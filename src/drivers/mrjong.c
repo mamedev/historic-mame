@@ -19,26 +19,22 @@ void mrjong_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 WRITE_HANDLER( mrjong_flipscreen_w );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa7ff, MRA_RAM },
 	{ 0xe000, 0xe3ff, videoram_r },
 	{ 0xe400, 0xe7ff, colorram_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa7ff, MWA_RAM },
 	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe400, 0xe7ff, colorram_w, &colorram },
 	{ 0xe000, 0xe03f, MWA_RAM, &spriteram, &spriteram_size},	/* here to initialize the pointer */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 WRITE_HANDLER( io_0x00_w )
@@ -51,22 +47,18 @@ READ_HANDLER( io_0x03_r )
 	return 0x00;
 }
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },		// Input 1
 	{ 0x01, 0x01, input_port_1_r },		// Input 2
 	{ 0x02, 0x02, input_port_2_r },		// DipSw 1
 	{ 0x03, 0x03, io_0x03_r },		// Unknown
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, io_0x00_w },
 	{ 0x01, 0x01, SN76496_0_w },
 	{ 0x02, 0x02, SN76496_1_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( mrjong )

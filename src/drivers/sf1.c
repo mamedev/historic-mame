@@ -4,6 +4,9 @@
 
   driver by Olivier Galibert
 
+TODO:
+- is there a third coin input?
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -13,78 +16,58 @@
 #include "cpu/m68000/m68000.h"
 
 
-extern unsigned char *sf1_objectram;
+extern data16_t *sf1_objectram,*sf1_videoram;
 extern int sf1_deltaxb;
 extern int sf1_deltaxm;
 extern int sf1_active;
 
-static unsigned char *sharedram;
-
+WRITE16_HANDLER( sf1_bg_scroll_w );
+WRITE16_HANDLER( sf1_fg_scroll_w );
+WRITE16_HANDLER( sf1_videoram_w );
+WRITE16_HANDLER( sf1_gfxctrl_w );
 int sf1_vh_start(void);
 void sf1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( sf1_bgb_scroll_w );
-WRITE_HANDLER( sf1_bgm_scroll_w );
-WRITE_HANDLER( sf1_videoram_w );
-void sf1_active_w(int data);
 
 
-static READ_HANDLER( dummy_r )
+static READ16_HANDLER( dummy_r )
 {
 	return 0xffff;
 }
 
-/* b0 = reset, or maybe "set anyway" */
-/* b1 = pulsed when control6.b6==0 until it's 1 */
-/* b2 = active when dip 8 (flip) on */
-/* b3 = active character plane */
-/* b4 = unused */
-/* b5 = active background plane */
-/* b6 = active middle plane */
-/* b7 = active sprites */
-static WRITE_HANDLER( active_w )
+
+static WRITE16_HANDLER( sf1_coin_w )
 {
-	if((data&0xff)!=0)
-		sf1_active_w(data);
+	if (ACCESSING_LSB)
+	{
+		coin_counter_w(0,data & 0x01);
+		coin_counter_w(1,data & 0x02);
+		coin_lockout_w(0,~data & 0x10);
+		coin_lockout_w(1,~data & 0x20);
+		coin_lockout_w(2,~data & 0x40);	/* is there a third coin input? */
+	}
 }
 
 
-static WRITE_HANDLER( soundcmd_w )
+static WRITE16_HANDLER( soundcmd_w )
 {
-	if (data != 0xffff) {
-		soundlatch_w(offset,data);
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(offset,data & 0xff);
 		cpu_cause_interrupt(1,Z80_NMI_INT);
 	}
 }
 
-/* Idle cycles skipping */
-static WRITE_HANDLER( shared_w )
-{
-	COMBINE_WORD_MEM (sharedram+offset, data);
-
-	if (offset)
-		return;
-	switch(cpu_get_pc()) {
-	case 0x3b1a6:
-	case 0x3b1a2:
-	case 0x3a1d6:
-		if(!(cpu_get_reg(M68K_SR) & 0x0700)) {
-			int i;
-			unsigned char *adr = sharedram+6;
-			for(i=0;i<16;i++) {
-				if(READ_WORD(adr) & 0x0300)
-					return;
-				adr += 16;
-			}
-			cpu_spinuntil_int();
-		}
-		break;
-	}
-}
 
 /* The protection of the japanese version */
 /* I'd love to see someone dump the 68705 rom */
 
-static WRITE_HANDLER( protection_w )
+static void write_dword(offs_t offset,UINT32 data)
+{
+	cpu_writemem24bew_word(offset,data >> 16);
+	cpu_writemem24bew_word(offset+2,data);
+}
+
+static WRITE16_HANDLER( protection_w )
 {
 	static int maplist[4][10] = {
 		{ 1, 0, 3, 2, 4, 5, 6, 7, 8, 9 },
@@ -105,21 +88,21 @@ static WRITE_HANDLER( protection_w )
 
 			base = 0x1b6e8+0x300e*map;
 
-			cpu_writemem24bew_dword(0xffc01c, 0x16bfc+0x270*map);
-			cpu_writemem24bew_dword(0xffc020, base+0x80);
-			cpu_writemem24bew_dword(0xffc024, base);
-			cpu_writemem24bew_dword(0xffc028, base+0x86);
-			cpu_writemem24bew_dword(0xffc02c, base+0x8e);
-			cpu_writemem24bew_dword(0xffc030, base+0x20e);
-			cpu_writemem24bew_dword(0xffc034, base+0x30e);
-			cpu_writemem24bew_dword(0xffc038, base+0x38e);
-			cpu_writemem24bew_dword(0xffc03c, base+0x40e);
-			cpu_writemem24bew_dword(0xffc040, base+0x80e);
-			cpu_writemem24bew_dword(0xffc044, base+0xc0e);
-			cpu_writemem24bew_dword(0xffc048, base+0x180e);
-			cpu_writemem24bew_dword(0xffc04c, base+0x240e);
-			cpu_writemem24bew_dword(0xffc050, 0x19548+0x60*map);
-			cpu_writemem24bew_dword(0xffc054, 0x19578+0x60*map);
+			write_dword(0xffc01c, 0x16bfc+0x270*map);
+			write_dword(0xffc020, base+0x80);
+			write_dword(0xffc024, base);
+			write_dword(0xffc028, base+0x86);
+			write_dword(0xffc02c, base+0x8e);
+			write_dword(0xffc030, base+0x20e);
+			write_dword(0xffc034, base+0x30e);
+			write_dword(0xffc038, base+0x38e);
+			write_dword(0xffc03c, base+0x40e);
+			write_dword(0xffc040, base+0x80e);
+			write_dword(0xffc044, base+0xc0e);
+			write_dword(0xffc048, base+0x180e);
+			write_dword(0xffc04c, base+0x240e);
+			write_dword(0xffc050, 0x19548+0x60*map);
+			write_dword(0xffc054, 0x19578+0x60*map);
 			break;
 		}
 	case 2:
@@ -139,8 +122,8 @@ static WRITE_HANDLER( protection_w )
 			cpu_writemem24bew_word(0xffc00c, 0xc0);
 			cpu_writemem24bew_word(0xffc00e, 0);
 
-			sf1_bgm_scroll_w(0, d1);
-			sf1_bgb_scroll_w(0, d2);
+			sf1_fg_scroll_w(0, d1, 0);
+			sf1_bg_scroll_w(0, d2, 0);
 			break;
 		}
 	case 4:
@@ -160,7 +143,7 @@ static WRITE_HANDLER( protection_w )
 				}
 				cpu_writemem24bew_word(0xffc682, d1);
 				cpu_writemem24bew_word(0xffc00e, off);
-				sf1_bgb_scroll_w(0, d1);
+				sf1_bg_scroll_w(0, d1, 0);
 			}
 			break;
 		}
@@ -180,12 +163,12 @@ static WRITE_HANDLER( protection_w )
 
 static int scale[8] = { 0x00, 0x40, 0xe0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
 
-static READ_HANDLER( button1_r )
+static READ16_HANDLER( button1_r )
 {
 	return (scale[input_port_7_r(0)]<<8)|scale[input_port_5_r(0)];
 }
 
-static READ_HANDLER( button2_r )
+static READ16_HANDLER( button2_r )
 {
 	return (scale[input_port_8_r(0)]<<8)|scale[input_port_6_r(0)];
 }
@@ -193,7 +176,7 @@ static READ_HANDLER( button2_r )
 
 static WRITE_HANDLER( sound2_bank_w )
 {
-	cpu_setbank(4, memory_region(REGION_CPU3)+0x8000*(data+1));
+	cpu_setbank(1,memory_region(REGION_CPU3)+0x8000*(data+1));
 }
 
 
@@ -208,404 +191,102 @@ static WRITE_HANDLER( msm5205_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x04ffff, MRA_ROM },
-	{ 0x800000, 0x800fff, MRA_BANK3 },
-	{ 0xc00000, 0xc00001, input_port_3_r },
-	{ 0xc00002, 0xc00003, input_port_4_r },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x04ffff, MRA16_ROM },
+	{ 0x800000, 0x800fff, MRA16_RAM },
+	{ 0xc00000, 0xc00001, input_port_3_word_r },
+	{ 0xc00002, 0xc00003, input_port_4_word_r },
 	{ 0xc00004, 0xc00005, button1_r },
 	{ 0xc00006, 0xc00007, button2_r },
-	{ 0xc00008, 0xc00009, input_port_0_r },
-	{ 0xc0000a, 0xc0000b, input_port_1_r },
-	{ 0xc0000c, 0xc0000d, input_port_2_r },
+	{ 0xc00008, 0xc00009, input_port_0_word_r },
+	{ 0xc0000a, 0xc0000b, input_port_1_word_r },
+	{ 0xc0000c, 0xc0000d, input_port_2_word_r },
 	{ 0xc0000e, 0xc0000f, dummy_r },
-	{ 0xff8000, 0xff80ff, MRA_BANK5 },
-	{ 0xff8100, 0xffdfff, MRA_BANK1 },
-	{ 0xffe000, 0xffffff, MRA_BANK2 },
-	{ -1 }
-};
+	{ 0xff8000, 0xffdfff, MRA16_RAM },
+	{ 0xffe000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress readmemus[] =
-{
-	{ 0x000000, 0x04ffff, MRA_ROM },
-	{ 0x800000, 0x800fff, MRA_BANK3 },
-	{ 0xc00000, 0xc00001, input_port_3_r },
-	{ 0xc00002, 0xc00003, input_port_4_r },
+static MEMORY_READ16_START( readmemus )
+	{ 0x000000, 0x04ffff, MRA16_ROM },
+	{ 0x800000, 0x800fff, MRA16_RAM },
+	{ 0xc00000, 0xc00001, input_port_3_word_r },
+	{ 0xc00002, 0xc00003, input_port_4_word_r },
 	{ 0xc00004, 0xc00005, dummy_r },
 	{ 0xc00006, 0xc00007, dummy_r },
-	{ 0xc00008, 0xc00009, input_port_0_r },
-	{ 0xc0000a, 0xc0000b, input_port_1_r },
-	{ 0xc0000c, 0xc0000d, input_port_2_r },
+	{ 0xc00008, 0xc00009, input_port_0_word_r },
+	{ 0xc0000a, 0xc0000b, input_port_1_word_r },
+	{ 0xc0000c, 0xc0000d, input_port_2_word_r },
 	{ 0xc0000e, 0xc0000f, dummy_r },
-	{ 0xff8000, 0xff80ff, MRA_BANK5 },
-	{ 0xff8100, 0xffdfff, MRA_BANK1 },
-	{ 0xffe000, 0xffffff, MRA_BANK2 },
-	{ -1 }
-};
+	{ 0xff8000, 0xffdfff, MRA16_RAM },
+	{ 0xffe000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress readmemjp[] =
-{
-	{ 0x000000, 0x04ffff, MRA_ROM },
-	{ 0x800000, 0x800fff, MRA_BANK3 },
-	{ 0xc00000, 0xc00001, input_port_3_r },
-	{ 0xc00002, 0xc00003, input_port_4_r },
-	{ 0xc00004, 0xc00005, input_port_5_r },
+static MEMORY_READ16_START( readmemjp )
+	{ 0x000000, 0x04ffff, MRA16_ROM },
+	{ 0x800000, 0x800fff, MRA16_RAM },
+	{ 0xc00000, 0xc00001, input_port_3_word_r },
+	{ 0xc00002, 0xc00003, input_port_4_word_r },
+	{ 0xc00004, 0xc00005, input_port_5_word_r },
 	{ 0xc00006, 0xc00007, dummy_r },
-	{ 0xc00008, 0xc00009, input_port_0_r },
-	{ 0xc0000a, 0xc0000b, input_port_1_r },
-	{ 0xc0000c, 0xc0000d, input_port_2_r },
+	{ 0xc00008, 0xc00009, input_port_0_word_r },
+	{ 0xc0000a, 0xc0000b, input_port_1_word_r },
+	{ 0xc0000c, 0xc0000d, input_port_2_word_r },
 	{ 0xc0000e, 0xc0000f, dummy_r },
-	{ 0xff8000, 0xff80ff, MRA_BANK5 },
-	{ 0xff8100, 0xffdfff, MRA_BANK1 },
-	{ 0xffe000, 0xffffff, MRA_BANK2 },
-	{ -1 }
-};
+	{ 0xff8000, 0xffdfff, MRA16_RAM },
+	{ 0xffe000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x04ffff, MWA_ROM },
-	{ 0x800000, 0x800fff, sf1_videoram_w, &videoram, &videoram_size },
-	{ 0xb00000, 0xb007ff, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0xc00010, 0xc00011, MWA_NOP }, /* Coin counters, etc... */
-	{ 0xc00014, 0xc00015, sf1_bgm_scroll_w },
-	{ 0xc00018, 0xc00019, sf1_bgb_scroll_w },
-	{ 0xc0001a, 0xc0001b, active_w },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x04ffff, MWA16_ROM },
+	{ 0x800000, 0x800fff, sf1_videoram_w, &sf1_videoram, &videoram_size },
+	{ 0xb00000, 0xb007ff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0xc00010, 0xc00011, sf1_coin_w },
+	{ 0xc00014, 0xc00015, sf1_fg_scroll_w },
+	{ 0xc00018, 0xc00019, sf1_bg_scroll_w },
+	{ 0xc0001a, 0xc0001b, sf1_gfxctrl_w },
 	{ 0xc0001c, 0xc0001d, soundcmd_w },
 	{ 0xc0001e, 0xc0001f, protection_w },
-	{ 0xff8000, 0xff80ff, shared_w, &sharedram },
-	{ 0xff8100, 0xffdfff, MWA_BANK1 },
-	{ 0xffe000, 0xffffff, MWA_BANK2, &sf1_objectram },
-	{ -1 }
-};
+	{ 0xff8000, 0xffdfff, MWA16_RAM },
+	{ 0xffe000, 0xffffff, MWA16_RAM, &sf1_objectram },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, soundlatch_r },
 	{ 0xe001, 0xe001, YM2151_status_port_0_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2151_register_port_0_w },
 	{ 0xe001, 0xe001, YM2151_data_port_0_w },
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound2_readmem[] =
-{
+static MEMORY_READ_START( sound2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xffff, MRA_BANK4 },
-	{ -1 }
-};
+	{ 0x8000, 0xffff, MRA_BANK1 },
+MEMORY_END
 
 /* Yes, _no_ ram */
-static struct MemoryWriteAddress sound2_writemem[] =
-{
+static MEMORY_WRITE_START( sound2_writemem )
 /*	{ 0x0000, 0xffff, MWA_ROM }, avoid cluttering up error.log */
 	{ 0x0000, 0xffff, MWA_NOP },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort sound2_readport[] =
-{
+static PORT_READ_START( sound2_readport )
 	{ 0x01, 0x01, soundlatch_r },
-	{ -1 }
-};
+PORT_END
 
 
-static struct IOWritePort sound2_writeport[] =
-{
+static PORT_WRITE_START( sound2_writeport )
 	{ 0x00, 0x01, msm5205_w },
 	{ 0x02, 0x02, sound2_bank_w },
-	{ -1 }
-};
+PORT_END
 
 
-INPUT_PORTS_START( sf1jp )
-	PORT_START
-	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
-	PORT_DIPSETTING(      0x0000, "Slow" )
-	PORT_DIPSETTING(      0x1000, "Normal" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Attract sound?" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
-
-	PORT_START
-	PORT_DIPNAME( 0x0007, 0x0007, "Continuation max stage" )
-	PORT_DIPSETTING(      0x0007, "5th" )
-	PORT_DIPSETTING(      0x0006, "4th" )
-	PORT_DIPSETTING(      0x0005, "3rd" )
-	PORT_DIPSETTING(      0x0004, "2nd" )
-	PORT_DIPSETTING(      0x0003, "1st" )
-	PORT_DIPSETTING(      0x0002, "No continuation" )
-	PORT_DIPNAME( 0x0018, 0x0018, "Round time" )
-	PORT_DIPSETTING(      0x0018, "100" )
-	PORT_DIPSETTING(      0x0010, "150" )
-	PORT_DIPSETTING(      0x0008, "200" )
-	PORT_DIPSETTING(      0x0000, "250" )
-	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0060, "Normal" )
-	PORT_DIPSETTING(      0x0040, "Easy" )
-	PORT_DIPSETTING(      0x0020, "Difficult" )
-	PORT_DIPSETTING(      0x0000, "Very difficult" )
-	PORT_DIPNAME( 0x0380, 0x0380, "Buy-in max stage" )
-	PORT_DIPSETTING(      0x0380, "5th" )
-	PORT_DIPSETTING(      0x0300, "4th" )
-	PORT_DIPSETTING(      0x0280, "3rd" )
-	PORT_DIPSETTING(      0x0200, "2nd" )
-	PORT_DIPSETTING(      0x0180, "1st" )
-	PORT_DIPSETTING(      0x0080, "No buy-in" )
-	PORT_DIPNAME( 0x0400, 0x0000, "Number of start countries" )
-	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPSETTING(      0x0400, "2" )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Freezes the game ? */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( sf1us )
-	PORT_START
-	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
-	PORT_DIPSETTING(      0x0000, "Slow" )
-	PORT_DIPSETTING(      0x1000, "Normal" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Attract sound?" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
-
-	PORT_START
-	PORT_DIPNAME( 0x0007, 0x0007, "Continuation max stage" )
-	PORT_DIPSETTING(      0x0007, "5th" )
-	PORT_DIPSETTING(      0x0006, "4th" )
-	PORT_DIPSETTING(      0x0005, "3rd" )
-	PORT_DIPSETTING(      0x0004, "2nd" )
-	PORT_DIPSETTING(      0x0003, "1st" )
-	PORT_DIPSETTING(      0x0002, "No continuation" )
-	PORT_DIPNAME( 0x0018, 0x0018, "Round time" )
-	PORT_DIPSETTING(      0x0018, "100" )
-	PORT_DIPSETTING(      0x0010, "150" )
-	PORT_DIPSETTING(      0x0008, "200" )
-	PORT_DIPSETTING(      0x0000, "250" )
-	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0060, "Normal" )
-	PORT_DIPSETTING(      0x0040, "Easy" )
-	PORT_DIPSETTING(      0x0020, "Difficult" )
-	PORT_DIPSETTING(      0x0000, "Very difficult" )
-	PORT_DIPNAME( 0x0380, 0x0380, "Buy-in max stage" )
-	PORT_DIPSETTING(      0x0380, "5th" )
-	PORT_DIPSETTING(      0x0300, "4th" )
-	PORT_DIPSETTING(      0x0280, "3rd" )
-	PORT_DIPSETTING(      0x0200, "2nd" )
-	PORT_DIPSETTING(      0x0180, "1st" )
-	PORT_DIPSETTING(      0x0080, "No buy-in" )
-	PORT_DIPNAME( 0x0400, 0x0000, "Number of start countries" )
-	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPSETTING(      0x0400, "2" )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Freezes the game ? */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
-INPUT_PORTS_END
 
 INPUT_PORTS_START( sf1 )
 	PORT_START
@@ -627,22 +308,30 @@ INPUT_PORTS_START( sf1 )
 	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )	/* Flip Screen not available */
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Attract Music" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
 	PORT_DIPSETTING(      0x0000, "Slow" )
 	PORT_DIPSETTING(      0x1000, "Normal" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Attract sound?" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -685,7 +374,7 @@ INPUT_PORTS_START( sf1 )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -699,7 +388,6 @@ INPUT_PORTS_START( sf1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -776,6 +464,300 @@ INPUT_PORTS_START( sf1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sf1us )
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Attract Music" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
+	PORT_DIPSETTING(      0x0000, "Slow" )
+	PORT_DIPSETTING(      0x1000, "Normal" )
+	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, "Continuation max stage" )
+	PORT_DIPSETTING(      0x0007, "5th" )
+	PORT_DIPSETTING(      0x0006, "4th" )
+	PORT_DIPSETTING(      0x0005, "3rd" )
+	PORT_DIPSETTING(      0x0004, "2nd" )
+	PORT_DIPSETTING(      0x0003, "1st" )
+	PORT_DIPSETTING(      0x0002, "No continuation" )
+	PORT_DIPNAME( 0x0018, 0x0018, "Round time" )
+	PORT_DIPSETTING(      0x0018, "100" )
+	PORT_DIPSETTING(      0x0010, "150" )
+	PORT_DIPSETTING(      0x0008, "200" )
+	PORT_DIPSETTING(      0x0000, "250" )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0060, "Normal" )
+	PORT_DIPSETTING(      0x0040, "Easy" )
+	PORT_DIPSETTING(      0x0020, "Difficult" )
+	PORT_DIPSETTING(      0x0000, "Very difficult" )
+	PORT_DIPNAME( 0x0380, 0x0380, "Buy-in max stage" )
+	PORT_DIPSETTING(      0x0380, "5th" )
+	PORT_DIPSETTING(      0x0300, "4th" )
+	PORT_DIPSETTING(      0x0280, "3rd" )
+	PORT_DIPSETTING(      0x0200, "2nd" )
+	PORT_DIPSETTING(      0x0180, "1st" )
+	PORT_DIPSETTING(      0x0080, "No buy-in" )
+	PORT_DIPNAME( 0x0400, 0x0000, "Number of start countries" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPSETTING(      0x0400, "2" )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Freezes the game ? */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sf1jp )
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Attract Music" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
+	PORT_DIPSETTING(      0x0000, "Slow" )
+	PORT_DIPSETTING(      0x1000, "Normal" )
+	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, "Continuation max stage" )
+	PORT_DIPSETTING(      0x0007, "5th" )
+	PORT_DIPSETTING(      0x0006, "4th" )
+	PORT_DIPSETTING(      0x0005, "3rd" )
+	PORT_DIPSETTING(      0x0004, "2nd" )
+	PORT_DIPSETTING(      0x0003, "1st" )
+	PORT_DIPSETTING(      0x0002, "No continuation" )
+	PORT_DIPNAME( 0x0018, 0x0018, "Round time" )
+	PORT_DIPSETTING(      0x0018, "100" )
+	PORT_DIPSETTING(      0x0010, "150" )
+	PORT_DIPSETTING(      0x0008, "200" )
+	PORT_DIPSETTING(      0x0000, "250" )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0060, "Normal" )
+	PORT_DIPSETTING(      0x0040, "Easy" )
+	PORT_DIPSETTING(      0x0020, "Difficult" )
+	PORT_DIPSETTING(      0x0000, "Very difficult" )
+	PORT_DIPNAME( 0x0380, 0x0380, "Buy-in max stage" )
+	PORT_DIPSETTING(      0x0380, "5th" )
+	PORT_DIPSETTING(      0x0300, "4th" )
+	PORT_DIPSETTING(      0x0280, "3rd" )
+	PORT_DIPSETTING(      0x0200, "2nd" )
+	PORT_DIPSETTING(      0x0180, "1st" )
+	PORT_DIPSETTING(      0x0080, "No buy-in" )
+	PORT_DIPNAME( 0x0400, 0x0000, "Number of start countries" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPSETTING(      0x0400, "2" )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Freezes the game ? */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -1224,6 +1206,6 @@ ROM_END
 
 
 
-GAMEX( 1987, sf1,   0,   sf1,   sf1,   0, ROT0, "Capcom", "Street Fighter (World)", GAME_NO_COCKTAIL )
-GAMEX( 1987, sf1us, sf1, sf1us, sf1us, 0, ROT0, "Capcom", "Street Fighter (US)", GAME_NO_COCKTAIL )
-GAMEX( 1987, sf1jp, sf1, sf1jp, sf1jp, 0, ROT0, "Capcom", "Street Fighter (Japan)", GAME_NO_COCKTAIL )
+GAME( 1987, sf1,   0,   sf1,   sf1,   0, ROT0, "Capcom", "Street Fighter (World)" )
+GAME( 1987, sf1us, sf1, sf1us, sf1us, 0, ROT0, "Capcom", "Street Fighter (US)" )
+GAME( 1987, sf1jp, sf1, sf1jp, sf1jp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )

@@ -1,35 +1,20 @@
 /* tilemap.c
 
-In Progress
--	visibility walk (temporarily broken)
--	nowrap
-
-To Do:
--	virtualization for huge tilemaps
--	precompute spans per row (to speed up the low level code)
--	support for unusual tile sizes (8x12, 8x10)
--	screenwise scrolling
--	internal profiling
-
-	Usage Notes:
-
+Usage Notes:
 	When the videoram for a tile changes, call tilemap_mark_tile_dirty
-	with the appropriate tile_index.
+	with the appropriate memory offset.
 
 	In the video driver, follow these steps:
 
 	1)	set each tilemap's scroll registers
 
-	2)	call tilemap_update for each tilemap.
+	2)	call tilemap_update( ALL_TILEMAPS )
 
-	3)	call palette_init_used_colors.
+	3)	call palette_init_used_colors().
 		mark the colors used by sprites.
-		call palette recalc.  If the palette manager has compressed the palette,
-			call tilemap_mark_all_pixels_dirty for each tilemap.
+		call palette recalc().
 
-	4)	call tilemap_render for each tilemap.
-
-	5)	call tilemap_draw to draw the tilemaps to the screen, from back to front
+	4)	call tilemap_draw to draw the tilemaps to the screen, from back to front
 */
 
 #ifndef DECLARE
@@ -37,7 +22,192 @@ To Do:
 #include "driver.h"
 #include "tilemap.h"
 
+
+struct cached_tile_info {
+	const UINT8 *pen_data;
+	const UINT16 *pal_data;
+	UINT32 pen_usage;
+	UINT32 flags;
+};
+
+struct tilemap_mask {
+	struct osd_bitmap *bitmask;
+	int line_offset;
+	UINT8 *data;
+	UINT8 **data_row;
+};
+
+struct tilemap {
+	UINT32 (*get_memory_offset)( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows );
+	int *memory_offset_to_cached_index;
+	UINT32 *cached_index_to_memory_offset;
+	int logical_flip_to_cached_flip[4];
+
+	/* callback to interpret video VRAM for the tilemap */
+	void (*tile_get_info)( int memory_offset );
+
+	UINT32 max_memory_offset;
+	int num_tiles;
+	int num_logical_rows, num_logical_cols;
+	int num_cached_rows, num_cached_cols;
+	int cached_tile_width, cached_tile_height, cached_width, cached_height;
+
+	struct cached_tile_info *cached_tile_info;
+
+	int dx, dx_if_flipped;
+	int dy, dy_if_flipped;
+	int scrollx_delta, scrolly_delta;
+
+	int enable;
+	int attributes;
+
+	int type;
+	int transparent_pen;
+	unsigned int transmask[4];
+
+	int bNeedRender;
+
+	void (*draw)( int, int );
+	void (*draw_opaque)( int, int );
+
+	UINT8 *priority,	/* priority for each tile */
+		**priority_row;
+
+	UINT8 *visible; /* boolean flag for each tile */
+
+	UINT8 *dirty_vram; /* boolean flag for each tile */
+
+	UINT8 *dirty_pixels;
+
+	int scroll_rows, scroll_cols;
+	int *rowscroll, *colscroll;
+
+	int orientation;
+	int clip_left,clip_right,clip_top,clip_bottom;
+
+	/* cached color data */
+	struct osd_bitmap *pixmap;
+	int pixmap_line_offset;
+
+	struct tilemap_mask *foreground;
+	/* for transparent layers, or the front half of a split layer */
+
+	struct tilemap_mask *background;
+	/* for the back half of a split layer */
+
+	struct tilemap *next; /* resource tracking */
+};
+
+
 #define SWAP(X,Y) {UINT32 temp=X; X=Y; Y=temp; }
+
+static void draw_tile(
+		struct tilemap *tilemap,
+		UINT32 cached_index,
+		UINT32 col, UINT32 row
+){
+	struct osd_bitmap *pixmap = tilemap->pixmap;
+	UINT32 tile_width = tilemap->cached_tile_width;
+	UINT32 tile_height = tilemap->cached_tile_height;
+	struct cached_tile_info *cached_tile_info = &tilemap->cached_tile_info[cached_index];
+	const UINT8 *pendata = cached_tile_info->pen_data;
+	const UINT16 *paldata = cached_tile_info->pal_data;
+
+	UINT32 flags = cached_tile_info->flags;
+	int x, sx = tile_width*col;
+	int sy,y1,y2,dy;
+
+	if( Machine->scrbitmap->depth==16 ){
+		if( flags&TILE_FLIPY ){
+			y1 = tile_height*row+tile_height-1;
+			y2 = y1-tile_height;
+	 		dy = -1;
+	 	}
+	 	else {
+			y1 = tile_height*row;
+			y2 = y1+tile_height;
+	 		dy = 1;
+	 	}
+
+		if( flags&TILE_FLIPX ){
+			tile_width--;
+			for( sy=y1; sy!=y2; sy+=dy ){
+				UINT16 *dest  = sx + (UINT16 *)pixmap->line[sy];
+				for( x=tile_width; x>=0; x-- ) dest[x] = paldata[*pendata++];
+			}
+		}
+		else {
+			for( sy=y1; sy!=y2; sy+=dy ){
+				UINT16 *dest  = sx + (UINT16 *)pixmap->line[sy];
+				for( x=0; x<tile_width; x++ ) dest[x] = paldata[*pendata++];
+			}
+		}
+	}
+	else {
+		if( flags&TILE_FLIPY ){
+			y1 = tile_height*row+tile_height-1;
+			y2 = y1-tile_height;
+	 		dy = -1;
+	 	}
+	 	else {
+			y1 = tile_height*row;
+			y2 = y1+tile_height;
+	 		dy = 1;
+	 	}
+
+		if( flags&TILE_FLIPX ){
+			tile_width--;
+			for( sy=y1; sy!=y2; sy+=dy ){
+				UINT8 *dest  = sx + (UINT8 *)pixmap->line[sy];
+				for( x=tile_width; x>=0; x-- ) dest[x] = paldata[*pendata++];
+			}
+		}
+		else {
+			for( sy=y1; sy!=y2; sy+=dy ){
+				UINT8 *dest  = sx + (UINT8 *)pixmap->line[sy];
+				for( x=0; x<tile_width; x++ ) dest[x] = paldata[*pendata++];
+			}
+		}
+	}
+}
+
+static void tmap_render( struct tilemap *tilemap ){
+	if( tilemap->bNeedRender ){
+		tilemap->bNeedRender = 0;
+		if( tilemap->enable ){
+			UINT8 *dirty_pixels = tilemap->dirty_pixels;
+			const UINT8 *visible = tilemap->visible;
+			UINT32 cached_index = 0;
+			UINT32 row,col;
+
+			/* walk over cached rows/cols (better to walk screen coords) */
+			for( row=0; row<tilemap->num_cached_rows; row++ ){
+				for( col=0; col<tilemap->num_cached_cols; col++ ){
+					if( visible[cached_index] && dirty_pixels[cached_index] ){
+						draw_tile( tilemap, cached_index, col, row );
+						dirty_pixels[cached_index] = 0;
+					}
+					cached_index++;
+				} /* next col */
+			} /* next row */
+		}
+	}
+}
+
+struct osd_bitmap *tilemap_get_pixmap( struct tilemap * tilemap ){
+profiler_mark(PROFILER_TILEMAP_DRAW);
+	tmap_render( tilemap );
+profiler_mark(PROFILER_END);
+	return tilemap->pixmap; /* TBA */
+}
+
+void tilemap_set_transparent_pen( struct tilemap *tilemap, int pen ){
+	tilemap->transparent_pen = pen;
+}
+
+void tilemap_set_transmask( struct tilemap *tilemap, int which, UINT32 penmask ){
+	tilemap->transmask[which] = penmask;
+}
 
 /***********************************************************************************/
 /* some common mappings */
@@ -628,7 +798,7 @@ void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap ){
 	}
 }
 
-void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
+static void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
 	if( tilemap==ALL_TILEMAPS ){
 		tilemap = first_tilemap;
 		while( tilemap ){
@@ -650,105 +820,8 @@ void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
 	}
 }
 
-/***********************************************************************************/
-
-static void draw_tile(
-		struct tilemap *tilemap,
-		UINT32 cached_index,
-		UINT32 col, UINT32 row
-){
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	UINT32 tile_width = tilemap->cached_tile_width;
-	UINT32 tile_height = tilemap->cached_tile_height;
-	struct cached_tile_info *cached_tile_info = &tilemap->cached_tile_info[cached_index];
-	const UINT8 *pendata = cached_tile_info->pen_data;
-	const UINT16 *paldata = cached_tile_info->pal_data;
-
-	UINT32 flags = cached_tile_info->flags;
-	int x, sx = tile_width*col;
-	int sy,y1,y2,dy;
-
-	if( Machine->scrbitmap->depth==16 ){
-		if( flags&TILE_FLIPY ){
-			y1 = tile_height*row+tile_height-1;
-			y2 = y1-tile_height;
-	 		dy = -1;
-	 	}
-	 	else {
-			y1 = tile_height*row;
-			y2 = y1+tile_height;
-	 		dy = 1;
-	 	}
-
-		if( flags&TILE_FLIPX ){
-			tile_width--;
-			for( sy=y1; sy!=y2; sy+=dy ){
-				UINT16 *dest  = sx + (UINT16 *)pixmap->line[sy];
-				for( x=tile_width; x>=0; x-- ) dest[x] = paldata[*pendata++];
-			}
-		}
-		else {
-			for( sy=y1; sy!=y2; sy+=dy ){
-				UINT16 *dest  = sx + (UINT16 *)pixmap->line[sy];
-				for( x=0; x<tile_width; x++ ) dest[x] = paldata[*pendata++];
-			}
-		}
-	}
-	else {
-		if( flags&TILE_FLIPY ){
-			y1 = tile_height*row+tile_height-1;
-			y2 = y1-tile_height;
-	 		dy = -1;
-	 	}
-	 	else {
-			y1 = tile_height*row;
-			y2 = y1+tile_height;
-	 		dy = 1;
-	 	}
-
-		if( flags&TILE_FLIPX ){
-			tile_width--;
-			for( sy=y1; sy!=y2; sy+=dy ){
-				UINT8 *dest  = sx + (UINT8 *)pixmap->line[sy];
-				for( x=tile_width; x>=0; x-- ) dest[x] = paldata[*pendata++];
-			}
-		}
-		else {
-			for( sy=y1; sy!=y2; sy+=dy ){
-				UINT8 *dest  = sx + (UINT8 *)pixmap->line[sy];
-				for( x=0; x<tile_width; x++ ) dest[x] = paldata[*pendata++];
-			}
-		}
-	}
-}
-
-void tilemap_render( struct tilemap *tilemap ){
-profiler_mark(PROFILER_TILEMAP_RENDER);
-	if( tilemap==ALL_TILEMAPS ){
-		tilemap = first_tilemap;
-		while( tilemap ){
-			tilemap_render( tilemap );
-			tilemap = tilemap->next;
-		}
-	}
-	else if( tilemap->enable ){
-		UINT8 *dirty_pixels = tilemap->dirty_pixels;
-		const UINT8 *visible = tilemap->visible;
-		UINT32 cached_index = 0;
-		UINT32 row,col;
-
-		/* walk over cached rows/cols (better to walk screen coords) */
-		for( row=0; row<tilemap->num_cached_rows; row++ ){
-			for( col=0; col<tilemap->num_cached_cols; col++ ){
-				if( visible[cached_index] && dirty_pixels[cached_index] ){
-					draw_tile( tilemap, cached_index, col, row );
-					dirty_pixels[cached_index] = 0;
-				}
-				cached_index++;
-			} /* next col */
-		} /* next row */
-	}
-profiler_mark(PROFILER_END);
+void tilemap_dirty_palette( const UINT8 *dirty_pens ) {
+	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 }
 
 /***********************************************************************************/
@@ -1184,6 +1257,7 @@ static void update_visible( struct tilemap *tilemap ){
 
 void tilemap_update( struct tilemap *tilemap ){
 profiler_mark(PROFILER_TILEMAP_UPDATE);
+	tilemap->bNeedRender = 1;
 	if( tilemap==ALL_TILEMAPS ){
 		tilemap = first_tilemap;
 		while( tilemap ){
@@ -1250,10 +1324,11 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value ){
 }
 /***********************************************************************************/
 
-void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 priority ){
+void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority ){
 	int xpos,ypos;
-
 profiler_mark(PROFILER_TILEMAP_DRAW);
+	tmap_render( tilemap );
+
 	if( tilemap->enable ){
 		void (*draw)( int, int );
 
@@ -1275,12 +1350,12 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 		blit.pixmap = tilemap->pixmap;
 		blit.source_line_offset = tilemap->pixmap_line_offset;
 
-		if( tilemap->type==TILEMAP_OPAQUE || (priority&TILEMAP_IGNORE_TRANSPARENCY) ){
+		if( tilemap->type==TILEMAP_OPAQUE || (flags&TILEMAP_IGNORE_TRANSPARENCY) ){
 			draw = tilemap->draw_opaque;
 		}
 		else {
 			draw = tilemap->draw;
-			if( priority&TILEMAP_BACK ){
+			if( flags&TILEMAP_BACK ){
 				blit.bitmask = tilemap->background->bitmask;
 				blit.mask_line_offset = tilemap->background->line_offset;
 				blit.mask_data_row = tilemap->background->data_row;
@@ -1305,8 +1380,8 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 		blit.priority_data_row = tilemap->priority_row;
 		blit.source_width = tilemap->cached_width;
 		blit.source_height = tilemap->cached_height;
-		blit.tile_priority = priority&0xf;
-		blit.tilemap_priority_code = priority>>16;
+		blit.tile_priority = flags&0xf;
+		blit.tilemap_priority_code = priority;
 
 		if( rows == 1 && cols == 1 ){ /* XY scrolling playfield */
 			int scrollx = rowscroll[0];

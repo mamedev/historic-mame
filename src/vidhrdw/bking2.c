@@ -20,7 +20,7 @@ static int ball1_pic;
 static int ball2_pic;
 static int crow_pic;
 static int crow_flip;
-static data_t palette_bank;
+static int palette_bank;
 static int controller;
 static int hitclr=0;
 
@@ -136,9 +136,9 @@ WRITE_HANDLER( bking2_cont1_w )
     /* D3 = Not Connected */
     /* D4-D7 = CROW0-CROW3 (selects crow picture) */
 
-	coin_lockout_global_w(0, ~data & 0x01);
+	coin_lockout_global_w(~data & 0x01);
 
-	flip_screen_w(0, data & 0x04);
+	flip_screen_set(data & 0x04);
 
 	controller = data & 0x02;
 

@@ -82,8 +82,7 @@ static WRITE_HANDLER( lkage_sh_nmi_enable_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xefff, paletteram_r },
@@ -100,11 +99,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf0c0, 0xf0c5, MRA_RAM },
 	{ 0xf100, 0xf15f, MRA_RAM },
 	{ 0xf400, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, MWA_RAM, &paletteram },
@@ -120,33 +117,27 @@ static struct MemoryWriteAddress writemem[] =
 //	{ 0xf0e1, 0xf0e1, MWA_NOP }, /* unknown */
 	{ 0xf100, 0xf15f, MWA_RAM, &spriteram }, /* spriteram */
 	{ 0xf400, 0xffff, lkage_videoram_w, &videoram }, /* videoram */
-	{ -1 }
-};
+MEMORY_END
 
 static READ_HANDLER( port_fetch_r )
 {
 	return memory_region(REGION_USER1)[offset];
 }
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x4000, 0x7fff, port_fetch_r },
-	{ -1 }
-};
+PORT_END
 
 
-static struct MemoryReadAddress m68705_readmem[] =
-{
+static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, lkage_68705_portA_r },
 	{ 0x0001, 0x0001, lkage_68705_portB_r },
 	{ 0x0002, 0x0002, lkage_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m68705_writemem[] =
-{
+static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0000, 0x0000, lkage_68705_portA_w },
 	{ 0x0001, 0x0001, lkage_68705_portB_w },
 	{ 0x0002, 0x0002, lkage_68705_portC_w },
@@ -155,8 +146,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 	{ 0x0006, 0x0006, lkage_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -164,8 +154,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 
 /* sound section is almost identical to Bubble Bobble, YM2203 instead of YM3526 */
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
@@ -173,11 +162,9 @@ static struct MemoryReadAddress readmem_sound[] =
 	{ 0xb000, 0xb000, soundlatch_r },
 	{ 0xb001, 0xb001, MRA_NOP },	/* ??? */
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
@@ -188,8 +175,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0xb001, 0xb001, lkage_sh_nmi_enable_w },
 	{ 0xb002, 0xb002, lkage_sh_nmi_disable_w },
 	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }
-};
+MEMORY_END
 
 /***************************************************************************/
 

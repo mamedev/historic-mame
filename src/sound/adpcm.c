@@ -538,23 +538,18 @@ void OKIM6295_sh_update(void)
 
 ***********************************************************************************************/
 
-void OKIM6295_set_bank_base(int which, int channel, int base)
+void OKIM6295_set_bank_base(int which, int base)
 {
-	struct ADPCMVoice *voice = &adpcm[which * MAX_OKIM6295_VOICES + channel];
+	int channel;
 
-	/* handle the all voice case */
-	if (channel == ALL_VOICES)
+	for (channel = 0; channel < MAX_OKIM6295_VOICES; channel++)
 	{
-		int i;
+		struct ADPCMVoice *voice = &adpcm[which * MAX_OKIM6295_VOICES + channel];
 
-		for (i = 0; i < MAX_OKIM6295_VOICES; i++)
-			OKIM6295_set_bank_base(which, i, base);
-		return;
+		/* update the stream and set the new base */
+		stream_update(voice->stream, 0);
+		okim6295_base[which][channel] = base;
 	}
-
-	/* update the stream and set the new base */
-	stream_update(voice->stream, 0);
-	okim6295_base[which][channel] = base;
 }
 
 
@@ -565,24 +560,19 @@ void OKIM6295_set_bank_base(int which, int channel, int base)
 
 ***********************************************************************************************/
 
-void OKIM6295_set_frequency(int which, int channel, int frequency)
+void OKIM6295_set_frequency(int which, int frequency)
 {
-	struct ADPCMVoice *voice = &adpcm[which * MAX_OKIM6295_VOICES + channel];
+	int channel;
 
-	/* handle the all voice case */
-	if (channel == ALL_VOICES)
+	for (channel = 0; channel < MAX_OKIM6295_VOICES; channel++)
 	{
-		int i;
+		struct ADPCMVoice *voice = &adpcm[which * MAX_OKIM6295_VOICES + channel];
 
-		for (i = 0; i < MAX_OKIM6295_VOICES; i++)
-			OKIM6295_set_frequency(which, i, frequency);
-		return;
+		/* update the stream and set the new base */
+		stream_update(voice->stream, 0);
+		if (Machine->sample_rate)
+			voice->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
 	}
-
-	/* update the stream and set the new base */
-	stream_update(voice->stream, 0);
-	if (Machine->sample_rate)
-		voice->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
 }
 
 
@@ -726,6 +716,26 @@ READ_HANDLER( OKIM6295_status_1_r )
 	return OKIM6295_status_r(1);
 }
 
+READ16_HANDLER( OKIM6295_status_0_lsb_r )
+{
+	return OKIM6295_status_r(0);
+}
+
+READ16_HANDLER( OKIM6295_status_1_lsb_r )
+{
+	return OKIM6295_status_r(1);
+}
+
+READ16_HANDLER( OKIM6295_status_0_msb_r )
+{
+	return OKIM6295_status_r(0) << 8;
+}
+
+READ16_HANDLER( OKIM6295_status_1_msb_r )
+{
+	return OKIM6295_status_r(1) << 8;
+}
+
 
 
 /**********************************************************************************************
@@ -743,4 +753,28 @@ WRITE_HANDLER( OKIM6295_data_0_w )
 WRITE_HANDLER( OKIM6295_data_1_w )
 {
 	OKIM6295_data_w(1, data);
+}
+
+WRITE16_HANDLER( OKIM6295_data_0_lsb_w )
+{
+	if (ACCESSING_LSB)
+		OKIM6295_data_w(0, data & 0xff);
+}
+
+WRITE16_HANDLER( OKIM6295_data_1_lsb_w )
+{
+	if (ACCESSING_LSB)
+		OKIM6295_data_w(1, data & 0xff);
+}
+
+WRITE16_HANDLER( OKIM6295_data_0_msb_w )
+{
+	if (ACCESSING_MSB)
+		OKIM6295_data_w(0, data >> 8);
+}
+
+WRITE16_HANDLER( OKIM6295_data_1_msb_w )
+{
+	if (ACCESSING_MSB)
+		OKIM6295_data_w(1, data >> 8);
 }

@@ -75,8 +75,7 @@ WRITE_HANDLER( canyon_led_w )
 	set_led_status((offset & 0x01), data & 0x01);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, /* WRAM */
 	{ 0x0800, 0x0bff, MRA_RAM }, /* DISPLAY RAM */
 	{ 0x1000, 0x17ff, canyon_switches_r }, /* SWITCHES */
@@ -86,11 +85,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3000, 0x37ff, MRA_NOP }, /* PROM3 */
 	{ 0x3800, 0x3fff, MRA_ROM }, /* PROM4 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM4 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
 //	{ 0x0680, 0x06ff, canyon_led_w },
 	{ 0x0bd0, 0x0bdf, MWA_RAM, &spriteram, &spriteram_size },
@@ -99,8 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2800, 0x2fff, MWA_NOP }, /* PROM2 */
 	{ 0x3000, 0x37ff, MWA_NOP }, /* PROM3 */
 	{ 0x3800, 0x3fff, MWA_ROM }, /* PROM4 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( canyon )
 	PORT_START      /* DSW - fake port, gets mapped to Canyon Bomber ports */

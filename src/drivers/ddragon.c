@@ -67,7 +67,7 @@ static WRITE_HANDLER( ddragon_bankswitch_w )
 	ddragon_scrolly_hi = ( ( data & 0x02 ) << 7 );
 	ddragon_scrollx_hi = ( ( data & 0x01 ) << 8 );
 
-	flip_screen_w(0,~data & 0x04);
+	flip_screen_set(~data & 0x04);
 
 	/* bit 3 unknown */
 
@@ -166,8 +166,7 @@ static READ_HANDLER( dd_adpcm_status_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2fff, ddragon_spriteram_r },
 	{ 0x3000, 0x37ff, MRA_RAM },
@@ -178,11 +177,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3804, 0x3804, input_port_3_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x11ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
@@ -197,11 +194,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x380e, 0x380e, cpu_sound_command_w },
 	{ 0x380f, 0x380f, ddragon_forcedIRQ_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dd2_writemem[] =
-{
+static MEMORY_WRITE_START( dd2_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
 	{ 0x2000, 0x2fff, ddragon_spriteram_w, &ddragon_spriteram },
@@ -215,80 +210,63 @@ static struct MemoryWriteAddress dd2_writemem[] =
 	{ 0x3c00, 0x3dff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x3e00, 0x3fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sub_readmem[] =
-{
+static MEMORY_READ_START( sub_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x8000, 0x8fff, ddragon_spriteram_r },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sub_writemem[] =
-{
+static MEMORY_WRITE_START( sub_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x8000, 0x8fff, ddragon_spriteram_w },
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1000, soundlatch_r },
 	{ 0x1800, 0x1800, dd_adpcm_status_r },
 	{ 0x2800, 0x2801, YM2151_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x2800, 0x2800, YM2151_register_port_0_w },
 	{ 0x2801, 0x2801, YM2151_data_port_0_w },
 	{ 0x3800, 0x3807, dd_adpcm_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dd2_sub_readmem[] =
-{
+static MEMORY_READ_START( dd2_sub_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, ddragon_spriteram_r },
 	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dd2_sub_writemem[] =
-{
+static MEMORY_WRITE_START( dd2_sub_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, ddragon_spriteram_w },
 	{ 0xd000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dd2_sound_readmem[] =
-{
+static MEMORY_READ_START( dd2_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
 	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xA000, 0xA000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dd2_sound_writemem[] =
-{
+static MEMORY_WRITE_START( dd2_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
 	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

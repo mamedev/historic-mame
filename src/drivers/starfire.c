@@ -187,23 +187,19 @@ static READ_HANDLER( fireone_input_r )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, starfire_scratch_r },
 	{ 0xa000, 0xbfff, starfire_colorram_r },
 	{ 0xc000, 0xffff, starfire_videoram_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, starfire_scratch_w },
 	{ 0xa000, 0xbfff, starfire_colorram_w, &starfire_colorram },
 	{ 0xc000, 0xffff, starfire_videoram_w, &starfire_videoram },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

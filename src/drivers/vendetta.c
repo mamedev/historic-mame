@@ -210,8 +210,7 @@ READ_HANDLER( vendetta_sound_r )
 
 /********************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_BANK1	},
 	{ 0x28d2, 0x28d2, speedup_r },
 	{ 0x2000, 0x3fff, MRA_RAM },
@@ -228,11 +227,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6000, 0x6fff, MRA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x3fff, MWA_RAM },
 	{ 0x5f80, 0x5f9f, K054000_w },
@@ -246,28 +243,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
 	{ 0xfc00, 0xfc2f, K053260_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
 	{ 0xfc00, 0xfc2f, K053260_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /***************************************************************************

@@ -315,8 +315,7 @@ static WRITE_HANDLER( twin16_UPD7759_start_w )
 	UPD7759_start_w(offset, (!(data & 0x01)));
 }
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, twin16_sres_r },
@@ -324,11 +323,9 @@ static struct MemoryReadAddress readmem_sound[] =
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
 	{ 0xf000, 0xf000, UPD7759_0_busy_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, twin16_sres_w },
@@ -337,13 +334,11 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xd000, 0xd000, UPD7759_0_message_w },
 	{ 0xe000, 0xe000, twin16_UPD7759_start_w },	// Changed by Takahiro Nogi. (1999/10/27)
-	{ -1 }
-};
+MEMORY_END
 
 /******************************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, COMRAM_r },
 	{ 0x060000, 0x063fff, WORKRAM_CPUA_r },
@@ -354,11 +349,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x100000, 0x103fff, FIXRAM_r },
 	{ 0x120000, 0x123fff, VIDRAM_r },
 	{ 0x140000, 0x143fff, OBJRAM_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x043fff, COMRAM_w },
 	{ 0x060000, 0x063fff, WORKRAM_CPUA_w },
@@ -372,11 +365,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x100000, 0x103fff, FIXRAM_w },
 	{ 0x120000, 0x123fff, VIDRAM_w, &videoram },
 	{ 0x140000, 0x143fff, OBJRAM_w, &spriteram },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sub[] =
-{
+static MEMORY_READ_START( readmem_sub )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, COMRAM_r },
 	{ 0x060000, 0x063fff, WORKRAM_CPUB_r },
@@ -387,11 +378,9 @@ static struct MemoryReadAddress readmem_sub[] =
 	{ 0x600000, 0x6fffff, twin16_gfx_rom1_r },
 	{ 0x700000, 0x77ffff, twin16_gfx_rom2_r },
 	{ 0x780000, 0x79ffff, twin16_sprite_gfx_ram_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sub[] =
-{
+static MEMORY_WRITE_START( writemem_sub )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x043fff, COMRAM_w },
 	{ 0x060000, 0x063fff, WORKRAM_CPUB_w },
@@ -400,13 +389,11 @@ static struct MemoryWriteAddress writemem_sub[] =
 	{ 0x480000, 0x483fff, VIDRAM_w },
 	{ 0x500000, 0x53ffff, twin16_tile_gfx_ram_w },
 	{ 0x780000, 0x79ffff, twin16_sprite_gfx_ram_w },
-	{ -1 }
-};
+MEMORY_END
 
 /******************************************************************************************/
 
-static struct MemoryReadAddress fround_readmem[] =
-{
+static MEMORY_READ_START( fround_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, COMRAM_r },
 	{ 0x060000, 0x063fff, WORKRAM_CPUA_r },
@@ -417,11 +404,9 @@ static struct MemoryReadAddress fround_readmem[] =
 	{ 0x120000, 0x123fff, VIDRAM_r },
 	{ 0x140000, 0x143fff, OBJRAM_r },
 	{ 0x500000, 0x6fffff, twin16_gfx_rom1_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fround_writemem[] =
-{
+static MEMORY_WRITE_START( fround_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x043fff, COMRAM_w },
 	{ 0x060000, 0x063fff, WORKRAM_CPUA_w },
@@ -434,8 +419,7 @@ static struct MemoryWriteAddress fround_writemem[] =
 	{ 0x100000, 0x103fff, FIXRAM_w },
 	{ 0x120000, 0x123fff, VIDRAM_w, &videoram },
 	{ 0x140000, 0x143fff, OBJRAM_w, &spriteram },
-	{ -1 }
-};
+MEMORY_END
 
 /******************************************************************************************/
 

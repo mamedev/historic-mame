@@ -19,26 +19,26 @@ c000-ffff ROM (Super Bagman only)
 memory mapped ports:
 
 read:
-a000      PAL16r6 output. (RD4 line)
-a800      ? (read only in one place, not used) (RD5 line)
-b000      DSW (RD6 line)
-b800      watchdog reset (RD7 line)
+a000	  PAL16r6 output. (RD4 line)
+a800	  ? (read only in one place, not used) (RD5 line)
+b000	  DSW (RD6 line)
+b800	  watchdog reset (RD7 line)
 
 write:
-a000      interrupt enable
-a001      horizontal flip
+a000	  interrupt enable
+a001	  horizontal flip
 a002	  vertical flip
-a003      video enable?? (seems to be unused in the schems)
-a004      coin counter
-a007      ? /SCS line in the schems connected to AY8910 pin A4 or AA (schems are unreadable)
+a003	  video enable?? (seems to be unused in the schems)
+a004	  coin counter
+a007	  ? /SCS line in the schems connected to AY8910 pin A4 or AA (schems are unreadable)
 
 a800-a805 these lines control the state machine driving TMS5110 (only bit 0 matters)
-          a800,a801,a802 - speech roms BIT select (000 bit 7, 001 bit 4, 010 bit 2)
-          a803 - 0 keeps the state machine in reset state; 1 starts speech
-          a804 - connected to speech rom 11 (QS) chip enable
-          a805 - connected to speech rom 12 (QT) chip enable
-b000      ?
-b800      ?
+		  a800,a801,a802 - speech roms BIT select (000 bit 7, 001 bit 4, 010 bit 2)
+		  a803 - 0 keeps the state machine in reset state; 1 starts speech
+		  a804 - connected to speech rom 11 (QS) chip enable
+		  a805 - connected to speech rom 12 (QT) chip enable
+b000	  ?
+b800	  ?
 
 
 PAL16r6 This chip is custom logic used for guards controlling.
@@ -51,8 +51,8 @@ I/O ports:
 I/O 8  ;AY-3-8910 Control Reg.
 I/O 9  ;AY-3-8910 Data Write Reg.
 I/O C  ;AY-3-8910 Data Read Reg.
-        Port A of the 8910 is connected to IN0
-        Port B of the 8910 is connected to IN1
+		Port A of the 8910 is connected to IN0
+		Port B of the 8910 is connected to IN1
 
 ***************************************************************************/
 
@@ -151,12 +151,12 @@ int byte = 0;
 }
 
 
-READ_HANDLER( bagman_ls259_r )
+static READ_HANDLER( bagman_ls259_r )
 {
 	return ls259_buf[offset];
 }
 
-WRITE_HANDLER( bagman_ls259_w )
+static WRITE_HANDLER( bagman_ls259_w )
 {
 	bagman_pal16r6_w(offset,data); /*this is just a simulation*/
 
@@ -178,23 +178,24 @@ WRITE_HANDLER( bagman_ls259_w )
 	}
 }
 
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( bagman_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0x9800, 0x9bff, MRA_RAM },
 	{ 0xa000, 0xa000, bagman_pal16r6_r },
 	//{ 0xa800, 0xa805, bagman_ls259_r }, /*just for debugging purposes*/
-	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
+	{ 0xb000, 0xb000, input_port_2_r }, /* DSW */
 	{ 0xb800, 0xb800, MRA_NOP },
 	{ 0xc000, 0xffff, MRA_ROM },	/* Super Bagman only */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x67ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -206,31 +207,27 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
 									/* here only to initialize the pointer, */
 									/* writes are handled by colorram_w */
-	{ 0xa800, 0xa805, bagman_ls259_w },	/* TMS5110 driving state machine */
+	{ 0xa800, 0xa805, bagman_ls259_w }, /* TMS5110 driving state machine */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
-	{ 0xa004, 0xa004, coin_counter_w },
+	{ 0xa004, 0xa004, bagman_coin_counter_w },
 
 #if 0
 	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
 	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
 	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
 #endif
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress pickin_readmem[] =
-{
+static MEMORY_READ_START( pickin_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x7000, 0x77ff, MRA_RAM },
 	{ 0x8800, 0x8bff, MRA_RAM },
 	{ 0x9800, 0x9bff, MRA_RAM },
 	{ 0xa800, 0xa800, input_port_2_r },
 	{ 0xb800, 0xb800, MRA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pickin_writemem[] =
-{
+static MEMORY_WRITE_START( pickin_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7000, 0x77ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
@@ -242,28 +239,23 @@ static struct MemoryWriteAddress pickin_writemem[] =
 									/* here only to initialize the pointer, */
 									/* writes are handled by colorram_w */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
-	{ 0xa004, 0xa004, coin_counter_w },
+	{ 0xa004, 0xa004, bagman_coin_counter_w },
 #if 0
 	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
 	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
 	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
 #endif
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x0c, 0x0c, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x08, 0x08, AY8910_control_port_0_w },
 	{ 0x09, 0x09, AY8910_write_port_0_w },
 	//{ 0x56, 0x56, IOWP_NOP },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
@@ -290,27 +282,27 @@ INPUT_PORTS_START( bagman )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(	0x03, "2" )
+	PORT_DIPSETTING(	0x02, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
-	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPSETTING(	0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(	0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, "Easy" )
-	PORT_DIPSETTING(    0x10, "Medium" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(	0x18, "Easy" )
+	PORT_DIPSETTING(	0x10, "Medium" )
+	PORT_DIPSETTING(	0x08, "Hard" )
+	PORT_DIPSETTING(	0x00, "Hardest" )
 	PORT_DIPNAME( 0x20, 0x20, "Language" )
-	PORT_DIPSETTING(    0x20, "English" )
-	PORT_DIPSETTING(    0x00, "French" )
+	PORT_DIPSETTING(	0x20, "English" )
+	PORT_DIPSETTING(	0x00, "French" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x40, "30000" )
-	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPSETTING(	0x40, "30000" )
+	PORT_DIPSETTING(	0x00, "40000" )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 /* EXACTLY the same as bagman, the only difference is that
@@ -322,7 +314,7 @@ INPUT_PORTS_START( bagmans )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
@@ -332,33 +324,33 @@ INPUT_PORTS_START( bagmans )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(	0x03, "2" )
+	PORT_DIPSETTING(	0x02, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
-	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPSETTING(	0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(	0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, "Easy" )
-	PORT_DIPSETTING(    0x10, "Medium" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(	0x18, "Easy" )
+	PORT_DIPSETTING(	0x10, "Medium" )
+	PORT_DIPSETTING(	0x08, "Hard" )
+	PORT_DIPSETTING(	0x00, "Hardest" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR ( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR ( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR ( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x40, "30000" )
-	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPSETTING(	0x40, "30000" )
+	PORT_DIPSETTING(	0x00, "40000" )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -380,7 +372,7 @@ INPUT_PORTS_START( sbagman )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )	/* double-function button, start and shoot */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL ) /* double-function button, start and shoot */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -389,27 +381,27 @@ INPUT_PORTS_START( sbagman )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(	0x03, "2" )
+	PORT_DIPSETTING(	0x02, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
-	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPSETTING(	0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(	0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, "Easy" )
-	PORT_DIPSETTING(    0x10, "Medium" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(	0x18, "Easy" )
+	PORT_DIPSETTING(	0x10, "Medium" )
+	PORT_DIPSETTING(	0x08, "Hard" )
+	PORT_DIPSETTING(	0x00, "Hardest" )
 	PORT_DIPNAME( 0x20, 0x20, "Language" )
-	PORT_DIPSETTING(    0x20, "English" )
-	PORT_DIPSETTING(    0x00, "French" )
+	PORT_DIPSETTING(	0x20, "English" )
+	PORT_DIPSETTING(	0x00, "French" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x40, "30000" )
-	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPSETTING(	0x40, "30000" )
+	PORT_DIPSETTING(	0x00, "40000" )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pickin )
@@ -435,28 +427,28 @@ INPUT_PORTS_START( pickin )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
-	PORT_DIPSETTING(    0x01, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPSETTING(	0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(	0x01, "1C/1C 1C/2C 1C/6C 1C/14C" )
 	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x06, "2" )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(	0x06, "2" )
+	PORT_DIPSETTING(	0x04, "3" )
+	PORT_DIPSETTING(	0x02, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Language" )
-	PORT_DIPSETTING(    0x40, "English" )
-	PORT_DIPSETTING(    0x00, "French" )
+	PORT_DIPSETTING(	0x40, "English" )
+	PORT_DIPSETTING(	0x00, "French" )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -466,10 +458,10 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0, 512*8*8 }, /* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8 /* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
 {
@@ -488,16 +480,16 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,      0, 16 },	/* char set #1 */
-	{ REGION_GFX1, 0, &spritelayout,    0, 16 },	/* sprites */
-	{ REGION_GFX2, 0, &charlayout,      0, 16 },	/* char set #2 */
+	{ REGION_GFX1, 0, &charlayout,		0, 16 },	/* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,	0, 16 },	/* sprites */
+	{ REGION_GFX2, 0, &charlayout,		0, 16 },	/* char set #2 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo pickin_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,      0, 16 },	/* char set #1 */
-	{ REGION_GFX1, 0, &spritelayout,    0, 16 },	/* sprites */
+	{ REGION_GFX1, 0, &charlayout,		0, 16 },	/* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,	0, 16 },	/* sprites */
 	/* no gfx2 */
 	{ -1 } /* end of array */
 };
@@ -630,7 +622,7 @@ ROM_START( bagman )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -657,7 +649,7 @@ ROM_START( bagnard )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -684,7 +676,7 @@ ROM_START( bagmans )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -711,7 +703,7 @@ ROM_START( bagmans2 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -725,15 +717,15 @@ ROM_START( sbagman )
 	ROM_LOAD( "9.9m",         0x4000, 0x1000, 0x601f34ba )
 	ROM_LOAD( "10.9n",        0x5000, 0x1000, 0x5f750918 )
 	ROM_LOAD( "13.8d",        0xc000, 0x0e00, 0x944a4453 )
-	ROM_CONTINUE(             0xfe00, 0x0200 )
+	ROM_CONTINUE(			  0xfe00, 0x0200 )
 	ROM_LOAD( "14.8f",        0xd000, 0x0400, 0x83b10139 )
-	ROM_CONTINUE(             0xe400, 0x0200 )
-	ROM_CONTINUE(             0xd600, 0x0a00 )
+	ROM_CONTINUE(			  0xe400, 0x0200 )
+	ROM_CONTINUE(			  0xd600, 0x0a00 )
 	ROM_LOAD( "15.8j",        0xe000, 0x0400, 0xfe924879 )
-	ROM_CONTINUE(             0xd400, 0x0200 )
-	ROM_CONTINUE(             0xe600, 0x0a00 )
+	ROM_CONTINUE(			  0xd400, 0x0200 )
+	ROM_CONTINUE(			  0xe600, 0x0a00 )
 	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
-	ROM_CONTINUE(             0xce00, 0x0200 )
+	ROM_CONTINUE(			  0xce00, 0x0200 )
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
@@ -748,7 +740,7 @@ ROM_START( sbagman )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -762,15 +754,15 @@ ROM_START( sbagmans )
 	ROM_LOAD( "sbag_9m.bin",  0x4000, 0x1000, 0xb21e246e )
 	ROM_LOAD( "10.9n",        0x5000, 0x1000, 0x5f750918 )
 	ROM_LOAD( "13.8d",        0xc000, 0x0e00, 0x944a4453 )
-	ROM_CONTINUE(             0xfe00, 0x0200 )
+	ROM_CONTINUE(			  0xfe00, 0x0200 )
 	ROM_LOAD( "sbag_f8.bin",  0xd000, 0x0400, 0x0f3e6de4 )
-	ROM_CONTINUE(             0xe400, 0x0200 )
-	ROM_CONTINUE(             0xd600, 0x0a00 )
+	ROM_CONTINUE(			  0xe400, 0x0200 )
+	ROM_CONTINUE(			  0xd600, 0x0a00 )
 	ROM_LOAD( "15.8j",        0xe000, 0x0400, 0xfe924879 )
-	ROM_CONTINUE(             0xd400, 0x0200 )
-	ROM_CONTINUE(             0xe600, 0x0a00 )
+	ROM_CONTINUE(			  0xd400, 0x0200 )
+	ROM_CONTINUE(			  0xe600, 0x0a00 )
 	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
-	ROM_CONTINUE(             0xce00, 0x0200 )
+	ROM_CONTINUE(			  0xce00, 0x0200 )
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
@@ -785,7 +777,7 @@ ROM_START( sbagmans )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -812,10 +804,11 @@ ROM_END
 
 
 
-GAME(1982, bagman,   0,       bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman" )
+GAME(1982, bagman,	 0, 	  bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman" )
 GAME(1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard" )
 GAME(1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
 GAME(1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
-GAME(1984, sbagman,  0,       bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman" )
+GAME(1984, sbagman,  0, 	  bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman" )
 GAME(1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
-GAME( 1983, pickin,   0,       pickin, pickin,  0, ROT270, "Valadon Automation", "Pickin'" )
+GAME(1983, pickin,	 0, 	  pickin, pickin,  0, ROT270, "Valadon Automation", "Pickin'" )
+

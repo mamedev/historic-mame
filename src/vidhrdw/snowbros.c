@@ -10,29 +10,12 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *snowbros_spriteram;
-
-size_t snowbros_spriteram_size;
-
-
-/* Put in case screen can be optimised later */
-
-WRITE_HANDLER( snowbros_spriteram_w )
-{
-  	COMBINE_WORD_MEM(&snowbros_spriteram[offset], data);
-}
-
-READ_HANDLER( snowbros_spriteram_r )
-{
-	return READ_WORD(&snowbros_spriteram[offset]);
-}
-
 void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x=0,y=0,offs;
 
 
-	palette_recalc ();
+	palette_recalc();
 	/* no need to check the return code since we redraw everything each frame */
 
 
@@ -62,11 +45,11 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
   	fillbitmap(bitmap,Machine->gfx[0]->colortable[0],&Machine->visible_area);
 
-	for (offs = 0;offs < 0x1e00; offs += 16)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		int sx = READ_WORD(&snowbros_spriteram[8+offs]) & 0xff;
-		int sy = READ_WORD(&snowbros_spriteram[0x0a+offs]) & 0xff;
-		int tilecolour = READ_WORD(&snowbros_spriteram[6+offs]);
+		int sx = spriteram16[offs+4] & 0xff;
+		int sy = spriteram16[offs+5] & 0xff;
+		int tilecolour = spriteram16[offs+3];
 
 		if (tilecolour & 1) sx = -1 - (sx ^ 0xff);
 
@@ -88,8 +71,8 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if ((x>-16) && (y>0) && (x<256) && (y<240))
 		{
-			int attr = READ_WORD(&snowbros_spriteram[0x0e + offs]);
-			int tile = ((attr & 0x0f) << 8) + (READ_WORD(&snowbros_spriteram[0x0c+offs]) & 0xff);
+			int attr = spriteram16[offs+7];
+			int tile = ((attr & 0x0f) << 8) + (spriteram16[offs+6] & 0xff);
 
 			drawgfx(bitmap,Machine->gfx[0],
 					tile,
@@ -105,23 +88,22 @@ void wintbob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	palette_recalc ();
+	palette_recalc();
 
 	fillbitmap(bitmap,Machine->gfx[0]->colortable[0],&Machine->visible_area);
 
-	for (offs = 0;offs < 0x1e00; offs += 16)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		int xpos  = (READ_WORD(&snowbros_spriteram[0x00+offs]) & 0xff);
-		int ypos  = (READ_WORD(&snowbros_spriteram[0x08+offs]) & 0xff);
-/*		int unk1  = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x01);*/  /* Unknown .. Set for the Bottom Left part of Sprites */
-		int disbl = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x02);
-/*		int unk2  = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x04);*/  /* Unknown .. Set for most things */
-		int wrapr = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x08);
-		int colr  = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0xf0) >> 4;
-		int tilen = (READ_WORD(&snowbros_spriteram[0x04+offs])  << 8 )+
-					(READ_WORD(&snowbros_spriteram[0x06+offs]) & 0xFF);
-		int flipy = (READ_WORD(&snowbros_spriteram[0x04+offs]) & 0x80);
-		int flipx = (READ_WORD(&snowbros_spriteram[0x04+offs]) & 0x40);
+		int xpos  = spriteram16[offs] & 0xff;
+		int ypos  = spriteram16[offs+4] & 0xff;
+/*		int unk1  = spriteram16[offs+1] & 0x01;*/  /* Unknown .. Set for the Bottom Left part of Sprites */
+		int disbl = spriteram16[offs+1] & 0x02;
+/*		int unk2  = spriteram16[offs+1] & 0x04;*/  /* Unknown .. Set for most things */
+		int wrapr = spriteram16[offs+1] & 0x08;
+		int colr  = (spriteram16[offs+1] & 0xf0) >> 4;
+		int tilen = (spriteram16[offs+2] << 8) + (spriteram16[offs+3] & 0xff);
+		int flipy = spriteram16[offs+2] & 0x80;
+		int flipx = spriteram16[offs+2] & 0x40;
 
 		if (wrapr == 8) xpos -= 256;
 

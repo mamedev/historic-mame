@@ -118,28 +118,25 @@ void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	/* set back pen for the zoom layer */
 	palette_used_colors[(zoom_colorbase + 0) * 128] = PALETTE_COLOR_TRANSPARENT;
 	palette_used_colors[(zoom_colorbase + 1) * 128] = PALETTE_COLOR_TRANSPARENT;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,2,1<<16);
+	K052109_tilemap_draw(bitmap,2,0,1);
 	if (ajax_priority)
 	{
 		/* basic layer order is B, zoom, A, F */
 		K051316_zoom_draw_0(bitmap,4);
-		K052109_tilemap_draw(bitmap,1,2<<16);
+		K052109_tilemap_draw(bitmap,1,0,2);
 	}
 	else
 	{
 		/* basic layer order is B, A, zoom, F */
-		K052109_tilemap_draw(bitmap,1,2<<16);
+		K052109_tilemap_draw(bitmap,1,0,2);
 		K051316_zoom_draw_0(bitmap,4);
 	}
-	K052109_tilemap_draw(bitmap,0,8<<16);
+	K052109_tilemap_draw(bitmap,0,0,8);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }

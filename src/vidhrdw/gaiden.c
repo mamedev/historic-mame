@@ -7,9 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *gaiden_videoram;
-unsigned char *gaiden_videoram2;
-unsigned char *gaiden_videoram3;
+data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 
 static struct tilemap *text_layer,*foreground,*background;
 
@@ -22,22 +20,22 @@ static struct tilemap *text_layer,*foreground,*background;
 
 static void get_bg_tile_info(int tile_index)
 {
-	UINT16 *videoram1 = (UINT16 *)&gaiden_videoram3[0x1000];
-	UINT16 *videoram2 = (UINT16 *)gaiden_videoram3;
+	UINT16 *videoram1 = &gaiden_videoram3[0x0800];
+	UINT16 *videoram2 = gaiden_videoram3;
 	SET_TILE_INFO(1,videoram1[tile_index] & 0xfff,(videoram2[tile_index] & 0xf0) >> 4)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
-	UINT16 *videoram1 = (UINT16 *)&gaiden_videoram2[0x1000];
-	UINT16 *videoram2 = (UINT16 *)gaiden_videoram2;
+	UINT16 *videoram1 = &gaiden_videoram2[0x0800];
+	UINT16 *videoram2 = gaiden_videoram2;
 	SET_TILE_INFO(2,videoram1[tile_index] & 0xfff,(videoram2[tile_index] & 0xf0) >> 4)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
-	UINT16 *videoram1 = (UINT16 *)&gaiden_videoram[0x0800];
-	UINT16 *videoram2 = (UINT16 *)gaiden_videoram;
+	UINT16 *videoram1 = &gaiden_videoram[0x0400];
+	UINT16 *videoram2 = gaiden_videoram;
 	SET_TILE_INFO(0,videoram1[tile_index] & 0x7ff,(videoram2[tile_index] & 0xf0) >> 4)
 }
 
@@ -57,10 +55,9 @@ int gaiden_vh_start(void)
 	if (!text_layer || !foreground || !background)
 		return 1;
 
-	background->transparent_pen = 0;
-	foreground->transparent_pen = 0;
-	text_layer->transparent_pen = 0;
-	palette_transparent_color = 0x200; /* background color */
+	tilemap_set_transparent_pen(background,0);
+	tilemap_set_transparent_pen(foreground,0);
+	tilemap_set_transparent_pen(text_layer,0);
 	return 0;
 }
 
@@ -72,100 +69,80 @@ int gaiden_vh_start(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( gaiden_txscrollx_w )
+WRITE16_HANDLER( gaiden_txscrollx_w )
 {
-	static UINT16 oldword;
-	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrollx(text_layer,0,oldword);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrollx(text_layer,0,scroll);
 }
 
-WRITE_HANDLER( gaiden_txscrolly_w )
+WRITE16_HANDLER( gaiden_txscrolly_w )
 {
-	static UINT16 oldword;
-	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrolly(text_layer,0,oldword);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrolly(text_layer,0,scroll);
 }
 
-WRITE_HANDLER( gaiden_fgscrollx_w )
+WRITE16_HANDLER( gaiden_fgscrollx_w )
 {
-	static UINT16 oldword;
-	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrollx(foreground,0,oldword);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrollx(foreground,0,scroll);
 }
 
-WRITE_HANDLER( gaiden_fgscrolly_w )
+WRITE16_HANDLER( gaiden_fgscrolly_w )
 {
-	static UINT16 oldword;
-	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrolly(foreground,0,oldword);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrolly(foreground,0,scroll);
 }
 
-WRITE_HANDLER( gaiden_bgscrollx_w )
+WRITE16_HANDLER( gaiden_bgscrollx_w )
 {
-	static UINT16 oldword;
-	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrollx(background,0,oldword);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrollx(background,0,scroll);
 }
 
-WRITE_HANDLER( gaiden_bgscrolly_w )
+WRITE16_HANDLER( gaiden_bgscrolly_w )
 {
-	static UINT16 oldword;
-	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrolly(background,0,oldword);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrolly(background,0,scroll);
 }
 
-WRITE_HANDLER( gaiden_videoram3_w )
+WRITE16_HANDLER( gaiden_videoram3_w )
 {
-	int oldword = READ_WORD(&gaiden_videoram3[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		int tile_index = (offset/2)&0x7ff;
-		WRITE_WORD(&gaiden_videoram3[offset],newword);
-		tilemap_mark_tile_dirty(background,tile_index);
-	}
+	int oldword = gaiden_videoram3[offset];
+	COMBINE_DATA(&gaiden_videoram3[offset]);
+	if (oldword != gaiden_videoram3[offset])
+		tilemap_mark_tile_dirty(background,offset&0x7ff);
 }
 
-READ_HANDLER( gaiden_videoram3_r )
+READ16_HANDLER( gaiden_videoram3_r )
 {
-   return READ_WORD(&gaiden_videoram3[offset]);
+   return gaiden_videoram3[offset];
 }
 
-WRITE_HANDLER( gaiden_videoram2_w )
+WRITE16_HANDLER( gaiden_videoram2_w )
 {
-	int oldword = READ_WORD(&gaiden_videoram2[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		int tile_index = (offset/2)&0x7ff;
-		WRITE_WORD(&gaiden_videoram2[offset],newword);
-		tilemap_mark_tile_dirty(foreground,tile_index);
-	}
+	int oldword = gaiden_videoram2[offset];
+	COMBINE_DATA(&gaiden_videoram2[offset]);
+	if (oldword != gaiden_videoram2[offset])
+		tilemap_mark_tile_dirty(foreground,offset&0x7ff);
 }
 
-READ_HANDLER( gaiden_videoram2_r )
+READ16_HANDLER( gaiden_videoram2_r )
 {
-   return READ_WORD(&gaiden_videoram2[offset]);
+   return gaiden_videoram2[offset];
 }
 
-WRITE_HANDLER( gaiden_videoram_w )
+WRITE16_HANDLER( gaiden_videoram_w )
 {
-	int oldword = READ_WORD(&gaiden_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		int tile_index = (offset/2)&0x3ff;
-		WRITE_WORD(&gaiden_videoram[offset],newword);
-		tilemap_mark_tile_dirty(text_layer,tile_index);
-	}
-}
-
-READ_HANDLER( gaiden_videoram_r )
-{
-	return READ_WORD(&gaiden_videoram[offset]);
+	int oldword = gaiden_videoram[offset];
+	COMBINE_DATA(&gaiden_videoram[offset]);
+	if (oldword != gaiden_videoram[offset])
+		tilemap_mark_tile_dirty(text_layer,offset&0x3ff);
 }
 
 
@@ -197,7 +174,7 @@ READ_HANDLER( gaiden_videoram_r )
 
 static void mark_sprite_colors(void)
 {
-	const UINT16 *source = (UINT16 *)spriteram;
+	const UINT16 *source = spriteram16;
 	const struct GfxElement *gfx = Machine->gfx[3];
 	int i;
 	for (i = 0;i < NUM_SPRITES;i++)
@@ -236,7 +213,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
-	const UINT16 *source = (NUM_SPRITES-1)*8 + (UINT16 *)spriteram;
+	const UINT16 *source = (NUM_SPRITES-1)*8 + spriteram16;
 	int count = NUM_SPRITES;
 
 	/* draw all sprites from front to back */
@@ -299,15 +276,13 @@ void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprite_colors();
 	palette_used_colors[0x200] = PALETTE_COLOR_USED;
 
-	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0x200],&Machine->visible_area);
-	tilemap_draw(bitmap,background,1<<16);
-	tilemap_draw(bitmap,foreground,2<<16);
-	tilemap_draw(bitmap,text_layer,4<<16);
+	tilemap_draw(bitmap,background,0,1);
+	tilemap_draw(bitmap,foreground,0,2);
+	tilemap_draw(bitmap,text_layer,0,4);
 
 	draw_sprites( bitmap );
 }

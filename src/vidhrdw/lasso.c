@@ -208,10 +208,8 @@ static void draw_lasso( struct osd_bitmap *bitmap )
 void lasso_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_update(ALL_TILEMAPS);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,background,0);
+	palette_recalc();
+	tilemap_draw(bitmap,background,0,0);
 	draw_lasso(bitmap);
 	draw_sprites(bitmap);
 }

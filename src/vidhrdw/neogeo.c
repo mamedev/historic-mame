@@ -4,7 +4,7 @@
 
   Functions to emulate the video hardware of the machine.
 
-Important!  There are two types of NeoGeo romdump - MVS & MGD2.  They are both
+Important!	There are two types of NeoGeo romdump - MVS & MGD2.  They are both
 converted to a standard format in the vh_start routines.
 
 
@@ -59,15 +59,20 @@ Notes:
 
 //#define NEO_DEBUG
 
-static unsigned char *vidram;
-static unsigned char *neogeo_paletteram;	   /* pointer to 1 of the 2 palette banks */
-static unsigned char *pal_bank1;		/* 0x100*16 2 byte palette entries */
-static unsigned char *pal_bank2;		/* 0x100*16 2 byte palette entries */
-static int palno,modulo,where,high_tile,vhigh_tile,vvhigh_tile;
+static data16_t *neogeo_vidram16;
+static data16_t *neogeo_paletteram16;	/* pointer to 1 of the 2 palette banks */
+static data16_t *neogeo_palettebank[2]; /* 0x100*16 2 byte palette entries */
+static int neogeo_palette_index;
+static data16_t neogeo_vidram16_modulo;
+static data16_t neogeo_vidram16_offset;
+static int high_tile;
+static int vhigh_tile;
+static int vvhigh_tile;
 int no_of_tiles;
-static int palette_swap_pending,fix_bank;
+static int palette_swap_pending;
+static int fix_bank;
 
-extern unsigned char *neogeo_ram;
+extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
 
@@ -93,43 +98,58 @@ int screen_yoffs = 0;
 
 void neogeo_vh_stop(void)
 {
-   	if (pal_bank1) free (pal_bank1);
-	if (pal_bank2) free (pal_bank2);
-	if (vidram) free (vidram);
-	if (neogeo_ram) free (neogeo_ram);
+	if (neogeo_palettebank[0])
+		free (neogeo_palettebank[0]);
+	neogeo_palettebank[0] = NULL;
 
-	pal_bank1=pal_bank2=vidram=neogeo_ram=0;
+	if (neogeo_palettebank[1])
+		free (neogeo_palettebank[1]);
+	neogeo_palettebank[1] = NULL;
+
+	if (neogeo_vidram16)
+		free (neogeo_vidram16);
+	neogeo_vidram16 = NULL;
+
+	if (neogeo_ram16)
+		free (neogeo_ram16);
+	neogeo_ram16 = NULL;
 }
 
 static int common_vh_start(void)
 {
-	pal_bank1=pal_bank2=vidram=0;
+	neogeo_palettebank[0] = NULL;
+	neogeo_palettebank[1] = NULL;
+	neogeo_vidram16 = NULL;
 
-	pal_bank1 = malloc(0x2000);
-	if (!pal_bank1) {
+	neogeo_palettebank[0] = malloc(0x2000);
+	if (!neogeo_palettebank[0])
+	{
 		neogeo_vh_stop();
 		return 1;
 	}
 
-	pal_bank2 = malloc(0x2000);
-	if (!pal_bank2) {
+	neogeo_palettebank[1] = malloc(0x2000);
+	if (!neogeo_palettebank[1])
+	{
 		neogeo_vh_stop();
 		return 1;
 	}
 
-	vidram = malloc(0x20000); /* 0x20000 bytes even though only 0x10c00 is used */
-	if (!vidram) {
+	/* 0x20000 bytes even though only 0x10c00 is used */
+	neogeo_vidram16 = malloc(0x20000);
+	if (!neogeo_vidram16)
+	{
 		neogeo_vh_stop();
 		return 1;
 	}
-	memset(vidram,0,0x20000);
+	memset(neogeo_vidram16,0,0x20000);
 
-	neogeo_paletteram = pal_bank1;
-	palno=0;
-	modulo=1;
-	where=0;
-	fix_bank=0;
-	palette_swap_pending=0;
+	neogeo_paletteram16 = neogeo_palettebank[0];
+	neogeo_palette_index = 0;
+	neogeo_vidram16_modulo = 1;
+	neogeo_vidram16_offset = 0;
+	fix_bank = 0;
+	palette_swap_pending = 0;
 
 	return 0;
 }
@@ -157,7 +177,7 @@ static void decodetile(int tileno)
 			pen  = ((swap[64 + 4*y + 3] >> x) & 1) << 3;
 			pen |= ((swap[64 + 4*y + 1] >> x) & 1) << 2;
 			pen |= ((swap[64 + 4*y + 2] >> x) & 1) << 1;
-			pen |=  (swap[64 + 4*y    ] >> x) & 1;
+			pen |=	(swap[64 + 4*y	  ] >> x) & 1;
 			dw |= pen << 4*(7-x);
 			Machine->gfx[2]->pen_usage[tileno] |= (1 << pen);
 		}
@@ -169,7 +189,7 @@ static void decodetile(int tileno)
 			pen  = ((swap[4*y + 3] >> x) & 1) << 3;
 			pen |= ((swap[4*y + 1] >> x) & 1) << 2;
 			pen |= ((swap[4*y + 2] >> x) & 1) << 1;
-			pen |=  (swap[4*y    ] >> x) & 1;
+			pen |=	(swap[4*y	 ] >> x) & 1;
 			dw |= pen << 4*(7-x);
 			Machine->gfx[2]->pen_usage[tileno] |= (1 << pen);
 		}
@@ -200,60 +220,64 @@ int neogeo_mvs_vh_start(void)
 
 static void swap_palettes(void)
 {
-	int i,newword;
+	int i;
 
-	for (i=0; i<0x2000; i+=2)
+	for (i = 0; i < 0x2000 >> 1; i++)
 	{
+		data16_t newword = neogeo_paletteram16[i];
 		int r,g,b;
 
-
-	   	newword = READ_WORD(&neogeo_paletteram[i]);
-
 		r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
-		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
-		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01) ;
+		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
+		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
 
 		r = (r << 3) | (r >> 2);
 		g = (g << 3) | (g >> 2);
 		b = (b << 3) | (b >> 2);
 
-		palette_change_color(i / 2,r,g,b);
+		palette_change_color(i, r, g, b);
 	}
 
-	palette_swap_pending=0;
+	palette_swap_pending = 0;
 }
 
-WRITE_HANDLER( neogeo_setpalbank0_w )
+static void neogeo_setpalbank(int n)
 {
-	if (palno != 0) {
-		palno = 0;
-		neogeo_paletteram = pal_bank1;
-		palette_swap_pending=1;
-	}
-}
-
-WRITE_HANDLER( neogeo_setpalbank1_w )
-{
-	if (palno != 1) {
-		palno = 1;
-		neogeo_paletteram = pal_bank2;
-		palette_swap_pending=1;
+	if (neogeo_palette_index != n)
+	{
+		neogeo_palette_index = n;
+		neogeo_paletteram16 = neogeo_palettebank[n];
+		palette_swap_pending = 1;
 	}
 }
 
-READ_HANDLER( neogeo_paletteram_r )
+WRITE16_HANDLER( neogeo_setpalbank0_16_w )
 {
-	return READ_WORD(&neogeo_paletteram[offset]);
+	neogeo_setpalbank(0);
 }
 
-WRITE_HANDLER( neogeo_paletteram_w )
+WRITE16_HANDLER( neogeo_setpalbank1_16_w )
 {
-	int oldword = READ_WORD (&neogeo_paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	neogeo_setpalbank(1);
+}
+
+READ16_HANDLER( neogeo_paletteram16_r )
+{
+	return neogeo_paletteram16[offset];
+}
+
+WRITE16_HANDLER( neogeo_paletteram16_w )
+{
+	data16_t oldword, newword;
 	int r,g,b;
 
+	oldword = newword = neogeo_paletteram16[offset];
+	COMBINE_DATA(&newword);
 
-	WRITE_WORD (&neogeo_paletteram[offset], newword);
+	if (oldword == newword)
+		return;
+
+	neogeo_paletteram16[offset] = newword;
 
 	r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
 	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
@@ -263,15 +287,15 @@ WRITE_HANDLER( neogeo_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_change_color(offset, r, g, b);
 }
 
 /******************************************************************************/
 
-static const unsigned char *neogeo_palette(const struct rectangle *clip)
+static const UINT8 *neogeo_palette(const struct rectangle *clip)
 {
 	int color,code,pal_base,y,my=0,count,offs,i;
- 	int colmask[256];
+	int colmask[256];
 	unsigned int *pen_usage; /* Save some struct derefs */
 
 	int sx =0,sy =0,oy =0,zx = 1, rzy = 1;
@@ -287,15 +311,17 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 	palette_init_used_colors();
 
 	/* character foreground */
-	pen_usage= Machine->gfx[fix_bank]->pen_usage;
+	pen_usage = Machine->gfx[fix_bank]->pen_usage;
 	pal_base = Machine->drv->gfxdecodeinfo[fix_bank].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs=0xe000;offs<0xea00;offs+=2) {
-		code = READ_WORD( &vidram[offs] );
+	for (color = 0; color < 16; color++)
+		colmask[color] = 0;
+	for (offs = 0xe000 >> 1; offs < 0xea00 >> 1; offs++)
+	{
+		code = neogeo_vidram16[offs];
 		color = code >> 12;
 		colmask[color] |= pen_usage[code&0xfff];
 	}
-	for (color = 0;color < 16;color++)
+	for (color = 0; color < 16; color++)
 	{
 		for (i = 1;i < 16;i++)
 		{
@@ -307,14 +333,17 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 	/* Tiles */
 	pen_usage= Machine->gfx[2]->pen_usage;
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (count=0;count<0x300;count+=2) {
-		t3 = READ_WORD( &vidram[0x10000 + count] );
-		t1 = READ_WORD( &vidram[0x10400 + count] );
-		t2 = READ_WORD( &vidram[0x10800 + count] );
+	for (color = 0; color < 256; color++)
+		colmask[color] = 0;
+	for (count = 0; count < 0x300 >> 1; count++)
+	{
+		t3 = neogeo_vidram16[(0x10000 >> 1) + count];
+		t1 = neogeo_vidram16[(0x10400 >> 1) + count];
+		t2 = neogeo_vidram16[(0x10800 >> 1) + count];
 
 		/* If this bit is set this new column is placed next to last one */
-		if (t1 & 0x40) {
+		if (t1 & 0x40)
+		{
 			sx += rzx;
 			if ( sx >= 0x1F0 )
 				sx -= 0x200;
@@ -322,7 +351,9 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			/* Get new zoom for this column */
 			zx = (t3 >> 8) & 0x0f;
 			sy = oy;
-		} else {	/* nope it is a new block */
+		}
+		else	/* nope it is a new block */
+		{
 			/* Sprite scaling */
 			zx = (t3 >> 8) & 0x0f;
 			rzy = t3 & 0xff;
@@ -357,41 +388,44 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			}
 			if (my > 0x20) my=0x20;
 
-			ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
+			ddax=0; /* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
 
 		/* No point doing anything if tile strip is 0 */
 		if (my==0) continue;
 
 		/* Process x zoom */
-		if(zx!=15) {
-			rzx=0;
-			for(i=0;i<16;i++) {
-				ddax-=zx+1;
-				if(ddax<=0) {
-					ddax+=15+1;
+		if (zx != 15)
+		{
+			rzx = 0;
+			for (i = 0; i < 16; i++)
+			{
+				ddax -= zx+1;
+				if (ddax <= 0)
+				{
+					ddax += 15+1;
 					rzx++;
 				}
 			}
 		}
 		else rzx=16;
 
-		if(sx>=320) continue;
+		if (sx >= 320)
+			continue;
 
 		/* Setup y zoom */
-		if(rzy==255)
+		if (rzy == 255)
 			yskip=16;
 		else
-			dday=0;	/* =256; NS990105 mslug fix */
+			dday=0; 	/* =256; NS990105 mslug fix */
 
-		offs = count<<6;
+		offs = count << 6;
 
 		/* my holds the number of tiles in each vertical multisprite block */
-		for (y=0; y < my ;y++) {
-			tileno  = READ_WORD(&vidram[offs]);
-			offs+=2;
-			tileatr = READ_WORD(&vidram[offs]);
-			offs+=2;
+		for (y=0; y < my ;y++)
+		{
+			tileno	= neogeo_vidram16[offs++];
+			tileatr = neogeo_vidram16[offs++];
 
 			if (high_tile && tileatr&0x10) tileno+=0x10000;
 			if (vhigh_tile && tileatr&0x20) tileno+=0x20000;
@@ -410,12 +444,15 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			}
 			else if (sy > 0x110) sy -= 0x200;	/* NS990105 mslug2 fix */
 
-			if(rzy!=255) {
-				yskip=0;
-				for(i=0;i<16;i++) {
-					dday-=rzy+1;
-					if(dday<=0) {
-						dday+=256;
+			if (rzy != 255)
+			{
+				yskip = 0;
+				for (i = 0; i < 16; i++)
+				{
+					dday -= rzy+1;
+					if (dday <= 0)
+					{
+						dday += 256;
 						yskip++;
 					}
 				}
@@ -423,9 +460,9 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 
 			if (sy+yskip-1 >= clip->min_y && sy <= clip->max_y)
 			{
-				tileatr=tileatr>>8;
+				tileatr = tileatr >> 8;
 				tileno %= no_of_tiles;
-				if (pen_usage[tileno] == 0)	/* decode tile if it hasn't been yet */
+				if (pen_usage[tileno] == 0) /* decode tile if it hasn't been yet */
 					decodetile(tileno);
 				colmask[tileatr] |= pen_usage[tileno];
 			}
@@ -435,7 +472,7 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 		}  /* for y */
 	}  /* for count */
 
-	for (color = 0;color < 256;color++)
+	for (color = 0; color < 256; color++)
 	{
 		for (i = 1;i < 16;i++)
 		{
@@ -451,54 +488,55 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 
 /******************************************************************************/
 
-WRITE_HANDLER( vidram_offset_w )
+WRITE16_HANDLER( neogeo_vidram16_offset_w )
 {
-	where = data;
+	COMBINE_DATA(&neogeo_vidram16_offset);
 }
 
-READ_HANDLER( vidram_data_r )
+READ16_HANDLER( neogeo_vidram16_data_r )
 {
-	return (READ_WORD(&vidram[where << 1]));
+	return neogeo_vidram16[neogeo_vidram16_offset];
 }
 
-WRITE_HANDLER( vidram_data_w )
+WRITE16_HANDLER( neogeo_vidram16_data_w )
 {
-	WRITE_WORD(&vidram[where << 1],data);
-	where = (where + modulo) & 0xffff;
+	COMBINE_DATA(&neogeo_vidram16[neogeo_vidram16_offset]);
+	neogeo_vidram16_offset += neogeo_vidram16_modulo;
+	neogeo_vidram16_offset &= 0xffff;
 }
 
 /* Modulo can become negative , Puzzle Bobble Super Sidekicks and a lot */
 /* of other games use this */
-WRITE_HANDLER( vidram_modulo_w )
+WRITE16_HANDLER( neogeo_vidram16_modulo_w )
 {
-	modulo = data;
+	COMBINE_DATA(&neogeo_vidram16_modulo);
 }
 
-READ_HANDLER( vidram_modulo_r )
+READ16_HANDLER( neogeo_vidram16_modulo_r )
 {
-	return modulo;
+	return neogeo_vidram16_modulo;
 }
 
 
 /* Two routines to enable videoram to be read in debugger */
-READ_HANDLER( mish_vid_r )
+READ16_HANDLER( mish_vid16_r )
 {
-	return READ_WORD(&vidram[offset]);
+	return neogeo_vidram16[offset];
 }
 
-WRITE_HANDLER( mish_vid_w )
+WRITE16_HANDLER( mish_vid16_w )
 {
-	COMBINE_WORD_MEM(&vidram[offset],data);
+	COMBINE_DATA(&neogeo_vidram16[offset]);
 }
 
-WRITE_HANDLER( neo_board_fix_w )
+WRITE16_HANDLER( neo_board_fix_16_w )
 {
-	fix_bank=1;
+	fix_bank = 1;
 }
 
-WRITE_HANDLER( neo_game_fix_w )
+WRITE16_HANDLER( neo_game_fix_16_w )
 {
-	fix_bank=0;
+	fix_bank = 0;
 }
 
 /******************************************************************************/
@@ -508,7 +546,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
-	int /*ox,*/oy,ey,y,dy;
+	int oy,ey,y,dy;
 	unsigned char *bm;
 	int col;
 	int l; /* Line skipping counter */
@@ -522,14 +560,14 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 
 	/* Mish/AJP - Most clipping is done in main loop */
 	oy = sy;
-  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
+	ey = sy + zy -1;	/* Clip for size of zoomed object */
 
 	if (sy < clip->min_y) sy = clip->min_y;
 	if (ey >= clip->max_y) ey = clip->max_y;
 	if (sx <= -16) return;
 
 	/* Safety feature */
-	code=code%no_of_tiles;
+	code %= no_of_tiles;
 
 	if (gfx->pen_usage[code] == 0)	/* decode tile if it hasn't been yet */
 		decodetile(code);
@@ -538,7 +576,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 	if ((gfx->pen_usage[code] & ~1) == 0)
 		return;
 
-   	if(zy==16)
+	if (zy==16)
 		 l_y_skip=full_y_skip;
 	else
 		 l_y_skip=dda_y_skip;
@@ -560,11 +598,11 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		if (flipx)	/* X flip */
 		{
 			l=0;
-			if(zx==16)
+			if (zx == 16)
 			{
 				for (y = sy;y <= ey;y++)
 				{
-					bm  = line[y]+sx;
+					bm	= line[y]+sx;
 
 					fspr+=l_y_skip[l]*dy;
 
@@ -595,7 +633,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 			{
 				for (y = sy;y <= ey;y++)
 				{
-					bm  = line[y]+sx;
+					bm	= line[y]+sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[1];
@@ -624,12 +662,12 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		}
 		else		/* normal */
 		{
-	  		l=0;
-			if(zx==16)
+			l=0;
+			if (zx == 16)
 			{
 				for (y = sy ;y <= ey;y++)
 				{
-					bm  = line[y] + sx;
+					bm	= line[y] + sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[0];
@@ -659,7 +697,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 			{
 				for (y = sy ;y <= ey;y++)
 				{
-					bm  = line[y] + sx;
+					bm	= line[y] + sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[0];
@@ -693,7 +731,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
-	int /*ox,*/oy,ey,y,dy;
+	int oy,ey,y,dy;
 	unsigned short *bm;
 	int col;
 	int l; /* Line skipping counter */
@@ -707,14 +745,14 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 
 	/* Mish/AJP - Most clipping is done in main loop */
 	oy = sy;
-  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
+	ey = sy + zy -1;	/* Clip for size of zoomed object */
 
 	if (sy < clip->min_y) sy = clip->min_y;
 	if (ey >= clip->max_y) ey = clip->max_y;
 	if (sx <= -16) return;
 
 	/* Safety feature */
-	code=code%no_of_tiles;
+	code %= no_of_tiles;
 
 	if (gfx->pen_usage[code] == 0)	/* decode tile if it hasn't been yet */
 		decodetile(code);
@@ -723,7 +761,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 	if ((gfx->pen_usage[code] & ~1) == 0)
 		return;
 
-   	if(zy==16)
+	if (zy == 16)
 		 l_y_skip=full_y_skip;
 	else
 		 l_y_skip=dda_y_skip;
@@ -745,11 +783,11 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 		if (flipx)	/* X flip */
 		{
 			l=0;
-			if(zx==16)
+			if (zx == 16)
 			{
 				for (y = sy;y <= ey;y++)
 				{
-					bm  = ((unsigned short *)line[y])+sx;
+					bm	= ((unsigned short *)line[y])+sx;
 
 					fspr+=l_y_skip[l]*dy;
 
@@ -780,7 +818,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 			{
 				for (y = sy;y <= ey;y++)
 				{
-					bm  = ((unsigned short *)line[y])+sx;
+					bm	= ((unsigned short *)line[y])+sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[1];
@@ -809,12 +847,12 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 		}
 		else		/* normal */
 		{
-	  		l=0;
-			if(zx==16)
+			l=0;
+			if (zx == 16)
 			{
 				for (y = sy ;y <= ey;y++)
 				{
-					bm  = ((unsigned short *)line[y]) + sx;
+					bm	= ((unsigned short *)line[y]) + sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[0];
@@ -844,7 +882,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 			{
 				for (y = sy ;y <= ey;y++)
 				{
-					bm  = ((unsigned short *)line[y]) + sx;
+					bm	= ((unsigned short *)line[y]) + sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[0];
@@ -891,7 +929,6 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 
 	#ifdef NEO_DEBUG
 	char buf[80];
-	struct DisplayText dt[2];
 
 	/* debug setting, tile view mode connected to '8' */
 	if (keyboard_pressed(KEYCODE_8))
@@ -926,7 +963,7 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 
 	if (clip->max_y - clip->min_y > 8 ||	/* kludge to speed up raster effects */
 			clip->min_y == Machine->visible_area.min_y)
-    {
+	{
 		/* Palette swap occured after last frame but before this one */
 		if (palette_swap_pending) swap_palettes();
 
@@ -942,13 +979,15 @@ if (!dotiles) { 					/* debug */
 #endif
 
 	/* Draw sprites */
-	for (count=0;count<0x300;count+=2) {
-		t3 = READ_WORD( &vidram[0x10000 + count] );
-		t1 = READ_WORD( &vidram[0x10400 + count] );
-		t2 = READ_WORD( &vidram[0x10800 + count] );
+	for (count = 0; count < 0x300 >> 1; count++)
+	{
+		t3 = neogeo_vidram16[(0x10000 >> 1) + count];
+		t1 = neogeo_vidram16[(0x10400 >> 1) + count];
+		t2 = neogeo_vidram16[(0x10800 >> 1) + count];
 
 		/* If this bit is set this new column is placed next to last one */
-		if (t1 & 0x40) {
+		if (t1 & 0x40)
+		{
 			sx += rzx;
 			if ( sx >= 0x1F0 )
 				sx -= 0x200;
@@ -956,7 +995,9 @@ if (!dotiles) { 					/* debug */
 			/* Get new zoom for this column */
 			zx = (t3 >> 8) & 0x0f;
 			sy = oy;
-		} else {	/* nope it is a new block */
+		}
+		else /* nope it is a new block */
+		{
 			/* Sprite scaling */
 			zx = (t3 >> 8) & 0x0f;
 			rzy = t3 & 0xff;
@@ -991,43 +1032,46 @@ if (!dotiles) { 					/* debug */
 			}
 			if (my > 0x20) my=0x20;
 
-			ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
+			ddax=0; /* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
 
 		/* No point doing anything if tile strip is 0 */
 		if (my==0) continue;
 
 		/* Process x zoom */
-		if(zx!=15) {
-			rzx=0;
-			for(i=0;i<16;i++) {
-				ddax-=zx+1;
-				if(ddax<=0) {
-					ddax+=15+1;
-					dda_x_skip[i]=1;
+		if (zx != 15)
+		{
+			rzx = 0;
+			for(i = 0; i < 16; i++)
+			{
+				ddax -= zx+1;
+				if (ddax <= 0)
+				{
+					ddax += 15+1;
+					dda_x_skip[i] = 1;
 					rzx++;
 				}
-				else dda_x_skip[i]=0;
+				else dda_x_skip[i] = 0;
 			}
 		}
 		else rzx=16;
 
-		if(sx>=320) continue;
+		if (sx >= 320)
+			continue;
 
 		/* Setup y zoom */
-		if(rzy==255)
+		if (rzy == 255)
 			yskip=16;
 		else
-			dday=0;	/* =256; NS990105 mslug fix */
+			dday=0; /* =256; NS990105 mslug fix */
 
 		offs = count<<6;
 
 		/* my holds the number of tiles in each vertical multisprite block */
-		for (y=0; y < my ;y++) {
-			tileno  = READ_WORD(&vidram[offs]);
-			offs+=2;
-			tileatr = READ_WORD(&vidram[offs]);
-			offs+=2;
+		for (y=0; y < my ;y++)
+		{
+			tileno	= neogeo_vidram16[offs++];
+			tileatr = neogeo_vidram16[offs++];
 
 			if (high_tile && tileatr&0x10) tileno+=0x10000;
 			if (vhigh_tile && tileatr&0x20) tileno+=0x20000;
@@ -1046,17 +1090,17 @@ if (!dotiles) { 					/* debug */
 			}
 			else if (sy > 0x110) sy -= 0x200;	/* NS990105 mslug2 fix */
 
-			if(rzy!=255)
+			if (rzy != 255)
 			{
 				yskip=0;
 				dda_y_skip[0]=0;
-				for(i=0;i<16;i++)
+				for(i = 0; i < 16; i++)
 				{
-					dda_y_skip[i+1]=0;
-					dday-=rzy+1;
-					if(dday<=0)
+					dda_y_skip[i+1] = 0;
+					dday -= rzy+1;
+					if (dday <= 0)
 					{
-						dday+=256;
+						dday += 256;
 						yskip++;
 						dda_y_skip[yskip]++;
 					}
@@ -1093,37 +1137,43 @@ if (!dotiles) { 					/* debug */
 
 
 	/* Save some struct de-refs */
-	gfx=Machine->gfx[fix_bank];
+	gfx = Machine->gfx[fix_bank];
 	pen_usage=gfx->pen_usage;
 
 	/* Character foreground */
-	for (y=clip->min_y/8; y<=clip->max_y/8; y++) {
-		for (x=0; x<40; x++) {
+	for (y=clip->min_y / 8; y <= clip->max_y / 8; y++)
+	{
+		for (x = 0; x < 40; x++)
+		{
 
-  			int byte1 = (READ_WORD(&vidram[0xE000 + 2*(y + 32*x)]));
-  			int byte2 = byte1 >> 12;
-		   	byte1 = byte1 & 0xfff;
+			int byte1 = neogeo_vidram16[(0xe000 >> 1) + y + 32 * x];
+			int byte2 = byte1 >> 12;
+			byte1 = byte1 & 0xfff;
 
 			if ((pen_usage[byte1] & ~1) == 0) continue;
 
-  			drawgfx(bitmap,gfx,
+			drawgfx(bitmap,gfx,
 					byte1,
 					byte2,
 					0,0,
 					x*8,y*8,
 					clip,TRANSPARENCY_PEN,0);
-  		}
+		}
 	}
 
 
 
 #ifdef NEO_DEBUG
-	} else {	/* debug */
+	}
+	else	/* debug */
+	{
 		offs = screen_offs;
-		for (y=screen_yoffs;y<screen_yoffs+15;y++) {
-			for (x=0;x<20;x++) {
-				tileno = READ_WORD(&vidram[offs + 4*y+x*128]);
-				tileatr = READ_WORD(&vidram[offs + 4*y+x*128+2]);
+		for (y = screen_yoffs; y < screen_yoffs+15; y++)
+		{
+			for (x = 0; x < 20; x++)
+			{
+				tileno = neogeo_vidram[(offs + 4*y+x*128) >> 1];
+				tileatr = neogeo_vidram16[(offs + 4*y+x*128+2) >> 1];
 
 				if (high_tile && tileatr&0x10) tileno+=0x10000;
 				if (vhigh_tile && tileatr&0x20) tileno+=0x20000;
@@ -1155,9 +1205,10 @@ if (keyboard_pressed(KEYCODE_D))
 {
 	FILE *fp;
 
-	fp=fopen("video.dmp","wb");
-	if (fp) {
-		fwrite(vidram,0x10c00, 1 ,fp);
+	fp = fopen("video.dmp","wb");
+	if (fp)
+	{
+		fwrite(neogeo_vidram16, 0x10c00, 1 ,fp);
 		fclose(fp);
 	}
 }
@@ -1177,30 +1228,30 @@ if (keyboard_pressed(KEYCODE_D))
 
 
   /*
-for (i = 0;i < 8;i+=2)
+for (i = 0;i < 8 >> 1; i+++)
 {
-	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x100a0+i]));
+	sprintf(mybuf,"%04X",neogeo_vidram16[(0x100a0 >> 1) + i]));
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
 }
 
 
-	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x10002]));
+	sprintf(mybuf,"%04X",neogeo_vidram16[0x10002 >> 1]);
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,8*j+4*8,8*7,0,TRANSPARENCY_NONE,0);
-	sprintf(mybuf,"%04X",0x200-(READ_WORD(&vidram[0x10402])>>7));
+	sprintf(mybuf,"%04X",0x200-(neogeo_vidram16[0x10402 >> 1] >> 7));
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,8*j+10*8,8*7,0,TRANSPARENCY_NONE,0);
-	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x10802])>> 7);
+	sprintf(mybuf,"%04X",neogeo_vidram16[0x10802 >> 1] >> 7);
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,8*j+16*8,8*7,0,TRANSPARENCY_NONE,0);
 
 */
 
 
-//		logerror("X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x1089c]),READ_WORD(&vidram[0x1049c]),READ_WORD(&vidram[0x1009c]));
+//logerror("X: %04x Y: %04x Video: %04x\n",neogeo_vidram16[0x1089c >> 1], neogeo_vidram16[0x1049c >> 1], neogeo_vidram16[0x1009c >> 1]);
 
-//logerror("X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x10930]),READ_WORD(&vidram[0x10530]),READ_WORD(&vidram[0x10130]));
+//logerror("X: %04x Y: %04x Video: %04x\n",neogeo_vidram16[0x10930 >> 1], neogeo_vidram16[0x10530 >> 1], neogeo_vidram16[0x10130 >> 1]);
 
 
 }
@@ -1242,8 +1293,9 @@ void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line
 
 void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    /* Palette swap occured after last frame but before this one */
-    if (palette_swap_pending) swap_palettes();
-    palette_recalc();
+	/* Palette swap occured after last frame but before this one */
+	if (palette_swap_pending) swap_palettes();
+	palette_recalc();
 	/* no need to check the return code since we redraw everything each frame */
 }
+

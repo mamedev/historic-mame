@@ -25,8 +25,7 @@ WRITE_HANDLER( btime_video_control_w );
 
 
 
-static struct MemoryReadAddress eggs_readmem[] =
-{
+static MEMORY_READ_START( eggs_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
@@ -37,11 +36,9 @@ static struct MemoryReadAddress eggs_readmem[] =
 	{ 0x2003, 0x2003, input_port_1_r },     /* IN1 */
 	{ 0x3000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },    /* reset/interrupt vectors */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress eggs_writemem[] =
-{
+static MEMORY_WRITE_START( eggs_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x1400, 0x17ff, colorram_w, &colorram },
@@ -54,8 +51,7 @@ static struct MemoryWriteAddress eggs_writemem[] =
 	{ 0x2006, 0x2006, AY8910_control_port_1_w },
 	{ 0x2007, 0x2007, AY8910_write_port_1_w },
 	{ 0x3000, 0x7fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

@@ -72,8 +72,7 @@ WRITE_HANDLER( sonson_sh_irqtrigger_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x17ff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ 0x3002, 0x3002, input_port_0_r },	/* IN0 */
@@ -81,11 +80,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3004, 0x3004, input_port_2_r },	/* IN2 */
 	{ 0x3005, 0x3005, input_port_3_r },	/* DSW0 */
 	{ 0x3006, 0x3006, input_port_4_r },	/* DSW1 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x1400, 0x17ff, colorram_w, &colorram },
@@ -96,27 +93,22 @@ static struct MemoryWriteAddress writemem[] =
 { 0x3018, 0x3018, MWA_NOP },
 	{ 0x3019, 0x3019, sonson_sh_irqtrigger_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x2000, 0x2000, AY8910_control_port_0_w },
 	{ 0x2001, 0x2001, AY8910_write_port_0_w },
 	{ 0x4000, 0x4000, AY8910_control_port_1_w },
 	{ 0x4001, 0x4001, AY8910_write_port_1_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

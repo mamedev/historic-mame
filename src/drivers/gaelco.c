@@ -24,13 +24,12 @@
 #include "cpu/m6809/m6809.h"
 #include "cpu/m68000/m68000.h"
 
-extern unsigned char *gaelco_vregs;
-extern unsigned char *gaelco_videoram;
-extern unsigned char *gaelco_spriteram;
+extern data16_t *gaelco_vregs;
+extern data16_t *gaelco_videoram;
+extern data16_t *gaelco_spriteram;
 
 /* from vidhrdw/gaelco.c */
-READ_HANDLER( gaelco_vram_r );
-WRITE_HANDLER( gaelco_vram_w );
+WRITE16_HANDLER( gaelco_vram_w );
 void gaelco_vh_stop(void);
 
 
@@ -71,78 +70,74 @@ int bigkarnk_vh_start( void );
 void bigkarnk_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
 
-static struct MemoryReadAddress bigkarnk_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },			/* ROM */
-	{ 0x100000, 0x101fff, gaelco_vram_r },		/* Video RAM */
-	{ 0x102000, 0x103fff, MRA_BANK1 },			/* Screen RAM */
-	{ 0x200000, 0x2007ff, paletteram_word_r },	/* Palette */
-	{ 0x440000, 0x440fff, MRA_BANK3 },			/* Sprite RAM */
-	{ 0x700000, 0x700001, input_port_0_r },		/* DIPSW #1 */
-	{ 0x700002, 0x700003, input_port_1_r },		/* DIPSW #2 */
-	{ 0x700004, 0x700005, input_port_2_r },		/* INPUT #1 */
-	{ 0x700006, 0x700007, input_port_3_r },		/* INPUT #2 */
-	{ 0x700008, 0x700009, input_port_4_r },		/* Service + Test */
-	{ 0xff8000, 0xffffff, MRA_BANK4 },			/* Work RAM */
-	{ -1 }
-};
+static MEMORY_READ16_START( bigkarnk_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },			/* ROM */
+	{ 0x100000, 0x101fff, MRA16_RAM },			/* Video RAM */
+	{ 0x102000, 0x103fff, MRA16_RAM },			/* Screen RAM */
+	{ 0x200000, 0x2007ff, MRA16_RAM },			/* Palette */
+	{ 0x440000, 0x440fff, MRA16_RAM },			/* Sprite RAM */
+	{ 0x700000, 0x700001, input_port_0_word_r },/* DIPSW #1 */
+	{ 0x700002, 0x700003, input_port_1_word_r },/* DIPSW #2 */
+	{ 0x700004, 0x700005, input_port_2_word_r },/* INPUT #1 */
+	{ 0x700006, 0x700007, input_port_3_word_r },/* INPUT #2 */
+	{ 0x700008, 0x700009, input_port_4_word_r },/* Service + Test */
+	{ 0xff8000, 0xffffff, MRA16_RAM },			/* Work RAM */
+MEMORY_END
 
-WRITE_HANDLER( bigkarnk_sound_command_w )
+WRITE16_HANDLER( bigkarnk_sound_command_w )
 {
-	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,M6809_INT_FIRQ);
-}
-
-WRITE_HANDLER( bigkarnk_coin_w )
-{
-	switch ((offset >> 4)){
-		case 0x00:	/* Coin Lockouts */
-		case 0x01:
-			coin_lockout_w( (offset >> 4) & 0x01, ~data & 0x01);
-			break;
-		case 0x02:	/* Coin Counters */
-		case 0x03:
-			coin_counter_w( (offset >> 4) & 0x01, data & 0x01);
-			break;
+	if (ACCESSING_LSB){
+		soundlatch_w(0,data & 0xff);
+		cpu_cause_interrupt(1,M6809_INT_FIRQ);
 	}
 }
 
-static struct MemoryWriteAddress bigkarnk_writemem[] =
+WRITE16_HANDLER( bigkarnk_coin_w )
 {
-	{ 0x000000, 0x07ffff, MWA_ROM },								/* ROM */
+	if (ACCESSING_LSB){
+		switch ((offset >> 3)){
+			case 0x00:	/* Coin Lockouts */
+			case 0x01:
+				coin_lockout_w( (offset >> 3) & 0x01, ~data & 0x01);
+				break;
+			case 0x02:	/* Coin Counters */
+			case 0x03:
+				coin_counter_w( (offset >> 3) & 0x01, data & 0x01);
+				break;
+		}
+	}
+}
+
+static MEMORY_WRITE16_START( bigkarnk_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },								/* ROM */
 	{ 0x100000, 0x101fff, gaelco_vram_w, &gaelco_videoram },		/* Video RAM */
-	{ 0x102000, 0x103fff, MWA_BANK1 },								/* Screen RAM */
-	{ 0x108000, 0x108007, MWA_BANK2, &gaelco_vregs },				/* Video Registers */
+	{ 0x102000, 0x103fff, MWA16_RAM },								/* Screen RAM */
+	{ 0x108000, 0x108007, MWA16_RAM, &gaelco_vregs },				/* Video Registers */
 //	{ 0x10800c, 0x10800d, watchdog_reset_w },						/* INT 6 ACK/Watchdog timer */
-	{ 0x200000, 0x2007ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },/* Palette */
-	{ 0x440000, 0x440fff, MWA_BANK3, &gaelco_spriteram },			/* Sprite RAM */
+	{ 0x200000, 0x2007ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },/* Palette */
+	{ 0x440000, 0x440fff, MWA16_RAM, &gaelco_spriteram },			/* Sprite RAM */
 	{ 0x70000e, 0x70000f, bigkarnk_sound_command_w },				/* Triggers a FIRQ on the sound CPU */
 	{ 0x70000a, 0x70003b, bigkarnk_coin_w },						/* Coin Counters + Coin Lockout */
-	{ 0xff8000, 0xffffff, MWA_BANK4 },								/* Work RAM */
-	{ -1 }
-};
+	{ 0xff8000, 0xffffff, MWA16_RAM },								/* Work RAM */
+MEMORY_END
 
 
-static struct MemoryReadAddress bigkarnk_readmem_snd[] =
-{
+static MEMORY_READ_START( bigkarnk_readmem_snd )
 	{ 0x0000, 0x07ff, MRA_RAM },				/* RAM */
 	{ 0x0800, 0x0800, OKIM6295_status_0_r },	/* OKI6295 */
 	{ 0x0a00, 0x0a00, YM3812_status_port_0_r },	/* YM3812 */
 	{ 0x0b00, 0x0b00, soundlatch_r },			/* Sound latch */
 	{ 0x0c00, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bigkarnk_writemem_snd[] =
-{
+static MEMORY_WRITE_START( bigkarnk_writemem_snd )
 	{ 0x0000, 0x07ff, MWA_RAM },				/* RAM */
 	{ 0x0800, 0x0800, OKIM6295_data_0_w },		/* OKI6295 */
 //	{ 0x0900, 0x0900, MWA_NOP },				/* enable sound output? */
 	{ 0x0a00, 0x0a00, YM3812_control_port_0_w },/* YM3812 */
 	{ 0x0a01, 0x0a01, YM3812_write_port_0_w },	/* YM3812 */
 	{ 0x0c00, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
 INPUT_PORTS_START( bigkarnk )
 	PORT_START	/* DSW #1 */
@@ -232,7 +227,7 @@ GFXDECODEINFO(0x100000,64);
 static struct YM3812interface bigkarnk_ym3812_interface =
 {
 	1,						/* 1 chip */
-	8867000/3,				/* 2.9556667 MHz? */
+	3580000,				/* 3.58 MHz? */
 	{ 60 },					/* volume */
 	{ 0 }					/* IRQ handler */
 };
@@ -324,41 +319,39 @@ int maniacsq_vh_start( void );
 void maniacsq_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
 
-static struct MemoryReadAddress maniacsq_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },			/* ROM */
-	{ 0x100000, 0x101fff, gaelco_vram_r },		/* Video RAM */
-	{ 0x200000, 0x2007ff, paletteram_word_r },	/* Palette */
-	{ 0x440000, 0x440fff, MRA_BANK2 },			/* Sprite RAM */
-	{ 0x700000, 0x700001, input_port_0_r },		/* DIPSW #2 */
-	{ 0x700002, 0x700003, input_port_1_r },		/* DIPSW #1 */
-	{ 0x700004, 0x700005, input_port_2_r },		/* INPUT #1 */
-	{ 0x700006, 0x700007, input_port_3_r },		/* INPUT #2 */
-	{ 0x70000e, 0x70000f, OKIM6295_status_0_r },/* OKI6295 status register */
-	{ 0xff0000, 0xffffff, MRA_BANK3 },			/* Work RAM */
-	{ -1 }
-};
+static MEMORY_READ16_START( maniacsq_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },			/* ROM */
+	{ 0x100000, 0x101fff, MRA16_RAM },			/* Video RAM */
+	{ 0x200000, 0x2007ff, MRA16_RAM },			/* Palette */
+	{ 0x440000, 0x440fff, MRA16_RAM },			/* Sprite RAM */
+	{ 0x700000, 0x700001, input_port_0_word_r },/* DIPSW #2 */
+	{ 0x700002, 0x700003, input_port_1_word_r },/* DIPSW #1 */
+	{ 0x700004, 0x700005, input_port_2_word_r },/* INPUT #1 */
+	{ 0x700006, 0x700007, input_port_3_word_r },/* INPUT #2 */
+	{ 0x70000e, 0x70000f, OKIM6295_status_0_lsb_r },/* OKI6295 status register */
+	{ 0xff0000, 0xffffff, MRA16_RAM },			/* Work RAM */
+MEMORY_END
 
-static WRITE_HANDLER( OKIM6295_bankswitch_w )
+static WRITE16_HANDLER( OKIM6295_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 
-	memcpy(&RAM[0x30000], &RAM[0x40000 + (data & 0x0f)*0x10000], 0x10000);
+	if (ACCESSING_LSB){
+		memcpy(&RAM[0x30000], &RAM[0x40000 + (data & 0x0f)*0x10000], 0x10000);
+	}
 }
 
-static struct MemoryWriteAddress maniacsq_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },								/* ROM */
+static MEMORY_WRITE16_START( maniacsq_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },								/* ROM */
 	{ 0x100000, 0x101fff, gaelco_vram_w, &gaelco_videoram },		/* Video RAM */
-	{ 0x108000, 0x108007, MWA_BANK1, &gaelco_vregs },				/* Video Registers */
+	{ 0x108000, 0x108007, MWA16_RAM, &gaelco_vregs },				/* Video Registers */
 //	{ 0x10800c, 0x10800d, watchdog_reset_w },						/* INT 6 ACK/Watchdog timer */
-	{ 0x200000, 0x2007ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },/* Palette */
-	{ 0x440000, 0x440fff, MWA_BANK2, &gaelco_spriteram },			/* Sprite RAM */
+	{ 0x200000, 0x2007ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },/* Palette */
+	{ 0x440000, 0x440fff, MWA16_RAM, &gaelco_spriteram },			/* Sprite RAM */
 	{ 0x70000c, 0x70000d, OKIM6295_bankswitch_w },					/* OKI6295 bankswitch */
-	{ 0x70000e, 0x70000f, OKIM6295_data_0_w },						/* OKI6295 data register */
-	{ 0xff0000, 0xffffff, MWA_BANK3 },								/* Work RAM */
-	{ -1 }
-};
+	{ 0x70000e, 0x70000f, OKIM6295_data_0_lsb_w },					/* OKI6295 data register */
+	{ 0xff0000, 0xffffff, MWA16_RAM },								/* Work RAM */
+MEMORY_END
 
 
 INPUT_PORTS_START( maniacsq )

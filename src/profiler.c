@@ -31,7 +31,7 @@ void profiler_stop(void)
 	use_profiler = 0;
 }
 
-void profiler_mark(int type)
+void profiler__mark(int type)
 {
 	unsigned int curr_cycles;
 
@@ -99,11 +99,12 @@ void profiler_show(struct osd_bitmap *bitmap)
 		"CPU 6  ",
 		"CPU 7  ",
 		"CPU 8  ",
+		"Mem rd ",
+		"Mem wr ",
 		"Video  ",
 		"drawgfx",
 		"copybmp",
 		"tmupdat",
-		"tmrendr",
 		"tmdraw ",
 		"Blit   ",
 		"Sound  ",

@@ -91,8 +91,7 @@ static READ_HANDLER( vblank_r ) {
 	return val;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00ff, 0x00ff, vblank_r }, /* HACK!!!! see init_exprraid below */
     { 0x0000, 0x05ff, MRA_RAM },
     { 0x0600, 0x07ff, MRA_RAM }, /* sprites */
@@ -106,11 +105,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2801, 0x2801, exprraid_prot_1_r }, /* protection */
     { 0x3800, 0x3800, vblank_r }, /* vblank on bootleg */
     { 0x4000, 0xffff, MRA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x05ff, MWA_RAM },
     { 0x0600, 0x07ff, MWA_RAM, &spriteram, &spriteram_size }, /* sprites */
     { 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
@@ -118,30 +115,25 @@ static struct MemoryWriteAddress writemem[] =
     { 0x2001, 0x2001, sound_cpu_command_w },
     { 0x2800, 0x2807, MWA_RAM, &exprraid_bgcontrol },
     { 0x4000, 0xffff, MWA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sub_readmem[] =
-{
+static MEMORY_READ_START( sub_readmem )
     { 0x0000, 0x1fff, MRA_RAM },
     { 0x2000, 0x2000, YM2203_status_port_0_r },
 	{ 0x2001, 0x2001, YM2203_read_port_0_r },
     { 0x4000, 0x4000, YM3526_status_port_0_r },
 	{ 0x6000, 0x6000, soundlatch_r },
     { 0x8000, 0xffff, MRA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sub_writemem[] =
-{
+static MEMORY_WRITE_START( sub_writemem )
     { 0x0000, 0x1fff, MWA_RAM },
     { 0x2000, 0x2000, YM2203_control_port_0_w },
 	{ 0x2001, 0x2001, YM2203_write_port_0_w },
     { 0x4000, 0x4000, YM3526_control_port_0_w },
     { 0x4001, 0x4001, YM3526_write_port_0_w },
     { 0x8000, 0xffff, MWA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( exprraid )
 	PORT_START /* IN 0 - 0x3800 */

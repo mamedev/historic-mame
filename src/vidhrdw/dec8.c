@@ -425,7 +425,7 @@ void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
 	tilemap_set_scrollx( dec8_pf1_tilemap,0, (dec8_pf1_control[0x10]<<8)+dec8_pf1_control[0x11] );
 	tilemap_set_scrolly( dec8_pf1_tilemap,0, (dec8_pf1_control[0x12]<<8)+dec8_pf1_control[0x13] );
-	flip_screen_w(0,dec8_pf0_control[0]>>7);
+	flip_screen_set(dec8_pf0_control[0]>>7);
 
 	gfx_mask=3;
 	gfx_bank=3;
@@ -437,15 +437,13 @@ void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_update(dec8_pf1_tilemap);
 	tilemap_update(dec8_fix_tilemap);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0,0);
 	draw_sprites2(bitmap,1);
-	tilemap_draw(bitmap,dec8_pf1_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf1_tilemap,0,0);
 	draw_sprites2(bitmap,2);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 /******************************************************************************/
@@ -486,8 +484,8 @@ int cobracom_vh_start(void)
 	if (!dec8_pf0_tilemap || !dec8_pf1_tilemap || !dec8_fix_tilemap)
 		return 1;
 
-	dec8_pf1_tilemap->transparent_pen = 0;
-	dec8_fix_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(dec8_pf1_tilemap,0);
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
 
 	return 0;
 }
@@ -509,13 +507,11 @@ void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
 
 	tilemap_update(ALL_TILEMAPS);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0,0);
 	draw_sprites1(bitmap,0);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 static void get_ghostb_fix_tile_info( int tile_index )
@@ -531,7 +527,7 @@ int ghostb_vh_start(void)
 {
 	dec8_pf0_tilemap = tilemap_create(get_bac0_tile_info,bac0_scan_rows,0,16,16,32,32);
 	dec8_fix_tilemap = tilemap_create(get_ghostb_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-	dec8_fix_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
 
 	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
 		return 1;
@@ -549,19 +545,17 @@ void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
-	flip_screen_w(0,dec8_pf0_control[1]>>7);
+	flip_screen_set(dec8_pf0_control[1]>>7);
 
 	tilemap_update(ALL_TILEMAPS);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0,0);
 	draw_sprites2(bitmap,0);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 static void get_oscar_fix_tile_info( int tile_index )
@@ -581,9 +575,9 @@ int oscar_vh_start(void)
 	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
 		return 1;
 
-	dec8_fix_tilemap->transparent_pen = 0;
-	dec8_pf0_tilemap->transmask[0] = 0x00ff; /* Bottom 8 pens */
-	dec8_pf0_tilemap->transmask[1] = 0xff00; /* Top 8 pens */
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
+	tilemap_set_transmask(dec8_pf0_tilemap,0,0x00ff); /* Bottom 8 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,1,0xff00); /* Top 8 pens */
 	game_uses_priority=1;
 	gfx_bank=2;
 	gfx_mask=0x7;
@@ -602,13 +596,11 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_init_used_colors();
 	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0,0);
 	draw_sprites1(bitmap,0);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 void shackled_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -619,16 +611,14 @@ void shackled_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_init_used_colors();
 	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0,0);
 	draw_sprites1(bitmap,0);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 static UINT32 lastmiss_scan_rows(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -665,7 +655,7 @@ int lastmiss_vh_start(void)
 	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
 		return 1;
 
-	dec8_fix_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
 	game_uses_priority=0;
 
 	return 0;
@@ -679,9 +669,9 @@ int shackled_vh_start(void)
 	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
 		return 1;
 
-	dec8_fix_tilemap->transparent_pen = 0;
-	dec8_pf0_tilemap->transmask[0] = 0x000f; /* Bottom 12 pens */
-	dec8_pf0_tilemap->transmask[1] = 0xfff0; /* Top 4 pens */
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
+	tilemap_set_transmask(dec8_pf0_tilemap,0,0x000f); /* Bottom 12 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,1,0xfff0); /* Top 4 pens */
 	game_uses_priority=1;
 
 	return 0;
@@ -694,17 +684,15 @@ void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (scroll2[0]<<8)+scroll2[1] );
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1,0);
 	srdarwin_drawsprites(bitmap,0); /* Priority may not be right on later levels */
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0,0);
 	srdarwin_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 static void get_srdarwin_fix_tile_info( int tile_index )
@@ -737,9 +725,9 @@ int srdarwin_vh_start(void)
 	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
 		return 1;
 
-	dec8_fix_tilemap->transparent_pen = 0;
-	dec8_pf0_tilemap->transmask[0] = 0x00ff; /* Bottom 8 pens */
-	dec8_pf0_tilemap->transmask[1] = 0xff00; /* Top 8 pens */
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
+	tilemap_set_transmask(dec8_pf0_tilemap,0,0x00ff); /* Bottom 8 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,1,0xff00); /* Top 8 pens */
 
 	return 0;
 }
@@ -754,15 +742,13 @@ void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_init_used_colors();
 	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK,0);
 	draw_sprites1(bitmap,2);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT,0);
 	draw_sprites1(bitmap,1);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -773,14 +759,12 @@ void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_init_used_colors();
 	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0,0);
 	draw_sprites1(bitmap,0);
-	tilemap_draw(bitmap,dec8_pf0_tilemap,1);
-	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,1,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
 static void get_gondo_fix_tile_info( int tile_index )
@@ -811,9 +795,9 @@ int gondo_vh_start(void)
 	if (!dec8_fix_tilemap || !dec8_pf0_tilemap)
 		return 1;
 
-	dec8_fix_tilemap->transparent_pen = 0;
-	dec8_pf0_tilemap->transmask[0] = 0x00ff; /* Bottom 8 pens */
-	dec8_pf0_tilemap->transmask[1] = 0xff00; /* Top 8 pens */
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
+	tilemap_set_transmask(dec8_pf0_tilemap,0,0x00ff); /* Bottom 8 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,1,0xff00); /* Top 8 pens */
 	game_uses_priority=0;
 
 	return 0;
@@ -827,7 +811,7 @@ int garyoret_vh_start(void)
 	if (!dec8_fix_tilemap || !dec8_pf0_tilemap)
 		return 1;
 
-	dec8_fix_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
 	game_uses_priority=1;
 
 	return 0;

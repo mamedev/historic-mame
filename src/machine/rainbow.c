@@ -32,8 +32,9 @@ static int FrameBank,
  *
  *************************************/
 
-WRITE_HANDLER( rainbow_c_chip_w )
+WRITE16_HANDLER( rainbow_c_chip_w )
 {
+	offset *= 2;
   switch(offset+1)
   {
   	case 0x001: if ((data & 0xff) == 1)	ChipOffset = 0x4950;
@@ -55,7 +56,7 @@ WRITE_HANDLER( rainbow_c_chip_w )
 
 extern int mrh_bank1(int address);
 
-READ_HANDLER( rainbow_c_chip_r )
+READ16_HANDLER( rainbow_c_chip_r )
 {
   unsigned char *CROM = memory_region(REGION_USER1);	/* C-Chip Dump */
 
@@ -64,6 +65,8 @@ READ_HANDLER( rainbow_c_chip_r )
   int ans;
 
   /* Start with standard return from rom image */
+
+	offset *= 2;
 
   Address = ChipOffset
           + FrameBank
@@ -94,16 +97,16 @@ READ_HANDLER( rainbow_c_chip_r )
   {
 				/* Input Ports */
 
-  	case 0x007: if (FrameBank==0) ans=input_port_2_r(offset);
+  	case 0x007: if (FrameBank==0) ans=input_port_2_word_r(offset);
                 break;
 
-    case 0x009: if (FrameBank==0) ans=input_port_3_r(offset);
+    case 0x009: if (FrameBank==0) ans=input_port_3_word_r(offset);
                 break;
 
-    case 0x00b: if (FrameBank==0) ans=input_port_4_r(offset);
+    case 0x00b: if (FrameBank==0) ans=input_port_4_word_r(offset);
                 break;
 
-    case 0x00d: if (FrameBank==0) ans=input_port_5_r(offset);
+    case 0x00d: if (FrameBank==0) ans=input_port_5_word_r(offset);
                 break;
 
 

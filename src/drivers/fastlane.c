@@ -84,8 +84,7 @@ static WRITE_HANDLER( fastlane_K007232_write_port_1_w )
 
 
 
-static struct MemoryReadAddress fastlane_readmem[] =
-{
+static MEMORY_READ_START( fastlane_readmem )
 	{ 0x0000, 0x005f, MRA_RAM },
 	{ 0x0800, 0x0800, input_port_2_r }, 	/* DIPSW #3 */
 	{ 0x0801, 0x0801, input_port_5_r }, 	/* 2P inputs */
@@ -100,11 +99,9 @@ static struct MemoryReadAddress fastlane_readmem[] =
 	{ 0x2000, 0x3fff, MRA_RAM },			/* Video RAM + Sprite RAM */
 	{ 0x4000, 0x7fff, MRA_BANK1 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fastlane_writemem[] =
-{
+static MEMORY_WRITE_START( fastlane_writemem )
 	{ 0x0000, 0x005f, k007121_registers_w, &fastlane_k007121_regs },/* 007121 registers */
 	{ 0x0b00, 0x0b00, watchdog_reset_w },		/* watchdog reset */
 	{ 0x0c00, 0x0c00, fastlane_bankswitch_w },	/* bankswitch control */
@@ -117,8 +114,7 @@ static struct MemoryWriteAddress fastlane_writemem[] =
 	{ 0x2800, 0x2fff, fastlane_vram2_w, &fastlane_videoram2 },
 	{ 0x3000, 0x3fff, MWA_RAM, &spriteram },	/* Sprite RAM */
 	{ 0x4000, 0xffff, MWA_ROM },				/* ROM/banked ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

@@ -19,7 +19,7 @@
 
 #define VEC_SHIFT 16
 
-UINT8 *cchasm_ram;
+data16_t *cchasm_ram;
 
 static int xcenter, ycenter;
 
@@ -44,14 +44,13 @@ static void cchasm_refresh (void)
 
 	while (!done)
 	{
-
-        data = READ_WORD (&cchasm_ram[pc]);
+        data = cchasm_ram[pc];
    		opcode = data >> 12;
         data &= 0xfff;
         if ((opcode > COLOR) && (data & 0x800))
           data |= 0xfffff000;
 
-		pc += 2;
+		pc++;
 
 		switch (opcode)
 		{
@@ -108,17 +107,20 @@ static void cchasm_refresh (void)
 }
 
 
-WRITE_HANDLER( cchasm_refresh_control_w )
+WRITE16_HANDLER( cchasm_refresh_control_w )
 {
-    switch (data)
-    {
-    case 0x37ff:
-        cchasm_refresh();
-        break;
-    case 0xf7ff:
-        cpu_set_irq_line (0, 2, CLEAR_LINE);
-        break;
-    }
+	if (ACCESSING_MSB)
+	{
+		switch (data >> 8)
+		{
+		case 0x37:
+			cchasm_refresh();
+			break;
+		case 0xf7:
+			cpu_set_irq_line (0, 2, CLEAR_LINE);
+			break;
+		}
+	}
 }
 
 void cchasm_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -132,13 +134,13 @@ void cchasm_init_colors (unsigned char *palette, unsigned short *colortable,cons
                 palette[3*i  ] = (255 * r) / 7;
                 palette[3*i+1] = (255 * g) / 7;
                 palette[3*i+2] = (255 * b) /3;
-                i++;
-            }
+				i++;
+			}
 }
 
 int cchasm_vh_start (void)
 {
-    int xmin, xmax, ymin, ymax;
+	int xmin, xmax, ymin, ymax;
 
 	xmin=Machine->visible_area.min_x;
 	ymin=Machine->visible_area.min_y;
@@ -150,10 +152,4 @@ int cchasm_vh_start (void)
 
 	vector_set_shift (VEC_SHIFT);
 	return vector_vh_start();
-}
-
-
-void cchasm_vh_stop (void)
-{
-	vector_vh_stop();
 }

@@ -130,8 +130,18 @@ static READ_HANDLER( p1_r )
 	return p1;
 }
 
-static struct MemoryReadAddress yamato_readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+
+static MEMORY_READ_START( yamato_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x7000, 0x7fff, MRA_ROM },
@@ -144,11 +154,9 @@ static struct MemoryReadAddress yamato_readmem[] =
 	{ 0xb000, 0xb000, input_port_2_r },     /* DSW */
 	{ 0xb800, 0xb800, input_port_3_r },     /* IN2 */
 	{ 0xba00, 0xba00, input_port_4_r },     /* IN3 (maybe a mirror of b800) */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress yamato_writemem[] =
-{
+static MEMORY_WRITE_START( yamato_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x67ff, MWA_RAM },
 	{ 0x7000, 0x7fff, MWA_ROM },
@@ -169,50 +177,34 @@ static struct MemoryWriteAddress yamato_writemem[] =
 //{ 0xa004, 0xa004, cclimber_sample_trigger_w },
 //{ 0xa800, 0xa800, cclimber_sample_rate_w },
 //{ 0xb000, 0xb000, cclimber_sample_volume_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort yamato_readport[] =
-{
-	{ -1 }	/* end of table */
-};
-
-static struct IOWritePort yamato_writeport[] =
-{
+static PORT_WRITE_START( yamato_writeport )
 	{ 0x00, 0x00, p0_w },	/* ??? */
 	{ 0x01, 0x01, p1_w },	/* ??? */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress yamato_sound_readmem[] =
-{
+static MEMORY_READ_START( yamato_sound_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x5000, 0x53ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress yamato_sound_writemem[] =
-{
+static MEMORY_WRITE_START( yamato_sound_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
 	{ 0x5000, 0x53ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort yamato_sound_readport[] =
-{
+static PORT_READ_START( yamato_sound_readport )
 	{ 0x04, 0x04, p0_r },	/* ??? */
 	{ 0x08, 0x08, p1_r },	/* ??? */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort yamato_sound_writeport[] =
-{
+static PORT_WRITE_START( yamato_sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x02, 0x02, AY8910_control_port_1_w },
 	{ 0x03, 0x03, AY8910_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
@@ -350,7 +342,7 @@ static const struct MachineDriver machine_driver_yamato =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz ? */
-			yamato_readmem,yamato_writemem,yamato_readport,yamato_writeport,
+			yamato_readmem,yamato_writemem,0,yamato_writeport,
 			nmi_interrupt,1
 		},
 		{

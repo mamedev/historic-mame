@@ -343,539 +343,142 @@ INLINE void sex( void )
 	SET_NZ16(t);
 }
 
-/* $1E EXG inherent ----- */
 INLINE void exg( void )
 {
-	UINT16 t, zero = 0;
+	UINT16 t1,t2;
 	UINT8 tb;
+	int 	promote = FALSE;
 
 	IMMBYTE(tb);
-
-	switch( tb )
+	if( (tb^(tb>>4)) & 0x08 )	/* HJB 990225: mixed 8/16 bit case? */
 	{
-		case 0x00:	t = D; D = D; D = t;					break;
-		case 0x01:	t = D; D = X; X = t;					break;
-		case 0x02:	t = D; D = Y; Y = t;					break;
-		case 0x03:	t = D; D = U; U = t;					break;
-		case 0x04:	t = D; D = S; S = t;					break;
-		case 0x05:	t = D; D = PC; PC = t; CHANGE_PC;		break;
-		case 0x06:	t = D; D = W; W = t;					break;
-		case 0x07:	t = D; D = V; V = t;					break;
-		case 0x08:	t = D; D = D; D = t;					break;
-		case 0x09:	t = D; D = D; D = t;					break;
-		case 0x0a:	t = D; D = CC; CC = t;					break;
-		case 0x0b:	t = D; D = DP; DP = t;					break;
-		case 0x0c:	t = D; D = 0; zero = t; 				break;
-		case 0x0d:	t = D; D = 0; zero = t; 				break;
-		case 0x0e:	t = D; D = W; W = t;					break;
-		case 0x0f:	t = D; D = W; W = t;					break;
-		case 0x10:	t = X; X = D; D = t;					break;
-		case 0x11:	t = X; X = X; X = t;					break;
-		case 0x12:	t = X; X = Y; Y = t;					break;
-		case 0x13:	t = X; X = U; U = t;					break;
-		case 0x14:	t = X; X = S; S = t;					break;
-		case 0x15:	t = X; X = PC; PC = t; CHANGE_PC;		break;
-		case 0x16:	t = X; X = W; W = t;					break;
-		case 0x17:	t = X; X = V; V = t;					break;
-		case 0x18:	t = X; X = D; D = t;					break;
-		case 0x19:	t = X; X = D; D = t;					break;
-		case 0x1a:	t = X; X = CC; CC = t;					break;
-		case 0x1b:	t = X; X = DP; DP = t;					break;
-		case 0x1c:	t = X; X = 0; zero = t; 				break;
-		case 0x1d:	t = X; X = 0; zero = t; 				break;
-		case 0x1e:	t = X; X = W; W = t;					break;
-		case 0x1f:	t = X; X = W; W = t;					break;
-		case 0x20:	t = Y; Y = D; D = t;					break;
-		case 0x21:	t = Y; Y = X; X = t;					break;
-		case 0x22:	t = Y; Y = Y; Y = t;					break;
-		case 0x23:	t = Y; Y = U; U = t;					break;
-		case 0x24:	t = Y; Y = S; S = t;					break;
-		case 0x25:	t = Y; Y = PC; PC = t; CHANGE_PC;		break;
-		case 0x26:	t = Y; Y = W; W = t;					break;
-		case 0x27:	t = Y; Y = V; V = t;					break;
-		case 0x28:	t = Y; Y = D; D = t;					break;
-		case 0x29:	t = Y; Y = D; D = t;					break;
-		case 0x2a:	t = Y; Y = CC; CC = t;					break;
-		case 0x2b:	t = Y; Y = DP; DP = t;					break;
-		case 0x2c:	t = Y; Y = 0; zero = t; 				break;
-		case 0x2d:	t = Y; Y = 0; zero = t; 				break;
-		case 0x2e:	t = Y; Y = W; W = t;					break;
-		case 0x2f:	t = Y; Y = W; W = t;					break;
-		case 0x30:	t = U; U = D; D = t;					break;
-		case 0x31:	t = U; U = X; X = t;					break;
-		case 0x32:	t = U; U = Y; Y = t;					break;
-		case 0x33:	t = U; U = U; U = t;					break;
-		case 0x34:	t = U; U = S; S = t;					break;
-		case 0x35:	t = U; U = PC; PC = t; CHANGE_PC;		break;
-		case 0x36:	t = U; U = W; W = t;					break;
-		case 0x37:	t = U; U = V; V = t;					break;
-		case 0x38:	t = U; U = D; D = t;					break;
-		case 0x39:	t = U; U = D; D = t;					break;
-		case 0x3a:	t = U; U = CC; CC = t;					break;
-		case 0x3b:	t = U; U = DP; DP = t;					break;
-		case 0x3c:	t = U; U = 0; zero = t; 				break;
-		case 0x3d:	t = U; U = 0; zero = t; 				break;
-		case 0x3e:	t = U; U = W; W = t;					break;
-		case 0x3f:	t = U; U = W; W = t;					break;
-		case 0x40:	t = S; S = D; D = t;					break;
-		case 0x41:	t = S; S = X; X = t;					break;
-		case 0x42:	t = S; S = Y; Y = t;					break;
-		case 0x43:	t = S; S = U; U = t;					break;
-		case 0x44:	t = S; S = S; S = t;					break;
-		case 0x45:	t = S; S = PC; PC = t; CHANGE_PC;		break;
-		case 0x46:	t = S; S = W; W = t;					break;
-		case 0x47:	t = S; S = V; V = t;					break;
-		case 0x48:	t = S; S = D; D = t;					break;
-		case 0x49:	t = S; S = D; D = t;					break;
-		case 0x4a:	t = S; S = CC; CC = t;					break;
-		case 0x4b:	t = S; S = DP; DP = t;					break;
-		case 0x4c:	t = S; S = 0; zero = t; 				break;
-		case 0x4d:	t = S; S = 0; zero = t; 				break;
-		case 0x4e:	t = S; S = W; W = t;					break;
-		case 0x4f:	t = S; S = W; W = t;					break;
-		case 0x50:	t = PC; PC = D; D = t; CHANGE_PC;		break;
-		case 0x51:	t = PC; PC = X; X = t; CHANGE_PC;		break;
-		case 0x52:	t = PC; PC = Y; Y = t; CHANGE_PC;		break;
-		case 0x53:	t = PC; PC = U; U = t; CHANGE_PC;		break;
-		case 0x54:	t = PC; PC = S; S = t; CHANGE_PC;		break;
-		case 0x55:	t = PC; PC = PC; PC = t; CHANGE_PC; 	break;
-		case 0x56:	t = PC; PC = W; W = t; CHANGE_PC;		break;
-		case 0x57:	t = PC; PC = V; V = t; CHANGE_PC;		break;
-		case 0x58:	t = PC; PC = D; D = t; CHANGE_PC;		break;
-		case 0x59:	t = PC; PC = D; D = t; CHANGE_PC;		break;
-		case 0x5a:	t = PC; PC = CC; CC = t; CHANGE_PC; 	break;
-		case 0x5b:	t = PC; PC = DP; DP = t; CHANGE_PC; 	break;
-		case 0x5c:	t = PC; PC = 0; zero = t; CHANGE_PC;	break;
-		case 0x5d:	t = PC; PC = 0; zero = t; CHANGE_PC;	break;
-		case 0x5e:	t = PC; PC = W; W = t; CHANGE_PC;		break;
-		case 0x5f:	t = PC; PC = W; W = t; CHANGE_PC;		break;
-		case 0x60:	t = W; W = D; D = t;					break;
-		case 0x61:	t = W; W = X; X = t;					break;
-		case 0x62:	t = W; W = Y; Y = t;					break;
-		case 0x63:	t = W; W = U; U = t;					break;
-		case 0x64:	t = W; W = S; S = t;					break;
-		case 0x65:	t = W; W = PC; PC = t; CHANGE_PC;		break;
-		case 0x66:	t = W; W = W; W = t;					break;
-		case 0x67:	t = W; W = V; V = t;					break;
-		case 0x68:	t = W; W = D; D = t;					break;
-		case 0x69:	t = W; W = D; D = t;					break;
-		case 0x6a:	t = W; W = CC; CC = t;					break;
-		case 0x6b:	t = W; W = DP; DP = t;					break;
-		case 0x6c:	t = W; W = 0; zero = t; 				break;
-		case 0x6d:	t = W; W = 0; zero = t; 				break;
-		case 0x6e:	t = W; W = W; W = t;					break;
-		case 0x6f:	t = W; W = W; W = t;					break;
-		case 0x70:	t = V; V = D; D = t;					break;
-		case 0x71:	t = V; V = X; X = t;					break;
-		case 0x72:	t = V; V = Y; Y = t;					break;
-		case 0x73:	t = V; V = U; U = t;					break;
-		case 0x74:	t = V; V = S; S = t;					break;
-		case 0x75:	t = V; V = PC; PC = t; CHANGE_PC;		break;
-		case 0x76:	t = V; V = W; W = t;					break;
-		case 0x77:	t = V; V = V; V = t;					break;
-		case 0x78:	t = V; V = D; D = t;					break;
-		case 0x79:	t = V; V = D; D = t;					break;
-		case 0x7a:	t = V; V = CC; CC = t;					break;
-		case 0x7b:	t = V; V = DP; DP = t;					break;
-		case 0x7c:	t = V; V = 0; zero = t; 				break;
-		case 0x7d:	t = V; V = 0; zero = t; 				break;
-		case 0x7e:	t = V; V = W; W = t;					break;
-		case 0x7f:	t = V; V = W; W = t;					break;
-		case 0x80:	t = D; D = D; D = t;					break;
-		case 0x81:	t = D; D = X; X = t;					break;
-		case 0x82:	t = D; D = Y; Y = t;					break;
-		case 0x83:	t = D; D = U; U = t;					break;
-		case 0x84:	t = D; D = S; S = t;					break;
-		case 0x85:	t = D; D = PC; PC = t; CHANGE_PC;		break;
-		case 0x86:	t = D; D = W; W = t;					break;
-		case 0x87:	t = D; D = V; V = t;					break;
-		case 0x88:	t = A; A = A; A = t;					break;
-		case 0x89:	t = A; A = B; B = t;					break;
-		case 0x8a:	t = A; A = CC; CC = t;					break;
-		case 0x8b:	t = A; A = DP; DP = t;					break;
-		case 0x8c:	t = A; A = 0; zero = t; 				break;
-		case 0x8d:	t = A; A = 0; zero = t; 				break;
-		case 0x8e:	t = A; A = E; E = t;					break;
-		case 0x8f:	t = A; A = F; F = t;					break;
-		case 0x90:	t = D; D = D; D = t;					break;
-		case 0x91:	t = D; D = X; X = t;					break;
-		case 0x92:	t = D; D = Y; Y = t;					break;
-		case 0x93:	t = D; D = U; U = t;					break;
-		case 0x94:	t = D; D = S; S = t;					break;
-		case 0x95:	t = D; D = PC; PC = t; CHANGE_PC;		break;
-		case 0x96:	t = D; D = W; W = t;					break;
-		case 0x97:	t = D; D = V; V = t;					break;
-		case 0x98:	t = B; B = A; A = t;					break;
-		case 0x99:	t = B; B = B; B = t;					break;
-		case 0x9a:	t = B; B = CC; CC = t;					break;
-		case 0x9b:	t = B; B = DP; DP = t;					break;
-		case 0x9c:	t = B; B = 0; zero = t; 				break;
-		case 0x9d:	t = B; B = 0; zero = t; 				break;
-		case 0x9e:	t = B; B = E; E = t;					break;
-		case 0x9f:	t = B; B = F; F = t;					break;
-		case 0xa0:	t = CC; CC = D; D = t;					break;
-		case 0xa1:	t = CC; CC = X; X = t;					break;
-		case 0xa2:	t = CC; CC = Y; Y = t;					break;
-		case 0xa3:	t = CC; CC = U; U = t;					break;
-		case 0xa4:	t = CC; CC = S; S = t;					break;
-		case 0xa5:	t = CC; CC = PC; PC = t; CHANGE_PC; 	break;
-		case 0xa6:	t = CC; CC = W; W = t;					break;
-		case 0xa7:	t = CC; CC = V; V = t;					break;
-		case 0xa8:	t = CC; CC = A; A = t;					break;
-		case 0xa9:	t = CC; CC = B; B = t;					break;
-		case 0xaa:	t = CC; CC = CC; CC = t;				break;
-		case 0xab:	t = CC; CC = DP; DP = t;				break;
-		case 0xac:	t = CC; CC = 0; zero = t;				break;
-		case 0xad:	t = CC; CC = 0; zero = t;				break;
-		case 0xae:	t = CC; CC = E; E = t;					break;
-		case 0xaf:	t = CC; CC = F; F = t;					break;
-		case 0xb0:	t = DP; DP = D; D = t;					break;
-		case 0xb1:	t = DP; DP = X; X = t;					break;
-		case 0xb2:	t = DP; DP = Y; Y = t;					break;
-		case 0xb3:	t = DP; DP = U; U = t;					break;
-		case 0xb4:	t = DP; DP = S; S = t;					break;
-		case 0xb5:	t = DP; DP = PC; PC = t; CHANGE_PC; 	break;
-		case 0xb6:	t = DP; DP = W; W = t;					break;
-		case 0xb7:	t = DP; DP = V; V = t;					break;
-		case 0xb8:	t = DP; DP = A; A = t;					break;
-		case 0xb9:	t = DP; DP = B; B = t;					break;
-		case 0xba:	t = DP; DP = CC; CC = t;				break;
-		case 0xbb:	t = DP; DP = DP; DP = t;				break;
-		case 0xbc:	t = DP; DP = 0; zero = t;				break;
-		case 0xbd:	t = DP; DP = 0; zero = t;				break;
-		case 0xbe:	t = DP; DP = E; E = t;					break;
-		case 0xbf:	t = DP; DP = F; F = t;					break;
-		case 0xc0:	t = 0; zero = D; D = t; 				break;
-		case 0xc1:	t = 0; zero = X; X = t; 				break;
-		case 0xc2:	t = 0; zero = Y; Y = t; 				break;
-		case 0xc3:	t = 0; zero = U; U = t; 				break;
-		case 0xc4:	t = 0; zero = S; S = t; 				break;
-		case 0xc5:	t = 0; zero = PC; PC = t; CHANGE_PC;	break;
-		case 0xc6:	t = 0; zero = W; W = t; 				break;
-		case 0xc7:	t = 0; zero = V; V = t; 				break;
-		case 0xc8:	t = 0; zero = A; A = t; 				break;
-		case 0xc9:	t = 0; zero = B; B = t; 				break;
-		case 0xca:	t = 0; zero = CC; CC = t;				break;
-		case 0xcb:	t = 0; zero = DP; DP = t;				break;
-		case 0xcc:	t = 0; zero = 0; zero = t;				break;
-		case 0xcd:	t = 0; zero = 0; zero = t;				break;
-		case 0xce:	t = 0; zero = E; E = t; 				break;
-		case 0xcf:	t = 0; zero = F; F = t; 				break;
-		case 0xd0:	t = 0; zero = D; D = t; 				break;
-		case 0xd1:	t = 0; zero = X; X = t; 				break;
-		case 0xd2:	t = 0; zero = Y; Y = t; 				break;
-		case 0xd3:	t = 0; zero = U; U = t; 				break;
-		case 0xd4:	t = 0; zero = S; S = t; 				break;
-		case 0xd5:	t = 0; zero = PC; PC = t; CHANGE_PC;	break;
-		case 0xd6:	t = 0; zero = W; W = t; 				break;
-		case 0xd7:	t = 0; zero = V; V = t; 				break;
-		case 0xd8:	t = 0; zero = A; A = t; 				break;
-		case 0xd9:	t = 0; zero = B; B = t; 				break;
-		case 0xda:	t = 0; zero = CC; CC = t;				break;
-		case 0xdb:	t = 0; zero = DP; DP = t;				break;
-		case 0xdc:	t = 0; zero = 0; zero = t;				break;
-		case 0xdd:	t = 0; zero = 0; zero = t;				break;
-		case 0xde:	t = 0; zero = E; E = t; 				break;
-		case 0xdf:	t = 0; zero = F; F = t; 				break;
-		case 0xe0:	t = W; W = D; D = t;					break;
-		case 0xe1:	t = W; W = X; X = t;					break;
-		case 0xe2:	t = W; W = Y; Y = t;					break;
-		case 0xe3:	t = W; W = U; U = t;					break;
-		case 0xe4:	t = W; W = S; S = t;					break;
-		case 0xe5:	t = W; W = PC; PC = t; CHANGE_PC;		break;
-		case 0xe6:	t = W; W = W; W = t;					break;
-		case 0xe7:	t = W; W = V; V = t;					break;
-		case 0xe8:	t = E; E = A; A = t;					break;
-		case 0xe9:	t = E; E = B; B = t;					break;
-		case 0xea:	t = E; E = CC; CC = t;					break;
-		case 0xeb:	t = E; E = DP; DP = t;					break;
-		case 0xec:	t = E; E = 0; zero = t; 				break;
-		case 0xed:	t = E; E = 0; zero = t; 				break;
-		case 0xee:	t = E; E = E; E = t;					break;
-		case 0xef:	t = E; E = F; F = t;					break;
-		case 0xf0:	t = W; W = D; D = t;					break;
-		case 0xf1:	t = W; W = X; X = t;					break;
-		case 0xf2:	t = W; W = Y; Y = t;					break;
-		case 0xf3:	t = W; W = U; U = t;					break;
-		case 0xf4:	t = W; W = S; S = t;					break;
-		case 0xf5:	t = W; W = PC; PC = t; CHANGE_PC;		break;
-		case 0xf6:	t = W; W = W; W = t;					break;
-		case 0xf7:	t = W; W = V; V = t;					break;
-		case 0xf8:	t = F; F = A; A = t;					break;
-		case 0xf9:	t = F; F = B; B = t;					break;
-		case 0xfa:	t = F; F = CC; CC = t;					break;
-		case 0xfb:	t = F; F = DP; DP = t;					break;
-		case 0xfc:	t = F; F = 0; zero = t; 				break;
-		case 0xfd:	t = F; F = 0; zero = t; 				break;
-		case 0xfe:	t = F; F = E; E = t;					break;
-		case 0xff:	t = F; F = F; F = t;					break;
+		promote = TRUE;
+	}
+
+	switch(tb>>4) {
+		case  0: t1 = D;  break;
+		case  1: t1 = X;  break;
+		case  2: t1 = Y;  break;
+		case  3: t1 = U;  break;
+		case  4: t1 = S;  break;
+		case  5: t1 = PC; break;
+		case  6: t1 = W;  break;
+		case  7: t1 = V;  break;
+		case  8: t1 = (promote ? D : A);  break;
+		case  9: t1 = (promote ? D : B);  break;
+		case 10: t1 = CC; break;
+		case 11: t1 = DP; break;
+		case 12: t1 = 0;  break;
+		case 13: t1 = 0;  break;
+		case 14: t1 = (promote ? W : E ); break;
+		default: t1 = (promote ? W : F ); break;
+	}
+	switch(tb&15) {
+		case  0: t2 = D;  break;
+		case  1: t2 = X;  break;
+		case  2: t2 = Y;  break;
+		case  3: t2 = U;  break;
+		case  4: t2 = S;  break;
+		case  5: t2 = PC; break;
+		case  6: t2 = W;  break;
+		case  7: t2 = V;  break;
+		case  8: t2 = (promote ? D : A);  break;
+		case  9: t2 = (promote ? D : B);  break;
+		case 10: t2 = CC; break;
+		case 11: t2 = DP; break;
+		case 12: t2 = 0;  break;
+		case 13: t2 = 0;  break;
+		case 14: t2 = (promote ? W : E); break;
+		default: t2 = (promote ? W : F); break;
+	}
+
+	switch(tb>>4) {
+		case  0: D = t2;  break;
+		case  1: X = t2;  break;
+		case  2: Y = t2;  break;
+		case  3: U = t2;  break;
+		case  4: S = t2;  break;
+		case  5: PC = t2; CHANGE_PC; break;
+		case  6: W = t2;  break;
+		case  7: V = t2;  break;
+		case  8: if (promote) D = t2; else A = t2; break;
+		case  9: if (promote) D = t2; else B = t2; break;
+		case 10: CC = t2; break;
+		case 11: DP = t2; break;
+		case 12: /* 0 = t2 */ break;
+		case 13: /* 0 = t2 */ break;
+		case 14: if (promote) W = t2; else E = t2; break;
+		case 15: if (promote) W = t2; else F = t2; break;
+	}
+	switch(tb&15) {
+		case  0: D = t1;  break;
+		case  1: X = t1;  break;
+		case  2: Y = t1;  break;
+		case  3: U = t1;  break;
+		case  4: S = t1;  break;
+		case  5: PC = t1; CHANGE_PC; break;
+		case  6: W = t1;  break;
+		case  7: V = t1;  break;
+		case  8: if (promote) D = t1; else A = t1; break;
+		case  9: if (promote) D = t1; else B = t1; break;
+		case 10: CC = t1; break;
+		case 11: DP = t1; break;
+		case 12: /* 0 = t1 */ break;
+		case 13: /* 0 = t1 */ break;
+		case 14: if (promote) W = t1; else E = t1; break;
+		case 15: if (promote) W = t1; else F = t1; break;
 	}
 }
+
 /* $1F TFR inherent ----- */
 INLINE void tfr( void )
 {
 	UINT8 tb;
-	UINT16 zero = 0;
+	UINT16 t;
+	int 	promote = FALSE;
 
 	IMMBYTE(tb);
-	switch(tb)
+	if( (tb^(tb>>4)) & 0x08 )
 	{
-		case 0x00:	D=D;				break;
-		case 0x01:	X=D;				break;
-		case 0x02:	Y=D;				break;
-		case 0x03:	U=D;				break;
-		case 0x04:	S=D;				break;
-		case 0x05:	PC=D; CHANGE_PC;	break;
-		case 0x06:	W=D;				break;
-		case 0x07:	V=D;				break;
-		case 0x08:	D=D;				break;
-		case 0x09:	D=D;				break;
-		case 0x0a:	CC=D;				break;
-		case 0x0b:	DP=D;				break;
-		case 0x0c:	zero=D; 			break;
-		case 0x0d:	zero=D; 			break;
-		case 0x0e:	W=D;				break;
-		case 0x0f:	W=D;				break;
-		case 0x10:	D=X;				break;
-		case 0x11:	X=X;				break;
-		case 0x12:	Y=X;				break;
-		case 0x13:	U=X;				break;
-		case 0x14:	S=X;				break;
-		case 0x15:	PC=X; CHANGE_PC;	break;
-		case 0x16:	W=X;				break;
-		case 0x17:	V=X;				break;
-		case 0x18:	D=X;				break;
-		case 0x19:	D=X;				break;
-		case 0x1a:	CC=X;				break;
-		case 0x1b:	DP=X;				break;
-		case 0x1c:	zero=X; 			break;
-		case 0x1d:	zero=X; 			break;
-		case 0x1e:	W=X;				break;
-		case 0x1f:	W=X;				break;
-		case 0x20:	D=Y;				break;
-		case 0x21:	X=Y;				break;
-		case 0x22:	Y=Y;				break;
-		case 0x23:	U=Y;				break;
-		case 0x24:	S=Y;				break;
-		case 0x25:	PC=Y; CHANGE_PC;	break;
-		case 0x26:	W=Y;				break;
-		case 0x27:	V=Y;				break;
-		case 0x28:	D=Y;				break;
-		case 0x29:	D=Y;				break;
-		case 0x2a:	CC=Y;				break;
-		case 0x2b:	DP=Y;				break;
-		case 0x2c:	zero=Y; 			break;
-		case 0x2d:	zero=Y; 			break;
-		case 0x2e:	W=Y;				break;
-		case 0x2f:	W=Y;				break;
-		case 0x30:	D=U;				break;
-		case 0x31:	X=U;				break;
-		case 0x32:	Y=U;				break;
-		case 0x33:	U=U;				break;
-		case 0x34:	S=U;				break;
-		case 0x35:	PC=U; CHANGE_PC;	break;
-		case 0x36:	W=U;				break;
-		case 0x37:	V=U;				break;
-		case 0x38:	D=U;				break;
-		case 0x39:	D=U;				break;
-		case 0x3a:	CC=U;				break;
-		case 0x3b:	DP=U;				break;
-		case 0x3c:	zero=U; 			break;
-		case 0x3d:	zero=U; 			break;
-		case 0x3e:	W=U;				break;
-		case 0x3f:	W=U;				break;
-		case 0x40:	D=S;				break;
-		case 0x41:	X=S;				break;
-		case 0x42:	Y=S;				break;
-		case 0x43:	U=S;				break;
-		case 0x44:	S=S;				break;
-		case 0x45:	PC=S; CHANGE_PC;	break;
-		case 0x46:	W=S;				break;
-		case 0x47:	V=S;				break;
-		case 0x48:	D=S;				break;
-		case 0x49:	D=S;				break;
-		case 0x4a:	CC=S;				break;
-		case 0x4b:	DP=S;				break;
-		case 0x4c:	zero=S; 			break;
-		case 0x4d:	zero=S; 			break;
-		case 0x4e:	W=S;				break;
-		case 0x4f:	W=S;				break;
-		case 0x50:	D=PC;				break;
-		case 0x51:	X=PC;				break;
-		case 0x52:	Y=PC;				break;
-		case 0x53:	U=PC;				break;
-		case 0x54:	S=PC;				break;
-		case 0x55:	PC=PC; CHANGE_PC;	break;
-		case 0x56:	W=PC;				break;
-		case 0x57:	V=PC;				break;
-		case 0x58:	D=PC;				break;
-		case 0x59:	D=PC;				break;
-		case 0x5a:	CC=PC;				break;
-		case 0x5b:	DP=PC;				break;
-		case 0x5c:	zero=PC;			break;
-		case 0x5d:	zero=PC;			break;
-		case 0x5e:	W=PC;				break;
-		case 0x5f:	W=PC;				break;
-		case 0x60:	D=W;				break;
-		case 0x61:	X=W;				break;
-		case 0x62:	Y=W;				break;
-		case 0x63:	U=W;				break;
-		case 0x64:	S=W;				break;
-		case 0x65:	PC=W; CHANGE_PC;	break;
-		case 0x66:	W=W;				break;
-		case 0x67:	V=W;				break;
-		case 0x68:	D=W;				break;
-		case 0x69:	D=W;				break;
-		case 0x6a:	CC=W;				break;
-		case 0x6b:	DP=W;				break;
-		case 0x6c:	zero=W; 			break;
-		case 0x6d:	zero=W; 			break;
-		case 0x6e:	W=W;				break;
-		case 0x6f:	W=W;				break;
-		case 0x70:	D=V;				break;
-		case 0x71:	X=V;				break;
-		case 0x72:	Y=V;				break;
-		case 0x73:	U=V;				break;
-		case 0x74:	S=V;				break;
-		case 0x75:	PC=V; CHANGE_PC;	break;
-		case 0x76:	W=V;				break;
-		case 0x77:	V=V;				break;
-		case 0x78:	D=V;				break;
-		case 0x79:	D=V;				break;
-		case 0x7a:	CC=V;				break;
-		case 0x7b:	DP=V;				break;
-		case 0x7c:	zero=V; 			break;
-		case 0x7d:	zero=V; 			break;
-		case 0x7e:	W=V;				break;
-		case 0x7f:	W=V;				break;
-		case 0x80:	D=D;				break;
-		case 0x81:	X=D;				break;
-		case 0x82:	Y=D;				break;
-		case 0x83:	U=D;				break;
-		case 0x84:	S=D;				break;
-		case 0x85:	PC=D; CHANGE_PC;	break;
-		case 0x86:	W=D;				break;
-		case 0x87:	V=D;				break;
-		case 0x88:	A=A;				break;
-		case 0x89:	B=A;				break;
-		case 0x8a:	CC=A;				break;
-		case 0x8b:	DP=A;				break;
-		case 0x8c:	zero=A; 			break;
-		case 0x8d:	zero=A; 			break;
-		case 0x8e:	E=A;				break;
-		case 0x8f:	F=A;				break;
-		case 0x90:	D=D;				break;
-		case 0x91:	X=D;				break;
-		case 0x92:	Y=D;				break;
-		case 0x93:	U=D;				break;
-		case 0x94:	S=D;				break;
-		case 0x95:	PC=D; CHANGE_PC;	break;
-		case 0x96:	W=D;				break;
-		case 0x97:	V=D;				break;
-		case 0x98:	A=B;				break;
-		case 0x99:	B=B;				break;
-		case 0x9a:	CC=B;				break;
-		case 0x9b:	DP=B;				break;
-		case 0x9c:	zero=B; 			break;
-		case 0x9d:	zero=B; 			break;
-		case 0x9e:	E=B;				break;
-		case 0x9f:	F=B;				break;
-		case 0xa0:	D=CC;				break;
-		case 0xa1:	X=CC;				break;
-		case 0xa2:	Y=CC;				break;
-		case 0xa3:	U=CC;				break;
-		case 0xa4:	S=CC;				break;
-		case 0xa5:	PC=CC; CHANGE_PC;	break;
-		case 0xa6:	W=CC;				break;
-		case 0xa7:	V=CC;				break;
-		case 0xa8:	A=CC;				break;
-		case 0xa9:	B=CC;				break;
-		case 0xaa:	CC=CC;				break;
-		case 0xab:	DP=CC;				break;
-		case 0xac:	zero=CC;			break;
-		case 0xad:	zero=CC;			break;
-		case 0xae:	E=CC;				break;
-		case 0xaf:	F=CC;				break;
-		case 0xb0:	D=DP;				break;
-		case 0xb1:	X=DP;				break;
-		case 0xb2:	Y=DP;				break;
-		case 0xb3:	U=DP;				break;
-		case 0xb4:	S=DP;				break;
-		case 0xb5:	PC=DP; CHANGE_PC;	break;
-		case 0xb6:	W=DP;				break;
-		case 0xb7:	V=DP;				break;
-		case 0xb8:	A=DP;				break;
-		case 0xb9:	B=DP;				break;
-		case 0xba:	CC=DP;				break;
-		case 0xbb:	DP=DP;				break;
-		case 0xbc:	zero=DP;			break;
-		case 0xbd:	zero=DP;			break;
-		case 0xbe:	E=DP;				break;
-		case 0xbf:	F=DP;				break;
-		case 0xc0:	D=0;				break;
-		case 0xc1:	X=0;				break;
-		case 0xc2:	Y=0;				break;
-		case 0xc3:	U=0;				break;
-		case 0xc4:	S=0;				break;
-		case 0xc5:	PC=0; CHANGE_PC;	break;
-		case 0xc6:	W=0;				break;
-		case 0xc7:	V=0;				break;
-		case 0xc8:	A=0;				break;
-		case 0xc9:	B=0;				break;
-		case 0xca:	CC=0;				break;
-		case 0xcb:	DP=0;				break;
-		case 0xcc:	zero=0; 			break;
-		case 0xcd:	zero=0; 			break;
-		case 0xce:	E=0;				break;
-		case 0xcf:	F=0;				break;
-		case 0xd0:	D=0;				break;
-		case 0xd1:	X=0;				break;
-		case 0xd2:	Y=0;				break;
-		case 0xd3:	U=0;				break;
-		case 0xd4:	S=0;				break;
-		case 0xd5:	PC=0; CHANGE_PC;	break;
-		case 0xd6:	W=0;				break;
-		case 0xd7:	V=0;				break;
-		case 0xd8:	A=0;				break;
-		case 0xd9:	B=0;				break;
-		case 0xda:	CC=0;				break;
-		case 0xdb:	DP=0;				break;
-		case 0xdc:	zero=0; 			break;
-		case 0xdd:	zero=0; 			break;
-		case 0xde:	E=0;				break;
-		case 0xdf:	F=0;				break;
-		case 0xe0:	D=W;				break;
-		case 0xe1:	X=W;				break;
-		case 0xe2:	Y=W;				break;
-		case 0xe3:	U=W;				break;
-		case 0xe4:	S=W;				break;
-		case 0xe5:	PC=W; CHANGE_PC;	break;
-		case 0xe6:	W=W;				break;
-		case 0xe7:	V=W;				break;
-		case 0xe8:	A=E;				break;
-		case 0xe9:	B=E;				break;
-		case 0xea:	CC=E;				break;
-		case 0xeb:	DP=E;				break;
-		case 0xec:	zero=E; 			break;
-		case 0xed:	zero=E; 			break;
-		case 0xee:	E=E;				break;
-		case 0xef:	F=E;				break;
-		case 0xf0:	D=W;				break;
-		case 0xf1:	X=W;				break;
-		case 0xf2:	Y=W;				break;
-		case 0xf3:	U=W;				break;
-		case 0xf4:	S=W;				break;
-		case 0xf5:	PC=W; CHANGE_PC;	break;
-		case 0xf6:	W=W;				break;
-		case 0xf7:	V=W;				break;
-		case 0xf8:	A=F;				break;
-		case 0xf9:	B=F;				break;
-		case 0xfa:	CC=F;				break;
-		case 0xfb:	DP=F;				break;
-		case 0xfc:	zero=F; 			break;
-		case 0xfd:	zero=F; 			break;
-		case 0xfe:	E=F;				break;
-		case 0xff:	F=F;				break;
+		promote = TRUE;
+	}
+
+	switch(tb>>4) {
+		case  0: t = D;  break;
+		case  1: t = X;  break;
+		case  2: t = Y;  break;
+		case  3: t = U;  break;
+		case  4: t = S;  break;
+		case  5: t = PC; break;
+		case  6: t = W;  break;
+		case  7: t = V;  break;
+		case  8: t = (promote ? D : A );  break;
+		case  9: t = (promote ? D : B );  break;
+		case 10: t = CC; break;
+		case 11: t = DP; break;
+		case 12: t = 0;  break;
+		case 13: t = 0;  break;
+		case 14: t = (promote ? W : E ); break;
+		default: t = (promote ? W : F ); break;
+	}
+
+	switch(tb&15) {
+		case  0: D = t;  break;
+		case  1: X = t;  break;
+		case  2: Y = t;  break;
+		case  3: U = t;  break;
+		case  4: S = t;  break;
+		case  5: PC = t; CHANGE_PC; break;
+		case  6: W = t;  break;
+		case  7: V = t;  break;
+		case  8: if (promote) D = t; else A = t; break;
+		case  9: if (promote) D = t; else B = t; break;
+		case 10: CC = t; break;
+		case 11: DP = t; break;
+		case 12: /* 0 = t1 */ break;
+		case 13: /* 0 = t1 */ break;
+		case 14: if (promote) W = t; else E = t; break;
+		case 15: if (promote) W = t; else F = t; break;
 	}
 }
 
@@ -1344,36 +947,85 @@ INLINE void lble( void )
 }
 
 /* $1030 addr_r r1 + r2 -> r2 */
-#define MATH16( r1, r2 )		\
-{								\
-	r16 = r1 + r2;				\
-	CLR_HNZVC;					\
-	SET_FLAGS16(r1,r1,r16); 	\
-	r2 = r16;					\
-}
-
-#define MATH8( r1, r2 ) 		\
-{								\
-	r8 = r1 + r2;				\
-	CLR_HNZVC;					\
-	SET_FLAGS8(r1,r2,r8);		\
-	SET_H(r1,r2,r8);			\
-	r2 = r8;					\
-}
 
 INLINE void addr_r( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
 
-	REG_TO_REG( t );
+	IMMBYTE(tb);
+	if( (tb^(tb>>4)) & 0x08 )	/* HJB 990225: mixed 8/16 bit case? */
+	{
+		promote = TRUE;
+	}
+
+	switch(tb>>4) {
+		case  0: src16Reg = &D; large = TRUE;  break;
+		case  1: src16Reg = &X; large = TRUE;  break;
+		case  2: src16Reg = &Y; large = TRUE;  break;
+		case  3: src16Reg = &U; large = TRUE;  break;
+		case  4: src16Reg = &S; large = TRUE;  break;
+		case  5: src16Reg = &PC; large = TRUE; break;
+		case  6: src16Reg = &W; large = TRUE;  break;
+		case  7: src16Reg = &V; large = TRUE;  break;
+		case  8: if (promote) src16Reg = &D; else src8Reg = &A; break;
+		case  9: if (promote) src16Reg = &D; else src8Reg = &B; break;
+		case 10: if (promote) src16Reg = &z16; else src8Reg = &CC; break; /* I dont know if this is the correct promotion */
+		case 11: if (promote) src16Reg = &z16; else src8Reg = &DP; break; /* I dont know if this is the correct promotion */
+		case 12: if (promote) src16Reg = &z16; else src8Reg = &z8; break;
+		case 13: if (promote) src16Reg = &z16; else src8Reg = &z8; break;
+		case 14: if (promote) src16Reg = &W; else src8Reg = &E; break;
+		default: if (promote) src16Reg = &W; else src8Reg = &F; break;
+	}
+
+	switch(tb&15) {
+		case  0: dst16Reg = &D; large = TRUE;  break;
+		case  1: dst16Reg = &X; large = TRUE;  break;
+		case  2: dst16Reg = &Y; large = TRUE;  break;
+		case  3: dst16Reg = &U; large = TRUE;  break;
+		case  4: dst16Reg = &S; large = TRUE;  break;
+		case  5: dst16Reg = &PC; large = TRUE; break;
+		case  6: dst16Reg = &W; large = TRUE;  break;
+		case  7: dst16Reg = &V; large = TRUE;  break;
+		case  8: if (promote) dst16Reg = &D; else dst8Reg = &A; break;
+		case  9: if (promote) dst16Reg = &D; else dst8Reg = &B; break;
+		case 10: if (promote) dst16Reg = &z16; else dst8Reg = &CC; break; /* I dont know if this is the correct promotion */
+		case 11: if (promote) dst16Reg = &z16; else dst8Reg = &DP; break; /* I dont know if this is the correct promotion */
+		case 12: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;
+		case 13: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;
+		case 14: if (promote) dst16Reg = &W; else dst8Reg = &E; break;
+		default: if (promote) dst16Reg = &W; else dst8Reg = &F; break;
+	}
+
+
+	if ( large )
+	{
+		r16 = *src16Reg + *dst16Reg;
+		CLR_HNZVC;
+		SET_FLAGS16(*src16Reg,*dst16Reg,r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *src8Reg + *dst8Reg;
+		CLR_HNZVC;
+		SET_FLAGS8(*src8Reg,*dst8Reg,r8);
+		/* SET_H(*src8Reg,*src8Reg,r8);*/ /*Experimentation prooved this not to be the case */
+		*dst8Reg = r8;
+	}
+
 }
-#undef MATH16
-#undef MATH8
 
-/* $1031 ADCR r1 + r2 + C -> r2 */
 #define MATH16( r1, r2 )			\
 {									\
 	r16 = r1 + r2 + (CC & CC_C);	\
@@ -1832,451 +1484,157 @@ INLINE void swi( void )
 	CHANGE_PC;
 }
 
-#define BIT_TRANSFER_MODES( immediate ) 					\
-{															\
-	switch( immediate ) 									\
-	{														\
-		case 0x00:	LOGICAL_OP( CC, 0x01, 0x01 );	break;	\
-		case 0x01:	LOGICAL_OP( CC, 0x01, 0x02 );	break;	\
-		case 0x02:	LOGICAL_OP( CC, 0x01, 0x04 );	break;	\
-		case 0x03:	LOGICAL_OP( CC, 0x01, 0x08 );	break;	\
-		case 0x04:	LOGICAL_OP( CC, 0x01, 0x10 );	break;	\
-		case 0x05:	LOGICAL_OP( CC, 0x01, 0x20 );	break;	\
-		case 0x06:	LOGICAL_OP( CC, 0x01, 0x40 );	break;	\
-		case 0x07:	LOGICAL_OP( CC, 0x01, 0x80 );	break;	\
-		case 0x08:	LOGICAL_OP( CC, 0x02, 0x01 );	break;	\
-		case 0x09:	LOGICAL_OP( CC, 0x02, 0x02 );	break;	\
-		case 0x0a:	LOGICAL_OP( CC, 0x02, 0x04 );	break;	\
-		case 0x0b:	LOGICAL_OP( CC, 0x02, 0x08 );	break;	\
-		case 0x0c:	LOGICAL_OP( CC, 0x02, 0x10 );	break;	\
-		case 0x0d:	LOGICAL_OP( CC, 0x02, 0x20 );	break;	\
-		case 0x0e:	LOGICAL_OP( CC, 0x02, 0x40 );	break;	\
-		case 0x0f:	LOGICAL_OP( CC, 0x02, 0x80 );	break;	\
-		case 0x10:	LOGICAL_OP( CC, 0x04, 0x01 );	break;	\
-		case 0x11:	LOGICAL_OP( CC, 0x04, 0x02 );	break;	\
-		case 0x12:	LOGICAL_OP( CC, 0x04, 0x04 );	break;	\
-		case 0x13:	LOGICAL_OP( CC, 0x04, 0x08 );	break;	\
-		case 0x14:	LOGICAL_OP( CC, 0x04, 0x10 );	break;	\
-		case 0x15:	LOGICAL_OP( CC, 0x04, 0x20 );	break;	\
-		case 0x16:	LOGICAL_OP( CC, 0x04, 0x40 );	break;	\
-		case 0x17:	LOGICAL_OP( CC, 0x04, 0x80 );	break;	\
-		case 0x18:	LOGICAL_OP( CC, 0x08, 0x01 );	break;	\
-		case 0x19:	LOGICAL_OP( CC, 0x08, 0x02 );	break;	\
-		case 0x1a:	LOGICAL_OP( CC, 0x08, 0x04 );	break;	\
-		case 0x1b:	LOGICAL_OP( CC, 0x08, 0x08 );	break;	\
-		case 0x1c:	LOGICAL_OP( CC, 0x08, 0x10 );	break;	\
-		case 0x1d:	LOGICAL_OP( CC, 0x08, 0x20 );	break;	\
-		case 0x1e:	LOGICAL_OP( CC, 0x08, 0x40 );	break;	\
-		case 0x1f:	LOGICAL_OP( CC, 0x08, 0x80 );	break;	\
-		case 0x20:	LOGICAL_OP( CC, 0x10, 0x01 );	break;	\
-		case 0x21:	LOGICAL_OP( CC, 0x10, 0x02 );	break;	\
-		case 0x22:	LOGICAL_OP( CC, 0x10, 0x04 );	break;	\
-		case 0x23:	LOGICAL_OP( CC, 0x10, 0x08 );	break;	\
-		case 0x24:	LOGICAL_OP( CC, 0x10, 0x10 );	break;	\
-		case 0x25:	LOGICAL_OP( CC, 0x10, 0x20 );	break;	\
-		case 0x26:	LOGICAL_OP( CC, 0x10, 0x40 );	break;	\
-		case 0x27:	LOGICAL_OP( CC, 0x10, 0x80 );	break;	\
-		case 0x28:	LOGICAL_OP( CC, 0x20, 0x01 );	break;	\
-		case 0x29:	LOGICAL_OP( CC, 0x20, 0x02 );	break;	\
-		case 0x2a:	LOGICAL_OP( CC, 0x20, 0x04 );	break;	\
-		case 0x2b:	LOGICAL_OP( CC, 0x20, 0x08 );	break;	\
-		case 0x2c:	LOGICAL_OP( CC, 0x20, 0x10 );	break;	\
-		case 0x2d:	LOGICAL_OP( CC, 0x20, 0x20 );	break;	\
-		case 0x2e:	LOGICAL_OP( CC, 0x20, 0x40 );	break;	\
-		case 0x2f:	LOGICAL_OP( CC, 0x20, 0x80 );	break;	\
-		case 0x30:	LOGICAL_OP( CC, 0x40, 0x01 );	break;	\
-		case 0x31:	LOGICAL_OP( CC, 0x40, 0x02 );	break;	\
-		case 0x32:	LOGICAL_OP( CC, 0x40, 0x04 );	break;	\
-		case 0x33:	LOGICAL_OP( CC, 0x40, 0x08 );	break;	\
-		case 0x34:	LOGICAL_OP( CC, 0x40, 0x10 );	break;	\
-		case 0x35:	LOGICAL_OP( CC, 0x40, 0x20 );	break;	\
-		case 0x36:	LOGICAL_OP( CC, 0x40, 0x40 );	break;	\
-		case 0x37:	LOGICAL_OP( CC, 0x40, 0x80 );	break;	\
-		case 0x38:	LOGICAL_OP( CC, 0x80, 0x01 );	break;	\
-		case 0x39:	LOGICAL_OP( CC, 0x80, 0x02 );	break;	\
-		case 0x3a:	LOGICAL_OP( CC, 0x80, 0x04 );	break;	\
-		case 0x3b:	LOGICAL_OP( CC, 0x80, 0x08 );	break;	\
-		case 0x3c:	LOGICAL_OP( CC, 0x80, 0x10 );	break;	\
-		case 0x3d:	LOGICAL_OP( CC, 0x80, 0x20 );	break;	\
-		case 0x3e:	LOGICAL_OP( CC, 0x80, 0x40 );	break;	\
-		case 0x3f:	LOGICAL_OP( CC, 0x80, 0x80 );	break;	\
-		case 0x40:	LOGICAL_OP(  A, 0x01, 0x01 );	break;	\
-		case 0x41:	LOGICAL_OP(  A, 0x01, 0x02 );	break;	\
-		case 0x42:	LOGICAL_OP(  A, 0x01, 0x04 );	break;	\
-		case 0x43:	LOGICAL_OP(  A, 0x01, 0x08 );	break;	\
-		case 0x44:	LOGICAL_OP(  A, 0x01, 0x10 );	break;	\
-		case 0x45:	LOGICAL_OP(  A, 0x01, 0x20 );	break;	\
-		case 0x46:	LOGICAL_OP(  A, 0x01, 0x40 );	break;	\
-		case 0x47:	LOGICAL_OP(  A, 0x01, 0x80 );	break;	\
-		case 0x48:	LOGICAL_OP(  A, 0x02, 0x01 );	break;	\
-		case 0x49:	LOGICAL_OP(  A, 0x02, 0x02 );	break;	\
-		case 0x4a:	LOGICAL_OP(  A, 0x02, 0x04 );	break;	\
-		case 0x4b:	LOGICAL_OP(  A, 0x02, 0x08 );	break;	\
-		case 0x4c:	LOGICAL_OP(  A, 0x02, 0x10 );	break;	\
-		case 0x4d:	LOGICAL_OP(  A, 0x02, 0x20 );	break;	\
-		case 0x4e:	LOGICAL_OP(  A, 0x02, 0x40 );	break;	\
-		case 0x4f:	LOGICAL_OP(  A, 0x02, 0x80 );	break;	\
-		case 0x50:	LOGICAL_OP(  A, 0x04, 0x01 );	break;	\
-		case 0x51:	LOGICAL_OP(  A, 0x04, 0x02 );	break;	\
-		case 0x52:	LOGICAL_OP(  A, 0x04, 0x04 );	break;	\
-		case 0x53:	LOGICAL_OP(  A, 0x04, 0x08 );	break;	\
-		case 0x54:	LOGICAL_OP(  A, 0x04, 0x10 );	break;	\
-		case 0x55:	LOGICAL_OP(  A, 0x04, 0x20 );	break;	\
-		case 0x56:	LOGICAL_OP(  A, 0x04, 0x40 );	break;	\
-		case 0x57:	LOGICAL_OP(  A, 0x04, 0x80 );	break;	\
-		case 0x58:	LOGICAL_OP(  A, 0x08, 0x01 );	break;	\
-		case 0x59:	LOGICAL_OP(  A, 0x08, 0x02 );	break;	\
-		case 0x5a:	LOGICAL_OP(  A, 0x08, 0x04 );	break;	\
-		case 0x5b:	LOGICAL_OP(  A, 0x08, 0x08 );	break;	\
-		case 0x5c:	LOGICAL_OP(  A, 0x08, 0x10 );	break;	\
-		case 0x5d:	LOGICAL_OP(  A, 0x08, 0x20 );	break;	\
-		case 0x5e:	LOGICAL_OP(  A, 0x08, 0x40 );	break;	\
-		case 0x5f:	LOGICAL_OP(  A, 0x08, 0x80 );	break;	\
-		case 0x60:	LOGICAL_OP(  A, 0x10, 0x01 );	break;	\
-		case 0x61:	LOGICAL_OP(  A, 0x10, 0x02 );	break;	\
-		case 0x62:	LOGICAL_OP(  A, 0x10, 0x04 );	break;	\
-		case 0x63:	LOGICAL_OP(  A, 0x10, 0x08 );	break;	\
-		case 0x64:	LOGICAL_OP(  A, 0x10, 0x10 );	break;	\
-		case 0x65:	LOGICAL_OP(  A, 0x10, 0x20 );	break;	\
-		case 0x66:	LOGICAL_OP(  A, 0x10, 0x40 );	break;	\
-		case 0x67:	LOGICAL_OP(  A, 0x10, 0x80 );	break;	\
-		case 0x68:	LOGICAL_OP(  A, 0x20, 0x01 );	break;	\
-		case 0x69:	LOGICAL_OP(  A, 0x20, 0x02 );	break;	\
-		case 0x6a:	LOGICAL_OP(  A, 0x20, 0x04 );	break;	\
-		case 0x6b:	LOGICAL_OP(  A, 0x20, 0x08 );	break;	\
-		case 0x6c:	LOGICAL_OP(  A, 0x20, 0x10 );	break;	\
-		case 0x6d:	LOGICAL_OP(  A, 0x20, 0x20 );	break;	\
-		case 0x6e:	LOGICAL_OP(  A, 0x20, 0x40 );	break;	\
-		case 0x6f:	LOGICAL_OP(  A, 0x20, 0x80 );	break;	\
-		case 0x70:	LOGICAL_OP(  A, 0x40, 0x01 );	break;	\
-		case 0x71:	LOGICAL_OP(  A, 0x40, 0x02 );	break;	\
-		case 0x72:	LOGICAL_OP(  A, 0x40, 0x04 );	break;	\
-		case 0x73:	LOGICAL_OP(  A, 0x40, 0x08 );	break;	\
-		case 0x74:	LOGICAL_OP(  A, 0x40, 0x10 );	break;	\
-		case 0x75:	LOGICAL_OP(  A, 0x40, 0x20 );	break;	\
-		case 0x76:	LOGICAL_OP(  A, 0x40, 0x40 );	break;	\
-		case 0x77:	LOGICAL_OP(  A, 0x40, 0x80 );	break;	\
-		case 0x78:	LOGICAL_OP(  A, 0x80, 0x01 );	break;	\
-		case 0x79:	LOGICAL_OP(  A, 0x80, 0x02 );	break;	\
-		case 0x7a:	LOGICAL_OP(  A, 0x80, 0x04 );	break;	\
-		case 0x7b:	LOGICAL_OP(  A, 0x80, 0x08 );	break;	\
-		case 0x7c:	LOGICAL_OP(  A, 0x80, 0x10 );	break;	\
-		case 0x7d:	LOGICAL_OP(  A, 0x80, 0x20 );	break;	\
-		case 0x7e:	LOGICAL_OP(  A, 0x80, 0x40 );	break;	\
-		case 0x7f:	LOGICAL_OP(  A, 0x80, 0x80 );	break;	\
-		case 0x80:	LOGICAL_OP(  B, 0x01, 0x01 );	break;	\
-		case 0x81:	LOGICAL_OP(  B, 0x01, 0x02 );	break;	\
-		case 0x82:	LOGICAL_OP(  B, 0x01, 0x04 );	break;	\
-		case 0x83:	LOGICAL_OP(  B, 0x01, 0x08 );	break;	\
-		case 0x84:	LOGICAL_OP(  B, 0x01, 0x10 );	break;	\
-		case 0x85:	LOGICAL_OP(  B, 0x01, 0x20 );	break;	\
-		case 0x86:	LOGICAL_OP(  B, 0x01, 0x40 );	break;	\
-		case 0x87:	LOGICAL_OP(  B, 0x01, 0x80 );	break;	\
-		case 0x88:	LOGICAL_OP(  B, 0x02, 0x01 );	break;	\
-		case 0x89:	LOGICAL_OP(  B, 0x02, 0x02 );	break;	\
-		case 0x8a:	LOGICAL_OP(  B, 0x02, 0x04 );	break;	\
-		case 0x8b:	LOGICAL_OP(  B, 0x02, 0x08 );	break;	\
-		case 0x8c:	LOGICAL_OP(  B, 0x02, 0x10 );	break;	\
-		case 0x8d:	LOGICAL_OP(  B, 0x02, 0x20 );	break;	\
-		case 0x8e:	LOGICAL_OP(  B, 0x02, 0x40 );	break;	\
-		case 0x8f:	LOGICAL_OP(  B, 0x02, 0x80 );	break;	\
-		case 0x90:	LOGICAL_OP(  B, 0x04, 0x01 );	break;	\
-		case 0x91:	LOGICAL_OP(  B, 0x04, 0x02 );	break;	\
-		case 0x92:	LOGICAL_OP(  B, 0x04, 0x04 );	break;	\
-		case 0x93:	LOGICAL_OP(  B, 0x04, 0x08 );	break;	\
-		case 0x94:	LOGICAL_OP(  B, 0x04, 0x10 );	break;	\
-		case 0x95:	LOGICAL_OP(  B, 0x04, 0x20 );	break;	\
-		case 0x96:	LOGICAL_OP(  B, 0x04, 0x40 );	break;	\
-		case 0x97:	LOGICAL_OP(  B, 0x04, 0x80 );	break;	\
-		case 0x98:	LOGICAL_OP(  B, 0x08, 0x01 );	break;	\
-		case 0x99:	LOGICAL_OP(  B, 0x08, 0x02 );	break;	\
-		case 0x9a:	LOGICAL_OP(  B, 0x08, 0x04 );	break;	\
-		case 0x9b:	LOGICAL_OP(  B, 0x08, 0x08 );	break;	\
-		case 0x9c:	LOGICAL_OP(  B, 0x08, 0x10 );	break;	\
-		case 0x9d:	LOGICAL_OP(  B, 0x08, 0x20 );	break;	\
-		case 0x9e:	LOGICAL_OP(  B, 0x08, 0x40 );	break;	\
-		case 0x9f:	LOGICAL_OP(  B, 0x08, 0x80 );	break;	\
-		case 0xa0:	LOGICAL_OP(  B, 0x10, 0x01 );	break;	\
-		case 0xa1:	LOGICAL_OP(  B, 0x10, 0x02 );	break;	\
-		case 0xa2:	LOGICAL_OP(  B, 0x10, 0x04 );	break;	\
-		case 0xa3:	LOGICAL_OP(  B, 0x10, 0x08 );	break;	\
-		case 0xa4:	LOGICAL_OP(  B, 0x10, 0x10 );	break;	\
-		case 0xa5:	LOGICAL_OP(  B, 0x10, 0x20 );	break;	\
-		case 0xa6:	LOGICAL_OP(  B, 0x10, 0x40 );	break;	\
-		case 0xa7:	LOGICAL_OP(  B, 0x10, 0x80 );	break;	\
-		case 0xa8:	LOGICAL_OP(  B, 0x20, 0x01 );	break;	\
-		case 0xa9:	LOGICAL_OP(  B, 0x20, 0x02 );	break;	\
-		case 0xaa:	LOGICAL_OP(  B, 0x20, 0x04 );	break;	\
-		case 0xab:	LOGICAL_OP(  B, 0x20, 0x08 );	break;	\
-		case 0xac:	LOGICAL_OP(  B, 0x20, 0x10 );	break;	\
-		case 0xad:	LOGICAL_OP(  B, 0x20, 0x20 );	break;	\
-		case 0xae:	LOGICAL_OP(  B, 0x20, 0x40 );	break;	\
-		case 0xaf:	LOGICAL_OP(  B, 0x20, 0x80 );	break;	\
-		case 0xb0:	LOGICAL_OP(  B, 0x40, 0x01 );	break;	\
-		case 0xb1:	LOGICAL_OP(  B, 0x40, 0x02 );	break;	\
-		case 0xb2:	LOGICAL_OP(  B, 0x40, 0x04 );	break;	\
-		case 0xb3:	LOGICAL_OP(  B, 0x40, 0x08 );	break;	\
-		case 0xb4:	LOGICAL_OP(  B, 0x40, 0x10 );	break;	\
-		case 0xb5:	LOGICAL_OP(  B, 0x40, 0x20 );	break;	\
-		case 0xb6:	LOGICAL_OP(  B, 0x40, 0x40 );	break;	\
-		case 0xb7:	LOGICAL_OP(  B, 0x40, 0x80 );	break;	\
-		case 0xb8:	LOGICAL_OP(  B, 0x80, 0x01 );	break;	\
-		case 0xb9:	LOGICAL_OP(  B, 0x80, 0x02 );	break;	\
-		case 0xba:	LOGICAL_OP(  B, 0x80, 0x04 );	break;	\
-		case 0xbb:	LOGICAL_OP(  B, 0x80, 0x08 );	break;	\
-		case 0xbc:	LOGICAL_OP(  B, 0x80, 0x10 );	break;	\
-		case 0xbd:	LOGICAL_OP(  B, 0x80, 0x20 );	break;	\
-		case 0xbe:	LOGICAL_OP(  B, 0x80, 0x40 );	break;	\
-		case 0xbf:	LOGICAL_OP(  B, 0x80, 0x80 );	break;	\
-		case 0xc0:	break;									\
-		case 0xc1:	break;									\
-		case 0xc2:	break;									\
-		case 0xc3:	break;									\
-		case 0xc4:	break;									\
-		case 0xc5:	break;									\
-		case 0xc6:	break;									\
-		case 0xc7:	break;									\
-		case 0xc8:	break;									\
-		case 0xc9:	break;									\
-		case 0xca:	break;									\
-		case 0xcb:	break;									\
-		case 0xcc:	break;									\
-		case 0xcd:	break;									\
-		case 0xce:	break;									\
-		case 0xcf:	break;									\
-		case 0xd0:	break;									\
-		case 0xd1:	break;									\
-		case 0xd2:	break;									\
-		case 0xd3:	break;									\
-		case 0xd4:	break;									\
-		case 0xd5:	break;									\
-		case 0xd6:	break;									\
-		case 0xd7:	break;									\
-		case 0xd8:	break;									\
-		case 0xd9:	break;									\
-		case 0xda:	break;									\
-		case 0xdb:	break;									\
-		case 0xdc:	break;									\
-		case 0xdd:	break;									\
-		case 0xde:	break;									\
-		case 0xdf:	break;									\
-		case 0xe0:	break;									\
-		case 0xe1:	break;									\
-		case 0xe2:	break;									\
-		case 0xe3:	break;									\
-		case 0xe4:	break;									\
-		case 0xe5:	break;									\
-		case 0xe6:	break;									\
-		case 0xe7:	break;									\
-		case 0xe8:	break;									\
-		case 0xe9:	break;									\
-		case 0xea:	break;									\
-		case 0xeb:	break;									\
-		case 0xec:	break;									\
-		case 0xed:	break;									\
-		case 0xee:	break;									\
-		case 0xef:	break;									\
-		case 0xf0:	break;									\
-		case 0xf1:	break;									\
-		case 0xf2:	break;									\
-		case 0xf3:	break;									\
-		case 0xf4:	break;									\
-		case 0xf5:	break;									\
-		case 0xf6:	break;									\
-		case 0xf7:	break;									\
-		case 0xf8:	break;									\
-		case 0xf9:	break;									\
-		case 0xfa:	break;									\
-		case 0xfb:	break;									\
-		case 0xfc:	break;									\
-		case 0xfd:	break;									\
-		case 0xfe:	break;									\
-		case 0xff:	break;									\
-		}													\
-}
-
 /* $1130 BAND */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( (( r & m1) & ( db & m2 )) == 1 )	\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
+
+#define decodePB_tReg(n)	((n)&3)
+#define decodePB_src(n) 	(((n)>>2)&7)
+#define decodePB_dst(n) 	(((n)>>5)&7)
+
+static unsigned char *	regTable[4] = { &(CC), &(A), &(B), &(E) };
+
+static UINT8	bitTable[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 
 INLINE void band( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) && ( db & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1131 BIAND */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( (( r & m1) & ( db & m2 )) == 0 )	\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
 
 INLINE void biand( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) && ( (~db) & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1132 BOR */
-#define LOGICAL_OP( r, m1, m2 ) 				\
-{											\
-	if ( (( r & m1) | ( db & m2 )) == 1 )	\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
 
 INLINE void bor( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) || ( db & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1133 BIOR */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( (( r & m1) | ( db & m2 )) == 0 )	\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
 
 INLINE void bior( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) || ( (~db) & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1134 BEOR */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( (( r & m1) ^ ( db & m2 )) == 1 )	\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
 
 INLINE void beor( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
+	UINT8		tReg, tMem;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	tReg = *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)];
+	tMem = db & bitTable[decodePB_src(pb)];
+
+	if ( (tReg || tMem ) && !(tReg && tMem) )
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1135 BIEOR */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( (( r & m1) ^ ( db & m2 )) == 0 )	\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
 
 INLINE void bieor( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
+	UINT8		tReg, tMem;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	tReg = *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)];
+	tMem = (~db) & bitTable[decodePB_src(pb)];
+
+	if ( (tReg || tMem ) && !(tReg && tMem) )
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1133 LDBT */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( ( db & m2 ) == 1 ) 				\
-		r |= m2;							\
-	else									\
-		r &= ~(m2); 						\
-}
 
 INLINE void ldbt( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
 
-	BIT_TRANSFER_MODES( t );
+	if ( ( db & bitTable[decodePB_src(pb)] ) )
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
+	else
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
-
-#undef LOGICAL_OP
 
 /* $1134 STBT */
-#define LOGICAL_OP( r, m1, m2 ) 			\
-{											\
-	if ( ( r & m1) == 1 )					\
-		WM(EAD,(db | m2));					\
-	else									\
-		WM(EAD,(db & (~(m2)))); 			\
-}
 
 INLINE void stbt( void )
 {
-	UINT8	t;
-	UINT16	db;
+	UINT8		pb;
+	UINT16		db;
 
-	IMMBYTE(t);
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	DIRECT;
 
-	BIT_TRANSFER_MODES( t );
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) )
+		WM( EAD, db | bitTable[decodePB_src(pb)] );
+	else
+		WM( EAD, db & (~bitTable[decodePB_src(pb)]) );
 }
-
-#undef LOGICAL_OP
 
 /* $103F SWI2 absolute indirect ----- */
 INLINE void swi2( void )
@@ -3375,9 +2733,13 @@ INLINE void ldx_im( void )
 /* $CD LDQ immediate -**0- */
 INLINE void ldq_im( void )
 {
-	IMMLONG(pQ);
+	PAIR	q;
+
+	IMMLONG(q);
 	CLR_NZV;
-	SET_NZ32(Q);
+	SET_NZ32(q.d);
+	D = q.w.h;
+	W = q.w.l;
 }
 
 /* $108E LDY immediate -**0- */
@@ -3391,10 +2753,12 @@ INLINE void ldy_im( void )
 /* $118f MULD immediate */
 INLINE void muld_im( void )
 {
-	PAIR t;
+	PAIR t, q;
 
 	IMMWORD( t );
-	Q = (signed short) D * (signed short)t.w.l;
+	q.d = (signed short) D * (signed short)t.w.l;
+	D = q.w.h;
+	W = q.w.l;
 
 	/* Warning: Set CC */
 }
@@ -3421,13 +2785,15 @@ INLINE void divd_im( void )
 /* $118e DIVQ immediate */
 INLINE void divq_im( void )
 {
-	PAIR	t;
+	PAIR	t,q;
 	INT16	v;
 
 	IMMWORD( t );
+	q.w.h = D;
+	q.w.l = W;
 
-	v = (signed long) Q / (signed short) t.w.l;
-	W = (signed long) Q % (signed short) t.w.l;
+	v = (signed long) q.d / (signed short) t.w.l;
+	W = (signed long) q.d % (signed short) t.w.l;
 	D = v;
 
 	/* Warning: Set CC */
@@ -3674,11 +3040,13 @@ INLINE void ldx_di( void )
 /* $119f MULD direct -**0- */
 INLINE void muld_di( void )
 {
-	PAIR	t;
+	PAIR	t,q;
 
 	DIRWORD(t);
-	Q = (signed short) D * (signed short)t.w.l;
+	q.d = (signed short) D * (signed short)t.w.l;
 
+	D = q.w.h;
+	W = q.w.l;
 	/* Warning: Set CC */
 }
 
@@ -3697,12 +3065,15 @@ INLINE void divd_di( void )
 /* $119e DIVQ direct -**0- */
 INLINE void divq_di( void )
 {
-	PAIR	t;
+	PAIR	t, q;
 	INT16	v;
 
+	q.w.h = D;
+	q.w.l = W;
+
 	DIRWORD(t);
-	v = (signed long) Q / (signed short) t.w.l;
-	W = (signed long) Q % (signed short) t.w.l;
+	v = (signed long) q.d / (signed short) t.w.l;
+	W = (signed long) q.d % (signed short) t.w.l;
 	D = v;
 
 	/* Warning: Set CC */
@@ -3711,9 +3082,13 @@ INLINE void divq_di( void )
 /* $10dc LDQ direct -**0- */
 INLINE void ldq_di( void )
 {
-	DIRLONG(pQ);
+	PAIR	q;
+
+	DIRLONG(q);
 	CLR_NZV;
-	SET_NZ32(Q);
+	SET_NZ32(q.d);
+	D = q.w.h;
+	W = q.w.l;
 }
 
 /* $109E LDY direct -**0- */
@@ -3736,10 +3111,15 @@ INLINE void stx_di( void )
 /* $10dd STQ direct -**0- */
 INLINE void stq_di( void )
 {
+	PAIR	q;
+
+	q.w.h = D;
+	q.w.l = W;
+
 	CLR_NZV;
-	SET_NZ32(Q);
+	SET_NZ32(q.d);
 	DIRECT;
-	WM32(EAD,&pQ);
+	WM32(EAD,&q);
 }
 
 /* $109F STY direct -**0- */
@@ -3998,11 +3378,15 @@ INLINE void ldx_ix( void )
 /* $11af MULD indexed -**0- */
 INLINE void muld_ix( void )
 {
+	PAIR	q;
 	UINT16	t;
 
 	fetch_effective_address();
 	t=RM16(EAD);
-	Q = (signed short) D * (signed short)t;
+	q.d = (signed short) D * (signed short)t;
+
+	D = q.w.h;
+	W = q.w.l;
 
 	/* Warning: Set CC */
 }
@@ -4024,13 +3408,15 @@ INLINE void divd_ix( void )
 INLINE void divq_ix( void )
 {
 	UINT16	t;
-	INT16	v;
+	PAIR	q;
+
+	q.w.h = D;
+	q.w.l = W;
 
 	fetch_effective_address();
 	t=RM16(EAD);
-	v = (signed long) Q / (signed short) t;
-	W = (signed long) Q % (signed short) t;
-	D = v;
+	D = (signed long) q.d / (signed short) t;
+	W = (signed long) q.d % (signed short) t;
 
 	/* Warning: Set CC */
 }
@@ -4038,10 +3424,14 @@ INLINE void divq_ix( void )
 /* $10ec LDQ indexed -**0- */
 INLINE void ldq_ix( void )
 {
+	PAIR	q;
+
 	fetch_effective_address();
-	Q=RM32(EAD);
+	q.d=RM32(EAD);
 	CLR_NZV;
-	SET_NZ32(Q);
+	SET_NZ32(q.d);
+	D = q.w.h;
+	W = q.w.l;
 }
 
 /* $10aE LDY indexed -**0- */
@@ -4065,10 +3455,15 @@ INLINE void stx_ix( void )
 /* $10ed STQ indexed -**0- */
 INLINE void stq_ix( void )
 {
+	PAIR	q;
+
+	q.w.h = D;
+	q.w.l = W;
+
 	fetch_effective_address();
 	CLR_NZV;
-	SET_NZ32(Q);
-	WM32(EAD,&pQ);
+	SET_NZ32(q.d);
+	WM32(EAD,&q);
 }
 
 /* $10aF STY indexed -**0- */
@@ -4314,10 +3709,13 @@ INLINE void ldx_ex( void )
 /* $11bf MULD extended -**0- */
 INLINE void muld_ex( void )
 {
-	PAIR t = {{0,}};
+	PAIR	t, q;
 
 	EXTWORD(t);
-	Q = (signed short) D * (signed short)t.w.l;
+	q.d = (signed short) D * (signed short)t.w.l;
+
+	D = q.w.h;
+	W = q.w.l;
 
 	/* Warning: Set CC */
 }
@@ -4337,13 +3735,14 @@ INLINE void divd_ex( void )
 /* $11be DIVQ extended -**0- */
 INLINE void divq_ex( void )
 {
-	PAIR t = {{0,}};
-	INT16 v;
+	PAIR	t, q;
+
+	q.w.h = D;
+	q.w.l = W;
 
 	EXTWORD(t);
-	v = (signed long) Q / (signed short) t.w.l;
-	W = (signed long) Q % (signed short) t.w.l;
-	D = v;
+	D = (signed long) q.d / (signed short) t.w.l;
+	W = (signed long) q.d % (signed short) t.w.l;
 
 	/* Warning: Set CC */
 }
@@ -4351,9 +3750,14 @@ INLINE void divq_ex( void )
 /* $10fc LDQ extended -**0- */
 INLINE void ldq_ex( void )
 {
-	EXTLONG(pQ);
+	PAIR	q;
+
+	EXTLONG(q);
 	CLR_NZV;
-	SET_NZ32(Q);
+	SET_NZ32(q.d);
+
+	D = q.w.h;
+	W = q.w.l;
 }
 
 /* $10bE LDY extended -**0- */
@@ -4376,10 +3780,15 @@ INLINE void stx_ex( void )
 /* $10fd STQ extended -**0- */
 INLINE void stq_ex( void )
 {
+	PAIR	q;
+
+	q.w.h = D;
+	q.w.l = W;
+
 	CLR_NZV;
-	SET_NZ32(Q);
+	SET_NZ32(q.d);
 	EXTENDED;
-	WM32(EAD,&pQ);
+	WM32(EAD,&q);
 }
 
 /* $10bF STY extended -**0- */
@@ -5062,7 +4471,7 @@ INLINE void std_di( void )
 	CLR_NZV;
 	SET_NZ16(D);
 	DIRECT;
-	WM16_D(EAD,&pD);
+	WM16(EAD,&pD);
 }
 
 /* $1097 STW direct -**0- */
@@ -5449,7 +4858,7 @@ INLINE void std_ix( void )
 	fetch_effective_address();
 	CLR_NZV;
 	SET_NZ16(D);
-	WM16_D(EAD,&pD);
+	WM16(EAD,&pD);
 }
 
 /* $10a7 STW indexed -**0- */
@@ -5809,7 +5218,7 @@ INLINE void addb_ex( void )
 /* $fC LDD extended -**0- */
 INLINE void ldd_ex( void )
 {
-	EXTWORD_D(pD);
+	EXTWORD(pD);
 	CLR_NZV;
 	SET_NZ16(D);
 }
@@ -5828,7 +5237,7 @@ INLINE void std_ex( void )
 	CLR_NZV;
 	SET_NZ16(D);
 	EXTENDED;
-	WM16_D(EAD,&pD);
+	WM16(EAD,&pD);
 }
 
 /* $10b7 STW extended -**0- */

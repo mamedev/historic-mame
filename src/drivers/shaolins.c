@@ -32,8 +32,7 @@ int shaolins_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0500, 0x0500, input_port_3_r },	/* Dipswitch settings */
 	{ 0x0600, 0x0600, input_port_4_r },	/* Dipswitch settings */
 	{ 0x0700, 0x0700, input_port_0_r },	/* coins + service */
@@ -45,11 +44,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3800, 0x3fff, MRA_RAM },	/* video RAM */
 	{ 0x4000, 0x5fff, MRA_ROM },    /* Machine checks for extra rom */
 	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0000, MWA_RAM, &shaolins_nmi_enable },	/* bit 1 = nmi enable, bit 2 = ? */
 														/* bit 3, bit 4 = coin counters */
 	{ 0x0100, 0x0100, watchdog_reset_w },
@@ -66,8 +63,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3800, 0x3bff, colorram_w, &colorram },
 	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

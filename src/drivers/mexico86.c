@@ -71,8 +71,7 @@ static WRITE_HANDLER( mexico86_f008_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },	/* banked roms */
 	{ 0xc000, 0xe7ff, shared_r },	/* shared with sound cpu */
@@ -80,11 +79,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xe900, 0xefff, MRA_RAM },
 	{ 0xf010, 0xf010, input_port_5_r },
 	{ 0xf800, 0xffff, MRA_RAM },	/* communication ram - to connect 4 players's subboard */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xe7ff, shared_w, &shared },	/* shared with sound cpu */
 	{ 0xc000, 0xcfff, MWA_RAM, &mexico86_videoram },
@@ -95,41 +92,33 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf008, 0xf008, mexico86_f008_w },	/* cpu reset lines + other unknown stuff */
 	{ 0xf018, 0xf018, MWA_NOP },	// watchdog_reset_w },
 	{ 0xf800, 0xffff, MWA_RAM },	/* communication ram */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xa7ff, shared_r },
 	{ 0xa800, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xc000, YM2203_status_port_0_r },
 	{ 0xc001, 0xc001, YM2203_read_port_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xa7ff, shared_w },
 	{ 0xa800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc000, YM2203_control_port_0_w },
 	{ 0xc001, 0xc001, YM2203_write_port_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress m68705_readmem[] =
-{
+static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, mexico86_68705_portA_r },
 	{ 0x0001, 0x0001, mexico86_68705_portB_r },
 	{ 0x0002, 0x0002, input_port_0_r },	/* COIN */
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m68705_writemem[] =
-{
+static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0000, 0x0000, mexico86_68705_portA_w },
 	{ 0x0001, 0x0001, mexico86_68705_portB_w },
 	{ 0x0004, 0x0004, mexico86_68705_ddrA_w },
@@ -138,8 +127,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 									/* 0x0a (=10dec) instead of 0x10 */
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

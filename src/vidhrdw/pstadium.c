@@ -1,0 +1,398 @@
+/***************************************************************************
+
+	Video Hardware for Nichibutsu Mahjong series.
+
+	Driver by Takahiro Nogi 1999/11/05 -
+
+***************************************************************************/
+
+#include "driver.h"
+#include "vidhrdw/generic.h"
+#include "vidhrdw/pstadium.h"
+#include "machine/nb1413m3.h"
+
+
+unsigned char pstadium_palette[0x200];
+unsigned char pstadium_paltbl[0x8000];
+
+static int pstadium_flipx, pstadium_flipy;
+static int pstadium_scrollx, pstadium_scrollx1, pstadium_scrollx2;
+static int pstadium_scrolly, pstadium_scrolly1, pstadium_scrolly2;
+static int pstadium_drawx, pstadium_drawx1, pstadium_drawx2;
+static int pstadium_drawy, pstadium_drawy1, pstadium_drawy2;
+static int pstadium_sizex, pstadium_sizey;
+static int pstadium_radrx, pstadium_radry;
+static int pstadium_dispflag;
+static int pstadium_gfxflag;
+static int pstadium_gfxrom;
+static int pstadium_flipscreen;
+static int pstadium_paltblnum;
+
+static struct osd_bitmap *tmpbitmap1;
+static unsigned char *pstadium_videoram;
+
+
+static void pstadium_gfxdraw(void);
+
+
+/******************************************************************/
+
+
+/******************************************************************/
+READ_HANDLER( pstadium_palette_r )
+{
+	return pstadium_palette[offset];
+}
+
+WRITE_HANDLER( pstadium_palette_w )
+{
+	int r, g, b;
+
+	pstadium_palette[offset] = data;
+
+	offset &= 0x1fe;
+
+	r = ((pstadium_palette[offset + 1] & 0x0f) << 4);
+	g = ((pstadium_palette[offset + 0] & 0xf0) << 0);
+	b = ((pstadium_palette[offset + 0] & 0x0f) << 4);
+
+	palette_change_color((offset / 2), r, g, b);
+}
+
+WRITE_HANDLER( galkoku_palette_w )
+{
+	int r, g, b;
+
+	pstadium_palette[offset] = data;
+
+	offset &= 0x1fe;
+
+	r = ((pstadium_palette[offset + 0] & 0x0f) << 4);
+	g = ((pstadium_palette[offset + 1] & 0xf0) << 0);
+	b = ((pstadium_palette[offset + 1] & 0x0f) << 4);
+
+	palette_change_color((offset / 2), r, g, b);
+}
+
+WRITE_HANDLER( galkaika_palette_w )
+{
+	int r, g, b;
+
+	pstadium_palette[offset] = data;
+
+	offset &= 0x1fe;
+
+	r = ((pstadium_palette[offset + 0] & 0x7c) >> 2);
+	g = (((pstadium_palette[offset + 0] & 0x03) << 3) | ((pstadium_palette[offset + 1] & 0xe0) >> 5));
+	b = ((pstadium_palette[offset + 1] & 0x1f) >> 0);
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_change_color((offset / 2), r, g, b);
+}
+
+/******************************************************************/
+
+
+/******************************************************************/
+static void pstadium_calc_scrollx(void)
+{
+	pstadium_scrollx = ((pstadium_scrollx2 + pstadium_scrollx1) << 1);
+
+	if (pstadium_dispflag & 0x04) pstadium_scrollx = 0x00;	// for now
+}
+
+static void pstadium_calc_scrolly(void)
+{
+	pstadium_scrolly = (pstadium_scrolly2 + pstadium_scrolly1);
+}
+
+static void pstadium_calc_drawx(void)
+{
+	pstadium_drawx = (pstadium_drawx2 + pstadium_drawx1);
+}
+
+static void pstadium_calc_drawy(void)
+{
+	pstadium_drawy = (pstadium_drawy2 + pstadium_drawy1);
+}
+
+void pstadium_radrx_w(int data)
+{
+	pstadium_radrx = data;
+}
+
+void pstadium_radry_w(int data)
+{
+	pstadium_radry = data;
+}
+
+void pstadium_sizex_w(int data)
+{
+	pstadium_sizex = data;
+}
+
+void pstadium_sizey_w(int data)
+{
+	pstadium_sizey = data;
+
+	pstadium_gfxdraw();
+}
+
+void pstadium_dispflag_w(int data)
+{
+	pstadium_dispflag = data;
+
+	pstadium_flipscreen = (data & 0x04) >> 2;
+}
+
+void pstadium_drawx_w(int data)
+{
+	pstadium_drawx1 = data;
+}
+
+void pstadium_drawy_w(int data)
+{
+	pstadium_drawy1 = data;
+}
+
+void pstadium_scrollx_w(int data)
+{
+	pstadium_scrollx1 = -(data);
+}
+
+void pstadium_scrolly_w(int data)
+{
+	pstadium_scrolly1 = -(data - 0xf0);
+}
+
+void pstadium_gfxflag_w(int data)
+{
+	pstadium_gfxflag = data;
+
+	pstadium_drawx2 = (((data & 0x01) >> 0) << 8);
+	pstadium_drawy2 = (((data & 0x02) >> 1) << 8);
+
+	pstadium_scrollx2 = -(((data & 0x04) >> 2) << 8);
+	pstadium_scrolly2 = (((data & 0x08) >> 3) << 8);
+
+	pstadium_flipx = ((data & 0x40) >> 6);		// Probably wrong
+	pstadium_flipy = ((data & 0x80) >> 7);
+}
+
+void pstadium_romsel_w(int data)
+{
+	pstadium_gfxrom = data;
+
+	if ((0x20000 * pstadium_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
+	{
+		usrintf_showmessage("GFXROM BANK OVER!!");
+		pstadium_gfxrom = 0;
+	}
+}
+
+void pstadium_paltblnum_w(int data)
+{
+	pstadium_paltblnum = data;
+}
+
+READ_HANDLER( pstadium_paltbl_r )
+{
+	return pstadium_paltbl[offset];
+}
+
+WRITE_HANDLER( pstadium_paltbl_w )
+{
+	pstadium_paltbl[((pstadium_paltblnum & 0x7f) * 0x10) + (offset & 0x0f)] = data;
+}
+
+/******************************************************************/
+
+
+/******************************************************************/
+static void pstadium_gfxdraw(void)
+{
+	unsigned char *GFX = memory_region(REGION_GFX1);
+
+	int i, j;
+	int x, y;
+	int flipx, flipy;
+	int startx, starty;
+	int sizex, sizey;
+	int skipx, skipy;
+	int ctrx, ctry;
+	int tflag1, tflag2;
+
+	pstadium_calc_drawx();
+	pstadium_calc_drawy();
+
+	flipx = (pstadium_dispflag & 0x01) ? 1 : 0;
+	flipy = (pstadium_dispflag & 0x02) ? 1 : 0;
+
+	if (flipx)
+	{
+		startx = 0;
+		sizex = (((pstadium_sizex - 1) ^ 0xff) & 0xff);
+		skipx = 1;
+		pstadium_drawx = ((pstadium_drawx1 + pstadium_drawx2) & 0x1ff);
+	}
+	else
+	{
+		startx = (pstadium_sizex & 0x1ff);
+		sizex = (startx + 1);
+		skipx = -1;
+	}
+
+	if (flipy)
+	{
+		starty = 0;
+		sizey = (((pstadium_sizey - 1) ^ 0xff) & 0xff);
+		skipy = 1;
+		pstadium_drawy = ((pstadium_drawy1 + pstadium_drawy2) & 0x1ff);
+	}
+	else
+	{
+		starty = (pstadium_sizey & 0x1ff);
+		sizey = (starty + 1);
+		skipy = -1;
+	}
+
+	i = j = 0;
+
+	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
+	{
+		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
+		{
+			unsigned char color1, color2;
+			unsigned char drawcolor1, drawcolor2;
+
+			color1 = (((GFX[(0x20000 * pstadium_gfxrom) + ((0x0200 * pstadium_radry) + (0x0002 * pstadium_radrx)) + (i++)]) & 0xf0) >> 4);
+			color2 = (((GFX[(0x20000 * pstadium_gfxrom) + ((0x0200 * pstadium_radry) + (0x0002 * pstadium_radrx)) + (j++)]) & 0x0f) >> 0);
+
+			drawcolor1 = pstadium_paltbl[((pstadium_paltblnum & 0x7f) * 0x10) + color1];
+			drawcolor2 = pstadium_paltbl[((pstadium_paltblnum & 0x7f) * 0x10) + color2];
+
+			tflag1 = (drawcolor1 != 0xff) ? 1 : 0;
+			tflag2 = (drawcolor2 != 0xff) ? 1 : 0;
+
+			if (flipx)
+			{
+				int tmp;
+
+				tmp = drawcolor1;
+				drawcolor1 = drawcolor2;
+				drawcolor2 = tmp;
+
+				tmp = tflag1;
+				tflag1 = tflag2;
+				tflag2 = tmp;
+			}
+
+			nb1413m3_busyctr++;
+
+			{
+				int x1, x2, yy;
+
+				x1 = (((pstadium_drawx * 2) + (x * 2)) & 0x3ff);
+				x2 = ((((pstadium_drawx * 2) + (x * 2)) + 1) & 0x3ff);
+				yy = ((pstadium_drawy + y) & 0x1ff);
+
+				if (tflag1)
+				{
+					pstadium_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
+					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
+				}
+				if (tflag2)
+				{
+					pstadium_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
+					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
+				}
+			}
+		}
+	}
+
+	nb1413m3_busyflag = (nb1413m3_busyctr > 7500) ? 0 : 1;
+
+}
+
+/******************************************************************/
+
+
+/******************************************************************/
+int pstadium_vh_start(void)
+{
+	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((pstadium_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
+	memset(pstadium_videoram, 0xff, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
+	return 0;
+}
+
+void pstadium_vh_stop(void)
+{
+	free(pstadium_videoram);
+	bitmap_free(tmpbitmap1);
+	pstadium_videoram = 0;
+	tmpbitmap1 = 0;
+}
+
+void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y;
+	int color;
+
+	if (palette_recalc() || full_refresh)
+	{
+		for (y = 0; y < Machine->drv->screen_height; y++)
+		{
+			for (x = 0; x < Machine->drv->screen_width; x++)
+			{
+				color = pstadium_videoram[(y * Machine->drv->screen_width) + x];
+				plot_pixel(tmpbitmap1, x, y, Machine->pens[color]);
+			}
+		}
+	}
+
+	pstadium_calc_scrollx();
+	pstadium_calc_scrolly();
+
+	if (nb1413m3_inputport & 0x20)
+	{
+		copyscrollbitmap(bitmap, tmpbitmap1, 1, &pstadium_scrollx, 1, &pstadium_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	}
+	else
+	{
+		fillbitmap(bitmap, Machine->pens[0xff], 0);
+	}
+}
+
+void galkoku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y;
+	int color;
+
+	if (palette_recalc() || full_refresh)
+	{
+		for (y = 0; y < Machine->drv->screen_height; y++)
+		{
+			for (x = 0; x < Machine->drv->screen_width; x++)
+			{
+				color = pstadium_videoram[(y * Machine->drv->screen_width) + x];
+				plot_pixel(tmpbitmap1, x, y, Machine->pens[color]);
+			}
+		}
+	}
+
+	pstadium_calc_scrollx();
+	pstadium_calc_scrolly();
+
+	if (pstadium_gfxflag & 0x10)
+	{
+		copyscrollbitmap(bitmap, tmpbitmap1, 1, &pstadium_scrollx, 1, &pstadium_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	}
+	else
+	{
+		fillbitmap(bitmap, Machine->pens[0xff], 0);
+	}
+}

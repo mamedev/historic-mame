@@ -120,8 +120,7 @@ void rockola_sh_update(void);
 
 
 
-static struct MemoryWriteAddress sasuke_writemem[] =
-{
+static MEMORY_WRITE_START( sasuke_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
@@ -132,11 +131,9 @@ static struct MemoryWriteAddress sasuke_writemem[] =
 	{ 0x3001, 0x3001, crtc6845_register_w },
 	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
 	{ 0xb003, 0xb003, satansat_backcolor_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress satansat_readmem[] =
-{
+static MEMORY_READ_START( satansat_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x4000, 0x97ff, MRA_ROM },
 	{ 0xb004, 0xb004, input_port_0_r }, /* IN0 */
@@ -144,11 +141,9 @@ static struct MemoryReadAddress satansat_readmem[] =
 	{ 0xb006, 0xb006, input_port_2_r }, /* DSW */
 	{ 0xb007, 0xb007, input_port_3_r }, /* IN2 */
 	{ 0xf800, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress satansat_writemem[] =
-{
+static MEMORY_WRITE_START( satansat_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
@@ -161,11 +156,9 @@ static struct MemoryWriteAddress satansat_writemem[] =
 	{ 0xb001, 0xb001, satansat_sound1_w },
 	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
 	{ 0xb003, 0xb003, satansat_backcolor_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress vanguard_readmem[] =
-{
+static MEMORY_READ_START( vanguard_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x3104, 0x3104, input_port_0_r },	/* IN0 */
 	{ 0x3105, 0x3105, input_port_1_r },	/* IN1 */
@@ -173,11 +166,9 @@ static struct MemoryReadAddress vanguard_readmem[] =
 	{ 0x3107, 0x3107, input_port_3_r },	/* IN2 */
 	{ 0x4000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress vanguard_writemem[] =
-{
+static MEMORY_WRITE_START( vanguard_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
@@ -192,11 +183,9 @@ static struct MemoryWriteAddress vanguard_writemem[] =
 	{ 0x3200, 0x3200, MWA_RAM, &rockola_scrolly },
 	{ 0x3300, 0x3300, MWA_RAM, &rockola_scrollx },
 	{ 0x4000, 0xbfff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress fantasy_readmem[] =
-{
+static MEMORY_READ_START( fantasy_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2104, 0x2104, input_port_0_r },	/* IN0 */
 	{ 0x2105, 0x2105, input_port_1_r },	/* IN1 */
@@ -204,11 +193,9 @@ static struct MemoryReadAddress fantasy_readmem[] =
 	{ 0x2107, 0x2107, input_port_3_r },	/* IN2 */
 	{ 0x3000, 0xbfff, MRA_ROM },
 	{ 0xfffa, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fantasy_writemem[] =
-{
+static MEMORY_WRITE_START( fantasy_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
@@ -223,11 +210,9 @@ static struct MemoryWriteAddress fantasy_writemem[] =
 	{ 0x2200, 0x2200, MWA_RAM, &rockola_scrolly },
 	{ 0x2300, 0x2300, MWA_RAM, &rockola_scrollx },
 	{ 0x3000, 0xbfff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress pballoon_readmem[] =
-{
+static MEMORY_READ_START( pballoon_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x3000, 0x9fff, MRA_ROM },
 	{ 0xb104, 0xb104, input_port_0_r },	/* IN0 */
@@ -235,11 +220,9 @@ static struct MemoryReadAddress pballoon_readmem[] =
 	{ 0xb106, 0xb106, input_port_2_r },	/* DSW */
 	{ 0xb107, 0xb107, input_port_3_r },	/* IN2 */
 	{ 0xfffa, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pballoon_writemem[] =
-{
+static MEMORY_WRITE_START( pballoon_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
@@ -254,8 +237,7 @@ static struct MemoryWriteAddress pballoon_writemem[] =
 	{ 0xb103, 0xb103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
 	{ 0xb200, 0xb200, MWA_RAM, &rockola_scrolly },
 	{ 0xb300, 0xb300, MWA_RAM, &rockola_scrollx },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

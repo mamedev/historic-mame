@@ -3,9 +3,25 @@
 */
 
 #include "driver.h"
-#include "m68000.h"
-#include "d68k.h"
 #include "mamedbg.h"
+#include "m68000.h"
+
+enum
+{
+	M68K_CPU_TYPE_INVALID,
+	M68K_CPU_TYPE_68000,
+	M68K_CPU_TYPE_68010,
+	M68K_CPU_TYPE_68EC020,
+	M68K_CPU_TYPE_68020,
+	M68K_CPU_TYPE_68030,	/* Supported by disassembler ONLY */
+	M68K_CPU_TYPE_68040		/* Supported by disassembler ONLY */
+};
+
+
+int illegal_op = 0 ;
+int illegal_pc = 0 ;
+
+unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_type);
 
 #ifdef WIN32
 #define CONVENTION __cdecl
@@ -50,7 +66,7 @@ typedef struct
 } m68k_cpu_context;
 
 
-static UINT8 m68k_reg_layout[] = {
+static UINT8 M68K_layout[] = {
 	M68K_PC, M68K_ISP, -1,
 	M68K_SR, M68K_USP, -1,
 	M68K_D0, M68K_A0, -1,
@@ -75,6 +91,19 @@ extern m68k_cpu_context regs;
 
 extern void CONVENTION M68KRUN(void);
 extern void CONVENTION M68KRESET(void);
+
+
+data32_t m68_readmem24bew_dword(offs_t address)
+{
+	return (cpu_readmem24bew_word(address) << 16) | cpu_readmem24bew_word(address+2);
+}
+
+void m68_writemem24bew_dword(offs_t address,data32_t data)
+{
+	cpu_writemem24bew_word(address,data >> 16);
+	cpu_writemem24bew_word(address+2,data & 0xffff);
+}
+
 
 /********************************************/
 /* Interface routines to link Mame -> 68KEM */
@@ -231,7 +260,7 @@ unsigned m68000_get_reg(int regnum)
 			{
 				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
-					return cpu_readmem24bew_dword( offset );
+					return m68_readmem24bew_dword( offset );
             }
     }
     return 0;
@@ -270,7 +299,7 @@ void m68000_set_reg(int regnum, unsigned val)
 			{
 				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
-					cpu_writemem24bew_dword( offset, val );
+					m68_writemem24bew_dword( offset, val );
             }
     }
 }
@@ -338,7 +367,7 @@ void m68000_set_reset_callback(int (*callback)(void))
 const char *m68000_info(void *context, int regnum)
 {
 #ifdef MAME_DEBUG
-extern int m68k_disassemble(char* str_buff, int pc);
+//extern int m68k_disassemble(char* str_buff, int pc, int cputype);
 #endif
     static char buffer[32][47+1];
 	static int which;
@@ -398,7 +427,7 @@ extern int m68k_disassemble(char* str_buff, int pc);
 		case CPU_INFO_VERSION: return "0.16";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
+		case CPU_INFO_REG_LAYOUT: return (const char*)M68K_layout;
         case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
 	}
 	return buffer[which];
@@ -408,7 +437,7 @@ unsigned m68000_dasm(char *buffer, unsigned pc)
 {
 	change_pc24bew(pc);
 #ifdef MAME_DEBUG
-    return m68k_disassemble(buffer, pc);
+	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68000);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
@@ -454,7 +483,7 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
 {
 	change_pc24bew(pc);
 #ifdef MAME_DEBUG
-    return m68k_disassemble(buffer, pc);
+	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68010);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
@@ -501,7 +530,7 @@ unsigned m68ec020_dasm(char *buffer, unsigned pc)
 {
 	change_pc24bew(pc);
 #ifdef MAME_DEBUG
-    return m68k_disassemble(buffer, pc);
+	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68EC020);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
@@ -544,7 +573,7 @@ unsigned m68020_dasm(char *buffer, unsigned pc)
 {
 	change_pc24bew(pc);
 #ifdef MAME_DEBUG
-    return m68k_disassemble(buffer, pc);
+	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;

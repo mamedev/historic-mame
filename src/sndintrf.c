@@ -30,7 +30,22 @@ WRITE_HANDLER( soundlatch_w )
 	timer_set(TIME_NOW,data,soundlatch_callback);
 }
 
+WRITE16_HANDLER( soundlatch_word_w )
+{
+	static data16_t word;
+	COMBINE_DATA(&word);
+
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,word,soundlatch_callback);
+}
+
 READ_HANDLER( soundlatch_r )
+{
+	read_debug = 1;
+	return latch;
+}
+
+READ16_HANDLER( soundlatch_word_r )
 {
 	read_debug = 1;
 	return latch;
@@ -58,7 +73,22 @@ WRITE_HANDLER( soundlatch2_w )
 	timer_set(TIME_NOW,data,soundlatch2_callback);
 }
 
+WRITE16_HANDLER( soundlatch2_word_w )
+{
+	static data16_t word;
+	COMBINE_DATA(&word);
+
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,word,soundlatch2_callback);
+}
+
 READ_HANDLER( soundlatch2_r )
+{
+	read_debug2 = 1;
+	return latch2;
+}
+
+READ16_HANDLER( soundlatch2_word_r )
 {
 	read_debug2 = 1;
 	return latch2;
@@ -86,7 +116,22 @@ WRITE_HANDLER( soundlatch3_w )
 	timer_set(TIME_NOW,data,soundlatch3_callback);
 }
 
+WRITE16_HANDLER( soundlatch3_word_w )
+{
+	static data16_t word;
+	COMBINE_DATA(&word);
+
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,word,soundlatch3_callback);
+}
+
 READ_HANDLER( soundlatch3_r )
+{
+	read_debug3 = 1;
+	return latch3;
+}
+
+READ16_HANDLER( soundlatch3_word_r )
 {
 	read_debug3 = 1;
 	return latch3;
@@ -114,7 +159,22 @@ WRITE_HANDLER( soundlatch4_w )
 	timer_set(TIME_NOW,data,soundlatch4_callback);
 }
 
+WRITE16_HANDLER( soundlatch4_word_w )
+{
+	static data16_t word;
+	COMBINE_DATA(&word);
+
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,word,soundlatch4_callback);
+}
+
 READ_HANDLER( soundlatch4_r )
+{
+	read_debug4 = 1;
+	return latch4;
+}
+
+READ16_HANDLER( soundlatch4_word_r )
 {
 	read_debug4 = 1;
 	return latch4;
@@ -279,6 +339,10 @@ int K051649_clock(const struct MachineSound *msound) { return ((struct k051649_i
 #if (HAS_K053260)
 int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
 #endif
+#if (HAS_K054539)
+int K054539_clock(const struct MachineSound *msound) { return ((struct K054539interface*)msound->sound_interface)->clock; }
+int K054539_num(const struct MachineSound *msound) { return ((struct K054539interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_CEM3394)
 int cem3394_num(const struct MachineSound *msound) { return ((struct cem3394_interface*)msound->sound_interface)->numchips; }
 #endif
@@ -287,6 +351,9 @@ int qsound_clock(const struct MachineSound *msound) { return ((struct QSound_int
 #endif
 #if (HAS_SAA1099)
 int saa1099_num(const struct MachineSound *msound) { return ((struct SAA1099_interface*)msound->sound_interface)->numchips; }
+#endif
+#if (HAS_IREMGA20)
+int iremga20_clock(const struct MachineSound *msound) { return ((struct IremGA20_interface*)msound->sound_interface)->clock; }
 #endif
 #if (HAS_SPEAKER)
 int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_interface*)msound->sound_interface)->num; }
@@ -741,6 +808,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_K054539)
+    {
+		SOUND_K054539,
+		"054539",
+		K054539_num,
+		K054539_clock,
+		K054539_sh_start,
+		K054539_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_SEGAPCM)
 	{
 		SOUND_SEGAPCM,
@@ -809,6 +888,18 @@ struct snd_interface sndintf[] =
 		0,
 		saa1099_sh_start,
 		saa1099_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_IREMGA20)
+	{
+		SOUND_IREMGA20,
+		"GA20",
+		0,
+		iremga20_clock,
+		IremGA20_sh_start,
+		IremGA20_sh_stop,
 		0,
 		0
 	},

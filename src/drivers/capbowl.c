@@ -177,30 +177,25 @@ static WRITE_HANDLER( track_reset_w )
 
 
 
-static struct MemoryReadAddress capbowl_readmem[] =
-{
+static MEMORY_READ_START( capbowl_readmem )
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x5000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5fff, TMS34061_r },
 	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
 	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bowlrama_readmem[] =
-{
+static MEMORY_READ_START( bowlrama_readmem )
 	{ 0x0000, 0x001f, bowlrama_turbo_r },
 	{ 0x5000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5fff, TMS34061_r },
 	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
 	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x001f, bowlrama_turbo_w },	/* Bowl-O-Rama only */
 	{ 0x4000, 0x4000, MWA_RAM, &capbowl_rowaddress },
 	{ 0x4800, 0x4800, capbowl_rom_select_w },
@@ -208,29 +203,24 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5800, 0x5fff, TMS34061_w },
 	{ 0x6000, 0x6000, capbowl_sndcmd_w },
 	{ 0x6800, 0x6800, track_reset_w },	/* + watchdog */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x1000, YM2203_status_port_0_r },
 	{ 0x1001, 0x1001, YM2203_read_port_0_r },
 	{ 0x7000, 0x7000, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM},
 	{ 0x1000, 0x1000, YM2203_control_port_0_w },
 	{ 0x1001, 0x1001, YM2203_write_port_0_w },
 	{ 0x2000, 0x2000, MWA_NOP },  /* Not hooked up according to the schematics */
 	{ 0x6000, 0x6000, DAC_0_data_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

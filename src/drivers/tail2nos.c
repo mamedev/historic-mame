@@ -15,13 +15,12 @@ press F1+F3 to see ROM/RAM tests and the final animation
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *tail2nos_bgvideoram;
+extern data16_t *tail2nos_bgvideoram;
 
-READ_HANDLER( tail2nos_bgvideoram_r );
-WRITE_HANDLER( tail2nos_bgvideoram_w );
-READ_HANDLER( tail2nos_zoomdata_r );
-WRITE_HANDLER( tail2nos_zoomdata_w );
-WRITE_HANDLER( tail2nos_gfxbank_w );
+WRITE16_HANDLER( tail2nos_bgvideoram_w );
+READ16_HANDLER( tail2nos_zoomdata_r );
+WRITE16_HANDLER( tail2nos_zoomdata_w );
+WRITE16_HANDLER( tail2nos_gfxbank_w );
 int tail2nos_vh_start(void);
 void tail2nos_vh_stop(void);
 void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -38,113 +37,101 @@ static void tail2nos_init_machine(void)
 	cpu_setbank(2,memory_region(REGION_USER2));
 
 	/* initialize sound bank */
-	cpu_setbank(9,memory_region(REGION_CPU2) + 0x10000);
+	cpu_setbank(3,memory_region(REGION_CPU2) + 0x10000);
 }
 
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE16_HANDLER( sound_command_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
 		cpu_cause_interrupt(1,Z80_NMI_INT);
 	}
 }
 
-static READ_HANDLER( tail2nos_K051316_0_r )
+static READ16_HANDLER( tail2nos_K051316_0_r )
 {
-	return K051316_0_r(offset >> 1);
+	return K051316_0_r(offset);
 }
 
-static WRITE_HANDLER( tail2nos_K051316_0_w )
+static WRITE16_HANDLER( tail2nos_K051316_0_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_0_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_0_w(offset,data & 0xff);
 }
 
-static WRITE_HANDLER( tail2nos_K051316_ctrl_0_w )
+static WRITE16_HANDLER( tail2nos_K051316_ctrl_0_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_ctrl_0_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_ctrl_0_w(offset,data & 0xff);
 }
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	cpu_setbank(9,memory_region(REGION_CPU2) + 0x10000 + (data & 0x01) * 0x8000);
+	cpu_setbank(3,memory_region(REGION_CPU2) + 0x10000 + (data & 0x01) * 0x8000);
 }
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x200000, 0x27ffff, MRA_BANK1 },	/* extra ROM */
-	{ 0x2c0000, 0x2dffff, MRA_BANK2 },	/* extra ROM */
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x200000, 0x27ffff, MRA16_BANK1 },	/* extra ROM */
+	{ 0x2c0000, 0x2dffff, MRA16_BANK2 },	/* extra ROM */
 	{ 0x400000, 0x41ffff, tail2nos_zoomdata_r },
 	{ 0x500000, 0x500fff, tail2nos_K051316_0_r },
-	{ 0xff8000, 0xffbfff, MRA_BANK3 },	/* work RAM */
-	{ 0xffc000, 0xffc2ff, MRA_BANK4 },	/* sprites */
-	{ 0xffc300, 0xffcfff, MRA_BANK5 },
-	{ 0xffd000, 0xffdfff, tail2nos_bgvideoram_r },
-	{ 0xffe000, 0xffefff, paletteram_word_r },
-	{ 0xfff000, 0xfff001, input_port_0_r },
-	{ 0xfff004, 0xfff005, input_port_1_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xff8000, 0xffbfff, MRA16_RAM },	/* work RAM */
+	{ 0xffc000, 0xffc2ff, MRA16_RAM },	/* sprites */
+	{ 0xffc300, 0xffcfff, MRA16_RAM },
+	{ 0xffd000, 0xffdfff, MRA16_RAM },
+	{ 0xffe000, 0xffefff, MRA16_RAM },
+	{ 0xfff000, 0xfff001, input_port_0_word_r },
+	{ 0xfff004, 0xfff005, input_port_1_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x200000, 0x27ffff, MWA_ROM },
-	{ 0x2c0000, 0x2dffff, MWA_ROM },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x200000, 0x27ffff, MWA16_ROM },
+	{ 0x2c0000, 0x2dffff, MWA16_ROM },
 	{ 0x400000, 0x41ffff, tail2nos_zoomdata_w },
 	{ 0x500000, 0x500fff, tail2nos_K051316_0_w },
 	{ 0x510000, 0x51001f, tail2nos_K051316_ctrl_0_w },
-	{ 0xff8000, 0xffbfff, MWA_BANK3 },	/* work RAM */
-	{ 0xffc000, 0xffc2ff, MWA_BANK4, &spriteram, &spriteram_size },
-	{ 0xffc300, 0xffcfff, MWA_BANK5 },
+	{ 0xff8000, 0xffbfff, MWA16_RAM },	/* work RAM */
+	{ 0xffc000, 0xffc2ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0xffc300, 0xffcfff, MWA16_RAM },
 	{ 0xffd000, 0xffdfff, tail2nos_bgvideoram_w, &tail2nos_bgvideoram },
-	{ 0xffe000, 0xffefff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0xffe000, 0xffefff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0xfff000, 0xfff001, tail2nos_gfxbank_w },
 	{ 0xfff008, 0xfff009, sound_command_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK9 },
-	{ -1 }  /* end of table */
-};
+	{ 0x8000, 0xffff, MRA_BANK3 },
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x77ff, MWA_ROM },
 	{ 0x7800, 0x7fff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x07, 0x07, soundlatch_r },
 #if 0
 	{ 0x18, 0x18, YM2610_status_port_0_A_r },
 	{ 0x1a, 0x1a, YM2610_status_port_0_B_r },
 #endif
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x07, 0x07, IOWP_NOP },	/* clear pending command */
 	{ 0x08, 0x08, YM2608_control_port_0_A_w },
 	{ 0x09, 0x09, YM2608_data_port_0_A_w },
 	{ 0x0a, 0x0a, YM2608_control_port_0_B_w },
 	{ 0x0b, 0x0b, YM2608_data_port_0_B_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

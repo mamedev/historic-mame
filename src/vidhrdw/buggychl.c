@@ -99,15 +99,15 @@ WRITE_HANDLER( buggychl_ctrl_w )
 	bit0 = VINV
 */
 
-	flip_screen_y_w(0,data & 0x01);
-	flip_screen_x_w(0,data & 0x02);
+	flip_screen_y_set(data & 0x01);
+	flip_screen_x_set(data & 0x02);
 
 	bg_on = data & 0x04;
 	sky_on = data & 0x08;
 
 	sprite_color_base = (data & 0x10) ? 1*16 : 3*16;
 
-	coin_lockout_global_w(0,(~data & 0x40) >> 6);
+	coin_lockout_global_w((~data & 0x40) >> 6);
 	set_led_status(0,~data & 0x80);
 }
 

@@ -64,8 +64,7 @@ static WRITE_HANDLER( jack_sh_command_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0xb000, 0xb07f, MRA_RAM },
@@ -78,11 +77,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xb506, 0xb507, jack_flipscreen_r },
 	{ 0xb800, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, MWA_RAM },
 	{ 0xb000, 0xb07f, MWA_RAM, &spriteram, &spriteram_size },
@@ -92,37 +89,28 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb800, 0xbbff, videoram_w, &videoram, &videoram_size },
 	{ 0xbc00, 0xbfff, colorram_w, &colorram },
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x6000, 0x6fff, MWA_NOP },  /* R/C filter ??? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x40, 0x40, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x80, 0x80, AY8910_control_port_0_w },
 	{ 0x40, 0x40, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -69,8 +69,7 @@ static int srumbler_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_RAM },   /* RAM (of 1 sort or another) */
 	{ 0x4008, 0x4008, input_port_0_r },
 	{ 0x4009, 0x4009, input_port_1_r },
@@ -88,8 +87,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd000, 0xdfff, MRA_BANK14 },	/* Banked ROM */
 	{ 0xe000, 0xefff, MRA_BANK15 },	/* Banked ROM */
 	{ 0xf000, 0xffff, MRA_BANK16 },	/* Banked ROM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /*
 The "scroll test" routine on the test screen appears to overflow and write
@@ -101,8 +99,7 @@ to the page register.
 Ignore the warnings about writing to unmapped memory.
 */
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1dff, MWA_RAM },
 	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2000, 0x3fff, srumbler_background_w, &srumbler_backgroundram },
@@ -114,27 +111,22 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_RAM }, /* Video RAM 2 ??? (not used) */
 	{ 0x7000, 0x73ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x7400, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0xe000, 0xe000, soundlatch_r },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0x8000, 0x8000, YM2203_control_port_0_w },
 	{ 0x8001, 0x8001, YM2203_write_port_0_w },
 	{ 0xa000, 0xa000, YM2203_control_port_1_w },
 	{ 0xa001, 0xa001, YM2203_write_port_1_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( srumbler )

@@ -71,8 +71,7 @@ static WRITE_HANDLER( m107_coincounter_w )
 
 /*****************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x9ffff, MRA_ROM },
 	{ 0xa0000, 0xbffff, MRA_BANK1 },
 	{ 0xd0000, 0xdffff, m107_vram_r },
@@ -80,22 +79,18 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf8000, 0xf8fff, MRA_RAM },
 	{ 0xf9000, 0xf9fff, paletteram_r },
 	{ 0xffff0, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0xbffff, MWA_ROM },
 	{ 0xd0000, 0xdffff, m107_vram_w, &m107_vram_data },
 	{ 0xe0000, 0xeffff, MWA_RAM, &m107_ram }, /* System ram */
 	{ 0xf8000, 0xf8fff, MWA_RAM, &spriteram },
 	{ 0xf9000, 0xf9fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xffff0, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r }, /* Player 1 */
 	{ 0x01, 0x01, input_port_1_r }, /* Player 2 */
 	{ 0x02, 0x02, m107_port_4_r }, /* Coins */
@@ -104,36 +99,29 @@ static struct IOReadPort readport[] =
 	{ 0x05, 0x05, input_port_5_r }, /* Dip 1 */
 	{ 0x06, 0x06, input_port_2_r }, /* Player 3 */
 	{ 0x07, 0x07, input_port_3_r }, /* Player 4 */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x01, m107_soundlatch_w },
 	{ 0x02, 0x03, m107_coincounter_w },
 	{ 0x06, 0x07, bankswitch_w },
 	{ 0x80, 0x9f, m107_control_w },
 	{ 0xa0, 0xaf, MWA_NOP }, /* Written with 0's in interrupt */
 	{ 0xb0, 0xb1, m107_spritebuffer_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /******************************************************************************/
 
 #if 0
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x00000, 0x1ffff, MRA_ROM },
 	{ 0xffff0, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x00000, 0x1ffff, MWA_ROM },
 	{ 0xffff0, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 #endif
 
 /******************************************************************************/

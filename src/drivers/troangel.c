@@ -16,8 +16,7 @@ void troangel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress troangel_readmem[] =
-{
+static MEMORY_READ_START( troangel_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x90ff, MRA_RAM },
@@ -27,11 +26,9 @@ static struct MemoryReadAddress troangel_readmem[] =
 	{ 0xd003, 0xd003, input_port_3_r },
 	{ 0xd004, 0xd004, input_port_4_r },
 	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress troangel_writemem[] =
-{
+static MEMORY_WRITE_START( troangel_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
 //	{ 0x8800, 0x8fff, MWA_RAM },
@@ -40,8 +37,7 @@ static struct MemoryWriteAddress troangel_writemem[] =
 	{ 0xd000, 0xd000, irem_sound_cmd_w },
 	{ 0xd001, 0xd001, troangel_flipscreen_w },	/* + coin counters */
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

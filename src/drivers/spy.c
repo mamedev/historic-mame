@@ -98,8 +98,7 @@ static WRITE_HANDLER( sound_bank_w )
 
 
 
-static struct MemoryReadAddress spy_readmem[] =
-{
+static MEMORY_READ_START( spy_readmem )
 	{ 0x0000, 0x07ff, spy_bankedram1_r },
 	{ 0x0800, 0x1aff, MRA_RAM },
 	{ 0x3fd0, 0x3fd0, input_port_4_r },
@@ -110,11 +109,9 @@ static struct MemoryReadAddress spy_readmem[] =
 	{ 0x2000, 0x5fff, K052109_051960_r },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spy_writemem[] =
-{
+static MEMORY_WRITE_START( spy_writemem )
 	{ 0x0000, 0x07ff, spy_bankedram1_w, &ram },
 	{ 0x0800, 0x1aff, MWA_RAM },
 	{ 0x3f80, 0x3f80, bankswitch_w },
@@ -125,22 +122,18 @@ static struct MemoryWriteAddress spy_writemem[] =
 	{ 0x2000, 0x5fff, K052109_051960_w },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress spy_sound_readmem[] =
-{
+static MEMORY_READ_START( spy_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa00d, K007232_read_port_0_r },
 	{ 0xb000, 0xb00d, K007232_read_port_1_r },
 	{ 0xc000, 0xc000, YM3812_status_port_0_r },
 	{ 0xd000, 0xd000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spy_sound_writemem[] =
-{
+static MEMORY_WRITE_START( spy_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x9000, sound_bank_w },
@@ -148,8 +141,7 @@ static struct MemoryWriteAddress spy_sound_writemem[] =
 	{ 0xb000, 0xb00d, K007232_write_port_1_w },
 	{ 0xc000, 0xc000, YM3812_control_port_0_w },
 	{ 0xc001, 0xc001, YM3812_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

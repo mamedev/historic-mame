@@ -1,15 +1,21 @@
 /*
  * 2asm: Convert binary files to 80*86 assembler. Version 1.00
  * Adapted by Andrea Mazzoleni for use with MAME
- * HJB 990321:
+ * HJB 990321: 
  * Changed output of hex values from 0xxxxh to $xxxx format
  * Removed "ptr" from "byte ptr", "word ptr" and "dword ptr"
  * OB 990721:
  * Changed to the needs of the new NEC core and FIXED opcode & arg fetching
  * from ROM/RAM pointers to support encrypted cpus
  * stripped most of obsolete code, since NEC's are 16 Bit only (until V60)
-*/
 
+Mish:
+
+add aw,%Iv
+add aw,%Iv
+
+*/
+ 
 /* 2asm comments
 
 License:
@@ -58,7 +64,7 @@ Any comments/updates/bug reports to:
 #include <stdlib.h>
 
 #ifdef MAME_DEBUG
-#include "nechost.h"
+//#include "nechost.h"
 
 /* Little endian uint read */
 #define	le_uint8(ptr) (*(UINT8*)ptr)
@@ -151,17 +157,22 @@ static int addrsize;
 
 /* watch out for aad && aam with odd operands */
 
-static char *opmap1[256] = {
+
+
+/* MISH BELOW!!! */
+
+
+/*static*/ char *opmap1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
-  "add al,%Ib",       "",                "push es",        "pop es",
+  "add al,%Ib",       "add aw,%Iv",      "push es",        "pop es",
   "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
-  "or al,%Ib",        "",                "push cs",        "%2 ",
+  "or al,%Ib",        "or aw,%Iv",       "push cs",        "%2 ",
 /* 1 */
   "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
-  "adc al,%Ib",       "",                "push ss",        "pop ss",
+  "adc al,%Ib",       "adc aw,%Iv",      "push ss",        "pop ss",
   "sbb %Eb,%Gb",      "sbb %Ev,%Gv",     "sbb %Gb,%Eb",    "sbb %Gv,%Ev",
-  "sbb al,%Ib",       "",                "push ds",        "pop ds",
+  "sbb al,%Ib",       "sbb aw,%Iv",      "push ds",        "pop ds",
 /* 2 */
   "and %Eb,%Gb",      "and %Ev,%Gv",     "and %Gb,%Eb",    "and %Gv,%Ev",
   "and al,%Ib",       "and aw,%Iv",      "%pe",            "adj4a",
@@ -199,6 +210,8 @@ static char *opmap1[256] = {
   "mov %Eb,%Gb",      "mov %Ev,%Gw",     "mov %Gb,%Eb",    "mov %Gw,%Ew",
   "mov %Ew,%Sw",      "ldea %Gw,%M ",    "mov %Sw,%Ew",    "pop %Ev",
 /* 9 */
+//above LDEA is wrong!  
+
   "nop",              "xch cw,aw",       "xch dw,aw",      "xch bw,aw",
   "xch sp,aw",        "xch bp,aw",       "xch ix,aw",      "xch ix,aw",
   "cvtbw",            "cvtwl",           "call %Ap",       "fwait",
@@ -221,13 +234,8 @@ static char *opmap1[256] = {
 /* d */
   "%g1 %Eb,1",        "%g1 %Ev,1",       "%g1 %Eb,cl",     "%g1 %Ev,cl",
   "aam ; %Ib",        "aad ; %Ib",       "setalc",         "trans",
-#if 0
-  "esc 0,%Ib",        "esc 1,%Ib",       "esc 2,%Ib",      "esc 3,%Ib",
-  "esc 4,%Ib",        "esc 5,%Ib",       "esc 6,%Ib",      "esc 7,%Ib",
-#else
   "%f0",              "%f1",             "%f2",            "%f3",
   "%f4",              "%f5",             "%f6",            "%f7",
-#endif
 /* e */
   "loopne %Jb",       "loope %Jb",       "loop %Jb",       "j%j cxz %Jb",
   "in al,%Ib",        "in aw,%Ib",       "out %Ib,al",     "out %Ib,aw",
@@ -279,11 +287,10 @@ static char *second[] = {
   "jz %Jv",           "jnz %Jv",         "jbe %Jv",        "ja %Jv",
   "js %Jv",           "jns %Jv",         "jp %Jv",         "jnp %Jv",
   "jl %Jv",           "jge %Jv",         "jle %Jv",        "jg %Jv",
-/* 9 */
-  "seto %Eb",         "setno %Eb",       "setc %Eb",       "setnc %Eb",
-  "setz %Eb",         "setnz %Eb",       "setbe %Eb",      "setnbe %Eb",
-  "sets %Eb",         "setns %Eb",       "setp %Eb",       "setnp %Eb",
-  "setl %Eb",         "setge %Eb",       "setle %Eb",      "setg %Eb",
+
+  0, 0, "fint", 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
+
 /* a */
   "push fs",          "pop fs",          0,                "bt %Ev,%Gv",
   "shld %Ev,%Gv,%Ib", "shld %Ev,%Gv,cl", 0,                0,
@@ -764,7 +771,7 @@ static void percent(char type, char subtype)
        case 'g':
        case 's':
             prefix = subtype;
-            c = getbyte();
+			c = getopcode();
             wordop = c & 1;
             ua_str(opmap1[c]);
             break;
@@ -773,7 +780,7 @@ static void percent(char type, char subtype)
               uprintf("%cs:", prefix);
             break;
        case ' ':
-            c = getbyte();
+            c = getopcode();
             wordop = c & 1;
             ua_str(opmap1[c]);
             break;
@@ -784,17 +791,15 @@ static void percent(char type, char subtype)
        switch (subtype) {
        case 'a':
             addrsize = 48 - addrsize;
-            c = getbyte();
+			c = getopcode();
             wordop = c & 1;
             ua_str(opmap1[c]);
-/*            ua_str(opmap1[getbyte()]); */
             break;
        case 'o':
-            opsize = 48 - opsize;
-            c = getbyte();
+            opsize = 48 - opsize;	
+			c = getopcode();
             wordop = c & 1;
             ua_str(opmap1[c]);
-/*            ua_str(opmap1[getbyte()]); */
             break;
        }
        break;

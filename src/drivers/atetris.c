@@ -56,19 +56,16 @@ static void nvram_handler(void *file,int read_or_write)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x20ff, MRA_RAM },
 	{ 0x2400, 0x25ff, MRA_RAM },
 	{ 0x2800, 0x280f, pokey1_r },
 	{ 0x2810, 0x281f, pokey2_r },
 	{ 0x4000, 0x7fff, atetris_slapstic_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
@@ -80,8 +77,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3800, 0x3800, MWA_NOP },  // ???
 	{ 0x3c00, 0x3c00, MWA_NOP },  // ???
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( atetris )

@@ -14,7 +14,7 @@ unsigned char *rockola_videoram2;
 unsigned char *rockola_characterram;
 unsigned char *rockola_scrollx,*rockola_scrolly;
 static unsigned char dirtycharacter[256];
-static data_t charbank;
+static int charbank;
 static int backcolor;
 
 
@@ -147,14 +147,14 @@ WRITE_HANDLER( rockola_flipscreen_w )
 	set_vh_global_attribute(&charbank,(~data & 0x08) >> 3);
 
 	/* bit 7 flips screen */
-	flip_screen_w(0,data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 
 WRITE_HANDLER( satansat_b002_w )
 {
 	/* bit 0 flips screen */
-	flip_screen_w(0,data & 0x01);
+	flip_screen_set(data & 0x01);
 
 	/* bit 1 enables interrups */
 	/* it controls only IRQs, not NMIs. Here I am affecting both, which */

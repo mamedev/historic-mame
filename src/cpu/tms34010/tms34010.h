@@ -72,8 +72,8 @@ struct tms34010_config
 {
 	UINT8	halt_on_reset;						/* /HCS pin, which determines HALT state after reset */
 	void	(*output_int)(int state);			/* output interrupt callback */
-	void	(*to_shiftreg)(UINT32, UINT16 *);	/* shift register write */
-	void	(*from_shiftreg)(UINT32, UINT16 *);	/* shift register read */
+	void	(*to_shiftreg)(offs_t, data16_t *);	/* shift register write */
+	void	(*from_shiftreg)(offs_t, data16_t *);/* shift register read */
 	void	(*display_addr_changed)(UINT32 offs, int rowbytes, int scanline);/* display address changed */
 	void	(*display_int_callback)(int scanline);/* display interrupt callback */
 };
@@ -140,12 +140,12 @@ int			tms34010_host_r(int cpunum, int reg);
 
 
 /* Reads & writes to the 34010 I/O registers; place at TOBYTE(0xc0000000) */
-WRITE_HANDLER( tms34010_io_register_w );
-READ_HANDLER( tms34010_io_register_r );
+WRITE16_HANDLER( tms34010_io_register_w );
+READ16_HANDLER( tms34010_io_register_r );
 
 /* Reads & writes to the 34020 I/O registers; place at TOBYTE(0xc0000000) */
-WRITE_HANDLER( tms34020_io_register_w );
-READ_HANDLER( tms34020_io_register_r );
+WRITE16_HANDLER( tms34020_io_register_w );
+READ16_HANDLER( tms34020_io_register_r );
 
 
 /* PUBLIC GLOBALS */
@@ -155,6 +155,8 @@ extern int tms34010_ICount;
 
 /* Use this macro in the memory definitions to specify bit-based addresses */
 #define TOBYTE(bitaddr) ((offs_t)(bitaddr) >> 3)
+#define TOWORD(bitaddr) ((offs_t)(bitaddr) >> 4)
+
 
 #ifdef MAME_DEBUG
 unsigned Dasm34010(char *buff, unsigned _pc);

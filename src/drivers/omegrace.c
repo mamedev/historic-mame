@@ -303,46 +303,35 @@ WRITE_HANDLER( omegrace_soundlatch_w )
 	cpu_cause_interrupt (1, 0xff);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
 	{ 0x5c00, 0x5cff, MRA_RAM }, /* NVRAM */
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_ROM }, /* vector rom */
-	{ -1 }	/* end of table */
+MEMORY_END
 
-	/* 9000-9fff is ROM, hopefully there are no writes to it */
-};
-
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
 	{ 0x4000, 0x4bff, MWA_RAM },
 	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size }, /* NVRAM */
 	{ 0x8000, 0x8fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector ram */
 	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x1000, 0x13ff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
 	{ 0x1000, 0x13ff, MWA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x08, 0x08, omegrace_vg_go_r },
 	{ 0x09, 0x09, omegrace_watchdog_r },
 	{ 0x0b, 0x0b, omegrace_vg_status_r }, /* vg_halt */
@@ -352,31 +341,24 @@ static struct IOReadPort readport[] =
 	{ 0x12, 0x12, input_port_3_r }, /* Player 2 input */
 	{ 0x15, 0x15, omegrace_spinner1_r }, /* 1st controller */
 	{ 0x16, 0x16, input_port_5_r }, /* 2nd controller (cocktail) */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x0a, 0x0a, avgdvg_reset_w },
 	{ 0x13, 0x13, omegrace_leds_w }, /* coin counters, leds, flip screen */
 	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x02, 0x02, AY8910_control_port_1_w },
 	{ 0x03, 0x03, AY8910_write_port_1_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( omegrace )
 	PORT_START /* SW0 */

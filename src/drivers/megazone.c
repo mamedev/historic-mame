@@ -116,17 +116,14 @@ WRITE_HANDLER( i8039_irqen_and_status_w )
 	i8039_status = (data & 0x70) >> 4;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x2000, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x33ff, MRA_RAM },
 	{ 0x3800, 0x3fff, megazone_sharedram_r },
 	{ 0x4000, 0xffff, MRA_ROM },		/* 4000->5FFF is a debug rom */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0007, 0x0007, interrupt_enable_w },
 	{ 0x0800, 0x0800, watchdog_reset_w },
 	{ 0x1800, 0x1800, MWA_RAM, &megazone_scrollx },
@@ -138,11 +135,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3000, 0x33ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3800, 0x3fff, megazone_sharedram_w, &megazone_sharedram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6000, 0x6000, input_port_0_r }, /* IO Coin */
 	{ 0x6001, 0x6001, input_port_1_r }, /* P1 IO */
@@ -151,11 +146,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x8000, 0x8000, input_port_4_r }, /* DIP 2 */
 	{ 0x8001, 0x8001, megazone_dip3_r }, /* DIP 3 - Not used */
 	{ 0xe000, 0xe7ff, megazone_sharedram_r },  /* Shared with $3800->3fff of main CPU */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2000, megazone_i8039_irq_w },	/* START line. Interrupts 8039 */
 	{ 0x4000, 0x4000, soundlatch_w },			/* CODE  line. Command Interrupts 8039 */
@@ -163,47 +156,34 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xc000, 0xc000, MWA_RAM },				/* INT (Actually is NMI) enable/disable (unused)*/
 	{ 0xc001, 0xc001, watchdog_reset_w },
 	{ 0xe000, 0xe7ff, megazone_sharedram_w },	/* Shared with $3800->3fff of main CPU */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x02, AY8910_read_port_0_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress i8039_readmem[] =
-{
+static MEMORY_READ_START( i8039_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress i8039_writemem[] =
-{
+static MEMORY_WRITE_START( i8039_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort i8039_readport[] =
-{
+static PORT_READ_START( i8039_readport )
 	{ 0x00, 0xff, soundlatch_r },
 	{ 0x111,0x111, IORP_NOP },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort i8039_writeport[] =
-{
+static PORT_WRITE_START( i8039_writeport )
 	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( megazone )
 	PORT_START      /* IN0 */

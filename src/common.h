@@ -168,9 +168,9 @@ void showdisclaimer(void);
 
 /* LBO 042898 - added coin counters */
 #define COIN_COUNTERS	4	/* total # of coin counters */
-WRITE_HANDLER( coin_counter_w );
-WRITE_HANDLER( coin_lockout_w );
-WRITE_HANDLER( coin_lockout_global_w );  /* Locks out all coin inputs */
+void coin_counter_w(int num,int on);
+void coin_lockout_w(int num,int on);
+void coin_lockout_global_w(int on);  /* Locks out all coin inputs */
 
 
 int readroms(void);
@@ -190,19 +190,15 @@ int memory_region_length(int num);
 int new_memory_region(int num, int length);
 void free_memory_region(int num);
 
-extern data_t flip_screen_x, flip_screen_y;
+extern int flip_screen_x, flip_screen_y;
 
-WRITE_HANDLER( flip_screen_w );
-WRITE_HANDLER( flip_screen_x_w );
-WRITE_HANDLER( flip_screen_y_w );
+void flip_screen_set(int on);
+void flip_screen_x_set(int on);
+void flip_screen_y_set(int on);
 #define flip_screen flip_screen_x
 
 /* sets a variable and schedules a full screen refresh if it changed */
-void set_vh_global_attribute( data_t *addr, data_t data );
-
-/* next time vh_screenrefresh is called, full_refresh will be true,
-   thus requesting a redraw of the entire screen */
-void schedule_full_refresh(void);
+void set_vh_global_attribute( int *addr, int data );
 
 void set_visible_area(int min_x,int max_x,int min_y,int max_y);
 

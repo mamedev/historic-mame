@@ -5,6 +5,10 @@
 #define BUILD_YM3526 (HAS_YM3526)
 #define BUILD_Y8950  (HAS_Y8950)
 
+/* --- system optimize --- */
+/* select bit size of output : 8 or 16 */
+#define OPL_OUTPUT_BIT 16
+
 /* compiler dependence */
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
@@ -15,6 +19,14 @@ typedef signed char		INT8;    /* signed  8bit   */
 typedef signed short	INT16;   /* signed 16bit   */
 typedef signed int		INT32;   /* signed 32bit   */
 #endif
+
+#if (OPL_OUTPUT_BIT==16)
+typedef INT16 OPLSAMPLE;
+#endif
+#if (OPL_OUTPUT_BIT==8)
+typedef unsigned char  OPLSAMPLE;
+#endif
+
 
 #if BUILD_Y8950
 #include "ymdeltat.h"

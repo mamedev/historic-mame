@@ -42,7 +42,6 @@ struct osd_bitmap
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth);
-void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 
 /*
@@ -108,7 +107,7 @@ int osd_allocate_colors(unsigned int totalcolors,
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 
-void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
+void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);
 
 /*
   osd_skip_this_frame() must return 0 if the current frame will be displayed.

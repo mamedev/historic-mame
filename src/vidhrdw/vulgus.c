@@ -12,7 +12,7 @@
 unsigned char *vulgus_fgvideoram,*vulgus_bgvideoram;
 unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
 
-static data_t vulgus_palette_bank;
+static int vulgus_palette_bank;
 static struct tilemap *fg_tilemap, *bg_tilemap;
 
 
@@ -119,7 +119,7 @@ int vulgus_vh_start(void)
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 47;
+	tilemap_set_transparent_pen(fg_tilemap,47);
 
 	return 0;
 }
@@ -151,16 +151,17 @@ WRITE_HANDLER( vulgus_c804_w )
 	coin_counter_w(1, data & 0x02);
 
 	/* bit 7 flips screen */
-	flip_screen_w(offset, data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 
 WRITE_HANDLER( vulgus_palette_bank_w )
 {
 	if (vulgus_palette_bank != data)
+	{
+		vulgus_palette_bank = data;
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
-
-	vulgus_palette_bank = data;
+	}
 }
 
 
@@ -222,9 +223,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(bg_tilemap, 0, vulgus_scroll_low[0] + 256 * vulgus_scroll_high[0]);
 
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

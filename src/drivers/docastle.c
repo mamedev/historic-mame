@@ -129,18 +129,15 @@ WRITE_HANDLER( docastle_flipscreen_off_w );
 WRITE_HANDLER( docastle_flipscreen_on_w );
 
 
-static struct MemoryReadAddress docastle_readmem[] =
-{
+static MEMORY_READ_START( docastle_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x97ff, MRA_RAM },
 	{ 0xa000, 0xa008, docastle_shared0_r },
 	{ 0xb800, 0xbbff, videoram_r }, /* mirror of video ram */
 	{ 0xbc00, 0xbfff, colorram_r }, /* mirror of color ram */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress docastle_writemem[] =
-{
+static MEMORY_WRITE_START( docastle_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x97ff, MWA_RAM },
 	{ 0x9800, 0x99ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -149,20 +146,16 @@ static struct MemoryWriteAddress docastle_writemem[] =
 	{ 0xb000, 0xb3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xb400, 0xb7ff, colorram_w, &colorram },
 	{ 0xe000, 0xe000, docastle_nmitrigger_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dorunrun_readmem[] =
-{
+static MEMORY_READ_START( dorunrun_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x37ff, MRA_RAM },
 	{ 0x4000, 0x9fff, MRA_ROM },
 	{ 0xa000, 0xa008, docastle_shared0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dorunrun_writemem[] =
-{
+static MEMORY_WRITE_START( dorunrun_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x39ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -172,11 +165,9 @@ static struct MemoryWriteAddress dorunrun_writemem[] =
 	{ 0xb400, 0xb7ff, colorram_w, &colorram },
 	{ 0xb800, 0xb800, docastle_nmitrigger_w },
 	{ 0xa800, 0xa800, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress docastle_readmem2[] =
-{
+static MEMORY_READ_START( docastle_readmem2 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa008, docastle_shared1_r },
@@ -192,11 +183,9 @@ static struct MemoryReadAddress docastle_readmem2[] =
 	{ 0xc081, 0xc081, input_port_4_r },
 	{ 0xc004, 0xc004, docastle_flipscreen_off_r },
 	{ 0xc084, 0xc084, docastle_flipscreen_on_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress docastle_writemem2[] =
-{
+static MEMORY_WRITE_START( docastle_writemem2 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa008, docastle_shared0_w },
@@ -206,11 +195,9 @@ static struct MemoryWriteAddress docastle_writemem2[] =
 	{ 0xec00, 0xec00, SN76496_3_w },
 	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
 	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dorunrun_readmem2[] =
-{
+static MEMORY_READ_START( dorunrun_readmem2 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xc003, 0xc003, input_port_0_r },
@@ -226,11 +213,9 @@ static struct MemoryReadAddress dorunrun_readmem2[] =
 	{ 0xc004, 0xc004, docastle_flipscreen_off_r },
 	{ 0xc084, 0xc084, docastle_flipscreen_on_r },
 	{ 0xe000, 0xe008, docastle_shared1_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dorunrun_writemem2[] =
-{
+static MEMORY_WRITE_START( dorunrun_writemem2 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },
@@ -240,8 +225,7 @@ static struct MemoryWriteAddress dorunrun_writemem2[] =
 	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
 	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
 	{ 0xe000, 0xe008, docastle_shared0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

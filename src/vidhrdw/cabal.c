@@ -12,16 +12,16 @@ static void draw_background( struct osd_bitmap *bitmap ) {
     int offs;
     const struct GfxElement *gfx = Machine->gfx[1];
 
-    for( offs = 0; offs < videoram_size; offs += 2 ){
-        int offs2 = offs / 2;
-        if( dirtybuffer[offs2] ) {
-            int data = READ_WORD( &videoram[offs] );
+    for( offs = 0; offs < videoram_size/2; offs++ )
+	{
+        if( dirtybuffer[offs] ) {
+            int data = videoram16[offs];
             int numtile = ( data & 0xfff );
             int color = ( data & 0xf000 ) >> 12;
-            int sx = ( offs2 % 16 ) * 16;
-            int sy = ( offs2 / 16 ) * 16;
+            int sx = ( offs % 16 ) * 16;
+            int sy = ( offs / 16 ) * 16;
 
-            dirtybuffer[offs2] = 0;
+            dirtybuffer[offs] = 0;
 
             drawgfx( tmpbitmap,gfx,
                 numtile,
@@ -39,14 +39,14 @@ static void draw_text( struct osd_bitmap *bitmap ) {
     int offs;
     const struct rectangle *clip = &Machine->visible_area;
 
-    for ( offs = 0; offs < 0x800; offs += 2 ) {
-        unsigned short data = READ_WORD( &colorram[offs] );
+    for ( offs = 0; offs < 0x400; offs++) {
+        unsigned short data = colorram16[offs];
         int tile_number = data&0x3ff;
 
         if ( tile_number != 0xd ) {
             int color = data>>10;
-            int sx = 8 * ( ( offs >> 1 ) % 32 );
-            int sy = 8 * ( ( offs >> 1 ) / 32 );
+            int sx = 8 * ( offs % 32 );
+            int sy = 8 * ( offs / 32 );
 
             drawgfx( bitmap,Machine->gfx[0],
                 tile_number,
@@ -63,11 +63,11 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
     const struct GfxElement *gfx = Machine->gfx[2];
     int offs;
 
-    for( offs = spriteram_size - 8; offs >= 0; offs -= 8 ) {
-        int data0 = READ_WORD( &spriteram[offs] );
-        int data1 = READ_WORD( &spriteram[offs+2] );
-        int data2 = READ_WORD( &spriteram[offs+4] );
-//      int data3 = READ_WORD( &spriteram[offs+6] );
+    for( offs = spriteram_size/2 - 4; offs >= 0; offs -= 4 ) {
+        int data0 = spriteram16[offs];
+        int data1 = spriteram16[offs+1];
+        int data2 = spriteram16[offs+2];
+//      int data3 = spriteram16[offs+3];
 
         /*
             -------E YYYYYYYY

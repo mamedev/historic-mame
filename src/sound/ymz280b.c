@@ -559,14 +559,14 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 	for (i = 0; i < intf->num; i++)
 	{
 		/* generate the name and create the stream */
-		sprintf(stream_name[0], "%s #%d (Left)", sound_name(msound), i);
-		sprintf(stream_name[1], "%s #%d (Right)", sound_name(msound), i);
+		sprintf(stream_name[0], "%s #%d Ch1", sound_name(msound), i);
+		sprintf(stream_name[1], "%s #%d Ch2", sound_name(msound), i);
 		stream_name_ptrs[0] = stream_name[0];
 		stream_name_ptrs[1] = stream_name[1];
 
 		/* set the volumes */
-		vol[0] = MIXER(intf->mixing_level[i], MIXER_PAN_LEFT);
-		vol[1] = MIXER(intf->mixing_level[i], MIXER_PAN_RIGHT);
+		vol[0] = intf->mixing_level[i] & 0xffff;
+		vol[1] = intf->mixing_level[i] >> 16;
 
 		/* create the stream */
 		ymz280b[i].stream = stream_init_multi(2, stream_name_ptrs, vol, Machine->sample_rate, i, ymz280b_update);

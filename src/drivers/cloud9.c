@@ -5,15 +5,15 @@
   This hardware is yet another variant of the Centipede/Millipede hardware,
   but as you can see there are some significant deviations...
 
-  0000			R/W		X index into the bitmap
-  0001			R/W		Y index into the bitmap
-  0002			R/W		Current bitmap pixel value
-  0003-05FF		R/W		RAM
-  0600-3FFF		R/W		Bitmap RAM bank 0 (and bank 1 ?)
-  5000-5073		R/W		Motion Object RAM
+  0000			R/W 	X index into the bitmap
+  0001			R/W 	Y index into the bitmap
+  0002			R/W 	Current bitmap pixel value
+  0003-05FF 	R/W 	RAM
+  0600-3FFF 	R/W 	Bitmap RAM bank 0 (and bank 1 ?)
+  5000-5073 	R/W 	Motion Object RAM
   5400			W		Watchdog
   5480			W		IRQ Acknowledge
-  5500-557F		W		Color RAM (9 bits, 4 banks, LSB of Blue is addr&$40)
+  5500-557F 	W		Color RAM (9 bits, 4 banks, LSB of Blue is addr&$40)
 
   5580			W		Auto-increment X bitmap index (~D7)
   5581			W		Auto-increment Y bitmap index (~D7)
@@ -36,10 +36,10 @@
   5900			R		Trackball Vert
   5901			R		Trackball Horiz
 
-  5A00-5A0F		R/W		Pokey 1
-  5B00-5B0F		R/W		Pokey 2
-  5C00-5CFF		W		EAROM
-  6000-FFFF		R		Program ROM
+  5A00-5A0F 	R/W 	Pokey 1
+  5B00-5B0F 	R/W 	Pokey 2
+  5C00-5CFF 	W		EAROM
+  6000-FFFF 	R		Program ROM
 
 
 
@@ -87,10 +87,14 @@ static WRITE_HANDLER( cloud9_led_w )
 	set_led_status(offset,~data & 0x80);
 }
 
-
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( cloud9_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0002, cloud9_bitmap_regs_r },
 	{ 0x0003, 0x05ff, MRA_RAM },
 	{ 0x0600, 0x3fff, MRA_RAM },
@@ -103,11 +107,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5b00, 0x5b0f, pokey2_r },
 	{ 0x5c00, 0x5cff, MRA_RAM },	/* EAROM */
 	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0002, cloud9_bitmap_regs_w, &cloud9_bitmap_regs },
 	{ 0x0003, 0x05ff, MWA_RAM },
 	{ 0x0600, 0x3fff, cloud9_bitmap_w, &videoram, &videoram_size },
@@ -120,15 +122,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5584, 0x5584, MWA_RAM, &cloud9_both_banks },
 	{ 0x5586, 0x5586, MWA_RAM, &cloud9_vram_bank },
 	{ 0x5587, 0x5587, MWA_RAM, &cloud9_color_bank },
-	{ 0x5600, 0x5601, coin_counter_w },
+	{ 0x5600, 0x5601, cloud9_coin_counter_w },
 	{ 0x5602, 0x5603, cloud9_led_w },
 	{ 0x5a00, 0x5a0f, pokey1_w },
 	{ 0x5b00, 0x5b0f, pokey2_w },
 	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ 0x10600,0x13fff, MWA_RAM, &cloud9_vram2 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -141,17 +142,17 @@ INPUT_PORTS_START( cloud9 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
-	PORT_START      /* IN1 */
+	PORT_START		/* IN1 */
 	PORT_BIT ( 0x0F, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START      /* IN2 */
+	PORT_START		/* IN2 */
 	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 30, 30, 0, 0 )
 
-	PORT_START      /* IN3 */
+	PORT_START		/* IN3 */
 	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 30, 30, 0, 0 )
 
 	PORT_START	/* IN4 */ /* DSW1 */
@@ -160,23 +161,23 @@ INPUT_PORTS_START( cloud9 )
 	PORT_START	/* IN5 */ /* DSW2 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0x06, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING (   0x04, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING (   0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME(0x18,  0x00, "Right Coin" )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x08, "*4" )
-	PORT_DIPSETTING (   0x10, "*5" )
-	PORT_DIPSETTING (   0x18, "*6" )
-	PORT_DIPNAME(0x20,  0x00, "Middle Coin" )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x20, "*2" )
-	PORT_DIPNAME(0xC0,  0x00, "Bonus Coins" )
-	PORT_DIPSETTING (   0xC0, "4 coins + 2 coins" )
-	PORT_DIPSETTING (   0x80, "4 coins + 1 coin" )
-	PORT_DIPSETTING (   0x40, "2 coins + 1 coin" )
-	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (	0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (	0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (	0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (	0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x18,	0x00, "Right Coin" )
+	PORT_DIPSETTING (	0x00, "*1" )
+	PORT_DIPSETTING (	0x08, "*4" )
+	PORT_DIPSETTING (	0x10, "*5" )
+	PORT_DIPSETTING (	0x18, "*6" )
+	PORT_DIPNAME(0x20,	0x00, "Middle Coin" )
+	PORT_DIPSETTING (	0x00, "*1" )
+	PORT_DIPSETTING (	0x20, "*2" )
+	PORT_DIPNAME(0xC0,	0x00, "Bonus Coins" )
+	PORT_DIPSETTING (	0xC0, "4 coins + 2 coins" )
+	PORT_DIPSETTING (	0x80, "4 coins + 1 coin" )
+	PORT_DIPSETTING (	0x40, "2 coins + 1 coin" )
+	PORT_DIPSETTING (	0x00, "None" )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -193,9 +194,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	64,	/* 64 sprites */
+	64, /* 64 sprites */
 	4,	/* 4 bits per pixel */
-	{ 0x3000*8, 0x2000*8, 0x1000*8, 0x0000*8 },	/* the four bitplanes are separated */
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0x0000*8 }, /* the four bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,
 			16*8, 18*8, 20*8, 22*8, 24*8, 26*8, 28*8, 30*8 },
@@ -238,7 +239,7 @@ static const struct MachineDriver machine_driver_cloud9 =
 	{
 		{
 			CPU_M6502,
-			12096000/8,	/* 1.512 MHz?? */
+			12096000/8, /* 1.512 MHz?? */
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -296,3 +297,4 @@ ROM_END
 
 
 GAMEX( 1983, cloud9, 0, cloud9, cloud9, 0, ROT0, "Atari", "Cloud 9 (prototype)", GAME_NO_COCKTAIL )
+

@@ -12,151 +12,127 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
-unsigned char* ultraman_regs;
 
 /* from vidhrdw/ultraman.c */
+WRITE16_HANDLER( ultraman_gfxctrl_w );
 int ultraman_vh_start( void );
 void ultraman_vh_stop( void );
 void ultraman_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
-static READ_HANDLER( ultraman_K051937_r )
+
+
+static READ16_HANDLER( ultraman_K051937_r )
 {
-	return K051937_r(offset >> 1);
+	return K051937_r(offset);
 }
 
-static READ_HANDLER( ultraman_K051960_r )
+static READ16_HANDLER( ultraman_K051960_r )
 {
-	return K051960_r(offset >> 1);
+	return K051960_r(offset);
 }
 
-static READ_HANDLER( ultraman_K051316_0_r )
+static READ16_HANDLER( ultraman_K051316_0_r )
 {
-	return K051316_0_r(offset >> 1);
+	return K051316_0_r(offset);
 }
 
-static READ_HANDLER( ultraman_K051316_1_r )
+static READ16_HANDLER( ultraman_K051316_1_r )
 {
-	return K051316_1_r(offset >> 1);
+	return K051316_1_r(offset);
 }
 
-static READ_HANDLER( ultraman_K051316_2_r )
+static READ16_HANDLER( ultraman_K051316_2_r )
 {
-	return K051316_2_r(offset >> 1);
+	return K051316_2_r(offset);
 }
 
-static WRITE_HANDLER( ultraman_K051316_0_w )
+static WRITE16_HANDLER( ultraman_K051316_0_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_0_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_0_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_K051316_1_w )
+static WRITE16_HANDLER( ultraman_K051316_1_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_1_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_1_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_K051316_2_w )
+static WRITE16_HANDLER( ultraman_K051316_2_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_2_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_2_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_K051316_ctrl_0_w )
+static WRITE16_HANDLER( ultraman_K051316_ctrl_0_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_ctrl_0_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_ctrl_0_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_K051316_ctrl_1_w )
+static WRITE16_HANDLER( ultraman_K051316_ctrl_1_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_ctrl_1_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_ctrl_1_w(offset, data & 0xff);
 
 }
 
-static WRITE_HANDLER( ultraman_K051316_ctrl_2_w )
+static WRITE16_HANDLER( ultraman_K051316_ctrl_2_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051316_ctrl_2_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051316_ctrl_2_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_K051937_w )
+static WRITE16_HANDLER( ultraman_K051937_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051937_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051937_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_K051960_w )
+static WRITE16_HANDLER( ultraman_K051960_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051960_w(offset >> 1, data & 0xff);
+	if (ACCESSING_LSB)
+		K051960_w(offset, data & 0xff);
 }
 
-static WRITE_HANDLER( ultraman_reg_w )
+static WRITE16_HANDLER( sound_cmd_w )
 {
-	int oldword = READ_WORD(&ultraman_regs[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-
-	WRITE_WORD(&ultraman_regs[offset],newword);
-
-	switch (offset){
-		/*	bit 0: enable wraparound for scr #1
-			bit 1: msb of code for scr #1
-			bit 2: enable wraparound for scr #2
-			bit 3: msb of code for scr #2
-			bit 4: enable wraparound for scr #3
-			bit 5: msb of code for scr #3
-			bit 6: coin counter 1
-			bit 7: coin counter 2 */
-		case 0x18:
-			if ((oldword & 0x2a) != (newword & 0x2a))
-				tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-			K051316_wraparound_enable(0, data & 0x01);
-			K051316_wraparound_enable(1, data & 0x04);
-			K051316_wraparound_enable(2, data & 0x10);
-			coin_counter_w(0, newword & 0x40);
-			coin_counter_w(1, newword & 0x80);
-			break;
-
-		case 0x20:	/* sound code # */
-			soundlatch_w(0, newword & 0xff);
-			break;
-
-		case 0x28:	/* cause interrupt on audio CPU */
-			cpu_cause_interrupt(1,Z80_NMI_INT);
-			break;
-
-		case 0x30:	/* watchdog timer */
-			watchdog_reset_w(0, newword & 0xff);
-			break;
-	}
+	if (ACCESSING_LSB)
+		soundlatch_w(0,data & 0xff);
 }
 
-static struct MemoryReadAddress ultraman_readmem[] =
+static WRITE16_HANDLER( sound_irq_trigger_w )
 {
-	{ 0x000000, 0x03ffff, MRA_ROM },				/* ROM */
-	{ 0x080000, 0x08ffff, MRA_BANK1 },				/* RAM */
-	{ 0x180000, 0x183fff, paletteram_word_r },		/* Palette */
-	{ 0x1c0000, 0x1c0001, input_port_0_r },			/* Coins + Service */
-	{ 0x1c0002, 0x1c0003, input_port_1_r },			/* 1P controls */
-	{ 0x1c0004, 0x1c0005, input_port_2_r },			/* 2P controls */
-	{ 0x1c0006, 0x1c0007, input_port_3_r },			/* DIPSW #1 */
-	{ 0x1c0008, 0x1c0009, input_port_4_r },			/* DIPSW #2 */
+	if (ACCESSING_LSB)
+		cpu_cause_interrupt(1,Z80_NMI_INT);
+}
+
+
+
+static MEMORY_READ16_START( ultraman_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },				/* ROM */
+	{ 0x080000, 0x08ffff, MRA16_RAM },				/* RAM */
+	{ 0x180000, 0x183fff, MRA16_RAM },				/* Palette */
+	{ 0x1c0000, 0x1c0001, input_port_0_word_r },	/* Coins + Service */
+	{ 0x1c0002, 0x1c0003, input_port_1_word_r },	/* 1P controls */
+	{ 0x1c0004, 0x1c0005, input_port_2_word_r },	/* 2P controls */
+	{ 0x1c0006, 0x1c0007, input_port_3_word_r },	/* DIPSW #1 */
+	{ 0x1c0008, 0x1c0009, input_port_4_word_r },	/* DIPSW #2 */
 	{ 0x204000, 0x204fff, ultraman_K051316_0_r },	/* K051316 #0 RAM */
 	{ 0x205000, 0x205fff, ultraman_K051316_1_r },	/* K051316 #1 RAM */
 	{ 0x206000, 0x206fff, ultraman_K051316_2_r },	/* K051316 #2 RAM */
 	{ 0x304000, 0x30400f, ultraman_K051937_r },		/* Sprite control */
 	{ 0x304800, 0x304fff, ultraman_K051960_r },		/* Sprite RAM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ultraman_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },					/* ROM */
-	{ 0x080000, 0x08ffff, MWA_BANK1 },					/* RAM */
-	{ 0x180000, 0x183fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },/* Palette */
-	{ 0x1c0000, 0x1c0031, ultraman_reg_w, &ultraman_regs },	/* counters + sound + watchdog + gfx ctrl */
+static MEMORY_WRITE16_START( ultraman_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },					/* ROM */
+	{ 0x080000, 0x08ffff, MWA16_RAM },					/* RAM */
+	{ 0x180000, 0x183fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },/* Palette */
+	{ 0x1c0018, 0x1c0019, ultraman_gfxctrl_w },	/* counters + gfx ctrl */
+	{ 0x1c0020, 0x1c0021, sound_cmd_w },
+	{ 0x1c0028, 0x1c0029, sound_irq_trigger_w },
+	{ 0x1c0030, 0x1c0031, watchdog_reset16_w },
 	{ 0x204000, 0x204fff, ultraman_K051316_0_w },		/* K051316 #0 RAM */
 	{ 0x205000, 0x205fff, ultraman_K051316_1_w },		/* K051316 #1 RAM */
 	{ 0x206000, 0x206fff, ultraman_K051316_2_w },		/* K051316 #2 RAM */
@@ -165,35 +141,28 @@ static struct MemoryWriteAddress ultraman_writemem[] =
 	{ 0x207fc0, 0x207fdf, ultraman_K051316_ctrl_2_w	},	/* K051316 #2 registers */
 	{ 0x304000, 0x30400f, ultraman_K051937_w },			/* Sprite control */
 	{ 0x304800, 0x304fff, ultraman_K051960_w },			/* Sprite RAM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress ultraman_readmem_sound[] =
-{
+static MEMORY_READ_START( ultraman_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
 	{ 0x8000, 0xbfff, MRA_RAM },					/* RAM */
 	{ 0xc000, 0xc000, soundlatch_r },				/* Sound latch read */
 	{ 0xe000, 0xe000, OKIM6295_status_0_r },		/* M6295 */
 	{ 0xf001, 0xf001, YM2151_status_port_0_r },		/* YM2151 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ultraman_writemem_sound[] =
-{
+static MEMORY_WRITE_START( ultraman_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
 	{ 0x8000, 0xbfff, MWA_RAM },					/* RAM */
 //	{ 0xd000, 0xd000, MWA_NOP },					/* ??? */
 	{ 0xe000, 0xe000, OKIM6295_data_0_w },			/* M6295 */
 	{ 0xf000, 0xf000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xf001, 0xf001, YM2151_data_port_0_w },		/* YM2151 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOWritePort ultraman_writeport_sound[] =
-{
+static PORT_WRITE_START( ultraman_writeport_sound )
 //	{ 0x00, 0x00, MWA_NOP },						/* ??? */
-	{ -1 }
-};
+PORT_END
 
 
 INPUT_PORTS_START( ultraman )

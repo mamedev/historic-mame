@@ -218,8 +218,7 @@ static WRITE_HANDLER( atarifb_out3_w )
 //	logerror("out3_w, %02x:%02x\n", loop, data);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x1000, 0x13bf, MRA_RAM },
 	{ 0x13c0, 0x13ff, MRA_RAM },
@@ -228,11 +227,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4002, 0x4002, atarifb_in2_r },
 	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
 	{ 0x0260, 0x039f, MWA_RAM },
@@ -246,11 +243,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
 	{ 0x5000, 0x5000, watchdog_reset_w },
 	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress atarifb4_readmem[] =
-{
+static MEMORY_READ_START( atarifb4_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x1000, 0x13bf, MRA_RAM },
 	{ 0x13c0, 0x13ff, MRA_RAM },
@@ -260,11 +255,9 @@ static struct MemoryReadAddress atarifb4_readmem[] =
 	{ 0x4002, 0x4002, atarifb4_in2_r },
 	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress atarifb4_writemem[] =
-{
+static MEMORY_WRITE_START( atarifb4_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
 	{ 0x0260, 0x039f, MWA_RAM },
@@ -278,11 +271,9 @@ static struct MemoryWriteAddress atarifb4_writemem[] =
 	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
 	{ 0x5000, 0x5000, watchdog_reset_w },
 	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress soccer_readmem[] =
-{
+static MEMORY_READ_START( soccer_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x0bff, MRA_RAM },	/* playfield/object RAM */
 	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM */
@@ -291,11 +282,9 @@ static struct MemoryReadAddress soccer_readmem[] =
 	{ 0x1802, 0x1802, atarifb4_in2_r },
 	{ 0x1803, 0x1803, input_port_11_r },
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress soccer_writemem[] =
-{
+static MEMORY_WRITE_START( soccer_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
 	{ 0x0260, 0x039f, MWA_RAM },
@@ -308,8 +297,7 @@ static struct MemoryWriteAddress soccer_writemem[] =
 	{ 0x1004, 0x1004, MWA_NOP }, /* Interrupt Acknowledge */
 	{ 0x1005, 0x1005, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( atarifb )

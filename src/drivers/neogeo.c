@@ -3,15 +3,15 @@
 
 	The following people have all spent probably far too much time on this:
 
-    AVDB
-    Bryan McPhail
-    Fuzz
-    Ernesto Corvi
-    Andrew Prime
+	AVDB
+	Bryan McPhail
+	Fuzz
+	Ernesto Corvi
+	Andrew Prime
 
 
 	TODO :
-            - What does 0x3c0006-7 *REALLY* do?
+			- What does 0x3c0006-7 *REALLY* do?
 
 
 known problems, some might have already been fixed:
@@ -168,7 +168,7 @@ Points to note, known and proven information deleted from this map:
 	0x3a000b		set game vector table (?)  mirror ?
 	0x3a001b		set bios vector table (?)  mirror ?
 
-	0x3a000c		Unknown	(ghost pilots)
+	0x3a000c		Unknown (ghost pilots)
 	0x31001c		Unknown (ghost pilots)
 
 	IO word read
@@ -182,8 +182,8 @@ Points to note, known and proven information deleted from this map:
 
 	0x3c0006		Unknown, set vblank counter (?)
 
-	0x3c0008		shadow address for 0x3c0000	(not confirmed)
-	0x3c000a		shadow address for 0x3c0002	(not confirmed)
+	0x3c0008		shadow address for 0x3c0000 (not confirmed)
+	0x3c000a		shadow address for 0x3c0002 (not confirmed)
 
 	The Neo Geo contains an NEC 4990 Serial I/O calendar & clock.
 	accesed through 0x320001, 0x380050, 0x280050 (shadow adress).
@@ -203,19 +203,19 @@ Points to note, known and proven information deleted from this map:
 #define RASTER_VBLANK_END (RASTER_LINES-(LAST_VISIBLE_LINE-FIRST_VISIBLE_LINE+1))
 
 
-extern unsigned char *vidram;
-extern unsigned char *neogeo_ram;
-extern unsigned char *neogeo_sram;
+extern data16_t *neogeo_vidram16;
+extern data16_t *neogeo_ram16;
+extern data16_t *neogeo_sram16;
 
-WRITE_HANDLER( neogeo_sram_lock_w );
-WRITE_HANDLER( neogeo_sram_unlock_w );
-READ_HANDLER( neogeo_sram_r );
-WRITE_HANDLER( neogeo_sram_w );
+WRITE16_HANDLER( neogeo_sram16_lock_w );
+WRITE16_HANDLER( neogeo_sram16_unlock_w );
+READ16_HANDLER( neogeo_sram16_r );
+WRITE16_HANDLER( neogeo_sram16_w );
 void neogeo_nvram_handler(void *file,int read_or_write);
 
 extern int	memcard_status;
-READ_HANDLER( 	neogeo_memcard_r );
-WRITE_HANDLER( neogeo_memcard_w );
+READ16_HANDLER( neogeo_memcard16_r );
+WRITE16_HANDLER( neogeo_memcard16_w );
 
 
 
@@ -225,25 +225,25 @@ void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line
 void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  neogeo_mvs_vh_start(void);
 void neogeo_vh_stop(void);
-WRITE_HANDLER( neogeo_paletteram_w );
-READ_HANDLER( neogeo_paletteram_r );
-WRITE_HANDLER( neogeo_setpalbank0_w );
-WRITE_HANDLER( neogeo_setpalbank1_w );
+WRITE16_HANDLER( neogeo_paletteram16_w );
+READ16_HANDLER( neogeo_paletteram16_r );
+WRITE16_HANDLER( neogeo_setpalbank0_16_w );
+WRITE16_HANDLER( neogeo_setpalbank1_16_w );
 
-WRITE_HANDLER( neo_board_fix_w );
-WRITE_HANDLER( neo_game_fix_w );
+WRITE16_HANDLER( neo_board_fix_16_w );
+WRITE16_HANDLER( neo_game_fix_16_w );
 
-WRITE_HANDLER( vidram_modulo_w );
-WRITE_HANDLER( vidram_data_w );
-WRITE_HANDLER( vidram_offset_w );
+WRITE16_HANDLER( neogeo_vidram16_modulo_w );
+WRITE16_HANDLER( neogeo_vidram16_data_w );
+WRITE16_HANDLER( neogeo_vidram16_offset_w );
 
-READ_HANDLER( vidram_data_r );
-READ_HANDLER( vidram_modulo_r );
+READ16_HANDLER( neogeo_vidram16_data_r );
+READ16_HANDLER( neogeo_vidram16_modulo_r );
 
 /* debug, used to 'see' the locations mapped in ROM space */
 /* with the debugger */
-READ_HANDLER( mish_vid_r );
-WRITE_HANDLER( mish_vid_w );
+READ16_HANDLER( mish_vid16_r );
+WRITE16_HANDLER( mish_vid16_w );
 /* end debug */
 
 
@@ -267,14 +267,14 @@ static int neogeo_interrupt(void)
 
 
 	/* Add a timer tick to the pd4990a */
-	addretrace();
+	pd4990a_addretrace();
 
 	/* Animation counter, 1 once per frame is too fast, every 4 seems good */
-        if  (fc>=neogeo_frame_counter_speed) {
-                fc=0;
-                neogeo_frame_counter++;
-        }
-        fc++;
+		if	(fc>=neogeo_frame_counter_speed) {
+				fc=0;
+				neogeo_frame_counter++;
+		}
+		fc++;
 
 #ifdef MAME_DEBUG
 	if (irq2_enable || keyboard_pressed(KEYCODE_F1)) cpu_cause_interrupt(0,2);
@@ -283,7 +283,7 @@ static int neogeo_interrupt(void)
 #endif
 
 	/* return a standard vblank interrupt */
-	return 1;      /* vertical blank */
+	return 1;	   /* vertical blank */
 }
 
 static int irq2enable,irq2start,irq2repeat=1000,irq2control;
@@ -297,15 +297,19 @@ static int raster_enable=1;
 
 	if (line == RASTER_LINES)	/* vblank */
 	{
-		if (keyboard_pressed_memory(KEYCODE_F1)) raster_enable ^= 1;
+		if (keyboard_pressed_memory(KEYCODE_F1))
+		{
+			raster_enable ^= 1;
+			usrintf_showmessage("raster effects %sabled",raster_enable ? "en" : "dis");
+		}
 
 		lastirq2line = 1000;
 
 		/* Add a timer tick to the pd4990a */
-		addretrace();
+		pd4990a_addretrace();
 
 		/* Animation counter, 1 once per frame is too fast, every 4 seems good */
-		if  (fc >= neogeo_frame_counter_speed)
+		if	(fc >= neogeo_frame_counter_speed)
 		{
 			fc=0;
 			neogeo_frame_counter++;
@@ -317,7 +321,7 @@ static int raster_enable=1;
 
 		/* return a standard vblank interrupt */
 //logerror("trigger IRQ1\n");
-		return 1;      /* vertical blank */
+		return 1;	   /* vertical blank */
 	}
 
 	if (irq2enable)
@@ -342,13 +346,11 @@ static int pending_command;
 static int result_code;
 
 /* Calendar, coins + Z80 communication */
-static READ_HANDLER( timer_r )
+static READ16_HANDLER( timer16_r )
 {
-	int res;
-
-
-	int coinflip = read_4990_testbit();
-	int databit = read_4990_databit();
+	data16_t res;
+	int coinflip = pd4990a_testbit_r(0);
+	int databit = pd4990a_databit_r(0);
 
 //	logerror("CPU %04x - Read timer\n",cpu_get_pc());
 
@@ -365,8 +367,11 @@ static READ_HANDLER( timer_r )
 	return res;
 }
 
-static WRITE_HANDLER( neo_z80_w )
+static WRITE16_HANDLER( neo_z80_w )
 {
+	if (ACCESSING_LSB)
+		return;
+
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -379,14 +384,14 @@ static WRITE_HANDLER( neo_z80_w )
 int neogeo_has_trackball;
 static int ts;
 
-static WRITE_HANDLER( trackball_select_w )
+static WRITE16_HANDLER( trackball_select_16_w )
 {
 	ts = data & 1;
 }
 
-static READ_HANDLER( controller1_r )
+static READ16_HANDLER( controller1_16_r )
 {
-	int res;
+	data16_t res;
 
 	if (neogeo_has_trackball)
 		res = (readinputport(ts?7:0) << 8) + readinputport(3);
@@ -394,40 +399,43 @@ static READ_HANDLER( controller1_r )
 	{
 		res = (readinputport(0) << 8) + readinputport(3);
 
-		if (readinputport(7) & 0x01) res &= 0xcfff;	/* A+B */
-		if (readinputport(7) & 0x02) res &= 0x3fff;	/* C+D */
-		if (readinputport(7) & 0x04) res &= 0x8fff;	/* A+B+C */
-		if (readinputport(7) & 0x08) res &= 0x0fff;	/* A+B+C+D */
+		if (readinputport(7) & 0x01) res &= 0xcfff; /* A+B */
+		if (readinputport(7) & 0x02) res &= 0x3fff; /* C+D */
+		if (readinputport(7) & 0x04) res &= 0x8fff; /* A+B+C */
+		if (readinputport(7) & 0x08) res &= 0x0fff; /* A+B+C+D */
 	}
 
 	return res;
 }
-static READ_HANDLER( controller2_r )
+static READ16_HANDLER( controller2_16_r )
 {
-	int res;
+	data16_t res;
 
 	res = (readinputport(1) << 8);
 
 	if (!neogeo_has_trackball)
 	{
-		if (readinputport(7) & 0x10) res &= 0xcfff;	/* A+B */
-		if (readinputport(7) & 0x20) res &= 0x3fff;	/* C+D */
-		if (readinputport(7) & 0x40) res &= 0x8fff;	/* A+B+C */
-		if (readinputport(7) & 0x80) res &= 0x0fff;	/* A+B+C+D */
+		if (readinputport(7) & 0x10) res &= 0xcfff; /* A+B */
+		if (readinputport(7) & 0x20) res &= 0x3fff; /* C+D */
+		if (readinputport(7) & 0x40) res &= 0x8fff; /* A+B+C */
+		if (readinputport(7) & 0x80) res &= 0x0fff; /* A+B+C+D */
 	}
 
 	return res;
 }
-static READ_HANDLER( controller3_r )
+static READ16_HANDLER( controller3_16_r )
 {
 	if (memcard_status==0)
 		return (readinputport(2) << 8);
 	else
 		return ((readinputport(2) << 8)&0x8FFF);
 }
-static READ_HANDLER( controller4_r ) { return readinputport(6); }
+static READ16_HANDLER( controller4_16_r )
+{
+	return readinputport(6);
+}
 
-static WRITE_HANDLER( neo_bankswitch_w )
+static WRITE16_HANDLER( neo_bankswitch_16_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -453,12 +461,12 @@ logerror("PC %06x: warning: bankswitch to empty bank %02x\n",cpu_get_pc(),data);
 
 
 /* TODO: Figure out how this really works! */
-static READ_HANDLER( neo_control_r )
+static READ16_HANDLER( neo_control_16_r )
 {
 	int line,irq_bit;
 
 	/*
-		The format of this very important location is:  AAAA AAAA B??? CDDD
+		The format of this very important location is:	AAAA AAAA B??? CDDD
 
 		A is most likely the video beam line, however from how it is used it
 		  doesn't seem to be a 0-255 direct map: the top bit is often masked out.
@@ -476,19 +484,19 @@ static READ_HANDLER( neo_control_r )
 		  3) samsho3 sets another variable to 256 or 307. This could be the total
 			 screen height (including vblank), or close to that.
 		  Some game (e.g. lstbld2, samsho3) do this (or similar):
-		  bclr    #$0, $3c000e.l
+		  bclr	  #$0, $3c000e.l
 		  when the bit is set, so 3c000e (whose function is unknown) has to be
 		  related
 		D is unknown (counter of some kind, used in a couple of places).
 		  in blazstar, this controls the background speed in level 2.
 	*/
-//logerror("PC %06x: neo_control_r\n",cpu_get_pc());
+//logerror("PC %06x: neo_control_16_r\n",cpu_get_pc());
 
 	line = RASTER_LINES - cpu_getiloops();
 	irq_bit = (irq2enable && (line == irq2start || line == lastirq2line + irq2repeat)) ||
 		(line == RASTER_LINES);
 
-	return  ((cpu_getscanline() * 0x80) & 0x7f80)	/* scanline */
+	return	((cpu_getscanline() * 0x80) & 0x7f80)	/* scanline */
 			| (irq_bit << 15)						/* vblank or irq2 */
 			| (neogeo_frame_counter & 0x0007);		/* frame counter */
 
@@ -496,26 +504,28 @@ static READ_HANDLER( neo_control_r )
 logerror("PC %06x: read 0x3c0006\n",cpu_get_pc());
 	switch(neogeo_game_fix)
 	{
-		case 0:
-			return (neogeo_frame_counter) & 0x0007;                 /* Blazing Star */
-		case 1:
-			if (cpu_get_pc() == 0x1b04) return 0x8000; /* Fix for Voltage Fighter */
-		case 2:
-			return 0x2000;          /* real bout 2 */
-		case 3:
-			return 0x80;            /* sam sho3 */
-		case 4:
-			return 0xb801;      /* overtop */
-		case 5:
-			return 0x7000; /* Fix for KOF97 */
-		case 6:
-			return 0x8000; /* Money Idol Exchanger */
-		case 8:
-			return 0xffff; /* Ninja Command */
-		case 9:
-			return 0x4000; /* KOF98 */
+	case 0: /* Blazing Star */
+		return (neogeo_frame_counter) & 0x0007;
+	case 1: /* Fix for Voltage Fighter */
+		if (cpu_get_pc() == 0x1b04) return 0x8000;
+	case 2: /* real bout 2 */
+		return 0x2000;
+	case 3: /* sam sho3 */
+		return 0x80;
+	case 4: /* overtop */
+		return 0xb801;
+	case 5: /* Fix for KOF97 */
+		return 0x7000;
+	case 6: /* Money Idol Exchanger */
+		return 0x8000;
+	case 8: /* Ninja Command */
+		return 0xffff;
+	case 9: /* KOF98 */
+		return 0x4000;
 	}
-	return(0x8000);              /* anything 0x8000 seems better than 0*/
+
+	/* anything 0x8000 seems better than 0 */
+	return(0x8000);
 #endif
 }
 
@@ -524,42 +534,42 @@ int neogeo_irq2type;
 static int irq2repeat_limit;
 
 /* this does much more than this, but I'm not sure exactly what */
-WRITE_HANDLER( neo_control_w )
+WRITE16_HANDLER( neo_control_16_w )
 {
-    /* Games which definitely need IRQ2:
-    neocup98
+	/* Games which definitely need IRQ2:
+	neocup98
 	ssideki4
 	ssideki3
 	sengoku2
 	spinmast
 	ridhero
 	turfmast
-    karnovr
+	karnovr
 	galaxyfg
 	zedblade
 	mslug2 (dunes at the beginning)
 	*/
 
-    /* Auto-Anim Speed Control? */
-    if((data & 0xf0ff) == 0)
-    {
+	/* Auto-Anim Speed Control? */
+	if((data & 0xf0ff) == 0)
+	{
 		int speed = (data >> 8) & 0x0f;
-        if (speed) neogeo_frame_counter_speed=speed;
-    }
+		if (speed) neogeo_frame_counter_speed=speed;
+	}
 
-    if (data & 0x10)
+	if (data & 0x10)
 		irq2enable = 1;
-    else
-    {
+	else
+	{
 		irq2enable = 0;
 		lastirq2line = 1000;
 		return;
-    }
+	}
 
-    if (data & 0x40)
+	if (data & 0x40)
 		lastirq2line = 1000;
 
-    irq2control = data & 0xff;
+	irq2control = data & 0xff;
 
 	/* ssideki2, zedblade and turfmast seem to be the only games to not set these
 	  bits, and also the only ones to have an irq2repeat > 8. Coincidence?
@@ -570,19 +580,19 @@ WRITE_HANDLER( neo_control_w )
 		irq2repeat_limit = 29;
 }
 
-static WRITE_HANDLER( neo_irq2pos_w )
+static WRITE16_HANDLER( neo_irq2pos_16_w )
 {
-	static int value;
+	static UINT32 value;
 	int line;
 
 	if (offset)
 	{
-		value = (value & 0xffff0000) | data;
+		value = (value & 0xffff0000) | (UINT32)data;
 		if (neogeo_irq2type) return;
 	}
 	else
 	{
-		value = (value & 0x0000ffff) | (data << 16);
+		value = (value & 0x0000ffff) | ((UINT32)data << 16);
 		if (!neogeo_irq2type) return;
 	}
 
@@ -595,102 +605,94 @@ static WRITE_HANDLER( neo_irq2pos_w )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress neogeo_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },   /* Rom bank 1 */
-	{ 0x100000, 0x10ffff, MRA_BANK1 }, /* Ram bank 1 */
-	{ 0x200000, 0x2fffff, MRA_BANK4 }, /* Rom bank 2 */
+static MEMORY_READ16_START( neogeo_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },			/* Rom bank 1 */
+	{ 0x100000, 0x10ffff, MRA16_BANK1 },		/* Ram bank 1 */
+	{ 0x200000, 0x2fffff, MRA16_BANK4 },		/* Rom bank 2 */
 
-	{ 0x300000, 0x300001, controller1_r },
-	{ 0x300080, 0x300081, controller4_r }, /* Test switch in here */
-	{ 0x320000, 0x320001, timer_r }, /* Coins, Calendar, Z80 communication */
-	{ 0x340000, 0x340001, controller2_r },
-	{ 0x380000, 0x380001, controller3_r },
-	{ 0x3c0000, 0x3c0001, vidram_data_r },	/* Baseball Stars */
-	{ 0x3c0002, 0x3c0003, vidram_data_r },
-	{ 0x3c0004, 0x3c0005, vidram_modulo_r },
+	{ 0x300000, 0x300001, controller1_16_r },
+	{ 0x300080, 0x300081, controller4_16_r },	/* Test switch in here */
+	{ 0x320000, 0x320001, timer16_r },			/* Coins, Calendar, Z80 communication */
+	{ 0x340000, 0x340001, controller2_16_r },
+	{ 0x380000, 0x380001, controller3_16_r },
+	{ 0x3c0000, 0x3c0001, neogeo_vidram16_data_r }, /* Baseball Stars */
+	{ 0x3c0002, 0x3c0003, neogeo_vidram16_data_r },
+	{ 0x3c0004, 0x3c0005, neogeo_vidram16_modulo_r },
 
-	{ 0x3c0006, 0x3c0007, neo_control_r },
-	{ 0x3c000a, 0x3c000b, vidram_data_r },	/* Puzzle de Pon */
+	{ 0x3c0006, 0x3c0007, neo_control_16_r },
+	{ 0x3c000a, 0x3c000b, neogeo_vidram16_data_r }, /* Puzzle de Pon */
 
-	{ 0x400000, 0x401fff, neogeo_paletteram_r },
-	{ 0x600000, 0x61ffff, mish_vid_r },
-	{ 0x800000, 0x800fff, neogeo_memcard_r }, /* memory card */
-	{ 0xc00000, 0xc1ffff, MRA_BANK3 }, /* system bios rom */
-	{ 0xd00000, 0xd0ffff, neogeo_sram_r }, /* 64k battery backed SRAM */
-	{ -1 }  /* end of table */
-};
+	{ 0x400000, 0x401fff, neogeo_paletteram16_r },
+	{ 0x600000, 0x61ffff, mish_vid16_r },
+	{ 0x800000, 0x800fff, neogeo_memcard16_r }, /* memory card */
+	{ 0xc00000, 0xc1ffff, MRA16_BANK3 },		/* system bios rom */
+	{ 0xd00000, 0xd0ffff, neogeo_sram16_r },	/* 64k battery backed SRAM */
+MEMORY_END
 
-static struct MemoryWriteAddress neogeo_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },    /* ghost pilots writes to ROM */
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( neogeo_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },	  /* ghost pilots writes to ROM */
+	{ 0x100000, 0x10ffff, MWA16_BANK1 },
 /*	{ 0x200000, 0x200fff, whp copies ROM data here. Why? Is there RAM in the banked ROM space? */
 /* trally writes to 200000-200003 as well, probably looking for a serial link */
 /* both games write to 0000fe before writing to 200000. The two things could be related. */
 /* sidkicks reads and writes to several addresses in this range, using this for copy */
 /* protection. Custom parts instead of the banked ROMs? */
-//	{ 0x280050, 0x280051, write_4990_control_w },
-	{ 0x2ffff0, 0x2fffff, neo_bankswitch_w },      /* NOTE THIS CHANGE TO END AT FF !!! */
-	{ 0x300000, 0x300001, watchdog_reset_w },
-	{ 0x320000, 0x320001, neo_z80_w },	/* Sound CPU */
-	{ 0x380000, 0x380001, trackball_select_w },	/* Used by bios, unknown */
-	{ 0x380030, 0x380031, MWA_NOP },    /* Used by bios, unknown */
-	{ 0x380040, 0x380041, MWA_NOP },	/* Output leds */
-	{ 0x380050, 0x380051, write_4990_control_w },
-	{ 0x380060, 0x380063, MWA_NOP },	/* Used by bios, unknown */
-	{ 0x3800e0, 0x3800e3, MWA_NOP },	/* Used by bios, unknown */
+//	{ 0x280050, 0x280051, pd4990a_control_16_w },
+	{ 0x2ffff0, 0x2fffff, neo_bankswitch_16_w },	/* NOTE THIS CHANGE TO END AT FF !!! */
+	{ 0x300000, 0x300001, watchdog_reset16_w },
+	{ 0x320000, 0x320001, neo_z80_w },				/* Sound CPU */
+	{ 0x380000, 0x380001, trackball_select_16_w },	/* Used by bios, unknown */
+	{ 0x380030, 0x380031, MWA16_NOP },				/* Used by bios, unknown */
+	{ 0x380040, 0x380041, MWA16_NOP },				/* Output leds */
+	{ 0x380050, 0x380051, pd4990a_control_16_w },
+	{ 0x380060, 0x380063, MWA16_NOP },				/* Used by bios, unknown */
+	{ 0x3800e0, 0x3800e3, MWA16_NOP },				/* Used by bios, unknown */
 
-	{ 0x3a0000, 0x3a0001, MWA_NOP },
-	{ 0x3a0010, 0x3a0011, MWA_NOP },
-	{ 0x3a0002, 0x3a0003, MWA_NOP },
-	{ 0x3a0012, 0x3a0013, MWA_NOP },
-	{ 0x3a000a, 0x3a000b, neo_board_fix_w }, /* Select board FIX char rom */
-	{ 0x3a001a, 0x3a001b, neo_game_fix_w },  /* Select game FIX char rom */
-	{ 0x3a000c, 0x3a000d, neogeo_sram_lock_w },
-	{ 0x3a001c, 0x3a001d, neogeo_sram_unlock_w },
-	{ 0x3a000e, 0x3a000f, neogeo_setpalbank1_w },
-	{ 0x3a001e, 0x3a001f, neogeo_setpalbank0_w },    /* Palette banking */
+	{ 0x3a0000, 0x3a0001, MWA16_NOP },
+	{ 0x3a0010, 0x3a0011, MWA16_NOP },
+	{ 0x3a0002, 0x3a0003, MWA16_NOP },
+	{ 0x3a0012, 0x3a0013, MWA16_NOP },
+	{ 0x3a000a, 0x3a000b, neo_board_fix_16_w }, /* Select board FIX char rom */
+	{ 0x3a001a, 0x3a001b, neo_game_fix_16_w },	/* Select game FIX char rom */
+	{ 0x3a000c, 0x3a000d, neogeo_sram16_lock_w },
+	{ 0x3a001c, 0x3a001d, neogeo_sram16_unlock_w },
+	{ 0x3a000e, 0x3a000f, neogeo_setpalbank1_16_w },
+	{ 0x3a001e, 0x3a001f, neogeo_setpalbank0_16_w },	/* Palette banking */
 
-	{ 0x3c0000, 0x3c0001, vidram_offset_w },
-	{ 0x3c0002, 0x3c0003, vidram_data_w },
-	{ 0x3c0004, 0x3c0005, vidram_modulo_w },
+	{ 0x3c0000, 0x3c0001, neogeo_vidram16_offset_w },
+	{ 0x3c0002, 0x3c0003, neogeo_vidram16_data_w },
+	{ 0x3c0004, 0x3c0005, neogeo_vidram16_modulo_w },
 
-	{ 0x3c0006, 0x3c0007, neo_control_w },  /* See level 2 of spinmasters, rowscroll data? */
-	{ 0x3c0008, 0x3c000b, neo_irq2pos_w },  /* IRQ2 x/y position? */
+	{ 0x3c0006, 0x3c0007, neo_control_16_w },	/* See level 2 of spinmasters, rowscroll data? */
+	{ 0x3c0008, 0x3c000b, neo_irq2pos_16_w },	/* IRQ2 x/y position? */
 
-	{ 0x3c000c, 0x3c000d, MWA_NOP },	/* IRQ acknowledge */
+	{ 0x3c000c, 0x3c000d, MWA16_NOP },	/* IRQ acknowledge */
 										/* 4 = IRQ 1 */
 										/* 2 = IRQ 2 */
 										/* 1 = IRQ 3 (does any game use this?) */
 //	{ 0x3c000e, 0x3c000f, }, /* Unknown, see control_r */
 
-	{ 0x400000, 0x401fff, neogeo_paletteram_w },
-	{ 0x600000, 0x61ffff, mish_vid_w },	/* Debug only, not part of real NeoGeo */
-	{ 0x800000, 0x800fff, neogeo_memcard_w },	/* mem card */
-	{ 0xd00000, 0xd0ffff, neogeo_sram_w, &neogeo_sram }, /* 64k battery backed SRAM */
-	{ -1 }  /* end of table */
-};
+	{ 0x400000, 0x401fff, neogeo_paletteram16_w },
+	{ 0x600000, 0x61ffff, mish_vid16_w },			/* Debug only, not part of real NeoGeo */
+	{ 0x800000, 0x800fff, neogeo_memcard16_w }, 	/* mem card */
+	{ 0xd00000, 0xd0ffff, neogeo_sram16_w, &neogeo_sram16 },	/* 64k battery backed SRAM */
+MEMORY_END
 
 /******************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK5 },
 	{ 0xc000, 0xdfff, MRA_BANK6 },
 	{ 0xe000, 0xefff, MRA_BANK7 },
 	{ 0xf000, 0xf7ff, MRA_BANK8 },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 static READ_HANDLER( z80_port_r )
@@ -708,63 +710,63 @@ static READ_HANDLER( z80_port_r )
 
 	switch (offset & 0xff)
 	{
-		case 0x00:
-			pending_command = 0;
-			return soundlatch_r(0);
-			break;
+	case 0x00:
+		pending_command = 0;
+		return soundlatch_r(0);
+		break;
 
-		case 0x04:
-			return YM2610_status_port_0_A_r(0);
-			break;
+	case 0x04:
+		return YM2610_status_port_0_A_r(0);
+		break;
 
-		case 0x05:
-			return YM2610_read_port_0_r(0);
-			break;
+	case 0x05:
+		return YM2610_read_port_0_r(0);
+		break;
 
-		case 0x06:
-			return YM2610_status_port_0_B_r(0);
-			break;
+	case 0x06:
+		return YM2610_status_port_0_B_r(0);
+		break;
 
-		case 0x08:
-			{
-				unsigned char *RAM = memory_region(REGION_CPU2);
-				bank[3] = 0x0800 * ((offset >> 8) & 0x7f);
-				cpu_setbank(8,&RAM[bank[3]]);
-				return 0;
-				break;
-			}
-
-		case 0x09:
-			{
-				unsigned char *RAM = memory_region(REGION_CPU2);
-				bank[2] = 0x1000 * ((offset >> 8) & 0x3f);
-				cpu_setbank(7,&RAM[bank[2]]);
-				return 0;
-				break;
-			}
-
-		case 0x0a:
-			{
-				unsigned char *RAM = memory_region(REGION_CPU2);
-				bank[1] = 0x2000 * ((offset >> 8) & 0x1f);
-				cpu_setbank(6,&RAM[bank[1]]);
-				return 0;
-				break;
-			}
-
-		case 0x0b:
-			{
-				unsigned char *RAM = memory_region(REGION_CPU2);
-				bank[0] = 0x4000 * ((offset >> 8) & 0x0f);
-				cpu_setbank(5,&RAM[bank[0]]);
-				return 0;
-				break;
-			}
-
-		default:
-logerror("CPU #1 PC %04x: read unmapped port %02x\n",cpu_get_pc(),offset&0xff);
+	case 0x08:
+		{
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[3] = 0x0800 * ((offset >> 8) & 0x7f);
+			cpu_setbank(8,&mem08[bank[3]]);
 			return 0;
 			break;
+		}
+
+	case 0x09:
+		{
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[2] = 0x1000 * ((offset >> 8) & 0x3f);
+			cpu_setbank(7,&mem08[bank[2]]);
+			return 0;
+			break;
+		}
+
+	case 0x0a:
+		{
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[1] = 0x2000 * ((offset >> 8) & 0x1f);
+			cpu_setbank(6,&mem08[bank[1]]);
+			return 0;
+			break;
+		}
+
+	case 0x0b:
+		{
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[0] = 0x4000 * ((offset >> 8) & 0x0f);
+			cpu_setbank(5,&mem08[bank[0]]);
+			return 0;
+			break;
+		}
+
+	default:
+logerror("CPU #1 PC %04x: read unmapped port %02x\n",cpu_get_pc(),offset&0xff);
+		return 0;
+		break;
 	}
 }
 
@@ -772,56 +774,52 @@ static WRITE_HANDLER( z80_port_w )
 {
 	switch (offset & 0xff)
 	{
-		case 0x04:
-			YM2610_control_port_0_A_w(0,data);
-			break;
+	case 0x04:
+		YM2610_control_port_0_A_w(0,data);
+		break;
 
-		case 0x05:
-			YM2610_data_port_0_A_w(0,data);
-			break;
+	case 0x05:
+		YM2610_data_port_0_A_w(0,data);
+		break;
 
-		case 0x06:
-			YM2610_control_port_0_B_w(0,data);
-			break;
+	case 0x06:
+		YM2610_control_port_0_B_w(0,data);
+		break;
 
-		case 0x07:
-			YM2610_data_port_0_B_w(0,data);
-			break;
+	case 0x07:
+		YM2610_data_port_0_B_w(0,data);
+		break;
 
-		case 0x08:
-			/* NMI enable / acknowledge? (the data written doesn't matter) */
-			break;
+	case 0x08:
+		/* NMI enable / acknowledge? (the data written doesn't matter) */
+		break;
 
-		case 0x0c:
-			result_code = data;
-			break;
+	case 0x0c:
+		result_code = data;
+		break;
 
-		case 0x18:
-			/* NMI disable? (the data written doesn't matter) */
-			break;
+	case 0x18:
+		/* NMI disable? (the data written doesn't matter) */
+		break;
 
-		default:
+	default:
 logerror("CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_get_pc(),data,offset&0xff);
-			break;
+		break;
 	}
 }
 
-static struct IOReadPort neo_readio[] =
-{
+static PORT_READ_START( neo_readio )
 	{ 0x0000, 0xffff, z80_port_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort neo_writeio[] =
-{
+static PORT_WRITE_START( neo_writeio )
 	{ 0x0000, 0xffff, z80_port_w },
-	{ -1 }
-};
+PORT_END
 
 /******************************************************************************/
 
 INPUT_PORTS_START( neogeo )
-	PORT_START      /* IN0 */
+	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -831,7 +829,7 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
 
-	PORT_START      /* IN1 */
+	PORT_START		/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
@@ -841,7 +839,7 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 
-	PORT_START      /* IN2 */
+	PORT_START		/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
 	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "SELECT 1",KEYCODE_6, IP_JOY_NONE ) /* Player 1 Select */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
@@ -850,30 +848,30 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN3 */
+	PORT_START		/* IN3 */
 	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Coin Chutes?" )
-	PORT_DIPSETTING(    0x00, "1?" )
-	PORT_DIPSETTING(    0x02, "2?" )
+	PORT_DIPSETTING(	0x00, "1?" )
+	PORT_DIPSETTING(	0x02, "2?" )
 	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x38, 0x38, "COMM Setting" )
-	PORT_DIPSETTING(    0x38, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x30, "1" )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(	0x38, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x30, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_START      /* IN4 */
+	PORT_START		/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service */
@@ -881,14 +879,14 @@ INPUT_PORTS_START( neogeo )
 	/* Fake  IN 5 */
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(    0x00,"Japan" )
-	PORT_DIPSETTING(    0x01,"USA" )
-	PORT_DIPSETTING(    0x02,"Europe" )
+	PORT_DIPSETTING(	0x00,"Japan" )
+	PORT_DIPSETTING(	0x01,"USA" )
+	PORT_DIPSETTING(	0x02,"Europe" )
 	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
-	PORT_DIPSETTING(    0x00,"Home" )
-	PORT_DIPSETTING(    0x04,"Arcade" )
+	PORT_DIPSETTING(	0x00,"Home" )
+	PORT_DIPSETTING(	0x04,"Arcade" )
 
-	PORT_START      /* Test switch */
+	PORT_START		/* Test switch */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -898,7 +896,7 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* This bit is used.. */
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 
-	PORT_START      /* FAKE */
+	PORT_START		/* FAKE */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_CHEAT )	/* A+B */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_CHEAT )	/* C+D */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_CHEAT )	/* A+B+C */
@@ -910,10 +908,10 @@ INPUT_PORTS_START( neogeo )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( irrmaze )
-	PORT_START      /* IN0 multiplexed */
+	PORT_START		/* IN0 multiplexed */
 	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_REVERSE, 10, 20, 0, 0 )
 
-	PORT_START      /* IN1 */
+	PORT_START		/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -923,7 +921,7 @@ INPUT_PORTS_START( irrmaze )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 
-	PORT_START      /* IN2 */
+	PORT_START		/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
 	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "SELECT 1",KEYCODE_6, IP_JOY_NONE ) /* Player 1 Select */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
@@ -932,30 +930,30 @@ INPUT_PORTS_START( irrmaze )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN3 */
+	PORT_START		/* IN3 */
 	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Coin Chutes?" )
-	PORT_DIPSETTING(    0x00, "1?" )
-	PORT_DIPSETTING(    0x02, "2?" )
+	PORT_DIPSETTING(	0x00, "1?" )
+	PORT_DIPSETTING(	0x02, "2?" )
 	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x38, 0x38, "COMM Setting" )
-	PORT_DIPSETTING(    0x38, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x30, "1" )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(	0x38, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x30, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_START      /* IN4 */
+	PORT_START		/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service */
@@ -963,14 +961,14 @@ INPUT_PORTS_START( irrmaze )
 	/* Fake  IN 5 */
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(    0x00,"Japan" )
-	PORT_DIPSETTING(    0x01,"USA" )
-	PORT_DIPSETTING(    0x02,"Europe" )
+	PORT_DIPSETTING(	0x00,"Japan" )
+	PORT_DIPSETTING(	0x01,"USA" )
+	PORT_DIPSETTING(	0x02,"Europe" )
 	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
-	PORT_DIPSETTING(    0x00,"Home" )
-	PORT_DIPSETTING(    0x04,"Arcade" )
+	PORT_DIPSETTING(	0x00,"Home" )
+	PORT_DIPSETTING(	0x04,"Arcade" )
 
-	PORT_START      /* Test switch */
+	PORT_START		/* Test switch */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -980,7 +978,7 @@ INPUT_PORTS_START( irrmaze )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* This bit is used.. */
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 
-	PORT_START      /* IN0 multiplexed */
+	PORT_START		/* IN0 multiplexed */
 	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0 )
 INPUT_PORTS_END
 
@@ -990,27 +988,27 @@ INPUT_PORTS_END
 /* character layout (same for all games) */
 static struct GfxLayout charlayout =	/* All games */
 {
-	8,8,            /* 8 x 8 chars */
-	4096,           /* 4096 in total */
-	4,              /* 4 bits per pixel */
+	8,8,			/* 8 x 8 chars */
+	4096,			/* 4096 in total */
+	4,				/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },    /* planes are packed in a nibble */
 	{ 33*4, 32*4, 49*4, 48*4, 1*4, 0*4, 17*4, 16*4 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	32*8    /* 32 bytes per char */
+	32*8	/* 32 bytes per char */
 };
 
 /* Placeholder and also reminder of how this graphic format is put together */
 static struct GfxLayout dummy_mvs_tilelayout =
 {
-	16,16,   /* 16*16 sprites */
+	16,16,	 /* 16*16 sprites */
 	20,
 	4,
-	{ 3*8, 1*8, 2*8, 0*8 },     /* plane offset */
+	{ 3*8, 1*8, 2*8, 0*8 }, 	/* plane offset */
 	{ 64*8+7, 64*8+6, 64*8+5, 64*8+4, 64*8+3, 64*8+2, 64*8+1, 64*8+0,
 			7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	128*8    /* every sprite takes 128 consecutive bytes */
+	128*8	 /* every sprite takes 128 consecutive bytes */
 };
 
 static struct GfxDecodeInfo neogeo_mvs_gfxdecodeinfo[] =
@@ -1138,38 +1136,38 @@ static const struct MachineDriver machine_driver_raster =
 	ROM_REGION( 0x20000, REGION_USER1 ) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
 	ROM_REGION( 0x40000, REGION_CPU2 ) \
-	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
-	ROM_LOAD( name,         0x00000, 0x40000, sum )	/* so overwrite it with the real thing */
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
+	ROM_LOAD( name, 		0x00000, 0x40000, sum ) /* so overwrite it with the real thing */
 
 #define NEO_BIOS_SOUND_128K(name,sum) \
 	ROM_REGION( 0x20000, REGION_USER1 ) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
 	ROM_REGION( 0x40000, REGION_CPU2 ) \
-	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
-	ROM_LOAD( name,         0x00000, 0x20000, sum )	/* so overwrite it with the real thing */
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
+	ROM_LOAD( name, 		0x00000, 0x20000, sum ) /* so overwrite it with the real thing */
 
 #define NEO_BIOS_SOUND_64K(name,sum) \
 	ROM_REGION( 0x20000, REGION_USER1 ) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
 	ROM_REGION( 0x40000, REGION_CPU2 ) \
-	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
-	ROM_LOAD( name,         0x00000, 0x10000, sum )	/* so overwrite it with the real thing */
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
+	ROM_LOAD( name, 		0x00000, 0x10000, sum ) /* so overwrite it with the real thing */
 
 #define NO_DELTAT_REGION
 
 #define NEO_SFIX_128K(name,sum) \
 	ROM_REGION( 0x40000, REGION_GFX1 ) \
-	ROM_LOAD( name,           0x000000, 0x20000, sum ) \
+	ROM_LOAD( name, 		  0x000000, 0x20000, sum ) \
 	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 
 #define NEO_SFIX_64K(name,sum) \
 	ROM_REGION( 0x40000, REGION_GFX1 ) \
-	ROM_LOAD( name,           0x000000, 0x10000, sum ) \
+	ROM_LOAD( name, 		  0x000000, 0x10000, sum ) \
 	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 
 #define NEO_SFIX_32K(name,sum) \
 	ROM_REGION( 0x40000, REGION_GFX1 ) \
-	ROM_LOAD( name,           0x000000, 0x08000, sum ) \
+	ROM_LOAD( name, 		  0x000000, 0x08000, sum ) \
 	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 
 /******************************************************************************/
@@ -1329,7 +1327,7 @@ ROM_END
 ROM_START( ridhero )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, BADCRC ( 0xdabfac95 ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_64K( "n046001a.378", BADCRC ( 0x197d1a28 ) )
 
@@ -1347,13 +1345,13 @@ ROM_START( ridhero )
 
 	ROM_REGION( 0x200000, REGION_GFX2 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, BADCRC ( 0x24096241 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x100000, 0x40000 )
+	ROM_CONTINUE(			  0x100000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, BADCRC ( 0x7026a3a2 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x140000, 0x40000 )
+	ROM_CONTINUE(			  0x140000, 0x40000 )
 	ROM_LOAD( "n046001a.638", 0x080000, 0x40000, BADCRC ( 0xdf6a5b00 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x180000, 0x40000 )
+	ROM_CONTINUE(			  0x180000, 0x40000 )
 	ROM_LOAD( "n046001a.63c", 0x0c0000, 0x40000, BADCRC ( 0x15220d51 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x1c0000, 0x40000 )
+	ROM_CONTINUE(			  0x1c0000, 0x40000 )
 ROM_END
 
 ROM_START( alpham2 )
@@ -1479,9 +1477,9 @@ ROM_END
 ROM_START( kotm )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n058001a.038", 0x000000, 0x040000, BADCRC ( 0xd239c184 ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n058001a.03c", 0x080000, 0x040000, BADCRC ( 0x7291a388 ) )
-	ROM_CONTINUE (                 0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n058001a.378", BADCRC ( 0x1a2eeeb3 ) )
 
@@ -1497,21 +1495,21 @@ ROM_START( kotm )
 
 	ROM_REGION( 0x400000, REGION_GFX2 )
 	ROM_LOAD( "n058001a.538", 0x000000, 0x40000, BADCRC ( 0x493db90e ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n058001a.53c", 0x040000, 0x40000, BADCRC ( 0x0d211945 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n058001b.538", 0x080000, 0x40000, BADCRC ( 0xcabb7b58 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n058001b.53c", 0x0c0000, 0x40000, BADCRC ( 0xc7c20718 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 	ROM_LOAD( "n058001a.638", 0x100000, 0x40000, BADCRC ( 0x8bc1c3a0 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
+	ROM_CONTINUE(			  0x300000, 0x40000 )
 	ROM_LOAD( "n058001a.63c", 0x140000, 0x40000, BADCRC ( 0xcc793bbf ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
+	ROM_CONTINUE(			  0x340000, 0x40000 )
 	ROM_LOAD( "n058001b.638", 0x180000, 0x40000, BADCRC ( 0xfde45b59 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
+	ROM_CONTINUE(			  0x380000, 0x40000 )
 	ROM_LOAD( "n058001b.63c", 0x1c0000, 0x40000, BADCRC ( 0xb89b4201 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_CONTINUE(			  0x3c0000, 0x40000 )
 ROM_END
 
 ROM_START( sengoku )
@@ -1603,7 +1601,7 @@ ROM_END
 ROM_START( lbowling )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n050001a.038", 0x000000, 0x040000, BADCRC ( 0x380e358d ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n050001a.378", BADCRC ( 0x5fcdc0ed ) )
 
@@ -1618,21 +1616,21 @@ ROM_START( lbowling )
 
 	ROM_REGION( 0x400000, REGION_GFX2 )
 	ROM_LOAD( "n050001a.538", 0x000000, 0x40000, BADCRC ( 0x17df7955 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n050001a.53c", 0x040000, 0x40000, BADCRC ( 0x67bf2d89 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n050001b.538", 0x080000, 0x40000, BADCRC ( 0x00d36f90 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n050001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x4e971be9 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 	ROM_LOAD( "n050001a.638", 0x100000, 0x40000, BADCRC ( 0x84fd2c90 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
+	ROM_CONTINUE(			  0x300000, 0x40000 )
 	ROM_LOAD( "n050001a.63c", 0x140000, 0x40000, BADCRC ( 0xcb4fbeb0 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
+	ROM_CONTINUE(			  0x340000, 0x40000 )
 	ROM_LOAD( "n050001b.638", 0x180000, 0x40000, BADCRC ( 0xc2ddf431 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
+	ROM_CONTINUE(			  0x380000, 0x40000 )
 	ROM_LOAD( "n050001b.63c", 0x1c0000, 0x40000, BADCRC ( 0xe67f8c81 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_CONTINUE(			  0x3c0000, 0x40000 )
 ROM_END
 
 ROM_START( gpilots )
@@ -1740,7 +1738,7 @@ ROM_END
 ROM_START( eightman )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, BADCRC ( 0xe23e2631 ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n046001a.378", BADCRC ( 0xa402202b ) )
 
@@ -1756,23 +1754,23 @@ ROM_START( eightman )
 
 	ROM_REGION( 0x300000, REGION_GFX2 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, BADCRC ( 0xc916c9bf ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x180000, 0x40000 )
+	ROM_CONTINUE(			  0x180000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, BADCRC ( 0x4b057b13 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x1c0000, 0x40000 )
+	ROM_CONTINUE(			  0x1c0000, 0x40000 )
 	ROM_LOAD( "n046001b.538", 0x080000, 0x40000, BADCRC ( 0x12d53af0 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n046001a.638", 0x0c0000, 0x40000, BADCRC ( 0x7114bce3 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n046001a.63c", 0x100000, 0x40000, BADCRC ( 0x51da9a34 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n046001b.638", 0x140000, 0x40000, BADCRC ( 0x43cf58f9 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 ROM_END
 
 ROM_START( minasan )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, BADCRC ( 0x86805d5a ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n054001a.378", BADCRC ( 0xe5824baa ) )
 
@@ -1788,21 +1786,21 @@ ROM_START( minasan )
 
 	ROM_REGION( 0x400000, REGION_GFX2 )
 	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, BADCRC ( 0x43f48265 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, BADCRC ( 0xcbf9eef8 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n054001b.538", 0x080000, 0x40000, BADCRC ( 0x3dae0a05 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x6979368e ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 	ROM_LOAD( "n054001a.638", 0x100000, 0x40000, BADCRC ( 0xf774d850 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
+	ROM_CONTINUE(			  0x300000, 0x40000 )
 	ROM_LOAD( "n054001a.63c", 0x140000, 0x40000, BADCRC ( 0x14a81e58 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
+	ROM_CONTINUE(			  0x340000, 0x40000 )
 	ROM_LOAD( "n054001b.638", 0x180000, 0x40000, BADCRC ( 0x0fb30b5b ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
+	ROM_CONTINUE(			  0x380000, 0x40000 )
 	ROM_LOAD( "n054001b.63c", 0x1c0000, 0x40000, BADCRC ( 0xcfa90d59 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_CONTINUE(			  0x3c0000, 0x40000 )
 ROM_END
 
 ROM_START( legendos )
@@ -1938,7 +1936,7 @@ ROM_END
 ROM_START( fbfrenzy )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, BADCRC ( 0xc9fc879c ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n046001a.378", BADCRC ( 0x8472ed44 ) )
 
@@ -1954,25 +1952,25 @@ ROM_START( fbfrenzy )
 
 	ROM_REGION( 0x300000, REGION_GFX2 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, BADCRC ( 0xcd377680 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x180000, 0x40000 )
+	ROM_CONTINUE(			  0x180000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, BADCRC ( 0x2f6d09c2 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x1c0000, 0x40000 )
+	ROM_CONTINUE(			  0x1c0000, 0x40000 )
 	ROM_LOAD( "n046001b.538", 0x080000, 0x40000, BADCRC ( 0x9abe41c8 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n046001a.638", 0x0c0000, 0x40000, BADCRC ( 0x8b76358f ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n046001a.63c", 0x100000, 0x40000, BADCRC ( 0x77e45dd2 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n046001b.638", 0x140000, 0x40000, BADCRC ( 0x336540a8 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 ROM_END
 
 ROM_START( bakatono )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n058001a.038", 0x000000, 0x040000, BADCRC ( 0x083ca651 ) )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n058001a.03c", 0x080000, 0x040000, BADCRC ( 0xb3bc26ae ) )
-	ROM_CONTINUE (                 0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n058001a.378", BADCRC ( 0xf3ef4485))
 
@@ -1988,21 +1986,21 @@ ROM_START( bakatono )
 
 	ROM_REGION( 0x400000, REGION_GFX2 )
 	ROM_LOAD( "n058001a.538", 0x000000, 0x40000, BADCRC ( 0xacb82025 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n058001a.53c", 0x040000, 0x40000, BADCRC ( 0xc6954f8e ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n058001b.538", 0x080000, 0x40000, BADCRC ( 0xeb751be8 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n058001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x1d39bad6 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 	ROM_LOAD( "n058001a.638", 0x100000, 0x40000, BADCRC ( 0x647ba28f ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
+	ROM_CONTINUE(			  0x300000, 0x40000 )
 	ROM_LOAD( "n058001a.63c", 0x140000, 0x40000, BADCRC ( 0xdffefa4f ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
+	ROM_CONTINUE(			  0x340000, 0x40000 )
 	ROM_LOAD( "n058001b.638", 0x180000, 0x40000, BADCRC ( 0x6135247a ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
+	ROM_CONTINUE(			  0x380000, 0x40000 )
 	ROM_LOAD( "n058001b.63c", 0x1c0000, 0x40000, BADCRC ( 0x0d40c953 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_CONTINUE(			  0x3c0000, 0x40000 )
 ROM_END
 
 ROM_START( crsword )
@@ -2064,13 +2062,13 @@ ROM_START( kotm2 )
 
 	ROM_REGION( 0x800000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "kotm2_c1.rom", 0x000000, 0x100000, 0x6d1c4aa9 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "kotm2_c2.rom", 0x000000, 0x100000, 0xf7b75337 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_EVEN( "kotm2_c3.rom", 0x200000, 0x100000, 0x40156dca ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x600000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x600000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "kotm2_c4.rom", 0x200000, 0x100000, 0xb0d44111 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x600000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x600000, 0x100000, 0 )
 ROM_END
 
 ROM_START( sengoku2 )
@@ -2177,13 +2175,13 @@ ROM_START( aof )
 
 	ROM_REGION( 0x800000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "aof_c1.rom", 0x000000, 0x100000, 0xddab98a7 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,            0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			 0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof_c2.rom", 0x000000, 0x100000, 0xd8ccd575 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,            0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			 0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_EVEN( "aof_c3.rom", 0x200000, 0x100000, 0x403e898a ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,            0x600000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			 0x600000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof_c4.rom", 0x200000, 0x100000, 0x6235fbaa ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,            0x600000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			 0x600000, 0x100000, 0 )
 ROM_END
 
 ROM_START( samsho )
@@ -2256,13 +2254,13 @@ ROM_START( fatfury2 )
 
 	ROM_REGION( 0x800000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "fury2_c1.rom", 0x000000, 0x100000, 0xf72a939e ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "fury2_c2.rom", 0x000000, 0x100000, 0x05119a0d ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_EVEN( "fury2_c3.rom", 0x200000, 0x100000, 0x01e00738 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x600000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x600000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "fury2_c4.rom", 0x200000, 0x100000, 0x9fe27432 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x600000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x600000, 0x100000, 0 )
 ROM_END
 
 ROM_START( janshin )
@@ -2308,9 +2306,9 @@ ROM_END
 ROM_START( ncommand )
 	ROM_REGION( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, BADCRC ( 0xfdaaca42))
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n054001a.03c", 0x080000, 0x040000, BADCRC ( 0xb34e91fe))
-	ROM_CONTINUE (                 0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_CONTINUE (				   0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
 	NEO_SFIX_128K( "n054001a.378", BADCRC ( 0xdb8f9c8e))
 
@@ -2325,21 +2323,21 @@ ROM_START( ncommand )
 
 	ROM_REGION( 0x400000, REGION_GFX2 )
 	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, BADCRC ( 0x73acaa79))  /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
+	ROM_CONTINUE(			  0x200000, 0x40000 )
 	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, BADCRC ( 0xad56623d))  /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
+	ROM_CONTINUE(			  0x240000, 0x40000 )
 	ROM_LOAD( "n054001b.538", 0x080000, 0x40000, BADCRC ( 0xc8d763cd))  /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
+	ROM_CONTINUE(			  0x280000, 0x40000 )
 	ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x63829529))  /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_CONTINUE(			  0x2c0000, 0x40000 )
 	ROM_LOAD( "n054001a.638", 0x100000, 0x40000, BADCRC ( 0x7b24359f))  /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
+	ROM_CONTINUE(			  0x300000, 0x40000 )
 	ROM_LOAD( "n054001a.63c", 0x140000, 0x40000, BADCRC ( 0x0913a784))  /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
+	ROM_CONTINUE(			  0x340000, 0x40000 )
 	ROM_LOAD( "n054001b.638", 0x180000, 0x40000, BADCRC ( 0x574612ec))  /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
+	ROM_CONTINUE(			  0x380000, 0x40000 )
 	ROM_LOAD( "n054001b.63c", 0x1c0000, 0x40000, BADCRC ( 0x990d302a))  /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_CONTINUE(			  0x3c0000, 0x40000 )
 ROM_END
 
 ROM_START( viewpoin )
@@ -2358,9 +2356,9 @@ ROM_START( viewpoin )
 
 	ROM_REGION( 0x600000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "viewp_c1.rom", 0x000000, 0x100000, 0xd624c132 )
-	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "viewp_c2.rom", 0x000000, 0x100000, 0x40d69f1e )
-	ROM_LOAD_GFX_ODD ( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x400000, 0x100000, 0 )
 ROM_END
 
 ROM_START( ssideki )
@@ -2378,9 +2376,9 @@ ROM_START( ssideki )
 
 	ROM_REGION( 0x600000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "sidek_c1.rom", 0x000000, 0x100000, 0x53e1c002 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "sidek_c2.rom", 0x000000, 0x100000, 0x776a2d1f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x400000, 0x100000, 0 )
 ROM_END
 
 ROM_START( wh1 )
@@ -2400,9 +2398,9 @@ ROM_START( wh1 )
 
 	ROM_REGION( 0x600000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "wh_c1.rom", 0x000000, 0x100000, 0x85eb5bce ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,           0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "wh_c2.rom", 0x000000, 0x100000, 0xec93b048 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,           0x400000, 0x100000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_EVEN( "wh_c3.rom", 0x200000, 0x100000, 0x0dd64965 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "wh_c4.rom", 0x200000, 0x100000, 0x9270d954 ) /* Plane 2,3 */
 ROM_END
@@ -2410,7 +2408,7 @@ ROM_END
 ROM_START( kof94 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof94_p1.rom", 0x100000, 0x100000, 0xf10a2042 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "kof94_s1.rom", 0x825976c1 )
 
@@ -2463,7 +2461,7 @@ ROM_END
 ROM_START( wh2 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "hero2_p1.rom", 0x100000, 0x100000, 0x65a891d9 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "hero2_s1.rom", 0xfcaeb3a4 )
 
@@ -2513,7 +2511,7 @@ ROM_END
 ROM_START( savagere )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "savag_p1.rom", 0x100000, 0x100000, 0x01d4e9c0 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "savag_s1.rom", 0xe08978ca )
 
@@ -2608,7 +2606,7 @@ ROM_END
 ROM_START( samsho2 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sams2_p1.rom", 0x100000, 0x100000, 0x22368892 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "sams2_s1.rom", 0x64a5cd66 )
 
@@ -2636,7 +2634,7 @@ ROM_END
 ROM_START( wh2j )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "wh2j_p1.rom", 0x100000, 0x100000, 0x385a2e86 )
-	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					   0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "wh2j_s1.rom", 0x2a03998a )
 
@@ -2731,8 +2729,8 @@ ROM_START( pspikes2 )
 	NEO_BIOS_SOUND_128K( "spike_m1.rom", 0xb1c7911e )
 
 	ROM_REGION( 0x300000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
-	ROM_LOAD( "spike_v1.rom", 0x000000, 0x100000, 0x2ced86df )	/* == pbobble */
-	ROM_LOAD( "spike_v2.rom", 0x100000, 0x100000, 0x970851ab )	/* == pbobble */
+	ROM_LOAD( "spike_v1.rom", 0x000000, 0x100000, 0x2ced86df )  /* == pbobble */
+	ROM_LOAD( "spike_v2.rom", 0x100000, 0x100000, 0x970851ab )  /* == pbobble */
 	ROM_LOAD( "spike_v3.rom", 0x200000, 0x100000, 0x81ff05aa )
 
 	NO_DELTAT_REGION
@@ -2764,13 +2762,13 @@ ROM_START( fatfury3 )
 
 	ROM_REGION( 0x1400000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "fury3_c1.rom", 0x0400000, 0x200000, 0xc73e86e4 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "fury3_c2.rom", 0x0400000, 0x200000, 0xbfaf3258 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "fury3_c3.rom", 0x0c00000, 0x200000, 0xf6738c87 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "fury3_c4.rom", 0x0c00000, 0x200000, 0x9c31e334 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "fury3_c5.rom", 0x1000000, 0x200000, 0xb3ec6fa6 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "fury3_c6.rom", 0x1000000, 0x200000, 0x69210441 ) /* Plane 2,3 */
 ROM_END
@@ -2797,7 +2795,7 @@ ROM_END
 ROM_START( aodk )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "aodk_p1.rom", 0x100000, 0x100000, 0x62369553 )
-	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					   0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "aodk_s1.rom", 0x96148d2b )
 
@@ -2823,7 +2821,7 @@ ROM_END
 ROM_START( sonicwi2 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "afig2_p1.rom", 0x100000, 0x100000, 0x92871738 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "afig2_s1.rom", 0x47cc6177 )
 
@@ -2867,7 +2865,7 @@ ROM_END
 ROM_START( galaxyfg )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "galfi_p1.rom", 0x100000, 0x100000, 0x45906309 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "galfi_s1.rom", 0x72f8923e )
 
@@ -2937,7 +2935,7 @@ ROM_END
 ROM_START( ssideki3 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "side3_p1.rom", 0x100000, 0x100000, 0x6bc27a3d )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "side3_s1.rom", 0x7626da34 )
 
@@ -2962,7 +2960,7 @@ ROM_END
 ROM_START( doubledr )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ddrag_p1.rom", 0x100000, 0x100000, 0x34ab832a )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "ddrag_s1.rom", 0xbef995c5 )
 
@@ -3008,7 +3006,7 @@ ROM_END
 ROM_START( kof95 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof95_p1.rom", 0x100000, 0x100000, 0x5e54cf95 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "kof95_s1.rom", 0xde716f8a )
 
@@ -3024,13 +3022,13 @@ ROM_START( kof95 )
 
 	ROM_REGION( 0x1a00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "kof95_c1.rom", 0x0400000, 0x200000, 0x33bf8657 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "kof95_c2.rom", 0x0400000, 0x200000, 0xf21908a4 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "kof95_c3.rom", 0x0c00000, 0x200000, 0x0cee1ddb ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "kof95_c4.rom", 0x0c00000, 0x200000, 0x729db15d ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "kof95_c5.rom", 0x1000000, 0x200000, 0x8a2c1edc ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kof95_c6.rom", 0x1000000, 0x200000, 0xf593ac35 ) /* Plane 2,3 */
 	/* 1400000-17fffff empty */
@@ -3054,9 +3052,9 @@ ROM_START( tws96 )
 
 	ROM_REGION( 0xa00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "tecmo_c1.rom", 0x400000, 0x200000, 0xd301a867 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "tecmo_c2.rom", 0x400000, 0x200000, 0x305fc74f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "tecmo_c3.rom", 0x800000, 0x100000, 0x750ddc0c ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "tecmo_c4.rom", 0x800000, 0x100000, 0x7a6e7d82 ) /* Plane 2,3 */
 ROM_END
@@ -3078,17 +3076,17 @@ ROM_START( samsho3 )
 
 	ROM_REGION( 0x1a00000, REGION_GFX2 )	/* lowering this to 0x1900000 corrupts the graphics */
 	ROM_LOAD_GFX_EVEN( "sams3_c1.rom", 0x0400000, 0x200000, 0xe079f767 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams3_c2.rom", 0x0400000, 0x200000, 0xfc045909 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sams3_c3.rom", 0x0c00000, 0x200000, 0xc61218d7 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams3_c4.rom", 0x0c00000, 0x200000, 0x054ec754 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sams3_c5.rom", 0x1400000, 0x200000, 0x05feee47 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams3_c6.rom", 0x1400000, 0x200000, 0xef7d9e29 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sams3_c7.rom", 0x1800000, 0x080000, 0x7a01f666 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sams3_c8.rom", 0x1800000, 0x080000, 0xffd009c2 ) /* Plane 2,3 */
 ROM_END
@@ -3096,7 +3094,7 @@ ROM_END
 ROM_START( stakwin )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "stakw_p1.rom",  0x100000, 0x100000, 0xbd5814f6 )
-	ROM_CONTINUE(                        0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
+	ROM_CONTINUE(						 0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
 
 	NEO_SFIX_128K( "stakw_s1.rom", 0x073cb208 )
 
@@ -3131,17 +3129,17 @@ ROM_START( pulstar )
 
 	ROM_REGION( 0x1c00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "pstar_c1.rom", 0x0400000, 0x200000, 0x63020fc6 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "pstar_c2.rom", 0x0400000, 0x200000, 0x260e9d4d ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "pstar_c3.rom", 0x0c00000, 0x200000, 0x21ef41d7 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "pstar_c4.rom", 0x0c00000, 0x200000, 0x3b9e288f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "pstar_c5.rom", 0x1400000, 0x200000, 0x6fe9259c ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "pstar_c6.rom", 0x1400000, 0x200000, 0xdc32f2b4 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "pstar_c7.rom", 0x1800000, 0x200000, 0x6a5618ca ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "pstar_c8.rom", 0x1800000, 0x200000, 0xa223572d ) /* Plane 2,3 */
 ROM_END
@@ -3149,7 +3147,7 @@ ROM_END
 ROM_START( whp )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "whp_p1.rom", 0x100000, 0x100000, 0xafaa4702 )
-	ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					  0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "whp_s1.rom",  0x174a880f )
 
@@ -3164,9 +3162,9 @@ ROM_START( whp )
 
 	ROM_REGION( 0x1c00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "whp_c1.rom", 0x0400000, 0x200000, 0xaecd5bb1 )
-	ROM_LOAD_GFX_EVEN( 0,            0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			 0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "whp_c2.rom", 0x0400000, 0x200000, 0x7566ffc0 )
-	ROM_LOAD_GFX_ODD ( 0,            0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			 0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "whp_c3.rom", 0x0800000, 0x200000, 0x436d1b31 )
 	ROM_LOAD_GFX_ODD ( "whp_c4.rom", 0x0800000, 0x200000, 0xf9c8dd26 )
 	/* 0c00000-0ffffff empty */
@@ -3180,7 +3178,7 @@ ROM_END
 ROM_START( kabukikl )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "klash_p1.rom", 0x100000, 0x100000, 0x28ec9b77 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "klash_s1.rom", 0xa3d68ee2 )
 
@@ -3196,13 +3194,13 @@ ROM_START( kabukikl )
 
 	ROM_REGION( 0x1000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "klash_c1.rom", 0x400000, 0x200000, 0x4d896a58 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "klash_c2.rom", 0x400000, 0x200000, 0x3cf78a18 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "klash_c3.rom", 0xc00000, 0x200000, 0x58c454e7 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "klash_c4.rom", 0xc00000, 0x200000, 0xe1a8aa6a ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( neobombe )
@@ -3215,16 +3213,16 @@ ROM_START( neobombe )
 
 	ROM_REGION( 0x600000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
 	ROM_LOAD( "bombm_v1.rom", 0x200000, 0x200000, 0x43057e99 )
-	ROM_CONTINUE(             0x000000, 0x200000 )
+	ROM_CONTINUE(			  0x000000, 0x200000 )
 	ROM_LOAD( "bombm_v2.rom", 0x400000, 0x200000, 0xa92b8b3d )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x900000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "bombm_c1.rom", 0x400000, 0x200000, 0xb90ebed4 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bombm_c2.rom", 0x400000, 0x200000, 0x41e62b4f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "bombm_c3.rom", 0x800000, 0x080000, 0xe37578c5 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "bombm_c4.rom", 0x800000, 0x080000, 0x59826783 ) /* Plane 2,3 */
 ROM_END
@@ -3232,7 +3230,7 @@ ROM_END
 ROM_START( gowcaizr )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "vfgow_p1.rom", 0x100000, 0x100000, 0x33019545 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "vfgow_s1.rom", 0x2f8748a2 )
 
@@ -3274,17 +3272,17 @@ ROM_START( rbff1 )
 
 	ROM_REGION( 0x1c00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "rbff1_c1.rom", 0x0400000, 0x200000, 0xc73e86e4 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbff1_c2.rom", 0x0400000, 0x200000, 0xbfaf3258 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rbff1_c3.rom", 0x0c00000, 0x200000, 0xf6738c87 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbff1_c4.rom", 0x0c00000, 0x200000, 0x9c31e334 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rbff1_c5.rom", 0x1400000, 0x200000, 0x248ff860 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbff1_c6.rom", 0x1400000, 0x200000, 0x0bfb2d1f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rbff1_c7.rom", 0x1800000, 0x200000, 0xca605e12 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "rbff1_c8.rom", 0x1800000, 0x200000, 0x4e6beb6c ) /* Plane 2,3 */
 ROM_END
@@ -3307,17 +3305,17 @@ ROM_START( aof3 )
 
 	ROM_REGION( 0x1c00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "aof3_c1.rom", 0x0400000, 0x200000, 0xf6c74731 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,             0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			  0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof3_c2.rom", 0x0400000, 0x200000, 0xf587f149 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,             0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			  0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "aof3_c3.rom", 0x0c00000, 0x200000, 0x7749f5e6 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,             0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			  0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof3_c4.rom", 0x0c00000, 0x200000, 0xcbd58369 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,             0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			  0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "aof3_c5.rom", 0x1400000, 0x200000, 0x1718bdcd ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,             0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			  0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof3_c6.rom", 0x1400000, 0x200000, 0x4fca967f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,             0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			  0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "aof3_c7.rom", 0x1800000, 0x200000, 0x51bd8ab2 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "aof3_c8.rom", 0x1800000, 0x200000, 0x9a34f99c ) /* Plane 2,3 */
 ROM_END
@@ -3325,7 +3323,7 @@ ROM_END
 ROM_START( sonicwi3 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sonw3_p1.rom", 0x100000, 0x100000, 0x0547121d )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "sonw3_s1.rom", 0x8dd66743 )
 
@@ -3339,9 +3337,9 @@ ROM_START( sonicwi3 )
 
 	ROM_REGION( 0xc00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "sonw3_c1.rom", 0x400000, 0x200000, 0x3ca97864 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sonw3_c2.rom", 0x400000, 0x200000, 0x1da4b3a9 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sonw3_c3.rom", 0x800000, 0x200000, 0xc339fff5 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sonw3_c4.rom", 0x800000, 0x200000, 0x84a40c6e ) /* Plane 2,3 */
 ROM_END
@@ -3349,7 +3347,7 @@ ROM_END
 ROM_START( turfmast )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "turfm_p1.rom",  0x100000, 0x100000, 0x28c83048 )
-	ROM_CONTINUE(                        0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
+	ROM_CONTINUE(						 0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
 
 	NEO_SFIX_128K( "turfm_s1.rom", 0x9a5402b2 )
 
@@ -3365,15 +3363,15 @@ ROM_START( turfmast )
 
 	ROM_REGION( 0x800000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "turfm_c1.rom", 0x400000, 0x200000, 0x8c6733f2 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "turfm_c2.rom", 0x400000, 0x200000, 0x596cc256 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 ROM_END
 
 ROM_START( mslug )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "mslug_p1.rom", 0x100000, 0x100000, 0x08d8daa5 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "mslug_s1.rom", 0x2f55958d )
 
@@ -3387,13 +3385,13 @@ ROM_START( mslug )
 
 	ROM_REGION( 0x1000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "mslug_c1.rom", 0x400000, 0x200000, 0xd00bd152 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "mslug_c2.rom", 0x400000, 0x200000, 0xddff1dea ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "mslug_c3.rom", 0xc00000, 0x200000, 0xd3d5f9e5 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "mslug_c4.rom", 0xc00000, 0x200000, 0x5ac1d497 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( puzzledp )
@@ -3474,7 +3472,7 @@ ROM_END
 ROM_START( sdodgeb )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "dodge_p1.rom", 0x100000, 0x100000, 0x127f3d32 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "dodge_s1.rom", 0x64abd6b3 )
 
@@ -3496,7 +3494,7 @@ ROM_END
 ROM_START( goalx3 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "goal!_p1.rom", 0x100000, 0x100000, 0x2a019a79 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "goal!_s1.rom", 0xc0eaad86 )
 
@@ -3509,9 +3507,9 @@ ROM_START( goalx3 )
 
 	ROM_REGION( 0xa00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "goal!_c1.rom", 0x400000, 0x200000, 0xd061f1f5 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "goal!_c2.rom", 0x400000, 0x200000, 0x3f63c1a2 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "goal!_c3.rom", 0x800000, 0x100000, 0x5f91bace ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "goal!_c4.rom", 0x800000, 0x100000, 0x1e9f76f2 ) /* Plane 2,3 */
 ROM_END
@@ -3519,7 +3517,7 @@ ROM_END
 ROM_START( overtop )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ovr_p1.rom", 0x100000, 0x100000, 0x16c063a9 )
-	ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					  0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "ovr_s1.rom",  0x481d3ddc )
 
@@ -3542,7 +3540,7 @@ ROM_END
 ROM_START( neodrift )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "drift_p1.rom",  0x100000, 0x100000, 0xe397d798 )
-	ROM_CONTINUE(                        0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
+	ROM_CONTINUE(						 0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
 
 	NEO_SFIX_128K( "drift_s1.rom", 0xb76b61bc )
 
@@ -3556,9 +3554,9 @@ ROM_START( neodrift )
 
 	ROM_REGION( 0x800000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "drift_c1.rom", 0x400000, 0x200000, 0x62c5edc9 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "drift_c2.rom", 0x400000, 0x200000, 0x9dc9c72a ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 ROM_END
 
 ROM_START( kof96 )
@@ -3591,7 +3589,7 @@ ROM_END
 ROM_START( ssideki4 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "side4_p1.rom", 0x100000, 0x100000, 0x519b4ba3 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "side4_s1.rom", 0xf0fe5c36 )
 
@@ -3599,20 +3597,20 @@ ROM_START( ssideki4 )
 
 	ROM_REGION( 0x600000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
 	ROM_LOAD( "side4_v1.rom", 0x200000, 0x200000, 0xc4bfed62 )
-	ROM_CONTINUE(             0x000000, 0x200000 )
+	ROM_CONTINUE(			  0x000000, 0x200000 )
 	ROM_LOAD( "side4_v2.rom", 0x400000, 0x200000, 0x1bfa218b )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x1400000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "side4_c1.rom", 0x0400000, 0x200000, 0x288a9225 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "side4_c2.rom", 0x0400000, 0x200000, 0x3fc9d1c4 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "side4_c3.rom", 0x0c00000, 0x200000, 0xfedfaebe ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "side4_c4.rom", 0x0c00000, 0x200000, 0x877a5bb2 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "side4_c5.rom", 0x1000000, 0x200000, 0x0c6f97ec ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "side4_c6.rom", 0x1000000, 0x200000, 0x329c5e1b ) /* Plane 2,3 */
 ROM_END
@@ -3620,7 +3618,7 @@ ROM_END
 ROM_START( kizuna )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ke_p1.rom", 0x100000, 0x100000, 0x75d2b3de )
-	ROM_CONTINUE(                    0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					 0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "ke_s1.rom",   0xefdc72d7 )
 
@@ -3664,27 +3662,27 @@ ROM_START( ninjamas )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "ninjm_c1.rom", 0x0400000, 0x200000, 0x58f91ae0 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "ninjm_c2.rom", 0x0400000, 0x200000, 0x4258147f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "ninjm_c3.rom", 0x0c00000, 0x200000, 0x36c29ce3 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "ninjm_c4.rom", 0x0c00000, 0x200000, 0x17e97a6e ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "ninjm_c5.rom", 0x1400000, 0x200000, 0x4683ffc0 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "ninjm_c6.rom", 0x1400000, 0x200000, 0xde004f4a ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "ninjm_c7.rom", 0x1c00000, 0x200000, 0x3e1885c0 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "ninjm_c8.rom", 0x1c00000, 0x200000, 0x5a5df034 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( ragnagrd )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rgard_p1.rom", 0x100000, 0x100000, 0xca372303 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "rgard_s1.rom", 0x7d402f9a )
 
@@ -3698,27 +3696,27 @@ ROM_START( ragnagrd )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "rgard_c1.rom", 0x0400000, 0x200000, 0x18f61d79 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rgard_c2.rom", 0x0400000, 0x200000, 0xdbf4ff4b ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rgard_c3.rom", 0x0c00000, 0x200000, 0x108d5589 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rgard_c4.rom", 0x0c00000, 0x200000, 0x7962d5ac ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rgard_c5.rom", 0x1400000, 0x200000, 0x4b74021a ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rgard_c6.rom", 0x1400000, 0x200000, 0xf5cf90bc ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rgard_c7.rom", 0x1c00000, 0x200000, 0x32189762 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rgard_c8.rom", 0x1c00000, 0x200000, 0xd5915828 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( pgoal )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pgoal_p1.rom", 0x100000, 0x100000, 0x6af0e574 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "pgoal_s1.rom", 0x002f3c88 )
 
@@ -3761,7 +3759,7 @@ ROM_START( samsho4 )
 	ROM_REGION( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sams4_p1.rom", 0x000000, 0x100000, 0x1a5cb56d )
 	ROM_LOAD_WIDE_SWAP( "sams4_p2.rom", 0x300000, 0x200000, 0x7587f09b )
-	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "sams4_s1.rom", 0x8d3d3bf9 )
 
@@ -3776,28 +3774,28 @@ ROM_START( samsho4 )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "sams4_c1.rom", 0x0400000, 0x200000, 0x289100fa ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams4_c2.rom", 0x0400000, 0x200000, 0xc2716ea0 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sams4_c3.rom", 0x0c00000, 0x200000, 0x6659734f ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams4_c4.rom", 0x0c00000, 0x200000, 0x91ebea00 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sams4_c5.rom", 0x1400000, 0x200000, 0xe22254ed ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams4_c6.rom", 0x1400000, 0x200000, 0x00947b2e ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sams4_c7.rom", 0x1c00000, 0x200000, 0xe3e3b0cd ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams4_c8.rom", 0x1c00000, 0x200000, 0xf33967f1 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( rbffspec )
 	ROM_REGION( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rbffs_p1.rom", 0x000000, 0x100000, 0xf84a2d1d )
 	ROM_LOAD_WIDE_SWAP( "rbffs_p2.rom", 0x300000, 0x200000, 0x27e3e54b )
-	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "rbffs_s1.rom", 0x7ecd6e8c )
 
@@ -3812,27 +3810,27 @@ ROM_START( rbffspec )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "rbffs_c1.rom", 0x0400000, 0x200000, 0x436edad4 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbffs_c2.rom", 0x0400000, 0x200000, 0xcc7dc384 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rbffs_c3.rom", 0x0c00000, 0x200000, 0x375954ea ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbffs_c4.rom", 0x0c00000, 0x200000, 0xc1a98dd7 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rbffs_c5.rom", 0x1400000, 0x200000, 0x12c5418e ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbffs_c6.rom", 0x1400000, 0x200000, 0xc8ad71d5 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "rbffs_c7.rom", 0x1c00000, 0x200000, 0x5c33d1d8 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbffs_c8.rom", 0x1c00000, 0x200000, 0xefdeb140 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( twinspri )
 	ROM_REGION( 0x400000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sprit_p1.rom", 0x100000, 0x100000, 0x7697e445 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "sprit_s1.rom", 0xeeed5758 )
 
@@ -3846,9 +3844,9 @@ ROM_START( twinspri )
 
 	ROM_REGION( 0xa00000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "sprit_c1.rom", 0x400000, 0x200000, 0x73b2a70b ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sprit_c2.rom", 0x400000, 0x200000, 0x3a3e506c ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "sprit_c3.rom", 0x800000, 0x100000, 0xc59e4129 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sprit_c4.rom", 0x800000, 0x100000, 0xb5532e53 ) /* Plane 2,3 */
 ROM_END
@@ -3870,23 +3868,23 @@ ROM_START( wakuwak7 )
 
 	ROM_REGION( 0x1800000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "waku7_c1.rom", 0x0400000, 0x200000, 0xd91d386f ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "waku7_c2.rom", 0x0400000, 0x200000, 0x36b5cf41 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "waku7_c3.rom", 0x0c00000, 0x200000, 0x02fcff2f ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "waku7_c4.rom", 0x0c00000, 0x200000, 0xcd7f1241 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "waku7_c5.rom", 0x1400000, 0x200000, 0x03d32f25 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "waku7_c6.rom", 0x1400000, 0x200000, 0xd996a90a ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 ROM_END
 
 ROM_START( stakwin2 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sw2_p1.rom", 0x100000, 0x100000, 0xdaf101d2 )
-	ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					  0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "sw2_s1.rom", 0x2a8c4462 )
 
@@ -3908,7 +3906,7 @@ ROM_END
 ROM_START( breakers )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "break_p1.rom", 0x100000, 0x100000, 0xed24a6e6 )
-	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "break_s1.rom", 0x076fb64c )
 
@@ -3988,13 +3986,13 @@ ROM_START( magdrop3 )
 
 	ROM_REGION( 0x1000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "drop3_c1.rom", 0x400000, 0x200000, 0x734db3d6 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "drop3_c2.rom", 0x400000, 0x200000, 0xd78f50e5 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "drop3_c3.rom", 0xc00000, 0x200000, 0xec65f472 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "drop3_c4.rom", 0xc00000, 0x200000, 0xf55dddf3 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( lastblad )
@@ -4051,8 +4049,8 @@ ROM_START( irrmaze )
 	/* special BIOS with trackball support */
 	ROM_LOAD_WIDE_SWAP( "im_bios.rom", 0x00000, 0x020000, 0x853e6b96 )
 	ROM_REGION( 0x40000, REGION_CPU2 )
-	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */
-	ROM_LOAD( "im_m1.rom",  0x00000, 0x20000, 0x880a1abd )	/* so overwrite it with the real thing */
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */
+	ROM_LOAD( "im_m1.rom",  0x00000, 0x20000, 0x880a1abd )  /* so overwrite it with the real thing */
 
 	ROM_REGION( 0x200000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
 	ROM_LOAD( "im_v1.rom", 0x000000, 0x200000, 0x5f89c3b4 )
@@ -4087,7 +4085,7 @@ ROM_START( shocktro )
 	ROM_REGION( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "shock_p1.rom", 0x000000, 0x100000, 0x5677456f )
 	ROM_LOAD_WIDE_SWAP( "shock_p2.rom", 0x300000, 0x200000, 0x646f6c76 )
-	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "shock_s1.rom", 0x1f95cedb )
 
@@ -4101,28 +4099,28 @@ ROM_START( shocktro )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "shock_c1.rom", 0x0400000, 0x200000, 0xaad087fc ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c2.rom", 0x0400000, 0x200000, 0x7e39df1f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "shock_c3.rom", 0x0c00000, 0x200000, 0x6682a458 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c4.rom", 0x0c00000, 0x200000, 0xcbef1f17 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "shock_c5.rom", 0x1400000, 0x200000, 0xe17762b1 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c6.rom", 0x1400000, 0x200000, 0x28beab71 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "shock_c7.rom", 0x1c00000, 0x200000, 0xa47e62d2 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c8.rom", 0x1c00000, 0x200000, 0xe8e890fb ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( shocktrj )
 	ROM_REGION( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "238-pg1.p1",   0x000000, 0x100000, 0xefedf8dc )
 	ROM_LOAD_WIDE_SWAP( "shock_p2.rom", 0x300000, 0x200000, 0x646f6c76 )
-	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(						0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "shock_s1.rom", 0x1f95cedb )
 
@@ -4136,21 +4134,21 @@ ROM_START( shocktrj )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "shock_c1.rom", 0x0400000, 0x200000, 0xaad087fc ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c2.rom", 0x0400000, 0x200000, 0x7e39df1f ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "shock_c3.rom", 0x0c00000, 0x200000, 0x6682a458 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c4.rom", 0x0c00000, 0x200000, 0xcbef1f17 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "shock_c5.rom", 0x1400000, 0x200000, 0xe17762b1 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c6.rom", 0x1400000, 0x200000, 0x28beab71 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "shock_c7.rom", 0x1c00000, 0x200000, 0xa47e62d2 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c8.rom", 0x1c00000, 0x200000, 0xe8e890fb ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( blazstar )
@@ -4170,21 +4168,21 @@ ROM_START( blazstar )
 
 	ROM_REGION( 0x2000000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "bstar_c1.rom", 0x0400000, 0x200000, 0x754744e0 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bstar_c2.rom", 0x0400000, 0x200000, 0xaf98c037 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "bstar_c3.rom", 0x0c00000, 0x200000, 0x7b39b590 ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bstar_c4.rom", 0x0c00000, 0x200000, 0x6e731b30 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x0800000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "bstar_c5.rom", 0x1400000, 0x200000, 0x9ceb113b ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bstar_c6.rom", 0x1400000, 0x200000, 0x6a78e810 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1000000, 0x200000, 0 )
 	ROM_LOAD_GFX_EVEN( "bstar_c7.rom", 0x1c00000, 0x200000, 0x50d28eca ) /* Plane 0,1 */
-	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( 0,			   0x1800000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bstar_c8.rom", 0x1c00000, 0x200000, 0xcdbbb7d7 ) /* Plane 2,3 */
-	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( 0,			   0x1800000, 0x200000, 0 )
 ROM_END
 
 ROM_START( rbff2 )
@@ -4292,7 +4290,7 @@ ROM_END
 ROM_START( neocup98 )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "nc98_p1.rom", 0x100000, 0x100000, 0xf8fdb7a5 )
-	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					   0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "nc98_s1.rom", 0x9bddb697 )
 
@@ -4312,7 +4310,7 @@ ROM_END
 ROM_START( breakrev )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "brev_p1.rom", 0x100000, 0x100000, 0xc828876d )
-	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					   0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "brev_s1.rom", 0xe7660a5d )
 
@@ -4400,7 +4398,7 @@ ROM_END
 ROM_START( ctomaday )
 	ROM_REGION( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ctom_p1.rom", 0x100000, 0x100000, 0xc9386118 )
-	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(					   0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "ctom_s1.rom", 0xdc9eb372 )
 
@@ -4582,177 +4580,178 @@ GAMEX( 1990, neogeo, 0, neogeo, neogeo, neogeo, ROT0, "SNK", "Neo-Geo", NOT_A_DR
 
 /******************************************************************************/
 
-/*    YEAR  NAME      PARENT    MACHINE INPUT    INIT    MONITOR  */
+/*	  YEAR	NAME	  PARENT	MACHINE INPUT	 INIT	 MONITOR  */
 
 /* SNK */
-GAME( 1990, nam1975,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "NAM-1975" )
-GAME( 1990, bstars,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Baseball Stars Professional" )
-GAME( 1990, tpgolf,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Top Player's Golf" )
-GAME( 1990, mahretsu, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Mahjong Kyoretsuden" )
-GAME( 1990, ridhero,  neogeo,   raster, neogeo,  mgd2,   ROT0_16BIT, "SNK", "Riding Hero" )
-GAME( 1991, alpham2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Alpha Mission II / ASO II - Last Guardian" )
-GAME( 1990, cyberlip, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Cyber-Lip" )
-GAME( 1990, superspy, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "The Super Spy" )
-GAME( 1992, mutnat,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Mutation Nation" )
-GAME( 1991, kotm,     neogeo,   neogeo, neogeo,  mgd2,   ROT0_16BIT, "SNK", "King of the Monsters" )
-GAME( 1991, sengoku,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 1)" )
-GAME( 1991, sengokh,  sengoku,  neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 2)" )
-GAME( 1991, burningf, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 1)" )
-GAME( 1991, burningh, burningf, neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 2)" )
-GAME( 1990, lbowling, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "League Bowling" )
-GAME( 1991, gpilots,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Ghost Pilots" )
-GAME( 1990, joyjoy,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Puzzled / Joy Joy Kid" )
-GAME( 1991, quizdais, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Daisousa Sen - The Last Count Down" )
-GAME( 1992, lresort,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Last Resort" )
-GAME( 1991, eightman, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK / Pallas", "Eight Man" )
-GAME( 1991, legendos, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Legend of Success Joe / Ashitano Joe Densetsu" )
-GAME( 1991, 2020bb,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "2020 Super Baseball (set 1)" )
-GAME( 1991, 2020bbh,  2020bb,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "2020 Super Baseball (set 2)" )
-GAME( 1991, socbrawl, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Soccer Brawl" )
-GAME( 1991, fatfury1, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai" )
-GAME( 1991, roboarmy, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Robo Army" )
-GAME( 1992, fbfrenzy, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "Football Frenzy" )
-GAME( 1992, kotm2,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "King of the Monsters 2 - The Next Thing" )
-GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sengoku 2 / Sengoku Denshou 2")
-GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Baseball Stars 2" )
-GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2" )
-GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 Count Bout / Fire Suplex" )
-GAME( 1992, aof,      neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
-GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
-GAME( 1994, tophuntr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
-GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
-GAME( 1992, ssideki,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Super Sidekicks / Tokuten Ou" )
-GAME( 1994, kof94,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '94" )
-GAME( 1994, aof2,     neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 2 / Ryuuko no Ken 2" )
-GAME( 1993, fatfursp, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury Special / Garou Densetsu Special" )
-GAME( 1995, savagere, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Savage Reign / Fu'un Mokushiroku - kakutou sousei" )
-GAME( 1994, ssideki2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football" )
-GAME( 1994, samsho2,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen" )
-GAME( 1995, fatfury3, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai" )
-GAME( 1995, ssideki3, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi" )
-GAME( 1995, kof95,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '95" )
-GAME( 1995, samsho3,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown III / Samurai Spirits - Zankurou Musouken" )
-GAME( 1995, rbff1,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
-GAME( 1996, aof3,     neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
-GAME( 1996, kof96,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '96" )
-GAME( 1996, ssideki4, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Ultimate 11 / Tokuten Ou - Honoo no Libero" )
-GAME( 1996, kizuna,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
-GAME( 1996, samsho4,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
-GAME( 1996, rbffspec, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special" )
-GAME( 1997, kof97,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '97" )
-GAME( 1997, lastblad, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade / Bakumatsu Roman - Gekkano Kenshi" )
-GAME( 1997, irrmaze,  neogeo,   neogeo, irrmaze, neogeo, ROT0,       "SNK / Saurus", "The Irritating Maze / Ultra Denryu Iraira Bou" )
-GAME( 1998, rbff2,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers" )
-GAME( 1998, mslug2,   neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug 2 - Super Vehicle-001/II" )
-GAME( 1998, kof98,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends" )
-GAME( 1998, lastbld2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi" )
-GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
-GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug X - Super Vehicle-001" )
-GAME( 1999, kof99,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle" )
-GAME( 1999, garou,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves" )
+GAME( 1990, nam1975,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "NAM-1975" )
+GAME( 1990, bstars,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Baseball Stars Professional" )
+GAME( 1990, tpgolf,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Top Player's Golf" )
+GAME( 1990, mahretsu, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Mahjong Kyoretsuden" )
+GAME( 1990, ridhero,  neogeo,	raster, neogeo,  mgd2,	 ROT0_16BIT, "SNK", "Riding Hero" )
+GAME( 1991, alpham2,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Alpha Mission II / ASO II - Last Guardian" )
+GAME( 1990, cyberlip, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Cyber-Lip" )
+GAME( 1990, superspy, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "The Super Spy" )
+GAME( 1992, mutnat,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Mutation Nation" )
+GAME( 1991, kotm,	  neogeo,	neogeo, neogeo,  mgd2,	 ROT0_16BIT, "SNK", "King of the Monsters" )
+GAME( 1991, sengoku,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Sengoku / Sengoku Denshou (set 1)" )
+GAME( 1991, sengokh,  sengoku,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Sengoku / Sengoku Denshou (set 2)" )
+GAME( 1991, burningf, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Burning Fight (set 1)" )
+GAME( 1991, burningh, burningf, neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Burning Fight (set 2)" )
+GAME( 1990, lbowling, neogeo,	neogeo, neogeo,  mgd2,	 ROT0,		 "SNK", "League Bowling" )
+GAME( 1991, gpilots,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Ghost Pilots" )
+GAME( 1990, joyjoy,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Puzzled / Joy Joy Kid" )
+GAME( 1991, quizdais, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Quiz Daisousa Sen - The Last Count Down" )
+GAME( 1992, lresort,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Last Resort" )
+GAME( 1991, eightman, neogeo,	neogeo, neogeo,  mgd2,	 ROT0,		 "SNK / Pallas", "Eight Man" )
+GAME( 1991, legendos, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Legend of Success Joe / Ashitano Joe Densetsu" )
+GAME( 1991, 2020bb,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK / Pallas", "2020 Super Baseball (set 1)" )
+GAME( 1991, 2020bbh,  2020bb,	neogeo, neogeo,  neogeo, ROT0,		 "SNK / Pallas", "2020 Super Baseball (set 2)" )
+GAME( 1991, socbrawl, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Soccer Brawl" )
+GAME( 1991, fatfury1, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai" )
+GAME( 1991, roboarmy, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Robo Army" )
+GAME( 1992, fbfrenzy, neogeo,	neogeo, neogeo,  mgd2,	 ROT0,		 "SNK", "Football Frenzy" )
+GAME( 1992, kotm2,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "King of the Monsters 2 - The Next Thing" )
+GAME( 1993, sengoku2, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sengoku 2 / Sengoku Denshou 2")
+GAME( 1992, bstars2,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Baseball Stars 2" )
+GAME( 1992, quizdai2, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2" )
+GAME( 1993, 3countb,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 Count Bout / Fire Suplex" )
+GAME( 1992, aof,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
+GAME( 1993, samsho,   neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
+GAME( 1994, tophuntr, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
+GAME( 1992, fatfury2, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
+GAME( 1992, ssideki,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Super Sidekicks / Tokuten Ou" )
+GAME( 1994, kof94,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '94" )
+GAME( 1994, aof2,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 2 / Ryuuko no Ken 2" )
+GAME( 1993, fatfursp, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "SNK", "Fatal Fury Special / Garou Densetsu Special" )
+GAME( 1995, savagere, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Savage Reign / Fu'un Mokushiroku - kakutou sousei" )
+GAME( 1994, ssideki2, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football" )
+GAME( 1994, samsho2,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen" )
+GAME( 1995, fatfury3, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai" )
+GAME( 1995, ssideki3, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi" )
+GAME( 1995, kof95,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '95" )
+GAME( 1995, samsho3,  neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown III / Samurai Spirits - Zankurou Musouken" )
+GAME( 1995, rbff1,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
+GAME( 1996, aof3,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
+GAME( 1996, kof96,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '96" )
+GAME( 1996, ssideki4, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Ultimate 11 / Tokuten Ou - Honoo no Libero" )
+GAME( 1996, kizuna,   neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
+GAME( 1996, samsho4,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
+GAME( 1996, rbffspec, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special" )
+GAME( 1997, kof97,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '97" )
+GAME( 1997, lastblad, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade / Bakumatsu Roman - Gekkano Kenshi" )
+GAME( 1997, irrmaze,  neogeo,	neogeo, irrmaze, neogeo, ROT0,		 "SNK / Saurus", "The Irritating Maze / Ultra Denryu Iraira Bou" )
+GAME( 1998, rbff2,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers" )
+GAME( 1998, mslug2,   neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug 2 - Super Vehicle-001/II" )
+GAME( 1998, kof98,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends" )
+GAME( 1998, lastbld2, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi" )
+GAME( 1998, neocup98, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
+GAME( 1999, mslugx,   neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug X - Super Vehicle-001" )
+GAME( 1999, kof99,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle" )
+GAME( 1999, garou,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves" )
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
-GAME( 1990, maglord,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Magician Lord (set 1)" )
-GAME( 1990, maglordh, maglord,  neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Magician Lord (set 2)" )
-GAME( 1990, ncombat,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Ninja Combat" )
-GAME( 1990, bjourney, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Blue's Journey / Raguy" )
-GAME( 1991, crsword,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Crossed Swords" )
-GAME( 1991, trally,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Thrash Rally" )
-GAME( 1992, ncommand, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Alpha Denshi Co.", "Ninja Commando" )
-GAME( 1992, wh1,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "World Heroes" )
-GAME( 1993, wh2,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK",              "World Heroes 2" )
-GAME( 1994, wh2j,     neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",        "World Heroes 2 Jet" )
-GAME( 1994, aodk,     neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",        "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku" )
-GAME( 1995, whp,      neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "World Heroes Perfect" )
-GAME( 1995, mosyougi, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "Syougi No Tatsujin - Master of Syougi" )
-GAME( 1996, overtop,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",              "Over Top" )
-GAME( 1996, ninjamas, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",        "Ninja Master's - haoh-ninpo-cho" )
-GAME( 1996, twinspri, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",              "Twinkle Star Sprites" )
+GAME( 1990, maglord,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "Magician Lord (set 1)" )
+GAME( 1990, maglordh, maglord,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "Magician Lord (set 2)" )
+GAME( 1990, ncombat,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "Ninja Combat" )
+GAME( 1990, bjourney, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "Blue's Journey / Raguy" )
+GAME( 1991, crsword,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "Crossed Swords" )
+GAME( 1991, trally,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "Thrash Rally" )
+GAME( 1992, ncommand, neogeo,	neogeo, neogeo,  mgd2,	 ROT0,		 "Alpha Denshi Co.", "Ninja Commando" )
+GAME( 1992, wh1,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Alpha Denshi Co.", "World Heroes" )
+GAME( 1993, wh2,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "ADK",              "World Heroes 2" )
+GAME( 1994, wh2j,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "ADK / SNK",        "World Heroes 2 Jet" )
+GAME( 1994, aodk,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "ADK / SNK",        "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku" )
+GAME( 1995, whp,	  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "World Heroes Perfect" )
+GAME( 1995, mosyougi, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "Syougi No Tatsujin - Master of Syougi" )
+GAME( 1996, overtop,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",              "Over Top" )
+GAME( 1996, ninjamas, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "ADK / SNK",        "Ninja Master's - haoh-ninpo-cho" )
+GAME( 1996, twinspri, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",              "Twinkle Star Sprites" )
 
 /* Aicom */
-GAME( 1994, janshin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
-GAME( 1995, pulstar,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Aicom", "Pulstar" )
+GAME( 1994, janshin,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
+GAME( 1995, pulstar,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Aicom", "Pulstar" )
 
 /* Data East Corporation */
-GAME( 1993, spinmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Spinmaster / Miracle Adventure" )
-GAME( 1994, wjammers, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Windjammers / Flying Power Disc" )
-GAME( 1994, karnovr,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Karnov's Revenge / Fighter's History Dynamite" )
-GAME( 1994, strhoop,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Street Hoop / Street Slam / Dunk Dream" )
-GAME( 1996, magdrop2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Magical Drop II" )
-GAME( 1997, magdrop3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Magical Drop III" )
+GAME( 1993, spinmast, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Spinmaster / Miracle Adventure" )
+GAME( 1994, wjammers, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Data East Corporation", "Windjammers / Flying Power Disc" )
+GAME( 1994, karnovr,  neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Karnov's Revenge / Fighter's History Dynamite" )
+GAME( 1994, strhoop,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Data East Corporation", "Street Hoop / Street Slam / Dunk Dream" )
+GAME( 1996, magdrop2, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Data East Corporation", "Magical Drop II" )
+GAME( 1997, magdrop3, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Data East Corporation", "Magical Drop III" )
 
 /* Face */
-GAME( 1994, gururin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Face", "Gururin" )
-GAME( 1997, miexchng, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Face", "Money Puzzle Exchanger / Money Idol Exchanger" )
+GAME( 1994, gururin,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Face", "Gururin" )
+GAME( 1997, miexchng, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Face", "Money Puzzle Exchanger / Money Idol Exchanger" )
 
 /* Hudson Soft */
-GAME( 1994, panicbom, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Eighting / Hudson", "Panic Bomber" )
-GAME( 1995, kabukikl, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Hudson", "Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden" )
-GAME( 1997, neobombe, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Hudson", "Neo Bomberman" )
+GAME( 1994, panicbom, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Eighting / Hudson", "Panic Bomber" )
+GAME( 1995, kabukikl, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Hudson", "Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden" )
+GAME( 1997, neobombe, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Hudson", "Neo Bomberman" )
 
 /* Monolith Corp. */
-GAME( 1990, minasan,  neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Monolith Corp.", "Minnasanno Okagesamadesu" )
-GAME( 1991, bakatono, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
+GAME( 1990, minasan,  neogeo,	neogeo, neogeo,  mgd2,	 ROT0,		 "Monolith Corp.", "Minnasanno Okagesamadesu" )
+GAME( 1991, bakatono, neogeo,	neogeo, neogeo,  mgd2,	 ROT0,		 "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
 
 /* Nazca */
-GAME( 1996, turfmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Nazca", "Neo Turf Masters / Big Tournament Golf" )
-GAME( 1996, mslug,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Nazca", "Metal Slug - Super Vehicle-001" )
+GAME( 1996, turfmast, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "Nazca", "Neo Turf Masters / Big Tournament Golf" )
+GAME( 1996, mslug,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Nazca", "Metal Slug - Super Vehicle-001" )
 
 /* NMK */
-GAME( 1994, zedblade, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "NMK", "Zed Blade / Operation Ragnarok" )
+GAME( 1994, zedblade, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "NMK", "Zed Blade / Operation Ragnarok" )
 
 /* Sammy */
-GAME( 1992, viewpoin, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Sammy", "Viewpoint" )
+GAME( 1992, viewpoin, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Sammy", "Viewpoint" )
 
 /* Saurus */
-GAME( 1995, quizkof,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Quiz King of Fighters" )
-GAME( 1995, stakwin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
-GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Operation Ragnagard / Shin-Oh-Ken" )
-GAME( 1996, pgoal,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
-GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner 2" )
-GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers" )
+GAME( 1995, quizkof,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Saurus", "Quiz King of Fighters" )
+GAME( 1995, stakwin,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
+GAME( 1996, ragnagrd, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Operation Ragnagard / Shin-Oh-Ken" )
+GAME( 1996, pgoal,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
+GAME( 1996, stakwin2, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Saurus", "Stakes Winner 2" )
+GAME( 1997, shocktro, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers" )
 GAME( 1997, shocktrj, shocktro, neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers (Japan)" )
-GAME( 1998, shocktr2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers - 2nd Squad" )
+GAME( 1998, shocktr2, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers - 2nd Squad" )
 
 /* Sunsoft */
-GAME( 1995, galaxyfg, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Sunsoft", "Galaxy Fight - Universal Warriors" )
-GAME( 1996, wakuwak7, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Sunsoft", "Waku Waku 7" )
+GAME( 1995, galaxyfg, neogeo,	raster, neogeo,  neogeo, ROT0_16BIT, "Sunsoft", "Galaxy Fight - Universal Warriors" )
+GAME( 1996, wakuwak7, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Sunsoft", "Waku Waku 7" )
 
 /* Taito */
-GAME( 1994, pbobble,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito", "Puzzle Bobble / Bust-A-Move (Neo-Geo)" )
-GAME( 1999, pbobbl2n, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito (SNK license)", "Puzzle Bobble 2 / Bust-A-Move Again (Neo-Geo)" )
+GAME( 1994, pbobble,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Taito", "Puzzle Bobble / Bust-A-Move (Neo-Geo)" )
+GAME( 1999, pbobbl2n, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Taito (SNK license)", "Puzzle Bobble 2 / Bust-A-Move Again (Neo-Geo)" )
 
 /* Takara */
-GAME( 1995, marukodq, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Takara", "Chibi Marukochan Deluxe Quiz" )
+GAME( 1995, marukodq, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Takara", "Chibi Marukochan Deluxe Quiz" )
 
 /* Technos */
-GAME( 1995, doubledr, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Technos", "Double Dragon (Neo-Geo)" )
-GAME( 1995, gowcaizr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer")
-GAME( 1996, sdodgeb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu" )
+GAME( 1995, doubledr, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Technos", "Double Dragon (Neo-Geo)" )
+GAME( 1995, gowcaizr, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer")
+GAME( 1996, sdodgeb,  neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu" )
 
 /* Tecmo */
-GAME( 1996, tws96,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Tecmo", "Tecmo World Soccer '96" )
+GAME( 1996, tws96,	  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Tecmo", "Tecmo World Soccer '96" )
 
 /* Yumekobo */
-GAME( 1998, blazstar, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Yumekobo", "Blazing Star" )
+GAME( 1998, blazstar, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Yumekobo", "Blazing Star" )
 
 /* Viccom */
-GAME( 1994, fightfev, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Viccom", "Fight Fever / Crystal Legacy" )
+GAME( 1994, fightfev, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Viccom", "Fight Fever / Crystal Legacy" )
 
 /* Video System Co. */
-GAME( 1994, pspikes2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Power Spikes II" )
-GAME( 1994, sonicwi2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
-GAME( 1995, sonicwi3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
-GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Pop 'n Bounce / Gapporin" )
+GAME( 1994, pspikes2, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Video System Co.", "Power Spikes II" )
+GAME( 1994, sonicwi2, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
+GAME( 1995, sonicwi3, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
+GAME( 1997, popbounc, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Pop 'n Bounce / Gapporin" )
 
 /* Visco */
-GAME( 1992, androdun, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Andro Dunos" )
-GAME( 1995, puzzledp, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito (Visco license)", "Puzzle De Pon" )
-GAME( 1996, neomrdo,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Neo Mr. Do!" )
-GAME( 1995, goalx3,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Goal! Goal! Goal!" )
-GAME( 1996, neodrift, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Neo Drift Out - New Technology" )
-GAME( 1996, breakers, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers" )
-GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo, ROT0,       "Taito (Visco license)", "Puzzle De Pon R" )
+GAME( 1992, androdun, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Visco", "Andro Dunos" )
+GAME( 1995, puzzledp, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Taito (Visco license)", "Puzzle De Pon" )
+GAME( 1996, neomrdo,  neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Visco", "Neo Mr. Do!" )
+GAME( 1995, goalx3,   neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Visco", "Goal! Goal! Goal!" )
+GAME( 1996, neodrift, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Visco", "Neo Drift Out - New Technology" )
+GAME( 1996, breakers, neogeo,	neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers" )
+GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo, ROT0,		 "Taito (Visco license)", "Puzzle De Pon R" )
 GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers Revenge")
-GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Battle Flip Shot" )
-GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Captain Tomaday" )
+GAME( 1998, flipshot, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Visco", "Battle Flip Shot" )
+GAME( 1999, ctomaday, neogeo,	neogeo, neogeo,  neogeo, ROT0,		 "Visco", "Captain Tomaday" )
+

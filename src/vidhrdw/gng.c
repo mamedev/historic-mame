@@ -53,10 +53,10 @@ int gng_vh_start(void)
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 3;
+	tilemap_set_transparent_pen(fg_tilemap,3);
 
-	bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-	bg_tilemap->transmask[1] = 0x41; /* split type 1 has pens 0 and 6 transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x41); /* split type 1 has pens 0 and 6 transparent in front half */
 
 	return 0;
 }
@@ -98,7 +98,7 @@ WRITE_HANDLER( gng_bgscrolly_w )
 
 WRITE_HANDLER( gng_flipscreen_w )
 {
-	flip_screen_w(0,~data & 1);
+	flip_screen_set(~data & 1);
 }
 
 
@@ -145,15 +145,12 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }
 
 void gng_eof_callback(void)

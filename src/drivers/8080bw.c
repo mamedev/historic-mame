@@ -145,66 +145,50 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 /*                                                     */
 /*******************************************************/
 
-static struct MemoryReadAddress invaders_readmem[] =
-{
+static MEMORY_READ_START( invaders_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress invaders_writemem[] =
-{
+static MEMORY_WRITE_START( invaders_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x5fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort invaders_readport[] =
-{
+static PORT_READ_START( invaders_readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, invaders_shift_data_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_0_3[] =
-{
+static PORT_WRITE_START( writeport_0_3 )
 	{ 0x00, 0x00, invaders_shift_amount_w },
 	{ 0x03, 0x03, invaders_shift_data_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_1_2[] =
-{
+static PORT_WRITE_START( writeport_1_2 )
 	{ 0x01, 0x01, invaders_shift_amount_w },
 	{ 0x02, 0x02, invaders_shift_data_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_2_3[] =
-{
+static PORT_WRITE_START( writeport_2_3 )
 	{ 0x02, 0x02, invaders_shift_amount_w },
 	{ 0x03, 0x03, invaders_shift_data_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_2_4[] =
-{
+static PORT_WRITE_START( writeport_2_4 )
 	{ 0x02, 0x02, invaders_shift_amount_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_4_3[] =
-{
+static PORT_WRITE_START( writeport_4_3 )
 	{ 0x03, 0x03, invaders_shift_data_w },
 	{ 0x04, 0x04, invaders_shift_amount_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( invaders )
@@ -963,8 +947,7 @@ INPUT_PORTS_END
 /*                                                     */
 /*******************************************************/
 
-static struct MemoryReadAddress rollingc_readmem[] =
-{
+static MEMORY_READ_START( rollingc_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x3fff, MRA_RAM },
 //  { 0x2000, 0x2002, MRA_RAM },
@@ -972,19 +955,16 @@ static struct MemoryReadAddress rollingc_readmem[] =
 	{ 0x4000, 0x5fff, MRA_ROM },
 	{ 0xa400, 0xbfff, schaser_colorram_r },
 	{ 0xe400, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rollingc_writemem[] =
-{
+static MEMORY_WRITE_START( rollingc_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x5fff, MWA_ROM },
 	{ 0xa400, 0xbfff, schaser_colorram_w, &colorram },
 	{ 0xe400, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( rollingc )
 	PORT_START      /* IN0 */
@@ -1074,56 +1054,42 @@ static const struct MachineDriver machine_driver_rollingc =
 /*                                                       */
 /*********************************************************/
 
-static struct MemoryReadAddress sheriff_readmem[] =
-{
+static MEMORY_READ_START( sheriff_readmem )
 	{ 0x0000, 0x27ff, MRA_ROM },
 	{ 0x4200, 0x7fff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sheriff_writemem[] =
-{
+static MEMORY_WRITE_START( sheriff_writemem )
 	{ 0x0000, 0x27ff, MWA_ROM },
 	{ 0x4200, 0x5dff, invaders_videoram_w, &videoram, &videoram_size },
 	{ 0x5e00, 0x7fff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sheriff_readport[] =
-{
+static PORT_READ_START( sheriff_readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, invaders_shift_data_r },
 	{ 0x04, 0x04, input_port_3_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress sheriff_sound_readmem[] =
-{
+static MEMORY_READ_START( sheriff_sound_readmem )
 	{ 0x0000, 0x03ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress sheriff_sound_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( sheriff_sound_writemem )
 	{ 0x0000, 0x03ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sheriff_sound_readport[] =
-{
+static PORT_READ_START( sheriff_sound_readport )
 	{ I8039_p1, I8039_p1, sheriff_sh_p1_r },
 	{ I8039_p2, I8039_p2, sheriff_sh_p2_r },
 	{ I8039_t0, I8039_t0, sheriff_sh_t0_r },
 	{ I8039_t1, I8039_t1, sheriff_sh_t1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sheriff_sound_writeport[] =
-{
+static PORT_WRITE_START( sheriff_sound_writeport )
 	{ I8039_p2, I8039_p2, sheriff_sh_p2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /* All of the controls/dips for cocktail mode are as per the schematic */
 /* BUT a coffee table version was never manufactured and support was   */
@@ -1301,18 +1267,12 @@ static const struct MachineDriver machine_driver_sheriff =
 /*                                                     */
 /*******************************************************/
 
-static struct IOReadPort spcenctr_readport[] =
-{
+static PORT_READ_START( spcenctr_readport )
 	{ 0x00, 0x00, spcenctr_port_0_r }, /* These 2 ports use Gray's binary encoding */
 	{ 0x01, 0x01, spcenctr_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort spcenctr_writeport[] =
-{
-	{ -1 }  /* end of table */
-};
 
 INPUT_PORTS_START( spcenctr )
 	PORT_START      /* IN0 */
@@ -1355,7 +1315,7 @@ static const struct MachineDriver machine_driver_spcenctr =
 		{
 			CPU_8080,
 			2000000,        /* 2 MHz? */
-			invaders_readmem,invaders_writemem,spcenctr_readport,spcenctr_writeport,
+			invaders_readmem,invaders_writemem,spcenctr_readport,0,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -1386,14 +1346,12 @@ static const struct MachineDriver machine_driver_spcenctr =
 /*                                                     */
 /*******************************************************/
 
-static struct IOReadPort gunfight_readport[] =
-{
+static PORT_READ_START( gunfight_readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, boothill_shift_data_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( gunfight )
     /* Gun position uses bits 4-6, handled using fake paddles */
@@ -1656,24 +1614,20 @@ static const struct MachineDriver machine_driver_boothill =
 /*                                                     */
 /*******************************************************/
 
-static struct MemoryReadAddress schaser_readmem[] =
-{
+static MEMORY_READ_START( schaser_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_ROM },
 	{ 0xc400, 0xdfff, schaser_colorram_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress schaser_writemem[] =
-{
+static MEMORY_WRITE_START( schaser_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x5fff, MWA_ROM },
 	{ 0xc400, 0xdfff, schaser_colorram_w, &colorram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( schaser )
 	PORT_START      /* IN0 */
@@ -2109,22 +2063,18 @@ static const struct MachineDriver machine_driver_lupin3 =
 /*                                                     */
 /*******************************************************/
 
-static struct MemoryReadAddress helifire_readmem[] =
-{
+static MEMORY_READ_START( helifire_readmem )
 	{ 0x0000, 0x27ff, MRA_ROM },
 	{ 0x4200, 0x7fff, MRA_RAM },
 	{ 0xc200, 0xddff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress helifire_writemem[] =
-{
+static MEMORY_WRITE_START( helifire_writemem )
 	{ 0x0000, 0x27ff, MWA_ROM },
 	{ 0x4200, 0x5dff, invaders_videoram_w, &videoram, &videoram_size },
 	{ 0x5e00, 0x7fff, MWA_RAM },
 	{ 0xc200, 0xddff, helifire_colorram_w, &colorram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( helifire )
 	PORT_START      /* 00 Main Controls */
@@ -2466,15 +2416,13 @@ INPUT_PORTS_END
 /*                                                     */
 /*******************************************************/
 
-static struct IOReadPort bowler_readport[] =
-{
+static PORT_READ_START( bowler_readport )
 	{ 0x01, 0x01, invaders_shift_data_comp_r },
 	{ 0x02, 0x02, input_port_0_r },				/* dip switch */
 	{ 0x04, 0x04, input_port_1_r },				/* coins / switches */
 	{ 0x05, 0x05, input_port_2_r },				/* ball vert */
 	{ 0x06, 0x06, input_port_3_r },				/* ball horz */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( bowler )
 	PORT_START      /* IN2 */
@@ -2553,15 +2501,13 @@ static const struct MachineDriver machine_driver_bowler =
 /*                                                     */
 /*******************************************************/
 
-static struct IOReadPort shuffle_readport[] =
-{
+static PORT_READ_START( shuffle_readport )
 	{ 0x01, 0x01, invaders_shift_data_r },
 	{ 0x02, 0x02, input_port_0_r },				/* dip switch */
 	{ 0x04, 0x04, input_port_1_r },				/* coins / switches */
 	{ 0x05, 0x05, input_port_2_r },				/* ball vert */
 	{ 0x06, 0x06, input_port_3_r },				/* ball horz */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( shuffle )
 	PORT_START      /* DSW0 */
@@ -2640,14 +2586,12 @@ static const struct MachineDriver machine_driver_shuffle =
 /*                                                     */
 /*******************************************************/
 
-static struct IOReadPort seawolf_readport[] =
-{
+static PORT_READ_START( seawolf_readport )
 	{ 0x00, 0x00, invaders_shift_data_rev_r },
 	{ 0x01, 0x01, input_port_0_r },
 	{ 0x02, 0x02, input_port_1_r },
 	{ 0x03, 0x03, invaders_shift_data_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( seawolf )
 	PORT_START      /* IN0 */
@@ -3025,19 +2969,13 @@ static const struct MachineDriver machine_driver_tornbase =
 /*                                                     */
 /*******************************************************/
 
-static struct IOReadPort checkmat_readport[] =
-{
+static PORT_READ_START( checkmat_readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort checkmat_writeport[] =
-{
-	{ -1 }  /* end of table */
-};
 
 INPUT_PORTS_START( checkmat )
 	PORT_START      /* IN0  */
@@ -3100,7 +3038,7 @@ static const struct MachineDriver machine_driver_checkmat =
 		{
 			CPU_8080,
 			2000000,        /* 2 MHz? */
-			invaders_readmem,invaders_writemem,checkmat_readport,checkmat_writeport,
+			invaders_readmem,invaders_writemem,checkmat_readport,0,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},

@@ -98,15 +98,12 @@ void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
+	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,0);
 	K051960_sprites_draw(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,2,0);
+	K052109_tilemap_draw(bitmap,2,0,0);
 	K051960_sprites_draw(bitmap,1,1);
-	K052109_tilemap_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,0,0,0);
 	K051960_sprites_draw(bitmap,0,0);
 }

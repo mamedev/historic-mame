@@ -9,8 +9,6 @@
 #include "cpu/z80/z80.h"
 #include "machine/z80fmly.h"
 
-static int sound_status[2];
-static int sound_command[2];
 static int sound_flags;
 
 READ_HANDLER( cchasm_snd_io_r )
@@ -31,12 +29,12 @@ READ_HANDLER( cchasm_snd_io_r )
         return AY8910_read_port_1_r (offset);
 
     case 0x40:
-        return sound_command[0] & 0xff;
+        return soundlatch_r (offset);
 
     case 0x41:
         sound_flags &= ~0x80;
         z80ctc_0_trg2_w (0, 0);
-        return sound_command[1] & 0xff;
+        return soundlatch2_r (offset);
     default:
         logerror("Read from unmapped internal IO device at 0x%x\n", offset + 0x6000);
         return 0;
@@ -64,12 +62,12 @@ WRITE_HANDLER( cchasm_snd_io_w )
         break;
 
     case 0x40:
-        sound_status[0] = data;
+        soundlatch3_w (offset, data);
         break;
 
     case 0x41:
         sound_flags |= 0x40;
-        sound_status[1] = data;
+        soundlatch4_w (offset, data);
         cpu_cause_interrupt(0,1);
         break;
 
@@ -82,45 +80,49 @@ WRITE_HANDLER( cchasm_snd_io_w )
     }
 }
 
-WRITE_HANDLER( cchasm_io_w )
+WRITE16_HANDLER( cchasm_io_w )
 {
     static int led;
 
-    switch ((offset >> 1) & 0xf)
-    {
-    case 0:
-        sound_command[0] = data >> 8;
-        break;
-    case 1:
-        sound_flags |= 0x80;
-        sound_command[1] = data >> 8;
-        z80ctc_0_trg2_w (0, 1);
-        cpu_cause_interrupt( 1, Z80_NMI_INT );
-        break;
-    case 2:
-        led = data;
-        break;
-    }
+	if (ACCESSING_MSB)
+	{
+		data >>= 8;
+		switch (offset & 0xf)
+		{
+		case 0:
+			soundlatch_w (offset, data);
+			break;
+		case 1:
+			sound_flags |= 0x80;
+			soundlatch2_w (offset, data);
+			z80ctc_0_trg2_w (0, 1);
+			cpu_cause_interrupt( 1, Z80_NMI_INT );
+			break;
+		case 2:
+			led = data;
+			break;
+		}
+	}
 }
 
-READ_HANDLER( cchasm_io_r )
+READ16_HANDLER( cchasm_io_r )
 {
-    switch ((offset >> 1) & 0xf)
-    {
-    case 0x0:
-        return sound_status[0] << 8;
-    case 0x1:
-        sound_flags &= ~0x40;
-        return sound_status[1] << 8;
-    case 0x2:
-        return (sound_flags| (input_port_3_r (offset) & 0x07) | 0x08) << 8;
-    case 0x5:
-        return input_port_2_r (offset) << 8;
-    case 0x8:
-        return input_port_1_r (offset) << 8;
-    default:
-        return 0xff << 8;
-    }
+	switch (offset & 0xf)
+	{
+	case 0x0:
+		return soundlatch3_r (offset) << 8;
+	case 0x1:
+		sound_flags &= ~0x40;
+		return soundlatch4_r (offset) << 8;
+	case 0x2:
+		return (sound_flags| (input_port_3_r (offset) & 0x07) | 0x08) << 8;
+	case 0x5:
+		return input_port_2_r (offset) << 8;
+	case 0x8:
+		return input_port_1_r (offset) << 8;
+	default:
+		return 0xff << 8;
+	}
 }
 
 static int channel[2], channel_active[2];
@@ -177,8 +179,6 @@ static void tone_update(int num,INT16 *buffer,int length)
 
 int cchasm_sh_start(const struct MachineSound *msound)
 {
-    sound_status[0] = 0; sound_status[1] = 0;
-    sound_command[0] = 0; sound_command[1] = 0;
     sound_flags = 0;
     output[0] = 0; output[1] = 0;
 

@@ -23,13 +23,13 @@ blocken:
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *shangha3_ram;
+extern data16_t *shangha3_ram;
 extern size_t shangha3_ram_size;
 extern int shangha3_do_shadows;
 
-WRITE_HANDLER( shangha3_flipscreen_w );
-WRITE_HANDLER( shangha3_gfxlist_addr_w );
-WRITE_HANDLER( shangha3_blitter_go_w );
+WRITE16_HANDLER( shangha3_flipscreen_w );
+WRITE16_HANDLER( shangha3_gfxlist_addr_w );
+WRITE16_HANDLER( shangha3_blitter_go_w );
 int shangha3_vh_start(void);
 void shangha3_vh_stop(void);
 void shangha3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -49,7 +49,7 @@ write    read
 20    -> 8
 40    -> 0
 */
-static READ_HANDLER( shangha3_prot_r )
+static READ16_HANDLER( shangha3_prot_r )
 {
 	static int count;
 	static int result[] = { 0x0,0x1,0x3,0x7,0xf,0xe,0xc,0x8,0x0};
@@ -58,24 +58,24 @@ logerror("PC %04x: read 20004e\n",cpu_get_pc());
 
 	return result[count++ % 9];
 }
-static WRITE_HANDLER( shangha3_prot_w )
+static WRITE16_HANDLER( shangha3_prot_w )
 {
 logerror("PC %04x: write %02x to 20004e\n",cpu_get_pc(),data);
 }
 
 
-static READ_HANDLER( heberpop_gfxrom_r )
+static READ16_HANDLER( heberpop_gfxrom_r )
 {
 	UINT8 *ROM = memory_region(REGION_GFX1);
 
-	return ROM[offset] | (ROM[offset+1] << 8);
+	return ROM[2*offset] | (ROM[2*offset+1] << 8);
 }
 
 
 
-static WRITE_HANDLER( shangha3_coinctrl_w )
+static WRITE16_HANDLER( shangha3_coinctrl_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
 		coin_lockout_w(0,~data & 0x0400);
 		coin_lockout_w(1,~data & 0x0400);
@@ -84,12 +84,12 @@ static WRITE_HANDLER( shangha3_coinctrl_w )
 	}
 }
 
-static WRITE_HANDLER( heberpop_coinctrl_w )
+static WRITE16_HANDLER( heberpop_coinctrl_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* the sound ROM bank is selected by the main CPU! */
-		OKIM6295_set_bank_base(0,ALL_VOICES,(data & 0x08) ? 0x40000 : 0x00000);
+		OKIM6295_set_bank_base(0,(data & 0x08) ? 0x40000 : 0x00000);
 
 		coin_lockout_w(0,~data & 0x04);
 		coin_lockout_w(1,~data & 0x04);
@@ -99,128 +99,112 @@ static WRITE_HANDLER( heberpop_coinctrl_w )
 }
 
 
-static WRITE_HANDLER( heberpop_sound_command_w )
+static WRITE16_HANDLER( heberpop_sound_command_w )
 {
-	soundlatch_w(0,data);
-	cpu_cause_interrupt(1,0xff);	/* RST 38h */
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(0,data & 0xff);
+		cpu_cause_interrupt(1,0xff);	/* RST 38h */
+	}
 }
 
 
 
-static struct MemoryReadAddress shangha3_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x100fff, paletteram_word_r },
-	{ 0x200000, 0x200001, input_port_0_r },
-	{ 0x200002, 0x200003, input_port_1_r },
-	{ 0x20001e, 0x20001f, AY8910_read_port_0_r },
+static MEMORY_READ16_START( shangha3_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x100fff, MRA16_RAM },
+	{ 0x200000, 0x200001, input_port_0_word_r },
+	{ 0x200002, 0x200003, input_port_1_word_r },
+	{ 0x20001e, 0x20001f, AY8910_read_port_0_lsb_r },
 	{ 0x20004e, 0x20004f, shangha3_prot_r },
-	{ 0x20006e, 0x20006f, OKIM6295_status_0_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+	{ 0x20006e, 0x20006f, OKIM6295_status_0_lsb_r },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress shangha3_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x100fff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram },
+static MEMORY_WRITE16_START( shangha3_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x100fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
 	{ 0x200008, 0x200009, shangha3_blitter_go_w },
-	{ 0x20000a, 0x20000b, MWA_NOP },	/* irq ack? */
+	{ 0x20000a, 0x20000b, MWA16_NOP },	/* irq ack? */
 	{ 0x20000c, 0x20000d, shangha3_coinctrl_w },
-	{ 0x20002e, 0x20002f, AY8910_write_port_0_w },
-	{ 0x20003e, 0x20003f, AY8910_control_port_0_w },
+	{ 0x20002e, 0x20002f, AY8910_write_port_0_lsb_w },
+	{ 0x20003e, 0x20003f, AY8910_control_port_0_lsb_w },
 	{ 0x20004e, 0x20004f, shangha3_prot_w },
-	{ 0x20006e, 0x20006f, OKIM6295_data_0_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
+	{ 0x20006e, 0x20006f, OKIM6295_data_0_lsb_w },
+	{ 0x300000, 0x30ffff, MWA16_RAM, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
 	{ 0x340000, 0x340001, shangha3_flipscreen_w },
 	{ 0x360000, 0x360001, shangha3_gfxlist_addr_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress heberpop_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x100000, 0x100fff, paletteram_word_r },
-	{ 0x200000, 0x200001, input_port_0_r },
-	{ 0x200002, 0x200003, input_port_1_r },
-	{ 0x200004, 0x200005, input_port_2_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
+static MEMORY_READ16_START( heberpop_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x100fff, MRA16_RAM },
+	{ 0x200000, 0x200001, input_port_0_word_r },
+	{ 0x200002, 0x200003, input_port_1_word_r },
+	{ 0x200004, 0x200005, input_port_2_word_r },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
 	{ 0x800000, 0xb7ffff, heberpop_gfxrom_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress heberpop_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x100fff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram },
+static MEMORY_WRITE16_START( heberpop_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x100000, 0x100fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
 	{ 0x200008, 0x200009, shangha3_blitter_go_w },
-	{ 0x20000a, 0x20000b, MWA_NOP },	/* irq ack? */
+	{ 0x20000a, 0x20000b, MWA16_NOP },	/* irq ack? */
 	{ 0x20000c, 0x20000d, heberpop_coinctrl_w },
 	{ 0x20000e, 0x20000f, heberpop_sound_command_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
+	{ 0x300000, 0x30ffff, MWA16_RAM, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
 	{ 0x340000, 0x340001, shangha3_flipscreen_w },
 	{ 0x360000, 0x360001, shangha3_gfxlist_addr_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress blocken_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x100000, 0x100001, input_port_0_r },
-	{ 0x100002, 0x100003, input_port_1_r },
-	{ 0x100004, 0x100005, input_port_2_r },
-	{ 0x200000, 0x200fff, paletteram_word_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
+static MEMORY_READ16_START( blocken_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x100001, input_port_0_word_r },
+	{ 0x100002, 0x100003, input_port_1_word_r },
+	{ 0x100004, 0x100005, input_port_2_word_r },
+	{ 0x200000, 0x200fff, MRA16_RAM },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
 	{ 0x800000, 0xb7ffff, heberpop_gfxrom_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress blocken_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
+static MEMORY_WRITE16_START( blocken_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x100008, 0x100009, shangha3_blitter_go_w },
-	{ 0x10000a, 0x10000b, MWA_NOP },	/* irq ack? */
+	{ 0x10000a, 0x10000b, MWA16_NOP },	/* irq ack? */
 	{ 0x10000c, 0x10000d, heberpop_coinctrl_w },
 	{ 0x10000e, 0x10000f, heberpop_sound_command_w },
-	{ 0x200000, 0x200fff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
+	{ 0x200000, 0x200fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
+	{ 0x300000, 0x30ffff, MWA16_RAM, &shangha3_ram, &shangha3_ram_size },	/* gfx & work ram */
 	{ 0x340000, 0x340001, shangha3_flipscreen_w },
 	{ 0x360000, 0x360001, shangha3_gfxlist_addr_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress heberpop_sound_readmem[] =
-{
+
+static MEMORY_READ_START( heberpop_sound_readmem )
 	{ 0x0000, 0xf7ff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress heberpop_sound_writemem[] =
-{
+static MEMORY_WRITE_START( heberpop_sound_writemem )
 	{ 0x0000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort heberpop_sound_readport[] =
-{
+static PORT_READ_START( heberpop_sound_readport )
 	{ 0x00, 0x00, YM2612_status_port_0_A_r },
 	{ 0x80, 0x80, OKIM6295_status_0_r },
 	{ 0xc0, 0xc0, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort heberpop_sound_writeport[] =
-{
+static PORT_WRITE_START( heberpop_sound_writeport )
 	{ 0x00, 0x00, YM2612_control_port_0_A_w },
 	{ 0x01, 0x01, YM2612_data_port_0_A_w },
 	{ 0x02, 0x02, YM2612_control_port_0_B_w },
 	{ 0x03, 0x03, YM2612_data_port_0_B_w },
 	{ 0x80, 0x80, OKIM6295_data_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -116,36 +116,29 @@ void bosco_sh_stop(void);
 extern unsigned char *pengo_soundregs;
 
 
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x7000, 0x700f, bosco_customio_data_1_r },
 	{ 0x7100, 0x7100, bosco_customio_1_r },
 	{ 0x7800, 0x97ff, bosco_sharedram_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x9000, 0x900f, bosco_customio_data_2_r },
 	{ 0x9100, 0x9100, bosco_customio_2_r },
 	{ 0x7800, 0x97ff, bosco_sharedram_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu3[] =
-{
+static MEMORY_READ_START( readmem_cpu3 )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x7800, 0x97ff, bosco_sharedram_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
 	{ 0x6820, 0x6820, bosco_interrupt_enable_1_w },
@@ -173,11 +166,9 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x9840, 0x9840, MWA_RAM, &bosco_staronoff },
 	{ 0x9870, 0x9870, bosco_flipscreen_w },
 	{ 0x9804, 0x980f, MWA_RAM, &bosco_radarattr },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x6821, 0x6821, bosco_interrupt_enable_2_w },
 
@@ -193,11 +184,9 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x9820, 0x9820, bosco_scrolly_w },
 	{ 0x9830, 0x9830, bosco_starcontrol_w },
 	{ 0x9874, 0x9875, MWA_RAM, &bosco_starblink },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu3[] =
-{
+static MEMORY_WRITE_START( writemem_cpu3 )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x6800, 0x681f, pengo_sound_w },
 	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
@@ -207,8 +196,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 	{ 0x8800, 0x8bff, colorram_w },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w },
 	{ 0x7800, 0x97ff, bosco_sharedram_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -120,8 +120,8 @@ int splash_vh_start(void)
 	if (!screen[0] || !screen[1] || !screen[2])
 		return 1;
 
-	screen[0]->transparent_pen = 0;
-	screen[1]->transparent_pen = 0;
+	tilemap_set_transparent_pen(screen[0],0);
+	tilemap_set_transparent_pen(screen[1],0);
 
 	tilemap_set_scrollx(screen[0], 0, 4);
 
@@ -187,14 +187,11 @@ void splash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	copybitmap(bitmap,screen2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
-	tilemap_draw(bitmap,screen[1],0);
+	tilemap_draw(bitmap,screen[1],0,0);
 	splash_draw_sprites(bitmap);
-	tilemap_draw(bitmap,screen[0],0);
+	tilemap_draw(bitmap,screen[0],0,0);
 }

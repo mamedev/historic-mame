@@ -102,8 +102,8 @@ int tsamurai_vh_start(void)
 	if (!background || !foreground)
 		return 1;
 
-	background->transparent_pen = 0;
-	foreground->transparent_pen = 0;
+	tilemap_set_transparent_pen(background,0);
+	tilemap_set_transparent_pen(foreground,0);
 	return 0;
 }
 
@@ -223,7 +223,6 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_update( ALL_TILEMAPS );
-	tilemap_render( ALL_TILEMAPS );
 
 	/*
 		This following isn't particularly efficient.  We'd be better off to
@@ -234,9 +233,9 @@ void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		(screenshots would be helpful)
 	*/
 	fillbitmap( bitmap, Machine->pens[bgcolor], 0 );
-	tilemap_draw( bitmap, background, 0 );
+	tilemap_draw( bitmap, background, 0 ,0);
 
 	draw_sprites( bitmap );
 
-	tilemap_draw( bitmap, foreground, 0 );
+	tilemap_draw( bitmap, foreground, 0 ,0);
 }

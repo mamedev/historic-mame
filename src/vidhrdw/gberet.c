@@ -109,8 +109,8 @@ int gberet_vh_start(void)
 	if (!bg_tilemap)
 		return 0;
 
-	bg_tilemap->transmask[0] = 0x0001; /* split type 0 has pen 1 transparent in front half */
-	bg_tilemap->transmask[1] = 0xffff; /* split type 1 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0x0001); /* split type 0 has pen 1 transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0xffff); /* split type 1 is totally transparent in front half */
 	tilemap_set_scroll_rows(bg_tilemap,32);
 
 	return 0;
@@ -285,10 +285,8 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	if (sprites_type == 0) draw_sprites0(bitmap);	/* original */
 	else draw_sprites1(bitmap);	/* bootleg */
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
 }

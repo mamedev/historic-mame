@@ -72,8 +72,7 @@ static void springer_init_machine(void)
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
@@ -81,11 +80,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa800, 0xa800, input_port_1_r },
 	{ 0xb000, 0xb000, input_port_2_r },
 	{ 0xb800, 0xb800, input_port_3_r },  /* also watchdog */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
@@ -98,25 +95,20 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa001, 0xa001, marineb_flipscreen_y_w },
 	{ 0xa002, 0xa002, marineb_flipscreen_x_w },
 	{ 0xb800, 0xb800, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOWritePort marineb_writeport[] =
-{
+static PORT_WRITE_START( marineb_writeport )
 	{ 0x08, 0x08, AY8910_control_port_0_w },
 	{ 0x09, 0x09, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort wanted_writeport[] =
-{
+static PORT_WRITE_START( wanted_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x02, 0x02, AY8910_control_port_1_w },
 	{ 0x03, 0x03, AY8910_write_port_1_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( marineb )

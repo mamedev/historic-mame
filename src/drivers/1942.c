@@ -99,8 +99,7 @@ static int c1942_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc000, input_port_0_r },	/* IN0 */
@@ -110,11 +109,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc004, 0xc004, input_port_4_r },	/* DSW1 */
 	{ 0xd000, 0xdbff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc802, 0xc803, c1942_scroll_w },
@@ -125,29 +122,24 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd000, 0xd7ff, c1942_fgvideoram_w, &c1942_fgvideoram },
 	{ 0xd800, 0xdbff, c1942_bgvideoram_w, &c1942_bgvideoram },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
 	{ 0x8001, 0x8001, AY8910_write_port_0_w },
 	{ 0xc000, 0xc000, AY8910_control_port_1_w },
 	{ 0xc001, 0xc001, AY8910_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

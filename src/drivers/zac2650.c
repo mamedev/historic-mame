@@ -21,7 +21,7 @@ READ_HANDLER( s2636_r );
 READ_HANDLER( tinvader_port_0_r );
 
 
-static struct MemoryReadAddress readmem[] = {
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x17ff, MRA_ROM },
     { 0x1800, 0x1bff, MRA_RAM },
     { 0x1E80, 0x1E80, tinvader_port_0_r },
@@ -29,17 +29,15 @@ static struct MemoryReadAddress readmem[] = {
     { 0x1E82, 0x1E82, input_port_2_r },
     { 0x1D00, 0x1Dff, MRA_RAM },
     { 0x1F00, 0x1FFF, s2636_r },			/* S2636 Chip */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] = {
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x17FF, MWA_ROM },
 	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
     { 0x1D00, 0x1dff, MWA_RAM },
     { 0x1E80, 0x1E80, tinvader_sound_w },
     { 0x1F00, 0x1FFF, s2636_w, &s2636ram },
-	{ -1 }
-};
+MEMORY_END
 
 INPUT_PORTS_START( tinvader )
 

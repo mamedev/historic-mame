@@ -17,19 +17,16 @@ void pkunwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0xa001, 0xa001, AY8910_read_port_0_r },
 	{ 0xa003, 0xa003, AY8910_read_port_1_r },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
@@ -40,14 +37,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa003, 0xa003, &AY8910_write_port_1_w },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, pkunwar_flipscreen_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

@@ -66,7 +66,7 @@ void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 WRITE_HANDLER( yiear_control_w )
 {
 	/* bit 0 flips screen */
-	flip_screen_w(offset, data & 1);
+	flip_screen_set(data & 1);
 
 	/* bit 1 is NMI enable */
 	nmi_enable = data & 0x02;

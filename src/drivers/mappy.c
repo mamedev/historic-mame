@@ -95,51 +95,42 @@ WRITE_HANDLER( mappy_sound_enable_w );
 
 
 /* CPU 1 read addresses */
-static struct MemoryReadAddress mappy_readmem_cpu1[] =
-{
+static MEMORY_READ_START( mappy_readmem_cpu1 )
 	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
 	{ 0x4800, 0x480f, mappy_customio_1_r },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, mappy_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x0000, 0x9fff, MRA_RAM },			/* RAM everywhere else */
 	{ 0xa000, 0xffff, MRA_ROM },			/* ROM code */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress digdug2_readmem_cpu1[] =
-{
+static MEMORY_READ_START( digdug2_readmem_cpu1 )
 	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
 	{ 0x4800, 0x480f, digdug2_customio_1_r },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, digdug2_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x4820, 0x4bff, MRA_RAM },				/* extra RAM for Dig Dug 2 */
 	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress motos_readmem_cpu1[] =
-{
+static MEMORY_READ_START( motos_readmem_cpu1 )
 	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
 	{ 0x4800, 0x480f, motos_customio_1_r },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, motos_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x0000, 0x7fff, MRA_RAM },			/* RAM everywhere else */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM code */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress todruaga_readmem_cpu1[] =
-{
+static MEMORY_READ_START( todruaga_readmem_cpu1 )
 	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
 	{ 0x4800, 0x480f, todruaga_customio_1_r },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, todruaga_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* CPU 1 write addresses */
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x1000, 0x177f, MWA_RAM },                                 /* general RAM, area 1 */
 	{ 0x1800, 0x1f7f, MWA_RAM },                                 /* general RAM, area 2 */
 	{ 0x2000, 0x277f, MWA_RAM },                                 /* general RAM, area 3 */
@@ -161,55 +152,44 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x8000, 0x8000, MWA_NOP },                                 /* watchdog timer */
 	{ 0x8000, 0xffff, MWA_ROM },                                 /* ROM code */
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 read addresses */
-static struct MemoryReadAddress mappy_readmem_cpu2[] =
-{
+static MEMORY_READ_START( mappy_readmem_cpu2 )
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
 	{ 0x0040, 0x03ff, mappy_sharedram_r },                      /* shared RAM with the main CPU */
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress digdug2_readmem_cpu2[] =
-{
+static MEMORY_READ_START( digdug2_readmem_cpu2 )
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
 	{ 0x0040, 0x03ff, mappy_sharedram_r },                    /* shared RAM with the main CPU */
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress motos_readmem_cpu2[] =
-{
+static MEMORY_READ_START( motos_readmem_cpu2 )
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
 	{ 0x0040, 0x03ff, mappy_sharedram_r },						 /* shared RAM with the main CPU */
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress todruaga_readmem_cpu2[] =
-{
+static MEMORY_READ_START( todruaga_readmem_cpu2 )
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
 	{ 0x0040, 0x03ff, mappy_sharedram_r },						 /* shared RAM with the main CPU */
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 write addresses */
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0040, 0x03ff, mappy_sharedram_w },                       /* shared RAM with the main CPU */
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },         /* sound control registers */
 	{ 0x2000, 0x2001, mappy_interrupt_enable_2_w },              /* interrupt enable */
 	{ 0x2006, 0x2007, mappy_sound_enable_w },                    /* sound enable */
 	{ 0xe000, 0xffff, MWA_ROM },                                 /* ROM code */
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* input from the outside world */

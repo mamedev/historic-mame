@@ -123,8 +123,7 @@ static WRITE_HANDLER( gbusters_snd_bankswitch_w )
 #endif
 }
 
-static struct MemoryReadAddress gbusters_readmem[] =
-{
+static MEMORY_READ_START( gbusters_readmem )
 	{ 0x1f90, 0x1f90, input_port_3_r },		/* coinsw & startsw */
 	{ 0x1f91, 0x1f91, input_port_4_r },		/* Player 1 inputs */
 	{ 0x1f92, 0x1f92, input_port_5_r },		/* Player 2 inputs */
@@ -136,11 +135,9 @@ static struct MemoryReadAddress gbusters_readmem[] =
 	{ 0x5800, 0x5fff, bankedram_r },		/* palette + work RAM (RAM D16 & C16) */
 	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM 878n02.rom */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gbusters_writemem[] =
-{
+static MEMORY_WRITE_START( gbusters_writemem )
 	{ 0x1f80, 0x1f80, gbusters_coin_counter_w },	/* coin counters */
 	{ 0x1f84, 0x1f84, soundlatch_w },				/* sound code # */
 	{ 0x1f88, 0x1f88, gbusters_sh_irqtrigger_w },	/* cause interrupt on audio CPU */
@@ -152,29 +149,24 @@ static struct MemoryWriteAddress gbusters_writemem[] =
 	{ 0x5800, 0x5fff, bankedram_w, &ram },			/* palette + work RAM (RAM D16 & C16) */
 	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM 878n02.rom */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress gbusters_readmem_sound[] =
-{
+static MEMORY_READ_START( gbusters_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM 878h01.rom */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0xa000, 0xa000, soundlatch_r },			/* soundlatch_r */
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },	/* 007232 registers */
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },	/* YM 2151 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gbusters_writemem_sound[] =
-{
+static MEMORY_WRITE_START( gbusters_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM 878h01.rom */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },		/* 007232 registers */
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM 2151 */
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM 2151 */
 	{ 0xf000, 0xf000, gbusters_snd_bankswitch_w },	/* 007232 bankswitch? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

@@ -141,17 +141,14 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x17ff, MRA_ROM },
 	{ 0x2000, 0x27ff, safarir_ram_r },
 	{ 0x3800, 0x38ff, input_port_0_r },
 	{ 0x3c00, 0x3cff, input_port_1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x17ff, MWA_ROM },
 	{ 0x2000, 0x27ff, safarir_ram_w, &safarir_ram1, &safarir_ram_size },
 	{ 0x2800, 0x28ff, safarir_ram_bank_w },
@@ -159,8 +156,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3000, 0x30ff, MWA_NOP },	/* goes to SN76477 */
 
 	{ 0x8000, 0x87ff, MWA_NOP, &safarir_ram2 },	/* only here to initialize pointer */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( safarir )

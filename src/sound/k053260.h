@@ -18,5 +18,7 @@ int K053260_sh_start( const struct MachineSound *msound );
 void K053260_sh_stop( void );
 WRITE_HANDLER( K053260_w );
 READ_HANDLER( K053260_r );
+WRITE16_HANDLER( K053260_lsb_w );
+READ16_HANDLER( K053260_lsb_r );
 
 #endif /* __K053260_H__ */

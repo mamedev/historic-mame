@@ -89,9 +89,16 @@ void backdrop_refresh(struct artwork_info *a);
 *********************************************************************/
 int overlay_set_palette (unsigned char *palette, int num_shades);
 
+
+/* called by mame.c */
+void artwork_kill(void);
+void artwork_draw(struct osd_bitmap *dest,struct osd_bitmap *source, int full_refresh);
+/* called by palette.c */
+void artwork_remap(void);
+
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

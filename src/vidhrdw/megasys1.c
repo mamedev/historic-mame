@@ -215,8 +215,10 @@ static int debugsprites;
 
 /* Variables defined here, that have to be shared: */
 struct tilemap *megasys1_tmap_0, *megasys1_tmap_1, *megasys1_tmap_2;
-unsigned char *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
-unsigned char *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
+
+data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
+data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
+
 int megasys1_scroll_flag[3], megasys1_scrollx[3], megasys1_scrolly[3], megasys1_pages_per_tmap_x[3], megasys1_pages_per_tmap_y[3];
 int megasys1_active_layers, megasys1_sprite_bank;
 int megasys1_screen_flag, megasys1_sprite_flag;
@@ -239,7 +241,7 @@ int megasys1_vh_start(void)
 {
 	int i;
 
-	spriteram = &megasys1_ram[0x8000];
+	spriteram16 = &megasys1_ram[0x8000/2];
 	megasys1_tmap_0 = megasys1_tmap_1 = megasys1_tmap_2 = NULL;
 
 	megasys1_active_layers = megasys1_sprite_bank = megasys1_screen_flag = megasys1_sprite_flag = 0;
@@ -294,22 +296,23 @@ int megasys1_vh_start(void)
 
 
 /* MS1-A, B, C, Z */
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBRGBx_word_w )
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
 {
 	/*	byte 0    byte 1	*/
 	/*	RRRR GGGG BBBB RGB?	*/
 	/*	4321 4321 4321 000?	*/
 
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int r,g,b;
+	data16_t word;
 
-	int r = ((newword >> 8) & 0xF0 ) | ((newword << 0) & 0x08);
-	int g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
-	int b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
+	COMBINE_DATA(&paletteram16[offset]);
+	word = paletteram16[offset];
 
-	palette_change_color( offset/2, r,g,b );
+	r = ((word >> 8) & 0xF0 ) | ((word << 0) & 0x08);
+	g = ((word >> 4) & 0xF0 ) | ((word << 1) & 0x08);
+	b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
 
-	WRITE_WORD (&paletteram[offset], newword);
+	palette_change_color( offset, r,g,b );
 }
 
 
@@ -332,13 +335,13 @@ WRITE_HANDLER( paletteram_RRRRGGGGBBBBRGBx_word_w )
 #define MEGASYS1_GET_TILE_INFO(_n_) \
 void megasys1_get_scroll_##_n_##_tile_info_8x8(int tile_index) \
 { \
-	int code = READ_WORD(&megasys1_scrollram_##_n_[2*tile_index]); \
+	data16_t code = megasys1_scrollram_##_n_[tile_index]; \
 	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_8x8_scroll_##_n_##_factor, code >> (16 - megasys1_bits_per_color_code) ) \
 } \
 \
 void megasys1_get_scroll_##_n_##_tile_info_16x16(int tile_index) \
 { \
-	int code = READ_WORD(&megasys1_scrollram_##_n_[2*(tile_index/4)]); \
+	data16_t code = megasys1_scrollram_##_n_[tile_index/4]; \
 	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_16x16_scroll_##_n_##_factor + (tile_index & 3), code >> (16-megasys1_bits_per_color_code) ); \
 } \
 \
@@ -359,22 +362,16 @@ UINT32 megasys1_##_n_##_scan_16x16(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 
 }
 
 
-#define MEGASYS1_SCROLLRAM_R(_n_) \
-READ_HANDLER( megasys1_scrollram_##_n_##_r ) {return READ_WORD(&megasys1_scrollram_##_n_[offset]);}
-
 #define MEGASYS1_SCROLLRAM_W(_n_) \
-WRITE_HANDLER( megasys1_scrollram_##_n_##_w ) \
+WRITE16_HANDLER( megasys1_scrollram_##_n_##_w ) \
 { \
-int old_data, new_data; \
-\
-	old_data = READ_WORD(&megasys1_scrollram_##_n_[offset]); \
-	new_data = COMBINE_WORD(old_data,data); \
+	data16_t old_data = megasys1_scrollram_##_n_[offset]; \
+	data16_t new_data = COMBINE_DATA(&megasys1_scrollram_##_n_[offset]); \
 	if (old_data != new_data) \
 	{ \
-		WRITE_WORD(&megasys1_scrollram_##_n_[offset], new_data); \
-		if ( (offset < 0x40000) && (megasys1_tmap_##_n_) ) \
+		if ( (offset < 0x40000/2) && (megasys1_tmap_##_n_) ) \
 		{\
-			int tile_index = offset / 2; \
+			int tile_index = offset; \
 			if (megasys1_scroll_flag[_n_] & 0x10)	/* tiles are 8x8 */ \
 			{ \
 				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index ); \
@@ -393,10 +390,6 @@ int old_data, new_data; \
 MEGASYS1_GET_TILE_INFO(0)
 MEGASYS1_GET_TILE_INFO(1)
 MEGASYS1_GET_TILE_INFO(2)
-
-MEGASYS1_SCROLLRAM_R(0)
-MEGASYS1_SCROLLRAM_R(1)
-MEGASYS1_SCROLLRAM_R(2)
 
 MEGASYS1_SCROLLRAM_W(0)
 MEGASYS1_SCROLLRAM_W(1)
@@ -443,7 +436,7 @@ void megasys1_scroll_##_n_##_flag_w(int data) \
 						TILES_PER_PAGE_X * megasys1_pages_per_tmap_x[_n_], \
 						TILES_PER_PAGE_Y * megasys1_pages_per_tmap_y[_n_]  \
 					) \
-			)) megasys1_tmap_##_n_->transparent_pen = 15; \
+			)) tilemap_set_transparent_pen(megasys1_tmap_##_n_,15); \
 	} \
 }
 
@@ -453,44 +446,40 @@ MEGASYS1_SCROLL_FLAG_W(2)
 
 
 /* Used by MS1-A/Z, B */
-WRITE_HANDLER( megasys1_vregs_A_w )
+WRITE16_HANDLER( megasys1_vregs_A_w )
 {
-int old_data, new_data;
-
-	old_data = READ_WORD(&megasys1_vregs[offset]);
-	COMBINE_WORD_MEM(&megasys1_vregs[offset],data);
-	new_data  = READ_WORD(&megasys1_vregs[offset]);
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
-		case 0x000   :	megasys1_active_layers = new_data;	break;
+		case 0x000/2   :	megasys1_active_layers = new_data;	break;
 
-		case 0x008+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
-		case 0x008+2 :	MEGASYS1_VREG_SCROLL(2,y)	break;
-		case 0x008+4 :	MEGASYS1_VREG_FLAG(2)		break;
+		case 0x008/2+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
+		case 0x008/2+1 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+		case 0x008/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
 
-		case 0x200+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
-		case 0x200+2 :	MEGASYS1_VREG_SCROLL(0,y)	break;
-		case 0x200+4 :	MEGASYS1_VREG_FLAG(0)		break;
+		case 0x200/2+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
+		case 0x200/2+1 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x200/2+2 :	MEGASYS1_VREG_FLAG(0)		break;
 
-		case 0x208+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
-		case 0x208+2 :	MEGASYS1_VREG_SCROLL(1,y)	break;
-		case 0x208+4 :	MEGASYS1_VREG_FLAG(1)		break;
+		case 0x208/2+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
+		case 0x208/2+1 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x208/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
-		case 0x100   :	megasys1_sprite_flag = new_data;		break;
+		case 0x100/2   :	megasys1_sprite_flag = new_data;		break;
 
-		case 0x300   :	megasys1_screen_flag = new_data;
-						if (new_data & 0x10)
-							cpu_set_reset_line(1,ASSERT_LINE);
-						else
-							cpu_set_reset_line(1,CLEAR_LINE);
-						break;
+		case 0x300/2   :	megasys1_screen_flag = new_data;
+							if (new_data & 0x10)
+								cpu_set_reset_line(1,ASSERT_LINE);
+							else
+								cpu_set_reset_line(1,CLEAR_LINE);
+							break;
 
-		case 0x308   :	ms_soundlatch_w(0,new_data);
-						cpu_cause_interrupt(1,4);
-						break;
+		case 0x308/2   :	soundlatch_word_w(0,new_data,0);
+							cpu_cause_interrupt(1,4);
+							break;
 
-		default		 :	SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
+		default		 :	SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
 	}
 
 }
@@ -499,86 +488,80 @@ int old_data, new_data;
 
 
 /* Used by MS1-C only */
-READ_HANDLER( megasys1_vregs_C_r )
+READ16_HANDLER( megasys1_vregs_C_r )
 {
 	switch (offset)
 	{
-		case 0x8000:	return soundlatch2_r(0);
-		default:		return READ_WORD(&megasys1_vregs[offset]);
+		case 0x8000/2:	return soundlatch2_word_r(0);
+		default:		return megasys1_vregs[offset];
 	}
 }
 
-WRITE_HANDLER( megasys1_vregs_C_w )
+WRITE16_HANDLER( megasys1_vregs_C_w )
 {
-int old_data, new_data;
-
-	old_data = READ_WORD(&megasys1_vregs[offset]);
-	COMBINE_WORD_MEM(&megasys1_vregs[offset],data);
-	new_data  = READ_WORD(&megasys1_vregs[offset]);
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
-		case 0x2000+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
-		case 0x2000+2 :	MEGASYS1_VREG_SCROLL(0,y)	break;
-		case 0x2000+4 :	MEGASYS1_VREG_FLAG(0)		break;
+		case 0x2000/2+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
+		case 0x2000/2+1 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x2000/2+2 :	MEGASYS1_VREG_FLAG(0)		break;
 
-		case 0x2008+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
-		case 0x2008+2 :	MEGASYS1_VREG_SCROLL(1,y)	break;
-		case 0x2008+4 :	MEGASYS1_VREG_FLAG(1)		break;
+		case 0x2008/2+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
+		case 0x2008/2+1 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x2008/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
-		case 0x2100+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
-		case 0x2100+2 :	MEGASYS1_VREG_SCROLL(2,y)	break;
-		case 0x2100+4 :	MEGASYS1_VREG_FLAG(2)		break;
+		case 0x2100/2+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
+		case 0x2100/2+1 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+		case 0x2100/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
 
-		case 0x2108   :	megasys1_sprite_bank   = new_data;	break;
-		case 0x2200   :	megasys1_sprite_flag   = new_data;	break;
-		case 0x2208   : megasys1_active_layers = new_data;	break;
+		case 0x2108/2   :	megasys1_sprite_bank   = new_data;	break;
+		case 0x2200/2   :	megasys1_sprite_flag   = new_data;	break;
+		case 0x2208/2   :	megasys1_active_layers = new_data;	break;
 
-		case 0x2308   :	megasys1_screen_flag = new_data;
-						if (new_data & 0x10)
-							cpu_set_reset_line(1,ASSERT_LINE);
-						else
-							cpu_set_reset_line(1,CLEAR_LINE);
-						break;
+		case 0x2308/2   :	megasys1_screen_flag = new_data;
+							if (new_data & 0x10)
+								cpu_set_reset_line(1,ASSERT_LINE);
+							else
+								cpu_set_reset_line(1,CLEAR_LINE);
+							break;
 
-		case 0x8000   :	/* Cybattler reads sound latch on irq 2 */
-						ms_soundlatch_w(0,new_data);
-						cpu_cause_interrupt(1,2);
-						break;
+		case 0x8000/2   :	/* Cybattler reads sound latch on irq 2 */
+							soundlatch_word_w(0,new_data,0);
+							cpu_cause_interrupt(1,2);
+							break;
 
-		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
+		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
 	}
 }
 
 
 
 /* Used by MS1-D only */
-WRITE_HANDLER( megasys1_vregs_D_w )
+WRITE16_HANDLER( megasys1_vregs_D_w )
 {
-int old_data, new_data;
-
-	old_data = READ_WORD(&megasys1_vregs[offset]);
-	COMBINE_WORD_MEM(&megasys1_vregs[offset],data);
-	new_data  = READ_WORD(&megasys1_vregs[offset]);
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
-		case 0x2000+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
-		case 0x2000+2 :	MEGASYS1_VREG_SCROLL(0,y)	break;
-		case 0x2000+4 :	MEGASYS1_VREG_FLAG(0)		break;
-		case 0x2008+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
-		case 0x2008+2 :	MEGASYS1_VREG_SCROLL(1,y)	break;
-		case 0x2008+4 :	MEGASYS1_VREG_FLAG(1)		break;
-//		case 0x2100+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
-//		case 0x2100+2 :	MEGASYS1_VREG_SCROLL(2,y)	break;
-//		case 0x2100+4 :	MEGASYS1_VREG_FLAG(2)		break;
+		case 0x2000/2+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
+		case 0x2000/2+1 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x2000/2+2 :	MEGASYS1_VREG_FLAG(0)		break;
 
-		case 0x2108   :	megasys1_sprite_bank	=	new_data;		break;
-		case 0x2200   :	megasys1_sprite_flag	=	new_data;		break;
-		case 0x2208   : megasys1_active_layers	=	new_data;		break;
-		case 0x2308   :	megasys1_screen_flag	=	new_data;		break;
+		case 0x2008/2+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
+		case 0x2008/2+1 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x2008/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
-		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
+//		case 0x2100/2+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
+//		case 0x2100/2+1 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+//		case 0x2100/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
+
+		case 0x2108/2   :	megasys1_sprite_bank	=	new_data;		break;
+		case 0x2200/2   :	megasys1_sprite_flag	=	new_data;		break;
+		case 0x2208/2   :	megasys1_active_layers	=	new_data;		break;
+		case 0x2308/2   :	megasys1_screen_flag	=	new_data;		break;
+
+		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
 	}
 }
 
@@ -615,7 +598,7 @@ int old_data, new_data;
 
 static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
-int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
+	int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 
 /* objram: 0x100*4 entries		spritedata: 0x80 entries */
 
@@ -628,14 +611,14 @@ int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 	{
 		color_mask = (megasys1_sprite_flag & 0x100) ? 0x07 : 0x0f;
 
-		for (offs = 0x000; offs < 0x800 ; offs += 8)
+		for (offs = 0x000; offs < 0x800/2 ; offs += 8/2)
 		{
 			for (sprite = 0; sprite < 4 ; sprite ++)
 			{
-				unsigned char *objectdata = &megasys1_objectram[offs + 0x800 * sprite];
-				unsigned char *spritedata = &spriteram[(READ_WORD(&objectdata[0x00])&0x7f)*0x10];
+				data16_t *objectdata = &megasys1_objectram[offs + (0x800/2) * sprite];
+				data16_t *spritedata = &spriteram16[ (objectdata[ 0 ] & 0x7f) * 0x10/2];
 
-				attr = READ_WORD(&spritedata[0x08]);
+				attr = spritedata[ 8/2 ];
 				if ( (attr & 0x08) == priority )	continue;	// priority
 				if (((attr & 0xc0)>>6) != sprite)	continue;	// flipping
 
@@ -644,8 +627,8 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 #endif
 
 				/* apply the position displacements */
-				sx = ( READ_WORD(&spritedata[0x0A]) + READ_WORD(&objectdata[0x02]) ) % 512;
-				sy = ( READ_WORD(&spritedata[0x0C]) + READ_WORD(&objectdata[0x04]) ) % 512;
+				sx = ( spritedata[0x0A/2] + objectdata[0x02/2] ) % 512;
+				sy = ( spritedata[0x0C/2] + objectdata[0x04/2] ) % 512;
 
 				if (sx > 256-1) sx -= 512;
 				if (sy > 256-1) sy -= 512;
@@ -660,7 +643,7 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 				}
 
 				/* sprite code is displaced as well */
-				code  = READ_WORD(&spritedata[0x0E]) + READ_WORD(&objectdata[0x06]);
+				code  = spritedata[0x0E/2] + objectdata[0x06/2];
 				color = (attr & color_mask);
 
 				drawgfx(bitmap,Machine->gfx[3],
@@ -681,22 +664,22 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 
 		for (sprite = 0; sprite < 0x80 ; sprite ++)
 		{
-			unsigned char *spritedata = &spriteram[sprite*0x10];
+			data16_t *spritedata = &spriteram16[ sprite * 0x10/2];
 
-			attr = READ_WORD(&spritedata[0x08]);
+			attr = spritedata[ 8/2 ];
 			if ( (attr & 0x08) == priority ) continue;
 
 #ifdef MAME_DEBUG
 if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 #endif
 
-			sx = READ_WORD(&spritedata[0x0A]) % 512;
-			sy = READ_WORD(&spritedata[0x0C]) % 512;
+			sx = spritedata[0x0A/2] % 512;
+			sy = spritedata[0x0C/2] % 512;
 
 			if (sx > 256-1) sx -= 512;
 			if (sy > 256-1) sy -= 512;
 
-			code  = READ_WORD(&spritedata[0x0E]);
+			code  = spritedata[0x0E/2];
 			color = (attr & 0x0F);
 
 			flipx = attr & 0x40;
@@ -709,12 +692,12 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 			}
 
 			drawgfx(bitmap,Machine->gfx[2],
-				code,
-				color,
-				flipx, flipy,
-				sx, sy,
-				&Machine->visible_area,
-				TRANSPARENCY_PEN,15);
+					code,
+					color,
+					flipx, flipy,
+					sx, sy,
+					&Machine->visible_area,
+					TRANSPARENCY_PEN,15);
 		}	/* sprite */
 	}	/* Z hw */
 
@@ -730,9 +713,9 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 
 static void mark_sprite_colors(void)
 {
-int color_codes_start, color, penmask[16];
-int offs, sx, sy, code, attr, i;
-int color_mask;
+	int color_codes_start, color, penmask[16];
+	int offs, sx, sy, code, attr, i;
+	int color_mask;
 
 	int xmin = Machine->visible_area.min_x - (16 - 1);
 	int xmax = Machine->visible_area.max_x;
@@ -749,23 +732,23 @@ int color_mask;
 		int total_elements		=	Machine->gfx[3]->total_elements;
 		color_codes_start		=	Machine->drv->gfxdecodeinfo[3].color_codes_start;
 
-		for (offs = 0; offs < 0x2000 ; offs += 8)
+		for (offs = 0; offs < 0x2000/2 ; offs += 8/2)
 		{
-			int sprite = READ_WORD(&megasys1_objectram[offs+0x00]);
-			unsigned char *spritedata = &spriteram[(sprite&0x7F)*16];
+			data16_t sprite			=	megasys1_objectram[offs+0x00];
+			data16_t *spritedata	=	&spriteram16[ (sprite&0x7F) * 16/2];
 
-			attr = READ_WORD(&spritedata[0x08]);
-			if ( (attr & 0xc0) != ((offs/0x800)<<6) ) continue;
+			attr = spritedata[ 8/2 ];
+			if ( (attr & 0xc0) != ((offs/(0x800/2))<<6) ) continue;
 
-			sx = ( READ_WORD(&spritedata[0x0A]) + READ_WORD(&megasys1_objectram[offs+0x02]) ) % 512;
-			sy = ( READ_WORD(&spritedata[0x0C]) + READ_WORD(&megasys1_objectram[offs+0x04]) ) % 512;
+			sx = ( spritedata[0x0A/2] + megasys1_objectram[0x02/2] ) % 512;
+			sy = ( spritedata[0x0C/2] + megasys1_objectram[0x04/2] ) % 512;
 
 			if (sx > 256-1) sx -= 512;
 			if (sy > 256-1) sy -= 512;
 
 			if ((sx > xmax) ||(sy > ymax) ||(sx < xmin) ||(sy < ymin)) continue;
 
-			code  = READ_WORD(&spritedata[0x0E]) + READ_WORD(&megasys1_objectram[offs+0x06]);
+			code  = spritedata[0x0E/2] + megasys1_objectram[offs+0x06/2];
 			code  =	(code & 0xfff );
 			color = (attr & color_mask);
 
@@ -781,12 +764,12 @@ int color_mask;
 
 		for (sprite = 0; sprite < 0x80 ; sprite++)
 		{
-			unsigned char* spritedata = &spriteram[sprite*16];
+			data16_t *spritedata = &spriteram16[ sprite * 16/2 ];
 
-			sx		=	READ_WORD(&spritedata[0x0A]) % 512;
-			sy		=	READ_WORD(&spritedata[0x0C]) % 512;
-			code	=	READ_WORD(&spritedata[0x0E]);
-			color	=	READ_WORD(&spritedata[0x08]) & 0x0F;
+			sx		=	spritedata[0x0A/2] % 512;
+			sy		=	spritedata[0x0C/2] % 512;
+			code	=	spritedata[0x0E/2];
+			color	=	spritedata[0x08/2] & 0x0F;
 
 			if (sx > 256-1) sx -= 512;
 			if (sy > 256-1) sy -= 512;
@@ -827,7 +810,6 @@ extern struct GameDriver driver_cybattlr;
 extern struct GameDriver driver_hachoo;
 extern struct GameDriver driver_iganinju;
 extern struct GameDriver driver_kickoff;
-extern struct GameDriver driver_soldamj;
 extern struct GameDriver driver_tshingen;
 
 /*
@@ -881,10 +863,6 @@ static struct priority priorities[] =
 	},
 	{	&driver_kickoff,
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&driver_soldamj,
-		{ 0x04132,0xfffff,0xfffff,0x01423,0xfffff,0xfffff,0xfffff,0x20413,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	&driver_tshingen,
@@ -1175,11 +1153,7 @@ int msk = 0;
 
 	mark_sprite_colors();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	MEGASYS1_TMAP_RENDER(0)
-	MEGASYS1_TMAP_RENDER(1)
-	MEGASYS1_TMAP_RENDER(2)
+	palette_recalc();
 
 	flag = TILEMAP_IGNORE_TRANSPARENCY;
 
@@ -1198,7 +1172,7 @@ int msk = 0;
 				if (flag != 0)
 				{
 					flag = 0;
-					osd_clearbitmap(bitmap);	/* should use fillbitmap */
+					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 				}
 
 				if (megasys1_active_layers & 0x08)
@@ -1218,7 +1192,7 @@ int msk = 0;
 		if (flag != 0)
 		{
 			flag = 0;
-			osd_clearbitmap(bitmap);	/* should use fillbitmap */
+			fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 		}
 
 	}

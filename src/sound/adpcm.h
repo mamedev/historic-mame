@@ -28,8 +28,13 @@ int ADPCM_playing(int num);
 
 #define MAX_OKIM6295 			2
 #define MAX_OKIM6295_VOICES		4
-#define ALL_VOICES				-1
 
+/*
+  Note about the playback frequency: the external clock is internally divided,
+  depending on pin 7, by 132 (high) or 165 (low). This isn't handled by the
+  emulation, so you have to provide the didvided internal clock instead of the
+  external clock.
+*/
 struct OKIM6295interface
 {
 	int num;                  		/* total number of chips */
@@ -41,13 +46,20 @@ struct OKIM6295interface
 int OKIM6295_sh_start(const struct MachineSound *msound);
 void OKIM6295_sh_stop(void);
 void OKIM6295_sh_update(void);
-void OKIM6295_set_bank_base(int which, int voice, int base);	/* set voice to ALL_VOICES to set all banks at once */
-void OKIM6295_set_frequency(int which, int voice, int frequency);	/* set voice to ALL_VOICES to set all banks at once */
+void OKIM6295_set_bank_base(int which, int base);
+void OKIM6295_set_frequency(int which, int frequency);
 
 READ_HANDLER( OKIM6295_status_0_r );
 READ_HANDLER( OKIM6295_status_1_r );
+READ16_HANDLER( OKIM6295_status_0_lsb_r );
+READ16_HANDLER( OKIM6295_status_1_lsb_r );
+READ16_HANDLER( OKIM6295_status_0_msb_r );
+READ16_HANDLER( OKIM6295_status_1_msb_r );
 WRITE_HANDLER( OKIM6295_data_0_w );
 WRITE_HANDLER( OKIM6295_data_1_w );
-
+WRITE16_HANDLER( OKIM6295_data_0_lsb_w );
+WRITE16_HANDLER( OKIM6295_data_1_lsb_w );
+WRITE16_HANDLER( OKIM6295_data_0_msb_w );
+WRITE16_HANDLER( OKIM6295_data_1_msb_w );
 
 #endif

@@ -86,8 +86,7 @@ static WRITE_HANDLER( surpratk_5fc0_w )
 
 /********************************************/
 
-static struct MemoryReadAddress surpratk_readmem[] =
-{
+static MEMORY_READ_START( surpratk_readmem )
 	{ 0x0000, 0x07ff, bankedram_r },
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, MRA_BANK1 },			/* banked ROM */
@@ -101,11 +100,9 @@ static struct MemoryReadAddress surpratk_readmem[] =
 	{ 0x5fc0, 0x5fc0, watchdog_reset_r },
 	{ 0x4000, 0x7fff, K052109_r },
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress surpratk_writemem[] =
-{
+static MEMORY_WRITE_START( surpratk_writemem )
 	{ 0x0000, 0x07ff, bankedram_w, &ram },
 	{ 0x0800, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x3fff, MWA_ROM },					/* banked ROM */
@@ -117,8 +114,7 @@ static struct MemoryWriteAddress surpratk_writemem[] =
 	{ 0x5fc4, 0x5fc4, surpratk_videobank_w },
 	{ 0x4000, 0x7fff, K052109_w },
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /***************************************************************************

@@ -33,8 +33,7 @@ WRITE_HANDLER( dominos_lamp1_w );
 /* vidhrdw/dominos.c */
 extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM }, /* RAM */
 	{ 0x0400, 0x07ff, MRA_RAM }, /* RAM */
 	{ 0x0800, 0x083f, dominos_port_r }, /* SWITCH */
@@ -48,11 +47,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0c00, 0x0fff, dominos_sync_r }, /* SYNC */
 	{ 0x3000, 0x3fff, MRA_ROM }, /* ROM1-ROM2 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
 	{ 0x0c00, 0x0c0f, dominos_attract_w }, /* ATTRACT */
@@ -61,8 +58,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0c40, 0x0c4f, dominos_lamp1_w }, /* LAMP1 */
 	{ 0x0c80, 0x0cff, MWA_NOP }, /* TIMER RESET */
 	{ 0x3000, 0x3fff, MWA_ROM }, /* ROM1-ROM2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( dominos )
 		PORT_START		/* DSW - fake port, gets mapped to Dominos ports */

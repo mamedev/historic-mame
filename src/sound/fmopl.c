@@ -2,9 +2,9 @@
 **
 ** File: fmopl.c -- software implementation of FM sound generator
 **
-** Copyright (C) 1999 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
+** Copyright (C) 1999,2000 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.36f
+** Version 0.37
 **
 */
 
@@ -20,11 +20,18 @@
 #include <stdarg.h>
 #include <math.h>
 #include "driver.h"		/* use M.A.M.E. */
-#include "fm.h"
 #include "fmopl.h"
 
 #ifndef PI
 #define PI 3.14159265358979323846
+#endif
+
+/* -------------------- for debug --------------------- */
+/* #define OPL_OUTPUT_LOG */
+#ifdef OPL_OUTPUT_LOG
+static FILE *opl_dbg_fp = NULL;
+static FM_OPL *opl_dbg_opl[16];
+static int opl_dbg_maxchip,opl_dbg_chip;
 #endif
 
 /* -------------------- preliminary define section --------------------- */
@@ -96,51 +103,52 @@ static const int slot_array[32]=
 };
 
 /* key scale level */
-#define ML (0.1875*2/EG_STEP)
+/* table is 3dB/OCT , DV converts this in TL step at 6dB/OCT */
+#define DV (EG_STEP/2)
 static const UINT32 KSL_TABLE[8*16]=
 {
 	/* OCT 0 */
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
 	/* OCT 1 */
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
-	 0.000*ML, 0.750*ML, 1.125*ML, 1.500*ML,
-	 1.875*ML, 2.250*ML, 2.625*ML, 3.000*ML,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
+	 0.000/DV, 0.750/DV, 1.125/DV, 1.500/DV,
+	 1.875/DV, 2.250/DV, 2.625/DV, 3.000/DV,
 	/* OCT 2 */
-	 0.000*ML, 0.000*ML, 0.000*ML, 0.000*ML,
-	 0.000*ML, 1.125*ML, 1.875*ML, 2.625*ML,
-	 3.000*ML, 3.750*ML, 4.125*ML, 4.500*ML,
-	 4.875*ML, 5.250*ML, 5.625*ML, 6.000*ML,
+	 0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
+	 0.000/DV, 1.125/DV, 1.875/DV, 2.625/DV,
+	 3.000/DV, 3.750/DV, 4.125/DV, 4.500/DV,
+	 4.875/DV, 5.250/DV, 5.625/DV, 6.000/DV,
 	/* OCT 3 */
-	 0.000*ML, 0.000*ML, 0.000*ML, 1.875*ML,
-	 3.000*ML, 4.125*ML, 4.875*ML, 5.625*ML,
-	 6.000*ML, 6.750*ML, 7.125*ML, 7.500*ML,
-	 7.875*ML, 8.250*ML, 8.625*ML, 9.000*ML,
+	 0.000/DV, 0.000/DV, 0.000/DV, 1.875/DV,
+	 3.000/DV, 4.125/DV, 4.875/DV, 5.625/DV,
+	 6.000/DV, 6.750/DV, 7.125/DV, 7.500/DV,
+	 7.875/DV, 8.250/DV, 8.625/DV, 9.000/DV,
 	/* OCT 4 */
-	 0.000*ML, 0.000*ML, 3.000*ML, 4.875*ML,
-	 6.000*ML, 7.125*ML, 7.875*ML, 8.625*ML,
-	 9.000*ML, 9.750*ML,10.125*ML,10.500*ML,
-	10.875*ML,11.250*ML,11.625*ML,12.000*ML,
+	 0.000/DV, 0.000/DV, 3.000/DV, 4.875/DV,
+	 6.000/DV, 7.125/DV, 7.875/DV, 8.625/DV,
+	 9.000/DV, 9.750/DV,10.125/DV,10.500/DV,
+	10.875/DV,11.250/DV,11.625/DV,12.000/DV,
 	/* OCT 5 */
-	 0.000*ML, 3.000*ML, 6.000*ML, 7.875*ML,
-	 9.000*ML,10.125*ML,10.875*ML,11.625*ML,
-	12.000*ML,12.750*ML,13.125*ML,13.500*ML,
-	13.875*ML,14.250*ML,14.625*ML,15.000*ML,
+	 0.000/DV, 3.000/DV, 6.000/DV, 7.875/DV,
+	 9.000/DV,10.125/DV,10.875/DV,11.625/DV,
+	12.000/DV,12.750/DV,13.125/DV,13.500/DV,
+	13.875/DV,14.250/DV,14.625/DV,15.000/DV,
 	/* OCT 6 */
-	 0.000*ML, 6.000*ML, 9.000*ML,10.875*ML,
-	12.000*ML,13.125*ML,13.875*ML,14.625*ML,
-	15.000*ML,15.750*ML,16.125*ML,16.500*ML,
-	16.875*ML,17.250*ML,17.625*ML,18.000*ML,
+	 0.000/DV, 6.000/DV, 9.000/DV,10.875/DV,
+	12.000/DV,13.125/DV,13.875/DV,14.625/DV,
+	15.000/DV,15.750/DV,16.125/DV,16.500/DV,
+	16.875/DV,17.250/DV,17.625/DV,18.000/DV,
 	/* OCT 7 */
-	 0.000*ML, 9.000*ML,12.000*ML,13.875*ML,
-	15.000*ML,16.125*ML,16.875*ML,17.625*ML,
-	18.000*ML,18.750*ML,19.125*ML,19.500*ML,
-	19.875*ML,20.250*ML,20.625*ML,21.000*ML
+	 0.000/DV, 9.000/DV,12.000/DV,13.875/DV,
+	15.000/DV,16.125/DV,16.875/DV,17.625/DV,
+	18.000/DV,18.750/DV,19.125/DV,19.500/DV,
+	19.875/DV,20.250/DV,20.625/DV,21.000/DV
 };
-#undef ML
+#undef DV
 
 /* sustain lebel table (3db per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,93 (dB)*/
@@ -189,7 +197,7 @@ static int num_lock = 0;
 /* work table */
 static void *cur_chip = NULL;	/* current chip point */
 /* currenct chip state */
-/* static FMSAMPLE  *bufL,*bufR; */
+/* static OPLSAMPLE  *bufL,*bufR; */
 static OPL_CH *S_CH;
 static OPL_CH *E_CH;
 OPL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
@@ -1013,7 +1021,7 @@ void YM3812UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 {
     int i;
 	int data;
-	FMSAMPLE *buf = buffer;
+	OPLSAMPLE *buf = buffer;
 	UINT32 amsCnt  = OPL->amsCnt;
 	UINT32 vibCnt  = OPL->vibCnt;
 	UINT8 rythm = OPL->rythm&0x20;
@@ -1057,6 +1065,14 @@ void YM3812UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 
 	OPL->amsCnt = amsCnt;
 	OPL->vibCnt = vibCnt;
+#ifdef OPL_OUTPUT_LOG
+	if(opl_dbg_fp)
+	{
+		for(opl_dbg_chip=0;opl_dbg_chip<opl_dbg_maxchip;opl_dbg_chip++)
+			if( opl_dbg_opl[opl_dbg_chip] == OPL) break;
+		fprintf(opl_dbg_fp,"%c%c%c",0x20+opl_dbg_chip,length&0xff,length/256);
+	}
+#endif
 }
 #endif /* (BUILD_YM3812 || BUILD_YM3526) */
 
@@ -1066,7 +1082,7 @@ void Y8950UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 {
     int i;
 	int data;
-	FMSAMPLE *buf = buffer;
+	OPLSAMPLE *buf = buffer;
 	UINT32 amsCnt  = OPL->amsCnt;
 	UINT32 vibCnt  = OPL->vibCnt;
 	UINT8 rythm = OPL->rythm&0x20;
@@ -1201,12 +1217,37 @@ FM_OPL *OPLCreate(int type, int clock, int rate)
 	OPL_initalize(OPL);
 	/* reset chip */
 	OPLResetChip(OPL);
+#ifdef OPL_OUTPUT_LOG
+	if(!opl_dbg_fp)
+	{
+		opl_dbg_fp = fopen("opllog.opl","wb");
+		opl_dbg_maxchip = 0;
+	}
+	if(opl_dbg_fp)
+	{
+		opl_dbg_opl[opl_dbg_maxchip] = OPL;
+		fprintf(opl_dbg_fp,"%c%c%c%c%c%c",0x00+opl_dbg_maxchip,
+			type,
+			clock&0xff,
+			(clock/0x100)&0xff,
+			(clock/0x10000)&0xff,
+			(clock/0x1000000)&0xff);
+		opl_dbg_maxchip++;
+	}
+#endif
 	return OPL;
 }
 
 /* ----------  Destroy one of vietual YM3812 ----------       */
 void OPLDestroy(FM_OPL *OPL)
 {
+#ifdef OPL_OUTPUT_LOG
+	if(opl_dbg_fp)
+	{
+		fclose(opl_dbg_fp);
+		opl_dbg_fp = NULL;
+	}
+#endif
 	OPL_UnLockTable();
 	free(OPL);
 }
@@ -1253,6 +1294,14 @@ int OPLWrite(FM_OPL *OPL,int a,int v)
 	else
 	{	/* data port */
 		if(OPL->UpdateHandler) OPL->UpdateHandler(OPL->UpdateParam,0);
+#ifdef OPL_OUTPUT_LOG
+	if(opl_dbg_fp)
+	{
+		for(opl_dbg_chip=0;opl_dbg_chip<opl_dbg_maxchip;opl_dbg_chip++)
+			if( opl_dbg_opl[opl_dbg_chip] == OPL) break;
+		fprintf(opl_dbg_fp,"%c%c%c",0x10+opl_dbg_chip,OPL->address,v);
+	}
+#endif
 		OPLWriteReg(OPL,OPL->address,v);
 	}
 	return OPL->status>>7;

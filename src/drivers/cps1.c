@@ -26,13 +26,13 @@ void slammast_decode(void);
 
 
 
-static READ_HANDLER( cps1_input2_r )
+static READ16_HANDLER( cps1_input2_r )
 {
 	int buttons=readinputport(5);
 	return buttons << 8 | buttons;
 }
 
-static READ_HANDLER( cps1_input3_r )
+static READ16_HANDLER( cps1_input3_r )
 {
     int buttons=readinputport(6);
 	return buttons << 8 | buttons;
@@ -53,9 +53,10 @@ static WRITE_HANDLER( cps1_snd_bankswitch_w )
 	if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
 }
 
-static WRITE_HANDLER( cps1_sound_fade_w )
+static WRITE16_HANDLER( cps1_sound_fade_w )
 {
-	cps1_sound_fade_timer=data;
+	if (ACCESSING_LSB)
+		cps1_sound_fade_timer = data & 0xff;
 }
 
 static READ_HANDLER( cps1_snd_fade_timer_r )
@@ -63,47 +64,53 @@ static READ_HANDLER( cps1_snd_fade_timer_r )
 	return cps1_sound_fade_timer;
 }
 
-static READ_HANDLER( cps1_input_r )
+static WRITE16_HANDLER( cps1_sound_command_w )
 {
-	int control=readinputport (offset/2);
+	if (ACCESSING_LSB)
+		soundlatch_w(0,data & 0xff);
+}
+
+static READ16_HANDLER( cps1_input_r )
+{
+	int control=readinputport(offset);
 	return (control<<8) | control;
 }
 
 static int dial[2];
 
-static READ_HANDLER( forgottn_dial_0_r )
+static READ16_HANDLER( forgottn_dial_0_r )
 {
-	return ((readinputport(5) - dial[0]) >> (4*offset)) & 0xff;
+	return ((readinputport(5) - dial[0]) >> (8*offset)) & 0xff;
 }
 
-static READ_HANDLER( forgottn_dial_1_r )
+static READ16_HANDLER( forgottn_dial_1_r )
 {
-	return ((readinputport(6) - dial[1]) >> (4*offset)) & 0xff;
+	return ((readinputport(6) - dial[1]) >> (8*offset)) & 0xff;
 }
 
-static WRITE_HANDLER( forgottn_dial_0_reset_w )
+static WRITE16_HANDLER( forgottn_dial_0_reset_w )
 {
 	dial[0] = readinputport(5);
 }
 
-static WRITE_HANDLER( forgottn_dial_1_reset_w )
+static WRITE16_HANDLER( forgottn_dial_1_reset_w )
 {
 	dial[1] = readinputport(6);
 }
 
-static WRITE_HANDLER( cps1_coinctrl_w )
+static WRITE16_HANDLER( cps1_coinctrl_w )
 {
 //	usrintf_showmessage("coinctrl %04x",data);
 
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
-		coin_lockout_w(0,~data & 0x0400);
-		coin_lockout_w(1,~data & 0x0800);
 		coin_counter_w(0,data & 0x0100);
 		coin_counter_w(1,data & 0x0200);
+		coin_lockout_w(0,~data & 0x0400);
+		coin_lockout_w(1,~data & 0x0800);
 	}
 
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* mercs sets bit 0 */
 		set_led_status(0,data & 0x02);
@@ -112,14 +119,14 @@ static WRITE_HANDLER( cps1_coinctrl_w )
 	}
 }
 
-WRITE_HANDLER( cpsq_coinctrl2_w )
+static WRITE16_HANDLER( cpsq_coinctrl2_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_LSB)
 	{
-		coin_lockout_w(2,~data & 0x0002);
-		coin_lockout_w(3,~data & 0x0008);
-		coin_counter_w(2,data & 0x0001);
-		coin_counter_w(3,data & 0x0004);
+		coin_counter_w(2,data & 0x01);
+		coin_lockout_w(2,~data & 0x02);
+		coin_counter_w(3,data & 0x04);
+		coin_lockout_w(3,~data & 0x08);
 /*
   	{
        char baf[40];
@@ -167,36 +174,38 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 }
 
 
-READ_HANDLER( qsound_rom_r )
+READ16_HANDLER( qsound_rom_r )
 {
 	unsigned char *rom = memory_region(REGION_USER1);
 
-	if (rom) return rom[offset / 2] | 0xff00;
+	if (rom) return rom[offset] | 0xff00;
 	else
 	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset/2);
+		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
 		return 0;
 	}
 }
 
-static READ_HANDLER( qsound_sharedram1_r )
+static READ16_HANDLER( qsound_sharedram1_r )
 {
-	return qsound_sharedram1[offset / 2] | 0xff00;
+	return qsound_sharedram1[offset] | 0xff00;
 }
 
-static WRITE_HANDLER( qsound_sharedram1_w )
+static WRITE16_HANDLER( qsound_sharedram1_w )
 {
-	qsound_sharedram1[offset / 2] = data;
+	if (ACCESSING_LSB)
+		qsound_sharedram1[offset] = data;
 }
 
-static READ_HANDLER( qsound_sharedram2_r )
+static READ16_HANDLER( qsound_sharedram2_r )
 {
-	return qsound_sharedram2[offset / 2] | 0xff00;
+	return qsound_sharedram2[offset] | 0xff00;
 }
 
-static WRITE_HANDLER( qsound_sharedram2_w )
+static WRITE16_HANDLER( qsound_sharedram2_w )
 {
-	qsound_sharedram2[offset / 2] = data;
+	if (ACCESSING_LSB)
+		qsound_sharedram2[offset] = data;
 }
 
 static WRITE_HANDLER( qsound_banksw_w )
@@ -270,69 +279,67 @@ static void pang3_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-READ_HANDLER( cps1_eeprom_port_r )
+READ16_HANDLER( cps1_eeprom_port_r )
 {
 	return EEPROM_read_bit();
 }
 
-WRITE_HANDLER( cps1_eeprom_port_w )
+WRITE16_HANDLER( cps1_eeprom_port_w )
 {
-	/*
-	bit 0 = data
-	bit 6 = clock
-	bit 7 = cs
-	*/
-	EEPROM_write_bit(data & 0x01);
-	EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
-	EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+	if (ACCESSING_LSB)
+	{
+		/*
+		bit 0 = data
+		bit 6 = clock
+		bit 7 = cs
+		*/
+		EEPROM_write_bit(data & 0x01);
+		EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+	}
 }
 
 
 
-static struct MemoryReadAddress cps1_readmem[] =
-{
-	{ 0x000000, 0x1fffff, MRA_ROM }, /* 68000 ROM */
-	{ 0x800000, 0x800001, input_port_4_r }, /* Player input ports */
-	{ 0x800010, 0x800011, input_port_4_r }, /* ?? */
+static MEMORY_READ16_START( cps1_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
+	{ 0x800000, 0x800001, input_port_4_word_r }, /* Player input ports */
+	{ 0x800010, 0x800011, input_port_4_word_r }, /* ?? */
 	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
-	{ 0x800020, 0x800021, MRA_NOP }, /* ? Used by Rockman ? */
+	{ 0x800020, 0x800021, MRA16_NOP }, /* ? Used by Rockman ? */
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
 	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
-	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
+	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
 	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
 	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
 	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
 	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
 	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_r },	/* Q RAM */
-	{ 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
-	{ -1 }  /* end of table */
-};
+	{ 0xff0000, 0xffffff, MRA16_RAM },   /* RAM */
+MEMORY_END
 
-static struct MemoryWriteAddress cps1_writemem[] =
-{
-	{ 0x000000, 0x1fffff, MWA_ROM },      /* ROM */
+static MEMORY_WRITE16_START( cps1_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM },      /* ROM */
 	{ 0x800030, 0x800031, cps1_coinctrl_w },
 	{ 0x800040, 0x800041, forgottn_dial_0_reset_w },
 	{ 0x800048, 0x800049, forgottn_dial_1_reset_w },
-	{ 0x800180, 0x800181, soundlatch_w },  /* Sound command */
+	{ 0x800180, 0x800181, cps1_sound_command_w },  /* Sound command */
 	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
+	{ 0x900000, 0x92ffff, MWA16_RAM, &cps1_gfxram, &cps1_gfxram_size },
 	{ 0xf18000, 0xf19fff, qsound_sharedram1_w }, /* Q RAM */
 	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
 	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_w }, /* Q RAM */
-	{ 0xff0000, 0xffffff, MWA_BANK2 },        /* RAM */
-	{ -1 }  /* end of table */
-};
+	{ 0xff0000, 0xffffff, MWA16_RAM },        /* RAM */
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xd000, 0xd7ff, MRA_RAM },
@@ -340,11 +347,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xf002, 0xf002, OKIM6295_status_0_r },
 	{ 0xf008, 0xf008, soundlatch_r },
 	{ 0xf00a, 0xf00a, cps1_snd_fade_timer_r }, /* Sound timer fade */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xf000, 0xf000, YM2151_register_port_0_w },
@@ -352,21 +357,17 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xf002, 0xf002, OKIM6295_data_0_w },
 	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
 //	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress qsound_readmem[] =
-{
+static MEMORY_READ_START( qsound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd007, 0xd007, qsound_status_r },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qsound_writemem[] =
-{
+static MEMORY_WRITE_START( qsound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
 	{ 0xd000, 0xd000, qsound_data_h_w },
@@ -374,8 +375,7 @@ static struct MemoryWriteAddress qsound_writemem[] =
 	{ 0xd002, 0xd002, qsound_cmd_w },
 	{ 0xd003, 0xd003, qsound_banksw_w },
 	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -2592,9 +2592,9 @@ INPUT_PORTS_START( cworld2j )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START
@@ -3557,13 +3557,13 @@ static struct OKIM6295interface okim6295_interface_7576 =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(DRVNAME,CPU,CPU_FRQ,OKI_FREQ,NVRAM)					\
-static const struct MachineDriver machine_driver_##DRVNAME =						\
+#define MACHINE_DRIVER(DRVNAME,CPU_FRQ,OKI_FREQ,NVRAM)						\
+static const struct MachineDriver machine_driver_##DRVNAME =				\
 {																			\
 	/* basic machine hardware */											\
 	{																		\
 		{																	\
-			CPU,															\
+			CPU_M68000,														\
 			CPU_FRQ,														\
 			cps1_readmem,cps1_writemem,0,0,									\
 			cps1_interrupt, 1												\
@@ -3646,11 +3646,11 @@ static const struct MachineDriver machine_driver_qsound =
 };
 
 
-MACHINE_DRIVER( forgottn, CPU_M68000,   10000000, 6061, 0 )
-MACHINE_DRIVER( cps1,     CPU_M68000,   10000000, 7576, 0 )	/* 10 MHz should be the "standard" freq */
-MACHINE_DRIVER( sf2,      CPU_M68000,   12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( sf2accp2, CPU_M68EC020, 12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( pang3,    CPU_M68000,   10000000, 7576, pang3_nvram_handler )	/* 10 MHz?? */
+MACHINE_DRIVER( forgottn, 10000000, 6061, 0 )
+MACHINE_DRIVER( cps1,     10000000, 7576, 0 )	/* 10 MHz should be the "standard" freq */
+MACHINE_DRIVER( sf2,      12000000, 7576, 0 )	/* 12 MHz */
+MACHINE_DRIVER( sf2accp2, 12000000, 7576, 0 )	/* 12 MHz */
+MACHINE_DRIVER( pang3,    10000000, 7576, pang3_nvram_handler )	/* 10 MHz?? */
 
 
 
@@ -4640,6 +4640,40 @@ ROM_START( sf2e )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
+ROM_START( sf2i )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_EVEN( "sf2u.30i",    0x00000, 0x20000, 0xfe39ee33 )
+	ROM_LOAD_ODD ( "sf2u.37i",    0x00000, 0x20000, 0x9df707dd )
+	ROM_LOAD_EVEN( "sf2u.31i",    0x40000, 0x20000, 0x69a0a301 )
+	ROM_LOAD_ODD ( "sf2u.38i",    0x40000, 0x20000, 0x4cb46daf )
+	ROM_LOAD_EVEN( "sf2u.28i",    0x80000, 0x20000, 0x1580be4c )
+	ROM_LOAD_ODD ( "sf2u.35i",    0x80000, 0x20000, 0x1468d185 )
+	ROM_LOAD_EVEN( "sf2_29b.rom", 0xc0000, 0x20000, 0xbb4af315 )
+	ROM_LOAD_ODD ( "sf2_36b.rom", 0xc0000, 0x20000, 0xc02a13eb )
+
+	ROM_REGION( 0x600000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf2gfx01.rom",       0x000000, 0x80000, 0xba529b4f )
+	ROM_LOAD( "sf2gfx10.rom",       0x080000, 0x80000, 0x14b84312 )
+	ROM_LOAD( "sf2gfx20.rom",       0x100000, 0x80000, 0xc1befaa8 )
+	ROM_LOAD( "sf2gfx02.rom",       0x180000, 0x80000, 0x22c9cc8e )
+	ROM_LOAD( "sf2gfx11.rom",       0x200000, 0x80000, 0x2c7e2229 )
+	ROM_LOAD( "sf2gfx21.rom",       0x280000, 0x80000, 0x994bfa58 )
+	ROM_LOAD( "sf2gfx03.rom",       0x300000, 0x80000, 0x4b1b33a8 )
+	ROM_LOAD( "sf2gfx12.rom",       0x380000, 0x80000, 0x5e9cd89a )
+	ROM_LOAD( "sf2gfx22.rom",       0x400000, 0x80000, 0x0627c831 )
+	ROM_LOAD( "sf2gfx04.rom",       0x480000, 0x80000, 0x57213be8 )
+	ROM_LOAD( "sf2gfx13.rom",       0x500000, 0x80000, 0xb5548f17 )
+	ROM_LOAD( "sf2gfx23.rom",       0x580000, 0x80000, 0x3e66ad9d )
+
+	ROM_REGION( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2_09.rom",    0x00000, 0x08000, 0xa4823a1b )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* Samples */
+	ROM_LOAD( "sf2_18.rom",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
 ROM_START( sf2j )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2j30.bin",    0x00000, 0x20000, 0x79022b31 )
@@ -5182,6 +5216,8 @@ ROM_START( sf2accp2 )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-23.bin", 0x000000, 0x80000, 0x36c3ba2f )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-22.bin", 0x080000, 0x80000, 0x0550453d )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-21.bin", 0x100000, 0x40000, 0x4c1c43ba )
+	/* ROM space ends at 13ffff, but the code checks 180ca6 and */
+	/* crashes if it isn't 0 - protection? */
 
 	ROM_REGION( 0x600000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
@@ -5349,6 +5385,32 @@ ROM_START( wofa )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tk2a_23b.rom",  0x000000, 0x80000, 0x2e024628 )
 	ROM_LOAD_WIDE_SWAP( "tk2a_22b.rom",  0x080000, 0x80000, 0x900ad4cd )
+
+	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tk2_gfx2.rom",   0x000000, 0x80000, 0xc5ca2460 )
+	ROM_LOAD( "tk2_gfx6.rom",   0x080000, 0x80000, 0x1abd14d6 )
+	ROM_LOAD( "tk2_gfx1.rom",   0x100000, 0x80000, 0x0d9cb9bf )
+	ROM_LOAD( "tk2_gfx5.rom",   0x180000, 0x80000, 0x291f0f0b )
+	ROM_LOAD( "tk2_gfx4.rom",   0x200000, 0x80000, 0xe349551c )
+	ROM_LOAD( "tk2_gfx8.rom",   0x280000, 0x80000, 0xb27948e3 )
+	ROM_LOAD( "tk2_gfx3.rom",   0x300000, 0x80000, 0x45227027 )
+	ROM_LOAD( "tk2_gfx7.rom",   0x380000, 0x80000, 0x3edeb949 )
+
+	ROM_REGION( 2*0x28000, REGION_CPU2 ) /* QSound Z80 code + space for decrypted opcodes */
+	ROM_LOAD( "tk2_qa.rom",     0x00000, 0x08000, 0xc9183a0d )
+	ROM_CONTINUE(               0x10000, 0x18000 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1 ) /* QSound samples */
+	ROM_LOAD( "tk2_q1.rom",     0x000000, 0x80000, 0x611268cf )
+	ROM_LOAD( "tk2_q2.rom",     0x080000, 0x80000, 0x20f55ca9 )
+	ROM_LOAD( "tk2_q3.rom",     0x100000, 0x80000, 0xbfcf6f52 )
+	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
+ROM_END
+
+ROM_START( wofu )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "tk2u.23c",  0x000000, 0x80000, 0x29b89c12 )
+	ROM_LOAD_WIDE_SWAP( "tk2u.22c",  0x080000, 0x80000, 0xf5af4774 )
 
 	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tk2_gfx2.rom",   0x000000, 0x80000, 0xc5ca2460 )
@@ -6137,6 +6199,7 @@ GAME( 1991, sf2,      0,        sf2,      sf2,      0,        ROT0,       "Capco
 GAME( 1991, sf2a,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910206)" )
 GAME( 1991, sf2b,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910214)" )
 GAME( 1991, sf2e,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910228)" )
+GAME( 1991, sf2i,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910522)" )
 GAME( 1991, sf2j,     sf2,      sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (Japan 911210)" )
 GAME( 1991, sf2jb,    sf2,      sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (Japan 910214)" )
 GAME( 1991, 3wonders, 0,        cps1,     3wonders, 0,        ROT0_16BIT, "Capcom", "Three Wonders (US)" )
@@ -6163,7 +6226,6 @@ GAME( 1992, varthj,   varth,    cps1,     varth,    0,        ROT270,     "Capco
 GAME( 1992, cworld2j, 0,        cps1,     cworld2j, 0,        ROT0_16BIT, "Capcom", "Capcom World 2 (Japan)" )
 GAME( 1992, sf2t,     sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Hyper Fighting (US)" )
 GAME( 1992, sf2tj,    sf2ce,    sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II' Turbo - Hyper Fighting (Japan)" )
-GAME( 1994, pnickj,   0,        cps1,     pnickj,   0,        ROT0,       "Capcom (licensed from Compile)", "Pnickies (Japan)" )
 GAME( 1992, qad,      0,        cps1,     qad,      0,        ROT0,       "Capcom", "Quiz & Dragons (US)" )
 GAME( 1994, qadj,     qad,      cps1,     qadj,     0,        ROT0,       "Capcom", "Quiz & Dragons (Japan)" )
 GAME( 1995, qtono2,   0,        cps1,     qtono2,   0,        ROT0,       "Capcom", "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)" )
@@ -6173,6 +6235,7 @@ GAME( 1995, sfzch,    0,        cps1,     sfzch,    0,        ROT0_16BIT, "Capco
 
 GAME( 1992, wof,      0,        qsound,   wof,      wof,      ROT0,       "Capcom", "Warriors of Fate (World)" )
 GAME( 1992, wofa,     wof,      qsound,   wof,      wof,      ROT0,       "Capcom", "Sangokushi II (Asia)" )
+GAME( 1992, wofu,     wof,      qsound,   wof,      wof,      ROT0,       "Capcom", "Warriors of Fate (US)" )
 GAME( 1992, wofj,     wof,      qsound,   wof,      wof,      ROT0,       "Capcom", "Tenchi wo Kurau II - Sekiheki no Tatakai (Japan)" )
 GAME( 1993, dino,     0,        qsound,   dino,     dino,     ROT0,       "Capcom", "Cadillacs and Dinosaurs (World)" )
 GAME( 1993, dinoj,    dino,     qsound,   dino,     dino ,    ROT0,       "Capcom", "Cadillacs Kyouryuu-Shinseiki (Japan)" )
@@ -6185,6 +6248,7 @@ GAME( 1993, mbomberj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capco
 GAME( 1993, mbombrd,  slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Ultimate Team Battle (World)" )
 GAME( 1993, mbombrdj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Heat Up Warriors (Japan)" )
 
+GAME( 1994, pnickj,   0,        cps1,     pnickj,   0,        ROT0,       "Compile (Capcom license)", "Pnickies (Japan)" )
 /* Japanese version of Pang 3 is encrypted, Euro version is not */
 GAME( 1995, pang3,    0,        pang3,    pang3,    0,        ROT0_16BIT, "Mitchell", "Pang! 3 (Euro)" )
 GAME( 1995, pang3j,   pang3,    pang3,    pang3,    pang3,    ROT0_16BIT, "Mitchell", "Pang! 3 (Japan)" )

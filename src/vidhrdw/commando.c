@@ -101,7 +101,7 @@ int commando_vh_start(void)
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 3;
+	tilemap_set_transparent_pen(fg_tilemap,3);
 
 	return 0;
 }
@@ -153,7 +153,7 @@ WRITE_HANDLER( commando_c804_w )
 	cpu_set_reset_line(1,(data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 7 flips screen */
-	flip_screen_w(offset, ~data & 0x80);
+	flip_screen_set(~data & 0x80);
 }
 
 
@@ -202,11 +202,10 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }
 
 void commando_eof_callback(void)

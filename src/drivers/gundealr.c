@@ -154,8 +154,7 @@ logerror("e000 = %02x\n",RAM[0xe000]);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc000, input_port_0_r },	/* DSW0 */
@@ -164,11 +163,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc005, 0xc005, input_port_3_r },	/* IN1 (Gun Dealer only) */
 	{ 0xc006, 0xc006, input_port_4_r },	/* IN0 (Gun Dealer only) */
 	{ 0xc400, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc010, 0xc013, yamyam_fg_scroll_w },		/* Yam Yam only */
 	{ 0xc014, 0xc014, gundealr_flipscreen_w },
@@ -178,21 +175,16 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc800, 0xcfff, gundealr_bg_videoram_w, &gundealr_bg_videoram },
 	{ 0xd000, 0xdfff, gundealr_fg_videoram_w, &gundealr_fg_videoram },
 	{ 0xe000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x01, 0x01, YM2203_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

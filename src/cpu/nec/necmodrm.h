@@ -18,10 +18,10 @@ static struct {
 #define PutbackRMWord(ModRM,val) 			     \
 { 							     \
 	if (ModRM >= 0xc0) I.regs.w[Mod_RM.RM.w[ModRM]]=val; \
-    else WriteWord(EA,val); 				     \
+    else WriteWord(EA,val);  \
 }
 
-#define GetnextRMWord ReadWord(EA+2)
+#define GetnextRMWord ReadWord((EA&0xf0000)|((EA+2)&0xffff))
 
 #define PutRMWord(ModRM,val)				\
 {							\
@@ -74,33 +74,31 @@ static struct {
 		WriteByte(EA,val);			\
 }
 
-#define DEF_br8(dst,src)				\
-	unsigned ModRM = FETCHOP;			\
-	unsigned src = RegByte(ModRM);			\
-    unsigned dst = GetRMByte(ModRM)
+#define DEF_br8							\
+	UINT32 ModRM = FETCH,src,dst;		\
+	src = RegByte(ModRM);				\
+    dst = GetRMByte(ModRM)
     
-#define DEF_wr16(dst,src)				\
-	unsigned ModRM = FETCHOP;			\
-	unsigned src = RegWord(ModRM);			\
-    unsigned dst = GetRMWord(ModRM)
+#define DEF_wr16						\
+	UINT32 ModRM = FETCH,src,dst;		\
+	src = RegWord(ModRM);				\
+    dst = GetRMWord(ModRM)
 
-#define DEF_r8b(dst,src)				\
-	unsigned ModRM = FETCHOP;			\
-	unsigned dst = RegByte(ModRM);			\
-    unsigned src = GetRMByte(ModRM)
+#define DEF_r8b							\
+	UINT32 ModRM = FETCH,src,dst;		\
+	dst = RegByte(ModRM);				\
+    src = GetRMByte(ModRM)
 
-#define DEF_r16w(dst,src)				\
-	unsigned ModRM = FETCHOP;			\
-	unsigned dst = RegWord(ModRM);			\
-    unsigned src = GetRMWord(ModRM)
+#define DEF_r16w						\
+	UINT32 ModRM = FETCH,src,dst;		\
+	dst = RegWord(ModRM);				\
+    src = GetRMWord(ModRM)
 
-#define DEF_ald8(dst,src)				\
-	unsigned src = FETCHOP; 			\
-	unsigned dst = I.regs.b[AL]
+#define DEF_ald8						\
+	UINT32 src = FETCH;					\
+	UINT32 dst = I.regs.b[AL]
 
-#define DEF_axd16(dst,src)				\
-	unsigned src = FETCHOP; 			\
-	unsigned dst = I.regs.w[AW];			\
+#define DEF_axd16						\
+	UINT32 src = FETCH; 				\
+	UINT32 dst = I.regs.w[AW];			\
     src += (FETCH << 8)
-
-

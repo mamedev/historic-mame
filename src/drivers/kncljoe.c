@@ -31,8 +31,7 @@ WRITE_HANDLER(kncljoe_scroll_w);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, videoram_r },		/* videoram */
 	{ 0xd800, 0xd800, input_port_0_r }, /* IN 0 */
@@ -42,11 +41,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd804, 0xd804, input_port_4_r },	/* DSW B */
 	{ 0xe800, 0xefff, MRA_RAM },		/* spriteram */
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, kncljoe_videoram_w, &videoram },
 	{ 0xd000, 0xd000, kncljoe_scroll_w },
@@ -54,8 +51,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd801, 0xd801, kncljoe_control_w },
 	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -188,7 +184,7 @@ static const struct MachineDriver machine_driver_kncljoe =
 		},
 		IREM_AUDIO_CPU
 	},
-	30, DEFAULT_30HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

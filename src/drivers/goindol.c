@@ -38,8 +38,7 @@ WRITE_HANDLER( goindol_bankswitch_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, MRA_RAM },
@@ -51,11 +50,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc820, 0xc820, input_port_2_r },
 	{ 0xc830, 0xc830, input_port_0_r },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
         { 0xc810, 0xc810, goindol_bankswitch_w },
@@ -68,25 +65,20 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe000, 0xe03f, MWA_RAM, &goindol_spriteram2 },
 	{ 0xe040, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, goindol_fg_videoram_w, &goindol_fg_videoram, &goindol_fg_videoram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd800, 0xd800, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xa000, 0xa000, YM2203_control_port_0_w },
 	{ 0xa001, 0xa001, YM2203_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( goindol )

@@ -42,8 +42,7 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xa000, 0xb7ff, MRA_RAM },
 	{ 0xc000, 0xc000, AY8910_read_port_0_r },
@@ -53,12 +52,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc007, 0xc007, input_port_1_r },
 	{ 0xc00e, 0xc00e, input_port_2_r },
 	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xa000, 0xa3ff, MWA_RAM, &nova2001_videoram, &nova2001_videoram_size },
 	{ 0xa400, 0xa7ff, MWA_RAM, &nova2001_colorram },
@@ -71,8 +68,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc002, 0xc002, AY8910_control_port_0_w },
 	{ 0xc003, 0xc003, AY8910_control_port_1_w },
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

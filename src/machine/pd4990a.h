@@ -1,9 +1,24 @@
 /*
  *	Header file for the PD4990A Serial I/O calendar & clock.
  */
-void addretrace (void);
-int read_4990_testbit(void);
-int read_4990_databit(void);
-WRITE_HANDLER( write_4990_control_w );
-void increment_day(void);
-void increment_month(void);
+struct pd4990a_s
+{
+	int seconds;
+	int minutes;
+	int hours;
+	int days;
+	int month;
+	int year;
+	int weekday;
+};
+
+extern struct pd4990a_s pd4990a;
+
+void pd4990a_addretrace (void);
+READ_HANDLER( pd4990a_testbit_r );
+READ_HANDLER( pd4990a_databit_r );
+WRITE_HANDLER( pd4990a_control_w );
+WRITE16_HANDLER( pd4990a_control_16_w );
+void pd4990a_increment_day(void);
+void pd4990a_increment_month(void);
+

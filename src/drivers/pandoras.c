@@ -133,19 +133,16 @@ WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
 		cpu_cause_interrupt(3,I8039_EXT_INT);
 }
 
-static struct MemoryReadAddress pandoras_readmem_a[] =
-{
+static MEMORY_READ_START( pandoras_readmem_a )
 	{ 0x0000, 0x0fff, pandoras_sharedram_r },	/* Work RAM (Shared with CPU B) */
 	{ 0x1000, 0x13ff, pandoras_cram_r },		/* Color RAM (shared with CPU B) */
 	{ 0x1400, 0x17ff, pandoras_vram_r },		/* Video RAM (shared with CPU B) */
 	{ 0x4000, 0x5fff, MRA_ROM },				/* see notes */
 	{ 0x6000, 0x67ff, pandoras_sharedram2_r },	/* Shared RAM with CPU B */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pandoras_writemem_a[] =
-{
+static MEMORY_WRITE_START( pandoras_writemem_a )
 	{ 0x0000, 0x0fff, pandoras_sharedram_w, &pandoras_sharedram },	/* Work RAM (Shared with CPU B) */
 	{ 0x1000, 0x13ff, pandoras_cram_w, &colorram },					/* Color RAM (shared with CPU B) */
 	{ 0x1400, 0x17ff, pandoras_vram_w, &videoram },					/* Video RAM (shared with CPU B) */
@@ -158,11 +155,9 @@ static struct MemoryWriteAddress pandoras_writemem_a[] =
 	{ 0x4000, 0x5fff, MWA_ROM },									/* see notes */
 	{ 0x6000, 0x67ff, pandoras_sharedram2_w, &pandoras_sharedram2 },/* Shared RAM with CPU B */
 	{ 0x8000, 0xffff, MWA_ROM },									/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress pandoras_readmem_b[] =
-{
+static MEMORY_READ_START( pandoras_readmem_b )
 	{ 0x0000, 0x0fff, pandoras_sharedram_r },	/* Work RAM (Shared with CPU A) */
 	{ 0x1000, 0x13ff, pandoras_cram_r },		/* Color RAM (shared with CPU A) */
 	{ 0x1400, 0x17ff, pandoras_vram_r },		/* Video RAM (shared with CPU A) */
@@ -175,11 +170,9 @@ static struct MemoryReadAddress pandoras_readmem_b[] =
 //	{ 0x1e00, 0x1e00, MWA_NOP },				/* ??? */
 	{ 0xc000, 0xc7ff, pandoras_sharedram2_r },	/* Shared RAM with the CPU A */
 	{ 0xe000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pandoras_writemem_b[] =
-{
+static MEMORY_WRITE_START( pandoras_writemem_b )
 	{ 0x0000, 0x0fff, pandoras_sharedram_w },	/* Work RAM (Shared with CPU A) */
 	{ 0x1000, 0x13ff, pandoras_cram_w },		/* Color RAM (shared with CPU A) */
 	{ 0x1400, 0x17ff, pandoras_vram_w },		/* Video RAM (shared with CPU A) */
@@ -188,53 +181,40 @@ static struct MemoryWriteAddress pandoras_writemem_b[] =
 	{ 0xa000, 0xa000, pandoras_cpua_irqtrigger_w },/* cause FIRQ on CPU A */
 	{ 0xc000, 0xc7ff, pandoras_sharedram2_w },	/* Shared RAM with the CPU A */
 	{ 0xe000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress pandoras_readmem_snd[] =
-{
+static MEMORY_READ_START( pandoras_readmem_snd )
 	{ 0x0000, 0x1fff, MRA_ROM },				/* ROM */
 	{ 0x2000, 0x23ff, MRA_RAM },				/* RAM */
 	{ 0x4000, 0x4000, soundlatch_r },			/* soundlatch_r */
 	{ 0x6001, 0x6001, AY8910_read_port_0_r },	/* AY-8910 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pandoras_writemem_snd[] =
-{
+static MEMORY_WRITE_START( pandoras_writemem_snd )
 	{ 0x0000, 0x1fff, MWA_ROM },				/* ROM */
 	{ 0x2000, 0x23ff, MWA_RAM },				/* RAM */
 	{ 0x6000, 0x6000, AY8910_control_port_0_w },/* AY-8910 */
 	{ 0x6002, 0x6002, AY8910_write_port_0_w },	/* AY-8910 */
 	{ 0x8000, 0x8000, pandoras_i8039_irqtrigger_w },/* cause INT on the 8039 */
 	{ 0xa000, 0xa000, soundlatch2_w },			/* sound command to the 8039 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress i8039_readmem[] =
-{
+static MEMORY_READ_START( i8039_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress i8039_writemem[] =
-{
+static MEMORY_WRITE_START( i8039_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort i8039_readport[] =
-{
+static PORT_READ_START( i8039_readport )
 	{ 0x00, 0xff, soundlatch2_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort i8039_writeport[] =
-{
+static PORT_WRITE_START( i8039_writeport )
 	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_w },
-	{ -1 }
-};
+PORT_END
 
 /***************************************************************************
 

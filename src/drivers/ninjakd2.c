@@ -317,8 +317,7 @@ WRITE_HANDLER( ninjakd2_pcm_play_w )
 		sample_start(0,i,0);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc000, input_port_2_r },
@@ -334,12 +333,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc20a, 0xc20b, MRA_RAM },
 	{ 0xc20c, 0xc20c, MRA_RAM },
 	{ 0xc800, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc200, 0xc200, soundlatch_w },
 	{ 0xc201, 0xc201, MWA_RAM },		// unknown but used
@@ -353,38 +350,31 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xdfff, ninjakd2_bgvideoram_w, &ninjakd2_background_videoram, &ninjakd2_backgroundram_size },
 	{ 0xe000, 0xf9ff, MWA_RAM },
 	{ 0xfa00, 0xffff, MWA_RAM, &ninjakd2_spriteram, &ninjakd2_spriteram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress snd_readmem[] =
-{
+static MEMORY_READ_START( snd_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
 	{ 0xefee, 0xefee, MRA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress snd_writemem[] =
-{
+static MEMORY_WRITE_START( snd_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xf000, ninjakd2_pcm_play_w },	/* PCM SAMPLE OFFSET*256 */
 	{ 0xeff5, 0xeff6, MWA_NOP },			/* SAMPLE FREQUENCY ??? */
 	{ 0xefee, 0xefee, MWA_NOP },			/* CHIP COMMAND ?? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort snd_writeport[] =
-{
+static PORT_WRITE_START( snd_writeport )
 	{ 0x0000, 0x0000, YM2203_control_port_0_w },
 	{ 0x0001, 0x0001, YM2203_write_port_0_w },
 	{ 0x0080, 0x0080, YM2203_control_port_1_w },
 	{ 0x0081, 0x0081, YM2203_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -51,8 +51,7 @@ extern void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void gaplus_init_machine(void);
 WRITE_HANDLER( gaplus_starfield_control_w );
 
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
@@ -63,11 +62,9 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x7820, 0x782f, MRA_RAM },				/* ??? */
 	{ 0x7c00, 0x7c01, MRA_NOP },				/* ??? */
 	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },  /* video RAM */
 	{ 0x0400, 0x07ff, colorram_w, &colorram },					/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_w, &gaplus_sharedram },	/* shared RAM with CPU #2 */
@@ -83,20 +80,16 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 //	{ 0x9c00, 0x9c00, MWA_NOP },								/* ??? */
 	{ 0xa000, 0xa003, gaplus_starfield_control_w },				/* starfield control */
 	{ 0xa000, 0xffff, MWA_ROM },								/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #1 & spriteram */
 	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x03ff, videoram_w },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_w },				/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_w },		/* shared RAM with CPU #1 */
@@ -104,21 +97,17 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 //	{ 0x6001, 0x6001, MWA_NOP },				/* ??? */
 	{ 0x6080, 0x6081, gaplus_interrupt_ctrl_2_w },/* IRQ 2 enable */
 	{ 0xa000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu3[] =
-{
+static MEMORY_READ_START( readmem_cpu3 )
 	{ 0x0000, 0x003f, MRA_RAM },				/* sound registers? */
 	{ 0x0040, 0x03ff, gaplus_snd_sharedram_r }, /* shared RAM with CPU #1 */
 //	{ 0x3000, 0x3001, MRA_NOP },				/* ???*/
 	{ 0xe000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }						  /* end of table */
-};
+MEMORY_END
 
 	/* CPU 3 (SOUND CPU) write addresses */
-static struct MemoryWriteAddress writemem_cpu3[] =
-{
+static MEMORY_WRITE_START( writemem_cpu3 )
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound registers */
 	{ 0x0040, 0x03ff, gaplus_snd_sharedram_w },			/* shared RAM with the main CPU */
 //	{ 0x2007, 0x2007, MWA_NOP },	/* ??? */
@@ -126,11 +115,9 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 	{ 0x4000, 0x4000, gaplus_interrupt_ctrl_3a_w },		/* interrupt enable */
 	{ 0x6000, 0x6000, gaplus_interrupt_ctrl_3b_w },		/* interrupt disable */
 	{ 0xe000, 0xffff, MWA_ROM },						/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress gaplusa_readmem_cpu1[] =
-{
+static MEMORY_READ_START( gaplusa_readmem_cpu1 )
 	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
@@ -141,11 +128,9 @@ static struct MemoryReadAddress gaplusa_readmem_cpu1[] =
 	{ 0x7820, 0x782f, MRA_RAM },				/* ??? */
 	{ 0x7c00, 0x7c01, MRA_NOP },				/* ??? */
 	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress galaga3_readmem_cpu1[] =
-{
+static MEMORY_READ_START( galaga3_readmem_cpu1 )
 	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
@@ -156,8 +141,7 @@ static struct MemoryReadAddress galaga3_readmem_cpu1[] =
 	{ 0x7820, 0x782f, MRA_RAM },				/* ??? */
 	{ 0x7c00, 0x7c01, MRA_NOP },				/* ??? */
 	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
 INPUT_PORTS_START( gaplus )

@@ -1,65 +1,34 @@
 /***************************************************************************
 
-Klax Memory Map
----------------
+	Atari Klax hardware
 
-KLAX 68000 MEMORY MAP
+	driver by Aaron Giles
 
-Program ROM             000000-05FFFF   R    D[15:0]
-Program ROM slapstic    058000-05FFFF   R    D[15:0]   (not used!)
+	Games supported:
+		* Klax (1989) [4 sets]
 
-EEPROM                  0E0001-0E0FFF  R/W   D[7:0]    (odd bytes only)
-UNLOCK EEPROM           1Fxxxx          W
-Watch Dog               2E0000          W    xx        (128 msec. timeout)
+	Known bugs:
+		* none at this time
 
-Color RAM Motion Object 3E0000-3E03FE  R/W   D[15:8]
-Color RAM Playfield     3E0400-3E07FE  R/W   D[15:8]
+****************************************************************************
 
-Playfield Picture RAM   3F0000-3F0EFF  R/W   D[15:0]
-MOB config              3F0F00-3F0F70  R/W   D[15:0]
-SLIP pointers           3F0F80-3F0FFF  R/W   M.O. link pointers
-Playfield palette AM    3F1000-3F1FFF  R/W   D[11:8]
-Motion Object RAM       3F2000-3F27FF  R/W   D[15:0]
-(Link, Picture, H-Pos, V-Pos, Link... etc.)
-Working RAM             3F2800-3F3FFF  R/W   D[15:0]
+	Memory map (TBA)
 
-Player 1 Input (left)   260000          R    D[15:12],D8 Active lo
-Player 2 Input (right)  260002          R    D[15:12],D8 Active lo
-      D8:    flip
-      D12:   right
-      D13:   left
-      D14:   down
-      D15:   up
-
-Status inputs           260000          R    D11,D1,D0
-      D0:    coin 1 (left) Active lo
-      D1:    coin 2 (right) Active lo
-      D11:   self-test Active lo
-
-LATCH                   260000          W    D[12:8]
-      D8:    ADPCM chip reset (active lo)
-      D9:    Spare
-      D10:   Coin Counter 2 (right)
-      D11:   Coin Counter 1 (left)
-      D12:   Spare
-      D13:   Color RAM bank select
-  NOTE: RESET clears this latch
-
-4ms Interrupt ack.      360000          W    xx
-
-ADPCM chip              270000         R/W   D[7:0]
-
-****************************************************************************/
-
+***************************************************************************/
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( klax_playfieldram_w );
-WRITE_HANDLER( klax_latch_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
+
+WRITE16_HANDLER( klax_latch_w );
 
 int klax_vh_start(void);
 void klax_vh_stop(void);
@@ -91,19 +60,16 @@ static void update_interrupts(void)
 
 static void scanline_update(int scanline)
 {
-	/* update the video */
-	klax_scanline_update(scanline);
-
 	/* generate 32V signals */
-	if (scanline % 64 == 0 && !(readinputport(0) & 0x800))
+	if ((scanline & 32) == 0 && !(readinputport(0) & 0x800))
 		atarigen_scanline_int_gen();
 }
 
 
-static WRITE_HANDLER( interrupt_ack_w )
+static WRITE16_HANDLER( interrupt_ack_w )
 {
-	atarigen_scanline_int_ack_w(offset, data);
-	atarigen_video_int_ack_w(offset, data);
+	atarigen_scanline_int_ack_w(offset, data, mem_mask);
+	atarigen_video_int_ack_w(offset, data, mem_mask);
 }
 
 
@@ -118,7 +84,7 @@ static void init_machine(void)
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(scanline_update, 8);
+	atarigen_scanline_timer_reset(scanline_update, 32);
 }
 
 
@@ -129,15 +95,15 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( adpcm_r )
+static READ16_HANDLER( adpcm_r )
 {
 	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-static WRITE_HANDLER( adpcm_w )
+static WRITE16_HANDLER( adpcm_w )
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 		OKIM6295_data_0_w(offset, data & 0xff);
 }
 
@@ -149,36 +115,32 @@ static WRITE_HANDLER( adpcm_w )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x260000, 0x260001, input_port_0_r },
-	{ 0x260002, 0x260003, input_port_1_r },
+	{ 0x260000, 0x260001, input_port_0_word_r },
+	{ 0x260002, 0x260003, input_port_1_word_r },
 	{ 0x270000, 0x270001, adpcm_r },
-	{ 0x3e0000, 0x3e07ff, MRA_BANK1 },
-	{ 0x3f0000, 0x3f1fff, MRA_BANK2 },
-	{ 0x3f2000, 0x3f27ff, MRA_BANK3 },
-	{ 0x3f2800, 0x3f3fff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e07ff, MRA16_RAM },
+	{ 0x3f0000, 0x3f3fff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 	{ 0x260000, 0x260001, klax_latch_w },
 	{ 0x270000, 0x270001, adpcm_w },
-	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360000, 0x360001, interrupt_ack_w },
-	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w, &paletteram },
-	{ 0x3f0000, 0x3f1fff, klax_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f2000, 0x3f27ff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f2800, 0x3f3fff, MWA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
+	{ 0x3f0000, 0x3f0f7f, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f0f80, 0x3f0fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f1000, 0x3f1fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f2000, 0x3f27ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3f2800, 0x3f3fff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -220,35 +182,23 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout pflayout =
+static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	8192,	/* 8192 of them */
-	4,		/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,2),
+	4,
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 0x20000*8+0, 0x20000*8+4, 8, 12, 0x20000*8+8, 0x20000*8+12 },
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 8, 12, RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
-};
-
-
-static struct GfxLayout molayout =
-{
-	8,8,	/* 8*8 sprites */
-	4096,	/* 4096 of them */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{ 0, 4, 0x10000*8+0, 0x10000*8+4, 8, 12, 0x10000*8+8, 0x10000*8+12 },
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
+	16*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &pflayout,  256, 16 },		/* sprites & playfield */
-	{ REGION_GFX2, 0, &molayout,    0, 16 },		/* sprites & playfield */
-	{ -1 } /* end of array */
+	{ REGION_GFX1, 0, &pfmolayout,  256, 16 },		/* sprites & playfield */
+	{ REGION_GFX2, 0, &pfmolayout,    0, 16 },		/* sprites & playfield */
+	{ -1 }
 };
 
 
@@ -261,7 +211,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
+	1,
 	{ ATARI_CLOCK_14MHz/4/4/132 },
 	{ REGION_SOUND1 },
 	{ 100 }
@@ -282,11 +232,11 @@ static const struct MachineDriver machine_driver_klax =
 		{
 			CPU_M68000,		/* verified */
 			ATARI_CLOCK_14MHz/2,
-			readmem,writemem,0,0,
+			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 

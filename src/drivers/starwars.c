@@ -201,8 +201,7 @@ WRITE_HANDLER( esb_slapstic_w )
 }
 
 /* Star Wars READ memory map */
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
@@ -221,12 +220,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },		/* rest of main_rom */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* Star Wars Sound READ memory map */
-static struct MemoryReadAddress readmem2[] =
-{
+static MEMORY_READ_START( readmem2 )
 	{ 0x0800, 0x0fff, starwars_sin_r },		/* SIN Read */
 	{ 0x1000, 0x107f, MRA_RAM },	/* 6532 RAM */
 	{ 0x1080, 0x109f, starwars_m6532_r },
@@ -234,12 +231,10 @@ static struct MemoryReadAddress readmem2[] =
 	{ 0x4000, 0xbfff, MRA_ROM },	/* sound roms */
 	{ 0xc000, 0xffff, MRA_ROM },	/* load last rom twice */
 									/* for proper int vec operation */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* Star Wars WRITE memory map */
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
@@ -257,12 +252,10 @@ static struct MemoryWriteAddress writemem[] =
 /*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
 	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
 	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* Star Wars sound WRITE memory map */
-static struct MemoryWriteAddress writemem2[] =
-{
+static MEMORY_WRITE_START( writemem2 )
 	{ 0x0000, 0x07ff, starwars_sout_w },
 	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
 	{ 0x1080, 0x109f, starwars_m6532_w },
@@ -270,11 +263,9 @@ static struct MemoryWriteAddress writemem2[] =
 	{ 0x2000, 0x27ff, MWA_RAM }, /* program RAM */
 	{ 0x4000, 0xbfff, MWA_ROM }, /* sound rom */
 	{ 0xc000, 0xffff, MWA_ROM }, /* sound rom again, for intvecs */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress esb_readmem[] =
-{
+static MEMORY_READ_START( esb_readmem )
 	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
@@ -294,11 +285,9 @@ static struct MemoryReadAddress esb_readmem[] =
 	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
 	{ 0x8000, 0x9fff, esb_slapstic_r },
 	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress esb_writemem[] =
-{
+static MEMORY_WRITE_START( esb_writemem )
 	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
@@ -320,8 +309,7 @@ static struct MemoryWriteAddress esb_writemem[] =
 
 	/* Dummy entry to set up the slapstic */
 	{ 0x14000, 0x1bfff, MWA_NOP, &slapstic_base },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( starwars )
 	PORT_START	/* IN0 */

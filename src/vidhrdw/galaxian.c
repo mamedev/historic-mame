@@ -60,10 +60,10 @@ static int total_stars;
 static void (*modify_charcode  )(int*,int);            /* function to call to do character banking */
 static void (*modify_spritecode)(int*,int*,int*,int);  /* function to call to do sprite banking */
 static int mooncrst_gfxextend;
-static data_t pisces_gfxbank;
-static data_t jumpbug_gfxbank[5];
+static int pisces_gfxbank;
+static int jumpbug_gfxbank[5];
 
-static data_t background_on;
+static int background_on;
 static unsigned char backcolor[256];
 
 static WRITE_HANDLER( mooncrgx_gfxextend_w );
@@ -315,8 +315,8 @@ static int common_vh_start(void)
 
 	mooncrst_gfxextend = 0;
 	stars_on = 0;
-	flip_screen_x_w(0, 0);
-	flip_screen_y_w(0, 0);
+	flip_screen_x_set(0);
+	flip_screen_y_set(0);
 
 	if (generic_vh_start() != 0)
 		return 1;

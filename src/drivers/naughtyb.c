@@ -127,17 +127,14 @@ int popflame_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x8fff, MRA_RAM },
 	{ 0xb000, 0xb7ff, input_port_0_r }, 	/* IN0 */
 	{ 0xb800, 0xbfff, input_port_1_r }, 	/* DSW */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x7fff, MWA_RAM },
 	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
@@ -146,11 +143,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
 	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
 	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress popflame_writemem[] =
-{
+static MEMORY_WRITE_START( popflame_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x7fff, MWA_RAM },
 	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
@@ -159,8 +154,7 @@ static struct MemoryWriteAddress popflame_writemem[] =
 	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
 	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
 	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

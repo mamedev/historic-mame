@@ -11,7 +11,7 @@
 
 
 
-static data_t gfxbank,palettebank;
+static int gfxbank,palettebank;
 extern int arkanoid_paddle_select;
 
 
@@ -67,8 +67,8 @@ void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 WRITE_HANDLER( arkanoid_d008_w )
 {
 	/* bits 0 and 1 flip X and Y, I don't know which is which */
-	flip_screen_x_w(offset, data & 0x01);
-	flip_screen_y_w(offset, data & 0x02);
+	flip_screen_x_set(data & 0x01);
+	flip_screen_y_set(data & 0x02);
 
 	/* bit 2 selects the input paddle */
     arkanoid_paddle_select = data & 0x04;

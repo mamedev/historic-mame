@@ -37,26 +37,24 @@ Notes:
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *deniam_videoram,*deniam_textram;
+extern data16_t *deniam_videoram,*deniam_textram;
 
 void init_logicpro(void);
 void init_karianx(void);
-READ_HANDLER( deniam_videoram_r );
-WRITE_HANDLER( deniam_videoram_w );
-READ_HANDLER( deniam_textram_r );
-WRITE_HANDLER( deniam_textram_w );
-WRITE_HANDLER( deniam_palette_w );
-READ_HANDLER( deniam_coinctrl_r );
-WRITE_HANDLER( deniam_coinctrl_w );
+WRITE16_HANDLER( deniam_videoram_w );
+WRITE16_HANDLER( deniam_textram_w );
+WRITE16_HANDLER( deniam_palette_w );
+READ16_HANDLER( deniam_coinctrl_r );
+WRITE16_HANDLER( deniam_coinctrl_w );
 int deniam_vh_start(void);
 void deniam_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE16_HANDLER( sound_command_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
 		soundlatch_w(offset,(data >> 8) & 0xff);
 		cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -65,134 +63,112 @@ static WRITE_HANDLER( sound_command_w )
 
 static WRITE_HANDLER( deniam16b_oki_rom_bank_w )
 {
-	OKIM6295_set_bank_base(0,ALL_VOICES,(data & 0x40) ? 0x40000 : 0x00000);
+	OKIM6295_set_bank_base(0,(data & 0x40) ? 0x40000 : 0x00000);
 }
 
-static WRITE_HANDLER( deniam16c_oki_rom_bank_w )
+static WRITE16_HANDLER( deniam16c_oki_rom_bank_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		OKIM6295_set_bank_base(0,ALL_VOICES,(data & 0x01) ? 0x40000 : 0x00000);
+	if (ACCESSING_LSB)
+		OKIM6295_set_bank_base(0,(data & 0x01) ? 0x40000 : 0x00000);
 }
 
 static void deniam_init_machine(void)
 {
 	/* logicpr2 does not reset the bank base on startup */
-	OKIM6295_set_bank_base(0,ALL_VOICES,0x00000);
+	OKIM6295_set_bank_base(0,0x00000);
 }
 
-static WRITE_HANDLER( YM3812_control_port_0_halfword_swap_w )
+static WRITE16_HANDLER( YM3812_control_port_0_msb_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 		YM3812_control_port_0_w(0,(data >> 8) & 0xff);
 }
 
-static WRITE_HANDLER( YM3812_write_port_0_halfword_swap_w )
+static WRITE16_HANDLER( YM3812_write_port_0_msb_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 		YM3812_write_port_0_w(0,(data >> 8) & 0xff);
 }
 
-static WRITE_HANDLER( OKIM6295_data_0_halfword_w )
-{
-	if ((data & 0x00ff0000) == 0)
-		OKIM6295_data_0_w(0,data & 0xff);
-}
 
 
-
-static struct MemoryReadAddress deniam16b_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x400000, 0x40ffff, deniam_videoram_r },
-	{ 0x410000, 0x410fff, deniam_textram_r },
+static MEMORY_READ16_START( deniam16b_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x400000, 0x40ffff, MRA16_RAM },
+	{ 0x410000, 0x410fff, MRA16_RAM },
 	{ 0xc40002, 0xc40003, deniam_coinctrl_r },
-	{ 0xc44000, 0xc44001, input_port_0_r },
-	{ 0xc44002, 0xc44003, input_port_1_r },
-	{ 0xc44004, 0xc44005, input_port_2_r },
-	{ 0xc44006, 0xc44007, MRA_NOP },	/* unused? */
-	{ 0xc4400a, 0xc4400b, input_port_3_r },
-	{ 0xff0000, 0xffffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xc44000, 0xc44001, input_port_0_word_r },
+	{ 0xc44002, 0xc44003, input_port_1_word_r },
+	{ 0xc44004, 0xc44005, input_port_2_word_r },
+	{ 0xc44006, 0xc44007, MRA16_NOP },	/* unused? */
+	{ 0xc4400a, 0xc4400b, input_port_3_word_r },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress deniam16b_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
+static MEMORY_WRITE16_START( deniam16b_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x400000, 0x40ffff, deniam_videoram_w, &deniam_videoram },
 	{ 0x410000, 0x410fff, deniam_textram_w, &deniam_textram },
-	{ 0x440000, 0x4407ff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ 0x840000, 0x840fff, deniam_palette_w, &paletteram },
+	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x840000, 0x840fff, deniam_palette_w, &paletteram16 },
 	{ 0xc40000, 0xc40001, sound_command_w },
 	{ 0xc40002, 0xc40003, deniam_coinctrl_w },
-	{ 0xc40004, 0xc40005, MWA_NOP },	/* irq ack? */
-	{ 0xff0000, 0xffffff, MWA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xc40004, 0xc40005, MWA16_NOP },	/* irq ack? */
+	{ 0xff0000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xf7ff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x01, 0x01, soundlatch_r },
 	{ 0x05, 0x05, OKIM6295_status_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x02, 0x02, YM3812_control_port_0_w },
 	{ 0x03, 0x03, YM3812_write_port_0_w },
 	{ 0x05, 0x05, OKIM6295_data_0_w },
 	{ 0x07, 0x07, deniam16b_oki_rom_bank_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 /* identical to 16b, but handles sound directly */
-static struct MemoryReadAddress deniam16c_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x400000, 0x40ffff, deniam_videoram_r },
-	{ 0x410000, 0x410fff, deniam_textram_r },
-	{ 0xc40000, 0xc40001, OKIM6295_status_0_r },
+static MEMORY_READ16_START( deniam16c_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x400000, 0x40ffff, MRA16_RAM },
+	{ 0x410000, 0x410fff, MRA16_RAM },
+	{ 0xc40000, 0xc40001, OKIM6295_status_0_lsb_r },
 	{ 0xc40002, 0xc40003, deniam_coinctrl_r },
-	{ 0xc44000, 0xc44001, input_port_0_r },
-	{ 0xc44002, 0xc44003, input_port_1_r },
-	{ 0xc44004, 0xc44005, input_port_2_r },
-	{ 0xc44006, 0xc44007, MRA_NOP },	/* unused? */
-	{ 0xc4400a, 0xc4400b, input_port_3_r },
-	{ 0xff0000, 0xffffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xc44000, 0xc44001, input_port_0_word_r },
+	{ 0xc44002, 0xc44003, input_port_1_word_r },
+	{ 0xc44004, 0xc44005, input_port_2_word_r },
+	{ 0xc44006, 0xc44007, MRA16_NOP },	/* unused? */
+	{ 0xc4400a, 0xc4400b, input_port_3_word_r },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress deniam16c_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
+static MEMORY_WRITE16_START( deniam16c_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x400000, 0x40ffff, deniam_videoram_w, &deniam_videoram },
 	{ 0x410000, 0x410fff, deniam_textram_w, &deniam_textram },
-	{ 0x440000, 0x4407ff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ 0x840000, 0x840fff, deniam_palette_w, &paletteram },
-	{ 0xc40000, 0xc40001, OKIM6295_data_0_halfword_w },
+	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x840000, 0x840fff, deniam_palette_w, &paletteram16 },
+	{ 0xc40000, 0xc40001, OKIM6295_data_0_lsb_w },
 	{ 0xc40002, 0xc40003, deniam_coinctrl_w },
-	{ 0xc40004, 0xc40005, MWA_NOP },	/* irq ack? */
+	{ 0xc40004, 0xc40005, MWA16_NOP },	/* irq ack? */
 	{ 0xc40006, 0xc40007, deniam16c_oki_rom_bank_w },
-	{ 0xc40008, 0xc40009, YM3812_control_port_0_halfword_swap_w },
-	{ 0xc4000a, 0xc4000b, YM3812_write_port_0_halfword_swap_w },
-	{ 0xff0000, 0xffffff, MWA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xc40008, 0xc40009, YM3812_control_port_0_msb_w },
+	{ 0xc4000a, 0xc4000b, YM3812_write_port_0_msb_w },
+	{ 0xff0000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 

@@ -65,17 +65,14 @@ static WRITE_HANDLER( blktiger_coinlockout_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xcfff, blktiger_bgvideoram_r },
 	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, blktiger_bgvideoram_w },
 	{ 0xd000, 0xd7ff, blktiger_txvideoram_w, &blktiger_txvideoram },
@@ -83,11 +80,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xdc00, 0xdfff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
 	{ 0xe000, 0xfdff, MWA_RAM },
 	{ 0xfe00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
@@ -95,11 +90,9 @@ static struct IOReadPort readport[] =
 	{ 0x04, 0x04, input_port_4_r },
 	{ 0x05, 0x05, input_port_5_r },
 	{ 0x07, 0x07, blktiger_protection_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, soundlatch_w },
 	{ 0x01, 0x01, blktiger_bankswitch_w },
 	{ 0x03, 0x03, blktiger_coinlockout_w },
@@ -111,12 +104,10 @@ static struct IOWritePort writeport[] =
 	{ 0x0c, 0x0c, blktiger_video_enable_w },
 	{ 0x0d, 0x0d, blktiger_bgvideoram_bank_w },
 	{ 0x0e, 0x0e, blktiger_screen_layout_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, soundlatch_r },
@@ -124,19 +115,16 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2203_read_port_0_r },
 	{ 0xe002, 0xe002, YM2203_status_port_1_r },
 	{ 0xe003, 0xe003, YM2203_read_port_1_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2203_control_port_0_w },
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },
 	{ 0xe002, 0xe002, YM2203_control_port_1_w },
 	{ 0xe003, 0xe003, YM2203_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -218,12 +218,9 @@ void skykid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,background,0);
+	tilemap_draw(bitmap,background,0,0);
 	if ((priority & 0xf0) != 0x50)
 		skykid_draw_sprites(bitmap);
 

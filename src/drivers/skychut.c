@@ -63,8 +63,7 @@ static void init_greenber_palette(unsigned char *game_palette, unsigned short *g
 	memcpy(game_palette,spacebeam_palette,sizeof(spacebeam_palette));
 }
 
-static struct MemoryReadAddress skychut_readmem[] =
-{
+static MEMORY_READ_START( skychut_readmem )
 	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
 	{ 0x1000, 0x2fff, MRA_ROM },
 	{ 0x4000, 0x4400, MRA_RAM },
@@ -74,12 +73,10 @@ static struct MemoryReadAddress skychut_readmem[] =
 	{ 0xa300, 0xa300, input_port_0_r },
 /*	{ 0xa700, 0xa700, input_port_2_r }, */
 	{ 0xfC00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress skychut_writemem[] =
-{
+static MEMORY_WRITE_START( skychut_writemem )
 	{ 0x0000, 0x02ff, MWA_RAM, &memory },
 	{ 0x1000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x4400, videoram_w, &videoram, &videoram_size },
@@ -88,11 +85,9 @@ static struct MemoryWriteAddress skychut_writemem[] =
 	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
 	{ 0Xa400, 0xa400, skychut_vh_flipscreen_w },
 	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress greenberet_readmem[] =
-{
+static MEMORY_READ_START( greenberet_readmem )
 	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
 	{ 0x1000, 0x33ff, MRA_ROM },
 	{ 0x4000, 0x4400, MRA_RAM },
@@ -102,11 +97,9 @@ static struct MemoryReadAddress greenberet_readmem[] =
 	{ 0xa200, 0xa200, input_port_1_r },
 	{ 0xa300, 0xa300, input_port_0_r },
 	{ 0xfC00, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress greenberet_writemem[] =
-{
+static MEMORY_WRITE_START( greenberet_writemem )
 	{ 0x0000, 0x02ff, MWA_RAM, &memory },
 	{ 0x1000, 0x33ff, MWA_ROM },
 	{ 0x4000, 0x4400, videoram_w, &videoram, &videoram_size },
@@ -115,8 +108,7 @@ static struct MemoryWriteAddress greenberet_writemem[] =
 	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
 	{ 0Xa400, 0xa400, skychut_vh_flipscreen_w },
 	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 int skychut_interrupt(void)

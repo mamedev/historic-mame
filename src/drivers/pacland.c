@@ -84,7 +84,7 @@ static READ_HANDLER( dsw1_r )
 
 static WRITE_HANDLER( pacland_coin_w )
 {
-	coin_lockout_global_w(0,data & 1);
+	coin_lockout_global_w(data & 1);
 	coin_counter_w(0,~data & 2);
 	coin_counter_w(1,~data & 4);
 }
@@ -96,8 +96,7 @@ static WRITE_HANDLER( pacland_led_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, videoram_r },
 	{ 0x2000, 0x37ff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_BANK1 },
@@ -105,11 +104,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6800, 0x6bff, sharedram1_r },
 	{ 0x7800, 0x7800, MRA_NOP },	/* ??? */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2000, videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x37ff, MWA_RAM },
 	{ 0x2700, 0x27ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -126,11 +123,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x8800, pacland_halt_mcu_w },
 	{ 0x9800, 0x9800, MWA_NOP },	/* ??? */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
@@ -143,11 +138,9 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0xd000, 0xd002, input_port_2_r },
 	{ 0xd000, 0xd003, input_port_3_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },		/* PSG device, shared RAM */
@@ -159,8 +152,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x8000, 0x9fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 static READ_HANDLER( readFF )
@@ -168,19 +160,15 @@ static READ_HANDLER( readFF )
 	return 0xff;
 }
 
-static struct IOReadPort mcu_readport[] =
-{
+static PORT_READ_START( mcu_readport )
 	{ HD63701_PORT1, HD63701_PORT1, input_port_4_r },
 	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort mcu_writeport[] =
-{
+static PORT_WRITE_START( mcu_writeport )
 	{ HD63701_PORT1, HD63701_PORT1, pacland_coin_w },
 	{ HD63701_PORT2, HD63701_PORT2, pacland_led_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -188,8 +188,7 @@ static READ_HANDLER( liberatr_input_port_0_r )
 
 
 
-static struct MemoryReadAddress liberatr_readmem[] =
-{
+static MEMORY_READ_START( liberatr_readmem )
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
 	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
 	{ 0x4000, 0x403f, atari_vg_earom_r },
@@ -199,11 +198,9 @@ static struct MemoryReadAddress liberatr_readmem[] =
 	{ 0x7800, 0x781f, pokey1_r },
 	{ 0x8000, 0xefff, MRA_ROM },
 	{ 0xfffa, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress liberat2_readmem[] =
-{
+static MEMORY_READ_START( liberat2_readmem )
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
 	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
 	{ 0x4000, 0x4000, liberatr_input_port_0_r },
@@ -213,12 +210,10 @@ static struct MemoryReadAddress liberat2_readmem[] =
 	{ 0x5800, 0x581f, pokey1_r },
 	{ 0x6000, 0xbfff, MRA_ROM },
 	{ 0xfffa, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress liberatr_writemem[] =
-{
+static MEMORY_WRITE_START( liberatr_writemem )
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
 	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
 	{ 0x6000, 0x600f, MWA_RAM, &liberatr_base_ram },
@@ -239,11 +234,9 @@ static struct MemoryWriteAddress liberatr_writemem[] =
 
 	{ 0x0000, 0x0000, MWA_RAM, &liberatr_x },	/* just here to assign pointer */
 	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },	/* just here to assign pointer */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress liberat2_writemem[] =
-{
+static MEMORY_WRITE_START( liberat2_writemem )
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
 	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
 	{ 0x4000, 0x400f, MWA_RAM, &liberatr_base_ram },
@@ -265,8 +258,7 @@ static struct MemoryWriteAddress liberat2_writemem[] =
 
 	{ 0x0000, 0x0000, MWA_RAM, &liberatr_x },	/* just here to assign pointer */
 	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },	/* just here to assign pointer */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

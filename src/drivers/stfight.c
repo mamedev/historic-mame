@@ -263,8 +263,7 @@ extern unsigned char *stfight_text_attr_ram;
 extern unsigned char *stfight_vh_latch_ram;
 extern unsigned char *stfight_sprite_ram;
 
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },          /* sf02.bin */
 	{ 0xc000, 0xc1ff, MRA_RAM },            /* palette ram */
@@ -276,11 +275,9 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0xd000, 0xd7ff, MRA_RAM },            /* video */
 	{ 0xe000, 0xffff, MRA_RAM },
 
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xbfff, MWA_BANK1 },                  /* sf02.bin */
 	{ 0xc000, 0xc0ff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
@@ -296,22 +293,18 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM,                  &stfight_sprite_ram },
 
-    { -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc001, 0xc001, YM2203_read_port_0_r },
 	{ 0xc801, 0xc801, YM2203_read_port_1_r },
 	{ 0xf000, 0xf000, stfight_fm_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc000, YM2203_control_port_0_w },
 	{ 0xc001, 0xc001, YM2203_write_port_0_w },
@@ -320,8 +313,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0xe800, 0xe800, stfight_e800_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( stfight )

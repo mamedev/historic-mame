@@ -28,21 +28,20 @@ down hardware (it doesn't write any good sound data btw, mostly zeros).
 int  supbtime_vh_start(void);
 void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE_HANDLER( supbtime_pf2_data_w );
-WRITE_HANDLER( supbtime_pf1_data_w );
-READ_HANDLER( supbtime_pf1_data_r );
-READ_HANDLER( supbtime_pf2_data_r );
+WRITE16_HANDLER( supbtime_pf2_data_w );
+WRITE16_HANDLER( supbtime_pf1_data_w );
+WRITE16_HANDLER( supbtime_control_0_w );
 
-WRITE_HANDLER( supbtime_control_0_w );
+extern data16_t *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
 
-extern unsigned char *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
-static unsigned char *supbtime_ram;
+static READ16_HANDLER( supbtime_pf1_data_r ) { return supbtime_pf1_data[offset]; }
+static READ16_HANDLER( supbtime_pf2_data_r ) { return supbtime_pf2_data[offset]; }
 
 /******************************************************************************/
 
-static READ_HANDLER( supbtime_controls_r )
+static READ16_HANDLER( supbtime_controls_r )
 {
- 	switch (offset)
+ 	switch (offset<<1)
 	{
 		case 0: /* Player 1 & Player 2 joysticks & fire buttons */
 			return (readinputport(0) + (readinputport(1) << 8));
@@ -56,10 +55,10 @@ static READ_HANDLER( supbtime_controls_r )
 	}
 
 	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
-	return 0xffff;
+	return ~0;
 }
 
-static WRITE_HANDLER( sound_w )
+static WRITE16_HANDLER( sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
@@ -67,26 +66,24 @@ static WRITE_HANDLER( sound_w )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress supbtime_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1 },
-	{ 0x120000, 0x1207ff, MRA_BANK2 },
-	{ 0x140000, 0x1407ff, paletteram_word_r },
+static MEMORY_READ16_START( supbtime_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x120000, 0x1207ff, MRA16_RAM },
+	{ 0x140000, 0x1407ff, MRA16_RAM },
 	{ 0x180000, 0x18000f, supbtime_controls_r },
 	{ 0x320000, 0x321fff, supbtime_pf1_data_r },
 	{ 0x322000, 0x323fff, supbtime_pf2_data_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x340000, 0x3401ff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress supbtime_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1, &supbtime_ram },
+static MEMORY_WRITE16_START( supbtime_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
 	{ 0x104000, 0x11ffff, MWA_NOP }, /* Nothing there */
-	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram },
+	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16 },
 	{ 0x120800, 0x13ffff, MWA_NOP }, /* Nothing there */
-	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x18000a, 0x18000d, MWA_NOP },
 	{ 0x1a0000, 0x1a0001, sound_w },
 
@@ -94,12 +91,11 @@ static struct MemoryWriteAddress supbtime_writemem[] =
 	{ 0x320000, 0x321fff, supbtime_pf1_data_w, &supbtime_pf1_data },
 	{ 0x322000, 0x323fff, supbtime_pf2_data_w, &supbtime_pf2_data },
 
-	{ 0x340000, 0x3401ff, MWA_BANK3, &supbtime_pf1_row },
+	{ 0x340000, 0x3401ff, MWA16_RAM, &supbtime_pf1_row },
 	{ 0x340400, 0x3405ff, MWA_NOP },/* Unused col scroll */
 	{ 0x342000, 0x3421ff, MWA_NOP },/* Unused row scroll */
 	{ 0x342400, 0x3425ff, MWA_NOP },/* Unused col scroll */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -116,8 +112,7 @@ static WRITE_HANDLER( YM2151_w )
 }
 
 /* Physical memory map (21 bits) */
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, MRA_NOP },
 	{ 0x110000, 0x110001, YM2151_status_port_0_r },
@@ -125,11 +120,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x130000, 0x130001, MRA_NOP }, /* This board only has 1 oki chip */
 	{ 0x140000, 0x140001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, MWA_NOP }, /* YM2203 - this board doesn't have one */
 	{ 0x110000, 0x110001, YM2151_w },
@@ -138,8 +131,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -385,19 +377,5 @@ ROM_END
 
 /******************************************************************************/
 
-static READ_HANDLER( supbtime_cycle_r )
-{
-	if (cpu_get_pc()==0x7e2 && READ_WORD(&supbtime_ram[0])==0) {cpu_spinuntil_int(); return 1;}
-
-	return READ_WORD(&supbtime_ram[0]);
-}
-
-static void init_supbtime(void)
-{
-	install_mem_read_handler(0, 0x100000, 0x100001, supbtime_cycle_r);
-}
-
-/******************************************************************************/
-
-GAME( 1990, supbtime, 0,        supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (World)" )
-GAME( 1990, supbtimj, supbtime, supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (Japan)" )
+GAME( 1990, supbtime, 0,        supbtime, supbtime, 0, ROT0, "Data East Corporation", "Super Burger Time (World)" )
+GAME( 1990, supbtimj, supbtime, supbtime, supbtime, 0, ROT0, "Data East Corporation", "Super Burger Time (Japan)" )

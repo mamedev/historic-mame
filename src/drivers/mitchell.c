@@ -298,8 +298,7 @@ logerror("PC %04x: write %02x to port 01\n",cpu_get_pc(),data);
 
 ***************************************************************************/
 
-static struct MemoryReadAddress mgakuen_readmem[] =
-{
+static MEMORY_READ_START( mgakuen_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, mgakuen_paletteram_r },	/* palette RAM */
@@ -307,53 +306,43 @@ static struct MemoryReadAddress mgakuen_readmem[] =
 	{ 0xd000, 0xdfff, mgakuen_videoram_r },	/* char RAM */
 	{ 0xe000, 0xefff, MRA_RAM },	/* Work RAM */
 	{ 0xf000, 0xffff, mgakuen_objram_r },	/* OBJ RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mgakuen_writemem[] =
-{
+static MEMORY_WRITE_START( mgakuen_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, mgakuen_paletteram_w },
 	{ 0xc800, 0xcfff, pang_colorram_w, &pang_colorram },
 	{ 0xd000, 0xdfff, mgakuen_videoram_w, &pang_videoram, &pang_videoram_size },
 	{ 0xe000, 0xefff, MWA_RAMROM },
 	{ 0xf000, 0xffff, mgakuen_objram_w },	/* OBJ RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, pang_paletteram_r },	/* Banked palette RAM */
 	{ 0xc800, 0xcfff, pang_colorram_r },	/* Attribute RAM */
 	{ 0xd000, 0xdfff, pang_videoram_r },	/* Banked char / OBJ RAM */
 	{ 0xe000, 0xffff, MRA_RAM },	/* Work RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, pang_paletteram_w },
 	{ 0xc800, 0xcfff, pang_colorram_w, &pang_colorram },
 	{ 0xd000, 0xdfff, pang_videoram_w, &pang_videoram, &pang_videoram_size },
 	{ 0xe000, 0xffff, MWA_RAMROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
-	{ 0x00, 0x02, input_r },	/* Super Pang needs a kludge to initialize EEPROM;
-						the Mahjong games and Block Block need special input treatment */
+static PORT_READ_START( readport )
+	{ 0x00, 0x02, input_r },	/* Super Pang needs a kludge to initialize EEPROM.
+						The Mahjong games and Block Block need special input treatment */
 	{ 0x03, 0x03, input_port_12_r },	/* mgakuen only */
 	{ 0x04, 0x04, input_port_13_r },	/* mgakuen only */
 	{ 0x05, 0x05, pang_port5_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, pang_gfxctrl_w },    /* Palette bank, layer enable, coin counters, more */
 	{ 0x01, 0x01, input_w },
 	{ 0x02, 0x02, pang_bankswitch_w },      /* Code bank register */
@@ -365,8 +354,7 @@ static struct IOWritePort writeport[] =
 	{ 0x08, 0x08, eeprom_cs_w },
 	{ 0x10, 0x10, eeprom_clock_w },
 	{ 0x18, 0x18, eeprom_serial_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

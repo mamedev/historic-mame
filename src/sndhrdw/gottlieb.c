@@ -3,7 +3,6 @@
 
 
 
-
 WRITE_HANDLER( gottlieb_sh_w )
 {
 	static int score_sample=7;
@@ -306,15 +305,9 @@ WRITE_HANDLER( gottlieb_nmi_rate_w )
 	nmi_rate = data;
 }
 
-static void cause_dac_nmi_callback(int param)
-{
-	cpu_cause_interrupt(cpu_gettotalcpu()-2, M6502_INT_NMI);
-}
-
 WRITE_HANDLER( gottlieb_cause_dac_nmi_w )
 {
-	/* make all the CPUs synchronize, and only AFTER that cause the NMI */
-	timer_set(TIME_NOW,0,cause_dac_nmi_callback);
+	cpu_cause_interrupt(cpu_gettotalcpu()-2, M6502_INT_NMI);
 }
 
 READ_HANDLER( gottlieb_cause_dac_nmi_r )
@@ -334,3 +327,26 @@ WRITE_HANDLER( exterm_ym2151_w )
 		YM2151_register_port_0_w(offset, data);
 	}
 }
+
+static UINT8 exterm_dac_volume;
+static UINT8 exterm_dac_data;
+
+WRITE_HANDLER( exterm_dac_vol_w )
+{
+	exterm_dac_volume = data ^ 0xff;
+	DAC_data_16_w(0, exterm_dac_volume * exterm_dac_data);
+}
+
+WRITE_HANDLER( exterm_dac_data_w )
+{
+	exterm_dac_data = data;
+	DAC_data_16_w(0, exterm_dac_volume * exterm_dac_data);
+}
+
+
+WRITE16_HANDLER( gottlieb_sh_word_w )
+{
+	if (ACCESSING_LSB)
+		gottlieb_sh_w(offset, data);
+}
+

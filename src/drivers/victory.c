@@ -243,8 +243,7 @@ static WRITE_HANDLER( lamp_control_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
+static MEMORY_READ_START( main_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc0ff, victory_video_control_r },
 	{ 0xc400, 0xc7ff, MRA_RAM },
@@ -253,12 +252,10 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xf800, sound_response_r },
 	{ 0xf801, 0xf801, sound_status_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
+static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc100, 0xc1ff, victory_video_control_w },
 	{ 0xc200, 0xc3ff, victory_paletteram_w, &paletteram },
@@ -267,27 +264,22 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xf7ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0xf800, 0xf800, sound_command_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort main_readport[] =
-{
+static PORT_READ_START( main_readport )
 	{ 0x00, 0x03, input_port_0_r },
 	{ 0x04, 0x07, input_port_1_r },
 	{ 0x08, 0x08, input_port_2_r },
 	{ 0x0a, 0x0a, input_port_3_r },
 	{ 0x0c, 0x0c, input_port_4_r },
 	{ 0x0e, 0x0e, input_port_5_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort main_writeport[] =
-{
+static PORT_WRITE_START( main_writeport )
 	{ 0x10, 0x13, lamp_control_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 
@@ -297,20 +289,17 @@ static struct IOWritePort main_writeport[] =
  *
  *************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x1000, 0x1fff, exidy_shriot_r },
 	{ 0x2000, 0x200f, pia_0_r },
 	{ 0x3000, 0x3fff, exidy_sh8253_r },
 	{ 0x5000, 0x5fff, exidy_sh6840_r },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x1000, 0x1fff, exidy_shriot_w },
 	{ 0x2000, 0x200f, pia_0_w },
@@ -318,8 +307,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x5000, 0x5fff, exidy_sh6840_w },
 	{ 0x6000, 0x6fff, exidy_sfxctrl_w },
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

@@ -2,6 +2,25 @@
 
 Xexex
 
+Unemulated constant write accesses:
+Hard.Addr	RAM Addr.	Value
+d0001		80482		01
+d0003		80483		ff
+d0005		80484		00
+d0007		80485		21
+d0009		80486		00
+d000b		80487		37
+d000d		80488		01
+d0013		80489		20
+d0015		8048a		0c
+d0017		8048b		0e
+d0019		8048c		54
+d001c		8048d		00
+
+ca001		80468		00
+ca002		80469		00
+ca003		8046a		00
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -13,12 +32,12 @@ Xexex
 int xexex_vh_start(void);
 void xexex_vh_stop(void);
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-READ_HANDLER( xexex_palette_r );
-WRITE_HANDLER( xexex_palette_w );
 
-static int cur_back_select, cur_back_ctrla;
-static int cur_control2;
+READ16_HANDLER( xexexbg_r );
+WRITE16_HANDLER( xexexbg_w );
+READ16_HANDLER( xexexbg_rom_r );
 
+static data16_t cur_control2;
 static int init_eeprom_count;
 
 static struct EEPROM_interface eeprom_interface =
@@ -50,7 +69,7 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static WRITE_HANDLER( K053251_halfword_w )
+static WRITE16_HANDLER( K053251_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K053251_w(offset >> 1,data & 0xff);
@@ -59,36 +78,36 @@ static WRITE_HANDLER( K053251_halfword_w )
 /* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
 /* of RAM, but they put 0x8000 there. The CPU can access them all. Address lines */
 /* A1, A5 and A6 don't go to the 053247. */
-static READ_HANDLER( K053247_scattered_word_r )
+static READ16_HANDLER( K053247_scattered_word_r )
 {
-	if (offset & 0x0062)
-		return READ_WORD(&spriteram[offset]);
+	if (offset & 0x0031)
+		return spriteram16[offset];
 	else
 	{
-		offset = ((offset & 0x001c) >> 1) | ((offset & 0x7f80) >> 3);
+		offset = ((offset & 0x000e) >> 1) | ((offset & 0x3fc0) >> 3);
 		return K053247_word_r(offset);
 	}
 }
 
-static WRITE_HANDLER( K053247_scattered_word_w )
+static WRITE16_HANDLER( K053247_scattered_word_w )
 {
-	if (offset & 0x0062)
-		COMBINE_WORD_MEM(&spriteram[offset],data);
+	if (offset & 0x0031)
+		COMBINE_DATA(spriteram16+offset);
 	else
 	{
-		offset = ((offset & 0x001c) >> 1) | ((offset & 0x7f80) >> 3);
+		offset = ((offset & 0x000e) >> 1) | ((offset & 0x3fc0) >> 3);
 //if ((offset&0xf) == 0)
 //	logerror("%04x: write %02x to spriteram %04x\n",cpu_get_pc(),data,offset);
-		K053247_word_w(offset,data);
+		K053247_word_w(offset,data,mem_mask);
 	}
 }
 
-static READ_HANDLER( control0_r )
+static READ16_HANDLER( control0_r )
 {
 	return input_port_0_r(0);
 }
 
-static READ_HANDLER( control1_r )
+static READ16_HANDLER( control1_r )
 {
 	int res;
 
@@ -106,13 +125,15 @@ static READ_HANDLER( control1_r )
 	return res;
 }
 
-static READ_HANDLER( control2_r )
+static READ16_HANDLER( control2_r )
 {
 	return cur_control2;
 }
 
-static WRITE_HANDLER( control2_w )
+static WRITE16_HANDLER( control2_w )
 {
+	COMBINE_DATA(&cur_control2);
+
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
@@ -123,7 +144,6 @@ static WRITE_HANDLER( control2_w )
 	EEPROM_write_bit(data & 0x01);
 	EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
 	EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
-	cur_control2 = data;
 
 	/* bit 8 = enable sprite ROM reading */
 	K053246_set_OBJCHA_line((data & 0x0100) ? ASSERT_LINE : CLEAR_LINE);
@@ -151,145 +171,105 @@ static int xexex_interrupt(void)
 	return ignore_interrupt();
 }
 
-static int sound_status = 0, sound_cmd = 0;
-
-static WRITE_HANDLER( sound_cmd_w )
+static WRITE16_HANDLER( sound_cmd1_w )
 {
-	logerror("Sound command : %d\n", data & 0xff);
-	sound_cmd = data & 0xff;
-	/*	cpu_set_irq_line(1, 0, HOLD_LINE); */
-	if(sound_cmd == 0xfe)
-	  sound_status = 0x7f;
+	if(ACCESSING_LSB) {
+		data &= 0xff;
+		logerror("Sound command1 write %x\n", data);
+		soundlatch_w(0, data);
+		if(!Machine->sample_rate)
+			if(data == 0xfc || data == 0xfe)
+				soundlatch3_w(0, 0x7f);
+	}
 }
 
-static WRITE_HANDLER( sound_status_w )
+static WRITE16_HANDLER( sound_cmd2_w )
 {
-	logerror("Sound status = %d\n", data);
-	sound_status = data;
+	if(ACCESSING_LSB) {
+		logerror("Sound command2 write %x\n", data & 0xff);
+		soundlatch2_w(0, data & 0xff);
+	}
 }
 
-static READ_HANDLER( sound_cmd_r )
+static WRITE16_HANDLER( sound_irq_w )
 {
-	logerror("Sound CPU read command %d\n", sound_cmd & 0xff);
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
-	return sound_cmd;
+	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
 }
 
-static READ_HANDLER( sound_status_r )
+static READ16_HANDLER( sound_status_r )
 {
-	return sound_status;
+	int latch = soundlatch3_r(0);
+	if(latch != 0x80)
+		logerror("Sound status read %x\n", latch);
+	return latch;
 }
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	cpu_setbank(3, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x2000);
+	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x4000);
 }
 
-static READ_HANDLER( back_ctrla_r )
-{
-	return cur_back_ctrla;
-}
-
-static WRITE_HANDLER( back_ctrla_w )
-{
-	data &= 0xff;
-	if(data != cur_back_ctrla) {
-		logerror("Back: ctrla = %02x (%08x)\n", data, cpu_get_pc());
-		cur_back_ctrla = data;
-	}
-}
-
-static READ_HANDLER( back_select_r )
-{
-	return cur_back_select;
-}
-
-static WRITE_HANDLER( back_select_w )
-{
-	data &= 0xff;
-	if(data != cur_back_select) {
-		logerror("Back: select = %02x (%08x)\n", data, cpu_get_pc());
-		cur_back_select = data;
-	}
-}
-
-static READ_HANDLER( backrom_r )
-{
-	if (!(cur_back_ctrla & 1))
-		logerror("Back: Reading rom memory with enable=0\n");
-	return *(memory_region(REGION_GFX3) + 2048*cur_back_select + (offset>>2));
-}
-
-
-
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x08ffff, MRA_BANK1 },
-	{ 0x090000, 0x097fff, K053247_scattered_word_r },
-	{ 0x0c0000, 0x0c003f, K054157_r },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x08ffff, MRA16_RAM },			/* Work RAM */
+	{ 0x090000, 0x097fff, K053247_scattered_word_r },	/* Sprites */
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
-	{ 0x0c6000, 0x0c6fff, MRA_BANK4 },			/* Effects? */
-	{ 0x0c800a, 0x0c800b, back_ctrla_r },
-	{ 0x0c800e, 0x0c800f, back_select_r },
+	{ 0x0c6000, 0x0c6fff, MRA16_RAM },			/* Background generator effects */
+	{ 0x0c8000, 0x0c800f, xexexbg_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
-	{ 0x0da000, 0x0da001, input_port_2_r },
-	{ 0x0da002, 0x0da003, input_port_3_r },
-	{ 0x0dc000, 0x0dc001, control0_r },
+	{ 0x0da000, 0x0da001, input_port_2_word_r },
+	{ 0x0da002, 0x0da003, input_port_3_word_r },
+	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
 	{ 0x0dc002, 0x0dc003, control1_r },
 	{ 0x0de000, 0x0de001, control2_r },
-	{ 0x100000, 0x17ffff, MRA_ROM },
-	{ 0x180000, 0x181fff, K054157_ram_word_r },
-	{ 0x190000, 0x191fff, MRA_BANK6 }, 			/* Passthrough to tile roms */
-	{ 0x1a0000, 0x1a1fff, backrom_r },
-	{ 0x1b0000, 0x1b1fff, xexex_palette_r },
-	{ -1 }
-};
+	{ 0x100000, 0x17ffff, MRA16_ROM },
+	{ 0x180000, 0x181fff, K054157_ram_word_r },		/* Graphic planes */
+	{ 0x190000, 0x191fff, K054157_rom_word_r }, 	/* Passthrough to tile roms */
+	{ 0x1a0000, 0x1a1fff, xexexbg_rom_r },
+	{ 0x1b0000, 0x1b1fff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x08ffff, MWA_BANK1 },	/* Work RAM */
-	{ 0x090000, 0x097fff, K053247_scattered_word_w, &spriteram },
-	{ 0x0c0000, 0x0c003f, K054157_w },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x08ffff, MWA16_RAM },
+	{ 0x090000, 0x097fff, K053247_scattered_word_w, &spriteram16 },
+	{ 0x0c0000, 0x0c003f, K054157_word_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
-	{ 0x0c6000, 0x0c6fff, MWA_BANK4 },
-	{ 0x0c800a, 0x0c800b, back_ctrla_w },
-	{ 0x0c800e, 0x0c800f, back_select_w },
-	{ 0x0cc000, 0x0cc01f, K053251_halfword_w },
-	{ 0x0d600c, 0x0d600d, sound_cmd_w },
+	{ 0x0c6000, 0x0c6fff, MWA16_RAM },
+	{ 0x0c8000, 0x0c800f, xexexbg_w },
+	{ 0x0ca000, 0x0ca003, MWA16_NOP },
+	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
+	{ 0x0d0000, 0x0d001d, MWA16_NOP },
+	{ 0x0d4000, 0x0d4001, sound_irq_w },
+	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
+	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
+	{ 0x0d8000, 0x0d8007, K054157_b_word_w },
 	{ 0x0de000, 0x0de001, control2_w },
-	{ 0x100000, 0x17ffff, MWA_ROM },
+	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x180000, 0x181fff, K054157_ram_word_w },
-	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &paletteram },
-	{ -1 }
-};
+	{ 0x190000, 0x191fff, MWA16_ROM },
+	{ 0x1b0000, 0x1b1fff, paletteram16_xrgb_word_w, &paletteram16 },
+MEMORY_END
 
-#if 0
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK3 },
-	{ 0xc000, 0xdf7f, MRA_RAM },
-	{ 0xe000, 0xe22f, MRA_RAM },
+	{ 0x8000, 0xbfff, MRA_BANK2 },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe22f, K054539_0_r },
 	{ 0xec01, 0xec01, YM2151_status_port_0_r },
-	{ 0xf002, 0xf002, sound_cmd_r },
-	{ -1 }
-};
+	{ 0xf002, 0xf002, soundlatch_r },
+	{ 0xf003, 0xf003, soundlatch2_r },
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdf7f, MWA_RAM },
-	{ 0xe000, 0xe22f, MWA_RAM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe22f, K054539_0_w },
 	{ 0xec00, 0xec00, YM2151_register_port_0_w },
 	{ 0xec01, 0xec01, YM2151_data_port_0_w },
-	{ 0xf000, 0xf000, sound_status_w },
+	{ 0xf000, 0xf000, soundlatch3_w },
 	{ 0xf800, 0xf800, sound_bankswitch_w },
-	{ -1 }
-};
-#endif
-
+MEMORY_END
 
 
 INPUT_PORTS_START( xexex )
@@ -331,7 +311,20 @@ INPUT_PORTS_START( xexex )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
+static struct YM2151interface ym2151_interface =
+{
+	1,
+	4000000,		/* Value found in Amuse */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
 
+static struct K054539interface k054539_interface =
+{
+	1,			/* 1 chip */
+	48000,
+	REGION_SOUND1
+};
 
 static const struct MachineDriver machine_driver_xexex =
 {
@@ -342,14 +335,12 @@ static const struct MachineDriver machine_driver_xexex =
 			readmem, writemem, 0, 0,
 			xexex_interrupt, 3	/* ??? */
 		},
-#if 0
 		{
-			CPU_Z80,
-			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432Mhz) */
+			CPU_Z80 | CPU_AUDIO_CPU,
+			5000000,	/* 5 Mhz in Amuse (xtal is 32MHz/19.432Mhz) */
 			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 1
+			ignore_interrupt, 0
 		},
-#endif
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -368,9 +359,16 @@ static const struct MachineDriver machine_driver_xexex =
 	xexex_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{0}
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_K054539,
+			&k054539_interface
+		}
 	},
 
 	nvram_handler
@@ -384,7 +382,7 @@ ROM_START( xexex )
 	ROM_LOAD_EVEN( "xex_b03.rom",  0x100000, 0x40000, 0x97833086 )
 	ROM_LOAD_ODD ( "xex_b04.rom",  0x100000, 0x40000, 0x26ec5dc8 )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x030000, REGION_CPU2 )
 	ROM_LOAD( "xex_a05.rom", 0x000000, 0x020000, 0x0e33d6ec )
 	ROM_RELOAD(              0x010000, 0x020000 )
 
@@ -398,8 +396,12 @@ ROM_START( xexex )
 	ROM_LOAD( "xex_b10.rom", 0x200000, 0x100000, 0xee31db8d )
 	ROM_LOAD( "xex_b09.rom", 0x300000, 0x100000, 0x88f072ef )
 
-	ROM_REGION( 0x80000, REGION_GFX3 )
+	ROM_REGION( 0x080000, REGION_GFX3 )
 	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
+
+	ROM_REGION( 0x300000, REGION_SOUND1 )
+	ROM_LOAD( "xex_b06.rom", 0x000000, 0x200000, 0x3b12fce4 )
+	ROM_LOAD( "xex_b07.rom", 0x200000, 0x100000, 0xec87fe1b )
 ROM_END
 
 ROM_START( xexexj )
@@ -409,7 +411,7 @@ ROM_START( xexexj )
 	ROM_LOAD_EVEN( "xex_b03.rom",  0x100000, 0x40000, 0x97833086 )
 	ROM_LOAD_ODD ( "xex_b04.rom",  0x100000, 0x40000, 0x26ec5dc8 )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x030000, REGION_CPU2 )
 	ROM_LOAD( "067jaa05.4e", 0x000000, 0x020000, 0x2f4dd0a8 )
 	ROM_RELOAD(              0x010000, 0x020000 )
 
@@ -423,10 +425,13 @@ ROM_START( xexexj )
 	ROM_LOAD( "xex_b10.rom", 0x200000, 0x100000, 0xee31db8d )
 	ROM_LOAD( "xex_b09.rom", 0x300000, 0x100000, 0x88f072ef )
 
-	ROM_REGION( 0x80000, REGION_GFX3 )
+	ROM_REGION( 0x080000, REGION_GFX3 )
 	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
-ROM_END
 
+	ROM_REGION( 0x300000, REGION_SOUND1 )
+	ROM_LOAD( "xex_b06.rom", 0x000000, 0x200000, 0x3b12fce4 )
+	ROM_LOAD( "xex_b07.rom", 0x200000, 0x100000, 0xec87fe1b )
+ROM_END
 
 
 static void init_xexex(void)
@@ -436,5 +441,5 @@ static void init_xexex(void)
 }
 
 
-GAMEX( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)",       GAME_NOT_WORKING )
+GAMEX( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)",       GAME_NOT_WORKING )

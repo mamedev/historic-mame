@@ -3,7 +3,7 @@
 	Driver for Williams/Midway T-unit games.
 
 	Hints for finding speedups:
-	
+
 		search disassembly for ": CAF9"
 
 **************************************************************************/
@@ -24,26 +24,26 @@
 /* speedup installation macros */
 #define INSTALL_SPEEDUP_1_16BIT(addr, pc, spin1, offs1, offs2) \
 	wms_speedup_pc = (pc); \
-	wms_speedup_offset = ((addr) & 0x10) >> 3; \
+	wms_speedup_offset = ((addr) & 0x10) >> 4; \
 	wms_speedup_spin[0] = spin1; \
 	wms_speedup_spin[1] = offs1; \
 	wms_speedup_spin[2] = offs2; \
-	wms_speedup_base = install_mem_read_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_16bit);
-	
+	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_16bit);
+
 #define INSTALL_SPEEDUP_3(addr, pc, spin1, spin2, spin3) \
 	wms_speedup_pc = (pc); \
-	wms_speedup_offset = ((addr) & 0x10) >> 3; \
+	wms_speedup_offset = ((addr) & 0x10) >> 4; \
 	wms_speedup_spin[0] = spin1; \
 	wms_speedup_spin[1] = spin2; \
 	wms_speedup_spin[2] = spin3; \
-	wms_speedup_base = install_mem_read_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_3);
-	
+	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_3);
+
 
 /* code-related variables */
-extern UINT8 *	wms_code_rom;
+extern data16_t *wms_code_rom;
 
 /* CMOS-related variables */
-extern UINT8 *	wms_cmos_ram;
+extern data16_t *wms_cmos_ram;
 static UINT8	cmos_write_enable;
 
 /* graphics-related variables */
@@ -59,12 +59,12 @@ static UINT8	fake_sound_state;
 extern offs_t 	wms_speedup_pc;
 extern offs_t 	wms_speedup_offset;
 extern offs_t 	wms_speedup_spin[3];
-extern UINT8 *	wms_speedup_base;
+extern data16_t *wms_speedup_base;
 
 
 /* speedup-related prototypes */
-extern READ_HANDLER( wms_generic_speedup_1_16bit );
-extern READ_HANDLER( wms_generic_speedup_3 );
+extern READ16_HANDLER( wms_generic_speedup_1_16bit );
+extern READ16_HANDLER( wms_generic_speedup_3 );
 
 
 
@@ -74,16 +74,16 @@ extern READ_HANDLER( wms_generic_speedup_3 );
  *
  *************************************/
 
-WRITE_HANDLER( wms_tunit_cmos_enable_w )
+WRITE16_HANDLER( wms_tunit_cmos_enable_w )
 {
 	cmos_write_enable = 1;
 }
 
-WRITE_HANDLER( wms_tunit_cmos_w )
+WRITE16_HANDLER( wms_tunit_cmos_w )
 {
 	if (1)/*cmos_write_enable)*/
 	{
-		COMBINE_WORD_MEM(&wms_cmos_ram[offset], data);
+		COMBINE_DATA(&wms_cmos_ram[offset]);
 		cmos_write_enable = 0;
 	}
 	else
@@ -93,9 +93,9 @@ WRITE_HANDLER( wms_tunit_cmos_w )
 	}
 }
 
-READ_HANDLER( wms_tunit_cmos_r )
+READ16_HANDLER( wms_tunit_cmos_r )
 {
-	return READ_WORD(&wms_cmos_ram[offset]);
+	return wms_cmos_ram[offset];
 }
 
 
@@ -106,9 +106,9 @@ READ_HANDLER( wms_tunit_cmos_r )
  *
  *************************************/
 
-READ_HANDLER( wms_tunit_input_r )
+READ16_HANDLER( wms_tunit_input_r )
 {
-	return readinputport(offset / 2);
+	return readinputport(offset);
 }
 
 
@@ -132,7 +132,7 @@ static const UINT8 mk_prot_values[] =
 };
 static UINT8 mk_prot_index;
 
-static READ_HANDLER( mk_prot_r )
+static READ16_HANDLER( mk_prot_r )
 {
 	logerror("%08X:Protection R @ %05X = %04X\n", cpu_get_pc(), offset, mk_prot_values[mk_prot_index] << 9);
 
@@ -146,33 +146,36 @@ static READ_HANDLER( mk_prot_r )
 	return mk_prot_values[mk_prot_index++] << 9;
 }
 
-static WRITE_HANDLER( mk_prot_w )
+static WRITE16_HANDLER( mk_prot_w )
 {
-	int first_val = (data >> 9) & 0x3f;
-	int i;
-
-	/* find the desired first value and stop then */	
-	for (i = 0; i < sizeof(mk_prot_values); i++)
-		if (mk_prot_values[i] == first_val)
-		{
-			mk_prot_index = i;
-			break;
-		}
-	
-	/* just in case */
-	if (i == sizeof(mk_prot_values))
+	if (ACCESSING_MSB)
 	{
-		logerror("%08X:Unhandled protection W @ %05X = %04X\n", cpu_get_pc(), offset, data);
-		mk_prot_index = 0;
-	}
+		int first_val = (data >> 9) & 0x3f;
+		int i;
 
-	logerror("%08X:Protection W @ %05X = %04X\n", cpu_get_pc(), offset, data);
+		/* find the desired first value and stop then */
+		for (i = 0; i < sizeof(mk_prot_values); i++)
+			if (mk_prot_values[i] == first_val)
+			{
+				mk_prot_index = i;
+				break;
+			}
+
+		/* just in case */
+		if (i == sizeof(mk_prot_values))
+		{
+			logerror("%08X:Unhandled protection W @ %05X = %04X\n", cpu_get_pc(), offset, data);
+			mk_prot_index = 0;
+		}
+
+		logerror("%08X:Protection W @ %05X = %04X\n", cpu_get_pc(), offset, data);
+	}
 }
 
-static READ_HANDLER( mk_mirror_r )
+static READ16_HANDLER( mk_mirror_r )
 {
 	/* probably not protection, just a bug in the code */
-	return READ_WORD(&wms_code_rom[offset]);
+	return wms_code_rom[offset];
 }
 
 
@@ -183,26 +186,26 @@ static READ_HANDLER( mk_mirror_r )
  *
  *************************************/
 
-static UINT16 mk2_prot_data;
+static data16_t mk2_prot_data;
 
-static READ_HANDLER( mk2_prot_const_r )
+static READ16_HANDLER( mk2_prot_const_r )
 {
 	return 2;
 }
 
-static READ_HANDLER( mk2_prot_r )
+static READ16_HANDLER( mk2_prot_r )
 {
 	return mk2_prot_data;
 }
 
-static READ_HANDLER( mk2_prot_shift_r )
+static READ16_HANDLER( mk2_prot_shift_r )
 {
 	return mk2_prot_data >> 1;
 }
 
-static WRITE_HANDLER( mk2_prot_w )
+static WRITE16_HANDLER( mk2_prot_w )
 {
-	mk2_prot_data = data;
+	COMBINE_DATA(&mk2_prot_data);
 }
 
 
@@ -254,10 +257,10 @@ static const UINT32 nbajamte_prot_values[128] =
 };
 
 static const UINT32 *nbajam_prot_table;
-static UINT16 nbajam_prot_queue[5];
+static data16_t nbajam_prot_queue[5];
 static UINT8 nbajam_prot_index;
 
-static READ_HANDLER( nbajam_prot_r )
+static READ16_HANDLER( nbajam_prot_r )
 {
 	int result = nbajam_prot_queue[nbajam_prot_index];
 	if (nbajam_prot_index < 4)
@@ -265,11 +268,11 @@ static READ_HANDLER( nbajam_prot_r )
 	return result;
 }
 
-static WRITE_HANDLER( nbajam_prot_w )
+static WRITE16_HANDLER( nbajam_prot_w )
 {
-	int table_index = (offset >> 7) & 0x7f;
+	int table_index = (offset >> 6) & 0x7f;
 	UINT32 protval = nbajam_prot_table[table_index];
-	
+
 	nbajam_prot_queue[0] = data;
 	nbajam_prot_queue[1] = ((protval >> 24) & 0xff) << 9;
 	nbajam_prot_queue[2] = ((protval >> 16) & 0xff) << 9;
@@ -291,7 +294,7 @@ static void init_tunit_generic(int sound)
 	offs_t gfx_chunk = wms_gfx_rom_size / 4;
 	UINT8 *base;
 	int i;
-	
+
 	/* set up code ROMs */
 	memcpy(wms_code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 
@@ -304,7 +307,7 @@ static void init_tunit_generic(int sound)
 		wms_gfx_rom[i + 2] = base[2 * gfx_chunk + i / 4];
 		wms_gfx_rom[i + 3] = base[3 * gfx_chunk + i / 4];
 	}
-	
+
 	/* load sound ROMs and set up sound handlers */
 	sound_type = sound;
 	switch (sound)
@@ -315,7 +318,7 @@ static void init_tunit_generic(int sound)
 			memcpy(base + 0x80000, base + 0x60000, 0x20000);
 			memcpy(base + 0x60000, base + 0x20000, 0x20000);
 			break;
-			
+
 		case SOUND_ADPCM_LARGE:
 			base = memory_region(REGION_SOUND1);
 			memcpy(base + 0x1a0000, base + 0x060000, 0x20000);	/* save common bank */
@@ -334,7 +337,7 @@ static void init_tunit_generic(int sound)
 			memcpy(base + 0x0a0000, base + 0x1a0000, 0x20000);
 			memcpy(base + 0x020000, base + 0x1a0000, 0x20000);
 			break;
-		
+
 		case SOUND_DCS:
 			break;
 	}
@@ -359,9 +362,9 @@ void init_mk(void)
 	init_tunit_generic(SOUND_ADPCM);
 
 	/* protection */
-	install_mem_read_handler (0, TOBYTE(0x1b00000), TOBYTE(0x1b6ffff), mk_prot_r);
-	install_mem_write_handler(0, TOBYTE(0x1b00000), TOBYTE(0x1b6ffff), mk_prot_w);
-	install_mem_read_handler (0, TOBYTE(0x1f800000), TOBYTE(0x1fffffff), mk_mirror_r);
+	install_mem_read16_handler (0, TOBYTE(0x1b00000), TOBYTE(0x1b6ffff), mk_prot_r);
+	install_mem_write16_handler(0, TOBYTE(0x1b00000), TOBYTE(0x1b6ffff), mk_prot_w);
+	install_mem_read16_handler (0, TOBYTE(0x1f800000), TOBYTE(0x1fffffff), mk_mirror_r);
 
 	/* sound chip protection (hidden RAM) */
 	install_mem_write_handler(1, 0xfb9c, 0xfbc6, MWA_RAM);
@@ -379,16 +382,16 @@ static void init_nbajam_common(int te_protection)
 	if (!te_protection)
 	{
 		nbajam_prot_table = nbajam_prot_values;
-		install_mem_read_handler (0, TOBYTE(0x1b14020), TOBYTE(0x1b2503f), nbajam_prot_r);
-		install_mem_write_handler(0, TOBYTE(0x1b14020), TOBYTE(0x1b2503f), nbajam_prot_w);
+		install_mem_read16_handler (0, TOBYTE(0x1b14020), TOBYTE(0x1b2503f), nbajam_prot_r);
+		install_mem_write16_handler(0, TOBYTE(0x1b14020), TOBYTE(0x1b2503f), nbajam_prot_w);
 	}
 	else
 	{
 		nbajam_prot_table = nbajamte_prot_values;
-		install_mem_read_handler (0, TOBYTE(0x1b15f40), TOBYTE(0x1b37f5f), nbajam_prot_r);
-		install_mem_read_handler (0, TOBYTE(0x1b95f40), TOBYTE(0x1bb7f5f), nbajam_prot_r);
-		install_mem_write_handler(0, TOBYTE(0x1b15f40), TOBYTE(0x1b37f5f), nbajam_prot_w);
-		install_mem_write_handler(0, TOBYTE(0x1b95f40), TOBYTE(0x1bb7f5f), nbajam_prot_w);
+		install_mem_read16_handler (0, TOBYTE(0x1b15f40), TOBYTE(0x1b37f5f), nbajam_prot_r);
+		install_mem_read16_handler (0, TOBYTE(0x1b95f40), TOBYTE(0x1bb7f5f), nbajam_prot_r);
+		install_mem_write16_handler(0, TOBYTE(0x1b15f40), TOBYTE(0x1b37f5f), nbajam_prot_w);
+		install_mem_write16_handler(0, TOBYTE(0x1b95f40), TOBYTE(0x1bb7f5f), nbajam_prot_w);
 	}
 
 	/* sound chip protection (hidden RAM) */
@@ -396,7 +399,7 @@ static void init_nbajam_common(int te_protection)
 		install_mem_write_handler(1, 0xfbaa, 0xfbd4, MWA_RAM);
 	else
 		install_mem_write_handler(1, 0xfbec, 0xfc16, MWA_RAM);
-} 
+}
 
 void init_nbajam(void)
 {
@@ -433,14 +436,14 @@ static void init_mk2_common(void)
 	wms_gfx_rom_large = 1;
 
 	/* protection */
-	install_mem_write_handler(0, TOBYTE(0x00f20c60), TOBYTE(0x00f20c7f), mk2_prot_w);
-	install_mem_write_handler(0, TOBYTE(0x00f42820), TOBYTE(0x00f4283f), mk2_prot_w);
-	install_mem_read_handler (0, TOBYTE(0x01a190e0), TOBYTE(0x01a190ff), mk2_prot_r);
-	install_mem_read_handler (0, TOBYTE(0x01a191c0), TOBYTE(0x01a191df), mk2_prot_shift_r);
-	install_mem_read_handler (0, TOBYTE(0x01a3d0c0), TOBYTE(0x01a3d0ff), mk2_prot_r);
-	install_mem_read_handler (0, TOBYTE(0x01d9d1e0), TOBYTE(0x01d9d1ff), mk2_prot_const_r);
-	install_mem_read_handler (0, TOBYTE(0x01def920), TOBYTE(0x01def93f), mk2_prot_const_r);
-} 
+	install_mem_write16_handler(0, TOBYTE(0x00f20c60), TOBYTE(0x00f20c7f), mk2_prot_w);
+	install_mem_write16_handler(0, TOBYTE(0x00f42820), TOBYTE(0x00f4283f), mk2_prot_w);
+	install_mem_read16_handler (0, TOBYTE(0x01a190e0), TOBYTE(0x01a190ff), mk2_prot_r);
+	install_mem_read16_handler (0, TOBYTE(0x01a191c0), TOBYTE(0x01a191df), mk2_prot_shift_r);
+	install_mem_read16_handler (0, TOBYTE(0x01a3d0c0), TOBYTE(0x01a3d0ff), mk2_prot_r);
+	install_mem_read16_handler (0, TOBYTE(0x01d9d1e0), TOBYTE(0x01d9d1ff), mk2_prot_const_r);
+	install_mem_read16_handler (0, TOBYTE(0x01def920), TOBYTE(0x01def93f), mk2_prot_const_r);
+}
 
 void init_mk2(void)
 {
@@ -477,7 +480,7 @@ void wms_tunit_init_machine(void)
 		case SOUND_ADPCM_LARGE:
 			williams_adpcm_init(1);
 			break;
-		
+
 		case SOUND_DCS:
 			williams_dcs_init(1);
 			break;
@@ -492,32 +495,32 @@ void wms_tunit_init_machine(void)
  *
  *************************************/
 
-READ_HANDLER( wms_tunit_sound_state_r )
+READ16_HANDLER( wms_tunit_sound_state_r )
 {
 	logerror("%08X:Sound status read\n", cpu_get_pc());
 
-	if ( sound_type == SOUND_DCS && Machine->sample_rate )
-		return williams_dcs_control_r(0) >> 4;
+	if (sound_type == SOUND_DCS && Machine->sample_rate)
+		return williams_dcs_control_r() >> 4;
 
 	if (fake_sound_state)
 	{
 		fake_sound_state--;
 		return 0;
 	}
-	return 0xffff;
+	return ~0;
 }
 
-READ_HANDLER( wms_tunit_sound_r )
+READ16_HANDLER( wms_tunit_sound_r )
 {
 	logerror("%08X:Sound data read\n", cpu_get_pc());
 
-	if ( sound_type == SOUND_DCS && Machine->sample_rate )
-		return williams_dcs_data_r(0);
+	if (sound_type == SOUND_DCS && Machine->sample_rate)
+		return williams_dcs_data_r();
 
-	return 0xffff;
+	return ~0;
 }
 
-WRITE_HANDLER( wms_tunit_sound_w )
+WRITE16_HANDLER( wms_tunit_sound_w )
 {
 	/* check for out-of-bounds accesses */
 	if (!offset)
@@ -525,25 +528,26 @@ WRITE_HANDLER( wms_tunit_sound_w )
 		logerror("%08X:Unexpected write to sound (lo) = %04X\n", cpu_get_pc(), data);
 		return;
 	}
-	
-	/* call through based on the sound type */
-	switch (sound_type)
-	{
-		case SOUND_ADPCM:
-		case SOUND_ADPCM_LARGE:
-			williams_adpcm_reset_w(~data & 0x100);
-			williams_adpcm_data_w(0, data & 0xff);
 
-			/* the games seem to check for $82 loops, so this should be just barely enough */
-			fake_sound_state = 128;
-			break;
-			
-		case SOUND_DCS:
-			logerror("%08X:Sound write = %04X\n", cpu_get_pc(), data);
-			williams_dcs_reset_w(~data & 0x100);
-			williams_dcs_data_w(0, data & 0xff);
-			/* the games seem to check for $82 loops, so this should be just barely enough */
-			fake_sound_state = 128;
-			break;
-	}
+	/* call through based on the sound type */
+	if (ACCESSING_LSB && ACCESSING_MSB)
+		switch (sound_type)
+		{
+			case SOUND_ADPCM:
+			case SOUND_ADPCM_LARGE:
+				williams_adpcm_reset_w(~data & 0x100);
+				williams_adpcm_data_w(data & 0xff);
+
+				/* the games seem to check for $82 loops, so this should be just barely enough */
+				fake_sound_state = 128;
+				break;
+
+			case SOUND_DCS:
+				logerror("%08X:Sound write = %04X\n", cpu_get_pc(), data);
+				williams_dcs_reset_w(~data & 0x100);
+				williams_dcs_data_w(data & 0xff);
+				/* the games seem to check for $82 loops, so this should be just barely enough */
+				fake_sound_state = 128;
+				break;
+		}
 }

@@ -25,11 +25,9 @@ struct DisplayText
 #define SEL_MASK ((1<<SEL_BITS)-1)
 #define SEL_MASK2 ((1<<SEL_BITS2)-1)
 
-extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
-
 struct GfxElement *builduifont(void);
 void pick_uifont_colors(void);
-void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt,int erase,int update_screen);
+void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt);
 void ui_text(struct osd_bitmap *bitmap,const char *buf,int x,int y);
 void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int height);
 void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text);

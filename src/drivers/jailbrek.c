@@ -37,8 +37,7 @@ static WRITE_HANDLER( jailbrek_speech_w ) {
 	VLM5030_RST( ( data >> 2 ) & 1 );
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x07ff, colorram_r },
 	{ 0x0800, 0x0fff, videoram_r },
 	{ 0x1000, 0x10bf, MRA_RAM }, /* sprites */
@@ -54,11 +53,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3303, 0x3303, input_port_0_r }, /* DSW0 */
 	{ 0x6000, 0x6000, jailbrek_speech_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, colorram_w, &colorram },
     { 0x0800, 0x0fff, videoram_w, &videoram, &videoram_size },
     { 0x1000, 0x10bf, MWA_RAM, &spriteram, &spriteram_size }, /* sprites */
@@ -74,8 +71,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x4000, jailbrek_speech_w }, /* speech pins */
 	{ 0x5000, 0x5000, VLM5030_data_w }, /* speech data */
     { 0x8000, 0xffff, MWA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( jailbrek )
 	PORT_START	/* DSW0  - $3303 */

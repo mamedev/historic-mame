@@ -56,11 +56,11 @@
 
 
 /* code-related variables */
-extern UINT8 *	wms_code_rom;
-extern UINT8 *	wms_scratch_ram;
+extern data16_t *wms_code_rom;
+extern data16_t *wms_scratch_ram;
 
 /* CMOS-related variables */
-extern UINT8 *	wms_cmos_ram;
+extern data16_t *wms_cmos_ram;
 
 /* graphics-related variables */
 extern UINT8 *	wms_gfx_rom;
@@ -91,21 +91,21 @@ void wms_yunit_init_machine(void);
 
 
 /* external read handlers */
-READ_HANDLER( wms_yunit_dma_r );
-READ_HANDLER( wms_yunit_vram_r );
-READ_HANDLER( wms_yunit_cmos_r );
-READ_HANDLER( wms_yunit_input_r );
-READ_HANDLER( wms_yunit_gfxrom_r );
-READ_HANDLER( wms_yunit_protection_r );
+READ16_HANDLER( wms_yunit_dma_r );
+READ16_HANDLER( wms_yunit_vram_r );
+READ16_HANDLER( wms_yunit_cmos_r );
+READ16_HANDLER( wms_yunit_input_r );
+READ16_HANDLER( wms_yunit_gfxrom_r );
+READ16_HANDLER( wms_yunit_protection_r );
 
 /* external write handlers */
-WRITE_HANDLER( wms_yunit_dma_w );
-WRITE_HANDLER( wms_yunit_vram_w );
-WRITE_HANDLER( wms_yunit_cmos_w );
-WRITE_HANDLER( wms_yunit_cmos_enable_w );
-WRITE_HANDLER( wms_yunit_control_w );
-WRITE_HANDLER( wms_yunit_sound_w );
-WRITE_HANDLER( wms_yunit_paletteram_w );
+WRITE16_HANDLER( wms_yunit_dma_w );
+WRITE16_HANDLER( wms_yunit_vram_w );
+WRITE16_HANDLER( wms_yunit_cmos_w );
+WRITE16_HANDLER( wms_yunit_cmos_enable_w );
+WRITE16_HANDLER( wms_yunit_control_w );
+WRITE16_HANDLER( wms_yunit_sound_w );
+WRITE16_HANDLER( wms_yunit_paletteram_w );
 
 
 /* external video routines */
@@ -147,37 +147,33 @@ static void nvram_handler(void *file, int read_or_write)
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ16_START( readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_yunit_vram_r },
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MRA_BANK2 },
+	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MRA16_RAM },
 	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), wms_yunit_cmos_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_word_r },
+	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), MRA16_RAM },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a8009f), wms_yunit_dma_r },
 	{ TOBYTE(0x01c00000), TOBYTE(0x01c0005f), wms_yunit_input_r },
 	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), wms_yunit_protection_r },
 	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), wms_yunit_gfxrom_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE16_START( writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_yunit_vram_w },
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MWA_BANK2, &wms_scratch_ram },
+	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MWA16_RAM, &wms_scratch_ram },
 	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), wms_yunit_cmos_w },
-	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), wms_yunit_paletteram_w, &paletteram },
+	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), wms_yunit_paletteram_w, &paletteram16 },
 	{ TOBYTE(0x01a00000), TOBYTE(0x01a0009f), wms_yunit_dma_w },	/* do we need this? */
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a8009f), wms_yunit_dma_w },
 	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), wms_yunit_cmos_enable_w },
 	{ TOBYTE(0x01e00000), TOBYTE(0x01e0001f), wms_yunit_sound_w },
 	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), wms_yunit_control_w },
-	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), MWA_ROM, &wms_gfx_rom, &wms_gfx_rom_size },
+	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), MWA16_ROM, (data16_t **)&wms_gfx_rom, &wms_gfx_rom_size },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_ROM, &wms_code_rom },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &wms_code_rom },
+MEMORY_END
 
 
 

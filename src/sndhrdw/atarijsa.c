@@ -120,6 +120,24 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 }
 
 
+void atarijsa3_init_adpcm(int region)
+{
+	UINT8 *base = memory_region(region);
+	
+	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
+	/* the upper 128k is fixed, the lower 128k is bankswitched */
+	memcpy(&base[0x00000], &base[0x80000], 0x20000);
+	memcpy(&base[0x40000], &base[0x80000], 0x20000);
+	memcpy(&base[0x80000], &base[0xa0000], 0x20000);
+	memcpy(&base[0xc0000], &base[0xc0000], 0x20000);
+
+	memcpy(&base[0x20000], &base[0xe0000], 0x20000);
+	memcpy(&base[0x60000], &base[0xe0000], 0x20000);
+	memcpy(&base[0xa0000], &base[0xe0000], 0x20000);
+	memcpy(&base[0xe0000], &base[0xe0000], 0x20000);
+}
+
+
 void atarijsa_reset(void)
 {
 	/* reset the sound I/O system */
@@ -358,7 +376,7 @@ static WRITE_HANDLER( jsa2_io_w )
 			last_ctl = data;
 
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(0, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -472,14 +490,14 @@ static WRITE_HANDLER( jsa3_io_w )
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
-			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
+			OKIM6295_set_bank_base(0, oki6295_bank_base);
 
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(0, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -493,7 +511,7 @@ static WRITE_HANDLER( jsa3_io_w )
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
-			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
+			OKIM6295_set_bank_base(0, oki6295_bank_base);
 
 			/* update the volumes */
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
@@ -609,15 +627,15 @@ static WRITE_HANDLER( jsa3s_io_w )
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
-			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
+			OKIM6295_set_bank_base(0, oki6295_bank_base);
 
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
-			OKIM6295_set_frequency(1, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(0, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(1, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -631,8 +649,8 @@ static WRITE_HANDLER( jsa3s_io_w )
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
-			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
-			OKIM6295_set_bank_base(1, ALL_VOICES, 0x40000 * (data >> 6));
+			OKIM6295_set_bank_base(0, oki6295_bank_base);
+			OKIM6295_set_bank_base(1, 0x40000 * (data >> 6));
 
 			/* update the volumes */
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
@@ -666,88 +684,72 @@ static void update_all_volumes(void)
  *
  *************************************/
 
-struct MemoryReadAddress atarijsa1_readmem[] =
-{
+MEMORY_READ_START( atarijsa1_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa1_io_r },
 	{ 0x3000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryWriteAddress atarijsa1_writemem[] =
-{
+MEMORY_WRITE_START( atarijsa1_writemem )
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x2800, 0x2bff, jsa1_io_w },
 	{ 0x3000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryReadAddress atarijsa2_readmem[] =
-{
+MEMORY_READ_START( atarijsa2_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa2_io_r },
 	{ 0x3000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryWriteAddress atarijsa2_writemem[] =
-{
+MEMORY_WRITE_START( atarijsa2_writemem )
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x2800, 0x2bff, jsa2_io_w },
 	{ 0x3000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryReadAddress atarijsa3_readmem[] =
-{
+MEMORY_READ_START( atarijsa3_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa3_io_r },
 	{ 0x3000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryWriteAddress atarijsa3_writemem[] =
-{
+MEMORY_WRITE_START( atarijsa3_writemem )
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x2800, 0x2bff, jsa3_io_w },
 	{ 0x3000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryReadAddress atarijsa3s_readmem[] =
-{
+MEMORY_READ_START( atarijsa3s_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa3s_io_r },
 	{ 0x3000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-struct MemoryWriteAddress atarijsa3s_writemem[] =
-{
+MEMORY_WRITE_START( atarijsa3s_writemem )
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x2800, 0x2bff, jsa3s_io_w },
 	{ 0x3000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

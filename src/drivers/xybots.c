@@ -1,47 +1,43 @@
 /***************************************************************************
 
-Xybots Memory Map
------------------------------------
+	Atari Xybots hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
-XYBOTS 68000 MEMORY MAP
+	Games supported:
+		* Xybots (1987)
 
-Function                           Address        R/W  DATA
--------------------------------------------------------------
-Program ROM                        000000-007FFF  R    D0-D15
-Program ROM/SLAPSTIC               008000-00FFFF  R    D0-D15
-Program ROM                        010000-02FFFF  R    D0-D15
+	Known bugs:
+		* none at this time
 
-NOTE: All addresses can be accessed in byte or word mode.
+****************************************************************************
 
-
-XYBOTS 6502 MEMORY MAP
-
+	Memory map (TBA)
 
 ***************************************************************************/
-
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
-
-
-WRITE_HANDLER( xybots_playfieldram_w );
-
-int xybots_vh_start(void);
-void xybots_vh_stop(void);
-void xybots_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void xybots_scanline_update(int scanline);
 
 
 
 /*************************************
  *
- *	Initialization
+ *	Externals
+ *
+ *************************************/
+
+int xybots_vh_start(void);
+void xybots_vh_stop(void);
+void xybots_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+
+
+/*************************************
+ *
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -66,7 +62,6 @@ static void init_machine(void)
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(xybots_scanline_update, 8);
 	atarijsa_reset();
 }
 
@@ -78,11 +73,11 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port1_r )
+static READ16_HANDLER( special_port1_r )
 {
 	static int h256 = 0x0400;
 
-	int result = input_port_1_r(offset);
+	int result = readinputport(1);
 
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0200;
 	result ^= h256 ^= 0x0400;
@@ -97,38 +92,31 @@ static READ_HANDLER( special_port1_r )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xff8000, 0xff8fff, MRA_BANK3 },
-	{ 0xff9000, 0xffadff, MRA_BANK2 },
-	{ 0xffae00, 0xffafff, MRA_BANK4 },
-	{ 0xffb000, 0xffbfff, MRA_BANK5 },
-	{ 0xffc000, 0xffc7ff, paletteram_word_r },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0xff8000, 0xffbfff, MRA16_RAM },
+	{ 0xffc000, 0xffc7ff, MRA16_RAM },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_r },
 	{ 0xffe000, 0xffe0ff, atarigen_sound_r },
-	{ 0xffe100, 0xffe1ff, input_port_0_r },
+	{ 0xffe100, 0xffe1ff, input_port_0_word_r },
 	{ 0xffe200, 0xffe2ff, special_port1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xff8000, 0xff8fff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xff9000, 0xffadff, MWA_BANK2 },
-	{ 0xffae00, 0xffafff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xffb000, 0xffbfff, xybots_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffc000, 0xffc7ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0xff8000, 0xff8fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff9000, 0xffadff, MWA16_RAM },
+	{ 0xffae00, 0xffafff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0xffb000, 0xffbfff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xffc000, 0xffc7ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },
 	{ 0xffe900, 0xffe9ff, atarigen_sound_w },
-	{ 0xffea00, 0xffeaff, watchdog_reset_w },
+	{ 0xffea00, 0xffeaff, watchdog_reset16_w },
 	{ 0xffeb00, 0xffebff, atarigen_video_int_ack_w },
 	{ 0xffee00, 0xffeeff, atarigen_sound_reset_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -178,46 +166,34 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	512,	/* 512 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
-static struct GfxLayout pflayout =
+static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 chars */
-	8192,	/* 8192 chars */
-	4,		/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every char takes 32 consecutive bytes */
-};
-
-
-static struct GfxLayout molayout =
-{
-	8,8,	/* 8*8 chars */
-	16384,	/* 16384 chars */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
-	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &pflayout,      512, 16 },		/* playfield */
-	{ REGION_GFX2, 0, &molayout,      256, 48 },		/* sprites */
+	{ REGION_GFX1, 0, &pfmolayout,    512, 16 },		/* playfield */
+	{ REGION_GFX2, 0, &pfmolayout,    256, 48 },		/* sprites */
 	{ REGION_GFX3, 0, &anlayout,        0, 64 },		/* characters 8x8 */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -240,7 +216,7 @@ static const struct MachineDriver machine_driver_xybots =
 		},
 		JSA_I_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -312,17 +288,16 @@ static void init_xybots(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x008000, 107);
-
 	atarijsa_init(1, 2, 1, 0x0100);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
-
-	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
-	atarigen_show_sound_message();
 }
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAME( 1987, xybots, 0, xybots, xybots, xybots, ROT0, "Atari Games", "Xybots" )

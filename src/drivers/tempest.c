@@ -204,8 +204,7 @@ static WRITE_HANDLER( tempest_coin_w )
 	lastval = data;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0c00, 0x0c00, tempest_IN0_r },	/* IN0 */
 	{ 0x0d00, 0x0d00, input_port_3_r },	/* DSW1 */
@@ -220,11 +219,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x60d0, 0x60df, pokey2_r },
 	{ 0x9000, 0xdfff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x080f, tempest_colorram_w },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
@@ -240,8 +237,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x60d0, 0x60df, pokey2_w },
 	{ 0x60e0, 0x60e0, tempest_led_w },
 	{ 0x9000, 0xdfff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( tempest )
 	PORT_START	/* IN0 */

@@ -264,8 +264,7 @@ static READ_HANDLER( dkong_in2_r )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },	/* DK: 0000-3fff */
 	{ 0x6000, 0x6fff, MRA_RAM },	/* including sprites RAM */
 	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
@@ -274,11 +273,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x7d00, 0x7d00, dkong_in2_r },	/* IN2/DSW2 */
 	{ 0x7d80, 0x7d80, input_port_3_r },	/* DSW1 */
 	{ 0x8000, 0x9fff, MRA_ROM },	/* DK3 and bootleg DKjr only */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dkong3_readmem[] =
-{
+static MEMORY_READ_START( dkong3_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },	/* DK: 0000-3fff */
 	{ 0x6000, 0x6fff, MRA_RAM },	/* including sprites RAM */
 	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
@@ -287,11 +284,9 @@ static struct MemoryReadAddress dkong3_readmem[] =
 	{ 0x7d00, 0x7d00, input_port_2_r },	/* IN2/DSW2 */
 	{ 0x7d80, 0x7d80, input_port_3_r },	/* DSW1 */
 	{ 0x8000, 0x9fff, MRA_ROM },	/* DK3 and bootleg DKjr only */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress radarscp_writemem[] =
-{
+static MEMORY_WRITE_START( radarscp_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
@@ -313,11 +308,9 @@ static struct MemoryWriteAddress radarscp_writemem[] =
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dkong_writemem[] =
-{
+static MEMORY_WRITE_START( dkong_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
@@ -339,8 +332,7 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 READ_HANDLER( herbiedk_iack_r )
 {
@@ -348,8 +340,7 @@ READ_HANDLER( herbiedk_iack_r )
     return 0;
 }
 
-static struct MemoryReadAddress hunchbkd_readmem[] =
-{
+static MEMORY_READ_START( hunchbkd_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_ROM },
@@ -364,11 +355,9 @@ static struct MemoryReadAddress hunchbkd_readmem[] =
     { 0x3000, 0x3fff, hunchbks_mirror_r },
     { 0x5000, 0x5fff, hunchbks_mirror_r },
     { 0x7000, 0x7fff, hunchbks_mirror_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hunchbkd_writemem[] =
-{
+static MEMORY_WRITE_START( hunchbkd_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x4fff, MWA_ROM },
@@ -386,8 +375,7 @@ static struct MemoryWriteAddress hunchbkd_writemem[] =
     { 0x3000, 0x3fff, hunchbks_mirror_w },
     { 0x5000, 0x5fff, hunchbks_mirror_w },
     { 0x7000, 0x7fff, hunchbks_mirror_w },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 int hunchloopback;
 
@@ -425,63 +413,46 @@ READ_HANDLER( herbiedk_port1_r )
     return 1;
 }
 
-static struct IOWritePort hunchbkd_writeport[] =
-{
+static PORT_WRITE_START( hunchbkd_writeport )
 	{ 0x101, 0x101, hunchbkd_data_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort hunchbkd_readport[] =
-{
+static PORT_READ_START( hunchbkd_readport )
 	{ 0x00, 0x00, hunchbkd_port0_r },
 	{ 0x01, 0x01, hunchbkd_port1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort herbiedk_readport[] =
-{
+static PORT_READ_START( herbiedk_readport )
 	{ 0x01, 0x01, herbiedk_port1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress writemem_sound[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
-static struct IOReadPort readport_sound[] =
-{
+MEMORY_END
+static PORT_READ_START( readport_sound )
 	{ 0x00,     0xff,     dkong_sh_tune_r },
 	{ I8039_p1, I8039_p1, dkong_sh_p1_r },
 	{ I8039_p2, I8039_p2, dkong_sh_p2_r },
 	{ I8039_t0, I8039_t0, dkong_sh_t0_r },
 	{ I8039_t1, I8039_t1, dkong_sh_t1_r },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort writeport_sound[] =
-{
+PORT_END
+static PORT_WRITE_START( writeport_sound )
 	{ I8039_p1, I8039_p1, dkong_sh_p1_w },
 	{ I8039_p2, I8039_p2, dkong_sh_p2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort readport_hunchbkd_sound[] =
-{
+static PORT_READ_START( readport_hunchbkd_sound )
 	{ I8039_bus,I8039_bus,soundlatch_r },
 	{ I8039_p1, I8039_p1, dkong_sh_p1_r },
 	{ I8039_p2, I8039_p2, dkong_sh_p2_r },
 	{ I8039_t0, I8039_t0, dkong_sh_t0_r },
 	{ I8039_t1, I8039_t1, dkong_sh_t1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryWriteAddress dkongjr_writemem[] =
-{
+static MEMORY_WRITE_START( dkongjr_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
@@ -505,8 +476,7 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },	/* bootleg DKjr only */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -528,8 +498,7 @@ WRITE_HANDLER( dkong3_2a03_reset_w )
 	}
 }
 
-static struct MemoryWriteAddress dkong3_writemem[] =
-{
+static MEMORY_WRITE_START( dkong3_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
@@ -545,49 +514,38 @@ static struct MemoryWriteAddress dkong3_writemem[] =
 	{ 0x7e85, 0x7e85, MWA_NOP },	/* ??? */
 	{ 0x7e86, 0x7e87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort dkong3_writeport[] =
-{
+static PORT_WRITE_START( dkong3_writeport )
 	{ 0x00, 0x00, IOWP_NOP },	/* ??? */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress dkong3_sound1_readmem[] =
-{
+static MEMORY_READ_START( dkong3_sound1_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x4016, 0x4016, soundlatch_r },
 	{ 0x4017, 0x4017, soundlatch2_r },
 	{ 0x4000, 0x4017, NESPSG_0_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dkong3_sound1_writemem[] =
-{
+static MEMORY_WRITE_START( dkong3_sound1_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x4000, 0x4017, NESPSG_0_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dkong3_sound2_readmem[] =
-{
+static MEMORY_READ_START( dkong3_sound2_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x4016, 0x4016, soundlatch3_r },
 	{ 0x4000, 0x4017, NESPSG_1_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dkong3_sound2_writemem[] =
-{
+static MEMORY_WRITE_START( dkong3_sound2_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x4000, 0x4017, NESPSG_1_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

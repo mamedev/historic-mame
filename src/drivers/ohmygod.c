@@ -14,12 +14,12 @@ Notes:
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *ohmygod_videoram;
+extern data16_t *ohmygod_videoram;
 
-READ_HANDLER( ohmygod_videoram_r );
-WRITE_HANDLER( ohmygod_videoram_w );
-WRITE_HANDLER( ohmygod_spritebank_w );
-WRITE_HANDLER( ohmygod_scroll_w );
+WRITE16_HANDLER( ohmygod_videoram_w );
+WRITE16_HANDLER( ohmygod_spritebank_w );
+WRITE16_HANDLER( ohmygod_scrollx_w );
+WRITE16_HANDLER( ohmygod_scrolly_w );
 int ohmygod_vh_start(void);
 void ohmygod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -39,60 +39,59 @@ static void ohmygod_init_machine(void)
 	memcpy(rom + 0x20000,rom + 0x40000 + 0x20000 * sndbank,0x20000);
 }
 
-WRITE_HANDLER( ohmygod_ctrl_w )
+WRITE16_HANDLER( ohmygod_ctrl_w )
 {
-	unsigned char *rom = memory_region(REGION_SOUND1);
-
-
-	coin_counter_w(0,data & 0x1000);
-	coin_counter_w(1,data & 0x2000);
-
-	/* ADPCM bank switch */
-	if (sndbank != ((data & 0xf0) >> 4))
+	if (ACCESSING_LSB)
 	{
-		sndbank = ((data & 0xf0) >> 4);
-		memcpy(rom + 0x20000,rom + 0x40000 + 0x20000 * sndbank,0x20000);
+		unsigned char *rom = memory_region(REGION_SOUND1);
+
+		/* ADPCM bank switch */
+		if (sndbank != ((data & 0xf0) >> 4))
+		{
+			sndbank = ((data & 0xf0) >> 4);
+			memcpy(rom + 0x20000,rom + 0x40000 + 0x20000 * sndbank,0x20000);
+		}
+	}
+	if (ACCESSING_MSB)
+	{
+		coin_counter_w(0,data & 0x1000);
+		coin_counter_w(1,data & 0x2000);
 	}
 }
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x300000, 0x303fff, MRA_BANK1 },
-	{ 0x304000, 0x307fff, ohmygod_videoram_r },
-	{ 0x308000, 0x30ffff, MRA_BANK2 },
-	{ 0x700000, 0x701fff, MRA_BANK3 },
-	{ 0x702000, 0x703fff, MRA_BANK4 },
-	{ 0x704000, 0x707fff, MRA_BANK5 },
-	{ 0x708000, 0x70bfff, MRA_BANK6 },
-	{ 0x800000, 0x800001, input_port_0_r },
-	{ 0x800002, 0x800003, input_port_1_r },
-	{ 0xa00000, 0xa00001, input_port_2_r },
-	{ 0xa00002, 0xa00003, input_port_3_r },
-	{ 0xb00000, 0xb00001, OKIM6295_status_0_r },
-	{ 0xc00000, 0xc00001, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x300000, 0x303fff, MRA16_RAM },
+	{ 0x304000, 0x307fff, MRA16_RAM },
+	{ 0x308000, 0x30ffff, MRA16_RAM },
+	{ 0x700000, 0x703fff, MRA16_RAM },
+	{ 0x704000, 0x707fff, MRA16_RAM },
+	{ 0x708000, 0x70bfff, MRA16_RAM },
+	{ 0x800000, 0x800001, input_port_0_word_r },
+	{ 0x800002, 0x800003, input_port_1_word_r },
+	{ 0xa00000, 0xa00001, input_port_2_word_r },
+	{ 0xa00002, 0xa00003, input_port_3_word_r },
+	{ 0xb00000, 0xb00001, OKIM6295_status_0_lsb_r },
+	{ 0xc00000, 0xc00001, watchdog_reset16_r },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x300000, 0x303fff, MWA_BANK1 },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x300000, 0x303fff, MWA16_RAM },
 	{ 0x304000, 0x307fff, ohmygod_videoram_w, &ohmygod_videoram },
-	{ 0x308000, 0x30ffff, MWA_BANK2 },
-	{ 0x400000, 0x400003, ohmygod_scroll_w },
-	{ 0x600000, 0x6007ff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },
-	{ 0x700000, 0x701fff, MWA_BANK3, &spriteram, &spriteram_size },
-	{ 0x702000, 0x703fff, MWA_BANK4, &spriteram_2 },
-	{ 0x704000, 0x707fff, MWA_BANK5 },
-	{ 0x708000, 0x70bfff, MWA_BANK6 },	/* work RAM */
+	{ 0x308000, 0x30ffff, MWA16_RAM },
+	{ 0x400000, 0x400001, ohmygod_scrollx_w },
+	{ 0x400002, 0x400003, ohmygod_scrolly_w },
+	{ 0x600000, 0x6007ff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },
+	{ 0x700000, 0x703fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x704000, 0x707fff, MWA16_RAM },
+	{ 0x708000, 0x70bfff, MWA16_RAM },	/* work RAM */
 	{ 0x900000, 0x900001, ohmygod_ctrl_w },
-	{ 0xb00000, 0xb00001, OKIM6295_data_0_w },
+	{ 0xb00000, 0xb00001, OKIM6295_data_0_lsb_w },
 	{ 0xd00000, 0xd00001, ohmygod_spritebank_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

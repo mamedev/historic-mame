@@ -114,84 +114,65 @@ WRITE_HANDLER( ebases_trackball_select_w );
 READ_HANDLER( ebases_trackball_r );
 
 
-static struct MemoryReadAddress seawolf2_readmem[] =
-{
+static MEMORY_READ_START( seawolf2_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress seawolf2_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( seawolf2_writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xcfff, MRA_ROM },
 	{ 0xd000, 0xdfff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },	/* ASG */
 	{ 0x8000, 0xcfff, MWA_ROM },
 	{ 0xd000, 0xdfff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress robby_readmem[] =
-{
+static MEMORY_READ_START( robby_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress robby_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( robby_writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x8000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress profpac_readmem[] =
-{
+static MEMORY_READ_START( profpac_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress profpac_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( profpac_writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x8000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x08, 0x08, wow_intercept_r },
 	{ 0x0e, 0x0e, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
   	{ 0x12, 0x12, input_port_2_r },
 	{ 0x13, 0x13, input_port_3_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort seawolf2_writeport[] =
-{
+static PORT_WRITE_START( seawolf2_writeport )
 	{ 0x00, 0x07, astrocde_colour_register_w },
 	{ 0x08, 0x08, astrocde_mode_w },
 	{ 0x09, 0x09, astrocde_colour_split_w },
@@ -202,10 +183,8 @@ static struct IOWritePort seawolf2_writeport[] =
 	{ 0x0e, 0x0e, astrocde_interrupt_enable_w },
 	{ 0x0f, 0x0f, astrocde_interrupt_w },
 	{ 0x19, 0x19, astrocde_magic_expand_color_w },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x07, astrocde_colour_register_w },
 	{ 0x08, 0x08, astrocde_mode_w },
 	{ 0x09, 0x09, astrocde_colour_split_w },
@@ -221,8 +200,7 @@ static struct IOWritePort writeport[] =
 	{ 0x5b, 0x5b, MWA_NOP }, /* speech board ? Wow always sets this to a5*/
 	{ 0x78, 0x7e, astrocde_pattern_board_w },
 /*	{ 0xf8, 0xff, MWA_NOP }, */ /* Gorf uses these */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

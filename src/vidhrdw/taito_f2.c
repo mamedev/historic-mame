@@ -67,11 +67,11 @@ if (offset >= 0x0a)
 
 extern int TC0480SCP_pri_reg;
 
-unsigned char *f2_sprite_extension;
+data16_t *f2_sprite_extension;
 size_t f2_spriteext_size;
 int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
-static UINT16 *spriteram_buffered,*spriteram_delayed;
 
+static data16_t *spriteram_buffered,*spriteram_delayed;
 
 struct tempsprite
 {
@@ -83,65 +83,65 @@ struct tempsprite
 };
 struct tempsprite *spritelist;
 
-/****************************************************
-Needed by Metal Black
-****************************************************/
+/*******************************************************
+   The TC0480SCP games may use separate palettes for
+   tilemaps and sprites (only Metalb actually does)
+*******************************************************/
 int f2_tilemap_col_base = 0;
 
-/****************************************************
+/*******************************************************
+   Four sprite banking methods are used for games with
+   more than $2000 sprite tiles, because the sprite ram
+   only uses 13 bits for tile numbers.
 
-!!!! NO LONGER USED IN THE F2 DRIVER !!!!
-
-(I think f2_video_version can be removed altogether.)
-
-Determines what capabilities handled in video driver:
- 0 = sprites,
- 1 = sprites + layers,
- 2 = sprites + layers + rotation
- 3 = double lot of standard layers (thundfox)
- 4 = 4 bg layers (e.g. deadconx)
-****************************************************/
-//int f2_video_version = 1;
-
-/****************************************************
-Determines sprite banking method:
- 0 = standard
- 1 = use sprite extension area lo bytes for hi 6 bits
- 2 = use sprite extension area hi bytes
- 3 = use sprite extension area lo bytes as hi bytes
-*****************************************************/
+    0 = standard [only a limited selection of sprites
+                  can be displayed]
+    1 = use sprite extension area lo bytes for hi 6 bits
+    2 = use sprite extension area hi bytes
+    3 = use sprite extension area lo bytes as hi bytes
+            [sprite extension areas mean all sprite
+             tiles are always accessible]
+*******************************************************/
 int f2_spriteext = 0;
 
-static int f2_pivot_xdisp = 0;
-static int f2_pivot_ydisp = 0;
+/*************************************************************************
+   On the left hand screen edge [assuming horiz screen, no screenflip;
+   in screenflip it is the right hand edge etc.] there may be 0-3 pixels
+   of rubbish in the tilemaps. To erase this we set a value for each
+   game of 0 to +3. Can't be calculated.
+*************************************************************************/
+static int f2_hide_pixels;
+
+
 static int spritebank[8];
 static int koshien_spritebank;
-/******************************************************************************
-f2_hide_pixels
-==============
-Allows us to iron out pixels of rubbish on edge of scr layers.
-Value has to be set per game, 0 to +3. Cannot be calculated.
-******************************************************************************/
-static int f2_hide_pixels;
-static int f2_xkludge = 0;   /* Needed by Deadconx, Metalb, Footchmp */
-static int f2_ykludge = 0;
 
+/* remember flip status over frames because driftout can fail to set it */
+static int sprites_flipscreen = 0;
+
+static int f2_pivot_xdisp = 0;   /* Needed in games with a pivot layer */
+static int f2_pivot_ydisp = 0;
+
+static int f2_xkludge = 0;   /* Needed in TC0480SCP games: Deadconx, Metalb, Footchmp */
+static int f2_ykludge = 0;
 
 
 static int has_two_TC0100SCN(void)
 {
-	const struct MemoryWriteAddress *mwa;
+	const struct Memory_WriteAddress16 *mwa;
 
 	/* scan the memory handlers and see if the second TC0100SCN is used */
 
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (mwa->start != -1)
+		while (!IS_MEMORY_END(mwa))
 		{
-			if (mwa->handler == TC0100SCN_word_1_w)
-				return 1;
-
+			if (!IS_MEMORY_MARKER(mwa))
+			{
+				if (mwa->handler == TC0100SCN_word_1_w)
+					return 1;
+			}
 			mwa++;
 		}
 	}
@@ -151,18 +151,20 @@ static int has_two_TC0100SCN(void)
 
 static int has_TC0480SCP(void)
 {
-	const struct MemoryWriteAddress *mwa;
+	const struct Memory_WriteAddress16 *mwa;
 
 	/* scan the memory handlers and see if the TC0480SCP is used */
 
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (mwa->start != -1)
+		while (!IS_MEMORY_END(mwa))
 		{
-			if (mwa->handler == TC0480SCP_word_w)
-				return 1;
-
+			if (!IS_MEMORY_MARKER(mwa))
+			{
+				if (mwa->handler == TC0480SCP_word_w)
+					return 1;
+			}
 			mwa++;
 		}
 	}
@@ -172,18 +174,20 @@ static int has_TC0480SCP(void)
 
 static int has_TC0110PCR(void)
 {
-	const struct MemoryWriteAddress *mwa;
+	const struct Memory_WriteAddress16 *mwa;
 
 	/* scan the memory handlers and see if the TC0110PCR is used */
 
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (mwa->start != -1)
+		while (!IS_MEMORY_END(mwa))
 		{
-			if (mwa->handler == TC0110PCR_word_w)
-				return 1;
-
+			if (!IS_MEMORY_MARKER(mwa))
+			{
+				if (mwa->handler == TC0110PCR_word_w)
+					return 1;
+			}
 			mwa++;
 		}
 	}
@@ -193,18 +197,20 @@ static int has_TC0110PCR(void)
 
 static int has_TC0280GRD(void)
 {
-	const struct MemoryWriteAddress *mwa;
+	const struct Memory_WriteAddress16 *mwa;
 
 	/* scan the memory handlers and see if the TC0280GRD is used */
 
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (mwa->start != -1)
+		while (!IS_MEMORY_END(mwa))
 		{
-			if (mwa->handler == TC0280GRD_word_w)
-				return 1;
-
+			if (!IS_MEMORY_MARKER(mwa))
+			{
+				if (mwa->handler == TC0280GRD_word_w)
+					return 1;
+			}
 			mwa++;
 		}
 	}
@@ -214,18 +220,20 @@ static int has_TC0280GRD(void)
 
 static int has_TC0430GRW(void)
 {
-	const struct MemoryWriteAddress *mwa;
+	const struct Memory_WriteAddress16 *mwa;
 
 	/* scan the memory handlers and see if the TC0430GRW is used */
 
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (mwa->start != -1)
+		while (!IS_MEMORY_END(mwa))
 		{
-			if (mwa->handler == TC0430GRW_word_w)
-				return 1;
-
+			if (!IS_MEMORY_MARKER(mwa))
+			{
+				if (mwa->handler == TC0430GRW_word_w)
+					return 1;
+			}
 			mwa++;
 		}
 	}
@@ -286,7 +294,6 @@ int taitof2_core_vh_start (void)
 
 int taitof2_default_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -294,7 +301,6 @@ int taitof2_default_vh_start (void)
 
 int taitof2_finalb_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 1;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -302,7 +308,6 @@ int taitof2_finalb_vh_start (void)
 
 int taitof2_3p_vh_start (void)   /* Megab, Liquidk */
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -310,7 +315,6 @@ int taitof2_3p_vh_start (void)   /* Megab, Liquidk */
 
 int taitof2_3p_buf_vh_start (void)   /* Solfigtr, Koshien */
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -318,7 +322,6 @@ int taitof2_3p_buf_vh_start (void)   /* Solfigtr, Koshien */
 
 int taitof2_driftout_vh_start (void)
 {
-//	f2_video_version = 2;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	f2_pivot_xdisp = -16;
@@ -328,7 +331,6 @@ int taitof2_driftout_vh_start (void)
 
 int taitof2_c_vh_start (void)   /* Quiz Crayons, Quiz Jinsei */
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 3;
 	return (taitof2_core_vh_start());
@@ -336,7 +338,6 @@ int taitof2_c_vh_start (void)   /* Quiz Crayons, Quiz Jinsei */
 
 int taitof2_ssi_vh_start (void)
 {
-//	f2_video_version = 0;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -344,7 +345,6 @@ int taitof2_ssi_vh_start (void)
 
 int taitof2_growl_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -352,7 +352,6 @@ int taitof2_growl_vh_start (void)
 
 int taitof2_ninjak_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -360,7 +359,6 @@ int taitof2_ninjak_vh_start (void)
 
 int taitof2_gunfront_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -368,7 +366,6 @@ int taitof2_gunfront_vh_start (void)
 
 int taitof2_thundfox_vh_start (void)
 {
-//	f2_video_version = 3;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -376,7 +373,6 @@ int taitof2_thundfox_vh_start (void)
 
 int taitof2_mjnquest_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -384,7 +380,6 @@ int taitof2_mjnquest_vh_start (void)
 
 int taitof2_footchmp_vh_start (void)
 {
-//	f2_video_version = 4;
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x1d;
 	f2_ykludge = 0x08;
@@ -395,7 +390,6 @@ int taitof2_footchmp_vh_start (void)
 
 int taitof2_hthero_vh_start (void)
 {
-//	f2_video_version = 4;
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x33;   // needs different kludges from Footchmp
 	f2_ykludge = - 0x04;
@@ -406,7 +400,6 @@ int taitof2_hthero_vh_start (void)
 
 int taitof2_deadconx_vh_start (void)
 {
-//	f2_video_version = 4;
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x1e;
 	f2_ykludge = 0x08;
@@ -417,7 +410,6 @@ int taitof2_deadconx_vh_start (void)
 
 int taitof2_deadconj_vh_start (void)
 {
-//	f2_video_version = 4;
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x34;
 	f2_ykludge = - 0x05;
@@ -428,7 +420,6 @@ int taitof2_deadconj_vh_start (void)
 
 int taitof2_metalb_vh_start (void)
 {
-//	f2_video_version = 4;
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x34;
 	f2_ykludge = - 0x04;
@@ -439,7 +430,6 @@ int taitof2_metalb_vh_start (void)
 
 int taitof2_yuyugogo_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 1;
 	return (taitof2_core_vh_start());
@@ -447,7 +437,6 @@ int taitof2_yuyugogo_vh_start (void)
 
 int taitof2_yesnoj_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -455,7 +444,6 @@ int taitof2_yesnoj_vh_start (void)
 
 int taitof2_dinorex_vh_start (void)
 {
-//	f2_video_version = 1;
 	f2_hide_pixels = 3;
 	f2_spriteext = 3;
 	return (taitof2_core_vh_start());
@@ -463,7 +451,6 @@ int taitof2_dinorex_vh_start (void)
 
 int taitof2_dondokod_vh_start (void)	/* dondokod, cameltry */
 {
-//	f2_video_version = 2;
 	f2_hide_pixels = 3;
 	f2_spriteext = 0;
 	f2_pivot_xdisp = -16;
@@ -473,7 +460,6 @@ int taitof2_dondokod_vh_start (void)	/* dondokod, cameltry */
 
 int taitof2_pulirula_vh_start (void)
 {
-//	f2_video_version = 2;
 	f2_hide_pixels = 3;
 	f2_spriteext = 2;
 	f2_pivot_xdisp = -10;	/* alignment seems correct (see level 2, falling */
@@ -515,36 +501,24 @@ void taitof2_vh_stop (void)
           SPRITE READ AND WRITE HANDLERS
 ********************************************************/
 
-READ_HANDLER( taitof2_spriteram_r )
+WRITE16_HANDLER( taitof2_sprite_extension_w )
 {
-	return READ_WORD(&spriteram[offset]);
-}
-
-WRITE_HANDLER( taitof2_spriteram_w )
-{
-	COMBINE_WORD_MEM(&spriteram[offset],data);
-}
-
-WRITE_HANDLER( taitof2_sprite_extension_w )
-{
-	if (offset < 0x1000)   /* areas above this cleared in some games, but not used */
+	if (offset < 0x800)   /* areas above 0x1000 cleared in some games, but not used */
 	{
-		COMBINE_WORD_MEM(&f2_sprite_extension[offset],data);
+		COMBINE_DATA(&f2_sprite_extension[offset]);
 	}
 }
 
-WRITE_HANDLER( taitof2_spritebank_w )
+WRITE16_HANDLER( taitof2_spritebank_w )
 {
-	int i;
-	int j;
+	int i=0;
+	int j=0;
 
-	i=0;
-	j = (offset >> 1);
-	if (j < 2) return;   /* these are always irrelevant zero writes */
+	if (offset < 2) return;   /* these are always irrelevant zero writes */
 
-	if ((offset >> 1) < 4)   /* special bank pairs */
+	if (offset < 4)   /* special bank pairs */
 	{
-		j = (offset & 2);   /* either set pair 0&1 or 2&3 */
+		j = (offset & 1) << 1;   /* either set pair 0&1 or 2&3 */
 		i = data << 11;
 
 		logerror("bank %d, set to: %04x\n", j, i);
@@ -557,18 +531,18 @@ WRITE_HANDLER( taitof2_spritebank_w )
 	else   /* last 4 are individual banks */
 	{
 		i = data << 10;
-		logerror("bank %d, new value: %04x\n", j, i);
-		spritebank[j] = i;
+		logerror("bank %d, new value: %04x\n", offset, i);
+		spritebank[offset] = i;
 	}
 
 }
 
-READ_HANDLER( koshien_spritebank_r )
+READ16_HANDLER( koshien_spritebank_r )
 {
 	return koshien_spritebank;
 }
 
-WRITE_HANDLER( koshien_spritebank_w )
+WRITE16_HANDLER( koshien_spritebank_w )
 {
 	koshien_spritebank = data;
 
@@ -645,21 +619,21 @@ void taitof2_update_palette(void)
 		if (f2_spriteext == 1)   /* Yuyugogo */
 		{
 			code = spriteram_buffered[offs/2] & 0x3ff;
-			i = (READ_WORD(&f2_sprite_extension[(extoffs >> 3)]) & 0x3f ) << 10;
+			i = (f2_sprite_extension[(extoffs >> 4)] & 0x3f ) << 10;
 			code = (i | code);
 		}
 
 		if (f2_spriteext == 2)   /* Pulirula */
 		{
 			code = spriteram_buffered[offs/2] & 0xff;
-			i = (READ_WORD(&f2_sprite_extension[(extoffs >> 3)]) & 0xff00 );
+			i = (f2_sprite_extension[(extoffs >> 4)] & 0xff00 );
 			code = (i | code);
 		}
 
 		if (f2_spriteext == 3)   /* Dinorex and a few quizzes */
 		{
 			code = spriteram_buffered[offs/2] & 0xff;
-			i = (READ_WORD(&f2_sprite_extension[(extoffs >> 3)]) & 0xff ) << 8;
+			i = (f2_sprite_extension[(extoffs >> 4)] & 0xff ) << 8;
 			code = (i | code);
 		}
 
@@ -770,7 +744,6 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 	int scrollx=0, scrolly=0;
 	int curx,cury;
 	int f2_x_offset;
-	int sprites_flipscreen = 0;
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
 	   while processing sprite ram and then draw them all at the end */
@@ -922,8 +895,8 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 			}
 		}
 
-/* Black lines between flames in Gunfront before zoom finishes suggest
-   these calculations are flawed. */
+/* Black lines between flames in Gunfront attract before the zoom
+   finishes suggest these calculations are flawed? */
 
 		if (big_sprite)
 		{
@@ -978,7 +951,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 			int i;
 
 			code = spriteram_buffered[(offs)/2] & 0x3ff;
-			i = (READ_WORD(&f2_sprite_extension[(extoffs >> 3)]) & 0x3f ) << 10;
+			i = (f2_sprite_extension[(extoffs >> 4)] & 0x3f ) << 10;
 			code = (i | code);
 		}
 
@@ -987,7 +960,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 			int i;
 
 			code = spriteram_buffered[(offs)/2] & 0xff;
-			i = (READ_WORD(&f2_sprite_extension[(extoffs >> 3)]) & 0xff00 );
+			i = (f2_sprite_extension[(extoffs >> 4)] & 0xff00 );
 			code = (i | code);
 		}
 
@@ -996,7 +969,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 			int i;
 
 			code = spriteram_buffered[(offs)/2] & 0xff;
-			i = (READ_WORD(&f2_sprite_extension[(extoffs >> 3)]) & 0xff ) << 8;
+			i = (f2_sprite_extension[(extoffs >> 4)] & 0xff ) << 8;
 			code = (i | code);
 		}
 
@@ -1081,7 +1054,7 @@ static void taitof2_handle_sprite_buffering(void)
 {
 	if (prepare_sprites)	/* no buffering */
 	{
-		memcpy(spriteram_buffered,spriteram,spriteram_size);
+		memcpy(spriteram_buffered,spriteram16,spriteram_size);
 		prepare_sprites = 0;
 	}
 }
@@ -1138,8 +1111,8 @@ void taitof2_partial_buffer_delayed_eof_callback(void)
 	prepare_sprites = 0;
 	memcpy(spriteram_buffered,spriteram_delayed,spriteram_size);
 	for (i = 0;i < spriteram_size/2;i += 4)
-		spriteram_buffered[i] = READ_WORD(&spriteram[2*i]);
-	memcpy(spriteram_delayed,spriteram,spriteram_size);
+		spriteram_buffered[i] = spriteram16[i];
+	memcpy(spriteram_delayed,spriteram16,spriteram_size);
 }
 void taitof2_partial_buffer_delayed_thundfox_eof_callback(void)
 {
@@ -1151,11 +1124,11 @@ void taitof2_partial_buffer_delayed_thundfox_eof_callback(void)
 	memcpy(spriteram_buffered,spriteram_delayed,spriteram_size);
 	for (i = 0;i < spriteram_size/2;i += 8)
 	{
-		spriteram_buffered[i]   = READ_WORD(&spriteram[2*i]);
-		spriteram_buffered[i+1] = READ_WORD(&spriteram[2*(i+1)]);
-		spriteram_buffered[i+4] = READ_WORD(&spriteram[2*(i+4)]);
+		spriteram_buffered[i]   = spriteram16[i];
+		spriteram_buffered[i+1] = spriteram16[i+1];
+		spriteram_buffered[i+4] = spriteram16[i+4];
 	}
-	memcpy(spriteram_delayed,spriteram,spriteram_size);
+	memcpy(spriteram_delayed,spriteram16,spriteram_size);
 }
 
 
@@ -1186,17 +1159,14 @@ void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	taitof2_update_palette();
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
 	draw_sprites(bitmap,NULL);
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0),0);
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0)^1,0);
-	TC0100SCN_tilemap_draw(bitmap,0,2,0);
+	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0),0,0);
+	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0)^1,0,0);
+	TC0100SCN_tilemap_draw(bitmap,0,2,0,0);
 }
 
 
@@ -1209,17 +1179,14 @@ void taitof2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	taitof2_update_palette();
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0),0);
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0)^1,0);
+	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0),0,0);
+	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0)^1,0,0);
 	draw_sprites(bitmap,NULL);
-	TC0100SCN_tilemap_draw(bitmap,0,2,0);
+	TC0100SCN_tilemap_draw(bitmap,0,2,0,0);
 }
 
 
@@ -1237,10 +1204,7 @@ void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	taitof2_update_palette();
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
@@ -1257,9 +1221,9 @@ void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],1<<16);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[1],2<<16);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],4<<16);
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1319,10 +1283,7 @@ void taitof2_pri_roz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 		for (i = 0;i < 4;i++)
 			palette_used_colors[16 * (roz_base_color+i)] = PALETTE_COLOR_TRANSPARENT;
 	}
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
@@ -1351,7 +1312,7 @@ void taitof2_pri_roz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 			draw_roz_layer(bitmap);
 			lastpri = rozpri;
 		}
-		TC0100SCN_tilemap_draw(bitmap,0,layer[drawn],(1<<drawn)<<16);
+		TC0100SCN_tilemap_draw(bitmap,0,layer[drawn],0,1<<drawn);
 		lastpri = tilepri[drawn];
 		drawn++;
 	}
@@ -1392,10 +1353,7 @@ void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	taitof2_update_palette();
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc ())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 
 	layer[0][0] = TC0100SCN_bottomlayer(0);
@@ -1437,17 +1395,17 @@ void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			pick = 0;
 		else pick = 1;
 
-		TC0100SCN_tilemap_draw(bitmap,pick,layer[pick][drawn[pick]],(1<<(drawn[pick]+2*pick))<<16);
+		TC0100SCN_tilemap_draw(bitmap,pick,layer[pick][drawn[pick]],0,1<<(drawn[pick]+2*pick));
 		drawn[pick]++;
 	}
 	while (drawn[0] < 2)
 	{
-		TC0100SCN_tilemap_draw(bitmap,0,layer[0][drawn[0]],(1<<drawn[0])<<16);
+		TC0100SCN_tilemap_draw(bitmap,0,layer[0][drawn[0]],0,1<<drawn[0]);
 		drawn[0]++;
 	}
 	while (drawn[1] < 2)
 	{
-		TC0100SCN_tilemap_draw(bitmap,1,layer[1][drawn[1]],(1<<(drawn[1]+2))<<16);
+		TC0100SCN_tilemap_draw(bitmap,1,layer[1][drawn[1]],0,1<<(drawn[1]+2));
 		drawn[1]++;
 	}
 
@@ -1475,13 +1433,13 @@ void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (tilepri[0][2] < tilepri[1][2])
 	{
-		TC0100SCN_tilemap_draw(bitmap,0,layer[0][2],0);
-		TC0100SCN_tilemap_draw(bitmap,1,layer[1][2],0);
+		TC0100SCN_tilemap_draw(bitmap,0,layer[0][2],0,0);
+		TC0100SCN_tilemap_draw(bitmap,1,layer[1][2],0,0);
 	}
 	else
 	{
-		TC0100SCN_tilemap_draw(bitmap,1,layer[1][2],0);
-		TC0100SCN_tilemap_draw(bitmap,0,layer[0][2],0);
+		TC0100SCN_tilemap_draw(bitmap,1,layer[1][2],0,0);
+		TC0100SCN_tilemap_draw(bitmap,0,layer[0][2],0,0);
 	}
 }
 
@@ -1628,12 +1586,7 @@ Some are still suspect! [see taitoic.c for more about this]
 		for (i = 0;i < Machine->drv->total_colors;i += 16)
 			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
 	}
-	if (palette_recalc ())
-	{
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	}
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = TC0480SCP_pri_lookup[priority][0];   /* tells us which bg layer is bottom */
 	layer[1] = TC0480SCP_pri_lookup[priority][1];
@@ -1661,22 +1614,22 @@ Some are still suspect! [see taitoic.c for more about this]
 #ifdef MAME_DEBUG
 	if (dislayer[layer[0]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[0],1<<16);
+		TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[1]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[1],2<<16);
+		TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[2]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[2],4<<16);
+		TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[3]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[3],8<<16);
+		TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1695,11 +1648,11 @@ Some are still suspect! [see taitoic.c for more about this]
 
 	/*
 	TODO: This isn't the correct way to handle the priority. At the moment of
-	writing, pdrawgfx() doesn't support 5 layers (??), so I have to cheat, assuming
+	writing, pdrawgfx() doesn't support 5 layers, so I have to cheat, assuming
 	that the FG layer is always on top of sprites.
 	*/
 
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0);
+	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
 }
 
 
@@ -1724,12 +1677,7 @@ void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (i = 0;i < Machine->drv->total_colors;i += 16)
 			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
 	}
-	if (palette_recalc ())
-	{
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	}
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = 0;	/* bottom bg */
 	layer[1] = 1;
@@ -1753,10 +1701,10 @@ void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
-	TC0480SCP_tilemap_draw(bitmap,layer[0],1<<16);
-	TC0480SCP_tilemap_draw(bitmap,layer[1],2<<16);
-	TC0480SCP_tilemap_draw(bitmap,layer[2],4<<16);
-	TC0480SCP_tilemap_draw(bitmap,layer[3],8<<16);
+	TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
+	TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
+	TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
+	TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1775,9 +1723,9 @@ void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/*
 	TODO: This isn't the correct way to handle the priority. At the moment of
-	writing, pdrawgfx() doesn't support 5 layers (??), so I have to cheat, assuming
+	writing, pdrawgfx() doesn't support 5 layers, so I have to cheat, assuming
 	that the FG layer is always on top of sprites.
 	*/
 
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0);
+	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
 }

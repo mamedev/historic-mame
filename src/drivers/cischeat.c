@@ -6,6 +6,7 @@
 
 				    driver by Luca Elia (eliavit@unina.it)
 
+- Note: press F2 to enter service mode -
 
 ----------------------------------------------------------------------
 Hardware		Main 	Sub#1	Sub#2	Sound	Sound Chips
@@ -128,7 +129,7 @@ fa2aa.l		($fa200 + $aa) speed << 16
 
 - Use the Tilemap Manager for the road layers (when this kind of layers
   will be supported) for perfomance and better priority support.
-  A line based zooming should be possible, for f1gpstar..
+  A line based zooming is additionally needed for f1gpstar.
 
 - Force feedback :)
 
@@ -138,20 +139,20 @@ fa2aa.l		($fa200 + $aa) speed << 16
 #include "drivers/megasys1.h"
 
 /* Variables only used here: */
-static unsigned char *rom_1, *rom_2, *rom_3;
-static unsigned char *sharedram1, *sharedram2;
+static data16_t *rom_1, *rom_2, *rom_3;
+static data16_t *sharedram1, *sharedram2;
 
 /* Variables that vidhrdw has access to: */
 
 /* Variables defined in vidhrdw: */
-extern unsigned char *cischeat_roadram[2];
+extern data16_t *cischeat_roadram[2];
 
 /* Functions defined in vidhrdw: */
-READ_HANDLER( cischeat_vregs_r );
-READ_HANDLER( f1gpstar_vregs_r );
+READ16_HANDLER( cischeat_vregs_r );
+READ16_HANDLER( f1gpstar_vregs_r );
 
-WRITE_HANDLER( cischeat_vregs_w );
-WRITE_HANDLER( f1gpstar_vregs_w );
+WRITE16_HANDLER( cischeat_vregs_w );
+WRITE16_HANDLER( f1gpstar_vregs_w );
 
 int cischeat_vh_start(void);
 int f1gpstar_vh_start(void);
@@ -166,15 +167,15 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 **
 */
 
-READ_HANDLER( sharedram1_r )			{return READ_WORD(&sharedram1[offset]);	}
-READ_HANDLER( sharedram2_r )			{return READ_WORD(&sharedram2[offset]);	}
+READ16_HANDLER( sharedram1_r )  {return sharedram1[offset];}
+READ16_HANDLER( sharedram2_r )  {return sharedram2[offset];}
 
-WRITE_HANDLER( sharedram1_w ) {WRITE_WORD(&sharedram1[offset],data);	}
-WRITE_HANDLER( sharedram2_w ) {WRITE_WORD(&sharedram2[offset],data);	}
+WRITE16_HANDLER( sharedram1_w ) {COMBINE_DATA(&sharedram1[offset]);}
+WRITE16_HANDLER( sharedram2_w ) {COMBINE_DATA(&sharedram2[offset]);}
 
-static READ_HANDLER( rom_1_r ) {return READ_WORD(&rom_1[offset]);}
-static READ_HANDLER( rom_2_r ) {return READ_WORD(&rom_2[offset]);}
-static READ_HANDLER( rom_3_r ) {return READ_WORD(&rom_3[offset]);}
+static READ16_HANDLER( rom_1_r ) {return rom_1[offset];}
+static READ16_HANDLER( rom_2_r ) {return rom_2[offset];}
+static READ16_HANDLER( rom_3_r ) {return rom_3[offset];}
 
 
 /**************************************************************************
@@ -191,44 +192,35 @@ static READ_HANDLER( rom_3_r ) {return READ_WORD(&rom_3[offset]);}
 	bd000-bd3ff		bd000-bdfff		sprites
 	bec00-befff		<				text		*/
 
-READ_HANDLER( cischeat_palette_r )
+WRITE16_HANDLER( cischeat_paletteram16_w )
 {
-	return READ_WORD(&paletteram[offset]);
-}
-
-WRITE_HANDLER( cischeat_palette_w )
-{
-int newword,r,g,b;
-
-	COMBINE_WORD_MEM(&paletteram[offset],data);
-	newword = READ_WORD(&paletteram[offset]);
-	r = ((newword >> 8) & 0xF0 ) | ((newword << 0) & 0x08);
-	g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
-	b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
+	data16_t word = COMBINE_DATA(&paletteram16[offset]);
+	int r = ((word >> 8) & 0xF0 ) | ((word << 0) & 0x08);
+	int g = ((word >> 4) & 0xF0 ) | ((word << 1) & 0x08);
+	int b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
 
 	// Scroll 0
-	if ( (offset >= 0x1c00) && (offset <= 0x1fff) ) { palette_change_color(0x000 + (offset - 0x1c00)/2, r,g,b ); return;}
+	if ( (offset >= 0x1c00/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x000 + offset - 0x1c00/2, r,g,b ); return;}
 	// Scroll 1
-	if ( (offset >= 0x2c00) && (offset <= 0x2fff) ) { palette_change_color(0x200 + (offset - 0x2c00)/2, r,g,b ); return;}
+	if ( (offset >= 0x2c00/2) && (offset <= 0x2fff/2) ) { palette_change_color(0x200 + offset - 0x2c00/2, r,g,b ); return;}
 	// Scroll 2
-	if ( (offset >= 0x6c00) && (offset <= 0x6fff) ) { palette_change_color(0x400 + (offset - 0x6c00)/2, r,g,b ); return;}
+	if ( (offset >= 0x6c00/2) && (offset <= 0x6fff/2) ) { palette_change_color(0x400 + offset - 0x6c00/2, r,g,b ); return;}
 	// Road 0
-	if ( (offset >= 0x3800) && (offset <= 0x3fff) ) { palette_change_color(0x600 + (offset - 0x3800)/2, r,g,b ); return;}
+	if ( (offset >= 0x3800/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x600 + offset - 0x3800/2, r,g,b ); return;}
 	// Road 1
-	if ( (offset >= 0x4800) && (offset <= 0x4fff) ) { palette_change_color(0xa00 + (offset - 0x4800)/2, r,g,b ); return;}
+	if ( (offset >= 0x4800/2) && (offset <= 0x4fff/2) ) { palette_change_color(0xa00 + offset - 0x4800/2, r,g,b ); return;}
 	// Sprites
-	if ( (offset >= 0x5000) && (offset <= 0x5fff) ) { palette_change_color(0xe00 + (offset - 0x5000)/2, r,g,b ); return;}
+	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_change_color(0xe00 + offset - 0x5000/2, r,g,b ); return;}
 }
 
 
 
-static struct MemoryReadAddress cischeat_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM			},	// ROM
+static MEMORY_READ16_START( cischeat_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM			},	// ROM
 	{ 0x100000, 0x17ffff, rom_1_r			},	// ROM
-	{ 0x0f0000, 0x0fffff, MRA_BANK1			},	// RAM
+	{ 0x0f0000, 0x0fffff, MRA16_RAM			},	// RAM
 	{ 0x080000, 0x087fff, cischeat_vregs_r	},	// Vregs
-	{ 0x088000, 0x088fff, MRA_BANK2			},	// Linking with other units
+	{ 0x088000, 0x088fff, MRA16_RAM			},	// Linking with other units
 
 /* 	Only the first 0x800 bytes are tested but:
 	CPU #0 PC 0000278c: warning - write 68c0 to unmapped memory address 0009c7fe
@@ -239,22 +231,19 @@ static struct MemoryReadAddress cischeat_readmem[] =
 	{ 0x090000, 0x097fff, sharedram2_r		},	// Sharedram with sub CPU#2
 	{ 0x098000, 0x09ffff, sharedram1_r		},	// Sharedram with sub CPU#1
 
-	{ 0x0a0000, 0x0a7fff, megasys1_scrollram_0_r	},	// Scroll ram 0
-	{ 0x0a8000, 0x0affff, megasys1_scrollram_1_r	},	// Scroll ram 1
-	{ 0x0b0000, 0x0b7fff, megasys1_scrollram_2_r	},	// Scroll ram 2
+	{ 0x0a0000, 0x0a7fff, MRA16_RAM			},	// Scroll ram 0
+	{ 0x0a8000, 0x0affff, MRA16_RAM			},	// Scroll ram 1
+	{ 0x0b0000, 0x0b7fff, MRA16_RAM			},	// Scroll ram 2
 
-	{ 0x0b8000, 0x0bffff, cischeat_palette_r	},	// Palettes
+	{ 0x0b8000, 0x0bffff, MRA16_RAM			},	// Palettes
+MEMORY_END
 
-	{ -1 }
-};
-
-static struct MemoryWriteAddress cischeat_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM							},	// ROM
-	{ 0x100000, 0x17ffff, MWA_ROM							},	// ROM
-	{ 0x0f0000, 0x0fffff, MWA_BANK1, &megasys1_ram			},	// RAM
+static MEMORY_WRITE16_START( cischeat_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM							},	// ROM
+	{ 0x100000, 0x17ffff, MWA16_ROM							},	// ROM
+	{ 0x0f0000, 0x0fffff, MWA16_RAM, &megasys1_ram			},	// RAM
 	{ 0x080000, 0x087fff, cischeat_vregs_w, &megasys1_vregs	},	// Vregs
-	{ 0x088000, 0x088fff, MWA_BANK2							},	// Linking with other units
+	{ 0x088000, 0x088fff, MWA16_RAM							},	// Linking with other units
 
 	{ 0x090000, 0x097fff, sharedram2_w, &sharedram2			},	// Sharedram with sub CPU#2
 	{ 0x098000, 0x09ffff, sharedram1_w, &sharedram1			},	// Sharedram with sub CPU#1
@@ -265,10 +254,8 @@ static struct MemoryWriteAddress cischeat_writemem[] =
 	{ 0x0a8000, 0x0affff, megasys1_scrollram_1_w, &megasys1_scrollram_1	},	// Scroll ram 1
 	{ 0x0b0000, 0x0b7fff, megasys1_scrollram_2_w, &megasys1_scrollram_2	},	// Scroll ram 2
 
-	{ 0x0b8000, 0x0bffff, cischeat_palette_w, &paletteram	},	// Palettes
-
-	{ -1 }
-};
+	{ 0x0b8000, 0x0bffff, cischeat_paletteram16_w, &paletteram16	},	// Palettes
+MEMORY_END
 
 
 
@@ -279,32 +266,25 @@ static struct MemoryWriteAddress cischeat_writemem[] =
 **************************************************************************/
 
 
-READ_HANDLER( f1gpstar_palette_r )
+WRITE16_HANDLER( f1gpstar_paletteram16_w )
 {
-	return READ_WORD(&paletteram[offset]);
-}
-WRITE_HANDLER( f1gpstar_palette_w )
-{
-int newword,r,g,b;
-
-	COMBINE_WORD_MEM(&paletteram[offset],data);
-	newword = READ_WORD(&paletteram[offset]);
-	r = ((newword >> 8) & 0xF0 ) | ((newword << 0) & 0x08);
-	g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
-	b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
+	data16_t word = COMBINE_DATA(&paletteram16[offset]);
+	int r = ((word >> 8) & 0xF0 ) | ((word << 0) & 0x08);
+	int g = ((word >> 4) & 0xF0 ) | ((word << 1) & 0x08);
+	int b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
 
 	// Scroll 0
-	if ( (offset >= 0x1e00) && (offset <= 0x1fff) ) { palette_change_color(0x000 + (offset - 0x1e00)/2, r,g,b ); return;}
+	if ( (offset >= 0x1e00/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x000 + offset - 0x1e00/2, r,g,b ); return;}
 	// Scroll 1
-	if ( (offset >= 0x2e00) && (offset <= 0x2fff) ) { palette_change_color(0x100 + (offset - 0x2e00)/2, r,g,b ); return;}
+	if ( (offset >= 0x2e00/2) && (offset <= 0x2fff/2) ) { palette_change_color(0x100 + offset - 0x2e00/2, r,g,b ); return;}
 	// Scroll 2
-	if ( (offset >= 0x6e00) && (offset <= 0x6fff) ) { palette_change_color(0x200 + (offset - 0x6e00)/2, r,g,b ); return;}
+	if ( (offset >= 0x6e00/2) && (offset <= 0x6fff/2) ) { palette_change_color(0x200 + offset - 0x6e00/2, r,g,b ); return;}
 	// Road 0
-	if ( (offset >= 0x3800) && (offset <= 0x3fff) ) { palette_change_color(0x300 + (offset - 0x3800)/2, r,g,b ); return;}
+	if ( (offset >= 0x3800/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x300 + offset - 0x3800/2, r,g,b ); return;}
 	// Road 1
-	if ( (offset >= 0x4800) && (offset <= 0x4fff) ) { palette_change_color(0x700 + (offset - 0x4800)/2, r,g,b ); return;}
+	if ( (offset >= 0x4800/2) && (offset <= 0x4fff/2) ) { palette_change_color(0x700 + offset - 0x4800/2, r,g,b ); return;}
 	// Sprites
-	if ( (offset >= 0x5000) && (offset <= 0x5fff) ) { palette_change_color(0xb00 + (offset - 0x5000)/2, r,g,b ); return;}
+	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_change_color(0xb00 + offset - 0x5000/2, r,g,b ); return;}
 }
 
 /*	F1 GP Star tests:
@@ -315,32 +295,29 @@ int newword,r,g,b;
 	098800-099000
 	0F8000-0F9000	*/
 
-static struct MemoryReadAddress f1gpstar_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM			},	// ROM
+static MEMORY_READ16_START( f1gpstar_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM			},	// ROM
 	{ 0x100000, 0x17ffff, rom_1_r			},	// ROM
-	{ 0x0f0000, 0x0fffff, MRA_BANK1			},	// RAM
+	{ 0x0f0000, 0x0fffff, MRA16_RAM			},	// RAM
 	{ 0x080000, 0x087fff, f1gpstar_vregs_r	},	// Vregs
-	{ 0x088000, 0x088fff, MRA_BANK2			},	// Linking with other units
+	{ 0x088000, 0x088fff, MRA16_RAM			},	// Linking with other units
 
 	{ 0x090000, 0x097fff, sharedram2_r		},	// Sharedram with sub CPU#2
 	{ 0x098000, 0x09ffff, sharedram1_r		},	// Sharedram with sub CPU#1
 
-	{ 0x0a0000, 0x0a7fff, megasys1_scrollram_0_r	},	// Scroll ram 0
-	{ 0x0a8000, 0x0affff, megasys1_scrollram_1_r	},	// Scroll ram 1
-	{ 0x0b0000, 0x0b7fff, megasys1_scrollram_2_r	},	// Scroll ram 2
+	{ 0x0a0000, 0x0a7fff, MRA16_RAM			},	// Scroll ram 0
+	{ 0x0a8000, 0x0affff, MRA16_RAM			},	// Scroll ram 1
+	{ 0x0b0000, 0x0b7fff, MRA16_RAM			},	// Scroll ram 2
 
-	{ 0x0b8000, 0x0bffff, f1gpstar_palette_r	},	// Palettes
-	{ -1 }
-};
+	{ 0x0b8000, 0x0bffff, MRA16_RAM			},	// Palettes
+MEMORY_END
 
-static struct MemoryWriteAddress f1gpstar_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM							},
-	{ 0x100000, 0x17ffff, MWA_ROM							},
-	{ 0x0f0000, 0x0fffff, MWA_BANK1, &megasys1_ram			},	// RAM
+static MEMORY_WRITE16_START( f1gpstar_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM							},
+	{ 0x100000, 0x17ffff, MWA16_ROM							},
+	{ 0x0f0000, 0x0fffff, MWA16_RAM, &megasys1_ram			},	// RAM
 	{ 0x080000, 0x087fff, f1gpstar_vregs_w, &megasys1_vregs	},	// Vregs
-	{ 0x088000, 0x088fff, MWA_BANK2							},	// Linking with other units
+	{ 0x088000, 0x088fff, MWA16_RAM							},	// Linking with other units
 
 	{ 0x090000, 0x097fff, sharedram2_w, &sharedram2			},	// Sharedram with sub CPU#2
 	{ 0x098000, 0x09ffff, sharedram1_w, &sharedram1			},	// Sharedram with sub CPU#1
@@ -351,10 +328,8 @@ static struct MemoryWriteAddress f1gpstar_writemem[] =
 	{ 0x0a8000, 0x0affff, megasys1_scrollram_1_w, &megasys1_scrollram_1	},	// Scroll ram 1
 	{ 0x0b0000, 0x0b7fff, megasys1_scrollram_2_w, &megasys1_scrollram_2	},	// Scroll ram 2
 
-	{ 0x0b8000, 0x0bffff, f1gpstar_palette_w, &paletteram	},	// Palettes
-
-	{ -1 }
-};
+	{ 0x0b8000, 0x0bffff, f1gpstar_paletteram16_w, &paletteram16	},	// Palettes
+MEMORY_END
 
 
 
@@ -370,25 +345,21 @@ static struct MemoryWriteAddress f1gpstar_writemem[] =
 								[ Cisco Heat ]
 **************************************************************************/
 
-static struct MemoryReadAddress cischeat_readmem2[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM		},	// ROM
+static MEMORY_READ16_START( cischeat_readmem2 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
 	{ 0x200000, 0x23ffff, rom_2_r		},	// ROM
-	{ 0x0c0000, 0x0c3fff, MRA_BANK3		},	// RAM
+	{ 0x0c0000, 0x0c3fff, MRA16_RAM		},	// RAM
 	{ 0x040000, 0x047fff, sharedram1_r	},	// Shared RAM (with Main CPU)
-	{ 0x080000, 0x0807ff, MRA_BANK4		},	// Road RAM
-	{ -1 }
-};
-static struct MemoryWriteAddress cischeat_writemem2[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM							},	// ROM
-	{ 0x200000, 0x23ffff, MWA_ROM							},	// ROM
-	{ 0x0c0000, 0x0c3fff, MWA_BANK3							},	// RAM
+	{ 0x080000, 0x0807ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( cischeat_writemem2 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x200000, 0x23ffff, MWA16_ROM							},	// ROM
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM							},	// RAM
 	{ 0x040000, 0x047fff, sharedram1_w						},	// Shared RAM (with Main CPU)
-	{ 0x080000, 0x0807ff, MWA_BANK4, &cischeat_roadram[0]	},	// Road RAM
-	{ 0x100000, 0x100001, MWA_NOP							},	// watchdog
-	{ -1 }
-};
+	{ 0x080000, 0x0807ff, MWA16_RAM, &cischeat_roadram[0]	},	// Road RAM
+	{ 0x100000, 0x100001, MWA16_NOP							},	// watchdog
+MEMORY_END
 
 
 
@@ -397,23 +368,19 @@ static struct MemoryWriteAddress cischeat_writemem2[] =
 							[ F1 GrandPrix Star ]
 **************************************************************************/
 
-static struct MemoryReadAddress f1gpstar_readmem2[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM		},	// ROM
-	{ 0x180000, 0x183fff, MRA_BANK3		},	// RAM
+static MEMORY_READ16_START( f1gpstar_readmem2 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
+	{ 0x180000, 0x183fff, MRA16_RAM		},	// RAM
 	{ 0x080000, 0x0807ff, sharedram1_r	},	// Shared RAM (with Main CPU)
-	{ 0x100000, 0x1007ff, MRA_BANK4		},	// Road RAM
-	{ -1 }
-};
-static struct MemoryWriteAddress f1gpstar_writemem2[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM							},	// ROM
-	{ 0x180000, 0x183fff, MWA_BANK3							},	// RAM
+	{ 0x100000, 0x1007ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( f1gpstar_writemem2 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x180000, 0x183fff, MWA16_RAM							},	// RAM
 	{ 0x080000, 0x0807ff, sharedram1_w						},	// Shared RAM (with Main CPU)
-	{ 0x100000, 0x1007ff, MWA_BANK4, &cischeat_roadram[0]	},	// Road RAM
-	{ 0x200000, 0x200001, MWA_NOP							},	// watchdog
-	{ -1 }
-};
+	{ 0x100000, 0x1007ff, MWA16_RAM, &cischeat_roadram[0]	},	// Road RAM
+	{ 0x200000, 0x200001, MWA16_NOP							},	// watchdog
+MEMORY_END
 
 
 /*
@@ -426,25 +393,21 @@ static struct MemoryWriteAddress f1gpstar_writemem2[] =
 								[ Cisco Heat ]
 **************************************************************************/
 
-static struct MemoryReadAddress cischeat_readmem3[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM		},	// ROM
+static MEMORY_READ16_START( cischeat_readmem3 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
 	{ 0x200000, 0x23ffff, rom_3_r		},	// ROM
-	{ 0x0c0000, 0x0c3fff, MRA_BANK5		},	// RAM
+	{ 0x0c0000, 0x0c3fff, MRA16_RAM		},	// RAM
 	{ 0x040000, 0x047fff, sharedram2_r	},	// Shared RAM (with Main CPU)
-	{ 0x080000, 0x0807ff, MRA_BANK6		},	// Road RAM
-	{ -1 }
-};
-static struct MemoryWriteAddress cischeat_writemem3[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM							},	// ROM
-	{ 0x200000, 0x23ffff, MWA_ROM							},	// ROM
-	{ 0x0c0000, 0x0c3fff, MWA_BANK5							},	// RAM
+	{ 0x080000, 0x0807ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( cischeat_writemem3 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x200000, 0x23ffff, MWA16_ROM							},	// ROM
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM							},	// RAM
 	{ 0x040000, 0x047fff, sharedram2_w						},	// Shared RAM (with Main CPU)
-	{ 0x080000, 0x0807ff, MWA_BANK6, &cischeat_roadram[1]	},	// Road RAM
-	{ 0x100000, 0x100001, MWA_NOP							},	// watchdog
-	{ -1 }
-};
+	{ 0x080000, 0x0807ff, MWA16_RAM, &cischeat_roadram[1]	},	// Road RAM
+	{ 0x100000, 0x100001, MWA16_NOP							},	// watchdog
+MEMORY_END
 
 
 
@@ -454,23 +417,19 @@ static struct MemoryWriteAddress cischeat_writemem3[] =
 							[ F1 GrandPrix Star ]
 **************************************************************************/
 
-static struct MemoryReadAddress f1gpstar_readmem3[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM		},	// ROM
-	{ 0x180000, 0x183fff, MRA_BANK5		},	// RAM
+static MEMORY_READ16_START( f1gpstar_readmem3 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
+	{ 0x180000, 0x183fff, MRA16_RAM		},	// RAM
 	{ 0x080000, 0x0807ff, sharedram2_r	},	// Shared RAM (with Main CPU)
-	{ 0x100000, 0x1007ff, MRA_BANK6		},	// Road RAM
-	{ -1 }
-};
-static struct MemoryWriteAddress f1gpstar_writemem3[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM							},	// ROM
-	{ 0x180000, 0x183fff, MWA_BANK5							},	// RAM
+	{ 0x100000, 0x1007ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( f1gpstar_writemem3 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x180000, 0x183fff, MWA16_RAM							},	// RAM
 	{ 0x080000, 0x0807ff, sharedram2_w						},	// Shared RAM (with Main CPU)
-	{ 0x100000, 0x1007ff, MWA_BANK6, &cischeat_roadram[1]	},	// Road RAM
-	{ 0x200000, 0x200001, MWA_NOP							},	// watchdog
-	{ -1 }
-};
+	{ 0x100000, 0x1007ff, MWA16_RAM, &cischeat_roadram[1]	},	// Road RAM
+	{ 0x200000, 0x200001, MWA16_NOP							},	// watchdog
+MEMORY_END
 
 
 
@@ -488,37 +447,33 @@ static struct MemoryWriteAddress f1gpstar_writemem3[] =
 **************************************************************************/
 
 #define SOUNDBANK_W(_n_) \
-WRITE_HANDLER( cischeat_soundbank_##_n_##_w ) \
+WRITE16_HANDLER( cischeat_soundbank_##_n_##_w ) \
 { \
-	OKIM6295_set_bank_base(_n_, ALL_VOICES, 0x40000 * (data & 1) ); \
+	if (ACCESSING_LSB)	OKIM6295_set_bank_base(_n_, 0x40000 * (data & 1) ); \
 }
 
 SOUNDBANK_W(0)
 SOUNDBANK_W(1)
 
-static struct MemoryReadAddress cischeat_sound_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM					},	// ROM
-	{ 0x0f0000, 0x0fffff, MRA_BANK7					},	// RAM
-	{ 0x060004, 0x060005, soundlatch_r				},	// From Main CPU
-	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
-	{ -1 }
-};
-static struct MemoryWriteAddress cischeat_sound_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM						},	// ROM
-	{ 0x0f0000, 0x0fffff, MWA_BANK7						},	// RAM
+static MEMORY_READ16_START( cischeat_sound_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM						},	// ROM
+	{ 0x0f0000, 0x0fffff, MRA16_RAM						},	// RAM
+	{ 0x060004, 0x060005, soundlatch_word_r				},	// From Main CPU
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
+MEMORY_END
+static MEMORY_WRITE16_START( cischeat_sound_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
+	{ 0x0f0000, 0x0fffff, MWA16_RAM						},	// RAM
 	{ 0x040002, 0x040003, cischeat_soundbank_0_w		},	// Sample Banking
 	{ 0x040004, 0x040005, cischeat_soundbank_1_w		},	// Sample Banking
-	{ 0x060002, 0x060003, ms_soundlatch2_w				},	// To Main CPU
-	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w	},
-	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w		},
-	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w			},
-	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w			},
-	{ -1 }
-};
+	{ 0x060002, 0x060003, soundlatch2_word_w			},	// To Main CPU
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
+MEMORY_END
 
 
 
@@ -528,29 +483,25 @@ static struct MemoryWriteAddress cischeat_sound_writemem[] =
 							[ F1 GrandPrix Star ]
 **************************************************************************/
 
-static struct MemoryReadAddress f1gpstar_sound_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM					},	// ROM
-	{ 0x0e0000, 0x0fffff, MRA_BANK7					},	// RAM				(cischeat: f0000-fffff)
-	{ 0x060000, 0x060001, soundlatch_r				},	// From Main CPU	(cischeat: 60004)
-	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
-	{ -1 }
-};
-static struct MemoryWriteAddress f1gpstar_sound_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM						},	// ROM
-	{ 0x0e0000, 0x0fffff, MWA_BANK7						},	// RAM				(cischeat: f0000-fffff)
+static MEMORY_READ16_START( f1gpstar_sound_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM						},	// ROM
+	{ 0x0e0000, 0x0fffff, MRA16_RAM						},	// RAM				(cischeat: f0000-fffff)
+	{ 0x060000, 0x060001, soundlatch_word_r				},	// From Main CPU	(cischeat: 60004)
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
+MEMORY_END
+static MEMORY_WRITE16_START( f1gpstar_sound_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
+	{ 0x0e0000, 0x0fffff, MWA16_RAM						},	// RAM				(cischeat: f0000-fffff)
 	{ 0x040004, 0x040005, cischeat_soundbank_0_w		},	// Sample Banking	(cischeat: 40002)
 	{ 0x040008, 0x040009, cischeat_soundbank_1_w		},	// Sample Banking	(cischeat: 40004)
-	{ 0x060000, 0x060001, ms_soundlatch2_w				},	// To Main CPU		(cischeat: 60002)
-	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w	},
-	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w		},
-	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w			},
-	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w			},
-	{ -1 }
-};
+	{ 0x060000, 0x060001, soundlatch2_word_w			},	// To Main CPU		(cischeat: 60002)
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
+MEMORY_END
 
 
 
@@ -734,7 +685,7 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_BITX(    0x1000, 0x1000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Time", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )	// ?
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( On )  )
 	PORT_DIPNAME( 0x4000, 0x4000, "Choose Race (US UK FR)"  )	// -> f0020
@@ -978,7 +929,7 @@ static struct OKIM6295interface _shortname_##_okim6295_interface = \
 	2, \
 	{_oki1_clock_, _oki2_clock_},\
 	{REGION_SOUND1,REGION_SOUND2}, \
-	{ 33, 33 } \
+	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) } \
 }; \
 \
 static const struct MachineDriver machine_driver_##_shortname_ = \
@@ -1009,7 +960,8 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 			cischeat_sound_interrupt, CISCHEAT_SOUND_INTERRUPT_NUM \
 		}, \
 	}, \
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	/*	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,*/ \
+30,DEFAULT_REAL_30HZ_VBLANK_DURATION, \
 	100, \
 	0, /* Init Machine */ \
 \
@@ -1027,7 +979,7 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	_shortname_##_vh_screenrefresh, \
 \
 	/* sound hardware */ \
-	0,0,0,0, \
+	SOUND_SUPPORTS_STEREO,0,0,0, /* Stereo Output */\
 	{ \
 		{ \
 			SOUND_YM2151, \
@@ -1183,10 +1135,10 @@ ROM_START( cischeat )
 	ROM_REGION( 0x80000, REGION_SOUND2 )	/* samples */
 	ROM_LOAD( "ch9071.r24", 0x000000, 0x080000, BADCRC(0xe87ca4d7) ) // 2 x 0x40000 (FIRST AND SECOND HALF IDENTICAL)
 
-	/* Unused ROMs */
-//	ROM_LOAD( "ch9072.01",  0x000000, 0x080000, 0xb2efed33 ) // FIXED BITS (xxxxxxxx0xxxxxxx)
-//	ROM_LOAD( "ch9072.02",  0x000000, 0x080000, 0x536edde4 )
-//	ROM_LOAD( "ch9072.03",  0x000000, 0x080000, 0x7e79151a )
+	ROM_REGION( 0x40000, REGION_USER2 )		/* ? Unused ROMs ? */
+	ROM_LOAD( "ch9072.01",  0x000000, 0x020000, 0xb2efed33 ) // FIXED BITS (xxxxxxxx0xxxxxxx)
+	ROM_LOAD( "ch9072.02",  0x000000, 0x040000, 0x536edde4 )
+	ROM_LOAD( "ch9072.03",  0x000000, 0x040000, 0x7e79151a )
 ROM_END
 
 
@@ -1194,17 +1146,17 @@ ROM_END
 void init_cischeat(void)
 {
 /* Split ROMs */
-	rom_1 = memory_region(REGION_USER1) + 0x00000;
+	rom_1 = (data16_t *) (memory_region(REGION_USER1) + 0x00000);
+	rom_2 = (data16_t *) (memory_region(REGION_CPU2)  + 0x40000);
+	rom_3 = (data16_t *) (memory_region(REGION_CPU3)  + 0x40000);
 
-	rom_2 = memory_region(REGION_CPU2) + 0x40000;
 	memcpy(memory_region(REGION_USER1) + 0x80000, rom_2, 0x40000);
 	memset(rom_2, 0, 0x40000);
-	rom_2 = memory_region(REGION_USER1) + 0x80000;
+	rom_2 = (data16_t *) (memory_region(REGION_USER1) + 0x80000);
 
-	rom_3 = memory_region(REGION_CPU3) + 0x40000;
 	memcpy(memory_region(REGION_USER1) + 0xc0000, rom_3, 0x40000);
 	memset(rom_3, 0, 0x40000);
-	rom_3 = memory_region(REGION_USER1) + 0xc0000;
+	rom_3 = (data16_t *) (memory_region(REGION_USER1) + 0xc0000);
 
 	cischeat_untangle_sprites(REGION_GFX5);	// Untangle sprites
 	astyanax_rom_decode(3);					// Decrypt sound cpu code
@@ -1405,29 +1357,28 @@ ROM_START( f1gpstar )
 	ROM_REGION( 0x80000, REGION_SOUND2 )	/* samples */
 	ROM_LOAD( "90015-33.w31", 0x000000, 0x080000, 0x6121d247 ) // 2 x 0x40000
 
-	/* Unused ROMs */
-
+	ROM_REGION( 0x80000, REGION_USER2 )		/* ? Unused ROMs ? */
 // "I know that one of the ROM images in the archive looks bad (90015-04.W09)
 //  however, it is good as far as I can tell. There were two of those ROMs
 // (soldered) onto the board and I checked them both against each other. "
 
-//	ROM_LOAD( "90015-04.w09",  0x000000, 0x080000, 0x5b324c81 )	// x 2 xxxxxxxxx0xxxxxxxxx = 0x00
-//	ROM_LOAD( "90015-03.w08",  0x000000, 0x080000, 0xccf5b158 )	// x 2 FIXED BITS (000x000x)
-//	ROM_LOAD( "90015-02.w07",  0x000000, 0x080000, 0xfcbecc9b )	// x 2
-//	ROM_LOAD( "90015-01.w06",  0x000000, 0x080000, 0xce4bfe6e )	// x 2 FIXED BITS (000x000x)
+	ROM_LOAD( "90015-04.w09",  0x000000, 0x080000, 0x5b324c81 )	// x 2 xxxxxxxxx0xxxxxxxxx = 0x00
+	ROM_LOAD( "90015-03.w08",  0x000000, 0x080000, 0xccf5b158 )	// x 2 FIXED BITS (000x000x)
+	ROM_LOAD( "90015-02.w07",  0x000000, 0x080000, 0xfcbecc9b )	// x 2
+	ROM_LOAD( "90015-01.w06",  0x000000, 0x080000, 0xce4bfe6e )	// x 2 FIXED BITS (000x000x)
 
-//	ROM_LOAD( "90015-20.r44",  0x000000, 0x080000, 0x9d428fb7 ) // x 2
+	ROM_LOAD( "90015-20.r45",  0x000000, 0x080000, 0x9d428fb7 ) // x 2
 
-//	ROM_LOAD( "ch9072-4",  0x000000, 0x001000, 0x5bc23535 )	// FIXED BITS (0000000x)
-//	ROM_LOAD( "ch9072-5",  0x000000, 0x001000, 0x0efac5b4 )	// FIXED BITS (xxxx0xxx)
-//	ROM_LOAD( "ch9072-6",  0x000000, 0x001000, 0x76ff63c5 )
-//	ROM_LOAD( "ch9072-8",  0x000000, 0x001000, 0xca04bace )	// FIXED BITS (0xxx0xxx)
+	ROM_LOAD( "ch9072-4",  0x000000, 0x001000, 0x5bc23535 )	// FIXED BITS (0000000x)
+	ROM_LOAD( "ch9072-5",  0x000000, 0x001000, 0x0efac5b4 )	// FIXED BITS (xxxx0xxx)
+	ROM_LOAD( "ch9072-6",  0x000000, 0x001000, 0x76ff63c5 )
+	ROM_LOAD( "ch9072-8",  0x000000, 0x001000, 0xca04bace )	// FIXED BITS (0xxx0xxx)
 
-//	ROM_LOAD( "pr88004q",  0x000000, 0x000200, 0x9327dc37 )	// FIXED BITS (1xxxxxxx1111x1xx)
-//	ROM_LOAD( "pr88004w",  0x000000, 0x000100, 0x3d648467 )	// FIXED BITS (00xxxxxx)
+	ROM_LOAD( "pr88004q",  0x000000, 0x000200, 0x9327dc37 )	// FIXED BITS (1xxxxxxx1111x1xx)
+	ROM_LOAD( "pr88004w",  0x000000, 0x000100, 0x3d648467 )	// FIXED BITS (00xxxxxx)
 
-//	ROM_LOAD( "pr90015a",  0x000000, 0x000800, 0x777583db )	// FIXED BITS (00000xxx0000xxxx)
-//	ROM_LOAD( "pr90015b",  0x000000, 0x000100, 0xbe240dac )	// FIXED BITS (000xxxxx000xxxx1)
+	ROM_LOAD( "pr90015a",  0x000000, 0x000800, 0x777583db )	// FIXED BITS (00000xxx0000xxxx)
+	ROM_LOAD( "pr90015b",  0x000000, 0x000100, 0xbe240dac )	// FIXED BITS (000xxxxx000xxxx1)
 ROM_END
 
 
@@ -1435,7 +1386,7 @@ ROM_END
 void init_f1gpstar(void)
 {
 /* Split ROMs */
-	rom_1 = memory_region(REGION_USER1) + 0x00000;
+	rom_1 = (data16_t *) memory_region(REGION_USER1);
 
 	cischeat_untangle_sprites(REGION_GFX6);
 }

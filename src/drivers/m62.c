@@ -198,8 +198,7 @@ WRITE_HANDLER( spelunk2_bankswitch_w )
 
 
 
-static struct MemoryWriteAddress kungfum_writemem[] =
-{
+static MEMORY_WRITE_START( kungfum_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xa000, 0xa000, kungfum_scroll_low_w },
 	{ 0xb000, 0xb000, kungfum_scroll_high_w },
@@ -208,144 +207,114 @@ static struct MemoryWriteAddress kungfum_writemem[] =
 	/* contiguous) videoram and colorram. They are interleaved in all the others. */
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress battroad_readmem[] =
-{
+static MEMORY_READ_START( battroad_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xa000, 0xbfff, MRA_BANK1 },
 	{ 0xc800, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress battroad_writemem[] =
-{
+static MEMORY_WRITE_START( battroad_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc800, 0xcfff, MWA_RAM, &irem_textram, &irem_textram_size },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ldrun_readmem[] =
-{
+static MEMORY_READ_START( ldrun_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xd000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ldrun_writemem[] =
-{
+static MEMORY_WRITE_START( ldrun_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ldrun2_readmem[] =
-{
+static MEMORY_READ_START( ldrun2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK1 },
 	{ 0xd000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ldrun2_writemem[] =
-{
+static MEMORY_WRITE_START( ldrun2_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ldrun3_readmem[] =
-{
+static MEMORY_READ_START( ldrun3_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc800, 0xc800, ldrun3_prot_5_r },
 	{ 0xcc00, 0xcc00, ldrun3_prot_7_r },
 	{ 0xcfff, 0xcfff, ldrun3_prot_7_r },
 	{ 0xd000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ldrun3_writemem[] =
-{
+static MEMORY_WRITE_START( ldrun3_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ldrun4_readmem[] =
-{
+static MEMORY_READ_START( ldrun4_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xd000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ldrun4_writemem[] =
-{
+static MEMORY_WRITE_START( ldrun4_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc800, 0xc800, ldrun4_bankswitch_w },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress lotlot_readmem[] =
-{
+static MEMORY_READ_START( lotlot_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xa000, 0xafff, MRA_RAM },
 	{ 0xd000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress lotlot_writemem[] =
-{
+static MEMORY_WRITE_START( lotlot_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xa000, 0xafff, MWA_RAM, &irem_textram, &irem_textram_size },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kidniki_readmem[] = {
+static MEMORY_READ_START( kidniki_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xafff, MRA_RAM },
 	{ 0xd000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kidniki_writemem[] = {
+static MEMORY_WRITE_START( kidniki_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xafff, videoram_w, &videoram, &videoram_size },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xdfff, MWA_RAM, &irem_textram, &irem_textram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress spelunkr_readmem[] =
-{
+static MEMORY_READ_START( spelunkr_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ 0xc800, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spelunkr_writemem[] =
-{
+static MEMORY_WRITE_START( spelunkr_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xbfff, videoram_w, &videoram, &videoram_size },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -355,22 +324,18 @@ static struct MemoryWriteAddress spelunkr_writemem[] =
 	{ 0xd004, 0xd004, spelunkr_bankswitch_w },
 	{ 0xd005, 0xd005, spelunkr_palbank_w },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress spelunk2_readmem[] =
-{
+static MEMORY_READ_START( spelunk2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_BANK1 },
 	{ 0x9000, 0x9fff, MRA_BANK2 },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ 0xc800, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spelunk2_writemem[] =
-{
+static MEMORY_WRITE_START( spelunk2_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xbfff, videoram_w, &videoram, &videoram_size },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -378,82 +343,65 @@ static struct MemoryWriteAddress spelunk2_writemem[] =
 	{ 0xd000, 0xd002, spelunk2_gfxport_w },
 	{ 0xd003, 0xd003, spelunk2_bankswitch_w },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort ldrun_readport[] =
-{
+static PORT_READ_START( ldrun_readport )
 	{ 0x00, 0x00, input_port_0_r },   /* coin */
 	{ 0x01, 0x01, input_port_1_r },   /* player 1 control */
 	{ 0x02, 0x02, input_port_2_r },   /* player 2 control */
 	{ 0x03, 0x03, input_port_3_r },   /* DSW 1 */
 	{ 0x04, 0x04, input_port_4_r },   /* DSW 2 */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort battroad_writeport[] =
-{
+static PORT_WRITE_START( battroad_writeport )
 	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
 	{ 0x80, 0x82, battroad_scroll_w },
 	{ 0x83, 0x83, battroad_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort ldrun_writeport[] =
-{
+static PORT_WRITE_START( ldrun_writeport )
 	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort ldrun2_readport[] =
-{
+static PORT_READ_START( ldrun2_readport )
 	{ 0x00, 0x00, input_port_0_r },   /* coin */
 	{ 0x01, 0x01, input_port_1_r },   /* player 1 control */
 	{ 0x02, 0x02, input_port_2_r },   /* player 2 control */
 	{ 0x03, 0x03, input_port_3_r },   /* DSW 1 */
 	{ 0x04, 0x04, input_port_4_r },   /* DSW 2 */
 	{ 0x80, 0x80, ldrun2_bankswitch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort ldrun2_writeport[] =
-{
+static PORT_WRITE_START( ldrun2_writeport )
 	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
 	{ 0x80, 0x81, ldrun2_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort ldrun3_writeport[] =
-{
+static PORT_WRITE_START( ldrun3_writeport )
 	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
 	{ 0x80, 0x80, ldrun3_vscroll_w },
 	/* 0x81 used too, don't know what for */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort ldrun4_writeport[] =
-{
+static PORT_WRITE_START( ldrun4_writeport )
 	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
 	{ 0x82, 0x83, ldrun4_hscroll_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort kidniki_writeport[] =
-{
+static PORT_WRITE_START( kidniki_writeport )
 	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
 	{ 0x80, 0x81, irem_background_hscroll_w },
 	{ 0x82, 0x83, kidniki_text_vscroll_w },
 	{ 0x84, 0x84, kidniki_background_bank_w },
 	{ 0x85, 0x85, kidniki_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

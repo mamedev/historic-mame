@@ -12,23 +12,20 @@
 
 /* Video emulation definitions */
 int  stadhero_vh_start(void);
-void stadhero_vh_stop(void);
 void stadhero_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *stadhero_pf1_data,*stadhero_pf2_data;
+extern data16_t *stadhero_pf1_data,*stadhero_pf2_data;
 
-WRITE_HANDLER( stadhero_pf1_data_w );
-READ_HANDLER( stadhero_pf1_data_r );
-WRITE_HANDLER( stadhero_pf2_control_0_w );
-WRITE_HANDLER( stadhero_pf2_control_1_w );
-WRITE_HANDLER( stadhero_pf2_data_w );
-READ_HANDLER( stadhero_pf2_data_r );
+WRITE16_HANDLER( stadhero_pf1_data_w );
+WRITE16_HANDLER( stadhero_pf2_data_w );
+WRITE16_HANDLER( stadhero_pf2_control_0_w );
+WRITE16_HANDLER( stadhero_pf2_control_1_w );
 
 /******************************************************************************/
 
-static READ_HANDLER( stadhero_control_r )
+static READ16_HANDLER( stadhero_control_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Player 1 & 2 joystick & buttons */
 			return (readinputport(0) + (readinputport(1) << 8));
@@ -41,12 +38,12 @@ static READ_HANDLER( stadhero_control_r )
 	}
 
 	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
-	return 0xffff;
+	return ~0;
 }
 
-static WRITE_HANDLER( stadhero_control_w )
+static WRITE16_HANDLER( stadhero_control_w )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 4: /* Interrupt ack (VBL - IRQ 5) */
 			break;
@@ -60,39 +57,38 @@ static WRITE_HANDLER( stadhero_control_w )
 	}
 }
 
-static WRITE_HANDLER( spriteram_mirror_w )
+static WRITE16_HANDLER( spriteram_mirror_w )
 {
-	WRITE_WORD(&spriteram[offset],data);
+	spriteram16[offset]=data;
 }
+
+static READ16_HANDLER( stadhero_pf1_data_r ) { return stadhero_pf1_data[offset]; }
+static READ16_HANDLER( stadhero_pf2_data_r ) { return stadhero_pf2_data[offset]; }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress stadhero_readmem[] =
-{
-	{ 0x000000, 0x01ffff, MRA_ROM },
+static MEMORY_READ16_START( stadhero_readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x200000, 0x2007ff, stadhero_pf1_data_r },
 	{ 0x260000, 0x261fff, stadhero_pf2_data_r },
 	{ 0x30c000, 0x30c00b, stadhero_control_r },
-	{ 0x310000, 0x3107ff, paletteram_word_r },
-	{ 0xff8000, 0xffbfff, MRA_BANK1 }, /* Main ram */
-	{ 0xffc000, 0xffc7ff, MRA_BANK2 }, /* Sprites */
-	{ -1 }  /* end of table */
-};
+	{ 0x310000, 0x3107ff, MRA16_RAM },
+	{ 0xff8000, 0xffbfff, MRA16_RAM }, /* Main ram */
+	{ 0xffc000, 0xffc7ff, MRA16_RAM }, /* Sprites */
+MEMORY_END
 
-static struct MemoryWriteAddress stadhero_writemem[] =
-{
-	{ 0x000000, 0x01ffff, MWA_ROM },
+static MEMORY_WRITE16_START( stadhero_writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0x200000, 0x2007ff, stadhero_pf1_data_w, &stadhero_pf1_data },
 	{ 0x240000, 0x240007, stadhero_pf2_control_0_w },
 	{ 0x240010, 0x240017, stadhero_pf2_control_1_w },
 	{ 0x260000, 0x261fff, stadhero_pf2_data_w, &stadhero_pf2_data },
 	{ 0x30c000, 0x30c00b, stadhero_control_w },
-	{ 0x310000, 0x3107ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0xff8000, 0xffbfff, MWA_BANK1 },
-	{ 0xffc000, 0xffc7ff, MWA_BANK2, &spriteram },
+	{ 0x310000, 0x3107ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0xff8000, 0xffbfff, MWA16_RAM },
+	{ 0xffc000, 0xffc7ff, MWA16_RAM, &spriteram16 },
 	{ 0xffc800, 0xffcfff, spriteram_mirror_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -120,24 +116,20 @@ static WRITE_HANDLER( YM2203_w )
 	}
 }
 
-static struct MemoryReadAddress stadhero_s_readmem[] =
-{
+static MEMORY_READ_START( stadhero_s_readmem )
 	{ 0x0000, 0x05ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x3800, 0x3800, OKIM6295_status_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress stadhero_s_writemem[] =
-{
+static MEMORY_WRITE_START( stadhero_s_writemem )
 	{ 0x0000, 0x05ff, MWA_RAM },
 	{ 0x0800, 0x0801, YM2203_w },
 	{ 0x1000, 0x1001, YM3812_w },
 	{ 0x3800, 0x3800, OKIM6295_data_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -189,7 +181,7 @@ INPUT_PORTS_START( stadhero )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
@@ -337,7 +329,7 @@ static const struct MachineDriver machine_driver_stadhero =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	stadhero_vh_start,
-	stadhero_vh_stop,
+	0,
 	stadhero_vh_screenrefresh,
 
 	/* sound hardware */

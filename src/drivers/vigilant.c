@@ -59,119 +59,95 @@ WRITE_HANDLER( kikcubic_coin_w )
 
 
 
-static struct MemoryReadAddress vigilant_readmem[] =
-{
+static MEMORY_READ_START( vigilant_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc020, 0xc0df, MRA_RAM },
 	{ 0xc800, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xdfff, videoram_r },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress vigilant_writemem[] =
-{
+static MEMORY_WRITE_START( vigilant_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc020, 0xc0df, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc800, 0xcfff, vigilant_paletteram_w, &paletteram },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort vigilant_readport[] =
-{
+static PORT_READ_START( vigilant_readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
 	{ 0x04, 0x04, input_port_4_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort vigilant_writeport[] =
-{
+static PORT_WRITE_START( vigilant_writeport )
 	{ 0x00, 0x00, m72_sound_command_w },  /* SD */
 	{ 0x01, 0x01, vigilant_out2_w }, /* OUT2 */
 	{ 0x04, 0x04, vigilant_bank_select_w }, /* PBANK */
 	{ 0x80, 0x81, vigilant_horiz_scroll_w }, /* HSPL, HSPH */
 	{ 0x82, 0x83, vigilant_rear_horiz_scroll_w }, /* RHSPL, RHSPH */
 	{ 0x84, 0x84, vigilant_rear_color_w }, /* RCOD */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress kikcubic_readmem[] =
-{
+static MEMORY_READ_START( kikcubic_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc0ff, MRA_RAM },
 	{ 0xc800, 0xcaff, MRA_RAM },
 	{ 0xd000, 0xdfff, videoram_r },
 	{ 0xe000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kikcubic_writemem[] =
-{
+static MEMORY_WRITE_START( kikcubic_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc800, 0xcaff, vigilant_paletteram_w, &paletteram },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort kikcubic_readport[] =
-{
+static PORT_READ_START( kikcubic_readport )
 	{ 0x00, 0x00, input_port_3_r },
 	{ 0x01, 0x01, input_port_4_r },
 	{ 0x02, 0x02, input_port_0_r },
 	{ 0x03, 0x03, input_port_1_r },
 	{ 0x04, 0x04, input_port_2_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort kikcubic_writeport[] =
-{
+static PORT_WRITE_START( kikcubic_writeport )
 	{ 0x00, 0x00, kikcubic_coin_w },	/* also flip screen, and...? */
 	{ 0x04, 0x04, vigilant_bank_select_w },
 	{ 0x06, 0x06, m72_sound_command_w },
 //	{ 0x07, 0x07, IOWP_NOP },	/* ?? */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x01, 0x01, YM2151_status_port_0_r },
 	{ 0x80, 0x80, soundlatch_r },	/* SDRE */
 	{ 0x84, 0x84, m72_sample_r },	/* S ROM C */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM2151_register_port_0_w },
 	{ 0x01, 0x01, YM2151_data_port_0_w },
 	{ 0x80, 0x81, vigilant_sample_addr_w },	/* STL / STH */
 	{ 0x82, 0x82, m72_sample_w },			/* COUNT UP */
 	{ 0x83, 0x83, m72_sound_irq_ack_w },	/* IRQ clear */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( vigilant )

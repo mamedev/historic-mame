@@ -81,18 +81,15 @@ void spy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
 	palette_used_colors[16 * layer_colorbase[0]] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[0]],&Machine->visible_area);
 	K051960_sprites_draw(bitmap,1,1);	/* are these used? */
-	K052109_tilemap_draw(bitmap,1,0);
+	K052109_tilemap_draw(bitmap,1,0,0);
 	K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,2,0);
+	K052109_tilemap_draw(bitmap,2,0,0);
 	K051960_sprites_draw(bitmap,3,3);	/* are these used? They are supposed to have */
 										/* priority over layer B but not layer A. */
 	K051960_sprites_draw(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,0,0,0);
 }

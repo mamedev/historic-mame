@@ -262,33 +262,31 @@ void thndrx2_vh_stop(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( tmnt_paletteram_w )
+WRITE16_HANDLER( tmnt_paletteram_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	WRITE_WORD(&paletteram[offset],newword);
+	int r,g,b;
 
-	offset /= 4;
-	{
-		int palette = ((READ_WORD(&paletteram[offset * 4]) & 0x00ff) << 8)
-				+ (READ_WORD(&paletteram[offset * 4 + 2]) & 0x00ff);
-		int r = palette & 31;
-		int g = (palette >> 5) & 31;
-		int b = (palette >> 10) & 31;
+	COMBINE_DATA(paletteram16 + offset);
+	offset &= ~1;
 
-		r = (r << 3) + (r >> 2);
-		g = (g << 3) + (g >> 2);
-		b = (b << 3) + (b >> 2);
+	data = (paletteram16[offset] << 8) | paletteram16[offset+1];
 
-		palette_change_color (offset,r,g,b);
-	}
+	r = (data >>  0) & 0x1f;
+	g = (data >>  5) & 0x1f;
+	b = (data >> 10) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_change_color(offset / 2,r,g,b);
 }
 
 
 
-WRITE_HANDLER( tmnt_0a0000_w )
+WRITE16_HANDLER( tmnt_0a0000_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		static int last;
 
@@ -312,9 +310,9 @@ WRITE_HANDLER( tmnt_0a0000_w )
 	}
 }
 
-WRITE_HANDLER( punkshot_0a0020_w )
+WRITE16_HANDLER( punkshot_0a0020_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		static int last;
 
@@ -333,9 +331,9 @@ WRITE_HANDLER( punkshot_0a0020_w )
 	}
 }
 
-WRITE_HANDLER( lgtnfght_0a0018_w )
+WRITE16_HANDLER( lgtnfght_0a0018_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		static int last;
 
@@ -355,9 +353,9 @@ WRITE_HANDLER( lgtnfght_0a0018_w )
 	}
 }
 
-WRITE_HANDLER( detatwin_700300_w )
+WRITE16_HANDLER( detatwin_700300_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* bit 0,1 = coin counter */
 		coin_counter_w(0,data & 0x01);
@@ -377,9 +375,9 @@ WRITE_HANDLER( detatwin_700300_w )
 	}
 }
 
-WRITE_HANDLER( glfgreat_122000_w )
+WRITE16_HANDLER( glfgreat_122000_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* bit 0,1 = coin counter */
 		coin_counter_w(0,data & 0x01);
@@ -392,9 +390,9 @@ WRITE_HANDLER( glfgreat_122000_w )
 	}
 }
 
-WRITE_HANDLER( ssriders_1c0300_w )
+WRITE16_HANDLER( ssriders_1c0300_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* bit 0,1 = coin counter */
 		coin_counter_w(0,data & 0x01);
@@ -409,9 +407,9 @@ WRITE_HANDLER( ssriders_1c0300_w )
 
 
 
-WRITE_HANDLER( tmnt_priority_w )
+WRITE16_HANDLER( tmnt_priority_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* bit 2/3 = priority; other bits unused */
 		/* bit2 = PRI bit3 = PRI2
@@ -465,16 +463,13 @@ void mia_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
+	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
 	if ((priorityflag & 1) == 1) K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,1,0);
+	K052109_tilemap_draw(bitmap,1,0,0);
 	if ((priorityflag & 1) == 0) K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,0,0,0);
 }
 
 void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -483,16 +478,13 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
+	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
 	if ((priorityflag & 1) == 1) K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,1,0);
+	K052109_tilemap_draw(bitmap,1,0,0);
 	if ((priorityflag & 1) == 0) K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,0,0,0);
 }
 
 
@@ -511,10 +503,7 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
@@ -526,9 +515,9 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	sortlayers(layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,NULL);
-	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
-	K052109_tilemap_draw(bitmap,layer[1],2<<16);
-	K052109_tilemap_draw(bitmap,layer[2],4<<16);
+	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	K052109_tilemap_draw(bitmap,layer[1],0,2);
+	K052109_tilemap_draw(bitmap,layer[2],0,4);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }
@@ -550,10 +539,7 @@ void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	K053245_mark_sprites_colors();
 	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
@@ -566,9 +552,9 @@ void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],1<<16);
-	K052109_tilemap_draw(bitmap,layer[1],2<<16);
-	K052109_tilemap_draw(bitmap,layer[2],4<<16);
+	K052109_tilemap_draw(bitmap,layer[0],0,1);
+	K052109_tilemap_draw(bitmap,layer[1],0,2);
+	K052109_tilemap_draw(bitmap,layer[2],0,4);
 
 	K053245_sprites_draw(bitmap);
 }
@@ -589,10 +575,7 @@ void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	K053245_mark_sprites_colors();
 	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
@@ -605,9 +588,9 @@ void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],1<<16);
-	K052109_tilemap_draw(bitmap,layer[1],2<<16);
-	K052109_tilemap_draw(bitmap,layer[2],4<<16);
+	K052109_tilemap_draw(bitmap,layer[0],0,1);
+	K052109_tilemap_draw(bitmap,layer[1],0,2);
+	K052109_tilemap_draw(bitmap,layer[2],0,4);
 
 	K053245_sprites_draw(bitmap);
 }
@@ -617,8 +600,9 @@ void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 
 	for (i = 0;i < 128;i++)
-		if ((K053245_word_r(16*i) & 0x8000) && !(K053245_word_r(16*i+2) & 0x8000))
-			K053245_word_w(16*i,0xff000000|i);	/* workaround for protection */
+		if ((K053245_word_r(8*i) & 0x8000) && !(K053245_word_r(8*i+1) & 0x8000)) {
+			K053245_word_w(8*i,i,0xff00);	/* workaround for protection */
+		}
 
 	lgtnfght_vh_screenrefresh(bitmap,full_refresh);
 }
@@ -640,10 +624,7 @@ void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
 	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
@@ -656,9 +637,9 @@ void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],1<<16);
-	K052109_tilemap_draw(bitmap,layer[1],2<<16);
-	K052109_tilemap_draw(bitmap,layer[2],4<<16);
+	K052109_tilemap_draw(bitmap,layer[0],0,1);
+	K052109_tilemap_draw(bitmap,layer[1],0,2);
+	K052109_tilemap_draw(bitmap,layer[2],0,4);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }

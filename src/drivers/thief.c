@@ -32,22 +32,22 @@ Credits:
 
 static UINT8 thief_input_select;
 
-extern READ_HANDLER( thief_context_ram_r );
-extern WRITE_HANDLER( thief_context_ram_w );
-extern WRITE_HANDLER( thief_context_bank_w );
-extern WRITE_HANDLER( thief_video_control_w );
-extern WRITE_HANDLER( thief_vtcsel_w );
-extern WRITE_HANDLER( thief_color_map_w );
-extern WRITE_HANDLER( thief_color_plane_w );
-extern READ_HANDLER( thief_videoram_r );
-extern WRITE_HANDLER( thief_videoram_w );
-extern WRITE_HANDLER( thief_blit_w );
-extern READ_HANDLER( thief_coprocessor_r );
-extern WRITE_HANDLER( thief_coprocessor_w );
+READ_HANDLER( thief_context_ram_r );
+WRITE_HANDLER( thief_context_ram_w );
+WRITE_HANDLER( thief_context_bank_w );
+WRITE_HANDLER( thief_video_control_w );
+WRITE_HANDLER( thief_vtcsel_w );
+WRITE_HANDLER( thief_color_map_w );
+WRITE_HANDLER( thief_color_plane_w );
+READ_HANDLER( thief_videoram_r );
+WRITE_HANDLER( thief_videoram_w );
+WRITE_HANDLER( thief_blit_w );
+READ_HANDLER( thief_coprocessor_r );
+WRITE_HANDLER( thief_coprocessor_w );
 
-extern void thief_vh_stop( void );
-extern int thief_vh_start( void );
-extern void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void thief_vh_stop( void );
+int thief_vh_start( void );
+void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int thief_interrupt( void )
@@ -153,24 +153,19 @@ static READ_HANDLER( thief_io_r )
 	return 0x00;
 }
 
-static struct MemoryReadAddress sharkatt_readmem[] =
-{
+static MEMORY_READ_START( sharkatt_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },			/* 2114 (working RAM) */
 	{ 0xc000, 0xdfff, thief_videoram_r },	/* 4116 */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sharkatt_writemem[] =
-{
+static MEMORY_WRITE_START( sharkatt_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },			/* 2114 */
 	{ 0xc000, 0xdfff, thief_videoram_w },	/* 4116 */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress thief_readmem[] =
-{
+static MEMORY_READ_START( thief_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },			/* 2114 (working RAM) */
 	{ 0xa000, 0xafff, MRA_ROM },			/* NATO Defense diagnostic ROM */
@@ -178,11 +173,9 @@ static struct MemoryReadAddress thief_readmem[] =
 	{ 0xe000, 0xe008, thief_coprocessor_r },
 	{ 0xe010, 0xe02f, MRA_ROM },
 	{ 0xe080, 0xe0bf, thief_context_ram_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress thief_writemem[] =
-{
+static MEMORY_WRITE_START( thief_writemem )
 	{ 0x0000, 0x0000, thief_blit_w },
 	{ 0x0001, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },			/* 2114 */
@@ -191,19 +184,15 @@ static struct MemoryWriteAddress thief_writemem[] =
 	{ 0xe010, 0xe02f, MWA_ROM },
 	{ 0xe080, 0xe0bf, thief_context_ram_w },
 	{ 0xe0c0, 0xe0c0, thief_context_bank_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x31, 0x31, thief_io_r }, // 8255
 	{ 0x41, 0x41, AY8910_read_port_0_r },
 	{ 0x43, 0x43, AY8910_read_port_1_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, MWA_NOP }, /* watchdog */
 	{ 0x10, 0x10, thief_video_control_w },
 	{ 0x30, 0x30, thief_input_select_w }, // 8255
@@ -215,8 +204,7 @@ static struct IOWritePort writeport[] =
 	{ 0x50, 0x50, thief_color_plane_w },
 	{ 0x60, 0x6f, thief_vtcsel_w },
 	{ 0x70, 0x7f, thief_color_map_w },
-	{ -1 }
-};
+PORT_END
 
 
 

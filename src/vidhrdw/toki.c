@@ -9,27 +9,27 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define SPRITE_Y		0
-#define SPRITE_TILE		2
-#define SPRITE_FLIP_X		2
-#define SPRITE_PAL_BANK		4
-#define SPRITE_X		6
+#define SPRITE_Y			0
+#define SPRITE_TILE 		1
+#define SPRITE_FLIP_X		1
+#define SPRITE_PAL_BANK 	2
+#define SPRITE_X			3
 
 #define XBG1SCROLL_ADJUST(x) (-(x)+0x103)
 #define XBG2SCROLL_ADJUST(x) (-(x)+0x101)
 #define YBGSCROLL_ADJUST(x) (-(x)-1)
 
-unsigned char *toki_foreground_videoram;
-unsigned char *toki_background1_videoram;
-unsigned char *toki_background2_videoram;
-unsigned char *toki_sprites_dataram;
-unsigned char *toki_scrollram;
+data16_t *toki_foreground_videoram16;
+data16_t *toki_background1_videoram16;
+data16_t *toki_background2_videoram16;
+data16_t *toki_sprites_dataram16;
+data16_t *toki_scrollram16;
 signed char toki_linescroll[256];
 
-size_t toki_foreground_videoram_size;
-size_t toki_background1_videoram_size;
-size_t toki_background2_videoram_size;
-size_t toki_sprites_dataram_size;
+size_t toki_foreground_videoram16_size;
+size_t toki_background1_videoram16_size;
+size_t toki_background2_videoram16_size;
+size_t toki_sprites_dataram16_size;
 
 static unsigned char *frg_dirtybuffer;		/* foreground */
 static unsigned char *bg1_dirtybuffer;		/* background 1 */
@@ -52,16 +52,16 @@ static int bg2_scrollx, bg2_scrolly;
 
 int toki_vh_start (void)
 {
-	if ((frg_dirtybuffer = malloc (toki_foreground_videoram_size / 2)) == 0)
+	if ((frg_dirtybuffer = malloc (toki_foreground_videoram16_size / 2)) == 0)
 	{
 		return 1;
 	}
-	if ((bg1_dirtybuffer = malloc (toki_background1_videoram_size / 2)) == 0)
+	if ((bg1_dirtybuffer = malloc (toki_background1_videoram16_size / 2)) == 0)
 	{
 		free (frg_dirtybuffer);
 		return 1;
 	}
-	if ((bg2_dirtybuffer = malloc (toki_background2_videoram_size / 2)) == 0)
+	if ((bg2_dirtybuffer = malloc (toki_background2_videoram16_size / 2)) == 0)
 	{
 		free (bg1_dirtybuffer);
 		free (frg_dirtybuffer);
@@ -97,9 +97,9 @@ int toki_vh_start (void)
 		bitmap_free (bitmap_frg);
 		return 1;
 	}
-	memset (frg_dirtybuffer,1,toki_foreground_videoram_size / 2);
-	memset (bg2_dirtybuffer,1,toki_background1_videoram_size / 2);
-	memset (bg1_dirtybuffer,1,toki_background2_videoram_size / 2);
+	memset (frg_dirtybuffer,1,toki_foreground_videoram16_size / 2);
+	memset (bg2_dirtybuffer,1,toki_background1_videoram16_size / 2);
+	memset (bg1_dirtybuffer,1,toki_background2_videoram16_size / 2);
 	return 0;
 
 }
@@ -122,21 +122,20 @@ void toki_vh_stop (void)
  *
  *************************************/
 
-WRITE_HANDLER( toki_foreground_videoram_w )
+WRITE16_HANDLER( toki_foreground_videoram16_w )
 {
-   int oldword = READ_WORD (&toki_foreground_videoram[offset]);
-   int newword = COMBINE_WORD (oldword, data);
+	int oldword = toki_foreground_videoram16[offset];
+	COMBINE_DATA(&toki_foreground_videoram16[offset]);
 
-   if (oldword != newword)
-   {
-		WRITE_WORD (&toki_foreground_videoram[offset], data);
-		frg_dirtybuffer[offset/2] = 1;
-   }
+	if (oldword != toki_foreground_videoram16[offset])
+	{
+		frg_dirtybuffer[offset] = 1;
+	}
 }
 
-READ_HANDLER( toki_foreground_videoram_r )
+READ16_HANDLER( toki_foreground_videoram16_r )
 {
-   return READ_WORD (&toki_foreground_videoram[offset]);
+	return toki_foreground_videoram16[offset];
 }
 
 
@@ -147,21 +146,20 @@ READ_HANDLER( toki_foreground_videoram_r )
  *
  *************************************/
 
-WRITE_HANDLER( toki_background1_videoram_w )
+WRITE16_HANDLER( toki_background1_videoram16_w )
 {
-   int oldword = READ_WORD (&toki_background1_videoram[offset]);
-   int newword = COMBINE_WORD (oldword, data);
+	int oldword = toki_background1_videoram16[offset];
+	COMBINE_DATA(&toki_background1_videoram16[offset]);
 
-   if (oldword != newword)
-   {
-		WRITE_WORD (&toki_background1_videoram[offset], data);
-		bg1_dirtybuffer[offset/2] = 1;
-   }
+	if (oldword != toki_background1_videoram16[offset])
+	{
+		bg1_dirtybuffer[offset] = 1;
+	}
 }
 
-READ_HANDLER( toki_background1_videoram_r )
+READ16_HANDLER( toki_background1_videoram16_r )
 {
-   return READ_WORD (&toki_background1_videoram[offset]);
+	return toki_background1_videoram16[offset];
 }
 
 
@@ -172,21 +170,20 @@ READ_HANDLER( toki_background1_videoram_r )
  *
  *************************************/
 
-WRITE_HANDLER( toki_background2_videoram_w )
+WRITE16_HANDLER( toki_background2_videoram16_w )
 {
-   int oldword = READ_WORD (&toki_background2_videoram[offset]);
-   int newword = COMBINE_WORD (oldword, data);
+	int oldword = toki_background2_videoram16[offset];
+	COMBINE_DATA(&toki_background2_videoram16[offset]);
 
-   if (oldword != newword)
-   {
-		WRITE_WORD (&toki_background2_videoram[offset], data);
-		bg2_dirtybuffer[offset/2] = 1;
-   }
+	if (oldword != toki_background2_videoram16[offset])
+	{
+		bg2_dirtybuffer[offset] = 1;
+	}
 }
 
-READ_HANDLER( toki_background2_videoram_r )
+READ16_HANDLER( toki_background2_videoram16_r )
 {
-   return READ_WORD (&toki_background2_videoram[offset]);
+	return toki_background2_videoram16[offset];
 }
 
 
@@ -200,31 +197,32 @@ READ_HANDLER( toki_background2_videoram_r )
 void toki_render_sprites (struct osd_bitmap *bitmap)
 {
 	int SprX,SprY,SprTile,SprFlipX,SprPalette,offs;
-	unsigned char *SprRegs;
+	data16_t *SprRegs;
 
 	/* Draw the sprites. 256 sprites in total */
 
-	for (offs = 0;offs < toki_sprites_dataram_size;offs += 8)
+	for (offs = 0;offs < toki_sprites_dataram16_size / 2;offs += 4)
 	{
-		SprRegs = &toki_sprites_dataram[offs];
+		SprRegs = &toki_sprites_dataram16[offs];
 
-		if (READ_WORD (&SprRegs[SPRITE_Y])==0xf100) break;
-		if (READ_WORD (&SprRegs[SPRITE_PAL_BANK]))
+		if (SprRegs[SPRITE_Y] == 0xf100)
+			break;
+		if (SprRegs[SPRITE_PAL_BANK])
 		{
 
-			SprX = READ_WORD (&SprRegs[SPRITE_X]) & 0x1ff;
+			SprX = SprRegs[SPRITE_X] & 0x1ff;
 			if (SprX > 256)
 				SprX -= 512;
 
-			SprY = READ_WORD (&SprRegs[SPRITE_Y]) & 0x1ff;
+			SprY = SprRegs[SPRITE_Y] & 0x1ff;
 			if (SprY > 256)
-			  SprY = (512-SprY)+240;
+				SprY = (512-SprY)+240;
 			else
-	       		  SprY = 240-SprY;
+				SprY = 240-SprY;
 
-			SprFlipX   = READ_WORD (&SprRegs[SPRITE_FLIP_X]) & 0x4000;
-			SprTile    = READ_WORD (&SprRegs[SPRITE_TILE]) & 0x1fff;
-			SprPalette = READ_WORD (&SprRegs[SPRITE_PAL_BANK])>>12;
+			SprFlipX   = SprRegs[SPRITE_FLIP_X] & 0x4000;
+			SprTile    = SprRegs[SPRITE_TILE] & 0x1fff;
+			SprPalette = SprRegs[SPRITE_PAL_BANK] >> 12;
 
 			drawgfx (bitmap,Machine->gfx[1],
 					SprTile,
@@ -248,13 +246,13 @@ void toki_draw_background1 (struct osd_bitmap *bitmap)
 {
 	int sx,sy,code,palette,offs;
 
-	for (offs = 0;offs < toki_background1_videoram_size / 2;offs++)
+	for (offs = 0;offs < toki_background1_videoram16_size / 2;offs++)
 	{
 		if (bg1_dirtybuffer[offs])
 		{
-			code = READ_WORD (&toki_background1_videoram[offs*2]);
-			palette = code>>12;
-			sx = (offs  % 32) << 4;
+			code = toki_background1_videoram16[offs];
+			palette = code >> 12;
+			sx = (offs	% 32) << 4;
 			sy = (offs >>  5) << 4;
 			bg1_dirtybuffer[offs] = 0;
 			drawgfx (bitmap,Machine->gfx[2],
@@ -271,13 +269,13 @@ void toki_draw_background2 (struct osd_bitmap *bitmap)
 {
 	int sx,sy,code,palette,offs;
 
-	for (offs = 0;offs < toki_background2_videoram_size / 2;offs++)
+	for (offs = 0;offs < toki_background2_videoram16_size / 2;offs++)
 	{
 		if (bg2_dirtybuffer[offs])
 		{
-			code = READ_WORD (&toki_background2_videoram[offs*2]);
-			palette = code>>12;
-			sx = (offs  % 32) << 4;
+			code = toki_background2_videoram16[offs];
+			palette = code >> 12;
+			sx = (offs	% 32) << 4;
 			sy = (offs >>  5) << 4;
 			bg2_dirtybuffer[offs] = 0;
 			drawgfx (bitmap,Machine->gfx[3],
@@ -294,13 +292,12 @@ void toki_draw_foreground (struct osd_bitmap *bitmap)
 {
 	int sx,sy,code,palette,offs;
 
-	for (offs = 0;offs < toki_foreground_videoram_size / 2;offs++)
+	for (offs = 0;offs < toki_foreground_videoram16_size / 2;offs++)
 	{
 		if (frg_dirtybuffer[offs])
 		{
-			code = READ_WORD (&toki_foreground_videoram[offs*2]);
-			palette = code>>12;
-
+			code = toki_foreground_videoram16[offs];
+			palette = code >> 12;
 			sx = (offs % 32) << 3;
 			sy = (offs >> 5) << 3;
 			frg_dirtybuffer[offs] = 0;
@@ -323,12 +320,12 @@ void toki_draw_foreground (struct osd_bitmap *bitmap)
 
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int title_on; 			/* title on screen flag */
+	int title_on;			/* title on screen flag */
 
-	bg1_scrolly = YBGSCROLL_ADJUST  (READ_WORD (&toki_scrollram[0]));
-	bg1_scrollx = XBG1SCROLL_ADJUST (READ_WORD (&toki_scrollram[2]));
-	bg2_scrolly = YBGSCROLL_ADJUST  (READ_WORD (&toki_scrollram[4]));
-	bg2_scrollx = XBG2SCROLL_ADJUST (READ_WORD (&toki_scrollram[6]));
+	bg1_scrolly = YBGSCROLL_ADJUST	(toki_scrollram16[0]);
+	bg1_scrollx = XBG1SCROLL_ADJUST (toki_scrollram16[1]);
+	bg2_scrolly = YBGSCROLL_ADJUST	(toki_scrollram16[2]);
+	bg2_scrollx = XBG2SCROLL_ADJUST (toki_scrollram16[3]);
 
 	/* Palette mapping first */
 	{
@@ -337,33 +334,33 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		memset (palette_map, 0, sizeof (palette_map));
 
-		for (offs = 0; offs < toki_foreground_videoram_size / 2; offs++)
+		for (offs = 0; offs < toki_foreground_videoram16_size / 2; offs++)
 		{
 			/* foreground */
-			code = READ_WORD (&toki_foreground_videoram[offs * 2]);
+			code = toki_foreground_videoram16[offs];
 			palette = code >> 12;
 			palette_map[16 + palette] |= Machine->gfx[0]->pen_usage[code & 0xfff];
 			/* background 1 */
-			code = READ_WORD (&toki_background1_videoram[offs * 2]);
+			code = toki_background1_videoram16[offs];
 			palette = code >> 12;
 			palette_map[32 + palette] |= Machine->gfx[2]->pen_usage[code & 0xfff];
 			/* background 2 */
-			code = READ_WORD (&toki_background2_videoram[offs * 2]);
+			code = toki_background2_videoram16[offs];
 			palette = code >> 12;
 			palette_map[48 + palette] |= Machine->gfx[3]->pen_usage[code & 0xfff];
 		}
 
 		/* sprites */
-		for (offs = 0;offs < toki_sprites_dataram_size;offs += 8)
+		for (offs = 0;offs < toki_sprites_dataram16_size / 2;offs += 4)
 		{
-			unsigned char *data = &toki_sprites_dataram[offs];
+			data16_t *SprRegs = &toki_sprites_dataram16[offs];
 
-			if (READ_WORD (&data[SPRITE_Y]) == 0xf100)
+			if (SprRegs[SPRITE_Y] == 0xf100)
 				break;
-			palette = READ_WORD (&data[SPRITE_PAL_BANK]);
+			palette = SprRegs[SPRITE_PAL_BANK];
 			if (palette)
 			{
-				code = READ_WORD (&data[SPRITE_TILE]) & 0x1fff;
+				code = SprRegs[SPRITE_TILE] & 0x1fff;
 				palette_map[0 + (palette >> 12)] |= Machine->gfx[1]->pen_usage[code];
 			}
 		}
@@ -391,18 +388,18 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* recompute */
 		if (palette_recalc ())
 		{
-			memset (frg_dirtybuffer, 1, toki_foreground_videoram_size / 2);
-			memset (bg1_dirtybuffer, 1, toki_background1_videoram_size / 2);
-			memset (bg2_dirtybuffer, 1, toki_background2_videoram_size / 2);
+			memset (frg_dirtybuffer, 1, toki_foreground_videoram16_size / 2);
+			memset (bg1_dirtybuffer, 1, toki_background1_videoram16_size / 2);
+			memset (bg2_dirtybuffer, 1, toki_background2_videoram16_size / 2);
 		}
 	}
 
 
-	title_on = (READ_WORD (&toki_foreground_videoram[0x710])==0x44) ? 1:0;
+	title_on = (toki_foreground_videoram16[0x710 >> 1]==0x44) ? 1:0;
 
- 	toki_draw_foreground (bitmap_frg);
+	toki_draw_foreground (bitmap_frg);
 	toki_draw_background1 (bitmap_bg1);
- 	toki_draw_background2 (bitmap_bg2);
+	toki_draw_background2 (bitmap_bg2);
 
 	if (title_on)
 	{
@@ -421,16 +418,16 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	toki_render_sprites (bitmap);
-   	copybitmap (bitmap,bitmap_frg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copybitmap (bitmap,bitmap_frg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
 
 
 
 static int lastline,lastdata;
 
-WRITE_HANDLER( toki_linescroll_w )
+WRITE16_HANDLER( toki_linescroll16_w )
 {
-	if (offset == 2)
+	if (offset == 1)
 	{
 		int currline;
 
@@ -461,3 +458,4 @@ int toki_interrupt(void)
 	lastline = 0;
 	return 1;  /*Interrupt vector 1*/
 }
+

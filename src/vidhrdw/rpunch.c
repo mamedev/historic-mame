@@ -23,7 +23,7 @@
  *
  *************************************/
 
-UINT8 *rpunch_bitmapram;
+data16_t *rpunch_bitmapram;
 size_t rpunch_bitmapram_size;
 static UINT32 *rpunch_bitmapsum;
 
@@ -31,12 +31,12 @@ int rpunch_sprite_palette;
 
 static struct tilemap *background[2];
 
-static UINT16 videoflags;
+static data16_t videoflags;
 static UINT8 crtc_register;
 static void *crtc_timer;
 static UINT8 bins, gins;
 
-static const UINT16 *callback_videoram;
+static const data16_t *callback_videoram;
 static UINT8 callback_gfxbank;
 static UINT8 callback_colorbase;
 static UINT16 callback_imagebase;
@@ -105,7 +105,7 @@ int rpunch_vh_start(void)
 	}
 
 	/* configure the tilemaps */
-	background[1]->transparent_pen = 15;
+	tilemap_set_transparent_pen(background[1],15);
 
 	/* reset the sums and bitmap */
 	for (i = 0; i < BITMAP_HEIGHT; i++)
@@ -141,17 +141,20 @@ void rpunch_vh_stop(void)
  *
  *************************************/
 
-WRITE_HANDLER(rpunch_bitmap_w)
+WRITE16_HANDLER(rpunch_bitmap_w)
 {
 	if (rpunch_bitmapram)
 	{
-		int oldword = READ_WORD(&rpunch_bitmapram[offset]);
-		int newword = COMBINE_WORD(oldword, data);
+		int oldword = rpunch_bitmapram[offset];
+		int newword = oldword;
+		COMBINE_DATA(&newword);
+
 		if (oldword != newword)
 		{
-			int row = offset / 256;
-			int col = 2 * (offset % 256) - BITMAP_XOFFSET;
-			WRITE_WORD(&rpunch_bitmapram[offset], data);
+			int row = offset / 128;
+			int col = 4 * (offset % 128) - BITMAP_XOFFSET;
+
+			rpunch_bitmapram[offset] = data;
 			if (row < BITMAP_HEIGHT && col >= 0 && col < BITMAP_WIDTH)
 				rpunch_bitmapsum[row] += newword - oldword;
 		}
@@ -159,61 +162,66 @@ WRITE_HANDLER(rpunch_bitmap_w)
 }
 
 
-WRITE_HANDLER(rpunch_videoram_w)
+WRITE16_HANDLER(rpunch_videoram_w)
 {
-	int oldword = READ_WORD(&videoram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
+	int oldword = videoram16[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
+
 	if (oldword != newword)
 	{
-		int tilemap = offset >> 13;
-		int tile_index = (offset / 2) & 0xfff;
-		WRITE_WORD(&videoram[offset], newword);
+		int tilemap = offset >> 12;
+		int tile_index = offset & 0xfff;
+
+		videoram16[offset] = newword;
 		tilemap_mark_tile_dirty(background[tilemap],tile_index);
 	}
 }
 
 
-WRITE_HANDLER(rpunch_videoreg_w)
+WRITE16_HANDLER(rpunch_videoreg_w)
 {
-	int newword = COMBINE_WORD(videoflags, data);
-	if (videoflags != newword)
+	int oldword = videoflags;
+	COMBINE_DATA(&videoflags);
+
+	if (videoflags != oldword)
 	{
 		/* invalidate tilemaps */
-		if ((newword ^ videoflags) & 0x0410)
+		if ((oldword ^ videoflags) & 0x0410)
 			tilemap_mark_all_tiles_dirty(background[0]);
-		if ((newword ^ videoflags) & 0x0820)
+		if ((oldword ^ videoflags) & 0x0820)
 			tilemap_mark_all_tiles_dirty(background[1]);
-		videoflags = newword;
 	}
 }
 
 
-WRITE_HANDLER(rpunch_scrollreg_w)
+WRITE16_HANDLER(rpunch_scrollreg_w)
 {
-	switch (offset / 2)
-	{
-		case 0:
-			tilemap_set_scrolly(background[0], 0, data & 0x1ff);
-			break;
+	if (ACCESSING_LSB && ACCESSING_MSB)
+		switch (offset)
+		{
+			case 0:
+				tilemap_set_scrolly(background[0], 0, data & 0x1ff);
+				break;
 
-		case 1:
-			tilemap_set_scrollx(background[0], 0, (data & 0x1ff) - 8);
-			break;
+			case 1:
+				tilemap_set_scrollx(background[0], 0, data & 0x1ff);
+				break;
 
-		case 2:
-			tilemap_set_scrolly(background[1], 0, data & 0x1ff);
-			break;
+			case 2:
+				tilemap_set_scrolly(background[1], 0, data & 0x1ff);
+				break;
 
-		case 3:
-			tilemap_set_scrollx(background[1], 0, data & 0x1ff);
-			break;
-	}
+			case 3:
+				tilemap_set_scrollx(background[1], 0, data & 0x1ff);
+				break;
+		}
 }
 
 
-WRITE_HANDLER(rpunch_crtc_data_w)
+WRITE16_HANDLER(rpunch_crtc_data_w)
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		data &= 0xff;
 		switch (crtc_register)
@@ -233,16 +241,16 @@ WRITE_HANDLER(rpunch_crtc_data_w)
 }
 
 
-WRITE_HANDLER(rpunch_crtc_register_w)
+WRITE16_HANDLER(rpunch_crtc_register_w)
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 		crtc_register = data & 0xff;
 }
 
 
-WRITE_HANDLER(rpunch_ins_w)
+WRITE16_HANDLER(rpunch_ins_w)
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		if (offset == 0)
 		{
@@ -270,15 +278,15 @@ static void mark_sprite_palette(void)
 	int offs, i, j;
 
 	memset(used_colors, 0, sizeof(used_colors));
-	for (offs = 0; offs < spriteram_size; offs += 8)
+	for (offs = 0; offs < spriteram_size / 2; offs += 4)
 	{
-		int data1 = READ_WORD(&spriteram[offs + 2]);
+		int data1 = spriteram16[offs + 1];
 		int code = data1 & 0x7ff;
 
 		if (code < 0x600)
 		{
-			int data0 = READ_WORD(&spriteram[offs + 0]);
-			int data2 = READ_WORD(&spriteram[offs + 4]);
+			int data0 = spriteram16[offs + 0];
+			int data2 = spriteram16[offs + 2];
 			int x = (data2 & 0x1ff) + 8;
 			int y = 513 - (data0 & 0x1ff);
 			int color = ((data1 >> 13) & 7) | ((videoflags & 0x0040) >> 3);
@@ -310,15 +318,15 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	int offs;
 
 	/* draw the sprites */
-	for (offs = 0; offs < spriteram_size; offs += 8)
+	for (offs = 0; offs < spriteram_size / 2; offs += 4)
 	{
-		int data1 = READ_WORD(&spriteram[offs + 2]);
+		int data1 = spriteram16[offs + 1];
 		int code = data1 & 0x7ff;
 
 		if (code < 0x600)
 		{
-			int data0 = READ_WORD(&spriteram[offs + 0]);
-			int data2 = READ_WORD(&spriteram[offs + 4]);
+			int data0 = spriteram16[offs + 0];
+			int data2 = spriteram16[offs + 2];
 			int x = (data2 & 0x1ff) + 8;
 			int y = 513 - (data0 & 0x1ff);
 			int xflip = data1 & 0x1000;
@@ -346,7 +354,7 @@ void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* update background 0 */
 	callback_gfxbank = 0;
-	callback_videoram = (const UINT16 *)&videoram[0];
+	callback_videoram = &videoram16[0];
 	callback_colorbase = (videoflags & 0x0010) >> 1;
 	callback_imagebase = (videoflags & 0x0400) << 3;
 	callback_imagemask = callback_imagebase ? 0x0fff : 0x1fff;
@@ -354,7 +362,7 @@ void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* update background 1 */
 	callback_gfxbank = 1;
-	callback_videoram = (const UINT16 *)&videoram[videoram_size / 2];
+	callback_videoram = &videoram16[videoram_size / 4];
 	callback_colorbase = (videoflags & 0x0020) >> 2;
 	callback_imagebase = (videoflags & 0x0800) << 2;
 	callback_imagemask = callback_imagebase ? 0x0fff : 0x1fff;
@@ -371,20 +379,15 @@ void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		palette_used_colors[penbase + 15] = PALETTE_COLOR_TRANSPARENT;
 	}
 
-	/* handle full refresh */
-	if (palette_recalc() || full_refresh)
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	/* update the tilemaps */
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* build the result */
-	tilemap_draw(bitmap, background[0], 0);
+	tilemap_draw(bitmap, background[0], 0,0);
 
 	/* if we have a bitmap layer, it goes on top */
 	if (rpunch_bitmapram)
 	{
-		tilemap_draw(bitmap, background[1], 0);
+		tilemap_draw(bitmap, background[1], 0,0);
 		draw_sprites(bitmap);
 		if (bitmap->depth == 8)
 			draw_bitmap_8(bitmap);
@@ -396,7 +399,7 @@ void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	else
 	{
 		draw_sprites(bitmap);
-		tilemap_draw(bitmap, background[1], 0);
+		tilemap_draw(bitmap, background[1], 0,0);
 	}
 }
 
@@ -466,7 +469,7 @@ void DRAW_FUNC(struct osd_bitmap *bitmap)
 	for (y = 0; y < BITMAP_HEIGHT; y++)
 		if (rpunch_bitmapsum[y] != (BITMAP_WIDTH/4) * 0xffff)
 		{
-			UINT16 *src = (UINT16 *)&rpunch_bitmapram[y * 256 + BITMAP_XOFFSET/2];
+			data16_t *src = &rpunch_bitmapram[y * 128 + BITMAP_XOFFSET/4];
 			TYPE *dst = (TYPE *)bitmap->line[y];
 			int xadv = 1;
 

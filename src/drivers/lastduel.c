@@ -10,156 +10,112 @@
 microcontroller.
 
 TODO:
-- Priority issues in Mad Gear. A PROM is probably missing.
+- The seem to be minor priority issues in Mad Gear, but the game might just
+  be like that. The priority PROM is missing.
+- visible area might be wrong
 
 **************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-READ_HANDLER( lastduel_vram_r );
-WRITE_HANDLER( lastduel_vram_w );
-WRITE_HANDLER( lastduel_flip_w );
-READ_HANDLER( lastduel_scroll2_r );
-READ_HANDLER( lastduel_scroll1_r );
-WRITE_HANDLER( lastduel_scroll1_w );
-WRITE_HANDLER( lastduel_scroll2_w );
-WRITE_HANDLER( madgear_scroll1_w );
-WRITE_HANDLER( madgear_scroll2_w );
+WRITE16_HANDLER( lastduel_vram_w );
+WRITE16_HANDLER( lastduel_flip_w );
+WRITE16_HANDLER( lastduel_scroll1_w );
+WRITE16_HANDLER( lastduel_scroll2_w );
+WRITE16_HANDLER( madgear_scroll1_w );
+WRITE16_HANDLER( madgear_scroll2_w );
+WRITE16_HANDLER( lastduel_scroll_w );
 int lastduel_vh_start(void);
 int madgear_vh_start(void);
 void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lastduel_eof_callback(void);
-WRITE_HANDLER( lastduel_scroll_w );
 
-extern unsigned char *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
-static unsigned char *lastduel_ram;
+extern data16_t *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 
 /******************************************************************************/
 
-static READ_HANDLER( lastduel_inputs_r )
+static WRITE16_HANDLER( lastduel_sound_w )
 {
-  switch (offset) {
-  	case 0: /* Player 1 & Player 2 controls */
-    	return(readinputport(0)<<8)+readinputport(1);
-
-    case 2: /* Coins & Service switch */
-      return readinputport(2);
-
-    case 4: /* Dips */
-    	return (readinputport(3)<<8)+readinputport(4);
-
-    case 6: /* Dips, flip */
-      return readinputport(5);
-  }
-  return 0xffff;
-}
-
-static READ_HANDLER( madgear_inputs_r )
-{
-	switch (offset) {
-    case 0: /* DIP switch A, DIP switch B */
-      return(readinputport(3)<<8)+readinputport(4);
-
-    case 2: /* DIP switch C */
-    	return readinputport(5)<<8;
-
-  	case 4: /* Player 1 & Player 2 controls */
-    	return(readinputport(0)<<8)+readinputport(1);
-
-    case 6: /* Start + coins */
-    	return readinputport(2)<<8;
-	}
-	return 0xffff;
-}
-
-static WRITE_HANDLER( lastduel_sound_w )
-{
-	soundlatch_w(offset,data & 0xff);
+	if (ACCESSING_LSB)
+		soundlatch_w(0,data & 0xff);
 }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress lastduel_readmem[] =
-{
-	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0xfc0800, 0xfc0fff, MRA_BANK2 },
-	{ 0xfc4000, 0xfc4007, lastduel_inputs_r },
-	{ 0xfcc000, 0xfcdfff, lastduel_vram_r },
-	{ 0xfd0000, 0xfd3fff, lastduel_scroll1_r },
-	{ 0xfd4000, 0xfd7fff, lastduel_scroll2_r },
-	{ 0xfd8000, 0xfd87ff, paletteram_word_r },
-	{ 0xfe0000, 0xffffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+static MEMORY_READ16_START( lastduel_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0xfc0800, 0xfc0fff, MRA16_RAM },
+	{ 0xfc4000, 0xfc4001, input_port_0_word_r },
+	{ 0xfc4002, 0xfc4003, input_port_1_word_r },
+	{ 0xfc4004, 0xfc4005, input_port_2_word_r },
+	{ 0xfc4006, 0xfc4007, input_port_3_word_r },
+	{ 0xfcc000, 0xfcdfff, MRA16_RAM },
+	{ 0xfd0000, 0xfd3fff, MRA16_RAM },
+	{ 0xfd4000, 0xfd7fff, MRA16_RAM },
+	{ 0xfd8000, 0xfd87ff, MRA16_RAM },
+	{ 0xfe0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress lastduel_writemem[] =
-{
-	{ 0x000000, 0x05ffff, MWA_ROM },
-	{ 0xfc0000, 0xfc0003, MWA_NOP }, /* Written rarely */
-	{ 0xfc0800, 0xfc0fff, MWA_BANK2, &spriteram, &spriteram_size },
+static MEMORY_WRITE16_START( lastduel_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
+	{ 0xfc0000, 0xfc0003, MWA16_NOP }, /* Written rarely */
+	{ 0xfc0800, 0xfc0fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
 	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
-	{ 0xfc8000, 0xfc800f, lastduel_scroll_w },
-	{ 0xfcc000, 0xfcdfff, lastduel_vram_w,    &lastduel_vram },
+	{ 0xfc8000, 0xfc8007, lastduel_scroll_w },
+	{ 0xfcc000, 0xfcdfff, lastduel_vram_w, &lastduel_vram },
 	{ 0xfd0000, 0xfd3fff, lastduel_scroll1_w, &lastduel_scroll1 },
 	{ 0xfd4000, 0xfd7fff, lastduel_scroll2_w, &lastduel_scroll2 },
-	{ 0xfd8000, 0xfd87ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
-	{ 0xfe0000, 0xffffff, MWA_BANK1, &lastduel_ram },
-	{ -1 }	/* end of table */
-};
+	{ 0xfd8000, 0xfd87ff, paletteram16_RRRRGGGGBBBBIIII_word_w, &paletteram16 },
+	{ 0xfe0000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress madgear_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xfc1800, 0xfc1fff, MRA_BANK2 },
-	{ 0xfc4000, 0xfc4007, madgear_inputs_r },
-	{ 0xfc8000, 0xfc9fff, lastduel_vram_r },
-	{ 0xfcc000, 0xfcc7ff, paletteram_word_r },
-	{ 0xfd4000, 0xfd7fff, lastduel_scroll1_r },
-	{ 0xfd8000, 0xfdffff, lastduel_scroll2_r },
-	{ 0xff0000, 0xffffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+static MEMORY_READ16_START( madgear_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0xfc1800, 0xfc1fff, MRA16_RAM },
+	{ 0xfc4000, 0xfc4001, input_port_0_word_r },
+	{ 0xfc4002, 0xfc4003, input_port_1_word_r },
+	{ 0xfc4004, 0xfc4005, input_port_2_word_r },
+	{ 0xfc4006, 0xfc4007, input_port_3_word_r },
+	{ 0xfc8000, 0xfc9fff, MRA16_RAM },
+	{ 0xfcc000, 0xfcc7ff, MRA16_RAM },
+	{ 0xfd4000, 0xfd7fff, MRA16_RAM },
+	{ 0xfd8000, 0xfdffff, MRA16_RAM },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress madgear_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xfc1800, 0xfc1fff, MWA_BANK2, &spriteram, &spriteram_size },
+static MEMORY_WRITE16_START( madgear_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0xfc1800, 0xfc1fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
 	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
-	{ 0xfc8000, 0xfc9fff, lastduel_vram_w,    &lastduel_vram },
-	{ 0xfcc000, 0xfcc7ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
-	{ 0xfd0000, 0xfd000f, lastduel_scroll_w },
+	{ 0xfc8000, 0xfc9fff, lastduel_vram_w, &lastduel_vram },
+	{ 0xfcc000, 0xfcc7ff, paletteram16_RRRRGGGGBBBBIIII_word_w, &paletteram16 },
+	{ 0xfd0000, 0xfd0007, lastduel_scroll_w },
 	{ 0xfd4000, 0xfd7fff, madgear_scroll1_w, &lastduel_scroll1 },
 	{ 0xfd8000, 0xfdffff, madgear_scroll2_w, &lastduel_scroll2 },
-	{ 0xff0000, 0xffffff, MWA_BANK1,&lastduel_ram },
-	{ -1 }	/* end of table */
-};
+	{ 0xff0000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 /******************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xe800, YM2203_status_port_0_r },
 	{ 0xf000, 0xf000, YM2203_status_port_1_r },
 	{ 0xf800, 0xf800, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xe800, YM2203_control_port_0_w },
 	{ 0xe801, 0xe801, YM2203_write_port_0_w },
 	{ 0xf000, 0xf000, YM2203_control_port_1_w },
 	{ 0xf001, 0xf001, YM2203_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 static WRITE_HANDLER( mg_bankswitch_w )
 {
@@ -170,19 +126,16 @@ static WRITE_HANDLER( mg_bankswitch_w )
 	cpu_setbank(3,&RAM[bankaddress]);
 }
 
-static struct MemoryReadAddress mg_sound_readmem[] =
-{
+static MEMORY_READ_START( mg_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xcfff, MRA_BANK3 },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xf000, 0xf000, YM2203_status_port_0_r },
 	{ 0xf002, 0xf002, YM2203_status_port_1_r },
 	{ 0xf006, 0xf006, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mg_sound_writemem[] =
-{
+static MEMORY_WRITE_START( mg_sound_writemem )
 	{ 0x0000, 0xcfff, MWA_ROM },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xf000, 0xf000, YM2203_control_port_0_w },
@@ -191,131 +144,88 @@ static struct MemoryWriteAddress mg_sound_writemem[] =
 	{ 0xf003, 0xf003, YM2203_write_port_1_w },
 	{ 0xf004, 0xf004, OKIM6295_data_0_w },
 	{ 0xf00a, 0xf00a, mg_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
-static struct GfxLayout sprites =
+static struct GfxLayout sprite_layout =
 {
-  16,16,  /* 16*16 sprites */
-  4096,   /* 32 bytes per sprite, 0x20000 per plane so 4096 sprites */
-  4,      /* 4 bits per pixel */
-  { 0x00000*8, 0x20000*8, 0x40000*8, 0x60000*8  },
-  {
-    0,1,2,3,4,5,6,7,
-    (16*8)+0,(16*8)+1,(16*8)+2,(16*8)+3,
-    (16*8)+4,(16*8)+5,(16*8)+6,(16*8)+7
-  },
-  {
-    0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-    8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8,
-  },
-  32*8   /* every sprite takes 32 consecutive bits */
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
 };
 
 static struct GfxLayout text_layout =
 {
-  8,8,    /* 8*8 characters */
-  2048,   /* 2048 character */
-  2,      /* 2 bitplanes */
-  { 4,0 },
-  {
-    0,1,2,3,8,9,10,11
-  },
-  {
-    0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16
-  },
-  16*8   /* every character takes 16 consecutive bytes */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
 };
 
-static struct GfxLayout scroll1layout =
+static struct GfxLayout tile_layout =
 {
-  16,16,  /* 16*16 tiles */
-  2048,   /* 2048 tiles */
-  4,      /* 4 bits per pixel */
-  { 4,0,(0x020000*8)+4,0x020000*8, },
-  {
-    0,1,2,3,8,9,10,11,
-    (8*4*8)+0,(8*4*8)+1,(8*4*8)+2,(8*4*8)+3,
-    (8*4*8)+8,(8*4*8)+9,(8*4*8)+10,(8*4*8)+11
-  },
-  {
-    0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-    8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16
-  },
-  64*8   /* each tile takes 64 consecutive bytes */
-};
-
-static struct GfxLayout scroll2layout =
-{
-  16,16,  /* 16*16 tiles */
-  4096,   /* 4096 tiles */
-  4,      /* 4 bits per pixel */
-  { 4,0,(0x040000*8)+4,0x040000*8, },
-  {
-    0,1,2,3,8,9,10,11,
-    (8*4*8)+0,(8*4*8)+1,(8*4*8)+2,(8*4*8)+3,
-    (8*4*8)+8,(8*4*8)+9,(8*4*8)+10,(8*4*8)+11
-  },
-  {
-    0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-    8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16
-  },
-  64*8   /* each tile takes 64 consecutive bytes */
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	32*16
 };
 
 static struct GfxLayout madgear_tile =
 {
 	16,16,
-	2048,
+	RGN_FRAC(1,1),
 	4,
-	{ 12,8,4,0 },
-	{
-		0, 1, 2, 3,
-		16,17,18,19,
-
-		0+64*8, 1+64*8, 2+64*8, 3+64*8,
-		16+64*8,17+64*8,18+64*8,19+64*8,
-	},
+	{ 3*4, 2*4, 1*4, 0*4 },
+	{ 0, 1, 2, 3, 16+0, 16+1, 16+2, 16+3,
+			32*16+0, 32*16+1, 32*16+2, 32*16+3, 32*16+16+0, 32*16+16+1, 32*16+16+2, 32*16+16+3 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	128*8
+	64*16
 };
 
 static struct GfxLayout madgear_tile2 =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,1),
 	4,
-	{ 4,12,0,8 },
-	{
-		0, 1, 2, 3,
-		16,17,18,19,
-
-		0+64*8, 1+64*8, 2+64*8, 3+64*8,
-		16+64*8,17+64*8,18+64*8,19+64*8,
-	},
+	{ 1*4, 3*4, 0*4, 2*4 },
+	{ 0, 1, 2, 3, 16+0, 16+1, 16+2, 16+3,
+			32*16+0, 32*16+1, 32*16+2, 32*16+3, 32*16+16+0, 32*16+16+1, 32*16+16+2, 32*16+16+3 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	128*8
+	64*16
 };
 
 static struct GfxDecodeInfo lastduel_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0,&sprites,       512, 16 },	/* colors 512-767 */
-	{ REGION_GFX2, 0,&text_layout,   768, 16 },	/* colors 768-831 */
-	{ REGION_GFX3, 0,&scroll1layout,   0, 16 },	/* colors   0-255 */
-	{ REGION_GFX4, 0,&scroll2layout, 256, 16 },	/* colors 256-511 */
+	{ REGION_GFX1, 0,&sprite_layout, 0x200, 16 },	/* colors 0x200-0x2ff */
+	{ REGION_GFX2, 0,&text_layout,   0x300, 16 },	/* colors 0x300-0x33f */
+	{ REGION_GFX3, 0,&tile_layout,   0x000, 16 },	/* colors 0x000-0x0ff */
+	{ REGION_GFX4, 0,&tile_layout,   0x100, 16 },	/* colors 0x100-0x1ff */
 	{ -1 }
 };
 
 static struct GfxDecodeInfo madgear_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0,&sprites,       512, 16 },	/* colors 512-767 */
-	{ REGION_GFX2, 0,&text_layout,   768, 16 },	/* colors 768-831 */
-	{ REGION_GFX3, 0,&madgear_tile,    0, 16 },	/* colors   0-255 */
-	{ REGION_GFX4, 0,&madgear_tile2, 256, 16 },	/* colors 256-511 */
+	{ REGION_GFX1, 0,&sprite_layout, 0x200, 16 },	/* colors 0x200-0x2ff */
+	{ REGION_GFX2, 0,&text_layout,   0x300, 16 },	/* colors 0x300-0x33f */
+	{ REGION_GFX3, 0,&madgear_tile,  0x000, 16 },	/* colors 0x000-0x0ff */
+	{ REGION_GFX4, 0,&madgear_tile2, 0x100, 16 },	/* colors 0x100-0x1ff */
 	{ -1 }
 };
 
@@ -381,7 +291,7 @@ static const struct MachineDriver machine_driver_lastduel =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, 56*8-1, 2*8, 30*8-1 }, /* 384 x 228? */
+	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 
 	lastduel_gfxdecodeinfo,
 	1024, 1024,
@@ -425,7 +335,7 @@ static const struct MachineDriver machine_driver_madgear =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, 56*8-1, 1*8, 31*8-1 }, /* 384 x 240? */
+	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 
 	madgear_gfxdecodeinfo,
 	1024, 1024,
@@ -435,7 +345,7 @@ static const struct MachineDriver machine_driver_madgear =
 	lastduel_eof_callback,
 	madgear_vh_start,
 	0,
-	ledstorm_vh_screenrefresh,
+	lastduel_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -455,24 +365,22 @@ static const struct MachineDriver machine_driver_madgear =
 
 INPUT_PORTS_START( lastduel )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -485,54 +393,52 @@ INPUT_PORTS_START( lastduel )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Difficult" )
-	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )	/* Could be cabinet type? */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x20, "20000 60000 80000" )
-	PORT_DIPSETTING(    0x30, "30000 80000 80000" )
-	PORT_DIPSETTING(    0x10, "40000 80000 80000" )
-	PORT_DIPSETTING(    0x00, "40000 80000 100000" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0200, "Easy" )
+	PORT_DIPSETTING(      0x0300, "Normal" )
+	PORT_DIPSETTING(      0x0100, "Difficult" )
+	PORT_DIPSETTING(      0x0000, "Very Difficult" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )	/* Could be cabinet type? */
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x2000, "20000 60000 80000" )
+	PORT_DIPSETTING(      0x3000, "30000 80000 80000" )
+	PORT_DIPSETTING(      0x1000, "40000 80000 80000" )
+	PORT_DIPSETTING(      0x0000, "40000 80000 100000" )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -562,118 +468,114 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( madgear )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
-
-	PORT_START /* Dip switch A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-	PORT_START /* Dip switch B */
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x04, "Difficult" )
-	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x30, "Upright One Player" )
-	PORT_DIPSETTING(    0x00, "Upright Two Players" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
-/* 	PORT_DIPSETTING(    0x20, "Upright One Player" ) */
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Background Music" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Difficult" )
+	PORT_DIPSETTING(      0x0000, "Very Difficult" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0030, "Upright One Player" )
+	PORT_DIPSETTING(      0x0000, "Upright Two Players" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Cocktail ) )
+/* 	PORT_DIPSETTING(      0x0020, "Upright One Player" ) */
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Background Music" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START /* Dip switch C, free play is COIN B all off, COIN A all on */
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 8C_3C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 5C_3C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 8C_3C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 5C_3C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0f00, 0x0f00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0x0900, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0f00, DEF_STR( 1C_1C ) )
+//	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0e00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0d00, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0b00, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0a00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x5000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x7000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0x9000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0xf000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xd000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0xb000, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+
+	PORT_START
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 INPUT_PORTS_END
 
 /******************************************************************************/

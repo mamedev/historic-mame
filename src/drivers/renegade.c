@@ -72,27 +72,27 @@ $3807w	coin counter
 $3800r	'player1'
 		xx		start buttons
 		  xx		fire buttons
-		    xxxx	joystick state
+			xxxx	joystick state
 
 $3801r	'player2'
 		xx		coin inputs
 		  xx		fire buttons
-		    xxxx	joystick state
+			xxxx	joystick state
 
 $3802r	'DIP2'
 		x		unused?
 		 x		vblank
-		  x		0: 68705 is ready to send information
+		  x 	0: 68705 is ready to send information
 		   x		1: 68705 is ready to receive information
-		    xx		3rd fire buttons for player 2,1
-		      xx	difficulty
+			xx		3rd fire buttons for player 2,1
+			  xx	difficulty
 
 $3803r 'DIP1'
 		x		screen flip
 		 x		cabinet type
-		  x		bonus (extra life for high score)
+		  x 	bonus (extra life for high score)
 		   x		starting lives: 1 or 2
-		    xxxx	coins per play
+			xxxx	coins per play
 
 ROM
 $4000 - $7fff	bankswitched ROM
@@ -117,9 +117,10 @@ extern unsigned char *renegade_textram;
 
 /********************************************************************************************/
 
-static WRITE_HANDLER( adpcm_play_w ){
-	data -= 0x2c;
-	if( data >= 0 ) ADPCM_play( 0, 0x2000*data, 0x2000*2 );
+static WRITE_HANDLER( adpcm_play_w )
+{
+	if (data >= 0x2c)
+		ADPCM_play( 0, 0x2000*(data-0x2c), 0x2000*2 );
 }
 
 static WRITE_HANDLER( sound_w ){
@@ -170,14 +171,16 @@ static size_t mcu_input_size;
 static int mcu_output_byte;
 static int mcu_key;
 
-static READ_HANDLER( mcu_reset_r ){
+static READ_HANDLER( mcu_reset_r )
+{
 	mcu_key = -1;
 	mcu_input_size = 0;
 	mcu_output_byte = 0;
 	return 0;
 }
 
-static WRITE_HANDLER( mcu_w ){
+static WRITE_HANDLER( mcu_w )
+{
 	mcu_output_byte = 0;
 
 	if( mcu_key<0 ){
@@ -192,7 +195,8 @@ static WRITE_HANDLER( mcu_w ){
 	}
 }
 
-static void mcu_process_command( void ){
+static void mcu_process_command( void )
+{
 	mcu_input_size = 0;
 	mcu_output_byte = 0;
 
@@ -324,7 +328,8 @@ static void mcu_process_command( void ){
 	}
 }
 
-static READ_HANDLER( mcu_r ){
+static READ_HANDLER( mcu_r )
+{
 	int result = 1;
 
 	if( mcu_input_size ) mcu_process_command();
@@ -339,15 +344,18 @@ static READ_HANDLER( mcu_r ){
 
 static int bank;
 
-static WRITE_HANDLER( bankswitch_w ){
-	if( (data&1)!=bank ){
+static WRITE_HANDLER( bankswitch_w )
+{
+	if( (data&1)!=bank )
+	{
 		unsigned char *RAM = memory_region(REGION_CPU1);
 		bank = data&1;
 		cpu_setbank(1,&RAM[ bank?0x10000:0x4000 ]);
 	}
 }
 
-static int renegade_interrupt(void){
+static int renegade_interrupt(void)
+{
 /*
 	static int coin;
 	int port = readinputport(1) & 0xc0;
@@ -367,22 +375,26 @@ static int renegade_interrupt(void){
 	return interrupt();
 }
 
+static WRITE_HANDLER( renegade_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
 /********************************************************************************************/
 
-static struct MemoryReadAddress main_readmem[] = {
+static MEMORY_READ_START( main_readmem )
 	{ 0x0000, 0x37ff, MRA_RAM },
-	{ 0x3800, 0x3800, input_port_0_r },	/* Player#1 controls; P1,P2 start */
-	{ 0x3801, 0x3801, input_port_1_r },	/* Player#2 controls; coin triggers */
-	{ 0x3802, 0x3802, input_port_2_r },	/* DIP2 ; various IO ports */
-	{ 0x3803, 0x3803, input_port_3_r },	/* DIP1 */
+	{ 0x3800, 0x3800, input_port_0_r }, /* Player#1 controls, P1,P2 start */
+	{ 0x3801, 0x3801, input_port_1_r }, /* Player#2 controls, coin triggers */
+	{ 0x3802, 0x3802, input_port_2_r }, /* DIP2  various IO ports */
+	{ 0x3803, 0x3803, input_port_3_r }, /* DIP1 */
 	{ 0x3804, 0x3804, mcu_r },
 	{ 0x3805, 0x3805, mcu_reset_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress main_writemem[] = {
+static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, renegade_textram_w, &renegade_textram },
 	{ 0x2000, 0x27ff, MWA_RAM, &spriteram },
@@ -396,20 +408,18 @@ static struct MemoryWriteAddress main_writemem[] = {
 	{ 0x3804, 0x3804, mcu_w },
 	{ 0x3805, 0x3805, bankswitch_w },
 	{ 0x3806, 0x3806, MWA_NOP }, /* watchdog? */
-	{ 0x3807, 0x3807, coin_counter_w },
+	{ 0x3807, 0x3807, renegade_coin_counter_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] = {
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1000, soundlatch_r },
 	{ 0x2801, 0x2801, YM3526_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] = {
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1800, 0x1800, MWA_NOP }, // this gets written the same values as 0x2000
 	{ 0x2000, 0x2000, adpcm_play_w },
@@ -417,8 +427,7 @@ static struct MemoryWriteAddress sound_writemem[] = {
 	{ 0x2801, 0x2801, YM3526_write_port_0_w },
 	{ 0x3000, 0x3000, MWA_NOP }, /* adpcm related? stereo pan? */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -426,7 +435,7 @@ INPUT_PORTS_START( renegade )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* attack left */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* jump */
@@ -436,7 +445,7 @@ INPUT_PORTS_START( renegade )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY | IPF_PLAYER2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2)
@@ -445,35 +454,35 @@ INPUT_PORTS_START( renegade )
 
 	PORT_START /* DIP2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPSETTING(	0x02, "Easy" )
+	PORT_DIPSETTING(	0x03, "Normal" )
+	PORT_DIPSETTING(	0x01, "Hard" )
+	PORT_DIPSETTING(	0x00, "Very Hard" )
 
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )	/* attack right */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )		/* 68705 status */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 	/* 68705 status */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )	/* 68705 status */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* DIP1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
-	PORT_DIPSETTING (   0x10, "1" )
-	PORT_DIPSETTING (   0x00, "2" )
+	PORT_DIPSETTING (	0x10, "1" )
+	PORT_DIPSETTING (	0x00, "2" )
 	PORT_DIPNAME( 0x20, 0x20, "Bonus" )
-	PORT_DIPSETTING (   0x20, "30k" )
-	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (	0x20, "30k" )
+	PORT_DIPSETTING (	0x00, "None" )
 	PORT_DIPNAME(0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING (  0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING (  0x40, DEF_STR( Cocktail ) )
@@ -578,7 +587,7 @@ static struct GfxLayout tileslayout4 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* 8x8 text, 8 colors */
-	{ REGION_GFX1, 0x00000, &charlayout,     0, 4 },	/* colors   0- 32 */
+	{ REGION_GFX1, 0x00000, &charlayout,	 0, 4 },	/* colors	0- 32 */
 
 	/* 16x16 background tiles, 8 colors */
 	{ REGION_GFX2, 0x00000, &tileslayout1, 192, 8 },	/* colors 192-255 */
@@ -625,7 +634,7 @@ static void irqhandler(int linestate)
 static struct YM3526interface ym3526_interface = {
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz ? (hand tuned) */
-	{ 50 },		/* volume */
+	{ 50 }, 	/* volume */
 	{ irqhandler },
 };
 
@@ -634,7 +643,7 @@ static struct ADPCMinterface adpcm_interface =
 	1,			/* 1 channel */
 	8000,		/* 8000Hz playback */
 	REGION_SOUND1,	/* memory region */
-	{ 100 }		/* volume */
+	{ 100 } 	/* volume */
 };
 
 
@@ -643,16 +652,16 @@ static const struct MachineDriver machine_driver_renegade =
 {
 	{
 		{
- 			CPU_M6502,
+			CPU_M6502,
 			1500000,	/* 1.5 MHz? */
 			main_readmem,main_writemem,0,0,
 			renegade_interrupt,2
 		},
 		{
- 			CPU_M6809 | CPU_AUDIO_CPU,
+			CPU_M6809 | CPU_AUDIO_CPU,
 			1500000,	/* ? */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
+			ignore_interrupt,0, /* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */
 		}
 	},
@@ -693,7 +702,7 @@ ROM_START( renegade )
 	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-5.bin",     0x08000, 0x8000, 0xba683ddf )
 	ROM_LOAD( "na-5.bin",     0x04000, 0x4000, 0xde7e7df4 )
-	ROM_CONTINUE(             0x10000, 0x4000 )
+	ROM_CONTINUE(			  0x10000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x8000, 0x8000, 0x3587de3b )
@@ -702,10 +711,10 @@ ROM_START( renegade )
 	ROM_LOAD( "mcu",          0x8000, 0x8000, 0x00000000 )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "nc-5.bin",     0x0000, 0x8000, 0x9adfaa5d )	/* characters */
+	ROM_LOAD( "nc-5.bin",     0x0000, 0x8000, 0x9adfaa5d )  /* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "n1-5.bin",     0x00000, 0x8000, 0x4a9f47f3 )	/* tiles */
+	ROM_LOAD( "n1-5.bin",     0x00000, 0x8000, 0x4a9f47f3 ) /* tiles */
 	ROM_LOAD( "n6-5.bin",     0x08000, 0x8000, 0xd62a0aa8 )
 	ROM_LOAD( "n7-5.bin",     0x10000, 0x8000, 0x7ca5a532 )
 	ROM_LOAD( "n2-5.bin",     0x18000, 0x8000, 0x8d2e7982 )
@@ -713,7 +722,7 @@ ROM_START( renegade )
 	ROM_LOAD( "n9-5.bin",     0x28000, 0x8000, 0x5b621b6a )
 
 	ROM_REGION( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "nh-5.bin",     0x00000, 0x8000, 0xdcd7857c )	/* sprites */
+	ROM_LOAD( "nh-5.bin",     0x00000, 0x8000, 0xdcd7857c ) /* sprites */
 	ROM_LOAD( "nd-5.bin",     0x08000, 0x8000, 0x2de1717c )
 	ROM_LOAD( "nj-5.bin",     0x10000, 0x8000, 0x0f96a18e )
 	ROM_LOAD( "nn-5.bin",     0x18000, 0x8000, 0x1bf15787 )
@@ -734,9 +743,9 @@ ROM_END
 
 ROM_START( kuniokun )
 	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
-	ROM_LOAD( "nb-01.bin",	  0x08000, 0x8000, 0x93fcfdf5 ) // original
+	ROM_LOAD( "nb-01.bin",    0x08000, 0x8000, 0x93fcfdf5 ) // original
 	ROM_LOAD( "ta18-11.bin",  0x04000, 0x4000, 0xf240f5cd )
-	ROM_CONTINUE(             0x10000, 0x4000 )
+	ROM_CONTINUE(			  0x10000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x8000, 0x8000, 0x3587de3b )
@@ -745,10 +754,10 @@ ROM_START( kuniokun )
 	ROM_LOAD( "mcu",          0x8000, 0x8000, 0x00000000 )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-25.bin",  0x0000, 0x8000, 0x9bd2bea3 )	/* characters */
+	ROM_LOAD( "ta18-25.bin",  0x0000, 0x8000, 0x9bd2bea3 )  /* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 )	/* tiles */
+	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 ) /* tiles */
 	ROM_LOAD( "ta18-06.bin",  0x08000, 0x8000, 0x1f59a248 )
 	ROM_LOAD( "n7-5.bin",     0x10000, 0x8000, 0x7ca5a532 )
 	ROM_LOAD( "ta18-02.bin",  0x18000, 0x8000, 0x994c0021 )
@@ -756,7 +765,7 @@ ROM_START( kuniokun )
 	ROM_LOAD( "ta18-03.bin",  0x28000, 0x8000, 0x0475c99a )
 
 	ROM_REGION( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-20.bin",  0x00000, 0x8000, 0xc7d54139 )	/* sprites */
+	ROM_LOAD( "ta18-20.bin",  0x00000, 0x8000, 0xc7d54139 ) /* sprites */
 	ROM_LOAD( "ta18-24.bin",  0x08000, 0x8000, 0x84677d45 )
 	ROM_LOAD( "ta18-18.bin",  0x10000, 0x8000, 0x1c770853 )
 	ROM_LOAD( "ta18-14.bin",  0x18000, 0x8000, 0xaf656017 )
@@ -779,16 +788,16 @@ ROM_START( kuniokub )
 	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "ta18-10.bin",  0x08000, 0x8000, 0xa90cf44a ) // bootleg
 	ROM_LOAD( "ta18-11.bin",  0x04000, 0x4000, 0xf240f5cd )
-	ROM_CONTINUE(             0x10000, 0x4000 )
+	ROM_CONTINUE(			  0x10000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x8000, 0x8000, 0x3587de3b )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-25.bin",  0x0000, 0x8000, 0x9bd2bea3 )	/* characters */
+	ROM_LOAD( "ta18-25.bin",  0x0000, 0x8000, 0x9bd2bea3 )  /* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 )	/* tiles */
+	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 ) /* tiles */
 	ROM_LOAD( "ta18-06.bin",  0x08000, 0x8000, 0x1f59a248 )
 	ROM_LOAD( "n7-5.bin",     0x10000, 0x8000, 0x7ca5a532 )
 	ROM_LOAD( "ta18-02.bin",  0x18000, 0x8000, 0x994c0021 )
@@ -796,7 +805,7 @@ ROM_START( kuniokub )
 	ROM_LOAD( "ta18-03.bin",  0x28000, 0x8000, 0x0475c99a )
 
 	ROM_REGION( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-20.bin",  0x00000, 0x8000, 0xc7d54139 )	/* sprites */
+	ROM_LOAD( "ta18-20.bin",  0x00000, 0x8000, 0xc7d54139 ) /* sprites */
 	ROM_LOAD( "ta18-24.bin",  0x08000, 0x8000, 0x84677d45 )
 	ROM_LOAD( "ta18-18.bin",  0x10000, 0x8000, 0x1c770853 )
 	ROM_LOAD( "ta18-14.bin",  0x18000, 0x8000, 0xaf656017 )
@@ -817,6 +826,7 @@ ROM_END
 
 
 
-GAMEX( 1986, renegade, 0,        renegade, renegade, renegade, ROT0, "Technos (Taito America license)", "Renegade (US)", GAME_NO_COCKTAIL )
+GAMEX( 1986, renegade, 0,		 renegade, renegade, renegade, ROT0, "Technos (Taito America license)", "Renegade (US)", GAME_NO_COCKTAIL )
 GAMEX( 1986, kuniokun, renegade, renegade, renegade, kuniokun, ROT0, "Technos", "Nekketsu Kouha Kunio-kun (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1986, kuniokub, renegade, renegade, renegade, 0,        ROT0, "bootleg", "Nekketsu Kouha Kunio-kun (Japan bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1986, kuniokub, renegade, renegade, renegade, 0, 	   ROT0, "bootleg", "Nekketsu Kouha Kunio-kun (Japan bootleg)", GAME_NO_COCKTAIL )
+

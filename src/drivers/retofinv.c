@@ -8,6 +8,21 @@ driver by Jarek Parchanski, Andrea Mazzoleni
 
 #include "driver.h"
 
+/* in machine */
+READ_HANDLER( retofinv_68705_portA_r );
+WRITE_HANDLER( retofinv_68705_portA_w );
+WRITE_HANDLER( retofinv_68705_ddrA_w );
+READ_HANDLER( retofinv_68705_portB_r );
+WRITE_HANDLER( retofinv_68705_portB_w );
+WRITE_HANDLER( retofinv_68705_ddrB_w );
+READ_HANDLER( retofinv_68705_portC_r );
+WRITE_HANDLER( retofinv_68705_portC_w );
+WRITE_HANDLER( retofinv_68705_ddrC_w );
+WRITE_HANDLER( retofinv_mcu_w );
+READ_HANDLER( retofinv_mcu_r );
+READ_HANDLER( retofinv_mcu_status_r );
+
+/* in vidhrdw */
 int  retofinv_vh_start(void);
 void retofinv_vh_stop(void);
 void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -33,77 +48,23 @@ extern unsigned char *retofinv_bg_colorram;
 extern unsigned char *retofinv_fg_char_bank;
 extern unsigned char *retofinv_bg_char_bank;
 
-static unsigned char cpu0_me000=0,cpu0_me800_last=0,cpu2_m6000=0;
+static unsigned char cpu2_m6000=0;
 
 static void retofinv_init_machine(void)
 {
-	cpu0_me800_last = 0;
 	cpu2_m6000 = 0;
 }
 
+static unsigned char *sharedram;
+
 static READ_HANDLER( retofinv_shared_ram_r )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	return RAM[0x8800+offset];
+	return sharedram[offset];
 }
 
 static WRITE_HANDLER( retofinv_shared_ram_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	RAM[0x8800+offset] = data;
-}
-
-static WRITE_HANDLER( retofinv_protection_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (cpu0_me800_last & 0x80)
-	{
-		cpu0_me000 = data;
-		cpu0_me800_last = 0;
-		return;
-	}
-	else if (data < 0x10)
-	{
-		switch(data)
-		{
-			case 0x01:
-				cpu0_me000 = ((cpu0_me000 >> 3) & 3) + 1;
-				break;
-			case 0x02:
-				cpu0_me000 = cpu0_me000 & 3;
-				break;
-			default:
-				cpu0_me000 = cpu0_me000;
-		}
-	}
-	else if (data > 0x0f)
-	{
-		switch(data)
-		{
-			case 0x30:
-				cpu0_me000 = cpu0_me000;
-				break;
-			case 0x40:
-				cpu0_me000 = RAM[0x9800];
-				break;
-			case 0x41:
-				cpu0_me000 = RAM[0x9801];
-				break;
-			case 0x42:
-				cpu0_me000 = RAM[0x9802];
-				break;
-			default:
-				cpu0_me000 = 0x3b;
-				break;
-		}
-	}
-	cpu0_me800_last = data;
-}
-
-static READ_HANDLER( retofinv_protection_r )
-{
-	return cpu0_me000;
+	sharedram[offset] = data;
 }
 
 static WRITE_HANDLER( reset_cpu2_w )
@@ -123,16 +84,6 @@ static WRITE_HANDLER( cpu1_halt_w )
 	cpu_set_halt_line(1, data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static READ_HANDLER( protection_2_r )
-{
-	return 0;
-}
-
-static READ_HANDLER( protection_3_r )
-{
-	return 0x30;
-}
-
 static WRITE_HANDLER( cpu2_m6000_w )
 {
 	cpu2_m6000 = data;
@@ -149,36 +100,34 @@ static WRITE_HANDLER( soundcommand_w )
       cpu_set_irq_line(2, 0, HOLD_LINE);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x7b00, 0x7b00, protection_2_r },
+	{ 0x7b00, 0x7b00, MRA_NOP },	/* space for diagnostic ROM? The code looks */
+									/* for a string here, and jumps if it's present */
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
-	{ 0x8800, 0x9fff, retofinv_shared_ram_r },
+	{ 0x8800, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc800, 0xc800, MRA_NOP },
 	{ 0xc000, 0xc000, input_port_1_r },
 	{ 0xc001, 0xc001, input_port_2_r },
-	{ 0xc002, 0xc002, protection_2_r },
-	{ 0xc003, 0xc003, protection_3_r },
+	{ 0xc002, 0xc002, MWA_NOP },	/* bit 7 must be 0, otherwise game resets */
+	{ 0xc003, 0xc003, retofinv_mcu_status_r },
 	{ 0xc004, 0xc004, input_port_0_r },
 	{ 0xc005, 0xc005, input_port_3_r },
 	{ 0xc006, 0xc006, input_port_5_r },
 	{ 0xc007, 0xc007, input_port_4_r },
-	{ 0xe000, 0xe000, retofinv_protection_r },
+	{ 0xe000, 0xe000, retofinv_mcu_r },
 	{ 0xf800, 0xf800, cpu0_mf800_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x7fff, 0x7fff, MWA_NOP },
+//	{ 0x7fff, 0x7fff, MWA_NOP },
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_w, &retofinv_fg_videoram, &retofinv_videoram_size },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_w, &retofinv_fg_colorram },
-	{ 0x8800, 0x9fff, retofinv_shared_ram_w },
+	{ 0x8800, 0x9fff, MWA_RAM, &sharedram },
 	{ 0x8f00, 0x8f7f, MWA_RAM, &retofinv_sprite_ram1 },	/* covered by the above, */
 	{ 0x9700, 0x977f, MWA_RAM, &retofinv_sprite_ram2 },	/* here only to */
 	{ 0x9f00, 0x9f7f, MWA_RAM, &retofinv_sprite_ram3 },	/* initialize the pointers */
@@ -195,12 +144,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc805, 0xc805, cpu1_halt_w },
 	{ 0xd800, 0xd800, soundcommand_w },
 	{ 0xd000, 0xd000, MWA_NOP },
-	{ 0xe800, 0xe800, retofinv_protection_w },
-	{ -1 }	/* end of table */
-};
+	{ 0xe800, 0xe800, retofinv_mcu_w },
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sub[] =
-{
+static MEMORY_READ_START( readmem_sub )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
@@ -208,13 +155,9 @@ static struct MemoryReadAddress readmem_sub[] =
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc804, 0xc804, MRA_NOP },
-	{ 0xe000, 0xe000, retofinv_protection_r },
-	{ 0xe800, 0xe800, MRA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sub[] =
-{
+static MEMORY_WRITE_START( writemem_sub )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_w },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_w },
@@ -222,27 +165,42 @@ static struct MemoryWriteAddress writemem_sub[] =
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_w },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_w },
 	{ 0xc804, 0xc804, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x27ff, MRA_RAM },
 	{ 0x4000, 0x4000, soundlatch_r },
 	{ 0xe000, 0xe000, MRA_NOP },  		/* Rom version ? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x27ff, MWA_RAM },
 	{ 0x6000, 0x6000, cpu2_m6000_w },
 	{ 0x8000, 0x8000, SN76496_0_w },
 	{ 0xa000, 0xa000, SN76496_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
+
+static MEMORY_READ_START( mcu_readmem )
+	{ 0x0000, 0x0000, retofinv_68705_portA_r },
+	{ 0x0001, 0x0001, retofinv_68705_portB_r },
+	{ 0x0002, 0x0002, retofinv_68705_portC_r },
+	{ 0x0010, 0x007f, MRA_RAM },
+	{ 0x0080, 0x07ff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( mcu_writemem )
+	{ 0x0000, 0x0000, retofinv_68705_portA_w },
+	{ 0x0001, 0x0001, retofinv_68705_portB_w },
+	{ 0x0002, 0x0002, retofinv_68705_portC_w },
+	{ 0x0004, 0x0004, retofinv_68705_ddrA_w },
+	{ 0x0005, 0x0005, retofinv_68705_ddrB_w },
+	{ 0x0006, 0x0006, retofinv_68705_ddrC_w },
+	{ 0x0010, 0x007f, MWA_RAM },
+	{ 0x0080, 0x07ff, MWA_ROM },
+MEMORY_END
+
 
 
 INPUT_PORTS_START( retofinv )
@@ -250,7 +208,7 @@ INPUT_PORTS_START( retofinv )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -440,6 +398,12 @@ static const struct MachineDriver machine_driver_retofinv =
 			readmem_sound, writemem_sound,0,0,
 			nmi_interrupt,2
 		},
+		{
+			CPU_M68705,
+			8000000/2,  /* 4 MHz */
+			mcu_readmem,mcu_writemem,0,0,
+			ignore_interrupt,0	/* irq's generated by Z80 */
+		}
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,					/* 100 CPU slices per frame - enough for the sound CPU to read all commands */
@@ -467,6 +431,57 @@ static const struct MachineDriver machine_driver_retofinv =
 	}
 };
 
+/* bootleg has no mcu */
+static const struct MachineDriver machine_driver_retofinb =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,
+			readmem, writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80,
+			3072000,
+			readmem_sub, writemem_sub,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80,
+			3072000,
+			readmem_sound, writemem_sound,0,0,
+			nmi_interrupt,2
+		}
+	},
+	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,					/* 100 CPU slices per frame - enough for the sound CPU to read all commands */
+	0,
+	/* video hardware */
+	36*8, 32*8,
+	{ 0*8, 36*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	256, 256*2+64*16+64*16,
+	retofinv_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	retofinv_vh_start,
+	retofinv_vh_stop,
+	retofinv_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
+};
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -484,6 +499,9 @@ ROM_START( retofinv )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
+
+	ROM_REGION( 0x0800, REGION_CPU4 )	/* 8k for the microcontroller */
+	ROM_LOAD( "68705p3.bin", 0x00000, 0x0800, 0x79bd6ded )	/* from a bootleg board */
 
 	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
@@ -572,5 +590,5 @@ ROM_END
 
 
 GAME( 1985, retofinv, 0,        retofinv, retofinv, 0, ROT270, "Taito Corporation", "Return of the Invaders" )
-GAME( 1985, retofin1, retofinv, retofinv, retofinv, 0, ROT270, "bootleg", "Return of the Invaders (bootleg set 1)" )
-GAME( 1985, retofin2, retofinv, retofinv, retofinv, 0, ROT270, "bootleg", "Return of the Invaders (bootleg set 2)" )
+GAME( 1985, retofin1, retofinv, retofinb, retofinv, 0, ROT270, "bootleg", "Return of the Invaders (bootleg set 1)" )
+GAME( 1985, retofin2, retofinv, retofinb, retofinv, 0, ROT270, "bootleg", "Return of the Invaders (bootleg set 2)" )

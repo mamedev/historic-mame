@@ -72,28 +72,24 @@ void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, phoenix_paged_ram_r },	/* 2 pages selected by Bit 0 of videoregister */
 	{ 0x7000, 0x73ff, phoenix_input_port_0_r }, /* IN0 */
 	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 #define WRITEMEM(GAMENAME)										\
 																\
-static struct MemoryWriteAddress GAMENAME##_writemem[] =		\
-{																\
+static MEMORY_WRITE_START( GAMENAME##_writemem )				\
 	{ 0x0000, 0x3fff, MWA_ROM },								\
 	{ 0x4000, 0x4fff, phoenix_paged_ram_w },  /* 2 pages selected by Bit 0 of the video register */ \
 	{ 0x5000, 0x53ff, phoenix_videoreg_w }, 					\
 	{ 0x5800, 0x5bff, phoenix_scroll_w },	/* the game sometimes writes at mirror addresses */ 	\
 	{ 0x6000, 0x63ff, GAMENAME##_sound_control_a_w },			\
 	{ 0x6800, 0x6bff, GAMENAME##_sound_control_b_w },			\
-	{ -1 }	/* end of table */									\
-};
+MEMORY_END
 
 WRITEMEM(phoenix)
 WRITEMEM(pleiads)

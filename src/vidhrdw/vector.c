@@ -822,6 +822,11 @@ void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int temp_x, temp_y;
 	point *new;
 
+
+	if (full_refresh)
+		fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
+
+
 	/* copy parameters */
 	vecbitmap = bitmap;
 	vecwidth  = bitmap->width;

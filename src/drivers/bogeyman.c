@@ -66,8 +66,7 @@ static WRITE_HANDLER( bogeyman_8910_control_w )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress bogeyman_readmem[] =
-{
+static MEMORY_READ_START( bogeyman_readmem )
 	{ 0x0000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x21ff, bogeyman_videoram_r },
@@ -77,11 +76,9 @@ static struct MemoryReadAddress bogeyman_readmem[] =
 	{ 0x3802, 0x3802, input_port_2_r },	/* Dip 1 */
 	{ 0x3803, 0x3803, input_port_3_r },	/* Dip 2 + Coins */
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bogeyman_writemem[] =
-{
+static MEMORY_WRITE_START( bogeyman_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, MWA_RAM, &videoram, &videoram_size },
   	{ 0x2000, 0x21ff, bogeyman_videoram_w, &bogeyman_videoram },
@@ -91,8 +88,7 @@ static struct MemoryWriteAddress bogeyman_writemem[] =
 	{ 0x3801, 0x3801, bogeyman_8910_latch_w },
 	{ 0x3803, 0x3803, MWA_NOP },	/* ?? */
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

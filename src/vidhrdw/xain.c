@@ -62,8 +62,8 @@ int xain_vh_start(void)
 	if (!bgram0_tilemap || !bgram1_tilemap || !char_tilemap)
 		return 1;
 
-	bgram1_tilemap->transparent_pen = 0;
-	char_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(bgram1_tilemap,0);
+	tilemap_set_transparent_pen(char_tilemap,0);
 
 	return 0;
 }
@@ -138,7 +138,7 @@ WRITE_HANDLER( xain_scrollyP1_w )
 
 WRITE_HANDLER( xain_flipscreen_w )
 {
-	flip_screen_w(0,data & 1);
+	flip_screen_set(data & 1);
 }
 
 
@@ -204,13 +204,10 @@ void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	memset(palette_used_colors+128,PALETTE_COLOR_USED,128);	/* sprites */
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bgram0_tilemap,0);
-	tilemap_draw(bitmap,bgram1_tilemap,0);
+	tilemap_draw(bitmap,bgram0_tilemap,0,0);
+	tilemap_draw(bitmap,bgram1_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,char_tilemap,0);
+	tilemap_draw(bitmap,char_tilemap,0,0);
 }

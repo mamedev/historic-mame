@@ -236,71 +236,59 @@ static READ_HANDLER( sound_command_r )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xcbff, paletteram_r },
 	{ 0xcc00, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xffff, pipedrm_videoram_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
 	{ 0xcc00, 0xcfff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xffff, pipedrm_videoram_w, &videoram, &videoram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress hatris_readmem[] =
-{
+static MEMORY_READ_START( hatris_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xcfff, paletteram_r },
 	{ 0xd000, 0xffff, hatris_videoram_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress hatris_writemem[] =
-{
+static MEMORY_WRITE_START( hatris_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
 	{ 0xd000, 0xffff, hatris_videoram_w, &videoram, &videoram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x20, 0x20, input_port_0_r },
 	{ 0x21, 0x21, input_port_1_r },
 	{ 0x22, 0x22, input_port_2_r },
 	{ 0x23, 0x23, input_port_3_r },
 	{ 0x24, 0x24, input_port_4_r },
 	{ 0x25, 0x25, pending_command_r },
-	{ -1 } /* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x20, 0x20, sound_command_w },
 	{ 0x21, 0x21, pipedrm_bankswitch_w },
 	{ 0x22, 0x25, pipedrm_scroll_regs_w },
-	{ -1 } /* end of table */
-};
+PORT_END
 
 
 
@@ -310,57 +298,46 @@ static struct IOWritePort writeport[] =
  *
  *************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x77ff, MWA_ROM },
 	{ 0x7800, 0x7fff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x16, 0x16, sound_command_r },
 	{ 0x18, 0x18, YM2610_status_port_0_A_r },
 	{ 0x1a, 0x1a, YM2610_status_port_0_B_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x04, 0x04, sound_bankswitch_w },
 	{ 0x17, 0x17, pending_command_clear_w },
 	{ 0x18, 0x18, YM2610_control_port_0_A_w },
 	{ 0x19, 0x19, YM2610_data_port_0_A_w },
 	{ 0x1a, 0x1a, YM2610_control_port_0_B_w },
 	{ 0x1b, 0x1b, YM2610_data_port_0_B_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
-static struct IOReadPort hatris_sound_readport[] =
-{
+static PORT_READ_START( hatris_sound_readport )
 	{ 0x04, 0x04, sound_command_r },
 	{ 0x05, 0x05, pending_command_r },
 	{ 0x08, 0x08, YM2608_status_port_0_A_r },
 	{ 0x0a, 0x0a, YM2608_status_port_0_B_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort hatris_sound_writeport[] =
-{
+static PORT_WRITE_START( hatris_sound_writeport )
 	{ 0x02, 0x02, YM2608_control_port_0_B_w },
 	{ 0x03, 0x03, YM2608_data_port_0_B_w },
 	{ 0x05, 0x05, pending_command_clear_w },
@@ -368,8 +345,7 @@ static struct IOWritePort hatris_sound_writeport[] =
 	{ 0x09, 0x09, YM2608_data_port_0_A_w },
 	{ 0x0a, 0x0a, YM2608_control_port_0_B_w },
 	{ 0x0b, 0x0b, YM2608_data_port_0_B_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

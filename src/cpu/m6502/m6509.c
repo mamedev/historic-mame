@@ -107,24 +107,24 @@ static m6509_Regs m6509;
 
 #include "t6509.c"
 
-READ_HANDLER ( m6509_read_00000 )
+READ_HANDLER( m6509_read_00000 )
 {
 	return m6509.pc_bank.b.h2;
 }
 
-READ_HANDLER ( m6509_read_00001 )
+READ_HANDLER( m6509_read_00001 )
 {
 	return m6509.ind_bank.b.h2;
 }
 
-WRITE_HANDLER ( m6509_write_00000 )
+WRITE_HANDLER( m6509_write_00000 )
 {
 	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
 	change_pc(PCD);
 }
 
-WRITE_HANDLER ( m6509_write_00001 )
+WRITE_HANDLER( m6509_write_00001 )
 {
 	m6509.ind_bank.b.h2=data&0xf;
 }

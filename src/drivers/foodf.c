@@ -1,142 +1,220 @@
 /***************************************************************************
 
-Food Fight Memory Map
------------------------------------
+	Atari Food Fight hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
-Function                           Address        R/W  DATA
--------------------------------------------------------------
-Program ROM                        000000-00FFFF  R    D0-D15
-Program RAM                        014000-01BFFF  R/W  D0-D15
-Motion Object RAM                  01C000-01CFFF  R/W  D0-D15
+	Games supported:
+		* Food Fight
 
-Motion Objects:
-  Vertical Position                xxxx00              D0-D7
-  Horizontal Position              xxxx00              D8-D15
-  Picture                          xxxx10              D0-D7
-  Color                            xxxx10              D8-D13
-  VFlip                            xxxx10              D14
-  HFlip                            xxxx10              D15
+	Known bugs:
+		* none at this time
 
-Playfield                          800000-8007FF  R/W  D0-D15
-  Picture                          xxxxx0              D0-D7+D15
-  Color                            xxxxx0              D8-D13
+****************************************************************************
 
-NVRAM                              900000-9001FF  R/W  D0-D3
-Analog In                          940000-940007  R    D0-D7
-Analog Out                         944000-944007  W
+	Memory map
 
-Coin 1 (Digital In)                948000         R    D0
-Coin 2                                            R    D1
-Start 1                                           R    D2
-Start 2                                           R    D3
-Coin Aux                                          R    D4
-Throw 1                                           R    D5
-Throw 2                                           R    D6
-Test                                              R    D7
+****************************************************************************
 
-PFFlip                             948000         W    D0
-Update                                            W    D1
-INT3RST                                           W    D2
-INT4RST                                           W    D3
-LED 1                                             W    D4
-LED 2                                             W    D5
-COUNTERL                                          W    D6
-COUNTERR                                          W    D7
+	Function                           Address        R/W  DATA
+	-------------------------------------------------------------
+	Program ROM                        000000-00FFFF  R    D0-D15
+	Program RAM                        014000-01BFFF  R/W  D0-D15
+	Motion Object RAM                  01C000-01CFFF  R/W  D0-D15
 
-Color RAM                          950000-9503FF  W    D0-D7
-Recall                             954000         W
-Watchdog                           958000         W
-Audio 1                            A40000-A4001F  R/W  D0-D7
-Audio 0                            A80000-A8001F  R/W  D0-D7
-Audio 2                            AC0000-AC001F  R/W  D0-D7
+	Motion Objects:
+	  Vertical Position                xxxx00              D0-D7
+	  Horizontal Position              xxxx00              D8-D15
+	  Picture                          xxxx10              D0-D7
+	  Color                            xxxx10              D8-D13
+	  VFlip                            xxxx10              D14
+	  HFlip                            xxxx10              D15
+
+	Playfield                          800000-8007FF  R/W  D0-D15
+	  Picture                          xxxxx0              D0-D7+D15
+	  Color                            xxxxx0              D8-D13
+
+	NVRAM                              900000-9001FF  R/W  D0-D3
+	Analog In                          940000-940007  R    D0-D7
+	Analog Out                         944000-944007  W
+
+	Coin 1 (Digital In)                948000         R    D0
+	Coin 2                                            R    D1
+	Start 1                                           R    D2
+	Start 2                                           R    D3
+	Coin Aux                                          R    D4
+	Throw 1                                           R    D5
+	Throw 2                                           R    D6
+	Test                                              R    D7
+
+	PFFlip                             948000         W    D0
+	Update                                            W    D1
+	INT3RST                                           W    D2
+	INT4RST                                           W    D3
+	LED 1                                             W    D4
+	LED 2                                             W    D5
+	COUNTERL                                          W    D6
+	COUNTERR                                          W    D7
+
+	Color RAM                          950000-9503FF  W    D0-D7
+	Recall                             954000         W
+	Watchdog                           958000         W
+	Audio 1                            A40000-A4001F  R/W  D0-D7
+	Audio 0                            A80000-A8001F  R/W  D0-D7
+	Audio 2                            AC0000-AC001F  R/W  D0-D7
 
 ***************************************************************************/
+
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern size_t foodf_playfieldram_size;
-extern size_t foodf_spriteram_size;
 
-extern unsigned char *foodf_spriteram;
-extern unsigned char *foodf_playfieldram;
 
-READ_HANDLER( foodf_playfieldram_r );
-READ_HANDLER( foodf_nvram_r );
-READ_HANDLER( foodf_analog_r );
-READ_HANDLER( foodf_digital_r );
-READ_HANDLER( foodf_pokey1_r );
-READ_HANDLER( foodf_pokey2_r );
-READ_HANDLER( foodf_pokey3_r );
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
-WRITE_HANDLER( foodf_playfieldram_w );
-WRITE_HANDLER( foodf_nvram_w );
-WRITE_HANDLER( foodf_analog_w );
-WRITE_HANDLER( foodf_digital_w );
-WRITE_HANDLER( foodf_paletteram_w );
-WRITE_HANDLER( foodf_pokey1_w );
-WRITE_HANDLER( foodf_pokey2_w );
-WRITE_HANDLER( foodf_pokey3_w );
+WRITE16_HANDLER( foodf_playfieldram_w );
+WRITE16_HANDLER( foodf_paletteram_w );
 
-void foodf_nvram_handler(void *file,int read_or_write);
-
-int foodf_interrupt(void);
-
-int foodf_vh_start(void);
-void foodf_vh_stop(void);
-
-void foodf_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-READ_HANDLER( foodf_pokey1_r ) { return pokey1_r (offset/2); }
-READ_HANDLER( foodf_pokey2_r ) { return pokey2_r (offset/2); }
-READ_HANDLER( foodf_pokey3_r ) { return pokey3_r (offset/2); }
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
 
-WRITE_HANDLER( foodf_pokey1_w ) { pokey1_w (offset/2, data & 0xff); }
-WRITE_HANDLER( foodf_pokey2_w ) { pokey2_w (offset/2, data & 0xff); }
-WRITE_HANDLER( foodf_pokey3_w ) { pokey3_w (offset/2, data & 0xff); }
+static UINT8 whichport = 0;
+static data16_t *nvram;
 
 
 
-static struct MemoryReadAddress foodf_readmem[] =
+/*************************************
+ *
+ *	NVRAM handler
+ *
+ *************************************/
+
+static void nvram_handler(void *file, int read_or_write)
 {
-	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x014000, 0x01bfff, MRA_BANK1 },
-	{ 0x01c000, 0x01cfff, MRA_BANK2 },
-	{ 0x800000, 0x8007ff, foodf_playfieldram_r },
-	{ 0x900000, 0x9001ff, foodf_nvram_r },
-	{ 0x940000, 0x940007, foodf_analog_r },
-	{ 0x948000, 0x948003, foodf_digital_r },
-	{ 0x94c000, 0x94c003, MRA_NOP }, /* Used from PC 0x776E */
-	{ 0x958000, 0x958003, MRA_NOP },
-	{ 0xa40000, 0xa4001f, foodf_pokey1_r },
-	{ 0xa80000, 0xa8001f, foodf_pokey2_r },
-	{ 0xac0000, 0xac001f, foodf_pokey3_r },
-	{ -1 }  /* end of table */
-};
+	if (read_or_write)
+		osd_fwrite(file, nvram, 512);
+	else if (file)
+		osd_fread(file, nvram, 512);
+	else
+		memset(nvram, 0xff, 512);
+}
 
-static struct MemoryWriteAddress foodf_writemem[] =
+
+
+/*************************************
+ *
+ *	Interrupts
+ *
+ *************************************/
+
+static void delayed_interrupt(int param)
 {
-	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x014000, 0x01bfff, MWA_BANK1 },
-	{ 0x01c000, 0x01cfff, MWA_BANK2, &foodf_spriteram, &foodf_spriteram_size },
-	{ 0x800000, 0x8007ff, foodf_playfieldram_w, &foodf_playfieldram, &foodf_playfieldram_size },
-	{ 0x900000, 0x9001ff, foodf_nvram_w },
-	{ 0x944000, 0x944007, foodf_analog_w },
-	{ 0x948000, 0x948003, foodf_digital_w },
-	{ 0x950000, 0x9501ff, foodf_paletteram_w, &paletteram },
-	{ 0x954000, 0x954003, MWA_NOP },
-	{ 0x958000, 0x958003, MWA_NOP },
-	{ 0xa40000, 0xa4001f, foodf_pokey1_w },
-	{ 0xa80000, 0xa8001f, foodf_pokey2_w },
-	{ 0xac0000, 0xac001f, foodf_pokey3_w },
-	{ -1 }  /* end of table */
-};
+	cpu_cause_interrupt(0, 2);
+}
 
+
+static int interrupt_gen(void)
+{
+	/* INT 2 once per frame in addition to... */
+	if (cpu_getiloops() == 0)
+		timer_set(TIME_IN_USEC(100), 0, delayed_interrupt);
+
+	/* INT 1 on the 32V signal */
+	return 1;
+}
+
+
+
+/*************************************
+ *
+ *	Analog inputs
+ *
+ *************************************/
+
+static READ16_HANDLER( analog_r )
+{
+	return readinputport(whichport);
+}
+
+
+static WRITE16_HANDLER( analog_w )
+{
+	whichport = offset ^ 3;
+}
+
+
+
+/*************************************
+ *
+ *	POKEY I/O
+ *
+ *************************************/
+
+static READ16_HANDLER( pokey1_word_r ) { return pokey1_r(offset); }
+static READ16_HANDLER( pokey2_word_r ) { return pokey2_r(offset); }
+static READ16_HANDLER( pokey3_word_r ) { return pokey3_r(offset); }
+
+static WRITE16_HANDLER( pokey1_word_w ) { if (ACCESSING_LSB) pokey1_w(offset, data & 0xff); }
+static WRITE16_HANDLER( pokey2_word_w ) { if (ACCESSING_LSB) pokey2_w(offset, data & 0xff); }
+static WRITE16_HANDLER( pokey3_word_w ) { if (ACCESSING_LSB) pokey3_w(offset, data & 0xff); }
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x00ffff, MRA16_ROM },
+	{ 0x014000, 0x01cfff, MRA16_RAM },
+	{ 0x800000, 0x8007ff, MRA16_RAM },
+	{ 0x900000, 0x9001ff, MRA16_RAM },
+	{ 0x940000, 0x940007, analog_r },
+	{ 0x948000, 0x948001, input_port_4_word_r },
+	{ 0x94c000, 0x94c001, MRA16_NOP }, /* Used from PC 0x776E */
+	{ 0x958000, 0x958001, MRA16_NOP },
+	{ 0xa40000, 0xa4001f, pokey1_word_r },
+	{ 0xa80000, 0xa8001f, pokey2_word_r },
+	{ 0xac0000, 0xac001f, pokey3_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x00ffff, MWA16_ROM },
+	{ 0x014000, 0x01bfff, MWA16_RAM },
+	{ 0x01c000, 0x01cfff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x800000, 0x8007ff, foodf_playfieldram_w, &videoram16, &videoram_size },
+	{ 0x900000, 0x9001ff, MWA16_RAM, &nvram },
+	{ 0x944000, 0x944007, analog_w },
+	{ 0x948000, 0x948001, MWA16_NOP },
+	{ 0x950000, 0x9501ff, foodf_paletteram_w, &paletteram16 },
+	{ 0x954000, 0x954001, MWA16_NOP },
+	{ 0x958000, 0x958001, MWA16_NOP },
+	{ 0xa40000, 0xa4001f, pokey1_word_w },
+	{ 0xa80000, 0xa8001f, pokey2_word_w },
+	{ 0xac0000, 0xac001f, pokey3_word_w },
+MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( foodf )
 	PORT_START	/* IN0 */
@@ -164,38 +242,50 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 chars */
-	512,	/* 512 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
+
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 of them */
-	2,		/* 2 bits per pixel */
-	{ 8*0x2000, 0 },
+	16,16,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(1,2), 0 },
 	{ 8*16+0, 8*16+1, 8*16+2, 8*16+3, 8*16+4, 8*16+5, 8*16+6, 8*16+7, 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	8*32	/* every sprite takes 32 consecutive bytes */
+	8*32
 };
-
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 64 },	/* characters 8x8 */
 	{ REGION_GFX2, 0, &spritelayout, 0, 64 },	/* sprites & playfield */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
+
+/*************************************
+ *
+ *	Sound definitions
+ *
+ *************************************/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -217,6 +307,12 @@ static struct POKEYinterface pokey_interface =
 
 
 
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
 static const struct MachineDriver machine_driver_foodf =
 {
 	/* basic machine hardware */
@@ -224,8 +320,8 @@ static const struct MachineDriver machine_driver_foodf =
 		{
 			CPU_M68000,
 			6000000,	/* 6 MHz */
-			foodf_readmem,foodf_writemem,0,0,
-			foodf_interrupt,4
+			readmem,writemem,0,0,
+			interrupt_gen,4
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -236,12 +332,12 @@ static const struct MachineDriver machine_driver_foodf =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	256, 256,
-	foodf_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	foodf_vh_start,
-	foodf_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	foodf_vh_screenrefresh,
 
 	/* sound hardware */
@@ -253,16 +349,16 @@ static const struct MachineDriver machine_driver_foodf =
 		}
 	},
 
-	foodf_nvram_handler
+	nvram_handler
 };
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definition(s)
+ *
+ *************************************/
 
 ROM_START( foodf )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for 68000 code */
@@ -284,5 +380,11 @@ ROM_START( foodf )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAMEX( 1982, foodf, 0, foodf, foodf, 0, ROT0, "Atari", "Food Fight", GAME_NO_COCKTAIL )

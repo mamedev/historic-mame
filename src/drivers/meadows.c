@@ -294,42 +294,34 @@ static int sound_interrupt(void)
 /* Memory layout                                             */
 /*                                                           */
 /*************************************************************/
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x0c00, 0x0c03, meadows_hardware_w },
 	{ 0x0d00, 0x0d0f, meadows_sprite_w },
 	{ 0x0e00, 0x0eff, MWA_RAM },
 	{ 0x1000, 0x1bff, MWA_ROM },
 	{ 0x1c00, 0x1fff, meadows_videoram_w, &videoram, &videoram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0c03, meadows_hardware_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
 	{ 0x1000, 0x1bff, MRA_ROM },
 	{ 0x1c00, 0x1fff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x0c00, 0x0c03, sound_hardware_w },
 	{ 0x0e00, 0x0eff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0c03, sound_hardware_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( meadows )
 	PORT_START		/* IN0 buttons */

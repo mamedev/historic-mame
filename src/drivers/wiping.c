@@ -94,19 +94,16 @@ static WRITE_HANDLER( subcpu_reset_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },
 	{ 0x9000, 0x93ff, shared1_r },
 	{ 0x9800, 0x9bff, shared2_r },
 	{ 0xa800, 0xa807, ports_r },
 	{ 0xb000, 0xb7ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
@@ -119,28 +116,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa003, 0xa003, subcpu_reset_w },
 	{ 0xb000, 0xb7ff, MWA_RAM },
 	{ 0xb800, 0xb800, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* Sound cpu data */
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x9000, 0x93ff, shared1_r },
 	{ 0x9800, 0x9bff, shared2_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x7fff, wiping_sound_w, &wiping_soundregs },
 	{ 0x9000, 0x93ff, shared1_w },
 	{ 0x9800, 0x9bff, shared2_w },
 	{ 0xa001, 0xa001, interrupt_enable_w },
-	{ -1 }
-};
+MEMORY_END
 
 
 

@@ -182,7 +182,7 @@ int galivan_vh_start(void)
 	if (!bg_tilemap || !tx_tilemap)
 		return 1;
 
-	tx_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	return 0;
 }
@@ -195,7 +195,7 @@ int ninjemak_vh_start(void)
 	if (!bg_tilemap || !tx_tilemap)
 		return 1;
 
-	tx_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	return 0;
 }
@@ -391,18 +391,17 @@ void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0x07));
 
 	tilemap_update (ALL_TILEMAPS);
-	tilemap_render (ALL_TILEMAPS);
 
 	if (layers & 0x40)
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
-		tilemap_draw(bitmap,bg_tilemap,0);
+		tilemap_draw(bitmap,bg_tilemap,0,0);
 
-	tilemap_draw (bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 
 	draw_sprites(bitmap);
 
-	tilemap_draw (bitmap,tx_tilemap,1);
+	tilemap_draw(bitmap,tx_tilemap,1,0);
 }
 
 void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -412,14 +411,13 @@ void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0xff));
 
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
 
 	if (ninjemak_dispdisable)
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
-		tilemap_draw(bitmap,bg_tilemap,0);
+		tilemap_draw(bitmap,bg_tilemap,0,0);
 
 	draw_sprites(bitmap);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }

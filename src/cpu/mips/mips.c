@@ -58,6 +58,17 @@
 #define CAUSE_CE2 ( 2L << 28 )
 #define CAUSE_BD ( 1L << 31 )
 
+INLINE UINT32 read_dword(offs_t address)
+{
+	return ((cpu_readmem32lew_word(address) << 16) | cpu_readmem32lew_word(address+2));
+}
+
+INLINE void write_dword(offs_t address,UINT32 data)
+{
+	cpu_writemem32lew_word(address,data >> 16);
+	cpu_writemem32lew_word(address+2,data & 0xffff);
+}
+
 /* there are more registers but the debugger interface is limited to 127 */
 static UINT8 mips_reg_layout[] =
 {
@@ -1032,7 +1043,7 @@ int mips_execute( int cycles )
 							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x000000ff ) | ( (UINT32)cpu_readmem32lew( adr - 1 ) << 8 ) | ( (UINT32)cpu_readmem32lew_word( adr ) << 16 );
 							break;
 						case 3:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_dword( adr - 3 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1051,7 +1062,7 @@ int mips_execute( int cycles )
 							cpu_readmem32lew_word( adr );
 							break;
 						case 3:
-							cpu_readmem32lew_dword( adr - 3 );
+							read_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1083,7 +1094,7 @@ int mips_execute( int cycles )
 							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x000000ff ) | ( (UINT32)cpu_readmem32lew_word( adr - 2 ) << 8 ) | ( (UINT32)cpu_readmem32lew( adr ) << 24 );
 							break;
 						case 3:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_dword( adr - 3 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1102,7 +1113,7 @@ int mips_execute( int cycles )
 							cpu_readmem32lew( adr );
 							break;
 						case 3:
-							cpu_readmem32lew_dword( adr - 3 );
+							read_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1130,11 +1141,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_dword( adr );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr );
 					}
 					else
 					{
-						cpu_readmem32lew_dword( adr );
+						read_dword( adr );
 					}
 					mips_advance_pc();
 				}
@@ -1267,7 +1278,7 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_dword( adr );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr );
 							break;
 						case 1:
 							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xff000000 ) | cpu_readmem32lew_word( adr - 1 ) | ( (UINT32)cpu_readmem32lew( adr + 1 ) << 16 );
@@ -1285,7 +1296,7 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							cpu_readmem32lew_dword( adr );
+							read_dword( adr );
 							break;
 						case 1:
 							cpu_readmem32lew_word( adr - 1 );
@@ -1318,7 +1329,7 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_dword( adr );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr );
 							break;
 						case 1:
 							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xff000000 ) | cpu_readmem32lew( adr ) | ( (UINT32)cpu_readmem32lew_word( adr + 1 ) << 8 );
@@ -1336,7 +1347,7 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							cpu_readmem32lew_dword( adr );
+							read_dword( adr );
 							break;
 						case 1:
 							cpu_readmem32lew( adr );
@@ -1461,7 +1472,7 @@ int mips_execute( int cycles )
 						cpu_writemem32lew_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
 						break;
 					case 3:
-						cpu_writemem32lew_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						write_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					}
 					mips_advance_pc();
@@ -1491,7 +1502,7 @@ int mips_execute( int cycles )
 						cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
 						break;
 					case 3:
-						cpu_writemem32lew_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						write_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					}
 					mips_advance_pc();
@@ -1521,7 +1532,7 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					cpu_writemem32lew_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					write_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 				}
 			}
@@ -1547,7 +1558,7 @@ int mips_execute( int cycles )
 					switch( adr & 3 )
 					{
 					case 0:
-						cpu_writemem32lew_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						write_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					case 1:
 						cpu_writemem32lew_word( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] );
@@ -1577,7 +1588,7 @@ int mips_execute( int cycles )
 					switch( adr & 3 )
 					{
 					case 0:
-						cpu_writemem32lew_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						write_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					case 1:
 						cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );

@@ -88,8 +88,7 @@ static READ_HANDLER( gameplan_port_r )
 	return readinputport(gameplan_current_port);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x03ff, MRA_RAM },
     { 0x032d, 0x03d8, MRA_RAM }, /* note: 300-32c and 3d9-3ff is
 								  * written but never read?
@@ -100,22 +99,18 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3000, 0x300f, gameplan_sound_r },
     { 0x9000, 0xffff, MRA_ROM },
 
-    { -1 }						/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x03ff, MWA_RAM },
     { 0x2000, 0x200f, gameplan_video_w },		/* VIA 1 */
     { 0x2800, 0x280f, gameplan_port_select_w },	/* VIA 2 */
     { 0x3000, 0x300f, gameplan_sound_w },       /* VIA 3 */
     { 0x9000, 0xffff, MWA_ROM },
 
-	{ -1 }						/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_snd[] =
-{
+static MEMORY_READ_START( readmem_snd )
 	{ 0x0000, 0x0026, MRA_RAM },
 	{ 0x01f6, 0x01ff, MRA_RAM },
 	{ 0x0800, 0x080f, gameplan_via5_r },
@@ -127,11 +122,9 @@ static struct MemoryReadAddress readmem_snd[] =
 #endif
 
     { 0xf800, 0xffff, MRA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_snd[] =
-{
+static MEMORY_WRITE_START( writemem_snd )
 	{ 0x0000, 0x0026, MWA_RAM },
 	{ 0x01f6, 0x01ff, MWA_RAM },
 	{ 0x0800, 0x080f, gameplan_via5_w },
@@ -146,8 +139,7 @@ static struct MemoryWriteAddress writemem_snd[] =
 
 	{ 0xf800, 0xffff, MWA_ROM },
 
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 int gameplan_interrupt(void)
 {

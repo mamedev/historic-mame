@@ -89,8 +89,7 @@ static WRITE_HANDLER( aliens_snd_bankswitch_w )
 }
 
 
-static struct MemoryReadAddress aliens_readmem[] =
-{
+static MEMORY_READ_START( aliens_readmem )
 	{ 0x0000, 0x03ff, bankedram_r },			/* palette + work RAM */
 	{ 0x0400, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, MRA_BANK1 },				/* banked ROM */
@@ -102,11 +101,9 @@ static struct MemoryReadAddress aliens_readmem[] =
 	{ 0x5f88, 0x5f88, watchdog_reset_r },
 	{ 0x4000, 0x7fff, K052109_051960_r },
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM e24_j02.bin */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress aliens_writemem[] =
-{
+static MEMORY_WRITE_START( aliens_writemem )
 	{ 0x0000, 0x03ff, bankedram_w, &ram },			/* palette + work RAM */
 	{ 0x0400, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x3fff, MWA_ROM },					/* banked ROM */
@@ -114,28 +111,23 @@ static struct MemoryWriteAddress aliens_writemem[] =
 	{ 0x5f8c, 0x5f8c, aliens_sh_irqtrigger_w },		/* cause interrupt on audio CPU */
 	{ 0x4000, 0x7fff, K052109_051960_w },
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM e24_j02.bin */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress aliens_readmem_sound[] =
-{
+static MEMORY_READ_START( aliens_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM g04_b03.bin */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0xa001, 0xa001, YM2151_status_port_0_r },
 	{ 0xc000, 0xc000, soundlatch_r },			/* soundlatch_r */
 	{ 0xe000, 0xe00d, K007232_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress aliens_writemem_sound[] =
-{
+static MEMORY_WRITE_START( aliens_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM g04_b03.bin */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0xa000, 0xa000, YM2151_register_port_0_w },
 	{ 0xa001, 0xa001, YM2151_data_port_0_w },
 	{ 0xe000, 0xe00d, K007232_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

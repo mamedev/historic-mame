@@ -136,7 +136,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		copybitmap(bitmap,llander_panel->artwork,0,0,
 				   0,bitmap->height - pheight,&rect,TRANSPARENCY_NONE,0);
-		osd_mark_dirty (rect.min_x,rect.min_y,rect.max_x,rect.max_y,0);
+		osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
 	}
 
 	scale = pwidth/800.0;
@@ -157,7 +157,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				copybitmap(bitmap,llander_panel->artwork,0,0,
 						   0,bitmap->height - pheight,&rect,TRANSPARENCY_NONE,0);
 
-			osd_mark_dirty (rect.min_x,rect.min_y,rect.max_x,rect.max_y,0);
+			osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
 
 			lights_changed[i] = 0;
 		}

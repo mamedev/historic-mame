@@ -53,8 +53,7 @@ WRITE_HANDLER( exctsccr_DAC_data_w )
 
 ***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x63ff, MRA_RAM }, /* Alpha mcu (protection) */
 	{ 0x7c00, 0x7fff, MRA_RAM }, /* work ram */
@@ -65,11 +64,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa040, 0xa040, input_port_1_r },
 	{ 0xa080, 0xa080, input_port_3_r },
 	{ 0xa0c0, 0xa0c0, input_port_2_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x63ff, exctsccr_mcu_w, &exctsccr_mcu_ram }, /* Alpha mcu (protection) */
 	{ 0x7c00, 0x7fff, MWA_RAM }, /* work ram */
@@ -85,29 +82,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa040, 0xa06f, MWA_RAM, &spriteram }, /* Sprite pos */
 	{ 0xa080, 0xa080, soundlatch_w },
 	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x8fff, MRA_ROM },
 	{ 0xa000, 0xa7ff, MRA_RAM },
 	{ 0xc00d, 0xc00d, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x8fff, MWA_ROM },
 	{ 0xa000, 0xa7ff, MWA_RAM },
 	{ 0xc008, 0xc009, exctsccr_DAC_data_w },
 	{ 0xc00c, 0xc00c, soundlatch_w }, /* used to clear the latch */
 	{ 0xc00f, 0xc00f, MWA_NOP }, /* ??? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x82, 0x82, AY8910_write_port_0_w },
 	{ 0x83, 0x83, AY8910_control_port_0_w },
 	{ 0x86, 0x86, AY8910_write_port_1_w },
@@ -116,12 +107,10 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x8b, 0x8b, AY8910_control_port_2_w },
 	{ 0x8e, 0x8e, AY8910_write_port_3_w },
 	{ 0x8f, 0x8f, AY8910_control_port_3_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /* Bootleg */
-static struct MemoryReadAddress bl_readmem[] =
-{
+static MEMORY_READ_START( bl_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x8000, 0x83ff, videoram_r },
 	{ 0x8400, 0x87ff, colorram_r },
@@ -130,11 +119,9 @@ static struct MemoryReadAddress bl_readmem[] =
 	{ 0xa040, 0xa040, input_port_1_r },
 	{ 0xa080, 0xa080, input_port_3_r },
 	{ 0xa0c0, 0xa0c0, input_port_2_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bl_writemem[] =
-{
+static MEMORY_WRITE_START( bl_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7000, 0x7000, AY8910_write_port_0_w },
 	{ 0x7001, 0x7001, AY8910_control_port_0_w },
@@ -150,26 +137,21 @@ static struct MemoryWriteAddress bl_writemem[] =
 	{ 0xa040, 0xa06f, MWA_RAM, &spriteram }, /* Sprite Pos */
 	{ 0xa080, 0xa080, soundlatch_w },
 	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bl_sound_readmem[] =
-{
+static MEMORY_READ_START( bl_sound_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bl_sound_writemem[] =
-{
+static MEMORY_WRITE_START( bl_sound_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0x8000, MWA_NOP }, /* 0 = DAC sound off, 1 = DAC sound on */
 	{ 0xa000, 0xa000, soundlatch_w }, /* used to clear the latch */
 	{ 0xc000, 0xc000, exctsccr_DAC_data_w },
 	{ 0xe000, 0xe3ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

@@ -320,8 +320,7 @@ static WRITE_HANDLER( kageki_csport_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 }, /* ROM + RAM */
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -329,11 +328,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf000, 0xf1ff, MRA_RAM },	/* VDC RAM */
 	{ 0xf600, 0xf600, MRA_NOP },	/* ? */
 	{ 0xf800, 0xfbff, MRA_RAM },	/* not in extrmatn and arkanoi2 (PROMs instead) */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xbfff, MWA_BANK1 },	/* ROM + RAM */
 	{ 0xc000, 0xdfff, MWA_RAM, &tnzs_objram },
@@ -343,11 +340,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf400, 0xf400, MWA_NOP },	/* ? */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
 	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },	/* not in extrmatn and arkanoi2 (PROMs instead) */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sub_readmem[] =
-{
+static MEMORY_READ_START( sub_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK2 },
 	{ 0xb000, 0xb000, YM2203_status_port_0_r },
@@ -356,14 +351,12 @@ static struct MemoryReadAddress sub_readmem[] =
 									/* changed in insectx_init() ) */
 	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_r },
-	{ 0xf000, 0xf003, arkanoi2_sh_f000_r },	/* paddles in arkanoid2/plumppop; the ports are */
+	{ 0xf000, 0xf003, arkanoi2_sh_f000_r },	/* paddles in arkanoid2/plumppop. The ports are */
 						/* read but not used by the other games, and are not read at */
 						/* all by insectx. */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sub_writemem[] =
-{
+static MEMORY_WRITE_START( sub_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
 	{ 0xb000, 0xb000, YM2203_control_port_0_w },
@@ -371,11 +364,9 @@ static struct MemoryWriteAddress sub_writemem[] =
 	{ 0xc000, 0xc001, tnzs_mcu_w },	/* not present in insectx */
 	{ 0xd000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kageki_sub_readmem[] =
-{
+static MEMORY_READ_START( kageki_sub_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK2 },
 	{ 0xb000, 0xb000, YM2203_status_port_0_r },
@@ -385,19 +376,16 @@ static struct MemoryReadAddress kageki_sub_readmem[] =
 	{ 0xc002, 0xc002, input_port_4_r },
 	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kageki_sub_writemem[] =
-{
+static MEMORY_WRITE_START( kageki_sub_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
 	{ 0xb000, 0xb000, YM2203_control_port_0_w },
 	{ 0xb001, 0xb001, YM2203_write_port_0_w },
 	{ 0xd000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* the bootleg board is different, it has a third CPU (and of course no mcu) */
 
@@ -407,8 +395,7 @@ static WRITE_HANDLER( tnzsb_sound_command_w )
 	cpu_cause_interrupt(2,0xff);
 }
 
-static struct MemoryReadAddress tnzsb_readmem1[] =
-{
+static MEMORY_READ_START( tnzsb_readmem1 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK2 },
 	{ 0xb002, 0xb002, input_port_0_r },
@@ -419,47 +406,36 @@ static struct MemoryReadAddress tnzsb_readmem1[] =
 	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_r },
 	{ 0xf000, 0xf003, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tnzsb_writemem1[] =
-{
+static MEMORY_WRITE_START( tnzsb_writemem1 )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
 	{ 0xb004, 0xb004, tnzsb_sound_command_w },
 	{ 0xd000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_w },
 	{ 0xf000, 0xf3ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress tnzsb_readmem2[] =
-{
+static MEMORY_READ_START( tnzsb_readmem2 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tnzsb_writemem2[] =
-{
+static MEMORY_WRITE_START( tnzsb_writemem2 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort tnzsb_readport[] =
-{
+static PORT_READ_START( tnzsb_readport )
 	{ 0x00, 0x00, YM2203_status_port_0_r  },
 	{ 0x02, 0x02, soundlatch_r  },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort tnzsb_writeport[] =
-{
+static PORT_WRITE_START( tnzsb_writeport )
 	{ 0x00, 0x00, YM2203_control_port_0_w  },
 	{ 0x01, 0x01, YM2203_write_port_0_w  },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -20,21 +20,17 @@ void minivadr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void minivadr_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ 0xe008, 0xe008, input_port_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0xa000, 0xbfff, minivadr_videoram_w, &videoram, &videoram_size },
 	{ 0xe008, 0xe008, MWA_NOP },		// ???
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( minivadr )

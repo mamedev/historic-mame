@@ -148,8 +148,8 @@ int travrusa_vh_start(void)
 	if (!bg_tilemap)
 		return 1;
 
-	bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-	bg_tilemap->transmask[1] = 0x3f; /* split type 1 has pens 6 and 7 opaque - hack! */
+	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x3f); /* split type 1 has pens 6 and 7 opaque - hack! */
 
 	tilemap_set_scroll_rows(bg_tilemap,32);
 
@@ -204,7 +204,7 @@ WRITE_HANDLER( travrusa_flipscreen_w )
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
 
-	flip_screen_w(0,data & 1);
+	flip_screen_set(data & 1);
 
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x20);
@@ -263,9 +263,7 @@ void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
 }

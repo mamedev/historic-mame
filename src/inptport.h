@@ -178,7 +178,7 @@ enum { IPT_END=1,IPT_PORT,
 
 /* start of table */
 #define INPUT_PORTS_START(name) \
-	static struct InputPortTiny input_ports_##name[] = {
+	static const struct InputPortTiny input_ports_##name[] = {
 
 /* end of table */
 #define INPUT_PORTS_END \
@@ -334,6 +334,27 @@ READ_HANDLER( input_port_16_r );
 READ_HANDLER( input_port_17_r );
 READ_HANDLER( input_port_18_r );
 READ_HANDLER( input_port_19_r );
+
+READ16_HANDLER( input_port_0_word_r );
+READ16_HANDLER( input_port_1_word_r );
+READ16_HANDLER( input_port_2_word_r );
+READ16_HANDLER( input_port_3_word_r );
+READ16_HANDLER( input_port_4_word_r );
+READ16_HANDLER( input_port_5_word_r );
+READ16_HANDLER( input_port_6_word_r );
+READ16_HANDLER( input_port_7_word_r );
+READ16_HANDLER( input_port_8_word_r );
+READ16_HANDLER( input_port_9_word_r );
+READ16_HANDLER( input_port_10_word_r );
+READ16_HANDLER( input_port_11_word_r );
+READ16_HANDLER( input_port_12_word_r );
+READ16_HANDLER( input_port_13_word_r );
+READ16_HANDLER( input_port_14_word_r );
+READ16_HANDLER( input_port_15_word_r );
+READ16_HANDLER( input_port_16_word_r );
+READ16_HANDLER( input_port_17_word_r );
+READ16_HANDLER( input_port_18_word_r );
+READ16_HANDLER( input_port_19_word_r );
 
 struct ipd
 {

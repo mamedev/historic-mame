@@ -26,53 +26,53 @@ a symmetrical visible area).
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *gradius3_gfxram;
+extern data16_t *gradius3_gfxram;
 extern int gradius3_priority;
 int gradius3_vh_start(void);
 void gradius3_vh_stop(void);
-READ_HANDLER( gradius3_gfxrom_r );
-READ_HANDLER( gradius3_gfxram_r );
-WRITE_HANDLER( gradius3_gfxram_w );
+READ16_HANDLER( gradius3_gfxrom_r );
+READ16_HANDLER( gradius3_gfxram_r );
+WRITE16_HANDLER( gradius3_gfxram_w );
 void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static READ_HANDLER( K052109_halfword_r )
+static READ16_HANDLER( K052109_halfword_r )
 {
-	return K052109_r(offset >> 1);
+	return K052109_r(offset);
 }
 
-static WRITE_HANDLER( K052109_halfword_w )
+static WRITE16_HANDLER( K052109_halfword_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K052109_w(offset >> 1,data & 0xff);
+	if (ACCESSING_LSB)
+		K052109_w(offset,data & 0xff);
 
 	/* is this a bug in the game or something else? */
-	if ((data & 0x00ff0000) == 0x00ff0000)
-		K052109_w(offset >> 1,(data >> 8) & 0xff);
+	if (!ACCESSING_LSB)
+		K052109_w(offset,(data >> 8) & 0xff);
 //		logerror("%06x half %04x = %04x\n",cpu_get_pc(),offset,data);
 }
 
-static READ_HANDLER( K051937_halfword_r )
+static READ16_HANDLER( K051937_halfword_r )
 {
-	return K051937_r(offset >> 1);
+	return K051937_r(offset);
 }
 
-static WRITE_HANDLER( K051937_halfword_w )
+static WRITE16_HANDLER( K051937_halfword_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051937_w(offset >> 1,data & 0xff);
+	if (ACCESSING_LSB)
+		K051937_w(offset,data & 0xff);
 }
 
-static READ_HANDLER( K051960_halfword_r )
+static READ16_HANDLER( K051960_halfword_r )
 {
-	return K051960_r(offset >> 1);
+	return K051960_r(offset);
 }
 
-static WRITE_HANDLER( K051960_halfword_w )
+static WRITE16_HANDLER( K051960_halfword_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		K051960_w(offset >> 1,data & 0xff);
+	if (ACCESSING_LSB)
+		K051960_w(offset,data & 0xff);
 }
 
 
@@ -88,21 +88,21 @@ static void gradius3_init(void)
 	irqBmask = 0;
 }
 
-static unsigned char *sharedram;
+static data16_t *sharedram;
 
-static READ_HANDLER( sharedram_r )
+static READ16_HANDLER( sharedram_r )
 {
-	return READ_WORD(&sharedram[offset]);
+	return sharedram[offset];
 }
 
-static WRITE_HANDLER( sharedram_w )
+static WRITE16_HANDLER( sharedram_w )
 {
-	COMBINE_WORD_MEM(&sharedram[offset],data);
+	COMBINE_DATA(&sharedram[offset]);
 }
 
-static WRITE_HANDLER( cpuA_ctrl_w )
+static WRITE16_HANDLER( cpuA_ctrl_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
 		data >>= 8;
 
@@ -124,9 +124,9 @@ static WRITE_HANDLER( cpuA_ctrl_w )
 	}
 }
 
-static WRITE_HANDLER( cpuB_irqenable_w )
+static WRITE16_HANDLER( cpuB_irqenable_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 		irqBmask = (data >> 8) & 0x07;
 }
 
@@ -149,7 +149,7 @@ static int cpuB_interrupt(void)
 	return 0;
 }
 
-static WRITE_HANDLER( cpuB_irqtrigger_w )
+static WRITE16_HANDLER( cpuB_irqtrigger_w )
 {
 	if (irqBmask & 4)
 	{
@@ -160,13 +160,13 @@ logerror("%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
 logerror("%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE16_HANDLER( sound_command_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 		soundlatch_w(0,(data >> 8) & 0xff);
 }
 
-static WRITE_HANDLER( sound_irq_w )
+static WRITE16_HANDLER( sound_irq_w )
 {
 	cpu_cause_interrupt(2,0xff);
 }
@@ -184,91 +184,75 @@ static WRITE_HANDLER( sound_bank_w )
 
 
 
-static struct MemoryReadAddress gradius3_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x043fff, MRA_BANK1 },	/* main RAM */
-	{ 0x080000, 0x080fff, paletteram_word_r },
-	{ 0x0c8000, 0x0c8001, input_port_0_r },
-	{ 0x0c8002, 0x0c8003, input_port_1_r },
-	{ 0x0c8004, 0x0c8005, input_port_2_r },
-	{ 0x0c8006, 0x0c8007, input_port_5_r },
-	{ 0x0d0000, 0x0d0001, input_port_3_r },
-	{ 0x0d0002, 0x0d0003, input_port_4_r },
+static MEMORY_READ16_START( gradius3_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x040000, 0x043fff, MRA16_RAM },
+	{ 0x080000, 0x080fff, MRA16_RAM },
+	{ 0x0c8000, 0x0c8001, input_port_0_word_r },
+	{ 0x0c8002, 0x0c8003, input_port_1_word_r },
+	{ 0x0c8004, 0x0c8005, input_port_2_word_r },
+	{ 0x0c8006, 0x0c8007, input_port_5_word_r },
+	{ 0x0d0000, 0x0d0001, input_port_3_word_r },
+	{ 0x0d0002, 0x0d0003, input_port_4_word_r },
 	{ 0x100000, 0x103fff, sharedram_r },
 	{ 0x14c000, 0x153fff, K052109_halfword_r },
 	{ 0x180000, 0x19ffff, gradius3_gfxram_r },
-#if 0
-	{ 0x140000, 0x140007, K051937_word_r },
-	{ 0x140400, 0x1407ff, K051960_word_r },
-#endif
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gradius3_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x043fff, MWA_BANK1 },	/* main RAM */
-	{ 0x080000, 0x080fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+static MEMORY_WRITE16_START( gradius3_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x040000, 0x043fff, MWA16_RAM },
+	{ 0x080000, 0x080fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x0c0000, 0x0c0001, cpuA_ctrl_w },	/* halt cpu B, irq enable, priority, coin counters, other? */
 	{ 0x0d8000, 0x0d8001, cpuB_irqtrigger_w },
-	{ 0x0e0000, 0x0e0001, watchdog_reset_w },
+	{ 0x0e0000, 0x0e0001, watchdog_reset16_w },
 	{ 0x0e8000, 0x0e8001, sound_command_w },
 	{ 0x0f0000, 0x0f0001, sound_irq_w },
 	{ 0x100000, 0x103fff, sharedram_w, &sharedram },
 	{ 0x14c000, 0x153fff, K052109_halfword_w },
 	{ 0x180000, 0x19ffff, gradius3_gfxram_w, &gradius3_gfxram },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress gradius3_readmem2[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK2 },	/* main RAM */
+static MEMORY_READ16_START( gradius3_readmem2 )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
 	{ 0x200000, 0x203fff, sharedram_r },
 	{ 0x24c000, 0x253fff, K052109_halfword_r },
 	{ 0x280000, 0x29ffff, gradius3_gfxram_r },
 	{ 0x2c0000, 0x2c000f, K051937_halfword_r },
 	{ 0x2c0800, 0x2c0fff, K051960_halfword_r },
 	{ 0x400000, 0x5fffff, gradius3_gfxrom_r },		/* gfx ROMs are mapped here, and copied to RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gradius3_writemem2[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK2 },	/* main RAM */
+static MEMORY_WRITE16_START( gradius3_writemem2 )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
 	{ 0x140000, 0x140001, cpuB_irqenable_w },
 	{ 0x200000, 0x203fff, sharedram_w },
 	{ 0x24c000, 0x253fff, K052109_halfword_w },
 	{ 0x280000, 0x29ffff, gradius3_gfxram_w },
 	{ 0x2c0000, 0x2c000f, K051937_halfword_w },
 	{ 0x2c0800, 0x2c0fff, K051960_halfword_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress gradius3_s_readmem[] =
-{
+static MEMORY_READ_START( gradius3_s_readmem )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf010, 0xf010, soundlatch_r },
 	{ 0xf020, 0xf02d, K007232_read_port_0_r },
 	{ 0xf031, 0xf031, YM2151_status_port_0_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gradius3_s_writemem[] =
-{
+static MEMORY_WRITE_START( gradius3_s_writemem )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf000, sound_bank_w },				/* 007232 bankswitch */
 	{ 0xf020, 0xf02d, K007232_write_port_0_w },
 	{ 0xf030, 0xf030, YM2151_register_port_0_w },
 	{ 0xf031, 0xf031, YM2151_data_port_0_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

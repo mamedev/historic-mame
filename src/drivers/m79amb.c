@@ -44,8 +44,7 @@ static READ_HANDLER( gray5bit_controller1_r )
     return (input_port_3_r(0) & 0xe0) | (~ControllerTable[input_port_3_r(0) & 0x1f] & 0x1f);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x63ff, MRA_RAM },
 	{ 0x8000, 0x8000, input_port_0_r},
@@ -54,15 +53,13 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8005, 0x8005, gray5bit_controller1_r},
 	{ 0xC000, 0xC07f, MRA_RAM},			/* ?? */
 	{ 0xC200, 0xC27f, MRA_RAM},			/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 WRITE_HANDLER( sound_w )
 {
 }
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
     { 0x4400, 0x5fff, ramtek_videoram_w, &videoram },
@@ -72,8 +69,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8002, 0x8003, sound_w },
 	{ 0xC000, 0xC07f, MWA_RAM},			/* ?? */
 	{ 0xC200, 0xC27f, MWA_RAM},			/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( m79amb )

@@ -159,7 +159,7 @@ struct GfxLayout mcr_sprite_layout =
  *
  *************************************/
 
-extern READ_HANDLER( zwackery_port_2_r );
+READ_HANDLER( zwackery_port_2_r );
 
 static struct pia6821_interface zwackery_pia_2_intf =
 {
@@ -291,9 +291,9 @@ void zwackery_init_machine(void)
 	v493_callback = zwackery_493_callback;
 
 	/* append our PIA state onto the existing one and reinit */
-	pia_config(2, PIA_STANDARD_ORDERING | PIA_16BIT_UPPER, &zwackery_pia_2_intf);
-	pia_config(3, PIA_STANDARD_ORDERING | PIA_16BIT_LOWER, &zwackery_pia_3_intf);
-	pia_config(4, PIA_STANDARD_ORDERING | PIA_16BIT_LOWER, &zwackery_pia_4_intf);
+	pia_config(2, PIA_STANDARD_ORDERING, &zwackery_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &zwackery_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING, &zwackery_pia_4_intf);
 	pia_reset();
 
 	/* vectors are 5 and 6 */
@@ -711,7 +711,7 @@ static WRITE_HANDLER( mcr68_6840_w_common )
 }
 
 
-static READ_HANDLER( mcr68_6840_r_common )
+static READ16_HANDLER( mcr68_6840_r_common )
 {
 	/* offset 0 is a no-op */
 	if (offset == 0)
@@ -748,27 +748,27 @@ static READ_HANDLER( mcr68_6840_r_common )
 }
 
 
-WRITE_HANDLER( mcr68_6840_upper_w )
+WRITE16_HANDLER( mcr68_6840_upper_w )
 {
-	if (!(data & 0xff000000))
-		mcr68_6840_w_common(offset / 2, (data >> 8) & 0xff);
+	if (ACCESSING_MSB)
+		mcr68_6840_w_common(offset, (data >> 8) & 0xff);
 }
 
 
-WRITE_HANDLER( mcr68_6840_lower_w )
+WRITE16_HANDLER( mcr68_6840_lower_w )
 {
-	if (!(data & 0x00ff0000))
-		mcr68_6840_w_common(offset / 2, data & 0xff);
+	if (ACCESSING_LSB)
+		mcr68_6840_w_common(offset, data & 0xff);
 }
 
 
-READ_HANDLER( mcr68_6840_upper_r )
+READ16_HANDLER( mcr68_6840_upper_r )
 {
-	return (mcr68_6840_r_common(offset / 2) << 8) | 0x00ff;
+	return (mcr68_6840_r_common(offset) << 8) | 0x00ff;
 }
 
 
-READ_HANDLER( mcr68_6840_lower_r )
+READ16_HANDLER( mcr68_6840_lower_r )
 {
-	return mcr68_6840_r_common(offset / 2) | 0xff00;
+	return mcr68_6840_r_common(offset) | 0xff00;
 }

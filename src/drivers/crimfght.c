@@ -66,8 +66,7 @@ static READ_HANDLER( speedup_r )
 	return RAM[0x0414];
 }
 
-static struct MemoryReadAddress crimfght_readmem[] =
-{
+static MEMORY_READ_START( crimfght_readmem )
 	{ 0x0000, 0x03ff, MRA_BANK1 },			/* banked RAM */
 	{ 0x0414, 0x0414, speedup_r },
 	{ 0x0400, 0x1fff, MRA_RAM },			/* RAM */
@@ -83,11 +82,9 @@ static struct MemoryReadAddress crimfght_readmem[] =
 	{ 0x2000, 0x5fff, K052109_051960_r },	/* video RAM + sprite RAM */
 	{ 0x6000, 0x7fff, MRA_BANK2 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress crimfght_writemem[] =
-{
+static MEMORY_WRITE_START( crimfght_writemem )
 	{ 0x0000, 0x03ff, MWA_BANK1 },					/* banked RAM */
 	{ 0x0400, 0x1fff, MWA_RAM },					/* RAM */
 	{ 0x3f88, 0x3f88, crimfght_coin_w },			/* coin counters */
@@ -95,28 +92,23 @@ static struct MemoryWriteAddress crimfght_writemem[] =
 	{ 0x2000, 0x5fff, K052109_051960_w },			/* video RAM + sprite RAM */
 	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress crimfght_readmem_sound[] =
-{
+static MEMORY_READ_START( crimfght_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM 821l01.h4 */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0xa001, 0xa001, YM2151_status_port_0_r },	/* YM2151 */
 	{ 0xc000, 0xc000, soundlatch_r },			/* soundlatch_r */
 	{ 0xe000, 0xe00d, K007232_read_port_0_r },	/* 007232 registers */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress crimfght_writemem_sound[] =
-{
+static MEMORY_WRITE_START( crimfght_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM 821l01.h4 */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0xa000, 0xa000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xa001, 0xa001, YM2151_data_port_0_w },		/* YM2151 */
 	{ 0xe000, 0xe00d, K007232_write_port_0_w },		/* 007232 registers */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

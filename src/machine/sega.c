@@ -48,7 +48,7 @@ WRITE_HANDLER( sega_w )
 
 
 	/* MWA_ROM */
-	if      ((off>=0x0000) && (off<=0xbfff))
+	if		((off>=0x0000) && (off<=0xbfff))
 	{
 		;
 	}
@@ -78,11 +78,16 @@ WRITE_HANDLER( sega_mult2_w )
 	result = mult1 * data;
 }
 
-WRITE_HANDLER( sega_switch_w ) {
-
+WRITE_HANDLER( sega_switch_w )
+{
 	ioSwitch = data;
 /*	logerror("ioSwitch: %02x\n",ioSwitch); */
-	}
+}
+
+WRITE_HANDLER( sega_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
 
 READ_HANDLER( sega_mult_r )
 {
@@ -177,3 +182,4 @@ READ_HANDLER( elim4_IN4_r )
 		return readinputport (8);
 	return (0);
 }
+

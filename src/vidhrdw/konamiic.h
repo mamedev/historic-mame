@@ -26,7 +26,7 @@ WRITE_HANDLER( K007342_scroll_w );
 void K007342_tilemap_update(void);
 WRITE_HANDLER( K007342_vreg_w );
 void K007342_tilemap_set_enable(int layer, int enable);
-void K007342_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags);
+void K007342_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags,UINT32 priority);
 int K007342_is_INT_enabled(void);
 
 
@@ -70,9 +70,13 @@ void K052109_vh_stop(void);
 /* plain 8-bit access */
 READ_HANDLER( K052109_r );
 WRITE_HANDLER( K052109_w );
+READ16_HANDLER( K052109_word_r );
+WRITE16_HANDLER( K052109_word_w );
+READ16_HANDLER( K052109_lsb_r );
+WRITE16_HANDLER( K052109_lsb_w );
 void K052109_set_RMRD_line(int state);
 void K052109_tilemap_update(void);
-void K052109_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags);
+void K052109_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags,UINT32 priority);
 int K052109_is_IRQ_enabled(void);
 
 
@@ -94,12 +98,12 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 void K051960_vh_stop(void);
 READ_HANDLER( K051960_r );
 WRITE_HANDLER( K051960_w );
-READ_HANDLER( K051960_word_r );
-WRITE_HANDLER( K051960_word_w );
+READ16_HANDLER( K051960_word_r );
+WRITE16_HANDLER( K051960_word_w );
 READ_HANDLER( K051937_r );
 WRITE_HANDLER( K051937_w );
-READ_HANDLER( K051937_word_r );
-WRITE_HANDLER( K051937_word_w );
+READ16_HANDLER( K051937_word_r );
+WRITE16_HANDLER( K051937_word_w );
 void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
 void K051960_mark_sprites_colors(void);
 int K051960_is_IRQ_enabled(void);
@@ -113,12 +117,14 @@ WRITE_HANDLER( K052109_051960_w );
 int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
 void K053245_vh_stop(void);
-READ_HANDLER( K053245_word_r );
-WRITE_HANDLER( K053245_word_w );
+READ16_HANDLER( K053245_word_r );
+WRITE16_HANDLER( K053245_word_w );
 READ_HANDLER( K053245_r );
 WRITE_HANDLER( K053245_w );
 READ_HANDLER( K053244_r );
 WRITE_HANDLER( K053244_w );
+READ16_HANDLER( K053244_lsb_r );
+WRITE16_HANDLER( K053244_lsb_w );
 void K053244_bankselect(int bank);	/* used by TMNT2 for ROM testing */
 void K053245_sprites_draw(struct osd_bitmap *bitmap);
 void K053245_mark_sprites_colors(void);
@@ -127,8 +133,8 @@ void K053245_mark_sprites_colors(void);
 int K053247_vh_start(int gfx_memory_region,int dx,int dy,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
 void K053247_vh_stop(void);
-READ_HANDLER( K053247_word_r );
-WRITE_HANDLER( K053247_word_w );
+READ16_HANDLER( K053247_word_r );
+WRITE16_HANDLER( K053247_word_w );
 READ_HANDLER( K053247_r );
 WRITE_HANDLER( K053247_w );
 void K053247_sprites_draw(struct osd_bitmap *bitmap);
@@ -136,8 +142,8 @@ void K053247_mark_sprites_colors(void);
 
 READ_HANDLER( K053246_r );
 WRITE_HANDLER( K053246_w );
-READ_HANDLER( K053246_word_r );
-WRITE_HANDLER( K053246_word_w );
+READ16_HANDLER( K053246_word_r );
+WRITE16_HANDLER( K053246_word_w );
 void K053246_set_OBJCHA_line(int state);
 int K053246_is_IRQ_enabled(void);
 
@@ -185,6 +191,8 @@ void K051316_set_offset(int chip, int xoffs, int yoffs);
 
 
 WRITE_HANDLER( K053251_w );
+WRITE16_HANDLER( K053251_lsb_w );
+WRITE16_HANDLER( K053251_msb_w );
 enum { K053251_CI0=0,K053251_CI1,K053251_CI2,K053251_CI3,K053251_CI4 };
 int K053251_get_priority(int ci);
 int K053251_get_palette_index(int ci);
@@ -192,17 +200,22 @@ int K053251_get_palette_index(int ci);
 
 WRITE_HANDLER( K054000_w );
 READ_HANDLER( K054000_r );
+WRITE16_HANDLER( K054000_lsb_w );
+READ16_HANDLER( K054000_lsb_r );
 
 WRITE_HANDLER( K051733_w );
 READ_HANDLER( K051733_r );
 
-int K054157_vh_start(int rambank, int rombank, int gfx_memory_region, int (*scrolld)[4][2],
-					 int plane0,int plane1,int plane2,int plane3,
-					 void (*callback)(int, int *, int *));
+int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2],
+		     int plane0,int plane1,int plane2,int plane3,
+		     void (*callback)(int, int *, int *));
 void K054157_vh_stop(void);
-READ_HANDLER( K054157_ram_word_r );
-WRITE_HANDLER( K054157_ram_word_w );
-READ_HANDLER( K054157_r );
-WRITE_HANDLER( K054157_w );
+READ16_HANDLER( K054157_ram_word_r );
+WRITE16_HANDLER( K054157_ram_word_w );
+READ16_HANDLER( K054157_rom_word_r );
+WRITE16_HANDLER( K054157_word_w );
+WRITE16_HANDLER( K054157_b_word_w );
 void K054157_tilemap_update(void);
-void K054157_tilemap_draw(struct osd_bitmap *bitmap, int num, int flags);
+void K054157_tilemap_draw(struct osd_bitmap *bitmap, int num, int flags, UINT32 priority);
+void K054157_mark_plane_dirty(int num);
+int K054157_is_IRQ_enabled(void);

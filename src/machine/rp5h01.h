@@ -10,20 +10,20 @@ struct RP5H01_interface {
 	int offset[MAX_RP5H01];		/* memory offset within the above region where data resides */
 };
 
-extern int RP5H01_init( struct RP5H01_interface *interface );
-extern void RP5H01_enable_w( int which, int data );				/* /CE */
-extern void RP5H01_reset_w( int which, int data );				/* RESET */
-extern void RP5H01_clock_w( int which, int data );				/* DATA CLOCK (active low) */
-extern void RP5H01_test_w( int which, int data );				/* TEST */
-extern int RP5H01_counter_r( int which );						/* COUNTER OUT */
-extern int RP5H01_data_r( int which );							/* DATA */
+int RP5H01_init( struct RP5H01_interface *interface );
+void RP5H01_enable_w( int which, int data );				/* /CE */
+void RP5H01_reset_w( int which, int data );				/* RESET */
+void RP5H01_clock_w( int which, int data );				/* DATA CLOCK (active low) */
+void RP5H01_test_w( int which, int data );				/* TEST */
+int RP5H01_counter_r( int which );						/* COUNTER OUT */
+int RP5H01_data_r( int which );							/* DATA */
 
 /* direct-access stubs */
-extern WRITE_HANDLER( RP5H01_0_enable_w );
-extern WRITE_HANDLER( RP5H01_0_reset_w );
-extern WRITE_HANDLER( RP5H01_0_clock_w );
-extern WRITE_HANDLER( RP5H01_0_test_w );
-extern READ_HANDLER( RP5H01_0_counter_r );
-extern READ_HANDLER( RP5H01_0_data_r );
+WRITE_HANDLER( RP5H01_0_enable_w );
+WRITE_HANDLER( RP5H01_0_reset_w );
+WRITE_HANDLER( RP5H01_0_clock_w );
+WRITE_HANDLER( RP5H01_0_test_w );
+READ_HANDLER( RP5H01_0_counter_r );
+READ_HANDLER( RP5H01_0_data_r );
 
 #endif /* __RP5H01_H__ */

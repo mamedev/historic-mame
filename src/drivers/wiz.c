@@ -105,9 +105,12 @@ static WRITE_HANDLER( sound_command_w )
 		soundlatch_w(0,data);	/* ??? */
 }
 
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( wiz_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd85f, MRA_RAM },
@@ -117,14 +120,12 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf010, 0xf010, input_port_0_r },	/* IN0 */
 	{ 0xf018, 0xf018, input_port_1_r },	/* IN1 */
 	{ 0xf800, 0xf800, watchdog_reset_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xc801, coin_counter_w },
+	{ 0xc800, 0xc801, wiz_coin_counter_w },
 	{ 0xd000, 0xd3ff, MWA_RAM, &wiz_videoram2 },
 	{ 0xd400, 0xd7ff, MWA_RAM, &wiz_colorram2 },
 	{ 0xd800, 0xd83f, MWA_RAM, &wiz_attributesram2 },
@@ -140,24 +141,20 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf006, 0xf006, wiz_flipx_w },
 	{ 0xf007, 0xf007, wiz_flipy_w },
 	{ 0xf800, 0xf800, sound_command_w },
-	{ 0xf808, 0xf808, MWA_NOP },	/* explosion sound trigger; analog? */
-	{ 0xf80a, 0xf80a, MWA_NOP },	/* shoot sound trigger; analog? */
+	{ 0xf808, 0xf808, MWA_NOP },	/* explosion sound trigger - analog? */
+	{ 0xf80a, 0xf80a, MWA_NOP },	/* shoot sound trigger - analog? */
 	{ 0xf818, 0xf818, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },  /* Stinger/Scion */
 	{ 0x7000, 0x7000, soundlatch_r },  /* Wiz */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x3000, 0x3000, interrupt_enable_w },		/* Stinger/Scion */
 	{ 0x4000, 0x4000, AY8910_control_port_2_w },
@@ -167,8 +164,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x6000, 0x6000, AY8910_control_port_1_w },	/* Wiz only */
 	{ 0x6001, 0x6001, AY8910_write_port_1_w },	/* Wiz only */
 	{ 0x7000, 0x7000, interrupt_enable_w },		/* Wiz */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

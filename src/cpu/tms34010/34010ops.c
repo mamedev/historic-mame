@@ -55,7 +55,7 @@ static void unimpl(void)
 	PUSH(GET_ST());
 	RESET_ST();
 	PC = RLONG(0xfffffc20);
-	change_pc29(PC);											\
+	change_pc29lew(PC);											\
   	COUNT_UNKNOWN_CYCLES(16);
 
 	/* extra check to prevent bad things */
@@ -276,10 +276,10 @@ static void add_b(void) { ADD(B); }
 {			  												\
 	/* I'm not sure to which side the carry is added to, should	*/	\
 	/* verify it against the examples */					\
-	INT32 a = R##REG(R##SRCREG) + (C_FLAG?1:0);				\
+	INT32 a = R##REG(R##SRCREG);							\
 	INT32 *rd = &R##REG(R##DSTREG);							\
 	INT32 b = *rd;											\
-	INT32 r = *rd = a + b;									\
+	INT32 r = *rd = a + b + (C_FLAG?1:0);					\
 	SET_NZCV_ADD(a,b,r);									\
 	COUNT_CYCLES(1);										\
 }
@@ -425,7 +425,7 @@ static void dint(void)
 	{														\
 		if (!*rs)											\
 		{													\
-			V_FLAG = 0;										\
+			V_FLAG = 1;										\
 		}													\
 		else												\
 		{													\
@@ -433,10 +433,10 @@ static void dint(void)
 			INT64 dividend  = COMBINE_64_32_32(*rd1, *rd2); \
 			INT64 quotient  = DIV_64_64_32(dividend, *rs); 	\
 			INT32 remainder = MOD_32_64_32(dividend, *rs); 	\
-			UINT32 signbits = ((quotient & 0x80000000) ? 0xffffffff : 0); 	\
+			UINT32 signbits = (INT32)quotient >> 31;	 	\
 			if (HI32_32_64(quotient) != signbits)			\
 			{												\
-				V_FLAG = 0;									\
+				V_FLAG = 1;									\
 			}												\
 			else											\
 			{												\
@@ -451,7 +451,7 @@ static void dint(void)
 	{														\
 		if (!*rs)											\
 		{													\
-			V_FLAG = 0;										\
+			V_FLAG = 1;										\
 		}													\
 		else												\
 		{													\
@@ -474,7 +474,7 @@ static void divs_b(void) { DIVS(B,0x10); }
 	{														\
 		if (!*rs)											\
 		{													\
-			V_FLAG = 0;										\
+			V_FLAG = 1;										\
 		}													\
 		else												\
 		{													\
@@ -484,7 +484,7 @@ static void divs_b(void) { DIVS(B,0x10); }
 			UINT32 remainder = MOD_U32_U64_U32(dividend, *rs); 	\
 			if (HI32_U32_U64(quotient) != 0)				\
 			{												\
-				V_FLAG = 0;									\
+				V_FLAG = 1;									\
 			}												\
 			else											\
 			{												\
@@ -498,7 +498,7 @@ static void divs_b(void) { DIVS(B,0x10); }
 	{														\
 		if (!*rs)											\
 		{													\
-			V_FLAG = 0;										\
+			V_FLAG = 1;										\
 		}													\
 		else												\
 		{													\
@@ -645,8 +645,10 @@ static void modu_b(void) { MODU(B); }
 	}															\
 	else														\
 	{															\
-		*rd1 *= m1;												\
-		SET_NZ(*rd1);											\
+		INT64 product    = MUL_64_32_32(m1, *rd1);				\
+		*rd1             = LO32_32_64(product);					\
+		SET_Z(product!=0);										\
+		SET_N(HI32_32_64(product));								\
 	}															\
 	COUNT_CYCLES(20);											\
 }
@@ -669,8 +671,9 @@ static void mpys_b(void) { MPYS(B,0x10); }
 	}															\
 	else														\
 	{															\
-		*rd1 = (UINT32)*rd1 * m1;								\
-		SET_Z(*rd1);											\
+		UINT64 product   = MUL_U64_U32_U32(m1, *rd1);			\
+		*rd1             = LO32_U32_U64(product);				\
+		SET_Z(product!=0);										\
 	}															\
 	COUNT_CYCLES(21);											\
 }
@@ -903,8 +906,8 @@ static void sub_b(void) { SUB(B); }
 #define SUBB(R)			       		       			    		\
 {			  													\
 	INT32 *rd = &R##REG(R##DSTREG);								\
-	INT32 t = R##REG(R##SRCREG) + (C_FLAG?1:0);					\
-	INT32 r = *rd - t;											\
+	INT32 t = R##REG(R##SRCREG);								\
+	INT32 r = *rd - t - (C_FLAG?1:0);							\
 	SET_NZCV_SUB(*rd,t,r);										\
 	*rd = r;													\
 	COUNT_CYCLES(1);											\
@@ -1341,7 +1344,7 @@ static void move1_aa (void) { MOVE_AA(1); }
 {																\
 	PUSH(PC);													\
 	PC = R##REG(R##DSTREG);										\
-	change_pc29(PC);											\
+	change_pc29lew(PC);											\
 	COUNT_CYCLES(3);											\
 }
 static void call_a (void) { CALL(A); }
@@ -1358,7 +1361,7 @@ static void calla(void)
 {
 	PUSH(PC+0x20);
 	PC = PARAM_LONG_NO_INC();
-	change_pc29(PC);
+	change_pc29lew(PC);
 	COUNT_CYCLES(4);
 }
 
@@ -1464,7 +1467,7 @@ static void emu(void)
 	INT32 temppc = *rd;											\
 	*rd = PC;													\
 	PC = temppc;												\
-	change_pc29(PC);											\
+	change_pc29lew(PC);											\
 	COUNT_CYCLES(2);											\
 }
 static void exgpc_a (void) { EXGPC(A); }
@@ -1503,7 +1506,7 @@ static void getst_b (void) { GETST(B); }
 		if (TAKE)												\
 		{														\
 			PC = PARAM_LONG_NO_INC();							\
-			change_pc29(PC);									\
+			change_pc29lew(PC);									\
 			COUNT_CYCLES(3);									\
 		}														\
 		else													\
@@ -1748,7 +1751,7 @@ static void j_NN_x(void)
 #define JUMP(R)													\
 {																\
 	PC = R##REG(R##DSTREG);										\
-	change_pc29(PC);											\
+	change_pc29lew(PC);											\
 	COUNT_CYCLES(2);											\
 }
 static void jump_a (void) { JUMP(A); }
@@ -1778,7 +1781,7 @@ static void reti(void)
 {
 	INT32 st = POP();
 	PC = POP();
-	change_pc29(PC);
+	change_pc29lew(PC);
 	SET_ST(st);
 	COUNT_CYCLES(11);
 }
@@ -1787,7 +1790,7 @@ static void rets(void)
 {
 	UINT32 offs;
 	PC = POP();
-	change_pc29(PC);
+	change_pc29lew(PC);
 	offs = PARAM_N;
 	if (offs)
 	{
@@ -1814,7 +1817,7 @@ static void trap(void)
 	}
 	RESET_ST();
 	PC = RLONG(0xffffffe0-(t<<5));
-	change_pc29(PC);
+	change_pc29lew(PC);
 	COUNT_CYCLES(16);
 }
 

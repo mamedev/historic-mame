@@ -48,8 +48,7 @@ static WRITE_HANDLER( battlnts_bankswitch_w )
 	/* other bits unknown */
 }
 
-static struct MemoryReadAddress battlnts_readmem[] =
-{
+static MEMORY_READ_START( battlnts_readmem )
 	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
 	{ 0x2200, 0x23ff, K007342_scroll_r },	/* Scroll RAM */
@@ -61,11 +60,9 @@ static struct MemoryReadAddress battlnts_readmem[] =
 	{ 0x2e04, 0x2e04, input_port_1_r }, 	/* DISPW #2 */
 	{ 0x4000, 0x7fff, MRA_BANK1 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM 777e02.bin */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress battlnts_writemem[] =
-{
+static MEMORY_WRITE_START( battlnts_writemem )
 	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
 	{ 0x2200, 0x23ff, K007342_scroll_w },		/* Scroll RAM */
@@ -78,29 +75,24 @@ static struct MemoryWriteAddress battlnts_writemem[] =
 	{ 0x2e18, 0x2e18, battlnts_sh_irqtrigger_w },/* cause interrupt on audio CPU */
 	{ 0x4000, 0x7fff, MWA_ROM },				/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM 777e02.bin */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress battlnts_readmem_sound[] =
-{
+static MEMORY_READ_START( battlnts_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM 777c01.rom */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0xa000, 0xa000, YM3812_status_port_0_r }, /* YM3812 (chip 1) */
 	{ 0xc000, 0xc000, YM3812_status_port_1_r }, /* YM3812 (chip 2) */
 	{ 0xe000, 0xe000, soundlatch_r },			/* soundlatch_r */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress battlnts_writemem_sound[] =
-{
+static MEMORY_WRITE_START( battlnts_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM 777c01.rom */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0xa000, 0xa000, YM3812_control_port_0_w },	/* YM3812 (chip 1) */
 	{ 0xa001, 0xa001, YM3812_write_port_0_w },		/* YM3812 (chip 1) */
 	{ 0xc000, 0xc000, YM3812_control_port_1_w },	/* YM3812 (chip 2) */
 	{ 0xc001, 0xc001, YM3812_write_port_1_w },		/* YM3812 (chip 2) */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

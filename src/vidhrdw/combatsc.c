@@ -218,9 +218,9 @@ int combasc_vh_start(void)
 
 	if (tilemap[0] && tilemap[1] && textlayer)
 	{
-		tilemap[0]->transparent_pen = 0;
-		tilemap[1]->transparent_pen = 0;
-		textlayer->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap[0],0);
+		tilemap_set_transparent_pen(tilemap[1],0);
+		tilemap_set_transparent_pen(textlayer,0);
 
 		tilemap_set_scroll_rows(textlayer,32);
 
@@ -245,9 +245,9 @@ int combascb_vh_start(void)
 
 	if (tilemap[0] && tilemap[1] && textlayer)
 	{
-		tilemap[0]->transparent_pen = 0;
-		tilemap[1]->transparent_pen = 0;
-		textlayer->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap[0],0);
+		tilemap_set_transparent_pen(tilemap[1],0);
+		tilemap_set_transparent_pen(textlayer,0);
 
 		tilemap_set_scroll_rows(tilemap[0],32);
 		tilemap_set_scroll_rows(tilemap[1],32);
@@ -509,18 +509,16 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly(tilemap[1],0,K007121_ctrlram[1][0x02]);
 
 	tilemap_update(ALL_TILEMAPS);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 
 	if (priority == 0)
 	{
-		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|0|(4<<16));
-		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|1|(8<<16));
-		tilemap_draw(bitmap,tilemap[0],0|(1<<16));
-		tilemap_draw(bitmap,tilemap[0],1|(2<<16));
+		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|0,4);
+		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|1,8);
+		tilemap_draw(bitmap,tilemap[0],0,1);
+		tilemap_draw(bitmap,tilemap[0],1,2);
 
 		/* we use the priority buffer so sprites are drawn front to back */
 		draw_sprites(bitmap,private_spriteram[1],1,0x0f00);
@@ -528,10 +526,10 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	}
 	else
 	{
-		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|0|(1<<16));
-		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|1|(2<<16));
-		tilemap_draw(bitmap,tilemap[1],1|(4<<16));
-		tilemap_draw(bitmap,tilemap[1],0|(8<<16));
+		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|0,1);
+		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|1,2);
+		tilemap_draw(bitmap,tilemap[1],1,4);
+		tilemap_draw(bitmap,tilemap[1],0,8);
 
 		/* we use the priority buffer so sprites are drawn front to back */
 		draw_sprites(bitmap,private_spriteram[1],1,0x0f00);
@@ -543,7 +541,7 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		for (i = 0;i < 32;i++)
 		{
 			tilemap_set_scrollx(textlayer,i,combasc_scrollram0[0x20+i] ? 0 : TILE_LINE_DISABLED);
-			tilemap_draw(bitmap,textlayer,0);
+			tilemap_draw(bitmap,textlayer,0,0);
 		}
 	}
 
@@ -650,24 +648,22 @@ void combascb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly( tilemap[1],0, combasc_io_ram[0x020] );
 
 	tilemap_update( ALL_TILEMAPS );
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render( ALL_TILEMAPS );
+	palette_recalc();
 
 	if (priority == 0)
 	{
-		tilemap_draw( bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY );
+		tilemap_draw( bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
 		bootleg_draw_sprites( bitmap, combasc_page[0], 0 );
-		tilemap_draw( bitmap,tilemap[0],0 );
+		tilemap_draw( bitmap,tilemap[0],0 ,0);
 		bootleg_draw_sprites( bitmap, combasc_page[1], 1 );
 	}
 	else
 	{
-		tilemap_draw( bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY );
+		tilemap_draw( bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 		bootleg_draw_sprites( bitmap, combasc_page[0], 0 );
-		tilemap_draw( bitmap,tilemap[1],0 );
+		tilemap_draw( bitmap,tilemap[1],0 ,0);
 		bootleg_draw_sprites( bitmap, combasc_page[1], 1 );
 	}
 
-	tilemap_draw( bitmap,textlayer,0 );
+	tilemap_draw( bitmap,textlayer,0,0);
 }

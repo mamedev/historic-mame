@@ -259,9 +259,13 @@ static READ_HANDLER( redbaron_joy_r )
 		return readinputport (6);
 }
 
-
-static struct MemoryReadAddress bzone_readmem[] =
+static WRITE_HANDLER( bzone_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+
+static MEMORY_READ_START( bzone_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
@@ -274,13 +278,11 @@ static struct MemoryReadAddress bzone_readmem[] =
 	{ 0x3000, 0x3fff, MRA_ROM },
 	{ 0x5000, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bzone_writemem[] =
-{
+static MEMORY_WRITE_START( bzone_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x1000, 0x1000, coin_counter_w },
+	{ 0x1000, 0x1000, bzone_coin_counter_w },
 	{ 0x1200, 0x1200, avgdvg_go_w },
 	{ 0x1400, 0x1400, watchdog_reset_w },
 	{ 0x1600, 0x1600, avgdvg_reset_w },
@@ -290,8 +292,7 @@ static struct MemoryWriteAddress bzone_writemem[] =
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x5000, 0x7fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( bzone )
@@ -372,8 +373,7 @@ INPUT_PORTS_START( bzone )
 INPUT_PORTS_END
 
 
-static struct MemoryReadAddress redbaron_readmem[] =
-{
+static MEMORY_READ_START( redbaron_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
@@ -388,11 +388,9 @@ static struct MemoryReadAddress redbaron_readmem[] =
 	{ 0x3000, 0x3fff, MRA_ROM },
 	{ 0x5000, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress redbaron_writemem[] =
-{
+static MEMORY_WRITE_START( redbaron_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x1000, 0x1000, MWA_NOP },			/* coin out */
 	{ 0x1200, 0x1200, avgdvg_go_w },
@@ -407,8 +405,7 @@ static struct MemoryWriteAddress redbaron_writemem[] =
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x5000, 0x7fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( redbaron )

@@ -1,13 +1,13 @@
 #include "vidhrdw/generic.h"
 
-static unsigned char tigeroad_scrollram[4];
+static data16_t tigeroad_scrollram[2];
 static int flipscreen,bgcharbank;
 
 
 
-WRITE_HANDLER( tigeroad_videoctrl_w )
+WRITE16_HANDLER( tigeroad_videoctrl_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
 		data = (data >> 8) & 0xff;
 
@@ -25,16 +25,16 @@ WRITE_HANDLER( tigeroad_videoctrl_w )
 	}
 }
 
-WRITE_HANDLER( tigeroad_scroll_w )
+WRITE16_HANDLER( tigeroad_scroll_w )
 {
-	COMBINE_WORD_MEM(&tigeroad_scrollram[offset],data);
+	COMBINE_DATA(&tigeroad_scrollram[offset]);
 }
 
 
 static void render_background( struct osd_bitmap *bitmap, int priority )
 {
-	int scrollx = 	READ_WORD(&tigeroad_scrollram[0]) & 0xfff; /* 0..4096 */
-	int scrolly =	READ_WORD(&tigeroad_scrollram[2]) & 0xfff; /* 0..4096 */
+	int scrollx = 	tigeroad_scrollram[0] & 0xfff; /* 0..4096 */
+	int scrolly =	tigeroad_scrollram[1] & 0xfff; /* 0..4096 */
 
 	unsigned char *p = memory_region(REGION_GFX4);
 
@@ -98,16 +98,16 @@ static void render_background( struct osd_bitmap *bitmap, int priority )
 
 static void render_sprites( struct osd_bitmap *bitmap )
 {
-	unsigned char *source = &buffered_spriteram[spriteram_size] - 8;
-	unsigned char *finish = buffered_spriteram;
+	data16_t *source = &buffered_spriteram16[spriteram_size/2] - 4;
+	data16_t *finish = buffered_spriteram16;
 
 	while( source>=finish )
 	{
-		int tile_number = READ_WORD( source );
+		int tile_number = source[0];
 		if( tile_number!=0xFFF ){
-			int attributes = READ_WORD( source+2 );
-			int sy = READ_WORD( source+4 ) & 0x1ff;
-			int sx = READ_WORD( source+6 ) & 0x1ff;
+			int attributes = source[1];
+			int sy = source[2] & 0x1ff;
+			int sx = source[3] & 0x1ff;
 
 			int flipx = attributes&2;
 			int flipy = attributes&1;
@@ -132,7 +132,7 @@ static void render_sprites( struct osd_bitmap *bitmap )
 				&Machine->visible_area,
 				TRANSPARENCY_PEN,15);
 		}
-		source-=8;
+		source-=4;
 	}
 }
 
@@ -141,17 +141,17 @@ static void render_text( struct osd_bitmap *bitmap )
 	int offs;
 
 
-	for (offs = 0;offs < videoram_size;offs += 2)
+	for (offs = 0;offs < videoram_size/2;offs++)
 	{
 		int sx,sy;
-		int data = READ_WORD(&videoram[offs]);
+		int data = videoram16[offs];
 		int attr = data >> 8;
 		int code = data & 0xff;
 		int color = attr & 0x0f;
 		int flipy = attr & 0x10;
 
-		sx = (offs / 2) % 32;
-		sy = (offs / 2) / 32;
+		sx = offs % 32;
+		sy = offs / 32;
 
 		if (flipscreen)
 		{
@@ -184,5 +184,5 @@ void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void tigeroad_eof_callback(void)
 {
-	buffer_spriteram_w(0,0);
+	buffer_spriteram16_w(0,0,0);
 }

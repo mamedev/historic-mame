@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *ohmygod_videoram;
+data16_t *ohmygod_videoram;
 
 static int spritebank;
 static struct tilemap *bg_tilemap;
@@ -17,8 +17,8 @@ static struct tilemap *bg_tilemap;
 
 static void get_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&ohmygod_videoram[4*tile_index+2]);
-	UINT16 attr = READ_WORD(&ohmygod_videoram[4*tile_index]);
+	UINT16 code = ohmygod_videoram[2*tile_index+1];
+	UINT16 attr = ohmygod_videoram[2*tile_index];
 	SET_TILE_INFO(0,code,(attr & 0x0f00) >> 8)
 }
 
@@ -48,32 +48,32 @@ int ohmygod_vh_start(void)
 
 ***************************************************************************/
 
-READ_HANDLER( ohmygod_videoram_r )
+WRITE16_HANDLER( ohmygod_videoram_w )
 {
-   return READ_WORD(&ohmygod_videoram[offset]);
+	int oldword = ohmygod_videoram[offset];
+	COMBINE_DATA(&ohmygod_videoram[offset]);
+	if (oldword != ohmygod_videoram[offset])
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 }
 
-WRITE_HANDLER( ohmygod_videoram_w )
+WRITE16_HANDLER( ohmygod_spritebank_w )
 {
-	int oldword = READ_WORD(&ohmygod_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&ohmygod_videoram[offset],newword);
-		tilemap_mark_tile_dirty(bg_tilemap,offset/4);
-	}
+	if (ACCESSING_MSB)
+		spritebank = data & 0x8000;
 }
 
-WRITE_HANDLER( ohmygod_spritebank_w )
+WRITE16_HANDLER( ohmygod_scrollx_w )
 {
-	spritebank = data & 0x8000;
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrollx(bg_tilemap,0,scroll - 0x81ec);
 }
 
-WRITE_HANDLER( ohmygod_scroll_w )
+WRITE16_HANDLER( ohmygod_scrolly_w )
 {
-	if (offset == 0) tilemap_set_scrollx(bg_tilemap,0,data - 0x81ec);
-	else tilemap_set_scrolly(bg_tilemap,0,data - 0x81ef);
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrolly(bg_tilemap,0,scroll - 0x81ef);
 }
 
 
@@ -87,19 +87,19 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	for (offs = 0;offs < spriteram_size/4;offs += 4)
 	{
 		int sx,sy,code,color,flipx;
-		unsigned char *sr;
+		data16_t *sr;
 
-		sr = spritebank ? spriteram_2 : spriteram;
+		sr = spritebank ? (spriteram16+spriteram_size/4) : spriteram16;
 
-		code = READ_WORD(&sr[offs+6]) & 0x0fff;
-		color = READ_WORD(&sr[offs+4]) & 0x000f;
-		sx = READ_WORD(&sr[offs+0]) - 29;
-		sy = READ_WORD(&sr[offs+2]);
+		code = sr[offs+3] & 0x0fff;
+		color = sr[offs+2] & 0x000f;
+		sx = sr[offs+0] - 29;
+		sy = sr[offs+1];
 		if (sy >= 32768) sy -= 65536;
-		flipx = READ_WORD(&sr[offs+6]) & 0x8000;
+		flipx = sr[offs+3] & 0x8000;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
@@ -114,11 +114,8 @@ void ohmygod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 }

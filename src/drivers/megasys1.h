@@ -22,12 +22,10 @@
 
 ***************************************************************************/
 
-WRITE_HANDLER( ms_soundlatch_w );
-WRITE_HANDLER( ms_soundlatch2_w );
-WRITE_HANDLER( ms_YM2151_register_port_0_w );
-WRITE_HANDLER( ms_YM2151_data_port_0_w );
-WRITE_HANDLER( ms_OKIM6295_data_0_w );
-WRITE_HANDLER( ms_OKIM6295_data_1_w );
+READ16_HANDLER( YM2151_status_port_0_lsb_r );
+
+WRITE16_HANDLER( YM2151_register_port_0_lsb_w );
+WRITE16_HANDLER( YM2151_data_port_0_lsb_w );
 
 
 /***************************************************************************
@@ -318,8 +316,10 @@ static struct GfxLayout _name_ =\
 
 /* Variables */
 extern struct tilemap *megasys1_tmap_0, *megasys1_tmap_1, *megasys1_tmap_2;
-extern unsigned char *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
-extern unsigned char *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
+
+extern data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
+extern data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
+
 extern int megasys1_scroll_flag[3], megasys1_scrollx[3], megasys1_scrolly[3], megasys1_pages_per_tmap_x[3], megasys1_pages_per_tmap_y[3];
 extern int megasys1_active_layers, megasys1_sprite_bank;
 extern int megasys1_screen_flag, megasys1_sprite_flag;
@@ -332,13 +332,9 @@ extern int megasys1_8x8_scroll_2_factor, megasys1_16x16_scroll_2_factor;
 /* Functions */
 int  megasys1_vh_start(void);
 
-READ_HANDLER( megasys1_scrollram_0_r );
-READ_HANDLER( megasys1_scrollram_1_r );
-READ_HANDLER( megasys1_scrollram_2_r );
-
-WRITE_HANDLER( megasys1_scrollram_0_w );
-WRITE_HANDLER( megasys1_scrollram_1_w );
-WRITE_HANDLER( megasys1_scrollram_2_w );
+WRITE16_HANDLER( megasys1_scrollram_0_w );
+WRITE16_HANDLER( megasys1_scrollram_1_w );
+WRITE16_HANDLER( megasys1_scrollram_2_w );
 
 void megasys1_scroll_0_flag_w(int data);
 void megasys1_scroll_1_flag_w(int data);
@@ -347,7 +343,7 @@ void megasys1_scroll_2_flag_w(int data);
 
 #define MEGASYS1_VREG_FLAG(_n_) \
 		megasys1_scroll_##_n_##_flag_w(new_data); \
-		if (megasys1_tmap_##_n_ == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset,data);
+		if (megasys1_tmap_##_n_ == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset*2,data);
 
 #define MEGASYS1_VREG_SCROLL(_n_, _dir_)	megasys1_scroll##_dir_[_n_] = new_data;
 
@@ -364,14 +360,9 @@ void megasys1_scroll_2_flag_w(int data);
 		tilemap_update(megasys1_tmap_##_n_);
 
 
-#define MEGASYS1_TMAP_RENDER(_n_) \
-	if ( (megasys1_tmap_##_n_) && (megasys1_active_layers & (1 << _n_) ) )\
-		tilemap_render(megasys1_tmap_##_n_);
-
-
 #define MEGASYS1_TMAP_DRAW(_n_) \
 	if ( (megasys1_tmap_##_n_) && (megasys1_active_layers & (1 << _n_) ) ) \
 	{ \
-		tilemap_draw(bitmap, megasys1_tmap_##_n_, flag ); \
+		tilemap_draw(bitmap, megasys1_tmap_##_n_, flag, 0 ); \
 		flag = 0; \
 	}

@@ -12,7 +12,7 @@
 
 static int (*map_color)(int x, int y);
 
-static data_t color_registers[3];
+static int color_registers[3];
 static int color_base = 0;
 static int nomnlnd_background_on=0;
 

@@ -1,27 +1,37 @@
 /***************************************************************************
 
-	Off the Wall
+	Atari "Round" hardware
 
-    driver by Aaron Giles
+	driver by Aaron Giles
 
-****************************************************************************/
+	Games supported:
+		* Off the Wall (1991) [2 sets]
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map (TBA)
+
+***************************************************************************/
 
 
 #include "driver.h"
-#include "sound/fm.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( offtwall_playfieldram_w );
-WRITE_HANDLER( offtwall_video_control_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
 int offtwall_vh_start(void);
 void offtwall_vh_stop(void);
-void offtwall_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void offtwall_scanline_update(int scanline);
+void offtwall_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 
 
@@ -57,9 +67,8 @@ static void update_interrupts(void)
 static void init_machine(void)
 {
 	atarigen_eeprom_reset();
-	atarigen_video_control_reset();
+	atarivc_reset(atarivc_eof_data);
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(offtwall_scanline_update, 8);
 	atarijsa_reset();
 }
 
@@ -71,18 +80,18 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port3_r )
+static READ16_HANDLER( special_port3_r )
 {
-	int result = input_port_3_r(offset);
+	int result = readinputport(3);
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0020;
 	return result;
 }
 
 
-static WRITE_HANDLER( io_latch_w )
+static WRITE16_HANDLER( io_latch_w )
 {
 	/* lower byte */
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		/* bit 4 resets the sound CPU */
 		cpu_set_reset_line(1, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
@@ -128,38 +137,41 @@ static WRITE_HANDLER( io_latch_w )
 
 -------------------------------------------------------------------------*/
 
-static UINT8 *bankswitch_base;
-static UINT8 *bankrom_base;
+static data16_t *bankswitch_base;
+static data16_t *bankrom_base;
 static UINT32 bank_offset;
 
-static READ_HANDLER( bankswitch_r )
+
+static READ16_HANDLER( bankswitch_r )
 {
 	/* this is the table lookup; the bank is determined by the address that was requested */
-	bank_offset = ((offset / 2) & 3) * 0x2000;
+	bank_offset = (offset & 3) * 0x1000;
 	logerror("Bankswitch index %d -> %04X\n", offset, bank_offset);
 
-	return READ_WORD(&bankswitch_base[offset]);
+	return bankswitch_base[offset];
 }
 
-static READ_HANDLER( bankrom_r )
+
+static READ16_HANDLER( bankrom_r )
 {
 	/* this is the banked ROM read */
 	logerror("%06X: %04X\n", cpu_getpreviouspc(), offset);
 
 	/* if the values are $3e000 or $3e002 are being read by code just below the
 		ROM bank area, we need to return the correct value to give the proper checksum */
-	if ((offset == 0x6000 || offset == 0x6002) && cpu_getpreviouspc() > 0x37000)
+	if ((offset == 0x3000 || offset == 0x3001) && cpu_getpreviouspc() > 0x37000)
 	{
-		unsigned int checksum = cpu_readmem24bew_dword(0x3fd210);
+		unsigned int checksum = (cpu_readmem24bew_word(0x3fd210)<<16)|cpu_readmem24bew_word(0x3fd212);
 		unsigned int us = 0xaaaa5555 - checksum;
-		if (offset == 0x6002)
+		if (offset == 0x3001)
 			return us & 0xffff;
 		else
 			return us >> 16;
 	}
 
-	return READ_WORD(&bankrom_base[(bank_offset + offset) & 0x7fff]);
+	return bankrom_base[(bank_offset + offset) & 0x3fff];
 }
+
 
 
 /*-------------------------------------------------------------------------
@@ -179,17 +191,18 @@ static READ_HANDLER( bankrom_r )
 
 -------------------------------------------------------------------------*/
 
-static UINT8 *spritecache_count;
+static data16_t *spritecache_count;
 
-static READ_HANDLER( spritecache_count_r )
+
+static READ16_HANDLER( spritecache_count_r )
 {
 	int prevpc = cpu_getpreviouspc();
 
 	/* if this read is coming from $99f8 or $9992, it's in the sprite copy loop */
 	if (prevpc == 0x99f8 || prevpc == 0x9992)
 	{
-		UINT16 *data = (UINT16 *)&spritecache_count[-0x200];
-		int oldword = READ_WORD(&spritecache_count[0]);
+		data16_t *data = &spritecache_count[-0x100];
+		int oldword = spritecache_count[0];
 		int count = oldword >> 8;
 		int i, width = 0;
 
@@ -210,13 +223,14 @@ static READ_HANDLER( spritecache_count_r )
 			}
 
 			/* update the final count in memory */
-			WRITE_WORD(&spritecache_count[0], (count << 8) | (oldword & 0xff));
+			spritecache_count[0] = (count << 8) | (oldword & 0xff);
 		}
 	}
 
 	/* and then read the data */
-	return READ_WORD(&spritecache_count[offset]);
+	return spritecache_count[offset];
 }
+
 
 
 /*-------------------------------------------------------------------------
@@ -232,15 +246,16 @@ static READ_HANDLER( spritecache_count_r )
 
 -------------------------------------------------------------------------*/
 
-static UINT8 *unknown_verify_base;
+static data16_t *unknown_verify_base;
 
-static READ_HANDLER( unknown_verify_r )
+
+static READ16_HANDLER( unknown_verify_r )
 {
 	int prevpc = cpu_getpreviouspc();
 	if (prevpc < 0x5c5e || prevpc > 0xc432)
-		return READ_WORD(&unknown_verify_base[offset]);
+		return unknown_verify_base[offset];
 	else
-		return READ_WORD(&unknown_verify_base[offset]) | 0x100;
+		return unknown_verify_base[offset] | 0x100;
 }
 
 
@@ -251,46 +266,42 @@ static READ_HANDLER( unknown_verify_r )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x037fff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x037fff, MRA16_ROM },
 	{ 0x038000, 0x03ffff, bankrom_r },
 	{ 0x120000, 0x120fff, atarigen_eeprom_r },
-	{ 0x260000, 0x260001, input_port_0_r },
-	{ 0x260002, 0x260003, input_port_1_r },
+	{ 0x260000, 0x260001, input_port_0_word_r },
+	{ 0x260002, 0x260003, input_port_1_word_r },
 	{ 0x260010, 0x260011, special_port3_r },
-	{ 0x260012, 0x260013, input_port_4_r },
-	{ 0x260020, 0x260021, input_port_5_r },
-	{ 0x260022, 0x260023, input_port_6_r },
-	{ 0x260024, 0x260025, input_port_7_r },
+	{ 0x260012, 0x260013, input_port_4_word_r },
+	{ 0x260020, 0x260021, input_port_5_word_r },
+	{ 0x260022, 0x260023, input_port_6_word_r },
+	{ 0x260024, 0x260025, input_port_7_word_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, MRA_BANK1 },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
-	{ 0x3f4000, 0x3f7fff, MRA_BANK3 },
-	{ 0x3f8000, 0x3fcfff, MRA_BANK4 },
-	{ 0x3fd000, 0x3fd3ff, MRA_BANK5 },
-	{ 0x3fd400, 0x3fffff, MRA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
+	{ 0x3effc0, 0x3effff, atarivc_r },
+	{ 0x3f4000, 0x3fffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x037fff, MWA_ROM },
-	{ 0x038000, 0x03ffff, MWA_ROM, &bankrom_base },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x037fff, MWA16_ROM },
+	{ 0x038000, 0x03ffff, MWA16_ROM, &bankrom_base },
 	{ 0x120000, 0x120fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x260040, 0x260041, atarigen_sound_w },
 	{ 0x260050, 0x260051, io_latch_w },
 	{ 0x260060, 0x260061, atarigen_eeprom_enable_w },
-	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
-	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
-	{ 0x3f4000, 0x3f7fff, offtwall_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f8000, 0x3fcfff, MWA_BANK4 },
-	{ 0x3fd000, 0x3fd3ff, MWA_BANK5, &atarigen_spriteram },
-	{ 0x3fd400, 0x3fffff, MWA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x2a0000, 0x2a0001, watchdog_reset16_w },
+	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram16 },
+	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
+	{ 0x3f4000, 0x3f5eff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0x3f5f00, 0x3f5f7f, MWA16_RAM, &atarivc_eof_data },
+	{ 0x3f5f80, 0x3f5fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f6000, 0x3f7fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f8000, 0x3fcfff, MWA16_RAM },
+	{ 0x3fd000, 0x3fd7ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3fd800, 0x3fffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -374,20 +385,20 @@ INPUT_PORTS_END
 
 static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	24576,	/* 8192 of them */
-	4,		/* 4 bits per pixel */
-	{ 0+0x60000*8, 4+0x60000*8, 0, 4 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
+	16*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pfmolayout,  256, 32 },		/* sprites & playfield */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -405,12 +416,12 @@ static const struct MachineDriver machine_driver_offtwall =
 		{
 			CPU_M68000,
 			ATARI_CLOCK_14MHz/2,
-			readmem,writemem,0,0,
+			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		JSA_III_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -431,22 +442,6 @@ static const struct MachineDriver machine_driver_offtwall =
 
 	atarigen_nvram_handler
 };
-
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	int i;
-
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-}
 
 
 
@@ -501,7 +496,7 @@ ROM_END
  *
  *************************************/
 
-static const UINT16 default_eeprom[] =
+static const data16_t default_eeprom[] =
 {
 	0x0001,0x011A,0x012A,0x0146,0x0100,0x0168,0x0300,0x011E,
 	0x0700,0x0122,0x0600,0x0120,0x0400,0x0102,0x0300,0x017E,
@@ -519,43 +514,30 @@ static const UINT16 default_eeprom[] =
 static void init_offtwall(void)
 {
 	atarigen_eeprom_default = default_eeprom;
-
 	atarijsa_init(1, 2, 3, 0x0040);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x41dd, 0x41f5);
+	atarigen_invert_region(REGION_GFX1);
 
 	/* install son-of-slapstic workarounds */
-	spritecache_count = install_mem_read_handler(0, 0x3fde42, 0x3fde43, spritecache_count_r);
-	bankswitch_base = install_mem_read_handler(0, 0x037ec2, 0x037f39, bankswitch_r);
-	unknown_verify_base = install_mem_read_handler(0, 0x3fdf1e, 0x3fdf1f, unknown_verify_r);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	spritecache_count = install_mem_read16_handler(0, 0x3fde42, 0x3fde43, spritecache_count_r);
+	bankswitch_base = install_mem_read16_handler(0, 0x037ec2, 0x037f39, bankswitch_r);
+	unknown_verify_base = install_mem_read16_handler(0, 0x3fdf1e, 0x3fdf1f, unknown_verify_r);
 }
 
 
 static void init_offtwalc(void)
 {
 	atarigen_eeprom_default = default_eeprom;
-
 	atarijsa_init(1, 2, 3, 0x0040);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x41dd, 0x41f5);
+	atarigen_invert_region(REGION_GFX1);
 
 	/* install son-of-slapstic workarounds */
-	spritecache_count = install_mem_read_handler(0, 0x3fde42, 0x3fde43, spritecache_count_r);
-	bankswitch_base = install_mem_read_handler(0, 0x037eca, 0x037f43, bankswitch_r);
-	unknown_verify_base = install_mem_read_handler(0, 0x3fdf24, 0x3fdf25, unknown_verify_r);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	spritecache_count = install_mem_read16_handler(0, 0x3fde42, 0x3fde43, spritecache_count_r);
+	bankswitch_base = install_mem_read16_handler(0, 0x037eca, 0x037f43, bankswitch_r);
+	unknown_verify_base = install_mem_read16_handler(0, 0x3fdf24, 0x3fdf25, unknown_verify_r);
 }
+
 
 
 /*************************************

@@ -34,7 +34,7 @@ enum
 
 
 /* CMOS-related variables */
-extern UINT8 *	wms_cmos_ram;
+extern data16_t *wms_cmos_ram;
 extern UINT32	wms_cmos_page;
 
 /* graphics-related variables */
@@ -64,7 +64,7 @@ static UINT32	autoerase_list[512];
 static UINT32	autoerase_count;
 
 /* DMA-related variables */
-static UINT16 dma_register[16];
+static data16_t dma_register[16];
 static struct
 {
 	UINT32		offset;			/* source offset, in bits */
@@ -99,29 +99,29 @@ static int vh_start_common(void)
 	local_videoram_copy = malloc(0x80000);
 	palette_lookup = malloc(256 * sizeof(palette_lookup[0]));
 	palette_reverse_lookup = malloc(65536 * sizeof(palette_reverse_lookup[0]));
-	
+
 	/* handle failure */
 	if (!wms_cmos_ram || !local_videoram || !local_videoram_copy || !palette_lookup || !palette_reverse_lookup)
 	{
 		wms_yunit_vh_stop();
 		return 1;
 	}
-	
+
 	/* we have to erase this since we rely on upper bits being 0 */
 	memset(local_videoram, 0, 0x80000);
 	memset(local_videoram_copy, 0, 0x80000);
-	
+
 	/* reset all the globals */
 	wms_cmos_page = 0;
-	
+
 	autoerase_enable = 0;
-	
+
 	page_flipping = 0;
 	skipping_this_frame = 0;
 	last_display_addr = 0;
 	last_update_scanline = 0;
 	autoerase_count = 0;
-	
+
 	memset(dma_register, 0, sizeof(dma_register));
 	memset(&dma_state, 0, sizeof(dma_state));
 
@@ -132,11 +132,11 @@ int wms_yunit_4bit_vh_start(void)
 {
 	int result = vh_start_common();
 	int i;
-	
+
 	/* handle failure */
 	if (result)
 		return result;
-	
+
 	/* init for 4-bit */
 	for (i = 0; i < 256; i++)
 		palette_lookup[i] = i & 0xf0;
@@ -144,7 +144,7 @@ int wms_yunit_4bit_vh_start(void)
 		palette_reverse_lookup[i] = i & 0xf0;
 	pixel_mask = 0x000f;
 	palette_mask = 0x00f0;
-	
+
 	return 0;
 }
 
@@ -152,11 +152,11 @@ int wms_yunit_6bit_vh_start(void)
 {
 	int result = vh_start_common();
 	int i;
-	
+
 	/* handle failure */
 	if (result)
 		return result;
-	
+
 	/* init for 6-bit */
 	for (i = 0; i < 256; i++)
 		palette_lookup[i] = (i & 0xc0) | ((i & 0x0f) << 8);
@@ -172,11 +172,11 @@ int wms_zunit_vh_start(void)
 {
 	int result = vh_start_common();
 	int i;
-	
+
 	/* handle failure */
 	if (result)
 		return result;
-	
+
 	/* init for 8-bit */
 	for (i = 0; i < 256; i++)
 		palette_lookup[i] = (i << 8) & 0xff00;
@@ -184,7 +184,7 @@ int wms_zunit_vh_start(void)
 		palette_reverse_lookup[i] = (i >> 8) & 0xff;
 	pixel_mask = 0x00ff;
 	palette_mask = 0xff00;
-	
+
 	return 0;
 }
 
@@ -227,8 +227,9 @@ void wms_yunit_vh_stop(void)
  *
  *************************************/
 
-READ_HANDLER( wms_yunit_gfxrom_r )
+READ16_HANDLER( wms_yunit_gfxrom_r )
 {
+	offset *= 2;
 	if (pixel_mask == 0x0f)
 		return wms_gfx_rom[offset] | (wms_gfx_rom[offset] << 4) |
 				(wms_gfx_rom[offset + 1] << 8) | (wms_gfx_rom[offset + 1] << 12);
@@ -244,27 +245,29 @@ READ_HANDLER( wms_yunit_gfxrom_r )
  *
  *************************************/
 
-WRITE_HANDLER( wms_yunit_vram_w )
+WRITE16_HANDLER( wms_yunit_vram_w )
 {
+	offset *= 2;
 	if (videobank_select)
 	{
-		if (!(data & 0x00ff0000))
+		if (ACCESSING_LSB)
 			local_videoram[offset] = (data & pixel_mask) | palette_lookup[dma_register[DMA_PALETTE] & 0xff];
-		if (!(data & 0xff000000))
+		if (ACCESSING_MSB)
 			local_videoram[offset + 1] = ((data >> 8) & pixel_mask) | palette_lookup[dma_register[DMA_PALETTE] >> 8];
 	}
 	else
 	{
-		if (!(data & 0x00ff0000))
+		if (ACCESSING_LSB)
 			local_videoram[offset] = (local_videoram[offset] & pixel_mask) | palette_lookup[data & 0xff];
-		if (!(data & 0xff000000))
+		if (ACCESSING_MSB)
 			local_videoram[offset + 1] = (local_videoram[offset + 1] & pixel_mask) | palette_lookup[(data >> 8) & 0xff];
 	}
 }
 
 
-READ_HANDLER( wms_yunit_vram_r )
+READ16_HANDLER( wms_yunit_vram_r )
 {
+	offset *= 2;
 	if (videobank_select)
 		return (local_videoram[offset] & pixel_mask) | ((local_videoram[offset + 1] & pixel_mask) << 8);
 	else
@@ -298,7 +301,7 @@ void wms_yunit_from_shiftreg(UINT32 address, UINT16 *shiftreg)
  *
  *************************************/
 
-WRITE_HANDLER( wms_yunit_control_w )
+WRITE16_HANDLER( wms_yunit_control_w )
 {
 	/*
 	 * Narc system register
@@ -314,26 +317,29 @@ WRITE_HANDLER( wms_yunit_control_w )
 	 *
 	 */
 
-	/* CMOS page is bits 6-7 */
-	wms_cmos_page = ((data >> 6) & 3) * 0x2000;
-
-	/* video bank select is bit 5 */
-	videobank_select = (data >> 5) & 1;
-
-	/* handle autoerase disable (bit 4) */
-	if (data & 0x10)
+	if (ACCESSING_LSB)
 	{
-		if (autoerase_enable)
-			update_partial(cpu_getscanline());
-		autoerase_enable = 0;
-	}
+		/* CMOS page is bits 6-7 */
+		wms_cmos_page = ((data >> 6) & 3) * 0x1000;
 
-	/* handle autoerase enable (bit 4)  */
-	else
-	{
-		if (!autoerase_enable)
-			update_partial(cpu_getscanline());
-		autoerase_enable = 1;
+		/* video bank select is bit 5 */
+		videobank_select = (data >> 5) & 1;
+
+		/* handle autoerase disable (bit 4) */
+		if (data & 0x10)
+		{
+			if (autoerase_enable)
+				update_partial(cpu_getscanline());
+			autoerase_enable = 0;
+		}
+
+		/* handle autoerase enable (bit 4)  */
+		else
+		{
+			if (!autoerase_enable)
+				update_partial(cpu_getscanline());
+			autoerase_enable = 1;
+		}
 	}
 }
 
@@ -345,21 +351,22 @@ WRITE_HANDLER( wms_yunit_control_w )
  *
  *************************************/
 
-WRITE_HANDLER( wms_yunit_paletteram_w )
+WRITE16_HANDLER( wms_yunit_paletteram_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	
-	int r = (newword >> 10) & 0x1f;
-	int g = (newword >>  5) & 0x1f;
-	int b = (newword      ) & 0x1f;
-	
+	int newword, r, g, b;
+
+	COMBINE_DATA(&paletteram16[offset]);
+	newword = paletteram16[offset];
+
+	r = (newword >> 10) & 0x1f;
+	g = (newword >>  5) & 0x1f;
+	b = (newword      ) & 0x1f;
+
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
-	
-	WRITE_WORD(&paletteram[offset], newword);
-	palette_change_color((offset / 2) & (pixel_mask | palette_mask), r, g, b);
+
+	palette_change_color(offset & (pixel_mask | palette_mask), r, g, b);
 }
 
 
@@ -540,13 +547,13 @@ static void dma_callback(int is_in_34010_context)
  *
  *************************************/
 
-READ_HANDLER( wms_yunit_dma_r )
+READ16_HANDLER( wms_yunit_dma_r )
 {
-	int result = READ_WORD(&dma_register[offset / 2]);
-	
+	int result = dma_register[offset];
+
 #if !FAST_DMA
 	/* see if we're done */
-	if (oofset / 2 == DMA_COMMAND && (result & 0x8000))
+	if (offset == DMA_COMMAND && (result & 0x8000))
 		switch (cpu_get_pc())
 		{
 			case 0xfff7aa20: /* narc */
@@ -606,15 +613,14 @@ READ_HANDLER( wms_yunit_dma_r )
  *     9     | xxxxxxxxxxxxxxxx | color
  */
 
-WRITE_HANDLER( wms_yunit_dma_w )
+WRITE16_HANDLER( wms_yunit_dma_w )
 {
 	UINT32 gfxoffset;
 	int command;
-	
+
 	/* blend with the current register contents */
-	offset /= 2;
-	COMBINE_WORD_MEM(&dma_register[offset], data);
-	
+	COMBINE_DATA(&dma_register[offset]);
+
 	/* only writes to DMA_COMMAND actually cause actions */
 	if (offset != DMA_COMMAND)
 		return;
@@ -633,7 +639,7 @@ WRITE_HANDLER( wms_yunit_dma_w )
 		logerror("----\n");
 		logerror("DMA command %04X: (xflip=%d yflip=%d)\n",
 				command, (command >> 4) & 1, (command >> 5) & 1);
-		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d\n", 
+		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d\n",
 				dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16),
 				(INT16)dma_register[DMA_XSTART], (INT16)dma_register[DMA_YSTART],
 				dma_register[DMA_WIDTH], dma_register[DMA_HEIGHT]);
@@ -641,7 +647,7 @@ WRITE_HANDLER( wms_yunit_dma_w )
 				dma_register[DMA_PALETTE], dma_register[DMA_COLOR]);
 	}
 #endif
-	
+
 	profiler_mark(PROFILER_USER1);
 
 	/* fill in the basic data */
@@ -652,7 +658,7 @@ WRITE_HANDLER( wms_yunit_dma_w )
 	dma_state.height = dma_register[DMA_HEIGHT];
 	dma_state.palette = palette_lookup[dma_register[DMA_PALETTE] & 0xff];
 	dma_state.color = dma_register[DMA_COLOR] & pixel_mask;
-	
+
 	/* determine the offset and adjust the rowbytes */
 	gfxoffset = dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16);
 	if (command & 0x10)
@@ -663,16 +669,16 @@ WRITE_HANDLER( wms_yunit_dma_w )
 	}
 	else
 		dma_state.rowbytes = (dma_state.rowbytes + dma_state.width + 3) & ~3;
-	
+
 	/* apply Y clipping */
 	if (dma_state.ypos + dma_state.height > 512)
 		dma_state.height = 512 - dma_state.ypos;
-		
+
 	/* special case: drawing mode C doesn't need to know about any pixel data */
 	/* shimpact relies on this behavior */
 	if ((command & 0x0f) == 0x0c)
 		gfxoffset = 0;
-	
+
 	/* determine the location and draw */
 	if (gfxoffset < 0x02000000)
 		gfxoffset += 0x02000000;
@@ -703,10 +709,10 @@ static void update_partial(int scanline)
 {
 	int v, width, xoffs, copying;
 	UINT32 offset;
-	
+
 	/* determine if we need to copy these scanlines into another buffer */
 	copying = (!page_flipping && !skipping_this_frame);
-	
+
 	/* don't draw if we're already past the bottom of the screen */
 	if (last_update_scanline >= Machine->visible_area.max_y)
 		return;
@@ -718,7 +724,7 @@ static void update_partial(int scanline)
 	/* bail if there's nothing to do */
 	if (last_update_scanline > scanline)
 		return;
-	
+
 	/* don't draw past the bottom scanline */
 	if (scanline > Machine->visible_area.max_y)
 		scanline = Machine->visible_area.max_y;
@@ -841,7 +847,7 @@ void wms_yunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 	/* if nothing changed, nothing to do */
 	if (offs == last_display_addr)
 		return;
-	
+
 	/* attempt to detect page flipping case; this value decays by 1 each frame */
 	if (last_display_addr != 0 && ((offs ^ last_display_addr) & 0x00100000))
 		page_flipping = 2;
@@ -874,7 +880,7 @@ void wms_yunit_vh_eof(void)
 {
 	int width = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
 	int i;
-	
+
 	/* we require them to keep flipping in order to stay in this mode */
 	if (page_flipping)
 		page_flipping--;
@@ -882,12 +888,12 @@ void wms_yunit_vh_eof(void)
 	/* finish updating */
 	update_partial(Machine->visible_area.max_y);
 	last_update_scanline = 0;
-	
+
 	/* handle any autoerase */
 	for (i = 0; i < autoerase_count; i++)
 		memcpy(&local_videoram[autoerase_list[i]], &local_videoram[510 * 512], width * sizeof(UINT16));
 	autoerase_count = 0;
-	
+
 	/* determine if we're going to skip this upcoming frame */
 	skipping_this_frame = osd_skip_this_frame();
 }

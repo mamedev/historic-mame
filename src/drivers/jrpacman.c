@@ -153,19 +153,16 @@ static int jrpacman_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_RAM },	/* including video and color RAM */
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ 0x8000, 0xdfff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, jrpacman_videoram_w, &videoram, &videoram_size },
 	{ 0x4800, 0x4fef, MWA_RAM },
@@ -183,16 +180,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5080, 0x5080, MWA_RAM, &jrpacman_scroll },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x8000, 0xdfff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0, 0, interrupt_vector_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( jrpacman )

@@ -163,7 +163,7 @@ WRITE_HANDLER( timeplt_colorram_w )
 
 WRITE_HANDLER( timeplt_flipscreen_w )
 {
-	flip_screen_w(0,data & 1);
+	flip_screen_set(data & 1);
 }
 
 /* Return the current video scan line */
@@ -230,9 +230,7 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,1);
+	tilemap_draw(bitmap,bg_tilemap,1,0);
 }

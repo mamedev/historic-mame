@@ -223,8 +223,18 @@ static READ_HANDLER( centipdb_AY8910_r )
 	return AY8910_read_port_0_r(0);
 }
 
-static struct MemoryReadAddress centiped_readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+static WRITE_HANDLER( centiped_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
+
+static MEMORY_READ_START( centiped_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
@@ -237,12 +247,10 @@ static struct MemoryReadAddress centiped_readmem[] =
 	{ 0x1700, 0x173f, atari_vg_earom_r },
 	{ 0x2000, 0x3fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* Same as the regular one, except it uses an AY8910 and an external RNG */
-static struct MemoryReadAddress centipdb_readmem[] =
-{
+static MEMORY_READ_START( centipdb_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
@@ -256,11 +264,9 @@ static struct MemoryReadAddress centipdb_readmem[] =
 	{ 0x1780, 0x1780, centipdb_rand_r },
 	{ 0x2000, 0x3fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress centipb2_readmem[] =
-{
+static MEMORY_READ_START( centipb2_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
@@ -274,11 +280,9 @@ static struct MemoryReadAddress centipb2_readmem[] =
 	{ 0x2000, 0x3fff, MRA_ROM },
 	{ 0x6000, 0x67ff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress centiped_writemem[] =
-{
+static MEMORY_WRITE_START( centiped_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
@@ -287,17 +291,15 @@ static struct MemoryWriteAddress centiped_writemem[] =
 	{ 0x1600, 0x163f, atari_vg_earom_w },
 	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
-	{ 0x1c00, 0x1c02, coin_counter_w },
+	{ 0x1c00, 0x1c02, centiped_coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
 	{ 0x1c07, 0x1c07, flip_screen_w },
 	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* Same as the regular one, except it uses an AY8910 */
-static struct MemoryWriteAddress centipdb_writemem[] =
-{
+static MEMORY_WRITE_START( centipdb_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
@@ -306,16 +308,14 @@ static struct MemoryWriteAddress centipdb_writemem[] =
 	{ 0x1600, 0x163f, atari_vg_earom_w },
 	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
-	{ 0x1c00, 0x1c02, coin_counter_w },
+	{ 0x1c00, 0x1c02, centiped_coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
 	{ 0x1c07, 0x1c07, flip_screen_w },
 	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress centipb2_writemem[] =
-{
+static MEMORY_WRITE_START( centipb2_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
@@ -325,14 +325,13 @@ static struct MemoryWriteAddress centipb2_writemem[] =
 	{ 0x1600, 0x163f, atari_vg_earom_w },
 	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
-	{ 0x1c00, 0x1c02, coin_counter_w },
+	{ 0x1c00, 0x1c02, centiped_coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
 	{ 0x1c07, 0x1c07, flip_screen_w },
 	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
 	{ 0x6000, 0x67ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* The input ports are identical for the real one and the bootleg one, except

@@ -295,19 +295,19 @@ int seta_vh_start_2_layers(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 
 		tilemap_set_scroll_rows(tilemap_2,1);
 		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_2->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_2,0);
 
 		tilemap_set_scroll_rows(tilemap_3,1);
 		tilemap_set_scroll_cols(tilemap_3,1);
-		tilemap_3->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_3,0);
 
 		tilemap_set_scrolldx(tilemap_0, -0x01, 0x00);	// see zingzip test mode
 		tilemap_set_scrolldx(tilemap_1, -0x01, 0x00);
@@ -353,11 +353,11 @@ int seta_vh_start_1_layer(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 
 		tilemap_set_scrolldx(tilemap_0, 0x00, 0x00); // see metafox test mode
 		tilemap_set_scrolldx(tilemap_1, 0x00, 0x00);
@@ -681,7 +681,7 @@ void seta_vh_screenrefresh_no_layers(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	seta_mark_sprite_color();
 	palette_recalc();
-	osd_clearbitmap(Machine->scrbitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 	seta_draw_sprites(bitmap);
 }
 
@@ -765,37 +765,35 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	seta_mark_sprite_color();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	osd_clearbitmap(Machine->scrbitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	if (order & 1)	// swap the layers?
 	{
 		if (tilemap_2)
 		{
-			if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2, TILEMAP_IGNORE_TRANSPARENCY);
-			if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3, TILEMAP_IGNORE_TRANSPARENCY);
+			if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2, TILEMAP_IGNORE_TRANSPARENCY,0);
+			if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3, TILEMAP_IGNORE_TRANSPARENCY,0);
 		}
 
 		if (order & 2)	// layer-sprite priority?
 		{
 			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  0);
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  0);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  0,0);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  0,0);
 		}
 		else
 		{
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  0);
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  0);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  0,0);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  0,0);
 			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);
 		}
 	}
 	else
 	{
-		if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  TILEMAP_IGNORE_TRANSPARENCY);
-		if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  TILEMAP_IGNORE_TRANSPARENCY);
+		if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  TILEMAP_IGNORE_TRANSPARENCY,0);
+		if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  TILEMAP_IGNORE_TRANSPARENCY,0);
 
 		if (order & 2)	// layer-sprite priority?
 		{
@@ -803,16 +801,16 @@ if (keyboard_pressed(KEYCODE_Z))
 
 			if (tilemap_2)
 			{
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2,  0);
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3,  0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2,  0,0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3,  0,0);
 			}
 		}
 		else
 		{
 			if (tilemap_2)
 			{
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2,  0);
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3,  0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2,  0,0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3,  0,0);
 			}
 
 			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);

@@ -4,15 +4,6 @@
 
 				driver by	Luca Elia (eliavit@unina.it)
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q			shows layer 0
-		W			shows layer 1
-		A			shows the sprites
-		S			shows sprite offset and data near each sprite
-
-		Keys can be used togheter!
-
 
 							[ 2 Scrolling Layers ]
 
@@ -42,7 +33,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-unsigned char *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
+data16_t *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
 
 
 /* Variables only used here: */
@@ -69,26 +60,26 @@ Offset:
 
 static void get_tile_info_0( int tile_index )
 {
-	int code =	READ_WORD(&psikyo_vram_0[tile_index * 2]);
+	data16_t code = psikyo_vram_0[tile_index];
 	SET_TILE_INFO(1, (code & 0x1fff), (code >> 13) & 7 );
 }
 static void get_tile_info_1( int tile_index )
 {
-	int code =	READ_WORD(&psikyo_vram_1[tile_index * 2]);
+	data16_t code = psikyo_vram_1[tile_index];
 	SET_TILE_INFO(2, (code & 0x1fff), (code >> 13) & 7 );
 }
 
 
-WRITE_HANDLER( psikyo_vram_0_w )
+WRITE16_HANDLER( psikyo_vram_0_w )
 {
-	COMBINE_WORD_MEM(&psikyo_vram_0[offset],data);
-	tilemap_mark_tile_dirty(tilemap_0, offset/2 );
+	COMBINE_DATA(&psikyo_vram_0[offset]);
+	tilemap_mark_tile_dirty(tilemap_0, offset);
 }
 
-WRITE_HANDLER( psikyo_vram_1_w )
+WRITE16_HANDLER( psikyo_vram_1_w )
 {
-	COMBINE_WORD_MEM(&psikyo_vram_1[offset],data);
-	tilemap_mark_tile_dirty(tilemap_1, offset/2 );
+	COMBINE_DATA(&psikyo_vram_1[offset]);
+	tilemap_mark_tile_dirty(tilemap_1, offset);
 }
 
 
@@ -113,11 +104,11 @@ int psikyo_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 15;
+		tilemap_set_transparent_pen(tilemap_0,15);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 15;
+		tilemap_set_transparent_pen(tilemap_1,15);
 		return 0;
 	}
 	else return 1;
@@ -175,19 +166,19 @@ static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
 	int height	=	Machine->drv->screen_height;
 
 	/* Exit if sprites are disabled */
-	if ( READ_WORD(&spriteram_2[0x800-2]) & 1 )	return;
+	if ( spriteram16_2[ (0x800-2)/2 ] & 1 )	return;
 
 	/* Look for "end of sprites" marker in the sprites list */
-	for ( offs = 0 ; offs < (0x800-2) ; offs += 2 )	// skip last "sprite"
+	for ( offs = 0/2 ; offs < (0x800-2)/2 ; offs += 2/2 )	// skip last "sprite"
 	{
-		int sprite	=	READ_WORD(&spriteram_2[offs]);
+		data16_t sprite = spriteram16_2[ offs ];
 		if (sprite == 0xffff)	break;
 	}
-	offs -= 2;
+	offs -= 2/2;
 
-	for ( ; offs >= 0 ; offs -= 2 )
+	for ( ; offs >= 0/2 ; offs -= 2/2 )
 	{
-		unsigned char *source;
+		data16_t *source;
 		int	sprite;
 
 		int	x,y,attr,code,flipx,flipy,nx,ny;
@@ -196,17 +187,17 @@ static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
 		int xinc, yinc, dx, dy;
 
 		/* Get next entry in the list */
-		sprite	=	READ_WORD(&spriteram_2[offs]);
+		sprite	=	spriteram16_2[ offs ];
 
 		sprite	%=	0x300;
-		source	=	&spriteram[sprite*8];
+		source	=	&spriteram16[ sprite*8/2 ];
 
 		/* Draw this sprite */
 
-		y		=	READ_WORD(&source[ 0 ]);
-		x		=	READ_WORD(&source[ 2 ]);
-		attr	=	READ_WORD(&source[ 4 ]);
-		code	=	READ_WORD(&source[ 6 ]) + ((attr & 1) << 16);
+		y		=	source[ 0/2 ];
+		x		=	source[ 2/2 ];
+		attr	=	source[ 4/2 ];
+		code	=	source[ 6/2 ] + ((attr & 1) << 16);
 
 		flipx	=	attr & 0x4000;
 		flipy	=	attr & 0x8000;
@@ -253,26 +244,7 @@ static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
 				code++;
 			}
 		}
-
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_S) )
-		{
-			struct DisplayText dt[2];
-			char buf[40];
-
-			dt[0].text	=	buf;	dt[0].color	=	UI_COLOR_NORMAL;
-			dt[0].x		=	y;	dt[0].y		=	320-16-x;
-			dt[1].text	=	0;
-
-			sprintf(buf, "%04X>%04X %04X-%04X %04X", sprite*8,
-						READ_WORD(&source[ 0 ]), READ_WORD(&source[ 2 ]),
-						READ_WORD(&source[ 4 ]), READ_WORD(&source[ 6 ]) );
-			displaytext(bitmap,dt,0,0);
-		}
-#endif
-
 	}
-
 }
 
 
@@ -295,13 +267,13 @@ static void psikyo_mark_sprite_colors(void)
 	int ymax = Machine->visible_area.max_y;
 
 	/* Exit if sprites are disabled */
-	if ( READ_WORD(&spriteram_2[0x800-2]) & 1 )	return;
+	if ( spriteram16_2[ (0x800-2)/2 ] & 1 )	return;
 
 	memset(colmask, 0, sizeof(colmask));
 
-	for ( offs = 0; offs < (0x800-2) ; offs += 2 )
+	for ( offs = 0/2; offs < (0x800-2)/2 ; offs += 2/2 )
 	{
-		unsigned char *source;
+		data16_t *source;
 		int	sprite;
 
 		int	x,y,attr,code,flipx,flipy,nx,ny;
@@ -311,20 +283,20 @@ static void psikyo_mark_sprite_colors(void)
 		int color;
 
 		/* Get next entry in the list */
-		sprite	=	READ_WORD(&spriteram_2[offs]);
+		sprite	=	spriteram16_2[ offs ];
 
 		/* End of sprites list */
 		if (sprite == 0xffff)	break;
 
 		sprite	%=	0x300;
-		source	=	&spriteram[sprite*8];
+		source	=	&spriteram16[ sprite*8/2 ];
 
 		/* Mark the pens used by the visible portion of this sprite */
 
-		y		=	READ_WORD(&source[ 0 ]);
-		x		=	READ_WORD(&source[ 2 ]);
-		attr	=	READ_WORD(&source[ 4 ]);
-		code	=	READ_WORD(&source[ 6 ]) + ((attr & 1) << 16);
+		y		=	source[ 0/2 ];
+		x		=	source[ 2/2 ];
+		attr	=	source[ 4/2 ];
+		code	=	source[ 6/2 ] + ((attr & 1) << 16);
 
 		flipx	=	attr & 0x4000;
 		flipy	=	attr & 0x8000;
@@ -371,11 +343,9 @@ static void psikyo_mark_sprite_colors(void)
 		count++;	}
 
 #if 0
-{
-	char buf[80];
+{	char buf[80];
 	sprintf(buf,"%d",count);
-	usrintf_showmessage(buf);
-}
+	usrintf_showmessage(buf);	}
 #endif
 }
 
@@ -390,54 +360,19 @@ static void psikyo_mark_sprite_colors(void)
 
 void psikyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layers_ctrl = -1;
-
 	/* Layers enable (not quite right) */
 
-	tilemap_set_enable(tilemap_0, ~READ_WORD(&psikyo_vregs[0x412]) & 1);
-	tilemap_set_enable(tilemap_1, ~READ_WORD(&psikyo_vregs[0x416]) & 1);
+	tilemap_set_enable(tilemap_0, ~psikyo_vregs[ 0x412/2 ] & 1);
+	tilemap_set_enable(tilemap_1, ~psikyo_vregs[ 0x416/2 ] & 1);
 
 	/* Layers scrolling */
 
-	tilemap_set_scrolly(tilemap_0, 0, READ_WORD(&psikyo_vregs[0x402]) );
-	tilemap_set_scrollx(tilemap_0, 0, READ_WORD(&psikyo_vregs[0x406]) );
+	tilemap_set_scrolly(tilemap_0, 0, psikyo_vregs[ 0x402/2 ] );
+	tilemap_set_scrollx(tilemap_0, 0, psikyo_vregs[ 0x406/2 ] );
 
-	tilemap_set_scrolly(tilemap_1, 0, READ_WORD(&psikyo_vregs[0x40a]) );
-	tilemap_set_scrollx(tilemap_1, 0, READ_WORD(&psikyo_vregs[0x40e]) );
+	tilemap_set_scrolly(tilemap_1, 0, psikyo_vregs[ 0x40a/2 ] );
+	tilemap_set_scrollx(tilemap_1, 0, psikyo_vregs[ 0x40e/2 ] );
 
-
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 4;
-	if (msk != 0) layers_ctrl &= msk;
-
-#if 0
-/* Show (part of) the video registers */
-{
-	char buf[80];
-
-	sprintf(buf,"%04X%04X-%04X%04X %04X%04X-%04X%04X %04X%04X-%04X%04X %04X",
-				READ_WORD(&psikyo_vregs[0x400]), READ_WORD(&psikyo_vregs[0x402]),
-				READ_WORD(&psikyo_vregs[0x404]), READ_WORD(&psikyo_vregs[0x406]),
-
-				READ_WORD(&psikyo_vregs[0x408]), READ_WORD(&psikyo_vregs[0x40a]),
-				READ_WORD(&psikyo_vregs[0x40c]), READ_WORD(&psikyo_vregs[0x40e]),
-
-				READ_WORD(&psikyo_vregs[0x410]), READ_WORD(&psikyo_vregs[0x412]),
-				READ_WORD(&psikyo_vregs[0x414]), READ_WORD(&psikyo_vregs[0x416]),
-
-				READ_WORD(&spriteram_2[0x800-2])
-			);
-
-	usrintf_showmessage(buf);
-}
-#endif
-}
-#endif
 
 	tilemap_update(ALL_TILEMAPS);
 
@@ -445,18 +380,16 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	psikyo_mark_sprite_colors();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 
-	osd_clearbitmap(Machine->scrbitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0, (0 << 16) | TILEMAP_IGNORE_TRANSPARENCY );
-	if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_1, (1 << 16)  );
+	tilemap_draw(bitmap,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
+	tilemap_draw(bitmap,tilemap_1, 0,                           1);
 
 	/* Sprites can go below layer 1 (and 0?) */
-	if (layers_ctrl & 4)	psikyo_draw_sprites(bitmap);
+	psikyo_draw_sprites(bitmap);
 }

@@ -12,81 +12,79 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "cpu/m68000/m68000.h"
 
 
-extern unsigned char *splash_vregs;
-extern unsigned char *splash_videoram;
-extern unsigned char *splash_spriteram;
-extern unsigned char *splash_pixelram;
+extern data16_t *splash_vregs;
+extern data16_t *splash_videoram;
+extern data16_t *splash_spriteram;
+extern data16_t *splash_pixelram;
 
 /* from vidhrdw/gaelco.c */
-READ_HANDLER( splash_vram_r );
-READ_HANDLER( splash_pixelram_r );
-WRITE_HANDLER( splash_vram_w );
-WRITE_HANDLER( splash_pixelram_w );
+READ16_HANDLER( splash_vram_r );
+READ16_HANDLER( splash_pixelram_r );
+WRITE16_HANDLER( splash_vram_w );
+WRITE16_HANDLER( splash_pixelram_w );
 int splash_vh_start( void );
 void splash_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
 
-static WRITE_HANDLER( splash_sh_irqtrigger_w )
+static WRITE16_HANDLER( splash_sh_irqtrigger_w )
 {
-	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,Z80_IRQ_INT);
-}
-
-static struct MemoryReadAddress splash_readmem[] =
-{
-	{ 0x000000, 0x3fffff, MRA_ROM },			/* ROM */
-	{ 0x800000, 0x83ffff, splash_pixelram_r },	/* Pixel Layer */
-	{ 0x840000, 0x840001, input_port_0_r },		/* DIPSW #1 */
-	{ 0x840002, 0x840003, input_port_1_r },		/* DIPSW #2 */
-	{ 0x840004, 0x840005, input_port_2_r },		/* INPUT #1 */
-	{ 0x840006, 0x840007, input_port_3_r },		/* INPUT #2 */
-	{ 0x880000, 0x8817ff, splash_vram_r },		/* Video RAM */
-	{ 0x881800, 0x881803, MRA_BANK1 },			/* Scroll registers */
-	{ 0x881804, 0x881fff, MRA_BANK2 },			/* Work RAM */
-	{ 0x8c0000, 0x8c0fff, paletteram_word_r },	/* Palette */
-	{ 0x900000, 0x900fff, MRA_BANK3 },			/* Sprite RAM */
-	{ 0xffc000, 0xffffff, MRA_BANK4 },			/* Work RAM */
-	{ -1 }
-};
-
-WRITE_HANDLER( splash_coin_w )
-{
-	switch ((offset >> 4)){
-		case 0x00:	/* Coin Lockouts */
-		case 0x01:
-			coin_lockout_w( (offset >> 4) & 0x01, data & 0x0400);
-			break;
-		case 0x02:	/* Coin Counters */
-		case 0x03:
-			coin_counter_w( (offset >> 4) & 0x01, data & 0x0100);
-			break;
+	if (ACCESSING_LSB){
+		soundlatch_w(0,data & 0xff);
+		cpu_cause_interrupt(1,Z80_IRQ_INT);
 	}
 }
 
-static struct MemoryWriteAddress splash_writemem[] =
+static MEMORY_READ16_START( splash_readmem )
+	{ 0x000000, 0x3fffff, MRA16_ROM },			/* ROM */
+	{ 0x800000, 0x83ffff, splash_pixelram_r },	/* Pixel Layer */
+	{ 0x840000, 0x840001, input_port_0_word_r },/* DIPSW #1 */
+	{ 0x840002, 0x840003, input_port_1_word_r },/* DIPSW #2 */
+	{ 0x840004, 0x840005, input_port_2_word_r },/* INPUT #1 */
+	{ 0x840006, 0x840007, input_port_3_word_r },/* INPUT #2 */
+	{ 0x880000, 0x8817ff, splash_vram_r },		/* Video RAM */
+	{ 0x881800, 0x881803, MRA16_RAM },			/* Scroll registers */
+	{ 0x881804, 0x881fff, MRA16_RAM },			/* Work RAM */
+	{ 0x8c0000, 0x8c0fff, MRA16_RAM },			/* Palette */
+	{ 0x900000, 0x900fff, MRA16_RAM },			/* Sprite RAM */
+	{ 0xffc000, 0xffffff, MRA16_RAM },			/* Work RAM */
+MEMORY_END
+
+WRITE16_HANDLER( splash_coin_w )
 {
-	{ 0x000000, 0x3fffff, MWA_ROM },										/* ROM */
+	if (ACCESSING_MSB){
+		switch ((offset >> 3)){
+			case 0x00:	/* Coin Lockouts */
+			case 0x01:
+				coin_lockout_w( (offset >> 3) & 0x01, (data & 0x0400) >> 8);
+				break;
+			case 0x02:	/* Coin Counters */
+			case 0x03:
+				coin_counter_w( (offset >> 3) & 0x01, (data & 0x0100) >> 8);
+				break;
+		}
+	}
+}
+
+static MEMORY_WRITE16_START( splash_writemem )
+	{ 0x000000, 0x3fffff, MWA16_ROM },										/* ROM */
 	{ 0x800000, 0x83ffff, splash_pixelram_w, &splash_pixelram },			/* Pixel Layer */
 	{ 0x84000e, 0x84000f, splash_sh_irqtrigger_w },							/* Sound command */
 	{ 0x84000a, 0x84003b, splash_coin_w },									/* Coin Counters + Coin Lockout */
 	{ 0x880000, 0x8817ff, splash_vram_w, &splash_videoram },				/* Video RAM */
-	{ 0x881800, 0x881803, MWA_BANK1, &splash_vregs },						/* Scroll registers */
-	{ 0x881804, 0x881fff, MWA_BANK2 },										/* Work RAM */
-	{ 0x8c0000, 0x8c0fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },/* Palette is xRRRRxGGGGxBBBBx */
-	{ 0x900000, 0x900fff, MWA_BANK3, &splash_spriteram },					/* Sprite RAM */
-	{ 0xffc000, 0xffffff, MWA_BANK4 },										/* Work RAM */
-	{ -1 }
-};
+	{ 0x881800, 0x881803, MWA16_RAM, &splash_vregs },						/* Scroll registers */
+	{ 0x881804, 0x881fff, MWA16_RAM },										/* Work RAM */
+	{ 0x8c0000, 0x8c0fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },/* Palette is xRRRRxGGGGxBBBBx */
+	{ 0x900000, 0x900fff, MWA16_RAM, &splash_spriteram },					/* Sprite RAM */
+	{ 0xffc000, 0xffffff, MWA16_RAM },										/* Work RAM */
+MEMORY_END
 
 
-static struct MemoryReadAddress splash_readmem_sound[] =
-{
+static MEMORY_READ_START( splash_readmem_sound )
 	{ 0x0000, 0xd7ff, MRA_ROM },					/* ROM */
 	{ 0xe800, 0xe800, soundlatch_r },				/* Sound latch */
 	{ 0xf000, 0xf000, YM3812_status_port_0_r },		/* YM3812 */
 	{ 0xf800, 0xffff, MRA_RAM },					/* RAM */
-	{ -1 }
-};
+MEMORY_END
 
 static int adpcm_data;
 
@@ -101,16 +99,14 @@ static void splash_msm5205_int(int data)
 }
 
 
-static struct MemoryWriteAddress splash_writemem_sound[] =
-{
+static MEMORY_WRITE_START( splash_writemem_sound )
 	{ 0x0000, 0xd7ff, MWA_ROM },					/* ROM */
 	{ 0xd800, 0xd800, splash_adpcm_data_w },		/* ADPCM data for the MSM5205 chip */
 //	{ 0xe000, 0xe000, MWA_NOP },					/* ??? */
 	{ 0xf000, 0xf000, YM3812_control_port_0_w },	/* YM3812 */
 	{ 0xf001, 0xf001, YM3812_write_port_0_w },		/* YM3812 */
 	{ 0xf800, 0xffff, MWA_RAM },					/* RAM */
-	{ -1 }
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( splash )
@@ -243,7 +239,7 @@ static const struct MachineDriver machine_driver_splash =
 			m68_level6_irq,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			30000000/8,			/* 3.75 MHz? */
 			splash_readmem_sound, splash_writemem_sound,0,0,
 			nmi_interrupt,64	/* needed for the msm5205 to play the samples */

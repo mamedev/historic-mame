@@ -102,8 +102,7 @@ READ_HANDLER( bombjack_soundlatch_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x97ff, MRA_RAM },	/* including video and color RAM */
 	{ 0xb000, 0xb000, input_port_0_r },	/* player 1 input */
@@ -113,11 +112,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xb004, 0xb004, input_port_3_r },	/* DSW1 */
 	{ 0xb005, 0xb005, input_port_4_r },	/* DSW2 */
 	{ 0xc000, 0xdfff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -130,35 +127,28 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb004, 0xb004, bombjack_flipscreen_w },
 	{ 0xb800, 0xb800, bombjack_soundlatch_w },
 	{ 0xc000, 0xdfff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bombjack_sound_readmem[] =
-{
+static MEMORY_READ_START( bombjack_sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, bombjack_soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bombjack_sound_writemem[] =
-{
+static MEMORY_WRITE_START( bombjack_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOWritePort bombjack_sound_writeport[] =
-{
+static PORT_WRITE_START( bombjack_sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x10, 0x10, AY8910_control_port_1_w },
 	{ 0x11, 0x11, AY8910_write_port_1_w },
 	{ 0x80, 0x80, AY8910_control_port_2_w },
 	{ 0x81, 0x81, AY8910_write_port_2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( bombjack )

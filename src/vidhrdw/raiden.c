@@ -99,8 +99,8 @@ int raiden_vh_start(void)
 	if (!bg_layer || !fg_layer || !tx_layer)
 		return 1;
 
-	fg_layer->transparent_pen = 15;
-	tx_layer->transparent_pen = 15;
+	tilemap_set_transparent_pen(fg_layer,15);
+	tilemap_set_transparent_pen(tx_layer,15);
 
 	return 0;
 }
@@ -195,21 +195,19 @@ void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_layer,0);
+	tilemap_draw(bitmap,bg_layer,0,0);
 
 	/* Draw sprites underneath foreground */
 	draw_sprites(bitmap,0x40);
-	tilemap_draw(bitmap,fg_layer,0);
+	tilemap_draw(bitmap,fg_layer,0,0);
 
 	/* Rest of sprites */
 	draw_sprites(bitmap,0x80);
 
 	/* Text layer */
-	tilemap_draw(bitmap,tx_layer,0);
+	tilemap_draw(bitmap,tx_layer,0,0);
 }
 
 

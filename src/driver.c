@@ -260,6 +260,60 @@ const struct GameDriver *drivers[] =
 	DRIVER( armedf )	/* (c) 1988 */
 	DRIVER( cclimbr2 )	/* (c) 1988 (Japan) */
 
+	/* Nichibutsu Mahjong games */
+	DRIVER( hyhoo )		/* (c) 1987 */
+	DRIVER( hyhoo2 )	/* (c) 1987 */
+
+	DRIVER( mjsikaku )	/* (c) 1988 */
+	DRIVER( mjsikakb )	/* (c) 1988 */
+	DRIVER( otonano )	/* (c) 1988 Apple */
+	DRIVER( mjcamera )	/* (c) 1988 MIKI SHOJI */
+	DRIVER( secolove )	/* (c) 1986 */
+	DRIVER( citylove )	/* (c) 1986 */
+	DRIVER( seiha )		/* (c) 1987 */
+	DRIVER( seiham )	/* (c) 1987 */
+	DRIVER( iemoto )	/* (c) 1987 */
+	DRIVER( ojousan )	/* (c) 1987 */
+	DRIVER( bijokkoy )	/* (c) 1987 */
+	DRIVER( bijokkog )	/* (c) 1988 */
+	DRIVER( housemnq )	/* (c) 1987 */
+	DRIVER( housemn2 )	/* (c) 1987 */
+	DRIVER( kaguya )	/* (c) 1988 MIKI SHOJI */
+	DRIVER( crystal2 )	/* (c) 1986 */
+	DRIVER( apparel )	/* (c) 1986 Central Denshi */
+
+	DRIVER( hanamomo )	/* (c) 1988 */
+	DRIVER( msjiken )	/* (c) 1988 */
+	DRIVER( telmahjn )	/* (c) 1988 */
+	DRIVER( gionbana )	/* (c) 1989 */
+	DRIVER( mgmen89 )	/* (c) 1989 */
+	DRIVER( mjfocus )	/* (c) 1989 */
+	DRIVER( mjfocusm )	/* (c) 1989 */
+	DRIVER( peepshow )	/* (c) 1989 AC */
+	DRIVER( scandal )	/* (c) 1989 */
+	DRIVER( scandalm )	/* (c) 1989 */
+	DRIVER( mjnanpas )	/* (c) 1989 BROOKS */
+	DRIVER( bananadr )	/* (c) 1989 DIGITAL SOFT */
+	DRIVER( club90s )	/* (c) 1990 */
+	DRIVER( mladyhtr )	/* (c) 1990 */
+	DRIVER( chinmoku )	/* (c) 1990 */
+	DRIVER( maiko )		/* (c) 1990 */
+	DRIVER( hanaoji )	/* (c) 1991 */
+
+	DRIVER( pstadium )	/* (c) 1990 */
+	DRIVER( triplew1 )	/* (c) 1989 */
+	DRIVER( triplew2 )	/* (c) 1990 */
+	DRIVER( ntopstar )	/* (c) 1990 */
+	DRIVER( mjlstory )	/* (c) 1991 */
+	DRIVER( vanilla )	/* (c) 1991 */
+	DRIVER( qmhayaku )	/* (c) 1991 */
+	DRIVER( galkoku )	/* (c) 1989 Nichibutsu/T.R.TEC */
+	DRIVER( galkaika )	/* (c) 1989 Nichibutsu/T.R.TEC */
+	DRIVER( tokyogal )	/* (c) 1989 */
+	DRIVER( tokimbsj )	/* (c) 1989 */
+	DRIVER( mcontest )	/* (c) 1989 */
+	DRIVER( av2mj1 )	/* (c) 1991 Nichibutsu/Miki Syouji/AV Japan */
+
 	/* "Phoenix hardware" (and variations) games */
 	DRIVER( safarir )	/* Shin Nihon Kikaku (SNK) */
 	DRIVER( phoenix )	/* (c) 1980 Amstar */
@@ -341,7 +395,7 @@ TESTDRIVER( popflamb )
 	DRIVER( galaga3 )	/* (c) 1984 */
 	DRIVER( galaga3a )	/* (c) 1984 */
 	/* Libble Rabble board (first Japanese game using a 68000) */
-TESTDRIVER( liblrabl )	/* (c) 1983 */
+	DRIVER( liblrabl )	/* (c) 1983 */
 	DRIVER( toypop )	/* (c) 1986 */
 	/* Z8000 games */
 	DRIVER( polepos )	/* (c) 1982  */
@@ -784,6 +838,7 @@ TESTDRIVER( greenber )
 	DRIVER( hharry )	/* (c) 1990 (World) */
 	DRIVER( hharryu )	/* (c) 1990 Irem America (US) */
 	DRIVER( dkgensan )	/* (c) 1990 (Japan) */
+	DRIVER( dkgenm72 )	/* (c) 1990 (Japan) */
 TESTDRIVER( kengo )
 	DRIVER( poundfor )	/* (c) 1990 (World) */
 	DRIVER( poundfou )	/* (c) 1990 Irem America (US) */
@@ -793,10 +848,15 @@ TESTDRIVER( kengo )
 	DRIVER( sichuan2 )	/* (c) 1989 Tamtex */
 	DRIVER( sichuana )	/* (c) 1989 Tamtex */
 	DRIVER( shisen )	/* (c) 1989 Tamtex */
+	/* M90 */
+TESTDRIVER( hasamu )
+	DRIVER( bombrman )	/* (c) 1991 Irem (Japan) */
+TESTDRIVER( dynablsb )	/* bootleg */
 	/* M92 */
 	DRIVER( bmaster )	/* (c) 1991 Irem */
 	DRIVER( gunforce )	/* (c) 1991 Irem (World) */
 	DRIVER( gunforcu )	/* (c) 1991 Irem America (US) */
+	DRIVER( gunforcj )	/* (c) 1991 Irem (Japan) */
 	DRIVER( hook )		/* (c) 1992 Irem (World) */
 	DRIVER( hooku )		/* (c) 1992 Irem America (US) */
 	DRIVER( mysticri )	/* (c) 1992 Irem (World) */
@@ -816,13 +876,13 @@ TESTDRIVER( leaguemn )	/* (c) 1993 Irem (Japan) */
 	DRIVER( thndblst )	/* (c) 1991 Irem (Japan) */
 	DRIVER( psoldier )	/* (c) 1993 Irem (Japan) */
 	/* M97 */
-TESTDRIVER( hasamu )	/* M90, probably doesn't belong here */
+	DRIVER( bbmanw )	/* (c) 1992 Irem (World) */
+	DRIVER( bbmanwj )
+	DRIVER( atompunk )	/* (c) 1992 Irem America (US) */
+TESTDRIVER( quizf1 )
 TESTDRIVER( riskchal )
 TESTDRIVER( gussun )
 TESTDRIVER( shisen2 )
-TESTDRIVER( quizf1 )
-TESTDRIVER( atompunk )
-TESTDRIVER( bbmanw )
 	/* M107 */
 TESTDRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
 	DRIVER( dsoccr94 )	/* (c) 1994 Irem (Data East Corporation license) */
@@ -985,6 +1045,7 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( qzshowby )	/* D72 (c) 1993 Taito Corporation (Japan) */
 	DRIVER( spacedx )	/* D89 (c) 1994 Taito Corporation (Japan) */
 	DRIVER( silentd )	/* ??? (c) 1992 Taito Corporation Japan (World) */
+	DRIVER( selfeena )	/* (c) 1991 East Technology */
 
 	/* Taito F2 games */
 	DRIVER( finalb )	/* B82 (c) 1988 Taito Corporation Japan (World) */
@@ -1141,7 +1202,7 @@ V-V                           TP-027
 
 	/* Cave games */
 	/* Cave was formed in 1994 from the ruins of Toaplan, like Raizing was. */
-/* Donpachi (c) 1995 */
+	DRIVER( donpachi )	/* (c) 1995 Atlus/Cave */
 	DRIVER( ddonpach )	/* (c) 1997 Atlus/Cave */
 	DRIVER( dfeveron )	/* (c) 1998 Cave + Nihon System license */
 	DRIVER( esprade )	/* (c) 1998 Atlus/Cave */
@@ -1241,6 +1302,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( dygera )	/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( avengers )	/*  2/1987 (c) 1987 (US) */
 	DRIVER( avenger2 )	/*  2/1987 (c) 1987 (US) */
+	DRIVER( buraiken )	/*  2/1987 (c) 1987 (Japan) */
 	DRIVER( bionicc )	/*  3/1987 (c) 1987 (US) */
 	DRIVER( bionicc2 )	/*  3/1987 (c) 1987 (US) */
 	DRIVER( topsecrt )	/*  3/1987 (c) 1987 (Japan) */
@@ -1311,6 +1373,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( sf2a )		/*  2/ 6/1991 (c) 1991 (US)    */
 	DRIVER( sf2b )		/*  2/14/1991 (c) 1991 (US)    */
 	DRIVER( sf2e )		/*  2/28/1991 (c) 1991 (US)    */
+	DRIVER( sf2i )		/*  5/22/1991 (c) 1991 (US)    */
 	DRIVER( sf2j )		/* 12/10/1991 (c) 1991 (Japan) */
 	DRIVER( sf2jb )		/*  2/14/1991 (c) 1991 (Japan) */
 	DRIVER( 3wonders )	/*  5/20/1991 (c) 1991 (US) */
@@ -1337,6 +1400,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( cworld2j )	/*  6/11/1992 (QUIZ 5) (c) 1992 (Japan) */
 	DRIVER( wof )		/* 10/ 2/1992 (c) 1992 (World) (CPS1 + QSound) */
 	DRIVER( wofa )		/* 10/ 5/1992 (c) 1992 (Asia)  (CPS1 + QSound) */
+	DRIVER( wofu )		/* 10/31/1992 (c) 1992 (US) (CPS1 + QSound) */
 	DRIVER( wofj )		/* 10/31/1992 (c) 1992 (Japan) (CPS1 + QSound) */
 	DRIVER( sf2t )		/* 12/ 9/1992 (c) 1992 (US)    */
 	DRIVER( sf2tj )		/* 12/ 9/1992 (c) 1992 (Japan) */
@@ -1350,7 +1414,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( mbomberj )	/*  7/13/1993 (c) 1993 (Japan) (CPS1 + QSound) */
 	DRIVER( mbombrd )	/* 12/ 6/1993 (c) 1993 (World) (CPS1 + QSound) */
 	DRIVER( mbombrdj )	/* 12/ 6/1993 (c) 1993 (Japan) (CPS1 + QSound) */
-	DRIVER( pnickj )	/*  6/ 8/1994 (c) 1994 + Compile license (Japan) not listed on Capcom's site */
+	DRIVER( pnickj )	/*  6/ 8/1994 (c) 1994 Compile + Capcom license (Japan) not listed on Capcom's site */
 	DRIVER( qad )		/*  7/ 1/1992 (c) 1992 (US)    */
 	DRIVER( qadj )		/*  9/21/1994 (c) 1994 (Japan) */
 	DRIVER( qtono2 )	/*  1/23/1995 (c) 1995 (Japan) */
@@ -1366,6 +1430,8 @@ TESTDRIVER( defndjeu )	/* bootleg */
 TESTDRIVER( ssf2 )		/* 11/09/1993 Super Street Fighter 2: The New Challengers (USA) */
 TESTDRIVER( ssf2a )		/* 11/09/1993 Super Street Fighter 2: The New Challengers (Asia) */
 TESTDRIVER( ssf2j )		/* 10/09/1993 Super Street Fighter 2: The New Challengers (Japan) */
+TESTDRIVER( ssf2jr1 )	/* 11/09/1993 Super Street Fighter 2: The New Challengers (Japan) */
+TESTDRIVER( ssf2jr2 )	/* 05/10/1993 Super Street Fighter 2: The New Challengers (Japan) */
 TESTDRIVER( ecofe )		/* 03/12/1993 Eco Fighters (Etc) */
 TESTDRIVER( uecology )	/* 03/12/1993 Ultimate Ecology (Japan) */
 TESTDRIVER( ddtod )		/* 13/01/1994 Dungeons & Dragons: Tower of Doom (USA) */
@@ -1392,15 +1458,18 @@ TESTDRIVER( sfar1 )		/* 27/07/1995 Street Fighter Alpha: The Warriors Dream (USA
 TESTDRIVER( sfzj )		/* 27/06/1995 Street Fighter Zero (Japan) */
 TESTDRIVER( sfzjr1 )	/* 27/07/1995 Street Fighter Zero (Japan) */
 TESTDRIVER( msh )		/* 24/10/1995 Marvel Super Heroes (USA) */
+TESTDRIVER( mshj )		/* 24/10/1995 Marvel Super Heroes (Japan) */
 TESTDRIVER( 19xx )		/* 07/12/1995 19XX: The Battle Against Destiny (USA) */
 TESTDRIVER( ddsom )		/* 09/02/1996 Dungeons & Dragons 2: Shadow over Mystara (USA) */
-TESTDRIVER( sfz2j )		/* 27/02/1996 Street Fighter Zero 2 (Japan) */
+TESTDRIVER( sfa2 )		/* 06/03/1996 Street Fighter Alpha 2 (USA) */
+TESTDRIVER( sfz2 )		/* 27/02/1996 Street Fighter Zero 2 (Japan) */
 TESTDRIVER( spf2xj )	/* 31/05/1996 Super Puzzle Fighter 2 X (Japan) */
 TESTDRIVER( spf2t )		/* 20/06/1996 Super Puzzle Fighter 2 Turbo (USA) */
 TESTDRIVER( qndream )	/* 26/06/1996 Quiz Nanairo Dreams: Miracle of the Rainbow Colored Town (Japan) */
 TESTDRIVER( rckman2j )	/* 08/07/1996 Rockman 2: The Power Fighters (Japan) */
 TESTDRIVER( sfz2a )		/* 05/08/1996 Street Fighter Zero 2 Alpha (Japan) */
 TESTDRIVER( xmvsf )		/* 04/10/1996 X-Men Vs. Street Fighter (USA) */
+TESTDRIVER( xmvsfj )	/* 10/09/1996 X-Men Vs. Street Fighter (Japan) */
 TESTDRIVER( batcirj )	/* 19/03/1997 Battle Circuit (Japan) */
 TESTDRIVER( batcira )	/* 19/03/1997 Battle Circuit (Asia) */
 TESTDRIVER( vsav )		/* 19/05/1997 Vampire Savior: The Lord of Vampire (USA) */
@@ -2104,6 +2173,8 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( rollergj )	/* GX999 (c) 1991 (Japan) */
 	DRIVER( xexex )		/* GX067 (c) 1991 (World) */
 	DRIVER( xexexj )	/* GX067 (c) 1991 (Japan) */
+TESTDRIVER( gijoe )		/* GX069 (c) 1991 (World) */
+TESTDRIVER( gijoeu )	/* GX069 (c) 1991 (US) */
 	DRIVER( simpsons )	/* GX072 (c) 1991 */
 	DRIVER( simpsn2p )	/* GX072 (c) 1991 */
 	DRIVER( simps2pj )	/* GX072 (c) 1991 (Japan) */
@@ -2339,6 +2410,18 @@ TESTDRIVER( liberat2 )
 	DRIVER( apb )		/* (c) 1987 */
 	DRIVER( apb2 )		/* (c) 1987 */
 
+	/* Atari polygon games */
+	DRIVER( irobot )	/* (c) 1983 */
+TESTDRIVER( harddriv )	/* (c) 1988 */
+	DRIVER( stunrun )	/* (c) 1989 */
+	DRIVER( stunrnp )
+TESTDRIVER( racedriv )
+TESTDRIVER( racedrvc )
+TESTDRIVER( steeltal )
+TESTDRIVER( steeltdb )
+TESTDRIVER( hdrivair )
+TESTDRIVER( hdrivaip )
+
 	/* later Atari games */
 	DRIVER( gauntlet )	/* (c) 1985 */
 	DRIVER( gauntir1 )	/* (c) 1985 */
@@ -2463,7 +2546,8 @@ TESTDRIVER( paddlema )	/* Alpha-68K96I  'PM' (c) 1988 SNK */
 	DRIVER( skysoldr )	/* Alpha-68K96II 'SS' (c) 1988 SNK (Romstar with dip switch) */
 	DRIVER( goldmedl )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
 TESTDRIVER( goldmedb )	/* Alpha-68K96II bootleg */
-	DRIVER( skyadvnt )	/* Alpha-68K96V  'SA' (c) 1989 SNK of America licensed from Alpha */
+	DRIVER( skyadvnt )	/* Alpha-68K96V  'SA' (c) 1989 Alpha Denshi Co. */
+	DRIVER( skyadvnu )	/* Alpha-68K96V  'SA' (c) 1989 SNK of America licensed from Alpha */
 	DRIVER( gangwars )	/* Alpha-68K96V       (c) 1989 Alpha Denshi Co. */
 	DRIVER( gangwarb )	/* Alpha-68K96V bootleg */
 	DRIVER( sbasebal )	/* Alpha-68K96V       (c) 1989 SNK of America licensed from Alpha */
@@ -2502,7 +2586,8 @@ TESTDRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	DRIVER( ddragon )	/* TA-0021 (c) 1987 */
 	DRIVER( ddragonu )	/* TA-0021 (c) 1987 Taito America */
 	DRIVER( ddragonb )	/* bootleg */
-	/* TA-0022 Super Dodge Ball */
+	DRIVER( spdodgeb )	/* TA-0022 (c) 1987 */
+	DRIVER( nkdodgeb )	/* TA-0022 (c) 1987 (Japan) */
 	/* TA-0023 China Gate */
 	/* TA-0024 WWF Superstars */
 	/* TA-0025 Champ V'Ball */
@@ -2583,6 +2668,17 @@ V1.2   May 27,1999
       Thunder Dragon 2                                                 93091
 
 */
+
+	/* UPL/NMK/Banpresto games */
+TESTDRIVER( mustang )	/* (c) 1990 UPL */
+TESTDRIVER( acrobatm )	/* (c) 1991 UPL + Taito license */
+TESTDRIVER( bioship )	/* (c) UPL + America Sammy license */
+TESTDRIVER( hachamf )	/* (c) 1991 NMK */
+	DRIVER( strahl )	/* (c) 1992 UPL */
+	DRIVER( macross )	/* (c) 1992 Banpresto */
+	DRIVER( macross2 )	/* (c) 1993 Banpresto */
+	DRIVER( bjtwin )	/* (c) 1993 NMK */
+	DRIVER( nouryoku )	/* (c) 1995 Tecmo */
 
 	/* Williams/Midway TMS34010 games */
 	DRIVER( narc )		/* (c) 1988 Williams */
@@ -2836,7 +2932,7 @@ Gaelco Game list:
 1992:	Splash, Thunder Hoop, Squash
 1993:	World Rally, Glass
 1994:	Strike Back, Target Hits, Thunder Hoop 2
-1995:	Alligator Hunt, Toy, World Rally 2, Salter, Touch & Go
+1995:	Alligator Hunt, Bio Mechanical Toy, World Rally 2, Salter, Touch & Go
 1996:	Maniac Square, Snow Board, Speed Up
 1997:	Surf Planet
 1998:	Radikal Bikers
@@ -2848,10 +2944,12 @@ All games newer than Splash are heavily protected.
 	/* Kaneko "AX System" games */
 	DRIVER( berlwall )	/* (c) 1991 Kaneko */
 	DRIVER( berlwalt )	/* (c) 1991 Kaneko */
+	DRIVER( blazeon )	/* (c) 1992 Atlus */
+TESTDRIVER( bakubrkr )
+TESTDRIVER( shogwarr )
 	DRIVER( gtmr )		/* (c) 1994 Kaneko */
 	DRIVER( gtmre )		/* (c) 1994 Kaneko */
 TESTDRIVER( gtmr2 )
-TESTDRIVER( shogwarr )
 
 	/* other Kaneko games */
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
@@ -2899,11 +2997,8 @@ TESTDRIVER( msgundam )
 	DRIVER( primella )	/* (c) 1994 NTC */
 	DRIVER( rshark )	/* (c) 1995 Dooyong */
 
-	/* NMK games */
-TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
-	DRIVER( bjtwin )	/* (c) 1993 NMK */
-
 	/* Comad games */
+	DRIVER( pushman )	/* (c) 1990 Comad + American Sammy license */
 	DRIVER( zerozone )	/* (c) 1993 Comad */
 	DRIVER( hotpinbl )	/* (c) 1995 Comad & New Japan System */
 	DRIVER( galspnbl )	/* (c) 1996 Comad */
@@ -2922,6 +3017,13 @@ TESTDRIVER( ladyfrog )
 	DRIVER( thief )		/* (c) 1981 */
 	DRIVER( natodef )	/* (c) 1982 */
 
+	/* Tong Electronic games */
+	DRIVER( leprechn )	/* (c) 1982 */
+	DRIVER( potogold )	/* (c) 1982 */
+	DRIVER( beezer )	/* (c) 1982 */
+	DRIVER( beezer1 )	/* (c) 1982 */
+
+
 	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
 	DRIVER( spacefbb )	/* bootleg */
@@ -2933,10 +3035,7 @@ TESTDRIVER( ladyfrog )
 	DRIVER( omegrace )	/* (c) 1981 Midway */
 	DRIVER( dday )		/* (c) 1982 Olympia */
 	DRIVER( ddayc )		/* (c) 1982 Olympia + Centuri license */
-	DRIVER( leprechn )	/* (c) 1982 Tong Electronic */
-	DRIVER( potogold )	/* (c) 1982 Tong Electronic */
 	DRIVER( hexa )		/* D. R. Korea */
-	DRIVER( irobot )	/* (c) 1983 Atari */
 	DRIVER( spiders )	/* (c) 1981 Sigma Ent. Inc. */
 	DRIVER( spiders2 )	/* (c) 1981 Sigma Ent. Inc. */
 	DRIVER( stactics )	/* [1981 Sega] */
@@ -2961,6 +3060,7 @@ TESTDRIVER( dlair )
 	DRIVER( mermaid )	/* (c) 1982 Rock-ola */
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
+TESTDRIVER( mazinger )
 
 
 #endif /* NEOMAME */

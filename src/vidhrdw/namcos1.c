@@ -161,7 +161,7 @@ static WRITE_HANDLER( namcos1_playfield_control_w )
 #if NAMCOS1_DIRECT_DRAW
 		if(namcos1_tilemap_used)
 #endif
-		playfields[whichone].tilemap->enable = objects[whichone].visible;
+		tilemap_set_enable(playfields[whichone].tilemap,objects[whichone].visible);
 	}
 	/* 22,23 unused */
 	else if (offset < 24)
@@ -588,7 +588,7 @@ void ns1_draw_tilemap(struct osd_bitmap *bitmap,struct gfx_object *object)
 #if NAMCOS1_DIRECT_DRAW
 	if(namcos1_tilemap_used)
 #endif
-	tilemap_draw( bitmap , playfields[layer].tilemap , 0 );
+	tilemap_draw( bitmap , playfields[layer].tilemap , 0 ,0);
 #if NAMCOS1_DIRECT_DRAW
 	else
 	{
@@ -861,7 +861,6 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 	struct gfx_object *object;
 	unsigned short palette_map[MAX_SPRITES+1];
-	const unsigned char *remapped;
 
 	/* update all tilemaps */
 #if NAMCOS1_DIRECT_DRAW
@@ -924,30 +923,11 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* background color */
 	palette_used_colors[BACKGROUNDCOLOR] |= PALETTE_COLOR_VISIBLE;
 
-	if ( ( remapped = palette_recalc() ) )
-	{
-#if NAMCOS1_DIRECT_DRAW
-		if(namcos1_tilemap_used)
-#endif
-		for (i = 0;i < MAX_PLAYFIELDS;i++)
-		{
-			int j;
-			const unsigned char *remapped_layer = &remapped[128*16+256*i];
-			for (j = 0;j < 256;j++)
-			{
-				if (remapped_layer[j])
-				{
-					tilemap_mark_all_pixels_dirty(playfields[i].tilemap);
-					break;
-				}
-			}
-		}
-	}
+	palette_recalc();
 
 #if NAMCOS1_DIRECT_DRAW
 	if(namcos1_tilemap_used)
 #endif
-	tilemap_render(ALL_TILEMAPS);
 	/* background color */
 	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],&Machine->visible_area);
 	/* draw objects (tilemaps and sprites) */

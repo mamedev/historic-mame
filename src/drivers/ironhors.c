@@ -65,8 +65,7 @@ static WRITE_HANDLER( ironhors_sh_irqtrigger_w )
 
 
 
-static struct MemoryReadAddress ironhors_readmem[] =
-{
+static MEMORY_READ_START( ironhors_readmem )
 	{ 0x0020, 0x003f, MRA_RAM },
 	{ 0x0b03, 0x0b03, input_port_0_r },	/* coins + selftest */
 	{ 0x0b02, 0x0b02, input_port_1_r },	/* player 1 controls */
@@ -77,11 +76,9 @@ static struct MemoryReadAddress ironhors_readmem[] =
 	{ 0x2000, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ironhors_writemem[] =
-{
+static MEMORY_WRITE_START( ironhors_writemem )
 	{ 0x0003, 0x0003, ironhors_charbank_w },
 	{ 0x0004, 0x0004, MWA_RAM, &ironhors_interrupt_enable },
 	{ 0x0020, 0x003f, MWA_RAM, &ironhors_scroll },
@@ -97,54 +94,41 @@ static struct MemoryWriteAddress ironhors_writemem[] =
 	{ 0x3800, 0x38ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3900, 0x3fff, MWA_RAM },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ironhors_sound_readmem[] =
-{
+static MEMORY_READ_START( ironhors_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x8000, 0x8000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ironhors_sound_writemem[] =
-{
+static MEMORY_WRITE_START( ironhors_sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort ironhors_sound_readport[] =
-{
+static PORT_READ_START( ironhors_sound_readport )
 	{ 0x00, 0x00, YM2203_status_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort ironhors_sound_writeport[] =
-{
+static PORT_WRITE_START( ironhors_sound_writeport )
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
-static struct MemoryReadAddress farwest_sound_readmem[] =
-{
+static MEMORY_READ_START( farwest_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x8000, 0x8000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress farwest_sound_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( farwest_sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x8000, 0x8000, YM2203_control_port_0_w },
 	{ 0x8001, 0x8001, YM2203_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

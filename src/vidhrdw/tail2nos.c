@@ -3,13 +3,13 @@
 #include "konamiic.h"
 
 
-unsigned char *tail2nos_bgvideoram;
+data16_t *tail2nos_bgvideoram;
 
 
 static struct tilemap *bg_tilemap;
 
 static int charbank,charpalette,video_enable;
-static unsigned char *zoomdata;
+static data16_t *zoomdata;
 static int dirtygfx;
 static unsigned char *dirtychar;
 
@@ -24,7 +24,7 @@ static unsigned char *dirtychar;
 
 static void get_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&tail2nos_bgvideoram[2*tile_index]);
+	UINT16 code = tail2nos_bgvideoram[tile_index];
 	SET_TILE_INFO(0,(code & 0x1fff) + (charbank << 13),((code & 0xe000) >> 13) + charpalette * 16)
 }
 
@@ -64,11 +64,11 @@ int tail2nos_vh_start(void)
 	}
 	memset(dirtychar,1,TOTAL_CHARS);
 
-	bg_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(bg_tilemap,15);
 
 	K051316_wraparound_enable(0,1);
 	K051316_set_offset(0,-89,-14);
-	zoomdata = memory_region(REGION_GFX3);
+	zoomdata = (data16_t *)memory_region(REGION_GFX3);
 
 	return 0;
 }
@@ -88,44 +88,33 @@ void tail2nos_vh_stop(void)
 
 ***************************************************************************/
 
-READ_HANDLER( tail2nos_bgvideoram_r )
+WRITE16_HANDLER( tail2nos_bgvideoram_w )
 {
-	return READ_WORD(&tail2nos_bgvideoram[offset]);
+	int oldword = tail2nos_bgvideoram[offset];
+	COMBINE_DATA(&tail2nos_bgvideoram[offset]);
+	if (oldword != tail2nos_bgvideoram[offset])
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
-WRITE_HANDLER( tail2nos_bgvideoram_w )
+READ16_HANDLER( tail2nos_zoomdata_r )
 {
-	int oldword = READ_WORD(&tail2nos_bgvideoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&tail2nos_bgvideoram[offset],newword);
-		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
-	}
+	return zoomdata[offset];
 }
 
-READ_HANDLER( tail2nos_zoomdata_r )
+WRITE16_HANDLER( tail2nos_zoomdata_w )
 {
-	return READ_WORD(&zoomdata[offset]);
-}
-
-WRITE_HANDLER( tail2nos_zoomdata_w )
-{
-	int oldword = READ_WORD(&zoomdata[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
+	int oldword = zoomdata[offset];
+	COMBINE_DATA(&zoomdata[offset]);
+	if (oldword != zoomdata[offset])
 	{
 		dirtygfx = 1;
-		dirtychar[offset / 128] = 1;
-		WRITE_WORD(&zoomdata[offset],newword);
+		dirtychar[offset / 64] = 1;
 	}
 }
 
-WRITE_HANDLER( tail2nos_gfxbank_w )
+WRITE16_HANDLER( tail2nos_gfxbank_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		int bank;
 
@@ -167,18 +156,18 @@ static void drawsprites(struct osd_bitmap *bitmap)
 	int offs;
 
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
 		int sx,sy,flipx,flipy,code,color;
 
-		sx = READ_WORD(&spriteram[offs + 2]);
+		sx = spriteram16[offs + 1];
 		if (sx >= 0x8000) sx -= 0x10000;
-		sy = 0x10000 - READ_WORD(&spriteram[offs + 0]);
+		sy = 0x10000 - spriteram16[offs + 0];
 		if (sy >= 0x8000) sy -= 0x10000;
-		code = READ_WORD(&spriteram[offs + 4]) & 0x07ff;
-		color = (READ_WORD(&spriteram[offs + 4]) & 0xe000) >> 13;
-		flipx = READ_WORD(&spriteram[offs + 4]) & 0x1000;
-		flipy = READ_WORD(&spriteram[offs + 4]) & 0x0800;
+		code = spriteram16[offs + 2] & 0x07ff;
+		color = (spriteram16[offs + 2] & 0xe000) >> 13;
+		flipx = spriteram16[offs + 2] & 0x1000;
+		flipy = spriteram16[offs + 2] & 0x0800;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
@@ -221,7 +210,7 @@ void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (dirtychar[i])
 			{
 				dirtychar[i] = 0;
-				decodechar(Machine->gfx[2],i,zoomdata,&tilelayout);
+				decodechar(Machine->gfx[2],i,(UINT8 *)zoomdata,&tilelayout);
 			}
 		}
 
@@ -232,16 +221,13 @@ void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	K051316_tilemap_update_0();
 	tilemap_update(bg_tilemap);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if (video_enable)
 	{
 		K051316_zoom_draw_0(bitmap,0);
 		drawsprites(bitmap);
-		tilemap_draw(bitmap,bg_tilemap,0);
+		tilemap_draw(bitmap,bg_tilemap,0,0);
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

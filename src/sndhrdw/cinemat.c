@@ -701,18 +701,15 @@ z80ctc_interface demon_z80ctc_interface =
 };
 
 
-struct MemoryReadAddress demon_sound_readmem[] =
-{
+MEMORY_READ_START( demon_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x3000, 0x33ff, MRA_RAM },
 	{ 0x4001, 0x4001, AY8910_read_port_0_r },
 	{ 0x5001, 0x5001, AY8910_read_port_1_r },
 	{ 0x6001, 0x6001, AY8910_read_port_2_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-struct  MemoryWriteAddress demon_sound_writemem[] =
-{
+MEMORY_WRITE_START( demon_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x3000, 0x33ff, MWA_RAM },
 	{ 0x4002, 0x4002, AY8910_write_port_0_w },
@@ -722,12 +719,9 @@ struct  MemoryWriteAddress demon_sound_writemem[] =
 	{ 0x6002, 0x6002, AY8910_write_port_2_w },
 	{ 0x6003, 0x6003, AY8910_control_port_2_w },
 	{ 0x7000, 0x7000, MWA_NOP },  /* watchdog? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-struct IOWritePort demon_sound_writeport[] =
-{
+PORT_WRITE_START( demon_sound_writeport )
 	{ 0x00, 0x03, z80ctc_0_w },
 	{ 0x1c, 0x1f, z80ctc_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END

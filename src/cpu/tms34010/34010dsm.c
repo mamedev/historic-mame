@@ -17,8 +17,8 @@
 #else
 #include "memory.h"
 #define PC __pc
-#define PARAM_WORD(v) { v = cpu_readmem29_word(_pc>>3); _pc += 16; }
-#define PARAM_LONG(v) { v = cpu_readmem29_dword(_pc>>3); _pc += 32; }
+#define PARAM_WORD(v) { v = cpu_readmem29lew_word(_pc>>3); _pc += 16; }
+#define PARAM_LONG(v) { v = (cpu_readmem29lew_word((_pc>>3)+2)<<16)|cpu_readmem29lew_word(_pc>>3); _pc += 32; }
 #endif
 
 static UINT8 rf;
@@ -268,28 +268,28 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			sprintf (buffer, "REV    ");
 			print_des_reg();
 			break;
-			
+
 		case 0x0040:
 			if (is_34020)
 				sprintf (buffer, "IDLE   ");
 			else
 				bad = 1;
 			break;
-			
+
 		case 0x0080:
 			if (is_34020)
 				sprintf (buffer, "MWAIT  ");
 			else
 				bad = 1;
 			break;
-			
+
 		case 0x00e0:
 			if (is_34020)
 				sprintf (buffer, "BLMOVE %d,%d", (op >> 1) & 1, op & 1);
 			else
 				bad = 1;
 			break;
-			
+
 		case 0x0100:
 			sprintf (buffer, "EMU    ");
 			break;
@@ -446,7 +446,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0020:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
@@ -460,7 +460,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0040:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
@@ -477,13 +477,13 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0060:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
 				UINT32 x;
 				PARAM_LONG(x);
-				
+
 				if (op == 0x0660 && (x & 0xff) == 0x01)
 				{
 					sprintf(buffer, "CMOVCS ");
@@ -504,7 +504,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0080:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
@@ -519,7 +519,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x00a0:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
@@ -533,7 +533,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x00c0:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
@@ -547,7 +547,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x00e0:
 			if (is_34020 && (op & 0xfe00) == 0x0600)
 			{
@@ -565,7 +565,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0100:
 			sprintf (buffer, "SEXT   ");
 			print_des_reg();
@@ -647,7 +647,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-			
+
 		case 0x0020:
 			if (is_34020)
 			{
@@ -662,28 +662,28 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0040:
 			if (is_34020)
 				sprintf (buffer, "VBLT   B,L");
 			else
 				bad = 1;
 			break;
-			
+
 		case 0x0060:
 			if (is_34020)
 				sprintf(buffer, "RETM   ");
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x00e0:
 			if (is_34020)
 				sprintf (buffer, "CLIP   ");
 			else
 				bad = 1;
 			break;
-			
+
 		case 0x0100:
 			sprintf (buffer, "TRAP   %Xh", op & 0x1f);
 			break;
@@ -747,21 +747,21 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0020:
 			if (is_34020)
 				sprintf (buffer, "PFILL  XY");
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0040:
 			if (is_34020)
 				sprintf (buffer, "VFILL  L");
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0060:
 			if (is_34020)
 			{
@@ -771,7 +771,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0080:
 			if (is_34020)
 			{
@@ -781,21 +781,21 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x00a0:
 			if (is_34020)
 				sprintf (buffer, "FPIXEQ ");
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x00c0:
 			if (is_34020)
 				sprintf (buffer, "FPIXNE ");
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0100:
 			sprintf (buffer, "ADDI   ");
             print_word_parm();
@@ -872,14 +872,14 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0040:
 			if (is_34020)
 				sprintf (buffer, "LINIT  ");
 			else
 				bad = 1;
 			break;
-		
+
 		case 0x0100:
 			sprintf (buffer, "SUBI   ");
             print_long_parm_1s_comp();
@@ -1572,7 +1572,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 		else
 			bad = 1;
 		break;
-	
+
 
 	case 0xde00:
 		switch (subop)

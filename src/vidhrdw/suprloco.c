@@ -161,7 +161,7 @@ WRITE_HANDLER( suprloco_control_w )
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 
-	flip_screen_w(0,data & 0x80);
+	flip_screen_set(data & 0x80);
 	tilemap_set_scrolly(bg_tilemap,0,flip_screen ? -32 : 0);
 
 	control = data;
@@ -290,9 +290,7 @@ void suprloco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,1);
+	tilemap_draw(bitmap,bg_tilemap,1,0);
 }

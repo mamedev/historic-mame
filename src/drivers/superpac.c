@@ -61,23 +61,25 @@ void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 READ_HANDLER( superpac_flipscreen_r );
 WRITE_HANDLER( superpac_flipscreen_w );
 
+static WRITE_HANDLER( flip_screen_w )
+{
+	flip_screen_set(data);
+}
+
 
 /* CPU 1 read addresses */
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2000, superpac_flipscreen_r },
 	{ 0x4040, 0x43ff, superpac_sharedram_r },	/* Pac'n Pal only */
 	{ 0x4800, 0x480f, superpac_customio_1_r },
 	{ 0x4810, 0x481f, superpac_customio_2_r },
 	{ 0xa000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* CPU 1 write addresses */
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },
 	{ 0x0400, 0x07ff, colorram_w, &colorram },
 	{ 0x0800, 0x0f7f, MWA_RAM },
@@ -96,48 +98,39 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x500a, 0x500b, superpac_cpu_enable_w },
 	{ 0x8000, 0x8000, watchdog_reset_w },
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 read addresses */
-static struct MemoryReadAddress superpac_readmem_cpu2[] =
-{
+static MEMORY_READ_START( superpac_readmem_cpu2 )
 	{ 0x0040, 0x03ff, superpac_sharedram_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 write addresses */
-static struct MemoryWriteAddress superpac_writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( superpac_writemem_cpu2 )
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },
 	{ 0x0040, 0x03ff, superpac_sharedram_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 read addresses */
-static struct MemoryReadAddress pacnpal_readmem_cpu2[] =
-{
+static MEMORY_READ_START( pacnpal_readmem_cpu2 )
 	{ 0x0040, 0x03ff, superpac_sharedram_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 write addresses */
-static struct MemoryWriteAddress pacnpal_writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( pacnpal_writemem_cpu2 )
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },
 	{ 0x0040, 0x03ff, superpac_sharedram_w },
 	{ 0x2000, 0x2001, superpac_interrupt_enable_w },
 	{ 0x2006, 0x2007, mappy_sound_enable_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( superpac )

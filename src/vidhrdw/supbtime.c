@@ -15,8 +15,8 @@ End sequence uses rowscroll '98 c0' on pf1 (jmp to 1d61a)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
-static unsigned char supbtime_control_0[16];
+data16_t *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
+static data16_t supbtime_control_0[8];
 static struct tilemap *pf1_tilemap,*pf2_tilemap;
 static int flipscreen;
 
@@ -34,15 +34,15 @@ static void supbtime_mark_sprite_colours(void)
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x3fff;
+		sprite = spriteram16[offs+1] & 0x3fff;
 		if (!sprite) continue;
 
-		y = READ_WORD(&spriteram[offs]);
-		x = READ_WORD(&spriteram[offs+4]);
+		y = spriteram16[offs];
+		x = spriteram16[offs+2];
 		color = (x >>9) &0xf;
 
 		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
@@ -70,18 +70,18 @@ static void supbtime_drawsprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x3fff;
+		sprite = spriteram16[offs+1] & 0x3fff;
 		if (!sprite) continue;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = spriteram16[offs];
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = spriteram16[offs+2];
 		colour = (x >>9) & 0x1f;
 
 		fx = y & 0x2000;
@@ -132,31 +132,25 @@ static void supbtime_drawsprites(struct osd_bitmap *bitmap)
 
 /******************************************************************************/
 
-WRITE_HANDLER( supbtime_pf2_data_w )
+WRITE16_HANDLER( supbtime_pf2_data_w )
 {
-	COMBINE_WORD_MEM(&supbtime_pf2_data[offset],data);
-	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
+	data16_t oldword=supbtime_pf2_data[offset];
+	COMBINE_DATA(&supbtime_pf2_data[offset]);
+	if (oldword!=supbtime_pf2_data[offset])
+		tilemap_mark_tile_dirty(pf2_tilemap,offset);
 }
 
-WRITE_HANDLER( supbtime_pf1_data_w )
+WRITE16_HANDLER( supbtime_pf1_data_w )
 {
-	COMBINE_WORD_MEM(&supbtime_pf1_data[offset],data);
-	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+	data16_t oldword=supbtime_pf1_data[offset];
+	COMBINE_DATA(&supbtime_pf1_data[offset]);
+	if (oldword!=supbtime_pf1_data[offset])
+		tilemap_mark_tile_dirty(pf1_tilemap,offset);
 }
 
-READ_HANDLER( supbtime_pf1_data_r )
+WRITE16_HANDLER( supbtime_control_0_w )
 {
-	return READ_WORD(&supbtime_pf1_data[offset]);
-}
-
-READ_HANDLER( supbtime_pf2_data_r )
-{
-	return READ_WORD(&supbtime_pf2_data[offset]);
-}
-
-WRITE_HANDLER( supbtime_control_0_w )
-{
-	COMBINE_WORD_MEM(&supbtime_control_0[offset],data);
+	COMBINE_DATA(&supbtime_control_0[offset]);
 }
 
 /******************************************************************************/
@@ -171,7 +165,7 @@ static void get_bg_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&supbtime_pf2_data[2*tile_index]);
+	tile=supbtime_pf2_data[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -180,7 +174,7 @@ static void get_bg_tile_info(int tile_index)
 
 static void get_fg_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&supbtime_pf1_data[2*tile_index]);
+	int tile=supbtime_pf1_data[tile_index];
 	int color=tile >> 12;
 
 	tile=tile&0xfff;
@@ -195,8 +189,8 @@ int supbtime_vh_start(void)
 	if (!pf1_tilemap || !pf2_tilemap)
 		return 1;
 
-	pf1_tilemap->transparent_pen = 0;
-	pf2_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+	tilemap_set_transparent_pen(pf2_tilemap,0);
 
 	return 0;
 }
@@ -205,33 +199,30 @@ int supbtime_vh_start(void)
 
 void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	flipscreen=(READ_WORD(&supbtime_control_0[0])&0x80);
+	flipscreen=supbtime_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&supbtime_control_0[2]) );
-	tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&supbtime_control_0[4]) );
-	tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&supbtime_control_0[6]) );
-	tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&supbtime_control_0[8]) );
+	tilemap_set_scrollx( pf1_tilemap,0, supbtime_control_0[1] );
+	tilemap_set_scrolly( pf1_tilemap,0, supbtime_control_0[2] );
+	tilemap_set_scrollx( pf2_tilemap,0, supbtime_control_0[3] );
+	tilemap_set_scrolly( pf2_tilemap,0, supbtime_control_0[4] );
 
 	/* 'Fake' rowscroll, used only in the end game message */
-	if (READ_WORD (&supbtime_control_0[0xc])==0xc0)
-		tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&supbtime_control_0[2]) + READ_WORD (&supbtime_pf1_row[8]) );
+	if (supbtime_control_0[6]==0xc0)
+		tilemap_set_scrollx( pf1_tilemap,0, supbtime_control_0[1] + supbtime_pf1_row[4] );
 
 	tilemap_update(pf2_tilemap);
 	tilemap_update(pf1_tilemap);
 
 	supbtime_mark_sprite_colours();
 	palette_used_colors[768] = PALETTE_COLOR_USED;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* The filled bitmap is unusual for Data East, but without this the title screen
 	background colour is incorrect.  This also explains why the game initialises
 	the previously unused palette ram to zero */
 	fillbitmap(bitmap,Machine->pens[768],&Machine->visible_area);
-	tilemap_draw(bitmap,pf2_tilemap,0);
+	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	supbtime_drawsprites(bitmap);
-	tilemap_draw(bitmap,pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }

@@ -148,48 +148,41 @@ const UINT8 *palette_recalc(void);
 
 #define PALETTE_COLOR_UNUSED	0	/* This color is not needed for this frame */
 #define PALETTE_COLOR_VISIBLE	1	/* This color is currently visible */
-#define PALETTE_COLOR_CACHED	2	/* This color is cached in temporary bitmaps */
-	/* palette_recalc() will try to use always the same pens for the used colors; */
+#define PALETTE_COLOR_CACHED	2	/* This color is cached in temporary bitmaps (but */
+									/* not necessarily visible) */
+	/* palette_recalc() will try to use always the same pens for the cached colors; */
 	/* if it is forced to rearrange the pens, it will return TRUE to signal the */
-	/* driver that it must refresh the display. */
+	/* driver that it must refresh the cached bitmaps. */
 #define PALETTE_COLOR_TRANSPARENT_FLAG	4	/* All colors using this attribute will be */
 	/* mapped to the same pen, and no other colors will be mapped to that pen. */
 	/* This way, transparencies can be handled by copybitmap(). */
 
 /* backwards compatibility */
-#define PALETTE_COLOR_USED			(PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED)
-#define PALETTE_COLOR_TRANSPARENT	(PALETTE_COLOR_TRANSPARENT_FLAG|PALETTE_COLOR_USED)
+#define PALETTE_COLOR_USED			(PALETTE_COLOR_VISIBLE | PALETTE_COLOR_CACHED)
+#define PALETTE_COLOR_TRANSPARENT	(PALETTE_COLOR_TRANSPARENT_FLAG | PALETTE_COLOR_USED)
 
 /* if you use PALETTE_COLOR_TRANSPARENT, to do a transparency blit with copybitmap() */
 /* pass it TRANSPARENCY_PEN, palette_transparent_pen. */
 extern UINT16 palette_transparent_pen;
-
-/* The transparent color can also be used as a background color, to avoid doing */
-/* a fillbitmap() + copybitmap() when there is nothing between the background */
-/* and the transparent layer. By default, the background color is black; you */
-/* can change it by doing: */
-/* palette_change_color(palette_transparent_color,R,G,B); */
-/* by default, palette_transparent_color is -1; you are allowed to change it */
-/* to make it point to a color in the game's palette, so the background color */
-/* can automatically handled by your paletteram_w() function. The Tecmo games */
-/* do this. */
-extern int palette_transparent_color;
 
 
 extern UINT16 *palette_shadow_table;
 
 
 
-/* here some functions to handle commonly used palette layouts, so you don't have */
-/* to write your own paletteram_w() function. */
+/* here are some functions to handle commonly used palette layouts, so you don't
+   have to write your own paletteram_w() function. */
 
-extern UINT8 *paletteram;
-extern UINT8 *paletteram_2;	/* use when palette RAM is split in two parts */
+extern data8_t *paletteram;
+extern data8_t *paletteram_2;	/* use when palette RAM is split in two parts */
+extern data16_t *paletteram16;
+extern data16_t *paletteram16_2;
+extern data32_t *paletteram32;
 
 READ_HANDLER( paletteram_r );
 READ_HANDLER( paletteram_2_r );
-READ_HANDLER( paletteram_word_r );	/* for 16 bit CPU */
-READ_HANDLER( paletteram_2_word_r );	/* for 16 bit CPU */
+READ16_HANDLER( paletteram16_word_r );
+READ16_HANDLER( paletteram16_2_word_r );
 
 WRITE_HANDLER( paletteram_BBGGGRRR_w );
 WRITE_HANDLER( paletteram_RRRGGGBB_w );
@@ -200,12 +193,13 @@ WRITE_HANDLER( paletteram_BBGGRRII_w );
 /* _swap_w  most significant byte first */
 /* _split_w least and most significant bytes are not consecutive */
 /* _word_w  use with 16 bit CPU */
+/* R, G, B are bits, r, g, b are bytes */
 /*                        MSB          LSB */
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w );
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_swap_w );
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w );	/* uses paletteram[] */
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w );	/* uses paletteram_2[] */
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w );
+WRITE16_HANDLER( paletteram16_xxxxBBBBGGGGRRRR_word_w );
 WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_w );
 WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_swap_w );
 WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w );	/* uses paletteram[] */
@@ -214,22 +208,39 @@ WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w );	/* uses paletteram[] */
 WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w );	/* uses paletteram_2[] */
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w );
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w );
-WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w );
+WRITE16_HANDLER( paletteram16_xxxxRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w );	/* uses paletteram[] */
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w );	/* uses paletteram_2[] */
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w );
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBxxxx_word_w );
 WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_swap_w );
 WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split1_w );	/* uses paletteram[] */
 WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w );	/* uses paletteram_2[] */
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w );
+WRITE16_HANDLER( paletteram16_BBBBGGGGRRRRxxxx_word_w );
 WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w );
 WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w );
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w );
+WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
+WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w );
+WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w );
+WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
+WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w );
+WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
+WRITE16_HANDLER( paletteram16_xrgb_word_w );
+
+
+
+/* obsolete, will be removed */
+READ_HANDLER( paletteram_word_r );
+READ_HANDLER( paletteram_2_word_r );
+WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w );
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w );
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w );
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w );
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w );
 WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w );
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
 WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
 WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );

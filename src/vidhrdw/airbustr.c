@@ -74,7 +74,7 @@ int airbustr_vh_start(void)
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
 }
@@ -263,11 +263,9 @@ int i, offs;
 		}
 	}
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap);
 }

@@ -36,8 +36,7 @@ READ_HANDLER( redalert_sound_register_IC1_r );
 WRITE_HANDLER( redalert_sound_register_IC2_w );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, /* Zero page / stack */
 	{ 0x0200, 0x0fff, MRA_RAM }, /* ? */
 	{ 0x1000, 0x1fff, MRA_RAM }, /* Scratchpad video RAM */
@@ -48,11 +47,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc120, 0xc120, input_port_2_r },
 	{ 0xc170, 0xc170, input_port_3_r }, /* Vertical Counter? */
 	{ 0xf000, 0xffff, MRA_ROM }, /* remapped ROM for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0200, 0x0fff, MWA_RAM }, /* ? */
 	{ 0x1000, 0x1fff, MWA_RAM }, /* Scratchpad video RAM */
@@ -67,42 +64,33 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc150, 0xc150, redalert_backcolor_w },
 	{ 0xc160, 0xc160, redalert_soundlatch_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x7800, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },
 	{ 0x1001, 0x1001, redalert_sound_register_IC1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x7800, 0x7fff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_ROM },
 	{ 0x1000, 0x1000, redalert_AY8910_w },
 	{ 0x1001, 0x1001, redalert_sound_register_IC2_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress voice_readmem[] =
-{
+static MEMORY_READ_START( voice_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 //	{ 0xc000, 0xc000, redalert_voicecommand_r }, /* reads command from D0-D5? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress voice_writemem[] =
-{
+static MEMORY_WRITE_START( voice_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( redalert )

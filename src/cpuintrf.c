@@ -93,7 +93,7 @@
 #if (HAS_CP1600)
 #include "cpu/cp1600/cp1600.h"
 #endif
-#if (HAS_TMS34010)
+#if (HAS_TMS34010 || HAS_TMS34020)
 #include "cpu/tms34010/tms34010.h"
 #endif
 #if (HAS_TMS9900 || HAS_TMS9940 || HAS_TMS9980 || HAS_TMS9985 || HAS_TMS9989 || HAS_TMS9995 || HAS_TMS99105A || HAS_TMS99110A)
@@ -304,7 +304,7 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 #define IFC_INFO(cpu,context,regnum)	((cpuintf[cpu].cpu_info)(context,regnum))
 
 /* most CPUs use this macro */
-#define CPU0(cpu,name,nirq,dirq,oc,i0,i1,i2,mem,shift,bits,endian,align,maxinst,MEM) \
+#define CPU0(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst,MEM) \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute, NULL,						   \
@@ -314,14 +314,15 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,NULL,NULL, name##_info, name##_dasm,								   \
 		nirq, dirq, &name##_ICount, oc, i0, i1, i2, 							   \
-		cpu_readmem##mem, cpu_writemem##mem, NULL, NULL,						   \
+		datawidth,																   \
+		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		0, cpu_setOPbase##mem,													   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
 	}
 
 /* CPUs which have _burn, _state_save and _state_load functions */
-#define CPU1(cpu,name,nirq,dirq,oc,i0,i1,i2,mem,shift,bits,endian,align,maxinst,MEM)   \
+#define CPU1(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst,MEM)   \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
@@ -333,14 +334,15 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,name##_state_save,name##_state_load, name##_info, name##_dasm, 	   \
 		nirq, dirq, &name##_ICount, oc, i0, i1, i2, 							   \
-		cpu_readmem##mem, cpu_writemem##mem, NULL, NULL,						   \
+		datawidth,																   \
+		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		0, cpu_setOPbase##mem,													   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
 	}
 
 /* CPUs which have the _internal_interrupt function */
-#define CPU2(cpu,name,nirq,dirq,oc,i0,i1,i2,mem,shift,bits,endian,align,maxinst,MEM)   \
+#define CPU2(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst,MEM)   \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
@@ -351,14 +353,15 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_internal_interrupt,NULL,NULL, name##_info, name##_dasm,			   \
 		nirq, dirq, &name##_ICount, oc, i0, i1, i2, 							   \
-		cpu_readmem##mem, cpu_writemem##mem, NULL, NULL,						   \
+		datawidth,																   \
+		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		0, cpu_setOPbase##mem,													   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
 	}																			   \
 
 /* like CPU0, but CPU has Harvard-architecture like program/data memory */
-#define CPU3(cpu,name,nirq,dirq,oc,i0,i1,i2,mem,shift,bits,endian,align,maxinst,MEM) \
+#define CPU3(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst,MEM) \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute, NULL,						   \
@@ -368,14 +371,15 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,NULL,NULL, name##_info, name##_dasm,								   \
 		nirq, dirq, &name##_icount, oc, i0, i1, i2, 							   \
-		cpu_readmem##mem, cpu_writemem##mem, NULL, NULL,						   \
+		datawidth,																   \
+		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		cpu##_PGM_OFFSET, cpu_setOPbase##mem,									   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
 	}
 
 /* like CPU0, but CPU has internal memory (or I/O ports, timers or similiar) */
-#define CPU4(cpu,name,nirq,dirq,oc,i0,i1,i2,mem,shift,bits,endian,align,maxinst,MEM) \
+#define CPU4(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst,MEM) \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute, NULL,						   \
@@ -385,7 +389,8 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,NULL,NULL, name##_info, name##_dasm,								   \
 		nirq, dirq, &name##_icount, oc, i0, i1, i2, 							   \
-		cpu_readmem##mem, cpu_writemem##mem, name##_internal_r, name##_internal_w, \
+		datawidth,																   \
+		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, name##_internal_r, name##_internal_w, \
 		0, cpu_setOPbase##mem,													   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
@@ -396,220 +401,223 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 /* warning the ordering must match the one of the enum in driver.h! */
 struct cpu_interface cpuintf[] =
 {
-	CPU0(DUMMY,    Dummy,	 1,  0,1.00,0,				   -1,			   -1,			   16,	  0,16,LE,1, 1,16	),
+	CPU0(DUMMY,    Dummy,	 1,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 1,16	),
 #if (HAS_Z80)
-	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    16,	  0,16,LE,1, 4,16	),
+	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4,16	),
 #endif
 #if (HAS_Z80GB)
-	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   16,	  0,16,LE,1, 4,16	),
+	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4,16	),
 #endif
 #if (HAS_CDP1802)
 #define cdp1802_ICount cdp1802_icount
-	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   16,	  0,16,BE,1, 3,16	),
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   8, 16,	  0,16,BE,1, 3,16	),
 #endif
 #if (HAS_8080)
-	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   16,	  0,16,LE,1, 3,16	),
+	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_8085A)
-	CPU0(8085A,    i8085,	 4,255,1.00,I8085_NONE, 	   I8085_INTR,	   I8085_TRAP,	   16,	  0,16,LE,1, 3,16	),
+	CPU0(8085A,    i8085,	 4,255,1.00,I8085_NONE, 	   I8085_INTR,	   I8085_TRAP,	   8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M6502)
-	CPU0(M6502,    m6502,	 1,  0,1.00,M6502_INT_NONE,    M6502_INT_IRQ,  M6502_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+	CPU0(M6502,    m6502,	 1,  0,1.00,M6502_INT_NONE,    M6502_INT_IRQ,  M6502_INT_NMI,  8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M65C02)
-	CPU0(M65C02,   m65c02,	 1,  0,1.00,M65C02_INT_NONE,   M65C02_INT_IRQ, M65C02_INT_NMI, 16,	  0,16,LE,1, 3,16	),
+	CPU0(M65C02,   m65c02,	 1,  0,1.00,M65C02_INT_NONE,   M65C02_INT_IRQ, M65C02_INT_NMI, 8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M65SC02)
-	CPU0(M65SC02,  m65sc02,  1,  0,1.00,M65SC02_INT_NONE,  M65SC02_INT_IRQ,M65SC02_INT_NMI,16,	  0,16,LE,1, 3,16	),
+	CPU0(M65SC02,  m65sc02,  1,  0,1.00,M65SC02_INT_NONE,  M65SC02_INT_IRQ,M65SC02_INT_NMI,8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M65CE02)
-	CPU0(M65CE02,  m65ce02,  1,  0,1.00,M65CE02_INT_NONE,  M65CE02_INT_IRQ,M65CE02_INT_NMI,16,	  0,16,LE,1, 3,16	),
+	CPU0(M65CE02,  m65ce02,  1,  0,1.00,M65CE02_INT_NONE,  M65CE02_INT_IRQ,M65CE02_INT_NMI,8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M6509)
-	CPU0(M6509,    m6509,	 1,  0,1.00,M6509_INT_NONE,    M6509_INT_IRQ,  M6509_INT_NMI,  20,	  0,20,LE,1, 3,20	),
+	CPU0(M6509,    m6509,	 1,  0,1.00,M6509_INT_NONE,    M6509_INT_IRQ,  M6509_INT_NMI,  8, 20,	  0,20,LE,1, 3,20	),
 #endif
 #if (HAS_M6510)
-	CPU0(M6510,    m6510,	 1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+	CPU0(M6510,    m6510,	 1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M6510T)
-	CPU0(M6510T,   m6510t,	 1,  0,1.00,M6510T_INT_NONE,   M6510T_INT_IRQ, M6510T_INT_NMI, 16,	  0,16,LE,1, 3,16	),
+	CPU0(M6510T,   m6510t,	 1,  0,1.00,M6510T_INT_NONE,   M6510T_INT_IRQ, M6510T_INT_NMI, 8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M7501)
-	CPU0(M7501,    m7501,	 1,  0,1.00,M7501_INT_NONE,    M7501_INT_IRQ,  M7501_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+	CPU0(M7501,    m7501,	 1,  0,1.00,M7501_INT_NONE,    M7501_INT_IRQ,  M7501_INT_NMI,  8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M8502)
-	CPU0(M8502,    m8502,	 1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+	CPU0(M8502,    m8502,	 1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_N2A03)
-	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_M4510)
-	CPU0(M4510,    m4510,	 1,  0,1.00,M4510_INT_NONE,    M4510_INT_IRQ,  M4510_INT_NMI,  20,	  0,20,LE,1, 3,20	),
+	CPU0(M4510,    m4510,	 1,  0,1.00,M4510_INT_NONE,    M4510_INT_IRQ,  M4510_INT_NMI,  8, 20,	  0,20,LE,1, 3,20	),
 #endif
 #if (HAS_H6280)
-	CPU0(H6280,    h6280,	 3,  0,1.00,H6280_INT_NONE,    -1,			   H6280_INT_NMI,  21,	  0,21,LE,1, 3,21	),
+	CPU0(H6280,    h6280,	 3,  0,1.00,H6280_INT_NONE,    -1,			   H6280_INT_NMI,  8, 21,	  0,21,LE,1, 3,21	),
 #endif
 #if (HAS_I86)
-	CPU0(I86,	   i86, 	 1,  0,1.00,I86_INT_NONE,	   -1000,		   I86_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+	CPU0(I86,	   i86, 	 1,  0,1.00,I86_INT_NONE,	   -1000,		   I86_NMI_INT,    8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_I88)
-	CPU0(I88,	   i88, 	 1,  0,1.00,I88_INT_NONE,	   -1000,		   I88_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+	CPU0(I88,	   i88, 	 1,  0,1.00,I88_INT_NONE,	   -1000,		   I88_NMI_INT,    8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_I186)
-	CPU0(I186,	   i186,	 1,  0,1.00,I186_INT_NONE,	   -1000,		   I186_NMI_INT,   20,	  0,20,LE,1, 5,20	),
+	CPU0(I186,	   i186,	 1,  0,1.00,I186_INT_NONE,	   -1000,		   I186_NMI_INT,   8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_I188)
-	CPU0(I188,	   i188,	 1,  0,1.00,I188_INT_NONE,	   -1000,		   I188_NMI_INT,   20,	  0,20,LE,1, 5,20	),
+	CPU0(I188,	   i188,	 1,  0,1.00,I188_INT_NONE,	   -1000,		   I188_NMI_INT,   8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_I286)
-	CPU0(I286,	   i286,	 1,  0,1.00,I286_INT_NONE,	   -1000,		   I286_NMI_INT,   24,	  0,24,LE,1, 5,24	),
+	CPU0(I286,	   i286,	 1,  0,1.00,I286_INT_NONE,	   -1000,		   I286_NMI_INT,   8, 24,	  0,24,LE,1, 5,24	),
 #endif
 #if (HAS_V20)
-	CPU0(V20,	   v20, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+	CPU0(V20,	   v20, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_V30)
-	CPU0(V30,	   v30, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+	CPU0(V30,	   v30, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_V33)
-	CPU0(V33,	   v33, 	 1,  0,1.20,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+	CPU0(V33,	   v33, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    8, 20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_I8035)
-	CPU0(I8035,    i8035,	 1,  0,1.00,I8035_IGNORE_INT,  I8035_EXT_INT,  -1,			   16,	  0,16,LE,1, 2,16	),
+	CPU0(I8035,    i8035,	 1,  0,1.00,I8035_IGNORE_INT,  I8035_EXT_INT,  -1,			   8, 16,	  0,16,LE,1, 2,16	),
 #endif
 #if (HAS_I8039)
-	CPU0(I8039,    i8039,	 1,  0,1.00,I8039_IGNORE_INT,  I8039_EXT_INT,  -1,			   16,	  0,16,LE,1, 2,16	),
+	CPU0(I8039,    i8039,	 1,  0,1.00,I8039_IGNORE_INT,  I8039_EXT_INT,  -1,			   8, 16,	  0,16,LE,1, 2,16	),
 #endif
 #if (HAS_I8048)
-	CPU0(I8048,    i8048,	 1,  0,1.00,I8048_IGNORE_INT,  I8048_EXT_INT,  -1,			   16,	  0,16,LE,1, 2,16	),
+	CPU0(I8048,    i8048,	 1,  0,1.00,I8048_IGNORE_INT,  I8048_EXT_INT,  -1,			   8, 16,	  0,16,LE,1, 2,16	),
 #endif
 #if (HAS_N7751)
-	CPU0(N7751,    n7751,	 1,  0,1.00,N7751_IGNORE_INT,  N7751_EXT_INT,  -1,			   16,	  0,16,LE,1, 2,16	),
+	CPU0(N7751,    n7751,	 1,  0,1.00,N7751_IGNORE_INT,  N7751_EXT_INT,  -1,			   8, 16,	  0,16,LE,1, 2,16	),
 #endif
 #if (HAS_M6800)
-	CPU0(M6800,    m6800,	 1,  0,1.00,M6800_INT_NONE,    M6800_INT_IRQ,  M6800_INT_NMI,  16,	  0,16,BE,1, 4,16	),
+	CPU0(M6800,    m6800,	 1,  0,1.00,M6800_INT_NONE,    M6800_INT_IRQ,  M6800_INT_NMI,  8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M6801)
-	CPU0(M6801,    m6801,	 1,  0,1.00,M6801_INT_NONE,    M6801_INT_IRQ,  M6801_INT_NMI,  16,	  0,16,BE,1, 4,16	),
+	CPU0(M6801,    m6801,	 1,  0,1.00,M6801_INT_NONE,    M6801_INT_IRQ,  M6801_INT_NMI,  8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M6802)
-	CPU0(M6802,    m6802,	 1,  0,1.00,M6802_INT_NONE,    M6802_INT_IRQ,  M6802_INT_NMI,  16,	  0,16,BE,1, 4,16	),
+	CPU0(M6802,    m6802,	 1,  0,1.00,M6802_INT_NONE,    M6802_INT_IRQ,  M6802_INT_NMI,  8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M6803)
-	CPU0(M6803,    m6803,	 1,  0,1.00,M6803_INT_NONE,    M6803_INT_IRQ,  M6803_INT_NMI,  16,	  0,16,BE,1, 4,16	),
+	CPU0(M6803,    m6803,	 1,  0,1.00,M6803_INT_NONE,    M6803_INT_IRQ,  M6803_INT_NMI,  8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M6808)
-	CPU0(M6808,    m6808,	 1,  0,1.00,M6808_INT_NONE,    M6808_INT_IRQ,  M6808_INT_NMI,  16,	  0,16,BE,1, 4,16	),
+	CPU0(M6808,    m6808,	 1,  0,1.00,M6808_INT_NONE,    M6808_INT_IRQ,  M6808_INT_NMI,  8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_HD63701)
-	CPU0(HD63701,  hd63701,  1,  0,1.00,HD63701_INT_NONE,  HD63701_INT_IRQ,HD63701_INT_NMI,16,	  0,16,BE,1, 4,16	),
+	CPU0(HD63701,  hd63701,  1,  0,1.00,HD63701_INT_NONE,  HD63701_INT_IRQ,HD63701_INT_NMI,8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_NSC8105)
-	CPU0(NSC8105,  nsc8105,  1,  0,1.00,NSC8105_INT_NONE,  NSC8105_INT_IRQ,NSC8105_INT_NMI,16,	  0,16,BE,1, 4,16	),
+	CPU0(NSC8105,  nsc8105,  1,  0,1.00,NSC8105_INT_NONE,  NSC8105_INT_IRQ,NSC8105_INT_NMI,8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M6805)
-	CPU0(M6805,    m6805,	 1,  0,1.00,M6805_INT_NONE,    M6805_INT_IRQ,  -1,			   16,	  0,11,BE,1, 3,16	),
+	CPU0(M6805,    m6805,	 1,  0,1.00,M6805_INT_NONE,    M6805_INT_IRQ,  -1,			   8, 16,	  0,11,BE,1, 3,16	),
 #endif
 #if (HAS_M68705)
-	CPU0(M68705,   m68705,	 1,  0,1.00,M68705_INT_NONE,   M68705_INT_IRQ, -1,			   16,	  0,11,BE,1, 3,16	),
+	CPU0(M68705,   m68705,	 1,  0,1.00,M68705_INT_NONE,   M68705_INT_IRQ, -1,			   8, 16,	  0,11,BE,1, 3,16	),
 #endif
 #if (HAS_HD63705)
-	CPU0(HD63705,  hd63705,  8,  0,1.00,HD63705_INT_NONE,  HD63705_INT_IRQ,-1,			   16,	  0,16,BE,1, 3,16	),
+	CPU0(HD63705,  hd63705,  8,  0,1.00,HD63705_INT_NONE,  HD63705_INT_IRQ,-1,			   8, 16,	  0,16,BE,1, 3,16	),
 #endif
 #if (HAS_HD6309)
-	CPU0(HD6309,   hd6309,	 2,  0,1.00,HD6309_INT_NONE,   HD6309_INT_IRQ, HD6309_INT_NMI, 16,	  0,16,BE,1, 4,16	),
+	CPU0(HD6309,   hd6309,	 2,  0,1.00,HD6309_INT_NONE,   HD6309_INT_IRQ, HD6309_INT_NMI, 8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M6809)
-	CPU0(M6809,    m6809,	 2,  0,1.00,M6809_INT_NONE,    M6809_INT_IRQ,  M6809_INT_NMI,  16,	  0,16,BE,1, 4,16	),
+	CPU0(M6809,    m6809,	 2,  0,1.00,M6809_INT_NONE,    M6809_INT_IRQ,  M6809_INT_NMI,  8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_KONAMI)
-	CPU0(KONAMI,   konami,	 2,  0,1.00,KONAMI_INT_NONE,   KONAMI_INT_IRQ, KONAMI_INT_NMI, 16,	  0,16,BE,1, 4,16	),
+	CPU0(KONAMI,   konami,	 2,  0,1.00,KONAMI_INT_NONE,   KONAMI_INT_IRQ, KONAMI_INT_NMI, 8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M68000)
-	CPU0(M68000,   m68000,	 8, -1,1.00,MC68000_INT_NONE,  -1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
+	CPU0(M68000,   m68000,	 8, -1,1.00,MC68000_INT_NONE,  -1,			   -1,			   16,24bew, 0,24,BE,2,10,24W),
 #endif
 #if (HAS_M68010)
-	CPU0(M68010,   m68010,	 8, -1,1.00,MC68010_INT_NONE,  -1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
+	CPU0(M68010,   m68010,	 8, -1,1.00,MC68010_INT_NONE,  -1,			   -1,			   16,24bew, 0,24,BE,2,10,24W),
 #endif
 #if (HAS_M68EC020)
-	CPU0(M68EC020, m68ec020, 8, -1,1.00,MC68EC020_INT_NONE,-1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
+	CPU0(M68EC020, m68ec020, 8, -1,1.00,MC68EC020_INT_NONE,-1,			   -1,			   16,24bew, 0,24,BE,2,10,24W),
 #endif
 #if (HAS_M68020)
-	CPU0(M68020,   m68020,	 8, -1,1.00,MC68020_INT_NONE,  -1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
+	CPU0(M68020,   m68020,	 8, -1,1.00,MC68020_INT_NONE,  -1,			   -1,			   16,24bew, 0,24,BE,2,10,24W),
 #endif
 #if (HAS_T11)
-	CPU0(T11,	   t11, 	 4,  0,1.00,T11_INT_NONE,	   -1,			   -1,			   16lew, 0,16,LE,2, 6,16LEW),
+	CPU0(T11,	   t11, 	 4,  0,1.00,T11_INT_NONE,	   -1,			   -1,			   16,16lew, 0,16,LE,2, 6,16W),
 #endif
 #if (HAS_S2650)
-	CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   16,	  0,15,LE,1, 3,16	),
+	CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   8, 16,	  0,15,LE,1, 3,16	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount
-	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   16,	  0,16,LE,1, 3,16	),
+	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   8, 16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             16,    0,16,LE,1, 3,16   ),
+    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             8, 16,    0,16,LE,1, 3,16   ),
 #endif
 #if (HAS_TMS34010)
-	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   29,	  3,29,LE,2,10,29	),
+	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   16,29lew,  3,29,LE,2,10,29W),
+#endif
+#if (HAS_TMS34020)
+	CPU2(TMS34020, tms34020, 2,  0,1.00,TMS34020_INT_NONE, TMS34020_INT1,  -1,			   16,29lew,  3,29,LE,2,10,29W),
 #endif
 #if (HAS_TMS9900)
-	CPU0(TMS9900,  tms9900,  1,  0,1.00,TMS9900_NONE,	   -1,			   -1,			   16bew, 0,16,BE,2, 6,16BEW),
+	CPU0(TMS9900,  tms9900,  1,  0,1.00,TMS9900_NONE,	   -1,			   -1,			   16,16bew, 0,16,BE,2, 6,16W),
 #endif
 #if (HAS_TMS9940)
-	CPU0(TMS9940,  tms9940,  1,  0,1.00,TMS9940_NONE,	   -1,			   -1,			   16bew, 0,16,BE,2, 6,16BEW),
+	CPU0(TMS9940,  tms9940,  1,  0,1.00,TMS9940_NONE,	   -1,			   -1,			   16,16bew, 0,16,BE,2, 6,16W),
 #endif
 #if (HAS_TMS9980)
-	CPU0(TMS9980,  tms9980a, 1,  0,1.00,TMS9980A_NONE,	   -1,			   -1,			   16,	  0,16,BE,1, 6,16	),
+	CPU0(TMS9980,  tms9980a, 1,  0,1.00,TMS9980A_NONE,	   -1,			   -1,			   8, 16,	  0,16,BE,1, 6,16	),
 #endif
 #if (HAS_TMS9985)
-	CPU0(TMS9985,  tms9985,  1,  0,1.00,TMS9985_NONE,	   -1,			   -1,			   16,	  0,16,BE,1, 6,16	),
+	CPU0(TMS9985,  tms9985,  1,  0,1.00,TMS9985_NONE,	   -1,			   -1,			   8, 16,	  0,16,BE,1, 6,16	),
 #endif
 #if (HAS_TMS9989)
-	CPU0(TMS9989,  tms9989,  1,  0,1.00,TMS9989_NONE,	   -1,			   -1,			   16,	  0,16,BE,1, 6,16	),
+	CPU0(TMS9989,  tms9989,  1,  0,1.00,TMS9989_NONE,	   -1,			   -1,			   8, 16,	  0,16,BE,1, 6,16	),
 #endif
 #if (HAS_TMS9995)
-	CPU0(TMS9995,  tms9995,  1,  0,1.00,TMS9995_NONE,	   -1,			   -1,			   16,	  0,16,BE,1, 6,16	),
+	CPU0(TMS9995,  tms9995,  1,  0,1.00,TMS9995_NONE,	   -1,			   -1,			   8, 16,	  0,16,BE,1, 6,16	),
 #endif
 #if (HAS_TMS99105A)
-	CPU0(TMS99105A,tms99105a,1,  0,1.00,TMS99105A_NONE,    -1,			   -1,			   16bew, 0,16,BE,2, 6,16BEW),
+	CPU0(TMS99105A,tms99105a,1,  0,1.00,TMS99105A_NONE,    -1,			   -1,			   16,16bew, 0,16,BE,2, 6,16W),
 #endif
 #if (HAS_TMS99110A)
-	CPU0(TMS99110A,tms99110a,1,  0,1.00,TMS99110A_NONE,    -1,			   -1,			   16bew, 0,16,BE,2, 6,16BEW),
+	CPU0(TMS99110A,tms99110a,1,  0,1.00,TMS99110A_NONE,    -1,			   -1,			   16,16bew, 0,16,BE,2, 6,16W),
 #endif
 #if (HAS_Z8000)
-	CPU0(Z8000,    z8000,	 2,  0,1.00,Z8000_INT_NONE,    Z8000_NVI,	   Z8000_NMI,	   16bew, 0,16,BE,2, 6,16BEW),
+	CPU0(Z8000,    z8000,	 2,  0,1.00,Z8000_INT_NONE,    Z8000_NVI,	   Z8000_NMI,	   16,16bew, 0,16,BE,2, 6,16W),
 #endif
 #if (HAS_TMS320C10)
-	CPU3(TMS320C10,tms320c10,2,  0,1.00,TMS320C10_INT_NONE,-1,			   -1,			   16,	 -1,16,BE,2, 4,16	),
+	CPU3(TMS320C10,tms320c10,2,  0,1.00,TMS320C10_INT_NONE,-1,			   -1,			   8, 16,	 -1,16,BE,2, 4,16	),
 #endif
 #if (HAS_CCPU)
-	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,	  0,15,LE,1, 3,16	),
+	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,15,LE,1, 3,16	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   16,	  0,18,LE,1, 3,16	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3,16	),
 #endif
 #if (HAS_ADSP2100)
-	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
+	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16,16lew,-1,14,LE,2, 4,16W),
 #endif
 #if (HAS_ADSP2105)
-	CPU3(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
+	CPU3(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16,16lew,-1,14,LE,2, 4,16W),
 #endif
 #if (HAS_PSXCPU)
-	CPU0(PSX,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
+	CPU0(PSXCPU,   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  16,32lew, 0,32,LE,4, 4,32W),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
-	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   16,	  0,16,BE,1, 4,16	),
+	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   8, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_ARM)
-	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   26lew, 0,26,LE,4, 4,26LEW),
+	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   32,26ledw, 0,26,LE,4, 4,26DW),
 #endif
 #if (HAS_G65816)
-	CPU0(G65C816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 24,	  0,24,BE,1, 3,24	),
+	CPU0(G65C816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3,24	),
 #endif
 #if (HAS_SPC700)
-	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   16,	  0,16,LE,1, 3,16	),
+	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3,16	),
 #endif
 };
 
@@ -622,7 +630,7 @@ void cpu_init(void)
 	{
 		if( cpuintf[i].cpu_num != i )
 		{
-logerror("CPU #%d [%s] wrong ID %d: check enum CPU_... in src/driver.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
+			printf("CPU #%d [%s] wrong ID %d: check enum CPU_... in src/cpuintrf.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
 			exit(1);
 		}
 	}
@@ -913,19 +921,34 @@ logerror("Machine reset\n");
   than 1 second without resetting the watchdog.
 
 ***************************************************************************/
-WRITE_HANDLER( watchdog_reset_w )
+
+static void watchdog_reset(void)
 {
 	if (watchdog_counter == -1) logerror("watchdog armed\n");
 	watchdog_counter = 2*Machine->drv->frames_per_second;
+}
+
+WRITE_HANDLER( watchdog_reset_w )
+{
+	watchdog_reset();
 }
 
 READ_HANDLER( watchdog_reset_r )
 {
-	if (watchdog_counter == -1) logerror("watchdog armed\n");
-	watchdog_counter = 2*Machine->drv->frames_per_second;
+	watchdog_reset();
 	return 0;
 }
 
+WRITE16_HANDLER( watchdog_reset16_w )
+{
+	watchdog_reset();
+}
+
+READ16_HANDLER( watchdog_reset16_r )
+{
+	watchdog_reset();
+	return 0;
+}
 
 
 /***************************************************************************
@@ -2038,7 +2061,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				break;
 #endif
 #if (HAS_PSXCPU)
-			case CPU_PSX:
+			case CPU_PSXCPU:
 				switch (num)
 				{
 				case MIPS_IRQ0: 		irq_line = 0; LOG(("MIPS IRQ0\n")); break;
@@ -2790,6 +2813,17 @@ unsigned cputype_endianess(int cpu_type)
 }
 
 /***************************************************************************
+  Returns the data bus width for a specific CPU type
+***************************************************************************/
+unsigned cputype_databus_width(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return cpuintf[cpu_type].databus_width;
+	return 0;
+}
+
+/***************************************************************************
   Returns the code align unit for a speciific CPU type (1 byte, 2 word, ...)
 ***************************************************************************/
 unsigned cputype_align_unit(int cpu_type)
@@ -2917,6 +2951,16 @@ unsigned cpunum_endianess(int cpunum)
 {
 	if( cpunum < totalcpu )
 		return cputype_endianess(CPU_TYPE(cpunum));
+	return 0;
+}
+
+/***************************************************************************
+  Returns the data bus width for a specific CPU number
+***************************************************************************/
+unsigned cpunum_databus_width(int cpunum)
+{
+	if( cpunum < totalcpu )
+		return cputype_databus_width(CPU_TYPE(cpunum));
 	return 0;
 }
 

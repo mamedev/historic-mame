@@ -147,7 +147,7 @@ int xevious_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
 }
@@ -221,7 +221,7 @@ WRITE_HANDLER( xevious_vh_latch_w )
 		tilemap_set_scrolly(fg_tilemap,0,data+18);
 		break;
 	case 7:
-		flip_screen_w(0,data & 1);
+		flip_screen_set(data & 1);
 		break;
    default:
 		   logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, data);
@@ -371,9 +371,7 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

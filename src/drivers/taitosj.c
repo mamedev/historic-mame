@@ -173,8 +173,7 @@ static WRITE_HANDLER( taitosj_soundcommand_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0x87ff, MRA_RAM },
@@ -192,11 +191,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40d, 0xd40d, input_port_4_r },
 	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },       /* DSW2 and DSW3 */
 	{ 0xe000, 0xefff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, taitosj_fake_data_w },
@@ -220,12 +217,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd50f, 0xd50f, MWA_NOP },
 	{ 0xd600, 0xd600, taitosj_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* only difference is taitosj_fake_ replaced with taitosj_mcu_ */
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0x87ff, MRA_RAM },
@@ -243,11 +238,9 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0xd40d, 0xd40d, input_port_4_r },
 	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },       /* DSW2 and DSW3 */
 	{ 0xe000, 0xefff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, taitosj_mcu_data_w },
@@ -270,13 +263,11 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0xd50e, 0xd50e, taitosj_bankswitch_w },
 	{ 0xd600, 0xd600, taitosj_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x4801, 0x4801, AY8910_read_port_1_r },
@@ -284,11 +275,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x4805, 0x4805, AY8910_read_port_3_r },
 	{ 0x5000, 0x5000, soundlatch_r },
 	{ 0xe000, 0xefff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x4800, 0x4800, AY8910_control_port_1_w },
@@ -297,28 +286,23 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4803, 0x4803, AY8910_write_port_2_w },
 	{ 0x4804, 0x4804, AY8910_control_port_3_w },
 	{ 0x4805, 0x4805, AY8910_write_port_3_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress m68705_readmem[] =
-{
+static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, taitosj_68705_portA_r },
 	{ 0x0001, 0x0001, taitosj_68705_portB_r },
 	{ 0x0002, 0x0002, taitosj_68705_portC_r },
 	{ 0x0003, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m68705_writemem[] =
-{
+static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0000, 0x0000, taitosj_68705_portA_w },
 	{ 0x0001, 0x0001, taitosj_68705_portB_w },
 	{ 0x0003, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

@@ -231,8 +231,7 @@ static WRITE_HANDLER( scontra_snd_bankswitch_w )
 
 /***************************************************************************/
 
-static struct MemoryReadAddress scontra_readmem[] =
-{
+static MEMORY_READ_START( scontra_readmem )
 	{ 0x1f90, 0x1f90, input_port_0_r }, /* coin */
 	{ 0x1f91, 0x1f91, input_port_1_r }, /* p1 */
 	{ 0x1f92, 0x1f92, input_port_2_r }, /* p2 */
@@ -245,11 +244,9 @@ static struct MemoryReadAddress scontra_readmem[] =
 	{ 0x5800, 0x5fff, scontra_bankedram_r },			/* palette + work RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress thunderx_readmem[] =
-{
+static MEMORY_READ_START( thunderx_readmem )
 	{ 0x1f90, 0x1f90, input_port_0_r }, /* coin */
 	{ 0x1f91, 0x1f91, input_port_1_r }, /* p1 */
 	{ 0x1f92, 0x1f92, input_port_2_r }, /* p2 */
@@ -262,11 +259,9 @@ static struct MemoryReadAddress thunderx_readmem[] =
 	{ 0x5800, 0x5fff, thunderx_bankedram_r },			/* palette + work RAM + unknown RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress scontra_writemem[] =
-{
+static MEMORY_WRITE_START( scontra_writemem )
 	{ 0x1f80, 0x1f80, scontra_bankswitch_w },	/* bankswitch control + coin counters */
 	{ 0x1f84, 0x1f84, soundlatch_w },
 	{ 0x1f88, 0x1f88, thunderx_sh_irqtrigger_w },		/* cause interrupt on audio CPU */
@@ -277,11 +272,9 @@ static struct MemoryWriteAddress scontra_writemem[] =
 	{ 0x4000, 0x57ff, MWA_RAM },
 	{ 0x5800, 0x5fff, scontra_bankedram_w, &ram },			/* palette + work RAM */
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress thunderx_writemem[] =
-{
+static MEMORY_WRITE_START( thunderx_writemem )
 	{ 0x1f80, 0x1f80, thunderx_videobank_w },
 	{ 0x1f84, 0x1f84, soundlatch_w },
 	{ 0x1f88, 0x1f88, thunderx_sh_irqtrigger_w },		/* cause interrupt on audio CPU */
@@ -292,47 +285,38 @@ static struct MemoryWriteAddress thunderx_writemem[] =
 	{ 0x4000, 0x57ff, MWA_RAM },
 	{ 0x5800, 0x5fff, thunderx_bankedram_w, &ram },			/* palette + work RAM + unknown RAM */
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress scontra_readmem_sound[] =
-{
+static MEMORY_READ_START( scontra_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0xa000, 0xa000, soundlatch_r },			/* soundlatch_r */
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },	/* 007232 registers */
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },	/* YM2151 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress scontra_writemem_sound[] =
-{
+static MEMORY_WRITE_START( scontra_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },		/* 007232 registers */
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM2151 */
 	{ 0xf000, 0xf000, scontra_snd_bankswitch_w },	/* 007232 bank select */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress thunderx_readmem_sound[] =
-{
+static MEMORY_READ_START( thunderx_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress thunderx_writemem_sound[] =
-{
+static MEMORY_WRITE_START( thunderx_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

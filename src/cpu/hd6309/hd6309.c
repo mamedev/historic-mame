@@ -117,7 +117,7 @@ typedef struct
 {
 	PAIR	pc; 		/* Program counter */
 	PAIR	ppc;		/* Previous program counter */
-	PAIR	q;			/* Accumulator a, b, e, f (ab = d, ef = w, abef = q) */
+	PAIR	d,w;		/* Accumlator d and w (ab = d, ef = w, abef = q) */
 	PAIR	dp; 		/* Direct Page register (page in MSB) */
 	PAIR	u, s;		/* Stack pointers */
 	PAIR	x, y;		/* Index registers */
@@ -160,11 +160,9 @@ int hd6309_slapstic = 0;
 #define pY		hd6309.y
 #define pV		hd6309.v
 #define pQ		hd6309.q
-
-#define Q		hd6309.q.d
-
-#define pD		hd6309.q		/* Not that these seem to be pointing to the same struct. They are. */
-#define pW		hd6309.q		/* There are two different macros needed to access these registers	*/
+#define pD		hd6309.d
+#define pW		hd6309.w
+#define pZ		hd6309.z
 
 #define PPC 	hd6309.ppc.w.l
 #define PC		hd6309.pc.w.l
@@ -179,12 +177,12 @@ int hd6309_slapstic = 0;
 #define YD		hd6309.y.d
 #define V		hd6309.v.w.l
 #define VD		hd6309.v.d
-#define D		hd6309.q.w.h
-#define A		hd6309.q.b.h3
-#define B		hd6309.q.b.h2
-#define W		hd6309.q.w.l
-#define E		hd6309.q.b.h
-#define F		hd6309.q.b.l
+#define D		hd6309.d.w.l
+#define A		hd6309.d.b.h
+#define B		hd6309.d.b.l
+#define W		hd6309.w.w.l
+#define E		hd6309.d.b.h
+#define F		hd6309.d.b.l
 #define DP		hd6309.dp.b.h
 #define DPD 	hd6309.dp.d
 #define CC		hd6309.cc
@@ -224,13 +222,11 @@ int hd6309_ICount=50000;
 
 #define PUSHBYTE(b) --S; WM(SD,b)
 #define PUSHWORD(w) --S; WM(SD,w.b.l); --S; WM(SD,w.b.h)
-#define PUSHWORD_D(w) --S; WM(SD,w.b.h2); --S; WM(SD,w.b.h3) /*special PUSHWORD for the d register */
 #define PULLBYTE(b) b = RM(SD); S++
 #define PULLWORD(w) w = RM(SD)<<8; S++; w |= RM(SD); S++
 
 #define PSHUBYTE(b) --U; WM(UD,b);
 #define PSHUWORD(w) --U; WM(UD,w.b.l); --U; WM(UD,w.b.h)
-#define PSHUWORD_D(w) --U; WM(UD,w.b.h2); --U; WM(UD,w.b.h3) /*special PUSHWORD for the d register */
 #define PULUBYTE(b) b = RM(UD); U++
 #define PULUWORD(w) w = RM(UD)<<8; U++; w |= RM(UD); U++
 
@@ -239,6 +235,7 @@ int hd6309_ICount=50000;
 #define CLR_HNZC	CC&=~(CC_H|CC_N|CC_Z|CC_C)
 #define CLR_NZVC	CC&=~(CC_N|CC_Z|CC_V|CC_C)
 #define CLR_Z		CC&=~(CC_Z)
+#define CLR_N		CC&=~(CC_N)
 #define CLR_NZC 	CC&=~(CC_N|CC_Z|CC_C)
 #define CLR_ZC		CC&=~(CC_Z|CC_C)
 
@@ -343,8 +340,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 #define DIRWORD(w) {DIRECT;w.d=RM16(EAD);}
 #define DIRLONG(lng) {DIRECT;lng.w.h=RM16(EAD);lng.w.l=RM16(EAD+2);}
 #define EXTBYTE(b) {EXTENDED;b=RM(EAD);}
-#define EXTWORD(wd) {EXTENDED;wd.w.l=RM16(EAD);}
-#define EXTWORD_D(wd) {EXTENDED;wd.w.h=RM16(EAD);}
+#define EXTWORD(w) {EXTENDED;w.d=RM16(EAD);}
 #define EXTLONG(lng) {EXTENDED;lng.w.h=RM16(EAD);lng.w.l=RM16(EAD+2);}
 
 /* macros for branch instructions */
@@ -391,13 +387,6 @@ INLINE void WM16( UINT32 mAddr, PAIR *p )
 {
 	WM( mAddr, p->b.h );
 	WM( (mAddr+1)&0xffff, p->b.l );
-}
-
-INLINE void WM16_D( UINT32 mAddr, PAIR *p );
-INLINE void WM16_D( UINT32 mAddr, PAIR *p )
-{
-	WM( mAddr, p->b.h3 );
-	WM( (mAddr+1)&0xffff, p->b.h2 );
 }
 
 INLINE void WM32( UINT32 mAddr, PAIR *p );
@@ -679,10 +668,6 @@ void hd6309_set_nmi_line(int state)
 		PUSHWORD(pY);
 		PUSHWORD(pX);
 		PUSHBYTE(DP);
-
-		/* I am not sure is this really happens on a 6309.
-		   I have this here just in case					*/
-
 		if ( MD & MD_EM )
 		{
 			PUSHBYTE(F);
@@ -813,10 +798,10 @@ const char *hd6309_info(void *context, int regnum)
 		case CPU_INFO_REG+HD6309_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+HD6309_MD: sprintf(buffer[which], "MD:%02X", r->md); break;
 		case CPU_INFO_REG+HD6309_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
-		case CPU_INFO_REG+HD6309_A: sprintf(buffer[which], "A:%02X", r->q.b.h3); break;
-		case CPU_INFO_REG+HD6309_B: sprintf(buffer[which], "B:%02X", r->q.b.h2); break;
-		case CPU_INFO_REG+HD6309_E: sprintf(buffer[which], "E:%02X", r->q.b.h); break;
-		case CPU_INFO_REG+HD6309_F: sprintf(buffer[which], "F:%02X", r->q.b.l); break;
+		case CPU_INFO_REG+HD6309_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
+		case CPU_INFO_REG+HD6309_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
+		case CPU_INFO_REG+HD6309_E: sprintf(buffer[which], "E:%02X", r->w.b.h); break;
+		case CPU_INFO_REG+HD6309_F: sprintf(buffer[which], "F:%02X", r->w.b.l); break;
 		case CPU_INFO_REG+HD6309_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
 		case CPU_INFO_REG+HD6309_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
 		case CPU_INFO_REG+HD6309_V: sprintf(buffer[which], "V:%04X", r->v.w.l); break;

@@ -10,6 +10,7 @@ static int splitline;
 static struct tilemap *fg_tilemap,*bg_tilemap;
 static int xadjust;
 static int scrollx1[256],scrolly1[256],scrollx2[256],scrolly2[256];
+static int video_off;
 extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;
 
@@ -19,7 +20,6 @@ void m72_init_machine(void)
 {
 	irq1 = 0x20;
 	irq2 = 0x22;
-
 	m72_init_sound();
 }
 
@@ -73,81 +73,82 @@ int m72_interrupt(void)
 
 ***************************************************************************/
 
-static void m72_get_bg_tile_info(int tile_index)
+INLINE void m72_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
 {
-	unsigned char attr = m72_videoram2[4*tile_index+1];
-	SET_TILE_INFO(2,m72_videoram2[4*tile_index] + ((attr & 0x3f) << 8),m72_videoram2[4*tile_index+2] & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	int code,attr,color,pri;
+
+	tile_index *= 4;
+
+	code  = videoram[tile_index];
+	attr  = videoram[tile_index+1];
+	color = videoram[tile_index+2];
+	SET_TILE_INFO(gfxnum,code + ((attr & 0x3f) << 8),color & 0x0f)
+
+	if (color & 0x80) pri = 2;
+	else if (color & 0x40) pri = 1;
+	else pri = 0;
+/* color & 0x10 is used in bchopper and hharry, more priority? */
+
+	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6) | TILE_SPLIT(pri);
 }
 
-static void m72_get_fg_tile_info(int tile_index)
+INLINE void rtype2_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
 {
-	unsigned char attr = m72_videoram1[4*tile_index+1];
-	SET_TILE_INFO(1,m72_videoram1[4*tile_index] + ((attr & 0x3f) << 8),m72_videoram1[4*tile_index+2] & 0x0f)
-/* bchopper: (videoram[4*tile_index+2] & 0x10) is used, priority? */
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	int code,attr,color,pri;
 
-	tile_info.priority = (m72_videoram1[4*tile_index+2] & 0x80) >> 7;
-}
+	tile_index *= 4;
 
-static void dbreed_get_bg_tile_info(int tile_index)
-{
-	unsigned char attr = m72_videoram2[4*tile_index+1];
-	SET_TILE_INFO(2,m72_videoram2[4*tile_index] + ((attr & 0x3f) << 8),m72_videoram2[4*tile_index+2] & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	code  = videoram[tile_index] + (videoram[tile_index+1] << 8);
+	color = videoram[tile_index+2];
+	attr  = videoram[tile_index+3];
+	SET_TILE_INFO(gfxnum,code,color & 0x0f)
 
-	/* this seems to apply only to Dragon Breed, it breaks R-Type and Gallop */
-	tile_info.priority = (m72_videoram2[4*tile_index+2] & 0x80) >> 7;
-}
+	if (attr & 0x01) pri = 2;
+	else if (color & 0x80) pri = 1;
+	else pri = 0;
 
-static void rtype2_get_bg_tile_info(int tile_index)
-{
-	unsigned char attr = m72_videoram2[4*tile_index+2];
-	SET_TILE_INFO(1,m72_videoram2[4*tile_index] + (m72_videoram2[4*tile_index+1] << 8),attr & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0x60) >> 5);
-}
-
-static void rtype2_get_fg_tile_info(int tile_index)
-{
-	unsigned char attr = m72_videoram1[4*tile_index+2];
-	SET_TILE_INFO(1,m72_videoram1[4*tile_index] + (m72_videoram1[4*tile_index+1] << 8),attr & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0x60) >> 5);
-
-	tile_info.priority = m72_videoram1[4*tile_index+3] & 0x01;
-
-/* TODO: this is used on the continue screen by rtype2. Maybe it selects split tilemap */
-/* like in M92 (top 8 pens appear over sprites), however if it is only used in that */
-/* place there's no need to support it, it's just a black screen... */
-	tile_info.priority |= (m72_videoram1[4*tile_index+2] & 0x80) >> 7;
+	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5) | TILE_SPLIT(pri);
 
 /* (videoram[tile_index+2] & 0x10) is used by majtitle on the green, but it's not clear for what */
 /* (videoram[tile_index+3] & 0xfe) are used as well */
 }
 
-static void majtitle_get_bg_tile_info(int tile_index)
+
+static void m72_get_bg_tile_info(int tile_index)
 {
-	unsigned char attr = m72_videoram2[4*tile_index+2];
-	SET_TILE_INFO(1,m72_videoram2[4*tile_index] + (m72_videoram2[4*tile_index+1] << 8),attr & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0x60) >> 5);
-/* (videoram[4*tile_index+2] & 0x10) is used, but it's not clear for what (priority?) */
+	m72_get_tile_info(tile_index,m72_videoram2,2);
 }
 
-INLINE void hharry_get_tile_info(int gfxnum,unsigned char *videoram,int tile_index)
+static void m72_get_fg_tile_info(int tile_index)
 {
-	unsigned char attr = videoram[4*tile_index+1];
-	SET_TILE_INFO(gfxnum,videoram[4*tile_index] + ((attr & 0x3f) << 8),videoram[4*tile_index+2] & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
-/* (videoram[4*tile_index+2] & 0x10) is used, but it's not clear for what (priority?) */
+	m72_get_tile_info(tile_index,m72_videoram1,1);
 }
 
 static void hharry_get_bg_tile_info(int tile_index)
 {
-	hharry_get_tile_info(1,m72_videoram2,tile_index);
+	m72_get_tile_info(tile_index,m72_videoram2,1);
 }
 
 static void hharry_get_fg_tile_info(int tile_index)
 {
-	hharry_get_tile_info(1,m72_videoram1,tile_index);
+	m72_get_tile_info(tile_index,m72_videoram1,1);
+}
+
+static void rtype2_get_bg_tile_info(int tile_index)
+{
+	rtype2_get_tile_info(tile_index,m72_videoram2,1);
+}
+
+static void rtype2_get_fg_tile_info(int tile_index)
+{
+	rtype2_get_tile_info(tile_index,m72_videoram1,1);
+}
+
+
+static UINT32 majtitle_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return row*256 + col;
 }
 
 
@@ -159,42 +160,22 @@ static void hharry_get_fg_tile_info(int tile_index)
 
 int m72_vh_start(void)
 {
-	int i;
-
-
-	bg_tilemap = tilemap_create(m72_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
-	fg_tilemap = tilemap_create(m72_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+	bg_tilemap = tilemap_create(m72_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(m72_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transmask(fg_tilemap,0,0xffff);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff);
+	tilemap_set_transmask(fg_tilemap,2,0x0001);
 
-	memset(m72_spriteram,0,spriteram_size);
-
-	xadjust = 0;
-
-	/* improves bad gfx in nspirit (but this is not a complete fix, maybe there's a */
-	/* layer enable register */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		palette_change_color(i,0,0,0);
-
-	return 0;
-}
-
-int dbreed_vh_start(void)
-{
-	bg_tilemap = tilemap_create(dbreed_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
-	fg_tilemap = tilemap_create(m72_get_fg_tile_info,   tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
-
-	m72_spriteram = malloc(spriteram_size);
-
-	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
-		return 1;
-
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transmask(bg_tilemap,0,0xffff);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff);
+	tilemap_set_transmask(bg_tilemap,2,0x0001);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -205,15 +186,22 @@ int dbreed_vh_start(void)
 
 int rtype2_vh_start(void)
 {
-	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
-	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transmask(fg_tilemap,0,0xffff);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff);
+	tilemap_set_transmask(fg_tilemap,2,0x0001);
+
+	tilemap_set_transmask(bg_tilemap,0,0xffff);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff);
+	tilemap_set_transmask(bg_tilemap,2,0x0001);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -225,17 +213,25 @@ int rtype2_vh_start(void)
 /* Major Title has a larger background RAM, and rowscroll */
 int majtitle_vh_start(void)
 {
-// tilemap can be 256x64, but seems to be used at 128x64 (scroll wraparound) */
-//	bg_tilemap = tilemap_create(majtitle_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,256,64);
-	bg_tilemap = tilemap_create(majtitle_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,128,64);
-	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,  tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+// The tilemap can be 256x64, but seems to be used at 128x64 (scroll wraparound).
+// The layout ramains 256x64, the right half is just not displayed.
+//	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,256,64);
+	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,majtitle_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,128,64);
+	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transmask(fg_tilemap,0,0xffff);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff);
+	tilemap_set_transmask(fg_tilemap,2,0x0001);
+
+	tilemap_set_transmask(bg_tilemap,0,0xffff);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff);
+	tilemap_set_transmask(bg_tilemap,2,0x0001);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -246,15 +242,22 @@ int majtitle_vh_start(void)
 
 int hharry_vh_start(void)
 {
-	bg_tilemap = tilemap_create(hharry_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
-	fg_tilemap = tilemap_create(hharry_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+	bg_tilemap = tilemap_create(hharry_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(hharry_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transmask(fg_tilemap,0,0xffff);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff);
+	tilemap_set_transmask(fg_tilemap,2,0x0001);
+
+	tilemap_set_transmask(bg_tilemap,0,0xffff);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff);
+	tilemap_set_transmask(bg_tilemap,2,0x0001);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -346,18 +349,6 @@ WRITE_HANDLER( m72_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( majtitle_videoram2_w )
-{
-	if (m72_videoram2[offset] != data)
-	{
-		m72_videoram2[offset] = data;
-//		tilemap_mark_tile_dirty(bg_tilemap,offset/4);
-// tilemap can be 256x64, but seems to be used at 128x64 (scroll wraparound) */
-if ((offset/4)%256 < 128)
-		tilemap_mark_tile_dirty(bg_tilemap,offset/4);
-	}
-}
-
 WRITE_HANDLER( m72_irq_line_w )
 {
 	offset *= 8;
@@ -444,6 +435,69 @@ WRITE_HANDLER( hharryu_spritectrl_w )
 }
 
 
+WRITE_HANDLER( m72_port02_w )
+{
+	if (offset != 0)
+	{
+		if (data) logerror("write %02x to port 03\n",data);
+		return;
+	}
+	if (data & 0xe0) logerror("write %02x to port 02\n",data);
+
+	/* bits 0/1 are coin counters */
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
+
+	/* bit 2 is flip screen (handled both by software and hardware) */
+	flip_screen_set(((data & 0x04) >> 2) ^ (~readinputport(5) & 1));
+
+	/* bit 3 is display disable */
+	video_off = data & 0x08;
+
+	/* bit 4 resets sound CPU (active low) */
+	if (data & 0x10)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
+
+	/* other bits unknown */
+}
+
+WRITE_HANDLER( rtype2_port02_w )
+{
+	if (offset != 0)
+	{
+		if (data) logerror("write %02x to port 03\n",data);
+		return;
+	}
+	if (data & 0xf0) logerror("write %02x to port 02\n",data);
+
+	/* bits 0/1 are coin counters */
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
+
+	/* bit 2 is flip screen (handled both by software and hardware) */
+	flip_screen_set(((data & 0x04) >> 2) ^ (~readinputport(5) & 1));
+
+	/* bit 3 is display disable */
+	video_off = data & 0x08;
+
+	/* other bits unknown */
+}
+
+
+static int majtitle_rowscroll;
+
+/* the following is mostly a kludge. This register seems to be used for something else */
+WRITE_HANDLER( majtitle_gfx_ctrl_w )
+{
+	if (offset == 1)
+	{
+		if (data) majtitle_rowscroll = 1;
+		else majtitle_rowscroll = 0;
+	}
+}
+
 
 /***************************************************************************
 
@@ -470,6 +524,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		w = 1 << ((m72_spriteram[offs+5] & 0xc0) >> 6);
 		h = 1 << ((m72_spriteram[offs+5] & 0x30) >> 4);
 		sy -= 16 * h;
+
+		if (flip_screen)
+		{
+			sx = 512 - 16*w - sx;
+			sy = 512 - 16*h - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		for (x = 0;x < w;x++)
 		{
@@ -512,6 +574,14 @@ static void majtitle_draw_sprites(struct osd_bitmap *bitmap)
 		w = 1;// << ((spriteram_2[offs+5] & 0xc0) >> 6);
 		h = 1 << ((spriteram_2[offs+5] & 0x30) >> 4);
 		sy -= 16 * h;
+
+		if (flip_screen)
+		{
+			sx = 512 - 16*w - sx;
+			sy = 512 - 16*h - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		for (x = 0;x < w;x++)
 		{
@@ -584,7 +654,7 @@ static void draw_layer(struct osd_bitmap *bitmap,
 		tilemap_set_clip(tilemap,&clip);
 		tilemap_set_scrollx(tilemap,0,scrollx[start] + xadjust);
 		tilemap_set_scrolly(tilemap,0,scrolly[start]);
-		tilemap_draw(bitmap,tilemap,priority);
+		tilemap_draw(bitmap,tilemap,priority,0);
 
 		start = i+1;
 	} while (start < Machine->visible_area.max_y - 128);
@@ -603,6 +673,12 @@ static void draw_fg(struct osd_bitmap *bitmap,int priority)
 
 void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (video_off)
+	{
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		return;
+	}
+
 	tilemap_set_clip(fg_tilemap,0);
 	tilemap_set_clip(bg_tilemap,0);
 
@@ -611,37 +687,13 @@ void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	mark_sprite_colors(m72_spriteram);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	draw_bg(bitmap,0);
-	draw_fg(bitmap,0);
+	draw_bg(bitmap,TILEMAP_BACK);
+	draw_fg(bitmap,TILEMAP_BACK);
 	draw_sprites(bitmap);
-	draw_fg(bitmap,1);
-}
-
-void dbreed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	tilemap_set_clip(fg_tilemap,0);
-	tilemap_set_clip(bg_tilemap,0);
-
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
-	mark_sprite_colors(m72_spriteram);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
-
-	draw_bg(bitmap,0);
-	draw_fg(bitmap,0);
-	draw_sprites(bitmap);
-	draw_bg(bitmap,1);
-	draw_fg(bitmap,1);
+	draw_bg(bitmap,TILEMAP_FRONT);
+	draw_fg(bitmap,TILEMAP_FRONT);
 }
 
 void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -649,10 +701,15 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 
 
+	if (video_off)
+	{
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		return;
+	}
+
 	tilemap_set_clip(fg_tilemap,0);
 
-	/* TODO: find how rowscroll is disabled */
-	if (1)
+	if (majtitle_rowscroll)
 	{
 		tilemap_set_scroll_rows(bg_tilemap,512);
 		for (i = 0;i < 512;i++)
@@ -671,17 +728,14 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	mark_sprite_colors(m72_spriteram);
 	mark_sprite_colors(spriteram_2);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
-
-	draw_fg(bitmap,0);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
+	draw_fg(bitmap,TILEMAP_BACK);
 	majtitle_draw_sprites(bitmap);
 	draw_sprites(bitmap);
-	draw_fg(bitmap,1);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	draw_fg(bitmap,TILEMAP_FRONT);
 }
 
 

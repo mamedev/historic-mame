@@ -41,11 +41,11 @@
 
 
 /* code-related variables */
-extern UINT8 *	wms_code_rom;
-extern UINT8 *	wms_scratch_ram;
+extern data16_t *wms_code_rom;
+extern data16_t *wms_scratch_ram;
 
 /* CMOS-related variables */
-extern UINT8 *	wms_cmos_ram;
+extern data16_t *wms_cmos_ram;
 
 /* graphics-related variables */
 extern UINT8 *	wms_gfx_rom;
@@ -66,22 +66,22 @@ void wms_tunit_init_machine(void);
 
 
 /* external read handlers */
-READ_HANDLER( wms_tunit_dma_r );
-READ_HANDLER( wms_tunit_vram_r );
-READ_HANDLER( wms_tunit_cmos_r );
-READ_HANDLER( wms_tunit_input_r );
-READ_HANDLER( wms_tunit_gfxrom_r );
-READ_HANDLER( wms_tunit_sound_r );
-READ_HANDLER( wms_tunit_sound_state_r );
+READ16_HANDLER( wms_tunit_dma_r );
+READ16_HANDLER( wms_tunit_vram_r );
+READ16_HANDLER( wms_tunit_cmos_r );
+READ16_HANDLER( wms_tunit_input_r );
+READ16_HANDLER( wms_tunit_gfxrom_r );
+READ16_HANDLER( wms_tunit_sound_r );
+READ16_HANDLER( wms_tunit_sound_state_r );
 
 /* external write handlers */
-WRITE_HANDLER( wms_tunit_dma_w );
-WRITE_HANDLER( wms_tunit_vram_w );
-WRITE_HANDLER( wms_tunit_cmos_w );
-WRITE_HANDLER( wms_tunit_cmos_enable_w );
-WRITE_HANDLER( wms_tunit_control_w );
-WRITE_HANDLER( wms_tunit_sound_w );
-WRITE_HANDLER( wms_tunit_paletteram_w );
+WRITE16_HANDLER( wms_tunit_dma_w );
+WRITE16_HANDLER( wms_tunit_vram_w );
+WRITE16_HANDLER( wms_tunit_cmos_w );
+WRITE16_HANDLER( wms_tunit_cmos_enable_w );
+WRITE16_HANDLER( wms_tunit_control_w );
+WRITE16_HANDLER( wms_tunit_sound_w );
+WRITE16_HANDLER( wms_tunit_paletteram_w );
 
 
 /* external video routines */
@@ -118,40 +118,36 @@ static void nvram_handler(void *file, int read_or_write)
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ16_START( readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_tunit_vram_r },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA_BANK2 },
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA16_RAM },
 	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), wms_tunit_cmos_r },
 	{ TOBYTE(0x01600000), TOBYTE(0x0160003f), wms_tunit_input_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), paletteram_word_r },
+	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), MRA16_RAM },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), wms_tunit_dma_r },
 	{ TOBYTE(0x01d00000), TOBYTE(0x01d0001f), wms_tunit_sound_state_r },
 	{ TOBYTE(0x01d01020), TOBYTE(0x01d0103f), wms_tunit_sound_r },
 	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), wms_tunit_gfxrom_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE16_START( writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_tunit_vram_w },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA_BANK2, &wms_scratch_ram },
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA16_RAM, &wms_scratch_ram },
 	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), wms_tunit_cmos_w, &wms_cmos_ram },
 	{ TOBYTE(0x01480000), TOBYTE(0x014fffff), wms_tunit_cmos_enable_w },
-	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), wms_tunit_paletteram_w, &paletteram },
+	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), wms_tunit_paletteram_w, &paletteram16 },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), wms_tunit_dma_w },
 	{ TOBYTE(0x01b00000), TOBYTE(0x01b0001f), wms_tunit_control_w },
 /*	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), wms_tunit_cmos_enable_w }, */
 	{ TOBYTE(0x01d01020), TOBYTE(0x01d0103f), wms_tunit_sound_w },
-	{ TOBYTE(0x01d81060), TOBYTE(0x01d8107f), watchdog_reset_w },
+	{ TOBYTE(0x01d81060), TOBYTE(0x01d8107f), watchdog_reset16_w },
 	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), wms_tunit_control_w },
-	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), MWA_ROM, &wms_gfx_rom, &wms_gfx_rom_size },
+	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), MWA16_ROM, (data16_t **)&wms_gfx_rom, &wms_gfx_rom_size },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_ROM, &wms_code_rom },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &wms_code_rom },
+MEMORY_END
 
 
 

@@ -64,21 +64,15 @@ standard NMI at 0x66
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/timeplt.h"
 
 
 WRITE_HANDLER( pooyan_flipscreen_w );
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-/* defined in sndhrdw/timeplt.c */
-extern struct MemoryReadAddress timeplt_sound_readmem[];
-extern struct MemoryWriteAddress timeplt_sound_writemem[];
-extern struct AY8910interface timeplt_ay8910_interface;
-WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
-
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },	/* color and video RAM */
 	{ 0xa000, 0xa000, input_port_4_r },	/* DSW2 */
@@ -86,11 +80,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa0a0, 0xa0a0, input_port_1_r },	/* IN1 */
 	{ 0xa0c0, 0xa0c0, input_port_2_r },	/* IN2 */
 	{ 0xa0e0, 0xa0e0, input_port_3_r },	/* DSW1 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, colorram_w, &colorram },
 	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
@@ -102,8 +94,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa180, 0xa180, interrupt_enable_w },
 	{ 0xa181, 0xa181, timeplt_sh_irqtrigger_w },
 	{ 0xa187, 0xa187, pooyan_flipscreen_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( pooyan )

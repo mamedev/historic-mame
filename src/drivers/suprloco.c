@@ -44,8 +44,7 @@ static WRITE_HANDLER( suprloco_soundport_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc1ff, MRA_RAM },
 	{ 0xc800, 0xc800, input_port_0_r },
@@ -57,11 +56,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf000, 0xf6ff, MRA_RAM },
 	{ 0xf7e0, 0xf7ff, suprloco_scrollram_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, suprloco_soundport_w },
@@ -69,26 +66,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf000, 0xf6ff, suprloco_videoram_w, &suprloco_videoram },
 	{ 0xf7e0, 0xf7ff, suprloco_scrollram_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa003, SN76496_0_w },
 	{ 0xc000, 0xc003, SN76496_1_w },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
 

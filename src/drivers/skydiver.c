@@ -154,8 +154,7 @@ int skydiver_interrupt(void)
 	   	return ignore_interrupt();
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x00ff, MRA_RAM },
 	{ 0x0400, 0x077f, MRA_RAM },
 //  { 0x780, 0x7ff, MRA_RAM },
@@ -167,11 +166,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2800, 0x3fff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x00ff, MWA_RAM },
 	{ 0x0010, 0x001f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0400, 0x077f, videoram_w, &videoram, &videoram_size },
@@ -190,8 +187,7 @@ static struct MemoryWriteAddress writemem[] =
 	// { 0x200a, 0x200d, skydiver_oct_w },
 	// { 0x200e, 0x200f, skydiver_noise_reset_w },
 	{ 0x2800, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( skydiver )
 	PORT_START /* fake port, gets mapped to Sky Diver ports */

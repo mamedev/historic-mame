@@ -1,14 +1,21 @@
-/*
-  quantum
+/***************************************************************************
 
-  Paul Forgey, 1997
+	Atari Food Fight hardware
 
-  This code is donated to the MAME team, and inherits all copyrights
-  and restrictions from MAME
-*/
+	driver by Paul Forgey, with some help from Aaron Giles
 
+	Games supported:
+		* Quantum
 
-/*
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map
+
+****************************************************************************
+
 	QUANTUM MEMORY MAP (per schem):
 
 	000000-003FFF	ROM0
@@ -34,7 +41,7 @@
 	940000			I/O (shematic label really - covered above)
 	900000			DTACK1
 
-*/
+***************************************************************************/
 
 
 #include "driver.h"
@@ -43,58 +50,173 @@
 
 
 
-int quantum_interrupt(void);
-READ_HANDLER( quantum_switches_r );
-WRITE_HANDLER( quantum_led_w );
-WRITE_HANDLER( quantum_snd_w );
-READ_HANDLER( quantum_snd_r );
-READ_HANDLER( quantum_trackball_r );
-READ_HANDLER( quantum_input_1_r );
-READ_HANDLER( quantum_input_2_r );
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
 
-READ_HANDLER( foodf_nvram_r );
-WRITE_HANDLER( foodf_nvram_w );
-void foodf_nvram_handler(void *file,int read_or_write);
+static data16_t *nvram;
 
 
 
-struct MemoryReadAddress quantum_read[] =
+/*************************************
+ *
+ *	NVRAM handler
+ *
+ *************************************/
+
+static void nvram_handler(void *file, int read_or_write)
 {
-	{ 0x000000, 0x013fff, MRA_ROM },
-	{ 0x018000, 0x01cfff, MRA_BANK1 },
-	{ 0x800000, 0x801fff, MRA_BANK2 },
-	{ 0x840000, 0x84003f, quantum_snd_r },
-	{ 0x900000, 0x9001ff, foodf_nvram_r },
-	{ 0x940000, 0x940001, quantum_trackball_r }, /* trackball */
-	{ 0x948000, 0x948001, quantum_switches_r },
-	{ 0x978000, 0x978001, MRA_NOP },	/* ??? */
-	{ -1 }	/* end of table */
-};
+	if (read_or_write)
+		osd_fwrite(file, nvram, 512);
+	else if (file)
+		osd_fread(file, nvram, 512);
+	else
+		memset(nvram, 0xff, 512);
+}
 
-struct MemoryWriteAddress quantum_write[] =
+
+
+/*************************************
+ *
+ *	Interrupts
+ *
+ *************************************/
+
+static int interrupt_gen(void)
 {
-	{ 0x000000, 0x013fff, MWA_ROM },
-	{ 0x018000, 0x01cfff, MWA_BANK1 },
-	{ 0x800000, 0x801fff, MWA_BANK2, &vectorram, &vectorram_size },
-	{ 0x840000, 0x84003f, quantum_snd_w },
-	{ 0x900000, 0x9001ff, foodf_nvram_w },
+	return 1; /* ipl0' == ivector 1 */
+}
+
+
+
+/*************************************
+ *
+ *	Inputs
+ *
+ *************************************/
+
+static READ16_HANDLER( switches_r )
+{
+	return (readinputport(0) | (avgdvg_done() ? 1 : 0));
+}
+
+
+static READ16_HANDLER( trackball_r )
+{
+	return (readinputport(4) << 4) | readinputport(3);
+}
+
+
+static READ_HANDLER( input_1_r )
+{
+	return (readinputport(1) << (7 - (offset - POT0_C))) & 0x80;
+}
+
+
+static READ_HANDLER( input_2_r )
+{
+	return (readinputport(2) << (7 - (offset - POT0_C))) & 0x80;
+}
+
+
+
+/*************************************
+ *
+ *	LEDs/coin counters
+ *
+ *************************************/
+
+static WRITE16_HANDLER( led_w )
+{
+	if (ACCESSING_LSB)
+	{
+		/* bits 0 and 1 are coin counters */
+		coin_counter_w(0, data & 2);
+		coin_counter_w(1, data & 1);
+
+		/* bits 4 and 5 are LED controls */
+		set_led_status(0, data & 0x10);
+		set_led_status(1, data & 0x20);
+
+		/* other bits unknown */
+	}
+}
+
+
+
+/*************************************
+ *
+ *	POKEY I/O
+ *
+ *************************************/
+
+static WRITE16_HANDLER( pokey_word_w )
+{
+	if (offset & 0x10) /* A5 selects chip */
+		pokey2_w(offset & 0x0f, data);
+	else
+		pokey1_w(offset & 0x0f, data);
+}
+
+
+static READ16_HANDLER( pokey_word_r )
+{
+	if (offset & 0x10)
+		return pokey2_r(offset & 0x0f);
+	else
+		return pokey1_r(offset & 0x0f);
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x013fff, MRA16_ROM },
+	{ 0x018000, 0x01cfff, MRA16_RAM },
+	{ 0x800000, 0x801fff, MRA16_RAM },
+	{ 0x840000, 0x84003f, pokey_word_r },
+	{ 0x900000, 0x9001ff, MRA16_RAM },
+	{ 0x940000, 0x940001, trackball_r }, /* trackball */
+	{ 0x948000, 0x948001, switches_r },
+	{ 0x978000, 0x978001, MRA16_NOP },	/* ??? */
+MEMORY_END
+
+
+MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x013fff, MWA16_ROM },
+	{ 0x018000, 0x01cfff, MWA16_RAM },
+	{ 0x800000, 0x801fff, MWA16_RAM, (data16_t **)&vectorram, &vectorram_size },
+	{ 0x840000, 0x84003f, pokey_word_w },
+	{ 0x900000, 0x9001ff, MWA16_RAM, &nvram },
 	{ 0x950000, 0x95001f, quantum_colorram_w },
-	{ 0x958000, 0x958001, quantum_led_w },
-	{ 0x960000, 0x960001, MWA_NOP },	/* enable NVRAM? */
-	{ 0x968000, 0x968001, avgdvg_reset_w },
+	{ 0x958000, 0x958001, led_w },
+	{ 0x960000, 0x960001, MWA16_NOP },	/* enable NVRAM? */
+	{ 0x968000, 0x968001, avgdvg_reset_word_w },
 //	{ 0x970000, 0x970001, avgdvg_go_w },
 //	{ 0x978000, 0x978001, watchdog_reset_w },
 	/* the following is wrong, but it's the only way I found to fix the service mode */
-	{ 0x978000, 0x978001, avgdvg_go_w },
-	{ -1 }	/* end of table */
-};
+	{ 0x978000, 0x978001, avgdvg_go_word_w },
+MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( quantum )
-	PORT_START	/* IN0 */
+	PORT_START		/* IN0 */
 	/* YHALT here MUST BE ALWAYS 0  */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )	/* vg YHALT */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_SPECIAL )	/* vg YHALT */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
@@ -104,7 +226,7 @@ INPUT_PORTS_START( quantum )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 /* first POKEY is SW2, second is SW1 -- more confusion! */
-	PORT_START /* DSW0 */
+	PORT_START 		/* DSW0 */
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -125,7 +247,7 @@ INPUT_PORTS_START( quantum )
 	PORT_DIPSETTING(    0x05, "1 each 3" )
 	PORT_DIPSETTING(    0x06, "2 each 4" )
 
-	PORT_START /* DSW1 */
+	PORT_START		/* DSW1 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
@@ -137,25 +259,37 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound definitions
+ *
+ *************************************/
+
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	600000,        /* .6 MHz? (hand tuned) */
 	{ 50, 50 },
 	/* The 8 pot handlers */
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
+	{ input_1_r, input_2_r },
 	/* The allpot handler */
 	{ 0, 0 },
 };
 
 
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
 
 static const struct MachineDriver machine_driver_quantum =
 {
@@ -163,9 +297,9 @@ static const struct MachineDriver machine_driver_quantum =
 	{
 		{
 			CPU_M68000,
-			6000000,		/* 6MHz */
-			quantum_read,quantum_write,0,0,
-			quantum_interrupt,3	/* IRQ rate = 750kHz/4096 */
+			6000000,			/* 6MHz */
+			readmem,writemem,0,0,
+			interrupt_gen,3		/* IRQ rate = 750kHz/4096 */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -193,16 +327,16 @@ static const struct MachineDriver machine_driver_quantum =
 		}
 	},
 
-	foodf_nvram_handler
+	nvram_handler
 };
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definition(s)
+ *
+ *************************************/
 
 ROM_START( quantum )
 	ROM_REGION( 0x014000, REGION_CPU1 )
@@ -218,6 +352,7 @@ ROM_START( quantum )
     ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
 ROM_END
 
+
 ROM_START( quantum1 )
 	ROM_REGION( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "136016.101",   0x000000, 0x002000, 0x5af0bd5b )
@@ -231,6 +366,7 @@ ROM_START( quantum1 )
     ROM_LOAD_EVEN( "136016.105",   0x010000, 0x002000, 0x13ec512c )
     ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
 ROM_END
+
 
 ROM_START( quantump )
 	ROM_REGION( 0x014000, REGION_CPU1 )
@@ -247,6 +383,12 @@ ROM_START( quantump )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAMEX( 1982, quantum,  0,       quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 2)", GAME_WRONG_COLORS )
 GAMEX( 1982, quantum1, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 1)", GAME_WRONG_COLORS )

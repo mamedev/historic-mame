@@ -237,35 +237,28 @@ extern unsigned char *pengo_soundregs;
 
 
 
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6800, 0x6807, xevious_dsw_r },
 	{ 0x7000, 0x700f, xevious_customio_data_r },
 	{ 0x7100, 0x7100, xevious_customio_r },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0xf000, 0xffff, xevious_bb_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6800, 0x6807, xevious_dsw_r },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0xf000, 0xffff, xevious_bb_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu3[] =
-{
+static MEMORY_READ_START( readmem_cpu3 )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6820, 0x6820, xevious_interrupt_enable_1_w },
 	{ 0x6821, 0x6821, xevious_interrupt_enable_2_w },
@@ -284,11 +277,9 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x8780, 0x87ff, MWA_RAM, &spriteram_2 },	/* here only */
 	{ 0x9780, 0x97ff, MWA_RAM, &spriteram_3 },	/* to initialize */
 	{ 0xa780, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },	/* the pointers */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x6830, 0x683f, MWA_NOP },				/* watch dog reset */
 	{ 0x7800, 0xafff, xevious_sharedram_w },
@@ -298,17 +289,14 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0xc800, 0xcfff, xevious_bg_videoram_w },
 	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
 	{ 0xf000, 0xffff, xevious_bs_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu3[] =
-{
+static MEMORY_WRITE_START( writemem_cpu3 )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
 	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
 	{ 0x7800, 0xcfff, xevious_sharedram_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -184,7 +184,7 @@ READ_HANDLER( scramblb_protection_2_r );
 
 static WRITE_HANDLER( galaxian_coin_lockout_w )
 {
-	coin_lockout_global_w(offset, data ^ 1);
+	coin_lockout_global_w(~data & 1);
 }
 
 static WRITE_HANDLER( galaxian_leds_w )
@@ -289,8 +289,23 @@ static WRITE_HANDLER( checkman_sound_command_w )
 	cpu_cause_interrupt (1, Z80_NMI_INT);
 }
 
-static struct MemoryReadAddress galaxian_readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+static WRITE_HANDLER( galaxian_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
+
+static MEMORY_READ_START( galaxian_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },	/* not all games use all the space */
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x5000, 0x53ff, MRA_RAM },	/* video RAM */
@@ -300,11 +315,9 @@ static struct MemoryReadAddress galaxian_readmem[] =
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
 	{ 0x7800, 0x7800, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress galaxian_writemem[] =
-{
+static MEMORY_WRITE_START( galaxian_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
@@ -323,12 +336,10 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x7006, 0x7006, flip_screen_x_w },
 	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x7800, 0x7800, galaxian_pitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress mooncrst_readmem[] =
-{
+static MEMORY_READ_START( mooncrst_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
@@ -338,11 +349,9 @@ static struct MemoryReadAddress mooncrst_readmem[] =
 	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW (coins per play) */
 	{ 0xb800, 0xb800, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mooncrst_writemem[] =
-{
+static MEMORY_WRITE_START( mooncrst_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -362,12 +371,10 @@ static struct MemoryWriteAddress mooncrst_writemem[] =
 	{ 0xb006, 0xb006, flip_screen_x_w },
 	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, galaxian_pitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress scramblb_readmem[] =
-{
+static MEMORY_READ_START( scramblb_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and video RAM */
 	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
@@ -377,11 +384,9 @@ static struct MemoryReadAddress scramblb_readmem[] =
 	{ 0x7800, 0x7800, watchdog_reset_r },
 	{ 0x8102, 0x8102, scramblb_protection_1_r },
 	{ 0x8202, 0x8202, scramblb_protection_2_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress scramblb_writemem[] =
-{
+static MEMORY_WRITE_START( scramblb_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
@@ -396,18 +401,16 @@ static struct MemoryWriteAddress scramblb_writemem[] =
 	{ 0x6805, 0x6805, galaxian_shoot_enable_w },
 	{ 0x6806, 0x6807, galaxian_vol_w },
 	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7002, 0x7002, coin_counter_w },
+	{ 0x7002, 0x7002, galaxian_coin_counter_w },
 	{ 0x7003, 0x7003, scramble_background_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x7006, 0x7006, flip_screen_x_w },
 	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x7800, 0x7800, galaxian_pitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress jumpbug_readmem[] =
-{
+static MEMORY_READ_START( jumpbug_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM, Video RAM */
 	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address for Video RAM*/
@@ -418,11 +421,9 @@ static struct MemoryReadAddress jumpbug_readmem[] =
 	{ 0x8000, 0xafff, MRA_ROM },
 	{ 0xb000, 0xbfff, jumpbug_protection_r },
 	{ 0xfff0, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress jumpbug_writemem[] =
-{
+static MEMORY_WRITE_START( jumpbug_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
@@ -435,17 +436,15 @@ static struct MemoryWriteAddress jumpbug_writemem[] =
 	{ 0x5900, 0x5900, AY8910_control_port_0_w },
 	{ 0x6002, 0x6006, jumpbug_gfxbank_w },
 	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7002, 0x7002, coin_counter_w },
+	{ 0x7002, 0x7002, galaxian_coin_counter_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x7006, 0x7006, flip_screen_x_w },
 	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x8000, 0xafff, MWA_ROM },
 	{ 0xfff0, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress checkmaj_writemem[] =
-{
+static MEMORY_WRITE_START( checkmaj_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
@@ -457,63 +456,47 @@ static struct MemoryWriteAddress checkmaj_writemem[] =
 	{ 0x7006, 0x7006, flip_screen_x_w },
 	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x7800, 0x7800, checkman_sound_command_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort checkman_writeport[] =
-{
+static PORT_WRITE_START( checkman_writeport )
 	{ 0, 0, checkman_sound_command_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress checkman_sound_readmem[] =
-{
+static MEMORY_READ_START( checkman_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress checkman_sound_writemem[] =
-{
+static MEMORY_WRITE_START( checkman_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort checkman_sound_readport[] =
-{
+static PORT_READ_START( checkman_sound_readport )
 	{ 0x03, 0x03, soundlatch_r },
 	{ 0x06, 0x06, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort checkman_sound_writeport[] =
-{
+static PORT_WRITE_START( checkman_sound_writeport )
 	{ 0x04, 0x04, AY8910_control_port_0_w },
 	{ 0x05, 0x05, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress checkmaj_sound_readmem[] =
-{
+static MEMORY_READ_START( checkmaj_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x8000, 0x81ff, MRA_RAM },
 	{ 0xa002, 0xa002, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress checkmaj_sound_writemem[] =
-{
+static MEMORY_WRITE_START( checkmaj_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x8000, 0x81ff, MWA_RAM },
 	{ 0xa000, 0xa000, AY8910_control_port_0_w },
 	{ 0xa001, 0xa001, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress kingball_writemem[] =
-{
+static MEMORY_WRITE_START( kingball_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -535,32 +518,23 @@ static struct MemoryWriteAddress kingball_writemem[] =
 	{ 0xb006, 0xb006, flip_screen_x_w },
 	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, galaxian_pitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kingball_sound_readmem[] =
-{
+static MEMORY_READ_START( kingball_sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kingball_sound_writemem[] =
-{
+static MEMORY_WRITE_START( kingball_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort kingball_sound_readport[] =
-{
+static PORT_READ_START( kingball_sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort kingball_sound_writeport[] =
-{
+static PORT_WRITE_START( kingball_sound_writeport )
 	{ 0x00, 0x00, DAC_0_data_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
@@ -601,8 +575,7 @@ static WRITE_HANDLER( zigzag_8910_control_trigger_w )
 	AY8910_control_port_0_w(0,latch);
 }
 
-static struct MemoryReadAddress zigzag_readmem[] =
-{
+static MEMORY_READ_START( zigzag_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_BANK1 },
 	{ 0x3000, 0x3fff, MRA_BANK2 },
@@ -612,11 +585,9 @@ static struct MemoryReadAddress zigzag_readmem[] =
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
 	{ 0x7800, 0x7800, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress zigzag_writemem[] =
-{
+static MEMORY_WRITE_START( zigzag_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4800, MWA_NOP },	/* part of the 8910 interface */
@@ -631,8 +602,7 @@ static struct MemoryWriteAddress zigzag_writemem[] =
 	{ 0x7002, 0x7002, zigzag_sillyprotection_w },
 	{ 0x7006, 0x7006, flip_screen_x_w },
 	{ 0x7007, 0x7007, flip_screen_y_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

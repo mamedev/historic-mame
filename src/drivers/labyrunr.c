@@ -52,8 +52,7 @@ if (data & 0xe0) usrintf_showmessage("bankswitch %02x",data);
 	coin_counter_w(1,data & 0x10);
 }
 
-static struct MemoryReadAddress labyrunr_readmem[] =
-{
+static MEMORY_READ_START( labyrunr_readmem )
 	{ 0x0020, 0x005f, MRA_RAM },	/* scroll registers */
 	{ 0x0801, 0x0801, YM2203_status_port_0_r },
 	{ 0x0800, 0x0800, YM2203_read_port_0_r },
@@ -68,11 +67,9 @@ static struct MemoryReadAddress labyrunr_readmem[] =
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress labyrunr_writemem[] =
-{
+static MEMORY_WRITE_START( labyrunr_writemem )
 	{ 0x0000, 0x0007, K007121_ctrl_0_w },
 	{ 0x0020, 0x005f, MWA_RAM },	/* scroll registers */
 	{ 0x0801, 0x0801, YM2203_control_port_0_w },
@@ -88,8 +85,7 @@ static struct MemoryWriteAddress labyrunr_writemem[] =
 	{ 0x3000, 0x37ff, labyrunr_vram1_w, &labyrunr_videoram1 },
 	{ 0x3800, 0x3fff, labyrunr_vram2_w, &labyrunr_videoram2 },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /***************************************************************************

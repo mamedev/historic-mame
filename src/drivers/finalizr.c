@@ -68,8 +68,7 @@ static WRITE_HANDLER( i8039_irqen_and_status_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0800, 0x0800, input_port_5_r },
 	{ 0x0808, 0x0808, input_port_4_r },
 	{ 0x0810, 0x0810, input_port_0_r },
@@ -79,11 +78,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2000, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0000, MWA_NOP },	/* ??? */
 	{ 0x0001, 0x0001, MWA_RAM, &finalizr_scroll },
 	{ 0x0002, 0x0002, MWA_NOP },	/* ??? */
@@ -105,35 +102,26 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3800, 0x39ff, MWA_RAM, &spriteram_2 },
 	{ 0x3a00, 0x3fff, MWA_RAM },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress i8039_readmem[] =
-{
+static MEMORY_READ_START( i8039_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress i8039_writemem[] =
-{
+static MEMORY_WRITE_START( i8039_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort i8039_readport[] =
-{
+static PORT_READ_START( i8039_readport )
 	{ 0x00, 0xff, soundlatch_r },
 	{ I8039_p2, I8039_p2, i8039_irqen_and_status_r },
 	{ 0x111,0x111, IORP_NOP },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort i8039_writeport[] =
-{
+static PORT_WRITE_START( i8039_writeport )
 	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

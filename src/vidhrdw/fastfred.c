@@ -26,8 +26,8 @@ static struct rectangle spritevisibleareaflipx =
         2*8, 30*8-1
 };
 
-static data_t character_bank[2];
-static data_t color_bank[2];
+static int character_bank[2];
+static int color_bank[2];
 static int canspritesflipx = 0;
 
 void jumpcoas_init_machine(void)
@@ -211,7 +211,7 @@ void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int code,sx,sy,flipx,flipy;
 
-		sx = (spriteram[offs + 3] + 1) & 0xff;  /* ??? */
+		sx = spriteram[offs + 3];
 		sy = 240 - spriteram[offs];
 
 		if (canspritesflipx)
@@ -232,7 +232,7 @@ void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (flip_screen_x)
 		{
-			sx = 241 - sx;  /* note: 241, not 240 */
+			sx = 240 - sx;
 			flipx = !flipx;
 		}
 		if (flip_screen_y)

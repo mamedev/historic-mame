@@ -4,6 +4,7 @@
 #include "ui_text.h" /* LBO 042400 */
 #include "mamedbg.h"
 #include "artwork.h"
+#include "vidhrdw/generic.h"
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -22,22 +23,17 @@ int bailing;	/* set to 1 if the startup is aborted to prevent multiple error mes
 
 static int settingsloaded;
 
-int bitmap_dirty;	/* set by osd_clearbitmap() */
-
 static int leds_status;
 
-
-/* Used in vh_open */
-extern unsigned char *spriteram,*spriteram_2;
-extern unsigned char *buffered_spriteram,*buffered_spriteram_2;
-extern int spriteram_size,spriteram_2_size;
 
 int init_machine(void);
 void shutdown_machine(void);
 int run_machine(void);
 
-void artwork_kill(void);
-void artwork_draw(struct osd_bitmap *dest,struct osd_bitmap *source, int _bitmap_dirty);
+/* in usrintrf.c */
+void switch_ui_orientation(void);
+void switch_true_orientation(void);
+
 
 #ifdef MAME_DEBUG
 
@@ -79,7 +75,7 @@ static int validitychecks(void)
 
 		if (drivers[i]->clone_of == drivers[i])
 		{
-			printf("%s is set as a clone of itself\n",drivers[i]->name);
+			printf("%s: %s is set as a clone of itself\n",drivers[i]->source_file,drivers[i]->name);
 			error = 1;
 		}
 
@@ -87,7 +83,7 @@ static int validitychecks(void)
 		{
 			if ((drivers[i]->clone_of->clone_of->flags & NOT_A_DRIVER) == 0)
 			{
-				printf("%s is a clone of a clone\n",drivers[i]->name);
+				printf("%s: %s is a clone of a clone\n",drivers[i]->source_file,drivers[i]->name);
 				error = 1;
 			}
 		}
@@ -96,19 +92,19 @@ static int validitychecks(void)
 		{
 			if (!strcmp(drivers[i]->name,drivers[j]->name))
 			{
-				printf("%s is a duplicate name (%s, %s)\n",drivers[i]->name,drivers[i]->source_file,drivers[j]->source_file);
+				printf("%s: %s is a duplicate name (%s, %s)\n",drivers[i]->source_file,drivers[i]->name,drivers[i]->source_file,drivers[j]->source_file);
 				error = 1;
 			}
 			if (!strcmp(drivers[i]->description,drivers[j]->description))
 			{
-				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
+				printf("%s: %s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
 			if (drivers[i]->rom && drivers[i]->rom == drivers[j]->rom
 					&& (drivers[i]->flags & NOT_A_DRIVER) == 0
 					&& (drivers[j]->flags & NOT_A_DRIVER) == 0)
 			{
-				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
+				printf("%s: %s and %s use the same ROM set\n",drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
 		}
@@ -140,7 +136,7 @@ static int validitychecks(void)
 					count++;
 					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
 					{
-						printf("%s has invalid ROM_REGION type %x\n",drivers[i]->name,type);
+						printf("%s: %s has invalid ROM_REGION type %x\n",drivers[i]->source_file,drivers[i]->name,type);
 						error = 1;
 					}
 
@@ -156,7 +152,7 @@ static int validitychecks(void)
 					{
 						if (tolower(*c) != *c)
 						{
-							printf("%s has upper case ROM name %s\n",drivers[i]->name,romp->name);
+							printf("%s: %s has upper case ROM name %s\n",drivers[i]->source_file,drivers[i]->name,romp->name);
 							error = 1;
 						}
 						c++;
@@ -177,7 +173,7 @@ static int validitychecks(void)
 					}
 					if (pre > 8 || post > 4)
 					{
-						printf("%s has >8.3 ROM name %s\n",drivers[i]->name,romp->name);
+						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,romp->name);
 						error = 1;
 					}
 				}
@@ -185,7 +181,7 @@ static int validitychecks(void)
 				{
 					if (romp->offset + (romp->length & ~ROMFLAG_MASK) > region_length[count])
 					{
-						printf("%s has ROM %s extending past the defined memory region\n",drivers[i]->name,last_name);
+						printf("%s: %s has ROM %s extending past the defined memory region\n",drivers[i]->source_file,drivers[i]->name,last_name);
 						error = 1;
 					}
 				}
@@ -196,7 +192,7 @@ static int validitychecks(void)
 			{
 				if (region_type_used[j] > 1)
 				{
-					printf("%s has duplicated ROM_REGION type %x\n",drivers[i]->name,j);
+					printf("%s: %s has duplicated ROM_REGION type %x\n",drivers[i]->source_file,drivers[i]->name,j);
 					error = 1;
 				}
 			}
@@ -206,44 +202,116 @@ static int validitychecks(void)
 			{
 				if (drivers[i]->drv->cpu[cpu].cpu_type)
 				{
-					int alignunit;
+					int alignunit,databus_width;
 
 
-					alignunit = cpuintf[drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK].align_unit;
+					alignunit = cputype_align_unit(drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
+					databus_width = cputype_databus_width(drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
+
 					if (drivers[i]->drv->cpu[cpu].memory_read)
 					{
-						const struct MemoryReadAddress *mra = drivers[i]->drv->cpu[cpu].memory_read;
+						const struct Memory_ReadAddress *mra = drivers[i]->drv->cpu[cpu].memory_read;
 
-						while (mra->start != -1)
+						if (mra->start != MEMORY_MARKER ||
+								(mra->end & MEMORY_DIRECTION_MASK) != MEMORY_DIRECTION_READ)
 						{
-							if (mra->end < mra->start)
+							printf("%s: %s wrong MEMORY_READ_START\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
+
+						switch (databus_width)
+						{
+							case 8:
+								if ((mra->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_8)
+								{
+									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
+									error = 1;
+								}
+								break;
+							case 16:
+								if ((mra->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_16)
+								{
+									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
+//									error = 1;
+								}
+								break;
+							case 32:
+								if ((mra->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_32)
+								{
+									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
+									error = 1;
+								}
+								break;
+						}
+
+						while (!IS_MEMORY_END(mra))
+						{
+							if (!IS_MEMORY_MARKER(mra))
 							{
-								printf("%s wrong memory read handler start = %08x > end = %08x\n",drivers[i]->name,mra->start,mra->end);
-								error = 1;
-							}
-							if ((mra->start & (alignunit-1)) != 0 || (mra->end & (alignunit-1)) != (alignunit-1))
-							{
-								printf("%s wrong memory read handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->name,mra->start,mra->end,alignunit);
-								error = 1;
+								if (mra->end < mra->start)
+								{
+									printf("%s: %s wrong memory read handler start = %08x > end = %08x\n",drivers[i]->source_file,drivers[i]->name,mra->start,mra->end);
+									error = 1;
+								}
+								if ((mra->start & (alignunit-1)) != 0 || (mra->end & (alignunit-1)) != (alignunit-1))
+								{
+									printf("%s: %s wrong memory read handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->source_file,drivers[i]->name,mra->start,mra->end,alignunit);
+									error = 1;
+								}
 							}
 							mra++;
 						}
 					}
 					if (drivers[i]->drv->cpu[cpu].memory_write)
 					{
-						const struct MemoryWriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
+						const struct Memory_WriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
 
-						while (mwa->start != -1)
+						if (mwa->start != MEMORY_MARKER ||
+								(mwa->end & MEMORY_DIRECTION_MASK) != MEMORY_DIRECTION_WRITE)
 						{
-							if (mwa->end < mwa->start)
+							printf("%s: %s wrong MEMORY_WRITE_START\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
+
+						switch (databus_width)
+						{
+							case 8:
+								if ((mwa->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_8)
+								{
+									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
+									error = 1;
+								}
+								break;
+							case 16:
+								if ((mwa->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_16)
+								{
+									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
+//									error = 1;
+								}
+								break;
+							case 32:
+								if ((mwa->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_32)
+								{
+									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
+									error = 1;
+								}
+								break;
+						}
+
+						while (!IS_MEMORY_END(mwa))
+						{
+							if (!IS_MEMORY_MARKER(mwa))
 							{
-								printf("%s wrong memory write handler start = %08x > end = %08x\n",drivers[i]->name,mwa->start,mwa->end);
-								error = 1;
-							}
-							if ((mwa->start & (alignunit-1)) != 0 || (mwa->end & (alignunit-1)) != (alignunit-1))
-							{
-								printf("%s wrong memory write handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->name,mwa->start,mwa->end,alignunit);
-								error = 1;
+								if (mwa->end < mwa->start)
+								{
+									printf("%s: %s wrong memory write handler start = %08x > end = %08x\n",drivers[i]->source_file,drivers[i]->name,mwa->start,mwa->end);
+									error = 1;
+								}
+								if ((mwa->start & (alignunit-1)) != 0 || (mwa->end & (alignunit-1)) != (alignunit-1))
+								{
+									printf("%s: %s wrong memory write handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->source_file,drivers[i]->name,mwa->start,mwa->end,alignunit);
+									error = 1;
+								}
 							}
 							mwa++;
 						}
@@ -263,7 +331,7 @@ static int validitychecks(void)
 /*
 					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
 					{
-						printf("%s has invalid memory region for gfx[%d]\n",drivers[i]->name,j);
+						printf("%s: %s has invalid memory region for gfx[%d]\n",drivers[i]->source_file,drivers[i]->name,j);
 						error = 1;
 					}
 */
@@ -283,7 +351,7 @@ static int validitychecks(void)
 								- (drivers[i]->drv->gfxdecodeinfo[j].start & ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement/8-1));
 						if ((start + len) / 8 > avail)
 						{
-							printf("%s has gfx[%d] extending past allocated memory\n",drivers[i]->name,j);
+							printf("%s: %s has gfx[%d] extending past allocated memory\n",drivers[i]->source_file,drivers[i]->name,j);
 							error = 1;
 						}
 					}
@@ -307,39 +375,39 @@ static int validitychecks(void)
 						if (inp->name == ipdn_defaultstrings[j]) break;
 						else if (!my_stricmp(inp->name,ipdn_defaultstrings[j]))
 						{
-							printf("%s must use DEF_STR( %s )\n",drivers[i]->name,inp->name);
+							printf("%s: %s must use DEF_STR( %s )\n",drivers[i]->source_file,drivers[i]->name,inp->name);
 							error = 1;
 						}
 					}
 
 					if (inp->name == DEF_STR( On ) && (inp+1)->name == DEF_STR( Off ))
 					{
-						printf("%s has inverted Off/On dipswitch order\n",drivers[i]->name);
+						printf("%s: %s has inverted Off/On dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
 						error = 1;
 					}
 
 					if (inp->name == DEF_STR( Yes ) && (inp+1)->name == DEF_STR( No ))
 					{
-						printf("%s has inverted No/Yes dipswitch order\n",drivers[i]->name);
+						printf("%s: %s has inverted No/Yes dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
 						error = 1;
 					}
 
 					if (!my_stricmp(inp->name,"table"))
 					{
-						printf("%s must use DEF_STR( Cocktail ), not %s\n",drivers[i]->name,inp->name);
+						printf("%s: %s must use DEF_STR( Cocktail ), not %s\n",drivers[i]->source_file,drivers[i]->name,inp->name);
 						error = 1;
 					}
 
-                    if (inp->name == DEF_STR( Cabinet ) && (inp+1)->name == DEF_STR( Upright )
+					if (inp->name == DEF_STR( Cabinet ) && (inp+1)->name == DEF_STR( Upright )
 							&& inp->default_value != (inp+1)->default_value)
 					{
-						printf("%s Cabinet must default to Upright\n",drivers[i]->name);
+						printf("%s: %s Cabinet must default to Upright\n",drivers[i]->source_file,drivers[i]->name);
 						error = 1;
 					}
 
 					if (inp->name == DEF_STR( Cocktail ) && (inp+1)->name == DEF_STR( Upright ))
 					{
-						printf("%s has inverted Upright/Cocktail dipswitch order\n",drivers[i]->name);
+						printf("%s: %s has inverted Upright/Cocktail dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
 						error = 1;
 					}
 
@@ -347,13 +415,13 @@ static int validitychecks(void)
 							&& (inp+1)->name >= DEF_STR( 9C_1C ) && (inp+1)->name <= DEF_STR( Free_Play )
 							&& inp->name >= (inp+1)->name)
 					{
-						printf("%s has unsorted coinage %s > %s\n",drivers[i]->name,inp->name,(inp+1)->name);
+						printf("%s: %s has unsorted coinage %s > %s\n",drivers[i]->source_file,drivers[i]->name,inp->name,(inp+1)->name);
 						error = 1;
 					}
 
 					if (inp->name == DEF_STR( Flip_Screen ) && (inp+1)->name != DEF_STR( Off ))
 					{
-						printf("%s has wrong Flip Screen option %s\n",drivers[i]->name,(inp+1)->name);
+						printf("%s: %s has wrong Flip Screen option %s\n",drivers[i]->source_file,drivers[i]->name,(inp+1)->name);
 						error = 1;
 					}
 				}
@@ -505,11 +573,17 @@ int init_machine(void)
 
 	/* LBO 042400 start */
 	if (uistring_init (options.language_file) != 0)
+	{
+		logerror("uisting_init failed\n");
 		goto out;
+	}
 	/* LBO 042400 end */
 
 	if (code_init() != 0)
+	{
+		logerror("code_init failed\n");
 		goto out;
+	}
 
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 	{
@@ -522,10 +596,14 @@ int init_machine(void)
 	{
 		Machine->input_ports = input_port_allocate(gamedrv->input_ports);
 		if (!Machine->input_ports)
+		{
+			logerror("could not allocate Machine->input_ports\n");
 			goto out_code;
+		}
 		Machine->input_ports_default = input_port_allocate(gamedrv->input_ports);
 		if (!Machine->input_ports_default)
 		{
+			logerror("could not allocate Machine->input_ports_default\n");
 			input_port_free(Machine->input_ports);
 			Machine->input_ports = 0;
 			goto out_code;
@@ -541,13 +619,19 @@ int init_machine(void)
 	#endif
 
 	if (readroms() != 0)
+	{
+		logerror("readroms failed\n");
 		goto out_free;
+	}
 
 	#ifdef MESS
 	load_next:
 		if (init_devices(gamedrv))
+		{
+			logerror("init_devices failed\n");
 			goto out_free;
-    #endif
+		}
+	#endif
 
 	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
 	spriteram_size=spriteram_2_size=0;
@@ -560,7 +644,10 @@ int init_machine(void)
 	settingsloaded = load_input_port_settings();
 
 	if( !memory_init() )
+	{
+		logerror("memory_init failed\n");
 		goto out_free;
+	}
 
 	if (gamedrv->driver_init) (*gamedrv->driver_init)();
 
@@ -644,11 +731,18 @@ static void vh_close(void)
 
 	palette_stop();
 
-	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
-		if (buffered_spriteram) free(buffered_spriteram);
-		if (buffered_spriteram_2) free(buffered_spriteram_2);
-		buffered_spriteram=NULL;
-		buffered_spriteram_2=NULL;
+	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
+	{
+		if (buffered_spriteram)
+			free(buffered_spriteram);
+		buffered_spriteram = NULL;
+		buffered_spriteram16 = NULL;
+		buffered_spriteram32 = NULL;
+		if (buffered_spriteram_2)
+			free(buffered_spriteram_2);
+		buffered_spriteram_2 = NULL;
+		buffered_spriteram16_2 = NULL;
+		buffered_spriteram32_2 = NULL;
 	}
 }
 
@@ -793,15 +887,17 @@ static int vh_open(void)
 		return 1;
 	}
 
+	switch_ui_orientation();
 	if (mame_debug)
 	{
-		Machine->debug_bitmap = osd_alloc_bitmap(options.debug_width,options.debug_height,Machine->color_depth);
+		Machine->debug_bitmap = bitmap_alloc_depth(options.debug_width,options.debug_height,Machine->color_depth);
 		if (!Machine->debug_bitmap)
 		{
 			vh_close();
 			return 1;
 		}
 	}
+	switch_true_orientation();
 
 	set_visible_area(
 			drv->default_visible_area.min_x,
@@ -810,16 +906,34 @@ static int vh_open(void)
 			drv->default_visible_area.max_y);
 
 	/* create spriteram buffers if necessary */
-	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
-		if (spriteram_size!=0) {
-			buffered_spriteram= malloc(spriteram_size);
-			if (!buffered_spriteram) { vh_close(); return 1; }
-			if (spriteram_2_size!=0) buffered_spriteram_2 = malloc(spriteram_2_size);
-			if (spriteram_2_size && !buffered_spriteram_2) { vh_close(); return 1; }
-		} else {
+	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
+	{
+		if (spriteram_size)
+		{
+			buffered_spriteram = malloc(spriteram_size);
+			if (!buffered_spriteram)
+			{
+				vh_close();
+				return 1;
+			}
+			if (spriteram_2_size)
+			{
+				buffered_spriteram_2 = malloc(spriteram_2_size);
+				if (!buffered_spriteram_2)
+				{
+					vh_close();
+					return 1;
+				}
+			}
+
+			buffered_spriteram16 = (data16_t *)buffered_spriteram;
+			buffered_spriteram32 = (data32_t *)buffered_spriteram;
+			buffered_spriteram16_2 = (data16_t *)buffered_spriteram_2;
+			buffered_spriteram32_2 = (data32_t *)buffered_spriteram_2;
+		}
+		else
+		{
 			logerror("vh_open():  Video buffers spriteram but spriteram_size is 0\n");
-			buffered_spriteram=NULL;
-			buffered_spriteram_2=NULL;
 		}
 	}
 
@@ -834,9 +948,9 @@ static int vh_open(void)
 		return 1;
 	}
 #ifdef MAME_DEBUG
-    if (mame_debug)
+	if (mame_debug)
 	{
-        if (NULL == (Machine->debugger_font = build_debugger_font()))
+		if (NULL == (Machine->debugger_font = build_debugger_font()))
 		{
 			vh_close();
 			return 1;
@@ -865,8 +979,6 @@ static int vh_open(void)
 
 ***************************************************************************/
 
-int need_to_clear_bitmap;	/* set by the user interface */
-
 int updatescreen(void)
 {
 	/* update sound */
@@ -875,13 +987,7 @@ int updatescreen(void)
 	if (osd_skip_this_frame() == 0)
 	{
 		profiler_mark(PROFILER_VIDEO);
-		if (need_to_clear_bitmap)
-		{
-			osd_clearbitmap(real_scrbitmap);
-			need_to_clear_bitmap = 0;
-		}
-		draw_screen(bitmap_dirty);	/* update screen */
-		bitmap_dirty = 0;
+		draw_screen();	/* update screen */
 		profiler_mark(PROFILER_END);
 	}
 
@@ -896,7 +1002,7 @@ int updatescreen(void)
 
 	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
 
-    return 0;
+	return 0;
 }
 
 
@@ -906,12 +1012,21 @@ int updatescreen(void)
 
 ***************************************************************************/
 
-void draw_screen(int _bitmap_dirty)
+static int bitmap_dirty;
+
+void draw_screen(void)
 {
-	(*Machine->drv->vh_update)(Machine->scrbitmap,_bitmap_dirty);  /* update screen */
+	(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 
 	if (artwork_backdrop || artwork_overlay)
-		artwork_draw(artwork_real_scrbitmap, Machine->scrbitmap, _bitmap_dirty);
+		artwork_draw(artwork_real_scrbitmap, Machine->scrbitmap,bitmap_dirty);
+
+	bitmap_dirty = 0;
+}
+
+void schedule_full_refresh(void)
+{
+	bitmap_dirty = 1;
 }
 
 
@@ -1069,6 +1184,6 @@ int mame_highscore_enabled(void)
 
 void set_led_status(int num,int on)
 {
-	if (on) leds_status |=  (1 << num);
-	else    leds_status &= ~(1 << num);
+	if (on) leds_status |=	(1 << num);
+	else	leds_status &= ~(1 << num);
 }

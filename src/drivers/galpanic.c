@@ -49,18 +49,12 @@ the board, and no piggybacked ROMs. Board number is MDK 321 V-0    EXPRO-02
 
 
 
-extern unsigned char *galpanic_bgvideoram,*galpanic_fgvideoram;
+extern data16_t *galpanic_bgvideoram,*galpanic_fgvideoram;
 extern size_t galpanic_fgvideoram_size;
 
 void galpanic_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
-READ_HANDLER( galpanic_bgvideoram_r );
-WRITE_HANDLER( galpanic_bgvideoram_w );
-READ_HANDLER( galpanic_fgvideoram_r );
-WRITE_HANDLER( galpanic_fgvideoram_w );
-READ_HANDLER( galpanic_paletteram_r );
-WRITE_HANDLER( galpanic_paletteram_w );
-READ_HANDLER( galpanic_spriteram_r );
-WRITE_HANDLER( galpanic_spriteram_w );
+WRITE16_HANDLER( galpanic_bgvideoram_w );
+WRITE16_HANDLER( galpanic_paletteram_w );
 void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void comad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -74,99 +68,78 @@ static int galpanic_interrupt(void)
 	else return 3;
 }
 
-static WRITE_HANDLER( galpanic_6295_bankswitch_w )
+static WRITE16_HANDLER( galpanic_6295_bankswitch_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
-		unsigned char *RAM = memory_region(REGION_SOUND1);
+		UINT8 *rom = memory_region(REGION_SOUND1);
 
-		memcpy(&RAM[0x30000],&RAM[0x40000 + ((data >> 8) & 0x0f) * 0x10000],0x10000);
+		memcpy(&rom[0x30000],&rom[0x40000 + ((data >> 8) & 0x0f) * 0x10000],0x10000);
 	}
 }
 
-static WRITE_HANDLER( oki_msb_w )
-{
-	if ((data & 0xff000000) == 0)
-	{
-		OKIM6295_data_0_w(offset,(data >> 8) & 0xff);
-	}
-}
-
-static READ_HANDLER( oki_msb_r )
-{
-	return OKIM6295_status_0_r(offset) << 8;
-}
 
 
+static MEMORY_READ16_START( galpanic_readmem )
+	{ 0x000000, 0x3fffff, MRA16_ROM },
+	{ 0x400000, 0x400001, OKIM6295_status_0_lsb_r },
+	{ 0x500000, 0x51ffff, MRA16_RAM },
+	{ 0x520000, 0x53ffff, MRA16_RAM },
+	{ 0x600000, 0x6007ff, MRA16_RAM },
+	{ 0x700000, 0x7047ff, MRA16_RAM },
+	{ 0x800000, 0x800001, input_port_0_word_r },
+	{ 0x800002, 0x800003, input_port_1_word_r },
+	{ 0x800004, 0x800005, input_port_2_word_r },
+MEMORY_END
 
-static struct MemoryReadAddress galpanic_readmem[] =
-{
-	{ 0x000000, 0x3fffff, MRA_ROM },
-	{ 0x400000, 0x400001, OKIM6295_status_0_r },
-	{ 0x500000, 0x51ffff, galpanic_fgvideoram_r },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_r },
-	{ 0x600000, 0x6007ff, galpanic_paletteram_r },
-	{ 0x700000, 0x7047ff, galpanic_spriteram_r },
-	{ 0x800000, 0x800001, input_port_0_r },
-	{ 0x800002, 0x800003, input_port_1_r },
-	{ 0x800004, 0x800005, input_port_2_r },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress galpanic_writemem[] =
-{
-	{ 0x000000, 0x3fffff, MWA_ROM },
-	{ 0x400000, 0x400001, OKIM6295_data_0_w },
-	{ 0x500000, 0x51ffff, galpanic_fgvideoram_w, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
+static MEMORY_WRITE16_START( galpanic_writemem )
+	{ 0x000000, 0x3fffff, MWA16_ROM },
+	{ 0x400000, 0x400001, OKIM6295_data_0_lsb_w },
+	{ 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
 	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x700000, 0x7047ff, galpanic_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
+	{ 0x700000, 0x7047ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },
-	{ 0xa00000, 0xa00001, MWA_NOP },	/* ??? */
-	{ 0xb00000, 0xb00001, MWA_NOP },	/* ??? */
-	{ 0xc00000, 0xc00001, MWA_NOP },	/* ??? */
-	{ -1 }  /* end of table */
-};
+	{ 0xa00000, 0xa00001, MWA16_NOP },	/* ??? */
+	{ 0xb00000, 0xb00001, MWA16_NOP },	/* ??? */
+	{ 0xc00000, 0xc00001, MWA16_NOP },	/* ??? */
+MEMORY_END
 
-static READ_HANDLER( kludge )
+static READ16_HANDLER( kludge )
 {
 	return rand() & 0x0700;
 }
 
-static struct MemoryReadAddress comad_readmem[] =
-{
-	{ 0x000000, 0x4fffff, MRA_ROM },
-	{ 0x500000, 0x51ffff, galpanic_fgvideoram_r },
-	{ 0x520000, 0x53ffff, galpanic_bgvideoram_r },
-	{ 0x600000, 0x6007ff, galpanic_paletteram_r },
-	{ 0x700000, 0x700fff, galpanic_spriteram_r },
-	{ 0x800000, 0x800001, input_port_0_r },
-	{ 0x800002, 0x800003, input_port_1_r },
-	{ 0x800004, 0x800005, input_port_2_r },
+static MEMORY_READ16_START( comad_readmem )
+	{ 0x000000, 0x4fffff, MRA16_ROM },
+	{ 0x500000, 0x51ffff, MRA16_RAM },
+	{ 0x520000, 0x53ffff, MRA16_RAM },
+	{ 0x600000, 0x6007ff, MRA16_RAM },
+	{ 0x700000, 0x700fff, MRA16_RAM },
+	{ 0x800000, 0x800001, input_port_0_word_r },
+	{ 0x800002, 0x800003, input_port_1_word_r },
+	{ 0x800004, 0x800005, input_port_2_word_r },
 //	{ 0x800006, 0x800007,  },	??
 	{ 0x80000a, 0x80000b, kludge },	/* bits 8-a = timer? palette update code waits for them to be 111 */
 	{ 0x80000c, 0x80000d, kludge },	/* missw96 bits 8-a = timer? palette update code waits for them to be 111 */
-	{ 0xc00000, 0xc0ffff, MRA_BANK1 },	/* missw96 */
-	{ 0xc80000, 0xc8ffff, MRA_BANK2 },	/* fantasia, newfant */
-	{ 0xf00000, 0xf00001, oki_msb_r },	/* fantasia, missw96 */
-	{ 0xf80000, 0xf80001, oki_msb_r },	/* newfant */
-	{ -1 }  /* end of table */
-};
+	{ 0xc00000, 0xc0ffff, MRA16_RAM },	/* missw96 */
+	{ 0xc80000, 0xc8ffff, MRA16_RAM },	/* fantasia, newfant */
+	{ 0xf00000, 0xf00001, OKIM6295_status_0_msb_r },	/* fantasia, missw96 */
+	{ 0xf80000, 0xf80001, OKIM6295_status_0_msb_r },	/* newfant */
+MEMORY_END
 
-static struct MemoryWriteAddress comad_writemem[] =
-{
-	{ 0x000000, 0x4fffff, MWA_ROM },
-	{ 0x500000, 0x51ffff, galpanic_fgvideoram_w, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
+static MEMORY_WRITE16_START( comad_writemem )
+	{ 0x000000, 0x4fffff, MWA16_ROM },
+	{ 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
 	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
-	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram },	/* 1024 colors, but only 512 seem to be used */
-	{ 0x700000, 0x700fff, galpanic_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
+	{ 0x700000, 0x700fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },	/* not sure */
-	{ 0xc00000, 0xc0ffff, MWA_BANK1 },	/* missw96 */
-	{ 0xc80000, 0xc8ffff, MWA_BANK2 },	/* fantasia, newfant */
-	{ 0xf00000, 0xf00001, oki_msb_w },	/* fantasia, missw96 */
-	{ 0xf80000, 0xf80001, oki_msb_w },	/* newfant */
-	{ -1 }  /* end of table */
-};
+	{ 0xc00000, 0xc0ffff, MWA16_RAM },	/* missw96 */
+	{ 0xc80000, 0xc8ffff, MWA16_RAM },	/* fantasia, newfant */
+	{ 0xf00000, 0xf00001, OKIM6295_data_0_msb_w },	/* fantasia, missw96 */
+	{ 0xf80000, 0xf80001, OKIM6295_data_0_msb_w },	/* newfant */
+MEMORY_END
 
 
 

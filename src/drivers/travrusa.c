@@ -31,8 +31,7 @@ void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },        /* Video and Color ram */
 	{ 0xd000, 0xd000, input_port_0_r },	/* IN0 */
@@ -41,11 +40,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd003, 0xd003, input_port_3_r },	/* DSW1 */
 	{ 0xd004, 0xd004, input_port_4_r },	/* DSW2 */
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, travrusa_videoram_w, &travrusa_videoram },
 	{ 0x9000, 0x9000, travrusa_scroll_x_low_w },
@@ -54,8 +51,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd000, 0xd000, irem_sound_cmd_w },
 	{ 0xd001, 0xd001, travrusa_flipscreen_w },	/* + coin counters */
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -64,9 +64,6 @@ void fsharkbt_reset_8741_mcu(void)
 
 	/* coin count increments on startup ? , so stop it */
 	coin_count = 0;
-
-	/* blank out the screen */
-	osd_clearbitmap(Machine->scrbitmap);
 }
 
 void wardner_reset(void)
@@ -89,9 +86,6 @@ void wardner_reset(void)
 
 	/* coin count increments on startup ? , so stop it */
 	coin_count = 0;
-
-	/* blank out the screen */
-	osd_clearbitmap(Machine->scrbitmap);
 }
 
 

@@ -12,16 +12,13 @@ driver by Nicola Salmoria
 
 
 
-extern unsigned char *blockout_videoram;
-extern unsigned char *blockout_frontvideoram;
+extern data16_t *blockout_videoram;
+extern data16_t *blockout_frontvideoram;
 extern unsigned char *blockout_frontcolor;
 
-WRITE_HANDLER( blockout_videoram_w );
-READ_HANDLER( blockout_videoram_r );
-WRITE_HANDLER( blockout_frontvideoram_w );
-READ_HANDLER( blockout_frontvideoram_r );
-WRITE_HANDLER( blockout_paletteram_w );
-WRITE_HANDLER( blockout_frontcolor_w );
+WRITE16_HANDLER( blockout_videoram_w );
+WRITE16_HANDLER( blockout_paletteram_w );
+WRITE16_HANDLER( blockout_frontcolor_w );
 int blockout_vh_start(void);
 void blockout_vh_stop(void);
 void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -33,26 +30,6 @@ static int blockout_interrupt(void)
 	/* interrupt 5 reads coin inputs - might have to be triggered only */
 	/* when a coin is inserted */
 	return 6 - cpu_getiloops();
-}
-
-static READ_HANDLER( blockout_input_r )
-{
-	switch (offset)
-	{
-		case 0:
-			return input_port_0_r(offset);
-		case 2:
-			return input_port_1_r(offset);
-		case 4:
-			return input_port_2_r(offset);
-		case 6:
-			return input_port_3_r(offset);
-		case 8:
-			return input_port_4_r(offset);
-		default:
-logerror("PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
-			return 0;
-	}
 }
 
 static WRITE_HANDLER( blockout_sound_command_w )
@@ -70,52 +47,48 @@ static WRITE_HANDLER( blockout_sound_command_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x10000b, blockout_input_r },
-	{ 0x180000, 0x1bffff, blockout_videoram_r },
-	{ 0x1d4000, 0x1dffff, MRA_BANK1 },	/* work RAM */
-	{ 0x1f4000, 0x1fffff, MRA_BANK2 },	/* work RAM */
-	{ 0x200000, 0x207fff, blockout_frontvideoram_r },
-	{ 0x208000, 0x21ffff, MRA_BANK3 },	/* ??? */
-	{ 0x280200, 0x2805ff, paletteram_word_r },
-	{ -1 }  /* end of table */
-};
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x100001, input_port_0_word_r },
+	{ 0x100002, 0x100003, input_port_1_word_r },
+	{ 0x100004, 0x100005, input_port_2_word_r },
+	{ 0x100006, 0x100007, input_port_3_word_r },
+	{ 0x100008, 0x100009, input_port_4_word_r },
+	{ 0x180000, 0x1bffff, MRA16_RAM },
+	{ 0x1d4000, 0x1dffff, MRA16_RAM },
+	{ 0x1f4000, 0x1fffff, MRA16_RAM },
+	{ 0x200000, 0x207fff, MRA16_RAM },
+	{ 0x208000, 0x21ffff, MRA16_RAM },
+	{ 0x280200, 0x2805ff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100014, 0x100017, blockout_sound_command_w },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100014, 0x100017, (mem_write16_handler)blockout_sound_command_w },
 	{ 0x180000, 0x1bffff, blockout_videoram_w, &blockout_videoram },
-	{ 0x1d4000, 0x1dffff, MWA_BANK1 },	/* work RAM */
-	{ 0x1f4000, 0x1fffff, MWA_BANK2 },	/* work RAM */
-	{ 0x200000, 0x207fff, blockout_frontvideoram_w, &blockout_frontvideoram },
-	{ 0x208000, 0x21ffff, MWA_BANK3 },	/* ??? */
+	{ 0x1d4000, 0x1dffff, MWA16_RAM },	/* work RAM */
+	{ 0x1f4000, 0x1fffff, MWA16_RAM },	/* work RAM */
+	{ 0x200000, 0x207fff, MWA16_RAM, &blockout_frontvideoram },
+	{ 0x208000, 0x21ffff, MWA16_RAM },	/* ??? */
 	{ 0x280002, 0x280003, blockout_frontcolor_w },
-	{ 0x280200, 0x2805ff, blockout_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+	{ 0x280200, 0x2805ff, blockout_paletteram_w, &paletteram16 },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
 	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
 	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( blockout )

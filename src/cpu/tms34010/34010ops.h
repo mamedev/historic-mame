@@ -26,13 +26,17 @@
 **	MEMORY I/O MACROS
 **#################################################################################################*/
 
-#define TMS34010_RDMEM(A)			((unsigned)cpu_readmem29      (A))
-#define TMS34010_RDMEM_WORD(A)		((unsigned)cpu_readmem29_word (A))
-#define TMS34010_RDMEM_DWORD(A)		((unsigned)cpu_readmem29_dword(A))
+#define TMS34010_RDMEM(A)			((unsigned)cpu_readmem29lew      (A))
+#define TMS34010_RDMEM_WORD(A)		((unsigned)cpu_readmem29lew_word (A))
+#define TMS34010_RDMEM_DWORD(A)		((unsigned)((cpu_readmem29lew_word((A)+2)<<16)|cpu_readmem29lew_word(A)))
 
-#define TMS34010_WRMEM(A,V)			(cpu_writemem29(A,V))
-#define TMS34010_WRMEM_WORD(A,V)	(cpu_writemem29_word(A,V))
-#define TMS34010_WRMEM_DWORD(A,V)	(cpu_writemem29_dword(A,V))
+#define TMS34010_WRMEM(A,V)			(cpu_writemem29lew(A,V))
+#define TMS34010_WRMEM_WORD(A,V)	(cpu_writemem29lew_word(A,V))
+INLINE void TMS34010_WRMEM_DWORD(offs_t A,UINT32 V)
+{
+	cpu_writemem29lew_word(A+2,V>>16);
+	cpu_writemem29lew_word(A,V&0xffff);
+}
 
 
 
@@ -58,7 +62,7 @@ enum
 	REG_HSTADRL,
 	REG_HSTADRH,
 	REG_HSTCTLL,
-	
+
 	REG_HSTCTLH,
 	REG_INTENB,
 	REG_INTPEND,
@@ -95,7 +99,7 @@ enum
 	REG020_HSTADRL,
 	REG020_HSTADRH,
 	REG020_HSTCTLL,
-	
+
 	REG020_HSTCTLH,
 	REG020_INTENB,
 	REG020_INTPEND,
@@ -112,7 +116,7 @@ enum
 	REG020_HCOUNT,
 	REG020_DPYADR,
 	REG020_REFADR,
-	
+
 	REG020_DPYSTL,
 	REG020_DPYSTH,
 	REG020_DPYNXL,
@@ -129,7 +133,7 @@ enum
 	REG020_BSFLTST,
 	REG020_DPYMSK,
 	REG020_RES5,
-	
+
 	REG020_SETVCNT,
 	REG020_SETHCNT,
 	REG020_BSFLTDL,

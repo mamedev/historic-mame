@@ -151,8 +151,8 @@ int stfight_vh_start(void)
 	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0x0F;
-	tx_tilemap->transparent_pen = 256;
+	tilemap_set_transparent_pen(fg_tilemap,0x0F);
+	tilemap_set_transparent_pen(tx_tilemap,256);
 
 	return 0;
 }
@@ -227,7 +227,7 @@ WRITE_HANDLER( stfight_vh_latch_w )
 			/* 0x40 = sprites */
 			tilemap_set_enable(bg_tilemap,data & 0x20);
 			tilemap_set_enable(fg_tilemap,data & 0x10);
-			flip_screen_w(0,data & 0x01);
+			flip_screen_set(data & 0x01);
 			break;
 	}
 }
@@ -289,24 +289,18 @@ void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	if (bg_tilemap->enable)
-	    tilemap_draw(bitmap,bg_tilemap,0);
-	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-	tilemap_draw(bitmap,fg_tilemap,1<<16);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* in case bg_tilemap is disabled */
+    tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,1);
 
 	/* Draw sprites (may be obscured by foreground layer) */
 	if (stfight_vh_latch_ram[0x07] & 0x40)
 		draw_sprites(bitmap);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }

@@ -37,29 +37,27 @@ I think that bit 1 of register 0d is flip screen.
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *aerofgt_rasterram;
-extern unsigned char *aerofgt_bg1videoram,*aerofgt_bg2videoram;
-extern unsigned char *aerofgt_spriteram1,*aerofgt_spriteram2;
-extern size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size;
+extern data16_t *aerofgt_rasterram;
+extern data16_t *aerofgt_bg1videoram,*aerofgt_bg2videoram;
+extern data16_t *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
+extern size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size,aerofgt_spriteram3_size;
 
-READ_HANDLER( aerofgt_rasterram_r );
-WRITE_HANDLER( aerofgt_rasterram_w );
-READ_HANDLER( aerofgt_spriteram_2_r );
-WRITE_HANDLER( aerofgt_spriteram_2_w );
-READ_HANDLER( aerofgt_bg1videoram_r );
-READ_HANDLER( aerofgt_bg2videoram_r );
-WRITE_HANDLER( aerofgt_bg1videoram_w );
-WRITE_HANDLER( aerofgt_bg2videoram_w );
-WRITE_HANDLER( pspikes_gfxbank_w );
-WRITE_HANDLER( karatblz_gfxbank_w );
-WRITE_HANDLER( spinlbrk_gfxbank_w );
-WRITE_HANDLER( turbofrc_gfxbank_w );
-WRITE_HANDLER( aerofgt_gfxbank_w );
-WRITE_HANDLER( aerofgt_bg1scrollx_w );
-WRITE_HANDLER( aerofgt_bg1scrolly_w );
-WRITE_HANDLER( aerofgt_bg2scrollx_w );
-WRITE_HANDLER( aerofgt_bg2scrolly_w );
-WRITE_HANDLER( pspikes_palette_bank_w );
+READ16_HANDLER( aerofgt_rasterram_r );
+WRITE16_HANDLER( aerofgt_rasterram_w );
+READ16_HANDLER( aerofgt_spriteram3_r );
+WRITE16_HANDLER( aerofgt_spriteram3_w );
+WRITE16_HANDLER( aerofgt_bg1videoram_w );
+WRITE16_HANDLER( aerofgt_bg2videoram_w );
+WRITE16_HANDLER( pspikes_gfxbank_w );
+WRITE16_HANDLER( karatblz_gfxbank_w );
+WRITE16_HANDLER( spinlbrk_gfxbank_w );
+WRITE16_HANDLER( turbofrc_gfxbank_w );
+WRITE16_HANDLER( aerofgt_gfxbank_w );
+WRITE16_HANDLER( aerofgt_bg1scrollx_w );
+WRITE16_HANDLER( aerofgt_bg1scrolly_w );
+WRITE16_HANDLER( aerofgt_bg2scrollx_w );
+WRITE16_HANDLER( aerofgt_bg2scrolly_w );
+WRITE16_HANDLER( pspikes_palette_bank_w );
 int pspikes_vh_start(void);
 int karatblz_vh_start(void);
 int spinlbrk_vh_start(void);
@@ -73,25 +71,25 @@ void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static unsigned char *aerofgt_workram;
+static data16_t *aerofgt_workram;
 
-static READ_HANDLER( aerofgt_workram_r )
+static READ16_HANDLER( aerofgt_workram_r )
 {
-	return READ_WORD(&aerofgt_workram[offset]);
+	return aerofgt_workram[offset];
 }
 
-static WRITE_HANDLER( aerofgt_workram_w )
+static WRITE16_HANDLER( aerofgt_workram_w )
 {
-	COMBINE_WORD_MEM(&aerofgt_workram[offset],data);
+	COMBINE_DATA(&aerofgt_workram[offset]);
 }
 
 
 
 static int pending_command;
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE16_HANDLER( sound_command_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		pending_command = 1;
 		soundlatch_w(offset,data & 0xff);
@@ -99,9 +97,9 @@ static WRITE_HANDLER( sound_command_w )
 	}
 }
 
-static WRITE_HANDLER( turbofrc_sound_command_w )
+static WRITE16_HANDLER( turbofrc_sound_command_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
 		pending_command = 1;
 		soundlatch_w(offset,(data >> 8) & 0xff);
@@ -109,7 +107,7 @@ static WRITE_HANDLER( turbofrc_sound_command_w )
 	}
 }
 
-static READ_HANDLER( pending_command_r )
+static READ16_HANDLER( pending_command_r )
 {
 	return pending_command;
 }
@@ -131,295 +129,259 @@ static WRITE_HANDLER( aerofgt_sh_bankswitch_w )
 
 
 
-static struct MemoryReadAddress pspikes_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK6 },
-	{ 0x200000, 0x203fff, MRA_BANK4 },
-	{ 0xff8000, 0xff8fff, aerofgt_bg1videoram_r },
+static MEMORY_READ16_START( pspikes_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x203fff, MRA16_RAM },
+	{ 0xff8000, 0xff8fff, MRA16_RAM },
 	{ 0xffd000, 0xffdfff, aerofgt_rasterram_r },
-	{ 0xffe000, 0xffefff, paletteram_word_r },
-	{ 0xfff000, 0xfff001, input_port_0_r },
-	{ 0xfff002, 0xfff003, input_port_1_r },
-	{ 0xfff004, 0xfff005, input_port_2_r },
+	{ 0xffe000, 0xffefff, MRA16_RAM },
+	{ 0xfff000, 0xfff001, input_port_0_word_r },
+	{ 0xfff002, 0xfff003, input_port_1_word_r },
+	{ 0xfff004, 0xfff005, input_port_2_word_r },
 	{ 0xfff006, 0xfff007, pending_command_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pspikes_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK6 },	/* work RAM */
-	{ 0x200000, 0x203fff, MWA_BANK4, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
+static MEMORY_WRITE16_START( pspikes_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },	/* work RAM */
+	{ 0x200000, 0x203fff, MWA16_RAM, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
 	{ 0xff8000, 0xff8fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram },
-	{ 0xffc000, 0xffc3ff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
+	{ 0xffc000, 0xffc3ff, aerofgt_spriteram3_w, &aerofgt_spriteram3, &aerofgt_spriteram3_size },
 	{ 0xffd000, 0xffdfff, aerofgt_rasterram_w, &aerofgt_rasterram },	/* bg1 scroll registers */
-	{ 0xffe000, 0xffefff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0xffe000, 0xffefff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0xfff000, 0xfff001, pspikes_palette_bank_w },
 	{ 0xfff002, 0xfff003, pspikes_gfxbank_w },
 	{ 0xfff004, 0xfff005, aerofgt_bg1scrolly_w },
 	{ 0xfff006, 0xfff007, sound_command_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress karatblz_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x081fff, aerofgt_bg1videoram_r },
-	{ 0x082000, 0x083fff, aerofgt_bg2videoram_r },
-	{ 0x0a0000, 0x0affff, MRA_BANK4 },
-	{ 0x0b0000, 0x0bffff, MRA_BANK5 },
-	{ 0x0c0000, 0x0cffff, MRA_BANK6 },	/* work RAM */
+static MEMORY_READ16_START( karatblz_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x081fff, MRA16_RAM },
+	{ 0x082000, 0x083fff, MRA16_RAM },
+	{ 0x0a0000, 0x0affff, MRA16_RAM },
+	{ 0x0b0000, 0x0bffff, MRA16_RAM },
+	{ 0x0c0000, 0x0cffff, MRA16_RAM },	/* work RAM */
 	{ 0x0f8000, 0x0fbfff, aerofgt_workram_r },	/* work RAM */
 	{ 0xff8000, 0xffbfff, aerofgt_workram_r },	/* mirror */
-	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_r },
-	{ 0x0fe000, 0x0fe7ff, paletteram_word_r },
-	{ 0x0ff000, 0x0ff001, input_port_0_r },
-	{ 0x0ff002, 0x0ff003, input_port_1_r },
-	{ 0x0ff004, 0x0ff005, input_port_2_r },
-	{ 0x0ff006, 0x0ff007, input_port_3_r },
-	{ 0x0ff008, 0x0ff009, input_port_4_r },
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram3_r },
+	{ 0x0fe000, 0x0fe7ff, MRA16_RAM },
+	{ 0x0ff000, 0x0ff001, input_port_0_word_r },
+	{ 0x0ff002, 0x0ff003, input_port_1_word_r },
+	{ 0x0ff004, 0x0ff005, input_port_2_word_r },
+	{ 0x0ff006, 0x0ff007, input_port_3_word_r },
+	{ 0x0ff008, 0x0ff009, input_port_4_word_r },
 	{ 0x0ff00a, 0x0ff00b, pending_command_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress karatblz_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
+static MEMORY_WRITE16_START( karatblz_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x081fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram },
 	{ 0x082000, 0x083fff, aerofgt_bg2videoram_w, &aerofgt_bg2videoram },
-	{ 0x0a0000, 0x0affff, MWA_BANK4, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
-	{ 0x0b0000, 0x0bffff, MWA_BANK5, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
-	{ 0x0c0000, 0x0cffff, MWA_BANK6 },	/* work RAM */
+	{ 0x0a0000, 0x0affff, MWA16_RAM, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
+	{ 0x0b0000, 0x0bffff, MWA16_RAM, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
+	{ 0x0c0000, 0x0cffff, MWA16_RAM },	/* work RAM */
 	{ 0x0f8000, 0x0fbfff, aerofgt_workram_w, &aerofgt_workram },	/* work RAM */
 	{ 0xff8000, 0xffbfff, aerofgt_workram_w },	/* mirror */
-	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
-	{ 0x0fe000, 0x0fe7ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram3_w, &aerofgt_spriteram3, &aerofgt_spriteram3_size },
+	{ 0x0fe000, 0x0fe7ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x0ff002, 0x0ff003, karatblz_gfxbank_w },
 	{ 0x0ff006, 0x0ff007, sound_command_w },
 	{ 0x0ff008, 0x0ff009, aerofgt_bg1scrollx_w },
 	{ 0x0ff00a, 0x0ff00b, aerofgt_bg1scrolly_w },
 	{ 0x0ff00c, 0x0ff00d, aerofgt_bg2scrollx_w },
 	{ 0x0ff00e, 0x0ff00f, aerofgt_bg2scrolly_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress spinlbrk_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x080000, 0x080fff, aerofgt_bg1videoram_r },
-	{ 0x082000, 0x082fff, aerofgt_bg2videoram_r },
-	{ 0xff8000, 0xffbfff, MRA_BANK6 },
-	{ 0xffc000, 0xffc7ff, aerofgt_spriteram_2_r },
+static MEMORY_READ16_START( spinlbrk_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x080fff, MRA16_RAM },
+	{ 0x082000, 0x082fff, MRA16_RAM },
+	{ 0xff8000, 0xffbfff, MRA16_RAM },
+	{ 0xffc000, 0xffc7ff, aerofgt_spriteram3_r },
 	{ 0xffd000, 0xffd1ff, aerofgt_rasterram_r },
-	{ 0xffe000, 0xffe7ff, paletteram_word_r },
-	{ 0xfff000, 0xfff001, input_port_0_r },
-	{ 0xfff002, 0xfff003, input_port_1_r },
-	{ 0xfff004, 0xfff005, input_port_2_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xffe000, 0xffe7ff, MRA16_RAM },
+	{ 0xfff000, 0xfff001, input_port_0_word_r },
+	{ 0xfff002, 0xfff003, input_port_1_word_r },
+	{ 0xfff004, 0xfff005, input_port_2_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress spinlbrk_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( spinlbrk_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x080fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram },
 	{ 0x082000, 0x082fff, aerofgt_bg2videoram_w, &aerofgt_bg2videoram },
-	{ 0xff8000, 0xffbfff, MWA_BANK6 },	/* work RAM */
-	{ 0xffc000, 0xffc7ff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
+	{ 0xff8000, 0xffbfff, MWA16_RAM },	/* work RAM */
+	{ 0xffc000, 0xffc7ff, aerofgt_spriteram3_w, &aerofgt_spriteram3, &aerofgt_spriteram3_size },
 	{ 0xffd000, 0xffd1ff, aerofgt_rasterram_w, &aerofgt_rasterram },	/* bg1 scroll registers */
-	{ 0xffe000, 0xffe7ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0xffe000, 0xffe7ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0xfff000, 0xfff001, spinlbrk_gfxbank_w },
 	{ 0xfff002, 0xfff003, aerofgt_bg2scrollx_w },
 	{ 0xfff006, 0xfff007, sound_command_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress turbofrc_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x0c0000, 0x0cffff, MRA_BANK6 },	/* work RAM */
-	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_r },
-	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_r },
-	{ 0x0e0000, 0x0e3fff, MRA_BANK4 },
-	{ 0x0e4000, 0x0e7fff, MRA_BANK5 },
+static MEMORY_READ16_START( turbofrc_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
+	{ 0x0c0000, 0x0cffff, MRA16_RAM },	/* work RAM */
+	{ 0x0d0000, 0x0d1fff, MRA16_RAM },
+	{ 0x0d2000, 0x0d3fff, MRA16_RAM },
+	{ 0x0e0000, 0x0e3fff, MRA16_RAM },
+	{ 0x0e4000, 0x0e7fff, MRA16_RAM },
 	{ 0x0f8000, 0x0fbfff, aerofgt_workram_r },	/* work RAM */
 	{ 0xff8000, 0xffbfff, aerofgt_workram_r },	/* mirror */
-	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_r },
-	{ 0xffc000, 0xffc7ff, aerofgt_spriteram_2_r },	/* mirror */
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram3_r },
+	{ 0xffc000, 0xffc7ff, aerofgt_spriteram3_r },	/* mirror */
 	{ 0x0fd000, 0x0fdfff, aerofgt_rasterram_r },
 	{ 0xffd000, 0xffdfff, aerofgt_rasterram_r },	/* mirror */
-	{ 0x0fe000, 0x0fe7ff, paletteram_word_r },
-	{ 0xfff000, 0xfff001, input_port_0_r },
-	{ 0xfff002, 0xfff003, input_port_1_r },
-	{ 0xfff004, 0xfff005, input_port_2_r },
+	{ 0x0fe000, 0x0fe7ff, MRA16_RAM },
+	{ 0xfff000, 0xfff001, input_port_0_word_r },
+	{ 0xfff002, 0xfff003, input_port_1_word_r },
+	{ 0xfff004, 0xfff005, input_port_2_word_r },
 	{ 0xfff006, 0xfff007, pending_command_r },
-	{ 0xfff008, 0xfff009, input_port_3_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xfff008, 0xfff009, input_port_3_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress turbofrc_writemem[] =
-{
-	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x0c0000, 0x0cffff, MWA_BANK6 },	/* work RAM */
+static MEMORY_WRITE16_START( turbofrc_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
+	{ 0x0c0000, 0x0cffff, MWA16_RAM },	/* work RAM */
 	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram },
 	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_w, &aerofgt_bg2videoram },
-	{ 0x0e0000, 0x0e3fff, MWA_BANK4, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
-	{ 0x0e4000, 0x0e7fff, MWA_BANK5, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
+	{ 0x0e0000, 0x0e3fff, MWA16_RAM, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
+	{ 0x0e4000, 0x0e7fff, MWA16_RAM, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
 	{ 0x0f8000, 0x0fbfff, aerofgt_workram_w, &aerofgt_workram },	/* work RAM */
 	{ 0xff8000, 0xffbfff, aerofgt_workram_w },	/* mirror */
-	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
-	{ 0xffc000, 0xffc7ff, aerofgt_spriteram_2_w },	/* mirror */
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram3_w, &aerofgt_spriteram3, &aerofgt_spriteram3_size },
+	{ 0xffc000, 0xffc7ff, aerofgt_spriteram3_w },	/* mirror */
 	{ 0x0fd000, 0x0fdfff, aerofgt_rasterram_w, &aerofgt_rasterram },	/* bg1 scroll registers */
 	{ 0xffd000, 0xffdfff, aerofgt_rasterram_w },	/* mirror */
-	{ 0x0fe000, 0x0fe7ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x0fe000, 0x0fe7ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0xfff002, 0xfff003, aerofgt_bg1scrolly_w },
 	{ 0xfff004, 0xfff005, aerofgt_bg2scrollx_w },
 	{ 0xfff006, 0xfff007, aerofgt_bg2scrolly_w },
 	{ 0xfff008, 0xfff00b, turbofrc_gfxbank_w },
-	{ 0xfff00c, 0xfff00d, MWA_NOP },	/* related to bg2 (written together with the scroll registers) */
+	{ 0xfff00c, 0xfff00d, MWA16_NOP },	/* related to bg2 (written together with the scroll registers) */
 	{ 0xfff00e, 0xfff00f, turbofrc_sound_command_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress aerofgtb_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x0c0000, 0x0cffff, MRA_BANK6 },	/* work RAM */
-	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_r },
-	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_r },
-	{ 0x0e0000, 0x0e3fff, MRA_BANK4 },
-	{ 0x0e4000, 0x0e7fff, MRA_BANK5 },
+static MEMORY_READ16_START( aerofgtb_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x0c0000, 0x0cffff, MRA16_RAM },	/* work RAM */
+	{ 0x0d0000, 0x0d1fff, MRA16_RAM },
+	{ 0x0d2000, 0x0d3fff, MRA16_RAM },
+	{ 0x0e0000, 0x0e3fff, MRA16_RAM },
+	{ 0x0e4000, 0x0e7fff, MRA16_RAM },
 	{ 0x0f8000, 0x0fbfff, aerofgt_workram_r },	/* work RAM */
-	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_r },
-	{ 0x0fd000, 0x0fd7ff, paletteram_word_r },
-	{ 0x0fe000, 0x0fe001, input_port_0_r },
-	{ 0x0fe002, 0x0fe003, input_port_1_r },
-	{ 0x0fe004, 0x0fe005, input_port_2_r },
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram3_r },
+	{ 0x0fd000, 0x0fd7ff, MRA16_RAM },
+	{ 0x0fe000, 0x0fe001, input_port_0_word_r },
+	{ 0x0fe002, 0x0fe003, input_port_1_word_r },
+	{ 0x0fe004, 0x0fe005, input_port_2_word_r },
 	{ 0x0fe006, 0x0fe007, pending_command_r },
-	{ 0x0fe008, 0x0fe009, input_port_3_r },
+	{ 0x0fe008, 0x0fe009, input_port_3_word_r },
 	{ 0x0ff000, 0x0fffff, aerofgt_rasterram_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress aerofgtb_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x0c0000, 0x0cffff, MWA_BANK6 },	/* work RAM */
+static MEMORY_WRITE16_START( aerofgtb_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x0c0000, 0x0cffff, MWA16_RAM },	/* work RAM */
 	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram },
 	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_w, &aerofgt_bg2videoram },
-	{ 0x0e0000, 0x0e3fff, MWA_BANK4, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
-	{ 0x0e4000, 0x0e7fff, MWA_BANK5, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
+	{ 0x0e0000, 0x0e3fff, MWA16_RAM, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
+	{ 0x0e4000, 0x0e7fff, MWA16_RAM, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
 	{ 0x0f8000, 0x0fbfff, aerofgt_workram_w, &aerofgt_workram },	/* work RAM */
-	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
-	{ 0x0fd000, 0x0fd7ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram3_w, &aerofgt_spriteram3, &aerofgt_spriteram3_size },
+	{ 0x0fd000, 0x0fd7ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x0fe002, 0x0fe003, aerofgt_bg1scrolly_w },
 	{ 0x0fe004, 0x0fe005, aerofgt_bg2scrollx_w },
 	{ 0x0fe006, 0x0fe007, aerofgt_bg2scrolly_w },
 	{ 0x0fe008, 0x0fe00b, turbofrc_gfxbank_w },
 	{ 0x0fe00e, 0x0fe00f, turbofrc_sound_command_w },
 	{ 0x0ff000, 0x0fffff, aerofgt_rasterram_w, &aerofgt_rasterram },	/* used only for the scroll registers */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress aerofgt_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x1a0000, 0x1a07ff, paletteram_word_r },
+static MEMORY_READ16_START( aerofgt_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x1a0000, 0x1a07ff, MRA16_RAM },
 	{ 0x1b0000, 0x1b07ff, aerofgt_rasterram_r },
-	{ 0x1b0800, 0x1b0801, MRA_NOP },	/* ??? */
-	{ 0x1b0ff0, 0x1b0fff, MRA_BANK7 },	/* stack area during boot */
-	{ 0x1b2000, 0x1b3fff, aerofgt_bg1videoram_r },
-	{ 0x1b4000, 0x1b5fff, aerofgt_bg2videoram_r },
-	{ 0x1c0000, 0x1c3fff, MRA_BANK4 },
-	{ 0x1c4000, 0x1c7fff, MRA_BANK5 },
-	{ 0x1d0000, 0x1d1fff, aerofgt_spriteram_2_r },
+	{ 0x1b0800, 0x1b0801, MRA16_NOP },	/* ??? */
+	{ 0x1b0ff0, 0x1b0fff, MRA16_RAM },	/* stack area during boot */
+	{ 0x1b2000, 0x1b3fff, MRA16_RAM },
+	{ 0x1b4000, 0x1b5fff, MRA16_RAM },
+	{ 0x1c0000, 0x1c3fff, MRA16_RAM },
+	{ 0x1c4000, 0x1c7fff, MRA16_RAM },
+	{ 0x1d0000, 0x1d1fff, aerofgt_spriteram3_r },
 	{ 0xfef000, 0xffefff, aerofgt_workram_r },	/* work RAM */
-	{ 0xffffa0, 0xffffa1, input_port_0_r },
-	{ 0xffffa2, 0xffffa3, input_port_1_r },
-	{ 0xffffa4, 0xffffa5, input_port_2_r },
-	{ 0xffffa6, 0xffffa7, input_port_3_r },
-	{ 0xffffa8, 0xffffa9, input_port_4_r },
+	{ 0xffffa0, 0xffffa1, input_port_0_word_r },
+	{ 0xffffa2, 0xffffa3, input_port_1_word_r },
+	{ 0xffffa4, 0xffffa5, input_port_2_word_r },
+	{ 0xffffa6, 0xffffa7, input_port_3_word_r },
+	{ 0xffffa8, 0xffffa9, input_port_4_word_r },
 	{ 0xffffac, 0xffffad, pending_command_r },
-	{ 0xffffae, 0xffffaf, input_port_5_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xffffae, 0xffffaf, input_port_5_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress aerofgt_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x1a0000, 0x1a07ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+static MEMORY_WRITE16_START( aerofgt_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x1a0000, 0x1a07ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x1b0000, 0x1b07ff, aerofgt_rasterram_w, &aerofgt_rasterram },	/* used only for the scroll registers */
-	{ 0x1b0800, 0x1b0801, MWA_NOP },	/* ??? */
-	{ 0x1b0ff0, 0x1b0fff, MWA_BANK7 },	/* stack area during boot */
+	{ 0x1b0800, 0x1b0801, MWA16_NOP },	/* ??? */
+	{ 0x1b0ff0, 0x1b0fff, MWA16_RAM },	/* stack area during boot */
 	{ 0x1b2000, 0x1b3fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram },
 	{ 0x1b4000, 0x1b5fff, aerofgt_bg2videoram_w, &aerofgt_bg2videoram },
-	{ 0x1c0000, 0x1c3fff, MWA_BANK4, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
-	{ 0x1c4000, 0x1c7fff, MWA_BANK5, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
-	{ 0x1d0000, 0x1d1fff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
+	{ 0x1c0000, 0x1c3fff, MWA16_RAM, &aerofgt_spriteram1, &aerofgt_spriteram1_size },
+	{ 0x1c4000, 0x1c7fff, MWA16_RAM, &aerofgt_spriteram2, &aerofgt_spriteram2_size },
+	{ 0x1d0000, 0x1d1fff, aerofgt_spriteram3_w, &aerofgt_spriteram3, &aerofgt_spriteram3_size },
 	{ 0xfef000, 0xffefff, aerofgt_workram_w, &aerofgt_workram },	/* work RAM */
 	{ 0xffff80, 0xffff87, aerofgt_gfxbank_w },
 	{ 0xffff88, 0xffff89, aerofgt_bg1scrolly_w },	/* + something else in the top byte */
 	{ 0xffff90, 0xffff91, aerofgt_bg2scrolly_w },	/* + something else in the top byte */
-	{ 0xffffac, 0xffffad, MWA_NOP },	/* ??? */
+	{ 0xffffac, 0xffffad, MWA16_NOP },	/* ??? */
 	{ 0xffffc0, 0xffffc1, sound_command_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x77ff, MWA_ROM },
 	{ 0x7800, 0x7fff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort turbofrc_sound_readport[] =
-{
+static PORT_READ_START( turbofrc_sound_readport )
 	{ 0x14, 0x14, soundlatch_r },
 	{ 0x18, 0x18, YM2610_status_port_0_A_r },
 	{ 0x1a, 0x1a, YM2610_status_port_0_B_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort turbofrc_sound_writeport[] =
-{
+static PORT_WRITE_START( turbofrc_sound_writeport )
 	{ 0x00, 0x00, aerofgt_sh_bankswitch_w },
 	{ 0x14, 0x14, pending_command_clear_w },
 	{ 0x18, 0x18, YM2610_control_port_0_A_w },
 	{ 0x19, 0x19, YM2610_data_port_0_A_w },
 	{ 0x1a, 0x1a, YM2610_control_port_0_B_w },
 	{ 0x1b, 0x1b, YM2610_data_port_0_B_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort aerofgt_sound_readport[] =
-{
+static PORT_READ_START( aerofgt_sound_readport )
 	{ 0x00, 0x00, YM2610_status_port_0_A_r },
 	{ 0x02, 0x02, YM2610_status_port_0_B_r },
 	{ 0x0c, 0x0c, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort aerofgt_sound_writeport[] =
-{
+static PORT_WRITE_START( aerofgt_sound_writeport )
 	{ 0x00, 0x00, YM2610_control_port_0_A_w },
 	{ 0x01, 0x01, YM2610_data_port_0_A_w },
 	{ 0x02, 0x02, YM2610_control_port_0_B_w },
 	{ 0x03, 0x03, YM2610_data_port_0_B_w },
 	{ 0x04, 0x04, aerofgt_sh_bankswitch_w },
 	{ 0x08, 0x08, pending_command_clear_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

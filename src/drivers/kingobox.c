@@ -67,8 +67,7 @@ static WRITE_HANDLER( sound_command_w ) {
 	cpu_cause_interrupt( 3, 0xff );
 }
 
-static struct MemoryReadAddress main_readmem[] =
-{
+static MEMORY_READ_START( main_readmem )
     { 0x0000, 0x7fff, MRA_ROM },
     { 0xc000, 0xc3ff, MRA_RAM }, /* work ram */
     { 0xe000, 0xe7ff, sprite_shared_r },
@@ -80,11 +79,9 @@ static struct MemoryReadAddress main_readmem[] =
     { 0xfc03, 0xfc03, input_port_3_r }, /* Player 2 controls */
     { 0xfc04, 0xfc04, input_port_4_r }, /* Coin & Start */
     { 0xfc05, 0xfc05, input_port_5_r }, /* Player 1 & 2 button 3 */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress main_writemem[] =
-{
+static MEMORY_WRITE_START( main_writemem )
     { 0x0000, 0x7fff, MWA_ROM },
     { 0xc000, 0xc3ff, MWA_RAM }, /* work ram */
     { 0xe000, 0xe7ff, sprite_shared_w }, /* shared with sprite cpu */
@@ -96,11 +93,9 @@ static struct MemoryWriteAddress main_writemem[] =
     { 0xf803, 0xf803, scroll_interrupt_w  },
     { 0xf804, 0xf804, video_interrupt_w },
     { 0xf807, 0xf807, sound_command_w }, /* sound latch */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress video_readmem[] =
-{
+static MEMORY_READ_START( video_readmem )
     { 0x0000, 0x3fff, MRA_ROM },
     { 0x8000, 0x87ff, MRA_RAM }, /* work ram */
     { 0xa000, 0xa7ff, video_shared_r }, /* shared with main */
@@ -108,11 +103,9 @@ static struct MemoryReadAddress video_readmem[] =
     { 0xc400, 0xc4ff, colorram_r }, /* background colorram */
     { 0xc800, 0xcbff, MRA_RAM }, /* foreground vram */
     { 0xcc00, 0xcfff, MRA_RAM }, /* foreground colorram */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress video_writemem[] =
-{
+static MEMORY_WRITE_START( video_writemem )
     { 0x0000, 0x3fff, MWA_ROM },
     { 0x8000, 0x87ff, MWA_RAM }, /* work ram */
     { 0xa000, 0xa7ff, video_shared_w, &video_shared }, /* shared with main */
@@ -120,61 +113,47 @@ static struct MemoryWriteAddress video_writemem[] =
     { 0xc400, 0xc4ff, colorram_w, &colorram }, /* background colorram */
     { 0xc800, 0xcbff, MWA_RAM, &kingobox_videoram1, &kingobox_videoram1_size }, /* foreground vram */
     { 0xcc00, 0xcfff, MWA_RAM, &kingobox_colorram1 }, /* foreground colorram */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sprite_readmem[] =
-{
+static MEMORY_READ_START( sprite_readmem )
     { 0x0000, 0x1fff, MRA_ROM },
     { 0x8000, 0x87ff, MRA_RAM }, /* work ram */
     { 0xa000, 0xa7ff, sprite_shared_r }, /* shared with main */
     { 0xc000, 0xc3ff, spriteram_r }, /* sprite ram */
     { 0xc400, 0xc43f, MRA_RAM }, /* something related to scroll? */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sprite_writemem[] =
-{
+static MEMORY_WRITE_START( sprite_writemem )
     { 0x0000, 0x1fff, MWA_ROM },
     { 0x8000, 0x87ff, MWA_RAM }, /* work ram */
     { 0xa000, 0xa7ff, sprite_shared_w, &sprite_shared }, /* shared with main */
     { 0xc000, 0xc3ff, spriteram_w, &spriteram, &spriteram_size }, /* sprite ram */
     { 0xc400, 0xc43f, MWA_RAM },  /* something related to scroll? */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
     { 0x0000, 0xbfff, MRA_ROM },
     { 0xc000, 0xc3ff, MRA_RAM }, /* work ram */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
     { 0x8000, 0x8000, MWA_NOP }, /* ??? */
     { 0x0000, 0xbfff, MWA_ROM },
     { 0xc000, 0xc3ff, MWA_RAM }, /* work ram */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x08, 0x08, AY8910_read_port_0_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, DAC_0_data_w },
 	{ 0x08, 0x08, AY8910_write_port_0_w },
 	{ 0x0c, 0x0c, AY8910_control_port_0_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 /* Ring King */
-static struct MemoryReadAddress rk_main_readmem[] =
-{
+static MEMORY_READ_START( rk_main_readmem )
     { 0x0000, 0xbfff, MRA_ROM },
     { 0xc000, 0xc3ff, MRA_RAM }, /* work ram */
     { 0xc800, 0xcfff, sprite_shared_r },
@@ -186,11 +165,9 @@ static struct MemoryReadAddress rk_main_readmem[] =
     { 0xe004, 0xe004, input_port_4_r }, /* Coin & Start */
     { 0xe005, 0xe005, input_port_5_r }, /* Player 1 & 2 button 3 */
     { 0xf000, 0xf7ff, MRA_RAM }, /* ???? */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rk_main_writemem[] =
-{
+static MEMORY_WRITE_START( rk_main_writemem )
     { 0x0000, 0xbfff, MWA_ROM },
     { 0xc000, 0xc3ff, MWA_RAM }, /* work ram */
     { 0xc800, 0xcfff, sprite_shared_w },
@@ -201,11 +178,9 @@ static struct MemoryWriteAddress rk_main_writemem[] =
     { 0xd803, 0xd803, sound_command_w },
     { 0xe800, 0xe800, MWA_RAM, &kingobox_scroll_y },
     { 0xf000, 0xf7ff, MWA_RAM }, /* ???? */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress rk_video_readmem[] =
-{
+static MEMORY_READ_START( rk_video_readmem )
     { 0x0000, 0x3fff, MRA_ROM },
     { 0x8000, 0x87ff, MRA_RAM }, /* work ram */
     { 0xc000, 0xc7ff, video_shared_r }, /* shared with main */
@@ -213,11 +188,9 @@ static struct MemoryReadAddress rk_video_readmem[] =
     { 0xac00, 0xacff, colorram_r }, /* background colorram */
     { 0xa000, 0xa3ff, MRA_RAM }, /* foreground vram */
     { 0xa400, 0xa7ff, MRA_RAM }, /* foreground colorram */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rk_video_writemem[] =
-{
+static MEMORY_WRITE_START( rk_video_writemem )
     { 0x0000, 0x3fff, MWA_ROM },
     { 0x8000, 0x87ff, MWA_RAM }, /* work ram */
     { 0xc000, 0xc7ff, video_shared_w, &video_shared }, /* shared with main */
@@ -225,42 +198,33 @@ static struct MemoryWriteAddress rk_video_writemem[] =
     { 0xac00, 0xacff, colorram_w, &colorram }, /* background colorram */
     { 0xa000, 0xa3ff, MWA_RAM, &kingobox_videoram1, &kingobox_videoram1_size }, /* foreground vram */
     { 0xa400, 0xa7ff, MWA_RAM, &kingobox_colorram1 }, /* foreground colorram */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress rk_sprite_readmem[] =
-{
+static MEMORY_READ_START( rk_sprite_readmem )
     { 0x0000, 0x1fff, MRA_ROM },
     { 0x8000, 0x87ff, MRA_RAM }, /* work ram */
     { 0xc800, 0xcfff, sprite_shared_r }, /* shared with main */
     { 0xa000, 0xa3ff, spriteram_r }, /* sprite ram */
     { 0xa400, 0xa43f, MRA_RAM }, /* something related to scroll? */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rk_sprite_writemem[] =
-{
+static MEMORY_WRITE_START( rk_sprite_writemem )
     { 0x0000, 0x1fff, MWA_ROM },
     { 0x8000, 0x87ff, MWA_RAM }, /* work ram */
     { 0xc800, 0xcfff, sprite_shared_w, &sprite_shared }, /* shared with main */
     { 0xa000, 0xa3ff, spriteram_w, &spriteram, &spriteram_size }, /* sprite ram */
     { 0xa400, 0xa43f, MWA_RAM },  /* something related to scroll? */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort rk_sound_readport[] =
-{
+static PORT_READ_START( rk_sound_readport )
 	{ 0x02, 0x02, AY8910_read_port_0_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort rk_sound_writeport[] =
-{
+static PORT_WRITE_START( rk_sound_writeport )
 	{ 0x00, 0x00, DAC_0_data_w },
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( kingofb )
     PORT_START /* DSW0 - 0xfc01 */

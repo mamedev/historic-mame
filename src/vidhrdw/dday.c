@@ -86,7 +86,6 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
 	start = code * gfx->height + (sy-oy);
 

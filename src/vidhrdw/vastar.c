@@ -110,9 +110,9 @@ int vastar_vh_start(void)
 	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
-	bg1_tilemap->transparent_pen = 0;
-	bg2_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(bg1_tilemap,0);
+	tilemap_set_transparent_pen(bg2_tilemap,0);
 
 	tilemap_set_scroll_cols(bg1_tilemap, 32);
 	tilemap_set_scroll_cols(bg2_tilemap, 32);
@@ -235,29 +235,28 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
 
 	switch (*vastar_sprite_priority)
 	{
 	case 0:
-		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY);
+		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY,0);
 		draw_sprites(bitmap);
-		tilemap_draw(bitmap, bg2_tilemap, 0);
-		tilemap_draw(bitmap, fg_tilemap, 0);
+		tilemap_draw(bitmap, bg2_tilemap, 0,0);
+		tilemap_draw(bitmap, fg_tilemap, 0,0);
 		break;
 
 	case 2:
-		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY);
+		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY,0);
 		draw_sprites(bitmap);
-		tilemap_draw(bitmap, bg1_tilemap, 0);
-		tilemap_draw(bitmap, bg2_tilemap, 0);
-		tilemap_draw(bitmap, fg_tilemap, 0);
+		tilemap_draw(bitmap, bg1_tilemap, 0,0);
+		tilemap_draw(bitmap, bg2_tilemap, 0,0);
+		tilemap_draw(bitmap, fg_tilemap, 0,0);
 		break;
 
 	case 3:
-		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY);
-		tilemap_draw(bitmap, bg2_tilemap, 0);
-		tilemap_draw(bitmap, fg_tilemap, 0);
+		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap, bg2_tilemap, 0,0);
+		tilemap_draw(bitmap, fg_tilemap, 0,0);
 		draw_sprites(bitmap);
 		break;
 

@@ -1,19 +1,19 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *taitob_fscroll;
-unsigned char *taitob_bscroll;
-
-unsigned char *b_backgroundram;
-unsigned char *b_foregroundram;
-unsigned char *b_textram;
-unsigned char *taitob_pixelram;
+data16_t *taitob_fscroll;
+data16_t *taitob_bscroll;
+data16_t *b_backgroundram;
+data16_t *b_foregroundram;
+data16_t *b_textram;
+data16_t *b_videoram;
+data16_t *b_pixelram;
 
 size_t b_backgroundram_size;
 size_t b_foregroundram_size;
 size_t b_textram_size;
+size_t b_videoram_size;
 size_t b_pixelram_size;
-
 size_t b_paletteram_size;
 
 
@@ -35,22 +35,12 @@ static int flipscreen = 0;
 
 
 
-READ_HANDLER( taitob_videoram_r )
-{
-	return READ_WORD(&videoram[offset]);
-}
-
-WRITE_HANDLER( taitob_videoram_w )
-{
-	COMBINE_WORD_MEM(&videoram[offset],data);
-}
-
-READ_HANDLER( taitob_video_control_r )
+READ16_HANDLER( taitob_video_control_r )
 {
 	return (video_control<<8);
 }
 
-WRITE_HANDLER( taitob_video_control_w )
+WRITE16_HANDLER( taitob_video_control_w )
 {
 	int val = (data>>8)&0xff;
 
@@ -88,7 +78,7 @@ WRITE_HANDLER( taitob_video_control_w )
 	if ( ((video_control & 1)==0) && ((val & 1)==1) ) /*kludge ?*/
 	{
 		//usrintf_showmessage("pixel layer clear");
-		memset(taitob_pixelram,0,b_pixelram_size);
+		memset(b_pixelram,0,b_pixelram_size);
 		memset(pixel_layer_dirty, 1, sizeof(pixel_layer_dirty));
 		memset(pixel_layer_colors, 0, sizeof(pixel_layer_colors));
 		pixel_layer_colors[0] = pixel_layer->width * pixel_layer->height;
@@ -101,16 +91,16 @@ WRITE_HANDLER( taitob_video_control_w )
 
 	video_control = val;
 
-	//flip_screen_w(0, video_control & 0x10);
+	//flip_screen_set(0, video_control & 0x10);
 	//tilemap_set_flip(ALL_TILEMAPS, (video_control & 0x10) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 }
 
-READ_HANDLER( taitob_text_video_control_r )
+READ16_HANDLER( taitob_text_video_control_r )
 {
 	return (text_video_control<<8);
 }
 
-WRITE_HANDLER( taitob_text_video_control_w )
+WRITE16_HANDLER( taitob_text_video_control_w )
 {
 	int val = (data>>8)&0xff;
 /*
@@ -136,26 +126,20 @@ WRITE_HANDLER( taitob_text_video_control_w )
 
 
 
-READ_HANDLER( taitob_pixelram_r )
+WRITE16_HANDLER( taitob_pixelram_w )
 {
-	return READ_WORD(&taitob_pixelram[offset]);
-}
-WRITE_HANDLER( taitob_pixelram_w )
-{
-	int oldword = READ_WORD (&taitob_pixelram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	data16_t oldword = b_pixelram[offset];
+	COMBINE_DATA (&b_pixelram[offset]);
 
-	if (oldword != newword) /*this results in bad colors, if you reset the game on warning screen, because MAME will invalidate the pens*/
+	if (oldword != b_pixelram[offset])
 	{
 		pixel_layer_colors[(oldword>>8) & 0xff]--;
 		pixel_layer_colors[   (oldword) & 0xff]--;
 
-		pixel_layer_colors[(newword>>8) & 0xff]++;
-		pixel_layer_colors[   (newword) & 0xff]++;
+		pixel_layer_colors[(b_pixelram[offset]>>8) & 0xff]++;
+		pixel_layer_colors[(b_pixelram[offset]   ) & 0xff]++;
 
-		WRITE_WORD (&taitob_pixelram[offset], newword);
-
-		pixel_layer_dirty[ offset>>9 ] = 1;
+		pixel_layer_dirty[ offset>>8 ] = 1;
 	}
 }
 
@@ -173,7 +157,7 @@ void taitob_redraw_pixel_layer_dirty(void)
 			pixel_layer_dirty[sy] = 0;
 			for (sx = 0; sx < 512; sx += 2)
 			{
-				int color = READ_WORD(&taitob_pixelram[ sy*512 + sx ]);
+				UINT16 color = b_pixelram[ sy*(512/2) + sx/2 ];
 
 				plot_pixel(pixel_layer, sx,   sy, pens[(color>>8) & 0xff]);
 				plot_pixel(pixel_layer, sx+1, sy, pens[     color & 0xff]);
@@ -183,22 +167,22 @@ void taitob_redraw_pixel_layer_dirty(void)
 }
 
 
-WRITE_HANDLER( masterw_pixelram_w )
+WRITE16_HANDLER( masterw_pixelram_w )
 {
 	unsigned short *pens = Machine->pens + b_px_color_base;
     int sx,sy,color1,color2;
 	int i;
 
-	COMBINE_WORD_MEM(&taitob_pixelram[offset],data);
+	COMBINE_DATA(&b_pixelram[offset]);
 
-	sx = (offset >> 5) & 0xff;
-	sy = offset & 0x1e;
+	sx = (offset >> 4) & 0xff;
+	sy = offset & 0x0f;
 	sx*=1;
-	sy*=8;
+	sy*=8*2;
 
-	color1 = READ_WORD(&taitob_pixelram[offset & ~0x2000]);
+	color1 = b_pixelram[offset & ~0x1000];
 	color1 = (color1 >> 8) | (color1 << 8);
-	color2 = READ_WORD(&taitob_pixelram[offset | 0x2000]);
+	color2 = b_pixelram[offset | 0x1000];
 	color2 = (color2 >> 8) | (color2 << 8);
 
 	for (i=0; i<16; i++)
@@ -208,23 +192,19 @@ WRITE_HANDLER( masterw_pixelram_w )
 }
 
 
-READ_HANDLER( hitice_pixelram_r )
-{
-	return READ_WORD(&taitob_pixelram[offset]);
-}
-WRITE_HANDLER( hitice_pixelram_w )
+WRITE16_HANDLER( hitice_pixelram_w )
 {
 	unsigned short *pens = Machine->pens + b_px_color_base;
     int sx,sy,color;
 
 	{
-		COMBINE_WORD_MEM(&taitob_pixelram[offset],data);
+		COMBINE_DATA(&b_pixelram[offset]);
 
-		sx = (offset) & 0x1ff;
-		sy = (offset >> 9);
+		sx = (offset) & 0x00ff;
+		sy = (offset >> 8);
 
 
-		color = READ_WORD(&taitob_pixelram[offset]);
+		color = b_pixelram[offset];
 
 		//if (color != 0)
 		//	usrintf_showmessage("hitice write to pixelram != 0 offs=%05x data=%08x",offset,color);
@@ -239,12 +219,12 @@ void taitob_vh_stop (void)
 #if 0
 FILE * fo;
 int i;
-	if (taitob_pixelram)
+	if (b_pixelram)
 	{
 		fo = fopen("mastpix.bin","wb");
-		for (i=0; i<0x10000-0x9000; i+=2)
+		for (i=0; i<(0x10000-0x9000)/2; i++)
 		{
-			int j = READ_WORD(&taitob_pixelram[i]);
+			int j = b_pixelram[i];
 			fputc( (j>>0)&255 , fo);
 			fputc( (j>>8)&255 , fo);
 		}
@@ -259,8 +239,8 @@ int i;
 
 static void get_bg_tile_info(int tile_index)
 {
-	int tile  = READ_WORD(&b_backgroundram[2*tile_index]);
-	int color = READ_WORD(&b_backgroundram[2*tile_index + 0x2000]);
+	int tile  = b_backgroundram[tile_index];
+	int color = b_backgroundram[tile_index + 0x1000];
 
 	/*there are 0x1fff tiles in all games but rambo3 where it is 0x3fff, qzshowby 0x7fff*/
 	SET_TILE_INFO(1, tile & 0x7fff, b_bg_color_base + (color&0x3f) )
@@ -269,8 +249,8 @@ static void get_bg_tile_info(int tile_index)
 
 static void get_fg_tile_info(int tile_index)
 {
-	int tile  = READ_WORD(&b_foregroundram[2*tile_index]);
-	int color = READ_WORD(&b_foregroundram[2*tile_index + 0x2000]);
+	int tile  = b_foregroundram[tile_index];
+	int color = b_foregroundram[tile_index + 0x1000];
 
 	/*there are 0x1fff tiles in all games but rambo3 where it is 0x3fff, qzshowby 0x7fff*/
 	SET_TILE_INFO(1, tile & 0x7fff, b_fg_color_base + (color&0x3f) )
@@ -279,7 +259,7 @@ static void get_fg_tile_info(int tile_index)
 
 static void get_tx_tile_info(int tile_index)
 {
-	int tile  = READ_WORD(&b_textram[2*tile_index]);
+	int tile  = b_textram[tile_index];
 
 	SET_TILE_INFO(0, tile & 0x0fff, b_tx_color_base + ((tile>>12) & 0x0f) )
 	/*no flip attribute*/
@@ -297,8 +277,8 @@ int taitob_vh_start_core (void)
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0; /* ?? */
-	tx_tilemap->transparent_pen = 0; /* ?? */
+	tilemap_set_transparent_pen(fg_tilemap,0); /* ?? */
+	tilemap_set_transparent_pen(tx_tilemap,0); /* ?? */
 
 	flipscreen = 0; /*maybe not needed*/
 
@@ -361,54 +341,51 @@ int taitob_vh_start_color_order2 (void)
 	return taitob_vh_start_core();
 }
 
-READ_HANDLER ( taitob_text_r )
+READ16_HANDLER( taitob_text_r )
 {
-	return READ_WORD(&b_textram[offset]);
+	return b_textram[offset];
 }
 
-WRITE_HANDLER( taitob_text_w_tm )
+WRITE16_HANDLER( taitob_text_w_tm )
 {
-	int oldword = READ_WORD (&b_textram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	data16_t oldword = b_textram[offset];
+	COMBINE_DATA (&b_textram[offset]);
 
-	if (oldword != newword)
+	if (oldword != b_textram[offset])
 	{
-		WRITE_WORD (&b_textram[offset],newword);
-		tilemap_mark_tile_dirty(tx_tilemap, offset / 2);
+		tilemap_mark_tile_dirty(tx_tilemap, offset);
 	}
 }
 
-READ_HANDLER ( taitob_background_r )
+READ16_HANDLER( taitob_background_r )
 {
-	return READ_WORD(&b_backgroundram[offset]);
+	return b_backgroundram[offset];
 }
 
-WRITE_HANDLER( taitob_background_w_tm )
+WRITE16_HANDLER( taitob_background_w_tm )
 {
-	int oldword = READ_WORD (&b_backgroundram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	data16_t oldword = b_backgroundram[offset];
+	COMBINE_DATA (&b_backgroundram[offset]);
 
-	if (oldword != newword)
+	if (oldword != b_backgroundram[offset])
 	{
-		WRITE_WORD (&b_backgroundram[offset],newword);
-		tilemap_mark_tile_dirty(bg_tilemap,(offset&0x1fff) / 2);
+		tilemap_mark_tile_dirty(bg_tilemap,(offset&0x0fff));
 	}
 }
 
-READ_HANDLER ( taitob_foreground_r )
+READ16_HANDLER( taitob_foreground_r )
 {
-	return READ_WORD(&b_foregroundram[offset]);
+	return b_foregroundram[offset];
 }
 
-WRITE_HANDLER( taitob_foreground_w_tm )
+WRITE16_HANDLER( taitob_foreground_w_tm )
 {
-	int oldword = READ_WORD (&b_foregroundram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	data16_t oldword = b_foregroundram[offset];
+	COMBINE_DATA (&b_foregroundram[offset]);
 
-	if (oldword != newword)
+	if (oldword != b_foregroundram[offset])
 	{
-		WRITE_WORD (&b_foregroundram[offset],newword);
-		tilemap_mark_tile_dirty(fg_tilemap,(offset&0x1fff) / 2);
+		tilemap_mark_tile_dirty(fg_tilemap,(offset&0x0fff));
 	}
 }
 
@@ -424,12 +401,12 @@ void taitob_mark_sprite_colors(void)
 	memset(palette_map, 0, sizeof(palette_map));
 
 	/* Sprites */
-	for (offs = 0;offs < 0x1980;offs += 16)
+	for (offs = 0;offs < 0x1980/2;offs += 8)
 	{
 		int tile;
 
-		tile = READ_WORD(&videoram[offs]);
-		color = b_sp_color_base + (READ_WORD(&videoram[offs+2]) & 0x3f);
+		tile = b_videoram[offs];
+		color = b_sp_color_base + (b_videoram[offs+1] & 0x3f);
 
 		palette_map[color] |= pen_usage[tile & elem_mask];
 	}
@@ -515,11 +492,11 @@ void taitob_draw_sprites (struct osd_bitmap *bitmap)
 	int offs,code,color,flipx,flipy;
 	unsigned int data, zoomx, zoomy, zx, zy, zoomxlatch=0, zoomylatch=0;
 
-	for (offs = 0x1980-16; offs >=0; offs -= 16)
+	for (offs = (0x1980-16)/2; offs >=0; offs -= 8)
 	{
-		code = READ_WORD(&videoram[offs]);
+		code = b_videoram[offs];
 
-		color = READ_WORD(&videoram[offs+2]);
+		color = b_videoram[offs+1];
 		flipx = color & 0x4000;
 		flipy = color & 0x8000;
 #if 0
@@ -532,12 +509,12 @@ void taitob_draw_sprites (struct osd_bitmap *bitmap)
 #endif
 		color = b_sp_color_base + (color & 0x3f);
 
-		x = READ_WORD(&videoram[offs+4]) & 0x3ff;
-		y = READ_WORD(&videoram[offs+6]) & 0x3ff;
+		x = b_videoram[offs+2] & 0x3ff;
+		y = b_videoram[offs+3] & 0x3ff;
 		if (x >= 0x200)	x -= 0x400;
 		if (y >= 0x200)	y -= 0x400;
 
-		data = READ_WORD(&videoram[offs+0x0a]);
+		data = b_videoram[offs+5];
 		if (data)
 		{
 			if (!big_sprite)
@@ -548,14 +525,14 @@ void taitob_draw_sprites (struct osd_bitmap *bitmap)
 				y_no  = 0;
 				xlatch = x;
 				ylatch = y;
-				data = READ_WORD(&videoram[offs+0x08]);
+				data = b_videoram[offs+4];
 				zoomxlatch = (data>>8) & 0xff;
 				zoomylatch = (data) & 0xff;
 				big_sprite = 1;
 			}
 		}
 
-		data = READ_WORD(&videoram[offs+0x08]);
+		data = b_videoram[offs+4];
 		zoomx = (data>>8) & 0xff;
 		zoomy = (data) & 0xff;
 		zx = (0x100 - zoomx) / 16;
@@ -605,10 +582,10 @@ void taitob_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 {
 
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -616,20 +593,15 @@ void taitob_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		full_refresh = 1;
-
-	if (full_refresh)
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	taitob_draw_sprites(bitmap);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 
@@ -645,22 +617,22 @@ void ashura_draw_sprites (struct osd_bitmap *bitmap, int priority)
 	int data,offs,code,color,flipx,flipy;
 	unsigned int zoomx, zoomy, zx, zy, zoomxlatch=0, zoomylatch=0;
 
-	for (offs = 0x1980-16; offs >= 0; offs -= 16)
+	for (offs = (0x1980-16)/2; offs >= 0; offs -= 8)
 	{
-		code = READ_WORD(&videoram[offs]);
+		code = b_videoram[offs];
 
-		color = READ_WORD(&videoram[offs+2]);
+		color = b_videoram[offs+1];
 		flipx = color & 0x4000;
 		flipy = color & 0x8000;
 		//if (color & 0x3fc0) logerror("color sprite (crimec)=%x\n",color);
 		color = b_sp_color_base + (color & 0x3f);
 
-		x = READ_WORD(&videoram[offs+4]) & 0x3ff;
-		y = READ_WORD(&videoram[offs+6]) & 0x3ff;
+		x = b_videoram[offs+2] & 0x3ff;
+		y = b_videoram[offs+3] & 0x3ff;
 		if (x >= 0x200)	x -= 0x400;
 		if (y >= 0x200)	y -= 0x400;
 
-		data = READ_WORD(&videoram[offs+0x0a]);
+		data = b_videoram[offs+5];
 		if (data)
 		{
 			if (!big_sprite)
@@ -671,14 +643,14 @@ void ashura_draw_sprites (struct osd_bitmap *bitmap, int priority)
 				y_no  = 0;
 				xlatch = x;
 				ylatch = y;
-				data = READ_WORD(&videoram[offs+0x08]);
+				data = b_videoram[offs+4];
 				zoomxlatch = (data>>8) & 0xff;
 				zoomylatch = (data) & 0xff;
 				big_sprite = 1;
 			}
 		}
 
-		data = READ_WORD(&videoram[offs+0x08]);
+		data = b_videoram[offs+4];
 		zoomx = (data>>8) & 0xff;
 		zoomy = (data) & 0xff;
 		zx = (0x100 - zoomx) / 16;
@@ -730,10 +702,10 @@ void ashura_draw_sprites (struct osd_bitmap *bitmap, int priority)
 void ashura_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -748,17 +720,15 @@ void ashura_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 	if ( palette_recalc() )
 	{
 		memset(pixel_layer_dirty, 1, sizeof(pixel_layer_dirty));
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	}
 
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 
 	ashura_draw_sprites(bitmap,1);
 
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	ashura_draw_sprites(bitmap,0);
 
@@ -768,7 +738,7 @@ void ashura_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,pixel_layer,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[ b_px_color_base ] );
 	}
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 
@@ -779,10 +749,10 @@ void crimec_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 {
 
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -797,17 +767,15 @@ void crimec_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 	if ( palette_recalc() )
 	{
 		memset(pixel_layer_dirty, 1, sizeof(pixel_layer_dirty));
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	}
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 
 	if (!(video_control&0x08))
 		ashura_draw_sprites (bitmap,1);
 
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
  /*a HACK !*/
 	if ((video_control&0xef) == 0xef) /*masked out bit is screen flip*/
@@ -824,7 +792,7 @@ void crimec_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 		ashura_draw_sprites (bitmap,0);
 	}
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 
@@ -878,10 +846,10 @@ void hitice_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 	int tx_scrolly;
 
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 /*this is more paging than scrolling, but I see no other way to implement it*/
 	switch(text_video_control)
@@ -909,18 +877,16 @@ void hitice_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	taitob_draw_sprites(bitmap);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 
@@ -929,10 +895,10 @@ void rambo3_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 	int tx_scrolly;
 
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 /*this is more paging than scrolling, but I see no other way to implement it*/
 	switch(text_video_control)
@@ -960,17 +926,15 @@ void rambo3_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	taitob_draw_sprites (bitmap);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 
 }
 
@@ -978,10 +942,10 @@ void rambo3_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 void puzbobb_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -989,28 +953,15 @@ void puzbobb_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
-	//if (!(video_control&0x08))  //sprites 1
-	//	ashura_draw_sprites (bitmap,1);
-
-	tilemap_draw(bitmap,fg_tilemap,0);
-
-	//if (!(video_control&0x08))
-	//	ashura_draw_sprites (bitmap,0); //sprites 0
-	//else
-	//{
-	//	ashura_draw_sprites (bitmap,1); //both
-	//	ashura_draw_sprites (bitmap,0);
-	//}
 	taitob_draw_sprites (bitmap); //both
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 
 }
 
@@ -1018,10 +969,10 @@ void puzbobb_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 void qzshowby_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -1029,30 +980,16 @@ void qzshowby_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
-
-	//if (!(video_control&0x08))  //sprites 1
-	//	ashura_draw_sprites (bitmap,1);
-
-	tilemap_draw(bitmap,fg_tilemap,0);
-
-	//if (!(video_control&0x08))
-	//	ashura_draw_sprites (bitmap,0); //sprites 0
-	//else
-	//{
-	//	ashura_draw_sprites (bitmap,1); //both
-	//	ashura_draw_sprites (bitmap,0);
-	//}
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	taitob_draw_sprites (bitmap); //both
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 
@@ -1061,10 +998,10 @@ void masterw_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 {
 
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -1072,13 +1009,11 @@ void masterw_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 
 	if (( video_control&0x01) == 0x01)
 	{
@@ -1089,11 +1024,11 @@ void masterw_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh)
 
 	ashura_draw_sprites(bitmap,1);
 
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	ashura_draw_sprites(bitmap,0);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 
@@ -1105,15 +1040,15 @@ int i;
 #if 1
 	for (i=0; i<256; i++)
 	{
-		tilemap_set_scrollx( bg_tilemap, i, -READ_WORD(&taitob_bscroll[i*4]) );
+		tilemap_set_scrollx( bg_tilemap, i, -taitob_bscroll[i*2] );
 	}
 #endif
 
 	/* Update tilemaps */
-	//tilemap_set_scrollx( bg_tilemap,0, -READ_WORD(&taitob_bscroll[0x30]) );
-	tilemap_set_scrolly( bg_tilemap,0, -READ_WORD(&taitob_bscroll[2]) );
-	tilemap_set_scrollx( fg_tilemap,0, -READ_WORD(&taitob_fscroll[0]) );
-	tilemap_set_scrolly( fg_tilemap,0, -READ_WORD(&taitob_fscroll[2]) );
+	//tilemap_set_scrollx( bg_tilemap,0, -taitob_bscroll[0x30/2] );
+	tilemap_set_scrolly( bg_tilemap,0, -taitob_bscroll[1] );
+	tilemap_set_scrollx( fg_tilemap,0, -taitob_fscroll[0] );
+	tilemap_set_scrolly( fg_tilemap,0, -taitob_fscroll[1] );
 
 
 	tilemap_update(bg_tilemap);
@@ -1122,19 +1057,14 @@ int i;
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
-	if (palette_recalc ())
-		full_refresh = 1;
-
-	if (full_refresh)
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
 	taitob_draw_sprites(bitmap);
 
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 

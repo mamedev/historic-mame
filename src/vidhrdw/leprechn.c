@@ -112,7 +112,6 @@ WRITE_HANDLER( leprechn_graphics_data_w )
     case 0x18:
         fillbitmap(Machine->scrbitmap,Machine->pens[data],0);
         memset(videoram, data, screen_width * Machine->drv->screen_height);
-        osd_mark_dirty(0,0,screen_width-1,Machine->drv->screen_height-1,0);
         return;
     }
 

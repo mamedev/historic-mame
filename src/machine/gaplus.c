@@ -33,7 +33,7 @@ READ_HANDLER( gaplus_sharedram_r )
 WRITE_HANDLER( gaplus_sharedram_w )
 {
 	if (offset == 0x082c)	/* 0x102c */
-		flip_screen_w(0, data);
+		flip_screen_set(data);
     gaplus_sharedram[offset] = data;
 }
 

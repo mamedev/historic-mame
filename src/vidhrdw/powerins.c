@@ -39,14 +39,13 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 #include "vidhrdw/generic.h"
 
 /* Variables that driver has access to: */
-unsigned char *powerins_vram_0, *powerins_vctrl_0;
-unsigned char *powerins_vram_1, *powerins_vctrl_1;
-unsigned char *powerins_vregs;
+data16_t *powerins_vram_0, *powerins_vctrl_0;
+data16_t *powerins_vram_1, *powerins_vctrl_1;
+data16_t *powerins_vregs;
 
 /* Variables only used here: */
 static struct tilemap *tilemap_0, *tilemap_1;
-static int flipscreen, tile_bank;
-static int oki_bank;
+static int tile_bank;
 
 
 
@@ -56,57 +55,23 @@ static int oki_bank;
 
 ***************************************************************************/
 
-READ_HANDLER( powerins_vregs_r )
+
+WRITE16_HANDLER( powerins_flipscreen_w )
 {
-	return READ_WORD(&powerins_vregs[offset]);
+	if (ACCESSING_LSB)	flip_screen_set( data & 1 );
 }
 
-WRITE_HANDLER( powerins_vregs_w )
+WRITE16_HANDLER( powerins_tilebank_w )
 {
-	COMBINE_WORD_MEM(&powerins_vregs[offset],data);
-
-	switch (offset)
+	if (ACCESSING_LSB)
 	{
-		case 0x14:	// Flipscreen
-			flipscreen = data & 1;
-			tilemap_set_flip( ALL_TILEMAPS, flipscreen?(TILEMAP_FLIPX | TILEMAP_FLIPY): 0 );
-			break;
-
-//		case 0x16:	// ? always 1
-
-		case 0x18:	// Tiles Banking (VRAM 0)
-			if (data != tile_bank)
-			{
-				tile_bank = data;
-				tilemap_mark_all_tiles_dirty(tilemap_0);
-			}
-			break;
-
-//		case 0x1e:	// ? there is an hidden test mode screen (set 18ff08 to 4
-					//   during test mode) that calls this: sound code (!?)
-
-		case 0x30:	// OKI banking
+		if (data != tile_bank)
 		{
-			unsigned char *RAM = memory_region(REGION_SOUND1);
-			int new_bank = data & 0x7;
-
-			if (new_bank != oki_bank)
-			{
-				oki_bank = new_bank;
-				memcpy(&RAM[0x30000],&RAM[0x40000 + 0x10000*new_bank],0x10000);
-			}
+			tile_bank = data;		// Tiles Bank (VRAM 0)
+			tilemap_mark_all_tiles_dirty(tilemap_0);
 		}
-		break;
-
-		case 0x3e:	// OKI data
-			OKIM6295_data_0_w(0,data);
-			break;
-
-		default:
-			logerror("PC %06X - Register %02X <- %02X !\n", cpu_get_pc(), offset, data);
 	}
 }
-
 
 
 
@@ -117,22 +82,19 @@ WRITE_HANDLER( powerins_vregs_w )
 ***************************************************************************/
 
 
-WRITE_HANDLER( powerins_paletteram_w )
+WRITE16_HANDLER( powerins_paletteram16_w )
 {
 	/*	byte 0    byte 1	*/
 	/*	RRRR GGGG BBBB RGBx	*/
 	/*	4321 4321 4321 000x	*/
 
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	data16_t newword = COMBINE_DATA(&paletteram16[offset]);
 
 	int r = ((newword >> 8) & 0xF0 ) | ((newword << 0) & 0x08);
 	int g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
 	int b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
 
-	palette_change_color( offset/2, r,g,b );
-
-	WRITE_WORD (&paletteram[offset], newword);
+	palette_change_color( offset, r,g,b );
 }
 
 
@@ -166,14 +128,16 @@ Offset:
 
 static void get_tile_info_0( int tile_index )
 {
-	int code = READ_WORD(&powerins_vram_0[tile_index * 2]);
+	data16_t code = powerins_vram_0[tile_index];
 	SET_TILE_INFO( 0 , (code & 0x07ff) + (tile_bank*0x800), ((code & 0xf000) >> (16-4)) + ((code & 0x0800) >> (11-4)) );
 }
 
-void powerins_vram_0_w(int offset,int data)
+WRITE16_HANDLER( powerins_vram_0_w )
 {
-	COMBINE_WORD_MEM(&powerins_vram_0[offset],data);
-	tilemap_mark_tile_dirty(tilemap_0, offset/2 );
+	data16_t oldword = powerins_vram_0[offset];
+	data16_t newword = COMBINE_DATA(&powerins_vram_0[offset]);
+	if (oldword != newword)
+		tilemap_mark_tile_dirty(tilemap_0, offset);
 }
 
 UINT32 powerins_get_memory_offset_0(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -202,14 +166,16 @@ Offset:
 
 static void get_tile_info_1( int tile_index )
 {
-	int code = READ_WORD(&powerins_vram_1[tile_index * 2]);
+	data16_t code = powerins_vram_1[tile_index];
 	SET_TILE_INFO( 1 , code & 0x0fff , (code & 0xf000) >> (16-4) );
 }
 
-void powerins_vram_1_w(int offset,int data)
+WRITE16_HANDLER( powerins_vram_1_w )
 {
-	COMBINE_WORD_MEM(&powerins_vram_1[offset],data);
-	tilemap_mark_tile_dirty(tilemap_1, offset/2 );
+	data16_t oldword = powerins_vram_1[offset];
+	data16_t newword = COMBINE_DATA(&powerins_vram_1[offset]);
+	if (oldword != newword)
+		tilemap_mark_tile_dirty(tilemap_1, offset);
 }
 
 
@@ -242,13 +208,12 @@ int powerins_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 15;
+		tilemap_set_transparent_pen(tilemap_0,15);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 15;
+		tilemap_set_transparent_pen(tilemap_1,15);
 
-		oki_bank = -1;	// samples bank "unitialised"
 		return 0;
 	}
 	else return 1;
@@ -302,6 +267,71 @@ Offset:		Format:					Value:
 
 #define SIGN_EXTEND_POS(_var_)	{_var_ &= 0x3ff; if (_var_ > 0x1ff) _var_ -= 0x400;}
 
+
+static void powerins_draw_sprites(struct osd_bitmap *bitmap)
+{
+	data16_t *source = spriteram16 + 0x8000/2;
+	data16_t *finish = spriteram16 + 0x9000/2;
+
+	int screen_w	=	Machine->drv->screen_width;
+	int screen_h	=	Machine->drv->screen_height;
+
+	for ( ; source < finish; source += 16/2 )
+	{
+		int x,y,inc;
+
+		int	attr	=	source[ 0x0/2 ];
+		int	size	=	source[ 0x2/2 ];
+		int	code	=	source[ 0x6/2 ];
+		int	sx		=	source[ 0x8/2 ];
+		int	sy		=	source[ 0xc/2 ];
+		int	color	=	source[ 0xe/2 ];
+
+		int	flipx	=	size & 0x1000;
+		int	flipy	=	0;	// ??
+
+		int	dimx	=	((size >> 0) & 0xf ) + 1;
+		int	dimy	=	((size >> 4) & 0xf ) + 1;
+
+		if (!(attr&1)) continue;
+
+		SIGN_EXTEND_POS(sx)
+		SIGN_EXTEND_POS(sy)
+
+		/* Handle flip_screen. Apply a global offset of 32 pixels along x too */
+
+		if (flip_screen)
+		{	sx = screen_w - sx - dimx*16 - 32;	flipx = !flipx;
+			sy = screen_h - sy - dimy*16;		flipy = !flipy;
+			code += dimx*dimy-1;			inc = -1;	}
+		else
+		{	sx += 32;						inc = +1;	}
+
+		code = (code & 0x7fff) + ( (size & 0x0100) << 7 );
+
+		for (x = 0 ; x < dimx ; x++)
+		{
+			for (y = 0 ; y < dimy ; y++)
+			{
+				drawgfx(bitmap,Machine->gfx[2],
+						code,
+						color,
+						flipx, flipy,
+						sx + x*16,
+						sy + y*16,
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
+
+				code += inc;
+			}
+		}
+
+
+	}
+}
+
+
+
+
 static void powerins_mark_sprite_colors(void)
 {
 	int i,col,colmask[0x100];
@@ -311,8 +341,8 @@ static void powerins_mark_sprite_colors(void)
 	int color_codes_start	=	Machine->drv->gfxdecodeinfo[2].color_codes_start;
 	int total_color_codes	=	Machine->drv->gfxdecodeinfo[2].total_color_codes;
 
-	unsigned char *source = spriteram + 0x8000;
-	unsigned char *finish = spriteram + 0x9000;
+	data16_t *source = spriteram16 + 0x8000/2;
+	data16_t *finish = spriteram16 + 0x9000/2;
 
 	int xmin = Machine->visible_area.min_x;
 	int xmax = Machine->visible_area.max_x;
@@ -325,12 +355,12 @@ static void powerins_mark_sprite_colors(void)
 	{
 		int x, y;
 
-		int	attr	=	READ_WORD(&source[ 0x0 ]);
-		int	size	=	READ_WORD(&source[ 0x2 ]);
-		int	code	=	READ_WORD(&source[ 0x6 ]);
-		int	sx		=	READ_WORD(&source[ 0x8 ]);
-		int	sy		=	READ_WORD(&source[ 0xc ]);
-		int	color	=	READ_WORD(&source[ 0xe ]) % total_color_codes;
+		int	attr	=	source[ 0x0/2 ];
+		int	size	=	source[ 0x2/2 ];
+		int	code	=	source[ 0x6/2 ];
+		int	sx		=	source[ 0x8/2 ];
+		int	sy		=	source[ 0xc/2 ];
+		int	color	=	source[ 0xe/2 ] % total_color_codes;
 
 		int	dimx	=	((size >> 0) & 0xf ) + 1;
 		int	dimy	=	((size >> 4) & 0xf ) + 1;
@@ -363,69 +393,6 @@ static void powerins_mark_sprite_colors(void)
 
 
 
-
-static void powerins_draw_sprites(struct osd_bitmap *bitmap)
-{
-	unsigned char *source = spriteram + 0x8000;
-	unsigned char *finish = spriteram + 0x9000;
-
-	int screen_w	=	Machine->drv->screen_width;
-	int screen_h	=	Machine->drv->screen_height;
-
-	for ( ; source < finish; source += 16 )
-	{
-		int x,y,inc;
-
-		int	attr	=	READ_WORD(&source[ 0x0 ]);
-		int	size	=	READ_WORD(&source[ 0x2 ]);
-		int	code	=	READ_WORD(&source[ 0x6 ]);
-		int	sx		=	READ_WORD(&source[ 0x8 ]);
-		int	sy		=	READ_WORD(&source[ 0xc ]);
-		int	color	=	READ_WORD(&source[ 0xe ]);
-
-		int	flipx	=	size & 0x1000;
-		int	flipy	=	0;	// ??
-
-		int	dimx	=	((size >> 0) & 0xf ) + 1;
-		int	dimy	=	((size >> 4) & 0xf ) + 1;
-
-		if (!(attr&1)) continue;
-
-		SIGN_EXTEND_POS(sx)
-		SIGN_EXTEND_POS(sy)
-
-		/* Handle Flipscreen. Apply a global offset of 32 pixels along x too */
-		if (flipscreen)	{	sx = screen_w - sx - dimx*16 - 32;	flipx = !flipx;
-							sy = screen_h - sy - dimy*16;		flipy = !flipy;
-							code += dimx*dimy-1;			inc = -1;	}
-		else			{	sx += 32;						inc = +1;	}
-
-		code = (code & 0x7fff) + ( (size & 0x0100) << 7 );
-
-		for (x = 0 ; x < dimx ; x++)
-		{
-			for (y = 0 ; y < dimy ; y++)
-			{
-				drawgfx(bitmap,Machine->gfx[2],
-						code,
-						color,
-						flipx, flipy,
-						sx + x*16,
-						sy + y*16,
-						&Machine->visible_area,TRANSPARENCY_PEN,15);
-
-				code += inc;
-			}
-		}
-
-
-	}
-}
-
-
-
-
-
 /***************************************************************************
 
 
@@ -439,8 +406,9 @@ void powerins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int layers_ctrl = -1;
 
-	int scrollx = (READ_WORD(&powerins_vctrl_0[2])&0xff) + (READ_WORD(&powerins_vctrl_0[0])&0xff)*256;
-	int scrolly = (READ_WORD(&powerins_vctrl_0[6])&0xff) + (READ_WORD(&powerins_vctrl_0[4])&0xff)*256;
+	int scrollx = (powerins_vctrl_0[2/2]&0xff) + (powerins_vctrl_0[0/2]&0xff)*256;
+	int scrolly = (powerins_vctrl_0[6/2]&0xff) + (powerins_vctrl_0[4/2]&0xff)*256;
+
 	tilemap_set_scrollx( tilemap_0, 0, scrollx - 0x20);
 	tilemap_set_scrolly( tilemap_0, 0, scrolly );
 
@@ -466,12 +434,10 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	powerins_mark_sprite_colors();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	if (layers_ctrl&1)		tilemap_draw(bitmap, tilemap_0, 0);
-	else					osd_clearbitmap(bitmap);
+	if (layers_ctrl&1)		tilemap_draw(bitmap, tilemap_0, 0, 0);
+	else					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 	if (layers_ctrl&8)		powerins_draw_sprites(bitmap);
-	if (layers_ctrl&2)		tilemap_draw(bitmap, tilemap_1, 0);
+	if (layers_ctrl&2)		tilemap_draw(bitmap, tilemap_1, 0, 0);
 }

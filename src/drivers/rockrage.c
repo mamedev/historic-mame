@@ -61,8 +61,7 @@ static WRITE_HANDLER( rockrage_speech_w ) {
 	VLM5030_VCU( ( data >> 1 ) & 0x01 );
 }
 
-static struct MemoryReadAddress rockrage_readmem[] =
-{
+static MEMORY_READ_START( rockrage_readmem )
 	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
 	{ 0x2200, 0x23ff, K007342_scroll_r },	/* Scroll RAM */
@@ -75,11 +74,9 @@ static struct MemoryReadAddress rockrage_readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },			/* RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rockrage_writemem[] =
-{
+static MEMORY_WRITE_START( rockrage_writemem )
 	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
 	{ 0x2200, 0x23ff, K007342_scroll_w },		/* Scroll RAM */
@@ -92,29 +89,24 @@ static struct MemoryWriteAddress rockrage_writemem[] =
 	{ 0x4000, 0x5fff, MWA_RAM },				/* RAM */
 	{ 0x6000, 0x7fff, MWA_RAM },				/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress rockrage_readmem_sound[] =
-{
+static MEMORY_READ_START( rockrage_readmem_sound )
 	{ 0x3000, 0x3000, rockrage_VLM5030_busy_r },/* VLM5030 */
 	{ 0x5000, 0x5000, soundlatch_r },			/* soundlatch_r */
 	{ 0x6001, 0x6001, YM2151_status_port_0_r },	/* YM 2151 */
 	{ 0x7000, 0x77ff, MRA_RAM },				/* RAM */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rockrage_writemem_sound[] =
-{
+static MEMORY_WRITE_START( rockrage_writemem_sound )
 	{ 0x2000, 0x2000, VLM5030_data_w }, 			/* VLM5030 */
 	{ 0x4000, 0x4000, rockrage_speech_w },			/* VLM5030 */
 	{ 0x6000, 0x6000, YM2151_register_port_0_w },	/* YM 2151 */
 	{ 0x6001, 0x6001, YM2151_data_port_0_w },		/* YM 2151 */
 	{ 0x7000, 0x77ff, MWA_RAM },					/* RAM */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

@@ -17,27 +17,25 @@
 int  darkseal_vh_start(void);
 void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE_HANDLER( darkseal_pf1_data_w );
-WRITE_HANDLER( darkseal_pf2_data_w );
-WRITE_HANDLER( darkseal_pf3_data_w );
-WRITE_HANDLER( darkseal_pf3b_data_w );
-WRITE_HANDLER( darkseal_control_0_w );
-WRITE_HANDLER( darkseal_control_1_w );
-WRITE_HANDLER( darkseal_palette_24bit_rg_w );
-WRITE_HANDLER( darkseal_palette_24bit_b_w );
-READ_HANDLER( darkseal_palette_24bit_rg_r );
-READ_HANDLER( darkseal_palette_24bit_b_r );
-extern unsigned char *darkseal_pf12_row, *darkseal_pf34_row;
-extern unsigned char *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
-static unsigned char *darkseal_ram;
+WRITE16_HANDLER( darkseal_pf1_data_w );
+WRITE16_HANDLER( darkseal_pf2_data_w );
+WRITE16_HANDLER( darkseal_pf3_data_w );
+WRITE16_HANDLER( darkseal_pf3b_data_w );
+WRITE16_HANDLER( darkseal_control_0_w );
+WRITE16_HANDLER( darkseal_control_1_w );
+WRITE16_HANDLER( darkseal_palette_24bit_rg_w );
+WRITE16_HANDLER( darkseal_palette_24bit_b_w );
+extern data16_t *darkseal_pf12_row, *darkseal_pf34_row;
+extern data16_t *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
+static data16_t *darkseal_ram;
 
 /******************************************************************************/
 
-static WRITE_HANDLER( darkseal_control_w )
+static WRITE16_HANDLER( darkseal_control_w )
 {
-	switch (offset) {
+	switch (offset<<1) {
     case 6: /* DMA flag */
-		buffer_spriteram_w(0,0);
+		buffer_spriteram16_w(0,0,0);
 		return;
     case 8: /* Sound CPU write */
 		soundlatch_w(0,data & 0xff);
@@ -48,9 +46,9 @@ static WRITE_HANDLER( darkseal_control_w )
 	}
 }
 
-static READ_HANDLER( darkseal_control_r )
+static READ16_HANDLER( darkseal_control_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Dip Switches */
 			return (readinputport(3) + (readinputport(4) << 8));
@@ -62,42 +60,38 @@ static READ_HANDLER( darkseal_control_r )
 			return readinputport(2);
 	}
 
-	return 0xffff;
+	return ~0;
 }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress darkseal_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1 },
-	{ 0x120000, 0x1207ff, MRA_BANK2 },
-	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_r },
-	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_r },
+static MEMORY_READ16_START( darkseal_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x120000, 0x1207ff, MRA16_RAM },
+	{ 0x140000, 0x140fff, MRA16_RAM },
+	{ 0x141000, 0x141fff, MRA16_RAM },
 	{ 0x180000, 0x18000f, darkseal_control_r },
-	{ 0x220000, 0x220fff, MRA_BANK3 },
-	{ 0x222000, 0x222fff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ 0x220000, 0x220fff, MRA16_RAM },
+	{ 0x222000, 0x222fff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress darkseal_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1, &darkseal_ram },
-	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_w, &paletteram },
-	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_w, &paletteram_2 },
+static MEMORY_WRITE16_START( darkseal_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM, &darkseal_ram },
+	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_w, &paletteram16 },
+	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_w, &paletteram16_2 },
 	{ 0x180000, 0x18000f, darkseal_control_w },
  	{ 0x200000, 0x200fff, darkseal_pf3b_data_w }, /* 2nd half of pf3, only used on last level */
 	{ 0x202000, 0x203fff, darkseal_pf3_data_w, &darkseal_pf3_data },
-	{ 0x220000, 0x220fff, MWA_BANK3, &darkseal_pf12_row },
-	{ 0x222000, 0x222fff, MWA_BANK4, &darkseal_pf34_row },
+	{ 0x220000, 0x220fff, MWA16_RAM, &darkseal_pf12_row },
+	{ 0x222000, 0x222fff, MWA16_RAM, &darkseal_pf34_row },
 	{ 0x240000, 0x24000f, darkseal_control_0_w },
 	{ 0x260000, 0x261fff, darkseal_pf2_data_w, &darkseal_pf2_data },
 	{ 0x262000, 0x263fff, darkseal_pf1_data_w, &darkseal_pf1_data },
 	{ 0x2a0000, 0x2a000f, darkseal_control_1_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -125,8 +119,7 @@ static WRITE_HANDLER( YM2203_w )
 	}
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, YM2203_status_port_0_r },
 	{ 0x110000, 0x110001, YM2151_status_port_0_r },
@@ -134,11 +127,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x130000, 0x130001, OKIM6295_status_1_r },
 	{ 0x140000, 0x140001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
@@ -147,8 +138,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -315,8 +305,6 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-
-
 static const struct MachineDriver machine_driver_darkseal =
 {
 	/* basic machine hardware */
@@ -345,7 +333,7 @@ static const struct MachineDriver machine_driver_darkseal =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	darkseal_vh_start,
 	0,
@@ -531,38 +519,14 @@ ROM_END
 
 /******************************************************************************/
 
-static void darkseal_decrypt(void)
+static void init_darkseal(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++)
 		RAM[i]=(RAM[i] & 0xbd) | ((RAM[i] & 0x02) << 5) | ((RAM[i] & 0x40) >> 5);
-}
 
-static READ_HANDLER( darkseal_cycle_r )
-{
-	int b=READ_WORD(&darkseal_ram[0x6]);
-	int a=READ_WORD(&darkseal_ram[0x2e7e]);
-	int d=cpu_geticount();
-
-	/* If possible skip this cpu segment - idle loop */
-	if (d>99 && d<0xf0000000) {
-		if (cpu_getpreviouspc()==0x160a && b==0xffff) {
-			cpu_spinuntil_int();
-			/* Update internal counter based on cycles left to run */
-			a=((a+d/54)-1)&0xffff; /* 54 cycles per loop increment */
-			WRITE_WORD(&darkseal_ram[0x2e7e],a);
-		}
-	}
-
-	return b;
-}
-
-static void init_darkseal(void)
-{
-	install_mem_read_handler(0, 0x100006, 0x100007, darkseal_cycle_r);
-	darkseal_decrypt();
 }
 
 /******************************************************************************/

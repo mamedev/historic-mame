@@ -94,18 +94,28 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( badlands_playfieldram_w );
-WRITE_HANDLER( badlands_pf_bank_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
+
+WRITE16_HANDLER( badlands_pf_bank_w );
 
 int badlands_vh_start(void);
 void badlands_vh_stop(void);
 void badlands_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void badlands_scanline_update(int scanline);
 
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
 
 static UINT8 pedal_value[2];
 
@@ -138,16 +148,11 @@ static void update_interrupts(void)
 
 static void scanline_update(int scanline)
 {
-	badlands_scanline_update(scanline);
-
 	/* sound IRQ is on 32V */
-	if (scanline % 32 == 0)
-	{
-		if (scanline & 32)
-			atarigen_6502_irq_ack_r(0);
-		else if (!(readinputport(0) & 0x40))
-			atarigen_6502_irq_gen();
-	}
+	if (scanline & 32)
+		atarigen_6502_irq_ack_r(0);
+	else if (!(readinputport(0) & 0x40))
+		atarigen_6502_irq_gen();
 }
 
 
@@ -157,7 +162,7 @@ static void init_machine(void)
 
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(scanline_update, 8);
+	atarigen_scanline_timer_reset(scanline_update, 32);
 
 	atarigen_sound_io_reset(1);
 	memcpy(bank_base, &bank_source_data[0x0000], 0x1000);
@@ -195,26 +200,22 @@ static int vblank_int(void)
  *
  *************************************/
 
-static READ_HANDLER( sound_busy_r )
+static READ16_HANDLER( sound_busy_r )
 {
 	int temp = 0xfeff;
-
-	(void)offset;
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0100;
 	return temp;
 }
 
 
-static READ_HANDLER( pedal_0_r )
+static READ16_HANDLER( pedal_0_r )
 {
-	(void)offset;
 	return pedal_value[0];
 }
 
 
-static READ_HANDLER( pedal_1_r )
+static READ16_HANDLER( pedal_1_r )
 {
-	(void)offset;
 	return pedal_value[1];
 }
 
@@ -321,39 +322,35 @@ static WRITE_HANDLER( audio_io_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0xfc0000, 0xfc1fff, sound_busy_r },
 	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_r },
-	{ 0xfe4000, 0xfe5fff, input_port_0_r },
-	{ 0xfe6000, 0xfe6001, input_port_1_r },
-	{ 0xfe6002, 0xfe6003, input_port_2_r },
+	{ 0xfe4000, 0xfe5fff, input_port_0_word_r },
+	{ 0xfe6000, 0xfe6001, input_port_1_word_r },
+	{ 0xfe6002, 0xfe6003, input_port_2_word_r },
 	{ 0xfe6004, 0xfe6005, pedal_0_r },
 	{ 0xfe6006, 0xfe6007, pedal_1_r },
 	{ 0xfea000, 0xfebfff, atarigen_sound_upper_r },
-	{ 0xffc000, 0xffc3ff, paletteram_word_r },
-	{ 0xffe000, 0xffefff, MRA_BANK1 },
-	{ 0xfff000, 0xffffff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffc3ff, MRA16_RAM },
+	{ 0xffe000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0xfc0000, 0xfc1fff, atarigen_sound_reset_w },
 	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xfe0000, 0xfe1fff, watchdog_reset_w },
+	{ 0xfe0000, 0xfe1fff, watchdog_reset16_w },
 	{ 0xfe2000, 0xfe3fff, atarigen_video_int_ack_w },
 	{ 0xfe8000, 0xfe9fff, atarigen_sound_upper_w },
 	{ 0xfec000, 0xfedfff, badlands_pf_bank_w },
 	{ 0xfee000, 0xfeffff, atarigen_eeprom_enable_w },
-	{ 0xffc000, 0xffc3ff, atarigen_expanded_666_paletteram_w, &paletteram },
-	{ 0xffe000, 0xffefff, badlands_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xfff000, 0xffffff, MWA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffc3ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
+	{ 0xffe000, 0xffefff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xfff000, 0xfff1ff, atarimo_0_spriteram_expanded_w, &atarimo_0_spriteram },
+	{ 0xfff200, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -363,25 +360,22 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress audio_readmem[] =
-{
+static MEMORY_READ_START( audio_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, audio_io_r },
 	{ 0x3000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress audio_writemem[] =
-{
+static MEMORY_WRITE_START( audio_writemem )
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x2800, 0x2bff, audio_io_w },
 	{ 0x3000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
+
 
 
 /*************************************
@@ -461,7 +455,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pflayout,    0, 8 },
 	{ REGION_GFX2, 0, &molayout,  128, 8 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -537,24 +531,6 @@ static const struct MachineDriver machine_driver_badlands =
 
 /*************************************
  *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	int i;
-
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
-		memory_region(REGION_GFX2)[i] ^= 0xff;
-}
-
-
-
-/*************************************
- *
  *	ROM definition(s)
  *
  *************************************/
@@ -595,18 +571,13 @@ ROM_END
 static void init_badlands(void)
 {
 	atarigen_eeprom_default = NULL;
+	atarigen_init_6502_speedup(1, 0x4155, 0x416d);
+	atarigen_invert_region(REGION_GFX1);
+	atarigen_invert_region(REGION_GFX2);
 
 	/* initialize the audio system */
 	bank_base = &memory_region(REGION_CPU2)[0x03000];
 	bank_source_data = &memory_region(REGION_CPU2)[0x10000];
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4155, 0x416d);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
 }
 
 

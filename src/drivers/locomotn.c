@@ -50,7 +50,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sndhrdw/timeplt.h"
 
 
 extern unsigned char *rallyx_videoram2,*rallyx_colorram2;
@@ -59,18 +59,13 @@ extern size_t rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 WRITE_HANDLER( rallyx_videoram2_w );
 WRITE_HANDLER( rallyx_colorram2_w );
+WRITE_HANDLER( rallyx_flipscreen_w );
 void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-/* defined in sndhrdw/timeplt.c */
-extern struct MemoryReadAddress timeplt_sound_readmem[];
-extern struct MemoryWriteAddress timeplt_sound_writemem[];
-extern struct AY8910interface timeplt_ay8910_interface;
-WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 static WRITE_HANDLER( coin_1_w )
@@ -84,8 +79,7 @@ static WRITE_HANDLER( coin_2_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9800, 0x9fff, MRA_RAM },
@@ -93,11 +87,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa080, 0xa080, input_port_1_r },	/* IN1 */
 	{ 0xa100, 0xa100, input_port_2_r },	/* IN2 */
 	{ 0xa180, 0xa180, input_port_3_r },	/* DSW */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress jungler_writemem[] =
-{
+static MEMORY_WRITE_START( jungler_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
@@ -113,7 +105,7 @@ static struct MemoryWriteAddress jungler_writemem[] =
 	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 //	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, flip_screen_w },
+	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa184, coin_1_w },
 	{ 0xa186, 0xa186, coin_2_w },
 //	{ 0xa187, 0xa187, MWA_NOP },	stars enable
@@ -121,11 +113,9 @@ static struct MemoryWriteAddress jungler_writemem[] =
 	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
 	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
 	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radary },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
@@ -141,7 +131,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 //	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, flip_screen_w },
+	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa184, coin_1_w },
 	{ 0xa186, 0xa186, coin_2_w },
 //	{ 0xa187, 0xa187, MWA_NOP },	stars enable
@@ -149,8 +139,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8800, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
 	{ 0x8020, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
 	{ 0x8820, 0x883f, MWA_RAM, &rallyx_radary },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

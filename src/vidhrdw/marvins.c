@@ -184,9 +184,9 @@ int marvins_vh_start( void )
 		tilemap_set_clip( bg_tilemap, &clip );
 		tilemap_set_clip( tx_tilemap, &clip );
 
-		fg_tilemap->transparent_pen = 0xf;
-		bg_tilemap->transparent_pen = 0xf;
-		tx_tilemap->transparent_pen = 0xf;
+		tilemap_set_transparent_pen(fg_tilemap,0xf);
+		tilemap_set_transparent_pen(bg_tilemap,0xf);
+		tilemap_set_transparent_pen(tx_tilemap,0xf);
 
 		if( strcmp(Machine->gamedrv->name,"marvins")==0 )
 		{
@@ -342,14 +342,13 @@ void marvins_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly( tx_tilemap,  0, 0 );
 
 	tilemap_update( ALL_TILEMAPS );
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
-	tilemap_render( ALL_TILEMAPS );
+	palette_recalc();
 
-	tilemap_draw( bitmap,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
+	tilemap_draw( bitmap,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
 	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 0, sprite_partition );
-	tilemap_draw( bitmap,bg_tilemap,0 );
+	tilemap_draw( bitmap,bg_tilemap,0 ,0);
 	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 1, sprite_partition );
-	tilemap_draw( bitmap,tx_tilemap,0 );
+	tilemap_draw( bitmap,tx_tilemap,0 ,0);
 	draw_status( bitmap );
 }
 
@@ -387,13 +386,12 @@ void madcrash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly( tx_tilemap,  0, 0 );
 
 	tilemap_update( ALL_TILEMAPS );
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
-	tilemap_render( ALL_TILEMAPS );
+	palette_recalc();
 
-	tilemap_draw( bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
-	tilemap_draw( bitmap,fg_tilemap,0 );
+	tilemap_draw( bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
+	tilemap_draw( bitmap,fg_tilemap,0 ,0);
 	draw_sprites( bitmap, sprite_scrollx+29, sprite_scrolly+1, 1, 0 );
 
-	tilemap_draw( bitmap,tx_tilemap,0 );
+	tilemap_draw( bitmap,tx_tilemap,0 ,0);
 	draw_status( bitmap );
 }

@@ -81,11 +81,9 @@ int tecmo_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	bg_tilemap->transparent_pen = 0;
-	fg_tilemap->transparent_pen = 0;
-	tx_tilemap->transparent_pen = 0;
-	/* 0x100 is the background color */
-	palette_transparent_color = 0x100;
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(tx_tilemap,0);
 
 	tilemap_set_scrolldx(bg_tilemap,-48,256+48);
 	tilemap_set_scrolldx(fg_tilemap,-48,256+48);
@@ -150,7 +148,7 @@ WRITE_HANDLER( tecmo_bgscroll_w )
 
 WRITE_HANDLER( tecmo_flipscreen_w )
 {
-	flip_screen_w(0,data & 1);
+	flip_screen_set(data & 1);
 }
 
 
@@ -275,18 +273,15 @@ void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	mark_sprite_colors();
-	palette_used_colors[0x100] = PALETTE_COLOR_USED;
+	palette_used_colors[0x100] = PALETTE_COLOR_VISIBLE;
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0x100],&Machine->visible_area);
-	tilemap_draw(bitmap,bg_tilemap,1<<16);
-	tilemap_draw(bitmap,fg_tilemap,2<<16);
-	tilemap_draw(bitmap,tx_tilemap,4<<16);
+	tilemap_draw(bitmap,bg_tilemap,0,1);
+	tilemap_draw(bitmap,fg_tilemap,0,2);
+	tilemap_draw(bitmap,tx_tilemap,0,4);
 
 	draw_sprites(bitmap);
 }

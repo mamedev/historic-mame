@@ -1,80 +1,39 @@
 /***************************************************************************
 
-vindictr Memory Map
-----------------
+	Atari Vindicators hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
+	Games supported:
+		* Vindicators (1988)
 
-vindictr 68010 MEMORY MAP
+	Known bugs:
+		* none at this time
 
-Program ROM             000000-09FFFF   R    D15-D0
+****************************************************************************
 
-EEPROM                  0E0001-0E0FFF  R/W   D7-D0    (odd bytes only)
-Program RAM             160000-16FFFF  R/W   D15-D0
-UNLOCK EEPROM           1Fxxxx          W
+	Memory map (TBA)
 
-Player 1 Input (left)   260000          R    D11-D8 Active lo
-Player 2 Input (right)  260010          R    D11-D8 Active lo
-      D8:    start
-      D9:    fire
-      D10:   spare
-      D11:   duck
-
-VBLANK                  260010          R    D0 Active lo
-Self-test                               R    D1 Active lo
-Input buffer full (@260030)             R    D2 Active lo
-Output buffer full (@360030)            R    D3 Active lo
-ADEOC, end of conversion                R    D4 Active hi
-
-ADC0, analog port       260020          R    Start
-
-Read sound processor    260030          R    D0-D7
-Watch Dog               2E0000          W    xx        (128 msec. timeout)
-VBLANK Interrupt ack.   360000          W    xx
-
-Video off               360010          W    D5 (active hi)
-Video intensity                         W    D1-D4 (0=full on)
-EXTRA cpu reset                         W    D0 (lo to reset)
-
-Sound processor reset   360020          W    xx
-Write sound processor   360030          W    D0-D7
-
-Color RAM Alpha         3E0000-3E01FF  R/W   D15-D0
-Color RAM Motion Object 3E0200-3E03FF  R/W   D15-D0
-Color RAM Playfield     3E0400-3E07FE  R/W   D15-D0
-Color RAM STAIN         3E0800-3E0FFE  R/W   D15-D0
-
-Playfield Picture RAM   3F0000-3F1FFF  R/W   D15-D0
-Motion Object RAM       3F2000-3F3FFF  R/W   D15-D0
-Alphanumerics RAM       3F4000-3F4EFF  R/W   D15-D0
-Scroll and MOB config   3F4F00-3F4F70  R/W   D15-D0
-SLIP pointers           3F4F80-3F4FFF  R/W   D9-D0
-Working RAM             3F5000-3F7FFF  R/W   D15-D0
-
-Playfield Picture RAM   FF8000-FF9FFF  R/W   D15-D0
-Motion Object RAM       FFA000-FFBFFF  R/W   D15-D0
-Alphanumerics RAM       FFC000-FFCEFF  R/W   D15-D0
-Scroll and MOB config   FFCF00-FFCF70  R/W   D15-D0
-SLIP pointers           FFCF80-FFCFFF  R/W   D9-D0
-Working RAM             FFD000-FFFFFF  R/W   D15-D0
-
-****************************************************************************/
-
+***************************************************************************/
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( vindictr_playfieldram_w );
-WRITE_HANDLER( vindictr_paletteram_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
+
+WRITE16_HANDLER( vindictr_paletteram_w );
 
 int vindictr_vh_start(void);
 void vindictr_vh_stop(void);
-void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void vindictr_scanline_update(int scanline);
 
@@ -86,17 +45,14 @@ void vindictr_scanline_update(int scanline);
  *
  *************************************/
 
-static UINT8 *shared_ram_4;
+static data16_t *shared_ram;
 
-static READ_HANDLER( shared_ram_1_r ) { return READ_WORD(&atarigen_playfieldram[offset]); }
-static READ_HANDLER( shared_ram_2_r ) { return READ_WORD(&atarigen_spriteram[offset]); }
-static READ_HANDLER( shared_ram_3_r ) { return READ_WORD(&atarigen_alpharam[offset]); }
-static READ_HANDLER( shared_ram_4_r ) { return READ_WORD(&shared_ram_4[offset]); }
+static READ16_HANDLER( pfram_r ) { return ataripf_0_base[offset]; }
+static READ16_HANDLER( moram_r ) { return atarimo_0_spriteram[offset]; }
+static READ16_HANDLER( anram_r ) { return atarian_0_base[offset]; }
+static READ16_HANDLER( shared_ram_r ) { return shared_ram[offset]; }
 
-static WRITE_HANDLER( shared_ram_1_w ) { COMBINE_WORD_MEM(&atarigen_playfieldram[offset], data); }
-static WRITE_HANDLER( shared_ram_2_w ) { COMBINE_WORD_MEM(&atarigen_spriteram[offset], data); }
-static WRITE_HANDLER( shared_ram_3_w ) { COMBINE_WORD_MEM(&atarigen_alpharam[offset], data); }
-static WRITE_HANDLER( shared_ram_4_w ) { COMBINE_WORD_MEM(&shared_ram_4[offset], data); }
+static WRITE16_HANDLER( shared_ram_w ) { COMBINE_DATA(&shared_ram[offset]); }
 
 
 
@@ -170,24 +126,18 @@ static int fake_inputs(int real_port, int fake_port)
 }
 
 
-static READ_HANDLER( special_input_r )
+static READ16_HANDLER( port0_r )
 {
-	int result = 0;
+	return fake_inputs(0, 3);
+}
 
-	switch (offset & 0x10)
-	{
-		case 0x00:
-			result = fake_inputs(0, 3);
-			break;
 
-		case 0x10:
-			result = fake_inputs(1, 4);
-			if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
-			if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
-			result ^= 0x0010;
-			break;
-	}
-
+static READ16_HANDLER( port1_r )
+{
+	int result = fake_inputs(1, 4);
+	if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
+	if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
+	result ^= 0x0010;
 	return result;
 }
 
@@ -199,47 +149,46 @@ static READ_HANDLER( special_input_r )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x09ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x09ffff, MRA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x260000, 0x26001f, special_input_r },
-	{ 0x260020, 0x26002f, input_port_2_r },
+	{ 0x260000, 0x26000f, port0_r },
+	{ 0x260010, 0x26001f, port1_r },
+	{ 0x260020, 0x26002f, input_port_2_word_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, MRA_BANK1 },
-	{ 0x3f0000, 0x3f1fff, shared_ram_1_r },
-	{ 0x3f2000, 0x3f3fff, shared_ram_2_r },
-	{ 0x3f4000, 0x3f4fff, shared_ram_3_r },
-	{ 0x3f5000, 0x3f7fff, shared_ram_4_r },
-	{ 0xff8000, 0xff9fff, shared_ram_1_r },
-	{ 0xffa000, 0xffbfff, shared_ram_2_r },
-	{ 0xffc000, 0xffcfff, shared_ram_3_r },
-	{ 0xffd000, 0xffffff, shared_ram_4_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
+	{ 0x3f0000, 0x3f1fff, pfram_r },
+	{ 0x3f2000, 0x3f3fff, moram_r },
+	{ 0x3f4000, 0x3f4fff, anram_r },
+	{ 0x3f5000, 0x3f7fff, shared_ram_r },
+	{ 0xff8000, 0xff9fff, pfram_r },
+	{ 0xffa000, 0xffbfff, moram_r },
+	{ 0xffc000, 0xffcfff, anram_r },
+	{ 0xffd000, 0xffffff, shared_ram_r },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x09ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x09ffff, MWA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
-	{ 0x360010, 0x360011, MWA_NOP },
+	{ 0x360010, 0x360011, MWA16_NOP },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, vindictr_paletteram_w, &paletteram },
-	{ 0x3f0000, 0x3f1fff, vindictr_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f2000, 0x3f3fff, shared_ram_2_w, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f4000, 0x3f4fff, shared_ram_3_w, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x3f5000, 0x3f7fff, shared_ram_4_w, &shared_ram_4 },
-	{ 0xff8000, 0xff9fff, vindictr_playfieldram_w },
-	{ 0xffa000, 0xffbfff, shared_ram_2_w },
-	{ 0xffc000, 0xffcfff, shared_ram_3_w },
-	{ 0xffd000, 0xffffff, shared_ram_4_w },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e0fff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0x3f0000, 0x3f1fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f2000, 0x3f3fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3f4000, 0x3f4f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f4f80, 0x3f4fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f5000, 0x3f7fff, shared_ram_w, &shared_ram },
+	{ 0xff8000, 0xff9fff, ataripf_0_simple_w },
+	{ 0xffa000, 0xffbfff, atarimo_0_spriteram_w },
+	{ 0xffc000, 0xffcf7f, atarian_0_vram_w },
+	{ 0xffcf80, 0xffcfff, atarimo_0_slipram_w },
+	{ 0xffd000, 0xffffff, shared_ram_w },
+MEMORY_END
 
 
 
@@ -308,25 +257,25 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	1024,	/* 1024 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	32768,	/* 32768 of them */
-	4,		/* 4 bits per pixel */
-	{ 0*8*0x40000, 1*8*0x40000, 2*8*0x40000, 3*8*0x40000 },
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
+	8*8
 };
 
 
@@ -334,7 +283,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pfmolayout,  256, 32 },		/* sprites & playfield */
 	{ REGION_GFX2, 0, &anlayout,      0, 64 },		/* characters 8x8 */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -357,7 +306,7 @@ static const struct MachineDriver machine_driver_vindictr =
 		},
 		JSA_I_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -426,30 +375,20 @@ ROM_END
  *
  *************************************/
 
-static void rom_decode(void)
-{
-	int i;
-
-	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-}
-
 static void init_vindictr(void)
 {
 	atarigen_eeprom_default = NULL;
-
 	atarijsa_init(1, 5, 1, 0x0002);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4150, 0x4168);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	atarigen_invert_region(REGION_GFX1);
 }
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAME( 1988, vindictr, 0, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators" )

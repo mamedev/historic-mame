@@ -474,3 +474,14 @@ READ_HANDLER( K053260_r )
 
 	return K053260_chip.regs[offset];
 }
+
+WRITE16_HANDLER( K053260_lsb_w )
+{
+	if (ACCESSING_LSB)
+		K053260_w (offset, data & 0xff);
+}
+
+READ16_HANDLER( K053260_lsb_r )
+{
+	return K053260_r(offset);
+}

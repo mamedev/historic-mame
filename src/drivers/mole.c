@@ -123,8 +123,7 @@ READ_HANDLER( mole_prot_r ){
 	return 0x00;
 }
 
-static struct MemoryReadAddress moleattack_readmem[] =
-{
+static MEMORY_READ_START( moleattack_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x08ff, mole_prot_r },
 	{ 0x5000, 0x7fff, MRA_ROM },
@@ -133,11 +132,9 @@ static struct MemoryReadAddress moleattack_readmem[] =
 	{ 0x8d80, 0x8d80, input_port_2_r },
 	{ 0x8dc0, 0x8dc0, input_port_3_r },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress moleattack_writemem[] =
-{
+static MEMORY_WRITE_START( moleattack_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x5000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, moleattack_videoram_w },
@@ -146,8 +143,7 @@ static struct MemoryWriteAddress moleattack_writemem[] =
 	{ 0x8c01, 0x8c01, AY8910_control_port_0_w },
 	{ 0x8d00, 0x8d00, MWA_NOP }, /* watchdog? */
 	{ 0xd000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 const struct MachineDriver machine_driver_mole =
 {

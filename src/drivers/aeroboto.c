@@ -47,8 +47,7 @@ static WRITE_HANDLER( aeroboto_3000_w )
 	/* there's probably a flip screen here as well */
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x08ff, MRA_RAM },	/* ? copied to 2000 */
 	{ 0x1000, 0x17ff, MRA_RAM },
@@ -60,11 +59,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3004, 0x3004, aeroboto_201_r },
 	{ 0x3800, 0x3800, watchdog_reset_r },	/* or IRQ acknowledge */
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x08ff, MWA_RAM },	/* ? initialized on startup */
 	{ 0x0900, 0x09ff, MWA_RAM },	/* ? initialized on startup (same as 0800) */
@@ -78,28 +75,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3001, 0x3001, soundlatch_w },	/* ? */
 	{ 0x3002, 0x3002, soundlatch2_w },	/* ? */
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x9002, 0x9002, AY8910_read_port_0_r },
 	{ 0xa002, 0xa002, AY8910_read_port_1_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x9000, 0x9000, AY8910_control_port_0_w },
 	{ 0x9001, 0x9001, AY8910_write_port_0_w },
 	{ 0xa000, 0xa000, AY8910_control_port_1_w },
 	{ 0xa001, 0xa001, AY8910_write_port_1_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

@@ -52,7 +52,7 @@ static int mystston_interrupt(void)
 static WRITE_HANDLER( mystston_soundcontrol_w )
 {
 	static int last;
-	data_t soundlatch;
+	int soundlatch;
 
 
 	soundlatch = soundlatch_r(0);
@@ -81,8 +81,7 @@ static WRITE_HANDLER( mystston_soundcontrol_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x077f, MRA_RAM },
 	{ 0x0800, 0x0fff, MRA_RAM },	/* work RAM? */
 	{ 0x1000, 0x1fff, MRA_RAM },
@@ -91,11 +90,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2020, 0x2020, input_port_2_r },
 	{ 0x2030, 0x2030, input_port_3_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x077f, MWA_RAM },
 	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0800, 0x0fff, MWA_RAM },	/* work RAM? */
@@ -109,8 +106,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2040, 0x2040, mystston_soundcontrol_w },
 	{ 0x2060, 0x2077, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -76,8 +76,7 @@ static READ_HANDLER( pip_r )
 	return 0x7f;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0020, 0x0020, watchdog_reset_r },
 	{ 0x0030, 0x0031, rollerg_sound_r },	/* K053260 */
 	{ 0x0050, 0x0050, input_port_0_r },
@@ -93,11 +92,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2000, 0x3aff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0010, 0x0010, rollerg_0010_w },
 	{ 0x0020, 0x0020, watchdog_reset_w },
 	{ 0x0030, 0x0031, K053260_w },
@@ -109,28 +106,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
 	{ 0x2000, 0x3aff, MWA_RAM },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa02f, K053260_r },
 	{ 0xc000, 0xc000, YM3812_status_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa02f, K053260_w },
 	{ 0xc000, 0xc000, YM3812_control_port_0_w },
 	{ 0xc001, 0xc001, YM3812_write_port_0_w },
 	{ 0xfc00, 0xfc00, sound_arm_nmi_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /***************************************************************************

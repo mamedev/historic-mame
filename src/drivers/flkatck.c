@@ -97,19 +97,16 @@ static WRITE_HANDLER( flkatck_ls138_w )
 	}
 }
 
-static struct MemoryReadAddress flkatck_readmem[] =
-{
+static MEMORY_READ_START( flkatck_readmem )
 	{ 0x0400, 0x041f, flkatck_ls138_r },			/* inputs + DIPS */
 	{ 0x0800, 0x0bff, MRA_RAM },		/* palette */
 	{ 0x1000, 0x1fff, MRA_RAM },					/* RAM */
 	{ 0x2000, 0x3fff, MRA_RAM },		/* Video RAM (007121) */
 	{ 0x4000, 0x5fff, MRA_BANK1 },					/* banked ROM */
 	{ 0x6000, 0xffff, MRA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress flkatck_writemem[] =
-{
+static MEMORY_WRITE_START( flkatck_writemem )
 	{ 0x0000, 0x0007, flkatck_k007121_regs_w }, 	/* 007121 registers */
 	{ 0x0400, 0x041f, flkatck_ls138_w },			/* bankswitch + counters + sound command */
 	{ 0x0800, 0x0bff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },/* palette */
@@ -117,11 +114,9 @@ static struct MemoryWriteAddress flkatck_writemem[] =
 	{ 0x2000, 0x3fff, flkatck_k007121_w, &k007121_ram },			/* Video RAM (007121) */
 	{ 0x4000, 0x5fff, MWA_BANK1 },					/* banked ROM */
 	{ 0x6000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress flkatck_readmem_sound[] =
-{
+static MEMORY_READ_START( flkatck_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0x9000, 0x9000, MRA_RAM },				/* ??? */
@@ -130,11 +125,9 @@ static struct MemoryReadAddress flkatck_readmem_sound[] =
 	{ 0xa000, 0xa000, soundlatch_r },			/* soundlatch_r */
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },	/* 007232 registers */
 	{ 0xc001, 0xc001, YM2151_status_port_0_r }, /* YM2151 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress flkatck_writemem_sound[] =
-{
+static MEMORY_WRITE_START( flkatck_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0x9000, 0x9000, MWA_RAM },					/* ??? */
@@ -143,8 +136,7 @@ static struct MemoryWriteAddress flkatck_writemem_sound[] =
 	{ 0xb000, 0xb00d, K007232_write_port_0_w }, 	/* 007232 registers */
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM2151 */
-	{ -1 }
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( flkatck )

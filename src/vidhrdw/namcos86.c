@@ -174,10 +174,10 @@ int namcos86_vh_start(void)
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3])
 		return 1;
 
-	tilemap[0]->transparent_pen = 7;
-	tilemap[1]->transparent_pen = 7;
-	tilemap[2]->transparent_pen = 7;
-	tilemap[3]->transparent_pen = 7;
+	tilemap_set_transparent_pen(tilemap[0],7);
+	tilemap_set_transparent_pen(tilemap[1],7);
+	tilemap_set_transparent_pen(tilemap[2],7);
+	tilemap_set_transparent_pen(tilemap[3],7);
 
 	return 0;
 }
@@ -398,8 +398,6 @@ void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap2_preupdate(); tilemap_update(tilemap[2]);
 	tilemap3_preupdate(); tilemap_update(tilemap[3]);
 
-	tilemap_render(ALL_TILEMAPS);
-
 	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],&Machine->visible_area);
 
 	for (layer = 0;layer < 8;layer++)
@@ -409,7 +407,7 @@ void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (i = 3;i >= 0;i--)
 		{
 			if (((xscroll[i] & 0x0e00) >> 9) == layer)
-				tilemap_draw(bitmap,tilemap[i],0);
+				tilemap_draw(bitmap,tilemap[i],0,0);
 		}
 
 		draw_sprites(bitmap,layer);

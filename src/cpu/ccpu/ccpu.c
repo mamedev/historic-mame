@@ -220,7 +220,7 @@ void ccpu_set_reg(int regnum, unsigned val)
 		case CCPU_I: context.eRegI = val; break;
 		case CCPU_J: context.eRegJ = val; break;
 		case CCPU_P: context.eRegP = val; break;
-		case CCPU_CSTATE: context.eCState = val; break;
+		case CCPU_CSTATE: context.eCState = (CINESTATE) val; break;
 /* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
 		default:
 			if( regnum <= REG_SP_CONTENTS )

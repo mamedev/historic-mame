@@ -142,33 +142,27 @@ static READ_HANDLER( arabian_input_port_r )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc200, 0xc200, input_port_1_r },
 	{ 0xd000, 0xd7ef, MRA_RAM },
 	{ 0xd7f0, 0xd7ff, arabian_input_port_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xbfff, arabian_videoram_w, &videoram },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xe000, 0xe07f, arabian_blitter_w, &spriteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0xc800, 0xc800, AY8910_control_port_0_w },
 	{ 0xca00, 0xca00, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

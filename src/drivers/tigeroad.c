@@ -24,13 +24,13 @@ Memory Overview:
 #include "cpu/z80/z80.h"
 
 
-WRITE_HANDLER( tigeroad_videoctrl_w );
-WRITE_HANDLER( tigeroad_scroll_w );
+WRITE16_HANDLER( tigeroad_videoctrl_w );
+WRITE16_HANDLER( tigeroad_scroll_w );
 void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tigeroad_eof_callback(void);
 
 
-static unsigned char *ram;
+static data16_t *ram16;
 
 /*
  F1 Dream protection code written by Eric Hustvedt (hustvedt@ma.ultranet.com).
@@ -92,70 +92,70 @@ static void f1dream_protection_w(void)
 	if (prevpc == 0x244c)
 	{
 		/* Called once, when a race is started.*/
-		indx = READ_WORD(&ram[0x3ff0]);
-		WRITE_WORD(&ram[0x3fe6],f1dream_2450_lookup[indx]);
-		WRITE_WORD(&ram[0x3fe8],f1dream_2450_lookup[++indx]);
-		WRITE_WORD(&ram[0x3fea],f1dream_2450_lookup[++indx]);
-		WRITE_WORD(&ram[0x3fec],f1dream_2450_lookup[++indx]);
+		indx = ram16[0x3ff0/2];
+		ram16[0x3fe6/2] = f1dream_2450_lookup[indx];
+		ram16[0x3fe8/2] = f1dream_2450_lookup[++indx];
+		ram16[0x3fea/2] = f1dream_2450_lookup[++indx];
+		ram16[0x3fec/2] = f1dream_2450_lookup[++indx];
 	}
 	else if (prevpc == 0x613a)
 	{
 		/* Called for every sprite on-screen.*/
-		if ((READ_WORD(&ram[0x3ff6])) < 15)
+		if (ram16[0x3ff6/2] < 15)
 		{
-			indx = f1dream_613ea_lookup[READ_WORD(&ram[0x3ff6])] - (READ_WORD(&ram[0x3ff4]));
+			indx = f1dream_613ea_lookup[ram16[0x3ff6/2]] - ram16[0x3ff4/2];
 			if (indx > 255)
 			{
 				indx <<= 4;
-				indx += READ_WORD(&ram[0x3ff6]) & 0x00ff;
+				indx += ram16[0x3ff6/2] & 0x00ff;
 				value = f1dream_613eb_lookup[indx];
 			}
 		}
 
-		WRITE_WORD(&ram[0x3ff2],value);
+		ram16[0x3ff2/2] = value;
 	}
 	else if (prevpc == 0x17b70)
 	{
 		/* Called only before a real race, not a time trial.*/
-		if ((READ_WORD(&ram[0x3ff0])) >= 0x04) indx = 128;
-		else if ((READ_WORD(&ram[0x3ff0])) > 0x02) indx = 96;
-		else if ((READ_WORD(&ram[0x3ff0])) == 0x02) indx = 64;
-		else if ((READ_WORD(&ram[0x3ff0])) == 0x01) indx = 32;
+		if (ram16[0x3ff0/2] >= 0x04) indx = 128;
+		else if (ram16[0x3ff0/2] > 0x02) indx = 96;
+		else if (ram16[0x3ff0/2] == 0x02) indx = 64;
+		else if (ram16[0x3ff0/2] == 0x01) indx = 32;
 		else indx = 0;
 
-		indx += READ_WORD(&ram[0x3fee]);
+		indx += ram16[0x3fee/2];
 		if (indx < 128)
 		{
-			WRITE_WORD(&ram[0x3fe6],f1dream_17b74_lookup[indx]);
-			WRITE_WORD(&ram[0x3fe8],f1dream_17b74_lookup[++indx]);
-			WRITE_WORD(&ram[0x3fea],f1dream_17b74_lookup[++indx]);
-			WRITE_WORD(&ram[0x3fec],f1dream_17b74_lookup[++indx]);
+			ram16[0x3fe6/2] = f1dream_17b74_lookup[indx];
+			ram16[0x3fe8/2] = f1dream_17b74_lookup[++indx];
+			ram16[0x3fea/2] = f1dream_17b74_lookup[++indx];
+			ram16[0x3fec/2] = f1dream_17b74_lookup[++indx];
 		}
 		else
 		{
-			WRITE_WORD(&ram[0x3fe6],0x00ff);
-			WRITE_WORD(&ram[0x3fe8],0x00ff);
-			WRITE_WORD(&ram[0x3fea],0x00ff);
-			WRITE_WORD(&ram[0x3fec],0x00ff);
+			ram16[0x3fe6/2] = 0x00ff;
+			ram16[0x3fe8/2] = 0x00ff;
+			ram16[0x3fea/2] = 0x00ff;
+			ram16[0x3fec/2] = 0x00ff;
 		}
 	}
 	else if ((prevpc == 0x27f8) || (prevpc == 0x511a) || (prevpc == 0x5142) || (prevpc == 0x516a))
 	{
 		/* The main CPU stuffs the byte for the soundlatch into 0xfffffd.*/
-		soundlatch_w(2,READ_WORD(&ram[0x3ffc]));
+		soundlatch_w(2,ram16[0x3ffc/2]);
 	}
 }
 
-static WRITE_HANDLER( f1dream_control_w )
+static WRITE16_HANDLER( f1dream_control_w )
 {
-	logerror("protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
+	logerror("protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram16[0x3fe0/2]);
 	f1dream_protection_w();
 }
 
-static WRITE_HANDLER( tigeroad_soundcmd_w )
+static WRITE16_HANDLER( tigeroad_soundcmd_w )
 {
-	if ((data & 0xff000000) == 0)
-		soundlatch_w(offset,(data >> 8) & 0xff);
+	if (ACCESSING_MSB)
+		soundlatch_w(offset,data >> 8);
 }
 
 static WRITE_HANDLER( msm5205_w )
@@ -174,86 +174,68 @@ int tigeroad_interrupt(void)
 
 /***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xfe0800, 0xfe0cff, MRA_BANK1 },
-	{ 0xfe0d00, 0xfe1807, MRA_BANK2 },
-	{ 0xfe4000, 0xfe4001, input_port_0_r },
-	{ 0xfe4002, 0xfe4003, input_port_1_r },
-	{ 0xfe4004, 0xfe4005, input_port_2_r },
-	{ 0xfec000, 0xfec7ff, MRA_BANK3 },
-	{ 0xff8200, 0xff867f, paletteram_word_r },
-	{ 0xffc000, 0xffffff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0xfe0800, 0xfe0cff, MRA16_RAM },
+	{ 0xfe0d00, 0xfe1807, MRA16_RAM },
+	{ 0xfe4000, 0xfe4001, input_port_0_word_r },
+	{ 0xfe4002, 0xfe4003, input_port_1_word_r },
+	{ 0xfe4004, 0xfe4005, input_port_2_word_r },
+	{ 0xfec000, 0xfec7ff, MRA16_RAM },
+	{ 0xff8200, 0xff867f, MRA16_RAM },
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xfe0800, 0xfe0cff, MWA_BANK1, &spriteram, &spriteram_size },
-	{ 0xfe0d00, 0xfe1807, MWA_BANK2 },  /* still part of OBJ RAM */
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0xfe0800, 0xfe0cff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0xfe0d00, 0xfe1807, MWA16_RAM },  /* still part of OBJ RAM */
 	{ 0xfe4000, 0xfe4001, tigeroad_videoctrl_w },	/* char bank, coin counters, + ? */
 	/*{ 0xfe4002, 0xfe4003, tigeroad_soundcmd_w }, added by init_tigeroad() */
-	{ 0xfec000, 0xfec7ff, MWA_BANK3, &videoram, &videoram_size },
+	{ 0xfec000, 0xfec7ff, MWA16_RAM, &videoram16, &videoram_size },
 	{ 0xfe8000, 0xfe8003, tigeroad_scroll_w },
-	{ 0xfe800e, 0xfe800f, MWA_NOP },    /* fe800e = watchdog or IRQ acknowledge */
-	{ 0xff8200, 0xff867f, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0xffc000, 0xffffff, MWA_BANK4, &ram },
-	{ -1 }  /* end of table */
-};
+	{ 0xfe800e, 0xfe800f, MWA16_RAM },    /* fe800e = watchdog or IRQ acknowledge */
+	{ 0xff8200, 0xff867f, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0xffc000, 0xffffff, MWA16_RAM, &ram16 },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8000, YM2203_status_port_0_r },
 	{ 0xa000, 0xa000, YM2203_status_port_1_r },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8000, YM2203_control_port_0_w },
 	{ 0x8001, 0x8001, YM2203_write_port_0_w },
 	{ 0xa000, 0xa000, YM2203_control_port_1_w },
 	{ 0xa001, 0xa001, YM2203_write_port_1_w },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x7f, 0x7f, soundlatch2_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress sample_readmem[] =
-{
+static MEMORY_READ_START( sample_readmem )
 	{ 0x0000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* yes, no RAM */
-static struct MemoryWriteAddress sample_writemem[] =
-{
+static MEMORY_WRITE_START( sample_writemem )
 	{ 0x0000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sample_readport[] =
-{
+static PORT_READ_START( sample_readport )
 	{ 0x00, 0x00, soundlatch2_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort sample_writeport[] =
-{
+static PORT_WRITE_START( sample_writeport )
 	{ 0x01, 0x01, msm5205_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 
@@ -821,12 +803,12 @@ ROM_END
 
 void init_tigeroad(void)
 {
-	install_mem_write_handler(0, 0xfe4002, 0xfe4003, tigeroad_soundcmd_w);
+	install_mem_write16_handler(0, 0xfe4002, 0xfe4003, tigeroad_soundcmd_w);
 }
 
 void init_f1dream(void)
 {
-	install_mem_write_handler(0, 0xfe4002, 0xfe4003, f1dream_control_w);
+	install_mem_write16_handler(0, 0xfe4002, 0xfe4003, f1dream_control_w);
 }
 
 

@@ -98,17 +98,17 @@ Sprites - Data East custom chip 52
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *cninja_pf1_data,*cninja_pf2_data;
-unsigned char *cninja_pf3_data,*cninja_pf4_data;
-unsigned char *cninja_pf1_rowscroll,*cninja_pf2_rowscroll;
-unsigned char *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
+data16_t *cninja_pf1_data,*cninja_pf2_data;
+data16_t *cninja_pf3_data,*cninja_pf4_data;
+data16_t *cninja_pf1_rowscroll,*cninja_pf2_rowscroll;
+data16_t *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
 
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
-static unsigned char *gfx_base;
+static data16_t *gfx_base;
 static int gfx_bank;
 
-static unsigned char cninja_control_0[16];
-static unsigned char cninja_control_1[16];
+static data16_t cninja_control_0[8];
+static data16_t cninja_control_1[8];
 
 static int cninja_pf2_bank,cninja_pf3_bank;
 static int bootleg,spritemask,color_base,flipscreen;
@@ -125,7 +125,7 @@ static void get_back_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&gfx_base[2*tile_index]);
+	tile=gfx_base[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -135,7 +135,7 @@ static void get_back_tile_info(int tile_index)
 /* 8x8 top layer */
 static void get_fore_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&cninja_pf1_data[2*tile_index]);
+	int tile=cninja_pf1_data[tile_index];
 	int color=tile >> 12;
 
 	tile=tile&0xfff;
@@ -158,11 +158,11 @@ static int common_vh_start(void)
 	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
-	pf1_tilemap->transparent_pen = 0;
-	pf3_tilemap->transparent_pen = 0;
-	pf4_tilemap->transparent_pen = 0;
-	pf4_tilemap->transmask[0] = 0x00ff;
-	pf4_tilemap->transmask[1] = 0xff00;
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+	tilemap_set_transparent_pen(pf3_tilemap,0);
+	tilemap_set_transparent_pen(pf4_tilemap,0);
+	tilemap_set_transmask(pf4_tilemap,0,0x00ff);
+	tilemap_set_transmask(pf4_tilemap,1,0xff00);
 
 	return 0;
 }
@@ -190,98 +190,81 @@ int edrandy_vh_start(void)
 
 /******************************************************************************/
 
-WRITE_HANDLER( cninja_pf1_data_w )
+WRITE16_HANDLER( cninja_pf1_data_w )
 {
-	COMBINE_WORD_MEM(&cninja_pf1_data[offset],data);
-	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+	data16_t oldword=cninja_pf1_data[offset];
+	COMBINE_DATA(&cninja_pf1_data[offset]);
+	if (oldword!=cninja_pf1_data[offset])
+		tilemap_mark_tile_dirty(pf1_tilemap,offset);
 }
 
-WRITE_HANDLER( cninja_pf2_data_w )
+WRITE16_HANDLER( cninja_pf2_data_w )
 {
-	COMBINE_WORD_MEM(&cninja_pf2_data[offset],data);
-	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
+	data16_t oldword=cninja_pf2_data[offset];
+	COMBINE_DATA(&cninja_pf2_data[offset]);
+	if (oldword!=cninja_pf2_data[offset])
+		tilemap_mark_tile_dirty(pf2_tilemap,offset);
 }
 
-WRITE_HANDLER( cninja_pf3_data_w )
+WRITE16_HANDLER( cninja_pf3_data_w )
 {
-	COMBINE_WORD_MEM(&cninja_pf3_data[offset],data);
-	tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
+	data16_t oldword=cninja_pf3_data[offset];
+	COMBINE_DATA(&cninja_pf3_data[offset]);
+	if (oldword!=cninja_pf3_data[offset])
+		tilemap_mark_tile_dirty(pf3_tilemap,offset);
 }
 
-WRITE_HANDLER( cninja_pf4_data_w )
+WRITE16_HANDLER( cninja_pf4_data_w )
 {
-	COMBINE_WORD_MEM(&cninja_pf4_data[offset],data);
-	tilemap_mark_tile_dirty(pf4_tilemap,offset/2);
+	data16_t oldword=cninja_pf4_data[offset];
+	COMBINE_DATA(&cninja_pf4_data[offset]);
+	if (oldword!=cninja_pf4_data[offset])
+		tilemap_mark_tile_dirty(pf4_tilemap,offset);
 }
 
-WRITE_HANDLER( cninja_control_0_w )
+WRITE16_HANDLER( cninja_control_0_w )
 {
-	if (bootleg && offset==6) {
-		COMBINE_WORD_MEM(&cninja_control_0[offset],data+0xa);
-		return;
-	}
-	COMBINE_WORD_MEM(&cninja_control_0[offset],data);
+//	if (bootleg && offset==6) {
+//		COMBINE_DATA(&cninja_control_0[offset],data+0xa);
+//		return;
+//	}
+	COMBINE_DATA(&cninja_control_0[offset]);
 }
 
-WRITE_HANDLER( cninja_control_1_w )
+WRITE16_HANDLER( cninja_control_1_w )
 {
-	if (bootleg) {
-		switch (offset) {
-			case 2:
-				COMBINE_WORD_MEM(&cninja_control_1[offset],data-2);
-				return;
-			case 6:
-				COMBINE_WORD_MEM(&cninja_control_1[offset],data+0xa);
-				return;
-		}
-	}
-	COMBINE_WORD_MEM(&cninja_control_1[offset],data);
+//	if (bootleg) {
+//		switch (offset) {
+//			case 1:
+//				COMBINE_DATA(&cninja_control_1[offset],data-2);
+//				return;
+//			case 3:
+////				COMBINE_DATA(&cninja_control_1[offset],data+0xa);
+//				return;
+//		}
+//	}
+	COMBINE_DATA(&cninja_control_1[offset]);
 }
 
-READ_HANDLER( cninja_pf1_data_r )
+READ16_HANDLER( cninja_pf1_data_r )
 {
-	return READ_WORD(&cninja_pf1_data[offset]);
-}
-
-WRITE_HANDLER( cninja_pf1_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&cninja_pf1_rowscroll[offset],data);
-}
-
-WRITE_HANDLER( cninja_pf2_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&cninja_pf2_rowscroll[offset],data);
-}
-
-WRITE_HANDLER( cninja_pf3_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&cninja_pf3_rowscroll[offset],data);
-}
-
-READ_HANDLER( cninja_pf3_rowscroll_r )
-{
-	return READ_WORD(&cninja_pf3_rowscroll[offset]);
-}
-
-WRITE_HANDLER( cninja_pf4_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&cninja_pf4_rowscroll[offset],data);
+	return cninja_pf1_data[offset];
 }
 
 /******************************************************************************/
 
-WRITE_HANDLER( cninja_palette_24bit_w )
+WRITE16_HANDLER( cninja_palette_24bit_w )
 {
 	int r,g,b;
 
-	COMBINE_WORD_MEM(&paletteram[offset],data);
-	if (offset%4) offset-=2;
+	COMBINE_DATA(&paletteram16[offset]);
+	if (offset&1) offset--;
 
-	b = (READ_WORD(&paletteram[offset]) >> 0) & 0xff;
-	g = (READ_WORD(&paletteram[offset+2]) >> 8) & 0xff;
-	r = (READ_WORD(&paletteram[offset+2]) >> 0) & 0xff;
+	b = (paletteram16[offset] >> 0) & 0xff;
+	g = (paletteram16[offset+1] >> 8) & 0xff;
+	r = (paletteram16[offset+1] >> 0) & 0xff;
 
-	palette_change_color(offset / 4,r,g,b);
+	palette_change_color(offset/2,r,g,b);
 }
 
 /******************************************************************************/
@@ -297,15 +280,15 @@ static void mark_sprites_colors(void)
 	pen_usage=Machine->gfx[4]->pen_usage;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&buffered_spriteram[offs+2]) & spritemask;
+		sprite = buffered_spriteram16[offs+1] & spritemask;
 		if (!sprite) continue;
 
-		x = READ_WORD(&buffered_spriteram[offs+4]);
-		y = READ_WORD(&buffered_spriteram[offs]);
+		x = buffered_spriteram16[offs+2];
+		y = buffered_spriteram16[offs];
 
 		color = (x >> 9) &0xf;
 		multi = (1 << ((y & 0x0600) >> 9)) - 1;
@@ -339,19 +322,19 @@ static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
-		sprite = READ_WORD (&buffered_spriteram[offs+2]) & spritemask;
+		sprite = buffered_spriteram16[offs+1] & spritemask;
 		if (!sprite) continue;
 
-		x = READ_WORD(&buffered_spriteram[offs+4]);
+		x = buffered_spriteram16[offs+2];
 
 		/* Sprite/playfield priority */
 		if ((x&0x4000) && pri==1) continue;
 		if (!(x&0x4000) && pri==0) continue;
 
-		y = READ_WORD(&buffered_spriteram[offs]);
+		y = buffered_spriteram16[offs];
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 		colour = (x >> 9) &0xf;
@@ -409,11 +392,11 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int pf23_control,pf1_control;
 
 	/* Update flipscreen */
-	flipscreen = READ_WORD(&cninja_control_1[0])&0x80;
+	flipscreen = cninja_control_1[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Handle gfx rom switching */
-	pf23_control=READ_WORD (&cninja_control_0[0xe]);
+	pf23_control=cninja_control_0[7];
 	if ((pf23_control&0xff)==0x00)
 		cninja_pf3_bank=2;
 	else
@@ -425,17 +408,17 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		cninja_pf2_bank=1;
 
 	/* Setup scrolling */
-	pf23_control=READ_WORD (&cninja_control_0[0xc]);
-	pf1_control=READ_WORD (&cninja_control_1[0xc]);
+	pf23_control=cninja_control_0[6];
+	pf1_control=cninja_control_1[6];
 
 	/* Background - Rowscroll enable */
 	if (pf23_control&0x4000) {
-		int scrollx=READ_WORD(&cninja_control_0[6]),rows;
+		int scrollx=cninja_control_0[3],rows;
 		tilemap_set_scroll_cols(pf2_tilemap,1);
-		tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&cninja_control_0[8]) );
+		tilemap_set_scrolly( pf2_tilemap,0, cninja_control_0[4] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&cninja_control_0[0xa])>>11)&7) {
+		switch ((cninja_control_0[5]>>11)&7) {
 			case 0: rows=512; break;/* Every line of 512 height bitmap */
 			case 1: rows=256; break;
 			case 2: rows=128; break;
@@ -449,23 +432,23 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		tilemap_set_scroll_rows(pf2_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf2_tilemap,offs, scrollx + READ_WORD(&cninja_pf2_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf2_tilemap,offs, scrollx + cninja_pf2_rowscroll[offs] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf2_tilemap,1);
 		tilemap_set_scroll_cols(pf2_tilemap,1);
-		tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&cninja_control_0[6]) );
-		tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&cninja_control_0[8]) );
+		tilemap_set_scrollx( pf2_tilemap,0, cninja_control_0[3] );
+		tilemap_set_scrolly( pf2_tilemap,0, cninja_control_0[4] );
 	}
 
 	/* Playfield 3 */
 	if (pf23_control&0x40) { /* Rowscroll */
-		int scrollx=READ_WORD(&cninja_control_0[2]),rows;
+		int scrollx=cninja_control_0[1],rows;
 		tilemap_set_scroll_cols(pf3_tilemap,1);
-		tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&cninja_control_0[4]) );
+		tilemap_set_scrolly( pf3_tilemap,0, cninja_control_0[2] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&cninja_control_0[0xa])>>3)&7) {
+		switch ((cninja_control_0[5]>>3)&7) {
 			case 0: rows=512; break;/* Every line of 512 height bitmap */
 			case 1: rows=256; break;
 			case 2: rows=128; break;
@@ -479,33 +462,33 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		tilemap_set_scroll_rows(pf3_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + READ_WORD(&cninja_pf3_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + cninja_pf3_rowscroll[offs] );
 	}
 	else if (pf23_control&0x20) { /* Colscroll */
-		int scrolly=READ_WORD(&cninja_control_0[4]);
+		int scrolly=cninja_control_0[2];
 		tilemap_set_scroll_rows(pf3_tilemap,1);
 		tilemap_set_scroll_cols(pf3_tilemap,64);
-		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&cninja_control_0[2]) );
+		tilemap_set_scrollx( pf3_tilemap,0, cninja_control_0[1] );
 
 		/* Used in lava level & Level 1 */
 		for (offs=0 ; offs < 32;offs++)
-			tilemap_set_scrolly( pf3_tilemap,offs+32, scrolly + READ_WORD(&cninja_pf3_rowscroll[(2*offs)+0x400]) );
+			tilemap_set_scrolly( pf3_tilemap,offs+32, scrolly + cninja_pf3_rowscroll[offs+0x200] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf3_tilemap,1);
 		tilemap_set_scroll_cols(pf3_tilemap,1);
-		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&cninja_control_0[2]) );
-		tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&cninja_control_0[4]) );
+		tilemap_set_scrollx( pf3_tilemap,0, cninja_control_0[1] );
+		tilemap_set_scrolly( pf3_tilemap,0, cninja_control_0[2] );
 	}
 
 	/* Top foreground */
 	if (pf1_control&0x4000) {
-		int scrollx=READ_WORD(&cninja_control_1[6]),rows;
+		int scrollx=cninja_control_1[3],rows;
 		tilemap_set_scroll_cols(pf4_tilemap,1);
-		tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&cninja_control_1[8]) );
+		tilemap_set_scrolly( pf4_tilemap,0, cninja_control_1[4] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&cninja_control_1[0xa])>>11)&7) {
+		switch ((cninja_control_1[5]>>11)&7) {
 			case 0: rows=512; break;/* Every line of 512 height bitmap */
 			case 1: rows=256; break;
 			case 2: rows=128; break;
@@ -519,33 +502,33 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		tilemap_set_scroll_rows(pf4_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + READ_WORD(&cninja_pf4_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + cninja_pf4_rowscroll[offs] );
 	}
 	else if (pf1_control&0x2000) { /* Colscroll */
-		int scrolly=READ_WORD(&cninja_control_1[8]);
+		int scrolly=cninja_control_1[4];
 		tilemap_set_scroll_rows(pf4_tilemap,1);
 		tilemap_set_scroll_cols(pf4_tilemap,64);
-		tilemap_set_scrollx( pf4_tilemap,0, READ_WORD(&cninja_control_0[2]) );
+		tilemap_set_scrollx( pf4_tilemap,0, cninja_control_0[1] );
 
 		/* Used in first lava level */
 		for (offs=0 ; offs < 64;offs++)
-			tilemap_set_scrolly( pf4_tilemap,offs, scrolly + READ_WORD(&cninja_pf4_rowscroll[(2*offs)+0x400]) );
+			tilemap_set_scrolly( pf4_tilemap,offs, scrolly + cninja_pf4_rowscroll[offs+0x200] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf4_tilemap,1);
 		tilemap_set_scroll_cols(pf4_tilemap,1);
-		tilemap_set_scrollx( pf4_tilemap,0, READ_WORD(&cninja_control_1[6]) );
-		tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&cninja_control_1[8]) );
+		tilemap_set_scrollx( pf4_tilemap,0, cninja_control_1[3] );
+		tilemap_set_scrolly( pf4_tilemap,0, cninja_control_1[4] );
 	}
 
 	/* Playfield 1 - 8 * 8 Text */
 	if (pf1_control&0x40) { /* Rowscroll */
-		int scrollx=READ_WORD(&cninja_control_1[2]),rows;
+		int scrollx=cninja_control_1[1],rows;
 		tilemap_set_scroll_cols(pf1_tilemap,1);
-		tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&cninja_control_1[4]) );
+		tilemap_set_scrolly( pf1_tilemap,0, cninja_control_1[2] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&cninja_control_1[0xa])>>3)&7) {
+		switch ((cninja_control_1[5]>>3)&7) {
 			case 0: rows=256; break;
 			case 1: rows=128; break;
 			case 2: rows=64; break;
@@ -559,13 +542,13 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		tilemap_set_scroll_rows(pf1_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf1_tilemap,offs, scrollx + READ_WORD(&cninja_pf1_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf1_tilemap,offs, scrollx + cninja_pf1_rowscroll[offs] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf1_tilemap,1);
 		tilemap_set_scroll_cols(pf1_tilemap,1);
-		tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&cninja_control_1[2]) );
-		tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&cninja_control_1[4]) );
+		tilemap_set_scrollx( pf1_tilemap,0, cninja_control_1[1] );
+		tilemap_set_scrolly( pf1_tilemap,0, cninja_control_1[2] );
 	}
 
 	/* Update playfields */
@@ -587,16 +570,14 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_init_used_colors();
 	mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,pf2_tilemap,0);
-	tilemap_draw(bitmap,pf3_tilemap,0);
-	tilemap_draw(bitmap,pf4_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,pf2_tilemap,0,0);
+	tilemap_draw(bitmap,pf3_tilemap,0,0);
+	tilemap_draw(bitmap,pf4_tilemap,TILEMAP_BACK,0);
 	cninja_drawsprites(bitmap,0);
-	tilemap_draw(bitmap,pf4_tilemap,TILEMAP_FRONT);
+	tilemap_draw(bitmap,pf4_tilemap,TILEMAP_FRONT,0);
 	cninja_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }

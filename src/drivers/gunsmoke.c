@@ -49,8 +49,7 @@ static READ_HANDLER( gunsmoke_unknown_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc000, input_port_0_r },
@@ -62,11 +61,9 @@ static struct MemoryReadAddress readmem[] =
     { 0xd000, 0xd3ff, videoram_r },
     { 0xd400, 0xd7ff, colorram_r },
 	{ 0xe000, 0xffff, MRA_RAM }, /* Work + sprite RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, gunsmoke_c804_w },	/* ROM bank switch, screen flip */
@@ -78,29 +75,24 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd806, 0xd806, gunsmoke_d806_w },	/* sprites and bg enable */
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2203_control_port_0_w },
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },
 	{ 0xe002, 0xe002, YM2203_control_port_1_w },
 	{ 0xe003, 0xe003, YM2203_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -5,7 +5,7 @@
 #define TOTAL_CHARS 0x1000
 #define TOTAL_SPRITES 0x4000
 
-unsigned char *gradius3_gfxram;
+data16_t *gradius3_gfxram;
 int gradius3_priority;
 static int layer_colorbase[3],sprite_colorbase;
 static int dirtygfx;
@@ -122,28 +122,26 @@ void gradius3_vh_stop(void)
 
 ***************************************************************************/
 
-READ_HANDLER( gradius3_gfxrom_r )
+READ16_HANDLER( gradius3_gfxrom_r )
 {
-	unsigned char *gfxdata = memory_region(REGION_GFX2);
+	UINT8 *gfxdata = memory_region(REGION_GFX2);
 
-	return (gfxdata[offset+1] << 8) | gfxdata[offset];
+	return (gfxdata[2*offset+1] << 8) | gfxdata[2*offset];
 }
 
-READ_HANDLER( gradius3_gfxram_r )
+READ16_HANDLER( gradius3_gfxram_r )
 {
-	return READ_WORD(&gradius3_gfxram[offset]);
+	return gradius3_gfxram[offset];
 }
 
-WRITE_HANDLER( gradius3_gfxram_w )
+WRITE16_HANDLER( gradius3_gfxram_w )
 {
-	int oldword = READ_WORD(&gradius3_gfxram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
+	int oldword = gradius3_gfxram[offset];
+	COMBINE_DATA(&gradius3_gfxram[offset]);
+	if (oldword != gradius3_gfxram[offset])
 	{
 		dirtygfx = 1;
-		dirtychar[offset / 32] = 1;
-		WRITE_WORD(&gradius3_gfxram[offset],newword);
+		dirtychar[offset / 16] = 1;
 	}
 }
 
@@ -187,7 +185,7 @@ void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (dirtychar[i])
 			{
 				dirtychar[i] = 0;
-				decodechar(Machine->gfx[0],i,gradius3_gfxram,&charlayout);
+				decodechar(Machine->gfx[0],i,(UINT8 *)gradius3_gfxram,&charlayout);
 			}
 		}
 
@@ -198,23 +196,20 @@ void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	if (gradius3_priority == 0)
 	{
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY|(2<<16));
-		K052109_tilemap_draw(bitmap,2,4<<16);
-		K052109_tilemap_draw(bitmap,0,1<<16);
+		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,2);
+		K052109_tilemap_draw(bitmap,2,0,4);
+		K052109_tilemap_draw(bitmap,0,0,1);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
-		K052109_tilemap_draw(bitmap,1,2<<16);
-		K052109_tilemap_draw(bitmap,2,4<<16);
+		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,1);
+		K052109_tilemap_draw(bitmap,1,0,2);
+		K052109_tilemap_draw(bitmap,2,0,4);
 	}
 
 	K051960_sprites_draw(bitmap,-1,-1);

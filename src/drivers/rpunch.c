@@ -120,7 +120,7 @@ int rpunch_vh_start(void);
 void rpunch_vh_stop(void);
 void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-extern UINT8 *rpunch_bitmapram;
+extern data16_t *rpunch_bitmapram;
 extern size_t rpunch_bitmapram_size;
 extern int rpunch_sprite_palette;
 
@@ -129,13 +129,13 @@ static UINT8 sound_busy;
 static UINT8 ym2151_irq;
 static UINT8 upd_rom_bank;
 
-WRITE_HANDLER(rpunch_bitmap_w);
-WRITE_HANDLER(rpunch_videoram_w);
-WRITE_HANDLER(rpunch_videoreg_w);
-WRITE_HANDLER(rpunch_scrollreg_w);
-WRITE_HANDLER(rpunch_ins_w);
-WRITE_HANDLER(rpunch_crtc_data_w);
-WRITE_HANDLER(rpunch_crtc_register_w);
+WRITE16_HANDLER( rpunch_bitmap_w );
+WRITE16_HANDLER( rpunch_videoram_w );
+WRITE16_HANDLER( rpunch_videoreg_w );
+WRITE16_HANDLER( rpunch_scrollreg_w );
+WRITE16_HANDLER( rpunch_ins_w );
+WRITE16_HANDLER( rpunch_crtc_data_w );
+WRITE16_HANDLER( rpunch_crtc_register_w );
 
 
 
@@ -165,9 +165,9 @@ static void init_machine(void)
  *
  *************************************/
 
-READ_HANDLER(common_port_r)
+READ16_HANDLER( common_port_r )
 {
-	return readinputport(offset / 2) | readinputport(2);
+	return readinputport(offset) | readinputport(2);
 }
 
 
@@ -186,14 +186,14 @@ void sound_command_w_callback(int data)
 }
 
 
-static WRITE_HANDLER(sound_command_w)
+static WRITE16_HANDLER( sound_command_w )
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 		timer_set(TIME_NOW, data & 0xff, sound_command_w_callback);
 }
 
 
-static READ_HANDLER(sound_command_r)
+static READ_HANDLER( sound_command_r )
 {
 	sound_busy = 0;
 	cpu_set_irq_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
@@ -201,7 +201,7 @@ static READ_HANDLER(sound_command_r)
 }
 
 
-static READ_HANDLER(sound_busy_r)
+static READ16_HANDLER( sound_busy_r )
 {
 	return sound_busy;
 }
@@ -214,7 +214,7 @@ static READ_HANDLER(sound_busy_r)
  *
  *************************************/
 
-WRITE_HANDLER(upd_control_w)
+WRITE_HANDLER( upd_control_w )
 {
 	if ((data & 1) != upd_rom_bank)
 	{
@@ -225,7 +225,7 @@ WRITE_HANDLER(upd_control_w)
 }
 
 
-WRITE_HANDLER(upd_data_w)
+WRITE_HANDLER( upd_data_w )
 {
 	UPD7759_message_w(0, data);
 	UPD7759_start_w(0, 0);
@@ -240,20 +240,20 @@ WRITE_HANDLER(upd_data_w)
  *
  *************************************/
 
-static READ_HANDLER(mirror_r)
+static READ16_HANDLER( mirror_r )
 {
-	return cpu_readmem24bew_word(offset & 0xfffff);
+	return cpu_readmem24bew_word((offset << 1) & 0xfffff);
 }
 
 
-static WRITE_HANDLER(mirror_w)
+static WRITE16_HANDLER(mirror_w)
 {
-	if (!(data & 0xffff0000))
-		cpu_writemem24bew_word(offset & 0xfffff, data);
-	else if (!(data & 0xff000000))
-		cpu_writemem24bew(offset & 0xfffff, (data >> 8) & 0xff);
+	if (ACCESSING_LSB && ACCESSING_MSB)
+		cpu_writemem24bew_word((offset << 1) & 0xfffff, data);
+	else if (ACCESSING_MSB)
+		cpu_writemem24bew((offset << 1) & 0xfffff, (data >> 8) & 0xff);
 	else
-		cpu_writemem24bew((offset & 0xfffff) + 1, data & 0xff);
+		cpu_writemem24bew(((offset << 1) & 0xfffff) + 1, data & 0xff);
 }
 
 
@@ -264,39 +264,35 @@ static WRITE_HANDLER(mirror_w)
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x04ffff, MRA_BANK1 },
-	{ 0x060000, 0x060fff, MRA_BANK2 },
-	{ 0x080000, 0x083fff, MRA_BANK3 },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x040000, 0x04ffff, MRA16_RAM },
+	{ 0x060000, 0x060fff, MRA16_RAM },
+	{ 0x080000, 0x083fff, MRA16_RAM },
 	{ 0x0c0018, 0x0c001b, common_port_r },
-	{ 0x0c001c, 0x0c001d, input_port_3_r },
+	{ 0x0c001c, 0x0c001d, input_port_3_word_r },
 	{ 0x0c001e, 0x0c001f, sound_busy_r },
-	{ 0x0a0000, 0x0a07ff, MRA_BANK4 },
-	{ 0x0fc000, 0x0fffff, MRA_BANK5 },
+	{ 0x0a0000, 0x0a07ff, MRA16_RAM },
+	{ 0x0fc000, 0x0fffff, MRA16_RAM },
 	{ 0x100000, 0xffffff, mirror_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x040000, 0x04ffff, rpunch_bitmap_w, &rpunch_bitmapram, &rpunch_bitmapram_size },
-	{ 0x060000, 0x060fff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ 0x080000, 0x083fff, rpunch_videoram_w, &videoram, &videoram_size },
-	{ 0x0a0000, 0x0a07ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x080000, 0x083fff, rpunch_videoram_w, &videoram16, &videoram_size },
+	{ 0x0a0000, 0x0a07ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x0c0000, 0x0c0007, rpunch_scrollreg_w },
 	{ 0x0c0008, 0x0c0009, rpunch_crtc_data_w },
 	{ 0x0c000c, 0x0c000d, rpunch_videoreg_w },
 	{ 0x0c000e, 0x0c000f, sound_command_w },
 	{ 0x0c0010, 0x0c0013, rpunch_ins_w },
 	{ 0x0c0028, 0x0c0029, rpunch_crtc_register_w },
-	{ 0x0fc000, 0x0fffff, MWA_BANK5 },
+	{ 0x0fc000, 0x0fffff, MWA16_RAM },
 	{ 0x100000, 0xffffff, mirror_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -306,26 +302,22 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf001, YM2151_status_port_0_r },
 	{ 0xf200, 0xf200, sound_command_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf000, YM2151_register_port_0_w },
 	{ 0xf001, 0xf001, YM2151_data_port_0_w },
 	{ 0xf400, 0xf400, upd_control_w },
 	{ 0xf600, 0xf600, upd_data_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -590,7 +582,7 @@ INPUT_PORTS_END
 static struct GfxLayout bglayout =
 {
 	8,8,
-	12288,
+	RGN_FRAC(1,1),
 	4,
 	{ 0, 1, 2, 3 },
 	{ 4, 0, 12, 8, 20, 16, 28, 24 },
@@ -602,7 +594,7 @@ static struct GfxLayout bglayout =
 static struct GfxLayout splayout =
 {
 	16,32,
-	1536,
+	RGN_FRAC(1,1),
 	4,
 	{ 0, 1, 2, 3 },
 	{ 12, 8, 4, 0, 28, 24, 20, 16, 44, 40, 36, 32, 60, 56, 52, 48 },

@@ -53,34 +53,27 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
-extern unsigned char *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
-extern unsigned char *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
+extern data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
+extern data16_t *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
+extern data16_t *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
 
-WRITE_HANDLER( dec0_pf1_control_0_w );
-WRITE_HANDLER( dec0_pf1_control_1_w );
-WRITE_HANDLER( dec0_pf1_rowscroll_w );
-WRITE_HANDLER( dec0_pf1_colscroll_w );
-WRITE_HANDLER( dec0_pf1_data_w );
-READ_HANDLER( dec0_pf1_data_r );
-WRITE_HANDLER( dec0_pf2_control_0_w );
-WRITE_HANDLER( dec0_pf2_control_1_w );
-WRITE_HANDLER( dec0_pf2_rowscroll_w );
-WRITE_HANDLER( dec0_pf2_colscroll_w );
-WRITE_HANDLER( dec0_pf2_data_w );
-READ_HANDLER( dec0_pf2_data_r );
-WRITE_HANDLER( dec0_pf3_control_0_w );
-WRITE_HANDLER( dec0_pf3_control_1_w );
-WRITE_HANDLER( dec0_pf3_rowscroll_w );
-WRITE_HANDLER( dec0_pf3_colscroll_w );
-READ_HANDLER( dec0_pf3_colscroll_r );
-WRITE_HANDLER( dec0_pf3_data_w );
-READ_HANDLER( dec0_pf3_data_r );
-WRITE_HANDLER( dec0_priority_w );
-WRITE_HANDLER( dec0_update_sprites_w );
+WRITE16_HANDLER( dec0_pf1_control_0_w );
+WRITE16_HANDLER( dec0_pf1_control_1_w );
+WRITE16_HANDLER( dec0_pf1_data_w );
+READ16_HANDLER( dec0_pf1_data_r );
+WRITE16_HANDLER( dec0_pf2_control_0_w );
+WRITE16_HANDLER( dec0_pf2_control_1_w );
+WRITE16_HANDLER( dec0_pf2_data_w );
+READ16_HANDLER( dec0_pf2_data_r );
+WRITE16_HANDLER( dec0_pf3_control_0_w );
+WRITE16_HANDLER( dec0_pf3_control_1_w );
+WRITE16_HANDLER( dec0_pf3_data_w );
+READ16_HANDLER( dec0_pf3_data_r );
+WRITE16_HANDLER( dec0_priority_w );
+WRITE16_HANDLER( dec0_update_sprites_w );
 
-WRITE_HANDLER( dec0_paletteram_rg_w );
-WRITE_HANDLER( dec0_paletteram_b_w );
+WRITE16_HANDLER( dec0_paletteram_rg_w );
+WRITE16_HANDLER( dec0_paletteram_b_w );
 
 READ_HANDLER( dec0_pf3_data_8bit_r );
 WRITE_HANDLER( dec0_pf3_data_8bit_w );
@@ -88,19 +81,19 @@ WRITE_HANDLER( dec0_pf3_control_8bit_w );
 
 /* System prototypes - from machine/dec0.c */
 extern void dec0_custom_memory(void);
-READ_HANDLER( dec0_controls_r );
-READ_HANDLER( dec0_rotary_r );
-READ_HANDLER( midres_controls_r );
-READ_HANDLER( slyspy_controls_r );
-READ_HANDLER( slyspy_protection_r );
-WRITE_HANDLER( slyspy_state_w );
-READ_HANDLER( slyspy_state_r );
-WRITE_HANDLER( slyspy_240000_w );
-WRITE_HANDLER( slyspy_242000_w );
-WRITE_HANDLER( slyspy_246000_w );
-WRITE_HANDLER( slyspy_248000_w );
-WRITE_HANDLER( slyspy_24c000_w );
-WRITE_HANDLER( slyspy_24e000_w );
+READ16_HANDLER( dec0_controls_r );
+READ16_HANDLER( dec0_rotary_r );
+READ16_HANDLER( midres_controls_r );
+READ16_HANDLER( slyspy_controls_r );
+READ16_HANDLER( slyspy_protection_r );
+WRITE16_HANDLER( slyspy_state_w );
+READ16_HANDLER( slyspy_state_r );
+WRITE16_HANDLER( slyspy_240000_w );
+WRITE16_HANDLER( slyspy_242000_w );
+WRITE16_HANDLER( slyspy_246000_w );
+WRITE16_HANDLER( slyspy_248000_w );
+WRITE16_HANDLER( slyspy_24c000_w );
+WRITE16_HANDLER( slyspy_24e000_w );
 
 extern void dec0_i8751_write(int data);
 extern void dec0_i8751_reset(void);
@@ -109,25 +102,28 @@ WRITE_HANDLER( hippodrm_prot_w );
 READ_HANDLER( hippodrm_shared_r );
 WRITE_HANDLER( hippodrm_shared_w );
 
-unsigned char *dec0_ram;
+data16_t *dec0_ram;
 
 /******************************************************************************/
 
-static WRITE_HANDLER( dec0_control_w )
+static WRITE16_HANDLER( dec0_control_w )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Playfield & Sprite priority */
-			dec0_priority_w(0,data);
+			dec0_priority_w(0,data,mem_mask);
 			break;
 
 		case 2: /* DMA flag */
-			dec0_update_sprites_w(0,0);
+			dec0_update_sprites_w(0,0,mem_mask);
 			break;
 
 		case 4: /* 6502 sound cpu */
-			soundlatch_w(0,data & 0xff);
-			cpu_cause_interrupt(1,M6502_INT_NMI);
+			if (ACCESSING_LSB)
+			{
+				soundlatch_w(0,data & 0xff);
+				cpu_cause_interrupt(1,M6502_INT_NMI);
+			}
 			break;
 
 		case 6: /* Intel 8751 microcontroller - Bad Dudes, Heavy Barrel, Birdy Try only */
@@ -137,117 +133,115 @@ static WRITE_HANDLER( dec0_control_w )
 		case 8: /* Interrupt ack (VBL - IRQ 6) */
 			break;
 
-		case 0xa: /* ? */
- 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+offset);
+		case 0xa: /* Mix Psel(?) */
+ 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
+
+//		case 0xc: /* Cblk - coin blockout?  Seems to be unused by the games */
+//			break;
 
 		case 0xe: /* Reset Intel 8751? - not sure, all the games write here at startup */
 			dec0_i8751_reset();
- 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+offset);
+ 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
 
 		default:
-			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+offset);
+			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
 	}
 }
 
-static WRITE_HANDLER( slyspy_control_w )
+static WRITE16_HANDLER( slyspy_control_w )
 {
-    switch (offset) {
+    switch (offset<<1) {
     	case 0:
-			soundlatch_w(0,data & 0xff);
-			cpu_cause_interrupt(1,H6280_INT_NMI);
+			if (ACCESSING_LSB)
+			{
+				soundlatch_w(0,data & 0xff);
+				cpu_cause_interrupt(1,H6280_INT_NMI);
+			}
 			break;
 		case 2:
-			dec0_priority_w(0,data);
+			dec0_priority_w(0,data,mem_mask);
 			break;
     }
 }
 
-static WRITE_HANDLER( midres_sound_w )
+static WRITE16_HANDLER( midres_sound_w )
 {
-	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,H6280_INT_NMI);
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(0,data & 0xff);
+		cpu_cause_interrupt(1,H6280_INT_NMI);
+	}
 }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress dec0_readmem[] =
-{
-	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0x242800, 0x243fff, MRA_BANK3 }, /* Robocop only */
+static MEMORY_READ16_START( dec0_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0x242800, 0x243fff, MRA16_RAM }, /* Robocop only */
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_r },
-	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_r },
+	{ 0x24c800, 0x24c87f, MRA16_RAM },
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_r },
 	{ 0x300000, 0x30001f, dec0_rotary_r },
 	{ 0x30c000, 0x30c00b, dec0_controls_r },
-	{ 0x310000, 0x3107ff, paletteram_word_r },
-	{ 0x314000, 0x3147ff, paletteram_2_word_r },
-	{ 0xff8000, 0xffbfff, MRA_BANK1 }, /* Main ram */
-	{ 0xffc000, 0xffc7ff, MRA_BANK2 }, /* Sprites */
-	{ -1 }  /* end of table */
-};
+	{ 0x310000, 0x3107ff, MRA16_RAM },
+	{ 0x314000, 0x3147ff, MRA16_RAM },
+	{ 0xff8000, 0xffbfff, MRA16_RAM }, /* Main ram */
+	{ 0xffc000, 0xffc7ff, MRA16_RAM }, /* Sprites */
+MEMORY_END
 
-static struct MemoryWriteAddress dec0_writemem[] =
-{
-	{ 0x000000, 0x05ffff, MWA_ROM },
+static MEMORY_WRITE16_START( dec0_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
 
 	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
- 	{ 0x242000, 0x24207f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
-	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
-	{ 0x242800, 0x243fff, MWA_BANK3 }, /* Robocop only */
+ 	{ 0x242000, 0x24207f, MWA16_RAM, &dec0_pf1_colscroll },
+	{ 0x242400, 0x2427ff, MWA16_RAM, &dec0_pf1_rowscroll },
+	{ 0x242800, 0x243fff, MWA16_RAM }, /* Robocop only */
 	{ 0x244000, 0x245fff, dec0_pf1_data_w, &dec0_pf1_data },
 
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
 	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
-	{ 0x248000, 0x24807f, dec0_pf2_colscroll_w, &dec0_pf2_colscroll },
-	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
+	{ 0x248000, 0x24807f, MWA16_RAM, &dec0_pf2_colscroll },
+	{ 0x248400, 0x2487ff, MWA16_RAM, &dec0_pf2_rowscroll },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w, &dec0_pf2_data },
 
 	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
 	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
-	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
-	{ 0x24cc00, 0x24cfff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
+	{ 0x24c800, 0x24c87f, MWA16_RAM, &dec0_pf3_colscroll },
+	{ 0x24cc00, 0x24cfff, MWA16_RAM, &dec0_pf3_rowscroll },
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w, &dec0_pf3_data },
 
 	{ 0x30c010, 0x30c01f, dec0_control_w },	/* Priority, sound, etc. */
-	{ 0x310000, 0x3107ff, dec0_paletteram_rg_w, &paletteram },	/* Red & Green bits */
-	{ 0x314000, 0x3147ff, dec0_paletteram_b_w, &paletteram_2 },	/* Blue bits */
-	{ 0xff8000, 0xffbfff, MWA_BANK1, &dec0_ram },
-	{ 0xffc000, 0xffc7ff, MWA_BANK2, &spriteram },
-	{ -1 }  /* end of table */
-};
+	{ 0x310000, 0x3107ff, dec0_paletteram_rg_w, &paletteram16 },	/* Red & Green bits */
+	{ 0x314000, 0x3147ff, dec0_paletteram_b_w, &paletteram16_2 },	/* Blue bits */
+	{ 0xff8000, 0xffbfff, MWA16_RAM, &dec0_ram },
+	{ 0xffc000, 0xffc7ff, MWA16_RAM, &spriteram16 },
+MEMORY_END
 
-static struct MemoryReadAddress robocop_sub_readmem[] =
-{
+static MEMORY_READ_START( robocop_sub_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 }, /* Main ram */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress robocop_sub_writemem[] =
-{
+static MEMORY_WRITE_START( robocop_sub_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress hippodrm_sub_readmem[] =
-{
+static MEMORY_READ_START( hippodrm_sub_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x180000, 0x1800ff, hippodrm_shared_r },
 	{ 0x1a1000, 0x1a17ff, dec0_pf3_data_8bit_r },
 	{ 0x1d0000, 0x1d00ff, hippodrm_prot_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 }, /* Main ram */
 	{ 0x1ff402, 0x1ff403, input_port_5_r }, /* VBL */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hippodrm_sub_writemem[] =
-{
+static MEMORY_WRITE_START( hippodrm_sub_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x180000, 0x1800ff, hippodrm_shared_w },
 	{ 0x1a0000, 0x1a001f, dec0_pf3_control_8bit_w },
@@ -255,24 +249,20 @@ static struct MemoryWriteAddress hippodrm_sub_writemem[] =
 	{ 0x1d0000, 0x1d00ff, hippodrm_prot_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress slyspy_readmem[] =
-{
-	{ 0x000000, 0x05ffff, MRA_ROM },
+static MEMORY_READ16_START( slyspy_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
 	{ 0x244000, 0x244001, slyspy_state_r }, /* protection */
-	{ 0x304000, 0x307fff, MRA_BANK1 }, /* Sly spy main ram */
-	{ 0x308000, 0x3087ff, MRA_BANK2 }, /* Sprites */
-	{ 0x310000, 0x3107ff, paletteram_word_r },
+	{ 0x304000, 0x307fff, MRA16_RAM }, /* Sly spy main ram */
+	{ 0x308000, 0x3087ff, MRA16_RAM }, /* Sprites */
+	{ 0x310000, 0x3107ff, MRA16_RAM },
 	{ 0x314008, 0x31400f, slyspy_controls_r },
 	{ 0x31c000, 0x31c00f, slyspy_protection_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress slyspy_writemem[] =
-{
-	{ 0x000000, 0x05ffff, MWA_ROM },
+static MEMORY_WRITE16_START( slyspy_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
 
 	/* These locations aren't real!  They are just there so memory is allocated */
 	{ 0x232000, 0x23207f, MWA_NOP, &dec0_pf2_colscroll },
@@ -297,34 +287,30 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 	/* Pf3 is unaffected by protection */
 	{ 0x300000, 0x300007, dec0_pf3_control_0_w },
 	{ 0x300010, 0x300017, dec0_pf3_control_1_w },
-	{ 0x300800, 0x30087f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
-	{ 0x300c00, 0x300fff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
+	{ 0x300800, 0x30087f, MWA16_RAM, &dec0_pf3_colscroll },
+	{ 0x300c00, 0x300fff, MWA16_RAM, &dec0_pf3_rowscroll },
 	{ 0x301000, 0x3017ff, dec0_pf3_data_w, &dec0_pf3_data },
 
-	{ 0x304000, 0x307fff, MWA_BANK1, &dec0_ram }, /* Sly spy main ram */
-	{ 0x308000, 0x3087ff, MWA_BANK2, &spriteram },
-	{ 0x310000, 0x3107ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x304000, 0x307fff, MWA16_RAM, &dec0_ram }, /* Sly spy main ram */
+	{ 0x308000, 0x3087ff, MWA16_RAM, &spriteram16 },
+	{ 0x310000, 0x3107ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x314000, 0x314003, slyspy_control_w },
 	{ 0x31c000, 0x31c00f, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress midres_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1 },
-	{ 0x120000, 0x1207ff, MRA_BANK2 },
+static MEMORY_READ16_START( midres_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x120000, 0x1207ff, MRA16_RAM },
 	{ 0x180000, 0x18000f, midres_controls_r },
 	{ 0x320000, 0x321fff, dec0_pf1_data_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress midres_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1, &dec0_ram },
-	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram },
-	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+static MEMORY_WRITE16_START( midres_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM, &dec0_ram },
+	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16 },
+	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x160000, 0x160001, dec0_priority_w },
 	{ 0x180008, 0x18000f, MWA_NOP }, /* ?? watchdog ?? */
 	{ 0x1a0000, 0x1a0001, midres_sound_w },
@@ -333,22 +319,21 @@ static struct MemoryWriteAddress midres_writemem[] =
 	{ 0x200010, 0x200017, dec0_pf2_control_1_w },
 	{ 0x220000, 0x2207ff, dec0_pf2_data_w, &dec0_pf2_data },
 	{ 0x220800, 0x220fff, dec0_pf2_data_w },	/* mirror address used in end sequence */
-	{ 0x240000, 0x24007f, dec0_pf2_colscroll_w, &dec0_pf2_colscroll },
-	{ 0x240400, 0x2407ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
+	{ 0x240000, 0x24007f, MWA16_RAM, &dec0_pf2_colscroll },
+	{ 0x240400, 0x2407ff, MWA16_RAM, &dec0_pf2_rowscroll },
 
 	{ 0x280000, 0x280007, dec0_pf3_control_0_w },
 	{ 0x280010, 0x280017, dec0_pf3_control_1_w },
 	{ 0x2a0000, 0x2a07ff, dec0_pf3_data_w, &dec0_pf3_data },
-	{ 0x2c0000, 0x2c007f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
-	{ 0x2c0400, 0x2c07ff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
+	{ 0x2c0000, 0x2c007f, MWA16_RAM, &dec0_pf3_colscroll },
+	{ 0x2c0400, 0x2c07ff, MWA16_RAM, &dec0_pf3_rowscroll },
 
 	{ 0x300000, 0x300007, dec0_pf1_control_0_w },
 	{ 0x300010, 0x300017, dec0_pf1_control_1_w },
 	{ 0x320000, 0x321fff, dec0_pf1_data_w, &dec0_pf1_data },
-	{ 0x340000, 0x34007f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
-	{ 0x340400, 0x3407ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
-	{ -1 }  /* end of table */
-};
+	{ 0x340000, 0x34007f, MWA16_RAM, &dec0_pf1_colscroll },
+	{ 0x340400, 0x3407ff, MWA16_RAM, &dec0_pf1_rowscroll },
+MEMORY_END
 
 /******************************************************************************/
 
@@ -376,66 +361,54 @@ static WRITE_HANDLER( YM2203_w )
 	}
 }
 
-static struct MemoryReadAddress dec0_s_readmem[] =
-{
+static MEMORY_READ_START( dec0_s_readmem )
 	{ 0x0000, 0x05ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x3800, 0x3800, OKIM6295_status_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dec0_s_writemem[] =
-{
+static MEMORY_WRITE_START( dec0_s_writemem )
 	{ 0x0000, 0x05ff, MWA_RAM },
 	{ 0x0800, 0x0801, YM2203_w },
 	{ 0x1000, 0x1001, YM3812_w },
 	{ 0x3800, 0x3800, OKIM6295_data_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* Physical memory map (21 bits) */
-static struct MemoryReadAddress slyspy_s_readmem[] =
-{
+static MEMORY_READ_START( slyspy_s_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x0a0000, 0x0a0001, MRA_NOP }, /* Protection counter */
 	{ 0x0e0000, 0x0e0001, OKIM6295_status_0_r },
 	{ 0x0f0000, 0x0f0001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress slyspy_s_writemem[] =
-{
+static MEMORY_WRITE_START( slyspy_s_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x090000, 0x090001, YM3812_w },
 	{ 0x0b0000, 0x0b0001, YM2203_w},
 	{ 0x0e0000, 0x0e0001, OKIM6295_data_0_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress midres_s_readmem[] =
-{
+static MEMORY_READ_START( midres_s_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x130000, 0x130001, OKIM6295_status_0_r },
 	{ 0x138000, 0x138001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress midres_s_writemem[] =
-{
+static MEMORY_WRITE_START( midres_s_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x108000, 0x108001, YM3812_w },
 	{ 0x118000, 0x118001, YM2203_w },
 	{ 0x130000, 0x130001, OKIM6295_data_0_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

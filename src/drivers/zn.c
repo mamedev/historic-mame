@@ -118,7 +118,7 @@ static void znqs_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 		dt[ 2 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 2 ].text ) ) / 2;
 		dt[ 2 ].y = Machine->uiheight - Machine->uifontheight * 1;
 		dt[ 3 ].text = 0; /* terminate array */
-		displaytext( Machine->scrbitmap, dt, 0, 0 );
+		displaytext( Machine->scrbitmap, dt );
 	}
 }
 
@@ -139,47 +139,38 @@ static WRITE_HANDLER( qsound_banksw_w )
 	cpu_setbank( 1, &RAM[ 0x10000 + ( ( data & 0x0f ) * 0x4000 ) ] );
 }
 
-static struct MemoryReadAddress qsound_readmem[] =
-{
+static MEMORY_READ_START( qsound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },	/* banked (contains music data) */
 	{ 0xd007, 0xd007, qsound_status_r },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qsound_writemem[] =
-{
+static MEMORY_WRITE_START( qsound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xd000, 0xd000, qsound_data_h_w },
 	{ 0xd001, 0xd001, qsound_data_l_w },
 	{ 0xd002, 0xd002, qsound_cmd_w },
 	{ 0xd003, 0xd003, qsound_banksw_w },
 	{ 0xf000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort qsound_readport[] =
-{
+static PORT_READ_START( qsound_readport )
 	{ 0x00, 0x00, soundlatch_r },
-	{ -1 } /* end of table */
-};
+PORT_END
 
 static struct GfxDecodeInfo znqs_gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };
 
-static struct MemoryReadAddress znqs_readmem[] =
-{
+static MEMORY_READ_START( znqs_readmem )
 	{ 0xbfc00000, 0xbfc7ffff, MRA_BANK3 },	/* bios */
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress znqs_writemem[] =
-{
-	{ -1 } /* end of table */
-};
+static MEMORY_WRITE_START( znqs_writemem )
+MEMORY_END
+
 
 static int qsound_interrupt( void )
 {
@@ -229,7 +220,7 @@ static const struct MachineDriver machine_driver_znqs =
 	/* basic machine hardware */
 	{
 		{
-			CPU_PSX,
+			CPU_PSXCPU,
 			33000000, /* 33mhz ?? */
 			znqs_readmem, znqs_writemem, 0, 0,
 			ignore_interrupt, 1  /* ??? interrupts per frame */
@@ -825,33 +816,29 @@ UINT16 bridge_r( UINT32 ( *p_bridge32_r )( UINT32 offset ), UINT32 offset )
 	return m_n_bridge_data & 0xffff;
 }
 
-WRITE_HANDLER( gpu_w )
+WRITE16_HANDLER( gpu_w )
 {
-	bridge_w( gpu32_w, offset, data );
+	bridge_w( gpu32_w, offset<<1, data );
 }
 
-READ_HANDLER( gpu_r )
+READ16_HANDLER( gpu_r )
 {
-	return bridge_r( gpu32_r, offset );
+	return bridge_r( gpu32_r, offset<<1 );
 }
 
-static struct MemoryReadAddress zn_readmem[] =
-{
-	{ 0x00000000, 0x001fffff, MRA_RAM },	/* ram */
+static MEMORY_READ16_START( zn_readmem )
+	{ 0x00000000, 0x001fffff, MRA16_RAM },	/* ram */
 	{ 0x1f801810, 0x1f801817, gpu_r },
-	{ 0xa0000000, 0xa01fffff, MRA_BANK1 },	/* ram mirror */
-	{ 0xbfc00000, 0xbfc7ffff, MRA_BANK2 },	/* bios */
-	{ -1 }	/* end of table */
-};
+	{ 0xa0000000, 0xa01fffff, MRA16_BANK1 },	/* ram mirror */
+	{ 0xbfc00000, 0xbfc7ffff, MRA16_BANK2 },	/* bios */
+MEMORY_END
 
-static struct MemoryWriteAddress zn_writemem[] =
-{
-	{ 0x00000000, 0x001fffff, MWA_RAM },	/* ram */
+static MEMORY_WRITE16_START( zn_writemem )
+	{ 0x00000000, 0x001fffff, MWA16_RAM },	/* ram */
 	{ 0x1f801810, 0x1f801817, gpu_w },
-	{ 0xa0000000, 0xa01fffff, MWA_BANK1 },	/* ram mirror */
-	{ 0xbfc00000, 0xbfc7ffff, MWA_ROM },	/* bios */
-	{ -1 }	/* end of table */
-};
+	{ 0xa0000000, 0xa01fffff, MWA16_BANK1 },	/* ram mirror */
+	{ 0xbfc00000, 0xbfc7ffff, MWA16_ROM },	/* bios */
+MEMORY_END
 
 static void zn_init_machine( void )
 {
@@ -869,7 +856,7 @@ static const struct MachineDriver machine_driver_zn =
 	/* basic machine hardware */
 	{
 		{
-			CPU_PSX,
+			CPU_PSXCPU,
 			33868800, /* 33mhz ?? */
 			zn_readmem, zn_writemem, 0, 0,
 			ignore_interrupt,1 /* ??? interrupts per frame */

@@ -98,35 +98,33 @@ WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
 
 
-
-static struct MemoryReadAddress readmem_cpu1[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x8000, 0x9fff, galaga_sharedram_r },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7000, 0x700f, galaga_customio_data_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x8000, 0x9fff, galaga_sharedram_r },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu3[] =
-{
+static MEMORY_READ_START( readmem_cpu3 )
 	{ 0x8000, 0x9fff, galaga_sharedram_r },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x8000, 0x9fff, galaga_sharedram_w, &galaga_sharedram },
 	{ 0x6830, 0x6830, MWA_NOP },
 	{ 0x7000, 0x700f, galaga_customio_data_w },
@@ -142,25 +140,20 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },      /* handled by galaga_sharedram_w() */
 	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size }, /* dirtybuffer[] handling is not needed because */
 	{ 0x8400, 0x87ff, MWA_RAM, &colorram }, /* characters are redrawn every frame */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x8000, 0x9fff, galaga_sharedram_w },
 	{ 0x6821, 0x6821, galaga_interrupt_enable_2_w },
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu3[] =
-{
+static MEMORY_WRITE_START( writemem_cpu3 )
 	{ 0x8000, 0x9fff, galaga_sharedram_w },
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
 	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

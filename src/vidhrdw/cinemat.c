@@ -353,8 +353,7 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
             }
 
-			osd_mark_dirty (rect.min_x, rect.min_y,
-                            rect.max_x, rect.max_y, 0);
+			osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
 		}
 	}
     sw_option_change = sw_option;

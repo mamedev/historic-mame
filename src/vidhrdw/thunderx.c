@@ -85,10 +85,7 @@ void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 
@@ -96,15 +93,15 @@ void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 //	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->visible_area);
 	if (scontra_priority)
 	{
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
-		K052109_tilemap_draw(bitmap,1,2<<16);
+		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,1);
+		K052109_tilemap_draw(bitmap,1,0,2);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
-		K052109_tilemap_draw(bitmap,2,2<<16);
+		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,1);
+		K052109_tilemap_draw(bitmap,2,0,2);
 	}
-	K052109_tilemap_draw(bitmap,0,4<<16);
+	K052109_tilemap_draw(bitmap,0,0,4);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }

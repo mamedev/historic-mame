@@ -208,7 +208,7 @@ WRITE_HANDLER( yard_flipscreen_w )
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
 
-	flip_screen_w(offset, data & 1);
+	flip_screen_set(data & 1);
 
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x20);

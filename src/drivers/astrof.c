@@ -57,19 +57,16 @@ WRITE_HANDLER( astrof_sample2_w );
 extern struct Samplesinterface astrof_samples_interface;
 extern struct Samplesinterface tomahawk_samples_interface;
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0xa000, 0xa000, input_port_0_r },
 	{ 0xa001, 0xa001, input_port_1_r },	/* IN1 */
 	{ 0xa003, 0xa003, tomahawk_protection_r },   // Only on Tomahawk
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress astrof_writemem[] =
-{
+static MEMORY_WRITE_START( astrof_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x4000, 0x5fff, astrof_videoram_w, &videoram, &videoram_size },
 	{ 0x8003, 0x8003, MWA_RAM, &astrof_color },
@@ -77,11 +74,9 @@ static struct MemoryWriteAddress astrof_writemem[] =
 	{ 0x8005, 0x8005, astrof_video_control2_w },
 	{ 0x8006, 0x8006, astrof_sample1_w },
 	{ 0x8007, 0x8007, astrof_sample2_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tomahawk_writemem[] =
-{
+static MEMORY_WRITE_START( tomahawk_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x4000, 0x5fff, tomahawk_videoram_w, &videoram, &videoram_size },
 	{ 0x8003, 0x8003, MWA_RAM, &astrof_color },
@@ -89,8 +84,7 @@ static struct MemoryWriteAddress tomahawk_writemem[] =
 	{ 0x8005, 0x8005, tomahawk_video_control2_w },
 	{ 0x8006, 0x8006, MWA_NOP },                        // Sound triggers
 	{ 0x8007, 0x8007, MWA_RAM, &tomahawk_protection },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

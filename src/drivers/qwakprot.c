@@ -53,8 +53,7 @@ static WRITE_HANDLER( qwakprot_led_w )
 	set_led_status(offset,~data & 0x80);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x0200, 0x025f, MRA_RAM },
 	{ 0x0300, 0x03ff, MRA_RAM },
@@ -72,11 +71,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x7000, 0x700f, pokey2_r },
 	{ 0x8000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0200, 0x025f, MWA_RAM },
 	{ 0x0300, 0x03ff, MWA_RAM },
@@ -88,8 +85,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x600f, pokey1_w },
 	{ 0x7000, 0x700f, pokey2_w },
 	{ 0x8000, 0xbfff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -86,7 +86,7 @@ static struct sprite_list *sprite_list;
 
 /* Variables that driver has acces to: */
 
-unsigned char *wecleman_pageram, *wecleman_txtram, *wecleman_roadram, *wecleman_unknown;
+data16_t *wecleman_pageram, *wecleman_txtram, *wecleman_roadram, *wecleman_unknown;
 size_t wecleman_roadram_size;
 int wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
 
@@ -116,15 +116,14 @@ extern int wecleman_selected_ip, wecleman_irqctrl;
 #define NUM_SPRITES 256
 
 
-WRITE_HANDLER( paletteram_SBGRBBBBGGGGRRRR_word_w )
+WRITE16_HANDLER( paletteram16_SBGRBBBBGGGGRRRR_word_w )
 {
 	/*	byte 0    	byte 1		*/
 	/*	SBGR BBBB 	GGGG RRRR	*/
 	/*	S000 4321 	4321 4321	*/
 	/*  S = Shade				*/
 
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int newword = COMBINE_DATA(&paletteram16[offset]);
 
 	int r = ((newword << 1) & 0x1E ) | ((newword >> 12) & 0x01);
 	int g = ((newword >> 3) & 0x1E ) | ((newword >> 13) & 0x01);
@@ -133,11 +132,9 @@ WRITE_HANDLER( paletteram_SBGRBBBBGGGGRRRR_word_w )
 	/* This effect can be turned on/off actually ... */
 	if (newword & 0x8000)	{ r /= 2;	 g /= 2;	 b /= 2; }
 
-	palette_change_color( offset/2,	 (r * 0xFF) / 0x1F,
+	palette_change_color( offset,	 (r * 0xFF) / 0x1F,
 									 (g * 0xFF) / 0x1F,
 									 (b * 0xFF) / 0x1F	 );
-
-	WRITE_WORD (&paletteram[offset], newword);
 }
 
 
@@ -168,34 +165,22 @@ WRITE_HANDLER( paletteram_SBGRBBBBGGGGRRRR_word_w )
 
 void wecleman_get_txt_tile_info( int tile_index )
 {
-	int code 		=	READ_WORD(&wecleman_txtram[tile_index*2]);
+	data16_t code = wecleman_txtram[tile_index];
 	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
 }
 
 
-
-
-READ_HANDLER( wecleman_txtram_r )
+WRITE16_HANDLER( wecleman_txtram_w )
 {
-	return READ_WORD(&wecleman_txtram[offset]);
-}
-
-
-
-
-WRITE_HANDLER( wecleman_txtram_w )
-{
-	int old_data = READ_WORD(&wecleman_txtram[offset]);
-	int new_data = COMBINE_WORD(old_data,data);
+	data16_t old_data = wecleman_txtram[offset];
+	data16_t new_data = COMBINE_DATA(&wecleman_txtram[offset]);
 
 	if ( old_data != new_data )
 	{
-		WRITE_WORD(&wecleman_txtram[offset], new_data);
-
-		if (offset >= 0xE00 )	/* Video registers */
+		if (offset >= 0xE00/2 )	/* Video registers */
 		{
 			/* pages selector for the background */
-			if (offset == 0xEFE)
+			if (offset == 0xEFE/2)
 			{
 				wecleman_bgpage[0] = (new_data >> 0x4) & 3;
 				wecleman_bgpage[1] = (new_data >> 0x0) & 3;
@@ -205,7 +190,7 @@ WRITE_HANDLER( wecleman_txtram_w )
 			}
 
 			/* pages selector for the foreground */
-			if (offset == 0xEFC)
+			if (offset == 0xEFC/2)
 			{
 				wecleman_fgpage[0] = (new_data >> 0x4) & 3;
 				wecleman_fgpage[1] = (new_data >> 0x0) & 3;
@@ -218,7 +203,7 @@ WRITE_HANDLER( wecleman_txtram_w )
 
 		}
 		else
-			tilemap_mark_tile_dirty(txt_tilemap, offset / 2);
+			tilemap_mark_tile_dirty(txt_tilemap, offset);
 	}
 }
 
@@ -229,12 +214,10 @@ WRITE_HANDLER( wecleman_txtram_w )
 							[ Background ]
 ------------------------------------------------------------------------*/
 
-
-
 void wecleman_get_bg_tile_info( int tile_index )
 {
-	int page = wecleman_bgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*PAGE_NY*2))];
-	int code = READ_WORD(&wecleman_pageram[( (tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY ) * 2]);
+	int page = wecleman_bgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*2*PAGE_NY))];
+	int code = wecleman_pageram[(tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY];
 	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
 }
 
@@ -244,12 +227,10 @@ void wecleman_get_bg_tile_info( int tile_index )
 							[ Foreground ]
 ------------------------------------------------------------------------*/
 
-
-
 void wecleman_get_fg_tile_info( int tile_index )
 {
-	int page = wecleman_fgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*PAGE_NY*2))];
-	int code = READ_WORD(&wecleman_pageram[( (tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY ) * 2]);
+	int page = wecleman_fgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*2*PAGE_NY))];
+	int code = wecleman_pageram[(tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY];
 	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
 }
 
@@ -265,27 +246,20 @@ void wecleman_get_fg_tile_info( int tile_index )
 
 
 /* Pages that compose both the background and the foreground */
-READ_HANDLER( wecleman_pageram_r )
-{
-	return READ_WORD(&wecleman_pageram[offset]);
-}
 
-
-WRITE_HANDLER( wecleman_pageram_w )
+WRITE16_HANDLER( wecleman_pageram_w )
 {
-	int old_data = READ_WORD(&wecleman_pageram[offset]);
-	int new_data = COMBINE_WORD(old_data,data);
+	data16_t old_data = wecleman_pageram[offset];
+	data16_t new_data = COMBINE_DATA(&wecleman_pageram[offset]);
 
 	if ( old_data != new_data )
 	{
 		int page,col,row;
 
-		WRITE_WORD(&wecleman_pageram[offset], new_data);
+		page	=	( offset ) / (PAGE_NX * PAGE_NY);
 
-		page	=	( offset / 2 ) / (PAGE_NX * PAGE_NY);
-
-		col		=	( offset / 2 )           % PAGE_NX;
-		row		=	( offset / 2 / PAGE_NX ) % PAGE_NY;
+		col		=	( offset )           % PAGE_NX;
+		row		=	( offset / PAGE_NX ) % PAGE_NY;
 
 		/* background */
 		if (wecleman_bgpage[0] == page)	tilemap_mark_tile_dirty(bg_tilemap, (col+PAGE_NX*0) + (row+PAGE_NY*0)*PAGE_NX*2 );
@@ -349,15 +323,15 @@ int wecleman_vh_start(void)
 	{
 		tilemap_set_scroll_rows(bg_tilemap, TILEMAP_DIMY);	/* Screen-wise scrolling */
 		tilemap_set_scroll_cols(bg_tilemap, 1);
-		bg_tilemap->transparent_pen = 0;
+		tilemap_set_transparent_pen(bg_tilemap,0);
 
 		tilemap_set_scroll_rows(fg_tilemap, TILEMAP_DIMY);	/* Screen-wise scrolling */
 		tilemap_set_scroll_cols(fg_tilemap, 1);
-		fg_tilemap->transparent_pen = 0;
+		tilemap_set_transparent_pen(fg_tilemap,0);
 
 		tilemap_set_scroll_rows(txt_tilemap, 1);
 		tilemap_set_scroll_cols(txt_tilemap, 1);
-		txt_tilemap->transparent_pen = 0;
+		tilemap_set_transparent_pen(txt_tilemap,0);
 		tilemap_set_scrollx(txt_tilemap,0, 512-320-16 );	/* fixed scrolling? */
 		tilemap_set_scrolly(txt_tilemap,0, 0 );
 
@@ -447,8 +421,8 @@ int hotchase_vh_start(void)
 	{
 		K051316_wraparound_enable(0,1);
 //		K051316_wraparound_enable(1,1);
-		K051316_set_offset(0,-96,-16);
-		K051316_set_offset(1,-96,-16);
+		K051316_set_offset(0, -0xB0/2, -16);
+		K051316_set_offset(1, -0xB0/2, -16);
 
 		sprite_list->max_priority = 0;
 		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
@@ -493,7 +467,7 @@ void wecleman_mark_road_colors(void)
 
 	for (; y <= ymax; y++)
 	{
-		int color = ROAD_COLOR( READ_WORD(&wecleman_roadram[0x400 + y * 2]) );
+		int color = ROAD_COLOR( wecleman_roadram[0x400/2 + y * 2/2] );
 		memset(&palette_used_colors[color_codes_start + color*8],PALETTE_COLOR_USED,8);	// no transparency
 	}
 }
@@ -531,9 +505,9 @@ void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
 	/* Let's draw from the top to the bottom of the visible screen */
 	for (sy = rect.min_y ; sy <= rect.max_y ; sy ++)
 	{
-		int code		=	READ_WORD(&wecleman_roadram[(YSIZE*0+sy)*2]);
-		int scrollx 	=	READ_WORD(&wecleman_roadram[(YSIZE*1+sy)*2]) + 24;	// fudge factor :)
-		int attr		=	READ_WORD(&wecleman_roadram[(YSIZE*2+sy)*2]);
+		int code		=	wecleman_roadram[ YSIZE*0+sy ];
+		int scrollx 	=	wecleman_roadram[ YSIZE*1+sy ] + 24;	// fudge factor :)
+		int attr		=	wecleman_roadram[ YSIZE*2+sy ];
 
 		/* high byte is a priority information? */
 		if ((code>>8) != priority)	continue;
@@ -586,7 +560,7 @@ void hotchase_mark_road_colors(void)
 
 	for (; y <= ymax; y++)
 	{
-		int color = (READ_WORD(&wecleman_roadram[y * 4]) >> 4 ) & 0xf;
+		int color = (wecleman_roadram[y * 4/2] >> 4) & 0xf;
 		palette_used_colors[color_codes_start + color*16 + 0] = PALETTE_COLOR_TRANSPARENT;	// pen 0 transparent
 		memset(&palette_used_colors[color_codes_start + color*16 + 1],PALETTE_COLOR_USED,16-1);
 	}
@@ -621,8 +595,8 @@ void hotchase_mark_road_colors(void)
 
 void hotchase_draw_road(struct osd_bitmap *bitmap,int priority, struct rectangle *clip)
 {
-struct rectangle rect = *clip;
-int sy;
+	struct rectangle rect = *clip;
+	int sy;
 
 
 /* Referred to what's in the ROMs */
@@ -634,8 +608,8 @@ int sy;
 	for (sy = rect.min_y ; sy <= rect.max_y ; sy ++)
 	{
 		int curr_code,sx;
-		int code	=	  READ_WORD(&wecleman_roadram[0x0000+sy*4+2]) +
-						( READ_WORD(&wecleman_roadram[0x0000+sy*4+0]) << 16 );
+		int code	=	  wecleman_roadram[ sy *4/2 + 2/2 ] +
+						( wecleman_roadram[ sy *4/2 + 0/2 ] << 16 );
 		int color	=	(( code & 0x00f00000 ) >> 20 ) + 0x70;
 		int scrollx =	 ( code & 0x000ffc00 ) >> 10;
 		code		=	 ( code & 0x000003ff ) >>  0;
@@ -685,17 +659,17 @@ static void mark_sprites_colors(void)
 {
 	int offs;
 
-	for (offs = 0; offs < (NUM_SPRITES * 0x10); offs += 0x10)
+	for (offs = 0/2; offs < (NUM_SPRITES * 0x10)/2; offs += 0x10/2)
 	{
 		int dest_y, dest_h, color;
 
-		dest_y = READ_WORD(&spriteram[offs + 0x00]);
+		dest_y = spriteram16[offs + 0x00/2];
 		if (dest_y == 0xFFFF)	break;
 
 		dest_h = (dest_y >> 8) - (dest_y & 0x00FF);
 		if (dest_h < 1) continue;
 
-		color = (READ_WORD(&spriteram[offs + 0x04]) >> 8) & 0x7f;
+		color = (spriteram16[offs + 0x04/2] >> 8) & 0x7f;
 		memset(&palette_used_colors[color*16 + 1], PALETTE_COLOR_USED, 16 - 2 );
 
 		// pens 0 & 15 are transparent
@@ -729,7 +703,7 @@ static void mark_sprites_colors(void)
 			---- ---- --54 3210		X? Shrink Factor
 
 Sprite "address" is the index of the pixel the hardware has to start
-fetching data from, divided by 8. Only on screen height and source data
+fetching data from, divided by 8. Only the on-screen height and source data
 width are provided, along with two shrinking factors. So on screen width
 and source height are calculated by the hardware using the shrink factors.
 The factors are in the range 0 (no shrinking) - 3F (half size).
@@ -743,7 +717,8 @@ static void get_sprite_info(void)
 
 	const int gfx_max = memory_region_length(REGION_GFX1);
 
-	unsigned char *source		=	spriteram;
+	data16_t *source			=	spriteram16;
+
 	struct sprite *sprite		=	sprite_list->sprite;
 	const struct sprite *finish	=	sprite + NUM_SPRITES;
 
@@ -753,13 +728,13 @@ static void get_sprite_info(void)
 #define SHRINK_FACTOR(x) \
 	(1.0 - ( ( (x) & 0x3F ) / 63.0) * 0.5)
 
-	for (; sprite < finish; sprite++,source+=0x10)
+	for (; sprite < finish; sprite++,source+=0x10/2)
 	{
 		int code, gfx, zoom;
 
 		sprite->priority = 0;
 
-		sprite->y	= READ_WORD(&source[0x00]);
+		sprite->y	= source[ 0x00/2 ];
 		if (sprite->y == 0xFFFF)	{ visibility = 0; }
 
 		sprite->flags = visibility;
@@ -768,10 +743,10 @@ static void get_sprite_info(void)
 		sprite->total_height = (sprite->y >> 8) - (sprite->y & 0xFF);
 		if (sprite->total_height < 1) {sprite->flags = 0;	continue;}
 
-		sprite->x	 		=	READ_WORD(&source[0x02]);
-		sprite->tile_width	=	READ_WORD(&source[0x04]);
-		code				=	READ_WORD(&source[0x06]);
-		zoom				=	READ_WORD(&source[0x08]);
+		sprite->x	 		=	source[ 0x02/2 ];
+		sprite->tile_width	=	source[ 0x04/2 ];
+		code				=	source[ 0x06/2 ];
+		zoom				=	source[ 0x08/2 ];
 
 		gfx	= (wecleman_gfx_bank[(sprite->x >> 10) & 0x3f] << 15) +  (code & 0x7fff);
 		sprite->pal_data = base_pal + ( (sprite->tile_width >> 4) & 0x7f0 );	// 16 colors = 16 shorts
@@ -908,7 +883,7 @@ void browser(struct osd_bitmap *bitmap)
 	KEY(B, browse ^= 1;) \
 	if (browse) \
 	{ \
-		osd_clearbitmap(Machine->scrbitmap); \
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area); \
 		browser(bitmap); \
 		return; \
 	} \
@@ -916,11 +891,11 @@ void browser(struct osd_bitmap *bitmap)
 	{ \
 	int msk = 0; \
 	 \
-		if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0xffe1;} \
-		if (keyboard_pressed(KEYCODE_W))	{ msk |= 0xffe2;} \
-		if (keyboard_pressed(KEYCODE_E))	{ msk |= 0xffe4;} \
-		if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xffe8;} \
-		if (keyboard_pressed(KEYCODE_R))	{ msk |= 0xfff0;} \
+		if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x01;} \
+		if (keyboard_pressed(KEYCODE_W))	{ msk |= 0x02;} \
+		if (keyboard_pressed(KEYCODE_E))	{ msk |= 0x04;} \
+		if (keyboard_pressed(KEYCODE_A))	{ msk |= 0x08;} \
+		if (keyboard_pressed(KEYCODE_R))	{ msk |= 0x10;} \
 		if (msk != 0) layers_ctrl &= msk; \
 	} \
 }
@@ -932,7 +907,7 @@ void browser(struct osd_bitmap *bitmap)
 
 void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i, layers_ctrl = 0xFFFF;
+	int i, layers_ctrl = -1;
 
 
 	WECLEMAN_LAMPS
@@ -947,8 +922,8 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /* Set the scroll values for the scrolling layers */
 
 	/* y values */
-	int bg_y = READ_WORD(&wecleman_txtram[0x0F24+2]) & (TILEMAP_DIMY - 1);
-	int fg_y = READ_WORD(&wecleman_txtram[0x0F24+0]) & (TILEMAP_DIMY - 1);
+	int bg_y = wecleman_txtram[( 0x0F24+2 )/2] & (TILEMAP_DIMY - 1);
+	int fg_y = wecleman_txtram[( 0x0F24+0 )/2] & (TILEMAP_DIMY - 1);
 
 	tilemap_set_scrolly(bg_tilemap, 0, bg_y );
 	tilemap_set_scrolly(fg_tilemap, 0, fg_y );
@@ -957,8 +932,8 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for ( i = 0 ; i < 28; i++ )
 	{
 		int j;
-		int bg_x = 0xB0 + READ_WORD(&wecleman_txtram[0xF80+i*4+2]);
-		int fg_x = 0xB0 + READ_WORD(&wecleman_txtram[0xF80+i*4+0]);
+		int bg_x = 0xB0 + wecleman_txtram[ 0xF80/2 + i*4/2 + 2/2 ];
+		int fg_x = 0xB0 + wecleman_txtram[ 0xF80/2 + i*4/2 + 0/2 ];
 
 		for ( j = 0 ; j < 8; j++ )
 		{
@@ -979,27 +954,21 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	sprite_update();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 
-	osd_clearbitmap(Machine->scrbitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	/* Draw the road (lines which have "priority" 0x02) */
 	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,0x02);
 
 	/* Draw the background */
 	if (layers_ctrl & 1)
-	{
-		tilemap_render(bg_tilemap);
-		tilemap_draw(bitmap, bg_tilemap,  0);
-	}
+		tilemap_draw(bitmap, bg_tilemap,  0,0);
 
 	/* Draw the foreground */
 	if (layers_ctrl & 2)
-	{
-		tilemap_render(fg_tilemap);
-		tilemap_draw(bitmap, fg_tilemap,  0);
-	}
+		tilemap_draw(bitmap, fg_tilemap,  0,0);
 
 	/* Draw the road (lines which have "priority" 0x04) */
 	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,0x04);
@@ -1009,11 +978,7 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the text layer */
 	if (layers_ctrl & 4)
-	{
-		tilemap_render(txt_tilemap);
-		tilemap_draw(bitmap, txt_tilemap,  0);
-	}
-
+		tilemap_draw(bitmap, txt_tilemap,  0,0);
 }
 
 
@@ -1030,7 +995,7 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
-	int layers_ctrl = 0xFFFF;
+	int layers_ctrl = -1;
 
 	WECLEMAN_LAMPS
 
@@ -1058,10 +1023,7 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
@@ -1078,9 +1040,9 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		hotchase_draw_road(temp_bitmap2,0,&clip);
 
 		copyrozbitmap( bitmap, temp_bitmap2,
-				11*16*0x10000,0,	/* start coordinates */
+				0xB0 << 16,0,			/* start coordinates */
 				0x08000,0,0,0x10000,	/* double horizontally */
-				0,	/* no wraparound */
+				0,						/* no wraparound */
 				&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,0);
 	}
 

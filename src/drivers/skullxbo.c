@@ -1,74 +1,44 @@
 /***************************************************************************
 
-Skull & Crossbones Memory Map
------------------------------
+	Atari Skull & Crossbones hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
-SKULL & CROSSBONES 68000 MEMORY MAP
+	Games supported:
+		* Skull & Crossbones (1989) [2 sets]
 
-Function                           Address        R/W  DATA
--------------------------------------------------------------
-Program ROM                        000000-07FFFF  R    D0-D15
+	Known bugs:
+		* none at this time
 
-Switch 1 (Player 1)                FC0000         R    D0-D7
-Action                                            R    D5
-Step (Development Only)                           R    D4
-Joystick Left                                     R    D3
-Joystick Right                                    R    D2
-Joystick Down                                     R    D1
-Joystick Up                                       R    D0
+****************************************************************************
 
-Switch 2 (Player 2)                FC2000         R    D0-D7
-Action                                            R    D5
-Step (Development Only)                           R    D4
-Joystick Left                                     R    D3
-Joystick Right                                    R    D2
-Joystick Down                                     R    D1
-Joystick Up                                       R    D0
+	Memory map (TBA)
 
-Self-Test (Active Low)             FC4000         R    D7
-Vertical Blank                                    R    D6
-Audio Busy Flag (Active Low)                      R    D5
-
-Audio Receive Port                 FC6000         R    D8-D15
-
-EEPROM                             FC8000-FC8FFE  R/W  D0-D7
-
-Color RAM                          FCA000-FCAFFE  R/W  D0-D15
-
-Unlock EEPROM                      FD0000         W    xx
-Sound Processor Reset              FD2000         W    xx
-Watchdog reset                     FD4000         W    xx
-IRQ Acknowledge                    FD6000         W    xx
-Audio Send Port                    FD8000         W    D8-D15
-
-Playfield RAM                      FF0000-FF1FFF  R/W  D0-D15
-Alpha RAM                          FF2000-FF2FFF  R/W  D0-D15
-Motion Object RAM                  FF3000-FF3FFF  R/W  D0-D15
-RAM                                FF4000-FFFFFF  R/W
-
-****************************************************************************/
+***************************************************************************/
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( skullxbo_playfieldram_w );
-WRITE_HANDLER( skullxbo_playfieldlatch_w );
-WRITE_HANDLER( skullxbo_hscroll_w );
-WRITE_HANDLER( skullxbo_vscroll_w );
-WRITE_HANDLER( skullxbo_mobmsb_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
+
+WRITE16_HANDLER( skullxbo_playfieldlatch_w );
+WRITE16_HANDLER( skullxbo_hscroll_w );
+WRITE16_HANDLER( skullxbo_vscroll_w );
+WRITE16_HANDLER( skullxbo_mobmsb_w );
 
 int skullxbo_vh_start(void);
 void skullxbo_vh_stop(void);
 void skullxbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void skullxbo_scanline_update(int param);
-
 
 
 
@@ -105,11 +75,11 @@ static void irq_gen(int param)
 
 static void alpha_row_update(int scanline)
 {
-	UINT16 *check = (UINT16 *)&atarigen_alpharam[((scanline / 8) * 64 + 42) * 2];
+	data16_t *check = &atarian_0_base[(scanline / 8) * 64 + 42];
 
 	/* check for interrupts in the alpha ram */
 	/* the interrupt occurs on the HBLANK of the 6th scanline following */
-	if ((UINT8 *)check < &atarigen_alpharam[atarigen_alpharam_size] && (*check & 0x8000))
+	if (check < &atarian_0_base[0x7c0] && (*check & 0x8000))
 		timer_set(cpu_getscanlineperiod() * 6.9, 0, irq_gen);
 
 	/* update the playfield and motion objects */
@@ -133,9 +103,9 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port1_r )
+static READ16_HANDLER( special_port1_r )
 {
-	int temp = input_port_1_r(offset);
+	int temp = readinputport(1);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0040;
 	if (atarigen_get_hblank()) temp ^= 0x0010;
 	return temp;
@@ -149,7 +119,7 @@ static READ_HANDLER( special_port1_r )
  *
  *************************************/
 
-static WRITE_HANDLER( skullxbo_mobwr_w )
+static WRITE16_HANDLER( skullxbo_mobwr_w )
 {
 	logerror("MOBWR[%02X] = %04X\n", offset, data);
 }
@@ -162,25 +132,19 @@ static WRITE_HANDLER( skullxbo_mobwr_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xff2000, 0xff2fff, MRA_BANK1 },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0xff2000, 0xff2fff, MRA16_RAM },
 	{ 0xff5000, 0xff5001, atarigen_sound_r },
-	{ 0xff5800, 0xff5801, input_port_0_r },
+	{ 0xff5800, 0xff5801, input_port_0_word_r },
 	{ 0xff5802, 0xff5803, special_port1_r },
 	{ 0xff6000, 0xff6fff, atarigen_eeprom_r },
-	{ 0xff8000, 0xffbfff, MRA_BANK2 },
-	{ 0xffc000, 0xffcfff, MRA_BANK3 },
-	{ 0xffd000, 0xffdfff, MRA_BANK4 },
-	{ 0xffe000, 0xffffff, MRA_BANK5 },
-	{ -1 }  /* end of table */
-};
+	{ 0xff8000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x08ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x08ffff, MWA16_ROM },
 	{ 0xff0000, 0xff07ff, skullxbo_mobmsb_w },
 	{ 0xff0800, 0xff0bff, atarigen_halt_until_hblank_0_w },
 	{ 0xff0c00, 0xff0fff, atarigen_eeprom_enable_w },
@@ -190,21 +154,22 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xff1c00, 0xff1c7f, skullxbo_playfieldlatch_w },
 	{ 0xff1c80, 0xff1cff, skullxbo_hscroll_w },
 	{ 0xff1d00, 0xff1d7f, atarigen_scanline_int_ack_w },
-	{ 0xff1d80, 0xff1dff, watchdog_reset_w },
+	{ 0xff1d80, 0xff1dff, watchdog_reset16_w },
 	{ 0xff1e00, 0xff1e7f, skullxbo_playfieldlatch_w },
 	{ 0xff1e80, 0xff1eff, skullxbo_hscroll_w },
 	{ 0xff1f00, 0xff1f7f, atarigen_scanline_int_ack_w },
-	{ 0xff1f80, 0xff1fff, watchdog_reset_w },
-	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w, &paletteram },
+	{ 0xff1f80, 0xff1fff, watchdog_reset16_w },
+	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0xff4000, 0xff47ff, skullxbo_vscroll_w },
 	{ 0xff4800, 0xff4fff, skullxbo_mobwr_w },
 	{ 0xff6000, 0xff6fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xff8000, 0xffbfff, skullxbo_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffc000, 0xffcfff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xffd000, 0xffdfff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xffe000, 0xffffff, MWA_BANK5 },
-	{ -1 }  /* end of table */
-};
+	{ 0xff8000, 0xff9fff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0xffa000, 0xffbfff, ataripf_0_upper_lsb_w, &ataripf_0_upper },
+	{ 0xffc000, 0xffcf7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0xffcf80, 0xffcfff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0xffd000, 0xffdfff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0xffe000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -254,38 +219,38 @@ INPUT_PORTS_END
 
 static struct GfxLayout pflayout =
 {
-	16,8,	/* 8*8 chars */
-	20480,	/* 20480 chars */
-	4,		/* 4 bits per pixel */
+	16,8,
+	RGN_FRAC(1,2),
+	4,
 	{ 0, 1, 2, 3 },
-	{ 0x50000*8+0,0x50000*8+0, 0x50000*8+4,0x50000*8+4, 0,0, 4,4,
-	  0x50000*8+8,0x50000*8+8, 0x50000*8+12,0x50000*8+12, 8,8, 12,12 },
+	{ RGN_FRAC(1,2)+0,RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4,RGN_FRAC(1,2)+4, 0,0, 4,4,
+	  RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+12,RGN_FRAC(1,2)+12, 8,8, 12,12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 
 
 static struct GfxLayout anlayout =
 {
-	16,8,	/* 8*8 chars */
-	2048,	/* 2048 chars */
-	2,		/* 2 bits per pixel */
+	16,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 1 },
 	{ 0,0, 2,2, 4,4, 6,6, 8,8, 10,10, 12,12, 14,14 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout molayout =
 {
-	16,8,	/* 8*8 chars */
-	20480,	/* 20480 chars */
-	5,		/* 5 bits per pixel */
-	{ 4*0x50000*8, 3*0x50000*8, 2*0x50000*8, 1*0x50000*8, 0*0x50000*8 },
+	16,8,
+	RGN_FRAC(1,5),
+	5,
+	{ RGN_FRAC(4,5), RGN_FRAC(3,5), RGN_FRAC(2,5), RGN_FRAC(1,5), RGN_FRAC(0,5) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 
 
@@ -294,7 +259,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &molayout, 0x000, 32 },
 	{ REGION_GFX2, 0, &pflayout, 0x200, 16 },
 	{ REGION_GFX3, 0, &anlayout, 0x300, 16 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -317,7 +282,7 @@ static const struct MachineDriver machine_driver_skullxbo =
 		},
 		JSA_II_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -491,33 +456,22 @@ ROM_END
  *
  *************************************/
 
-static void rom_decode(void)
-{
-	int i;
-	for (i = 0x170000; i < 0x190000; i++)
-		memory_region(REGION_GFX1)[i] = 0;
-	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
-		memory_region(REGION_GFX2)[i] ^= 0xff;
-}
-
-
-
 static void init_skullxbo(void)
 {
 	atarigen_eeprom_default = NULL;
-
 	atarijsa_init(1, 2, 1, 0x0080);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	memset(memory_region(REGION_GFX1) + 0x170000, 0, 0x20000);
+	atarigen_invert_region(REGION_GFX2);
 }
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAME( 1989, skullxbo, 0,        skullxbo, skullxbo, skullxbo, ROT0, "Atari Games", "Skull & Crossbones (set 1)" )
 GAME( 1989, skullxb2, skullxbo, skullxbo, skullxbo, skullxbo, ROT0, "Atari Games", "Skull & Crossbones (set 2)" )

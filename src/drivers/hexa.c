@@ -42,18 +42,15 @@ WRITE_HANDLER( hexa_d008_w );
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
 	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xd000, 0xd000, AY8910_control_port_0_w },
@@ -61,8 +58,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd008, 0xd008, hexa_d008_w },
 	{ 0xd010, 0xd010, watchdog_reset_w },	/* or IRQ acknowledge, or both */
 	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
 

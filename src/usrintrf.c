@@ -17,7 +17,6 @@
   #include "mess/mess.h"
 #endif
 
-extern int bitmap_dirty;	/* set by osd_clearbitmap() */
 
 /* Variables for stat menu */
 extern char build_version[];
@@ -426,6 +425,13 @@ struct GfxElement *builduifont(void)
 
 
 
+static void erase_screen(struct osd_bitmap *bitmap)
+{
+	fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
+	schedule_full_refresh();
+}
+
+
 /***************************************************************************
 
   Display text on the screen. If erase is 0, it superimposes the text on
@@ -433,15 +439,11 @@ struct GfxElement *builduifont(void)
 
 ***************************************************************************/
 
-void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt,int erase,int update_screen)
+void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt)
 {
-	if (erase)
-		osd_clearbitmap(bitmap);
-
-
 	switch_ui_orientation();
 
-	osd_mark_dirty (0,0,Machine->uiwidth-1,Machine->uiheight-1,1);	/* ASG 971011 */
+	osd_mark_dirty(0,0,Machine->uiwidth-1,Machine->uiheight-1);
 
 	while (dt->text)
 	{
@@ -506,8 +508,6 @@ void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt,int eras
 	}
 
 	switch_true_orientation();
-
-	if (update_screen) update_video_and_audio();
 }
 
 /* Writes messages on the screen. */
@@ -830,7 +830,7 @@ void ui_displaymenu(struct osd_bitmap *bitmap,const char **items,const char **su
 
 	dt[curr_dt].text = 0;	/* terminate array */
 
-	displaytext(bitmap,dt,0,0);
+	displaytext(bitmap,dt);
 
 	if (selected_long)
 	{
@@ -954,7 +954,7 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 
 	dt[curr_dt].text = 0;	/* terminate array */
 
-	displaytext(bitmap,dt,0,0);
+	displaytext(bitmap,dt);
 }
 
 
@@ -1023,7 +1023,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 		{
 			int lastdrawn=0;
 
-			osd_clearbitmap(bitmap);
+			erase_screen(bitmap);
 
 			/* validity chack after char bank change */
 			if (bank >= 0)
@@ -1267,9 +1267,6 @@ static void showcharset(struct osd_bitmap *bitmap)
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL));
 
-	/* clear the screen before returning */
-	osd_clearbitmap(bitmap);
-
 	if (palette_used_colors)
 	{
 		/* this should force a full refresh by the video driver */
@@ -1280,7 +1277,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 		free(orig_used_colors);
 	}
 
-	return;
+	schedule_full_refresh();
 }
 
 
@@ -1450,7 +1447,7 @@ static int setdipswitches(struct osd_bitmap *bitmap,int selected)
 			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -1474,7 +1471,7 @@ static int setdipswitches(struct osd_bitmap *bitmap,int selected)
 			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -1491,8 +1488,7 @@ static int setdipswitches(struct osd_bitmap *bitmap,int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -1576,7 +1572,7 @@ static int setdefcodesettings(struct osd_bitmap *bitmap,int selected)
 			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 
 			record_first_insert = ret != 0;
 		}
@@ -1610,7 +1606,7 @@ static int setdefcodesettings(struct osd_bitmap *bitmap,int selected)
 			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -1623,7 +1619,7 @@ static int setdefcodesettings(struct osd_bitmap *bitmap,int selected)
 	if (sel == -1 || sel == -2)
 	{
 		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 
 		record_first_insert = 1;
 	}
@@ -1709,7 +1705,7 @@ static int setcodesettings(struct osd_bitmap *bitmap,int selected)
 			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 
 			record_first_insert = ret != 0;
 		}
@@ -1742,7 +1738,7 @@ static int setcodesettings(struct osd_bitmap *bitmap,int selected)
 			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -1754,8 +1750,7 @@ static int setcodesettings(struct osd_bitmap *bitmap,int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 
 		record_first_insert = 1;
 	}
@@ -1798,7 +1793,7 @@ static int calibratejoysticks(struct osd_bitmap *bitmap,int selected)
 	else
 	{
 		msg = osd_joystick_calibrate_next();
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 		if (msg == 0)
 		{
 			calibration_started = 0;
@@ -1818,8 +1813,7 @@ static int calibratejoysticks(struct osd_bitmap *bitmap,int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2003,8 +1997,7 @@ static int settraksettings(struct osd_bitmap *bitmap,int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2077,8 +2070,7 @@ static int mame_stats(struct osd_bitmap *bitmap,int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2119,7 +2111,7 @@ int showcopyright(struct osd_bitmap *bitmap)
 	} while (done < 2);
 
 	setup_selected = 0;////
-	osd_clearbitmap(bitmap);
+	erase_screen(bitmap);
 	update_video_and_audio();
 
 	return 0;
@@ -2285,8 +2277,7 @@ static int displaygameinfo(struct osd_bitmap *bitmap,int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2411,7 +2402,7 @@ int showgamewarnings(struct osd_bitmap *bitmap)
 	}
 
 
-	osd_clearbitmap(bitmap);
+	erase_screen(bitmap);
 
 	/* clear the input memory */
 	while (code_read_async() != CODE_NONE) {};
@@ -2428,7 +2419,7 @@ int showgamewarnings(struct osd_bitmap *bitmap)
 	}
 	#endif
 
-	osd_clearbitmap(bitmap);
+	erase_screen(bitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
 	update_video_and_audio();
 	update_video_and_audio();
@@ -2593,7 +2584,7 @@ static void display_scroll_message (struct osd_bitmap *bitmap, int *scroll, int 
 
 	dt[curr_dt].text = 0;	/* terminate array */
 
-	displaytext(bitmap,dt,0,0);
+	displaytext(bitmap,dt);
 }
 
 
@@ -2683,8 +2674,7 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 
 		/* force buffer to be recreated */
 		if (buf)
@@ -2812,8 +2802,7 @@ int memcard_menu(struct osd_bitmap *bitmap, int selection)
 
 		if (sel == -1 || sel == -2)
 		{
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -3014,8 +3003,7 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_CHEAT:
 			case UI_MEMCARD:
 				sel |= 1 << SEL_BITS;
-				/* tell updatescreen() to clean after us */
-				need_to_clear_bitmap = 1;
+				schedule_full_refresh();
 				break;
 
 			case UI_RESET:
@@ -3038,8 +3026,7 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 
 	if (sel == -1)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -3079,7 +3066,7 @@ static void displayosd(struct osd_bitmap *bitmap,const char *text,int percentage
 	dt[0].x = (Machine->uiwidth - Machine->uifontwidth * strlen(text)) / 2;
 	dt[0].y = (Machine->uiheight - 2*Machine->uifontheight) + 2;
 	dt[1].text = 0; /* terminate array */
-	displaytext(bitmap,dt,0,0);
+	displaytext(bitmap,dt);
 }
 
 
@@ -3366,8 +3353,7 @@ static int on_screen_display(struct osd_bitmap *bitmap, int selected)
 	{
 		sel = -1;
 
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -3404,7 +3390,7 @@ static void displaymessage(struct osd_bitmap *bitmap,const char *text)
 	dt[0].x = (Machine->uiwidth - Machine->uifontwidth * strlen(text)) / 2;
 	dt[0].y = Machine->uiheight - 5*Machine->uifontheight/2;
 	dt[1].text = 0; /* terminate array */
-	displaytext(bitmap,dt,0,0);
+	displaytext(bitmap,dt);
 }
 
 
@@ -3430,7 +3416,6 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 }
 
 
-
 int handle_user_interface(struct osd_bitmap *bitmap)
 {
 	static int show_profiler;
@@ -3451,7 +3436,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			ui_toggle_key = 1;
 			ui_active = !ui_active;
 			ui_display_count = 4 * 60;
-			bitmap_dirty = 1;
+			schedule_full_refresh();
 		 }
 	}
 	else
@@ -3474,7 +3459,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 					y0,0,TRANSPARENCY_NONE,0);
 			}
 			if( --ui_display_count == 0 )
-				bitmap_dirty = 1;
+				schedule_full_refresh();
 		}
 	}
 	else
@@ -3492,7 +3477,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 					y0,0,TRANSPARENCY_NONE,0);
 			}
 			if( --ui_display_count == 0 )
-				bitmap_dirty = 1;
+				schedule_full_refresh();
 		}
 		return 0;
 	}
@@ -3517,8 +3502,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		if (osd_selected != 0)
 		{
 			osd_selected = 0;	/* disable on screen display */
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
@@ -3529,8 +3513,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		if (setup_selected != 0)
 		{
 			setup_selected = 0; /* disable setup menu */
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 	if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
@@ -3607,18 +3590,9 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			profiler_mark(PROFILER_VIDEO);
 			if (osd_skip_this_frame() == 0)
 			{
-				if (need_to_clear_bitmap || bitmap_dirty)
-				{
-					osd_clearbitmap(bitmap);
-					need_to_clear_bitmap = 0;
-					draw_screen(bitmap_dirty);
-					bitmap_dirty = 0;
-				}
-#ifdef MAME_DEBUG
-/* keep calling vh_screenrefresh() while paused so we can stuff */
-/* debug code in there */
-draw_screen(bitmap_dirty);
-#endif
+				/* keep calling vh_screenrefresh() while paused so we can stuff */
+				/* debug code in there */
+				draw_screen();
 			}
 			profiler_mark(PROFILER_END);
 
@@ -3634,8 +3608,7 @@ draw_screen(bitmap_dirty);
 				if (osd_selected != 0)
 				{
 					osd_selected = 0;	/* disable on screen display */
-					/* tell updatescreen() to clean after us */
-					need_to_clear_bitmap = 1;
+					schedule_full_refresh();
 				}
 			}
 			if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
@@ -3646,8 +3619,7 @@ draw_screen(bitmap_dirty);
 				if (setup_selected != 0)
 				{
 					setup_selected = 0; /* disable setup menu */
-					/* tell updatescreen() to clean after us */
-					need_to_clear_bitmap = 1;
+					schedule_full_refresh();
 				}
 			}
 			if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
@@ -3675,8 +3647,7 @@ draw_screen(bitmap_dirty);
 		displaymessage(bitmap, messagetext);
 
 		if (--messagecounter == 0)
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 	}
 
 
@@ -3688,8 +3659,7 @@ draw_screen(bitmap_dirty);
 		else
 		{
 			profiler_stop();
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 #ifdef MAME_DEBUG
@@ -3697,8 +3667,7 @@ draw_screen(bitmap_dirty);
 	{
 		show_total_colors ^= 1;
 		if (show_total_colors == 0)
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 	}
 	if (show_total_colors) showtotalcolors(bitmap);
 #endif

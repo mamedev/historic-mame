@@ -186,8 +186,7 @@ static WRITE_HANDLER( tp84_sh_irqtrigger_w )
 
 
 /* CPU 1 read addresses */
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x2800, 0x2800, input_port_0_r },
 	{ 0x2820, 0x2820, input_port_1_r },
 	{ 0x2840, 0x2840, input_port_2_r },
@@ -196,12 +195,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4000, 0x4fff, MRA_RAM },
 	{ 0x5000, 0x57ff, sharedram_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* CPU 1 write addresses */
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x2000, 0x2000, MWA_RAM }, /*Watch dog?*/
 	{ 0x2800, 0x2800, tp84_col0_w },
 	{ 0x3000, 0x3000, MWA_RAM },
@@ -216,45 +213,37 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5000, 0x57ff, sharedram_w, &sharedram },
 	{ 0x5000, 0x5177, MWA_RAM, &spriteram, &spriteram_size },	/* FAKE (see below) */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* CPU 2 read addresses */
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x0000, MRA_RAM },
 	{ 0x2000, 0x2000, tp84_beam_r }, /* beam position */
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x8000, 0x87ff, sharedram_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* CPU 2 write addresses */
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x0000, MWA_RAM }, /* Watch dog ?*/
 	{ 0x4000, 0x4000, tp84_catchloop_w }, /* IRQ enable */ /* JB 970829 */
 	{ 0x6000, 0x67ff, MWA_RAM },
 //	{ 0x67a0, 0x67ff, MWA_RAM, &spriteram, &spriteram_size },	/* REAL (multiplexed) */
 	{ 0x8000, 0x87ff, sharedram_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, tp84_sh_timer_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa1ff, tp84_filter_w },
@@ -262,8 +251,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xc001, 0xc001, SN76496_0_w },
 	{ 0xc003, 0xc003, SN76496_1_w },
 	{ 0xc004, 0xc004, SN76496_2_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

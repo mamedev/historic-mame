@@ -68,8 +68,7 @@ READ_HANDLER( mpatrol_protection_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, mpatrol_protection_r },
@@ -79,11 +78,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd003, 0xd003, mpatrol_input_port_3_r },  /* DSW1 */
 	{ 0xd004, 0xd004, input_port_4_r },          /* DSW2 */
 	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
@@ -92,21 +89,18 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd000, 0xd000, irem_sound_cmd_w },
 	{ 0xd001, 0xd001, mpatrol_flipscreen_w },	/* + coin counters */
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x10, 0x1f, mpatrol_scroll_w },
 	{ 0x40, 0x40, mpatrol_bg1xpos_w },
 	{ 0x60, 0x60, mpatrol_bg1ypos_w },
 	{ 0x80, 0x80, mpatrol_bg2xpos_w },
 	{ 0xa0, 0xa0, mpatrol_bg2ypos_w },
 	{ 0xc0, 0xc0, mpatrol_bgcontrol_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

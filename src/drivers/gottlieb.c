@@ -349,8 +349,7 @@ static void nvram_handler(void *file,int read_or_write)
 
 
 
-static struct MemoryReadAddress reactor_readmem[] =
-{
+static MEMORY_READ_START( reactor_readmem )
 	{ 0x00000, 0x01fff, MRA_RAM },
 	{ 0x03000, 0x033ff, MRA_RAM },
 	{ 0x04000, 0x04fff, MRA_RAM },
@@ -362,11 +361,9 @@ static struct MemoryReadAddress reactor_readmem[] =
 	{ 0x08000, 0x0ffff, MRA_ROM },
 	/* map the ROM into Fxxxx so we can boot */
 	{ 0xf8000, 0xfffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress reactor_writemem[] =
-{
+static MEMORY_WRITE_START( reactor_writemem )
 	{ 0x00000, 0x01fff, MWA_RAM },
 	{ 0x02000, 0x020ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x03000, 0x033ff, videoram_w, &videoram, &videoram_size },
@@ -378,11 +375,9 @@ static struct MemoryWriteAddress reactor_writemem[] =
 	{ 0x07002, 0x07002, gottlieb_sh_w }, /* sound/speech command */
 	{ 0x07003, 0x07003, reactor_output_w },       /* OUT1 */
 	{ 0x08000, 0x0ffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress gottlieb_readmem[] =
-{
+static MEMORY_READ_START( gottlieb_readmem )
 	{ 0x00000, 0x00fff, MRA_RAM },
 	{ 0x01000, 0x01fff, MRA_RAM },	/* or ROM */
 	{ 0x02000, 0x02fff, MRA_RAM },	/* or ROM */
@@ -405,11 +400,9 @@ static struct MemoryReadAddress gottlieb_readmem[] =
 	{ 0xe0000, 0xeffff, MRA_BANK2 },
 	/* map the ROM into Fxxxx so we can boot */
 	{ 0xf8000, 0xfffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gottlieb_writemem[] =
-{
+static MEMORY_WRITE_START( gottlieb_writemem )
 	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
@@ -433,13 +426,11 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 	{ 0xe5801, 0xe5801, gottlieb_track_reset_w },
 	{ 0xe5802, 0xe5802, gottlieb_sh_w }, /* sound/speech command */
 	{ 0xe5803, 0xe5803, gottlieb_video_outputs_w },       /* OUT1 */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* same as above, different video_outputs plus laser disc control outputs */
-static struct MemoryWriteAddress usvsthem_writemem[] =
-{
+static MEMORY_WRITE_START( usvsthem_writemem )
 	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
@@ -467,12 +458,10 @@ static struct MemoryWriteAddress usvsthem_writemem[] =
 	{ 0xe5803, 0xe5803, usvsthem_video_outputs_w },       /* OUT1 */
 	{ 0xe5805, 0xe5805, gottlieb_laserdisc_command_w },	/* command for the player */
 	{ 0xe5806, 0xe5806, gottlieb_laserdisc_mpx_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* same as above, different IN4 */
-static struct MemoryReadAddress stooges_readmem[] =
-{
+static MEMORY_READ_START( stooges_readmem )
 	{ 0x00000, 0x00fff, MRA_RAM },
 	{ 0x01000, 0x01fff, MRA_RAM },
 	{ 0x02000, 0x02fff, MRA_ROM },
@@ -486,12 +475,10 @@ static struct MemoryReadAddress stooges_readmem[] =
 	{ 0x06000, 0x0ffff, MRA_ROM },
 	/* map the ROM into Fxxxx so we can boot */
 	{ 0xf8000, 0xfffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* same as above, different video_outputs */
-static struct MemoryWriteAddress stooges_writemem[] =
-{
+static MEMORY_WRITE_START( stooges_writemem )
 	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x01000, 0x01fff, MWA_RAM },
 	{ 0x02000, 0x02fff, MWA_ROM },
@@ -505,13 +492,11 @@ static struct MemoryWriteAddress stooges_writemem[] =
 	{ 0x05802, 0x05802, gottlieb_sh_w }, /* sound/speech command */
 	{ 0x05803, 0x05803, stooges_output_w },       /* OUT1 */
 	{ 0x06000, 0x0ffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
-struct MemoryReadAddress gottlieb_sound_readmem[] =
-{
+MEMORY_READ_START( gottlieb_sound_readmem )
 	{ 0x0000, 0x01ff, riot_ram_r },
 	{ 0x0200, 0x03ff, gottlieb_riot_r },
 	{ 0x6000, 0x7fff, MRA_ROM },
@@ -519,11 +504,9 @@ struct MemoryReadAddress gottlieb_sound_readmem[] =
 	{ 0x8000, 0x81ff, riot_ram_r },
 	{ 0x8200, 0x83ff, gottlieb_riot_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress gottlieb_sound_writemem[] =
-{
+MEMORY_WRITE_START( gottlieb_sound_writemem )
 	{ 0x0000, 0x01ff, riot_ram_w, &riot_ram },
 	{ 0x0200, 0x03ff, gottlieb_riot_w },
 	{ 0x1000, 0x1000, DAC_0_data_w },
@@ -537,38 +520,30 @@ struct MemoryWriteAddress gottlieb_sound_writemem[] =
 	{ 0xa000, 0xa000, gottlieb_speech_w },
 	{ 0xb000, 0xb000, gottlieb_speech_clock_DAC_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress stooges_sound_readmem[] =
-{
+static MEMORY_READ_START( stooges_sound_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x8000, 0x8000, soundlatch_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress stooges_sound_writemem[] =
-{
+MEMORY_WRITE_START( stooges_sound_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x4000, 0x4001, DAC_0_data_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress stooges_sound2_readmem[] =
-{
+static MEMORY_READ_START( stooges_sound2_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x6000, 0x6000, stooges_sound_input_r },	/* various signals */
 	{ 0xa800, 0xa800, soundlatch_r },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress stooges_sound2_writemem[] =
-{
+MEMORY_WRITE_START( stooges_sound2_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2000, MWA_NOP },	/* speech chip. The game sends strings */
 									/* of 15 bytes (clocked by 4000). The chip also */
@@ -578,8 +553,7 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 	{ 0xa000, 0xa000, gottlieb_nmi_rate_w },	/* the timer generates NMIs */
 	{ 0xb000, 0xb000, gottlieb_cause_dac_nmi_w },
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

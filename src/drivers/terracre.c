@@ -39,65 +39,24 @@ VRAM(Sprites)
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 
-unsigned char* terrac_ram;
 
 void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 //void terracre_vh_screenrefresh(struct osd_bitmap *bitmap);
 int terrac_vh_start(void);
 void terrac_vh_stop(void);
-WRITE_HANDLER( terrac_videoram2_w );
-READ_HANDLER( terrac_videoram2_r );
+WRITE16_HANDLER( terrac_videoram2_w );
+READ16_HANDLER( terrac_videoram2_r );
 
-extern unsigned char *terrac_videoram;
-extern size_t terrac_videoram_size;
-extern unsigned char terrac_scrolly[];
+extern data16_t *terrac_videoram2;
+extern size_t terrac_videoram2_size;
+extern data16_t *terrac_scrolly;
 
 
-WRITE_HANDLER( terracre_misc_w )
+WRITE16_HANDLER( terracre_soundcmd_w )
 {
-	switch (offset)
-	{
-//		case 0: /* ??? */
-//			break;
-		case 2: /* Scroll Y */
-			COMBINE_WORD_MEM(terrac_scrolly,data);
-			return;
-			break;
-//		case 4: /* ??? */
-//			break;
-//		case 0xa: /* ??? */
-//			break;
-		case 0xc: /* sound command */
-			soundlatch_w(offset,((data & 0x7f) << 1) | 1);
-			return;
-			break;
-//		case 0xe: /* ??? */
-//			break;
-	}
-
-	logerror("OUTPUT [%x] <- %08x\n", offset,data );
+	soundlatch_w(0,((data & 0x7f) << 1) | 1);
 }
-
-static READ_HANDLER( terracre_ports_r )
-{
-	switch (offset)
-	{
-		case 0: /* Player controls */
-			return readinputport(0);
-
-		case 2: /* Dipswitch 0xf000*/
-			return readinputport(1);
-
-		case 4: /* Start buttons & Dipswitch */
-			return readinputport(2) << 8;
-
-		case 6: /* Dipswitch???? */
-			return (readinputport(4) << 8) | readinputport(3);
-	}
-	return 0xffff;
-}
-
 
 static READ_HANDLER( soundlatch_clear_r )
 {
@@ -107,73 +66,63 @@ static READ_HANDLER( soundlatch_clear_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x020000, 0x0201ff, MRA_BANK1 },
-	{ 0x020200, 0x021fff, MRA_BANK2 },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x020000, 0x0201ff, MRA16_RAM },
+	{ 0x020200, 0x021fff, MRA16_RAM },
 	{ 0x022000, 0x022fff, terrac_videoram2_r },
-	{ 0x023000, 0x023fff, MRA_BANK3 },
-	{ 0x024000, 0x024007, terracre_ports_r },
-	{ 0x028000, 0x0287ff, MRA_BANK4 },
-	{ -1 }	/* end of table */
-};
+	{ 0x023000, 0x023fff, MRA16_RAM },
+	{ 0x024000, 0x024001, input_port_0_word_r },
+	{ 0x024002, 0x024003, input_port_1_word_r },
+	{ 0x024004, 0x024005, input_port_2_word_r },
+	{ 0x024006, 0x024007, input_port_3_word_r },
+	{ 0x028000, 0x0287ff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0x020000, 0x0201ff, MWA_BANK1, &spriteram, &spriteram_size },
-	{ 0x020200, 0x021fff, MWA_BANK2, &terrac_ram },
-	{ 0x022000, 0x022fff, terrac_videoram2_w, &terrac_videoram, &terrac_videoram_size },
-	{ 0x023000, 0x023fff, MWA_BANK3 },
-	{ 0x026000, 0x02600f, terracre_misc_w },
-	{ 0x028000, 0x0287ff, MWA_BANK4, &videoram, &videoram_size },
-	{ -1 }	/* end of table */
-};
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
+	{ 0x020000, 0x0201ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x020200, 0x021fff, MWA16_RAM },
+	{ 0x022000, 0x022fff, terrac_videoram2_w, &terrac_videoram2, &terrac_videoram2_size },
+	{ 0x023000, 0x023fff, MWA16_RAM },
+	{ 0x026002, 0x026003, MWA16_RAM, &terrac_scrolly },
+	{ 0x02600c, 0x02600d, terracre_soundcmd_w },
+	{ 0x028000, 0x0287ff, MWA16_RAM, &videoram16, &videoram_size },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x04, 0x04, soundlatch_clear_r },
 	{ 0x06, 0x06, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport_3526[] =
-{
+static PORT_WRITE_START( sound_writeport_3526 )
 	{ 0x00, 0x00, YM3526_control_port_0_w },
 	{ 0x01, 0x01, YM3526_write_port_0_w },
 	{ 0x02, 0x02, DAC_0_signed_data_w },
 	{ 0x03, 0x03, DAC_1_signed_data_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport_2203[] =
-{
+static PORT_WRITE_START( sound_writeport_2203 )
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
 	{ 0x02, 0x02, DAC_0_signed_data_w },
 	{ 0x03, 0x03, DAC_1_signed_data_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( terracre )
-	PORT_START	/* Player 1 controls */
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -183,7 +132,7 @@ INPUT_PORTS_START( terracre )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Player 2 controls */
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL  )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
@@ -193,63 +142,61 @@ INPUT_PORTS_START( terracre )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Coin, Start, Test, Dipswitch */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_SERVICE( 0x2000, IP_ACTIVE_LOW )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Dipswitch */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20000 60000" )
-	PORT_DIPSETTING(    0x08, "30000 70000" )
-	PORT_DIPSETTING(    0x04, "40000 80000" )
-	PORT_DIPSETTING(    0x00, "50000 90000" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* Dipswitch */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_DIPSETTING(      0x0002, "4" )
+	PORT_DIPSETTING(      0x0001, "5" )
+	PORT_DIPSETTING(      0x0000, "6" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x000c, "20000 60000" )
+	PORT_DIPSETTING(      0x0008, "30000 70000" )
+	PORT_DIPSETTING(      0x0004, "40000 80000" )
+	PORT_DIPSETTING(      0x0000, "50000 90000" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x1000, "Easy" )
+	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BITX(    0x4000, 0x4000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -307,7 +254,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	4000000,	/* 4 MHz ? (hand tuned) */
-	{ 255 }		/* (not supported) */
+	{ 50 }		/* volume */
 };
 
 static struct YM2203interface ym2203_interface =

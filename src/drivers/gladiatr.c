@@ -279,19 +279,16 @@ static void nvram_handler(void *file,int read_or_write)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x7fff, MRA_BANK1},
 	{ 0x8000, 0xbfff, MRA_BANK2},
 	{ 0xc000, 0xcbff, MRA_RAM },
 	{ 0xcc00, 0xcfff, gladiatr_video_registers_r },
 	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcbff, MWA_RAM, &spriteram },
 	{ 0xcc00, 0xcfff, gladiatr_video_registers_w },
@@ -304,69 +301,53 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe800, 0xefff, MWA_RAM, &gladiator_text },
 	{ 0xf000, 0xf3ff, MWA_RAM, &nvram, &nvram_size }, /* battery backed RAM */
 	{ 0xf400, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x2000, 0x2fff, glad_cpu_sound_command_r },
 	{ 0x4000, 0x7fff, MRA_BANK3 }, /* BANKED ROM */
 	{ 0x8000, 0xbfff, MRA_BANK4 }, /* BANKED ROM */
 	{ 0xc000, 0xffff, MRA_BANK5 }, /* BANKED ROM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x1000, 0x1fff, glad_adpcm_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x02, 0x02, gladiatr_bankswitch_r },
 	{ 0x9e, 0x9f, TAITO8741_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x01, 0x01, gladiatr_spritebank_w},
 	{ 0x02, 0x02, gladiatr_bankswitch_w},
 	{ 0x04, 0x04, gladiatr_irq_patch_w}, /* !!! patch to 2nd CPU IRQ !!! */
 	{ 0x9e, 0x9f, TAITO8741_0_w },
 	{ 0xbf, 0xbf, IORP_NOP },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort readport_cpu2[] =
-{
+static PORT_READ_START( readport_cpu2 )
 	{ 0x00, 0x00, YM2203_status_port_0_r },
 	{ 0x01, 0x01, YM2203_read_port_0_r },
 	{ 0x20, 0x21, TAITO8741_1_r },
 	{ 0x40, 0x40, IOWP_NOP },
 	{ 0x60, 0x61, TAITO8741_2_r },
 	{ 0x80, 0x81, TAITO8741_3_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_cpu2[] =
-{
+static PORT_WRITE_START( writeport_cpu2 )
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
 	{ 0x20, 0x21, TAITO8741_1_w },
@@ -374,8 +355,7 @@ static struct IOWritePort writeport_cpu2[] =
 	{ 0x80, 0x81, TAITO8741_3_w },
 /*	{ 0x40, 0x40, glad_sh_irq_clr }, */
 	{ 0xe0, 0xe0, glad_cpu_sound_command_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( gladiatr )
 	PORT_START		/* DSW1 (8741-0 parallel port)*/

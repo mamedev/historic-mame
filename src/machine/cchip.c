@@ -54,7 +54,7 @@ void cchip1_init_machine(void)
 	cchip1_bank = 0;
 }
 
-READ_HANDLER( cchip1_r )
+READ16_HANDLER( cchip1_word_r )
 {
 	int ret = 0;
 
@@ -63,7 +63,7 @@ READ_HANDLER( cchip1_r )
 		case 0x000:
 			/* Player 1 */
 			if (cchip1_bank == 1)
-				ret = cchip1_code[offset/2];
+				ret = cchip1_code[offset];
 			else
 				if (cchip[0])
 				{
@@ -73,10 +73,10 @@ READ_HANDLER( cchip1_r )
 				else
 					ret = readinputport (4);
 			break;
-		case 0x002:
+		case 0x001:
 			/* Player 2 */
 			if (cchip1_bank == 1)
-				ret = cchip1_code[offset/2];
+				ret = cchip1_code[offset];
 			else
 				if (cchip[1])
 				{
@@ -86,11 +86,11 @@ READ_HANDLER( cchip1_r )
 				else
 					ret = readinputport (5);
 			break;
-		case 0x004:
+		case 0x002:
 			/* Coins */
 			logerror("cchip1_r (coin) pc: %06x, offset: %04x\n", cpu_get_pc(), offset);
 			if (cchip1_bank == 1)
-				ret = cchip1_code[offset/2];
+				ret = cchip1_code[offset];
 			else
 				if (cchip[2])
 				{
@@ -100,16 +100,16 @@ READ_HANDLER( cchip1_r )
 				else
 					ret = readinputport (6);
 			break;
-		case 0x802:
+		case 0x401:
 			/* C-Chip ID */
 			ret =  0x01;
 			break;
-		case 0xc00:
+		case 0x600:
 			ret =  cchip1_bank;
 			break;
 		default:
-			if (offset < 0x1f0 && cchip1_bank == 1)
-				ret = cchip1_code[offset/2];
+			if (offset < 0x1f0/2 && cchip1_bank == 1)
+				ret = cchip1_code[offset];
 			else
 			{
 				logerror("cchip1_r offset: %04x\n", offset);
@@ -121,9 +121,11 @@ READ_HANDLER( cchip1_r )
 	return ret;
 }
 
-WRITE_HANDLER( cchip1_w )
+WRITE16_HANDLER( cchip1_word_w )
 {
 	logerror("cchip1_w pc: %06x, %04x:%02x\n", cpu_get_pc(), offset, data);
+
+
 	switch (offset)
 	{
 		case 0x0000:
@@ -132,18 +134,18 @@ WRITE_HANDLER( cchip1_w )
 			else cchip[0] = data;
 			break;
 
-		case 0x0002:
+		case 0x0001:
 			if ((data & 0xff) == 0x46)
 				cchip[1] = 0x57;
 			else cchip[1] = data;
 			break;
 
-		case 0x0004:
+		case 0x0002:
 			if ((data & 0xff) == 0x34)
 				cchip[2] = 0x4b;
 			else cchip[2] = data;
 			break;
-		case 0xc00:
+		case 0x600:
 			cchip1_bank = data & 0x07;
 			break;
 		default:
@@ -153,15 +155,15 @@ WRITE_HANDLER( cchip1_w )
 
 
 /* Mega Blast */
-unsigned char *cchip_ram;
+data16_t *cchip_ram;
 
-READ_HANDLER( cchip2_r )
+READ16_HANDLER( cchip2_word_r )
 {
-    int ret = 0;
+    data16_t ret = 0;
 
     switch (offset)
     {
-        case 0x802:
+        case 0x401:
             /* C-Chip ID */
             ret = 0x01;
             break;
@@ -174,8 +176,8 @@ READ_HANDLER( cchip2_r )
     return ret;
 }
 
-WRITE_HANDLER( cchip2_w )
+WRITE16_HANDLER( cchip2_word_w )
 {
     logerror("cchip2_w pc: %06x, %04x:%02x\n", cpu_get_pc(), offset, data);
-    cchip_ram[offset] = data;
+    COMBINE_DATA(&cchip_ram[offset]);
 }

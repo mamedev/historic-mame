@@ -122,15 +122,14 @@ static READ_HANDLER( sound_ack_r ){
 	return 0xff;
 }
 
-static struct MemoryReadAddress readmem_sound[] = {
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4000, sound_command_r },
 	{ 0xa000, 0xa000, sound_ack_r },
 	{ 0xe000, 0xe7ff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] = {
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x3fff, MWA_ROM, &namco_wavedata },	/* silly hack - this shouldn't be here */
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
 	{ 0x8001, 0x8001, AY8910_write_port_0_w },
@@ -138,8 +137,7 @@ static struct MemoryWriteAddress writemem_sound[] = {
 	{ 0x8008, 0x8008, AY8910_control_port_1_w },
 	{ 0x8009, 0x8009, AY8910_write_port_1_w },
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 /* this input port has one of its bits mapped to sound CPU status */
 static READ_HANDLER( marvins_port_0_r ){
@@ -242,8 +240,7 @@ static READ_HANDLER( CPUB_int_trigger_r )
 **
 ***************************************************************************/
 
-static struct MemoryReadAddress readmem_CPUA[] =
-{
+static MEMORY_READ_START( readmem_CPUA )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8000, marvins_port_0_r },	/* coin input, start, sound CPU status */
 	{ 0x8100, 0x8100, input_port_1_r },		/* player #1 controls */
@@ -253,11 +250,9 @@ static struct MemoryReadAddress readmem_CPUA[] =
 	{ 0x8700, 0x8700, CPUB_int_trigger_r },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_CPUA[] =
-{
+static MEMORY_WRITE_START( writemem_CPUA )
 	{ 0x6000, 0x6000, marvins_palette_bank_w }, // Marvin's Maze only
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8300, 0x8300, sound_command_w },
@@ -271,43 +266,35 @@ static struct MemoryWriteAddress writemem_CPUA[] =
 	{ 0xe800, 0xefff, MWA_RAM },
 	{ 0xf000, 0xf3ff, marvins_text_ram_w },
 	{ 0xf400, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress marvins_readmem_CPUB[] =
-{
+static MEMORY_READ_START( marvins_readmem_CPUB )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8700, 0x8700, CPUA_int_trigger_r },
 	{ 0xc000, 0xcfff, marvins_spriteram_r },
 	{ 0xd000, 0xffff, marvins_background_ram_r },
 	{ 0xe000, 0xffff, marvins_foreground_ram_r },
 	{ 0xf000, 0xffff, marvins_text_ram_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress marvins_writemem_CPUB[] =
-{
+static MEMORY_WRITE_START( marvins_writemem_CPUB )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8700, 0x8700, CPUB_int_enable_w },
 	{ 0xc000, 0xcfff, marvins_spriteram_w },
 	{ 0xd000, 0xffff, marvins_background_ram_w },
 	{ 0xe000, 0xffff, marvins_foreground_ram_w },
 	{ 0xf000, 0xffff, marvins_text_ram_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress madcrash_readmem_CPUB[] =
-{
+static MEMORY_READ_START( madcrash_readmem_CPUB )
 	{ 0x0000, 0x9fff, MRA_ROM },
 	{ 0xc000, 0xcfff, marvins_foreground_ram_r },
 	{ 0xd000, 0xdfff, marvins_text_ram_r },
 	{ 0xe000, 0xefff, marvins_spriteram_r },
 	{ 0xf000, 0xffff, marvins_background_ram_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress madcrash_writemem_CPUB[] =
-{
+static MEMORY_WRITE_START( madcrash_writemem_CPUB )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8700, 0x8700, CPUB_int_enable_w }, /* Vangaurd II */
 	{ 0x8000, 0x9fff, MWA_ROM }, /* extra ROM for Mad Crasher */
@@ -316,8 +303,7 @@ static struct MemoryWriteAddress madcrash_writemem_CPUB[] =
 	{ 0xd000, 0xdfff, marvins_text_ram_w },
 	{ 0xe000, 0xefff, marvins_spriteram_w },
 	{ 0xf000, 0xffff, marvins_background_ram_w },
-	{ -1 }
-};
+MEMORY_END
 
 
 

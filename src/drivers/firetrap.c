@@ -157,8 +157,13 @@ static WRITE_HANDLER( firetrap_adpcm_data_w )
 	msm5205next = data;
 }
 
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xe97f, MRA_RAM },
@@ -169,11 +174,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf014, 0xf014, input_port_4_r },
 	{ 0xf016, 0xf016, firetrap_8751_r },
 	{ 0xf800, 0xf8ff, MRA_ROM },	/* extra ROM in the bootleg with unprotection code */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd7ff, firetrap_bg1videoram_w, &firetrap_bg1videoram },
@@ -191,20 +194,16 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf00c, 0xf00d, firetrap_bg2_scrollx_w },
 	{ 0xf00e, 0xf00f, firetrap_bg2_scrolly_w },
 	{ 0xf800, 0xf8ff, MWA_ROM },	/* extra ROM in the bootleg with unprotection code */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x3400, 0x3400, soundlatch_r },
 	{ 0x4000, 0x7fff, MRA_BANK2 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x1000, 0x1000, YM3526_control_port_0_w },
 	{ 0x1001, 0x1001, YM3526_write_port_0_w },
@@ -212,8 +211,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x2400, 0x2400, firetrap_sound_2400_w },
 	{ 0x2800, 0x2800, firetrap_sound_bankselect_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

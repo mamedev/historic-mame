@@ -49,8 +49,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x8000, 0x8fff, MRA_NOP },
@@ -60,11 +59,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9003, 0x9003, input_port_4_r },	/* DSW1 */
 	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
 	{ 0xe000, 0xe000, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x73ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -73,8 +70,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xcfff, SN76496_1_w },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

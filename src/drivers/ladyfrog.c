@@ -21,45 +21,33 @@ void ladyfrog_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x3fffff, MRA_ROM },
-	{ 0xffc000, 0xffffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x3fffff, MRA16_ROM },
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x3fffff, MWA_ROM },
-	{ 0xffc000, 0xffffff, MWA_BANK1 },
-	{ -1 }  /* end of table */
-};
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x3fffff, MWA16_ROM },
+	{ 0xffc000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0x7000, 0x7fff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x7000, 0x7fff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
-	{ -1 }  /* end of table */
-};
+static PORT_READ_START( sound_readport )
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 //	{ 0x12, 0x12, },	ym2151?
 //	{ 0x13, 0x13, },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

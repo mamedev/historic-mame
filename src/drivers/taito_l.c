@@ -41,6 +41,7 @@ TODO:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/taitosnd.h"
 
 void taitol_eof_callback(void);
 int taitol_vh_start(void);
@@ -64,14 +65,6 @@ READ_HANDLER( taitol_control_r );
 WRITE_HANDLER( horshoes_bankg_w );
 WRITE_HANDLER( taitol_bankc_w );
 READ_HANDLER( taitol_bankc_r );
-
-
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
-READ_HANDLER( rastan_sound_comm_r );
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
 
 
 
@@ -622,114 +615,93 @@ static READ_HANDLER( horshoes_trackx_hi_r )
 
 
 
-static struct MemoryReadAddress fhawk_readmem[] =
-{
+static MEMORY_READ_START( fhawk_readmem )
 	COMMON_BANKS_READ,
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xbfff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fhawk_writemem[] =
-{
+static MEMORY_WRITE_START( fhawk_writemem )
 	COMMON_BANKS_WRITE,
 	{ 0x8000, 0x9fff, MWA_RAM, &shared_ram },
 	{ 0xa000, 0xbfff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress fhawk_2_readmem[] =
-{
+static MEMORY_READ_START( fhawk_2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK6 },
 	{ 0xc800, 0xc800, MRA_NOP },
-	{ 0xc801, 0xc801, rastan_sound_comm_r },
+	{ 0xc801, 0xc801, taitosound_comm_r },
 	{ 0xe000, 0xffff, shared_r },
 	{ 0xd000, 0xd000, input_port_0_r },
 	{ 0xd001, 0xd001, input_port_1_r },
 	{ 0xd002, 0xd002, input_port_2_r },
 	{ 0xd003, 0xd003, input_port_3_r },
 	{ 0xd007, 0xd007, input_port_4_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fhawk_2_writemem[] =
-{
+static MEMORY_WRITE_START( fhawk_2_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc000, rombank2switch_w },
-	{ 0xc800, 0xc800, rastan_sound_port_w },
-	{ 0xc801, 0xc801, rastan_sound_comm_w },
+	{ 0xc800, 0xc800, taitosound_port_w },
+	{ 0xc801, 0xc801, taitosound_comm_w },
 	{ 0xd000, 0xd000, MWA_NOP },	// Direct copy of input port 0
 	{ 0xd004, 0xd004, control2_w },
 	{ 0xd005, 0xd006, MWA_NOP },	// Always 0
 	{ 0xe000, 0xffff, shared_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress fhawk_3_readmem[] =
-{
+static MEMORY_READ_START( fhawk_3_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK7 },
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xe000, 0xe000, MRA_NOP },
-	{ 0xe001, 0xe001, rastan_a001_r },
+	{ 0xe001, 0xe001, taitosound_slave_comm_r },
 	{ 0xf000, 0xf000, YM2203_status_port_0_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fhawk_3_writemem[] =
-{
+static MEMORY_WRITE_START( fhawk_3_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xe000, 0xe000, rastan_a000_w },
-	{ 0xe001, 0xe001, rastan_a001_w },
+	{ 0xe000, 0xe000, taitosound_slave_port_w },
+	{ 0xe001, 0xe001, taitosound_slave_comm_w },
 	{ 0xf000, 0xf000, YM2203_control_port_0_w },
 	{ 0xf001, 0xf001, YM2203_write_port_0_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress raimais_readmem[] =
-{
+static MEMORY_READ_START( raimais_readmem )
 	COMMON_BANKS_READ,
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, mux_r },
 	{ 0x8801, 0x8801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
 	{ 0x8c00, 0x8c00, MRA_NOP },
-	{ 0x8c01, 0x8c01, rastan_sound_comm_r },
+	{ 0x8c01, 0x8c01, taitosound_comm_r },
 	{ 0xa000, 0xbfff, MRA_RAM },
-	{ -1 }
-};
-static struct MemoryWriteAddress raimais_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( raimais_writemem )
 	COMMON_BANKS_WRITE,
 	{ 0x8000, 0x87ff, MWA_RAM, &shared_ram },
 	{ 0x8800, 0x8800, mux_w },
 	{ 0x8801, 0x8801, mux_ctrl_w },
-	{ 0x8c00, 0x8c00, rastan_sound_port_w },
-	{ 0x8c01, 0x8c01, rastan_sound_comm_w },
+	{ 0x8c00, 0x8c00, taitosound_port_w },
+	{ 0x8c01, 0x8c01, taitosound_comm_w },
 	{ 0xa000, 0xbfff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress raimais_2_readmem[] =
-{
+static MEMORY_READ_START( raimais_2_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xe7ff, shared_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress raimais_2_writemem[] =
-{
+static MEMORY_WRITE_START( raimais_2_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe7ff, shared_w },
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress raimais_3_readmem[] =
-{
+static MEMORY_READ_START( raimais_3_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK7 },
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -737,9 +709,8 @@ static struct MemoryReadAddress raimais_3_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, rastan_a001_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xe201, 0xe201, taitosound_slave_comm_r },
+MEMORY_END
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
@@ -749,44 +720,37 @@ static WRITE_HANDLER( sound_bankswitch_w )
 	cpu_setbank (7, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
-static struct MemoryWriteAddress raimais_3_writemem[] =
-{
+static MEMORY_WRITE_START( raimais_3_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, rastan_a000_w },
-	{ 0xe201, 0xe201, rastan_a001_w },
+	{ 0xe200, 0xe200, taitosound_slave_port_w },
+	{ 0xe201, 0xe201, taitosound_slave_comm_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xe600, 0xe600, MWA_NOP }, /* ? */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
 	{ 0xf200, 0xf200, sound_bankswitch_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress champwr_readmem[] =
-{
+static MEMORY_READ_START( champwr_readmem )
 	COMMON_BANKS_READ,
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xbfff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress champwr_writemem[] =
-{
+static MEMORY_WRITE_START( champwr_writemem )
 	COMMON_BANKS_WRITE,
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xbfff, MWA_RAM, &shared_ram },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress champwr_2_readmem[] =
-{
+static MEMORY_READ_START( champwr_2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK6 },
 	{ 0xc000, 0xdfff, shared_r },
@@ -797,69 +761,57 @@ static struct MemoryReadAddress champwr_2_readmem[] =
 	{ 0xe007, 0xe007, input_port_4_r },
 	{ 0xe008, 0xe00f, MRA_NOP },
 	{ 0xe800, 0xe800, MRA_NOP },
-	{ 0xe801, 0xe801, rastan_sound_comm_r },
+	{ 0xe801, 0xe801, taitosound_comm_r },
 	{ 0xf000, 0xf000, rombank2switch_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress champwr_2_writemem[] =
-{
+static MEMORY_WRITE_START( champwr_2_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdfff, shared_w },
 	{ 0xe000, 0xe000, MWA_NOP },	// Watchdog
 	{ 0xe004, 0xe004, control2_w },
-	{ 0xe800, 0xe800, rastan_sound_port_w },
-	{ 0xe801, 0xe801, rastan_sound_comm_w },
+	{ 0xe800, 0xe800, taitosound_port_w },
+	{ 0xe801, 0xe801, taitosound_comm_w },
 	{ 0xf000, 0xf000, rombank2switch_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress champwr_3_readmem[] =
-{
+static MEMORY_READ_START( champwr_3_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK7 },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
 	{ 0xa000, 0xa000, MRA_NOP },
-	{ 0xa001, 0xa001, rastan_a001_r },
-	{ -1 }
-};
+	{ 0xa001, 0xa001, taitosound_slave_comm_r },
+MEMORY_END
 
-static struct MemoryWriteAddress champwr_3_writemem[] =
-{
+static MEMORY_WRITE_START( champwr_3_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
-	{ -1 }
-};
+	{ 0xa000, 0xa000, taitosound_slave_port_w },
+	{ 0xa001, 0xa001, taitosound_slave_comm_w },
+MEMORY_END
 
 
 
-static struct MemoryReadAddress kurikint_readmem[] =
-{
+static MEMORY_READ_START( kurikint_readmem )
 	COMMON_BANKS_READ,
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xa7ff, MRA_RAM },
 	{ 0xa800, 0xa800, mux_r },
 	{ 0xa801, 0xa801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kurikint_writemem[] =
-{
+static MEMORY_WRITE_START( kurikint_writemem )
 	COMMON_BANKS_WRITE,
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xa7ff, MWA_RAM, &shared_ram },
 	{ 0xa800, 0xa800, mux_w },
 	{ 0xa801, 0xa801, mux_ctrl_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress kurikint_2_readmem[] =
-{
+static MEMORY_READ_START( kurikint_2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xe7ff, shared_r },
@@ -871,11 +823,9 @@ static struct MemoryReadAddress kurikint_2_readmem[] =
 	{ 0xd003, 0xd003, input_port_3_r },
 	{ 0xd007, 0xd007, input_port_4_r },
 #endif
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kurikint_2_writemem[] =
-{
+static MEMORY_WRITE_START( kurikint_2_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe7ff, shared_w },
@@ -884,74 +834,60 @@ static struct MemoryWriteAddress kurikint_2_writemem[] =
 #if 0
 	{ 0xc000, 0xc000, rombank2switch_w },
 #endif
-	{ -1 }
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress puzznic_readmem[] =
-{
+static MEMORY_READ_START( puzznic_readmem )
 	COMMON_BANKS_READ,
 	COMMON_SINGLE_READ,
 	{ 0xa800, 0xa800, MRA_NOP },	// Watchdog
 	{ 0xb000, 0xb7ff, MRA_RAM },	// Wrong, used to overcome protection
 	{ 0xb800, 0xb800, mcu_data_r },
 	{ 0xb801, 0xb801, mcu_control_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress puzznic_writemem[] =
-{
+static MEMORY_WRITE_START( puzznic_writemem )
 	COMMON_BANKS_WRITE,
 	COMMON_SINGLE_WRITE,
 	{ 0xb000, 0xb7ff, MWA_RAM },	// Wrong, used to overcome protection
 	{ 0xb800, 0xb800, mcu_data_w },
 	{ 0xb801, 0xb801, mcu_control_w },
 	{ 0xbc00, 0xbc00, MWA_NOP },	// Control register, function unknown
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress plotting_readmem[] =
-{
+static MEMORY_READ_START( plotting_readmem )
 	COMMON_BANKS_READ,
 	COMMON_SINGLE_READ,
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress plotting_writemem[] =
-{
+static MEMORY_WRITE_START( plotting_writemem )
 	COMMON_BANKS_WRITE,
 	COMMON_SINGLE_WRITE,
 	{ 0xa800, 0xa800, MWA_NOP },	// Watchdog or interrupt ack
 	{ 0xb800, 0xb800, MWA_NOP },	// Control register, function unknown
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress palamed_readmem[] =
-{
+static MEMORY_READ_START( palamed_readmem )
 	COMMON_BANKS_READ,
 	COMMON_SINGLE_READ,
 	{ 0xa800, 0xa800, input_port_2_r },
 	{ 0xa801, 0xa801, input_port_3_r },
 	{ 0xa802, 0xa802, input_port_4_r },
 	{ 0xb001, 0xb001, MRA_NOP },	// Watchdog or interrupt ack
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress palamed_writemem[] =
-{
+static MEMORY_WRITE_START( palamed_writemem )
 	COMMON_BANKS_WRITE,
 	COMMON_SINGLE_WRITE,
 	{ 0xa803, 0xa803, MWA_NOP },	// Control register, function unknown
 	{ 0xb000, 0xb000, MWA_NOP },	// Control register, function unknown (copy of 8822)
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress cachat_readmem[] =
-{
+static MEMORY_READ_START( cachat_readmem )
 	COMMON_BANKS_READ,
 	COMMON_SINGLE_READ,
 	{ 0xa800, 0xa800, input_port_2_r },
@@ -959,22 +895,18 @@ static struct MemoryReadAddress cachat_readmem[] =
 	{ 0xa802, 0xa802, input_port_4_r },
 	{ 0xb001, 0xb001, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
 	{ 0xfff8, 0xfff8, rombankswitch_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cachat_writemem[] =
-{
+static MEMORY_WRITE_START( cachat_writemem )
 	COMMON_BANKS_WRITE,
 	COMMON_SINGLE_WRITE,
 	{ 0xa803, 0xa803, MWA_NOP },	// Control register, function unknown
 	{ 0xb000, 0xb000, MWA_NOP },	// Control register, function unknown
 	{ 0xfff8, 0xfff8, rombankswitch_w },
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress horshoes_readmem[] =
-{
+static MEMORY_READ_START( horshoes_readmem )
 	COMMON_BANKS_READ,
 	COMMON_SINGLE_READ,
 	{ 0xa800, 0xa800, horshoes_tracky_lo_r },
@@ -984,17 +916,14 @@ static struct MemoryReadAddress horshoes_readmem[] =
 	{ 0xa808, 0xa808, horshoes_trackx_lo_r },
 	{ 0xa80c, 0xa80c, horshoes_trackx_hi_r },
 	{ 0xb801, 0xb801, MRA_NOP },	// Watchdog or interrupt ack
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress horshoes_writemem[] =
-{
+static MEMORY_WRITE_START( horshoes_writemem )
 	COMMON_BANKS_WRITE,
 	COMMON_SINGLE_WRITE,
 	{ 0xb802, 0xb802, horshoes_bankg_w },
 	{ 0xbc00, 0xbc00, MWA_NOP },
-	{ -1 }
-};
+MEMORY_END
 
 
 

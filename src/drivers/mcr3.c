@@ -416,28 +416,23 @@ static void spyhunt_nvram_handler(void *file, int read_or_write)
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe9ff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xe9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
 	{ 0xf800, 0xf8ff, mcr3_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
@@ -446,20 +441,17 @@ static struct IOReadPort readport[] =
 	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
-	{ -1 }
-};
+PORT_END
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, mcr_control_port_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0x84, 0x86, mcr_scroll_value_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
 	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
-	{ -1 }
-};
+PORT_END
 
 
 
@@ -469,15 +461,13 @@ static struct IOWritePort writeport[] =
  *
  *************************************/
 
-static struct MemoryWriteAddress mcrmono_writemem[] =
-{
+static MEMORY_WRITE_START( mcrmono_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xec00, 0xecff, mcr3_paletteram_w, &paletteram },
 	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -487,25 +477,21 @@ static struct MemoryWriteAddress mcrmono_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress spyhunt_readmem[] =
-{
+static MEMORY_READ_START( spyhunt_readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xebff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress spyhunt_writemem[] =
-{
+static MEMORY_WRITE_START( spyhunt_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe800, 0xebff, MWA_RAM, &spyhunt_alpharam, &spyhunt_alpharam_size },
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xfa00, 0xfaff, mcr3_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

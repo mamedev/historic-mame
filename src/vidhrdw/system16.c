@@ -465,9 +465,9 @@ int sys16_vh_start( void ){
 		sprite_list->max_priority = 3;
 		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
 
-		if(sys16_bg1_trans) background->transparent_pen = 0;
-		foreground->transparent_pen = 0;
-		text_layer->transparent_pen = 0;
+		if(sys16_bg1_trans) tilemap_set_transparent_pen(background,0);
+		tilemap_set_transparent_pen(foreground,0);
+		tilemap_set_transparent_pen(text_layer,0);
 
 		sys16_tile_bank0 = 0;
 		sys16_tile_bank1 = 1;
@@ -586,7 +586,7 @@ int sys18_vh_start( void ){
 		ret = sys16_vh_start();
 		if(ret) return 1;
 
-		foreground2->transparent_pen = 0;
+		tilemap_set_transparent_pen(foreground2,0);
 
 		if(sys18_splittab_fg_x)
 		{
@@ -1776,40 +1776,12 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 	if(sys16_quartet_title_kludge)
 	{
-		int top,bottom,left,right;
-		int top2,bottom2,left2,right2;
-		struct rectangle clip;
-
-		left = background->clip_left;
-		right = background->clip_right;
-		top = background->clip_top;
-		bottom = background->clip_bottom;
-
-		left2 = foreground->clip_left;
-		right2 = foreground->clip_right;
-		top2 = foreground->clip_top;
-		bottom2 = foreground->clip_bottom;
-
-		clip.min_x=0;
-		clip.min_y=0;
-		clip.max_x=1024;
-		clip.max_y=512;
+		struct rectangle clip = { 0,1023, 0,511 };
 
 		tilemap_set_clip( background, &clip );
 		tilemap_set_clip( foreground, &clip );
 
 		tilemap_update(  ALL_TILEMAPS  );
-
-		background->clip_left = left;
-		background->clip_right = right;
-		background->clip_top = top;
-		background->clip_bottom = bottom;
-
-		foreground->clip_left = left2;
-		foreground->clip_right = right2;
-		foreground->clip_top = top2;
-		foreground->clip_bottom = bottom2;
-
 	}
 	else
 		tilemap_update(  ALL_TILEMAPS  );
@@ -1821,28 +1793,27 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	mark_sprite_colors(); // custom; normally this would be handled by the sprite manager
 	sprite_update();
 
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	palette_recalc();
 	build_shadow_table();
-	tilemap_render(  ALL_TILEMAPS  );
 
 	if(!sys16_quartet_title_kludge)
 	{
-		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY );
-		if(sys16_bg_priority_mode) tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 );
+		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY ,0);
+		if(sys16_bg_priority_mode) tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 ,0);
 	}
 	else
 		draw_quartet_title_screen( bitmap, 0 );
 
 	sprite_draw(sprite_list,3); // needed for Aurail
-	if(sys16_bg_priority_mode==2) tilemap_draw( bitmap, background, 1 );		// body slam (& wrestwar??)
+	if(sys16_bg_priority_mode==2) tilemap_draw( bitmap, background, 1 ,0);		// body slam (& wrestwar??)
 	sprite_draw(sprite_list,2);
-	if(sys16_bg_priority_mode==1) tilemap_draw( bitmap, background, 1 );		// alien syndrome / aurail
+	if(sys16_bg_priority_mode==1) tilemap_draw( bitmap, background, 1 ,0);		// alien syndrome / aurail
 
 	if(!sys16_quartet_title_kludge)
 	{
-		tilemap_draw( bitmap, foreground, 0 );
+		tilemap_draw( bitmap, foreground, 0 ,0);
 		sprite_draw(sprite_list,1);
-		tilemap_draw( bitmap, foreground, 1 );
+		tilemap_draw( bitmap, foreground, 1 ,0);
 	}
 	else
 	{
@@ -1850,9 +1821,9 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		sprite_draw(sprite_list,1);
 	}
 
-	if(sys16_textlayer_lo_max!=0) tilemap_draw( bitmap, text_layer, 1 ); // needed for Body Slam
+	if(sys16_textlayer_lo_max!=0) tilemap_draw( bitmap, text_layer, 1 ,0); // needed for Body Slam
 	sprite_draw(sprite_list,0);
-	tilemap_draw( bitmap, text_layer, 0 );
+	tilemap_draw( bitmap, text_layer, 0 ,0);
 #ifdef SYS16_DEBUG
 	dump_tilemap();
 #endif
@@ -1953,33 +1924,32 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	mark_sprite_colors(); // custom; normally this would be handled by the sprite manager
 	sprite_update();
 
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	palette_recalc();
 	build_shadow_table();
-	tilemap_render(  ALL_TILEMAPS  );
 
 	if(sys18_bg2_active)
-		tilemap_draw( bitmap, background2, 0 );
+		tilemap_draw( bitmap, background2, 0 ,0);
 	else
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
-	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY );
-	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 );	//??
-	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 2 );	//??
+	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY ,0);
+	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 ,0);	//??
+	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 2 ,0);	//??
 
 	sprite_draw(sprite_list,3);
-	tilemap_draw( bitmap, background, 1 );
+	tilemap_draw( bitmap, background, 1 ,0);
 	sprite_draw(sprite_list,2);
-	tilemap_draw( bitmap, background, 2 );
+	tilemap_draw( bitmap, background, 2 ,0);
 
-	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 0 );
-	tilemap_draw( bitmap, foreground, 0 );
+	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 0 ,0);
+	tilemap_draw( bitmap, foreground, 0 ,0);
 	sprite_draw(sprite_list,1);
-	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 1 );
-	tilemap_draw( bitmap, foreground, 1 );
+	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 1 ,0);
+	tilemap_draw( bitmap, foreground, 1 ,0);
 
-	tilemap_draw( bitmap, text_layer, 1 );
+	tilemap_draw( bitmap, text_layer, 1 ,0);
 	sprite_draw(sprite_list,0);
-	tilemap_draw( bitmap, text_layer, 0 );
+	tilemap_draw( bitmap, text_layer, 0 ,0);
 }
 
 extern int gr_bitmap_width;
@@ -2324,19 +2294,18 @@ void sys16_ho_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	sprite_update();
 	gr_colors();
 
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	palette_recalc();
 	build_shadow_table();
-	tilemap_render(  ALL_TILEMAPS  );
 
 	render_gr(bitmap,0);
 
-	tilemap_draw( bitmap, background, 0 );
-	tilemap_draw( bitmap, foreground, 0 );
+	tilemap_draw( bitmap, background, 0 ,0);
+	tilemap_draw( bitmap, foreground, 0 ,0);
 
 	render_gr(bitmap,1);
 
 	sprite_draw(sprite_list,0);
-	tilemap_draw( bitmap, text_layer, 0 );
+	tilemap_draw( bitmap, text_layer, 0 ,0);
 
 #ifdef SYS16_DEBUG
 	dump_tilemap();
@@ -2741,20 +2710,19 @@ void sys16_or_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	sprite_update();
 	grv2_colors();
 
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	palette_recalc();
 	build_shadow_table();
-	tilemap_render(  ALL_TILEMAPS  );
 
 	render_grv2(bitmap,1);
 
-	tilemap_draw( bitmap, background, 0 );
-	tilemap_draw( bitmap, foreground, 0 );
+	tilemap_draw( bitmap, background, 0 ,0);
+	tilemap_draw( bitmap, foreground, 0 ,0);
 
 	render_grv2(bitmap,0);
 
 	sprite_draw(sprite_list,0);
 
-	tilemap_draw( bitmap, text_layer, 0 );
+	tilemap_draw( bitmap, text_layer, 0 ,0);
 
 #ifdef SYS16_DEBUG
 	dump_tilemap();
@@ -2770,8 +2738,6 @@ static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
 	struct tilemap *tilemap;
 	struct rectangle clip;
 
-	int top,bottom,left,right;
-
 
 	if(playfield==0) // background
 	{
@@ -2786,11 +2752,6 @@ static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
 		tilemap=foreground;
 	}
 
-	left = tilemap->clip_left;
-	right = tilemap->clip_right;
-	top = tilemap->clip_top;
-	bottom = tilemap->clip_bottom;
-
 	for(r=0;r<14;r++)
 	{
 		clip.min_y=r*16;
@@ -2804,7 +2765,7 @@ static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
 			tilemap_set_scrollx( tilemap, 0, (-320-scroll+sys16_bgxoffset)&0x3ff );
 			scroll = READ_WORD(&yscroll[c*4])&0x1ff;
 			tilemap_set_scrolly( tilemap, 0, (-256+scroll)&0x1ff );
-			tilemap_draw( bitmap, tilemap, 0 );
+			tilemap_draw( bitmap, tilemap, 0 ,0);
 		}
 	}
 /*
@@ -2821,14 +2782,10 @@ static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
 			tilemap_set_scrollx( tilemap, 0, (-320-scroll+sys16_bgxoffset)&0x3ff );
 			scroll = READ_WORD(&yscroll[c*2])&0x1ff;
 			tilemap_set_scrolly( tilemap, 0, (-256+scroll)&0x1ff );
-			tilemap_draw( bitmap, tilemap, 0 );
+			tilemap_draw( bitmap, tilemap, 0 ,0);
 		}
 	}
 */
-	tilemap->clip_left = left;
-	tilemap->clip_right = right;
-	tilemap->clip_top = top;
-	tilemap->clip_bottom = bottom;
 }
 
 

@@ -181,8 +181,7 @@ int spiders_timed_irq(void);
 
 /* Driver structure definition */
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_RAM },
 //	{ 0x1c00, 0x1cff, MRA_RAM },	// Data page
 //	{ 0x4000, 0x5bff, MRA_RAM },	// Video ram 1
@@ -196,11 +195,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc080, 0xc080, input_port_3_r },
 	{ 0xc0a0, 0xc0a0, input_port_4_r },
 	{ 0xc100, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_RAM },
 //	{ 0x1c00, 0x1cff, MWA_RAM },
 //	{ 0x4000, 0x5bff, MWA_RAM },
@@ -212,24 +209,19 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc048, 0xc04b, pia_1_w },
 	{ 0xc050, 0xc053, pia_2_w },
 	{ 0xc100, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
 #if 0
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0xf800, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 #endif
 
 

@@ -131,15 +131,15 @@ struct subcheat_struct
 {
 	int cpu;
 	offs_t address;
-	data_t data;
+	data8_t data;
 #ifdef MESS
-	data_t olddata;					/* old data for code patch when cheat is turned OFF */
+	data8_t olddata;					/* old data for code patch when cheat is turned OFF */
 #endif
-	data_t backup;					/* The original value of the memory location, checked against the current */
+	data8_t backup;					/* The original value of the memory location, checked against the current */
 	UINT32 code;
 	UINT16 flags;
-	data_t min;
-	data_t max;
+	data8_t min;
+	data8_t max;
 	UINT32 frames_til_trigger;			/* the number of frames until this cheat fires (does not change) */
 	UINT32 frame_count;				/* decrementing frame counter to determine if cheat should fire */
 };
@@ -642,9 +642,9 @@ void LoadCheatFile (int merge, char *filename)
 		char temp_patch;
 #endif
 		offs_t temp_address;
-		data_t temp_data;
+		data8_t temp_data;
 #ifdef MESS
-		data_t temp_olddata;
+		data8_t temp_olddata;
 #endif
 		INT32 temp_code;
 
@@ -705,7 +705,11 @@ void LoadCheatFile (int merge, char *filename)
 		/* data byte */
 		ptr = strtok(NULL, ":");
 		if (!ptr) continue;
-		sscanf(ptr,"%x", &temp_data);
+		{
+			int t;
+			sscanf(ptr,"%x", &t);
+			temp_data = t;
+		}
 		temp_data &= 0xff;
 
 #ifdef MESS
@@ -1013,8 +1017,7 @@ INT32 EnableDisableCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 			if (CheatTable[tag[sel]].comment && (CheatTable[tag[sel]].comment[0] != 0x00))
 			{
 				submenu_choice = 1;
-				/* tell updatescreen() to clean after us */
-				need_to_clear_bitmap = 1;
+				schedule_full_refresh();
 			}
 		}
 	}
@@ -1029,8 +1032,7 @@ INT32 EnableDisableCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -1080,8 +1082,7 @@ static INT32 CommentMenu (struct osd_bitmap *bitmap, INT32 selected, int cheat_i
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -1177,8 +1178,7 @@ INT32 AddEditCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 		else
 		{
 			submenu_choice = 1;
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -1192,8 +1192,7 @@ INT32 AddEditCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -1427,8 +1426,7 @@ static INT32 EditCheatMenu (struct osd_bitmap *bitmap, INT32 selected, UINT8 che
 		else
 		{
 			submenu_choice = 1;
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -1445,8 +1443,7 @@ static INT32 EditCheatMenu (struct osd_bitmap *bitmap, INT32 selected, UINT8 che
 		textedit_active = 0;
 		/* flush the text buffer */
 		osd_readkey_unicode (1);
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	/* After we've weeded out any control characters, look for text */
@@ -1556,8 +1553,7 @@ static void reset_table (struct ExtMemory *table)
 /* create tables for storing copies of all MWA_RAM areas */
 static int build_tables (int cpu)
 {
-	/* const struct MemoryReadAddress *mra = Machine->drv->cpu[SearchCpuNo].memory_read; */
-	const struct MemoryWriteAddress *mwa = Machine->drv->cpu[cpu].memory_write;
+	const struct Memory_WriteAddress *mwa = Machine->drv->cpu[cpu].memory_write;
 
 	int region = REGION_CPU1+cpu;
 
@@ -1639,82 +1635,85 @@ static int build_tables (int cpu)
 #endif
 
 	NoMemArea = 0;
-	while (mwa->start != -1)
+	while (!IS_MEMORY_END(mwa))
 	{
-		/* int (*handler)(int) = mra->handler; */
-		mem_write_handler handler = mwa->handler;
-		int size = (mwa->end - mwa->start) + 1;
-
-		if (SkipBank(CpuToScan, BankToScanTable, handler))
+		if (!IS_MEMORY_MARKER(mwa))
 		{
-			NoMemArea++;
-			mwa++;
-			continue;
-		}
+			/* int (*handler)(int) = mra->handler; */
+			mem_write_handler handler = mwa->handler;
+			int size = (mwa->end - mwa->start) + 1;
+
+			if (SkipBank(CpuToScan, BankToScanTable, handler))
+			{
+				NoMemArea++;
+				mwa++;
+				continue;
+			}
 
 #if 0
-		if ((fastsearch == 3) && (!MemToScanTable[NoMemArea].Enabled))
-		{
-			NoMemArea++;
-			mwa++;
-			continue;
-		}
+			if ((fastsearch == 3) && (!MemToScanTable[NoMemArea].Enabled))
+			{
+				NoMemArea++;
+				mwa++;
+				continue;
+			}
 #endif
 
-		/* time to allocate */
-		if (!bail)
-		{
-			ext_sr->data = malloc (size);
-			ext_br->data = malloc (size);
-			ext_ft->data = malloc (size);
-
-			ext_obr->data = malloc (size);
-			ext_oft->data = malloc (size);
-
-			if (ext_sr->data == NULL)
-			{
-				bail = 1;
-				MemoryNeeded += size;
-			}
-			if (ext_br->data == NULL)
-			{
-				bail = 1;
-				MemoryNeeded += size;
-			}
-			if (ext_ft->data == NULL)
-			{
-				bail = 1;
-				MemoryNeeded += size;
-			}
-
-			if (ext_obr->data == NULL)
-			{
-				bail = 1;
-				MemoryNeeded += size;
-			}
-			if (ext_oft->data == NULL)
-			{
-				bail = 1;
-				MemoryNeeded += size;
-			}
-
+			/* time to allocate */
 			if (!bail)
 			{
-				ext_sr->start = ext_br->start = ext_ft->start = mwa->start;
-				ext_sr->end = ext_br->end = ext_ft->end = mwa->end;
-				ext_sr->region = ext_br->region = ext_ft->region = region;
-				ext_sr++, ext_br++, ext_ft++;
+				ext_sr->data = malloc (size);
+				ext_br->data = malloc (size);
+				ext_ft->data = malloc (size);
 
-				ext_obr->start = ext_oft->start = mwa->start;
-				ext_obr->end = ext_oft->end = mwa->end;
-				ext_obr->region = ext_oft->region = region;
-				ext_obr++, ext_oft++;
+				ext_obr->data = malloc (size);
+				ext_oft->data = malloc (size);
+
+				if (ext_sr->data == NULL)
+				{
+					bail = 1;
+					MemoryNeeded += size;
+				}
+				if (ext_br->data == NULL)
+				{
+					bail = 1;
+					MemoryNeeded += size;
+				}
+				if (ext_ft->data == NULL)
+				{
+					bail = 1;
+					MemoryNeeded += size;
+				}
+
+				if (ext_obr->data == NULL)
+				{
+					bail = 1;
+					MemoryNeeded += size;
+				}
+				if (ext_oft->data == NULL)
+				{
+					bail = 1;
+					MemoryNeeded += size;
+				}
+
+				if (!bail)
+				{
+					ext_sr->start = ext_br->start = ext_ft->start = mwa->start;
+					ext_sr->end = ext_br->end = ext_ft->end = mwa->end;
+					ext_sr->region = ext_br->region = ext_ft->region = region;
+					ext_sr++, ext_br++, ext_ft++;
+
+					ext_obr->start = ext_oft->start = mwa->start;
+					ext_obr->end = ext_oft->end = mwa->end;
+					ext_obr->region = ext_oft->region = region;
+					ext_obr++, ext_oft++;
+				}
 			}
-		}
-		else
-			MemoryNeeded += (5 * size);
+			else
+				MemoryNeeded += (5 * size);
 
-		NoMemArea++;
+			NoMemArea++;
+		}
 		mwa++;
 	}
 
@@ -1836,7 +1835,7 @@ INT32 StartSearch (struct osd_bitmap *bitmap, INT32 selected)
 		Menu_Total
 	};
 
-	const char *menu_item[Menu_Total];
+	const char *menu_item[Menu_Total+1];
 	const char *menu_subitem[Menu_Total];
 	char setting[Menu_Total][30];
 	INT32 sel;
@@ -2022,8 +2021,7 @@ INT32 StartSearch (struct osd_bitmap *bitmap, INT32 selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2094,8 +2092,7 @@ INT32 ViewSearchResults (struct osd_bitmap *bitmap, INT32 selected)
 		else
 		{
 			submenu_choice = 1;
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -2109,8 +2106,7 @@ INT32 ViewSearchResults (struct osd_bitmap *bitmap, INT32 selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2445,8 +2441,7 @@ static INT32 ConfigureWatch (struct osd_bitmap *bitmap, INT32 selected, UINT8 wa
 		else
 		{
 			submenu_choice = 1;
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -2463,8 +2458,7 @@ static INT32 ConfigureWatch (struct osd_bitmap *bitmap, INT32 selected, UINT8 wa
 		textedit_active = 0;
 		/* flush the text buffer */
 		osd_readkey_unicode (1);
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	/* After we've weeded out any control characters, look for text */
@@ -2590,8 +2584,7 @@ static INT32 ChooseWatch (struct osd_bitmap *bitmap, INT32 selected)
 		else
 		{
 			submenu_choice = 1;
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -2605,8 +2598,7 @@ static INT32 ChooseWatch (struct osd_bitmap *bitmap, INT32 selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;
@@ -2719,8 +2711,7 @@ INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 		else
 		{
 			submenu_choice = 1;
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 	}
 
@@ -2734,8 +2725,7 @@ INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;

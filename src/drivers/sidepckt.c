@@ -124,8 +124,7 @@ static WRITE_HANDLER( sidepctj_i8751_w )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x17ff, videoram_r },
 	{ 0x1800, 0x1fff, colorram_r },
@@ -136,11 +135,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3003, 0x3003, input_port_3_r },
 	{ 0x3014, 0x3014, sidepckt_i8751_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x13ff, sidepckt_videoram_w, &videoram, &videoram_size },
 	{ 0x1800, 0x1bff, sidepckt_colorram_w, &colorram },
@@ -149,11 +146,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x300c, 0x300c, sidepckt_flipscreen_w },
 	{ 0x3018, 0x3018, sidepckt_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress j_writemem[] =
-{
+static MEMORY_WRITE_START( j_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x13ff, sidepckt_videoram_w, &videoram, &videoram_size },
 	{ 0x1800, 0x1bff, sidepckt_colorram_w, &colorram },
@@ -162,27 +157,22 @@ static struct MemoryWriteAddress j_writemem[] =
 	{ 0x300c, 0x300c, sidepckt_flipscreen_w },
 	{ 0x3018, 0x3018, sidepctj_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
     { 0x0000, 0x0fff, MRA_RAM },
     { 0x3000, 0x3000, soundlatch_r },
     { 0x8000, 0xffff, MRA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
     { 0x0000, 0x0fff, MWA_RAM },
     { 0x1000, 0x1000, YM2203_control_port_0_w },
     { 0x1001, 0x1001, YM2203_write_port_0_w },
     { 0x2000, 0x2000, YM3526_control_port_0_w },
     { 0x2001, 0x2001, YM3526_write_port_0_w },
     { 0x8000, 0xffff, MWA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

@@ -145,7 +145,7 @@ int contra_vh_start(void)
 		clip.min_x = 0;
 		tilemap_set_clip( tx_tilemap, &clip );
 
-		fg_tilemap->transparent_pen = 0;
+		tilemap_set_transparent_pen(fg_tilemap,0);
 
 		return 0;
 	}
@@ -284,13 +284,11 @@ void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( bg_tilemap,0, K007121_ctrlram[1][0x02] );
 
 	tilemap_update( ALL_TILEMAPS );
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render( ALL_TILEMAPS );
+	palette_recalc();
 
-	tilemap_draw( bitmap, bg_tilemap, 0 );
-	tilemap_draw( bitmap, fg_tilemap, 0 );
+	tilemap_draw( bitmap, bg_tilemap, 0 ,0);
+	tilemap_draw( bitmap, fg_tilemap, 0 ,0);
 	draw_sprites( bitmap, 0 );
 	draw_sprites( bitmap, 1 );
-	tilemap_draw( bitmap, tx_tilemap, 0 );
+	tilemap_draw( bitmap, tx_tilemap, 0 ,0);
 }

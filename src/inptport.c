@@ -1677,6 +1677,26 @@ READ_HANDLER( input_port_17_r ) { return readinputport(17); }
 READ_HANDLER( input_port_18_r ) { return readinputport(18); }
 READ_HANDLER( input_port_19_r ) { return readinputport(19); }
 
+READ16_HANDLER( input_port_0_word_r ) { return readinputport(0); }
+READ16_HANDLER( input_port_1_word_r ) { return readinputport(1); }
+READ16_HANDLER( input_port_2_word_r ) { return readinputport(2); }
+READ16_HANDLER( input_port_3_word_r ) { return readinputport(3); }
+READ16_HANDLER( input_port_4_word_r ) { return readinputport(4); }
+READ16_HANDLER( input_port_5_word_r ) { return readinputport(5); }
+READ16_HANDLER( input_port_6_word_r ) { return readinputport(6); }
+READ16_HANDLER( input_port_7_word_r ) { return readinputport(7); }
+READ16_HANDLER( input_port_8_word_r ) { return readinputport(8); }
+READ16_HANDLER( input_port_9_word_r ) { return readinputport(9); }
+READ16_HANDLER( input_port_10_word_r ) { return readinputport(10); }
+READ16_HANDLER( input_port_11_word_r ) { return readinputport(11); }
+READ16_HANDLER( input_port_12_word_r ) { return readinputport(12); }
+READ16_HANDLER( input_port_13_word_r ) { return readinputport(13); }
+READ16_HANDLER( input_port_14_word_r ) { return readinputport(14); }
+READ16_HANDLER( input_port_15_word_r ) { return readinputport(15); }
+READ16_HANDLER( input_port_16_word_r ) { return readinputport(16); }
+READ16_HANDLER( input_port_17_word_r ) { return readinputport(17); }
+READ16_HANDLER( input_port_18_word_r ) { return readinputport(18); }
+READ16_HANDLER( input_port_19_word_r ) { return readinputport(19); }
 
 #ifdef MAME_NET
 void set_default_player_controls(int player)
@@ -1793,4 +1813,3 @@ void input_port_free(struct InputPort* dst)
 {
 	free(dst);
 }
-

@@ -17,6 +17,8 @@
 int avgdvg_done (void);
 WRITE_HANDLER( avgdvg_go_w );
 WRITE_HANDLER( avgdvg_reset_w );
+WRITE16_HANDLER( avgdvg_go_word_w );
+WRITE16_HANDLER( avgdvg_reset_word_w );
 int avgdvg_init(int vgType);
 
 /* Apart from the color mentioned below, the vector games will make additional
@@ -39,7 +41,7 @@ void avg_init_palette_astdelux  (unsigned char *palette, unsigned short *colorta
  * right now, but in src/vidhrdw/avgdvg.c itself. */
 WRITE_HANDLER( tempest_colorram_w );
 WRITE_HANDLER( mhavoc_colorram_w );
-WRITE_HANDLER( quantum_colorram_w );
+WRITE16_HANDLER( quantum_colorram_w );
 
 int dvg_start(void);
 int avg_start(void);

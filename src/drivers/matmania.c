@@ -77,8 +77,7 @@ WRITE_HANDLER( maniach_sh_command_w )
 
 
 
-static struct MemoryReadAddress matmania_readmem[] =
-{
+static MEMORY_READ_START( matmania_readmem )
 	{ 0x0000, 0x077f, MRA_RAM },
 	{ 0x1000, 0x17ff, MRA_RAM },
 	{ 0x2000, 0x27ff, MRA_RAM },
@@ -87,11 +86,9 @@ static struct MemoryReadAddress matmania_readmem[] =
 	{ 0x3020, 0x3020, input_port_2_r },
 	{ 0x3030, 0x3030, input_port_3_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress matmania_writemem[] =
-{
+static MEMORY_WRITE_START( matmania_writemem )
 	{ 0x0000, 0x077f, MWA_RAM },
 	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1000, 0x13ff, MWA_RAM, &matmania_videoram2, &matmania_videoram2_size },
@@ -106,11 +103,9 @@ static struct MemoryWriteAddress matmania_writemem[] =
 //	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
 	{ 0x3050, 0x307f, matmania_paletteram_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress maniach_readmem[] =
-{
+static MEMORY_READ_START( maniach_readmem )
 	{ 0x0000, 0x077f, MRA_RAM },
 	{ 0x1000, 0x17ff, MRA_RAM },
 	{ 0x2000, 0x27ff, MRA_RAM },
@@ -121,11 +116,9 @@ static struct MemoryReadAddress maniach_readmem[] =
 	{ 0x3040, 0x3040, maniach_mcu_r },
 	{ 0x3041, 0x3041, maniach_mcu_status_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress maniach_writemem[] =
-{
+static MEMORY_WRITE_START( maniach_writemem )
 	{ 0x0000, 0x077f, MWA_RAM },
 	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1000, 0x13ff, MWA_RAM, &matmania_videoram2, &matmania_videoram2_size },
@@ -141,19 +134,15 @@ static struct MemoryWriteAddress maniach_writemem[] =
 	{ 0x3040, 0x3040, maniach_mcu_w },
 	{ 0x3050, 0x307f, matmania_paletteram_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x2007, 0x2007, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x2000, 0x2000, AY8910_write_port_0_w },
 	{ 0x2001, 0x2001, AY8910_control_port_0_w },
@@ -161,39 +150,31 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x2003, 0x2003, AY8910_control_port_1_w },
 	{ 0x2004, 0x2004, matmania_dac_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress maniach_sound_readmem[] =
-{
+static MEMORY_READ_START( maniach_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x2004, 0x2004, soundlatch_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress maniach_sound_writemem[] =
-{
+static MEMORY_WRITE_START( maniach_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM3526_control_port_0_w },
 	{ 0x2001, 0x2001, YM3526_write_port_0_w },
 	{ 0x2002, 0x2002, matmania_dac_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x0000, maniach_68705_portA_r },
 	{ 0x0001, 0x0001, maniach_68705_portB_r },
 	{ 0x0002, 0x0002, maniach_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x0000, maniach_68705_portA_w },
 	{ 0x0001, 0x0001, maniach_68705_portB_w },
 	{ 0x0002, 0x0002, maniach_68705_portC_w },
@@ -202,8 +183,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x0006, 0x0006, maniach_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -33,11 +33,12 @@ Note:	if MAME_DEBUG is defined, pressing:
 
 
 /* Variables that driver has access to: */
-unsigned char *cave_videoregs;
 
-unsigned char *cave_vram_0, *cave_vctrl_0;
-unsigned char *cave_vram_1, *cave_vctrl_1;
-unsigned char *cave_vram_2, *cave_vctrl_2;
+data16_t *cave_videoregs;
+
+data16_t *cave_vram_0, *cave_vctrl_0;
+data16_t *cave_vram_1, *cave_vctrl_1;
+data16_t *cave_vram_2, *cave_vctrl_2;
 
 /* Variables only used here: */
 
@@ -74,24 +75,24 @@ Offset:
 #define CAVE_TILEMAP(_n_) \
 static void get_tile_info_##_n_( int tile_index ) \
 { \
-	int code		=	(READ_WORD(&cave_vram_##_n_[ tile_index * 4 + 0]) << 16 )+ \
-						 READ_WORD(&cave_vram_##_n_[ tile_index * 4 + 2]); \
+	UINT32 code		=	(cave_vram_##_n_[ tile_index * 2 + 0] << 16 )+ \
+						 cave_vram_##_n_[ tile_index * 2 + 1]; \
 	SET_TILE_INFO( _n_ ,  code & 0x00ffffff , (code & 0x3f000000) >> (32-8) ); \
 	tile_info.priority = (code & 0xc0000000)>> (32-2); \
 } \
 \
-WRITE_HANDLER( cave_vram_##_n_##_w ) \
+WRITE16_HANDLER( cave_vram_##_n_##_w ) \
 { \
-	COMBINE_WORD_MEM(&cave_vram_##_n_[offset],data); \
-	if ( (offset/4) < DIM_NX * DIM_NY ) \
-		tilemap_mark_tile_dirty(tilemap_##_n_, offset/4 ); \
+	COMBINE_DATA(&cave_vram_##_n_[offset]); \
+	if ( (offset/2) < DIM_NX * DIM_NY ) \
+		tilemap_mark_tile_dirty(tilemap_##_n_, offset/2 ); \
 } \
 \
-WRITE_HANDLER( cave_vram_##_n_##_8x8_w ) \
+WRITE16_HANDLER( cave_vram_##_n_##_8x8_w ) \
 { \
-	offset %= (DIM_NX * DIM_NY * 4 * 4); /* mirrored RAM */ \
-	COMBINE_WORD_MEM(&cave_vram_##_n_[offset],data); \
-	tilemap_mark_tile_dirty(tilemap_##_n_, offset/4 ); \
+	offset %= ( (DIM_NX * 2) * (DIM_NY * 2) * 2); /* mirrored RAM */ \
+	COMBINE_DATA(&cave_vram_##_n_[offset]); \
+	tilemap_mark_tile_dirty(tilemap_##_n_, offset/2 ); \
 }
 
 CAVE_TILEMAP(0)
@@ -139,15 +140,15 @@ int ddonpach_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 
 		tilemap_set_scroll_rows(tilemap_2,1);
 		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_2->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_2,0);
 
 		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 );
 		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 );
@@ -194,15 +195,15 @@ int guwange_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 
 		tilemap_set_scroll_rows(tilemap_2,1);
 		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_2->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_2,0);
 
 //		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 );
 //		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 );
@@ -254,15 +255,15 @@ int esprade_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 
 		tilemap_set_scroll_rows(tilemap_2,1);
 		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_2->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_2,0);
 
 		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 );
 		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 );
@@ -305,11 +306,11 @@ int dfeveron_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scroll_rows(tilemap_1,1);
 		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 
 /*
 	Scroll registers (on dfeveron logo screen):
@@ -355,7 +356,7 @@ int uopoko_vh_start(void)
 	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_0->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_0,0);
 
 		tilemap_set_scrolldx( tilemap_0, -0x6d, -0x54 );
 
@@ -458,38 +459,39 @@ static void get_sprite_info(void)
 	const unsigned char  *base_gfx	=	memory_region(region);
 	const unsigned char  *gfx_max	=	base_gfx + memory_region_length(region);
 
-	int sprite_bank					=	READ_WORD(&cave_videoregs[8]) & 1;
+	int sprite_bank					=	cave_videoregs[ 4 ] & 1;
 
-	unsigned char *source			=	spriteram + (spriteram_size / 2) * sprite_bank;
+	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * sprite_bank;
 	struct sprite *sprite			=	sprite_list->sprite;
 	const struct sprite *finish		=	sprite + spriteram_size / 0x10 / 2;
 
-	int	glob_flipx	=	READ_WORD(&cave_videoregs[0]) & 0x8000;
-	int	glob_flipy	=	READ_WORD(&cave_videoregs[2]) & 0x8000;
+	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
+	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
 
 	int max_x		=	Machine->drv->screen_width;
 	int max_y		=	Machine->drv->screen_height;
 
-	for (; sprite < finish; sprite++,source+=0x10 )
+	for (; sprite < finish; sprite++,source+=8 )
 	{
 		int x,y,attr,code,zoomx,zoomy,size,flipx,flipy;
 		if ( cave_spritetype == 0)	// most of the games
 		{
-			x			=		READ_WORD(&source[ 0x00 ]);
-			y			=		READ_WORD(&source[ 0x02 ]);
-			attr		=		READ_WORD(&source[ 0x04 ]);
-			code		=		READ_WORD(&source[ 0x06 ]);
-			zoomx		=		READ_WORD(&source[ 0x08 ]);
-			zoomy		=		READ_WORD(&source[ 0x0a ]);
-			size		=		READ_WORD(&source[ 0x0c ]);
+			x			=		source[ 0 ];
+			y			=		source[ 1 ];
+			attr		=		source[ 2 ];
+			code		=		source[ 3 ];
+			zoomx		=		source[ 4 ];
+			zoomy		=		source[ 5 ];
+			size		=		source[ 6 ];
 		}
 		else						// ddonpach
 		{
-			attr		=		READ_WORD(&source[ 0x00 ]);
-			code		=		READ_WORD(&source[ 0x02 ]);
-			x			=		READ_WORD(&source[ 0x04 ]) << 6;
-			y			=		READ_WORD(&source[ 0x06 ]) << 6;
-			size		=		READ_WORD(&source[ 0x08 ]);
+			attr		=		source[ 0 ];
+			code		=		source[ 1 ];
+			x			=		source[ 2 ] << 6;
+			y			=		source[ 3 ] << 6;
+			size		=		source[ 4 ];
+			// no zooming
 			zoomx		=		0x100;
 			zoomy		=		0x100;
 		}
@@ -530,31 +532,6 @@ static void get_sprite_info(void)
 
 		if (flipx)	sprite->flags |= SPRITE_FLIPX;
 		if (flipy)	sprite->flags |= SPRITE_FLIPY;
-
-
-#if 0
-
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_N) )
-		{
-			struct DisplayText dt[3];
-			char buf1[40],buf2[40];
-
-			if ( (zoomx == 0x100) && (zoomy == 0x100) )	continue;
-
-			dt[0].text = buf1;		dt[1].text = buf2;	dt[2].text = 0;
-			dt[0].color			=	dt[1].color = UI_COLOR_NORMAL;
-			dt[0].x = y;			dt[1].x = dt[0].x;
-			dt[0].y = max_x-x;		dt[1].y = dt[0].y + 8;
-
-			sprintf(buf1, "1:%04X", zoomx);
-			sprintf(buf2, "2:%04X", zoomy);
-			displaytext(dt,0,0);
-		}
-#endif
-
-#endif
-
 	}
 }
 
@@ -571,27 +548,27 @@ void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int pri;
 	int layers_ctrl = -1;
 
-	int	glob_flipx	=	READ_WORD(&cave_videoregs[0]) & 0x8000;
-	int	glob_flipy	=	READ_WORD(&cave_videoregs[2]) & 0x8000;
+	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
+	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
 
 	tilemap_set_flip(ALL_TILEMAPS, (glob_flipx ? TILEMAP_FLIPX : 0) | (glob_flipy ? TILEMAP_FLIPY : 0) );
 
-	tilemap_set_enable( tilemap_0, READ_WORD(&cave_vctrl_0[4]) & 1 );
-	tilemap_set_scrollx(tilemap_0, 0, READ_WORD(&cave_vctrl_0[0]) );
-	tilemap_set_scrolly(tilemap_0, 0, READ_WORD(&cave_vctrl_0[2]) );
+	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
+	tilemap_set_scrollx(tilemap_0, 0, cave_vctrl_0[0] );
+	tilemap_set_scrolly(tilemap_0, 0, cave_vctrl_0[1] );
 
 	if (tilemap_1)
 	{
-		tilemap_set_enable( tilemap_1, READ_WORD(&cave_vctrl_1[4]) & 1 );
-		tilemap_set_scrollx(tilemap_1, 0, READ_WORD(&cave_vctrl_1[0]) );
-		tilemap_set_scrolly(tilemap_1, 0, READ_WORD(&cave_vctrl_1[2]) );
+		tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
+		tilemap_set_scrollx(tilemap_1, 0, cave_vctrl_1[0] );
+		tilemap_set_scrolly(tilemap_1, 0, cave_vctrl_1[1] );
 	}
 
 	if (tilemap_2)
 	{
-		tilemap_set_enable( tilemap_2, READ_WORD(&cave_vctrl_2[4]) & 1 );
-		tilemap_set_scrollx(tilemap_2, 0, READ_WORD(&cave_vctrl_2[0]) );
-		tilemap_set_scrolly(tilemap_2, 0, READ_WORD(&cave_vctrl_2[2]) );
+		tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
+		tilemap_set_scrollx(tilemap_2, 0, cave_vctrl_2[0] );
+		tilemap_set_scrolly(tilemap_2, 0, cave_vctrl_2[1] );
 	}
 
 
@@ -618,10 +595,10 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) || keyboard_pres
 	{
 		char buf[80];
 		sprintf(buf,"%04X %04X %04X %04X %04X %04X %04X %04X",
-			READ_WORD(&cave_videoregs[0x0]),READ_WORD(&cave_videoregs[0x2]),
-			READ_WORD(&cave_videoregs[0x4]),READ_WORD(&cave_videoregs[0x6]),
-			READ_WORD(&cave_videoregs[0x8]),READ_WORD(&cave_videoregs[0xa]),
-			READ_WORD(&cave_videoregs[0xc]),READ_WORD(&cave_videoregs[0xe]) );
+				cave_videoregs[0], cave_videoregs[1],
+				cave_videoregs[2], cave_videoregs[3],
+				cave_videoregs[4], cave_videoregs[5],
+				cave_videoregs[6], cave_videoregs[7] );
 		usrintf_showmessage(buf);
 	}
 #endif
@@ -637,27 +614,26 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) || keyboard_pres
 
 	sprite_update();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Clear the background if at least one of layer 0's tile priorities
 	   is lacking */
 
-	if ((layers_ctrl & 0xf) != 0xf)	osd_clearbitmap(Machine->scrbitmap);
+	if ((layers_ctrl & 0xf) != 0xf)
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	/* Pen 0 of layer 0's tiles (any priority) goes below anything else */
 
 	for ( pri = 0; pri < 4; pri++ )
-		if ((layers_ctrl&(1<<(pri+0)))&&tilemap_0)	tilemap_draw(bitmap, tilemap_0, TILEMAP_IGNORE_TRANSPARENCY | pri);
+		if ((layers_ctrl&(1<<(pri+0)))&&tilemap_0)	tilemap_draw(bitmap, tilemap_0, TILEMAP_IGNORE_TRANSPARENCY | pri,0);
 
 	/* Draw the rest with transparency */
 
 	for ( pri = 0; pri < 4; pri++ )
 	{
 		if ((layers_ctrl&(1<<(pri+12))))			sprite_draw(sprite_list, pri);
-		if ((layers_ctrl&(1<<(pri+0)))&&tilemap_0)	tilemap_draw(bitmap, tilemap_0, pri);
-		if ((layers_ctrl&(1<<(pri+4)))&&tilemap_1)	tilemap_draw(bitmap, tilemap_1, pri);
-		if ((layers_ctrl&(1<<(pri+8)))&&tilemap_2)	tilemap_draw(bitmap, tilemap_2, pri);
+		if ((layers_ctrl&(1<<(pri+0)))&&tilemap_0)	tilemap_draw(bitmap, tilemap_0, pri,0);
+		if ((layers_ctrl&(1<<(pri+4)))&&tilemap_1)	tilemap_draw(bitmap, tilemap_1, pri,0);
+		if ((layers_ctrl&(1<<(pri+8)))&&tilemap_2)	tilemap_draw(bitmap, tilemap_2, pri,0);
 	}
 }

@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 
-static data_t gfx_bank,palette_bank;
+static int gfx_bank,palette_bank;
 static int grid_on;
 static const unsigned char *color_codes;
 
@@ -196,7 +196,7 @@ WRITE_HANDLER( radarscp_grid_color_w )
 
 WRITE_HANDLER( dkong_flipscreen_w )
 {
-	flip_screen_w(0,~data & 1);
+	flip_screen_set(~data & 1);
 }
 
 /***************************************************************************

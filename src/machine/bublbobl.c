@@ -52,7 +52,7 @@ WRITE_HANDLER( bublbobl_bankswitch_w )
 	bublbobl_video_enable = data & 0x40;
 
 	/* bit 7 flips screen */
-	flip_screen_w(0,data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 WRITE_HANDLER( tokio_bankswitch_w )
@@ -68,7 +68,7 @@ WRITE_HANDLER( tokio_bankswitch_w )
 WRITE_HANDLER( tokio_videoctrl_w )
 {
 	/* bit 7 flips screen */
-	flip_screen_w(0,data & 0x80);
+	flip_screen_set(data & 0x80);
 
 	/* other bits unknown */
 }

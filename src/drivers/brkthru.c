@@ -87,8 +87,7 @@ WRITE_HANDLER( brkthru_soundlatch_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },		/* Plane 0: Text */
 	{ 0x0400, 0x0bff, MRA_RAM },
 	{ 0x0c00, 0x0fff, MRA_RAM },		/* Plane 2  Background */
@@ -100,11 +99,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1803, 0x1803, input_port_2_r },	/* coin input & DSW */
 	{ 0x2000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
 	{ 0x0400, 0x0bff, MWA_RAM },
 	{ 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
@@ -114,10 +111,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1802, 0x1802, brkthru_soundlatch_w },
 	{ 0x1803, 0x1803, brkthru_1803_w },	/* NMI enable, + ? */
 	{ 0x2000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-static struct MemoryReadAddress darwin_readmem[] =
-{
+MEMORY_END
+static MEMORY_READ_START( darwin_readmem )
 	{ 0x1000, 0x13ff, MRA_RAM },		/* Plane 0: Text */
 	{ 0x0400, 0x07ff, MRA_RAM },
 	{ 0x1c00, 0x1fff, MRA_RAM },		/* Plane 2  Background */
@@ -129,11 +124,9 @@ static struct MemoryReadAddress darwin_readmem[] =
 	{ 0x0803, 0x0803, input_port_2_r },	/* coin input & DSW */
 	{ 0x2000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress darwin_writemem[] =
-{
+static MEMORY_WRITE_START( darwin_writemem )
 	{ 0x1000, 0x13ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
 	{ 0x1c00, 0x1fff, videoram_w, &videoram, &videoram_size },
 	{ 0x0000, 0x00ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -143,28 +136,23 @@ static struct MemoryWriteAddress darwin_writemem[] =
 	{ 0x0802, 0x0802, brkthru_soundlatch_w },
 	{ 0x0803, 0x0803, darwin_0803_w },     /* NMI enable, + ? */
 	{ 0x2000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x4000, 0x4000, soundlatch_r },
 	{ 0x6000, 0x6000, YM2203_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM3526_control_port_0_w  },
 	{ 0x2001, 0x2001, YM3526_write_port_0_w },
 	{ 0x6000, 0x6000, YM2203_control_port_0_w },
 	{ 0x6001, 0x6001, YM2203_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

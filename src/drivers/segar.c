@@ -176,8 +176,7 @@ static READ_HANDLER( segar_ports_r )
  Main memory handlers
 ***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xc7ff, MRA_ROM },
 	{ 0xc800, 0xcfff, MRA_RAM },    /* Misc RAM */
 	{ 0xe000, 0xe3ff, MRA_RAM },
@@ -187,23 +186,19 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf040, 0xf07f, MRA_RAM },    /* Dynamic color table for background (Monster Bash)*/
 	{ 0xf080, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xffff, segar_w, &segar_mem },
 	{ 0xe000, 0xe3ff, MWA_RAM, &videoram, &videoram_size },    /* handled by */
 	{ 0xe800, 0xefff, MWA_RAM, &segar_characterram },    	/* the above, */
 	{ 0xf000, 0xf03f, MWA_RAM, &segar_mem_colortable },     /* here only */
 	{ 0xf040, 0xf07f, MWA_RAM, &segar_mem_bcolortable },    /* to initialize */
 	{ 0xf800, 0xffff, MWA_RAM, &segar_characterram2 },    	/* the pointers */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress sindbadm_readmem[] =
-{
+static MEMORY_READ_START( sindbadm_readmem )
 	{ 0x0000, 0xc7ff, MRA_ROM },
 	{ 0xc800, 0xcfff, MRA_RAM },    /* Misc RAM */
 	{ 0xe000, 0xe3ff, MRA_RAM },
@@ -213,11 +208,9 @@ static struct MemoryReadAddress sindbadm_readmem[] =
 	{ 0xf040, 0xf07f, MRA_RAM },
 	{ 0xf080, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sindbadm_writemem[] =
-{
+static MEMORY_WRITE_START( sindbadm_writemem )
 	{ 0x0000, 0xc7ff, MWA_ROM },
 	{ 0xc800, 0xcfff, MWA_RAM },
 	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
@@ -227,29 +220,23 @@ static struct MemoryWriteAddress sindbadm_writemem[] =
 	{ 0xf040, 0xf07f, segar_colortable_w, &segar_mem_colortable },
 	{ 0xf080, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, segar_characterram2_w, &segar_characterram2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 //{0x3f, 0x3f, MRA_NOP }, /* Pig Newton - read from 1D87 */
 	{ 0x0e, 0x0e, monsterb_audio_8255_r },
 	{ 0x81, 0x81, input_port_8_r },     /* only used by Sindbad Mystery */
 	{ 0xf8, 0xfc, segar_ports_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort astrob_writeport[] =
-{
+static PORT_WRITE_START( astrob_writeport )
 	{ 0x38, 0x38, astrob_speech_port_w },
 	{ 0x3e, 0x3f, astrob_audio_ports_w },
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort spaceod_writeport[] =
-{
+static PORT_WRITE_START( spaceod_writeport )
 	{ 0x08, 0x08, spaceod_back_port_w },
 	{ 0x09, 0x09, spaceod_backshift_clear_w },
 	{ 0x0a, 0x0a, spaceod_backshift_w },
@@ -257,31 +244,24 @@ static struct IOWritePort spaceod_writeport[] =
 	{ 0x0d, 0x0d, spaceod_backfill_w },
 	{ 0x0e, 0x0f, spaceod_audio_ports_w },
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_005[] =
-{
+static PORT_WRITE_START( writeport_005 )
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort monsterb_writeport[] =
-{
+static PORT_WRITE_START( monsterb_writeport )
 	{ 0x0c, 0x0f, monsterb_audio_8255_w },
 	{ 0xbc, 0xbc, monsterb_back_port_w },
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort pignewt_writeport[] =
-{
+static PORT_WRITE_START( pignewt_writeport )
 	{ 0xb4, 0xb5, pignewt_back_color_w },   /* Just guessing */
 	{ 0xb8, 0xbc, pignewt_back_ports_w },   /* Just guessing */
 	{ 0xbe, 0xbe, MWA_NOP },    		/* probably some type of music register */
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 static WRITE_HANDLER( sindbadm_soundport_w )
 {
@@ -309,89 +289,61 @@ static WRITE_HANDLER( sindbadm_SN76496_1_w )
 }
 
 
-static struct IOWritePort sindbadm_writeport[] =
-{
+static PORT_WRITE_START( sindbadm_writeport )
 //      { 0x00, 0x00, ???_w }, /* toggles on and off immediately (0x01, 0x00) */
 	{ 0x41, 0x41, sindbadm_back_port_w },
 	{ 0x43, 0x43, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
 	{ 0x80, 0x80, sindbadm_soundport_w },    /* sound commands */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 /***************************************************************************
  Sound memory handlers
 ***************************************************************************/
 
-static struct MemoryReadAddress speech_readmem[] =
-{
+static MEMORY_READ_START( speech_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress speech_writemem[] =
-{
+static MEMORY_WRITE_START( speech_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort speech_readport[] =
-{
-	{ -1 }  /* end of table */
-};
-
-static struct IOWritePort speech_writeport[] =
-{
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryReadAddress monsterb_7751_readmem[] =
-{
+static MEMORY_READ_START( monsterb_7751_readmem )
 	{ 0x0000, 0x03ff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress monsterb_7751_writemem[] =
-{
+static MEMORY_WRITE_START( monsterb_7751_writemem )
 	{ 0x0000, 0x03ff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort monsterb_7751_readport[] =
-{
+static PORT_READ_START( monsterb_7751_readport )
 	{ I8039_t1,  I8039_t1,  monsterb_sh_t1_r },
 	{ I8039_p2,  I8039_p2,  monsterb_sh_command_r },
 	{ I8039_bus, I8039_bus, monsterb_sh_rom_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort monsterb_7751_writeport[] =
-{
+static PORT_WRITE_START( monsterb_7751_writeport )
 	{ I8039_p1, I8039_p1, monsterb_sh_dac_w },
 	{ I8039_p2, I8039_p2, monsterb_sh_busy_w },
 	{ I8039_p4, I8039_p4, monsterb_sh_offset_a0_a3_w },
 	{ I8039_p5, I8039_p5, monsterb_sh_offset_a4_a7_w },
 	{ I8039_p6, I8039_p6, monsterb_sh_offset_a8_a11_w },
 	{ I8039_p7, I8039_p7, monsterb_sh_rom_select_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress sindbadm_sound_readmem[] =
-{
+static MEMORY_READ_START( sindbadm_sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sindbadm_sound_writemem[] =
-{
+static MEMORY_WRITE_START( sindbadm_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa003, sindbadm_SN76496_0_w },    /* the four addresses are written */
 	{ 0xc000, 0xc003, sindbadm_SN76496_1_w },    /* in sequence */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /***************************************************************************
@@ -1196,7 +1148,7 @@ static const struct MachineDriver machine_driver_astrob =
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
 			3120000/15,    /* 3.12MHz crystal ??? */
-			speech_readmem,speech_writemem,speech_readport,speech_writeport,
+			speech_readmem,speech_writemem,0,0,
 			ignore_interrupt,1
 		}
 	},

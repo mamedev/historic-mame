@@ -19,19 +19,16 @@ void citycon_vh_stop(void);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x3000, 0x3000, citycon_in_r },	/* player 1 & 2 inputs multiplexed */
 	{ 0x3001, 0x3001, input_port_2_r },
 	{ 0x3002, 0x3002, input_port_3_r },
 	{ 0x3007, 0x3007, watchdog_reset_r },	/* ? */
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x20ff, citycon_charlookup_w, &citycon_charlookup },
@@ -42,28 +39,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3004, 0x3005, MWA_RAM, &citycon_scroll },
 	{ 0x3800, 0x3cff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0fff, MRA_RAM },
 //	{ 0x4002, 0x4002, YM2203_read_port_1_r },	/* ?? */
 	{ 0x6001, 0x6001, YM2203_read_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x4000, 0x4000, YM2203_control_port_1_w },
 	{ 0x4001, 0x4001, YM2203_write_port_1_w },
 	{ 0x6000, 0x6000, YM2203_control_port_0_w },
 	{ 0x6001, 0x6001, YM2203_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

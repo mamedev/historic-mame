@@ -99,7 +99,7 @@ void mcr_sound_init(void)
 	/* Chip Squeak Deluxe */
 	if (mcr_sound_config & MCR_CHIP_SQUEAK_DELUXE)
 	{
-		pia_config(0, PIA_ALTERNATE_ORDERING | PIA_16BIT_AUTO, &csdeluxe_pia_intf);
+		pia_config(0, PIA_ALTERNATE_ORDERING, &csdeluxe_pia_intf);
 		csdeluxe_dac_index = dac_index++;
 		csdeluxe_sound_cpu = sound_cpu++;
 		csdeluxe_reset_w(1);
@@ -110,7 +110,7 @@ void mcr_sound_init(void)
 	if (mcr_sound_config & MCR_SOUNDS_GOOD)
 	{
 		/* special case: Spy Hunter 2 has both Turbo CS and Sounds Good, so we use PIA slot 1 */
-		pia_config(1, PIA_ALTERNATE_ORDERING | PIA_16BIT_UPPER, &soundsgood_pia_intf);
+		pia_config(1, PIA_ALTERNATE_ORDERING, &soundsgood_pia_intf);
 		soundsgood_dac_index = dac_index++;
 		soundsgood_sound_cpu = sound_cpu++;
 		soundsgood_reset_w(1);
@@ -120,8 +120,8 @@ void mcr_sound_init(void)
 	/* Squawk n Talk */
 	if (mcr_sound_config & MCR_SQUAWK_N_TALK)
 	{
-		pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &squawkntalk_pia0_intf);
-		pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &squawkntalk_pia1_intf);
+		pia_config(0, PIA_STANDARD_ORDERING, &squawkntalk_pia0_intf);
+		pia_config(1, PIA_STANDARD_ORDERING, &squawkntalk_pia1_intf);
 		squawkntalk_sound_cpu = sound_cpu++;
 		squawkntalk_reset_w(1);
 		squawkntalk_reset_w(0);
@@ -246,8 +246,7 @@ struct AY8910interface ssio_ay8910_interface =
 
 
 /********* memory interfaces ***********/
-struct MemoryReadAddress ssio_readmem[] =
-{
+MEMORY_READ_START( ssio_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x9000, 0x9003, ssio_data_r },
@@ -255,11 +254,9 @@ struct MemoryReadAddress ssio_readmem[] =
 	{ 0xb001, 0xb001, AY8910_read_port_1_r },
 	{ 0xe000, 0xe000, MRA_NOP },
 	{ 0xf000, 0xf000, input_port_5_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress ssio_writemem[] =
-{
+MEMORY_WRITE_START( ssio_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xa000, 0xa000, AY8910_control_port_0_w },
@@ -268,8 +265,7 @@ struct MemoryWriteAddress ssio_writemem[] =
 	{ 0xb002, 0xb002, AY8910_write_port_1_w },
 	{ 0xc000, 0xc000, ssio_status_w },
 	{ 0xe000, 0xe000, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -333,21 +329,17 @@ struct DACinterface mcr_dual_dac_interface =
 
 
 /********* memory interfaces ***********/
-struct MemoryReadAddress csdeluxe_readmem[] =
-{
-	{ 0x000000, 0x007fff, MRA_ROM },
-	{ 0x018000, 0x018007, pia_0_r },
-	{ 0x01c000, 0x01cfff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+MEMORY_READ16_START( csdeluxe_readmem )
+	{ 0x000000, 0x007fff, MRA16_ROM },
+	{ 0x018000, 0x018007, pia_0_msb_r },
+	{ 0x01c000, 0x01cfff, MRA16_RAM },
+MEMORY_END
 
-struct MemoryWriteAddress csdeluxe_writemem[] =
-{
-	{ 0x000000, 0x007fff, MWA_ROM },
-	{ 0x018000, 0x018007, pia_0_w },
-	{ 0x01c000, 0x01cfff, MWA_BANK1 },
-	{ -1 }	/* end of table */
-};
+MEMORY_WRITE16_START( csdeluxe_writemem )
+	{ 0x000000, 0x007fff, MWA16_ROM },
+	{ 0x018000, 0x018007, pia_0_msb_w },
+	{ 0x01c000, 0x01cfff, MWA16_RAM },
+MEMORY_END
 
 
 /********* PIA interfaces ***********/
@@ -420,21 +412,17 @@ struct DACinterface turbocs_plus_soundsgood_dac_interface =
 
 
 /********* memory interfaces ***********/
-struct MemoryReadAddress soundsgood_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x060000, 0x060007, pia_1_r },
-	{ 0x070000, 0x070fff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+MEMORY_READ16_START( soundsgood_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x060000, 0x060007, pia_1_msb_r },
+	{ 0x070000, 0x070fff, MRA16_RAM },
+MEMORY_END
 
-struct MemoryWriteAddress soundsgood_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x060000, 0x060007, pia_1_w },
-	{ 0x070000, 0x070fff, MWA_BANK1 },
-	{ -1 }	/* end of table */
-};
+MEMORY_WRITE16_START( soundsgood_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x060000, 0x060007, pia_1_msb_w },
+	{ 0x070000, 0x070fff, MWA16_RAM },
+MEMORY_END
 
 
 /********* PIA interfaces ***********/
@@ -502,23 +490,19 @@ void turbocs_reset_w(int state)
 
 
 /********* memory interfaces ***********/
-struct MemoryReadAddress turbocs_readmem[] =
-{
+MEMORY_READ_START( turbocs_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x4000, 0x4003, pia_0_r },	/* Max RPM accesses the PIA here */
 	{ 0x6000, 0x6003, pia_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress turbocs_writemem[] =
-{
+MEMORY_WRITE_START( turbocs_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x4000, 0x4003, pia_0_w },	/* Max RPM accesses the PIA here */
 	{ 0x6000, 0x6003, pia_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /********* PIA interfaces ***********/
@@ -613,23 +597,19 @@ struct TMS5220interface squawkntalk_tms5220_interface =
 
 
 /********* memory interfaces ***********/
-struct MemoryReadAddress squawkntalk_readmem[] =
-{
+MEMORY_READ_START( squawkntalk_readmem )
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x0080, 0x0083, pia_0_r },
 	{ 0x0090, 0x0093, pia_1_r },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress squawkntalk_writemem[] =
-{
+MEMORY_WRITE_START( squawkntalk_writemem )
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x0080, 0x0083, pia_0_w },
 	{ 0x0090, 0x0093, pia_1_w },
 	{ 0xd000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /********* PIA interfaces ***********/

@@ -12,11 +12,12 @@ enum {
 	PROFILER_CPU6,
 	PROFILER_CPU7,
 	PROFILER_CPU8,
+	PROFILER_MEMREAD,
+	PROFILER_MEMWRITE,
 	PROFILER_VIDEO,
 	PROFILER_DRAWGFX,
 	PROFILER_COPYBITMAP,
 	PROFILER_TILEMAP_UPDATE,
-	PROFILER_TILEMAP_RENDER,
 	PROFILER_TILEMAP_DRAW,
 	PROFILER_BLIT,
 	PROFILER_SOUND,
@@ -49,7 +50,13 @@ profiler_mark(PROFILER_END);
 the profiler handles a FILO list so calls may be nested.
 */
 
-void profiler_mark(int type);
+#ifdef MAME_DEBUG
+#define profiler_mark(type) profiler__mark(type)
+#else
+#define profiler_mark(type)
+#endif
+
+void profiler__mark(int type);
 
 /* functions called by usrintf.c */
 void profiler_start(void);

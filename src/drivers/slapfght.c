@@ -219,8 +219,7 @@ int getstar_interrupt(void);
 
 /* Driver structure definition */
 
-static struct MemoryReadAddress tigerh_readmem[] =
-{
+static MEMORY_READ_START( tigerh_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_r },
@@ -229,11 +228,9 @@ static struct MemoryReadAddress tigerh_readmem[] =
 	{ 0xd800, 0xdfff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, MRA_RAM },
@@ -245,11 +242,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xe803, 0xe803, getstar_e803_r }, /* LE 151098 */
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
@@ -262,11 +257,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
 	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
 	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress slapbtuk_writemem[] =
-{
+static MEMORY_WRITE_START( slapbtuk_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
@@ -279,26 +272,20 @@ static struct MemoryWriteAddress slapbtuk_writemem[] =
 	{ 0xe803, 0xe803, MWA_RAM, &slapfight_scrollx_lo },
 	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
 	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, slapfight_port_00_r },	/* status register */
-	{ -1 } /* end of table */
-};
+PORT_END
 
-static struct IOWritePort tigerh_writeport[] =
-{
+static PORT_WRITE_START( tigerh_writeport )
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
 	{ 0x06, 0x06, slapfight_port_06_w },
 	{ 0x07, 0x07, slapfight_port_07_w },
-	{ -1 } /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
 //	{ 0x04, 0x04, getstar_port_04_w   },
@@ -306,22 +293,18 @@ static struct IOWritePort writeport[] =
 	{ 0x07, 0x07, slapfight_port_07_w },
 	{ 0x08, 0x08, slapfight_port_08_w },	/* select bank 0 */
 	{ 0x09, 0x09, slapfight_port_09_w },	/* select bank 1 */
-	{ -1 } /* end of table */
-};
+PORT_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0xa081, 0xa081, AY8910_read_port_0_r },
 	{ 0xa091, 0xa091, AY8910_read_port_1_r },
 	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0xa080, 0xa080, AY8910_control_port_0_w },
 	{ 0xa082, 0xa082, AY8910_write_port_0_w },
@@ -330,8 +313,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
 	{ 0xc800, 0xc80f, slapfight_dpram_w },
 	{ 0xc810, 0xcfff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

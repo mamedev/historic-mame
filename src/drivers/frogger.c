@@ -11,10 +11,10 @@ b040-b05f sprites
 b060-b0ff unused?
 
 read:
-8800      Watchdog Reset
-e000      IN0
-e002      IN1
-e004      IN2
+8800	  Watchdog Reset
+e000	  IN0
+e002	  IN1
+e004	  IN2
 
 *
  * IN0 (all bits are inverted)
@@ -36,7 +36,7 @@ e004      IN2
  * bit 3 : SHOOT 1 player 2 (TABLE only)
  * bit 2 : SHOOT 2 player 2 (TABLE only)
  * bit 1 :\ nr of lives
- * bit 0 :/ 00 = 3  01 = 5  10 = 7  11 = 256
+ * bit 0 :/ 00 = 3	01 = 5	10 = 7	11 = 256
 *
  * IN2 (all bits are inverted)
  * bit 7 : unused
@@ -50,13 +50,13 @@ e004      IN2
  *
 
 write:
-b808      interrupt enable
-b80c      screen horizontal flip
-b810      screen vertical flip
-b818      coin counter 1
-b81c      coin counter 2
-d000      To AY-3-8910 port A (commands for the second Z80)
-d002      trigger interrupt on sound CPU
+b808	  interrupt enable
+b80c	  screen horizontal flip
+b810	  screen vertical flip
+b818	  coin counter 1
+b81c	  coin counter 2
+d000	  To AY-3-8910 port A (commands for the second Z80)
+d002	  trigger interrupt on sound CPU
 
 
 SOUND BOARD:
@@ -65,11 +65,11 @@ SOUND BOARD:
 
 I/0 ports:
 read:
-40      8910 #1  read
+40		8910 #1  read
 
 write
-40      8910 #1  write
-80      8910 #1  control
+40		8910 #1  write
+80		8910 #1  control
 
 interrupts:
 interrupt mode 1 triggered by the main CPU
@@ -92,26 +92,28 @@ READ_HANDLER( frogger_portB_r );
 WRITE_HANDLER( frogger_sh_irqtrigger_w );
 WRITE_HANDLER( frogger2_sh_irqtrigger_w );
 
-static WRITE_HANDLER( frogger_counterb_w )
+static WRITE_HANDLER( frogger_coin_counter_0_w )
+{
+	coin_counter_w (0, data);
+}
+
+static WRITE_HANDLER( frogger_coin_counter_1_w )
 {
 	coin_counter_w (1, data);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, watchdog_reset_r },
 	{ 0xa800, 0xabff, MRA_RAM },	/* video RAM */
 	{ 0xb000, 0xb05f, MRA_RAM },	/* screen attributes, sprites */
-	{ 0xe000, 0xe000, input_port_0_r },	/* IN0 */
-	{ 0xe002, 0xe002, input_port_1_r },	/* IN1 */
-	{ 0xe004, 0xe004, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
+	{ 0xe000, 0xe000, input_port_0_r }, /* IN0 */
+	{ 0xe002, 0xe002, input_port_1_r }, /* IN1 */
+	{ 0xe004, 0xe004, input_port_2_r }, /* IN2 */
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa800, 0xabff, videoram_w, &videoram, &videoram_size },
@@ -119,28 +121,24 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb040, 0xb05f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb808, 0xb808, interrupt_enable_w },
 	{ 0xb80c, 0xb80c, frogger_flipscreen_w },
-	{ 0xb818, 0xb818, coin_counter_w },
-	{ 0xb81c, 0xb81c, frogger_counterb_w },
+	{ 0xb818, 0xb818, frogger_coin_counter_0_w },
+	{ 0xb81c, 0xb81c, frogger_coin_counter_1_w },
 	{ 0xd000, 0xd000, soundlatch_w },
 	{ 0xd002, 0xd002, frogger_sh_irqtrigger_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress froggrmc_readmem[] =
-{
+static MEMORY_READ_START( froggrmc_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9800, 0x985f, MRA_RAM },	/* screen attributes, sprites */
-	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
-	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
-	{ 0xb000, 0xb000, input_port_2_r },	/* IN2 */
+	{ 0xa000, 0xa000, input_port_0_r }, /* IN0 */
+	{ 0xa800, 0xa800, input_port_1_r }, /* IN1 */
+	{ 0xb000, 0xb000, input_port_2_r }, /* IN2 */
 	{ 0xb800, 0xb800, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress froggrmc_writemem[] =
-{
+static MEMORY_WRITE_START( froggrmc_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -150,39 +148,30 @@ static struct MemoryWriteAddress froggrmc_writemem[] =
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb001, 0xb001, frogger2_sh_irqtrigger_w },
 	{ 0xb006, 0xb006, frogger_flipscreen_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x17ff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x17ff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x40, 0x40, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x80, 0x80, AY8910_control_port_0_w },
 	{ 0x40, 0x40, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
@@ -199,10 +188,10 @@ INPUT_PORTS_START( frogger )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x02, "7" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x01, "5" )
+	PORT_DIPSETTING(	0x02, "7" )
+	PORT_BITX( 0,		0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot2 - unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot1 - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -213,13 +202,13 @@ INPUT_PORTS_START( frogger )
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
-	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
-	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1 C 1/1" )
-	PORT_DIPSETTING(    0x06, "A 1/1 B 1/6 C 1/1" )
+	PORT_DIPSETTING(	0x02, "A 2/1 B 2/1 C 2/1" )
+	PORT_DIPSETTING(	0x04, "A 2/1 B 1/3 C 2/1" )
+	PORT_DIPSETTING(	0x00, "A 1/1 B 1/1 C 1/1" )
+	PORT_DIPSETTING(	0x06, "A 1/1 B 1/6 C 1/1" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -245,20 +234,20 @@ INPUT_PORTS_START( froggrmc )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0xc0, "3" )
-	PORT_DIPSETTING(    0x80, "5" )
-	PORT_DIPSETTING(    0x40, "7" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0xc0, "3" )
+	PORT_DIPSETTING(	0x80, "5" )
+	PORT_DIPSETTING(	0x40, "7" )
+	PORT_BITX( 0,		0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
 
 	PORT_START	/* IN2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
-	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
-	PORT_DIPSETTING(    0x06, "A 1/1 B 1/1 C 1/1" )
-	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6 C 1/1" )
+	PORT_DIPSETTING(	0x02, "A 2/1 B 2/1 C 2/1" )
+	PORT_DIPSETTING(	0x04, "A 2/1 B 1/3 C 2/1" )
+	PORT_DIPSETTING(	0x06, "A 1/1 B 1/1 C 1/1" )
+	PORT_DIPSETTING(	0x00, "A 1/1 B 1/6 C 1/1" )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -273,15 +262,15 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	{ 256*8*8, 0 },	/* the two bitplanes are separated */
+	{ 256*8*8, 0 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8 /* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	64,	/* 64 sprites */
+	64, /* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 64*16*16, 0 },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
@@ -295,7 +284,7 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,     0, 16 },
+	{ REGION_GFX1, 0, &charlayout,	   0, 16 },
 	{ REGION_GFX1, 0, &spritelayout,   0,  8 },
 	{ -1 } /* end of array */
 };
@@ -305,7 +294,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 MHz */
+	14318000/8, /* 1.78975 MHz */
 	{ MIXERG(80,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ soundlatch_r },
 	{ frogger_portB_r },
@@ -321,13 +310,13 @@ static const struct MachineDriver machine_driver_frogger =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
+			18432000/6, /* 3.072 MHz */
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
+			14318000/8, /* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -364,13 +353,13 @@ static const struct MachineDriver machine_driver_froggrmc =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
+			18432000/6, /* 3.072 MHz */
 			froggrmc_readmem,froggrmc_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
+			14318000/8, /* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -520,9 +509,10 @@ static void init_froggrmc(void)
 
 
 
-GAME( 1981, frogger,  0,       frogger,  frogger,  frogger,  ROT90, "Konami", "Frogger" )
+GAME( 1981, frogger,  0,	   frogger,  frogger,  frogger,  ROT90, "Konami", "Frogger" )
 GAME( 1981, frogseg1, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 1)" )
 GAME( 1981, frogseg2, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 2)" )
 
 /* this version runs on modified Moon Cresta hardware */
 GAME( 1981, froggrmc, frogger, froggrmc, froggrmc, froggrmc, ROT90, "bootleg?", "Frogger (modified Moon Cresta hardware)" )
+

@@ -180,6 +180,7 @@ Sound board: uses the same board as Pooyan.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sndhrdw/timeplt.h"
 
 
 
@@ -187,12 +188,6 @@ extern unsigned char *tutankhm_scrollx;
 
 WRITE_HANDLER( tutankhm_videoram_w );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-/* defined in sndhrdw/timeplt.c */
-extern struct MemoryReadAddress timeplt_sound_readmem[];
-extern struct MemoryWriteAddress timeplt_sound_writemem[];
-extern struct AY8910interface timeplt_ay8910_interface;
-WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 static WRITE_HANDLER( tutankhm_bankselect_w )
@@ -210,9 +205,18 @@ static WRITE_HANDLER( tutankhm_coin_counter_w )
 	coin_counter_w(offset ^ 1, data);
 }
 
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_RAM },
 	{ 0x8120, 0x8120, watchdog_reset_r },
 	{ 0x8160, 0x8160, input_port_0_r },	/* DSW2 (inverted bits) */
@@ -223,11 +227,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8800, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, tutankhm_videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0x800f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x8100, 0x8100, MWA_RAM, &tutankhm_scrollx },
@@ -241,8 +243,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8700, 0x8700, soundlatch_w },
 	{ 0x8800, 0x8fff, MWA_RAM },
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( tutankhm )

@@ -183,7 +183,7 @@ int magix_vh_start(void)
 
 	if (tilemap_0 && tilemap_1)
 	{
-		tilemap_1->transparent_pen = 0;
+		tilemap_set_transparent_pen(tilemap_1,0);
 		return 0;
 	}
 	else return 1;
@@ -219,12 +219,10 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	/* No Sprites ... */
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
+	if (layers_ctrl&1)	tilemap_draw(bitmap, tilemap_0, 0,0);
+	else                fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
-	if (layers_ctrl&1)	tilemap_draw(bitmap, tilemap_0, 0);
-	else				osd_clearbitmap(bitmap);
-
-	if (layers_ctrl&2)	tilemap_draw(bitmap, tilemap_1, 0);
+	if (layers_ctrl&2)	tilemap_draw(bitmap, tilemap_1, 0,0);
 }

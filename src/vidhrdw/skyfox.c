@@ -5,14 +5,6 @@
 				driver by	Luca Elia (eliavit@unina.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q			shows the background
-		A			shows the sprites
-		S			shows 2 bytes from spriteram near each sprite
-
-		Keys can be used togheter!
-
 							[ 1 Background ]
 
 	The stars in the background are not tile based (I think!) and
@@ -239,26 +231,7 @@ void skyfox_draw_sprites(struct osd_bitmap *bitmap)
 
 			if (n==2)	code+=2;
 		}
-
-
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_S) )
-		{
-			struct DisplayText dt[2];
-			char buf[40];
-
-			dt[0].text	=	buf;	dt[0].color	=	UI_COLOR_NORMAL;
-			dt[0].x		=	240-y;	dt[0].y		=	x-0x60;
-			dt[1].text	=	0;
-
-			sprintf(buf, "%04X", spriteram[offs+2] + spriteram[offs+3] * 256);
-			displaytext(bitmap,dt,0,0);
-		}
-#endif
-
 	}
-
-
 }
 
 
@@ -316,30 +289,7 @@ void skyfox_draw_background(struct osd_bitmap *bitmap)
 
 void skyfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layers_ctrl = -1;
-
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 2;
-	if (msk != 0) layers_ctrl &= msk;
-
-#if 1
-{
-	/* show the vregs at e008-e00f */
-	char buf[80];
-	sprintf(buf,"%02X %02X %02X %02X-%02X %02X %02X %02X",
-				vreg[0],vreg[1],vreg[2],vreg[3],
-				vreg[4],vreg[5],vreg[6],vreg[7]);
-	usrintf_showmessage(buf);
-}
-#endif
-}
-#endif
-
-	osd_clearbitmap(bitmap);	// the bg is black
-	if (layers_ctrl&1)	skyfox_draw_background(bitmap);
-	if (layers_ctrl&2)	skyfox_draw_sprites(bitmap);
+	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area);	// the bg is black
+	skyfox_draw_background(bitmap);
+	skyfox_draw_sprites(bitmap);
 }

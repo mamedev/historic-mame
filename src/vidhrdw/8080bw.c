@@ -11,9 +11,9 @@
 #include "artwork.h"
 
 static int use_tmpbitmap;
-static data_t screen_red;
+static int screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */
-static data_t color_map_select;
+static int color_map_select;
 static int background_color;
 
 static int artwork_type;
@@ -97,7 +97,7 @@ void init_8080bw(void)
 	screen_red_enabled = 0;
 	artwork_type = NO_ARTWORK;
 	color_map_select = 0;
-	flip_screen_w(0,0);
+	flip_screen_set(0);
 }
 
 void init_invaders(void)
@@ -289,7 +289,7 @@ void invaders_flip_screen_w(int data)
 
 	if (input_port_3_r(0) & 0x01)
 	{
-		flip_screen_w(0, data);
+		flip_screen_set(data);
 	}
 }
 

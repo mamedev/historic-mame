@@ -8,14 +8,15 @@
 #include "vidhrdw/generic.h"
 #include <math.h>
 
-unsigned char *nemesis_videoram1;
-unsigned char *nemesis_videoram2;
+data16_t *nemesis_videoram1;
+data16_t *nemesis_videoram2;
 
-unsigned char *nemesis_characterram;
-unsigned char *nemesis_characterram_gfx;
+data16_t *nemesis_characterram;
 size_t nemesis_characterram_size;
-unsigned char *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
-unsigned char *nemesis_yscroll1,*nemesis_yscroll2;
+data16_t *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
+data16_t *nemesis_yscroll1,*nemesis_yscroll2;
+
+static int spriteram_words;
 
 static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
@@ -32,12 +33,12 @@ static unsigned char *sprite3232_dirty;	/* 128 sprites */
 static unsigned char *sprite168_dirty;	/* 1024 sprites */
 static unsigned char *sprite6464_dirty;	/* 32 sprites */
 
-WRITE_HANDLER( nemesis_palette_w )
+WRITE16_HANDLER( nemesis_palette_word_w )
 {
 	int r,g,b,bit1,bit2,bit3,bit4,bit5;
 
-	COMBINE_WORD_MEM(&paletteram[offset],data);
-	data = READ_WORD(&paletteram[offset]);
+	COMBINE_DATA(paletteram16 + offset);
+	data = paletteram16[offset];
 
 	/* Mish, 30/11/99 - Schematics show the resistor values are:
 		300 Ohms
@@ -73,17 +74,17 @@ WRITE_HANDLER( nemesis_palette_w )
 	b = MULTIPLIER;
 	b = pow (b/255.0, 2)*255;
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_change_color(offset,r,g,b);
 }
 
-WRITE_HANDLER( salamander_palette_w )
+WRITE16_HANDLER( salamander_palette_word_w )
 {
 	int r,g,b;
 
-	COMBINE_WORD_MEM(&paletteram[offset],data);
-	if (offset%4) offset-=2;
+	COMBINE_DATA(paletteram16 + offset);
+	offset &= ~1;
 
-	data = ((READ_WORD(&paletteram[offset]) << 8) | READ_WORD(&paletteram[offset+2]))&0xffff;
+	data = (paletteram16[offset] << 8) | paletteram16[offset+1];
 
 	r = (data >>  0) & 0x1f;
 	g = (data >>  5) & 0x1f;
@@ -93,94 +94,90 @@ WRITE_HANDLER( salamander_palette_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 4,r,g,b);
+	palette_change_color(offset / 2,r,g,b);
 }
 
-READ_HANDLER( nemesis_videoram1_r )
+READ16_HANDLER( nemesis_videoram1_word_r )
 {
-	return READ_WORD(&nemesis_videoram1[offset]);
+	return nemesis_videoram1[offset];
 }
 
-WRITE_HANDLER( nemesis_videoram1_w )
+WRITE16_HANDLER( nemesis_videoram1_word_w )
 {
-	COMBINE_WORD_MEM(&nemesis_videoram1[offset],data);
-	if (offset < 0x1000)
-		video1_dirty[offset / 2] = 1;
+	COMBINE_DATA(nemesis_videoram1 + offset);
+	if (offset < 0x800)
+		video1_dirty[offset] = 1;
 	else
-		video2_dirty[(offset - 0x1000) / 2] = 1;
+		video2_dirty[offset - 0x800] = 1;
 }
 
-READ_HANDLER( nemesis_videoram2_r )
+READ16_HANDLER( nemesis_videoram2_word_r )
 {
-	return READ_WORD(&nemesis_videoram2[offset]);
+	return nemesis_videoram2[offset];
 }
 
-WRITE_HANDLER( nemesis_videoram2_w )
+WRITE16_HANDLER( nemesis_videoram2_word_w )
 {
-	COMBINE_WORD_MEM(&nemesis_videoram2[offset],data);
-	if (offset < 0x1000)
-		video1_dirty[offset / 2] = 1;
+	COMBINE_DATA(nemesis_videoram2 + offset);
+	if (offset < 0x800)
+		video1_dirty[offset] = 1;
 	else
-		video2_dirty[(offset - 0x1000) / 2] = 1;
+		video2_dirty[offset - 0x800] = 1;
 }
 
 
-READ_HANDLER( gx400_xscroll1_r ) { return READ_WORD(&nemesis_xscroll1[offset]);}
-READ_HANDLER( gx400_xscroll2_r ) { return READ_WORD(&nemesis_xscroll2[offset]);}
-READ_HANDLER( gx400_yscroll_r ) { return READ_WORD(&nemesis_yscroll[offset]);}
+READ16_HANDLER( gx400_xscroll1_word_r ) { return nemesis_xscroll1[offset];}
+READ16_HANDLER( gx400_xscroll2_word_r ) { return nemesis_xscroll2[offset];}
+READ16_HANDLER( gx400_yscroll_word_r ) { return nemesis_yscroll[offset];}
 
-WRITE_HANDLER( gx400_xscroll1_w ) { COMBINE_WORD_MEM(&nemesis_xscroll1[offset],data);}
-WRITE_HANDLER( gx400_xscroll2_w ) { COMBINE_WORD_MEM(&nemesis_xscroll2[offset],data);}
-WRITE_HANDLER( gx400_yscroll_w ) { COMBINE_WORD_MEM(&nemesis_yscroll[offset],data);}
+WRITE16_HANDLER( gx400_xscroll1_word_w ) { COMBINE_DATA(nemesis_xscroll1 + offset);}
+WRITE16_HANDLER( gx400_xscroll2_word_w ) { COMBINE_DATA(nemesis_xscroll2 + offset);}
+WRITE16_HANDLER( gx400_yscroll_word_w ) { COMBINE_DATA(nemesis_yscroll + offset);}
 
 
 /* we have to straighten out the 16-bit word into bytes for gfxdecode() to work */
-READ_HANDLER( nemesis_characterram_r )
+READ16_HANDLER( nemesis_characterram_word_r )
 {
-	int res;
-
-	res = READ_WORD(&nemesis_characterram_gfx[offset]);
-
-	#ifdef LSB_FIRST
-	res = ((res & 0x00ff) << 8) | ((res & 0xff00) >> 8);
-	#endif
-
-	return res;
+	return nemesis_characterram[offset];
 }
 
-WRITE_HANDLER( nemesis_characterram_w )
+WRITE16_HANDLER( nemesis_characterram_word_w )
 {
-	int oldword = READ_WORD(&nemesis_characterram_gfx[offset]);
-	int newword;
+	data16_t oldword = nemesis_characterram[offset];
+	COMBINE_DATA(nemesis_characterram + offset);
+	data = nemesis_characterram[offset];
 
-	COMBINE_WORD_MEM(&nemesis_characterram[offset],data);	/* this is need so that twinbee can run code in the
-																character RAM */
-
-	#ifdef LSB_FIRST
-	data = ((data & 0x00ff00ff) << 8) | ((data & 0xff00ff00) >> 8);
-	#endif
-
-	newword = COMBINE_WORD(oldword,data);
-	if (oldword != newword)
+	if (oldword != data)
 	{
-		WRITE_WORD(&nemesis_characterram_gfx[offset],newword);
-
-		char_dirty[offset / 32] = 1;
-		sprite_dirty[offset / 128] = 1;
-		sprite3216_dirty[offset / 256] = 1;
-		sprite1632_dirty[offset / 256] = 1;
-		sprite3232_dirty[offset / 512] = 1;
-		sprite168_dirty[offset / 64] = 1;
-		sprite816_dirty[offset / 64] = 1;
-		sprite6464_dirty[offset / 2048] = 1;
+		char_dirty[offset / 16] = 1;
+		sprite_dirty[offset / 64] = 1;
+		sprite3216_dirty[offset / 128] = 1;
+		sprite1632_dirty[offset / 128] = 1;
+		sprite3232_dirty[offset / 256] = 1;
+		sprite168_dirty[offset / 32] = 1;
+		sprite816_dirty[offset / 32] = 1;
+		sprite6464_dirty[offset / 1024] = 1;
 	}
 }
 
+
+/* Fix the gdx decode info for lsb first systems */
+static void nemesis_lsbify_gfx(void)
+{
+	int i, j;
+	for(i=0; i<8; i++)
+		for(j=0; j<Machine->drv->gfxdecodeinfo[i].gfxlayout->width; j++)
+			Machine->drv->gfxdecodeinfo[i].gfxlayout->xoffset[j] ^= 8;
+}
 
 
 /* free the palette dirty array */
 void nemesis_vh_stop(void)
 {
+#ifdef LSB_FIRST
+	nemesis_lsbify_gfx();
+#endif
+
 	bitmap_free(tmpbitmap);
 	bitmap_free(tmpbitmap2);
 	bitmap_free(tmpbitmap3);
@@ -197,12 +194,17 @@ void nemesis_vh_stop(void)
 	char_dirty = 0;
 	free (video1_dirty);
 	free (video2_dirty);
-	free (nemesis_characterram_gfx);
 }
 
 /* claim a palette dirty array */
 int nemesis_vh_start(void)
 {
+#ifdef LSB_FIRST
+	nemesis_lsbify_gfx();
+#endif
+
+	spriteram_words = spriteram_size / 2;
+
 	if ((tmpbitmap = bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		nemesis_vh_stop();
@@ -293,13 +295,7 @@ int nemesis_vh_start(void)
 	memset(video1_dirty,1,0x800);
 	memset(video2_dirty,1,0x800);
 
-	nemesis_characterram_gfx = malloc(nemesis_characterram_size);
-	if(!nemesis_characterram_gfx)
-	{
-		nemesis_vh_stop();
-		return 1;
-	}
-	memset(nemesis_characterram_gfx,0,nemesis_characterram_size);
+	memset(nemesis_characterram,0,nemesis_characterram_size);
 
 	return 0;
 }
@@ -817,23 +813,24 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 	for (priority=0;priority<256;priority++)
 	{
-		for (adress = 0;adress < spriteram_size;adress += 16)
+		for (adress = 0;adress < spriteram_words;adress += 8)
 		{
-			if(READ_WORD(&spriteram[adress])!=priority) continue;
+			if(spriteram16[adress]!=priority) continue;
 
-			code = READ_WORD(&spriteram[adress+6]) + ((READ_WORD(&spriteram[adress+8]) & 0xc0) << 2);
-			zoom=READ_WORD(&spriteram[adress+4])&0xff;
+			code = spriteram16[adress+3] + ((spriteram16[adress+4] & 0xc0) << 2);
+			zoom = spriteram16[adress+2]&0xff;
 			if (zoom != 0xFF || code!=0)
 			{
-				size=READ_WORD(&spriteram[adress+2]);
+				size=spriteram16[adress+1];
 				zoom+=(size&0xc0)<<2;
 
-				sx = READ_WORD(&spriteram[adress+10])&0xff;
-				sy = READ_WORD(&spriteram[adress+12])&0xff;
-				if(READ_WORD(&spriteram[adress+8])&1) sx-=0x100;	/* fixes left side clip */
-				color = (READ_WORD(&spriteram[adress+8]) & 0x1e) >> 1;
-				flipx = READ_WORD(&spriteram[adress+2]) & 0x01;
-				flipy = READ_WORD(&spriteram[adress+8]) & 0x20;
+				sx = spriteram16[adress+5]&0xff;
+				sy = spriteram16[adress+6]&0xff;
+				if(spriteram16[adress+4]&1)
+					sx-=0x100;	/* fixes left side clip */
+				color = (spriteram16[adress+4] & 0x1e) >> 1;
+				flipx = spriteram16[adress+1] & 0x01;
+				flipy = spriteram16[adress+4] & 0x20;
 
 				switch(size&0x38)
 				{
@@ -915,16 +912,16 @@ static void setup_palette(void)
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 0x80;color++) colmask[color] = 0;
-	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+	for (offs = 0x800 - 1;offs >= 0;offs --)
 	{
-		code = READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x7ff;
+		code = nemesis_videoram1[offs + 0x800] & 0x7ff;
 		if (char_dirty[code] == 1)
 		{
-			decodechar(Machine->gfx[0],code,nemesis_characterram_gfx,
+			decodechar(Machine->gfx[0],code,(unsigned char *)nemesis_characterram,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			char_dirty[code] = 2;
 		}
-		color = READ_WORD (&nemesis_videoram2[offs + 0x1000]) & 0x7f;
+		color = nemesis_videoram2[offs + 0x800] & 0x7f;
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
 
@@ -942,14 +939,14 @@ static void setup_palette(void)
 
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 0x80;color++) colmask[color] = 0;
-	for (offs = 0;offs < spriteram_size;offs += 16)
+	for (offs = 0;offs < spriteram_words;offs += 8)
 	{
 		int char_type;
-		int zoom=READ_WORD(&spriteram[offs+4]);
-		code = READ_WORD(&spriteram[offs+6]) + ((READ_WORD(&spriteram[offs+8]) & 0xc0) << 2);
+		int zoom = spriteram16[offs+2];
+		code = spriteram16[offs+3] + ((spriteram16[offs+4] & 0xc0) << 2);
 		if (zoom != 0xFF || code!=0)
 		{
-			int size=READ_WORD(&spriteram[offs+2]);
+			int size = spriteram16[offs+1];
 			switch(size&0x38)
 			{
 				case 0x00:
@@ -958,7 +955,7 @@ static void setup_palette(void)
 					code/=8;
 					if (sprite3232_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite3232_dirty[code] = 0;
 					}
@@ -969,7 +966,7 @@ static void setup_palette(void)
 					code/=4;
 					if (sprite1632_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite1632_dirty[code] = 0;
 
@@ -981,7 +978,7 @@ static void setup_palette(void)
 					code/=4;
 					if (sprite3216_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite3216_dirty[code] = 0;
 					}
@@ -992,7 +989,7 @@ static void setup_palette(void)
 					code/=32;
 					if (sprite6464_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite6464_dirty[code] = 0;
 					}
@@ -1003,7 +1000,7 @@ static void setup_palette(void)
 					code*=2;
 					if (char_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 						Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						char_dirty[code] = 0;
 					}
@@ -1013,7 +1010,7 @@ static void setup_palette(void)
 					char_type=6;
 					if (sprite168_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite168_dirty[code] = 0;
 					}
@@ -1023,7 +1020,7 @@ static void setup_palette(void)
 					char_type=3;
 					if (sprite816_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite816_dirty[code] = 0;
 					}
@@ -1036,7 +1033,7 @@ static void setup_palette(void)
 					code/=2;
 					if (sprite_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite_dirty[code] = 2;
 
@@ -1044,7 +1041,7 @@ static void setup_palette(void)
 					break;
 			}
 
-			color = (READ_WORD(&spriteram[offs+8]) & 0x1e) >> 1;
+			color = (spriteram16[offs+4] & 0x1e) >> 1;
 			colmask[color] |= Machine->gfx[char_type]->pen_usage[code];
 		}
 	}
@@ -1064,16 +1061,16 @@ static void setup_palette(void)
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 0x80;color++) colmask[color] = 0;
-	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+	for (offs = 0x800 - 1;offs >= 0;offs --)
 	{
-		code = READ_WORD (&nemesis_videoram1[offs]) & 0x7ff;
+		code = nemesis_videoram1[offs] & 0x7ff;
 		if (char_dirty[code] == 1)
 		{
-			decodechar(Machine->gfx[0],code,nemesis_characterram_gfx,
+			decodechar(Machine->gfx[0],code,(unsigned char *)nemesis_characterram,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			char_dirty[code] = 2;
 		}
-		color = READ_WORD (&nemesis_videoram2[offs]) & 0x7f;
+		color = nemesis_videoram2[offs] & 0x7f;
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
 
@@ -1100,29 +1097,29 @@ static void setup_backgrounds(void)
 	int offs;
 
 	/* Do the foreground first */
-	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+	for (offs = 0x800 - 1;offs >= 0;offs --)
 	{
 		int code,color;
 
 
-		code = READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x7ff;
+		code = nemesis_videoram1[offs + 0x800] & 0x7ff;
 
-		if (video2_dirty[offs/2] || char_dirty[code])
+		if (video2_dirty[offs] || char_dirty[code])
 		{
 			int sx,sy,flipx,flipy;
 
-			color = READ_WORD (&nemesis_videoram2[offs + 0x1000]) & 0x7f;
+			color = nemesis_videoram2[offs + 0x800] & 0x7f;
 
-			video2_dirty[offs/2] = 0;
+			video2_dirty[offs] = 0;
 
-			sx = (offs/2) % 64;
-			sy = (offs/2) / 64;
-			flipx = READ_WORD (&nemesis_videoram2[offs + 0x1000]) & 0x80;
-			flipy =  READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x800;
+			sx = offs % 64;
+			sy = offs / 64;
+			flipx = nemesis_videoram2[offs + 0x800] & 0x80;
+			flipy = nemesis_videoram1[offs + 0x800] & 0x800;
 
-			if(READ_WORD (&nemesis_videoram1[offs + 0x1000])!=0 || READ_WORD (&nemesis_videoram2[offs + 0x1000])!=0)
+			if(nemesis_videoram1[offs + 0x800]!=0 || nemesis_videoram2[offs + 0x800]!=0)
 			{
-				if (READ_WORD(&nemesis_videoram1[offs + 0x1000]) & 0x1000)		//screen priority
+				if (nemesis_videoram1[offs + 0x800] & 0x1000)		//screen priority
 				{
 					struct rectangle clip;
 
@@ -1167,29 +1164,29 @@ static void setup_backgrounds(void)
 	}
 
 	/* Background */
-	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+	for (offs = 0x800 - 1;offs >= 0;offs --)
 	{
 		int code,color;
 
 
-		code = READ_WORD (&nemesis_videoram1[offs]) & 0x7ff;
+		code = nemesis_videoram1[offs] & 0x7ff;
 
-		if (video1_dirty[offs/2] || char_dirty[code])
+		if (video1_dirty[offs] || char_dirty[code])
 		{
 			int sx,sy,flipx,flipy;
 
-			video1_dirty[offs/2] = 0;
+			video1_dirty[offs] = 0;
 
-			color = READ_WORD (&nemesis_videoram2[offs]) & 0x7f;
+			color = nemesis_videoram2[offs] & 0x7f;
 
-			sx = (offs/2) % 64;
-			sy = (offs/2) / 64;
-			flipx = READ_WORD (&nemesis_videoram2[offs]) & 0x80;
-			flipy = READ_WORD (&nemesis_videoram1[offs]) & 0x800;
+			sx = offs % 64;
+			sy = offs / 64;
+			flipx = nemesis_videoram2[offs] & 0x80;
+			flipy = nemesis_videoram1[offs] & 0x800;
 
-			if(READ_WORD (&nemesis_videoram1[offs])!=0 || READ_WORD (&nemesis_videoram2[offs])!=0)
+			if(nemesis_videoram1[offs]!=0 || nemesis_videoram2[offs]!=0)
 			{
-				if (READ_WORD(&nemesis_videoram1[offs]) & 0x1000)		//screen priority
+				if (nemesis_videoram1[offs] & 0x1000)		//screen priority
 				{
 					struct rectangle clip;
 
@@ -1247,22 +1244,22 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* screen flash */
-	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00]) & 0x7ff],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],&Machine->visible_area);
 
 	/* Copy the background bitmap */
-	yscroll = -(READ_WORD(&nemesis_yscroll[0x300]) & 0xff);	/* used on nemesis level 2 */
+	yscroll = -(nemesis_yscroll[0x180] & 0xff);	/* used on nemesis level 2 */
 	for (offs = 0;offs < 256;offs++)
 	{
-		xscroll2[offs] = -((READ_WORD(&nemesis_xscroll2[2 * offs]) & 0xff) +
-				((READ_WORD(&nemesis_xscroll2[0x200 + 2 * offs]) & 1) << 8));
+		xscroll2[offs] = -((nemesis_xscroll2[offs] & 0xff) +
+				((nemesis_xscroll2[0x100 + offs] & 1) << 8));
 	}
 	copyscrollbitmap(bitmap,tmpbitmap,256,xscroll2,1,&yscroll,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* Do the foreground */
 	for (offs = 0;offs < 256;offs++)
 	{
-		xscroll[offs] = -((READ_WORD(&nemesis_xscroll1[2 * offs]) & 0xff) +
-				((READ_WORD(&nemesis_xscroll1[0x200 + 2 * offs]) & 1) << 8));
+		xscroll[offs] = -((nemesis_xscroll1[offs] & 0xff) +
+				((nemesis_xscroll1[0x100 + offs] & 1) << 8));
 	}
 	copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
@@ -1289,19 +1286,19 @@ void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* Copy the background bitmap */
-	yscroll = -(READ_WORD(&nemesis_yscroll[0x300]) & 0xff);	/* used on nemesis level 2 */
+	yscroll = -(nemesis_yscroll[0x180] & 0xff);	/* used on nemesis level 2 */
 	for (offs = 0;offs < 256;offs++)
 	{
-		xscroll2[offs] = -((READ_WORD(&nemesis_xscroll2[2 * offs]) & 0xff) +
-				((READ_WORD(&nemesis_xscroll2[0x200 + 2 * offs]) & 1) << 8));
+		xscroll2[offs] = -((nemesis_xscroll2[offs] & 0xff) +
+				((nemesis_xscroll2[0x100 + offs] & 1) << 8));
 	}
 	copyscrollbitmap(bitmap,tmpbitmap,256,xscroll2,1,&yscroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Do the foreground */
 	for (offs = 0;offs < 256;offs++)
 	{
-		xscroll[offs] = -((READ_WORD(&nemesis_xscroll1[2 * offs]) & 0xff) +
-				((READ_WORD(&nemesis_xscroll1[0x200 + 2 * offs]) & 1) << 8));
+		xscroll[offs] = -((nemesis_xscroll1[offs] & 0xff) +
+				((nemesis_xscroll1[0x100 + offs] & 1) << 8));
 	}
 	copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
@@ -1339,35 +1336,35 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* screen flash */
-	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00]) & 0x7ff],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],&Machine->visible_area);
 
 	/* Kludge - check if we need row or column scroll */
-	if (READ_WORD(&nemesis_yscroll[0x780]) || READ_WORD(&nemesis_yscroll[0x790])) {
+	if (nemesis_yscroll[0x3c0] || nemesis_yscroll[0x3c8]) {
 		/* Column scroll */
 		culumn_scroll = 1;
 		l=0;
-		for (offs = 0x800-2;offs >= 0x780; offs-=2)
+		for (offs = 0x400-1;offs >= 0x3c0; offs--)
 		{
-			yscroll[l] = yscroll[l+64] = -READ_WORD(&nemesis_yscroll[offs]);
+			yscroll[l] = yscroll[l+64] = -nemesis_yscroll[offs];
 			l++;
 		}
 		copyscrollbitmap(bitmap,tmpbitmap2,0,0,128,yscroll,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	} else { /* Rowscroll */
 		for (offs = 0;offs < 256;offs++)
 		{
-			xscroll[offs] = -((READ_WORD(&nemesis_xscroll1[2 * offs]) & 0xff) +
-					((READ_WORD(&nemesis_xscroll1[0x200 + 2 * offs]) & 1) << 8));
+			xscroll[offs] = -((nemesis_xscroll1[offs] & 0xff) +
+					((nemesis_xscroll1[0x100 + offs] & 1) << 8));
 		}
 		copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 	/* Copy the foreground bitmap */
-	if (READ_WORD(&nemesis_yscroll[0x700]) || READ_WORD(&nemesis_yscroll[0x710])) {
+	if (nemesis_yscroll[0x380] || nemesis_yscroll[0x388]) {
 		/* Column scroll */
 		l=0;
-		for (offs = 0x780-2;offs >= 0x700; offs-=2)
+		for (offs = 0x3c0-1;offs >= 0x380; offs--)
 		{
-			yscroll2[l] = yscroll2[l+64] = -READ_WORD(&nemesis_yscroll[offs]);
+			yscroll2[l] = yscroll2[l+64] = -nemesis_yscroll[offs];
 			l++;
 		}
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,128,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
@@ -1383,8 +1380,8 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	} else { /* Rowscroll */
 		for (offs = 0;offs < 256;offs++)
 		{
-			xscroll2[offs] = -((READ_WORD(&nemesis_xscroll2[2 * offs]) & 0xff) +
-					((READ_WORD(&nemesis_xscroll2[0x200 + 2 * offs]) & 1) << 8));
+			xscroll2[offs] = -((nemesis_xscroll2[offs] & 0xff) +
+					((nemesis_xscroll2[0x100 + offs] & 1) << 8));
 		}
 		copyscrollbitmap(bitmap,tmpbitmap,256,xscroll2,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
@@ -1404,4 +1401,3 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			char_dirty[offs] = 0;
 	}
 }
-

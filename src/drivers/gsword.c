@@ -296,16 +296,13 @@ WRITE_HANDLER( adpcm_soundcommand_w )
 	cpu_set_nmi_line(2, PULSE_LINE);
 }
 
-static struct MemoryReadAddress gsword_readmem[] =
-{
+static MEMORY_READ_START( gsword_readmem )
 	{ 0x0000, 0x8fff, MRA_ROM },
 	{ 0x9000, 0x9fff, MRA_RAM },
 	{ 0xb000, 0xb7ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gsword_writemem[] =
-{
+static MEMORY_WRITE_START( gsword_writemem )
 	{ 0x0000, 0x8fff, MWA_ROM },
 	{ 0x9000, 0x9fff, MWA_RAM },
 	{ 0xa380, 0xa3ff, MWA_RAM, &gs_spritetile_ram },
@@ -315,52 +312,38 @@ static struct MemoryWriteAddress gsword_writemem[] =
 	{ 0xab00, 0xab00, MWA_RAM, &gs_scrolly_ram },
 	{ 0xab80, 0xabff, MWA_RAM, &gs_spriteattrib_ram },
 	{ 0xb000, 0xb7ff, gs_videoram_w, &gs_videoram, &gs_videoram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x6000, 0x6000, adpcm_soundcommand_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu3[] =
-{
+static MEMORY_READ_START( readmem_cpu3 )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu3[] =
-{
+static MEMORY_WRITE_START( writemem_cpu3 )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0x8000, gsword_adpcm_data_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x7e, 0x7f, TAITO8741_0_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x7e, 0x7f, TAITO8741_0_w },
-	{ -1 }
-};
+PORT_END
 
-static struct IOReadPort readport_cpu2[] =
-{
+static PORT_READ_START( readport_cpu2 )
 	{ 0x00, 0x01, TAITO8741_2_r },
 	{ 0x20, 0x21, TAITO8741_3_r },
 	{ 0x40, 0x41, TAITO8741_1_r },
@@ -369,11 +352,9 @@ static struct IOReadPort readport_cpu2[] =
 	{ 0x80, 0x80, gsword_fake_1_r },
 	{ 0x81, 0x81, AY8910_read_port_1_r },
 	{ 0xe0, 0xe0, IORP_NOP }, /* ?? */
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport_cpu2[] =
-{
+static PORT_WRITE_START( writeport_cpu2 )
 	{ 0x00, 0x01, TAITO8741_2_w },
 	{ 0x20, 0x21, TAITO8741_3_w },
 	{ 0x40, 0x41, TAITO8741_1_w },
@@ -383,8 +364,7 @@ static struct IOWritePort writeport_cpu2[] =
 	{ 0x81, 0x81, AY8910_write_port_1_w },
 	{ 0xa0, 0xa0, IOWP_NOP }, /* ?? */
 	{ 0xe0, 0xe0, IOWP_NOP }, /* watch dog ?*/
-	{ -1 }
-};
+PORT_END
 
 INPUT_PORTS_START( gsword )
 	PORT_START	/* IN0 (8741-2 port1?) */

@@ -188,29 +188,24 @@ static void mcr2_nvram_handler(void *file, int read_or_write)
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xf000, 0xf1ff, MRA_RAM },
 	{ 0xf800, 0xff7f, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xf1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf800, 0xff7f, mcr2_videoram_w, &videoram, &videoram_size },
 	{ 0xff80, 0xffff, mcr2_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
@@ -219,19 +214,16 @@ static struct IOReadPort readport[] =
 	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
-	{ -1 }
-};
+PORT_END
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, mcr_control_port_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
 	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

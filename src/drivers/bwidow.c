@@ -296,8 +296,7 @@ WRITE_HANDLER( bwidow_misc_w )
 }
 
 
-static struct MemoryReadAddress bwidow_readmem[] =
-{
+static MEMORY_READ_START( bwidow_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x2000, 0x27ff, MRA_RAM },
 	{ 0x2800, 0x5fff, MRA_ROM },
@@ -308,11 +307,9 @@ static struct MemoryReadAddress bwidow_readmem[] =
 	{ 0x8000, 0x8000, input_port_3_r },	/* IN1 */
 	{ 0x8800, 0x8800, input_port_4_r },	/* IN1 */
 	{ 0x9000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bwidow_writemem[] =
-{
+static MEMORY_WRITE_START( bwidow_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x2000, 0x27ff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x2800, 0x5fff, MWA_ROM },
@@ -326,11 +323,9 @@ static struct MemoryWriteAddress bwidow_writemem[] =
 	{ 0x8940, 0x897f, atari_vg_earom_w },
 	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
 	{ 0x9000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress spacduel_readmem[] =
-{
+static MEMORY_READ_START( spacduel_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x0900, 0x0907, spacduel_IN3_r },	/* IN1 */
@@ -341,11 +336,9 @@ static struct MemoryReadAddress spacduel_readmem[] =
 	{ 0x2800, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x8fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spacduel_writemem[] =
-{
+static MEMORY_WRITE_START( spacduel_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
 //	{ 0x0c00, 0x0c00, coin_counter_w }, /* coin out */
@@ -361,8 +354,7 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ 0x2800, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x8fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( bwidow )
 	PORT_START	/* IN0 */

@@ -99,8 +99,7 @@ WRITE_HANDLER( zodiac_master_soundlatch_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0x5800, 0x5fff, MRA_RAM },
 	{ 0x7000, 0x7000, MRA_RAM },	/* ?? */
@@ -114,11 +113,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6084, 0x6084, input_port_3_r },	/* IN3 */
 	{ 0x6090, 0x6090, soundlatch_r },	/* the main CPU reads the command back from the slave */
 	{ 0xc000, 0xcfff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x5800, 0x5fff, MWA_RAM },
 	{ 0x6090, 0x6090, zodiac_master_soundlatch_w },
@@ -132,33 +129,26 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9020, 0x903f, MWA_RAM, &espial_column_scroll },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
 	{ 0xc000, 0xcfff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x4000, 0x4000, interrupt_enable_w },
 	{ 0x6000, 0x6000, soundlatch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( espial )

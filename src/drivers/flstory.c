@@ -64,8 +64,7 @@ static READ_HANDLER( flstory_d401_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0xbfff, MRA_ROM },
     { 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, flstory_mcu_r },
@@ -79,11 +78,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd805, 0xd805, flstory_mcu_status_r },
 	{ 0xd806, 0xd806, input_port_5_r },
     { 0xe000, 0xe7ff, MRA_RAM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd000, 0xd000, flstory_mcu_w },
@@ -95,20 +92,16 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xdd00, 0xdeff, flstory_palette_w },
 	{ 0xdf03, 0xdf03, flstory_gfxctrl_w },
 	{ 0xe000, 0xe7ff, MWA_RAM },	/* work RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
     { 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
     { 0xd800, 0xd800, soundlatch_r },
     { 0xe000, 0xefff, MRA_ROM },	/* space for diagnostics ROM */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc800, AY8910_control_port_0_w },
@@ -119,21 +112,17 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xda00, 0xda00, MWA_RAM },	/* ??? */
 	{ 0xdc00, 0xdc00, MWA_RAM },	/* ??? */
 	{ 0xe000, 0xefff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress m68705_readmem[] =
-{
+static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, flstory_68705_portA_r },
 	{ 0x0001, 0x0001, flstory_68705_portB_r },
 	{ 0x0002, 0x0002, flstory_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m68705_writemem[] =
-{
+static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0000, 0x0000, flstory_68705_portA_w },
 	{ 0x0001, 0x0001, flstory_68705_portB_w },
 	{ 0x0002, 0x0002, flstory_68705_portC_w },
@@ -142,8 +131,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 	{ 0x0006, 0x0006, flstory_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

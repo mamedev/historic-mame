@@ -35,31 +35,24 @@ extern int p2_sprite;
 extern int s1_sprite;
 extern int s2_sprite;
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0fff, MRA_ROM }, /* Program ROM */
 	{ 0x1000, 0x10ff, MRA_RAM }, /* RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x0fff, MWA_ROM }, /* Program ROM */
     { 0x1000, 0x10ff, MWA_RAM }, /* RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
     { 0x00, 0x00, input_port_0_r },
     { 0x01, 0x01, input_port_1_r },
     { 0x02, 0x02, starcrus_coll_det_r },
     { 0x03, 0x03, input_port_2_r },
-    { -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
     { 0x00, 0x00, starcrus_s1_x_w },
     { 0x01, 0x01, starcrus_s1_y_w },
     { 0x02, 0x02, starcrus_s2_x_w },
@@ -72,8 +65,7 @@ static struct IOWritePort writeport[] =
     { 0x09, 0x09, starcrus_ship_parm_2_w },
     { 0x0a, 0x0a, starcrus_proj_parm_1_w },
     { 0x0b, 0x0b, starcrus_proj_parm_2_w },
-    { -1 }  /* end of table */
-};
+PORT_END
 
 
 

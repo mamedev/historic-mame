@@ -1279,8 +1279,7 @@ static WRITE_HANDLER( register_addr_w )
  *************************************/
 
 /* CPU 1 read addresses */
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x8fff, MRA_RAM },
 	{ 0x9400, 0x9400, adc_data_r },
 	{ 0x9900, 0x9900, input_port_0_r },
@@ -1293,13 +1292,11 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x9c00, 0x9cff, MRA_RAM },		/* cart NOVRAM */
 	{ 0xa000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xffff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* CPU 1 write addresses */
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x0800, 0x7fff, balsente_videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0x8fff, balsente_paletteram_w, &paletteram },
@@ -1314,8 +1311,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x9b00, 0x9cff, MWA_RAM, &nvram, &nvram_size },		/* system NOVRAM + cart NOVRAM */
 	{ 0x9f00, 0x9f00, rombank2_select_w },
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -1325,41 +1321,33 @@ static struct MemoryWriteAddress writemem_cpu1[] =
  *
  *************************************/
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x5fff, MRA_RAM },
 	{ 0xe000, 0xffff, m6850_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x7fff, m6850_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport_cpu2[] =
-{
+static PORT_READ_START( readport_cpu2 )
 	{ 0x00, 0x03, counter_8253_r },
 	{ 0x08, 0x0f, counter_state_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort writeport_cpu2[] =
-{
+static PORT_WRITE_START( writeport_cpu2 )
 	{ 0x00, 0x03, counter_8253_w },
 	{ 0x08, 0x09, counter_control_w },
 	{ 0x0a, 0x0b, dac_data_w },
 	{ 0x0c, 0x0d, register_addr_w },
 	{ 0x0e, 0x0f, chip_select_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

@@ -56,8 +56,7 @@ READ_HANDLER( input_port_matrix_r )
 }
 
 
-static struct MemoryReadAddress cpu1_readmem[] =
-{
+static MEMORY_READ_START( cpu1_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, ttmahjng_sharedram_r },
 	{ 0x4800, 0x4800, input_port_0_r },
@@ -66,11 +65,9 @@ static struct MemoryReadAddress cpu1_readmem[] =
 	{ 0x7838, 0x7838, MRA_NOP },
 	{ 0x7859, 0x7859, MRA_NOP },
 	{ 0x8000, 0xbfff, ttmahjng_videoram1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cpu1_writemem[] =
-{
+static MEMORY_WRITE_START( cpu1_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, ttmahjng_sharedram_w, &ttmahjng_sharedram },
 	{ 0x4800, 0x4800, ttmahjng_out0_w },
@@ -80,24 +77,19 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ 0x6800, 0x6800, AY8910_write_port_0_w },
 	{ 0x6900, 0x6900, AY8910_control_port_0_w },
 	{ 0x8000, 0xbfff, ttmahjng_videoram1_w, &ttmahjng_videoram1, &ttmahjng_videoram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress cpu2_readmem[] =
-{
+static MEMORY_READ_START( cpu2_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, ttmahjng_sharedram_r },
 	{ 0x8000, 0xbfff, ttmahjng_videoram2_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cpu2_writemem[] =
-{
+static MEMORY_WRITE_START( cpu2_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, ttmahjng_sharedram_w },
 	{ 0x8000, 0xbfff, ttmahjng_videoram2_w, &ttmahjng_videoram2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( ttmahjng )

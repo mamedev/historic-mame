@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-	Shoot Out (USA)				(c) 1985 Data East USA		DE-0219
+	Shoot Out (USA) 			(c) 1985 Data East USA		DE-0219
 	Shoot Out (Japan)			(c) 1985 Data East USA		DE-0203
 	Shoot Out (Korean bootleg)	(c) 1985 Data East USA		DE-0203 bootleg
 
@@ -64,10 +64,14 @@ static READ_HANDLER( low_input_r )
 	return ~readinputport( offset );
 }
 
+static WRITE_HANDLER( shootout_coin_counter_w )
+{
+	coin_counter_w( offset, data );
+}
+
 /*******************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1003, low_input_r },
 	{ 0x2000, 0x27ff, MRA_RAM },	/* foreground */
@@ -75,15 +79,13 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2c00, 0x2fff, colorram_r }, /* background colorram */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1000, shootout_bankswitch_w },
 	{ 0x1001, 0x1001, MWA_NOP }, /* Todo:  Flipscreen */
-	{ 0x1002, 0x1002, coin_counter_w },
+	{ 0x1002, 0x1002, shootout_coin_counter_w },
 	{ 0x1003, 0x1003, sound_cpu_command_w },
 	{ 0x1004, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x19ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -91,11 +93,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2800, 0x2bff, videoram_w, &videoram, &videoram_size },
 	{ 0x2c00, 0x2fff, colorram_w, &colorram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_alt[] =
-{
+static MEMORY_READ_START( readmem_alt )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1003, low_input_r },
 	{ 0x2000, 0x21ff, MRA_RAM },
@@ -105,13 +105,11 @@ static struct MemoryReadAddress readmem_alt[] =
 	{ 0x3c00, 0x3fff, colorram_r }, /* background colorram */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_alt[] =
-{
+static MEMORY_WRITE_START( writemem_alt )
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1800, 0x1800, coin_counter_w },
+	{ 0x1800, 0x1800, shootout_coin_counter_w },
 	{ 0x2000, 0x21ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2800, 0x2800, YM2203_control_port_0_w },
 	{ 0x2801, 0x2801, YM2203_write_port_0_w },
@@ -119,56 +117,51 @@ static struct MemoryWriteAddress writemem_alt[] =
 	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
 	{ 0x3c00, 0x3fff, colorram_w, &colorram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /*******************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x4000, 0x4000, YM2203_status_port_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x4000, 0x4000, YM2203_control_port_0_w },
 	{ 0x4001, 0x4001, YM2203_write_port_0_w },
 	{ 0xd000, 0xd000, interrupt_enable_w },
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /*******************************************************************************/
 
 INPUT_PORTS_START( shootout )
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x80, 0x00, "Freeze" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -190,22 +183,22 @@ INPUT_PORTS_START( shootout )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN2 )
 
-	PORT_START 	/* DSW2 */
+	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX(0,        0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x02, "1" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x01, "5" )
+	PORT_BITX(0,		0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "20k 70k" )
-	PORT_DIPSETTING(    0x04, "30k 80k" )
-	PORT_DIPSETTING(    0x08, "40k 90k" )
-	PORT_DIPSETTING(    0x0c, "70k" )
+	PORT_DIPSETTING(	0x00, "20k 70k" )
+	PORT_DIPSETTING(	0x04, "30k 80k" )
+	PORT_DIPSETTING(	0x08, "40k 90k" )
+	PORT_DIPSETTING(	0x0c, "70k" )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x10, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x30, "Hardest" )
+	PORT_DIPSETTING(	0x00, "Easy" )
+	PORT_DIPSETTING(	0x10, "Medium" )
+	PORT_DIPSETTING(	0x20, "Hard" )
+	PORT_DIPSETTING(	0x30, "Hardest" )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* this is set when either coin is inserted */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
@@ -219,7 +212,7 @@ static struct GfxLayout char_layout =
 	{ 0,4 },	/* the bitplanes are packed in the same byte */
 	{ (0x2000*8)+0, (0x2000*8)+1, (0x2000*8)+2, (0x2000*8)+3, 0, 1, 2, 3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8 /* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout sprite_layout =
 {
@@ -239,14 +232,14 @@ static struct GfxLayout tile_layout =
 	{ 0,4 },	/* the bitplanes are packed in the same byte */
 	{ (0x4000*8)+0, (0x4000*8)+1, (0x4000*8)+2, (0x4000*8)+3, 0, 1, 2, 3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8 /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout,   16*4+8*8, 16 }, /* characters */
-	{ REGION_GFX2, 0, &sprite_layout, 16*4,      8 }, /* sprites */
-	{ REGION_GFX3, 0, &tile_layout,   0,        16 }, /* tiles */
+	{ REGION_GFX2, 0, &sprite_layout, 16*4, 	 8 }, /* sprites */
+	{ REGION_GFX3, 0, &tile_layout,   0,		16 }, /* tiles */
 	{ -1 } /* end of array */
 };
 
@@ -394,7 +387,7 @@ ROM_START( shootout )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 )	/* sprites */
+	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 )   /* sprites */
 	ROM_LOAD( "cu03.c5",        0x08000, 0x8000, 0xb786bb3e )
 	ROM_LOAD( "cu06.c10",       0x10000, 0x8000, 0x2ec1d17f )
 	ROM_LOAD( "cu05.c9",        0x18000, 0x8000, 0xdd038b85 )
@@ -403,13 +396,13 @@ ROM_START( shootout )
 
 	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
-	ROM_CONTINUE(               0x04000, 0x2000 )
-	ROM_CONTINUE(               0x02000, 0x2000 )
-	ROM_CONTINUE(               0x06000, 0x2000 )
+	ROM_CONTINUE(				0x04000, 0x2000 )
+	ROM_CONTINUE(				0x02000, 0x2000 )
+	ROM_CONTINUE(				0x06000, 0x2000 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END
 
 ROM_START( shootouj )
@@ -422,19 +415,19 @@ ROM_START( shootouj )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "cg03.bin",    0x00000, 0x8000, 0x5252ec19 )	/* sprites */
+	ROM_LOAD( "cg03.bin",    0x00000, 0x8000, 0x5252ec19 )  /* sprites */
 	ROM_LOAD( "cg04.bin",    0x10000, 0x8000, 0xdb06cfe9 )
 	ROM_LOAD( "cg05.bin",    0x20000, 0x8000, 0xd634d6b8 )
 
 	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
-	ROM_CONTINUE(               0x04000, 0x2000 )
-	ROM_CONTINUE(               0x02000, 0x2000 )
-	ROM_CONTINUE(               0x06000, 0x2000 )
+	ROM_CONTINUE(				0x04000, 0x2000 )
+	ROM_CONTINUE(				0x02000, 0x2000 )
+	ROM_CONTINUE(				0x06000, 0x2000 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END
 
 ROM_START( shootoub )
@@ -447,19 +440,19 @@ ROM_START( shootoub )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "shootout.005",   0x00000, 0x8000, 0xe6357ba3 )	/* sprites */
+	ROM_LOAD( "shootout.005",   0x00000, 0x8000, 0xe6357ba3 )   /* sprites */
 	ROM_LOAD( "shootout.004",   0x10000, 0x8000, 0x7f422c93 )
 	ROM_LOAD( "shootout.003",   0x20000, 0x8000, 0xeea94535 )
 
 	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
-	ROM_CONTINUE(               0x04000, 0x2000 )
-	ROM_CONTINUE(               0x02000, 0x2000 )
-	ROM_CONTINUE(               0x06000, 0x2000 )
+	ROM_CONTINUE(				0x04000, 0x2000 )
+	ROM_CONTINUE(				0x02000, 0x2000 )
+	ROM_CONTINUE(				0x06000, 0x2000 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END
 
 static void init_shootout(void)
@@ -474,6 +467,7 @@ static void init_shootout(void)
 		rom[A+diff] = (rom[A] & 0x9f) | ((rom[A] & 0x40) >> 1) | ((rom[A] & 0x20) << 1);
 }
 
-GAMEX( 1985, shootout, 0,        shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)", GAME_NO_COCKTAIL )
-GAMEX( 1985, shootouj, shootout, shootouj, shootout, 0,        ROT0, "Data East USA", "Shoot Out (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1985, shootout, 0,		 shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)", GAME_NO_COCKTAIL )
+GAMEX( 1985, shootouj, shootout, shootouj, shootout, 0, 	   ROT0, "Data East USA", "Shoot Out (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1985, shootoub, shootout, shootouj, shootout, shootout, ROT0, "bootleg", "Shoot Out (Korean Bootleg)", GAME_NO_COCKTAIL )
+

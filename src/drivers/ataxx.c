@@ -101,10 +101,10 @@ void leland_i186_sound_init(void);
 
 void leland_i86_optimize_address(offs_t offset);
 
-extern struct MemoryReadAddress leland_i86_readmem[];
-extern struct MemoryWriteAddress leland_i86_writemem[];
-extern struct IOReadPort leland_i86_readport[];
-extern struct IOWritePort ataxx_i86_writeport[];
+extern const struct Memory_ReadAddress leland_i86_readmem[];
+extern const struct Memory_WriteAddress leland_i86_writemem[];
+extern const struct IO_ReadPort leland_i86_readport[];
+extern const struct IO_WritePort ataxx_i86_writeport[];
 
 
 /* Video routines */
@@ -639,44 +639,36 @@ static READ_HANDLER( raster_r )
  *
  *************************************/
 
-static struct MemoryReadAddress master_readmem[] =
-{
+static MEMORY_READ_START( master_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xdfff, MRA_BANK2 },
 	{ 0xe000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, paletteram_and_misc_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress master_writemem[] =
-{
+static MEMORY_WRITE_START( master_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xdfff, battery_ram_w },
 	{ 0xe000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, paletteram_and_misc_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort master_readport[] =
-{
+static PORT_READ_START( master_readport )
     { 0x04, 0x04, leland_i86_response_r },
     { 0x20, 0x20, eeprom_r },
     { 0xd0, 0xef, ataxx_mvram_port_r },
     { 0xf0, 0xff, master_input_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort master_writeport[] =
-{
+static PORT_WRITE_START( master_writeport )
     { 0x05, 0x05, leland_i86_command_hi_w },
     { 0x06, 0x06, leland_i86_command_lo_w },
     { 0x0c, 0x0c, ataxx_i86_control_w },
     { 0x20, 0x20, eeprom_w },
     { 0xd0, 0xef, ataxx_mvram_port_w },
     { 0xf0, 0xff, master_output_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 
@@ -687,36 +679,28 @@ static struct IOWritePort master_writeport[] =
  *
  *************************************/
 
-static struct MemoryReadAddress slave_readmem[] =
-{
+static MEMORY_READ_START( slave_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x9fff, MRA_BANK3 },
 	{ 0xa000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xfffe, 0xfffe, raster_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress slave_writemem[] =
-{
+static MEMORY_WRITE_START( slave_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xfffc, 0xfffd, leland_slave_video_addr_w },
 	{ 0xffff, 0xffff, slave_banksw_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort slave_readport[] =
-{
+static PORT_READ_START( slave_readport )
 	{ 0x60, 0x7f, ataxx_svram_port_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort slave_writeport[] =
-{
+static PORT_WRITE_START( slave_writeport )
 	{ 0x60, 0x7f, ataxx_svram_port_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

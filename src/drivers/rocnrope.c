@@ -7,6 +7,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sndhrdw/timeplt.h"
 
 
 void konami1_decode(void);
@@ -14,12 +15,6 @@ void konami1_decode(void);
 WRITE_HANDLER( rocnrope_flipscreen_w );
 void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-/* defined in sndhrdw/timeplt.c */
-extern struct MemoryReadAddress timeplt_sound_readmem[];
-extern struct MemoryWriteAddress timeplt_sound_writemem[];
-extern struct AY8910interface timeplt_ay8910_interface;
-WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
@@ -32,8 +27,7 @@ WRITE_HANDLER( rocnrope_interrupt_vector_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x3080, 0x3080, input_port_0_r }, /* IO Coin */
 	{ 0x3081, 0x3081, input_port_1_r }, /* P1 IO */
 	{ 0x3082, 0x3082, input_port_2_r }, /* P2 IO */
@@ -42,11 +36,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3100, 0x3100, input_port_5_r }, /* DSW 2 */
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x403f, MWA_RAM, &spriteram_2 },
 	{ 0x4040, 0x43ff, MWA_RAM },
 	{ 0x4400, 0x443f, MWA_RAM, &spriteram, &spriteram_size },
@@ -64,8 +56,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8100, 0x8100, soundlatch_w },
 	{ 0x8182, 0x818d, rocnrope_interrupt_vector_w },
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( rocnrope )

@@ -131,8 +131,13 @@ static WRITE_HANDLER( ccastles_bankswitch_w )
 	else { cpu_setbank(1,&RAM[0xa000]); }
 }
 
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0002, 0x0002, ccastles_bitmode_r },
 	{ 0x0000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x90ff, MRA_RAM },
@@ -147,11 +152,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9a00, 0x9a0f, pokey2_r }, /* Random #, IN1 */
 	{ 0xa000, 0xdfff, MRA_BANK1 },
 	{ 0xe000, 0xffff, MRA_ROM },	/* ROMs/interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0001, MWA_RAM, &ccastles_screen_addr },
 	{ 0x0002, 0x0002, ccastles_bitmode_w },
 	{ 0x0003, 0x0bff, MWA_RAM },
@@ -176,8 +179,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9f07, 0x9f07, MWA_RAM, &ccastles_sprite_bank },
 	{ 0x9f80, 0x9fbf, ccastles_paletteram_w },
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( ccastles )
 	PORT_START	/* IN0 */

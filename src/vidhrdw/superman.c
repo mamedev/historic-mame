@@ -11,67 +11,9 @@
 size_t supes_videoram_size;
 size_t supes_attribram_size;
 
-unsigned char *supes_videoram;
-unsigned char *supes_attribram;
-//static unsigned char *dirtybuffer;		/* foreground */
-//static unsigned char *dirtybuffer2;		/* background */
+data16_t *supes_videoram;
+data16_t *supes_attribram;
 
-int superman_vh_start (void)
-{
-	return 0;
-}
-
-void superman_vh_stop (void)
-{
-}
-
-/*************************************
- *
- *		Foreground RAM
- *
- *************************************/
-
-WRITE_HANDLER( supes_attribram_w )
-{
-   int oldword = READ_WORD (&supes_attribram[offset]);
-   int newword = COMBINE_WORD (oldword, data);
-
-   if (oldword != newword)
-   {
-		WRITE_WORD (&supes_attribram[offset], data);
-//		dirtybuffer2[offset/2] = 1;
-   }
-}
-
-READ_HANDLER( supes_attribram_r )
-{
-   return READ_WORD (&supes_attribram[offset]);
-}
-
-
-
-/*************************************
- *
- *		Background RAM
- *
- *************************************/
-
-WRITE_HANDLER( supes_videoram_w )
-{
-   int oldword = READ_WORD (&supes_videoram[offset]);
-   int newword = COMBINE_WORD (oldword, data);
-
-   if (oldword != newword)
-   {
-		WRITE_WORD (&supes_videoram[offset], data);
-//		dirtybuffer[offset/2] = 1;
-   }
-}
-
-READ_HANDLER( supes_videoram_r )
-{
-   return READ_WORD (&supes_videoram[offset]);
-}
 
 
 void superman_update_palette (void)
@@ -82,20 +24,20 @@ void superman_update_palette (void)
 	memset (palette_map, 0, sizeof (palette_map));
 
 	/* Find colors used in the background tile plane */
-	for (i = 0; i < 0x400; i += 0x40)
+	for (i = 0; i < 0x400/2; i += 0x40/2)
 	{
 		int i2;
 
-		for (i2 = i; i2 < (i + 0x40); i2 += 2)
+		for (i2 = i; i2 < (i + 0x40/2); i2 += 2/2)
 		{
 			int tile;
 			int color;
 
 			color = 0;
 
-			tile = READ_WORD (&supes_videoram[0x800 + i2]) & 0x3fff;
+			tile = supes_videoram[0x800/2 + i2] & 0x3fff;
 			if (tile)
-				color = READ_WORD (&supes_videoram[0xc00 + i2]) >> 11;
+				color = supes_videoram[0xc00/2 + i2] >> 11;
 
 			palette_map[color] |= Machine->gfx[0]->pen_usage[tile];
 
@@ -103,16 +45,16 @@ void superman_update_palette (void)
 	}
 
 	/* Find colors used in the sprite plane */
-	for (i = 0x3fe; i >= 0; i -= 2)
+	for (i = 0x3fe/2; i >= 0; i -= 2/2)
 	{
 		int tile;
 		int color;
 
 		color = 0;
 
-		tile = READ_WORD (&supes_videoram[i]) & 0x3fff;
+		tile = supes_videoram[i] & 0x3fff;
 		if (tile)
-			color = READ_WORD (&supes_videoram[0x400 + i]) >> 11;
+			color = supes_videoram[0x400/2 + i] >> 11;
 
 		palette_map[color] |= Machine->gfx[0]->pen_usage[tile];
 	}
@@ -146,34 +88,34 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	superman_update_palette ();
 
-	osd_clearbitmap(bitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	/* Refresh the background tile plane */
-	for (i = 0; i < 0x400; i += 0x40)
+	for (i = 0; i < 0x400/2; i += 0x40/2)
 	{
-		int x1, y1;
+		UINT32 x1, y1;
 		int i2;
 
-		x1 = READ_WORD (&supes_attribram[0x408 + (i >> 1)]);
-		y1 = READ_WORD (&supes_attribram[0x400 + (i >> 1)]);
+		x1 = supes_attribram[0x408/2 + (i>>1)];
+		y1 = supes_attribram[0x400/2 + (i>>1)];
 
-		for (i2 = i; i2 < (i + 0x40); i2 += 2)
+		for (i2 = i; i2 < (i + 0x40/2); i2 += 2/2)
 		{
 			int tile;
 
-			tile = READ_WORD (&supes_videoram[0x800 + i2]) & 0x3fff;
+			tile = supes_videoram[0x800/2 + i2] & 0x3fff;
 			if (tile)
 			{
 				int x, y;
 
-				x = (        x1 + ((i2 & 0x03) << 3))  & 0x1ff;
-				y = ((265 - (y1 - ((i2 & 0x3c) << 2))) &  0xff);
+				x = (        x1 + ((i2 & 0x01) << 4))  & 0x1ff;
+				y = ((265 - (y1 - ((i2 & 0x1e) << 3))) &  0xff);
 
 //				if ((x > 0) && (y > 0) && (x < 388) && (y < 272))
 				{
-					int flipx = READ_WORD (&supes_videoram[0x800 + i2]) & 0x4000;
-					int flipy = READ_WORD (&supes_videoram[0x800 + i2]) & 0x8000;
-					int color = READ_WORD (&supes_videoram[0xc00 + i2]) >> 11;
+					UINT32 flipx = supes_videoram[0x800/2 + i2] & 0x4000;
+					UINT32 flipy = supes_videoram[0x800/2 + i2] & 0x8000;
+					UINT32 color = supes_videoram[0xc00/2 + i2] >> 11;
 
 					/* Some tiles are transparent, e.g. the gate, so we use TRANSPARENCY_PEN */
 					drawgfx(bitmap,Machine->gfx[0],
@@ -189,23 +131,23 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	/* Refresh the sprite plane */
-	for (i = 0x3fe; i >= 0; i -= 2)
+	for (i = 0x3fe/2; i >= 0; i -= 2/2)
 	{
 		int sprite;
 
-		sprite = READ_WORD (&supes_videoram[i]) & 0x3fff;
+		sprite = supes_videoram[i] & 0x3fff;
 		if (sprite)
 		{
 			int x, y;
 
-			x = (      READ_WORD (&supes_videoram [0x400 + i]))  & 0x1ff;
-			y = (250 - READ_WORD (&supes_attribram[i        ]))  & 0xff;
+			x = (      supes_videoram [0x400/2 + i])  & 0x1ff;
+			y = (250 - supes_attribram[i          ])  & 0xff;
 
 //			if ((x > 0) && (y > 0) && (x < 388) && (y < 272))
 			{
-				int flipy = READ_WORD (&supes_videoram[i]) & 0x4000;
-				int flipx = READ_WORD (&supes_videoram[i]) & 0x8000;
-				int color = READ_WORD (&supes_videoram[0x400 + i]) >> 11;
+				int flipy = supes_videoram[i] & 0x4000;
+				int flipx = supes_videoram[i] & 0x8000;
+				int color = supes_videoram[0x400/2 + i] >> 11;
 
 				drawgfx(bitmap,Machine->gfx[0],
 					sprite,

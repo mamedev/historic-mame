@@ -116,16 +116,13 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
-	K052109_tilemap_draw(bitmap,2,1|(2<<16));	/* low priority part of layer */
-	K052109_tilemap_draw(bitmap,2,0|(4<<16));	/* high priority part of layer */
-	K052109_tilemap_draw(bitmap,0,8<<16);
+	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,1);
+	K052109_tilemap_draw(bitmap,2,1,2);	/* low priority part of layer */
+	K052109_tilemap_draw(bitmap,2,0,4);	/* high priority part of layer */
+	K052109_tilemap_draw(bitmap,0,0,8);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }
@@ -134,13 +131,10 @@ void dv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-	K052109_tilemap_draw(bitmap,2,0);
+	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,0);
+	K052109_tilemap_draw(bitmap,2,0,0);
 	K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,0,0,0);
 }

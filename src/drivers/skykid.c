@@ -49,7 +49,7 @@ static WRITE_HANDLER( inputport_select_w )
 		inputport_selected = data & 0x07;
 	else if ((data & 0xe0) == 0xc0)
 	{
-		coin_lockout_global_w(0,~data & 1);
+		coin_lockout_global_w(~data & 1);
 		coin_counter_w(0,data & 2);
 		coin_counter_w(1,data & 4);
 	}
@@ -120,8 +120,7 @@ WRITE_HANDLER( skykid_bankswitch_w )
 }
 
 
-static struct MemoryReadAddress skykid_readmem[] =
-{
+static MEMORY_READ_START( skykid_readmem )
 	{ 0x0000, 0x1fff, MRA_BANK1 },				/* banked ROM */
 	{ 0x2000, 0x2fff, skykid_videoram_r },		/* Video RAM (background) */
 	{ 0x4000, 0x47ff, MRA_RAM },				/* video RAM (text layer) */
@@ -130,11 +129,9 @@ static struct MemoryReadAddress skykid_readmem[] =
 	{ 0x6800, 0x6bff, skykid_sharedram_r },		/* shared RAM with the MCU */
 	{ 0x7800, 0x7800, watchdog_reset_r },		/* watchdog reset */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress skykid_writemem[] =
-{
+static MEMORY_WRITE_START( skykid_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },				/* banked ROM */
 	{ 0x2000, 0x2fff, skykid_videoram_w, &skykid_videoram },/* Video RAM (background) */
 	{ 0x4000, 0x47ff, MWA_RAM, &skykid_textram },/* video RAM (text layer) */
@@ -148,11 +145,9 @@ static struct MemoryWriteAddress skykid_writemem[] =
 	{ 0x9000, 0x9800, skykid_bankswitch_w },	/* Bankswitch control */
 	{ 0xa000, 0xa001, skykid_flipscreen_w },	/* flip screen */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },/* internal registers */
 	{ 0x0080, 0x00ff, MRA_RAM },					/* built in RAM */
 	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
@@ -161,11 +156,9 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x8000, 0xbfff, MRA_ROM },					/* MCU external ROM */
 	{ 0xc000, 0xc800, MRA_RAM },					/* RAM */
 	{ 0xf000, 0xffff, MRA_ROM },					/* MCU internal ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },/* internal registers */
 	{ 0x0080, 0x00ff, MWA_RAM },					/* built in RAM */
 	{ 0x1000, 0x10ff, namcos1_wavedata_w },			/* PSG device, shared RAM */
@@ -177,8 +170,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x8000, 0xbfff, MWA_ROM },					/* MCU external ROM */
 	{ 0xc000, 0xc800, MWA_RAM },					/* RAM */
 	{ 0xf000, 0xffff, MWA_ROM },					/* MCU internal ROM */
-	{ -1 }
-};
+MEMORY_END
 
 
 static READ_HANDLER( readFF )
@@ -186,19 +178,15 @@ static READ_HANDLER( readFF )
 	return 0xff;
 }
 
-static struct IOReadPort mcu_readport[] =
-{
+static PORT_READ_START( mcu_readport )
 	{ HD63701_PORT1, HD63701_PORT1, inputport_r },			/* input ports read */
 	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort mcu_writeport[] =
-{
+static PORT_WRITE_START( mcu_writeport )
 	{ HD63701_PORT1, HD63701_PORT1, inputport_select_w },	/* input port select */
 	{ HD63701_PORT2, HD63701_PORT2, skykid_led_w },			/* lamps */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( skykid )
 	PORT_START	/* DSW A */

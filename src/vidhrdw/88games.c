@@ -108,27 +108,24 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* set back pen for the zoom layer */
 	for (i = 0;i < 16;i++)
 		palette_used_colors[(zoom_colorbase + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if (k88games_priority)
 	{
-		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY);
+		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
 		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,2,0);
-		K052109_tilemap_draw(bitmap,1,0);
+		K052109_tilemap_draw(bitmap,2,0,0);
+		K052109_tilemap_draw(bitmap,1,0,0);
 		K051960_sprites_draw(bitmap,0,0);
 		K051316_zoom_draw_0(bitmap,0);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
+		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
 		K051316_zoom_draw_0(bitmap,0);
 		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,1,0);
+		K052109_tilemap_draw(bitmap,1,0,0);
 		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,0,0,0);
 	}
 }

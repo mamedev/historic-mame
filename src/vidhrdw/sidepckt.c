@@ -68,8 +68,8 @@ int sidepckt_vh_start(void)
 	if (!bg_tilemap)
 		return 1;
 
-	bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-	bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x01); /* split type 1 has pen 1 transparent in front half */
 
 	tilemap_set_flip(ALL_TILEMAPS,TILEMAP_FLIPX);
 
@@ -152,9 +152,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 void sidepckt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
 }

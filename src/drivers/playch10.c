@@ -157,37 +157,37 @@ extern void playch10_vh_convert_color_prom(unsigned char *palette, unsigned shor
 extern void playch10_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
 
 /* from machine */
-extern void pc10_init_machine( void );
-extern void init_playch10( void );	/* standard games */
-extern void init_pc_gun( void );	/* gun games */
-extern void init_pc_hrz( void );	/* horizontal games */
-extern void init_pcaboard( void );	/* a-board games */
-extern void init_pcbboard( void );	/* b-board games */
-extern void init_pccboard( void );	/* c-board games */
-extern void init_pcdboard( void );	/* d-board games */
-extern void init_pceboard( void );	/* e-board games */
-extern void init_pcfboard( void );	/* f-board games */
-extern void init_pcgboard( void );	/* g-board games */
-extern void init_pciboard( void );	/* i-board games */
-extern void init_pckboard( void );	/* k-board games */
-extern READ_HANDLER( pc10_port_0_r );
-extern READ_HANDLER( pc10_instrom_r );
-extern READ_HANDLER( pc10_prot_r );
-extern READ_HANDLER( pc10_detectclr_r );
-extern READ_HANDLER( pc10_in0_r );
-extern READ_HANDLER( pc10_in1_r );
-extern WRITE_HANDLER( pc10_SDCS_w );
-extern WRITE_HANDLER( pc10_CNTRLMASK_w );
-extern WRITE_HANDLER( pc10_DISPMASK_w );
-extern WRITE_HANDLER( pc10_SOUNDMASK_w );
-extern WRITE_HANDLER( pc10_NMIENABLE_w );
-extern WRITE_HANDLER( pc10_DOGDI_w );
-extern WRITE_HANDLER( pc10_GAMERES_w );
-extern WRITE_HANDLER( pc10_GAMESTOP_w );
-extern WRITE_HANDLER( pc10_PPURES_w );
-extern WRITE_HANDLER( pc10_prot_w );
-extern WRITE_HANDLER( pc10_CARTSEL_w );
-extern WRITE_HANDLER( pc10_in0_w );
+void pc10_init_machine( void );
+void init_playch10( void );	/* standard games */
+void init_pc_gun( void );	/* gun games */
+void init_pc_hrz( void );	/* horizontal games */
+void init_pcaboard( void );	/* a-board games */
+void init_pcbboard( void );	/* b-board games */
+void init_pccboard( void );	/* c-board games */
+void init_pcdboard( void );	/* d-board games */
+void init_pceboard( void );	/* e-board games */
+void init_pcfboard( void );	/* f-board games */
+void init_pcgboard( void );	/* g-board games */
+void init_pciboard( void );	/* i-board games */
+void init_pckboard( void );	/* k-board games */
+READ_HANDLER( pc10_port_0_r );
+READ_HANDLER( pc10_instrom_r );
+READ_HANDLER( pc10_prot_r );
+READ_HANDLER( pc10_detectclr_r );
+READ_HANDLER( pc10_in0_r );
+READ_HANDLER( pc10_in1_r );
+WRITE_HANDLER( pc10_SDCS_w );
+WRITE_HANDLER( pc10_CNTRLMASK_w );
+WRITE_HANDLER( pc10_DISPMASK_w );
+WRITE_HANDLER( pc10_SOUNDMASK_w );
+WRITE_HANDLER( pc10_NMIENABLE_w );
+WRITE_HANDLER( pc10_DOGDI_w );
+WRITE_HANDLER( pc10_GAMERES_w );
+WRITE_HANDLER( pc10_GAMESTOP_w );
+WRITE_HANDLER( pc10_PPURES_w );
+WRITE_HANDLER( pc10_prot_w );
+WRITE_HANDLER( pc10_CARTSEL_w );
+WRITE_HANDLER( pc10_in0_w );
 extern int pc10_sdcs;
 extern int pc10_nmi_enable;
 extern int pc10_dog_di;
@@ -258,39 +258,32 @@ static void nvram_handler(void *file, int read_or_write)
 /******************************************************************************/
 
 /* BIOS */
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },	/* 8V */
 	{ 0x8800, 0x8fff, ram_8w_r },	/* 8W */
 	{ 0x9000, 0x97ff, videoram_r },
 	{ 0xc000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xffff, pc10_prot_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM }, /* 8V */
 	{ 0x8800, 0x8fff, ram_8w_w, &ram_8w }, /* 8W */
 	{ 0x9000, 0x97ff, video_w, &videoram, &videoram_size },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xffff, pc10_prot_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, pc10_port_0_r },	/* coins, service */
 	{ 0x01, 0x01, input_port_1_r },	/* dipswitch 1 */
 	{ 0x02, 0x02, input_port_2_r }, /* dipswitch 2 */
 	{ 0x03, 0x03, pc10_detectclr_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, pc10_SDCS_w },
 	{ 0x01, 0x01, pc10_CNTRLMASK_w },
 	{ 0x02, 0x02, pc10_DISPMASK_w },
@@ -303,12 +296,10 @@ static struct IOWritePort writeport[] =
 	{ 0x0a, 0x0a, pc10_PPURES_w },
 	{ 0x0b, 0x0e, pc10_CARTSEL_w },
 	{ 0x0f, 0x0f, up8w_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 /* Cart */
-static struct MemoryReadAddress cart_readmem[] =
-{
+static MEMORY_READ_START( cart_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x1fff, mirror_ram_r },
 	{ 0x2000, 0x3fff, ppu2c03b_0_r },
@@ -316,11 +307,9 @@ static struct MemoryReadAddress cart_readmem[] =
 	{ 0x4016, 0x4016, pc10_in0_r },
 	{ 0x4017, 0x4017, pc10_in1_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cart_writemem[] =
-{
+static MEMORY_WRITE_START( cart_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM, &work_ram },
 	{ 0x0800, 0x1fff, mirror_ram_w },
 	{ 0x2000, 0x3fff, ppu2c03b_0_w },
@@ -330,8 +319,7 @@ static struct MemoryWriteAddress cart_writemem[] =
 	{ 0x4016, 0x4016, pc10_in0_w },
 	{ 0x4017, 0x4017, MWA_NOP }, /* in 1 writes ignored */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

@@ -76,8 +76,7 @@ extern int kchamp1p_vh_start(void);
 static int nmi_enable = 0;
 static int sound_nmi_enable = 0;
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd3ff, videoram_r },
@@ -85,11 +84,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd800, 0xd8ff, spriteram_r },
 	{ 0xd900, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
@@ -97,22 +94,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xd8ff, spriteram_w, &spriteram, &spriteram_size },
 	{ 0xd900, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 static WRITE_HANDLER( control_w ) {
 	nmi_enable = data & 1;
@@ -141,80 +133,64 @@ static WRITE_HANDLER( sound_msm_w ) {
 	msm_play_lo_nibble = 1;
 }
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r }, /* Player 1 controls - ACTIVE LOW */
 	{ 0x40, 0x40, input_port_1_r }, /* Player 2 controls - ACTIVE LOW */
 	{ 0x80, 0x80, input_port_2_r }, /* Coins & Start - ACTIVE LOW */
 	{ 0xC0, 0xC0, input_port_3_r }, /* Dipswitch */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, MWA_NOP },
 	{ 0x01, 0x01, control_w },
 	{ 0x02, 0x02, sound_reset_w },
 	{ 0x40, 0x40, sound_command_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x01, 0x01, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, AY8910_write_port_0_w },
 	{ 0x01, 0x01, AY8910_control_port_0_w },
 	{ 0x02, 0x02, AY8910_write_port_1_w },
 	{ 0x03, 0x03, AY8910_control_port_1_w },
 	{ 0x04, 0x04, sound_msm_w },
 	{ 0x05, 0x05, sound_control_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /********************
 * 1 Player Version  *
 ********************/
 
-static struct MemoryReadAddress kc_readmem[] =
-{
+static MEMORY_READ_START( kc_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xe3ff, videoram_r },
 	{ 0xe400, 0xe7ff, colorram_r },
 	{ 0xea00, 0xeaff, spriteram_r },
 	{ 0xeb00, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kc_writemem[] =
-{
+static MEMORY_WRITE_START( kc_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe400, 0xe7ff, colorram_w, &colorram },
 	{ 0xea00, 0xeaff, spriteram_w, &spriteram, &spriteram_size },
 	{ 0xeb00, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress kc_sound_readmem[] =
-{
+static MEMORY_READ_START( kc_sound_readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe2ff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kc_sound_writemem[] =
-{
+static MEMORY_WRITE_START( kc_sound_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe2ff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 static READ_HANDLER( sound_reset_r ) {
 	cpu_set_reset_line(1,PULSE_LINE);
@@ -228,40 +204,32 @@ static WRITE_HANDLER( kc_sound_control_w ) {
 //		DAC_set_volume(0,( data == 1 ) ? 255 : 0,0);
 }
 
-static struct IOReadPort kc_readport[] =
-{
+static PORT_READ_START( kc_readport )
 	{ 0x90, 0x90, input_port_0_r }, /* Player 1 controls - ACTIVE LOW */
 	{ 0x98, 0x98, input_port_1_r }, /* Player 2 controls - ACTIVE LOW */
 	{ 0xa0, 0xa0, input_port_2_r }, /* Coins & Start - ACTIVE LOW */
 	{ 0x80, 0x80, input_port_3_r }, /* Dipswitch */
 	{ 0xa8, 0xa8, sound_reset_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort kc_writeport[] =
-{
+static PORT_WRITE_START( kc_writeport )
 	{ 0x80, 0x80, MWA_NOP },
 	{ 0x81, 0x81, control_w },
 	{ 0xa8, 0xa8, sound_command_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort kc_sound_readport[] =
-{
+static PORT_READ_START( kc_sound_readport )
 	{ 0x06, 0x06, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort kc_sound_writeport[] =
-{
+static PORT_WRITE_START( kc_sound_writeport )
 	{ 0x00, 0x00, AY8910_write_port_0_w },
 	{ 0x01, 0x01, AY8910_control_port_0_w },
 	{ 0x02, 0x02, AY8910_write_port_1_w },
 	{ 0x03, 0x03, AY8910_control_port_1_w },
 	{ 0x04, 0x04, DAC_0_data_w },
 	{ 0x05, 0x05, kc_sound_control_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( kchampvs )

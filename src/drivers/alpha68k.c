@@ -71,7 +71,7 @@ WRITE_HANDLER( alpha68k_videoram_w );
 WRITE_HANDLER( kouyakyu_video_w );
 
 static unsigned char *shared_ram,*sound_ram;
-static int invert_controls,microcontroller_id;
+static int invert_controls,microcontroller_id,coin_id;
 
 /******************************************************************************/
 
@@ -203,30 +203,24 @@ static READ_HANDLER( alpha_V_trigger_r )
 		case 0:	/* Dipswitch 1 */
 			WRITE_WORD(&shared_ram[0], (source&0xff00)| readinputport(4));
 			return 0;
-
 		case 0x44: /* Coin value */
 			WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x1);
 			return 0;
 		case 0x52: /* Query microcontroller for coin insert */
 			if ((readinputport(2)&0x3)==3) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x23);
+				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|(coin_id&0xff));
 				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
 				latch=1;
 			}
 			else if ((readinputport(2)&0x2)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x24);
+				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|(coin_id>>8));
 				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
 				latch=1;
 			}
 			else
 				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x00);
 			return 0;
-
-//		case 0x62: /* Sky Adventure - I don't think is correct, but it works */
-//			WRITE_WORD(&shared_ram[0x154], 0xffff);
-//			return 0;
-
 		case 0x1fc:	/* Custom ID check */
 			WRITE_WORD(&shared_ram[0x1fc], (source&0xff00)|(microcontroller_id>>8));
 			break;
@@ -312,19 +306,16 @@ static READ_HANDLER( kyros_alpha_trigger_r )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress kouyakyu_readmem[] =
-{
+static MEMORY_READ_START( kouyakyu_readmem )
 	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x040000, 0x040fff, MRA_BANK1 },
 	{ 0x080000, 0x081fff, MRA_BANK2 },
 	{ 0x0c0000, 0x0c0fff, MRA_BANK3 },
 	{ 0x100000, 0x1007ff, MRA_BANK4 },
 	{ 0x140000, 0x1407ff, MRA_BANK5 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kouyakyu_writemem[] =
-{
+static MEMORY_WRITE_START( kouyakyu_writemem )
 	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x040000, 0x040fff, MWA_BANK1, &shared_ram },
 	{ 0x080000, 0x080fff, kouyakyu_video_w, &videoram },
@@ -332,11 +323,9 @@ static struct MemoryWriteAddress kouyakyu_writemem[] =
 	{ 0x100000, 0x1007ff, MWA_BANK4 },
 	{ 0x140000, 0x1407ff, MWA_BANK5 },
 	{ 0x780000, 0x780001, MWA_NOP }, /* Watchdog? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kyros_readmem[] =
-{
+static MEMORY_READ_START( kyros_readmem )
 	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x020000, 0x020fff, MRA_BANK1 },
 	{ 0x040000, 0x041fff, MRA_BANK2 },
@@ -344,42 +333,34 @@ static struct MemoryReadAddress kyros_readmem[] =
 	{ 0x080000, 0x0801ff, kyros_alpha_trigger_r },
 	{ 0x0c0000, 0x0c0001, input_port_0_r },
 	{ 0x0e0000, 0x0e0001, kyros_dip_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kyros_writemem[] =
-{
+static MEMORY_WRITE_START( kyros_writemem )
 	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x020000, 0x020fff, MWA_BANK1, &shared_ram },
 	{ 0x040000, 0x041fff, MWA_BANK2, &spriteram },
 	{ 0x060000, 0x060001, alpha68k_II_sound_w }, /* Watchdog? */
 	{ 0x0e0000, 0x0e0001, kyros_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress alpha68k_I_readmem[] =
-{
+static MEMORY_READ_START( alpha68k_I_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x080000, 0x083fff, MRA_BANK1 },
 //	{ 0x180008, 0x180009, control_2_r }, /* 1 byte */
 	{ 0x300000, 0x300001, control_1_r }, /* 2  */
 	{ 0x340000, 0x340001, control_1_r }, /* 2  */
 	{ 0x100000, 0x103fff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alpha68k_I_writemem[] =
-{
+static MEMORY_WRITE_START( alpha68k_I_writemem )
 	{ 0x000000, 0x03ffff, MWA_NOP },
 	{ 0x080000, 0x083fff, MWA_BANK1, &shared_ram },
 	{ 0x100000, 0x103fff, MWA_BANK2, &spriteram },
 	{ 0x180000, 0x180001, MWA_NOP }, /* Watchdog */
 	{ 0x380000, 0x380001, alpha68k_II_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress alpha68k_II_readmem[] =
-{
+static MEMORY_READ_START( alpha68k_II_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x040fff, MRA_BANK1 },
 	{ 0x080000, 0x080001, control_1_r }, /* Joysticks */
@@ -394,11 +375,9 @@ static struct MemoryReadAddress alpha68k_II_readmem[] =
 	{ 0x300000, 0x3001ff, alpha_II_trigger_r },
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ 0x800000, 0x83ffff, MRA_BANK8 }, /* Extra code bank */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alpha68k_II_writemem[] =
-{
+static MEMORY_WRITE_START( alpha68k_II_writemem )
 	{ 0x000000, 0x03ffff, MWA_NOP },
 	{ 0x040000, 0x040fff, MWA_BANK1, &shared_ram },
 	{ 0x080000, 0x080001, alpha68k_II_sound_w },
@@ -407,11 +386,9 @@ static struct MemoryWriteAddress alpha68k_II_writemem[] =
 	{ 0x200000, 0x207fff, MWA_BANK2, &spriteram },
 	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
 	{ 0x400000, 0x400fff, alpha68k_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress alpha68k_V_readmem[] =
-{
+static MEMORY_READ_START( alpha68k_V_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, MRA_BANK1 },
 	{ 0x080000, 0x080001, control_1_r }, /* Joysticks */
@@ -424,21 +401,19 @@ static struct MemoryReadAddress alpha68k_V_readmem[] =
 	{ 0x300000, 0x303fff, alpha_V_trigger_r },
 	{ 0x400000, 0x401fff, paletteram_word_r },
 	{ 0x800000, 0x83ffff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alpha68k_V_writemem[] =
-{
+static MEMORY_WRITE_START( alpha68k_V_writemem )
 	{ 0x000000, 0x03ffff, MWA_NOP },
 	{ 0x040000, 0x043fff, MWA_BANK1, &shared_ram },
 	{ 0x080000, 0x080001, alpha68k_V_sound_w },
 	{ 0x0c0000, 0x0c00ff, alpha68k_V_video_control_w },
 	{ 0x100000, 0x100fff, alpha68k_videoram_w, &videoram },
 	{ 0x200000, 0x207fff, MWA_BANK3, &spriteram },
-	{ 0x303e00, 0x303fff, alpha_microcontroller_w },
+	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
+	{ 0x303e00, 0x303fff, alpha_microcontroller_w }, /* Gang Wars mirror */
 	{ 0x400000, 0x401fff, alpha68k_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -451,67 +426,52 @@ static WRITE_HANDLER( sound_bank_w )
 	cpu_setbank(7,&RAM[bankaddress]);
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xc000, 0xffff, MRA_BANK7 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kyros_sound_readmem[] =
-{
+static MEMORY_READ_START( kyros_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 //	{ 0xe000, 0xe000, soundlatch_r },
 //	{ 0xc000, 0xffff, MRA_BANK7 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kyros_sound_writemem[] =
-{
+static MEMORY_WRITE_START( kyros_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sstingry_sound_readmem[] =
-{
+static MEMORY_READ_START( sstingry_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 //	{ 0xe000, 0xe000, soundlatch_r },
 //	{ 0xc000, 0xffff, MRA_BANK7 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 static WRITE_HANDLER (soundram_mirror_w)
 {
 	sound_ram[offset]=data;
 }
 
-static struct MemoryWriteAddress sstingry_sound_writemem[] =
-{
+static MEMORY_WRITE_START( sstingry_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM, &sound_ram },
 //	{ 0xc000, 0xc3ff, soundram_mirror_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, soundlatch_clear_w },
 	{ 0x08, 0x08, DAC_0_signed_data_w },
 	{ 0x0a, 0x0a, YM2413_register_port_0_w },
@@ -519,11 +479,9 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x0c, 0x0c, YM2203_control_port_0_w },
 	{ 0x0d, 0x0d, YM2203_write_port_0_w },
 	{ 0x0e, 0x0e, sound_bank_w },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort kyros_sound_writeport[] =
-{
+static PORT_WRITE_START( kyros_sound_writeport )
 //	{ 0x00, 0x00, soundlatch_clear_w },
 //	{ 0x08, 0x08, DAC_0_data_w },
 	{ 0x10, 0x10, YM2203_control_port_0_w },
@@ -532,8 +490,7 @@ static struct IOWritePort kyros_sound_writeport[] =
 	{ 0x81, 0x81, AY8910_control_port_0_w },
 	{ 0x90, 0x90, AY8910_write_port_1_w },
 	{ 0x91, 0x91, AY8910_control_port_1_w },
-	{ -1 }
-};
+PORT_END
 
 /******************************************************************************/
 
@@ -667,7 +624,7 @@ INPUT_PORTS_START( timesold )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -725,7 +682,7 @@ INPUT_PORTS_START( btlfield )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -783,7 +740,7 @@ INPUT_PORTS_START( skysoldr )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -858,7 +815,7 @@ INPUT_PORTS_START( goldmedl )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -917,7 +874,7 @@ INPUT_PORTS_START( skyadvnt )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* Dip 2: 6 way dip switch */
@@ -987,7 +944,7 @@ INPUT_PORTS_START( gangwars )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* Dip 2: 6 way dip switch */
@@ -1057,7 +1014,7 @@ INPUT_PORTS_START( sbasebal )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* Dip 2: 6 way dip switch */
@@ -2061,6 +2018,28 @@ ROM_END
 
 ROM_START( skyadvnt )
 	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "sa1.bin",   0x00000,  0x20000, 0xc2b23080 )
+	ROM_LOAD_ODD ( "sa2.bin",   0x00000,  0x20000, 0x06074e72 )
+
+	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
+	ROM_CONTINUE(               0x18000,  0x08000 )
+	ROM_LOAD( "sa.4",           0x30000,  0x10000, 0xc2e3c30c )
+	ROM_LOAD( "sa.5",           0x50000,  0x10000, 0x11cdb868 )
+	ROM_LOAD( "sa.6",           0x70000,  0x08000, 0x237d93fd )
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "sa.7",           0x000000, 0x08000, 0xea26e9c5 )
+
+	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "sachr3",         0x000000, 0x80000, 0xa986b8d5 )
+	ROM_LOAD( "sachr2",         0x0a0000, 0x80000, 0x504b07ae )
+	ROM_LOAD( "sachr1",         0x140000, 0x80000, 0xe734dccd )
+	ROM_LOAD( "sachr0",         0x1e0000, 0x80000, 0xe281b204 )
+ROM_END
+
+ROM_START( skyadvnu )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "sa_v3.1",   0x00000,  0x20000, 0x862393b5 )
 	ROM_LOAD_ODD ( "sa_v3.2",   0x00000,  0x20000, 0xfa7a14d1 )
 
@@ -2321,12 +2300,21 @@ static void init_sbasebal(void)
 
 	microcontroller_id=0x8512;
 	invert_controls=0;
+	coin_id=0x23|(0x24<<8);
 }
 
 static void init_skyadvnt(void)
 {
 	microcontroller_id=0x8814;
 	invert_controls=0;
+	coin_id=0x22|(0x22<<8);
+}
+
+static void init_skyadvnu(void)
+{
+	microcontroller_id=0x8814;
+	invert_controls=0;
+	coin_id=0x23|(0x24<<8);
 }
 
 static void init_kyros(void)
@@ -2356,10 +2344,11 @@ GAME( 1987, btlfield, timesold, alpha68k_II,   btlfield, btlfield, ROT90,      "
 GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers (US)" )
 GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, goldmedl, ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure (US)", GAME_NO_COCKTAIL )
+GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "Alpha Denshi Co.", "Sky Adventure (Japan)" )
+GAME( 1989, skyadvnu, skyadvnt, alpha68k_V,    skyadvnt, skyadvnu, ROT90,      "Alpha Denshi Co. (SNK of America license)", "Sky Adventure (US)" )
 GAME( 1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha Denshi Co.", "Gang Wars (US)" )
 GAME( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)" )
-GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, sbasebal, ROT0,       "SNK of America (licensed from Alpha)", "Super Champion Baseball", GAME_NO_COCKTAIL )
+GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, sbasebal, ROT0,       "Alpha Denshi Co. (SNK of America license)", "Super Champion Baseball", GAME_NO_COCKTAIL )
 
 /*
  Super Baseball and Sky Adventure don't write to their flipscreen ports - I'm not yet sure if this

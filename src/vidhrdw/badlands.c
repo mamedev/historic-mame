@@ -4,39 +4,8 @@
 
 ***************************************************************************/
 
-
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
-
-#define XCHARS 42
-#define YCHARS 30
-
-#define XDIM (XCHARS*8)
-#define YDIM (YCHARS*8)
-
-
-
-/*************************************
- *
- *	Statics
- *
- *************************************/
-
-static struct atarigen_pf_state pf_state;
-
-
-
-/*************************************
- *
- *	Prototypes
- *
- *************************************/
-
-static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
-static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
-
-static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
@@ -48,52 +17,99 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 int badlands_vh_start(void)
 {
-	static struct atarigen_mo_desc mo_desc =
+	static const struct ataripf_desc pfdesc =
 	{
-		32,                  /* maximum number of MO's */
-		4,                   /* number of bytes per MO entry */
-		0x80,                /* number of bytes between MO words */
-		0,                   /* ignore an entry if this word == 0xffff */
-		-1, 0, 0x3f,         /* link = (data[linkword] >> linkshift) & linkmask */
-		0                    /* render in reverse link order */
+		0,			/* index to which gfx system */
+		64,32,		/* size of the playfield in tiles (x,y) */
+		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
+	
+		0x00,		/* index of palette base */
+		0x80,		/* maximum number of colors */
+		0,			/* color XOR for shadow effect (if any) */
+		0,			/* latch mask */
+		0,			/* transparent pen mask */
+	
+		0x11fff,	/* tile data index mask */
+		0x0e000,	/* tile data color mask */
+		0,			/* tile data hflip mask */
+		0,			/* tile data vflip mask */
+		0			/* tile data priority mask */
 	};
 
-	static struct atarigen_pf_desc pf_desc =
+	static const struct atarimo_desc modesc =
 	{
-		8, 8,				/* width/height of each tile */
-		64, 64,				/* number of tiles in each direction */
-		1					/* non-scrolling */
-	};
+		1,					/* index to which gfx system */
+		1,					/* number of motion object banks */
+		0,					/* are the entries linked? */
+		1,					/* are the entries split? */
+		0,					/* render in reverse order? */
+		0,					/* render in swapped X/Y order? */
+		0,					/* does the neighbor bit affect the next object? */
+		0,					/* pixels per SLIP entry (0 for no-slip) */
+		8,					/* number of scanlines between MO updates */
 
-	/* initialize statics */
-	memset(&pf_state, 0, sizeof(pf_state));
+		0x80,				/* base palette entry */
+		0x80,				/* maximum number of colors */
+		0,					/* transparent pen index */
+
+		{{ 0x1f }},			/* mask for the link */
+		{{ 0 }},			/* mask for the graphics bank */
+		{{ 0x0fff,0,0,0 }},	/* mask for the code index */
+		{{ 0 }},			/* mask for the upper code index */
+		{{ 0,0,0,0x0007 }},	/* mask for the color */
+		{{ 0,0,0,0xff80 }},	/* mask for the X position */
+		{{ 0,0xff80,0,0 }},	/* mask for the Y position */
+		{{ 0 }},			/* mask for the width, in tiles*/
+		{{ 0,0x000f,0,0 }},	/* mask for the height, in tiles */
+		{{ 0 }},			/* mask for the horizontal flip */
+		{{ 0 }},			/* mask for the vertical flip */
+		{{ 0,0,0,0x0008 }},	/* mask for the priority */
+		{{ 0 }},			/* mask for the neighbor */
+		{{ 0 }},			/* mask for absolute coordinates */
+		
+		{{ 0 }},			/* mask for the ignore value */
+		0,					/* resulting value to indicate "ignore" */
+		0					/* callback routine for ignored entries */
+	};
+	
+	UINT32 *pflookup;
+	int i, size;
 
 	/* initialize the playfield */
-	if (atarigen_pf_init(&pf_desc))
-		return 1;
+	if (!ataripf_init(0, &pfdesc))
+		goto cant_create_pf;
 
 	/* initialize the motion objects */
-	if (atarigen_mo_init(&mo_desc))
+	if (!atarimo_init(0, &modesc))
+		goto cant_create_mo;
+	
+	/* modify the code bits in the playfield lookup to handle our banking */
+	pflookup = ataripf_get_lookup(0, &size);
+	for (i = 0; i < size; i++)
 	{
-		atarigen_pf_free();
-		return 1;
+		int entry = i << ATARIPF_LOOKUP_DATABITS;
+		int code = entry & 0xfff;
+		if (entry & 0x1000)
+			code += 0x1000 + ((entry & 0x10000) >> 4);
+		ATARIPF_LOOKUP_SET_CODE(pflookup[i], code);
 	}
 
-	/*
-	 * if we are palette reducing, do the simple thing by marking everything used except for
+	/* if we are palette reducing, do the simple thing by marking everything used except for
 	 * the transparent sprite and alpha colors; this should give some leeway for machines
-	 * that can't give up all 256 colors
-	 */
+	 * that can't give up all 256 colors */
 	if (palette_used_colors)
 	{
-		int i;
-
 		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(UINT8));
 		for (i = 0; i < 8; i++)
 			palette_used_colors[0x80 + i * 16] = PALETTE_COLOR_TRANSPARENT;
 	}
-
 	return 0;
+
+	/* error cases */
+cant_create_mo:
+	ataripf_free();
+cant_create_pf:
+	return 1;
 }
 
 
@@ -106,23 +122,8 @@ int badlands_vh_start(void)
 
 void badlands_vh_stop(void)
 {
-	atarigen_pf_free();
-	atarigen_mo_free();
-}
-
-
-
-/*************************************
- *
- *	Periodic scanline updater
- *
- *************************************/
-
-void badlands_scanline_update(int scanline)
-{
-	/* update motion objects */
-	if (scanline == 0)
-		atarigen_mo_update(atarigen_spriteram, 0, scanline);
+	atarimo_free();
+	ataripf_free();
 }
 
 
@@ -133,36 +134,36 @@ void badlands_scanline_update(int scanline)
  *
  *************************************/
 
-WRITE_HANDLER( badlands_pf_bank_w )
+WRITE16_HANDLER( badlands_pf_bank_w )
 {
-	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-
-	if (oldword != newword)
-	{
-		pf_state.param[0] = data & 1;
-		atarigen_pf_update(&pf_state, cpu_getscanline());
-	}
+	if (ACCESSING_LSB)
+		ataripf_set_bankbits(0, (data & 1) << 16, cpu_getscanline() + 1);
 }
 
 
 
 /*************************************
  *
- *	Playfield RAM write handler
+ *	Overrendering
  *
  *************************************/
 
-WRITE_HANDLER( badlands_playfieldram_w )
+static int overrender_callback(struct ataripf_overrender_data *data, int state)
 {
-	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-
-	if (oldword != newword)
+	/* we're all or nothing, so just handle the BEGIN message */
+	if (state == OVERRENDER_BEGIN)
 	{
-		WRITE_WORD(&atarigen_playfieldram[offset], newword);
-		atarigen_pf_dirty[offset / 2] = 0xff;
+		/* if the priority is 1, we don't need to overrender */
+		if (data->mopriority == 1)
+			return OVERRENDER_NONE;
+		
+		/* by default, draw anywhere the MO is non-zero */
+		data->drawmode = TRANSPARENCY_PENS;
+		data->drawpens = 0x00ff;
+		data->maskpens = 0x0001;
+		return OVERRENDER_ALL;
 	}
+	return 0;
 }
 
 
@@ -175,152 +176,11 @@ WRITE_HANDLER( badlands_playfieldram_w )
 
 void badlands_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int i;
-
-	/* remap if necessary */
+	/* update the palette, and mark things dirty if we need to */
 	if (palette_recalc())
-		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
+		ataripf_invalidate(0);
 
-	/* set up the all-transparent overrender palette */
-	for (i = 0; i < 16; i++)
-		atarigen_overrender_colortable[i] = palette_transparent_pen;
-
-	/* draw the playfield */
-	atarigen_pf_process(pf_render_callback, bitmap, &Machine->visible_area);
-
-	/* render the motion objects */
-	atarigen_mo_process(mo_render_callback, bitmap);
-
-	/* update onscreen messages */
-	atarigen_update_messages();
-}
-
-
-
-/*************************************
- *
- *	Playfield rendering
- *
- *************************************/
-
-static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
-{
-	const struct GfxElement *gfx = Machine->gfx[0];
-	int bank = state->param[0] * 0x1000;
-	struct osd_bitmap *bitmap = param;
-	int x, y;
-
-	/* standard loop over tiles */
-	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
-		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
-		{
-			int offs = y * 64 + x;
-
-			/* update only if dirty */
-			if (atarigen_pf_dirty[offs] != state->param[0])
-			{
-				int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-				int code = data & 0x1fff;
-				int color = data >> 13;
-				if (code & 0x1000) code += bank;
-
-				drawgfx(atarigen_pf_bitmap, gfx, code, color, 0, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
-				atarigen_pf_dirty[offs] = state->param[0];
-			}
-		}
-
-	/* then blast the result */
-	copybitmap(bitmap, atarigen_pf_bitmap, 0, 0, 0, 0, clip, TRANSPARENCY_NONE, 0);
-}
-
-
-
-/*************************************
- *
- *	Playfield overrendering
- *
- *************************************/
-
-static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
-{
-	const struct GfxElement *gfx = Machine->gfx[0];
-	int bank = state->param[0] * 0x1000;
-	struct osd_bitmap *bitmap = param;
-	int x, y;
-
-	/* standard loop over tiles */
-	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
-		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
-		{
-			int offs = y * 64 + x;
-/*			int priority_offs = y * 64 + XCHARS + x / 2;*/
-			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-			int color = data >> 13;
-			int code = data & 0x1fff;
-			if (code & 0x1000) code += bank;
-
-			drawgfx(bitmap, gfx, code, color, 0, 0, 8 * x, 8 * y, clip, TRANSPARENCY_PENS, 0x00ff);
-		}
-}
-
-
-
-/*************************************
- *
- *	Motion object rendering
- *
- *************************************/
-
-static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
-{
-	struct GfxElement *gfx = Machine->gfx[1];
-	struct osd_bitmap *bitmap = param;
-	struct rectangle pf_clip;
-
-	/* extract data from the various words */
-	int ypos = -(data[1] >> 7);
-	int vsize = (data[1] & 0x000f) + 1;
-	int code = data[0] & 0x0fff;
-	int xpos = data[3] >> 7;
-	int color = data[3] & 0x0007;
-	int priority = (data[3] >> 3) & 1;
-
-	/* adjust for height */
-	ypos -= vsize * 8;
-
-	/* adjust the final coordinates */
-	xpos &= 0x1ff;
-	ypos &= 0x1ff;
-	if (xpos >= XDIM) xpos -= 0x200;
-	if (ypos >= YDIM) ypos -= 0x200;
-
-	/* clip the X coordinate */
-	if (xpos <= -16 || xpos >= XDIM)
-		return;
-
-	/* determine the bounding box */
-	atarigen_mo_compute_clip_16x16(pf_clip, xpos, ypos, 1, vsize, clip);
-
-	/* simple case? */
-	if (priority == 1)
-	{
-		/* draw the motion object */
-		atarigen_mo_draw_16x8_strip(bitmap, gfx, code, color, 0, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
-	}
-
-	/* otherwise, make it tricky */
-	else
-	{
-		/* draw an instance of the object in all transparent pens */
-		atarigen_mo_draw_transparent_16x8_strip(bitmap, gfx, code, 0, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
-
-		/* and then draw it normally on the temp bitmap */
-		atarigen_mo_draw_16x8_strip(atarigen_pf_overrender_bitmap, gfx, code, color, 0, 0, xpos, ypos, vsize, clip, TRANSPARENCY_NONE, 0);
-
-		/* overrender the playfield on top of that that */
-		atarigen_pf_process(pf_overrender_callback, atarigen_pf_overrender_bitmap, &pf_clip);
-
-		/* finally, copy this chunk to the real bitmap */
-		copybitmap(bitmap, atarigen_pf_overrender_bitmap, 0, 0, 0, 0, &pf_clip, TRANSPARENCY_THROUGH, palette_transparent_pen);
-	}
+	/* draw the layers */
+	ataripf_render(0, bitmap);
+	atarimo_render(0, bitmap, overrender_callback, NULL);
 }

@@ -18,31 +18,24 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *tecmo16_videoram;
-extern unsigned char *tecmo16_colorram;
-extern unsigned char *tecmo16_videoram2;
-extern unsigned char *tecmo16_colorram2;
-extern unsigned char *tecmo16_charram;
+extern data16_t *tecmo16_videoram;
+extern data16_t *tecmo16_colorram;
+extern data16_t *tecmo16_videoram2;
+extern data16_t *tecmo16_colorram2;
+extern data16_t *tecmo16_charram;
 
-READ_HANDLER( tecmo16_videoram_r );
-READ_HANDLER( tecmo16_colorram_r );
-READ_HANDLER( tecmo16_videoram2_r );
-READ_HANDLER( tecmo16_colorram2_r );
-READ_HANDLER( tecmo16_charram_r );
-READ_HANDLER( tecmo16_spriteram_r );
-WRITE_HANDLER( tecmo16_videoram_w );
-WRITE_HANDLER( tecmo16_colorram_w );
-WRITE_HANDLER( tecmo16_videoram2_w );
-WRITE_HANDLER( tecmo16_colorram2_w );
-WRITE_HANDLER( tecmo16_charram_w );
-WRITE_HANDLER( tecmo16_spriteram_w );
+WRITE16_HANDLER( tecmo16_videoram_w );
+WRITE16_HANDLER( tecmo16_colorram_w );
+WRITE16_HANDLER( tecmo16_videoram2_w );
+WRITE16_HANDLER( tecmo16_colorram2_w );
+WRITE16_HANDLER( tecmo16_charram_w );
 
-WRITE_HANDLER( tecmo16_scroll_x_w );
-WRITE_HANDLER( tecmo16_scroll_y_w );
-WRITE_HANDLER( tecmo16_scroll2_x_w );
-WRITE_HANDLER( tecmo16_scroll2_y_w );
-WRITE_HANDLER( tecmo16_scroll_char_x_w );
-WRITE_HANDLER( tecmo16_scroll_char_y_w );
+WRITE16_HANDLER( tecmo16_scroll_x_w );
+WRITE16_HANDLER( tecmo16_scroll_y_w );
+WRITE16_HANDLER( tecmo16_scroll2_x_w );
+WRITE16_HANDLER( tecmo16_scroll2_y_w );
+WRITE16_HANDLER( tecmo16_scroll_char_x_w );
+WRITE16_HANDLER( tecmo16_scroll_char_y_w );
 
 int fstarfrc_vh_start(void);
 int ginkun_vh_start(void);
@@ -50,82 +43,78 @@ void tecmo16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /******************************************************************************/
 
-static WRITE_HANDLER( tecmo16_sound_command_w )
+static WRITE16_HANDLER( tecmo16_sound_command_w )
 {
-	soundlatch_w(0x00,data & 0xff);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(0x00,data & 0xff);
+		cpu_cause_interrupt(1,Z80_NMI_INT);
+	}
 }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress fstarfrc_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1 },	/* Main RAM */
-	{ 0x110000, 0x110fff, tecmo16_charram_r },
-	{ 0x120000, 0x1207ff, tecmo16_videoram_r },
-	{ 0x120800, 0x120fff, tecmo16_colorram_r },
-	{ 0x121000, 0x1217ff, tecmo16_videoram2_r },
-	{ 0x121800, 0x121fff, tecmo16_colorram2_r },
-	{ 0x122000, 0x127fff, MRA_BANK2 },	/* work area */
-	{ 0x130000, 0x130fff, tecmo16_spriteram_r },
-	{ 0x140000, 0x1407ff, paletteram_word_r },
-	{ 0x150030, 0x150031, input_port_1_r },
-	{ 0x150040, 0x150041, input_port_0_r },
-	{ 0x150050, 0x150051, input_port_2_r },
-	{ -1 }	/* end of table */
-};
+static MEMORY_READ16_START( fstarfrc_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x110000, 0x110fff, MRA16_RAM },
+	{ 0x120000, 0x1207ff, MRA16_RAM },
+	{ 0x120800, 0x120fff, MRA16_RAM },
+	{ 0x121000, 0x1217ff, MRA16_RAM },
+	{ 0x121800, 0x121fff, MRA16_RAM },
+	{ 0x122000, 0x127fff, MRA16_RAM },
+	{ 0x130000, 0x130fff, MRA16_RAM },
+	{ 0x140000, 0x1407ff, MRA16_RAM },
+	{ 0x150030, 0x150031, input_port_1_word_r },
+	{ 0x150040, 0x150041, input_port_0_word_r },
+	{ 0x150050, 0x150051, input_port_2_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress fstarfrc_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1 },	/* Main RAM */
+static MEMORY_WRITE16_START( fstarfrc_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
 	{ 0x110000, 0x110fff, tecmo16_charram_w, &tecmo16_charram },
 	{ 0x120000, 0x1207ff, tecmo16_videoram_w, &tecmo16_videoram },
 	{ 0x120800, 0x120fff, tecmo16_colorram_w, &tecmo16_colorram },
 	{ 0x121000, 0x1217ff, tecmo16_videoram2_w, &tecmo16_videoram2 },
 	{ 0x121800, 0x121fff, tecmo16_colorram2_w, &tecmo16_colorram2 },
-	{ 0x122000, 0x127fff, MWA_BANK2 },	/* work area */
-	{ 0x130000, 0x130fff, tecmo16_spriteram_w, &spriteram, &spriteram_size },
-	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x122000, 0x127fff, MWA16_RAM },	/* work area */
+	{ 0x130000, 0x130fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x150010, 0x150011, tecmo16_sound_command_w },
-	{ 0x150030, 0x150031, MWA_NOP },
+	{ 0x150030, 0x150031, MWA16_NOP },	/* ??? */
 	{ 0x160000, 0x160001, tecmo16_scroll_char_x_w },
 	{ 0x16000c, 0x16000d, tecmo16_scroll_x_w },
 	{ 0x160012, 0x160013, tecmo16_scroll_y_w },
 	{ 0x160018, 0x160019, tecmo16_scroll2_x_w },
 	{ 0x16001e, 0x16001f, tecmo16_scroll2_y_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ginkun_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1 },	/* Main RAM */
-	{ 0x110000, 0x110fff, tecmo16_charram_r },
-	{ 0x120000, 0x120fff, tecmo16_videoram_r },
-	{ 0x121000, 0x121fff, tecmo16_colorram_r },
-	{ 0x122000, 0x122fff, tecmo16_videoram2_r },
-	{ 0x123000, 0x123fff, tecmo16_colorram2_r },
-	{ 0x130000, 0x130fff, tecmo16_spriteram_r },
-	{ 0x140000, 0x1407ff, paletteram_word_r },
-	{ 0x150030, 0x150031, input_port_1_r },
-	{ 0x150040, 0x150041, input_port_0_r },
-	{ 0x150050, 0x150051, input_port_2_r },
-	{ -1 }	/* end of table */
-};
+static MEMORY_READ16_START( ginkun_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x110000, 0x110fff, MRA16_RAM },
+	{ 0x120000, 0x120fff, MRA16_RAM },
+	{ 0x121000, 0x121fff, MRA16_RAM },
+	{ 0x122000, 0x122fff, MRA16_RAM },
+	{ 0x123000, 0x123fff, MRA16_RAM },
+	{ 0x130000, 0x130fff, MRA16_RAM },
+	{ 0x140000, 0x1407ff, MRA16_RAM },
+	{ 0x150030, 0x150031, input_port_1_word_r },
+	{ 0x150040, 0x150041, input_port_0_word_r },
+	{ 0x150050, 0x150051, input_port_2_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress ginkun_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1 },	/* Main RAM */
+static MEMORY_WRITE16_START( ginkun_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
 	{ 0x110000, 0x110fff, tecmo16_charram_w, &tecmo16_charram },
 	{ 0x120000, 0x120fff, tecmo16_videoram_w, &tecmo16_videoram },
 	{ 0x121000, 0x121fff, tecmo16_colorram_w, &tecmo16_colorram },
 	{ 0x122000, 0x122fff, tecmo16_videoram2_w, &tecmo16_videoram2 },
 	{ 0x123000, 0x123fff, tecmo16_colorram2_w, &tecmo16_colorram2 },
-	{ 0x130000, 0x130fff, tecmo16_spriteram_w, &spriteram, &spriteram_size },
-	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x130000, 0x130fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x150010, 0x150011, tecmo16_sound_command_w },
 	{ 0x160000, 0x160001, tecmo16_scroll_char_x_w },
 	{ 0x160006, 0x160007, tecmo16_scroll_char_y_w },
@@ -133,11 +122,9 @@ static struct MemoryWriteAddress ginkun_writemem[] =
 	{ 0x160012, 0x160013, tecmo16_scroll_y_w },
 	{ 0x160018, 0x160019, tecmo16_scroll2_x_w },
 	{ 0x16001e, 0x16001f, tecmo16_scroll2_y_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xfbff, MRA_RAM },	/* Sound RAM */
 	{ 0xfc00, 0xfc00, OKIM6295_status_0_r },
@@ -145,11 +132,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xfc08, 0xfc08, soundlatch_r },
 	{ 0xfc0c, 0xfc0c, MRA_NOP },
 	{ 0xfffe, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xfbff, MWA_RAM },	/* Sound RAM */
 	{ 0xfc00, 0xfc00, OKIM6295_data_0_w },
@@ -157,8 +142,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xfc05, 0xfc05, YM2151_data_port_0_w },
 	{ 0xfc0c, 0xfc0c, MWA_NOP },
 	{ 0xfffe, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

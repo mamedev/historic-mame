@@ -412,7 +412,7 @@ void init_machine_polaris(void)
 
 static WRITE_HANDLER( polaris_sh_port6_w )
 {
-	coin_lockout_global_w(0, data & 0x04);
+	coin_lockout_global_w(data & 0x04);
 
 	invaders_flip_screen_w(data & 0x20);
 }
@@ -546,7 +546,7 @@ static WRITE_HANDLER( sheriff_sh_port5_w )
 
 static WRITE_HANDLER( sheriff_sh_port6_w )
 {
-	flip_screen_w(offset, data & 0x20);
+	flip_screen_set(data & 0x20);
 }
 
 
@@ -591,7 +591,7 @@ void init_machine_helifire(void)
 
 static WRITE_HANDLER( helifire_sh_port6_w )
 {
-	flip_screen_w(offset, data & 0x20);
+	flip_screen_set(data & 0x20);
 }
 
 
@@ -749,7 +749,7 @@ static WRITE_HANDLER( schaser_sh_port5_w )
 
 	mixer_sound_enable_global_w(data & 0x02);
 
-	coin_lockout_global_w(0, data & 0x04);
+	coin_lockout_global_w(data & 0x04);
 
 	invaders_flip_screen_w(data & 0x20);
 }

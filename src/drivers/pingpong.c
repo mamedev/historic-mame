@@ -24,8 +24,7 @@ static int pingpong_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7FFF, MRA_ROM },
 	{ 0x8000, 0x87FF, MRA_RAM },
 	{ 0x9000, 0x97FF, MRA_RAM },
@@ -33,11 +32,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xA880, 0xA880, input_port_1_r },
 	{ 0xA900, 0xA900, input_port_2_r },
 	{ 0xA980, 0xA980, input_port_3_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7FFF, MWA_ROM },
 	{ 0x8000, 0x83FF, colorram_w, &colorram },
 	{ 0x8400, 0x87FF, videoram_w, &videoram, &videoram_size },
@@ -50,8 +47,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xA200, 0xA200, MWA_NOP },		/* SN76496 data latch */
 	{ 0xA400, 0xA400, SN76496_0_w },	/* trigger read */
 	{ 0xA600, 0xA600, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "cpu/z80/z80.h"
 
 
 #define VERBOSE 0
@@ -25,17 +24,17 @@ static UINT8 ic25_last_unsigned;
 /* 4-bit MCU state */
 static struct polepos_mcu_def
 {
-	int		enabled;			/* Enabled */
-	int		status;				/* Status */
-	int		transfer_id;		/* Transfer id */
-	void	*timer;				/* Transfer timer */
-	int		coin1_coinpercred;	/* Coinage info */
-	int		coin1_credpercoin;	/* Coinage info */
-	int		coin2_coinpercred;	/* Coinage info */
-	int		coin2_credpercoin;	/* Coinage info */
-	int		mode;				/* Mode ( 0 = read switches, 1 = Coinage, 2 = in-game ) */
-	int		credits;			/* Credits count */
-	int		start;				/* Start switch */
+	int 	enabled;			/* Enabled */
+	int 	status; 			/* Status */
+	int 	transfer_id;		/* Transfer id */
+	void	*timer; 			/* Transfer timer */
+	int 	coin1_coinpercred;	/* Coinage info */
+	int 	coin1_credpercoin;	/* Coinage info */
+	int 	coin2_coinpercred;	/* Coinage info */
+	int 	coin2_credpercoin;	/* Coinage info */
+	int 	mode;				/* Mode ( 0 = read switches, 1 = Coinage, 2 = in-game ) */
+	int 	credits;			/* Credits count */
+	int 	start;				/* Start switch */
 } polepos_mcu;
 
 /* Prototypes */
@@ -43,7 +42,7 @@ static void z80_interrupt(int scanline);
 void polepos_sample_play(int sample); /* from sndhrdw */
 
 /*************************************************************************************/
-/* Interrupt handling                                                                */
+/* Interrupt handling																 */
 /*************************************************************************************/
 
 void polepos_init_machine(void)
@@ -88,9 +87,9 @@ WRITE_HANDLER( polepos_z80_irq_enable_w )
 	if ((data & 1) == 0) cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
-WRITE_HANDLER( polepos_z8002_nvi_enable_w )
+WRITE16_HANDLER( polepos_z8002_nvi_enable_w )
 {
-	int which = (offset / 2) + 1;
+	int which = offset + 1;
 
 	if (which == cpu_getactivecpu())
 	{
@@ -129,7 +128,7 @@ WRITE_HANDLER( polepos_z8002_enable_w )
 
 
 /*************************************************************************************/
-/* I/O and ADC handling                                                              */
+/* I/O and ADC handling 															 */
 /*************************************************************************************/
 
 WRITE_HANDLER( polepos_adc_select_w )
@@ -173,22 +172,22 @@ READ_HANDLER( polepos_io_r )
 
 
 /*************************************************************************************/
-/* Pole Position II protection                                                       */
+/* Pole Position II protection														 */
 /*************************************************************************************/
 
-READ_HANDLER( polepos2_ic25_r )
+READ16_HANDLER( polepos2_ic25_r )
 {
 	int result;
 
-	offset = offset & 0x3ff;
-	if (offset < 0x200)
+	offset = offset & 0x1ff;
+	if (offset < 0x100)
 	{
-		ic25_last_signed = (offset / 2) & 0xff;
+		ic25_last_signed = offset & 0xff;
 		result = ic25_last_result & 0xff;
 	}
 	else
 	{
-		ic25_last_unsigned = (offset / 2) & 0xff;
+		ic25_last_unsigned = offset & 0xff;
 		result = (ic25_last_result >> 8) & 0xff;
 		ic25_last_result = (INT8)ic25_last_signed * (UINT8)ic25_last_unsigned;
 	}
@@ -201,7 +200,7 @@ READ_HANDLER( polepos2_ic25_r )
 
 
 /*************************************************************************************/
-/* 4 bit cpu emulation                                                               */
+/* 4 bit cpu emulation																 */
 /*************************************************************************************/
 
 WRITE_HANDLER( polepos_mcu_enable_w )
@@ -221,7 +220,7 @@ WRITE_HANDLER( polepos_mcu_enable_w )
 
 static void polepos_mcu_callback(int param)
 {
-	cpu_cause_interrupt(0, Z80_NMI_INT);
+	cpu_set_nmi_line(0, PULSE_LINE);
 }
 
 READ_HANDLER( polepos_mcu_control_r )
@@ -236,13 +235,13 @@ WRITE_HANDLER( polepos_mcu_control_w )
 {
 	LOG(("polepos_mcu_control_w: %d, $%02x\n", offset, data));
 
-    if (polepos_mcu.enabled)
-    {
+	if (polepos_mcu.enabled)
+	{
 		if (data != 0x10)
 		{
 			/* start transfer */
 			polepos_mcu.transfer_id = data; /* get the id */
-			polepos_mcu.status = 0xe0; 		/* set status */
+			polepos_mcu.status = 0xe0;		/* set status */
 			if (polepos_mcu.timer)
 				timer_remove(polepos_mcu.timer);
 			/* fire off the transfer timer */
@@ -458,3 +457,4 @@ WRITE_HANDLER( polepos_start_w )
 
 	last_start = data;
 }
+

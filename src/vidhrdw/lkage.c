@@ -78,8 +78,8 @@ int lkage_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
-	tx_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(tx_tilemap,0);
 
 	tilemap_set_scrolldx(tx_tilemap,-9,15);
 	tilemap_set_scrolldx(fg_tilemap,-15,13);
@@ -168,8 +168,8 @@ void lkage_set_palette_row( int virtual_row, int logical_row, int len )
 
 void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	flip_screen_x_w(0,~lkage_vreg[2] & 0x01);
-	flip_screen_y_w(0,~lkage_vreg[2] & 0x02);
+	flip_screen_x_set(~lkage_vreg[2] & 0x01);
+	flip_screen_y_set(~lkage_vreg[2] & 0x02);
 
 	if( bg_tile_bank != (lkage_vreg[1]&0x08) )
 	{
@@ -198,19 +198,18 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(bg_tilemap,0,lkage_scroll[5]);
 
 	tilemap_update( ALL_TILEMAPS );
-	if (palette_recalc())  tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render( ALL_TILEMAPS );
+	palette_recalc();
 
 	if ((lkage_vreg[2] & 0xf0) == 0xf0)
 	{
-		tilemap_draw( bitmap,bg_tilemap,0 );
+		tilemap_draw( bitmap,bg_tilemap,0 ,0);
 		draw_sprites( bitmap, 1 );
-		tilemap_draw( bitmap,fg_tilemap,0 );
+		tilemap_draw( bitmap,fg_tilemap,0 ,0);
 		draw_sprites( bitmap, 0 );
-		tilemap_draw( bitmap,tx_tilemap,0 );
+		tilemap_draw( bitmap,tx_tilemap,0 ,0);
 	}
 	else
 	{
-		tilemap_draw( bitmap,tx_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
+		tilemap_draw( bitmap,tx_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
 	}
 }

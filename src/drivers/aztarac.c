@@ -11,59 +11,83 @@
 #include "vidhrdw/vector.h"
 
 /* from machine/foodf.c */
-READ_HANDLER( foodf_nvram_r );
-WRITE_HANDLER( foodf_nvram_w );
+READ16_HANDLER( foodf_nvram_r );
+WRITE16_HANDLER( foodf_nvram_w );
 void foodf_nvram_handler(void *file,int read_or_write);
 
 /* from vidhrdw/aztarac.c */
 void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int aztarac_vh_start (void);
-WRITE_HANDLER( aztarac_ubr_w );
+WRITE16_HANDLER( aztarac_ubr_w );
 int aztarac_vg_interrupt(void);
 
-extern UINT8 *aztarac_vectorram;
+extern data16_t *aztarac_vectorram;
 
 /* from sndhrdw/aztarac.c */
-READ_HANDLER( aztarac_sound_r );
-WRITE_HANDLER( aztarac_sound_w );
+READ16_HANDLER( aztarac_sound_r );
+WRITE16_HANDLER( aztarac_sound_w );
 READ_HANDLER( aztarac_snd_command_r );
 READ_HANDLER( aztarac_snd_status_r );
 WRITE_HANDLER( aztarac_snd_status_w );
 int aztarac_snd_timed_irq (void);
 
-static READ_HANDLER( aztarac_joystick_r )
+static unsigned char nvram[128];
+
+static READ16_HANDLER( aztarac_nvram_r )
+{
+	return ((nvram[(offset / 4) ^ 0x03] >> 2*(offset % 4))) & 0x0f;
+}
+
+static WRITE16_HANDLER( aztarac_nvram_w )
+{
+	if (ACCESSING_LSB)
+	{
+		nvram[(offset / 4) ^ 0x03] &= ~(0x0f << 2*(offset % 4));
+		nvram[(offset / 4) ^ 0x03] |= (data & 0x0f) << 2*(offset % 4);
+	}
+}
+
+static void aztarac_nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,128);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,128);
+		else
+			memset(nvram,0xff,128);
+	}
+}
+
+static READ16_HANDLER( aztarac_joystick_r )
 {
     return (((input_port_0_r (offset) - 0xf) << 8) |
             ((input_port_1_r (offset) - 0xf) & 0xff));
 }
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x00bfff, MRA_ROM },
-	{ 0x022000, 0x022fff, foodf_nvram_r },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x00bfff, MRA16_ROM },
+	{ 0x022000, 0x022fff, aztarac_nvram_r },
 	{ 0x027000, 0x027001, aztarac_joystick_r },
-	{ 0x027004, 0x027005, input_port_3_r },
+	{ 0x027004, 0x027005, input_port_3_word_r },
 	{ 0x027008, 0x027009, aztarac_sound_r },
-	{ 0x02700c, 0x02700d, input_port_2_r },
-	{ 0x02700e, 0x02700f, watchdog_reset_r },
-	{ 0xff8000, 0xffafff, MRA_BANK1 },
-	{ 0xffe000, 0xffffff, MRA_BANK2 },
-	{ -1 }	/* end of table */
-};
+	{ 0x02700c, 0x02700d, input_port_2_word_r },
+	{ 0x02700e, 0x02700f, watchdog_reset16_r },
+	{ 0xff8000, 0xffafff, MRA16_RAM },
+	{ 0xffe000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x00bfff, MWA_ROM },
-	{ 0x022000, 0x022fff, foodf_nvram_w },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x00bfff, MWA16_ROM },
+	{ 0x022000, 0x022fff, aztarac_nvram_w },
 	{ 0x027008, 0x027009, aztarac_sound_w },
-	{ 0xff8000, 0xffafff, MWA_BANK1, &aztarac_vectorram },
+	{ 0xff8000, 0xffafff, MWA16_RAM, &aztarac_vectorram },
 	{ 0xffb000, 0xffb001, aztarac_ubr_w },
-	{ 0xffe000, 0xffffff, MWA_BANK2 },
-	{ -1 }	/* end of table */
-};
+	{ 0xffe000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, aztarac_snd_command_r },
@@ -72,11 +96,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x8c04, 0x8c05, AY8910_read_port_2_r },
 	{ 0x8c06, 0x8c07, AY8910_read_port_3_r },
 	{ 0x9000, 0x9000, aztarac_snd_status_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8c00, 0x8c00, AY8910_write_port_0_w },
@@ -88,8 +110,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8c06, 0x8c06, AY8910_write_port_3_w },
 	{ 0x8c07, 0x8c07, AY8910_control_port_3_w },
 	{ 0x9000, 0x9000, aztarac_snd_status_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -170,7 +191,7 @@ static const struct MachineDriver machine_driver_aztarac =
 		}
     },
 
-	foodf_nvram_handler
+	aztarac_nvram_handler
 };
 
 /***************************************************************************
@@ -199,17 +220,13 @@ ROM_START( aztarac )
 	ROM_LOAD( "j3_d.bin", 0x1000, 0x1000, 0x4016de77 )
 ROM_END
 
-
-
 static void init_aztarac(void)
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	/* patch IRQ vector 4 to autovector location */
-	WRITE_WORD(&rom[0x70], 0);
-	WRITE_WORD(&rom[0x72], 0x0c02);
+	rom[0x70/2] = 0x0000;
+	rom[0x72/2] = 0x0c02;
 }
-
-
 
 GAME( 1983, aztarac, 0, aztarac, aztarac, aztarac, ROT0, "Centuri", "Aztarac" )

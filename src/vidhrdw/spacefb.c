@@ -64,7 +64,7 @@ void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 WRITE_HANDLER( spacefb_video_control_w )
 {
-	flip_screen_w(offset, video_control & 0x01);
+	flip_screen_set(data & 0x01);
 
 	video_control = data;
 }

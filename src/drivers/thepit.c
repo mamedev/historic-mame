@@ -68,9 +68,18 @@ READ_HANDLER( thepit_input_port_0_r );
 WRITE_HANDLER( thepit_sound_enable_w );
 WRITE_HANDLER( intrepid_graphics_bank_select_w );
 
-
-static struct MemoryReadAddress thepit_readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+
+static MEMORY_READ_START( thepit_readmem )
 	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x93ff, MRA_RAM },
@@ -80,11 +89,9 @@ static struct MemoryReadAddress thepit_readmem[] =
 	{ 0xa800, 0xa800, input_port_1_r },
 	{ 0xb000, 0xb000, input_port_2_r },
 	{ 0xb800, 0xb800, watchdog_reset_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress thepit_writemem[] =
-{
+static MEMORY_WRITE_START( thepit_writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
@@ -103,12 +110,10 @@ static struct MemoryWriteAddress thepit_writemem[] =
 	{ 0xb006, 0xb006, flip_screen_x_w },
 	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, soundlatch_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress intrepid_readmem[] =
-{
+static MEMORY_READ_START( intrepid_readmem )
 	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x98ff, MRA_RAM },
@@ -116,11 +121,9 @@ static struct MemoryReadAddress intrepid_readmem[] =
 	{ 0xa800, 0xa800, input_port_1_r },
 	{ 0xb000, 0xb000, input_port_2_r },
 	{ 0xb800, 0xb800, watchdog_reset_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress intrepid_writemem[] =
-{
+static MEMORY_WRITE_START( intrepid_writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -137,38 +140,29 @@ static struct MemoryWriteAddress intrepid_writemem[] =
 	{ 0xb006, 0xb006, flip_screen_x_w },
 	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, soundlatch_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x3800, 0x3bff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x3800, 0x3bff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x8f, 0x8f, AY8910_read_port_0_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, soundlatch_clear_w },
 	{ 0x8c, 0x8c, AY8910_control_port_1_w },
 	{ 0x8d, 0x8d, AY8910_write_port_1_w },
 	{ 0x8e, 0x8e, AY8910_control_port_0_w },
 	{ 0x8f, 0x8f, AY8910_write_port_0_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( thepit )

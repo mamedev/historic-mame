@@ -22,13 +22,12 @@ static int use_16bit;
 #define PALETTIZED_16BIT	2
 
 static int total_shrinked_pens;
-UINT16 *shrinked_pens;
+static UINT16 *shrinked_pens;
 static UINT8 *shrinked_palette;
 static UINT16 *palette_map;	/* map indexes from game_palette to shrinked_palette */
 static UINT16 pen_usage_count[DYNAMIC_MAX_PENS];
 
 UINT16 palette_transparent_pen;
-int palette_transparent_color;
 
 
 #define BLACK_PEN		0
@@ -42,8 +41,6 @@ int palette_transparent_color;
 
 
 UINT16 *palette_shadow_table;
-
-void artwork_remap(void);
 
 
 
@@ -208,10 +205,6 @@ int palette_init(void)
 	/* vh_init_palette() */
 	for (i = 0;i < Machine->drv->color_table_len;i++)
 		Machine->game_colortable[i] = i % Machine->drv->total_colors;
-
-	/* by default we use -1 to identify the transparent color, the driver */
-	/* can modify this. */
-	palette_transparent_color = -1;
 
 	/* now the driver can modify the default values if it wants to. */
 	if (Machine->drv->vh_init_palette)
@@ -406,6 +399,8 @@ logerror("shrinked palette uses %d colors\n",used);
 		Machine->debug_remapped_colortable[2*i+1] = Machine->debug_pens[i % DEBUGGER_TOTAL_COLORS];
 	}
 
+	artwork_remap();
+
 	return 0;
 }
 
@@ -413,23 +408,6 @@ logerror("shrinked palette uses %d colors\n",used);
 
 INLINE void palette_change_color_16_static(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
-	if (color == palette_transparent_color)
-	{
-		int i;
-
-
-		palette_transparent_pen = shrinked_pens[rgbpenindex(red,green,blue)];
-
-		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
-
-		for (i = 0;i < Machine->drv->total_colors;i++)
-		{
-			if ((old_used_colors[i] & (PALETTE_COLOR_VISIBLE | PALETTE_COLOR_TRANSPARENT_FLAG))
-					== (PALETTE_COLOR_VISIBLE | PALETTE_COLOR_TRANSPARENT_FLAG))
-				old_used_colors[i] |= PALETTE_COLOR_NEEDS_REMAP;
-		}
-	}
-
 	if (	game_palette[3*color + 0] == red &&
 			game_palette[3*color + 1] == green &&
 			game_palette[3*color + 2] == blue)
@@ -446,13 +424,6 @@ INLINE void palette_change_color_16_static(int color,UINT8 red,UINT8 green,UINT8
 
 INLINE void palette_change_color_16_palettized(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
-	if (color == palette_transparent_color)
-	{
-		osd_modify_pen(palette_transparent_pen,red,green,blue);
-
-		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
-	}
-
 	if (	game_palette[3*color + 0] == red &&
 			game_palette[3*color + 1] == green &&
 			game_palette[3*color + 2] == blue)
@@ -469,13 +440,6 @@ INLINE void palette_change_color_16_palettized(int color,UINT8 red,UINT8 green,U
 INLINE void palette_change_color_8(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	int pen;
-
-	if (color == palette_transparent_color)
-	{
-		osd_modify_pen(palette_transparent_pen,red,green,blue);
-
-		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
-	}
 
 	if (	game_palette[3*color + 0] == red &&
 			game_palette[3*color + 1] == green &&
@@ -1225,7 +1189,11 @@ const UINT8 *palette_recalc(void)
 		}
 	}
 
-	if (ret) artwork_remap();
+	if (ret)
+	{
+		tilemap_dirty_palette(ret);
+		artwork_remap();
+	}
 
 	return ret;
 }
@@ -1238,7 +1206,11 @@ const UINT8 *palette_recalc(void)
 
 ******************************************************************************/
 
-UINT8 *paletteram,*paletteram_2;
+data8_t *paletteram;
+data8_t *paletteram_2;	/* use when palette RAM is split in two parts */
+data16_t *paletteram16;
+data16_t *paletteram16_2;
+data32_t *paletteram32;
 
 READ_HANDLER( paletteram_r )
 {
@@ -1250,14 +1222,14 @@ READ_HANDLER( paletteram_2_r )
 	return paletteram_2[offset];
 }
 
-READ_HANDLER( paletteram_word_r )
+READ16_HANDLER( paletteram16_word_r )
 {
-	return READ_WORD(&paletteram[offset]);
+	return paletteram16[offset];
 }
 
-READ_HANDLER( paletteram_2_word_r )
+READ16_HANDLER( paletteram16_2_word_r )
 {
-	return READ_WORD(&paletteram_2[offset]);
+	return paletteram16_2[offset];
 }
 
 WRITE_HANDLER( paletteram_RRRGGGBB_w )
@@ -1400,14 +1372,10 @@ WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w )
 	changecolor_xxxxBBBBGGGGRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w )
+WRITE16_HANDLER( paletteram16_xxxxBBBBGGGGRRRR_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_xxxxBBBBGGGGRRRR(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xxxxBBBBGGGGRRRR(offset,paletteram16[offset]);
 }
 
 
@@ -1509,14 +1477,10 @@ WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w )
 	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w )
+WRITE16_HANDLER( paletteram16_xxxxRRRRGGGGBBBB_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_xxxxRRRRGGGGBBBB(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xxxxRRRRGGGGBBBB(offset,paletteram16[offset]);
 }
 
 
@@ -1554,14 +1518,10 @@ WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w )
 	changecolor_RRRRGGGGBBBBxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w )
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBxxxx_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_RRRRGGGGBBBBxxxx(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_RRRRGGGGBBBBxxxx(offset,paletteram16[offset]);
 }
 
 
@@ -1599,14 +1559,10 @@ WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w )
 	changecolor_BBBBGGGGRRRRxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w )
+WRITE16_HANDLER( paletteram16_BBBBGGGGRRRRxxxx_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_BBBBGGGGRRRRxxxx(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_BBBBGGGGRRRRxxxx(offset,paletteram16[offset]);
 }
 
 
@@ -1638,14 +1594,10 @@ WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w )
 	changecolor_xBBBBBGGGGGRRRRR(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w )
+WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_xBBBBBGGGGGRRRRR(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xBBBBBGGGGGRRRRR(offset,paletteram16[offset]);
 }
 
 
@@ -1671,14 +1623,10 @@ WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w )
 	changecolor_xRRRRRGGGGGBBBBB(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w )
+WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_xRRRRRGGGGGBBBBB(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xRRRRRGGGGGBBBBB(offset,paletteram16[offset]);
 }
 
 
@@ -1698,14 +1646,10 @@ INLINE void changecolor_xGGGGGRRRRRBBBBB(int color,int data)
 	palette_change_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w )
+WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_xGGGGGRRRRRBBBBB(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xGGGGGRRRRRBBBBB(offset,paletteram16[offset]);
 }
 
 
@@ -1731,14 +1675,10 @@ WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w )
 	changecolor_RRRRRGGGGGBBBBBx(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w )
+WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_RRRRRGGGGGBBBBBx(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_RRRRRGGGGGBBBBBx(offset,paletteram16[offset]);
 }
 
 
@@ -1758,14 +1698,10 @@ INLINE void changecolor_IIIIRRRRGGGGBBBB(int color,int data)
 	palette_change_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w )
+WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_IIIIRRRRGGGGBBBB(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_IIIIRRRRGGGGBBBB(offset,paletteram16[offset]);
 }
 
 
@@ -1785,12 +1721,51 @@ INLINE void changecolor_RRRRGGGGBBBBIIII(int color,int data)
 	palette_change_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w )
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-	changecolor_RRRRGGGGBBBBIIII(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_RRRRGGGGBBBBIIII(offset,paletteram16[offset]);
 }
+
+
+WRITE16_HANDLER( paletteram16_xrgb_word_w )
+{
+	int r, g, b;
+	data16_t data0, data1;
+
+	COMBINE_DATA(paletteram16 + offset);
+
+	offset &= ~1;
+
+	data0 = paletteram16[offset];
+	data1 = paletteram16[offset + 1];
+
+	r = data0 & 0xff;
+	g = data1 >> 8;
+	b = data1 & 0xff;
+
+	palette_change_color(offset>>1, r, g, b);
+}
+
+
+/* obsolete, will be removed */
+READ_HANDLER( paletteram_word_r )
+{
+	return READ_WORD(&paletteram[offset]);
+}
+
+READ_HANDLER( paletteram_2_word_r )
+{
+	return READ_WORD(&paletteram_2[offset]);
+}
+
+WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w ) { }
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w ) { }
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w ) { }
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w ) { }
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w ) { }
+WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w ) { }
+WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w ) { }
+WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w ) { }
+WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w ) { }
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w ) { }

@@ -59,21 +59,21 @@ driver by Zsolt Vasvari and Alex Pasadyn
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 
-static unsigned char *eeprom;
+static data16_t *eeprom;
 static size_t eeprom_size;
 static size_t code_rom_size;
-unsigned char *exterm_code_rom;
+static data16_t *exterm_code_rom;
+static data16_t *exterm_master_speedup, *exterm_slave_speedup;
 
-extern unsigned char *exterm_master_speedup, *exterm_slave_speedup;
-extern unsigned char *exterm_master_videoram, *exterm_slave_videoram;
+extern data16_t *exterm_master_videoram, *exterm_slave_videoram;
+
+static int aimpos1, aimpos2;
 
 /* Functions in vidhrdw/exterm.c */
 void exterm_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  exterm_vh_start(void);
 void exterm_vh_stop (void);
-READ_HANDLER( exterm_master_videoram_r );
-READ_HANDLER( exterm_slave_videoram_r );
-WRITE_HANDLER( exterm_paletteram_w );
+
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg);
 void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg);
@@ -81,24 +81,21 @@ void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 
 /* Functions in sndhrdw/gottlieb.c */
-WRITE_HANDLER( gottlieb_sh_w );
+WRITE16_HANDLER( gottlieb_sh_word_w );
 READ_HANDLER( gottlieb_cause_dac_nmi_r );
 WRITE_HANDLER( gottlieb_nmi_rate_w );
 WRITE_HANDLER( exterm_sound_control_w );
 WRITE_HANDLER( exterm_ym2151_w );
+WRITE_HANDLER( exterm_dac_vol_w );
+WRITE_HANDLER( exterm_dac_data_w );
 
-/* Functions in machine/exterm.c */
-WRITE_HANDLER( exterm_host_data_w );
-READ_HANDLER( exterm_host_data_r );
-READ_HANDLER( exterm_coderom_r );
-READ_HANDLER( exterm_input_port_0_1_r );
-READ_HANDLER( exterm_input_port_2_3_r );
-WRITE_HANDLER( exterm_output_port_0_w );
-READ_HANDLER( exterm_master_speedup_r );
-WRITE_HANDLER( exterm_slave_speedup_w );
-READ_HANDLER( exterm_sound_dac_speedup_r );
-READ_HANDLER( exterm_sound_ym2151_speedup_r );
 
+
+/*************************************
+ *
+ *	NVRAM handler
+ *
+ *************************************/
 
 static void nvram_handler(void *file, int read_or_write)
 {
@@ -114,127 +111,238 @@ static void nvram_handler(void *file, int read_or_write)
 }
 
 
-static struct tms34010_config master_config =
+
+/*************************************
+ *
+ *	Master/slave communications
+ *
+ *************************************/
+
+WRITE16_HANDLER( exterm_host_data_w )
 {
-	0,							/* halt on reset */
-	NULL,						/* generate interrupt */
-	exterm_to_shiftreg_master,	/* write to shiftreg function */
-	exterm_from_shiftreg_master	/* read from shiftreg function */
-};
+	tms34010_host_w(1, offset / TOWORD(0x00100000), data);
+}
 
 
-static struct MemoryReadAddress master_readmem[] =
+READ16_HANDLER( exterm_host_data_r )
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r },
-	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA_BANK1 },
-	{ TOBYTE(0x01000000), TOBYTE(0x0100000f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
+	return tms34010_host_r(1, TMS34010_HOST_DATA);
+}
+
+
+
+/*************************************
+ *
+ *	Input port handlers
+ *
+ *************************************/
+
+READ16_HANDLER( exterm_input_port_0_1_r )
+{
+	int hi = readinputport(1);
+	if (!(hi & 2)) aimpos1++;
+	if (!(hi & 1)) aimpos1--;
+	aimpos1 &= 0x3f;
+
+	return ((hi & 0x80) << 8) | (aimpos1 << 8) | readinputport(0);
+}
+
+READ16_HANDLER( exterm_input_port_2_3_r )
+{
+	int hi = readinputport(3);
+	if (!(hi & 2)) aimpos2++;
+	if (!(hi & 1)) aimpos2--;
+	aimpos2 &= 0x3f;
+
+	return (aimpos2 << 8) | readinputport(2);
+}
+
+
+
+/*************************************
+ *
+ *	Output port handlers
+ *
+ *************************************/
+
+WRITE16_HANDLER( exterm_output_port_0_w )
+{
+	/* All the outputs are activated on the rising edge */
+
+	static data16_t last = 0;
+
+	if (ACCESSING_LSB)
+	{
+		/* Bit 0-1= Resets analog controls */
+		if ((data & 0x0001) && !(last & 0x0001))
+			aimpos1 = 0;
+
+		if ((data & 0x0002) && !(last & 0x0002))
+			aimpos2 = 0;
+	}
+
+	if (ACCESSING_MSB)
+	{
+		/* Bit 13 = Resets the slave CPU */
+		if ((data & 0x2000) && !(last & 0x2000))
+			cpu_set_reset_line(1, PULSE_LINE);
+
+		/* Bits 14-15 = Coin counters */
+		coin_counter_w(0, data & 0x8000);
+		coin_counter_w(1, data & 0x4000);
+	}
+
+	COMBINE_DATA(&last);
+}
+
+
+
+/*************************************
+ *
+ *	Speedup handlers
+ *
+ *************************************/
+
+READ16_HANDLER( exterm_master_speedup_r )
+{
+	int value = exterm_master_speedup[offset];
+
+	/* Suspend cpu if it's waiting for an interrupt */
+	if (cpu_get_pc() == 0xfff4d9b0 && !value)
+		cpu_spinuntil_int();
+
+	return value;
+}
+
+WRITE16_HANDLER( exterm_slave_speedup_w )
+{
+	/* Suspend cpu if it's waiting for an interrupt */
+	if (cpu_get_pc() == 0xfffff050)
+		cpu_spinuntil_int();
+
+	COMBINE_DATA(&exterm_slave_speedup[offset]);
+}
+
+READ_HANDLER( exterm_sound_dac_speedup_r )
+{
+	UINT8 *RAM = memory_region(REGION_CPU3);
+	int value = RAM[0x0007];
+
+	/* Suspend cpu if it's waiting for an interrupt */
+	if (cpu_get_pc() == 0x8e79 && !value)
+		cpu_spinuntil_int();
+
+	return value;
+}
+
+READ_HANDLER( exterm_sound_ym2151_speedup_r )
+{
+	/* Doing this won't flash the LED, but we're not emulating that anyhow, so
+	   it doesn't matter */
+	UINT8 *RAM = memory_region(REGION_CPU4);
+	int value = RAM[0x02b6];
+
+	/* Suspend cpu if it's waiting for an interrupt */
+	if (cpu_get_pc() == 0x8179 && !(value & 0x80) &&  RAM[0x00bc] == RAM[0x00bb] &&
+		RAM[0x0092] == 0x00 &&  RAM[0x0093] == 0x00 && !(RAM[0x0004] & 0x80))
+		cpu_spinuntil_int();
+
+	return value;
+}
+
+
+
+/*************************************
+ *
+ *	Master/slave memory maps
+ *
+ *************************************/
+
+static MEMORY_READ16_START( master_readmem )
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_RAM },
+	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA16_RAM },
 	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), exterm_host_data_r },
 	{ TOBYTE(0x01400000), TOBYTE(0x0140000f), exterm_input_port_0_1_r },
 	{ TOBYTE(0x01440000), TOBYTE(0x0144000f), exterm_input_port_2_3_r },
-	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_4_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), paletteram_word_r },
-	{ TOBYTE(0x01808000), TOBYTE(0x0180800f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA_BANK2 },
-	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), exterm_coderom_r },
-	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), exterm_coderom_r },
+	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_4_word_r },
+	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), MRA16_RAM },
+	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA16_RAM },
+	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), MRA16_BANK1 },
+	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), MRA16_BANK2 },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
-static WRITE_HANDLER( placeholder )
-{}
-
-static struct MemoryWriteAddress master_writemem[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_master_videoram },
-/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
-/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
-	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA_BANK1 },
-	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), placeholder, &exterm_master_speedup },
+static MEMORY_WRITE16_START( master_writemem )
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA16_RAM, &exterm_master_videoram },
+	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA16_RAM },
 	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), exterm_host_data_w },
 	{ TOBYTE(0x01500000), TOBYTE(0x0150000f), exterm_output_port_0_w },
-	{ TOBYTE(0x01580000), TOBYTE(0x0158000f), gottlieb_sh_w },
-	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset_w },
-	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), exterm_paletteram_w, &paletteram },
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2, &eeprom, &eeprom_size }, /* EEPROM */
+	{ TOBYTE(0x01580000), TOBYTE(0x0158000f), gottlieb_sh_word_w },
+	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset16_w },
+	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA16_RAM, &eeprom, &eeprom_size }, /* EEPROM */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA_BANK3, &exterm_code_rom, &code_rom_size },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA16_ROM, &exterm_code_rom, &code_rom_size },
+MEMORY_END
 
 
-static struct tms34010_config slave_config =
-{
-	1,							/* halt on reset */
-	NULL,						/* generate interrupt */
-	exterm_to_shiftreg_slave,	/* write to shiftreg function */
-	exterm_from_shiftreg_slave	/* read from shiftreg function */
-};
-
-
-static struct MemoryReadAddress slave_readmem[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r },
+static MEMORY_READ16_START( slave_readmem )
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_RAM },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress slave_writemem[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_slave_videoram },
-/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
-/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
+static MEMORY_WRITE16_START( slave_writemem )
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA16_RAM, &exterm_slave_videoram },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xfffffb90), TOBYTE(0xfffffb9f), exterm_slave_speedup_w, &exterm_slave_speedup },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_RAM },
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_dac_readmem[] =
-{
-	{ 0x0007, 0x0007, exterm_sound_dac_speedup_r },
+
+/*************************************
+ *
+ *	Audio memory maps
+ *
+ *************************************/
+
+static MEMORY_READ_START( sound_dac_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x4000, 0x4000, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_dac_writemem[] =
-{
+static MEMORY_WRITE_START( sound_dac_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x8000, 0x8000, DAC_0_data_w },
-	{ 0x8001, 0x8001, DAC_1_data_w },
-	{ -1 }  /* end of table */
-};
+	{ 0x8000, 0x8000, exterm_dac_vol_w },
+	{ 0x8001, 0x8001, exterm_dac_data_w },
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_ym2151_readmem[] =
-{
-	{ 0x02b6, 0x02b6, exterm_sound_ym2151_speedup_r },
+static MEMORY_READ_START( sound_ym2151_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x6800, 0x6800, soundlatch_r },
 	{ 0x7000, 0x7000, gottlieb_cause_dac_nmi_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_ym2151_writemem[] =
-{
+static MEMORY_WRITE_START( sound_ym2151_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x4000, 0x4000, exterm_ym2151_w },
 	{ 0x6000, 0x6000, gottlieb_nmi_rate_w },
 	{ 0xa000, 0xa000, exterm_sound_control_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 INPUT_PORTS_START( exterm )
-
 	PORT_START      /* IN0 LO */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
@@ -296,6 +404,37 @@ INPUT_PORTS_START( exterm )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *	34010 configurations
+ *
+ *************************************/
+
+static struct tms34010_config master_config =
+{
+	0,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	exterm_to_shiftreg_master,	/* write to shiftreg function */
+	exterm_from_shiftreg_master	/* read from shiftreg function */
+};
+
+static struct tms34010_config slave_config =
+{
+	1,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	exterm_to_shiftreg_slave,	/* write to shiftreg function */
+	exterm_from_shiftreg_slave	/* read from shiftreg function */
+};
+
+
+
+/*************************************
+ *
+ *	Sound configurations
+ *
+ *************************************/
+
 static struct DACinterface dac_interface =
 {
 	2, 			/* 2 channels on 1 chip */
@@ -311,37 +450,42 @@ static struct YM2151interface ym2151_interface =
 };
 
 
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
 static const struct MachineDriver machine_driver_exterm =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_TMS34010,
-			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 MHz */
+			40000000/TMS34010_CLOCK_DIVIDER,
             master_readmem,master_writemem,0,0,
-            ignore_interrupt,0,  /* Display Interrupts caused internally */
+            ignore_interrupt,0,
             0,0,&master_config
 		},
 		{
 			CPU_TMS34010,
-			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 MHz */
+			40000000/TMS34010_CLOCK_DIVIDER,
             slave_readmem,slave_writemem,0,0,
-            ignore_interrupt,0,  /* Display Interrupts caused internally */
+            ignore_interrupt,0,
             0,0,&slave_config
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,	/* 2 MHz */
+			2000000,
 			sound_dac_readmem,sound_dac_writemem,0,0,
-			ignore_interrupt,0	/* IRQ caused when sound command is written */
-								/* NMIs are triggered by the YM2151 CPU */
+			ignore_interrupt,0
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,	/* 2 MHz */
+			2000000,
 			sound_ym2151_readmem,sound_ym2151_writemem,0,0,
-			ignore_interrupt,0	/* IRQ caused when sound command is written */
-								/* NMIs are triggered by a programmable timer */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -380,14 +524,24 @@ static const struct MachineDriver machine_driver_exterm =
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( exterm )
-	ROM_REGION( 0x200000, REGION_CPU1 )     /* 2MB for 34010 code */
+	ROM_REGION( 0x20000, REGION_CPU1 )		/* dummy region for TMS34010 #1 */
+
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* dummy region for TMS34010 #2 */
+
+	ROM_REGION( 0x10000, REGION_CPU3 )		/* 64k for DAC code */
+	ROM_LOAD( "v101d1", 0x8000, 0x8000, 0x83268b7d )
+
+	ROM_REGION( 0x10000, REGION_CPU4 )		/* 64k for YM2151 code */
+	ROM_LOAD( "v101y1", 0x8000, 0x8000, 0xcbeaa837 )
+
+	ROM_REGION( 0x200000, REGION_USER1 )	/* 2MB for 34010 code */
 	ROM_LOAD_ODD(  "v101bg0",  0x000000, 0x10000, 0x8c8e72cf )
 	ROM_LOAD_EVEN( "v101bg1",  0x000000, 0x10000, 0xcc2da0d8 )
 	ROM_LOAD_ODD(  "v101bg2",  0x020000, 0x10000, 0x2dcb3653 )
@@ -408,21 +562,37 @@ ROM_START( exterm )
 	ROM_LOAD_EVEN( "v101fg5",  0x1c0000, 0x10000, 0x842de63a )
 	ROM_LOAD_ODD(  "v101p0",   0x1e0000, 0x10000, 0x6c8ee79a )
 	ROM_LOAD_EVEN( "v101p1",   0x1e0000, 0x10000, 0x557bfc84 )
-
-	ROM_REGION( 0x1000, REGION_CPU2 )	 /* Slave CPU memory space. There are no ROMs mapped here */
-
-	ROM_REGION( 0x10000, REGION_CPU3 )	 /* 64k for DAC code */
-	ROM_LOAD( "v101d1", 0x08000, 0x08000, 0x83268b7d )
-
-	ROM_REGION( 0x10000, REGION_CPU4 )	 /* 64k for YM2151 code */
-	ROM_LOAD( "v101y1", 0x08000, 0x08000, 0xcbeaa837 )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
 void init_exterm(void)
 {
-	memcpy (exterm_code_rom,memory_region(REGION_CPU1),code_rom_size);
+	memcpy(exterm_code_rom, memory_region(REGION_USER1), code_rom_size);
+
+	/* install speedups */
+	exterm_master_speedup = install_mem_read16_handler(0, TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r);
+	exterm_slave_speedup = install_mem_write16_handler(1, TOBYTE(0xfffffb90), TOBYTE(0xfffffb9f), exterm_slave_speedup_w);
+	install_mem_read_handler(2, 0x0007, 0x0007, exterm_sound_dac_speedup_r);
+	install_mem_read_handler(3, 0x02b6, 0x02b6, exterm_sound_ym2151_speedup_r);
+
+	/* set up mirrored ROM access */
+	cpu_setbank(1, exterm_code_rom);
+	cpu_setbank(2, exterm_code_rom);
 }
 
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1989, exterm, 0, exterm, exterm, exterm, ROT0_16BIT, "Gottlieb / Premier Technology", "Exterminator" )

@@ -159,8 +159,7 @@ int jackal_interrupt(void)
 }
 
 
-static struct MemoryReadAddress jackal_readmem[] =
-{
+static MEMORY_READ_START( jackal_readmem )
 	{ 0x0010, 0x0010, input_port_0_r },
 	{ 0x0011, 0x0011, input_port_1_r },
 	{ 0x0012, 0x0012, input_port_2_r },
@@ -174,11 +173,9 @@ static struct MemoryReadAddress jackal_readmem[] =
 	{ 0x3000, 0x3fff, jackal_spriteram_r },	/* MAIN V O RAM,SUB  V O RAM */
 	{ 0x4000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress jackal_writemem[] =
-{
+static MEMORY_WRITE_START( jackal_writemem )
 	{ 0x0000, 0x0003, MWA_RAM, &jackal_videoctrl },	/* scroll + other things */
 	{ 0x0004, 0x0004, jackal_interrupt_enable_w },
 	{ 0x0019, 0x0019, MWA_NOP },	/* possibly watchdog reset */
@@ -188,29 +185,24 @@ static struct MemoryWriteAddress jackal_writemem[] =
 	{ 0x2000, 0x2fff, jackal_voram_w },
 	{ 0x3000, 0x3fff, jackal_spriteram_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress jackal_sound_readmem[] =
-{
+static MEMORY_READ_START( jackal_sound_readmem )
 	{ 0x2001, 0x2001, YM2151_status_port_0_r },
 	{ 0x4000, 0x43ff, MRA_RAM },		/* COLOR RAM (Self test only check 0x4000-0x423f */
 	{ 0x6000, 0x605f, MRA_RAM },		/* SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff */
 	{ 0x6060, 0x7fff, jackal_commonram1_r }, /* COMMON RAM */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress jackal_sound_writemem[] =
-{
+static MEMORY_WRITE_START( jackal_sound_writemem )
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x4000, 0x43ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x6000, 0x605f, MWA_RAM },
 	{ 0x6060, 0x7fff, jackal_commonram1_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

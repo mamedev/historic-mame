@@ -36,63 +36,32 @@ write:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
-extern unsigned char *gaiden_videoram;
-extern unsigned char *gaiden_videoram2;
-extern unsigned char *gaiden_videoram3;
+extern data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE_HANDLER( gaiden_unknownram_w );
-READ_HANDLER( gaiden_unknownram_r );
-WRITE_HANDLER( gaiden_videoram_w );
-READ_HANDLER( gaiden_videoram_r );
-WRITE_HANDLER( gaiden_videoram2_w );
-READ_HANDLER( gaiden_videoram2_r );
-WRITE_HANDLER( gaiden_videoram3_w );
-READ_HANDLER( gaiden_videoram3_r );
+WRITE16_HANDLER( gaiden_videoram_w );
+WRITE16_HANDLER( gaiden_videoram2_w );
+READ16_HANDLER( gaiden_videoram2_r );
+WRITE16_HANDLER( gaiden_videoram3_w );
+READ16_HANDLER( gaiden_videoram3_r );
 
-WRITE_HANDLER( gaiden_txscrollx_w );
-WRITE_HANDLER( gaiden_txscrolly_w );
-WRITE_HANDLER( gaiden_fgscrollx_w );
-WRITE_HANDLER( gaiden_fgscrolly_w );
-WRITE_HANDLER( gaiden_bgscrollx_w );
-WRITE_HANDLER( gaiden_bgscrolly_w );
+WRITE16_HANDLER( gaiden_txscrollx_w );
+WRITE16_HANDLER( gaiden_txscrolly_w );
+WRITE16_HANDLER( gaiden_fgscrollx_w );
+WRITE16_HANDLER( gaiden_fgscrolly_w );
+WRITE16_HANDLER( gaiden_bgscrollx_w );
+WRITE16_HANDLER( gaiden_bgscrolly_w );
 
-
-WRITE_HANDLER( gaiden_background_w );
+int gaiden_vh_start(void);
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int  gaiden_vh_start(void);
 
 
-static int gaiden_interrupt(void)
+static WRITE16_HANDLER( gaiden_sound_command_w )
 {
-	return 5;  /*Interrupt vector 5*/
-}
-
-static READ_HANDLER( gaiden_input_r )
-{
-	switch (offset)
-	{
-		case 0:
-			return input_port_4_r (offset);
-			break;
-		case 2:
-			return (input_port_1_r (offset) << 8) + (input_port_0_r (offset));
-			break;
-		case 4:
-			return (input_port_3_r (offset) << 8) + (input_port_2_r (offset));
-			break;
-	}
-
-	return 0;
-}
-
-
-static WRITE_HANDLER( gaiden_sound_command_w )
-{
-	if (data & 0xff000000) soundlatch_w(0,data & 0xff);	/* Ninja Gaiden */
-	if (data & 0x00ff0000) soundlatch_w(0,(data >> 8) & 0xff);	/* Tecmo Knight */
+	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);	/* Ninja Gaiden */
+	if (ACCESSING_MSB) soundlatch_w(0,data >> 8);	/* Tecmo Knight */
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
@@ -104,54 +73,57 @@ static WRITE_HANDLER( gaiden_sound_command_w )
 
 static int prot;
 
-static WRITE_HANDLER( tknight_protection_w )
+static WRITE16_HANDLER( tknight_protection_w )
 {
-	static int jumpcode;
-	static int jumppoints[] =
+	if (ACCESSING_MSB)
 	{
-		0x0c0c,0x0cac,0x0d42,0x0da2,0x0eea,0x112e,0x1300,0x13fa,
-		0x159a,0x1630,0x109a,0x1700,0x1750,0x1806,0x18d6,0x1a44,
-		0x1b52
-	};
+		static int jumpcode;
+		static int jumppoints[] =
+		{
+			0x0c0c,0x0cac,0x0d42,0x0da2,0x0eea,0x112e,0x1300,0x13fa,
+			0x159a,0x1630,0x109a,0x1700,0x1750,0x1806,0x18d6,0x1a44,
+			0x1b52
+		};
 
-	data = (data >> 8) & 0xff;
+		data >>= 8;
 
 //logerror("PC %06x: prot = %02x\n",cpu_get_pc(),data);
 
-	switch (data & 0xf0)
-	{
-		case 0x00:	/* init */
-			prot = 0x00;
-			break;
-		case 0x10:	/* high 4 bits of jump code */
-			jumpcode = (data & 0x0f) << 4;
-			prot = 0x10;
-			break;
-		case 0x20:	/* low 4 bits of jump code */
-			jumpcode |= data & 0x0f;
-			if (jumpcode > 16)
-			{
+		switch (data & 0xf0)
+		{
+			case 0x00:	/* init */
+				prot = 0x00;
+				break;
+			case 0x10:	/* high 4 bits of jump code */
+				jumpcode = (data & 0x0f) << 4;
+				prot = 0x10;
+				break;
+			case 0x20:	/* low 4 bits of jump code */
+				jumpcode |= data & 0x0f;
+				if (jumpcode > 16)
+				{
 logerror("unknown jumpcode %02x\n",jumpcode);
-				jumpcode = 0;
-			}
-			prot = 0x20;
-			break;
-		case 0x30:	/* ask for bits 12-15 of function address */
-			prot = 0x40 | ((jumppoints[jumpcode] >> 12) & 0x0f);
-			break;
-		case 0x40:	/* ask for bits 8-11 of function address */
-			prot = 0x50 | ((jumppoints[jumpcode] >> 8) & 0x0f);
-			break;
-		case 0x50:	/* ask for bits 4-7 of function address */
-			prot = 0x60 | ((jumppoints[jumpcode] >> 4) & 0x0f);
-			break;
-		case 0x60:	/* ask for bits 0-3 of function address */
-			prot = 0x70 | ((jumppoints[jumpcode] >> 0) & 0x0f);
-			break;
+					jumpcode = 0;
+				}
+				prot = 0x20;
+				break;
+			case 0x30:	/* ask for bits 12-15 of function address */
+				prot = 0x40 | ((jumppoints[jumpcode] >> 12) & 0x0f);
+				break;
+			case 0x40:	/* ask for bits 8-11 of function address */
+				prot = 0x50 | ((jumppoints[jumpcode] >> 8) & 0x0f);
+				break;
+			case 0x50:	/* ask for bits 4-7 of function address */
+				prot = 0x60 | ((jumppoints[jumpcode] >> 4) & 0x0f);
+				break;
+			case 0x60:	/* ask for bits 0-3 of function address */
+				prot = 0x70 | ((jumppoints[jumpcode] >> 0) & 0x0f);
+				break;
+		}
 	}
 }
 
-static READ_HANDLER( tknight_protection_r )
+static READ16_HANDLER( tknight_protection_r )
 {
 //logerror("PC %06x: read prot %02x\n",cpu_get_pc(),prot);
 	return prot;
@@ -159,31 +131,30 @@ static READ_HANDLER( tknight_protection_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x060000, 0x063fff, MRA_BANK1 },   /* RAM */
-	{ 0x070000, 0x070fff, gaiden_videoram_r },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x060000, 0x063fff, MRA16_RAM },
+	{ 0x070000, 0x070fff, MRA16_RAM },
 	{ 0x072000, 0x073fff, gaiden_videoram2_r },
 	{ 0x074000, 0x075fff, gaiden_videoram3_r },
-	{ 0x076000, 0x077fff, MRA_BANK2 },
-	{ 0x078000, 0x0787ff, paletteram_word_r },
-	{ 0x078800, 0x079fff, MRA_NOP },   /* extra portion of palette RAM, not really used */
-	{ 0x07a000, 0x07a005, gaiden_input_r },
+	{ 0x076000, 0x077fff, MRA16_RAM },
+	{ 0x078000, 0x0787ff, MRA16_RAM },
+	{ 0x078800, 0x079fff, MRA16_NOP },   /* extra portion of palette RAM, not really used */
+	{ 0x07a000, 0x07a001, input_port_0_word_r },
+	{ 0x07a002, 0x07a003, input_port_1_word_r },
+	{ 0x07a004, 0x07a005, input_port_2_word_r },
 	{ 0x07a006, 0x07a007, tknight_protection_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x060000, 0x063fff, MWA_BANK1 },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x060000, 0x063fff, MWA16_RAM },
 	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram },
-	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2 },
-	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3 },
-	{ 0x076000, 0x077fff, MWA_BANK2, &spriteram },
-	{ 0x078000, 0x0787ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
+	{ 0x072000, 0x073fff, gaiden_videoram2_w, &gaiden_videoram2 },
+	{ 0x074000, 0x075fff, gaiden_videoram3_w, &gaiden_videoram3 },
+	{ 0x076000, 0x077fff, MWA16_RAM, &spriteram16 },
+	{ 0x078000, 0x0787ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0x078800, 0x079fff, MWA16_NOP },   /* extra portion of palette RAM, not really used */
 	{ 0x07a104, 0x07a105, gaiden_txscrolly_w },
 	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w },
 	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w },
@@ -194,21 +165,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x07a802, 0x07a803, gaiden_sound_command_w },
 	{ 0x07a804, 0x07a805, tknight_protection_w },
 	{ 0x07a806, 0x07a807, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xf800, OKIM6295_status_0_r },
 	{ 0xfc00, 0xfc00, MRA_NOP },	/* ?? */
 	{ 0xfc20, 0xfc20, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, OKIM6295_data_0_w },
@@ -217,82 +184,11 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xf820, 0xf820, YM2203_control_port_1_w },
 	{ 0xf821, 0xf821, YM2203_write_port_1_w },
 	{ 0xfc00, 0xfc00, MWA_NOP },	/* ?? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
 INPUT_PORTS_START( gaiden )
-	PORT_START      /* PLAYER 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* PLAYER 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* DSWA */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
-
-	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, "Energy" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0xc0, "2" )
-	PORT_DIPSETTING(    0x40, "3" )
-	PORT_DIPSETTING(    0x80, "4" )
-
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -302,80 +198,75 @@ INPUT_PORTS_START( gaiden )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* PLAYER */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x00e0, 0x00e0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, "Energy" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x3000, "3" )
+	PORT_DIPSETTING(      0x1000, "4" )
+	PORT_DIPSETTING(      0x2000, "5" )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0xc000, "2" )
+	PORT_DIPSETTING(      0x4000, "3" )
+	PORT_DIPSETTING(      0x8000, "4" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tknight )
-	PORT_START      /* PLAYER 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* PLAYER 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* DSWA */
-	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-
-	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x80, "1" )
-	PORT_DIPSETTING(    0xc0, "2" )
-	PORT_DIPSETTING(    0x40, "3" )
-/*	PORT_DIPSETTING(    0x00, "2" ) */
-
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -385,6 +276,73 @@ INPUT_PORTS_START( tknight )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* PLAYER */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x00e0, 0x00e0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x8000, "1" )
+	PORT_DIPSETTING(      0xc000, "2" )
+	PORT_DIPSETTING(      0x4000, "3" )
+/*	PORT_DIPSETTING(      0x0000, "2" ) */
 INPUT_PORTS_END
 
 
@@ -472,7 +430,7 @@ static const struct MachineDriver machine_driver_gaiden =
 			CPU_M68000,
 			8000000,	/* 8 MHz */
 			readmem,writemem,0,0,
-			gaiden_interrupt,1,0,0
+			m68_level5_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,

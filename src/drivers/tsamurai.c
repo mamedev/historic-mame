@@ -90,8 +90,18 @@ static WRITE_HANDLER( sound_command2_w )
 	cpu_cause_interrupt( 2, Z80_IRQ_INT );
 }
 
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+static WRITE_HANDLER( tsamurai_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 
@@ -111,11 +121,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf802, 0xf802, input_port_2_r },
 	{ 0xf804, 0xf804, input_port_3_r },
 	{ 0xf805, 0xf805, input_port_4_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 
@@ -136,22 +144,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfc00, 0xfc00, flip_screen_w },
 	{ 0xfc01, 0xfc01, nmi_enable_w },
 	{ 0xfc02, 0xfc02, tsamurai_textbank_w },
-	{ 0xfc03, 0xfc04, coin_counter_w },
+	{ 0xfc03, 0xfc04, tsamurai_coin_counter_w },
+MEMORY_END
 
-	{ -1 }
-};
-
-static struct IOReadPort z80_readport[] =
-{
-	{ -1 }
-};
-
-static struct IOWritePort z80_writeport[] =
-{
+static PORT_WRITE_START( z80_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
-	{ -1 }
-};
+PORT_END
 
 
 /*******************************************************************************/
@@ -166,22 +165,18 @@ static WRITE_HANDLER( sound_out1_w )
 	DAC_data_w(0,data);
 }
 
-static struct MemoryReadAddress readmem_sound1[] =
-{
+static MEMORY_READ_START( readmem_sound1 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6000, 0x6000, sound_command1_r },
 	{ 0x7f00, 0x7fff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound1[] =
-{
+static MEMORY_WRITE_START( writemem_sound1 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6001, 0x6001, MWA_NOP }, /* ? */
 	{ 0x6002, 0x6002, sound_out1_w },
 	{ 0x7f00, 0x7fff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 /*******************************************************************************/
 static READ_HANDLER( sound_command2_r ){
 	return sound_command2;
@@ -191,22 +186,18 @@ static WRITE_HANDLER( sound_out2_w ){
 	DAC_data_w(1,data);
 }
 
-static struct MemoryReadAddress readmem_sound2[] =
-{
+static MEMORY_READ_START( readmem_sound2 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6000, 0x6000, sound_command2_r },
 	{ 0x7f00, 0x7fff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound2[] =
-{
+static MEMORY_WRITE_START( writemem_sound2 )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6001, 0x6001, MWA_NOP }, /* ? */
 	{ 0x6002, 0x6002, sound_out2_w },
 	{ 0x7f00, 0x7fff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 /*******************************************************************************/
 
@@ -514,7 +505,7 @@ static const struct MachineDriver machine_driver_tsamurai =
 		{
 			CPU_Z80,
 			4000000,
-			readmem,writemem,z80_readport, z80_writeport,
+			readmem,writemem,0,z80_writeport,
 			samurai_interrupt,1,
 		},
 		{

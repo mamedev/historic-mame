@@ -63,8 +63,7 @@ WRITE_HANDLER( sprint2_lamp1_w );
 WRITE_HANDLER( sprint2_lamp2_w );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM }, /* WRAM */
 	{ 0x0400, 0x07ff, MRA_RAM }, /* DISPLAY RAM */
 	{ 0x0800, 0x083f, sprint2_read_ports_r }, /* SWITCH */
@@ -88,11 +87,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1400, 0x17ff, sprint2_collision2_r }, /* COLLISION 2 */
 	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM1-PROM8 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM }, /* WRAM */
 	{ 0x0010, 0x0013, MWA_RAM, &sprint2_horiz_ram }, /* WRAM */
 	{ 0x0018, 0x001f, MWA_RAM, &sprint2_vert_car_ram }, /* WRAM */
@@ -110,12 +107,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0e80, 0x0eff, sprint2_steering_reset2_w }, /* STEERING RESET 2 */
 	{ 0x0f00, 0x0f7f, MWA_RAM }, /* NOISE RESET */
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* The only difference is that we use "sprint1_read_ports" */
-static struct MemoryReadAddress sprint1_readmem[] =
-{
+static MEMORY_READ_START( sprint1_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM }, /* WRAM */
 	{ 0x0400, 0x07ff, MRA_RAM }, /* DISPLAY RAM */
 	{ 0x0800, 0x083f, sprint1_read_ports_r }, /* SWITCH */
@@ -139,8 +134,7 @@ static struct MemoryReadAddress sprint1_readmem[] =
 	{ 0x1400, 0x17ff, sprint2_collision2_r }, /* COLLISION 2 */
 	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM1-PROM8 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( sprint2 )
 	PORT_START      /* DSW - fake port, gets mapped to Sprint2 ports */

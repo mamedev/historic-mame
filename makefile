@@ -12,8 +12,7 @@ TARGET = mame
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
-# currently the Psikyo games don't work with it
-# X86_ASM_68K = 1
+X86_ASM_68K = 1
 
 # set this the operating system you're building for
 # (actually you'll probably need your own main makefile anyways)
@@ -34,6 +33,7 @@ ASM = @nasmw
 ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
+#PERL = @perl -w
 
 ifdef DEBUG
 NAME = $(TARGET)d
@@ -146,6 +146,13 @@ endif
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+ifdef PERL
+$(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
+	$(PERL) src/makelist.pl
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+endif
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...

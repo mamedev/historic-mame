@@ -232,13 +232,13 @@ INLINE void blit_byte(UINT8 x, UINT8 y, int val, int val2, UINT8 plane)
 	}
 
 	if (dx >= 0 && dy >= 0)
-		osd_mark_dirty(x,y,x+3*dx,y+3*dy,0);
+		osd_mark_dirty(x,y,x+3*dx,y+3*dy);
 	else if (dx >= 0)
-		osd_mark_dirty(x,y+3*dy,x+3*dx,y,0);
+		osd_mark_dirty(x,y+3*dy,x+3*dx,y);
 	else if (dy >= 0)
-		osd_mark_dirty(x+3*dx,y,x,y+3*dy,0);
+		osd_mark_dirty(x+3*dx,y,x,y+3*dy);
 	else
-		osd_mark_dirty(x+3*dx,y+3*dy,x,y,0);
+		osd_mark_dirty(x+3*dx,y+3*dy,x,y);
 }
 
 
@@ -429,13 +429,13 @@ WRITE_HANDLER( arabian_videoram_w )
 	tmpbitmap2->line[y+3*dy][x+3*dx] = Machine->pens[ tmpbitmap2->line[y+3*dy][x+3*dx] ];
 
 	if (dx >= 0 && dy >= 0)
-		osd_mark_dirty(x,y,x+3*dx,y+3*dy,0);
+		osd_mark_dirty(x,y,x+3*dx,y+3*dy);
 	else if (dx >= 0)
-		osd_mark_dirty(x,y+3*dy,x+3*dx,y,0);
+		osd_mark_dirty(x,y+3*dy,x+3*dx,y);
 	else if (dy >= 0)
-		osd_mark_dirty(x+3*dx,y,x,y+3*dy,0);
+		osd_mark_dirty(x+3*dx,y,x,y+3*dy);
 	else
-		osd_mark_dirty(x+3*dx,y+3*dy,x,y,0);
+		osd_mark_dirty(x+3*dx,y+3*dy,x,y);
 }
 
 

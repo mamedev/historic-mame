@@ -112,7 +112,7 @@ int mystston_vh_start(void)
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
 }
@@ -161,7 +161,7 @@ WRITE_HANDLER( mystston_2000_w )
 	coin_counter_w(1,data & 0x20);
 
 	/* bit 7 is screen flip */
-	flip_screen_w(0,data & 0x80);
+	flip_screen_set(data & 0x80);
 
 	/* other bits unused? */
 	logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
@@ -212,12 +212,9 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

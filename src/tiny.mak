@@ -1,14 +1,15 @@
 # a tiny compile is without Neogeo games
-COREDEFS += -DTINY_COMPILE=1 -DTINY_NAME=driver_buggychl
+COREDEFS += -DTINY_COMPILE=1 -DTINY_NAME=driver_mazinger
 
 # uses these CPUs
-CPUS+=Z80@
-CPUS+=M68705@
+CPUS+=CPU_M68000@
+CPUS+=CPU_Z80@
 
 # uses these SOUNDs
-SOUNDS+=AY8910@
+SOUNDS+=SOUND_OKIM6295@
+SOUNDS+=SOUND_YM2203@
 
-OBJS = $(OBJ)/machine/buggychl.o $(OBJ)/vidhrdw/buggychl.o $(OBJ)/drivers/buggychl.o
+OBJS = $(OBJ)/drivers/mazinger.o
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/driver.o

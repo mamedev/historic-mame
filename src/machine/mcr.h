@@ -32,10 +32,10 @@ int mcr68_interrupt(void);
 WRITE_HANDLER( mcr_control_port_w );
 WRITE_HANDLER( mcr_scroll_value_w );
 
-WRITE_HANDLER( mcr68_6840_upper_w );
-WRITE_HANDLER( mcr68_6840_lower_w );
-READ_HANDLER( mcr68_6840_upper_r );
-READ_HANDLER( mcr68_6840_lower_r );
+WRITE16_HANDLER( mcr68_6840_upper_w );
+WRITE16_HANDLER( mcr68_6840_lower_w );
+READ16_HANDLER( mcr68_6840_upper_r );
+READ16_HANDLER( mcr68_6840_lower_r );
 
 
 

@@ -151,17 +151,14 @@ usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02
 
 	palette_init_used_colors();
 	K007121_mark_sprites_colors(0,&k007121_ram[0x1000],0,0);
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* set scroll registers */
 	tilemap_set_scrollx(k007121_tilemap[0],0,K007121_ctrlram[0][0x00] - 40);
 	tilemap_set_scrolly(k007121_tilemap[0],0,K007121_ctrlram[0][0x02]);
 
 	/* draw the graphics */
-	tilemap_draw(bitmap,k007121_tilemap[0],0);
+	tilemap_draw(bitmap,k007121_tilemap[0],0,0);
 	K007121_sprites_draw(0,bitmap,&k007121_ram[0x1000],0,40,0,-1);
-	tilemap_draw(bitmap,k007121_tilemap[1],0);
+	tilemap_draw(bitmap,k007121_tilemap[1],0,0);
 }

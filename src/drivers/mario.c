@@ -135,8 +135,7 @@ WRITE_HANDLER( masao_sh_irqtrigger_w )
 	last = data;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
@@ -144,12 +143,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x7c80, 0x7c80, input_port_1_r },	/* IN1 */
 	{ 0x7f80, 0x7f80, input_port_2_r },	/* DSW */
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
@@ -171,11 +168,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
 //	{ 0x7e85, 0x7e85, MWA_RAM },	/* Sets alternative 1 and 0 */
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress masao_writemem[] =
-{
+static MEMORY_WRITE_START( masao_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
@@ -189,41 +184,30 @@ static struct MemoryWriteAddress masao_writemem[] =
 	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
 	{ 0x7f00, 0x7f00, masao_sh_irqtrigger_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort mario_writeport[] =
-{
+static PORT_WRITE_START( mario_writeport )
 	{ 0x00,   0x00,   IOWP_NOP },  /* unknown... is this a trigger? */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress writemem_sound[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
-static struct IOReadPort readport_sound[] =
-{
+MEMORY_END
+static PORT_READ_START( readport_sound )
 	{ 0x00,     0xff,     mario_sh_tune_r },
 	{ I8039_p1, I8039_p1, mario_sh_p1_r },
 	{ I8039_p2, I8039_p2, mario_sh_p2_r },
 	{ I8039_t0, I8039_t0, mario_sh_t0_r },
 	{ I8039_t1, I8039_t1, mario_sh_t1_r },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort writeport_sound[] =
-{
+PORT_END
+static PORT_WRITE_START( writeport_sound )
 	{ 0x00,     0xff,     mario_sh_sound_w },
 	{ I8039_p1, I8039_p1, mario_sh_p1_w },
 	{ I8039_p2, I8039_p2, mario_sh_p2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
@@ -397,22 +381,18 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MemoryReadAddress masao_sound_readmem[] =
-{
+static MEMORY_READ_START( masao_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress masao_sound_writemem[] =
-{
+static MEMORY_WRITE_START( masao_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x6000, 0x6000, AY8910_control_port_0_w },
 	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 static const struct MachineDriver machine_driver_mario =

@@ -10,9 +10,9 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *terrac_videoram;
-size_t terrac_videoram_size;
-unsigned char terrac_scrolly[2];
+data16_t *terrac_videoram2;
+size_t terrac_videoram2_size;
+data16_t *terrac_scrolly;
 
 static struct osd_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
@@ -97,22 +97,19 @@ void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-WRITE_HANDLER( terrac_videoram2_w )
+WRITE16_HANDLER( terrac_videoram2_w )
 {
-	int oldword = READ_WORD(&terrac_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
+	int oldword = terrac_videoram2[offset];
+	COMBINE_DATA(&terrac_videoram2[offset]);
+	if (oldword != terrac_videoram2[offset])
 	{
-		WRITE_WORD(&terrac_videoram[offset],newword);
 		dirtybuffer2[offset] = 1;
-		dirtybuffer2[offset+1] = 1;
 	}
 }
 
-READ_HANDLER( terrac_videoram2_r )
+READ16_HANDLER( terrac_videoram2_r )
 {
-   return READ_WORD (&terrac_videoram[offset]);
+   return terrac_videoram2[offset];
 }
 
 
@@ -122,7 +119,7 @@ READ_HANDLER( terrac_videoram2_r )
 
 void terrac_vh_stop(void)
 {
-        free(dirtybuffer2);
+	free(dirtybuffer2);
 	bitmap_free(tmpbitmap2);
 	generic_vh_stop();
 }
@@ -137,12 +134,12 @@ int terrac_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(terrac_videoram_size)) == 0)
+	if ((dirtybuffer2 = malloc(terrac_videoram2_size/2)) == 0)
 	{
 		terrac_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,1,terrac_videoram_size);
+	memset(dirtybuffer2,1,terrac_videoram2_size/2);
 
 	/* the background area is 4 x 1 (90 Rotated!) */
 	if ((tmpbitmap2 = bitmap_alloc(4*Machine->drv->screen_width,
@@ -173,12 +170,12 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		for (x = 0; x < 16; x++)
 		{
-			if ((dirtybuffer2[x*2 + y*64]) || (dirtybuffer2[x*2 + y*64+1]))
+			if (dirtybuffer2[x + y*32])
 			{
-				int code = READ_WORD(&terrac_videoram[x*2 + y*64]) & 0x01ff;
-				int color = (READ_WORD(&terrac_videoram[x*2 + y*64])&0x7800)>>11;
+				int code = terrac_videoram2[x + y*32] & 0x01ff;
+				int color = (terrac_videoram2[x + y*32]&0x7800)>>11;
 
-				dirtybuffer2[x*2 + y*64] = dirtybuffer2[x*2 + y*64+1] = 0;
+				dirtybuffer2[x + y*32] = 0;
 
 				drawgfx(tmpbitmap2,Machine->gfx[1],
 						code,
@@ -191,32 +188,32 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the background graphics */
-	if (READ_WORD(terrac_scrolly) & 0x2000)	/* background disable */
+	if (*terrac_scrolly & 0x2000)	/* background disable */
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
 	{
 		int scrollx;
 
-		scrollx = -READ_WORD(terrac_scrolly);
+		scrollx = -*terrac_scrolly;
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
 
-	for (x = 0;x <spriteram_size;x += 8)
+	for (x = 0;x <spriteram_size/2;x += 4)
 	{
 		int code;
-		int attr = READ_WORD(&spriteram[x+4]) & 0xff;
+		int attr = spriteram16[x+2] & 0xff;
 		int color = (attr & 0xf0) >> 4;
 		int flipx = attr & 0x04;
 		int flipy = attr & 0x08;
 		int sx,sy;
 
-		sx = (READ_WORD(&spriteram[x+6]) & 0xff) - 0x80 + 256 * (attr & 1);
-		sy = 240 - (READ_WORD(&spriteram[x]) & 0xff);
+		sx = (spriteram16[x+3] & 0xff) - 0x80 + 256 * (attr & 1);
+		sy = 240 - (spriteram16[x] & 0xff);
 
-		code = (READ_WORD(&spriteram[x+2]) & 0xff) + ((attr & 0x02) << 7);
+		code = (spriteram16[x+1] & 0xff) + ((attr & 0x02) << 7);
 
 		drawgfx(bitmap,Machine->gfx[2],
 				code,
@@ -227,16 +224,16 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+	for (offs = videoram_size/2 - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 
 
-		sx = (offs/2) / 32;
-		sy = (offs/2) % 32;
+		sx = offs / 32;
+		sy = offs % 32;
 
 		drawgfx(bitmap,Machine->gfx[0],
-				READ_WORD(&videoram[offs]) & 0xff,
+				videoram16[offs] & 0xff,
 				0,
 				0,0,
 				8*sx,8*sy,

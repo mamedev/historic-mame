@@ -121,8 +121,7 @@ static void tecmo_adpcm_int(int num)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_BANK1 },
@@ -137,11 +136,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf808, 0xf808, input_port_8_r },
 	{ 0xf809, 0xf809, input_port_9_r },
 	{ 0xf80f, 0xf80f, input_port_10_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rygar_writemem[] =
-{
+static MEMORY_WRITE_START( rygar_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd7ff, tecmo_txvideoram_w, &tecmo_txvideoram },
@@ -156,11 +153,9 @@ static struct MemoryWriteAddress rygar_writemem[] =
 	{ 0xf807, 0xf807, tecmo_flipscreen_w },
 	{ 0xf808, 0xf808, tecmo_bankswitch_w },
 	{ 0xf80b, 0xf80b, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gemini_writemem[] =
-{
+static MEMORY_WRITE_START( gemini_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd7ff, tecmo_txvideoram_w, &tecmo_txvideoram },
@@ -175,11 +170,9 @@ static struct MemoryWriteAddress gemini_writemem[] =
 	{ 0xf807, 0xf807, tecmo_flipscreen_w },
 	{ 0xf808, 0xf808, tecmo_bankswitch_w },
 	{ 0xf80b, 0xf80b, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress silkworm_writemem[] =
-{
+static MEMORY_WRITE_START( silkworm_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc3ff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
 	{ 0xc400, 0xc7ff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
@@ -195,19 +188,15 @@ static struct MemoryWriteAddress silkworm_writemem[] =
 	{ 0xf808, 0xf808, tecmo_bankswitch_w },
 	{ 0xf809, 0xf809, MWA_NOP },	/* ? */
 	{ 0xf80b, 0xf80b, MWA_NOP },	/* ? if mapped to watchdog like in the others, causes reset */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress rygar_sound_readmem[] =
-{
+static MEMORY_READ_START( rygar_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0xc000, 0xc000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress rygar_sound_writemem[] =
-{
+static MEMORY_WRITE_START( rygar_sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, YM3812_control_port_0_w },
@@ -216,19 +205,15 @@ static struct MemoryWriteAddress rygar_sound_writemem[] =
 	{ 0xd000, 0xd000, tecmo_adpcm_end_w },
 	{ 0xe000, 0xe000, tecmo_adpcm_vol_w },
 	{ 0xf000, 0xf000, MWA_NOP },	/* NMI acknowledge */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress tecmo_sound_readmem[] =
-{
+static MEMORY_READ_START( tecmo_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xc000, 0xc000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tecmo_sound_writemem[] =
-{
+static MEMORY_WRITE_START( tecmo_sound_writemem )
 	{ 0x2000, 0x207f, MWA_RAM },	/* Silkworm set #2 has a custom CPU which */
 									/* writes code to this area */
 	{ 0x0000, 0x7fff, MWA_ROM },
@@ -239,8 +224,7 @@ static struct MemoryWriteAddress tecmo_sound_writemem[] =
 	{ 0xc400, 0xc400, tecmo_adpcm_end_w },
 	{ 0xc800, 0xc800, tecmo_adpcm_vol_w },
 	{ 0xcc00, 0xcc00, MWA_NOP },	/* NMI acknowledge */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -25,6 +25,7 @@ WRITE_HANDLER( seibu_soundclear_w );
 void seibu_ym3812_irqhandler(int linestate);
 READ_HANDLER( seibu_soundlatch_r );
 WRITE_HANDLER( seibu_soundlatch_w );
+WRITE16_HANDLER( seibu_soundlatch_word_w );
 WRITE_HANDLER( seibu_main_data_w );
 void seibu_sound_init_1(void);
 void seibu_sound_init_2(void);
@@ -37,8 +38,7 @@ extern unsigned char *seibu_shared_sound_ram;
 
 #define SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port)			\
 																	\
-static struct MemoryReadAddress sound_readmem[] =					\
-{																	\
+static MEMORY_READ_START( sound_readmem )							\
 	{ 0x0000, 0x1fff, MRA_ROM },									\
 	{ 0x2000, 0x27ff, MRA_RAM },									\
 	{ 0x4008, 0x4008, YM3812_status_port_0_r },						\
@@ -46,11 +46,9 @@ static struct MemoryReadAddress sound_readmem[] =					\
 	{ 0x4013, 0x4013, input_port }, 								\
 	{ 0x6000, 0x6000, OKIM6295_status_0_r },						\
 	{ 0x8000, 0xffff, MRA_BANK1 },									\
-	{ -1 }	/* end of table */										\
-};																	\
+MEMORY_END															\
 				  													\
-static struct MemoryWriteAddress sound_writemem[] =					\
-{																	\
+static MEMORY_WRITE_START( sound_writemem )							\
 	{ 0x0000, 0x1fff, MWA_ROM },									\
 	{ 0x2000, 0x27ff, MWA_RAM },									\
 	{ 0x4000, 0x4000, seibu_soundclear_w },							\
@@ -61,8 +59,8 @@ static struct MemoryWriteAddress sound_writemem[] =					\
 	{ 0x4009, 0x4009, YM3812_write_port_0_w },						\
 	{ 0x4018, 0x401f, seibu_main_data_w },							\
 	{ 0x6000, 0x6000, OKIM6295_data_0_w },							\
-	{ -1 }	/* end of table */										\
-}
+MEMORY_END
+
 
 
 #define SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(freq1,freq2,region)		\

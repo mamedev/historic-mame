@@ -2,7 +2,7 @@
 
 4/25/99 - Tac-Scan sound call for coins now works. (Jim Hernandez)
 2/5/98 - Added input ports support for Tac Scan. Bonus Ships now work.
-         Zektor now uses it's own input port section. (Jim Hernandez)
+		 Zektor now uses it's own input port section. (Jim Hernandez)
 
 Sega Vector memory map (preliminary)
 
@@ -13,55 +13,55 @@ http://www.spies.com/arcade/simulation/gameHardware/
 
 ROM Address Map
 ---------------
-       Eliminator Elim4Player Space Fury  Zektor  TAC/SCAN  Star Trk
+	   Eliminator Elim4Player Space Fury  Zektor  TAC/SCAN	Star Trk
 -----+-----------+-----------+-----------+-------+---------+---------+
-0000 | 969       | 1390      | 969       | 1611  | 1711    | 1873    | CPU u25
+0000 | 969		 | 1390 	 | 969		 | 1611  | 1711    | 1873	 | CPU u25
 -----+-----------+-----------+-----------+-------+---------+---------+
-0800 | 1333      | 1347      | 960       | 1586  | 1670    | 1848    | ROM u1
+0800 | 1333 	 | 1347 	 | 960		 | 1586  | 1670    | 1848	 | ROM u1
 -----+-----------+-----------+-----------+-------+---------+---------+
-1000 | 1334      | 1348      | 961       | 1587  | 1671    | 1849    | ROM u2
+1000 | 1334 	 | 1348 	 | 961		 | 1587  | 1671    | 1849	 | ROM u2
 -----+-----------+-----------+-----------+-------+---------+---------+
-1800 | 1335      | 1349      | 962       | 1588  | 1672    | 1850    | ROM u3
+1800 | 1335 	 | 1349 	 | 962		 | 1588  | 1672    | 1850	 | ROM u3
 -----+-----------+-----------+-----------+-------+---------+---------+
-2000 | 1336      | 1350      | 963       | 1589  | 1673    | 1851    | ROM u4
+2000 | 1336 	 | 1350 	 | 963		 | 1589  | 1673    | 1851	 | ROM u4
 -----+-----------+-----------+-----------+-------+---------+---------+
-2800 | 1337      | 1351      | 964       | 1590  | 1674    | 1852    | ROM u5
+2800 | 1337 	 | 1351 	 | 964		 | 1590  | 1674    | 1852	 | ROM u5
 -----+-----------+-----------+-----------+-------+---------+---------+
-3000 | 1338      | 1352      | 965       | 1591  | 1675    | 1853    | ROM u6
+3000 | 1338 	 | 1352 	 | 965		 | 1591  | 1675    | 1853	 | ROM u6
 -----+-----------+-----------+-----------+-------+---------+---------+
-3800 | 1339      | 1353      | 966       | 1592  | 1676    | 1854    | ROM u7
+3800 | 1339 	 | 1353 	 | 966		 | 1592  | 1676    | 1854	 | ROM u7
 -----+-----------+-----------+-----------+-------+---------+---------+
-4000 | 1340      | 1354      | 967       | 1593  | 1677    | 1855    | ROM u8
+4000 | 1340 	 | 1354 	 | 967		 | 1593  | 1677    | 1855	 | ROM u8
 -----+-----------+-----------+-----------+-------+---------+---------+
-4800 | 1341      | 1355      | 968       | 1594  | 1678    | 1856    | ROM u9
+4800 | 1341 	 | 1355 	 | 968		 | 1594  | 1678    | 1856	 | ROM u9
 -----+-----------+-----------+-----------+-------+---------+---------+
-5000 | 1342      | 1356      |           | 1595  | 1679    | 1857    | ROM u10
+5000 | 1342 	 | 1356 	 |			 | 1595  | 1679    | 1857	 | ROM u10
 -----+-----------+-----------+-----------+-------+---------+---------+
-5800 | 1343      | 1357      |           | 1596  | 1680    | 1858    | ROM u11
+5800 | 1343 	 | 1357 	 |			 | 1596  | 1680    | 1858	 | ROM u11
 -----+-----------+-----------+-----------+-------+---------+---------+
-6000 | 1344      | 1358      |           | 1597  | 1681    | 1859    | ROM u12
+6000 | 1344 	 | 1358 	 |			 | 1597  | 1681    | 1859	 | ROM u12
 -----+-----------+-----------+-----------+-------+---------+---------+
-6800 | 1345      | 1359      |           | 1598  | 1682    | 1860    | ROM u13
+6800 | 1345 	 | 1359 	 |			 | 1598  | 1682    | 1860	 | ROM u13
 -----+-----------+-----------+-----------+-------+---------+---------+
-7000 |           | 1360      |           | 1599  | 1683    | 1861    | ROM u14
+7000 |			 | 1360 	 |			 | 1599  | 1683    | 1861	 | ROM u14
 -----+-----------+-----------+-----------+-------+---------+---------+
-7800 |                                   | 1600  | 1684    | 1862    | ROM u15
+7800 |									 | 1600  | 1684    | 1862	 | ROM u15
 -----+-----------+-----------+-----------+-------+---------+---------+
-8000 |                                   | 1601  | 1685    | 1863    | ROM u16
+8000 |									 | 1601  | 1685    | 1863	 | ROM u16
 -----+-----------+-----------+-----------+-------+---------+---------+
-8800 |                                   | 1602  | 1686    | 1864    | ROM u17
+8800 |									 | 1602  | 1686    | 1864	 | ROM u17
 -----+-----------+-----------+-----------+-------+---------+---------+
-9000 |                                   | 1603  | 1687    | 1865    | ROM u18
+9000 |									 | 1603  | 1687    | 1865	 | ROM u18
 -----+-----------+-----------+-----------+-------+---------+---------+
-9800 |                                   | 1604  | 1688    | 1866    | ROM u19
+9800 |									 | 1604  | 1688    | 1866	 | ROM u19
 -----+-----------+-----------+-----------+-------+---------+---------+
-A000 |                                   | 1605  | 1709    | 1867    | ROM u20
+A000 |									 | 1605  | 1709    | 1867	 | ROM u20
 -----+-----------+-----------+-----------+-------+---------+---------+
-A800 |                                   | 1606  | 1710    | 1868    | ROM u21
+A800 |									 | 1606  | 1710    | 1868	 | ROM u21
 -----+-----------+-----------+-----------+-------+---------+---------+
-B000 |                                                     | 1869    | ROM u22
+B000 |													   | 1869	 | ROM u22
 -----+-----------+-----------+-----------+-------+---------+---------+
-B800 |                                                     | 1870    | ROM u23
+B800 |													   | 1870	 | ROM u23
 -----+-----------+-----------+-----------+-------+---------+---------+
 
 I/O ports:
@@ -80,30 +80,30 @@ SWITCH MAPPINGS
 |SW1-8 |SW1-7 |SW1-6 |SW1-5 |SW1-4 |SW1-3 |SW1-2 |SW1-1 |
 +------+------+------+------+------+------+------+------+
  F8:08 |F9:08 |FA:08 |FB:08 |F8:04 |F9:04  FA:04  FB:04    Zektor &
-       |      |      |      |      |      |                Space Fury
-       |      |      |      |      |      |
+	   |	  | 	 |		|	   |	  | 			   Space Fury
+	   |	  | 	 |		|	   |	  |
    1  -|------|------|------|------|------|--------------- upright
    0  -|------|------|------|------|------|--------------- cocktail
-       |      |      |      |      |      |
-       |  1  -|------|------|------|------|--------------- voice
-       |  0  -|------|------|------|------|--------------- no voice
-              |      |      |      |      |
-              |  1   |  1  -|------|------|--------------- 5 ships
-              |  0   |  1  -|------|------|--------------- 4 ships
-              |  1   |  0  -|------|------|--------------- 3 ships
-              |  0   |  0  -|------|------|--------------- 2 ships
-                            |      |      |
-                            |  1   |  1  -|--------------- hardest
-                            |  0   |  1  -|--------------- hard
-1 = Open                    |  1   |  0  -|--------------- medium
-0 = Closed                  |  0   |  0  -|--------------- easy
+	   |	  | 	 |		|	   |	  |
+	   |  1  -|------|------|------|------|--------------- voice
+	   |  0  -|------|------|------|------|--------------- no voice
+			  | 	 |		|	   |	  |
+			  |  1	 |	1  -|------|------|--------------- 5 ships
+			  |  0	 |	1  -|------|------|--------------- 4 ships
+			  |  1	 |	0  -|------|------|--------------- 3 ships
+			  |  0	 |	0  -|------|------|--------------- 2 ships
+							|	   |	  |
+							|  1   |  1  -|--------------- hardest
+							|  0   |  1  -|--------------- hard
+1 = Open					|  1   |  0  -|--------------- medium
+0 = Closed					|  0   |  0  -|--------------- easy
 
 +------+------+------+------+------+------+------+------+
 |SW2-8 |SW2-7 |SW2-6 |SW2-5 |SW2-4 |SW2-3 |SW2-2 |SW2-1 |
 +------+------+------+------+------+------+------+------+
 |F8:02 |F9:02 |FA:02 |FB:02 |F8:01 |F9:01 |FA:01 |FB:01 |
-|      |      |      |      |      |      |      |      |
-|  1   |  1   |  0   |  0   |  1   | 1    | 0    |  0   | 1 coin/ 1 play
+|	   |	  | 	 |		|	   |	  | 	 |		|
+|  1   |  1   |  0	 |	0	|  1   | 1	  | 0	 |	0	| 1 coin/ 1 play
 +------+------+------+------+------+------+------+------+
 
 Known problems:
@@ -134,6 +134,7 @@ READ_HANDLER( sega_mult_r );
 WRITE_HANDLER( sega_mult1_w );
 WRITE_HANDLER( sega_mult2_w );
 WRITE_HANDLER( sega_switch_w );
+WRITE_HANDLER( sega_coin_counter_w );
 
 /* Sound hardware prototypes */
 int sega_sh_start (const struct MachineSound *msound);
@@ -160,112 +161,90 @@ int sega_vh_start (void);
 void sega_vh_stop (void);
 void sega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc800, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xd000, 0xdfff, MRA_RAM },			/* sound ram */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xffff, sega_w, &sega_mem },
 	{ 0xe000, 0xefff, MWA_RAM, &vectorram, &vectorram_size },	/* handled by the above, */
 												/* here only to initialize the pointer */
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort spacfury_readport[] =
-{
+static PORT_READ_START( spacfury_readport )
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_ports_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort spacfury_writeport[] =
-{
+static PORT_WRITE_START( spacfury_writeport )
 	{ 0x38, 0x38, sega_sh_speech_w },
 	{ 0x3e, 0x3e, spacfury1_sh_w },
 	{ 0x3f, 0x3f, spacfury2_sh_w },
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
-	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-	{ -1 }	/* end of table */
-};
+	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
+PORT_END
 
-static struct IOReadPort zektor_readport[] =
-{
+static PORT_READ_START( zektor_readport )
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_ports_r },
 	{ 0xfc, 0xfc, sega_IN4_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort zektor_writeport[] =
-{
+static PORT_WRITE_START( zektor_writeport )
 	{ 0x38, 0x38, sega_sh_speech_w },
-        { 0x3e, 0x3e, zektor1_sh_w },
-        { 0x3f, 0x3f, zektor2_sh_w },
+		{ 0x3e, 0x3e, zektor1_sh_w },
+		{ 0x3f, 0x3f, zektor2_sh_w },
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-	{ -1 }	/* end of table */
-};
+	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
+PORT_END
 
-static struct IOWritePort tacscan_writeport[] =
-{
+static PORT_WRITE_START( tacscan_writeport )
 	{ 0x3f, 0x3f, tacscan_sh_w },
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-	{ -1 }	/* end of table */
-};
+	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
+PORT_END
 
-static struct IOReadPort elim2_readport[] =
-{
+static PORT_READ_START( elim2_readport )
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_ports_r },
 	{ 0xfc, 0xfc, input_port_4_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort elim4_readport[] =
-{
+static PORT_READ_START( elim4_readport )
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_ports_r },
 	{ 0xfc, 0xfc, elim4_IN4_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort elim_writeport[] =
-{
+static PORT_WRITE_START( elim_writeport )
 	{ 0x3e, 0x3e, elim1_sh_w },
 	{ 0x3f, 0x3f, elim2_sh_w },
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-	{ -1 }	/* end of table */
-};
+	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
+PORT_END
 
-static struct IOWritePort startrek_writeport[] =
-{
+static PORT_WRITE_START( startrek_writeport )
 	{ 0x38, 0x38, sega_sh_speech_w },
 	{ 0x3f, 0x3f, startrek_sh_w },
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-	{ -1 }	/* end of table */
-};
+	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
+PORT_END
 
 /*************************************************************************
 Input Ports
@@ -274,40 +253,40 @@ Input Ports
 /* This fake input port is used for DIP Switch 2
    for all games except Eliminato 4 players */
 #define COINAGE PORT_START \
-        PORT_DIPNAME( 0x0f, 0x0c, DEF_STR ( Coin_B ) ) \
-        PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) ) \
-        PORT_DIPSETTING(    0x08, DEF_STR ( 3C_1C ) ) \
-        PORT_DIPSETTING(    0x09, "2 Coins/1 Credit 5/3 6/4" ) \
-        PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 4/3" ) \
-        PORT_DIPSETTING(    0x04, DEF_STR ( 2C_1C ) ) \
-        PORT_DIPSETTING(    0x0c, DEF_STR ( 1C_1C ) ) \
-        PORT_DIPSETTING(    0x0d, "1 Coin/1 Credit 5/6" ) \
-        PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 4/5" ) \
-        PORT_DIPSETTING(    0x0b, "1 Coin/1 Credit 2/3" ) \
-        PORT_DIPSETTING(    0x02, DEF_STR ( 1C_2C ) ) \
-        PORT_DIPSETTING(    0x0f, "1 Coin/2 Credits 4/9" ) \
-        PORT_DIPSETTING(    0x07, "1 Coin/2 Credits 5/11" ) \
-        PORT_DIPSETTING(    0x0a, DEF_STR ( 1C_3C ) ) \
-        PORT_DIPSETTING(    0x06, DEF_STR ( 1C_4C ) ) \
-        PORT_DIPSETTING(    0x0e, DEF_STR ( 1C_5C ) ) \
-        PORT_DIPSETTING(    0x01, DEF_STR ( 1C_6C ) ) \
-        PORT_DIPNAME( 0xf0, 0xc0, DEF_STR ( Coin_A ) ) \
-        PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) ) \
-        PORT_DIPSETTING(    0x80, DEF_STR ( 3C_1C ) ) \
-        PORT_DIPSETTING(    0x90, "2 Coins/1 Credit 5/3 6/4" ) \
-        PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 4/3" ) \
-        PORT_DIPSETTING(    0x40, DEF_STR ( 2C_1C ) ) \
-        PORT_DIPSETTING(    0xc0, DEF_STR ( 1C_1C ) ) \
-        PORT_DIPSETTING(    0xd0, "1 Coin/1 Credit 5/6" ) \
-        PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 4/5" ) \
-        PORT_DIPSETTING(    0xb0, "1 Coin/1 Credit 2/3" ) \
-        PORT_DIPSETTING(    0x20, DEF_STR ( 1C_2C ) ) \
-        PORT_DIPSETTING(    0xf0, "1 Coin/2 Credits 4/9" ) \
-        PORT_DIPSETTING(    0x70, "1 Coin/2 Credits 5/11" ) \
-        PORT_DIPSETTING(    0xa0, DEF_STR ( 1C_3C ) ) \
-        PORT_DIPSETTING(    0x60, DEF_STR ( 1C_4C ) ) \
-        PORT_DIPSETTING(    0xe0, DEF_STR ( 1C_5C ) ) \
-        PORT_DIPSETTING(    0x10, DEF_STR ( 1C_6C ) )
+		PORT_DIPNAME( 0x0f, 0x0c, DEF_STR ( Coin_B ) ) \
+		PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) ) \
+		PORT_DIPSETTING(	0x08, DEF_STR ( 3C_1C ) ) \
+		PORT_DIPSETTING(	0x09, "2 Coins/1 Credit 5/3 6/4" ) \
+		PORT_DIPSETTING(	0x05, "2 Coins/1 Credit 4/3" ) \
+		PORT_DIPSETTING(	0x04, DEF_STR ( 2C_1C ) ) \
+		PORT_DIPSETTING(	0x0c, DEF_STR ( 1C_1C ) ) \
+		PORT_DIPSETTING(	0x0d, "1 Coin/1 Credit 5/6" ) \
+		PORT_DIPSETTING(	0x03, "1 Coin/1 Credit 4/5" ) \
+		PORT_DIPSETTING(	0x0b, "1 Coin/1 Credit 2/3" ) \
+		PORT_DIPSETTING(	0x02, DEF_STR ( 1C_2C ) ) \
+		PORT_DIPSETTING(	0x0f, "1 Coin/2 Credits 4/9" ) \
+		PORT_DIPSETTING(	0x07, "1 Coin/2 Credits 5/11" ) \
+		PORT_DIPSETTING(	0x0a, DEF_STR ( 1C_3C ) ) \
+		PORT_DIPSETTING(	0x06, DEF_STR ( 1C_4C ) ) \
+		PORT_DIPSETTING(	0x0e, DEF_STR ( 1C_5C ) ) \
+		PORT_DIPSETTING(	0x01, DEF_STR ( 1C_6C ) ) \
+		PORT_DIPNAME( 0xf0, 0xc0, DEF_STR ( Coin_A ) ) \
+		PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) ) \
+		PORT_DIPSETTING(	0x80, DEF_STR ( 3C_1C ) ) \
+		PORT_DIPSETTING(	0x90, "2 Coins/1 Credit 5/3 6/4" ) \
+		PORT_DIPSETTING(	0x50, "2 Coins/1 Credit 4/3" ) \
+		PORT_DIPSETTING(	0x40, DEF_STR ( 2C_1C ) ) \
+		PORT_DIPSETTING(	0xc0, DEF_STR ( 1C_1C ) ) \
+		PORT_DIPSETTING(	0xd0, "1 Coin/1 Credit 5/6" ) \
+		PORT_DIPSETTING(	0x30, "1 Coin/1 Credit 4/5" ) \
+		PORT_DIPSETTING(	0xb0, "1 Coin/1 Credit 2/3" ) \
+		PORT_DIPSETTING(	0x20, DEF_STR ( 1C_2C ) ) \
+		PORT_DIPSETTING(	0xf0, "1 Coin/2 Credits 4/9" ) \
+		PORT_DIPSETTING(	0x70, "1 Coin/2 Credits 5/11" ) \
+		PORT_DIPSETTING(	0xa0, DEF_STR ( 1C_3C ) ) \
+		PORT_DIPSETTING(	0x60, DEF_STR ( 1C_4C ) ) \
+		PORT_DIPSETTING(	0xe0, DEF_STR ( 1C_5C ) ) \
+		PORT_DIPSETTING(	0x10, DEF_STR ( 1C_6C ) )
 
 
 INPUT_PORTS_START( spacfury )
@@ -341,30 +320,30 @@ INPUT_PORTS_START( spacfury )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-        PORT_DIPSETTING(    0x00, "10000" )
-        PORT_DIPSETTING(    0x02, "20000" )
-        PORT_DIPSETTING(    0x01, "30000" )
-        PORT_DIPSETTING(    0x03, "40000" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x08, "Normal" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
-        PORT_DIPSETTING(    0x00, "2" )
-        PORT_DIPSETTING(    0x20, "3" )
-        PORT_DIPSETTING(    0x10, "4" )
-        PORT_DIPSETTING(    0x30, "5" )
-        PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds) )
-        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+		/* This fake input port is used for DIP Switch 1 */
+		PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+		PORT_DIPSETTING(	0x00, "10000" )
+		PORT_DIPSETTING(	0x02, "20000" )
+		PORT_DIPSETTING(	0x01, "30000" )
+		PORT_DIPSETTING(	0x03, "40000" )
+		PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+		PORT_DIPSETTING(	0x00, "Easy" )
+		PORT_DIPSETTING(	0x08, "Normal" )
+		PORT_DIPSETTING(	0x04, "Hard" )
+		PORT_DIPSETTING(	0x0c, "Very Hard" )
+		PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
+		PORT_DIPSETTING(	0x00, "2" )
+		PORT_DIPSETTING(	0x20, "3" )
+		PORT_DIPSETTING(	0x10, "4" )
+		PORT_DIPSETTING(	0x30, "5" )
+		PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds) )
+		PORT_DIPSETTING(	0x40, DEF_STR ( Off ) )
+		PORT_DIPSETTING(	0x00, DEF_STR ( On ) )
+		PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+		PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+		PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
-        COINAGE
+		COINAGE
 
 
 INPUT_PORTS_END
@@ -400,30 +379,30 @@ INPUT_PORTS_START( zektor )
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-	PORT_DIPSETTING(    0x03, "10000" )
-	PORT_DIPSETTING(    0x01, "20000" )
-	PORT_DIPSETTING(    0x02, "30000" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(	0x03, "10000" )
+	PORT_DIPSETTING(	0x01, "20000" )
+	PORT_DIPSETTING(	0x02, "30000" )
+	PORT_DIPSETTING(	0x00, "None" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x08, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x0c, "Very Hard" )
+	PORT_DIPSETTING(	0x00, "Easy" )
+	PORT_DIPSETTING(	0x08, "Normal" )
+	PORT_DIPSETTING(	0x04, "Hard" )
+	PORT_DIPSETTING(	0x0c, "Very Hard" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x20, "3" )
-	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPSETTING(	0x00, "2" )
+	PORT_DIPSETTING(	0x20, "3" )
+	PORT_DIPSETTING(	0x10, "4" )
+	PORT_DIPSETTING(	0x30, "5" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+	PORT_DIPSETTING(	0x40, DEF_STR ( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
 	COINAGE
 
-	PORT_START      /* IN8 - FAKE port for the dial */
+	PORT_START		/* IN8 - FAKE port for the dial */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 10, 0, 0 )
 INPUT_PORTS_END
 
@@ -461,30 +440,30 @@ INPUT_PORTS_START( startrek )
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "10000" )
-	PORT_DIPSETTING(    0x02, "20000" )
-	PORT_DIPSETTING(    0x01, "30000" )
-	PORT_DIPSETTING(    0x03, "40000" )
+	PORT_DIPSETTING(	0x00, "10000" )
+	PORT_DIPSETTING(	0x02, "20000" )
+	PORT_DIPSETTING(	0x01, "30000" )
+	PORT_DIPSETTING(	0x03, "40000" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x08, "Medium" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x0c, "Tournament" )
+	PORT_DIPSETTING(	0x00, "Easy" )
+	PORT_DIPSETTING(	0x08, "Medium" )
+	PORT_DIPSETTING(	0x04, "Hard" )
+	PORT_DIPSETTING(	0x0c, "Tournament" )
 	PORT_DIPNAME( 0x30, 0x30, "Photon Torpedoes" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x30, "4" )
+	PORT_DIPSETTING(	0x00, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x30, "4" )
 	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
-	PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+	PORT_DIPSETTING(	0x40, DEF_STR ( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
 	COINAGE
 
-	PORT_START      /* IN8 - dummy port for the dial */
+	PORT_START		/* IN8 - dummy port for the dial */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 10, 0, 0 )
 INPUT_PORTS_END
 
@@ -520,30 +499,30 @@ INPUT_PORTS_START( tacscan )
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-	PORT_DIPSETTING(    0x03, "10000" )
-	PORT_DIPSETTING(    0x01, "20000" )
-	PORT_DIPSETTING(    0x02, "30000" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(	0x03, "10000" )
+	PORT_DIPSETTING(	0x01, "20000" )
+	PORT_DIPSETTING(	0x02, "30000" )
+	PORT_DIPSETTING(	0x00, "None" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x08, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x0c, "Very Hard" )
+	PORT_DIPSETTING(	0x00, "Easy" )
+	PORT_DIPSETTING(	0x08, "Normal" )
+	PORT_DIPSETTING(	0x04, "Hard" )
+	PORT_DIPSETTING(	0x0c, "Very Hard" )
 	PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPSETTING(    0x10, "6" )
-	PORT_DIPSETTING(    0x30, "8" )
+	PORT_DIPSETTING(	0x00, "2" )
+	PORT_DIPSETTING(	0x20, "4" )
+	PORT_DIPSETTING(	0x10, "6" )
+	PORT_DIPSETTING(	0x30, "8" )
 	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
-	PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+	PORT_DIPSETTING(	0x40, DEF_STR ( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+	PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
 	COINAGE
 
-	PORT_START      /* IN8 - FAKE port for the dial */
+	PORT_START		/* IN8 - FAKE port for the dial */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 10, 0, 0 )
 INPUT_PORTS_END
 
@@ -567,13 +546,13 @@ INPUT_PORTS_START( elim2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 - port 0xfb */
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT   | IPF_PLAYER2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	| IPF_PLAYER2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1        | IPF_PLAYER2 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1		| IPF_PLAYER2 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2		| IPF_PLAYER2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
 	PORT_BIT ( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -583,27 +562,27 @@ INPUT_PORTS_START( elim2 )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
-        PORT_DIPSETTING(    0x01, "10000" )
-        PORT_DIPSETTING(    0x02, "20000" )
-        PORT_DIPSETTING(    0x00, "30000" )
-        PORT_DIPSETTING(    0x03, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x08, "Normal" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPNAME( 0x30, 0x20, DEF_STR ( Lives ) )
-        PORT_DIPSETTING(    0x20, "3" )
-        PORT_DIPSETTING(    0x10, "4" )
-        PORT_DIPSETTING(    0x00, "5" )
-        /* 0x30 gives 5 Lives */
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+		/* This fake input port is used for DIP Switch 1 */
+		PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
+		PORT_DIPSETTING(	0x01, "10000" )
+		PORT_DIPSETTING(	0x02, "20000" )
+		PORT_DIPSETTING(	0x00, "30000" )
+		PORT_DIPSETTING(	0x03, "None" )
+		PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+		PORT_DIPSETTING(	0x00, "Easy" )
+		PORT_DIPSETTING(	0x08, "Normal" )
+		PORT_DIPSETTING(	0x04, "Hard" )
+		PORT_DIPSETTING(	0x0c, "Very Hard" )
+		PORT_DIPNAME( 0x30, 0x20, DEF_STR ( Lives ) )
+		PORT_DIPSETTING(	0x20, "3" )
+		PORT_DIPSETTING(	0x10, "4" )
+		PORT_DIPSETTING(	0x00, "5" )
+		/* 0x30 gives 5 Lives */
+		PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+		PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+		PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
-        COINAGE
+		COINAGE
 
 INPUT_PORTS_END
 
@@ -618,28 +597,28 @@ INPUT_PORTS_START( elim4 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2         | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 		| IPF_PLAYER2 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 - port 0xfa */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT  | IPF_PLAYER2 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1         | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	| IPF_PLAYER2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 		| IPF_PLAYER2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 - port 0xfb */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT   | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	| IPF_PLAYER2 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1        | IPF_PLAYER3 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2        | IPF_PLAYER3 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1		| IPF_PLAYER3 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2		| IPF_PLAYER3 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT	| IPF_PLAYER3 )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1        | IPF_PLAYER4 )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2        | IPF_PLAYER4 )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 )
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1		| IPF_PLAYER4 )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2		| IPF_PLAYER4 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT	| IPF_PLAYER4 )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
 
 	PORT_START	/* IN5 - FAKE */
@@ -648,30 +627,30 @@ INPUT_PORTS_START( elim4 )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
-        PORT_DIPSETTING(    0x01, "10000" )
-        PORT_DIPSETTING(    0x02, "20000" )
-        PORT_DIPSETTING(    0x00, "30000" )
-        PORT_DIPSETTING(    0x03, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x08, "Normal" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
-        PORT_DIPSETTING(    0x20, "3" )
-        PORT_DIPSETTING(    0x10, "4" )
-        PORT_DIPSETTING(    0x00, "5" )
-        /* 0x30 gives 5 Lives */
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+		/* This fake input port is used for DIP Switch 1 */
+		PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
+		PORT_DIPSETTING(	0x01, "10000" )
+		PORT_DIPSETTING(	0x02, "20000" )
+		PORT_DIPSETTING(	0x00, "30000" )
+		PORT_DIPSETTING(	0x03, "None" )
+		PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+		PORT_DIPSETTING(	0x00, "Easy" )
+		PORT_DIPSETTING(	0x08, "Normal" )
+		PORT_DIPSETTING(	0x04, "Hard" )
+		PORT_DIPSETTING(	0x0c, "Very Hard" )
+		PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
+		PORT_DIPSETTING(	0x20, "3" )
+		PORT_DIPSETTING(	0x10, "4" )
+		PORT_DIPSETTING(	0x00, "5" )
+		/* 0x30 gives 5 Lives */
+		PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+		PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+		PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
-        PORT_START /* That is the coinage port in all the other games */
-        PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+		PORT_START /* That is the coinage port in all the other games */
+		PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-        PORT_START      /* IN8 - FAKE - port 0xfc - read in machine/sega.c */
+		PORT_START		/* IN8 - FAKE - port 0xfc - read in machine/sega.c */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 3 )
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_HIGH, IPT_COIN3, 3 )
@@ -688,38 +667,38 @@ INPUT_PORTS_END
 
 void init_spacfury(void)
 {
-    /* This game uses the 315-0064 security chip */
-    sega_security(64);
+	/* This game uses the 315-0064 security chip */
+	sega_security(64);
 }
 
 void init_zektor(void)
 {
-    /* This game uses the 315-0082 security chip */
-    sega_security(82);
+	/* This game uses the 315-0082 security chip */
+	sega_security(82);
 }
 
 void init_elim2(void)
 {
-    /* This game uses the 315-0070 security chip */
-    sega_security(70);
+	/* This game uses the 315-0070 security chip */
+	sega_security(70);
 }
 
 void init_elim4(void)
 {
-    /* This game uses the 315-0076 security chip */
-    sega_security(76);
+	/* This game uses the 315-0076 security chip */
+	sega_security(76);
 }
 
 void init_startrek(void)
 {
-    /* This game uses the 315-0064 security chip */
-    sega_security(64);
+	/* This game uses the 315-0064 security chip */
+	sega_security(64);
 }
 
 void init_tacscan(void)
 {
-    /* This game uses the 315-0076 security chip */
-    sega_security(76);
+	/* This game uses the 315-0076 security chip */
+	sega_security(76);
 }
 
 
@@ -766,13 +745,13 @@ static const char *spacfury_sample_names[] =
 	"sfury8.wav",
 	"sfury9.wav",
 	"sfury10.wav",
-    0	/* end of array */
+	0	/* end of array */
 };
 
 static struct Samplesinterface spacfury_samples_interface =
 {
 	9,	/* 9 channels */
-	25,	/* volume */
+	25, /* volume */
 	spacfury_sample_names
 };
 
@@ -872,13 +851,13 @@ static const char *zektor_sample_names[] =
 				  /* Missing Rotation Rings */
 
 
-    0	/* end of array */
+	0	/* end of array */
 };
 
 static struct Samplesinterface zektor_samples_interface =
 {
 	12, /* only speech for now */
-	25,	/* volume */
+	25, /* volume */
 	zektor_sample_names
 };
 
@@ -942,7 +921,7 @@ static const char *tacscan_sample_names[] =
 	"01.wav",
 	"02.wav",
 	"03.wav",
-        "plaser.wav",
+		"plaser.wav",
 	"pexpl.wav",
 	"pship.wav",
 	"tunnelh.wav",
@@ -951,24 +930,24 @@ static const char *tacscan_sample_names[] =
 	"sexpl.wav",
 	"eshot.wav",
 	"eexpl.wav",
-        "tunnelw.wav",
-        "flight1.wav",
-        "flight2.wav",
-        "flight3.wav",
-        "flight4.wav",
-        "flight5.wav",
-        "formatn.wav",
-        "warp.wav",
-        "credit.wav",
-        "1up.wav",
+		"tunnelw.wav",
+		"flight1.wav",
+		"flight2.wav",
+		"flight3.wav",
+		"flight4.wav",
+		"flight5.wav",
+		"formatn.wav",
+		"warp.wav",
+		"credit.wav",
+		"1up.wav",
 
-    0	/* end of array */
+	0	/* end of array */
 };
 
 static struct Samplesinterface tacscan_samples_interface =
 {
-	12,	/* 12 channels */
-	25,	/* volume */
+	12, /* 12 channels */
+	25, /* volume */
 	tacscan_sample_names
 };
 
@@ -1046,13 +1025,13 @@ static const char *elim_sample_names[] =
 	"elim10.wav",
 	"elim11.wav",
 	"elim12.wav",
-    0	/* end of array */
+	0	/* end of array */
 };
 
 static struct Samplesinterface elim2_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
+	25, /* volume */
 	elim_sample_names
 };
 
@@ -1207,13 +1186,13 @@ static const char *startrek_sample_names[] =
 	"trek26.wav",
 	"trek27.wav",
 	"trek28.wav",
-    0	/* end of array */
+	0	/* end of array */
 };
 
 static struct Samplesinterface startrek_samples_interface =
 {
-	10,	/* 10 channels */
-	25,	/* volume */
+	10, /* 10 channels */
+	25, /* volume */
 	startrek_sample_names
 };
 
@@ -1266,30 +1245,30 @@ static const struct MachineDriver machine_driver_startrek =
 
 ROM_START( spacfury ) /* Revision C */
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
-        ROM_LOAD( "969c.u25",     0x0000, 0x0800, 0x411207f2 )
-        ROM_LOAD( "960c.u1",      0x0800, 0x0800, 0xd071ab7e )
-        ROM_LOAD( "961c.u2",      0x1000, 0x0800, 0xaebc7b97 )
-        ROM_LOAD( "962c.u3",      0x1800, 0x0800, 0xdbbba35e )
-        ROM_LOAD( "963c.u4",      0x2000, 0x0800, 0xd9e9eadc )
-        ROM_LOAD( "964c.u5",      0x2800, 0x0800, 0x7ed947b6 )
-        ROM_LOAD( "965c.u6",      0x3000, 0x0800, 0xd2443a22 )
-        ROM_LOAD( "966c.u7",      0x3800, 0x0800, 0x1985ccfc )
-        ROM_LOAD( "967c.u8",      0x4000, 0x0800, 0x330f0751 )
-        ROM_LOAD( "968c.u9",      0x4800, 0x0800, 0x8366eadb )
+		ROM_LOAD( "969c.u25",     0x0000, 0x0800, 0x411207f2 )
+		ROM_LOAD( "960c.u1",      0x0800, 0x0800, 0xd071ab7e )
+		ROM_LOAD( "961c.u2",      0x1000, 0x0800, 0xaebc7b97 )
+		ROM_LOAD( "962c.u3",      0x1800, 0x0800, 0xdbbba35e )
+		ROM_LOAD( "963c.u4",      0x2000, 0x0800, 0xd9e9eadc )
+		ROM_LOAD( "964c.u5",      0x2800, 0x0800, 0x7ed947b6 )
+		ROM_LOAD( "965c.u6",      0x3000, 0x0800, 0xd2443a22 )
+		ROM_LOAD( "966c.u7",      0x3800, 0x0800, 0x1985ccfc )
+		ROM_LOAD( "967c.u8",      0x4000, 0x0800, 0x330f0751 )
+		ROM_LOAD( "968c.u9",      0x4800, 0x0800, 0x8366eadb )
 ROM_END
 
 ROM_START( spacfura ) /* Revision A */
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
-        ROM_LOAD( "969a.u25",     0x0000, 0x0800, 0x896a615c )
-        ROM_LOAD( "960a.u1",      0x0800, 0x0800, 0xe1ea7964 )
-        ROM_LOAD( "961a.u2",      0x1000, 0x0800, 0xcdb04233 )
-        ROM_LOAD( "962a.u3",      0x1800, 0x0800, 0x5f03e632 )
-        ROM_LOAD( "963a.u4",      0x2000, 0x0800, 0x45a77b44 )
-        ROM_LOAD( "964a.u5",      0x2800, 0x0800, 0xba008f8b )
-        ROM_LOAD( "965a.u6",      0x3000, 0x0800, 0x78677d31 )
-        ROM_LOAD( "966a.u7",      0x3800, 0x0800, 0xa8a51105 )
-        ROM_LOAD( "967a.u8",      0x4000, 0x0800, 0xd60f667d )
-        ROM_LOAD( "968a.u9",      0x4800, 0x0800, 0xaea85b6a )
+		ROM_LOAD( "969a.u25",     0x0000, 0x0800, 0x896a615c )
+		ROM_LOAD( "960a.u1",      0x0800, 0x0800, 0xe1ea7964 )
+		ROM_LOAD( "961a.u2",      0x1000, 0x0800, 0xcdb04233 )
+		ROM_LOAD( "962a.u3",      0x1800, 0x0800, 0x5f03e632 )
+		ROM_LOAD( "963a.u4",      0x2000, 0x0800, 0x45a77b44 )
+		ROM_LOAD( "964a.u5",      0x2800, 0x0800, 0xba008f8b )
+		ROM_LOAD( "965a.u6",      0x3000, 0x0800, 0x78677d31 )
+		ROM_LOAD( "966a.u7",      0x3800, 0x0800, 0xa8a51105 )
+		ROM_LOAD( "967a.u8",      0x4000, 0x0800, 0xd60f667d )
+		ROM_LOAD( "968a.u9",      0x4800, 0x0800, 0xaea85b6a )
 ROM_END
 
 ROM_START( zektor )
@@ -1438,11 +1417,12 @@ ROM_END
 
 
 
-GAME( 1981, spacfury, 0,        spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
+GAME( 1981, spacfury, 0,		spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
 GAME( 1981, spacfura, spacfury, spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision A)" )
-GAME( 1982, zektor,   0,        zektor,   zektor,   zektor,   ROT0,   "Sega", "Zektor" )
-GAME( 1982, tacscan,  0,        tacscan,  tacscan,  tacscan,  ROT270, "Sega", "Tac/Scan" )
-GAME( 1981, elim2,    0,        elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
-GAME( 1981, elim2a,   elim2,    elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
-GAME( 1981, elim4,    elim2,    elim4,    elim4,    elim4,    ROT0,   "Gremlin", "Eliminator (4 Players)" )
-GAME( 1982, startrek, 0,        startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
+GAME( 1982, zektor,   0,		zektor,   zektor,	zektor,   ROT0,   "Sega", "Zektor" )
+GAME( 1982, tacscan,  0,		tacscan,  tacscan,	tacscan,  ROT270, "Sega", "Tac/Scan" )
+GAME( 1981, elim2,	  0,		elim2,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
+GAME( 1981, elim2a,   elim2,	elim2,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
+GAME( 1981, elim4,	  elim2,	elim4,	  elim4,	elim4,	  ROT0,   "Gremlin", "Eliminator (4 Players)" )
+GAME( 1982, startrek, 0,		startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
+

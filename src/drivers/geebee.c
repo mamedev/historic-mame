@@ -99,28 +99,23 @@ extern void geebee_sh_update(void);
  *
  *******************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },	/* GeeBee uses only the first 4K */
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x37ff, MRA_ROM },	/* GeeBee uses only the first 1K */
 	{ 0x4000, 0x40ff, MRA_RAM },
 	{ 0x5000, 0x5fff, geebee_in_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_navalone[] =
-{
+static MEMORY_READ_START( readmem_navalone )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x37ff, MRA_ROM },
 	{ 0x4000, 0x40ff, MRA_RAM },
 	{ 0x5000, 0x5fff, navalone_in_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
 	{ 0x2400, 0x27ff, videoram_w }, /* mirror used in kaitei */
@@ -128,27 +123,20 @@ static struct MemoryWriteAddress writemem[] =
     { 0x4000, 0x40ff, MWA_RAM },
 	{ 0x6000, 0x6fff, geebee_out6_w },
 	{ 0x7000, 0x7fff, geebee_out7_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x50, 0x5f, geebee_in_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOReadPort readport_navalone[] =
-{
+static PORT_READ_START( readport_navalone )
 	{ 0x50, 0x5f, navalone_in_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x60, 0x6f, geebee_out6_w },
 	{ 0x70, 0x7f, geebee_out7_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( geebee )
 	PORT_START		/* IN0 SW0 */

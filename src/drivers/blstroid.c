@@ -1,87 +1,47 @@
 /***************************************************************************
 
-Blasteroids Memory Map
-----------------------
+	Atari Blasteroids hardware
 
-BLASTEROIDS 68010 MEMORY MAP
+	driver by Aaron Giles
 
-Function                           Address        R/W  DATA
--------------------------------------------------------------
-Program ROM                        000000-03FFFF  R    D0-D15
-Slapstic Program ROM               038000-03FFFF  R    D0-D15
+	Games supported:
+		* Blasteroids (1987) [3 sets]
 
-Watchdog reset                     FF8000         W    xx
-IRQ Acknowledge                    FF8200         W    xx
-VBLANK Acknowledge                 FF8400         W    xx
-Unlock EEPROM                      FF8600         W    xx
+	Known bugs:
+		* none at this time
 
-Priority RAM (1=MO, 0=PF)          FF8800-FF89FE  W    D0
+****************************************************************************
 
-Audio Send Port                    FF8A01         W    D0-D7
-Sound Processor Reset              FF8C00         W    xx
-Halt CPU until HBLANK              FF8E00         W    xx
+	Memory map (TBA)
 
-Audio Receive Port                 FF9401         R    D0-D7
-Whirly-Gig (Player 1)              FF9801         R    D0-D7
-Whirly-Gig (Player 2)              FF9805         R    D0-D7
-
-Self-Test                          FF9C01         R    D7
-Audio Busy Flag                                   R    D6
-Vertical Blank                                    R    D5
-Horizontal Blank                                  R    D4
-Player 1 Button 4                                 R    D3
-Player 1 Transform                                R    D2
-Player 1 Thrust                                   R    D1
-Player 1 Fire                                     R    D0
-
-Player 2 Button 4                  FF9C03         R    D3
-Player 2 Transform                                R    D2
-Player 2 Thrust                                   R    D1
-Player 2 Fire                                     R    D0
-
-Color RAM Motion Object            FFA000-FFA1FE  R/W  D0-D14
-Color RAM Playfield                FFA200-FFA2FE  R/W  D0-D14
-
-EEPROM                             FFB001-FFB3FF  R/W  D0-D7
-
-Playfield RAM (40x30)              FFC000-FFCFFF  R/W  D0-D15
-Row Programmable Interrupt         FFC050-FFCED0  R/W  D15
-
-Motion Object V Position           FFD000-FFDFF8  R/W  D7-D15
-Motion Object V Size                              R/W  D0-D3
-Motion Object H Flip               FFD002-FFDFFA  R/W  D15
-Motion Object V Flip                              R/W  D14
-Motion Object Stamp                               R/W  D0-D13
-Motion Object Link                 FFD004-FFDFFC  R/W  D3-D11
-Motion Object H Position           FFD006-FFDFFE  R/W  D6-D15
-Motion Object Palette                             R/W  D0-D3
-
-RAM                                FFE000-FFFFFF  R/W
-
-****************************************************************************/
-
+***************************************************************************/
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
-
-
-WRITE_HANDLER( blstroid_priorityram_w );
-WRITE_HANDLER( blstroid_playfieldram_w );
-
-int blstroid_vh_start(void);
-void blstroid_vh_stop(void);
-void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void blstroid_scanline_update(int scanline);
 
 
 
 /*************************************
  *
- *	Initialization
+ *	Externals
+ *
+ *************************************/
+
+int blstroid_vh_start(void);
+void blstroid_vh_stop(void);
+void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+void blstroid_scanline_update(int scanline);
+
+extern data16_t *blstroid_priorityram;
+
+
+
+/*************************************
+ *
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -119,9 +79,9 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port2_r )
+static READ16_HANDLER( special_port2_r )
 {
-	int temp = input_port_2_r(offset);
+	int temp = readinputport(2);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0040;
 	if (atarigen_get_hblank()) temp ^= 0x0010;
 	return temp;
@@ -135,41 +95,35 @@ static READ_HANDLER( special_port2_r )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0xff9400, 0xff9401, atarigen_sound_r },
-	{ 0xff9800, 0xff9801, input_port_0_r },
-	{ 0xff9804, 0xff9805, input_port_1_r },
+	{ 0xff9800, 0xff9801, input_port_0_word_r },
+	{ 0xff9804, 0xff9805, input_port_1_word_r },
 	{ 0xff9c00, 0xff9c01, special_port2_r },
-	{ 0xff9c02, 0xff9c03, input_port_3_r },
-	{ 0xffa000, 0xffa3ff, paletteram_word_r },
+	{ 0xff9c02, 0xff9c03, input_port_3_word_r },
+	{ 0xffa000, 0xffa3ff, MRA16_RAM },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_r },
-	{ 0xffc000, 0xffcfff, MRA_BANK1 },
-	{ 0xffd000, 0xffdfff, MRA_BANK2 },
-	{ 0xffe000, 0xffffff, MRA_BANK3 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xff8000, 0xff8001, watchdog_reset_w },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0xff8000, 0xff8001, watchdog_reset16_w },
 	{ 0xff8200, 0xff8201, atarigen_scanline_int_ack_w },
 	{ 0xff8400, 0xff8401, atarigen_video_int_ack_w },
 	{ 0xff8600, 0xff8601, atarigen_eeprom_enable_w },
-	{ 0xff8800, 0xff89ff, blstroid_priorityram_w },
+	{ 0xff8800, 0xff89ff, MWA16_RAM, &blstroid_priorityram },
 	{ 0xff8a00, 0xff8a01, atarigen_sound_w },
 	{ 0xff8c00, 0xff8c01, atarigen_sound_reset_w },
 	{ 0xff8e00, 0xff8e01, atarigen_halt_until_hblank_0_w },
-	{ 0xffa000, 0xffa3ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0xffa000, 0xffa3ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffc000, 0xffcfff, blstroid_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffd000, 0xffdfff, MWA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xffe000, 0xffffff, MWA_BANK3 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffcfff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xffd000, 0xffdfff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0xffe000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -246,7 +200,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pflayout,  256, 16 },
 	{ REGION_GFX2, 0, &molayout,    0, 16 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -269,7 +223,7 @@ static const struct MachineDriver machine_driver_blstroid =
 		},
 		JSA_I_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -422,12 +376,7 @@ static void init_blstroid(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 4, 2, 0x80);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
-
-	/* display messages */
-	atarigen_show_sound_message();
 }
 
 

@@ -160,7 +160,7 @@ if (data & 0x6e) logerror("videomode = %02x\n",data);
 	system1_video_mode = data;
 
 	/* bit 7 is flip screen */
-	flip_screen_w(0, data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 READ_HANDLER( system1_videomode_r )

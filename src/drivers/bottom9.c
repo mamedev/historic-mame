@@ -130,8 +130,7 @@ static WRITE_HANDLER( sound_bank_w )
 
 
 
-static struct MemoryReadAddress bottom9_readmem[] =
-{
+static MEMORY_READ_START( bottom9_readmem )
 	{ 0x0000, 0x07ff, bottom9_bankedram1_r },
 	{ 0x1fd0, 0x1fd0, input_port_4_r },
 	{ 0x1fd1, 0x1fd1, input_port_0_r },
@@ -143,11 +142,9 @@ static struct MemoryReadAddress bottom9_readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bottom9_writemem[] =
-{
+static MEMORY_WRITE_START( bottom9_writemem )
 	{ 0x0000, 0x07ff, bottom9_bankedram1_w },
 	{ 0x1f80, 0x1f80, bankswitch_w },
 	{ 0x1f90, 0x1f90, bottom9_1f90_w },
@@ -160,29 +157,24 @@ static struct MemoryWriteAddress bottom9_writemem[] =
 	{ 0x4000, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bottom9_sound_readmem[] =
-{
+static MEMORY_READ_START( bottom9_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa00d, K007232_read_port_0_r },
 	{ 0xb000, 0xb00d, K007232_read_port_1_r },
 	{ 0xd000, 0xd000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bottom9_sound_writemem[] =
-{
+static MEMORY_WRITE_START( bottom9_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x9000, sound_bank_w },
 	{ 0xa000, 0xa00d, K007232_write_port_0_w },
 	{ 0xb000, 0xb00d, K007232_write_port_1_w },
 	{ 0xf000, 0xf000, nmi_enable_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

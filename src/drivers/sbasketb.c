@@ -40,9 +40,18 @@ WRITE_HANDLER( sbasketb_sh_irqtrigger_w )
 	cpu_cause_interrupt(1,0xff);
 }
 
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+static WRITE_HANDLER( sbasketb_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x2000, 0x3bff, MRA_RAM },
 	{ 0x3c10, 0x3c10, MRA_NOP },    /* ???? */
 	{ 0x3e00, 0x3e00, input_port_0_r },
@@ -52,11 +61,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3e80, 0x3e80, input_port_3_r },
 	{ 0x3f00, 0x3f00, input_port_4_r },
 	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x2000, 0x2fff, MWA_RAM },
 	{ 0x3000, 0x33ff, colorram_w, &colorram },
 	{ 0x3400, 0x37ff, videoram_w, &videoram, &videoram_size },
@@ -66,33 +73,28 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3c20, 0x3c20, MWA_RAM, &sbasketb_palettebank },
 	{ 0x3c80, 0x3c80, flip_screen_w },
 	{ 0x3c81, 0x3c81, interrupt_enable_w },
-	{ 0x3c83, 0x3c84, coin_counter_w },
+	{ 0x3c83, 0x3c84, sbasketb_coin_counter_w },
 	{ 0x3c85, 0x3c85, MWA_RAM, &sbasketb_spriteram_select },
 	{ 0x3d00, 0x3d00, soundlatch_w },
 	{ 0x3d80, 0x3d80, sbasketb_sh_irqtrigger_w },
 	{ 0x3f80, 0x3f80, MWA_RAM, &sbasketb_scroll },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, hyperspt_sh_timer_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
 	{ 0xc000, 0xdfff, hyperspt_sound_w },     /* speech and output controll */
 	{ 0xe000, 0xe000, DAC_0_data_w },
 	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
 	{ 0xe002, 0xe002, konami_SN76496_0_w },      /* This address triggers the SN chip to read the data port. */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

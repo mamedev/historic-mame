@@ -117,39 +117,49 @@
 ****************************************************************************/
 
 
-
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 
 
-extern UINT8 vindctr2_screen_refresh;
 
-WRITE_HANDLER( gauntlet_playfieldram_w );
-WRITE_HANDLER( gauntlet_hscroll_w );
-WRITE_HANDLER( gauntlet_vscroll_w );
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
-void gauntlet_scanline_update(int scanline);
+WRITE16_HANDLER( gauntlet_xscroll_w );
+WRITE16_HANDLER( gauntlet_yscroll_w );
 
 int gauntlet_vh_start(void);
 void gauntlet_vh_stop(void);
-void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+extern UINT8 vindctr2_screen_refresh;
+extern data16_t *gauntlet_yscroll;
 
 
-static UINT8 *speed_check;
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
+
+static data16_t *speed_check;
 static UINT32 last_speed_check;
 
 static UINT8 speech_val;
 static UINT8 last_speech_write;
 static UINT8 speech_squeak;
 
-static UINT16 last_sound_reset;
+static data16_t sound_reset_val;
 
 
 
 /*************************************
  *
- *	Initialization of globals.
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -171,16 +181,11 @@ static void update_interrupts(void)
 
 static void scanline_update(int scanline)
 {
-	gauntlet_scanline_update(scanline);
-
 	/* sound IRQ is on 32V */
-	if (scanline % 32 == 0)
-	{
-		if (scanline & 32)
-			atarigen_6502_irq_gen();
-		else
-			atarigen_6502_irq_ack_r(0);
-	}
+	if (scanline & 32)
+		atarigen_6502_irq_gen();
+	else
+		atarigen_6502_irq_ack_r(0);
 }
 
 
@@ -188,13 +193,13 @@ static void init_machine(void)
 {
 	last_speed_check = 0;
 	last_speech_write = 0x80;
-	last_sound_reset = 1;
+	sound_reset_val = 1;
 	speech_squeak = 0;
 
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(scanline_update, 8);
+	atarigen_scanline_timer_reset(scanline_update, 32);
 	atarigen_sound_io_reset(1);
 }
 
@@ -202,7 +207,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *	Controller read dispatch.
+ *	Controller reads
  *
  *************************************/
 
@@ -238,68 +243,104 @@ static int fake_inputs(int real_port, int fake_port)
 }
 
 
-static READ_HANDLER( control_r )
+static READ16_HANDLER( port0_r )
 {
-	/* differentiate Gauntlet input from Vindicators 2 inputs via the refresh flag */
-	if (!vindctr2_screen_refresh)
-	{
-		/* Gauntlet case */
-		int p1 = input_port_6_r(offset);
-		switch (offset)
-		{
-			case 0:
-				return readinputport(p1);
-			case 2:
-				return readinputport((p1 != 1) ? 1 : 0);
-			case 4:
-				return readinputport((p1 != 2) ? 2 : 0);
-			case 6:
-				return readinputport((p1 != 3) ? 3 : 0);
-		}
-	}
-	else
-	{
-		/* Vindicators 2 case */
-		switch (offset)
-		{
-			case 0:
-				return fake_inputs(0, 6);
-			case 2:
-				return fake_inputs(1, 7);
-			case 4:
-			case 6:
-				return readinputport(offset / 2);
-		}
-	}
-	return 0xffff;
+	return vindctr2_screen_refresh ?
+				fake_inputs(0, 6) :
+				readinputport(readinputport(6));
+}
+
+
+static READ16_HANDLER( port1_r )
+{
+	return vindctr2_screen_refresh ?
+				fake_inputs(1, 7) :
+				readinputport((readinputport(6) != 1) ? 1 : 0);
+}
+
+
+static READ16_HANDLER( port2_r )
+{
+	return vindctr2_screen_refresh ?
+				readinputport(2) :
+				readinputport((readinputport(6) != 2) ? 2 : 0);
+}
+
+
+static READ16_HANDLER( port3_r )
+{
+	return vindctr2_screen_refresh ?
+				readinputport(3) :
+				readinputport((readinputport(6) != 3) ? 3 : 0);
+}
+
+
+static READ16_HANDLER( port4_r )
+{
+	int temp = readinputport(4);
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x0020;
+	if (atarigen_sound_to_cpu_ready) temp ^= 0x0010;
+	return temp;
 }
 
 
 
 /*************************************
  *
- *	I/O read dispatch.
+ *	Sound reset
  *
  *************************************/
 
-static READ_HANDLER( input_r )
+static WRITE16_HANDLER( sound_reset_w )
 {
-	int temp;
-
-	switch (offset)
+	if (ACCESSING_LSB)
 	{
-		case 0:
-			temp = input_port_4_r(offset);
-			if (atarigen_cpu_to_sound_ready) temp ^= 0x0020;
-			if (atarigen_sound_to_cpu_ready) temp ^= 0x0010;
-			return temp;
+		int oldword = sound_reset_val;
+		COMBINE_DATA(&sound_reset_val);
 
-		case 6:
-			return atarigen_sound_r(0);
+		if ((oldword ^ sound_reset_val) & 1)
+		{
+			cpu_set_reset_line(1, (sound_reset_val & 1) ? CLEAR_LINE : ASSERT_LINE);
+			atarigen_sound_reset();
+		}
 	}
-	return 0xffff;
 }
 
+
+
+/*************************************
+ *
+ *	Speed cheats
+ *
+ *************************************/
+
+static READ16_HANDLER( speedup_68010_r )
+{
+	int result = speed_check[offset];
+	int time = cpu_gettotalcycles();
+	int delta = time - last_speed_check;
+
+	last_speed_check = time;
+	if (delta <= 100 && result == 0 && delta >= 0)
+		cpu_spin();
+
+	return result;
+}
+
+
+static WRITE16_HANDLER( speedup_68010_w )
+{
+	last_speed_check -= 1000;
+	COMBINE_DATA(&speed_check[offset]);
+}
+
+
+
+/*************************************
+ *
+ *	Sound I/O inputs
+ *
+ *************************************/
 
 static READ_HANDLER( switch_6502_r )
 {
@@ -308,7 +349,7 @@ static READ_HANDLER( switch_6502_r )
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x80;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x40;
 	if (tms5220_ready_r()) temp ^= 0x20;
-	if (!(input_port_4_r(offset) & 0x0008)) temp ^= 0x10;
+	if (!(readinputport(4) & 0x0008)) temp ^= 0x10;
 
 	return temp;
 }
@@ -317,40 +358,12 @@ static READ_HANDLER( switch_6502_r )
 
 /*************************************
  *
- *	Controller write dispatch.
- *
- *************************************/
-
-static WRITE_HANDLER( input_w )
-{
-	switch (offset)
-	{
-		case 0x0e:		/* sound CPU reset */
-		{
-			int newword = COMBINE_WORD(last_sound_reset, data);
-			int diff = newword ^ last_sound_reset;
-			last_sound_reset = newword;
-			if (diff & 1)
-			{
-				cpu_set_reset_line(1, (newword & 1) ? CLEAR_LINE : ASSERT_LINE);
-				atarigen_sound_reset();
-			}
-			break;
-		}
-	}
-}
-
-
-
-/*************************************
- *
- *	Sound TMS5220 write.
+ *	Sound TMS5220 write
  *
  *************************************/
 
 static WRITE_HANDLER( tms5220_w )
 {
-	(void)offset;
 	speech_val = data;
 }
 
@@ -358,7 +371,7 @@ static WRITE_HANDLER( tms5220_w )
 
 /*************************************
  *
- *	Sound control write.
+ *	Sound control write
  *
  *************************************/
 
@@ -391,44 +404,15 @@ static WRITE_HANDLER( sound_ctl_w )
 
 /*************************************
  *
- *	Sound mixer write.
+ *	Sound mixer write
  *
  *************************************/
 
 static WRITE_HANDLER( mixer_w )
 {
-	(void)offset;
 	atarigen_set_ym2151_vol((data & 7) * 100 / 7);
 	atarigen_set_pokey_vol(((data >> 3) & 3) * 100 / 3);
 	atarigen_set_tms5220_vol(((data >> 5) & 7) * 100 / 7);
-}
-
-
-
-/*************************************
- *
- *	Speed cheats
- *
- *************************************/
-
-static READ_HANDLER( speedup_68010_r )
-{
-	int result = READ_WORD(&speed_check[offset]);
-	int time = cpu_gettotalcycles();
-	int delta = time - last_speed_check;
-
-	last_speed_check = time;
-	if (delta <= 100 && result == 0 && delta >= 0)
-		cpu_spin();
-
-	return result;
-}
-
-
-static WRITE_HANDLER( speedup_68010_w )
-{
-	last_speed_check -= 1000;
-	COMBINE_WORD_MEM(&speed_check[offset], data);
 }
 
 
@@ -439,44 +423,39 @@ static WRITE_HANDLER( speedup_68010_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x800000, 0x801fff, MRA_BANK1 },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x800000, 0x801fff, MRA16_RAM },
 	{ 0x802000, 0x802fff, atarigen_eeprom_r },
-	{ 0x803000, 0x803007, control_r },
-	{ 0x803008, 0x80300f, input_r },
-	{ 0x900000, 0x901fff, MRA_BANK2 },
-	{ 0x902000, 0x903fff, MRA_BANK3 },
-	{ 0x904000, 0x904fff, MRA_BANK4 },
-	{ 0x905000, 0x905eff, MRA_BANK5 },
-	{ 0x905f00, 0x905fff, MRA_BANK6 },
-	{ 0x910000, 0x9107ff, paletteram_word_r },
-	{ 0x930000, 0x930003, MRA_BANK7 },
-	{ -1 }  /* end of table */
-};
+	{ 0x803000, 0x803001, port0_r },
+	{ 0x803002, 0x803003, port1_r },
+	{ 0x803004, 0x803005, port2_r },
+	{ 0x803006, 0x803007, port3_r },
+	{ 0x803008, 0x803009, port4_r },
+	{ 0x80300e, 0x80300f, atarigen_sound_r },
+	{ 0x900000, 0x905fff, MRA16_RAM },
+	{ 0x910000, 0x9107ff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x800000, 0x801fff, MWA_BANK1 },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x800000, 0x801fff, MWA16_RAM },
 	{ 0x802000, 0x802fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x803100, 0x803103, watchdog_reset_w },
-	{ 0x803120, 0x80312f, input_w },
-	{ 0x803140, 0x803143, atarigen_video_int_ack_w },
-	{ 0x803150, 0x803153, atarigen_eeprom_enable_w },
-	{ 0x803170, 0x803173, atarigen_sound_w },
-	{ 0x900000, 0x901fff, gauntlet_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x902000, 0x903fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x904000, 0x904fff, MWA_BANK4 },
-	{ 0x905000, 0x905eff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x905f6e, 0x905f6f, gauntlet_vscroll_w, &atarigen_vscroll },
-	{ 0x905f00, 0x905fff, MWA_BANK6 },
-	{ 0x910000, 0x9107ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0x930000, 0x930001, gauntlet_hscroll_w, &atarigen_hscroll },
-	{ -1 }  /* end of table */
-};
+	{ 0x803100, 0x803101, watchdog_reset16_w },
+	{ 0x80312e, 0x80312f, sound_reset_w },
+	{ 0x803140, 0x803141, atarigen_video_int_ack_w },
+	{ 0x803150, 0x803151, atarigen_eeprom_enable_w },
+	{ 0x803170, 0x803171, atarigen_sound_w },
+	{ 0x900000, 0x901fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x902000, 0x903fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x904000, 0x904fff, MWA16_RAM },
+	{ 0x905f6e, 0x905f6f, gauntlet_yscroll_w, &gauntlet_yscroll },
+	{ 0x905000, 0x905f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x905f80, 0x905fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x910000, 0x9107ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0x930000, 0x930001, gauntlet_xscroll_w },
+MEMORY_END
 
 
 
@@ -486,8 +465,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1010, 0x101f, atarigen_6502_sound_r },
 	{ 0x1020, 0x102f, input_port_5_r },
@@ -496,12 +474,10 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x1811, 0x1811, YM2151_status_port_0_r },
 	{ 0x1830, 0x183f, atarigen_6502_irq_ack_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x100f, atarigen_6502_sound_w },
 	{ 0x1020, 0x102f, mixer_w },
@@ -512,8 +488,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1820, 0x182f, tms5220_w },
 	{ 0x1830, 0x183f, atarigen_6502_irq_ack_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -685,7 +660,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &pfmolayout,  256, 32 },
 	{ REGION_GFX1, 0, &anlayout,      0, 64 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -1010,64 +985,6 @@ ROM_END
 
 /*************************************
  *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	UINT32 *p1, *p2, temp;
-	UINT8 *data;
-	int i;
-
-	/* swap the top and bottom halves of the main CPU ROM images */
-	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x000000];
-	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x008000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x040000];
-	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x048000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x050000];
-	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x058000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x060000];
-	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x068000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x070000];
-	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x078000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-
-	/* highly strange -- the address bits on the chip at 2J (and only that
-	   chip) are scrambled -- this is verified on the schematics! */
-	if (memory_region_length(REGION_GFX2) >= 0xc0000)
-	{
-		data = malloc(0x8000);
-		if (data)
-		{
-			memcpy(data, &memory_region(REGION_GFX2)[0x88000], 0x8000);
-			for (i = 0; i < 0x8000; i++)
-			{
-				int srcoffs = (i & 0x4000) | ((i << 11) & 0x3800) | ((i >> 3) & 0x07ff);
-				memory_region(REGION_GFX2)[0x88000 + i] = data[srcoffs];
-			}
-			free(data);
-		}
-	}
-
-	/* also invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
-		memory_region(REGION_GFX2)[i] ^= 0xff;
-}
-
-
-
-/*************************************
- *
  *	Driver initialization
  *
  *************************************/
@@ -1076,20 +993,19 @@ static void init_gauntlet(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 104);
+	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
+	atarigen_invert_region(REGION_GFX2);
 
+	/* swap the top and bottom halves of the main CPU ROM images */
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x040000, memory_region(REGION_CPU1) + 0x048000, 0x8000);
+
+	/* indicate that we're not vindicators 2 */
 	vindctr2_screen_refresh = 0;
 
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-
 	/* speed up the 68010 */
-	speed_check = install_mem_write_handler(0, 0x904002, 0x904003, speedup_68010_w);
-	install_mem_read_handler(0, 0x904002, 0x904003, speedup_68010_r);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	speed_check = install_mem_write16_handler(0, 0x904002, 0x904003, speedup_68010_w);
+	install_mem_read16_handler(0, 0x904002, 0x904003, speedup_68010_r);
 }
 
 
@@ -1097,20 +1013,19 @@ static void init_gaunt2p(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 107);
+	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
+	atarigen_invert_region(REGION_GFX2);
 
+	/* swap the top and bottom halves of the main CPU ROM images */
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x040000, memory_region(REGION_CPU1) + 0x048000, 0x8000);
+
+	/* indicate that we're not vindicators 2 */
 	vindctr2_screen_refresh = 0;
 
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-
 	/* speed up the 68010 */
-	speed_check = install_mem_write_handler(0, 0x904002, 0x904003, speedup_68010_w);
-	install_mem_read_handler(0, 0x904002, 0x904003, speedup_68010_r);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	speed_check = install_mem_write16_handler(0, 0x904002, 0x904003, speedup_68010_w);
+	install_mem_read16_handler(0, 0x904002, 0x904003, speedup_68010_r);
 }
 
 
@@ -1118,37 +1033,57 @@ static void init_gauntlet2(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 106);
+	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
+	atarigen_invert_region(REGION_GFX2);
 
+	/* swap the top and bottom halves of the main CPU ROM images */
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x040000, memory_region(REGION_CPU1) + 0x048000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x050000, memory_region(REGION_CPU1) + 0x058000, 0x8000);
+
+	/* indicate that we're not vindicators 2 */
 	vindctr2_screen_refresh = 0;
 
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-
 	/* speed up the 68010 */
-	speed_check = install_mem_write_handler(0, 0x904002, 0x904003, speedup_68010_w);
-	install_mem_read_handler(0, 0x904002, 0x904003, speedup_68010_r);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	speed_check = install_mem_write16_handler(0, 0x904002, 0x904003, speedup_68010_w);
+	install_mem_read16_handler(0, 0x904002, 0x904003, speedup_68010_r);
 }
 
 
 static void init_vindctr2(void)
 {
+	UINT8 *gfx2_base = memory_region(REGION_GFX2);
+	UINT8 *data;
+	int i;
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 118);
-
-	vindctr2_screen_refresh = 1;
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x40ff, 0x4117);
+	atarigen_invert_region(REGION_GFX2);
 
-	/* display messages */
-	atarigen_show_sound_message();
+	/* swap the top and bottom halves of the main CPU ROM images */
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x040000, memory_region(REGION_CPU1) + 0x048000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x050000, memory_region(REGION_CPU1) + 0x058000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x060000, memory_region(REGION_CPU1) + 0x068000, 0x8000);
+	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x070000, memory_region(REGION_CPU1) + 0x078000, 0x8000);
 
-	rom_decode();
+	/* highly strange -- the address bits on the chip at 2J (and only that
+	   chip) are scrambled -- this is verified on the schematics! */
+	data = malloc(0x8000);
+	if (data)
+	{
+		memcpy(data, &gfx2_base[0x88000], 0x8000);
+		for (i = 0; i < 0x8000; i++)
+		{
+			int srcoffs = (i & 0x4000) | ((i << 11) & 0x3800) | ((i >> 3) & 0x07ff);
+			gfx2_base[0x88000 + i] = data[srcoffs];
+		}
+		free(data);
+	}
+
+	/* indicate that we are vindicators 2 */
+	vindctr2_screen_refresh = 1;
 }
 
 

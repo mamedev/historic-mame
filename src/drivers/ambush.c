@@ -50,19 +50,21 @@ static WRITE_HANDLER( ambush_coin_counter_w )
 	coin_counter_w(1, data & 0x02);
 }
 
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, watchdog_reset_r },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, input_port_2_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xc080, 0xc09f, MWA_RAM, &ambush_scrollram },
 	{ 0xc100, 0xc1ff, MWA_RAM, &colorram },
@@ -72,24 +74,19 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xcc04, 0xcc04, flip_screen_w },
 	{ 0xcc05, 0xcc05, MWA_RAM, &ambush_colorbank },
 	{ 0xcc07, 0xcc07, ambush_coin_counter_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, AY8910_read_port_0_r },
 	{ 0x80, 0x80, AY8910_read_port_1_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x80, 0x80, AY8910_control_port_1_w },
 	{ 0x81, 0x81, AY8910_write_port_1_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( ambush )

@@ -146,34 +146,27 @@ static WRITE_HANDLER( eeprom_serial_w )
 
 
 
-static struct MemoryReadAddress cbasebal_readmem[] =
-{
+static MEMORY_READ_START( cbasebal_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xcfff, bankedram_r },
 	{ 0xe000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cbasebal_writemem[] =
-{
+static MEMORY_WRITE_START( cbasebal_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, bankedram_w, &paletteram },	/* palette + vram + scrollram */
 	{ 0xe000, 0xfdff, MWA_RAM },			/* work RAM */
 	{ 0xfe00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort cbasebal_readport[] =
-{
+static PORT_READ_START( cbasebal_readport )
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, eeprom_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort cbasebal_writeport[] =
-{
+static PORT_WRITE_START( cbasebal_writeport )
 	{ 0x00, 0x00, cbasebal_bankswitch_w },
 	{ 0x01, 0x01, eeprom_cs_w },
 	{ 0x02, 0x02, eeprom_clock_w },
@@ -185,8 +178,7 @@ static struct IOWritePort cbasebal_writeport[] =
 	{ 0x0a, 0x0b, cbasebal_scrolly_w },
 	{ 0x13, 0x13, cbasebal_gfxctrl_w },
 	{ 0x14, 0x14, cbasebal_coinctrl_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( cbasebal )

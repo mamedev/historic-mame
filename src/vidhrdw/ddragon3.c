@@ -8,111 +8,97 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-unsigned char *ddragon3_bg_videoram;
-static UINT16 ddragon3_bg_scrollx;
-static UINT16 ddragon3_bg_scrolly;
+data16_t *ddragon3_bg_videoram16;
+static data16_t ddragon3_bg_scrollx;
+static data16_t ddragon3_bg_scrolly;
 
-static UINT16 ddragon3_bg_tilebase;
-static UINT16 old_ddragon3_bg_tilebase;
+static data16_t ddragon3_bg_tilebase;
+static data16_t old_ddragon3_bg_tilebase;
 
-unsigned char *ddragon3_fg_videoram;
-static UINT16 ddragon3_fg_scrollx;
-static UINT16 ddragon3_fg_scrolly;
-UINT16 ddragon3_vreg;
+data16_t *ddragon3_fg_videoram16;
+static data16_t ddragon3_fg_scrollx;
+static data16_t ddragon3_fg_scrolly;
+data16_t ddragon3_vreg;
 
 static struct tilemap *background, *foreground;
 
 /* scroll write function */
-WRITE_HANDLER( ddragon3_scroll_w ){
-	switch (offset) {
-		case 0x0: /* Scroll X, BG1 */
-		ddragon3_fg_scrollx = data;
-		return;
+WRITE16_HANDLER( ddragon3_scroll16_w )
+{
+	switch (offset)
+	{
+	case 0: /* Scroll X, BG1 */
+	COMBINE_DATA(&ddragon3_fg_scrollx);
+	break;
 
-		case 0x2: /* Scroll Y, BG1 */
-		ddragon3_fg_scrolly = data;
-		return;
+	case 1: /* Scroll Y, BG1 */
+	COMBINE_DATA(&ddragon3_fg_scrolly);
+	break;
 
-		case 0x4: /* Scroll X, BG0 */
-		ddragon3_bg_scrollx = data;
-		return;
+	case 2: /* Scroll X, BG0 */
+	COMBINE_DATA(&ddragon3_bg_scrollx);
+	break;
 
-		case 0x6: /* Scroll Y, BG0 */
-		ddragon3_bg_scrolly = data;
-		return;
+	case 3: /* Scroll Y, BG0 */
+	COMBINE_DATA(&ddragon3_bg_scrolly);
+	break;
 
-		case 0xc: /* BG Tile Base */
-		ddragon3_bg_tilebase = COMBINE_WORD(ddragon3_bg_tilebase, data)&0x1ff;
-		return;
+	case 6: /* BG Tile Base */
+	COMBINE_DATA(&ddragon3_bg_tilebase);
+	ddragon3_bg_tilebase &= 0x1ff;
+	return;
 
-		default:  /* Unknown */
-		logerror("OUTPUT c00[%02x] %02x \n", offset,data);
-		break;
+	default:  /* Unknown */
+	logerror("OUTPUT c00[%02x] %02x \n", offset,data);
+	break;
 	}
 }
 
 /* background */
 static void get_bg_tile_info(int tile_index)
 {
-	UINT16 data = ((UINT16 *)ddragon3_bg_videoram)[tile_index];
-	SET_TILE_INFO( 0, (data&0xfff) | ((ddragon3_bg_tilebase&1)<<12), ((data&0xf000)>>12)+16 );  // GFX,NUMBER,COLOR
+	data16_t data = ddragon3_bg_videoram16[tile_index];
+	SET_TILE_INFO( 0, (data&0xfff) | ((ddragon3_bg_tilebase&1)<<12), ((data&0xf000)>>12)+16 );	// GFX,NUMBER,COLOR
 }
 
-WRITE_HANDLER( ddragon3_bg_videoram_w )
+WRITE16_HANDLER( ddragon3_bg_videoram16_w )
 {
-	int oldword = READ_WORD(&ddragon3_bg_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword )
-	{
-		WRITE_WORD(&ddragon3_bg_videoram[offset],newword);
-		offset = offset/2;
+	data16_t oldword = ddragon3_bg_videoram16[offset];
+	COMBINE_DATA(&ddragon3_bg_videoram16[offset]);
+	if( oldword != ddragon3_bg_videoram16[offset] )
 		tilemap_mark_tile_dirty(background,offset);
-	}
-}
-
-READ_HANDLER( ddragon3_bg_videoram_r )
-{
-	return READ_WORD( &ddragon3_bg_videoram[offset] );
 }
 
 /* foreground */
 static void get_fg_tile_info(int tile_index)
 {
-	UINT16 data0 = ((UINT16 *)ddragon3_fg_videoram)[2*tile_index];
-	UINT16 data1 = ((UINT16 *)ddragon3_fg_videoram)[2*tile_index+1];
+	data16_t data0 = ddragon3_fg_videoram16[2*tile_index];
+	data16_t data1 = ddragon3_fg_videoram16[2*tile_index+1];
 	SET_TILE_INFO( 0, data1&0x1fff , data0&0xf );  // GFX,NUMBER,COLOR
-        tile_info.flags = ((data0&0x40) >> 6);  // FLIPX
+	tile_info.flags = ((data0&0x40) >> 6);	// FLIPX
 }
 
-WRITE_HANDLER( ddragon3_fg_videoram_w )
+WRITE16_HANDLER( ddragon3_fg_videoram16_w )
 {
-	int oldword = READ_WORD(&ddragon3_fg_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword )
-	{
-		WRITE_WORD(&ddragon3_fg_videoram[offset],newword);
-		offset = offset/4;
-		tilemap_mark_tile_dirty(foreground,offset);
-	}
-}
-
-READ_HANDLER( ddragon3_fg_videoram_r )
-{
-	return READ_WORD( &ddragon3_fg_videoram[offset] );
+	data16_t oldword = ddragon3_fg_videoram16[offset];
+	COMBINE_DATA(&ddragon3_fg_videoram16[offset]);
+	if( oldword != ddragon3_fg_videoram16[offset] )
+		tilemap_mark_tile_dirty(foreground,offset/2);
 }
 
 /* start & stop */
-int ddragon3_vh_start(void){
+int ddragon3_vh_start(void)
+{
 	ddragon3_bg_tilebase = 0;
 	old_ddragon3_bg_tilebase = -1;
 
-	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
+	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,	   16,16,32,32);
 	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
 	if (!background || !foreground)
 		return 1;
 
-	foreground->transparent_pen = 0;
+	tilemap_set_transparent_pen(foreground,0);
 	return 0;
 }
 
@@ -120,44 +106,47 @@ int ddragon3_vh_start(void){
  * Sprite Format
  * ----------------------------------
  *
- * Word | Bit(s)           | Use
+ * Word | Bit(s)		   | Use
  * -----+-fedcba9876543210-+----------------
- *   0	| --------xxxxxxxx | ypos (signed)
+ *	 0	| --------xxxxxxxx | ypos (signed)
  * -----+------------------+
- *   1	| --------xxx----- | height
- *   1  | -----------xx--- | yflip, xflip
- *   1  | -------------x-- | msb x
- *   1  | --------------x- | msb y?
- *   1  | ---------------x | enable
+ *	 1	| --------xxx----- | height
+ *	 1	| -----------xx--- | yflip, xflip
+ *	 1	| -------------x-- | msb x
+ *	 1	| --------------x- | msb y?
+ *	 1	| ---------------x | enable
  * -----+------------------+
- *   2  | --------xxxxxxxx | tile number
+ *	 2	| --------xxxxxxxx | tile number
  * -----+------------------+
- *   3  | --------xxxxxxxx | bank
+ *	 3	| --------xxxxxxxx | bank
  * -----+------------------+
- *   4  | ------------xxxx |color
+ *	 4	| ------------xxxx |color
  * -----+------------------+
- *   5  | --------xxxxxxxx | xpos
+ *	 5	| --------xxxxxxxx | xpos
  * -----+------------------+
- *   6,7| unused
+ *	 6,7| unused
  */
 
-static void draw_sprites( struct osd_bitmap *bitmap ){
+static void draw_sprites( struct osd_bitmap *bitmap )
+{
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
-	UINT16 *source = (UINT16 *)spriteram;
-	UINT16 *finish = source+0x800;
+	data16_t *source = spriteram16;
+	data16_t *finish = source + 0x800;
 
-	while( source<finish ){
-		UINT16 attributes = source[1];
-		if( attributes&0x01 ){ /* enable */
+	while( source<finish )
+	{
+		data16_t attributes = source[1];
+		if( attributes&0x01 )	/* enable */
+		{
 			int flipx = attributes&0x10;
 			int flipy = attributes&0x08;
 			int height = (attributes>>5)&0x7;
 
 			int sy = source[0]&0xff;
 			int sx = source[5]&0xff;
-			UINT16 tile_number = source[2]&0xff;
-			UINT16 color = source[4]&0xf;
+			int tile_number = source[2]&0xff;
+			int color = source[4]&0xf;
 			int bank = source[3]&0xff;
 			int i;
 
@@ -167,7 +156,8 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 
 			tile_number += (bank*256);
 
-			for( i=0; i<=height; i++ ){
+			for( i=0; i<=height; i++ )
+			{
 				int tile_index = tile_number + i;
 
 				drawgfx(bitmap,gfx,
@@ -186,21 +176,21 @@ static void mark_sprite_colors( void )
 {
 	int offs,color,i,pal_base,sprite,multi,attr;
 	int colmask[16];
-    unsigned int *pen_usage; /* Save some struct derefs */
+	unsigned int *pen_usage; /* Save some struct derefs */
 
 	/* Sprites */
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	pen_usage=Machine->gfx[1]->pen_usage;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x1000;offs += 16)
+	for (offs = 0; offs < (0x1000 >> 1); offs += 8)
 	{
-		attr = READ_WORD (&spriteram[offs+2]);
+		attr = spriteram16[offs+1];
 		if (!(attr&1)) continue;
 
 		multi = (attr>>5)&0x7;
-		sprite = READ_WORD (&spriteram[offs+4]) & 0xff;
-		sprite += ((READ_WORD (&spriteram[offs+6]) & 0xff)<<8);
-		color = READ_WORD (&spriteram[offs+8]) & 0xf;
+		sprite = spriteram16[offs+2] & 0xff;
+		sprite += (spriteram16[offs+3] & 0xff) << 8;
+		color = spriteram16[offs+4] & 0xf;
 
 		while (multi >= 0)
 		{
@@ -233,25 +223,23 @@ void ddragon3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( foreground, 0, ddragon3_fg_scrolly );
 	tilemap_set_scrollx( foreground, 0, ddragon3_fg_scrollx );
 
-	tilemap_update( background );
-	tilemap_update( foreground );
+	tilemap_update( ALL_TILEMAPS );
 
 	palette_init_used_colors();
 	mark_sprite_colors();
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	palette_recalc();
 
-	tilemap_render( background );
-	tilemap_render( foreground );
-
-	if (ddragon3_vreg&0x40) {
-		tilemap_draw( bitmap, background, 0 );
-		tilemap_draw( bitmap, foreground, 0 );
+	if (ddragon3_vreg & 0x40)
+	{
+		tilemap_draw( bitmap, background, 0 ,0);
+		tilemap_draw( bitmap, foreground, 0 ,0);
 		draw_sprites( bitmap );
 	}
-	else {
-		tilemap_draw( bitmap, background, 0 );
+	else
+	{
+		tilemap_draw( bitmap, background, 0 ,0);
 		draw_sprites( bitmap );
-		tilemap_draw( bitmap, foreground, 0 );
+		tilemap_draw( bitmap, foreground, 0 ,0);
 	}
 }
 
@@ -268,17 +256,14 @@ void ctribe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( foreground, 0, ddragon3_fg_scrolly );
 	tilemap_set_scrollx( foreground, 0, ddragon3_fg_scrollx );
 
-	tilemap_update( background );
-	tilemap_update( foreground );
+	tilemap_update( ALL_TILEMAPS );
 
 	palette_init_used_colors();
 	mark_sprite_colors();
-	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	palette_recalc();
 
-	tilemap_render( background );
-	tilemap_render( foreground );
-
-	tilemap_draw( bitmap, background, 0 );
-	tilemap_draw( bitmap, foreground, 0 );
+	tilemap_draw( bitmap, background, 0 ,0);
+	tilemap_draw( bitmap, foreground, 0 ,0);
 	draw_sprites( bitmap );
 }
+

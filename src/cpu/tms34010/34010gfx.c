@@ -202,7 +202,7 @@ int compute_pixblt_b_cycles(int left_partials, int right_partials, int full_word
 
 
 /* Shift register handling */
-static WRITE_HANDLER( shiftreg_w )
+static void shiftreg_w(offs_t offset,data16_t data)
 {
 	if (state.config->from_shiftreg)
 		(*state.config->from_shiftreg)((UINT32)(offset << 3) & ~15, &state.shiftreg[0]);
@@ -210,7 +210,7 @@ static WRITE_HANDLER( shiftreg_w )
 		logerror("From ShiftReg function not set. PC = %08X\n", PC);
 }
 
-static READ_HANDLER( shiftreg_r )
+static data16_t shiftreg_r(offs_t offset)
 {
 	if (state.config->to_shiftreg)
 		(*state.config->to_shiftreg)((UINT32)(offset << 3) & ~15, &state.shiftreg[0]);
@@ -219,7 +219,7 @@ static READ_HANDLER( shiftreg_r )
 	return state.shiftreg[0];
 }
 
-static READ_HANDLER( dummy_shiftreg_r )
+static data16_t dummy_shiftreg_r(offs_t offset)
 {
 	return state.shiftreg[0];
 }
@@ -1030,8 +1030,8 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 	if (!P_FLAG)
 	{
 		int dx, dy, x, y, words, left_partials, right_partials, full_words, bitshift, bitshift_alt, yreverse;
-		mem_write_handler word_write;
-		mem_read_handler word_read;
+		void (*word_write)(offs_t address,data16_t data);
+		data16_t (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
 
 		/* determine read/write functions */
@@ -1042,8 +1042,8 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 		}
 		else
 		{
-			word_write = cpu_writemem29_word;
-			word_read = cpu_readmem29_word;
+			word_write = cpu_writemem29lew_word;
+			word_read = cpu_readmem29lew_word;
 		}
 
 		/* compute the starting addresses */
@@ -1263,8 +1263,8 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 	if (!P_FLAG)
 	{
 		int dx, dy, x, y, words, left_partials, right_partials, full_words, bitshift, bitshift_alt, yreverse;
-		mem_write_handler word_write;
-		mem_read_handler word_read;
+		void (*word_write)(offs_t address,data16_t data);
+		data16_t (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
 
 		/* determine read/write functions */
@@ -1275,8 +1275,8 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 		}
 		else
 		{
-			word_write = cpu_writemem29_word;
-			word_read = cpu_readmem29_word;
+			word_write = cpu_writemem29lew_word;
+			word_read = cpu_readmem29lew_word;
 		}
 
 		/* compute the starting addresses */
@@ -1505,8 +1505,8 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 	if (!P_FLAG)
 	{
 		int dx, dy, x, y, words, left_partials, right_partials, full_words;
-		mem_write_handler word_write;
-		mem_read_handler word_read;
+		void (*word_write)(offs_t address,data16_t data);
+		data16_t (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
 
 		/* determine read/write functions */
@@ -1517,8 +1517,8 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 		}
 		else
 		{
-			word_write = cpu_writemem29_word;
-			word_read = cpu_readmem29_word;
+			word_write = cpu_writemem29lew_word;
+			word_read = cpu_readmem29lew_word;
 		}
 
 		/* compute the starting addresses */
@@ -1704,8 +1704,8 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 	if (!P_FLAG)
 	{
 		int dx, dy, x, y, words, left_partials, right_partials, full_words;
-		mem_write_handler word_write;
-		mem_read_handler word_read;
+		void (*word_write)(offs_t address,data16_t data);
+		data16_t (*word_read)(offs_t address);
 		UINT32 daddr;
 
 		/* determine read/write functions */
@@ -1716,8 +1716,8 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		}
 		else
 		{
-			word_write = cpu_writemem29_word;
-			word_read = cpu_readmem29_word;
+			word_write = cpu_writemem29lew_word;
+			word_read = cpu_readmem29lew_word;
 		}
 
 		/* compute the bounds of the operation */

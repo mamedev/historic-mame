@@ -68,8 +68,7 @@ WRITE_HANDLER( blockhl_sh_irqtrigger_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x1f94, 0x1f94, input_port_4_r },
 	{ 0x1f95, 0x1f95, input_port_0_r },
 	{ 0x1f96, 0x1f96, input_port_1_r },
@@ -80,11 +79,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5800, 0x5fff, bankedram_r },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x1f84, 0x1f84, soundlatch_w },
 	{ 0x1f88, 0x1f88, blockhl_sh_irqtrigger_w },
 	{ 0x1f8c, 0x1f8c, watchdog_reset_w },
@@ -93,27 +90,22 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5800, 0x5fff, bankedram_w, &ram },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xe00c, 0xe00d, MWA_NOP },		/* leftover from missing 007232? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

@@ -122,19 +122,16 @@ static WRITE_HANDLER( leprechn_sh_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x03ff, MRA_RAM},
     { 0x2000, 0x2000, leprechn_graphics_data_r},
     { 0x200d, 0x200d, leprechn_200d_r },
     { 0x2801, 0x2801, leprechn_input_port_r },
     { 0x3002, 0x3003, MRA_RAM},
     { 0x8000, 0xffff, MRA_ROM},
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x03ff, MWA_RAM},
     { 0x2000, 0x2000, leprechn_graphics_command_w},
     { 0x2001, 0x2001, leprechn_graphics_data_w},
@@ -147,11 +144,9 @@ static struct MemoryWriteAddress writemem[] =
     { 0x3002, 0x3003, MWA_RAM},   // ???
     { 0x300c, 0x300c, MWA_NOP },  // ???
     { 0x8000, 0xffff, MWA_ROM},
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
     { 0x0000, 0x01ff, MRA_RAM},
     { 0x0800, 0x0800, soundlatch_r},
     { 0x0804, 0x0804, MRA_RAM},   // ???
@@ -159,12 +154,10 @@ static struct MemoryReadAddress sound_readmem[] =
     { 0x080c, 0x080c, MRA_RAM},   // ???
     { 0xa001, 0xa001, MRA_RAM},   // ???
     { 0xf000, 0xffff, MRA_ROM},
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
     { 0x0000, 0x01ff, MWA_RAM},
     { 0x0801, 0x0803, MWA_RAM},   // ???
     { 0x0806, 0x0806, MWA_RAM},   // ???
@@ -172,8 +165,7 @@ static struct MemoryWriteAddress sound_writemem[] =
     { 0xa000, 0xa000, AY8910_control_port_0_w },
     { 0xa002, 0xa002, AY8910_write_port_0_w },
     { 0xf000, 0xffff, MWA_ROM},
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( leprechn )
     // All of these ports are read indirectly through 2800/2801

@@ -3,9 +3,11 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
+struct tilemap;
+
 #define ALL_TILEMAPS	0
 /* ALL_TILEMAPS may be used with:
-	tilemap_update, tilemap_render, tilemap_set_flip, tilemap_mark_all_pixels_dirty
+	tilemap_update, tilemap_set_flip, tilemap_mark_all_tiles_dirty
 */
 
 #define TILEMAP_OPAQUE				0x00
@@ -31,13 +33,6 @@
 #define TILEMAP_BITMASK_TRANSPARENT (0)
 #define TILEMAP_BITMASK_OPAQUE ((UINT8 *)~0)
 
-struct cached_tile_info {
-	const UINT8 *pen_data;
-	const UINT16 *pal_data;
-	UINT32 pen_usage;
-	UINT32 flags;
-};
-
 extern struct tile_info {
 	/*
 		you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
@@ -45,18 +40,19 @@ extern struct tile_info {
 		tile_info.flags and tile_info.priority will be automatically preset to 0,
 		games that don't need them don't need to explicitly set them to 0
 	*/
+	UINT32 tile_number; /* for cache key */
 	const UINT8 *pen_data;
 	const UINT16 *pal_data;
 	UINT32 pen_usage;
-	UINT32 flags;
-
+	UINT32 flags;	/* flipx, flipy, ignore_transparency, split */
 	UINT32 priority;
-	UINT8 *mask_data;
+	UINT8 *mask_data; /* for TILEMAP_BITMASK transparency */
 } tile_info;
 
 #define SET_TILE_INFO(GFX,CODE,COLOR) { \
 	const struct GfxElement *gfx = Machine->gfx[(GFX)]; \
 	int _code = (CODE) % gfx->total_elements; \
+	tile_info.tile_number = _code; \
 	tile_info.pen_data = gfx->gfxdata + _code*gfx->char_modulo; \
 	tile_info.pal_data = &gfx->colortable[gfx->color_granularity * (COLOR)]; \
 	tile_info.pen_usage = gfx->pen_usage?gfx->pen_usage[_code]:0; \
@@ -80,81 +76,19 @@ extern struct tile_info {
 
 #define TILE_LINE_DISABLED 0x80000000
 
+#if 0
 #ifndef OSD_CPU_H
 #include "osd_cpu.h"
+#endif
 #endif
 
 extern struct osd_bitmap *priority_bitmap;
 
-struct tilemap_mask {
-	struct osd_bitmap *bitmask;
-	int line_offset;
-	UINT8 *data;
-	UINT8 **data_row;
-};
-
-struct tilemap {
-	UINT32 (*get_memory_offset)( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows );
-	int *memory_offset_to_cached_index;
-	UINT32 *cached_index_to_memory_offset;
-	int logical_flip_to_cached_flip[4];
-
-	/* callback to interpret video VRAM for the tilemap */
-	void (*tile_get_info)( int memory_offset );
-
-	UINT32 max_memory_offset;
-	int num_tiles;
-	int num_logical_rows, num_logical_cols;
-	int num_cached_rows, num_cached_cols;
-	int cached_tile_width, cached_tile_height, cached_width, cached_height;
-
-	struct cached_tile_info *cached_tile_info;
-
-	int dx, dx_if_flipped;
-	int dy, dy_if_flipped;
-	int scrollx_delta, scrolly_delta;
-
-	int enable;
-	int attributes;
-
-	int type;
-	int transparent_pen;
-	unsigned int transmask[4];
-
-	void (*draw)( int, int );
-	void (*draw_opaque)( int, int );
-
-	UINT8 *priority,	/* priority for each tile */
-		**priority_row;
-
-	UINT8 *visible; /* boolean flag for each tile */
-
-	UINT8 *dirty_vram; /* boolean flag for each tile */
-
-	UINT8 *dirty_pixels;
-
-	int scroll_rows, scroll_cols;
-	int *rowscroll, *colscroll;
-
-	int orientation;
-	int clip_left,clip_right,clip_top,clip_bottom;
-
-	/* cached color data */
-	struct osd_bitmap *pixmap;
-	int pixmap_line_offset;
-
-	struct tilemap_mask *foreground;
-	/* for transparent layers, or the front half of a split layer */
-
-	struct tilemap_mask *background;
-	/* for the back half of a split layer */
-
-	struct tilemap *next; /* resource tracking */
-};
-
 /* don't call these from drivers - they are called from mame.c */
 int tilemap_init( void );
 void tilemap_close( void );
+
+void tilemap_debug( struct tilemap *tilemap );
 
 struct tilemap *tilemap_create(
 	void (*tile_get_info)( int memory_offset ),
@@ -170,19 +104,21 @@ void tilemap_dispose( struct tilemap *tilemap );
 	tile size or cols/rows dynamically.
 */
 
-void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols );
-void tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows );
-/* scroll_rows and scroll_cols default to 1 for XY scrolling */
+void tilemap_set_transparent_pen( struct tilemap *tilemap, int pen );
+void tilemap_set_transmask( struct tilemap *tilemap, int which, UINT32 penmask );
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int memory_offset );
 void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
-void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap );
 
-void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
-void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
+void tilemap_dirty_palette( const UINT8 *dirty_pens );
 
+void tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows ); /* default: 1 */
 void tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped );
+void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
+
+void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols ); /* default: 1 */
 void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped );
+void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
 
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
@@ -191,8 +127,9 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 void tilemap_set_enable( struct tilemap *tilemap, int enable );
 
 void tilemap_update( struct tilemap *tilemap );
-void tilemap_render( struct tilemap *tilemap );
-void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 priority );
+void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
+
+struct osd_bitmap *tilemap_get_pixmap( struct tilemap * tilemap );
 
 /*********************************************************************/
 

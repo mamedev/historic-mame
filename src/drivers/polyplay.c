@@ -154,8 +154,7 @@ READ_HANDLER( polyplay_ram_r )
 }
 
 /* memory mapping */
-static struct MemoryReadAddress polyplay_readmem[] =
-{
+static MEMORY_READ_START( polyplay_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0fff, polyplay_ram_r },
 	{ 0x1000, 0x8fff, MRA_ROM },
@@ -163,11 +162,9 @@ static struct MemoryReadAddress polyplay_readmem[] =
 	{ 0xe800, 0xebff, MRA_ROM},
 	{ 0xec00, 0xf7ff, polyplay_characterram_r },
 	{ 0xf800, 0xffff, videoram_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress polyplay_writemem[] =
-{
+static MEMORY_WRITE_START( polyplay_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x0c00, 0x0fff, polyplay_ram_w, &polyplay_ram },
 	{ 0x1000, 0x8fff, MWA_ROM },
@@ -175,23 +172,19 @@ static struct MemoryWriteAddress polyplay_writemem[] =
 	{ 0xe800, 0xebff, MWA_ROM },
 	{ 0xec00, 0xf7ff, polyplay_characterram_w, &polyplay_characterram },
 	{ 0xf800, 0xffff, videoram_w, &videoram, &videoram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /* port mapping */
-static struct IOReadPort readport_polyplay[] =
-{
+static PORT_READ_START( readport_polyplay )
 	{ 0x84, 0x84, polyplay_input_read },
 	{ 0x83, 0x83, polyplay_random_read },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_polyplay[] =
-{	{ 0x80, 0x81, polyplay_sound_channel },
+static PORT_WRITE_START( writeport_polyplay )
+	{ 0x80, 0x81, polyplay_sound_channel },
 	{ 0x82, 0x82, polyplay_start_timer2 },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( polyplay )
 	PORT_START	/* IN0 */

@@ -162,9 +162,11 @@ TODO Lists
   buffering inside the chip but it's not clear how. See below the irq section
   for a long list of observations on sprite glitches.
 
-- TC0480SCP emulation (footchmp, metalb, deadconx) has incorrect zoom.
+- TC0480SCP emulation (footchmp, metalb, deadconx) is incomplete. Zoom is
+  imperfect, and row scrolling is flawed in MetalB. Column scrolling needs to
+  be implemented.
 
-- Some DIPS are wrong [many in the Japanese quiz games].
+- Some DIPS are wrong [and many unknown in the Japanese quiz games].
 
 - Macros for common input port definitions.
 
@@ -175,13 +177,6 @@ Dondokod
 Roz layer is one pixel out vertically when screen flipped.
 
 
-Pulirula
---------
-
-In level 3, the mask sprites used for the door are misaligned by one pixel to
-the left.
-
-
 Cameltru
 --------
 
@@ -190,16 +185,10 @@ the program writes char data to 811000-811fff and tilemap to 812000-813fff.
 The tilemap is 128x32 instead of the usual 64x64.
 
 
-Driftout
+Qtorimon
 --------
 
-Sprites don't stay flipped in screenflip (watch attract).
-
-
-Driveout
---------
-
-No sound, I think it uses different hardware.
+CoinA/B don't register in test mode.
 
 
 Gun Frontier
@@ -208,6 +197,13 @@ Gun Frontier
 There are mask sprites used on the waterfall in the first round
 of attract demo, however it's not clear what they should mask since
 there don't seem to be sprites below them. Shadow maybe?
+
+
+Pulirula
+--------
+
+In level 3, the mask sprites used for the door are misaligned by one pixel to
+the left.
 
 
 Metal Black
@@ -220,7 +216,7 @@ attract should be 1 pixel left.
 Yesnoj
 ------
 
-Input mapping incomplete (there's a 0x02 one which only seems to be
+Input mapping incomplete (there's a 0x01 one which only seems to be
 used in what is probably test mode).
 
 The end summary is black on black on half of the screen. Is there a
@@ -244,17 +240,30 @@ map. This is done by a sprite which doesn't have priority over the
 background. This is probably the same thing as the waterfall in Gun Frontier.
 
 
+Driftout
+--------
+
+Sprites are 1 pixel too far right in screenflip.
+Roz layer is around 4 pixels too far down in screenflip.
+
+
+Driveout
+--------
+
+No sound, I think it uses different hardware.
+
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
+#include "sndhrdw/taitosnd.h"
 
 
 
-
-extern unsigned char *f2_sprite_extension;
+extern data16_t *f2_sprite_extension;
 extern size_t f2_spriteext_size;
 
 int mjnquest_input;
@@ -296,33 +305,25 @@ void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-READ_HANDLER( taitof2_spriteram_r );
-WRITE_HANDLER( taitof2_spriteram_w );
-WRITE_HANDLER( taitof2_spritebank_w );
-READ_HANDLER( koshien_spritebank_r );
-WRITE_HANDLER( koshien_spritebank_w );
-WRITE_HANDLER( taitof2_sprite_extension_w );
-WRITE_HANDLER( taitof2_scrbank_w );
-//WRITE_HANDLER( taitof2_unknown_reg_w );
+WRITE16_HANDLER( taitof2_spritebank_w );
+READ16_HANDLER( koshien_spritebank_r );
+WRITE16_HANDLER( koshien_spritebank_w );
+WRITE16_HANDLER( taitof2_sprite_extension_w );
+WRITE16_HANDLER( taitof2_scrbank_w );
+//WRITE16_HANDLER( taitof2_unknown_reg_w );
 
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
-READ_HANDLER( rastan_sound_comm_r );
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
 
-extern unsigned char *cchip_ram;
-READ_HANDLER( cchip2_r );
-WRITE_HANDLER( cchip2_w );
+extern data16_t *cchip_ram;
+READ16_HANDLER( cchip2_word_r );
+WRITE16_HANDLER( cchip2_word_w );
 
 
 
-static WRITE_HANDLER( TC0360PRI_halfword_w )
+static WRITE16_HANDLER( TC0360PRI_halfword_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
-		TC0360PRI_w(offset >> 1,data & 0xff);
+		TC0360PRI_w(offset,data & 0xff);
 if (data & 0xff00)
 logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
 	}
@@ -332,11 +333,11 @@ logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\
 	}
 }
 
-static WRITE_HANDLER( TC0360PRI_halfword_swap_w )
+static WRITE16_HANDLER( TC0360PRI_halfword_swap_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
-		TC0360PRI_w(offset >> 1,(data >> 8) & 0xff);
+		TC0360PRI_w(offset,(data >> 8) & 0xff);
 if (data & 0xff)
 logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
 	}
@@ -350,150 +351,150 @@ logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\
 			GAME INPUTS
 **********************************************************/
 
-static READ_HANDLER( TC0220IOC_halfword_r )
+static READ16_HANDLER( TC0220IOC_halfword_r )
 {
-	return TC0220IOC_r(offset >> 1);
+	return TC0220IOC_r(offset);
 }
 
-static WRITE_HANDLER( TC0220IOC_halfword_w )
+static WRITE16_HANDLER( TC0220IOC_halfword_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		TC0220IOC_w(offset >> 1,data & 0xff);
+	if (ACCESSING_LSB)
+		TC0220IOC_w(offset,data & 0xff);
 	else
 	{
 		/* qtorimon writes here the coin counters - bug? */
 logerror("CPU #0 PC %06x: warning - write to MSB of TC0220IOC address %02x\n",cpu_get_pc(),offset);
-		TC0220IOC_w(offset >> 1,(data >> 8) & 0xff);
+		TC0220IOC_w(offset,(data >> 8) & 0xff);
 	}
 }
 
-static READ_HANDLER( TC0510NIO_halfword_r )
+static READ16_HANDLER( TC0510NIO_halfword_r )
 {
-	return TC0510NIO_r(offset >> 1);
+	return TC0510NIO_r(offset);
 }
 
-static WRITE_HANDLER( TC0510NIO_halfword_w )
+static WRITE16_HANDLER( TC0510NIO_halfword_w )
 {
-	if ((data & 0x00ff0000) == 0)
-		TC0510NIO_w(offset >> 1,data & 0xff);
+	if (ACCESSING_LSB)
+		TC0510NIO_w(offset,data & 0xff);
 	else
 	{
 		/* driftout writes here the coin counters - bug? */
 logerror("CPU #0 PC %06x: warning - write to MSB of TC0510NIO address %02x\n",cpu_get_pc(),offset);
-		TC0510NIO_w(offset >> 1,(data >> 8) & 0xff);
+		TC0510NIO_w(offset,(data >> 8) & 0xff);
 	}
 }
 
-static READ_HANDLER( TC0510NIO_halfword_wordswap_r )
+static READ16_HANDLER( TC0510NIO_halfword_wordswap_r )
 {
-	return TC0510NIO_halfword_r(offset ^ 2);
+	return TC0510NIO_halfword_r(offset ^ 1);
 }
 
-static WRITE_HANDLER( TC0510NIO_halfword_wordswap_w )
+static WRITE16_HANDLER( TC0510NIO_halfword_wordswap_w )
 {
-	TC0510NIO_halfword_w(offset ^ 2,data);
+	TC0510NIO_halfword_w(offset ^ 1,data,mem_mask);
 }
 
-static READ_HANDLER( growl_dsw_r )
+static READ16_HANDLER( growl_dsw_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(3); /* DSW A */
+              return input_port_3_word_r(0); /* DSW A */
 
-         case 0x02:
-              return readinputport(4); /* DSW B */
+         case 0x01:
+              return input_port_4_word_r(0); /* DSW B */
     }
 
-logerror("CPU #0 dsw_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",cpu_get_pc(),offset);
 
 	return 0xff;
 }
 
-static READ_HANDLER( growl_input_r )
+static READ16_HANDLER( growl_input_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(0); /* IN0 */
+              return input_port_0_word_r(0); /* IN0 */
+
+         case 0x01:
+              return input_port_1_word_r(0); /* IN1 */
 
          case 0x02:
-              return readinputport(1); /* IN1 */
-
-         case 0x04:
-              return readinputport(2); /* IN2 */
+              return input_port_2_word_r(0); /* IN2 */
 
     }
 
-logerror("CPU #0 input_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
 
 	return 0xff;
 }
 
-static READ_HANDLER( footchmp_input_r )
+static READ16_HANDLER( footchmp_input_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(3); /* DSW A */
+              return input_port_3_word_r(0); /* DSW A */
+
+         case 0x01:
+              return input_port_4_word_r(0); /* DSW B */
 
          case 0x02:
-              return readinputport(4); /* DSW B */
+              return input_port_2_word_r(0); /* IN2 */
 
-         case 0x04:
-              return readinputport(2); /* IN2 */
-
-         case 0x0a:
-              return readinputport(0); /* IN0 */
-
-         case 0x0c:
-              return readinputport(1); /* IN1 */
-
-         case 0x0e:
-              return readinputport(5); /* IN3 */
-
-         case 0x10:
-              return readinputport(6); /* IN4 */
-    }
-
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x700000+offset);
-
-	return 0xff;
-}
-
-static READ_HANDLER( ninjak_input_r )
-{
-    switch (offset)
-    {
-         case 0x00:
-              return (readinputport(3) << 8); /* DSW A */
-
-         case 0x02:
-              return (readinputport(4) << 8); /* DSW B */
-
-         case 0x04:
-              return (readinputport(0) << 8); /* IN 0 */
+         case 0x05:
+              return input_port_0_word_r(0); /* IN0 */
 
          case 0x06:
-              return (readinputport(1) << 8); /* IN 1 */
+              return input_port_1_word_r(0); /* IN1 */
+
+         case 0x07:
+              return input_port_5_word_r(0); /* IN3 */
 
          case 0x08:
-              return (readinputport(5) << 8); /* IN 3 */
-
-         case 0x0a:
-              return (readinputport(6) << 8); /* IN 4 */
-
-         case 0x0c:
-              return (readinputport(2) << 8); /* IN 2 */
-
+              return input_port_6_word_r(0); /* IN4 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x300000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
 
 	return 0xff;
 }
 
-static READ_HANDLER( cameltry_paddle_r )
+static READ16_HANDLER( ninjak_input_r )
+{
+    switch (offset)
+    {
+         case 0x00:
+              return (input_port_3_word_r(0) << 8); /* DSW A */
+
+         case 0x01:
+              return (input_port_4_word_r(0) << 8); /* DSW B */
+
+         case 0x02:
+              return (input_port_0_word_r(0) << 8); /* IN 0 */
+
+         case 0x03:
+              return (input_port_1_word_r(0) << 8); /* IN 1 */
+
+         case 0x04:
+              return (input_port_5_word_r(0) << 8); /* IN 3 */
+
+         case 0x05:
+              return (input_port_6_word_r(0) << 8); /* IN 4 */
+
+         case 0x06:
+              return (input_port_2_word_r(0) << 8); /* IN 2 */
+
+    }
+
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
+
+	return 0xff;
+}
+
+static READ16_HANDLER( cameltry_paddle_r )
 {
 	static int last[2];
 	int curr,res = 0xff;
@@ -501,108 +502,108 @@ static READ_HANDLER( cameltry_paddle_r )
 	switch (offset)
 	{
 		case 0x00:
-			curr = readinputport(5); /* Paddle A */
+			curr = input_port_5_word_r(0); /* Paddle A */
 			res = curr - last[0];
 			last[0] = curr;
 			break;
 
-		case 0x04:
-			curr = readinputport(6); /* Paddle B */
+		case 0x02:
+			curr = input_port_6_word_r(0); /* Paddle B */
 			res = curr - last[1];
 			last[1] = curr;
 			break;
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x300018+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",cpu_get_pc(),offset);
 
 	return res;
 }
 
-static READ_HANDLER( driftout_paddle_r )
+static READ16_HANDLER( driftout_paddle_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(5); /* Paddle A */
+              return input_port_5_word_r(0); /* Paddle A */
 
-         case 0x02:
-              return readinputport(6); /* Paddle B */
+         case 0x01:
+              return input_port_6_word_r(0); /* Paddle B */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0xb00018+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",cpu_get_pc(),offset);
 
         return 0xff;
 }
 
-static READ_HANDLER( deadconx_input_r )
+static READ16_HANDLER( deadconx_input_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(3); /* DSW A */
+              return input_port_3_word_r(0); /* DSW A */
+
+         case 0x01:
+              return input_port_4_word_r(0); /* DSW B */
 
          case 0x02:
-              return readinputport(4); /* DSW B */
+              return input_port_2_word_r(0); /* IN2 */
 
-         case 0x04:
-              return readinputport(2); /* IN2 */
+         case 0x05:
+              return input_port_0_word_r(0); /* IN0 */
 
-         case 0x0a:
-              return readinputport(0); /* IN0 */
+         case 0x06:
+              return input_port_1_word_r(0); /* IN1 */
 
-         case 0x0c:
-              return readinputport(1); /* IN1 */
+         case 0x07:
+              return input_port_5_word_r(0); /* IN3 */
 
-         case 0x0e:
-              return readinputport(5); /* IN3 */
-
-         case 0x10:
-              return readinputport(6); /* IN4 */
+         case 0x08:
+              return input_port_6_word_r(0); /* IN4 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x700000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
 
 	return 0xff;
 }
 
-static READ_HANDLER( mjnquest_dsw_r )
+static READ16_HANDLER( mjnquest_dsw_r )
 {
     switch (offset)
     {
         case 0x00:
         {
-			return (readinputport(5) << 8) + readinputport(7); /* DSW A */
+			return (input_port_5_word_r(0) << 8) + input_port_7_word_r(0); /* DSW A + coin */
         }
 
-        case 0x02:
+        case 0x01:
         {
-			return (readinputport(6) << 8) + readinputport(8); /* DSW B */
+			return (input_port_6_word_r(0) << 8) + input_port_8_word_r(0); /* DSW B + coin */
         }
     }
 
-    logerror("CPU #0 dsw_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+    logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",cpu_get_pc(),offset);
 
     return 0xff;
 }
 
-static READ_HANDLER( mjnquest_input_r )
+static READ16_HANDLER( mjnquest_input_r )
 {
     switch (mjnquest_input)
     {
          case 0x01:
-              return readinputport(0); /* IN0 */
+              return input_port_0_word_r(0); /* IN0 */
 
          case 0x02:
-              return readinputport(1); /* IN1 */
+              return input_port_1_word_r(0); /* IN1 */
 
          case 0x04:
-              return readinputport(2); /* IN2 */
+              return input_port_2_word_r(0); /* IN2 */
 
          case 0x08:
-              return readinputport(3); /* IN3 */
+              return input_port_3_word_r(0); /* IN3 */
 
          case 0x10:
-              return readinputport(4); /* IN4 */
+              return input_port_4_word_r(0); /* IN4 */
 
     }
 
@@ -611,79 +612,79 @@ logerror("CPU #0 mjnquest_input %06x: warning - read unknown input %06x\n",cpu_g
 	return 0xff;
 }
 
-static WRITE_HANDLER( mjnquest_inputselect_w )
+static WRITE16_HANDLER( mjnquest_inputselect_w )
 {
     mjnquest_input = (data >> 6);
 }
 
-static READ_HANDLER( quizhq_input1_r )
+static READ16_HANDLER( quizhq_input1_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(4); /* DSW B */
+              return input_port_4_word_r(0); /* DSW B */
 
-         case 0x02:
-              return readinputport(0); /* IN0 */
+         case 0x01:
+              return input_port_0_word_r(0); /* IN0 */
     }
 
-logerror("CPU #0 input_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
 
 	return 0xff;
 }
 
-static READ_HANDLER( quizhq_input2_r )
+static READ16_HANDLER( quizhq_input2_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(3); /* DSW A */
+              return input_port_3_word_r(0); /* DSW A */
+
+         case 0x01:
+              return input_port_1_word_r(0); /* IN1 */
 
          case 0x02:
-              return readinputport(1); /* IN1 */
-
-         case 0x04:
-              return readinputport(2); /* IN2 */
+              return input_port_2_word_r(0); /* IN2 */
     }
 
-logerror("CPU #0 input_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
 
 	return 0xff;
 }
 
-static READ_HANDLER( yesnoj_input_r )
+static READ16_HANDLER( yesnoj_input_r )
 {
     switch (offset)
     {
          case 0x00:
-              return readinputport(0); /* IN0 */
+              return input_port_0_word_r(0); /* IN0 */
 
-// case 0x02 only used if "service" "DSW" bit is clear...
+// case 0x01 only used if "service" "DSW" bit is clear...
 
-         case 0x04:
-              return readinputport(1); /* IN1 */
+         case 0x02:
+              return input_port_1_word_r(0); /* IN1 */
     }
 
-logerror("CPU #0 input_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
 
 	return 0x0;
 }
 
-static READ_HANDLER( yesnoj_dsw_r )
+static READ16_HANDLER( yesnoj_dsw_r )
 {
 #ifdef MAME_DEBUG
-	logerror("CPU #0 pc = %06x: read yesnoj DSW %01x\n",cpu_get_pc(),yesnoj_dsw);
+	logerror("CPU #0 PC = %06x: read yesnoj DSW %01x\n",cpu_get_pc(),yesnoj_dsw);
 #endif
 
 	yesnoj_dsw = 1 - yesnoj_dsw;   /* game reads same word twice to get DSW A then B so we toggle */
 
 	if (yesnoj_dsw)
 	{
-		return readinputport(2);
+		return input_port_2_word_r(0);
 	}
 	else
 	{
-		return readinputport(3);
+		return input_port_3_word_r(0);
 	}
 }
 
@@ -855,54 +856,21 @@ static WRITE_HANDLER( bankswitch_w )
 #ifdef MAME_DEBUG
 	if (banknum>3) logerror("CPU #1 switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
 #endif
-	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
+	cpu_setbank(2, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
-WRITE_HANDLER( taitof2_sound_w )
-{
-	if (offset == 0)
-		rastan_sound_port_w (0, data & 0xff);
-	else if (offset == 2)
-		rastan_sound_comm_w (0, data & 0xff);
-#ifdef MAME_DEBUG
-	if (data & 0xff00)
-	{
-		char buf[80];
 
-		sprintf(buf,"taitof2_sound_w to high byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
-#endif
-}
-
-READ_HANDLER( taitof2_sound_r )
+READ16_HANDLER( taitof2_sound_r )
 {
-	if (offset == 2)
-		return ((rastan_sound_comm_r (0) & 0xff));
+	if (offset == 1)
+		return (taitosound_comm16_lsb_r(0));
 	else return 0;
 }
 
-WRITE_HANDLER( taitof2_msb_sound_w )
+READ16_HANDLER( taitof2_msb_sound_r )
 {
-	if (offset == 0)
-		rastan_sound_port_w (0,(data >> 8) & 0xff);
-	else if (offset == 2)
-		rastan_sound_comm_w (0,(data >> 8) & 0xff);
-#ifdef MAME_DEBUG
-	if (data & 0xff)
-	{
-		char buf[80];
-
-		sprintf(buf,"taitof2_msb_sound_w to low byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
-#endif
-}
-
-READ_HANDLER( taitof2_msb_sound_r )
-{
-	if (offset == 2)
-		return ((rastan_sound_comm_r (0) & 0xff) << 8);
+	if (offset == 1)
+		return (taitosound_comm16_msb_r(0));
 	else return 0;
 }
 
@@ -912,829 +880,744 @@ READ_HANDLER( taitof2_msb_sound_r )
 			 MEMORY STRUCTURES
 ***********************************************************/
 
-static struct MemoryReadAddress finalb_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
+static MEMORY_READ16_START( finalb_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_r },	/* palette */
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress finalb_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( finalb_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x320000, 0x320003, taitof2_sound_w },
+	{ 0x320000, 0x320001, taitosound_port16_lsb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_lsb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0x810000, 0x81ffff, MWA_NOP },   /* error in game init code ? */
+	{ 0x810000, 0x81ffff, MWA16_NOP },   /* error in game init code ? */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ 0xb00002, 0xb00003, MWA_NOP },   /* ?? */
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+	{ 0xb00002, 0xb00003, MWA16_NOP },   /* ?? */
+MEMORY_END
 
-static struct MemoryReadAddress dondokod_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( dondokod_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
+	{ 0x900000, 0x90ffff, MRA16_RAM },
 	{ 0xa00000, 0xa01fff, TC0280GRD_word_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dondokod_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+static MEMORY_WRITE16_START( dondokod_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x320000, 0x320003, taitof2_msb_sound_w },
+	{ 0x320000, 0x320001, taitosound_port16_msb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xa00000, 0xa01fff, TC0280GRD_word_w },	/* ROZ tilemap */
 	{ 0xa02000, 0xa0200f, TC0280GRD_ctrl_word_w },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress megab_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( megab_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x100000, 0x100003, taitof2_msb_sound_r },
 	{ 0x120000, 0x12000f, TC0220IOC_halfword_r },	/* I/O */
-	{ 0x180000, 0x180fff, cchip2_r },
-	{ 0x200000, 0x20ffff, MRA_BANK1 },
-	{ 0x300000, 0x301fff, paletteram_word_r },
+	{ 0x180000, 0x180fff, cchip2_word_r },
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x300000, 0x301fff, MRA16_RAM },
 	{ 0x600000, 0x60ffff, TC0100SCN_word_0_r },	/* tilemaps */
-	{ 0x610000, 0x61ffff, MRA_BANK8 }, /* unused? */
+	{ 0x610000, 0x61ffff, MRA16_RAM }, /* unused? */
 	{ 0x620000, 0x62000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x800000, 0x80ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress megab_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x200000, 0x20ffff, MWA_BANK1 },
-	{ 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x100000, 0x100003, taitof2_msb_sound_w },
+static MEMORY_WRITE16_START( megab_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x100001, taitosound_port16_msb_w },
+	{ 0x100002, 0x100003, taitosound_comm16_msb_w },
 	{ 0x120000, 0x12000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x180000, 0x180fff, cchip2_w, &cchip_ram },
+	{ 0x180000, 0x180fff, cchip2_word_w, &cchip_ram },
+	{ 0x200000, 0x20ffff, MWA16_RAM },
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x400000, 0x40001f, TC0360PRI_halfword_w },	/* ?? */
 	{ 0x600000, 0x60ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0x610000, 0x61ffff, MWA_BANK8 },   /* unused? */
+	{ 0x610000, 0x61ffff, MWA16_RAM },   /* unused? */
 	{ 0x620000, 0x62000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ -1 }  /* end of table */
-};
+	{ 0x800000, 0x80ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+MEMORY_END
 
-static struct MemoryReadAddress thundfox_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x101fff, paletteram_word_r },
+static MEMORY_READ16_START( thundfox_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x101fff, MRA16_RAM },
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x220000, 0x220003, taitof2_msb_sound_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
 	{ 0x400000, 0x40ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x420000, 0x42000f, TC0100SCN_ctrl_word_0_r },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_1_r },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_1_r },
-	{ 0x600000, 0x60ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x600000, 0x60ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress thundfox_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x101fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+static MEMORY_WRITE16_START( thundfox_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x101fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x220000, 0x220003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1 },
+	{ 0x220000, 0x220001, taitosound_port16_msb_w },
+	{ 0x220002, 0x220003, taitosound_comm16_msb_w },
+	{ 0x300000, 0x30ffff, MWA16_RAM },
 	{ 0x400000, 0x40ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x420000, 0x42000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_1_w },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_1_w },
-	{ 0x600000, 0x60ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x600000, 0x60ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x800000, 0x80001f, TC0360PRI_halfword_swap_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress cameltry_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( cameltry_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x300018, 0x30001f, cameltry_paddle_r },
 	{ 0x320000, 0x320003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
+	{ 0x900000, 0x90ffff, MRA16_RAM },
 	{ 0xa00000, 0xa01fff, TC0280GRD_word_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cameltry_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+static MEMORY_WRITE16_START( cameltry_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x320000, 0x320003, taitof2_msb_sound_w },
+	{ 0x320000, 0x320001, taitosound_port16_msb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xa00000, 0xa01fff, TC0280GRD_word_w },	/* ROZ tilemap */
 	{ 0xa02000, 0xa0200f, TC0280GRD_ctrl_word_w },
 	{ 0xd00000, 0xd0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress qtorimon_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
+static MEMORY_READ16_START( qtorimon_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_r },	/* palette */
 	{ 0x500000, 0x50000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x600000, 0x600003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress qtorimon_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( qtorimon_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x500000, 0x50000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x600000, 0x600003, taitof2_msb_sound_w },
+	{ 0x600000, 0x600001, taitosound_port16_msb_w },
+	{ 0x600002, 0x600003, taitosound_comm16_msb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ 0x910000, 0x9120ff, MWA_NOP },   /* error in init code ? */
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+	{ 0x910000, 0x9120ff, MWA16_NOP },   /* error in init code ? */
+MEMORY_END
 
-static struct MemoryReadAddress liquidk_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( liquidk_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress liquidk_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+static MEMORY_WRITE16_START( liquidk_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x320000, 0x320003, taitof2_sound_w },
+	{ 0x320000, 0x320001, taitosound_port16_lsb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_lsb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress quizhq_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
+static MEMORY_READ16_START( quizhq_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_r },	/* palette */
 	{ 0x500000, 0x50000f, quizhq_input1_r },
 	{ 0x580000, 0x58000f, quizhq_input2_r },
 	{ 0x600000, 0x600003, taitof2_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress quizhq_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( quizhq_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
-	{ 0x500004, 0x500005, MWA_NOP },   /* irq ack ? */
-	{ 0x580000, 0x580001, MWA_NOP },   /* irq ack ? */
-	{ 0x580006, 0x580007, MWA_NOP },   /* irq ack ? */
-	{ 0x600000, 0x600003, taitof2_sound_w },
-	{ 0x680000, 0x680001, MWA_NOP },   /* watchdog ?? */
+	{ 0x500004, 0x500005, MWA16_NOP },   /* irq ack ? */
+	{ 0x580000, 0x580001, MWA16_NOP },   /* irq ack ? */
+	{ 0x580006, 0x580007, MWA16_NOP },   /* irq ack ? */
+	{ 0x600000, 0x600001, taitosound_port16_lsb_w },
+	{ 0x600002, 0x600003, taitosound_comm16_lsb_w },
+	{ 0x680000, 0x680001, MWA16_NOP },   /* watchdog ?? */
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
-	{ 0x810000, 0x81ffff, MWA_NOP },   /* error in init code ? */
+	{ 0x810000, 0x81ffff, MWA16_NOP },   /* error in init code ? */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+MEMORY_END
 
-static struct MemoryReadAddress ssi_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( ssi_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x100000, 0x10000f, TC0510NIO_halfword_r },
-	{ 0x200000, 0x20ffff, MRA_BANK1 },
-	{ 0x300000, 0x301fff, paletteram_word_r },
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x300000, 0x301fff, MRA16_RAM },
 	{ 0x400000, 0x400003, taitof2_msb_sound_r },
 	{ 0x600000, 0x60ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x620000, 0x62000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x800000, 0x80ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress ssi_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
+static MEMORY_WRITE16_START( ssi_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x10000f, TC0510NIO_halfword_w },
-	{ 0x200000, 0x20ffff, MWA_BANK1 },
-	{ 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x400000, 0x400003, taitof2_msb_sound_w },
-//	{ 0x500000, 0x500001, MWA_NOP },   /* ?? */
+	{ 0x200000, 0x20ffff, MWA16_RAM },
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x400000, 0x400001, taitosound_port16_msb_w },
+	{ 0x400002, 0x400003, taitosound_comm16_msb_w },
+//	{ 0x500000, 0x500001, MWA16_NOP },   /* ?? */
 	{ 0x600000, 0x60ffff, TC0100SCN_word_0_w },	/* tilemaps (not used) */
 	{ 0x620000, 0x62000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },   /* sprite ram */
-	{ -1 }  /* end of table */
-};
+	{ 0x800000, 0x80ffff, MWA16_RAM, &spriteram16, &spriteram_size },   /* sprite ram */
+MEMORY_END
 
-static struct MemoryReadAddress gunfront_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( gunfront_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_r },
 	{ 0x320000, 0x320003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress gunfront_writemem[] =
-{
-	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+static MEMORY_WRITE16_START( gunfront_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_w },
-	{ 0x320000, 0x320003, taitof2_msb_sound_w },
+	{ 0x320000, 0x320001, taitosound_port16_msb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
-//	{ 0xa00000, 0xa00001, MWA_NOP },   /* ?? */
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size },
+//	{ 0xa00000, 0xa00001, MWA16_NOP },   /* ?? */
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress growl_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( growl_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, growl_dsw_r },
 	{ 0x320000, 0x32000f, growl_input_r },
 	{ 0x400000, 0x400003, taitof2_msb_sound_r },
-	{ 0x508000, 0x50800f, input_port_5_r },   /* IN3 */
-	{ 0x50c000, 0x50c00f, input_port_6_r },   /* IN4 */
+	{ 0x508000, 0x50800f, input_port_5_word_r },   /* IN3 */
+	{ 0x50c000, 0x50c00f, input_port_6_word_r },   /* IN4 */
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress growl_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x340000, 0x340001, MWA_NOP },   /* irq ack? */
-	{ 0x400000, 0x400003, taitof2_msb_sound_w },
+static MEMORY_WRITE16_START( growl_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x340000, 0x340001, MWA16_NOP },   /* irq ack? */
+	{ 0x400000, 0x400001, taitosound_port16_msb_w },
+	{ 0x400002, 0x400003, taitosound_comm16_msb_w },
 	{ 0x500000, 0x50000f, taitof2_spritebank_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress mjnquest_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x110000, 0x11ffff, MRA_BANK8 },   /* sram ? */
-	{ 0x120000, 0x12ffff, MRA_BANK1 },
+static MEMORY_READ16_START( mjnquest_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x110000, 0x11ffff, MRA16_RAM },   /* sram ? */
+	{ 0x120000, 0x12ffff, MRA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_r },	/* palette */
 	{ 0x300000, 0x30000f, mjnquest_dsw_r },
 	{ 0x310000, 0x310001, mjnquest_input_r },
 	{ 0x360000, 0x360003, taitof2_msb_sound_r },
 	{ 0x400000, 0x40ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x420000, 0x42000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x500000, 0x50ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x500000, 0x50ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress mjnquest_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x110000, 0x11ffff, MWA_BANK8 },   /* sram ? */
-	{ 0x120000, 0x12ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( mjnquest_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x110000, 0x11ffff, MWA16_RAM },   /* sram ? */
+	{ 0x120000, 0x12ffff, MWA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x320000, 0x320001, mjnquest_inputselect_w },
-	{ 0x330000, 0x330001, MWA_NOP },   /* watchdog ? */
-	{ 0x350000, 0x350001, MWA_NOP },   /* watchdog ? */
-	{ 0x360000, 0x360003, taitof2_msb_sound_w },
+	{ 0x330000, 0x330001, MWA16_NOP },   /* watchdog ? */
+	{ 0x350000, 0x350001, MWA16_NOP },   /* watchdog ? */
+	{ 0x360000, 0x360001, taitosound_port16_msb_w },
+	{ 0x360002, 0x360003, taitosound_comm16_msb_w },
 	{ 0x380000, 0x380001, taitof2_scrbank_w },   /* scr bank */
 	{ 0x400000, 0x40ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x420000, 0x42000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x500000, 0x50ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ -1 }  /* end of table */
-};
+	{ 0x500000, 0x50ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+MEMORY_END
 
-static struct MemoryReadAddress footchmp_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x20ffff, taitof2_spriteram_r },
+static MEMORY_READ16_START( footchmp_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x20ffff, MRA16_RAM },
 	{ 0x400000, 0x40ffff, TC0480SCP_word_r },   /* tilemaps */
 	{ 0x430000, 0x43002f, TC0480SCP_ctrl_word_r },
-	{ 0x600000, 0x601fff, paletteram_word_r },
+	{ 0x600000, 0x601fff, MRA16_RAM },
 	{ 0x700000, 0x70001f, footchmp_input_r },
 	{ 0xa00000, 0xa00003, taitof2_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress footchmp_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x20ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+static MEMORY_WRITE16_START( footchmp_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x20ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x300000, 0x30000f, taitof2_spritebank_w },
 	{ 0x400000, 0x40ffff, TC0480SCP_word_w },	  /* tilemaps */
 	{ 0x430000, 0x43002f, TC0480SCP_ctrl_word_w },
 	{ 0x500000, 0x50001f, TC0360PRI_halfword_w },
-	{ 0x600000, 0x601fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x800000, 0x800001, MWA_NOP },   /* watchdog ? */
-	{ 0xa00000, 0xa00003, taitof2_sound_w },
-	{ -1 }  /* end of table */
-};
+	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x800000, 0x800001, MWA16_NOP },   /* watchdog ? */
+	{ 0xa00000, 0xa00001, taitosound_port16_lsb_w },
+	{ 0xa00002, 0xa00003, taitosound_comm16_lsb_w },
+MEMORY_END
 
-static struct MemoryReadAddress koshien_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( koshien_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_r },
 	{ 0x320000, 0x320003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
+	{ 0x900000, 0x90ffff, MRA16_RAM },
 //	{ 0xa20000, 0xa20001, koshien_spritebank_r },   /* for debugging spritebank */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress koshien_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+static MEMORY_WRITE16_START( koshien_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_w },
-	{ 0x320000, 0x320003, taitof2_msb_sound_w },
+	{ 0x320000, 0x320001, taitosound_port16_msb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ 0xa20000, 0xa20001, koshien_spritebank_w },   /* spritebank word ?? */
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+	{ 0xa20000, 0xa20001, koshien_spritebank_w },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_swap_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress yuyugogo_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
+static MEMORY_READ16_START( yuyugogo_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_r },
 	{ 0x400000, 0x400003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ 0xa00000, 0xa01fff, paletteram_word_r },
-	{ 0xb00000, 0xb10fff, MRA_BANK1 },
-	{ 0xd00000, 0xdfffff, MRA_BANK8 },   /* extra data rom */
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+	{ 0xa00000, 0xa01fff, MRA16_RAM },
+	{ 0xb00000, 0xb10fff, MRA16_RAM },
+	{ 0xd00000, 0xdfffff, MRA16_BANK1 },   /* extra data rom */
+MEMORY_END
 
-static struct MemoryWriteAddress yuyugogo_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( yuyugogo_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_w },
-	{ 0x400000, 0x400003, taitof2_msb_sound_w },
+	{ 0x400000, 0x400001, taitosound_port16_msb_w },
+	{ 0x400002, 0x400003, taitosound_comm16_msb_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
-	{ 0xa00000, 0xa01fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0xb00000, 0xb10fff, MWA_BANK1 },   /* deliberate writes to $b10xxx, I think */
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0xb00000, 0xb10fff, MWA16_RAM },   /* deliberate writes to $b10xxx, I think */
 	{ 0xc00000, 0xc01fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
-	{ 0xd00000, 0xdfffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+	{ 0xd00000, 0xdfffff, MWA16_ROM },
+MEMORY_END
 
-static struct MemoryReadAddress ninjak_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( ninjak_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, ninjak_input_r },
 	{ 0x400000, 0x400003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress ninjak_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x380000, 0x380001, MWA_NOP },   /* irq ack? */
-	{ 0x400000, 0x400003, taitof2_msb_sound_w },
+static MEMORY_WRITE16_START( ninjak_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x380000, 0x380001, MWA16_NOP },   /* irq ack? */
+	{ 0x400000, 0x400001, taitosound_port16_msb_w },
+	{ 0x400002, 0x400003, taitosound_comm16_msb_w },
 	{ 0x600000, 0x60000f, taitof2_spritebank_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress solfigtr_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_word_r },
+static MEMORY_READ16_START( solfigtr_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x201fff, MRA16_RAM },
 	{ 0x300000, 0x30000f, growl_dsw_r },
 	{ 0x320000, 0x32000f, growl_input_r },
 	{ 0x400000, 0x400003, taitof2_msb_sound_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x90ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress solfigtr_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x400000, 0x400003, taitof2_msb_sound_w },
+static MEMORY_WRITE16_START( solfigtr_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x400000, 0x400001, taitosound_port16_msb_w },
+	{ 0x400002, 0x400003, taitosound_comm16_msb_w },
 	{ 0x500000, 0x50000f, taitof2_spritebank_w },
-	{ 0x504000, 0x504001, MWA_NOP },   /* irq ack? */
+	{ 0x504000, 0x504001, MWA16_NOP },   /* irq ack? */
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress qzquest_readmem[] =
-{
-	{ 0x000000, 0x17ffff, MRA_ROM },
+static MEMORY_READ16_START( qzquest_readmem )
+	{ 0x000000, 0x17ffff, MRA16_ROM },
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_r },
 	{ 0x300000, 0x300003, taitof2_sound_r },
-	{ 0x400000, 0x401fff, paletteram_word_r },
-	{ 0x500000, 0x50ffff, MRA_BANK1 },
-	{ 0x600000, 0x60ffff, taitof2_spriteram_r },
+	{ 0x400000, 0x401fff, MRA16_RAM },
+	{ 0x500000, 0x50ffff, MRA16_RAM },
+	{ 0x600000, 0x60ffff, MRA16_RAM },
 	{ 0x700000, 0x70ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x720000, 0x72000f, TC0100SCN_ctrl_word_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qzquest_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( qzquest_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_w },
-	{ 0x300000, 0x300003, taitof2_sound_w },
-	{ 0x400000, 0x401fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
-	{ 0x500000, 0x50ffff, MWA_BANK1 },
-	{ 0x600000, 0x60ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
+	{ 0x400000, 0x401fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0x500000, 0x50ffff, MWA16_RAM },
+	{ 0x600000, 0x60ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0x700000, 0x70ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x720000, 0x72000f, TC0100SCN_ctrl_word_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress pulirula_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
+static MEMORY_READ16_START( pulirula_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
 	{ 0x400000, 0x401fff, TC0430GRW_word_r },
-	{ 0x700000, 0x701fff, paletteram_word_r },
+	{ 0x700000, 0x701fff, MRA16_RAM },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
+	{ 0x900000, 0x90ffff, MRA16_RAM },
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pulirula_writemem[] =
-{
-	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x200000, 0x200003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( pulirula_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
+	{ 0x200000, 0x200001, taitosound_port16_msb_w },
+	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
+	{ 0x300000, 0x30ffff, MWA16_RAM },
 	{ 0x400000, 0x401fff, TC0430GRW_word_w },	/* ROZ tilemap */
 	{ 0x402000, 0x40200f, TC0430GRW_ctrl_word_w },
-//	{ 0x500000, 0x500001, MWA_NOP },   /* ??? */
+//	{ 0x500000, 0x500001, MWA16_NOP },   /* ??? */
 	{ 0x600000, 0x603fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
-	{ 0x700000, 0x701fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x700000, 0x701fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xa00000, 0xa0001f, TC0360PRI_halfword_swap_w },
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress metalb_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x300000, 0x30ffff, taitof2_spriteram_r },
+static MEMORY_READ16_START( metalb_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
 	{ 0x500000, 0x50ffff, TC0480SCP_word_r },   /* tilemaps */
 	{ 0x530000, 0x53002f, TC0480SCP_ctrl_word_r },
-	{ 0x700000, 0x703fff, paletteram_word_r },
+	{ 0x700000, 0x703fff, MRA16_RAM },
 	{ 0x800000, 0x80000f, TC0510NIO_halfword_wordswap_r },
 	{ 0x900000, 0x900003, taitof2_msb_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress metalb_writemem[] =
-{
-	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x300000, 0x30ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
-//	{ 0x42000c, 0x42000f, MWA_NOP },   /* zeroed */
+static MEMORY_WRITE16_START( metalb_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x300000, 0x30ffff, MWA16_RAM, &spriteram16, &spriteram_size },
+//	{ 0x42000c, 0x42000f, MWA16_NOP },   /* zeroed */
 	{ 0x500000, 0x50ffff, TC0480SCP_word_w },	  /* tilemaps */
 	{ 0x530000, 0x53002f, TC0480SCP_ctrl_word_w },
 	{ 0x600000, 0x60001f, TC0360PRI_halfword_w },
-	{ 0x700000, 0x703fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+	{ 0x700000, 0x703fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x800000, 0x80000f, TC0510NIO_halfword_wordswap_w },
-	{ 0x900000, 0x900003, taitof2_msb_sound_w },
-//	{ 0xa00000, 0xa00001, MWA_NOP },   /* ??? */
-	{ -1 }  /* end of table */
-};
+	{ 0x900000, 0x900001, taitosound_port16_msb_w },
+	{ 0x900002, 0x900003, taitosound_comm16_msb_w },
+//	{ 0xa00000, 0xa00001, MWA16_NOP },   /* ??? */
+MEMORY_END
 
-static struct MemoryReadAddress qzchikyu_readmem[] =
-{
-	{ 0x000000, 0x17ffff, MRA_ROM },
+static MEMORY_READ16_START( qzchikyu_readmem )
+	{ 0x000000, 0x17ffff, MRA16_ROM },
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_r },
 	{ 0x300000, 0x300003, taitof2_sound_r },
-	{ 0x400000, 0x401fff, paletteram_word_r },
-	{ 0x500000, 0x50ffff, MRA_BANK1 },
-	{ 0x600000, 0x60ffff, taitof2_spriteram_r },
+	{ 0x400000, 0x401fff, MRA16_RAM },
+	{ 0x500000, 0x50ffff, MRA16_RAM },
+	{ 0x600000, 0x60ffff, MRA16_RAM },
 	{ 0x700000, 0x70ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x720000, 0x72000f, TC0100SCN_ctrl_word_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qzchikyu_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( qzchikyu_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_w },
-	{ 0x300000, 0x300003, taitof2_sound_w },
-	{ 0x400000, 0x401fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
-	{ 0x500000, 0x50ffff, MWA_BANK1 },
-	{ 0x600000, 0x60ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
+	{ 0x400000, 0x401fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0x500000, 0x50ffff, MWA16_RAM },
+	{ 0x600000, 0x60ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0x700000, 0x70ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x720000, 0x72000f, TC0100SCN_ctrl_word_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress yesnoj_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x200000, 0x20ffff, MRA_BANK1 },
-	{ 0x400000, 0x40ffff, taitof2_spriteram_r },
+static MEMORY_READ16_START( yesnoj_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x400000, 0x40ffff, MRA16_RAM },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x600000, 0x601fff, paletteram_word_r },
+	{ 0x600000, 0x601fff, MRA16_RAM },
 //	{ 0x700000, 0x70000b, yesnoj_unknown_r },   /* what's this? */
 	{ 0x800000, 0x800003, taitof2_msb_sound_r },
 	{ 0xa00000, 0xa0000f, yesnoj_input_r },
 	{ 0xb00000, 0xb00001, yesnoj_dsw_r },   /* ?? (reads this twice in init) */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress yesnoj_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x200000, 0x20ffff, MWA_BANK1 },
-	{ 0x400000, 0x40ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+static MEMORY_WRITE16_START( yesnoj_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x200000, 0x20ffff, MWA16_RAM },
+	{ 0x400000, 0x40ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x600000, 0x601fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x800000, 0x800003, taitof2_msb_sound_w },
-	{ 0x900002, 0x900003, MWA_NOP },   /* lots of similar writes */
-	{ 0xc00000, 0xc00001, MWA_NOP },   /* watchdog ?? */
-	{ 0xd00000, 0xd00001, MWA_NOP },   /* lots of similar writes */
-	{ -1 }  /* end of table */
-};
+	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x800000, 0x800001, taitosound_port16_msb_w },
+	{ 0x800002, 0x800003, taitosound_comm16_msb_w },
+	{ 0x900002, 0x900003, MWA16_NOP },   /* lots of similar writes */
+	{ 0xc00000, 0xc00001, MWA16_NOP },   /* watchdog ?? */
+	{ 0xd00000, 0xd00001, MWA16_NOP },   /* lots of similar writes */
+MEMORY_END
 
-static struct MemoryReadAddress deadconx_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x200000, 0x20ffff, taitof2_spriteram_r },
+static MEMORY_READ16_START( deadconx_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200000, 0x20ffff, MRA16_RAM },
 	{ 0x400000, 0x40ffff, TC0480SCP_word_r },   /* tilemaps */
 	{ 0x430000, 0x43002f, TC0480SCP_ctrl_word_r },
-	{ 0x600000, 0x601fff, paletteram_word_r },
+	{ 0x600000, 0x601fff, MRA16_RAM },
 	{ 0x700000, 0x70001f, deadconx_input_r },
 	{ 0xa00000, 0xa00003, taitof2_msb_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress deadconx_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x20ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+static MEMORY_WRITE16_START( deadconx_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x20ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x300000, 0x30000f, taitof2_spritebank_w },
 	{ 0x400000, 0x40ffff, TC0480SCP_word_w },	  /* tilemaps */
-//	{ 0x42000c, 0x42000f, MWA_NOP },   /* zeroed */
+//	{ 0x42000c, 0x42000f, MWA16_NOP },   /* zeroed */
 	{ 0x430000, 0x43002f, TC0480SCP_ctrl_word_w },
 	{ 0x500000, 0x50001f, TC0360PRI_halfword_w },
-	{ 0x600000, 0x601fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x800000, 0x800001, MWA_NOP },   /* watchdog ? */
-	{ 0xa00000, 0xa00003, taitof2_msb_sound_w },
-	{ -1 }  /* end of table */
-};
+	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x800000, 0x800001, MWA16_NOP },   /* watchdog ? */
+	{ 0xa00000, 0xa00001, taitosound_port16_msb_w },
+	{ 0xa00002, 0xa00003, taitosound_comm16_msb_w },
+MEMORY_END
 
-static struct MemoryReadAddress dinorex_readmem[] =
-{
-	{ 0x000000, 0x2fffff, MRA_ROM },
+static MEMORY_READ16_START( dinorex_readmem )
+	{ 0x000000, 0x2fffff, MRA16_ROM },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_r },
-	{ 0x500000, 0x501fff, paletteram_word_r },
-	{ 0x600000, 0x60ffff, MRA_BANK1 },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_r },
+	{ 0x500000, 0x501fff, MRA16_RAM },
+	{ 0x600000, 0x60ffff, MRA16_RAM },
+	{ 0x800000, 0x80ffff, MRA16_RAM },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x920000, 0x92000f, TC0100SCN_ctrl_word_0_r },
 	{ 0xa00000, 0xa00003, taitof2_msb_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dinorex_writemem[] =
-{
-	{ 0x000000, 0x2fffff, MWA_ROM },
+static MEMORY_WRITE16_START( dinorex_writemem )
+	{ 0x000000, 0x2fffff, MWA16_ROM },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_w },
 	{ 0x400000, 0x400fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
-	{ 0x500000, 0x501fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x600000, 0x60ffff, MWA_BANK1 },
+	{ 0x500000, 0x501fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x600000, 0x60ffff, MWA16_RAM },
 	{ 0x700000, 0x70001f, TC0360PRI_halfword_w },	/* ?? */
-	{ 0x800000, 0x80ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x800000, 0x80ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x920000, 0x92000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xa00000, 0xa00003, taitof2_msb_sound_w },
-	{ 0xb00000, 0xb00001, MWA_NOP },   /* watchdog? */
-	{ -1 }  /* end of table */
-};
+	{ 0xa00000, 0xa00001, taitosound_port16_msb_w },
+	{ 0xa00002, 0xa00003, taitosound_comm16_msb_w },
+	{ 0xb00000, 0xb00001, MWA16_NOP },   /* watchdog? */
+MEMORY_END
 
-static struct MemoryReadAddress qjinsei_readmem[] =
-{
-	{ 0x000000, 0x1fffff, MRA_ROM },
+static MEMORY_READ16_START( qjinsei_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
-	{ 0x700000, 0x701fff, paletteram_word_r },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
+	{ 0x700000, 0x701fff, MRA16_RAM },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
+	{ 0x900000, 0x90ffff, MRA16_RAM },
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qjinsei_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x200000, 0x200003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1 },
-	{ 0x500000, 0x500001, MWA_NOP },   /* watchdog ? */
+static MEMORY_WRITE16_START( qjinsei_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x200000, 0x200001, taitosound_port16_msb_w },
+	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
+	{ 0x300000, 0x30ffff, MWA16_RAM },
+	{ 0x500000, 0x500001, MWA16_NOP },   /* watchdog ? */
 	{ 0x600000, 0x603fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
-	{ 0x700000, 0x701fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+	{ 0x700000, 0x701fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xa00000, 0xa0001f, TC0360PRI_halfword_w },	/* ?? */
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress qcrayon_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
-	{ 0x300000, 0x3fffff, MRA_BANK8 },   /* extra data rom */
+static MEMORY_READ16_START( qcrayon_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x300000, 0x3fffff, MRA16_BANK1 },   /* extra data rom */
 	{ 0x500000, 0x500003, taitof2_msb_sound_r },
-	{ 0x700000, 0x701fff, paletteram_word_r },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_r },
+	{ 0x700000, 0x701fff, MRA16_RAM },
+	{ 0x800000, 0x80ffff, MRA16_RAM },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x920000, 0x92000f, TC0100SCN_ctrl_word_0_r },
 	{ 0xa00000, 0xa0000f, TC0510NIO_halfword_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qcrayon_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
-//	{ 0x200000, 0x200001, MWA_NOP },   /* unknown */
-	{ 0x300000, 0x3fffff, MWA_ROM },
-	{ 0x500000, 0x500003, taitof2_msb_sound_w },
+static MEMORY_WRITE16_START( qcrayon_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+//	{ 0x200000, 0x200001, MWA16_NOP },   /* unknown */
+	{ 0x300000, 0x3fffff, MWA16_ROM },
+	{ 0x500000, 0x500001, taitosound_port16_msb_w },
+	{ 0x500002, 0x500003, taitosound_comm16_msb_w },
 	{ 0x600000, 0x603fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
-	{ 0x700000, 0x701fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x800000, 0x80ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+	{ 0x700000, 0x701fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x800000, 0x80ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x920000, 0x92000f, TC0100SCN_ctrl_word_0_w },
 	{ 0xa00000, 0xa0000f, TC0510NIO_halfword_w },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress qcrayon2_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x200000, 0x20ffff, MRA_BANK1 },
-	{ 0x300000, 0x301fff, paletteram_word_r },
-	{ 0x400000, 0x40ffff, taitof2_spriteram_r },
+static MEMORY_READ16_START( qcrayon2_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x300000, 0x301fff, MRA16_RAM },
+	{ 0x400000, 0x40ffff, MRA16_RAM },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x600000, 0x67ffff, MRA_BANK8 },   /* extra data rom */
+	{ 0x600000, 0x67ffff, MRA16_BANK1 },   /* extra data rom */
 	{ 0x700000, 0x70000f, TC0510NIO_halfword_r },
 	{ 0xa00000, 0xa00003, taitof2_msb_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qcrayon2_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x200000, 0x20ffff, MWA_BANK1 },
-	{ 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x400000, 0x40ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
+static MEMORY_WRITE16_START( qcrayon2_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x200000, 0x20ffff, MWA16_RAM },
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x400000, 0x40ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x600000, 0x67ffff, MWA_ROM },
+	{ 0x600000, 0x67ffff, MWA16_ROM },
 	{ 0x700000, 0x70000f, TC0510NIO_halfword_w },
 	{ 0x900000, 0x90001f, TC0360PRI_halfword_w },	/* ?? */
-	{ 0xa00000, 0xa00003, taitof2_msb_sound_w },
+	{ 0xa00000, 0xa00001, taitosound_port16_msb_w },
+	{ 0xa00002, 0xa00003, taitosound_comm16_msb_w },
 	{ 0xb00000, 0xb017ff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress driftout_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
+static MEMORY_READ16_START( driftout_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_r },
-	{ 0x300000, 0x30ffff, MRA_BANK1 },
+	{ 0x300000, 0x30ffff, MRA16_RAM },
 	{ 0x400000, 0x401fff, TC0430GRW_word_r },
-	{ 0x700000, 0x701fff, paletteram_word_r },
+	{ 0x700000, 0x701fff, MRA16_RAM },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
+	{ 0x900000, 0x90ffff, MRA16_RAM },
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_r },
 	{ 0xb00018, 0xb0001f, driftout_paddle_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress driftout_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x200000, 0x200003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( driftout_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x200000, 0x200001, taitosound_port16_msb_w },
+	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
+	{ 0x300000, 0x30ffff, MWA16_RAM },
 	{ 0x400000, 0x401fff, TC0430GRW_word_w },	/* ROZ tilemap */
 	{ 0x402000, 0x40200f, TC0430GRW_ctrl_word_w },
-	{ 0x700000, 0x701fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x700000, 0x701fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xa00000, 0xa0001f, TC0360PRI_halfword_swap_w },
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /***************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK2 },
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -1742,27 +1625,24 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, rastan_a001_r },
+	{ 0xe201, 0xe201, taitosound_slave_comm_r },
 	{ 0xea00, 0xea00, MRA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, rastan_a000_w },
-	{ 0xe201, 0xe201, rastan_a001_w },
+	{ 0xe200, 0xe200, taitosound_slave_port_w },
+	{ 0xe201, 0xe201, taitosound_slave_comm_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
 	{ 0xf200, 0xf200, bankswitch_w },	/* ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /***********************************************************
@@ -5223,7 +5103,7 @@ static struct YM2610interface ym2610_interface =
 static void init_machine_qcrayon(void)
 {
 	/* point to the extra ROM */
-	cpu_setbank(8,memory_region(REGION_USER1));
+	cpu_setbank(1,memory_region(REGION_USER1));
 }
 
 #define init_machine_0 0
@@ -6574,5 +6454,5 @@ GAME( 1992, dinorexu, dinorex,  dinorex,  dinorex,  0,        ROT0,       "Taito
 GAME( 1992, qjinsei,  0,        qjinsei,  qjinsei,  0,        ROT0,       "Taito Corporation", "Quiz Jinsei Gekijoh (Japan)" )
 GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  0,        ROT0,       "Taito Corporation", "Quiz Crayon Shinchan (Japan)" )
 GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, 0,        ROT0,       "Taito Corporation", "Crayon Shinchan Orato Asobo (Japan)" )
-GAMEX(1991, driftout, 0,        driftout, driftout, 0,        ROT270,     "Visco", "Drift Out (Japan)", GAME_NO_COCKTAIL )
+GAME( 1991, driftout, 0,        driftout, driftout, 0,        ROT270,     "Visco", "Drift Out (Japan)" )
 GAMEX(1991, driveout, driftout, driftout, driftout, 0,        ROT270,     "bootleg", "Drive Out", GAME_NO_SOUND )

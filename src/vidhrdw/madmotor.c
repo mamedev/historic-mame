@@ -9,12 +9,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *madmotor_pf1_rowscroll;
-unsigned char *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
+data16_t *madmotor_pf1_rowscroll;
+data16_t *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
 
-static unsigned char madmotor_pf1_control[32];
-static unsigned char madmotor_pf2_control[32];
-static unsigned char madmotor_pf3_control[32];
+static data16_t madmotor_pf1_control[16];
+static data16_t madmotor_pf2_control[16];
+static data16_t madmotor_pf3_control[16];
 
 static int flipscreen;
 static struct tilemap *madmotor_pf1_tilemap,*madmotor_pf2_tilemap,*madmotor_pf3_tilemap,*madmotor_pf3a_tilemap;
@@ -33,7 +33,7 @@ static void get_pf1_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&madmotor_pf1_data[2*tile_index]);
+	tile=madmotor_pf1_data[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -51,7 +51,7 @@ static void get_pf2_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&madmotor_pf2_data[2*tile_index]);
+	tile=madmotor_pf2_data[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -69,7 +69,7 @@ static void get_pf3_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&madmotor_pf3_data[2*tile_index]);
+	tile=madmotor_pf3_data[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -87,7 +87,7 @@ static void get_pf3a_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&madmotor_pf3_data[2*tile_index]);
+	tile=madmotor_pf3_data[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -106,8 +106,8 @@ int madmotor_vh_start(void)
 	if (!madmotor_pf1_tilemap  || !madmotor_pf2_tilemap || !madmotor_pf3_tilemap || !madmotor_pf3a_tilemap)
 		return 1;
 
-	madmotor_pf1_tilemap->transparent_pen = 0;
-	madmotor_pf2_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(madmotor_pf1_tilemap,0);
+	tilemap_set_transparent_pen(madmotor_pf2_tilemap,0);
 	tilemap_set_scroll_rows(madmotor_pf1_tilemap,512);
 
 	return 0;
@@ -115,67 +115,74 @@ int madmotor_vh_start(void)
 
 /******************************************************************************/
 
-READ_HANDLER( madmotor_pf1_data_r )
+READ16_HANDLER( madmotor_pf1_data_r )
 {
-	return READ_WORD(&madmotor_pf1_data[offset]);
+	return madmotor_pf1_data[offset];
 }
 
-READ_HANDLER( madmotor_pf2_data_r )
+READ16_HANDLER( madmotor_pf2_data_r )
 {
-	return READ_WORD(&madmotor_pf2_data[offset]);
+	return madmotor_pf2_data[offset];
 }
 
-READ_HANDLER( madmotor_pf3_data_r )
+READ16_HANDLER( madmotor_pf3_data_r )
 {
-	return READ_WORD(&madmotor_pf3_data[offset]);
+	return madmotor_pf3_data[offset];
 }
 
-WRITE_HANDLER( madmotor_pf1_data_w )
+WRITE16_HANDLER( madmotor_pf1_data_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf1_data[offset],data);
-	tilemap_mark_tile_dirty(madmotor_pf1_tilemap,offset/2);
+	int oldword = madmotor_pf1_data[offset];
+	COMBINE_DATA(&madmotor_pf1_data[offset]);
+	if (oldword != madmotor_pf1_data[offset])
+		tilemap_mark_tile_dirty(madmotor_pf1_tilemap,offset);
 }
 
-WRITE_HANDLER( madmotor_pf2_data_w )
+WRITE16_HANDLER( madmotor_pf2_data_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf2_data[offset],data);
-	tilemap_mark_tile_dirty(madmotor_pf2_tilemap,offset/2);
+	int oldword = madmotor_pf2_data[offset];
+	COMBINE_DATA(&madmotor_pf2_data[offset]);
+	if (oldword != madmotor_pf2_data[offset])
+		tilemap_mark_tile_dirty(madmotor_pf2_tilemap,offset);
 }
 
-WRITE_HANDLER( madmotor_pf3_data_w )
+WRITE16_HANDLER( madmotor_pf3_data_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf3_data[offset],data);
+	int oldword = madmotor_pf3_data[offset];
+	COMBINE_DATA(&madmotor_pf3_data[offset]);
+	if (oldword != madmotor_pf3_data[offset])
+	{
+		/* Mark the dirty position on the 512 x 1024 version */
+		tilemap_mark_tile_dirty(madmotor_pf3_tilemap,offset);
 
-	/* Mark the dirty position on the 512 x 1024 version */
-	tilemap_mark_tile_dirty(madmotor_pf3_tilemap,offset/2);
-
-	/* Mark the dirty position on the 2048 x 256 version */
-	tilemap_mark_tile_dirty(madmotor_pf3_tilemap,offset/2);
+		/* Mark the dirty position on the 2048 x 256 version */
+		tilemap_mark_tile_dirty(madmotor_pf3a_tilemap,offset);
+	}
 }
 
-WRITE_HANDLER( madmotor_pf1_control_w )
+WRITE16_HANDLER( madmotor_pf1_control_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf1_control[offset],data);
+	COMBINE_DATA(&madmotor_pf1_control[offset]);
 }
 
-WRITE_HANDLER( madmotor_pf2_control_w )
+WRITE16_HANDLER( madmotor_pf2_control_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf2_control[offset],data);
+	COMBINE_DATA(&madmotor_pf2_control[offset]);
 }
 
-WRITE_HANDLER( madmotor_pf3_control_w )
+WRITE16_HANDLER( madmotor_pf3_control_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf3_control[offset],data);
+	COMBINE_DATA(&madmotor_pf3_control[offset]);
 }
 
-READ_HANDLER( madmotor_pf1_rowscroll_r )
+READ16_HANDLER( madmotor_pf1_rowscroll_r )
 {
-	return READ_WORD(&madmotor_pf1_rowscroll[offset]);
+	return madmotor_pf1_rowscroll[offset];
 }
 
-WRITE_HANDLER( madmotor_pf1_rowscroll_w )
+WRITE16_HANDLER( madmotor_pf1_rowscroll_w )
 {
-	COMBINE_WORD_MEM(&madmotor_pf1_rowscroll[offset],data);
+	COMBINE_DATA(&madmotor_pf1_rowscroll[offset]);
 }
 
 /******************************************************************************/
@@ -190,14 +197,14 @@ static void madmotor_mark_sprite_colours(void)
 	/* Sprites */
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,multi;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = spriteram16[offs];
 		if ((y&0x8000) == 0) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = spriteram16[offs+2];
 		color = (x & 0xf000) >> 12;
 
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
@@ -208,7 +215,7 @@ static void madmotor_mark_sprite_colours(void)
 		x = 240 - x;
 		if (x>256) continue; /* Speedup + save colours */
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x1fff;
+		sprite = spriteram16[offs+1] & 0x1fff;
 		sprite &= ~multi;
 
 		while (multi >= 0)
@@ -234,14 +241,14 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = spriteram16[offs];
 		if ((y&0x8000) == 0) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = spriteram16[offs+2];
 		colour = x >> 12;
 		if ((colour & pri_mask) != pri_val) continue;
 
@@ -253,7 +260,7 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
 											/* multi = 0   1   3   7 */
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x1fff;
+		sprite = spriteram16[offs+1] & 0x1fff;
 
 		x = x & 0x01ff;
 		y = y & 0x01ff;
@@ -303,7 +310,7 @@ void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 	/* Update flipscreen */
-	if (READ_WORD(&madmotor_pf1_control[0])&0x80)
+	if (madmotor_pf1_control[0]&0x80)
 		flipscreen=1;
 	else
 		flipscreen=0;
@@ -311,14 +318,14 @@ void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Setup scroll registers */
 	for (offs = 0;offs < 512;offs++)
-		tilemap_set_scrollx( madmotor_pf1_tilemap,offs, READ_WORD(&madmotor_pf1_control[0x10]) + READ_WORD(&madmotor_pf1_rowscroll[0x400+2*offs]) );
-	tilemap_set_scrolly( madmotor_pf1_tilemap,0, READ_WORD(&madmotor_pf1_control[0x12]) );
-	tilemap_set_scrollx( madmotor_pf2_tilemap,0, READ_WORD(&madmotor_pf2_control[0x10]) );
-	tilemap_set_scrolly( madmotor_pf2_tilemap,0, READ_WORD(&madmotor_pf2_control[0x12]) );
-	tilemap_set_scrollx( madmotor_pf3_tilemap,0, READ_WORD(&madmotor_pf3_control[0x10]) );
-	tilemap_set_scrolly( madmotor_pf3_tilemap,0, READ_WORD(&madmotor_pf3_control[0x12]) );
-	tilemap_set_scrollx( madmotor_pf3a_tilemap,0, READ_WORD(&madmotor_pf3_control[0x10]) );
-	tilemap_set_scrolly( madmotor_pf3a_tilemap,0, READ_WORD(&madmotor_pf3_control[0x12]) );
+		tilemap_set_scrollx( madmotor_pf1_tilemap,offs, madmotor_pf1_control[0x08] + madmotor_pf1_rowscroll[0x200+offs] );
+	tilemap_set_scrolly( madmotor_pf1_tilemap,0, madmotor_pf1_control[0x09] );
+	tilemap_set_scrollx( madmotor_pf2_tilemap,0, madmotor_pf2_control[0x08] );
+	tilemap_set_scrolly( madmotor_pf2_tilemap,0, madmotor_pf2_control[0x09] );
+	tilemap_set_scrollx( madmotor_pf3_tilemap,0, madmotor_pf3_control[0x08] );
+	tilemap_set_scrolly( madmotor_pf3_tilemap,0, madmotor_pf3_control[0x09] );
+	tilemap_set_scrollx( madmotor_pf3a_tilemap,0, madmotor_pf3_control[0x08] );
+	tilemap_set_scrolly( madmotor_pf3a_tilemap,0, madmotor_pf3_control[0x09] );
 
 	tilemap_update(madmotor_pf1_tilemap);
 	tilemap_update(madmotor_pf2_tilemap);
@@ -326,16 +333,14 @@ void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_update(madmotor_pf3a_tilemap);
 
 	madmotor_mark_sprite_colours();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* Draw playfields & sprites */
-	tilemap_render(ALL_TILEMAPS);
-	if (READ_WORD(&madmotor_pf3_control[0x6])==2)
-		tilemap_draw(bitmap,madmotor_pf3_tilemap,0);
+	if (madmotor_pf3_control[0x03]==2)
+		tilemap_draw(bitmap,madmotor_pf3_tilemap,0,0);
 	else
-		tilemap_draw(bitmap,madmotor_pf3a_tilemap,0);
-	tilemap_draw(bitmap,madmotor_pf2_tilemap,0);
+		tilemap_draw(bitmap,madmotor_pf3a_tilemap,0,0);
+	tilemap_draw(bitmap,madmotor_pf2_tilemap,0,0);
 	dec0_drawsprites(bitmap,0x00,0x00);
-	tilemap_draw(bitmap,madmotor_pf1_tilemap,0);
+	tilemap_draw(bitmap,madmotor_pf1_tilemap,0,0);
 }

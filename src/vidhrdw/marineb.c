@@ -12,29 +12,29 @@
 
 unsigned char *marineb_column_scroll;
 int marineb_active_low_flipscreen;
-static data_t palbank;
+static int palbank;
 
 
 WRITE_HANDLER( marineb_palbank0_w )
 {
-	data_t new_palbank = (palbank & ~1) | (data & 1);
+	int new_palbank = (palbank & ~1) | (data & 1);
 	set_vh_global_attribute(&palbank, new_palbank);
 }
 
 WRITE_HANDLER( marineb_palbank1_w )
 {
-	data_t new_palbank = (palbank & ~2) | ((data << 1) & 2);
+	int new_palbank = (palbank & ~2) | ((data << 1) & 2);
 	set_vh_global_attribute(&palbank, new_palbank);
 }
 
 WRITE_HANDLER( marineb_flipscreen_x_w )
 {
-	flip_screen_x_w(offset, data ^ marineb_active_low_flipscreen);
+	flip_screen_x_set(data ^ marineb_active_low_flipscreen);
 }
 
 WRITE_HANDLER( marineb_flipscreen_y_w )
 {
-	flip_screen_y_w(offset, data ^ marineb_active_low_flipscreen);
+	flip_screen_y_set(data ^ marineb_active_low_flipscreen);
 }
 
 

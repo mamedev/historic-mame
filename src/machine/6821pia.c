@@ -190,7 +190,6 @@ int pia_read(int which, int offset)
 	int val = 0;
 
 	/* adjust offset for 16-bit and ordering */
-	if (p->addr & PIA_16BIT) offset /= 2;
 	offset &= 3;
 	if (p->addr & PIA_ALTERNATE_ORDERING) offset = swizzle_address[offset];
 
@@ -301,15 +300,6 @@ int pia_read(int which, int offset)
 			break;
 	}
 
-	/* adjust final output value for 16-bit */
-	if (p->addr & PIA_16BIT)
-	{
-		if (p->addr & PIA_AUTOSENSE)
-			val = (val << 8) | val;
-		else if (p->addr & PIA_UPPER)
-			val <<= 8;
-	}
-
 	return val;
 }
 
@@ -321,33 +311,8 @@ void pia_write(int which, int offset, int data)
 	struct pia6821 *p = pia + which;
 
 	/* adjust offset for 16-bit and ordering */
-	if (p->addr & PIA_16BIT) offset /= 2;
 	offset &= 3;
 	if (p->addr & PIA_ALTERNATE_ORDERING) offset = swizzle_address[offset];
-
-	/* adjust data for 16-bit */
-	if (p->addr & PIA_16BIT)
-	{
-		if (p->addr & PIA_AUTOSENSE)
-		{
-			if (!(data & 0x00ff0000))
-				data &= 0xff;
-			else
-				data = (data >> 8) & 0xff;
-		}
-		else if (p->addr & PIA_UPPER)
-		{
-			if (data & 0xff000000)
-				return;
-			data = (data >> 8) & 0xff;
-		}
-		else
-		{
-			if (data & 0x00ff0000)
-				return;
-			data &= 0xff;
-		}
-	}
 
 	switch (offset)
 	{
@@ -690,6 +655,46 @@ WRITE_HANDLER( pia_4_w ) { pia_write(4, offset, data); }
 WRITE_HANDLER( pia_5_w ) { pia_write(5, offset, data); }
 WRITE_HANDLER( pia_6_w ) { pia_write(6, offset, data); }
 WRITE_HANDLER( pia_7_w ) { pia_write(7, offset, data); }
+
+/******************* Standard 16-bit CPU interfaces, D0-D7 *******************/
+
+READ16_HANDLER( pia_0_lsb_r ) { return pia_read(0, offset); }
+READ16_HANDLER( pia_1_lsb_r ) { return pia_read(1, offset); }
+READ16_HANDLER( pia_2_lsb_r ) { return pia_read(2, offset); }
+READ16_HANDLER( pia_3_lsb_r ) { return pia_read(3, offset); }
+READ16_HANDLER( pia_4_lsb_r ) { return pia_read(4, offset); }
+READ16_HANDLER( pia_5_lsb_r ) { return pia_read(5, offset); }
+READ16_HANDLER( pia_6_lsb_r ) { return pia_read(6, offset); }
+READ16_HANDLER( pia_7_lsb_r ) { return pia_read(7, offset); }
+
+WRITE16_HANDLER( pia_0_lsb_w ) { if (ACCESSING_LSB) pia_write(0, offset, data & 0xff); }
+WRITE16_HANDLER( pia_1_lsb_w ) { if (ACCESSING_LSB) pia_write(1, offset, data & 0xff); }
+WRITE16_HANDLER( pia_2_lsb_w ) { if (ACCESSING_LSB) pia_write(2, offset, data & 0xff); }
+WRITE16_HANDLER( pia_3_lsb_w ) { if (ACCESSING_LSB) pia_write(3, offset, data & 0xff); }
+WRITE16_HANDLER( pia_4_lsb_w ) { if (ACCESSING_LSB) pia_write(4, offset, data & 0xff); }
+WRITE16_HANDLER( pia_5_lsb_w ) { if (ACCESSING_LSB) pia_write(5, offset, data & 0xff); }
+WRITE16_HANDLER( pia_6_lsb_w ) { if (ACCESSING_LSB) pia_write(6, offset, data & 0xff); }
+WRITE16_HANDLER( pia_7_lsb_w ) { if (ACCESSING_LSB) pia_write(7, offset, data & 0xff); }
+
+/******************* Standard 16-bit CPU interfaces, D8-D15 *******************/
+
+READ16_HANDLER( pia_0_msb_r ) { return pia_read(0, offset) << 8; }
+READ16_HANDLER( pia_1_msb_r ) { return pia_read(1, offset) << 8; }
+READ16_HANDLER( pia_2_msb_r ) { return pia_read(2, offset) << 8; }
+READ16_HANDLER( pia_3_msb_r ) { return pia_read(3, offset) << 8; }
+READ16_HANDLER( pia_4_msb_r ) { return pia_read(4, offset) << 8; }
+READ16_HANDLER( pia_5_msb_r ) { return pia_read(5, offset) << 8; }
+READ16_HANDLER( pia_6_msb_r ) { return pia_read(6, offset) << 8; }
+READ16_HANDLER( pia_7_msb_r ) { return pia_read(7, offset) << 8; }
+
+WRITE16_HANDLER( pia_0_msb_w ) { if (ACCESSING_MSB) pia_write(0, offset, data >> 8); }
+WRITE16_HANDLER( pia_1_msb_w ) { if (ACCESSING_MSB) pia_write(1, offset, data >> 8); }
+WRITE16_HANDLER( pia_2_msb_w ) { if (ACCESSING_MSB) pia_write(2, offset, data >> 8); }
+WRITE16_HANDLER( pia_3_msb_w ) { if (ACCESSING_MSB) pia_write(3, offset, data >> 8); }
+WRITE16_HANDLER( pia_4_msb_w ) { if (ACCESSING_MSB) pia_write(4, offset, data >> 8); }
+WRITE16_HANDLER( pia_5_msb_w ) { if (ACCESSING_MSB) pia_write(5, offset, data >> 8); }
+WRITE16_HANDLER( pia_6_msb_w ) { if (ACCESSING_MSB) pia_write(6, offset, data >> 8); }
+WRITE16_HANDLER( pia_7_msb_w ) { if (ACCESSING_MSB) pia_write(7, offset, data >> 8); }
 
 /******************* 8-bit A/B port interfaces *******************/
 

@@ -216,12 +216,12 @@ void withmcu_init_machine(void)
 	suspended = 0;
 
 	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_0_intf);
-	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
-	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_2_intf);
-	pia_config(3, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_3_intf);
-	pia_config(4, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_4_intf);
-	pia_config(5, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_5_intf);
+	pia_config(0, PIA_STANDARD_ORDERING, &qixmcu_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &qix_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING, &qixmcu_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &qix_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING, &qix_pia_4_intf);
+	pia_config(5, PIA_STANDARD_ORDERING, &qix_pia_5_intf);
 	pia_reset();
 
 	sdungeon_coinctrl = 0x00;
@@ -232,12 +232,12 @@ void qix_init_machine(void)
 	suspended = 0;
 
 	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_0_intf);
-	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
-	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_2_intf);
-	pia_config(3, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_3_intf);
-	pia_config(4, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_4_intf);
-	pia_config(5, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_5_intf);
+	pia_config(0, PIA_STANDARD_ORDERING, &qix_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &qix_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING, &qix_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &qix_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING, &qix_pia_4_intf);
+	pia_config(5, PIA_STANDARD_ORDERING, &qix_pia_5_intf);
 	pia_reset();
 
 	sdungeon_coinctrl = 0x00;

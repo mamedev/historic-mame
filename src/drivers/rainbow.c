@@ -8,6 +8,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/taitosnd.h"
 
 /***************************************************************************
   Video Hardware - Uses similar engine to Rastan
@@ -15,31 +16,24 @@
 
 extern size_t rastan_videoram_size;
 
-extern unsigned char *rastan_ram;
-extern unsigned char *rastan_videoram1,*rastan_videoram3;
-extern unsigned char *rastan_spriteram;
-extern unsigned char *rastan_scrollx;
-extern unsigned char *rastan_scrolly;
+extern data16_t *rastan_ram;
+extern data16_t *rastan_videoram1,*rastan_videoram3;
+extern data16_t *rastan_spriteram;
+extern data16_t *rastan_scrollx;
+extern data16_t *rastan_scrolly;
 
-WRITE_HANDLER( rastan_spriteram_w );
-READ_HANDLER( rastan_spriteram_r );
-WRITE_HANDLER( rastan_videoram1_w );
-READ_HANDLER( rastan_videoram1_r );
-WRITE_HANDLER( rastan_videoram3_w );
-READ_HANDLER( rastan_videoram3_r );
+WRITE16_HANDLER( rastan_spriteram_w );
+READ16_HANDLER( rastan_spriteram_r );
+WRITE16_HANDLER( rastan_videoram1_w );
+READ16_HANDLER( rastan_videoram1_r );
+WRITE16_HANDLER( rastan_videoram3_w );
+READ16_HANDLER( rastan_videoram3_r );
 
 int  rastan_vh_start(void);
 void rastan_vh_stop(void);
 
-WRITE_HANDLER( rastan_scrollY_w );
-WRITE_HANDLER( rastan_scrollX_w );
-WRITE_HANDLER( rastan_videocontrol_w );
-WRITE_HANDLER( rastan_flipscreen_w );
-
-int  rastan_s_interrupt(void);
-READ_HANDLER( rastan_sound_r );
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
+WRITE16_HANDLER( rastan_videocontrol_w );
+WRITE16_HANDLER( rastan_flipscreen_w );
 
 
 /***************************************************************************
@@ -49,40 +43,37 @@ WRITE_HANDLER( rastan_sound_comm_w );
   Jumping uses two YM2203's
 ***************************************************************************/
 
-void rastan_irq_handler(int irq);
 
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
-
-static struct MemoryReadAddress rastan_s_readmem[] =
-{
+static MEMORY_READ_START( rainbow_s_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK5 },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, rastan_a001_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xa001, 0xa001, taitosound_slave_comm_r },
+MEMORY_END
 
-static struct MemoryWriteAddress rastan_s_writemem[] =
-{
+static MEMORY_WRITE_START( rainbow_s_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2151_register_port_0_w },
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
-	{ -1 }  /* end of table */
-};
+	{ 0xa000, 0xa000, taitosound_slave_port_w },
+	{ 0xa001, 0xa001, taitosound_slave_comm_w },
+MEMORY_END
 
 
-static WRITE_HANDLER( rastan_bankswitch_w )
+static WRITE_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = ( data - 1 ) & 3;
 	cpu_setbank( 5, &RAM[ 0x10000 + ( banknum * 0x4000 ) ] );
+}
+
+/* handler called by the YM2151 emulator when the internal timers cause an IRQ */
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =
@@ -90,8 +81,8 @@ static struct YM2151interface ym2151_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ rastan_irq_handler },
-	{ rastan_bankswitch_w }
+	{ irqhandler },
+	{ bankswitch_w }
 };
 
 /***************************************************************************
@@ -99,59 +90,46 @@ static struct YM2151interface ym2151_interface =
 ***************************************************************************/
 
 int  rainbow_interrupt(void);
-WRITE_HANDLER( rainbow_c_chip_w );
-READ_HANDLER( rainbow_c_chip_r );
+WRITE16_HANDLER( rainbow_c_chip_w );
+READ16_HANDLER( rainbow_c_chip_r );
 void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static WRITE_HANDLER( rainbow_sound_w )
-{
-	if (offset == 0)
-	{
-		rastan_sound_port_w(0,data & 0xff);
-	}
-	else if (offset == 2)
-	{
-		rastan_sound_comm_w(0,data & 0xff);
-	}
-}
 
-static struct MemoryReadAddress rainbow_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
-	{ 0x200000, 0x20ffff, paletteram_word_r },
-	{ 0x390000, 0x390003, input_port_0_r },
-	{ 0x3B0000, 0x3B0003, input_port_1_r },
-	{ 0x3e0000, 0x3e0003, rastan_sound_r },
+static MEMORY_READ16_START( rainbow_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x390000, 0x390003, input_port_0_word_r },
+	{ 0x3B0000, 0x3B0003, input_port_1_word_r },
+	{ 0x3e0000, 0x3e0001, MRA16_NOP },
+	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
 	{ 0x800000, 0x80ffff, rainbow_c_chip_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
-	{ 0xc04000, 0xc07fff, MRA_BANK2 },
+	{ 0xc04000, 0xc07fff, MRA16_RAM },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
-	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0xd00000, 0xd0ffff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ 0xc0c000, 0xc0ffff, MRA16_RAM },
+	{ 0xd00000, 0xd0ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress rainbow_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x10c000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x20ffff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+static MEMORY_WRITE16_START( rainbow_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x10c000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x20ffff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x800000, 0x80ffff, rainbow_c_chip_w },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
-	{ 0xc04000, 0xc07fff, MWA_BANK2 },
+	{ 0xc04000, 0xc07fff, MWA16_RAM },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
-	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
-	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
+	{ 0xc0c000, 0xc0ffff, MWA16_RAM },
+	{ 0xc20000, 0xc20003, MWA16_RAM, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
+	{ 0xc40000, 0xc40003, MWA16_RAM, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
 	{ 0xc50000, 0xc50003, rastan_flipscreen_w }, /* bit 0  flipscreen */
-	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
-	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
-	{ 0x3a0000, 0x3a0003, MWA_NOP },
-	{ 0x3c0000, 0x3c0003, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+	{ 0xd00000, 0xd0ffff, MWA16_RAM, &rastan_spriteram },
+	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
+	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
+	{ 0x3a0000, 0x3a0003, MWA16_NOP },
+	{ 0x3c0000, 0x3c0003, MWA16_NOP },
+MEMORY_END
 
 INPUT_PORTS_START( rainbow )
 	PORT_START	/* DIP SWITCH A */
@@ -203,7 +181,7 @@ INPUT_PORTS_START( rainbow )
 	PORT_START	/* 800007 */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START /* 800009 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -294,7 +272,7 @@ static const struct MachineDriver machine_driver_rainbow =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz */
-			rastan_s_readmem,rastan_s_writemem,0,0,
+			rainbow_s_readmem,rainbow_s_writemem,0,0,
 			ignore_interrupt,1
 		}
 	},
@@ -330,11 +308,12 @@ static const struct MachineDriver machine_driver_rainbow =
 ***************************************************************************/
 
 void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
 static int jumping_latch = 0;
 
-static WRITE_HANDLER( jumping_sound_w )
+static WRITE16_HANDLER( jumping_sound_w )
 {
-	if (offset == 0)
+	if (ACCESSING_LSB)
 	{
 		jumping_latch = data & 0xff; /*M68000 writes .b to $400007*/
 		/*logerror("jumping M68k write latch=%02x\n",jumping_latch);*/
@@ -348,44 +327,40 @@ static READ_HANDLER( jumping_latch_r )
 	return jumping_latch;
 }
 
-static struct MemoryReadAddress jumping_readmem[] =
-{
-	{ 0x000000, 0x08ffff, MRA_ROM },
-	{ 0x10c000, 0x10ffff, MRA_BANK1 },		/* RAM */
-	{ 0x200000, 0x20ffff, paletteram_word_r },
-	{ 0x400000, 0x400001, input_port_0_r },
-	{ 0x400002, 0x400003, input_port_1_r },
-	{ 0x401000, 0x401001, input_port_2_r },
-	{ 0x401002, 0x401003, input_port_3_r },
+static MEMORY_READ16_START( jumping_readmem )
+	{ 0x000000, 0x08ffff, MRA16_ROM },
+	{ 0x10c000, 0x10ffff, MRA16_RAM },		/* RAM */
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x400000, 0x400001, input_port_0_word_r },
+	{ 0x400002, 0x400003, input_port_1_word_r },
+	{ 0x401000, 0x401001, input_port_2_word_r },
+	{ 0x401002, 0x401003, input_port_3_word_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
-	{ 0xc04000, 0xc07fff, MRA_BANK2 },
+	{ 0xc04000, 0xc07fff, MRA16_RAM },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
-	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0x440000, 0x4407ff, MRA_BANK4 },
-	{ 0xd00000, 0xd01fff, MRA_BANK5 }, 		/* Needed for Attract Mode */
-	{ 0x420000, 0x420001, MRA_NOP},			/* Read, but result not used */
-	{ -1 }  /* end of table */
-};
+	{ 0xc0c000, 0xc0ffff, MRA16_RAM },
+	{ 0x440000, 0x4407ff, MRA16_RAM },
+	{ 0xd00000, 0xd01fff, MRA16_RAM },	 		/* Needed for Attract Mode */
+	{ 0x420000, 0x420001, MRA16_NOP},			/* Read, but result not used */
+MEMORY_END
 
-static struct MemoryWriteAddress jumping_writemem[] =
-{
-	{ 0x000000, 0x08ffff, MWA_ROM },
-	{ 0x10c000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x20ffff, paletteram_xxxxBBBBGGGGRRRR_word_w , &paletteram },
+static MEMORY_WRITE16_START( jumping_writemem )
+	{ 0x000000, 0x08ffff, MWA16_ROM },
+	{ 0x10c000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x20ffff, paletteram16_xxxxBBBBGGGGRRRR_word_w , &paletteram16 },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
-	{ 0xc04000, 0xc07fff, MWA_BANK2 },
+	{ 0xc04000, 0xc07fff, MWA16_RAM },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
-	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
-	{ 0x430000, 0x430003, rastan_scrollY_w, &rastan_scrolly }, /* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc20000, 0xc20003, MWA_NOP },			/*seems it is a leftover from rainbow, games writes scroll y here, too */
-   	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx }, /* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0x440000, 0x4407ff, MWA_BANK4, &rastan_spriteram },
+	{ 0xc0c000, 0xc0ffff, MWA16_RAM },
+	{ 0x430000, 0x430003, MWA16_RAM, &rastan_scrolly }, /* scroll Y  1st.w plane1  2nd.w plane2 */
+	{ 0xc20000, 0xc20003, MWA16_NOP },			/*seems it is a leftover from rainbow, games writes scroll y here, too */
+   	{ 0xc40000, 0xc40003, MWA16_RAM, &rastan_scrollx }, /* scroll X  1st.w plane1  2nd.w plane2 */
+	{ 0x440000, 0x4407ff, MWA16_RAM, &rastan_spriteram },
 	{ 0x400006, 0x400007, jumping_sound_w },
-	{ 0xd00000, 0xd01fff, MWA_BANK5 }, 			/* Needed for Attract Mode */
-	{ 0x3c0000, 0x3c0001, MWA_NOP },			/* Watchdog ? */
-	{ 0x800000, 0x80ffff, MWA_NOP },			/* Original C-Chip location (not used) */
-	{ -1 }  /* end of table */
-};
+	{ 0xd00000, 0xd01fff, MWA16_RAM }, 			/* Needed for Attract Mode */
+	{ 0x3c0000, 0x3c0001, MWA16_NOP },			/* Watchdog ? */
+	{ 0x800000, 0x80ffff, MWA16_NOP },			/* Original C-Chip location (not used) */
+MEMORY_END
 
 #if 0
 static WRITE_HANDLER( jumping_bankswitch_w )
@@ -399,8 +374,7 @@ static WRITE_HANDLER( jumping_bankswitch_w )
 }
 #endif
 
-static struct MemoryReadAddress jumping_sound_readmem[] =
-{
+static MEMORY_READ_START( jumping_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 /*{ ????, ????, MRA_BANK6 },*/
 	{ 0x8000, 0x8fff, MRA_RAM },
@@ -408,11 +382,9 @@ static struct MemoryReadAddress jumping_sound_readmem[] =
 	{ 0xb400, 0xb400, YM2203_status_port_1_r },
 	{ 0xb800, 0xb800, jumping_latch_r },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress jumping_sound_writemem[] =
-{
+static MEMORY_WRITE_START( jumping_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0xb000, 0xb000, YM2203_control_port_0_w },
@@ -421,8 +393,7 @@ static struct MemoryWriteAddress jumping_sound_writemem[] =
 	{ 0xb401, 0xb401, YM2203_write_port_1_w },
 	{ 0xbc00, 0xbc00, MWA_NOP },
 /*{ 0xbc00, 0xbc00, jumping_bankswitch_w },*/ /*looks like a bankswitch, but sound works with or without it*/
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( jumping )
 

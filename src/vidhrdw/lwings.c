@@ -86,7 +86,7 @@ int lwings_vh_start(void)
 	if (!fg_tilemap || !bg1_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 3;
+	tilemap_set_transparent_pen(fg_tilemap,3);
 
 	return 0;
 }
@@ -100,10 +100,10 @@ int trojan_vh_start(void)
 	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 3;
-	bg1_tilemap->transparent_pen = 0;
-	bg1_tilemap->transmask[0] = 0xffff; /* split type 0 is totally transparent in front half */
-	bg1_tilemap->transmask[1] = 0xf07f; /* split type 1 has pens 7-11 opaque in front half */
+	tilemap_set_transparent_pen(fg_tilemap,3);
+	tilemap_set_transparent_pen(bg1_tilemap,0);
+	tilemap_set_transmask(bg1_tilemap,0,0xffff); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg1_tilemap,1,0xf07f); /* split type 1 has pens 7-11 opaque in front half */
 
 	trojan_vh_type = 0;
 
@@ -318,13 +318,11 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	lwings_mark_sprite_colors();
 
-	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg1_tilemap,0);
+	tilemap_draw(bitmap,bg1_tilemap,0,0);
 	lwings_draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }
 
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -334,15 +332,13 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	trojan_mark_sprite_colors();
 
-	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg2_tilemap,0);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK);
+	tilemap_draw(bitmap,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK,0);
 	trojan_draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_FRONT);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }
 
 void lwings_eof_callback(void)

@@ -109,8 +109,7 @@ static WRITE_HANDLER( wc90_sound_command_w )
 	cpu_cause_interrupt(2,Z80_NMI_INT);
 }
 
-static struct MemoryReadAddress wc90_readmem1[] =
-{
+static MEMORY_READ_START( wc90_readmem1 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM }, /* Main RAM */
 	{ 0xa000, 0xa7ff, wc90_tile_colorram_r }, /* bg 1 color ram */
@@ -128,11 +127,9 @@ static struct MemoryReadAddress wc90_readmem1[] =
 	{ 0xfc05, 0xfc05, input_port_4_r }, /* Start & Coin */
 	{ 0xfc06, 0xfc06, input_port_2_r }, /* DIP Switch A */
 	{ 0xfc07, 0xfc07, input_port_3_r }, /* DIP Switch B */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress wc90_readmem2[] =
-{
+static MEMORY_READ_START( wc90_readmem2 )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
@@ -140,11 +137,9 @@ static struct MemoryReadAddress wc90_readmem2[] =
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_BANK2 },
 	{ 0xf800, 0xfbff, wc90_shared_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress wc90_writemem1[] =
-{
+static MEMORY_WRITE_START( wc90_writemem1 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xa7ff, wc90_tile_colorram_w, &wc90_tile_colorram },
@@ -172,11 +167,9 @@ static struct MemoryWriteAddress wc90_writemem1[] =
 	{ 0xfcc0, 0xfcc0, wc90_sound_command_w },
 	{ 0xfcd0, 0xfcd0, MWA_NOP },	/* ??? */
 	{ 0xfce0, 0xfce0, wc90_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress wc90_writemem2[] =
-{
+static MEMORY_WRITE_START( wc90_writemem2 )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd7ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -186,11 +179,9 @@ static struct MemoryWriteAddress wc90_writemem2[] =
 	{ 0xf800, 0xfbff, wc90_shared_w },
 	{ 0xfc00, 0xfc00, wc90_bankswitch1_w },
 	{ 0xfc01, 0xfc01, MWA_NOP },	/* ??? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xf800, YM2203_status_port_0_r },
@@ -199,19 +190,16 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xf803, 0xf803, YM2203_read_port_1_r },
 	{ 0xfc00, 0xfc00, MRA_NOP }, /* ??? adpcm ??? */
 	{ 0xfc10, 0xfc10, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2203_control_port_0_w },
 	{ 0xf801, 0xf801, YM2203_write_port_0_w },
 	{ 0xf802, 0xf802, YM2203_control_port_1_w },
 	{ 0xf803, 0xf803, YM2203_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( wc90 )
 	PORT_START	/* IN0 bit 0-5 */

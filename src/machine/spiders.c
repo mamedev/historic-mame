@@ -77,10 +77,10 @@ static struct pia6821_interface pia_3_intf =
 void spiders_init_machine(void)
 {
 	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_0_intf);
-	pia_config(1, PIA_ALTERNATE_ORDERING | PIA_8BIT, &pia_1_intf);
-	pia_config(2, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_2_intf);
-	pia_config(3, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_3_intf);
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	pia_config(1, PIA_ALTERNATE_ORDERING, &pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING, &pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &pia_3_intf);
 	pia_reset();
 }
 

@@ -106,8 +106,7 @@ extern size_t colorram2_size;
 
 
 
-static struct MemoryReadAddress rallybik_readmem[] =
-{
+static MEMORY_READ_START( rallybik_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x080000, 0x083fff, MRA_BANK1 },
 	{ 0x0c0000, 0x0c0fff, MRA_BANK2 },				/* sprite ram data */
@@ -118,10 +117,8 @@ static struct MemoryReadAddress rallybik_readmem[] =
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_r },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
-	{ -1 }
-};
-static struct MemoryWriteAddress rallybik_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( rallybik_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x083fff, MWA_BANK1 },
 	{ 0x0c0000, 0x0c0fff, MWA_BANK2, &spriteram, &spriteram_size },	/* sprite ram data */
@@ -134,11 +131,9 @@ static struct MemoryWriteAddress rallybik_writemem[] =
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
 	{ 0x180000, 0x180fff, toaplan1_shared_w, &toaplan1_sharedram },
 	{ 0x1c0000, 0x1c0003, offsetregs_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress truxton_readmem[] =
-{
+static MEMORY_READ_START( truxton_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x080000, 0x083fff, MRA_BANK1 },
 	{ 0x0c0000, 0x0c0001, input_port_0_r },
@@ -151,10 +146,8 @@ static struct MemoryReadAddress truxton_readmem[] =
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_r },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
-	{ -1 }
-};
-static struct MemoryWriteAddress truxton_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( truxton_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x083fff, MWA_BANK1 },
 	{ 0x0c0002, 0x0c0003, video_ofs_w },
@@ -170,11 +163,9 @@ static struct MemoryWriteAddress truxton_writemem[] =
 	{ 0x180000, 0x180fff, toaplan1_shared_w, &toaplan1_sharedram },
 	{ 0x1c0000, 0x1c0003, offsetregs_w },
 	{ 0x1c0006, 0x1c0007, toaplan1_flipscreen_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress hellfire_readmem[] =
-{
+static MEMORY_READ_START( hellfire_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x047fff, MRA_BANK1 },
 	{ 0x084000, 0x0847ff, toaplan1_colorram1_r },
@@ -187,10 +178,8 @@ static struct MemoryReadAddress hellfire_readmem[] =
 	{ 0x140002, 0x140003, video_ofs_r },
 	{ 0x140004, 0x140005, toaplan1_videoram1_r },	/* sprites info */
 	{ 0x140006, 0x140007, toaplan1_videoram2_r },	/* sprite size ? */
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress hellfire_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( hellfire_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x047fff, MWA_BANK1 },
 	{ 0x080002, 0x080003, toaplan1_int_enable_w },
@@ -206,11 +195,9 @@ static struct MemoryWriteAddress hellfire_writemem[] =
 	{ 0x140006, 0x140007, toaplan1_videoram2_w },	/* sprite size ? */
 	{ 0x180000, 0x180003, offsetregs_w },
 	{ 0x180006, 0x180007, toaplan1_flipscreen_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress zerowing_readmem[] =
-{
+static MEMORY_READ_START( zerowing_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x080000, 0x087fff, MRA_BANK1 },
 	{ 0x400000, 0x400005, toaplan1_unk_r },
@@ -224,10 +211,8 @@ static struct MemoryReadAddress zerowing_readmem[] =
 	{ 0x4c0002, 0x4c0003, video_ofs_r },
 	{ 0x4c0004, 0x4c0005, toaplan1_videoram1_r },	/* sprites info */
 	{ 0x4c0006, 0x4c0007, toaplan1_videoram2_r },	/* sprite size ? */
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress zerowing_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( zerowing_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x087fff, MWA_BANK1 },
 	{ 0x0c0000, 0x0c0003, offsetregs_w },
@@ -243,11 +228,9 @@ static struct MemoryWriteAddress zerowing_writemem[] =
 	{ 0x4c0002, 0x4c0003, video_ofs_w },
 	{ 0x4c0004, 0x4c0005, toaplan1_videoram1_w },	/* sprites info */
 	{ 0x4c0006, 0x4c0007, toaplan1_videoram2_w },	/* sprite size ? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress demonwld_readmem[] =
-{
+static MEMORY_READ_START( demonwld_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x400000, 0x400001, input_port_0_r },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
@@ -261,10 +244,8 @@ static struct MemoryReadAddress demonwld_readmem[] =
 	{ 0xa00004, 0xa00005, toaplan1_videoram1_r },	/* sprites info */
 	{ 0xa00006, 0xa00007, toaplan1_videoram2_r },	/* sprite size ? */
 	{ 0xc00000, 0xc03fff, MRA_BANK1},
-	{ -1 }
-};
-static struct MemoryWriteAddress demonwld_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( demonwld_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x340006, 0x340007, toaplan1_flipscreen_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
@@ -281,11 +262,9 @@ static struct MemoryWriteAddress demonwld_writemem[] =
 	{ 0xc00000, 0xc03fff, MWA_BANK1},
 	{ 0xe00000, 0xe00003, offsetregs_w },
 	{ 0xe0000a, 0xe0000b, demonwld_dsp_ctrl_w },			/* DSP Comms control */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress samesame_readmem[] =
-{
+static MEMORY_READ_START( samesame_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x040000, 0x07ffff, MRA_ROM },
 	{ 0x0c0000, 0x0c3fff, MRA_BANK1 },
@@ -305,10 +284,8 @@ static struct MemoryReadAddress samesame_readmem[] =
 	{ 0x1c0002, 0x1c0003, video_ofs_r },
 	{ 0x1c0004, 0x1c0005, toaplan1_videoram1_r },	/* sprites info */
 	{ 0x1c0006, 0x1c0007, toaplan1_videoram2_r },	/* sprite size ? */
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress samesame_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( samesame_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x040000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x080003, offsetregs_w },
@@ -328,11 +305,9 @@ static struct MemoryWriteAddress samesame_writemem[] =
 	{ 0x1c0002, 0x1c0003, video_ofs_w },
 	{ 0x1c0004, 0x1c0005, toaplan1_videoram1_w },	/* sprites info */
 	{ 0x1c0006, 0x1c0007, toaplan1_videoram2_w },	/* sprite size ? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress outzone_readmem[] =
-{
+static MEMORY_READ_START( outzone_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x100001, input_port_0_r },
 	{ 0x100002, 0x100003, video_ofs_r },
@@ -346,10 +321,8 @@ static struct MemoryReadAddress outzone_readmem[] =
 	{ 0x300000, 0x300001, toaplan1_vblank_r },
 	{ 0x304000, 0x3047ff, toaplan1_colorram1_r },
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_r },
-	{ -1 }
-};
-static struct MemoryWriteAddress outzone_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( outzone_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100002, 0x100003, video_ofs_w },
 	{ 0x100004, 0x100005, toaplan1_videoram1_w },	/* sprites info */
@@ -365,11 +338,9 @@ static struct MemoryWriteAddress outzone_writemem[] =
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
 	{ 0x340000, 0x340003, offsetregs_w },
 	{ 0x340006, 0x340007, toaplan1_flipscreen_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress vimana_readmem[] =
-{
+static MEMORY_READ_START( vimana_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x0c0000, 0x0c0001, input_port_0_r },
 	{ 0x0c0002, 0x0c0003, video_ofs_r },
@@ -390,10 +361,8 @@ static struct MemoryReadAddress vimana_readmem[] =
 	{ 0x4c0002, 0x4c0003, video_ofs3_r },
 	{ 0x4c0004, 0x4c0007, toaplan1_videoram3_r },	/* tile layers */
 	{ 0x4c0010, 0x4c001f, scrollregs_r },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress vimana_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( vimana_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x080000, 0x080003, offsetregs_w },
 	{ 0x080006, 0x080007, toaplan1_flipscreen_w },
@@ -409,27 +378,21 @@ static struct MemoryWriteAddress vimana_writemem[] =
 	{ 0x4c0002, 0x4c0003, video_ofs3_w },
 	{ 0x4c0004, 0x4c0007, toaplan1_videoram3_w },	/* tile layers */
 	{ 0x4c0010, 0x4c001f, scrollregs_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress sound_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_RAM, &toaplan1_sharedram },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort truxton_sound_readport[] =
-{
+static PORT_READ_START( truxton_sound_readport )
 	{ 0x00, 0x00, input_port_1_r },	/* Player 1 */
 	{ 0x10, 0x10, input_port_2_r },	/* Player 2 */
 	{ 0x20, 0x20, input_port_5_r },	/* Coin/Start inputs */
@@ -437,25 +400,19 @@ static struct IOReadPort truxton_sound_readport[] =
 	{ 0x50, 0x50, input_port_4_r },	/* DSW2 */
 	{ 0x60, 0x60, YM3812_status_port_0_r },
 	{ 0x70, 0x70, input_port_6_r },	/* Territory Jumper Block for Truxton */
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort truxton_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( truxton_sound_writeport )
 	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout */
 	{ 0x60, 0x60, YM3812_control_port_0_w },
 	{ 0x61, 0x61, YM3812_write_port_0_w },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort rallybik_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( rallybik_sound_writeport )
 	{ 0x30, 0x30, rallybik_coin_w },	/* Coin counter/lockout */
 	{ 0x60, 0x60, YM3812_control_port_0_w },
 	{ 0x61, 0x61, YM3812_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort hellfire_sound_readport[] =
-{
+static PORT_READ_START( hellfire_sound_readport )
 	{ 0x00, 0x00, input_port_3_r },	/* DSW1 */
 	{ 0x10, 0x10, input_port_4_r },	/* DSW2 */
 	{ 0x20, 0x20, input_port_6_r },	/* Territory Jumper Block */
@@ -463,18 +420,14 @@ static struct IOReadPort hellfire_sound_readport[] =
 	{ 0x50, 0x50, input_port_2_r },	/* Player 2 */
 	{ 0x60, 0x60, input_port_5_r },	/* Coin/Start inputs */
 	{ 0x70, 0x70, YM3812_status_port_0_r },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort hellfire_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( hellfire_sound_writeport )
 	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout */
 	{ 0x70, 0x70, YM3812_control_port_0_w },
 	{ 0x71, 0x71, YM3812_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort zerowing_sound_readport[] =
-{
+static PORT_READ_START( zerowing_sound_readport )
 	{ 0x00, 0x00, input_port_1_r },	/* Player 1 */
 	{ 0x08, 0x08, input_port_2_r },	/* Player 2 */
 	{ 0x20, 0x20, input_port_3_r },	/* DSW1 */
@@ -482,18 +435,14 @@ static struct IOReadPort zerowing_sound_readport[] =
 	{ 0x80, 0x80, input_port_5_r },	/* Coin/Start inputs */
 	{ 0x88, 0x88, input_port_6_r },	/* Territory Jumper Block */
 	{ 0xa8, 0xa8, YM3812_status_port_0_r },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort zerowing_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( zerowing_sound_writeport )
 	{ 0xa0, 0xa0, toaplan1_coin_w },	/* Coin counter/lockout */
 	{ 0xa8, 0xa8, YM3812_control_port_0_w },
 	{ 0xa9, 0xa9, YM3812_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort demonwld_sound_readport[] =
-{
+static PORT_READ_START( demonwld_sound_readport )
 	{ 0x00, 0x00, YM3812_status_port_0_r },
 	{ 0x20, 0x20, input_port_6_r },
 	{ 0x60, 0x60, input_port_5_r },
@@ -501,18 +450,14 @@ static struct IOReadPort demonwld_sound_readport[] =
 	{ 0xa0, 0xa0, input_port_4_r },
 	{ 0xc0, 0xc0, input_port_2_r },
 	{ 0xe0, 0xe0, input_port_3_r },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort demonwld_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( demonwld_sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
 	{ 0x40, 0x40, toaplan1_coin_w },	/* Coin counter/lockout */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort outzone_sound_readport[] =
-{
+static PORT_READ_START( outzone_sound_readport )
 	{ 0x08, 0x08, input_port_3_r },
 	{ 0x0c, 0x0c, input_port_4_r },
 	{ 0x10, 0x10, input_port_5_r },
@@ -520,43 +465,32 @@ static struct IOReadPort outzone_sound_readport[] =
 	{ 0x18, 0x18, input_port_2_r },
 	{ 0x1c, 0x1c, input_port_6_r },
 	{ 0x00, 0x00, YM3812_status_port_0_r },
-	{ -1 }	/* end of table */
-};
-static struct IOWritePort outzone_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( outzone_sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
 	{ 0x04, 0x04, toaplan1_coin_w },	/* Coin counter/lockout */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress DSP_readmem[] =
-{
+static MEMORY_READ_START( DSP_readmem )
 	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
 	{ 0x8000, 0x8fff, MRA_ROM },	/* 800h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress DSP_writemem[] =
-{
+static MEMORY_WRITE_START( DSP_writemem )
 	{ 0x0000, 0x011f, MWA_RAM },
 	{ 0x8000, 0x8fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort DSP_readport[] =
-{
+static PORT_READ_START( DSP_readport )
 	{ 0x01, 0x01, demonwld_dsp_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort DSP_writeport[] =
-{
+static PORT_WRITE_START( DSP_writeport )
 	{ 0x00, 0x03, demonwld_dsp_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 /*****************************************************************************

@@ -15,28 +15,28 @@ a400-a7ff Color RAM
 8400-8fff sprites
 
 read:
-c000      IN0
-c001      IN1
-c002      DSW1
-c003      DSW2
-c008      IN2
+c000	  IN0
+c001	  IN1
+c002	  DSW1
+c003	  DSW2
+c008	  IN2
 
 write:
 c000-c002 ?
-c006      ?
-c018      coinAen, used to enable input on coin slot A
-c019      coinBen, used to enable input on coin slot B
-c01a      serven,  used to enable input on service sw
-c01b      counterA,coin counter for slot A
-c01c      counterB,coin counter for slot B
-c01d      background enable
-c01e      flip screen
-c01f      interrupt enable
+c006	  ?
+c018	  coinAen, used to enable input on coin slot A
+c019	  coinBen, used to enable input on coin slot B
+c01a	  serven,  used to enable input on service sw
+c01b	  counterA,coin counter for slot A
+c01c	  counterB,coin counter for slot B
+c01d	  background enable
+c01e	  flip screen
+c01f	  interrupt enable
 
 c028-c029 background playfield position
-c031      sprite enable ?
-c032      sprite start
-c033      sprite count
+c031	  sprite enable ?
+c032	  sprite start
+c033	  sprite count
 
 
 interrupts:
@@ -86,9 +86,12 @@ WRITE_HANDLER( congo_daio_w )
 	}
 }
 
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( congo_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+static MEMORY_READ_START( readmem )
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0xa000, 0xa7ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },
@@ -97,11 +100,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc002, 0xc002, input_port_3_r },
 	{ 0xc003, 0xc003, input_port_4_r },
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xa000, 0xa3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xa400, 0xa7ff, colorram_w, &colorram },
@@ -115,28 +116,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc018, 0xc018, MWA_NOP }, /* coinAen */
 	{ 0xc019, 0xc019, MWA_NOP }, /* coinBen */
 	{ 0xc01a, 0xc01a, MWA_NOP }, /* serven */
-	{ 0xc01b, 0xc01c, coin_counter_w }, /* counterA, counterB */
+	{ 0xc01b, 0xc01c, congo_coin_counter_w }, /* counterA, counterB */
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sh_readmem[] =
-{
+static MEMORY_READ_START( sh_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x8000, 0x8003, soundlatch_r },
-	{ -1 }
-};
-static struct MemoryWriteAddress sh_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( sh_writemem )
 	{ 0x6000, 0x6003, SN76496_0_w },
 	{ 0xa000, 0xa003, SN76496_1_w },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8003, congo_daio_w },
 	{ 0x0000, 0x2000, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -149,7 +145,7 @@ static struct MemoryWriteAddress sh_writemem[] =
 static int congo_interrupt(void)
 {
 	if (readinputport(5) & 1)	/* get status of the F2 key */
-		return nmi_interrupt();	/* trigger self test */
+		return nmi_interrupt(); /* trigger self test */
 	else return interrupt();
 }
 
@@ -191,62 +187,62 @@ INPUT_PORTS_START( congo )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x03, "10000" )
-	PORT_DIPSETTING(    0x01, "20000" )
-	PORT_DIPSETTING(    0x02, "30000" )
-	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPSETTING(	0x03, "10000" )
+	PORT_DIPSETTING(	0x01, "20000" )
+	PORT_DIPSETTING(	0x02, "30000" )
+	PORT_DIPSETTING(	0x00, "40000" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???" )
-	PORT_DIPSETTING(    0x0c, "Easy?" )
-	PORT_DIPSETTING(    0x04, "Medium?" )
-	PORT_DIPSETTING(    0x08, "Hard?" )
-	PORT_DIPSETTING(    0x00, "Hardest?" )
+	PORT_DIPSETTING(	0x0c, "Easy?" )
+	PORT_DIPSETTING(	0x04, "Medium?" )
+	PORT_DIPSETTING(	0x08, "Hard?" )
+	PORT_DIPSETTING(	0x00, "Hardest?" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x30, "3" )
+	PORT_DIPSETTING(	0x10, "4" )
+	PORT_DIPSETTING(	0x20, "5" )
+	PORT_BITX( 0,		0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, "2C/1C 5C/3C 6C/4C" )
-	PORT_DIPSETTING(    0x0a, "2C/1C 3C/2C 4C/3C" )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, "1C/1C 5C/6C" )
-	PORT_DIPSETTING(    0x0c, "1C/1C 4C/5C" )
-	PORT_DIPSETTING(    0x04, "1C/1C 2C/3C" )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x08, "1C/2C 5C/11C" )
-	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x0f, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x0b, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x06, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(	0x0a, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(	0x0c, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(	0x04, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(	0x0d, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x08, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(	0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(	0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x09, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0x0e, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0xf0, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x60, "2C/1C 5C/3C 6C/4C" )
-	PORT_DIPSETTING(    0xa0, "2C/1C 3C/2C 4C/3C" )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, "1C/1C 5C/6C" )
-	PORT_DIPSETTING(    0xc0, "1C/1C 4C/5C" )
-	PORT_DIPSETTING(    0x40, "1C/1C 2C/3C" )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, "1C/2C 5C/11C" )
-	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
-	PORT_DIPSETTING(    0x50, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0xf0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0xb0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x60, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(	0xa0, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(	0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x20, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(	0xc0, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(	0x40, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(	0xd0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x80, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(	0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(	0x50, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x90, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0xe0, DEF_STR( 1C_6C ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -293,62 +289,62 @@ INPUT_PORTS_START( tiptop )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x03, "10000" )
-	PORT_DIPSETTING(    0x01, "20000" )
-	PORT_DIPSETTING(    0x02, "30000" )
-	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPSETTING(	0x03, "10000" )
+	PORT_DIPSETTING(	0x01, "20000" )
+	PORT_DIPSETTING(	0x02, "30000" )
+	PORT_DIPSETTING(	0x00, "40000" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???" )
-	PORT_DIPSETTING(    0x0c, "Easy?" )
-	PORT_DIPSETTING(    0x04, "Medium?" )
-	PORT_DIPSETTING(    0x08, "Hard?" )
-	PORT_DIPSETTING(    0x00, "Hardest?" )
+	PORT_DIPSETTING(	0x0c, "Easy?" )
+	PORT_DIPSETTING(	0x04, "Medium?" )
+	PORT_DIPSETTING(	0x08, "Hard?" )
+	PORT_DIPSETTING(	0x00, "Hardest?" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x30, "3" )
+	PORT_DIPSETTING(	0x10, "4" )
+	PORT_DIPSETTING(	0x20, "5" )
+	PORT_BITX( 0,		0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x40, 0x40, "Sound" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, "2C/1C 5C/3C 6C/4C" )
-	PORT_DIPSETTING(    0x0a, "2C/1C 3C/2C 4C/3C" )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, "1C/1C 5C/6C" )
-	PORT_DIPSETTING(    0x0c, "1C/1C 4C/5C" )
-	PORT_DIPSETTING(    0x04, "1C/1C 2C/3C" )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x08, "1C/2C 5C/11C" )
-	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x0f, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x0b, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x06, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(	0x0a, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(	0x0c, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(	0x04, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(	0x0d, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x08, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(	0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(	0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x09, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0x0e, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0xf0, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x60, "2C/1C 5C/3C 6C/4C" )
-	PORT_DIPSETTING(    0xa0, "2C/1C 3C/2C 4C/3C" )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, "1C/1C 5C/6C" )
-	PORT_DIPSETTING(    0xc0, "1C/1C 4C/5C" )
-	PORT_DIPSETTING(    0x40, "1C/1C 2C/3C" )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, "1C/2C 5C/11C" )
-	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
-	PORT_DIPSETTING(    0x50, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0xf0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0xb0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x60, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(	0xa0, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(	0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x20, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(	0xc0, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(	0x40, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(	0xd0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x80, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(	0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(	0x50, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x90, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0xe0, DEF_STR( 1C_6C ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -362,7 +358,7 @@ static struct GfxLayout spritelayout =
 	32,32,	/* 32*32 sprites */
 	128,	/* 128 sprites */
 	3,	/* 3 bits per pixel */
-	{ 2*128*128*8, 128*128*8, 0 },    /* the bitplanes are separated */
+	{ 2*128*128*8, 128*128*8, 0 },	  /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
@@ -377,9 +373,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &zaxxon_charlayout1,  0, 32 },	/* characters */
-	{ REGION_GFX2, 0, &zaxxon_charlayout2,  0, 32 },	/* background tiles */
-	{ REGION_GFX3, 0, &spritelayout,        0, 32 },	/* sprites */
+	{ REGION_GFX1, 0, &zaxxon_charlayout1,	0, 32 },	/* characters */
+	{ REGION_GFX2, 0, &zaxxon_charlayout2,	0, 32 },	/* background tiles */
+	{ REGION_GFX3, 0, &spritelayout,		0, 32 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -392,7 +388,7 @@ static struct SN76496interface sn76496_interface =
 	{ 100, 100 }
 };
 
-/* Samples for Congo Bongo, these are needed for now    */
+/* Samples for Congo Bongo, these are needed for now	*/
 /* as I haven't gotten around to calculate a formula for the */
 /* simple oscillators producing the drums VL*/
 /* As for now, thanks to Tim L. for providing samples */
@@ -411,7 +407,7 @@ static const char *congo_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	5,	/* 5 channels */
-	25,	/* volume */
+	25, /* volume */
 	congo_sample_names
 };
 
@@ -483,16 +479,16 @@ ROM_START( congo )
 	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 
 	ROM_REGION( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b )	/* characters */
+	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b ) /* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "congo8.bin",   0x00000, 0x2000, 0xdb99a619 )	/* background tiles */
+	ROM_LOAD( "congo8.bin",   0x00000, 0x2000, 0xdb99a619 ) /* background tiles */
 	ROM_LOAD( "congo9.bin",   0x02000, 0x2000, 0x93e2309e )
 	ROM_LOAD( "congo10.bin",  0x04000, 0x2000, 0xf27a9407 )
 
 	ROM_REGION( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "congo12.bin",  0x00000, 0x2000, 0x15e3377a )	/* sprites */
+	ROM_LOAD( "congo12.bin",  0x00000, 0x2000, 0x15e3377a ) /* sprites */
 	ROM_LOAD( "congo13.bin",  0x02000, 0x2000, 0x1d1321c8 )
 	ROM_LOAD( "congo11.bin",  0x04000, 0x2000, 0x73e2709f )
 	ROM_LOAD( "congo14.bin",  0x06000, 0x2000, 0xbf9169fe )
@@ -520,16 +516,16 @@ ROM_START( tiptop )
 	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 
 	ROM_REGION( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b )	/* characters */
+	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b ) /* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
 
 	ROM_REGION( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "congo8.bin",   0x00000, 0x2000, 0xdb99a619 )	/* background tiles */
+	ROM_LOAD( "congo8.bin",   0x00000, 0x2000, 0xdb99a619 ) /* background tiles */
 	ROM_LOAD( "congo9.bin",   0x02000, 0x2000, 0x93e2309e )
 	ROM_LOAD( "congo10.bin",  0x04000, 0x2000, 0xf27a9407 )
 
 	ROM_REGION( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "congo12.bin",  0x00000, 0x2000, 0x15e3377a )	/* sprites */
+	ROM_LOAD( "congo12.bin",  0x00000, 0x2000, 0x15e3377a ) /* sprites */
 	ROM_LOAD( "congo13.bin",  0x02000, 0x2000, 0x1d1321c8 )
 	ROM_LOAD( "congo11.bin",  0x04000, 0x2000, 0x73e2709f )
 	ROM_LOAD( "congo14.bin",  0x06000, 0x2000, 0xbf9169fe )
@@ -548,5 +544,6 @@ ROM_END
 
 
 
-GAME( 1983, congo,  0,     congo, congo,  0, ROT90, "Sega", "Congo Bongo" )
+GAME( 1983, congo,	0,	   congo, congo,  0, ROT90, "Sega", "Congo Bongo" )
 GAME( 1983, tiptop, congo, congo, tiptop, 0, ROT90, "Sega", "Tip Top" )
+

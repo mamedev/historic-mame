@@ -75,8 +75,7 @@ static READ_HANDLER( pcktgal_adpcm_reset_r )
 
 /***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1800, 0x1800, input_port_0_r },
 	{ 0x1a00, 0x1a00, input_port_1_r },
@@ -84,11 +83,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4000, 0x5fff, MRA_BANK1 },
 	{ 0x6000, 0x7fff, MRA_BANK2 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, videoram_w, &videoram, &videoram_size },
 	{ 0x1000, 0x11ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -97,23 +94,19 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1a00, 0x1a00, pcktgal_sound_w },
 	{ 0x1c00, 0x1c00, pcktgal_bank_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /***************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x3400, 0x3400, pcktgal_adpcm_reset_r },	/* ? not sure */
 	{ 0x4000, 0x7fff, MRA_BANK3 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0800, YM2203_control_port_0_w },
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
@@ -122,8 +115,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1800, 0x1800, pcktgal_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
 	{ 0x2000, 0x2000, pcktgal_sound_bank_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************/
 

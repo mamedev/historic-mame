@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *galspnbl_bgvideoram;
+data16_t *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
 static int screenscroll;
 
 
@@ -30,29 +30,22 @@ void galspnbl_init_palette(unsigned char *palette, unsigned short *colortable,co
 
 
 
-READ_HANDLER( galspnbl_bgvideoram_r )
+WRITE16_HANDLER( galspnbl_bgvideoram_w )
 {
-	return READ_WORD(&galspnbl_bgvideoram[offset]);
+	int sx,sy;
+
+
+	data = COMBINE_DATA(&galspnbl_bgvideoram[offset]);
+
+	sx = offset % 512;
+	sy = offset / 512;
+
+	plot_pixel(tmpbitmap,sx,sy,Machine->pens[1024 + (data >> 1)]);
 }
 
-WRITE_HANDLER( galspnbl_bgvideoram_w )
+WRITE16_HANDLER( galspnbl_scroll_w )
 {
-	int sx,sy,color;
-
-
-	COMBINE_WORD_MEM(&galspnbl_bgvideoram[offset],data);
-
-	sx = (offset/2) % 512;
-	sy = (offset/2) / 512;
-
-	color = READ_WORD(&galspnbl_bgvideoram[offset]);
-
-	plot_pixel(tmpbitmap,sx,sy,Machine->pens[1024 + (color >> 1)]);
-}
-
-WRITE_HANDLER( galspnbl_scroll_w )
-{
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 		screenscroll = 4-(data & 0xff);
 }
 
@@ -89,22 +82,22 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 		{42,43,46,47,58,59,62,63}
 	};
 
-	for (offs = spriteram_size-16;offs >= 0;offs -= 16)
+	for (offs = (spriteram_size-16)/2;offs >= 0;offs -= 8)
 	{
 		int sx,sy,code,color,size,attr,flipx,flipy;
 		int col,row;
 
-		attr = READ_WORD(&spriteram[offs]);
+		attr = spriteram16[offs];
 		if ((attr & 0x0004) && ((attr & 0x0040) == 0 || (cpu_getcurrentframe() & 1))
 //				&& ((attr & 0x0030) >> 4) == priority)
 				&& ((attr & 0x0020) >> 5) == priority)
 		{
-			code = READ_WORD(&spriteram[offs+2]);
-			color = READ_WORD(&spriteram[offs+4]);
+			code = spriteram16[offs+1];
+			color = spriteram16[offs+2];
 			size = 1 << (color & 0x0003); // 1,2,4,8
 			color = (color & 0x00f0) >> 4;
-			sx = READ_WORD(&spriteram[offs+8]) + screenscroll;
-			sy = READ_WORD(&spriteram[offs+6]);
+			sx = spriteram16[offs+4] + screenscroll;
+			sy = spriteram16[offs+3];
 			flipx = attr & 0x0001;
 			flipy = attr & 0x0002;
 
@@ -141,15 +134,15 @@ void galspnbl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	draw_sprites(bitmap,0);
 
-	for (offs = 0;offs < 0x1000;offs += 2)
+	for (offs = 0;offs < 0x1000/2;offs++)
 	{
 		int sx,sy,code,attr,color;
 
-		code = READ_WORD(&videoram[offs]);
-		attr = READ_WORD(&colorram[offs]);
+		code = galspnbl_videoram[offs];
+		attr = galspnbl_colorram[offs];
 		color = (attr & 0x00f0) >> 4;
-		sx = (offs/2) % 64;
-		sy = (offs/2) / 64;
+		sx = offs % 64;
+		sy = offs / 64;
 
 		/* What is this? A priority/half transparency marker? */
 		if (!(attr & 0x0008))

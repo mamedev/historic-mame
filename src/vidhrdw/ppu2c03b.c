@@ -927,7 +927,7 @@ void ppu2c03b_reset( int num, int scan_scale )
  *************************************/
 int ppu2c03b_r( int num, int offset )
 {
-	data_t ret = 0;
+	int ret = 0;
 
 	/* check bounds */
 	if ( num >= intf->num )

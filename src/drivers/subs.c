@@ -29,8 +29,7 @@ WRITE_HANDLER( subs_sonar1_w );
 WRITE_HANDLER( subs_crash_w );
 WRITE_HANDLER( subs_explode_w );
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0007, subs_control_r },
 	{ 0x0020, 0x0027, subs_coin_r },
 	{ 0x0060, 0x0063, subs_options_r },
@@ -38,11 +37,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0800, 0x0bff, MRA_RAM },
 	{ 0x2000, 0x3fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM }, /* A14/A15 unused, so mirror ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0000, subs_noise_reset_w },
 	{ 0x0020, 0x0020, subs_steer_reset_w },
 //	{ 0x0040, 0x0040, subs_timer_reset_w },
@@ -58,8 +55,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( subs )
 	PORT_START /* OPTIONS */

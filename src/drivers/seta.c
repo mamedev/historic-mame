@@ -76,8 +76,8 @@ void seta_vh_screenrefresh_no_layers(struct osd_bitmap *bitmap,int full_refresh)
 
 extern unsigned char *seta_sound_ram;
 
-READ_HANDLER ( seta_sound_r );
-READ_HANDLER ( seta_sound_word_r );
+READ_HANDLER( seta_sound_r );
+READ_HANDLER( seta_sound_word_r );
 WRITE_HANDLER( seta_sound_w );
 WRITE_HANDLER( seta_sound_word_w );
 int  seta_sh_start_4KHz(const struct MachineSound *msound);
@@ -177,7 +177,7 @@ static READ_HANDLER( seta_dsw_r )
 								Caliber 50
 ***************************************************************************/
 
-READ_HANDLER ( calibr50_ip_r )
+READ_HANDLER( calibr50_ip_r )
 {
 	int dir1 = readinputport(4) & 0xfff;	// analog port
 	int dir2 = readinputport(5) & 0xfff;	// analog port
@@ -191,7 +191,7 @@ READ_HANDLER ( calibr50_ip_r )
 		case 0x12:	return (dir1>>8);			// upper 4 bits of p1 rotation
 		case 0x14:	return (dir2&0xff);			// lower 8 bits of p2 rotation
 		case 0x16:	return (dir2>>8);			// upper 4 bits of p2 rotation
-		case 0x18:	return 0xffff;				// ? (value's read but not used)
+		case 0x18:	return ~0;					// ? (value's read but not used)
 		default:
 			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
 			return 0;
@@ -205,8 +205,7 @@ WRITE_HANDLER( calibr50_soundlatch_w )
 	cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the sound cpu to acknowledge
 }
 
-static struct MemoryReadAddress calibr50_readmem[] =
-{
+static MEMORY_READ_START( calibr50_readmem )
 	{ 0x000000, 0x09ffff, MRA_ROM					},	// ROM
 	{ 0xff0000, 0xffffff, MRA_BANK1					},	// RAM
 	{ 0x100000, 0x100007, MRA_NOP					},	// ? (same as a00010-a00017?)
@@ -224,11 +223,9 @@ static struct MemoryReadAddress calibr50_readmem[] =
 	{ 0xe00000, 0xe03fff, MRA_BANK9					},	// Sprites Code + X + Attr
 	{ 0xb00000, 0xb00001, soundlatch2_r				},	// From Sub CPU
 /**/{ 0xc00000, 0xc00001, MRA_BANK10				},	// ? $4000
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress calibr50_writemem[] =
-{
+static MEMORY_WRITE_START( calibr50_writemem )
 	{ 0x000000, 0x09ffff, MWA_ROM								},	// ROM
 	{ 0xff0000, 0xffffff, MWA_BANK1								},	// RAM
 	{ 0x200000, 0x200fff, MWA_BANK2								},	// NVRAM
@@ -243,8 +240,7 @@ static struct MemoryWriteAddress calibr50_writemem[] =
 	{ 0xe00000, 0xe03fff, MWA_BANK9, &spriteram_2				},	// Sprites Code + X + Attr
 	{ 0xb00000, 0xb00001, calibr50_soundlatch_w					},	// To Sub CPU
 	{ 0xc00000, 0xc00001, MWA_BANK10							},	// ? $4000
-	{ -1 }
-};
+MEMORY_END
 
 
 /***************************************************************************
@@ -252,8 +248,7 @@ static struct MemoryWriteAddress calibr50_writemem[] =
 			(with slight variations, and protections hooked in)
 ***************************************************************************/
 
-static struct MemoryReadAddress downtown_readmem[] =
-{
+static MEMORY_READ_START( downtown_readmem )
 	{ 0x000000, 0x09ffff, MRA_ROM					},	// ROM
 	{ 0xf00000, 0xffffff, MRA_BANK1					},	// RAM
 	{ 0x100000, 0x103fff, seta_sound_word_r			},	// Sound
@@ -266,11 +261,9 @@ static struct MemoryReadAddress downtown_readmem[] =
 /**/{ 0xc00000, 0xc00001, MRA_BANK7					},	// ? $4000
 /**/{ 0xd00000, 0xd00607, MRA_BANK8					},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MRA_BANK9					},	// Sprites Code + X + Attr
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress downtown_writemem[] =
-{
+static MEMORY_WRITE_START( downtown_writemem )
 	{ 0x000000, 0x09ffff, MWA_ROM								},	// ROM
 	{ 0xf00000, 0xffffff, MWA_BANK1								},	// RAM
 	{ 0x100000, 0x103fff, seta_sound_word_w, &seta_sound_ram	},	// Sound
@@ -284,8 +277,7 @@ static struct MemoryWriteAddress downtown_writemem[] =
 	{ 0xc00000, 0xc00001, MWA_BANK7								},	// ? $4000
 	{ 0xd00000, 0xd00607, MWA_BANK8, &spriteram					},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MWA_BANK9, &spriteram_2				},	// Sprites Code + X + Attr
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -295,8 +287,7 @@ static struct MemoryWriteAddress downtown_writemem[] =
 ***************************************************************************/
 
 
-static struct MemoryReadAddress msgundam_readmem[] =
-{
+static MEMORY_READ_START( msgundam_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM				},	// ROM
 	{ 0x100000, 0x1fffff, MRA_ROM				},	// ROM
 	{ 0x200000, 0x24ffff, MRA_BANK1				},	// RAM
@@ -314,10 +305,8 @@ static struct MemoryReadAddress msgundam_readmem[] =
 	{ 0xb00000, 0xb00005, MRA_BANK11			},	// VRAM 0&1 Ctrl
 	{ 0xb80000, 0xb80005, MRA_BANK12			},	// VRAM 1&2 Ctrl
 	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-	{ -1 }
-};
-static struct MemoryWriteAddress msgundam_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( msgundam_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM								},	// ROM
 	{ 0x100000, 0x1fffff, MWA_ROM								},	// ROM
 	{ 0x200000, 0x24ffff, MWA_BANK1								},	// RAM
@@ -336,8 +325,7 @@ static struct MemoryWriteAddress msgundam_writemem[] =
 	{ 0xb80000, 0xb80005, MWA_BANK12, &seta_vctrl_2				},	// VRAM 2&3 Ctrl
 	{ 0xc00000, 0xc03fff, seta_sound_word_w, &seta_sound_ram	},	// Sound
 //	{ 0xd00000, 0xd00007, MWA_NOP								},	// ?
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -368,8 +356,7 @@ WRITE_HANDLER( mirror_ram_w )
 }
 
 
-static struct MemoryReadAddress tndrcade_readmem[] =
-{
+static MEMORY_READ_START( tndrcade_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM					},	// ROM
 	{ 0x380000, 0x3803ff, MRA_BANK1					},	// Palette
 /**/{ 0x400000, 0x400001, MRA_BANK2					},	// ? $4000
@@ -378,11 +365,9 @@ static struct MemoryReadAddress tndrcade_readmem[] =
 	{ 0xc00000, 0xc03fff, MRA_BANK4					},	// Sprites Code + X + Attr
 	{ 0xe00000, 0xe03fff, MRA_BANK5					},	// RAM (Mirrored?)
 	{ 0xffc000, 0xffffff, mirror_ram_r				},	// RAM (Mirrored?)
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tndrcade_writemem[] =
-{
+static MEMORY_WRITE_START( tndrcade_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM							},	// ROM
 	{ 0x200000, 0x200001, MWA_NOP							},	// ? 0
 	{ 0x280000, 0x280001, MWA_NOP							},	// ? 0 / 1 (sub cpu related?)
@@ -395,8 +380,7 @@ static struct MemoryWriteAddress tndrcade_writemem[] =
 	{ 0xc00000, 0xc03fff, MWA_BANK4, &spriteram_2			},	// Sprites Code + X + Attr
 	{ 0xe00000, 0xe03fff, MWA_BANK5, &mirror_ram			},	// RAM (Mirrored?)
 	{ 0xffc000, 0xffffff, mirror_ram_w						},	// RAM (Mirrored?)
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -451,8 +435,7 @@ WRITE_HANDLER( usclssic_lockout_w )
 }
 
 
-static struct MemoryReadAddress usclssic_readmem[] =
-{
+static MEMORY_READ_START( usclssic_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM					},	// ROM
 	{ 0xff0000, 0xffffff, MRA_BANK1					},	// RAM
 	{ 0x800000, 0x800607, MRA_BANK2					},	// Sprites Y
@@ -469,11 +452,9 @@ static struct MemoryReadAddress usclssic_readmem[] =
 	{ 0xd02000, 0xd03fff, MRA_BANK8					},	// VRAM
 	{ 0xd04000, 0xd04fff, MRA_BANK9					},	//
 	{ 0xe00000, 0xe00fff, MRA_BANK10				},	// NVRAM? (odd bytes)
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress usclssic_writemem[] =
-{
+static MEMORY_WRITE_START( usclssic_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM							},	// ROM
 	{ 0xff0000, 0xffffff, MWA_BANK1							},	// RAM
 	{ 0x800000, 0x800607, MWA_BANK2 , &spriteram			},	// Sprites Y
@@ -489,8 +470,7 @@ static struct MemoryWriteAddress usclssic_writemem[] =
 	{ 0xd02000, 0xd03fff, seta_vram_1_w, &seta_vram_1		},	// VRAM
 	{ 0xd04000, 0xd04fff, MWA_BANK9							},	//
 	{ 0xe00000, 0xe00fff, MWA_BANK10						},	// NVRAM? (odd bytes)
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -498,8 +478,7 @@ static struct MemoryWriteAddress usclssic_writemem[] =
 					Blandia / War of Aero / Zing Zing Zip
 ***************************************************************************/
 
-static struct MemoryReadAddress wrofaero_readmem[] =
-{
+static MEMORY_READ_START( wrofaero_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM				},	// ROM
 	{ 0x100000, 0x1fffff, MRA_ROM				},	// ROM (for blandia)
 	{ 0x200000, 0x20ffff, MRA_BANK1				},	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
@@ -518,10 +497,8 @@ static struct MemoryReadAddress wrofaero_readmem[] =
 /**/{ 0xa80000, 0xa80001, MRA_BANK9				},	// ? 0x4000
 	{ 0xb00000, 0xb03fff, MRA_BANK10			},	// Sprites Code + X + Attr
 /**/{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-	{ -1 }
-};
-static struct MemoryWriteAddress wrofaero_writemem[] =
-{
+MEMORY_END
+static MEMORY_WRITE_START( wrofaero_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM								},	// ROM
 	{ 0x100000, 0x1fffff, MWA_ROM								},	// ROM (for blandia)
 	{ 0x200000, 0x20ffff, MWA_BANK1								},	// RAM
@@ -542,8 +519,7 @@ static struct MemoryWriteAddress wrofaero_writemem[] =
 //	{ 0xd00000, 0xd00007, MWA_NOP								},	// ?
 	{ 0xe00000, 0xe00001, MWA_NOP								},	// ?
 	{ 0xf00000, 0xf00001, MWA_NOP								},	// ?
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -583,19 +559,16 @@ static WRITE_HANDLER( sub_bankswitch_w )
 								Caliber 50
 ***************************************************************************/
 
-static struct MemoryReadAddress calibr50_sub_readmem[] =
-{
+static MEMORY_READ_START( calibr50_sub_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM			},	// RAM
 	{ 0x1000, 0x107f, seta_sound_r		},	// Sound
 	{ 0x1080, 0x1fff, MRA_RAM			},	// RAM
 	{ 0x4000, 0x4000, soundlatch_r		},	// From Main CPU
 	{ 0x8000, 0xbfff, MRA_BANK15		},	// Banked ROM
 	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress calibr50_sub_writemem[] =
-{
+static MEMORY_WRITE_START( calibr50_sub_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM							},	// RAM
 	{ 0x1000, 0x107f, seta_sound_w, &seta_sound_ram		},	// Sound
 	{ 0x1080, 0x1fff, MWA_RAM							},	// RAM
@@ -603,8 +576,7 @@ static struct MemoryWriteAddress calibr50_sub_writemem[] =
 	{ 0x8000, 0xbfff, MWA_ROM							},	// Banked ROM
 	{ 0xc000, 0xc000, soundlatch2_w						},	// To Main CPU
 	{ 0xc001, 0xffff, MWA_ROM							},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -635,8 +607,7 @@ READ_HANDLER( downtown_ip_r )
 	return 0;
 }
 
-static struct MemoryReadAddress downtown_sub_readmem[] =
-{
+static MEMORY_READ_START( downtown_sub_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM			},	// RAM
 	{ 0x0800, 0x0800, soundlatch_r		},	//
 	{ 0x0801, 0x0801, soundlatch2_r		},	//
@@ -645,17 +616,14 @@ static struct MemoryReadAddress downtown_sub_readmem[] =
 	{ 0x7000, 0x7fff, MRA_ROM			},	// ROM
 	{ 0x8000, 0xbfff, MRA_BANK15		},	// Banked ROM
 	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress downtown_sub_writemem[] =
-{
+static MEMORY_WRITE_START( downtown_sub_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM				},	// RAM
 	{ 0x1000, 0x1000, sub_bankswitch_w		},	// ROM Bank + Coin Lockout
 	{ 0x5000, 0x57ff, MWA_RAM, &sharedram	},	// Shared RAM
 	{ 0x7000, 0xffff, MWA_ROM				},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -664,8 +632,7 @@ static struct MemoryWriteAddress downtown_sub_writemem[] =
 								Meta Fox
 ***************************************************************************/
 
-static struct MemoryReadAddress metafox_sub_readmem[] =
-{
+static MEMORY_READ_START( metafox_sub_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM			},	// RAM
 	{ 0x0800, 0x0800, soundlatch_r		},	//
 	{ 0x0801, 0x0801, soundlatch2_r		},	//
@@ -676,27 +643,23 @@ static struct MemoryReadAddress metafox_sub_readmem[] =
 	{ 0x5000, 0x57ff, MRA_RAM			},	// Shared RAM
 	{ 0x7000, 0x7fff, MRA_ROM			},	// ROM
 	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress metafox_sub_writemem[] =
-{
+static MEMORY_WRITE_START( metafox_sub_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM				},	// RAM
 	{ 0x1000, 0x1000, sub_bankswitch_w		},	// ROM Bank + Coin Lockout
 	{ 0x5000, 0x57ff, MWA_RAM, &sharedram	},	// Shared RAM
 	{ 0x7000, 0x7fff, MWA_ROM				},	// ROM
 	{ 0x8000, 0xbfff, MWA_ROM				},	// ROM
 	{ 0xc000, 0xffff, MWA_ROM				},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
 
 /***************************************************************************
 								Twin Eagle
 ***************************************************************************/
 
-static struct MemoryReadAddress twineagl_sub_readmem[] =
-{
+static MEMORY_READ_START( twineagl_sub_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM			},	// RAM
 	{ 0x0800, 0x0800, soundlatch_r		},	//
 	{ 0x0801, 0x0801, soundlatch2_r		},	//
@@ -707,18 +670,15 @@ static struct MemoryReadAddress twineagl_sub_readmem[] =
 	{ 0x7000, 0x7fff, MRA_ROM			},	// ROM
 	{ 0x8000, 0xbfff, MRA_BANK15		},	// ROM
 	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress twineagl_sub_writemem[] =
-{
+static MEMORY_WRITE_START( twineagl_sub_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM				},	// RAM
 	{ 0x1000, 0x1000, sub_bankswitch_w		},	// ROM Bank + Coin Lockout
 	{ 0x5000, 0x57ff, MWA_RAM, &sharedram	},	// Shared RAM
 	{ 0x7000, 0x7fff, MWA_ROM				},	// ROM
 	{ 0xc000, 0xffff, MWA_ROM				},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -728,8 +688,7 @@ static struct MemoryWriteAddress twineagl_sub_writemem[] =
 
 static READ_HANDLER( ff_r )	{return 0xff;}
 
-static struct MemoryReadAddress tndrcade_sub_readmem[] =
-{
+static MEMORY_READ_START( tndrcade_sub_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM					},	// RAM
 	{ 0x0800, 0x0800, ff_r						},	// ? (bits 0/1/2/3: 1 -> do test 0-ff/100-1e0/5001-57ff/banked rom)
 //	{ 0x0800, 0x0800, soundlatch_r				},	//
@@ -742,11 +701,9 @@ static struct MemoryReadAddress tndrcade_sub_readmem[] =
 	{ 0x6000, 0x7fff, MRA_ROM					},	// ROM
 	{ 0x8000, 0xbfff, MRA_BANK15				},	// Banked ROM
 	{ 0xc000, 0xffff, MRA_ROM					},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tndrcade_sub_writemem[] =
-{
+static MEMORY_WRITE_START( tndrcade_sub_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM					},	// RAM
 	{ 0x1000, 0x1000, sub_bankswitch_w			},	// ROM Bank + Coin Lockout
 	{ 0x2000, 0x2000, YM2203_control_port_0_w	},
@@ -755,8 +712,7 @@ static struct MemoryWriteAddress tndrcade_sub_writemem[] =
 	{ 0x3001, 0x3001, YM3812_write_port_0_w		},
 	{ 0x5000, 0x57ff, MWA_RAM, &sharedram		},	// Shared RAM
 	{ 0x6000, 0xffff, MWA_ROM					},	// ROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -1597,8 +1553,8 @@ INPUT_PORTS_START( usclssic )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
-	PORT_BIT_IMPULSE( 0x0010, IP_ACTIVE_LOW, IPT_COIN1, 5 )
-	PORT_BIT_IMPULSE( 0x0020, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT_IMPULSE( 0x0010, IP_ACTIVE_HIGH, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0020, IP_ACTIVE_HIGH, IPT_COIN2, 5 )
 	PORT_BIT(  0x0040, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT(  0x0080, IP_ACTIVE_HIGH, IPT_TILT     )
 
@@ -3436,7 +3392,7 @@ ROM_START( wrofaero )
 	ROM_LOAD( "u66.bin",  0x000000, 0x080000, 0xc9fc6a0c )
 
 	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "u68.bin",  0x000000, 0x080000, BADCRC(0x3b9cc2b9) )
+	ROM_LOAD( "u68.bin",  0x000000, 0x080000, 0x25c0c483 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1 )	/* Samples */
 	ROM_LOAD( "u69.bin",  0x000000, 0x080000, 0x957ecd41 )

@@ -137,8 +137,8 @@ int firetrap_vh_start(void)
 	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
-	bg1_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(bg1_tilemap,0);
 
 	return 0;
 }
@@ -288,10 +288,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg2_tilemap,0);
-	tilemap_draw(bitmap,bg1_tilemap,0);
+	tilemap_draw(bitmap,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,bg1_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

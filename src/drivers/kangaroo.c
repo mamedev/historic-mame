@@ -145,8 +145,7 @@ static WRITE_HANDLER( kangaroo_coin_counter_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_BANK1 },
 	{ 0xe000, 0xe3ff, MRA_RAM },
@@ -155,11 +154,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xed00, 0xed00, input_port_1_r },
 	{ 0xee00, 0xee00, input_port_2_r },
 	{ 0xef00, 0xef00, kangaroo_sec_chip_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0xbfff, kangaroo_videoram_w },
 	{ 0xc000, 0xdfff, MWA_ROM },
@@ -172,30 +169,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xec00, 0xec00, soundlatch_w },
 	{ 0xed00, 0xed00, kangaroo_coin_counter_w },
 	{ 0xef00, 0xefff, kangaroo_sec_chip_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x7000, 0x7000, AY8910_write_port_0_w },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

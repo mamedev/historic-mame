@@ -4,41 +4,41 @@ Millipede memory map (preliminary)
 
 driver by Ivan Mackintosh
 
-0400-040F       POKEY 1
-0800-080F       POKEY 2
-1000-13BF       SCREEN RAM (8x8 TILES, 32x30 SCREEN)
-13C0-13CF       SPRITE IMAGE OFFSETS
-13D0-13DF       SPRITE HORIZONTAL OFFSETS
-13E0-13EF       SPRITE VERTICAL OFFSETS
-13F0-13FF       SPRITE COLOR OFFSETS
+0400-040F		POKEY 1
+0800-080F		POKEY 2
+1000-13BF		SCREEN RAM (8x8 TILES, 32x30 SCREEN)
+13C0-13CF		SPRITE IMAGE OFFSETS
+13D0-13DF		SPRITE HORIZONTAL OFFSETS
+13E0-13EF		SPRITE VERTICAL OFFSETS
+13F0-13FF		SPRITE COLOR OFFSETS
 
-2000            BIT 1-4 trackball
-                BIT 5 IS P1 FIRE
-                BIT 6 IS P1 START
-                BIT 7 IS VBLANK
+2000			BIT 1-4 trackball
+				BIT 5 IS P1 FIRE
+				BIT 6 IS P1 START
+				BIT 7 IS VBLANK
 
-2001            BIT 1-4 trackball
-                BIT 5 IS P2 FIRE
-                BIT 6 IS P2 START
-                BIT 7,8 (?)
+2001			BIT 1-4 trackball
+				BIT 5 IS P2 FIRE
+				BIT 6 IS P2 START
+				BIT 7,8 (?)
 
-2010            BIT 1 IS P1 RIGHT
-                BIT 2 IS P1 LEFT
-                BIT 3 IS P1 DOWN
-                BIT 4 IS P1 UP
-                BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
-                BIT 6,7 (?)
-                BIT 8 IS RIGHT COIN
-2030            earom read
-2480-249F       COLOR RAM
+2010			BIT 1 IS P1 RIGHT
+				BIT 2 IS P1 LEFT
+				BIT 3 IS P1 DOWN
+				BIT 4 IS P1 UP
+				BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
+				BIT 6,7 (?)
+				BIT 8 IS RIGHT COIN
+2030			earom read
+2480-249F		COLOR RAM
 2500-2502		Coin counters
 2503-2504		LEDs
 2505-2507		Coin door lights ??
-2600            INTERRUPT ACKNOWLEDGE
-2680            CLEAR WATCHDOG
+2600			INTERRUPT ACKNOWLEDGE
+2680			CLEAR WATCHDOG
 2700			earom control
 2780			earom write
-4000-7FFF       GAME CODE
+4000-7FFF		GAME CODE
 
 *************************************************************************/
 
@@ -109,10 +109,14 @@ static WRITE_HANDLER( milliped_led_w )
 	set_led_status(offset,~data & 0x80);
 }
 
-
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( milliped_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x040f, pokey1_r },
 	{ 0x0800, 0x080f, pokey2_r },
@@ -124,20 +128,18 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2030, 0x2030, atari_vg_earom_r },
 	{ 0x4000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x040f, pokey1_w },
 	{ 0x0800, 0x080f, pokey2_w },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
 	{ 0x2480, 0x249f, milliped_paletteram_w, &paletteram },
-	{ 0x2500, 0x2502, coin_counter_w },
+	{ 0x2500, 0x2502, milliped_coin_counter_w },
 	{ 0x2503, 0x2504, milliped_led_w },
 	{ 0x2505, 0x2505, milliped_input_select_w },
 //	{ 0x2506, 0x2507, MWA_NOP }, /* ? */
@@ -146,12 +148,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2700, 0x2700, atari_vg_earom_ctrl_w },
 	{ 0x2780, 0x27bf, atari_vg_earom_w },
 	{ 0x4000, 0x73ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( milliped )
-	PORT_START	/* IN0 $2000 */	/* see port 6 for x trackball */
+	PORT_START	/* IN0 $2000 */ /* see port 6 for x trackball */
 	PORT_DIPNAME(0x03, 0x00, "Language" )
 	PORT_DIPSETTING(   0x00, "English" )
 	PORT_DIPSETTING(   0x01, "German" )
@@ -167,7 +168,7 @@ INPUT_PORTS_START( milliped )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* trackball sign bit */
 
-	PORT_START	/* IN1 $2001 */	/* see port 7 for y trackball */
+	PORT_START	/* IN1 $2001 */ /* see port 7 for y trackball */
 	PORT_DIPNAME(0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x01, DEF_STR( On ) )
@@ -265,10 +266,10 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 0, 256*8*8 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8 /* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
 {
@@ -286,8 +287,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,      0, 4 },	/* use colors 0-15 */
-	{ REGION_GFX1, 0, &spritelayout,   16, 1 },	/* use colors 16-19 */
+	{ REGION_GFX1, 0, &charlayout,		0, 4 }, /* use colors 0-15 */
+	{ REGION_GFX1, 0, &spritelayout,   16, 1 }, /* use colors 16-19 */
 	{ -1 } /* end of array */
 };
 
@@ -366,7 +367,7 @@ ROM_START( milliped )
 	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0xfb01baf2 )
 	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x62e137e0 )
 	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x46752c7d )
-	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_RELOAD( 			  0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "milliped.106", 0x0000, 0x0800, 0xf4468045 )
@@ -376,3 +377,4 @@ ROM_END
 
 
 GAME( 1982, milliped, 0, milliped, milliped, 0, ROT270, "Atari", "Millipede" )
+

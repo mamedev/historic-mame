@@ -75,7 +75,6 @@ I/O read/write
 
 
 extern unsigned char *senjyo_fgscroll;
-extern unsigned char *senjyo_bgstripes;
 extern unsigned char *senjyo_scrollx1,*senjyo_scrolly1;
 extern unsigned char *senjyo_scrollx2,*senjyo_scrolly2;
 extern unsigned char *senjyo_scrollx3,*senjyo_scrolly3;
@@ -132,10 +131,14 @@ int senjyo_interrupt(void)
 	return ignore_interrupt();
 }
 
-
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x97ff, MRA_RAM },
 	{ 0x9800, 0x987f, MRA_RAM },
@@ -150,11 +153,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd002, 0xd002, input_port_2_r },	/* coin */
 	{ 0xd004, 0xd004, input_port_3_r },	/* DSW1 */
 	{ 0xd005, 0xd005, input_port_4_r },	/* DSW2 */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x93ff, senjyo_fgvideoram_w, &senjyo_fgvideoram },
@@ -165,7 +166,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9e20, 0x9e21, MWA_RAM, &senjyo_scrolly3 },
 /*	{ 0x9e22, 0x9e23, height of the layer (Senjyo only, fixed at 0x380) */
 	{ 0x9e25, 0x9e25, MWA_RAM, &senjyo_scrollx3 },
-	{ 0x9e27, 0x9e27, senjyo_bgstripes_w, &senjyo_bgstripes },	/* controls width of background stripes */
+	{ 0x9e27, 0x9e27, senjyo_bgstripes_w },	/* controls width of background stripes */
 	{ 0x9e28, 0x9e29, MWA_RAM, &senjyo_scrolly2 },
 /*	{ 0x9e2a, 0x9e2b, height of the layer (Senjyo only, fixed at 0x200) */
 	{ 0x9e2d, 0x9e2d, MWA_RAM, &senjyo_scrollx2 },
@@ -181,19 +182,15 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb800, 0xbbff, MWA_RAM, &senjyo_radarram },
 	{ 0xd000, 0xd000, flip_screen_w },
 	{ 0xd004, 0xd004, z80pioA_0_p_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x8000, 0x8000, SN76496_0_w },
@@ -204,22 +201,17 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe000, 0xe000, unknown },
 	{ 0xf000, 0xf000, unknown },
 #endif
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x03, z80pio_0_r },
 	{ 0x08, 0x0b, z80ctc_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x03, z80pio_0_w },
 	{ 0x08, 0x0b, z80ctc_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

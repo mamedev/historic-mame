@@ -73,7 +73,7 @@ WRITE_HANDLER( missile_w )
 	/* $4800 - various IO */
 	if (offset == 0x4800)
 	{
-		flip_screen_w(0,~data & 0x40);
+		flip_screen_set(~data & 0x40);
 		coin_counter_w(0,data & 0x20);
 		coin_counter_w(1,data & 0x10);
 		coin_counter_w(2,data & 0x08);

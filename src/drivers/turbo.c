@@ -161,8 +161,7 @@ WRITE_HANDLER( turbo_collision_clear_w );
  * CPU memory structures
  *********************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0xb000, 0xb1ff, MRA_RAM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
@@ -174,11 +173,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfc00, 0xfcff, turbo_8279_r },
 	{ 0xfd00, 0xfdff, input_port_0_r },
 	{ 0xfe00, 0xfeff, turbo_collision_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xa800, 0xa807, turbo_coin_and_lamp_w },
@@ -192,8 +189,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfa00, 0xfa03, ppi8255_2_w },
 	{ 0xfb00, 0xfb03, ppi8255_3_w },
 	{ 0xfc00, 0xfcff, turbo_8279_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /*********************************************************************

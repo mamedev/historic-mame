@@ -189,6 +189,11 @@ static WRITE_HANDLER( pacman_leds_w )
 	set_led_status(offset,data & 1);
 }
 
+static WRITE_HANDLER( pacman_coin_counter_w )
+{
+	coin_counter_w(offset,data & 1);
+}
+
 static WRITE_HANDLER( alibaba_sound_w )
 {
 	/* since the sound region in Ali Baba is not contiguous, translate the
@@ -224,12 +229,11 @@ static READ_HANDLER( alibaba_mystery_2_r )
 
 static WRITE_HANDLER( pacman_coin_lockout_global_w )
 {
-	coin_lockout_global_w(offset, ~data & 0x01);
+	coin_lockout_global_w(~data & 0x01);
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
@@ -238,11 +242,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
 	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac-Man / Ponpoko only */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
@@ -254,7 +256,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5003, 0x5003, pengo_flipscreen_w },
  	{ 0x5004, 0x5005, pacman_leds_w },
 // 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },	this breaks many games
- 	{ 0x5007, 0x5007, coin_counter_w },
+ 	{ 0x5007, 0x5007, pacman_coin_counter_w },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, watchdog_reset_w },
@@ -262,12 +264,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
 	{ 0xffff, 0xffff, MWA_NOP },	/* Eyes writes to this location to simplify code */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress alibaba_readmem[] =
-	{
+static MEMORY_READ_START( alibaba_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ef0-4eff */
@@ -279,11 +279,9 @@ static struct MemoryReadAddress alibaba_readmem[] =
 	{ 0x8000, 0x8fff, MRA_ROM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0xa000, 0xa7ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alibaba_writemem[] =
-{
+static MEMORY_WRITE_START( alibaba_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
@@ -292,7 +290,7 @@ static struct MemoryWriteAddress alibaba_writemem[] =
 	{ 0x5000, 0x5000, watchdog_reset_w },
  	{ 0x5004, 0x5005, pacman_leds_w },
  	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
- 	{ 0x5007, 0x5007, coin_counter_w },
+ 	{ 0x5007, 0x5007, pacman_coin_counter_w },
 	{ 0x5040, 0x506f, alibaba_sound_w, &pengo_soundregs },  /* the sound region is not contiguous */
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 }, /* actually at 5050-505f, here to point to free RAM */
 	{ 0x50c0, 0x50c0, pengo_sound_enable_w },
@@ -303,35 +301,27 @@ static struct MemoryWriteAddress alibaba_writemem[] =
 	{ 0xa000, 0xa7ff, MWA_ROM },
 	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, interrupt_vector_w },	/* Pac-Man only */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort vanvan_writeport[] =
-{
+static PORT_WRITE_START( vanvan_writeport )
 	{ 0x01, 0x01, SN76496_0_w },
 	{ 0x02, 0x02, SN76496_1_w },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort dremshpr_writeport[] =
-{
+static PORT_WRITE_START( dremshpr_writeport )
 	{ 0x06, 0x06, AY8910_write_port_0_w },
 	{ 0x07, 0x07, AY8910_control_port_0_w },
-	{ -1 }
-};
+PORT_END
 
 
-static struct MemoryReadAddress theglob_readmem[] =
-{
+static MEMORY_READ_START( theglob_readmem )
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
@@ -339,14 +329,11 @@ static struct MemoryReadAddress theglob_readmem[] =
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort theglob_readport[] =
-{
+static PORT_READ_START( theglob_readport )
 	{ 0x00, 0xff, theglob_decrypt_rom },	/* Switch protection logic */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( pacman )

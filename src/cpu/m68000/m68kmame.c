@@ -279,7 +279,7 @@ const char *m68000_info(void *context, int regnum)
 
 unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-	change_pc32(pc);
+	change_pc32bew(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble( buffer, pc, M68K_CPU_TYPE_68000 );
 #else
@@ -579,7 +579,7 @@ const char *m68010_info(void *context, int regnum)
 
 unsigned m68010_dasm(char *buffer, unsigned pc)
 {
-	change_pc32(pc);
+	change_pc32bew(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68010);
 #else
@@ -888,7 +888,7 @@ const char *m68ec020_info(void *context, int regnum)
 
 unsigned m68ec020_dasm(char *buffer, unsigned pc)
 {
-	change_pc32(pc);
+	change_pc32bew(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else
@@ -1196,7 +1196,7 @@ const char *m68020_info(void *context, int regnum)
 
 unsigned m68020_dasm(char *buffer, unsigned pc)
 {
-	change_pc32(pc);
+	change_pc32bew(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else

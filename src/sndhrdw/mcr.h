@@ -33,9 +33,6 @@ void soundsgood_reset_w(int state);
 WRITE_HANDLER( squawkntalk_data_w );
 void squawkntalk_reset_w(int state);
 
-WRITE_HANDLER( advaudio_data_w );
-void advaudio_reset_w(int state);
-
 
 
 /************ Sound Configuration ***************/
@@ -56,8 +53,8 @@ extern UINT8 mcr_sound_config;
 
 /************ SSIO CPU and sound definitions ***************/
 
-extern struct MemoryReadAddress ssio_readmem[];
-extern struct MemoryWriteAddress ssio_writemem[];
+extern const struct Memory_ReadAddress ssio_readmem[];
+extern const struct Memory_WriteAddress ssio_writemem[];
 
 extern struct AY8910interface ssio_ay8910_interface;
 
@@ -79,8 +76,8 @@ extern struct AY8910interface ssio_ay8910_interface;
 
 /************ Chip Squeak Deluxe CPU and sound definitions ***************/
 
-extern struct MemoryReadAddress csdeluxe_readmem[];
-extern struct MemoryWriteAddress csdeluxe_writemem[];
+extern const struct Memory_ReadAddress16 csdeluxe_readmem[];
+extern const struct Memory_WriteAddress16 csdeluxe_writemem[];
 
 extern struct DACinterface mcr_dac_interface;
 
@@ -102,8 +99,8 @@ extern struct DACinterface mcr_dac_interface;
 
 /************ Sounds Good CPU and sound definitions ***************/
 
-extern struct MemoryReadAddress soundsgood_readmem[];
-extern struct MemoryWriteAddress soundsgood_writemem[];
+extern const struct Memory_ReadAddress16 soundsgood_readmem[];
+extern const struct Memory_WriteAddress16 soundsgood_writemem[];
 
 extern struct DACinterface mcr_dual_dac_interface;
 
@@ -121,8 +118,8 @@ extern struct DACinterface mcr_dual_dac_interface;
 
 /************ Turbo Chip Squeak CPU and sound definitions ***************/
 
-extern struct MemoryReadAddress turbocs_readmem[];
-extern struct MemoryWriteAddress turbocs_writemem[];
+extern const struct Memory_ReadAddress turbocs_readmem[];
+extern const struct Memory_WriteAddress turbocs_writemem[];
 
 #define SOUND_CPU_TURBO_CHIP_SQUEAK					\
 	{												\
@@ -148,8 +145,8 @@ extern struct MemoryWriteAddress turbocs_writemem[];
 
 /************ Squawk & Talk CPU and sound definitions ***************/
 
-extern struct MemoryReadAddress squawkntalk_readmem[];
-extern struct MemoryWriteAddress squawkntalk_writemem[];
+extern const struct Memory_ReadAddress squawkntalk_readmem[];
+extern const struct Memory_WriteAddress squawkntalk_writemem[];
 
 extern struct TMS5220interface squawkntalk_tms5220_interface;
 

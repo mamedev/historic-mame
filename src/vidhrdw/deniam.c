@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *deniam_videoram,*deniam_textram;
+data16_t *deniam_videoram,*deniam_textram;
 static int display_enable;
 static int bg_scrollx_offs,bg_scrolly_offs,fg_scrollx_offs,fg_scrolly_offs;
 static int bg_scrollx_reg,bg_scrolly_reg,bg_page_reg;
@@ -15,12 +15,12 @@ static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
 void init_logicpro(void)
 {
-	bg_scrollx_reg = 0x00a4;
-	bg_scrolly_reg = 0x00a8;
-	bg_page_reg    = 0x00ac;
-	fg_scrollx_reg = 0x00a2;
-	fg_scrolly_reg = 0x00a6;
-	fg_page_reg    = 0x00aa;
+	bg_scrollx_reg = 0x00a4/2;
+	bg_scrolly_reg = 0x00a8/2;
+	bg_page_reg    = 0x00ac/2;
+	fg_scrollx_reg = 0x00a2/2;
+	fg_scrolly_reg = 0x00a6/2;
+	fg_page_reg    = 0x00aa/2;
 
 	bg_scrollx_offs = 0x00d;
 	bg_scrolly_offs = 0x000;
@@ -29,12 +29,12 @@ void init_logicpro(void)
 }
 void init_karianx(void)
 {
-	bg_scrollx_reg = 0x00a4;
-	bg_scrolly_reg = 0x00a8;
-	bg_page_reg    = 0x00ac;
-	fg_scrollx_reg = 0x00a2;
-	fg_scrolly_reg = 0x00a6;
-	fg_page_reg    = 0x00aa;
+	bg_scrollx_reg = 0x00a4/2;
+	bg_scrolly_reg = 0x00a8/2;
+	bg_page_reg    = 0x00ac/2;
+	fg_scrollx_reg = 0x00a2/2;
+	fg_scrolly_reg = 0x00a6/2;
+	fg_page_reg    = 0x00aa/2;
 
 	bg_scrollx_offs = 0x10d;
 	bg_scrolly_offs = 0x080;
@@ -59,20 +59,20 @@ static UINT32 scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 static void get_bg_tile_info(int tile_index)
 {
 	int page = tile_index >> 11;
-	UINT16 attr = READ_WORD(&deniam_videoram[bg_page[page] * 0x1000 + 2 * (tile_index & 0x7ff)]);
+	UINT16 attr = deniam_videoram[bg_page[page] * 0x0800 + (tile_index & 0x7ff)];
 	SET_TILE_INFO(0,attr,(attr & 0x1fc0) >> 6)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	int page = tile_index >> 11;
-	UINT16 attr = READ_WORD(&deniam_videoram[fg_page[page] * 0x1000 + 2 * (tile_index & 0x7ff)]);
+	UINT16 attr = deniam_videoram[fg_page[page] * 0x0800 + (tile_index & 0x7ff)];
 	SET_TILE_INFO(0,attr,(attr & 0x1fc0) >> 6)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
-	UINT16 attr = READ_WORD(&deniam_textram[2*tile_index]);
+	UINT16 attr = deniam_textram[tile_index];
 	SET_TILE_INFO(0,attr & 0xf1ff,(attr & 0x0e00) >> 9)
 }
 
@@ -93,8 +93,8 @@ int deniam_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
-	tx_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(tx_tilemap,0);
 
 	return 0;
 }
@@ -107,83 +107,63 @@ int deniam_vh_start(void)
 
 ***************************************************************************/
 
-READ_HANDLER( deniam_videoram_r )
+WRITE16_HANDLER( deniam_videoram_w )
 {
-   return READ_WORD(&deniam_videoram[offset]);
-}
-
-WRITE_HANDLER( deniam_videoram_w )
-{
-	int oldword = READ_WORD(&deniam_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
+	int oldword = deniam_videoram[offset];
+	COMBINE_DATA(&deniam_videoram[offset]);
+	if (oldword != deniam_videoram[offset])
 	{
 		int page,i;
 
-		WRITE_WORD(&deniam_videoram[offset],newword);
-
-		page = offset >> 12;
+		page = offset >> 11;
 		for (i = 0;i < 4;i++)
 		{
 			if (bg_page[i] == page)
-				tilemap_mark_tile_dirty(bg_tilemap,i * 0x800 + (offset & 0xfff)/2);
+				tilemap_mark_tile_dirty(bg_tilemap,i * 0x800 + (offset & 0x7ff));
 			if (fg_page[i] == page)
-				tilemap_mark_tile_dirty(fg_tilemap,i * 0x800 + (offset & 0xfff)/2);
+				tilemap_mark_tile_dirty(fg_tilemap,i * 0x800 + (offset & 0x7ff));
 		}
 	}
 }
 
 
-READ_HANDLER( deniam_textram_r )
+WRITE16_HANDLER( deniam_textram_w )
 {
-   return READ_WORD(&deniam_textram[offset]);
-}
-
-WRITE_HANDLER( deniam_textram_w )
-{
-	int oldword = READ_WORD(&deniam_textram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&deniam_textram[offset],newword);
-		tilemap_mark_tile_dirty(tx_tilemap,offset/2);
-	}
+	int oldword = deniam_textram[offset];
+	COMBINE_DATA(&deniam_textram[offset]);
+	if (oldword != deniam_textram[offset])
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
 }
 
 
-WRITE_HANDLER( deniam_palette_w )
+WRITE16_HANDLER( deniam_palette_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
 	int r,g,b;
 
+	data = COMBINE_DATA(&paletteram16[offset]);
 
-	WRITE_WORD(&paletteram[offset],newword);
-
-	r = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
-	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
-	b = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
+	r = ((data << 1) & 0x1e) | ((data >> 12) & 0x01);
+	g = ((data >> 3) & 0x1e) | ((data >> 13) & 0x01);
+	b = ((data >> 7) & 0x1e) | ((data >> 14) & 0x01);
 
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset/2,r,g,b);
+	palette_change_color(offset,r,g,b);
 }
 
 
-static UINT16 coinctrl;
+static data16_t coinctrl;
 
-READ_HANDLER( deniam_coinctrl_r )
+READ16_HANDLER( deniam_coinctrl_r )
 {
 	return coinctrl;
 }
 
-WRITE_HANDLER( deniam_coinctrl_w )
+WRITE16_HANDLER( deniam_coinctrl_w )
 {
-	coinctrl = COMBINE_WORD(coinctrl,data);
+	COMBINE_DATA(&coinctrl);
 
 	/* bit 0 is coin counter */
 	coin_counter_w(0,coinctrl & 0x01);
@@ -230,25 +210,25 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = spriteram_size-16;offs >= 0;offs -= 16)
+	for (offs = spriteram_size/2-8;offs >= 0;offs -= 8)
 	{
 		int sx,starty,endy,x,y,start,color,width,flipx,primask;
 		UINT8 *rom = memory_region(REGION_GFX2);
 
 
-		sx = (READ_WORD(&spriteram[offs+2]) & 0x01ff) + 16*8 - 1;
+		sx = (spriteram16[offs+1] & 0x01ff) + 16*8 - 1;
 		if (sx >= 512) sx -= 512;
-		starty = READ_WORD(&spriteram[offs+0]) & 0xff;
-		endy = READ_WORD(&spriteram[offs+0]) >> 8;
+		starty = spriteram16[offs+0] & 0xff;
+		endy = spriteram16[offs+0] >> 8;
 
-		width = READ_WORD(&spriteram[offs+4]) & 0x007f;
-		flipx = READ_WORD(&spriteram[offs+4]) & 0x0100;
+		width = spriteram16[offs+2] & 0x007f;
+		flipx = spriteram16[offs+2] & 0x0100;
 		if (flipx) sx++;
 
-		color = 0x40 + (READ_WORD(&spriteram[offs+8]) & 0x3f);
+		color = 0x40 + (spriteram16[offs+4] & 0x3f);
 
 		primask = 8;
-		switch (READ_WORD(&spriteram[offs+8]) & 0xc0)
+		switch (spriteram16[offs+4] & 0xc0)
 		{
 			case 0x00: primask |= 4|2|1; break;	/* below everything */
 			case 0x40: primask |= 4|2;   break;	/* below fg and tx */
@@ -257,8 +237,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		}
 
 
-		start = READ_WORD(&spriteram[offs+6]) +
-				((READ_WORD(&spriteram[offs+8]) & 0x1f00) << 8);
+		start = spriteram16[offs+3] + ((spriteram16[offs+4] & 0x1f00) << 8);
 		rom += 2*start;
 
 		for (y = starty+1;y <= endy;y++)
@@ -367,11 +346,11 @@ static void mark_sprite_colors(void)
 
 	memset(palette_map,0,sizeof(palette_map));
 
-	for (i = 0;i < spriteram_size;i += 16)
+	for (i = 0;i < spriteram_size/2;i += 8)
 	{
 		int color;
 
-		color = 0x40 + (READ_WORD(&spriteram[i+8]) & 0x3f);
+		color = 0x40 + (spriteram16[i+4] & 0x3f);
 		palette_map[color] |= 0xffff;
 	}
 
@@ -422,31 +401,21 @@ void deniam_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (!display_enable) return;	/* don't update (freeze display) */
 
-	bg_scrollx = READ_WORD(&deniam_textram[bg_scrollx_reg]) - bg_scrollx_offs;
-	bg_scrolly = (READ_WORD(&deniam_textram[bg_scrolly_reg]) & 0xff) - bg_scrolly_offs;
-	page = READ_WORD(&deniam_textram[bg_page_reg]);
+	bg_scrollx = deniam_textram[bg_scrollx_reg] - bg_scrollx_offs;
+	bg_scrolly = (deniam_textram[bg_scrolly_reg] & 0xff) - bg_scrolly_offs;
+	page = deniam_textram[bg_page_reg];
 	set_bg_page(3,(page >>12) & 0x0f);
 	set_bg_page(2,(page >> 8) & 0x0f);
 	set_bg_page(1,(page >> 4) & 0x0f);
 	set_bg_page(0,(page >> 0) & 0x0f);
 
-	fg_scrollx = READ_WORD(&deniam_textram[fg_scrollx_reg]) - fg_scrollx_offs;
-	fg_scrolly = (READ_WORD(&deniam_textram[fg_scrolly_reg]) & 0xff) - fg_scrolly_offs;
-	page = READ_WORD(&deniam_textram[fg_page_reg]);
+	fg_scrollx = deniam_textram[fg_scrollx_reg] - fg_scrollx_offs;
+	fg_scrolly = (deniam_textram[fg_scrolly_reg] & 0xff) - fg_scrolly_offs;
+	page = deniam_textram[fg_page_reg];
 	set_fg_page(3,(page >>12) & 0x0f);
 	set_fg_page(2,(page >> 8) & 0x0f);
 	set_fg_page(1,(page >> 4) & 0x0f);
 	set_fg_page(0,(page >> 0) & 0x0f);
-
-#if 0
-usrintf_showmessage("bg %x%x%x%x %04x %04x  fg %x%x%x%x %04x %04x",
-		bg_page[0],bg_page[1],bg_page[2],bg_page[3],
-		READ_WORD(&deniam_textram[bg_scrollx_reg]),
-		READ_WORD(&deniam_textram[bg_scrolly_reg]),
-		fg_page[0],fg_page[1],fg_page[2],fg_page[3],
-		READ_WORD(&deniam_textram[fg_scrollx_reg]),
-		READ_WORD(&deniam_textram[fg_scrolly_reg]));
-#endif
 
 	tilemap_set_scrollx(bg_tilemap,0,bg_scrollx & 0x1ff);
 	tilemap_set_scrolly(bg_tilemap,0,bg_scrolly & 0x0ff);
@@ -458,16 +427,13 @@ usrintf_showmessage("bg %x%x%x%x %04x %04x  fg %x%x%x%x %04x %04x",
 	palette_init_used_colors();
 	mark_sprite_colors();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	tilemap_draw(bitmap,bg_tilemap,1<<16);
-	tilemap_draw(bitmap,fg_tilemap,2<<16);
-	tilemap_draw(bitmap,tx_tilemap,4<<16);
+	tilemap_draw(bitmap,bg_tilemap,0,1);
+	tilemap_draw(bitmap,fg_tilemap,0,2);
+	tilemap_draw(bitmap,tx_tilemap,0,4);
 
 	draw_sprites(bitmap);
 }

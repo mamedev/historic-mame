@@ -10,78 +10,65 @@
 #include "machine/z80fmly.h"
 
 /* from machine/cchasm.c */
-READ_HANDLER( cchasm_6840_r );
-WRITE_HANDLER( cchasm_6840_w );
-WRITE_HANDLER( cchasm_led_w );
-WRITE_HANDLER( cchasm_watchdog_w );
+READ16_HANDLER( cchasm_6840_r );
+WRITE16_HANDLER( cchasm_6840_w );
+WRITE16_HANDLER( cchasm_led_w );
 
 /* from vidhrdw/cchasm.c */
-WRITE_HANDLER( cchasm_refresh_control_w );
+WRITE16_HANDLER( cchasm_refresh_control_w );
 void cchasm_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cchasm_vh_start (void);
 void cchasm_vh_stop (void);
 
-extern UINT8 *cchasm_ram;
+extern data16_t *cchasm_ram;
 
 /* from sndhrdw/cchasm.c */
-WRITE_HANDLER( cchasm_io_w );
-READ_HANDLER( cchasm_io_r );
+WRITE16_HANDLER( cchasm_io_w );
+READ16_HANDLER( cchasm_io_r );
 READ_HANDLER( cchasm_snd_io_r );
 WRITE_HANDLER( cchasm_snd_io_w );
 int cchasm_sh_start(const struct MachineSound *msound);
 void cchasm_sh_update(void);
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x00ffff, MRA_ROM },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x00ffff, MRA16_ROM },
 	{ 0x040000, 0x04000f, cchasm_6840_r },
-	{ 0x060000, 0x060001, input_port_0_r },
+	{ 0x060000, 0x060001, input_port_0_word_r },
 	{ 0xf80000, 0xf800ff, cchasm_io_r },
-	{ 0xffb000, 0xffffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+	{ 0xffb000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x00ffff, MWA_ROM },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x00ffff, MWA16_ROM },
 	{ 0x040000, 0x04000f, cchasm_6840_w },
 	{ 0x050000, 0x050001, cchasm_refresh_control_w },
 	{ 0x060000, 0x060001, cchasm_led_w },
-	{ 0x070000, 0x070001, cchasm_watchdog_w },
+	{ 0x070000, 0x070001, watchdog_reset16_w },
 	{ 0xf80000, 0xf800ff, cchasm_io_w },
-	{ 0xffb000, 0xffffff, MWA_BANK1, &cchasm_ram },
-	{ -1 }	/* end of table */
-};
+	{ 0xffb000, 0xffffff, MWA16_RAM, &cchasm_ram },
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x5000, 0x53ff, MRA_RAM },
 	{ 0x6000, 0x6fff, cchasm_snd_io_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x5000, 0x53ff, MWA_RAM },
 	{ 0x6000, 0x6fff, cchasm_snd_io_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x03, z80ctc_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x03, z80ctc_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( cchasm )
@@ -187,7 +174,7 @@ static const struct MachineDriver machine_driver_cchasm =
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	cchasm_vh_start,
-	cchasm_vh_stop,
+	vector_vh_stop,
 	vector_vh_screenrefresh,
 
 	/* sound hardware */

@@ -579,22 +579,17 @@ static WRITE_HANDLER( shanghai_coin_w )
 	coin_counter_w(1,data & 2);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x03fff, MRA_RAM },
 	{ 0xa0000, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0x03fff, MWA_RAM },
 	{ 0xa0000, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x01, HD63484_status_r },
 	{ 0x02, 0x03, HD63484_data_r },
 	{ 0x20, 0x20, YM2203_status_port_0_r },
@@ -602,18 +597,15 @@ static struct IOReadPort readport[] =
 	{ 0x40, 0x40, input_port_0_r },
 	{ 0x44, 0x44, input_port_1_r },
 	{ 0x48, 0x48, input_port_2_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x01, HD63484_address_w },
 	{ 0x02, 0x03, HD63484_data_w },
 	{ 0x20, 0x20, YM2203_control_port_0_w },
 	{ 0x22, 0x22, YM2203_write_port_0_w },
 	{ 0x4c, 0x4c, shanghai_coin_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

@@ -115,9 +115,19 @@ static READ_HANDLER( fastfred_custom_io_r )
     return 0x00;
 }
 
-
-static struct MemoryReadAddress fastfred_readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+
+
+static MEMORY_READ_START( fastfred_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_NOP }, // There is a bug in Fast Freddie that causes
 								 // these locations to be read. See 1b5a
@@ -130,11 +140,9 @@ static struct MemoryReadAddress fastfred_readmem[] =
 	{ 0xe800, 0xe800, input_port_1_r },
 	{ 0xf000, 0xf000, input_port_2_r },
 	{ 0xf800, 0xf800, watchdog_reset_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fastfred_writemem[] =
-{
+static MEMORY_WRITE_START( fastfred_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, MWA_NOP },
@@ -153,12 +161,10 @@ static struct MemoryWriteAddress fastfred_writemem[] =
 	{ 0xf116, 0xf116, flip_screen_x_w },
 	{ 0xf117, 0xf117, flip_screen_y_w },
 	{ 0xf800, 0xf800, soundlatch_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress jumpcoas_readmem[] =
-{
+static MEMORY_READ_START( jumpcoas_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd3ff, MRA_RAM },
@@ -168,12 +174,10 @@ static struct MemoryReadAddress jumpcoas_readmem[] =
 	{ 0xe802, 0xe803, input_port_2_r },
 	//{ 0xf800, 0xf800, watchdog_reset_r },  // Why doesn't this work???
 	{ 0xf800, 0xf800, MRA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress jumpcoas_writemem[] =
-{
+static MEMORY_WRITE_START( jumpcoas_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, MWA_NOP },
@@ -193,21 +197,17 @@ static struct MemoryWriteAddress jumpcoas_writemem[] =
 	{ 0xf117, 0xf117, flip_screen_y_w },
 	{ 0xf800, 0xf800, AY8910_control_port_0_w },
 	{ 0xf801, 0xf801, AY8910_write_port_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x3000, 0x3000, interrupt_enable_w },
 	{ 0x4000, 0x4000, MWA_RAM },  // Reset PSG's
@@ -215,8 +215,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x5001, 0x5001, AY8910_write_port_0_w },
 	{ 0x6000, 0x6000, AY8910_control_port_1_w },
 	{ 0x6001, 0x6001, AY8910_write_port_1_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( fastfred )

@@ -203,24 +203,24 @@ void docastle_vh_stop(void)
 
 READ_HANDLER( docastle_flipscreen_off_r )
 {
-	flip_screen_w(offset, 0);
+	flip_screen_set(0);
 	return 0;
 }
 
 READ_HANDLER( docastle_flipscreen_on_r )
 {
-	flip_screen_w(offset, 1);
+	flip_screen_set(1);
 	return 0;
 }
 
 WRITE_HANDLER( docastle_flipscreen_off_w )
 {
-	flip_screen_w(offset, 0);
+	flip_screen_set(0);
 }
 
 WRITE_HANDLER( docastle_flipscreen_on_w )
 {
-	flip_screen_w(offset, 1);
+	flip_screen_set(1);
 }
 
 

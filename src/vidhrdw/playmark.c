@@ -3,9 +3,10 @@
 
 
 
-unsigned char *bigtwin_bgvideoram;
+data16_t *bigtwin_bgvideoram;
 size_t bigtwin_bgvideoram_size;
-unsigned char *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
+data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
+
 static struct osd_bitmap *bgbitmap;
 static int bgscrollx,bgscrolly;
 static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
@@ -20,38 +21,38 @@ static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 
 static void bigtwin_get_tx_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&wbeachvl_videoram1[4*tile_index]);
-	UINT16 color = READ_WORD(&wbeachvl_videoram1[4*tile_index+2]);
+	UINT16 code = wbeachvl_videoram1[2*tile_index];
+	UINT16 color = wbeachvl_videoram1[2*tile_index+1];
 	SET_TILE_INFO(2,code,color)
 }
 
 static void bigtwin_get_fg_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&wbeachvl_videoram2[4*tile_index]);
-	UINT16 color = READ_WORD(&wbeachvl_videoram2[4*tile_index+2]);
+	UINT16 code = wbeachvl_videoram2[2*tile_index];
+	UINT16 color = wbeachvl_videoram2[2*tile_index+1];
 	SET_TILE_INFO(1,code,color)
 }
 
 
 static void wbeachvl_get_tx_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&wbeachvl_videoram1[4*tile_index]);
-	UINT16 color = READ_WORD(&wbeachvl_videoram1[4*tile_index+2]);
+	UINT16 code = wbeachvl_videoram1[2*tile_index];
+	UINT16 color = wbeachvl_videoram1[2*tile_index+1];
 	SET_TILE_INFO(2,code,color / 4)
 }
 
 static void wbeachvl_get_fg_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&wbeachvl_videoram2[4*tile_index]);
-	UINT16 color = READ_WORD(&wbeachvl_videoram2[4*tile_index+2]);
+	UINT16 code = wbeachvl_videoram2[2*tile_index];
+	UINT16 color = wbeachvl_videoram2[2*tile_index+1];
 	SET_TILE_INFO(1,code & 0x7fff,color / 4 + 8)
 	tile_info.flags = (code & 0x8000) ? TILE_FLIPX : 0;
 }
 
 static void wbeachvl_get_bg_tile_info(int tile_index)
 {
-	UINT16 code = READ_WORD(&wbeachvl_videoram3[4*tile_index]);
-	UINT16 color = READ_WORD(&wbeachvl_videoram3[4*tile_index+2]);
+	UINT16 code = wbeachvl_videoram3[2*tile_index];
+	UINT16 color = wbeachvl_videoram3[2*tile_index+1];
 	SET_TILE_INFO(1,code & 0x7fff,color / 4)
 	tile_info.flags = (code & 0x8000) ? TILE_FLIPX : 0;
 }
@@ -83,8 +84,8 @@ int bigtwin_vh_start(void)
 		return 1;
 	}
 
-	tx_tilemap->transparent_pen = 0;
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(tx_tilemap,0);
+	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
 }
@@ -99,8 +100,8 @@ int wbeachvl_vh_start(void)
 	if (!tx_tilemap || !fg_tilemap || !bg_tilemap)
 		return 1;
 
-	tx_tilemap->transparent_pen = 0;
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(tx_tilemap,0);
+	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
 }
@@ -113,66 +114,39 @@ int wbeachvl_vh_start(void)
 
 ***************************************************************************/
 
-READ_HANDLER( wbeachvl_txvideoram_r )
+WRITE16_HANDLER( wbeachvl_txvideoram_w )
 {
-	return READ_WORD(&wbeachvl_videoram1[offset]);
+	int oldword = wbeachvl_videoram1[offset];
+	COMBINE_DATA(&wbeachvl_videoram1[offset]);
+	if (oldword != wbeachvl_videoram1[offset])
+		tilemap_mark_tile_dirty(tx_tilemap,offset / 2);
 }
 
-WRITE_HANDLER( wbeachvl_txvideoram_w )
+WRITE16_HANDLER( wbeachvl_fgvideoram_w )
 {
-	int oldword = READ_WORD(&wbeachvl_videoram1[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&wbeachvl_videoram1[offset],newword);
-		tilemap_mark_tile_dirty(tx_tilemap,offset / 4);
-	}
+	int oldword = wbeachvl_videoram2[offset];
+	COMBINE_DATA(&wbeachvl_videoram2[offset]);
+	if (oldword != wbeachvl_videoram2[offset])
+		tilemap_mark_tile_dirty(fg_tilemap,offset / 2);
 }
 
-READ_HANDLER( wbeachvl_fgvideoram_r )
+WRITE16_HANDLER( wbeachvl_bgvideoram_w )
 {
-	return READ_WORD(&wbeachvl_videoram2[offset]);
-}
-
-WRITE_HANDLER( wbeachvl_fgvideoram_w )
-{
-	int oldword = READ_WORD(&wbeachvl_videoram2[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&wbeachvl_videoram2[offset],newword);
-		tilemap_mark_tile_dirty(fg_tilemap,offset / 4);
-	}
-}
-
-READ_HANDLER( wbeachvl_bgvideoram_r )
-{
-	return READ_WORD(&wbeachvl_videoram3[offset]);
-}
-
-WRITE_HANDLER( wbeachvl_bgvideoram_w )
-{
-	int oldword = READ_WORD(&wbeachvl_videoram3[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&wbeachvl_videoram3[offset],newword);
-		tilemap_mark_tile_dirty(bg_tilemap,offset / 4);
-	}
+	int oldword = wbeachvl_videoram3[offset];
+	COMBINE_DATA(&wbeachvl_videoram3[offset]);
+	if (oldword != wbeachvl_videoram3[offset])
+		tilemap_mark_tile_dirty(bg_tilemap,offset / 2);
 }
 
 
-WRITE_HANDLER( bigtwin_paletteram_w )
+WRITE16_HANDLER( bigtwin_paletteram_w )
 {
 	int r,g,b,val;
 
 
-	COMBINE_WORD_MEM(&paletteram[offset],data);
+	COMBINE_DATA(&paletteram16[offset]);
 
-	val = READ_WORD(&paletteram[offset]);
+	val = paletteram16[offset];
 	r = (val >> 11) & 0x1e;
 	g = (val >>  7) & 0x1e;
 	b = (val >>  3) & 0x1e;
@@ -185,60 +159,58 @@ WRITE_HANDLER( bigtwin_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_change_color(offset,r,g,b);
 }
 
-WRITE_HANDLER( bigtwin_bgvideoram_w )
+WRITE16_HANDLER( bigtwin_bgvideoram_w )
 {
 	int sx,sy,color;
 
 
-	COMBINE_WORD_MEM(&bigtwin_bgvideoram[offset],data);
+	COMBINE_DATA(&bigtwin_bgvideoram[offset]);
 
-	sx = (offset/2) % 512;
-	sy = (offset/2) / 512;
+	sx = offset % 512;
+	sy = offset / 512;
 
-	color = READ_WORD(&bigtwin_bgvideoram[offset]) & 0xff;
+	color = bigtwin_bgvideoram[offset] & 0xff;
 
 	plot_pixel(bgbitmap,sx,sy,Machine->pens[256 + color]);
 }
 
 
-WRITE_HANDLER( bigtwin_scroll_w )
+WRITE16_HANDLER( bigtwin_scroll_w )
 {
-	static UINT8 scroll[12];
+	static data16_t scroll[6];
 
 
-	COMBINE_WORD_MEM(&scroll[offset],data);
-	data = READ_WORD(&scroll[offset]);
+	data = COMBINE_DATA(&scroll[offset]);
 
 	switch (offset)
 	{
-		case 0x00: tilemap_set_scrollx(tx_tilemap,0,data+2); break;
-		case 0x02: tilemap_set_scrolly(tx_tilemap,0,data);   break;
-		case 0x04: bgscrollx = -(data+4);                    break;
-		case 0x06: bgscrolly = (-data) & 0x1ff;              break;
-		case 0x08: tilemap_set_scrollx(fg_tilemap,0,data+6); break;
-		case 0x0a: tilemap_set_scrolly(fg_tilemap,0,data);   break;
+		case 0: tilemap_set_scrollx(tx_tilemap,0,data+2); break;
+		case 1: tilemap_set_scrolly(tx_tilemap,0,data);   break;
+		case 2: bgscrollx = -(data+4);                    break;
+		case 3: bgscrolly = (-data) & 0x1ff;              break;
+		case 4: tilemap_set_scrollx(fg_tilemap,0,data+6); break;
+		case 5: tilemap_set_scrolly(fg_tilemap,0,data);   break;
 	}
 }
 
-WRITE_HANDLER( wbeachvl_scroll_w )
+WRITE16_HANDLER( wbeachvl_scroll_w )
 {
-	static UINT8 scroll[12];
+	static data16_t scroll[6];
 
 
-	COMBINE_WORD_MEM(&scroll[offset],data);
-	data = READ_WORD(&scroll[offset]);
+	data = COMBINE_DATA(&scroll[offset]);
 
 	switch (offset)
 	{
-		case 0x00: tilemap_set_scrollx(tx_tilemap,0,data+2); break;
-		case 0x02: tilemap_set_scrolly(tx_tilemap,0,data);   break;
-		case 0x04: tilemap_set_scrollx(fg_tilemap,0,data+4); break;
-		case 0x06: tilemap_set_scrolly(fg_tilemap,0,data);   break;
-		case 0x08: tilemap_set_scrollx(bg_tilemap,0,data+6); break;
-		case 0x0a: tilemap_set_scrolly(bg_tilemap,0,data);   break;
+		case 0: tilemap_set_scrollx(tx_tilemap,0,data+2); break;
+		case 1: tilemap_set_scrolly(tx_tilemap,0,data);   break;
+		case 2: tilemap_set_scrollx(fg_tilemap,0,data+4); break;
+		case 3: tilemap_set_scrolly(fg_tilemap,0,data);   break;
+		case 4: tilemap_set_scrollx(bg_tilemap,0,data+6); break;
+		case 5: tilemap_set_scrolly(bg_tilemap,0,data);   break;
 	}
 }
 
@@ -256,18 +228,18 @@ static void draw_sprites(struct osd_bitmap *bitmap,int codeshift)
 	int height = Machine->gfx[0]->height;
 	int colordiv = Machine->gfx[0]->color_granularity / 16;
 
-	for (offs = 8;offs < spriteram_size;offs += 8)
+	for (offs = 4;offs < spriteram_size/2;offs += 4)
 	{
 		int sx,sy,code,color,flipx;
 
-		sy = READ_WORD(&spriteram[offs+6-8]);	/* -8? what the... ??? */
+		sy = spriteram16[offs+3-4];	/* -4? what the... ??? */
 		if (sy == 0x2000) return;	/* end of list marker */
 
 		flipx = sy & 0x4000;
-		sx = (READ_WORD(&spriteram[offs+2]) & 0x01ff) - 16-7;
+		sx = (spriteram16[offs+1] & 0x01ff) - 16-7;
 		sy = (256-8-height - sy) & 0xff;
-		code = READ_WORD(&spriteram[offs+4]) >> codeshift;
-		color = (READ_WORD(&spriteram[offs+2]) & 0xfe00) >> 9;
+		code = spriteram16[offs+2] >> codeshift;
+		color = (spriteram16[offs+1] & 0xfe00) >> 9;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
@@ -288,30 +260,24 @@ void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int offs;
 
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-		for (offs = 0;offs < bigtwin_bgvideoram_size;offs += 2)
-			bigtwin_bgvideoram_w(offs,READ_WORD(&bigtwin_bgvideoram[offs]));
+		for (offs = 0;offs < bigtwin_bgvideoram_size/2;offs++)
+			bigtwin_bgvideoram_w(offs,bigtwin_bgvideoram[offs],0);
 	}
 
-	tilemap_render(ALL_TILEMAPS);
-
 	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap,4);
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 void wbeachvl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }

@@ -319,53 +319,41 @@ static READ_HANDLER( lazercmd_hardware_r )
     return data;
 }
 
-static struct MemoryWriteAddress lazercmd_writemem[] =
-{
+static MEMORY_WRITE_START( lazercmd_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
 	{ 0x1f00, 0x1f03, lazercmd_hardware_w },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress lazercmd_readmem[] =
-{
+static MEMORY_READ_START( lazercmd_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x1c20, 0x1eff, MRA_RAM },
 	{ 0x1f00, 0x1f03, lazercmd_hardware_r },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress medlanes_writemem[] =
-{
+static MEMORY_WRITE_START( medlanes_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x1000, 0x1800, MWA_ROM },
 	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
 	{ 0x1f00, 0x1f03, medlanes_hardware_w },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress medlanes_readmem[] =
-{
+static MEMORY_READ_START( medlanes_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x1000, 0x1800, MRA_ROM },
 	{ 0x1c20, 0x1eff, MRA_RAM },
 	{ 0x1f00, 0x1f03, lazercmd_hardware_r },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort lazercmd_writeport[] =
-{
+static PORT_WRITE_START( lazercmd_writeport )
 	{ S2650_CTRL_PORT, S2650_CTRL_PORT, lazercmd_ctrl_port_w },
 	{ S2650_DATA_PORT, S2650_DATA_PORT, lazercmd_data_port_w },
-	{ -1 }					   /* end of table */
-};
+PORT_END
 
-static struct IOReadPort lazercmd_readport[] =
-{
+static PORT_READ_START( lazercmd_readport )
 	{ S2650_CTRL_PORT, S2650_CTRL_PORT, lazercmd_ctrl_port_r },
 	{ S2650_DATA_PORT, S2650_DATA_PORT, lazercmd_data_port_r },
-	{ -1 }					   /* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( lazercmd )

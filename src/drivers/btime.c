@@ -234,8 +234,7 @@ static WRITE_HANDLER( disco_w )
 }
 
 
-static struct MemoryReadAddress btime_readmem[] =
-{
+static MEMORY_READ_START( btime_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
@@ -246,11 +245,9 @@ static struct MemoryReadAddress btime_readmem[] =
 	{ 0x4003, 0x4003, input_port_3_r },     /* DSW1 */
 	{ 0x4004, 0x4004, input_port_4_r },     /* DSW2 */
 	{ 0xb000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress btime_writemem[] =
-{
+static MEMORY_WRITE_START( btime_writemem )
 	{ 0x0000, 0xffff, btime_w },	    /* override the following entries to */
 										/* support ROM decryption */
 	{ 0x0000, 0x07ff, MWA_RAM },
@@ -263,11 +260,9 @@ static struct MemoryWriteAddress btime_writemem[] =
 	{ 0x4002, 0x4002, btime_video_control_w },
 	{ 0x4003, 0x4003, sound_command_w },
 	{ 0x4004, 0x4004, bnj_scroll1_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress cookrace_readmem[] =
-{
+static MEMORY_READ_START( cookrace_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0500, 0x3fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
@@ -284,11 +279,9 @@ static struct MemoryReadAddress cookrace_readmem[] =
 	{ 0xe003, 0xe003, input_port_1_r },     /* IN1 */
 	{ 0xe004, 0xe004, input_port_2_r },     /* coin */
 	{ 0xfff9, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cookrace_writemem[] =
-{
+static MEMORY_WRITE_START( cookrace_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0500, 0x3fff, MWA_ROM },
 	{ 0xc000, 0xc3ff, videoram_w, &videoram, &videoram_size },
@@ -304,11 +297,9 @@ static struct MemoryWriteAddress cookrace_writemem[] =
 	{ 0x4004, 0x4004, bnj_scroll1_w },
 #endif
 	{ 0xfff9, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress zoar_readmem[] =
-{
+static MEMORY_READ_START( zoar_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9800, 0x9800, input_port_3_r },     /* DSW 1 */
 	{ 0x9801, 0x9801, input_port_4_r },     /* DSW 2 */
@@ -316,11 +307,9 @@ static struct MemoryReadAddress zoar_readmem[] =
 	{ 0x9803, 0x9803, input_port_1_r },     /* IN 1 */
 	{ 0x9804, 0x9804, input_port_2_r },     /* coin */
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress zoar_writemem[] =
-{
+static MEMORY_WRITE_START( zoar_writemem )
 	{ 0x0000, 0xffff, zoar_w },	    /* override the following entries to */
 									/* support ROM decryption */
 	{ 0x0000, 0x07ff, MWA_RAM },
@@ -334,11 +323,9 @@ static struct MemoryWriteAddress zoar_writemem[] =
 	{ 0x9805, 0x9805, bnj_scroll1_w },
 	{ 0x9806, 0x9806, sound_command_w },
   /*{ 0x9807, 0x9807, MWA_RAM }, */ /* Marked as ACK on schematics (Board 2 Pg 5) */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress lnc_readmem[] =
-{
+static MEMORY_READ_START( lnc_readmem )
 	{ 0x0000, 0x3fff, MRA_RAM },
 	{ 0x7c00, 0x7fff, btime_mirrorvideoram_r },
 	{ 0x8000, 0x8000, input_port_3_r },     /* DSW1 */
@@ -348,11 +335,9 @@ static struct MemoryReadAddress lnc_readmem[] =
 	{ 0x9002, 0x9002, input_port_2_r },     /* coin */
 	{ 0xb000, 0xb1ff, MRA_RAM },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress lnc_writemem[] =
-{
+static MEMORY_WRITE_START( lnc_writemem )
 	{ 0x0000, 0xffff, lnc_w },      /* override the following entries to */
 									/* support ROM decryption */
 	{ 0x0000, 0x3bff, MWA_RAM },
@@ -365,12 +350,10 @@ static struct MemoryWriteAddress lnc_writemem[] =
 	{ 0x9000, 0x9000, MWA_NOP },            /* IRQ ACK ??? */
 	{ 0x9002, 0x9002, sound_command_w },
 	{ 0xb000, 0xb1ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress mmonkey_readmem[] =
-{
+static MEMORY_READ_START( mmonkey_readmem )
 	{ 0x0000, 0x3fff, MRA_RAM },
 	{ 0x7c00, 0x7fff, btime_mirrorvideoram_r },
 	{ 0x8000, 0x8000, input_port_3_r },     /* DSW1 */
@@ -380,11 +363,9 @@ static struct MemoryReadAddress mmonkey_readmem[] =
 	{ 0x9002, 0x9002, input_port_2_r },     /* coin */
 	{ 0xb000, 0xbfff, mmonkey_protection_r },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mmonkey_writemem[] =
-{
+static MEMORY_WRITE_START( mmonkey_writemem )
 	{ 0x0000, 0xffff, mmonkey_w },  /* override the following entries to */
 									/* support ROM decryption */
 	{ 0x0000, 0x3bff, MWA_RAM },
@@ -396,12 +377,10 @@ static struct MemoryWriteAddress mmonkey_writemem[] =
 	{ 0x9000, 0x9000, MWA_NOP },            /* IRQ ACK ??? */
 	{ 0x9002, 0x9002, sound_command_w },
 	{ 0xb000, 0xbfff, mmonkey_protection_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress bnj_readmem[] =
-{
+static MEMORY_READ_START( bnj_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x1000, input_port_3_r },     /* DSW1 */
 	{ 0x1001, 0x1001, input_port_4_r },     /* DSW2 */
@@ -412,11 +391,9 @@ static struct MemoryReadAddress bnj_readmem[] =
 	{ 0x4800, 0x4bff, btime_mirrorvideoram_r },
 	{ 0x4c00, 0x4fff, btime_mirrorcolorram_r },
 	{ 0xa000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bnj_writemem[] =
-{
+static MEMORY_WRITE_START( bnj_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x1001, 0x1001, bnj_video_control_w },
 	{ 0x1002, 0x1002, sound_command_w },
@@ -428,11 +405,9 @@ static struct MemoryWriteAddress bnj_writemem[] =
 	{ 0x5400, 0x5400, bnj_scroll1_w },
 	{ 0x5800, 0x5800, bnj_scroll2_w },
 	{ 0x5c00, 0x5c0f, btime_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress disco_readmem[] =
-{
+static MEMORY_READ_START( disco_readmem )
 	{ 0x0000, 0x04ff, MRA_RAM },
 	{ 0x2000, 0x881f, MRA_RAM },
 	{ 0x9000, 0x9000, input_port_2_r },     /* coin */
@@ -442,11 +417,9 @@ static struct MemoryReadAddress disco_readmem[] =
 	{ 0x9a00, 0x9a00, input_port_4_r },     /* DSW2 */
 	{ 0x9c00, 0x9c00, input_port_5_r },     /* VBLANK */
 	{ 0xa000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress disco_writemem[] =
-{
+static MEMORY_WRITE_START( disco_writemem )
 	{ 0x0000, 0xffff, disco_w },    /* override the following entries to */
 									/* support ROM decryption */
 	{ 0x2000, 0x7fff, deco_charram_w, &deco_charram },
@@ -455,21 +428,17 @@ static struct MemoryWriteAddress disco_writemem[] =
 	{ 0x8800, 0x881f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9a00, 0x9a00, sound_command_w },
 	{ 0x9c00, 0x9c00, disco_video_control_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0200, 0x0fff, MRA_ROM },	/* Cook Race */
 	{ 0xa000, 0xafff, soundlatch_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0200, 0x0fff, MWA_ROM },	/* Cook Race */
 	{ 0x2000, 0x2fff, AY8910_write_port_0_w },
@@ -478,20 +447,16 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0x8fff, AY8910_control_port_1_w },
 	{ 0xc000, 0xcfff, interrupt_enable_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress disco_sound_readmem[] =
-{
+static MEMORY_READ_START( disco_sound_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x8000, 0x8fff, soundlatch_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress disco_sound_writemem[] =
-{
+static MEMORY_WRITE_START( disco_sound_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x4000, 0x4fff, AY8910_write_port_0_w },
 	{ 0x5000, 0x5fff, AY8910_control_port_0_w },
@@ -499,8 +464,7 @@ static struct MemoryWriteAddress disco_sound_writemem[] =
 	{ 0x7000, 0x7fff, AY8910_control_port_1_w },
 	{ 0x8000, 0x8fff, MWA_NOP },  /* ACK ? */
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 /***************************************************************************
@@ -1790,8 +1754,7 @@ READ_HANDLER( pip_r )
 	return rand();
 }
 
-static struct MemoryReadAddress decocass_readmem[] =
-{
+static MEMORY_READ_START( decocass_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0xe300, 0xe300, input_port_3_r },     /* DSW1 */
 	{ 0xe700, 0xe702, pip_r },	/* read data from tape */
@@ -1810,11 +1773,9 @@ static struct MemoryReadAddress decocass_readmem[] =
 	{ 0xe004, 0xe004, input_port_2_r },     /* coin */
 #endif
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress decocass_writemem[] =
-{
+static MEMORY_WRITE_START( decocass_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x6000, 0xbfff, deco_charram_w, &deco_charram },
 	{ 0xc000, 0xc3ff, videoram_w, &videoram, &videoram_size },
@@ -1834,21 +1795,17 @@ static struct MemoryWriteAddress decocass_writemem[] =
 	{ 0x4004, 0x4004, bnj_scroll1_w },
 #endif
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress decocass_sound_readmem[] =
-{
+static MEMORY_READ_START( decocass_sound_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 #if 0
 	{ 0xa000, 0xafff, soundlatch_r },
 #endif
 	{ 0xf800, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress decocass_sound_writemem[] =
-{
+static MEMORY_WRITE_START( decocass_sound_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x2000, 0x2fff, AY8910_write_port_0_w },
 	{ 0x4000, 0x4fff, AY8910_control_port_0_w },
@@ -1858,8 +1815,7 @@ static struct MemoryWriteAddress decocass_sound_writemem[] =
 	{ 0xc000, 0xcfff, interrupt_enable_w },
 #endif
 	{ 0xf800, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( decocass )
 	PORT_START      /* IN0 */

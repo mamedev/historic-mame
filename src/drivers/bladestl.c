@@ -113,8 +113,7 @@ static WRITE_HANDLER( bladestl_speech_ctrl_w ){
 	//	logerror("%04x: (speech_ctrl) write %02x\n",cpu_get_pc(), data);
 }
 
-static struct MemoryReadAddress bladestl_readmem[] =
-{
+static MEMORY_READ_START( bladestl_readmem )
 	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
 	{ 0x2200, 0x23ff, K007342_scroll_r },	/* Scroll RAM */
@@ -129,11 +128,9 @@ static struct MemoryReadAddress bladestl_readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },			/* Work RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bladestl_writemem[] =
-{
+static MEMORY_WRITE_START( bladestl_writemem )
 	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
 	{ 0x2200, 0x23ff, K007342_scroll_w },		/* Scroll RAM */
@@ -147,30 +144,25 @@ static struct MemoryWriteAddress bladestl_writemem[] =
 	{ 0x4000, 0x5fff, MWA_RAM },				/* Work RAM */
 	{ 0x6000, 0x7fff, MWA_RAM },				/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bladestl_readmem_sound[] =
-{
+static MEMORY_READ_START( bladestl_readmem_sound )
 	{ 0x0000, 0x07ff, MRA_RAM },				/* RAM */
 	{ 0x1000, 0x1000, YM2203_status_port_0_r },	/* YM2203 */
 	{ 0x1001, 0x1001, YM2203_read_port_0_r },	/* YM2203 */
 	{ 0x4000, 0x4000, UPD7759_0_busy_r },		/* UPD7759? */
 	{ 0x6000, 0x6000, soundlatch_r },			/* soundlatch_r */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bladestl_writemem_sound[] =
-{
+static MEMORY_WRITE_START( bladestl_writemem_sound )
 	{ 0x0000, 0x07ff, MWA_RAM },				/* RAM */
 	{ 0x1000, 0x1000, YM2203_control_port_0_w },/* YM2203 */
 	{ 0x1001, 0x1001, YM2203_write_port_0_w },	/* YM2203 */
 	{ 0x3000, 0x3000, bladestl_speech_ctrl_w },	/* UPD7759 */
 	{ 0x5000, 0x5000, MWA_NOP },				/* ??? */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

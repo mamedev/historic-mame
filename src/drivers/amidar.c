@@ -74,8 +74,18 @@ WRITE_HANDLER( amidar_coinb_w )
 	coin_counter_w (1, 0);
 }
 
-static struct MemoryReadAddress amidar_readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+
+static MEMORY_READ_START( amidar_readmem )
 	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
@@ -85,11 +95,9 @@ static struct MemoryReadAddress amidar_readmem[] =
 	{ 0xb010, 0xb010, input_port_1_r },	/* IN1 */
 	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
 	{ 0xb820, 0xb820, input_port_3_r },	/* DSW */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
@@ -103,44 +111,35 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa038, 0xa038, amidar_coinb_w },
 	{ 0xb800, 0xb800, soundlatch_w },
 	{ 0xb810, 0xb810, scramble_sh_irqtrigger_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 //	{ 0x9000, 0x9000, MWA_NOP },
 //	{ 0x9080, 0x9080, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x80, 0x80, AY8910_read_port_0_r },
 	{ 0x20, 0x20, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x40, 0x40, AY8910_control_port_0_w },
 	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ 0x10, 0x10, AY8910_control_port_1_w },
 	{ 0x20, 0x20, AY8910_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -112,8 +112,7 @@ WRITE_HANDLER( chqflag_sh_irqtrigger_w )
 
 /****************************************************************************/
 
-static struct MemoryReadAddress chqflag_readmem[] =
-{
+static MEMORY_READ_START( chqflag_readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },					/* RAM */
 	{ 0x1000, 0x17ff, MRA_BANK1 },					/* banked RAM (RAM/051316 (chip 1)) */
 	{ 0x1800, 0x1fff, MRA_BANK2 },					/* palette + RAM */
@@ -129,11 +128,9 @@ static struct MemoryReadAddress chqflag_readmem[] =
 	{ 0x3702, 0x3702, analog_read_r },				/* accelerator/wheel */
 	{ 0x4000, 0x7fff, MRA_BANK4 },					/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress chqflag_writemem[] =
-{
+static MEMORY_WRITE_START( chqflag_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },					/* RAM */
 	{ 0x1000, 0x17ff, MWA_BANK1 },					/* banked RAM (RAM/051316 (chip 1)) */
 	{ 0x1800, 0x1fff, MWA_BANK2 },					/* palette + RAM */
@@ -152,11 +149,9 @@ static struct MemoryWriteAddress chqflag_writemem[] =
 	{ 0x3702, 0x3702, select_analog_ctrl_w },		/* select accelerator/wheel (mirror?) */
 	{ 0x4000, 0x7fff, MWA_ROM },					/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress chqflag_readmem_sound[] =
-{
+static MEMORY_READ_START( chqflag_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM */
 	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
 	{ 0xa000, 0xa00d, K007232_read_port_0_r },	/* 007232 (chip 1) */
@@ -164,8 +159,7 @@ static struct MemoryReadAddress chqflag_readmem_sound[] =
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },	/* YM2151 */
 	{ 0xd000, 0xd000, soundlatch_r },			/* soundlatch_r */
 	//{ 0xe000, 0xe000, MRA_NOP },				/* ??? */
-	{ -1 }
-};
+MEMORY_END
 
 static WRITE_HANDLER( k007232_bankswitch_w )
 {
@@ -186,8 +180,7 @@ static WRITE_HANDLER( k007232_bankswitch_w )
 
 }
 
-static struct MemoryWriteAddress chqflag_writemem_sound[] =
-{
+static MEMORY_WRITE_START( chqflag_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
 	{ 0x9000, 0x9000, k007232_bankswitch_w },		/* 007232 bankswitch */
@@ -198,8 +191,7 @@ static struct MemoryWriteAddress chqflag_writemem_sound[] =
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM2151 */
 	{ 0xf000, 0xf000, MWA_NOP },					/* ??? */
-	{ -1 }
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( chqflag )

@@ -11,18 +11,12 @@
 
 
 
-#define BIGSPRITE_WIDTH 128
-#define BIGSPRITE_HEIGHT 128
-
 unsigned char *cclimber_bsvideoram;
 size_t cclimber_bsvideoram_size;
 unsigned char *cclimber_bigspriteram;
 unsigned char *cclimber_column_scroll;
-static unsigned char *bsdirtybuffer;
-static struct osd_bitmap *bsbitmap;
-static data_t palettebank;
-static data_t sidepanel_enabled;
-static int bgpen;
+static int palettebank;
+static int sidepanel_enabled;
 
 
 /***************************************************************************
@@ -90,8 +84,6 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		if (i % 4 == 0) COLOR(2,i) = 0;
 		else COLOR(2,i) = i + 64;
 	}
-
-	bgpen = 0;
 }
 
 
@@ -212,9 +204,6 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	*(palette++) = 0x24;
 	*(palette++) = 0x5d;
 	*(palette++) = 0x4e;
-
-	palette_transparent_color = BGPEN; /* background color */
-	bgpen = BGPEN;
 }
 
 
@@ -274,20 +263,6 @@ int cclimber_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((bsdirtybuffer = malloc(cclimber_bsvideoram_size)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-	memset(bsdirtybuffer,1,cclimber_bsvideoram_size);
-
-	if ((bsbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-	{
-		free(bsdirtybuffer);
-		generic_vh_stop();
-		return 1;
-	}
-
 	return 0;
 }
 
@@ -300,8 +275,6 @@ int cclimber_vh_start(void)
 ***************************************************************************/
 void cclimber_vh_stop(void)
 {
-	bitmap_free(bsbitmap);
-	free(bsdirtybuffer);
 	generic_vh_stop();
 }
 
@@ -328,12 +301,7 @@ WRITE_HANDLER( cclimber_colorram_w )
 
 WRITE_HANDLER( cclimber_bigsprite_videoram_w )
 {
-	if (cclimber_bsvideoram[offset] != data)
-	{
-		bsdirtybuffer[offset] = 1;
-
-		cclimber_bsvideoram[offset] = data;
-	}
+	cclimber_bsvideoram[offset] = data;
 }
 
 
@@ -361,38 +329,47 @@ WRITE_HANDLER( swimmer_sidepanel_enable_w )
 ***************************************************************************/
 static void drawbigsprite(struct osd_bitmap *bitmap)
 {
-	int sx,sy,flipx,flipy;
+	int offs;
+	int ox,oy,sx,sy,flipx,flipy;
+	int color;
 
 
-	sx = 136 - cclimber_bigspriteram[3];
-	sy = 128 - cclimber_bigspriteram[2];
+	ox = 136 - cclimber_bigspriteram[3];
+	oy = 128 - cclimber_bigspriteram[2];
 	flipx = cclimber_bigspriteram[1] & 0x10;
 	flipy = cclimber_bigspriteram[1] & 0x20;
 	if (flip_screen_y)      /* only the Y direction has to be flipped */
 	{
-		sy = 128 - sy;
+		oy = 128 - oy;
 		flipy = !flipy;
 	}
+	color = cclimber_bigspriteram[1] & 0x07;	/* cclimber */
+//	color = cclimber_bigspriteram[1] & 0x03;	/* swimmer */
 
-	/* we have to draw if four times for wraparound */
-	sx &= 0xff;
-	sy &= 0xff;
-	copybitmap(bitmap,bsbitmap,
-			flipx,flipy,
-			sx,sy,
-			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
-	copybitmap(bitmap,bsbitmap,
-			flipx,flipy,
-			sx-256,sy,
-			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
-	copybitmap(bitmap,bsbitmap,
-			flipx,flipy,
-			sx-256,sy-256,
-			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
-	copybitmap(bitmap,bsbitmap,
-			flipx,flipy,
-			sx,sy-256,
-			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
+	for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
+	{
+		sx = offs % 16;
+		sy = offs / 16;
+		if (flipx) sx = 15 - sx;
+		if (flipy) sy = 15 - sy;
+
+		drawgfx(bitmap,Machine->gfx[2],
+//				cclimber_bsvideoram[offs],	/* cclimber */
+				cclimber_bsvideoram[offs] + ((cclimber_bigspriteram[1] & 0x08) << 5),	/* swimmer */
+				color,
+				flipx,flipy,
+				(ox+8*sx) & 0xff,(oy+8*sy) & 0xff,
+				0,TRANSPARENCY_PEN,0);
+
+		/* wraparound */
+		drawgfx(bitmap,Machine->gfx[2],
+//				cclimber_bsvideoram[offs],	/* cclimber */
+				cclimber_bsvideoram[offs] + ((cclimber_bigspriteram[1] & 0x08) << 5),	/* swimmer */
+				color,
+				flipx,flipy,
+				((ox+8*sx) & 0xff) - 256,(oy+8*sy) & 0xff,
+				0,TRANSPARENCY_PEN,0);
+	}
 }
 
 
@@ -404,7 +381,6 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (palette_recalc() || full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
-		memset(bsdirtybuffer,1,cclimber_bsvideoram_size);
 	}
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -472,39 +448,6 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/* update the "big sprite" */
-	{
-		int newcol;
-		static int lastcol;
-
-
-		newcol = cclimber_bigspriteram[1] & 0x07;
-
-		for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
-		{
-			int sx,sy;
-
-
-			if (bsdirtybuffer[offs] || newcol != lastcol)
-			{
-				bsdirtybuffer[offs] = 0;
-
-				sx = offs % 16;
-				sy = offs / 16;
-
-				drawgfx(bsbitmap,Machine->gfx[2],
-						cclimber_bsvideoram[offs],newcol,
-						0,0,
-						8*sx,8*sy,
-						0,TRANSPARENCY_NONE,0);
-			}
-
-		}
-
-		lastcol = newcol;
-	}
-
-
 	if (cclimber_bigspriteram[0] & 1)
 		/* draw the "big sprite" below sprites */
 		drawbigsprite(bitmap);
@@ -556,7 +499,6 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (palette_recalc() || full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
-		memset(bsdirtybuffer,1,cclimber_bsvideoram_size);
 	}
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -621,40 +563,6 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* update the "big sprite" */
-	{
-		int newcol;
-		static int lastcol;
-
-
-		newcol = cclimber_bigspriteram[1] & 0x03;
-
-		for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
-		{
-			int sx,sy;
-
-
-			if (bsdirtybuffer[offs] || newcol != lastcol)
-			{
-				bsdirtybuffer[offs] = 0;
-
-				sx = offs % 16;
-				sy = offs / 16;
-
-				drawgfx(bsbitmap,Machine->gfx[2],
-						cclimber_bsvideoram[offs] + ((cclimber_bigspriteram[1] & 0x08) << 5),
-						newcol,
-						0,0,
-						8*sx,8*sy,
-						0,TRANSPARENCY_NONE,0);
-			}
-
-		}
-
-		lastcol = newcol;
 	}
 
 

@@ -47,8 +47,7 @@ static READ_HANDLER( ripcord_IN2_r )
 	return readinputport (2);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x1000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
@@ -57,11 +56,9 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0xd000, 0xd000, input_port_2_r },
 	{ 0xd000, 0xd000, ripcord_IN2_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x1000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2000, circus_clown_x_w },
@@ -69,8 +66,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0x8000, circus_clown_z_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( circus )

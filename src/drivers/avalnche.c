@@ -29,25 +29,21 @@ int avalnche_interrupt(void);
 WRITE_HANDLER( avalnche_videoram_w );
 void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_RAM }, /* RAM SEL */
 	{ 0x2000, 0x2fff, avalnche_input_r }, /* INSEL */
 	{ 0x6000, 0x7fff, MRA_ROM }, /* ROM1-ROM2 */
 	{ 0xe000, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, avalnche_videoram_w, &videoram, &videoram_size }, /* DISPLAY */
 	{ 0x3000, 0x3fff, MWA_NOP }, /* WATCHDOG */
 	{ 0x4000, 0x4fff, avalnche_output_w }, /* OUTSEL */
 	{ 0x5000, 0x5fff, avalnche_noise_amplitude_w }, /* SOUNDLVL */
 	{ 0x6000, 0x7fff, MWA_ROM }, /* ROM1-ROM2 */
 	{ 0xe000, 0xffff, MWA_ROM }, /* ROM1-ROM2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

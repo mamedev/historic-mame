@@ -46,8 +46,7 @@ static READ_HANDLER( mermaid_f800_r )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x9fff, MRA_ROM },
 	{ 0xc000, 0xcbff, MRA_RAM },
 	{ 0xd000, 0xd3ff, MRA_RAM },
@@ -58,11 +57,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xe800, 0xe800, input_port_1_r },
 	{ 0xf000, 0xf000, input_port_2_r },
 	{ 0xf800, 0xf800, mermaid_f800_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcbff, MWA_RAM, &mermaid_background_videoram, &videoram_size },
@@ -77,8 +74,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf802, 0xf802, MWA_NOP },	/* ??? see memory map */
 	{ 0xf806, 0xf806, mermaid_AY8910_write_port_w },
 	{ 0xf807, 0xf807, mermaid_AY8910_control_port_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( mermaid )

@@ -215,8 +215,7 @@ static void nvram_handler(void *file,int read_or_write)
 
 /**********************************************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
+static MEMORY_READ_START( main_readmem )
 	{ 0x0000, 0x1fff, namcos1_0_banked_area0_r },
 	{ 0x2000, 0x3fff, namcos1_0_banked_area1_r },
 	{ 0x4000, 0x5fff, namcos1_0_banked_area2_r },
@@ -225,11 +224,9 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0xa000, 0xbfff, namcos1_0_banked_area5_r },
 	{ 0xc000, 0xdfff, namcos1_0_banked_area6_r },
 	{ 0xe000, 0xffff, namcos1_0_banked_area7_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress main_writemem[] =
-{
+static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x1fff, namcos1_0_banked_area0_w },
 	{ 0x2000, 0x3fff, namcos1_0_banked_area1_w },
 	{ 0x4000, 0x5fff, namcos1_0_banked_area2_w },
@@ -243,11 +240,9 @@ static struct MemoryWriteAddress main_writemem[] =
 //	{ 0xf400, 0xf400, MWA_NOP }, /* unknown */
 //	{ 0xf600, 0xf600, MWA_NOP }, /* unknown */
 	{ 0xfc00, 0xfc01, namcos1_subcpu_bank_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sub_readmem[] =
-{
+static MEMORY_READ_START( sub_readmem )
 	{ 0x0000, 0x1fff, namcos1_1_banked_area0_r },
 	{ 0x2000, 0x3fff, namcos1_1_banked_area1_r },
 	{ 0x4000, 0x5fff, namcos1_1_banked_area2_r },
@@ -256,11 +251,9 @@ static struct MemoryReadAddress sub_readmem[] =
 	{ 0xa000, 0xbfff, namcos1_1_banked_area5_r },
 	{ 0xc000, 0xdfff, namcos1_1_banked_area6_r },
 	{ 0xe000, 0xffff, namcos1_1_banked_area7_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sub_writemem[] =
-{
+static MEMORY_WRITE_START( sub_writemem )
 	{ 0xe000, 0xefff, namcos1_bankswitch_w },
 	{ 0x0000, 0x1fff, namcos1_1_banked_area0_w },
 	{ 0x2000, 0x3fff, namcos1_1_banked_area1_w },
@@ -273,11 +266,9 @@ static struct MemoryWriteAddress sub_writemem[] =
 	{ 0xf200, 0xf200, MWA_NOP }, /* watchdog? */
 //	{ 0xf400, 0xf400, MWA_NOP }, /* unknown */
 //	{ 0xf600, 0xf600, MWA_NOP }, /* unknown */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_BANK1 },	/* Banked ROMs */
 	{ 0x4000, 0x4001, YM2151_status_port_0_r },
 	{ 0x5000, 0x50ff, namcos1_wavedata_r }, /* PSG ( Shared ) */
@@ -286,11 +277,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x7000, 0x77ff, MRA_BANK2 },	/* Sound RAM 2 - ( Shared ) */
 	{ 0x8000, 0x9fff, MRA_RAM },	/* Sound RAM 3 */
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },	/* Banked ROMs */
 	{ 0x4000, 0x4000, YM2151_register_port_0_w },
 	{ 0x4001, 0x4001, YM2151_data_port_0_w },
@@ -302,8 +291,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xc000, 0xc001, namcos1_sound_bankswitch_w }, /* bank selector */
 	{ 0xd001, 0xd001, MWA_NOP },	/* watchdog? */
 	{ 0xe000, 0xe000, MWA_NOP },	/* IRQ clear ? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 static READ_HANDLER( dsw_r )
 {
@@ -317,7 +305,7 @@ static READ_HANDLER( dsw_r )
 
 static WRITE_HANDLER( namcos1_coin_w )
 {
-	coin_lockout_global_w(0,~data & 1);
+	coin_lockout_global_w(~data & 1);
 	coin_counter_w(0,data & 2);
 	coin_counter_w(1,data & 4);
 }
@@ -421,8 +409,7 @@ static READ_HANDLER( faceoff_in1_r )
 	return ret;
 }
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
 	{ 0x1400, 0x1400, input_port_0_r },
@@ -432,11 +419,9 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0xc000, 0xc7ff, MRA_BANK3 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM }, /* built in RAM */
 	{ 0x4000, 0xbfff, MWA_ROM },
@@ -447,11 +432,9 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0xd400, 0xd400, namcos1_dac1_w },
 	{ 0xd800, 0xd800, namcos1_mcu_bankswitch_w }, /* BANK selector */
 	{ 0xf000, 0xf000, MWA_NOP }, /* IRQ clear ? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress quester_mcu_readmem[] =
-{
+static MEMORY_READ_START( quester_mcu_readmem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
 	{ 0x1400, 0x1400, quester_in0_r },
@@ -461,11 +444,9 @@ static struct MemoryReadAddress quester_mcu_readmem[] =
 	{ 0xc000, 0xc7ff, MRA_BANK3 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress faceoff_mcu_readmem[] =
-{
+static MEMORY_READ_START( faceoff_mcu_readmem )
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
 	{ 0x1400, 0x1400, faceoff_in0_r },
@@ -475,21 +456,16 @@ static struct MemoryReadAddress faceoff_mcu_readmem[] =
 	{ 0xc000, 0xc7ff, MRA_BANK3 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort mcu_readport[] =
-{
+static PORT_READ_START( mcu_readport )
 	{ HD63701_PORT1, HD63701_PORT1, input_port_3_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort mcu_writeport[] =
-{
+static PORT_WRITE_START( mcu_writeport )
 	{ HD63701_PORT1, HD63701_PORT1, namcos1_coin_w },
 	{ HD63701_PORT2, HD63701_PORT2, namcos1_dac_gain_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

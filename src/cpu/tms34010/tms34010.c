@@ -100,12 +100,12 @@ typedef struct tms34010_regs
 	UINT32 fw[2];
 	UINT32 fw_inc[2];  /* Same as fw[], except when fw = 0, fw_inc = 32 */
 	UINT32 reset_deferred;
-	mem_write_handler f0_write;
-	mem_write_handler f1_write;
-	mem_write_handler pixel_write;
-	mem_read_handler f0_read;
-	mem_read_handler f1_read;
-	mem_read_handler pixel_read;
+	void (*f0_write)(offs_t offset,data32_t data);
+	void (*f1_write)(offs_t offset,data32_t data);
+	void (*pixel_write)(offs_t offset,data32_t data);
+	data32_t (*f0_read)(offs_t offset);
+	data32_t (*f1_read)(offs_t offset);
+	data32_t (*pixel_read)(offs_t offset);
 	UINT32 transparency;
 	UINT32 window_checking;
 	 INT32 (*raster_op)(INT32 newpix, INT32 oldpix);
@@ -113,7 +113,7 @@ typedef struct tms34010_regs
 	UINT32 convdp;
 	UINT32 convmp;
 	UINT32 pixelshift;
-	UINT16 *shiftreg;
+	data16_t *shiftreg;
 	UINT8  is_34020;
 	int gfxcycles;
 	int (*irq_callback)(int irqline);
@@ -179,40 +179,40 @@ static void check_interrupt(void);
 **	FUNCTION TABLES
 **#################################################################################################*/
 
-extern WRITE_HANDLER( wfield_01 );
-extern WRITE_HANDLER( wfield_02 );
-extern WRITE_HANDLER( wfield_03 );
-extern WRITE_HANDLER( wfield_04 );
-extern WRITE_HANDLER( wfield_05 );
-extern WRITE_HANDLER( wfield_06 );
-extern WRITE_HANDLER( wfield_07 );
-extern WRITE_HANDLER( wfield_08 );
-extern WRITE_HANDLER( wfield_09 );
-extern WRITE_HANDLER( wfield_10 );
-extern WRITE_HANDLER( wfield_11 );
-extern WRITE_HANDLER( wfield_12 );
-extern WRITE_HANDLER( wfield_13 );
-extern WRITE_HANDLER( wfield_14 );
-extern WRITE_HANDLER( wfield_15 );
-extern WRITE_HANDLER( wfield_16 );
-extern WRITE_HANDLER( wfield_17 );
-extern WRITE_HANDLER( wfield_18 );
-extern WRITE_HANDLER( wfield_19 );
-extern WRITE_HANDLER( wfield_20 );
-extern WRITE_HANDLER( wfield_21 );
-extern WRITE_HANDLER( wfield_22 );
-extern WRITE_HANDLER( wfield_23 );
-extern WRITE_HANDLER( wfield_24 );
-extern WRITE_HANDLER( wfield_25 );
-extern WRITE_HANDLER( wfield_26 );
-extern WRITE_HANDLER( wfield_27 );
-extern WRITE_HANDLER( wfield_28 );
-extern WRITE_HANDLER( wfield_29 );
-extern WRITE_HANDLER( wfield_30 );
-extern WRITE_HANDLER( wfield_31 );
-extern WRITE_HANDLER( wfield_32 );
+extern void wfield_01(offs_t offset,data32_t data);
+extern void wfield_02(offs_t offset,data32_t data);
+extern void wfield_03(offs_t offset,data32_t data);
+extern void wfield_04(offs_t offset,data32_t data);
+extern void wfield_05(offs_t offset,data32_t data);
+extern void wfield_06(offs_t offset,data32_t data);
+extern void wfield_07(offs_t offset,data32_t data);
+extern void wfield_08(offs_t offset,data32_t data);
+extern void wfield_09(offs_t offset,data32_t data);
+extern void wfield_10(offs_t offset,data32_t data);
+extern void wfield_11(offs_t offset,data32_t data);
+extern void wfield_12(offs_t offset,data32_t data);
+extern void wfield_13(offs_t offset,data32_t data);
+extern void wfield_14(offs_t offset,data32_t data);
+extern void wfield_15(offs_t offset,data32_t data);
+extern void wfield_16(offs_t offset,data32_t data);
+extern void wfield_17(offs_t offset,data32_t data);
+extern void wfield_18(offs_t offset,data32_t data);
+extern void wfield_19(offs_t offset,data32_t data);
+extern void wfield_20(offs_t offset,data32_t data);
+extern void wfield_21(offs_t offset,data32_t data);
+extern void wfield_22(offs_t offset,data32_t data);
+extern void wfield_23(offs_t offset,data32_t data);
+extern void wfield_24(offs_t offset,data32_t data);
+extern void wfield_25(offs_t offset,data32_t data);
+extern void wfield_26(offs_t offset,data32_t data);
+extern void wfield_27(offs_t offset,data32_t data);
+extern void wfield_28(offs_t offset,data32_t data);
+extern void wfield_29(offs_t offset,data32_t data);
+extern void wfield_30(offs_t offset,data32_t data);
+extern void wfield_31(offs_t offset,data32_t data);
+extern void wfield_32(offs_t offset,data32_t data);
 
-static mem_write_handler wfield_functions[32] =
+static void (*wfield_functions[32])(offs_t offset,data32_t data) =
 {
 	wfield_32, wfield_01, wfield_02, wfield_03, wfield_04, wfield_05,
 	wfield_06, wfield_07, wfield_08, wfield_09, wfield_10, wfield_11,
@@ -222,40 +222,40 @@ static mem_write_handler wfield_functions[32] =
 	wfield_30, wfield_31
 };
 
-extern READ_HANDLER( rfield_z_01 );
-extern READ_HANDLER( rfield_z_02 );
-extern READ_HANDLER( rfield_z_03 );
-extern READ_HANDLER( rfield_z_04 );
-extern READ_HANDLER( rfield_z_05 );
-extern READ_HANDLER( rfield_z_06 );
-extern READ_HANDLER( rfield_z_07 );
-extern READ_HANDLER( rfield_z_08 );
-extern READ_HANDLER( rfield_z_09 );
-extern READ_HANDLER( rfield_z_10 );
-extern READ_HANDLER( rfield_z_11 );
-extern READ_HANDLER( rfield_z_12 );
-extern READ_HANDLER( rfield_z_13 );
-extern READ_HANDLER( rfield_z_14 );
-extern READ_HANDLER( rfield_z_15 );
-extern READ_HANDLER( rfield_z_16 );
-extern READ_HANDLER( rfield_z_17 );
-extern READ_HANDLER( rfield_z_18 );
-extern READ_HANDLER( rfield_z_19 );
-extern READ_HANDLER( rfield_z_20 );
-extern READ_HANDLER( rfield_z_21 );
-extern READ_HANDLER( rfield_z_22 );
-extern READ_HANDLER( rfield_z_23 );
-extern READ_HANDLER( rfield_z_24 );
-extern READ_HANDLER( rfield_z_25 );
-extern READ_HANDLER( rfield_z_26 );
-extern READ_HANDLER( rfield_z_27 );
-extern READ_HANDLER( rfield_z_28 );
-extern READ_HANDLER( rfield_z_29 );
-extern READ_HANDLER( rfield_z_30 );
-extern READ_HANDLER( rfield_z_31 );
-extern READ_HANDLER( rfield_32 );
+extern data32_t rfield_z_01(offs_t offset);
+extern data32_t rfield_z_02(offs_t offset);
+extern data32_t rfield_z_03(offs_t offset);
+extern data32_t rfield_z_04(offs_t offset);
+extern data32_t rfield_z_05(offs_t offset);
+extern data32_t rfield_z_06(offs_t offset);
+extern data32_t rfield_z_07(offs_t offset);
+extern data32_t rfield_z_08(offs_t offset);
+extern data32_t rfield_z_09(offs_t offset);
+extern data32_t rfield_z_10(offs_t offset);
+extern data32_t rfield_z_11(offs_t offset);
+extern data32_t rfield_z_12(offs_t offset);
+extern data32_t rfield_z_13(offs_t offset);
+extern data32_t rfield_z_14(offs_t offset);
+extern data32_t rfield_z_15(offs_t offset);
+extern data32_t rfield_z_16(offs_t offset);
+extern data32_t rfield_z_17(offs_t offset);
+extern data32_t rfield_z_18(offs_t offset);
+extern data32_t rfield_z_19(offs_t offset);
+extern data32_t rfield_z_20(offs_t offset);
+extern data32_t rfield_z_21(offs_t offset);
+extern data32_t rfield_z_22(offs_t offset);
+extern data32_t rfield_z_23(offs_t offset);
+extern data32_t rfield_z_24(offs_t offset);
+extern data32_t rfield_z_25(offs_t offset);
+extern data32_t rfield_z_26(offs_t offset);
+extern data32_t rfield_z_27(offs_t offset);
+extern data32_t rfield_z_28(offs_t offset);
+extern data32_t rfield_z_29(offs_t offset);
+extern data32_t rfield_z_30(offs_t offset);
+extern data32_t rfield_z_31(offs_t offset);
+extern data32_t rfield_32(offs_t offset);
 
-static mem_read_handler rfield_functions_z[32] =
+static data32_t (*rfield_functions_z[32])(offs_t offset) =
 {
 	rfield_32  , rfield_z_01, rfield_z_02, rfield_z_03, rfield_z_04, rfield_z_05,
 	rfield_z_06, rfield_z_07, rfield_z_08, rfield_z_09, rfield_z_10, rfield_z_11,
@@ -265,39 +265,39 @@ static mem_read_handler rfield_functions_z[32] =
 	rfield_z_30, rfield_z_31
 };
 
-extern READ_HANDLER( rfield_s_01 );
-extern READ_HANDLER( rfield_s_02 );
-extern READ_HANDLER( rfield_s_03 );
-extern READ_HANDLER( rfield_s_04 );
-extern READ_HANDLER( rfield_s_05 );
-extern READ_HANDLER( rfield_s_06 );
-extern READ_HANDLER( rfield_s_07 );
-extern READ_HANDLER( rfield_s_08 );
-extern READ_HANDLER( rfield_s_09 );
-extern READ_HANDLER( rfield_s_10 );
-extern READ_HANDLER( rfield_s_11 );
-extern READ_HANDLER( rfield_s_12 );
-extern READ_HANDLER( rfield_s_13 );
-extern READ_HANDLER( rfield_s_14 );
-extern READ_HANDLER( rfield_s_15 );
-extern READ_HANDLER( rfield_s_16 );
-extern READ_HANDLER( rfield_s_17 );
-extern READ_HANDLER( rfield_s_18 );
-extern READ_HANDLER( rfield_s_19 );
-extern READ_HANDLER( rfield_s_20 );
-extern READ_HANDLER( rfield_s_21 );
-extern READ_HANDLER( rfield_s_22 );
-extern READ_HANDLER( rfield_s_23 );
-extern READ_HANDLER( rfield_s_24 );
-extern READ_HANDLER( rfield_s_25 );
-extern READ_HANDLER( rfield_s_26 );
-extern READ_HANDLER( rfield_s_27 );
-extern READ_HANDLER( rfield_s_28 );
-extern READ_HANDLER( rfield_s_29 );
-extern READ_HANDLER( rfield_s_30 );
-extern READ_HANDLER( rfield_s_31 );
+extern data32_t rfield_s_01(offs_t offset);
+extern data32_t rfield_s_02(offs_t offset);
+extern data32_t rfield_s_03(offs_t offset);
+extern data32_t rfield_s_04(offs_t offset);
+extern data32_t rfield_s_05(offs_t offset);
+extern data32_t rfield_s_06(offs_t offset);
+extern data32_t rfield_s_07(offs_t offset);
+extern data32_t rfield_s_08(offs_t offset);
+extern data32_t rfield_s_09(offs_t offset);
+extern data32_t rfield_s_10(offs_t offset);
+extern data32_t rfield_s_11(offs_t offset);
+extern data32_t rfield_s_12(offs_t offset);
+extern data32_t rfield_s_13(offs_t offset);
+extern data32_t rfield_s_14(offs_t offset);
+extern data32_t rfield_s_15(offs_t offset);
+extern data32_t rfield_s_16(offs_t offset);
+extern data32_t rfield_s_17(offs_t offset);
+extern data32_t rfield_s_18(offs_t offset);
+extern data32_t rfield_s_19(offs_t offset);
+extern data32_t rfield_s_20(offs_t offset);
+extern data32_t rfield_s_21(offs_t offset);
+extern data32_t rfield_s_22(offs_t offset);
+extern data32_t rfield_s_23(offs_t offset);
+extern data32_t rfield_s_24(offs_t offset);
+extern data32_t rfield_s_25(offs_t offset);
+extern data32_t rfield_s_26(offs_t offset);
+extern data32_t rfield_s_27(offs_t offset);
+extern data32_t rfield_s_28(offs_t offset);
+extern data32_t rfield_s_29(offs_t offset);
+extern data32_t rfield_s_30(offs_t offset);
+extern data32_t rfield_s_31(offs_t offset);
 
-static mem_read_handler rfield_functions_s[32] =
+static data32_t (*rfield_functions_s[32])(offs_t offset) =
 {
 	rfield_32  , rfield_s_01, rfield_s_02, rfield_s_03, rfield_s_04, rfield_s_05,
 	rfield_s_06, rfield_s_07, rfield_s_08, rfield_s_09, rfield_s_10, rfield_s_11,
@@ -493,7 +493,7 @@ INLINE INT32 PARAM_LONG_NO_INC(void)
 }
 
 /* read memory byte */
-INLINE READ_HANDLER( RBYTE )
+INLINE data32_t RBYTE(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_8;
@@ -501,19 +501,19 @@ INLINE READ_HANDLER( RBYTE )
 }
 
 /* write memory byte */
-INLINE WRITE_HANDLER( WBYTE )
+INLINE void WBYTE(offs_t offset,data32_t data)
 {
 	WFIELDMAC_8;
 }
 
 /* read memory long */
-INLINE READ_HANDLER( RLONG )
+INLINE data32_t RLONG(offs_t offset)
 {
 	RFIELDMAC_32;
 }
 
 /* write memory long */
-INLINE WRITE_HANDLER( WLONG )
+INLINE void WLONG(offs_t offset,data32_t data)
 {
 	WFIELDMAC_32;
 }
@@ -542,18 +542,18 @@ INLINE INT32 POP(void)
 	/* TODO: Plane masking */								\
 	return (TMS34010_RDMEM_WORD(TOBYTE(offset & 0xfffffff0)) >> (offset & m1)) & m2;
 
-static READ_HANDLER( read_pixel_1 ) { RP(0x0f,0x01) }
-static READ_HANDLER( read_pixel_2 ) { RP(0x0e,0x03) }
-static READ_HANDLER( read_pixel_4 ) { RP(0x0c,0x0f) }
-static READ_HANDLER( read_pixel_8 ) { RP(0x08,0xff) }
-static READ_HANDLER( read_pixel_16 )
+static data32_t read_pixel_1(offs_t offset) { RP(0x0f,0x01) }
+static data32_t read_pixel_2(offs_t offset) { RP(0x0e,0x03) }
+static data32_t read_pixel_4(offs_t offset) { RP(0x0c,0x0f) }
+static data32_t read_pixel_8(offs_t offset) { RP(0x08,0xff) }
+static data32_t read_pixel_16(offs_t offset)
 {
 	/* TODO: Plane masking */
 	return TMS34010_RDMEM_WORD(TOBYTE(offset & 0xfffffff0));
 }
 
 /* Shift register read */
-static READ_HANDLER( read_pixel_shiftreg )
+static data32_t read_pixel_shiftreg(offs_t offset)
 {
 	if (state.config->to_shiftreg)
 		state.config->to_shiftreg(offset, &state.shiftreg[0]);
@@ -621,22 +621,22 @@ static READ_HANDLER( read_pixel_shiftreg )
 
 
 /* No Raster Op + No Transparency */
-static WRITE_HANDLER( write_pixel_1 ) { WP(0x0f, 0x01); }
-static WRITE_HANDLER( write_pixel_2 ) { WP(0x0e, 0x03); }
-static WRITE_HANDLER( write_pixel_4 ) { WP(0x0c, 0x0f); }
-static WRITE_HANDLER( write_pixel_8 ) { WP(0x08, 0xff); }
-static WRITE_HANDLER( write_pixel_16 )
+static void write_pixel_1(offs_t offset,data32_t data) { WP(0x0f, 0x01); }
+static void write_pixel_2(offs_t offset,data32_t data) { WP(0x0e, 0x03); }
+static void write_pixel_4(offs_t offset,data32_t data) { WP(0x0c, 0x0f); }
+static void write_pixel_8(offs_t offset,data32_t data) { WP(0x08, 0xff); }
+static void write_pixel_16(offs_t offset,data32_t data)
 {
 	/* TODO: plane masking */
 	TMS34010_WRMEM_WORD(TOBYTE(offset & 0xfffffff0), data);
 }
 
 /* No Raster Op + Transparency */
-static WRITE_HANDLER( write_pixel_t_1 ) { WP_T(0x0f, 0x01); }
-static WRITE_HANDLER( write_pixel_t_2 ) { WP_T(0x0e, 0x03); }
-static WRITE_HANDLER( write_pixel_t_4 ) { WP_T(0x0c, 0x0f); }
-static WRITE_HANDLER( write_pixel_t_8 ) { WP_T(0x08, 0xff); }
-static WRITE_HANDLER( write_pixel_t_16 )
+static void write_pixel_t_1(offs_t offset,data32_t data) { WP_T(0x0f, 0x01); }
+static void write_pixel_t_2(offs_t offset,data32_t data) { WP_T(0x0e, 0x03); }
+static void write_pixel_t_4(offs_t offset,data32_t data) { WP_T(0x0c, 0x0f); }
+static void write_pixel_t_8(offs_t offset,data32_t data) { WP_T(0x08, 0xff); }
+static void write_pixel_t_16(offs_t offset,data32_t data)
 {
 	/* TODO: plane masking */
 	if (data)
@@ -644,11 +644,11 @@ static WRITE_HANDLER( write_pixel_t_16 )
 }
 
 /* Raster Op + No Transparency */
-static WRITE_HANDLER( write_pixel_r_1 ) { WP_R(0x0f, 0x01); }
-static WRITE_HANDLER( write_pixel_r_2 ) { WP_R(0x0e, 0x03); }
-static WRITE_HANDLER( write_pixel_r_4 ) { WP_R(0x0c, 0x0f); }
-static WRITE_HANDLER( write_pixel_r_8 ) { WP_R(0x08, 0xff); }
-static WRITE_HANDLER( write_pixel_r_16 )
+static void write_pixel_r_1(offs_t offset,data32_t data) { WP_R(0x0f, 0x01); }
+static void write_pixel_r_2(offs_t offset,data32_t data) { WP_R(0x0e, 0x03); }
+static void write_pixel_r_4(offs_t offset,data32_t data) { WP_R(0x0c, 0x0f); }
+static void write_pixel_r_8(offs_t offset,data32_t data) { WP_R(0x08, 0xff); }
+static void write_pixel_r_16(offs_t offset,data32_t data)
 {
 	/* TODO: plane masking */
 	UINT32 a = TOBYTE(offset & 0xfffffff0);
@@ -656,11 +656,11 @@ static WRITE_HANDLER( write_pixel_r_16 )
 }
 
 /* Raster Op + Transparency */
-static WRITE_HANDLER( write_pixel_r_t_1 ) { WP_R_T(0x0f,0x01); }
-static WRITE_HANDLER( write_pixel_r_t_2 ) { WP_R_T(0x0e,0x03); }
-static WRITE_HANDLER( write_pixel_r_t_4 ) { WP_R_T(0x0c,0x0f); }
-static WRITE_HANDLER( write_pixel_r_t_8 ) { WP_R_T(0x08,0xff); }
-static WRITE_HANDLER( write_pixel_r_t_16 )
+static void write_pixel_r_t_1(offs_t offset,data32_t data) { WP_R_T(0x0f,0x01); }
+static void write_pixel_r_t_2(offs_t offset,data32_t data) { WP_R_T(0x0e,0x03); }
+static void write_pixel_r_t_4(offs_t offset,data32_t data) { WP_R_T(0x0c,0x0f); }
+static void write_pixel_r_t_8(offs_t offset,data32_t data) { WP_R_T(0x08,0xff); }
+static void write_pixel_r_t_16(offs_t offset,data32_t data)
 {
 	/* TODO: plane masking */
 	UINT32 a = TOBYTE(offset & 0xfffffff0);
@@ -671,7 +671,7 @@ static WRITE_HANDLER( write_pixel_r_t_16 )
 }
 
 /* Shift register write */
-static WRITE_HANDLER( write_pixel_shiftreg )
+static void write_pixel_shiftreg(offs_t offset,data32_t data)
 {
 	if (state.config->from_shiftreg)
 		state.config->from_shiftreg(offset, &state.shiftreg[0]);
@@ -763,7 +763,7 @@ static void check_interrupt(void)
 		/* leap to the vector */
 		RESET_ST();
 		PC = RLONG(0xfffffee0);
-		change_pc29(PC);
+		change_pc29lew(PC);
 		return;
 	}
 
@@ -816,7 +816,7 @@ static void check_interrupt(void)
 		PUSH(GET_ST());
 		RESET_ST();
 		PC = RLONG(vector);
-		change_pc29(PC);
+		change_pc29lew(PC);
 
 		/* call the callback for externals */
 		if (irqline >= 0)
@@ -843,7 +843,7 @@ void tms34010_reset(void *param)
 
 	/* fetch the initial PC and reset the state */
 	PC = RLONG(0xffffffe0);
-	change_pc29(PC)
+	change_pc29lew(PC)
 	RESET_ST();
 
 	/* reset the host interface */
@@ -853,7 +853,7 @@ void tms34010_reset(void *param)
 	/* the first time we are run */
 	state.reset_deferred = config->halt_on_reset;
 	if (config->halt_on_reset)
-		tms34010_io_register_w(REG_HSTCTLH * 2, 0x8000);
+		tms34010_io_register_w(REG_HSTCTLH, 0x8000, 0);
 }
 
 void tms34020_reset(void *param)
@@ -941,7 +941,7 @@ void tms34010_set_context(void *src)
 		for (i = 0; i < 15; i++)
 			BREG(BINDEX(i)) = state.flat_bregs[i];
 	}
-	change_pc29(PC)
+	change_pc29lew(PC)
 	check_interrupt();
 }
 
@@ -957,7 +957,7 @@ void tms34020_set_context(void *src)
 		for (i = 0; i < 15; i++)
 			BREG(BINDEX(i)) = state.flat_bregs[i];
 	}
-	change_pc29(PC)
+	change_pc29lew(PC)
 	check_interrupt();
 }
 
@@ -986,7 +986,7 @@ unsigned tms34020_get_pc(void)
 void tms34010_set_pc(unsigned val)
 {
 	PC = val;
-	change_pc29(PC)
+	change_pc29lew(PC)
 }
 
 void tms34020_set_pc(unsigned val)
@@ -1074,7 +1074,7 @@ unsigned tms34010_get_reg(int regnum)
 			if (regnum <= REG_SP_CONTENTS)
 			{
 				unsigned offset = SP + 4 * (REG_SP_CONTENTS - regnum);
-				return cpu_readmem29_dword(TOBYTE(offset));
+				return (cpu_readmem29lew_word(TOBYTE(offset)+2) << 16) | cpu_readmem29lew_word(TOBYTE(offset));
 			}
 	}
 	return 0;
@@ -1133,7 +1133,7 @@ void tms34010_set_reg(int regnum, unsigned val)
 			if (regnum <= REG_SP_CONTENTS)
 			{
 				unsigned offset = SP + 4 * (REG_SP_CONTENTS - regnum);
-				cpu_writemem29_word(TOBYTE(offset), val); /* ??? */
+				cpu_writemem29lew_word(TOBYTE(offset), val); /* ??? */
 			}
 	}
 }
@@ -1248,7 +1248,7 @@ int tms34010_execute(int cycles)
 
 	/* execute starting now */
 	tms34010_ICount = cycles;
-	change_pc29(PC);
+	change_pc29lew(PC);
 	do
 	{
 		#ifdef	MAME_DEBUG
@@ -1426,7 +1426,7 @@ unsigned tms34020_dasm(char *buffer, unsigned pc)
 **	PIXEL OPS
 **#################################################################################################*/
 
-static mem_write_handler pixel_write_ops[4][5] =
+static void (*pixel_write_ops[4][5])(offs_t offset,data32_t data) =
 {
 	{ write_pixel_1,     write_pixel_2,     write_pixel_4,     write_pixel_8,     write_pixel_16     },
 	{ write_pixel_r_1,   write_pixel_r_2,   write_pixel_r_4,   write_pixel_r_8,   write_pixel_r_16   },
@@ -1434,7 +1434,7 @@ static mem_write_handler pixel_write_ops[4][5] =
 	{ write_pixel_r_t_1, write_pixel_r_t_2, write_pixel_r_t_4, write_pixel_r_t_8, write_pixel_r_t_16 }
 };
 
-static mem_read_handler pixel_read_ops[5] =
+static data32_t (*pixel_read_ops[5])(offs_t offset) =
 {
 	read_pixel_1,        read_pixel_2,      read_pixel_4,      read_pixel_8,      read_pixel_16
 };
@@ -1759,12 +1759,12 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
 }
 
-WRITE_HANDLER( tms34010_io_register_w )
+WRITE16_HANDLER( tms34010_io_register_w )
 {
 	if (!host_interface_context)
-		common_io_register_w(cpu_getactivecpu(), &state, offset / 2, data);
+		common_io_register_w(cpu_getactivecpu(), &state, offset, data);
 	else
-		common_io_register_w(host_interface_cpu, host_interface_context, offset / 2, data);
+		common_io_register_w(host_interface_cpu, host_interface_context, offset, data);
 }
 
 
@@ -1864,12 +1864,12 @@ static void common_020_io_register_w(int cpunum, tms34010_regs *context, int reg
 	}
 }
 
-WRITE_HANDLER( tms34020_io_register_w )
+WRITE16_HANDLER( tms34020_io_register_w )
 {
 	if (!host_interface_context)
-		common_020_io_register_w(cpu_getactivecpu(), &state, offset / 2, data);
+		common_020_io_register_w(cpu_getactivecpu(), &state, offset, data);
 	else
-		common_020_io_register_w(host_interface_cpu, host_interface_context, offset / 2, data);
+		common_020_io_register_w(host_interface_cpu, host_interface_context, offset, data);
 }
 
 
@@ -1914,12 +1914,12 @@ static int common_io_register_r(int cpunum, tms34010_regs *context, int reg)
 }
 
 
-READ_HANDLER( tms34010_io_register_r )
+READ16_HANDLER( tms34010_io_register_r )
 {
 	if (!host_interface_context)
-		return common_io_register_r(cpu_getactivecpu(), &state, offset / 2);
+		return common_io_register_r(cpu_getactivecpu(), &state, offset);
 	else
-		return common_io_register_r(host_interface_cpu, host_interface_context, offset / 2);
+		return common_io_register_r(host_interface_cpu, host_interface_context, offset);
 }
 
 
@@ -1930,12 +1930,12 @@ static int common_020_io_register_r(int cpunum, tms34010_regs *context, int reg)
 	return common_io_register_r(cpunum, context, reg);
 }
 
-READ_HANDLER( tms34020_io_register_r )
+READ16_HANDLER( tms34020_io_register_r )
 {
 	if (!host_interface_context)
-		return common_020_io_register_r(cpu_getactivecpu(), &state, offset / 2);
+		return common_020_io_register_r(cpu_getactivecpu(), &state, offset);
 	else
-		return common_020_io_register_r(host_interface_cpu, host_interface_context, offset / 2);
+		return common_020_io_register_r(host_interface_cpu, host_interface_context, offset);
 }
 
 
@@ -1994,9 +1994,9 @@ void tms34010_state_load(int cpunum, void *f)
 
 	osd_fread(f,context,sizeof(state));
 	osd_fread(f,&tms34010_ICount,sizeof(tms34010_ICount));
-	change_pc29(PC);
+	change_pc29lew(PC);
 	SET_FW();
-	tms34010_io_register_w(REG_DPYINT<<1,IOREG(REG_DPYINT));
+	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);
 	set_raster_op(&state);
 	set_pixel_function(&state);
 

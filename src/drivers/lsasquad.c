@@ -63,15 +63,14 @@ WRITE_HANDLER( lsasquad_bankswitch_w )
 	/* bit 3 is zeroed on startup, maybe reset sound CPU */
 
 	/* bit 4 flips screen */
-	flip_screen_w(offset,data & 0x10);
+	flip_screen_set(data & 0x10);
 
 	/* other bits unknown */
 }
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xe5ff, MRA_RAM },
@@ -86,11 +85,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xec00, 0xec00, lsasquad_sound_result_r },
 	{ 0xec01, 0xec01, lsasquad_sound_status_r },
 	{ 0xee00, 0xee00, lsasquad_mcu_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xbfff, MWA_RAM },	/* SRAM */
 	{ 0xc000, 0xdfff, MWA_RAM, &lsasquad_videoram },	/* SCREEN RAM */
@@ -99,11 +96,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xea00, 0xea00, lsasquad_bankswitch_w },
 	{ 0xec00, 0xec00, lsasquad_sound_command_w },
 	{ 0xee00, 0xee00, lsasquad_mcu_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, YM2203_status_port_0_r },
@@ -111,11 +106,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xd000, 0xd000, lsasquad_sh_sound_command_r },
 	{ 0xd800, 0xd800, lsasquad_sound_status_r },
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa000, YM2203_control_port_0_w },
@@ -126,29 +119,24 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xd400, 0xd400, lsasquad_sh_nmi_disable_w },
 	{ 0xd800, 0xd800, lsasquad_sh_nmi_enable_w },
 	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress m68705_readmem[] =
-{
+static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, lsasquad_68705_portA_r },
 	{ 0x0001, 0x0001, lsasquad_68705_portB_r },
 	{ 0x0002, 0x0002, lsasquad_mcu_status_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m68705_writemem[] =
-{
+static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0000, 0x0000, lsasquad_68705_portA_w },
 	{ 0x0001, 0x0001, lsasquad_68705_portB_w },
 	{ 0x0004, 0x0004, lsasquad_68705_ddrA_w },
 	{ 0x0005, 0x0005, lsasquad_68705_ddrB_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

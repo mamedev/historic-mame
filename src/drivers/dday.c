@@ -95,8 +95,7 @@ static int dday_interrupt (void)
     return ignore_interrupt();
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x5000, 0x5bff, MRA_RAM },
 	{ 0x5c00, 0x5fff, dday_colorram_r },
@@ -106,11 +105,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x7400, 0x7400, input_port_2_r },
 	{ 0x7800, 0x7800, dday_timer_r },
 	{ 0x7c00, 0x7c00, input_port_3_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4000, dday_searchlight_w },
 	{ 0x5000, 0x53ff, MWA_RAM, &dday_videoram2 },
@@ -135,8 +132,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6800, 0x6800, AY8910_control_port_1_w },
 	{ 0x6801, 0x6801, AY8910_write_port_1_w },
 	{ 0x7800, 0x7800, dday_control_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

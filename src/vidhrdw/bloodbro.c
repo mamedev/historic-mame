@@ -6,405 +6,271 @@
 
 #include "vidhrdw/generic.h"
 
-#define NUM_SPRITES 128
+data16_t *bloodbro_txvideoram;
+data16_t *bloodbro_bgvideoram,*bloodbro_fgvideoram;
+data16_t *bloodbro_scroll;
 
-unsigned char *textlayoutram;
-static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
-extern unsigned char *dirtybuffer2;
-unsigned char *bloodbro_videoram2;
-unsigned char *bloodbro_scroll;
-static struct sprite_list *sprite_list;
+static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
 
-READ_HANDLER( bloodbro_background_r ){
-	return READ_WORD (&videoram[offset]);
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = bloodbro_bgvideoram[tile_index];
+	SET_TILE_INFO(1,code & 0xfff,code >> 12)
 }
 
-WRITE_HANDLER( bloodbro_background_w ){
-	int oldword = READ_WORD(&videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
-		WRITE_WORD(&videoram[offset],newword);
-		dirtybuffer[offset/2] = 1;
-	}
+static void get_fg_tile_info(int tile_index)
+{
+	int code = bloodbro_fgvideoram[tile_index];
+	SET_TILE_INFO(2,code & 0xfff,code >> 12)
 }
 
-READ_HANDLER( bloodbro_foreground_r ){
-	return READ_WORD (&bloodbro_videoram2[offset]);
+static void get_tx_tile_info(int tile_index)
+{
+	int code = bloodbro_txvideoram[tile_index];
+	SET_TILE_INFO(0,code & 0xfff,code >> 12)
 }
 
-WRITE_HANDLER( bloodbro_foreground_w ){
-	int oldword = READ_WORD(&bloodbro_videoram2[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
-		WRITE_WORD(&bloodbro_videoram2[offset],newword);
-		dirtybuffer2[offset/2] = 1;
-	}
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int bloodbro_vh_start(void)
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,16);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,16);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+
+	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap,15);
+	tilemap_set_transparent_pen(tx_tilemap,15);
+
+	return 0;
 }
 
-/**************************************************************************/
 
-void bloodbro_vh_stop(void) {
-	if( tmpbitmap ) bitmap_free( tmpbitmap );
-	if( tmpbitmap2 ) bitmap_free( tmpbitmap2 );
-	free( dirtybuffer2 );
-	free( dirtybuffer );
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE16_HANDLER( bloodbro_bgvideoram_w )
+{
+	int oldword = bloodbro_bgvideoram[offset];
+	COMBINE_DATA(&bloodbro_bgvideoram[offset]);
+	if (oldword != bloodbro_bgvideoram[offset])
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
-int bloodbro_vh_start(void) {
-	tmpbitmap = bitmap_alloc(512,256);
-	dirtybuffer = malloc(32*16);
-	tmpbitmap2 = bitmap_alloc(512,256);
-	dirtybuffer2 = malloc(32*16);
-	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_FRONT_TO_BACK );
-
-	if( tmpbitmap && tmpbitmap2 && dirtybuffer && dirtybuffer2 ){
-		memset( dirtybuffer, 1, 32*16 );
-		memset( dirtybuffer2, 1, 32*16 );
-		sprite_list->transparent_pen = 0xf;
-		sprite_list->max_priority = 1;
-		sprite_list->sprite_type = SPRITE_TYPE_STACK;
-		return 0;
-	}
-	bloodbro_vh_stop();
-	return 1;
+WRITE16_HANDLER( bloodbro_fgvideoram_w )
+{
+	int oldword = bloodbro_fgvideoram[offset];
+	COMBINE_DATA(&bloodbro_fgvideoram[offset]);
+	if (oldword != bloodbro_fgvideoram[offset])
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
 }
 
-/**************************************************************************/
-
-static void draw_text( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->visible_area;
-	const UINT16 *source = (const UINT16 *)textlayoutram;
-	int sx, sy;
-	for( sy=0; sy<32; sy++ ){
-		for( sx=0; sx<32; sx++ ){
-			UINT16 data = *source++;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					data&0xfff, /* tile number */
-					data>>12, /* color */
-					0,0,   /* no flip */
-					8*sx,8*sy,
-					clip,TRANSPARENCY_PEN,0xf);
-		}
-	}
+WRITE16_HANDLER( bloodbro_txvideoram_w )
+{
+	int oldword = bloodbro_txvideoram[offset];
+	COMBINE_DATA(&bloodbro_txvideoram[offset]);
+	if (oldword != bloodbro_txvideoram[offset])
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
 }
 
-static void draw_background( struct osd_bitmap *bitmap ) {
-	const struct GfxElement *gfx = Machine->gfx[1];
-	const UINT16 *source = (UINT16 *)videoram;
-	int offs;
-	for( offs=0; offs<32*16; offs++ ){
-		if( dirtybuffer[offs] ){
-			int sx = 16*(offs%32);
-			int sy = 16*(offs/32);
-			UINT16 data = source[offs];
-			dirtybuffer[offs] = 0;
 
-			drawgfx(tmpbitmap,gfx,
-				data&0xfff, /* tile number */
-				(data&0xf000)>>12, /* color */
-				0,0, /* no flip */
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-		}
-    }
-    {
-		int scrollx = -READ_WORD( &bloodbro_scroll[0x20] ); /** ? **/
-		int scrolly = -READ_WORD( &bloodbro_scroll[0x22] ); /** ? **/
 
-		copyscrollbitmap(bitmap,tmpbitmap,
-			1,&scrollx,1,&scrolly,
-			&Machine->visible_area,
-              TRANSPARENCY_NONE,0);
-	}
-}
+/***************************************************************************
 
-static void draw_foreground( struct osd_bitmap *bitmap ) {
-	struct rectangle r;
-	const struct GfxElement *gfx = Machine->gfx[2];
-	const UINT16 *source = (UINT16 *)bloodbro_videoram2;
-	int offs;
-	for( offs=0; offs<32*16; offs++ ){
-		if( dirtybuffer2[offs] ){
-			int sx = 16*(offs%32);
-			int sy = 16*(offs/32);
-			UINT16 data = source[offs];
-			dirtybuffer2[offs] = 0;
+  Display refresh
 
-			/* Necessary to use TRANSPARENCY_PEN here */
-			r.min_x = sx; r.max_x = sx+15;
-			r.min_y = sy; r.max_y = sy+15;
-			fillbitmap(tmpbitmap2,0xf,&r);
-			/******************************************/
-
-			drawgfx( tmpbitmap2,gfx,
-				data&0xfff, /* tile number */
-				(data&0xf000)>>12, /* color */
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_PEN,0xf);
-		}
-	}
-	{
-		int scrollx = -READ_WORD( &bloodbro_scroll[0x24] );
-		int scrolly = -READ_WORD( &bloodbro_scroll[0x26] );
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,
-                TRANSPARENCY_PEN,0xf );
-	}
-}
+***************************************************************************/
 
 /* SPRITE INFO (8 bytes)
 
-   --F???SS SSSSCCCC
+   D-F?P?SS SSSSCCCC
    ---TTTTT TTTTTTTT
    -------X XXXXXXXX
    -------- YYYYYYYY */
-static void get_sprite_info( void ){
-	const struct GfxElement *gfx = Machine->gfx[3];
-	const unsigned short *source = (const UINT16 *)spriteram;
-	struct sprite *sprite = sprite_list->sprite;
-	int count = NUM_SPRITES;
+static void bloodbro_draw_sprites( struct osd_bitmap *bitmap)
+{
+	int offs;
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
+	{
+		int sx,sy,x,y,width,height,attributes,tile_number,color,flipx,flipy,pri_mask;
 
-	int attributes, flags, number, color, vertical_size, horizontal_size, i;
-	while( count-- ){
-		attributes = source[0];
-		flags = 0;
-		if( (attributes&0x8000)==0 ){
-			flags |= SPRITE_VISIBLE;
-			horizontal_size = 1 + ((attributes>>7)&7);
-			vertical_size = 1 + ((attributes>>4)&7);
-			sprite->priority = (attributes>>11)&1;
-			number = source[1]&0x1fff;
-			sprite->x = source[2]&0x1ff;
-			sprite->y = source[3]&0x1ff;
+		attributes = spriteram16[offs+0];
+		if (attributes & 0x8000) continue;	/* disabled */
 
-			/* wraparound - could be handled by Sprite Manager?*/
-			if( sprite->x >= 256) sprite->x -= 512;
-			if( sprite->y >= 256) sprite->y -= 512;
+		width = ((attributes>>7)&7);
+		height = ((attributes>>4)&7);
+		pri_mask = (attributes & 0x0800) ? 0x02 : 0;
+		tile_number = spriteram16[offs+1]&0x1fff;
+		sx = spriteram16[offs+2]&0x1ff;
+		sy = spriteram16[offs+3]&0x1ff;
+		if (sx >= 256) sx -= 512;
+		if (sy >= 256) sy -= 512;
 
-			sprite->total_width = 16*horizontal_size;
-			sprite->total_height = 16*vertical_size;
+		flipx = attributes & 0x2000;
+		flipy = attributes & 0x4000;	/* ?? */
+		color = attributes & 0xf;
 
-			sprite->tile_width = 16;
-			sprite->tile_height = 16;
-			sprite->line_offset = 16;
-
-			if( attributes&0x2000 ) flags |= SPRITE_FLIPX;
-			if( attributes&0x4000 ) flags |= SPRITE_FLIPY; /* ? */
-			color = attributes&0xf;
-
-			sprite->pen_data = gfx->gfxdata + number * gfx->char_modulo;
-			sprite->pal_data = &gfx->colortable[gfx->color_granularity * color];
-
-			sprite->pen_usage = 0;
-			for( i=0; i<vertical_size*horizontal_size; i++ ){
-				sprite->pen_usage |= gfx->pen_usage[number++];
+		for (x = 0;x <= width;x++)
+		{
+			for (y = 0;y <= height;y++)
+			{
+				pdrawgfx(bitmap,Machine->gfx[3],
+						tile_number++,
+						color,
+						flipx,flipy,
+						flipx ? (sx + 16*(width-x)) : (sx + 16*x),flipy ? (sy + 16*(height-y)) : (sy + 16*y),
+						&Machine->visible_area,TRANSPARENCY_PEN,15,
+						pri_mask);
 			}
 		}
-		sprite->flags = flags;
-
-		sprite++;
-		source+=4;
 	}
 }
 
-static void bloodbro_mark_used_colors(void){
+static void bloodbro_mark_sprite_colors(void)
+{
 	int offs,i;
-	int code, color, colmask[0x80];
+	int color, colmask[0x80];
 	int pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Text layer */
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+	/* Sprites */
+	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs <0x800;offs += 2) {
-		code = READ_WORD(&textlayoutram[offs]);
-		color=code>>12;
-		if ((code&0xfff)==0xd) continue;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code&0xfff];
+	for (offs = 0;offs <spriteram_size/2;offs += 4 )
+	{
+		color = spriteram16[offs+0] & 0x000f;
+		colmask[color] |= 0xffff;
 	}
 	for (color = 0;color < 16;color++)
 	{
 		for (i = 0;i < 15;i++)
 		{
 			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
 		}
 	}
-
-	/* Tiles - bottom layer */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (offs=0; offs<256; offs++)
-		palette_used_colors[pal_base + offs] = PALETTE_COLOR_USED;
-
-	/* Tiles - top layer */
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0x0000;offs <0x400;offs += 2 )
-	{
-		code = READ_WORD(&bloodbro_videoram2[offs]);
-		color= code>>12;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code&0xfff];
-	}
-
-	for (color = 0;color < 16;color++){
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-		/* kludge */
-		palette_used_colors[pal_base + 16 * color +15] = PALETTE_COLOR_TRANSPARENT;
-		palette_change_color(pal_base + 16 * color +15 ,0,0,0);
-	}
-}
-
-void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
-	get_sprite_info();
-
-	bloodbro_mark_used_colors();
-	sprite_update();
-
-	if (palette_recalc()) {
-		memset(dirtybuffer,1,32*16);
-		memset(dirtybuffer2,1,32*16);
-	}
-
-	draw_background( bitmap );
-	sprite_draw( sprite_list, 1 );
-	draw_foreground( bitmap );
-	sprite_draw( sprite_list, 0 );
-	draw_text( bitmap );
 }
 
 /* SPRITE INFO (8 bytes)
 
-   -------- YYYYYYYY
+   D------- YYYYYYYY
    ---TTTTT TTTTTTTT
    CCCC--F? -?--????  Priority??
    -------X XXXXXXXX
 */
 
-static void weststry_draw_sprites( struct osd_bitmap *bitmap, int priority) {
+static void weststry_draw_sprites( struct osd_bitmap *bitmap, int priority)
+{
 	int offs;
-	for( offs = 0x800-8; offs > 0; offs-=8 ){
-		int data = READ_WORD( &spriteram[offs+4] );
-		int data0 = READ_WORD( &spriteram[offs+0] );
-		int tile_number = READ_WORD( &spriteram[offs+2] )&0x1fff;
-		int sx = READ_WORD( &spriteram[offs+6] )&0xff;
+
+	/* TODO: the last two entries are not sprites - control registers? */
+	for (offs = 0;offs < spriteram_size/2 - 8;offs += 4)
+	{
+		int data = spriteram16[offs+2];
+		int data0 = spriteram16[offs+0];
+		int code = spriteram16[offs+1]&0x1fff;
+		int sx = spriteram16[offs+3]&0x1ff;
 		int sy = 0xf0-(data0&0xff);
-		int flipx = (data&0x200)>>9;
-		int datax = (READ_WORD( &spriteram[offs+6] )&0x100);
+		int flipx = data & 0x200;
+		int flipy = data & 0x400;	/* ??? */
 		int color = (data&0xf000)>>12;
+		int pri_mask = (data & 0x0080) ? 0x02 : 0;
 
-		/* Remap sprites */
-		switch(tile_number&0x1800) {
-			case 0x0000: break;
-			case 0x0800: tile_number = (tile_number&0x7ff) | 0x1000; break;
-			case 0x1000: tile_number = (tile_number&0x7ff) | 0x800; break;
-			case 0x1800: break;
-		}
+		if (sx >= 256) sx -= 512;
 
-		if ((!(data0&0x8000)) && (!datax)) {
-			drawgfx(bitmap,Machine->gfx[3],
-				tile_number, color, flipx,0,
+		if (data0 & 0x8000) continue;	/* disabled */
+
+		/* Remap code 0x800 <-> 0x1000 */
+		code = (code&0x7ff) | ((code&0x800)<<1) | ((code&0x1000)>>1);
+
+		pdrawgfx(bitmap,Machine->gfx[3],
+				code,
+				color,
+				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0xf);
-		}
+				&Machine->visible_area,TRANSPARENCY_PEN,15,
+				pri_mask);
 	}
 }
 
-static void weststry_mark_used_colors(void){
+static void weststry_mark_sprite_colors(void)
+{
 	int offs,i;
-	int colmask[0x80],code,pal_base,color;
-
- 	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Text layer */
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs <0x800;offs += 2) {
-		code = READ_WORD(&textlayoutram[offs]);
-		color=code>>12;
-		if ((code&0xfff)==0xd) continue;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code&0xfff];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	/* Tiles - bottom layer */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (offs=0; offs<256; offs++)
-		palette_used_colors[pal_base + offs] = PALETTE_COLOR_USED;
-
-	/* Tiles - top layer */
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0x0000;offs <0x400;offs += 2 )
-	{
-		code = READ_WORD(&bloodbro_videoram2[offs]);
-		color= code>>12;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code&0xfff];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-
-                /* kludge */
-                palette_used_colors[pal_base + 16 * color +15] = PALETTE_COLOR_TRANSPARENT;
-                palette_change_color(pal_base + 16 * color +15 ,0,0,0);
-	}
+	int colmask[0x80],pal_base,color;
 
 	/* Sprites */
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs <0x800;offs += 8 )
+	/* TODO: the last two entries are not sprites - control registers? */
+	for (offs = 0;offs <spriteram_size/2 - 8;offs += 4 )
 	{
-		color = READ_WORD(&spriteram[offs+4])>>12;
-		code = READ_WORD(&spriteram[offs+2])&0x1fff;
-                /* Remap code 0x800 <-> 0x1000 */
-                code = (code&0x7ff) | ((code&0x800)<<1) | ((code&0x1000)>>1);
-
-		colmask[color] |= Machine->gfx[3]->pen_usage[code];
+		color = spriteram16[offs+2]>>12;
+		colmask[color] |= 0xffff;
 	}
 	for (color = 0;color < 16;color++)
 	{
 		for (i = 0;i < 15;i++)
 		{
 			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
 		}
 	}
-
-	if (palette_recalc()) {
-                memset(dirtybuffer,1,32*16);
-                memset(dirtybuffer2,1,32*16);
-	}
 }
 
-void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
-	weststry_mark_used_colors();
 
-	draw_background( bitmap );
-	//weststry_draw_sprites(bitmap,0);
-	draw_foreground( bitmap );
+
+void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+{
+	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x10]);	/* ? */
+	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
+	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
+	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
+
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	bloodbro_mark_sprite_colors();
+	palette_recalc();
+
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,1);
+	bloodbro_draw_sprites(bitmap);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
+}
+
+void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+{
+//	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x10]);	/* ? */
+//	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
+//	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
+//	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
+
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	weststry_mark_sprite_colors();
+	palette_recalc();
+
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,1);
 	weststry_draw_sprites(bitmap,1);
-	draw_text( bitmap );
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
-

@@ -19,13 +19,13 @@ WRITE_HANDLER( jack_paletteram_w )
 
 READ_HANDLER( jack_flipscreen_r )
 {
-	flip_screen_w(0, offset);
+	flip_screen_set(offset);
 	return 0;
 }
 
 WRITE_HANDLER( jack_flipscreen_w )
 {
-	flip_screen_w(0, offset);
+	flip_screen_set(offset);
 }
 
 

@@ -126,7 +126,6 @@ void iremm15_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							Machine->pens[colorram[offs]],
 							Machine->pens[7], // space beam not color 0
 							8*sx,8*sy);
-			osd_mark_dirty (sx*8, sy*8, sx*8+7, sy*8+7, 0);
 		}
 	}
 

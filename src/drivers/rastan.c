@@ -8,120 +8,91 @@ driver by Jarek Burczynski
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/taitosnd.h"
 
-unsigned char *rastan_ram;
-extern unsigned char *rastan_videoram1,*rastan_videoram3;
+data16_t *rastan_ram; /*speedup hack*/
+
+extern data16_t *rastan_videoram1,*rastan_videoram3;
+extern data16_t *rastan_spriteram;
+extern data16_t *rastan_scrollx;
+extern data16_t *rastan_scrolly;
 extern size_t rastan_videoram_size;
-extern unsigned char *rastan_spriteram;
-extern unsigned char *rastan_scrollx;
-extern unsigned char *rastan_scrolly;
 
-WRITE_HANDLER( rastan_spriteram_w );
-READ_HANDLER( rastan_spriteram_r );
-WRITE_HANDLER( rastan_videoram1_w );
-READ_HANDLER( rastan_videoram1_r );
-WRITE_HANDLER( rastan_videoram3_w );
-READ_HANDLER( rastan_videoram3_r );
+WRITE16_HANDLER( rastan_spriteram_w );
+READ16_HANDLER( rastan_spriteram_r );
+WRITE16_HANDLER( rastan_videoram1_w );
+READ16_HANDLER( rastan_videoram1_r );
+WRITE16_HANDLER( rastan_videoram3_w );
+READ16_HANDLER( rastan_videoram3_r );
 
-WRITE_HANDLER( rastan_scrollY_w );
-WRITE_HANDLER( rastan_scrollX_w );
+WRITE16_HANDLER( rastan_videocontrol_w );
+WRITE16_HANDLER( rastan_flipscreen_w );
 
-WRITE_HANDLER( rastan_videocontrol_w );
-WRITE_HANDLER( rastan_flipscreen_w );
+WRITE16_HANDLER( rastan_background_w );
 
-int rastan_interrupt(void);
-int rastan_s_interrupt(void);
-
-WRITE_HANDLER( rastan_background_w );
 void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 int  rastan_vh_start(void);
 void rastan_vh_stop(void);
 
-WRITE_HANDLER( rastan_sound_w );
-READ_HANDLER( rastan_sound_r );
 
 
-
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
 WRITE_HANDLER( rastan_adpcm_trigger_w );
-
 WRITE_HANDLER( rastan_c000_w );
 WRITE_HANDLER( rastan_d000_w );
 
-void rastan_irq_handler(int irq);
-
-int rastan_interrupt(void)
+static int rastan_interrupt(void)
 {
 	return 5;  /*Interrupt vector 5*/
 }
 
-static READ_HANDLER( rastan_input_r )
-{
-	switch (offset)
-	{
-		case 0:
-			return input_port_0_r (offset);
-		case 2:
-			return input_port_1_r (offset);
-		case 6:
-			return input_port_2_r (offset);
-		case 8:
-			return input_port_3_r (offset);
-		case 10:
-			return input_port_4_r (offset);
-		default:
-			return 0;
-	}
-}
 
-static READ_HANDLER( rastan_cycle_r )
+static READ16_HANDLER( rastan_cycle_r )
 {
 	if (cpu_get_pc()==0x3b088) cpu_spinuntil_int();
 
-	return READ_WORD(&rastan_ram[0x1c10]);
+	return rastan_ram[0x1c10/2];
 }
 
 
-static struct MemoryReadAddress rastan_readmem[] =
-{
-	{ 0x000000, 0x05ffff, MRA_ROM },
+static MEMORY_READ16_START( rastan_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
 //	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
 { 0x10dc10, 0x10dc11, rastan_cycle_r },
-	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
-	{ 0x200000, 0x20ffff, paletteram_word_r },
-	{ 0x3e0000, 0x3e0003, rastan_sound_r },
-	{ 0x390000, 0x39000f, rastan_input_r },
+	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
+	{ 0x200000, 0x20ffff, MRA16_RAM },
+	{ 0x3e0000, 0x3e0001, MRA16_NOP },
+	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
+	{ 0x390000, 0x390001, input_port_0_word_r },
+	{ 0x390002, 0x390003, input_port_1_word_r },
+	{ 0x390006, 0x390007, input_port_2_word_r },
+	{ 0x390008, 0x390009, input_port_3_word_r },
+	{ 0x39000a, 0x39000b, input_port_4_word_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
-	{ 0xc04000, 0xc07fff, MRA_BANK2 },
+	{ 0xc04000, 0xc07fff, MRA16_RAM },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
-	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0xd00000, 0xd0ffff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ 0xc0c000, 0xc0ffff, MRA16_RAM },
+	{ 0xd00000, 0xd0ffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress rastan_writemem[] =
-{
-	{ 0x000000, 0x05ffff, MWA_ROM },
+static MEMORY_WRITE16_START( rastan_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
 //	{ 0x10dc10, 0x10dc13, rastan_speedup_w },
-	{ 0x10c000, 0x10ffff, MWA_BANK1, &rastan_ram },
-	{ 0x200000, 0x20ffff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ 0x350008, 0x35000b, MWA_NOP },     /* 0 only (often) ? */
+	{ 0x10c000, 0x10ffff, MWA16_RAM, &rastan_ram },
+	{ 0x200000, 0x20ffff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x350008, 0x35000b, MWA16_NOP },     /* 0 only (often) ? */
 	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
-	{ 0x3c0000, 0x3c0003, MWA_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
-	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+	{ 0x3c0000, 0x3c0003, MWA16_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
+	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
+	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
-	{ 0xc04000, 0xc07fff, MWA_BANK2 },
+	{ 0xc04000, 0xc07fff, MWA16_RAM },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
-	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
-	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
+	{ 0xc0c000, 0xc0ffff, MWA16_RAM },
+	{ 0xc20000, 0xc20003, MWA16_RAM, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
+	{ 0xc40000, 0xc40003, MWA16_RAM, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
 	{ 0xc50000, 0xc50003, rastan_flipscreen_w },     /* bit 0  flipscreen*/
-	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
-	{ -1 }  /* end of table */
-};
+	{ 0xd00000, 0xd0ffff, MWA16_RAM, &rastan_spriteram },
+MEMORY_END
 
 
 static WRITE_HANDLER( rastan_bankswitch_w )
@@ -133,30 +104,26 @@ static WRITE_HANDLER( rastan_bankswitch_w )
 	cpu_setbank(5,&RAM[bankaddress]);
 }
 
-static struct MemoryReadAddress rastan_s_readmem[] =
-{
+static MEMORY_READ_START( rastan_s_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK5 },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, rastan_a001_r },
-	{ -1 }  /* end of table */
-};
+	{ 0xa001, 0xa001, taitosound_slave_comm_r },
+MEMORY_END
 
-static struct MemoryWriteAddress rastan_s_writemem[] =
-{
+static MEMORY_WRITE_START( rastan_s_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2151_register_port_0_w },
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
+	{ 0xa000, 0xa000, taitosound_slave_port_w },
+	{ 0xa001, 0xa001, taitosound_slave_comm_w },
 	{ 0xb000, 0xb000, rastan_adpcm_trigger_w },
 	{ 0xc000, 0xc000, rastan_c000_w },
 	{ 0xd000, 0xd000, rastan_d000_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -353,13 +320,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+/* handler called by the YM2151 emulator when the internal timers cause an IRQ */
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ rastan_irq_handler },
+	{ irqhandler },
 	{ rastan_bankswitch_w }
 };
 

@@ -9,8 +9,8 @@
 #define ZOOMROM2_MEM_REGION REGION_GFX4
 
 static int sprite_colorbase, zoom_colorbase[3];
+static int bank0,bank1,bank2;
 
-extern unsigned char* ultraman_regs;
 
 /***************************************************************************
 
@@ -34,22 +34,19 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 static void zoom_callback_0(int *code,int *color)
 {
-	unsigned short data = READ_WORD(&ultraman_regs[0x18]);
-	*code |= ((*color & 0x07) << 8) | (data & 0x02) << 10;
+	*code |= ((*color & 0x07) << 8) | (bank0 << 11);
 	*color = zoom_colorbase[0] + ((*color & 0xf8) >> 3);
 }
 
 static void zoom_callback_1(int *code,int *color)
 {
-	unsigned short data = READ_WORD(&ultraman_regs[0x18]);
-	*code |= ((*color & 0x07) << 8) | (data & 0x08) << 8;
+	*code |= ((*color & 0x07) << 8) | (bank1 << 11);
 	*color = zoom_colorbase[1] + ((*color & 0xf8) >> 3);
 }
 
 static void zoom_callback_2(int *code,int *color)
 {
-	unsigned short data = READ_WORD(&ultraman_regs[0x18]);
-	*code |= ((*color & 0x07) << 8) | (data & 0x20) << 6;
+	*code |= ((*color & 0x07) << 8) | (bank2 << 11);
 	*color = zoom_colorbase[2] + ((*color & 0xf8) >> 3);
 }
 
@@ -113,6 +110,49 @@ void ultraman_vh_stop(void)
 
 /***************************************************************************
 
+  Memory handlers
+
+***************************************************************************/
+
+WRITE16_HANDLER( ultraman_gfxctrl_w )
+{
+	if (ACCESSING_LSB)
+	{
+		/*	bit 0: enable wraparound for scr #1
+			bit 1: msb of code for scr #1
+			bit 2: enable wraparound for scr #2
+			bit 3: msb of code for scr #2
+			bit 4: enable wraparound for scr #3
+			bit 5: msb of code for scr #3
+			bit 6: coin counter 1
+			bit 7: coin counter 2 */
+		K051316_wraparound_enable(0,data & 0x01);
+		if (bank0 != ((data & 0x02) >> 1))
+		{
+			bank0 = (data & 0x02) >> 1;
+			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	/* should mark only zoom0 */
+		}
+		K051316_wraparound_enable(1,data & 0x04);
+		if (bank1 != ((data & 0x08) >> 3))
+		{
+			bank1 = (data & 0x08) >> 3;
+			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	/* should mark only zoom1 */
+		}
+		K051316_wraparound_enable(2,data & 0x10);
+		if (bank2 != ((data & 0x20) >> 5))
+		{
+			bank2 = (data & 0x20) >> 5;
+			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	/* should mark only zoom2 */
+		}
+		coin_counter_w(0, data & 0x40);
+		coin_counter_w(1, data & 0x80);
+	}
+}
+
+
+
+/***************************************************************************
+
 	Display Refresh
 
 ***************************************************************************/
@@ -134,10 +174,7 @@ void ultraman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		palette_used_colors[(zoom_colorbase[1] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	K051316_zoom_draw_2(bitmap,0);
 	K051316_zoom_draw_1(bitmap,0);

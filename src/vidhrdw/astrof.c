@@ -166,7 +166,7 @@ WRITE_HANDLER( astrof_video_control1_w )
 
 	if (input_port_2_r(0) & 0x02) /* Cocktail mode */
 	{
-		flip_screen_w(offset, data & 0x01);
+		flip_screen_set(data & 0x01);
 	}
 }
 

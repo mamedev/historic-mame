@@ -29,7 +29,7 @@ extern unsigned char *magix_videoram_0,*magix_videoram_1;
 
 WRITE_HANDLER( magix_videobank_w );
 
-READ_HANDLER ( magix_videoram_r );
+READ_HANDLER( magix_videoram_r );
 WRITE_HANDLER( magix_videoram_w );
 
 WRITE_HANDLER( magix_flipscreen_w );
@@ -84,47 +84,39 @@ WRITE_HANDLER( magix_bankswitch_w )
 	d000-dfff	Tiles	""
 */
 
-static struct MemoryReadAddress magix_readmem[] =
-{
+static MEMORY_READ_START( magix_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM				},	// ROM
 	{ 0x8000, 0xbfff, MRA_BANK1				},	// Banked ROM
 	{ 0xc000, 0xdfff, magix_videoram_r		},	// Video RAM (Banked)
 	{ 0xe000, 0xffff, MRA_RAM				},	// RAM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress magix_writemem[] =
-{
+static MEMORY_WRITE_START( magix_writemem )
 	{ 0x0000, 0x0000, MWA_ROM				},	// ROM
 	{ 0x0001, 0x0001, magix_bankswitch_w	},	// ROM Bankswitching
 	{ 0x0002, 0xbfff, MWA_ROM				},	// ROM
 	{ 0xc000, 0xdfff, magix_videoram_w		},	// Video RAM (Banked)
 	{ 0xe000, 0xffff, MWA_RAM				},	// RAM
-	{ -1 }
-};
+MEMORY_END
 
 
 
 
-static struct IOReadPort magix_readport[] =
-{
+static PORT_READ_START( magix_readport )
 	{ 0x00, 0x00, input_port_0_r		},	// Coins
 	{ 0x01, 0x01, input_port_1_r		},	// P1
 	{ 0x02, 0x02, input_port_2_r		},	// P2
 	{ 0x03, 0x03, input_port_3_r		},	// DSW 1
 	{ 0x04, 0x04, input_port_4_r		},	// DSW 2
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort magix_writeport[] =
-{
+static PORT_WRITE_START( magix_writeport )
 	{ 0x00, 0x00, magix_videobank_w		},	// Video RAM Bank
 	{ 0x01, 0x01, magix_bankswitch_w	},	// ROM Bankswitching (again?)
 	{ 0x02, 0x02, soundlatch_w			},	// To Sound CPU
 	{ 0x06, 0x06, magix_flipscreen_w	},	// Flip Screen
 	{ 0x07, 0x07, IOWP_NOP				},	// ? (end of IRQ, random value)
-	{ -1 }
-};
+PORT_END
 
 
 
@@ -169,17 +161,14 @@ WRITE_HANDLER( magix_adpcm_w )
 
 
 
-static struct MemoryReadAddress magix_sound_readmem[] =
-{
+static MEMORY_READ_START( magix_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM			},	// ROM
 	{ 0x8000, 0xbfff, MRA_BANK3			},	// Banked ROM
 	{ 0xf000, 0xf7ff, MRA_RAM			},	// RAM
 	{ 0xf800, 0xf800, soundlatch_r		},	// From Main CPU
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress magix_sound_writemem[] =
-{
+static MEMORY_WRITE_START( magix_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
 	{ 0x8000, 0xbfff, MWA_ROM					},	// Banked ROM
 	{ 0xe000, 0xe000, magix_sound_bankswitch_w	},	// ROM Bankswitching
@@ -187,17 +176,7 @@ static struct MemoryWriteAddress magix_sound_writemem[] =
 	{ 0xec00, 0xec00, YM3812_control_port_0_w	},	// YM3812
 	{ 0xec01, 0xec01, YM3812_write_port_0_w		},
 	{ 0xf000, 0xf7ff, MWA_RAM					},	// RAM
-	{ -1 }
-};
-
-static struct IOReadPort magix_sound_readport[] =
-{
-	{ -1 }
-};
-static struct IOWritePort magix_sound_writeport[] =
-{
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -411,7 +390,7 @@ static const struct MachineDriver machine_driver_magix =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,	/* Z80A */
 			4000000,					/* ? */
-			magix_sound_readmem, magix_sound_writemem,magix_sound_readport,magix_sound_writeport,
+			magix_sound_readmem, magix_sound_writemem,0,0,
 			interrupt, 1	/* NMI caused by the MSM5205? */
 		}
 	},

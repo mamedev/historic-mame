@@ -110,10 +110,7 @@ void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* set back pen for the zoom layer */
 	for (i = 0;i < 16;i++)
 		palette_used_colors[(zoom_colorbase + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	/* note: FIX layer is not used */
 	fillbitmap(bitmap,Machine->pens[layer_colorbase[1]],&Machine->visible_area);
@@ -122,10 +119,10 @@ void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		K051960_sprites_draw(bitmap,1,1);
 		K051316_zoom_draw_0(bitmap,0);
 		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,2,0);
+		K052109_tilemap_draw(bitmap,2,0,0);
 		/* note that priority 3 is opposite to the basic layer priority! */
 		/* (it IS used, but hopefully has no effect) */
 		K051960_sprites_draw(bitmap,2,3);
-		K052109_tilemap_draw(bitmap,1,0);
+		K052109_tilemap_draw(bitmap,1,0,0);
 	}
 }

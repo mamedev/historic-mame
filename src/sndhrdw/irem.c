@@ -119,35 +119,27 @@ struct MSM5205interface irem_msm5205_interface =
 
 
 
-struct MemoryReadAddress irem_sound_readmem[] =
-{
+MEMORY_READ_START( irem_sound_readmem )
 	{ 0x0000, 0x001f, m6803_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress irem_sound_writemem[] =
-{
+MEMORY_WRITE_START( irem_sound_writemem )
 	{ 0x0000, 0x001f, m6803_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x0800, 0x0800, MWA_NOP },    /* IACK */
 	{ 0x0801, 0x0802, irem_adpcm_w },
 	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-struct IOReadPort irem_sound_readport[] =
-{
+PORT_READ_START( irem_sound_readport )
 	{ M6803_PORT1, M6803_PORT1, irem_port1_r },
 	{ M6803_PORT2, M6803_PORT2, irem_port2_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-struct IOWritePort irem_sound_writeport[] =
-{
+PORT_WRITE_START( irem_sound_writeport )
 	{ M6803_PORT1, M6803_PORT1, irem_port1_w },
 	{ M6803_PORT2, M6803_PORT2, irem_port2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END

@@ -12,7 +12,6 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		Q,W,E		shows scroll 0,1,2
 		R,T			shows road 0,1
 		A,S,D,F		shows sprites with priority 0,1,2,3
-		N			shows sprites attribute
 		M			disables sprites zooming
 		U			toggles the display of some hardware registers'
 					values ($80000/2/4/6)
@@ -69,7 +68,7 @@ static int debugsprites;	// For debug purposes
 #endif
 
 /* Variables that driver has access to: */
-unsigned char *cischeat_roadram[2];
+data16_t *cischeat_roadram[2];
 
 /* Variables defined in driver: */
 
@@ -158,28 +157,30 @@ static int read_accelerator(void)
 								[ Cisco Heat ]
 **************************************************************************/
 
-READ_HANDLER( cischeat_vregs_r )
+READ16_HANDLER( cischeat_vregs_r )
 {
 	switch (offset)
 	{
-		case 0x0000 : return readinputport(1);	// Coins
-		case 0x0002 : return readinputport(2) + (read_shift()<<1);	// Buttons
-		case 0x0004 : return readinputport(3);	// Motor Limit Switches
-		case 0x0006 : return readinputport(4);	// DSW 1 & 2
-		case 0x0010 :
+		case 0x0000/2 : return readinputport(1);	// Coins
+		case 0x0002/2 : return readinputport(2) +
+						(read_shift()<<1);			// Buttons
+		case 0x0004/2 : return readinputport(3);	// Motor Limit Switches
+		case 0x0006/2 : return readinputport(4);	// DSW 1 & 2
+
+		case 0x0010/2 :
 			switch (cischeat_ip_select & 0x3)
 			{
 				case 0 : return readinputport(6);	// Driving Wheel
-				case 1 : return 0xFFFF;				// Cockpit: Up / Down Position?
-				case 2 : return 0xFFFF;				// Cockpit: Left / Right Position?
-				default: return 0xFFFF;
+				case 1 : return ~0;					// Cockpit: Up / Down Position?
+				case 2 : return ~0;					// Cockpit: Left / Right Position?
+				default: return ~0;
 			}
 
-		case 0x2200 : return readinputport(5);	// DSW 3 (4 bits)
-		case 0x2300 : return soundlatch2_r(0);	// From sound cpu
+		case 0x2200/2 : return readinputport(5);	// DSW 3 (4 bits)
+		case 0x2300/2 : return soundlatch2_r(0);	// From sound cpu
 
-		default:	SHOW_READ_ERROR("vreg %04X read!",offset);
-					return READ_WORD(&megasys1_vregs[offset]);
+		default:	SHOW_READ_ERROR("vreg %04X read!",offset*2);
+					return megasys1_vregs[offset];
 	}
 }
 
@@ -188,29 +189,32 @@ READ_HANDLER( cischeat_vregs_r )
 **************************************************************************/
 
 
-READ_HANDLER( f1gpstar_vregs_r )
+READ16_HANDLER( f1gpstar_vregs_r )
 {
 
 	switch (offset)
 	{
-		case 0x0000 :	// DSW 1&2: coinage changes with Country
+		case 0x0000/2 :	// DSW 1&2: coinage changes with Country
 		{
 			int val = readinputport(1);
 			if (val & 0x0200)	return readinputport(6) | val; 	// JP, US
 			else				return readinputport(7) | val; 	// UK, FR
 		}
 
-//		case 0x0002 :	return 0xFFFF;
-		case 0x0004 :	return readinputport(2) + (read_shift()<<5);	// Buttons
-		case 0x0006 :	return readinputport(3);	// ? Read at boot only
-		case 0x0008 :	return soundlatch2_r(0);	// From sound cpu
-		case 0x000c :	return readinputport(4);	// DSW 3
+//		case 0x0002/2 :	return 0xFFFF;
+		case 0x0004/2 :	return readinputport(2) +
+						       (read_shift()<<5);	// Buttons
 
-		case 0x0010 :	// Accel + Driving Wheel
+		case 0x0006/2 :	return readinputport(3);	// ? Read at boot only
+		case 0x0008/2 :	return soundlatch2_r(0);	// From sound cpu
+
+		case 0x000c/2 :	return readinputport(4);	// DSW 3
+
+		case 0x0010/2 :	// Accel + Driving Wheel
 			return (read_accelerator()&0xff) + ((readinputport(5)&0xff)<<8);
 
-		default:		SHOW_READ_ERROR("vreg %04X read!",offset);
-						return READ_WORD(&megasys1_vregs[offset]);
+		default:		SHOW_READ_ERROR("vreg %04X read!",offset*2);
+						return megasys1_vregs[offset];
 	}
 }
 
@@ -218,61 +222,62 @@ READ_HANDLER( f1gpstar_vregs_r )
 								[ Cisco Heat ]
 **************************************************************************/
 
-WRITE_HANDLER( cischeat_vregs_w )
+WRITE16_HANDLER( cischeat_vregs_w )
 {
-int old_data, new_data;
-
-	old_data = READ_WORD(&megasys1_vregs[offset]);
-	COMBINE_WORD_MEM(&megasys1_vregs[offset],data);
-	new_data  = READ_WORD(&megasys1_vregs[offset]);
+	data16_t old_data = megasys1_vregs[offset];
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
- 		case 0x0000   :	// leds
- 			set_led_status(0,new_data & 0x10);
-			set_led_status(1,new_data & 0x20);
+ 		case 0x0000/2   :	// leds
+			if (ACCESSING_LSB)
+			{
+	 			set_led_status(0,new_data & 0x10);
+				set_led_status(1,new_data & 0x20);
+			}
 			break;
 
-		case 0x0002   :	// ?? 91/1/91/1 ...
+		case 0x0002/2   :	// ?? 91/1/91/1 ...
 			break;
 
- 		case 0x0004   :	// motor (seat?)
-			set_led_status(2, (new_data != old_data) ? 1 : 0);
+ 		case 0x0004/2   :	// motor (seat?)
+			if (ACCESSING_LSB)
+				set_led_status(2, (new_data != old_data) ? 1 : 0);
  			break;
 
- 		case 0x0006   :	// motor (wheel?)
+ 		case 0x0006/2   :	// motor (wheel?)
 			break;
 
-		case 0x0010   : cischeat_ip_select = new_data;	break;
-		case 0x0012   : break; // value above + 1
+		case 0x0010/2   : cischeat_ip_select = new_data;	break;
+		case 0x0012/2   : break; // value above + 1
 
-		case 0x2000+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
-		case 0x2000+2 : MEGASYS1_VREG_SCROLL(0,y)		break;
-		case 0x2000+4 : MEGASYS1_VREG_FLAG(0)			break;
+		case 0x2000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
+		case 0x2000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
+		case 0x2000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
 
-		case 0x2008+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
-		case 0x2008+2 : MEGASYS1_VREG_SCROLL(1,y)		break;
-		case 0x2008+4 : MEGASYS1_VREG_FLAG(1)			break;
+		case 0x2008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
+		case 0x2008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
+		case 0x2008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
 
-		case 0x2100+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
-		case 0x2100+2 : MEGASYS1_VREG_SCROLL(2,y)		break;
-		case 0x2100+4 : MEGASYS1_VREG_FLAG(2)			break;
+		case 0x2100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
+		case 0x2100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
+		case 0x2100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
 
-		case 0x2108   : break;	// ? written with 0 only
-		case 0x2208   : break;	// watchdog reset
+		case 0x2108/2   : break;	// ? written with 0 only
+		case 0x2208/2   : break;	// watchdog reset
 
-		case 0x2300   :	/* Sound CPU: reads latch during int 4, and stores command */
-						soundlatch_w(0,new_data);
-						cpu_cause_interrupt(3,4);
-						break;
+		case 0x2300/2   :	/* Sound CPU: reads latch during int 4, and stores command */
+							soundlatch_word_w(0,new_data,0);
+							cpu_cause_interrupt(3,4);
+							break;
 
 		/* Not sure about this one.. */
-		case 0x2308   :	cpu_set_reset_line(1, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-						cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-						cpu_set_reset_line(3, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
-						break;
+		case 0x2308/2   :	cpu_set_reset_line(1, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpu_set_reset_line(3, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
+							break;
 
-		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
+		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
 	}
 }
 
@@ -281,13 +286,10 @@ int old_data, new_data;
 							[ F1 GrandPrix Star ]
 **************************************************************************/
 
-WRITE_HANDLER( f1gpstar_vregs_w )
+WRITE16_HANDLER( f1gpstar_vregs_w )
 {
-int old_data, new_data;
-
-	old_data = READ_WORD(&megasys1_vregs[offset]);
-	COMBINE_WORD_MEM(&megasys1_vregs[offset],data);
-	new_data  = READ_WORD(&megasys1_vregs[offset]);
+//	data16_t old_data = megasys1_vregs[offset];
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
@@ -297,45 +299,45 @@ CPU #0 PC 002350 : Warning, vreg 0002 <- 0000
 CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 */
 		// "shudder" motors, leds
-		case 0x0004   :
-		case 0x0014   :
-
-			set_led_status(0,new_data & 0x04);	// 1p start lamp
-			set_led_status(1,new_data & 0x20);	// 2p start lamp?
-
-			// wheel | seat motor
-			set_led_status(2, ((new_data >> 3) | (new_data >> 4)) & 1 );
-
+		case 0x0004/2   :
+		case 0x0014/2   :
+			if (ACCESSING_LSB)
+			{
+				set_led_status(0,new_data & 0x04);	// 1p start lamp
+				set_led_status(1,new_data & 0x20);	// 2p start lamp?
+				// wheel | seat motor
+				set_led_status(2, ((new_data >> 3) | (new_data >> 4)) & 1 );
+			}
 			break;
 
 		/* Usually written in sequence, but not always */
-		case 0x0008   :	soundlatch_w(0,new_data);	break;
-		case 0x0018   :	cpu_cause_interrupt(3,4);	break;
+		case 0x0008/2   :	soundlatch_word_w(0,new_data,0);	break;
+		case 0x0018/2   :	cpu_cause_interrupt(3,4);		break;
 
-		case 0x0010   :	break;
+		case 0x0010/2   :	break;
 
-		case 0x2000+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
-		case 0x2000+2 : MEGASYS1_VREG_SCROLL(0,y)		break;
-		case 0x2000+4 : MEGASYS1_VREG_FLAG(0)			break;
+		case 0x2000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
+		case 0x2000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
+		case 0x2000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
 
-		case 0x2008+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
-		case 0x2008+2 : MEGASYS1_VREG_SCROLL(1,y)		break;
-		case 0x2008+4 : MEGASYS1_VREG_FLAG(1)			break;
+		case 0x2008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
+		case 0x2008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
+		case 0x2008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
 
-		case 0x2100+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
-		case 0x2100+2 : MEGASYS1_VREG_SCROLL(2,y)		break;
-		case 0x2100+4 : MEGASYS1_VREG_FLAG(2)			break;
+		case 0x2100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
+		case 0x2100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
+		case 0x2100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
 
-		case 0x2108   : break;	// ? written with 0 only
-		case 0x2208   : break;	// watchdog reset
+		case 0x2108/2   : break;	// ? written with 0 only
+		case 0x2208/2   : break;	// watchdog reset
 
 		/* Not sure about this one. Values: $10 then 0, $7 then 0 */
-		case 0x2308   :	cpu_set_reset_line(1, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
-						cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-						cpu_set_reset_line(3, (new_data & 4) ? ASSERT_LINE : CLEAR_LINE );
-						break;
+		case 0x2308/2   :	cpu_set_reset_line(1, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
+							cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpu_set_reset_line(3, (new_data & 4) ? ASSERT_LINE : CLEAR_LINE );
+							break;
 
-		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
+		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
 	}
 }
 
@@ -385,7 +387,8 @@ void cischeat_mark_road_colors(int road_num)
 	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
 //	int total_color_codes		=	gfx.total_color_codes;
 	int color_codes_start		=	gfx.color_codes_start;
-	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
+
+	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
 	int min_y = Machine->visible_area. min_y;
 	int max_y = Machine->visible_area. max_y;
@@ -395,12 +398,13 @@ void cischeat_mark_road_colors(int road_num)
 	/* Let's walk from the top to the bottom of the visible screen */
 	for (sy = min_y ; sy <= max_y ; sy ++)
 	{
-		int code	= READ_WORD(&roadram[sy*8 + 0]);
-		int attr	= READ_WORD(&roadram[sy*8 + 4]);
-			color	= ROAD_COLOR(attr);
+		int code	= roadram[sy * 4 + 0];
+		int attr	= roadram[sy * 4 + 2];
+
+		color = ROAD_COLOR(attr);
 
 		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
-		code	= code * (X_SIZE/TILE_SIZE);
+		code = code * (X_SIZE/TILE_SIZE);
 
 		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
 			colmask[color] |= pen_usage[(code + i) % total_elements];
@@ -420,13 +424,13 @@ void cischeat_mark_road_colors(int road_num)
 
 void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
 {
-
 	int curr_code,sx,sy;
 	int min_priority, max_priority;
 
 	struct rectangle rect		=	Machine->visible_area;
-	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
 	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?4:3];
+
+	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
 	int min_y = rect.min_y;
 	int max_y = rect.max_y;
@@ -443,16 +447,16 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	/* Let's draw from the top to the bottom of the visible screen */
 	for (sy = min_y ; sy <= max_y ; sy ++)
 	{
-		int code	= READ_WORD(&roadram[sy*8 + 0]);
-		int xscroll = READ_WORD(&roadram[sy*8 + 2]);
-		int attr	= READ_WORD(&roadram[sy*8 + 4]);
+		int code	= roadram[ sy * 4 + 0 ];
+		int xscroll = roadram[ sy * 4 + 1 ];
+		int attr	= roadram[ sy * 4 + 2 ];
 
 		/* high byte is a priority information */
 		if ( ((attr & 0x700) < min_priority) || ((attr & 0x700) > max_priority) )
 			continue;
 
 		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
-		code	= code * (X_SIZE/TILE_SIZE);
+		code = code * (X_SIZE/TILE_SIZE);
 
 		xscroll %= X_SIZE;
 		curr_code = code + xscroll/TILE_SIZE;
@@ -522,7 +526,8 @@ void f1gpstar_mark_road_colors(int road_num)
 	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
 //	int total_color_codes		=	gfx.total_color_codes;
 	int color_codes_start		=	gfx.color_codes_start;
-	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
+
+	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
 	int min_y = Machine->visible_area.min_y;
 	int max_y = Machine->visible_area.max_y;
@@ -532,9 +537,10 @@ void f1gpstar_mark_road_colors(int road_num)
 	/* Let's walk from the top to the bottom of the visible screen */
 	for (sy = min_y ; sy <= max_y ; sy ++)
 	{
-		int code	= READ_WORD(&roadram[sy*8 + 6]);
-		int attr	= READ_WORD(&roadram[sy*8 + 4]);
-			color	= ROAD_COLOR(attr>>8);
+		int attr	=	roadram[ sy * 4 + 2 ];
+		int code	=	roadram[ sy * 4 + 3 ];
+
+		color	= ROAD_COLOR(attr>>8);
 
 		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
 		code	= code * (X_SIZE/TILE_SIZE);
@@ -562,8 +568,9 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	int min_priority, max_priority;
 
 	struct rectangle rect		=	Machine->visible_area;
-	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
 	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?4:3];
+
+	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
 	int min_y = rect.min_y;
 	int max_y = rect.max_y;
@@ -582,10 +589,10 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	{
 		int xscale, xdim;
 
-		int xscroll	= READ_WORD(&roadram[sy*8 + 0]);
-		int xzoom	= READ_WORD(&roadram[sy*8 + 2]);
-		int attr	= READ_WORD(&roadram[sy*8 + 4]);
-		int code	= READ_WORD(&roadram[sy*8 + 6]);
+		int xscroll	= roadram[ sy * 4 + 0 ];
+		int xzoom	= roadram[ sy * 4 + 1 ];
+		int attr	= roadram[ sy * 4 + 2 ];
+		int code	= roadram[ sy * 4 + 3 ];
 
 		/* highest nibble is a priority information */
 		if ( ((xscroll & 0x7000) < min_priority) || ((xscroll & 0x7000) > max_priority) )
@@ -658,29 +665,29 @@ static void cischeat_mark_sprite_colors(void)
 	int ymin = Machine->visible_area.min_y;
 	int ymax = Machine->visible_area.max_y;
 
-	unsigned char		*source	= spriteram;
-	const unsigned char *finish	= source + 0x1000;
+	data16_t		*source	=	spriteram16;
+	const data16_t	*finish	=	source + 0x1000/2;
 
 	for (color = 0 ; color < SPRITE_COLOR_CODES ; color++) colmask[color] = 0;
 
-	for (; source < finish; source += 0x10 )
+	for (; source < finish; source += 0x10/2 )
 	{
 		int sx, sy, xzoom, yzoom;
 		int xdim, ydim, xnum, ynum;
 		int code, attr, size;
 
- 		size	=	READ_WORD(&source[0x00]);
+ 		size	=	source[ 0 ];
 		if (size & 0x1000)	continue;
 
 		/* number of tiles */
 		xnum	=	( (size & 0x0f) >> 0 ) + 1;
 		ynum	=	( (size & 0xf0) >> 4 ) + 1;
 
-		xzoom	=	READ_WORD(&source[0x02]);
-		yzoom	=	READ_WORD(&source[0x04]);
+		xzoom	=	source[ 1 ];
+		yzoom	=	source[ 2 ];
 
-		sx		=	READ_WORD(&source[0x06]);
-		sy		=	READ_WORD(&source[0x08]);
+		sx		=	source[ 3 ];
+		sy		=	source[ 4 ];
 		SIGN_EXTEND_POS(sx)
 		SIGN_EXTEND_POS(sy)
 
@@ -695,8 +702,8 @@ static void cischeat_mark_sprite_colors(void)
 		if (	((sx+xdim-1) < xmin) || (sx > xmax) ||
 				((sy+ydim-1) < ymin) || (sy > ymax)		)	continue;
 
-		code	=	READ_WORD(&source[0x0C]);
-		attr	=	READ_WORD(&source[0x0E]);
+		code	=	source[ 6 ];
+		attr	=	source[ 7 ];
 		color	=	SPRITE_COLOR(attr);
 
 		for (i = 0; i < xnum * ynum; i++)
@@ -759,8 +766,8 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 
 	int min_priority, max_priority, high_sprites;
 
-	unsigned char		*source	= spriteram;
-	const unsigned char *finish	= source + 0x1000;
+	data16_t		*source	=	spriteram16;
+	const data16_t	*finish	=	source + 0x1000/2;
 
 
 	/* Move the priority values in place */
@@ -771,22 +778,22 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 	if (priority1 < priority2)	{	min_priority = priority1;	max_priority = priority2; }
 	else						{	min_priority = priority2;	max_priority = priority1; }
 
-	for (; source < finish; source += 0x10 )
+	for (; source < finish; source += 0x10/2 )
 	{
-		size	=	READ_WORD(&source[0x00]);
+		size	=	source[ 0 ];
 		if (size & 0x1000)	continue;
 
 		/* number of tiles */
 		xnum	=	( (size & 0x0f) >> 0 ) + 1;
 		ynum	=	( (size & 0xf0) >> 4 ) + 1;
 
-		xzoom	=	READ_WORD(&source[0x02]);
-		yzoom	=	READ_WORD(&source[0x04]);
+		xzoom	=	source[ 1 ];
+		yzoom	=	source[ 2 ];
 		flipx	=	xzoom & 0x1000;
 		flipy	=	yzoom & 0x1000;
 
-		sx		=	READ_WORD(&source[0x06]);
-		sy		=	READ_WORD(&source[0x08]);
+		sx		=	source[ 3 ];
+		sy		=	source[ 4 ];
 		SIGN_EXTEND_POS(sx)
 		SIGN_EXTEND_POS(sy)
 
@@ -814,8 +821,8 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 		   we need the y pos of the first line  */
 		sy -= (ydim * ynum);
 
-		code	=	READ_WORD(&source[0x0C]);
-		attr	=	READ_WORD(&source[0x0E]);
+		code	=	source[ 6 ];
+		attr	=	source[ 7 ];
 		color	=	SPRITE_COLOR(attr);
 
 		/* high byte is a priority information */
@@ -859,26 +866,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 							xscale, yscale );
 			}
 		}
-
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_N) )
-		{
-			struct DisplayText dt[3];
-			char buf[40],buf1[40];
-
-			dt[0].text = buf;	dt[1].text = buf1;	dt[2].text = 0;
-			dt[0].color = dt[1].color = UI_COLOR_NORMAL;
-			dt[0].x = sx / 0x10000;	dt[1].x = dt[0].x;
-			dt[0].y = sy / 0x10000;	dt[1].y = dt[0].y + 8;
-
-			sprintf(buf, "A:%04X",attr);
-			sprintf(buf1,"Z:%04X",xzoom);
-			displaytext(Machine->scrbitmap,dt,0,0);
-		}
-#endif
-
 	}	/* end sprite loop */
-
 }
 
 
@@ -920,11 +908,8 @@ if (keyboard_pressed(KEYCODE_Z)) \
 	{ \
 		char buf[80]; \
 		sprintf(buf, "0:%04X 2:%04X 4:%04X 6:%04X", \
-					READ_WORD(&megasys1_vregs[0x0000]), \
-					READ_WORD(&megasys1_vregs[0x0002]), \
-					READ_WORD(&megasys1_vregs[0x0004]), \
-					READ_WORD(&megasys1_vregs[0x0006]) \
-				); \
+					megasys1_vregs[0],megasys1_vregs[1], \
+					megasys1_vregs[2],megasys1_vregs[3] ); \
 		usrintf_showmessage(buf); \
 	} \
 }
@@ -939,7 +924,8 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int megasys1_active_layers1, flag;
 
 #ifdef MAME_DEBUG
-	megasys1_active_layers = READ_WORD(&megasys1_vregs[0x2400]);
+	/* FAKE Videoreg */
+	megasys1_active_layers = megasys1_vregs[0x2400/2];
 	if (megasys1_active_layers == 0)	megasys1_active_layers = 0x3f;
 #else
 	megasys1_active_layers = 0x3f;
@@ -965,13 +951,9 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (megasys1_active_layers & 0x10)	cischeat_mark_road_colors(0);	// road 0
 	if (megasys1_active_layers & 0x20)	cischeat_mark_road_colors(1);	// road 1
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	MEGASYS1_TMAP_RENDER(0)
-	MEGASYS1_TMAP_RENDER(1)
-	MEGASYS1_TMAP_RENDER(2)
-
-	osd_clearbitmap(Machine->scrbitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 										/* bitmap, road, priority, transparency */
 	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,7,5,TRANSPARENCY_NONE);
@@ -979,7 +961,7 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	flag = 0;
 	MEGASYS1_TMAP_DRAW(0)
-//	else	osd_clearbitmap(Machine->scrbitmap);
+//	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 	MEGASYS1_TMAP_DRAW(1)
 
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,15,3);
@@ -1012,7 +994,8 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int megasys1_active_layers1, flag;
 
 #ifdef MAME_DEBUG
-	megasys1_active_layers = READ_WORD(&megasys1_vregs[0x2400]);
+	/* FAKE Videoreg */
+	megasys1_active_layers = megasys1_vregs[0x2400/2];
 	if (megasys1_active_layers == 0)	megasys1_active_layers = 0x3f;
 #else
 	megasys1_active_layers = 0x3f;
@@ -1038,13 +1021,9 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (megasys1_active_layers & 0x10)	f1gpstar_mark_road_colors(0);	// road 0
 	if (megasys1_active_layers & 0x20)	f1gpstar_mark_road_colors(1);	// road 1
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	MEGASYS1_TMAP_RENDER(0)
-	MEGASYS1_TMAP_RENDER(1)
-	MEGASYS1_TMAP_RENDER(2)
-
-	osd_clearbitmap(Machine->scrbitmap);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 /*	1: clouds 5, grad 7, road 0		2: clouds 5, grad 7, road 0, tunnel roof 0 */
 
@@ -1057,7 +1036,7 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	flag = 0;
 	MEGASYS1_TMAP_DRAW(0)
-//	else	osd_clearbitmap(Machine->scrbitmap);
+//	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 	MEGASYS1_TMAP_DRAW(1)
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */

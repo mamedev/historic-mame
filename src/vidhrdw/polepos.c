@@ -1,12 +1,11 @@
 #ifndef ROAD_CORE_INCLUDE
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-UINT8 *polepos_view_memory;
-UINT8 *polepos_road_memory;
-UINT8 *polepos_sprite_memory;
-UINT8 *polepos_alpha_memory;
+data16_t *polepos_view16_memory;
+data16_t *polepos_road16_memory;
+data16_t *polepos_sprite16_memory;
+data16_t *polepos_alpha16_memory;
 
 /* modified vertical position built from three nibbles (12 bit)
  * of ROMs 136014-142, 136014-143, 136014-144
@@ -14,10 +13,10 @@ UINT8 *polepos_alpha_memory;
  * to this value and the upper 10 bits of the result are used to
  * address the playfield video memory (AB0 - AB9).
  */
-static UINT16 polepos_vertical_position_modifier[256];
+static data16_t polepos_vertical_position_modifier[256];
 
-static UINT16 view_hscroll;
-static UINT16 road_vscroll;
+static data16_t view16_hscroll;
+static data16_t road16_vscroll;
 
 static const UINT8 *road_control;
 static const UINT8 *road_bits1;
@@ -183,24 +182,24 @@ void polepos_vh_stop(void)
 
 ***************************************************************************/
 
+READ16_HANDLER( polepos_sprite16_r )
+{
+	return polepos_sprite16_memory[offset];
+}
+
+WRITE16_HANDLER( polepos_sprite16_w )
+{
+	COMBINE_DATA(&polepos_sprite16_memory[offset]);
+}
+
 READ_HANDLER( polepos_sprite_r )
 {
-	return READ_WORD(&polepos_sprite_memory[offset]);
+	return polepos_sprite16_memory[offset] & 0xff;
 }
 
 WRITE_HANDLER( polepos_sprite_w )
 {
-	COMBINE_WORD_MEM(&polepos_sprite_memory[offset], data);
-}
-
-READ_HANDLER( polepos_z80_sprite_r )
-{
-	return polepos_sprite_r(offset << 1) & 0xff;
-}
-
-WRITE_HANDLER( polepos_z80_sprite_w )
-{
-	polepos_sprite_w(offset << 1, data | 0xff000000);
+	polepos_sprite16_memory[offset] = (polepos_sprite16_memory[offset] & 0xff00) | data;
 }
 
 
@@ -210,29 +209,29 @@ WRITE_HANDLER( polepos_z80_sprite_w )
 
 ***************************************************************************/
 
+READ16_HANDLER( polepos_road16_r )
+{
+	return polepos_road16_memory[offset];
+}
+
+WRITE16_HANDLER( polepos_road16_w )
+{
+	COMBINE_DATA(&polepos_road16_memory[offset]);
+}
+
 READ_HANDLER( polepos_road_r )
 {
-	return READ_WORD(&polepos_road_memory[offset]);
+	return polepos_road16_memory[offset] & 0xff;
 }
 
 WRITE_HANDLER( polepos_road_w )
 {
-	COMBINE_WORD_MEM(&polepos_road_memory[offset], data);
+	polepos_road16_memory[offset] = (polepos_road16_memory[offset] & 0xff00) | data;
 }
 
-READ_HANDLER( polepos_z80_road_r )
+WRITE16_HANDLER( polepos_road16_vscroll_w )
 {
-	return polepos_road_r(offset << 1) & 0xff;
-}
-
-WRITE_HANDLER( polepos_z80_road_w )
-{
-	polepos_road_w(offset << 1, data | 0xff000000);
-}
-
-WRITE_HANDLER( polepos_road_vscroll_w )
-{
-	road_vscroll = data;
+	COMBINE_DATA(&road16_vscroll);
 }
 
 
@@ -242,36 +241,41 @@ WRITE_HANDLER( polepos_road_vscroll_w )
 
 ***************************************************************************/
 
+READ16_HANDLER( polepos_view16_r )
+{
+	return polepos_view16_memory[offset];
+}
+
+WRITE16_HANDLER( polepos_view16_w )
+{
+	data16_t oldword = polepos_view16_memory[offset];
+	COMBINE_DATA(&polepos_view16_memory[offset]);
+	if (oldword != polepos_view16_memory[offset])
+	{
+		if (offset < 0x400)
+			view_dirty[offset] = 1;
+	}
+}
+
 READ_HANDLER( polepos_view_r )
 {
-	return READ_WORD(&polepos_view_memory[offset]);
+	return polepos_view16_memory[offset] & 0xff;
 }
 
 WRITE_HANDLER( polepos_view_w )
 {
-	int oldword = READ_WORD(&polepos_view_memory[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	if (oldword != newword)
+	data16_t oldword = polepos_view16_memory[offset];
+	polepos_view16_memory[offset] = (polepos_view16_memory[offset] & 0xff00) | data;
+	if (oldword != polepos_view16_memory[offset])
 	{
-		WRITE_WORD(&polepos_view_memory[offset], newword);
-		if (offset < 0x800)
-			view_dirty[offset / 2] = 1;
+		if (offset < 0x400)
+			view_dirty[offset] = 1;
 	}
 }
 
-READ_HANDLER( polepos_z80_view_r )
+WRITE16_HANDLER( polepos_view16_hscroll_w )
 {
-	return polepos_view_r(offset << 1) & 0xff;
-}
-
-WRITE_HANDLER( polepos_z80_view_w )
-{
-	polepos_view_w(offset << 1, data | 0xff000000);
-}
-
-WRITE_HANDLER( polepos_view_hscroll_w )
-{
-	view_hscroll = data;
+	COMBINE_DATA(&view16_hscroll);
 }
 
 
@@ -281,27 +285,24 @@ WRITE_HANDLER( polepos_view_hscroll_w )
 
 ***************************************************************************/
 
+READ16_HANDLER( polepos_alpha16_r )
+{
+	return polepos_alpha16_memory[offset];
+}
+
+WRITE16_HANDLER( polepos_alpha16_w )
+{
+	COMBINE_DATA(&polepos_alpha16_memory[offset]);
+}
+
 READ_HANDLER( polepos_alpha_r )
 {
-	return READ_WORD(&polepos_alpha_memory[offset]);
+	return polepos_alpha16_memory[offset] & 0xff;
 }
 
 WRITE_HANDLER( polepos_alpha_w )
 {
-	int oldword = READ_WORD(&polepos_alpha_memory[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	if (oldword != newword)
-		WRITE_WORD(&polepos_alpha_memory[offset], newword);
-}
-
-READ_HANDLER( polepos_z80_alpha_r )
-{
-	return polepos_alpha_r(offset << 1) & 0xff;
-}
-
-WRITE_HANDLER( polepos_z80_alpha_w )
-{
-	polepos_alpha_w(offset << 1, data | 0xff000000);
+	polepos_alpha16_memory[offset] = (polepos_alpha16_memory[offset] & 0xff00) | data;
 }
 
 
@@ -321,7 +322,7 @@ static void draw_view(struct osd_bitmap *bitmap)
 		for (y = 0; y < 16; y++, offs++)
 			if (view_dirty[offs])
 			{
-				int word = READ_WORD(&polepos_view_memory[offs * 2]);
+				data16_t word = polepos_view16_memory[offs];
 				int code = (word & 0xff) | ((word >> 6) & 0x100);
 				int color = (word >> 8) & 0x3f;
 
@@ -331,7 +332,7 @@ static void draw_view(struct osd_bitmap *bitmap)
 			}
 
 	/* copy the bitmap */
-	x = -view_hscroll;
+	x = -view16_hscroll;
 	clip.max_y = 127;
 	copyscrollbitmap(bitmap, view_bitmap, 1, &x, 0, 0, &clip, TRANSPARENCY_NONE, 0);
 }
@@ -372,8 +373,8 @@ static void draw_road(struct osd_bitmap *bitmap)
 
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
-	UINT16 *posmem = (UINT16 *)&polepos_sprite_memory[0x700];
-	UINT16 *sizmem = (UINT16 *)&polepos_sprite_memory[0xf00];
+	data16_t *posmem = &polepos_sprite16_memory[0x380];
+	data16_t *sizmem = &polepos_sprite16_memory[0x780];
 	int i;
 
 	for (i = 0; i < 64; i++, posmem += 2, sizmem += 2)
@@ -401,9 +402,9 @@ static void draw_alpha(struct osd_bitmap *bitmap)
 	for (y = offs = 0; y < 32; y++)
 		for (x = 0; x < 32; x++, offs++)
 		{
-			int word = READ_WORD(&polepos_alpha_memory[offs * 2]);
+			data16_t word = polepos_alpha16_memory[offs];
 			int code = (word & 0xff) | ((word >> 6) & 0x100);
-			int color = (word >> 8) & 0x3f;	/* 6 bits color */
+			int color = (word >> 8) & 0x3f; /* 6 bits color */
 
 			if (y >= 16) color |= 0x40;
 			drawgfx(bitmap, Machine->gfx[0],
@@ -494,16 +495,16 @@ static void NAME(struct osd_bitmap *bitmap, int sx, int sy, int dx, int dy)
 		TYPE *dest;
 
 		/* first add the vertical position modifier and the vertical scroll */
-		yoffs = ((polepos_vertical_position_modifier[y] + road_vscroll) >> 2) & 0x3fe;
+		yoffs = ((polepos_vertical_position_modifier[y] + road16_vscroll) >> 3) & 0x1ff;
 
 		/* then use that as a lookup into the road memory */
-		roadpal = READ_WORD(&polepos_road_memory[yoffs]) & 15;
+		roadpal = polepos_road16_memory[yoffs] & 15;
 
 		/* this becomes the palette base for the scanline */
 		colortable = &Machine->remapped_colortable[0x1000 + (roadpal << 6)];
 
 		/* now fetch the horizontal scroll offset for this scanline */
-		xoffs = READ_WORD(&polepos_road_memory[0x700 + (y & 0x7f) * 2]) & 0x3ff;
+		xoffs = polepos_road16_memory[0x380 + (y & 0x7f)] & 0x3ff;
 
 		/* the road is drawn in 8-pixel chunks, so round downward and adjust the base */
 		/* note that we assume there is at least 8 pixels of slop on the left/right */
@@ -551,3 +552,4 @@ static void NAME(struct osd_bitmap *bitmap, int sx, int sy, int dx, int dy)
 }
 
 #endif
+

@@ -926,6 +926,6 @@ static WRITE_HANDLER( joust2_pia_3_cb1_w )
 static WRITE_HANDLER( joust2_snd_cmd_w )
 {
 	joust2_current_sound_data = (joust2_current_sound_data & ~0xff) | (data & 0xff);
-	williams_cvsd_data_w(0, joust2_current_sound_data);
+	williams_cvsd_data_w(joust2_current_sound_data);
 	timer_set(TIME_NOW, joust2_current_sound_data, joust2_deferred_snd_cmd_w);
 }

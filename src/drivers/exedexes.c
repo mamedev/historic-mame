@@ -34,8 +34,7 @@ static int exedexes_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
@@ -45,11 +44,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM }, /* Work RAM */
 	{ 0xf000, 0xffff, MRA_RAM }, /* Sprite RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, exedexes_c804_w },	/* coin counters + text layer enable */
@@ -62,29 +59,24 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd807, 0xd807, exedexes_gfxctrl_w },	/* layer enables */
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
 	{ 0x8001, 0x8001, AY8910_write_port_0_w },
 	{ 0x8002, 0x8002, SN76496_0_w },
 	{ 0x8003, 0x8003, SN76496_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

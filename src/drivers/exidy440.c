@@ -586,8 +586,7 @@ READ_HANDLER( showdown_pld_select2_r )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x209f, MRA_RAM },
 	{ 0x20a0, 0x29ff, MRA_RAM },
@@ -601,12 +600,10 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x3000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x1fff, MWA_RAM, &exidy440_imageram },
 	{ 0x2000, 0x209f, MWA_RAM, &spriteram },
 	{ 0x20a0, 0x29ff, MWA_RAM },
@@ -619,8 +616,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x3000, 0x3fff, MWA_RAM },
 	{ 0x4000, 0x7fff, bankram_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -630,28 +626,24 @@ static struct MemoryWriteAddress writemem_cpu1[] =
  *
  *************************************/
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x8000, 0x8016, exidy440_m6844_r },
 	{ 0x8400, 0x8407, MRA_RAM },
 	{ 0x8800, 0x8800, exidy440_sound_command_r },
 	{ 0x9800, 0x9800, MRA_NOP },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x8000, 0x8016, exidy440_m6844_w, &exidy440_m6844_data },
 	{ 0x8400, 0x8407, exidy440_sound_volume_w, &exidy440_sound_volume },
 	{ 0x9400, 0x9403, MWA_RAM, &exidy440_sound_banks },
 	{ 0x9800, 0x9800, exidy440_sound_interrupt_clear_w },
 	{ 0xa000, 0xbfff, MWA_RAM },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

@@ -38,8 +38,7 @@ extern int simpsons_firq_enabled;
 
 ***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0fff, MRA_BANK3 },
 	{ 0x1f80, 0x1f80, input_port_4_r },
 	{ 0x1f81, 0x1f81, simpsons_eeprom_r },
@@ -58,11 +57,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_BANK3 },
 	{ 0x1fa0, 0x1fa7, K053246_w },
 	{ 0x1fb0, 0x1fbf, K053251_w },
@@ -74,8 +71,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 static WRITE_HANDLER( z80_bankswitch_w )
 {
@@ -107,18 +103,15 @@ static WRITE_HANDLER( z80_arm_nmi_w )
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
 
-static struct MemoryReadAddress z80_readmem[] =
-{
+static MEMORY_READ_START( z80_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK2 },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
 	{ 0xfc00, 0xfc2f, K053260_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress z80_writemem[] =
-{
+static MEMORY_WRITE_START( z80_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xbfff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
@@ -127,8 +120,7 @@ static struct MemoryWriteAddress z80_writemem[] =
 	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
 	{ 0xfc00, 0xfc2f, K053260_w },
 	{ 0xfe00, 0xfe00, z80_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /***************************************************************************
 

@@ -42,6 +42,7 @@ same as Pooyan
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/timeplt.h"
 
 
 extern unsigned char *timeplt_videoram,*timeplt_colorram;
@@ -55,12 +56,6 @@ WRITE_HANDLER( timeplt_flipscreen_w );
 int  timeplt_vh_start(void);
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-/* defined in sndhrdw/timeplt.c */
-extern struct MemoryReadAddress timeplt_sound_readmem[];
-extern struct MemoryWriteAddress timeplt_sound_writemem[];
-extern struct AY8910interface timeplt_ay8910_interface;
-WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 
@@ -76,8 +71,7 @@ static READ_HANDLER( psurge_protection_r )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6004, 0x6004, psurge_protection_r },	/* psurge only */
 	{ 0xa000, 0xbfff, MRA_RAM },
@@ -87,11 +81,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc320, 0xc320, input_port_1_r },	/* IN1 */
 	{ 0xc340, 0xc340, input_port_2_r },	/* IN2 */
 	{ 0xc360, 0xc360, input_port_3_r },	/* DSW1 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0xa000, 0xa3ff, timeplt_colorram_w, &timeplt_colorram },
 	{ 0xa400, 0xa7ff, timeplt_videoram_w, &timeplt_videoram },
@@ -104,8 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc302, 0xc302, timeplt_flipscreen_w },
 	{ 0xc304, 0xc304, timeplt_sh_irqtrigger_w },
 	{ 0xc30a, 0xc30c, timeplt_coin_counter_w },  /* c30b is not used */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( timeplt )

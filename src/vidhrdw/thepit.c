@@ -11,7 +11,7 @@
 
 extern unsigned char *galaxian_attributesram;
 
-static data_t graphics_bank = 0;
+static int graphics_bank = 0;
 
 static struct rectangle spritevisiblearea =
 {

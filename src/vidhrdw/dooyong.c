@@ -5,7 +5,7 @@
 
 unsigned char *lastday_txvideoram;
 unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
-unsigned char *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
+data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
 static int tx_disable;
 
 
@@ -20,13 +20,13 @@ WRITE_HANDLER( lastday_ctrl_w )
 	/* bit 4 is used but unknown */
 
 	/* bit 6 is flip screen */
-	flip_screen_w(0,data & 0x40);
+	flip_screen_set(data & 0x40);
 }
 
 WRITE_HANDLER( pollux_ctrl_w )
 {
 	/* bit 0 is flip screen */
-	flip_screen_w(0,data & 0x01);
+	flip_screen_set(data & 0x01);
 
 	/* bits 6 and 7 are coin counters */
 	coin_counter_w(0,data & 0x80);
@@ -50,21 +50,24 @@ WRITE_HANDLER( primella_ctrl_w )
 	tx_disable = data & 0x08;
 
 	/* bit 4 flips screen */
-	flip_screen_w(0,data & 0x10);
+	flip_screen_set(data & 0x10);
 
 	/* bit 5 used but unknown */
 
 //	logerror("%04x: bankswitch = %02x\n",cpu_get_pc(),data&0xe0);
 }
 
-WRITE_HANDLER( rshark_ctrl_w )
+WRITE16_HANDLER( rshark_ctrl_w )
 {
-	/* bit 0 flips screen */
-	flip_screen_w(0,data & 0x01);
+	if (ACCESSING_LSB)
+	{
+		/* bit 0 flips screen */
+		flip_screen_set(data & 0x01);
 
-	/* bit 4 used but unknown */
+		/* bit 4 used but unknown */
 
-	/* bit 5 used but unknown */
+		/* bit 5 used but unknown */
+	}
 }
 
 
@@ -212,14 +215,14 @@ static void bluehawk_draw_layer2(struct osd_bitmap *bitmap,int gfx,const unsigne
 	}
 }
 
-static void rshark_draw_layer(struct osd_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void rshark_draw_layer(struct osd_bitmap *bitmap,int gfx,data16_t *scroll,
 		const unsigned char *tilemap,const unsigned char *tilemap2,int transparency)
 {
 	int offs;
 	int scrollx,scrolly;
 
-	scrollx = (READ_WORD(&scroll[0])&0xff) + ((READ_WORD(&scroll[2])&0xff) << 8);
-	scrolly = (READ_WORD(&scroll[6])&0xff) + ((READ_WORD(&scroll[8])&0xff) << 8);
+	scrollx = (scroll[0]&0xff) + ((scroll[1]&0xff) << 8);
+	scrolly = (scroll[3]&0xff) + ((scroll[4]&0xff) << 8);
 
 	for (offs = 0;offs < 0x800;offs += 2)
 	{
@@ -355,19 +358,19 @@ static void rshark_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < spriteram_size;offs += 16)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		if (READ_WORD(&buffered_spriteram[offs]) & 0x0001)	/* enable */
+		if (buffered_spriteram16[offs] & 0x0001)	/* enable */
 		{
 			int sx,sy,code,color;
 			int flipx=0,flipy=0,width,height,x,y;
 
-			sx = READ_WORD(&buffered_spriteram[offs+8]);
-			sy = (INT16)READ_WORD(&buffered_spriteram[offs+12]);
-			code = READ_WORD(&buffered_spriteram[offs+6]);
-			color = READ_WORD(&buffered_spriteram[offs+14]);
-			width = READ_WORD(&buffered_spriteram[offs+2]) & 0x000f;
-			height = (READ_WORD(&buffered_spriteram[offs+2]) & 0x00f0) >> 4;
+			sx = buffered_spriteram16[offs+4] & 0x01ff;
+			sy = (INT16)buffered_spriteram16[offs+6];
+			code = buffered_spriteram16[offs+3];
+			color = buffered_spriteram16[offs+7];
+			width = buffered_spriteram16[offs+1] & 0x000f;
+			height = (buffered_spriteram16[offs+1] & 0x00f0) >> 4;
 
 			if (flip_screen)
 			{
@@ -451,4 +454,9 @@ void rshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void dooyong_eof_callback(void)
 {
 	buffer_spriteram_w(0,0);
+}
+
+void rshark_eof_callback(void)
+{
+	buffer_spriteram16_w(0,0,0);
 }

@@ -158,11 +158,9 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)
@@ -298,11 +296,9 @@ void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)

@@ -13,40 +13,37 @@
 #include "cpu/h6280/h6280.h"
 
 int  vaportra_vh_start(void);
-void vaportra_vh_stop (void);
 void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE_HANDLER( vaportra_pf1_data_w );
-WRITE_HANDLER( vaportra_pf2_data_w );
-WRITE_HANDLER( vaportra_pf3_data_w );
-WRITE_HANDLER( vaportra_pf4_data_w );
-READ_HANDLER( vaportra_pf1_data_r );
-READ_HANDLER( vaportra_pf2_data_r );
-READ_HANDLER( vaportra_pf3_data_r );
-READ_HANDLER( vaportra_pf4_data_r );
+WRITE16_HANDLER( vaportra_pf1_data_w );
+WRITE16_HANDLER( vaportra_pf2_data_w );
+WRITE16_HANDLER( vaportra_pf3_data_w );
+WRITE16_HANDLER( vaportra_pf4_data_w );
 
-WRITE_HANDLER( vaportra_control_0_w );
-WRITE_HANDLER( vaportra_control_1_w );
-WRITE_HANDLER( vaportra_control_2_w );
-WRITE_HANDLER( vaportra_palette_24bit_rg_w );
-WRITE_HANDLER( vaportra_palette_24bit_b_w );
+WRITE16_HANDLER( vaportra_control_0_w );
+WRITE16_HANDLER( vaportra_control_1_w );
+WRITE16_HANDLER( vaportra_control_2_w );
+WRITE16_HANDLER( vaportra_palette_24bit_rg_w );
+WRITE16_HANDLER( vaportra_palette_24bit_b_w );
 
-extern unsigned char *vaportra_pf1_data,*vaportra_pf2_data,*vaportra_pf3_data,*vaportra_pf4_data;
-static unsigned char *vaportra_ram;
-
-WRITE_HANDLER( vaportra_update_sprites_w );
+extern data16_t *vaportra_pf1_data,*vaportra_pf2_data,*vaportra_pf3_data,*vaportra_pf4_data;
 
 /******************************************************************************/
 
-static WRITE_HANDLER( vaportra_sound_w )
+static READ16_HANDLER( vaportra_pf1_data_r ) { return vaportra_pf1_data[offset]; }
+static READ16_HANDLER( vaportra_pf2_data_r ) { return vaportra_pf2_data[offset]; }
+static READ16_HANDLER( vaportra_pf3_data_r ) { return vaportra_pf3_data[offset]; }
+static READ16_HANDLER( vaportra_pf4_data_r ) { return vaportra_pf4_data[offset]; }
+
+static WRITE16_HANDLER( vaportra_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
 }
 
-static READ_HANDLER( vaportra_control_r )
+static READ16_HANDLER( vaportra_control_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 4: /* Dip Switches */
 			return (readinputport(4) + (readinputport(3) << 8));
@@ -57,14 +54,13 @@ static READ_HANDLER( vaportra_control_r )
 	}
 
 	logerror("Unknown control read at %d\n",offset);
-	return 0xffff;
+	return ~0;
 }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress vaportra_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( vaportra_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x100000, 0x10000f, vaportra_control_r },
 
 	{ 0x200000, 0x201fff, vaportra_pf2_data_r },
@@ -72,17 +68,15 @@ static struct MemoryReadAddress vaportra_readmem[] =
 	{ 0x280000, 0x281fff, vaportra_pf1_data_r },
 	{ 0x282000, 0x283fff, vaportra_pf3_data_r },
 
-	{ 0x300000, 0x300fff, paletteram_word_r },
-	{ 0x304000, 0x304fff, paletteram_2_word_r },
+	{ 0x300000, 0x300fff, MRA16_RAM },
+	{ 0x304000, 0x304fff, MRA16_RAM },
 	{ 0x308000, 0x308001, MRA_NOP },
-	{ 0xff8000, 0xff87ff, MRA_BANK2 },
-	{ 0xffc000, 0xffffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xff8000, 0xff87ff, MRA16_RAM },
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress vaportra_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
+static MEMORY_WRITE16_START( vaportra_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x100003, vaportra_control_2_w },
 	{ 0x100006, 0x100007, vaportra_sound_w },
 
@@ -94,14 +88,13 @@ static struct MemoryWriteAddress vaportra_writemem[] =
 	{ 0x282000, 0x283fff, vaportra_pf3_data_w, &vaportra_pf3_data },
 	{ 0x2c0000, 0x2c000f, vaportra_control_1_w },
 
-	{ 0x300000, 0x3009ff, vaportra_palette_24bit_rg_w, &paletteram },
-	{ 0x304000, 0x3049ff, vaportra_palette_24bit_b_w, &paletteram_2 },
+	{ 0x300000, 0x3009ff, vaportra_palette_24bit_rg_w, &paletteram16 },
+	{ 0x304000, 0x3049ff, vaportra_palette_24bit_b_w, &paletteram16_2 },
 	{ 0x308000, 0x308001, MWA_NOP },
-	{ 0x30c000, 0x30c001, vaportra_update_sprites_w },
-	{ 0xff8000, 0xff87ff, MWA_BANK2, &spriteram },
-	{ 0xffc000, 0xffffff, MWA_BANK1, &vaportra_ram },
-	{ -1 }  /* end of table */
-};
+	{ 0x30c000, 0x30c001, buffer_spriteram16_w },
+	{ 0xff8000, 0xff87ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0xffc000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 /******************************************************************************/
 
@@ -129,8 +122,7 @@ static WRITE_HANDLER( YM2203_w )
 	}
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, YM2203_status_port_0_r },
 	{ 0x110000, 0x110001, YM2151_status_port_0_r },
@@ -138,11 +130,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x130000, 0x130001, OKIM6295_status_1_r },
 	{ 0x140000, 0x140001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
@@ -151,8 +141,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -362,10 +351,10 @@ static const struct MachineDriver machine_driver_vaportra =
 	1280, 1280,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	vaportra_vh_start,
-	vaportra_vh_stop,
+	0,
 	vaportra_vh_screenrefresh,
 
 	/* sound hardware */
@@ -474,31 +463,13 @@ ROM_END
 
 /******************************************************************************/
 
-static void vaportra_decrypt(void)
+static void init_vaportra(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++)
 		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x01) << 7) | ((RAM[i] & 0x80) >> 7);
-}
-
-static READ_HANDLER( cycle_r )
-{
-	int pc=cpu_get_pc();
-	int ret=READ_WORD(&vaportra_ram[0x6]);
-
-	if (ret==0 && (pc==0x3dea || pc==0x3de8)) {
-		cpu_spinuntil_int();
-		return 1;
-	}
-	return ret;
-}
-
-static void init_vaportra(void)
-{
-	install_mem_read_handler(0, 0xffc006, 0xffc007, cycle_r);
-	vaportra_decrypt();
 }
 
 /******************************************************************************/

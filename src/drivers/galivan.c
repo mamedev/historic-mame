@@ -100,109 +100,87 @@ static WRITE_HANDLER( ninjemak_videoreg_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_BANK1 },
 	{ 0xe000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xd800, 0xdbff, galivan_videoram_w, &videoram, &videoram_size },
 	{ 0xdc00, 0xdfff, galivan_colorram_w, &colorram },
 	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe100, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ninjemak_writemem[] =
-{
+static MEMORY_WRITE_START( ninjemak_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xd800, 0xd81f, ninjemak_videoreg_w },
 	{ 0xd800, 0xdbff, galivan_videoram_w, &videoram, &videoram_size },
 	{ 0xdc00, 0xdfff, galivan_colorram_w, &colorram },
 	{ 0xe000, 0xe1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe200, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
 	{ 0x04, 0x04, input_port_4_r },
 	{ 0xc0, 0xc0, IO_port_c0_r }, /* dangar needs to return 0x58 */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x40, 0x40, galivan_gfxbank_w },
 	{ 0x41, 0x42, galivan_scrollx_w },
 	{ 0x43, 0x44, galivan_scrolly_w },
 	{ 0x45, 0x45, galivan_sound_command_w },
 /*	{ 0x46, 0x46, IOWP_NOP }, */
 /*	{ 0x47, 0x47, IOWP_NOP }, */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort ninjemak_readport[] =
-{
+static PORT_READ_START( ninjemak_readport )
 	{ 0x80, 0x80, input_port_0_r },
 	{ 0x81, 0x81, input_port_1_r },
 	{ 0x82, 0x82, input_port_2_r },
 	{ 0x83, 0x83, input_port_3_r },
 	{ 0x84, 0x84, input_port_4_r },
 	{ 0x85, 0x85, input_port_5_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort ninjemak_writeport[] =
-{
+static PORT_WRITE_START( ninjemak_writeport )
 	{ 0x80, 0x80, ninjemak_gfxbank_w },
 	{ 0x85, 0x85, galivan_sound_command_w },
 //	{ 0x86, 0x86, IOWP_NOP },			// ??
 //	{ 0x87, 0x87, IOWP_NOP },			// ??
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 /*	{ 0x04, 0x04, IORP_NOP },    value read and *discarded*    */
 	{ 0x06, 0x06, galivan_sound_command_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM3526_control_port_0_w },
 	{ 0x01, 0x01, YM3526_write_port_0_w },
 	{ 0x02, 0x02, DAC_0_data_w },
 	{ 0x03, 0x03, DAC_1_data_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

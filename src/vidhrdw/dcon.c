@@ -7,58 +7,70 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+data16_t *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,*dcon_textram;
+
 static struct tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
-unsigned char *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram;
 static int dcon_enable;
 
 /******************************************************************************/
 
-WRITE_HANDLER( dcon_control_w )
+WRITE16_HANDLER( dcon_control_w )
 {
-	dcon_enable=data;
-	if ((dcon_enable&4)==4)
-		tilemap_set_enable(foreground_layer,0);
-	else
-		tilemap_set_enable(foreground_layer,1);
+	if (ACCESSING_LSB)
+	{
+		dcon_enable=data;
+		if ((dcon_enable&4)==4)
+			tilemap_set_enable(foreground_layer,0);
+		else
+			tilemap_set_enable(foreground_layer,1);
 
-	if ((dcon_enable&2)==2)
-		tilemap_set_enable(midground_layer,0);
-	else
-		tilemap_set_enable(midground_layer,1);
+		if ((dcon_enable&2)==2)
+			tilemap_set_enable(midground_layer,0);
+		else
+			tilemap_set_enable(midground_layer,1);
 
-	if ((dcon_enable&1)==1)
-		tilemap_set_enable(background_layer,0);
-	else
-		tilemap_set_enable(background_layer,1);
+		if ((dcon_enable&1)==1)
+			tilemap_set_enable(background_layer,0);
+		else
+			tilemap_set_enable(background_layer,1);
+	}
 }
 
-WRITE_HANDLER( dcon_background_w )
+WRITE16_HANDLER( dcon_background_w )
 {
-	COMBINE_WORD_MEM(&dcon_back_data[offset],data);
-	tilemap_mark_tile_dirty( background_layer,offset/2);
+	int oldword = dcon_back_data[offset];
+	COMBINE_DATA(&dcon_back_data[offset]);
+	if (oldword != dcon_back_data[offset])
+		tilemap_mark_tile_dirty(background_layer,offset);
 }
 
-WRITE_HANDLER( dcon_foreground_w )
+WRITE16_HANDLER( dcon_foreground_w )
 {
-	COMBINE_WORD_MEM(&dcon_fore_data[offset],data);
-	tilemap_mark_tile_dirty( foreground_layer,offset/2);
+	int oldword = dcon_fore_data[offset];
+	COMBINE_DATA(&dcon_fore_data[offset]);
+	if (oldword != dcon_fore_data[offset])
+		tilemap_mark_tile_dirty(foreground_layer,offset);
 }
 
-WRITE_HANDLER( dcon_midground_w )
+WRITE16_HANDLER( dcon_midground_w )
 {
-	COMBINE_WORD_MEM(&dcon_mid_data[offset],data);
-	tilemap_mark_tile_dirty( midground_layer,offset/2);
+	int oldword = dcon_mid_data[offset];
+	COMBINE_DATA(&dcon_mid_data[offset]);
+	if (oldword != dcon_mid_data[offset])
+		tilemap_mark_tile_dirty(midground_layer,offset);
 }
 
-WRITE_HANDLER( dcon_text_w )
+WRITE16_HANDLER( dcon_text_w )
 {
-	COMBINE_WORD_MEM(&videoram[offset],data);
-	tilemap_mark_tile_dirty( text_layer,offset/2);
+	int oldword = dcon_textram[offset];
+	COMBINE_DATA(&dcon_textram[offset]);
+	if (oldword != dcon_textram[offset])
+		tilemap_mark_tile_dirty(text_layer,offset);
 }
 
 static void get_back_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&dcon_back_data[2*tile_index]);
+	int tile=dcon_back_data[tile_index];
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -68,7 +80,7 @@ static void get_back_tile_info(int tile_index)
 
 static void get_fore_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&dcon_fore_data[2*tile_index]);
+	int tile=dcon_fore_data[tile_index];
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -78,7 +90,7 @@ static void get_fore_tile_info(int tile_index)
 
 static void get_mid_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&dcon_mid_data[2*tile_index]);
+	int tile=dcon_mid_data[tile_index];
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -88,7 +100,7 @@ static void get_mid_tile_info(int tile_index)
 
 static void get_text_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&videoram[2*tile_index]);
+	int tile = dcon_textram[tile_index];
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -106,9 +118,9 @@ int dcon_vh_start(void)
 	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
 		return 1;
 
-	midground_layer->transparent_pen = 15;
-	foreground_layer->transparent_pen = 15;
-	text_layer->transparent_pen = 15;
+	tilemap_set_transparent_pen(midground_layer,15);
+	tilemap_set_transparent_pen(foreground_layer,15);
+	tilemap_set_transparent_pen(text_layer,15);
 
 	return 0;
 }
@@ -118,26 +130,26 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;
 
-	for (offs = 0x800-8;offs >= 0;offs -= 8)
+	for (offs = 0x400-4;offs >= 0;offs -= 4)
 	{
-		if ((READ_WORD(&spriteram[offs+0])&0x8000)!=0x8000) continue;
-		sprite = READ_WORD(&spriteram[offs+2]);
+		if ((spriteram16[offs+0]&0x8000)!=0x8000) continue;
+		sprite = spriteram16[offs+1];
 		if ((sprite>>14)!=pri) continue;
 		sprite &= 0x3fff;
 
-		y = READ_WORD(&spriteram[offs+6]);
-		x = READ_WORD(&spriteram[offs+4]);
+		y = spriteram16[offs+3];
+		x = spriteram16[offs+2];
 
 		if (x&0x8000) x=0-(0x200-(x&0x1ff));
 		else x&=0x1ff;
 		if (y&0x8000) y=0-(0x200-(y&0x1ff));
 		else y&=0x1ff;
 
-		color = READ_WORD(&spriteram[offs+0])&0x3f;
+		color = spriteram16[offs+0]&0x3f;
 		fx = 0; /* To do */
 		fy = 0; /* To do */
-		dy=((READ_WORD(&spriteram[offs+0])&0x0380)>>7)+1;
-		dx=((READ_WORD(&spriteram[offs+0])&0x1c00)>>10)+1;
+		dy=((spriteram16[offs+0]&0x0380)>>7)+1;
+		dx=((spriteram16[offs+0]&0x1c00)>>10)+1;
 
 		for (ax=0; ax<dx; ax++)
 			for (ay=0; ay<dy; ay++) {
@@ -155,12 +167,12 @@ static void mark_sprite_colours(void)
 
 	pal_base = Machine->drv->gfxdecodeinfo[4].color_codes_start;
 	for (color = 0;color < 64;color++) colmask[color] = 0;
-	for (offs = 8;offs <0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
-		color = READ_WORD(&spriteram[offs+0])&0x3f;
-		sprite = READ_WORD(&spriteram[offs+2]);
+		color = spriteram16[offs+0]&0x3f;
+		sprite = spriteram16[offs+1];
 		sprite &= 0x3fff;
-		multi=(((READ_WORD(&spriteram[offs+0])&0x0380)>>7)+1)*(((READ_WORD(&spriteram[offs+0])&0x1c00)>>10)+1);
+		multi=(((spriteram16[offs+0]&0x0380)>>7)+1)*(((spriteram16[offs+0]&0x1c00)>>10)+1);
 
 		for (i=0; i<multi; i++)
 			colmask[color] |= Machine->gfx[4]->pen_usage[(sprite+i)&0x3fff];
@@ -178,12 +190,12 @@ static void mark_sprite_colours(void)
 void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
-	tilemap_set_scrollx( background_layer,0, READ_WORD(&dcon_scroll_ram[0]) );
-	tilemap_set_scrolly( background_layer,0, READ_WORD(&dcon_scroll_ram[2]) );
-	tilemap_set_scrollx( midground_layer, 0, READ_WORD(&dcon_scroll_ram[4]) );
-	tilemap_set_scrolly( midground_layer, 0, READ_WORD(&dcon_scroll_ram[6]) );
-	tilemap_set_scrollx( foreground_layer,0, READ_WORD(&dcon_scroll_ram[8]) );
-	tilemap_set_scrolly( foreground_layer,0, READ_WORD(&dcon_scroll_ram[0xa]) );
+	tilemap_set_scrollx( background_layer,0, dcon_scroll_ram[0] );
+	tilemap_set_scrolly( background_layer,0, dcon_scroll_ram[1] );
+	tilemap_set_scrollx( midground_layer, 0, dcon_scroll_ram[2] );
+	tilemap_set_scrolly( midground_layer, 0, dcon_scroll_ram[3] );
+	tilemap_set_scrollx( foreground_layer,0, dcon_scroll_ram[4] );
+	tilemap_set_scrolly( foreground_layer,0, dcon_scroll_ram[5] );
 
 	tilemap_update(ALL_TILEMAPS);
 
@@ -191,21 +203,18 @@ void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	mark_sprite_colours();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if ((dcon_enable&1)!=1)
-		tilemap_draw(bitmap,background_layer,0);
+		tilemap_draw(bitmap,background_layer,0,0);
 	else
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,midground_layer,0);
+	tilemap_draw(bitmap,midground_layer,0,0);
 	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,foreground_layer,0);
+	tilemap_draw(bitmap,foreground_layer,0,0);
 	draw_sprites(bitmap,0);
 	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,text_layer,0);
+	tilemap_draw(bitmap,text_layer,0,0);
 }

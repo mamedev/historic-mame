@@ -15,7 +15,7 @@ Functions to emulate the video hardware of the machine.
 static int redraw_man = 0;
 static int man_scroll = -1;
 static int sprites[0x20];
-static data_t char_palette = 0;
+static int char_palette = 0;
 
 
 void cheekyms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -105,7 +105,7 @@ WRITE_HANDLER( cheekyms_port_80_w )
 	set_vh_global_attribute(&char_palette, (data >> 2) & 0x10);
 
 	/* Bit 7 is screen flip */
-	flip_screen_w(offset, data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 

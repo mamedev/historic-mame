@@ -85,8 +85,7 @@ static READ_HANDLER( raiden_sound_r )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x07fff, MRA_RAM },
 	{ 0x0a000, 0x0afff, raiden_shared_r },
 	{ 0x0b000, 0x0b000, input_port_0_r },
@@ -95,11 +94,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0b003, 0x0b003, input_port_3_r },
 	{ 0x0d000, 0x0d00f, raiden_sound_r },
 	{ 0xa0000, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0x06fff, MWA_RAM },
 	{ 0x07000, 0x07fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0a000, 0x0afff, raiden_shared_w, &raiden_shared_ram },
@@ -108,22 +105,18 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0d000, 0x0d00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
 	{ 0x0d060, 0x0d067, MWA_RAM, &raiden_scroll_ram },
 	{ 0xa0000, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sub_readmem[] =
-{
+static MEMORY_READ_START( sub_readmem )
 	{ 0x00000, 0x01fff, MRA_RAM },
 	{ 0x02000, 0x027ff, raiden_background_r },
 	{ 0x02800, 0x02fff, raiden_foreground_r },
 	{ 0x03000, 0x03fff, paletteram_r },
 	{ 0x04000, 0x04fff, raiden_shared_r },
 	{ 0xc0000, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sub_writemem[] =
-{
+static MEMORY_WRITE_START( sub_writemem )
 	{ 0x00000, 0x01fff, MWA_RAM },
 	{ 0x02000, 0x027ff, raiden_background_w, &raiden_back_data },
 	{ 0x02800, 0x02fff, raiden_foreground_w, &raiden_fore_data },
@@ -131,13 +124,11 @@ static struct MemoryWriteAddress sub_writemem[] =
 	{ 0x04000, 0x04fff, raiden_shared_w },
 	{ 0x07ffe, 0x0afff, MWA_NOP },
 	{ 0xc0000, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /************************* Alternate board set ************************/
 
-static struct MemoryReadAddress alt_readmem[] =
-{
+static MEMORY_READ_START( alt_readmem )
 	{ 0x00000, 0x07fff, MRA_RAM },
 	{ 0x08000, 0x08fff, raiden_shared_r },
 	{ 0x0a000, 0x0a00f, raiden_sound_r },
@@ -146,11 +137,9 @@ static struct MemoryReadAddress alt_readmem[] =
 	{ 0x0e002, 0x0e002, input_port_2_r },
 	{ 0x0e003, 0x0e003, input_port_3_r },
 	{ 0xa0000, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alt_writemem[] =
-{
+static MEMORY_WRITE_START( alt_writemem )
 	{ 0x00000, 0x06fff, MWA_RAM },
 	{ 0x07000, 0x07fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x08000, 0x08fff, raiden_shared_w, &raiden_shared_ram },
@@ -159,12 +148,11 @@ static struct MemoryWriteAddress alt_writemem[] =
 	{ 0x0c000, 0x0c7ff, raidena_text_w, &videoram },
 	{ 0x0f000, 0x0f035, MWA_RAM, &raiden_scroll_ram },
 	{ 0xa0000, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
-SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port_4_r); /* Coin port */
+SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port_4_r) /* Coin port */
 
 /******************************************************************************/
 

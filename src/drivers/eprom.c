@@ -1,128 +1,50 @@
 /***************************************************************************
 
-EPRoM Memory Map
-----------------
+	Atari Escape hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
+	Games supported:
+		* Escape From The Planet Of The Robot Monsters (1989) [2 sets]
 
-EPRoM 68010 MEMORY MAP
+	Known bugs:
+		* none at this time
 
-Program ROM             000000-05FFFF   R    D15-D0
-Program ROM shared      060000-07FFFF   R    D15-D0
-Program ROM             080000-09FFFF   R    D15-D0
+****************************************************************************
 
-EEPROM                  0E0001-0E0FFF  R/W   D7-D0    (odd bytes only)
-Program RAM             160000-16FFFF  R/W   D15-D0
-UNLOCK EEPROM           1Fxxxx          W
+	Memory map (TBA)
 
-Player 1 Input (left)   260000          R    D11-D8 Active lo
-Player 2 Input (right)  260010          R    D11-D8 Active lo
-      D8:    start
-      D9:    fire
-      D10:   spare
-      D11:   duck
+***************************************************************************/
 
-VBLANK                  260010          R    D0 Active lo
-Self-test                               R    D1 Active lo
-Input buffer full (@260030)             R    D2 Active lo
-Output buffer full (@360030)            R    D3 Active lo
-ADEOC, end of conversion                R    D4 Active hi
-
-ADC0, analog port       260020          R    D0-D7
-ADC1                    260022          R    D0-D7
-ADC2                    260024          R    D0-D7
-ADC3                    260026          R    D0-D7
-
-Read sound processor    260030          R    D0-D7
-
-Watch Dog               2E0000          W    xx        (128 msec. timeout)
-
-VBLANK Interrupt ack.   360000          W    xx
-
-Video off               360010          W    D5 (active hi)
-Video intensity                         W    D1-D4 (0=full on)
-EXTRA cpu reset                         W    D0 (lo to reset)
-
-Sound processor reset   360020          W    xx
-
-Write sound processor   360030          W    D0-D7
-
-Color RAM Alpha         3E0000-3E01FF  R/W   D15-D0
-Color RAM Motion Object 3E0200-3E03FF  R/W   D15-D0
-Color RAM Playfield     3E0400-3E07FE  R/W   D15-D0
-Color RAM STAIN         3E0800-3E0FFE  R/W   D15-D0
-
-Playfield Picture RAM   3F0000-3F1FFF  R/W   D15-D0
-Motion Object RAM       3F2000-3F3FFF  R/W   D15-D0
-Alphanumerics RAM       3F4000-3F4EFF  R/W   D15-D0
-Scroll and MOB config   3F4F00-3F4F70  R/W   D15-D0
-SLIP pointers           3F4F80-3F4FFF  R/W   D9-D0
-Working RAM             3F5000-3F7FFF  R/W   D15-D0
-Playfield palette RAM   3F8000-3F9FFF  R/W   D11-D8
-
------------------------------------------------------------
-
-EPRoM EXTRA 68010 MEMORY MAP
-
-Program ROM             000000-05FFFF   R    D15-D0
-Program ROM shared      060000-07FFFF   R    D15-D0
-
-Program RAM             160000-16FFFF  R/W   D15-D0
-
-Player 1 Input (left)   260000          R    D11-D8 Active lo
-Player 2 Input (right)  260010          R    D11-D8 Active lo
-      D8:    start
-      D9:    fire
-      D10:   spare
-      D11:   duck
-
-VBLANK                  260010          R    D0 Active lo
-Self-test                               R    D1 Active lo
-Input buffer full (@260030)             R    D2 Active lo
-Output buffer full (@360030)            R    D3 Active lo
-ADEOC, end of conversion                R    D4 Active hi
-
-ADC0, analog port       260020          R    D0-D7
-ADC1                    260022          R    D0-D7
-ADC2                    260024          R    D0-D7
-ADC3                    260026          R    D0-D7
-
-Read sound processor    260030          R    D0-D7
-
-VBLANK Interrupt ack.   360000          W    xx
-
-Video off               360010          W    D5 (active hi)
-Video intensity                         W    D1-D4 (0=full on)
-EXTRA cpu reset                         W    D0 (lo to reset)
-
-Sound processor reset   360020          W    xx
-
-Write sound processor   360030          W    D0-D7
-
-****************************************************************************/
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-extern UINT8 *eprom_playfieldpalram;
-extern size_t eprom_playfieldpalram_size;
 
-WRITE_HANDLER( eprom_latch_w );
-WRITE_HANDLER( eprom_playfieldram_w );
-WRITE_HANDLER( eprom_playfieldpalram_w );
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
 int eprom_vh_start(void);
 void eprom_vh_stop(void);
-void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void eprom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void eprom_scanline_update(int scanline);
 
 
-static UINT8 *sync_data;
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
+
+static data16_t *sync_data;
+
 
 
 /*************************************
@@ -169,9 +91,9 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port1_r )
+static READ16_HANDLER( special_port1_r )
 {
-	int result = input_port_1_r(offset);
+	int result = readinputport(1);
 
 	if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
@@ -181,10 +103,10 @@ static READ_HANDLER( special_port1_r )
 }
 
 
-static READ_HANDLER( adc_r )
+static READ16_HANDLER( adc_r )
 {
 	static int last_offset;
-	int result = readinputport(2 + ((last_offset / 2) & 3));
+	int result = readinputport(2 + (last_offset & 3));
 	last_offset = offset;
 	return result;
 }
@@ -197,17 +119,15 @@ static READ_HANDLER( adc_r )
  *
  *************************************/
 
-WRITE_HANDLER( eprom_latch_w )
+static WRITE16_HANDLER( eprom_latch_w )
 {
-	(void)offset;
-
 	/* reset extra CPU */
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		if (data & 1)
-			cpu_set_reset_line(1,CLEAR_LINE);
+			cpu_set_reset_line(1, CLEAR_LINE);
 		else
-			cpu_set_reset_line(1,ASSERT_LINE);
+			cpu_set_reset_line(1, ASSERT_LINE);
 	}
 }
 
@@ -219,17 +139,19 @@ WRITE_HANDLER( eprom_latch_w )
  *
  *************************************/
 
-static READ_HANDLER( sync_r )
+static READ16_HANDLER( sync_r )
 {
-	return READ_WORD(&sync_data[offset]);
+	return sync_data[offset];
 }
 
 
-static WRITE_HANDLER( sync_w )
+static WRITE16_HANDLER( sync_w )
 {
-	int oldword = READ_WORD(&sync_data[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&sync_data[offset], newword);
+	int oldword = sync_data[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
+
+	sync_data[offset] = newword;
 	if ((oldword & 0xff00) != (newword & 0xff00))
 		cpu_yield();
 }
@@ -242,46 +164,39 @@ static WRITE_HANDLER( sync_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x09ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x09ffff, MRA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
 	{ 0x16cc00, 0x16cc01, sync_r },
-	{ 0x160000, 0x16ffff, MRA_BANK1 },
-	{ 0x260000, 0x26000f, input_port_0_r },
+	{ 0x160000, 0x16ffff, MRA16_BANK1 },
+	{ 0x260000, 0x26000f, input_port_0_word_r },
 	{ 0x260010, 0x26001f, special_port1_r },
 	{ 0x260020, 0x26002f, adc_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3f0000, 0x3f1fff, MRA_BANK2 },
-	{ 0x3f2000, 0x3f3fff, MRA_BANK3 },
-	{ 0x3f4000, 0x3f4fff, MRA_BANK4 },
-	{ 0x3f5000, 0x3f7fff, MRA_BANK5 },
-	{ 0x3f8000, 0x3f9fff, MRA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
+	{ 0x3f0000, 0x3f9fff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x09ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x09ffff, MWA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x16cc00, 0x16cc01, sync_w, &sync_data },
-	{ 0x160000, 0x16ffff, MWA_BANK1 },
+	{ 0x160000, 0x16ffff, MWA16_BANK1 },	/* shared */
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
 	{ 0x360010, 0x360011, eprom_latch_w },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f2000, 0x3f3fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f4000, 0x3f4fff, MWA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x3f5000, 0x3f7fff, MWA_BANK5 },
-	{ 0x3f8000, 0x3f9fff, eprom_playfieldpalram_w, &eprom_playfieldpalram, &eprom_playfieldpalram_size },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e0fff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0x3f0000, 0x3f1fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f2000, 0x3f3fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3f4000, 0x3f4f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f4f80, 0x3f4fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f5000, 0x3f7fff, MWA16_RAM },
+	{ 0x3f8000, 0x3f9fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+MEMORY_END
 
 
 
@@ -291,30 +206,26 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress extra_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( extra_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x16cc00, 0x16cc01, sync_r },
-	{ 0x160000, 0x16ffff, MRA_BANK1 },
-	{ 0x260000, 0x26000f, input_port_0_r },
+	{ 0x160000, 0x16ffff, MRA16_BANK1 },
+	{ 0x260000, 0x26000f, input_port_0_word_r },
 	{ 0x260010, 0x26001f, special_port1_r },
 	{ 0x260020, 0x26002f, adc_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress extra_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
+static MEMORY_WRITE16_START( extra_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x16cc00, 0x16cc01, sync_w, &sync_data },
-	{ 0x160000, 0x16ffff, MWA_BANK1 },
+	{ 0x160000, 0x16ffff, MWA16_BANK1 },	/* shared */
 	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
 	{ 0x360010, 0x360011, eprom_latch_w },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -377,25 +288,25 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	1024,	/* 1024 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	32768,	/* 32768 of them */
-	4,		/* 4 bits per pixel */
-	{ 0*8*0x40000, 1*8*0x40000, 2*8*0x40000, 3*8*0x40000 },
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
+	8*8
 };
 
 
@@ -403,7 +314,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pfmolayout,  256, 32 },	/* sprites & playfield */
 	{ REGION_GFX2, 0, &anlayout,      0, 64 },	/* characters 8x8 */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -432,7 +343,7 @@ static const struct MachineDriver machine_driver_eprom =
 		},
 		JSA_I_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,
 	init_machine,
 
@@ -453,26 +364,6 @@ static const struct MachineDriver machine_driver_eprom =
 
 	atarigen_nvram_handler
 };
-
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	int i;
-
-	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-
-	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
-}
 
 
 
@@ -578,14 +469,9 @@ static void init_eprom(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 6, 1, 0x0002);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(2, 0x4158, 0x4170);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
+	atarigen_invert_region(REGION_GFX1);
 }
 
 

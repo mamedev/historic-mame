@@ -3,7 +3,7 @@
 
 
 
-unsigned char *galpanic_bgvideoram,*galpanic_fgvideoram;
+data16_t *galpanic_bgvideoram,*galpanic_fgvideoram;
 size_t galpanic_fgvideoram_size;
 
 
@@ -31,70 +31,35 @@ void galpanic_init_palette(unsigned char *palette, unsigned short *colortable,co
 
 
 
-READ_HANDLER( galpanic_bgvideoram_r )
+WRITE16_HANDLER( galpanic_bgvideoram_w )
 {
-	return READ_WORD(&galpanic_bgvideoram[offset]);
+	int sx,sy;
+
+
+	data = COMBINE_DATA(&galpanic_bgvideoram[offset]);
+
+	sy = offset / 256;
+	sx = offset % 256;
+
+	plot_pixel(tmpbitmap, sx, sy, Machine->pens[1024 + (data >> 1)]);
 }
 
-WRITE_HANDLER( galpanic_bgvideoram_w )
-{
-	int sx,sy,color;
-
-
-	COMBINE_WORD_MEM(&galpanic_bgvideoram[offset],data);
-
-	sy = (offset/2) / 256;
-	sx = (offset/2) % 256;
-
-	color = READ_WORD(&galpanic_bgvideoram[offset]);
-
-	plot_pixel(tmpbitmap, sx, sy, Machine->pens[1024 + (color >> 1)]);
-}
-
-READ_HANDLER( galpanic_fgvideoram_r )
-{
-	return READ_WORD(&galpanic_fgvideoram[offset]);
-}
-
-WRITE_HANDLER( galpanic_fgvideoram_w )
-{
-	COMBINE_WORD_MEM(&galpanic_fgvideoram[offset],data);
-}
-
-READ_HANDLER( galpanic_paletteram_r )
-{
-	return READ_WORD(&paletteram[offset]);
-}
-
-WRITE_HANDLER( galpanic_paletteram_w )
+WRITE16_HANDLER( galpanic_paletteram_w )
 {
 	int r,g,b;
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
 
+	data = COMBINE_DATA(&paletteram16[offset]);
 
-	WRITE_WORD(&paletteram[offset],newword);
-
-	r = (newword >>  6) & 0x1f;
-	g = (newword >> 11) & 0x1f;
-	b = (newword >>  1) & 0x1f;
+	r = (data >>  6) & 0x1f;
+	g = (data >> 11) & 0x1f;
+	b = (data >>  1) & 0x1f;
 	/* bit 0 seems to be a transparency flag for the front bitmap */
 
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
-}
-
-READ_HANDLER( galpanic_spriteram_r )
-{
-	return READ_WORD(&spriteram[offset]);
-}
-
-WRITE_HANDLER( galpanic_spriteram_w )
-{
-	COMBINE_WORD_MEM(&spriteram[offset],data);
+	palette_change_color(offset,r,g,b);
 }
 
 
@@ -113,13 +78,13 @@ static void galpanic_draw_sprites(struct osd_bitmap *bitmap)
 	int sx,sy;
 
 	sx = sy = 0;
-	for (offs = 0;offs < spriteram_size;offs += 0x10)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
 		int x,y,code,color,flipx,flipy,attr1,attr2;
 
-		attr1 = READ_WORD(&spriteram[offs + 6]);
-		x = READ_WORD(&spriteram[offs + 8]) - ((attr1 & 0x01) << 8);
-		y = READ_WORD(&spriteram[offs + 10]) + ((attr1 & 0x02) << 7);
+		attr1 = spriteram16[offs + 3];
+		x = spriteram16[offs + 4] - ((attr1 & 0x01) << 8);
+		y = spriteram16[offs + 5] + ((attr1 & 0x02) << 7);
 		if (attr1 & 0x04)	/* multi sprite */
 		{
 			sx += x;
@@ -135,8 +100,8 @@ static void galpanic_draw_sprites(struct osd_bitmap *bitmap)
 
 		/* bit 0 [offs + 0] is used but I don't know what for */
 
-		attr2 = READ_WORD(&spriteram[offs + 14]);
-		code = READ_WORD(&spriteram[offs + 12]) + ((attr2 & 0x1f) << 8);
+		attr2 = spriteram16[offs + 7];
+		code = spriteram16[offs + 6] + ((attr2 & 0x1f) << 8);
 		flipx = attr2 & 0x80;
 		flipy = attr2 & 0x40;
 
@@ -153,16 +118,16 @@ static void comad_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
 		int sx,sy,code,color,flipx,flipy;
 
-		sx = READ_WORD(&spriteram[offs + 4]) >> 6;
-		sy = READ_WORD(&spriteram[offs + 6]) >> 6;
-		code = READ_WORD(&spriteram[offs + 2]);
-		color = (READ_WORD(&spriteram[offs]) & 0x003c) >> 2;
-		flipx = READ_WORD(&spriteram[offs]) & 0x0002;
-		flipy = READ_WORD(&spriteram[offs]) & 0x0001;
+		sx = spriteram16[offs + 2] >> 6;
+		sy = spriteram16[offs + 3] >> 6;
+		code = spriteram16[offs + 1];
+		color = (spriteram16[offs] & 0x003c) >> 2;
+		flipx = spriteram16[offs] & 0x0002;
+		flipy = spriteram16[offs] & 0x0001;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
@@ -177,17 +142,15 @@ static void draw_fgbitmap(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
+	for (offs = 0;offs < galpanic_fgvideoram_size/2;offs++)
 	{
 		int sx,sy,color;
 
-		sx = (offs/2) % 256;
-		sy = (offs/2) / 256;
-		color = READ_WORD(&galpanic_fgvideoram[offs]);
+		sx = offs % 256;
+		sy = offs / 256;
+		color = galpanic_fgvideoram[offs];
 		if (color)
-		{
 			plot_pixel(bitmap, sx, sy, Machine->pens[color]);
-		}
 	}
 }
 

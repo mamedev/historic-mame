@@ -240,12 +240,12 @@ void irobot_vh_stop(void)
 
 ***************************************************************************/
 
-void irobot_poly_clear(void) {
-
-    if (irobot_bufsel)
-        osd_clearbitmap(polybitmap2);
-    else
-        osd_clearbitmap(polybitmap1);
+void irobot_poly_clear(void)
+{
+	if (irobot_bufsel)
+		fillbitmap(polybitmap2,palette_transparent_pen,&Machine->visible_area);
+	else
+		fillbitmap(polybitmap1,palette_transparent_pen,&Machine->visible_area);
 }
 
 INLINE void irobot_draw_pixel (int x, int y, int col)

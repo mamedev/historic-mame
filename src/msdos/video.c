@@ -46,8 +46,6 @@ BEGIN_COLOR_DEPTH_LIST
 	COLOR_DEPTH_16
 END_COLOR_DEPTH_LIST
 
-#define BACKGROUND 0
-
 
 dirtygrid grid1;
 char *dirty_new=grid1;
@@ -513,8 +511,7 @@ struct mode_adjust  arcade_adjust[] = {
 	{ 0, 0 }
 };
 
-/* Create a bitmap. Also calls osd_clearbitmap() to appropriately initialize */
-/* it to the background color. */
+/* Create a bitmap. */
 /* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
@@ -571,8 +568,6 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 		bitmap->line += safety;
 
 		bitmap->_private = bm;
-
-		osd_clearbitmap(bitmap);
 	}
 
 	return bitmap;
@@ -581,31 +576,7 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 
 static void mark_full_screen_dirty(void)
 {
-	osd_mark_dirty(0,0,65535,65535,1);
-}
-
-/* set the bitmap to black */
-void osd_clearbitmap(struct osd_bitmap *bitmap)
-{
-	int i;
-
-
-	for (i = 0;i < bitmap->height;i++)
-	{
-		if (bitmap->depth == 16)
-			memset(bitmap->line[i],0,2*bitmap->width);
-		else
-			memset(bitmap->line[i],BACKGROUND,bitmap->width);
-	}
-
-
-	if (bitmap == Machine->scrbitmap || bitmap == artwork_real_scrbitmap)
-	{
-		extern int bitmap_dirty;        /* in mame.c */
-
-		mark_full_screen_dirty();
-		bitmap_dirty = 1;
-	}
+	osd_mark_dirty(0,0,65535,65535);
 }
 
 
@@ -622,7 +593,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 }
 
 
-void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
+void osd_mark_dirty(int _x1,int _y1,int _x2,int _y2)
 {
 	if (use_dirty)
 	{
@@ -1736,6 +1707,10 @@ void osd_debugger_focus(int debugger_has_focus)
 			clrbitmap = osd_alloc_bitmap(gfx_display_columns,gfx_display_lines,video_depth);
 			if (clrbitmap)
 			{
+				fillbitmap(clrbitmap,Machine->uifont->colortable[0],NULL);
+				/* three times to handle triple buffering */
+				update_screen_debugger(clrbitmap);
+				update_screen_debugger(clrbitmap);
 				update_screen_debugger(clrbitmap);
 				osd_free_bitmap(clrbitmap);
 			}
@@ -2081,7 +2056,6 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 	static TICKER prev_measure,this_frame_base,prev;
 	static int speed = 100;
 	static int vups,vfcount;
-	int have_to_clear_bitmap = 0;
 	int already_synced;
 	struct osd_bitmap *bitmap;
 	static int leds_old;
@@ -2159,9 +2133,7 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 		{
 			showfpstemp--;
 			if (showfps == 0 && showfpstemp == 0)
-			{
-				have_to_clear_bitmap = 1;
-			}
+				schedule_full_refresh();
 		}
 
 
@@ -2170,15 +2142,13 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 			if (showfpstemp)
 			{
 				showfpstemp = 0;
-				have_to_clear_bitmap = 1;
+				schedule_full_refresh();
 			}
 			else
 			{
 				showfps ^= 1;
 				if (showfps == 0)
-				{
-					have_to_clear_bitmap = 1;
-				}
+					schedule_full_refresh();
 			}
 		}
 
@@ -2412,13 +2382,7 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 		interlace_sync();
 
 
-		if (!show_debugger && have_to_clear_bitmap)
-			osd_clearbitmap(bitmap);
-
 		if (use_dirty) init_dirty(0);
-
-		if (!show_debugger && have_to_clear_bitmap)
-			osd_clearbitmap(bitmap);
 
 
 		if (throttle && autoframeskip && frameskip_counter == 0)

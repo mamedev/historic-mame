@@ -1,21 +1,33 @@
 /***************************************************************************
 
-	Batman
+	Atari Batman hardware
 
-    driver by Aaron Giles
+	driver by Aaron Giles
 
-****************************************************************************/
+	Games supported:
+		* Batman (1991)
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map (TBA)
+
+***************************************************************************/
+
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-void batman_set_alpha_bank(int bank);
-WRITE_HANDLER( batman_playfieldram_w );
-WRITE_HANDLER( batman_playfield2ram_w );
-WRITE_HANDLER( batman_colorram_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
 int batman_vh_start(void);
 void batman_vh_stop(void);
@@ -24,7 +36,15 @@ void batman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void batman_scanline_update(int scanline);
 
 
-static UINT8 *latch_data;
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
+
+static data16_t latch_data;
+
 
 
 /*************************************
@@ -52,7 +72,7 @@ static void update_interrupts(void)
 static void init_machine(void)
 {
 	atarigen_eeprom_reset();
-	atarigen_video_control_reset();
+	atarivc_reset(atarivc_eof_data);
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_scanline_timer_reset(batman_scanline_update, 8);
 	atarijsa_reset();
@@ -66,32 +86,29 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port2_r )
+static READ16_HANDLER( special_port2_r )
 {
-	int result = input_port_2_r(offset);
-
+	int result = readinputport(2);
 	if (atarigen_sound_to_cpu_ready) result ^= 0x0010;
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0020;
-
 	return result;
 }
 
 
-static WRITE_HANDLER( latch_w )
+static WRITE16_HANDLER( latch_w )
 {
-	int oldword = READ_WORD(latch_data);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(latch_data, newword);
+	int oldword = latch_data;
+	COMBINE_DATA(&latch_data);
 
 	/* bit 4 is connected to the /RESET pin on the 6502 */
-	if (newword & 0x0010)
+	if (latch_data & 0x0010)
 		cpu_set_reset_line(1, CLEAR_LINE);
 	else
 		cpu_set_reset_line(1, ASSERT_LINE);
 
 	/* alpha bank is selected by the upper 4 bits */
-	if ((oldword ^ newword) & 0x7000)
-		batman_set_alpha_bank((newword >> 12) & 7);
+	if ((oldword ^ latch_data) & 0x7000)
+		atarian_set_bankbits(0, ((latch_data >> 12) & 7) << 16);
 }
 
 
@@ -102,44 +119,39 @@ static WRITE_HANDLER( latch_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_BANK1 },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x120000, 0x120fff, atarigen_eeprom_r },
-	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
-	{ 0x260000, 0x260001, input_port_0_r },
-	{ 0x260002, 0x260003, input_port_1_r },
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
+	{ 0x3effc0, 0x3effff, atarivc_r },
+	{ 0x260000, 0x260001, input_port_0_word_r },
+	{ 0x260002, 0x260003, input_port_1_word_r },
 	{ 0x260010, 0x260011, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3f0000, 0x3f5fff, MRA_BANK3 },
-	{ 0x3f6000, 0x3f7fff, MRA_BANK4 },
-	{ 0x3f8000, 0x3f8fff, MRA_BANK5 },
-	{ 0x3f9000, 0x3fffff, MRA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x3f0000, 0x3fffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x120000, 0x120fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x260040, 0x260041, atarigen_sound_w },
-	{ 0x260050, 0x260051, latch_w, &latch_data },
+	{ 0x260050, 0x260051, latch_w },
 	{ 0x260060, 0x260061, atarigen_eeprom_enable_w },
-	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
-	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
-	{ 0x3f0000, 0x3f1fff, batman_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
-	{ 0x3f2000, 0x3f3fff, batman_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f4000, 0x3f5fff, batman_colorram_w, &atarigen_playfieldram_color },
-	{ 0x3f6000, 0x3f7fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f8000, 0x3f8fff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x3f9000, 0x3fffff, MWA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x2a0000, 0x2a0001, watchdog_reset16_w },
+	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram16 },
+	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
+	{ 0x3f0000, 0x3f1fff, ataripf_1_latched_w, &ataripf_1_base },
+	{ 0x3f2000, 0x3f3fff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0x3f4000, 0x3f5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0x3f6000, 0x3f7fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3f8000, 0x3f8fef, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f8f00, 0x3f8f7f, MWA16_RAM, &atarivc_eof_data },
+	{ 0x3f8f80, 0x3f8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f9000, 0x3fffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -184,25 +196,25 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	8192,	/* 8192 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	32768,	/* 32768 of them */
-	4,		/* 4 bits per pixel */
-	{ 0*8*0x80000, 1*8*0x80000, 2*8*0x80000, 3*8*0x80000 },
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
+	8*8
 };
 
 
@@ -211,7 +223,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX2, 0x040000, &pfmolayout,  512, 64 },		/* sprites & playfield */
 	{ REGION_GFX2, 0x000000, &pfmolayout,  256, 64 },		/* sprites & playfield */
 	{ REGION_GFX1, 0x000000, &anlayout,      0, 64 },		/* characters 8x8 */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -234,7 +246,7 @@ static const struct MachineDriver machine_driver_batman =
 		},
 		JSA_III_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -255,74 +267,6 @@ static const struct MachineDriver machine_driver_batman =
 
 	atarigen_nvram_handler
 };
-
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	UINT8 *base = memory_region(REGION_SOUND1);
-	int i;
-
-	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
-		memory_region(REGION_GFX2)[i] ^= 0xff;
-
-	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
-	/* the upper 128k is fixed, the lower 128k is bankswitched */
-	memcpy(&base[0x00000], &base[0x80000], 0x20000);
-	memcpy(&base[0x40000], &base[0x80000], 0x20000);
-	memcpy(&base[0x80000], &base[0xa0000], 0x20000);
-	memcpy(&base[0xc0000], &base[0xc0000], 0x20000);
-
-	memcpy(&base[0x20000], &base[0xe0000], 0x20000);
-	memcpy(&base[0x60000], &base[0xe0000], 0x20000);
-	memcpy(&base[0xa0000], &base[0xe0000], 0x20000);
-	memcpy(&base[0xe0000], &base[0xe0000], 0x20000);
-}
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_batman(void)
-{
-	static const UINT16 default_eeprom[] =
-	{
-		0x0001,0x01F1,0x0154,0x01C5,0x0100,0x0113,0x0300,0x0173,
-		0x0700,0x0154,0x0200,0x0107,0x0100,0x0120,0x0300,0x0165,
-		0x0125,0x0100,0x0149,0x019D,0x016C,0x018B,0x01F1,0x0154,
-		0x01C5,0x0100,0x0113,0x0300,0x0173,0x0700,0x0154,0x0200,
-		0x0107,0x0100,0x0120,0x0300,0x0165,0x0125,0x0100,0x0149,
-		0x019D,0x016C,0x018B,0x6800,0x0134,0x0113,0x0148,0x0100,
-		0x019A,0x0105,0x01DC,0x01A2,0x013A,0x0139,0x0100,0x0105,
-		0x01AB,0x016A,0x0149,0x0100,0x01ED,0x0105,0x0185,0x01B2,
-		0x0134,0x0100,0x0105,0x0160,0x01AA,0x0149,0x0100,0x0105,
-		0x012A,0x0152,0x0110,0x0100,0x0168,0x0105,0x0113,0x012E,
-		0x0150,0x0218,0x01D0,0x0100,0x01D0,0x0300,0x01D0,0x0600,
-		0x01D0,0x02C8,0x0000
-	};
-
-	atarigen_eeprom_default = default_eeprom;
-	atarijsa_init(1, 3, 2, 0x0040);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4163, 0x417b);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
-}
 
 
 
@@ -375,6 +319,38 @@ ROM_START( batman )
 	ROM_LOAD( "085-1043.15e",  0xc0000, 0x20000, 0x51812d3b )
 	ROM_LOAD( "085-1044.12e",  0xe0000, 0x20000, 0x5e2d7f31 )
 ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static void init_batman(void)
+{
+	static const data16_t default_eeprom[] =
+	{
+		0x0001,0x01F1,0x0154,0x01C5,0x0100,0x0113,0x0300,0x0173,
+		0x0700,0x0154,0x0200,0x0107,0x0100,0x0120,0x0300,0x0165,
+		0x0125,0x0100,0x0149,0x019D,0x016C,0x018B,0x01F1,0x0154,
+		0x01C5,0x0100,0x0113,0x0300,0x0173,0x0700,0x0154,0x0200,
+		0x0107,0x0100,0x0120,0x0300,0x0165,0x0125,0x0100,0x0149,
+		0x019D,0x016C,0x018B,0x6800,0x0134,0x0113,0x0148,0x0100,
+		0x019A,0x0105,0x01DC,0x01A2,0x013A,0x0139,0x0100,0x0105,
+		0x01AB,0x016A,0x0149,0x0100,0x01ED,0x0105,0x0185,0x01B2,
+		0x0134,0x0100,0x0105,0x0160,0x01AA,0x0149,0x0100,0x0105,
+		0x012A,0x0152,0x0110,0x0100,0x0168,0x0105,0x0113,0x012E,
+		0x0150,0x0218,0x01D0,0x0100,0x01D0,0x0300,0x01D0,0x0600,
+		0x01D0,0x02C8,0x0000
+	};
+	atarigen_eeprom_default = default_eeprom;
+	atarijsa_init(1, 3, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x4163, 0x417b);
+	atarigen_invert_region(REGION_GFX2);
+}
 
 
 

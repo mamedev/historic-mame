@@ -80,8 +80,7 @@ static WRITE_HANDLER( yiear_speech_st_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0000, yiear_speech_r },
 	{ 0x4c00, 0x4c00, input_port_3_r },
 	{ 0x4d00, 0x4d00, input_port_4_r },
@@ -91,11 +90,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4e03, 0x4e03, input_port_5_r },
 	{ 0x5000, 0x5fff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x4000, yiear_control_w },
 	{ 0x4800, 0x4800, konami_SN76496_latch_w },
 	{ 0x4900, 0x4900, konami_SN76496_0_w },
@@ -108,8 +105,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5430, 0x57ff, MWA_RAM },
 	{ 0x5800, 0x5fff, videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
 

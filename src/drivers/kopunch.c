@@ -99,31 +99,17 @@ int kopunch_interrupt(void)
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x6000, 0x63ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7000, 0x70ff, MWA_RAM, &bsvideoram, &bsvideoram_size },
-	{ -1 }	/* end of table */
-};
-
-static struct IOReadPort readport[] =
-{
-	{ -1 }	/* end of table */
-};
-
-static struct IOWritePort writeport[] =
-{
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -173,7 +159,7 @@ static const struct MachineDriver machine_driver_kopunch =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz ? */
-			readmem,writemem,readport,writeport,
+			readmem,writemem,0,0,
 			kopunch_interrupt,1
 		}
 	},

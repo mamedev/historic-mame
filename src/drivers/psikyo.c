@@ -5,12 +5,15 @@
 				driver by	Luca Elia (eliavit@unina.it)
 
 
-CPU:	68EC020
+CPU:	68EC020 + PIC16C57 [Optional MCU]
 
 Sound:	Z80A				+	YM2610
    Or:	LZ8420M (Z80 core)	+	YMF286-K
 
-Chips:	PS2001B PS3103 PS3204 PS3305
+Chips:	PS2001B
+		PS3103
+		PS3204
+		PS3305
 
 ---------------------------------------------------------------------------
 Name					Year	Board	Notes
@@ -35,12 +38,12 @@ To Do:
 
 /* Variables defined in vidhrdw */
 
-extern unsigned char *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
+extern data16_t *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
 
 /* Functions defined in vidhrdw */
 
-WRITE_HANDLER( psikyo_vram_0_w );
-WRITE_HANDLER( psikyo_vram_1_w );
+WRITE16_HANDLER( psikyo_vram_0_w );
+WRITE16_HANDLER( psikyo_vram_1_w );
 
 int  psikyo_vh_start(void);
 void psikyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -58,34 +61,38 @@ static int ack_latch;
 
 ***************************************************************************/
 
-WRITE_HANDLER( psikyo_soundlatch_w )
+WRITE16_HANDLER( psikyo_soundlatch_w )
 {
-	if (Machine->sample_rate == 0)		return;
+	if (ACCESSING_LSB)
+	{
+		if (Machine->sample_rate == 0)		return;
 
-	ack_latch = 1;
-	soundlatch_w(0,data);
-	cpu_set_nmi_line(1,PULSE_LINE);
+		ack_latch = 1;
+		soundlatch_w(0, data & 0xff);
+		cpu_set_nmi_line(1,PULSE_LINE);
+		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
+	}
 }
 
 
-READ_HANDLER( gunbird_input_r )
+READ16_HANDLER( gunbird_input_r )
 {
 	switch(offset)
 	{
-		case 0x0:	return readinputport(0);
-		case 0x2:
+		case 0x0/2:	return readinputport(0);
+		case 0x2/2:
 		{
 					const int bit = 0x80;
 					int ret = ack_latch ? bit : 0;
 					if (Machine->sample_rate == 0)	ret = 0;
 					return (readinputport(1) & ~bit) | ret;
 		}
-		case 0x4:	return readinputport(2);
-		case 0x6:	return readinputport(3);
+		case 0x4/2:	return readinputport(2);
+		case 0x6/2:	return readinputport(3);
 
-//		case 0x8:
-//		case 0xa:
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+//		case 0x8/2:
+//		case 0xa/2:
+		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
 					return 0;
 	}
 }
@@ -94,25 +101,25 @@ READ_HANDLER( gunbird_input_r )
 
 
 
-READ_HANDLER( s1945_input_r )
+READ16_HANDLER( s1945_input_r )
 {
 	switch(offset)
 	{
-		case 0x0:	return readinputport(0);
-		case 0x2:
+		case 0x0/2:	return readinputport(0);
+		case 0x2/2:
 		{
 					const int bit = 0x04;
 					int ret = ack_latch ? bit : 0;
 					if (Machine->sample_rate == 0)	ret = 0;
 					return (readinputport(1) & ~bit) | ret;
 		}
-		case 0x4:	return readinputport(2);
-		case 0x6:	return readinputport(3);
+		case 0x4/2:	return readinputport(2);
+		case 0x6/2:	return readinputport(3);
 
-		case 0x8:	return (rand() & 0xffff);	// protection??
+		case 0x8/2:	return (rand() & 0xffff);	// protection??
 
-//		case 0xa:
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+//		case 0xa/2:
+		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
 					return 0;
 	}
 }
@@ -120,24 +127,24 @@ READ_HANDLER( s1945_input_r )
 
 
 
-READ_HANDLER( sngkace_input_r )
+READ16_HANDLER( sngkace_input_r )
 {
 	switch(offset)
 	{
-		case 0x0:	return readinputport(0);
-		case 0x2:	return 0xffff;	// NC
-		case 0x4:	return readinputport(1);
-		case 0x6:	return 0xffff;	// NC
-		case 0x8:
+		case 0x0/2:	return readinputport(0);
+		case 0x2/2:	return ~0;	// NC
+		case 0x4/2:	return readinputport(1);
+		case 0x6/2:	return ~0;	// NC
+		case 0x8/2:
 		{
 					const int bit = 0x80;
 					int ret = ack_latch ? bit : 0;
 					if (Machine->sample_rate == 0)	ret = 0;
 					return (readinputport(2) & ~bit) | ret;
 		}
-		case 0xa:	return readinputport(3);
+		case 0xa/2:	return readinputport(3);
 
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
 					return 0;
 	}
 }
@@ -148,33 +155,29 @@ READ_HANDLER( sngkace_input_r )
 								Sengoku Ace
 ***************************************************************************/
 
-static struct MemoryReadAddress sngkace_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM			},	// ROM (not all used)
-	{ 0xfe0000, 0xffffff, MRA_BANK1			},	// RAM
-	{ 0x400000, 0x4017ff, MRA_BANK2			},	// Sprites Data
-	{ 0x401800, 0x401fff, MRA_BANK3			},	// Sprites List
-	{ 0x600000, 0x601fff, MRA_BANK4			},	// Palette
-	{ 0x800000, 0x801fff, MRA_BANK5			},	// Layer 0
-	{ 0x802000, 0x803fff, MRA_BANK6			},	// Layer 1
-	{ 0x804000, 0x807fff, MRA_BANK7			},	// RAM + Vregs
+static MEMORY_READ16_START( sngkace_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM			},	// ROM (not all used)
+	{ 0xfe0000, 0xffffff, MRA16_RAM			},	// RAM
+	{ 0x400000, 0x4017ff, MRA16_RAM			},	// Sprites Data
+	{ 0x401800, 0x401fff, MRA16_RAM			},	// Sprites List
+	{ 0x600000, 0x601fff, MRA16_RAM			},	// Palette
+	{ 0x800000, 0x801fff, MRA16_RAM			},	// Layer 0
+	{ 0x802000, 0x803fff, MRA16_RAM			},	// Layer 1
+	{ 0x804000, 0x807fff, MRA16_RAM			},	// RAM + Vregs
 	{ 0xc00000, 0xc0000b, sngkace_input_r	},	// Input Ports
-	{ -1 }
-};
-static struct MemoryWriteAddress sngkace_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM							},	// ROM (not all used)
-	{ 0xfe0000, 0xffffff, MWA_BANK1							},	// RAM
-	{ 0x400000, 0x4017ff, MWA_BANK2, &spriteram				},	// Sprites Data
-	{ 0x401800, 0x401fff, MWA_BANK3, &spriteram_2			},	// Sprites List
-	{ 0x600000, 0x601fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram	},	// Palette
+MEMORY_END
+static MEMORY_WRITE16_START( sngkace_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM							},	// ROM (not all used)
+	{ 0xfe0000, 0xffffff, MWA16_RAM							},	// RAM
+	{ 0x400000, 0x4017ff, MWA16_RAM, &spriteram16			},	// Sprites Data
+	{ 0x401800, 0x401fff, MWA16_RAM, &spriteram16_2			},	// Sprites List
+	{ 0x600000, 0x601fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x800000, 0x801fff, psikyo_vram_0_w, &psikyo_vram_0	},	// Layer 0
 	{ 0x802000, 0x803fff, psikyo_vram_1_w, &psikyo_vram_1	},	// Layer 1
-	{ 0x804000, 0x807fff, MWA_BANK7, &psikyo_vregs			},	// RAM + Vregs
-	{ 0xc00010, 0xc00011, MWA_NOP							},	// To Sound CPU
+	{ 0x804000, 0x807fff, MWA16_RAM, &psikyo_vregs			},	// RAM + Vregs
+	{ 0xc00010, 0xc00011, MWA16_NOP							},	// To Sound CPU
 	{ 0xc00012, 0xc00013, psikyo_soundlatch_w				},	//
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -207,43 +210,35 @@ WRITE_HANDLER( gunbird_sound_bankswitch_w )
 	   are the first 0x200 or the last 0x200 bytes of the rom not
 	   reachable ? */
 
-//	cpu_setbank(15, &RAM[bank * 0x8000 + 0x10000 + 0x200]);
-	cpu_setbank(15, &RAM[bank * 0x8000 + 0x10000]);
+//	cpu_setbank(1, &RAM[bank * 0x8000 + 0x10000 + 0x200]);
+	cpu_setbank(1, &RAM[bank * 0x8000 + 0x10000]);
 }
 
-static struct MemoryReadAddress gunbird_sound_readmem[] =
-{
+static MEMORY_READ_START( gunbird_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM		},	// ROM
 	{ 0x8000, 0x81ff, MRA_RAM		},	// RAM
-	{ 0x8200, 0xffff, MRA_BANK15	},	// Banked ROM
-	{ -1 }
-};
-static struct MemoryWriteAddress gunbird_sound_writemem[] =
-{
+	{ 0x8200, 0xffff, MRA_BANK1		},	// Banked ROM
+MEMORY_END
+static MEMORY_WRITE_START( gunbird_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM		},	// ROM
 	{ 0x8000, 0x81ff, MWA_RAM		},	// RAM
 	{ 0x8200, 0xffff, MWA_ROM		},	// Banked ROM
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct IOReadPort gunbird_sound_readport[] =
-{
+static PORT_READ_START( gunbird_sound_readport )
 	{ 0x04, 0x04, YM2610_status_port_0_A_r		},
 	{ 0x06, 0x06, YM2610_status_port_0_B_r		},
 	{ 0x08, 0x08, soundlatch_r					},
-	{ -1 }
-};
-static struct IOWritePort gunbird_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( gunbird_sound_writeport )
 	{ 0x00, 0x00, gunbird_sound_bankswitch_w	},
 	{ 0x04, 0x04, YM2610_control_port_0_A_w		},
 	{ 0x05, 0x05, YM2610_data_port_0_A_w		},
 	{ 0x06, 0x06, YM2610_control_port_0_B_w		},
 	{ 0x07, 0x07, YM2610_data_port_0_B_w		},
 	{ 0x0c, 0x0c, psikyo_ack_latch_w			},
-	{ -1 }
-};
+PORT_END
 
 
 
@@ -255,42 +250,34 @@ WRITE_HANDLER( sngkace_sound_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bank = data & 3;
-	cpu_setbank(15, &RAM[bank * 0x8000 + 0x10000]);
+	cpu_setbank(1, &RAM[bank * 0x8000 + 0x10000]);
 }
 
-static struct MemoryReadAddress sngkace_sound_readmem[] =
-{
+static MEMORY_READ_START( sngkace_sound_readmem )
 	{ 0x0000, 0x77ff, MRA_ROM		},	// ROM
 	{ 0x7800, 0x7fff, MRA_RAM		},	// RAM
-	{ 0x8000, 0xffff, MRA_BANK15	},	// Banked ROM
-	{ -1 }
-};
-static struct MemoryWriteAddress sngkace_sound_writemem[] =
-{
+	{ 0x8000, 0xffff, MRA_BANK1		},	// Banked ROM
+MEMORY_END
+static MEMORY_WRITE_START( sngkace_sound_writemem )
 	{ 0x0000, 0x77ff, MWA_ROM		},	// ROM
 	{ 0x7800, 0x7fff, MWA_RAM		},	// RAM
 	{ 0x8000, 0xffff, MWA_ROM		},	// Banked ROM
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct IOReadPort sngkace_sound_readport[] =
-{
+static PORT_READ_START( sngkace_sound_readport )
 	{ 0x00, 0x00, YM2610_status_port_0_A_r		},
 	{ 0x02, 0x02, YM2610_status_port_0_B_r		},
 	{ 0x08, 0x08, soundlatch_r					},
-	{ -1 }
-};
-static struct IOWritePort sngkace_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( sngkace_sound_writeport )
 	{ 0x00, 0x00, YM2610_control_port_0_A_w		},
 	{ 0x01, 0x01, YM2610_data_port_0_A_w		},
 	{ 0x02, 0x02, YM2610_control_port_0_B_w		},
 	{ 0x03, 0x03, YM2610_data_port_0_B_w		},
 	{ 0x04, 0x04, sngkace_sound_bankswitch_w	},
 	{ 0x0c, 0x0c, psikyo_ack_latch_w			},
-	{ -1 }
-};
+PORT_END
 
 
 /***************************************************************************
@@ -298,15 +285,12 @@ static struct IOWritePort sngkace_sound_writeport[] =
 ***************************************************************************/
 
 
-static struct IOReadPort s1945_sound_readport[] =
-{
+static PORT_READ_START( s1945_sound_readport )
 	{ 0x08, 0x08, YM2610_status_port_0_A_r		},
 //	{ 0x06, 0x06, YM2610_status_port_0_B_r		},
 	{ 0x10, 0x10, soundlatch_r					},
-	{ -1 }
-};
-static struct IOWritePort s1945_sound_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( s1945_sound_writeport )
 	{ 0x00, 0x00, gunbird_sound_bankswitch_w	},
 //	{ 0x02, 0x02, IOWP_NOP	},
 //	{ 0x03, 0x03, IOWP_NOP	},
@@ -317,8 +301,7 @@ static struct IOWritePort s1945_sound_writeport[] =
 //	{ 0x0c, 0x0c, IOWP_NOP	},
 //	{ 0x0d, 0x0d, IOWP_NOP	},
 	{ 0x18, 0x18, psikyo_ack_latch_w			},
-	{ -1 }
-};
+PORT_END
 
 
 /***************************************************************************
@@ -356,14 +339,14 @@ INPUT_PORTS_START( gunbird )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
 
 	PORT_START	// IN1 - c00002&3
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_TILT     )
-/*	PORT_BIT( 0x0080,  From Sound CPU here ) */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1    )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_COIN2    )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_TILT     )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL  )	// From Sound CPU
 
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -517,14 +500,14 @@ INPUT_PORTS_START( sngkace )
 	PORT_DIPSETTING(      0x0000, "Yes   [Free Play]" )
 
 	PORT_START	// IN2 - c00008&9
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_TILT     )
-/*	PORT_BIT( 0x0080,  From Sound CPU here ) */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1    )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_COIN2    )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_TILT     )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL  )	// From Sound CPU
 
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )	// unused?
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -895,7 +878,7 @@ void init_gunbird(void)
 	init_psikyo();	// untangle code first!
 
 	/* The input ports are different */
-	install_mem_read_handler(0, 0x00c00000, 0x00c0000b, gunbird_input_r);
+	install_mem_read16_handler(0, 0xc00000, 0xc0000b, gunbird_input_r);
 }
 
 
@@ -1021,17 +1004,17 @@ ROM_END
 
 void init_sngkblad(void)
 {
-	unsigned char *RAM	= memory_region(REGION_CPU1);
+	data16_t *RAM	= (data16_t *) memory_region(REGION_CPU1);
 
 	init_psikyo();	// untangle code first!
 
-	WRITE_WORD(&RAM[0x1a34c], 0x4e71);	// protection check -> NOP
+	RAM[0x1a34c] = 0x4e71;	// protection check -> NOP
 
 	/* The input ports are different */
-	install_mem_read_handler(0, 0x00c00000, 0x00c0000b, s1945_input_r);
+	install_mem_read16_handler(0, 0xc00000, 0xc0000b, s1945_input_r);
 
 	/* protection */
-	install_mem_write_handler(0, 0x00c00006, 0x00c0000b, MWA_NOP);
+	install_mem_write16_handler(0, 0xc00006, 0xc0000b, MWA16_NOP);
 
 }
 
@@ -1098,18 +1081,18 @@ ROM_END
 
 void init_s1945(void)
 {
-	unsigned char *RAM	= memory_region(REGION_CPU1);
+	data16_t *RAM	= (data16_t *) memory_region(REGION_CPU1);
 
 	init_psikyo();	// untangle code first!
 
-	WRITE_WORD(&RAM[0x19568], 0x4e71);	// protection check -> NOP
-//	WRITE_WORD(&RAM[0x1994c], 0x4e75);	// JSR $400 -> RTS
+	RAM[0x19568] = 0x4e71;	// protection check -> NOP
+//	RAM[0x1994c] = 0x4e75;	// JSR $400 -> RTS
 
 	/* The input ports are different */
-	install_mem_read_handler(0, 0x00c00000, 0x00c0000b, s1945_input_r);
+	install_mem_read16_handler(0, 0xc00000, 0xc0000b, s1945_input_r);
 
 	/* protection */
-	install_mem_write_handler(0, 0x00c00006, 0x00c0000b, MWA_NOP);
+	install_mem_write16_handler(0, 0xc00006, 0xc0000b, MWA16_NOP);
 
 }
 
@@ -1124,7 +1107,10 @@ void init_s1945(void)
 
 ***************************************************************************/
 
+/* Working Games */
 GAMEX( 1993, sngkace,  0, sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)",   GAME_NO_COCKTAIL ) // Banpresto?
 GAMEX( 1994, gunbird,  0, gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Japan)",      GAME_NO_COCKTAIL )
+
+/* Non Working Games: Protected (the PIC16C57 code isn't dumped) */
 GAMEX( 1995, s1945,    0, s1945,    gunbird,  s1945,    ROT270, "Psikyo", "Strikers 1945 (Japan)", GAME_NOT_WORKING )
 GAMEX( 1996, sngkblad, 0, s1945,    gunbird,  sngkblad, ROT0,   "Psikyo", "Sengoku Blade (Japan)", GAME_NOT_WORKING )

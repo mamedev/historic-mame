@@ -121,8 +121,7 @@ static int xainA_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, xain_sharedram_r },
 	{ 0x2000, 0x37ff, MRA_RAM },
 	{ 0x3a00, 0x3a00, input_port_0_r },
@@ -134,11 +133,9 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0x3a06, 0x3a06, MRA_NOP },	/* ?? read (and discarded) on startup. Maybe reset the 68705 */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, xain_sharedram_w, &xain_sharedram },
 	{ 0x2000, 0x27ff, xain_charram_w, &xain_charram },
 	{ 0x2800, 0x2fff, xain_bgram1_w, &xain_bgram1 },
@@ -159,45 +156,36 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3c00, 0x3dff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x3e00, 0x3fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmemB[] =
-{
+static MEMORY_READ_START( readmemB )
 	{ 0x0000, 0x1fff, xain_sharedram_r },
 	{ 0x4000, 0x7fff, MRA_BANK2 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writememB[] =
-{
+static MEMORY_WRITE_START( writememB )
 	{ 0x0000, 0x1fff, xain_sharedram_w },
 	{ 0x2000, 0x2000, xain_irqA_assert_w },
 	{ 0x2800, 0x2800, xain_irqB_clear_w },
 	{ 0x3000, 0x3000, xainCPUB_bankswitch_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x1000, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x2800, 0x2800, YM2203_control_port_0_w },
 	{ 0x2801, 0x2801, YM2203_write_port_0_w },
 	{ 0x3000, 0x3000, YM2203_control_port_1_w },
 	{ 0x3001, 0x3001, YM2203_write_port_1_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

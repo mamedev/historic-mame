@@ -115,16 +115,13 @@ WRITE_HANDLER( system1_soundport_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xf3ff, MRA_RAM },
 	{ 0xf800, 0xfbff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAMROM },
 	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -135,31 +132,25 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xeffc, 0xeffd, MWA_RAM, &system1_scroll_x },
 	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
 	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress brain_readmem[] =
-{
+static MEMORY_READ_START( brain_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xf3ff, MRA_RAM },
 	{ 0xf800, 0xfbff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress wbml_readmem[] =
-{
+static MEMORY_READ_START( wbml_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, wbml_paged_videoram_r },
 	{ 0xf020, 0xf03f, MRA_RAM },
 	{ 0xf800, 0xfbff, MRA_RAM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress wbml_writemem[] =
-{
+static MEMORY_WRITE_START( wbml_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAMROM },
 	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -167,11 +158,9 @@ static struct MemoryWriteAddress wbml_writemem[] =
 	{ 0xe000, 0xefff, wbml_paged_videoram_w },
 	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
 	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress chplft_writemem[] =
-{
+static MEMORY_WRITE_START( chplft_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAMROM },
 	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -181,11 +170,9 @@ static struct MemoryWriteAddress chplft_writemem[] =
 	{ 0xe800, 0xeeff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
 	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
 	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r }, /* joy1 */
 	{ 0x04, 0x04, input_port_1_r }, /* joy2 */
 	{ 0x08, 0x08, input_port_2_r }, /* coin,start */
@@ -196,20 +183,16 @@ static struct IOReadPort readport[] =
 									/* but there are games which check BOTH! */
 	{ 0x15, 0x15, system1_videomode_r },
 	{ 0x19, 0x19, system1_videomode_r },    /* mirror address */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
 	{ 0x15, 0x15, system1_videomode_w },    /* video control and (in some games) bank switching */
 	{ 0x18, 0x18, system1_soundport_w },    /* mirror address */
 	{ 0x19, 0x19, system1_videomode_w },    /* mirror address */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOReadPort wbml_readport[] =
-{
+static PORT_READ_START( wbml_readport )
 	{ 0x00, 0x00, input_port_0_r }, /* joy1 */
 	{ 0x04, 0x04, input_port_1_r }, /* joy2 */
 	{ 0x08, 0x08, input_port_2_r }, /* coin,start */
@@ -220,37 +203,28 @@ static struct IOReadPort wbml_readport[] =
 	{ 0x15, 0x15, system1_videomode_r },
 	{ 0x16, 0x16, wbml_videoram_bank_latch_r },
 	{ 0x19, 0x19, system1_videomode_r },  /* mirror address */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort wbml_writeport[] =
-{
+static PORT_WRITE_START( wbml_writeport )
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
 	{ 0x15, 0x15, chplft_videomode_w },
 	{ 0x16, 0x16, wbml_videoram_bank_latch_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort hvymetal_writeport[] =
-{
+static PORT_WRITE_START( hvymetal_writeport )
 	{ 0x18, 0x18, system1_soundport_w },    /* sound commands */
 	{ 0x19, 0x19, hvymetal_videomode_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort brain_writeport[] =
-{
+static PORT_WRITE_START( brain_writeport )
 	{ 0x18, 0x18, system1_soundport_w },    /* sound commands */
 	{ 0x19, 0x19, brain_videomode_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort chplft_writeport[] =
-{
+static PORT_WRITE_START( chplft_writeport )
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
 	{ 0x15, 0x15, chplft_videomode_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 static unsigned char *work_ram;
@@ -265,25 +239,21 @@ static WRITE_HANDLER( work_ram_w )
 	work_ram[offset] = data;
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, work_ram_r },
 	{ 0x8800, 0x8fff, work_ram_r },
 	{ 0xe000, 0xe000, soundlatch_r },
 	{ 0xffff, 0xffff, soundlatch_r },   /* 4D warriors reads also from here - bug? */
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, work_ram_w, &work_ram },
 	{ 0x8800, 0x8fff, work_ram_w },
 	{ 0xa000, 0xa003, SN76496_0_w },    /* Choplifter writes to the four addresses */
 	{ 0xc000, 0xc003, SN76496_1_w },    /* in sequence */
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
 #define IN0_PORT \

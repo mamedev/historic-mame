@@ -3,7 +3,7 @@
 	Driver for Williams/Midway games using the TMS34010 processor
 
 	Hints for finding speedups:
-	
+
 		search disassembly for ": CAF9"
 
 **************************************************************************/
@@ -26,58 +26,58 @@
 /* protection data types */
 struct protection_data
 {
-	UINT16	reset_sequence[3];
-	UINT16	data_sequence[100];
+	data16_t	reset_sequence[3];
+	data16_t	data_sequence[100];
 };
 static const struct protection_data *prot_data;
-static UINT16 prot_result;
-static UINT16 prot_sequence[3];
+static data16_t prot_result;
+static data16_t prot_sequence[3];
 static UINT8 prot_index;
 
 
 /* speedup installation macros */
 #define INSTALL_SPEEDUP_1_16BIT(addr, pc, spin1, offs1, offs2) \
 	wms_speedup_pc = (pc); \
-	wms_speedup_offset = ((addr) & 0x10) >> 3; \
+	wms_speedup_offset = ((addr) & 0x10) >> 4; \
 	wms_speedup_spin[0] = spin1; \
 	wms_speedup_spin[1] = offs1; \
 	wms_speedup_spin[2] = offs2; \
-	wms_speedup_base = install_mem_read_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_16bit);
-	
+	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_16bit);
+
 #define INSTALL_SPEEDUP_1_MIXEDBITS(addr, pc, spin1, offs1, offs2) \
 	wms_speedup_pc = (pc); \
-	wms_speedup_offset = ((addr) & 0x10) >> 3; \
+	wms_speedup_offset = ((addr) & 0x10) >> 4; \
 	wms_speedup_spin[0] = spin1; \
 	wms_speedup_spin[1] = offs1; \
 	wms_speedup_spin[2] = offs2; \
-	wms_speedup_base = install_mem_read_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_mixedbits);
-	
+	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_mixedbits);
+
 #define INSTALL_SPEEDUP_1_32BIT(addr, pc, spin1, offs1, offs2) \
 	wms_speedup_pc = (pc); \
-	wms_speedup_offset = ((addr) & 0x10) >> 3; \
+	wms_speedup_offset = ((addr) & 0x10) >> 4; \
 	wms_speedup_spin[0] = spin1; \
 	wms_speedup_spin[1] = offs1; \
 	wms_speedup_spin[2] = offs2; \
-	wms_speedup_base = install_mem_read_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_32bit);
-	
+	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_1_32bit);
+
 #define INSTALL_SPEEDUP_3(addr, pc, spin1, spin2, spin3) \
 	wms_speedup_pc = (pc); \
-	wms_speedup_offset = ((addr) & 0x10) >> 3; \
+	wms_speedup_offset = ((addr) & 0x10) >> 4; \
 	wms_speedup_spin[0] = spin1; \
 	wms_speedup_spin[1] = spin2; \
 	wms_speedup_spin[2] = spin3; \
-	wms_speedup_base = install_mem_read_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_3);
-	
+	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_3);
+
 
 /* code related variables */
-       UINT8 *	wms_code_rom;
-       UINT8 *	wms_scratch_ram;
+       data16_t *wms_code_rom;
+       data16_t *wms_scratch_ram;
 
 /* input-related variables */
 static UINT8	term2_analog_select;
 
 /* CMOS-related variables */
-       UINT8 *	wms_cmos_ram;
+       data16_t *wms_cmos_ram;
        UINT32 	wms_cmos_page;
 static UINT8	cmos_w_enable;
 
@@ -96,10 +96,10 @@ static UINT8	sound_type;
        offs_t 	wms_speedup_pc;
        offs_t 	wms_speedup_offset;
        offs_t 	wms_speedup_spin[3];
-       UINT8 *	wms_speedup_base;
+       data16_t *wms_speedup_base;
 
 /* hack-related variables */
-static UINT8 *	t2_hack_mem;
+static data16_t *t2_hack_mem;
 
 
 
@@ -109,16 +109,16 @@ static UINT8 *	t2_hack_mem;
  *
  *************************************/
 
-WRITE_HANDLER( wms_yunit_cmos_w )
+WRITE16_HANDLER( wms_yunit_cmos_w )
 {
 	logerror("%08x:CMOS Write @ %05X\n", cpu_get_pc(), offset);
-	COMBINE_WORD_MEM(&wms_cmos_ram[offset + wms_cmos_page], data);
+	COMBINE_DATA(&wms_cmos_ram[offset + wms_cmos_page]);
 }
 
 
-READ_HANDLER( wms_yunit_cmos_r )
+READ16_HANDLER( wms_yunit_cmos_r )
 {
-	return READ_WORD(&wms_cmos_ram[offset + wms_cmos_page]);
+	return wms_cmos_ram[offset + wms_cmos_page];
 }
 
 
@@ -129,7 +129,7 @@ READ_HANDLER( wms_yunit_cmos_r )
  *
  *************************************/
 
-WRITE_HANDLER( wms_yunit_cmos_enable_w )
+WRITE16_HANDLER( wms_yunit_cmos_enable_w )
 {
 	cmos_w_enable = (~data >> 9) & 1;
 
@@ -140,22 +140,22 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 	{
 		/* mask off the data */
 		data &= 0x0f00;
-		
+
 		/* update the FIFO */
 		prot_sequence[0] = prot_sequence[1];
 		prot_sequence[1] = prot_sequence[2];
 		prot_sequence[2] = data;
-		
+
 		/* special case: sequence entry 1234 means Strike Force, which is different */
 		if (prot_data->reset_sequence[0] == 0x1234)
 		{
 			if (data == 0x500)
 			{
-				prot_result = cpu_readmem29_word(TOBYTE(0x10a4390)) << 4;
+				prot_result = cpu_readmem29lew_word(TOBYTE(0x10a4390)) << 4;
 				logerror("  desired result = %04X\n", prot_result);
 			}
 		}
-		
+
 		/* all other games use the same pattern */
 		else
 		{
@@ -167,7 +167,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 				logerror("Protection reset\n");
 				prot_index = 0;
 			}
-			
+
 			/* look for a clock */
 			if ((prot_sequence[1] & 0x0800) != 0 && (prot_sequence[2] & 0x0800) == 0)
 			{
@@ -179,7 +179,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 }
 
 
-READ_HANDLER( wms_yunit_protection_r )
+READ16_HANDLER( wms_yunit_protection_r )
 {
 	/* return the most recently clocked value */
 	logerror("%08X:Protection read = %04X\n", cpu_get_pc(), prot_result);
@@ -194,9 +194,9 @@ READ_HANDLER( wms_yunit_protection_r )
  *
  *************************************/
 
-READ_HANDLER( wms_yunit_input_r )
+READ16_HANDLER( wms_yunit_input_r )
 {
-	return readinputport(offset / 2);
+	return readinputport(offset);
 }
 
 
@@ -207,27 +207,27 @@ READ_HANDLER( wms_yunit_input_r )
  *
  *************************************/
 
-static READ_HANDLER( term2_input_r )
+static READ16_HANDLER( term2_input_r )
 {
-	if (offset != 4)
-		return readinputport(offset / 2);
+	if (offset != 2)
+		return readinputport(offset);
 
 	switch (term2_analog_select)
 	{
 		default:
-		case 0:  return input_port_2_r(offset);  break;
-		case 1:  return input_port_6_r(offset);  break;
-		case 2:  return input_port_7_r(offset);  break;
-		case 3:  return input_port_8_r(offset);  break;
+		case 0:  return readinputport(2);  break;
+		case 1:  return readinputport(6);  break;
+		case 2:  return readinputport(7);  break;
+		case 3:  return readinputport(8);  break;
 	}
 }
 
-static WRITE_HANDLER( term2_sound_w )
+static WRITE16_HANDLER( term2_sound_w )
 {
 	if (offset == 0)
 		term2_analog_select = (data >> 0x0c) & 0x03;
 
-	williams_adpcm_data_w(offset, data);
+	williams_adpcm_data_w(data);
 }
 
 
@@ -238,14 +238,14 @@ static WRITE_HANDLER( term2_sound_w )
  *
  *************************************/
 
-static WRITE_HANDLER( term2_hack_w )
+static WRITE16_HANDLER( term2_hack_w )
 {
     if (offset == 0 && cpu_get_pc() == 0xffce5230)
     {
-        WRITE_WORD(&t2_hack_mem[offset], 0);
+        t2_hack_mem[offset] = 0;
         return;
     }
-	COMBINE_WORD_MEM(&t2_hack_mem[offset], data);
+	COMBINE_DATA(&t2_hack_mem[offset]);
 }
 
 
@@ -295,7 +295,7 @@ static WRITE_HANDLER( term2_hack_w )
 	#endif
 #endif
 
-#define SCRATCH_RAM(offs)		&wms_scratch_ram[TOBYTE((offs) & 0x3fffff)]
+#define SCRATCH_RAM(offs)		&wms_scratch_ram[((offs) & 0x3fffff) >> 4]
 
 #define READ_INT8(REG)			(*(INT8 *)BYTE_XOR_LE(SCRATCH_RAM(REG)))
 #define READ_INT16(REG)			READ_U16(SCRATCH_RAM(REG))
@@ -384,15 +384,15 @@ static WRITE_HANDLER( term2_hack_w )
 													/* DIVS   A5,A6			*/  \
 	WRITE_INT32(a1+0x140, a6xa7x & 0xffffffff);		/* MOVE   A6,*A1(140h),1*/
 
-static READ_HANDLER( term2_speedup_r )
+static READ16_HANDLER( term2_speedup_r )
 {
 	if (offset)
 	{
-		return READ_WORD(&wms_scratch_ram[TOBYTE(0xaa050)]);
+		return wms_scratch_ram[TOWORD(0xaa050)];
 	}
 	else
 	{
-		UINT32 value1 = READ_WORD(&wms_scratch_ram[TOBYTE(0xaa040)]);
+		UINT32 value1 = wms_scratch_ram[TOWORD(0xaa040)];
 
 		/* Suspend cpu if it's waiting for an interrupt */
 		if (cpu_get_pc() == 0xffcdc270 && !value1)
@@ -551,10 +551,10 @@ static READ_HANDLER( term2_speedup_r )
 	if (tms34010_ICount > 0)								\
 		cpu_spinuntil_int();								\
 
-READ_HANDLER( wms_generic_speedup_1_16bit )
+READ16_HANDLER( wms_generic_speedup_1_16bit )
 {
-	UINT16 value = READ_WORD(&wms_speedup_base[offset]);
-	
+	data16_t value = wms_speedup_base[offset];
+
 	/* just return if this isn't the offset we're looking for */
 	if (offset != wms_speedup_offset)
 		return value;
@@ -576,10 +576,10 @@ READ_HANDLER( wms_generic_speedup_1_16bit )
  *
  *************************************/
 
-READ_HANDLER( wms_generic_speedup_1_mixedbits )
+READ16_HANDLER( wms_generic_speedup_1_mixedbits )
 {
-	UINT16 value = READ_WORD(&wms_speedup_base[offset]);
-	
+	UINT16 value = wms_speedup_base[offset];
+
 	/* just return if this isn't the offset we're looking for */
 	if (offset != wms_speedup_offset)
 		return value;
@@ -601,10 +601,10 @@ READ_HANDLER( wms_generic_speedup_1_mixedbits )
  *
  *************************************/
 
-READ_HANDLER( wms_generic_speedup_1_32bit )
+READ16_HANDLER( wms_generic_speedup_1_32bit )
 {
-	UINT16 value = READ_WORD(&wms_speedup_base[offset]);
-	
+	UINT16 value = wms_speedup_base[offset];
+
 	/* just return if this isn't the offset we're looking for */
 	if (offset != wms_speedup_offset)
 		return value;
@@ -644,10 +644,10 @@ READ_HANDLER( wms_generic_speedup_1_32bit )
 		DO_SPEEDUP_LOOP(C, LOC3, 0xc0, 0xa0, INT32, INT32);	\
 	}
 
-READ_HANDLER( wms_generic_speedup_3 )
+READ16_HANDLER( wms_generic_speedup_3 )
 {
-	UINT16 value = READ_WORD(&wms_speedup_base[offset]);
-	
+	UINT16 value = wms_speedup_base[offset];
+
 	/* just return if this isn't the offset we're looking for */
 	if (offset != wms_speedup_offset)
 		return value;
@@ -685,10 +685,10 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
 	UINT8 d1, d2, d3, d4, d5, d6;
 	UINT8 *base;
 	int i;
-	
+
 	/* set up code ROMs */
 	memcpy(wms_code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-	
+
 	/* load graphics ROMs */
 	base = memory_region(REGION_GFX1);
 	switch (bpp)
@@ -700,7 +700,7 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
 				d2 = ((base[1 * gfx_chunk + (i + 0) / 4]) >> (2 * ((i + 0) % 4))) & 3;
 				d3 = ((base[0 * gfx_chunk + (i + 1) / 4]) >> (2 * ((i + 1) % 4))) & 3;
 				d4 = ((base[1 * gfx_chunk + (i + 1) / 4]) >> (2 * ((i + 1) % 4))) & 3;
-		
+
 				wms_gfx_rom[i + 0] = d1 | (d2 << 2);
 				wms_gfx_rom[i + 1] = d3 | (d4 << 2);
 			}
@@ -715,12 +715,12 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
 				d4 = ((base[0 * gfx_chunk + (i + 1) / 4]) >> (2 * ((i + 1) % 4))) & 3;
 				d5 = ((base[1 * gfx_chunk + (i + 1) / 4]) >> (2 * ((i + 1) % 4))) & 3;
 				d6 = ((base[2 * gfx_chunk + (i + 1) / 4]) >> (2 * ((i + 1) % 4))) & 3;
-		
+
 				wms_gfx_rom[i + 0] = d1 | (d2 << 2) | (d3 << 4);
 				wms_gfx_rom[i + 1] = d4 | (d5 << 2) | (d6 << 4);
 			}
 			break;
-			
+
 		case 8:
 			for (i = 0; i < wms_gfx_rom_size; i += 4)
 			{
@@ -731,7 +731,7 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
 			}
 			break;
 	}
-	
+
 	/* load sound ROMs and set up sound handlers */
 	sound_type = sound;
 	switch (sound)
@@ -743,7 +743,7 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
 			memcpy(&base[0x60000], &base[0x50000], 0x10000);
 			cvsd_protection_base = install_mem_write_handler(1, prot_start, prot_end, cvsd_protection_w);
 			break;
-			
+
 		case SOUND_ADPCM:
 			base = memory_region(REGION_SOUND1);
 			memcpy(base + 0xa0000, base + 0x20000, 0x20000);
@@ -751,18 +751,18 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
 			memcpy(base + 0x60000, base + 0x20000, 0x20000);
 			install_mem_write_handler(1, prot_start, prot_end, MWA_RAM);
 			break;
-		
+
 		case SOUND_CVSD:
 		case SOUND_NARC:
 			install_mem_write_handler(1, prot_start, prot_end, MWA_RAM);
 			break;
 	}
-	
+
 	/* default visible area */
 	wms_visible_area = Machine->drv->default_visible_area;
 	wms_visible_area.max_x = max_x;
 	wms_visible_area.max_y = max_y;
-	
+
 	/* default update offset */
 	wms_partial_update_offset = 0;
 }
@@ -796,8 +796,8 @@ void init_narc3(void)
 
 	/* expand code ROMs */
 	for (bank = 0; bank < 4; bank++)
-		for (offset = 0; offset < 0x20000; offset++)
-			wms_code_rom[bank * 0x40000 + 0x20000 + offset] = wms_code_rom[bank * 0x40000 + offset];
+		for (offset = 0; offset < 0x10000; offset++)
+			wms_code_rom[bank * 0x20000 + 0x10000 + offset] = wms_code_rom[bank * 0x20000 + offset];
 
 	/* speedups */
 	INSTALL_SPEEDUP_1_32BIT(0x0101b310, 0xffae30c0, 0x1000040, 0xc0, 0xa0);
@@ -822,7 +822,7 @@ static void init_trog_common(void)
 	static const struct protection_data trog_protection_data =
 	{
 		{ 0x0f00, 0x0f00, 0x0f00 },
-		{ 0x3000, 0x1000, 0x2000, 0x0000, 
+		{ 0x3000, 0x1000, 0x2000, 0x0000,
 		  0x2000, 0x3000,
 		  0x3000, 0x1000,
 		  0x0000, 0x0000, 0x2000, 0x3000, 0x1000, 0x1000, 0x2000 }
@@ -881,7 +881,7 @@ static void init_hiimpact_common(void)
 	static const struct protection_data hiimpact_protection_data =
 	{
 		{ 0x0b00, 0x0b00, 0x0b00 },
-		{ 0x2000, 0x4000, 0x4000, 0x0000, 0x6000, 0x6000, 0x2000, 0x4000, 
+		{ 0x2000, 0x4000, 0x4000, 0x0000, 0x6000, 0x6000, 0x2000, 0x4000,
 		  0x2000, 0x4000, 0x2000, 0x0000, 0x4000, 0x6000, 0x2000 }
 	};
 	prot_data = &hiimpact_protection_data;
@@ -1012,18 +1012,18 @@ static void init_term2_common(void)
 	init_generic(6, SOUND_ADPCM, 0xfa8d, 0xfa9c, 398, 281);
 
 	/* special inputs */
-	install_mem_read_handler(0, TOBYTE(0x01c00000), TOBYTE(0x01c0005f), term2_input_r);
-	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), term2_sound_w);
+	install_mem_read16_handler(0, TOBYTE(0x01c00000), TOBYTE(0x01c0005f), term2_input_r);
+	install_mem_write16_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), term2_sound_w);
 
 	/* HACK: this prevents the freeze on the movies */
 	/* until we figure whats causing it, this is better than nothing */
-	t2_hack_mem = install_mem_write_handler(0, TOBYTE(0x010aa0e0),	TOBYTE(0x010aa0ff), term2_hack_w);
+	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2_hack_w);
 }
 
 void init_term2(void)
 {
 	init_term2_common();
-	install_mem_read_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
+	install_mem_read16_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
 }
 
 
@@ -1073,14 +1073,14 @@ void wms_yunit_init_machine(void)
 		case SOUND_NARC:
 			williams_narc_init(1);
 			break;
-		
+
 		case SOUND_CVSD:
 		case SOUND_CVSD_SMALL:
 			pia_unconfig();
 			williams_cvsd_init(1, 0);
 			pia_reset();
 			break;
-		
+
 		case SOUND_ADPCM:
 			williams_adpcm_init(1);
 			break;
@@ -1095,7 +1095,7 @@ void wms_yunit_init_machine(void)
  *
  *************************************/
 
-WRITE_HANDLER( wms_yunit_sound_w )
+WRITE16_HANDLER( wms_yunit_sound_w )
 {
 	/* check for out-of-bounds accesses */
 	if (offset)
@@ -1103,21 +1103,22 @@ WRITE_HANDLER( wms_yunit_sound_w )
 		logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
 		return;
 	}
-	
+
 	/* call through based on the sound type */
-	switch (sound_type)
-	{
-		case SOUND_NARC:
-			williams_narc_data_w(0, data);
-			break;
-	
-		case SOUND_CVSD_SMALL:
-		case SOUND_CVSD:
-			williams_cvsd_data_w(0, (data & 0xff) | ((data & 0x200) >> 1));
-			break;
-		
-		case SOUND_ADPCM:
-			williams_adpcm_data_w(0, data);
-			break;
-	}
+	if (ACCESSING_LSB && ACCESSING_MSB)
+		switch (sound_type)
+		{
+			case SOUND_NARC:
+				williams_narc_data_w(data);
+				break;
+
+			case SOUND_CVSD_SMALL:
+			case SOUND_CVSD:
+				williams_cvsd_data_w((data & 0xff) | ((data & 0x200) >> 1));
+				break;
+
+			case SOUND_ADPCM:
+				williams_adpcm_data_w(data);
+				break;
+		}
 }

@@ -405,16 +405,13 @@ static WRITE_HANDLER( spunchout_prot_f_w ) {
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc3ff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc3ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0xd000, 0xd7ff, MWA_RAM },
@@ -426,11 +423,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe800, 0xefff, punchout_bigsprite2ram_w, &punchout_bigsprite2ram, &punchout_bigsprite2ram_size },
 	{ 0xf000, 0xf03f, MWA_RAM, &punchout_scroll },
 	{ 0xf000, 0xffff, punchout_videoram2_w, &punchout_videoram2, &punchout_videoram2_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
@@ -448,11 +443,9 @@ static struct IOReadPort readport[] =
 	{ 0xb7, 0xb7, spunchout_prot_b_r },
 	{ 0xc7, 0xc7, spunchout_prot_c_r },
 	/* { 0xf7, 0xf7, spunchout_prot_f_r }, */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x01, IOWP_NOP },	/* the 2A03 #1 is not present */
 	{ 0x02, 0x02, soundlatch_w },
 	{ 0x03, 0x03, soundlatch2_w },
@@ -480,26 +473,21 @@ static struct IOWritePort writeport[] =
 	{ 0xb7, 0xb7, spunchout_prot_b_w },
 	{ 0xd7, 0xd7, spunchout_prot_d_w },
 	{ 0xf7, 0xf7, spunchout_prot_f_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x4016, 0x4016, soundlatch_r },
 	{ 0x4017, 0x4017, soundlatch2_r },
 	{ 0x4000, 0x4017, NESPSG_0_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x4000, 0x4017, NESPSG_0_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

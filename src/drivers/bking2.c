@@ -63,24 +63,19 @@ static WRITE_HANDLER( bking2_soundlatch_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x7fff, MRA_ROM },
     { 0x8000, 0x83ff, MRA_RAM },
     { 0x9000, 0x97ff, MRA_RAM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x7fff, MWA_ROM },
     { 0x8000, 0x83ff, MWA_RAM },
     { 0x9000, 0x97ff, videoram_w, &videoram, &videoram_size },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
     { 0x00, 0x00, input_port_0_r },
     { 0x01, 0x01, input_port_1_r },
     { 0x02, 0x02, input_port_2_r },
@@ -89,11 +84,9 @@ static struct IOReadPort readport[] =
     { 0x05, 0x05, bking2_input_port_5_r },
     { 0x06, 0x06, bking2_input_port_6_r },
 	{ 0x07, 0x1f, bking2_pos_r },
-    { -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
     { 0x00, 0x00, bking2_xld1_w },
     { 0x01, 0x01, bking2_yld1_w },
     { 0x02, 0x02, bking2_xld2_w },
@@ -108,11 +101,9 @@ static struct IOWritePort writeport[] =
     { 0x0b, 0x0b, bking2_soundlatch_w },
   //{ 0x0c, 0x0c, bking2_eport2_w },   this is not shown to be connected anywhere
     { 0x0d, 0x0d, bking2_hitclr_w },
-    { -1 }  /* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
     { 0x0000, 0x1fff, MRA_ROM },
     { 0x4000, 0x43ff, MRA_RAM },
 	{ 0x4401, 0x4401, AY8910_read_port_0_r },
@@ -121,11 +112,9 @@ static struct MemoryReadAddress sound_readmem[] =
     { 0x4802, 0x4802, bking2_sndnmi_disable_r },
     { 0xe000, 0xefff, MRA_ROM },   /* space for some other ROM???
 									  It's checked if there is valid code there */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
     { 0x0000, 0x1fff, MWA_ROM },
     { 0x4000, 0x43ff, MWA_RAM },
 	{ 0x4400, 0x4400, AY8910_control_port_0_w },
@@ -133,8 +122,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4402, 0x4402, AY8910_control_port_1_w },
 	{ 0x4403, 0x4403, AY8910_write_port_1_w },
     { 0x4802, 0x4802, bking2_sndnmi_enable_w },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( bking2 )
     PORT_START  /* IN0 */

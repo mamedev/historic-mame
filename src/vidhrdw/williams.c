@@ -153,7 +153,7 @@ static void mark_dirty(int x1, int y1, int x2, int y2)
 	}
 
 	/* mark it */
-	osd_mark_dirty(x1, y1, x2, y2, 0);
+	osd_mark_dirty(x1,y1,x2,y2);
 }
 
 

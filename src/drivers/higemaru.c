@@ -24,8 +24,7 @@ int higemaru_interrupt(void)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
@@ -34,11 +33,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc004, 0xc004, input_port_4_r },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc800, 0xc800, higemaru_c800_w },
 	{ 0xc801, 0xc801, AY8910_control_port_0_w },
@@ -49,8 +46,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ 0xd880, 0xd9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

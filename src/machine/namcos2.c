@@ -625,7 +625,7 @@ READ_HANDLER( namcos2_68k_master_C148_r )
 			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
 			break;
 		case 0x1e0000:					/* EEPROM Status register*/
-			return 0xffff;				/* Only BIT0 used: 1=EEPROM READY 0=EEPROM BUSY */
+			return ~0;				/* Only BIT0 used: 1=EEPROM READY 0=EEPROM BUSY */
 			break;
 		case 0x1e6000:					/* Watchdog reset */
 			/* watchdog_reset_w(0,0); */

@@ -51,16 +51,12 @@
 
 
 /* code-related variables */
-extern UINT8 *	wms_code_rom;
-extern UINT8 *	wms_scratch_ram;
+extern data16_t *wms_code_rom;
+extern data16_t *wms_scratch_ram;
 extern UINT8 *	wms_wolfu_decode_memory;
 
 /* CMOS-related variables */
-extern UINT8 *	wms_cmos_ram;
-
-/* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t 	wms_gfx_rom_size;
+extern data16_t *wms_cmos_ram;
 
 
 /* driver-specific initialization */
@@ -79,24 +75,26 @@ void wms_wolfu_init_machine(void);
 
 
 /* external read handlers */
-READ_HANDLER( wms_tunit_dma_r );
-READ_HANDLER( wms_tunit_vram_r );
-READ_HANDLER( wms_wolfu_cmos_r );
-READ_HANDLER( wms_wolfu_input_r );
-READ_HANDLER( wms_wolfu_sound_r );
-READ_HANDLER( wms_wolfu_gfxrom_r );
-READ_HANDLER( wms_wolfu_control_r );
-READ_HANDLER( wms_wolfu_security_r );
+READ16_HANDLER( wms_wolfu_io_r );
+READ16_HANDLER( wms_tunit_dma_r );
+READ16_HANDLER( wms_tunit_vram_r );
+READ16_HANDLER( wms_wolfu_cmos_r );
+READ16_HANDLER( wms_wolfu_input_r );
+READ16_HANDLER( wms_wolfu_sound_r );
+READ16_HANDLER( wms_wolfu_gfxrom_r );
+READ16_HANDLER( wms_wolfu_control_r );
+READ16_HANDLER( wms_wolfu_security_r );
 
 /* external write handlers */
-WRITE_HANDLER( wms_tunit_dma_w );
-WRITE_HANDLER( wms_tunit_vram_w );
-WRITE_HANDLER( wms_wolfu_cmos_w );
-WRITE_HANDLER( wms_wolfu_cmos_enable_w );
-WRITE_HANDLER( wms_wolfu_control_w );
-WRITE_HANDLER( wms_wolfu_sound_w );
-WRITE_HANDLER( wms_wolfu_security_w );
-WRITE_HANDLER( wms_tunit_paletteram_w );
+WRITE16_HANDLER( wms_wolfu_io_w );
+WRITE16_HANDLER( wms_tunit_dma_w );
+WRITE16_HANDLER( wms_tunit_vram_w );
+WRITE16_HANDLER( wms_wolfu_cmos_w );
+WRITE16_HANDLER( wms_wolfu_cmos_enable_w );
+WRITE16_HANDLER( wms_wolfu_control_w );
+WRITE16_HANDLER( wms_wolfu_sound_w );
+WRITE16_HANDLER( wms_wolfu_security_w );
+WRITE16_HANDLER( wms_tunit_paletteram_w );
 
 
 /* external video routines */
@@ -133,40 +131,38 @@ static void nvram_handler(void *file, int read_or_write)
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ16_START( readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_tunit_vram_r },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA_BANK2 },
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA16_RAM },
 	{ TOBYTE(0x01400000), TOBYTE(0x0145ffff), wms_wolfu_cmos_r },
 	{ TOBYTE(0x01600000), TOBYTE(0x0160001f), wms_wolfu_security_r },
 	{ TOBYTE(0x01680000), TOBYTE(0x0168001f), wms_wolfu_sound_r },
-	{ TOBYTE(0x01880000), TOBYTE(0x018fffff), paletteram_word_r },
+	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), wms_wolfu_io_r },
+	{ TOBYTE(0x01880000), TOBYTE(0x018fffff), MRA16_RAM },
 	{ TOBYTE(0x01a00000), TOBYTE(0x01a000ff), wms_tunit_dma_r },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), wms_tunit_dma_r },
 	{ TOBYTE(0x01b00000), TOBYTE(0x01b0001f), wms_wolfu_control_r },
 	{ TOBYTE(0x02000000), TOBYTE(0x06ffffff), wms_wolfu_gfxrom_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE16_START( writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_tunit_vram_w },
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA_BANK2, &wms_scratch_ram },
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA16_RAM, &wms_scratch_ram },
 	{ TOBYTE(0x01400000), TOBYTE(0x0145ffff), wms_wolfu_cmos_w, &wms_cmos_ram },
 	{ TOBYTE(0x01480000), TOBYTE(0x014fffff), wms_wolfu_cmos_enable_w },
 	{ TOBYTE(0x01600000), TOBYTE(0x0160001f), wms_wolfu_security_w },
 	{ TOBYTE(0x01680000), TOBYTE(0x0168001f), wms_wolfu_sound_w },
-	{ TOBYTE(0x01880000), TOBYTE(0x018fffff), wms_tunit_paletteram_w, &paletteram },
+	{ TOBYTE(0x01800000), TOBYTE(0x0187ffff), wms_wolfu_io_w },
+	{ TOBYTE(0x01880000), TOBYTE(0x018fffff), wms_tunit_paletteram_w, &paletteram16 },
 	{ TOBYTE(0x01a00000), TOBYTE(0x01a000ff), wms_tunit_dma_w },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), wms_tunit_dma_w },
 	{ TOBYTE(0x01b00000), TOBYTE(0x01b0001f), wms_wolfu_control_w },
-	{ TOBYTE(0x02000000), TOBYTE(0x06ffffff), MWA_ROM, &wms_wolfu_decode_memory },
+	{ TOBYTE(0x02000000), TOBYTE(0x06ffffff), MWA16_ROM, (data16_t **)&wms_wolfu_decode_memory },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_ROM, &wms_code_rom },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &wms_code_rom },
+MEMORY_END
 
 
 
@@ -686,7 +682,7 @@ static const struct MachineDriver machine_driver_wolfu =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -1125,64 +1121,3 @@ GAME( 1995, openice, 0,         wolfu, openice, openice, ROT0_16BIT, "Midway", "
 GAME( 1996, nbamaxht,0,         wolfu, nbamaxht,nbamaxht,ROT0_16BIT, "Midway", "NBA Maximum Hangtime (rev 1.0)" )
 GAME( 1997, rmpgwt,  0,         wolfu, rmpgwt,  rmpgwt,  ROT0_16BIT, "Midway", "Rampage: World Tour (rev 1.3)" )
 GAME( 1997, rmpgwt11,rmpgwt,    wolfu, rmpgwt,  rmpgwt,  ROT0_16BIT, "Midway", "Rampage: World Tour (rev 1.1)" )
-
-
-#if 0
-/** Revolution X actually doesn't run on this platform   **/
-/** It appears to use a 34020 and a different memory map **/
-/** This information is currently here just to note how  **/
-/** the ROMs might be mapped.                            **/
-
-ROM_START( revx )
-	ROM_REGION( 0x10, REGION_CPU1 )		/* 34020 dummy region */
-
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* ADSP-2105 data */
-	ROM_LOAD( "revx_snd.2",  0x000000, 0x80000, 0x4ed9e803 )
-	ROM_LOAD( "revx_snd.3",  0x000000, 0x80000, 0xaf8f253b )
-	ROM_LOAD( "revx_snd.4",  0x000000, 0x80000, 0x3ccce59c )
-	ROM_LOAD( "revx_snd.5",  0x000000, 0x80000, 0xa0438006 )
-	ROM_LOAD( "revx_snd.6",  0x000000, 0x80000, 0xb7b34f60 )
-	ROM_LOAD( "revx_snd.7",  0x000000, 0x80000, 0x6795fd88 )
-	ROM_LOAD( "revx_snd.8",  0x000000, 0x80000, 0x793a7eb5 )
-	ROM_LOAD( "revx_snd.9",  0x000000, 0x80000, 0x14ddbea1 )
-
-	ROM_REGION( 0x200000, REGION_USER1 | REGIONFLAG_DISPOSE )	/* 34020 code */
-	ROM_LOAD_QUAD( "revx.52",  0x00000, 0x80000, 0xfbf55510 )
-	ROM_LOAD_QUAD( "revx.51",  0x00000, 0x80000, 0x9960ac7c )
-	ROM_LOAD_QUAD( "revx.54",  0x00000, 0x80000, 0x24471269 )
-	ROM_LOAD_QUAD( "revx.53",  0x00000, 0x80000, 0xa045b265 )
-
-	ROM_REGION( 0x2000000, REGION_GFX1 )
-	ROM_LOAD( "revx.63",  0x0000000, 0x80000, 0x3066e3f3 )
-	ROM_LOAD( "revx.64",  0x0080000, 0x80000, 0xc33f5309 )
-	ROM_LOAD( "revx.65",  0x0100000, 0x80000, 0x6eee3e71 )
-	ROM_LOAD( "revx.66",  0x0180000, 0x80000, 0xb43d6fff )
-
-	ROM_LOAD( "revx.71",  0x0200000, 0x80000, 0x2b29fddb )
-	ROM_LOAD( "revx.72",  0x0280000, 0x80000, 0x2680281b )
-	ROM_LOAD( "revx.73",  0x0300000, 0x80000, 0x420bde4d )
-	ROM_LOAD( "revx.74",  0x0380000, 0x80000, 0x26627410 )
-
-	ROM_LOAD( "revx.81",  0x0400000, 0x80000, 0x729eacb1 )
-	ROM_LOAD( "revx.82",  0x0480000, 0x80000, 0x19acb904 )
-	ROM_LOAD( "revx.83",  0x0500000, 0x80000, 0x0e223456 )
-	ROM_LOAD( "revx.84",  0x0580000, 0x80000, 0xd3de0192 )
-
-	ROM_LOAD( "revx.91",  0x0600000, 0x80000, 0x52a63713 )
-	ROM_LOAD( "revx.92",  0x0680000, 0x80000, 0xfae3621b )
-	ROM_LOAD( "revx.93",  0x0700000, 0x80000, 0x7065cf95 )
-	ROM_LOAD( "revx.94",  0x0780000, 0x80000, 0x600d5b98 )
-
-	ROM_LOAD( "revx.110",  0x0800000, 0x80000, 0xe3f7f0af )
-	ROM_LOAD( "revx.111",  0x0880000, 0x80000, 0x49fe1a69 )
-	ROM_LOAD( "revx.112",  0x0900000, 0x80000, 0x7e3ba175 )
-	ROM_LOAD( "revx.113",  0x0980000, 0x80000, 0xc0817583 )
-
-	ROM_LOAD( "revx.120",  0x0a00000, 0x80000, 0x523af1f0 )
-	ROM_LOAD( "revx.121",  0x0a80000, 0x80000, 0x78201d93 )
-	ROM_LOAD( "revx.122",  0x0b00000, 0x80000, 0x2cf36144 )
-	ROM_LOAD( "revx.123",  0x0b80000, 0x80000, 0x6912e1fb )
-ROM_END
-
-GAMEX(1993, revx,   0,         wolfu, mk3,     mk3,      ROT0_16BIT, "Midway",   "Revolution X", GAME_NOT_WORKING )
-#endif

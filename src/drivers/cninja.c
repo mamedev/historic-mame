@@ -36,53 +36,52 @@ Caveman Ninja Issues:
 #include "cpu/z80/z80.h"
 
 /* Video emulation definitions */
-extern unsigned char *cninja_pf1_rowscroll,*cninja_pf2_rowscroll;
-extern unsigned char *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
-extern unsigned char *cninja_pf1_data,*cninja_pf2_data;
-extern unsigned char *cninja_pf3_data,*cninja_pf4_data;
+extern data16_t *cninja_pf1_rowscroll,*cninja_pf2_rowscroll;
+extern data16_t *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
+extern data16_t *cninja_pf1_data,*cninja_pf2_data;
+extern data16_t *cninja_pf3_data,*cninja_pf4_data;
 
 int  cninja_vh_start(void);
 int  edrandy_vh_start(void);
 int  stoneage_vh_start(void);
 void cninja_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-READ_HANDLER( cninja_pf3_rowscroll_r );
-READ_HANDLER( cninja_pf1_data_r );
+READ16_HANDLER( cninja_pf1_data_r );
 
-WRITE_HANDLER( cninja_pf1_data_w );
-WRITE_HANDLER( cninja_pf2_data_w );
-WRITE_HANDLER( cninja_pf3_data_w );
-WRITE_HANDLER( cninja_pf4_data_w );
-WRITE_HANDLER( cninja_control_0_w );
-WRITE_HANDLER( cninja_control_1_w );
+WRITE16_HANDLER( cninja_pf1_data_w );
+WRITE16_HANDLER( cninja_pf2_data_w );
+WRITE16_HANDLER( cninja_pf3_data_w );
+WRITE16_HANDLER( cninja_pf4_data_w );
+WRITE16_HANDLER( cninja_control_0_w );
+WRITE16_HANDLER( cninja_control_1_w );
 
-WRITE_HANDLER( cninja_pf1_rowscroll_w );
-WRITE_HANDLER( cninja_pf2_rowscroll_w );
-WRITE_HANDLER( cninja_pf3_rowscroll_w );
-WRITE_HANDLER( cninja_pf4_rowscroll_w );
+WRITE16_HANDLER( cninja_pf1_rowscroll_w );
+WRITE16_HANDLER( cninja_pf2_rowscroll_w );
+WRITE16_HANDLER( cninja_pf3_rowscroll_w );
+WRITE16_HANDLER( cninja_pf4_rowscroll_w );
 
-WRITE_HANDLER( cninja_palette_24bit_w );
+WRITE16_HANDLER( cninja_palette_24bit_w );
 
-static int loopback[0x100];
-static unsigned char *cninja_ram;
+static data16_t loopback[0x80];
+static data16_t *cninja_ram;
 
 /**********************************************************************************/
 
-static WRITE_HANDLER( cninja_sound_w )
+static WRITE16_HANDLER( cninja_sound_w )
 {
 	soundlatch_w(0,data&0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
 }
 
-static WRITE_HANDLER( stoneage_sound_w )
+static WRITE16_HANDLER( stoneage_sound_w )
 {
 	soundlatch_w(0,data&0xff);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-static WRITE_HANDLER( cninja_loopback_w )
+static WRITE16_HANDLER( cninja_loopback_w )
 {
-	COMBINE_WORD_MEM(&loopback[offset],data);
+	COMBINE_DATA(&loopback[offset]);
 #if 0
 	if ((offset>0x22 || offset<0x8) && (offset>0x94 || offset<0x80)
 && offset!=0x36 && offset!=0x9e && offset!=0x76 && offset!=0x58 && offset!=0x56
@@ -93,38 +92,38 @@ logerror("Protection PC %06x: warning - write %04x to %04x\n",cpu_get_pc(),data,
 #endif
 }
 
-static READ_HANDLER( cninja_prot_r )
+static READ16_HANDLER( cninja_prot_r )
 {
- 	switch (offset) {
+ 	switch (offset<<1) {
 		case 0x80: /* Master level control */
-			return READ_WORD(&loopback[0]);
+			return loopback[0];
 
 		case 0xde: /* Restart position control */
-			return READ_WORD(&loopback[2]);
+			return loopback[1];
 
 		case 0xe6: /* The number of credits in the system. */
-			return READ_WORD(&loopback[4]);
+			return loopback[2];
 
 		case 0x86: /* End of game check.  See 0x1814 */
-			return READ_WORD(&loopback[6]);
+			return loopback[3];
 
 		/* Video registers */
 		case 0x5a: /* Moved to 0x140000 on int */
-			return READ_WORD(&loopback[0x10]);
+			return loopback[8];
 		case 0x84: /* Moved to 0x14000a on int */
-			return READ_WORD(&loopback[0x12]);
+			return loopback[9];
 		case 0x20: /* Moved to 0x14000c on int */
-			return READ_WORD(&loopback[0x14]);
+			return loopback[10];
 		case 0x72: /* Moved to 0x14000e on int */
-			return READ_WORD(&loopback[0x16]);
+			return loopback[11];
 		case 0xdc: /* Moved to 0x150000 on int */
-			return READ_WORD(&loopback[0x18]);
+			return loopback[12];
 		case 0x6e: /* Moved to 0x15000a on int */
-			return READ_WORD(&loopback[0x1a]); /* Not used on bootleg */
+			return loopback[13]; /* Not used on bootleg */
 		case 0x6c: /* Moved to 0x15000c on int */
-			return READ_WORD(&loopback[0x1c]);
+			return loopback[14];
 		case 0x08: /* Moved to 0x15000e on int */
-			return READ_WORD(&loopback[0x1e]);
+			return loopback[15];
 
 		case 0x36: /* Dip switches */
 			return (readinputport(3) + (readinputport(4) << 8));
@@ -139,9 +138,9 @@ static READ_HANDLER( cninja_prot_r )
 	return 0;
 }
 
-static READ_HANDLER( edrandy_prot_r )
+static READ16_HANDLER( edrandy_prot_r )
 {
- 	switch (offset) {
+ 	switch (offset<<1) {
 		/* Video registers */
 		case 0x32a: /* Moved to 0x140006 on int */
 			return READ_WORD(&loopback[0x80]);
@@ -295,7 +294,7 @@ case 0x2a0: return READ_WORD(&loopback[0xb2]);
 //case 0x5d4: /* Top byte:  Player 1?  lsl.4 then mask 3 for fire buttons? */
 //case 0x5d4:
 
-		return 0xffff;//(readinputport(0) + (readinputport(1) << 8));
+		return ~0;//(readinputport(0) + (readinputport(1) << 8));
 #endif
 	}
 
@@ -313,82 +312,74 @@ static WRITE_HANDLER( log_m_w )
 
 /**********************************************************************************/
 
-static struct MemoryReadAddress cninja_readmem[] =
-{
-	{ 0x000000, 0x0bffff, MRA_ROM },
+static MEMORY_READ16_START( cninja_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
 	{ 0x144000, 0x144fff, cninja_pf1_data_r },
-	{ 0x15c000, 0x15c7ff, cninja_pf3_rowscroll_r },
-	{ 0x184000, 0x187fff, MRA_BANK1 },
+	{ 0x15c000, 0x15c7ff, MRA16_RAM },
+	{ 0x184000, 0x187fff, MRA16_RAM },
 	{ 0x190004, 0x190005, MRA_NOP }, /* Seemingly unused */
-	{ 0x19c000, 0x19dfff, paletteram_word_r },
-	{ 0x1a4000, 0x1a47ff, MRA_BANK2 }, /* Sprites */
+	{ 0x19c000, 0x19dfff, MRA16_RAM },
+	{ 0x1a4000, 0x1a47ff, MRA16_RAM }, /* Sprites */
 	{ 0x1bc000, 0x1bcfff, cninja_prot_r }, /* Protection device */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cninja_writemem[] =
-{
-	{ 0x000000, 0x0bffff, MWA_ROM },
+static MEMORY_WRITE16_START( cninja_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
 
 	{ 0x140000, 0x14000f, cninja_control_1_w },
 	{ 0x144000, 0x144fff, cninja_pf1_data_w, &cninja_pf1_data },
 	{ 0x146000, 0x146fff, cninja_pf4_data_w, &cninja_pf4_data },
-	{ 0x14c000, 0x14c7ff, cninja_pf1_rowscroll_w, &cninja_pf1_rowscroll },
-	{ 0x14e000, 0x14e7ff, cninja_pf4_rowscroll_w, &cninja_pf4_rowscroll },
+	{ 0x14c000, 0x14c7ff, MWA16_RAM, &cninja_pf1_rowscroll },
+	{ 0x14e000, 0x14e7ff, MWA16_RAM, &cninja_pf4_rowscroll },
 
 	{ 0x150000, 0x15000f, cninja_control_0_w },
 	{ 0x154000, 0x154fff, cninja_pf3_data_w, &cninja_pf3_data },
 	{ 0x156000, 0x156fff, cninja_pf2_data_w, &cninja_pf2_data },
-	{ 0x15c000, 0x15c7ff, cninja_pf3_rowscroll_w, &cninja_pf3_rowscroll },
-	{ 0x15e000, 0x15e7ff, cninja_pf2_rowscroll_w, &cninja_pf2_rowscroll },
+	{ 0x15c000, 0x15c7ff, MWA16_RAM, &cninja_pf3_rowscroll },
+	{ 0x15e000, 0x15e7ff, MWA16_RAM, &cninja_pf2_rowscroll },
 
-	{ 0x184000, 0x187fff, MWA_BANK1, &cninja_ram }, /* Main ram */
+	{ 0x184000, 0x187fff, MWA16_RAM, &cninja_ram }, /* Main ram */
 	{ 0x190000, 0x190007, MWA_NOP }, /* IRQ Ack + DMA flags? */
-	{ 0x19c000, 0x19dfff, cninja_palette_24bit_w, &paletteram },
-	{ 0x1a4000, 0x1a47ff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ 0x1b4000, 0x1b4001, buffer_spriteram_w }, /* DMA flag */
+	{ 0x19c000, 0x19dfff, cninja_palette_24bit_w, &paletteram16 },
+	{ 0x1a4000, 0x1a47ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x1b4000, 0x1b4001, buffer_spriteram16_w }, /* DMA flag */
 	{ 0x1bc000, 0x1bc0ff, cninja_loopback_w }, /* Protection writes */
 	{ 0x308000, 0x308fff, MWA_NOP }, /* Bootleg only */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress edrandy_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
+static MEMORY_READ16_START( edrandy_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x144000, 0x144fff, cninja_pf1_data_r },
-	{ 0x15c000, 0x15c7ff, cninja_pf3_rowscroll_r },
-	{ 0x188000, 0x189fff, paletteram_word_r },
-	{ 0x194000, 0x197fff, MRA_BANK1 },
+	{ 0x15c000, 0x15c7ff, MRA16_RAM },
+	{ 0x188000, 0x189fff, MRA16_RAM },
+	{ 0x194000, 0x197fff, MRA16_RAM },
 	{ 0x198000, 0x198fff, edrandy_prot_r }, /* Protection device */
-	{ 0x1bc000, 0x1bc7ff, MRA_BANK2 }, /* Sprites */
-	{ -1 }  /* end of table */
-};
+	{ 0x1bc000, 0x1bc7ff, MRA16_RAM }, /* Sprites */
+MEMORY_END
 
-static struct MemoryWriteAddress edrandy_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
+static MEMORY_WRITE16_START( edrandy_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
 
 	{ 0x140000, 0x14000f, cninja_control_1_w },
 	{ 0x144000, 0x144fff, cninja_pf1_data_w, &cninja_pf1_data },
 	{ 0x146000, 0x146fff, cninja_pf4_data_w, &cninja_pf4_data },
-	{ 0x14c000, 0x14c7ff, cninja_pf1_rowscroll_w, &cninja_pf1_rowscroll },
-	{ 0x14e000, 0x14e7ff, cninja_pf4_rowscroll_w, &cninja_pf4_rowscroll },
+	{ 0x14c000, 0x14c7ff, MWA16_RAM, &cninja_pf1_rowscroll },
+	{ 0x14e000, 0x14e7ff, MWA16_RAM, &cninja_pf4_rowscroll },
 
 	{ 0x150000, 0x15000f, cninja_control_0_w },
 	{ 0x154000, 0x154fff, cninja_pf3_data_w, &cninja_pf3_data },
 	{ 0x156000, 0x156fff, cninja_pf2_data_w, &cninja_pf2_data },
-	{ 0x15c000, 0x15c7ff, cninja_pf3_rowscroll_w, &cninja_pf3_rowscroll },
-	{ 0x15e000, 0x15e7ff, cninja_pf2_rowscroll_w, &cninja_pf2_rowscroll },
+	{ 0x15c000, 0x15c7ff, MWA16_RAM, &cninja_pf3_rowscroll },
+	{ 0x15e000, 0x15e7ff, MWA16_RAM, &cninja_pf2_rowscroll },
 
-	{ 0x188000, 0x189fff, cninja_palette_24bit_w, &paletteram },
-	{ 0x194000, 0x197fff, MWA_BANK1, &cninja_ram }, /* Main ram */
+	{ 0x188000, 0x189fff, cninja_palette_24bit_w, &paletteram16 },
+	{ 0x194000, 0x197fff, MWA16_RAM, &cninja_ram }, /* Main ram */
 	{ 0x198064, 0x198065, cninja_sound_w }, /* Soundlatch is amongst protection */
 	{ 0x198000, 0x1980ff, cninja_loopback_w }, /* Protection writes */
 	{ 0x1a4000, 0x1a4007, MWA_NOP }, /* IRQ Ack + DMA flags? */
-	{ 0x1ac000, 0x1ac001, buffer_spriteram_w }, /* DMA flag */
-	{ 0x1bc000, 0x1bc7ff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ -1 }  /* end of table */
-};
+	{ 0x1ac000, 0x1ac001, buffer_spriteram16_w }, /* DMA flag */
+	{ 0x1bc000, 0x1bc7ff, MWA16_RAM, &spriteram16, &spriteram_size },
+MEMORY_END
 
 /******************************************************************************/
 
@@ -416,8 +407,7 @@ static WRITE_HANDLER( YM2203_w )
 	}
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, YM2203_status_port_0_r },
 	{ 0x110000, 0x110001, YM2151_status_port_0_r },
@@ -425,11 +415,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x130000, 0x130001, OKIM6295_status_1_r },
 	{ 0x140000, 0x140001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
@@ -438,28 +426,23 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress stoneage_s_readmem[] =
-{
+static MEMORY_READ_START( stoneage_s_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0x9800, 0x9800, OKIM6295_status_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress stoneage_s_writemem[] =
-{
+static MEMORY_WRITE_START( stoneage_s_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
 	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /**********************************************************************************/
 
@@ -699,7 +682,7 @@ static void sound_irq2(int state)
 static WRITE_HANDLER( sound_bankswitch_w )
 {
 	/* the second OKIM6295 ROM is bank switched */
-	OKIM6295_set_bank_base(1, ALL_VOICES, (data & 1) * 0x40000);
+	OKIM6295_set_bank_base(1, (data & 1) * 0x40000);
 }
 
 static struct YM2151interface ym2151_interface =
@@ -1171,23 +1154,22 @@ ROM_END
 
 static void cninja_patch(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	int i;
 
-	for (i=0; i<0x80000; i+=2) {
-		int aword=READ_WORD(&RAM[i]);
+	for (i=0; i<0x80000/2; i++) {
+		int aword=RAM[i];
 
 		if (aword==0x66ff || aword==0x67ff) {
-			int doublecheck=READ_WORD(&RAM[i-8]);
+			data16_t doublecheck=RAM[i-4];
 
 			/* Cmpi + btst controlling opcodes */
 			if (doublecheck==0xc39 || doublecheck==0x839) {
-
-				WRITE_WORD (&RAM[i],0x4E71);
-		        WRITE_WORD (&RAM[i-2],0x4E71);
-		        WRITE_WORD (&RAM[i-4],0x4E71);
-		        WRITE_WORD (&RAM[i-6],0x4E71);
-		        WRITE_WORD (&RAM[i-8],0x4E71);
+				RAM[i]=0x4E71;
+		        RAM[i-1]=0x4E71;
+		        RAM[i-2]=0x4E71;
+		        RAM[i-3]=0x4E71;
+		        RAM[i-4]=0x4E71;
 			}
 		}
 	}
@@ -1208,13 +1190,13 @@ static void edrandyj_patch(void)
 
 static void init_cninja(void)
 {
-	install_mem_write_handler(0, 0x1bc0a8, 0x1bc0a9, cninja_sound_w);
+	install_mem_write16_handler(0, 0x1bc0a8, 0x1bc0a9, cninja_sound_w);
 	cninja_patch();
 }
 
 static void init_stoneage(void)
 {
-	install_mem_write_handler(0, 0x1bc0a8, 0x1bc0a9, stoneage_sound_w);
+	install_mem_write16_handler(0, 0x1bc0a8, 0x1bc0a9, stoneage_sound_w);
 }
 
 /**********************************************************************************/
@@ -1224,5 +1206,5 @@ GAME( 1991, cninja0,  cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Cor
 GAME( 1991, cninjau,  cninja,  cninja,   cninjau, cninja,   ROT0, "Data East Corporation", "Caveman Ninja (US)" )
 GAME( 1991, joemac,   cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Joe & Mac (Japan)" )
 GAME( 1991, stoneage, cninja,  stoneage, cninja,  stoneage, ROT0, "bootleg", "Stoneage" )
-GAMEX(1990, edrandy,  0,       edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (World)", GAME_NOT_WORKING )
-GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (Japan)", GAME_NOT_WORKING )
+GAMEX(1990, edrandy,  0,       edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (World)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (Japan)", GAME_UNEMULATED_PROTECTION )

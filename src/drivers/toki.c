@@ -10,51 +10,41 @@ driver by Jarek Parchanski
 #include "cpu/z80/z80.h"
 
 
-static unsigned char *ram;
-extern unsigned char *toki_foreground_videoram;
-extern unsigned char *toki_background1_videoram;
-extern unsigned char *toki_background2_videoram;
-extern unsigned char *toki_sprites_dataram;
-extern unsigned char *toki_scrollram;
+extern data16_t *toki_foreground_videoram16;
+extern data16_t *toki_background1_videoram16;
+extern data16_t *toki_background2_videoram16;
+extern data16_t *toki_sprites_dataram16;
+extern data16_t *toki_scrollram16;
 
-extern size_t toki_foreground_videoram_size;
-extern size_t toki_background1_videoram_size;
-extern size_t toki_background2_videoram_size;
-extern size_t toki_sprites_dataram_size;
+extern size_t toki_foreground_videoram16_size;
+extern size_t toki_background1_videoram16_size;
+extern size_t toki_background2_videoram16_size;
+extern size_t toki_sprites_dataram16_size;
 
 int toki_interrupt(void);
 int  toki_vh_start(void);
 void toki_vh_stop(void);
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-READ_HANDLER( toki_foreground_videoram_r );
-WRITE_HANDLER( toki_foreground_videoram_w );
-READ_HANDLER( toki_background1_videoram_r );
-WRITE_HANDLER( toki_background1_videoram_w );
-READ_HANDLER( toki_background2_videoram_r );
-WRITE_HANDLER( toki_background2_videoram_w );
-WRITE_HANDLER( toki_linescroll_w );
+READ16_HANDLER( toki_foreground_videoram16_r );
+WRITE16_HANDLER( toki_foreground_videoram16_w );
+READ16_HANDLER( toki_background1_videoram16_r );
+WRITE16_HANDLER( toki_background1_videoram16_w );
+READ16_HANDLER( toki_background2_videoram16_r );
+WRITE16_HANDLER( toki_background2_videoram16_w );
+WRITE16_HANDLER( toki_linescroll16_w );
 
 
-static READ_HANDLER( toki_ports_r )
-{
-    switch(offset)
-    {
-		case 0:
-			return input_port_3_r(0) + (input_port_4_r(0) << 8);
-		case 2:
-			return input_port_1_r(0) + (input_port_2_r(0) << 8);
-		case 4:
-			return input_port_0_r(0);
-		default:
-			return 0;
-    }
-}
-
-WRITE_HANDLER( toki_soundcommand_w )
+WRITE16_HANDLER( toki_soundcommand16_w )
 {
 	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
+
+static READ16_HANDLER( pip16_r )
+{
+	return ~0;
+}
+
 
 static int msm5205next;
 
@@ -67,7 +57,7 @@ void toki_adpcm_int (int data)
 
 	toggle ^= 1;
 	if (toggle)
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_nmi_line(1, PULSE_LINE);
 }
 
 WRITE_HANDLER( toki_adpcm_control_w )
@@ -88,58 +78,50 @@ WRITE_HANDLER( toki_adpcm_data_w )
 	msm5205next = data;
 }
 
-static READ_HANDLER( pip_r )
-{
-	return 0xffff;
-}
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0x060000, 0x06dfff, MRA_BANK2 },
-	{ 0x06e000, 0x06e7ff, paletteram_word_r },
-	{ 0x06e800, 0x06efff, toki_background1_videoram_r },
-	{ 0x06f000, 0x06f7ff, toki_background2_videoram_r },
-	{ 0x06f800, 0x06ffff, toki_foreground_videoram_r },
-	{ 0x072000, 0x072001, watchdog_reset_r },	/* probably */
-	{ 0x0c0000, 0x0c0005, toki_ports_r },
-	{ 0x0c000e, 0x0c000f, pip_r },	/* sound related, if we return 0 the code writes */
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0x060000, 0x06dfff, MRA16_RAM },
+	{ 0x06e000, 0x06e7ff, MRA16_RAM },
+	{ 0x06e800, 0x06efff, toki_background1_videoram16_r },
+	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_r },
+	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_r },
+	{ 0x072000, 0x072001, watchdog_reset16_r },   /* probably */
+	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
+	{ 0x0c0002, 0x0c0003, input_port_1_word_r },
+	{ 0x0c0004, 0x0c0005, input_port_2_word_r },
+	{ 0x0c000e, 0x0c000f, pip16_r },  /* sound related, if we return 0 the code writes */
 									/* the sound command quickly followed by 0 and the */
 									/* sound CPU often misses the command. */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x05ffff, MWA_ROM },
-	{ 0x060000, 0x06dfff, MWA_BANK2, &ram },
-	{ 0x06e000, 0x06e7ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0x06e800, 0x06efff, toki_background1_videoram_w, &toki_background1_videoram, &toki_background1_videoram_size },
-	{ 0x06f000, 0x06f7ff, toki_background2_videoram_w, &toki_background2_videoram, &toki_background2_videoram_size },
-	{ 0x06f800, 0x06ffff, toki_foreground_videoram_w, &toki_foreground_videoram, &toki_foreground_videoram_size },
-	{ 0x071000, 0x071001, MWA_NOP },	/* sprite related? seems another scroll register; */
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
+	{ 0x060000, 0x06dfff, MWA16_RAM },
+	{ 0x06e000, 0x06e7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0x06e800, 0x06efff, toki_background1_videoram16_w, &toki_background1_videoram16, &toki_background1_videoram16_size },
+	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_w, &toki_background2_videoram16, &toki_background2_videoram16_size },
+	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_w, &toki_foreground_videoram16, &toki_foreground_videoram16_size },
+	{ 0x071000, 0x071001, MWA16_NOP },	/* sprite related? seems another scroll register */
 										/* gets written the same value as 75000a (bg2 scrollx) */
-	{ 0x071804, 0x071807, MWA_NOP },	/* sprite related; always 01be0100 */
-	{ 0x07180e, 0x071e45, MWA_BANK3, &toki_sprites_dataram, &toki_sprites_dataram_size },
-	{ 0x075000, 0x075001, toki_soundcommand_w },
-	{ 0x075004, 0x07500b, MWA_BANK4, &toki_scrollram },
-	{ 0x0a002a, 0x0a002d, toki_linescroll_w },	/* scroll register used to waggle the title screen */
-	{ -1 }  /* end of table */
-};
+	{ 0x071804, 0x071807, MWA16_NOP },	/* sprite related, always 01be0100 */
+	{ 0x07180e, 0x071e45, MWA16_RAM, &toki_sprites_dataram16, &toki_sprites_dataram16_size },
+	{ 0x075000, 0x075001, toki_soundcommand16_w },
+	{ 0x075004, 0x07500b, MWA16_RAM, &toki_scrollram16 },
+	{ 0x0a002a, 0x0a002d, toki_linescroll16_w },  /* scroll register used to waggle the title screen */
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xec00, 0xec00, YM3812_status_port_0_r },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xf800, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xe000, 0xe000, toki_adpcm_control_w },	/* MSM5205 + ROM bank */
 	{ 0xe400, 0xe400, toki_adpcm_data_w },
@@ -148,13 +130,83 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xec08, 0xec08, YM3812_control_port_0_w },	/* mirror address, it seems */
 	{ 0xec09, 0xec09, YM3812_write_port_0_w },	/* mirror address, it seems */
 	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
 INPUT_PORTS_START( toki )
-	PORT_START	/* IN0 */
+	PORT_START
+	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0015, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0x0017, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0019, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x001b, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0x001d, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x001f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0013, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0011, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x001e, "A 1/1 B 1/2" )
+	PORT_DIPSETTING(      0x0014, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(      0x000a, "A 3/1 B 1/5" )
+	PORT_DIPSETTING(      0x0000, "A 5/1 B 1/6" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Joysticks" )
+	PORT_DIPSETTING(      0x0020, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Upright ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "5" )
+	PORT_BITX( 0,         0x0000, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0800, "50000 150000" )
+	PORT_DIPSETTING(      0x0000, "70000 140000 210000" )
+	PORT_DIPSETTING(      0x0c00, "70000" )
+	PORT_DIPSETTING(      0x0400, "100000 200000" )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Easy" )
+	PORT_DIPSETTING(      0x3000, "Medium" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -163,81 +215,6 @@ INPUT_PORTS_START( toki )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x1F, 0x1F, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x15, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x17, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x19, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x1B, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 8C_3C ) )
-	PORT_DIPSETTING(    0x1D, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 5C_3C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x1F, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x13, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x11, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x0F, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x0D, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x0B, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x1E, "A 1/1 B 1/2" )
-	PORT_DIPSETTING(    0x14, "A 2/1 B 1/3" )
-	PORT_DIPSETTING(    0x0A, "A 3/1 B 1/5" )
-	PORT_DIPSETTING(    0x00, "A 5/1 B 1/6" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x20, 0x20, "Joysticks" )
-	PORT_DIPSETTING(    0x20, "1" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x0C, 0x0C, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "50000 150000" )
-	PORT_DIPSETTING(    0x00, "70000 140000 210000" )
-	PORT_DIPSETTING(    0x0C, "70000" )
-	PORT_DIPSETTING(    0x04, "100000 200000" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, "Easy" )
-	PORT_DIPSETTING(    0x30, "Medium" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -293,7 +270,7 @@ static struct GfxLayout tokib_charlayout =
 	8,8,	/* 8 by 8 */
 	4096,	/* 4096 characters */
 	4,	/* 4 bits per pixel */
-	{4096*8*8*3,4096*8*8*2,4096*8*8*1,4096*8*8*0 },	/* planes */
+	{4096*8*8*3,4096*8*8*2,4096*8*8*1,4096*8*8*0 }, /* planes */
 	{ 0, 1,  2,  3,  4,  5,  6,  7},		/* x bit */
 	{ 0, 8, 16, 24, 32, 40, 48, 56},		/* y bit */
 	8*8
@@ -307,7 +284,7 @@ static struct GfxLayout tokib_tilelayout =
 	{ 4096*16*16*3,4096*16*16*2,4096*16*16*1,4096*16*16*0 },	/* planes */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 	  0x8000*8+0, 0x8000*8+1, 0x8000*8+2, 0x8000*8+3, 0x8000*8+4,
-	  0x8000*8+5, 0x8000*8+6, 0x8000*8+7 },				/* x bit */
+	  0x8000*8+5, 0x8000*8+6, 0x8000*8+7 }, 			/* x bit */
 	{
 	  0,8,16,24,32,40,48,56,
 	  0x10000*8+ 0, 0x10000*8+ 8, 0x10000*8+16, 0x10000*8+24, 0x10000*8+32,
@@ -321,7 +298,7 @@ static struct GfxLayout tokib_spriteslayout =
 	8192,	/* 8192 sprites */
 	4,	/* 4 bits per pixel */
 	{ 8192*16*16*3,8192*16*16*2,8192*16*16*1,8192*16*16*0 },	/* planes */
-	{    0,     1,     2,     3,     4,     5,     6,     7,
+	{	 0, 	1,	   2,	  3,	 4, 	5,	   6,	  7,
 	 128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7 },	/* x bit */
 	{ 0,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120 },		/* y bit */
 	16*16
@@ -329,10 +306,10 @@ static struct GfxLayout tokib_spriteslayout =
 
 static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tokib_charlayout,    16*16, 16 },
+	{ REGION_GFX1, 0, &tokib_charlayout,	16*16, 16 },
 	{ REGION_GFX2, 0, &tokib_spriteslayout,  0*16, 16 },
-	{ REGION_GFX3, 0, &tokib_tilelayout,    32*16, 16 },
-	{ REGION_GFX4, 0, &tokib_tilelayout,    48*16, 16 },
+	{ REGION_GFX3, 0, &tokib_tilelayout,	32*16, 16 },
+	{ REGION_GFX4, 0, &tokib_tilelayout,	48*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -347,10 +324,10 @@ static struct YM3526interface ym3812_interface =
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
+	1,					/* 1 chip			  */
+	384000, 			/* 384KHz			  */
 	{ toki_adpcm_int },/* interrupt function */
-	{ MSM5205_S96_4B},	/* 4KHz               */
+	{ MSM5205_S96_4B},	/* 4KHz 			  */
 	{ 60 }
 };
 
@@ -474,23 +451,23 @@ ROM_START( toki )
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
 	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
 	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
 
 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )   /* sprites */
 	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
 
 	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )   /* tiles 1 */
 
 	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 ) /* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
@@ -506,23 +483,23 @@ ROM_START( toki2 )
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
 	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
 	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
 
 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )   /* sprites */
 	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
 
 	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )   /* tiles 1 */
 
 	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 ) /* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
@@ -538,23 +515,23 @@ ROM_START( toki3 )
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
 	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
 	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
 
 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )   /* sprites */
 	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
 
 	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )   /* tiles 1 */
 
 	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 ) /* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
@@ -570,23 +547,23 @@ ROM_START( tokiu )
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
 	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
 	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
 
 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )   /* sprites */
 	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
 
 	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )   /* tiles 1 */
 
 	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 ) /* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
@@ -599,16 +576,16 @@ ROM_START( tokib )
 
 	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for code + 32k for banked data */
 	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
-	ROM_CONTINUE(             0x10000, 0x8000 )	/* banked at 8000-bfff */
+	ROM_CONTINUE(			  0x10000, 0x8000 ) /* banked at 8000-bfff */
 
 	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )	/* chars */
+	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )   /* chars */
 	ROM_LOAD( "toki.e13",     0x008000, 0x08000, 0x052ad275 )
 	ROM_LOAD( "toki.e22",     0x010000, 0x08000, 0x04dcdc21 )
 	ROM_LOAD( "toki.e7",      0x018000, 0x08000, 0x70729106 )
 
 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.e26",     0x000000, 0x20000, 0xa8ba71fc )	/* sprites */
+	ROM_LOAD( "toki.e26",     0x000000, 0x20000, 0xa8ba71fc )   /* sprites */
 	ROM_LOAD( "toki.e28",     0x020000, 0x20000, 0x29784948 )
 	ROM_LOAD( "toki.e34",     0x040000, 0x20000, 0xe5f6e19b )
 	ROM_LOAD( "toki.e36",     0x060000, 0x20000, 0x96e8db8b )
@@ -618,7 +595,7 @@ ROM_START( tokib )
 	ROM_LOAD( "toki.e40",     0x0e0000, 0x20000, 0x96e87350 )
 
 	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.e23",     0x000000, 0x10000, 0xfeb13d35 )	/* tiles 1 */
+	ROM_LOAD( "toki.e23",     0x000000, 0x10000, 0xfeb13d35 )   /* tiles 1 */
 	ROM_LOAD( "toki.e24",     0x010000, 0x10000, 0x5b365637 )
 	ROM_LOAD( "toki.e15",     0x020000, 0x10000, 0x617c32e6 )
 	ROM_LOAD( "toki.e16",     0x030000, 0x10000, 0x2a11c0f0 )
@@ -628,7 +605,7 @@ ROM_START( tokib )
 	ROM_LOAD( "toki.e9",      0x070000, 0x10000, 0x82ce27f6 )
 
 	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "toki.e25",     0x000000, 0x10000, 0x63026cad )	/* tiles 2 */
+	ROM_LOAD( "toki.e25",     0x000000, 0x10000, 0x63026cad )   /* tiles 2 */
 	ROM_LOAD( "toki.e20",     0x010000, 0x10000, 0xa7f2ce26 )
 	ROM_LOAD( "toki.e11",     0x020000, 0x10000, 0x48989aa0 )
 	ROM_LOAD( "toki.e12",     0x030000, 0x10000, 0xc2ad9342 )
@@ -683,8 +660,8 @@ void init_tokib(void)
 
 
 
-GAMEX( 1989, toki,  0,    toki,  toki, 0,     ROT0, "Tad", "Toki (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, toki2, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, toki3, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, tokiu, toki, toki,  toki, 0,     ROT0, "Tad (Fabtek license)", "Toki (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, toki,	0,	  toki,  toki, 0,	  ROT0, "Tad", "Toki (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, toki2, toki, toki,  toki, 0,	  ROT0, "Tad", "Toki (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, toki3, toki, toki,  toki, 0,	  ROT0, "Tad", "Toki (set 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, tokiu, toki, toki,  toki, 0,	  ROT0, "Tad (Fabtek license)", "Toki (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1989, tokib, toki, tokib, toki, tokib, ROT0, "bootleg", "Toki (bootleg)", GAME_NO_COCKTAIL )

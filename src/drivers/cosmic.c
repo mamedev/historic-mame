@@ -411,24 +411,27 @@ static READ_HANDLER( cosmicg_videoram_r )
 	return (videoram[offset] << 8) | videoram[offset+1];
 }
 
+
 #define COSMICG_ROM_LOAD ROM_LOAD_WIDE
 
 #endif
 
-
-static struct MemoryReadAddress panic_readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+static MEMORY_READ_START( panic_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6800, 0x6800, input_port_0_r }, /* IN1 */
 	{ 0x6801, 0x6801, input_port_1_r }, /* IN2 */
 	{ 0x6802, 0x6802, input_port_2_r }, /* DSW */
 	{ 0x6803, 0x6803, input_port_3_r }, /* IN0 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress panic_writemem[] =
-{
+static MEMORY_WRITE_START( panic_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, cosmica_videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0x601f, MWA_RAM, &spriteram, &spriteram_size },
@@ -436,61 +439,47 @@ static struct MemoryWriteAddress panic_writemem[] =
 	{ 0x700c, 0x700e, panic_color_register_w },
 	{ 0x700f, 0x700f, flip_screen_w },
     { 0x7800, 0x7801, panic_sound_output2_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress cosmica_readmem[] =
-{
+static MEMORY_READ_START( cosmica_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6800, 0x6800, input_port_0_r }, /* IN1 */
 	{ 0x6801, 0x6801, input_port_1_r }, /* IN2 */
 	{ 0x6802, 0x6802, input_port_2_r }, /* DSW */
 	{ 0x6803, 0x6803, cosmica_pixel_clock_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cosmica_writemem[] =
-{
+static MEMORY_WRITE_START( cosmica_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, cosmica_videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0x601f, MWA_RAM ,&spriteram, &spriteram_size },
 	{ 0x7000, 0x700b, MWA_RAM },   			/* Sound Triggers */
 	{ 0x700c, 0x700e, panic_color_register_w },
 	{ 0x700f, 0x700f, flip_screen_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress cosmicg_readmem[] =
-{
+static MEMORY_READ_START( cosmicg_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x3fff, cosmicg_videoram_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cosmicg_writemem[] =
-{
+static MEMORY_WRITE_START( cosmicg_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x3fff, cosmicg_videoram_w, &videoram, &videoram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort cosmicg_readport[] =
-{
+static PORT_READ_START( cosmicg_readport )
 	{ 0x00, 0x00, cosmicg_pixel_clock_r },
 	{ 0x01, 0x01, input_port_1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort cosmicg_writeport[] =
-{
+static PORT_WRITE_START( cosmicg_writeport )
 	{ 0x00, 0x15, cosmicg_output_w },
     { 0x16, 0x17, cosmicg_color_register_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress magspot2_readmem[] =
-{
+static MEMORY_READ_START( magspot2_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x3800, 0x3807, magspot2_coinage_dip_r },
 	{ 0x5000, 0x5000, input_port_0_r },
@@ -498,33 +487,27 @@ static struct MemoryReadAddress magspot2_readmem[] =
 	{ 0x5002, 0x5002, input_port_2_r },
 	{ 0x5003, 0x5003, input_port_3_r },
 	{ 0x6000, 0x7fff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress magspot2_writemem[] =
-{
+static MEMORY_WRITE_START( magspot2_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4800, 0x4800, DAC_0_data_w },
 	{ 0x480c, 0x480e, panic_color_register_w },
 	{ 0x480f, 0x480f, flip_screen_w },
 	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress nomnlnd_readmem[] =
-{
+static MEMORY_READ_START( nomnlnd_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x3800, 0x3807, magspot2_coinage_dip_r },
 	{ 0x5000, 0x5001, nomnlnd_port_r },
 	{ 0x5002, 0x5002, input_port_2_r },
 	{ 0x5003, 0x5003, input_port_3_r },
 	{ 0x6000, 0x7fff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress nomnlnd_writemem[] =
-{
+static MEMORY_WRITE_START( nomnlnd_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4807, 0x4807, nomnlnd_background_w },
@@ -532,8 +515,7 @@ static struct MemoryWriteAddress nomnlnd_writemem[] =
 	{ 0x480c, 0x480e, panic_color_register_w },
 	{ 0x480f, 0x480f, flip_screen_w },
 	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( panic )

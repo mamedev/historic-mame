@@ -83,14 +83,11 @@ void bladestl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K007342_tilemap_update();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render( ALL_TILEMAPS );
-
-	K007342_tilemap_draw( bitmap, 1, TILEMAP_IGNORE_TRANSPARENCY );
+	K007342_tilemap_draw( bitmap, 1, TILEMAP_IGNORE_TRANSPARENCY ,0);
 	K007420_sprites_draw( bitmap );
-	K007342_tilemap_draw( bitmap, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY );
-	K007342_tilemap_draw( bitmap, 0, 0 );
-	K007342_tilemap_draw( bitmap, 0, 1 );
+	K007342_tilemap_draw( bitmap, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
+	K007342_tilemap_draw( bitmap, 0, 0 ,0);
+	K007342_tilemap_draw( bitmap, 0, 1 ,0);
 }

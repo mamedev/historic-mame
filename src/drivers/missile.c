@@ -152,24 +152,20 @@ WRITE_HANDLER( missile_video_3rd_bit_w );
 WRITE_HANDLER( missile_video2_w );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x18ff, MRA_RAM },
 	{ 0x1900, 0xfff9, missile_r }, /* shared region */
 	{ 0xfffa, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x05ff, missile_video_3rd_bit_w },
 	{ 0x0600, 0x063f, MWA_RAM },
 	{ 0x0640, 0x4fff, missile_w }, /* shared region */
 	{ 0x5000, 0xffff, missile_video2_w, &missile_video2ram },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

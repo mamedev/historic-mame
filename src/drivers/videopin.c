@@ -42,8 +42,7 @@ READ_HANDLER( videopin_in2_r );
 
 
 
-static struct MemoryReadAddress videopin_readmem[] =
-{
+static MEMORY_READ_START( videopin_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },        /* working   RAM 512  bytes */
 	{ 0x0200, 0x07ff, MRA_RAM },        /* playfield RAM 1,5 Kbytes */
 	{ 0x0800, 0x0800, videopin_in2_r }, /* VBLANK, NUDGE, PLUNGER1, PLUNGER2 */
@@ -51,12 +50,10 @@ static struct MemoryReadAddress videopin_readmem[] =
 	{ 0x1800, 0x1800, videopin_in1_r }, /* IN1 DSW */
 	{ 0x2000, 0x3fff, MRA_ROM },        /* PROM */
 	{ 0xfff0, 0xffff, MRA_ROM },        /* PROM for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress videopin_writemem[] =
-{
+static MEMORY_WRITE_START( videopin_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },                  /* working RAM */
 	{ 0x0200, 0x07ff, videoram_w, &videoram, &videoram_size },
 	                                              /* playfield RAM */
@@ -69,8 +66,7 @@ static struct MemoryWriteAddress videopin_writemem[] =
                                                      bong audio gen enable, coin counter,
 													 audio volume select (OUT 2) */
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

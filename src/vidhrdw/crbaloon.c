@@ -65,7 +65,7 @@ WRITE_HANDLER( crbaloon_spritectrl_w )
 
 WRITE_HANDLER( crbaloon_flipscreen_w )
 {
-	flip_screen_w(0,data & 1);
+	flip_screen_set(data & 1);
 }
 
 /***************************************************************************

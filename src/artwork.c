@@ -994,14 +994,8 @@ static void backdrop_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 	}
 }
 
-void artwork_draw(struct osd_bitmap *dest, struct osd_bitmap *source, int _bitmap_dirty)
+void artwork_draw(struct osd_bitmap *dest, struct osd_bitmap *source, int full_refresh)
 {
-	if (_bitmap_dirty)
-	{
-		artwork_remap();
-		osd_mark_dirty (0, 0, dest->width-1, dest->height-1, 0);
-	}
-
 	if (artwork_backdrop) backdrop_draw(dest, source);
 	if (artwork_overlay) overlay_draw(dest, source);
 }

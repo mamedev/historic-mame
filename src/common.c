@@ -15,7 +15,7 @@ unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
 
-data_t flip_screen_x, flip_screen_y;
+int flip_screen_x, flip_screen_y;
 
 
 
@@ -750,32 +750,32 @@ void free_memory_region(int num)
 
 
 /* LBO 042898 - added coin counters */
-WRITE_HANDLER( coin_counter_w )
+void coin_counter_w(int num,int on)
 {
-	if (offset >= COIN_COUNTERS) return;
+	if (num >= COIN_COUNTERS) return;
 	/* Count it only if the data has changed from 0 to non-zero */
-	if (data && (lastcoin[offset] == 0))
+	if (on && (lastcoin[num] == 0))
 	{
-		coins[offset] ++;
+		coins[num]++;
 	}
-	lastcoin[offset] = data;
+	lastcoin[num] = on;
 }
 
-WRITE_HANDLER( coin_lockout_w )
+void coin_lockout_w(int num,int on)
 {
-	if (offset >= COIN_COUNTERS) return;
+	if (num >= COIN_COUNTERS) return;
 
-	coinlockedout[offset] = data;
+	coinlockedout[num] = on;
 }
 
 /* Locks out all the coin inputs */
-WRITE_HANDLER( coin_lockout_global_w )
+void coin_lockout_global_w(int on)
 {
 	int i;
 
 	for (i = 0; i < COIN_COUNTERS; i++)
 	{
-		coin_lockout_w(i, data);
+		coin_lockout_w(i,on);
 	}
 }
 
@@ -812,47 +812,40 @@ static void updateflip(void)
 	set_visible_area(min_x,max_x,min_y,max_y);
 }
 
-WRITE_HANDLER( flip_screen_w )
+void flip_screen_set(int on)
 {
-	flip_screen_x_w(offset,data);
-	flip_screen_y_w(offset,data);
+	flip_screen_x_set(on);
+	flip_screen_y_set(on);
 }
 
-WRITE_HANDLER( flip_screen_x_w )
+void flip_screen_x_set(int on)
 {
-	if (data) data = ~0;
-	if (flip_screen_x != data)
+	if (on) on = ~0;
+	if (flip_screen_x != on)
 	{
-		set_vh_global_attribute(&flip_screen_x,data);
+		set_vh_global_attribute(&flip_screen_x,on);
 		updateflip();
 	}
 }
 
-WRITE_HANDLER( flip_screen_y_w )
+void flip_screen_y_set(int on)
 {
-	if (data) data = ~0;
-	if (flip_screen_y != data)
+	if (on) on = ~0;
+	if (flip_screen_y != on)
 	{
-		set_vh_global_attribute(&flip_screen_y,data);
+		set_vh_global_attribute(&flip_screen_y,on);
 		updateflip();
 	}
 }
 
 
-void set_vh_global_attribute( data_t *addr, data_t data )
+void set_vh_global_attribute( int *addr, int data )
 {
 	if (*addr != data)
 	{
 		schedule_full_refresh();
 		*addr = data;
 	}
-}
-
-
-void schedule_full_refresh(void)
-{
-	extern int bitmap_dirty;
-	bitmap_dirty = 1;
 }
 
 

@@ -776,7 +776,6 @@ static void avgdvg_clr_busy (int dummy)
 
 WRITE_HANDLER( avgdvg_go_w )
 {
-
 	if (busy)
 		return;
 
@@ -803,9 +802,19 @@ WRITE_HANDLER( avgdvg_go_w )
 	}
 }
 
+WRITE16_HANDLER( avgdvg_go_word_w )
+{
+	avgdvg_go_w(offset, data);
+}
+
 WRITE_HANDLER( avgdvg_reset_w )
 {
-	avgdvg_clr_busy (0);
+	avgdvg_clr_busy(0);
+}
+
+WRITE16_HANDLER( avgdvg_reset_word_w )
+{
+	avgdvg_clr_busy(0);
 }
 
 int avgdvg_init (int vgType)
@@ -1028,9 +1037,9 @@ static WRITE_HANDLER( colorram_w )
 WRITE_HANDLER( tempest_colorram_w )
 {
 #if 0 /* with low intensity bit */
-	int trans[]= { 7, 15, 3, 11, 6, 14, 2, 10, 5, 13, 1,  9, 4, 12, 0,  8 };
+	static const int trans[]= { 7, 15, 3, 11, 6, 14, 2, 10, 5, 13, 1,  9, 4, 12, 0,  8 };
 #else /* high intensity */
-	int trans[]= { 7,  7, 3,  3, 6,  6, 2,  2, 5,  5, 1,  1, 4,  4, 0,  0 };
+	static const int trans[]= { 7,  7, 3,  3, 6,  6, 2,  2, 5,  5, 1,  1, 4,  4, 0,  0 };
 #endif
 	colorram_w (offset, trans[data & 0x0f]);
 }
@@ -1038,16 +1047,16 @@ WRITE_HANDLER( tempest_colorram_w )
 WRITE_HANDLER( mhavoc_colorram_w )
 {
 #if 0 /* with low intensity bit */
-	int trans[]= { 7, 6, 5, 4, 15, 14, 13, 12, 3, 2, 1, 0, 11, 10, 9, 8 };
+	static const int trans[]= { 7, 6, 5, 4, 15, 14, 13, 12, 3, 2, 1, 0, 11, 10, 9, 8 };
 #else /* high intensity */
-	int trans[]= { 7, 6, 5, 4,  7,  6,  5,  4, 3, 2, 1, 0,  3,  2, 1, 0 };
+	static const int trans[]= { 7, 6, 5, 4,  7,  6,  5,  4, 3, 2, 1, 0,  3,  2, 1, 0 };
 #endif
 	logerror("colorram: %02x: %02x\n", offset, data);
 	colorram_w (offset , trans[data & 0x0f]);
 }
 
 
-WRITE_HANDLER( quantum_colorram_w )
+WRITE16_HANDLER( quantum_colorram_w )
 {
 /* Notes on colors:
 offset:				color:			color (game):
@@ -1074,10 +1083,13 @@ high score - white? yellow?
 level # - green
 */
 
-	int trans[]= { 7/*white*/, 0, 3, 1/*blue*/, 2/*green*/, 5, 6, 4/*red*/,
-		       7/*white*/, 0, 3, 1/*blue*/, 2/*green*/, 5, 6, 4/*red*/};
+	if (ACCESSING_LSB)
+	{
+		static const int trans[]= { 7/*white*/, 0, 3, 1/*blue*/, 2/*green*/, 5, 6, 4/*red*/,
+			       7/*white*/, 0, 3, 1/*blue*/, 2/*green*/, 5, 6, 4/*red*/};
 
-	colorram_w (offset >> 1, trans[data & 0x0f]);
+		colorram_w(offset, trans[data & 0x0f]);
+	}
 }
 
 /***************************************************************************

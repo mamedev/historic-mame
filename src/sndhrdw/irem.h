@@ -8,10 +8,10 @@
 WRITE_HANDLER( irem_sound_cmd_w );
 
 
-extern struct MemoryReadAddress irem_sound_readmem[];
-extern struct MemoryWriteAddress irem_sound_writemem[];
-extern struct IOReadPort irem_sound_readport[];
-extern struct IOWritePort irem_sound_writeport[];
+extern const struct Memory_ReadAddress irem_sound_readmem[];
+extern const struct Memory_WriteAddress irem_sound_writemem[];
+extern const struct IO_ReadPort irem_sound_readport[];
+extern const struct IO_WritePort irem_sound_writeport[];
 
 extern struct AY8910interface irem_ay8910_interface;
 extern struct MSM5205interface irem_msm5205_interface;

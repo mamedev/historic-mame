@@ -398,7 +398,7 @@ static int namco86_interrupt2(void)
 
 static WRITE_HANDLER( namcos86_coin_w )
 {
-	coin_lockout_global_w(0,data & 1);
+	coin_lockout_global_w(data & 1);
 	coin_counter_w(0,~data & 2);
 	coin_counter_w(1,~data & 4);
 }
@@ -412,8 +412,7 @@ static WRITE_HANDLER( namcos86_led_w )
 
 /*******************************************************************/
 
-static struct MemoryReadAddress readmem1[] =
-{
+static MEMORY_READ_START( readmem1 )
 	{ 0x0000, 0x1fff, rthunder_videoram1_r },
 	{ 0x2000, 0x3fff, rthunder_videoram2_r },
 	{ 0x4000, 0x40ff, namcos1_wavedata_r }, /* PSG device, shared RAM */
@@ -422,11 +421,9 @@ static struct MemoryReadAddress readmem1[] =
 	{ 0x4400, 0x5fff, spriteram_r },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem1[] =
-{
+static MEMORY_WRITE_START( writemem1 )
 	{ 0x0000, 0x1fff, rthunder_videoram1_w, &rthunder_videoram1 },
 	{ 0x2000, 0x3fff, rthunder_videoram2_w, &rthunder_videoram2 },
 
@@ -460,23 +457,20 @@ static struct MemoryWriteAddress writemem1[] =
 	{ 0xa000, 0xa000, rthunder_backcolor_w },
 
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
 #define CPU2_MEMORY(NAME,ADDR_SPRITE,ADDR_VIDEO1,ADDR_VIDEO2,ADDR_ROM,ADDR_BANK,ADDR_WDOG,ADDR_INT)	\
-static struct MemoryReadAddress NAME##_readmem2[] =									\
-{																					\
+static MEMORY_READ_START( NAME##_readmem2 )											\
 	{ ADDR_SPRITE+0x0000, ADDR_SPRITE+0x03ff, MRA_RAM },							\
 	{ ADDR_SPRITE+0x0400, ADDR_SPRITE+0x1fff, spriteram_r },						\
 	{ ADDR_VIDEO1+0x0000, ADDR_VIDEO1+0x1fff, rthunder_videoram1_r },				\
 	{ ADDR_VIDEO2+0x0000, ADDR_VIDEO2+0x1fff, rthunder_videoram2_r },				\
 	{ ADDR_ROM+0x0000, ADDR_ROM+0x1fff, MRA_BANK2 },								\
 	{ 0x8000, 0xffff, MRA_ROM },													\
-	{ -1 }																			\
-};																					\
-static struct MemoryWriteAddress NAME##_writemem2[] =								\
-{																					\
+MEMORY_END																			\
+																					\
+static MEMORY_WRITE_START( NAME##_writemem2 )										\
 	{ ADDR_SPRITE+0x0000, ADDR_SPRITE+0x03ff, MWA_RAM },							\
 	{ ADDR_SPRITE+0x0400, ADDR_SPRITE+0x1fff, spriteram_w },						\
 	{ ADDR_VIDEO1+0x0000, ADDR_VIDEO1+0x1fff, rthunder_videoram1_w },				\
@@ -488,8 +482,7 @@ static struct MemoryWriteAddress NAME##_writemem2[] =								\
 	{ ADDR_INT, ADDR_INT, int_ack2_w },	/* IRQ acknowledge */						\
 	{ ADDR_ROM+0x0000, ADDR_ROM+0x1fff, MWA_ROM },									\
 	{ 0x8000, 0xffff, MWA_ROM },													\
-	{ -1 }																			\
-};
+MEMORY_END
 
 #define UNUSED 0x4000
 /*                     SPRITE  VIDEO1  VIDEO2  ROM     BANK    WDOG    IRQACK */
@@ -503,8 +496,7 @@ CPU2_MEMORY( wndrmomo, 0x2000, 0x4000, 0x6000, UNUSED, UNUSED, 0xc000, 0xc800 )
 
 
 #define MCU_MEMORY(NAME,ADDR_LOWROM,ADDR_INPUT,ADDR_UNK1,ADDR_UNK2)			\
-static struct MemoryReadAddress NAME##_mcu_readmem[] =						\
-{																			\
+static MEMORY_READ_START( NAME##_mcu_readmem )								\
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },						\
 	{ 0x0080, 0x00ff, MRA_RAM },											\
 	{ 0x1000, 0x10ff, namcos1_wavedata_r }, /* PSG device, shared RAM */	\
@@ -519,10 +511,9 @@ static struct MemoryReadAddress NAME##_mcu_readmem[] =						\
 	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MRA_ROM },							\
 	{ 0x8000, 0xbfff, MRA_ROM },											\
 	{ 0xf000, 0xffff, MRA_ROM },											\
-	{ -1 } /* end of table */												\
-};																			\
-static struct MemoryWriteAddress NAME##_mcu_writemem[] =					\
-{																			\
+MEMORY_END																	\
+																			\
+static MEMORY_WRITE_START( NAME##_mcu_writemem )							\
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },						\
 	{ 0x0080, 0x00ff, MWA_RAM },											\
 	{ 0x1000, 0x10ff, namcos1_wavedata_w }, /* PSG device, shared RAM */	\
@@ -536,8 +527,7 @@ static struct MemoryWriteAddress NAME##_mcu_writemem[] =					\
 	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MWA_ROM },							\
 	{ 0x8000, 0xbfff, MWA_ROM },											\
 	{ 0xf000, 0xffff, MWA_ROM },											\
-	{ -1 } /* end of table */												\
-};
+MEMORY_END
 
 #define UNUSED 0x4000
 /*                    LOWROM   INPUT    UNK1    UNK2 */
@@ -555,19 +545,15 @@ static READ_HANDLER( readFF )
 	return 0xff;
 }
 
-static struct IOReadPort mcu_readport[] =
-{
+static PORT_READ_START( mcu_readport )
 	{ HD63701_PORT1, HD63701_PORT1, input_port_4_r },
 	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort mcu_writeport[] =
-{
+static PORT_WRITE_START( mcu_writeport )
 	{ HD63701_PORT1, HD63701_PORT1, namcos86_coin_w },
 	{ HD63701_PORT2, HD63701_PORT2, namcos86_led_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 /*******************************************************************/

@@ -27,19 +27,16 @@ WRITE_HANDLER( gotya_video_control_w );
 WRITE_HANDLER( gotya_soundlatch_w );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x5000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x6000, input_port_0_r },
 	{ 0x6001, 0x6001, input_port_1_r },
 	{ 0x6002, 0x6002, input_port_2_r },
 	{ 0xc000, 0xd3ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x5000, 0x5fff, MWA_RAM },
 	{ 0x6004, 0x6004, gotya_video_control_w },
@@ -50,8 +47,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc800, 0xcfff, colorram_w, &colorram },
 	{ 0xd000, 0xd3df, MWA_RAM, &gotya_foregroundram },
 	{ 0xd3e0, 0xd3ff, MWA_RAM, &spriteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( gotya )

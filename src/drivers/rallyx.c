@@ -15,9 +15,9 @@ driver by Nicola Salmoria
 memory mapped ports:
 
 read:
-a000      IN0
-a080      IN1
-a100      DSW1
+a000	  IN0
+a080	  IN1
+a100	  DSW1
 
 write:
 8014-801f sprites - 6 pairs: code (including flipping) and X position
@@ -25,26 +25,26 @@ write:
 8034-880c radar car indicators x position
 8834-883c radar car indicators y position
 a004-a00c radar car indicators color and x position MSB
-a080      watchdog reset
-a105      sound voice 1 waveform (nibble)
+a080	  watchdog reset
+a105	  sound voice 1 waveform (nibble)
 a111-a113 sound voice 1 frequency (nibble)
-a115      sound voice 1 volume (nibble)
-a10a      sound voice 2 waveform (nibble)
+a115	  sound voice 1 volume (nibble)
+a10a	  sound voice 2 waveform (nibble)
 a116-a118 sound voice 2 frequency (nibble)
-a11a      sound voice 2 volume (nibble)
-a10f      sound voice 3 waveform (nibble)
+a11a	  sound voice 2 volume (nibble)
+a10f	  sound voice 3 waveform (nibble)
 a11b-a11d sound voice 3 frequency (nibble)
-a11f      sound voice 3 volume (nibble)
-a130      virtual screen X scroll position
-a140      virtual screen Y scroll position
-a170      ? this is written to A LOT of times every frame
-a180      explosion sound trigger
-a181      interrupt enable
-a182      ?
-a183      flip screen
-a184      1 player start lamp
-a185      2 players start lamp
-a186      coin lockout
+a11f	  sound voice 3 volume (nibble)
+a130	  virtual screen X scroll position
+a140	  virtual screen Y scroll position
+a170	  ? this is written to A LOT of times every frame
+a180	  explosion sound trigger
+a181	  interrupt enable
+a182	  ?
+a183	  flip screen
+a184	  1 player start lamp
+a185	  2 players start lamp
+a186	  coin lockout
 a187	  coin counter
 
 I/O ports:
@@ -80,6 +80,11 @@ static WRITE_HANDLER( rallyx_coin_lockout_w )
 	coin_lockout_w(offset, data ^ 1);
 }
 
+static WRITE_HANDLER( rallyx_coin_counter_w )
+{
+	coin_counter_w(offset, data);
+}
+
 static WRITE_HANDLER( rallyx_leds_w )
 {
 	set_led_status(offset,data & 1);
@@ -96,19 +101,16 @@ static WRITE_HANDLER( rallyx_play_sound_w )
 	last = data;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9800, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
-	{ 0xa080, 0xa080, input_port_1_r },	/* IN1 */
-	{ 0xa100, 0xa100, input_port_2_r },	/* DSW1 */
-	{ -1 }	/* end of table */
-};
+	{ 0xa000, 0xa000, input_port_0_r }, /* IN0 */
+	{ 0xa080, 0xa080, input_port_1_r }, /* IN1 */
+	{ 0xa100, 0xa100, input_port_2_r }, /* DSW1 */
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
@@ -126,24 +128,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa185, rallyx_leds_w },
 	{ 0xa186, 0xa186, rallyx_coin_lockout_w },
-	{ 0xa187, 0xa187, coin_counter_w },
+	{ 0xa187, 0xa187, rallyx_coin_counter_w },
 	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
-	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
+	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size }, /* ditto */
 	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radary },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0, 0, interrupt_vector_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
 INPUT_PORTS_START( rallyx )
-	PORT_START      /* IN0 */
+	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -153,10 +152,10 @@ INPUT_PORTS_START( rallyx )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-	PORT_START      /* IN1 */
+	PORT_START		/* IN1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -165,32 +164,32 @@ INPUT_PORTS_START( rallyx )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START      /* DSW0 */
+	PORT_START		/* DSW0 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	/* TODO: the bonus score depends on the number of lives */
 	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x02, "A" )
-	PORT_DIPSETTING(    0x04, "B" )
-	PORT_DIPSETTING(    0x06, "C" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(	0x02, "A" )
+	PORT_DIPSETTING(	0x04, "B" )
+	PORT_DIPSETTING(	0x06, "C" )
+	PORT_DIPSETTING(	0x00, "None" )
 	PORT_DIPNAME( 0x38, 0x08, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "1 Car, Medium" )
-	PORT_DIPSETTING(    0x28, "1 Car, Hard" )
-	PORT_DIPSETTING(    0x00, "2 Cars, Easy" )
-	PORT_DIPSETTING(    0x18, "2 Cars, Medium" )
-	PORT_DIPSETTING(    0x30, "2 Cars, Hard" )
-	PORT_DIPSETTING(    0x08, "3 Cars, Easy" )
-	PORT_DIPSETTING(    0x20, "3 Cars, Medium" )
-	PORT_DIPSETTING(    0x38, "3 Cars, Hard" )
+	PORT_DIPSETTING(	0x10, "1 Car, Medium" )
+	PORT_DIPSETTING(	0x28, "1 Car, Hard" )
+	PORT_DIPSETTING(	0x00, "2 Cars, Easy" )
+	PORT_DIPSETTING(	0x18, "2 Cars, Medium" )
+	PORT_DIPSETTING(	0x30, "2 Cars, Hard" )
+	PORT_DIPSETTING(	0x08, "3 Cars, Easy" )
+	PORT_DIPSETTING(	0x20, "3 Cars, Medium" )
+	PORT_DIPSETTING(	0x38, "3 Cars, Hard" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nrallyx )
-	PORT_START      /* IN0 */
+	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -200,10 +199,10 @@ INPUT_PORTS_START( nrallyx )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-	PORT_START      /* IN1 */
+	PORT_START		/* IN1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -212,28 +211,28 @@ INPUT_PORTS_START( nrallyx )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START      /* DSW0 */
+	PORT_START		/* DSW0 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	/* TODO: the bonus score depends on the number of lives */
 	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x02, "A" )
-	PORT_DIPSETTING(    0x04, "B" )
-	PORT_DIPSETTING(    0x06, "C" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(	0x02, "A" )
+	PORT_DIPSETTING(	0x04, "B" )
+	PORT_DIPSETTING(	0x06, "C" )
+	PORT_DIPSETTING(	0x00, "None" )
 	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "1 Car, Medium" )
-	PORT_DIPSETTING(    0x28, "1 Car, Hard" )
-	PORT_DIPSETTING(    0x18, "2 Cars, Medium" )
-	PORT_DIPSETTING(    0x30, "2 Cars, Hard" )
-	PORT_DIPSETTING(    0x00, "3 Cars, Easy" )
-	PORT_DIPSETTING(    0x20, "3 Cars, Medium" )
-	PORT_DIPSETTING(    0x38, "3 Cars, Hard" )
-	PORT_DIPSETTING(    0x08, "4 Cars, Easy" )
+	PORT_DIPSETTING(	0x10, "1 Car, Medium" )
+	PORT_DIPSETTING(	0x28, "1 Car, Hard" )
+	PORT_DIPSETTING(	0x18, "2 Cars, Medium" )
+	PORT_DIPSETTING(	0x30, "2 Cars, Hard" )
+	PORT_DIPSETTING(	0x00, "3 Cars, Easy" )
+	PORT_DIPSETTING(	0x20, "3 Cars, Medium" )
+	PORT_DIPSETTING(	0x38, "3 Cars, Hard" )
+	PORT_DIPSETTING(	0x08, "4 Cars, Easy" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
 
@@ -244,14 +243,14 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
+	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 bytes */
 };
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	64,	/* 64 sprites */
+	64, /* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,	/* bits are packed in groups of four */
@@ -276,9 +275,9 @@ static struct GfxLayout dotlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,        0, 64 },
-	{ REGION_GFX1, 0, &spritelayout,      0, 64 },
-	{ REGION_GFX2, 0, &dotlayout,      64*4,  1 },
+	{ REGION_GFX1, 0, &charlayout,		  0, 64 },
+	{ REGION_GFX1, 0, &spritelayout,	  0, 64 },
+	{ REGION_GFX2, 0, &dotlayout,	   64*4,  1 },
 	{ -1 } /* end of array */
 };
 
@@ -286,7 +285,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	3072000/32,	/* sample rate */
+	3072000/32, /* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
 	REGION_SOUND1	/* memory region */
@@ -302,7 +301,7 @@ static const char *rallyx_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	80,	/* volume */
+	80, /* volume */
 	rallyx_sample_names
 };
 
@@ -368,15 +367,15 @@ ROM_START( rallyx )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 
 	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )	/* dots */
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )  /* dots */
 
 	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound proms */
+	ROM_REGION( 0x0200, REGION_SOUND1 ) /* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
-	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
 ROM_START( rallyxm )
@@ -390,15 +389,15 @@ ROM_START( rallyxm )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 
 	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )	/* dots */
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )  /* dots */
 
 	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound proms */
+	ROM_REGION( 0x0200, REGION_SOUND1 ) /* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
-	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
 ROM_START( nrallyx )
@@ -412,19 +411,20 @@ ROM_START( nrallyx )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, 0xca7a174a )
 
 	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, BADCRC( 0x3c16f62c ) )	/* dots */
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, BADCRC( 0x3c16f62c ) )    /* dots */
 
 	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
 	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
 
-	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound proms */
+	ROM_REGION( 0x0200, REGION_SOUND1 ) /* sound proms */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
-	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
 
 
-GAME( 1980, rallyx,  0,      rallyx, rallyx,  0, ROT0, "Namco", "Rally X" )
+GAME( 1980, rallyx,  0, 	 rallyx, rallyx,  0, ROT0, "Namco", "Rally X" )
 GAME( 1980, rallyxm, rallyx, rallyx, rallyx,  0, ROT0, "[Namco] (Midway license)", "Rally X (Midway)" )
-GAME( 1981, nrallyx, 0,      rallyx, nrallyx, 0, ROT0, "Namco", "New Rally X" )
+GAME( 1981, nrallyx, 0, 	 rallyx, nrallyx, 0, ROT0, "Namco", "New Rally X" )
+

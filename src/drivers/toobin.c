@@ -1,89 +1,59 @@
 /***************************************************************************
 
-Toobin Memory Map (preliminary)
--------------------------------
+	Atari Toobin' hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
-TOOBIN' 68010 MEMORY MAP
+	Games supported:
+		* Toobin' (1988) [3 sets]
 
-Function                           Address        R/W  DATA
--------------------------------------------------------------
-Program ROM                        000000-07FFFF  R    D0-D15
+	Known bugs:
+		* none at this time
 
-Playfield RAM                      C00000-C07FFF  R/W  D0-D15
-Alphanumerics RAM                  C08000-C097FF  R/W  D0-D15
-Motion Object RAM                  C09800-C09FFF  R/W  D0-D15
+****************************************************************************
 
-Color RAM Playfield                C10000-C101FF  R/W  D0-D15
-Color RAM Motion Object            C10200-C103FF  R/W  D0-D15
-Color RAM Alpha                    C10400-C105FF  R/W  D0-D15
-Color RAM Extra?                   C10600-C107FF  R/W  D0-D15
+	Memory map (TBA)
 
-???? (Dip switches?)               FF6000         R
+***************************************************************************/
 
-Watchdog reset                     FF8000-FF8001  W    xx
-68000-to-6502 data                 FF8101         W    D0-D7
-Video intensity (0=max, 1f=min)    FF8300         W    D0-D4
-Scan line of next interrupt        FF8340         W    D0-D8
-Head of motion object list         FF8380         W    D0-D7
-Interrupt acknowledge              FF83C0-FF83C1  W    xx
-Sound chip reset                   FF8400-FF8401  W    D0
-EEPROM output enable               FF8500-FF8501  W    xx
-
-Horizontal scroll register         FF8600-FF8601  W    D6-D15
-Vertical scroll register           FF8700-FF8701  W    D6-D15
-
-Player 2 Throw                     FF8800-FF8801  R    D9
-Player 1 Throw                                    R    D8
-Player 1 Paddle Forward (Right)                   R    D7
-Player 1 Paddle Forward (Left)                    R    D6
-Player 1 Paddle Backward (Left)                   R    D5
-Player 1 Paddle Backward (Right)                  R    D4
-Player 2 Paddle Forward (Right)                   R    D3
-Player 2 Paddle Forward (Left)                    R    D2
-Player 2 Paddle Backward (Left)                   R    D1
-Player 2 Paddle Backward (Right)                  R    D0
-
-VBLANK                             FF9000         R    D14
-Output buffer full (at FF8101)                    R    D13
-Self-test                                         R    D12
-
-6502-to-68000 data                 FF9801         R    D0-D7
-
-EEPROM                             FFA000-FFAFFF  R/W  D0-D7
-
-Program RAM                        FFC000-FFFFFF  R/W  D0-D15
-
-****************************************************************************/
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
-
-
-extern UINT8 *toobin_intensity;
-extern UINT8 *toobin_moslip;
-
-static UINT8 *interrupt_scan;
-
-
-WRITE_HANDLER( toobin_moslip_w );
-WRITE_HANDLER( toobin_paletteram_w );
-WRITE_HANDLER( toobin_playfieldram_w );
-
-int toobin_vh_start(void);
-void toobin_vh_stop(void);
-void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void toobin_scanline_update(int scanline);
 
 
 
 /*************************************
  *
- *	Initialization
+ *	Externals
+ *
+ *************************************/
+
+WRITE16_HANDLER( toobin_paletteram_w );
+WRITE16_HANDLER( toobin_hscroll_w );
+WRITE16_HANDLER( toobin_vscroll_w );
+
+int toobin_vh_start(void);
+void toobin_vh_stop(void);
+void toobin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+extern data16_t *toobin_intensity;
+
+
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
+
+static data16_t *interrupt_scan;
+
+
+
+/*************************************
+ *
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -107,7 +77,6 @@ static void init_machine(void)
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(toobin_scanline_update, 8);
 	atarijsa_reset();
 }
 
@@ -115,19 +84,20 @@ static void init_machine(void)
 
 /*************************************
  *
- *	Interrupt handlers.
+ *	Interrupt handlers
  *
  *************************************/
 
-static WRITE_HANDLER( interrupt_scan_w )
+static WRITE16_HANDLER( interrupt_scan_w )
 {
-	int oldword = READ_WORD(&interrupt_scan[offset]);
-	int newword = COMBINE_WORD(oldword, data);
+	int oldword = interrupt_scan[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
 
 	/* if something changed, update the word in memory */
 	if (oldword != newword)
 	{
-		WRITE_WORD(&interrupt_scan[offset], newword);
+		interrupt_scan[offset] = newword;
 		atarigen_scanline_int_set(newword & 0x1ff);
 	}
 }
@@ -140,9 +110,9 @@ static WRITE_HANDLER( interrupt_scan_w )
  *
  *************************************/
 
-static READ_HANDLER( special_port1_r )
+static READ16_HANDLER( special_port1_r )
 {
-	int result = input_port_1_r(offset);
+	int result = readinputport(1);
 	if (atarigen_get_hblank()) result ^= 0x8000;
 	if (atarigen_cpu_to_sound_ready) result ^= 0x2000;
 	return result;
@@ -156,44 +126,38 @@ static READ_HANDLER( special_port1_r )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xc00000, 0xc07fff, MRA_BANK1 },
-	{ 0xc08000, 0xc097ff, MRA_BANK2 },
-	{ 0xc09800, 0xc09fff, MRA_BANK3 },
-	{ 0xc10000, 0xc107ff, paletteram_word_r },
-	{ 0xff6000, 0xff6001, MRA_NOP },		/* who knows? read at controls time */
-	{ 0xff8800, 0xff8801, input_port_0_r },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0xc00000, 0xc09fff, MRA16_RAM },
+	{ 0xc10000, 0xc107ff, MRA16_RAM },
+	{ 0xff6000, 0xff6001, MRA16_NOP },		/* who knows? read at controls time */
+	{ 0xff8800, 0xff8801, input_port_0_word_r },
 	{ 0xff9000, 0xff9001, special_port1_r },
 	{ 0xff9800, 0xff9801, atarigen_sound_r },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_r },
-	{ 0xffc000, 0xffffff, MRA_BANK7 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xc00000, 0xc07fff, toobin_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xc08000, 0xc097ff, MWA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xc09800, 0xc09fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram },
-	{ 0xff8000, 0xff8001, watchdog_reset_w },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0xc00000, 0xc07fff, ataripf_0_large_w, &ataripf_0_base },
+	{ 0xc08000, 0xc097ff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xc09800, 0xc09fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram16 },
+	{ 0xff8000, 0xff8001, watchdog_reset16_w },
 	{ 0xff8100, 0xff8101, atarigen_sound_w },
-	{ 0xff8300, 0xff8301, MWA_BANK4, &toobin_intensity },
+	{ 0xff8300, 0xff8301, MWA16_RAM, &toobin_intensity },
 	{ 0xff8340, 0xff8341, interrupt_scan_w, &interrupt_scan },
-	{ 0xff8380, 0xff8381, toobin_moslip_w, &toobin_moslip },
+	{ 0xff8380, 0xff8381, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0xff83c0, 0xff83c1, atarigen_scanline_int_ack_w },
 	{ 0xff8400, 0xff8401, atarigen_sound_reset_w },
 	{ 0xff8500, 0xff8501, atarigen_eeprom_enable_w },
-	{ 0xff8600, 0xff8601, MWA_BANK5, &atarigen_hscroll },
-	{ 0xff8700, 0xff8701, MWA_BANK6, &atarigen_vscroll },
+	{ 0xff8600, 0xff8601, toobin_hscroll_w },
+	{ 0xff8700, 0xff8701, toobin_vscroll_w },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffc000, 0xffffff, MWA_BANK7 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -241,37 +205,37 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	1024,	/* 1024 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout pflayout =
 {
-	8,8,	/* 8*8 tiles */
-	16384,	/* 16384 of them */
-	4,		/* 4 bits per pixel */
-	{ 256*1024*8, 256*1024*8+4, 0, 4 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every tile takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout molayout =
 {
-	16,16,	/* 16*16 sprites */
-	16384,	/* 16384 of them */
-	4,		/* 4 bits per pixel */
-	{ 1024*1024*8, 1024*1024*8+4, 0, 4 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	8*64	/* every sprite takes 64 consecutive bytes */
+	8*64
 };
 
 
@@ -280,7 +244,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &pflayout,     0, 16 },
 	{ REGION_GFX2, 0, &molayout,   256, 16 },
 	{ REGION_GFX3, 0, &anlayout,   512, 64 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -303,7 +267,7 @@ static const struct MachineDriver machine_driver_toobin =
 		},
 		JSA_I_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -511,17 +475,17 @@ ROM_END
 static void init_toobin(void)
 {
 	atarigen_eeprom_default = NULL;
-
 	atarijsa_init(1, 2, 1, 0x1000);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x414e, 0x4166);
-
-	/* display messages */
-	atarigen_show_sound_message();
 }
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAME( 1988, toobin,  0,      toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (version 3)" )
 GAME( 1988, toobin2, toobin, toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (version 2)" )

@@ -83,18 +83,18 @@ int blktiger_vh_start(void)
 		return 1;
 	}
 
-	tx_tilemap->transparent_pen = 3;
-	bg_tilemap8x4->transparent_pen =
-	bg_tilemap4x8->transparent_pen = 15;
+	tilemap_set_transparent_pen(tx_tilemap,3);
+	tilemap_set_transparent_pen(bg_tilemap8x4,15);
+	tilemap_set_transparent_pen(bg_tilemap4x8,15);
 
-	bg_tilemap8x4->transmask[0] =
-	bg_tilemap4x8->transmask[0] = 0xffff;	/* split type 0 is totally transparent in front half */
-	bg_tilemap8x4->transmask[1] =
-	bg_tilemap4x8->transmask[1] = 0xfff0;	/* split type 1 has pens 4-15 transparent in front half */
-	bg_tilemap8x4->transmask[2] =
-	bg_tilemap4x8->transmask[2] = 0xff00;	/* split type 1 has pens 8-15 transparent in front half */
-	bg_tilemap8x4->transmask[3] =
-	bg_tilemap4x8->transmask[3] = 0xf000;	/* split type 1 has pens 12-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,0,0xffff);	/* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,1,0xfff0);	/* split type 1 has pens 4-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,2,0xff00);	/* split type 1 has pens 8-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,3,0xf000);	/* split type 1 has pens 12-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap4x8,0,0xffff);
+	tilemap_set_transmask(bg_tilemap4x8,1,0xfff0);
+	tilemap_set_transmask(bg_tilemap4x8,2,0xff00);
+	tilemap_set_transmask(bg_tilemap4x8,3,0xf000);
 
 	return 0;
 }
@@ -172,7 +172,7 @@ WRITE_HANDLER( blktiger_video_control_w )
 	cpu_set_reset_line(1,(data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 6 flips screen */
-	flip_screen_w(0,data & 0x40);
+	flip_screen_set(data & 0x40);
 
 	/* bit 7 enables characters? Just a guess */
 	chon = ~data & 0x80;
@@ -269,24 +269,21 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	if (bgon)
-		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_BACK);
+		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_BACK,0);
 
 	if (objon)
 		draw_sprites(bitmap);
 
 	if (bgon)
-		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_FRONT);
+		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_FRONT,0);
 
 	if (chon)
-		tilemap_draw(bitmap,tx_tilemap,0);
+		tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 void blktiger_eof_callback(void)

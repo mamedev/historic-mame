@@ -197,8 +197,7 @@ static WRITE_HANDLER( fax_bank_select_w )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
+static MEMORY_READ_START( main_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x3fff, MRA_ROM },			/* Targ, Spectar only */
 	{ 0x4000, 0x43ff, videoram_r },
@@ -212,11 +211,9 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x5213, 0x5213, input_port_3_r },		/* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM },			/* Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress main_writemem[] =
-{
+static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0800, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
@@ -231,11 +228,9 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x5200, 0x520F, pia_0_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress fax_readmem[] =
-{
+static MEMORY_READ_START( fax_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },			/* Fax only */
 	{ 0x1a00, 0x1a00, input_port_4_r },		/* IN3 - Fax only */
@@ -249,11 +244,9 @@ static struct MemoryReadAddress fax_readmem[] =
 	{ 0x5213, 0x5213, input_port_3_r },		/* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM },			/* Fax, Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fax_writemem[] =
-{
+static MEMORY_WRITE_START( fax_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, MWA_RAM },			/* Fax only */
 	{ 0x2000, 0x2000, fax_bank_select_w },	/* Fax only */
@@ -269,8 +262,7 @@ static struct MemoryWriteAddress fax_writemem[] =
 	{ 0x5213, 0x5217, MWA_NOP },			/* empty control lines on color/sound board */
 	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -280,8 +272,7 @@ static struct MemoryWriteAddress fax_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0fff, exidy_shriot_r },
 	{ 0x1000, 0x100f, pia_1_r },
@@ -291,11 +282,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x5800, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, exidy_shriot_w },
 	{ 0x1000, 0x100f, pia_1_w },
@@ -306,33 +295,24 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x5800, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cvsd_writemem[] =
-{
+static MEMORY_WRITE_START( cvsd_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress cvsd_readmem[] =
-{
+static MEMORY_READ_START( cvsd_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOWritePort cvsd_iowrite[] =
-{
+static PORT_WRITE_START( cvsd_iowrite )
 	{ 0x00, 0xff, mtrap_voiceio_w },
-	{ -1 }
-};
+PORT_END
 
-static struct IOReadPort cvsd_ioread[] =
-{
+static PORT_READ_START( cvsd_ioread )
 	{ 0x00, 0xff, mtrap_voiceio_r },
-	{ -1 }
-};
+PORT_END
 
 
 

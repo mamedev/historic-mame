@@ -52,10 +52,12 @@ int pang_vh_start(void)
 	paletteram=NULL;
 
 
-	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!bg_tilemap)
 		return 1;
+
+	tilemap_set_transparent_pen(bg_tilemap,15);
 
 	/*
 		OBJ RAM
@@ -78,8 +80,6 @@ int pang_vh_start(void)
 		return 1;
 	}
 	memset(paletteram, 0, 2*Machine->drv->total_colors);
-
-	palette_transparent_color = 0; /* background color (Block Block uses this on the title screen) */
 
 	return 0;
 }
@@ -196,7 +196,7 @@ logerror("PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
 	/* bit 3 is unknown (used, e.g. marukin pulses it on the title screen) */
 
 	/* bit 4 selects OKI M6295 bank */
-	OKIM6295_set_bank_base(0, ALL_VOICES, (data & 0x10) ? 0x40000 : 0x00000);
+	OKIM6295_set_bank_base(0, (data & 0x10) ? 0x40000 : 0x00000);
 
 	/* bit 5 is palette RAM bank selector (doesn't apply to mgakuen) */
 	paletteram_bank = data & 0x20;
@@ -299,24 +299,15 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
-
 	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
-
 	mark_sprites_palette();
+	palette_used_colors[0] = PALETTE_COLOR_VISIBLE;
 
-	/* the following is required to make the colored background work */
-	for (i = 15;i < Machine->drv->total_colors;i += 16)
-		palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
+	palette_recalc();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
-
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 }

@@ -322,7 +322,7 @@ static void Interrupt(void)
 #if (HAS_HD63705)
 		if(SUBTYPE!=SUBTYPE_HD63705)
 #endif
-			PC |= 0xf800;
+			PC |= ~AMASK;
 		PUSHWORD(m6805.pc);
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
@@ -933,9 +933,15 @@ static UINT8 m68705_win_layout[] = {
 
 void m68705_reset(void *param)
 {
-    m6805_reset(param);
+	UINT32 *p_amask = param;
+	m6805_reset(param);
 	/* Overide default 6805 type */
 	m6805.subtype = SUBTYPE_M68705;
+	if (p_amask)
+		AMASK = *p_amask;
+	else
+		AMASK = 0x7ff; /* default if no AMASK is specified */
+	RM16( AMASK-1, &m6805.pc );
 }
 void m68705_exit(void) { m6805_exit(); }
 int  m68705_execute(int cycles) { return m6805_execute(cycles); }

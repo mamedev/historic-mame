@@ -167,19 +167,16 @@ WRITE_HANDLER( bublbobl_sh_nmi_enable_w );
 
 
 
-static struct MemoryReadAddress bublbobl_readmem[] =
-{
+static MEMORY_READ_START( bublbobl_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
 	{ 0xf800, 0xf9ff, paletteram_r },
 	{ 0xfc00, 0xffff, bublbobl_sharedram2_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bublbobl_writemem[] =
-{
+static MEMORY_WRITE_START( bublbobl_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
 	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
@@ -191,33 +188,27 @@ static struct MemoryWriteAddress bublbobl_writemem[] =
 	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
 	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
 	{ 0xfc00, 0xffff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress m68705_readmem[] =
-{
+static MEMORY_READ_START( m68705_readmem )
 	{ 0x0000, 0x0000, bublbobl_68705_portA_r },
 	{ 0x0001, 0x0001, bublbobl_68705_portB_r },
 	{ 0x0002, 0x0002, input_port_0_r },	/* COIN */
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m68705_writemem[] =
-{
+static MEMORY_WRITE_START( m68705_writemem )
 	{ 0x0000, 0x0000, bublbobl_68705_portA_w },
 	{ 0x0001, 0x0001, bublbobl_68705_portB_w },
 	{ 0x0004, 0x0004, bublbobl_68705_ddrA_w },
 	{ 0x0005, 0x0005, bublbobl_68705_ddrB_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress boblbobl_readmem[] =
-{
+static MEMORY_READ_START( boblbobl_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -228,11 +219,9 @@ static struct MemoryReadAddress boblbobl_readmem[] =
 	{ 0xff01, 0xff01, input_port_1_r },
 	{ 0xff02, 0xff02, input_port_2_r },
 	{ 0xff03, 0xff03, input_port_3_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress boblbobl_writemem[] =
-{
+static MEMORY_WRITE_START( boblbobl_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
 	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
@@ -243,26 +232,20 @@ static struct MemoryWriteAddress boblbobl_writemem[] =
 	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
 	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
 	{ 0xfc00, 0xfcff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bublbobl_readmem2[] =
-{
+static MEMORY_READ_START( bublbobl_readmem2 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xe000, 0xf7ff, bublbobl_sharedram1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bublbobl_writemem2[] =
-{
+static MEMORY_WRITE_START( bublbobl_writemem2 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
@@ -272,11 +255,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xb001, 0xb001, MRA_NOP },	/* bit 0: message pending for main cpu */
 									/* bit 1: message pending for sound cpu */
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
@@ -287,12 +268,10 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xb001, 0xb001, bublbobl_sh_nmi_enable_w },
 	{ 0xb002, 0xb002, bublbobl_sh_nmi_disable_w },
 	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress tokio_readmem[] =
-{
+static MEMORY_READ_START( tokio_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -304,11 +283,9 @@ static struct MemoryReadAddress tokio_readmem[] =
 	{ 0xfa06, 0xfa06, input_port_3_r },
 	{ 0xfa07, 0xfa07, input_port_4_r },
 	{ 0xfe00, 0xfe00, tokio_fake_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tokio_writemem[] =
-{
+static MEMORY_WRITE_START( tokio_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdcff, MWA_RAM, &videoram, &videoram_size },
 	{ 0xdd00, 0xdfff, MWA_RAM, &bublbobl_objectram, &bublbobl_objectram_size },
@@ -320,25 +297,19 @@ static struct MemoryWriteAddress tokio_writemem[] =
 	{ 0xfb80, 0xfb80, bublbobl_nmitrigger_w },
 	{ 0xfc00, 0xfc00, bublbobl_sound_command_w },
 	{ 0xfe00, 0xfe00, MWA_NOP }, /* ??? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress tokio_readmem2[] =
-{
+static MEMORY_READ_START( tokio_readmem2 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x97ff, bublbobl_sharedram1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tokio_writemem2[] =
-{
+static MEMORY_WRITE_START( tokio_writemem2 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x97ff, bublbobl_sharedram1_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress tokio_sound_readmem[] =
-{
+static MEMORY_READ_START( tokio_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, soundlatch_r },
@@ -346,11 +317,9 @@ static struct MemoryReadAddress tokio_sound_readmem[] =
 	{ 0xb000, 0xb000, YM2203_status_port_0_r },
 	{ 0xb001, 0xb001, YM2203_read_port_0_r },
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tokio_sound_writemem[] =
-{
+static MEMORY_WRITE_START( tokio_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 //	{ 0x9000, 0x9000, MWA_NOP },	/* ??? */
@@ -359,8 +328,7 @@ static struct MemoryWriteAddress tokio_sound_writemem[] =
 	{ 0xb000, 0xb000, YM2203_control_port_0_w },
 	{ 0xb001, 0xb001, YM2203_write_port_0_w },
 	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

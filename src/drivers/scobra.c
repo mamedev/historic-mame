@@ -123,15 +123,29 @@ static READ_HANDLER( moonwar2_IN0_r )
 	return ((readinputport(0) & 0xe0) | delta | sign );
 }
 
+static WRITE_HANDLER( scobra_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
 static WRITE_HANDLER( stratgyx_coin_counter_w )
 {
 	/* Bit 1 selects coin counter */
 	coin_counter_w(offset >> 1, data);
 }
 
-
-static struct MemoryReadAddress type1_readmem[] =
+static WRITE_HANDLER( flip_screen_x_w )
 {
+	flip_screen_x_set(data);
+}
+
+static WRITE_HANDLER( flip_screen_y_w )
+{
+	flip_screen_y_set(data);
+}
+
+
+static MEMORY_READ_START( type1_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
@@ -139,11 +153,9 @@ static struct MemoryReadAddress type1_readmem[] =
 	{ 0x9801, 0x9801, input_port_1_r },	/* IN1 */
 	{ 0x9802, 0x9802, input_port_2_r },	/* IN2 */
 	{ 0xb000, 0xb000, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress type1_writemem[] =
-{
+static MEMORY_WRITE_START( type1_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
@@ -155,16 +167,14 @@ static struct MemoryWriteAddress type1_writemem[] =
 	{ 0xa000, 0xa000, soundlatch_w },
 	{ 0xa001, 0xa001, scramble_sh_irqtrigger_w },
 	{ 0xa801, 0xa801, interrupt_enable_w },
-	{ 0xa802, 0xa802, coin_counter_w },
+	{ 0xa802, 0xa802, scobra_coin_counter_w },
 	{ 0xa803, 0xa803, scramble_background_w },
 	{ 0xa804, 0xa804, galaxian_stars_w },
 	{ 0xa806, 0xa806, flip_screen_x_w },
 	{ 0xa807, 0xa807, flip_screen_y_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress type2_readmem[] =
-{
+static MEMORY_READ_START( type2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x9000, 0x93ff, MRA_RAM },	/* screen attributes, sprites, bullets */
@@ -172,11 +182,9 @@ static struct MemoryReadAddress type2_readmem[] =
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa004, 0xa004, input_port_1_r },	/* IN1 */
 	{ 0xa008, 0xa008, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress type2_writemem[] =
-{
+static MEMORY_WRITE_START( type2_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x883f, galaxian_attributes_w, &galaxian_attributesram },
@@ -192,11 +200,9 @@ static struct MemoryWriteAddress type2_writemem[] =
 	{ 0xb006, 0xb008, stratgyx_coin_counter_w },
 	{ 0xb00c, 0xb00c, flip_screen_y_w },
 	{ 0xb00e, 0xb00e, flip_screen_x_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress hustler_readmem[] =
-{
+static MEMORY_READ_START( hustler_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
@@ -204,11 +210,9 @@ static struct MemoryReadAddress hustler_readmem[] =
 	{ 0xd000, 0xd000, input_port_0_r },	/* IN0 */
 	{ 0xd008, 0xd008, input_port_1_r },	/* IN1 */
 	{ 0xd010, 0xd010, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hustler_writemem[] =
-{
+static MEMORY_WRITE_START( hustler_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
@@ -221,11 +225,9 @@ static struct MemoryWriteAddress hustler_writemem[] =
 	{ 0xa80e, 0xa80e, MWA_NOP },	/* coin counters */
 	{ 0xe000, 0xe000, soundlatch_w },
 	{ 0xe008, 0xe008, scramble_sh_irqtrigger_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress hustlerb_readmem[] =
-{
+static MEMORY_READ_START( hustlerb_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
@@ -233,11 +235,9 @@ static struct MemoryReadAddress hustlerb_readmem[] =
 	{ 0xc100, 0xc100, input_port_0_r },	/* IN0 */
 	{ 0xc101, 0xc101, input_port_1_r },	/* IN1 */
 	{ 0xc102, 0xc102, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hustlerb_writemem[] =
-{
+static MEMORY_WRITE_START( hustlerb_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
@@ -250,80 +250,59 @@ static struct MemoryWriteAddress hustlerb_writemem[] =
 	{ 0xa807, 0xa807, flip_screen_x_w },
 	{ 0xc200, 0xc200, soundlatch_w },
 	{ 0xc201, 0xc201, scramble_sh_irqtrigger_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x9000, 0x9fff, scramble_filter_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress hustler_sound_readmem[] =
-{
+static MEMORY_READ_START( hustler_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hustler_sound_writemem[] =
-{
+static MEMORY_WRITE_START( hustler_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x20, 0x20, AY8910_read_port_0_r },
 	{ 0x80, 0x80, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x10, 0x10, AY8910_control_port_0_w },
 	{ 0x20, 0x20, AY8910_write_port_0_w },
 	{ 0x40, 0x40, AY8910_control_port_1_w },
 	{ 0x80, 0x80, AY8910_write_port_1_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort hustler_sound_readport[] =
-{
+static PORT_READ_START( hustler_sound_readport )
 	{ 0x40, 0x40, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort hustler_sound_writeport[] =
-{
+static PORT_WRITE_START( hustler_sound_writeport )
 	{ 0x40, 0x40, AY8910_write_port_0_w },
 	{ 0x80, 0x80, AY8910_control_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOReadPort hustlerb_sound_readport[] =
-{
+static PORT_READ_START( hustlerb_sound_readport )
 	{ 0x80, 0x80, AY8910_read_port_0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort hustlerb_sound_writeport[] =
-{
+static PORT_WRITE_START( hustlerb_sound_writeport )
 	{ 0x40, 0x40, AY8910_control_port_0_w },
 	{ 0x80, 0x80, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( scobra )

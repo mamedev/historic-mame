@@ -80,8 +80,7 @@ static WRITE_HANDLER( actfancr_sound_w )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress actfan_readmem[] =
-{
+static MEMORY_READ_START( actfan_readmem )
 	{ 0x000000, 0x02ffff, MRA_ROM },
 	{ 0x062000, 0x063fff, actfancr_pf1_data_r },
 	{ 0x072000, 0x0727ff, actfancr_pf2_data_r },
@@ -90,11 +89,9 @@ static struct MemoryReadAddress actfan_readmem[] =
 	{ 0x140000, 0x140001, actfan_control_0_r },
 	{ 0x120000, 0x1205ff, paletteram_r },
 	{ 0x1f0000, 0x1f3fff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress actfan_writemem[] =
-{
+static MEMORY_WRITE_START( actfan_writemem )
 	{ 0x000000, 0x02ffff, MWA_ROM },
 	{ 0x060000, 0x06001f, actfancr_pf1_control_w },
 	{ 0x062000, 0x063fff, actfancr_pf1_data_w, &actfancr_pf1_data },
@@ -105,11 +102,9 @@ static struct MemoryWriteAddress actfan_writemem[] =
 	{ 0x120000, 0x1205ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0x150000, 0x150001, actfancr_sound_w },
 	{ 0x1f0000, 0x1f3fff, MWA_RAM, &actfancr_ram }, /* Main ram */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress triothep_readmem[] =
-{
+static MEMORY_READ_START( triothep_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x044000, 0x045fff, actfancr_pf2_data_r },
 	{ 0x064000, 0x0647ff, actfancr_pf1_data_r },
@@ -118,11 +113,9 @@ static struct MemoryReadAddress triothep_readmem[] =
 	{ 0x140000, 0x140001, MRA_NOP }, /* Value doesn't matter */
 	{ 0x1f0000, 0x1f3fff, MRA_RAM },
 	{ 0x1ff000, 0x1ff001, triothep_control_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress triothep_writemem[] =
-{
+static MEMORY_WRITE_START( triothep_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x04001f, actfancr_pf2_control_w },
 	{ 0x044000, 0x045fff, actfancr_pf2_data_w, &actfancr_pf2_data },
@@ -137,22 +130,18 @@ static struct MemoryWriteAddress triothep_writemem[] =
 	{ 0x1f0000, 0x1f3fff, MWA_RAM, &actfancr_ram }, /* Main ram */
 	{ 0x1ff000, 0x1ff001, triothep_control_select_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
-static struct MemoryReadAddress dec0_s_readmem[] =
-{
+static MEMORY_READ_START( dec0_s_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x3800, 0x3800, OKIM6295_status_0_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dec0_s_writemem[] =
-{
+static MEMORY_WRITE_START( dec0_s_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0800, YM2203_control_port_0_w },
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
@@ -160,8 +149,7 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 	{ 0x1001, 0x1001, YM3812_write_port_0_w },
 	{ 0x3800, 0x3800, OKIM6295_data_0_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

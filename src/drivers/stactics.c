@@ -88,8 +88,7 @@ WRITE_HANDLER( stactics_chardata_e_w );
 WRITE_HANDLER( stactics_videoram_f_w );
 WRITE_HANDLER( stactics_chardata_f_w );
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x2fff, MRA_ROM },
     { 0x4000, 0x47ff, MRA_RAM },
     { 0x5000, 0x5fff, input_port_0_r, },
@@ -114,11 +113,9 @@ static struct MemoryReadAddress readmem[] =
     { 0xf600, 0xf7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
     { 0xf800, 0xffff, MRA_RAM },
 
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x4000, 0x47ff, MWA_RAM },
     { 0x6000, 0x6001, stactics_coin_lockout_w },
     { 0x6006, 0x6007, stactics_palette_w },
@@ -152,8 +149,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0xf400, 0xf7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
     { 0xf800, 0xffff, stactics_chardata_f_w, &stactics_chardata_f },
 
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( stactics )
 

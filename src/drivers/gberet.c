@@ -104,8 +104,7 @@ static WRITE_HANDLER( mrgoemon_bankswitch_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xe03f, MRA_RAM },
 	{ 0xf200, 0xf200, input_port_4_r },	/* DSW1 */
@@ -115,11 +114,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf602, 0xf602, input_port_0_r },	/* IN0 */
 	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
 	{ 0xf800, 0xf800, MRA_NOP },	/* gberetb only - IRQ acknowledge */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
 	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
@@ -133,11 +130,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf200, 0xf200, MWA_NOP },		/* Loads the snd command into the snd latch */
 	{ 0xf400, 0xf400, SN76496_0_w },	/* This address triggers the SN chip to read the data port. */
 //	{ 0xf600, 0xf600, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gberetb_writemem[] =
-{
+static MEMORY_WRITE_START( gberetb_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
 	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
@@ -152,11 +147,9 @@ static struct MemoryWriteAddress gberetb_writemem[] =
 //	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
 	{ 0xe044, 0xe044, gberet_e044_w },
 	{ 0xf400, 0xf400, SN76496_0_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress mrgoemon_readmem[] =
-{
+static MEMORY_READ_START( mrgoemon_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xe03f, MRA_RAM },
 	{ 0xf200, 0xf200, input_port_4_r },	/* DSW1 */
@@ -166,11 +159,9 @@ static struct MemoryReadAddress mrgoemon_readmem[] =
 	{ 0xf602, 0xf602, input_port_0_r },	/* IN0 */
 	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
 	{ 0xf800, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mrgoemon_writemem[] =
-{
+static MEMORY_WRITE_START( mrgoemon_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
 	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
@@ -184,8 +175,7 @@ static struct MemoryWriteAddress mrgoemon_writemem[] =
 	{ 0xf200, 0xf200, MWA_NOP },		/* Loads the snd command into the snd latch */
 	{ 0xf400, 0xf400, SN76496_0_w },	/* This address triggers the SN chip to read the data port. */
 	{ 0xf800, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

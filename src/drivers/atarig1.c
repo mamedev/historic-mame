@@ -1,43 +1,60 @@
 /***************************************************************************
 
-	Hydra/Pit Fighter
+	Atari G1 hardware
 
-****************************************************************************/
+	driver by Aaron Giles
+
+	Games supported:
+		* Hydra (1990)
+		* Pit Fighter (1990)
+
+	Known bugs:
+		* slapstic not 100%
+
+****************************************************************************
+
+	Memory map (TBA)
+
+***************************************************************************/
 
 
 #include "driver.h"
-#include "sound/adpcm.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-/* Note: if this is set to 1, it must also be set in the vidhrdw module */
-#define HIGH_RES 0
 
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
-extern struct rectangle hydra_mo_area;
-extern UINT32 hydra_mo_priority_offset;
-extern INT32 hydra_pf_xoffset;
-
-
-static UINT8 which_input;
-
-
-WRITE_HANDLER( hydra_playfieldram_w );
+WRITE16_HANDLER( hydra_mo_control_w );
 
 int hydra_vh_start(void);
 void hydra_vh_stop(void);
 void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void hydra_scanline_update(int param);
-WRITE_HANDLER( hydra_mo_control_w );
+
+extern UINT8 atarig1_pitfight;
 
 
 
 /*************************************
  *
- *	Initialization
+ *	Statics
+ *
+ *************************************/
+
+static UINT8 which_input;
+
+
+
+/*************************************
+ *
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -74,27 +91,26 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port0_r )
+static READ16_HANDLER( special_port0_r )
 {
-	int temp = input_port_0_r(offset);
+	int temp = readinputport(0);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x1000;
 	temp ^= 0x2000;		/* A2DOK always high for now */
 	return temp;
 }
 
 
-static WRITE_HANDLER( a2d_select_w )
+static WRITE16_HANDLER( a2d_select_w )
 {
-	(void)data;
-	which_input = (offset / 2);
+	which_input = offset;
 }
 
 
-static READ_HANDLER( a2d_data_r )
+static READ16_HANDLER( a2d_data_r )
 {
 	/* Pit Fighter has no A2D, just another input port */
-	if (hydra_mo_area.min_x != 0)
-		return input_port_1_r(offset);
+	if (atarig1_pitfight)
+		return readinputport(1);
 
 	/* otherwise, assume it's hydra */
 	if (which_input < 3)
@@ -111,27 +127,21 @@ static READ_HANDLER( a2d_data_r )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0xfc0000, 0xfc0001, special_port0_r },
 	{ 0xfc8000, 0xfc8001, a2d_data_r },
 	{ 0xfd0000, 0xfd0001, atarigen_sound_upper_r },
 	{ 0xfd8000, 0xfdffff, atarigen_eeprom_r },
 /*	{ 0xfe0000, 0xfe7fff, from_r },*/
-	{ 0xfe8000, 0xfe89ff, MRA_BANK1 },
-	{ 0xff0000, 0xff3fff, MRA_BANK2 },
-	{ 0xff4000, 0xff5fff, MRA_BANK3 },
-	{ 0xff6000, 0xff6fff, MRA_BANK4 },
-	{ 0xff7000, 0xffffff, MRA_BANK5 },
-	{ -1 }  /* end of table */
-};
+	{ 0xfe8000, 0xfe89ff, MRA16_RAM },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xf80000, 0xf80001, watchdog_reset_w },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0xf80000, 0xf80001, watchdog_reset16_w },
 	{ 0xf88000, 0xf8ffff, atarigen_eeprom_enable_w },
 	{ 0xf90000, 0xf90001, atarigen_sound_upper_w },
 	{ 0xf98000, 0xf98001, atarigen_sound_reset_w },
@@ -139,13 +149,12 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xfb0000, 0xfb0001, atarigen_video_int_ack_w },
 	{ 0xfc8000, 0xfc8007, a2d_select_w },
 	{ 0xfd8000, 0xfdffff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w, &paletteram },
-	{ 0xff0000, 0xff3fff, MWA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xff4000, 0xff5fff, hydra_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xff6000, 0xff6fff, MWA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xff7000, 0xffffff, MWA_BANK5 },
-	{ -1 }  /* end of table */
-};
+	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w, &paletteram16 },
+	{ 0xff0000, 0xff3fff, atarirle_0_spriteram_w, &atarirle_0_spriteram },
+	{ 0xff4000, 0xff5fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xff6000, 0xff6fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff7000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -238,33 +247,35 @@ INPUT_PORTS_END
 
 static struct GfxLayout pflayout =
 {
-	8 << HIGH_RES,8,	/* 8*8 chars */
-	16384,	/* 16384 chars */
-	5,		/* 5 bits per pixel */
+	8,8,
+	RGN_FRAC(2,5),
+	5,
 	{ 0, 0, 1, 2, 3 },
-#if HIGH_RES
-	{ 0x40000*8+0,0x40000*8+0, 0x40000*8+4,0x40000*8+4, 0,0, 4,4,
-		0x40000*8+8,0x40000*8+8, 0x40000*8+12,0x40000*8+12, 8,8, 12,12 },
-#else
-	{ 0x40000*8+0, 0x40000*8+4, 0, 4, 0x40000*8+8, 0x40000*8+12, 8, 12 },
-#endif
+	{ RGN_FRAC(2,5)+0, RGN_FRAC(2,5)+4, 0, 4, RGN_FRAC(2,5)+8, RGN_FRAC(2,5)+12, 8, 12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
+};
+
+static struct GfxLayout pftoplayout =
+{
+	8,8,
+	RGN_FRAC(2,5),
+	5,
+	{ RGN_FRAC(4,5), RGN_FRAC(4,5), RGN_FRAC(4,5), RGN_FRAC(4,5), RGN_FRAC(4,5) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
 };
 
 static struct GfxLayout anlayout =
 {
-	8 << HIGH_RES,8,	/* 8*8 chars */
-	4096,	/* 4096 chars */
-	4,		/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
-#if HIGH_RES
-	{ 0,0, 4,4, 8,8, 12,12, 16,16, 20,20, 24,24, 28,28 },
-#else
 	{ 0, 4, 8, 12, 16, 20, 24, 28 },
-#endif
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 
@@ -272,7 +283,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pflayout, 0x300, 8 },
 	{ REGION_GFX2, 0, &anlayout, 0x100, 16 },
-	{ -1 } /* end of array */
+	{ REGION_GFX1, 0, &pftoplayout, 0x300, 8 },
+	{ -1 }
 };
 
 
@@ -295,21 +307,17 @@ static const struct MachineDriver machine_driver_hydra =
 		},
 		JSA_II_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
 	/* video hardware */
-	42*(8 << HIGH_RES), 30*8, { 0*(8 << HIGH_RES), 42*(8 << HIGH_RES)-1, 0*8, 30*8-1 },
+	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1280,1280,
 	0,
 
-#if HIGH_RES
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-#else
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-#endif
 	0,
 	hydra_vh_start,
 	hydra_vh_stop,
@@ -333,43 +341,20 @@ static void init_hydra(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x078000, 116);
-
-	hydra_mo_area.min_x = 0 << HIGH_RES;
-	hydra_mo_area.max_x = 255 << HIGH_RES;
-	hydra_mo_area.min_y = 0;
-	hydra_mo_area.max_y = 239;
-	hydra_mo_priority_offset = 10;
-	hydra_pf_xoffset = 0;
-
 	atarijsa_init(1, 4, 0, 0x8000);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 
-	/* display messages */
-	atarigen_show_slapstic_message();
-	atarigen_show_sound_message();
+	atarig1_pitfight = 0;
 }
 
 
 static void init_hydrap(void)
 {
 	atarigen_eeprom_default = NULL;
-
-	hydra_mo_area.min_x = 0 << HIGH_RES;
-	hydra_mo_area.max_x = 255 << HIGH_RES;
-	hydra_mo_area.min_y = 0;
-	hydra_mo_area.max_y = 239;
-	hydra_mo_priority_offset = 10;
-	hydra_pf_xoffset = 0;
-
 	atarijsa_init(1, 4, 0, 0x8000);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 
-	/* display messages */
-	atarigen_show_sound_message();
+	atarig1_pitfight = 0;
 }
 
 
@@ -377,22 +362,10 @@ static void init_pitfight(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 111);
-
-	hydra_mo_area.min_x = 40 << HIGH_RES;
-	hydra_mo_area.max_x = (40 + 255) << HIGH_RES;
-	hydra_mo_area.min_y = 0;
-	hydra_mo_area.max_y = 239;
-	hydra_mo_priority_offset = 12;
-	hydra_pf_xoffset = 2;
-
 	atarijsa_init(1, 4, 0, 0x8000);
-
-	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 
-	/* display messages */
-	atarigen_show_slapstic_message();
-	atarigen_show_sound_message();
+	atarig1_pitfight = 1;
 }
 
 
@@ -457,6 +430,7 @@ ROM_START( hydra )
 	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, 0xeb9eaeb7 )
 ROM_END
 
+
 ROM_START( hydrap )
 	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydhi0.bin", 0x00000, 0x10000, 0xdab2e8a2 )
@@ -511,6 +485,7 @@ ROM_START( hydrap )
 	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, BADCRC(0xeb9eaeb7) )
 ROM_END
 
+
 ROM_START( pitfight )
 	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "4028", 0x00000, 0x10000, 0xf7cb1a4b )
@@ -556,6 +531,7 @@ ROM_START( pitfight )
 	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
 	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
 ROM_END
+
 
 ROM_START( pitfigh3 )
 	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
@@ -611,7 +587,7 @@ ROM_END
  *
  *************************************/
 
-GAME( 1990, hydra,    0,        hydra, hydra,    hydra,    ROT0, "Atari Games", "Hydra" )
-GAME( 1990, hydrap,   hydra,    hydra, hydra,    hydrap,   ROT0, "Atari Games", "Hydra (prototype)" )
-GAME( 1990, pitfight, 0,        hydra, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 4)" )
-GAME( 1990, pitfigh3, pitfight, hydra, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 3)" )
+GAME ( 1990, hydra,    0,        hydra, hydra,    hydra,    ROT0, "Atari Games", "Hydra" )
+GAME ( 1990, hydrap,   hydra,    hydra, hydra,    hydrap,   ROT0, "Atari Games", "Hydra (prototype)" )
+GAMEX( 1990, pitfight, 0,        hydra, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 4)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1990, pitfigh3, pitfight, hydra, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 3)", GAME_UNEMULATED_PROTECTION )

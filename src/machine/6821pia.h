@@ -25,17 +25,6 @@
 #define PIA_STANDARD_ORDERING		0
 #define PIA_ALTERNATE_ORDERING		1
 
-#define PIA_8BIT					0
-#define PIA_16BIT					2
-
-#define PIA_LOWER					0
-#define PIA_UPPER					4
-#define PIA_AUTOSENSE				8
-
-#define PIA_16BIT_LOWER				(PIA_16BIT | PIA_LOWER)
-#define PIA_16BIT_UPPER				(PIA_16BIT | PIA_UPPER)
-#define PIA_16BIT_AUTO				(PIA_16BIT | PIA_AUTOSENSE)
-
 struct pia6821_interface
 {
 	mem_read_handler in_a_func;
@@ -87,6 +76,46 @@ WRITE_HANDLER( pia_4_w );
 WRITE_HANDLER( pia_5_w );
 WRITE_HANDLER( pia_6_w );
 WRITE_HANDLER( pia_7_w );
+
+/******************* Standard 16-bit CPU interfaces, D0-D7 *******************/
+
+READ16_HANDLER( pia_0_lsb_r );
+READ16_HANDLER( pia_1_lsb_r );
+READ16_HANDLER( pia_2_lsb_r );
+READ16_HANDLER( pia_3_lsb_r );
+READ16_HANDLER( pia_4_lsb_r );
+READ16_HANDLER( pia_5_lsb_r );
+READ16_HANDLER( pia_6_lsb_r );
+READ16_HANDLER( pia_7_lsb_r );
+
+WRITE16_HANDLER( pia_0_lsb_w );
+WRITE16_HANDLER( pia_1_lsb_w );
+WRITE16_HANDLER( pia_2_lsb_w );
+WRITE16_HANDLER( pia_3_lsb_w );
+WRITE16_HANDLER( pia_4_lsb_w );
+WRITE16_HANDLER( pia_5_lsb_w );
+WRITE16_HANDLER( pia_6_lsb_w );
+WRITE16_HANDLER( pia_7_lsb_w );
+
+/******************* Standard 16-bit CPU interfaces, D8-D15 *******************/
+
+READ16_HANDLER( pia_0_msb_r );
+READ16_HANDLER( pia_1_msb_r );
+READ16_HANDLER( pia_2_msb_r );
+READ16_HANDLER( pia_3_msb_r );
+READ16_HANDLER( pia_4_msb_r );
+READ16_HANDLER( pia_5_msb_r );
+READ16_HANDLER( pia_6_msb_r );
+READ16_HANDLER( pia_7_msb_r );
+
+WRITE16_HANDLER( pia_0_msb_w );
+WRITE16_HANDLER( pia_1_msb_w );
+WRITE16_HANDLER( pia_2_msb_w );
+WRITE16_HANDLER( pia_3_msb_w );
+WRITE16_HANDLER( pia_4_msb_w );
+WRITE16_HANDLER( pia_5_msb_w );
+WRITE16_HANDLER( pia_6_msb_w );
+WRITE16_HANDLER( pia_7_msb_w );
 
 /******************* 8-bit A/B port interfaces *******************/
 

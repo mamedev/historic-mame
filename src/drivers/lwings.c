@@ -42,7 +42,7 @@ static WRITE_HANDLER( lwings_bankswitch_w )
 
 
 	/* bit 0 is flip screen */
-	flip_screen_w(0,~data & 0x01);
+	flip_screen_set(~data & 0x01);
 
 	/* bits 1 and 2 select ROM bank */
 	RAM = memory_region(REGION_CPU1);
@@ -95,8 +95,7 @@ static WRITE_HANDLER( msm5205_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xf7ff, MRA_RAM },
@@ -106,11 +105,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf80b, 0xf80b, input_port_3_r },
 	{ 0xf80c, 0xf80c, input_port_4_r },
 	{ 0xf80d, 0xf80d, avengers_protection_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xddff, MWA_RAM },
 	{ 0xde00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
@@ -123,11 +120,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress trojan_writemem[] =
-{
+static MEMORY_WRITE_START( trojan_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xddff, MWA_RAM },
 	{ 0xde00, 0xdf7f, MWA_RAM, &spriteram, &spriteram_size },
@@ -144,21 +139,17 @@ static struct MemoryWriteAddress trojan_writemem[] =
 	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, soundlatch_r },
 	{ 0xe006, 0xe006, MRA_RAM },    /* Avengers - ADPCM status?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2203_control_port_0_w },
@@ -166,36 +157,27 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe002, 0xe002, YM2203_control_port_1_w },
 	{ 0xe003, 0xe003, YM2203_write_port_1_w },
 	{ 0xe006, 0xe006, MWA_RAM },    /* Avengers - ADPCM output??? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress adpcm_readmem[] =
-{
+static MEMORY_READ_START( adpcm_readmem )
 	{ 0x0000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* Yes, _no_ ram */
-static struct MemoryWriteAddress adpcm_writemem[] =
-{
+static MEMORY_WRITE_START( adpcm_writemem )
 /*	{ 0x0000, 0xffff, MWA_ROM }, avoid cluttering up error.log */
 	{ 0x0000, 0xffff, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort adpcm_readport[] =
-{
+static PORT_READ_START( adpcm_readport )
 	{ 0x00, 0x00, soundlatch_r },
-	{ -1 }
-};
+PORT_END
 
 
-static struct IOWritePort adpcm_writeport[] =
-{
+static PORT_WRITE_START( adpcm_writeport )
 	{ 0x01, 0x01, msm5205_w },
-	{ -1 }
-};
+PORT_END
 
 
 
@@ -1160,8 +1142,8 @@ ROM_START( avengers )
 	ROM_REGION( 0x10000, REGION_CPU3 )     /* ADPCM CPU (not emulated) */
 	ROM_LOAD( "01.6d",        0x0000, 0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03.8k",        0x00000, 0x8000, 0xefb5883e )  /* characters */
 
 	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "13.6b",        0x00000, 0x8000, 0x9b5ff305 ) /* plane 1 */
@@ -1190,15 +1172,16 @@ ROM_START( avengers )
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "23.9n",        0x0000,  0x8000, 0xc0a93ef6 )  /* Tile Map */
 
-	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "63s141.7j",    0x0000,  0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbb_2bpr.7j",  0x0000,  0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "tbb_1bpr.1e",  0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
 ROM_START( avenger2 )
 	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "avg4.bin",     0x00000, 0x8000, 0x0fea7ac5 )
-	ROM_LOAD( "avg6.bin",     0x10000, 0x8000, 0x491a712c )
-	ROM_LOAD( "avg5.bin",     0x18000, 0x8000, 0x9a214b42 )
+	ROM_LOAD( "av_06a.13n",   0x10000, 0x8000, 0x491a712c )
+	ROM_LOAD( "av_05.12n",    0x18000, 0x8000, 0x9a214b42 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "02.15h",       0x0000,  0x8000, 0x107a2e17 ) /* MISSING from this set */
@@ -1206,8 +1189,8 @@ ROM_START( avenger2 )
 	ROM_REGION( 0x10000, REGION_CPU3 )     /* ADPCM CPU (not emulated) */
 	ROM_LOAD( "01.6d",        0x0000,  0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03.8k",        0x00000, 0x8000, 0xefb5883e )  /* characters */
 
 	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "13.6b",        0x00000, 0x8000, 0x9b5ff305 ) /* plane 1 */
@@ -1236,10 +1219,58 @@ ROM_START( avenger2 )
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "23.9n",        0x0000,  0x8000, 0xc0a93ef6 )  /* Tile Map */
 
-	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "63s141.7j",    0x0000,  0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbb_2bpr.7j",  0x0000,  0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "tbb_1bpr.1e",  0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
+
+ROM_START( buraiken )
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "av_04a.10n",   0x00000, 0x8000, 0x361fc614 )
+	ROM_LOAD( "av_06a.13n",   0x10000, 0x8000, 0x491a712c )
+	ROM_LOAD( "av_05.12n",    0x18000, 0x8000, 0x9a214b42 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "02.15h",       0x0000,  0x8000, 0x107a2e17 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )     /* ADPCM CPU (not emulated) */
+	ROM_LOAD( "01.6d",        0x0000,  0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
+
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03.8k",        0x00000, 0x8000, 0xefb5883e )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "13.6b",        0x00000, 0x8000, 0x9b5ff305 ) /* plane 1 */
+	ROM_LOAD( "09.6a",        0x08000, 0x8000, 0x08323355 )
+	ROM_LOAD( "12.4b",        0x10000, 0x8000, 0x6d5261ba ) /* plane 2 */
+	ROM_LOAD( "08.4a",        0x18000, 0x8000, 0xa13d9f54 )
+	ROM_LOAD( "11.3b",        0x20000, 0x8000, 0xa2911d8b ) /* plane 3 */
+	ROM_LOAD( "07.3a",        0x28000, 0x8000, 0xcde78d32 )
+	ROM_LOAD( "14.8b",        0x30000, 0x8000, 0x44ac2671 ) /* plane 4 */
+	ROM_LOAD( "10.8a",        0x38000, 0x8000, 0xb1a717cb )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* sprites */
+	ROM_LOAD( "18.7l",        0x00000, 0x8000, 0x3c876a17 ) /* planes 0,1 */
+	ROM_LOAD( "16.3l",        0x08000, 0x8000, 0x4b1ff3ac )
+	ROM_LOAD( "17.5l",        0x10000, 0x8000, 0x4eb543ef )
+	ROM_LOAD( "15.2l",        0x18000, 0x8000, 0x8041de7f )
+	ROM_LOAD( "22.7n",        0x20000, 0x8000, 0xbdaa8b22 ) /* planes 2,3 */
+	ROM_LOAD( "20.3n",        0x28000, 0x8000, 0x566e3059 )
+	ROM_LOAD( "21.5n",        0x30000, 0x8000, 0x301059aa )
+	ROM_LOAD( "19.2n",        0x38000, 0x8000, 0xa00485ec )
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "av_25.15n",    0x00000, 0x8000, 0x88a505a7 ) /* planes 0,1 */
+	ROM_LOAD( "av_24.13n",    0x08000, 0x8000, 0x1f4463c8 ) /* planes 2,3 */
+
+	ROM_REGION( 0x08000, REGION_GFX5 )
+	ROM_LOAD( "23.9n",        0x0000,  0x8000, 0xc0a93ef6 )  /* Tile Map */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbb_2bpr.7j",  0x0000,  0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "tbb_1bpr.1e",  0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
+ROM_END
 
 
 GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 1)" )
@@ -1252,3 +1283,4 @@ GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom (Romstar l
 GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom", "Tatakai no Banka (Japan)" )
 GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
 GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
+GAMEX(1987, buraiken, avengers, avengers, avengers, 0, ROT90, "Capcom", "Hissatsu Buraiken (Japan)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )

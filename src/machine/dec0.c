@@ -8,30 +8,28 @@ Data East machine functions - Bryan McPhail, mish@tendril.co.uk
 
 #include "driver.h"
 
-extern unsigned char *dec0_ram;
+extern data16_t *dec0_ram;
 static int GAME,i8751_return,slyspy_state;
 
-WRITE_HANDLER( dec0_pf1_control_0_w );
-WRITE_HANDLER( dec0_pf1_control_1_w );
-WRITE_HANDLER( dec0_pf1_rowscroll_w );
-WRITE_HANDLER( dec0_pf1_colscroll_w );
-WRITE_HANDLER( dec0_pf1_data_w );
-READ_HANDLER( dec0_pf1_data_r );
-WRITE_HANDLER( dec0_pf2_control_0_w );
-WRITE_HANDLER( dec0_pf2_control_1_w );
-WRITE_HANDLER( dec0_pf2_rowscroll_w );
-WRITE_HANDLER( dec0_pf2_colscroll_w );
-WRITE_HANDLER( dec0_pf2_data_w );
-READ_HANDLER( dec0_pf2_data_r );
-WRITE_HANDLER( dec0_pf3_control_1_w );
-WRITE_HANDLER( dec0_pf3_control_0_w );
-WRITE_HANDLER( dec0_pf3_data_w );
+WRITE16_HANDLER( dec0_pf1_control_0_w );
+WRITE16_HANDLER( dec0_pf1_control_1_w );
+WRITE16_HANDLER( dec0_pf1_data_w );
+READ16_HANDLER( dec0_pf1_data_r );
+WRITE16_HANDLER( dec0_pf2_control_0_w );
+WRITE16_HANDLER( dec0_pf2_control_1_w );
+WRITE16_HANDLER( dec0_pf2_data_w );
+READ16_HANDLER( dec0_pf2_data_r );
+WRITE16_HANDLER( dec0_pf3_control_1_w );
+WRITE16_HANDLER( dec0_pf3_control_0_w );
+WRITE16_HANDLER( dec0_pf3_data_w );
+extern data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
+extern data16_t *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
 
 /******************************************************************************/
 
-READ_HANDLER( dec0_controls_r )
+READ16_HANDLER( dec0_controls_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Player 1 & 2 joystick & buttons */
 			return (readinputport(0) + (readinputport(1) << 8));
@@ -48,14 +46,14 @@ READ_HANDLER( dec0_controls_r )
 	}
 
 	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
-	return 0xffff;
+	return ~0;
 }
 
 /******************************************************************************/
 
-READ_HANDLER( dec0_rotary_r )
+READ16_HANDLER( dec0_rotary_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Player 1 rotary */
 			return ~(1 << (readinputport(5) * 12 / 256));
@@ -72,9 +70,9 @@ READ_HANDLER( dec0_rotary_r )
 
 /******************************************************************************/
 
-READ_HANDLER( midres_controls_r )
+READ16_HANDLER( midres_controls_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Player 1 Joystick + start, Player 2 Joystick + start */
 			return (readinputport(0) + (readinputport(1) << 8));
@@ -96,14 +94,14 @@ READ_HANDLER( midres_controls_r )
 	}
 
 	logerror("PC %06x unknown control read at %02x\n",cpu_get_pc(),0x180000+offset);
-	return 0xffff;
+	return ~0;
 }
 
 /******************************************************************************/
 
-READ_HANDLER( slyspy_controls_r )
+READ16_HANDLER( slyspy_controls_r )
 {
-	switch (offset)
+	switch (offset<<1)
 	{
 		case 0: /* Dip Switches */
 			return (readinputport(3) + (readinputport(4) << 8));
@@ -116,13 +114,13 @@ READ_HANDLER( slyspy_controls_r )
 	}
 
 	logerror("Unknown control read at 30c000 %d\n",offset);
-	return 0xffff;
+	return ~0;
 }
 
-READ_HANDLER( slyspy_protection_r )
+READ16_HANDLER( slyspy_protection_r )
 {
 	/* These values are for Boulderdash, I have no idea what they do in Slyspy */
-	switch (offset) {
+	switch (offset<<1) {
 		case 0: 	return 0;
 		case 2: 	return 0x13;
 		case 4:		return 0;
@@ -166,96 +164,96 @@ READ_HANDLER( slyspy_protection_r )
 
 */
 
-WRITE_HANDLER( slyspy_state_w )
+WRITE16_HANDLER( slyspy_state_w )
 {
 	slyspy_state=0;
 }
 
-READ_HANDLER( slyspy_state_r )
+READ16_HANDLER( slyspy_state_r )
 {
 	slyspy_state++;
 	slyspy_state=slyspy_state%4;
 	return 0; /* Value doesn't mater */
 }
 
-WRITE_HANDLER( slyspy_240000_w )
+WRITE16_HANDLER( slyspy_240000_w )
 {
 	switch (slyspy_state) {
 		case 0x3:
-			dec0_pf1_data_w(offset,data);
+			dec0_pf1_data_w(offset,data,mem_mask);
 			return;
 		case 0x2:
-			dec0_pf2_data_w(offset,data);
+			dec0_pf2_data_w(offset,data,mem_mask);
 			return;
 		case 0x0:
-			if (offset<0x10) dec0_pf2_control_0_w(offset,data);
-			else if (offset<0x20) dec0_pf2_control_1_w(offset-0x10,data);
+			if (offset<0x8) dec0_pf2_control_0_w(offset,data,mem_mask);
+			else if (offset<0x10) dec0_pf2_control_1_w(offset-0x8,data,mem_mask);
 			return;
 	}
 	logerror("Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
-WRITE_HANDLER( slyspy_242000_w )
+WRITE16_HANDLER( slyspy_242000_w )
 {
 	switch (slyspy_state) {
 		case 0x2: /* Trap A */
-			dec0_pf1_data_w(offset,data);
+			dec0_pf1_data_w(offset,data,mem_mask);
 			return;
 		case 0x0: /* Trap C */
-			if (offset<0x80) dec0_pf2_colscroll_w(offset,data);
-			else if (offset<0x600) dec0_pf2_rowscroll_w(offset-0x400,data);
+			if (offset<0x40) COMBINE_DATA(&dec0_pf2_colscroll[offset]);
+			else if (offset<0x300) COMBINE_DATA(&dec0_pf2_rowscroll[offset-0x200]);
 			return;
 	}
 	logerror("Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
-WRITE_HANDLER( slyspy_246000_w )
+WRITE16_HANDLER( slyspy_246000_w )
 {
 	switch (slyspy_state) {
 		case 0x0:
-			dec0_pf2_data_w(offset,data);
+			dec0_pf2_data_w(offset,data,mem_mask);
 			return;
 	}
 	logerror("Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
-WRITE_HANDLER( slyspy_248000_w )
+WRITE16_HANDLER( slyspy_248000_w )
 {
 	switch (slyspy_state) {
 		case 0x1:
-			dec0_pf1_data_w(offset,data);
+			dec0_pf1_data_w(offset,data,mem_mask);
 			return;
 		case 0x3:
-			dec0_pf2_data_w(offset,data);
+			dec0_pf2_data_w(offset,data,mem_mask);
 			return;
 		case 0x0:
-			if (offset<0x10) dec0_pf1_control_0_w(offset,data);
-			else if (offset<0x20) dec0_pf1_control_1_w(offset-0x10,data);
+			if (offset<0x8) dec0_pf1_control_0_w(offset,data,mem_mask);
+			else if (offset<0x10) dec0_pf1_control_1_w(offset-0x8,data,mem_mask);
 			return;
 	}
 	logerror("Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
-WRITE_HANDLER( slyspy_24c000_w )
+WRITE16_HANDLER( slyspy_24c000_w )
 {
 	switch (slyspy_state) {
 		case 0x1: /* Trap 9 */
-			dec0_pf2_data_w(offset,data);
+			dec0_pf2_data_w(offset,data,mem_mask);
 			return;
 		case 0x0: /* Trap C */
-			if (offset<0x80) dec0_pf1_colscroll_w(offset,data);
-			else if (offset<0x600) dec0_pf1_rowscroll_w(offset-0x400,data);
+			if (offset<0x40) COMBINE_DATA(&dec0_pf1_colscroll[offset]);
+			else if (offset<0x300) COMBINE_DATA(&dec0_pf1_rowscroll[offset-0x200]);
 			return;
 	}
 	logerror("Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
-WRITE_HANDLER( slyspy_24e000_w )
+WRITE16_HANDLER( slyspy_24e000_w )
 {
 	switch (slyspy_state) {
 		case 0x2:
 		case 0x0:
-			dec0_pf1_data_w(offset,data);
+			dec0_pf1_data_w(offset,data,mem_mask);
 			return;
 	}
 	logerror("Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
@@ -293,15 +291,15 @@ WRITE_HANDLER( hippodrm_shared_w )
 	share[offset]=data;
 }
 
-static READ_HANDLER( hippodrm_68000_share_r )
+static READ16_HANDLER( hippodrm_68000_share_r )
 {
 	if (offset==0) cpu_yield(); /* A wee helper */
-	return share[offset/2];
+	return share[offset]&0xff;
 }
 
-static WRITE_HANDLER( hippodrm_68000_share_w )
+static WRITE16_HANDLER( hippodrm_68000_share_w )
 {
-	share[offset/2]=data&0xff;
+	share[offset]=data&0xff;
 }
 
 /******************************************************************************/
@@ -490,27 +488,16 @@ void dec0_i8751_reset(void)
 
 /******************************************************************************/
 
-static READ_HANDLER( hbarrel_cycle_r )
+static WRITE16_HANDLER( sprite_mirror_w )
 {
-	if (cpu_get_pc()==0x130ca) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
-}
-
-static READ_HANDLER( hbarrelu_cycle_r )
-{
-	if (cpu_get_pc()==0x131a0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
-}
-
-static WRITE_HANDLER( sprite_mirror_w )
-{
-	extern unsigned char *spriteram;
-	WRITE_WORD (&spriteram[offset], data);
+	extern data16_t *spriteram16;
+	COMBINE_DATA(&spriteram16[offset]);
 }
 
 /******************************************************************************/
 
 static void hbarrel_custom_memory(void)
 {
-	install_mem_read_handler(0, 0xff8010, 0xff8011, hbarrel_cycle_r);
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
 unsigned char *RAM = memory_region(REGION_CPU1);
@@ -520,7 +507,6 @@ WRITE_WORD (&RAM[0xb3e],0x8008);
 
 static void hbarrelu_custom_memory(void)
 {
-	install_mem_read_handler(0, 0xff8010, 0xff8011, hbarrelu_cycle_r);
 	GAME=1;
 
 { /* Remove this patch once processing time of i8751 is simulated */
@@ -536,9 +522,9 @@ static void robocop_custom_memory(void)
 
 static void hippodrm_custom_memory(void)
 {
-	install_mem_read_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
-	install_mem_write_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
-	install_mem_write_handler(0, 0xffc800, 0xffcfff, sprite_mirror_w);
+	install_mem_read16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
+	install_mem_write16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
+	install_mem_write16_handler(0, 0xffc800, 0xffcfff, sprite_mirror_w);
 }
 
 void dec0_custom_memory(void)

@@ -58,8 +58,7 @@ READ_HANDLER( arkanoid_68705_input_0_r );
 READ_HANDLER( arkanoid_input_2_r );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
@@ -68,11 +67,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd018, 0xd018, arkanoid_Z80_mcu_r },  /* input from the 68705 */
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd000, AY8910_control_port_0_w },
@@ -84,11 +81,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe840, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress boot_readmem[] =
-{
+static MEMORY_READ_START( boot_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
@@ -97,11 +92,9 @@ static struct MemoryReadAddress boot_readmem[] =
 	{ 0xd018, 0xd018, arkanoid_input_2_r },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress boot_writemem[] =
-{
+static MEMORY_WRITE_START( boot_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd000, AY8910_control_port_0_w },
@@ -113,30 +106,25 @@ static struct MemoryWriteAddress boot_writemem[] =
 	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe840, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x0000, arkanoid_68705_portA_r },
 	{ 0x0001, 0x0001, arkanoid_input_2_r },
 	{ 0x0002, 0x0002, arkanoid_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x0000, arkanoid_68705_portA_w },
 	{ 0x0002, 0x0002, arkanoid_68705_portC_w },
 	{ 0x0004, 0x0004, arkanoid_68705_ddrA_w },
 	{ 0x0006, 0x0006, arkanoid_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( arkanoid )

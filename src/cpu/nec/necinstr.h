@@ -96,13 +96,9 @@ static void i_pop_si(void);
 static void i_pop_di(void);
 static void i_pusha(void);
 static void i_popa(void);
-static void i_bound(void);
+static void i_chkind(void);
 static void i_repnc(void);
 static void i_repc(void);
-
-
-
-
 static void i_push_d16(void);
 static void i_imul_d16(void);
 static void i_push_d8(void);
@@ -113,12 +109,12 @@ static void i_outsb(void);
 static void i_outsw(void);
 static void i_jo(void);
 static void i_jno(void);
-static void i_jb(void);
-static void i_jnb(void);
+static void i_jc(void);
+static void i_jnc(void);
 static void i_jz(void);
 static void i_jnz(void);
-static void i_jbe(void);
-static void i_jnbe(void);
+static void i_jce(void);
+static void i_jnce(void);
 static void i_js(void);
 static void i_jns(void);
 static void i_jp(void);
@@ -214,8 +210,8 @@ static void i_rotshft_wcl(void);
 static void i_aam(void);
 static void i_aad(void);
 static void i_setalc(void);
-static void i_xlat(void);
-static void i_escape(void);
+static void i_trans(void);
+static void i_fpo(void);
 static void i_loopne(void);
 static void i_loope(void);
 static void i_loop(void);
@@ -267,7 +263,6 @@ void (*nec_instruction[256])(void) =
     i_or_ald8,          /* 0x0c */
     i_or_axd16,         /* 0x0d */
     i_push_cs,          /* 0x0e */
-//    i_invalid,
 	i_pre_nec			/* 0x0f */, 
     i_adc_br8,          /* 0x10 */
     i_adc_wr16,         /* 0x11 */
@@ -351,7 +346,7 @@ void (*nec_instruction[256])(void) =
     i_pop_di,           /* 0x5f */
     i_pusha,            /* 0x60 */
     i_popa,             /* 0x61 */
-    i_bound,            /* 0x62 */
+    i_chkind,           /* 0x62 */
     i_invalid,			/* 0x63 */
     i_repnc,			/* 0x64 */
     i_repc,				/* 0x65 */
@@ -367,12 +362,12 @@ void (*nec_instruction[256])(void) =
     i_outsw,            /* 0x6f */
     i_jo,               /* 0x70 */
     i_jno,              /* 0x71 */
-    i_jb,               /* 0x72 */
-    i_jnb,              /* 0x73 */
+    i_jc,               /* 0x72 */
+    i_jnc,              /* 0x73 */
     i_jz,               /* 0x74 */
     i_jnz,              /* 0x75 */
-    i_jbe,              /* 0x76 */
-    i_jnbe,             /* 0x77 */
+    i_jce,              /* 0x76 */
+    i_jnce,             /* 0x77 */
     i_js,               /* 0x78 */
     i_jns,              /* 0x79 */
     i_jp,               /* 0x7a */
@@ -468,15 +463,15 @@ void (*nec_instruction[256])(void) =
     i_aam,              /* 0xd4 */
     i_aad,              /* 0xd5 */
     i_setalc,
-    i_xlat,             /* 0xd7 */
-    i_escape,           /* 0xd8 */
-    i_escape,           /* 0xd9 */
-    i_escape,           /* 0xda */
-    i_escape,           /* 0xdb */
-    i_escape,           /* 0xdc */
-    i_escape,           /* 0xdd */
-    i_escape,           /* 0xde */
-    i_escape,           /* 0xdf */
+    i_trans,            /* 0xd7 */
+    i_fpo,              /* 0xd8 */
+    i_fpo,              /* 0xd9 */
+    i_fpo,              /* 0xda */
+    i_fpo,              /* 0xdb */
+    i_fpo,              /* 0xdc */
+    i_fpo,              /* 0xdd */
+    i_fpo,              /* 0xde */
+    i_fpo,              /* 0xdf */
     i_loopne,           /* 0xe0 */
     i_loope,            /* 0xe1 */
     i_loop,             /* 0xe2 */

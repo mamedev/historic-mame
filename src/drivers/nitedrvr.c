@@ -43,8 +43,7 @@ WRITE_HANDLER( nitedrvr_hvc_w );
 extern void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x00ff, nitedrvr_ram_r }, /* SCRAM */
 	{ 0x0100, 0x01ff, nitedrvr_ram_r }, /* SCRAM */
 	{ 0x0600, 0x07ff, nitedrvr_in0_r },
@@ -60,11 +59,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8400, 0x87ff, nitedrvr_steering_reset_r },
 	{ 0x9000, 0x9fff, MRA_ROM }, /* ROM1-ROM2 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x00ff, nitedrvr_ram_w, &nitedrvr_ram }, /* SCRAM */
 	{ 0x0100, 0x01ff, nitedrvr_ram_w }, /* SCRAM */
 	{ 0x0200, 0x027f, videoram_w, &videoram, &videoram_size }, /* PFW */
@@ -76,8 +73,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0c00, 0x0dff, nitedrvr_out1_w },
 	{ 0x8400, 0x87ff, nitedrvr_steering_reset_w },
 	{ 0x9000, 0x9fff, MWA_ROM }, /* ROM1-ROM2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */

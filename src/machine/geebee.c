@@ -111,7 +111,7 @@ WRITE_HANDLER( geebee_out7_w )
 		coin_counter_w(0,data & 1);
 		break;
 	case 4:
-		coin_lockout_global_w(0,~data & 1);
+		coin_lockout_global_w(~data & 1);
 		break;
 	case 5:
 		logerror("out7_w:5 bgw      $%02X\n", data);

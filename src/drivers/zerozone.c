@@ -24,23 +24,21 @@ TODO:
 void zerozone_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int zerozone_vh_start(void);
 void zerozone_vh_stop(void);
-READ_HANDLER( zerozone_videoram_r );
-WRITE_HANDLER( zerozone_videoram_w );
+WRITE16_HANDLER( zerozone_videoram_w );
 
-extern unsigned char *zerozone_videoram;
-static unsigned char *ram; /* for high score save */
+extern data16_t *zerozone_videoram;
 
-static READ_HANDLER( zerozone_input_r )
+static READ16_HANDLER( zerozone_input_r )
 {
 	switch (offset)
 	{
 		case 0x00:
 			return readinputport(0); /* IN0 */
-		case 0x02:
+		case 0x01:
 			return (readinputport(1) | (readinputport(2) << 8)); /* IN1 & IN2 */
-		case 0x08:
+		case 0x04:
 			return (readinputport(4) << 8);
-		case 0x0a:
+		case 0x05:
 			return readinputport(3);
 	}
 
@@ -50,52 +48,47 @@ logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get
 }
 
 
-WRITE_HANDLER( zerozone_sound_w )
+WRITE16_HANDLER( zerozone_sound_w )
 {
-	soundlatch_w (offset, (data >> 8) & 0xff);
-	cpu_cause_interrupt (1, 0xff);
+	if (ACCESSING_MSB)
+	{
+		soundlatch_w(offset,data >> 8);
+		cpu_cause_interrupt(1,0xff);
+	}
 }
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x01ffff, MRA_ROM },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x080000, 0x08000f, zerozone_input_r },
-	{ 0x088000, 0x0881ff, paletteram_word_r },
-//	{ 0x098000, 0x098001, MRA_RAM }, /* watchdog? */
-	{ 0x09ce00, 0x09d9ff, zerozone_videoram_r },
-	{ 0x0c0000, 0x0cffff, MRA_BANK1 },
-	{ 0x0f8000, 0x0f87ff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+	{ 0x088000, 0x0881ff, MRA16_RAM },
+//	{ 0x098000, 0x098001, MRA16_RAM }, /* watchdog? */
+	{ 0x09ce00, 0x09d9ff, MRA16_RAM },
+	{ 0x0c0000, 0x0cffff, MRA16_RAM },
+	{ 0x0f8000, 0x0f87ff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x01ffff, MWA_ROM },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0x084000, 0x084001, zerozone_sound_w },
-	{ 0x088000, 0x0881ff, paletteram_BBBBGGGGRRRRxxxx_word_w, &paletteram },
+	{ 0x088000, 0x0881ff, paletteram16_BBBBGGGGRRRRxxxx_word_w, &paletteram16 },
 	{ 0x09ce00, 0x09d9ff, zerozone_videoram_w, &zerozone_videoram, &videoram_size },
-	{ 0x0c0000, 0x0cffff, MWA_BANK1, &ram }, /* RAM */
-	{ 0x0f8000, 0x0f87ff, MWA_BANK2 },
-	{ -1 }  /* end of table */
-};
+	{ 0x0c0000, 0x0cffff, MWA16_RAM }, /* RAM */
+	{ 0x0f8000, 0x0f87ff, MWA16_RAM },
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( zerozone )
 	PORT_START      /* IN0 */
@@ -227,7 +220,6 @@ static const struct MachineDriver machine_driver_zerozone =
 
 	/* video hardware */
 	48*8, 32*8, { 1*8, 47*8-1, 2*8, 30*8-1 },
-
 	gfxdecodeinfo,
 	256, 256,
 	0,

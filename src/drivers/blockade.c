@@ -198,40 +198,32 @@ static WRITE_HANDLER( blockade_videoram_w )
 	}
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x07ff, MRA_ROM },
     { 0x4000, 0x47ff, MRA_ROM },  /* same image */
     { 0xe000, 0xe3ff, videoram_r },
     { 0xff00, 0xffff, MRA_RAM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x07ff, MWA_ROM },
     { 0x4000, 0x47ff, MWA_ROM },  /* same image */
     { 0xe000, 0xe3ff, blockade_videoram_w, &videoram, &videoram_size },
     { 0xff00, 0xffff, MWA_RAM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
     { 0x01, 0x01, blockade_input_port_0_r },
     { 0x02, 0x02, input_port_1_r },
     { 0x04, 0x04, input_port_2_r },
-    { -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
     { 0x01, 0x01, blockade_coin_latch_w },
     { 0x02, 0x02, blockade_sound_freq_w },
     { 0x04, 0x04, blockade_env_on_w },
     { 0x08, 0x08, blockade_env_off_w },
-    { -1 }  /* end of table */
-};
+PORT_END
 
 /* These are not dip switches, they are mapped to */
 /* connectors on the board.  Different games had  */

@@ -236,7 +236,7 @@ void cps1_debug_tiles(struct osd_bitmap *bitmap)
     }
 }
 
-WRITE_HANDLER( cps2_qsound_sharedram_w );
+WRITE16_HANDLER( cps2_qsound_sharedram_w );
 
 void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -286,21 +286,21 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     if (qcode != oldq)
     {
         int mode=0;
-        cps2_qsound_sharedram_w(0x1ffa, 0x0088);
-        cps2_qsound_sharedram_w(0x1ffe, 0xffff);
+        cps2_qsound_sharedram_w(0x1ffa, 0x0088, 0);
+        cps2_qsound_sharedram_w(0x1ffe, 0xffff, 0);
 
-        cps2_qsound_sharedram_w(0x00, 0x0000);
-        cps2_qsound_sharedram_w(0x02, qcode);
-        cps2_qsound_sharedram_w(0x06, 0x0000);
-        cps2_qsound_sharedram_w(0x08, 0x0000);
-        cps2_qsound_sharedram_w(0x0c, mode);
-        cps2_qsound_sharedram_w(0x0e, 0x0010);
-        cps2_qsound_sharedram_w(0x10, 0x0000);
-        cps2_qsound_sharedram_w(0x12, 0x0000);
-        cps2_qsound_sharedram_w(0x14, 0x0000);
-        cps2_qsound_sharedram_w(0x16, 0x0000);
-        cps2_qsound_sharedram_w(0x18, 0x0000);
-        cps2_qsound_sharedram_w(0x1e, 0x0000);
+        cps2_qsound_sharedram_w(0x00, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x02, qcode, 0);
+        cps2_qsound_sharedram_w(0x06, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x08, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x0c, mode, 0);
+        cps2_qsound_sharedram_w(0x0e, 0x0010, 0);
+        cps2_qsound_sharedram_w(0x10, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x12, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x14, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x16, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x18, 0x0000, 0);
+        cps2_qsound_sharedram_w(0x1e, 0x0000, 0);
     }
     {
     struct DisplayText dt[3];
@@ -317,7 +317,7 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     dt[1].y = dt[0].y+2*Machine->uifontheight;
 
     dt[2].text = 0; /* terminate array */
-	displaytext(Machine->scrbitmap,dt,0,0);
+	displaytext(Machine->scrbitmap,dt);
     }
 }
 

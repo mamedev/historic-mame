@@ -1,7 +1,7 @@
 /******************************************************************
 
-	Double Dragon 3						Technos Japan Corp 1990
-	The Combatribes						Technos Japan Corp 1990
+	Double Dragon 3 					Technos Japan Corp 1990
+	The Combatribes 					Technos Japan Corp 1990
 
 
 	Notes:
@@ -22,58 +22,61 @@
 
 void ddragon3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ctribe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( ddragon3_scroll_w );
+WRITE16_HANDLER( ddragon3_scroll16_w );
 
 extern int ddragon3_vh_start(void);
 
-extern unsigned char *ddragon3_bg_videoram;
-WRITE_HANDLER( ddragon3_bg_videoram_w );
-READ_HANDLER( ddragon3_bg_videoram_r );
+extern data16_t *ddragon3_bg_videoram16;
+WRITE16_HANDLER( ddragon3_bg_videoram16_w );
+READ16_HANDLER( ddragon3_bg_videoram16_r );
 
-extern unsigned char *ddragon3_fg_videoram;
-WRITE_HANDLER( ddragon3_fg_videoram_w );
-READ_HANDLER( ddragon3_fg_videoram_r );
+extern data16_t *ddragon3_fg_videoram16;
+WRITE16_HANDLER( ddragon3_fg_videoram16_w );
+READ16_HANDLER( ddragon3_fg_videoram16_r );
 
 /***************************************************************************/
 
 static WRITE_HANDLER( oki_bankswitch_w )
 {
-	OKIM6295_set_bank_base(0, ALL_VOICES, (data & 1) * 0x40000);
+	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
 
-static READ_HANDLER( ddrago3b_io_r )
+static READ16_HANDLER( ddrago3b_io16_r )
 {
-	switch (offset) {
-		case 0x0: return readinputport(0) + 256*((readinputport(3)&0x0f)|((readinputport(4)&0xc0)<<2));
-		case 0x2: return readinputport(1) + 256*(readinputport(4)&0x3f);
-		case 0x4: return readinputport(2) + 256*(readinputport(5)&0x3f);
-		case 0x6: return (readinputport(5)&0xc0)<<2;
+	switch (offset)
+	{
+	case 0: return readinputport(0) + 256*((readinputport(3)&0x0f)|((readinputport(4)&0xc0)<<2));
+	case 1: return readinputport(1) + 256*(readinputport(4)&0x3f);
+	case 2: return readinputport(2) + 256*(readinputport(5)&0x3f);
+	case 3: return (readinputport(5)&0xc0)<<2;
 	}
-	return 0xffff;
+	return ~0;
 }
 
-static READ_HANDLER( ctribe_io_r ){
-	switch (offset) {
-		case 0x0: return readinputport(0) + 256*((readinputport(3)&0x0f)|((readinputport(4)&0xc0)<<2));
-		case 0x2: return readinputport(1) + 256*(readinputport(4)&0x3f);
-		case 0x4: return readinputport(2) + 256*(readinputport(5)&0x3f);
-		case 0x6: return 256*(readinputport(5)&0xc0);
-	}
-	return 0xffff;
-}
-
-static READ_HANDLER( ddragon3_io_r )
+static READ16_HANDLER( ctribe_io16_r )
 {
-	switch (offset) {
-		case 0x0: return readinputport(0);
-		case 0x2: return readinputport(1);
-		case 0x4: return readinputport(2);
-		case 0x6: return readinputport(3);
-
-		default:
-		logerror("INPUT 1800[%02x] \n", offset);
-		return 0xffff;
+	switch (offset)
+	{
+	case 0: return readinputport(0) + 256*((readinputport(3)&0x0f)|((readinputport(4)&0xc0)<<2));
+	case 1: return readinputport(1) + 256*(readinputport(4)&0x3f);
+	case 2: return readinputport(2) + 256*(readinputport(5)&0x3f);
+	case 3: return 256*(readinputport(5)&0xc0);
 	}
+	return ~0;
+}
+
+static READ16_HANDLER( ddragon3_io16_r )
+{
+	switch (offset)
+	{
+	case 0: return readinputport(0);
+	case 1: return readinputport(1);
+	case 2: return readinputport(2);
+	case 3: return readinputport(3);
+
+	default: logerror("INPUT 1800[%02x] \n", offset);
+	}
+	return ~0;
 }
 
 extern UINT16 ddragon3_vreg;
@@ -88,153 +91,143 @@ static int ddragon3_cpu_interrupt(void) { /* 6:0x177e - 5:0x176a */
 	return MC68000_INT_NONE;
 }
 
-static UINT16 reg[8];
+static data16_t reg[8];
 
-static WRITE_HANDLER( ddragon3_io_w ){
-	reg[offset/2] = COMBINE_WORD(reg[offset],data);
+static WRITE16_HANDLER( ddragon3_io16_w )
+{
+	COMBINE_DATA(&reg[offset]);
 
-	switch (offset) {
-		case 0x0:
-		ddragon3_vreg = reg[0];
-		break;
+	switch (offset)
+	{
+	case 0:
+	ddragon3_vreg = reg[0];
+	break;
 
-		case 0x2: /* soundlatch_w */
-		soundlatch_w(1,reg[1]&0xff);
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
-		break;
+	case 1: /* soundlatch_w */
+	soundlatch_w(1,reg[1]&0xff);
+	cpu_cause_interrupt( 1, Z80_NMI_INT );
+	break;
 
-		case 0x4:
-		/*	this gets written to on startup and at the end of IRQ6
-		**	possibly trigger IRQ on sound CPU
-		*/
-		break;
+	case 2:
+	/*	this gets written to on startup and at the end of IRQ6
+	**	possibly trigger IRQ on sound CPU
+	*/
+	break;
 
-		case 0x6:
-		/*	this gets written to on startup,
-		**	and at the end of IRQ5 (input port read) */
-		break;
+	case 3:
+	/*	this gets written to on startup,
+	**	and at the end of IRQ5 (input port read) */
+	break;
 
-		case 0x8:
-		/* this gets written to at the end of IRQ6 only */
-		break;
+	case 4:
+	/* this gets written to at the end of IRQ6 only */
+	break;
 
-		default:
-		logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, cpu_get_pc() );
-		break;
+	default:
+	logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, cpu_get_pc() );
+	break;
 	}
 }
 
 /**************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM   },
-	{ 0x080000, 0x080fff, ddragon3_fg_videoram_r }, /* Foreground (32x32 Tiles - 4 by per tile) */
-	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_r }, /* Background (32x32 Tiles - 2 by per tile) */
-	{ 0x100000, 0x100007, ddragon3_io_r },
-	{ 0x140000, 0x1405ff, paletteram_word_r },
-	{ 0x180000, 0x180fff, MRA_BANK1 },
-	{ 0x1c0000, 0x1c3fff, MRA_BANK2 }, /* working RAM */
-	{ -1 }
-};
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x080fff, MRA16_RAM },	/* Foreground (32x32 Tiles - 4 by per tile) */
+	{ 0x082000, 0x0827ff, MRA16_RAM },	/* Background (32x32 Tiles - 2 by per tile) */
+	{ 0x100000, 0x100007, ddragon3_io16_r },
+	{ 0x140000, 0x1405ff, MRA16_RAM },	/* Palette RAM */
+	{ 0x180000, 0x180fff, MRA16_RAM },
+	{ 0x1c0000, 0x1c3fff, MRA16_RAM },	/* working RAM */
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x080fff, ddragon3_fg_videoram_w, &ddragon3_fg_videoram },
-	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_w, &ddragon3_bg_videoram },
-	{ 0x0c0000, 0x0c000f, ddragon3_scroll_w },
-	{ 0x100000, 0x10000f, ddragon3_io_w },
-	{ 0x140000, 0x1405ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram},
-	{ 0x180000, 0x180fff, MWA_BANK1, &spriteram }, /* Sprites (16 bytes per sprite) */
-	{ 0x1c0000, 0x1c3fff, MWA_BANK2 },
-	{ -1 }
-};
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x080fff, ddragon3_fg_videoram16_w, &ddragon3_fg_videoram16 },
+	{ 0x082000, 0x0827ff, ddragon3_bg_videoram16_w, &ddragon3_bg_videoram16 },
+	{ 0x0c0000, 0x0c000f, ddragon3_scroll16_w },
+	{ 0x100000, 0x10000f, ddragon3_io16_w },
+	{ 0x140000, 0x1405ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x180000, 0x180fff, MWA16_RAM, &spriteram16 }, /* Sprites (16 bytes per sprite) */
+	{ 0x1c0000, 0x1c3fff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress dd3b_readmem[] = {
-	{ 0x000000, 0x07ffff, MRA_ROM   },
-	{ 0x080000, 0x080fff, ddragon3_fg_videoram_r }, /* Foreground (32x32 Tiles - 4 by per tile) */
-	{ 0x081000, 0x081fff, MRA_BANK1 },
-	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_r }, /* Background (32x32 Tiles - 2 by per tile) */
-	{ 0x100000, 0x1005ff, paletteram_word_r },
-	{ 0x180000, 0x180007, ddrago3b_io_r },
-	{ 0x1c0000, 0x1c3fff, MRA_BANK2 }, /* working RAM */
-	{ -1 }
-};
+static MEMORY_READ16_START( dd3b_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x080fff, MRA16_RAM },	/* Foreground (32x32 Tiles - 4 by per tile) */
+	{ 0x081000, 0x081fff, MRA16_RAM },
+	{ 0x082000, 0x0827ff, MRA16_RAM },	/* Background (32x32 Tiles - 2 by per tile) */
+	{ 0x100000, 0x1005ff, MRA16_RAM },	/* Palette RAM */
+	{ 0x180000, 0x180007, ddrago3b_io16_r },
+	{ 0x1c0000, 0x1c3fff, MRA16_RAM },	/* working RAM */
+MEMORY_END
 
-static struct MemoryWriteAddress dd3b_writemem[] = {
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x080fff, ddragon3_fg_videoram_w, &ddragon3_fg_videoram },
-	{ 0x081000, 0x081fff, MWA_BANK1, &spriteram }, /* Sprites (16 bytes per sprite) */
-	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_w, &ddragon3_bg_videoram },
-	{ 0x0c0000, 0x0c000f, ddragon3_scroll_w },
-	{ 0x100000, 0x1005ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram},
-	{ 0x140000, 0x14000f, ddragon3_io_w },
-	{ 0x1c0000, 0x1c3fff, MWA_BANK2 },
-	{ -1 }
-};
+static MEMORY_WRITE16_START( dd3b_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x080fff, ddragon3_fg_videoram16_w, &ddragon3_fg_videoram16 },
+	{ 0x081000, 0x081fff, MWA16_RAM, &spriteram16 }, /* Sprites (16 bytes per sprite) */
+	{ 0x082000, 0x0827ff, ddragon3_bg_videoram16_w, &ddragon3_bg_videoram16 },
+	{ 0x0c0000, 0x0c000f, ddragon3_scroll16_w },
+	{ 0x100000, 0x1005ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x140000, 0x14000f, ddragon3_io16_w },
+	{ 0x1c0000, 0x1c3fff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress ctribe_readmem[] = {
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x080fff, ddragon3_fg_videoram_r }, /* Foreground (32x32 Tiles - 4 by per tile) */
-	{ 0x081000, 0x081fff, MRA_BANK1 },
-	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_r }, /* Background (32x32 Tiles - 2 by per tile) */
-	{ 0x100000, 0x1005ff, paletteram_word_r },
-	{ 0x180000, 0x180007, ctribe_io_r },
-	{ 0x1c0000, 0x1c3fff, MRA_BANK2 }, /* working RAM */
-	{ -1 }
-};
+static MEMORY_READ16_START( ctribe_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x080fff, MRA16_RAM },	/* Foreground (32x32 Tiles - 4 by per tile) */
+	{ 0x081000, 0x081fff, MRA16_RAM },
+	{ 0x082000, 0x0827ff, MRA16_RAM },	/* Background (32x32 Tiles - 2 by per tile) */
+	{ 0x100000, 0x1005ff, MRA16_RAM },	/* Palette RAM */
+	{ 0x180000, 0x180007, ctribe_io16_r },
+	{ 0x1c0000, 0x1c3fff, MRA16_RAM },	/* working RAM */
+MEMORY_END
 
-static struct MemoryWriteAddress ctribe_writemem[] = {
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x080fff, ddragon3_fg_videoram_w, &ddragon3_fg_videoram },
-	{ 0x081000, 0x081fff, MWA_BANK1, &spriteram }, /* Sprites (16 bytes per sprite) */
-	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_w, &ddragon3_bg_videoram },
-	{ 0x0c0000, 0x0c000f, ddragon3_scroll_w },
-	{ 0x100000, 0x1005ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram},
-	{ 0x140000, 0x14000f, ddragon3_io_w },
-	{ 0x1c0000, 0x1c3fff, MWA_BANK2 },
-	{ -1 }
-};
+static MEMORY_WRITE16_START( ctribe_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x080fff, ddragon3_fg_videoram16_w, &ddragon3_fg_videoram16 },
+	{ 0x081000, 0x081fff, MWA16_RAM, &spriteram16 }, /* Sprites (16 bytes per sprite) */
+	{ 0x082000, 0x0827ff, ddragon3_bg_videoram16_w, &ddragon3_bg_videoram16 },
+	{ 0x0c0000, 0x0c000f, ddragon3_scroll16_w },
+	{ 0x100000, 0x1005ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0x140000, 0x14000f, ddragon3_io16_w },
+	{ 0x1c0000, 0x1c3fff, MWA16_RAM },
+MEMORY_END
 
 /**************************************************************************/
 
-static struct MemoryReadAddress readmem_sound[] = {
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc801, 0xc801, YM2151_status_port_0_r },
 	{ 0xd800, 0xd800, OKIM6295_status_0_r },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] = {
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc800, YM2151_register_port_0_w },
 	{ 0xc801, 0xc801, YM2151_data_port_0_w },
 	{ 0xd800, 0xd800, OKIM6295_data_0_w },
 	{ 0xe800, 0xe800, oki_bankswitch_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress ctribe_readmem_sound[] = {
+static MEMORY_READ_START( ctribe_readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
 	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ctribe_writemem_sound[] = {
+static MEMORY_WRITE_START( ctribe_writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
 	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-	{ -1 }
-};
+MEMORY_END
 
 /***************************************************************************/
 
@@ -370,53 +363,53 @@ INPUT_PORTS_START( ddragon3 )
 
 	/* DSWA */
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0x0000, "A" )
-	PORT_DIPSETTING(      0x0100, "B" )
-	PORT_DIPSETTING(      0x0200, "C" )
-	PORT_DIPSETTING(      0x0300, "D" )
+	PORT_DIPSETTING(	  0x0000, "A" )
+	PORT_DIPSETTING(	  0x0100, "B" )
+	PORT_DIPSETTING(	  0x0200, "C" )
+	PORT_DIPSETTING(	  0x0300, "D" )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x1000, "Coin Statistics" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, "Invert Screen" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 
 	PORT_START /* 180006 DSW */
 	PORT_DIPNAME( 0x0100, 0x0100, "Starting Power" )
-	PORT_DIPSETTING(      0x0000, "200" )
-	PORT_DIPSETTING(      0x0100, "230" )
+	PORT_DIPSETTING(	  0x0000, "200" )
+	PORT_DIPSETTING(	  0x0100, "230" )
 	PORT_DIPNAME( 0x0200, 0x0200, "Simultaneous Players" )
-	PORT_DIPSETTING(      0x0200, "2" )
-	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPSETTING(	  0x0200, "2" )
+	PORT_DIPSETTING(	  0x0000, "3" )
 	PORT_DIPNAME( 0x0400, 0x0400, "Stage Clear Power" )
-	PORT_DIPSETTING(      0x0400, "50" )
-	PORT_DIPSETTING(      0x0000, "0" )
+	PORT_DIPSETTING(	  0x0400, "50" )
+	PORT_DIPSETTING(	  0x0000, "0" )
 	PORT_DIPNAME( 0x0800, 0x0800, "Test Mode?" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000, 0x2000, "P1 hurt P2" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(	  0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR(Difficulty) )
-	PORT_DIPSETTING(      0x4000, "Easy" )
-	PORT_DIPSETTING(      0xc000, "Normal" )
-	PORT_DIPSETTING(      0x8000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(	  0x4000, "Easy" )
+	PORT_DIPSETTING(	  0xc000, "Normal" )
+	PORT_DIPSETTING(	  0x8000, "Hard" )
+	PORT_DIPSETTING(	  0x0000, "Hardest" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ctribe )
@@ -474,10 +467,10 @@ INPUT_PORTS_START( ctribe )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40,	0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80,	0x80, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
@@ -523,9 +516,9 @@ static struct GfxLayout tile_layout =
 
 static struct GfxLayout sprite_layout = {
 	16,16,	/* 16*16 tiles */
-	0x90000/32,	/* 4096 tiles */
+	0x90000/32, /* 4096 tiles */
 	4,	/* 4 bits per pixel */
-	{ 0, 0x100000*8, 2*0x100000*8 , 3*0x100000*8 },	/* the bitplanes are separated */
+	{ 0, 0x100000*8, 2*0x100000*8 , 3*0x100000*8 }, /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -535,7 +528,7 @@ static struct GfxLayout sprite_layout = {
 
 static struct GfxDecodeInfo ddragon3_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tile_layout,	  256, 32 },
+	{ REGION_GFX1, 0, &tile_layout,   256, 32 },
 	{ REGION_GFX2, 0, &sprite_layout,		0, 16 },
 	{ -1 }
 };
@@ -557,8 +550,8 @@ static struct YM2151interface ym2151_interface =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,              /* 1 chip */
-	{ 8500 },       /* frequency (Hz) */
+	1,				/* 1 chip */
+	{ 8500 },		/* frequency (Hz) */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 47 }
 };
@@ -723,7 +716,7 @@ ROM_START( ddragon3 )
 	ROM_LOAD( "dd3.a" ,  0x0c0000, 0x40000, 0x0f74ea1c )
 
 	ROM_REGION( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	/* sprites  */
+	/* sprites	*/
 	ROM_LOAD( "dd3.3e" ,  0x000000, 0x20000, 0x726c49b7 ) //4a
 	ROM_LOAD( "dd3.3d" ,  0x020000, 0x20000, 0x37a1c335 ) //3a
 	ROM_LOAD( "dd3.3c" ,  0x040000, 0x20000, 0x2bcfe63c ) //2a
@@ -771,7 +764,7 @@ ROM_START( ddrago3b )
 	ROM_LOAD( "dd3.a" ,  0x0c0000, 0x40000, 0x0f74ea1c )
 
 	ROM_REGION( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	/* sprites  */
+	/* sprites	*/
 	ROM_LOAD( "dd3.3e" ,  0x000000, 0x20000, 0x726c49b7 ) //4a
 	ROM_LOAD( "dd3.3d" ,  0x020000, 0x20000, 0x37a1c335 ) //3a
 	ROM_LOAD( "dd3.3c" ,  0x040000, 0x20000, 0x2bcfe63c ) //2a
@@ -812,13 +805,13 @@ ROM_START( ctribe )
 	ROM_LOAD( "ct_ep4.rom",   0x00000, 0x8000, 0x4346de13 )
 
 	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ct_mr7.rom",  0x000000, 0x40000, 0xa8b773f1 ) 	/* Background */
+	ROM_LOAD( "ct_mr7.rom",  0x000000, 0x40000, 0xa8b773f1 )    /* Background */
 	ROM_LOAD( "ct_mr6.rom",  0x040000, 0x40000, 0x617530fc )
 	ROM_LOAD( "ct_mr5.rom",  0x080000, 0x40000, 0xcef0a821 )
 	ROM_LOAD( "ct_mr4.rom",  0x0c0000, 0x40000, 0xb84fda09 )
 
 	ROM_REGION( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ct_mr3.rom",  0x000000, 0x80000, 0x1ac2a461 ) 	/* Sprites */
+	ROM_LOAD( "ct_mr3.rom",  0x000000, 0x80000, 0x1ac2a461 )    /* Sprites */
 	ROM_LOAD( "ct_ep5.rom",  0x080000, 0x10000, 0x972faddb )
 	ROM_LOAD( "ct_mr2.rom",  0x100000, 0x80000, 0x8c796707 )
 	ROM_LOAD( "ct_ep6.rom",  0x180000, 0x10000, 0xeb3ab374 )
@@ -829,7 +822,7 @@ ROM_START( ctribe )
 
 	ROM_REGION( 0x040000, REGION_SOUND1 )	/* ADPCM Samples */
 	ROM_LOAD( "ct_mr8.rom" ,  0x020000, 0x20000, 0x9963a6be )
-	ROM_CONTINUE(             0x000000, 0x20000 )
+	ROM_CONTINUE(			  0x000000, 0x20000 )
 ROM_END
 
 ROM_START( ctribeb )
@@ -843,13 +836,13 @@ ROM_START( ctribeb )
 	ROM_LOAD( "ct_ep4.rom",   0x00000, 0x8000, 0x4346de13 )
 
 	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ct_mr7.rom",  0x000000, 0x40000, 0xa8b773f1 ) 	/* Background */
+	ROM_LOAD( "ct_mr7.rom",  0x000000, 0x40000, 0xa8b773f1 )    /* Background */
 	ROM_LOAD( "ct_mr6.rom",  0x040000, 0x40000, 0x617530fc )
 	ROM_LOAD( "ct_mr5.rom",  0x080000, 0x40000, 0xcef0a821 )
 	ROM_LOAD( "ct_mr4.rom",  0x0c0000, 0x40000, 0xb84fda09 )
 
 	ROM_REGION( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ct_mr3.rom",  0x000000, 0x80000, 0x1ac2a461 ) 	/* Sprites */
+	ROM_LOAD( "ct_mr3.rom",  0x000000, 0x80000, 0x1ac2a461 )    /* Sprites */
 	ROM_LOAD( "ct_ep5.rom",  0x080000, 0x10000, 0x972faddb )
 	ROM_LOAD( "ct_mr2.rom",  0x100000, 0x80000, 0x8c796707 )
 	ROM_LOAD( "ct_ep6.rom",  0x180000, 0x10000, 0xeb3ab374 )
@@ -860,12 +853,13 @@ ROM_START( ctribeb )
 
 	ROM_REGION( 0x040000, REGION_SOUND1 )	/* ADPCM Samples */
 	ROM_LOAD( "ct_mr8.rom" ,  0x020000, 0x20000, 0x9963a6be )
-	ROM_CONTINUE(             0x000000, 0x20000 )
+	ROM_CONTINUE(			  0x000000, 0x20000 )
 ROM_END
 
 /**************************************************************************/
 
-GAMEX( 1990, ddragon3, 0,        ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone", GAME_NO_COCKTAIL )
+GAMEX( 1990, ddragon3, 0,		 ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone", GAME_NO_COCKTAIL )
 GAMEX( 1990, ddrago3b, ddragon3, ddrago3b, ddrago3b, 0, ROT0, "bootleg", "Double Dragon 3 - The Rosetta Stone (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1990, ctribe,   0,        ctribe,   ctribe,   0, ROT0, "Technos", "The Combatribes (US)", GAME_NO_COCKTAIL )
-GAMEX( 1990, ctribeb,  ctribe,   ctribe,   ctribe,   0, ROT0, "bootleg", "The Combatribes (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1990, ctribe,   0,		 ctribe,   ctribe,	 0, ROT0, "Technos", "The Combatribes (US)", GAME_NO_COCKTAIL )
+GAMEX( 1990, ctribeb,  ctribe,	 ctribe,   ctribe,	 0, ROT0, "bootleg", "The Combatribes (bootleg)", GAME_NO_COCKTAIL )
+

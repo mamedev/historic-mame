@@ -125,12 +125,10 @@ void fastlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	tilemap_set_scrolly( layer0, 0, K007121_ctrlram[0][0x02] );
 
-	tilemap_update( ALL_TILEMAPS );
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	tilemap_render( ALL_TILEMAPS );
+	tilemap_update(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_draw(bitmap,layer0,0);
+	tilemap_draw(bitmap,layer0,0,0);
 	K007121_sprites_draw(0,bitmap,spriteram,0,40,0,-1);
-	tilemap_draw(bitmap,layer1,0);
+	tilemap_draw(bitmap,layer1,0,0);
 }

@@ -1,22 +1,36 @@
 /***************************************************************************
 
-	Shuuz
+	Atari Shuuz hardware
 
-    driver by Aaron Giles
+	driver by Aaron Giles
 
-****************************************************************************/
+	Games supported:
+		* Shuuz (1990) [2 sets]
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map (TBA)
+
+***************************************************************************/
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( shuuz_playfieldram_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
 int shuuz_vh_start(void);
 void shuuz_vh_stop(void);
-void shuuz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void shuuz_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void shuuz_scanline_update(int scanline);
 
@@ -52,16 +66,13 @@ static void update_interrupts(void)
 static void init_machine(void)
 {
 	atarigen_eeprom_reset();
-	atarigen_video_control_reset();
+	atarivc_reset(atarivc_eof_data);
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(shuuz_scanline_update, 8);
 }
 
 
-static WRITE_HANDLER( latch_w )
+static WRITE16_HANDLER( latch_w )
 {
-	(void)offset;
-	(void)data;
 }
 
 
@@ -72,17 +83,17 @@ static WRITE_HANDLER( latch_w )
  *
  *************************************/
 
-static READ_HANDLER( leta_r )
+static READ16_HANDLER( leta_r )
 {
 	/* trackball -- rotated 45 degrees? */
 	static int cur[2];
-	int which = (offset >> 1) & 1;
+	int which = offset & 1;
 
 	/* when reading the even ports, do a real analog port update */
 	if (which == 0)
 	{
-		int dx = (INT8)input_port_2_r(offset);
-		int dy = (INT8)input_port_3_r(offset);
+		int dx = (INT8)readinputport(2);
+		int dy = (INT8)readinputport(3);
 
 		cur[0] = dx + dy;
 		cur[1] = dx - dy;
@@ -100,15 +111,15 @@ static READ_HANDLER( leta_r )
  *
  *************************************/
 
-static READ_HANDLER( adpcm_r )
+static READ16_HANDLER( adpcm_r )
 {
 	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-static WRITE_HANDLER( adpcm_w )
+static WRITE16_HANDLER( adpcm_w )
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 		OKIM6295_data_0_w(offset, data & 0xff);
 }
 
@@ -120,9 +131,9 @@ static WRITE_HANDLER( adpcm_w )
  *
  *************************************/
 
-static READ_HANDLER( special_port0_r )
+static READ16_HANDLER( special_port0_r )
 {
-	int result = input_port_0_r(offset);
+	int result = readinputport(0);
 
 	if ((result & 0x0800) && atarigen_get_hblank())
 		result &= ~0x0800;
@@ -138,42 +149,38 @@ static READ_HANDLER( special_port0_r )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x100fff, atarigen_eeprom_r },
 	{ 0x103000, 0x103003, leta_r },
 	{ 0x105000, 0x105001, special_port0_r },
-	{ 0x105002, 0x105003, input_port_1_r },
+	{ 0x105002, 0x105003, input_port_1_word_r },
 	{ 0x106000, 0x106001, adpcm_r },
-	{ 0x107000, 0x107007, MRA_NOP },
-	{ 0x3e0000, 0x3e087f, MRA_BANK1 },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
-	{ 0x3f4000, 0x3f7fff, MRA_BANK2 },
-	{ 0x3f8000, 0x3fcfff, MRA_BANK3 },
-	{ 0x3fd000, 0x3fd3ff, MRA_BANK4 },
-	{ 0x3fd400, 0x3fffff, MRA_BANK5 },
-	{ -1 }  /* end of table */
-};
+	{ 0x107000, 0x107007, MRA16_NOP },
+	{ 0x3e0000, 0x3e087f, MRA16_RAM },
+	{ 0x3effc0, 0x3effff, atarivc_r },
+	{ 0x3f4000, 0x3fffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x100fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x101000, 0x101fff, atarigen_eeprom_enable_w },
-	{ 0x102000, 0x102001, watchdog_reset_w },
+	{ 0x102000, 0x102001, watchdog_reset16_w },
 	{ 0x105000, 0x105001, latch_w },
 	{ 0x106000, 0x106001, adpcm_w },
-	{ 0x107000, 0x107007, MWA_NOP },
-	{ 0x3e0000, 0x3e087f, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
-	{ 0x3f4000, 0x3f7fff, shuuz_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f8000, 0x3fcfff, MWA_BANK3 },
-	{ 0x3fd000, 0x3fd3ff, MWA_BANK4, &atarigen_spriteram },
-	{ 0x3fd400, 0x3fffff, MWA_BANK5 },
-	{ -1 }  /* end of table */
-};
+	{ 0x107000, 0x107007, MWA16_NOP },
+	{ 0x3e0000, 0x3e087f, atarigen_666_paletteram_w, &paletteram16 },
+	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
+	{ 0x3f4000, 0x3f5eff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0x3f5f00, 0x3f5f7f, MWA16_RAM, &atarivc_eof_data },
+	{ 0x3f5f80, 0x3f5fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f6000, 0x3f7fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f8000, 0x3fcfff, MWA16_RAM },
+	{ 0x3fd000, 0x3fd3ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3fd400, 0x3fffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -250,35 +257,23 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout pflayout =
+static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	16384,	/* 16384 of them */
-	4,		/* 4 bits per pixel */
-	{ 0, 4, 0+0x40000*8, 4+0x40000*8 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 4, 0+RGN_FRAC(1,2), 4+RGN_FRAC(1,2) },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
-};
-
-
-static struct GfxLayout molayout =
-{
-	8,8,	/* 8*8 sprites */
-	32768,	/* 32768 of them */
-	4,		/* 4 bits per pixel */
-	{ 0, 4, 0+0x80000*8, 4+0x80000*8 },
-	{ 0, 1, 2, 3, 8, 9, 10, 11 },
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
+	16*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &pflayout,  256, 16 },		/* sprites & playfield */
-	{ REGION_GFX2, 0, &molayout,    0, 16 },		/* sprites & playfield */
-	{ -1 } /* end of array */
+	{ REGION_GFX1, 0, &pfmolayout,  256, 16 },		/* sprites & playfield */
+	{ REGION_GFX2, 0, &pfmolayout,    0, 16 },		/* sprites & playfield */
+	{ -1 }
 };
 
 
@@ -291,7 +286,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
+	1,
 	{ ATARI_CLOCK_14MHz/16/132 },
 	{ REGION_SOUND1 },
 	{ 100 }
@@ -312,11 +307,11 @@ static const struct MachineDriver machine_driver_shuuz =
 		{
 			CPU_M68000,		/* verified */
 			ATARI_CLOCK_14MHz/2,
-			readmem,writemem,0,0,
+			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -343,24 +338,6 @@ static const struct MachineDriver machine_driver_shuuz =
 
 	atarigen_nvram_handler
 };
-
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	int i;
-
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
-		memory_region(REGION_GFX2)[i] ^= 0xff;
-}
 
 
 
@@ -425,14 +402,26 @@ ROM_END
 
 
 
+/*************************************
+ *
+ *	Driver init
+ *
+ *************************************/
+
 static void init_shuuz(void)
 {
 	atarigen_eeprom_default = NULL;
-
-	rom_decode();
+	atarigen_invert_region(REGION_GFX1);
+	atarigen_invert_region(REGION_GFX2);
 }
 
 
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAME( 1990, shuuz,  0,     shuuz, shuuz,  shuuz, ROT0, "Atari Games", "Shuuz (version 8.0)" )
 GAME( 1990, shuuz2, shuuz, shuuz, shuuz2, shuuz, ROT0, "Atari Games", "Shuuz (version 7.1)" )

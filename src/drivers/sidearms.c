@@ -56,8 +56,7 @@ static READ_HANDLER( turtship_ports_r )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc800, 0xc800, input_port_0_r },
@@ -67,11 +66,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc804, 0xc804, input_port_4_r },
 	{ 0xc805, 0xc805, input_port_5_r },
 	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc3ff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
 	{ 0xc400, 0xc7ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
@@ -88,8 +85,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xdfff, colorram_w, &colorram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 #ifdef THIRD_CPU
 static WRITE_HANDLER( pop )
@@ -100,19 +96,16 @@ RAM[0xa002] = 0xa0;
 //      interrupt_enable_w(offset,data & 0x80);
 }
 
-static struct MemoryReadAddress readmem2[] =
-{
+static MEMORY_READ_START( readmem2 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xe3ff, MRA_RAM },
 	{ 0xe400, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xebff, MRA_RAM },
 	{ 0xec00, 0xefff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem2[] =
-{
+static MEMORY_WRITE_START( writemem2 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe3ff, MWA_RAM },
@@ -120,23 +113,19 @@ static struct MemoryWriteAddress writemem2[] =
 	{ 0xe800, 0xebff, MWA_RAM },
 	{ 0xec00, 0xefff, MWA_RAM },
 	{ 0xf80e, 0xf80e, pop },        /* ROM bank selector? (to appear at 8000) */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 #endif
 
 
-static struct MemoryReadAddress turtship_readmem[] =
-{
+static MEMORY_READ_START( turtship_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xe807, turtship_ports_r },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress turtship_writemem[] =
-{
+static MEMORY_WRITE_START( turtship_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
@@ -154,30 +143,25 @@ static struct MemoryWriteAddress turtship_writemem[] =
 	{ 0xe80c, 0xe80c, sidearms_gfxctrl_w },	/* background and sprite enable */
 	{ 0xf000, 0xf7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xf800, 0xffff, colorram_w, &colorram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, soundlatch_r },
 	{ 0xf000, 0xf000, YM2203_status_port_0_r },
 	{ 0xf002, 0xf002, YM2203_status_port_1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xf000, YM2203_control_port_0_w },
 	{ 0xf001, 0xf001, YM2203_write_port_0_w },
 	{ 0xf002, 0xf002, YM2203_control_port_1_w },
 	{ 0xf003, 0xf003, YM2203_write_port_1_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( sidearms )

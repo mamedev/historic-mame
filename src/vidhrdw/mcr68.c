@@ -13,23 +13,11 @@
 #include "vidhrdw/generic.h"
 
 
-#define LOW_BYTE(x) (READ_WORD(x) & 0xff)
+#define LOW_BYTE(x) ((x) & 0xff)
 
 
 UINT8 mcr68_sprite_clip;
 INT8 mcr68_sprite_xoffset;
-
-
-#define DEBUG_VIDEO		0
-
-
-#if DEBUG_VIDEO
-static int show_bg_colors;
-static int show_colors;
-
-static void mcr68_debug();
-static void zwackery_debug();
-#endif
 
 
 
@@ -39,13 +27,12 @@ static void zwackery_debug();
  *
  *************************************/
 
-WRITE_HANDLER( mcr68_paletteram_w )
+WRITE16_HANDLER( mcr68_paletteram_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	int r, g, b;
+	int newword, r, g, b;
 
-	WRITE_WORD(&paletteram[offset], newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	newword = paletteram16[offset];
 
 	r = (newword >> 6) & 7;
 	b = (newword >> 3) & 7;
@@ -56,7 +43,7 @@ WRITE_HANDLER( mcr68_paletteram_w )
 	g = (g << 5) | (g << 2) | (g >> 1);
 	b = (b << 5) | (b << 2) | (b >> 1);
 
-	palette_change_color(offset / 2, r, g, b);
+	palette_change_color(offset, r, g, b);
 }
 
 
@@ -67,15 +54,16 @@ WRITE_HANDLER( mcr68_paletteram_w )
  *
  *************************************/
 
-WRITE_HANDLER( mcr68_videoram_w )
+WRITE16_HANDLER( mcr68_videoram_w )
 {
-	int oldword = READ_WORD(&videoram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
+	int oldword = videoram16[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		dirtybuffer[offset & ~3] = 1;
-		WRITE_WORD(&videoram[offset], newword);
+		dirtybuffer[offset & ~1] = 1;
+		videoram16[offset] = newword;
 	}
 }
 
@@ -93,17 +81,17 @@ static void mcr68_update_background(struct osd_bitmap *bitmap, int overrender)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 4; offs >= 0; offs -= 4)
+	for (offs = (videoram_size / 2) - 2; offs >= 0; offs -= 2)
 	{
 		/* this works for overrendering as well, since the sprite code will mark */
 		/* intersecting tiles for us */
 		if (dirtybuffer[offs])
 		{
-			int mx = (offs / 4) % 32;
-			int my = (offs / 4) / 32;
-			int attr = LOW_BYTE(&videoram[offs + 2]);
+			int mx = (offs / 2) % 32;
+			int my = (offs / 2) / 32;
+			int attr = LOW_BYTE(videoram16[offs + 1]);
 			int color = (attr & 0x30) >> 4;
-			int code = LOW_BYTE(&videoram[offs]) + 256 * (attr & 0x03) + 1024 * ((attr >> 6) & 0x03);
+			int code = LOW_BYTE(videoram16[offs]) + 256 * (attr & 0x03) + 1024 * ((attr >> 6) & 0x03);
 
 			if (!overrender)
 				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
@@ -138,12 +126,12 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 	sprite_clip.max_x -= mcr68_sprite_clip;
 
 	/* loop over sprite RAM */
-	for (offs = 0; offs < spriteram_size; offs += 8)
+	for (offs = 0; offs < spriteram_size / 2; offs += 4)
 	{
 		int code, color, flipx, flipy, x, y, sx, sy, xcount, ycount, flags;
 
-		flags = LOW_BYTE(&spriteram[offs + 2]);
-		code = LOW_BYTE(&spriteram[offs + 4]) + 256 * ((flags >> 3) & 0x01) + 512 * ((flags >> 6) & 0x03);
+		flags = LOW_BYTE(spriteram16[offs + 1]);
+		code = LOW_BYTE(spriteram16[offs + 2]) + 256 * ((flags >> 3) & 0x01) + 512 * ((flags >> 6) & 0x03);
 
 		/* skip if zero */
 		if (code == 0)
@@ -157,8 +145,8 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 		color = ~flags & 0x03;
 		flipx = flags & 0x10;
 		flipy = flags & 0x20;
-		x = LOW_BYTE(&spriteram[offs + 6]) * 2 + mcr68_sprite_xoffset;
-		y = (241 - LOW_BYTE(&spriteram[offs])) * 2;
+		x = LOW_BYTE(spriteram16[offs + 3]) * 2 + mcr68_sprite_xoffset;
+		y = (241 - LOW_BYTE(spriteram16[offs])) * 2;
 
 		/* allow sprites to clip off the left side */
 		if (x > 0x1f0) x -= 0x200;
@@ -192,7 +180,7 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 			for (y = sy; y < sy + ycount; y++)
 				for (x = sx; x < sx + xcount; x++)
 					if (x >= 0 && x < 32 && y >= 0 && y < 30)
-						dirtybuffer[(32 * y + x) * 4] = 1;
+						dirtybuffer[(32 * y + x) * 2] = 1;
 		}
 	}
 }
@@ -207,13 +195,9 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 
 void mcr68_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-#if DEBUG_VIDEO
-	mcr68_debug();
-#endif
-
 	/* update palette */
 	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size / 2);
 
 	/* draw the background */
 	mcr68_update_background(tmpbitmap, 0);
@@ -235,55 +219,16 @@ void mcr68_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /*************************************
  *
- *	General MCR/68k debug
- *
- *************************************/
-
-#if DEBUG_VIDEO
-void mcr68_debug(void)
-{
-	static FILE *f;
-	if (keyboard_pressed(KEYCODE_9))
-	{
-		int offs;
-
-		if (!f) f = fopen("mcr.log", "w");
-		if (f)
-		{
-			fprintf(f, "\n\n=================================================================\n");
-			for (offs = 0; offs < videoram_size; offs += 4)
-			{
-				fprintf(f, "%02X%02X ", LOW_BYTE(&videoram[offs + 2]), LOW_BYTE(&videoram[offs + 0]));
-				if (offs % (32 * 4) == 31 * 4) fprintf(f, "\n");
-			}
-			fprintf(f, "\n\n");
-			for (offs = 0; offs < spriteram_size; offs += 8)
-				fprintf(f, "Sprite %03d: %02X %02X %02X %02X\n", offs / 8,
-					LOW_BYTE(&spriteram[offs + 0]),
-					LOW_BYTE(&spriteram[offs + 2]),
-					LOW_BYTE(&spriteram[offs + 4]),
-					LOW_BYTE(&spriteram[offs + 6]));
-		}
-		fflush(f);
-	}
-}
-#endif
-
-
-
-/*************************************
- *
  *	Zwackery palette RAM writes
  *
  *************************************/
 
-WRITE_HANDLER( zwackery_paletteram_w )
+WRITE16_HANDLER( zwackery_paletteram_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	int r, g, b;
+	int newword, r, g, b;
 
-	WRITE_WORD(&paletteram[offset], newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	newword = paletteram16[offset];
 
 	r = (~newword >> 10) & 31;
 	b = (~newword >> 5) & 31;
@@ -294,7 +239,7 @@ WRITE_HANDLER( zwackery_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2, r, g, b);
+	palette_change_color(offset, r, g, b);
 }
 
 
@@ -305,15 +250,16 @@ WRITE_HANDLER( zwackery_paletteram_w )
  *
  *************************************/
 
-WRITE_HANDLER( zwackery_videoram_w )
+WRITE16_HANDLER( zwackery_videoram_w )
 {
-	int oldword = READ_WORD(&videoram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
+	int oldword = videoram16[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		dirtybuffer[offset & ~1] = 1;
-		WRITE_WORD(&videoram[offset], newword);
+		dirtybuffer[offset] = 1;
+		videoram16[offset] = newword;
 	}
 }
 
@@ -325,13 +271,12 @@ WRITE_HANDLER( zwackery_videoram_w )
  *
  *************************************/
 
-WRITE_HANDLER( zwackery_spriteram_w )
+WRITE16_HANDLER( zwackery_spriteram_w )
 {
 	/* yech -- Zwackery relies on the upper 8 bits of a spriteram read being $ff! */
 	/* to make this happen we always write $ff in the upper 8 bits */
-	int oldword = READ_WORD(&spriteram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&spriteram[offset], newword | 0xff00);
+	COMBINE_DATA(&spriteram16[offset]);
+	spriteram16[offset] |= 0xff00;
 }
 
 
@@ -403,9 +348,9 @@ static void zwackery_mark_background(void)
 	int offs;
 
 	/* for every character in the Video RAM, mark the colors */
-	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
+	for (offs = (videoram_size / 2) - 1; offs >= 0; offs--)
 	{
-		int data = READ_WORD(&videoram[offs]);
+		int data = videoram16[offs];
 		int color = (data >> 13) & 7;
 		int code = data & 0x3ff;
 		int i;
@@ -427,15 +372,15 @@ static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
+	for (offs = (videoram_size / 2) - 1; offs >= 0; offs--)
 	{
 		/* this works for overrendering as well, since the sprite code will mark */
 		/* intersecting tiles for us */
 		if (dirtybuffer[offs])
 		{
-			int data = READ_WORD(&videoram[offs]);
-			int mx = (offs / 2) % 32;
-			int my = (offs / 2) / 32;
+			int data = videoram16[offs];
+			int mx = offs % 32;
+			int my = offs / 32;
 			int color = (data >> 13) & 7;
 			int code = data & 0x3ff;
 
@@ -450,16 +395,6 @@ static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender
 			else if (color != 0)
 				drawgfx(bitmap, Machine->gfx[2], code, color, data & 0x0800, data & 0x1000,
 						16 * mx, 16 * my, &Machine->visible_area, TRANSPARENCY_PEN, 0);
-
-#if DEBUG_VIDEO
-if (show_bg_colors)
-{
-	char c = "01234567"[color];
-	drawgfx(bitmap, Machine->uifont, c, 1, 0, 0, 16 * mx + 0, 16 * my, 0, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->uifont, c, 1, 0, 0, 16 * mx + 4, 16 * my, 0, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->uifont, c, 0, 0, 0, 16 * mx + 2, 16 * my, 0, TRANSPARENCY_PEN, 0);
-}
-#endif
 
 			/* only clear the dirty flag if we're not overrendering */
 			dirtybuffer[offs] = 0;
@@ -484,17 +419,17 @@ static void zwackery_mark_sprites(void)
 	memset(&used, 0, sizeof(used));
 
 	/* loop over spriteram */
-	for (offs = 0; offs < spriteram_size; offs += 8)
+	for (offs = 0; offs < spriteram_size / 2; offs += 4)
 	{
 		int code, color, flags;
 
 		/* get the code and skip if zero */
-		code = LOW_BYTE(&spriteram[offs + 4]);
+		code = LOW_BYTE(spriteram16[offs + 2]);
 		if (code == 0)
 			continue;
 
 		/* extract the flag bits and determine the color */
-		flags = LOW_BYTE(&spriteram[offs + 2]);
+		flags = LOW_BYTE(spriteram16[offs + 1]);
 		color = ((~flags >> 2) & 0x0f) | ((flags & 0x02) << 3);
 
 		/* mark the appropriate pens */
@@ -521,17 +456,17 @@ static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 	int offs;
 
 	/* loop over sprite RAM */
-	for (offs = 0; offs < spriteram_size; offs += 8)
+	for (offs = 0; offs < spriteram_size / 2; offs += 4)
 	{
 		int code, color, flipx, flipy, x, y, sx, sy, xcount, ycount, flags;
 
 		/* get the code and skip if zero */
-		code = LOW_BYTE(&spriteram[offs + 4]);
+		code = LOW_BYTE(spriteram16[offs + 2]);
 		if (code == 0)
 			continue;
 
 		/* extract the flag bits and determine the color */
-		flags = LOW_BYTE(&spriteram[offs + 2]);
+		flags = LOW_BYTE(spriteram16[offs + 1]);
 		color = ((~flags >> 2) & 0x0f) | ((flags & 0x02) << 3);
 
 		/* for low priority, draw everything but color 7 */
@@ -551,24 +486,14 @@ static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 		/* determine flipping and coordinates */
 		flipx = ~flags & 0x40;
 		flipy = flags & 0x80;
-		x = (231 - LOW_BYTE(&spriteram[offs + 6])) * 2;
-		y = (241 - LOW_BYTE(&spriteram[offs])) * 2;
+		x = (231 - LOW_BYTE(spriteram16[offs + 3])) * 2;
+		y = (241 - LOW_BYTE(spriteram16[offs])) * 2;
 
 		if (x <= -32) x += 512;
 
 		/* draw the sprite */
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
 				&Machine->visible_area, TRANSPARENCY_PEN, 0);
-
-#if DEBUG_VIDEO
-if (show_colors)
-{
-	char c = "0123456789ABCDEF"[color];
-	drawgfx(bitmap, Machine->uifont, c, 1, 0, 0, x + 8,  y + 8, 0, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->uifont, c, 1, 0, 0, x + 12, y + 8, 0, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->uifont, c, 0, 0, 0, x + 10, y + 8, 0, TRANSPARENCY_PEN, 0);
-}
-#endif
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites. */
@@ -594,7 +519,7 @@ if (show_colors)
 
 			for (y = sy; y < sy + ycount; y++)
 				for (x = sx; x < sx + xcount; x++)
-					dirtybuffer[(32 * (y & 31) + (x & 31)) * 2] = 1;
+					dirtybuffer[32 * (y & 31) + (x & 31)] = 1;
 		}
 	}
 }
@@ -609,10 +534,6 @@ if (show_colors)
 
 void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-#if DEBUG_VIDEO
-	zwackery_debug();
-#endif
-
 	/* mark the palette */
 	palette_init_used_colors();
 	zwackery_mark_background();
@@ -620,7 +541,7 @@ void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* update palette */
 	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size / 2);
 
 	/* draw the background */
 	zwackery_update_background(tmpbitmap, 0);
@@ -637,113 +558,3 @@ void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* draw the high-priority sprites */
 	zwackery_update_sprites(bitmap, 1);
 }
-
-
-
-/*************************************
- *
- *	Zwackery debug
- *
- *************************************/
-
-#if DEBUG_VIDEO
-void zwackery_debug(void)
-{
-	static int last_h_state;
-	static int last_l_state;
-	static FILE *f;
-	int i;
-
-	if (keyboard_pressed(KEYCODE_CAPSLOCK))
-	{
-		if (!show_bg_colors) memset(dirtybuffer, 1, videoram_size);
-		show_bg_colors = 1;
-	}
-	else
-	{
-		if (show_bg_colors) memset(dirtybuffer, 1, videoram_size);
-		show_bg_colors = 0;
-	}
-
-	if (keyboard_pressed(KEYCODE_9))
-	{
-		int offs;
-
-		if (!f) f = fopen("mcr.log", "w");
-		if (f)
-		{
-			fprintf(f, "\n\n=================================================================\n");
-			for (offs = 0; offs < videoram_size; offs += 2)
-			{
-				fprintf(f, "%04X ", READ_WORD(&videoram[offs]));
-				if (offs % (32 * 2) == 31 * 2) fprintf(f, "\n");
-			}
-			fprintf(f, "\n\n");
-			for (offs = 0; offs < spriteram_size; offs += 8)
-				fprintf(f, "Sprite %03d: %02X %02X %02X %02X\n", offs / 8,
-					READ_WORD(&spriteram[offs + 0]),
-					READ_WORD(&spriteram[offs + 2]),
-					READ_WORD(&spriteram[offs + 4]),
-					READ_WORD(&spriteram[offs + 6]));
-		}
-		fflush(f);
-	}
-
-	show_colors = keyboard_pressed(KEYCODE_8);
-
-	if (keyboard_pressed(KEYCODE_H))
-	{
-		last_h_state = 1;
-		for (i = 0; i < 2048; i++)
-			if (i & 0x80) palette_change_color(i, 255, 255, 255);
-	}
-	else if (last_h_state)
-	{
-		last_h_state = 0;
-		for (i = 0; i < 2048; i++)
-			if (i & 0x80)
-			{
-				int word = READ_WORD(&paletteram[i * 2]);
-
-				int r = (~word >> 10) & 31;
-				int b = (~word >> 5) & 31;
-				int g = (~word >> 0) & 31;
-
-				/* up to 8 bits */
-				r = (r << 3) | (r >> 2);
-				g = (g << 3) | (g >> 2);
-				b = (b << 3) | (b >> 2);
-
-				palette_change_color(i, r, g, b);
-			}
-	}
-
-	if (keyboard_pressed(KEYCODE_L))
-	{
-		last_l_state = 1;
-		for (i = 0; i < 2048; i++)
-			if (!(i & 0x80)) palette_change_color(i, 255, 255, 255);
-	}
-	else if (last_l_state)
-	{
-		last_l_state = 0;
-		for (i = 0; i < 2048; i++)
-			if (!(i & 0x80))
-			{
-				int word = READ_WORD(&paletteram[i * 2]);
-
-				int r = (~word >> 10) & 31;
-				int b = (~word >> 5) & 31;
-				int g = (~word >> 0) & 31;
-
-				/* up to 8 bits */
-				r = (r << 3) | (r >> 2);
-				g = (g << 3) | (g >> 2);
-				b = (b << 3) | (b >> 2);
-
-				palette_change_color(i, r, g, b);
-			}
-	}
-}
-#endif
-

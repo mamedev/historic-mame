@@ -320,9 +320,9 @@ static int create_tilemaps_0(void)
 	if (!top_tilemap[0] || !fg_tilemap[0] || !bg_tilemap[0])
 		return 1;
 
-	top_tilemap[0]->transparent_pen = 0;
-	fg_tilemap[0]->transparent_pen = 0;
-	bg_tilemap[0]->transparent_pen = 0;
+	tilemap_set_transparent_pen(top_tilemap[0],0);
+	tilemap_set_transparent_pen(fg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
 
 	return 0;
 }
@@ -335,9 +335,9 @@ static int create_tilemaps_1(void)
 	if (!top_tilemap[1] || !fg_tilemap[1] || !bg_tilemap[1])
 		return 1;
 
-	top_tilemap[1]->transparent_pen = 0;
-	fg_tilemap[1]->transparent_pen = 0;
-	bg_tilemap[1]->transparent_pen = 0;
+	tilemap_set_transparent_pen(top_tilemap[1],0);
+	tilemap_set_transparent_pen(fg_tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
 
 	return 0;
 }
@@ -426,7 +426,7 @@ int raizing_0_vh_start(void)
 	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	if (!text_tilemap)
 		return 1;
-	text_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(text_tilemap,0);
 	return 0;
 }
 int raizing_1_vh_start(void)
@@ -440,7 +440,7 @@ int raizing_1_vh_start(void)
 	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	if (!text_tilemap)
 		return 1;
-	text_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(text_tilemap,0);
 	return 0;
 }
 
@@ -1253,17 +1253,15 @@ void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	mark_sprite_colors(0);	/* Also mark priorities used */
 
-	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,bg_tilemap[0],priority);
-		tilemap_draw(bitmap,fg_tilemap[0],priority);
-		tilemap_draw(bitmap,top_tilemap[0],priority);
+		tilemap_draw(bitmap,bg_tilemap[0],priority,0);
+		tilemap_draw(bitmap,fg_tilemap[0],priority,0);
+		tilemap_draw(bitmap,top_tilemap[0],priority,0);
 		if (sprite_priority[0][priority])
 			draw_sprites(bitmap,0,priority);
 	}
@@ -1288,25 +1286,23 @@ void toaplan2_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprite_colors(0);	/* Also mark priorities used */
 	mark_sprite_colors(1);	/* Also mark priorities used */
 
-	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,bg_tilemap[1],priority);
-		tilemap_draw(bitmap,fg_tilemap[1],priority);
-		tilemap_draw(bitmap,top_tilemap[1],priority);
+		tilemap_draw(bitmap,bg_tilemap[1],priority,0);
+		tilemap_draw(bitmap,fg_tilemap[1],priority,0);
+		tilemap_draw(bitmap,top_tilemap[1],priority,0);
 		if (sprite_priority[1][priority])
 			draw_sprites(bitmap,1,priority);
 	}
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,bg_tilemap[0],priority);
-		tilemap_draw(bitmap,fg_tilemap[0],priority);
-		tilemap_draw(bitmap,top_tilemap[0],priority);
+		tilemap_draw(bitmap,bg_tilemap[0],priority,0);
+		tilemap_draw(bitmap,fg_tilemap[0],priority,0);
+		tilemap_draw(bitmap,top_tilemap[0],priority,0);
 		if (sprite_priority[0][priority])
 			draw_sprites(bitmap,0,priority);
 	}
@@ -1331,25 +1327,23 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprite_colors(0);	/* Also mark priorities used */
 	mark_sprite_colors(1);	/* Also mark priorities used */
 
-	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,bg_tilemap[0],priority); /* 2 */
-		tilemap_draw(bitmap,bg_tilemap[1],priority);
-		tilemap_draw(bitmap,fg_tilemap[1],priority);
-		tilemap_draw(bitmap,top_tilemap[1],priority);
+		tilemap_draw(bitmap,bg_tilemap[0],priority,0); /* 2 */
+		tilemap_draw(bitmap,bg_tilemap[1],priority,0);
+		tilemap_draw(bitmap,fg_tilemap[1],priority,0);
+		tilemap_draw(bitmap,top_tilemap[1],priority,0);
 		if (sprite_priority[1][priority])
 			draw_sprites(bitmap,1,priority);
 	}
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,fg_tilemap[0],priority);
-		tilemap_draw(bitmap,top_tilemap[0],priority);
+		tilemap_draw(bitmap,fg_tilemap[0],priority,0);
+		tilemap_draw(bitmap,top_tilemap[0],priority,0);
 		if (sprite_priority[0][priority])
 			draw_sprites(bitmap,0,priority);
 	}
@@ -1358,12 +1352,12 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void raizing_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	toaplan2_0_vh_screenrefresh(bitmap, full_refresh);
-	tilemap_draw(bitmap,text_tilemap,0);
+	tilemap_draw(bitmap,text_tilemap,0,0);
 }
 void raizing_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	toaplan2_1_vh_screenrefresh(bitmap, full_refresh);
-	tilemap_draw(bitmap,text_tilemap,0);
+	tilemap_draw(bitmap,text_tilemap,0,0);
 }
 
 

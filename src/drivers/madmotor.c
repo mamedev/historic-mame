@@ -19,84 +19,66 @@
 int  madmotor_vh_start(void);
 void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-READ_HANDLER( madmotor_pf1_rowscroll_r );
-WRITE_HANDLER( madmotor_pf1_rowscroll_w );
-READ_HANDLER( madmotor_pf1_data_r );
-READ_HANDLER( madmotor_pf2_data_r );
-READ_HANDLER( madmotor_pf3_data_r );
-WRITE_HANDLER( madmotor_pf1_data_w );
-WRITE_HANDLER( madmotor_pf2_data_w );
-WRITE_HANDLER( madmotor_pf3_data_w );
-WRITE_HANDLER( madmotor_pf1_control_w );
-WRITE_HANDLER( madmotor_pf2_control_w );
-WRITE_HANDLER( madmotor_pf3_control_w );
-extern unsigned char *madmotor_pf1_rowscroll;
-extern unsigned char *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
-static unsigned char *madmotor_ram;
+READ16_HANDLER( madmotor_pf1_rowscroll_r );
+WRITE16_HANDLER( madmotor_pf1_rowscroll_w );
+READ16_HANDLER( madmotor_pf1_data_r );
+READ16_HANDLER( madmotor_pf2_data_r );
+READ16_HANDLER( madmotor_pf3_data_r );
+WRITE16_HANDLER( madmotor_pf1_data_w );
+WRITE16_HANDLER( madmotor_pf2_data_w );
+WRITE16_HANDLER( madmotor_pf3_data_w );
+WRITE16_HANDLER( madmotor_pf1_control_w );
+WRITE16_HANDLER( madmotor_pf2_control_w );
+WRITE16_HANDLER( madmotor_pf3_control_w );
+extern data16_t *madmotor_pf1_rowscroll;
+extern data16_t *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
+
 
 /******************************************************************************/
 
-static WRITE_HANDLER( madmotor_sound_w )
+static WRITE16_HANDLER( madmotor_sound_w )
 {
-	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,H6280_INT_IRQ1);
-}
-
-static READ_HANDLER( madmotor_control_r )
-{
-	switch (offset)
+	if (ACCESSING_LSB)
 	{
-		case 2: /* Player 1 & Player 2 joysticks & fire buttons */
-			return (readinputport(0) + (readinputport(1) << 8));
-
-		case 4: /* Dip Switches */
-			return (readinputport(3) + (readinputport(4) << 8));
-
-		case 6: /* Credits */
-			return readinputport(2);
+		soundlatch_w(0,data & 0xff);
+		cpu_cause_interrupt(1,H6280_INT_IRQ1);
 	}
-
-	logerror("Unknown control read at %d\n",offset);
-	return 0xffff;
 }
+
 
 /******************************************************************************/
 
-static struct MemoryReadAddress madmotor_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( madmotor_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x184000, 0x1847ff, madmotor_pf1_rowscroll_r },
 	{ 0x188000, 0x189fff, madmotor_pf1_data_r },
 	{ 0x198000, 0x1987ff, madmotor_pf2_data_r },
 	{ 0x1a4000, 0x1a4fff, madmotor_pf3_data_r },
-	{ 0x18c000, 0x18c001, MRA_NOP },
-	{ 0x19c000, 0x19c001, MRA_NOP },
-	{ 0x3e0000, 0x3e3fff, MRA_BANK1 },
-	{ 0x3e8000, 0x3e87ff, MRA_BANK2 },
-	{ 0x3f0000, 0x3f07ff, paletteram_word_r },
-	{ 0x3f8000, 0x3f800f, madmotor_control_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x18c000, 0x18c001, MRA16_NOP },
+	{ 0x19c000, 0x19c001, MRA16_NOP },
+	{ 0x3e0000, 0x3e3fff, MRA16_RAM },
+	{ 0x3e8000, 0x3e87ff, MRA16_RAM },
+	{ 0x3f0000, 0x3f07ff, MRA16_RAM },
+	{ 0x3f8002, 0x3f8003, input_port_0_word_r },
+	{ 0x3f8004, 0x3f8005, input_port_1_word_r },
+	{ 0x3f8006, 0x3f8007, input_port_2_word_r },
+MEMORY_END
 
-static struct MemoryWriteAddress madmotor_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x18c000, 0x18c001, MWA_NOP },
-
+static MEMORY_WRITE16_START( madmotor_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x180000, 0x18001f, madmotor_pf1_control_w },
 	{ 0x184000, 0x1847ff, madmotor_pf1_rowscroll_w, &madmotor_pf1_rowscroll },
 	{ 0x188000, 0x189fff, madmotor_pf1_data_w, &madmotor_pf1_data },
+	{ 0x18c000, 0x18c001, MWA16_NOP },
 	{ 0x190000, 0x19001f, madmotor_pf2_control_w },
 	{ 0x198000, 0x1987ff, madmotor_pf2_data_w, &madmotor_pf2_data },
 	{ 0x1a0000, 0x1a001f, madmotor_pf3_control_w },
 	{ 0x1a4000, 0x1a4fff, madmotor_pf3_data_w, &madmotor_pf3_data },
-
-	{ 0x3e0000, 0x3e3fff, MWA_BANK1, &madmotor_ram },
-	{ 0x3e8000, 0x3e87ff, MWA_BANK2, &spriteram },
-	{ 0x3f0000, 0x3f07ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x3e0000, 0x3e3fff, MWA16_RAM },
+	{ 0x3e8000, 0x3e87ff, MWA16_RAM, &spriteram16 },
+	{ 0x3f0000, 0x3f07ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x3fc004, 0x3fc005, madmotor_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -125,8 +107,7 @@ static WRITE_HANDLER( YM2203_w )
 }
 
 /* Physical memory map (21 bits) */
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, YM2203_status_port_0_r },
 	{ 0x110000, 0x110001, YM2151_status_port_0_r },
@@ -134,11 +115,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x130000, 0x130001, OKIM6295_status_1_r },
 	{ 0x140000, 0x140001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
@@ -147,31 +126,76 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
 INPUT_PORTS_START( madmotor )
-	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPSETTING(      0x0100, "5" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0800, "Easy" )
+	PORT_DIPSETTING(      0x0c00, "Normal" )
+	PORT_DIPSETTING(      0x0400, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x1000, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_START	/* Credits */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -182,56 +206,6 @@ INPUT_PORTS_START( madmotor )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -426,36 +400,18 @@ ROM_END
 
 /******************************************************************************/
 
-static void madmotor_decrypt(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	int i;
-
-	for (i=0x00000; i<0x80000; i++) {
-		RAM[i]=(RAM[i] & 0xdb) | ((RAM[i] & 0x04) << 3) | ((RAM[i] & 0x20) >> 3);
-		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x01) << 7) | ((RAM[i] & 0x80) >> 7);
-	}
-}
-
-static READ_HANDLER( cycle_r )
-{
-	int ret=READ_WORD(&madmotor_ram[0]);
-
-	if (cpu_get_pc()==0x646e && (ret&0x8000)==0x8000) {
-		cpu_spinuntil_int();
-		return 0;
-	}
-
-	return ret;
-}
-
 static void init_madmotor(void)
 {
-	install_mem_read_handler(0, 0x3e0000, 0x3e0001, cycle_r);
-	madmotor_decrypt();
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int i;
+
+	for (i = 0x00000;i < 0x80000;i++)
+	{
+		rom[i] = (rom[i] & 0xdb) | ((rom[i] & 0x04) << 3) | ((rom[i] & 0x20) >> 3);
+		rom[i] = (rom[i] & 0x7e) | ((rom[i] & 0x01) << 7) | ((rom[i] & 0x80) >> 7);
+	}
 }
 
-/******************************************************************************/
 
  /* The title screen is undated, but it's (c) 1989 Data East at 0xefa0 */
 GAME( 1989, madmotor, 0, madmotor, madmotor, madmotor, ROT0, "Mitchell", "Mad Motor" )

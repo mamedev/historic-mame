@@ -14,7 +14,7 @@
 unsigned char *citycon_charlookup;
 unsigned char *citycon_scroll;
 static struct osd_bitmap *tmpbitmap2;
-static data_t bg_image;
+static int bg_image;
 static unsigned char dirtylookup[32];
 
 
@@ -86,7 +86,7 @@ WRITE_HANDLER( citycon_background_w )
 
 	/* bit 0 flips screen */
 	/* it is also used to multiplex player 1 and player 2 controls */
-	flip_screen_w(offset, data & 0x01);
+	flip_screen_set(data & 0x01);
 
 	/* bits 1-3 are unknown */
 	if ((data & 0x0e) != 0) logerror("background register = %02x\n",data);

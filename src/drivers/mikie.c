@@ -29,7 +29,7 @@ void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-READ_HANDLER( mikie_sh_timer_r )
+static READ_HANDLER( mikie_sh_timer_r )
 {
 	int clock;
 
@@ -40,7 +40,7 @@ READ_HANDLER( mikie_sh_timer_r )
 	return clock;
 }
 
-WRITE_HANDLER( mikie_sh_irqtrigger_w )
+static WRITE_HANDLER( mikie_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -54,10 +54,13 @@ WRITE_HANDLER( mikie_sh_irqtrigger_w )
 	last = data;
 }
 
-
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( mikie_coin_counter_w )
 {
+	coin_counter_w(offset,data);
+}
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x00ff, MRA_RAM },	/* ???? */
 	{ 0x2400, 0x2400, input_port_0_r },	/* coins + selftest */
 	{ 0x2401, 0x2401, input_port_1_r },	/* player 1 controls */
@@ -70,12 +73,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x3800, 0x3fff, MRA_RAM },	/* video RAM */
 	{ 0x4000, 0x5fff, MRA_ROM },    /* Machine checks for extra rom */
 	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x2000, 0x2001, coin_counter_w },
+static MEMORY_WRITE_START( writemem )
+	{ 0x2000, 0x2001, mikie_coin_counter_w },
 	{ 0x2002, 0x2002, mikie_sh_irqtrigger_w },
 	{ 0x2006, 0x2006, mikie_flipscreen_w },
 	{ 0x2007, 0x2007, interrupt_enable_w },
@@ -87,20 +88,16 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3800, 0x3bff, colorram_w, &colorram },
 	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x8003, 0x8003, soundlatch_r },
 	{ 0x8005, 0x8005, mikie_sh_timer_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x8000, 0x8000, MWA_NOP },	/* sound command latch */
@@ -109,8 +106,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8004, 0x8004, SN76496_1_w },	/* trigger read of latch */
 	{ 0x8079, 0x8079, MWA_NOP },	/* ??? */
 //	{ 0xa003, 0xa003, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 
 

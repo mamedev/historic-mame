@@ -51,49 +51,40 @@ static void berzerk_nvram_handler(void *file,int read_or_write)
 
 
 
-static struct MemoryReadAddress berzerk_readmem[] =
-{
+static MEMORY_READ_START( berzerk_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x0800, 0x09ff, MRA_RAM },
 	{ 0x1000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x87ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress berzerk_writemem[] =
-{
+static MEMORY_WRITE_START( berzerk_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
 	{ 0x0800, 0x09ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
 	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
 	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress frenzy_readmem[] =
-{
+static MEMORY_READ_START( frenzy_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x87ff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_ROM },
 	{ 0xf800, 0xf9ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress frenzy_writemem[] =
-{
+static MEMORY_WRITE_START( frenzy_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
 	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
 	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
 	{ 0xc000, 0xcfff, MWA_ROM },
 	{ 0xf800, 0xf9ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x44, 0x44, berzerk_voiceboard_r}, /* Sound stuff */
 	{ 0x48, 0x48, input_port_0_r},
 	{ 0x49, 0x49, input_port_1_r},
@@ -109,12 +100,10 @@ static struct IOReadPort readport[] =
 	{ 0x65, 0x65, input_port_8_r},
 	{ 0x66, 0x66, berzerk_led_off_r},
 	{ 0x67, 0x67, berzerk_led_on_r},
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x40, 0x46, berzerk_sound_control_a_w}, /* First sound board */
 	{ 0x47, 0x47, IOWP_NOP}, /* not used sound stuff */
 	{ 0x4b, 0x4b, berzerk_magicram_control_w},
@@ -122,8 +111,7 @@ static struct IOWritePort writeport[] =
 	{ 0x4d, 0x4d, berzerk_nmi_disable_w},
 	{ 0x4f, 0x4f, berzerk_irq_enable_w},
 	{ 0x50, 0x57, IOWP_NOP}, /* Second sound board but not used */
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 #define COINAGE(CHUTE) \

@@ -23,18 +23,18 @@ TODO:
 /* Variables that vidhrdw has access to */
 
 /* Variables defined in vidhrdw */
-extern unsigned char *powerins_vram_0, *powerins_vctrl_0;
-extern unsigned char *powerins_vram_1, *powerins_vctrl_1;
-extern unsigned char *powerins_vregs;
+extern data16_t *powerins_vram_0, *powerins_vctrl_0;
+extern data16_t *powerins_vram_1, *powerins_vctrl_1;
 
 /* Functions defined in vidhrdw */
-READ_HANDLER ( powerins_vregs_r );
-WRITE_HANDLER( powerins_vregs_w );
 
-WRITE_HANDLER( powerins_paletteram_w );
+WRITE16_HANDLER( powerins_flipscreen_w );
+WRITE16_HANDLER( powerins_tilebank_w );
 
-WRITE_HANDLER( powerins_vram_0_w );
-WRITE_HANDLER( powerins_vram_1_w );
+WRITE16_HANDLER( powerins_paletteram16_w );
+
+WRITE16_HANDLER( powerins_vram_0_w );
+WRITE16_HANDLER( powerins_vram_1_w );
 
 int  powerins_vh_start(void);
 void powerins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -46,48 +46,57 @@ void powerins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 ***************************************************************************/
 
-READ_HANDLER( powerins_input_r )
-{
-	switch (offset)
-	{
-		case 0x00:	return readinputport(1);		// Coins + Start Buttons
-		case 0x02:	return readinputport(0);		// P1+P2
-		case 0x08:	return readinputport(2);		// DSW 1
-		case 0x0a:	return readinputport(3);		// DSW 2
-		case 0x3e:	return OKIM6295_status_0_r(0);	// OKI Status
+static int oki_bank;
 
-		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
-			return 0;
+WRITE16_HANDLER( powerins_okibank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		unsigned char *RAM = memory_region(REGION_SOUND1);
+		int new_bank = data & 0x7;
+
+		if (new_bank != oki_bank)
+		{
+			oki_bank = new_bank;
+			memcpy(&RAM[0x30000],&RAM[0x40000 + 0x10000*new_bank],0x10000);
+		}
 	}
 }
 
-static struct MemoryReadAddress powerins_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },	// ROM
-	{ 0x100000, 0x10003f, powerins_input_r },	// Input Ports
-	{ 0x120000, 0x120fff, MRA_BANK2 },	// Palette
-/**/{ 0x130000, 0x130007, MRA_BANK3 },	// VRAM 0 Control
-	{ 0x140000, 0x143fff, MRA_BANK4 },	// VRAM 0
-	{ 0x170000, 0x170fff, MRA_BANK5 },	// VRAM 1
-	{ 0x180000, 0x18ffff, MRA_BANK6 },	// RAM + Sprites
-//	{ 0x990000, 0x99003f, powerins_vregs_r },	// Fake: use to see the video regs.
-	{ -1 }
-};
 
-static struct MemoryWriteAddress powerins_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },	// ROM
-	{ 0x100000, 0x10003f, powerins_vregs_w, &powerins_vregs },	// Video Regs
-	{ 0x120000, 0x120fff, powerins_paletteram_w, &paletteram },	// Palette
-	{ 0x130000, 0x130007, MWA_BANK3, &powerins_vctrl_0 },	// VRAM 0 Control
-	{ 0x140000, 0x143fff, powerins_vram_0_w, &powerins_vram_0 },	// VRAM 0
-	{ 0x170000, 0x170fff, powerins_vram_1_w, &powerins_vram_1 },	// VRAM 1
-	{ 0x171000, 0x171fff, powerins_vram_1_w },	// Mirror of VRAM 1?
-	{ 0x180000, 0x18ffff, MWA_BANK6, &spriteram },	// RAM + Sprites
-	{ -1 }
-};
+static MEMORY_READ16_START( powerins_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
+	{ 0x100000, 0x100001, input_port_0_word_r		},	// Coins + Start Buttons
+	{ 0x100002, 0x100003, input_port_1_word_r		},	// P1 + P2
+	{ 0x100008, 0x100009, input_port_2_word_r		},	// DSW 1
+	{ 0x10000a, 0x10000b, input_port_3_word_r		},	// DSW 2
+	{ 0x10003e, 0x10003f, OKIM6295_status_0_lsb_r	},	// OKI Status
+	{ 0x120000, 0x120fff, MRA16_RAM					},	// Palette
+/**/{ 0x130000, 0x130007, MRA16_RAM					},	// VRAM 0 Control
+	{ 0x140000, 0x143fff, MRA16_RAM					},	// VRAM 0
+	{ 0x170000, 0x170fff, MRA16_RAM					},	// VRAM 1
+	{ 0x180000, 0x18ffff, MRA16_RAM					},	// RAM + Sprites
+MEMORY_END
 
+static MEMORY_WRITE16_START( powerins_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM								},	// ROM
+	{ 0x100014, 0x100015, powerins_flipscreen_w					},	// Flip Screen
+	{ 0x100016, 0x100017, MWA16_NOP								},	// ? always 1
+	{ 0x100018, 0x100019, powerins_tilebank_w					},	// Tiles Banking (VRAM 0)
+//	{ 0x10001e, 0x10001f, MWA16_NOP								},	//
+	{ 0x100030, 0x100031, powerins_okibank_w					},	// Sound
+	{ 0x10003e, 0x10003f, OKIM6295_data_0_lsb_w					},	//
+	{ 0x120000, 0x120fff, powerins_paletteram16_w, &paletteram16	},	// Palette
+	{ 0x130000, 0x130007, MWA16_RAM, &powerins_vctrl_0			},	// VRAM 0 Control
+	{ 0x140000, 0x143fff, powerins_vram_0_w, &powerins_vram_0	},	// VRAM 0
+	{ 0x170000, 0x170fff, powerins_vram_1_w, &powerins_vram_1	},	// VRAM 1
+	{ 0x171000, 0x171fff, powerins_vram_1_w						},	// Mirror of VRAM 1?
+	{ 0x180000, 0x18ffff, MWA16_RAM, &spriteram16				},	// RAM + Sprites
+MEMORY_END
+
+/* There is an hidden test mode screen (set 18ff08 to 4 during test mode)
+   that calls the data writtent to $10001e "sound code".
+   This is a bootleg, so the original may have a sound CPU */
 
 
 
@@ -98,7 +107,17 @@ static struct MemoryWriteAddress powerins_writemem[] =
 ***************************************************************************/
 
 INPUT_PORTS_START( powerins )
-	PORT_START	// IN0 - $100002 - Player 1 & 2
+	PORT_START	// IN0 - $100000 - Coins
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN1 - $100002 - Player 1 & 2
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	 | IPF_PLAYER1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
@@ -116,16 +135,6 @@ INPUT_PORTS_START( powerins )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER2 )
-
-	PORT_START	// IN1 - $100000 - Coins
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START1   )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START2   )
-	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 	PORT_START	// IN2 - $100008 - DSW 1
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Free_Play ) )
@@ -251,6 +260,11 @@ static struct GfxDecodeInfo powerins_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
+void powerins_init_machine(void)
+{
+	oki_bank = -1;	// samples bank "unitialised"
+}
+
 static struct OKIM6295interface powerins_okim6295_interface =
 {
 	1,
@@ -258,8 +272,6 @@ static struct OKIM6295interface powerins_okim6295_interface =
 	{ REGION_SOUND1 },
 	{ 100 }
 };
-
-
 
 static const struct MachineDriver machine_driver_powerins =
 {
@@ -273,7 +285,7 @@ static const struct MachineDriver machine_driver_powerins =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
-	0,
+	powerins_init_machine,
 
 	/* video hardware */
 	320, 256, { 0, 320-1, 0+16, 256-16-1 },

@@ -395,7 +395,7 @@ static WRITE_HANDLER( ghostb_bank_w )
 
 	if (data&1) int_enable=1; else int_enable=0;
 	if (data&2) nmi_enable=1; else nmi_enable=0;
-	flip_screen_w(0,data & 0x08);
+	flip_screen_set(data & 0x08);
 }
 
 WRITE_HANDLER( csilver_control_w )
@@ -501,10 +501,14 @@ static WRITE_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
 static READ_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
 static WRITE_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
 
+static WRITE_HANDLER( flip_screen_w )
+{
+	flip_screen_set(data);
+}
+
 /******************************************************************************/
 
-static struct MemoryReadAddress cobra_readmem[] =
-{
+static MEMORY_READ_START( cobra_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0fff, dec8_pf0_data_r },
 	{ 0x1000, 0x17ff, dec8_pf1_data_r },
@@ -517,11 +521,9 @@ static struct MemoryReadAddress cobra_readmem[] =
 	{ 0x3a00, 0x3a00, input_port_2_r }, /* VBL & coins */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cobra_writemem[] =
-{
+static MEMORY_WRITE_START( cobra_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x1000, 0x17ff, dec8_pf1_data_w, &dec8_pf1_data },
@@ -536,11 +538,9 @@ static struct MemoryWriteAddress cobra_writemem[] =
 	{ 0x3c02, 0x3c02, buffer_spriteram_w }, /* DMA */
 	{ 0x3e00, 0x3e00, dec8_sound_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ghostb_readmem[] =
-{
+static MEMORY_READ_START( ghostb_readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x1800, 0x1fff, videoram_r },
 	{ 0x2000, 0x27ff, dec8_pf0_data_r },
@@ -555,11 +555,9 @@ static struct MemoryReadAddress ghostb_readmem[] =
 	{ 0x3860, 0x3860, i8751_l_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ghostb_writemem[] =
-{
+static MEMORY_WRITE_START( ghostb_writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, dec8_videoram_w, &videoram, &videoram_size },
@@ -573,11 +571,9 @@ static struct MemoryWriteAddress ghostb_writemem[] =
 	{ 0x3840, 0x3840, ghostb_bank_w },
 	{ 0x3860, 0x3861, ghostb_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress srdarwin_readmem[] =
-{
+static MEMORY_READ_START( srdarwin_readmem )
 	{ 0x0000, 0x13ff, MRA_RAM },
 	{ 0x1400, 0x17ff, dec8_pf0_data_r },
 	{ 0x2000, 0x2000, i8751_h_r },
@@ -588,11 +584,9 @@ static struct MemoryReadAddress srdarwin_readmem[] =
 	{ 0x3803, 0x3803, input_port_3_r }, /* Dip 2 */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress srdarwin_writemem[] =
-{
+static MEMORY_WRITE_START( srdarwin_writemem )
 	{ 0x0000, 0x05ff, MWA_RAM },
 	{ 0x0600, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x0800, 0x0fff, srdarwin_videoram_w, &videoram, &spriteram_size },
@@ -608,11 +602,9 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 	{ 0x2800, 0x288f, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x3000, 0x308f, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress gondo_readmem[] =
-{
+static MEMORY_READ_START( gondo_readmem )
 	{ 0x0000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1fff, videoram_r },
 	{ 0x2000, 0x27ff, dec8_pf0_data_r },
@@ -629,11 +621,9 @@ static struct MemoryReadAddress gondo_readmem[] =
 	{ 0x3839, 0x3839, i8751_l_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gondo_writemem[] =
-{
+static MEMORY_WRITE_START( gondo_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x27ff, dec8_pf0_data_w, &dec8_pf0_data },
@@ -645,11 +635,9 @@ static struct MemoryWriteAddress gondo_writemem[] =
 	{ 0x3830, 0x3830, ghostb_bank_w }, /* Bank + NMI enable */
 	{ 0x383a, 0x383b, gondo_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress oscar_readmem[] =
-{
+static MEMORY_READ_START( oscar_readmem )
 	{ 0x0000, 0x0eff, dec8_share_r },
 	{ 0x0f00, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1fff, dec8_share2_r },
@@ -664,11 +652,9 @@ static struct MemoryReadAddress oscar_readmem[] =
 	{ 0x3c04, 0x3c04, input_port_4_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress oscar_writemem[] =
-{
+static MEMORY_WRITE_START( oscar_writemem )
 	{ 0x0000, 0x0eff, dec8_share_w, &dec8_shared_ram },
 	{ 0x0f00, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, dec8_share2_w, &dec8_shared2_ram },
@@ -683,30 +669,24 @@ static struct MemoryWriteAddress oscar_writemem[] =
 	{ 0x3e00, 0x3e00, MWA_NOP },       		/* COINCL */
 	{ 0x3e80, 0x3e83, oscar_int_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress oscar_sub_readmem[] =
-{
+static MEMORY_READ_START( oscar_sub_readmem )
 	{ 0x0000, 0x0eff, dec8_share_r },
 	{ 0x0f00, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1fff, dec8_share2_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress oscar_sub_writemem[] =
-{
+static MEMORY_WRITE_START( oscar_sub_writemem )
 	{ 0x0000, 0x0eff, dec8_share_w },
 	{ 0x0f00, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, dec8_share2_w },
 	{ 0x3e80, 0x3e83, oscar_int_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress lastmiss_readmem[] =
-{
+static MEMORY_READ_START( lastmiss_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
@@ -723,11 +703,9 @@ static struct MemoryReadAddress lastmiss_readmem[] =
 	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress lastmiss_writemem[] =
-{
+static MEMORY_WRITE_START( lastmiss_writemem )
 	{ 0x0000, 0x0fff, dec8_share_w, &dec8_shared_ram },
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
@@ -744,11 +722,9 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
 	{ 0x3800, 0x3fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress lastmiss_sub_readmem[] =
-{
+static MEMORY_READ_START( lastmiss_sub_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
@@ -761,11 +737,9 @@ static struct MemoryReadAddress lastmiss_sub_readmem[] =
 	{ 0x3000, 0x37ff, dec8_share2_r },
 	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress lastmiss_sub_writemem[] =
-{
+static MEMORY_WRITE_START( lastmiss_sub_writemem )
 	{ 0x0000, 0x0fff, dec8_share_w },
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
@@ -778,11 +752,9 @@ static struct MemoryWriteAddress lastmiss_sub_writemem[] =
 	{ 0x3000, 0x37ff, dec8_share2_w },
 	{ 0x3800, 0x3fff, dec8_pf0_data_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress shackled_readmem[] =
-{
+static MEMORY_READ_START( shackled_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
@@ -797,11 +769,9 @@ static struct MemoryReadAddress shackled_readmem[] =
 	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress shackled_writemem[] =
-{
+static MEMORY_WRITE_START( shackled_writemem )
 	{ 0x0000, 0x0fff, dec8_share_w, &dec8_shared_ram },
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
@@ -817,11 +787,9 @@ static struct MemoryWriteAddress shackled_writemem[] =
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
 	{ 0x3800, 0x3fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress shackled_sub_readmem[] =
-{
+static MEMORY_READ_START( shackled_sub_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
@@ -837,11 +805,9 @@ static struct MemoryReadAddress shackled_sub_readmem[] =
 	{ 0x3000, 0x37ff, dec8_share2_r },
 	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress shackled_sub_writemem[] =
-{
+static MEMORY_WRITE_START( shackled_sub_writemem )
 	{ 0x0000, 0x0fff, dec8_share_w },
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
@@ -858,11 +824,9 @@ static struct MemoryWriteAddress shackled_sub_writemem[] =
 	{ 0x3000, 0x37ff, dec8_share2_w },
 	{ 0x3800, 0x3fff, dec8_pf0_data_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress csilver_readmem[] =
-{
+static MEMORY_READ_START( csilver_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
@@ -879,11 +843,9 @@ static struct MemoryReadAddress csilver_readmem[] =
 	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress csilver_writemem[] =
-{
+static MEMORY_WRITE_START( csilver_writemem )
 	{ 0x0000, 0x0fff, dec8_share_w, &dec8_shared_ram },
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
@@ -899,11 +861,9 @@ static struct MemoryWriteAddress csilver_writemem[] =
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
 	{ 0x3800, 0x3fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress csilver_sub_readmem[] =
-{
+static MEMORY_READ_START( csilver_sub_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
@@ -917,11 +877,9 @@ static struct MemoryReadAddress csilver_sub_readmem[] =
 	{ 0x3000, 0x37ff, dec8_share2_r },
 	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress csilver_sub_writemem[] =
-{
+static MEMORY_WRITE_START( csilver_sub_writemem )
 	{ 0x0000, 0x0fff, dec8_share_w },
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
@@ -934,11 +892,9 @@ static struct MemoryWriteAddress csilver_sub_writemem[] =
 	{ 0x3000, 0x37ff, dec8_share2_w },
 	{ 0x3800, 0x3fff, dec8_pf0_data_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress garyoret_readmem[] =
-{
+static MEMORY_READ_START( garyoret_readmem )
 	{ 0x0000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1fff, videoram_r },
 	{ 0x2000, 0x27ff, dec8_pf0_data_r },
@@ -954,11 +910,9 @@ static struct MemoryReadAddress garyoret_readmem[] =
 	{ 0x383b, 0x383b, i8751_l_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress garyoret_writemem[] =
-{
+static MEMORY_WRITE_START( garyoret_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x27ff, dec8_pf0_data_w, &dec8_pf0_data },
@@ -970,64 +924,52 @@ static struct MemoryWriteAddress garyoret_writemem[] =
 	{ 0x3830, 0x3830, ghostb_bank_w }, /* Bank + NMI enable */
 	{ 0x3838, 0x3839, garyoret_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
 /* Used for Cobra Command, Maze Hunter, Super Real Darwin, Gondomania, etc */
-static struct MemoryReadAddress dec8_s_readmem[] =
-{
+static MEMORY_READ_START( dec8_s_readmem )
 	{ 0x0000, 0x05ff, MRA_RAM},
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dec8_s_writemem[] =
-{
+static MEMORY_WRITE_START( dec8_s_writemem )
 	{ 0x0000, 0x05ff, MWA_RAM},
 	{ 0x2000, 0x2000, YM2203_control_port_0_w }, /* OPN */
 	{ 0x2001, 0x2001, YM2203_write_port_0_w },
 	{ 0x4000, 0x4000, YM3812_control_port_0_w }, /* OPL */
 	{ 0x4001, 0x4001, YM3812_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* Used by Last Mission, Shackled & Breywood */
-static struct MemoryReadAddress ym3526_s_readmem[] =
-{
+static MEMORY_READ_START( ym3526_s_readmem )
 	{ 0x0000, 0x05ff, MRA_RAM},
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ym3526_s_writemem[] =
-{
+static MEMORY_WRITE_START( ym3526_s_writemem )
 	{ 0x0000, 0x05ff, MWA_RAM},
 	{ 0x0800, 0x0800, YM2203_control_port_0_w }, /* OPN */
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
 	{ 0x1000, 0x1000, YM3526_control_port_0_w }, /* OPL? */
 	{ 0x1001, 0x1001, YM3526_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* Captain Silver - same sound system as Pocket Gal */
-static struct MemoryReadAddress csilver_s_readmem[] =
-{
+static MEMORY_READ_START( csilver_s_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x3400, 0x3400, csilver_adpcm_reset_r },	/* ? not sure */
 	{ 0x4000, 0x7fff, MRA_BANK3 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress csilver_s_writemem[] =
-{
+static MEMORY_WRITE_START( csilver_s_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0800, YM2203_control_port_0_w },
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
@@ -1036,8 +978,7 @@ static struct MemoryWriteAddress csilver_s_writemem[] =
 	{ 0x1800, 0x1800, csilver_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
 	{ 0x2000, 0x2000, csilver_sound_bank_w },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

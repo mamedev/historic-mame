@@ -261,8 +261,7 @@ static WRITE_HANDLER( wardner_ramrom_banks_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x6fff, MRA_ROM },			/* Main CPU ROM code */
 	{ 0x7000, 0x7fff, wardner_mainram_r },	/* Main RAM */
 	{ 0x8000, 0xffff, wardner_ram_rom_r },	/* Overlapped RAM/Banked ROM - See below */
@@ -274,11 +273,9 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0xb000, 0xbfff, MRA_ROM },			/* Banked ROM */
 //	{ 0xc000, 0xc7ff, MRA_BANK3 },			/* Shared RAM with Sound CPU RAM */
 //	{ 0xc800, 0xffff, MRA_ROM },			/* Banked ROM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x6fff, MWA_ROM },
 	{ 0x7000, 0x7fff, wardner_mainram_w, &wardner_mainram },
 	{ 0x8000, 0x8fff, wardner_sprite_w, &spriteram, &spriteram_size },
@@ -288,57 +285,45 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xc7ff, wardner_sharedram_w, &wardner_sharedram },
 	{ 0xb000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x807f, MRA_BANK4 },
 	{ 0xc000, 0xc7ff, wardner_sharedram_r },
 	{ 0xc800, 0xcfff, MRA_BANK5 },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x807f, MWA_BANK4 },
 	{ 0xc000, 0xc7ff, wardner_sharedram_w },
 	{ 0xc800, 0xcfff, MWA_BANK5 },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress DSP_readmem[] =
-{
+static MEMORY_READ_START( DSP_readmem )
 	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
 	{ 0x8000, 0x8bff, MRA_ROM },	/* 600h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress DSP_writemem[] =
-{
+static MEMORY_WRITE_START( DSP_writemem )
 	{ 0x0000, 0x011f, MWA_RAM },
 	{ 0x8000, 0x8bff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x50, 0x50, input_port_3_r },			/* DSW A */
 	{ 0x52, 0x52, input_port_4_r },			/* DSW B */
 	{ 0x54, 0x54, input_port_1_r },			/* Player 1 */
 	{ 0x56, 0x56, input_port_2_r },			/* Player 2 */
 	{ 0x58, 0x58, input_port_0_r },			/* V-Blank/Coin/Start */
 	{ 0x60, 0x65, wardner_videoram_r },		/* data from video layer RAM */
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x02, twincobr_crtc_w },
 	{ 0x10, 0x13, wardner_txscroll_w },		/* scroll text layer */
 	{ 0x14, 0x15, wardner_txlayer_w },		/* offset in text video RAM */
@@ -351,32 +336,23 @@ static struct IOWritePort writeport[] =
 	{ 0x5a, 0x5a, fshark_coin_dsp_w },		/* Machine system control */
 	{ 0x5c, 0x5c, twincobr_7800c_w },		/* Machine system control */
 	{ 0x70, 0x70, wardner_ramrom_banks_w },	/* ROM bank select */
-	{ -1 }
-};
+PORT_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, YM3812_status_port_0_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
-	{ -1 }
-};
+PORT_END
 
-static struct IOReadPort DSP_readport[] =
-{
+static PORT_READ_START( DSP_readport )
 	{ 0x01, 0x01, twincobr_dsp_r },
-	{ -1 }
-};
-static struct IOWritePort DSP_writeport[] =
-{
+PORT_END
+static PORT_WRITE_START( DSP_writeport )
 	{ 0x00,  0x03, twincobr_dsp_w },
-	{ -1 }
-};
+PORT_END
 
 
 

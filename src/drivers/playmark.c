@@ -39,31 +39,28 @@ World Beach Volley:
 #include "machine/eeprom.h"
 
 
-extern unsigned char *bigtwin_bgvideoram;
+extern data16_t *bigtwin_bgvideoram;
 extern size_t bigtwin_bgvideoram_size;
-extern unsigned char *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
+extern data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
 
 int bigtwin_vh_start(void);
 void bigtwin_vh_stop(void);
 int wbeachvl_vh_start(void);
-READ_HANDLER( wbeachvl_txvideoram_r );
-WRITE_HANDLER( wbeachvl_txvideoram_w );
-READ_HANDLER( wbeachvl_fgvideoram_r );
-WRITE_HANDLER( wbeachvl_fgvideoram_w );
-READ_HANDLER( wbeachvl_bgvideoram_r );
-WRITE_HANDLER( wbeachvl_bgvideoram_w );
-WRITE_HANDLER( bigtwin_paletteram_w );
-WRITE_HANDLER( bigtwin_bgvideoram_w );
-WRITE_HANDLER( bigtwin_scroll_w );
-WRITE_HANDLER( wbeachvl_scroll_w );
+WRITE16_HANDLER( wbeachvl_txvideoram_w );
+WRITE16_HANDLER( wbeachvl_fgvideoram_w );
+WRITE16_HANDLER( wbeachvl_bgvideoram_w );
+WRITE16_HANDLER( bigtwin_paletteram_w );
+WRITE16_HANDLER( bigtwin_bgvideoram_w );
+WRITE16_HANDLER( bigtwin_scroll_w );
+WRITE16_HANDLER( wbeachvl_scroll_w );
 void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void wbeachvl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static WRITE_HANDLER( coinctrl_w )
+static WRITE16_HANDLER( coinctrl_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_MSB)
 	{
 		coin_counter_w(0,data & 0x0100);
 		coin_counter_w(1,data & 0x0200);
@@ -113,7 +110,7 @@ static void wbeachvl_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static READ_HANDLER( wbeachvl_port0_r )
+static READ16_HANDLER( wbeachvl_port0_r )
 {
 	int bit;
 
@@ -122,9 +119,9 @@ static READ_HANDLER( wbeachvl_port0_r )
 	return (input_port_0_r(0) & 0x7f) | bit;
 }
 
-static WRITE_HANDLER( wbeachvl_coin_eeprom_w )
+static WRITE16_HANDLER( wbeachvl_coin_eeprom_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* bits 0-3 are coin counters? (only 0 used?) */
 		coin_counter_w(0,data & 0x01);
@@ -141,75 +138,67 @@ static WRITE_HANDLER( wbeachvl_coin_eeprom_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x440000, 0x4403ff, MRA_BANK1 },
-	{ 0x700010, 0x700011, input_port_0_r },
-	{ 0x700012, 0x700013, input_port_1_r },
-	{ 0x700014, 0x700015, input_port_2_r },
-	{ 0x70001a, 0x70001b, input_port_3_r },
-	{ 0x70001c, 0x70001d, input_port_4_r },
-	{ 0xff0000, 0xffffff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+static MEMORY_READ16_START( bigtwin_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x440000, 0x4403ff, MRA16_RAM },
+	{ 0x700010, 0x700011, input_port_0_word_r },
+	{ 0x700012, 0x700013, input_port_1_word_r },
+	{ 0x700014, 0x700015, input_port_2_word_r },
+	{ 0x70001a, 0x70001b, input_port_3_word_r },
+	{ 0x70001c, 0x70001d, input_port_4_word_r },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x304000, 0x304001, MWA_NOP },	/* watchdog? irq ack? */
-	{ 0x440000, 0x4403ff, MWA_BANK1, &spriteram, &spriteram_size },
+static MEMORY_WRITE16_START( bigtwin_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x304000, 0x304001, MWA16_NOP },	/* watchdog? irq ack? */
+	{ 0x440000, 0x4403ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x500000, 0x5007ff, wbeachvl_fgvideoram_w, &wbeachvl_videoram2 },
-{ 0x500800, 0x501fff, MWA_NOP },	/* unused RAM? */
+{ 0x500800, 0x501fff, MWA16_NOP },	/* unused RAM? */
 	{ 0x502000, 0x503fff, wbeachvl_txvideoram_w, &wbeachvl_videoram1 },
-{ 0x504000, 0x50ffff, MWA_NOP },	/* unused RAM? */
+{ 0x504000, 0x50ffff, MWA16_NOP },	/* unused RAM? */
 	{ 0x510000, 0x51000b, bigtwin_scroll_w },
-	{ 0x51000c, 0x51000d, MWA_NOP },	/* always 3? */
+	{ 0x51000c, 0x51000d, MWA16_NOP },	/* always 3? */
 	{ 0x600000, 0x67ffff, bigtwin_bgvideoram_w, &bigtwin_bgvideoram, &bigtwin_bgvideoram_size },
 	{ 0x700016, 0x700017, coinctrl_w },
-	{ 0x70001e, 0x70001f, MWA_NOP },//sound_command_w },
-	{ 0x780000, 0x7807ff, bigtwin_paletteram_w, &paletteram },
+	{ 0x70001e, 0x70001f, MWA16_NOP },//sound_command_w },
+	{ 0x780000, 0x7807ff, bigtwin_paletteram_w, &paletteram16 },
 //	{ 0xe00000, 0xe00001, ?? written on startup
-	{ 0xff0000, 0xffffff, MWA_BANK4 },
-	{ -1 }  /* end of table */
-};
+	{ 0xff0000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
-static struct MemoryReadAddress wbeachvl_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x440000, 0x440fff, MRA_BANK1 },
-	{ 0x500000, 0x501fff, wbeachvl_bgvideoram_r },
-	{ 0x504000, 0x505fff, wbeachvl_fgvideoram_r },
-	{ 0x508000, 0x509fff, wbeachvl_txvideoram_r },
-	{ 0xff0000, 0xffffff, MRA_BANK5 },
+static MEMORY_READ16_START( wbeachvl_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x440000, 0x440fff, MRA16_RAM },
+	{ 0x500000, 0x501fff, MRA16_RAM },
+	{ 0x504000, 0x505fff, MRA16_RAM },
+	{ 0x508000, 0x509fff, MRA16_RAM },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
 	{ 0x710010, 0x710011, wbeachvl_port0_r },
-	{ 0x710012, 0x710013, input_port_1_r },
-	{ 0x710014, 0x710015, input_port_2_r },
-	{ 0x710018, 0x710019, input_port_3_r },
-	{ 0x71001a, 0x71001b, input_port_4_r },
+	{ 0x710012, 0x710013, input_port_1_word_r },
+	{ 0x710014, 0x710015, input_port_2_word_r },
+	{ 0x710018, 0x710019, input_port_3_word_r },
+	{ 0x71001a, 0x71001b, input_port_4_word_r },
 //	{ 0x71001c, 0x71001d, ??
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress wbeachvl_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x440000, 0x440fff, MWA_BANK1, &spriteram, &spriteram_size },
+static MEMORY_WRITE16_START( wbeachvl_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x440000, 0x440fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x500000, 0x501fff, wbeachvl_bgvideoram_w, &wbeachvl_videoram3 },
 	{ 0x504000, 0x505fff, wbeachvl_fgvideoram_w, &wbeachvl_videoram2 },
 	{ 0x508000, 0x509fff, wbeachvl_txvideoram_w, &wbeachvl_videoram1 },
 	{ 0x510000, 0x51000b, wbeachvl_scroll_w },
-	{ 0x51000c, 0x51000d, MWA_NOP },	/* always 3? */
+	{ 0x51000c, 0x51000d, MWA16_NOP },	/* always 3? */
 //	{ 0x700000, 0x700001, ?? written on startup
 	{ 0x710016, 0x710017, wbeachvl_coin_eeprom_w },
-	{ 0x71001e, 0x71001f, MWA_NOP },//sound_command_w },
-	{ 0x780000, 0x780fff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram },
-	{ 0xff0000, 0xffffff, MWA_BANK5 },
+	{ 0x71001e, 0x71001f, MWA16_NOP },//sound_command_w },
+	{ 0x780000, 0x780fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
+	{ 0xff0000, 0xffffff, MWA16_RAM },
 #if 0
 	{ 0x700016, 0x700017, coinctrl_w },
 #endif
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -485,7 +474,7 @@ static const struct MachineDriver machine_driver_bigtwin =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz? */
-			readmem,writemem,0,0,
+			bigtwin_readmem,bigtwin_writemem,0,0,
 			m68_level2_irq,1
 		}
 	},

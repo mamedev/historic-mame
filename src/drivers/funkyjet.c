@@ -22,28 +22,36 @@ int  funkyjet_vh_start(void);
 void funkyjet_vh_stop(void);
 void funkyjet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE_HANDLER( funkyjet_pf2_data_w );
-WRITE_HANDLER( funkyjet_pf1_data_w );
-READ_HANDLER( funkyjet_pf1_data_r );
-READ_HANDLER( funkyjet_pf2_data_r );
+WRITE16_HANDLER( funkyjet_pf2_data16_w );
+WRITE16_HANDLER( funkyjet_pf1_data16_w );
+READ16_HANDLER( funkyjet_pf1_data16_r );
+READ16_HANDLER( funkyjet_pf2_data16_r );
 
-WRITE_HANDLER( funkyjet_control_0_w );
+WRITE16_HANDLER( funkyjet_control16_0_w );
 
-extern unsigned char *funkyjet_pf2_data,*funkyjet_pf1_data,*funkyjet_pf1_row;
-static unsigned char *funkyjet_ram;
+extern data16_t *funkyjet_pf1_data16;
+extern data16_t *funkyjet_pf2_data16;
+extern data16_t *funkyjet_pf1_row16;
+extern size_t funkyjet_pf1_data16_size;
+extern size_t funkyjet_pf2_data16_size;
+static data16_t *funkyjet_ram16;
 
 /******************************************************************************/
 
-static int loopback[0x800];
+static data16_t loopback[0x400];
 
-static WRITE_HANDLER( funkyjet_protection_w )
+static WRITE16_HANDLER( funkyjet_protection16_w )
 {
-	WRITE_WORD(&loopback[offset],data);
+	COMBINE_DATA(&loopback[offset]);
 
-	if (offset!=0x502 && offset!=0x700 && offset!=0x70e && offset!=0x78e)
-		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset,data);
+	if (offset != (0x502 >> 1) &&
+		offset != (0x700 >> 1) &&
+		offset != (0x70e >> 1) &&
+		offset != (0x78e >> 1))
+		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset<<1,data);
 
-	if (offset==0x10a) {
+	if (offset == (0x10a >> 1))
+	{
 		soundlatch_w(0,data&0xff);
 		cpu_cause_interrupt(1,H6280_INT_IRQ1);
 	}
@@ -57,30 +65,31 @@ static WRITE_HANDLER( funkyjet_protection_w )
 	*/
 }
 
-static READ_HANDLER( funkyjet_protection_r )
+static READ16_HANDLER( funkyjet_protection16_r )
 {
  	switch (offset)
 	{
-		case 0x148: /* EOR mask for joysticks */
+		case 0x148 >> 1: /* EOR mask for joysticks */
 			return 0;
-		case 0xc: /* Player 1 & Player 2 joysticks & fire buttons */
-		case 0x24c:
+		case 0x00c >> 1: /* Player 1 & Player 2 joysticks & fire buttons */
+		case 0x24c >> 1:
 			return ~(readinputport(0) + (readinputport(1) << 8));
 
-		case 0x2d8: /* EOR mask for credits */
+		case 0x2d8 >> 1: /* EOR mask for credits */
 			return 0;
-		case 0x778: /* Credits */
+		case 0x778 >> 1: /* Credits */
 			return readinputport(2);
 
-		case 0x382: /* DIPS */
+		case 0x382 >> 1: /* DIPS */
 			return (readinputport(3) + (readinputport(4) << 8));
 
-		case 0x56c:
+		case 0x56c >> 1:
 			return 0;
 
 	}
 
-	if (offset!=0x778) logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
+	if (offset != (0x778 >> 1))
+		logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset<<1);
 
 /*
 
@@ -93,50 +102,47 @@ Protection device:
 
 */
 
-	return 0xffff;
+	return ~0;
 }
 
 /******************************************************************************/
 
-static struct MemoryReadAddress funkyjet_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x120000, 0x1207ff, paletteram_word_r },
-	{ 0x140000, 0x143fff, MRA_BANK1 },
-	{ 0x160000, 0x1607ff, MRA_BANK2 },
-	{ 0x180000, 0x1807ff, funkyjet_protection_r },
+static MEMORY_READ16_START( funkyjet_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x120000, 0x1207ff, MRA16_RAM },
+	{ 0x140000, 0x143fff, MRA16_RAM },
+	{ 0x160000, 0x1607ff, MRA16_RAM },
+	{ 0x180000, 0x1807ff, funkyjet_protection16_r },
 
-	{ 0x320000, 0x321fff, funkyjet_pf1_data_r },
-	{ 0x322000, 0x323fff, funkyjet_pf2_data_r },
-	{ 0x340000, 0x340bff, MRA_BANK3 },
-	{ 0x342000, 0x342bff, MRA_BANK4 }, /* pf2 rowscroll */
-	{ -1 }  /* end of table */
-};
+	{ 0x320000, 0x321fff, funkyjet_pf1_data16_r },
+	{ 0x322000, 0x323fff, funkyjet_pf2_data16_r },
+	{ 0x340000, 0x340bff, MRA16_RAM },
+	{ 0x342000, 0x342bff, MRA16_RAM }, /* pf2 rowscroll */
+MEMORY_END
 
-static struct MemoryWriteAddress funkyjet_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x120000, 0x1207ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0x140000, 0x143fff, MWA_BANK1, &funkyjet_ram },
-	{ 0x160000, 0x1607ff, MWA_BANK2, &spriteram },
-	{ 0x180000, 0x1807ff, funkyjet_protection_w },
+static MEMORY_WRITE16_START( funkyjet_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x120000, 0x1207ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0x140000, 0x143fff, MWA16_RAM, &funkyjet_ram16 },
+	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 },
+	{ 0x180000, 0x1807ff, funkyjet_protection16_w },
 
-	{ 0x184000, 0x184001, MWA_NOP },
-	{ 0x188000, 0x188001, MWA_NOP },
+	{ 0x184000, 0x184001, MWA16_NOP },
+	{ 0x188000, 0x188001, MWA16_NOP },
 
-	{ 0x300000, 0x30000f, funkyjet_control_0_w },
-	{ 0x320000, 0x321fff, funkyjet_pf1_data_w, &funkyjet_pf1_data },
-	{ 0x322000, 0x323fff, funkyjet_pf2_data_w, &funkyjet_pf2_data },
-	{ 0x340000, 0x340bff, MWA_BANK3, &funkyjet_pf1_row },
-	{ 0x342000, 0x342bff, MWA_BANK4 }, /* pf2 rowscroll */
-	{ -1 }  /* end of table */
-};
+	{ 0x300000, 0x30000f, funkyjet_control16_0_w },
+	{ 0x320000, 0x321fff, funkyjet_pf1_data16_w, &funkyjet_pf1_data16, &funkyjet_pf1_data16_size },
+	{ 0x322000, 0x323fff, funkyjet_pf2_data16_w, &funkyjet_pf2_data16, &funkyjet_pf2_data16_size },
+	{ 0x340000, 0x340bff, MWA16_RAM, &funkyjet_pf1_row16 },
+	{ 0x342000, 0x342bff, MWA16_RAM }, /* pf2 rowscroll */
+MEMORY_END
 
 /******************************************************************************/
 
 static WRITE_HANDLER( YM2151_w )
 {
-	switch (offset) {
+	switch (offset)
+	{
 	case 0:
 		YM2151_register_port_0_w(0,data);
 		break;
@@ -147,8 +153,7 @@ static WRITE_HANDLER( YM2151_w )
 }
 
 /* Physical memory map (21 bits) */
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, MRA_NOP },
 	{ 0x110000, 0x110001, YM2151_status_port_0_r },
@@ -156,11 +161,9 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x130000, 0x130001, MRA_NOP }, /* This board only has 1 oki chip */
 	{ 0x140000, 0x140001, soundlatch_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, MWA_NOP }, /* YM2203 - this board doesn't have one */
 	{ 0x110000, 0x110001, YM2151_w },
@@ -169,8 +172,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

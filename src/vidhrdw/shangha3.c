@@ -61,12 +61,12 @@ Word | Bit(s)           | Use
 #include "driver.h"
 
 
-unsigned char *shangha3_ram;
+data16_t *shangha3_ram;
 size_t shangha3_ram_size;
 
 int shangha3_do_shadows;
 
-static int gfxlist_addr;
+static data16_t gfxlist_addr;
 static struct osd_bitmap *rawbitmap;
 
 
@@ -100,72 +100,47 @@ void shangha3_vh_stop(void)
 
 
 
-WRITE_HANDLER( shangha3_paletteram_w )
+WRITE16_HANDLER( shangha3_flipscreen_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int r,g,b;
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-
-	r = (newword >> 11) & 0x1f;
-	g = (newword >>  6) & 0x1f;
-	b = (newword >>  1) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	/* for shadows, change low bits so they won't be merged with normal colors */
-	if (offset/2 >= 128)
+	if (ACCESSING_LSB)
 	{
-		r ^= 0x04;
-		g ^= 0x04;
-		b ^= 0x04;
+		/* bit 7 flips screen, the rest seems to always be set to 0x7e */
+		flip_screen_set(data & 0x80);
+
+		if ((data & 0x7f) != 0x7e) usrintf_showmessage("flipscreen_w %02x",data);
 	}
-
-	palette_change_color(offset/2,r,g,b);
 }
 
-WRITE_HANDLER( shangha3_flipscreen_w )
+WRITE16_HANDLER( shangha3_gfxlist_addr_w )
 {
-	/* bit 7 flips screen, the rest seems to always be set to 0x7e */
-	flip_screen_w(0,data & 0x80);
-
-	if ((data & 0x7f) != 0x7e) usrintf_showmessage("flipscreen_w %02x",data);
-}
-
-WRITE_HANDLER( shangha3_gfxlist_addr_w )
-{
-	gfxlist_addr = data * 0x10;
+	COMBINE_DATA(&gfxlist_addr);
 }
 
 
-WRITE_HANDLER( shangha3_blitter_go_w )
+WRITE16_HANDLER( shangha3_blitter_go_w )
 {
 	int offs;
 
 
 	profiler_mark(PROFILER_VIDEO);
 
-	for (offs = gfxlist_addr;offs < shangha3_ram_size;offs += 32)
+	for (offs = gfxlist_addr << 3;offs < shangha3_ram_size/2;offs += 16)
 	{
 		int sx,sy,x,y,code,color,flipx,flipy,sizex,sizey,zoomx,zoomy;
 
 
-		code = READ_WORD(&shangha3_ram[offs+2]);
-		color = READ_WORD(&shangha3_ram[offs+10]) & 0x7f;
-		flipx = READ_WORD(&shangha3_ram[offs+8]) & 0x01;
-		flipy = READ_WORD(&shangha3_ram[offs+8]) & 0x02;
-		sx = (READ_WORD(&shangha3_ram[offs+4]) & 0x1ff0) >> 4;
+		code = shangha3_ram[offs+1];
+		color = shangha3_ram[offs+5] & 0x7f;
+		flipx = shangha3_ram[offs+4] & 0x01;
+		flipy = shangha3_ram[offs+4] & 0x02;
+		sx = (shangha3_ram[offs+2] & 0x1ff0) >> 4;
 		if (sx >= 0x180) sx -= 0x200;
-		sy = (READ_WORD(&shangha3_ram[offs+6]) & 0x1ff0) >> 4;
+		sy = (shangha3_ram[offs+3] & 0x1ff0) >> 4;
 		if (sy >= 0x100) sy -= 0x200;
-		sizex = READ_WORD(&shangha3_ram[offs+12]);
-		sizey = READ_WORD(&shangha3_ram[offs+14]);
-		zoomx = READ_WORD(&shangha3_ram[offs+20]);
-		zoomy = READ_WORD(&shangha3_ram[offs+26]);
+		sizex = shangha3_ram[offs+6];
+		sizey = shangha3_ram[offs+7];
+		zoomx = shangha3_ram[offs+10];
+		zoomy = shangha3_ram[offs+13];
 
 		if (flip_screen)
 		{
@@ -181,22 +156,22 @@ WRITE_HANDLER( shangha3_blitter_go_w )
 		{
 			struct rectangle myclip;
 
-//if (READ_WORD(&shangha3_ram[offs+22]) || READ_WORD(&shangha3_ram[offs+24]))
-//logerror("offs %04x: sx %04x sy %04x zoom %04x %04x %04x %04x fx %d fy %d\n",offs,sx,sy,zoomx,READ_WORD(&shangha3_ram[offs+22]),READ_WORD(&shangha3_ram[offs+24]),zoomy,flipx,flipy);
+//if (shangha3_ram[offs+11] || shangha3_ram[offs+12])
+//logerror("offs %04x: sx %04x sy %04x zoom %04x %04x %04x %04x fx %d fy %d\n",offs,sx,sy,zoomx,shangha3_ram[offs+11]),shangha3_ram[offs+12],zoomy,flipx,flipy);
 
 			myclip.min_x = sx;
 			myclip.max_x = sx + sizex;
 			myclip.min_y = sy;
 			myclip.max_y = sy + sizey;
 
-			if (READ_WORD(&shangha3_ram[offs+8]) & 0x08)	/* tilemap */
+			if (shangha3_ram[offs+4] & 0x08)	/* tilemap */
 			{
 				int srcx,srcy,dispx,dispy,w,h,condensed;
 
-				condensed = READ_WORD(&shangha3_ram[offs+8]) & 0x04;
+				condensed = shangha3_ram[offs+4] & 0x04;
 
-				srcx = READ_WORD(&shangha3_ram[offs+16])/16;
-				srcy = READ_WORD(&shangha3_ram[offs+18])/16;
+				srcx = shangha3_ram[offs+8]/16;
+				srcy = shangha3_ram[offs+9]/16;
 				dispx = srcx & 0x0f;
 				dispy = srcy & 0x0f;
 
@@ -226,7 +201,7 @@ WRITE_HANDLER( shangha3_blitter_go_w )
 						{
 							int addr = ((y+srcy) & 0x1f) +
 										0x20 * ((x+srcx) & 0xff);
-							tile = READ_WORD(&shangha3_ram[2*addr]);
+							tile = shangha3_ram[addr];
 							dx = 8*x*(0x200-zoomx)/0x100 - dispx;
 							dy = 8*y*(0x200-zoomy)/0x100 - dispy;
 						}
@@ -235,7 +210,7 @@ WRITE_HANDLER( shangha3_blitter_go_w )
 							int addr = ((y+srcy) & 0x0f) +
 										0x10 * ((x+srcx) & 0xff) +
 										0x100 * ((y+srcy) & 0x10);
-							tile = READ_WORD(&shangha3_ram[2*addr]);
+							tile = shangha3_ram[addr];
 							dx = 16*x*(0x200-zoomx)/0x100 - dispx;
 							dy = 16*y*(0x200-zoomy)/0x100 - dispy;
 						}

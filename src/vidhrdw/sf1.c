@@ -1,11 +1,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *sf1_objectram;
 
-int sf1_active = 0;
+data16_t *sf1_objectram,*sf1_videoram;
 
-static struct tilemap *bgb_tilemap, *bgm_tilemap, *char_tilemap;
+static int sf1_active = 0;
+
+static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 
 /***************************************************************************
@@ -14,7 +15,7 @@ static struct tilemap *bgb_tilemap, *bgm_tilemap, *char_tilemap;
 
 ***************************************************************************/
 
-static void get_bgb_tile_info(int tile_index)
+static void get_bg_tile_info(int tile_index)
 {
 	unsigned char *base = memory_region(REGION_GFX5) + 2*tile_index;
 	int attr = base[0x10000];
@@ -24,7 +25,7 @@ static void get_bgb_tile_info(int tile_index)
 	tile_info.flags = TILE_FLIPYX(attr & 3);
 }
 
-static void get_bgm_tile_info(int tile_index)
+static void get_fg_tile_info(int tile_index)
 {
 	unsigned char *base = memory_region(REGION_GFX5) + 0x20000 + 2*tile_index;
 	int attr = base[0x10000];
@@ -34,9 +35,9 @@ static void get_bgm_tile_info(int tile_index)
 	tile_info.flags = TILE_FLIPYX(attr & 3);
 }
 
-static void get_char_tile_info(int tile_index)
+static void get_tx_tile_info(int tile_index)
 {
-	int code = READ_WORD(&videoram[2*tile_index]);
+	int code = sf1_videoram[tile_index];
 	SET_TILE_INFO (3, code & 0x3ff, code>>12);
 	tile_info.flags = TILE_FLIPYX((code & 0xc00)>>10);
 }
@@ -53,15 +54,15 @@ int sf1_vh_start(void)
 {
 	int i;
 
-	bgb_tilemap =  tilemap_create(get_bgb_tile_info, tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,2048,16);
-	bgm_tilemap =  tilemap_create(get_bgm_tile_info, tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,2048,16);
-	char_tilemap = tilemap_create(get_char_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,  64,32);
+	bg_tilemap =  tilemap_create(get_bg_tile_info, tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,2048,16);
+	fg_tilemap =  tilemap_create(get_fg_tile_info, tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,2048,16);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,  64,32);
 
-	if (!bgb_tilemap || !bgm_tilemap || !char_tilemap)
+	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	bgm_tilemap->transparent_pen = 15;
-	char_tilemap->transparent_pen = 3;
+	tilemap_set_transparent_pen(fg_tilemap,15);
+	tilemap_set_transparent_pen(tx_tilemap,3);
 
 	for(i = 832; i<1024; i++)
 		palette_used_colors[i] = PALETTE_COLOR_UNUSED;
@@ -77,33 +78,46 @@ int sf1_vh_start(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( sf1_videoram_w )
+WRITE16_HANDLER( sf1_videoram_w )
 {
-	int old = READ_WORD(&videoram[offset]);
-	int new = COMBINE_WORD(old, data);
-	if (old != new)
+	int oldword = sf1_videoram[offset];
+	COMBINE_DATA(&sf1_videoram[offset]);
+	if (oldword != sf1_videoram[offset])
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
+}
+
+WRITE16_HANDLER( sf1_bg_scroll_w )
+{
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrollx(bg_tilemap,0,scroll);
+}
+
+WRITE16_HANDLER( sf1_fg_scroll_w )
+{
+	static data16_t scroll;
+	COMBINE_DATA(&scroll);
+	tilemap_set_scrollx(fg_tilemap,0,scroll);
+}
+
+WRITE16_HANDLER( sf1_gfxctrl_w )
+{
+/* b0 = reset, or maybe "set anyway" */
+/* b1 = pulsed when control6.b6==0 until it's 1 */
+/* b2 = active when dip 8 (flip) on */
+/* b3 = active character plane */
+/* b4 = unused */
+/* b5 = active background plane */
+/* b6 = active middle plane */
+/* b7 = active sprites */
+	if (ACCESSING_LSB)
 	{
-		WRITE_WORD(&videoram[offset], new);
-		tilemap_mark_tile_dirty(char_tilemap,offset/2);
+		sf1_active = data & 0xff;
+		flip_screen_set(data & 0x04);
+		tilemap_set_enable(tx_tilemap,data & 0x08);
+		tilemap_set_enable(bg_tilemap,data & 0x20);
+		tilemap_set_enable(fg_tilemap,data & 0x40);
 	}
-}
-
-WRITE_HANDLER( sf1_bgb_scroll_w )
-{
-	tilemap_set_scrollx(bgb_tilemap, 0, data);
-}
-
-WRITE_HANDLER( sf1_bgm_scroll_w )
-{
-	tilemap_set_scrollx(bgm_tilemap, 0, data);
-}
-
-void sf1_active_w(int data)
-{
-	sf1_active = data;
-	tilemap_set_enable(bgb_tilemap, data & 0x20);
-	tilemap_set_enable(bgm_tilemap, data & 0x40);
-	tilemap_set_enable(char_tilemap, data & 0x08);
 }
 
 
@@ -114,127 +128,126 @@ void sf1_active_w(int data)
 
 ***************************************************************************/
 
+static void mark_sprite_colors(void)
+{
+	unsigned int cmap = 0;
+	int offs,i,j;
+
+	for (offs = 0x1000-0x20;offs >= 0;offs -= 0x20)
+	{
+		int color = sf1_objectram[offs+1] & 0x0f;
+
+		cmap |= 1 << color;
+	}
+
+	for (i = 0;i < 16;i++)
+	{
+		if (cmap & (1 << i))
+		{
+			unsigned char *umap =
+					&palette_used_colors[Machine->drv->gfxdecodeinfo[2].color_codes_start + 16*i];
+
+			for (j = 0;j < 15;j++)
+				*umap++ = PALETTE_COLOR_USED;
+		}
+	}
+}
+
 INLINE int sf1_invert(int nb)
 {
 	static int delta[4] = {0x00, 0x18, 0x18, 0x00};
-	return nb^delta[(nb>>3)&3];
-}
-
-
-static void mark_sprites_palette(void)
-{
-	unsigned char *umap = &palette_used_colors[Machine->drv->gfxdecodeinfo[2].color_codes_start];
-	unsigned int cmap = 0;
-	unsigned char *pt = sf1_objectram + 0x2000-0x40;
-	int i, j;
-
-	while(pt>=sf1_objectram)
-	{
-		int at = READ_WORD(pt+2);
-		int y = READ_WORD(pt+4);
-		int x = READ_WORD(pt+6);
-
-		if(x>32 && x<415 && y>0 && y<256)
-			cmap |= (1<<(at & 0x0f));
-
-		pt -= 0x40;
-	}
-
-	for(i=0;i<16;i++)
-	{
-		if(cmap & (1<<i))
-		{
-			for(j=0;j<15;j++)
-				*umap++ = PALETTE_COLOR_USED;
-			*umap++ = PALETTE_COLOR_TRANSPARENT;
-		}
-		else
-		{
-			for(j=0;j<16;j++)
-				*umap++ = PALETTE_COLOR_UNUSED;
-		}
-	}
+	return nb ^ delta[(nb >> 3) & 3];
 }
 
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
-	unsigned char *pt = sf1_objectram + 0x2000-0x40;
+	int offs;
 
-	while(pt>=sf1_objectram) {
-		int c = READ_WORD(pt);
-		int at = READ_WORD(pt+2);
-		int y = READ_WORD(pt+4);
-		int x = READ_WORD(pt+6);
+	for (offs = 0x1000-0x20;offs >= 0;offs -= 0x20)
+	{
+		int c = sf1_objectram[offs];
+		int attr = sf1_objectram[offs+1];
+		int sy = sf1_objectram[offs+2];
+		int sx = sf1_objectram[offs+3];
+		int color = attr & 0x000f;
+		int flipx = attr & 0x0100;
+		int flipy = attr & 0x0200;
 
-		if(x>32 && x<415 && y>0 && y<256) {
-			if(!(at&0x400)) {
-				drawgfx(bitmap,
-						Machine->gfx[2],
-						sf1_invert(c),
-						at & 0xf,
-						at & 0x100, at & 0x200,
-						x, y,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
-			} else {
-				int c1, c2, c3, c4;
-				switch(at & 0x300) {
-				case 0x000:
-				default:
-					c1 = c;
-					c2 = c+1;
-					c3 = c+16;
-					c4 = c+17;
-					break;
-				case 0x100:
-					c1 = c+1;
-					c2 = c;
-					c3 = c+17;
-					c4 = c+16;
-					break;
-				case 0x200:
-					c1 = c+16;
-					c2 = c+17;
-					c3 = c;
-					c4 = c+1;
-					break;
-				case 0x300:
-					c1 = c+17;
-					c2 = c+16;
-					c3 = c+1;
-					c4 = c;
-					break;
-				}
-				drawgfx(bitmap,
-						Machine->gfx[2],
-						sf1_invert(c1),
-						at & 0xf,
-						at & 0x100, at & 0x200,
-						x, y,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
-				drawgfx(bitmap,
-						Machine->gfx[2],
-						sf1_invert(c2),
-						at & 0xf,
-						at & 0x100, at & 0x200,
-						x+16, y,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
-				drawgfx(bitmap,
-						Machine->gfx[2],
-						sf1_invert(c3),
-						at & 0xf,
-						at & 0x100, at & 0x200,
-						x, y+16,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
-				drawgfx(bitmap,
-						Machine->gfx[2],
-						sf1_invert(c4),
-						at & 0xf,
-						at & 0x100, at & 0x200,
-						x+16, y+16,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
+		if (attr & 0x400)	/* large sprite */
+		{
+			int c1,c2,c3,c4,t;
+
+			if (flip_screen)
+			{
+				sx = 480 - sx;
+				sy = 224 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
 			}
+
+			c1 = c;
+			c2 = c+1;
+			c3 = c+16;
+			c4 = c+17;
+
+			if (flipx)
+			{
+				t = c1; c1 = c2; c2 = t;
+				t = c3; c3 = c4; c4 = t;
+			}
+			if (flipy)
+			{
+				t = c1; c1 = c3; c3 = t;
+				t = c2; c2 = c4; c4 = t;
+			}
+
+			drawgfx(bitmap,
+					Machine->gfx[2],
+					sf1_invert(c1),
+					color,
+					flipx,flipy,
+					sx,sy,
+					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+			drawgfx(bitmap,
+					Machine->gfx[2],
+					sf1_invert(c2),
+					color,
+					flipx,flipy,
+					sx+16,sy,
+					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+			drawgfx(bitmap,
+					Machine->gfx[2],
+					sf1_invert(c3),
+					color,
+					flipx,flipy,
+					sx,sy+16,
+					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+			drawgfx(bitmap,
+					Machine->gfx[2],
+					sf1_invert(c4),
+					color,
+					flipx,flipy,
+					sx+16,sy+16,
+					&Machine->visible_area, TRANSPARENCY_PEN, 15);
 		}
-		pt -= 0x40;
+		else
+		{
+			if (flip_screen)
+			{
+				sx = 496 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,
+					Machine->gfx[2],
+					sf1_invert(c),
+					color,
+					flipx,flipy,
+					sx,sy,
+					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+		}
 	}
 }
 
@@ -244,24 +257,19 @@ void sf1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
+	if (sf1_active & 0x80)
+		mark_sprite_colors();
+	palette_recalc();
 
-	if(sf1_active & 0x80)
-		mark_sprites_palette();
-
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap, bgb_tilemap, 0);
-
-	if(!(sf1_active & 0x20))
+	if (sf1_active & 0x20)
+		tilemap_draw(bitmap,bg_tilemap,0,0);
+	else
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
-	tilemap_draw(bitmap, bgm_tilemap, 0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 
-	if(sf1_active & 0x80)
+	if (sf1_active & 0x80)
 		draw_sprites(bitmap);
 
-	tilemap_draw(bitmap, char_tilemap, 0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }

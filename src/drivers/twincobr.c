@@ -242,8 +242,7 @@ static int twincobr_interrupt(void)
 	else return MC68000_INT_NONE;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x000000, 0x02ffff, MRA_ROM },
 	{ 0x030000, 0x033fff, twincobr_68k_dsp_r },		/* 68K and DSP shared RAM */
 	{ 0x040000, 0x040fff, MRA_BANK1 },				/* sprite ram data */
@@ -257,11 +256,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x07e000, 0x07e001, twincobr_txram_r },		/* data from text video RAM */
 	{ 0x07e002, 0x07e003, twincobr_bgram_r },		/* data from bg video RAM */
 	{ 0x07e004, 0x07e005, twincobr_fgram_r },		/* data from fg video RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x000000, 0x02ffff, MWA_ROM },
 	{ 0x030000, 0x033fff, twincobr_68k_dsp_w, &twincobr_68k_dsp_ram },	/* 68K and DSP shared RAM */
 	{ 0x040000, 0x040fff, MWA_BANK1, &spriteram, &spriteram_size },		/* sprite ram data */
@@ -280,68 +277,51 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x07e000, 0x07e001, twincobr_txram_w },		/* data for text video RAM */
 	{ 0x07e002, 0x07e003, twincobr_bgram_w },		/* data for bg video RAM */
 	{ 0x07e004, 0x07e005, twincobr_fgram_w },		/* data for fg video RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM, &twincobr_sharedram },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, YM3812_status_port_0_r },
 	{ 0x10, 0x10, input_port_5_r },		/* Twin Cobra - Coin/Start */
 	{ 0x40, 0x40, input_port_3_r },		/* Twin Cobra - DSW A */
 	{ 0x50, 0x50, input_port_4_r },		/* Twin Cobra - DSW B */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
 	{ 0x20, 0x20, fshark_coin_dsp_w },		/* Twin Cobra coin count-lockout */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress DSP_readmem[] =
-{
+static MEMORY_READ_START( DSP_readmem )
 	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
 	{ 0x8000, 0x8fff, MRA_ROM },	/* 800h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress DSP_writemem[] =
-{
+static MEMORY_WRITE_START( DSP_writemem )
 	{ 0x0000, 0x011f, MWA_RAM },
 	{ 0x8000, 0x8fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort DSP_readport[] =
-{
+static PORT_READ_START( DSP_readport )
 	{ 0x01, 0x01, twincobr_dsp_r },
 	{ 0x02, 0x02, fsharkbt_dsp_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort DSP_writeport[] =
-{
+static PORT_WRITE_START( DSP_writeport )
 	{ 0x00, 0x03, twincobr_dsp_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 /*****************************************************************************

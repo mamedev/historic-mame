@@ -10,16 +10,15 @@
 
 #define VEC_SHIFT 16
 
-UINT8 *aztarac_vectorram;
+data16_t *aztarac_vectorram;
 
 static int xcenter, ycenter;
 
 INLINE void read_vectorram (int addr, int *x, int *y, int *c)
 {
-    addr <<= 1;
-    *c = READ_WORD (&aztarac_vectorram[addr]) & 0xffff;
-    *x = READ_WORD (&aztarac_vectorram[addr + 0x1000]) & 0x03ff;
-    *y = READ_WORD (&aztarac_vectorram[addr + 0x2000]) & 0x03ff;
+    *c = aztarac_vectorram[addr] & 0xffff;
+    *x = aztarac_vectorram[addr + 0x800] & 0x03ff;
+    *y = aztarac_vectorram[addr + 0x1000] & 0x03ff;
     if (*x & 0x200) *x |= 0xfffffc00;
     if (*y & 0x200) *y |= 0xfffffc00;
 }
@@ -30,7 +29,7 @@ INLINE void aztarac_vector (int x, int y, int color, int intensity)
     vector_add_point (xcenter + (x << VEC_SHIFT), ycenter - (y << VEC_SHIFT), color, intensity);
 }
 
-WRITE_HANDLER( aztarac_ubr_w )
+WRITE16_HANDLER( aztarac_ubr_w )
 {
     int x, y, c, intensity, xoffset, yoffset, color;
     int defaddr, objaddr=0, ndefs;

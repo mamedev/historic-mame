@@ -1,28 +1,44 @@
 /***************************************************************************
 
-	Relief Pitcher
+	Atari "Round" hardware
 
-    driver by Aaron Giles
+	driver by Aaron Giles
 
-****************************************************************************/
+	Games supported:
+		* Relief Pitcher (1990) [2 sets]
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map (TBA)
+
+***************************************************************************/
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( relief_playfieldram_w );
-WRITE_HANDLER( relief_playfield2ram_w );
-WRITE_HANDLER( relief_colorram_w );
-WRITE_HANDLER( relief_video_control_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
 int relief_vh_start(void);
 void relief_vh_stop(void);
-void relief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void relief_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-void relief_scanline_update(int scanline);
 
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
 
 static UINT8 ym2413_volume;
 static UINT8 overall_volume;
@@ -60,11 +76,10 @@ static void update_interrupts(void)
 static void init_machine(void)
 {
 	atarigen_eeprom_reset();
-	atarigen_video_control_reset();
+	atarivc_reset(atarivc_eof_data);
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(relief_scanline_update, 8);
 
-	OKIM6295_set_bank_base(0, ALL_VOICES, 0);
+	OKIM6295_set_bank_base(0, 0);
 	ym2413_volume = 15;
 	overall_volume = 127;
 	adpcm_bank_base = 0;
@@ -78,9 +93,9 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port2_r )
+static READ16_HANDLER( special_port2_r )
 {
-	int result = input_port_2_r(offset);
+	int result = readinputport(2);
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0020;
 	if (!(result & 0x0080) || atarigen_get_hblank()) result ^= 0x0001;
 	return result;
@@ -94,26 +109,24 @@ static READ_HANDLER( special_port2_r )
  *
  *************************************/
 
-static WRITE_HANDLER( audio_control_w )
+static WRITE16_HANDLER( audio_control_w )
 {
-	(void)offset;
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		ym2413_volume = (data >> 1) & 15;
 		atarigen_set_ym2413_vol((ym2413_volume * overall_volume * 100) / (127 * 15));
 		adpcm_bank_base = (0x040000 * ((data >> 6) & 3)) | (adpcm_bank_base & 0x100000);
 	}
-	if (!(data & 0xff000000))
+	if (ACCESSING_MSB)
 		adpcm_bank_base = (0x100000 * ((data >> 8) & 1)) | (adpcm_bank_base & 0x0c0000);
 
-	OKIM6295_set_bank_base(0, ALL_VOICES, adpcm_bank_base);
+	OKIM6295_set_bank_base(0, adpcm_bank_base);
 }
 
 
-static WRITE_HANDLER( audio_volume_w )
+static WRITE16_HANDLER( audio_volume_w )
 {
-	(void)offset;
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		overall_volume = data & 127;
 		atarigen_set_ym2413_vol((ym2413_volume * overall_volume * 100) / (127 * 15));
@@ -129,15 +142,15 @@ static WRITE_HANDLER( audio_volume_w )
  *
  *************************************/
 
-static READ_HANDLER( adpcm_r )
+static READ16_HANDLER( adpcm_r )
 {
 	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-static WRITE_HANDLER( adpcm_w )
+static WRITE16_HANDLER( adpcm_w )
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 		OKIM6295_data_0_w(offset, data & 0xff);
 }
 
@@ -149,18 +162,17 @@ static WRITE_HANDLER( adpcm_w )
  *
  *************************************/
 
-static READ_HANDLER( ym2413_r )
+static READ16_HANDLER( ym2413_r )
 {
-	(void)offset;
 	return YM2413_status_port_0_r(0) | 0xff00;
 }
 
 
-static WRITE_HANDLER( ym2413_w )
+static WRITE16_HANDLER( ym2413_w )
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
-		if (offset & 2)
+		if (offset & 1)
 			YM2413_data_port_0_w(0, data & 0xff);
 		else
 			YM2413_register_port_0_w(0, data & 0xff);
@@ -175,48 +187,43 @@ static WRITE_HANDLER( ym2413_w )
  *
  *************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x140000, 0x140003, ym2413_r },
 	{ 0x140010, 0x140011, adpcm_r },
 	{ 0x180000, 0x180fff, atarigen_eeprom_upper_r },
-	{ 0x260000, 0x260001, input_port_0_r },
-	{ 0x260002, 0x260003, input_port_1_r },
+	{ 0x260000, 0x260001, input_port_0_word_r },
+	{ 0x260002, 0x260003, input_port_1_word_r },
 	{ 0x260010, 0x260011, special_port2_r },
-	{ 0x260012, 0x260013, input_port_3_r },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
-	{ 0xfe0000, 0xfe0fff, MRA_BANK1 },
-	{ 0xfeffc0, 0xfeffff, atarigen_video_control_r },
-	{ 0xff0000, 0xff5fff, MRA_BANK3 },
-	{ 0xff6000, 0xff7fff, MRA_BANK4 },
-	{ 0xff8000, 0xff8fff, MRA_BANK5 },
-	{ 0xff9000, 0xffffff, MRA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x260012, 0x260013, input_port_3_word_r },
+	{ 0x3effc0, 0x3effff, atarivc_r },
+	{ 0xfe0000, 0xfe0fff, MRA16_RAM },
+	{ 0xfeffc0, 0xfeffff, atarivc_r },
+	{ 0xff0000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x140000, 0x140003, ym2413_w },
 	{ 0x140010, 0x140011, adpcm_w },
 	{ 0x140020, 0x140021, audio_volume_w },
 	{ 0x140030, 0x140031, audio_control_w },
 	{ 0x180000, 0x180fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1c0030, 0x1c0031, atarigen_eeprom_enable_w },
-	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
-	{ 0xfe0000, 0xfe0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0xfeffc0, 0xfeffff, atarigen_video_control_w },
-	{ 0xff0000, 0xff1fff, relief_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
-	{ 0xff2000, 0xff3fff, relief_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xff4000, 0xff5fff, relief_colorram_w, &atarigen_playfieldram_color },
-	{ 0xff6000, 0xff7fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xff8000, 0xff8fff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xff9000, 0xffffff, MWA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ 0x2a0000, 0x2a0001, watchdog_reset16_w },
+	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
+	{ 0xfe0000, 0xfe0fff, atarigen_666_paletteram_w, &paletteram16 },
+	{ 0xfeffc0, 0xfeffff, atarivc_w },
+	{ 0xff0000, 0xff1fff, ataripf_1_latched_w, &ataripf_1_base },
+	{ 0xff2000, 0xff3fff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0xff4000, 0xff5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0xff6000, 0xff67ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0xff6800, 0xff8eff, MWA16_RAM },
+	{ 0xff8f00, 0xff8f7f, MWA16_RAM, &atarivc_eof_data },
+	{ 0xff8f80, 0xff8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0xff9000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -277,22 +284,35 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout pfanmolayout =
+static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	32768,	/* 32768 of them */
-	4,		/* 4 bits per pixel */
-	{ 0x80000*3*8, 0x80000*2*8, 0x80000*1*8, 0x80000*0*8 },
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
+	16*8
+};
+
+
+static struct GfxLayout moexlayout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	5,
+	{ 0, 0, 0, 0, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &pfanmolayout,   0, 64 },		/* alpha & playfield */
-	{ REGION_GFX1, 0x000001, &pfanmolayout, 256, 16 },		/* sprites */
+	{ REGION_GFX1, 0, &pfmolayout,   0, 64 },		/* alpha & playfield */
+	{ REGION_GFX1, 1, &pfmolayout, 256, 16 },		/* sprites */
+	{ REGION_GFX2, 0, &moexlayout, 256, 16 },		/* extra sprite bit */
 	{ -1 } /* end of array */
 };
 
@@ -306,7 +326,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
+	1,
 	{ ATARI_CLOCK_14MHz/4/3/165 },
 	{ REGION_SOUND1 },
 	{ 75 }
@@ -315,11 +335,12 @@ static struct OKIM6295interface okim6295_interface =
 
 static struct YM2413interface ym2413_interface =
 {
-	1,					/* 1 chip */
+	1,
 	ATARI_CLOCK_14MHz/4,
 	{ 75 },
 	{ 0 }
 };
+
 
 
 /*************************************
@@ -335,11 +356,11 @@ static const struct MachineDriver machine_driver_relief =
 		{
 			CPU_M68000,		/* verified */
 			ATARI_CLOCK_14MHz/2,
-			readmem,writemem,0,0,
+			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -375,51 +396,43 @@ static const struct MachineDriver machine_driver_relief =
 
 /*************************************
  *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	UINT8 *base = memory_region(REGION_SOUND1);
-	int i;
-
-	/* invert the graphics bits */
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-
-	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
-	/* the upper 128k is fixed, the lower 128k is bankswitched */
-	memcpy(&base[0x000000], &base[0x100000], 0x20000);
-	memcpy(&base[0x040000], &base[0x100000], 0x20000);
-	memcpy(&base[0x080000], &base[0x140000], 0x20000);
-	memcpy(&base[0x0c0000], &base[0x160000], 0x20000);
-	memcpy(&base[0x100000], &base[0x180000], 0x20000);
-	memcpy(&base[0x140000], &base[0x1a0000], 0x20000);
-	memcpy(&base[0x180000], &base[0x1c0000], 0x20000);
-	memcpy(&base[0x1c0000], &base[0x1e0000], 0x20000);
-
-	memcpy(&base[0x020000], &base[0x120000], 0x20000);
-	memcpy(&base[0x060000], &base[0x120000], 0x20000);
-	memcpy(&base[0x0a0000], &base[0x120000], 0x20000);
-	memcpy(&base[0x0e0000], &base[0x120000], 0x20000);
-	memcpy(&base[0x120000], &base[0x120000], 0x20000);
-	memcpy(&base[0x160000], &base[0x120000], 0x20000);
-	memcpy(&base[0x1a0000], &base[0x120000], 0x20000);
-	memcpy(&base[0x1e0000], &base[0x120000], 0x20000);
-}
-
-
-
-/*************************************
- *
  *	Driver initialization
  *
  *************************************/
 
+static void init_common(const data16_t *def_eeprom)
+{
+	UINT8 *sound_base = memory_region(REGION_SOUND1);
+
+	atarigen_eeprom_default = def_eeprom;
+	atarigen_invert_region(REGION_GFX1);
+	atarigen_invert_region(REGION_GFX2);
+
+	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
+	/* the upper 128k is fixed, the lower 128k is bankswitched */
+	memcpy(&sound_base[0x000000], &sound_base[0x100000], 0x20000);
+	memcpy(&sound_base[0x040000], &sound_base[0x100000], 0x20000);
+	memcpy(&sound_base[0x080000], &sound_base[0x140000], 0x20000);
+	memcpy(&sound_base[0x0c0000], &sound_base[0x160000], 0x20000);
+	memcpy(&sound_base[0x100000], &sound_base[0x180000], 0x20000);
+	memcpy(&sound_base[0x140000], &sound_base[0x1a0000], 0x20000);
+	memcpy(&sound_base[0x180000], &sound_base[0x1c0000], 0x20000);
+	memcpy(&sound_base[0x1c0000], &sound_base[0x1e0000], 0x20000);
+
+	memcpy(&sound_base[0x020000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x060000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x0a0000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x0e0000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x120000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x160000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x1a0000], &sound_base[0x120000], 0x20000);
+	memcpy(&sound_base[0x1e0000], &sound_base[0x120000], 0x20000);
+}
+
+
 static void init_relief(void)
 {
-	static const UINT16 default_eeprom[] =
+	static const data16_t default_eeprom[] =
 	{
 		0x0001,0x0166,0x0128,0x01E6,0x0100,0x012C,0x0300,0x0144,
 		0x0700,0x01C0,0x2F00,0x01EC,0x0B00,0x0148,0x0140,0x0100,
@@ -429,16 +442,13 @@ static void init_relief(void)
 		0x0188,0x0120,0x0600,0x0196,0x013C,0x0192,0x0150,0xFF00,
 		0x9500,0x0000
 	};
-
-	atarigen_eeprom_default = default_eeprom;
-
-	rom_decode();
+	init_common(default_eeprom);
 }
 
 
 static void init_relief2(void)
 {
-	static const UINT16 default_eeprom[] =
+	static const data16_t default_eeprom[] =
 	{
 		0x0001,0x01FD,0x019F,0x015E,0x01FF,0x019E,0x03FF,0x015F,
 		0x07FF,0x01FD,0x12FF,0x01FC,0x01FB,0x07FF,0x01F7,0x01FF,
@@ -455,10 +465,7 @@ static void init_relief2(void)
 		0x0100,0x0145,0x0100,0x0109,0x0184,0x012C,0x0200,0x0107,
 		0x01AA,0x0149,0x60FF,0x3300,0x0000
 	};
-
-	atarigen_eeprom_default = default_eeprom;
-
-	rom_decode();
+	init_common(default_eeprom);
 }
 
 
@@ -476,17 +483,20 @@ ROM_START( relief )
 	ROM_LOAD_EVEN( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
 	ROM_LOAD_ODD ( "093-0014.17j", 0x40000, 0x20000, 0x19e5decd )
 
-	ROM_REGION( 0x240000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
 	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
 	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
 	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
-	ROM_LOAD( "093-0029.4d",  0x200000, 0x40000, 0xe4593ff4 )
+
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "093-0029.4d",  0x000000, 0x40000, 0xe4593ff4 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1 )	/* 2MB for ADPCM data */
 	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
 	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
 ROM_END
+
 
 ROM_START( relief2 )
 	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
@@ -495,12 +505,14 @@ ROM_START( relief2 )
 	ROM_LOAD_EVEN( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
 	ROM_LOAD_ODD ( "093-0014.17j", 0x40000, 0x20000, 0x19e5decd )
 
-	ROM_REGION( 0x240000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
 	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
 	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
 	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
-	ROM_LOAD( "093-0029.4d",  0x200000, 0x40000, 0xe4593ff4 )
+
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "093-0029.4d",  0x000000, 0x40000, 0xe4593ff4 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1 )	/* 2MB for ADPCM data */
 	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )

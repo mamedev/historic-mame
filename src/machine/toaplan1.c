@@ -212,7 +212,7 @@ void toaplan1_init_machine(void)
 	credits = 0;
 	latch = 0;
 	toaplan1_coin_count = 0;
-	coin_lockout_global_w(0,0);
+	coin_lockout_global_w(0);
 }
 
 WRITE_HANDLER( rallybik_coin_w )
@@ -243,17 +243,17 @@ WRITE_HANDLER( toaplan1_coin_w )
 		case 0xe2: coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_w(1,1); break;
 		case 0xe1: coin_counter_w(0,1); coin_counter_w(0,0); coin_lockout_w(0,1); break;
 
-		case 0xec: coin_lockout_global_w(0,0); break;	/* ??? count games played */
+		case 0xec: coin_lockout_global_w(0); break;	/* ??? count games played */
 		case 0xe8: break;	/* ??? Maximum credits reached with coin/credit ratio */
 		case 0xe4: break;	/* ??? Reset coin system */
 
-		case 0x0c: coin_lockout_global_w(0,0); break;	/* Unlock all coin slots */
+		case 0x0c: coin_lockout_global_w(0); break;	/* Unlock all coin slots */
 		case 0x08: coin_lockout_w(2,0); break;	/* Unlock coin slot C */
 		case 0x09: coin_lockout_w(0,0); break;	/* Unlock coin slot A */
 		case 0x0a: coin_lockout_w(1,0); break;	/* Unlock coin slot B */
 
 		case 0x02: coin_lockout_w(1,1); break;	/* Lock coin slot B */
 		case 0x01: coin_lockout_w(0,1); break;	/* Lock coin slot A */
-		case 0x00: coin_lockout_global_w(0,1); break;	/* Lock all coin slots */
+		case 0x00: coin_lockout_global_w(1); break;	/* Lock all coin slots */
 	}
 }

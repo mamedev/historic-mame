@@ -1,21 +1,33 @@
 /***************************************************************************
 
-	Thunderjaws
+	Atari ThunderJaws hardware
 
-    driver by Aaron Giles
+	driver by Aaron Giles
 
-****************************************************************************/
+	Games supported:
+		* ThunderJaws (1990)
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map (TBA)
+
+***************************************************************************/
+
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 
 
-void thunderj_set_alpha_bank(int bank);
-WRITE_HANDLER( thunderj_playfieldram_w );
-WRITE_HANDLER( thunderj_playfield2ram_w );
-WRITE_HANDLER( thunderj_colorram_w );
+
+/*************************************
+ *
+ *	Externals
+ *
+ *************************************/
 
 int thunderj_vh_start(void);
 void thunderj_vh_stop(void);
@@ -24,13 +36,20 @@ void thunderj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void thunderj_scanline_update(int scanline);
 
 
-static UINT8 *rts_address;
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
+
+static data16_t *rts_address;
 
 
 
 /*************************************
  *
- *	Initialization
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -59,9 +78,9 @@ static void update_interrupts(void)
 static void init_machine(void)
 {
 	atarigen_eeprom_reset();
-	atarigen_video_control_reset();
+	atarivc_reset(atarivc_eof_data);
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(thunderj_scanline_update, 8);
+	atarigen_scanline_timer_reset(thunderj_scanline_update, 1024);
 	atarijsa_reset();
 }
 
@@ -73,9 +92,9 @@ static void init_machine(void)
  *
  *************************************/
 
-static READ_HANDLER( special_port2_r )
+static READ16_HANDLER( special_port2_r )
 {
-	int result = input_port_2_r(offset);
+	int result = readinputport(2);
 
 	if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
@@ -85,19 +104,19 @@ static READ_HANDLER( special_port2_r )
 }
 
 
-static WRITE_HANDLER( latch_w )
+static WRITE16_HANDLER( latch_w )
 {
 	/* reset extra CPU */
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
 		/* 0 means hold CPU 2's reset low */
 		if (data & 1)
-			cpu_set_reset_line(1,CLEAR_LINE);
+			cpu_set_reset_line(1, CLEAR_LINE);
 		else
-			cpu_set_reset_line(1,ASSERT_LINE);
+			cpu_set_reset_line(1, ASSERT_LINE);
 
 		/* bits 2-5 are the alpha bank */
-		thunderj_set_alpha_bank((data >> 2) & 7);
+		atarian_set_bankbits(0, ((data >> 2) & 7) << 16);
 	}
 }
 
@@ -109,7 +128,7 @@ static WRITE_HANDLER( latch_w )
  *
  *************************************/
 
-READ_HANDLER( thunderj_video_control_r )
+READ16_HANDLER( thunderj_video_control_r )
 {
 	/* Sigh. CPU #1 reads the video controller register twice per frame, once at
 	   the beginning of interrupt and once near the end. It stores these values in a
@@ -129,7 +148,7 @@ READ_HANDLER( thunderj_video_control_r )
 	if (cpu_readmem24bew_word(0x163482) > 0xfff)
 		printf("You're screwed!");*/
 
-	return atarigen_video_control_r(offset);
+	return atarivc_r(offset);
 }
 
 
@@ -140,47 +159,42 @@ READ_HANDLER( thunderj_video_control_r )
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x09ffff, MRA_ROM },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x09ffff, MRA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x160000, 0x16ffff, MRA_BANK1 },
-	{ 0x260000, 0x26000f, input_port_0_r },
-	{ 0x260010, 0x260011, input_port_1_r },
+	{ 0x160000, 0x16ffff, MRA16_BANK1 },
+	{ 0x260000, 0x26000f, input_port_0_word_r },
+	{ 0x260010, 0x260011, input_port_1_word_r },
 	{ 0x260012, 0x260013, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
 	{ 0x3effc0, 0x3effff, thunderj_video_control_r },
-	{ 0x3f0000, 0x3f5fff, MRA_BANK3 },
-	{ 0x3f6000, 0x3f7fff, MRA_BANK4 },
-	{ 0x3f8000, 0x3f8fff, MRA_BANK5 },
-	{ 0x3f9000, 0x3fffff, MRA_BANK6 },
-	{ 0x800000, 0x800001, MRA_BANK7 },
-	{ -1 }  /* end of table */
-};
+	{ 0x3f0000, 0x3fffff, MRA16_RAM },
+	{ 0x800000, 0x800001, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x09ffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x09ffff, MWA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x160000, 0x16ffff, MWA_BANK1 },
+	{ 0x160000, 0x16ffff, MWA16_BANK1 },	/* shared */
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360010, 0x360011, latch_w },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
-	{ 0x3f0000, 0x3f1fff, thunderj_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
-	{ 0x3f2000, 0x3f3fff, thunderj_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f4000, 0x3f5fff, thunderj_colorram_w, &atarigen_playfieldram_color },
-	{ 0x3f6000, 0x3f7fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f8000, 0x3f8fff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x3f9000, 0x3fffff, MWA_BANK6 },
-	{ 0x800000, 0x800001, MWA_BANK7, &rts_address },
-	{ -1 }  /* end of table */
-};
+	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram16 },
+	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
+	{ 0x3f0000, 0x3f1fff, ataripf_1_latched_w, &ataripf_1_base },
+	{ 0x3f2000, 0x3f3fff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0x3f4000, 0x3f5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0x3f6000, 0x3f7fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
+	{ 0x3f8000, 0x3f8eff, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f8f00, 0x3f8f7f, MWA16_RAM, &atarivc_eof_data },
+	{ 0x3f8f80, 0x3f8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0x3f9000, 0x3fffff, MWA16_RAM },
+	{ 0x800000, 0x800001, MWA16_RAM, &rts_address },
+MEMORY_END
 
 
 
@@ -190,30 +204,26 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress extra_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x060000, 0x07ffff, MRA_ROM },
-	{ 0x160000, 0x16ffff, MRA_BANK1 },
-	{ 0x260000, 0x26000f, input_port_0_r },
-	{ 0x260010, 0x260011, input_port_1_r },
+static MEMORY_READ16_START( extra_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x060000, 0x07ffff, MRA16_ROM },
+	{ 0x160000, 0x16ffff, MRA16_BANK1 },
+	{ 0x260000, 0x26000f, input_port_0_word_r },
+	{ 0x260010, 0x260011, input_port_1_word_r },
 	{ 0x260012, 0x260013, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress extra_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x060000, 0x07ffff, MWA_ROM },
-	{ 0x160000, 0x16ffff, MWA_BANK1 },
+static MEMORY_WRITE16_START( extra_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x060000, 0x07ffff, MWA16_ROM },
+	{ 0x160000, 0x16ffff, MWA16_BANK1 },
 	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
 	{ 0x360010, 0x360011, latch_w },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -267,25 +277,25 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	4096,	/* 4096 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
 static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	32768,	/* 32768 of them */
-	4,		/* 4 bits per pixel */
-	{ 3*8*0x40000, 2*8*0x40000, 1*8*0x40000, 0*8*0x40000 },
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
+	8*8
 };
 
 
@@ -294,7 +304,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &pfmolayout,  512,  96 },	/* sprites & playfield */
 	{ REGION_GFX2, 0, &pfmolayout,  256, 112 },	/* sprites & playfield */
 	{ REGION_GFX3, 0, &anlayout,      0, 512 },	/* characters 8x8 */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
@@ -323,7 +333,7 @@ static const struct MachineDriver machine_driver_thunderj =
 		},
 		JSA_II_CPU
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100,
 	init_machine,
 
@@ -344,55 +354,6 @@ static const struct MachineDriver machine_driver_thunderj =
 
 	atarigen_nvram_handler
 };
-
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	int i;
-
-	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
-		memory_region(REGION_GFX2)[i] ^= 0xff;
-
-	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
-}
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_thunderj(void)
-{
-	atarigen_eeprom_default = NULL;
-
-	atarijsa_init(2, 3, 2, 0x0002);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(2, 0x4159, 0x4171);
-
-	/* it looks like they jsr to $800000 as some kind of protection */
-	/* put an RTS there so we don't die */
-	WRITE_WORD(rts_address, 0x4E75);
-
-	/* display messages */
-	atarigen_show_sound_message();
-
-	rom_decode();
-}
 
 
 
@@ -470,5 +431,35 @@ ROM_START( thunderj )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static void init_thunderj(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(2, 3, 2, 0x0002);
+	atarigen_init_6502_speedup(2, 0x4159, 0x4171);
+	atarigen_invert_region(REGION_GFX1);
+	atarigen_invert_region(REGION_GFX2);
+
+	/* it looks like they jsr to $800000 as some kind of protection */
+	/* put an RTS there so we don't die */
+	*rts_address = 0x4e75;
+
+	/* copy the shared ROM from region 0 to region 1 */
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
+}
+
+
+
+/*************************************
+ *
+ *	Game driver(s)
+ *
+ *************************************/
 
 GAME( 1990, thunderj, 0, thunderj, thunderj, thunderj, ROT0, "Atari Games", "ThunderJaws" )

@@ -58,42 +58,34 @@ extern struct Samplesinterface spacewar_samples_interface;
 extern struct Samplesinterface ripoff_samples_interface;
 extern struct Samplesinterface solarq_samples_interface;
 
-extern struct MemoryReadAddress demon_sound_readmem[];
-extern struct MemoryWriteAddress demon_sound_writemem[];
-extern struct IOWritePort demon_sound_writeport[];
+extern const struct Memory_ReadAddress demon_sound_readmem[];
+extern const struct Memory_WriteAddress demon_sound_writemem[];
+extern const struct IO_WritePort demon_sound_writeport[];
 extern struct AY8910interface demon_ay8910_interface;
 extern z80ctc_interface demon_z80ctc_interface;
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ CCPU_PORT_IOSWITCHES,   CCPU_PORT_IOSWITCHES,   input_port_0_r },
 	{ CCPU_PORT_IOINPUTS,     CCPU_PORT_IOINPUTS,     input_port_1_r },
 	{ CCPU_PORT_IOOUTPUTS,    CCPU_PORT_IOOUTPUTS,    cinemat_output_port_r },
 	{ CCPU_PORT_IN_JOYSTICKX, CCPU_PORT_IN_JOYSTICKX, input_port_2_r },
 	{ CCPU_PORT_IN_JOYSTICKY, CCPU_PORT_IN_JOYSTICKY, input_port_3_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ CCPU_PORT_IOOUTPUTS,    CCPU_PORT_IOOUTPUTS,    cinemat_output_port_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in

@@ -74,8 +74,8 @@ int taitol_vh_start(void)
 	horshoes_gfxbank = 0;
 	cur_ctrl = 0;
 
-	bg18_tilemap->transparent_pen = 0;
-	ch1a_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(bg18_tilemap,0);
+	tilemap_set_transparent_pen(ch1a_tilemap,0);
 
 	for (i=0;i<256;i++)
 		palette_change_color(i, 0, 0, 0);
@@ -321,24 +321,21 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if (cur_ctrl & 0x20)	/* display enable */
 	{
 		fillbitmap(priority_bitmap,0,NULL);
 
-		tilemap_draw(bitmap,bg19_tilemap,0);
+		tilemap_draw(bitmap,bg19_tilemap,0,0);
 
 		if (cur_ctrl & 0x08)	/* sprites always over BG1 */
-			tilemap_draw(bitmap,bg18_tilemap,0);
+			tilemap_draw(bitmap,bg18_tilemap,0,0);
 		else					/* split priority */
-			tilemap_draw(bitmap,bg18_tilemap,1<<16);
+			tilemap_draw(bitmap,bg18_tilemap,0,1);
 		draw_sprites(bitmap);
 
-		tilemap_draw(bitmap,ch1a_tilemap,0);
+		tilemap_draw(bitmap,ch1a_tilemap,0,0);
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

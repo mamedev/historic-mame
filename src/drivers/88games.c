@@ -130,8 +130,7 @@ static WRITE_HANDLER( speech_msg_w )
 	invalid_code = (data == total_samples[speech_chip]);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_RAM },	/* banked ROM + palette RAM */
 	{ 0x2000, 0x37ff, MRA_RAM },
 	{ 0x3800, 0x3fff, bankedram_r },
@@ -143,11 +142,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5f9b, 0x5f9b, input_port_4_r },
 	{ 0x4000, 0x7fff, K052109_051960_r },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },	/* banked ROM */
 	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },	/* banked ROM + palette RAM */
 	{ 0x2000, 0x2fff, MWA_RAM },
@@ -160,28 +157,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5fc0, 0x5fcf, K051316_ctrl_0_w },
 	{ 0x4000, 0x7fff, K052109_051960_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x9000, speech_msg_w },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xe000, 0xe000, speech_control_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -54,8 +54,7 @@ WRITE_HANDLER( champbas_dac_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x7800, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
@@ -64,11 +63,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa080, 0xa080, input_port_2_r },
 /*	{ 0xa0a0, 0xa0a0,  },	???? */
 	{ 0xa0c0, 0xa0c0, input_port_3_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7000, 0x7000, AY8910_write_port_0_w },
 	{ 0x7001, 0x7001, AY8910_control_port_0_w },
@@ -82,26 +79,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa060, 0xa06f, MWA_RAM, &spriteram_2 },
 	{ 0xa080, 0xa080, soundlatch_w },
 	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem2[] =
-{
+static MEMORY_READ_START( readmem2 )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem2[] =
-{
+static MEMORY_WRITE_START( writemem2 )
 	{ 0x0000, 0x5fff, MWA_ROM },
 /*	{ 0x8000, 0x8000, MWA_NOP },	unknown - maybe DAC enable */
 	{ 0xa000, 0xa000, soundlatch_w },	/* probably. The sound latch has to be cleared some way */
 	{ 0xc000, 0xc000, champbas_dac_w },
 	{ 0xe000, 0xe3ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

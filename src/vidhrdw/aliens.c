@@ -97,16 +97,13 @@ void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
 	palette_used_colors[layer_colorbase[1] * 16] |= PALETTE_COLOR_VISIBLE;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[layer_colorbase[1] * 16],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,1,1<<16);
-	K052109_tilemap_draw(bitmap,2,2<<16);
-	K052109_tilemap_draw(bitmap,0,4<<16);
+	K052109_tilemap_draw(bitmap,1,0,1);
+	K052109_tilemap_draw(bitmap,2,0,2);
+	K052109_tilemap_draw(bitmap,0,0,4);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }

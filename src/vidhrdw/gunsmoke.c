@@ -133,7 +133,7 @@ WRITE_HANDLER( gunsmoke_c804_w )
 	/* bit 5 resets the sound CPU? - we ignore it */
 
 	/* bit 6 flips screen */
-	flip_screen_w(0,data & 0x40);
+	flip_screen_set(data & 0x40);
 
 	/* bit 7 enables characters? */
 	chon = data & 0x80;

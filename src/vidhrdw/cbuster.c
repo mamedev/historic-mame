@@ -7,21 +7,17 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *twocrude_pf1_data,*twocrude_pf2_data,*twocrude_pf3_data,*twocrude_pf4_data;
+data16_t *twocrude_pf1_data,*twocrude_pf2_data,*twocrude_pf3_data,*twocrude_pf4_data;
 
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
-static unsigned char *gfx_base;
-static int gfx_bank,twocrude_pri,flipscreen,last_flip;
+static data16_t *gfx_base;
+static int gfx_bank,twocrude_pri,flipscreen;
 
-static unsigned char twocrude_control_0[16];
-static unsigned char twocrude_control_1[16];
+static data16_t twocrude_control_0[8];
+static data16_t twocrude_control_1[8];
 
-unsigned char *twocrude_pf1_rowscroll,*twocrude_pf2_rowscroll;
-unsigned char *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
-
-static unsigned char *twocrude_spriteram;
-
-
+data16_t *twocrude_pf1_rowscroll,*twocrude_pf2_rowscroll;
+data16_t *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
 
 /* Function for all 16x16 1024 by 512 layers */
 static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -34,7 +30,7 @@ static void get_back_tile_info(int tile_index)
 {
 	int tile,color;
 
-	tile=READ_WORD(&gfx_base[2*tile_index]);
+	tile=gfx_base[tile_index];
 	color=tile >> 12;
 	tile=tile&0xfff;
 
@@ -44,7 +40,7 @@ static void get_back_tile_info(int tile_index)
 /* 8x8 top layer */
 static void get_fore_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&twocrude_pf1_data[2*tile_index]);
+	int tile=twocrude_pf1_data[tile_index];
 	int color=tile >> 12;
 
 	tile=tile&0xfff;
@@ -53,11 +49,6 @@ static void get_fore_tile_info(int tile_index)
 }
 
 /******************************************************************************/
-
-void twocrude_vh_stop (void)
-{
-	free(twocrude_spriteram);
-}
 
 int twocrude_vh_start(void)
 {
@@ -69,53 +60,36 @@ int twocrude_vh_start(void)
 	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
-	pf1_tilemap->transparent_pen = 0;
-	pf3_tilemap->transparent_pen = 0;
-	pf4_tilemap->transparent_pen = 0;
-
-	twocrude_spriteram = malloc(0x800);
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+	tilemap_set_transparent_pen(pf3_tilemap,0);
+	tilemap_set_transparent_pen(pf4_tilemap,0);
 
 	return 0;
 }
 
 /******************************************************************************/
 
-WRITE_HANDLER( twocrude_update_sprites_w )
-{
-	memcpy(twocrude_spriteram,spriteram,0x800);
-}
-
 static void update_24bitcol(int offset)
 {
-	int r,g,b;
+	UINT8 r,g,b; /* The highest palette value seems to be 0x8e */
 
-	r = (READ_WORD(&paletteram[offset]) >> 0) & 0xff;
-	g = (READ_WORD(&paletteram[offset]) >> 8) & 0xff;
-	b = (READ_WORD(&paletteram_2[offset]) >> 0) & 0xff;
+	r = (UINT8)((float)((paletteram16[offset] >> 0) & 0xff)*1.75);
+	g = (UINT8)((float)((paletteram16[offset] >> 8) & 0xff)*1.75);
+	b = (UINT8)((float)((paletteram16_2[offset] >> 0) & 0xff)*1.75);
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_change_color(offset,r,g,b);
 }
 
-WRITE_HANDLER( twocrude_palette_24bit_rg_w )
+WRITE16_HANDLER( twocrude_palette_24bit_rg_w )
 {
-	COMBINE_WORD_MEM(&paletteram[offset],data);
+	COMBINE_DATA(&paletteram16[offset]);
 	update_24bitcol(offset);
 }
 
-WRITE_HANDLER( twocrude_palette_24bit_b_w )
+WRITE16_HANDLER( twocrude_palette_24bit_b_w )
 {
-	COMBINE_WORD_MEM(&paletteram_2[offset],data);
+	COMBINE_DATA(&paletteram16_2[offset]);
 	update_24bitcol(offset);
-}
-
-READ_HANDLER( twocrude_palette_24bit_rg_r )
-{
-	return READ_WORD(&paletteram[offset]);
-}
-
-READ_HANDLER( twocrude_palette_24bit_b_r )
-{
-	return READ_WORD(&paletteram_2[offset]);
 }
 
 /******************************************************************************/
@@ -125,82 +99,46 @@ void twocrude_pri_w(int pri)
 	twocrude_pri=pri;
 }
 
-WRITE_HANDLER( twocrude_pf1_data_w )
+WRITE16_HANDLER( twocrude_pf1_data_w )
 {
-	int oldword = READ_WORD(&twocrude_pf1_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf1_data[offset],newword);
-		tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
-	}
+	data16_t oldword=twocrude_pf1_data[offset];
+	COMBINE_DATA(&twocrude_pf1_data[offset]);
+	if (oldword!=twocrude_pf1_data[offset])
+		tilemap_mark_tile_dirty(pf1_tilemap,offset);
 }
 
-WRITE_HANDLER( twocrude_pf2_data_w )
+WRITE16_HANDLER( twocrude_pf2_data_w )
 {
-	int oldword = READ_WORD(&twocrude_pf2_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf2_data[offset],newword);
-		tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
-	}
+	data16_t oldword=twocrude_pf2_data[offset];
+	COMBINE_DATA(&twocrude_pf2_data[offset]);
+	if (oldword!=twocrude_pf2_data[offset])
+		tilemap_mark_tile_dirty(pf2_tilemap,offset);
 }
 
-WRITE_HANDLER( twocrude_pf3_data_w )
+WRITE16_HANDLER( twocrude_pf3_data_w )
 {
-	int oldword = READ_WORD(&twocrude_pf3_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf3_data[offset],newword);
-		tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
-	}
+	data16_t oldword=twocrude_pf3_data[offset];
+	COMBINE_DATA(&twocrude_pf3_data[offset]);
+	if (oldword!=twocrude_pf3_data[offset])
+		tilemap_mark_tile_dirty(pf3_tilemap,offset);
 }
 
-WRITE_HANDLER( twocrude_pf4_data_w )
+WRITE16_HANDLER( twocrude_pf4_data_w )
 {
-	int oldword = READ_WORD(&twocrude_pf4_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf4_data[offset],newword);
-		tilemap_mark_tile_dirty(pf4_tilemap,offset/2);
-	}
+	data16_t oldword=twocrude_pf4_data[offset];
+	COMBINE_DATA(&twocrude_pf4_data[offset]);
+	if (oldword!=twocrude_pf4_data[offset])
+		tilemap_mark_tile_dirty(pf4_tilemap,offset);
 }
 
-WRITE_HANDLER( twocrude_control_0_w )
+WRITE16_HANDLER( twocrude_control_0_w )
 {
-	COMBINE_WORD_MEM(&twocrude_control_0[offset],data);
+	COMBINE_DATA(&twocrude_control_0[offset]);
 }
 
-WRITE_HANDLER( twocrude_control_1_w )
+WRITE16_HANDLER( twocrude_control_1_w )
 {
-	COMBINE_WORD_MEM(&twocrude_control_1[offset],data);
-}
-
-WRITE_HANDLER( twocrude_pf1_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&twocrude_pf1_rowscroll[offset],data);
-}
-
-WRITE_HANDLER( twocrude_pf2_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&twocrude_pf2_rowscroll[offset],data);
-}
-
-WRITE_HANDLER( twocrude_pf3_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&twocrude_pf3_rowscroll[offset],data);
-}
-
-WRITE_HANDLER( twocrude_pf4_rowscroll_w )
-{
-	COMBINE_WORD_MEM(&twocrude_pf4_rowscroll[offset],data);
+	COMBINE_DATA(&twocrude_control_1[offset]);
 }
 
 /******************************************************************************/
@@ -215,15 +153,15 @@ static void twocrude_update_palette(void)
 	/* Sprites */
 	pal_base = Machine->drv->gfxdecodeinfo[4].color_codes_start;
 	for (color = 0;color < 32;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&twocrude_spriteram[offs+2]) & 0x7fff;
+		sprite = buffered_spriteram16[offs+1] & 0x7fff;
 		if (!sprite) continue;
 
-		y = READ_WORD(&twocrude_spriteram[offs]);
-		x = READ_WORD(&twocrude_spriteram[offs+4]);
+		y = buffered_spriteram16[offs];
+		x = buffered_spriteram16[offs+2];
 		color = (x >> 9) &0x1f;
 
 		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
@@ -254,23 +192,22 @@ static void twocrude_update_palette(void)
 		}
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 }
 
 static void twocrude_drawsprites(struct osd_bitmap *bitmap, int pri)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x800;offs += 8)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
-		sprite = READ_WORD (&twocrude_spriteram[offs+2]) & 0x7fff;
+		sprite = buffered_spriteram16[offs+1] & 0x7fff;
 		if (!sprite) continue;
 
-		y = READ_WORD(&twocrude_spriteram[offs]);
-		x = READ_WORD(&twocrude_spriteram[offs+4]);
+		y = buffered_spriteram16[offs];
+		x = buffered_spriteram16[offs+2];
 
 		if ((y&0x8000) && pri==1) continue;
 		if (!(y&0x8000) && pri==0) continue;
@@ -334,26 +271,23 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int pf23_control,pf14_control;
 
 	/* Update flipscreen */
-	if (READ_WORD(&twocrude_control_1[0])&0x80)
+	if (twocrude_control_1[0]&0x80)
 		flipscreen=0;
 	else
 		flipscreen=1;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	if (last_flip!=flipscreen)
-		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	last_flip=flipscreen;
-
-	pf23_control=READ_WORD (&twocrude_control_0[0xc]);
-	pf14_control=READ_WORD (&twocrude_control_1[0xc]);
+	pf23_control=twocrude_control_0[6];
+	pf14_control=twocrude_control_1[6];
 
 	/* Background - Rowscroll enable */
 	if (pf23_control&0x4000) {
-		int scrollx=READ_WORD(&twocrude_control_0[6]),rows;
+		int scrollx=twocrude_control_0[3],rows;
 		tilemap_set_scroll_cols(pf2_tilemap,1);
-		tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
+		tilemap_set_scrolly( pf2_tilemap,0, twocrude_control_0[4] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&twocrude_control_0[0xa])>>11)&7) {
+		switch ((twocrude_control_0[5]>>11)&7) {
 			case 0: rows=512; break;/* Every line of 512 height bitmap */
 			case 1: rows=256; break;
 			case 2: rows=128; break;
@@ -367,23 +301,23 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		tilemap_set_scroll_rows(pf2_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf2_tilemap,offs, scrollx + READ_WORD(&twocrude_pf2_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf2_tilemap,offs, scrollx + twocrude_pf2_rowscroll[offs] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf2_tilemap,1);
 		tilemap_set_scroll_cols(pf2_tilemap,1);
-		tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&twocrude_control_0[6]) );
-		tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
+		tilemap_set_scrollx( pf2_tilemap,0, twocrude_control_0[3] );
+		tilemap_set_scrolly( pf2_tilemap,0, twocrude_control_0[4] );
 	}
 
 	/* Playfield 3 */
 	if (pf23_control&0x40) { /* Rowscroll */
-		int scrollx=READ_WORD(&twocrude_control_0[2]),rows;
+		int scrollx=twocrude_control_0[1],rows;
 		tilemap_set_scroll_cols(pf3_tilemap,1);
-		tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&twocrude_control_0[4]) );
+		tilemap_set_scrolly( pf3_tilemap,0, twocrude_control_0[2] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&twocrude_control_0[0xa])>>3)&7) {
+		switch ((twocrude_control_0[5]>>3)&7) {
 			case 0: rows=512; break;/* Every line of 512 height bitmap */
 			case 1: rows=256; break;
 			case 2: rows=128; break;
@@ -397,15 +331,15 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		tilemap_set_scroll_rows(pf3_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + READ_WORD(&twocrude_pf3_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + twocrude_pf3_rowscroll[offs] );
 	}
 	else if (pf23_control&0x20) { /* Colscroll */
-		int scrolly=READ_WORD(&twocrude_control_0[4]),cols;
+		int scrolly=twocrude_control_0[2],cols;
 		tilemap_set_scroll_rows(pf3_tilemap,1);
-		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&twocrude_control_0[2]) );
+		tilemap_set_scrollx( pf3_tilemap,0, twocrude_control_0[1] );
 
 		/* Several different colscroll styles! */
-		switch ((READ_WORD (&twocrude_control_0[0xa])>>0)&7) {
+		switch ((twocrude_control_0[5]>>0)&7) {
 			case 0: cols=64; break;
 			case 1: cols=32; break;
 			case 2: cols=16; break;
@@ -419,23 +353,23 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		tilemap_set_scroll_cols(pf3_tilemap,cols);
 		for (offs = 0;offs < cols;offs++)
-			tilemap_set_scrolly( pf3_tilemap,offs,scrolly + READ_WORD(&twocrude_pf3_rowscroll[2*offs+0x400]) );
+			tilemap_set_scrolly( pf3_tilemap,offs,scrolly + twocrude_pf3_rowscroll[offs+0x200] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf3_tilemap,1);
 		tilemap_set_scroll_cols(pf3_tilemap,1);
-		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&twocrude_control_0[2]) );
-		tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&twocrude_control_0[4]) );
+		tilemap_set_scrollx( pf3_tilemap,0, twocrude_control_0[1] );
+		tilemap_set_scrolly( pf3_tilemap,0, twocrude_control_0[2] );
 	}
 
 	/* Playfield 4 - Rowscroll enable */
 	if (pf14_control&0x4000) {
-		int scrollx=READ_WORD(&twocrude_control_1[6]),rows;
+		int scrollx=twocrude_control_1[3],rows;
 		tilemap_set_scroll_cols(pf4_tilemap,1);
-		tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&twocrude_control_1[8]) );
+		tilemap_set_scrolly( pf4_tilemap,0, twocrude_control_1[4] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&twocrude_control_1[0xa])>>11)&7) {
+		switch ((twocrude_control_1[5]>>11)&7) {
 			case 0: rows=512; break;/* Every line of 512 height bitmap */
 			case 1: rows=256; break;
 			case 2: rows=128; break;
@@ -449,23 +383,23 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		tilemap_set_scroll_rows(pf4_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + READ_WORD(&twocrude_pf4_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + twocrude_pf4_rowscroll[offs] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf4_tilemap,1);
 		tilemap_set_scroll_cols(pf4_tilemap,1);
-		tilemap_set_scrollx( pf4_tilemap,0, READ_WORD(&twocrude_control_1[6]) );
-		tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&twocrude_control_1[8]) );
+		tilemap_set_scrollx( pf4_tilemap,0, twocrude_control_1[3] );
+		tilemap_set_scrolly( pf4_tilemap,0, twocrude_control_1[4] );
 	}
 
 	/* Playfield 1 */
 	if (pf14_control&0x40) { /* Rowscroll */
-		int scrollx=READ_WORD(&twocrude_control_1[2]),rows;
+		int scrollx=twocrude_control_1[1],rows;
 		tilemap_set_scroll_cols(pf1_tilemap,1);
-		tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&twocrude_control_1[4]) );
+		tilemap_set_scrolly( pf1_tilemap,0, twocrude_control_1[2] );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&twocrude_control_1[0xa])>>3)&7) {
+		switch ((twocrude_control_1[5]>>3)&7) {
 			case 0: rows=256; break;/* Every line of 256 height bitmap */
 			case 1: rows=128; break;
 			case 2: rows=64; break;
@@ -479,13 +413,13 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		tilemap_set_scroll_rows(pf1_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf1_tilemap,offs, scrollx + READ_WORD(&twocrude_pf1_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf1_tilemap,offs, scrollx + twocrude_pf1_rowscroll[offs] );
 	}
 	else {
 		tilemap_set_scroll_rows(pf1_tilemap,1);
 		tilemap_set_scroll_cols(pf1_tilemap,1);
-		tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&twocrude_control_1[2]) );
-		tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&twocrude_control_1[4]) );
+		tilemap_set_scrollx( pf1_tilemap,0, twocrude_control_1[1] );
+		tilemap_set_scrolly( pf1_tilemap,0, twocrude_control_1[2] );
 	}
 
 	/* Update playfields */
@@ -504,19 +438,18 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	twocrude_update_palette();
 
 	/* Draw playfields & sprites */
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,pf2_tilemap,0);
+	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	twocrude_drawsprites(bitmap,0);
 
 	if (twocrude_pri) {
-		tilemap_draw(bitmap,pf4_tilemap,0);
-		tilemap_draw(bitmap,pf3_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0,0);
+		tilemap_draw(bitmap,pf3_tilemap,0,0);
 	}
 	else {
-		tilemap_draw(bitmap,pf3_tilemap,0);
-		tilemap_draw(bitmap,pf4_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0,0);
+		tilemap_draw(bitmap,pf4_tilemap,0,0);
 	}
 
 	twocrude_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }

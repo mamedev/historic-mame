@@ -58,7 +58,7 @@ static READ_HANDLER( special_spriteram_r )
 /* time to abuse the preprocessor for the memory/port maps */
 
 #define Main_MemMap( name, shared, watchdog )										\
-	static struct MemoryReadAddress name##_readmem[] = {							\
+	static MEMORY_READ_START( name##_readmem )										\
 		{ 0x0000, 0x7fff, MRA_ROM },												\
 		{ 0x8000, 0x87ff, videoram_r }, /* background tiles */						\
 		{ 0x8800, 0x8fff, colorram_r }, /* background color */						\
@@ -67,42 +67,38 @@ static READ_HANDLER( special_spriteram_r )
 		{ 0xa000, 0xa7ff, MRA_RAM }, /* sprites */									\
 		{ shared, shared+0x7ff, shared_ram_r }, /* shared RAM */					\
 		{ 0xf800, 0xffff, shared_ram_r }, /* shared mirror always here */			\
-		{ -1 }	/* end of table */													\
-	};																				\
+	MEMORY_END																		\
 																					\
-	static struct MemoryWriteAddress name##_writemem[] = {							\
+	static MEMORY_WRITE_START( name##_writemem )									\
 		{ 0x0000, 0x7fff, MWA_ROM },												\
 		{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },					\
 		{ 0x8800, 0x8fff, colorram_w, &colorram },									\
-		{ 0x9000, 0x97ff, MWA_RAM, &kyugo_videoram, &kyugo_videoram_size },	\
+		{ 0x9000, 0x97ff, MWA_RAM, &kyugo_videoram, &kyugo_videoram_size },			\
 		{ 0x9800, 0x9fff, MWA_RAM, &spriteram_2 },	/* 4 bits wide */				\
 		{ 0xa000, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },					\
 		{ 0xa800, 0xa800, MWA_RAM, &kyugo_back_scrollY_lo }, /* back scroll Y */	\
 		{ 0xb000, 0xb000, kyugo_gfxctrl_w }, /* back scroll MSB + other stuff */	\
-		{ 0xb800, 0xb800, MWA_RAM, &kyugo_back_scrollX }, /* back scroll X */	 \
+		{ 0xb800, 0xb800, MWA_RAM, &kyugo_back_scrollX }, /* back scroll X */		\
 		{ shared, shared+0x7ff, shared_ram_w, &shared_ram }, /* shared RAM */		\
 		{ 0xf800, 0xffff, shared_ram_w }, /* shared mirror always here */			\
-		{ watchdog, watchdog, watchdog_reset_w },								\
-		{ -1 }	/* end of table */													\
-	};
+		{ watchdog, watchdog, watchdog_reset_w },									\
+	MEMORY_END
 
 #define Sub_MemMap( name, rom_end, shared, extra_ram, in0, in1, in2 )	\
-	static struct MemoryReadAddress name##_sub_readmem[] = {			\
+	static MEMORY_READ_START( name##_sub_readmem )						\
 		{ 0x0000, rom_end, MRA_ROM },									\
 		{ shared, shared+0x7ff, shared_ram_r }, /* shared RAM */		\
 		{ extra_ram, extra_ram+0x7ff, MRA_RAM }, /* extra RAM */		\
 		{ in0, in0, input_port_2_r }, /* input port */					\
 		{ in1, in1, input_port_3_r }, /* input port */					\
 		{ in2, in2, input_port_4_r }, /* input port */					\
-		{ -1 }	/* end of table */										\
-	};																	\
+	MEMORY_END															\
 																		\
-	static struct MemoryWriteAddress name##_sub_writemem[] = {			\
+	static MEMORY_WRITE_START( name##_sub_writemem )					\
 		{ 0x0000, rom_end, MWA_ROM },									\
 		{ shared, shared+0x7ff, shared_ram_w }, /* shared RAM */		\
 		{ extra_ram, extra_ram+0x7ff, MWA_RAM }, /* extra RAM */		\
-		{ -1 }	/* end of table */										\
-	};
+	MEMORY_END
 
 /* actual definitions */
 Main_MemMap( gyrodine, 0xf000, 0xe000 )
@@ -123,30 +119,24 @@ static WRITE_HANDLER( sub_cpu_control_w )
 }
 
 #define Main_PortMap( name, base )								\
-	static struct IOReadPort name##_readport[] = {				\
-		{ -1 }	/* end of table */								\
-	};															\
-																\
-	static struct IOWritePort name##_writeport[] = {			\
+	static PORT_WRITE_START( name##_writeport )					\
 		{ base+0, base+0, interrupt_enable_w },					\
-		{ base+1, base+1, kyugo_flipscreen_w },				\
+		{ base+1, base+1, kyugo_flipscreen_w },					\
 		{ base+2, base+2, sub_cpu_control_w },					\
-		{ -1 }	/* end of table */								\
-	};
+	PORT_END													\
 
 #define Sub_PortMap( name, ay0_base, ay1_base )					\
-	static struct IOReadPort name##_sub_readport[] = {			\
+	static PORT_READ_START( name##_sub_readport )				\
 		{ ay0_base+2, ay0_base+2, AY8910_read_port_0_r },		\
-		{ -1 }	/* end of table */								\
-	};															\
+	PORT_END													\
 																\
-	static struct IOWritePort name##_sub_writeport[] = {		\
+	static PORT_WRITE_START( name##_sub_writeport )				\
 		{ ay0_base+0, ay0_base+0, AY8910_control_port_0_w },	\
 		{ ay0_base+1, ay0_base+1, AY8910_write_port_0_w },		\
 		{ ay1_base+0, ay1_base+0, AY8910_control_port_1_w },	\
 		{ ay1_base+1, ay1_base+1, AY8910_write_port_1_w },		\
-		{ -1 }	/* end of table */								\
-	};
+	PORT_END
+
 
 /* actual definitions */
 Main_PortMap( gyrodine, 0x00 )
@@ -598,7 +588,7 @@ static const struct MachineDriver machine_driver_##name =											\
 		{																					\
 			CPU_Z80,																		\
 			18432000 / 4,	/* 18.432 MHz crystal */										\
-			name##_readmem,name##_writemem,name##_readport,name##_writeport,				\
+			name##_readmem,name##_writemem,0,name##_writeport,								\
 			nmi_interrupt,1																	\
 		},																					\
 		{																					\

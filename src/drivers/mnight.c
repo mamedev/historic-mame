@@ -62,8 +62,7 @@ WRITE_HANDLER( mnight_bankselect_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xf7ff, MRA_RAM },
@@ -79,12 +78,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfa08, 0xfa09, MRA_RAM },
 	{ 0xfa0a, 0xfa0b, MRA_RAM },
 	{ 0xfa0c, 0xfa0c, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xd9ff, MWA_RAM },
 	{ 0xda00, 0xdfff, MWA_RAM, &mnight_spriteram, &mnight_spriteram_size },
@@ -99,37 +96,30 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfa08, 0xfa09, MWA_RAM, &mnight_scrollx_ram },
 	{ 0xfa0a, 0xfa0b, MWA_RAM, &mnight_scrolly_ram },
 	{ 0xfa0c, 0xfa0c, mnight_background_enable_w, &mnight_bgenable_ram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress snd_readmem[] =
-{
+static MEMORY_READ_START( snd_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
 	{ 0xefee, 0xefee, MRA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress snd_writemem[] =
-{
+static MEMORY_WRITE_START( snd_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xeff5, 0xeff6, MWA_NOP },			   /* SAMPLE FREQUENCY ??? */
 	{ 0xefee, 0xefee, MWA_NOP },			   /* CHIP COMMAND ?? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort snd_writeport[] =
-{
+static PORT_WRITE_START( snd_writeport )
 	{ 0x0000, 0x0000, YM2203_control_port_0_w },
 	{ 0x0001, 0x0001, YM2203_write_port_0_w },
 	{ 0x0080, 0x0080, YM2203_control_port_1_w },
 	{ 0x0081, 0x0081, YM2203_write_port_1_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 
 

@@ -3,8 +3,8 @@
 
 
 
-unsigned char *blockout_videoram;
-unsigned char *blockout_frontvideoram;
+data16_t *blockout_videoram;
+data16_t *blockout_frontvideoram;
 
 
 
@@ -38,20 +38,18 @@ static void setcolor(int color,int rgb)
 	palette_change_color(color,r,g,b);
 }
 
-WRITE_HANDLER( blockout_paletteram_w )
+WRITE16_HANDLER( blockout_paletteram_w )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-
-	WRITE_WORD(&paletteram[offset],newword);
-
-	setcolor(offset / 2,newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	setcolor(offset,paletteram16[offset]);
 }
 
-WRITE_HANDLER( blockout_frontcolor_w )
+WRITE16_HANDLER( blockout_frontcolor_w )
 {
-	setcolor(512,data);
+	static data16_t color;
+
+	COMBINE_DATA(&color);
+	setcolor(512,color);
 }
 
 
@@ -86,7 +84,7 @@ void blockout_vh_stop (void)
 
 static void updatepixels(int x,int y)
 {
-	int front,back;
+	data16_t front,back;
 	int color;
 
 
@@ -96,8 +94,8 @@ static void updatepixels(int x,int y)
 			y > Machine->visible_area.max_y)
 		return;
 
-	front = READ_WORD(&blockout_videoram[y*512+x]);
-	back = READ_WORD(&blockout_videoram[0x20000 + y*512+x]);
+	front = blockout_videoram[y*256+x/2];
+	back = blockout_videoram[0x10000 + y*256+x/2];
 
 	if (front>>8) color = front>>8;
 	else color = (back>>8) + 256;
@@ -110,33 +108,15 @@ static void updatepixels(int x,int y)
 
 
 
-WRITE_HANDLER( blockout_videoram_w )
+WRITE16_HANDLER( blockout_videoram_w )
 {
-	int oldword = READ_WORD(&blockout_videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
+	data16_t oldword = blockout_videoram[offset];
+	COMBINE_DATA(&blockout_videoram[offset]);
 
-	if (oldword != newword)
+	if (oldword != blockout_videoram[offset])
 	{
-		WRITE_WORD(&blockout_videoram[offset],newword);
-		updatepixels(offset % 512,(offset / 512) % 256);
+		updatepixels((offset % 256)*2,(offset / 256) % 256);
 	}
-}
-
-READ_HANDLER( blockout_videoram_r )
-{
-   return READ_WORD(&blockout_videoram[offset]);
-}
-
-
-
-WRITE_HANDLER( blockout_frontvideoram_w )
-{
-	COMBINE_WORD_MEM(&blockout_frontvideoram[offset],data);
-}
-
-READ_HANDLER( blockout_frontvideoram_r )
-{
-   return READ_WORD(&blockout_frontvideoram[offset]);
 }
 
 
@@ -173,7 +153,7 @@ void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int d;
 
 
-				d = READ_WORD(&blockout_frontvideoram[y*128+(x/4)]);
+				d = blockout_frontvideoram[y*64+(x/8)];
 
 				if (d)
 				{

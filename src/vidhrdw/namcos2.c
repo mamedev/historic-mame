@@ -989,12 +989,7 @@ void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh)
 		/* Finally the sprites */
 		namcos2_mark_used_sprite_colours();
 
-		if (palette_recalc())
-		{
-			/* Mark all planes as dirty */
-			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-		}
-		tilemap_render(ALL_TILEMAPS);
+		palette_recalc();
 	}
 
 
@@ -1004,12 +999,12 @@ void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh)
 	/* Render the screen */
 	for(priority=0;priority<=7;priority++)
 	{
-		if((namcos2_68k_vram_ctrl_r(0x20)&0x07)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0);
-		if((namcos2_68k_vram_ctrl_r(0x22)&0x07)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0);
-		if((namcos2_68k_vram_ctrl_r(0x24)&0x07)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0);
-		if((namcos2_68k_vram_ctrl_r(0x26)&0x07)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0);
-		if((namcos2_68k_vram_ctrl_r(0x28)&0x07)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0);
-		if((namcos2_68k_vram_ctrl_r(0x2a)&0x07)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0);
+		if((namcos2_68k_vram_ctrl_r(0x20)&0x07)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x22)&0x07)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x24)&0x07)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x26)&0x07)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x28)&0x07)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x2a)&0x07)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0,0);
 
 		/* Draw ROZ if enabled */
 		if(priority>=1 && ((namcos2_68k_sprite_bank_r(0)>>12)&0x07)==priority && show[6]) draw_layerROZ(bitmap);
@@ -1086,12 +1081,7 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 		/* Mark any colours in the palette_used_colors array */
 		namcos2_mark_used_sprite_colours();
 
-		if (palette_recalc())
-		{
-			/* Mark all planes as dirty */
-			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-		}
-		tilemap_render(ALL_TILEMAPS);
+		palette_recalc();
 	}
 
 
@@ -1101,12 +1091,12 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 	/* Render the screen */
 	for(priority=0;priority<=15;priority++)
 	{
-		if((namcos2_68k_vram_ctrl_r(0x20)&0x0f)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0);
-		if((namcos2_68k_vram_ctrl_r(0x22)&0x0f)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0);
-		if((namcos2_68k_vram_ctrl_r(0x24)&0x0f)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0);
-		if((namcos2_68k_vram_ctrl_r(0x26)&0x0f)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0);
-		if((namcos2_68k_vram_ctrl_r(0x28)&0x0f)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0);
-		if((namcos2_68k_vram_ctrl_r(0x2a)&0x0f)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0);
+		if((namcos2_68k_vram_ctrl_r(0x20)&0x0f)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x22)&0x0f)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x24)&0x0f)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x26)&0x0f)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x28)&0x0f)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x2a)&0x0f)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0,0);
 		/* Not sure if priority should be 0x07 or 0x0f */
 
 		/* Sprites */

@@ -96,11 +96,11 @@ int dynduke_vh_start(void)
 	fg_layer = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
 	tx_layer = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
-	bg_layer->transmask[0] = 0x0000ffff; /* 4bpp */
-	bg_layer->transmask[1] = 0xffff0000; /* The rest - 1bpp */
+	tilemap_set_transmask(bg_layer,0,0x0000ffff); /* 4bpp */
+	tilemap_set_transmask(bg_layer,1,0xffff0000); /* The rest - 1bpp */
 
-	fg_layer->transparent_pen = 15;
-	tx_layer->transparent_pen = 15;
+	tilemap_set_transparent_pen(fg_layer,15);
+	tilemap_set_transparent_pen(tx_layer,15);
 
 	return 0;
 }
@@ -216,21 +216,18 @@ void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if (back_enable)
-		tilemap_draw(bitmap,bg_layer,TILEMAP_BACK);
+		tilemap_draw(bitmap,bg_layer,TILEMAP_BACK,0);
 	else
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	draw_sprites(bitmap,0); /* Untested: does anything use it? Could be behind background */
 	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,bg_layer,TILEMAP_FRONT);
+	tilemap_draw(bitmap,bg_layer,TILEMAP_FRONT,0);
 	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,fg_layer,0);
+	tilemap_draw(bitmap,fg_layer,0,0);
 	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,tx_layer,0);
+	tilemap_draw(bitmap,tx_layer,0,0);
 }

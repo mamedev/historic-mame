@@ -220,8 +220,7 @@ static WRITE_HANDLER( mhavoc_gammaram_w )
 
 
 /* Main board Readmem */
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },			/* 0.5K Program Ram */
 	{ 0x0200, 0x07ff, MRA_BANK1 },			/* 3K Paged Program RAM	*/
 	{ 0x0800, 0x09ff, MRA_RAM },			/* 0.5K Program RAM */
@@ -233,13 +232,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5000, 0x5fff, MRA_ROM },			/* Vector ROM (4K) */
 	{ 0x6000, 0x7fff, MRA_BANK3 },			/* Paged Vector ROM (32K) */
 	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (32K) */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* Main Board Writemem */
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },			/* 0.5K Program Ram */
 	{ 0x0200, 0x07ff, MWA_BANK1 },			/* 3K Paged Program RAM */
 	{ 0x0800, 0x09ff, MWA_RAM },			/* 0.5K Program RAM */
@@ -257,13 +254,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2000, 0x3fff, MWA_ROM },			/* Major Havoc writes here.*/
 	{ 0x4000, 0x4fff, MWA_RAM, &vectorram, &vectorram_size },/* Vector Generator RAM	*/
 	{ 0x6000, 0x7fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /* Gamma board readmem */
-static struct MemoryReadAddress gamma_readmem[] =
-{
+static MEMORY_READ_START( gamma_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },			/* Program RAM (2K)	*/
 	{ 0x0800, 0x1fff, mhavoc_gammaram_r },	/* wraps to 0x000-0x7ff */
 	{ 0x2000, 0x203f, quad_pokey_r },		/* Quad Pokey read	*/
@@ -273,11 +268,9 @@ static struct MemoryReadAddress gamma_readmem[] =
 	{ 0x4000, 0x4000, input_port_4_r },		/* DSW at 8S */
 	{ 0x6000, 0x61ff, MRA_RAM },			/* EEROM		*/
 	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (16K)	*/
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress gamma_writemem[] =
-{
+static MEMORY_WRITE_START( gamma_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },			/* Program RAM (2K)	*/
 	{ 0x0800, 0x1fff, mhavoc_gammaram_w, &gammaram },	/* wraps to 0x000-0x7ff */
 	{ 0x2000, 0x203f, quad_pokey_w },		/* Quad Pokey write	*/
@@ -285,8 +278,7 @@ static struct MemoryWriteAddress gamma_writemem[] =
 	{ 0x4800, 0x4800, mhavoc_out_1_w },		/* Coin Counters 	*/
 	{ 0x5000, 0x5000, mhavoc_alpha_w },		/* Alpha Comm. Write Port */
 	{ 0x6000, 0x61ff, MWA_RAM, &nvram, &nvram_size },	/* EEROM		*/
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( mhavoc )
 	PORT_START	/* IN0 - alpha (player_1 = 0) */

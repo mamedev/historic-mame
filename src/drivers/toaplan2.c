@@ -99,14 +99,14 @@ static INT8 old_p2_paddle_v;
 
 /********* Video wrappers for PIPIBIBI *********/
 WRITE_HANDLER( pipibibi_scroll_w );
-READ_HANDLER ( pipibibi_videoram_r );
+READ_HANDLER( pipibibi_videoram_r );
 WRITE_HANDLER( pipibibi_videoram_w );
-READ_HANDLER ( pipibibi_spriteram_r );
+READ_HANDLER( pipibibi_spriteram_r );
 WRITE_HANDLER( pipibibi_spriteram_w );
 
 /**************** Video stuff ******************/
-READ_HANDLER ( toaplan2_0_videoram_r );
-READ_HANDLER ( toaplan2_1_videoram_r );
+READ_HANDLER( toaplan2_0_videoram_r );
+READ_HANDLER( toaplan2_1_videoram_r );
 WRITE_HANDLER( toaplan2_0_videoram_w );
 WRITE_HANDLER( toaplan2_1_videoram_w );
 
@@ -324,15 +324,15 @@ static WRITE_HANDLER( toaplan2_coin_w )
 	data &= 0xffff;
 	switch (data & 0x0f)
 	{
-		case 0x00:	coin_lockout_global_w(0,1); break;	/* Lock all coin slots */
-		case 0x0c:	coin_lockout_global_w(0,0); break;	/* Unlock all coin slots */
+		case 0x00:	coin_lockout_global_w(1); break;	/* Lock all coin slots */
+		case 0x0c:	coin_lockout_global_w(0); break;	/* Unlock all coin slots */
 		case 0x0d:	coin_counter_w(0,1); coin_counter_w(0,0);	/* Count slot A */
 					logerror("Count coin slot A\n"); break;
 		case 0x0e:	coin_counter_w(1,1); coin_counter_w(1,0);	/* Count slot B */
 					logerror("Count coin slot B\n"); break;
 	/* The following are coin counts after coin-lock active (faulty coin-lock ?) */
 		case 0x01:	coin_counter_w(0,1); coin_counter_w(0,0); coin_lockout_w(0,1); break;
-		case 0x02:	coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_global_w(0,1); break;
+		case 0x02:	coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_global_w(1); break;
 
 		default:	logerror("Writing unknown command (%04x) to coin control\n",data);
 					break;
@@ -345,7 +345,7 @@ static WRITE_HANDLER( toaplan2_coin_w )
 
 static WRITE_HANDLER( oki_bankswitch_w )
 {
-	OKIM6295_set_bank_base(0, ALL_VOICES, (data & 1) * 0x40000);
+	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
 
 static READ_HANDLER( toaplan2_shared_r )
@@ -616,8 +616,7 @@ WRITE_HANDLER( raizing_shared_ram_w )
 }
 
 
-static struct MemoryReadAddress tekipaki_readmem[] =
-{
+static MEMORY_READ_START( tekipaki_readmem )
 	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x020000, 0x03ffff, MRA_ROM },				/* extra for Whoopee */
 	{ 0x080000, 0x082fff, MRA_BANK1 },
@@ -630,11 +629,9 @@ static struct MemoryReadAddress tekipaki_readmem[] =
 	{ 0x180030, 0x180031, c2map_port_6_r },			/* CPU 2 busy and Territory Jumper block */
 	{ 0x180050, 0x180051, input_port_1_r },			/* Player 1 controls */
 	{ 0x180060, 0x180061, input_port_2_r },			/* Player 2 controls */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tekipaki_writemem[] =
-{
+static MEMORY_WRITE_START( tekipaki_writemem )
 	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x020000, 0x03ffff, MWA_ROM },				/* extra for Whoopee */
 	{ 0x080000, 0x082fff, MWA_BANK1 },
@@ -645,11 +642,9 @@ static struct MemoryWriteAddress tekipaki_writemem[] =
 	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x180040, 0x180041, toaplan2_coin_w },		/* Coin count/lock */
 	{ 0x180070, 0x180071, toaplan2_hd647180_cpu_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress ghox_readmem[] =
-{
+static MEMORY_READ_START( ghox_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x040001, ghox_p2_h_analog_r },		/* Paddle 2 */
 	{ 0x080000, 0x083fff, MRA_BANK1 },
@@ -667,11 +662,9 @@ static struct MemoryReadAddress ghox_readmem[] =
 	{ 0x18000e, 0x18000f, ghox_p2_v_analog_r },		/* Player 2 controls */
 	{ 0x180500, 0x180fff, ghox_shared_ram_r },
 	{ 0x18100c, 0x18100d, input_port_6_r },			/* Territory Jumper block */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ghox_writemem[] =
-{
+static MEMORY_WRITE_START( ghox_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x080000, 0x083fff, MWA_BANK1 },
 	{ 0x0c0000, 0x0c0fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
@@ -682,11 +675,9 @@ static struct MemoryWriteAddress ghox_writemem[] =
 	{ 0x180000, 0x180001, ghox_mcu_w },				/* really part of shared RAM */
 	{ 0x180500, 0x180fff, ghox_shared_ram_w, &toaplan2_shared_ram },
 	{ 0x181000, 0x181001, toaplan2_coin_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress dogyuun_readmem[] =
-{
+static MEMORY_READ_START( dogyuun_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x200010, 0x200011, input_port_1_r },			/* Player 1 controls */
@@ -710,11 +701,9 @@ static struct MemoryReadAddress dogyuun_readmem[] =
 	/***** The following in 0x50000x are for video controller 2 ******/
 	{ 0x500004, 0x500007, toaplan2_1_videoram_r },	/* tile layers 2 */
 	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dogyuun_writemem[] =
-{
+static MEMORY_WRITE_START( dogyuun_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1 },
 	{ 0x200008, 0x200009, OKIM6295_data_0_w },
@@ -738,11 +727,9 @@ static struct MemoryWriteAddress dogyuun_writemem[] =
 	{ 0x500004, 0x500007, toaplan2_1_videoram_w },	/* Tile/Sprite VideoRAM */
 	{ 0x500008, 0x500009, toaplan2_1_scroll_reg_select_w },
 	{ 0x50000c, 0x50000d, toaplan2_1_scroll_reg_data_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress kbash_readmem[] =
-{
+static MEMORY_READ_START( kbash_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x200000, 0x200001, kbash_sub_cpu_r },
@@ -756,11 +743,9 @@ static struct MemoryReadAddress kbash_readmem[] =
 	{ 0x30000c, 0x30000d, input_port_0_r },			/* VBlank */
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kbash_writemem[] =
-{
+static MEMORY_WRITE_START( kbash_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1 },
 	{ 0x200000, 0x200003, kbash_sub_cpu_w },		/* sound number to play */
@@ -771,12 +756,10 @@ static struct MemoryWriteAddress kbash_writemem[] =
 	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ -1 }
-};
+MEMORY_END
 
 /* Fixed by Yochizo 2000/08/16 */
-static struct MemoryReadAddress tatsujn2_readmem[] =
-{
+static MEMORY_READ_START( tatsujn2_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x200004, 0x200007, toaplan2_0_videoram_r },
@@ -793,11 +776,9 @@ static struct MemoryReadAddress tatsujn2_readmem[] =
 	{ 0x700008, 0x700009, input_port_2_r },			/* Player 2 controls */
 	{ 0x70000a, 0x70000b, input_port_3_r },			/* Coin/System inputs */
 	{ 0x700016, 0x700017, YM2151_status_port_0_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tatsujn2_writemem[] =
-{
+static MEMORY_WRITE_START( tatsujn2_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x200001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
@@ -812,11 +793,9 @@ static struct MemoryWriteAddress tatsujn2_writemem[] =
 	{ 0x700014, 0x700015, YM2151_register_port_0_w },
 	{ 0x700016, 0x700017, YM2151_data_port_0_w },
 	{ 0x70001e, 0x70001f, toaplan2_coin_w },		/* Coin count/lock */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress pipibibs_readmem[] =
-{
+static MEMORY_READ_START( pipibibs_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x080000, 0x082fff, MRA_BANK1 },
 	{ 0x0c0000, 0x0c0fff, paletteram_word_r },
@@ -829,11 +808,9 @@ static struct MemoryReadAddress pipibibs_readmem[] =
 	{ 0x19c02c, 0x19c02d, input_port_3_r },			/* Coin/System inputs */
 	{ 0x19c030, 0x19c031, input_port_1_r },			/* Player 1 controls */
 	{ 0x19c034, 0x19c035, input_port_2_r },			/* Player 2 controls */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pipibibs_writemem[] =
-{
+static MEMORY_WRITE_START( pipibibs_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x080000, 0x082fff, MWA_BANK1 },
 	{ 0x0c0000, 0x0c0fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
@@ -843,11 +820,9 @@ static struct MemoryWriteAddress pipibibs_writemem[] =
 	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x190000, 0x190fff, toaplan2_shared_w, &toaplan2_shared_ram },
 	{ 0x19c01c, 0x19c01d, toaplan2_coin_w },		/* Coin count/lock */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress pipibibi_readmem[] =
-{
+static MEMORY_READ_START( pipibibi_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x080000, 0x082fff, MRA_BANK1 },
 	{ 0x083000, 0x0837ff, pipibibi_spriteram_r },
@@ -862,11 +837,9 @@ static struct MemoryReadAddress pipibibi_readmem[] =
 	{ 0x19c02c, 0x19c02d, input_port_3_r },			/* Coin/System inputs */
 	{ 0x19c030, 0x19c031, input_port_1_r },			/* Player 1 controls */
 	{ 0x19c034, 0x19c035, input_port_2_r },			/* Player 2 controls */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pipibibi_writemem[] =
-{
+static MEMORY_WRITE_START( pipibibi_writemem )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x080000, 0x082fff, MWA_BANK1 },
 	{ 0x083000, 0x0837ff, pipibibi_spriteram_w },   /* SpriteRAM */
@@ -878,11 +851,9 @@ static struct MemoryWriteAddress pipibibi_writemem[] =
 	{ 0x188000, 0x18800f, pipibibi_scroll_w },
 	{ 0x190010, 0x190011, pipibibi_z80_task_w },	/* Z80 task to perform */
 	{ 0x19c01c, 0x19c01d, toaplan2_coin_w },		/* Coin count/lock */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress fixeight_readmem[] =
-{
+static MEMORY_READ_START( fixeight_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x200008, 0x200009, input_port_4_r },			/* Dip Switch A */
@@ -908,11 +879,9 @@ static struct MemoryReadAddress fixeight_readmem[] =
 	{ 0x503000, 0x5031ff, MRA_BANK6 },
 	{ 0x600000, 0x60ffff, MRA_BANK7 },
 	{ 0x800000, 0x800001, video_count_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress fixeight_writemem[] =
-{
+static MEMORY_WRITE_START( fixeight_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1 },
 	{ 0x20001c, 0x20001d, toaplan2_coin_w },		/* Coin count/lock */
@@ -935,11 +904,9 @@ static struct MemoryWriteAddress fixeight_writemem[] =
 	{ 0x502000, 0x5021ff, MWA_BANK5 },
 	{ 0x503000, 0x5031ff, MWA_BANK6 },
 	{ 0x600000, 0x60ffff, MWA_BANK7 },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress vfive_readmem[] =
-{
+static MEMORY_READ_START( vfive_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1 },
 //	{ 0x200000, 0x20ffff, MRA_ROM },				/* Sound ROM is here ??? */
@@ -961,11 +928,9 @@ static struct MemoryReadAddress vfive_readmem[] =
 	{ 0x30000c, 0x30000d, input_port_0_r },
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ 0x700000, 0x700001, video_count_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress vfive_writemem[] =
-{
+static MEMORY_WRITE_START( vfive_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1 },
 //	{ 0x200000, 0x20ffff, MWA_ROM },				/* Sound ROM is here ??? */
@@ -983,11 +948,9 @@ static struct MemoryWriteAddress vfive_writemem[] =
 	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress batsugun_readmem[] =
-{
+static MEMORY_READ_START( batsugun_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x200010, 0x200011, input_port_1_r },			/* Player 1 controls */
@@ -1012,11 +975,9 @@ static struct MemoryReadAddress batsugun_readmem[] =
 	/***** The following in 0x50000x are for video controller 1 ******/
 	{ 0x500004, 0x500007, toaplan2_0_videoram_r },	/* tile layers 2 */
 	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress batsugun_writemem[] =
-{
+static MEMORY_WRITE_START( batsugun_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x20001c, 0x20001d, toaplan2_coin_w },		/* Coin count/lock */
@@ -1040,11 +1001,9 @@ static struct MemoryWriteAddress batsugun_writemem[] =
 	{ 0x500004, 0x500007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
 	{ 0x500008, 0x500009, toaplan2_0_scroll_reg_select_w },
 	{ 0x50000c, 0x50000d, toaplan2_0_scroll_reg_data_w },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress snowbro2_readmem[] =
-{
+static MEMORY_READ_START( snowbro2_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
@@ -1060,11 +1019,9 @@ static struct MemoryReadAddress snowbro2_readmem[] =
 	{ 0x700014, 0x700015, input_port_3_r },			/* Player 3 controls */
 	{ 0x700018, 0x700019, input_port_4_r },			/* Player 4 controls */
 	{ 0x70001c, 0x70001d, input_port_5_r },			/* Coin/System inputs */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress snowbro2_writemem[] =
-{
+static MEMORY_WRITE_START( snowbro2_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
@@ -1077,11 +1034,9 @@ static struct MemoryWriteAddress snowbro2_writemem[] =
 	{ 0x600000, 0x600001, OKIM6295_data_0_w },
 	{ 0x700030, 0x700031, oki_bankswitch_w },		/* Sample bank switch */
 	{ 0x700034, 0x700035, toaplan2_coin_w },		/* Coin count/lock */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress mahoudai_readmem[] =
-{
+static MEMORY_READ_START( mahoudai_readmem )
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_r },
@@ -1098,11 +1053,9 @@ static struct MemoryReadAddress mahoudai_readmem[] =
 	{ 0x30000c, 0x30000d, input_port_0_r },			/* VBlank */
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ 0x500000, 0x503fff, raizing_textram_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mahoudai_writemem[] =
-{
+static MEMORY_WRITE_START( mahoudai_writemem )
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_w, &raizing_shared_ram },
@@ -1116,11 +1069,9 @@ static struct MemoryWriteAddress mahoudai_writemem[] =
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram},
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress shippumd_readmem[] =
-{
+static MEMORY_READ_START( shippumd_readmem )
 	{ 0x000000, 0x0fffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_r },
@@ -1137,11 +1088,9 @@ static struct MemoryReadAddress shippumd_readmem[] =
 	{ 0x30000c, 0x30000d, input_port_0_r },			/* VBlank */
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ 0x500000, 0x503fff, raizing_textram_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress shippumd_writemem[] =
-{
+static MEMORY_WRITE_START( shippumd_writemem )
 	{ 0x000000, 0x0fffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_w, &raizing_shared_ram },
@@ -1155,31 +1104,25 @@ static struct MemoryWriteAddress shippumd_writemem[] =
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram},
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xe000, 0xe000, YM3812_status_port_0_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM, &toaplan2_shared_ram },
 	{ 0xe000, 0xe000, YM3812_control_port_0_w },
 	{ 0xe001, 0xe001, YM3812_write_port_0_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /* Added by Yochizo 2000/08/20 */
 
-static struct MemoryReadAddress raizing_sound_readmem[] =
-{
+static MEMORY_READ_START( raizing_sound_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe001, 0xe001, YM2151_status_port_0_r },
@@ -1190,50 +1133,39 @@ static struct MemoryReadAddress raizing_sound_readmem[] =
 	{ 0xe016, 0xe016, input_port_4_r },
 	{ 0xe018, 0xe018, input_port_5_r },
 	{ 0xe01a, 0xe01a, input_port_6_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress raizing_sound_writemem[] =
-{
+static MEMORY_WRITE_START( raizing_sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM, &raizing_shared_ram },
 	{ 0xe000, 0xe000, YM2151_register_port_0_w },
 	{ 0xe001, 0xe001, YM2151_data_port_0_w },
 	{ 0xe004, 0xe004, OKIM6295_data_0_w },
 	{ 0xe00e, 0xe00e, toaplan2_coin_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 #if HD64x180
-static struct MemoryReadAddress hd647180_readmem[] =
-{
+static MEMORY_READ_START( hd647180_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xfe00, 0xffff, MRA_RAM },			/* Internal 512 bytes of RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hd647180_writemem[] =
-{
+static MEMORY_WRITE_START( hd647180_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xfe00, 0xffff, MWA_RAM },			/* Internal 512 bytes of RAM */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 #endif
 
 
 #if Zx80
-static struct MemoryReadAddress Zx80_readmem[] =
-{
+static MEMORY_READ_START( Zx80_readmem )
 	{ 0x0000, 0x7fff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress Zx80_writemem[] =
-{
+static MEMORY_WRITE_START( Zx80_writemem )
 	{ 0x0000, 0x07fff, MWA_RAM, &Zx80_sharedram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 #endif
 
 

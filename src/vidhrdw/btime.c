@@ -21,7 +21,7 @@ size_t bnj_backgroundram_size;
 static int sprite_dirty[256];
 static int char_dirty[1024];
 
-static data_t btime_palette = 0;
+static int btime_palette = 0;
 static unsigned char bnj_scroll1 = 0;
 static unsigned char bnj_scroll2 = 0;
 static unsigned char *dirtybuffer2 = 0;
@@ -308,7 +308,7 @@ WRITE_HANDLER( zoar_video_control_w )
     // Bit 7   = Flip Screen
 
 	set_vh_global_attribute(&btime_palette, (data & 0x30) >> 3);
-	flip_screen_w(offset, data & 0x80);
+	flip_screen_set(data & 0x80);
 }
 
 WRITE_HANDLER( btime_video_control_w )
@@ -318,7 +318,7 @@ WRITE_HANDLER( btime_video_control_w )
     // Bit 0   = Flip screen
     // Bit 1-7 = Unknown
 
-	flip_screen_w(offset, data & 0x01);
+	flip_screen_set(data & 0x01);
 }
 
 WRITE_HANDLER( bnj_video_control_w )
@@ -352,7 +352,7 @@ WRITE_HANDLER( disco_video_control_w )
 
 	if (!(input_port_3_r(0) & 0x40)) /* cocktail mode */
 	{
-		flip_screen_w(offset, data & 0x01);
+		flip_screen_set(data & 0x01);
 	}
 }
 

@@ -235,15 +235,15 @@ int m107_vh_start(void)
 	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf4_layer)
 		return 1;
 
-	pf1_layer->transparent_pen = 0;
-	pf2_layer->transparent_pen = 0;
-	pf3_layer->transparent_pen = 0;
-//	pf1_layer->transmask[0] = 0x00ff;
-//	pf1_layer->transmask[1] = 0xff00;
-//	pf2_layer->transmask[0] = 0x00ff;
-//	pf2_layer->transmask[1] = 0xff00;
-//	pf3_layer->transmask[0] = 0x00ff;
-//	pf3_layer->transmask[1] = 0xff00;
+	tilemap_set_transparent_pen(pf1_layer,0);
+	tilemap_set_transparent_pen(pf2_layer,0);
+	tilemap_set_transparent_pen(pf3_layer,0);
+//	tilemap_set_transmask(pf1_layer,0,0x00ff);
+//	tilemap_set_transmask(pf1_layer,1,0xff00);
+//	tilemap_set_transmask(pf2_layer,0,0x00ff);
+//	tilemap_set_transmask(pf2_layer,1,0xff00);
+//	tilemap_set_transmask(pf3_layer,0,0x00ff);
+//	tilemap_set_transmask(pf3_layer,1,0xff00);
 
 	pf1_vram_ptr=pf2_vram_ptr=pf3_vram_ptr=pf4_vram_ptr=0;
 	pf1_enable=pf2_enable=pf3_enable=pf4_enable=0;
@@ -421,23 +421,20 @@ void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 
 	palette_init_used_colors();
 	mark_sprite_colours();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if (pf4_enable)
-		tilemap_draw(bitmap,pf4_layer,0);
+		tilemap_draw(bitmap,pf4_layer,0,0);
 	else
 		fillbitmap(bitmap,palette_transparent_pen,clip);
 
-	tilemap_draw(bitmap,pf3_layer,0);
-	tilemap_draw(bitmap,pf2_layer,0);
-	tilemap_draw(bitmap,pf1_layer,0);
+	tilemap_draw(bitmap,pf3_layer,0,0);
+	tilemap_draw(bitmap,pf2_layer,0,0);
+	tilemap_draw(bitmap,pf1_layer,0,0);
 
 	m107_drawsprites(bitmap,clip,0);
-	tilemap_draw(bitmap,pf2_layer,1);
-	tilemap_draw(bitmap,pf1_layer,1);
+	tilemap_draw(bitmap,pf2_layer,1,0);
+	tilemap_draw(bitmap,pf1_layer,1,0);
 
 	m107_drawsprites(bitmap,clip,1);
 

@@ -120,25 +120,33 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 
 
 /* Variables only used here: */
-static int ip_select, ip_select_values[5];
+
+static data16_t ip_select, ip_select_values[5];
+
 
 /* Variables defined in vidhrdw: */
 
+
+
 /* Functions defined in vidhrdw: */
+
 void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *prom);
 int  megasys1_vh_start(void);
 void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-READ_HANDLER( megasys1_vregs_C_r );
-WRITE_HANDLER( megasys1_vregs_A_w );
-WRITE_HANDLER( megasys1_vregs_C_w );
-WRITE_HANDLER( megasys1_vregs_D_w );
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBRGBx_word_w );
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
+
+READ16_HANDLER( megasys1_vregs_C_r );
+
+WRITE16_HANDLER( megasys1_vregs_A_w );
+WRITE16_HANDLER( megasys1_vregs_C_w );
+WRITE16_HANDLER( megasys1_vregs_D_w );
+
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
+
+READ16_HANDLER( protection_peekaboo_r );
+WRITE16_HANDLER( protection_peekaboo_w );
 
 
 
-READ_HANDLER( protection_peekaboo_r );
-WRITE_HANDLER( protection_peekaboo_w );
 
 void megasys1_init_machine(void)
 {
@@ -159,12 +167,14 @@ void megasys1_init_machine(void)
 						[ Main CPU - System A / Z ]
 ***************************************************************************/
 
-static READ_HANDLER( coins_r )   {return input_port_0_r(0);}	// < 00 | Coins >
-static READ_HANDLER( player1_r ) {return input_port_1_r(0);}	// < 00 | Player 1 >
-static READ_HANDLER( player2_r ) {return (input_port_2_r(0)<<8)+input_port_3_r(0);}		// < Reserve | Player 2 >
-static READ_HANDLER( dsw1_r )	 {return input_port_4_r(0);}							//   DSW 1
-static READ_HANDLER( dsw2_r )	 {return input_port_5_r(0);}							//   DSW 2
-static READ_HANDLER( dsw_r )	 {return (input_port_4_r(0)<<8)+input_port_5_r(0);}		// < DSW 1 | DSW 2 >
+static READ16_HANDLER( coins_r )	{return readinputport(0);}	// < 00 | Coins >
+static READ16_HANDLER( player1_r )	{return readinputport(1);}	// < 00 | Player 1 >
+static READ16_HANDLER( player2_r )	{return readinputport(2) * 256 +
+									        readinputport(3);}		// < Reserve | Player 2 >
+static READ16_HANDLER( dsw1_r )		{return readinputport(4);}							//   DSW 1
+static READ16_HANDLER( dsw2_r )		{return readinputport(5);}							//   DSW 2
+static READ16_HANDLER( dsw_r )		{return readinputport(4) * 256 +
+									        readinputport(5);}		// < DSW 1 | DSW 2 >
 
 
 #define INTERRUPT_NUM_A		3
@@ -187,35 +197,31 @@ int interrupt_A(void)
 
 
 #define MEMORYMAP_A(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress readmem_##_shortname_[] = \
-{ \
-	{ 0x000000, 0x05ffff, MRA_ROM					}, \
-	{ _ram_start_, _ram_end_, MRA_BANK1				}, \
-	{ 0x080000, 0x080001, coins_r					}, \
-	{ 0x080002, 0x080003, player1_r					}, \
-	{ 0x080004, 0x080005, player2_r					}, \
-	{ 0x080006, 0x080007, dsw_r						}, \
-	{ 0x080008, 0x080009, soundlatch2_r				}, /* from sound cpu */ \
-	{ 0x084000, 0x084fff, MRA_BANK2					}, \
-	{ 0x088000, 0x0887ff, paletteram_word_r			}, \
-	{ 0x08e000, 0x08ffff, MRA_BANK3					}, \
-	{ 0x090000, 0x093fff, megasys1_scrollram_0_r	}, \
-	{ 0x094000, 0x097fff, megasys1_scrollram_1_r	}, \
-	{ 0x098000, 0x09bfff, megasys1_scrollram_2_r	}, \
-	{ -1 } \
-}; \
-static struct MemoryWriteAddress writemem_##_shortname_[] = \
-{ \
- 	{ 0x000000, 0x05ffff, MWA_ROM											}, \
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			}, \
-	{ 0x084000, 0x0843ff, megasys1_vregs_A_w,		&megasys1_vregs			}, \
-	{ 0x088000, 0x0887ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram	}, \
-	{ 0x08e000, 0x08ffff, MWA_BANK3,				&megasys1_objectram		}, \
-	{ 0x090000, 0x093fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0,0	}, \
-	{ 0x094000, 0x097fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1,0	}, \
-	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w,	&megasys1_scrollram_2,0	}, \
-	{ -1 } \
-};
+static MEMORY_READ16_START( readmem_##_shortname_ ) \
+	{ 0x000000, 0x05ffff, MRA16_ROM				}, \
+	{_ram_start_,_ram_end_, MRA16_RAM			}, \
+	{ 0x080000, 0x080001, coins_r				}, \
+	{ 0x080002, 0x080003, player1_r				}, \
+	{ 0x080004, 0x080005, player2_r				}, \
+	{ 0x080006, 0x080007, dsw_r					}, \
+	{ 0x080008, 0x080009, soundlatch2_word_r	}, /* from sound cpu */ \
+	{ 0x084000, 0x084fff, MRA16_RAM				}, \
+	{ 0x088000, 0x0887ff, paletteram16_word_r	}, \
+	{ 0x08e000, 0x08ffff, MRA16_RAM				}, \
+	{ 0x090000, 0x093fff, MRA16_RAM				}, \
+	{ 0x094000, 0x097fff, MRA16_RAM				}, \
+	{ 0x098000, 0x09bfff, MRA16_RAM				}, \
+MEMORY_END \
+static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
+ 	{ 0x000000, 0x05ffff, MWA16_ROM												}, \
+	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram				}, \
+	{ 0x084000, 0x0843ff, megasys1_vregs_A_w,		&megasys1_vregs				}, \
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16	}, \
+	{ 0x08e000, 0x08ffff, MWA16_RAM,				&megasys1_objectram			}, \
+	{ 0x090000, 0x093fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0		}, \
+	{ 0x094000, 0x097fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1		}, \
+	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w,	&megasys1_scrollram_2		}, \
+MEMORY_END
 
 #define MEMORYMAP_Z		MEMORYMAP_A
 
@@ -247,9 +253,9 @@ int interrupt_B(void)
 
  in that order.			*/
 
-static READ_HANDLER( ip_select_r )
+static READ16_HANDLER( ip_select_r )
 {
-int i;
+	int i;
 
 //	Coins	P1		P2		DSW1	DSW2
 //	57		53		54		55		56		< 64street
@@ -259,57 +265,53 @@ int i;
 // 	20		21		22		23		24		< edf
 
 	/* f(x) = ((x*x)>>4)&0xFF ; f(f($D)) == 6 */
-	if ((ip_select & 0xF0) == 0xF0) return 0x0D;
+	if ((ip_select & 0xF0) == 0xF0) return 0x000D;
 
 	for (i = 0; i < 5; i++)	if (ip_select == ip_select_values[i]) break;
 
 	switch (i)
 	{
-			case 0x0 :	return coins_r(0);		break;
-			case 0x1 :	return player1_r(0);	break;
-			case 0x2 :	return player2_r(0);	break;
-			case 0x3 :	return dsw1_r(0);		break;
-			case 0x4 :	return dsw2_r(0);		break;
-			default	 :	return 0x06;
+			case 0 :	return coins_r(0);		break;
+			case 1 :	return player1_r(0);	break;
+			case 2 :	return player2_r(0);	break;
+			case 3 :	return dsw1_r(0);		break;
+			case 4 :	return dsw2_r(0);		break;
+			default	 :	return 0x0006;
 	}
 }
 
-static WRITE_HANDLER( ip_select_w )
+static WRITE16_HANDLER( ip_select_w )
 {
-	ip_select = COMBINE_WORD(ip_select,data);
+	ip_select = COMBINE_DATA(&ip_select);
 	cpu_cause_interrupt(0,2);
 }
 
 
 #define MEMORYMAP_B(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress readmem_##_shortname_[] = \
-{\
-	{ 0x000000, 0x03ffff, MRA_ROM					},\
-	{ 0x080000, 0x0bffff, MRA_ROM					},\
-	{ _ram_start_, _ram_end_,	MRA_BANK1			},\
-	{ 0x044000, 0x044fff, MRA_BANK2					},\
-	{ 0x048000, 0x0487ff, paletteram_word_r			},\
-	{ 0x04e000, 0x04ffff, MRA_BANK3					},\
-	{ 0x050000, 0x053fff, megasys1_scrollram_0_r	},\
-	{ 0x054000, 0x057fff, megasys1_scrollram_1_r	},\
-	{ 0x058000, 0x05bfff, megasys1_scrollram_2_r	},\
-	{ 0x0e0000, 0x0e0001, ip_select_r				},\
-	{ -1 }\
-};\
-static struct MemoryWriteAddress writemem_##_shortname_[] = \
-{\
- 	{ 0x000000, 0x03ffff, MWA_ROM											},\
-	{ 0x080000, 0x0bffff, MWA_ROM											},\
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			},\
+static MEMORY_READ16_START( readmem_##_shortname_ ) \
+	{ 0x000000, 0x03ffff, MRA16_ROM				},\
+	{ 0x080000, 0x0bffff, MRA16_ROM				},\
+	{_ram_start_,_ram_end_,	MRA16_RAM			},\
+	{ 0x044000, 0x044fff, MRA16_RAM				},\
+	{ 0x048000, 0x0487ff, paletteram16_word_r	},\
+	{ 0x04e000, 0x04ffff, MRA16_RAM				},\
+	{ 0x050000, 0x053fff, MRA16_RAM				},\
+	{ 0x054000, 0x057fff, MRA16_RAM				},\
+	{ 0x058000, 0x05bfff, MRA16_RAM				},\
+	{ 0x0e0000, 0x0e0001, ip_select_r			},\
+MEMORY_END \
+static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
+ 	{ 0x000000, 0x03ffff, MWA16_ROM											},\
+	{ 0x080000, 0x0bffff, MWA16_ROM											},\
+	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram			},\
 	{ 0x044000, 0x0443ff, megasys1_vregs_A_w,		&megasys1_vregs			},\
-	{ 0x048000, 0x0487ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram	},\
-	{ 0x04e000, 0x04ffff, MWA_BANK3,				&megasys1_objectram		},\
+	{ 0x048000, 0x0487ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16	},\
+	{ 0x04e000, 0x04ffff, MWA16_RAM,				&megasys1_objectram		},\
 	{ 0x050000, 0x053fff, megasys1_scrollram_0_w ,	&megasys1_scrollram_0	},\
 	{ 0x054000, 0x057fff, megasys1_scrollram_1_w ,	&megasys1_scrollram_1	},\
 	{ 0x058000, 0x05bfff, megasys1_scrollram_2_w ,	&megasys1_scrollram_2	},\
 	{ 0x0e0000, 0x0e0001, ip_select_w										},\
-	{ -1 }\
-};\
+MEMORY_END
 
 
 
@@ -322,32 +324,28 @@ static struct MemoryWriteAddress writemem_##_shortname_[] = \
 #define interrupt_C		interrupt_B
 
 #define MEMORYMAP_C(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress readmem_##_shortname_[] = \
-{\
-	{ 0x000000, 0x07ffff, MRA_ROM					}, \
-	{ _ram_start_, _ram_end_, MRA_BANK1				}, \
-	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_r		}, \
-	{ 0x0d2000, 0x0d3fff, MRA_BANK3					}, \
-	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_r	}, \
-	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_r	}, \
-	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_r	}, \
-	{ 0x0f8000, 0x0f87ff, paletteram_word_r			}, \
-	{ 0x0d8000, 0x0d8001, ip_select_r				}, \
-	{ -1 } \
-}; \
-static struct MemoryWriteAddress writemem_##_shortname_[] = \
-{ \
- 	{ 0x000000, 0x07ffff, MWA_ROM											}, \
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			}, \
+static MEMORY_READ16_START( readmem_##_shortname_ ) \
+	{ 0x000000, 0x07ffff, MRA16_ROM				}, \
+	{_ram_start_,_ram_end_, MRA16_RAM			}, \
+	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_r	}, \
+	{ 0x0d2000, 0x0d3fff, MRA16_RAM				}, \
+	{ 0x0e0000, 0x0e3fff, MRA16_RAM				}, \
+	{ 0x0e8000, 0x0ebfff, MRA16_RAM				}, \
+	{ 0x0f0000, 0x0f3fff, MRA16_RAM				}, \
+	{ 0x0f8000, 0x0f87ff, paletteram16_word_r	}, \
+	{ 0x0d8000, 0x0d8001, ip_select_r			}, \
+MEMORY_END \
+static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
+ 	{ 0x000000, 0x07ffff, MWA16_ROM											}, \
+	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram			}, \
 	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_w,		&megasys1_vregs			}, \
-	{ 0x0d2000, 0x0d3fff, MWA_BANK3,				&megasys1_objectram		}, \
+	{ 0x0d2000, 0x0d3fff, MWA16_RAM,				&megasys1_objectram		}, \
 	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	}, \
 	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_w,	&megasys1_scrollram_1	}, \
 	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	}, \
-	{ 0x0f8000, 0x0f87ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram	}, \
+	{ 0x0f8000, 0x0f87ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16	}, \
 	{ 0x0d8000, 0x0d8001, ip_select_w										}, \
-	{ -1 } \
-};
+MEMORY_END
 
 
 
@@ -363,38 +361,34 @@ int interrupt_D(void)
 }
 
 #define MEMORYMAP_D(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress readmem_##_shortname_[] = \
-{ \
-	{ 0x000000, 0x03ffff, MRA_ROM						}, \
-	{ _ram_start_, _ram_end_, MRA_BANK1					}, \
-	{ 0x0c0000, 0x0c9fff, MRA_BANK2						}, \
-	{ 0x0ca000, 0x0cbfff, MRA_BANK3						}, \
-	{ 0x0d0000, 0x0d3fff, MRA_BANK4						}, \
-	{ 0x0d4000, 0x0d7fff, MRA_BANK5						}, \
-	{ 0x0d8000, 0x0d87ff, paletteram_word_r				}, \
-	{ 0x0db000, 0x0db7ff, paletteram_word_r				}, \
+static MEMORY_READ16_START( readmem_##_shortname_ ) \
+	{ 0x000000, 0x03ffff, MRA16_ROM						}, \
+	{_ram_start_,_ram_end_, MRA16_RAM					}, \
+	{ 0x0c0000, 0x0c9fff, MRA16_RAM						}, \
+	{ 0x0ca000, 0x0cbfff, MRA16_RAM						}, \
+	{ 0x0d0000, 0x0d3fff, MRA16_RAM						}, \
+	{ 0x0d4000, 0x0d7fff, MRA16_RAM						}, \
+	{ 0x0d8000, 0x0d87ff, paletteram16_word_r			}, \
+	{ 0x0db000, 0x0db7ff, paletteram16_word_r			}, \
 	{ 0x0e0000, 0x0e0001, dsw_r							}, \
-	{ 0x0e8000, 0x0ebfff, MRA_BANK7						}, \
+	{ 0x0e8000, 0x0ebfff, MRA16_RAM						}, \
 	{ 0x0f0000, 0x0f0001, coins_r						}, /* Coins + P1&P2 Buttons */ \
-	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_r			}, \
+	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_lsb_r		}, \
 	{ 0x100000, 0x100001, protection_##_shortname_##_r	}, /* Protection */ \
-	{ -1 } \
-}; \
-static struct MemoryWriteAddress writemem_##_shortname_[] = \
-{ \
- 	{ 0x000000, 0x03ffff, MWA_ROM											}, \
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			}, \
+MEMORY_END \
+static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
+ 	{ 0x000000, 0x03ffff, MWA16_ROM											}, \
+	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram			}, \
 	{ 0x0c0000, 0x0c9fff, megasys1_vregs_D_w,		&megasys1_vregs			}, \
-	{ 0x0ca000, 0x0cbfff, MWA_BANK3, 				&megasys1_objectram		}, \
+	{ 0x0ca000, 0x0cbfff, MWA16_RAM, 				&megasys1_objectram		}, \
 	{ 0x0d0000, 0x0d3fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1	}, \
 	{ 0x0d4000, 0x0d7fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	}, \
-	{ 0x0d8000, 0x0d87ff, paletteram_RRRRRGGGGGBBBBBx_word_w				}, \
-	{ 0x0db000, 0x0db7ff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram	}, \
+	{ 0x0d8000, 0x0d87ff, paletteram16_RRRRRGGGGGBBBBBx_word_w				}, \
+	{ 0x0db000, 0x0db7ff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16	}, \
 	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	}, \
-	{ 0x0f8000, 0x0f8001, ms_OKIM6295_data_0_w								}, \
+	{ 0x0f8000, 0x0f8001, OKIM6295_data_0_lsb_w								}, \
 	{ 0x100000, 0x100001, protection_##_shortname_##_w						}, /* Protection */ \
-	{ -1 } \
-};
+MEMORY_END
 
 
 
@@ -459,78 +453,50 @@ static int sound_interrupt(void)
 }
 
 
-WRITE_HANDLER( ms_YM2151_register_port_0_w )
+READ16_HANDLER( YM2151_status_port_0_lsb_r )
 {
-	if ((data & 0x00ff0000) == 0)	YM2151_register_port_0_w(0,data & 0xff);
-	else							logerror("%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
+	return YM2151_status_port_0_r(0);
 }
 
-WRITE_HANDLER( ms_YM2151_data_port_0_w )
+WRITE16_HANDLER( YM2151_register_port_0_lsb_w )
 {
-	if ((data & 0x00ff0000) == 0)	YM2151_data_port_0_w(0,data & 0xff);
-	else							logerror("%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
+	if (ACCESSING_LSB)	YM2151_register_port_0_w(0, data & 0xff);
 }
 
-WRITE_HANDLER( ms_OKIM6295_data_0_w )
+WRITE16_HANDLER( YM2151_data_port_0_lsb_w )
 {
-	if ((data & 0x00ff0000) == 0)	OKIM6295_data_0_w(0,data & 0xff);
-	else							logerror("%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
+	if (ACCESSING_LSB)	YM2151_data_port_0_w(0, data & 0xff);
 }
 
-WRITE_HANDLER( ms_OKIM6295_data_1_w )
-{
-	if ((data & 0x00ff0000) == 0)	OKIM6295_data_1_w(0,data & 0xff);
-	else							logerror("%06x: write %02x to OKIM6295_data_1_w\n",cpu_get_pc(),data);
-}
-
-
-
-WRITE_HANDLER( ms_soundlatch_w )
-{
-	static unsigned char val[2];
-	COMBINE_WORD_MEM(val,data);
-	soundlatch_w(0, READ_WORD(val) );
-}
-
-WRITE_HANDLER( ms_soundlatch2_w )
-{
-	static unsigned char val[2];
-	COMBINE_WORD_MEM(val,data);
-	soundlatch2_w(0, READ_WORD(val) );
-}
 
 /***************************************************************************
 							[ Sound CPU - System A ]
 ***************************************************************************/
 
 
-static struct MemoryReadAddress sound_readmem_A[] =
-{
-	{ 0x000000, 0x01ffff, MRA_ROM					},
-	{ 0x040000, 0x040001, soundlatch_r				},
-	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
+static MEMORY_READ16_START( sound_readmem_A )
+	{ 0x000000, 0x01ffff, MRA16_ROM						},
+	{ 0x040000, 0x040001, soundlatch_word_r				},
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
 #if SOUND_HACK
-	{ 0x0a0000, 0x0a0001, MRA_NOP					},
-	{ 0x0c0000, 0x0c0001, MRA_NOP					},
+	{ 0x0a0000, 0x0a0001, MRA16_NOP						},
+	{ 0x0c0000, 0x0c0001, MRA16_NOP						},
 #else
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
 #endif
-	{ 0x0e0000, 0x0fffff, MRA_BANK8					},
-	{ -1 }
-};
+	{ 0x0e0000, 0x0fffff, MRA16_RAM						},
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem_A[] =
-{
-	{ 0x000000, 0x01ffff, MWA_ROM						},
-	{ 0x060000, 0x060001, ms_soundlatch2_w				},	// to main cpu
-	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w	},
-	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w		},
-	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w			},
-	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w			},
-	{ 0x0e0000, 0x0fffff, MWA_BANK8						},
-	{ -1 }
-};
+static MEMORY_WRITE16_START( sound_writemem_A )
+	{ 0x000000, 0x01ffff, MWA16_ROM						},
+	{ 0x060000, 0x060001, soundlatch2_word_w			},	// to main cpu
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
+	{ 0x0e0000, 0x0fffff, MWA16_RAM						},
+MEMORY_END
 
 
 
@@ -542,35 +508,31 @@ static struct MemoryWriteAddress sound_writemem_A[] =
 ***************************************************************************/
 
 
-static struct MemoryReadAddress sound_readmem_B[] =
-{
-	{ 0x000000, 0x01ffff, MRA_ROM					},
-	{ 0x040000, 0x040001, soundlatch_r				},	/* from main cpu */
-	{ 0x060000, 0x060001, soundlatch_r				},	/* from main cpu */
-	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
+static MEMORY_READ16_START( sound_readmem_B )
+	{ 0x000000, 0x01ffff, MRA16_ROM						},
+	{ 0x040000, 0x040001, soundlatch_word_r				},	/* from main cpu */
+	{ 0x060000, 0x060001, soundlatch_word_r				},	/* from main cpu */
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
 #if SOUND_HACK
-	{ 0x0a0000, 0x0a0001, MRA_NOP					},
-	{ 0x0c0000, 0x0c0001, MRA_NOP					},
+	{ 0x0a0000, 0x0a0001, MRA16_NOP						},
+	{ 0x0c0000, 0x0c0001, MRA16_NOP						},
 #else
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
 #endif
-	{ 0x0e0000, 0x0effff, MRA_BANK8					},
-	{ -1 }
-};
+	{ 0x0e0000, 0x0effff, MRA16_RAM						},
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem_B[] =
-{
-	{ 0x000000, 0x01ffff, MWA_ROM						},
-	{ 0x040000, 0x040001, ms_soundlatch2_w				},	/* to main cpu */
-	{ 0x060000, 0x060001, ms_soundlatch2_w				},	/* to main cpu */
-	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w	},
-	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w		},
-	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w			},
-	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w			},
-	{ 0x0e0000, 0x0effff, MWA_BANK8						},
-	{ -1 }
-};
+static MEMORY_WRITE16_START( sound_writemem_B )
+	{ 0x000000, 0x01ffff, MWA16_ROM						},
+	{ 0x040000, 0x040001, soundlatch2_word_w			},	/* to main cpu */
+	{ 0x060000, 0x060001, soundlatch2_word_w			},	/* to main cpu */
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
+	{ 0x0e0000, 0x0effff, MWA16_RAM						},
+MEMORY_END
 
 #define sound_readmem_C		sound_readmem_B
 #define sound_writemem_C	sound_writemem_B
@@ -586,35 +548,27 @@ static struct MemoryWriteAddress sound_writemem_B[] =
 
 
 
-static struct MemoryReadAddress sound_readmem_z80[] =
-{
+static MEMORY_READ_START( sound_readmem_z80 )
 	{ 0x0000, 0x3fff, MRA_ROM		},
 	{ 0xc000, 0xc7ff, MRA_RAM		},
 	{ 0xe000, 0xe000, soundlatch_r	},
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem_z80[] =
-{
+static MEMORY_WRITE_START( sound_writemem_z80 )
 	{ 0x0000, 0x3fff, MWA_ROM	},
 	{ 0xc000, 0xc7ff, MWA_RAM	},
 	{ 0xf000, 0xf000, MWA_NOP	}, /* ?? */
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, YM2203_status_port_0_r	},
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM2203_control_port_0_w	},
 	{ 0x01, 0x01, YM2203_write_port_0_w		},
-	{ -1 }
-};
+PORT_END
 
 
 
@@ -707,7 +661,7 @@ static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 	2, \
 	{_oki1_clock_, _oki2_clock_},\
 	{ REGION_SOUND1, REGION_SOUND2 }, \
-	{ 30, 30 } \
+	{ MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) } \
 }; \
  \
 static const struct MachineDriver machine_driver_##_shortname_ = \
@@ -740,7 +694,7 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	0, \
 	megasys1_vh_screenrefresh, \
 	/* sound hardware */ \
-	0,0,0,0, \
+	SOUND_SUPPORTS_STEREO,0,0,0, /* Stereo Output */\
 	{ \
 		{ \
 			SOUND_YM2151, \
@@ -874,7 +828,7 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	0,\
 	megasys1_vh_screenrefresh,\
 	/* sound hardware */ \
-	0,0,0,0,\
+	0,0,0,0, /* This system is mono */\
 	{\
 		{ \
 			SOUND_YM2203, \
@@ -1141,9 +1095,9 @@ INPUT_PORTS_END
 
 static void init_64street(void)
 {
-//	unsigned char *RAM = memory_region(REGION_CPU1);
-//	WRITE_WORD (&RAM[0x006b8],0x6004);		// d8001 test
-//	WRITE_WORD (&RAM[0x10EDE],0x6012);		// watchdog
+//	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+//	RAM[0x006b8/2] = 0x6004;		// d8001 test
+//	RAM[0x10EDE/2] = 0x6012;		// watchdog
 
 	ip_select_values[0] = 0x57;
 	ip_select_values[1] = 0x53;
@@ -1290,15 +1244,15 @@ INPUT_PORTS_END
 
 void astyanax_rom_decode(int cpu)
 {
-	unsigned char	*RAM	=	memory_region(REGION_CPU1+cpu);
-	int i,			size	=	memory_region_length(REGION_CPU1+cpu);
+	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
+	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
 	if (size > 0x40000)	size = 0x40000;
 
-	for (i = 0 ; i < size ; i+=2)
+	for (i = 0 ; i < size/2 ; i++)
 	{
-		int x,y;
+		data16_t x,y;
 
-		x = READ_WORD(&RAM[i]);
+		x = RAM[i];
 
 // [0] def0 a981 65cb 7234
 // [1] fdb9 7531 8ace 0246
@@ -1308,29 +1262,29 @@ void astyanax_rom_decode(int cpu)
 #define BITSWAP_1	BITSWAP(x,0xf,0xd,0xb,0x9,0x7,0x5,0x3,0x1,0x8,0xa,0xc,0xe,0x0,0x2,0x4,0x6)
 #define BITSWAP_2	BITSWAP(x,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc)
 
-		if		(i < 0x08000)	{ if ( (i | 0x248) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x10000)	{ y = BITSWAP_2; }
-		else if	(i < 0x18000)	{ if ( (i | 0x248) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x20000)	{ y = BITSWAP_1; }
+		if		(i < 0x08000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x10000/2)	{ y = BITSWAP_2; }
+		else if	(i < 0x18000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
 		else 					{ y = BITSWAP_2; }
 
 #undef	BITSWAP_0
 #undef	BITSWAP_1
 #undef	BITSWAP_2
 
-		WRITE_WORD(&RAM[i],y);
+		RAM[i] = y;
 	}
 }
 
 
 static void init_astyanax(void)
 {
-	unsigned char *RAM;
+	data16_t *RAM;
 
 	astyanax_rom_decode(0);
 
-	RAM  = memory_region(REGION_CPU1);
-	WRITE_WORD(&RAM[0x0004e6],0x6040);	// protection
+	RAM = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0004e6/2] = 0x6040;	// protection
 }
 
 
@@ -1498,15 +1452,15 @@ static void init_avspirit(void)
 
 void phantasm_rom_decode(int cpu)
 {
-	unsigned char	*RAM	=	memory_region(REGION_CPU1+cpu);
-	int i,			size	=	memory_region_length(REGION_CPU1+cpu);
+	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
+	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
 	if (size > 0x40000)	size = 0x40000;
 
-	for (i = 0 ; i < size ; i+=2)
+	for (i = 0 ; i < size/2 ; i++)
 	{
-		int x,y;
+		data16_t x,y;
 
-		x = READ_WORD(&RAM[i]);
+		x = RAM[i];
 
 // [0] def0 189a bc56 7234
 // [1] fdb9 7531 eca8 6420
@@ -1515,17 +1469,17 @@ void phantasm_rom_decode(int cpu)
 #define BITSWAP_1	BITSWAP(x,0xf,0xd,0xb,0x9,0x7,0x5,0x3,0x1,0xe,0xc,0xa,0x8,0x6,0x4,0x2,0x0)
 #define BITSWAP_2	BITSWAP(x,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc)
 
-		if		(i < 0x08000)	{ if ( (i | 0x248) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x10000)	{ y = BITSWAP_2; }
-		else if	(i < 0x18000)	{ if ( (i | 0x248) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x20000)	{ y = BITSWAP_1; }
+		if		(i < 0x08000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x10000/2)	{ y = BITSWAP_2; }
+		else if	(i < 0x18000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
 		else 					{ y = BITSWAP_2; }
 
 #undef	BITSWAP_0
 #undef	BITSWAP_1
 #undef	BITSWAP_2
 
-		WRITE_WORD(&RAM[i],y);
+		RAM[i] = y;
 	}
 
 }
@@ -1652,9 +1606,9 @@ INPUT_PORTS_START( bigstrik )
 
 INPUT_PORTS_END
 
-WRITE_HANDLER( bigstrik_spriteram_w )
+WRITE16_HANDLER( bigstrik_spriteram16_w )
 {
-	COMBINE_WORD_MEM(&spriteram[offset],data);
+	COMBINE_DATA(&spriteram16[offset]);
 }
 
 static void init_bigstrik(void)
@@ -1665,7 +1619,7 @@ static void init_bigstrik(void)
 	ip_select_values[3] = 0x56;
 	ip_select_values[4] = 0x57;
 
-	install_mem_write_handler(0, 0x1f8000, 0x1f87ff, bigstrik_spriteram_w);
+	install_mem_write16_handler(0, 0x1f8000, 0x1f87ff, bigstrik_spriteram16_w);
 }
 
 
@@ -2096,12 +2050,12 @@ INPUT_PORTS_END
 
 static void init_hachoo(void)
 {
-	unsigned char *RAM;
+	data16_t *RAM;
 
 	astyanax_rom_decode(0);
 
-	RAM  = memory_region(REGION_CPU1);
-	WRITE_WORD(&RAM[0x0006da],0x6000);	// protection
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0006da/2] = 0x6000;	// protection
 }
 
 
@@ -2219,15 +2173,15 @@ INPUT_PORTS_END
 
 static void init_iganinju(void)
 {
-	unsigned char *RAM;
+	data16_t *RAM;
 
 	phantasm_rom_decode(0);
 
-	RAM  = memory_region(REGION_CPU1);
-	WRITE_WORD(&RAM[0x02f000],0x835d);	// protection
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x02f000/2] = 0x835d;	// protection
 
-	WRITE_WORD(&RAM[0x00006e],0x0420);	// the only game that does
-										// not like lev 3 interrupts
+	RAM[0x00006e/2] = 0x0420;	// the only game that does
+								// not like lev 3 interrupts
 }
 
 
@@ -2807,10 +2761,10 @@ INPUT_PORTS_END
 
 
 
-static int protection_val;
+data16_t protection_val;
 
 /* Read the input ports, through a protection device */
-READ_HANDLER( protection_peekaboo_r )
+READ16_HANDLER( protection_peekaboo_r )
 {
 	switch (protection_val)
 	{
@@ -2820,10 +2774,11 @@ READ_HANDLER( protection_peekaboo_r )
 		default:	return protection_val;
 	}
 }
-WRITE_HANDLER( protection_peekaboo_w )
+WRITE16_HANDLER( protection_peekaboo_w )
 {
 	static int bank;
-	protection_val = data;
+
+	COMBINE_DATA(&protection_val);
 
 	if ((protection_val & 0x90) == 0x90)
 	{
@@ -2940,12 +2895,12 @@ INPUT_PORTS_END
 
 static void init_plusalph(void)
 {
-	unsigned char *RAM;
+	data16_t *RAM;
 
 	astyanax_rom_decode(0);
 
-	RAM  = memory_region(REGION_CPU1);
-	WRITE_WORD(&RAM[0x0012b6],0x0000);	// protection
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0012b6/2] = 0x0000;	// protection
 }
 
 
@@ -3109,15 +3064,15 @@ INPUT_PORTS_END
 
 void rodland_rom_decode(int cpu)
 {
-	unsigned char	*RAM	=	memory_region(REGION_CPU1+cpu);
-	int i,			size	=	memory_region_length(REGION_CPU1+cpu);
+	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
+	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
 	if (size > 0x40000)	size = 0x40000;
 
-	for (i = 0 ; i < size ; i+=2)
+	for (i = 0 ; i < size/2 ; i++)
 	{
-		int x,y;
+		data16_t x,y;
 
-		x = READ_WORD(&RAM[i]);
+		x = RAM[i];
 
 // [0] d0a9 6ebf 5c72 3814	[1] 4567 0123 ba98 fedc
 // [2] fdb9 ce07 5318 a246	[3] 4512 ed3b a967 08fc
@@ -3126,10 +3081,10 @@ void rodland_rom_decode(int cpu)
 #define	BITSWAP_2	BITSWAP(x,0xf,0xd,0xb,0x9,0xc,0xe,0x0,0x7,0x5,0x3,0x1,0x8,0xa,0x2,0x4,0x6);
 #define	BITSWAP_3	BITSWAP(x,0x4,0x5,0x1,0x2,0xe,0xd,0x3,0xb,0xa,0x9,0x6,0x7,0x0,0x8,0xf,0xc);
 
-		if		(i < 0x08000)	{	if ( (i | 0x248) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x10000)	{	if ( (i | 0x248) != i ) {y = BITSWAP_2;} else {y = BITSWAP_3;} }
-		else if	(i < 0x18000)	{	if ( (i | 0x248) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x20000)	{ y = BITSWAP_1; }
+		if		(i < 0x08000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x10000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_2;} else {y = BITSWAP_3;} }
+		else if	(i < 0x18000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
 		else 					{ y = BITSWAP_3; }
 
 #undef	BITSWAP_0
@@ -3137,7 +3092,7 @@ void rodland_rom_decode(int cpu)
 #undef	BITSWAP_2
 #undef	BITSWAP_3
 
-		WRITE_WORD(&RAM[i],y);
+		RAM[i] = y;
 	}
 }
 
@@ -3259,12 +3214,12 @@ INPUT_PORTS_END
 
 static void init_stdragon(void)
 {
-	unsigned char *RAM;
+	data16_t *RAM;
 
 	phantasm_rom_decode(0);
 
-	RAM  = memory_region(REGION_CPU1);
-	WRITE_WORD(&RAM[0x00045e],0x0098);	// protection
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x00045e/2] = 0x0098;	// protection
 }
 
 
@@ -3311,7 +3266,7 @@ ROM_START( soldamj )
 	ROM_LOAD( "soldam8.bin",  0x000000, 0x040000, 0xfcd36019 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
-	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "soldam.m14",   0x0000, 0x0200, 0x8914e72d )
 ROM_END
 
 INPUT_PORTS_START( soldamj )
@@ -3354,13 +3309,13 @@ INPUT_PORTS_START( soldamj )
 
 INPUT_PORTS_END
 
-READ_HANDLER( soldamj_spriteram_r )
+READ16_HANDLER( soldamj_spriteram16_r )
 {
-	return READ_WORD(&spriteram[offset]);
+	return spriteram16[offset];
 }
-WRITE_HANDLER( soldamj_spriteram_w )
+WRITE16_HANDLER( soldamj_spriteram16_w )
 {
-	if (offset < 0x800)	COMBINE_WORD_MEM(&spriteram[offset],data);
+	if (offset < 0x800/2)	COMBINE_DATA(&spriteram16[offset]);
 }
 
 static void init_soldam(void)
@@ -3368,8 +3323,8 @@ static void init_soldam(void)
 	astyanax_rom_decode(0);
 
 	/* Sprite RAM is mirrored. Why? */
-	install_mem_read_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram_r);
-	install_mem_write_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram_w);
+	install_mem_read16_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram16_r);
+	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
 }
 
 
@@ -3477,27 +3432,27 @@ static void init_tshingen(void)
 ***************************************************************************/
 
 
-GAME( 1991, 64street, 0,        64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
-GAME( 1991, 64streej, 64street, 64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
-GAME( 1989, astyanax, 0,        astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
-GAME( 1989, lordofk,  astyanax, astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
-GAME( 1991, avspirit, 0,        avspirit, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
-GAME( 1990, phantasm, avspirit, phantasm, phantasm, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
-GAME( 1992, bigstrik, 0,        bigstrik, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
-GAME( 1993, chimerab, 0,        chimerab, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
-GAME( 1993, cybattlr, 0,        cybattlr, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
-GAME( 1991, edf,      0,        edf,      edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
-GAME( 1989, hachoo,   0,        hachoo,   hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!" )
-GAME( 1988, iganinju, 0,        iganinju, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
-GAME( 1988, kickoff,  0,        kickoff,  kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
-GAME( 1988, lomakai,  0,        lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
-GAME( 1988, makaiden, lomakai,  lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
-GAME( 1988, p47,      0,        p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
-GAME( 1988, p47j,     p47,      p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
-GAME( 1993, peekaboo, 0,        peekaboo, peekaboo, 0,        ROT0,       "Jaleco", "Peek-a-Boo!" )
-GAME( 1989, plusalph, 0,        plusalph, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
-GAME( 1990, rodland,  0,        rodland,  rodland,  rodland,  ROT0,       "Jaleco", "RodLand (World)" )
-GAME( 1990, rodlandj, rodland,  rodland,  rodland,  rodlandj, ROT0,       "Jaleco", "RodLand (Japan)" )
-GAME( 1989, stdragon, 0,        stdragon, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
-GAME( 1992, soldamj,  0,        soldamj,  soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
-GAME( 1988, tshingen, 0,        tshingen, tshingen, tshingen, ROT0,       "Jaleco", "Takeda Shingen (Japan)" )
+GAME ( 1991, 64street, 0,        64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
+GAME ( 1991, 64streej, 64street, 64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
+GAME ( 1989, astyanax, 0,        astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
+GAME ( 1989, lordofk,  astyanax, astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
+GAME ( 1991, avspirit, 0,        avspirit, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
+GAME ( 1990, phantasm, avspirit, phantasm, phantasm, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
+GAME ( 1992, bigstrik, 0,        bigstrik, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
+GAME ( 1993, chimerab, 0,        chimerab, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
+GAME ( 1993, cybattlr, 0,        cybattlr, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
+GAME ( 1991, edf,      0,        edf,      edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
+GAMEX( 1989, hachoo,   0,        hachoo,   hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
+GAME ( 1988, iganinju, 0,        iganinju, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
+GAME ( 1988, kickoff,  0,        kickoff,  kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
+GAME ( 1988, lomakai,  0,        lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
+GAME ( 1988, makaiden, lomakai,  lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
+GAME ( 1988, p47,      0,        p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
+GAME ( 1988, p47j,     p47,      p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
+GAME ( 1993, peekaboo, 0,        peekaboo, peekaboo, 0,        ROT0,       "Jaleco", "Peek-a-Boo!" )
+GAME ( 1989, plusalph, 0,        plusalph, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
+GAME ( 1990, rodland,  0,        rodland,  rodland,  rodland,  ROT0,       "Jaleco", "RodLand (World)" )
+GAME ( 1990, rodlandj, rodland,  rodland,  rodland,  rodlandj, ROT0,       "Jaleco", "RodLand (Japan)" )
+GAME ( 1989, stdragon, 0,        stdragon, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
+GAME ( 1992, soldamj,  0,        soldamj,  soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
+GAME ( 1988, tshingen, 0,        tshingen, tshingen, tshingen, ROT0,       "Jaleco", "Takeda Shingen (Japan)" )

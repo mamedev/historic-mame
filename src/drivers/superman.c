@@ -39,53 +39,21 @@ TODO:
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/taitosnd.h"
 
 
-WRITE_HANDLER( supes_attribram_w );
-READ_HANDLER( supes_attribram_r );
-WRITE_HANDLER( supes_videoram_w );
-READ_HANDLER( supes_videoram_r );
 void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
-int superman_vh_start (void);
-void superman_vh_stop (void);
 
 extern size_t supes_videoram_size;
 extern size_t supes_attribram_size;
 
-extern unsigned char *supes_videoram;
-extern unsigned char *supes_attribram;
+extern data16_t *supes_videoram;
+extern data16_t *supes_attribram;
 
-/* Routines found in sndhrdw/rastan.c */
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
-
-WRITE_HANDLER( rastan_sound_w );
-READ_HANDLER( rastan_sound_r );
-
-static unsigned char *ram; /* for high score save */
 
 void cchip1_init_machine(void);
-READ_HANDLER( cchip1_r );
-WRITE_HANDLER( cchip1_w );
-
-READ_HANDLER( superman_input_r )
-{
-	switch (offset)
-	{
-		case 0x00:
-			return readinputport (0);
-		case 0x02:
-			return readinputport (1);
-		case 0x04:
-			return readinputport (2);
-		case 0x06:
-			return readinputport (3);
-		default:
-			logerror("superman_input_r offset: %04x\n", offset);
-			return 0xff;
-	}
-}
+READ16_HANDLER( cchip1_word_r );
+WRITE16_HANDLER( cchip1_word_w );
 
 
 
@@ -99,33 +67,33 @@ static WRITE_HANDLER( taito68k_sound_bankswitch_w )
 }
 
 
-static struct MemoryReadAddress superman_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x500000, 0x50000f, superman_input_r },	/* DSW A/B */
-	{ 0x800000, 0x800003, rastan_sound_r },
-	{ 0x900000, 0x900fff, cchip1_r } ,
-	{ 0xb00000, 0xb00fff, paletteram_word_r },
-	{ 0xd00000, 0xd007ff, supes_attribram_r },
-	{ 0xe00000, 0xe03fff, supes_videoram_r },
-	{ 0xf00000, 0xf03fff, MRA_BANK1 },	/* Main RAM */
-	{ -1 }  /* end of table */
-};
+static MEMORY_READ16_START( superman_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x500000, 0x500001, input_port_0_word_r },
+	{ 0x500002, 0x500003, input_port_1_word_r },
+	{ 0x500004, 0x500005, input_port_2_word_r },
+	{ 0x500006, 0x500007, input_port_3_word_r },
+	{ 0x800000, 0x800001, MRA16_NOP },
+	{ 0x800002, 0x800003, taitosound_comm16_lsb_r },
+	{ 0x900000, 0x900fff, cchip1_word_r } ,
+	{ 0xb00000, 0xb00fff, MRA16_RAM },
+	{ 0xd00000, 0xd007ff, MRA16_RAM },
+	{ 0xe00000, 0xe03fff, MRA16_RAM },
+	{ 0xf00000, 0xf03fff, MRA16_RAM },	/* Main RAM */
+MEMORY_END
 
-static struct MemoryWriteAddress superman_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x800000, 0x800003, rastan_sound_w },
-	{ 0x900000, 0x900fff, cchip1_w },
-	{ 0xb00000, 0xb00fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
-	{ 0xd00000, 0xd007ff, supes_attribram_w, &supes_attribram, &supes_attribram_size },
-	{ 0xe00000, 0xe03fff, supes_videoram_w, &supes_videoram, &supes_videoram_size },
-	{ 0xf00000, 0xf03fff, MWA_BANK1, &ram },			/* Main RAM */
-	{ -1 }  /* end of table */
-};
+static MEMORY_WRITE16_START( superman_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x800000, 0x800001, taitosound_port16_lsb_w },
+	{ 0x800002, 0x800003, taitosound_comm16_lsb_w },
+	{ 0x900000, 0x900fff, cchip1_word_w },
+	{ 0xb00000, 0xb00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0xd00000, 0xd007ff, MWA16_RAM, &supes_attribram, &supes_attribram_size },
+	{ 0xe00000, 0xe03fff, MWA16_RAM, &supes_videoram, &supes_videoram_size },
+	{ 0xf00000, 0xf03fff, MWA16_RAM },			/* Main RAM */
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK2 },
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -133,27 +101,24 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, rastan_a001_r },
+	{ 0xe201, 0xe201, taitosound_slave_comm_r },
 	{ 0xea00, 0xea00, MRA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, rastan_a000_w },
-	{ 0xe201, 0xe201, rastan_a001_w },
+	{ 0xe200, 0xe200, taitosound_slave_port_w },
+	{ 0xe201, 0xe201, taitosound_slave_comm_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
 	{ 0xf200, 0xf200, taito68k_sound_bankswitch_w }, /* bankswitch? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( superman )
 	PORT_START /* DSW A */
@@ -327,8 +292,8 @@ static const struct MachineDriver machine_driver_superman =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	superman_vh_start,
-	superman_vh_stop,
+	0,
+	0,
 	superman_vh_screenrefresh,
 
 	/* sound hardware */

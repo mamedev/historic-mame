@@ -116,20 +116,17 @@ static WRITE_HANDLER( ddrible_vlm5030_ctrl_w )
 }
 
 
-static struct MemoryReadAddress readmem_cpu0[] =
-{
+static MEMORY_READ_START( readmem_cpu0 )
 	{ 0x1800, 0x187f, MRA_RAM },			/* palette */
 	{ 0x2000, 0x3fff, MRA_RAM },			/* Video RAM 1 + Object RAM 1 */
 	{ 0x4000, 0x5fff, MRA_RAM },			/* shared RAM with CPU #1 */
 	{ 0x6000, 0x7fff, MRA_RAM },			/* Video RAM 2 + Object RAM 2 */
 	{ 0x8000, 0x9fff, MRA_BANK1 },			/* banked ROM */
 	{ 0xa000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_cpu0[] =
-{
+static MEMORY_WRITE_START( writemem_cpu0 )
 	{ 0x0000, 0x0004, K005885_0_w },								/* video registers (005885 #1) */
 	{ 0x0800, 0x0804, K005885_1_w },								/* video registers (005885 #2) */
 	{ 0x1800, 0x187f, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* seems wrong, MSB is used as well */
@@ -140,11 +137,9 @@ static struct MemoryWriteAddress writemem_cpu0[] =
 	{ 0x7000, 0x7fff, MWA_RAM, &ddrible_spriteram_2 },				/* Object RAM 2 + Work RAM */
 	{ 0x8000, 0x8000, ddrible_bankswitch_w },						/* bankswitch control */
 	{ 0x8000, 0xffff, MWA_ROM },									/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu1[] =
-{
+static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x1fff, ddrible_sharedram_r },		/* shared RAM with CPU #0 */
 	{ 0x2000, 0x27ff, ddrible_snd_sharedram_r },	/* shared RAM with CPU #2 */
 	{ 0x2800, 0x2800, input_port_3_r },				/* DSW #1 */
@@ -154,37 +149,30 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x2c00, 0x2c00, input_port_4_r },				/* DSW #2 */
 	{ 0x3000, 0x3000, input_port_5_r },				/* DSW #3 */
 	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu1[] =
-{
+static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x1fff, ddrible_sharedram_w },		/* shared RAM with CPU #0 */
 	{ 0x2000, 0x27ff, ddrible_snd_sharedram_w },	/* shared RAM with CPU #2 */
 	{ 0x3400, 0x3400, ddrible_coin_counter_w },		/* coin counters */
 	{ 0x3c00, 0x3c00, watchdog_reset_w },			/* watchdog reset */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_cpu2[] =
-{
+static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x07ff, MRA_RAM },					/* shared RAM with CPU #1 */
 	{ 0x1000, 0x1000, YM2203_status_port_0_r },		/* YM2203 */
 	{ 0x1001, 0x1001, YM2203_read_port_0_r },		/* YM2203 */
 	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_cpu2[] =
-{
+static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x07ff, MWA_RAM, &ddrible_snd_sharedram  },	/* shared RAM with CPU #1 */
 	{ 0x1000, 0x1000, YM2203_control_port_0_w },			/* YM2203 */
 	{ 0x1001, 0x1001, YM2203_write_port_0_w },				/* YM2203 */
 	{ 0x3000, 0x3000, VLM5030_data_w },						/* Speech data */
 	{ 0x8000, 0xffff, MWA_ROM },							/* ROM */
-	{ -1 }
-};
+MEMORY_END
 
 INPUT_PORTS_START( ddribble )
 	PORT_START	/* PLAYER 1 INPUTS */

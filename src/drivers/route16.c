@@ -71,19 +71,16 @@ READ_HANDLER( route16_sharedram_r );
 void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( stratvox_sn76477_w );
 
-static struct MemoryReadAddress cpu1_readmem[] =
-{
+static MEMORY_READ_START( cpu1_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x4000, 0x43ff, route16_sharedram_r },
 	{ 0x4800, 0x4800, input_port_0_r },
 	{ 0x5000, 0x5000, input_port_1_r },
 	{ 0x5800, 0x5800, input_port_2_r },
 	{ 0x8000, 0xbfff, route16_videoram1_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cpu1_writemem[] =
-{
+static MEMORY_WRITE_START( cpu1_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
 	{ 0x4800, 0x4800, route16_out0_w },
@@ -91,34 +88,27 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
 	{ 0xc000, 0xc000, MWA_RAM }, // Stratvox has an off by one error
                                  // when clearing the screen
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct IOWritePort cpu1_writeport[] =
-{
+static PORT_WRITE_START( cpu1_writeport )
 	{ 0x6800, 0x6800, AY8910_write_port_0_w },
 	{ 0x6900, 0x6900, AY8910_control_port_0_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct MemoryReadAddress cpu2_readmem[] =
-{
+static MEMORY_READ_START( cpu2_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, route16_sharedram_r },
 	{ 0x8000, 0xbfff, route16_videoram2_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cpu2_writemem[] =
-{
+static MEMORY_WRITE_START( cpu2_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2800, 0x2800, DAC_0_data_w }, // Not used by Route 16
 	{ 0x4000, 0x43ff, route16_sharedram_w },
 	{ 0x8000, 0xbfff, route16_videoram2_w, &route16_videoram2 },
 	{ 0xc000, 0xc1ff, MWA_NOP }, // Route 16 sometimes writes outside of
-	{ -1 }  /* end of table */   // the video ram. (Probably a bug)
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( route16 )

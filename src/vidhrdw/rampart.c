@@ -1,42 +1,22 @@
 /***************************************************************************
 
-  vidhrdw/rampart.c
+	Atari Rampart hardware
 
-  Functions to emulate the video hardware of the machine.
-
-****************************************************************************
-
-	Motion Object encoding
-	----------------------
-		4 16-bit words are used
-
-		Word 1:
-			Bits  0-7  = link to the next motion object
-
-		Word 2:
-			Bit   15   = horizontal flip
-			Bits  0-11 = image index
-
-		Word 3:
-			Bits  7-15 = horizontal position
-			Bits  0-3  = motion object palette
-
-		Word 4:
-			Bits  7-15 = vertical position
-			Bits  4-6  = horizontal size of the object, in tiles
-			Bits  0-2  = vertical size of the object, in tiles
-
-***************************************************************************/
+****************************************************************************/
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 
-#define XCHARS 43
-#define YCHARS 30
 
-#define XDIM (XCHARS*8)
-#define YDIM (YCHARS*8)
+
+/*************************************
+ *
+ *	Globals we own
+ *
+ *************************************/
+
+data16_t *rampart_bitmap;
 
 
 
@@ -46,20 +26,16 @@
  *
  *************************************/
 
-static int *color_usage;
+static int *pfusage;
+static UINT8 *pfdirty;
+static struct osd_bitmap *pfbitmap;
+static int xdim, ydim;
 
-
-
-/*************************************
- *
- *	Prototypes
- *
- *************************************/
-
-static const UINT8 *update_palette(void);
-
-static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+int rampart_bitmap_init(int _xdim, int _ydim);
+void rampart_bitmap_free(void);
+void rampart_bitmap_invalidate(void);
+void rampart_bitmap_mark_palette(int base);
+void rampart_bitmap_render(struct osd_bitmap *bitmap);
 
 
 
@@ -71,45 +47,59 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 int rampart_vh_start(void)
 {
-	static struct atarigen_mo_desc mo_desc =
+	static const struct atarimo_desc modesc =
 	{
-		256,                 /* maximum number of MO's */
-		8,                   /* number of bytes per MO entry */
-		2,                   /* number of bytes between MO words */
-		0,                   /* ignore an entry if this word == 0xffff */
-		0, 0, 0xff,          /* link = (data[linkword] >> linkshift) & linkmask */
-		0                    /* render in reverse link order */
-	};
+		0,					/* index to which gfx system */
+		1,					/* number of motion object banks */
+		1,					/* are the entries linked? */
+		0,					/* are the entries split? */
+		0,					/* render in reverse order? */
+		0,					/* render in swapped X/Y order? */
+		0,					/* does the neighbor bit affect the next object? */
+		8,					/* pixels per SLIP entry (0 for no-slip) */
+		8,					/* number of scanlines between MO updates */
 
-	static struct atarigen_pf_desc pf_desc =
-	{
-		8, 8,				/* width/height of each tile */
-		XCHARS, YCHARS,		/* number of tiles in each direction */
-		1					/* non-scrolling */
-	};
+		0x100,				/* base palette entry */
+		0x100,				/* maximum number of colors */
+		0,					/* transparent pen index */
 
-	/* allocate color usage */
-	color_usage = malloc(sizeof(int) * 256);
-	if (!color_usage)
-		return 1;
-	color_usage[0] = XDIM * YDIM;
+		{{ 0x00ff,0,0,0 }},	/* mask for the link */
+		{{ 0 }},			/* mask for the graphics bank */
+		{{ 0,0x7fff,0,0 }},	/* mask for the code index */
+		{{ 0 }},			/* mask for the upper code index */
+		{{ 0,0,0x000f,0 }},	/* mask for the color */
+		{{ 0,0,0xff80,0 }},	/* mask for the X position */
+		{{ 0,0,0,0xff80 }},	/* mask for the Y position */
+		{{ 0,0,0,0x0070 }},	/* mask for the width, in tiles*/
+		{{ 0,0,0,0x0007 }},	/* mask for the height, in tiles */
+		{{ 0,0x8000,0,0 }},	/* mask for the horizontal flip */
+		{{ 0 }},			/* mask for the vertical flip */
+		{{ 0 }},			/* mask for the priority */
+		{{ 0 }},			/* mask for the neighbor */
+		{{ 0 }},			/* mask for absolute coordinates */
+		
+		{{ 0 }},			/* mask for the ignore value */
+		0,					/* resulting value to indicate "ignore" */
+		0,					/* callback routine for ignored entries */
+	};
 
 	/* initialize the playfield */
-	if (atarigen_pf_init(&pf_desc))
-	{
-		free(color_usage);
-		return 1;
-	}
+	if (!rampart_bitmap_init(43*8, 30*8))
+		goto cant_create_pf;
 
 	/* initialize the motion objects */
-	if (atarigen_mo_init(&mo_desc))
-	{
-		atarigen_pf_free();
-		free(color_usage);
-		return 1;
-	}
+	if (!atarimo_init(0, &modesc))
+		goto cant_create_mo;
 
+	/* set the intial scroll offset */
+	atarimo_set_xscroll(0, -4, 0);
 	return 0;
+
+	/* error cases */
+cant_create_mo:
+	rampart_bitmap_free();
+cant_create_pf:
+	return 1;
 }
 
 
@@ -122,61 +112,8 @@ int rampart_vh_start(void)
 
 void rampart_vh_stop(void)
 {
-	/* free data */
-	if (color_usage)
-		free(color_usage);
-	color_usage = 0;
-
-	atarigen_pf_free();
-	atarigen_mo_free();
-}
-
-
-
-/*************************************
- *
- *	Playfield RAM write handler
- *
- *************************************/
-
-WRITE_HANDLER( rampart_playfieldram_w )
-{
-	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	int x, y;
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&atarigen_playfieldram[offset], newword);
-
-		/* track color usage */
-		x = offset % 512;
-		y = offset / 512;
-		if (x < XDIM && y < YDIM)
-		{
-			color_usage[(oldword >> 8) & 0xff]--;
-			color_usage[oldword & 0xff]--;
-			color_usage[(newword >> 8) & 0xff]++;
-			color_usage[newword & 0xff]++;
-		}
-
-		/* mark scanlines dirty */
-		atarigen_pf_dirty[y] = 1;
-	}
-}
-
-
-
-/*************************************
- *
- *	Periodic scanline updater
- *
- *************************************/
-
-void rampart_scanline_update(int scanline)
-{
-	/* update the MOs from the SLIP table */
-	atarigen_mo_update_slip_512(atarigen_spriteram, 0, scanline, &atarigen_spriteram[0x3f40]);
+	atarimo_free();
+	rampart_bitmap_free();
 }
 
 
@@ -189,143 +126,167 @@ void rampart_scanline_update(int scanline)
 
 void rampart_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* remap if necessary */
-	if (update_palette())
-		memset(atarigen_pf_dirty, 1, YDIM);
+	/* mark the used colors */
+	palette_init_used_colors();
+	rampart_bitmap_mark_palette(0);
+	atarimo_mark_palette(0);
 
-	/* update the cached bitmap */
-	{
-		int x, y;
+	/* update the palette, and mark things dirty if we need to */
+	if (palette_recalc())
+		rampart_bitmap_invalidate();
 
-		for (y = 0; y < YDIM; y++)
-			if (atarigen_pf_dirty[y])
-			{
-				int xx = 0;
-				const UINT8 *src = &atarigen_playfieldram[512 * y];
-
-				/* regenerate the line */
-				for (x = 0; x < XDIM/2; x++)
-				{
-					int bits = READ_WORD(src);
-					src += 2;
-					plot_pixel(atarigen_pf_bitmap, xx++, y, Machine->pens[bits >> 8]);
-					plot_pixel(atarigen_pf_bitmap, xx++, y, Machine->pens[bits & 0xff]);
-				}
-				atarigen_pf_dirty[y] = 0;
-			}
-	}
-
-	/* copy the cached bitmap */
-	copybitmap(bitmap, atarigen_pf_bitmap, 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
-
-	/* render the motion objects */
-	atarigen_mo_process(mo_render_callback, bitmap);
-
-	/* update onscreen messages */
-	atarigen_update_messages();
+	/* draw the layers */
+	rampart_bitmap_render(bitmap);
+	atarimo_render(0, bitmap, NULL, NULL);
 }
 
 
 
 /*************************************
  *
- *	Palette management
+ *	Bitmap initialization
  *
  *************************************/
 
-static const UINT8 *update_palette(void)
+int rampart_bitmap_init(int _xdim, int _ydim)
 {
-	UINT16 mo_map[16];
-	int i, j;
+	/* set the dimensions */
+	xdim = _xdim;
+	ydim = _ydim;
 
-	/* reset color tracking */
-	memset(mo_map, 0, sizeof(mo_map));
-	palette_init_used_colors();
+	/* allocate color usage */
+	pfusage = malloc(sizeof(pfusage[0]) * 256);
+	if (!pfusage)
+		goto cant_alloc_usage;
+	pfusage[0] = xdim * ydim;
+	
+	/* allocate dirty map */
+	pfdirty = malloc(sizeof(pfdirty[0]) * ydim);
+	if (!pfdirty)
+		goto cant_alloc_dirty;
+	memset(pfdirty, 1, sizeof(pfdirty[0]) * ydim);
+	
+	/* allocate playfield bitmap */
+	pfbitmap = bitmap_alloc(xdim, ydim);
+	if (!pfbitmap)
+		goto cant_alloc_pf;
+	return 1;
 
-	/* update color usage for the mo's */
-	atarigen_mo_process(mo_color_callback, mo_map);
+	/* error cases */
+cant_alloc_pf:
+	free(pfdirty);
+cant_alloc_dirty:
+	free(pfusage);
+cant_alloc_usage:
+	return 0;
+}
 
-	/* rebuild the playfield palette */
-	for (i = 0; i < 256; i++)
-		if (color_usage[i])
-			palette_used_colors[0x000 + i] = PALETTE_COLOR_USED;
 
-	/* rebuild the motion object palette */
-	for (i = 0; i < 16; i++)
+
+/*************************************
+ *
+ *	Bitmap freeing
+ *
+ *************************************/
+
+void rampart_bitmap_free(void)
+{
+	bitmap_free(pfbitmap);
+	free(pfdirty);
+	free(pfusage);
+}
+
+
+
+/*************************************
+ *
+ *	Bitmap invalidating
+ *
+ *************************************/
+
+void rampart_bitmap_invalidate(void)
+{
+	memset(pfdirty, 1, ydim * sizeof(pfdirty[0]));
+}
+
+
+
+/*************************************
+ *
+ *	Bitmap RAM write handler
+ *
+ *************************************/
+
+WRITE16_HANDLER( rampart_bitmap_w )
+{
+	int oldword = rampart_bitmap[offset];
+	int newword = oldword;
+	int x, y;
+
+	COMBINE_DATA(&newword);
+	if (oldword != newword)
 	{
-		UINT16 used = mo_map[i];
-		if (used)
+		rampart_bitmap[offset] = newword;
+
+		/* track color usage */
+		x = offset % 256;
+		y = offset / 256;
+		if (x < xdim && y < ydim)
 		{
-			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
-			for (j = 1; j < 16; j++)
-				if (used & (1 << j))
-					palette_used_colors[0x100 + i * 16 + j] = PALETTE_COLOR_USED;
+			pfusage[(oldword >> 8) & 0xff]--;
+			pfusage[oldword & 0xff]--;
+			pfusage[(newword >> 8) & 0xff]++;
+			pfusage[newword & 0xff]++;
+			pfdirty[y] = 1;
 		}
 	}
-
-	return palette_recalc();
 }
 
 
 
 /*************************************
  *
- *	Motion object palette
+ *	Bitmap palette marking
  *
  *************************************/
 
-static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
+void rampart_bitmap_mark_palette(int base)
 {
-	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	UINT16 *colormap = param;
-	int code = data[1] & 0x7fff;
-	int color = data[2] & 0x000f;
-	int hsize = ((data[3] >> 4) & 7) + 1;
-	int vsize = (data[3] & 7) + 1;
-	int tiles = hsize * vsize;
-	UINT16 temp = 0;
 	int i;
-
-	for (i = 0; i < tiles; i++)
-		temp |= usage[code++];
-	colormap[color] |= temp;
+	
+	for (i = 0; i < 256; i++)
+		if (pfusage[i])
+			palette_used_colors[base + i] = PALETTE_COLOR_USED;
 }
 
 
 
 /*************************************
  *
- *	Motion object rendering
+ *	Bitmap rendering
  *
  *************************************/
 
-static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
+void rampart_bitmap_render(struct osd_bitmap *bitmap)
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
-	struct osd_bitmap *bitmap = param;
-	struct rectangle pf_clip;
+	int x, y;
 
-	/* extract data from the various words */
-	int hflip = data[1] & 0x8000;
-	int code = data[1] & 0x7fff;
-	int xpos = (data[2] >> 7) + 4;
-	int color = data[2] & 0x000f;
-	int ypos = 512 - (data[3] >> 7);
-	int hsize = ((data[3] >> 4) & 7) + 1;
-	int vsize = (data[3] & 7) + 1;
+	/* update any dirty scanlines */
+	for (y = 0; y < ydim; y++)
+		if (pfdirty[y])
+		{
+			const data16_t *src = &rampart_bitmap[256 * y];
 
-	/* adjust for height */
-	ypos -= vsize * 8;
+			/* regenerate the line */
+			for (x = 0; x < xdim / 2; x++)
+			{
+				int bits = *src++;
+				plot_pixel(pfbitmap, x*2+0, y, Machine->pens[bits >> 8]);
+				plot_pixel(pfbitmap, x*2+1, y, Machine->pens[bits & 0xff]);
+			}
+			pfdirty[y] = 0;
+		}
 
-	/* adjust the final coordinates */
-	xpos &= 0x1ff;
-	ypos &= 0x1ff;
-	if (xpos >= XDIM) xpos -= 0x200;
-	if (ypos >= YDIM) ypos -= 0x200;
-
-	/* determine the bounding box */
-	atarigen_mo_compute_clip_8x8(pf_clip, xpos, ypos, hsize, vsize, clip);
-
-	/* draw the motion object */
-	atarigen_mo_draw_8x8(bitmap, gfx, code, color, hflip, 0, xpos, ypos, hsize, vsize, clip, TRANSPARENCY_PEN, 0);
+	/* copy the cached bitmap */
+	copybitmap(bitmap, pfbitmap, 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
 }

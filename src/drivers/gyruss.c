@@ -94,8 +94,7 @@ WRITE_HANDLER( gyruss_sharedram_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_RAM },
@@ -110,11 +109,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc0c0, 0xc0c0, input_port_2_r },	/* IN2 */
 	{ 0xc0e0, 0xc0e0, input_port_3_r },	/* DSW0 */
 	{ 0xc100, 0xc100, input_port_5_r },	/* DSW2 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },                 /* rom space+1        */
 	{ 0x8000, 0x83ff, colorram_w, &colorram },
 	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
@@ -135,38 +132,30 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc100, 0xc100, soundlatch_w },         /* command to soundb  */
 	{ 0xc180, 0xc180, interrupt_enable_w },      /* NMI enable         */
 	{ 0xc185, 0xc185, gyruss_flipscreen_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },                 /* rom soundboard     */
 	{ 0x6000, 0x63ff, MRA_RAM },                 /* ram soundboard     */
 	{ 0x8000, 0x8000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },                 /* rom soundboard     */
 	{ 0x6000, 0x63ff, MWA_RAM },                 /* ram soundboard     */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x01, 0x01, AY8910_read_port_0_r },
   	{ 0x05, 0x05, AY8910_read_port_1_r },
 	{ 0x09, 0x09, AY8910_read_port_2_r },
   	{ 0x0d, 0x0d, AY8910_read_port_3_r },
   	{ 0x11, 0x11, AY8910_read_port_4_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x04, 0x04, AY8910_control_port_1_w },
@@ -179,55 +168,42 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x12, 0x12, AY8910_write_port_4_w },
 	{ 0x14, 0x14, gyruss_i8039_irq_w },
 	{ 0x18, 0x18, soundlatch2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 #ifdef EMULATE_6809
-static struct MemoryReadAddress m6809_readmem[] =
-{
+static MEMORY_READ_START( m6809_readmem )
 	{ 0x0000, 0x0000, gyruss_scanline_r },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x6000, 0x67ff, gyruss_sharedram_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress m6809_writemem[] =
-{
+static MEMORY_WRITE_START( m6809_writemem )
 	{ 0x2000, 0x2000, interrupt_enable_w },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4040, 0x40ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x6000, 0x67ff, gyruss_sharedram_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 #endif
 
-static struct MemoryReadAddress i8039_readmem[] =
-{
+static MEMORY_READ_START( i8039_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress i8039_writemem[] =
-{
+static MEMORY_WRITE_START( i8039_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort i8039_readport[] =
-{
+static PORT_READ_START( i8039_readport )
 	{ 0x00, 0xff, soundlatch2_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort i8039_writeport[] =
-{
+static PORT_WRITE_START( i8039_writeport )
 	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, IOWP_NOP },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

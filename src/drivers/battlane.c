@@ -111,8 +111,7 @@ WRITE_HANDLER( battlane_cpu_command_w )
 
 /* Both CPUs share the same memory */
 
-static struct MemoryReadAddress battlane_readmem[] =
-{
+static MEMORY_READ_START( battlane_readmem )
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
     { 0x1000, 0x17ff, battlane_tileram_r },
     { 0x1800, 0x18ff, battlane_spriteram_r },
@@ -123,11 +122,9 @@ static struct MemoryReadAddress battlane_readmem[] =
 	{ 0x1c04, 0x1c04, YM3526_status_port_0_r },
 	{ 0x2000, 0x3fff, battlane_bitmap_r },
 	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress battlane_writemem[] =
-{
+static MEMORY_WRITE_START( battlane_writemem )
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
     { 0x1000, 0x17ff, battlane_tileram_w },
     { 0x1800, 0x18ff, battlane_spriteram_w },
@@ -140,8 +137,7 @@ static struct MemoryWriteAddress battlane_writemem[] =
 	{ 0x1e00, 0x1e3f, MWA_RAM }, /* Palette ??? */
 	{ 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 int battlane_cpu1_interrupt(void)
 {

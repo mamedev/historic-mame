@@ -79,7 +79,7 @@ int renegade_vh_start( void )
 	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_scrolldx( bg_tilemap, 256, 0 );
 
 	tilemap_set_scrolldy( fg_tilemap, 0, 16 );
@@ -138,9 +138,8 @@ void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly( fg_tilemap, 0, 0 );
 
 	tilemap_update( ALL_TILEMAPS );
-	if (palette_recalc())  tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
-	tilemap_render( ALL_TILEMAPS );
-	tilemap_draw( bitmap,bg_tilemap,0 );
+	palette_recalc();
+	tilemap_draw( bitmap,bg_tilemap,0 ,0);
 	draw_sprites( bitmap );
-	tilemap_draw( bitmap,fg_tilemap,0 );
+	tilemap_draw( bitmap,fg_tilemap,0 ,0);
 }

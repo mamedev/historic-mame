@@ -245,8 +245,7 @@ static void nvram_handler(void *file,int read_or_write)
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x8000, 0x83ff, qix_sharedram_r },
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, MRA_RAM },   /* ACIA */
@@ -255,11 +254,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9900, 0x9903, pia_1_r },
 	{ 0x9c00, 0x9FFF, pia_2_r },
 	{ 0xa000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress zoo_readmem[] =
-{
+static MEMORY_READ_START( zoo_readmem )
 	{ 0x0000, 0x03ff, qix_sharedram_r },
 	{ 0x0400, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x1003, pia_3_r },	/* Sound PIA */
@@ -267,22 +264,18 @@ static struct MemoryReadAddress zoo_readmem[] =
 	{ 0x1900, 0x1903, pia_1_r },	/* Game PIA 2 */
 	{ 0x1c00, 0x1fff, pia_2_r },    /* Game PIA 3 - Player 2 */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_video[] =
-{
+static MEMORY_READ_START( readmem_video )
 	{ 0x0000, 0x7fff, qix_videoram_r },
 	{ 0x8000, 0x83ff, qix_sharedram_r },
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x9400, 0x9400, qix_addresslatch_r },
 	{ 0x9800, 0x9800, qix_scanline_r },
 	{ 0xa000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress zoo_readmem_video[] =
-{
+static MEMORY_READ_START( zoo_readmem_video )
 	{ 0x0000, 0x7fff, qix_videoram_r },
 	{ 0x8000, 0x83ff, qix_sharedram_r },
 	{ 0x8400, 0x87ff, MRA_RAM },
@@ -290,30 +283,24 @@ static struct MemoryReadAddress zoo_readmem_video[] =
 	{ 0x9800, 0x9800, qix_scanline_r },
 	{ 0xa000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x2000, 0x2003, pia_5_r },
 	{ 0x4000, 0x4003, pia_4_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress zoo_readmem_sound[] =
-{
+static MEMORY_READ_START( zoo_readmem_sound )
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x2000, 0x2003, pia_5_r },
 	{ 0x4000, 0x4003, pia_4_r },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x8000, 0x83ff, qix_sharedram_w, &qix_sharedram },
 	{ 0x8400, 0x87ff, MWA_RAM },
 	{ 0x8c00, 0x8c00, qix_video_firq_w },
@@ -322,11 +309,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9900, 0x9903, pia_1_w },
 	{ 0x9c00, 0x9fff, pia_2_w },
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress zoo_writemem[] =
-{
+static MEMORY_WRITE_START( zoo_writemem )
 	{ 0x0000, 0x03ff, qix_sharedram_w, &qix_sharedram },
 	{ 0x0400, 0x07ff, MWA_RAM },
 	{ 0x0c00, 0x0c00, qix_video_firq_w },
@@ -336,11 +321,9 @@ static struct MemoryWriteAddress zoo_writemem[] =
 	{ 0x1900, 0x1903, pia_1_w },	/* Game PIA 2 */
 	{ 0x1c00, 0x1fff, pia_2_w },    /* Game PIA 3 */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_video[] =
-{
+static MEMORY_WRITE_START( writemem_video )
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
 	{ 0x8400, 0x87ff, MWA_RAM, &nvram, &nvram_size },
@@ -351,11 +334,9 @@ static struct MemoryWriteAddress writemem_video[] =
 	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
 	{ 0x9c00, 0x9FFF, MWA_RAM }, /* Video controller */
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress zoo_writemem_video[] =
-{
+static MEMORY_WRITE_START( zoo_writemem_video )
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
 	{ 0x8400, 0x87ff, MWA_RAM, &nvram, &nvram_size },	/////protected when coin door is closed
@@ -367,39 +348,31 @@ static struct MemoryWriteAddress zoo_writemem_video[] =
 	{ 0x9400, 0x9400, qix_addresslatch_w },
 	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
 	{ 0xa000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x2000, 0x2003, pia_5_w },
 	{ 0x4000, 0x4003, pia_4_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress zoo_writemem_sound[] =
-{
+static MEMORY_WRITE_START( zoo_writemem_sound )
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x2000, 0x2003, pia_5_w },
 	{ 0x4000, 0x4003, pia_4_w },
 	{ 0xd000, 0xffff, MWA_ROM },
-	{ -1 } /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x0000, sdungeon_68705_portA_r },
 	{ 0x0001, 0x0001, sdungeon_68705_portB_r },
 	{ 0x0002, 0x0002, sdungeon_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x0000, sdungeon_68705_portA_w },
 	{ 0x0001, 0x0001, sdungeon_68705_portB_w },
 	{ 0x0002, 0x0002, sdungeon_68705_portC_w },
@@ -408,8 +381,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x0006, 0x0006, sdungeon_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

@@ -27,8 +27,7 @@ static WRITE_HANDLER( solomon_sh_command_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },	/* RAM */
 	{ 0xd000, 0xdfff, MRA_RAM },	/* video + color + bg */
@@ -40,11 +39,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xe604, 0xe604, input_port_3_r },	/* DSW1 */
 	{ 0xe605, 0xe605, input_port_4_r },	/* DSW2 */
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd3ff, colorram_w, &colorram },
@@ -57,35 +54,28 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe604, 0xe604, solomon_flipscreen_w },
 	{ 0xe800, 0xe800, solomon_sh_command_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress solomon_sound_readmem[] =
-{
+static MEMORY_READ_START( solomon_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x8000, 0x8000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress solomon_sound_writemem[] =
-{
+static MEMORY_WRITE_START( solomon_sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0xffff, 0xffff, MWA_NOP },	/* watchdog? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort solomon_sound_writeport[] =
-{
+static PORT_WRITE_START( solomon_sound_writeport )
 	{ 0x10, 0x10, AY8910_control_port_0_w },
 	{ 0x11, 0x11, AY8910_write_port_0_w },
 	{ 0x20, 0x20, AY8910_control_port_1_w },
 	{ 0x21, 0x21, AY8910_write_port_1_w },
 	{ 0x30, 0x30, AY8910_control_port_2_w },
 	{ 0x31, 0x31, AY8910_write_port_2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

@@ -352,8 +352,7 @@ int psychic5_interrupt(void)
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xdfff, psychic5_paged_ram_r },
@@ -367,11 +366,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf006, 0xf1ff, MRA_NOP },
 	{ 0xf200, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xbfff, MWA_BANK1 },
 	{ 0xc000, 0xdfff, psychic5_paged_ram_w },
@@ -385,32 +382,25 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf006, 0xf1ff, MWA_NOP },
 	{ 0xf200, 0xf7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
 	{ 0x80, 0x80, YM2203_control_port_1_w },
 	{ 0x81, 0x81, YM2203_write_port_1_w },
-	{ -1 }
-};
+PORT_END
 
 INPUT_PORTS_START( psychic5 )
     PORT_START

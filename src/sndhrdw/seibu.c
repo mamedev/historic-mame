@@ -144,6 +144,12 @@ WRITE_HANDLER( seibu_soundlatch_w )
 		timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
 }
 
+WRITE16_HANDLER( seibu_soundlatch_word_w )
+{
+	if (ACCESSING_LSB)
+		seibu_soundlatch_w(2*offset,data & 0xff);
+}
+
 WRITE_HANDLER( seibu_main_data_w )
 {
 	seibu_shared_sound_ram[offset<<1]=data;

@@ -89,8 +89,8 @@ int baraduke_vh_start( void )
 	if (!tilemap[0] || !tilemap[1])
 		return 1;
 
-	tilemap[0]->transparent_pen = 7;
-	tilemap[1]->transparent_pen = 7;
+	tilemap_set_transparent_pen(tilemap[0],7);
+	tilemap_set_transparent_pen(tilemap[1],7);
 
 	return 0;
 }
@@ -310,14 +310,11 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	mark_textlayer_colors();
 	mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY);
+	tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
 	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,tilemap[0],0);
+	tilemap_draw(bitmap,tilemap[0],0,0);
 	draw_sprites(bitmap,1);
 
 	for (offs = 0x400 - 1; offs > 0; offs--)
@@ -363,14 +360,11 @@ void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY);
+	tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,tilemap[1],0);
+	tilemap_draw(bitmap,tilemap[1],0,0);
 	draw_sprites(bitmap,1);
 	for (offs = 0x400 - 1; offs > 0; offs--)
 	{

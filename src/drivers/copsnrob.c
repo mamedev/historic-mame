@@ -54,8 +54,7 @@ READ_HANDLER( copsnrob_gun_position_r );
 int copsnrob_vh_start(void);
 void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x0800, 0x08ff, MRA_RAM },
 	{ 0x0b00, 0x0bff, MRA_RAM },
@@ -67,11 +66,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x101a, 0x101a, input_port_2_r },
 	{ 0x1200, 0x1fff, MRA_ROM },
 	{ 0xfff8, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0500, 0x0503, MWA_RAM },
 	{ 0x0504, 0x0507, MWA_NOP },  // ???
@@ -85,8 +82,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1000, 0x1003, MWA_NOP },
 	{ 0x1200, 0x1fff, MWA_ROM },
 	{ 0xfff8, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( copsnrob )

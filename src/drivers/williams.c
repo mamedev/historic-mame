@@ -610,9 +610,9 @@ WRITE_HANDLER( williams2_bg_select_w );
 
 #define CONFIGURE_PIAS(a,b,c) \
 	pia_unconfig();\
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &a);\
-	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &b);\
-	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &c)
+	pia_config(0, PIA_STANDARD_ORDERING, &a);\
+	pia_config(1, PIA_STANDARD_ORDERING, &b);\
+	pia_config(2, PIA_STANDARD_ORDERING, &c)
 
 
 
@@ -639,26 +639,22 @@ static void nvram_handler(void *file,int read_or_write)
  *
  *************************************/
 
-static struct MemoryReadAddress defender_readmem[] =
-{
+static MEMORY_READ_START( defender_readmem )
 	{ 0x0000, 0x97ff, MRA_BANK1 },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_BANK2 },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress defender_writemem[] =
-{
+static MEMORY_WRITE_START( defender_writemem )
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xcfff, MWA_BANK2, &defender_bank_base },
 	{ 0xc000, 0xc00f, MWA_RAM, &paletteram },
 	{ 0xd000, 0xdfff, defender_bank_select_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -668,8 +664,7 @@ static struct MemoryWriteAddress defender_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress williams_readmem[] =
-{
+static MEMORY_READ_START( williams_readmem )
 	{ 0x0000, 0x97ff, MRA_BANK1 },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_0_r },
@@ -677,12 +672,10 @@ static struct MemoryReadAddress williams_readmem[] =
 	{ 0xcb00, 0xcb00, williams_video_counter_r },
 	{ 0xcc00, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress williams_writemem[] =
-{
+static MEMORY_WRITE_START( williams_writemem )
 	{ 0x0000, 0x97ff, williams_videoram_w, &williams_bank_base, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
@@ -693,8 +686,7 @@ static struct MemoryWriteAddress williams_writemem[] =
 	{ 0xcbff, 0xcbff, watchdog_reset_w },
 	{ 0xcc00, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -704,8 +696,7 @@ static struct MemoryWriteAddress williams_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress blaster_readmem[] =
-{
+static MEMORY_READ_START( blaster_readmem )
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0x96ff, MRA_BANK2 },
 	{ 0x9700, 0xbfff, MRA_RAM },
@@ -714,12 +705,10 @@ static struct MemoryReadAddress blaster_readmem[] =
 	{ 0xcb00, 0xcb00, williams_video_counter_r },
 	{ 0xcc00, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress blaster_writemem[] =
-{
+static MEMORY_WRITE_START( blaster_writemem )
 	{ 0x0000, 0x96ff, williams_videoram_w, &williams_bank_base, &videoram_size },
 	{ 0x9700, 0xbaff, MWA_RAM },
 	{ 0xbb00, 0xbbff, MWA_RAM, &blaster_color_zero_table },
@@ -736,8 +725,7 @@ static struct MemoryWriteAddress blaster_writemem[] =
 	{ 0xcbff, 0xcbff, watchdog_reset_w },
 	{ 0xcc00, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 
 
@@ -747,8 +735,7 @@ static struct MemoryWriteAddress blaster_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress williams2_readmem[] =
-{
+static MEMORY_READ_START( williams2_readmem )
 	{ 0x0000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0x87ff, MRA_BANK2 },
 	{ 0x8800, 0x8fff, MRA_BANK3 },
@@ -759,12 +746,10 @@ static struct MemoryReadAddress williams2_readmem[] =
 	{ 0xcbe0, 0xcbe0, williams_video_counter_r },
 	{ 0xcc00, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress williams2_writemem[] =
-{
+static MEMORY_WRITE_START( williams2_writemem )
 	{ 0x0000, 0x8fff, williams2_videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
@@ -782,8 +767,7 @@ static struct MemoryWriteAddress williams2_writemem[] =
 	{ 0xcba0, 0xcba0, MWA_RAM, &williams2_blit_inhibit },
 	{ 0xcc00, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 
@@ -793,24 +777,20 @@ static struct MemoryWriteAddress williams2_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x0400, 0x0403, pia_2_r },
 	{ 0x8400, 0x8403, pia_2_r },	/* used by Colony 7, perhaps others? */
-	{ 0xb000, 0xffff, MRA_ROM },	/* most games start at $F000; Sinistar starts at $B000 */
-	{ -1 }  /* end of table */
-};
+	{ 0xb000, 0xffff, MRA_ROM },	/* most games start at $F000, Sinistar starts at $B000 */
+MEMORY_END
 
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x0400, 0x0403, pia_2_w },
 	{ 0x8400, 0x8403, pia_2_w },	/* used by Colony 7, perhaps others? */
-	{ 0xb000, 0xffff, MWA_ROM },	/* most games start at $F000; Sinistar starts at $B000 */
-	{ -1 }  /* end of table */
-};
+	{ 0xb000, 0xffff, MWA_ROM },	/* most games start at $F000, Sinistar starts at $B000 */
+MEMORY_END
 
 
 
@@ -820,22 +800,18 @@ static struct MemoryWriteAddress sound_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress williams2_sound_readmem[] =
-{
+static MEMORY_READ_START( williams2_sound_readmem )
 	{ 0x0000, 0x00ff, MRA_RAM },
 	{ 0x2000, 0x2003, pia_2_r },
 	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress williams2_sound_writemem[] =
-{
+static MEMORY_WRITE_START( williams2_sound_writemem )
 	{ 0x0000, 0x00ff, MWA_RAM },
 	{ 0x2000, 0x2003, pia_2_w },
 	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

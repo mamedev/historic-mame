@@ -15,18 +15,15 @@
 static READ_HANDLER( timeplt_portB_r );
 static WRITE_HANDLER( timeplt_filter_w );
 
-struct MemoryReadAddress timeplt_sound_readmem[] =
-{
+MEMORY_READ_START( timeplt_sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x33ff, MRA_RAM },
 	{ 0x4000, 0x4000, AY8910_read_port_0_r },
 	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress timeplt_sound_writemem[] =
-{
+MEMORY_WRITE_START( timeplt_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x3000, 0x33ff, MWA_RAM },
@@ -35,8 +32,7 @@ struct MemoryWriteAddress timeplt_sound_writemem[] =
 	{ 0x6000, 0x6000, AY8910_write_port_1_w },
 	{ 0x7000, 0x7000, AY8910_control_port_1_w },
 	{ 0x8000, 0x8fff, timeplt_filter_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 struct AY8910interface timeplt_ay8910_interface =

@@ -66,8 +66,7 @@ static WRITE_HANDLER( cpu_sound_command_w )
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0010, 0x0010, input_port_0_r },		/* IN0 */
 	{ 0x0011, 0x0011, input_port_1_r },		/* IN1 */
 	{ 0x0012, 0x0012, input_port_2_r },		/* IN2 */
@@ -80,11 +79,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0007, contra_K007121_ctrl_0_w },
 	{ 0x0018, 0x0018, contra_coin_counter_w },
 	{ 0x001a, 0x001a, contra_sh_irqtrigger_w },
@@ -105,27 +102,22 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_ROM },
  	{ 0x7000, 0x7000, contra_bankswitch_w },
 	{ 0x7001, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0000, soundlatch_r },
 	{ 0x2001, 0x2001, YM2151_status_port_0_r },
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x4000, 0x4000, MWA_NOP }, /* read triggers irq reset and latch read (in the hardware only). */
 	{ 0x6000, 0x67ff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
 

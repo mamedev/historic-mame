@@ -50,44 +50,36 @@ void bankp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xf000, 0xf3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xf400, 0xf7ff, colorram_w, &colorram },
 	{ 0xf800, 0xfbff, bankp_videoram2_w, &bankp_videoram2 },
 	{ 0xfc00, 0xffff, bankp_colorram2_w, &bankp_colorram2 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },	/* IN0 */
 	{ 0x01, 0x01, input_port_1_r },	/* IN1 */
 	{ 0x02, 0x02, input_port_2_r },	/* IN2 */
 	{ 0x04, 0x04, input_port_3_r },	/* DSW */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, SN76496_0_w },
 	{ 0x01, 0x01, SN76496_1_w },
 	{ 0x02, 0x02, SN76496_2_w },
 	{ 0x05, 0x05, bankp_scroll_w },
 	{ 0x07, 0x07, bankp_out_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 

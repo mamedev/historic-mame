@@ -143,8 +143,7 @@ WRITE_HANDLER( dv_sh_bankswitch_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x1f94, 0x1f94, input_port_0_r }, /* Coins */
 	{ 0x1f95, 0x1f95, input_port_1_r }, /* Player 1 */
 	{ 0x1f96, 0x1f96, input_port_2_r }, /* Player 2 */
@@ -158,11 +157,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x1f80, 0x1f80, mainevt_bankswitch_w },
 	{ 0x1f84, 0x1f84, soundlatch_w },				/* probably */
 	{ 0x1f88, 0x1f88, mainevt_sh_irqtrigger_w },	/* probably */
@@ -173,12 +170,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x5dff, MWA_RAM },
 	{ 0x5e00, 0x5fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
  	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress dv_readmem[] =
-{
+static MEMORY_READ_START( dv_readmem )
 	{ 0x1f94, 0x1f94, input_port_0_r }, /* Coins */
 	{ 0x1f95, 0x1f95, input_port_1_r }, /* Player 1 */
 	{ 0x1f96, 0x1f96, input_port_2_r }, /* Player 2 */
@@ -191,11 +186,9 @@ static struct MemoryReadAddress dv_readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dv_writemem[] =
-{
+static MEMORY_WRITE_START( dv_writemem )
 	{ 0x1f80, 0x1f80, mainevt_bankswitch_w },
 	{ 0x1f84, 0x1f84, soundlatch_w },				/* probably */
 	{ 0x1f88, 0x1f88, mainevt_sh_irqtrigger_w },	/* probably */
@@ -207,43 +200,35 @@ static struct MemoryWriteAddress dv_writemem[] =
 	{ 0x4000, 0x5dff, MWA_RAM },
 	{ 0x5e00, 0x5fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xd000, 0xd000, UPD7759_0_busy_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
 	{ 0x9000, 0x9000, UPD7759_0_message_w },
 	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress dv_sound_readmem[] =
-{
+static MEMORY_READ_START( dv_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress dv_sound_writemem[] =
-{
+static MEMORY_WRITE_START( dv_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
@@ -251,8 +236,7 @@ static struct MemoryWriteAddress dv_sound_writemem[] =
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xe000, 0xe000, devstor_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, dv_sh_bankswitch_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

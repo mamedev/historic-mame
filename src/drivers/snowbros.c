@@ -11,14 +11,8 @@
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
-static unsigned char *ram;
-
-extern unsigned char *snowbros_spriteram;
-
 void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void wintbob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( snowbros_spriteram_w );
-READ_HANDLER( snowbros_spriteram_r );
 
 
 
@@ -29,29 +23,9 @@ static int snowbros_interrupt(void)
 
 
 
-static READ_HANDLER( snowbros_input_r )
-{
-	int ans = 0xff;
-
-	switch (offset)
-	{
-		case 0:
-			ans = (input_port_0_r (offset) << 8) + (input_port_3_r (offset));
-            break;
-		case 2:
-			ans = (input_port_1_r (offset) << 8) + (input_port_4_r (offset));
-            break;
-		case 4:
-			ans = input_port_2_r (offset) << 8;
-            break;
-	}
-
-    return ans;
-}
-
 /* Sound Routines */
 
-READ_HANDLER( snowbros_68000_sound_r )
+READ16_HANDLER( snowbros_68000_sound_r )
 {
 	int ret;
 
@@ -70,104 +44,66 @@ READ_HANDLER( snowbros_68000_sound_r )
 }
 
 
-static WRITE_HANDLER( snowbros_68000_sound_w )
+static WRITE16_HANDLER( snowbros_68000_sound_w )
 {
-	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(offset,data & 0xff);
+		cpu_cause_interrupt(1,Z80_NMI_INT);
+	}
 }
 
 
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1 },
+static MEMORY_READ16_START( readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
 	{ 0x300000, 0x300001, snowbros_68000_sound_r },
-	{ 0x500000, 0x500005, snowbros_input_r },
-	{ 0x600000, 0x6001ff, paletteram_word_r },
-	{ 0x700000, 0x701dff, snowbros_spriteram_r },
-	{ -1 }  /* end of table */
-};
+	{ 0x500000, 0x500001, input_port_0_word_r },
+	{ 0x500002, 0x500003, input_port_1_word_r },
+	{ 0x500004, 0x500005, input_port_2_word_r },
+	{ 0x600000, 0x6001ff, MRA16_RAM },
+	{ 0x700000, 0x701dff, MRA16_RAM },
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1, &ram },
-	{ 0x200000, 0x200001, watchdog_reset_w },
+static MEMORY_WRITE16_START( writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x200000, 0x200001, watchdog_reset16_w },
 	{ 0x300000, 0x300001, snowbros_68000_sound_w },
 //	{ 0x400000, 0x400001, snowbros_interrupt_enable_w },
-	{ 0x600000, 0x6001ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ 0x700000, 0x701dff, snowbros_spriteram_w, &snowbros_spriteram, &videoram_size },
-	{ 0x800000, 0x800001, MWA_NOP },	/* IRQ 4 acknowledge? */
-	{ 0x900000, 0x900001, MWA_NOP },	/* IRQ 3 acknowledge? */
-	{ 0xa00000, 0xa00001, MWA_NOP },	/* IRQ 2 acknowledge? */
-	{ -1 }  /* end of table */
-};
+	{ 0x600000, 0x6001ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x700000, 0x701dff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
+	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
+	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x02, 0x02, YM3812_status_port_0_r },
 	{ 0x04, 0x04, soundlatch_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x02, 0x02, YM3812_control_port_0_w },
 	{ 0x03, 0x03, YM3812_write_port_0_w },
 	{ 0x04, 0x04, soundlatch_w },	/* goes back to the main CPU, checked during boot */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
 INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Must be low or game stops! */
-                                               /* probably VBlank */
-
-	PORT_START	/* 500003 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* 500005 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Country (Affects Coinage)" )
 	PORT_DIPSETTING(    0x01, "America" )
 	PORT_DIPSETTING(    0x00, "Europe" )
@@ -189,8 +125,17 @@ INPUT_PORTS_START( snowbros )
 	PORT_DIPSETTING(    0xc0, "1C/1C 1C/2C" )
 	PORT_DIPSETTING(    0x00, "2C/3C 1C/6C" )
 	PORT_DIPSETTING(    0x80, "1C/2C 1C/3C" )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Must be low or game stops! */
+                                               /* probably VBlank */
 
-	PORT_START /* DSW 2 */
+	PORT_START	/* 500003 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, "Easy" )
 	PORT_DIPSETTING(    0x03, "Normal" )
@@ -212,6 +157,24 @@ INPUT_PORTS_START( snowbros )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500005 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -294,8 +257,8 @@ static const struct MachineDriver machine_driver_snowbros =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	0,
+	0,
 	snowbros_vh_screenrefresh,
 
 	/* sound hardware */
@@ -314,13 +277,13 @@ static const struct MachineDriver machine_driver_wintbob =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10mhz .. Needed to compensate for less capable gfx hardware? otherwise game runs too slow */
+			10000000,	/* 10MHz .. Needed to compensate for less capable gfx hardware? otherwise game runs too slow */
 			readmem,writemem,0,0,
 			snowbros_interrupt,3
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3600000,	/* 3.6 Mhz ??? */
+			3600000,	/* 3.6 MHz ??? */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 		}
@@ -337,8 +300,8 @@ static const struct MachineDriver machine_driver_wintbob =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	0,
+	0,
 	wintbob_vh_screenrefresh,
 
 	/* sound hardware */

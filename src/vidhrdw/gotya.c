@@ -64,7 +64,7 @@ WRITE_HANDLER( gotya_video_control_w )
 
 	scroll_bit_8 = data & 0x01;
 
-	flip_screen_w(offset, data & 0x02);
+	flip_screen_set(data & 0x02);
 }
 
 

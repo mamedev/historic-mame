@@ -120,8 +120,7 @@ static WRITE_HANDLER( irobot_clearfirq_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x07ff, MRA_RAM },
     { 0x0800, 0x0fff, MRA_BANK2 },
     { 0x1000, 0x103f, input_port_0_r },
@@ -135,11 +134,9 @@ static struct MemoryReadAddress readmem[] =
     { 0x2000, 0x3fff, irobot_sharedmem_r },
     { 0x4000, 0x5fff, MRA_BANK1 },
     { 0x6000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x07ff, MWA_RAM },
     { 0x0800, 0x0fff, MWA_BANK2 },
     { 0x1100, 0x1100, irobot_clearirq_w },
@@ -155,8 +152,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x1c00, 0x1fff, MWA_RAM, &videoram, &videoram_size },
     { 0x2000, 0x3fff, irobot_sharedmem_w},
     { 0x4000, 0xffff, MWA_ROM },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
 
 

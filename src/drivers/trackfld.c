@@ -139,10 +139,14 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-
-
-static struct MemoryReadAddress readmem[] =
+static WRITE_HANDLER( flip_screen_w )
 {
+	flip_screen_set(data);
+}
+
+
+
+static MEMORY_READ_START( readmem )
 	{ 0x1800, 0x185f, MRA_RAM },
 	{ 0x1c00, 0x1c5f, MRA_RAM },
 	{ 0x1200, 0x1200, input_port_4_r }, /* DIP 2 */
@@ -153,11 +157,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1283, 0x1283, input_port_3_r }, /* DIP 1 */
 	{ 0x2800, 0x3fff, MRA_RAM },
 	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x1000, 0x1000, watchdog_reset_w },
 	{ 0x1080, 0x1080, flip_screen_w },
 	{ 0x1081, 0x1081, konami_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
@@ -175,21 +177,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3000, 0x37ff, videoram_w, &videoram, &videoram_size },
 	{ 0x3800, 0x3fff, colorram_w, &colorram },
 	{ 0x6000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, trackfld_sh_timer_r },
 	{ 0xe002, 0xe002, trackfld_speech_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
@@ -203,21 +201,17 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
 	{ 0xe004, 0xe004, VLM5030_data_w },
 	{ 0xe000, 0xefff, trackfld_sound_w, }, /* e003 speech control */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress hyprolyb_sound_readmem[] =
-{
+static MEMORY_READ_START( hyprolyb_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, trackfld_sh_timer_r },
 	{ 0xe002, 0xe002, hyprolyb_speech_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
-{
+static MEMORY_WRITE_START( hyprolyb_sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
@@ -231,8 +225,7 @@ static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
 	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
 	{ 0xe004, 0xe004, hyprolyb_ADPCM_data_w },
 	{ 0xe000, 0xefff, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

@@ -19,37 +19,29 @@ WRITE_HANDLER( cheekyms_port_40_w );
 WRITE_HANDLER( cheekyms_port_80_w );
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_ROM},
 	{ 0x3000, 0x33ff, MRA_RAM},
 	{ 0x3800, 0x3bff, MRA_RAM},	/* screen RAM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x3000, 0x33ff, MWA_RAM },
 	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x20, 0x3f, cheekyms_sprite_w },
 	{ 0x40, 0x40, cheekyms_port_40_w },
 	{ 0x80, 0x80, cheekyms_port_80_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 static int cheekyms_interrupt(void)

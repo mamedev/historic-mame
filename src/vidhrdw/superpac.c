@@ -70,7 +70,7 @@ static void superpac_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsig
 
 READ_HANDLER(superpac_flipscreen_r)
 {
-	flip_screen_w(offset, 1);
+	flip_screen_set(1);
 
 	return flip_screen;	/* return value not used */
 }

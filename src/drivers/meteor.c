@@ -83,8 +83,7 @@ static WRITE_HANDLER( meteor_soundtrigger_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x7000, 0x7000, input_port_0_r },
@@ -93,11 +92,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0xa000, 0xa3ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x7000, 0x7000, soundlatch_w },
@@ -107,35 +104,26 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x9000, 0x93ff, MWA_RAM, &colorram },
 	{ 0xa000, 0xa3ff, MWA_RAM, &meteor_scrollram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ I8039_bus, I8039_bus, soundlatch_r },
 	{ I8039_p2,  I8039_p2,  meteor_SN76496_select_r },
 	{ I8039_t0,  I8039_t0,  meteor_t0_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ I8039_p1,  I8039_p1, meteor_SN76496_latch_w },
 	{ I8039_p2,  I8039_p2, meteor_SN76496_select_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( meteor )

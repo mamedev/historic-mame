@@ -86,7 +86,7 @@ WRITE_HANDLER( hanaawas_colorram_w )
 WRITE_HANDLER( hanaawas_portB_w )
 {
 	/* bit 7 is flip screen */
-	flip_screen_w(offset, ~data & 0x80);
+	flip_screen_set(~data & 0x80);
 }
 
 /***************************************************************************

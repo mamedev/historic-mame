@@ -4,16 +4,16 @@
 
 ****************************************************************************/
 
-extern struct MemoryReadAddress williams_cvsd_readmem[];
-extern struct MemoryWriteAddress williams_cvsd_writemem[];
-extern struct MemoryReadAddress williams_adpcm_readmem[];
-extern struct MemoryWriteAddress williams_adpcm_writemem[];
-extern struct MemoryReadAddress williams_narc_master_readmem[];
-extern struct MemoryWriteAddress williams_narc_master_writemem[];
-extern struct MemoryReadAddress williams_narc_slave_readmem[];
-extern struct MemoryWriteAddress williams_narc_slave_writemem[];
-extern struct MemoryReadAddress williams_dcs_readmem[];
-extern struct MemoryWriteAddress williams_dcs_writemem[];
+extern const struct Memory_ReadAddress williams_cvsd_readmem[];
+extern const struct Memory_WriteAddress williams_cvsd_writemem[];
+extern const struct Memory_ReadAddress williams_adpcm_readmem[];
+extern const struct Memory_WriteAddress williams_adpcm_writemem[];
+extern const struct Memory_ReadAddress williams_narc_master_readmem[];
+extern const struct Memory_WriteAddress williams_narc_master_writemem[];
+extern const struct Memory_ReadAddress williams_narc_slave_readmem[];
+extern const struct Memory_WriteAddress williams_narc_slave_writemem[];
+extern const struct Memory_ReadAddress16 williams_dcs_readmem[];
+extern const struct Memory_WriteAddress16 williams_dcs_writemem[];
 
 
 extern struct CustomSound_interface williams_custom_interface;
@@ -27,21 +27,21 @@ extern struct OKIM6295interface williams_adpcm_6295_interface_REGION_SOUND1;
 extern struct CustomSound_interface williams_dcs_custom_interface;
 
 void williams_cvsd_init(int cpunum, int pianum);
-WRITE_HANDLER( williams_cvsd_data_w );
+void williams_cvsd_data_w(int data);
 void williams_cvsd_reset_w(int state);
 
 void williams_adpcm_init(int cpunum);
-WRITE_HANDLER( williams_adpcm_data_w );
+void williams_adpcm_data_w(int data);
 void williams_adpcm_reset_w(int state);
 
 void williams_narc_init(int cpunum);
-WRITE_HANDLER( williams_narc_data_w );
+void williams_narc_data_w(int data);
 void williams_narc_reset_w(int state);
 
 void williams_dcs_init(int cpunum);
-READ_HANDLER( williams_dcs_data_r );
-READ_HANDLER( williams_dcs_control_r );
-WRITE_HANDLER( williams_dcs_data_w );
+int williams_dcs_data_r(void);
+int williams_dcs_control_r(void);
+void williams_dcs_data_w(int data);
 void williams_dcs_reset_w(int state);
 
 

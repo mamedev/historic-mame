@@ -126,8 +126,7 @@ static WRITE_HANDLER( bsktball_bounce_w )
 }
 
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, /* Zero Page RAM */
 	{ 0x0800, 0x0800, bsktball_in0_r },
 	{ 0x0802, 0x0802, input_port_5_r },
@@ -135,11 +134,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1800, 0x1cff, MRA_RAM }, /* video ram */
 	{ 0x2000, 0x3fff, MRA_ROM }, /* PROGRAM */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
 	{ 0x1000, 0x1000, MWA_RAM }, /* Timer Reset */
 	{ 0x1010, 0x101f, bsktball_bounce_w }, /* Crowd Amp / Bounce */
@@ -154,8 +151,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1bbf, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
 	{ 0x1bc0, 0x1bff, MWA_RAM, &bsktball_motion },
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( bsktball )
 	PORT_START	/* IN0 */

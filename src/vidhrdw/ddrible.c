@@ -114,7 +114,7 @@ int ddrible_vh_start ( void )
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	fg_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
 }
@@ -248,13 +248,10 @@ void ddrible_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 
 	tilemap_update( ALL_TILEMAPS );
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render( ALL_TILEMAPS );
-
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	ddribble_draw_sprites(bitmap,ddrible_spriteram_1,0x07d,2,ddribble_vregs[0][4] & 0x08);
 	ddribble_draw_sprites(bitmap,ddrible_spriteram_2,0x140,3,ddribble_vregs[1][4] & 0x08);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

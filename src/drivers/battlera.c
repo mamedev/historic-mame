@@ -70,18 +70,15 @@ static READ_HANDLER( control_data_r )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress battlera_readmem[] =
-{
+static MEMORY_READ_START( battlera_readmem )
 	{ 0x000000, 0x0fffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, HuC6270_debug_r }, /* Cheat to view vram data */
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
 	{ 0x1fe000, 0x1fe001, HuC6270_register_r },
 	{ 0x1ff000, 0x1ff001, control_data_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress battlera_writemem[] =
-{
+static MEMORY_WRITE_START( battlera_writemem )
 	{ 0x000000, 0x0fffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, HuC6270_debug_w }, /* Cheat to edit vram data */
 	{ 0x1e0800, 0x1e0801, battlera_sound_w },
@@ -91,15 +88,12 @@ static struct MemoryWriteAddress battlera_writemem[] =
 	{ 0x1fe002, 0x1fe003, HuC6270_data_w },
 	{ 0x1ff000, 0x1ff001, control_data_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort battlera_portwrite[] =
-{
+static PORT_WRITE_START( battlera_portwrite )
 	{ 0x00, 0x01, HuC6270_register_w },
 	{ 0x02, 0x03, HuC6270_data_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 /******************************************************************************/
 
@@ -135,16 +129,13 @@ static WRITE_HANDLER( battlera_adpcm_reset_w )
 	MSM5205_reset_w(0,0);
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK7 }, /* Main ram */
 	{ 0x1ff000, 0x1ff001, soundlatch_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
  	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x040000, 0x040001, YM2203_w },
 	{ 0x080000, 0x080001, battlera_adpcm_data_w },
@@ -152,8 +143,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1f0000, 0x1f1fff, MWA_BANK7 }, /* Main ram */
 	{ 0x1ff000, 0x1ff001, battlera_adpcm_reset_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 

@@ -9,17 +9,18 @@
 
 
 void atarijsa_init(int cpunum, int inputport, int testport, int testmask);
+void atarijsa3_init_adpcm(int region);
 void atarijsa_reset(void);
 
 
-extern struct MemoryReadAddress atarijsa1_readmem[];
-extern struct MemoryWriteAddress atarijsa1_writemem[];
-extern struct MemoryReadAddress atarijsa2_readmem[];
-extern struct MemoryWriteAddress atarijsa2_writemem[];
-extern struct MemoryReadAddress atarijsa3_readmem[];
-extern struct MemoryWriteAddress atarijsa3_writemem[];
-extern struct MemoryReadAddress atarijsa3s_readmem[];
-extern struct MemoryWriteAddress atarijsa3s_writemem[];
+extern const struct Memory_ReadAddress atarijsa1_readmem[];
+extern const struct Memory_WriteAddress atarijsa1_writemem[];
+extern const struct Memory_ReadAddress atarijsa2_readmem[];
+extern const struct Memory_WriteAddress atarijsa2_writemem[];
+extern const struct Memory_ReadAddress atarijsa3_readmem[];
+extern const struct Memory_WriteAddress atarijsa3_writemem[];
+extern const struct Memory_ReadAddress atarijsa3s_readmem[];
+extern const struct Memory_WriteAddress atarijsa3s_writemem[];
 
 extern struct TMS5220interface atarijsa_tms5220_interface;
 extern struct YM2151interface atarijsa_ym2151_interface_mono;

@@ -138,8 +138,7 @@ WRITE_HANDLER( tankbatt_sh_fire_w )
 		sample_start (0, 0, 0);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x0c00, 0x0c07, tankbatt_in0_r },
 	{ 0x0c08, 0x0c0f, tankbatt_in1_r },
@@ -147,11 +146,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0200, 0x0bff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0010, 0x01ff, MWA_RAM },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
 	{ 0x0000, 0x000f, MWA_RAM, &tankbatt_bulletsram, &tankbatt_bulletsram_size },
@@ -164,8 +161,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0c0f, 0x0c0f, tankbatt_demo_interrupt_enable_w },
 	{ 0x0200, 0x07ff, MWA_RAM },
 	{ 0x2000, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 int tankbatt_interrupt (void)
 {

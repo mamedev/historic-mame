@@ -526,140 +526,127 @@ $a00000 checks have been seen on the Final Lap boards.
 /* MASTER 68000 CPU Memory declarations 					 */
 /*************************************************************/
 
-static struct MemoryReadAddress readmem_master_default[] = {
+static MEMORY_READ_START( readmem_master_default )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_READ
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_master_default[] = {
+static MEMORY_WRITE_START( writemem_master_default )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_WRITE
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_master_finallap[] = {
+static MEMORY_READ_START( readmem_master_finallap )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_READ
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_master_finallap[] = {
+static MEMORY_WRITE_START( writemem_master_finallap )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_WRITE
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_master_metlhawk[] = {
+static MEMORY_READ_START( readmem_master_metlhawk )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_R },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_r },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_READ
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_master_metlhawk[] = {
+static MEMORY_WRITE_START( writemem_master_metlhawk )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, NAMCOS2_68K_MASTER_RAM_W },
 	{ 0x180000, 0x183fff, NAMCOS2_68K_EEPROM_W },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_master_C148_w },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_WRITE
-	{ -1 }
-};
+MEMORY_END
 
 /*************************************************************/
 /* SLAVE 68000 CPU Memory declarations						 */
 /*************************************************************/
 
-static struct MemoryReadAddress readmem_slave_default[] = {
+static MEMORY_READ_START( readmem_slave_default )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_READ
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_slave_default[] ={
+static MEMORY_WRITE_START( writemem_slave_default )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_DEFAULT_GFX_BOARD_WRITE
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_slave_finallap[] = {
+static MEMORY_READ_START( readmem_slave_finallap )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_READ
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_slave_finallap[] ={
+static MEMORY_WRITE_START( writemem_slave_finallap )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_FINALLAP_GFX_BOARD_WRITE
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_slave_metlhawk[] = {
+static MEMORY_READ_START( readmem_slave_metlhawk )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_R },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_READ
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_READ
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_slave_metlhawk[] ={
+static MEMORY_WRITE_START( writemem_slave_metlhawk )
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x13ffff, NAMCOS2_68K_SLAVE_RAM_W },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_WRITE
 	NAMCOS2_68K_METLHAWK_GFX_BOARD_WRITE
-	{ -1 }
-};
+MEMORY_END
 
 
 /*************************************************************/
 /* 6809 SOUND CPU Memory declarations						 */
 /*************************************************************/
 
-static struct MemoryReadAddress readmem_sound[] ={
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x3fff, BANKED_SOUND_ROM_R }, /* banked */
 	{ 0x4000, 0x4001, YM2151_status_port_0_r },
 	{ 0x5000, 0x6fff, C140_r },
 	{ 0x7000, 0x7fff, namcos2_dpram_byte_r },		/* 991112.CAB  ($5800-5fff=image of $5000-$57ff) */
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] = {
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4000, YM2151_register_port_0_w },
 	{ 0x4001, 0x4001, YM2151_data_port_0_w },
@@ -670,15 +657,14 @@ static struct MemoryWriteAddress writemem_sound[] = {
 	{ 0xc000, 0xc001, namcos2_sound_bankselect_w },
 	{ 0xd001, 0xd001, MWA_NOP },					/* Watchdog */
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 /*************************************************************/
 /* 68705 IO CPU Memory declarations 						 */
 /*************************************************************/
 
-static struct MemoryReadAddress readmem_mcu[] ={
+static MEMORY_READ_START( readmem_mcu )
 	/* input ports and dips are mapped here */
 
 	{ 0x0000, 0x0000, MRA_NOP },			// Keep logging quiet
@@ -699,10 +685,9 @@ static struct MemoryReadAddress readmem_mcu[] ={
 	{ 0x5000, 0x57ff, namcos2_dpram_byte_r },
 	{ 0x6000, 0x6fff, MRA_NOP },				/* watchdog */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_mcu[] ={
+static MEMORY_WRITE_START( writemem_mcu )
 	{ 0x0003, 0x0003, namcos2_mcu_port_d_w },
 	{ 0x0010, 0x0010, namcos2_mcu_analog_ctrl_w },
 	{ 0x0011, 0x0011, namcos2_mcu_analog_port_w },
@@ -711,8 +696,7 @@ static struct MemoryWriteAddress writemem_mcu[] ={
 	{ 0x01c0, 0x1fff, MWA_ROM },
 	{ 0x5000, 0x57ff, namcos2_dpram_byte_w },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 
 
