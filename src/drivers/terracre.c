@@ -333,7 +333,7 @@ static struct MachineDriver machine_driver_ym3526 =
 	{
 		{
 			CPU_M68000,
-			8000000, /* 8 Mhz?? */
+			8000000, /* 8 MHz?? */
 			readmem,writemem,0,0,
 			m68_level1_irq,1
 		},
@@ -379,7 +379,7 @@ static struct MachineDriver machine_driver_ym2203 =
 	{
 		{
 			CPU_M68000,
-			8000000, /* 8 Mhz?? */
+			8000000, /* 8 MHz?? */
 			readmem,writemem,0,0,
 			m68_level1_irq,1
 		},

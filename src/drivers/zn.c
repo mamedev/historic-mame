@@ -211,13 +211,13 @@ static struct MachineDriver machine_driver_zn =
     {
         {
 			CPU_MIPS,
-            33000000, /* 33mhz ?? */
+            33000000, /* 33MHz ?? */
             zn_readmem, zn_writemem, 0, 0,
 			ignore_interrupt, 1  /* ??? interrupts per frame */
         },
         {
             CPU_Z80 | CPU_AUDIO_CPU,
-            8000000,  /* 8mhz ?? */
+            8000000,  /* 8MHz ?? */
             qsound_readmem, qsound_writemem, qsound_readport, 0,
             zn_interrupt, 4 /* 4 interrupts per frame ?? */
         }

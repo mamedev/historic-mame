@@ -2,7 +2,7 @@
 #include <string.h>
 #include "ccpu.h"
 
-#define CCPU_FETCH(A)	cpu_readop(A)
+#define CCPU_FETCH(A)	cpu_readop(CCPU_PGM_OFFSET+A)
 
 /*
  * opcode tables for debugging
@@ -469,7 +469,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 
 	} /* switch on addressing mode */
 
-#if NEVERDEF
+#if 0
     /* build flags dump */
 	sprintf (flbuffer,
 	    "A=%03X B=%03X I=%03XZ J=%03X P=%X " \

@@ -114,71 +114,52 @@ size_t namcos2_68k_vram_size;
 
 WRITE_HANDLER( namcos2_68k_vram_w )
 {
-//	int col=(offset>>1)&0x3f;
-//	int row=(offset>>7)&0x3f;
+	int oldword = READ_WORD(&videoram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
 
-	COMBINE_WORD_MEM(&videoram[offset],data);
-
-	/* Some games appear to use the 409000 region as SRAM to */
-	/* communicate between master/slave processors ??		 */
-
-	if(offset<0x9000)
+	if (oldword != newword)
 	{
-		switch(offset&0xe000)
+		WRITE_WORD(&videoram[offset],newword);
+
+		/* Some games appear to use the 409000 region as SRAM to */
+		/* communicate between master/slave processors ??		 */
+
+		if(offset<0x9000)
 		{
-			case 0x0000:
-//				if(namcos2_tilemap0_flip&TILEMAP_FLIPX) col=63-col;
-//				if(namcos2_tilemap0_flip&TILEMAP_FLIPY) row=63-row;
-//				tilemap_mark_tile_dirty(namcos2_tilemap0,col,row);
-				tilemap_mark_tile_dirty(namcos2_tilemap0,(offset>>1)&0xfff);
-				break;
+			switch(offset&0xe000)
+			{
+				case 0x0000:
+					tilemap_mark_tile_dirty(namcos2_tilemap0,(offset>>1)&0xfff);
+					break;
 
-			case 0x2000:
-//				if(namcos2_tilemap1_flip&TILEMAP_FLIPX) col=63-col;
-//				if(namcos2_tilemap1_flip&TILEMAP_FLIPY) row=63-row;
-//				tilemap_mark_tile_dirty(namcos2_tilemap1,col,row);
-				tilemap_mark_tile_dirty(namcos2_tilemap1,(offset>>1)&0xfff);
-				break;
+				case 0x2000:
+					tilemap_mark_tile_dirty(namcos2_tilemap1,(offset>>1)&0xfff);
+					break;
 
-			case 0x4000:
-//				if(namcos2_tilemap2_flip&TILEMAP_FLIPX) col=63-col;
-//				if(namcos2_tilemap2_flip&TILEMAP_FLIPY) row=63-row;
-//				tilemap_mark_tile_dirty(namcos2_tilemap2,col,row);
-				tilemap_mark_tile_dirty(namcos2_tilemap2,(offset>>1)&0xfff);
-				break;
+				case 0x4000:
+					tilemap_mark_tile_dirty(namcos2_tilemap2,(offset>>1)&0xfff);
+					break;
 
-			case 0x6000:
-//				if(namcos2_tilemap3_flip&TILEMAP_FLIPX) col=63-col;
-//				if(namcos2_tilemap3_flip&TILEMAP_FLIPY) row=63-row;
-//				tilemap_mark_tile_dirty(namcos2_tilemap3,col,row);
-				tilemap_mark_tile_dirty(namcos2_tilemap3,(offset>>1)&0xfff);
-				break;
+				case 0x6000:
+					tilemap_mark_tile_dirty(namcos2_tilemap3,(offset>>1)&0xfff);
+					break;
 
-			case 0x8000:
-				if(offset>=0x8010 && offset<0x87f0)
-				{
-					offset-=0x10;	/* Fixed plane offsets */
-//					row=((offset&0x7ff)>>1)/36;
-//					col=((offset&0x7ff)>>1)%36;
-//					if(namcos2_tilemap4_flip&TILEMAP_FLIPX) col=35-col;
-//					if(namcos2_tilemap4_flip&TILEMAP_FLIPY) row=27-row;
-//					tilemap_mark_tile_dirty(namcos2_tilemap4,col,row);
-					tilemap_mark_tile_dirty(namcos2_tilemap4,(offset&0x7ff)>>1);
-				}
-				else if(offset>=0x8810 && offset<0x8ff0)
-				{
-					offset-=0x10;	/* Fixed plane offsets */
-//					row=((offset&0x7ff)>>1)/36;
-//					col=((offset&0x7ff)>>1)%36;
-//					if(namcos2_tilemap5_flip&TILEMAP_FLIPX) col=35-col;
-//					if(namcos2_tilemap5_flip&TILEMAP_FLIPY) row=27-row;
-//					tilemap_mark_tile_dirty(namcos2_tilemap5,col,row);
-					tilemap_mark_tile_dirty(namcos2_tilemap5,(offset&0x7ff)>>1);
-				}
-				break;
+				case 0x8000:
+					if(offset>=0x8010 && offset<0x87f0)
+					{
+						offset-=0x10;	/* Fixed plane offsets */
+						tilemap_mark_tile_dirty(namcos2_tilemap4,(offset&0x7ff)>>1);
+					}
+					else if(offset>=0x8810 && offset<0x8ff0)
+					{
+						offset-=0x10;	/* Fixed plane offsets */
+						tilemap_mark_tile_dirty(namcos2_tilemap5,(offset&0x7ff)>>1);
+					}
+					break;
 
-			default:
-				break;
+				default:
+					break;
+			}
 		}
 	}
 }
@@ -195,77 +176,75 @@ unsigned char namcos2_68k_vram_ctrl[0x40];
 
 WRITE_HANDLER( namcos2_68k_vram_ctrl_w )
 {
-	int olddata=namcos2_68k_vram_ctrl_r(offset&0x3f)&0x0f;
-	int newdata=data&0x0f;
-	int flip;
+	int oldword = READ_WORD(&namcos2_68k_vram_ctrl[offset&0x3f]);
+	int newword = COMBINE_WORD(oldword,data);
 
-	/* Write word to register */
-	COMBINE_WORD_MEM(&namcos2_68k_vram_ctrl[offset&0x3f],data);
-
-	switch(offset&0x3f)
+	if (oldword != newword)
 	{
-		case 0x02:
-			/* All planes are flipped X+Y from D15 of this word */
-			flip=(namcos2_68k_vram_ctrl_r(0x02)&0x8000)?(TILEMAP_FLIPX|TILEMAP_FLIPY):0;
-			if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+		WRITE_WORD(&namcos2_68k_vram_ctrl[offset&0x3f],newword);
 
-			tilemap_set_flip( ALL_TILEMAPS, flip );
-//			namcos2_tilemap0_flip=flip;
-//			namcos2_tilemap1_flip=flip;
-//			namcos2_tilemap2_flip=flip;
-//			namcos2_tilemap3_flip=flip;
-//			namcos2_tilemap4_flip=flip;
-//			namcos2_tilemap5_flip=flip;
+		switch(offset&0x3f)
+		{
+			case 0x02:
+				/* All planes are flipped X+Y from D15 of this word */
+				tilemap_set_flip(ALL_TILEMAPS,(newword & 0x8000) ? (TILEMAP_FLIPX|TILEMAP_FLIPY) : 0);
 
-			tilemap_set_scrollx( namcos2_tilemap0, 0, (data+44+4)&0x1ff );
-			break;
-		case 0x06:
-			tilemap_set_scrolly( namcos2_tilemap0, 0, (data+24)&0x1ff );
-			break;
-		case 0x0a:
-			tilemap_set_scrollx( namcos2_tilemap1, 0, (data+44+2)&0x1ff );
-			break;
-		case 0x0e:
-			tilemap_set_scrolly( namcos2_tilemap1, 0, (data+24)&0x1ff );
-			break;
-		case 0x12:
-			tilemap_set_scrollx( namcos2_tilemap2, 0, (data+44+1)&0x1ff );
-			break;
-		case 0x16:
-			tilemap_set_scrolly( namcos2_tilemap2, 0, (data+24)&0x1ff );
-			break;
-		case 0x1a:
-			tilemap_set_scrollx( namcos2_tilemap3, 0, (data+44)&0x1ff );
-			break;
-		case 0x1e:
-			tilemap_set_scrolly( namcos2_tilemap3, 0, (data+24)&0x1ff );
-			break;
-		case 0x30:
-			/* Change of colour bank needs to force a tilemap redraw */
-			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
-			break;
-		case 0x32:
-			/* Change of colour bank needs to force a tilemap redraw */
-			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
-			break;
-		case 0x34:
-			/* Change of colour bank needs to force a tilemap redraw */
-			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
-			break;
-		case 0x36:
-			/* Change of colour bank needs to force a tilemap redraw */
-			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
-			break;
-		case 0x38:
-			/* Change of colour bank needs to force a tilemap redraw */
-			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
-			break;
-		case 0x3a:
-			/* Change of colour bank needs to force a tilemap redraw */
-			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
-			break;
-		default:
-			break;
+				tilemap_set_scrollx( namcos2_tilemap0, 0, (newword+44+4)&0x1ff );
+				break;
+			case 0x06:
+				tilemap_set_scrolly( namcos2_tilemap0, 0, (newword+24)&0x1ff );
+				break;
+			case 0x0a:
+				tilemap_set_scrollx( namcos2_tilemap1, 0, (newword+44+2)&0x1ff );
+				break;
+			case 0x0e:
+				tilemap_set_scrolly( namcos2_tilemap1, 0, (newword+24)&0x1ff );
+				break;
+			case 0x12:
+				tilemap_set_scrollx( namcos2_tilemap2, 0, (newword+44+1)&0x1ff );
+				break;
+			case 0x16:
+				tilemap_set_scrolly( namcos2_tilemap2, 0, (newword+24)&0x1ff );
+				break;
+			case 0x1a:
+				tilemap_set_scrollx( namcos2_tilemap3, 0, (newword+44)&0x1ff );
+				break;
+			case 0x1e:
+				tilemap_set_scrolly( namcos2_tilemap3, 0, (newword+24)&0x1ff );
+				break;
+			case 0x30:
+				/* Change of colour bank needs to force a tilemap redraw */
+				if ((newword & 7) != (oldword & 7))
+					tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
+				break;
+			case 0x32:
+				/* Change of colour bank needs to force a tilemap redraw */
+				if ((newword & 7) != (oldword & 7))
+					tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
+				break;
+			case 0x34:
+				/* Change of colour bank needs to force a tilemap redraw */
+				if ((newword & 7) != (oldword & 7))
+					tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
+				break;
+			case 0x36:
+				/* Change of colour bank needs to force a tilemap redraw */
+				if ((newword & 7) != (oldword & 7))
+					tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
+				break;
+			case 0x38:
+				/* Change of colour bank needs to force a tilemap redraw */
+				if ((newword & 7) != (oldword & 7))
+					tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
+				break;
+			case 0x3a:
+				/* Change of colour bank needs to force a tilemap redraw */
+				if ((newword & 7) != (oldword & 7))
+					tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
+				break;
+			default:
+				break;
+		}
 	}
 }
 

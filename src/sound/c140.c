@@ -181,7 +181,7 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 			/* Abort voice if no frequency value set */
 			if(frequency==0) continue;
 
-			/* Delta =  frequency * ((8Mhz/374)*2 / sample rate) */
+			/* Delta =  frequency * ((8MHz/374)*2 / sample rate) */
 			delta=(long)((float)frequency * pbase);
 
 			/* Calculate left/right channel volumes */

@@ -186,7 +186,7 @@ static struct MachineDriver machine_driver_hanaawas =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz ??? */
+			18432000/6,	/* 3.072 MHz ??? */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}

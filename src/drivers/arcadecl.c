@@ -183,7 +183,7 @@ static WRITE_HANDLER( latch_w )
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x200000, 0x21fffe, MRA_BANK1 },
+	{ 0x200000, 0x21ffff, MRA_BANK1 },
 	{ 0x3c0000, 0x3c07ff, MRA_BANK2 },
 	{ 0x3e0000, 0x3effff, MRA_BANK3 },
 	{ 0x640000, 0x640001, input_port_0_r },
@@ -203,7 +203,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x200000, 0x21fffe, arcadecl_playfieldram_w, &atarigen_playfieldram },
+	{ 0x200000, 0x21ffff, arcadecl_playfieldram_w, &atarigen_playfieldram },
 	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram },
 	{ 0x3e0000, 0x3effff, MWA_BANK3, &atarigen_spriteram },
 	{ 0x640040, 0x64004f, latch_w },

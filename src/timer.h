@@ -10,6 +10,10 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern double cycles_to_sec[];
 extern double sec_to_cycles[];
 
@@ -56,5 +60,9 @@ void timer_holdcpu_trigger(int cpu, int trigger);
 void timer_trigger(int trigger);
 double timer_get_overclock(int cpunum);
 void timer_set_overclock(int cpunum, double overclock);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include "driver.h"		/* use M.A.M.E. */
+#include "fm.h"
 #include "fmopl.h"
 
 #ifndef PI

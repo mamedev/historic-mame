@@ -16,7 +16,7 @@ struct VLM5030interface konami_vlm5030_interface =
 struct SN76496interface konami_sn76496_interface =
 {
     1,  /* 1 chip */
-    { 14318180/8 }, /*  1.7897725 Mhz */
+    { 14318180/8 }, /*  1.7897725 MHz */
     { 0x2064 }
 };
 
@@ -28,23 +28,23 @@ struct DACinterface konami_dac_interface =
 
 struct ADPCMinterface hyprolyb_adpcm_interface =
 {
-    1,          /* 1 channel */
-    4000,       /* 4000Hz playback */
-    4,          /* memory region 4 */
-    0,          /* init function */
-    { 100 }
+	1,          /* 1 channel */
+	4000,       /* 4000Hz playback */
+	REGION_CPU3,	/* memory region */
+	0,          /* init function */
+	{ 100 }
 };
 
 
 static int SN76496_latch;
 
 /* The timer port on TnF and HyperSports sound hardware is derived from
-   a 14.318 mhz clock crystal which is passed  through a couple of 74ls393
+   a 14.318 MHz clock crystal which is passed  through a couple of 74ls393
     ripple counters.
     Various outputs of the ripper counters clock the various chips.
-    The Z80 uses 14.318 mhz / 4 (3.4mhz)
-    The SN chip uses 14.318 ,hz / 8 (1.7mhz)
-    And the timer is connected to 14.318 mhz / 4096
+    The Z80 uses 14.318 MHz / 4 (3.4MHz)
+    The SN chip uses 14.318 MHz / 8 (1.7MHz)
+    And the timer is connected to 14.318 MHz / 4096
     As we are using the Z80 clockrate as a base value we need to multiply
     the no of cycles by 4 to undo the 14.318/4 operation
 */

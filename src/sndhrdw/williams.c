@@ -670,7 +670,7 @@ void williams_adpcm_init(int cpunum)
 		default:
 			break;
 	}
-	
+
 	/* find the number of banks in the ADPCM space */
 	for (i = 0; i < MAX_SOUND; i++)
 		if (Machine->drv->sound[i].sound_type == SOUND_OKIM6295)
@@ -765,7 +765,7 @@ static void williams_dcs_boot( void )
 		data = ( ( data & 0xff ) << 24 ) | ( ( data & 0xff00 ) << 8 ) | ( ( data >> 8 ) & 0xff00 ) | ( ( data >> 24 ) & 0xff );
 #endif
 		data >>= 8;
-		dst[i] = data;	
+		dst[i] = data;
 	}
 }
 
@@ -776,23 +776,23 @@ void williams_dcs_init(int cpunum)
 	/* configure the CPU */
 	williams_cpunum = cpunum;
 	williams_audio_type = WILLIAMS_DCS;
-	
+
 	/* initialize our state structure and install the transmit callback */
 	dcs.mem = 0;
 	dcs.size = 0;
 	dcs.incs = 0;
 	dcs.ireg = 0;
-	
+
 	/* initialize the ADSP control regs */
 	for( i = 0; i < sizeof(dcs.control_regs) / sizeof(dcs.control_regs[0]); i++ )
 		dcs.control_regs[i] = 0;
 
 	/* initialize banking */
 	dcs.bank = 0;
-	
+
 	/* start with no sound output */
 	dcs.enabled = 0;
-	
+
 	/* reset DAC generation */
 	dcs.buffer_in = 0;
 	dcs.sample_step = 0x10000;
@@ -801,7 +801,7 @@ void williams_dcs_init(int cpunum)
 
 	/* initialize the ADSP Tx callback */
 	adsp2105_set_tx_callback( sound_tx_callback );
-	
+
 	/* clear all interrupts */
 	cpu_set_irq_line( williams_cpunum, ADSP2105_IRQ0, CLEAR_LINE );
 	cpu_set_irq_line( williams_cpunum, ADSP2105_IRQ1, CLEAR_LINE );
@@ -812,11 +812,11 @@ void williams_dcs_init(int cpunum)
 	dcs_speedup1 = install_mem_write_handler(williams_cpunum, ADSP_DATA_ADDR_RANGE(0x04f8, 0x04f8), dcs_speedup1_w);
 	dcs_speedup2 = install_mem_write_handler(williams_cpunum, ADSP_DATA_ADDR_RANGE(0x063d, 0x063d), dcs_speedup2_w);
 #endif
-	
+
 	/* initialize the comm bits */
 	dcs.latch_control = 0x0c00;
 
-	/* boot */	
+	/* boot */
 	williams_dcs_boot();
 }
 
@@ -920,7 +920,7 @@ static int dcs_custom_start(const struct MachineSound *msound)
 {
 	/* allocate a DAC stream */
 	dac_stream = stream_init("DCS DAC", 100, Machine->sample_rate, 0, dcs_dac_update);
-	
+
 	/* allocate memory for our buffer */
 	dcs.buffer = malloc(DCS_BUFFER_SIZE * sizeof(INT16));
 	if (!dcs.buffer)
@@ -1028,9 +1028,9 @@ WRITE_HANDLER( williams_narc_slave_bank_select_w )
 WRITE_HANDLER( williams_dcs_bank_select_w )
 {
 	dcs.bank = data & 0x7ff;
-	
+
 	/* bit 11 = sound board led */
-#ifdef MAME_DEBUG
+#if 0
 	osd_led_w( 2, ( data & 0x800 ) ? 1 : 0 );
 #endif
 
@@ -1041,11 +1041,11 @@ WRITE_HANDLER( williams_dcs_bank_select_w )
 		/* calculate the next buffer address */
 		int source = cpu_get_reg( ADSP2100_I0+dcs.ireg );
 		int ar = source + dcs.size / 2;
-		
+
 		/* check for wrapping */
 		if ( ar >= ( dcs.ireg_base + dcs.size ) )
 			ar = dcs.ireg_base;
-		
+
 		/* set it */
 		cpu_set_reg( ADSP2100_AR, ar );
 
@@ -1197,7 +1197,7 @@ READ_HANDLER( williams_dcs_data_r )
 {
 	/* data is actually only 8 bit (read from d8-d15) */
 	dcs.latch_control |= 0x0400;
-	
+
 	return soundlatch2_r( 0 ) & 0xff;
 }
 
@@ -1217,14 +1217,14 @@ READ_HANDLER( williams_dcs_control_r )
 	/* loss */
 	if ( ( dcs.latch_control & 0x800 ) == 0 )
 		cpu_spinuntil_time( TIME_IN_USEC(50) );
-	
+
 	return dcs.latch_control;
 }
 
 void williams_dcs_reset_w(int state)
 {
-	logerror( "%08x: DCS reset\n", cpu_get_pc() );	
-	
+	logerror( "%08x: DCS reset\n", cpu_get_pc() );
+
 	/* going high halts the CPU */
 	if ( state )
 	{
@@ -1698,11 +1698,11 @@ static void dcs_dac_update(int num, INT16 *buffer, int length)
 			current += step;
 			*buffer++ = source[indx & DCS_BUFFER_MASK];
 		}
-		
+
 		/* fill the rest with the last sample */
 		for ( ; i < length; i++)
 			*buffer++ = source[(dcs.buffer_in - 1) & DCS_BUFFER_MASK];
-		
+
 		/* mask off extra bits */
 		while (current >= (DCS_BUFFER_SIZE << 16))
 		{
@@ -1774,12 +1774,12 @@ INT16 get_next_cvsd_sample(int bit)
 
 /*
 	The ADSP2105 memory map when in boot rom mode is as follows:
-	
+
 	Program Memory:
 	0x0000-0x03ff = Internal Program Ram (contents of boot rom gets copied here)
 	0x0400-0x07ff = Reserved
 	0x0800-0x3fff = External Program Ram
-	
+
 	Data Memory:
 	0x0000-0x03ff = External Data - 0 Waitstates
 	0x0400-0x07ff = External Data - 1 Waitstates
@@ -1815,7 +1815,7 @@ enum {
 WRITE_HANDLER( williams_dcs_control_w )
 {
 	dcs.control_regs[offset>>1] = data;
-	
+
 	switch( offset >> 1 ) {
 		case SYSCONTROL_REG:
 			if ( data & 0x0200 ) {
@@ -1837,20 +1837,20 @@ WRITE_HANDLER( williams_dcs_control_w )
 				}
 			}
 		break;
-		
+
 		case S1_AUTOBUF_REG:
 			/* autobuffer off: nuke the timer, and disable the DAC */
 			stream_update(dac_stream, 0);
 			if ( ( data & 0x0002 ) == 0 ) {
 				dcs.enabled = 0;
-				
+
 				if ( dcs.reg_timer ) {
 					timer_remove( dcs.reg_timer );
 					dcs.reg_timer = 0;
 				}
 			}
 		break;
-		
+
 		case S1_CONTROL_REG:
 			if ( ( ( data >> 4 ) & 3 ) == 2 )
 				logerror( "Oh no!, the data is compresed with u-law encoding\n" );
@@ -1873,27 +1873,27 @@ static void williams_dcs_irq(int state)
 	/* translate into data memory bus address */
 	int source = ADSP2100_DATA_OFFSET + ( reg << 1 );
 	int i;
-	
+
 	/* copy the current data into the buffer */
 	for (i = 0; i < dcs.size / 2; i++)
 		dcs.buffer[dcs.buffer_in++ & DCS_BUFFER_MASK] = READ_WORD(&dcs.mem[source + i * 2]);
-	
+
 	/* increment it */
 	reg += dcs.incs * dcs.size / 2;
-	
+
 	/* check for wrapping */
 	if ( reg >= ( dcs.ireg_base + dcs.size ) )
 	{
 		/* reset the base pointer */
 		reg = dcs.ireg_base;
-		
+
 		/* generate the (internal, thats why the pulse) irq */
 		cpu_set_irq_line( williams_cpunum, ADSP2105_IRQ1, PULSE_LINE );
 	}
-	
+
 	/* store it */
 	cpunum_set_reg( williams_cpunum, ADSP2100_I0+dcs.ireg, reg );
-	
+
 #if (!DISABLE_DCS_SPEEDUP)
 	/* this is the same trigger as an interrupt */
 	cpu_trigger( -2000 + williams_cpunum );
@@ -1906,7 +1906,7 @@ static void sound_tx_callback( int port, INT32 data )
 	/* check if it's for SPORT1 */
 	if ( port != 1 )
 		return;
-	
+
 	/* check if SPORT1 is enabled */
 	if ( dcs.control_regs[SYSCONTROL_REG] & 0x0800 ) /* bit 11 */
 	{
@@ -1917,46 +1917,46 @@ static void sound_tx_callback( int port, INT32 data )
 			int		mreg, lreg;
 			UINT16	source;
 			int		sample_rate;
-			
+
 			stream_update(dac_stream, 0);
 
 			dcs.ireg = ( dcs.control_regs[S1_AUTOBUF_REG] >> 9 ) & 7;
 			mreg = ( dcs.control_regs[S1_AUTOBUF_REG] >> 7 ) & 3;
 			mreg |= dcs.ireg & 0x04; /* msb comes from ireg */
 			lreg = dcs.ireg;
-			
+
 			/* now get the register contents in a more legible format */
 			/* we depend on register indexes to be continuous (wich is the case in our core) */
 			source = cpunum_get_reg( williams_cpunum, ADSP2100_I0+dcs.ireg );
 			dcs.incs = cpunum_get_reg( williams_cpunum, ADSP2100_M0+mreg );
 			dcs.size = cpunum_get_reg( williams_cpunum, ADSP2100_L0+lreg );
-			
+
 			/* get the base value, since we need to keep it around for wrapping */
 			source--;
-			
+
 			/* make it go back one so we dont loose the first sample */
 			cpunum_set_reg( williams_cpunum, ADSP2100_I0+dcs.ireg, source );
-			
+
 			/* save it as it is now */
 			dcs.ireg_base = source;
-			
+
 			/* get the memory chunk to read the data from */
 			dcs.mem = memory_region( REGION_CPU1+williams_cpunum );
-			
+
 			/* enable the dac playing */
 			dcs.enabled = 1;
-			
+
 			/* calculate how long until we generate an interrupt */
-			
+
 			/* frequency in Hz per each bit sent */
 			sample_rate = Machine->drv->cpu[williams_cpunum].cpu_clock / ( 2 * ( dcs.control_regs[S1_SCLKDIV_REG] + 1 ) );
 
 			/* now put it down to samples, so we know what the channel frequency has to be */
 			sample_rate /= 16;
-			
+
 			/* fire off a timer wich will hit every half-buffer */
 			dcs.reg_timer = timer_pulse(TIME_IN_HZ(sample_rate) * (dcs.size / 2), 0, williams_dcs_irq);
-			
+
 			/* configure the DAC generator */
 			dcs.sample_step = (int)(sample_rate * 65536.0 / (double)Machine->sample_rate);
 			dcs.sample_position = 0;
@@ -1967,11 +1967,11 @@ static void sound_tx_callback( int port, INT32 data )
 		else
 			logerror( "ADSP SPORT1: trying to transmit and autobuffer not enabled!\n" );
 	}
-	
+
 	/* if we get there, something went wrong. Disable playing */
 	stream_update(dac_stream, 0);
 	dcs.enabled = 0;
-	
+
 	/* remove timer */
 	if ( dcs.reg_timer )
 	{
@@ -2057,7 +2057,7 @@ static void dcs_speedup_common()
 	int mem63e = 0x40;
 	int mem63f = mem63e >> 1;
 	int i, j, k;
-	
+
 	for (i = 0; i < 6; i++)
 	{
 		INT16 *i4 = &source[0x780];
@@ -2069,10 +2069,10 @@ static void dcs_speedup_common()
 		for (j = 0; j < mem63d; j++)
 		{
 			INT32 mx0, mx1, my0, my1, ax0, ay0, ay1, mr1, temp;
-		
+
 			my0 = *i4++;
 			my1 = *i5++;
-			
+
 			for (k = 0; k < mem63f; k++)
 			{
 				mx0 = *i1++;

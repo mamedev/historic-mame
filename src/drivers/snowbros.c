@@ -262,13 +262,13 @@ static struct MachineDriver machine_driver_snowbros =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz ????? */
+			8000000,	/* 8 MHz ????? */
 			readmem,writemem,0,0,
 			snowbros_interrupt,3
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3600000,	/* 3.6 Mhz ??? */
+			3600000,	/* 3.6 MHz ??? */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 		}

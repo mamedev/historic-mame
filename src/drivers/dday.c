@@ -340,7 +340,7 @@ static struct MachineDriver machine_driver_dday =
 	{
 		{
 			CPU_Z80,
-			2000000,     /* 2 Mhz ? */
+			2000000,     /* 2 MHz ? */
 			readmem,writemem,0,0,
 			dday_interrupt,1
 		}

@@ -17,7 +17,11 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 3.0
+ *	 Changes in 3.1
+ *	 - removed the REPEAT_AT_ONCE execution of LDIR/CPIR etc. opcodes
+ *	   for readabilities sake and because the implementation was buggy
+ *	   (and I was not able to find the difference)
+ *   Changes in 3.0
  *	 - 'finished' switch to dynamically overrideable cycle count tables
  *   Changes in 2.9:
  *	 - added methods to access and override the cycle count tables
@@ -86,10 +90,6 @@
 
 /* Set to 1 for a more exact (but somewhat slower) Z80 emulation */
 #define Z80_EXACT			1
-
-/* repetitive commands (ldir,cpdr etc.) repeat at
-   once until cycles used up or B(C) counted down. */
-#define REPEAT_AT_ONCE		1
 
 /* on JP and JR opcodes check for tight loops */
 #define BUSY_LOOP_HACKS 	1
@@ -1877,258 +1877,90 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 /***************************************************************
  * LDIR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define LDIR {                                                  \
-	CC(ex,0xb0);												\
-	_PC -= 2;													\
-	do															\
+#define LDIR													\
+	LDI;														\
+	if( _BC )													\
 	{															\
-		LDI;													\
-		if( _BC )												\
-		{														\
-			if( z80_ICount > 0 )								\
-			{													\
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xb0);									\
-				CC(ex,0xb0);									\
-			}													\
-			else break; 										\
-		}														\
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xb0];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define LDIR LDI; if( _BC ) { _PC -= 2; CC(ex,0xb0); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xb0);											\
+	}
 
 /***************************************************************
  * CPIR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define CPIR {                                                  \
-	CC(ex,0xb1);												\
-	_PC -= 2;													\
-    do                                                          \
+#define CPIR													\
+	CPI;														\
+	if( _BC && !(_F & ZF) ) 									\
 	{															\
-		CPI;													\
-		if( _BC && !(_F & ZF) ) 								\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xb1);									\
-				CC(ex,0xb1);									\
-			}													\
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xb1];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define CPIR CPI; if( _BC && !(_F & ZF) ) { _PC -= 2; CC(ex,0xb1); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xb1);											\
+	}
 
 /***************************************************************
  * INIR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define INIR {                                                  \
-	CC(ex,0xb2);												\
-	_PC -= 2;													\
-    do                                                          \
+#define INIR													\
+	INI;														\
+	if( _B )													\
 	{															\
-		INI;													\
-		if( _B )												\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xb2);									\
-				CC(ex,0xb2);									\
-            }                                                   \
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xb2];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define INIR INI; if( _B ) { _PC -= 2; CC(ex,0xb2); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xb2);											\
+	}
 
 /***************************************************************
  * OTIR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define OTIR {                                                  \
-	CC(ex,0xb3);												\
-    _PC -= 2;                                                   \
-    do                                                          \
+#define OTIR													\
+	OUTI;														\
+	if( _B )													\
 	{															\
-		OUTI;													\
-		if( _B	)												\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xb3);									\
-				CC(ex,0xb3);									\
-            }                                                   \
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xb3];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define OTIR OUTI; if( _B ) { _PC -= 2; CC(ex,0xb3); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xb3);											\
+	}
 
 /***************************************************************
  * LDDR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define LDDR {                                                  \
-	CC(ex,0xb8);												\
-	_PC -= 2;													\
-    do                                                          \
+#define LDDR													\
+	LDD;														\
+	if( _BC )													\
 	{															\
-		LDD;													\
-		if( _BC )												\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xb8);									\
-				CC(ex,0xb8);									\
-            }                                                   \
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xb8];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define LDDR LDD; if( _BC ) { _PC -= 2; CC(ex,0xb8); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xb8);											\
+    }
 
 /***************************************************************
  * CPDR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define CPDR {                                                  \
-	CC(ex,0xb9);												\
-	_PC -= 2;													\
-    do                                                          \
+#define CPDR													\
+	CPD;														\
+	if( _BC && !(_F & ZF) ) 									\
 	{															\
-		CPD;													\
-		if( _BC && !(_F & ZF) ) 								\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xb9);									\
-				CC(ex,0xb9);									\
-			}													\
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xb9];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define CPDR CPD; if( _BC && !(_F & ZF) ) { _PC -= 2; CC(ex,0xb9); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xb9);											\
+	}
 
 /***************************************************************
  * INDR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define INDR {                                                  \
-	CC(ex,0xba);												\
-    _PC -= 2;                                                   \
-    do                                                          \
+#define INDR													\
+	IND;														\
+	if( _B )													\
 	{															\
-		IND;													\
-		if( _B )												\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xba);									\
-				CC(ex,0xba);									\
-            }                                                   \
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xba];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define INDR IND; if( _B ) { _PC -= 2; CC(ex,0xba); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xba);											\
+	}
 
 /***************************************************************
  * OTDR
  ***************************************************************/
-#if REPEAT_AT_ONCE
-#define OTDR {                                                  \
-	CC(ex,0xbb);												\
-    _PC -= 2;                                                   \
-    do                                                          \
+#define OTDR													\
+	OUTD;														\
+	if( _B )													\
 	{															\
-		OUTD;													\
-		if( _B )												\
-		{														\
-			if( z80_ICount > 0 )								\
-            {                                                   \
-				_R += 2;  /* increment R twice */				\
-				CC(op,0xbb);									\
-				CC(ex,0xbb);									\
-            }                                                   \
-            else break;                                         \
-        }                                                       \
-		else													\
-		{														\
-			_PC += 2;											\
-			z80_ICount += cc[Z80_TABLE_ex][0xbb];				\
-            break;                                              \
-		}														\
-	} while( z80_ICount > 0 );									\
-}
-#else
-#define OTDR OUTD; if( _B ) { _PC -= 2; CC(ex,0xbb); }
-#endif
+		_PC -= 2;												\
+		CC(ex,0xbb);											\
+	}
 
 /***************************************************************
  * EI
@@ -4359,7 +4191,7 @@ void *z80_get_cycle_table (int which)
  ****************************************************************************/
 void z80_set_cycle_table (int which, void *new_table)
 {
-	if (which >= 0 && which <= Z80_TABLE_xycb)
+	if (which >= 0 && which <= Z80_TABLE_ex)
 		cc[which] = new_table;
 }
 
@@ -4684,7 +4516,7 @@ const char *z80_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "Z80";
         case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "3.0";
+		case CPU_INFO_VERSION: return "3.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;

@@ -179,7 +179,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
-	{ 3867120, 3867120, 3867120 },	/* ?? the main oscillator is 15.46848 Mhz */
+	{ 3867120, 3867120, 3867120 },	/* ?? the main oscillator is 15.46848 MHz */
 	{ 100, 100, 100 }
 };
 
@@ -191,7 +191,7 @@ static struct MachineDriver machine_driver_bankp =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* ?? the main oscillator is 15.46848 Mhz */
+			3867120,	/* ?? the main oscillator is 15.46848 MHz */
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		},

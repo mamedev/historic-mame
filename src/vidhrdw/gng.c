@@ -57,7 +57,7 @@ int gng_vh_start(void)
 	fg_tilemap->transparent_pen = 3;
 
 	bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-	bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
+	bg_tilemap->transmask[1] = 0x41; /* split type 1 has pens 0 and 6 transparent in front half */
 
 	return 0;
 }

@@ -4,6 +4,11 @@ Popeye memory map (preliminary)
 
 driver by Marc Lafontaine
 
+TODO:
+- popeyef is known to have a territory jumper on the board. This might
+  apply to the others as well.
+
+
 0000-7fff  ROM
 
 8000-87ff  RAM
@@ -261,7 +266,7 @@ static struct MachineDriver machine_driver_popeyebl =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,2
 		}
@@ -350,6 +355,31 @@ ROM_START( popeye2 )
 	ROM_LOAD( "prom-vid.7j",  0x0240, 0x0100, 0xa4655e2e ) /* timing for the protection ALU */
 ROM_END
 
+ROM_START( popeyef )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "tpp2-c_f.7a",  0x0000, 0x2000, 0x5fc5264d )
+	ROM_LOAD( "tpp2-c_f.7b",  0x2000, 0x2000, 0x51de48e8 )
+	ROM_LOAD( "tpp2-c_f.7c",  0x4000, 0x2000, 0x62df9647 )
+	ROM_LOAD( "7e",           0x6000, 0x2000, 0xb64aa314 )
+
+	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-5n",         0x0000, 0x0800, 0xcca61ddd )	/* first half is empty */
+	ROM_CONTINUE(             0x0000, 0x0800 )
+
+	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-1e",         0x0000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x2000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x4000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x6000, 0x2000, 0x49e1d170 )
+
+	ROM_REGION( 0x0340, REGION_PROMS )
+	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
+	ROM_LOAD( "prom-cpu.3a",  0x0020, 0x0020, 0xe950bea1 ) /* char palette */
+	ROM_LOAD( "prom-cpu.5b",  0x0040, 0x0100, 0xc5826883 ) /* sprite palette - low 4 bits */
+	ROM_LOAD( "prom-cpu.5a",  0x0140, 0x0100, 0xc576afba ) /* sprite palette - high 4 bits */
+	ROM_LOAD( "prom-vid.7j",  0x0240, 0x0100, 0xa4655e2e ) /* timing for the protection ALU */
+ROM_END
+
 ROM_START( popeyebl )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "po1",          0x0000, 0x2000, 0xb14a07ca )
@@ -381,6 +411,7 @@ ROM_END
 /* The encryption is based on a custom ALU and seems to be dynamically evolving */
 /* (like Jr. PacMan). I think it decodes 16 bits at a time, bits 0-2 are (or can be) */
 /* an opcode for the ALU and the others contain the data. */
-GAMEX( 1982?, popeye,   0,      popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1982?, popeye2,  popeye, popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1982?, popeye,   0,      popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 1)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1982?, popeye2,  popeye, popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1982?, popeyef,  popeye, popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (rev. F)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
 GAMEX( 1982?, popeyebl, popeye, popeyebl, popeye, 0, ROT0, "bootleg", "Popeye (bootleg)", GAME_NO_COCKTAIL )

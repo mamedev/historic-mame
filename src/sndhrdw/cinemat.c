@@ -675,7 +675,7 @@ static READ_HANDLER(demon_sound_r)
 struct AY8910interface demon_ay8910_interface =
 {
 	3,	/* 3 chips */
-	3579545,	/* 3.579545 Mhz */
+	3579545,	/* 3.579545 MHz */
 	{ 25, 25, 25 },
 	{ demon_sound_r },
 	{ 0 },	/* there are sound enable bits in here, but don't know what is what */

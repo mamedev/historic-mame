@@ -304,13 +304,13 @@ static struct MachineDriver machine_driver_leprechn =
         // next level
         {
             CPU_M6502,
-            1250000,    /* 1.25 Mhz ??? */
+            1250000,    /* 1.25 MHz ??? */
             readmem,writemem,0,0,
             interrupt,1
         },
         {
             CPU_M6502 | CPU_AUDIO_CPU,
-            1500000,    /* 1.5 Mhz ??? */
+            1500000,    /* 1.5 MHz ??? */
             sound_readmem,sound_writemem,0,0,
             ignore_interrupt,1      /* interrupts are triggered by the main CPU */
         }

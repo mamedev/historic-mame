@@ -1057,7 +1057,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579580,	/* 3.58 MHZ ? */
+	3579580,	/* 3.58 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
 };
@@ -1074,14 +1074,14 @@ static struct C140interface C140_interface =
 
 /******************************************
 
-Master clock = 49.152Mhz
+Master clock = 49.152MHz
 
-68000 Measured at  84ns = 12.4Mhz	BUT 49.152MHz/4 = 12.288MHz = 81ns
+68000 Measured at  84ns = 12.4MHz	BUT 49.152MHz/4 = 12.288MHz = 81ns
 6809  Measured at 343ns = 2.915 MHz BUT 49.152MHz/16 = 3.072MHz = 325ns
 63B05 Measured at 120ns = 8.333 MHz BUT 49.152MHz/6 = 8.192MHz = 122ns
 
 I've corrected all frequencies to be multiples of integer divisions of
-the 49.152Mhz master clock. Additionally the 6305 looks to hav an
+the 49.152MHz master clock. Additionally the 6305 looks to hav an
 internal divider.
 
 Soooo;

@@ -368,7 +368,7 @@ static struct MachineDriver machine_driver_bionicc =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,  /* 4 Mhz ??? TODO: find real FRQ */
+			4000000,  /* 4 MHz ??? TODO: find real FRQ */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,4	/* ??? */
 		}
@@ -436,6 +436,9 @@ ROM_START( bionicc )
 	ROM_LOAD( "tsu_19.rom",   0x28000, 0x8000, 0xb5c82722 )
 	ROM_LOAD( "tsu_22.rom",   0x30000, 0x8000, 0x5ee1ae6a )
 	ROM_LOAD( "tsu_21.rom",   0x38000, 0x8000, 0x98777006 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.18f",   0x0000, 0x0100, 0xb58d0023 )	/* priority (not used) */
 ROM_END
 
 ROM_START( bionicc2 )
@@ -474,6 +477,9 @@ ROM_START( bionicc2 )
 	ROM_LOAD( "tsu_19.rom",   0x28000, 0x8000, 0xb5c82722 )
 	ROM_LOAD( "tsu_22.rom",   0x30000, 0x8000, 0x5ee1ae6a )
 	ROM_LOAD( "tsu_21.rom",   0x38000, 0x8000, 0x98777006 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.18f",   0x0000, 0x0100, 0xb58d0023 )	/* priority (not used) */
 ROM_END
 
 ROM_START( topsecrt )
@@ -512,6 +518,9 @@ ROM_START( topsecrt )
 	ROM_LOAD( "ts_19.rom",    0x28000, 0x8000, 0x928b669e )
 	ROM_LOAD( "ts_22.rom",    0x30000, 0x8000, 0x3fe05d9a )
 	ROM_LOAD( "ts_21.rom",    0x38000, 0x8000, 0x27a9bb7c )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.18f",   0x0000, 0x0100, 0xb58d0023 )	/* priority (not used) */
 ROM_END
 
 

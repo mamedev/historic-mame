@@ -362,11 +362,11 @@ void trojan_render_foreground( struct osd_bitmap *bitmap, int scrollx, int scrol
         int transp0,transp1;
         if( priority ){
 		transp0 = 0xFFFF;	/* draw nothing (all pens transparent) */
-		transp1 = 0xF00F;	/* high priority half of tile */
+		transp1 = 0xF07F;	/* high priority half of tile */
 	}
         else {
 		transp0 = 1;		/* TRANSPARENCY_PEN, color 0 */
-		transp1 = 0x0FF0;	/* low priority half of tile */
+		transp1 = 0x0F80;	/* low priority half of tile */
 	}
 
         for (sx=0; sx<0x12; sx++)
@@ -453,56 +453,57 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-        {
-              static int oldoffsy=0xffff;
-              static int oldoffsx=0xffff;
+	{
+		  static int oldoffsy=0xffff;
+		  static int oldoffsx=0xffff;
 
-              scrollx = (trojan_bk_scrollx[0]);
-              scrolly = (trojan_bk_scrolly[0]);
+		  scrollx = (trojan_bk_scrollx[0]);
+		  scrolly = (trojan_bk_scrolly[0]);
 
-              offsy = 0x20 * scrolly;
-              offsx = (scrollx >> 4);
-              scrollx = -(scrollx & 0x0f);
-              scrolly = 0; /* Y doesn't scroll ??? */
-              if (oldoffsy != offsy || oldoffsx != offsx)
-              {
-                  unsigned char *p=memory_region(REGION_GFX5);
-                  oldoffsx=offsx;
-                  oldoffsy=offsy;
+		  offsy = 0x20 * scrolly;
+		  offsx = (scrollx >> 4);
+		  scrollx = -(scrollx & 0x0f);
+		  scrolly = 0; /* Y doesn't scroll ??? */
+		  if (oldoffsy != offsy || oldoffsx != offsx)
+		  {
+			  unsigned char *p=memory_region(REGION_GFX5);
+			  oldoffsx=offsx;
+			  oldoffsy=offsy;
 
-                  for (sy=0; sy < 0x11; sy++)
-                  {
-                      offsy &= 0x7fff;
-                      for (sx=0; sx<0x11; sx++)
-                      {
-                          int code, colour;
-                          int offset=offsy + ((2*(offsx+sx)) & 0x3f);
-                          code = *(p+offset);
-                          colour = *(p+offset+1);
-                          drawgfx(tmpbitmap3, Machine->gfx[3],
-                                   code+((colour&0x80)<<1),
-                                   colour & 0x07,
-                                   colour&0x10,
-                                   colour&0x20,
-                                   16 * sx,16 * sy,
-                                   0,TRANSPARENCY_NONE,0);
-                      }
-                      offsy += 0x800;
-                  }
-              }
-              copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-        }
+			  for (sy=0; sy < 0x11; sy++)
+			  {
+				  offsy &= 0x7fff;
+				  for (sx=0; sx<0x11; sx++)
+				  {
+					  int code, colour;
+					  int offset=offsy + ((2*(offsx+sx)) & 0x3f);
+					  code = *(p+offset);
+					  colour = *(p+offset+1);
+					  drawgfx(tmpbitmap3, Machine->gfx[3],
+							   code+((colour&0x80)<<1),
+							   colour & 0x07,
+							   colour&0x10,
+							   colour&0x20,
+							   16 * sx,16 * sy,
+							   0,TRANSPARENCY_NONE,0);
+				  }
+				  offsy += 0x800;
+			  }
+		  }
+		  copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	}
 
-        scrollx = (trojan_scrollx[0] + 256 * trojan_scrollx[1]);
-        scrolly = (trojan_scrolly[0] + 256 * trojan_scrolly[1]);
+	scrollx = (trojan_scrollx[0] + 256 * trojan_scrollx[1]);
+	scrolly = (trojan_scrolly[0] + 256 * trojan_scrolly[1]);
 
-        trojan_render_foreground( bitmap, scrollx, scrolly, 0 );
+	trojan_render_foreground( bitmap, scrollx, scrolly, 0 );
 
 	trojan_draw_sprites( bitmap );
 	trojan_render_foreground( bitmap, scrollx, scrolly, 1 );
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--){
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
 		sx = offs % 32;
 		sy = offs / 32;
 		drawgfx(bitmap,Machine->gfx[0],

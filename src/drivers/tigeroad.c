@@ -590,7 +590,7 @@ static struct MachineDriver machine_driver_tigeroad =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,    /* 4 Mhz ??? */
+			4000000,    /* 4 MHz ??? */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -635,7 +635,7 @@ static struct MachineDriver machine_driver_toramich =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,    /* 4 Mhz ??? */
+			4000000,    /* 4 MHz ??? */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -720,7 +720,7 @@ ROM_START( tigeroad )
 	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
 
 	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
+	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, 0xec80ae36 )	/* priority (not used) */
 ROM_END
 
 ROM_START( toramich )
@@ -757,7 +757,7 @@ ROM_START( toramich )
 	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
 
 	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
+	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, 0xec80ae36 )	/* priority (not used) */
 ROM_END
 
 ROM_START( f1dream )
@@ -795,7 +795,7 @@ ROM_START( f1dream )
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
 
 	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "09e_tr.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
+	ROM_LOAD( "09e_tr.bin",   0x0000, 0x0100, 0xec80ae36 )	/* priority (not used) */
 ROM_END
 
 ROM_START( f1dreamb )
@@ -835,7 +835,7 @@ ROM_START( f1dreamb )
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
 
 	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "09e_tr.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
+	ROM_LOAD( "09e_tr.bin",   0x0000, 0x0100, 0xec80ae36 )	/* priority (not used) */
 ROM_END
 
 

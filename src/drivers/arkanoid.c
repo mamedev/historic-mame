@@ -329,13 +329,13 @@ static struct MachineDriver machine_driver_arkanoid =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz ?? */
+			6000000,	/* 6 MHz ?? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M68705,
-			500000,	/* .5 Mhz (don't know really how fast, but it doesn't need to even be this fast) */
+			500000,	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,1
 		},
@@ -372,7 +372,7 @@ static struct MachineDriver machine_driver_bootleg =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz ?? */
+			6000000,	/* 6 MHz ?? */
 			boot_readmem,boot_writemem,0,0,
 			interrupt,1
 		},

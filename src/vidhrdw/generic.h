@@ -1,5 +1,8 @@
 #include "driver.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern unsigned char *videoram;
 extern size_t videoram_size;
@@ -33,3 +36,6 @@ WRITE_HANDLER( buffer_spriteram_2_w );
 void buffer_spriteram(unsigned char *ptr,int length);
 void buffer_spriteram_2(unsigned char *ptr,int length);
 
+#ifdef __cplusplus
+}
+#endif

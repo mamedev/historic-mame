@@ -105,7 +105,7 @@ INLINE void win_out(UINT8 bChar, UINT8 bAttr, UINT32 x, UINT32 y, UINT32 idx)
 		p_attr[offs] = bAttr;
 
 		/* Here's where we draw the character */
-		osd_put_screen_char(bChar, bAttr, x, y);
+		dbg_put_screen_char(bChar, bAttr, x, y);
 	}
 }
 

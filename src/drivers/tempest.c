@@ -13,7 +13,7 @@
      0C00        R             D               Self test sw
      0C00        R          D                  Diagnostic step sw
      0C00        R       D                     Halt
-     0C00        R    D                        3khz ??
+     0C00        R    D                        3kHz ??
      0D00        R    D  D  D  D  D  D  D  D   option switches
      0E00        R    D  D  D  D  D  D  D  D   option switches
 
@@ -179,7 +179,7 @@ static READ_HANDLER( tempest_IN0_r )
 	if (avgdvg_done())
 		res|=0x40;
 
-	/* Emulate the 3Khz source on bit 7 (divide 1.5Mhz by 512) */
+	/* Emulate the 3Khz source on bit 7 (divide 1.5MHz by 512) */
 	if (cpu_gettotalcycles() & 0x100)
 		res |=0x80;
 
@@ -255,7 +255,7 @@ INPUT_PORTS_START( tempest )
 	/* per default (busy vector processor). */
  	/* handled by tempest_IN0_r() */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* bit 7 is tied to a 3khz (?) clock */
+	/* bit 7 is tied to a 3kHz (?) clock */
  	/* handled by tempest_IN0_r() */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 

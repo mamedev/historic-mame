@@ -16,8 +16,6 @@ extern unsigned char *blockout_videoram;
 extern unsigned char *blockout_frontvideoram;
 extern unsigned char *blockout_frontcolor;
 
-static unsigned char *ram_blockout; /* used by high scores */
-
 WRITE_HANDLER( blockout_videoram_w );
 READ_HANDLER( blockout_videoram_r );
 WRITE_HANDLER( blockout_frontvideoram_w );
@@ -90,7 +88,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100014, 0x100017, blockout_sound_command_w },
 	{ 0x180000, 0x1bffff, blockout_videoram_w, &blockout_videoram },
-	{ 0x1d4000, 0x1dffff, MWA_BANK1, &ram_blockout },	/* work RAM */
+	{ 0x1d4000, 0x1dffff, MWA_BANK1 },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MWA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_w, &blockout_frontvideoram },
 	{ 0x208000, 0x21ffff, MWA_BANK3 },	/* ??? */
@@ -208,7 +206,7 @@ static void blockout_irq_handler(int irq)
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.579545 Mhz (?) */
+	3579545,	/* 3.579545 MHz (?) */
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ blockout_irq_handler }
 };
@@ -235,7 +233,7 @@ static struct MachineDriver machine_driver_blockout =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 Mhz (?) */
+			3579545,	/* 3.579545 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* NMIs are triggered by the main CPU, IRQs by the YM2151 */
 		}

@@ -628,13 +628,13 @@ static struct MachineDriver machine_driver_mappy =
 	{
 		{
 			CPU_M6809,
-			1100000,                        /* 1.1 Mhz */
+			1100000,                        /* 1.1 MHz */
 			mappy_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
-			1100000,                        /* 1.1 Mhz */
+			1100000,                        /* 1.1 MHz */
 			mappy_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -672,13 +672,13 @@ static struct MachineDriver machine_driver_digdug2 =
 	{
 		{
 			CPU_M6809,
-			1600000,                        /* 1.6 Mhz */
+			1600000,                        /* 1.6 MHz */
 			digdug2_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
-			1600000,                        /* 1.6 Mhz */
+			1600000,                        /* 1.6 MHz */
 			digdug2_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -716,13 +716,13 @@ static struct MachineDriver machine_driver_motos =
 	{
 		{
 			CPU_M6809,
-			1600000,                        /* 1.6 Mhz */
+			1600000,                        /* 1.6 MHz */
 			motos_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
-			1600000,                        /* 1.6 Mhz */
+			1600000,                        /* 1.6 MHz */
 			motos_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -760,13 +760,13 @@ static struct MachineDriver machine_driver_todruaga =
 	{
 		{
 			CPU_M6809,
-			1600000,                        /* 1.6 Mhz */
+			1600000,                        /* 1.6 MHz */
 			todruaga_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
-			1600000,                        /* 1.6 Mhz */
+			1600000,                        /* 1.6 MHz */
 			todruaga_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}

@@ -538,13 +538,8 @@ void shanghai_vh_stop(void)
 void shanghai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x,y,b;
-	static int base,bose=256;
-if (keyboard_pressed_memory(KEYCODE_Z)) base -= 384/2*280;
-if (keyboard_pressed_memory(KEYCODE_X)) base += 384/2*280;
-if (keyboard_pressed_memory(KEYCODE_C)) bose--;
-if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 
-	b = 2 * (base + ((HD63484_reg[0xcc/2] & 0x001f) << 16) + HD63484_reg[0xce/2]);
+	b = 2 * (((HD63484_reg[0xcc/2] & 0x001f) << 16) + HD63484_reg[0xce/2]);
 	for (y = 0;y < 280;y++)
 	{
 		for (x = 0;x < 384;x++)
@@ -557,7 +552,7 @@ if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 
 	if ((HD63484_reg[0x06/2] & 0x0300) == 0x0300)
 	{
-		b = 2 * (base + ((HD63484_reg[0xdc/2] & 0x001f) << 16) + HD63484_reg[0xde/2]);
+		b = 2 * (((HD63484_reg[0xdc/2] & 0x001f) << 16) + HD63484_reg[0xde/2]);
 		for (y = 0;y < 280;y++)
 		{
 			for (x = 0;x < 384;x++)

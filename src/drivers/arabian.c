@@ -312,7 +312,7 @@ static struct MachineDriver machine_driver_arabian =
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			readmem,writemem,0,writeport,
 			arabian_interrupt,1
 		}

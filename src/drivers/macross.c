@@ -313,7 +313,7 @@ static struct MachineDriver machine_driver_macross =
 
 ROM_START( macross )
 	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
-	ROM_LOAD( "921a03",  0x00000, 0x80000, 0x33318d55 )	/* 68000 code */
+	ROM_LOAD( "921a03",  0x00000, 0x80000, 0x33318d55 )
 
 	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "921a01",		0x000000, 0x20000, 0xbbd8242d )	/* 8x8 tiles */
@@ -329,6 +329,14 @@ ROM_START( macross )
 
 	ROM_REGION( 0x80000, REGION_SOUND2 )	/* 512Kb for ADPCM sounds - sound chip is OKIM6295 */
 	ROM_LOAD( "921a06",    0x000000, 0x80000, 0x89461d0f )
+
+	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_LOAD( "921a08",    0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
+	ROM_LOAD( "921a09",    0x0100, 0x0100, 0x633ab1c9 )	/* unknown */
+	ROM_LOAD( "921a10",    0x0200, 0x0020, 0x8371e42d )	/* unknown */
+
+	ROM_REGION( 0x10000, REGION_USER1 )		/* unknown */
+	ROM_LOAD( "921a02",  0x00000, 0x10000, 0x77c082c7 )
 ROM_END
 
 

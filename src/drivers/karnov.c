@@ -580,7 +580,7 @@ static struct MachineDriver machine_driver_karnov =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10 Mhz */
+			10000000,	/* 10 MHz */
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,1
 		},
@@ -628,7 +628,7 @@ static struct MachineDriver machine_driver_wndrplnt =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10 Mhz */
+			10000000,	/* 10 MHz */
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,1
 		},

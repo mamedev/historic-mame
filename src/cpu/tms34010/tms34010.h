@@ -125,6 +125,8 @@ unsigned 	tms34020_dasm(char *buffer, unsigned pc);
 
 void 		tms34020_state_save(int cpunum, void *f);
 void 		tms34020_state_load(int cpunum, void *f);
+int 		tms34020_io_display_blanked(int cpu);
+int 		tms34020_get_DPYSTRT(int cpu);
 
 
 /* Host control interface */
@@ -156,6 +158,7 @@ extern int tms34010_ICount;
 
 #ifdef MAME_DEBUG
 unsigned Dasm34010(char *buff, unsigned _pc);
+unsigned Dasm34020(char *buff, unsigned _pc);
 #endif
 
 #endif /* _TMS34010_H */

@@ -260,7 +260,7 @@ static struct MachineDriver machine_driver_shisen =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz ? */
+			6000000,	/* 6 MHz ? */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},

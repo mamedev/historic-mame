@@ -249,19 +249,19 @@ static struct MachineDriver machine_driver_toypop =
 	{
 		{
 			CPU_M6809,
-			1600000,	/* 1.6 Mhz (?) */
+			1600000,	/* 1.6 MHz (?) */
 			toypop_readmem_I_6809,toypop_writemem_I_6809,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1600000,	/* 1.6 Mhz (?) */
+			1600000,	/* 1.6 MHz (?) */
 			toypop_readmem_II_6809,toypop_writemem_II_6809,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz (?) */
+			8000000,	/* 8 MHz (?) */
 			toypop_readmem_68k,toypop_writemem_68k,0,0,
 			toypop_interrupt,1
 		}

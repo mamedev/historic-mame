@@ -3,6 +3,7 @@
 
 #include "osd_cpu.h"
 #include "memory.h"
+#include "mamedbg.h"
 #include "osdepend.h"
 #include "mame.h"
 #include "common.h"
@@ -186,6 +187,9 @@ enum
 #if (HAS_S2650)
 	CPU_S2650,
 #endif
+#if (HAS_F8)
+	CPU_F8,
+#endif
 #if (HAS_TMS34010)
 	CPU_TMS34010,
 #endif
@@ -239,6 +243,12 @@ enum
 #endif
 #if (HAS_ARM)
 	CPU_ARM,
+#endif
+#if (HAS_G65816)
+	CPU_G65C816,
+#endif
+#if (HAS_SPC700)
+	CPU_SPC700,
 #endif
     CPU_COUNT
 };
@@ -425,9 +435,9 @@ struct GameDriver
 #define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_ and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS
-#define GAME_COMPUTER				0x8000	/* Driver is a computer (needs full keyboard) */
+#define GAME_COMPUTER               0x8000  /* Driver is a computer (needs full keyboard) */
 #define GAME_COMPUTER_MODIFIED      0x0800	/* Official? Hack */
-#define GAME_ALIAS					NOT_A_DRIVER	/* Driver is only an alias for an existing model */
+#define GAME_ALIAS                  NOT_A_DRIVER	/* Driver is only an alias for an existing model */
 #endif
 
 

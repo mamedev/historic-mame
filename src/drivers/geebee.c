@@ -453,7 +453,7 @@ static struct MachineDriver machine_driver_geebee =
 	{
 		{
 			CPU_8080,
-			18432000/9, 		/* 18.432 Mhz / 9 */
+			18432000/9, 		/* 18.432 MHz / 9 */
 			readmem,writemem,readport,writeport,
 			geebee_interrupt,1	/* one interrupt per frame */
 		}
@@ -491,7 +491,7 @@ static struct MachineDriver machine_driver_navalone =
 	{
 		{
 			CPU_8080,
-			18432000/9, 		/* 18.432 Mhz / 9 */
+			18432000/9, 		/* 18.432 MHz / 9 */
 			readmem_navalone,writemem,readport_navalone,writeport,
 			geebee_interrupt,1	/* one interrupt per frame */
 		}
@@ -530,7 +530,7 @@ static struct MachineDriver machine_driver_kaitei =
 	{
 		{
 			CPU_8080,
-			18432000/9, 		/* 18.432 Mhz / 9 */
+			18432000/9, 		/* 18.432 MHz / 9 */
 			readmem_navalone,writemem,readport_navalone,writeport,
 			kaitei_interrupt,1	/* one interrupt per frame */
 		}
@@ -567,7 +567,7 @@ static struct MachineDriver machine_driver_sos =
 	{
 		{
 			CPU_8080,
-			18432000/9, 		/* 18.432 Mhz / 9 */
+			18432000/9, 		/* 18.432 MHz / 9 */
 			readmem_navalone,writemem,readport_navalone,writeport,
 			geebee_interrupt,1	/* one interrupt per frame */
 		}

@@ -372,13 +372,13 @@ static struct MachineDriver machine_driver_firetrap =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz */
+			6000000,	/* 6 MHz */
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			3072000/2,	/* 1.536 Mhz? */
+			3072000/2,	/* 1.536 MHz? */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 							/* IRQs are caused by the ADPCM chip */

@@ -175,7 +175,7 @@ static struct MachineDriver machine_driver_sharkatt =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4 Mhz? */
+			4000000,        /* 4 MHz? */
 			readmem,writemem,readport,writeport,
 			sharkatt_interrupt,1
 		}

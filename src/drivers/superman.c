@@ -33,7 +33,6 @@ CPU 1 : 68000, uses irq 6
 
 TODO:
 	* Optimize rendering
-	* Does high score save work consistently?
 
 ***************************************************************************/
 

@@ -10,8 +10,6 @@
 #include "vidhrdw/generic.h"
 
 
-static int flipscreen;
-
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -70,23 +68,11 @@ static void superpac_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsig
 }
 
 
-WRITE_HANDLER(superpac_flipscreen_w)
-{
-	data &= 0x01;
-
-	if (flipscreen != data)
-	{
-		memset(dirtybuffer, 1, videoram_size);
-
-		flipscreen = data;
-	}
-}
-
 READ_HANDLER(superpac_flipscreen_r)
 {
-	superpac_flipscreen_w(offset, 1);
+	flip_screen_w(offset, 1);
 
-	return flipscreen;	/* return value not used */
+	return flip_screen;	/* return value not used */
 }
 
 /***************************************************************************
@@ -99,6 +85,12 @@ READ_HANDLER(superpac_flipscreen_r)
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -136,7 +128,7 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sy = my - 2;
 			}
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 35 - sx;
 				sy = 27 - sy;
@@ -145,7 +137,7 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs],
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -167,7 +159,7 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int flipx = spriteram_3[offs] & 1;
 			int flipy = spriteram_3[offs] & 2;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;

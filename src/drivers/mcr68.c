@@ -963,7 +963,7 @@ static struct MachineDriver machine_driver_zwackery =
 	{
 		{
 			CPU_M68000,
-			7652400,	/* 8 Mhz */
+			7652400,	/* 8 MHz */
 			zwackery_readmem,zwackery_writemem,0,0,
 			mcr68_interrupt,1
 		},
@@ -1001,7 +1001,7 @@ static struct MachineDriver machine_driver_##NAME =		\
 	{													\
 		{												\
 			CPU_M68000,									\
-			7723800,	/* 8 Mhz */						\
+			7723800,	/* 8 MHz */						\
 			MEMMAP##_readmem,MEMMAP##_writemem,0,0,		\
 			mcr68_interrupt,1							\
 		},												\

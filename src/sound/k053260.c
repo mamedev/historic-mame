@@ -46,7 +46,7 @@ static unsigned long *delta_table;
 static void InitDeltaTable( void ) {
 	int		i;
 	double	base = ( double )Machine->sample_rate;
-	double	max = (double)K053260_chip.intf->clock; /* hz */
+	double	max = (double)K053260_chip.intf->clock; /* Hz */
 	unsigned long val;
 
 	for( i = 0; i < 0x1000; i++ ) {

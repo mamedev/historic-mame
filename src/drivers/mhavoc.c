@@ -457,13 +457,13 @@ static struct MachineDriver machine_driver_mhavoc =
 	{
 		{
 			CPU_M6502,
-			2500000,	/* 2.5 Mhz */
+			2500000,	/* 2.5 MHz */
 			readmem,writemem,0,0,
 			interrupt,8 /* 2.4576 milliseconds period */
 		},
 		{
 			CPU_M6502,
-			1250000,	/* 1.25 Mhz */
+			1250000,	/* 1.25 MHz */
 			gamma_readmem,gamma_writemem,0,0,
 			0, 0, /* no vblank interrupt */
 #if 0		/* HJB has it's own timer in machine/mhavoc now */

@@ -39,8 +39,8 @@ void MSM5205_data_w (int num, int data);
 /* Call MSM5205_vclk_w after MSM5205_data_w and MSM5205_reset_w. */
 void MSM5205_vclk_w (int num, int reset);
 /* option , selected pin seletor */
-void MSM5205_selector_w (int num, int _select);
-void MSM5205_bitwidth_w (int num, int bitwidth);
+void MSM5205_playmode_w(int num,int _select);
+
 void MSM5205_set_volume(int num,int volume);
 
 #endif

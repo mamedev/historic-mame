@@ -721,7 +721,7 @@ static struct MachineDriver machine_driver_zunit =
 	{
 		{
 			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
+			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 MHz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -767,7 +767,7 @@ static struct MachineDriver machine_driver_yunit_cvsd_4bit =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -806,7 +806,7 @@ static struct MachineDriver machine_driver_yunit_cvsd_6bit =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -845,7 +845,7 @@ static struct MachineDriver machine_driver_yunit_adpcm =
 	{
 		{
 			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
+			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 MHz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config

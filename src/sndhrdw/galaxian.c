@@ -8,7 +8,7 @@
 
 #define XTAL		18432000
 
-#define SOUND_CLOCK (XTAL/6/2)			/* 1.536 Mhz */
+#define SOUND_CLOCK (XTAL/6/2)			/* 1.536 MHz */
 
 #define SAMPLES 1
 

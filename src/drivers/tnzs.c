@@ -28,10 +28,10 @@ it succeed is as follows:
 - on the color test screen, press 2 (player 2 start)
 - set dip switch 1 and dip switch 2 so that they read 00000001
 - reset the emulation, and skip the previous step.
-- press 3 (coin 1). Text at the bottom will change to "CHECKING NOW".
+- press 5 (coin 1). Text at the bottom will change to "CHECKING NOW".
 - use all the inputs, including tilt, until all inputs are OK
-- press 3 (coin 1) - to confirm that coin lockout 1 works
-- press 3 (coin 1) - to confirm that coin lockout 2 works
+- press 5 (coin 1) - to confirm that coin lockout 1 works
+- press 5 (coin 1) - to confirm that coin lockout 2 works
 - set dip switch 1 to 00000000
 - set dip switch 1 to 10101010
 - set dip switch 1 to 11111111
@@ -39,10 +39,10 @@ it succeed is as follows:
 - set dip switch 2 to 10101010
 - set dip switch 2 to 11111111
 - speaker should now output a tone
-- press 3 (coin 1) , to confirm that OPN works
-- press 3 (coin 1) , to confirm that SSGCH1 works
-- press 3 (coin 1) , to confirm that SSGCH2 works
-- press 3 (coin 1) , to confirm that SSGCH3 works
+- press 5 (coin 1) , to confirm that OPN works
+- press 5 (coin 1) , to confirm that SSGCH1 works
+- press 5 (coin 1) , to confirm that SSGCH2 works
+- press 5 (coin 1) , to confirm that SSGCH3 works
 - finished ("CHECK ALL OK!")
 
 ****************************************************************************
@@ -533,7 +533,7 @@ INPUT_PORTS_START( extrmatn )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -606,7 +606,7 @@ INPUT_PORTS_START( arkanoi2 )
 	PORT_START		/* spinner 1 - read at f000/1 */
 	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
@@ -678,7 +678,7 @@ INPUT_PORTS_START( ark2us )
 	PORT_START		/* spinner 1 - read at f000/1 */
 	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
@@ -711,18 +711,16 @@ INPUT_PORTS_START( plumppop )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START		/* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "50k 150k" )
+	PORT_DIPSETTING(    0x0c, "70k 200k" )
+	PORT_DIPSETTING(    0x04, "100k 250k" )
+	PORT_DIPSETTING(    0x00, "200k 300k" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
@@ -756,7 +754,7 @@ INPUT_PORTS_START( plumppop )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -839,7 +837,7 @@ INPUT_PORTS_START( drtoppel )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -878,19 +876,11 @@ INPUT_PORTS_START( chukatai )
 	PORT_DIPSETTING(    0x03, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-/* Bonus life awards are to be verified
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "50000 150000" )
-	PORT_DIPSETTING(    0x0c, "70000 200000" )
-	PORT_DIPSETTING(    0x04, "100000 250000" )
-	PORT_DIPSETTING(    0x08, "200000 300000" )
-*/
+	PORT_DIPSETTING(    0x08, "100k 300k 440k" )
+	PORT_DIPSETTING(    0x00, "100k 300k 500k" )
+	PORT_DIPSETTING(    0x0c, "100k 400k" )
+	PORT_DIPSETTING(    0x04, "100k 500k" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
@@ -924,7 +914,7 @@ INPUT_PORTS_START( chukatai )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1001,7 +991,7 @@ INPUT_PORTS_START( tnzs )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1078,7 +1068,7 @@ INPUT_PORTS_START( tnzsb )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1155,7 +1145,7 @@ INPUT_PORTS_START( tnzs2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1189,18 +1179,16 @@ INPUT_PORTS_START( insectx )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
 	PORT_START		/* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "100k 200k 300k 440k" )
+	PORT_DIPSETTING(    0x0c, "100k 400k" )
+	PORT_DIPSETTING(    0x04, "100k 500k" )
+	PORT_DIPSETTING(    0x00, "150000 Only" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
@@ -1234,7 +1222,7 @@ INPUT_PORTS_START( insectx )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1313,7 +1301,7 @@ INPUT_PORTS_START( kageki )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1488,13 +1476,13 @@ static struct MachineDriver machine_driver_drtoppel =
 	{
 		{
 			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
+			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
+			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		},
@@ -1531,13 +1519,13 @@ static struct MachineDriver machine_driver_tnzs =
 	{
 		{
 			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
+			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
+			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		}
@@ -1575,19 +1563,19 @@ static struct MachineDriver machine_driver_tnzsb =
 	{
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz(?) */
+			6000000,		/* 6 MHz(?) */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz(?) */
+			6000000,		/* 6 MHz(?) */
 			tnzsb_readmem1,tnzsb_writemem1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,		/* 4 Mhz??? */
+			4000000,		/* 4 MHz??? */
 			tnzsb_readmem2,tnzsb_writemem2,tnzsb_readport,tnzsb_writeport,
 			ignore_interrupt,1
 		}
@@ -1625,13 +1613,13 @@ static struct MachineDriver machine_driver_insectx =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz(?) */
+			6000000,	/* 6 MHz(?) */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz(?) */
+			6000000,	/* 6 MHz(?) */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		}
@@ -1722,6 +1710,39 @@ static struct MachineDriver machine_driver_kageki =
 
 ***************************************************************************/
 
+ROM_START( plumppop )
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "a98-09.bin", 0x00000, 0x08000, 0x107f9e06 )
+	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
+	ROM_LOAD( "a98-10.bin", 0x20000, 0x10000, 0xdf6e6af2 )	/* banked at 8000-bfff */
+
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "a98-11.bin", 0x00000, 0x08000, 0xbc56775c )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a98-01.bin", 0x00000, 0x10000, 0xf3033dca )
+	ROM_RELOAD(             0x10000, 0x10000 )
+	ROM_LOAD( "a98-02.bin", 0x20000, 0x10000, 0xf2d17b0c )
+	ROM_RELOAD(             0x30000, 0x10000 )
+	ROM_LOAD( "a98-03.bin", 0x40000, 0x10000, 0x1a519b0a )
+	ROM_RELOAD(             0x40000, 0x10000 )
+	ROM_LOAD( "a98-04.bin", 0x60000, 0x10000, 0xb64501a1 )
+	ROM_RELOAD(             0x70000, 0x10000 )
+	ROM_LOAD( "a98-05.bin", 0x80000, 0x10000, 0x45c36963 )
+	ROM_RELOAD(             0x90000, 0x10000 )
+	ROM_LOAD( "a98-06.bin", 0xa0000, 0x10000, 0xe075341b )
+	ROM_RELOAD(             0xb0000, 0x10000 )
+	ROM_LOAD( "a98-07.bin", 0xc0000, 0x10000, 0x8e16cd81 )
+	ROM_RELOAD(             0xd0000, 0x10000 )
+	ROM_LOAD( "a98-08.bin", 0xe0000, 0x10000, 0xbfa7609a )
+	ROM_RELOAD(             0xf0000, 0x10000 )
+
+	ROM_REGION( 0x0400, REGION_PROMS )		/* color proms */
+	ROM_LOAD( "a98-13.bpr", 0x0000, 0x200, 0x7cde2da5 )	/* hi bytes */
+	ROM_LOAD( "a98-12.bpr", 0x0200, 0x200, 0x90dc9da7 )	/* lo bytes */
+ROM_END
+
 ROM_START( extrmatn )
 	ROM_REGION( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "b06-20.bin", 0x00000, 0x08000, 0x04e3fc1f )
@@ -1806,39 +1827,6 @@ ROM_START( ark2jp )
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
-ROM_START( plumppop )
-	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "a98-09.bin", 0x00000, 0x08000, 0x107f9e06 )
-	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
-	ROM_LOAD( "a98-10.bin", 0x20000, 0x10000, 0xdf6e6af2 )	/* banked at 8000-bfff */
-
-	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "a98-11.bin", 0x00000, 0x08000, 0xbc56775c )
-	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
-
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a98-01.bin", 0x00000, 0x10000, 0xf3033dca )
-	ROM_RELOAD(             0x10000, 0x10000 )
-	ROM_LOAD( "a98-02.bin", 0x20000, 0x10000, 0xf2d17b0c )
-	ROM_RELOAD(             0x30000, 0x10000 )
-	ROM_LOAD( "a98-03.bin", 0x40000, 0x10000, 0x1a519b0a )
-	ROM_RELOAD(             0x40000, 0x10000 )
-	ROM_LOAD( "a98-04.bin", 0x60000, 0x10000, 0xb64501a1 )
-	ROM_RELOAD(             0x70000, 0x10000 )
-	ROM_LOAD( "a98-05.bin", 0x80000, 0x10000, 0x45c36963 )
-	ROM_RELOAD(             0x90000, 0x10000 )
-	ROM_LOAD( "a98-06.bin", 0xa0000, 0x10000, 0xe075341b )
-	ROM_RELOAD(             0xb0000, 0x10000 )
-	ROM_LOAD( "a98-07.bin", 0xc0000, 0x10000, 0x8e16cd81 )
-	ROM_RELOAD(             0xd0000, 0x10000 )
-	ROM_LOAD( "a98-08.bin", 0xe0000, 0x10000, 0xbfa7609a )
-	ROM_RELOAD(             0xf0000, 0x10000 )
-
-	ROM_REGION( 0x0400, REGION_PROMS )		/* color proms */
-	ROM_LOAD( "a98-13.bpr", 0x0000, 0x200, 0x7cde2da5 )	/* hi bytes */
-	ROM_LOAD( "a98-12.bpr", 0x0200, 0x200, 0x90dc9da7 )	/* lo bytes */
-ROM_END
-
 ROM_START( drtoppel )
 	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b19-09.bin", 0x00000, 0x08000, 0x3e654f82 )
@@ -1862,6 +1850,54 @@ ROM_START( drtoppel )
 	ROM_REGION( 0x0400, REGION_PROMS )		/* color proms */
 	ROM_LOAD( "b19-13.bin", 0x0000, 0x200, 0x6a547980 )	/* hi bytes */
 	ROM_LOAD( "b19-12.bin", 0x0200, 0x200, 0x5754e9d8 )	/* lo bytes */
+ROM_END
+
+ROM_START( kageki )
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "b35-16.11c",  0x00000, 0x08000, 0xa4e6fd58 )	/* US ver */
+	ROM_CONTINUE(            0x18000, 0x08000 )
+	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
+
+	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
+	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
+	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
+	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, 0x71c03f91 )
+	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, 0xa4e20c08 )
+	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, 0x3f8ab658 )
+	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
+	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
+	ROM_LOAD( "b35-15.98g",  0x00000, 0x10000, 0xe6212a0f )	/* US ver */
+ROM_END
+
+ROM_START( kagekij )
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "b35-09j.11c", 0x00000, 0x08000, 0x829637d5 )	/* JP ver */
+	ROM_CONTINUE(            0x18000, 0x08000 )
+	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
+
+	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
+	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
+	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
+	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, 0x71c03f91 )
+	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, 0xa4e20c08 )
+	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, 0x3f8ab658 )
+	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
+	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
+	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, 0x184409f1 )	/* JP ver */
 ROM_END
 
 ROM_START( chukatai )
@@ -1964,66 +2000,18 @@ ROM_START( insectx )
 	ROM_LOAD( "insector.r16", 0x80000, 0x80000, 0xdb5a7434 )
 ROM_END
 
-ROM_START( kageki )
-	ROM_REGION( 0x30000, REGION_CPU1 )
-	ROM_LOAD( "b35-16.11c",  0x00000, 0x08000, 0xa4e6fd58 )	/* US ver */
-	ROM_CONTINUE(            0x18000, 0x08000 )
-	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
-
-	ROM_REGION( 0x18000, REGION_CPU2 )
-	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
-	ROM_CONTINUE(            0x10000, 0x08000 )
-
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
-	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
-	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
-	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, 0x71c03f91 )
-	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, 0xa4e20c08 )
-	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, 0x3f8ab658 )
-	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
-	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
-
-	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
-	ROM_LOAD( "b35-15.98g",  0x00000, 0x10000, 0xe6212a0f )	/* US ver */
-ROM_END
-
-ROM_START( kagekij )
-	ROM_REGION( 0x30000, REGION_CPU1 )
-	ROM_LOAD( "b35-09j.11c", 0x00000, 0x08000, 0x829637d5 )	/* JP ver */
-	ROM_CONTINUE(            0x18000, 0x08000 )
-	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
-
-	ROM_REGION( 0x18000, REGION_CPU2 )
-	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
-	ROM_CONTINUE(            0x10000, 0x08000 )
-
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
-	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
-	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
-	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, 0x71c03f91 )
-	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, 0xa4e20c08 )
-	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, 0x3f8ab658 )
-	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
-	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
-
-	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
-	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, 0x184409f1 )	/* JP ver */
-ROM_END
 
 
-
+GAME( 1987, plumppop, 0,        drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
 GAME( 1987, extrmatn, 0,        arkanoi2, extrmatn, extrmatn, ROT270, "[Taito] World Games", "Extermination (US)" )
 GAME( 1987, arkanoi2, 0,        arkanoi2, arkanoi2, arkanoi2, ROT270, "Taito Corporation Japan", "Arkanoid - Revenge of DOH (World)" )
 GAME( 1987, ark2us,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito America Corporation (Romstar license)", "Arkanoid - Revenge of DOH (US)" )
 GAME( 1987, ark2jp,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito Corporation", "Arkanoid - Revenge of DOH (Japan)" )
-GAME( 1987, plumppop, 0,        drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
 GAME( 1987, drtoppel, 0,        drtoppel, drtoppel, drtoppel, ROT90,  "Taito Corporation", "Dr. Toppel's Tankentai (Japan)" )
+GAME( 1988, kageki,   0,        kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)" )
+GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (Japan)" )
 GAME( 1988, chukatai, 0,        tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
 GAME( 1988, tnzs,     0,        tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
 GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzs,     ROT0,   "bootleg", "The NewZealand Story (World, bootleg)" )
 GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story 2 (World)" )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )
-GAME( 1988, kageki,   0,        kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)" )
-GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (Japan)" )

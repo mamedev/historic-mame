@@ -134,7 +134,6 @@ extern unsigned char *cclimber_bsvideoram;
 extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-WRITE_HANDLER( cclimber_flipscreen_w );
 WRITE_HANDLER( cclimber_colorram_w );
 WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -195,7 +194,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9800, 0x9bff, MWA_RAM },  /* not used, but initialized */
 	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa002, cclimber_flipscreen_w },
+	{ 0xa001, 0xa001, flip_screen_x_w },
+	{ 0xa002, 0xa002, flip_screen_y_w },
 	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
 	{ 0xa800, 0xa800, cclimber_sample_rate_w },
 	{ 0xb000, 0xb000, cclimber_sample_volume_w },
@@ -1062,7 +1062,8 @@ static struct MemoryWriteAddress swimmer_writemem[] =
 	{ 0x98fc, 0x98ff, MWA_RAM, &cclimber_bigspriteram },
 	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa002, cclimber_flipscreen_w },
+	{ 0xa001, 0xa001, flip_screen_x_w },
+	{ 0xa002, 0xa002, flip_screen_y_w },
 	{ 0xa003, 0xa003, swimmer_sidepanel_enable_w },
 	{ 0xa004, 0xa004, swimmer_palettebank_w },
 	{ 0xa800, 0xa800, swimmer_sh_soundlatch_w },

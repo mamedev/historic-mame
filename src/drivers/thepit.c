@@ -605,7 +605,7 @@ static struct GfxDecodeInfo suprmous_gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,      /* 1 or 2 chips */
-	18432000/12,     /* 1.536Mhz */
+	18432000/12,     /* 1.536MHz */
 	{ 25, 25 },
 	{ soundlatch_r, 0 },
 	{ 0, 0 },
@@ -621,13 +621,13 @@ static struct MachineDriver machine_driver_##GAMENAME =		\
 	{														\
 		{													\
 			CPU_Z80,										\
-			18432000/6,     /* 3.072 Mhz */					\
+			18432000/6,     /* 3.072 MHz */					\
 			GAMENAME##_readmem,GAMENAME##_writemem,0,0,		\
 			nmi_interrupt,1									\
 		},													\
 		{													\
 			CPU_Z80 | CPU_AUDIO_CPU,						\
-			10000000/4,     /* 2.5 Mhz */					\
+			10000000/4,     /* 2.5 MHz */					\
 			sound_readmem,sound_writemem,					\
 			sound_readport,sound_writeport,					\
 			interrupt,1										\

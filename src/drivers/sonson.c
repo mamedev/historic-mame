@@ -258,13 +258,13 @@ static struct MachineDriver machine_driver_sonson =
 	{
 		{
 			CPU_M6809,
-			2000000,	/* 2 Mhz (?) */
+			2000000,	/* 2 MHz (?) */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz (?) */
+			2000000,	/* 2 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4	/* FIRQs are triggered by the main CPU */
 		},
@@ -321,11 +321,12 @@ ROM_START( sonson )
 	ROM_LOAD( "ss8.v12",      0x04000, 0x4000, 0x9f59014e )
 	ROM_LOAD( "ss9.v12",      0x08000, 0x4000, 0xe240345a )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0340, REGION_PROMS )
 	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
 	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
-	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */
-	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0xd4f7bfb5 )	/* sprite lookup table */
+	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0xc53321c6 )	/* character lookup table */
+	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0x7d2c324a )	/* sprite lookup table */
+	ROM_LOAD( "ss4.bin",      0x0240, 0x0100, 0xa04b0cfe )	/* unknown (not used) */
 ROM_END
 
 

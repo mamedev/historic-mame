@@ -254,13 +254,13 @@ static struct MachineDriver machine_driver_gunsmoke =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4 Mhz (?) */
+			4000000,        /* 4 MHz (?) */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz (?) */
+			3000000,	/* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -334,7 +334,7 @@ ROM_START( gunsmoke )
 	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -343,6 +343,8 @@ ROM_START( gunsmoke )
 	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0xcb9394fc )	/* tile palette bank */
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
+	ROM_LOAD( "02j_g-10.bin", 0x0800, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, 0x25c90c2a )	/* priority? (not used) */
 ROM_END
 
 ROM_START( gunsmrom )
@@ -380,7 +382,7 @@ ROM_START( gunsmrom )
 	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -389,6 +391,8 @@ ROM_START( gunsmrom )
 	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0xcb9394fc )	/* tile palette bank */
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
+	ROM_LOAD( "02j_g-10.bin", 0x0800, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, 0x25c90c2a )	/* priority? (not used) */
 ROM_END
 
 ROM_START( gunsmokj )
@@ -426,7 +430,7 @@ ROM_START( gunsmokj )
 	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -435,6 +439,8 @@ ROM_START( gunsmokj )
 	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0xcb9394fc )	/* tile palette bank */
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
+	ROM_LOAD( "02j_g-10.bin", 0x0800, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, 0x25c90c2a )	/* priority? (not used) */
 ROM_END
 
 ROM_START( gunsmoka )
@@ -472,7 +478,7 @@ ROM_START( gunsmoka )
 	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -481,6 +487,8 @@ ROM_START( gunsmoka )
 	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0xcb9394fc )	/* tile palette bank */
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
+	ROM_LOAD( "02j_g-10.bin", 0x0800, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, 0x25c90c2a )	/* priority? (not used) */
 ROM_END
 
 
@@ -490,7 +498,7 @@ ROM_END
   different: the levels are in a different order, and the "Demonstration" dip
   switch has no effect.
  */
-GAMEX( 1985, gunsmoke, 0,        gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (World)", GAME_NO_COCKTAIL )
-GAMEX( 1985, gunsmrom, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1986, gunsmoka, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (US set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1985, gunsmokj, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (Japan)", GAME_NO_COCKTAIL )
+GAME( 1985, gunsmoke, 0,        gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (World)" )
+GAME( 1985, gunsmrom, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 1)" )
+GAME( 1986, gunsmoka, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (US set 2)" )
+GAME( 1985, gunsmokj, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (Japan)" )

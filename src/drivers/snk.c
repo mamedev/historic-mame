@@ -816,7 +816,7 @@ static struct MachineDriver machine_driver_tnk3 =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_readmem_sound,YM3526_writemem_sound,0,0,
 			interrupt,2 /* ? */
 		},
@@ -866,7 +866,7 @@ static struct MachineDriver machine_driver_athena =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -904,19 +904,19 @@ static struct MachineDriver machine_driver_ikari =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -954,19 +954,19 @@ static struct MachineDriver machine_driver_victroad =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -1003,19 +1003,19 @@ static struct MachineDriver machine_driver_gwar =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -1051,19 +1051,20 @@ static struct MachineDriver machine_driver_bermudat =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+//			4000000,	/* 4.0 MHz (?) */ doesn't work with this clock speed
+			5000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -1099,19 +1100,19 @@ static struct MachineDriver machine_driver_psychos =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -1147,19 +1148,19 @@ static struct MachineDriver machine_driver_chopper1 =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -1199,19 +1200,19 @@ static struct MachineDriver machine_driver_tdfever =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 //			YM3526_Y8950_readmem_sound, YM3526_Y8950_writemem_sound,0,0,
 			YM3526_YM3526_readmem_sound, YM3526_YM3526_writemem_sound,0,0,
 			interrupt,1
@@ -1253,19 +1254,19 @@ static struct MachineDriver machine_driver_ftsoccer =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			Y8950_readmem_sound, Y8950_writemem_sound,0,0,
 			interrupt,1
 		},

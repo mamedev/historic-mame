@@ -6,7 +6,7 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.1
+ *                                Version 3.2
  *
  * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
@@ -112,7 +112,7 @@ typedef enum
 	M68K_REG_PREF_DATA,	/* Last prefetch data */
 
 	/* Convenience registers */
-	M68K_REG_PPC,		/* Previous program counter */
+	M68K_REG_PPC,		/* Previous value in the program counter */
 	M68K_REG_IR,		/* Instruction register */
 	M68K_REG_CPU_TYPE	/* Type of CPU being run */
 } m68k_register_t;
@@ -225,11 +225,6 @@ void m68k_set_instr_hook_callback(void  (*callback)(void));
 /* ====================== FUNCTIONS TO ACCESS THE CPU ===================== */
 /* ======================================================================== */
 
-int m68k_cycles_run(void);
-int m68k_cycles_remaining(void);
-void m68k_modify_timeslice(int cycles);
-void m68k_end_timeslice(void);
-
 /* Use this function to set the CPU type you want to emulate.
  * Currently supported types are: M68K_CPU_TYPE_68000, M68K_CPU_TYPE_68010,
  * M68K_CPU_TYPE_EC020, and M68K_CPU_TYPE_68020.
@@ -246,6 +241,16 @@ void m68k_pulse_reset(void);
 
 /* execute num_cycles worth of instructions.  returns number of cycles used */
 int m68k_execute(int num_cycles);
+
+/* These functions let you read/write/modify the number of cycles left to run
+ * while m68k_execute() is running.
+ * These are useful if the 68k accesses a memory-mapped port on another device
+ * that requires immediate processing by another CPU.
+ */
+int m68k_cycles_run(void);              /* Number of cycles run so far */
+int m68k_cycles_remaining(void);        /* Number of cycles left */
+void m68k_modify_timeslice(int cycles); /* Modify cycles left */
+void m68k_end_timeslice(void);          /* End timeslice now */
 
 /* Set the IPL0-IPL2 pins on the CPU (IRQ).
  * A transition from < 7 to 7 will cause a non-maskable interrupt (NMI).
@@ -295,8 +300,8 @@ void m68k_set_reg(m68k_register_t reg, unsigned int value);
 /* Check if an instruction is valid for the specified CPU type */
 unsigned int m68k_is_valid_instruction(unsigned int instruction, unsigned int cpu_type);
 
-/* Disassemble 1 instructionat pc.  Stores disassembly in str_buff and returns
- * the size of the instruction in bytes.
+/* Disassemble 1 instruction using the epecified CPU type at pc.  Stores
+ * disassembly in str_buff and returns the size of the instruction in bytes.
  */
 unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_type);
 

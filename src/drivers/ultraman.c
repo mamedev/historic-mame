@@ -107,12 +107,16 @@ static WRITE_HANDLER( ultraman_reg_w )
 			bit 3: msb of code for scr #2
 			bit 4: enable wraparound for scr #3
 			bit 5: msb of code for scr #3
-			bit 7: coin counter */
+			bit 6: coin counter 1
+			bit 7: coin counter 2 */
 		case 0x18:
+			if ((oldword & 0x2a) != (newword & 0x2a))
+				tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 			K051316_wraparound_enable(0, data & 0x01);
 			K051316_wraparound_enable(1, data & 0x04);
 			K051316_wraparound_enable(2, data & 0x10);
-			coin_counter_w(0, newword & 0x80);
+			coin_counter_w(0, newword & 0x40);
+			coin_counter_w(1, newword & 0x80);
 			break;
 
 		case 0x20:	/* sound code # */
@@ -178,7 +182,7 @@ static struct MemoryWriteAddress ultraman_writemem_sound[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
 	{ 0x8000, 0xbfff, MWA_RAM },					/* RAM */
-	{ 0xd000, 0xd000, MWA_NOP },					/* ??? */
+//	{ 0xd000, 0xd000, MWA_NOP },					/* ??? */
 	{ 0xe000, 0xe000, OKIM6295_data_0_w },			/* M6295 */
 	{ 0xf000, 0xf000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xf001, 0xf001, YM2151_data_port_0_w },		/* YM2151 */
@@ -187,7 +191,7 @@ static struct MemoryWriteAddress ultraman_writemem_sound[] =
 
 static struct IOWritePort ultraman_writeport_sound[] =
 {
-	{ 0x00, 0x00, MWA_NOP },						/* ??? */
+//	{ 0x00, 0x00, MWA_NOP },						/* ??? */
 	{ -1 }
 };
 
@@ -315,7 +319,7 @@ static struct MachineDriver machine_driver_ultraman =
 			m68_level4_irq,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80  | CPU_AUDIO_CPU,
 			24000000/6,		/* 4 MHz? */
 			ultraman_readmem_sound, ultraman_writemem_sound,0,ultraman_writeport_sound,
 			ignore_interrupt,1	/* NMI triggered by the m68000 */
@@ -326,7 +330,7 @@ static struct MachineDriver machine_driver_ultraman =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8, 2*8, 30*8-1 },
+	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* decoded by KonamiIC */
 	8192, 8192,
 	0,

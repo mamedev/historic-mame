@@ -278,7 +278,7 @@ static struct MachineDriver machine_driver_tankbatt =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			1000000,	/* 1 MHz ???? */
 			readmem,writemem,0,0,
 			tankbatt_interrupt,1
 		}

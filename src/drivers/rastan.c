@@ -396,13 +396,13 @@ static struct MachineDriver machine_driver_rastan =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz */
+			8000000,	/* 8 MHz */
 			rastan_readmem,rastan_writemem,0,0,
 			rastan_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			rastan_s_readmem,rastan_s_writemem,0,0,
 			ignore_interrupt,1
 		}

@@ -669,7 +669,7 @@ static struct MachineDriver machine_driver_aso =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			aso_readmem_sound,aso_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -705,19 +705,19 @@ static struct MachineDriver machine_driver_hal21 = {
 	{
 		{
 			CPU_Z80,
-			3360000,	/* 3.336 Mhz? */
+			3360000,	/* 3.336 MHz? */
 			hal21_readmem_CPUA,hal21_writemem_CPUA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			3360000,	/* 3.336 Mhz? */
+			3360000,	/* 3.336 MHz? */
 			hal21_readmem_CPUB,hal21_writemem_CPUB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			hal21_readmem_sound,hal21_writemem_sound,0,0,
 			interrupt,1
 		},

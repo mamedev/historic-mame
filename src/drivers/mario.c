@@ -421,13 +421,13 @@ static struct MachineDriver machine_driver_mario =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,writemem,0,mario_writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
-                        730000,         /* 730 khz */
+			730000,         /* 730 kHz */
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -468,7 +468,7 @@ static struct MachineDriver machine_driver_masao =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4.000 Mhz (?) */
+			4000000,        /* 4.000 MHz (?) */
 			readmem,masao_writemem,0,0,
 			nmi_interrupt,1
 		},

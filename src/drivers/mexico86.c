@@ -419,6 +419,30 @@ MACHINEDRIVER( kikikai )
 
 ***************************************************************************/
 
+ROM_START( kikikai )
+	ROM_REGION( 0x28000, REGION_CPU1 )	 /* 196k for code */
+	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code		 */
+	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
+	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
+
+	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
+
+	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a85-15.rom", 0x00000, 0x10000, 0xaebc8c32 )
+	ROM_LOAD( "a85-14.rom", 0x10000, 0x10000, 0xa9df0453 )
+	ROM_LOAD( "a85-13.rom", 0x20000, 0x10000, 0x3eeaf878 )
+	ROM_LOAD( "a85-12.rom", 0x30000, 0x10000, 0x91e58067 )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "a85-08.rom", 0x0000, 0x0100, 0xd15f61a8 )
+	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, 0x8fc3fa86 )
+	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, 0xb931c94d )
+ROM_END
+
 ROM_START( kicknrun )
 	ROM_REGION( 0x28000, REGION_CPU1 )	 /* 196k for code */
 	ROM_LOAD( "a87-08.bin", 0x00000, 0x08000, 0x715e1b04 ) /* 1st half, main code		 */
@@ -475,32 +499,8 @@ ROM_START( mexico86 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
 ROM_END
 
-ROM_START( kikikai )
-	ROM_REGION( 0x28000, REGION_CPU1 )	 /* 196k for code */
-	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code		 */
-	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
-	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
-
-	ROM_REGION( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
-	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
-
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
-
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a85-15.rom", 0x00000, 0x10000, 0xaebc8c32 )
-	ROM_LOAD( "a85-14.rom", 0x10000, 0x10000, 0xa9df0453 )
-	ROM_LOAD( "a85-13.rom", 0x20000, 0x10000, 0x3eeaf878 )
-	ROM_LOAD( "a85-12.rom", 0x30000, 0x10000, 0x91e58067 )
-
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "a85-08.rom", 0x0000, 0x0100, 0xd15f61a8 )
-	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, 0x8fc3fa86 )
-	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, 0xb931c94d )
-ROM_END
 
 
-
+GAMEX(1986, kikikai,  0,        kikikai,  kikikai,  0, ROT90, "Taito Corporation", "KiKi KaiKai", GAME_NOT_WORKING )
 GAME( 1986, kicknrun, 0,        mexico86, mexico86, 0, ROT0, "Taito Corporation", "Kick and Run" )
 GAME( 1986, mexico86, kicknrun, mexico86, mexico86, 0, ROT0, "bootleg", "Mexico 86" )
-GAMEX(1986, kikikai,  0,        kikikai,  kikikai,  0, ROT90, "Taito Corporation", "KiKi KaiKai", GAME_NOT_WORKING )

@@ -24,15 +24,15 @@ struct RunningMachine
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct rectangle visible_area;
-	unsigned short *pens;	/* remapped palette pen numbers. When you write */
-							/* directly to a bitmap, never use absolute values, */
-							/* use this array to get the pen number. For example, */
-							/* if you want to use color #6 in the palette, use */
-							/* pens[6] instead of just 6. */
-	unsigned short *game_colortable;	/* lookup table used to map gfx pen numbers */
-										/* to color numbers */
-	unsigned short *remapped_colortable;	/* the above, already remapped through */
-											/* Machine->pens */
+	UINT16 *pens;	/* remapped palette pen numbers. When you write */
+					/* directly to a bitmap, never use absolute values, */
+					/* use this array to get the pen number. For example, */
+					/* if you want to use color #6 in the palette, use */
+					/* pens[6] instead of just 6. */
+	UINT16 *game_colortable;	/* lookup table used to map gfx pen numbers */
+								/* to color numbers */
+	UINT16 *remapped_colortable;	/* the above, already remapped through */
+									/* Machine->pens */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	int color_depth;	/* video color depth: 8 or 16 */
@@ -52,6 +52,13 @@ struct RunningMachine
 	int uixmin,uiymin;
 	int uiwidth,uiheight;
 	int ui_orientation;
+	struct rectangle absolute_visible_area;	/* as passed to osd_set_visible_area() */
+
+	/* stuff for the debugger */
+	struct osd_bitmap *debug_bitmap;
+	UINT16 *debug_pens;
+	UINT16 *debug_remapped_colortable;
+	struct GfxElement *debugger_font;
 };
 
 #ifdef MESS
@@ -84,6 +91,8 @@ struct GameOptions {
 	int color_depth;	/* 8 or 16, any other value means auto */
 	int vector_width;	/* requested width for vector games; 0 means default (640) */
 	int vector_height;	/* requested height for vector games; 0 means default (480) */
+	int debug_width;	/* initial size of the debug_bitmap */
+	int debug_height;
 	int norotate;
 	int ror;
 	int rol;

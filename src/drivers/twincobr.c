@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1987
 		-------------------------------
 		Driver by: Quench
-		Flying Shark details: Carl-Henrik Skårstedt  &  Magnus Danielsson
+		Flying Shark details: Carl-Henrik Skarstedt  &  Magnus Danielsson
 		Flying Shark bootleg info: Ruben Panossian
 
 
@@ -123,9 +123,10 @@ out:
 20		  Coin counters / Coin lockouts
 
 TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
-0000-07ff ROM (words)
-0000-0090 Internal RAM (words).	Moved to 8000-8120 for MAME compatibility.
-								View this memory in the debugger at 4000h
+0000-07ff ROM 16-bit opcodes (word access only). Moved to $8000-8fff for
+				 MAME compatibility. View this ROM in the debugger at $8000h
+0000-0090 Internal RAM (words).
+
 
 in:
 01		  data read from addressed 68K address space (Main RAM/Sprite RAM)
@@ -186,6 +187,7 @@ Shark	Zame
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
+#include "cpu/tms32010/tms32010.h"
 
 /**************** Machine stuff ******************/
 void fsharkbt_reset_8741_mcu(void);
@@ -314,17 +316,17 @@ static struct IOWritePort sound_writeport[] =
 
 static struct MemoryReadAddress DSP_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811f, MRA_RAM },	/* The real DSP has this at address 0 */
-									/* View this at 4000h in the debugger */
+	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
+	{ 0x8000, 0x8fff, MRA_ROM },	/* 800h words. The real DSPs ROM is at */
+									/* address 0 */
+									/* View it at 8000h in the debugger */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress DSP_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811f, MWA_RAM },	/* The real DSP has this at address 0 */
-									/* View this at 4000h in the debugger */
+	{ 0x0000, 0x011f, MWA_RAM },
+	{ 0x8000, 0x8fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -703,7 +705,7 @@ static struct MachineDriver machine_driver_twincobr =
 	{
 		{
 			CPU_M68000,
-			28000000/4,			/* 7.0 MHz - Main board Crystal is 28Mhz */
+			28000000/4,			/* 7.0 MHz - Main board Crystal is 28MHz */
 			readmem,writemem,0,0,
 			twincobr_interrupt,1
 		},
@@ -765,8 +767,8 @@ ROM_START( twincobr )
 	ROM_LOAD( "tc12",			0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
+	ROM_LOAD_EVEN( "dsp_22.bin",    0x8000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",    0x8000, 0x0800, 0x2d135376 )
 /******  The following are from a bootleg board. ******
 	A0 and A1 are swapped between the TMS320C10 and these BPROMs on the board.
 	ROM_LOAD_EVEN( "tc1b",		0x0000, 0x0800, 0x1757cc33 )
@@ -815,8 +817,8 @@ ROM_START( twincobu )
 	ROM_LOAD( "b30-05",				0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
+	ROM_LOAD_EVEN( "dsp_22.bin",    0x8000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",    0x8000, 0x0800, 0x2d135376 )
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
@@ -860,8 +862,8 @@ ROM_START( ktiger )
 	ROM_LOAD( "b30-05",			0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp-22",	0x0000, 0x0800, BADCRC( 0x8a1d48d9 ) )
-	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, BADCRC( 0x33d99bc2 ) )
+	ROM_LOAD_EVEN( "dsp-22",    0x8000, 0x0800, BADCRC( 0x8a1d48d9 ) )
+	ROM_LOAD_ODD ( "dsp-21",    0x8000, 0x0800, BADCRC( 0x33d99bc2 ) )
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
@@ -904,23 +906,23 @@ ROM_START( fshark )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x1000, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x1400, 0x0400, 0xcbf3184b )
-	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x1400, 0x0400, 0x8246a05c )
-	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x1800, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x1800, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x1c00, 0x0400, 0xf35b978a )
-	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x1c00, 0x0400, 0x0459e51b )
+	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x9000, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x9000, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x9400, 0x0400, 0xcbf3184b )
+	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x9400, 0x0400, 0x8246a05c )
+	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x9800, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x9800, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x9c00, 0x0400, 0xf35b978a )
+	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x9c00, 0x0400, 0x0459e51b )
 #else
-	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x1000, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x1000, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x1400, 0x0400, 0xf35b978a )
-	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x1400, 0x0400, 0x0459e51b )
-	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x1800, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x1800, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x1c00, 0x0400, 0xcbf3184b )
-	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x1c00, 0x0400, 0x8246a05c )
+	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x9000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x9000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x9400, 0x0400, 0xf35b978a )
+	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x9400, 0x0400, 0x0459e51b )
+	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x9800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x9800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x9c00, 0x0400, 0xcbf3184b )
+	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x9c00, 0x0400, 0x8246a05c )
 #endif
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
@@ -966,23 +968,23 @@ ROM_START( skyshark )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x1000, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x1400, 0x0400, 0xcbf3184b )
-	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x1400, 0x0400, 0x8246a05c )
-	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x1800, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x1800, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x1c00, 0x0400, 0xf35b978a )
-	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x1c00, 0x0400, 0x0459e51b )
+	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x9000, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x9000, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x9400, 0x0400, 0xcbf3184b )
+	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x9400, 0x0400, 0x8246a05c )
+	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x9800, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x9800, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x9c00, 0x0400, 0xf35b978a )
+	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x9c00, 0x0400, 0x0459e51b )
 #else
-	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x1000, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x1000, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x1400, 0x0400, 0xf35b978a )
-	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x1400, 0x0400, 0x0459e51b )
-	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x1800, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x1800, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x1c00, 0x0400, 0xcbf3184b )
-	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x1c00, 0x0400, 0x8246a05c )
+	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x9000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137-2.mcu",  0x9000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s137-5.mcu",  0x9400, 0x0400, 0xf35b978a )
+	ROM_LOAD_NIB_LOW ( "82s137-6.mcu",  0x9400, 0x0400, 0x0459e51b )
+	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x9800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x9800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s137-7.mcu",  0x9c00, 0x0400, 0xcbf3184b )
+	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x9c00, 0x0400, 0x8246a05c )
 #endif
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
@@ -1028,23 +1030,23 @@ ROM_START( hishouza )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x1000, 0x0400, 0xdf88e79b ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x1000, 0x0400, 0xa2094a7f )
-	ROM_LOAD_NIB_HIGH( "dsp-b7.bpr", 0x1400, 0x0400, 0xe87540cd )
-	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x1400, 0x0400, 0xd3c16c5c )
-	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x1800, 0x0400, 0x45d4d1b1 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "dsp-a2.bpr", 0x1800, 0x0400, 0xedd227fa )
-	ROM_LOAD_NIB_HIGH( "dsp-b5.bpr", 0x1c00, 0x0400, 0x85ca5d47 )
-	ROM_LOAD_NIB_LOW ( "dsp-b6.bpr", 0x1c00, 0x0400, 0x81816b2c )
+	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x9000, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x9000, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "dsp-b7.bpr", 0x9400, 0x0400, 0xe87540cd )
+	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x9400, 0x0400, 0xd3c16c5c )
+	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x9800, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "dsp-a2.bpr", 0x9800, 0x0400, 0xedd227fa )
+	ROM_LOAD_NIB_HIGH( "dsp-b5.bpr", 0x9c00, 0x0400, 0x85ca5d47 )
+	ROM_LOAD_NIB_LOW ( "dsp-b6.bpr", 0x9c00, 0x0400, 0x81816b2c )
 #else
-	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x1000, 0x0400, 0x45d4d1b1 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "dsp-a2.bpr", 0x1000, 0x0400, 0xedd227fa )
-	ROM_LOAD_NIB_HIGH( "dsp-b5.bpr", 0x1400, 0x0400, 0x85ca5d47 )
-	ROM_LOAD_NIB_LOW ( "dsp-b6.bpr", 0x1400, 0x0400, 0x81816b2c )
-	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x1800, 0x0400, 0xdf88e79b ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x1800, 0x0400, 0xa2094a7f )
-	ROM_LOAD_NIB_HIGH( "dsp-b7.bpr", 0x1c00, 0x0400, 0xe87540cd )
-	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x1c00, 0x0400, 0xd3c16c5c )
+	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x9000, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "dsp-a2.bpr", 0x9000, 0x0400, 0xedd227fa )
+	ROM_LOAD_NIB_HIGH( "dsp-b5.bpr", 0x9400, 0x0400, 0x85ca5d47 )
+	ROM_LOAD_NIB_LOW ( "dsp-b6.bpr", 0x9400, 0x0400, 0x81816b2c )
+	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x9800, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x9800, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "dsp-b7.bpr", 0x9c00, 0x0400, 0xe87540cd )
+	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x9c00, 0x0400, 0xd3c16c5c )
 #endif
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
@@ -1090,23 +1092,23 @@ ROM_START( fsharkbt )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x1000, 0x0400, 0xdf88e79b ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x1000, 0x0400, 0xa2094a7f )
-	ROM_LOAD_NIB_HIGH( "mcu-7.bpr",  0x1400, 0x0400, 0x0cd30d49 )
-	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x1400, 0x0400, 0x3379bbff )
-	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x1800, 0x0400, 0x45d4d1b1 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "mcu-2.bpr",  0x1800, 0x0400, 0x651336d1 )
-	ROM_LOAD_NIB_HIGH( "mcu-5.bpr",  0x1c00, 0x0400, 0xf97a58da )
-	ROM_LOAD_NIB_LOW ( "mcu-6.bpr",  0x1c00, 0x0400, 0xffcc422d )
+	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x9000, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x9000, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "mcu-7.bpr",  0x9400, 0x0400, 0x0cd30d49 )
+	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x9400, 0x0400, 0x3379bbff )
+	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x9800, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "mcu-2.bpr",  0x9800, 0x0400, 0x651336d1 )
+	ROM_LOAD_NIB_HIGH( "mcu-5.bpr",  0x9c00, 0x0400, 0xf97a58da )
+	ROM_LOAD_NIB_LOW ( "mcu-6.bpr",  0x9c00, 0x0400, 0xffcc422d )
 #else
-	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x1000, 0x0400, 0x45d4d1b1 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "mcu-2.bpr",  0x1000, 0x0400, 0x651336d1 )
-	ROM_LOAD_NIB_HIGH( "mcu-5.bpr",  0x1400, 0x0400, 0xf97a58da )
-	ROM_LOAD_NIB_LOW ( "mcu-6.bpr",  0x1400, 0x0400, 0xffcc422d )
-	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x1800, 0x0400, 0xdf88e79b ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x1800, 0x0400, 0xa2094a7f )
-	ROM_LOAD_NIB_HIGH( "mcu-7.bpr",  0x1c00, 0x0400, 0x0cd30d49 )
-	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x1c00, 0x0400, 0x3379bbff )
+	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x9000, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "mcu-2.bpr",  0x9000, 0x0400, 0x651336d1 )
+	ROM_LOAD_NIB_HIGH( "mcu-5.bpr",  0x9400, 0x0400, 0xf97a58da )
+	ROM_LOAD_NIB_LOW ( "mcu-6.bpr",  0x9400, 0x0400, 0xffcc422d )
+	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x9800, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x9800, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "mcu-7.bpr",  0x9c00, 0x0400, 0x0cd30d49 )
+	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x9c00, 0x0400, 0x3379bbff )
 #endif
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
@@ -1156,13 +1158,13 @@ static void init_fshark(void)
 
 	for (A = 0;A < 0x0800;A++)
 	{
-		datamsb = DSP_ROMS[0x1000 + A];
-		datalsb = DSP_ROMS[0x1800 + A];
-		DSP_ROMS[(A*2)]   = datamsb;
-		DSP_ROMS[(A*2)+1] = datalsb;
+		datamsb = DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1000 + A];
+		datalsb = DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1800 + A];
+		DSP_ROMS[TMS320C10_PGM_OFFSET + (A*2)]	 = datamsb;
+		DSP_ROMS[TMS320C10_PGM_OFFSET + (A*2)+1] = datalsb;
 
-		DSP_ROMS[0x1000 + A] = 00;
-		DSP_ROMS[0x1800 + A] = 00;
+		DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1000 + A] = 0;
+		DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1800 + A] = 0;
 	}
 }
 

@@ -513,7 +513,7 @@ static struct MachineDriver machine_driver_##GAMENAME =							\
 	{																			\
 		{																		\
 			CPU_M6502,															\
-			12096000/8,	/* 1.512 Mhz (slows down to 0.75MHz while accessing playfield RAM) */	\
+			12096000/8,	/* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */	\
 			GAMENAME##_readmem,GAMENAME##_writemem,0,0,							\
 			centiped_interrupt,4												\
 		}																		\

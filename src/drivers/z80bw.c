@@ -177,7 +177,7 @@ static struct MachineDriver machine_driver_astinvad = /* LT */
 	{
 		{
 			CPU_Z80,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			astinvad_readmem,astinvad_writemem,astinvad_readport,astinvad_writeport,
 			interrupt,1    /* two interrupts per frame */
 		}
@@ -321,7 +321,7 @@ static struct MachineDriver machine_driver_spaceint = /* 20-12-1998 LT */
 	{
 		{
 			CPU_Z80,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			spaceint_readmem,spaceint_writemem,spaceint_readport,spaceint_writeport,
 			spaceint_interrupt,1
 		}

@@ -12,6 +12,9 @@
 /* address or I/O port. */
 
 /***************************************************************************/
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct InputPortTiny
 {
@@ -337,5 +340,10 @@ struct ipd
 	const char *name;
 	InputSeq seq;
 };
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

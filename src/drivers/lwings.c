@@ -7,22 +7,20 @@
 
   Driver provided by Paul Leaman
 
-  Trojan contains a third Z80 to drive the game samples. This third
+TODO:
+- Trojan contains a third Z80 to drive the game samples. This third
   Z80 outputs the ADPCM data byte at a time to the sound hardware. Since
   this will be expensive to do this extra processor is not emulated.
-
   Instead, the ADPCM data is lifted directly from the sound ROMS.
+- sectionz does "false contacts" on the coin counters, causing them to
+  increment twice per coin.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
-WRITE_HANDLER( lwings_bankswitch_w );
-READ_HANDLER( lwings_bankedrom_r );
-int lwings_interrupt(void);
-READ_HANDLER( avengers_protection_r );
-WRITE_HANDLER( avengers_protection_w );
 
 extern unsigned char *lwings_backgroundram;
 extern unsigned char *lwings_backgroundattribram;
@@ -46,6 +44,57 @@ int  trojan_vh_start(void);
 void trojan_vh_stop(void);
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+
+int lwings_bank_register=0xff;
+
+WRITE_HANDLER( lwings_bankswitch_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	/* bits 1 and 2 select ROM bank */
+	int bank = (data & 0x06) >> 1;
+	cpu_setbank(1,&RAM[0x10000 + bank*0x4000]);
+
+	/* bit 0 is flip screen (not supported yet) */
+
+	/* bit 3 enables NMI */
+	lwings_bank_register=data;
+
+	/* bits 6 and 7 are coin counters */
+	coin_counter_w(1,data & 0x40);
+	coin_counter_w(0,data & 0x80);
+}
+
+int lwings_interrupt(void)
+{
+	return 0x00d7; /* RST 10h */
+}
+
+int avengers_interrupt( void ){ /* hack */
+#if 0
+	static int n;
+	if (keyboard_pressed_memory(KEYCODE_S)){ /* test code */
+		n++;
+		n&=0x0f;
+		ADPCM_trigger(0, n);
+	}
+#endif
+
+	if( lwings_bank_register & 0x08 ){ /* NMI enable */
+		static int s;
+		s=!s;
+		if( s ){
+			return interrupt();
+			//cpu_cause_interrupt(0, 0xd7);
+		}
+		else {
+			return Z80_NMI_INT;
+		}
+	}
+
+	return Z80_IGNORE_INT;
+}
+
 WRITE_HANDLER( trojan_sound_cmd_w )
 {
        soundlatch_w(offset, data);
@@ -63,6 +112,19 @@ WRITE_HANDLER( trojan_sound_cmd_w )
 	logerror("Sound Code=%02x\n", data);
 #endif
 }
+
+WRITE_HANDLER( avengers_protection_w )
+{
+}
+
+READ_HANDLER( avengers_protection_r )
+{
+	/* the protection reads are used for background palette among other things */
+	static int hack;
+	hack = hack&0xf;
+	return hack++;
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -259,11 +321,12 @@ INPUT_PORTS_START( lwings )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Unknown 1/2" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -282,8 +345,8 @@ INPUT_PORTS_START( lwings )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, "Difficulty?" )
 	PORT_DIPSETTING(    0x02, "Easy?" )
 	PORT_DIPSETTING(    0x06, "Normal?" )
@@ -377,7 +440,7 @@ INPUT_PORTS_START( trojan )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen?" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
@@ -570,13 +633,13 @@ static struct MachineDriver machine_driver_lwings =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4 Mhz (?) */
+			4000000,        /* 4 MHz (?) */
 			readmem,writemem,0,0,
 			lwings_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 Mhz (?) */
+			3000000,        /* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -641,6 +704,9 @@ ROM_START( lwings )
 	ROM_LOAD( "1j_lw11.bin",  0x08000, 0x8000, 0x2a0790d6 )
 	ROM_LOAD( "3h_lw16.bin",  0x10000, 0x8000, 0xe8834006 )
 	ROM_LOAD( "1h_lw10.bin",  0x18000, 0x8000, 0xb693f5a5 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.15g",   0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
 
 ROM_START( lwings2 )
@@ -670,6 +736,9 @@ ROM_START( lwings2 )
 	ROM_LOAD( "b_01j.rom",    0x08000, 0x8000, 0x7cc90a1d )
 	ROM_LOAD( "b_03h.rom",    0x10000, 0x8000, 0x7d58f532 )
 	ROM_LOAD( "b_01h.rom",    0x18000, 0x8000, 0x3e396eda )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.15g",   0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
 
 ROM_START( lwingsjp )
@@ -699,6 +768,9 @@ ROM_START( lwingsjp )
 	ROM_LOAD( "b_01j.rom",    0x08000, 0x8000, 0x7cc90a1d )
 	ROM_LOAD( "b_03h.rom",    0x10000, 0x8000, 0x7d58f532 )
 	ROM_LOAD( "b_01h.rom",    0x18000, 0x8000, 0x3e396eda )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.15g",   0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
 
 
@@ -741,6 +813,9 @@ ROM_START( sectionz )
 	ROM_LOAD( "1j_sz11.bin",  0x08000, 0x8000, 0x685d4c54 )
 	ROM_LOAD( "3h_sz16.bin",  0x10000, 0x8000, 0x500ff2bb )
 	ROM_LOAD( "1h_sz10.bin",  0x18000, 0x8000, 0x00b3d244 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "mb7114e.15g",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
 
 ROM_START( sctionza )
@@ -770,6 +845,9 @@ ROM_START( sctionza )
 	ROM_LOAD( "1j_sz11.bin",  0x08000, 0x8000, 0x685d4c54 )
 	ROM_LOAD( "3h_sz16.bin",  0x10000, 0x8000, 0x500ff2bb )
 	ROM_LOAD( "1h_sz10.bin",  0x18000, 0x8000, 0x00b3d244 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "mb7114e.15g",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
 
 
@@ -827,13 +905,13 @@ static struct MachineDriver machine_driver_trojan =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4 Mhz (?) */
+			4000000,        /* 4 MHz (?) */
 			readmem,trojan_writemem,0,0,
 			lwings_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 Mhz (?) */
+			3000000,        /* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -910,6 +988,10 @@ ROM_START( trojan )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.7j",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "mb7114e.1e",   0x0100, 0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
 ROM_START( trojanr )
@@ -953,6 +1035,10 @@ ROM_START( trojanr )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.7j",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "mb7114e.1e",   0x0100, 0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
 ROM_START( trojanj )
@@ -996,6 +1082,10 @@ ROM_START( trojanj )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.7j",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "mb7114e.1e",   0x0100, 0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
 /***************************************************************************
@@ -1003,18 +1093,6 @@ ROM_END
  Avengers - Doesn't work properly due to copy protection
 
  ***************************************************************************/
-
-extern int avengers_interrupt(void);
-
-WRITE_HANDLER( avengers_protection_w ){
-}
-
-READ_HANDLER( avengers_protection_r ){
-	/* the protection reads are used for background palette among other things */
-	static int hack;
-	hack = hack&0xf;
-	return hack++;
-}
 
 
 /*
@@ -1058,13 +1136,13 @@ static struct MachineDriver machine_driver_avengers =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4 Mhz (?) */
+			4000000,        /* 4 MHz (?) */
 			readmem,trojan_writemem,0,0,
 			avengers_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 Mhz (?) */
+			3000000,        /* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -1220,6 +1298,9 @@ ROM_START( avengers )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.7j",    0x0000, 0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
 ROM_END
 
 ROM_START( avenger2 )
@@ -1263,16 +1344,19 @@ ROM_START( avenger2 )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.7j",    0x0000, 0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
 ROM_END
 
 
-GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 1)" )
-GAME( 1986, lwings2,  lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 2)" )
-GAME( 1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Ales no Tsubasa (Japan)" )
-GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 1)" )
-GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 2)" )
-GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,   "Capcom", "Trojan (US)" )
-GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom (Romstar license)", "Trojan (Romstar)" )
-GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom", "Tatakai no Banka (Japan)" )
-GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 1)", GAME_NOT_WORKING | GAME_WRONG_COLORS )
-GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 2)", GAME_NOT_WORKING | GAME_WRONG_COLORS )
+GAMEX(1986, lwings,   0,        lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 1)", GAME_NO_COCKTAIL )
+GAMEX(1986, lwings2,  lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 2)", GAME_NO_COCKTAIL )
+GAMEX(1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Ales no Tsubasa (Japan)", GAME_NO_COCKTAIL )
+GAMEX(1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 1)", GAME_NO_COCKTAIL )
+GAMEX(1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 2)", GAME_NO_COCKTAIL )
+GAMEX(1986, trojan,   0,        trojan,   trojanls, 0, ROT0,   "Capcom", "Trojan (US)", GAME_NO_COCKTAIL )
+GAMEX(1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom (Romstar license)", "Trojan (Romstar)", GAME_NO_COCKTAIL )
+GAMEX(1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom", "Tatakai no Banka (Japan)", GAME_NO_COCKTAIL )
+GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )

@@ -241,8 +241,8 @@ static struct MachineDriver machine_driver_pengo =
 	{
 		{
 			CPU_Z80,
-/*			18432000/6,	* 3.072 Mhz */
-			3020000,	/* The correct speed is 3.072 Mhz, but 3.020 gives a more */
+/*			18432000/6,	* 3.072 MHz */
+			3020000,	/* The correct speed is 3.072 MHz, but 3.020 gives a more */
 						/* accurate emulation speed (time for two attract mode */
 						/* cycles after power up, until the high score list appears */
 						/* for the second time: 3'39") */

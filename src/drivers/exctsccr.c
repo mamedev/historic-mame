@@ -361,7 +361,7 @@ static struct MachineDriver machine_driver_exctsccr =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
@@ -370,7 +370,7 @@ static struct MachineDriver machine_driver_exctsccr =
 			4123456,	/* ??? with 4 MHz, nested NMIs might happen */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0,
-			nmi_interrupt, 4000 /* 4 khz, updates the dac */
+			nmi_interrupt, 4000 /* 4 kHz, updates the dac */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -410,13 +410,13 @@ static struct MachineDriver machine_driver_exctsccb =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4000000,	/* 4.0 MHz (?) */
 			bl_readmem,bl_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz ? */
 			bl_sound_readmem,bl_sound_writemem,0,0,
 			ignore_interrupt,0
 		},

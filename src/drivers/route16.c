@@ -219,7 +219,7 @@ INPUT_PORTS_END
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	10000000/8,     /* 10Mhz / 8 = 1.25Mhz */
+	10000000/8,     /* 10MHz / 8 = 1.25MHz */
 	{ 50 },
 	{ 0 },
 	{ 0 },
@@ -266,13 +266,13 @@ static struct MachineDriver machine_driver_##GAMENAME =		\
 	{														\
 		{													\
 			CPU_Z80 | CPU_16BIT_PORT,						\
-			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
+			2500000,	/* 10MHz / 4 = 2.5MHz */			\
 			cpu1_readmem,cpu1_writemem,0,cpu1_writeport,	\
 			interrupt,1										\
 		},													\
 		{													\
 			CPU_Z80,										\
-			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
+			2500000,	/* 10MHz / 4 = 2.5MHz */			\
 			cpu2_readmem,cpu2_writemem,0,0,					\
 			ignore_interrupt,0								\
 		}													\

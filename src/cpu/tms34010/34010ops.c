@@ -15,9 +15,9 @@
 #define ZEXTEND(val,width) if (width) (val) &= ((UINT32)0xffffffff >> (32 - (width)))
 #define SEXTEND(val,width) if (width) (val) = (INT32)((val) << (32 - (width))) >> (32 - (width))
 
-#define XYTOL(val)	((((INT32)((UINT16)(val.y)) << state.xytolshiftcount1) |	\
-				    (((INT32)((UINT16)(val.x))) << state.xytolshiftcount2)) + OFFSET)
-
+#define SXYTOL(val)	((((INT32)(UINT16)(val).y * state.convsp) | ((INT32)(UINT16)(val).x << state.pixelshift)) + OFFSET)
+#define DXYTOL(val)	((((INT32)(UINT16)(val).y * state.convdp) | ((INT32)(UINT16)(val).x << state.pixelshift)) + OFFSET)
+#define MXYTOL(val)	((((INT32)(UINT16)(val).y * state.convmp) | ((INT32)(UINT16)(val).x << state.pixelshift)) + OFFSET)
 
 #define COUNT_CYCLES(x)	tms34010_ICount -= x
 #define COUNT_UNKNOWN_CYCLES(x) COUNT_CYCLES(x)
@@ -55,13 +55,14 @@ static void unimpl(void)
 	PUSH(GET_ST());
 	RESET_ST();
 	PC = RLONG(0xfffffc20);
+	change_pc29(PC);											\
   	COUNT_UNKNOWN_CYCLES(16);
 
 	/* extra check to prevent bad things */
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
 		cpu_set_halt_line(cpu_getactivecpu(),ASSERT_LINE);
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 		debug_key_pressed = 1;
 #endif
 	}
@@ -139,7 +140,7 @@ static void cpw_b(void) { CPW(B); }
 
 #define CVXYL(R)									\
 {													\
-    R##REG(R##DSTREG) = XYTOL(R##REG_XY(R##SRCREG));\
+    R##REG(R##DSTREG) = DXYTOL(R##REG_XY(R##SRCREG));\
   	COUNT_CYCLES(3);								\
 }
 static void cvxyl_a(void) { CVXYL(A); }
@@ -185,7 +186,7 @@ static void pixt_ri_b(void) { PIXT_RI(B); }
 	if (state.window_checking != 3 ||						\
 		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
 		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
-		WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
+		WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
   	COUNT_UNKNOWN_CYCLES(4);						\
 }
 static void pixt_rixy_a(void) { PIXT_RIXY(A); }
@@ -209,7 +210,7 @@ static void pixt_ii_b(void) { PIXT_II(B); }
 
 #define PIXT_IXYR(R)			              		\
 {													\
-	R##REG(R##DSTREG) = V_FLAG = RPIXEL(XYTOL(R##REG_XY(R##SRCREG)));	\
+	R##REG(R##DSTREG) = V_FLAG = RPIXEL(SXYTOL(R##REG_XY(R##SRCREG)));	\
 	COUNT_CYCLES(6);								\
 }
 static void pixt_ixyr_a(void) { PIXT_IXYR(A); }
@@ -217,7 +218,7 @@ static void pixt_ixyr_b(void) { PIXT_IXYR(B); }
 
 #define PIXT_IXYIXY(R)			              			      		\
 {																	\
-	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),RPIXEL(XYTOL(R##REG_XY(R##SRCREG))));	\
+	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),RPIXEL(SXYTOL(R##REG_XY(R##SRCREG))));	\
   	COUNT_UNKNOWN_CYCLES(7);										\
 }
 static void pixt_ixyixy_a(void) { PIXT_IXYIXY(A); }
@@ -225,12 +226,12 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
 #define DRAV(R)			              			      		\
 {															\
-	if (state.window_checking)					\
+	if (state.window_checking)								\
 	{														\
 		logerror("DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}														\
 															\
-	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),COLOR1);				\
+	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),COLOR1);			\
 															\
 	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\
 	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);				\
@@ -632,7 +633,7 @@ static void modu_b(void) { MODU(B); }
 	INT32 *rd1 = &R##REG(R##DSTREG);							\
 																\
 	INT32 m1 = R##REG(R##SRCREG);								\
-	SEXTEND(m1, FW(1));											\
+	SEXTEND(m1, FW_INC(1));										\
 																\
 	if (!(R##DSTREG & (1*N)))									\
 	{															\
@@ -657,7 +658,7 @@ static void mpys_b(void) { MPYS(B,0x10); }
 	INT32 *rd1 = &R##REG(R##DSTREG);							\
 																\
 	UINT32 m1 = R##REG(R##SRCREG);								\
-	ZEXTEND(m1, FW(1));											\
+	ZEXTEND(m1, FW_INC(1));										\
 																\
 	if (!(R##DSTREG & (1*N)))									\
 	{															\
@@ -753,7 +754,7 @@ static void setf1(void) { SETF(1); }
 #define SEXT(F,R)												\
 {							   									\
 	INT32 *rd = &R##REG(R##DSTREG);								\
-	SEXTEND(*rd,FW(F));											\
+	SEXTEND(*rd,FW_INC(F));										\
 	SET_NZ(*rd);												\
 	COUNT_CYCLES(3);											\
 }
@@ -972,7 +973,7 @@ static void xori_b(void) { XORI(B); }
 #define ZEXT(F,R)												\
 {																\
 	INT32 *rd = &R##REG(R##DSTREG);								\
-	ZEXTEND(*rd,FW(F));											\
+	ZEXTEND(*rd,FW_INC(F));										\
 	SET_Z(*rd);													\
 	COUNT_CYCLES(1);											\
 }
@@ -1340,6 +1341,7 @@ static void move1_aa (void) { MOVE_AA(1); }
 {																\
 	PUSH(PC);													\
 	PC = R##REG(R##DSTREG);										\
+	change_pc29(PC);											\
 	COUNT_CYCLES(3);											\
 }
 static void call_a (void) { CALL(A); }
@@ -1356,6 +1358,7 @@ static void calla(void)
 {
 	PUSH(PC+0x20);
 	PC = PARAM_LONG_NO_INC();
+	change_pc29(PC);
 	COUNT_CYCLES(4);
 }
 
@@ -1461,6 +1464,7 @@ static void emu(void)
 	INT32 temppc = *rd;											\
 	*rd = PC;													\
 	PC = temppc;												\
+	change_pc29(PC);											\
 	COUNT_CYCLES(2);											\
 }
 static void exgpc_a (void) { EXGPC(A); }
@@ -1499,6 +1503,7 @@ static void getst_b (void) { GETST(B); }
 		if (TAKE)												\
 		{														\
 			PC = PARAM_LONG_NO_INC();							\
+			change_pc29(PC);									\
 			COUNT_CYCLES(3);									\
 		}														\
 		else													\
@@ -1743,6 +1748,7 @@ static void j_NN_x(void)
 #define JUMP(R)													\
 {																\
 	PC = R##REG(R##DSTREG);										\
+	change_pc29(PC);											\
 	COUNT_CYCLES(2);											\
 }
 static void jump_a (void) { JUMP(A); }
@@ -1772,6 +1778,7 @@ static void reti(void)
 {
 	INT32 st = POP();
 	PC = POP();
+	change_pc29(PC);
 	SET_ST(st);
 	COUNT_CYCLES(11);
 }
@@ -1780,6 +1787,7 @@ static void rets(void)
 {
 	UINT32 offs;
 	PC = POP();
+	change_pc29(PC);
 	offs = PARAM_N;
 	if (offs)
 	{
@@ -1806,6 +1814,7 @@ static void trap(void)
 	}
 	RESET_ST();
 	PC = RLONG(0xffffffe0-(t<<5));
+	change_pc29(PC);
 	COUNT_CYCLES(16);
 }
 
@@ -1814,6 +1823,116 @@ static void trap(void)
 /*###################################################################################################
 **	34020 INSTRUCTIONS
 **#################################################################################################*/
+
+/************************************
+
+New 34020 ops:
+
+	0000 1100 000R dddd = ADDXYI IL,Rd
+	iiii iiii iiii iiii
+	iiii iiii iiii iiii
+
+	0000 0000 1111 00SD = BLMOVE S,D
+
+	0000 0110 0000 0000 = CEXEC S,c,ID,L
+	cccc cccc S000 0000
+	iiic cccc cccc cccc
+
+	1101 1000 0ccc cccS = CEXEC S,c,ID
+	iiic cccc cccc cccc
+
+	0000 1000 1111 0010 = CLIP
+
+	0000 0110 011R dddd = CMOVCG Rd1,Rd2,S,c,ID
+	cccc cccc S00R dddd
+	iiic cccc cccc cccc
+
+	0000 0110 101R dddd = CMOVCM *Rd+,n,S,c,ID
+	cccc cccc S00n nnnn
+	iiic cccc cccc cccc
+
+	0000 0110 110R dddd = CMOVCM -*Rd,n,S,c,ID
+	cccc cccc S00n nnnn
+	iiic cccc cccc cccc
+
+	0000 0110 0110 0000 = CMOVCS c,ID
+	cccc cccc 0000 0001
+	iiic cccc cccc cccc
+
+	0000 0110 001R ssss = CMOVGC Rs,c,ID
+	cccc cccc 0000 0000
+	iiic cccc cccc cccc
+
+	0000 0110 010R ssss = CMOVGC Rs1,Rs2,S,c,ID
+	cccc cccc S00R ssss
+	iiic cccc cccc cccc
+
+	0000 0110 100n nnnn = CMOVMC *Rs+,n,S,c,ID
+	cccc cccc S00R ssss
+	iiic cccc cccc cccc
+
+	0000 1000 001n nnnn = CMOVMC -*Rs,n,S,c,ID
+	cccc cccc S00R ssss
+	iiic cccc cccc cccc
+
+	0000 0110 111R dddd = CMOVMC *Rs+,Rd,S,c,ID
+	cccc cccc S00R ssss
+	iiic cccc cccc cccc
+
+	0011 01kk kkkR dddd = CMPK k,Rd
+
+	0000 1010 100R dddd = CVDXYL Rd
+
+	0000 1010 011R dddd = CVMXYL Rd
+
+	1110 101s sssR dddd = CVSXYL Rs,Rd
+
+	0000 0010 101R dddd = EXGPS Rd
+
+	1101 1110 Z001 1010 = FLINE Z
+
+	0000 1010 1011 1011 = FPIXEQ
+
+	0000 1010 1101 1011 = FPIXNE
+
+	0000 0010 110R dddd = GETPS Rd
+
+	0000 0000 0100 0000 = IDLE
+
+	0000 1100 0101 0111 = LINIT
+
+	0000 0000 1000 0000 = MWAIT
+
+	0000 1010 0011 0111 = PFILL XY
+
+	0000 1110 0001 0111 = PIXBLT L,M,L
+
+	0000 1000 0110 0000 = RETM
+
+	0111 101s sssR dddd = RMO Rs,Rd
+
+	0000 0010 100R dddd = RPIX Rd
+
+	0000 0010 0111 0011 = SETCDP
+
+	0000 0010 1111 1011 = SETCMP
+
+	0000 0010 0101 0001 = SETCSP
+
+	0111 111s sssR dddd = SWAPF *Rs,Rd,0
+
+	0000 1110 1111 1010 = TFILL XY
+
+	0000 1000 0000 1111 = TRAPL
+
+	0000 1000 0101 0111 = VBLT B,L
+
+	0000 1010 0101 0111 = VFILL L
+
+	0000 1010 0000 0000 = VLCOL
+
+************************************/
+
 
 #define ADD_XYI(R)								\
 {												\
@@ -1829,323 +1948,420 @@ static void trap(void)
   	*b = res;									\
   	COUNT_CYCLES(1);							\
 }
-
 static void addxyi_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
 	ADD_XYI(A);
 }
-
 static void addxyi_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
 	ADD_XYI(B);
 }
 
 static void blmove(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	offs_t src = BREG(BINDEX(0));
+	offs_t dst = BREG(BINDEX(2));
+	offs_t bits = BREG(BINDEX(7));
+
+	if (!state.is_34020) { unimpl(); return; }
+
+	/* src and dst are aligned */
+	if (!(src & 0x0f) && !(dst & 0x0f))
+	{
+		while (bits >= 16 && tms34010_ICount > 0)
+		{
+			TMS34010_WRMEM_WORD(TOBYTE(dst), TMS34010_RDMEM_WORD(TOBYTE(src)));
+			src += 0x10;
+			dst += 0x10;
+			bits -= 0x10;
+			tms34010_ICount -= 2;
+		}
+		if (bits != 0 && tms34010_ICount > 0)
+		{
+			(*wfield_functions[bits])(dst, (*rfield_functions_z[bits])(src));
+			dst += bits;
+			src += bits;
+			bits = 0;
+			tms34010_ICount -= 2;
+		}
+	}
+
+	/* src is aligned, dst is not */
+	else if (!(src & 0x0f))
+	{
+		logerror("020:BLMOVE with aligned src and unaligned dst\n");
+	}
+
+	/* dst is aligned, src is not */
+	else if (!(dst & 0x0f))
+	{
+		logerror("020:BLMOVE with unaligned src and aligned dst\n");
+	}
+
+	/* neither are aligned */
+	else
+	{
+		logerror("020:BLMOVE with completely unaligned src and dst\n");
+	}
+
+	/* update the final results */
+	BREG(BINDEX(0)) = src;
+	BREG(BINDEX(2)) = dst;
+	BREG(BINDEX(7)) = bits;
+
+	/* if we're not done yet, back up the PC */
+	if (bits != 0)
+		PC -= 0x10;
 }
 
 static void cexec_l(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cexec_l\n");
 }
 
 static void cexec_s(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cexec_s\n");
 }
 
 static void clip(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:clip\n");
 }
 
 static void cmovcg_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovcg_a\n");
 }
 
 static void cmovcg_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovcg_b\n");
 }
 
 static void cmovcm_f(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovcm_f\n");
 }
 
 static void cmovcm_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovcm_b\n");
 }
 
 static void cmovgc_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovgc_a\n");
 }
 
 static void cmovgc_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovgc_b\n");
 }
 
 static void cmovgc_a_s(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovgc_a_s\n");
 }
 
 static void cmovgc_b_s(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovgc_b_s\n");
 }
 
 static void cmovmc_f(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovmc_f\n");
 }
 
 static void cmovmc_f_va(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovmc_f_va\n");
 }
 
 static void cmovmc_f_vb(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovmc_f_vb\n");
 }
 
 static void cmovmc_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cmovmc_b\n");
 }
 
+#define CMPK(R)				       		       			    \
+{															\
+	INT32 r;												\
+	INT32 *rd = &R##REG(R##DSTREG);							\
+	INT32 t = PARAM_K; if (!t) t = 32;						\
+	r = *rd - t;											\
+	SET_NZCV_SUB(*rd,t,r);									\
+	COUNT_CYCLES(1);										\
+}
 static void cmp_k_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	CMPK(A);
 }
-
 static void cmp_k_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	CMPK(B);
 }
 
 static void cvdxyl_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cvdxyl_a\n");
 }
 
 static void cvdxyl_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cvdxyl_b\n");
 }
 
 static void cvmxyl_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cvmxyl_a\n");
 }
 
 static void cvmxyl_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cvmxyl_b\n");
 }
 
 static void cvsxyl_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cvsxyl_a\n");
 }
 
 static void cvsxyl_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:cvsxyl_b\n");
 }
 
 static void exgps_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:exgps_a\n");
 }
 
 static void exgps_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:exgps_b\n");
 }
 
 static void fline(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:fline\n");
 }
 
 static void fpixeq(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:fpixeq\n");
 }
 
 static void fpixne(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:fpixne\n");
 }
 
 static void getps_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:getps_a\n");
 }
 
 static void getps_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:getps_b\n");
 }
 
 static void idle(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:idle\n");
 }
 
 static void linit(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:linit\n");
 }
 
 static void mwait(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:mwait\n");
 }
 
 static void pfill_xy(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:pfill_xy\n");
 }
 
 static void pixblt_l_m_l(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:pixblt_l_m_l\n");
 }
 
 static void retm(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:retm\n");
 }
 
 static void rmo_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:rmo_a\n");
 }
 
 static void rmo_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:rmo_b\n");
+}
+
+#define RPIX(R)									\
+{												\
+	UINT32 v = R##REG(R##DSTREG);				\
+	switch (state.pixelshift)					\
+	{											\
+		case 1:									\
+			v = (v & 1) ? 0xffffffff : 0x00000000;\
+		  	COUNT_CYCLES(8);					\
+		  	break;								\
+		case 2:									\
+			v &= 3;								\
+			v |= v << 2;						\
+			v |= v << 4;						\
+			v |= v << 8;						\
+			v |= v << 16;						\
+			COUNT_CYCLES(7);					\
+			break;								\
+		case 4:									\
+			v &= 0x0f;							\
+			v |= v << 4;						\
+			v |= v << 8;						\
+			v |= v << 16;						\
+			COUNT_CYCLES(6);					\
+			break;								\
+		case 8:									\
+			v &= 0xff;							\
+			v |= v << 8;						\
+			v |= v << 16;						\
+			COUNT_CYCLES(5);					\
+			break;								\
+		case 16:								\
+			v &= 0xffff;						\
+			v |= v << 16;						\
+			COUNT_CYCLES(4);					\
+			break;								\
+		case 32:								\
+			COUNT_CYCLES(2);					\
+			break;								\
+	}											\
+	R##REG(R##DSTREG) = v;						\
 }
 
 static void rpix_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	RPIX(A);
 }
 
 static void rpix_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	RPIX(B);
 }
 
 static void setcdp(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:setcdp\n");
 }
 
 static void setcmp(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:setcmp\n");
 }
 
 static void setcsp(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:setcsp\n");
 }
 
 static void swapf_a(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:swapf_a\n");
 }
 
 static void swapf_b(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:swapf_b\n");
 }
 
 static void tfill_xy(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:tfill_xy\n");
 }
 
 static void trapl(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:trapl\n");
 }
 
 static void vblt_b_l(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:vblt_b_l\n");
 }
 
 static void vfill_l(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:vfill_l\n");
 }
 
 static void vlcol(void)
 {
-	if (!state.is_34020)
-		unimpl();
+	if (!state.is_34020) { unimpl(); return; }
+	logerror("020:vlcol\n");
 }

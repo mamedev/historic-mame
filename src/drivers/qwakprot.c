@@ -213,7 +213,7 @@ static struct MachineDriver machine_driver_qwakprot =
 	{
 		{
 			CPU_M6502,
-			12096000/8,	/* 1.512 Mhz?? */
+			12096000/8,	/* 1.512 MHz?? */
 			readmem,writemem,0,0,
 			interrupt,4
 		}

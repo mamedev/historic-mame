@@ -761,13 +761,13 @@ static struct MachineDriver machine_driver_terraf =
 	{
 		{
 			CPU_M68000,
-			8000000, /* 8 Mhz?? */
+			8000000, /* 8 MHz?? */
 			terraf_readmem,terraf_writemem,0,0,
 			armedf_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz???? */
+			3072000,	/* 3.072 MHz???? */
 			soundreadmem,soundwritemem,readport,writeport,
 			interrupt,128
 		},
@@ -807,13 +807,13 @@ static struct MachineDriver machine_driver_kodure =
 	{
 		{
 			CPU_M68000,
-			8000000, /* 8 Mhz?? */
+			8000000, /* 8 MHz?? */
 			kodure_readmem, kodure_writemem, 0, 0,
 			armedf_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz???? */
+			3072000,	/* 3.072 MHz???? */
 			soundreadmem, soundwritemem, readport, writeport,
 			interrupt, 128
 		},
@@ -853,13 +853,13 @@ static struct MachineDriver machine_driver_armedf =
 	{
 		{
 			CPU_M68000,
-			8000000, /* 8 Mhz?? */
+			8000000, /* 8 MHz?? */
 			armedf_readmem,armedf_writemem,0,0,
 			armedf_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz???? */
+			3072000,	/* 3.072 MHz???? */
 			soundreadmem,soundwritemem,readport,writeport,
 			interrupt,128
 		},
@@ -899,13 +899,13 @@ static struct MachineDriver machine_driver_cclimbr2 =
 	{
 		{
 			CPU_M68000,
-			8000000, /* 8 Mhz?? */
+			8000000, /* 8 MHz?? */
 			cclimbr2_readmem,cclimbr2_writemem,0,0,
 			cclimbr2_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz???? */
+			3072000,	/* 3.072 MHz???? */
 			cclimbr2_soundreadmem,cclimbr2_soundwritemem,readport,writeport,
 			interrupt,128
 		},

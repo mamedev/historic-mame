@@ -525,7 +525,7 @@ static struct MachineDriver machine_driver_mcr2 =
 	{
 		{
 			CPU_Z80,
-			2500000,	/* 2.5 Mhz */
+			2500000,	/* 2.5 MHz */
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
@@ -563,7 +563,7 @@ static struct MachineDriver machine_driver_journey =
 	{
 		{
 			CPU_Z80,
-			7500000,	/* Looks like it runs at 7.5 Mhz rather than 5 or 2.5 */
+			7500000,	/* Looks like it runs at 7.5 MHz rather than 5 or 2.5 */
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain

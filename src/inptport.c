@@ -1614,9 +1614,6 @@ profiler_mark(PROFILER_INPUT);
 		}
 	}
 
-	/* poll all the analog joysticks */
-	osd_poll_joysticks();
-
 	/* update the analog devices */
 	for (i = 0;i < OSD_MAX_JOY_ANALOG;i++)
 	{

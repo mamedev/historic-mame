@@ -3036,8 +3036,8 @@ INLINE void pref10( void )
 		case 0xce: lds_im();	m6809_ICount-=4;	break;
 		case 0xcf: sts_im();	m6809_ICount-=4;	break;
 
-		case 0xde: lds_di();	m6809_ICount-=4;	break;
-		case 0xdf: sts_di();	m6809_ICount-=4;	break;
+		case 0xde: lds_di();	m6809_ICount-=6;	break;
+		case 0xdf: sts_di();	m6809_ICount-=6;	break;
 
 		case 0xee: lds_ix();	m6809_ICount-=6;	break;
 		case 0xef: sts_ix();	m6809_ICount-=6;	break;

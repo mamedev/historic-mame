@@ -186,7 +186,6 @@ Sound board: uses the same board as Pooyan.
 extern unsigned char *tutankhm_scrollx;
 
 WRITE_HANDLER( tutankhm_videoram_w );
-WRITE_HANDLER( tutankhm_flipscreen_w );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* defined in sndhrdw/timeplt.c */
@@ -196,7 +195,7 @@ extern struct AY8910interface timeplt_ay8910_interface;
 WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
-WRITE_HANDLER( tutankhm_bankselect_w )
+static WRITE_HANDLER( tutankhm_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -204,6 +203,11 @@ WRITE_HANDLER( tutankhm_bankselect_w )
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
 	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+static WRITE_HANDLER( tutankhm_coin_counter_w )
+{
+	coin_counter_w(offset ^ 1, data);
 }
 
 
@@ -228,9 +232,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x800f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x8100, 0x8100, MWA_RAM, &tutankhm_scrollx },
 	{ 0x8200, 0x8200, interrupt_enable_w },
-	{ 0x8202, 0x8203, MWA_RAM },	/* coin counters */
+	{ 0x8202, 0x8203, tutankhm_coin_counter_w },
 	{ 0x8205, 0x8205, MWA_NOP },	/* ??? */
-	{ 0x8206, 0x8207, tutankhm_flipscreen_w },
+	{ 0x8206, 0x8206, flip_screen_x_w },
+	{ 0x8207, 0x8207, flip_screen_y_w },
 	{ 0x8300, 0x8300, tutankhm_bankselect_w },
 	{ 0x8600, 0x8600, timeplt_sh_irqtrigger_w },
 	{ 0x8700, 0x8700, soundlatch_w },
@@ -268,7 +273,7 @@ INPUT_PORTS_START( tutankhm )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -341,7 +346,7 @@ static struct MachineDriver machine_driver_tutankhm =
 	{
 		{
 			CPU_M6809,
-			1500000,			/* 1.5 Mhz ??? */
+			1500000,			/* 1.5 MHz ??? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},

@@ -24,7 +24,7 @@ int silentident,knownstatus;
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 
-void get_rom_sample_path (int argc, char **argv, int game_index);
+void get_rom_sample_path (int argc, char **argv, int game_index, char *override_default_rompath);
 
 static const struct GameDriver *gamedrv;
 
@@ -108,15 +108,28 @@ void identify_rom(const char* name, int checksum, int length)
 
 		while (romp && (romp->name || romp->offset || romp->length))
 		{
-			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
+			if (romp->name && romp->name != (char *)-1)
 			{
-				if (!silentident)
+				if (checksum == romp->crc)
 				{
-					if (found != 0)
-						printf("             ");
-					printf("= %-12s  %s\n",romp->name,drivers[i]->description);
+					if (!silentident)
+					{
+						if (found != 0)
+							printf("             ");
+						printf("= %-12s  %s\n",romp->name,drivers[i]->description);
+					}
+					found++;
 				}
-				found++;
+				if (BADCRC(checksum) == romp->crc)
+				{
+					if (!silentident)
+					{
+						if (found != 0)
+							printf("             ");
+						printf("= (BAD) %-12s  %s\n",romp->name,drivers[i]->description);
+					}
+					found++;
+				}
 			}
 			romp++;
 		}
@@ -601,7 +614,7 @@ int frontend_help (int argc, char **argv)
 				for (i = 0; drivers[i]; i++)
 				{
 					static int first_missing = 1;
-					get_rom_sample_path (argc, argv, i);
+					get_rom_sample_path (argc, argv, i, NULL);
 					if (RomsetMissing (i))
 					{
 						if (first_missing)
@@ -1243,7 +1256,7 @@ j = 0;	// count only the main cpu
 				continue;
 
 			/* set rom and sample path correctly */
-			get_rom_sample_path (argc, argv, i);
+			get_rom_sample_path (argc, argv, i, NULL);
 
 			if (verify & VERIFY_ROMS)
 			{

@@ -374,7 +374,7 @@ INPUT_PORTS_START( bwidow )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* bit 7 is tied to a 3khz clock */
+	/* bit 7 is tied to a 3kHz clock */
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
@@ -453,7 +453,7 @@ INPUT_PORTS_START( gravitar )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* bit 7 is tied to a 3khz clock */
+	/* bit 7 is tied to a 3kHz clock */
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
@@ -527,7 +527,7 @@ INPUT_PORTS_START( spacduel )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* bit 7 is tied to a 3khz clock */
+	/* bit 7 is tied to a 3kHz clock */
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
@@ -624,7 +624,7 @@ static struct MachineDriver machine_driver_bwidow =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			bwidow_readmem,bwidow_writemem,0,0,
 			interrupt,4	/* 4.1ms */
 		}
@@ -661,7 +661,7 @@ static struct MachineDriver machine_driver_gravitar =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			bwidow_readmem,bwidow_writemem,0,0,
 			interrupt,4 /* 4.1ms */
 		}
@@ -700,7 +700,7 @@ static struct MachineDriver machine_driver_spacduel =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			spacduel_readmem,spacduel_writemem,0,0,
 			interrupt,4 /* 5.4ms */
 		}

@@ -15,7 +15,6 @@ unsigned char *sbasketb_scroll;
 unsigned char *sbasketb_palettebank;
 unsigned char *sbasketb_spriteram_select;
 
-static int flipscreen = 0;
 static struct rectangle scroll_area = { 0*8, 32*8-1, 0*8, 32*8-1 };
 
 
@@ -88,16 +87,6 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-WRITE_HANDLER( sbasketb_flipscreen_w )
-{
-	if (flipscreen != data)
-	{
-		flipscreen = data;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -109,6 +98,12 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 	int sx,sy,code,color,flipx,flipy;
+
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -127,7 +122,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipx = colorram[offs] & 0x40;
 			flipy = colorram[offs] & 0x80;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;
@@ -149,7 +144,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scroll[32];
 
-		if (!flipscreen)
+		if (!flip_screen)
 		{
 			for (i = 0;i < 6;i++)
 				scroll[i] = 0;
@@ -184,7 +179,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipx =  spriteram[offs + 1] & 0x40;
 			flipy =  spriteram[offs + 1] & 0x80;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;

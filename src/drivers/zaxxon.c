@@ -645,7 +645,7 @@ static struct MachineDriver machine_driver_zaxxon =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ?? */
+			3072000,	/* 3.072 MHz ?? */
 			readmem,writemem,0,0,
 			zaxxon_interrupt,1
 		}
@@ -682,7 +682,7 @@ static struct MachineDriver machine_driver_futspy =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ?? */
+			3072000,	/* 3.072 MHz ?? */
 			readmem,futspy_writemem,0,0,
 			zaxxon_interrupt,1
 		}
@@ -719,7 +719,7 @@ static struct MachineDriver machine_driver_razmataz =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ?? */
+			3072000,	/* 3.072 MHz ?? */
 			razmataz_readmem,razmataz_writemem,0,0,
 			zaxxon_interrupt,1
 		}

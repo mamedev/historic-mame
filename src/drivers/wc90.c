@@ -371,13 +371,13 @@ static struct MachineDriver machine_driver_wc90 =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6.0 Mhz ??? */
+			6000000,	/* 6.0 MHz ??? */
 			wc90_readmem1, wc90_writemem1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			6000000,	/* 6.0 Mhz ??? */
+			6000000,	/* 6.0 MHz ??? */
 			wc90_readmem2, wc90_writemem2,0,0,
 			interrupt,1
 		},

@@ -40,9 +40,28 @@ typedef struct ccpuRegs
     UINT8   eCState;
 } ccpuRegs;
 
-#define CCPU_FETCH(a) ((unsigned)cpu_readop(a))
+#define CCPU_FETCH(a) ((unsigned)cpu_readop(a+CCPU_PGM_OFFSET))
 #define CCPU_READPORT(a) (cpu_readport (a))
 #define CCPU_WRITEPORT(a,v) (cpu_writeport (a,v))
+
+/*
+ * Read a word from given RAM memory location
+ */
+#ifdef LSB_FIRST
+#define CCPU_RAM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1)+CCPU_DATA_OFFSET)<<8) | cpu_readmem16(((A<<1)+CCPU_DATA_OFFSET+1)))
+#else
+#define CCPU_RAM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1)+CCPU_DATA_OFFSET)) | cpu_readmem16(((A<<1)+CCPU_DATA_OFFSET+1))<<8)
+#endif
+
+/*
+ *	 Write a word to given RAM memory location
+ */
+#ifdef LSB_FIRST
+#define CCPU_RAM_WRMEM(A,V) { cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET+1),(V&0x0ff)); cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET),((V>>8)&0x0ff)); }
+#else
+#define CCPU_RAM_WRMEM(A,V) { cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET+1),((V>>8)&0x0ff)); cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET),(V&0x0ff)); }
+#endif
+
 
 #define RAW_VECTORS 1
 
@@ -53,7 +72,7 @@ typedef struct ccpuRegs
 /* This prototype was missing */
 extern void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color);
 
-int ccpu_ICount = 1000;
+int ccpu_icount = 1000;
 
 
 extern UINT16 ioSwitches;
@@ -444,13 +463,11 @@ void ccpu_SetInputs(int inputs, int switches)
 #include <stdio.h>
 #include <string.h>
 
-#include "ccpu.h"
-
 /*
  * Use 0xF000 so as to keep the current page, since it may well
  * have been changed with JPP.
  */
-#define JMP() register_PC = ((register_PC - 1) & 0xF000) + register_J; ccpu_ICount -= 2
+#define JMP() register_PC = ((register_PC - 1) & 0xF000) + register_J; ccpu_icount -= 2
 
 /* Declare needed macros */
 #ifdef macintosh
@@ -495,7 +512,9 @@ static CINEBYTE acc_a0 = 0;      /* bit0 of A-reg at last accumulator access */
 
 static CINESTATE state = state_A;/* C-CPU state machine current state */
 
-static CINEWORD  ram[256];       /* C-CPU ram (for all pages) */
+//static CINEWORD  ram[256];       /* C-CPU ram (for all pages) */
+//#define CCPU_RAM_RDMEM(a) (ram[a])
+//#define CCPU_RAM_WRMEM(a,v) (ram[a]=v)
 
 static int ccpu_jmi_dip = 0;     /* as set by cineSetJMI */
 static int ccpu_msize = 0;       /* as set by cineSetMSize */
@@ -535,7 +554,7 @@ extern int sdwYOffset;
 
 CINELONG cineExec (CINELONG cycles)
 {
-	ccpu_ICount = cycles;
+	ccpu_icount = cycles;
 	bailOut = FALSE;
 
    	do
@@ -551,7 +570,7 @@ CINELONG cineExec (CINELONG cycles)
 
 		opcode = CCPU_FETCH (register_PC++);
 		state = (*cineops[state][opcode]) (opcode);
-        ccpu_ICount -= ccpu_cycles[opcode];
+        ccpu_icount -= ccpu_cycles[opcode];
 
 
 		/*
@@ -561,11 +580,11 @@ CINELONG cineExec (CINELONG cycles)
 		 */
 		if (bailOut)
 /*			ccpu_ICount = 0; */
-			ccpu_ICount -= 100;
+			ccpu_icount -= 100;
 	}
-	while (ccpu_ICount > 0);
+	while (ccpu_icount > 0);
 
-	return cycles - ccpu_ICount;
+	return cycles - ccpu_icount;
 }
 
 
@@ -769,7 +788,7 @@ CINESTATE opLDAdir_A_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;  /* set I register */
 
-	cmp_new = ram[register_I];                  /* new acc value */
+	cmp_new = CCPU_RAM_RDMEM(register_I);                  /* new acc value */
 
 	SETA0 (register_A);                          /* back up bit0 */
 	SETFC (register_A);
@@ -786,7 +805,7 @@ CINESTATE opLDAdir_B_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;  /* set I register */
 
-	cmp_new = ram[register_I];                  /* new acc value */
+	cmp_new = CCPU_RAM_RDMEM(register_I);                  /* new acc value */
 
 	SETA0 (register_A);                          /* back up bit0 */
 	SETFC (register_A);
@@ -799,7 +818,7 @@ CINESTATE opLDAdir_B_AA (int opcode)
 
 CINESTATE opLDAirg_A_AA (int opcode)
 {
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 
 	SETA0 (register_A);
 	SETFC (register_A);
@@ -812,7 +831,7 @@ CINESTATE opLDAirg_A_AA (int opcode)
 
 CINESTATE opLDAirg_B_AA (int opcode)
 {
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 
 	SETA0 (register_A);
 	SETFC (register_A);
@@ -887,7 +906,7 @@ CINESTATE opADDdir_A_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;   /* set regI addr */
 
-	cmp_new = ram[register_I];                   /* fetch imm real value */
+	cmp_new = CCPU_RAM_RDMEM(register_I);                   /* fetch imm real value */
 	SETA0 (register_A);                           /* store bit0 */
 	cmp_old = register_A;                           /* store old acc value */
 
@@ -904,7 +923,7 @@ CINESTATE opADDdir_B_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;   /* set regI addr */
 
-	cmp_new = ram[register_I];                   /* fetch imm real value */
+	cmp_new = CCPU_RAM_RDMEM(register_I);                   /* fetch imm real value */
 	SETA0 (register_A);                           /* store bit0 */
 	cmp_old = register_B;                           /* store old acc value */
 
@@ -917,7 +936,7 @@ CINESTATE opADDdir_B_AA (int opcode)
 
 CINESTATE opAWDirg_A_AA (int opcode)
 {
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 	SETA0 (register_A);
 	cmp_old = register_A;
 
@@ -930,7 +949,7 @@ CINESTATE opAWDirg_A_AA (int opcode)
 
 CINESTATE opAWDirg_B_AA (int opcode)
 {
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 	SETA0 (register_A);
 	cmp_old = register_B;
 
@@ -1021,7 +1040,7 @@ CINESTATE opSUBdir_A_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_word;   /* set regI addr */
 
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 	SETA0 (register_A);
 	cmp_old = register_A;
 
@@ -1040,7 +1059,7 @@ CINESTATE opSUBdir_B_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;   /* set regI addr */
 
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 	SETA0 (register_A);
 	cmp_old = register_B;
 
@@ -1057,7 +1076,7 @@ CINESTATE opSUBirg_A_AA (int opcode)
 	CINEWORD temp_word;
 
 	/* sub [i] */
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 	SETA0 (register_A);
 	cmp_old = register_A;
 
@@ -1074,7 +1093,7 @@ CINESTATE opSUBirg_B_AA (int opcode)
 	CINEWORD temp_word;
 
 	/* sub [i] */
-	cmp_new = ram[register_I];
+	cmp_new = CCPU_RAM_RDMEM(register_I);
 	SETA0 (register_A);
 	cmp_old = register_B;
 
@@ -1098,7 +1117,7 @@ CINESTATE opCMPdir_A_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte; /* build real addr */
 
-	temp_word = ram[register_I];
+	temp_word = CCPU_RAM_RDMEM(register_I);
 	cmp_new = temp_word;                          /* new acc value */
 	SETA0 (register_A);                         /* backup bit0 */
 	cmp_old = register_A;                         /* backup old acc */
@@ -1117,7 +1136,7 @@ CINESTATE opCMPdir_B_AA (int opcode)
 
 	register_I = (register_P << 4) + temp_byte; /* build real addr */
 
-	temp_word = ram[register_I];
+	temp_word = CCPU_RAM_RDMEM(register_I);
 	cmp_new = temp_word;                          /* new acc value */
 	SETA0 (register_A);                         /* backup bit0 */
 	cmp_old = register_B;                         /* backup old acc */
@@ -1132,7 +1151,7 @@ CINESTATE opCMPdir_B_AA (int opcode)
   /* AND [i] */
 CINESTATE opANDirg_A_AA (int opcode)
 {
-	cmp_new = ram[register_I];                /* new acc value */
+	cmp_new = CCPU_RAM_RDMEM(register_I);                /* new acc value */
 	SETA0 (register_A);
 	SETFC (register_A);
 	cmp_old = register_A;
@@ -1144,7 +1163,7 @@ CINESTATE opANDirg_A_AA (int opcode)
 
 CINESTATE opANDirg_B_AA (int opcode)
 {
-	cmp_new = ram[register_I];                /* new acc value */
+	cmp_new = CCPU_RAM_RDMEM(register_I);                /* new acc value */
 	SETA0 (register_A);
 	SETFC (register_A);
 	cmp_old = register_B;
@@ -1183,13 +1202,13 @@ CINESTATE opLDJimm_B_BB (int opcode)
 CINESTATE opLDJirg_A_A (int opcode)
 {
 	/* load J reg from value at last dir addr */
-	register_J = ram[register_I];
+	register_J = CCPU_RAM_RDMEM(register_I);
 	return state_A;
 }
 
 CINESTATE opLDJirg_B_BB (int opcode)
 {
-	register_J = ram[register_I];
+	register_J = CCPU_RAM_RDMEM(register_I);
 	return state_BB;
 }
 
@@ -1216,7 +1235,7 @@ CINESTATE opLDIdir_A_A (int opcode)
 	CINEBYTE temp_byte = (register_P << 4) +           /* get ram page ... */
 	         (opcode & 0x0F); /* and imm half of ram addr.. */
 
-	register_I = ram[temp_byte] & 0xFF;      /* set/mask new register_I */
+	register_I = CCPU_RAM_RDMEM(temp_byte) & 0xFF;      /* set/mask new register_I */
 
 	return state_A;
 }
@@ -1226,7 +1245,7 @@ CINESTATE opLDIdir_B_BB (int opcode)
 	CINEBYTE temp_byte = (register_P << 4) +           /* get ram page ... */
 	         (opcode & 0x0F); /* and imm half of ram addr.. */
 
-	register_I = ram[temp_byte] & 0xFF;      /* set/mask new register_I */
+	register_I = CCPU_RAM_RDMEM(temp_byte) & 0xFF;      /* set/mask new register_I */
 
 	return state_BB;
 }
@@ -1238,7 +1257,7 @@ CINESTATE opSTAdir_A_A (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;  /* set I register */
 
-	ram[register_I] = register_A;               /* store acc to RAM */
+	CCPU_RAM_WRMEM(register_I, register_A);               /* store acc to RAM */
 
 	return state_A;
 }
@@ -1249,7 +1268,7 @@ CINESTATE opSTAdir_B_BB (int opcode)
 
 	register_I = (register_P << 4) + temp_byte;  /* set I register */
 
-	ram[register_I] = register_B;               /* store acc to RAM */
+	CCPU_RAM_WRMEM(register_I, register_B);               /* store acc to RAM */
 
 	return state_BB;
 }
@@ -1261,14 +1280,14 @@ CINESTATE opSTAirg_A_A (int opcode)
 	 * STA into address specified in regI. Nice and easy :)
 	 */
 
-	ram[register_I] = register_A;               /* store acc */
+	CCPU_RAM_WRMEM(register_I, register_A);               /* store acc */
 
 	return state_A;
 }
 
 CINESTATE opSTAirg_B_BB (int opcode)
 {
-	ram[register_I] = register_B;               /* store acc */
+	CCPU_RAM_WRMEM(register_I, register_B);               /* store acc */
 
 	return state_BB;
 }
@@ -1311,7 +1330,7 @@ CINESTATE opXLT_B_AA (int opcode)
 CINESTATE opMULirg_A_AA (int opcode)
 {
 	CINEBYTE temp_byte = opcode & 0xFF;    /* (for ease and speed) */
-	CINEWORD temp_word = ram[register_I];               /* pick up ram value */
+	CINEWORD temp_word = CCPU_RAM_RDMEM(register_I);               /* pick up ram value */
 
 	cmp_new = temp_word;
 
@@ -1369,7 +1388,7 @@ CINESTATE opMULirg_A_AA (int opcode)
 
 CINESTATE opMULirg_B_AA (int opcode)
 {
-	CINEWORD temp_word = ram[register_I];
+	CINEWORD temp_word = CCPU_RAM_RDMEM(register_I);
 
 	cmp_new = temp_word;
 	cmp_old = register_B;
@@ -2295,9 +2314,6 @@ void cineReset(void)
 
 	/* reset state */
 	state = state_A;
-
-	/* reset RAM */
-	memset(ram, 0, sizeof(ram));
 
 	/* reset internal state */
 	cmp_old = 0;

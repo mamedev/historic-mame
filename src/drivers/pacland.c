@@ -311,7 +311,7 @@ static struct MachineDriver machine_driver_pacland =
 	{
 		{
 			CPU_M6809,
-			1500000,	/* 1.500 Mhz (?) */
+			1500000,	/* 1.500 MHz (?) */
 			readmem,writemem,0,0,
 			interrupt,1
 		},

@@ -1794,7 +1794,7 @@ static struct MemoryReadAddress decocass_readmem[] =
 {
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0xe300, 0xe300, input_port_3_r },     /* DSW1 */
-	{ 0xe500, 0xe502, pip_r },	/* read data from tape */
+	{ 0xe700, 0xe702, pip_r },	/* read data from tape */
 #if 0
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0500, 0x3fff, MRA_ROM },

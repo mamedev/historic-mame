@@ -153,13 +153,6 @@ int osd_is_key_pressed(int keycode)
 }
 
 
-int osd_wait_keypress(void)
-{
-	clear_keybuf();
-	return readkey() >> 8;
-}
-
-
 int osd_readkey_unicode(int flush)
 {
 	if (flush) clear_keybuf();
@@ -398,7 +391,7 @@ int osd_is_joy_pressed(int joycode)
 }
 
 
-void osd_poll_joysticks(void)
+void poll_joysticks(void)
 {
 	if (joystick > JOY_TYPE_NONE)
 		poll_joystick();

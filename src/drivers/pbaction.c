@@ -284,13 +284,13 @@ static struct MachineDriver machine_driver_pbaction =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz? */
+			4000000,	/* 4 MHz? */
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz (?????) */
+			3072000,	/* 3.072 MHz (?????) */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			pbaction_interrupt,2	/* ??? */
 									/* IRQs are caused by the main CPU */

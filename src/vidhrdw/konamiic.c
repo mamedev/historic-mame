@@ -453,7 +453,8 @@ memory map:
                    aliens sets it just after checking bit 0, and before copying
                    the sprite data
            bit 5 = enable gfx ROM reading
-001     W  Devastators sets bit 1, function unknown, could it be a global shadow enable?
+001     W  Devastators sets bit 1, function unknown.
+           Ultraman sets the register to 0x0f.
            None of the other games I tested seem to set this register to other than 0.
 002-003 W  selects the portion of the gfx ROMs to be read.
 004     W  Aliens uses this to select the ROM bank to be read, but Punk Shot
@@ -2046,7 +2047,7 @@ static int K051960_memory_region;
 static struct GfxElement *K051960_gfx;
 static void (*K051960_callback)(int *code,int *color,int *priority,int *shadow);
 static int K051960_romoffset;
-static int K051960_spriteflip,K051960_readroms,K051960_force_shadows;
+static int K051960_spriteflip,K051960_readroms;
 static unsigned char K051960_spriterombank[3];
 static unsigned char *K051960_ram;
 static int K051960_irq_enabled, K051960_nmi_enabled;
@@ -2099,7 +2100,6 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K051960_ram = malloc(0x400);
 	if (!K051960_ram) return 1;
 	memset(K051960_ram,0,0x400);
-	K051960_force_shadows = 0;
 
 	return 0;
 }
@@ -2218,7 +2218,6 @@ logerror("%04x: write %02x to 051937 address %x\n",cpu_get_pc(),data,offset);
 	usrintf_showmessage("%04x: write %02x to 051937 address %x",cpu_get_pc(),data,offset);
 #endif
 logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
-		K051960_force_shadows = data & 0x02;
 	}
 	else if (offset >= 2 && offset < 5)
 	{
@@ -2378,7 +2377,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					else c += yoffset[y];
 
 					/* hack to simulate shadow */
-					if (K051960_force_shadows || shadow)
+					if (shadow)
 					{
 						int o = K051960_gfx->colortable[16*color+15];
 						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
@@ -2439,7 +2438,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					else c += yoffset[y];
 
 					/* hack to simulate shadow */
-					if (K051960_force_shadows || shadow)
+					if (shadow)
 					{
 						int o = K051960_gfx->colortable[16*color+15];
 						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;

@@ -116,6 +116,10 @@
 #ifndef PALETTE_H
 #define PALETTE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DYNAMIC_MAX_PENS 254	/* the Mac cannot handle more than 254 dynamic pens */
 #define STATIC_MAX_PENS 256		/* but 256 static pens can be handled */
 
@@ -123,24 +127,24 @@ int palette_start(void);
 void palette_stop(void);
 int palette_init(void);
 
-void palette_change_color(int color,unsigned char red,unsigned char green,unsigned char blue);
+void palette_change_color(int color,UINT8 red,UINT8 green,UINT8 blue);
 
 /* This array is used by palette_recalc() to know which colors are used, and which */
 /* ones are transparent (see defines below). By default, it is initialized to */
 /* PALETTE_COLOR_USED for all colors; this is enough in some cases. */
-extern unsigned char *palette_used_colors;
+extern UINT8 *palette_used_colors;
 
 void palette_increase_usage_count(int table_offset,unsigned int usage_mask,int color_flags);
 void palette_decrease_usage_count(int table_offset,unsigned int usage_mask,int color_flags);
-void palette_increase_usage_countx(int table_offset,int num_pens,const unsigned char *pen_data,int color_flags);
-void palette_decrease_usage_countx(int table_offset,int num_pens,const unsigned char *pen_data,int color_flags);
+void palette_increase_usage_countx(int table_offset,int num_pens,const UINT8 *pen_data,int color_flags);
+void palette_decrease_usage_countx(int table_offset,int num_pens,const UINT8 *pen_data,int color_flags);
 
 /* If you want to dynamically change the usage array, call palette_init_used_colors() */
 /* before setting used entries to PALETTE_COLOR_USED/PALETTE_COLOR_TRANSPARENT. */
 /* The function automatically marks colors used by the TileMap system. */
 void palette_init_used_colors(void);
 
-const unsigned char *palette_recalc(void);
+const UINT8 *palette_recalc(void);
 
 #define PALETTE_COLOR_UNUSED	0	/* This color is not needed for this frame */
 #define PALETTE_COLOR_VISIBLE	1	/* This color is currently visible */
@@ -158,7 +162,7 @@ const unsigned char *palette_recalc(void);
 
 /* if you use PALETTE_COLOR_TRANSPARENT, to do a transparency blit with copybitmap() */
 /* pass it TRANSPARENCY_PEN, palette_transparent_pen. */
-extern unsigned short palette_transparent_pen;
+extern UINT16 palette_transparent_pen;
 
 /* The transparent color can also be used as a background color, to avoid doing */
 /* a fillbitmap() + copybitmap() when there is nothing between the background */
@@ -172,15 +176,15 @@ extern unsigned short palette_transparent_pen;
 extern int palette_transparent_color;
 
 
-extern unsigned short *palette_shadow_table;
+extern UINT16 *palette_shadow_table;
 
 
 
 /* here some functions to handle commonly used palette layouts, so you don't have */
 /* to write your own paletteram_w() function. */
 
-extern unsigned char *paletteram;
-extern unsigned char *paletteram_2;	/* use when palette RAM is split in two parts */
+extern UINT8 *paletteram;
+extern UINT8 *paletteram_2;	/* use when palette RAM is split in two parts */
 
 READ_HANDLER( paletteram_r );
 READ_HANDLER( paletteram_2_r );
@@ -228,5 +232,9 @@ WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
 WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
 WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

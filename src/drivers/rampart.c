@@ -241,7 +241,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x0fffff, MRA_ROM },
 	{ 0x140000, 0x147fff, slapstic_bank_r },
-	{ 0x200000, 0x21fffe, MRA_BANK1 },
+	{ 0x200000, 0x21ffff, MRA_BANK1 },
 	{ 0x3c0000, 0x3c07ff, MRA_BANK2 },
 	{ 0x3e0000, 0x3effff, MRA_BANK3 },
 	{ 0x460000, 0x460001, adpcm_r },
@@ -263,7 +263,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
 	{ 0x140000, 0x147fff, slapstic_bank_w, &slapstic_base },	/* here only to initialize the pointer */
-	{ 0x200000, 0x21fffe, rampart_playfieldram_w, &atarigen_playfieldram },
+	{ 0x200000, 0x21ffff, rampart_playfieldram_w, &atarigen_playfieldram },
 	{ 0x220000, 0x3bffff, MWA_NOP },	/* the code blasts right through this when initializing */
 	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram },
 	{ 0x3c0800, 0x3dffff, MWA_NOP },	/* the code blasts right through this when initializing */

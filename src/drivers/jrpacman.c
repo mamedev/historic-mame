@@ -302,7 +302,7 @@ static struct MachineDriver machine_driver_jrpacman =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			readmem,writemem,0,writeport,
 			jrpacman_interrupt,1
 		}

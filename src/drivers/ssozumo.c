@@ -259,7 +259,7 @@ static struct MachineDriver machine_driver_ssozumo =
 	{
 		{
 			CPU_M6502,
-			1200000,	/* 1.2 Mhz ???? */
+			1200000,	/* 1.2 MHz ???? */
 			readmem, writemem, 0, 0,
 			ssozumo_interrupt, 1
 		},

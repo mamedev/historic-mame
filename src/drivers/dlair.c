@@ -230,7 +230,7 @@ static struct MachineDriver machine_driver_dlair =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz ? */
 			readmem,writemem,readport,writeport,
 			0,0, /* interrupts are made by z80 daisy chain system */
 			0,0,daisy_chain

@@ -476,19 +476,19 @@ static struct MachineDriver machine_driver_polepos =
 	{
 		{
 			CPU_Z80,
-			3125000,	/* 3.125 Mhz */
+			3125000,	/* 3.125 MHz */
 			z80_readmem,z80_writemem,z80_readport,z80_writeport,
 			ignore_interrupt,1
 		},
 		{
 			CPU_Z8000,
-			3125000,	/* 3.125 Mhz */
+			3125000,	/* 3.125 MHz */
 			z8002_readmem,z8002_writemem,0,0,
 			polepos_z8002_1_interrupt,1
 		},
 		{
 			CPU_Z8000,
-			3125000,	/* 3.125 Mhz */
+			3125000,	/* 3.125 MHz */
 			z8002_readmem,z8002_writemem,0,0,
 			polepos_z8002_2_interrupt,1
 		}

@@ -2,10 +2,45 @@
 
 Irem "M62" system
 
-There's two crystals on Kid Kiki. 24.00 MHz and 3.579545 MHz for sound
-
 TODO:
-- Kid Niki is missing the drums
+- Kid Niki is missing the drums. There is an analog section in the sound board.
+
+
+The following information is gathered from Kung Fu Master; the board was most
+likely modified for other games (or, not all the games in this driver are
+really M62).
+
+The M62 board can be set up for different configurations through the use of
+jumpers.
+
+A board:
+J1: \
+J2: / ROM or RAM at 0x4000
+J3: sound prg ROM size, 2764 or 27128
+J4: send output C of the secondy AY-3-8910 to SOUND IO instead of SOUND. Is
+    this to have it amplified more?
+J5: enable a tristate on accesses to the range a000-bfff (must not be done
+    when there is ROM at this address)
+J6:
+J7: main prg ROM type, 2764 or 27128
+
+B board:
+J1: selects whether bit 4 of obj color code selects or not high priority over tiles
+J2: selects whether bit 4 of obj color code goes to A7 of obj color PROMS
+J3: I'm not sure about this. It involves A8 of sprite ram.
+J4: pixels per scanline, 256 or 384. There's also a PROM @ 6F that controls
+    video timing and how long a scanline is.
+J5: output Horizontal Sync or Composite Sync
+J6: ??? where is this ???
+J7: \ main xtal, 18.432 MHz (for low resolution games?) or
+J8: / 24 MHz (for mid resolution games?)
+J9: obj ROM type, 2764 or 27128
+
+G board:
+JP1: \
+JP2: | Tiles with color code >= the value set here have priority over sprites
+JP3: |
+JP4: /
 
 **************************************************************************/
 
@@ -1169,7 +1204,7 @@ static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 
 
 
-#define MACHINE_DRIVER(GAMENAME,READPORT,VISIBLEMINX,VISIBLEMAXX,COLORS,CONVERTCOLOR)        \
+#define MACHINE_DRIVER(GAMENAME,READPORT,CLOCK,PIXELS_PER_LINE,COLORS,CONVERTCOLOR)          \
                                                                                              \
 static struct MachineDriver machine_driver_##GAMENAME =                                      \
 {                                                                                            \
@@ -1177,7 +1212,7 @@ static struct MachineDriver machine_driver_##GAMENAME =                         
 	{                                                                                        \
 		{                                                                                    \
 			CPU_Z80,                                                                         \
-			4000000,	/* 4 Mhz (?) */                                                      \
+			CLOCK/6,                                                                         \
 			GAMENAME##_readmem,GAMENAME##_writemem,READPORT##_readport,GAMENAME##_writeport, \
 			interrupt,1                                                                      \
 		},                                                                                   \
@@ -1188,7 +1223,7 @@ static struct MachineDriver machine_driver_##GAMENAME =                         
 	0,                                                                                       \
                                                                                              \
 	/* video hardware */                                                                     \
-	64*8, 32*8, { VISIBLEMINX, VISIBLEMAXX, 0*8, 32*8-1 },                                   \
+	64*8, 32*8, { (64*8-PIXELS_PER_LINE)/2, 64*8-(64*8-PIXELS_PER_LINE)/2-1, 0*8, 32*8-1 },  \
 	GAMENAME##_gfxdecodeinfo,                                                                \
 	COLORS, COLORS,                                                                          \
 	CONVERTCOLOR##_vh_convert_color_prom,                                                    \
@@ -1221,16 +1256,16 @@ static struct MachineDriver machine_driver_##GAMENAME =                         
 #define	ldrun2_vh_screenrefresh ldrun_vh_screenrefresh
 #define	ldrun3_vh_screenrefresh ldrun_vh_screenrefresh
 
-MACHINE_DRIVER(kungfum,  ldrun, 16*8, (64-16)*8-1, 512,irem);
-MACHINE_DRIVER(battroad, ldrun, 16*8, (64-16)*8-1, 544,battroad);
-MACHINE_DRIVER(ldrun,    ldrun,  8*8, (64-8)*8-1,  512,irem);
-MACHINE_DRIVER(ldrun2,   ldrun2, 8*8, (64-8)*8-1,  512,irem);
-MACHINE_DRIVER(ldrun3,   ldrun,  8*8, (64-8)*8-1,  512,irem);
-MACHINE_DRIVER(ldrun4,   ldrun,  8*8, (64-8)*8-1,  512,irem);
-MACHINE_DRIVER(lotlot,   ldrun,  8*8, (64-8)*8-1,  768,irem);
-MACHINE_DRIVER(kidniki,  ldrun,  8*8, (64-8)*8-1,  512,irem);
-MACHINE_DRIVER(spelunkr, ldrun,  8*8, (64-8)*8-1,  512,irem);
-MACHINE_DRIVER(spelunk2, ldrun,  8*8, (64-8)*8-1,  768,spelunk2);
+MACHINE_DRIVER(kungfum,  ldrun,  18432000, 256, 512, irem);
+MACHINE_DRIVER(battroad, ldrun,  18432000, 256, 544, battroad);
+MACHINE_DRIVER(ldrun,    ldrun,  24000000, 384, 512, irem);
+MACHINE_DRIVER(ldrun2,   ldrun2, 24000000, 384, 512, irem);
+MACHINE_DRIVER(ldrun3,   ldrun,  24000000, 384, 512, irem);
+MACHINE_DRIVER(ldrun4,   ldrun,  24000000, 384, 512, irem);
+MACHINE_DRIVER(lotlot,   ldrun,  24000000, 384, 768, irem);
+MACHINE_DRIVER(kidniki,  ldrun,  24000000, 384, 512, irem);
+MACHINE_DRIVER(spelunkr, ldrun,  24000000, 384, 512, irem);
+MACHINE_DRIVER(spelunk2, ldrun,  24000000, 384, 768, spelunk2);
 
 
 
@@ -1278,7 +1313,7 @@ ROM_START( kungfum )
 	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
 	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
 															/* sprites. Used at run time! */
-	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing - same as battroad */
 ROM_END
 
 ROM_START( kungfud )
@@ -1319,7 +1354,7 @@ ROM_START( kungfud )
 	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
 	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
 															/* sprites. Used at run time! */
-	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing - same as battroad */
 ROM_END
 
 ROM_START( spartanx )
@@ -1360,7 +1395,7 @@ ROM_START( spartanx )
 	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
 	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
 															/* sprites. Used at run time! */
-	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing - same as battroad */
 ROM_END
 
 ROM_START( kungfub )
@@ -1401,7 +1436,7 @@ ROM_START( kungfub )
 	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
 	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
 															/* sprites. Used at run time! */
-	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing - same as battroad */
 ROM_END
 
 ROM_START( kungfub2 )
@@ -1442,7 +1477,7 @@ ROM_START( kungfub2 )
 	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
 	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
 															/* sprites. Used at run time! */
-	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing - same as battroad */
 ROM_END
 
 ROM_START( battroad )
@@ -1490,7 +1525,7 @@ ROM_START( battroad )
 	ROM_LOAD( "br-c-1j",     0x0600, 0x0020, 0x78eb5d77 )	/* character palette */
 	ROM_LOAD( "br-b-5p",     0x0620, 0x0020, 0xce746937 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "br-b-6f",     0x0640, 0x0100, 0x82c20d12 )	/* video timing? - same as kungfum */
+	ROM_LOAD( "br-b-6f",     0x0640, 0x0100, 0x82c20d12 )	/* video timing - same as kungfum */
 ROM_END
 
 ROM_START( ldrun )
@@ -1523,7 +1558,7 @@ ROM_START( ldrun )
 	ROM_LOAD( "lr-b-1l",      0x0500, 0x0100, 0x08d8cf9a )	/* sprite palette blue component */
 	ROM_LOAD( "lr-b-5p",      0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( ldruna )
@@ -1556,7 +1591,7 @@ ROM_START( ldruna )
 	ROM_LOAD( "lr-b-1l",      0x0500, 0x0100, 0x08d8cf9a )	/* sprite palette blue component */
 	ROM_LOAD( "lr-b-5p",      0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( ldrun2 )
@@ -1595,7 +1630,7 @@ ROM_START( ldrun2 )
 	ROM_LOAD( "lr2-b-1l",     0x0500, 0x0100, 0xc8fb708a )	/* sprite palette blue component */
 	ROM_LOAD( "lr2-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "lr2-b-6f",     0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "lr2-b-6f",     0x0620, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( ldrun3 )
@@ -1628,7 +1663,7 @@ ROM_START( ldrun3 )
 	ROM_LOAD( "lr3-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr3-n-4f",     0x0620, 0x0100, 0xdf674be9 )	/* unknown */
-	ROM_LOAD( "lr3-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "lr3-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( ldrun4 )
@@ -1664,7 +1699,7 @@ ROM_START( ldrun4 )
 	ROM_LOAD( "lr4-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr4-v-4h",     0x0620, 0x0100, 0xdf674be9 )	/* unknown */
-	ROM_LOAD( "lr4-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "lr4-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( lotlot )
@@ -1704,7 +1739,7 @@ ROM_START( lotlot )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lot-k-7e",     0x0920, 0x0200, 0x6cef0fbd )	/* unknown */
 	ROM_LOAD( "lot-k-7h",     0x0b20, 0x0200, 0x04442bee )	/* unknown */
-	ROM_LOAD( "lot-b-6f",     0x0d20, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "lot-b-6f",     0x0d20, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( kidniki )
@@ -1754,7 +1789,7 @@ ROM_START( kidniki )
 	ROM_LOAD( "dr32.5p",      0x0600, 0x0020, 0x11cd1f2e )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
-	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 
@@ -1805,7 +1840,7 @@ ROM_START( yanchamr )
 	ROM_LOAD( "dr32.5p",      0x0600, 0x0020, 0x11cd1f2e )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
-	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( spelunkr )
@@ -1871,7 +1906,7 @@ ROM_START( spelunkr )
 	ROM_LOAD( "sprb.5p",      0x0600, 0x0020, 0x746c6238 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "sprm.8h",      0x0620, 0x0200, 0x875cc442 )	/* unknown */
-	ROM_LOAD( "sprb.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "sprb.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 ROM_START( spelunk2 )
@@ -1935,7 +1970,7 @@ ROM_START( spelunk2 )
 	ROM_LOAD( "sp2-b.5p",     0x0700, 0x0020, 0xcd126f6a )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "sp2-r.8j",     0x0720, 0x0200, 0x875cc442 )	/* unknown */
-	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
 

@@ -226,13 +226,13 @@ static struct MachineDriver machine_driver_champbas =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz ? */
 			readmem2,writemem2,0,0,
 			ignore_interrupt,1
 		}

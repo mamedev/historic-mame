@@ -318,13 +318,13 @@ static struct MachineDriver machine_driver_cloak =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			1000000,	/* 1 MHz ???? */
 			readmem,writemem,0,0,
 			interrupt,4
 		},
 		{
 			CPU_M6502,
-            1250000,        /* 1 Mhz ???? */
+            1250000,        /* 1 MHz ???? */
 			readmem2,writemem2,0,0,
 			interrupt,2
 		}

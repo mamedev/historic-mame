@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include "ui_text.h" /* LBO 042400 */
+#include "mamedbg.h"
 #include "artwork.h"
 
 static struct RunningMachine machine;
@@ -13,7 +14,7 @@ static struct osd_bitmap *real_scrbitmap;
 /* Variables to hold the status of various game options */
 struct GameOptions	options;
 
-void *record;   /* for -record */
+void *record;	/* for -record */
 void *playback; /* for -playback */
 int mame_debug; /* !0 when -debug option is specified */
 
@@ -54,7 +55,7 @@ INLINE int my_stricmp( const char *dst, const char *src)
 
 static int validitychecks(void)
 {
-	int i,j;
+	int i,j,cpu;
 	UINT8 a,b;
 	int error = 0;
 
@@ -202,6 +203,56 @@ static int validitychecks(void)
 			}
 
 
+			for (cpu = 0;cpu < MAX_CPU;cpu++)
+			{
+				if (drivers[i]->drv->cpu[cpu].cpu_type)
+				{
+					int alignunit;
+
+
+					alignunit = cpuintf[drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK].align_unit;
+					if (drivers[i]->drv->cpu[cpu].memory_read)
+					{
+						const struct MemoryReadAddress *mra = drivers[i]->drv->cpu[cpu].memory_read;
+
+						while (mra->start != -1)
+						{
+							if (mra->end < mra->start)
+							{
+								printf("%s wrong memory read handler start = %08x > end = %08x\n",drivers[i]->name,mra->start,mra->end);
+								error = 1;
+							}
+							if ((mra->start & (alignunit-1)) != 0 || (mra->end & (alignunit-1)) != (alignunit-1))
+							{
+								printf("%s wrong memory read handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->name,mra->start,mra->end,alignunit);
+								error = 1;
+							}
+							mra++;
+						}
+					}
+					if (drivers[i]->drv->cpu[cpu].memory_write)
+					{
+						const struct MemoryWriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
+
+						while (mwa->start != -1)
+						{
+							if (mwa->end < mwa->start)
+							{
+								printf("%s wrong memory write handler start = %08x > end = %08x\n",drivers[i]->name,mwa->start,mwa->end);
+								error = 1;
+							}
+							if ((mwa->start & (alignunit-1)) != 0 || (mwa->end & (alignunit-1)) != (alignunit-1))
+							{
+								printf("%s wrong memory write handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->name,mwa->start,mwa->end,alignunit);
+								error = 1;
+							}
+							mwa++;
+						}
+					}
+				}
+			}
+
+
 			if (drivers[i]->drv->gfxdecodeinfo)
 			{
 				for (j = 0;j < MAX_GFX_ELEMENTS && drivers[i]->drv->gfxdecodeinfo[j].memory_region != -1;j++)
@@ -280,6 +331,13 @@ static int validitychecks(void)
 						error = 1;
 					}
 
+                    if (inp->name == DEF_STR( Cabinet ) && (inp+1)->name == DEF_STR( Upright )
+							&& inp->default_value != (inp+1)->default_value)
+					{
+						printf("%s Cabinet must default to Upright\n",drivers[i]->name);
+						error = 1;
+					}
+
 					if (inp->name == DEF_STR( Cocktail ) && (inp+1)->name == DEF_STR( Upright ))
 					{
 						printf("%s has inverted Upright/Cocktail dipswitch order\n",drivers[i]->name);
@@ -299,7 +357,6 @@ static int validitychecks(void)
 						printf("%s has wrong Flip Screen option %s\n",drivers[i]->name,(inp+1)->name);
 						error = 1;
 					}
-
 				}
 
 				inp++;
@@ -326,7 +383,7 @@ int run_game(int game)
 
 
 	/* copy some settings into easier-to-handle variables */
-	record     = options.record;
+	record	   = options.record;
 	playback   = options.playback;
 	mame_debug = options.mame_debug;
 
@@ -476,13 +533,13 @@ int init_machine(void)
 		}
 	}
 
-    #ifdef MESS
+	#ifdef MESS
 	if (!gamedrv->rom)
 	{
 		logerror("Going to load_next tag\n");
 		goto load_next;
 	}
-    #endif
+	#endif
 
 	if (readroms() != 0)
 		goto out_free;
@@ -532,7 +589,7 @@ void shutdown_machine(void)
 	exit_devices();
 	#endif
 
-    /* ASG 971007 free memory element map */
+	/* ASG 971007 free memory element map */
 	memory_shutdown();
 
 	/* free the memory allocated for ROM and RAM */
@@ -568,12 +625,22 @@ static void vh_close(void)
 		Machine->gfx[i] = 0;
 	}
 	freegfx(Machine->uifont);
-	Machine->uifont = 0;
+	Machine->uifont = NULL;
+	if (Machine->debugger_font)
+	{
+		freegfx(Machine->debugger_font);
+		Machine->debugger_font = NULL;
+	}
 	osd_close_display();
 	if (Machine->scrbitmap)
 	{
 		bitmap_free(Machine->scrbitmap);
 		Machine->scrbitmap = NULL;
+	}
+	if (Machine->debug_bitmap)
+	{
+		osd_free_bitmap(Machine->debug_bitmap);
+		Machine->debug_bitmap = NULL;
 	}
 
 	palette_stop();
@@ -619,11 +686,12 @@ static void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *heigh
 static int vh_open(void)
 {
 	int i;
-	int width,height;
+	int bmwidth,bmheight,viswidth,visheight;
 
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
-	Machine->uifont = 0;
+	Machine->uifont = NULL;
+	Machine->debugger_font = NULL;
 
 	if (palette_start() != 0)
 	{
@@ -688,37 +756,52 @@ static int vh_open(void)
 	}
 
 
-	width = drv->screen_width;
-	height = drv->screen_height;
+	bmwidth = drv->screen_width;
+	bmheight = drv->screen_height;
 
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		scale_vectorgames(options.vector_width,options.vector_height,&width,&height);
+		scale_vectorgames(options.vector_width,options.vector_height,&bmwidth,&bmheight);
 
-	Machine->scrbitmap = bitmap_alloc_depth(width,height,Machine->color_depth);
+	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	{
+		viswidth = drv->default_visible_area.max_x - drv->default_visible_area.min_x + 1;
+		visheight = drv->default_visible_area.max_y - drv->default_visible_area.min_y + 1;
+	}
+	else
+	{
+		viswidth = bmwidth;
+		visheight = bmheight;
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+		temp = viswidth; viswidth = visheight; visheight = temp;
+	}
+
+	/* create the display bitmap, and allocate the palette */
+	if (osd_create_display(viswidth,visheight,Machine->color_depth,
+			drv->frames_per_second,drv->video_attributes,Machine->orientation))
+	{
+		vh_close();
+		return 1;
+	}
+
+	Machine->scrbitmap = bitmap_alloc_depth(bmwidth,bmheight,Machine->color_depth);
 	if (!Machine->scrbitmap)
 	{
 		vh_close();
 		return 1;
 	}
 
-	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	if (mame_debug)
 	{
-		width = drv->default_visible_area.max_x - drv->default_visible_area.min_x + 1;
-		height = drv->default_visible_area.max_y - drv->default_visible_area.min_y + 1;
-	}
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-		temp = width; width = height; height = temp;
-	}
-
-	/* create the display bitmap, and allocate the palette */
-	if (osd_create_display(width,height,Machine->color_depth,
-			drv->frames_per_second,drv->video_attributes,Machine->orientation))
-	{
-		vh_close();
-		return 1;
+		Machine->debug_bitmap = osd_alloc_bitmap(options.debug_width,options.debug_height,Machine->color_depth);
+		if (!Machine->debug_bitmap)
+		{
+			vh_close();
+			return 1;
+		}
 	}
 
 	set_visible_area(
@@ -746,11 +829,21 @@ static int vh_open(void)
 	/* resolution we are running at and can pick a different font depending on it. */
 	/* It must be done BEFORE palette_init() because that will also initialize */
 	/* (through osd_allocate_colors()) the uifont colortable. */
-	if ((Machine->uifont = builduifont()) == 0)
+	if (NULL == (Machine->uifont = builduifont()))
 	{
 		vh_close();
 		return 1;
 	}
+#ifdef MAME_DEBUG
+    if (mame_debug)
+	{
+        if (NULL == (Machine->debugger_font = build_debugger_font()))
+		{
+			vh_close();
+			return 1;
+		}
+	}
+#endif
 
 	/* initialize the palette - must be done after osd_create_display() */
 	if (palette_init())
@@ -814,7 +907,7 @@ int updatescreen(void)
 
 void draw_screen(int _bitmap_dirty)
 {
-	if (_bitmap_dirty)  overlay_remap();
+	if (_bitmap_dirty)	overlay_remap();
 
 	(*Machine->drv->vh_update)(Machine->scrbitmap,_bitmap_dirty);  /* update screen */
 
@@ -832,7 +925,10 @@ void draw_screen(int _bitmap_dirty)
 ***************************************************************************/
 void update_video_and_audio(void)
 {
-	osd_update_video_and_audio(real_scrbitmap);
+#ifdef MAME_DEBUG
+	debug_trace_delay = 0;
+#endif
+	osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap);
 }
 
 
@@ -852,11 +948,11 @@ int run_machine(void)
 		tilemap_init();
 		sprite_init();
 		gfxobj_init();
-		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)      /* start the video hardware */
+		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)		/* start the video hardware */
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
-				int	region;
+				int region;
 
 				real_scrbitmap = artwork_overlay ? overlay_real_scrbitmap : Machine->scrbitmap;
 
@@ -882,7 +978,7 @@ int run_machine(void)
 					if (showcopyright(real_scrbitmap)) goto userquit;
 				}
 
-				if (showgamewarnings(real_scrbitmap) == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
+				if (showgamewarnings(real_scrbitmap) == 0)	/* show info about incorrect behaviour (wrong colors etc.) */
 				{
 					/* shut down the leds (work around Allegro hanging bug in the DOS port) */
 					osd_led_w(0,1);
@@ -910,7 +1006,7 @@ int run_machine(void)
 						if (f) osd_fclose(f);
 					}
 
-					cpu_run();      /* run the emulation! */
+					cpu_run();		/* run the emulation! */
 
 					if (drv->nvram_handler)
 					{
@@ -976,10 +1072,11 @@ int mame_highscore_enabled(void)
 	if (he_did_cheat != 0) return 0;
 
 #ifdef MAME_NET
-    /* disable high score when playing network game */
-    /* (this forces all networked machines to start from the same state!) */
-    if (net_active()) return 0;
+	/* disable high score when playing network game */
+	/* (this forces all networked machines to start from the same state!) */
+	if (net_active()) return 0;
 #endif /* MAME_NET */
 
 	return 1;
 }
+

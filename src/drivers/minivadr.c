@@ -56,7 +56,7 @@ static struct MachineDriver machine_driver_minivadr =
 	{
 		{
 			CPU_Z80,
-			24000000 / 6,		 /* 4 Mhz ? */
+			24000000 / 6,		 /* 4 MHz ? */
 			readmem, writemem, 0, 0,
 			interrupt, 1
 		}

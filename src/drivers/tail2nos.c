@@ -295,7 +295,7 @@ static struct MachineDriver machine_driver_tail2nos =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2608 */

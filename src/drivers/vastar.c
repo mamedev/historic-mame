@@ -358,13 +358,13 @@ static struct MachineDriver machine_driver_vastar =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ???? */
+			3072000,	/* 3.072 MHz ???? */
 			readmem,writemem,0,writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ???? */
+			3072000,	/* 3.072 MHz ???? */
 			cpu2_readmem,cpu2_writemem,cpu2_readport,cpu2_writeport,
 			interrupt,4	/* ??? */
 		}

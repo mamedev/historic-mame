@@ -48,25 +48,16 @@ extern unsigned i8039_dasm(char *buffer, unsigned pc);
  *   architecture.  (i.e., define access to ports { I8039_p1, I8039_p1, dkong_out_w })
  */
 
-#if OLDPORTHANDLING
-		UINT8	 I8039_port_r(UINT8 port);
-		void	 I8039_port_w(UINT8 port, UINT8 data);
-		UINT8	 I8039_test_r(UINT8 port);
-		void	 I8039_test_w(UINT8 port, UINT8 data);
-		UINT8	 I8039_bus_r(void);
-		void	 I8039_bus_w(UINT8 data);
-#else
-        #define  I8039_p0	0x100   /* Not used */
-        #define  I8039_p1	0x101
-        #define  I8039_p2	0x102
-        #define  I8039_p4	0x104
-        #define  I8039_p5	0x105
-        #define  I8039_p6	0x106
-        #define  I8039_p7	0x107
-        #define  I8039_t0	0x110
-        #define  I8039_t1	0x111
-        #define  I8039_bus	0x120
-#endif
+#define  I8039_p0	0x100   /* Not used */
+#define  I8039_p1	0x101
+#define  I8039_p2	0x102
+#define  I8039_p4	0x104
+#define  I8039_p5	0x105
+#define  I8039_p6	0x106
+#define  I8039_p7	0x107
+#define  I8039_t0	0x110
+#define  I8039_t1	0x111
+#define  I8039_bus	0x120
 
 /**************************************************************************
  * I8035 section

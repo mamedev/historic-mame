@@ -225,8 +225,8 @@ static struct MachineDriver machine_driver_superqix =
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
-//			10000000,	/* 10 Mhz ? */
-			6000000,	/* 6 Mhz ? */
+//			10000000,	/* 10 MHz ? */
+			6000000,	/* 6 MHz ? */
 			readmem,writemem,readport,writeport,
 //			nmi_interrupt,3	/* ??? */
 			sqix_interrupt,6	/* ??? */

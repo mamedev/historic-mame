@@ -4,7 +4,7 @@
 /* macro to convert 4-bit unsigned samples to 8-bit signed samples */
 #define SAMPLE_CONV4(a) (0x11*((a&0x0f))-0x80)
 
-#define SND_CLOCK 3072000	/* 3.072 Mhz */
+#define SND_CLOCK 3072000	/* 3.072 MHz */
 
 
 static signed char *samplebuf;	/* buffer to decode samples at run time */

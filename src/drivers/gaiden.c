@@ -470,7 +470,7 @@ static struct MachineDriver machine_driver_gaiden =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz */
+			8000000,	/* 8 MHz */
 			readmem,writemem,0,0,
 			gaiden_interrupt,1,0,0
 		},
@@ -691,8 +691,8 @@ ROM_END
 
 
 
-GAME( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden (World)" )
-GAME( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors (US)" )
-GAME( 1989, ryukendn, gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
-GAME( 1989, tknight,  0,       gaiden, tknight, 0, ROT0, "Tecmo", "Tecmo Knight" )
-GAME( 1989, wildfang, tknight, gaiden, tknight, 0, ROT0, "Tecmo", "Wild Fang" )
+GAMEX( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden (World)", GAME_NO_COCKTAIL )
+GAMEX( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors (US)", GAME_NO_COCKTAIL )
+GAMEX( 1989, ryukendn, gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Ryukenden (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1989, tknight,  0,       gaiden, tknight, 0, ROT0, "Tecmo", "Tecmo Knight", GAME_NO_COCKTAIL )
+GAMEX( 1989, wildfang, tknight, gaiden, tknight, 0, ROT0, "Tecmo", "Wild Fang", GAME_NO_COCKTAIL )

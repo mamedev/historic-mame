@@ -225,7 +225,7 @@ static struct MachineDriver machine_driver_safarir =
 	{
 		{
 			CPU_8080,
-			3072000,	/* 3 Mhz ? */								\
+			3072000,	/* 3 MHz ? */								\
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		}

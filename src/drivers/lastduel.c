@@ -9,6 +9,9 @@
   Trivia ;)  The Mad Gear pcb has an unused pad on the board for an i8751
 microcontroller.
 
+TODO:
+- Priority issues in Mad Gear. A PROM is probably missing.
+
 **************************************************************************/
 
 #include "driver.h"
@@ -477,9 +480,9 @@ INPUT_PORTS_START( lastduel )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
@@ -506,7 +509,7 @@ INPUT_PORTS_START( lastduel )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
@@ -515,7 +518,7 @@ INPUT_PORTS_START( lastduel )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
@@ -582,11 +585,11 @@ INPUT_PORTS_START( madgear )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START /* Dip switch A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -636,8 +639,8 @@ INPUT_PORTS_START( madgear )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START /* Dip switch C, free play is COIN A all off, COIN B all on */
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_START /* Dip switch C, free play is COIN B all off, COIN A all on */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 6C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
@@ -654,7 +657,7 @@ INPUT_PORTS_START( madgear )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 6C_1C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
@@ -713,6 +716,9 @@ ROM_START( lastduel )
 	ROM_LOAD( "ld_25.bin",    0x050000, 0x10000, 0xc541ae9a )
 	ROM_LOAD( "ld_23.bin",    0x060000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x070000, 0x10000, 0xb74f0c0e )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.3d",    0x0000, 0x0100, 0x729a1ddc )	/* priority (not used) */
 ROM_END
 
 ROM_START( lstduela )
@@ -753,6 +759,9 @@ ROM_START( lstduela )
 	ROM_LOAD( "ld_25.bin",    0x050000, 0x10000, 0xc541ae9a )
 	ROM_LOAD( "ld_23.bin",    0x060000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x070000, 0x10000, 0xb74f0c0e )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.3d",    0x0000, 0x0100, 0x729a1ddc )	/* priority (not used) */
 ROM_END
 
 ROM_START( lstduelb )
@@ -795,6 +804,9 @@ ROM_START( lstduelb )
 	ROM_LOAD( "ld_25.bin",    0x050000, 0x10000, 0xc541ae9a )
 	ROM_LOAD( "ld_23.bin",    0x060000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x070000, 0x10000, 0xb74f0c0e )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141.3d",    0x0000, 0x0100, 0x729a1ddc )	/* priority (not used) */
 ROM_END
 
 ROM_START( madgear )
@@ -830,6 +842,9 @@ ROM_START( madgear )
 	ROM_REGION( 0x40000, REGION_SOUND1 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "prom",         0x0000, 0x0100, 0x00000000 )	/* priority (not used) */
 ROM_END
 
 ROM_START( madgearj )
@@ -865,6 +880,9 @@ ROM_START( madgearj )
 	ROM_REGION( 0x40000, REGION_SOUND1 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "prom",         0x0000, 0x0100, 0x00000000 )	/* priority (not used) */
 ROM_END
 
 ROM_START( ledstorm )
@@ -900,6 +918,9 @@ ROM_START( ledstorm )
 	ROM_REGION( 0x40000, REGION_SOUND1 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "prom",         0x0000, 0x0100, 0x00000000 )	/* priority (not used) */
 ROM_END
 
 /******************************************************************************/

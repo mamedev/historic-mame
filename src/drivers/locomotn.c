@@ -59,7 +59,6 @@ extern size_t rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 WRITE_HANDLER( rallyx_videoram2_w );
 WRITE_HANDLER( rallyx_colorram2_w );
-WRITE_HANDLER( rallyx_flipscreen_w );
 void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
@@ -114,7 +113,7 @@ static struct MemoryWriteAddress jungler_writemem[] =
 	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 //	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, rallyx_flipscreen_w },
+	{ 0xa183, 0xa183, flip_screen_w },
 	{ 0xa184, 0xa184, coin_1_w },
 	{ 0xa186, 0xa186, coin_2_w },
 //	{ 0xa187, 0xa187, MWA_NOP },	stars enable
@@ -142,7 +141,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 //	{ 0xa182, 0xa182, MWA_NOP },	sound mute
-	{ 0xa183, 0xa183, rallyx_flipscreen_w },
+	{ 0xa183, 0xa183, flip_screen_w },
 	{ 0xa184, 0xa184, coin_1_w },
 	{ 0xa186, 0xa186, coin_2_w },
 //	{ 0xa187, 0xa187, MWA_NOP },	stars enable

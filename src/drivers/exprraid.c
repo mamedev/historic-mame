@@ -325,13 +325,13 @@ static struct MachineDriver machine_driver_exprraid =
 	{
 		{
 			CPU_M6502,
-			4000000,        /* 4 Mhz ??? */
+			4000000,        /* 4 MHz ??? */
 			readmem,writemem,0,0,
 			exprraid_interrupt, 1
 		},
 		{
 			CPU_M6809,
-			2000000,        /* 2 Mhz ??? */
+			2000000,        /* 2 MHz ??? */
 			sub_readmem,sub_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are caused by the main CPU */
 								/* IRQs are caused by the YM3526 */

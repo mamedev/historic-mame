@@ -624,7 +624,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	4,	/* 4 chips */
-	{ 4000000, 4000000, 4000000, 4000000 },	/* 4 Mhz? */
+	{ 4000000, 4000000, 4000000, 4000000 },	/* 4 MHz? */
 	{ 25, 25, 25, 25 }
 };
 
@@ -679,13 +679,13 @@ static struct MachineDriver machine_driver_dorunrun =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			dorunrun_readmem,dorunrun_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			dorunrun_readmem2,dorunrun_writemem2,0,0,
 			interrupt,8
 		}

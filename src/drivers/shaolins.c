@@ -223,7 +223,7 @@ static struct GfxDecodeInfo shaolins_gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	{ 1536000, 3072000 },	/* 3.072 Mhz???? */
+	{ 1536000, 3072000 },	/* 3.072 MHz???? */
 	{ 100, 100 }
 };
 
@@ -235,7 +235,7 @@ static struct MachineDriver machine_driver_shaolins =
 	{
 		{
 			CPU_M6809,
-			1250000,        /* 1.25 Mhz */
+			1250000,        /* 1.25 MHz */
 			readmem,writemem,0,0,
 			shaolins_interrupt,16	/* 1 IRQ + 8 NMI */
 		},

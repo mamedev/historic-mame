@@ -36,21 +36,12 @@ static UINT8 i8039_win_layout[] = {
 #define M_IN(A)		I8039_In(A)
 #define M_OUT(A,V)	I8039_Out(A,V)
 
-#if OLDPORTHANDLING
-        #define port_r(A)	I8039_port_r(A)
-        #define port_w(A,V)	I8039_port_w(A,V)
-        #define test_r(A)	I8039_test_r(A)
-        #define test_w(A,V)	I8039_test_w(A,V)
-        #define bus_r		I8039_bus_r
-        #define bus_w(V)	I8039_bus_w(V)
-#else
-        #define port_r(A)	I8039_In(I8039_p0 + A)
-        #define port_w(A,V)	I8039_Out(I8039_p0 + A,V)
-        #define test_r(A)	I8039_In(I8039_t0 + A)
-        #define test_w(A,V)	I8039_Out(I8039_t0 + A,V)
-        #define bus_r()		I8039_In(I8039_bus)
-        #define bus_w(V)	I8039_Out(I8039_bus,V)
-#endif
+#define port_r(A)	I8039_In(I8039_p0 + A)
+#define port_w(A,V)	I8039_Out(I8039_p0 + A,V)
+#define test_r(A)	I8039_In(I8039_t0 + A)
+#define test_w(A,V)	I8039_Out(I8039_t0 + A,V)
+#define bus_r()		I8039_In(I8039_bus)
+#define bus_w(V)	I8039_Out(I8039_bus,V)
 
 #define C_FLAG          0x80
 #define A_FLAG          0x40
@@ -201,17 +192,6 @@ INLINE void M_UNDEFINED(void)
 	logerror("I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
 }
 
-
-#if OLDPORTHANDLING
-	UINT8 I8039_port_r(UINT8 port)			  { return R.p[port & 7]; }
-	void I8039_port_w(UINT8 port, UINT8 data) { R.p[port & 7] = data; }
-
-	UINT8 I8039_test_r(UINT8 port)			  { return R.t[port & 1]; }
-	void I8039_test_w(UINT8 port, UINT8 data) { R.t[port & 1] = data; }
-
-	UINT8 I8039_bus_r(void) 	 { return R.bus; }
-	void I8039_bus_w(UINT8 data) { R.bus = data; }
-#endif
 
 static void illegal(void)    { M_ILLEGAL(); }
 

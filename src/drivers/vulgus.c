@@ -60,6 +60,14 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
+static int vulgus_interrupt(void)
+{
+	if (cpu_getiloops() != 0) return 0x00cf;	/* RST 08h */
+	else return 0x00d7;	/* RST 10h - vblank */
+}
+
+
+
 static WRITE_HANDLER( vulgus_control_w )
 {
 	/* bit 0-1 coin counters */
@@ -278,13 +286,13 @@ static struct MachineDriver machine_driver_vulgus =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			readmem,writemem,0,0,
-			c1942_interrupt,2
+			vulgus_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz ??? */
+			3000000,	/* 3 MHz ??? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,8
 		}
@@ -351,13 +359,15 @@ ROM_START( vulgus )
 	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
+	ROM_LOAD( "82s126.9k",    0x0600, 0x0100, 0x32b10521 )	/* interrupt timing? (not used) */
+	ROM_LOAD( "82s129.8n",    0x0700, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 ROM_START( vulgus2 )
@@ -388,13 +398,15 @@ ROM_START( vulgus2 )
 	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
+	ROM_LOAD( "82s126.9k",    0x0600, 0x0100, 0x32b10521 )	/* interrupt timing? (not used) */
+	ROM_LOAD( "82s129.8n",    0x0700, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 ROM_START( vulgusj )
@@ -425,13 +437,15 @@ ROM_START( vulgusj )
 	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
+	ROM_LOAD( "82s126.9k",    0x0600, 0x0100, 0x32b10521 )	/* interrupt timing? (not used) */
+	ROM_LOAD( "82s129.8n",    0x0700, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 

@@ -10,7 +10,6 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "vidhrdw/generic.h"
 
 extern unsigned char *grobda_snd_sharedram;
-extern unsigned char *grobda_spriteram;
 extern unsigned char *grobda_customio_1, *grobda_customio_2;
 extern unsigned char *mappy_soundregs;
 
@@ -33,11 +32,8 @@ WRITE_HANDLER( grobda_interrupt_ctrl_2_w );
 void grobda_init_machine(void);
 
 /* video functions */
-int grobda_vh_start( void );
-void grobda_vh_stop( void );
 void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( grobda_flipscreen_w );
 
 
 static WRITE_HANDLER( grobda_DAC_w )
@@ -61,8 +57,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },		/* video RAM */
 	{ 0x0400, 0x07ff, colorram_w, &colorram },						/* color RAM */
-	{ 0x0800, 0x1fff, MWA_RAM, &grobda_spriteram },					/* RAM & sprite RAM */
-	{ 0x2000, 0x2000, grobda_flipscreen_w },						/* flip screen */
+	{ 0x0800, 0x1fff, MWA_RAM, &spriteram },						/* RAM & sprite RAM */
+	{ 0x2000, 0x2000, flip_screen_w },								/* flip screen */
 	{ 0x4040, 0x43ff, grobda_snd_sharedram_w },						/* shared RAM with CPU #2 */
 	{ 0x4800, 0x480f, grobda_customio_1_w, &grobda_customio_1 },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, grobda_customio_2_w, &grobda_customio_2 },	/* custom I/O chip #2 interface */
@@ -244,8 +240,8 @@ static struct MachineDriver machine_driver_grobda =
 	grobda_vh_convert_color_prom,
 	VIDEO_TYPE_RASTER,
 	0,
-	grobda_vh_start,
-	grobda_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	grobda_vh_screenrefresh,
 
 	/* sound hardware */

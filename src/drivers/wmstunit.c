@@ -1,7 +1,7 @@
 /*************************************************************************
 
 	Driver for Midway T-unit games
-  
+
 	TMS34010 processor @ 6.25MHz
 	Two sound options:
 		standard Williams ADPCM board, with 6809 @ 2MHz, a YM2151, and an OKI6295 ADPCM decoder
@@ -483,7 +483,7 @@ static struct MachineDriver machine_driver_tunit_adpcm =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -521,7 +521,7 @@ static struct MachineDriver machine_driver_tunit_dcs =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config

@@ -233,7 +233,7 @@ static struct MachineDriver machine_driver_rocnrope =
 	{
 		{
 			CPU_M6809,
-			2048000,        /* 2 Mhz */
+			2048000,        /* 2 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},

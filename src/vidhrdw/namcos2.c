@@ -326,7 +326,6 @@ int namcos2_vh_start(void){
 	namcos2_tilemap4_flip=0;
 	namcos2_tilemap5_flip=0;
 
-	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 
 	/* Rotate/Flip the mask ROM */
 

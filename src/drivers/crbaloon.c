@@ -362,7 +362,7 @@ static struct MachineDriver machine_driver_crbaloon =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ????? */
+			3072000,	/* 3.072 MHz ????? */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}

@@ -200,7 +200,7 @@ if (palette_recalc())
 	/* There is a scrolling blinking star background behind the tile */
 	/* background, but I have absolutely NO IDEA how to render it. */
 	/* The scroll registers have a 64 pixels resolution. */
-#if IHAVETHEBACKGROUND
+#ifdef IHAVETHEBACKGROUND
 	{
 		int x,y;
 		for (x = 0;x < 48;x+=8)
@@ -266,7 +266,7 @@ if (palette_recalc())
 		}
 
 	scrollx += 64;
-#if IHAVETHEBACKGROUND
+#ifdef IHAVETHEBACKGROUND
 	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,1);
 #else
 	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);

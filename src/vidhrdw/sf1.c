@@ -88,12 +88,12 @@ WRITE_HANDLER( sf1_videoram_w )
 	}
 }
 
-WRITE_HANDLER( sf1_deltaxb_w )
+WRITE_HANDLER( sf1_bgb_scroll_w )
 {
 	tilemap_set_scrollx(bgb_tilemap, 0, data);
 }
 
-WRITE_HANDLER( sf1_deltaxm_w )
+WRITE_HANDLER( sf1_bgm_scroll_w )
 {
 	tilemap_set_scrollx(bgm_tilemap, 0, data);
 }

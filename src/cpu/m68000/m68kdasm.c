@@ -3,7 +3,7 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.1
+ *                                Version 3.2
  *
  * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
@@ -3245,6 +3245,14 @@ unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_
 	g_instruction_table[g_cpu_ir]();
 	sprintf(str_buff, "%s%s", g_dasm_str, g_helper_str);
 	return g_cpu_pc - pc;
+}
+
+char* m68ki_disassemble_quick(unsigned int pc, unsigned int cpu_type)
+{
+	static char buff[100];
+	buff[0] = 0;
+	m68k_disassemble(buff, pc, cpu_type);
+	return buff;
 }
 
 /* Check if the instruction is a valid one */

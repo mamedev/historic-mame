@@ -38,24 +38,27 @@ void CLIB_DECL logerror(const char *text,...)
 
 /* compare modes when one file is twice as long as the other */
 /* A = All file */
+/* BS = All file, byte swapped */
 /* 1 = 1st half */
 /* 2 = 2nd half */
 /* E = Even bytes */
-/* O = Odd butes */
+/* O = Odd bytes */
 /* E1 = Even bytes 1st half */
-/* O1 = Odd butes 1st half */
+/* O1 = Odd bytes 1st half */
 /* E2 = Even bytes 2nd half */
-/* O2 = Odd butes 2nd half */
-enum {	MODE_A_A, MODE_12_A, MODE_22_A, MODE_E_A, MODE_O_A,
-		          MODE_14_A, MODE_24_A, MODE_34_A, MODE_44_A,
-		          MODE_E1_A, MODE_O1_A, MODE_E2_A, MODE_O2_A,
-		          MODE_A_12, MODE_A_22, MODE_A_E, MODE_A_O,
-		          MODE_A_14, MODE_A_24, MODE_A_34, MODE_A_44,
-		          MODE_A_E1, MODE_A_O1, MODE_A_E2, MODE_A_O2,
+/* O2 = Odd bytes 2nd half */
+enum {	MODE_A_A, MODE_A_BS,
+		MODE_12_A, MODE_22_A, MODE_E_A, MODE_O_A,
+		MODE_14_A, MODE_24_A, MODE_34_A, MODE_44_A,
+		MODE_E1_A, MODE_O1_A, MODE_E2_A, MODE_O2_A,
+		MODE_A_12, MODE_A_22, MODE_A_E, MODE_A_O,
+		MODE_A_14, MODE_A_24, MODE_A_34, MODE_A_44,
+		MODE_A_E1, MODE_A_O1, MODE_A_E2, MODE_A_O2,
 		TOTAL_MODES };
 char *modenames[][2] =
 {
 	{ "          ", "          " },
+	{ "          ", "[byteswap]" },
 	{ "[1/2]     ", "          " },
 	{ "[2/2]     ", "          " },
 	{ "[even]    ", "          " },
@@ -258,7 +261,7 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 		file2 = temp;
 	}
 
-	if (mode == MODE_A_A)
+	if (mode == MODE_A_A || mode == MODE_A_BS)
 	{
 		if (file1->size != file2->size) return 0.0;
 	}
@@ -279,6 +282,14 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 			for (i = 0;i < file2->size;i++)
 			{
 				if (file1->buf[i] == file2->buf[i]) match++;
+			}
+			score = (float)match/file2->size;
+			break;
+
+		case MODE_A_BS:
+			for (i = 0;i < file2->size;i++)
+			{
+				if (file1->buf[i] == file2->buf[i^1]) match++;
 			}
 			score = (float)match/file2->size;
 			break;
@@ -630,7 +641,8 @@ int CLIB_DECL main(int argc,char **argv)
 					matchscore[besti][bestj][bestmode] = 0.0;
 					for (mode = 0;mode < TOTAL_MODES;mode++)
 					{
-						if (bestmode == MODE_A_A || mode == bestmode ||
+						if (bestmode == MODE_A_A || bestmode == MODE_A_BS ||
+								mode == bestmode ||
 								(bestmode >= MODE_12_A && bestmode <= MODE_O_A &&
 								((mode-MODE_12_A)&~1) != ((bestmode-MODE_12_A)&~1)) ||
 								(bestmode >= MODE_14_A && bestmode <= MODE_44_A &&

@@ -510,7 +510,7 @@ static struct MachineDriver machine_driver_lazercmd =
 		{
 			CPU_S2650,
 			8064000/12/3, 				/* 672 kHz? */
-/*          Main Clock is 8Mhz divided by 12
+/*          Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
@@ -555,7 +555,7 @@ static struct MachineDriver machine_driver_medlanes =
 		{
 			CPU_S2650,
 			8064000/12/3, 				/* 672 kHz? */
-/*          Main Clock is 8Mhz divided by 12
+/*          Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */

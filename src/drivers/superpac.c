@@ -86,7 +86,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x1780, 0x17ff, MWA_RAM, &spriteram_2 },
 	{ 0x1800, 0x1f7f, MWA_RAM },
 	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },
-	{ 0x2000, 0x2000, superpac_flipscreen_w },
+	{ 0x2000, 0x2000, flip_screen_w },
 	{ 0x4040, 0x43ff, superpac_sharedram_w, &superpac_sharedram },
 	{ 0x4800, 0x480f, MWA_RAM, &superpac_customio_1 },
 	{ 0x4810, 0x481f, MWA_RAM, &superpac_customio_2 },
@@ -369,13 +369,13 @@ static struct MachineDriver machine_driver_superpac =
 	{
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			readmem_cpu1,writemem_cpu1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			superpac_readmem_cpu2,superpac_writemem_cpu2,0,0,
 			ignore_interrupt,1
 		}
@@ -413,13 +413,13 @@ static struct MachineDriver machine_driver_pacnpal =
 	{
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			readmem_cpu1,writemem_cpu1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			pacnpal_readmem_cpu2,pacnpal_writemem_cpu2,0,0,
 			interrupt,1
 		}

@@ -9,6 +9,10 @@
 #ifndef DRAWGFX_H
 #define DRAWGFX_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_GFX_PLANES 8
 #define MAX_GFX_SIZE 64
 
@@ -170,5 +174,9 @@ void pdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

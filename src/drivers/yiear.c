@@ -289,7 +289,7 @@ static struct MachineDriver machine_driver_yiear =
 	{
 		{
 			CPU_M6809,
-			1250000,	/* 1.25 Mhz */
+			1250000,	/* 1.25 MHz */
 			readmem, writemem, 0, 0,
 			interrupt,1,	/* vblank */
 			yiear_nmi_interrupt,500	/* music tempo (correct frequency unknown) */

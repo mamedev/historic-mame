@@ -1,13 +1,3 @@
-/***************************************************************************
-
-  osdepend.c
-
-  OS dependant stuff (display handling, keyboard scan...)
-  This is the only file which should me modified in order to port the
-  emulator to a different system.
-
-***************************************************************************/
-
 #include "mamalleg.h"
 #include "driver.h"
 #include <dos.h>
@@ -34,7 +24,7 @@ void msdos_init_input(void);
 void msdos_shutdown_sound(void);
 void msdos_shutdown_input(void);
 int  frontend_help (int argc, char **argv);
-void parse_cmdline (int argc, char **argv, int game);
+void parse_cmdline (int argc, char **argv, int game, char *override_default_rompath);
 void init_inpdir(void);
 
 
@@ -124,6 +114,8 @@ int main (int argc, char **argv)
 {
 	int res, i, j = 0, game_index;
     char *playbackname = NULL;
+	char override_path[256];
+
 
 	memset(&options,0,sizeof(options));
 
@@ -218,6 +210,8 @@ int main (int argc, char **argv)
     if (game_index == -1)
     {
         /* take the first commandline argument without "-" as the game name */
+
+
         for (j = 1; j < argc; j++)
         {
             if (argv[j][0] != '-') break;
@@ -242,60 +236,82 @@ int main (int argc, char **argv)
         else
 #endif
         {
-            for (i = 0; drivers[i] && (game_index == -1); i++)
-            {
-                if (stricmp(argv[j],drivers[i]->name) == 0)
-                {
-                    game_index = i;
-                    break;
-                }
-            }
+			char gamename[256];
+			char *n,*c;
 
-            /* educated guess on what the user wants to play */
-            if (game_index == -1)
-            {
-                int fuzz = 9999; /* best fuzz factor so far */
 
-                for (i = 0; (drivers[i] != 0); i++)
-                {
-                    int tmp;
-                    tmp = fuzzycmp(argv[j], drivers[i]->description);
-                    /* continue if the fuzz index is worse */
-                    if (tmp > fuzz)
-                        continue;
+			/* separate leading path */
+			strcpy(override_path,argv[j]);
+			n = override_path;
+			do
+			{
+				c = strchr(n,'\\');
+				if (c) n = c+1;
+			} while (c);
+			strcpy(gamename,n);
+			if (n == override_path)
+				*n = 0;
+			else
+				*(n-1) = 0;
 
-                    /* on equal fuzz index, we prefer working, original games */
-                    if (tmp == fuzz)
-                    {
+			/* strip out trailing extension */
+			c = strchr(gamename,'.');
+			if (c) *c = 0;
+
+			for (i = 0; drivers[i] && (game_index == -1); i++)
+			{
+				if (stricmp(gamename,drivers[i]->name) == 0)
+				{
+					game_index = i;
+					break;
+				}
+			}
+
+			/* educated guess on what the user wants to play */
+			if (game_index == -1)
+			{
+				int fuzz = 9999; /* best fuzz factor so far */
+
+				for (i = 0; (drivers[i] != 0); i++)
+				{
+					int tmp;
+					tmp = fuzzycmp(gamename, drivers[i]->description);
+					/* continue if the fuzz index is worse */
+					if (tmp > fuzz)
+						continue;
+
+					/* on equal fuzz index, we prefer working, original games */
+					if (tmp == fuzz)
+					{
 						/* game is a clone */
 						if (drivers[i]->clone_of != 0
 								&& !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
-                        {
-                            /* if the game we already found works, why bother. */
-                            /* and broken clones aren't very helpful either */
-                            if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
-                                (drivers[i]->flags & GAME_NOT_WORKING))
-                                continue;
-                        }
-                        else continue;
-                    }
+						{
+							/* if the game we already found works, why bother. */
+							/* and broken clones aren't very helpful either */
+							if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
+								(drivers[i]->flags & GAME_NOT_WORKING))
+								continue;
+						}
+						else continue;
+					}
 
-                    /* we found a better match */
-                    game_index = i;
-                    fuzz = tmp;
-                }
+					/* we found a better match */
+					game_index = i;
+					fuzz = tmp;
+				}
 
-                if (game_index != -1)
-                    printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
-            }
-        }
+				if (game_index != -1)
+					printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
+			}
+		}
 
-        if (game_index == -1)
-        {
-            printf("Game \"%s\" not supported\n", argv[j]);
-            return 1;
-        }
-    }
+		if (game_index == -1)
+		{
+			printf("Game \"%s\" not supported\n", argv[j]);
+			return 1;
+		}
+	}
 
 	#ifdef MESS
 	/* This function has been added to MESS.C as load_image() */
@@ -303,7 +319,7 @@ int main (int argc, char **argv)
 	#endif
 
 	/* parse generic (os-independent) options */
-	parse_cmdline (argc, argv, game_index);
+	parse_cmdline (argc, argv, game_index, override_path);
 
 {	/* Mish:  I need sample rate initialised _before_ rom loading for optional rom regions */
 	extern int soundcard;
@@ -319,7 +335,7 @@ int main (int argc, char **argv)
 	{
 		if (stricmp(argv[i],"-record") == 0)
 		{
-            i++;
+			i++;
 			if (i < argc)
 				options.record = osd_fopen(argv[i],0,OSD_FILETYPE_INPUTLOG,1);
 		}

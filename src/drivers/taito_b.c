@@ -2831,12 +2831,12 @@ ROM_START( nastar )
 	ROM_LOAD( "b81-02.bin", 0x00000, 0x80000, 0x20ec3b86 )
 ROM_END
 
-ROM_START( crimecu )
+ROM_START( crimec )
 	ROM_REGION( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
-	ROM_LOAD_EVEN( "b99-07"   , 0x00000, 0x20000, 0x26e886e6 )
-	ROM_LOAD_ODD ( "b99-05"   , 0x00000, 0x20000, 0xff7f9a9d )
-	ROM_LOAD_EVEN( "b99-06"   , 0x40000, 0x20000, 0x1f26aa92 )
-	ROM_LOAD_ODD ( "b99_14-2" , 0x40000, 0x20000, 0x06cf8441 )
+	ROM_LOAD_EVEN( "b99-07",    0x00000, 0x20000, 0x26e886e6 )
+	ROM_LOAD_ODD ( "b99-05",    0x00000, 0x20000, 0xff7f9a9d )
+	ROM_LOAD_EVEN( "b99-06",    0x40000, 0x20000, 0x1f26aa92 )
+	ROM_LOAD_ODD ( "b99-14",    0x40000, 0x20000, 0x71c8b4d7 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "b99-08", 0x00000, 0x4000, 0x26135451 )
@@ -2850,12 +2850,12 @@ ROM_START( crimecu )
 	ROM_LOAD( "b99-03.roa", 0x00000, 0x80000, 0xdda10df7 )
 ROM_END
 
-ROM_START( crimec )
+ROM_START( crimecu )
 	ROM_REGION( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
-	ROM_LOAD_EVEN( "b99-07"   , 0x00000, 0x20000, 0x26e886e6 )
-	ROM_LOAD_ODD ( "b99-05"   , 0x00000, 0x20000, 0xff7f9a9d )
-	ROM_LOAD_EVEN( "b99-06"   , 0x40000, 0x20000, 0x1f26aa92 )
-	ROM_LOAD_ODD ( "b99-14"   , 0x40000, 0x20000, 0x71c8b4d7 )
+	ROM_LOAD_EVEN( "b99-07",    0x00000, 0x20000, 0x26e886e6 )
+	ROM_LOAD_ODD ( "b99-05",    0x00000, 0x20000, 0xff7f9a9d )
+	ROM_LOAD_EVEN( "b99-06",    0x40000, 0x20000, 0x1f26aa92 )
+	ROM_LOAD_ODD ( "b99-13",    0x40000, 0x20000, 0x06cf8441 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "b99-08", 0x00000, 0x4000, 0x26135451 )
@@ -2874,7 +2874,7 @@ ROM_START( crimecj )
 	ROM_LOAD_EVEN( "b99-07", 0x00000, 0x20000, 0x26e886e6 )
 	ROM_LOAD_ODD ( "b99-05", 0x00000, 0x20000, 0xff7f9a9d )
 	ROM_LOAD_EVEN( "b99-06", 0x40000, 0x20000, 0x1f26aa92 )
-	ROM_LOAD_ODD ( "15"    , 0x40000, 0x20000, 0xe8c1e56d )
+	ROM_LOAD_ODD ( "15",     0x40000, 0x20000, 0xe8c1e56d )
 
 	ROM_REGION( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "b99-08", 0x00000, 0x4000, 0x26135451 )
@@ -3148,21 +3148,21 @@ ROM_END
 
 
 /*     year  rom       parent   machine   inp       init */
+GAMEX( 1989, masterw,  0,       masterw,  rastsag2, 0, ROT270,      "Taito Corporation Japan", "Master of Weapon (World)", GAME_NO_COCKTAIL)
 GAMEX( 1988, nastar,   0,       rastsag2, rastsag2, 0, ROT0,        "Taito Corporation Japan", "Nastar (World)", GAME_NO_COCKTAIL )
 GAMEX( 1988, nastarw,  nastar,  rastsag2, rastsag2, 0, ROT0,        "Taito America Corporation", "Nastar Warrior (US)", GAME_NO_COCKTAIL )
 GAMEX( 1988, rastsag2, nastar,  rastsag2, rastsag2, 0, ROT0,        "Taito Corporation", "Rastan Saga 2 (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1989, rambo3,   0,       rambo3,   rastsag2, 0, ROT180,      "Taito Europe Corporation", "Rambo III (set 1, Europe)", GAME_NO_COCKTAIL )
+GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180,      "Taito America Corporation", "Rambo III (set 2, US)", GAME_NO_COCKTAIL)
 GAMEX( 1989, crimec,   0,       crimec,   crimec,   0, ROT0,        "Taito Corporation Japan", "Crime City (World)", GAME_NO_COCKTAIL )
 GAMEX( 1989, crimecu,  crimec,  crimec,   crimec,   0, ROT0,        "Taito America Corporation", "Crime City (US)", GAME_NO_COCKTAIL )
 GAMEX( 1989, crimecj,  crimec,  crimec,   crimec,   0, ROT0,        "Taito Corporation", "Crime City (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,        "Sega", "Tetris (Japan, B-System)", GAME_NO_COCKTAIL )
+GAMEX( 1989, viofight, 0,       viofight, viofight, 0, ROT180,      "Taito Corporation Japan", "Violence Fight (World)", GAME_NO_COCKTAIL)
 GAMEX( 1990, ashura,   0,       ashura,   ashura,   0, ROT270,      "Taito Corporation", "Ashura Blaster (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1990, ashurau,  ashura,  ashura,   ashura,   0, ROT270,      "Taito America Corporation", "Ashura Blaster (US)", GAME_NO_COCKTAIL )
 GAMEX( 1990, hitice,   0,       hitice,   hitice,   0, ROT180,      "Williams", "Hit the Ice (US)", GAME_NO_COCKTAIL )
-GAMEX( 1989, rambo3,   0,       rambo3,   rastsag2, 0, ROT180,      "Taito Europe Corporation", "Rambo III (set 1, Europe)", GAME_NO_COCKTAIL )
-GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180,      "Taito America Corporation", "Rambo III (set 2, US)", GAME_NO_COCKTAIL)
 GAMEX( 1994, puzbobb,  pbobble, puzbobb,  puzbobb,  0, ROT0,        "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
-GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,        "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, qzshowby, 0,       qzshowby, puzbobb,  0, ROT0,        "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1989, viofight, 0,       viofight, viofight, 0, ROT180,      "Taito Corporation Japan", "Violence Fight (World)", GAME_NO_COCKTAIL)
-GAMEX( 1989, masterw,  0,       masterw,  rastsag2, 0, ROT270,      "Taito Corporation Japan", "Master of Weapon (World)", GAME_NO_COCKTAIL)
+GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,        "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1992, silentd,  0,       silentd,  silentd,  0, ROT0_16BIT,  "Taito Corporation Japan", "Silent Dragon (World)", GAME_NO_COCKTAIL )

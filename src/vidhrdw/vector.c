@@ -882,7 +882,7 @@ void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
   MLR 100598
  *********************************************************************/
 
-static void vector_restore_artwork (struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+static void vector_restore_artwork (struct osd_bitmap *bitmap, struct artwork_info *a, int full_refresh)
 {
 	int i, x, y;
 	struct osd_bitmap *artwork;
@@ -915,7 +915,7 @@ static void vector_restore_artwork (struct osd_bitmap *bitmap, struct artwork *a
   then merged with the backdrop.
  *********************************************************************/
 
-static void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+static void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork_info *a, int full_refresh)
 {
 	int i, x, y;
 	unsigned int coords;

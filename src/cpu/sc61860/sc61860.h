@@ -31,6 +31,10 @@
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	int (*reset)(void);
 	int (*brk)(void);
@@ -71,5 +75,8 @@ void sc61860_2ms_tick(int param);
 // this is though for power on/off of the sharps
 UINT8 *sc61860_internal_ram(void);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif

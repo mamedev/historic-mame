@@ -234,7 +234,7 @@ static void irqhandler(int irq)
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
-	4000000,	/* 4 Mhz */
+	4000000,	/* 4 MHz */
 	{ 50 },
 	{ irqhandler },
 };

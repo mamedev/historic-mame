@@ -347,7 +347,7 @@ static struct MachineDriver machine_driver_kangaroo =
 	{
 		{
 			CPU_Z80,
-			10000000/4, /* 2.5 Mhz */
+			10000000/4, /* 2.5 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},

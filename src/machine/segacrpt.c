@@ -73,7 +73,7 @@
   instead of the custom CPU. The encryption table is different from the
   original Ninja Princess; it is actually the same as Flicky.
 
-  The first PROM is 32x8 (?) and contains the number (0..5) of the table to
+  The first PROM is 32x8 and contains the number (0..5) of the table to
   use depending on M1, A0, A4, A8, A12:
 
   00: 11 00 33 22 00 44 44 00 11 33 33 22 44 44 44 22

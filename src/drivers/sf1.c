@@ -22,8 +22,8 @@ static unsigned char *sharedram;
 
 int sf1_vh_start(void);
 void sf1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( sf1_deltaxb_w );
-WRITE_HANDLER( sf1_deltaxm_w );
+WRITE_HANDLER( sf1_bgb_scroll_w );
+WRITE_HANDLER( sf1_bgm_scroll_w );
 WRITE_HANDLER( sf1_videoram_w );
 void sf1_active_w(int data);
 
@@ -139,8 +139,8 @@ static WRITE_HANDLER( protection_w )
 			cpu_writemem24bew_word(0xffc00c, 0xc0);
 			cpu_writemem24bew_word(0xffc00e, 0);
 
-			sf1_deltaxm_w(0, d1);
-			sf1_deltaxb_w(0, d2);
+			sf1_bgm_scroll_w(0, d1);
+			sf1_bgb_scroll_w(0, d2);
 			break;
 		}
 	case 4:
@@ -160,7 +160,7 @@ static WRITE_HANDLER( protection_w )
 				}
 				cpu_writemem24bew_word(0xffc682, d1);
 				cpu_writemem24bew_word(0xffc00e, off);
-				sf1_deltaxb_w(0, d1);
+				sf1_bgb_scroll_w(0, d1);
 			}
 			break;
 		}
@@ -268,8 +268,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x800000, 0x800fff, sf1_videoram_w, &videoram, &videoram_size },
 	{ 0xb00000, 0xb007ff, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
 	{ 0xc00010, 0xc00011, MWA_NOP }, /* Coin counters, etc... */
-	{ 0xc00014, 0xc00015, sf1_deltaxm_w },
-	{ 0xc00017, 0xc00018, sf1_deltaxb_w },
+	{ 0xc00014, 0xc00015, sf1_bgm_scroll_w },
+	{ 0xc00018, 0xc00019, sf1_bgb_scroll_w },
 	{ 0xc0001a, 0xc0001b, active_w },
 	{ 0xc0001c, 0xc0001d, soundcmd_w },
 	{ 0xc0001e, 0xc0001f, protection_w },
@@ -308,7 +308,8 @@ static struct MemoryReadAddress sound2_readmem[] =
 /* Yes, _no_ ram */
 static struct MemoryWriteAddress sound2_writemem[] =
 {
-	{ 0x0000, 0xffff, MWA_ROM },
+/*	{ 0x0000, 0xffff, MWA_ROM }, avoid cluttering up error.log */
+	{ 0x0000, 0xffff, MWA_NOP },
 	{ -1 }
 };
 

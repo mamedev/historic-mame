@@ -233,7 +233,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,      /* 2 chips */
-	{ 14318180/8, 14318180/8 },     /*  1.7897725 Mhz */
+	{ 14318180/8, 14318180/8 },     /*  1.7897725 MHz */
 	{ 100, 100 }
 };
 
@@ -251,13 +251,13 @@ static struct MachineDriver machine_driver_circusc =
 	{
 		{
 			CPU_M6809,
-			2048000,        /* 2 Mhz */
+			2048000,        /* 2 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,     /* Z80 Clock is derived from a 14.31818 Mhz crystal */
+			14318180/4,     /* Z80 Clock is derived from a 14.31818 MHz crystal */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}

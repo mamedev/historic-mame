@@ -213,7 +213,7 @@ static struct MachineDriver machine_driver_mrdo =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		}

@@ -306,9 +306,9 @@ endif
 CPU=$(strip $(findstring HD6309@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_HD6309=1
-CPUOBJS += $(OBJ)/cpu/m6809/m6809.o
-DBGOBJS += $(OBJ)/cpu/m6809/6809dasm.o
-$(OBJ)/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
+CPUOBJS += $(OBJ)/cpu/hd6309/hd6309.o
+DBGOBJS += $(OBJ)/cpu/hd6309/6309dasm.o
+$(OBJ)/cpu/hd6309/hd6309.o: hd6309.c hd6309.h 6309ops.c 6309tbl.c
 endif
 
 CPU=$(strip $(findstring M6809@,$(CPUS)))
@@ -405,6 +405,14 @@ CPUDEFS += -DHAS_S2650=1
 CPUOBJS += $(OBJ)/cpu/s2650/s2650.o
 DBGOBJS += $(OBJ)/cpu/s2650/2650dasm.o
 $(OBJ)/cpu/s2650/s2650.o: s2650.c s2650.h s2650cpu.h
+endif
+
+CPU=$(strip $(findstring F8@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_F8=1
+CPUOBJS += $(OBJ)/cpu/f8/f8.o
+DBGOBJS += $(OBJ)/cpu/f8/f8dasm.o
+$(OBJ)/cpu/f8/f8.o: f8.c f8.h
 endif
 
 CPU=$(strip $(findstring TMS34010@,$(CPUS)))
@@ -550,6 +558,32 @@ CPUDEFS += -DHAS_ARM=1
 CPUOBJS += $(OBJ)/cpu/arm/arm.o
 DBGOBJS += $(OBJ)/cpu/arm/dasm.o
 $(OBJ)/cpu/arm/arm.o: src/cpu/arm/arm.h
+endif
+
+CPU=$(strip $(findstring G65816@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_G65816=1
+CPUOBJS += $(OBJ)/cpu/g65816/g65816.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o0.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o1.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o2.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o3.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o4.o
+DBGOBJS += $(OBJ)/cpu/g65816/g65816ds.o
+$(OBJ)/cpu/g65816/g65816.o: g65816.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o0.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o1.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o2.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o3.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o4.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+endif
+
+CPU=$(strip $(findstring SPC700@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_SPC700=1
+CPUOBJS += $(OBJ)/cpu/spc700/spc700.o
+DBGOBJS += $(OBJ)/cpu/spc700/spc700ds.o
+$(OBJ)/cpu/spc700/spc700.o: spc700.c spc700.h
 endif
 
 
@@ -702,6 +736,12 @@ SOUNDDEFS += -DHAS_TMS36XX=1
 SOUNDOBJS += $(OBJ)/sound/tms36xx.o
 endif
 
+SOUND=$(strip $(findstring TMS5110@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_TMS5110=1
+SOUNDOBJS += $(OBJ)/sound/tms5110.o $(OBJ)/sound/5110intf.o
+endif
+
 SOUND=$(strip $(findstring TMS5220@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TMS5220=1
@@ -810,3 +850,8 @@ SOUNDDEFS += -DHAS_WAVE=1
 SOUNDOBJS += $(OBJ)/sound/wave.o
 endif
 
+SOUND=$(strip $(findstring BEEP@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_BEEP=1
+SOUNDOBJS += $(OBJ)/sound/beep.o
+endif

@@ -1104,7 +1104,7 @@ static struct MachineDriver machine_driver_panic =
 	{
 		{
 			CPU_Z80,
-			2000000,	/* 2 Mhz? */
+			2000000,	/* 2 MHz? */
 			panic_readmem,panic_writemem,0,0,
 			panic_interrupt,2
 		}
@@ -1180,7 +1180,7 @@ static struct MachineDriver machine_driver_cosmicg =
 #else
 			CPU_TMS9900,
 #endif
-			1228500,			/* 9.828 Mhz Crystal */
+			1228500,			/* 9.828 MHz Crystal */
 			/* R Nabet : huh ? This would imply the crystal frequency is somehow divided by 2 before being
 			fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
 			1.5MHz.  So, if someone can check this... */
@@ -1225,7 +1225,7 @@ static struct MachineDriver machine_driver_magspot2 =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz ???? */
+			18432000/6,	/* 3.072 MHz ???? */
 			magspot2_readmem,magspot2_writemem,0,0,
 			magspot2_interrupt,1
 		},
@@ -1262,7 +1262,7 @@ static struct MachineDriver machine_driver_nomnlnd =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz ???? */
+			18432000/6,	/* 3.072 MHz ???? */
 			nomnlnd_readmem,nomnlnd_writemem,0,0,
 			magspot2_interrupt,1
 		},

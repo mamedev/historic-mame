@@ -24,7 +24,7 @@ The decryption consists of these steps:
 - ROL
 - bitswap
 
-To know how to apply the byteswap, take the address of the byte to decode and:
+To know how to apply the bit swap, take the address of the byte to decode and:
 - if the byte is an opcode, add addr_key to the address
 - if the byte is data, XOR the address with 1FC0, add 1, and then add addr_key
 You'll get a 16-bit word. The first two bitswaps depend on bits 0-7 of that

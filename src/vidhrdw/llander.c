@@ -13,8 +13,8 @@
 
 #define NUM_LIGHTS 5
 
-static struct artwork *llander_panel;
-static struct artwork *llander_lit_panel;
+static struct artwork_info *llander_panel;
+static struct artwork_info *llander_lit_panel;
 
 static struct rectangle light_areas[NUM_LIGHTS] =
 {

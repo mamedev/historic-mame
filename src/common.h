@@ -9,6 +9,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct RomModule
 {
 	const char *name;	/* name of the file to load */
@@ -208,5 +212,9 @@ void bitmap_free(struct osd_bitmap *bitmap);
 
 void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap);
 void save_screen_snapshot(struct osd_bitmap *bitmap);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

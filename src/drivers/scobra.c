@@ -1186,7 +1186,7 @@ static struct GfxDecodeInfo calipso_gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	14318000/8,	/* 1.78975 Mhz */
+	14318000/8,	/* 1.78975 MHz */
 	/* Ant Eater clips if the volume is set higher than this */
 	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ 0, soundlatch_r },
@@ -1198,7 +1198,7 @@ static struct AY8910interface ay8910_interface =
 static struct AY8910interface hustler_ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 Mhz */
+	14318000/8,	/* 1.78975 MHz */
 	{ 80 },
 	{ soundlatch_r },
 	{ frogger_portB_r },
@@ -1214,13 +1214,13 @@ static struct MachineDriver machine_driver_type1 =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1258,13 +1258,13 @@ static struct MachineDriver machine_driver_armorcar =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1303,13 +1303,13 @@ static struct MachineDriver machine_driver_rescue =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1346,13 +1346,13 @@ static struct MachineDriver machine_driver_minefld =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1389,13 +1389,13 @@ static struct MachineDriver machine_driver_stratgyx =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type2_readmem,type2_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1432,13 +1432,13 @@ static struct MachineDriver machine_driver_type2 =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type2_readmem,type2_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1475,13 +1475,13 @@ static struct MachineDriver machine_driver_hustler =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			hustler_readmem,hustler_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			hustler_sound_readmem,hustler_sound_writemem,hustler_sound_readport,hustler_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1518,13 +1518,13 @@ static struct MachineDriver machine_driver_hustlerb =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			hustlerb_readmem,hustlerb_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,hustlerb_sound_readport,hustlerb_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1561,13 +1561,13 @@ static struct MachineDriver machine_driver_calipso =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}

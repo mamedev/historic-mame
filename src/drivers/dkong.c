@@ -957,13 +957,13 @@ static struct MachineDriver machine_driver_radarscp =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,radarscp_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6Mhz crystal */
+			6000000/15,	/* 6MHz crystal */
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -1004,13 +1004,13 @@ static struct MachineDriver machine_driver_dkong =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,dkong_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6Mhz crystal */
+			6000000/15,	/* 6MHz crystal */
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -1062,7 +1062,7 @@ static struct MachineDriver machine_driver_hunchbkd =
 		},
         {
 			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6Mhz crystal */
+			6000000/15,	/* 6MHz crystal */
 			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -1111,7 +1111,7 @@ static struct MachineDriver machine_driver_herbiedk =
 		},
         {
 			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6Mhz crystal */
+			6000000/15,	/* 6MHz crystal */
 			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -1148,13 +1148,13 @@ static struct MachineDriver machine_driver_dkongjr =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,dkongjr_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6Mhz crystal */
+			6000000/15,	/* 6MHz crystal */
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -1205,7 +1205,7 @@ static struct MachineDriver machine_driver_dkong3 =
 	{
 		{
 			CPU_Z80,
-			8000000/2,	/* 4 Mhz */
+			8000000/2,	/* 4 MHz */
 			dkong3_readmem,dkong3_writemem,0,dkong3_writeport,
 			nmi_interrupt,1
 		},

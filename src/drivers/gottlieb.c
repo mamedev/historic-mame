@@ -1387,7 +1387,7 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 	{		                                                        \
 		{	  	                                                    \
 			CPU_I86,												\
-			5000000,        /* 5 Mhz */								\
+			5000000,        /* 5 MHz */								\
 			READMEM,WRITEMEM,0,0,									\
 			gottlieb_interrupt,1									\
 		},		                                                    \
@@ -1438,7 +1438,7 @@ static struct MachineDriver machine_driver_##GAMENAME =				\
 	{																\
 		{															\
 			CPU_I86,												\
-			5000000,        /* 5 Mhz */								\
+			5000000,        /* 5 MHz */								\
 			READMEM,WRITEMEM,0,0,									\
 			gottlieb_interrupt,1									\
 		},															\

@@ -11,7 +11,6 @@
 #include "cpu/m6809/m6809.h"
 
 unsigned char *grobda_snd_sharedram;
-unsigned char *grobda_spriteram;
 unsigned char *grobda_customio_1,*grobda_customio_2;
 static int int_enable_1, int_enable_2;
 static int credits, coincounter1, coincounter2;

@@ -272,10 +272,12 @@ ROM_START( copsnrob )
 	ROM_REGION( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5770.m2",      0x0000, 0x0100, 0xb00bbe77 )
 
-	ROM_REGION( 0x0060, REGION_PROMS )	 /* misc. PROMs (timing?) */
+	ROM_REGION( 0x0260, REGION_PROMS )	 /* misc. PROMs (timing?) */
 	ROM_LOAD( "5765.h8",      0x0000, 0x0020, 0x6cd58931 )
 	ROM_LOAD( "5766.k8",      0x0020, 0x0020, 0xe63edf4f )
 	ROM_LOAD( "5767.j8",      0x0040, 0x0020, 0x381b5ae4 )
+	ROM_LOAD( "5768.n4",      0x0060, 0x0100, 0xcb7fc836 )
+	ROM_LOAD( "5769.d5",      0x0160, 0x0100, 0x75081a5a )
 ROM_END
 
 

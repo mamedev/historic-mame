@@ -1,7 +1,15 @@
 /***************************************************************************
 
-  Video Hardware for Irem Games:
-  Battle Road, Lode Runner, Kid Niki, Spelunker
+Video Hardware for Irem Games:
+Battle Road, Lode Runner, Kid Niki, Spelunker
+
+Tile/sprite priority system (for the Kung Fu Master M62 board):
+- Tiles with color code >= N (where N is set by jumpers) have priority over
+  sprites. Only bits 1-4 of the color code are used, bit 0 is ignored.
+
+- Two jumpers select whether bit 5 of the sprite color code should be used
+  to index the high address pin of the color PROMs, or to select high
+  priority over tiles (or both, but is this used by any game?)
 
 ***************************************************************************/
 
@@ -21,17 +29,6 @@ static int spelunk2_palbank;
 unsigned char *irem_textram;
 size_t irem_textram_size;
 
-
-static const struct rectangle kungfum_spritevisiblearea =
-{
-	16*8, (64-16)*8-1,
-	10*8, 32*8-1
-};
-static const struct rectangle kungfum_flipspritevisiblearea =
-{
-	16*8, (64-16)*8-1,
-	0*8, 22*8-1
-};
 
 /***************************************************************************
 
@@ -395,9 +392,7 @@ WRITE_HANDLER( spelunk2_gfxport_w )
   the main emulation engine.
 
 ***************************************************************************/
-static void draw_sprites(struct osd_bitmap *bitmap,
-					     const struct rectangle *spritevisiblearea,
-					     const struct rectangle *flipspritevisiblearea )
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
@@ -448,7 +443,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,
 					code + i * incr,col,
 					flipx,flipy,
 					sx,sy + 16 * i,
-					flipscreen ? flipspritevisiblearea : spritevisiblearea,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			i--;
 		} while (i >= 0);
@@ -518,64 +513,97 @@ static void draw_priority_sprites(struct osd_bitmap *bitmap, int prioritylayer)
 }
 
 
-void kungfum_draw_background(struct osd_bitmap *bitmap)
+void kungfum_draw_background(struct osd_bitmap *bitmap,int prioritylayer)
 {
 	int offs,i;
+	int scrollx[32];
 
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size/2 - 1;offs >= 0;offs--)
+	if (flipscreen)
 	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+0x800])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = dirtybuffer[offs+0x800] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			flipx = videoram[offs+0x800] & 0x20;
-			flipy = 0;
-			if (flipscreen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 4 * (videoram[offs+0x800] & 0xc0),
-					videoram[offs+0x800] & 0x1f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		for (i = 31;i > 25;i--)
+			scrollx[i] = 0;
+		for (i = 25;i >= 0;i--)
+			scrollx[i] = irem_background_hscroll;
+	}
+	else
+	{
+		for (i = 0;i < 6;i++)
+			scrollx[i] = 0;
+		for (i = 6;i < 32;i++)
+			scrollx[i] = -irem_background_hscroll;
 	}
 
 
-	/* copy the temporary bitmap to the screen */
+	if (prioritylayer)
 	{
-		int scrollx[32];
-
-
-		if (flipscreen)
+		for (offs = videoram_size/2 - 1;offs >= 0;offs--)
 		{
-			for (i = 31;i > 25;i--)
-				scrollx[i] = 0;
-			for (i = 25;i >= 0;i--)
-				scrollx[i] = irem_background_hscroll;
+			int color = videoram[offs+0x800] & 0x1f;
+			int sy = offs / 64;
+
+			/* is the following right? */
+			if (sy < 6 || (color >> 1) > 0x0c)
+			{
+				int code,sx,flipx,flipy;
+
+
+				sx = offs % 64;
+				code = videoram[offs] + 4 * (videoram[offs+0x800] & 0xc0);
+				flipx = videoram[offs+0x800] & 0x20;
+				flipy = 0;
+				if (flipscreen)
+				{
+					sx = 63 - sx;
+					sy = 31 - sy;
+					flipx = !flipx;
+					flipy = !flipy;
+				}
+
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						color,
+						flipx,flipy,
+						(8*sx+scrollx[sy])&0x1ff,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
 		}
-		else
+	}
+	else
+	{
+		for (offs = videoram_size/2 - 1;offs >= 0;offs--)
 		{
-			for (i = 0;i < 6;i++)
-				scrollx[i] = 0;
-			for (i = 6;i < 32;i++)
-				scrollx[i] = -irem_background_hscroll;
+			if (dirtybuffer[offs] || dirtybuffer[offs+0x800])
+			{
+				int code,color,sx,sy,flipx,flipy;
+
+
+				dirtybuffer[offs] = dirtybuffer[offs+0x800] = 0;
+
+				sx = offs % 64;
+				sy = offs / 64;
+				code = videoram[offs] + 4 * (videoram[offs+0x800] & 0xc0);
+				color = videoram[offs+0x800] & 0x1f;
+				flipx = videoram[offs+0x800] & 0x20;
+				flipy = 0;
+				if (flipscreen)
+				{
+					sx = 63 - sx;
+					sy = 31 - sy;
+					flipx = !flipx;
+					flipy = !flipy;
+				}
+
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						code,
+						color,
+						flipx,flipy,
+						8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
 		}
 
+		/* copy the temporary bitmap to the screen */
 		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
@@ -1061,8 +1089,9 @@ static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	kungfum_draw_background(bitmap);
-	draw_sprites(bitmap, &kungfum_spritevisiblearea, &kungfum_flipspritevisiblearea);
+	kungfum_draw_background(bitmap,0);
+	draw_sprites(bitmap);
+	kungfum_draw_background(bitmap,1);
 }
 
 void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -1085,32 +1114,32 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	ldrun4_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
+	draw_sprites(bitmap);
 }
 
 void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	lotlot_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
+	draw_sprites(bitmap);
 }
 
 void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	kidniki_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
+	draw_sprites(bitmap);
 	kidniki_draw_text(bitmap);
 }
 
 void spelunkr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunkr_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
+	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
 }
 
 void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunk2_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
+	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
 }

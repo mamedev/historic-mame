@@ -822,7 +822,7 @@ static struct MachineDriver machine_driver_##NAME =									\
 	{																				\
 		{																			\
 			CPU_Z80,																\
-			8000000/2,	/* 4 Mhz */													\
+			8000000/2,	/* 4 MHz */													\
 			readmem,writemem,readport,writeport,									\
 			nmi_interrupt,1															\
 		},																			\

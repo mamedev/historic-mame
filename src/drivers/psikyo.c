@@ -635,9 +635,7 @@ static struct MachineDriver machine_driver_gunbird =
 	{
 		{
 			CPU_M68EC020,
-//			16000000,
-32000000,	/* 16 MHz - bumped because the game slows down
-			   (the 020 core timing has to be tuned up, I guess) */
+			16000000,
 			sngkace_readmem,sngkace_writemem,0,0,
 			m68_level1_irq, 1
 		},
@@ -703,9 +701,7 @@ static struct MachineDriver machine_driver_sngkace =
 	{
 		{
 			CPU_M68EC020,
-//			16000000,
-32000000,	/* 16 MHz - bumped because the game slows down
-			   (the 020 core timing has to be tuned up, I guess) */
+			16000000,
 			sngkace_readmem,sngkace_writemem,0,0,
 			m68_level1_irq, 1
 		},

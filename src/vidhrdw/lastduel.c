@@ -19,8 +19,11 @@ static int gfx_bank,flipscreen;
 WRITE_HANDLER( lastduel_flip_w )
 {
 	flipscreen=data&1;
+
 	coin_lockout_w(0,~data & 0x10);
 	coin_lockout_w(1,~data & 0x20);
+	coin_counter_w(0,data & 0x40);
+	coin_counter_w(1,data & 0x80);
 }
 
 WRITE_HANDLER( lastduel_scroll_w )
@@ -75,7 +78,16 @@ WRITE_HANDLER( madgear_scroll2_w )
 	tilemap_mark_tile_dirty(bg_tilemap,(offset & 0xfff)/2);
 }
 
-static void get_ld_tile_info(int tile_index)
+static void ld_get_bg_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&gfx_base[4*tile_index])&0x1fff;
+	int color=READ_WORD(&gfx_base[4*tile_index+2]);
+
+	SET_TILE_INFO(gfx_bank,tile,color&0xf)
+	tile_info.flags = TILE_FLIPYX((color & 0x60)>>5);
+}
+
+static void ld_get_fg_tile_info(int tile_index)
 {
 	int tile=READ_WORD(&gfx_base[4*tile_index])&0x1fff;
 	int color=READ_WORD(&gfx_base[4*tile_index+2]);
@@ -110,16 +122,15 @@ static void get_fix_info(int tile_index)
 
 int lastduel_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_ld_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,64);
-	fg_tilemap = tilemap_create(get_ld_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,64,64);
+	bg_tilemap = tilemap_create(ld_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,64);
+	fg_tilemap = tilemap_create(ld_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,64,64);
 	tx_tilemap = tilemap_create(get_fix_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
 	fg_tilemap->transparent_pen = 0;
-	fg_tilemap->transmask[0] = 0x007f;
-	fg_tilemap->transmask[1] = 0xff10;
+	fg_tilemap->transmask[0] = 0xf07f;
 	tx_tilemap->transparent_pen = 3;
 
 	return 0;
@@ -136,7 +147,6 @@ int madgear_vh_start(void)
 
 	fg_tilemap->transparent_pen = 15;
 	fg_tilemap->transmask[0] = 0x80ff;
-	fg_tilemap->transmask[1] = 0x7f00;
 	tx_tilemap->transparent_pen = 3;
 
 	return 0;
@@ -198,8 +208,8 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 	tilemap_draw(bitmap,bg_tilemap,0);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 0);
+	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
 
 	/* Sprites */
 	for(offs=0x800-8;offs>=0;offs-=8)
@@ -333,8 +343,8 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 	tilemap_draw(bitmap,bg_tilemap,0);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 0);
+	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
 	ledstorm_sprites(bitmap,0);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 1);
 	ledstorm_sprites(bitmap,1);

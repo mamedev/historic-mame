@@ -24,6 +24,7 @@ Hammerin' Harry               1990  Rev 3.15 M81
 Ken-Go	                      1991  Rev 3.15 M81
 Pound for Pound               1990  Rev 3.15 M83 (no NMI handler)
 Gallop - Armed Police Unit    1991  Rev 3.15 M72 (no NMI handler)
+Hasamu                        1991  Rev 3.15 M81
 Bomber Man World              1992  Rev 3.31 M81
 Atomic Punk                   1992  Rev 3.31 M99
 Quiz F-1 1,2finish            1992  Rev 3.33 M81

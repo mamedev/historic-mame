@@ -1,57 +1,11 @@
 /***************************************************************************
 
-Exed Exes memory map (preliminary) - RD 29/07/97
+Exed Exes
 
-MAIN CPU
-0000-bfff ROM
-d000-d3ff Character Video RAM
-d400-d7ff Character Color RAM
-e000-efff RAM
-f000-ffff Sprites
-        Sprite information (4 bytes long) is stored every 32 bytes in the
-        regions f000-f5ff and f800-fbff, possibly in other areas as well.
-
-        Sprite Data layout:
-                Byte 0 - Sprite number 0-255
-                Byte 1 - bits 0 to 3 Sprite color 0-15
-                       - bit 4 Sprite x-flip
-                       - bit 5 Sprite y-flip
-                       - bit 6 ?
-                       - bit 7 Sprite Y position MSB
-                Byte 2 - Sprite X position
-                Byte 3 - Sprite Y position
-
-        The background consists of two vertically scrolling layers, one made
-        up of 16x16 tiles similarly to 1942, the other made up of smaller
-        8x8 or perhaps 8x16 tiles. The 16x16 tiled foreground is dislayed on
-        top of the 8x? tiled background in a similar way to Star Force.
-
-read:
-c000      IN0 Coin and start switches
-c001      IN1 Joystick 1
-c002      IN2 Joystick 2
-c003      DSW1 ?
-c004      DSW2 ?
-
-write:
-c800 Sound command
-c804 Coin ack ?
-c806 ?
-d800-d83f only seems to use:
-	d800-d801 near background y-scroll
-	d802-d803 near background x-scroll
-        d804-d805 8x? tile vertical scroll
-        d806-d807 ?
-
-SOUND CPU
-0000-3fff ROM
-4000-47ff RAM
-
-write:
-8000      YM2203 #1 control
-8001      YM2203 #1 write
-8002      YM2203 #2 control ?
-8003      YM2203 #2 write ?
+Notes:
+- Flip screen is not supported, but doesn't seem to be used (no flip screen
+  dip switch and no cocktail mode)
+- Some writes to unknown memory locations (always 0?)
 
 ***************************************************************************/
 
@@ -60,15 +14,23 @@ write:
 
 
 
-WRITE_HANDLER( c1942_bankswitch_w );
-READ_HANDLER( c1942_bankedrom_r );
-int c1942_interrupt(void);
+WRITE_HANDLER( exedexes_c804_w );
+WRITE_HANDLER( exedexes_gfxctrl_w );
 
 extern unsigned char *exedexes_bg_scroll;
 extern unsigned char *exedexes_nbg_yscroll;
 extern unsigned char *exedexes_nbg_xscroll;
 void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void exedexes_eof_callback(void);
+
+
+
+static int exedexes_interrupt(void)
+{
+	if (cpu_getiloops() != 0) return 0x00cf;	/* RST 08h */
+	else return 0x00d7;	/* RST 10h - vblank */
+}
 
 
 
@@ -80,6 +42,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
+	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xe000, 0xefff, MRA_RAM }, /* Work RAM */
 	{ 0xf000, 0xffff, MRA_RAM }, /* Sprite RAM */
 	{ -1 }	/* end of table */
@@ -89,12 +52,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
+	{ 0xc804, 0xc804, exedexes_c804_w },	/* coin counters + text layer enable */
 	{ 0xc806, 0xc806, MWA_NOP }, /* Watchdog ?? */
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ 0xd800, 0xd801, MWA_RAM, &exedexes_nbg_yscroll },
 	{ 0xd802, 0xd803, MWA_RAM, &exedexes_nbg_xscroll },
 	{ 0xd804, 0xd805, MWA_RAM, &exedexes_bg_scroll },
+	{ 0xd807, 0xd807, exedexes_gfxctrl_w },	/* layer enables */
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 	{ -1 }	/* end of table */
@@ -130,9 +95,9 @@ INPUT_PORTS_START( exedexes )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 8 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1, 8 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -177,7 +142,7 @@ INPUT_PORTS_START( exedexes )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
@@ -186,7 +151,7 @@ INPUT_PORTS_START( exedexes )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
@@ -284,13 +249,13 @@ static struct MachineDriver machine_driver_exedexes =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz (?) */
+			4000000,	/* 4 MHz (?) */
 			readmem,writemem,0,0,
-			c1942_interrupt,2
+			exedexes_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz ??? */
+			3000000,	/* 3 MHz ??? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -305,8 +270,8 @@ static struct MachineDriver machine_driver_exedexes =
 	256,64*4+64*4+16*16+16*16,
 	exedexes_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	exedexes_eof_callback,
 	generic_vh_start,
 	generic_vh_stop,
 	exedexes_vh_screenrefresh,
@@ -354,7 +319,7 @@ ROM_START( exedexes )
 	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
 	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0b20, REGION_PROMS )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
 	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
 	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
@@ -363,6 +328,10 @@ ROM_START( exedexes )
 	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
 	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
 	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
+	ROM_LOAD( "06l_e-06.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "k06_e-08.bin", 0x0900, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "l03_e-09.bin", 0x0a00, 0x0100, 0x0d968558 )	/* unknown (all 0) */
+	ROM_LOAD( "03e_e-01.bin", 0x0b00, 0x0020, 0x1acee376 )	/* unknown (priority?) */
 ROM_END
 
 ROM_START( savgbees )
@@ -392,7 +361,7 @@ ROM_START( savgbees )
 	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
 	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0b20, REGION_PROMS )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
 	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
 	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
@@ -401,9 +370,13 @@ ROM_START( savgbees )
 	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
 	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
 	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
+	ROM_LOAD( "06l_e-06.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "k06_e-08.bin", 0x0900, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "l03_e-09.bin", 0x0a00, 0x0100, 0x0d968558 )	/* unknown (all 0) */
+	ROM_LOAD( "03e_e-01.bin", 0x0b00, 0x0020, 0x1acee376 )	/* unknown (priority?) */
 ROM_END
 
 
 
-GAMEX( 1985, exedexes, 0,        exedexes, exedexes, 0, ROT270, "Capcom", "Exed Exes", GAME_NO_COCKTAIL )
-GAMEX( 1985, savgbees, exedexes, exedexes, exedexes, 0, ROT270, "Capcom (Memetron license)", "Savage Bees", GAME_NO_COCKTAIL )
+GAME( 1985, exedexes, 0,        exedexes, exedexes, 0, ROT270, "Capcom", "Exed Exes" )
+GAME( 1985, savgbees, exedexes, exedexes, exedexes, 0, ROT270, "Capcom (Memetron license)", "Savage Bees" )

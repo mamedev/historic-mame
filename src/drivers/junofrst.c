@@ -89,7 +89,6 @@ void konami1_decode(void);
 extern unsigned char *tutankhm_scrollx;
 
 WRITE_HANDLER( tutankhm_videoram_w );
-WRITE_HANDLER( tutankhm_flipscreen_w );
 WRITE_HANDLER( junofrst_blitter_w );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -195,7 +194,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8030, 0x8030, interrupt_enable_w },
 	{ 0x8031, 0x8032, coin_counter_w },
 	{ 0x8033, 0x8033, MWA_RAM, &tutankhm_scrollx },              /* video x pan hardware reg - Not USED in Juno*/
-	{ 0x8034, 0x8035, tutankhm_flipscreen_w },
+	{ 0x8034, 0x8035, flip_screen_w },
 	{ 0x8040, 0x8040, junofrst_sh_irqtrigger_w },
 	{ 0x8050, 0x8050, soundlatch_w },
 	{ 0x8060, 0x8060, junofrst_bankselect_w },
@@ -374,7 +373,7 @@ static struct MachineDriver machine_driver_junofrst =
 	{
 		{
 			CPU_M6809,
-			1500000,			/* 1.5 Mhz ??? */
+			1500000,			/* 1.5 MHz ??? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},

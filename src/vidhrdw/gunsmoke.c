@@ -15,7 +15,6 @@ unsigned char *gunsmoke_bg_scrolly;
 unsigned char *gunsmoke_bg_scrollx;
 static int chon,objon,bgon;
 static int sprite3bank;
-static int flipscreen;
 
 static struct osd_bitmap * bgbitmap;
 static unsigned char bgmap[9][9][2];
@@ -123,7 +122,9 @@ WRITE_HANDLER( gunsmoke_c804_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-	/* bits 0 and 1 are for coin counters? - we ignore them */
+	/* bits 0 and 1 are for coin counters */
+	coin_counter_w(1,data & 1);
+	coin_counter_w(0,data & 2);
 
 	/* bits 2 and 3 select the ROM bank */
 	bankaddress = 0x10000 + (data & 0x0c) * 0x1000;
@@ -132,11 +133,7 @@ WRITE_HANDLER( gunsmoke_c804_w )
 	/* bit 5 resets the sound CPU? - we ignore it */
 
 	/* bit 6 flips screen */
-	if (flipscreen != (data & 0x40))
-	{
-		flipscreen = data & 0x40;
-//		memset(dirtybuffer,1,c1942_backgroundram_size);
-	}
+	flip_screen_w(0,data & 0x40);
 
 	/* bit 7 enables characters? */
 	chon = data & 0x80;
@@ -170,10 +167,13 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
 	unsigned char *p=memory_region(REGION_GFX4);
-	int top,left,xscroll,yscroll;
+	int top,left;
 
 
-/* TODO: support flipscreen */
+	if (full_refresh)
+		memset (bgmap, 0xff, sizeof (bgmap));
+
+
 	if (bgon)
 	{
 		bg_scrolly = gunsmoke_bg_scrolly[0] + 256 * gunsmoke_bg_scrolly[1];
@@ -194,41 +194,59 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			for (sx = 0;sx < 9;sx++)
 			{
-				int tile, attr, offset;
+				int offset;
 				int tx = (sx + left) % 9;
 				unsigned char *map = &bgmap[ty][tx][0];
 				offset=offs+(sx*2);
 
-				tile=p[offset];
-				attr=p[offset+1];
-
-				if (tile != map[0] || attr != map[1])
+				if (p[offset] != map[0] || p[offset+1] != map[1])
 				{
-					map[0] = tile;
-					map[1] = attr;
-					tile+=256*(attr&0x01);
+					int code,col,flipx,flipy;
+
+					map[0] = p[offset];
+					map[1] = p[offset+1];
+
+					code = p[offset] + 256*(p[offset+1] & 1);
+					col = (p[offset+1] & 0x3c) >> 2;
+
+					flipx = p[offset+1] & 0x40;
+					flipy = p[offset+1] & 0x80;
+
+					if (flip_screen)
+					{
+						tx = 8 - tx;
+						ty = 8 - ty;
+						flipx = !flipx;
+						flipy = !flipy;
+					}
+
 					drawgfx(bgbitmap,Machine->gfx[1],
-							tile,
-							(attr & 0x3c) >> 2,
-							attr & 0x40,attr & 0x80,
+							code,col,
+							flipx,flipy,
 							(8-ty)*32, tx*32,
-							0,
-							TRANSPARENCY_NONE,0);
+							0,TRANSPARENCY_NONE,0);
 				}
-				map += 2;
 			}
 			offs-=0x10;
 		}
 
-		xscroll = (top*32-bg_scrolly);
-		yscroll = -(left*32+bg_scrollx);
-		copyscrollbitmap(bitmap,bgbitmap,
-			1,&xscroll,
-			1,&yscroll,
-			&Machine->visible_area,
-			TRANSPARENCY_NONE,0);
+		{
+			int xscroll,yscroll;
+
+			xscroll = (top*32-bg_scrolly);
+			yscroll = -(left*32+bg_scrollx);
+
+			if (flip_screen)
+			{
+				xscroll = 256 - xscroll;
+				yscroll = 256 - yscroll;
+			}
+
+			copyscrollbitmap(bitmap,bgbitmap,1,&xscroll,1,&yscroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		}
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	else
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 
@@ -247,7 +265,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  			sy = spriteram[offs + 2];
 			flipx = 0;
 			flipy = spriteram[offs + 1] & 0x10;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
@@ -272,7 +290,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			sx = offs % 32;
 			sy = offs / 32;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -281,7 +299,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + ((colorram[offs] & 0xc0) << 2),
 					colorram[offs] & 0x1f,
-					!flipscreen,!flipscreen,
+					!flip_screen,!flip_screen,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_COLOR,79);
 		}

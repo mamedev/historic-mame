@@ -626,8 +626,8 @@ INPUT_PORTS_START( dotron )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	/* we default to Environmental otherwise speech is disabled */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, "Environmental" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 
 	PORT_START	/* IN3 -- dipswitches */
 	PORT_DIPNAME( 0x01, 0x01, "Coin Meters" )
@@ -1125,7 +1125,7 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 #define MAIN_CPU(interrupt) 							\
 	{													\
 		CPU_Z80,										\
-		5000000,	/* 5 Mhz */							\
+		5000000,	/* 5 MHz */							\
 		readmem,writemem,readport,writeport,			\
 		interrupt,1,									\
 		0,0,mcr_daisy_chain								\
@@ -1134,7 +1134,7 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 #define MONO_CPU(interrupt) 							\
 	{													\
 		CPU_Z80,										\
-		5000000,	/* 5 Mhz */							\
+		5000000,	/* 5 MHz */							\
 		readmem,mcrmono_writemem,readport,writeport,	\
 		interrupt,1,									\
 		0,0,mcr_daisy_chain								\
@@ -1143,7 +1143,7 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 #define SPYHUNT_CPU(interrupt) 							\
 	{													\
 		CPU_Z80,										\
-		5000000,	/* 5 Mhz */							\
+		5000000,	/* 5 MHz */							\
 		spyhunt_readmem,spyhunt_writemem,readport,writeport,\
 		interrupt,1,									\
 		0,0,mcr_daisy_chain								\
@@ -1325,7 +1325,7 @@ static struct MachineDriver machine_driver_powerdrv =
 	{
 		{
 			CPU_Z80,
-			5000000,	/* 5 Mhz */
+			5000000,	/* 5 MHz */
 			readmem,mcrmono_writemem,readport,writeport,
 			powerdrv_interrupt,2,
 			0,0,mcr_daisy_chain

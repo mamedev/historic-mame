@@ -24,10 +24,10 @@
 static UINT8 isblack[256];
 
 /* the backdrop instance */
-struct artwork *artwork_backdrop = NULL;
+struct artwork_info *artwork_backdrop = NULL;
 
 /* the overlay instance */
-struct artwork *artwork_overlay = NULL;
+struct artwork_info *artwork_overlay = NULL;
 struct osd_bitmap *overlay_real_scrbitmap;
 
 /*
@@ -65,7 +65,7 @@ static UINT8 find_pen(UINT8 r,UINT8 g,UINT8 b)
 	return(bi);
 }
 
-void backdrop_refresh_tables (struct artwork *a)
+void backdrop_refresh_tables (struct artwork_info *a)
 {
 	int i,j, k, tab_colors;
 	UINT8 rgb1[3], rgb2[3], c[3];
@@ -108,7 +108,7 @@ void backdrop_refresh_tables (struct artwork *a)
   returns a non-zero value, since the mappings will have changed.
  *********************************************************************/
 
-void backdrop_refresh(struct artwork *a)
+void backdrop_refresh(struct artwork_info *a)
 {
 	int i, j, height,width, offset;
 	struct osd_bitmap *back, *orig;
@@ -141,7 +141,7 @@ void backdrop_refresh(struct artwork *a)
   one byte of blue, one byte of green.  This could hopefully be used
   for special effects, like lightening and darkening the backdrop.
  *********************************************************************/
-void backdrop_set_palette(struct artwork *a, UINT8 *palette)
+void backdrop_set_palette(struct artwork_info *a, UINT8 *palette)
 {
 	int i;
 
@@ -162,7 +162,7 @@ void backdrop_set_palette(struct artwork *a, UINT8 *palette)
   Don't forget to clean up when you're done with the backdrop!!!
  *********************************************************************/
 
-void artwork_free(struct artwork **a)
+void artwork_free(struct artwork_info **a)
 {
 	if (*a)
 	{
@@ -922,7 +922,7 @@ static void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
   The function returns a array of ints with the number of shades
   for each transparent color based on the color histogram.
  *********************************************************************/
-static unsigned int *transparency_hist (struct artwork *a, int num_shades)
+static unsigned int *transparency_hist (struct artwork_info *a, int num_shades)
 {
 	int i, j;
 	unsigned int *hist;
@@ -1127,10 +1127,11 @@ void overlay_remap(void)
 
 	/* Calculate brightness of all colors */
 
-	for (i = 0; i < Machine->drv->total_colors; i++)
+	i = (Machine->scrbitmap->depth == 8) ? 256 : 32768 + artwork_overlay->start_pen;
+	while (--i >= 0)
 	{
-		osd_get_pen (Machine->pens[i], &r, &g, &b);
-		artwork_overlay->brightness[Machine->pens[i]]=(222*r+707*g+71*b)/1000;
+		osd_get_pen (i, &r, &g, &b);
+		artwork_overlay->brightness[i]=(222*r+707*g+71*b)/1000;
 	}
 
 	/* Erase vector bitmap same way as in vector.c */
@@ -1143,7 +1144,7 @@ void overlay_remap(void)
 
   Allocates memory for all the bitmaps.
  *********************************************************************/
-static void allocate_artwork_mem (int width, int height, struct artwork **a)
+static void allocate_artwork_mem (int width, int height, struct artwork_info **a)
 {
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -1154,7 +1155,7 @@ static void allocate_artwork_mem (int width, int height, struct artwork **a)
 		width = temp;
 	}
 
-	*a = (struct artwork *)malloc(sizeof(struct artwork));
+	*a = (struct artwork_info *)malloc(sizeof(struct artwork_info));
 	if (*a == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
@@ -1431,7 +1432,7 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
  *********************************************************************/
 
 static void artwork_load_size_common(const char *filename, unsigned int start_pen, unsigned int max_pens,
-					   				 int width, int height, struct artwork **a)
+					   				 int width, int height, struct artwork_info **a)
 {
 	struct osd_bitmap *picture = 0, *alpha = 0;
 	struct png_info p;
@@ -1496,7 +1497,7 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 		backdrop_set_palette(*a,(*a)->orig_palette);
 }
 
-static void artwork_load_common(const char *filename, unsigned int start_pen, unsigned int max_pens, struct artwork **a)
+static void artwork_load_common(const char *filename, unsigned int start_pen, unsigned int max_pens, struct artwork_info **a)
 {
 	artwork_load_size_common(filename, start_pen, max_pens, Machine->scrbitmap->width, Machine->scrbitmap->height, a);
 }
@@ -1540,12 +1541,12 @@ void backdrop_load(const char *filename, unsigned int start_pen, unsigned int ma
 	artwork_load_common(filename, start_pen, max_pens, &artwork_backdrop);
 }
 
-void artwork_load(struct artwork **a, const char *filename, unsigned int start_pen, unsigned int max_pens)
+void artwork_load(struct artwork_info **a, const char *filename, unsigned int start_pen, unsigned int max_pens)
 {
 	artwork_load_common(filename, start_pen, max_pens, a);
 }
 
-void artwork_load_size(struct artwork **a, const char *filename, unsigned int start_pen, unsigned int max_pens,
+void artwork_load_size(struct artwork_info **a, const char *filename, unsigned int start_pen, unsigned int max_pens,
 					   int width, int height)
 {
 	artwork_load_size_common(filename, start_pen, max_pens, width, height, a);
@@ -1639,7 +1640,7 @@ void artwork_elements_scale(struct artwork_element *ae, int width, int height)
 	}
 }
 
-static int artwork_newpen (struct artwork *a, int r, int g, int b, int alpha)
+static int artwork_newpen (struct artwork_info *a, int r, int g, int b, int alpha)
 {
 	int pen;
 
@@ -1673,7 +1674,7 @@ static int artwork_newpen (struct artwork *a, int r, int g, int b, int alpha)
 	return pen;
 }
 
-static void merge_cmy(struct artwork *a, struct osd_bitmap *source, struct osd_bitmap *source_alpha,int sx, int sy)
+static void merge_cmy(struct artwork_info *a, struct osd_bitmap *source, struct osd_bitmap *source_alpha,int sx, int sy)
 {
 	int c1, c2, m1, m2, y1, y2, pen1, pen2, max, alpha;
 	int x, y, w, h;
@@ -1912,4 +1913,6 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 	   to init the palette and remap the colors now */
 	if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
 		backdrop_set_palette(artwork_overlay,artwork_overlay->orig_palette);
+
+	overlay_remap();
 }

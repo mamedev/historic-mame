@@ -512,14 +512,14 @@ static struct MachineDriver machine_driver_stfight =
 	{
 		{
 			CPU_Z80,
-			3000000,	/* 3 Mhz */
+			3000000,	/* 3 MHz */
 			readmem_cpu1, writemem_cpu1, 0, 0,
 			stfight_vb_interrupt, 1,
             stfight_interrupt_1, 30
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz */
+			3000000,	/* 3 MHz */
 			readmem_cpu2, writemem_cpu2, 0, 0,
 			0, 0,
             stfight_interrupt_2, 120

@@ -323,13 +323,13 @@ static struct MachineDriver machine_driver_wiping =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			interrupt,140	/* periodic interrupt, don't know about the frequency */

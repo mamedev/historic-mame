@@ -202,7 +202,7 @@ static struct MachineDriver machine_driver_galpanic =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz ??? */
+			8000000,	/* 8 MHz ??? */
 			readmem,writemem,0,0,
 			galpanic_interrupt,2
 		}

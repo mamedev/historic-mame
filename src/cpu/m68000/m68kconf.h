@@ -3,7 +3,7 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.1
+ *                                Version 3.2
  *
  * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
@@ -66,7 +66,7 @@
 /* Turn this on if you want to have immediate reads call
  * m68k_read_immediate_xx() instead of m68k_read_xx().
  */
-#define M68K_SEPARATE_READ_IMM      OPT_ON
+#define M68K_SEPARATE_READ_IMM      OPT_OFF
 
 
 /* If on, CPU will call the interrupt acknowledge callback when it services an
@@ -126,6 +126,13 @@
 #define M68K_EMULATE_PREFETCH       OPT_OFF
 
 
+/* If on, the CPU will generate address error exceptions if it tries to
+ * access a word or longword at an odd address.
+ * NOTE: Do not enable this!  It is not working!
+ */
+#define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
+
+
 /* Turn on to enable logging of illegal instruction calls.
  * M68K_LOG_FILEHANDLE must be #defined to a stdio file stream.
  * Turn on M68K_LOG_1010_1111 to log all 1010 and 1111 calls.
@@ -135,8 +142,23 @@
 #define M68K_LOG_FILEHANDLE         some_file_handle
 
 
-/* Set to your compiler's static inline keyword.
+/* ----------------------------- COMPATIBILITY ---------------------------- */
+
+/* The following options set optimizations that violate the current ANSI
+ * standard, but will be compliant under the forthcoming C9X standard.
+ */
+
+
+/* If on, the enulation core will use 64-bit integers to speed up some
+ * operations.
+*/
+#define M68K_USE_64_BIT  OPT_OFF
+
+
+/* Set to your compiler's static inline keyword to enable it, or
+ * set it to blank to disable it.
  * If you define INLINE in the makefile, it will override this value.
+ * NOTE: not enabling inline functions will SEVERELY slow down emulation.
  */
 #ifndef INLINE
 #define INLINE static __inline__

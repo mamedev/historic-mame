@@ -1,3 +1,13 @@
+int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_base);
+void TC0480SCP_vh_stop(void);
+READ_HANDLER( TC0480SCP_word_r );
+WRITE_HANDLER( TC0480SCP_word_w );
+READ_HANDLER( TC0480SCP_ctrl_word_r );
+WRITE_HANDLER( TC0480SCP_ctrl_word_w );
+void TC0480SCP_tilemap_update(void);
+void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags);
+
+
 int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset);
 void TC0100SCN_vh_stop(void);
 READ_HANDLER( TC0100SCN_word_0_r );

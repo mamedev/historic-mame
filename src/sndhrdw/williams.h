@@ -48,7 +48,7 @@ void williams_dcs_reset_w(int state);
 #define SOUND_CPU_WILLIAMS_CVSD								\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
-		8000000/4,	/* 2 Mhz */								\
+		8000000/4,	/* 2 MHz */								\
 		williams_cvsd_readmem,williams_cvsd_writemem,0,0,	\
 		ignore_interrupt,1									\
 	}
@@ -75,7 +75,7 @@ void williams_dcs_reset_w(int state);
 #define SOUND_CPU_WILLIAMS_ADPCM							\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
-		8000000/4,	/* 2 Mhz */								\
+		8000000/4,	/* 2 MHz */								\
 		williams_adpcm_readmem,williams_adpcm_writemem,0,0,	\
 		ignore_interrupt,1									\
 	}
@@ -102,13 +102,13 @@ void williams_dcs_reset_w(int state);
 #define SOUND_CPU_WILLIAMS_NARC								\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
-		8000000/4,	/* 2 Mhz */								\
+		8000000/4,	/* 2 MHz */								\
 		williams_narc_master_readmem,williams_narc_master_writemem,0,0,\
 		ignore_interrupt,1									\
 	},														\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
-		8000000/4,	/* 2 Mhz */								\
+		8000000/4,	/* 2 MHz */								\
 		williams_narc_slave_readmem,williams_narc_slave_writemem,0,0,\
 		ignore_interrupt,1									\
 	}
@@ -133,7 +133,7 @@ void williams_dcs_reset_w(int state);
 #define SOUND_CPU_WILLIAMS_DCS								\
 	{														\
 		CPU_ADSP2105 | CPU_AUDIO_CPU,						\
-		10240000,	/* 10.24 Mhz */							\
+		10240000,	/* 10.24 MHz */							\
 		williams_dcs_readmem,williams_dcs_writemem,0,0,		\
 		ignore_interrupt,0									\
 	}

@@ -264,13 +264,13 @@ static struct MachineDriver machine_driver_1943 =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz */
+			6000000,	/* 6 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz */
+			3000000,	/* 3 MHz */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}

@@ -1174,7 +1174,7 @@ static struct namco_interface namco_interface =
 static struct SN76496interface sn76496_interface =
 {
 	2,
-	{ 1789750, 1789750 },	/* 1.78975 Mhz ? */
+	{ 1789750, 1789750 },	/* 1.78975 MHz ? */
 	{ 75, 75 }
 };
 
@@ -1196,7 +1196,7 @@ static struct MachineDriver machine_driver_pacman =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			readmem,writemem,0,writeport,
 			pacman_interrupt,1
 		}
@@ -1233,7 +1233,7 @@ static struct MachineDriver machine_driver_theglob =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			theglob_readmem,writemem,theglob_readport,writeport,
 			pacman_interrupt,1
 		}
@@ -1270,7 +1270,7 @@ static struct MachineDriver machine_driver_vanvan =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			readmem,writemem,0,vanvan_writeport,
 			nmi_interrupt,1
 		}
@@ -1307,7 +1307,7 @@ static struct MachineDriver machine_driver_dremshpr =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			readmem,writemem,0,dremshpr_writeport,
 			nmi_interrupt,1
 		}
@@ -1344,7 +1344,7 @@ static struct MachineDriver machine_driver_alibaba =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			alibaba_readmem,alibaba_writemem,0,0,
 			interrupt,1
 		}

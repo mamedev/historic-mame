@@ -14,9 +14,10 @@ being hacked very soon
 
 games running on this:
 
-Risky Challenge/Gussun Oyoyo D8000019A1
-Shisensho II                 D8000020A1 023 9320NK700
-Quiz F-1 1,2 Finish          NANAO 08J27291A4 014 9147KK700
+Hasamu (M90, probably doesn't belong here) NANAO 08J27261A1 011 9102KK700
+Risky Challenge/Gussun Oyoyo               D8000019A1
+Shisensho II                               D8000020A1 023 9320NK700
+Quiz F-1 1,2 Finish                        NANAO 08J27291A4 014 9147KK700
 Bomber Man World/Atomic Punk
 
 */
@@ -61,13 +62,13 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	65536,	/* 65536 characters */
+	8,8,
+	RGN_FRAC(1,4),
 	4,	/* 4 bits per pixel */
-	{ 3*65536*8*8, 2*65536*8*8, 1*65536*8*8, 0*65536*8*8 },	/* the bitplanes are separated */
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -143,6 +144,21 @@ static struct MachineDriver machine_driver_m97 =
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( hasamu )
+	ROM_REGION( 0x100000, REGION_CPU1 )
+	ROM_LOAD_V20_EVEN( "hasc-p0.bin",  0xc0000, 0x20000, 0xdff0ba6e )
+	ROM_LOAD_V20_ODD ( "hasc-p1.bin",  0xc0000, 0x20000, 0x53df9834 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "hasc-sp.bin",  0x0000, 0x10000, 0x259b1687 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hasc-c0.bin",  0x000000, 0x20000, 0xdd5a2174 )
+	ROM_LOAD( "hasc-c1.bin",  0x020000, 0x20000, 0x76b8217c )
+	ROM_LOAD( "hasc-c2.bin",  0x040000, 0x20000, 0xd90f9a68 )
+	ROM_LOAD( "hasc-c3.bin",  0x060000, 0x20000, 0x6cfe0d39 )
+ROM_END
 
 ROM_START( riskchal )
 	ROM_REGION( 0x100000, REGION_CPU1 )
@@ -223,11 +239,11 @@ ROM_START( atompunk )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5j",           0x0000, 0x10000, 0x6bc1689e )
 
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
+	ROM_LOAD( "bbm2_c1.bin",  0x040000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x0c0000, 0x40000, 0x47af1750 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "5e",           0x0000, 0x20000, 0x4ad889ed )
@@ -241,11 +257,11 @@ ROM_START( bbmanw )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, 0xb8d8108c )
 
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
+	ROM_LOAD( "bbm2_c1.bin",  0x040000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x0c0000, 0x40000, 0x47af1750 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, 0x0ae655ff )
@@ -253,6 +269,7 @@ ROM_END
 
 
 
+GAMEX( 1991, hasamu,   0,        m97, m97, 0, ROT0, "Irem", "Hasamu (Japan)", GAME_NOT_WORKING )
 GAMEX( 1992, atompunk, 0,        m97, m97, 0, ROT0, "Irem America (licensed from Hudson Soft)", "Atomic Punk (US)", GAME_NOT_WORKING )
 GAMEX( 1992, bbmanw,   atompunk, m97, m97, 0, ROT0, "Irem (licensed from Hudson Soft)", "Bomber Man World (Japan)", GAME_NOT_WORKING )
 GAMEX( 1992, quizf1,   0,        m97, m97, 0, ROT0, "Irem", "Quiz F-1 1,2finish", GAME_NOT_WORKING )

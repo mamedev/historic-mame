@@ -501,26 +501,26 @@ static struct MachineDriver machine_driver_gyruss =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* 3.579545 Mhz */
+			14318180/4,	/* 3.579545 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
-			8000000/15,	/* 8Mhz crystal */
+			8000000/15,	/* 8MHz crystal */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},
 #ifdef EMULATE_6809
 		{
 			CPU_M6809,
-			2000000,        /* 2 Mhz ??? */
+			2000000,        /* 2 MHz ??? */
 			m6809_readmem,m6809_writemem,0,0,
 			interrupt,1
 		},

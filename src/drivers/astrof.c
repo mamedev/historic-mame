@@ -220,7 +220,7 @@ static struct MachineDriver machine_driver_##GAMENAME =						   \
 	{																		   \
 		{																	   \
 			CPU_M6502,														   \
-			10595000/16,	/* 0.66 Mhz */									   \
+			10595000/16,	/* 0.66 MHz */									   \
 			readmem,GAMENAME##_writemem,0,0,								   \
 			astrof_interrupt,1												   \
 		}																	   \

@@ -226,7 +226,7 @@ static void do_blit_unpack( const struct sprite *sprite ){
 			#undef NEXTLINE
 		}
 		else if( sprite->flags&SPRITE_TRANSPARENCY_THROUGH ){
-			int color = Machine->pens[palette_transparent_color];
+			int color = Machine->pens[palette_transparent_pen];
 			#define OPAQUE(X) (dest[x]==color && source[X]!=transparent_pen)
 			#define COLOR(X) (pal_data[source[X]])
 			#define NEXTLINE
@@ -325,7 +325,7 @@ static void do_blit_stack( const struct sprite *sprite ){
 					#undef NEXTLINE
 				}
 				else if( sprite->flags&SPRITE_TRANSPARENCY_THROUGH ){
-					int color = Machine->pens[palette_transparent_color];
+					int color = Machine->pens[palette_transparent_pen];
 					#define OPAQUE(X) (dest[x]==color && source[X]!=transparent_pen)
 					#define COLOR(X) (pal_data[source[X]])
 					#define NEXTLINE

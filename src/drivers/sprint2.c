@@ -315,7 +315,7 @@ static struct MachineDriver machine_driver_sprint2 =
 	{
 		{
 			CPU_M6502,
-			333333,        /* 0.3 Mhz ???? */
+			333333,        /* 0.3 MHz ???? */
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -346,7 +346,7 @@ static struct MachineDriver machine_driver_sprint1 =
 	{
 		{
 			CPU_M6502,
-			333333,        /* 0.3 Mhz ???? */
+			333333,        /* 0.3 MHz ???? */
 			sprint1_readmem,writemem,0,0,
 			interrupt,1
 		}

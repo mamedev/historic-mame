@@ -555,7 +555,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */
-	{ YM2203_VOL(10,40), YM2203_VOL(10,40) },
+	{ YM2203_VOL(20,40), YM2203_VOL(20,40) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -570,13 +570,13 @@ static struct MachineDriver machine_driver_gng =
 	{
 		{
 			CPU_M6809,
-			1500000,			/* 1.5 Mhz ? */
+			1500000,			/* 1.5 MHz ? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz (?) */
+			3000000,	/* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -643,6 +643,10 @@ ROM_START( gng )
 	ROM_LOAD( "gg14.bin",     0x0c000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )	/* priority (not used) */
 ROM_END
 
 ROM_START( gnga )
@@ -674,6 +678,10 @@ ROM_START( gnga )
 	ROM_LOAD( "gg14.bin",     0x0c000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )	/* priority (not used) */
 ROM_END
 
 ROM_START( gngt )
@@ -703,6 +711,10 @@ ROM_START( gngt )
 	ROM_LOAD( "gg14.bin",     0x0c000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )	/* priority (not used) */
 ROM_END
 
 ROM_START( makaimur )
@@ -732,6 +744,10 @@ ROM_START( makaimur )
 	ROM_LOAD( "gng16.l4",     0x0c000, 0x4000, 0x608d68d5 )		/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )	/* priority (not used) */
 ROM_END
 
 ROM_START( makaimuc )
@@ -761,6 +777,10 @@ ROM_START( makaimuc )
 	ROM_LOAD( "gng16.l4",     0x0c000, 0x4000, 0x608d68d5 )		/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )	/* priority (not used) */
 ROM_END
 
 ROM_START( makaimug )
@@ -790,6 +810,10 @@ ROM_START( makaimug )
 	ROM_LOAD( "gng16.l4",     0x0c000, 0x4000, 0x608d68d5 )	/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
+	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )	/* priority (not used) */
 ROM_END
 
 ROM_START( diamond )
@@ -821,6 +845,10 @@ ROM_START( diamond )
 	ROM_LOAD( "d14",          0x0c000, 0x4000, 0x6f132163 )	/* sprites 0 Plane 3-4 */
 	/* empty space for unused sprites 1 Plane 3-4 */
 	/* empty space for unused sprites 2 Plane 3-4 */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )	/* video timing (not used) */
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )	/* priority (not used) */
 ROM_END
 
 

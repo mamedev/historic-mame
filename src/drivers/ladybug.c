@@ -426,7 +426,7 @@ static struct MachineDriver machine_driver_ladybug =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			readmem,writemem,0,0,
 			ladybug_interrupt,1
 		}

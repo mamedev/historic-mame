@@ -309,7 +309,7 @@ static struct MachineDriver machine_driver_royalmah =
 	{
 		{
 			CPU_Z80,
-			3000000,        /* 3.00 Mhz ? */
+			3000000,        /* 3.00 MHz ? */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}

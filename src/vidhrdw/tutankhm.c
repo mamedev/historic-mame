@@ -15,7 +15,6 @@
 
 
 unsigned char *tutankhm_scrollx;
-static int flipscreen[2];
 
 
 
@@ -29,12 +28,12 @@ static void videowrite(int offset,int data)
 	x2 = x1 + 1;
 	y2 = y1;
 
-	if (flipscreen[0])
+	if (flip_screen_x)
 	{
 		x1 = 255 - x1;
 		x2 = 255 - x2;
 	}
-	if (flipscreen[1])
+	if (flip_screen_y)
 	{
 		y1 = 255 - y1;
 		y2 = 255 - y2;
@@ -54,22 +53,6 @@ WRITE_HANDLER( tutankhm_videoram_w )
 
 
 
-WRITE_HANDLER( tutankhm_flipscreen_w )
-{
-	if (flipscreen[offset] != (data & 1))
-	{
-		int offs;
-
-
-		flipscreen[offset] = data & 1;
-		/* refresh the display */
-		for (offs = 0;offs < videoram_size;offs++)
-			videowrite(offs,videoram[offs]);
-	}
-}
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -79,7 +62,7 @@ WRITE_HANDLER( tutankhm_flipscreen_w )
 ***************************************************************************/
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (palette_recalc())
+	if (palette_recalc() || full_refresh)
 	{
 		int offs;
 
@@ -92,14 +75,14 @@ void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scroll[32], i;
 
 
-		if (flipscreen[0])
+		if (flip_screen_x)
 		{
 			for (i = 0;i < 8;i++)
 				scroll[i] = 0;
 			for (i = 8;i < 32;i++)
 			{
 				scroll[i] = -*tutankhm_scrollx;
-				if (flipscreen[1]) scroll[i] = -scroll[i];
+				if (flip_screen_y) scroll[i] = -scroll[i];
 			}
 		}
 		else
@@ -107,7 +90,7 @@ void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			for (i = 0;i < 24;i++)
 			{
 				scroll[i] = -*tutankhm_scrollx;
-				if (flipscreen[1]) scroll[i] = -scroll[i];
+				if (flip_screen_y) scroll[i] = -scroll[i];
 			}
 			for (i = 24;i < 32;i++)
 				scroll[i] = 0;

@@ -442,7 +442,7 @@ static struct MachineDriver machine_driver_##GAMENAME =		\
 		},													\
 		{													\
 			CPU_Z80,										\
-			14318000/8,	/* 1.78975 Mhz??? */				\
+			14318000/8,	/* 1.78975 MHz??? */				\
 			sound_readmem,sound_writemem,0,sound_writeport,	\
 			nmi_interrupt,8	/* IRQs are triggered by the main CPU */	\
 		}													\

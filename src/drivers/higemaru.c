@@ -245,10 +245,12 @@ ROM_START( higemaru )
 	ROM_LOAD( "hg1",          0x0000, 0x2000, 0xef4c2f5d )	/* tiles */
 	ROM_LOAD( "hg2",          0x2000, 0x2000, 0x9133f804 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0420, REGION_PROMS )
 	ROM_LOAD( "hgb3",         0x0000, 0x0020, 0x629cebd8 )	/* palette */
 	ROM_LOAD( "hgb5",         0x0020, 0x0100, 0xdbaa4443 )	/* char lookup table */
 	ROM_LOAD( "hgb1",         0x0120, 0x0100, 0x07c607ce )	/* sprite lookup table */
+	ROM_LOAD( "hgb4",         0x0220, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "hgb2",         0x0320, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 

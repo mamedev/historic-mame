@@ -305,7 +305,7 @@ static struct MachineDriver machine_driver_shootout =
 	{
 		{
 			CPU_M6502,
-			2000000,	/* 2 Mhz? */
+			2000000,	/* 2 MHz? */
 			readmem,writemem,0,0,
 			shootout_interrupt,1 /* nmi's are triggered at coin up */
 		},
@@ -348,7 +348,7 @@ static struct MachineDriver machine_driver_shootouj =
 	{
 		{
 			CPU_M6502,
-			2000000,	/* 2 Mhz? */
+			2000000,	/* 2 MHz? */
 			readmem_alt,writemem_alt,0,0,
 			shootout_interrupt,1 /* nmi's are triggered at coin up */
 		}

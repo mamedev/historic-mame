@@ -336,9 +336,9 @@ INPUT_PORTS_START( ebases )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )	/* The colors are screwed up if selected */
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x00, "Monitor" )
+	PORT_DIPSETTING(    0x00, "Color" )
+	PORT_DIPSETTING(    0x10, "B/W" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -607,7 +607,7 @@ static struct MachineDriver machine_driver_seawolf2 =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			seawolf2_readmem,seawolf2_writemem,readport,seawolf2_writeport,
 			wow_interrupt,256
 		}
@@ -638,7 +638,7 @@ static struct MachineDriver machine_driver_spacezap =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -675,7 +675,7 @@ static struct MachineDriver machine_driver_ebases =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -712,7 +712,7 @@ static struct MachineDriver machine_driver_wow =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -757,7 +757,7 @@ static struct MachineDriver machine_driver_gorf =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			readmem,writemem,readport,writeport,
 			gorf_interrupt,256
 		}
@@ -805,7 +805,7 @@ static struct MachineDriver machine_driver_robby =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			robby_readmem,robby_writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -842,7 +842,7 @@ static struct MachineDriver machine_driver_profpac =
 	{
 		{
 			CPU_Z80,
-			1789773,	/* 1.789 Mhz */
+			1789773,	/* 1.789 MHz */
 			profpac_readmem,profpac_writemem,readport,writeport,
 			wow_interrupt,256
 		}

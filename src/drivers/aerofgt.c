@@ -1092,7 +1092,7 @@ static struct MachineDriver machine_driver_pspikes =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1136,7 +1136,7 @@ static struct MachineDriver machine_driver_karatblz =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1180,7 +1180,7 @@ static struct MachineDriver machine_driver_spinlbrk =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1224,7 +1224,7 @@ static struct MachineDriver machine_driver_turbofrc =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1268,7 +1268,7 @@ static struct MachineDriver machine_driver_aerofgtb =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1313,7 +1313,7 @@ static struct MachineDriver machine_driver_aerofgt =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
+			8000000/2,	/* 4 MHz ??? */
 			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */

@@ -25,7 +25,7 @@ Q-Sound hardware
 */
 WRITE_HANDLER( cps2_qsound_sharedram_w )
 {
-	qsound_sharedram_w(offset, data);
+	qsound_sharedram1_w(offset, data);
 }
 
 
@@ -105,7 +105,7 @@ static struct MachineDriver machine_driver_cps2 =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000,  /* 4 Mhz ??? TODO: find real FRQ */
+			8000000,  /* 4 MHz ??? TODO: find real FRQ */
 			qsound_readmem,qsound_writemem,0,0,
 			interrupt,4
 		}

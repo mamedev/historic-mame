@@ -335,7 +335,7 @@ static struct MachineDriver machine_driver_xexex =
 #if 0
 		{
 			CPU_Z80,
-			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432Mhz) */
+			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432MHz) */
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 1
 		},

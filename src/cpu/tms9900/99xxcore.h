@@ -396,7 +396,7 @@ typedef struct
 	int IDLE;       /* nonzero if processor is IDLE - i.e waiting for interrupt while writing
 	                    special data on CRU bus */
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	UINT16 FR[16];  /* contains a copy of the workspace for the needs of the debugger */
 #endif
 
@@ -516,7 +516,7 @@ static void reset_decrementer(void);
 	/*The code is complex, so we use functions rather than macros*/
 
 	/* Why aren't these in memory.h ??? */
-#if LSB_FIRST
+#ifdef LSB_FIRST
 	#define BYTE_XOR_BE(a) ((a) ^ 1)
 #else
 	#define BYTE_XOR_BE(a) (a)
@@ -757,8 +757,6 @@ int TMS99XX_EXECUTE(int cycles)
 
 		#ifdef MAME_DEBUG
 		{
-			extern int mame_debug;
-
 			if (mame_debug)
 			{
 				setstat();

@@ -151,3 +151,31 @@ WRITE_HANDLER( cchip1_w )
 	}
 }
 
+
+/* Mega Blast */
+unsigned char *cchip_ram;
+
+READ_HANDLER( cchip2_r )
+{
+    int ret = 0;
+
+    switch (offset)
+    {
+        case 0x802:
+            /* C-Chip ID */
+            ret = 0x01;
+            break;
+        default:
+            logerror("cchip2_r offset: %04x\n", offset);
+            ret = cchip_ram[offset];
+            break;
+    }
+
+    return ret;
+}
+
+WRITE_HANDLER( cchip2_w )
+{
+    logerror("cchip2_w pc: %06x, %04x:%02x\n", cpu_get_pc(), offset, data);
+    cchip_ram[offset] = data;
+}

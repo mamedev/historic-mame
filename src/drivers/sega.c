@@ -789,7 +789,7 @@ static struct MachineDriver machine_driver_spacfury =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
+			3867120,	/* 3.86712 MHz */
 			readmem, writemem, spacfury_readport, spacfury_writeport,
 			0, 0, /* no vblank interrupt */
 			sega_interrupt, 40 /* 40 Hz */
@@ -890,7 +890,7 @@ static struct MachineDriver machine_driver_zektor =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
+			3867120,	/* 3.86712 MHz */
 			readmem,writemem,zektor_readport,zektor_writeport,
 
 			0, 0, /* no vblank interrupt */
@@ -987,7 +987,7 @@ static struct MachineDriver machine_driver_tacscan =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
+			3867120,	/* 3.86712 MHz */
 			readmem,writemem,zektor_readport,tacscan_writeport,
 
 			0, 0, /* no vblank interrupt */
@@ -1063,7 +1063,7 @@ static struct MachineDriver machine_driver_elim2 =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
+			3867120,	/* 3.86712 MHz */
 			readmem,writemem,elim2_readport,elim_writeport,
 
 			0, 0, /* no vblank interrupt */
@@ -1108,7 +1108,7 @@ static struct MachineDriver machine_driver_elim4 =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
+			3867120,	/* 3.86712 MHz */
 			readmem,writemem,elim4_readport,elim_writeport,
 
 			0, 0, /* no vblank interrupt */
@@ -1223,7 +1223,7 @@ static struct MachineDriver machine_driver_startrek =
 	{
 		{
 			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
+			3867120,	/* 3.86712 MHz */
 			readmem,writemem,zektor_readport,startrek_writeport,
 
 			0, 0, /* no vblank interrupt */

@@ -333,14 +333,14 @@ static struct MachineDriver machine_driver_bking2 =
     {
         {
             CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
             readmem,writemem,
             readport,writeport,
             interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz */
+			3000000,	/* 3 MHz */
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts (from Jungle King hardware, might be wrong): */
 			/* - no interrupts synced with vblank */

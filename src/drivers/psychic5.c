@@ -61,8 +61,8 @@ A^ B^
 
 2) CPU.
 
-The board mounts two crystals, 12.000 Mhz and 5.000 Mhz.
-The possible effective main CPU clock may be 6 Mhz (12/2).
+The board mounts two crystals, 12.000 MHz and 5.000 MHz.
+The possible effective main CPU clock may be 6 MHz (12/2).
 
 The main Z80 runs in Interrupt mode 0 (IM0),the game program expects
 execution of two different restart (RST) instructions.

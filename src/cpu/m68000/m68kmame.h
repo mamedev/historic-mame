@@ -38,6 +38,9 @@
 #define M68K_LOG_1010_1111          OPT_OFF
 #define M68K_LOG_FILEHANDLE         errorlog
 
+#define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
+
+#define M68K_USE_64_BIT             OPT_OFF
 
 
 /* Redirect memory calls */
@@ -65,49 +68,18 @@
 /* M68K Variants */
 #if HAS_M68010
 #define M68K_EMULATE_010            OPT_ON
-#define m68010_exit                 m68000_exit
-#define m68010_execute              m68000_execute
-#define m68010_get_context          m68000_get_context
-#define m68010_set_context          m68000_set_context
-#define m68010_get_pc               m68000_get_pc
-#define m68010_set_pc               m68000_set_pc
-#define m68010_get_sp               m68000_get_sp
-#define m68010_set_sp               m68000_set_sp
-#define m68010_set_nmi_line         m68000_set_nmi_line
-#define m68010_set_irq_line         m68000_set_irq_line
-#define m68010_set_irq_callback     m68000_set_irq_callback
 #else
 #define M68K_EMULATE_010            OPT_OFF
 #endif
 
 #if HAS_M68EC020
 #define M68K_EMULATE_EC020          OPT_ON
-#define m68ec020_exit               m68000_exit
-#define m68ec020_execute            m68000_execute
-#define m68ec020_get_context        m68000_get_context
-#define m68ec020_set_context        m68000_set_context
-#define m68ec020_get_pc             m68000_get_pc
-#define m68ec020_set_pc             m68000_set_pc
-#define m68ec020_get_sp             m68000_get_sp
-#define m68ec020_set_sp             m68000_set_sp
-#define m68ec020_set_nmi_line       m68000_set_nmi_line
-#define m68ec020_set_irq_line       m68000_set_irq_line
-#define m68ec020_set_irq_callback   m68000_set_irq_callback
 #else
 #define M68K_EMULATE_EC020          OPT_OFF
 #endif
 
 #if HAS_M68020
 #define M68K_EMULATE_020            OPT_ON
-#define m68020_exit                 m68000_exit
-#define m68020_execute              m68000_execute
-#define m68020_get_context          m68000_get_context
-#define m68020_set_context          m68000_set_context
-#define m68020_get_sp               m68000_get_sp
-#define m68020_set_sp               m68000_set_sp
-#define m68020_set_nmi_line         m68000_set_nmi_line
-#define m68020_set_irq_line         m68000_set_irq_line
-#define m68020_set_irq_callback     m68000_set_irq_callback
 #else
 #define M68K_EMULATE_020            OPT_OFF
 #endif

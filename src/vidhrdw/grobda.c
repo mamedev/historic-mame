@@ -9,9 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int flipscreen;
-extern unsigned char *grobda_spriteram;
-
 
 /***************************************************************************
 
@@ -62,30 +59,6 @@ void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-int grobda_vh_start( void )
-{
-	/* set up spriteram area */
-	spriteram_size = 0x80;
-	spriteram = &grobda_spriteram[0x780];
-	spriteram_2 = &grobda_spriteram[0x780+0x800];
-	spriteram_3 = &grobda_spriteram[0x780+0x800+0x800];
-
-	return generic_vh_start();
-}
-
-void grobda_vh_stop( void )
-{
-	generic_vh_stop();
-}
-
-WRITE_HANDLER( grobda_flipscreen_w )
-{
-	if (flipscreen != data)
-		memset(dirtybuffer,1,videoram_size);
-	flipscreen = data;
-}
-
-
 /***************************************************************************
 
 	Screen Refresh
@@ -96,23 +69,26 @@ static void grobda_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0; offs < spriteram_size; offs += 2){
-		int number = spriteram[offs];
-		int color = spriteram[offs+1];
-		int sx = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
-		int sy = 28*8-spriteram_2[offs] - 16;
-		int flipx = spriteram_3[offs] & 1;
-		int flipy = spriteram_3[offs] & 2;
+	for (offs = 0; offs < 0x80; offs += 2)
+	{
+		int number = spriteram[offs+0x0780];
+		int color = spriteram[offs+0x0781];
+		int sx = (spriteram[offs+0x0f81]-40) + 0x100*(spriteram[offs+0x1781] & 1);
+		int sy = 28*8-spriteram[offs+0x0f80] - 16;
+		int flipx = spriteram[offs+0x1780] & 1;
+		int flipy = spriteram[offs+0x1780] & 2;
 		int width,height;
 
-		if (flipscreen){
+		if (flip_screen)
+		{
 			flipx = !flipx;
 			flipy = !flipy;
 		}
 
-		if (spriteram_3[offs+1] & 2) continue;
+		if (spriteram[offs+0x1781] & 2) continue;
 
-		switch (spriteram_3[offs] & 0x0c){
+		switch (spriteram[offs+0x1780] & 0x0c)
+		{
 			case 0x0c:	/* 2x both ways */
 				width = height = 2; number &= (~3); break;
 			case 0x08:	/* 2x vertical */
@@ -128,8 +104,10 @@ static void grobda_draw_sprites(struct osd_bitmap *bitmap)
 			static int y_offset[2] = { 0x00, 0x02 };
 			int x,y, ex, ey;
 
-			for( y=0; y < height; y++ ){
-				for( x=0; x < width; x++ ){
+			for( y=0; y < height; y++ )
+			{
+				for( x=0; x < width; x++ )
+				{
 					ex = flipx ? (width-1-x) : x;
 					ey = flipy ? (height-1-y) : y;
 
@@ -149,6 +127,11 @@ static void grobda_draw_sprites(struct osd_bitmap *bitmap)
 void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+
+	if (full_refresh)
+		memset(dirtybuffer,1,videoram_size);
+
 
 	for (offs = videoram_size - 1; offs > 0; offs--)
 	{
@@ -178,7 +161,7 @@ void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sy = my - 2;
 			}
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 35 - sx;
 				sy = 27 - sy;
@@ -187,7 +170,7 @@ void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs] & 0x3f,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					sx*8,sy*8,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
         }

@@ -42,52 +42,7 @@ extern const char *m6809_info(void *context,int regnum);
 extern unsigned m6809_dasm(char *buffer, unsigned pc);
 
 /****************************************************************************/
-/* For now the 6309 is using the functions of the 6809						*/
-/****************************************************************************/
-#if (HAS_HD6309)
-#define M6309_A 				M6809_A
-#define M6309_B 				M6809_B
-#define M6309_PC				M6809_PC
-#define M6309_S 				M6809_S
-#define M6309_U 				M6809_U
-#define M6309_X 				M6809_X
-#define M6309_Y 				M6809_Y
-#define M6309_CC				M6809_CC
-#define M6309_DP				M6809_DP
-#define M6309_NMI_STATE 		M6809_NMI_STATE
-#define M6309_IRQ_STATE 		M6809_IRQ_STATE
-#define M6309_FIRQ_STATE		M6809_FIRQ_STATE
-
-#define HD6309_INT_NONE					M6809_INT_NONE
-#define HD6309_INT_IRQ					M6809_INT_IRQ
-#define HD6309_INT_FIRQ					M6809_INT_FIRQ
-#define HD6309_INT_NMI					M6809_INT_NMI
-#define M6309_IRQ_LINE					M6809_IRQ_LINE
-#define M6309_FIRQ_LINE 				M6809_FIRQ_LINE
-
-#define hd6309_ICount					 m6809_ICount
-extern void hd6309_reset(void *param);
-extern void hd6309_exit(void);
-extern int hd6309_execute(int cycles);	/* NS 970908 */
-extern unsigned hd6309_get_context(void *dst);
-extern void hd6309_set_context(void *src);
-extern unsigned hd6309_get_pc(void);
-extern void hd6309_set_pc(unsigned val);
-extern unsigned hd6309_get_sp(void);
-extern void hd6309_set_sp(unsigned val);
-extern unsigned hd6309_get_reg(int regnum);
-extern void hd6309_set_reg(int regnum, unsigned val);
-extern void hd6309_set_nmi_line(int state);
-extern void hd6309_set_irq_line(int irqline, int state);
-extern void hd6309_set_irq_callback(int (*callback)(int irqline));
-extern void hd6309_state_save(void *file);
-extern void hd6309_state_load(void *file);
-extern const char *hd6309_info(void *context,int regnum);
-extern unsigned hd6309_dasm(char *buffer, unsigned pc);
-#endif
-
-/****************************************************************************/
-/* Read a byte from given memory location									*/
+/* Read a byte from given memory location                                   */
 /****************************************************************************/
 /* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
 #define M6809_RDMEM(Addr) ((unsigned)cpu_readmem16(Addr))

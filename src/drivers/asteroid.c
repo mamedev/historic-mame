@@ -607,7 +607,7 @@ static struct MachineDriver machine_driver_asteroid =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			asteroid_readmem,asteroid_writemem,0,0,
 			asteroid_interrupt,4	/* 250 Hz */
 		}
@@ -644,7 +644,7 @@ static struct MachineDriver machine_driver_asteroib =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			asteroib_readmem,asteroid_writemem,0,0,
 			asteroid_interrupt,4	/* 250 Hz */
 		}
@@ -707,7 +707,7 @@ static struct MachineDriver machine_driver_astdelux =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			astdelux_readmem,astdelux_writemem,0,0,
 			asteroid_interrupt,4	/* 250 Hz */
 		}
@@ -759,7 +759,7 @@ static struct MachineDriver machine_driver_llander =
 	{
 		{
 			CPU_M6502,
-			1500000,			/* 1.5 Mhz */
+			1500000,			/* 1.5 MHz */
 			llander_readmem, llander_writemem,0,0,
 			llander_interrupt,6	/* 250 Hz */
 		}

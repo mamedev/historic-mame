@@ -20,7 +20,6 @@ extern unsigned char *cclimber_bsvideoram;
 extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-WRITE_HANDLER( cclimber_flipscreen_w );
 WRITE_HANDLER( cclimber_colorram_w );
 WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -165,7 +164,8 @@ static struct MemoryWriteAddress yamato_writemem[] =
 	{ 0x9800, 0x9bff, MWA_RAM },  /* not used, but initialized */
 	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa001, 0xa002, cclimber_flipscreen_w },
+	{ 0xa001, 0xa001, flip_screen_x_w },
+	{ 0xa002, 0xa002, flip_screen_y_w },
 //{ 0xa004, 0xa004, cclimber_sample_trigger_w },
 //{ 0xa800, 0xa800, cclimber_sample_rate_w },
 //{ 0xb000, 0xb000, cclimber_sample_volume_w },
@@ -355,7 +355,7 @@ static struct MachineDriver machine_driver_yamato =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz ? */
 			yamato_sound_readmem,yamato_sound_writemem,yamato_sound_readport,yamato_sound_writeport,
 			ignore_interrupt,0
 		}

@@ -378,7 +378,7 @@ static struct MachineDriver machine_driver_spacefb =
 	{
         {
             CPU_Z80,
-            4000000,    /* 4 Mhz? */
+            4000000,    /* 4 MHz? */
             readmem,writemem,readport,writeport,
             spacefb_interrupt,2 /* two int's per frame */
         },

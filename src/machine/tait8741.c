@@ -11,7 +11,7 @@ program types
 #include "driver.h"
 #include "tait8741.h"
 
-//#define __log__ 1
+#define __log__ 0
 
 #define CMD_IDLE 0
 #define CMD_08 1

@@ -176,6 +176,7 @@ $(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
+	@rm -f $@
 	$(AR) cr $@ $^
 
 makedir:
@@ -196,6 +197,7 @@ maketree:
 	@md $(OBJ)\cpu\m6800
 	@md $(OBJ)\cpu\m6805
 	@md $(OBJ)\cpu\m6809
+	@md $(OBJ)\cpu\hd6309
 	@md $(OBJ)\cpu\konami
 	@md $(OBJ)\cpu\m68000
 	@md $(OBJ)\cpu\s2650
@@ -209,6 +211,9 @@ maketree:
 	@md $(OBJ)\cpu\pdp1
 	@md $(OBJ)\cpu\mips
 	@md $(OBJ)\cpu\sc61860
+	@md $(OBJ)\cpu\arm
+	@md $(OBJ)\cpu\g65816
+	@md $(OBJ)\cpu\f8
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -227,36 +232,6 @@ endif
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	deltree /Y $(OBJ)
+	@rm -fr $(OBJ)
 	@echo Deleting $(EMULATOR)...
-	@del $(EMULATOR)
-
-cleandebug:
-	@echo Deleting debug obj tree...
-	@del $(OBJ)\*.o
-	@del $(OBJ)\cpu\z80\*.o
-	@del $(OBJ)\cpu\z80gb\*.o
-	@del $(OBJ)\cpu\m6502\*.o
-	@del $(OBJ)\cpu\h6280\*.o
-	@del $(OBJ)\cpu\i86\*.o
-	@del $(OBJ)\cpu\nec\*.o
-	@del $(OBJ)\cpu\i8039\*.o
-	@del $(OBJ)\cpu\i8085\*.o
-	@del $(OBJ)\cpu\m6800\*.o
-	@del $(OBJ)\cpu\m6805\*.o
-	@del $(OBJ)\cpu\m6809\*.o
-	@del $(OBJ)\cpu\konami\*.o
-	@del $(OBJ)\cpu\m68000\*.o
-	@del $(OBJ)\cpu\m68000\*.c
-	@del $(OBJ)\cpu\s2650\*.o
-	@del $(OBJ)\cpu\t11\*.o
-	@del $(OBJ)\cpu\tms34010\*.o
-	@del $(OBJ)\cpu\tms9900\*.o
-	@del $(OBJ)\cpu\z8000\*.o
-	@del $(OBJ)\cpu\tms32010\*.o
-	@del $(OBJ)\cpu\ccpu\*.o
-	@del $(OBJ)\cpu\adsp2100\*.o
-	@del $(OBJ)\cpu\pdp1\*.o
-	@del $(OBJ)\cpu\mips\*.o
-	@del $(EMULATOR)
-
+	@rm -f $(EMULATOR)

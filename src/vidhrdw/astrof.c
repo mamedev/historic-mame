@@ -86,6 +86,10 @@ int astrof_vh_start(void)
 		return 1;
 	}
 
+	do_modify_palette = 0;
+	palette_bank = -1;
+	red_on = -1;
+
 	return 0;
 }
 

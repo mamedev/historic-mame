@@ -1,6 +1,25 @@
 /***************************************************************************
 
-  Bionic Commando Video Hardware
+Bionic Commando Video Hardware
+
+This board handles tile/tile and tile/sprite priority with a PROM. Its
+working is complicated and hardcoded in the driver.
+
+The PROM is a 256x4 chip, with address inputs wired as follows:
+
+A0 bg opaque
+A1 \
+A2 |  fg pen
+A3 |
+A4 /
+A5 fg has priority over sprites (bit 5 of tile attribute)
+A6 fg has not priority over bg (bits 6 & 7 of tile attribute both set)
+A7 sprite opaque
+
+The output selects the active layer, it can be:
+0  bg
+1  fg
+2  sprite
 
 ***************************************************************************/
 
@@ -64,7 +83,7 @@ static void get_tx_tile_info(int tile_index)
 int bionicc_vh_start(void)
 {
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,64,64);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,64);
 
 	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
@@ -72,6 +91,7 @@ int bionicc_vh_start(void)
 
 	tx_tilemap->transparent_pen = 3;
 	fg_tilemap->transparent_pen = 15;
+	fg_tilemap->transmask[0] = 0xffc1; /* split has pens 1-5 opaque in front half */
 	bg_tilemap->transparent_pen = 15;
 
 	return 0;
@@ -199,8 +219,8 @@ static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 			int color = (attr&0x3C)>>2;
 			int flipx = attr&0x02;
 			int flipy = 0;
-			int sx= (signed short)READ_WORD(&buffered_spriteram[offs+6]);
-			int sy= (signed short)READ_WORD(&buffered_spriteram[offs+4]);
+			int sx = (signed short)READ_WORD(&buffered_spriteram[offs+6]);
+			int sy = (signed short)READ_WORD(&buffered_spriteram[offs+4]);
 			if(sy>512-16) sy-=512;
 			if (flipscreen)
 			{
@@ -262,11 +282,14 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	tilemap_draw(bitmap,fg_tilemap,2);
+	tilemap_draw(bitmap,fg_tilemap,2|TILEMAP_BACK);
+	tilemap_draw(bitmap,fg_tilemap,2|TILEMAP_FRONT);
 	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0|TILEMAP_BACK);
+	tilemap_draw(bitmap,fg_tilemap,0|TILEMAP_FRONT);
+	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_BACK);
 	bionicc_draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,1);
+	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_FRONT);
 	tilemap_draw(bitmap,tx_tilemap,0);
 }
 

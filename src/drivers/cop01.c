@@ -284,13 +284,13 @@ static struct MachineDriver machine_driver_cop01 =
 	{
 		{
 			CPU_Z80,
-			3500000,        /* 3.5 Mhz (?) */
+			3500000,        /* 3.5 MHz (?) */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3.0 Mhz (?) */
+			3000000,        /* 3.0 MHz (?) */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		},

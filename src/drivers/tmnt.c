@@ -301,7 +301,7 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 		dest[i] = val;
 	}
 
-	/*	The sample is now ready to be used.  It's a 16 bit, 22khz sample.
+	/*	The sample is now ready to be used.  It's a 16 bit, 22kHz sample.
 	 */
 
 	return 0;

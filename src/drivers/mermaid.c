@@ -233,6 +233,9 @@ ROM_START( mermaid )
 	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "col_a", 	      0x0000, 0x0020, 0xef87bcd6 )
 	ROM_LOAD( "col_b", 	      0x0020, 0x0020, 0xca48abdd )
+
+	ROM_REGION( 0x1000, REGION_USER1 )	/* unknown */
+	ROM_LOAD( "g960_42.39",	  0x0000, 0x1000, 0x287840bb )
 ROM_END
 
 

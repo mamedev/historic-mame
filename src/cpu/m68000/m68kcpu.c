@@ -5,7 +5,7 @@
 #if 0
 static const char* copyright_notice =
 "MUSASHI\n"
-"Version 3.1 (2000-04-04)\n"
+"Version 3.2 (2000-08-04)\n"
 "A portable Motorola M680x0 processor emulation engine.\n"
 "Copyright 1999-2000 Karl Stenerud.  All rights reserved.\n"
 "\n"
@@ -62,6 +62,9 @@ char* m68ki_cpu_names[9] =
 /* The CPU core */
 m68ki_cpu_core m68ki_cpu = {0};
 
+#if M68K_EMULATE_ADDRESS_ERROR
+jmp_buf m68ki_address_error_trap;
+#endif /* M68K_EMULATE_ADDRESS_ERROR */
 
 /* Used by shift & rotate instructions */
 uint8 m68ki_shift_8_table[65] =
@@ -424,7 +427,7 @@ unsigned int m68k_get_reg(void* context, m68k_register_t regnum)
 		case M68K_REG_A5:	return cpu->dar[13];
 		case M68K_REG_A6:	return cpu->dar[14];
 		case M68K_REG_A7:	return cpu->dar[15];
-		case M68K_REG_PC:	return cpu->pc;
+		case M68K_REG_PC:	return MASK_OUT_ABOVE_32(cpu->pc);
 		case M68K_REG_SR:	return	cpu->t1_flag						|
 									cpu->t0_flag						|
 									(cpu->s_flag << 11)					|
@@ -446,7 +449,7 @@ unsigned int m68k_get_reg(void* context, m68k_register_t regnum)
 		case M68K_REG_CAAR:	return cpu->caar;
 		case M68K_REG_PREF_ADDR:	return cpu->pref_addr;
 		case M68K_REG_PREF_DATA:	return cpu->pref_data;
-		case M68K_REG_PPC:	return cpu->ppc;
+		case M68K_REG_PPC:	return MASK_OUT_ABOVE_32(cpu->ppc);
 		case M68K_REG_IR:	return cpu->ir;
 		case M68K_REG_CPU_TYPE:
 			switch(cpu->cpu_type)
@@ -631,6 +634,9 @@ int m68k_execute(int num_cycles)
 		USE_CYCLES(CPU_INT_CYCLES);
 		CPU_INT_CYCLES = 0;
 
+		/* Return point if we had an address error */
+		m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
+
 		/* Main loop.  Keep going until we run out of clock cycles */
 		do
 		{
@@ -711,7 +717,7 @@ void m68k_set_irq(unsigned int int_level)
 	/* A transition from < 7 to 7 always interrupts (NMI) */
 	/* Note: Level 7 can also level trigger like a normal IRQ */
 	if(old_level != 0x0700 && CPU_INT_LEVEL == 0x0700)
-		m68ki_service_interrupt(7); /* Edge triggered level 7 (NMI) */
+		m68ki_exception_interrupt(7); /* Edge triggered level 7 (NMI) */
 	else
 		m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }

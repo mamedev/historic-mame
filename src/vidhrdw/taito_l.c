@@ -1,18 +1,18 @@
 #include "driver.h"
-#include "generic.h"
 
 
 extern unsigned char *taitol_rambanks;
-extern int taitol_bg18_deltax, taitol_bg19_deltax;
 
 static struct tilemap *bg18_tilemap;
 static struct tilemap *bg19_tilemap;
 static struct tilemap *ch1a_tilemap;
 
 static int cur_ctrl = 0;
-static int cur_bankg = 0;
+static int horshoes_gfxbank = 0;
 static int bankc[4];
-
+static int flipscreen;
+#define SPRITERAM_SIZE 0x400
+static unsigned char buffered_spriteram[SPRITERAM_SIZE];
 
 
 /***************************************************************************
@@ -24,17 +24,23 @@ static int bankc[4];
 static void get_bg18_tile_info(int tile_index)
 {
 	int attr = taitol_rambanks[2*tile_index+0x4000+1];
-	int code = taitol_rambanks[2*tile_index+0x4000]|((attr&0x03)<<8)|(bankc[(attr&0xc)>>2]<<10);
+	int code = taitol_rambanks[2*tile_index+0x4000]
+			| ((attr & 0x03) << 8)
+			| ((bankc[(attr & 0xc) >> 2]) << 10)
+			| (horshoes_gfxbank << 12);
 
-	SET_TILE_INFO (0, code, (attr & 0xf0)>>4);
+	SET_TILE_INFO(0,code,(attr & 0xf0) >> 4);
 }
 
 static void get_bg19_tile_info(int tile_index)
 {
 	int attr = taitol_rambanks[2*tile_index+0x5000+1];
-	int code = taitol_rambanks[2*tile_index+0x5000]|((attr&0x03)<<8)|(bankc[(attr&0xc)>>2]<<10);
+	int code = taitol_rambanks[2*tile_index+0x5000]
+			| ((attr & 0x03) << 8)
+			| ((bankc[(attr & 0xc) >> 2]) << 10)
+			| (horshoes_gfxbank << 12);
 
-	SET_TILE_INFO (0, code, (attr & 0xf0)>>4);
+	SET_TILE_INFO(0,code,(attr & 0xf0) >> 4);
 }
 
 static void get_ch1a_tile_info(int tile_index)
@@ -42,7 +48,7 @@ static void get_ch1a_tile_info(int tile_index)
 	int attr = taitol_rambanks[2*tile_index+0x6000+1];
 	int code = taitol_rambanks[2*tile_index+0x6000]|((attr&0x01)<<8)|((attr&0x04)<<7);
 
-	SET_TILE_INFO (2, code, (attr & 0xf0)>>4);
+	SET_TILE_INFO(2,code,(attr & 0xf0) >> 4);
 }
 
 
@@ -65,6 +71,7 @@ int taitol_vh_start(void)
 		return 1;
 
 	bankc[0] = bankc[1] = bankc[2] = bankc[3] = 0;
+	horshoes_gfxbank = 0;
 	cur_ctrl = 0;
 
 	bg18_tilemap->transparent_pen = 0;
@@ -73,7 +80,9 @@ int taitol_vh_start(void)
 	for (i=0;i<256;i++)
 		palette_change_color(i, 0, 0, 0);
 
-	tilemap_set_scrollx(ch1a_tilemap, 0, 8);
+	tilemap_set_scrolldx(ch1a_tilemap,-8,-8);
+	tilemap_set_scrolldx(bg18_tilemap,28,-11);
+	tilemap_set_scrolldx(bg19_tilemap,38,-21);
 
 	return 0;
 }
@@ -86,30 +95,22 @@ int taitol_vh_start(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( taitol_bankg_w )
+WRITE_HANDLER( horshoes_bankg_w )
 {
-	if (data != cur_bankg)
+	if (horshoes_gfxbank != data)
 	{
-		int i;
-		for(i=0;i<4;i++)
-			bankc[i] = bankc[i] + (data - cur_bankg)*4;
-		cur_bankg = data;
+		horshoes_gfxbank = data;
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
 		tilemap_mark_all_tiles_dirty(bg19_tilemap);
 	}
 }
 
-READ_HANDLER( taitol_bankg_r )
-{
-	return cur_bankg;
-}
-
 WRITE_HANDLER( taitol_bankc_w )
 {
-	if (bankc[offset] != data + cur_bankg*4)
+	if (bankc[offset] != data)
 	{
-		bankc[offset] = data + cur_bankg*4;
+		bankc[offset] = data;
 //		logerror("Bankc %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
@@ -119,17 +120,28 @@ WRITE_HANDLER( taitol_bankc_w )
 
 READ_HANDLER( taitol_bankc_r )
 {
-	return bankc[offset] - cur_bankg*4;
+	return bankc[offset];
 }
 
 
 WRITE_HANDLER( taitol_control_w )
 {
-	if (cur_ctrl != data) {
-//		logerror("Control Write %02x (%04x)\n", data, cpu_get_pc());
+//	logerror("Control Write %02x (%04x)\n", data, cpu_get_pc());
 
-		cur_ctrl = data;
-	}
+	cur_ctrl = data;
+//usrintf_showmessage("%02x",data);
+
+	/* bit 0 unknown */
+
+	/* bit 1 unknown */
+
+	/* bit 3 controls sprite/tile priority - handled in vh_screenrefresh() */
+
+	/* bit 4 flip screen */
+	flipscreen = data & 0x10;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+	/* bit 5 display enable - handled in vh_screenrefresh() */
 }
 
 READ_HANDLER( taitol_control_r )
@@ -211,38 +223,12 @@ void taitol_char1a_m(int offset)
 
 void taitol_obj1b_m(int offset)
 {
+#if 0
 	if (offset>=0x3f0 && offset<=0x3ff)
 	{
-		switch(offset & 0xf)
-		{
-			case 0x4:
-			case 0x5:
-			{
-				int dx = taitol_rambanks[0x73f4]|(taitol_rambanks[0x73f5]<<8);
-				tilemap_set_scrollx(bg18_tilemap, 0, taitol_bg18_deltax - dx);
-				break;
-			}
-			case 0x6:
-			{
-				int dy = taitol_rambanks[0x73f6];
-				tilemap_set_scrolly(bg18_tilemap, 0, -dy);
-				break;
-			}
-			case 0xc:
-			case 0xd:
-			{
-				int dx = taitol_rambanks[0x73fc]|(taitol_rambanks[0x73fd]<<8);
-				tilemap_set_scrollx(bg19_tilemap, 0, taitol_bg19_deltax - dx);
-				break;
-			}
-			case 0xe:
-			{
-				int dy = taitol_rambanks[0x73fe];
-				tilemap_set_scrolly(bg19_tilemap, 0, -dy);
-				break;
-			}
-		}
+		/* scroll, handled in vh-screenrefresh */
 	}
+#endif
 }
 
 
@@ -253,37 +239,86 @@ void taitol_obj1b_m(int offset)
 
 ***************************************************************************/
 
+/*
+	Sprite format:
+	00: xxxxxxxx tile number (low)
+	01: xxxxxxxx tile number (high)
+	02: ----xxxx color
+	    ----x--- priority
+	03: -------x flip x
+	    ------x- flip y
+	04: xxxxxxxx x position (low)
+	05: -------x x position (high)
+	06: xxxxxxxx y position
+	07: xxxxxxxx unknown / ignored? Seems just garbage in many cases, e.g
+	             plgirs2 bullets and raimais big bosses.
+*/
+
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	spriteram = taitol_rambanks + 0x7000;
-	spriteram_size = 0x3f0;
-
-	for (offs = spriteram_size-8;offs >= 0;offs -= 8)
+	/* at spriteram + 0x3f0 and 03f8 are the tilemap control registers;
+		spriteram + 0x3e8 seems to be unused
+	*/
+	for (offs = 0;offs < SPRITERAM_SIZE-3*8;offs += 8)
 	{
 		int code,color,sx,sy,flipx,flipy;
 
-		color = spriteram[offs + 2] & 0x0f;
-		code = spriteram[offs] | (spriteram[offs + 1] << 8);
-		sx = spriteram[offs + 4] | (spriteram[offs + 5] << 8);
-		sy = spriteram[offs + 6] | (spriteram[offs + 7] << 8);
-		flipx = spriteram[offs + 3] & 0x01;
-		flipy = spriteram[offs + 3] & 0x02;
+		color = buffered_spriteram[offs + 2] & 0x0f;
+		code = buffered_spriteram[offs] | (buffered_spriteram[offs + 1] << 8);
 
-		drawgfx(bitmap,Machine->gfx[1],
+		code |= (horshoes_gfxbank & 0x03) << 10;
+
+		sx = buffered_spriteram[offs + 4] | ((buffered_spriteram[offs + 5] & 1) << 8);
+		sy = buffered_spriteram[offs + 6];
+		if (sx >= 320) sx -= 512;
+		flipx = buffered_spriteram[offs + 3] & 0x01;
+		flipy = buffered_spriteram[offs + 3] & 0x02;
+
+		if (flipscreen)
+		{
+			sx = 304 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		pdrawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				(color & 0x08) ? 0xaa : 0x00);
 	}
 }
 
 
 void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	int dx,dy;
+
+
+	/* tilemap bug? If I do this just in vh_start(), it won't work */
+	tilemap_set_scrollx(ch1a_tilemap,0,0);	/* won't change at run time */
+
+	dx = taitol_rambanks[0x73f4]|(taitol_rambanks[0x73f5]<<8);
+	if (flipscreen)
+		dx = ((dx & 0xfffc) | ((dx - 3) & 0x0003)) ^ 0xf;
+	dy = taitol_rambanks[0x73f6];
+	tilemap_set_scrollx(bg18_tilemap,0,-dx);
+	tilemap_set_scrolly(bg18_tilemap,0,-dy);
+
+	dx = taitol_rambanks[0x73fc]|(taitol_rambanks[0x73fd]<<8);
+	if (flipscreen)
+		dx = ((dx & 0xfffc) | ((dx - 3) & 0x0003)) ^ 0xf;
+	dy = taitol_rambanks[0x73fe];
+	tilemap_set_scrollx(bg19_tilemap,0,-dx);
+	tilemap_set_scrolly(bg19_tilemap,0,-dy);
+
+
 	tilemap_update(ALL_TILEMAPS);
 
 	if (palette_recalc())
@@ -291,9 +326,29 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg19_tilemap,0);
-	tilemap_draw(bitmap,bg18_tilemap,0);
-	tilemap_draw(bitmap,ch1a_tilemap,0);
+	if (cur_ctrl & 0x20)	/* display enable */
+	{
+		fillbitmap(priority_bitmap,0,NULL);
 
-	draw_sprites(bitmap);
+		tilemap_draw(bitmap,bg19_tilemap,0);
+
+		if (cur_ctrl & 0x08)	/* sprites always over BG1 */
+			tilemap_draw(bitmap,bg18_tilemap,0);
+		else					/* split priority */
+			tilemap_draw(bitmap,bg18_tilemap,1<<16);
+		draw_sprites(bitmap);
+
+		tilemap_draw(bitmap,ch1a_tilemap,0);
+	}
+	else
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+}
+
+
+
+void taitol_eof_callback(void)
+{
+	unsigned char *spriteram = taitol_rambanks + 0x7000;
+
+	memcpy(buffered_spriteram,spriteram,SPRITERAM_SIZE);
 }

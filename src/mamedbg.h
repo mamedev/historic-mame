@@ -3,28 +3,48 @@
 
 #include "mame.h"
 
-#ifndef DECL_SPEC
-#define DECL_SPEC
-#endif
+#define DEBUGGER_TOTAL_COLORS 16
 
-#ifdef MAME_DEBUG
+/* If this flag is set, a CPU core should call MAME_Debug from it's execution loop */
+extern int mame_debug;
 
-#define COLOR_TITLE         YELLOW
-#define COLOR_FRAME 		LIGHTCYAN
-#define COLOR_REGS			WHITE
-#define COLOR_DASM          WHITE
-#define COLOR_MEM1          WHITE
-#define COLOR_MEM2          WHITE
-#define COLOR_CMDS			WHITE
-#define COLOR_BRK_EXEC		YELLOW
-#define COLOR_BRK_DATA		(YELLOW+BLUE*16)
-#define COLOR_BRK_REGS		(YELLOW+BLUE*16)
-#define COLOR_ERROR         (YELLOW+RED*16)
-#define COLOR_HELP			(WHITE+BLUE*16)
-#define COLOR_PROMPT        CYAN
-#define COLOR_CHANGES       LIGHTCYAN
-#define COLOR_PC            (WHITE+BLUE*16) /* MB 980103 */
-#define COLOR_CURSOR		(WHITE+RED*16)	/* MB 980103 */
+#ifdef  MAME_DEBUG
+
+enum {
+	DBG_BLACK,
+	DBG_BLUE,
+	DBG_GREEN,
+	DBG_CYAN,
+	DBG_RED,
+	DBG_MAGENTA,
+	DBG_BROWN,
+	DBG_LIGHTGRAY,
+	DBG_GRAY,
+	DBG_LIGHTBLUE,
+	DBG_LIGHTGREEN,
+	DBG_LIGHTCYAN,
+	DBG_LIGHTRED,
+	DBG_LIGHTMAGENTA,
+	DBG_YELLOW,
+	DBG_WHITE
+};
+
+#define COLOR_TITLE 		DBG_YELLOW
+#define COLOR_FRAME 		DBG_LIGHTCYAN
+#define COLOR_REGS			DBG_WHITE
+#define COLOR_DASM			DBG_WHITE
+#define COLOR_MEM1			DBG_WHITE
+#define COLOR_MEM2			DBG_WHITE
+#define COLOR_CMDS			DBG_WHITE
+#define COLOR_BRK_EXEC		DBG_YELLOW
+#define COLOR_BRK_DATA		(DBG_YELLOW+DBG_BLUE*16)
+#define COLOR_BRK_REGS		(DBG_YELLOW+DBG_BLUE*16)
+#define COLOR_ERROR 		(DBG_YELLOW+DBG_RED*16)
+#define COLOR_HELP			(DBG_WHITE+DBG_BLUE*16)
+#define COLOR_PROMPT		DBG_CYAN
+#define COLOR_CHANGES		DBG_LIGHTCYAN
+#define COLOR_PC			(DBG_WHITE+DBG_BLUE*16) /* MB 980103 */
+#define COLOR_CURSOR		(DBG_WHITE+DBG_RED*16)	/* MB 980103 */
 
 /***************************************************************************
  *
@@ -74,17 +94,16 @@ enum {
  * contains a literal hex string for that address.
  * Later it could also return a symbol for that address and access.
  ***************************************************************************/
-extern const char *set_ea_info( int what, unsigned address, int size, int access );
+extern const char *set_ea_info( int what, unsigned address, int size, int acc );
 
 /* Startup and shutdown functions; called from cpu_run */
 extern void mame_debug_init(void);
 extern void mame_debug_exit(void);
 
-/* If this flag is set, a CPU core should call MAME_Debug from it's execution loop */
-extern int mame_debug;
-
 /* This is the main entry into the mame debugger */
 extern void MAME_Debug(void);
+
+extern int debug_trace_delay;	/* set to 0 to force a screen update */
 
 /***************************************************************************
  * Convenience macro for the CPU cores, this is defined to empty
@@ -93,10 +112,31 @@ extern void MAME_Debug(void);
  ***************************************************************************/
 #define CALL_MAME_DEBUG if( mame_debug ) MAME_Debug()
 
-#else   /* MAME_DEBUG */
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif
+
+#ifndef TRUE
+#define TRUE    1
+#endif
+
+#ifndef FALSE
+#define FALSE   0
+#endif
+
+#ifndef INVALID
+#define INVALID 0xffffffff
+#endif
+
+
+extern UINT8 debugger_palette[DEBUGGER_TOTAL_COLORS*3];
+struct GfxElement *build_debugger_font(void);
+void dbg_put_screen_char (int ch, int attr, int x, int y);
+
+#else	/* MAME_DEBUG */
 
 #define CALL_MAME_DEBUG
 
 #endif  /* !MAME_DEBUG */
 
-#endif /* _MAMEDBG_H */
+#endif

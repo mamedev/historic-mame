@@ -1682,13 +1682,13 @@ static struct MachineDriver machine_driver_nomcu =
 	{
 		{
 			CPU_Z80,
-			8000000/2,      /* 4 Mhz */
+			8000000/2,      /* 4 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,      /* 3 Mhz */
+			6000000/2,      /* 3 MHz */
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts: */
 			/* - no interrupts synced with vblank */
@@ -1736,13 +1736,13 @@ static struct MachineDriver machine_driver_mcu =
 	{
 		{
 			CPU_Z80,
-			8000000/2,      /* 4 Mhz */
+			8000000/2,      /* 4 MHz */
 			mcu_readmem,mcu_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,      /* 3 Mhz */
+			6000000/2,      /* 3 MHz */
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts: */
 			/* - no interrupts synced with vblank */

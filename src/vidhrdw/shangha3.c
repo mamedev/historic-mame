@@ -109,9 +109,9 @@ WRITE_HANDLER( shangha3_paletteram_w )
 
 	WRITE_WORD(&paletteram[offset],newword);
 
-	r = (data >> 11) & 0x1f;
-	g = (data >>  6) & 0x1f;
-	b = (data >>  1) & 0x1f;
+	r = (newword >> 11) & 0x1f;
+	g = (newword >>  6) & 0x1f;
+	b = (newword >>  1) & 0x1f;
 
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);

@@ -469,7 +469,7 @@ static struct MachineDriver machine_driver_zaccaria =
 	{
 		{
 			CPU_Z80,
-			3000000,    /* 3 Mhz ????? */
+			3000000,    /* 3 MHz ????? */
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},

@@ -19,7 +19,7 @@ extern struct MSM5205interface irem_msm5205_interface;
 #define IREM_AUDIO_CPU										\
 	{														\
 		CPU_M6803 | CPU_AUDIO_CPU,							\
-		6000000/4,	/* ??? */								\
+		3579545/4,											\
 		irem_sound_readmem,irem_sound_writemem,				\
 		irem_sound_readport,irem_sound_writeport,			\
 		0,0													\

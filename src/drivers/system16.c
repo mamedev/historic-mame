@@ -297,7 +297,7 @@ void aurail_decode_opcode2(unsigned char *dest,unsigned char *source,int size);
 
 /***************************************************************************/
 
-#define MACHINE_DRIVER( GAMENAME,READMEM,WRITEMEM,INITMACHINE,GFXSIZE) \
+#define MACHINE_DRIVER( GAMENAME,READMEM,WRITEMEM,INITMACHINE) \
 static struct MachineDriver GAMENAME = \
 { \
 	{ \
@@ -318,7 +318,7 @@ static struct MachineDriver GAMENAME = \
 	1, \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	GFXSIZE, \
+	gfxdecodeinfo, \
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
 	0, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
@@ -335,7 +335,7 @@ static struct MachineDriver GAMENAME = \
 	} \
 };
 
-#define MACHINE_DRIVER_7759( GAMENAME,READMEM,WRITEMEM,INITMACHINE,GFXSIZE, UPD7759INTF ) \
+#define MACHINE_DRIVER_7759( GAMENAME,READMEM,WRITEMEM,INITMACHINE, UPD7759INTF ) \
 static struct MachineDriver GAMENAME = \
 { \
 	{ \
@@ -356,7 +356,7 @@ static struct MachineDriver GAMENAME = \
 	1, \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	GFXSIZE, \
+	gfxdecodeinfo, \
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
 	0, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
@@ -377,7 +377,7 @@ static struct MachineDriver GAMENAME = \
 };
 
 
-#define MACHINE_DRIVER_7751( GAMENAME,READMEM,WRITEMEM,INITMACHINE,GFXSIZE ) \
+#define MACHINE_DRIVER_7751( GAMENAME,READMEM,WRITEMEM,INITMACHINE ) \
 static struct MachineDriver GAMENAME = \
 { \
 	{ \
@@ -395,7 +395,7 @@ static struct MachineDriver GAMENAME = \
 		}, \
 		{ \
 			CPU_N7751 | CPU_AUDIO_CPU, \
-			6000000/15,        /* 6Mhz crystal */ \
+			6000000/15,        /* 6MHz crystal */ \
 			readmem_7751,writemem_7751,readport_7751,writeport_7751, \
 			ignore_interrupt,1 \
 		} \
@@ -404,7 +404,7 @@ static struct MachineDriver GAMENAME = \
 	1, \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	GFXSIZE, \
+	gfxdecodeinfo, \
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
 	0, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
@@ -426,7 +426,7 @@ static struct MachineDriver GAMENAME = \
 };
 
 
-#define MACHINE_DRIVER_18( GAMENAME,READMEM,WRITEMEM,INITMACHINE,GFXSIZE) \
+#define MACHINE_DRIVER_18( GAMENAME,READMEM,WRITEMEM,INITMACHINE) \
 static struct MachineDriver GAMENAME = \
 { \
 	{ \
@@ -447,7 +447,7 @@ static struct MachineDriver GAMENAME = \
 	1, \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	GFXSIZE, \
+	gfxdecodeinfo, \
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
 	0, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
@@ -744,7 +744,7 @@ static struct YM2612interface ym3438_interface =
 static struct YM2203interface ym2203_interface =
 {
 	1,	/* 1 chips */
-	4096000,	/* 3.58 MHZ ? */
+	4096000,	/* 3.58 MHz ? */
 	{ YM2203_VOL(50,50) },
 	{ 0 },
 	{ 0 },
@@ -756,7 +756,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM2203interface ym2203_interface2 =
 {
 	3,	/* 1 chips */
-	4096000,	/* 3.58 MHZ ? */
+	4096000,	/* 3.58 MHz ? */
 	{ YM2203_VOL(50,50),YM2203_VOL(50,50),YM2203_VOL(50,50) },
 	{ 0 },
 	{ 0 },
@@ -824,7 +824,7 @@ static WRITE_HANDLER( sound_command_nmi_w ){
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	4096000,	/* 3.58 MHZ ? */
+	4096000,	/* 3.58 MHz ? */
 	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
@@ -834,71 +834,20 @@ static struct YM2151interface ym2151_interface =
 
 /***************************************************************************/
 
-static struct GfxLayout charlayout1 =
+static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 chars */
-	8192,	/* 8192 chars */
-	3,	/* 3 bits per pixel */
-	{ 0x20000*8, 0x10000*8, 0 },
-		{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
+	8*8
 };
 
-static struct GfxLayout charlayout2 =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	8,8,	/* 8*8 chars */
-	16384,	/* 16384 chars */
-	3,	/* 3 bits per pixel */
-	{ 0x40000*8, 0x20000*8, 0 },
-		{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
-};
-
-static struct GfxLayout charlayout4 =
-{
-	8,8,	/* 8*8 chars */
-	32768,	/* 32768 chars */
-	3,	/* 3 bits per pixel */
-	{ 0x80000*8, 0x40000*8, 0 },
-		{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
-};
-
-static struct GfxLayout charlayout8 =
-{
-	8,8,	/* 8*8 chars */
-	4096,	/* 4096 chars */
-	3,	/* 3 bits per pixel */
-	{ 0x10000*8, 0x08000*8, 0 },
-		{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfx1[] =
-{
-	{ REGION_GFX1, 0x00000, &charlayout1,	0, 256 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo gfx2[] =
-{
-	{ REGION_GFX1, 0x00000, &charlayout2,	0, 256 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo gfx4[] =
-{
-	{ REGION_GFX1, 0x00000, &charlayout4,	0, 256 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo gfx8[] =
-{
-	{ REGION_GFX1, 0x00000, &charlayout8,	0, 256 },
+	{ REGION_GFX1, 0, &charlayout,	0, 256 },
 	{ -1 } /* end of array */
 };
 
@@ -1415,36 +1364,36 @@ static void patch_z80code( int offset, int data ){
 	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) ) \
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) ) \
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 5/3 6/4") \
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit 4/3") \
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 5/3 6/4" ) \
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit 4/3" ) \
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit 2/3") \
-	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit 4/5") \
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 5/6") \
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit 2/3" ) \
+	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit 4/5" ) \
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 5/6" ) \
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) ) \
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) ) \
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) ) \
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) ) \
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) ) \
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) ) \
-	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1") \
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1" ) \
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) ) \
 	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) ) \
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) ) \
 	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 5/3 6/4") \
-	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit 4/3") \
+	PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 5/3 6/4" ) \
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit 4/3" ) \
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(    0x10, "1 Coin/1 Credit 2/3") \
-	PORT_DIPSETTING(    0x20, "1 Coin/1 Credit 4/5") \
-	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 5/6") \
+	PORT_DIPSETTING(    0x10, "1 Coin/1 Credit 2/3" ) \
+	PORT_DIPSETTING(    0x20, "1 Coin/1 Credit 4/5" ) \
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 5/6" ) \
 	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) ) \
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) ) \
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) ) \
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) ) \
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) ) \
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) ) \
-	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1" )
 
 
 
@@ -1625,7 +1574,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( machine_driver_alexkidd, \
-	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine,gfx8 )
+	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -1872,7 +1821,7 @@ static struct UPD7759_interface aliensyn_upd7759_interface =
 /****************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_aliensyn, \
-	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, gfx1, aliensyn_upd7759_interface )
+	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, aliensyn_upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -2072,8 +2021,8 @@ INPUT_PORTS_START( altbeast )
 
 PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
-	PORT_DIPSETTING(    0x01, "1 to start, 1 to continue")
-	PORT_DIPSETTING(    0x00, "2 to start, 1 to continue")
+	PORT_DIPSETTING(    0x01, "1 to start, 1 to continue" )
+	PORT_DIPSETTING(    0x00, "2 to start, 1 to continue" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2097,10 +2046,10 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_altbeast, \
-	altbeast_readmem,altbeast_writemem,altbeast_init_machine, gfx2,upd7759_interface )
+	altbeast_readmem,altbeast_writemem,altbeast_init_machine,upd7759_interface )
 
 MACHINE_DRIVER_7759( machine_driver_altbeas2, \
-	altbeast_readmem,altbeast_writemem,altbeas2_init_machine, gfx2,upd7759_interface )
+	altbeast_readmem,altbeast_writemem,altbeas2_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys18
@@ -2437,7 +2386,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_18( machine_driver_astorm, \
-	astorm_readmem,astorm_writemem,astorm_init_machine, gfx4 )
+	astorm_readmem,astorm_writemem,astorm_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -2635,7 +2584,7 @@ static struct MachineDriver machine_driver_atomicp =
 	1,
 	atomicp_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	gfx8,
+	gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2869,7 +2818,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_aurail, \
-	aurail_readmem,aurail_writemem,aurail_init_machine, gfx4,upd7759_interface )
+	aurail_readmem,aurail_writemem,aurail_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -3105,7 +3054,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_bayroute, \
-	bayroute_readmem,bayroute_writemem,bayroute_init_machine, gfx1,upd7759_interface )
+	bayroute_readmem,bayroute_writemem,bayroute_init_machine,upd7759_interface )
 
 /***************************************************************************
 
@@ -3356,7 +3305,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( machine_driver_bodyslam, \
-	bodyslam_readmem,bodyslam_writemem,bodyslam_init_machine, gfx8 )
+	bodyslam_readmem,bodyslam_writemem,bodyslam_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -3536,7 +3485,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_dduxbl, \
-	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine, gfx1)
+	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine)
 
 /***************************************************************************/
 // sys16B
@@ -3707,7 +3656,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_eswat, \
-	eswat_readmem,eswat_writemem,eswat_init_machine, gfx4,upd7759_interface )
+	eswat_readmem,eswat_writemem,eswat_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16A
@@ -3948,9 +3897,9 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_fantzono, \
-	fantzono_readmem,fantzono_writemem,fantzono_init_machine, gfx8 )
+	fantzono_readmem,fantzono_writemem,fantzono_init_machine )
 MACHINE_DRIVER( machine_driver_fantzone, \
-	fantzone_readmem,fantzone_writemem,fantzone_init_machine, gfx8 )
+	fantzone_readmem,fantzone_writemem,fantzone_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -4145,7 +4094,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_fpoint, \
-	fpoint_readmem,fpoint_writemem,fpoint_init_machine, gfx1)
+	fpoint_readmem,fpoint_writemem,fpoint_init_machine)
 
 /***************************************************************************/
 // sys16B
@@ -4354,8 +4303,8 @@ INPUT_PORTS_START( goldnaxe )
 
 PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
-	PORT_DIPSETTING(    0x01, "1 to start, 1 to continue")
-	PORT_DIPSETTING(    0x00, "2 to start, 1 to continue")
+	PORT_DIPSETTING(    0x01, "1 to start, 1 to continue" )
+	PORT_DIPSETTING(    0x00, "2 to start, 1 to continue" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -4380,7 +4329,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_goldnaxe, \
-	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine, gfx2,upd7759_interface )
+	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -4573,7 +4522,7 @@ static void goldnaxa_init_machine( void ){
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_goldnaxa, \
-	goldnaxa_readmem,goldnaxa_writemem,goldnaxa_init_machine, gfx2,upd7759_interface )
+	goldnaxa_readmem,goldnaxa_writemem,goldnaxa_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -4799,7 +4748,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_hwchamp, \
-	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine, gfx4 ,upd7759_interface)
+	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine ,upd7759_interface)
 
 /***************************************************************************/
 // pre16
@@ -4812,13 +4761,10 @@ ROM_START( mjleague )
 	ROM_LOAD_EVEN( "epra7406.11b", 0x020000, 0x8000, 0xbb743639 )
 	ROM_LOAD_ODD ( "epra7403.08b", 0x020000, 0x8000, 0xd86250cf )	// Fails memory test. Bad rom?
 
-	ROM_REGION( 0x30000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr-7051.09a", 0x00000, 0x08000, 0x10ca255a )
-	ROM_RELOAD(               0x08000, 0x08000 )
-	ROM_LOAD( "epr-7052.10a", 0x10000, 0x08000, 0x2550db0e )
-	ROM_RELOAD(               0x18000, 0x08000 )
-	ROM_LOAD( "epr-7053.11a", 0x20000, 0x08000, 0x5bfea038 )
-	ROM_RELOAD(               0x28000, 0x08000 )
+	ROM_LOAD( "epr-7052.10a", 0x08000, 0x08000, 0x2550db0e )
+	ROM_LOAD( "epr-7053.11a", 0x10000, 0x08000, 0x5bfea038 )
 
 	ROM_REGION( 0x050000*2, REGION_GFX2 ) /* sprites */
 	ROM_LOAD( "epr-7055.05a", 0x000000, 0x008000, 0x1fb860bd )
@@ -5047,7 +4993,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( machine_driver_mjleague, \
-	mjleague_readmem,mjleague_writemem,mjleague_init_machine, gfx1)
+	mjleague_readmem,mjleague_writemem,mjleague_init_machine)
 
 /***************************************************************************/
 // sys18
@@ -5356,7 +5302,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_18( machine_driver_moonwalk, \
-	moonwalk_readmem,moonwalk_writemem,moonwalk_init_machine, gfx4 )
+	moonwalk_readmem,moonwalk_writemem,moonwalk_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -5392,7 +5338,7 @@ ROM_START( passht4b )
 	ROM_LOAD_ODD ( "pas4p.4", 0x000000, 0x10000, 0xe759e831 )
 
 	ROM_REGION( 0x30000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "pas4p.11",  0x00000, 0x10000, 0xda20fbc9 )
+	ROM_LOAD( "pas4p.11", 0x00000, 0x10000, 0xda20fbc9 )
 	ROM_LOAD( "pas4p.12", 0x10000, 0x10000, 0xbebb9211 )
 	ROM_LOAD( "pas4p.13", 0x20000, 0x10000, 0xe37506c3 )
 
@@ -5750,10 +5696,10 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_passsht, \
-	passsht_readmem,passsht_writemem,passsht_init_machine, gfx1 ,upd7759_interface)
+	passsht_readmem,passsht_writemem,passsht_init_machine ,upd7759_interface)
 
 MACHINE_DRIVER_7759( machine_driver_passht4b, \
-	passht4b_readmem,passht4b_writemem,passht4b_init_machine, gfx1 ,upd7759_interface)
+	passht4b_readmem,passht4b_writemem,passht4b_init_machine ,upd7759_interface)
 
 /***************************************************************************/
 // pre16
@@ -5994,7 +5940,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( machine_driver_quartet, \
-	quartet_readmem,quartet_writemem,quartet_init_machine, gfx8 )
+	quartet_readmem,quartet_writemem,quartet_init_machine )
 
 /***************************************************************************/
 // pre16
@@ -6148,7 +6094,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( machine_driver_quartet2, \
-	quartet2_readmem,quartet2_writemem,quartet2_init_machine, gfx8 )
+	quartet2_readmem,quartet2_writemem,quartet2_init_machine )
 
 /***************************************************************************
 
@@ -6299,7 +6245,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_riotcity, \
-	riotcity_readmem,riotcity_writemem,riotcity_init_machine, gfx4,upd7759_interface )
+	riotcity_readmem,riotcity_writemem,riotcity_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -6515,7 +6461,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_sdi, \
-	sdi_readmem,sdi_writemem,sdi_init_machine, gfx1)
+	sdi_readmem,sdi_writemem,sdi_init_machine)
 
 /***************************************************************************/
 // sys18
@@ -6693,7 +6639,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_18( machine_driver_shdancer, \
-	shdancer_readmem,shdancer_writemem,shdancer_init_machine, gfx4 )
+	shdancer_readmem,shdancer_writemem,shdancer_init_machine )
 
 /***************************************************************************/
 
@@ -6867,7 +6813,7 @@ static void init_shdancbl( void ){
 /***************************************************************************/
 
 MACHINE_DRIVER_18( machine_driver_shdancbl, \
-	shdancbl_readmem,shdancbl_writemem,shdancbl_init_machine, gfx4 )
+	shdancbl_readmem,shdancbl_writemem,shdancbl_init_machine )
 
 /***************************************************************************/
 // sys18
@@ -6928,7 +6874,7 @@ static void init_shdancrj( void ){
 /***************************************************************************/
 
 MACHINE_DRIVER_18( machine_driver_shdancrj, \
-	shdancer_readmem,shdancer_writemem,shdancrj_init_machine, gfx4 )
+	shdancer_readmem,shdancer_writemem,shdancrj_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -7097,7 +7043,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_shinobi, \
-	shinobi_readmem,shinobi_writemem,shinobi_init_machine, gfx1,upd7759_interface )
+	shinobi_readmem,shinobi_writemem,shinobi_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16A
@@ -7240,7 +7186,7 @@ static void shinobl_init_machine( void ){
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( machine_driver_shinobl, \
-	shinobl_readmem,shinobl_writemem,shinobl_init_machine, gfx1)
+	shinobl_readmem,shinobl_writemem,shinobl_init_machine)
 
 /***************************************************************************/
 
@@ -7411,7 +7357,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_tetris, \
-	tetris_readmem,tetris_writemem,tetris_init_machine, gfx1 )
+	tetris_readmem,tetris_writemem,tetris_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -7580,7 +7526,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_timscanr, \
-	timscanr_readmem,timscanr_writemem,timscanr_init_machine, gfx8,upd7759_interface )
+	timscanr_readmem,timscanr_writemem,timscanr_init_machine,upd7759_interface )
 
 /***************************************************************************/
 
@@ -7715,7 +7661,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_toryumon, \
-	toryumon_readmem,toryumon_writemem,toryumon_init_machine, gfx4,upd7759_interface )
+	toryumon_readmem,toryumon_writemem,toryumon_init_machine,upd7759_interface )
 
 /***************************************************************************/
 
@@ -7882,10 +7828,10 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_tturf, \
-	tturf_readmem,tturf_writemem,tturf_init_machine, gfx1,upd7759_interface )
+	tturf_readmem,tturf_writemem,tturf_init_machine,upd7759_interface )
 
 MACHINE_DRIVER_7759( machine_driver_tturfu, \
-	tturf_readmem,tturf_writemem,tturfu_init_machine, gfx1,upd7759_interface )
+	tturf_readmem,tturf_writemem,tturfu_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -8010,7 +7956,7 @@ static void init_tturfbl(void)
 /***************************************************************************/
 // sound ??
 MACHINE_DRIVER_7759( machine_driver_tturfbl, \
-	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine, gfx1,upd7759_interface )
+	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine,upd7759_interface )
 
 /***************************************************************************/
 // sys16B
@@ -8166,7 +8112,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_wb3, \
-	wb3_readmem,wb3_writemem,wb3_init_machine, gfx1 )
+	wb3_readmem,wb3_writemem,wb3_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -8290,7 +8236,7 @@ static void init_wb3bl(void)
 /***************************************************************************/
 
 MACHINE_DRIVER( machine_driver_wb3bl, \
-	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine, gfx1 )
+	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine )
 
 /***************************************************************************/
 // sys16B
@@ -8438,7 +8384,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( machine_driver_wrestwar, \
-	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine, gfx2,upd7759_interface )
+	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine,upd7759_interface )
 
 
 /***************************************************************************/
@@ -8784,7 +8730,7 @@ static struct MachineDriver machine_driver_hangon =
 	1,
 	hangon_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	gfx8,
+	gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -9166,7 +9112,7 @@ static struct MachineDriver machine_driver_sharrier =
 	1,
 	harrier_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	gfx8,
+	gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -9550,7 +9496,7 @@ static struct MachineDriver machine_driver_shangon =
 	1,
 	shangon_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	gfx8,
+	gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -10222,7 +10168,7 @@ static struct MachineDriver GAMENAME = \
 	4, /* needed to sync processors */ \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	gfx1, \
+	gfxdecodeinfo, \
 	4096*ShadowColorsMultiplier,4096*ShadowColorsMultiplier, \
 	0, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK, \
@@ -10875,7 +10821,7 @@ static struct MachineDriver machine_driver_enduror =
 	1,
 	enduror_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	gfx8,
+	gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -10922,7 +10868,7 @@ static struct MachineDriver machine_driver_endurob2 =
 	2,
 	enduror_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	gfx8,
+	gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -10977,7 +10923,7 @@ INPUT_PORTS_START( s16dummy )
 INPUT_PORTS_END
 
 MACHINE_DRIVER( machine_driver_s16dummy, \
-	sys16_dummy_readmem,sys16_dummy_writemem,sys16_dummy_init_machine, gfx8)
+	sys16_dummy_readmem,sys16_dummy_writemem,sys16_dummy_init_machine)
 
 /*****************************************************************************/
 // Ace Attacker
@@ -11772,106 +11718,106 @@ ROM_END
 
 /***************************************************************************/
 
-GAMEX(1986, alexkidd, 0,        alexkidd, alexkidd, alexkidd, ROT0,         "Sega",    "Alex Kidd (set 1)", GAME_NOT_WORKING)
-GAME( 1986, alexkida, alexkidd, alexkidd, alexkidd, alexkidd, ROT0,         "Sega",    "Alex Kidd (set 2)")
-GAME( 1987, aliensyn, 0,        aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (set 1)")
-GAMEX(1987, aliensya, aliensyn, aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (set 2)", GAME_NOT_WORKING)
-GAMEX(1987, aliensyj, aliensyn, aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (Japan)", GAME_NOT_WORKING)
-GAMEX(1987, aliensyb, aliensyn, aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (set 3)", GAME_NOT_WORKING)
-GAME( 1988, altbeast, 0,        altbeast, altbeast, altbeast, ROT0,         "Sega",    "Altered Beast (Version 1)")
-GAMEX(1988, jyuohki,  altbeast, altbeast, altbeast, altbeast, ROT0,         "Sega",    "Jyuohki (Japan)",           GAME_NOT_WORKING)
-GAMEX(1988, altbeas2, altbeast, altbeas2, altbeast, altbeast, ROT0,         "Sega",    "Altered Beast (Version 2)", GAME_NO_SOUND)
-GAMEX(1990, astorm,   0,        astorm,   astorm,   astorm,   ROT0_16BIT,   "Sega",    "Alien Storm", GAME_NOT_WORKING)
-GAMEX(1990, astorm2p, astorm,   astorm,   astorm,   astorm,   ROT0_16BIT,   "Sega",    "Alien Storm (2 Player)", GAME_NOT_WORKING)
-GAME( 1990, astormbl, astorm,   astorm,   astorm,   astorm,   ROT0_16BIT,   "bootleg", "Alien Storm (bootleg)")
-GAMEX(1990, atomicp,  0,        atomicp,  atomicp,  atomicp,  ROT0,         "Philko",  "Atomic Point", GAME_NO_SOUND)
-GAME( 1990, aurail,   0,        aurail,   aurail,   aurail,   ROT0,         "Sega / Westone", "Aurail (set 1)")
-GAME( 1990, auraila,  aurail,   aurail,   aurail,   auraila,  ROT0,         "Sega / Westone", "Aurail (set 2)")
-GAME( 1989, bayroute, 0,        bayroute, bayroute, bayroute, ROT0,         "Sunsoft / Sega", "Bay Route (set 1)")
-GAMEX(1989, bayrouta, bayroute, bayroute, bayroute, bayrouta, ROT0,         "Sunsoft / Sega", "Bay Route (set 2)", GAME_NOT_WORKING)
-GAMEX(1989, bayrtbl1, bayroute, bayroute, bayroute, bayrtbl1, ROT0,         "bootleg", "Bay Route (bootleg set 1)", GAME_NOT_WORKING)
-GAMEX(1989, bayrtbl2, bayroute, bayroute, bayroute, bayrtbl1, ROT0,         "bootleg", "Bay Route (bootleg set 2)", GAME_NOT_WORKING)
-GAME( 1986, bodyslam, 0,        bodyslam, bodyslam, bodyslam, ROT0,         "Sega",    "Body Slam")
-GAME( 1986, dumpmtmt, bodyslam, bodyslam, bodyslam, bodyslam, ROT0,         "Sega",    "Dump Matsumoto (Japan)")
-GAME( 1989, dduxbl,   0,        dduxbl,   dduxbl,   dduxbl,   ROT0,         "bootleg", "Dynamite Dux (bootleg)")
-GAMEX(1989, eswat,    0,        eswat,    eswat,    eswat,    ROT0,         "Sega",    "E-Swat", GAME_NOT_WORKING)
-GAME( 1989, eswatbl,  eswat,    eswat,    eswat,    eswat,    ROT0,         "bootleg", "E-Swat (bootleg)")
-GAME( 1986, fantzone, 0,        fantzone, fantzone, fantzone, ROT0,         "Sega",    "Fantasy Zone (Japan New Ver.)")
-GAME( 1986, fantzono, fantzone, fantzono, fantzone, fantzone, ROT0,         "Sega",    "Fantasy Zone (Old Ver.)")
-GAMEX(1989, fpoint,   0,        fpoint,   fpoint,   fpoint,   ROT0,         "Sega",    "Flash Point", GAME_NOT_WORKING)
-GAME( 1989, fpointbl, fpoint,   fpoint,   fpoint,   fpointbl, ROT0,         "bootleg", "Flash Point (bootleg)")
-GAME( 1989, goldnaxe, 0,        goldnaxe, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 1)")
-GAMEX(1989, goldnaxj, goldnaxe, goldnaxe, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 1, Japan)", GAME_NOT_WORKING)
-GAMEX(1989, goldnabl, goldnaxe, goldnaxe, goldnaxe, goldnabl, ROT0,         "bootleg", "Golden Axe (bootleg)", GAME_NOT_WORKING)
-GAME( 1989, goldnaxa, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 2)")
-GAMEX(1989, goldnaxb, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 2 317-0110)", GAME_NOT_WORKING)
-GAMEX(1989, goldnaxc, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 2 317-0122)", GAME_NOT_WORKING)
-GAME( 1987, hwchamp,  0,        hwchamp,  hwchamp,  hwchamp,  ROT0,         "Sega",    "Heavyweight Champ")
-GAME( 1985, mjleague, 0,        mjleague, mjleague, mjleague, ROT270,       "Sega",    "Major League")
-GAMEX(1990, moonwalk, 0,        moonwalk, moonwalk, moonwalk, ROT0,         "Sega",    "Moon Walker (Set 1)", GAME_NOT_WORKING)
-GAMEX(1990, moonwlka, moonwalk, moonwalk, moonwalk, moonwalk, ROT0,         "Sega",    "Moon Walker (Set 2)", GAME_NOT_WORKING)
-GAME( 1990, moonwlkb, moonwalk, moonwalk, moonwalk, moonwalk, ROT0,         "bootleg", "Moon Walker (bootleg)")
-GAMEX(????, passsht,  0,        passsht,  passsht,  passsht,  ROT270,       "Sega",    "Passing Shot (2 Players)", GAME_NOT_WORKING)
-GAME( ????, passshtb, passsht,  passsht,  passsht,  passsht,  ROT270,       "bootleg", "Passing Shot (2 Players) (bootleg)")
-GAMEX(????, passht4b, passsht,  passht4b, passht4b, passht4b, ROT270,       "bootleg", "Passing Shot (4 Players) (bootleg)", GAME_NO_SOUND)
-GAME( 1986, quartet,  0,        quartet,  quartet,  quartet,  ROT0,         "Sega",    "Quartet")
-GAME( 1986, quartetj, quartet,  quartet,  quartet,  quartet,  ROT0,         "Sega",    "Quartet (Japan)")
-GAME( 1986, quartet2, quartet,  quartet2, quartet2, quartet2, ROT0,         "Sega",    "Quartet II")
-GAME( 1991, riotcity, 0,        riotcity, riotcity, riotcity, ROT0,         "Sega / Westone", "Riot City")
-GAME( 1987, sdi,      0,        sdi,      sdi,      sdi,      ROT0,         "Sega",    "SDI - Strategic Defense Initiative")
-GAMEX(1987, sdioj,    sdi,      sdi,      sdi,      sdi,      ROT0,         "Sega",    "SDI - Strategic Defense Initiative (Japan)", GAME_NOT_WORKING)
-GAME( 1989, shdancer, 0,        shdancer, shdancer, shdancer, ROT0,         "Sega",    "Shadow Dancer (US)")
-GAMEX(1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0,         "bootleg", "Shadow Dancer (bootleg)", GAME_NOT_WORKING)
-GAME( 1989, shdancrj, shdancer, shdancrj, shdancer, shdancrj, ROT0,         "Sega",    "Shadow Dancer (Japan)")
-GAME( 1987, shinobi,  0,        shinobi,  shinobi,  shinobi,  ROT0,         "Sega",    "Shinobi (set 1)")
-GAMEX(1987, shinobib, shinobi,  shinobi,  shinobi,  shinobi,  ROT0,         "Sega",    "Shinobi (set 3)", GAME_NOT_WORKING)
-GAMEX(1987, shinobia, shinobi,  shinobl,  shinobi,  shinobi,  ROT0,         "Sega",    "Shinobi (set 2)", GAME_NOT_WORKING)
-GAME( 1987, shinobl,  shinobi,  shinobl,  shinobi,  shinobi,  ROT0,         "bootleg", "Shinobi (bootleg)")
-GAMEX(1988, tetris,   0,        tetris,   tetris,   tetris,   ROT0,         "Sega",    "Tetris (Sega Set 1)", GAME_NOT_WORKING)
-GAME( 1988, tetrisbl, tetris,   tetris,   tetris,   tetrisbl, ROT0,         "bootleg", "Tetris (Sega bootleg)")
-GAMEX(1988, tetrisa,  tetris,   tetris,   tetris,   tetrisbl, ROT0,         "Sega",    "Tetris (Sega Set 2)", GAME_NOT_WORKING)
-GAME( 1987, timscanr, 0,        timscanr, timscanr, timscanr, ROT270,       "Sega",    "Time Scanner")
-GAME (1994, toryumon, 0,        toryumon, toryumon, toryumon, ROT0,         "Sega",    "Toryumon")
-GAMEX(1989, tturf,    0,        tturf,    tturf,    tturf,    ROT0_16BIT,   "Sega / Sunsoft", "Tough Turf (Japan)", GAME_NO_SOUND)
-GAMEX(1989, tturfu,   tturf,    tturfu,   tturf,    tturf,    ROT0_16BIT,   "Sega / Sunsoft", "Tough Turf (US)", GAME_NO_SOUND)
+GAMEX(1986, alexkidd, 0,        alexkidd, alexkidd, alexkidd, ROT0,         "Sega",    "Alex Kidd (set 1)", GAME_NOT_WORKING )
+GAME( 1986, alexkida, alexkidd, alexkidd, alexkidd, alexkidd, ROT0,         "Sega",    "Alex Kidd (set 2)" )
+GAME( 1987, aliensyn, 0,        aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (set 1)" )
+GAMEX(1987, aliensya, aliensyn, aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (set 2)", GAME_NOT_WORKING )
+GAMEX(1987, aliensyj, aliensyn, aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (Japan)", GAME_NOT_WORKING )
+GAMEX(1987, aliensyb, aliensyn, aliensyn, aliensyn, aliensyn, ROT0,         "Sega",    "Alien Syndrome (set 3)", GAME_NOT_WORKING )
+GAME( 1988, altbeast, 0,        altbeast, altbeast, altbeast, ROT0,         "Sega",    "Altered Beast (Version 1)" )
+GAMEX(1988, jyuohki,  altbeast, altbeast, altbeast, altbeast, ROT0,         "Sega",    "Jyuohki (Japan)",           GAME_NOT_WORKING )
+GAMEX(1988, altbeas2, altbeast, altbeas2, altbeast, altbeast, ROT0,         "Sega",    "Altered Beast (Version 2)", GAME_NO_SOUND )
+GAMEX(1990, astorm,   0,        astorm,   astorm,   astorm,   ROT0_16BIT,   "Sega",    "Alien Storm", GAME_NOT_WORKING )
+GAMEX(1990, astorm2p, astorm,   astorm,   astorm,   astorm,   ROT0_16BIT,   "Sega",    "Alien Storm (2 Player)", GAME_NOT_WORKING )
+GAME( 1990, astormbl, astorm,   astorm,   astorm,   astorm,   ROT0_16BIT,   "bootleg", "Alien Storm (bootleg)" )
+GAMEX(1990, atomicp,  0,        atomicp,  atomicp,  atomicp,  ROT0,         "Philko",  "Atomic Point", GAME_NO_SOUND )
+GAME( 1990, aurail,   0,        aurail,   aurail,   aurail,   ROT0,         "Sega / Westone", "Aurail (set 1)" )
+GAME( 1990, auraila,  aurail,   aurail,   aurail,   auraila,  ROT0,         "Sega / Westone", "Aurail (set 2)" )
+GAME( 1989, bayroute, 0,        bayroute, bayroute, bayroute, ROT0,         "Sunsoft / Sega", "Bay Route (set 1)" )
+GAMEX(1989, bayrouta, bayroute, bayroute, bayroute, bayrouta, ROT0,         "Sunsoft / Sega", "Bay Route (set 2)", GAME_NOT_WORKING )
+GAMEX(1989, bayrtbl1, bayroute, bayroute, bayroute, bayrtbl1, ROT0,         "bootleg", "Bay Route (bootleg set 1)", GAME_NOT_WORKING )
+GAMEX(1989, bayrtbl2, bayroute, bayroute, bayroute, bayrtbl1, ROT0,         "bootleg", "Bay Route (bootleg set 2)", GAME_NOT_WORKING )
+GAME( 1986, bodyslam, 0,        bodyslam, bodyslam, bodyslam, ROT0,         "Sega",    "Body Slam" )
+GAME( 1986, dumpmtmt, bodyslam, bodyslam, bodyslam, bodyslam, ROT0,         "Sega",    "Dump Matsumoto (Japan)" )
+GAME( 1989, dduxbl,   0,        dduxbl,   dduxbl,   dduxbl,   ROT0,         "bootleg", "Dynamite Dux (bootleg)" )
+GAMEX(1989, eswat,    0,        eswat,    eswat,    eswat,    ROT0,         "Sega",    "E-Swat - Cyber Police", GAME_NOT_WORKING )
+GAME( 1989, eswatbl,  eswat,    eswat,    eswat,    eswat,    ROT0,         "bootleg", "E-Swat - Cyber Police (bootleg)" )
+GAME( 1986, fantzone, 0,        fantzone, fantzone, fantzone, ROT0,         "Sega",    "Fantasy Zone (Japan New Ver.)" )
+GAME( 1986, fantzono, fantzone, fantzono, fantzone, fantzone, ROT0,         "Sega",    "Fantasy Zone (Old Ver.)" )
+GAMEX(1989, fpoint,   0,        fpoint,   fpoint,   fpoint,   ROT0,         "Sega",    "Flash Point", GAME_NOT_WORKING )
+GAME( 1989, fpointbl, fpoint,   fpoint,   fpoint,   fpointbl, ROT0,         "bootleg", "Flash Point (bootleg)" )
+GAME( 1989, goldnaxe, 0,        goldnaxe, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 1)" )
+GAMEX(1989, goldnaxj, goldnaxe, goldnaxe, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 1, Japan)", GAME_NOT_WORKING )
+GAMEX(1989, goldnabl, goldnaxe, goldnaxe, goldnaxe, goldnabl, ROT0,         "bootleg", "Golden Axe (bootleg)", GAME_NOT_WORKING )
+GAME( 1989, goldnaxa, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 2)" )
+GAMEX(1989, goldnaxb, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 2 317-0110)", GAME_NOT_WORKING )
+GAMEX(1989, goldnaxc, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,         "Sega",    "Golden Axe (Version 2 317-0122)", GAME_NOT_WORKING )
+GAME( 1987, hwchamp,  0,        hwchamp,  hwchamp,  hwchamp,  ROT0,         "Sega",    "Heavyweight Champ" )
+GAME( 1985, mjleague, 0,        mjleague, mjleague, mjleague, ROT270,       "Sega",    "Major League" )
+GAMEX(1990, moonwalk, 0,        moonwalk, moonwalk, moonwalk, ROT0,         "Sega",    "Moon Walker (Set 1)", GAME_NOT_WORKING )
+GAMEX(1990, moonwlka, moonwalk, moonwalk, moonwalk, moonwalk, ROT0,         "Sega",    "Moon Walker (Set 2)", GAME_NOT_WORKING )
+GAME( 1990, moonwlkb, moonwalk, moonwalk, moonwalk, moonwalk, ROT0,         "bootleg", "Moon Walker (bootleg)" )
+GAMEX(????, passsht,  0,        passsht,  passsht,  passsht,  ROT270,       "Sega",    "Passing Shot (2 Players)", GAME_NOT_WORKING )
+GAME( ????, passshtb, passsht,  passsht,  passsht,  passsht,  ROT270,       "bootleg", "Passing Shot (2 Players) (bootleg)" )
+GAMEX(????, passht4b, passsht,  passht4b, passht4b, passht4b, ROT270,       "bootleg", "Passing Shot (4 Players) (bootleg)", GAME_NO_SOUND )
+GAME( 1986, quartet,  0,        quartet,  quartet,  quartet,  ROT0,         "Sega",    "Quartet" )
+GAME( 1986, quartetj, quartet,  quartet,  quartet,  quartet,  ROT0,         "Sega",    "Quartet (Japan)" )
+GAME( 1986, quartet2, quartet,  quartet2, quartet2, quartet2, ROT0,         "Sega",    "Quartet II" )
+GAME( 1991, riotcity, 0,        riotcity, riotcity, riotcity, ROT0,         "Sega / Westone", "Riot City" )
+GAME( 1987, sdi,      0,        sdi,      sdi,      sdi,      ROT0,         "Sega",    "SDI - Strategic Defense Initiative" )
+GAMEX(1987, sdioj,    sdi,      sdi,      sdi,      sdi,      ROT0,         "Sega",    "SDI - Strategic Defense Initiative (Japan)", GAME_NOT_WORKING )
+GAME( 1989, shdancer, 0,        shdancer, shdancer, shdancer, ROT0,         "Sega",    "Shadow Dancer (US)" )
+GAMEX(1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0,         "bootleg", "Shadow Dancer (bootleg)", GAME_NOT_WORKING )
+GAME( 1989, shdancrj, shdancer, shdancrj, shdancer, shdancrj, ROT0,         "Sega",    "Shadow Dancer (Japan)" )
+GAME( 1987, shinobi,  0,        shinobi,  shinobi,  shinobi,  ROT0,         "Sega",    "Shinobi (set 1)" )
+GAMEX(1987, shinobib, shinobi,  shinobi,  shinobi,  shinobi,  ROT0,         "Sega",    "Shinobi (set 3)", GAME_NOT_WORKING )
+GAMEX(1987, shinobia, shinobi,  shinobl,  shinobi,  shinobi,  ROT0,         "Sega",    "Shinobi (set 2)", GAME_NOT_WORKING )
+GAME( 1987, shinobl,  shinobi,  shinobl,  shinobi,  shinobi,  ROT0,         "bootleg", "Shinobi (bootleg)" )
+GAMEX(1988, tetris,   0,        tetris,   tetris,   tetris,   ROT0,         "Sega",    "Tetris (Sega Set 1)", GAME_NOT_WORKING )
+GAME( 1988, tetrisbl, tetris,   tetris,   tetris,   tetrisbl, ROT0,         "bootleg", "Tetris (Sega bootleg)" )
+GAMEX(1988, tetrisa,  tetris,   tetris,   tetris,   tetrisbl, ROT0,         "Sega",    "Tetris (Sega Set 2)", GAME_NOT_WORKING )
+GAME( 1987, timscanr, 0,        timscanr, timscanr, timscanr, ROT270,       "Sega",    "Time Scanner" )
+GAME (1994, toryumon, 0,        toryumon, toryumon, toryumon, ROT0,         "Sega",    "Toryumon" )
+GAMEX(1989, tturf,    0,        tturf,    tturf,    tturf,    ROT0_16BIT,   "Sega / Sunsoft", "Tough Turf (Japan)", GAME_NO_SOUND )
+GAMEX(1989, tturfu,   tturf,    tturfu,   tturf,    tturf,    ROT0_16BIT,   "Sega / Sunsoft", "Tough Turf (US)", GAME_NO_SOUND )
 GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0_16BIT,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_SOUND)
-GAME( 1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,         "Sega / Westone", "Wonder Boy III - Monster Lair (set 1)")
-GAMEX(1988, wb3a,     wb3,      wb3,      wb3,      wb3,      ROT0,         "Sega / Westone", "Wonder Boy III - Monster Lair (set 2)", GAME_NOT_WORKING)
-GAME( 1988, wb3bl,    wb3,      wb3bl,    wb3,      wb3bl,    ROT0,         "bootleg", "Wonder Boy III - Monster Lair (bootleg)")
-GAME( 1989, wrestwar, 0,        wrestwar, wrestwar, wrestwar, ROT270_16BIT, "Sega",    "Wrestle War")
+GAME( 1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,         "Sega / Westone", "Wonder Boy III - Monster Lair (set 1)" )
+GAMEX(1988, wb3a,     wb3,      wb3,      wb3,      wb3,      ROT0,         "Sega / Westone", "Wonder Boy III - Monster Lair (set 2)", GAME_NOT_WORKING )
+GAME( 1988, wb3bl,    wb3,      wb3bl,    wb3,      wb3bl,    ROT0,         "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )
+GAME( 1989, wrestwar, 0,        wrestwar, wrestwar, wrestwar, ROT270_16BIT, "Sega",    "Wrestle War" )
 
-GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0,         "Sega",    "Hang-On")
-GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0_16BIT,   "Sega",    "Space Harrier")
-GAMEX(1992, shangon,  0,        shangon,  shangon,  shangon,  ROT0,         "Sega",    "Super Hang-On", GAME_NOT_WORKING)
-GAME( 1992, shangonb, shangon,  shangon,  shangon,  shangonb, ROT0,         "bootleg", "Super Hang-On (bootleg)")
-GAME( 1986, outrun,   0,        outrun,   outrun,   outrun,   ROT0,         "Sega",    "Out Run (set 1)")
-GAME( 1986, outruna,  outrun,   outruna,  outrun,   outrun,   ROT0,         "Sega",    "Out Run (set 2)")
-GAME( 1986, outrunb,  outrun,   outruna,  outrun,   outrunb,  ROT0,         "Sega",    "Out Run (set 3)")
-GAMEX(1985, enduror,  0,        enduror,  enduror,  enduror,  ROT0,         "Sega",    "Enduro Racer", GAME_NOT_WORKING)
-GAME( 1985, endurobl, enduror,  enduror,  enduror,  endurobl, ROT0,         "bootleg", "Enduro Racer (bootleg set 1)")
-GAME( 1985, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0,         "bootleg", "Enduro Racer (bootleg set 2)")
+GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0,         "Sega",    "Hang-On" )
+GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0_16BIT,   "Sega",    "Space Harrier" )
+GAMEX(1992, shangon,  0,        shangon,  shangon,  shangon,  ROT0,         "Sega",    "Super Hang-On", GAME_NOT_WORKING )
+GAME( 1992, shangonb, shangon,  shangon,  shangon,  shangonb, ROT0,         "bootleg", "Super Hang-On (bootleg)" )
+GAME( 1986, outrun,   0,        outrun,   outrun,   outrun,   ROT0,         "Sega",    "Out Run (set 1)" )
+GAME( 1986, outruna,  outrun,   outruna,  outrun,   outrun,   ROT0,         "Sega",    "Out Run (set 2)" )
+GAME( 1986, outrunb,  outrun,   outruna,  outrun,   outrunb,  ROT0,         "Sega",    "Out Run (set 3)" )
+GAMEX(1985, enduror,  0,        enduror,  enduror,  enduror,  ROT0,         "Sega",    "Enduro Racer", GAME_NOT_WORKING )
+GAME( 1985, endurobl, enduror,  enduror,  enduror,  endurobl, ROT0,         "bootleg", "Enduro Racer (bootleg set 1)" )
+GAME( 1985, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0,         "bootleg", "Enduro Racer (bootleg set 2)" )
 
 
 
-GAMEX(????, aceattac, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Ace Attacker", GAME_NOT_WORKING)
-GAMEX(????, aburner,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "After Burner (Japan)", GAME_NOT_WORKING)
-GAMEX(????, aburner2, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "After Burner II", GAME_NOT_WORKING)
-GAMEX(????, bloxeed,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Bloxeed", GAME_NOT_WORKING)
-GAMEX(????, cltchitr, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Clutch Hitter", GAME_NOT_WORKING)
-GAMEX(????, cotton,   0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Cotton (Japan)", GAME_NOT_WORKING)
-GAMEX(????, cottona,  cotton,   s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Cotton", GAME_NOT_WORKING)
-GAMEX(????, ddcrew,   0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "DD Crew", GAME_NOT_WORKING)
-GAMEX(????, dunkshot, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Dunk Shot", GAME_NOT_WORKING)
-GAMEX(????, lghost,   0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Laser Ghost", GAME_NOT_WORKING)
-GAMEX(????, loffire,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Line of Fire", GAME_NOT_WORKING)
-GAMEX(????, mvp,      0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "MVP", GAME_NOT_WORKING)
-GAMEX(????, thndrbld, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Thunder Blade", GAME_NOT_WORKING)
-GAMEX(????, thndrbdj, thndrbld, s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Thunder Blade (Japan)", GAME_NOT_WORKING)
-GAMEX(????, toutrun,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Turbo Outrun (set 1)", GAME_NOT_WORKING)
-GAMEX(????, toutruna, toutrun,  s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Turbo Outrun (set 2)", GAME_NOT_WORKING)
-GAMEX(????, exctleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Excite League", GAME_NOT_WORKING)
-GAMEX(????, suprleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Super League", GAME_NOT_WORKING)
-GAMEX(????, afighter, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Action Fighter", GAME_NOT_WORKING)
-GAMEX(????, ryukyu  , 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Ryukyu", GAME_NOT_WORKING)
+GAMEX(????, aceattac, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Ace Attacker", GAME_NOT_WORKING )
+GAMEX(????, aburner,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "After Burner (Japan)", GAME_NOT_WORKING )
+GAMEX(????, aburner2, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "After Burner II", GAME_NOT_WORKING )
+GAMEX(????, bloxeed,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Bloxeed", GAME_NOT_WORKING )
+GAMEX(????, cltchitr, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Clutch Hitter", GAME_NOT_WORKING )
+GAMEX(????, cotton,   0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Cotton (Japan)", GAME_NOT_WORKING )
+GAMEX(????, cottona,  cotton,   s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Cotton", GAME_NOT_WORKING )
+GAMEX(????, ddcrew,   0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "DD Crew", GAME_NOT_WORKING )
+GAMEX(????, dunkshot, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Dunk Shot", GAME_NOT_WORKING )
+GAMEX(????, lghost,   0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Laser Ghost", GAME_NOT_WORKING )
+GAMEX(????, loffire,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Line of Fire", GAME_NOT_WORKING )
+GAMEX(????, mvp,      0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "MVP", GAME_NOT_WORKING )
+GAMEX(????, thndrbld, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Thunder Blade", GAME_NOT_WORKING )
+GAMEX(????, thndrbdj, thndrbld, s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Thunder Blade (Japan)", GAME_NOT_WORKING )
+GAMEX(????, toutrun,  0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Turbo Outrun (set 1)", GAME_NOT_WORKING )
+GAMEX(????, toutruna, toutrun,  s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Turbo Outrun (set 2)", GAME_NOT_WORKING )
+GAMEX(????, exctleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Excite League", GAME_NOT_WORKING )
+GAMEX(????, suprleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Super League", GAME_NOT_WORKING )
+GAMEX(????, afighter, 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Action Fighter", GAME_NOT_WORKING )
+GAMEX(????, ryukyu  , 0,        s16dummy, s16dummy, s16dummy, ROT0,         "Sega", "Ryukyu", GAME_NOT_WORKING )
 
 

@@ -373,7 +373,7 @@ static struct MachineDriver machine_driver_##NAME = \
 	{ 												\
 		{ 											\
 			CPU_8080, 								\
-			2048000,	/* 3 Mhz? */ 				\
+			2048000,	/* 3 MHz? */ 				\
 			NAME##_readmem,NAME##_writemem,0,0, 	\
 			interrupt,1 							\
 		} 											\

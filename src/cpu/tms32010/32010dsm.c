@@ -28,6 +28,7 @@
 #include <ctype.h>
 
 #include "memory.h"
+#include "tms32010.h"
 
 #ifdef  MAME_DEBUG
 #include "mamedbg.h"
@@ -40,11 +41,11 @@ typedef unsigned short int word;
 #define PTRS_PER_FORMAT 2
 
 #ifdef LSB_FIRST
-#define READOP16(a)   ((cpu_readop(a)<<8)|cpu_readop((a)+1))
-#define READARG16(a)  ((cpu_readop_arg(a)<<8)|cpu_readop_arg((a)+1))
+#define READOP16(a)   ((cpu_readop((a)+TMS320C10_PGM_OFFSET)<<8)|cpu_readop((a)+TMS320C10_PGM_OFFSET+1))
+#define READARG16(a)  ((cpu_readop_arg((a)+TMS320C10_PGM_OFFSET)<<8)|cpu_readop_arg((a)+TMS320C10_PGM_OFFSET+1))
 #else
-#define READOP16(a)   ((cpu_readop(a))|(cpu_readop((a)+1)<<8))
-#define READARG16(a)  ((cpu_readop_arg(a))|(cpu_readop_arg((a)+1)<<8))
+#define READOP16(a)   ((cpu_readop((a)+TMS320C10_PGM_OFFSET))|(cpu_readop((a)+TMS320C10_PGM_OFFSET+1)<<8))
+#define READARG16(a)  ((cpu_readop_arg((a)+TMS320C10_PGM_OFFSET))|(cpu_readop_arg((a)+TMS320C10_PGM_OFFSET+1)<<8))
 #endif
 
 char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
@@ -231,7 +232,7 @@ static void InitDasm32010(void)
 	OpInizialized = 1;
 }
 
-int Dasm32010(char *str, unsigned pc)
+unsigned Dasm32010(char *str, unsigned pc)
 {
 	int a, b, d, k, m, n, p, r, s, w;	/* these can all be filled in by parsing an instruction */
 	int i;

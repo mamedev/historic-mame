@@ -363,7 +363,7 @@ static struct MachineDriver machine_driver_missile =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			1000000,	/* 1 MHz ???? */
 			readmem,writemem,0,0,
 			interrupt, 4  /* EEA was 1 */
 		}

@@ -80,7 +80,6 @@ void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( sauro_scroll1_w );
 WRITE_HANDLER( sauro_scroll2_w );
-WRITE_HANDLER( sauro_flipscreen_w );
 
 static WRITE_HANDLER( sauro_sound_command_w )
 {
@@ -129,7 +128,7 @@ static struct IOWritePort writeport[] =
 		{ 0xa0, 0xa0, sauro_scroll1_w, },
 		{ 0xa1, 0xa1, sauro_scroll2_w, },
 		{ 0x80, 0x80, sauro_sound_command_w, },
-		{ 0xc0, 0xc0, sauro_flipscreen_w, },
+		{ 0xc0, 0xc0, flip_screen_w, },
 		{ 0xc1, 0xce, MWA_NOP, },
 		{ 0xe0, 0xe0, watchdog_reset_w },
 		{ -1 }	/* end of table */

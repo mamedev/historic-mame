@@ -76,7 +76,7 @@ static UINT8 tms320c10_win_layout[] = {
 static UINT16   opcode=0;
 static UINT8	opcode_major=0, opcode_minor, opcode_minr;	/* opcode split into MSB and LSB */
 static tms320c10_Regs R;
-int tms320c10_ICount;
+int tms320c10_icount;
 static INT32 tmpacc;
 typedef void (*opcode_fn) (void);
 
@@ -670,7 +670,7 @@ static int Ext_IRQ(void)
  ****************************************************************************/
 int tms320c10_execute(int cycles)
 {
-	tms320c10_ICount = cycles;
+	tms320c10_icount = cycles;
 
 	do
 	{
@@ -683,7 +683,7 @@ int tms320c10_execute(int cycles)
 		if (R.pending_irq) {
 			/* Dont service INT if prev instruction was MPY, MPYK or EINT */
 			if ((opcode_major != 0x6d) || ((opcode_major & 0xe0) != 0x80) || (opcode != 0x7f82))
-				tms320c10_ICount -= Ext_IRQ();
+				tms320c10_icount -= Ext_IRQ();
 		}
 
 		R.PREPC = R.PC;
@@ -696,18 +696,17 @@ int tms320c10_execute(int cycles)
 
 		R.PC++;
 		if (opcode_major != 0x07f) { /* Do all opcodes except the 7Fxx ones */
-			tms320c10_ICount -= cycles_main[opcode_major];
+			tms320c10_icount -= cycles_main[opcode_major];
 			(*(opcode_main[opcode_major]))();
 		}
 		else { /* Opcode major byte 7Fxx has many opcodes in its minor byte */
 			opcode_minr = (opcode & 0x001f);
-			tms320c10_ICount -= cycles_7F_other[opcode_minr];
+			tms320c10_icount -= cycles_7F_other[opcode_minr];
 			(*(opcode_7F_other[opcode_minr]))();
 		}
-	}
-	while (tms320c10_ICount>0);
+	} while (tms320c10_icount>0);
 
-	return cycles - tms320c10_ICount;
+	return cycles - tms320c10_icount;
 }
 
 /****************************************************************************

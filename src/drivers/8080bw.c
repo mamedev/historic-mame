@@ -257,7 +257,7 @@ static struct MachineDriver machine_driver_invaders =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -407,7 +407,7 @@ static struct MachineDriver machine_driver_invadpt2 =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -656,7 +656,7 @@ static struct MachineDriver machine_driver_invad2ct =
 	{
 		{
 			CPU_8080,
-			1996800,        /* 19.968Mhz / 10 */
+			1996800,        /* 19.968MHz / 10 */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1036,7 +1036,7 @@ static struct MachineDriver machine_driver_rollingc =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			rollingc_readmem,rollingc_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1353,7 +1353,7 @@ static struct MachineDriver machine_driver_spcenctr =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,spcenctr_readport,spcenctr_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1463,7 +1463,7 @@ static struct MachineDriver machine_driver_gunfight =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,gunfight_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1539,7 +1539,7 @@ static struct MachineDriver machine_driver_m4 =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,gunfight_readport,writeport_1_2,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1617,7 +1617,7 @@ static struct MachineDriver machine_driver_boothill =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,gunfight_readport,writeport_1_2,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1731,7 +1731,7 @@ static struct MachineDriver machine_driver_schaser =
 	{
 		{
 			CPU_8080,
-			1996800,        /* 19.968Mhz / 10 */
+			1996800,        /* 19.968MHz / 10 */
 			schaser_readmem,schaser_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1874,7 +1874,7 @@ static struct MachineDriver machine_driver_clowns =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_1_2,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1994,7 +1994,7 @@ static struct MachineDriver machine_driver_280zzzap =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_4_3,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2076,7 +2076,7 @@ static struct MachineDriver machine_driver_lupin3 =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			schaser_readmem,schaser_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2306,7 +2306,7 @@ static struct MachineDriver machine_driver_polaris =
 	{
 		{
 			CPU_8080,
-			1996800,        /* 19.968Mhz / 10 */
+			1996800,        /* 19.968MHz / 10 */
 			schaser_readmem,schaser_writemem,invaders_readport,writeport_0_3,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2520,7 +2520,7 @@ static struct MachineDriver machine_driver_bowler =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz */
+			2000000,        /* 2 MHz */
 			invaders_readmem,invaders_writemem,bowler_readport,writeport_1_2,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2607,7 +2607,7 @@ static struct MachineDriver machine_driver_shuffle =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz */
+			2000000,        /* 2 MHz */
 			invaders_readmem,invaders_writemem,shuffle_readport,writeport_1_2,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2684,7 +2684,7 @@ static struct MachineDriver machine_driver_seawolf =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,seawolf_readport,writeport_4_3,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2992,7 +2992,7 @@ static struct MachineDriver machine_driver_tornbase =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -3098,7 +3098,7 @@ static struct MachineDriver machine_driver_checkmat =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,checkmat_readport,checkmat_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -3384,7 +3384,7 @@ static struct MachineDriver machine_driver_ballbomb =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,        /* 2 MHz? */
 			invaders_readmem,invaders_writemem,invaders_readport,writeport_2_4,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}

@@ -3,7 +3,7 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.1
+ *                                Version 3.2
  *
  * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 
-char* g_version = "3.1";
+char* g_version = "3.2";
 
 /* ======================================================================== */
 /* =============================== INCLUDES =============================== */
@@ -59,13 +59,15 @@ char* g_version = "3.1";
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
-#include <dir.h>
 
 
 
 /* ======================================================================== */
 /* ============================= CONFIGURATION ============================ */
 /* ======================================================================== */
+
+#define MAX_PATH 1024
+#define MAX_DIR  1024
 
 #define NUM_CPUS                          3	/* 000, 010, 020 */
 #define MAX_LINE_LENGTH                 200	/* length of 1 line */
@@ -236,7 +238,7 @@ void read_insert(char* insert);
 /* ======================================================================== */
 
 /* Name of the input file */
-char g_input_filename[MAXPATH] = FILENAME_INPUT;
+char g_input_filename[MAX_PATH] = FILENAME_INPUT;
 
 /* File handles */
 FILE* g_input_file = NULL;
@@ -819,13 +821,13 @@ void set_opcode_struct(opcode_struct* src, opcode_struct* dst, int ea_mode)
 void generate_opcode_handler(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* opinfo, int ea_mode)
 {
 	char str[MAX_LINE_LENGTH+1];
-	opcode_struct op;
+	opcode_struct* op = malloc(sizeof(opcode_struct));
 
 	/* Set the opcode structure and write the tables, prototypes, etc */
-	set_opcode_struct(opinfo, &op, ea_mode);
-	get_base_name(str, &op);
+	set_opcode_struct(opinfo, op, ea_mode);
+	get_base_name(str, op);
 	write_prototype(g_prototype_file, str);
-	add_opcode_output_table_entry(&op, str);
+	add_opcode_output_table_entry(op, str);
 	write_function_name(filep, str);
 
 	/* Add any replace strings needed */
@@ -848,6 +850,7 @@ void generate_opcode_handler(FILE* filep, body_struct* body, replace_struct* rep
 	/* Now write the function body with the selected replace strings */
 	write_body(filep, body, replace);
 	g_num_functions++;
+	free(op);
 }
 
 /* Generate opcode variants based on available addressing modes */
@@ -912,9 +915,11 @@ void generate_opcode_cc_variants(FILE* filep, body_struct* body, replace_struct*
 	char replnot[20];
 	int i;
 	int old_length = replace->length;
-	opcode_struct op = *op_in;
+	opcode_struct* op = malloc(sizeof(opcode_struct));
 
-	op.op_mask |= 0x0f00;
+	*op = *op_in;
+
+	op->op_mask |= 0x0f00;
 
 	/* Do all condition codes except t and f */
 	for(i=2;i<16;i++)
@@ -927,15 +932,16 @@ void generate_opcode_cc_variants(FILE* filep, body_struct* body, replace_struct*
 		add_replace_string(replace, ID_OPHANDLER_NOT_CC, replnot);
 
 		/* Set the new opcode info */
-		strcpy(op.name+offset, g_cc_table[i][0]);
+		strcpy(op->name+offset, g_cc_table[i][0]);
 
-		op.op_match = (op.op_match & 0xf0ff) | (i<<8);
+		op->op_match = (op->op_match & 0xf0ff) | (i<<8);
 
 		/* Generate all opcode variants for this modified opcode */
-		generate_opcode_ea_variants(filep, body, replace, &op);
+		generate_opcode_ea_variants(filep, body, replace, op);
 		/* Remove the above replace strings */
 		replace->length = old_length;
 	}
+	free(op);
 }
 
 /* Process the opcode handlers section of the input file */
@@ -948,8 +954,8 @@ void process_opcode_handlers(void)
 	int  oper_size;
 	char oper_mode[MAX_LINE_LENGTH+1];
 	opcode_struct* opinfo;
-	replace_struct replace;
-	body_struct body;
+	replace_struct* replace = malloc(sizeof(replace_struct));
+	body_struct* body = malloc(sizeof(body_struct));
 
 
 	output_file = g_ops_ac_file;
@@ -961,22 +967,26 @@ void process_opcode_handlers(void)
 		while(strstr(func_name, ID_OPHANDLER_NAME) == NULL)
 		{
 			if(strcmp(func_name, ID_INPUT_SEPARATOR) == 0)
+			{
+				free(replace);
+				free(body);
 				return; /* all done */
+			}
 			if(fgetline(func_name, MAX_LINE_LENGTH, input_file) < 0)
 				error_exit("Premature end of file");
 		}
 		/* Get the rest of the function */
-		for(body.length=0;;body.length++)
+		for(body->length=0;;body->length++)
 		{
-			if(body.length > MAX_BODY_LENGTH)
+			if(body->length > MAX_BODY_LENGTH)
 				error_exit("Function too long");
 
-			if(fgetline(body.body[body.length], MAX_LINE_LENGTH, input_file) < 0)
+			if(fgetline(body->body[body->length], MAX_LINE_LENGTH, input_file) < 0)
 				error_exit("Premature end of file");
 
-			if(body.body[body.length][0] == '}')
+			if(body->body[body->length][0] == '}')
 			{
-				body.length++;
+				body->length++;
 				break;
 			}
 		}
@@ -998,18 +1008,21 @@ void process_opcode_handlers(void)
 		else if(output_file == g_ops_dm_file && oper_name[0] > 'm')
 			output_file = g_ops_nz_file;
 
-		replace.length = 0;
+		replace->length = 0;
 
 		/* Generate opcode variants */
 		if(strcmp(opinfo->name, "bcc") == 0 || strcmp(opinfo->name, "scc") == 0)
-			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 1);
+			generate_opcode_cc_variants(output_file, body, replace, opinfo, 1);
 		else if(strcmp(opinfo->name, "dbcc") == 0)
-			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 2);
+			generate_opcode_cc_variants(output_file, body, replace, opinfo, 2);
 		else if(strcmp(opinfo->name, "trapcc") == 0)
-			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 4);
+			generate_opcode_cc_variants(output_file, body, replace, opinfo, 4);
 		else
-			generate_opcode_ea_variants(output_file, &body, &replace, opinfo);
+			generate_opcode_ea_variants(output_file, body, replace, opinfo);
 	}
+
+	free(replace);
+	free(body);
 }
 
 
@@ -1157,8 +1170,8 @@ void read_insert(char* insert)
 int main(int argc, char **argv)
 {
 	/* File stuff */
-	char output_path[MAXDIR] = "";
-	char filename[MAXPATH];
+	char output_path[MAX_DIR] = "";
+	char filename[MAX_PATH];
 	/* Section identifier */
 	char section_id[MAX_LINE_LENGTH+1];
 	/* Inserts */

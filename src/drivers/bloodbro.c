@@ -367,7 +367,7 @@ static struct MachineDriver machine_driver_bloodbro =
 	{
 		{
 			CPU_M68000,
-			10000000, /* 10 Mhz */
+			10000000, /* 10 MHz */
 			readmem_cpu,writemem_cpu,0,0,
 			m68_level4_irq,1
 		},
@@ -404,7 +404,7 @@ static struct MachineDriver machine_driver_weststry =
 	{
 		{
 			CPU_M68000,
-			10000000, /* 10 Mhz */
+			10000000, /* 10 MHz */
 			weststry_readmem_cpu,weststry_writemem_cpu,0,0,
 			m68_level6_irq,1
 		},

@@ -22,6 +22,7 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	*priority = (*color & 0x80) >> 7;
 	*color = sprite_colorbase + ((*color & 0x7e) >> 1);
+	*shadow = 0;
 }
 
 
@@ -128,19 +129,15 @@ void ultraman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	K051960_mark_sprites_colors();
 
 	/* set transparent pens for the K051316 */
-	for (i = 0;i < 64;i++)
-	{
+	for (i = 0;i < 64;i++){
 		palette_used_colors[(zoom_colorbase[0] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
 		palette_used_colors[(zoom_colorbase[1] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[(zoom_colorbase[2] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
 	}
 
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
 	tilemap_render(ALL_TILEMAPS);
-
-	fillbitmap(bitmap,Machine->pens[zoom_colorbase[2] * 16],&Machine->visible_area);
 
 	K051316_zoom_draw_2(bitmap,0);
 	K051316_zoom_draw_1(bitmap,0);

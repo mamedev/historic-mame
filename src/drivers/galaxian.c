@@ -1879,7 +1879,7 @@ static struct MachineDriver machine_driver_##NAME =								\
 	{																			\
 		{																		\
 			CPU_Z80,															\
-			18432000/6,	/* 3.072 Mhz */											\
+			18432000/6,	/* 3.072 MHz */											\
 			MEM##_readmem,MEM##_writemem,0,0,									\
 			INT##_vh_interrupt,1												\
 		}																		\
@@ -1930,7 +1930,7 @@ static struct MachineDriver machine_driver_zigzag =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			zigzag_readmem,zigzag_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -1967,7 +1967,7 @@ static struct MachineDriver machine_driver_jumpbug =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 MHz */
 			jumpbug_readmem,jumpbug_writemem,0,0,
 			jumpbug_vh_interrupt,1
 		}
@@ -2052,7 +2052,7 @@ static struct MachineDriver machine_driver_checkmaj =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 MHz */
 			galaxian_readmem,checkmaj_writemem,0,0,
 			galaxian_vh_interrupt,1
 		},
@@ -2096,7 +2096,7 @@ static struct MachineDriver machine_driver_kingball =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz? */
+			18432000/6,	/* 3.072 MHz? */
 			mooncrst_readmem,kingball_writemem,0,0,
 			galaxian_vh_interrupt,1
 		},

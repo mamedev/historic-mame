@@ -94,7 +94,6 @@ int code_pressed(InputCode code);
 int code_pressed_memory(InputCode code);
 int code_pressed_memory_repeat(InputCode code, int speed);
 InputCode code_read_async(void);
-InputCode code_read_sync(void);
 INT8 code_read_hex_async(void);
 
 /* Wrappers for compatibility */
@@ -102,8 +101,7 @@ INT8 code_read_hex_async(void);
 #define keyboard_pressed                code_pressed
 #define keyboard_pressed_memory         code_pressed_memory
 #define keyboard_pressed_memory_repeat  code_pressed_memory_repeat
-#define keyboard_read_async	        code_read_async
-#define keyboard_read_sync              code_read_sync
+#define keyboard_read_async             code_read_async
 
 /***************************************************************************/
 /* Sequence code funtions */

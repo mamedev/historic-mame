@@ -151,7 +151,11 @@ void toypop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			palette_index = (toypop_sharedram_2[0x102] ? 0xe0 : 0x60);
 			for (by = box.min_y;by <= box.max_y;by++)
 				for (bx = box.min_x;bx <= box.max_x;bx++)
+#ifdef LSB_FIRST
 					bgbitmap->line[by][bx] = Machine->pens[bg_image[(bx + by * 288) ^ 1] | palette_index];
+#else
+					bgbitmap->line[by][bx] = Machine->pens[bg_image[(bx + by * 288)] | palette_index];
+#endif
 			// mark the matching character as dirty
 			// so the next loop will draw everything right
 			switch ((offs >> 1) % 18) {

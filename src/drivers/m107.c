@@ -373,7 +373,7 @@ static struct MachineDriver machine_driver_firebarr =
 #if 0
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
-			14318000,	/* 14.318 Mhz */
+			14318000,	/* 14.318 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -413,7 +413,7 @@ static struct MachineDriver machine_driver_dsoccr94 =
 #if 0
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
-			14318000,	/* 14.318 Mhz */
+			14318000,	/* 14.318 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}

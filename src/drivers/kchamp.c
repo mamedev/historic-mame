@@ -445,7 +445,7 @@ static void msmint( int data ) {
 static struct AY8910interface ay8910_interface =
 {
 	2, /* 2 chips */
-	1500000,			/* 12 Mhz / 8 = 1.5 Mhz */
+	1500000,			/* 12 MHz / 8 = 1.5 MHz */
 	{ 30, 30 },			// Modified by T.Nogi 1999/11/08
 	{ 0 },
 	{ 0 },
@@ -456,7 +456,7 @@ static struct AY8910interface ay8910_interface =
 static struct MSM5205interface msm_interface =
 {
 	1,				/* 1 chip */
-	375000,				/* 12Mhz / 16 / 2 */
+	375000,				/* 12MHz / 16 / 2 */
 	{ msmint },			/* interrupt function */
 	{ MSM5205_S96_4B },		/* 1 / 96 = 3906.25Hz playback */
 	{ 100 }
@@ -487,13 +487,13 @@ static struct MachineDriver machine_driver_kchampvs =
 	{
 		{
 			CPU_Z80,
-			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
+			3000000,	/* 12MHz / 4 = 3.0 MHz */
 			readmem,writemem,readport,writeport,
 			kc_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
+			3000000,	/* 12MHz / 4 = 3.0 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt, 0
 			/* irq's triggered from main cpu */
@@ -541,13 +541,13 @@ static struct MachineDriver machine_driver_kchamp =
 	{
 		{
 			CPU_Z80,
-			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
+			3000000,	/* 12MHz / 4 = 3.0 MHz */
 			kc_readmem, kc_writemem, kc_readport, kc_writeport,
 			kc_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
+			3000000,	/* 12MHz / 4 = 3.0 MHz */
 			kc_sound_readmem,kc_sound_writemem,kc_sound_readport,kc_sound_writeport,
 			ignore_interrupt, 0,
 			sound_int, 125 /* Hz */

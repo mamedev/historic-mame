@@ -64,6 +64,8 @@ void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 WRITE_HANDLER( spacefb_video_control_w )
 {
+	flip_screen_w(offset, video_control & 0x01);
+
 	video_control = data;
 }
 
@@ -85,7 +87,7 @@ logerror("Port #2 = %02d\n",data);
 void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-	int spriteno, col_bit2, flipscreen;
+	int spriteno, col_bit2;
 
 
 
@@ -94,7 +96,6 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the sprite/chars */
 	spriteno = (video_control & 0x20) ? 0x80 : 0x00;
-	flipscreen = video_control & 0x01;
 
 	/* A4 of the color PROM, depending on a jumper setting, can either come
 	   from the CREF line or from sprite memory. CREF is the default
@@ -120,7 +121,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				/* Draw bullets */
 
-				if (flipscreen)
+				if (flip_screen)
 				{
 					sx = 260 - sx;
 					sy = 252 - sy;
@@ -129,7 +130,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(bitmap,Machine->gfx[1],
 						code & 0x3f,
 						col,
-						flipscreen,flipscreen,
+						flip_screen,flip_screen,
 						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
@@ -138,7 +139,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				sy -= 5;	/* aligns the spaceship and the bullet */
 
-				if (flipscreen)
+				if (flip_screen)
 				{
 					sx = 256 - sx;
 					sy = 248 - sy;
@@ -147,7 +148,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(bitmap,Machine->gfx[0],
 						255 - code,
 						col,
-						flipscreen,flipscreen,
+						flip_screen,flip_screen,
 						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}

@@ -321,13 +321,13 @@ static struct MachineDriver machine_driver_battlane =
 	{
 		{
 			CPU_M6809,
-            1250000,        /* 1.25 Mhz ? */
+            1250000,        /* 1.25 MHz ? */
             battlane_readmem, battlane_writemem,0,0,
             battlane_cpu1_interrupt,2
 		},
 		{
 			CPU_M6809,
-            1250000,        /* 1.25 Mhz ? */
+            1250000,        /* 1.25 MHz ? */
             battlane_readmem, battlane_writemem,0,0,
             battlane_cpu2_interrupt,1
 		}

@@ -172,7 +172,7 @@ static struct MachineDriver machine_driver_kopunch =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz ? */
 			readmem,writemem,readport,writeport,
 			kopunch_interrupt,1
 		}

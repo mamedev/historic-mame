@@ -237,7 +237,7 @@ static struct MachineDriver machine_driver_jailbrek =
 	{
 		{
 		    CPU_M6809,
-		    3000000,        /* 3 Mhz ??? */
+		    3000000,        /* 3 MHz ??? */
 		    readmem,writemem,0,0,
 		    jb_interrupt,1,
 		    jb_interrupt_nmi, 500 /* ? */

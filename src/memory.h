@@ -4,6 +4,9 @@
 #include "osd_cpu.h"
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_BANKS		16
 
@@ -49,6 +52,8 @@ struct MemoryReadAddress
 	offs_t start, end;
 	mem_read_handler handler;				/* see special values below */
 };
+
+#define MEMORY_TABLE_END { ~0 }
 
 #define MRA_NOP   0 						/* don't care, return 0 */
 #define MRA_RAM   ((mem_read_handler)-1)	/* plain RAM location (return its contents) */
@@ -196,8 +201,8 @@ constants for each address space type we support.
 #define ABITS2_24BEW	8
 #define ABITS_MIN_24BEW 1			/* minimum memory block is 2 bytes */
 /* 26 bits address (little endian - dword access) */
-#define ABITS1_26LEW	16
-#define ABITS2_26LEW	8
+#define ABITS1_26LEW	14
+#define ABITS2_26LEW	10
 #define ABITS_MIN_26LEW 2			/* minimum memory block is 4 bytes */
 /* 29 bits address (dword access) */
 #define ABITS1_29		19
@@ -257,18 +262,18 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 	if (cur_mrhard[(pc)>>(abits2+abitsmin+shift)] != ophw)	\
 		setop(pc);											\
 }
-#define change_pc(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
-#define change_pc16(pc) 	change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
-#define change_pc16bew(pc)	change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, 0, cpu_setOPbase16bew)
-#define change_pc16lew(pc)	change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, 0, cpu_setOPbase16lew)
-#define change_pc20(pc) 	change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
-#define change_pc21(pc) 	change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
-#define change_pc24(pc) 	change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
-#define change_pc24bew(pc)	change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
-#define change_pc26lew(pc)	change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
-#define change_pc29(pc)     change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
-#define change_pc32(pc) 	change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
-#define change_pc32lew(pc)	change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
+#define change_pc(pc)		 change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16(pc) 	 change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16bew(pc)	 change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, 0, cpu_setOPbase16bew)
+#define change_pc16lew(pc)	 change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, 0, cpu_setOPbase16lew)
+#define change_pc20(pc) 	 change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
+#define change_pc21(pc) 	 change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
+#define change_pc24(pc) 	 change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
+#define change_pc24bew(pc)	 change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
+#define change_pc26lew(pc)	 change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
+#define change_pc29(pc)      change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
+#define change_pc32(pc) 	 change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
+#define change_pc32lew(pc)	 change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
 
 /* ----- for use OPbaseOverride driver, request override callback to next cpu_setOPbase ----- */
 #define catch_nextBranch()	(ophw = 0xff)
@@ -390,6 +395,10 @@ the base of the memory.
 This can be used (carefully!) by drivers that wish to access memory directly
 without going through the readmem/writemem accessors (e.g., blitters). */
 unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

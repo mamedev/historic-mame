@@ -24,8 +24,8 @@ static int cinemat_screenh;
 static struct artwork_element *cinemat_simple_overlay;
 
 static int color_display;
-static struct artwork *spacewar_panel;
-static struct artwork *spacewar_pressed_panel;
+static struct artwork_info *spacewar_panel;
+static struct artwork_info *spacewar_pressed_panel;
 
 struct artwork_element starcas_overlay[]=
 {

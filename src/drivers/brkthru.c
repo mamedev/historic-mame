@@ -413,13 +413,13 @@ static struct MachineDriver machine_driver_brkthru =
 	{
 		{
 			CPU_M6809,
-			1250000,        /* 1.25 Mhz ? */
+			1250000,        /* 1.25 MHz ? */
 			readmem,writemem,0,0,
 			brkthru_interrupt,2
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1250000,        /* 1.25 MHz ? */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -460,13 +460,13 @@ static struct MachineDriver machine_driver_darwin =
 	{
 		{
 			CPU_M6809,
-			1500000,        /* 1.25 Mhz ? */
+			1500000,        /* 1.25 MHz ? */
 			darwin_readmem,darwin_writemem,0,0,
 			brkthru_interrupt,2
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,        /* 1.25 Mhz ? */
+			1500000,        /* 1.25 MHz ? */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}

@@ -512,7 +512,7 @@ static struct MachineDriver machine_driver_starwars =
 		/* Main CPU */
 		{
 			CPU_M6809,
-			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
+			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
 			readmem,writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
@@ -520,7 +520,7 @@ static struct MachineDriver machine_driver_starwars =
 		/* Sound CPU */
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
+			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
 			readmem2,writemem2,0,0,
 			0, 0,
 			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
@@ -566,7 +566,7 @@ static struct MachineDriver machine_driver_esb =
 		/* Main CPU */
 		{
 			CPU_M6809,
-			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
+			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
 			esb_readmem, esb_writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
@@ -574,7 +574,7 @@ static struct MachineDriver machine_driver_esb =
 		/* Sound CPU */
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
+			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
 			readmem2,writemem2,0,0,
 			0, 0,
 			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */

@@ -339,7 +339,7 @@ static struct MachineDriver machine_driver_xsleena =
 	{
 		{
 			CPU_M6809,
-			2000000,	/* 2 Mhz ??? */
+			2000000,	/* 2 MHz ??? */
 			readmem,writemem,0,0,
 			xainA_interrupt,4	/* wrong, this is just a hack */
 								/* IRQs are caused by CPU B */
@@ -350,13 +350,13 @@ static struct MachineDriver machine_driver_xsleena =
 		},
 		{
 			CPU_M6809,
-			2000000,	/* 2 Mhz ??? */
+			2000000,	/* 2 MHz ??? */
 			readmemB,writememB,0,0,
 			ignore_interrupt,0	/* IRQs are caused by CPU A */
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz ??? */
+			2000000,	/* 2 MHz ??? */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by CPU A */
 								/* FIRQs are caused by the YM2203 */

@@ -254,7 +254,7 @@ static struct MachineDriver machine_driver_ccastles =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			readmem,writemem,0,0,
 			interrupt,4
 		}

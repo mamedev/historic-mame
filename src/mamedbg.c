@@ -1,121 +1,30 @@
 /****************************************************************************
- *	The new MAME debugger V0.53
- *	Written by:   Juergen Buchmueller (so far - help welcome! :)
+ *	MAME debugger V0.54
+ *	Juergen Buchmueller <pullmoll@t-online.de>
  *
  *	Based on code found in the preivous version of the MAME debugger
- *	written by:   Martin Scragg, John Butler, Mirko Buffoni
- *				  Chris Moore, Aaron Giles, Ernesto Corvi
+ *	written by: Martin Scragg, John Butler, Mirko Buffoni
+ *	Chris Moore, Aaron Giles, Ernesto Corvi
  *
- *  Online help is available by pressing F1 (context sensitive!)
+ *	Online help is available by pressing F1 (context sensitive!)
  *
  *	TODO:
- *	- Verify correct endianess handling, ie. look at the word and dword
- *	  modes of the memory and disassembly windows (selected with M)
- *	- Squash thousands of bugs :-/
- *	- Test & improve name_rom()
- *	- Add more names for generic handlers to name_rdmem() and name_wrmem()
- *
- *  LATER:
  *	- Add stack view using cpu_get_reg(REG_SP_CONTENTS+offset)
  *	- Add more display modes for the memory windows (binary? octal? decimal?)
- *	- Make the windows resizeable somehow (using win_set_w and win_set_h)
- *	- Anything you like - just contact me to avoid doubled effort.
  *
  ****************************************************************************/
 
 #include <stdio.h>
 
 #ifdef MAME_DEBUG
-#include "mamedbg.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include "driver.h"
-#include "window.h"
 #include "vidhrdw/generic.h"
-#include "osd_dbg.h"
-
-
-#if (HAS_Z80)
-#include "cpu/z80/z80.h"
-#endif
-#if (HAS_8080 || HAS_8085A)
-#include "cpu/i8085/i8085.h"
-#endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03)
-#include "cpu/m6502/m6502.h"
-#endif
-#if (HAS_M4510)
-#include "cpu/m6502/m4510.h"
-#endif
-#if (HAS_M65CE02)
-#include "cpu/m6502/m65ce02.h"
-#endif
-#if (HAS_M6509)
-#include "cpu/m6502/m6509.h"
-#endif
-#if (HAS_H6280)
-#include "cpu/h6280/h6280.h"
-#endif
-#if (HAS_I86)
-#include "cpu/i86/i86intf.h"
-#endif
-#if (HAS_I88)
-#include "cpu/i86/i88intf.h"
-#endif
-#if (HAS_I186)
-#include "cpu/i86/i186intf.h"
-#endif
-#if (HAS_I188)
-#include "cpu/i86/i188intf.h"
-#endif
-#if (HAS_I286)
-#include "cpu/i86/i286intf.h"
-#endif
-#if (HAS_V20 || HAS_V30 || HAS_V33)
-#include "cpu/nec/necintrf.h"
-#endif
-#if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
-#include "cpu/i8039/i8039.h"
-#endif
-#if (HAS_M6800 || HAS_M6801 || HAS_M6802 || HAS_M6803 || HAS_M6808 || HAS_HD63701)
-#include "cpu/m6800/m6800.h"
-#endif
-#if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
-#include "cpu/m6805/m6805.h"
-#endif
-#if (HAS_HD6309 || HAS_M6809)
-#include "cpu/m6809/m6809.h"
-#endif
-#if (HAS_M68000 || defined HAS_M68010 || HAS_M68020)
-#include "cpu/m68000/m68000.h"
-#endif
-#if (HAS_T11)
-#include "cpu/t11/t11.h"
-#endif
-#if (HAS_S2650)
-#include "cpu/s2650/s2650.h"
-#endif
-#if (HAS_TMS34010)
-#include "cpu/tms34010/tms34010.h"
-#endif
-#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
-		|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
-#include "cpu/tms9900/tms9900.h"
-#endif
-#if (HAS_Z8000)
-#include "cpu/z8000/z8000.h"
-#endif
-#if (HAS_TMS320C10)
-#include "cpu/tms32010/tms32010.h"
-#endif
-#if (HAS_CCPU)
-#include "cpu/ccpu/ccpu.h"
-#endif
-#if (HAS_PDP1)
-#include "cpu/pdp1/pdp1.h"
-#endif
+#include "mamedbg.h"
+#include "window.h"
 
 #ifndef INVALID
 #define INVALID -1
@@ -126,20 +35,24 @@
  ****************************************************************************/
 /* Long(er) function names, short macro names... */
 #define ABITS	cpu_address_bits()
-#define AMASK   cpu_address_mask()
+#define AMASK	cpu_address_mask()
 #define ASHIFT	cpu_address_shift()
-#define ALIGN   cpu_align_unit()
-#define INSTL   cpu_max_inst_len()
+#define ALIGN	cpu_align_unit()
+#define INSTL	cpu_max_inst_len()
 #define ENDIAN	cpu_endianess()
 
 #define RDMEM(a)	(*cpuintf[cputype].memory_read)(a)
 #define WRMEM(a,v)	(*cpuintf[cputype].memory_write)(a,v)
+#define RDINT(a)	(*cpuintf[cputype].internal_read)(a)
+#define WRINT(a,v)	(*cpuintf[cputype].internal_write)(a,v)
+#define PGM_MEMORY	cpuintf[cputype].pgm_memory_base
 
 /****************************************************************************
  * Globals
  ****************************************************************************/
-int debug_key_pressed = 0;
-int debug_key_delay = 0;
+int debug_key_pressed = 0;	/* set to non zero to break into the debugger */
+int debug_key_delay = 0;	/* set to 0x7ffe to force keyboard check on next update */
+int debug_trace_delay = 0;	/* set to 0 to force a screen update */
 
 /****************************************************************************
  * Limits
@@ -151,7 +64,7 @@ int debug_key_delay = 0;
 
 #define MAX_HIST	16			/* Maximum history depth */
 
-#define EDIT_CMDS   0
+#define EDIT_CMDS	0
 #define EDIT_REGS	1			/* Just the order of the windows */
 #define EDIT_DASM	2
 #define EDIT_MEM1	3
@@ -160,7 +73,7 @@ int debug_key_delay = 0;
 #define DBG_WINDOWS 5
 
 /* Some convenience macros to address the cpu'th window */
-#define WIN_CMDS(cpu)   (cpu*DBG_WINDOWS+EDIT_CMDS)
+#define WIN_CMDS(cpu)	(cpu*DBG_WINDOWS+EDIT_CMDS)
 #define WIN_REGS(cpu)	(cpu*DBG_WINDOWS+EDIT_REGS)
 #define WIN_DASM(cpu)	(cpu*DBG_WINDOWS+EDIT_DASM)
 #define WIN_MEM(cpu,n)	(cpu*DBG_WINDOWS+EDIT_MEM1+n)
@@ -169,9 +82,19 @@ int debug_key_delay = 0;
 #define WIN_HELP		(MAX_WINDOWS-1)
 #define WIN_MSGBOX		(MAX_WINDOWS-2)
 
-#define MODE_HEX_UINT8	0
-#define MODE_HEX_UINT16 1
-#define MODE_HEX_UINT32 2
+enum {
+	MODE_HEX_UINT8,
+	MODE_HEX_UINT16,
+	MODE_HEX_UINT32,
+	MODE_HEX_COUNT
+};
+
+enum {
+	MODE_CHR_HEX,
+	MODE_CHR_XLATE,
+	MODE_CHR_PLAIN,
+	MODE_CHR_COUNT
+};
 
 #define UINT16_XOR_LE(o) (((o)&~1)|(((o)&1)^1))
 #define UINT32_XOR_LE(o) (((o)&~3)|(((o)&3)^3))
@@ -193,10 +116,10 @@ static int cputype = 0;
 static int dbg_fast = 0;
 static int dbg_step = 0;
 static int dbg_trace = 0;
-static int dbg_trace_delay = 0x1000;
 static int dbg_update = 0;
 static int dbg_update_cur = 0;
 static int dbg_active = 0;
+static int dbg_trace_delay = 0;
 
 /* 0 = dont, 1 = do allow squeezed display w/alternating dim, bright colors */
 static int dbg_mem_squeezed = 0;
@@ -235,16 +158,16 @@ static const char *dbg_info_once = NULL;
 	"FRAME\0" \
 	"REGS\0" \
 	"DASM\0" \
-    "MEM1\0" \
-    "MEM2\0" \
+	"MEM1\0" \
+	"MEM2\0" \
 	"CMDS\0" \
 	"BRK_EXEC\0" \
 	"BRK_DATA\0" \
 	"BRK_REGS\0" \
-    "ERROR\0" \
-    "HELP\0" \
+	"ERROR\0" \
+	"HELP\0" \
 	"PROMPT\0" \
-    "CHANGES\0" \
+	"CHANGES\0" \
 	"PC\0" \
 	"CURSOR\0"
 
@@ -253,16 +176,16 @@ enum ELEMENT {
 	E_FRAME,
 	E_REGS,
 	E_DASM,
-    E_MEM1,
-    E_MEM2,
+	E_MEM1,
+	E_MEM2,
 	E_CMDS,
 	E_BRK_EXEC,
 	E_BRK_DATA,
 	E_BRK_REGS,
-    E_ERROR,
-    E_HELP,
-    E_PROMPT,
-    E_CHANGES,
+	E_ERROR,
+	E_HELP,
+	E_PROMPT,
+	E_CHANGES,
 	E_PC,
 	E_CURSOR,
 	E_COUNT
@@ -273,16 +196,16 @@ static UINT8 cur_col[E_COUNT] = {
 	COLOR_FRAME,
 	COLOR_REGS,
 	COLOR_DASM,
-    COLOR_MEM1,
-    COLOR_MEM2,
+	COLOR_MEM1,
+	COLOR_MEM2,
 	COLOR_CMDS,
 	COLOR_BRK_EXEC,
 	COLOR_BRK_DATA,
 	COLOR_BRK_REGS,
-    COLOR_ERROR,
-    COLOR_HELP,
+	COLOR_ERROR,
+	COLOR_HELP,
 	COLOR_PROMPT,
-    COLOR_CHANGES,
+	COLOR_CHANGES,
 	COLOR_PC,
 	COLOR_CURSOR,
 };
@@ -292,18 +215,18 @@ static UINT8 def_col[E_COUNT] = {
 	COLOR_FRAME,
 	COLOR_REGS,
 	COLOR_DASM,
-    COLOR_MEM1,
-    COLOR_MEM2,
+	COLOR_MEM1,
+	COLOR_MEM2,
 	COLOR_CMDS,
 	COLOR_BRK_EXEC,
 	COLOR_BRK_DATA,
 	COLOR_BRK_REGS,
-    COLOR_ERROR,
-    COLOR_HELP,
+	COLOR_ERROR,
+	COLOR_HELP,
 	COLOR_PROMPT,
-    COLOR_CHANGES,
+	COLOR_CHANGES,
 	COLOR_PC,
-    COLOR_CURSOR,
+	COLOR_CURSOR,
 };
 
 /****************************************************************************
@@ -311,7 +234,7 @@ static UINT8 def_col[E_COUNT] = {
  ****************************************************************************/
 static char trans_table[256] = {
 	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
 	' ','!','"','#','$','%','&', 39,'(',')','*','+',',','-','.','/',
 	'0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?',
 	'@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
@@ -319,13 +242,13 @@ static char trans_table[256] = {
 	'`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
 	'p','q','r','s','t','u','v','w','x','y','z','{','|','}','~','.',
 	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
 	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
 	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
 	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
 };
 
 /****************************************************************************
@@ -393,11 +316,11 @@ static void cmd_trace_to_file( void );
 static void cmd_save_to_file( void );
 static void cmd_set_ignore( void );
 static void cmd_set_observe( void );
+static void cmd_set_key_repeat( void );
 static void cmd_set_dasm_case( void );
 static void cmd_set_dasm_opcodes( void );
 static void cmd_set_dasm_relative_jumps( void );
 static void cmd_set_mem_squeezed( void );
-static void cmd_set_screen_size( void );
 static void cmd_set_element_color( void );
 static void cmd_brk_exec_toggle( void );
 static void cmd_brk_data_toggle( void );
@@ -412,7 +335,6 @@ static void cmd_dasm_end( void );
 static void cmd_dasm_hist_follow( void );
 static void cmd_dasm_hist_back( void );
 static void cmd_run_to_cursor( void );
-static void cmd_view_screen( void );
 static void cmd_focus_next_cpu( void );
 static void cmd_step( void );
 static void cmd_animate( void );
@@ -424,12 +346,12 @@ static void cmd_search_memory( void );
  * Generic structure for saving points in the 'follow history'
  ****************************************************************************/
 typedef struct {
-    UINT32  dasm_top;               /* previous top of window PC */
-    UINT32  dasm_cur;               /* previous cursor PC */
-    UINT32  mem1_base;              /* previous memory 1 base address */
-    UINT32  mem1_offset;            /* previous memory 1 offset */
-    UINT32  mem1_nibble;            /* previous memory 1 nibble */
-}   s_hist;
+	UINT32	dasm_top;				/* previous top of window PC */
+	UINT32	dasm_cur;				/* previous cursor PC */
+	UINT32	mem1_base;				/* previous memory 1 base address */
+	UINT32	mem1_offset;			/* previous memory 1 offset */
+	UINT32	mem1_nibble;			/* previous memory 1 nibble */
+}	s_hist;
 
 /****************************************************************************
  * Symbol table entry
@@ -456,16 +378,16 @@ typedef struct {
  * Register display and editing structure
  ****************************************************************************/
 typedef struct {
-    UINT32  backup[MAX_REGS];       /* backup register values */
-    UINT32  newval[MAX_REGS];       /* new register values */
+	UINT32	backup[MAX_REGS];		/* backup register values */
+	UINT32	newval[MAX_REGS];		/* new register values */
 	s_edit	edit[MAX_REGS]; 		/* list of x,y,w triplets for the register values */
 	char	name[MAX_REGS][15+1];	/* ...fifteen characters enough!? */
 	UINT8	id[MAX_REGS];			/* the ID of the register (cpu_get_reg/cpu_set_reg) */
 	UINT32	max_width;				/* maximum width of any dumped register */
-    INT32   idx;                    /* index of current register */
-    INT32   count;                  /* number of registers */
-    INT32   nibble;                 /* edit nibble */
-    INT32   changed;
+	INT32	idx;					/* index of current register */
+	INT32	count;					/* number of registers */
+	INT32	nibble; 				/* edit nibble */
+	INT32	changed;
 	INT32	top;
 	INT32	base;
 }	s_regs;
@@ -474,19 +396,21 @@ typedef struct {
  * Memory display and editing structure
  ****************************************************************************/
 typedef struct {
-    UINT8   backup[MAX_DATA];   /* backup data */
-    UINT8   newval[MAX_DATA];   /* newly read data */
+	UINT8	backup[MAX_DATA];	/* backup data */
+	UINT8	newval[MAX_DATA];	/* newly read data */
 	s_edit	edit[MAX_DATA]; 	/* list of x,y,w triplets for the memory elements */
-    UINT32  base;               /* current base address */
+	UINT32	base;				/* current base address */
 	UINT32	address;			/* current cursor address */
-    INT32   offset;             /* edit offset */
-    INT32   nibble;             /* edit nibble */
+	UINT32	pgm_memory_base;	/* program/data memory base toggle */
+	INT32	offset; 			/* edit offset */
+	INT32	nibble; 			/* edit nibble */
 	INT32	bytes;				/* number of bytes per edit line */
 	INT32	width;				/* width in nibbles of the edit line */
 	INT32	size;				/* number of bytes in the edit window */
 	UINT8	mode;				/* 0 bytes, 1 words, 2 dword */
 	UINT8	ascii;				/* display ASCII values */
-    UINT8   changed;
+	UINT8	internal;			/* display CPU internal memory instead of ROM/RAM? */
+	UINT8	changed;
 }	s_mem;
 
 /****************************************************************************
@@ -509,11 +433,11 @@ typedef struct {
  * Tracing structure
  ****************************************************************************/
 typedef struct {
-    UINT32  last_pc[MAX_LOOPS];
+	UINT32	last_pc[MAX_LOOPS];
 	UINT8	regs[MAX_REGS];
-    FILE    *file;
-    INT32   iters;
-    INT32   loops;
+	FILE	*file;
+	INT32	iters;
+	INT32	loops;
 }	s_trace;
 
 /****************************************************************************
@@ -544,7 +468,7 @@ typedef struct {
 	INT32	hist_cnt;
 	s_hist	hist[MAX_HIST];
 
-    char    cmdline[80+1];
+	char	cmdline[80+1];
 	UINT8	window; 	/* edit what: cmds, regs, dasm, mem1, mem2 */
 
 }	s_dbg;
@@ -559,6 +483,503 @@ static	s_dbg	dbg[MAX_CPU];
 #define TRACE	dbg[tracecpu].trace
 
 #define CMD 	dbg[activecpu].cmdline
+
+/****************************************************************************
+ * Graphics output using debug_bitmap
+ ****************************************************************************/
+
+static int cursor_x, cursor_y, cursor_on;
+
+/* This will be intialized depending on the game framerate */
+static int dbg_key_repeat = 4;
+
+
+UINT8 debugger_palette[] = {
+	0x00,0x00,0x00, /* black	 */
+	0x00,0x00,0x7f, /* blue 	 */
+	0x00,0x7f,0x00, /* green	 */
+	0x00,0x7f,0x7f, /* cyan 	 */
+	0x7f,0x00,0x00, /* red		 */
+	0x7f,0x00,0x7f, /* magenta	 */
+	0x7f,0x7f,0x00, /* brown	 */
+	0x7f,0x7f,0x7f, /* ltgray	 */
+	0x5f,0x5f,0x5f, /* dkgray	 */
+	0x00,0x00,0xff, /* ltblue	 */
+	0x00,0xff,0x00, /* ltgreen	 */
+	0x00,0xff,0xff, /* ltcyan	 */
+	0xff,0x00,0x00, /* ltred	 */
+	0xff,0x00,0xff, /* ltmagenta */
+	0xff,0xff,0x00, /* yellow	 */
+	0xff,0xff,0xff	/* white	 */
+};
+
+static unsigned char fontdata8x16[] = {
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x42,0x81,0xE7,0xA5,0x99,0x81,0x99,0x42,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x7E,0xFF,0x99,0xDB,0xE7,0xFF,0xE7,0x7E,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x6C,0xFE,0xFE,0xFE,0xFE,0xFE,0x7C,0x38,0x10,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x10,0x38,0x7C,0xFE,0x7C,0x38,0x10,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x38,0x38,0x10,0xD6,0xFE,0xD6,0x10,0x10,0x38,0x7C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x10,0x38,0x7C,0xFE,0xFE,0x54,0x10,0x10,0x38,0x7C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x3C,0x3C,0x18,0x00,0x00,0x00,0x00,0x00,0x00,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xE7,0xC3,0xC3,0xE7,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0x00,0x00,0x00,0x00,0x00,0x3C,0x66,0x42,0x42,0x66,0x3C,0x00,0x00,0x00,0x00,0x00,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xC3,0x99,0xBD,0xBD,0x99,0xC3,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0x00,0x00,0x0F,0x07,0x0D,0x18,0x78,0xCC,0xCC,0xCC,0xCC,0x78,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x66,0x66,0x66,0x3C,0x18,0x7E,0x18,0x18,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x08,0x0C,0x0A,0x0A,0x0A,0x08,0x08,0x08,0x38,0x78,0x30,0x00,0x00,0x00,0x00,
+	0x00,0x10,0x18,0x1C,0x1E,0x1E,0x16,0x12,0x72,0xF2,0x62,0x0E,0x1E,0x0C,0x00,0x00,
+	0x00,0x00,0x00,0x10,0x92,0x54,0x38,0xFE,0x38,0x54,0x92,0x10,0x00,0x00,0x00,0x00,
+	0x00,0x80,0x00,0x80,0xC0,0xE0,0xB8,0x8E,0xB8,0xE0,0xC0,0x80,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x02,0x06,0x0E,0x3A,0xE2,0x3A,0x0E,0x06,0x02,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x10,0x38,0x7C,0xD6,0x10,0x10,0x10,0x10,0xD6,0x7C,0x38,0x10,0x00,0x00,
+	0x00,0x00,0x42,0xE7,0xE7,0xE7,0x42,0x42,0x00,0x66,0x66,0x66,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x7F,0xCA,0xCA,0xCA,0x7A,0x0A,0x0A,0x0A,0x0A,0x1B,0x00,0x00,0x00,0x00,
+	0x00,0x1E,0x31,0x78,0xCC,0xC6,0xC3,0x63,0x33,0x1E,0x8C,0x78,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0xFE,0xFE,0xFE,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x10,0x38,0x7C,0xD6,0x10,0x10,0x10,0x10,0xD6,0x7C,0x38,0x10,0xFE,0x00,
+	0x00,0x00,0x10,0x38,0x7C,0xD6,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x00,0x00,
+	0x00,0x00,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0xD6,0x7C,0x38,0x10,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x08,0x0C,0x06,0xFF,0x06,0x0C,0x08,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x10,0x30,0x60,0xFF,0x60,0x30,0x10,0x00,0x00,0x00,0x00,
+	0x00,0x66,0x88,0xCC,0xEE,0x44,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x24,0x42,0xFF,0x42,0x24,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x10,0x38,0x38,0x6C,0x6C,0xC6,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0xFE,0xC6,0x6C,0x6C,0x38,0x38,0x10,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x18,0x3C,0x3C,0x3C,0x18,0x18,0x10,0x00,0x18,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x22,0x77,0x33,0x11,0x66,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x12,0x12,0x7F,0x24,0x24,0x24,0xFE,0x48,0x48,0x00,0x00,0x00,0x00,
+	0x00,0x10,0x10,0x7A,0xD6,0xD2,0xD0,0x7C,0x16,0x96,0xD6,0xBC,0x10,0x10,0x00,0x00,
+	0x00,0x00,0x46,0xBC,0x4C,0x08,0x18,0x10,0x30,0x20,0x64,0x4A,0xC4,0x00,0x00,0x00,
+	0x00,0x00,0x38,0x6C,0x6C,0x38,0x30,0x77,0xDA,0xCC,0xCC,0x77,0x00,0x00,0x00,0x00,
+	0x00,0x10,0x38,0x18,0x08,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x04,0x08,0x10,0x10,0x30,0x30,0x30,0x30,0x10,0x10,0x08,0x04,0x00,0x00,0x00,
+	0x00,0x20,0x10,0x08,0x08,0x0C,0x0C,0x0C,0x0C,0x08,0x08,0x10,0x20,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x44,0x28,0x38,0xFE,0x38,0x28,0x44,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x18,0x18,0x7E,0x18,0x18,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x38,0x18,0x08,0x30,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x38,0x10,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x06,0x04,0x0C,0x08,0x18,0x10,0x30,0x20,0x60,0x40,0xC0,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x3C,0x46,0xC6,0xC6,0xC6,0xC6,0xC4,0x78,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x08,0x18,0x78,0x18,0x18,0x18,0x18,0x7E,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x7C,0x86,0x06,0x0C,0x18,0x20,0x41,0xFE,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x3C,0x46,0x04,0x08,0x1C,0x06,0x06,0x06,0x0C,0x70,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x04,0x08,0x10,0x2C,0x4C,0x8C,0xFE,0x0C,0x0C,0x0C,0x00,0x00,
+	0x00,0x00,0x00,0x02,0x3C,0x20,0x20,0x70,0x0C,0x06,0x06,0x06,0x0C,0x70,0x00,0x00,
+	0x00,0x00,0x18,0x20,0x40,0xC0,0xDC,0xC6,0xC6,0xC6,0x44,0x38,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x40,0x7E,0x82,0x06,0x04,0x0C,0x18,0x18,0x30,0x30,0x30,0x00,0x00,
+	0x00,0x00,0x7C,0xC6,0xC6,0x64,0x38,0x4C,0xC6,0xC6,0xC6,0x7C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x38,0x44,0xC6,0xC6,0x76,0x06,0x06,0x04,0x08,0x30,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x10,0x38,0x10,0x00,0x00,0x10,0x38,0x10,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x10,0x38,0x10,0x00,0x00,0x10,0x38,0x18,0x08,0x30,0x00,0x00,
+	0x00,0x00,0x06,0x0C,0x18,0x30,0x50,0x50,0x30,0x18,0x0C,0x06,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x7E,0x00,0x00,0x7E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x60,0x30,0x18,0x0C,0x0A,0x0A,0x0C,0x18,0x30,0x60,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x7C,0x86,0xC6,0x04,0x08,0x10,0x18,0x00,0x18,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x3C,0x46,0xCE,0xD6,0xD6,0xD6,0xDC,0xC0,0xC2,0x7C,0x00,0x00,0x00,
+	0x00,0x00,0x18,0x18,0x18,0x3C,0x2C,0x2C,0x7E,0x46,0x46,0xEF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFC,0x66,0x66,0x66,0x7C,0x66,0x66,0x66,0x66,0xFC,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3A,0x66,0xC2,0xC0,0xC0,0xC0,0xC0,0xC0,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFC,0x66,0x63,0x63,0x63,0x63,0x63,0x63,0x66,0xFC,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFF,0x63,0x61,0x64,0x7C,0x64,0x60,0x61,0x63,0xFF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFF,0x63,0x61,0x64,0x7C,0x64,0x60,0x60,0x60,0xF0,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3A,0x66,0xC2,0xC0,0xC0,0xCF,0xC6,0xC6,0x66,0x3A,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF7,0x62,0x62,0x62,0x7E,0x62,0x62,0x62,0x62,0xF7,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x1E,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0xCC,0x8C,0x78,0x00,0x00,
+	0x00,0x00,0xF7,0x64,0x6C,0x68,0x78,0x6C,0x6C,0x66,0x66,0xF7,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF8,0x60,0x60,0x60,0x60,0x60,0x60,0x61,0x63,0xFF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xC3,0x66,0x76,0x7E,0x56,0x46,0x46,0x46,0x46,0xEF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xE7,0x62,0x72,0x52,0x5A,0x4A,0x4E,0x46,0x46,0xE2,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x66,0xC3,0xC3,0xC3,0xC3,0xC3,0xC3,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFC,0x66,0x66,0x66,0x6C,0x60,0x60,0x60,0x60,0xF0,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x66,0xC3,0xC3,0xC3,0xC3,0xC3,0xC3,0x66,0x3C,0x10,0x39,0x0E,0x00,
+	0x00,0x00,0xFC,0x66,0x66,0x66,0x7C,0x6C,0x66,0x66,0x66,0xF3,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x7A,0xC6,0xC2,0x70,0x3C,0x0E,0x06,0x86,0xC6,0xBC,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFF,0xDB,0x99,0x18,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF7,0x62,0x62,0x62,0x62,0x62,0x62,0x62,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF7,0x62,0x62,0x76,0x34,0x34,0x3C,0x18,0x18,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF7,0x62,0x62,0x62,0x6A,0x6A,0x6A,0x6A,0x7E,0x34,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF7,0x62,0x34,0x34,0x18,0x18,0x2C,0x2C,0x46,0xEF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xF7,0x62,0x62,0x34,0x34,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFF,0xC6,0x8C,0x0C,0x18,0x18,0x30,0x31,0x63,0xFF,0x00,0x00,0x00,0x00,
+	0x00,0x3C,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x3C,0x00,0x00,0x00,
+	0x00,0x00,0xC0,0x40,0x60,0x20,0x30,0x10,0x18,0x08,0x0C,0x04,0x06,0x00,0x00,0x00,
+	0x00,0x3C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x0C,0x3C,0x00,0x00,0x00,
+	0x00,0x10,0x38,0x4C,0x86,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,
+	0x00,0x18,0x20,0x30,0x38,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xE0,0x60,0x60,0x6C,0x76,0x66,0x66,0x66,0x76,0x6C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x3C,0x66,0x60,0x60,0x60,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x1C,0x0C,0x0C,0x6C,0xDC,0xCC,0xCC,0xCC,0xDC,0x66,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x3C,0x66,0x7E,0x60,0x60,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x1E,0x31,0x33,0x30,0x78,0x30,0x30,0x30,0x30,0x78,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x7B,0xCE,0xCC,0xCC,0xCC,0x78,0x60,0x7C,0x86,0xC6,0x7C,
+	0x00,0x00,0xE0,0x60,0x60,0x6C,0x76,0x66,0x66,0x66,0x66,0xF7,0x00,0x00,0x00,0x00,
+	0x00,0x10,0x38,0x10,0x00,0x38,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x08,0x1C,0x08,0x00,0x1C,0x0C,0x0C,0x0C,0x0C,0x0C,0x6C,0x4C,0x38,0x00,0x00,
+	0x00,0x00,0xE0,0x60,0x60,0x67,0x66,0x6C,0x78,0x6C,0x66,0xE7,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x38,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xCA,0x7E,0x6A,0x6A,0x6A,0x62,0xF7,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xDC,0x76,0x66,0x66,0x66,0x66,0xF7,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x3C,0x66,0x66,0x66,0x66,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xDC,0x66,0x66,0x66,0x66,0x66,0x7C,0x60,0x60,0xF0,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x76,0xCC,0xCC,0xCC,0xCC,0xCC,0x7C,0x0C,0x0C,0x1E,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xDE,0x76,0x60,0x60,0x60,0x60,0xF0,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x7A,0xC6,0x72,0x1C,0x86,0xC6,0xBC,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x10,0x30,0x7C,0x30,0x30,0x30,0x30,0x34,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xEE,0x66,0x66,0x66,0x66,0x66,0x3B,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xF7,0x62,0x76,0x34,0x3C,0x18,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xF7,0x62,0x6A,0x6A,0x6A,0x7E,0x24,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xF7,0x62,0x34,0x18,0x2C,0x46,0xEF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xF7,0x62,0x62,0x34,0x34,0x18,0x18,0x10,0xB0,0xE0,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xFE,0x8C,0x18,0x30,0x60,0xC2,0xFE,0x00,0x00,0x00,0x00,
+	0x00,0x0E,0x18,0x10,0x10,0x08,0x70,0x70,0x08,0x10,0x10,0x18,0x0E,0x00,0x00,0x00,
+	0x00,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x00,0x00,0x00,
+	0x00,0x70,0x18,0x08,0x08,0x10,0x0E,0x0E,0x10,0x08,0x08,0x18,0x70,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x76,0xDC,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x10,0x38,0x6C,0xC6,0xC6,0xC6,0xFE,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3A,0x66,0xC2,0xC0,0xC0,0xC0,0xC0,0xC0,0x62,0x3C,0x18,0x0C,0x24,0x18,
+	0x00,0x00,0x66,0x00,0x00,0xEE,0x66,0x66,0x66,0x66,0x66,0x3B,0x00,0x00,0x00,0x00,
+	0x00,0x0C,0x18,0x20,0x00,0x3C,0x66,0x7E,0x60,0x60,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x30,0x58,0x8C,0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x66,0x00,0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0x00,0x00,0x00,
+	0x00,0x30,0x18,0x04,0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0x00,0x00,0x00,
+	0x38,0x44,0x44,0x38,0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x3C,0x66,0x60,0x60,0x60,0x62,0x3C,0x18,0x0C,0x24,0x18,
+	0x00,0x18,0x2C,0x46,0x00,0x3C,0x66,0x7E,0x60,0x60,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x66,0x00,0x00,0x3C,0x66,0x7E,0x60,0x60,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x30,0x18,0x04,0x00,0x3C,0x66,0x7E,0x60,0x60,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x66,0x00,0x00,0x38,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x18,0x2C,0x46,0x00,0x38,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x60,0x30,0x08,0x00,0x38,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x66,0x00,0x18,0x18,0x18,0x3C,0x2C,0x2C,0x7E,0x46,0x46,0xEF,0x00,0x00,0x00,0x00,
+	0x18,0x24,0x18,0x18,0x18,0x3C,0x2C,0x2C,0x7E,0x46,0x46,0xEF,0x00,0x00,0x00,0x00,
+	0x0C,0x18,0x20,0xFF,0x63,0x61,0x64,0x7C,0x64,0x61,0x63,0xFF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x76,0x9B,0x1B,0x3F,0xD8,0xD9,0x6E,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x1F,0x1D,0x1C,0x3C,0x2E,0x2C,0x7C,0x4C,0x4D,0xEF,0x00,0x00,0x00,0x00,
+	0x00,0x18,0x2C,0x46,0x00,0x3C,0x66,0x66,0x66,0x66,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x66,0x00,0x00,0x3C,0x66,0x66,0x66,0x66,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x30,0x18,0x04,0x00,0x3C,0x66,0x66,0x66,0x66,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x18,0x2C,0x46,0x00,0xEE,0x66,0x66,0x66,0x66,0x66,0x3B,0x00,0x00,0x00,0x00,
+	0x00,0x30,0x18,0x04,0x00,0xEE,0x66,0x66,0x66,0x66,0x66,0x3B,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x66,0x00,0x00,0xF7,0x62,0x62,0x36,0x34,0x1C,0x18,0x18,0xB0,0xE0,0x00,
+	0x66,0x00,0x3C,0x66,0xC3,0xC3,0xC3,0xC3,0xC3,0xC3,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x66,0x00,0xF7,0x62,0x62,0x62,0x62,0x62,0x62,0x62,0x62,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x10,0x10,0x10,0x7C,0xC6,0xC0,0xC0,0xC0,0xC2,0x7C,0x10,0x10,0x10,0x00,
+	0x00,0x38,0x64,0x6C,0x60,0x60,0xF0,0x60,0x60,0x60,0x66,0xFC,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x81,0xC3,0x66,0x3C,0x18,0xFF,0x18,0xFF,0x18,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFE,0x63,0x63,0x63,0x6E,0x60,0x64,0x6E,0x64,0xF5,0x06,0x00,0x00,0x00,
+	0x00,0x00,0x0E,0x19,0x1B,0x18,0x3C,0x18,0x18,0x18,0xD8,0x98,0x70,0x00,0x00,0x00,
+	0x00,0x0C,0x18,0x20,0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0x00,0x00,0x00,
+	0x00,0x06,0x0C,0x10,0x00,0x38,0x18,0x18,0x18,0x18,0x18,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x0C,0x18,0x20,0x00,0x3C,0x66,0x66,0x66,0x66,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x0C,0x18,0x20,0x00,0xEE,0x66,0x66,0x66,0x66,0x66,0x3B,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x32,0x4C,0x00,0xDC,0x76,0x66,0x66,0x66,0x66,0xF7,0x00,0x00,0x00,0x00,
+	0x32,0x4C,0x00,0xE7,0x72,0x52,0x5A,0x4A,0x4E,0x46,0x46,0xE2,0x00,0x00,0x00,0x00,
+	0x00,0x78,0x8C,0x0C,0x3C,0xCC,0xCD,0x76,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x3C,0x66,0x66,0x66,0x66,0x66,0x3C,0x00,0x7E,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x30,0x30,0x00,0x30,0x10,0x20,0x40,0xC6,0xC2,0x7C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0xC0,0xC0,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0x06,0x06,0x06,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x20,0xE0,0x63,0x66,0xFC,0x18,0x30,0x60,0xCE,0x93,0x06,0x0C,0x1F,0x00,0x00,
+	0x00,0x20,0xE0,0x63,0x66,0xFC,0x18,0x30,0x64,0xC8,0x96,0x3F,0x06,0x06,0x00,0x00,
+	0x00,0x00,0x18,0x18,0x00,0x08,0x18,0x18,0x3C,0x3C,0x3C,0x18,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x36,0x6C,0xD8,0xD8,0x6C,0x36,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0xD8,0x6C,0x36,0x36,0x6C,0xD8,0x00,0x00,0x00,0x00,0x00,
+	0x82,0x10,0x82,0x10,0x82,0x10,0x82,0x10,0x82,0x10,0x82,0x10,0x82,0x10,0x82,0x10,
+	0x00,0x95,0x00,0xA9,0x00,0x95,0x00,0xA9,0x00,0x95,0x00,0xA9,0x00,0x95,0x00,0xA9,
+	0x92,0x49,0x92,0x49,0x92,0x49,0x92,0x49,0x92,0x49,0x92,0x49,0x92,0x49,0x92,0x49,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0xF8,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0xF8,0x18,0x18,0xF8,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0xE6,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xF8,0x18,0x18,0xF8,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x66,0x66,0x66,0x66,0x66,0x66,0xE6,0x06,0x06,0xE6,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0x06,0x06,0xE6,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0xE6,0x06,0x06,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x18,0x18,0x18,0x18,0x18,0x18,0xF8,0x18,0x18,0xF8,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xF8,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x1F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x1F,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0xFF,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x1F,0x18,0x18,0x1F,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x67,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x67,0x60,0x60,0x7F,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x7F,0x60,0x60,0x67,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0xE7,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0xE7,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x67,0x60,0x60,0x67,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x66,0x66,0x66,0x66,0x66,0x66,0xE7,0x00,0x00,0xE7,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x18,0x18,0x18,0x18,0x18,0x18,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0xFF,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x7F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x1F,0x18,0x18,0x1F,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x1F,0x18,0x18,0x1F,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7F,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0xFF,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x18,0x18,0x18,0x18,0x18,0x18,0xFF,0x00,0x00,0xFF,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0xF8,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1F,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,
+	0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x77,0xCC,0xCC,0xCC,0xDE,0x73,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x7C,0xC6,0xC6,0xC4,0xC8,0xC4,0xC6,0xC6,0xC6,0xDC,0xC0,0xC0,0x00,0x00,
+	0x00,0x00,0xFF,0x63,0x61,0x60,0x60,0x60,0x60,0x60,0x60,0xF0,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x01,0x7E,0xA4,0x24,0x2C,0x6C,0x6C,0x48,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xFF,0xC3,0x61,0x30,0x18,0x30,0x60,0xC1,0xC3,0xFF,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x7F,0xC8,0xC8,0xC8,0xC8,0xC8,0x70,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x22,0x66,0x66,0x66,0x66,0x7C,0x60,0x60,0x60,0xC0,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x76,0xDC,0x18,0x18,0x18,0x18,0x10,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x38,0x10,0x7C,0xD6,0xD6,0xD6,0xD6,0x7C,0x10,0x38,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x38,0x6C,0xC6,0xC6,0xFE,0xC6,0xC6,0xC6,0x6C,0x38,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x3C,0x66,0xC3,0xC3,0xC3,0xC3,0x66,0x24,0xA5,0xE7,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x1E,0x31,0x18,0x0C,0x3E,0x66,0x66,0x66,0x66,0x3C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x6E,0xFF,0x99,0x99,0xFF,0x76,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x02,0x04,0x7C,0xCA,0x92,0xA6,0x7C,0x40,0x80,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x1C,0x30,0x60,0x60,0x7C,0x60,0x60,0x60,0x30,0x1C,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x7C,0xC6,0xC6,0xC6,0xC6,0xC6,0xC6,0xC6,0xC6,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0xFE,0x00,0x00,0x7C,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x18,0x18,0x7E,0x18,0x18,0x00,0x00,0x7E,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x30,0x18,0x0C,0x06,0x0C,0x18,0x30,0x00,0x7E,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x0C,0x18,0x30,0x60,0x30,0x18,0x0C,0x00,0x7E,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x0E,0x19,0x1B,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,
+	0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18,0xD8,0x98,0x70,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x18,0x18,0x00,0x7E,0x00,0x18,0x18,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x76,0xDC,0x00,0x76,0xDC,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x38,0x44,0x44,0x38,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x07,0x06,0x06,0x0C,0x0C,0x08,0x98,0xD0,0x70,0x20,0x00,0x00,0x00,0x00,
+	0x00,0x00,0xCC,0x76,0x66,0x66,0x66,0xF7,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x70,0x98,0x18,0x30,0x60,0x88,0xF8,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x7C,0x6C,0x6C,0x6C,0x6C,0x7C,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+
+static struct GfxLayout fontlayout8x16 =
+{
+	8,16,	/* 8*16 characters */
+	256,	/* 256 characters */
+	1,		/* 1 bit per pixel */
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8,10*8,11*8,12*8,13*8,14*8,15*8 },
+	8*16 /* every char takes 16 consecutive bytes */
+};
+
+/* in usrintrf.c */
+void switch_ui_orientation(void);
+void switch_true_orientation(void);
+
+struct GfxElement *build_debugger_font(void)
+{
+	struct GfxElement *font;
+
+	switch_ui_orientation();
+
+	font = decodegfx(fontdata8x16,&fontlayout8x16);
+
+	if (font)
+	{
+		font->colortable = Machine->debug_remapped_colortable;
+		font->total_colors = DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS;
+	}
+
+	switch_true_orientation();
+
+	return font;
+}
+
+static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
+{
+	int sx, sy, x, y;
+	switch_ui_orientation();
+	sx = cursor_x * font->width;
+	sy = cursor_y * font->height;
+	for (y = 0; y < font->height; y++)
+	{
+		for (x = 0; x < font->width; x++)
+		{
+			int i;
+			int pen = read_pixel(bitmap, sx+x, sy+y);
+			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
+			{
+				if (pen == Machine->debug_pens[i])
+				{
+					pen = Machine->debug_pens[DEBUGGER_TOTAL_COLORS-1 - i];
+					break;
+				}
+			}
+			plot_pixel(bitmap, sx+x, sy+y, pen);
+		}
+	}
+	switch_true_orientation();
+	cursor_on ^= 1;
+}
+
+void dbg_put_screen_char(int ch, int attr, int x, int y)
+{
+	struct osd_bitmap *bitmap = Machine->debug_bitmap;
+	struct GfxElement *font = Machine->debugger_font;
+
+	switch_ui_orientation();
+	drawgfx(bitmap, font,
+		ch, attr, 0, 0, x*font->width, y*font->height,
+		0, TRANSPARENCY_NONE, 0);
+	switch_true_orientation();
+}
+
+static void set_screen_curpos(int x, int y)
+{
+	cursor_x = x;
+	cursor_y = y;
+}
+
+static void get_screen_size( unsigned *width, unsigned *height )
+{
+	*width = Machine->debug_bitmap->width / Machine->debugger_font->width;
+	*height = Machine->debug_bitmap->height / Machine->debugger_font->height;
+}
+
+static int readkey(void)
+{
+	int i, k;
+	int cursor_flash = 0;
+
+	i = 0;
+	do
+	{
+		if ((cursor_flash++ & 15) == 0)
+			toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
+		update_video_and_audio();
+
+		k = KEYCODE_NONE;
+		if (keyboard_pressed_memory_repeat(KEYCODE_A,dbg_key_repeat)) k = KEYCODE_A;
+		if (keyboard_pressed_memory_repeat(KEYCODE_B,dbg_key_repeat)) k = KEYCODE_B;
+		if (keyboard_pressed_memory_repeat(KEYCODE_C,dbg_key_repeat)) k = KEYCODE_C;
+		if (keyboard_pressed_memory_repeat(KEYCODE_D,dbg_key_repeat)) k = KEYCODE_D;
+		if (keyboard_pressed_memory_repeat(KEYCODE_E,dbg_key_repeat)) k = KEYCODE_E;
+		if (keyboard_pressed_memory_repeat(KEYCODE_F,dbg_key_repeat)) k = KEYCODE_F;
+		if (keyboard_pressed_memory_repeat(KEYCODE_G,dbg_key_repeat)) k = KEYCODE_G;
+		if (keyboard_pressed_memory_repeat(KEYCODE_H,dbg_key_repeat)) k = KEYCODE_H;
+		if (keyboard_pressed_memory_repeat(KEYCODE_I,dbg_key_repeat)) k = KEYCODE_I;
+		if (keyboard_pressed_memory_repeat(KEYCODE_J,dbg_key_repeat)) k = KEYCODE_J;
+		if (keyboard_pressed_memory_repeat(KEYCODE_K,dbg_key_repeat)) k = KEYCODE_K;
+		if (keyboard_pressed_memory_repeat(KEYCODE_L,dbg_key_repeat)) k = KEYCODE_L;
+		if (keyboard_pressed_memory_repeat(KEYCODE_M,dbg_key_repeat)) k = KEYCODE_M;
+		if (keyboard_pressed_memory_repeat(KEYCODE_N,dbg_key_repeat)) k = KEYCODE_N;
+		if (keyboard_pressed_memory_repeat(KEYCODE_O,dbg_key_repeat)) k = KEYCODE_O;
+		if (keyboard_pressed_memory_repeat(KEYCODE_P,dbg_key_repeat)) k = KEYCODE_P;
+		if (keyboard_pressed_memory_repeat(KEYCODE_Q,dbg_key_repeat)) k = KEYCODE_Q;
+		if (keyboard_pressed_memory_repeat(KEYCODE_R,dbg_key_repeat)) k = KEYCODE_R;
+		if (keyboard_pressed_memory_repeat(KEYCODE_S,dbg_key_repeat)) k = KEYCODE_S;
+		if (keyboard_pressed_memory_repeat(KEYCODE_T,dbg_key_repeat)) k = KEYCODE_T;
+		if (keyboard_pressed_memory_repeat(KEYCODE_U,dbg_key_repeat)) k = KEYCODE_U;
+		if (keyboard_pressed_memory_repeat(KEYCODE_V,dbg_key_repeat)) k = KEYCODE_V;
+		if (keyboard_pressed_memory_repeat(KEYCODE_W,dbg_key_repeat)) k = KEYCODE_W;
+		if (keyboard_pressed_memory_repeat(KEYCODE_X,dbg_key_repeat)) k = KEYCODE_X;
+		if (keyboard_pressed_memory_repeat(KEYCODE_Y,dbg_key_repeat)) k = KEYCODE_Y;
+		if (keyboard_pressed_memory_repeat(KEYCODE_Z,dbg_key_repeat)) k = KEYCODE_Z;
+		if (keyboard_pressed_memory_repeat(KEYCODE_0,dbg_key_repeat)) k = KEYCODE_0;
+		if (keyboard_pressed_memory_repeat(KEYCODE_1,dbg_key_repeat)) k = KEYCODE_1;
+		if (keyboard_pressed_memory_repeat(KEYCODE_2,dbg_key_repeat)) k = KEYCODE_2;
+		if (keyboard_pressed_memory_repeat(KEYCODE_3,dbg_key_repeat)) k = KEYCODE_3;
+		if (keyboard_pressed_memory_repeat(KEYCODE_4,dbg_key_repeat)) k = KEYCODE_4;
+		if (keyboard_pressed_memory_repeat(KEYCODE_5,dbg_key_repeat)) k = KEYCODE_5;
+		if (keyboard_pressed_memory_repeat(KEYCODE_6,dbg_key_repeat)) k = KEYCODE_6;
+		if (keyboard_pressed_memory_repeat(KEYCODE_7,dbg_key_repeat)) k = KEYCODE_7;
+		if (keyboard_pressed_memory_repeat(KEYCODE_8,dbg_key_repeat)) k = KEYCODE_8;
+		if (keyboard_pressed_memory_repeat(KEYCODE_9,dbg_key_repeat)) k = KEYCODE_9;
+		if (keyboard_pressed_memory_repeat(KEYCODE_0_PAD,dbg_key_repeat)) k = KEYCODE_0_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_1_PAD,dbg_key_repeat)) k = KEYCODE_1_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_2_PAD,dbg_key_repeat)) k = KEYCODE_2_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_3_PAD,dbg_key_repeat)) k = KEYCODE_3_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_4_PAD,dbg_key_repeat)) k = KEYCODE_4_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_5_PAD,dbg_key_repeat)) k = KEYCODE_5_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_6_PAD,dbg_key_repeat)) k = KEYCODE_6_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_7_PAD,dbg_key_repeat)) k = KEYCODE_7_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_8_PAD,dbg_key_repeat)) k = KEYCODE_8_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_9_PAD,dbg_key_repeat)) k = KEYCODE_9_PAD;
+		if (keyboard_pressed_memory(KEYCODE_F1)) k = KEYCODE_F1;
+		if (keyboard_pressed_memory(KEYCODE_F2)) k = KEYCODE_F2;
+		if (keyboard_pressed_memory(KEYCODE_F3)) k = KEYCODE_F3;
+		if (keyboard_pressed_memory(KEYCODE_F4)) k = KEYCODE_F4;
+/*		if (keyboard_pressed_memory(KEYCODE_F5)) k = KEYCODE_F5; */
+		if (keyboard_pressed_memory(KEYCODE_F6)) k = KEYCODE_F6;
+		if (keyboard_pressed_memory(KEYCODE_F7)) k = KEYCODE_F7;
+		if (keyboard_pressed_memory(KEYCODE_F8)) k = KEYCODE_F8;
+		if (keyboard_pressed_memory(KEYCODE_F9)) k = KEYCODE_F9;
+		if (keyboard_pressed_memory(KEYCODE_F10)) k = KEYCODE_F10;
+		if (keyboard_pressed_memory(KEYCODE_F11)) k = KEYCODE_F11;
+		if (keyboard_pressed_memory(KEYCODE_F12)) k = KEYCODE_F12;
+		if (keyboard_pressed_memory(KEYCODE_ESC)) k = KEYCODE_ESC;
+/*		if (keyboard_pressed_memory_repeat(KEYCODE_TILDE,dbg_key_repeat)) k = KEYCODE_TILDE; */
+		if (keyboard_pressed_memory_repeat(KEYCODE_MINUS,dbg_key_repeat)) k = KEYCODE_MINUS;
+		if (keyboard_pressed_memory_repeat(KEYCODE_EQUALS,dbg_key_repeat)) k = KEYCODE_EQUALS;
+		if (keyboard_pressed_memory_repeat(KEYCODE_BACKSPACE,dbg_key_repeat)) k = KEYCODE_BACKSPACE;
+		if (keyboard_pressed_memory_repeat(KEYCODE_TAB,dbg_key_repeat)) k = KEYCODE_TAB;
+		if (keyboard_pressed_memory_repeat(KEYCODE_OPENBRACE,dbg_key_repeat)) k = KEYCODE_OPENBRACE;
+		if (keyboard_pressed_memory_repeat(KEYCODE_CLOSEBRACE,dbg_key_repeat)) k = KEYCODE_CLOSEBRACE;
+		if (keyboard_pressed_memory_repeat(KEYCODE_ENTER,dbg_key_repeat)) k = KEYCODE_ENTER;
+		if (keyboard_pressed_memory_repeat(KEYCODE_COLON,dbg_key_repeat)) k = KEYCODE_COLON;
+		if (keyboard_pressed_memory_repeat(KEYCODE_QUOTE,dbg_key_repeat)) k = KEYCODE_QUOTE;
+		if (keyboard_pressed_memory_repeat(KEYCODE_BACKSLASH,dbg_key_repeat)) k = KEYCODE_BACKSLASH;
+		if (keyboard_pressed_memory_repeat(KEYCODE_BACKSLASH2,dbg_key_repeat)) k = KEYCODE_BACKSLASH2;
+		if (keyboard_pressed_memory_repeat(KEYCODE_COMMA,dbg_key_repeat)) k = KEYCODE_COMMA;
+		if (keyboard_pressed_memory_repeat(KEYCODE_STOP,dbg_key_repeat)) k = KEYCODE_STOP;
+		if (keyboard_pressed_memory_repeat(KEYCODE_SLASH,dbg_key_repeat)) k = KEYCODE_SLASH;
+		if (keyboard_pressed_memory_repeat(KEYCODE_SPACE,dbg_key_repeat)) k = KEYCODE_SPACE;
+		if (keyboard_pressed_memory_repeat(KEYCODE_INSERT,dbg_key_repeat)) k = KEYCODE_INSERT;
+		if (keyboard_pressed_memory_repeat(KEYCODE_DEL,dbg_key_repeat)) k = KEYCODE_DEL;
+		if (keyboard_pressed_memory_repeat(KEYCODE_HOME,dbg_key_repeat)) k = KEYCODE_HOME;
+		if (keyboard_pressed_memory_repeat(KEYCODE_END,dbg_key_repeat)) k = KEYCODE_END;
+		if (keyboard_pressed_memory_repeat(KEYCODE_PGUP,dbg_key_repeat)) k = KEYCODE_PGUP;
+		if (keyboard_pressed_memory_repeat(KEYCODE_PGDN,dbg_key_repeat)) k = KEYCODE_PGDN;
+		if (keyboard_pressed_memory_repeat(KEYCODE_LEFT,dbg_key_repeat)) k = KEYCODE_LEFT;
+		if (keyboard_pressed_memory_repeat(KEYCODE_RIGHT,dbg_key_repeat)) k = KEYCODE_RIGHT;
+		if (keyboard_pressed_memory_repeat(KEYCODE_UP,dbg_key_repeat)) k = KEYCODE_UP;
+		if (keyboard_pressed_memory_repeat(KEYCODE_DOWN,dbg_key_repeat)) k = KEYCODE_DOWN;
+		if (keyboard_pressed_memory_repeat(KEYCODE_SLASH_PAD,dbg_key_repeat)) k = KEYCODE_SLASH_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_ASTERISK,dbg_key_repeat)) k = KEYCODE_ASTERISK;
+		if (keyboard_pressed_memory_repeat(KEYCODE_MINUS_PAD,dbg_key_repeat)) k = KEYCODE_MINUS_PAD;
+		if (keyboard_pressed_memory_repeat(KEYCODE_PLUS_PAD,dbg_key_repeat)) k = KEYCODE_PLUS_PAD;
+/*		if (keyboard_pressed_memory_repeat(KEYCODE_DEL_PAD,dbg_key_repeat)) k = KEYCODE_DEL_PAD; */
+/*		if (keyboard_pressed_memory_repeat(KEYCODE_ENTER_PAD,dbg_key_repeat)) k = KEYCODE_ENTER_PAD; */
+/*		if (keyboard_pressed_memory(KEYCODE_PRTSCR)) k = KEYCODE_PRTSCR; */
+/*		if (keyboard_pressed_memory(KEYCODE_PAUSE)) k = KEYCODE_PAUSE; */
+/*		if (keyboard_pressed_memory(KEYCODE_SCRLOCK)) k = KEYCODE_SCRLOCK; */
+/*		if (keyboard_pressed_memory(KEYCODE_NUMLOCK)) k = KEYCODE_NUMLOCK; */
+/*		if (keyboard_pressed_memory(KEYCODE_CAPSLOCK)) k = KEYCODE_CAPSLOCK; */
+/*		if (keyboard_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
+/*		if (keyboard_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
+/*		if (keyboard_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
+	} while (k == KEYCODE_NONE);
+	if (cursor_on)
+		toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
+
+	return k;
+}
+
+
+
+
 
 /****************************************************************************
  * Tracing
@@ -585,79 +1006,79 @@ static s_command commands[] = {
 {	(1<<EDIT_CMDS),
 	"A",            0,          CODE_NONE,
 	"[<update>]",
-	"Animate (trace) and update display every <update> opcodes only",
+	"Animate (trace) and update display once per frame [or every <update> opcodes only]",
 	cmd_animate },
-{   (1<<EDIT_CMDS),
-    "D",            0,          CODE_NONE,
-    "<1|2> <address>",
-    "Display memory <1|2> starting at <address>",
-    cmd_display_memory },
-{   (1<<EDIT_CMDS),
-    "E",            0,          CODE_NONE,
-    "<1|2> [<address>]",
-    "Edit memory window <1|2> [at <address>]",
-    cmd_edit_memory },
 {	(1<<EDIT_CMDS),
-    "M",            0,          CODE_NONE,
+	"D",            0,          CODE_NONE,
+	"<1|2> <address>",
+	"Display memory <1|2> starting at <address>",
+	cmd_display_memory },
+{	(1<<EDIT_CMDS),
+	"E",            0,          CODE_NONE,
+	"<1|2> [<address>]",
+	"Edit memory window <1|2> [at <address>]",
+	cmd_edit_memory },
+{	(1<<EDIT_CMDS),
+	"M",            0,          CODE_NONE,
 	"<1|2> [BYTE|WORD|DWORD]",
 	"Change memory window mode to default [to BYTE|WORD|DWORD (or 0|1|2)]",
 	cmd_set_memory_mode },
-{   (1<<EDIT_CMDS),
-    "F",            0,          CODE_NONE,
-    "",
-    "Fast",
-    cmd_fast },
-{   (1<<EDIT_CMDS),
-    "G",            0,          CODE_NONE,
-    "[<address>]",
-    "Go [and break at <address>]",
-    cmd_go_break },
-{   (1<<EDIT_CMDS),
-    "J",            0,          CODE_NONE,
-    "<address>",
-    "Jump to <address> in disassembly window",
-    cmd_jump },
-{   (1<<EDIT_CMDS),
-    "R",            0,          CODE_NONE,
-    "<register> <value>",
+{	(1<<EDIT_CMDS),
+	"F",            0,          CODE_NONE,
+	"",
+	"Fast",
+	cmd_fast },
+{	(1<<EDIT_CMDS),
+	"G",            0,          CODE_NONE,
+	"[<address>]",
+	"Go [and break at <address>]",
+	cmd_go_break },
+{	(1<<EDIT_CMDS),
+	"J",            0,          CODE_NONE,
+	"<address>",
+	"Jump to <address> in disassembly window",
+	cmd_jump },
+{	(1<<EDIT_CMDS),
+	"R",            0,          CODE_NONE,
+	"<register> <value>",
 	"Replace <register> with <value> (<value> may also be a <register>)",
-    cmd_replace_register },
-{   (1<<EDIT_CMDS),
+	cmd_replace_register },
+{	(1<<EDIT_CMDS),
 	"BP",           "BPX",      CODE_NONE,
 	"<address> [<times>]",
 	"Break on execution of <address> [after ignoring it <times>]",
 	cmd_brk_exec_set },
-{   (1<<EDIT_CMDS),
+{	(1<<EDIT_CMDS),
 	"BC",           0,          CODE_NONE,
 	"",
 	"Clear execution breakpoint",
 	cmd_brk_exec_clear },
 {	(1<<EDIT_CMDS),
-    "RP",           0,          CODE_NONE,
-    "<register> [<value> [<mask>]]",
-    "Break if <register> changes [to <value> [compare after applying <mask>]]",
-    cmd_brk_regs_set },
-{   (1<<EDIT_CMDS),
-    "RC",           0,          CODE_NONE,
-    "",
-    "Clear register watchpoint",
-    cmd_brk_regs_clear },
-{   (1<<EDIT_CMDS),
-    "WP",           "BPW",      CODE_NONE,
-    "<address> [<value>]",
-    "Break if data at <address> changes [to <value>]",
-    cmd_brk_data_set },
-{   (1<<EDIT_CMDS),
-    "WC",           0,          CODE_NONE,
-    "",
-	"Clear data watchpoint",
-    cmd_brk_data_clear },
+	"RP",           0,          CODE_NONE,
+	"<register> [<value> [<mask>]]",
+	"Break if <register> changes [to <value> [compare after applying <mask>]]",
+	cmd_brk_regs_set },
 {	(1<<EDIT_CMDS),
-    "HERE",         0,          CODE_NONE,
-    "",
-    "Run to cursor",
-    cmd_here },
-{   (1<<EDIT_CMDS),
+	"RC",           0,          CODE_NONE,
+	"",
+	"Clear register watchpoint",
+	cmd_brk_regs_clear },
+{	(1<<EDIT_CMDS),
+	"WP",           "BPW",      CODE_NONE,
+	"<address> [<value>]",
+	"Break if data at <address> changes [to <value>]",
+	cmd_brk_data_set },
+{	(1<<EDIT_CMDS),
+	"WC",           0,          CODE_NONE,
+	"",
+	"Clear data watchpoint",
+	cmd_brk_data_clear },
+{	(1<<EDIT_CMDS),
+	"HERE",         0,          CODE_NONE,
+	"",
+	"Run to cursor",
+	cmd_here },
+{	(1<<EDIT_CMDS),
 	"DASM",         0,          CODE_NONE,
 	"<filename> <start> <end> [<boolean>]",
 	"Disassemble to <filename> from address <start> to <end>\n" \
@@ -665,23 +1086,24 @@ static s_command commands[] = {
 	cmd_dasm_to_file },
 {	(1<<EDIT_CMDS),
 	"DUMP",         0,          CODE_NONE,
-	"<filename> <start> <end> [<data size> [<ASCII mode>]]",
+	"<filename> <start> <end> [<data size> [<ASCII mode> [<prog/data memory>]]]",
 	"Dump to <filename> from address <start> to <end>\n" \
 	"[data size BYTE|WORD|DWORD (also 0|1|2)]\n" \
-	"[ASCII mode OFF|TRANSLATE|FULL (also 0|1|2)]\n",
+	"[ASCII mode OFF|TRANSLATE|FULL (also 0|1|2)]\n" \
+	"[PROG or DATA memory (also 0|1) for CPUs supporting it]\n",
 	cmd_dump_to_file },
 {	(1<<EDIT_CMDS),
-    "TRACE",        0,          CODE_NONE,
-    "{<filename> [<reg1> [<reg2>...]]}|OFF",
-    "Trace to <filename> [dumping <reg1> [<reg2>...]] | OFF to stop tracing.",
-    cmd_trace_to_file },
+	"TRACE",        0,          CODE_NONE,
+	"{<filename> [<reg1> [<reg2>...]]}|OFF",
+	"Trace to <filename> [dumping <reg1> [<reg2>...]] | OFF to stop tracing.",
+	cmd_trace_to_file },
 {	(1<<EDIT_CMDS),
 	"SAVE",         0,          CODE_NONE,
 	"<filename> <start> <end> [OPCODES|DATA]",
 	"Save binary to <filename> from address <start> to <end>\n" \
 	"[either OPCODES (from OP_ROM, default) or DATA (from OP_RAM), also 0|1].",
 	cmd_save_to_file },
-{   (1<<EDIT_CMDS),
+{	(1<<EDIT_CMDS),
 	"IGNORE",       0,          CODE_NONE,
 	"<cpunum>",
 	"Ignore CPU #<cpunum> while debugging or tracing",
@@ -692,20 +1114,25 @@ static s_command commands[] = {
 	"Observe CPU #<cpunum> while debugging or tracing",
 	cmd_set_observe },
 {	(1<<EDIT_CMDS),
-    "CASE",         0,          CODE_NONE,
-    "DEFAULT|LOWER|UPPER (also 0|1|2)",
-    "Set disassembly case style.",
-    cmd_set_dasm_case },
-{   (1<<EDIT_CMDS),
-    "OPCODES",      0,          CODE_NONE,
-    "<boolean>",
-    "Display opcodes in disassembly window",
-    cmd_set_dasm_opcodes },
-{   (1<<EDIT_CMDS),
-    "RELATIVE",     0,          CODE_NONE,
-    "<boolean>",
-    "Display relative jump addresses in disassembly window",
-    cmd_set_dasm_relative_jumps },
+	"REPEAT",       0,          CODE_NONE,
+	"rate",
+	"Set keyboard initial repeat rate (rate/frame will increase to 1/frame)",
+	cmd_set_key_repeat },
+{	(1<<EDIT_CMDS),
+	"CASE",         0,          CODE_NONE,
+	"DEFAULT|LOWER|UPPER (also 0|1|2)",
+	"Set disassembly case style.",
+	cmd_set_dasm_case },
+{	(1<<EDIT_CMDS),
+	"OPCODES",      0,          CODE_NONE,
+	"<boolean>",
+	"Display opcodes in disassembly window",
+	cmd_set_dasm_opcodes },
+{	(1<<EDIT_CMDS),
+	"RELATIVE",     0,          CODE_NONE,
+	"<boolean>",
+	"Display relative jump addresses in disassembly window",
+	cmd_set_dasm_relative_jumps },
 {	(1<<EDIT_CMDS),
 	"SQUEEZE",      0,        CODE_NONE,
 	"<boolean>",
@@ -716,12 +1143,7 @@ static s_command commands[] = {
 	"<element> <foreground> [<background>]",
 	"Set <element> color to <foreground> on BLACK [or <background>].\nFor a list of <elements> and <colors> see mamedbg.cfg",
 	cmd_set_element_color },
-{   (1<<EDIT_CMDS),
-	"SCREEN",       0,          CODE_NONE,
-	"[<column> <lines>]",
-	"Set screen size to default [or to <columns> x <lines>]",
-	cmd_set_screen_size },
-{   (1<<EDIT_CMDS)|(1<<EDIT_DASM),
+{	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
 	0,				0,			KEYCODE_UP,
 	"",
 	"Move cursor up in disassembly window",
@@ -751,7 +1173,7 @@ static s_command commands[] = {
 	"",
 	"Move cursor to last page in disassembly window",
 	cmd_dasm_end },
-{   (1<<EDIT_CMDS)|(1<<EDIT_DASM),
+{	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
 	0,				0,			KEYCODE_LEFT,
 	"",
 	"Back to the previous point in 'follow history'",
@@ -761,50 +1183,60 @@ static s_command commands[] = {
 	"",
 	"Follow the current instruction's code or data reference",
 	cmd_dasm_hist_follow },
-{   ALL,
+{	ALL,
 	0,				0,			KEYCODE_TAB,
 	"",
 	"Switch between windows (backwards SHIFT+TAB)",
 	cmd_switch_window },
 {	(1<<EDIT_DASM),
-    0,              0,          KEYCODE_D,
-    "",
-    "Change disassembly case style to default",
-    NULL },
+	0,				0,			KEYCODE_D,
+	"",
+	"Change disassembly case style to default",
+	NULL },
 {	(1<<EDIT_DASM),
 	0,				0,			KEYCODE_L,
-    "",
+	"",
 	"Change disassembly case style to lower case",
-    NULL },
+	NULL },
 {	(1<<EDIT_DASM),
 	0,				0,			KEYCODE_U,
-    "",
+	"",
 	"Change disassembly case style to upper case",
-    NULL },
+	NULL },
 {	(1<<EDIT_DASM),
 	0,				0,			KEYCODE_M,
-    "",
+	"",
 	"Toggle disassembly opcode display mode",
-    NULL },
+	NULL },
 {	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
 	0,				0,			KEYCODE_H,
-    "",
+	"",
 	"Toggle between hex, ASCII and full character set mode",
-    NULL },
-{   (1<<EDIT_MEM1)|(1<<EDIT_MEM2),
+	NULL },
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
+	0,				0,			KEYCODE_P,
+	"",
+	"Toggle memory display between DATA and PROGRAM memory (Harvard-architecture CPUs)",
+	NULL },
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
+	0,				0,			KEYCODE_I,
+	"",
+	"Toggle memory display between CPU internal and normal memory",
+	NULL },
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
 	0,				0,			KEYCODE_M,
-    "",
+	"",
 	"Switch memory display mode between bytes, words and dwords",
-    NULL },
+	NULL },
 {	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
 	0,				0,			KEYCODE_S,
-    "",
+	"",
 	"Search memory for a sequence of bytes",
 	cmd_search_memory },
-{   ALL,
+{	ALL,
 	0,				0,			KEYCODE_F1,
 	"",
-    "Help - maybe you realized this ;)",
+	"Help - maybe you realized this ;)",
 	cmd_help },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
 	0,				0,			KEYCODE_F2,
@@ -821,11 +1253,6 @@ static s_command commands[] = {
 	"",
 	"Set data watchpoint to current memory location",
 	cmd_brk_data_toggle },
-{   ALL,
-	0,				0,			KEYCODE_F5,
-	"",
-	"View emulation screen",
-	cmd_view_screen },
 {	ALL,
 	0,				0,			KEYCODE_F6,
 	"",
@@ -857,7 +1284,7 @@ static s_command commands[] = {
 	"Go!",
 	cmd_go },
 /* This is the end of the list! */
-{ 0,    },
+{ 0,	},
 };
 
 INLINE unsigned order( unsigned offset, unsigned size )
@@ -872,14 +1299,14 @@ INLINE unsigned order( unsigned offset, unsigned size )
 		{
 		case CPU_IS_LE: return UINT16_XOR_LE(offset);
 		case CPU_IS_BE: return UINT16_XOR_BE(offset);
-        }
+		}
 		break;
 	case 4:
 		switch( ENDIAN )
 		{
 		case CPU_IS_LE: return UINT32_XOR_LE(offset);
 		case CPU_IS_BE: return UINT32_XOR_BE(offset);
-        }
+		}
 		break;
 	}
 	return offset;
@@ -890,8 +1317,8 @@ INLINE unsigned lshift( unsigned offset )
 {
 	switch( ASHIFT )
 	{
-		case -1: return offset / 2;
-		case  3: return offset * 8;
+	case -1: return offset / 2;
+	case  3: return offset * 8;
 	}
 	return offset;
 }
@@ -901,8 +1328,8 @@ INLINE unsigned rshift( unsigned offset )
 {
 	switch( ASHIFT )
 	{
-		case -1: return offset * 2;
-		case  3: return offset / 8;
+	case -1: return offset * 2;
+	case  3: return offset / 8;
 	}
 	return offset;
 }
@@ -919,7 +1346,7 @@ INLINE unsigned dtou( char **parg, int *size)
 {
 	unsigned val = 0, digit;
 
-    if (size) *size = 0;
+	if (size) *size = 0;
 	while( isdigit( *(*parg) ) )
 	{
 		digit = *(*parg) - '0';
@@ -942,7 +1369,7 @@ INLINE unsigned xtou( char **parg, int *size)
 {
 	unsigned val = 0, digit;
 
-    if (size) *size = 0;
+	if (size) *size = 0;
 	while( isxdigit( *(*parg) ) )
 	{
 		digit = toupper(*(*parg)) - '0';
@@ -962,7 +1389,7 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 	const char *sign = "";
 	unsigned width, result;
 
-    which = ++which % 8;
+	which = ++which % 8;
 
 	if( access == EA_REL_PC )
 		/* PC relative calls set_ea_info with value = PC and size = offset */
@@ -970,26 +1397,26 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 	else
 		result = value;
 
-    /* set source EA? */
+	/* set source EA? */
 	if( what == EA_SRC )
-    {
+	{
 		DBGDASM.src_ea_access = access;
 		DBGDASM.src_ea_value = result;
 		DBGDASM.src_ea_size = size;
-    }
-    else
+	}
+	else
 	if( what == EA_DST )
-    {
+	{
 		DBGDASM.dst_ea_access = access;
 		DBGDASM.dst_ea_value = result;
 		DBGDASM.dst_ea_size = size;
-    }
+	}
 	else
 	{
 		return "set_ea_info: invalid <what>!";
 	}
 
-    switch( access )
+	switch( access )
 	{
 	case EA_VALUE:	/* Immediate value */
 		switch( size )
@@ -1053,7 +1480,7 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 		else
 		if( size == EA_INT32 || size == EA_UINT32 )
 			width = 8;
-        else
+		else
 			width = (ABITS + 3) / 4;
 		break;
 
@@ -1066,7 +1493,7 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 			{
 				sign = "-";
 				result = (unsigned) -size;
-            }
+			}
 			else
 			{
 				sign = "+";
@@ -1074,14 +1501,14 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 			}
 			sprintf( buffer[which], "$%s%u", sign, result );
 			return buffer[which];
-        }
+		}
 		/* fall through */
-    default:
+	default:
 		result &= AMASK;
 		width = (ABITS + 3) / 4;
 	}
 	sprintf( buffer[which], "%s$%0*X", sign, width, result );
-    return buffer[which];
+	return buffer[which];
 }
 
 /**************************************************************************
@@ -1171,9 +1598,9 @@ static unsigned get_boolean( char **parg, int *size )
 			result = 0;
 			length = 3;
 			*parg += length;
-        }
-    }
-    else
+		}
+	}
+	else
 	if( toupper(p[0]) == 'N' )
 	{
 		if( toupper(p[1]) == 'O' && !isalnum(p[2]) )
@@ -1187,14 +1614,14 @@ static unsigned get_boolean( char **parg, int *size )
 		{
 			result = 0;
 			length = 1;
-            *parg += length;
-        }
-    }
-    else
+			*parg += length;
+		}
+	}
+	else
 	if( toupper(p[0]) == 'Y' )
 	{
 		if( toupper(p[1]) == 'E' && toupper(p[2]) == 'S' && !isalnum(p[3]) )
-        {
+		{
 			result = 1;
 			length = 3;
 			*parg += length;
@@ -1204,9 +1631,9 @@ static unsigned get_boolean( char **parg, int *size )
 		{
 			result = 0;
 			length = 1;
-            *parg += length;
-        }
-    }
+			*parg += length;
+		}
+	}
 
 	if( length )
 	{
@@ -1218,9 +1645,9 @@ static unsigned get_boolean( char **parg, int *size )
 		result = xtou( parg, &length );
 	}
 
-    if( size ) *size += length;
+	if( size ) *size += length;
 
-    return result;
+	return result;
 }
 
 /**************************************************************************
@@ -1241,7 +1668,7 @@ static unsigned get_option_or_value( char **parg, int *size, const char *opt_lis
 	while( isspace(*p) ) p++;
 
 	/* sacn options */
-    for( opt = opt_list; *opt ; opt += strlen(opt) + 1 )
+	for( opt = opt_list; *opt ; opt += strlen(opt) + 1 )
 	{
 		if( strncmp(*parg, opt, length) == 0 )
 		{
@@ -1255,7 +1682,7 @@ static unsigned get_option_or_value( char **parg, int *size, const char *opt_lis
 	result = xtou( parg, &length );
 	if( size ) *size += length;
 
-    return result;
+	return result;
 }
 
 static const char *get_file_name( char **parg, int *size )
@@ -1267,9 +1694,9 @@ static const char *get_file_name( char **parg, int *size )
 	for( l = 0, s = *parg, d = filename; *s && (isalnum(*s) || ispunct(*s)); l++ )
 		*d++ = *s++;
 
-    *d = '\0';
+	*d = '\0';
 	while( isspace(*s) ) s++;
-    *parg = s;
+	*parg = s;
 
 	if( size ) *size = l;
 
@@ -1288,38 +1715,38 @@ const char *get_ea_info( unsigned pc )
 		"<",    /* zero page memory read */
 		">",    /* zero page memory write */
 		"*",    /* zero page memory modify */
-        "<",    /* memory read */
+		"<",    /* memory read */
 		">",    /* memory write */
 		"*",    /* memory modify */
 		"P<",   /* port read */
 		"P>"    /* port write */
 	};
 
-    unsigned wdst, wsrc;
+	unsigned wdst, wsrc;
 
 	switch( DBGDASM.dst_ea_size )
 	{
-		case EA_INT8:	wdst = 2; break;
-		case EA_INT16:	wdst = 4; break;
-		case EA_INT32:	wdst = 8; break;
-		case EA_UINT8:	wdst = 2; break;
-		case EA_UINT16: wdst = 4; break;
-		case EA_UINT32: wdst = 8; break;
-        default:
-			wdst = (ABITS + 3) / 4;
-    }
+	case EA_INT8:	wdst = 2; break;
+	case EA_INT16:	wdst = 4; break;
+	case EA_INT32:	wdst = 8; break;
+	case EA_UINT8:	wdst = 2; break;
+	case EA_UINT16: wdst = 4; break;
+	case EA_UINT32: wdst = 8; break;
+	default:
+		wdst = (ABITS + 3) / 4;
+	}
 
 	switch( DBGDASM.src_ea_size )
 	{
-		case EA_INT8:	wsrc = 2; break;
-		case EA_INT16:	wsrc = 4; break;
-		case EA_INT32:	wsrc = 8; break;
-		case EA_UINT8:	wsrc = 2; break;
-		case EA_UINT16: wsrc = 4; break;
-		case EA_UINT32: wsrc = 8; break;
-        default:
-			wsrc = (ABITS + 3) / 4;
-    }
+	case EA_INT8:	wsrc = 2; break;
+	case EA_INT16:	wsrc = 4; break;
+	case EA_INT32:	wsrc = 8; break;
+	case EA_UINT8:	wsrc = 2; break;
+	case EA_UINT16: wsrc = 4; break;
+	case EA_UINT32: wsrc = 8; break;
+	default:
+		wsrc = (ABITS + 3) / 4;
+	}
 
 	if( DBGDASM.dst_ea_value != INVALID && DBGDASM.src_ea_value != INVALID )
 		sprintf( buffer, "%s\t%s%0*X %s%0*X",
@@ -1339,7 +1766,7 @@ const char *get_ea_info( unsigned pc )
 	else
 		sprintf( buffer, "%s", name_rdmem(rshift(pc)) );
 
-    return buffer;
+	return buffer;
 }
 
 /**************************************************************************
@@ -1363,7 +1790,7 @@ static unsigned get_register_id( char **parg, int *size )
 				return DBGREGS.id[i];
 			}
 		}
-    }
+	}
 	if( size ) *size = 0;
 	return 0;
 }
@@ -1379,7 +1806,7 @@ static const char *get_register_name( int id )
 	{
 		if( DBGREGS.id[i] == id )
 			return DBGREGS.name[i];
-    }
+	}
 	return "??";
 }
 
@@ -1413,10 +1840,10 @@ static void trace_init( const char *filename, UINT8 *regs )
 {
 	char name[100];
 
-    if( trace_on )
+	if( trace_on )
 		return;
 
-    for( tracecpu = 0; tracecpu < totalcpu; tracecpu++ )
+	for( tracecpu = 0; tracecpu < totalcpu; tracecpu++ )
 	{
 		sprintf( name, "%s.%d", filename, tracecpu );
 		TRACE.file = fopen(name,"w");
@@ -1441,14 +1868,14 @@ void trace_done(void)
 	if( !trace_on )
 		return;
 
-    for( tracecpu = 0; tracecpu < totalcpu; tracecpu++ )
+	for( tracecpu = 0; tracecpu < totalcpu; tracecpu++ )
 	{
 		if( TRACE.file )
 			fclose( TRACE.file );
 		TRACE.file = NULL;
 	}
 
-    trace_on = 0;
+	trace_on = 0;
 }
 
 /**************************************************************************
@@ -1459,7 +1886,7 @@ static void trace_select( void )
 {
 	if( tracecpu == activecpu )
 		return;
-    if( trace_on && TRACE.file )
+	if( trace_on && TRACE.file )
 	{
 		if( TRACE.loops )
 		{
@@ -1486,13 +1913,13 @@ static void trace_output( void )
 	static char buffer[127+1];
 	char *dst = buffer;
 
-    if( trace_on && TRACE.file )
+	if( trace_on && TRACE.file )
 	{
 		unsigned pc = cpu_get_pc();
 		unsigned addr_width = (ABITS + 3) / 4;
 		int count, i;
 
-		// check for trace_loops
+		/* check for trace_loops */
 		for( i = count = 0; i < MAX_LOOPS; i++ )
 			if( TRACE.last_pc[i] == pc )
 				count++;
@@ -1511,9 +1938,9 @@ static void trace_output( void )
 			}
 			if( TRACE.regs[0] )
 			{
-                for( i = 0; i < MAX_REGS && TRACE.regs[i]; i++ )
+				for( i = 0; i < MAX_REGS && TRACE.regs[i]; i++ )
 					dst += sprintf( dst, "%s ", cpu_dump_reg(TRACE.regs[i]) );
-            }
+			}
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
 			cpu_dasm( dst, pc );
 			strcat( dst, "\n" );
@@ -1524,7 +1951,7 @@ static void trace_output( void )
 				(MAX_LOOPS-1)*sizeof(TRACE.last_pc[0]) );
 			TRACE.last_pc[MAX_LOOPS-1] = pc;
 		}
-    }
+	}
 }
 
 /**************************************************************************
@@ -1535,7 +1962,7 @@ static void trace_output( void )
 static int hit_brk_exec(void)
 {
 	static char dbg_info[63+1];
-    UINT32 pc = cpu_get_pc();
+	UINT32 pc = cpu_get_pc();
 
 	if( DBG.brk_temp != INVALID && DBG.brk_temp == pc )
 	{
@@ -1552,7 +1979,7 @@ static int hit_brk_exec(void)
 				sprintf( dbg_info, "Hit exec breakpoint %d times", DBG.brk_exec_reset);
 				dbg_info_once = dbg_info;
 				return 1;
-            }
+			}
 			return 0;
 		}
 		sprintf( dbg_info, "Hit exec breakpoint at $%X", DBG.brk_exec);
@@ -1560,7 +1987,7 @@ static int hit_brk_exec(void)
 		return 1;
 	}
 
-    return 0;
+	return 0;
 }
 
 /**************************************************************************
@@ -1585,14 +2012,14 @@ static int hit_brk_data(void)
 			if( DBG.brk_data_newval == data )
 			{
 				sprintf( dbg_info, "Hit data watchpoint at $%X value $%X", DBG.brk_data, DBG.brk_data_newval);
-                dbg_info_once = dbg_info;
-                return 1;
+				dbg_info_once = dbg_info;
+				return 1;
 			}
 			return 0;
 		}
 		sprintf( dbg_info, "Hit data watchpoint at $%X", DBG.brk_data);
 		dbg_info_once = dbg_info;
-        return 1;
+		return 1;
 	}
 	return 0;
 }
@@ -1623,14 +2050,14 @@ static int hit_brk_regs(void)
 					sprintf( dbg_info, "Hit register %s & $%X watchpoint value $%X", get_register_name(DBG.brk_regs), DBG.brk_regs_mask, DBG.brk_regs_newval);
 				else
 					sprintf( dbg_info, "Hit register %s watchpoint value $%X", get_register_name(DBG.brk_regs), DBG.brk_regs_newval);
-                dbg_info_once = dbg_info;
-                return 1;
+				dbg_info_once = dbg_info;
+				return 1;
 			}
 			return 0;
 		}
 		sprintf( dbg_info, "Hit register %s watchpoint", get_register_name(DBG.brk_regs));
 		dbg_info_once = dbg_info;
-        return 1;
+		return 1;
 	}
 	return 0;
 }
@@ -1642,32 +2069,32 @@ static int hit_brk_regs(void)
  **************************************************************************/
 static const char *name_rom( const char *type, int region, unsigned *base, unsigned start )
 {
-    const struct RomModule *romp = Machine->gamedrv->rom;
+	const struct RomModule *romp = Machine->gamedrv->rom;
 	unsigned offset = *base;
 
-    while( romp && (romp->name || romp->offset || romp->length ) )
-    {
+	while( romp && (romp->name || romp->offset || romp->length ) )
+	{
 		romp++; /* skip memory region definition */
 
-        while( romp->length )
-        {
+		while( romp->length )
+		{
 			const char *name;
 			int length;
 
 			name = romp->name;
-            length = 0;
+			length = 0;
 
-            do
-            {
-                /* ROM_RELOAD */
-                if (romp->name == (char *)-1)
-                    length = 0; /* restart */
+			do
+			{
+				/* ROM_RELOAD */
+				if (romp->name == (char *)-1)
+					length = 0; /* restart */
 
-                length += romp->length & ~ROMFLAG_MASK;
+				length += romp->length & ~ROMFLAG_MASK;
 
-                romp++;
+				romp++;
 
-            } while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
 			/* region found already ? */
 			if( region == 0 )
@@ -1683,11 +2110,11 @@ static const char *name_rom( const char *type, int region, unsigned *base, unsig
 				offset -= length;
 			}
 
-        }
+		}
 		--region;
-    }
+	}
 
-    /* default to ROM + xxxx (base - start) */
+	/* default to ROM + xxxx (base - start) */
 	*base -= start;
 	return type;
 }
@@ -1699,11 +2126,11 @@ static const char *name_rom( const char *type, int region, unsigned *base, unsig
 static const char *name_rdmem( unsigned base )
 {
 	static char buffer[16][79+1];
-    static int which = 0;
+	static int which = 0;
 	const struct MachineCPU *cpu = &Machine->drv->cpu[activecpu];
 	const struct MemoryReadAddress *mr = cpu->memory_read;
 	int ram_cnt = 1, nop_cnt = 1;
-    const char *name;
+	const char *name;
 	char *dst;
 
 	which = ++which % 16;
@@ -1711,25 +2138,28 @@ static const char *name_rdmem( unsigned base )
 	*dst = '\0';
 
 	while( *dst == '\0' && mr->start != -1 )
-    {
-        if( base >= mr->start && base <= mr->end )
-        {
+	{
+		if( base >= mr->start && base <= mr->end )
+		{
 			unsigned offset = base - mr->start;
 
-//			if( mr->description )
-//				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
-//			else
-//			if( mr->base && *mr->base == videoram )
-//				sprintf(dst, "video+%04X", lshift(offset) );
-//			else
-//			if( mr->base && *mr->base == colorram )
-//				sprintf(dst, "color+%04X", lshift(offset) );
-//			else
-//			if( mr->base && *mr->base == spriteram )
-//				sprintf(dst, "sprite+%04X", lshift(offset) );
-//			else
+#if 0
+/* Won't work since the MemoryWrite doesn't support ->base anymore */
+			if( mr->description )
+				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
+			else
+			if( mr->base && *mr->base == videoram )
+				sprintf(dst, "video+%04X", lshift(offset) );
+			else
+			if( mr->base && *mr->base == colorram )
+				sprintf(dst, "color+%04X", lshift(offset) );
+			else
+			if( mr->base && *mr->base == spriteram )
+				sprintf(dst, "sprite+%04X", lshift(offset) );
+			else
+#endif
 			switch( (FPTR)mr->handler )
-            {
+			{
 			case (FPTR)MRA_RAM:
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
 				break;
@@ -1812,15 +2242,15 @@ static const char *name_rdmem( unsigned base )
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_15_r )
 					sprintf(dst, "input_port_15+%04X", lshift(offset) );
-            }
-        }
-        switch( (FPTR)mr->handler )
-        {
-			case (FPTR)MRA_RAM: ram_cnt++; break;
-			case (FPTR)MRA_NOP: nop_cnt++; break;
-        }
-        mr++;
-    }
+			}
+		}
+		switch( (FPTR)mr->handler )
+		{
+		case (FPTR)MRA_RAM: ram_cnt++; break;
+		case (FPTR)MRA_NOP: nop_cnt++; break;
+		}
+		mr++;
+	}
 
 	return dst;
 }
@@ -1831,26 +2261,29 @@ static const char *name_rdmem( unsigned base )
  **************************************************************************/
 static const char *name_wrmem( unsigned base )
 {
-    static char buffer[16][79+1];
-    static int which = 0;
+	static char buffer[16][79+1];
+	static int which = 0;
 	const struct MachineCPU *cpu = &Machine->drv->cpu[activecpu];
-    const struct MemoryWriteAddress *mw = cpu->memory_write;
+	const struct MemoryWriteAddress *mw = cpu->memory_write;
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
-    char *dst;
+	char *dst;
 
-    which = ++which % 16;
-    dst = buffer[which];
+	which = ++which % 16;
+	dst = buffer[which];
 	*dst = '\0';
 
-    ram_cnt = nop_cnt = 1;
+	ram_cnt = nop_cnt = 1;
 	while( *dst == '\0' && mw->start != -1 )
-    {
-        if( base >= mw->start && base <= mw->end )
-        {
-//			if( mw->description )
-//				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
-//			else
+	{
+		if( base >= mw->start && base <= mw->end )
+		{
+#if 0
+/* Won't work since the MemoryRead doesn't support ->description anymore */
+			if( mw->description )
+				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
+			else
+#endif
 			if( mw->base && *mw->base == videoram )
 				sprintf(dst, "video+%04X", lshift(base - mw->start) );
 			else
@@ -1859,9 +2292,9 @@ static const char *name_wrmem( unsigned base )
 			else
 			if( mw->base && *mw->base == spriteram )
 				sprintf(dst, "sprite+%04X", lshift(base - mw->start) );
-            else
-            switch( (FPTR)mw->handler )
-            {
+			else
+			switch( (FPTR)mw->handler )
+			{
 			case (FPTR)MWA_RAM:
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - mw->start) );
 				break;
@@ -1901,16 +2334,16 @@ static const char *name_wrmem( unsigned base )
 				sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(base - mw->start) );
 				break;
 			}
-        }
-        switch( (FPTR)mw->handler )
-        {
-            case (FPTR)MRA_RAM: ram_cnt++; break;
-            case (FPTR)MRA_NOP: nop_cnt++; break;
-        }
-        mw++;
-    }
+		}
+		switch( (FPTR)mw->handler )
+		{
+		case (FPTR)MRA_RAM: ram_cnt++; break;
+		case (FPTR)MRA_NOP: nop_cnt++; break;
+		}
+		mw++;
+	}
 
-    return dst;
+	return dst;
 }
 
 /**************************************************************************
@@ -1920,32 +2353,32 @@ static const char *name_wrmem( unsigned base )
 static const char *name_memory( unsigned base )
 {
 	static char buffer[8][79+1];
-    static int which = 0;
+	static int which = 0;
 	const char *rd, *wr;
 
 	/* search readmem and writemem names */
-    rd = name_rdmem( base );
+	rd = name_rdmem( base );
 	wr = name_wrmem( base );
 
 	/* both empty, so it's no specific region */
-    if( *rd == '\0' && *wr == '\0' )
+	if( *rd == '\0' && *wr == '\0' )
 	{
 		which = ++which % 8;
 		sprintf(buffer[which], "N/A:%04X", base);
-        return buffer[which];
-    }
+		return buffer[which];
+	}
 
 	which = ++which % 8;
 
-    /* both names differ? */
-    if( strcmp(rd,wr) )
-		/* well, return one of the names... */
-        sprintf(buffer[which], "%s\t%s", rd, wr);
+	/* both names differ? */
+	if( strcmp(rd,wr) )
+		/* well, return both (separated by tab means left/right aligned) */
+		sprintf(buffer[which], "%s\t%s", rd, wr);
 	else
 		/* return the name for readmem... */
 		sprintf(buffer[which], "%s", rd);
 
-    return buffer[which];
+	return buffer[which];
 }
 
 /**************************************************************************
@@ -1955,7 +2388,7 @@ static const char *name_memory( unsigned base )
 static int win_create(int n, UINT8 prio, int x, int y, int w, int h,
 	UINT8 co_text, UINT8 co_frame, UINT8 chr, UINT32 attributes)
 {
-    struct sWindow win;
+	struct sWindow win;
 	/* fill in the default values for window creation */
 	memset( &win, 0, sizeof(struct sWindow) );
 	win.filler = chr;
@@ -1976,7 +2409,7 @@ static int win_create(int n, UINT8 prio, int x, int y, int w, int h,
 static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt, ... )
 {
 	UINT32 win = WIN_MSGBOX;
-    va_list arg;
+	va_list arg;
 	int i;
 
 	win_create( win, 0,
@@ -1984,15 +2417,15 @@ static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt
 		BORDER_TOP | BORDER_LEFT | BORDER_RIGHT | BORDER_BOTTOM | SHADOW );
 	win_set_title( win, title );
 
-    va_start( arg, fmt );
+	va_start( arg, fmt );
 	win_vprintf( win, fmt, arg );
 	va_end( arg );
 
-    win_show( win );
-    i = keyboard_read_sync();
-    win_close( win );
+	win_show( win );
+	i = readkey();
+	win_close( win );
 
-    return i;
+	return i;
 }
 
 /**************************************************************************
@@ -2014,23 +2447,23 @@ INLINE void dbg_set_rect( struct rectangle *r, int x, int y, int w, int h )
  **************************************************************************/
 static void dbg_open_windows( void )
 {
-    UINT32 flags;
+	UINT32 flags;
 	UINT32 i, w, h, aw, ah;
 
-    /* Initialize windowing engine */
-	osd_get_screen_size( &w, &h );
+	/* Initialize windowing engine */
+	get_screen_size( &w, &h );
 	win_init_engine( w, h );
 
 	/* anything more than 80x25 available? */
 	aw = w - 80;
 	ah = h - 25;
 
-    for( i = 0; i < totalcpu; i++ )
+	for( i = 0; i < totalcpu; i++ )
 	{
 		const UINT8 *win_layout = (UINT8*)cpunum_win_layout(i);
 		struct rectangle regs, dasm, mem1, mem2, cmds;
 
-        #define REGS_X  win_layout[0*4+0]
+		#define REGS_X	win_layout[0*4+0]
 		#define REGS_Y	win_layout[0*4+1]
 		#define REGS_W	win_layout[0*4+2]
 		#define REGS_H	win_layout[0*4+3]
@@ -2070,7 +2503,7 @@ static void dbg_open_windows( void )
 				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H+ah);
 				 dbg_set_rect(&mem1, MEM1_X+aw,MEM1_Y,MEM1_W,MEM1_H+(ah+1)/2);
 				 dbg_set_rect(&mem2, MEM2_X+aw,MEM2_Y+(ah+1)/2,MEM2_W,MEM2_H+ah/2);
-            }
+			}
 			else
 			if( MEM1_X == MEM2_X )
 			{
@@ -2082,13 +2515,14 @@ static void dbg_open_windows( void )
 				 * mem2   * 		*
 				 ********************
 				 * cmds 			*
-                 ********************/
-                 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
+				 ********************/
+				 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
 				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H);
 				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y,MEM1_W+aw,MEM1_H+(ah+1)/2);
 				 dbg_set_rect(&mem2, MEM2_X,MEM2_Y+(ah+1)/2,MEM2_W+aw,MEM2_H+ah/2);
-            }
+			}
 			else
+			if( DASM_X < REGS_X )
 			{
 				/********************
 				 * dasm   * regs	*
@@ -2098,13 +2532,29 @@ static void dbg_open_windows( void )
 				 * mem1   * mem2	*
 				 ********************
 				 * cmds 			*
-                 ********************/
-                 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
+				 ********************/
+				 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
 				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H+(ah+1)/2);
 				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y+(ah+1)/2,MEM1_W+aw,MEM1_H+ah/2);
 				 dbg_set_rect(&mem2, MEM2_X+aw,MEM2_Y,MEM2_W,MEM2_H+ah);
-            }
-        }
+			}
+			else
+			{
+				/********************
+				 * regs   * dasm	*
+				 *		  * 		*
+				 *		  * 		*
+				 ********************
+				 * mem1   * mem2	*
+				 ********************
+				 * cmds 			*
+				 ********************/
+				 dbg_set_rect(&dasm, DASM_X+aw,DASM_Y,DASM_W,DASM_H);
+				 dbg_set_rect(&regs, REGS_X,REGS_Y,REGS_W+aw,REGS_H+(ah+1)/2);
+				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y+(ah+1)/2,MEM1_W+aw,MEM1_H+ah/2);
+				 dbg_set_rect(&mem2, MEM2_X+aw,MEM2_Y,MEM2_W,MEM2_H+ah);
+			}
+		}
 		else
 		{
 			/********************
@@ -2119,14 +2569,14 @@ static void dbg_open_windows( void )
 			 dbg_set_rect(&regs, REGS_X,REGS_Y,REGS_W+aw,REGS_H);
 			 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+(aw+1)/2,DASM_H+ah);
 			 dbg_set_rect(&mem1, MEM1_X+(aw+1)/2,MEM1_Y,MEM1_W+aw/2,MEM1_H+(ah+1)/2);
-			 dbg_set_rect(&mem2, MEM2_X+(aw+1)/w,MEM2_Y+(ah+1)/2,MEM2_W+aw/2,MEM2_H+ah/2);
-        }
+			 dbg_set_rect(&mem2, MEM2_X+(aw+1)/2,MEM2_Y+(ah+1)/2,MEM2_W+aw/2,MEM2_H+ah/2);
+		}
 
-        flags = BORDER_TOP;
-        if( regs.max_x + 1 < w ) flags |= BORDER_RIGHT;
-        win_create(WIN_REGS(i), 1,
-            regs.min_x,regs.min_y,
-            regs.max_x+1-regs.min_x,regs.max_y+1-regs.min_y,
+		flags = BORDER_TOP;
+		if( regs.max_x + 1 < w ) flags |= BORDER_RIGHT;
+		win_create(WIN_REGS(i), 1,
+			regs.min_x,regs.min_y,
+			regs.max_x+1-regs.min_x,regs.max_y+1-regs.min_y,
 			cur_col[E_REGS], cur_col[E_FRAME], ' ', flags );
 
 		flags = BORDER_TOP | BORDER_RIGHT;
@@ -2155,7 +2605,7 @@ static void dbg_open_windows( void )
 			cmds.max_x+1-cmds.min_x,cmds.max_y+1-cmds.min_y,
 			cur_col[E_CMDS], cur_col[E_FRAME], ' ', flags );
 
-        win_set_title(WIN_CMDS(i), "Command (press F1 for help)");
+		win_set_title(WIN_CMDS(i), "Command (press F1 for help)");
 	}
 }
 
@@ -2167,7 +2617,7 @@ static void dbg_close_windows( void )
 {
 	int i;
 
-    for( i = 0; i < totalcpu; i++ )
+	for( i = 0; i < totalcpu; i++ )
 	{
 		win_close( WIN_REGS(i) );
 		win_close( WIN_DASM(i) );
@@ -2186,11 +2636,11 @@ static unsigned dasm_line( unsigned pc, int times )
 {
 	static char buffer[127+1];
 
-    while( times-- > 0 )
+	while( times-- > 0 )
 		pc += cpu_dasm( buffer, pc );
 	pc = lshift( rshift(pc) & AMASK );
 
-    return pc;
+	return pc;
 }
 
 
@@ -2211,14 +2661,14 @@ static void dump_regs( void )
 	UINT32 *val = regs->newval;
 	UINT32 width;
 	const char *name = cpu_name(), *flags = cpu_flags();
-    int w = win_get_w(win);
+	int w = win_get_w(win);
 	int h = win_get_h(win);
 	int i, j, l, x, y;
 	UINT8 color;
 	const INT8 *reg = (INT8*)cpu_reg_layout();
 
 	/* Called the very first time: find max_width */
-    if( regs->count == 0 )
+	if( regs->count == 0 )
 	{
 		for(i = 0; reg[i]; i++)
 		{
@@ -2230,14 +2680,14 @@ static void dump_regs( void )
 		}
 	}
 
-    x = 0;
+	x = 0;
 	y = 0;
-    win_set_curpos( win, 0, 0 );
-    sprintf( title, "CPU #%d %-8s Flags:%s  Cycles:%6u", activecpu, name, flags, cpu_geticount() );
+	win_set_curpos( win, 0, 0 );
+	sprintf( title, "CPU #%d %-8s Flags:%s  Cycles:%6u", activecpu, name, flags, cpu_geticount() );
 	l = strlen(title);
 	if( l + 2 < w )
 	{
-        /* Everything should fit into the caption */
+		/* Everything should fit into the caption */
 		if( l + 4 < w )
 			/* We can even separate the cycles to the right corner */
 			sprintf( title, "CPU #%d %-8s Flags:%s\tCycles:%6u", activecpu, name, flags, cpu_geticount() );
@@ -2252,7 +2702,7 @@ static void dump_regs( void )
 		{
 			if( l + 4 < w )
 				sprintf( title, "CPU #%d %-8s\tFlags:%s", activecpu, name, flags );
-            win_set_title( win, title );
+			win_set_title( win, title );
 			if( y < h )
 			{
 				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
@@ -2277,7 +2727,7 @@ static void dump_regs( void )
 					else
 						win_printf( win, "%s\n", flags );
 				}
-            }
+			}
 			else
 			{
 				/* Only CPU # and name fit into the caption */
@@ -2303,7 +2753,7 @@ static void dump_regs( void )
 	regs->top = y;
 	y = 0;
 
-    for( i = 0, j = 0; *reg; i++, reg++ )
+	for( i = 0, j = 0; *reg; i++, reg++ )
 	{
 		if( *reg == -1 )
 		{
@@ -2321,12 +2771,12 @@ static void dump_regs( void )
 			if( *name == '\0' )
 				continue;
 
-            regs->id[j] = *reg;
+			regs->id[j] = *reg;
 			*val = cpu_get_reg(regs->id[j]);
 			color = cur_col[E_REGS];
 			if( DBG.brk_regs == *reg )
 				color = cur_col[E_BRK_REGS];
-            if( *val != *old )
+			if( *val != *old )
 			{
 				regs->changed = 1;
 				color = (color & 0xf0) | cur_col[E_CHANGES];
@@ -2347,18 +2797,18 @@ static void dump_regs( void )
 				p = strchr( regs->name[j], ':');
 				if( p )
 				{
-                    pedit->w = strlen( p + 1 );
+					pedit->w = strlen( p + 1 );
 				}
 				else
 				{
 					/* Or else find an apostrophe */
-                    p = strchr( regs->name[j], '\'' );
+					p = strchr( regs->name[j], '\'' );
 					if( p )
 					{
 						/* Include the apostrophe in the name! */
-                        ++p;
+						++p;
 						pedit->w = strlen( p );
-                    }
+					}
 				}
 				/* TODO: other characters to delimit a register name from it's value? */
 				if( p )
@@ -2387,7 +2837,7 @@ static void dump_regs( void )
 					win_printf( win, "%*s", regs->max_width - pedit->w - pedit->n, "" );
 			}
 			x += strlen( name ) + regs->max_width - pedit->w - pedit->n;
-            pedit++;
+			pedit++;
 			val++;
 			old++;
 			j++;
@@ -2410,11 +2860,11 @@ static void dump_regs( void )
  **************************************************************************/
 static unsigned dump_dasm( unsigned pc )
 {
-    UINT32 win = WIN_DASM(activecpu);
-    int w = win_get_w(win);
-    int h = win_get_h(win);
+	UINT32 win = WIN_DASM(activecpu);
+	int w = win_get_w(win);
+	int h = win_get_h(win);
 	int x, y, l, line_pc_cpu = INVALID, line_pc_cur = INVALID;
-    UINT8 color;
+	UINT8 color;
 	char dasm[127+1];
 	unsigned pc_first = pc, pc_next;
 	unsigned width = (ABITS + 3) / 4;
@@ -2440,7 +2890,7 @@ static unsigned dump_dasm( unsigned pc )
 				color = (color & 0x0f) | (cur_col[E_CURSOR] & 0xf0);
 				line_pc_cur = y;
 			}
-            win_set_color( win, color );
+			win_set_color( win, color );
 			l = win_printf( win, "%0*X: ", width, pc );
 
 			DBGDASM.dst_ea_value = INVALID;
@@ -2493,14 +2943,14 @@ static unsigned dump_dasm( unsigned pc )
 						else l += win_printf( win, "         " );
 					}
 					break;
-                }
+				}
 			}
 			pc = lshift(rshift(pc_next) & AMASK);
-            switch( dbg_dasm_case )
+			switch( dbg_dasm_case )
 			{
-				case 0: win_printf( win, "%-*.*s", w-l, w-l, dasm ); break;
-				case 1: win_printf( win, "%-*.*s", w-l, w-l, lower(dasm) ); break;
-				case 2: win_printf( win, "%-*.*s", w-l, w-l, upper(dasm) ); break;
+			case 0: win_printf( win, "%-*.*s", w-l, w-l, dasm ); break;
+			case 1: win_printf( win, "%-*.*s", w-l, w-l, lower(dasm) ); break;
+			case 2: win_printf( win, "%-*.*s", w-l, w-l, upper(dasm) ); break;
 			}
 		}
 		if( line_pc_cpu == INVALID )
@@ -2521,7 +2971,7 @@ static unsigned dump_dasm( unsigned pc )
 
 	win_set_curpos( win, 0, line_pc_cur );
 
-    return pc;
+	return pc;
 }
 
 /**************************************************************************
@@ -2599,8 +3049,8 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 			break;
 		}
 
-        if( column == 0 )
-        {
+		if( column == 0 )
+		{
 			win_set_color( win, cur_col[E_MEM1+which] );
 			win_printf( win, "%*s%0*X:%*s",
 				spc_left, "", len_addr, lshift((DBGMEM[which].base + offs) & AMASK), spc_addr, "" );
@@ -2609,9 +3059,15 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		if( DBGMEM[which].address == DBG.brk_data )
 			color = cur_col[E_BRK_DATA];
 
-		*val = RDMEM( DBGMEM[which].address );
+		if( DBGMEM[which].internal )
+			*val = RDINT( DBGMEM[which].address );
+		else
+		if( DBGMEM[which].pgm_memory_base )
+			*val = OP_ROM[DBGMEM[which].pgm_memory_base + DBGMEM[which].address];
+		else
+			*val = RDMEM( DBGMEM[which].address );
 
-        if( *val != *old )
+		if( *val != *old )
 		{
 			DBGMEM[which].changed = 1;
 			color = (color & 0xf0) | (cur_col[E_CHANGES] & 0x0f);
@@ -2634,19 +3090,19 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		win_set_color( win, color );
 		switch( DBGMEM[which].ascii )
 		{
-			case 0: /* hex */
-				win_printf( win, "%02X", *val );
-				break;
-			case 1: /* translated */
-				win_printf( win, "%c ", trans_table[*val] );
-				break;
-			case 2: /* plain character, except for \r, \n and \t */
-				if( *val == '\0' || *val == '\b' || *val == '\t' ||
-					*val == '\r' || *val == '\n' )
-					win_printf( win, ". " );
-				else
-                    win_printf( win, "%c ", *val );
-				break;
+		case MODE_CHR_HEX:
+			win_printf( win, "%02X", *val );
+			break;
+		case MODE_CHR_XLATE:
+			win_printf( win, "%c ", trans_table[*val] );
+			break;
+		case MODE_CHR_PLAIN:
+			if( *val == '\0' || *val == '\b' || *val == '\t' ||
+				*val == '\r' || *val == '\n' )
+				win_printf( win, ". " );
+			else
+				win_printf( win, "%c ", *val );
+			break;
 		}
 
 		if( ++column < DBGMEM[which].bytes )
@@ -2675,14 +3131,19 @@ static void dump_mem( int which, int set_title )
 {
 	unsigned len_addr = (ABITS + ASHIFT + 3) / 4;
 
-    if( set_title )
-		win_set_title( WIN_MEM(activecpu,which), name_memory(DBGMEM[which].base) );
+	if( set_title )
+	{
+		if( DBGMEM[which].internal )
+			win_set_title( WIN_MEM(activecpu,which), "CPU internal" );
+		else
+			win_set_title( WIN_MEM(activecpu,which), name_memory(DBGMEM[which].base + DBGMEM[which].pgm_memory_base) );
+	}
 
 	switch( DBGMEM[which].mode )
 	{
-		case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
-		case MODE_HEX_UINT16: dump_mem_hex( which, len_addr, 4 ); break;
-		case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
+	case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
+	case MODE_HEX_UINT16: dump_mem_hex( which, len_addr, 4 ); break;
+	case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
 	}
 }
 
@@ -2696,11 +3157,11 @@ static void edit_regs( void )
 	s_regs *regs = &DBGREGS;
 	s_edit *pedit = regs->edit;
 	unsigned shift, mask, val;
-    const char *k;
+	const char *k;
 	int i, x, y;
 
 	/* Eventually update the cmdline window caption */
-    edit_cmds_info();
+	edit_cmds_info();
 
 	if( regs->base > pedit[ regs->idx ].y )
 	{
@@ -2711,12 +3172,12 @@ static void edit_regs( void )
 	if( pedit[ regs->idx ].y >= regs->base + win_get_h( win ) - regs->top )
 	{
 		regs->base = pedit[ regs->idx ].y - win_get_h( win ) + regs->top + 1;
-        dump_regs();
-    }
+		dump_regs();
+	}
 	win_set_curpos( win, pedit[regs->idx].x + pedit[regs->idx].n + regs->nibble, pedit[regs->idx].y - regs->base + regs->top );
-	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-    i = keyboard_read_sync();
+	i = readkey();
 	k = keyboard_name(i);
 
 	shift = (pedit->w - 1 - regs->nibble) * 4;
@@ -2726,100 +3187,100 @@ static void edit_regs( void )
 	{
 		switch( k[0] )
 		{
-			case '0': case '1': case '2': case '3':
-			case '4': case '5': case '6': case '7':
-			case '8': case '9': case 'A': case 'B':
-			case 'C': case 'D': case 'E': case 'F':
-				val = k[0] - '0';
-				if( val > 9 ) val -= 7;
-				val <<= shift;
-				/* now modify the register */
-				cpu_set_reg( regs->id[regs->idx],
-					( cpu_get_reg( regs->id[regs->idx] ) & mask ) | val );
-				dump_regs();
-				i = KEYCODE_RIGHT;	/* advance to next nibble */
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+		case '8': case '9': case 'A': case 'B':
+		case 'C': case 'D': case 'E': case 'F':
+			val = k[0] - '0';
+			if( val > 9 ) val -= 7;
+			val <<= shift;
+			/* now modify the register */
+			cpu_set_reg( regs->id[regs->idx],
+				( cpu_get_reg( regs->id[regs->idx] ) & mask ) | val );
+			dump_regs();
+			i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
 	}
 
-    switch( i )
-    {
-		case KEYCODE_LEFT:
-			if( --regs->nibble < 0 )
+	switch( i )
+	{
+	case KEYCODE_LEFT:
+		if( --regs->nibble < 0 )
+		{
+			if( --regs->idx < 0 )
 			{
-				if( --regs->idx < 0 )
+				regs->idx = regs->count - 1;
+			}
+			regs->nibble = pedit[regs->idx].w - 1;
+		}
+		break;
+
+	case KEYCODE_RIGHT:
+		if( ++regs->nibble >= pedit[regs->idx].w )
+		{
+			regs->nibble = 0;
+			if( ++regs->idx >= regs->count )
+			{
+				regs->idx = 0;
+			}
+		}
+		break;
+
+	case KEYCODE_UP:
+		i = regs->idx;
+		x = pedit[regs->idx].x;
+		y = pedit[regs->idx].y;
+		while( x != pedit[i].x || pedit[i].y == y )
+		{
+			if( --i < 0 )
+			{
+				i = regs->count - 1;
+				if( pedit[i].y == y )
 				{
-					regs->idx = regs->count - 1;
+					i = regs->idx;
+					break;
 				}
-				regs->nibble = pedit[regs->idx].w - 1;
 			}
-			break;
+		}
+		if( i != regs->idx )
+		{
+			if( regs->nibble >= pedit[i].w )
+				regs->nibble = pedit[i].w - 1;
+			regs->idx = i;
+		}
+		break;
 
-		case KEYCODE_RIGHT:
-			if( ++regs->nibble >= pedit[regs->idx].w )
+	case KEYCODE_DOWN:
+		i = regs->idx;
+		x = pedit[regs->idx].x;
+		y = pedit[regs->idx].y;
+		while( x != pedit[i].x || pedit[i].y == y )
+		{
+			if( ++i >= regs->count )
 			{
-				regs->nibble = 0;
-				if( ++regs->idx >= regs->count )
+				i = 0;
+				if( pedit[i].y == y )
 				{
-					regs->idx = 0;
-                }
-            }
-            break;
-
-		case KEYCODE_UP:
-			i = regs->idx;
-            x = pedit[regs->idx].x;
-			y = pedit[regs->idx].y;
-			while( x != pedit[i].x || pedit[i].y == y )
-			{
-				if( --i < 0 )
-                {
-                    i = regs->count - 1;
-                    if( pedit[i].y == y )
-                    {
-                        i = regs->idx;
-                        break;
-                    }
-                }
+					i = regs->idx;
+					break;
+				}
 			}
-			if( i != regs->idx )
-			{
-				if( regs->nibble >= pedit[i].w )
-					regs->nibble = pedit[i].w - 1;
-                regs->idx = i;
-			}
-            break;
+		}
+		if( i != regs->idx )
+		{
+			if( regs->nibble >= pedit[i].w )
+				regs->nibble = pedit[i].w - 1;
+			regs->idx = i;
+		}
+		break;
 
-		case KEYCODE_DOWN:
-			i = regs->idx;
-			x = pedit[regs->idx].x;
-			y = pedit[regs->idx].y;
-			while( x != pedit[i].x || pedit[i].y == y )
-			{
-				if( ++i >= regs->count )
-				{
-					i = 0;
-					if( pedit[i].y == y )
-					{
-						i = regs->idx;
-						break;
-					}
-                }
-			}
-			if( i != regs->idx )
-            {
-				if( regs->nibble >= pedit[i].w )
-                    regs->nibble = pedit[i].w - 1;
-                regs->idx = i;
-            }
-            break;
+	case KEYCODE_ENTER:
+		DBG.window = EDIT_CMDS;
+		break;
 
-		case KEYCODE_ENTER:
-			DBG.window = EDIT_CMDS;
-			break;
-
-        default:
-			cmd_default( i );
-    }
+	default:
+		cmd_default( i );
+	}
 }
 
 
@@ -2830,51 +3291,51 @@ static void edit_regs( void )
 static void edit_dasm(void)
 {
 	UINT32 win = WIN_DASM(activecpu);
-    const char *k;
+	const char *k;
 	int i, update_window = 0;
 
 	/* Eventually update the cmdline window caption */
-    edit_cmds_info();
+	edit_cmds_info();
 
-	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-    i = keyboard_read_sync();
+	i = readkey();
 	k = keyboard_name(i);
 
-    switch( i )
-    {
-		case KEYCODE_M: /* Toggle mode (opcode display) */
-			sprintf( CMD, "%d", dbg_dasm_opcodes ^ 1 );
-			cmd_set_dasm_opcodes();
-			break;
+	switch( i )
+	{
+	case KEYCODE_M: /* Toggle mode (opcode display) */
+		sprintf( CMD, "%d", dbg_dasm_opcodes ^ 1 );
+		cmd_set_dasm_opcodes();
+		break;
 
-		case KEYCODE_D: /* Default case disassembly */
-			dbg_dasm_case = 0;
-            update_window = 1;
-            break;
+	case KEYCODE_D: /* Default case disassembly */
+		dbg_dasm_case = 0;
+		update_window = 1;
+		break;
 
-		case KEYCODE_L: /* Lower case disassembly */
-			dbg_dasm_case = 1;
-			update_window = 1;
-            break;
+	case KEYCODE_L: /* Lower case disassembly */
+		dbg_dasm_case = 1;
+		update_window = 1;
+		break;
 
-		case KEYCODE_U: /* Upper case disassembly */
-			dbg_dasm_case = 2;
-            update_window = 1;
-            break;
+	case KEYCODE_U: /* Upper case disassembly */
+		dbg_dasm_case = 2;
+		update_window = 1;
+		break;
 
-		case KEYCODE_R: /* Toggle relative jumps display */
-			dbg_dasm_relative_jumps ^= 1;
-            update_window = 1;
-            break;
+	case KEYCODE_R: /* Toggle relative jumps display */
+		dbg_dasm_relative_jumps ^= 1;
+		update_window = 1;
+		break;
 
-        case KEYCODE_ENTER:
-			DBG.window = EDIT_CMDS;
-			break;
+	case KEYCODE_ENTER:
+		DBG.window = EDIT_CMDS;
+		break;
 
-        default:
-			cmd_default( i );
-    }
+	default:
+		cmd_default( i );
+	}
 	if( update_window )
 	{
 		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
@@ -2890,15 +3351,15 @@ static void edit_mem( int which )
 {
 	UINT32 win = WIN_MEM(activecpu,which);
 	s_edit *pedit = DBGMEM[which].edit;
-    const char *k;
+	const char *k;
 	unsigned shift, mask, val;
 	int i, update_window = 0;
 
 	/* Eventually update the cmdline window caption */
-    edit_cmds_info();
+	edit_cmds_info();
 
 	win_set_curpos( win, pedit[DBGMEM[which].offset].x + DBGMEM[which].nibble, pedit[DBGMEM[which].offset].y );
-	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
 	switch( DBGMEM[which].mode )
 	{
@@ -2907,14 +3368,14 @@ static void edit_mem( int which )
 			break;
 		case MODE_HEX_UINT16:
 			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~1) + pedit[DBGMEM[which].offset].n ) & AMASK;
-            break;
+			break;
 		case MODE_HEX_UINT32:
 			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASK;
-            break;
+			break;
 	}
-	win_set_title( win, name_memory( DBGMEM[which].address ) );
+	win_set_title( win, name_memory(DBGMEM[which].address + DBGMEM[which].pgm_memory_base) );
 
-    i = keyboard_read_sync();
+	i = readkey();
 	k = keyboard_name(i);
 
 	shift = (pedit[DBGMEM[which].offset].w - 1 - DBGMEM[which].nibble) * 4;
@@ -2924,111 +3385,135 @@ static void edit_mem( int which )
 	{
 		switch( k[0] )
 		{
-			case '0': case '1': case '2': case '3':
-			case '4': case '5': case '6': case '7':
-			case '8': case '9': case 'A': case 'B':
-			case 'C': case 'D': case 'E': case 'F':
-				val = k[0] - '0';
-				if( val > 9 ) val -= 7;
-				val <<= shift;
-				/* now modify the register */
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+		case '8': case '9': case 'A': case 'B':
+		case 'C': case 'D': case 'E': case 'F':
+			val = k[0] - '0';
+			if( val > 9 ) val -= 7;
+			val <<= shift;
+			/* now modify the register */
+			if( DBGMEM[which].internal )
+			{
+				if( cpuintf[cputype].internal_write )
+					WRINT( DBGMEM[which].address, ( RDINT( DBGMEM[which].address ) & mask ) | val );
+			}
+			else
+			if( DBGMEM[which].pgm_memory_base == 0 )
 				WRMEM( DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val );
-				update_window = 1;
-				i = KEYCODE_RIGHT;	/* advance to next nibble */
+			/* we don't write to 'program memory' */
+			update_window = 1;
+			i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
 	}
 
-    switch( i )
-    {
-        case KEYCODE_LEFT:
-			if( --DBGMEM[which].nibble < 0 )
-			{
-				if( --DBGMEM[which].offset < 0 )
-				{
-					DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
-					DBGMEM[which].offset += DBGMEM[which].bytes;
-					update_window = 1;
-				}
-				DBGMEM[which].nibble = pedit[DBGMEM[which].offset].w - 1;
-			}
-			break;
-
-		case KEYCODE_RIGHT:
-			if( ++DBGMEM[which].nibble >= pedit[DBGMEM[which].offset].w )
-			{
-				DBGMEM[which].nibble = 0;
-				if( ++DBGMEM[which].offset >= DBGMEM[which].size )
-				{
-					DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
-					DBGMEM[which].offset -= DBGMEM[which].bytes;
-					update_window = 1;
-                }
-            }
-            break;
-
-		case KEYCODE_UP:
-			DBGMEM[which].offset -= DBGMEM[which].bytes;
-			if( DBGMEM[which].offset < 0 )
+	switch( i )
+	{
+	case KEYCODE_LEFT:
+		if( --DBGMEM[which].nibble < 0 )
+		{
+			if( --DBGMEM[which].offset < 0 )
 			{
 				DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
 				DBGMEM[which].offset += DBGMEM[which].bytes;
 				update_window = 1;
-            }
-			break;
+			}
+			DBGMEM[which].nibble = pedit[DBGMEM[which].offset].w - 1;
+		}
+		break;
 
-		case KEYCODE_DOWN:
-			DBGMEM[which].offset += DBGMEM[which].bytes;
-			if( DBGMEM[which].offset >= DBGMEM[which].size )
-            {
+	case KEYCODE_RIGHT:
+		if( ++DBGMEM[which].nibble >= pedit[DBGMEM[which].offset].w )
+		{
+			DBGMEM[which].nibble = 0;
+			if( ++DBGMEM[which].offset >= DBGMEM[which].size )
+			{
 				DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
 				DBGMEM[which].offset -= DBGMEM[which].bytes;
 				update_window = 1;
-            }
-            break;
+			}
+		}
+		break;
 
-		case KEYCODE_PGUP:
-			DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].size) & AMASK;
+	case KEYCODE_UP:
+		DBGMEM[which].offset -= DBGMEM[which].bytes;
+		if( DBGMEM[which].offset < 0 )
+		{
+			DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
+			DBGMEM[which].offset += DBGMEM[which].bytes;
 			update_window = 1;
-            break;
+		}
+		break;
 
-		case KEYCODE_PGDN:
-			DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].size) & AMASK;
-            update_window = 1;
-            break;
-
-		case KEYCODE_HOME:
-			DBGMEM[which].offset = 0;
-			DBGMEM[which].base = 0x00000000;
-            update_window = 1;
-            break;
-
-		case KEYCODE_END:
-			DBGMEM[which].offset = DBGMEM[which].size - 1;
-			DBGMEM[which].base = (0xffffffff - DBGMEM[which].offset) & AMASK;
-            update_window = 1;
-            break;
-
-		case KEYCODE_H:
-			DBGMEM[which].ascii = (DBGMEM[which].ascii + 1) % 3;
+	case KEYCODE_DOWN:
+		DBGMEM[which].offset += DBGMEM[which].bytes;
+		if( DBGMEM[which].offset >= DBGMEM[which].size )
+		{
+			DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
+			DBGMEM[which].offset -= DBGMEM[which].bytes;
 			update_window = 1;
-			break;
+		}
+		break;
 
+	case KEYCODE_PGUP:
+		DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].size) & AMASK;
+		update_window = 1;
+		break;
 
-        case KEYCODE_M:
-			DBGMEM[which].mode = ++(DBGMEM[which].mode) % 3;
+	case KEYCODE_PGDN:
+		DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].size) & AMASK;
+		update_window = 1;
+		break;
+
+	case KEYCODE_HOME:
+		DBGMEM[which].offset = 0;
+		DBGMEM[which].base = 0x00000000;
+		update_window = 1;
+		break;
+
+	case KEYCODE_END:
+		DBGMEM[which].offset = DBGMEM[which].size - 1;
+		DBGMEM[which].base = (0xffffffff - DBGMEM[which].offset) & AMASK;
+		update_window = 1;
+		break;
+
+	case KEYCODE_H:
+		DBGMEM[which].ascii = ++(DBGMEM[which].ascii) % MODE_CHR_COUNT;
+		update_window = 1;
+		break;
+
+	case KEYCODE_M: /* display mode */
+		DBGMEM[which].mode = ++(DBGMEM[which].mode) % MODE_HEX_COUNT;
+		/* Reset cursor coordinates and sizes of the edit info */
+		memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
+		update_window = 1;
+		break;
+
+	case KEYCODE_P: /* program memory */
+		DBGMEM[which].pgm_memory_base ^= PGM_MEMORY;
+		/* Reset cursor coordinates and sizes of the edit info */
+		memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
+		update_window = 1;
+		break;
+
+	case KEYCODE_I: /* internal memory */
+		if( cpuintf[cputype].internal_read )
+		{
+			DBGMEM[which].internal ^= 1;
 			/* Reset cursor coordinates and sizes of the edit info */
 			memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
 			update_window = 1;
-			break;
+		}
+		break;
 
-		case KEYCODE_ENTER:
-			DBG.window = EDIT_CMDS;
-			break;
+	case KEYCODE_ENTER:
+		DBG.window = EDIT_CMDS;
+		break;
 
-        default:
-			cmd_default( i );
-			update_window = 1;
-    }
+	default:
+		cmd_default( i );
+		update_window = 1;
+	}
 
 	if( update_window )
 	{
@@ -3049,22 +3534,22 @@ static int edit_cmds_info( void )
 	int i, l;
 
 	hist_info[0] = '\0';
-    if( DBG.hist_cnt )
+	if( DBG.hist_cnt )
 		sprintf( hist_info, "\tHistory: %d", DBG.hist_cnt);
 
-    if( strlen(cmd) )
-    {
-        for( i = 0; commands[i].name; i++ )
-        {
+	if( strlen(cmd) )
+	{
+		for( i = 0; commands[i].name; i++ )
+		{
 			l = strlen(cmd);
 			if( strlen(commands[i].name) < l )
 				l = strlen(commands[i].name);
 			if( strncmp( cmd, commands[i].name, l ) == 0 && !isalnum(cmd[l]) )
-            {
+			{
 				win_set_title( WIN_CMDS(activecpu), "Command: %s %s%s",
 					commands[i].name, commands[i].args, hist_info );
 				return i;
-            }
+			}
 			if( commands[i].alias )
 			{
 				l = strlen(cmd);
@@ -3076,14 +3561,14 @@ static int edit_cmds_info( void )
 						commands[i].alias, commands[i].args, commands[i].name, hist_info );
 					return i;
 				}
-            }
-        }
-    }
+			}
+		}
+	}
 	if( dbg_info_once )
 	{
 		win_set_title( WIN_CMDS(activecpu), "%s%s", dbg_info_once, hist_info );
 		dbg_info_once = NULL;
-    }
+	}
 	else
 	{
 		win_set_title( WIN_CMDS(activecpu), "Command (press F1 for help)%s", hist_info );
@@ -3098,19 +3583,19 @@ static int edit_cmds_info( void )
  **************************************************************************/
 static int edit_cmds_parse( char *cmdline )
 {
-    int i, l;
+	int i, l;
 
-    for( i = 0; commands[i].valid; i++ )
-    {
-        if( !commands[i].name )
-            continue;
-        l = strlen( commands[i].name );
+	for( i = 0; commands[i].valid; i++ )
+	{
+		if( !commands[i].name )
+			continue;
+		l = strlen( commands[i].name );
 		if( !strncmp( cmdline, commands[i].name, l ) && !isalnum( cmdline[l] ) )
-        {
+		{
 			while( cmdline[l] && isspace( cmdline[l] ) ) l++;
 			strcpy( cmdline, cmdline + l );
-            return i;
-        }
+			return i;
+		}
 		if( commands[i].alias )
 		{
 			l = strlen( commands[i].alias );
@@ -3120,8 +3605,8 @@ static int edit_cmds_parse( char *cmdline )
 				strcpy( cmdline, cmdline + l );
 				return i;
 			}
-        }
-    }
+		}
+	}
 	return INVALID;
 }
 
@@ -3134,7 +3619,7 @@ static void edit_cmds_append( const char *src )
 {
 	char *cmdline = DBG.cmdline;
 	UINT32 win = WIN_CMDS(activecpu);
-    if( strlen(cmdline) < 80 )
+	if( strlen(cmdline) < 80 )
 	{
 		strcat(cmdline, src);
 		win_printf( win, "%s", src );
@@ -3147,8 +3632,8 @@ void edit_cmds_reset( void )
 	DBG.cmdline[0] = '\0';
 	win_set_color( win, cur_col[E_CMDS] );
 	win_set_curpos( win, 0, 0 );
-	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
-    win_erase_eol( win, ' ' );
+	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+	win_erase_eol( win, ' ' );
 }
 
 /**************************************************************************
@@ -3162,58 +3647,58 @@ static void edit_cmds(void)
 	const char *k;
 	int i, l, cmd;
 
-	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
 	cmd = edit_cmds_info();
 
-	i = keyboard_read_sync();
+	i = readkey();
 	k = keyboard_name(i);
 	l = strlen(k);
 
 	if( l == 1 )
 		edit_cmds_append(k);
 
-    switch( i )
-    {
-		case KEYCODE_SPACE:
-			/*
-			 * Command completion for convenience:
-			 * found a valid command and no space in the command line yet?
-			 */
-			if( cmd != INVALID && strchr(CMD, ' ') == NULL )
-			{
-				strcpy( CMD, commands[cmd].name );
-				win_set_curpos( win, 0, 0 );
-				win_printf( win, "%s", CMD );
-			}
-			edit_cmds_append(" ");
+	switch( i )
+	{
+	case KEYCODE_SPACE:
+		/*
+		 * Command completion for convenience:
+		 * found a valid command and no space in the command line yet?
+		 */
+		if( cmd != INVALID && strchr(CMD, ' ') == NULL )
+		{
+			strcpy( CMD, commands[cmd].name );
+			win_set_curpos( win, 0, 0 );
+			win_printf( win, "%s", CMD );
+		}
+		edit_cmds_append(" ");
+		break;
+
+	case KEYCODE_BACKSPACE:
+		if( strlen(cmdline) > 0 )
+		{
+			cmdline[strlen(cmdline)-1] = '\0';
+			win_printf( win, "\b \b" );
+		}
+		break;
+
+	case KEYCODE_ENTER:
+		if( strlen(cmdline) )
+		{
+			cmd = edit_cmds_parse( cmdline );
+			if( cmd != INVALID && commands[cmd].function )
+				(*commands[cmd].function)();
 			break;
-
-        case KEYCODE_BACKSPACE:
-            if( strlen(cmdline) > 0 )
-            {
-                cmdline[strlen(cmdline)-1] = '\0';
-				win_printf( win, "\b \b" );
-            }
-            break;
-
-		case KEYCODE_ENTER:
-			if( strlen(cmdline) )
-            {
-				cmd = edit_cmds_parse( cmdline );
-				if( cmd != INVALID && commands[cmd].function )
-					(*commands[cmd].function)();
-                break;
-            }
-			else
-			{
-				/* ENTER in an empty line: do single step... */
-                i = KEYCODE_F8;
-			}
-			/* fall through */
-        default:
-			cmd_default( i );
-    }
+		}
+		else
+		{
+			/* ENTER in an empty line: do single step... */
+			i = KEYCODE_F8;
+		}
+		/* fall through */
+	default:
+		cmd_default( i );
+	}
 }
 
 /**************************************************************************
@@ -3231,7 +3716,7 @@ static void edit_cmds(void)
  **************************************************************************/
 static void cmd_help( void )
 {
-    UINT32 win = WIN_HELP;
+	UINT32 win = WIN_HELP;
 	const char *title = "";
 	char *help = malloc(4096+1), *dst;
 	const char *src;
@@ -3239,24 +3724,24 @@ static void cmd_help( void )
 	int cmd = INVALID;
 	int i, k, l, top, lines;
 
-    if( !help )
-    {
+	if( !help )
+	{
 		win_msgbox( cur_col[E_ERROR],
 			"Memory problem!", "Couldn't allocate help text buffer" );
-        return;
-    }
-    dst = help;
+		return;
+	}
+	dst = help;
 
 	/* Decide what to print in the first lines of the help window */
-    switch( DBG.window )
-    {
+	switch( DBG.window )
+	{
 	case EDIT_CMDS:
 		title = "MAME Debugger command help";
 		cmd = edit_cmds_info();
 		/* Did not find the start of a command? */
 		if( cmd == INVALID )
 		{
-			dst += sprintf( dst, "Welcome to the new MAME debugger V0.53!") + 1;
+			dst += sprintf( dst, "Welcome to the MAME debugger V0.54!") + 1;
 			dst += sprintf( dst, " " ) + 1;
 			dst += sprintf( dst, "Many commands accept either a value or a register name.") + 1;
 			dst += sprintf( dst, "You can indeed type either \"R HL = SP\" or \"R HL = 1FD0\".") + 1;
@@ -3267,7 +3752,7 @@ static void cmd_help( void )
 			dst += sprintf( dst, "main directory. Furthermore you can put game specific settings into a") + 1;
 			dst += sprintf( dst, "set of files <driver>.cf<cpu>, eg. \"dkong.cf0\" and \"dkong.cf1\".") + 1;
 			dst += sprintf( dst, "The files can contain different settings for the CPUs of a game.") + 1;
-        }
+		}
 		else
 		{
 			if( commands[cmd].alias )
@@ -3281,7 +3766,7 @@ static void cmd_help( void )
 				src++;
 			}
 			*dst++ = '\0';
-        }
+		}
 		break;
 	case EDIT_REGS:
 		title = "MAME debugger CPU registers help";
@@ -3290,36 +3775,39 @@ static void cmd_help( void )
 		dst += sprintf( dst, "Code align unit: %d byte(s)", cpu_align_unit() ) + 1;
 		dst += sprintf( dst, "This CPU is    : %s endian", (ENDIAN == CPU_IS_LE) ? "little" : "big") + 1;
 		dst += sprintf( dst, "Source file    : %s", cpu_core_file() ) + 1;
+		dst += sprintf( dst, "Internal read  : %s", cpuintf[cputype].internal_read ? "yes" : "no" ) + 1;
+		dst += sprintf( dst, "Internal write : %s", cpuintf[cputype].internal_write ? "yes" : "no" ) + 1;
+		dst += sprintf( dst, "Program / Data : %s", cpuintf[cputype].pgm_memory_base ? "yes" : "no" ) + 1;
 		dst += sprintf( dst, "%s", cpu_core_credits() ) + 1;
-        break;
+		break;
 	case EDIT_DASM:
 		title = "MAME debugger disassembly help";
-        dst += sprintf( dst, "%s [%s]", cpu_name(), cpu_core_family() ) + 1;
-        break;
+		dst += sprintf( dst, "%s [%s]", cpu_name(), cpu_core_family() ) + 1;
+		break;
 	case EDIT_MEM1:
 	case EDIT_MEM2:
 		title = "MAME debugger memory editor help";
 		dst += sprintf( dst, "You can move around using the cursor key block.") + 1;
 		dst += sprintf( dst, "Change memory by keying in hex digits (0-9, A-F).") + 1;
-        break;
-    }
+		break;
+	}
 	dst += sprintf( dst, " " ) + 1;
 	dst += sprintf( dst, "Valid commands and keys are:" ) + 1;
 
-    for( i = 0; commands[i].valid; i++ )
-    {
-        if( commands[i].valid & ( 1 << DBG.window ) )
-        {
+	for( i = 0; commands[i].valid; i++ )
+	{
+		if( commands[i].valid & ( 1 << DBG.window ) )
+		{
 			/* Already displayed this help? */
-            if( i == cmd )
+			if( i == cmd )
 				continue;
 			dst += sprintf( dst, " " ) + 1;
-            if( commands[i].name )
+			if( commands[i].name )
 			{
-                if( commands[i].alias )
+				if( commands[i].alias )
 					dst += sprintf( dst, "%s %s (aka %s)", commands[i].name, commands[i].args, commands[i].alias ) + 1;
 				else
-                    dst += sprintf( dst, "%s %s", commands[i].name, commands[i].args ) + 1;
+					dst += sprintf( dst, "%s %s", commands[i].name, commands[i].args ) + 1;
 				src = commands[i].info;
 				while( *src )
 				{
@@ -3333,82 +3821,82 @@ static void cmd_help( void )
 					src++;
 				}
 				*dst++ = '\0';
-            }
-            else
+			}
+			else
 			{
 				dst += sprintf( dst, "[%s]\t%s", keyboard_name(commands[i].key), commands[i].info ) + 1;
 			}
-        }
-    }
+		}
+	}
 
-    /* Terminate *help with a second NULL byte */
-    *dst++ = '\0';
+	/* Terminate *help with a second NULL byte */
+	*dst++ = '\0';
 
-    /* Count lines */
-    for( lines = 0, src = help; *src && i > 0; src += strlen(src) + 1 )
-        lines++;
+	/* Count lines */
+	for( lines = 0, src = help; *src && i > 0; src += strlen(src) + 1 )
+		lines++;
 
-	osd_get_screen_size( &w, &h );
-    win_create( win, 0,
+	get_screen_size( &w, &h );
+	win_create( win, 0,
 		2,1,w-2-4,h-2-3, cur_col[E_HELP], cur_col[E_FRAME], ' ',
-        BORDER_TOP | BORDER_LEFT | BORDER_RIGHT | BORDER_BOTTOM | SHADOW );
-    win_set_title( win, title );
-    win_show( win );
-    h = win_get_h( win );
+		BORDER_TOP | BORDER_LEFT | BORDER_RIGHT | BORDER_BOTTOM | SHADOW );
+	win_set_title( win, title );
+	win_show( win );
+	h = win_get_h( win );
 
-    top = 0;
-    do
-    {
-        for( src = help, i = top; *src && i > 0; src += strlen(src) + 1 )
-            i--;
-        win_set_curpos( win, 0, 0 );
-        l = 0;
-        do
-        {
-            if( *src )
-            {
-                win_printf( win, src );
-                src += strlen(src) + 1;
-            }
+	top = 0;
+	do
+	{
+		for( src = help, i = top; *src && i > 0; src += strlen(src) + 1 )
+			i--;
+		win_set_curpos( win, 0, 0 );
+		l = 0;
+		do
+		{
+			if( *src )
+			{
+				win_printf( win, src );
+				src += strlen(src) + 1;
+			}
 			win_erase_eol( win, ' ' );
-            win_putc( win, '\n');
-            l++;
-        } while( l < win_get_h(win) );
+			win_putc( win, '\n');
+			l++;
+		} while( l < win_get_h(win) );
 
-        k = keyboard_read_sync();
-        switch( k )
-        {
-            case KEYCODE_UP:
-                if( top > 0 )
-                    top--;
-				k = KEYCODE_NONE;
-                break;
-            case KEYCODE_ENTER:
-            case KEYCODE_DOWN:
-                if( top < lines - h )
-                    top++;
-				k = KEYCODE_NONE;
-                break;
-            case KEYCODE_PGUP:
-                if( top - h > 0 )
-                    top -= h;
-                else
-                    top = 0;
-				k = KEYCODE_NONE;
-                break;
-            case KEYCODE_PGDN:
-                if( top + h < lines - h )
-                    top += h;
-                else
-                    top = lines - h;
-				k = KEYCODE_NONE;
-                break;
-        }
+		k = readkey();
+		switch( k )
+		{
+		case KEYCODE_UP:
+			if( top > 0 )
+				top--;
+			k = KEYCODE_NONE;
+			break;
+		case KEYCODE_ENTER:
+		case KEYCODE_DOWN:
+			if( top < lines - h )
+				top++;
+			k = KEYCODE_NONE;
+			break;
+		case KEYCODE_PGUP:
+			if( top - h > 0 )
+				top -= h;
+			else
+				top = 0;
+			k = KEYCODE_NONE;
+			break;
+		case KEYCODE_PGDN:
+			if( top + h < lines - h )
+				top += h;
+			else
+				top = lines - h;
+			k = KEYCODE_NONE;
+			break;
+		}
 	} while( k == KEYCODE_NONE );
 
-    free( help );
+	free( help );
 
-    win_close( win );
+	win_close( win );
 }
 
 /**************************************************************************
@@ -3417,16 +3905,16 @@ static void cmd_help( void )
  **************************************************************************/
 static void cmd_default( int code )
 {
-    int i;
-    for( i = 0; commands[i].valid; i++ )
-    {
-        if( (commands[i].valid & (1<<DBG.window)) && commands[i].key == code )
-        {
-            if( commands[i].function )
-                (*commands[i].function)();
-            return;
-        }
-    }
+	int i;
+	for( i = 0; commands[i].valid; i++ )
+	{
+		if( (commands[i].valid & (1<<DBG.window)) && commands[i].key == code )
+		{
+			if( commands[i].function )
+				(*commands[i].function)();
+			return;
+		}
+	}
 }
 
 
@@ -3441,14 +3929,14 @@ static void cmd_set_element_color( void )
 	int length;
 
 	element = get_option_or_value( &cmd, &length, ELEMENT_NAMES );
-    if( length )
+	if( length )
 	{
 		fg = get_option_or_value( &cmd, &length, COLOR_NAMES );
 		if( length )
 		{
 			bg = get_option_or_value( &cmd, &length, COLOR_NAMES );
 			if( !length ) bg = 0;	/* BLACK is default background */
-        }
+		}
 		else
 		{
 			bg = def_col[element] >> 4;
@@ -3465,8 +3953,8 @@ static void cmd_set_element_color( void )
 				for( win = 0; win < MAX_WINDOWS; win++ )
 					win_set_frame_color( win, cur_col[element] );
 				break;
-        }
-    }
+		}
+	}
 	else
 	{
 		memcpy( cur_col, def_col, sizeof(cur_col) );
@@ -3474,43 +3962,9 @@ static void cmd_set_element_color( void )
 			win_set_title_color( win, cur_col[E_TITLE] );
 		for( win = 0; win < MAX_WINDOWS; win++ )
 			win_set_frame_color( win, cur_col[E_FRAME] );
-    }
-
-    edit_cmds_reset();
-	dbg_update = 1;
-}
-
-/**************************************************************************
- * cmd_set_screen_size
- * Set new screen size width and height
- **************************************************************************/
-static void cmd_set_screen_size( void )
-{
-	char *cmd = CMD;
-	unsigned w, h, new_w, new_h;
-	int length;
-
-	osd_get_screen_size( &w, &h );
-
-	new_w = dtou( &cmd, &length );
-	if( length )
-	{
-		new_h = dtou( &cmd, &length );
-		if( !length ) new_h = h;
 	}
-	else
-	{
-		new_w = 80;
-		new_h = 25;
-	}
-	if( new_w < 80 ) new_w = 80;
-	if( new_h < 25 ) new_h = 25;
 
-	dbg_close_windows();
-	osd_set_screen_size( new_w, new_h );
-	dbg_open_windows();
-
-    edit_cmds_reset();
+	edit_cmds_reset();
 	dbg_update = 1;
 }
 
@@ -3520,7 +3974,7 @@ static void cmd_set_screen_size( void )
  **************************************************************************/
 static void cmd_brk_regs_set( void )
 {
-    char *cmd = CMD;
+	char *cmd = CMD;
 	unsigned data;
 	int length;
 
@@ -3543,15 +3997,15 @@ static void cmd_brk_regs_set( void )
 			{
 				DBG.brk_regs_mask = 0xffffffff;
 			}
-        }
+		}
 		else
 		{
 			DBG.brk_regs_newval = INVALID;
-            DBG.brk_regs_mask = 0xffffffff;
+			DBG.brk_regs_mask = 0xffffffff;
 		}
 	}
-    dbg_update = 1;
-    edit_cmds_reset();
+	dbg_update = 1;
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3568,7 +4022,7 @@ static void cmd_brk_regs_clear( void )
 		DBG.brk_regs_mask = 0xffffffff;
 		dbg_update = 1;
 	}
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3578,8 +4032,8 @@ static void cmd_brk_regs_clear( void )
  **************************************************************************/
 static void cmd_brk_data_set( void )
 {
-    char *cmd = CMD;
-    unsigned data;
+	char *cmd = CMD;
+	unsigned data;
 	int length;
 
 	DBG.brk_data = get_register_or_value( &cmd, &length );
@@ -3600,11 +4054,11 @@ static void cmd_brk_data_set( void )
 		else
 		{
 			DBG.brk_data_newval = INVALID;
-        }
+		}
 	}
 
-    dbg_update = 1;
-    edit_cmds_reset();
+	dbg_update = 1;
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3620,7 +4074,7 @@ static void cmd_brk_data_clear( void )
 		DBG.brk_data_newval = INVALID;
 		dbg_update = 1;
 	}
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3646,8 +4100,8 @@ static void cmd_brk_exec_set( void )
 		{
 			DBG.brk_exec_times = 0;
 			DBG.brk_exec_reset = 0;
-        }
-    }
+		}
+	}
 	else
 	{
 		DBG.brk_exec = DBGDASM.pc_cur;
@@ -3655,7 +4109,7 @@ static void cmd_brk_exec_set( void )
 		DBG.brk_exec_reset = 0;
 	}
 	dbg_update = 1;
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3671,7 +4125,7 @@ static void cmd_brk_exec_clear( void )
 		DBG.brk_exec_reset = 0;
 		dbg_update = 1;
 	}
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3681,14 +4135,14 @@ static void cmd_brk_exec_clear( void )
 static void cmd_display_memory( void )
 {
 	char *cmd = CMD;
-    unsigned which, address;
-    int length;
+	unsigned which, address;
+	int length;
 
 	which = xtou( &cmd, &length );
 	if( length )
 	{
 		address = get_register_or_value( &cmd, &length );
-        if( length )
+		if( length )
 		{
 			which = (which - 1) % MAX_MEM;
 		}
@@ -3698,10 +4152,10 @@ static void cmd_display_memory( void )
 			which = 0;
 		}
 		address = rshift(address) & AMASK;
-        DBGMEM[which].base = address;
+		DBGMEM[which].base = address;
 		dump_mem( which, 1 );
-    }
-    edit_cmds_reset();
+	}
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3722,7 +4176,7 @@ static void cmd_dasm_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "DASM arguments",
 			"Filename missing");
 		edit_cmds_reset();
-        return;
+		return;
 	}
 	start = get_register_or_value( &cmd, &length );
 	if( !length )
@@ -3730,7 +4184,7 @@ static void cmd_dasm_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "DASM arguments",
 			"Start address missing");
 		edit_cmds_reset();
-        return;
+		return;
 	}
 	end = get_register_or_value( &cmd, &length );
 	if( !length )
@@ -3738,23 +4192,23 @@ static void cmd_dasm_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "DASM arguments",
 			"End address missing");
 		edit_cmds_reset();
-        return;
-    }
+		return;
+	}
 	opcodes = get_boolean( &cmd, &length );
 	if( !length ) opcodes = 1;	/* default to display opcodes */
 
-    file = fopen(filename, "w");
+	file = fopen(filename, "w");
 	if( !file )
 	{
 		win_msgbox( cur_col[E_ERROR], "DASM to file",
 			"Could not create %s", filename);
 		edit_cmds_reset();
-        return;
-    }
+		return;
+	}
 
 	width = (ABITS + ASHIFT + 3) / 4;
 
-    for( pc = start; pc <= end; /* */ )
+	for( pc = start; pc <= end; /* */ )
 	{
 		unsigned p = rshift(pc);
 		unsigned s;
@@ -3768,8 +4222,7 @@ static void cmd_dasm_to_file( void )
 			for( i = 0; i < INSTL; i++ )
 			{
 				if ( i < s )
-					fprintf( file, "%02X ",
-						RDMEM(order(p+i,1)) );
+					fprintf( file, "%02X ", RDMEM(order(p+i,1)) );
 				else
 					fprintf( file, "   ");
 			}
@@ -3797,7 +4250,7 @@ static void cmd_dasm_to_file( void )
 			break;
 		}
 		fprintf( file, "%s\n", buffer );
-        if( (pc + size) < pc )
+		if( (pc + size) < pc )
 			break;
 		pc += size;
 	}
@@ -3818,7 +4271,7 @@ static void cmd_dump_to_file( void )
 	int length;
 	FILE *file;
 	unsigned x, offs, address = 0, start, end, width, data;
-	unsigned datasize, asciimode;
+	unsigned datasize, asciimode, pgm_memory_base;
 
 	filename = get_file_name( &cmd, &length );
 	if( !length )
@@ -3826,7 +4279,7 @@ static void cmd_dump_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "DUMP arguments",
 			"<filename> missing");
 		edit_cmds_reset();
-        return;
+		return;
 	}
 	start = get_register_or_value( &cmd, &length );
 	if( !length )
@@ -3834,7 +4287,7 @@ static void cmd_dump_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "DUMP arguments",
 			"<start> address missing");
 		edit_cmds_reset();
-        return;
+		return;
 	}
 	start = rshift(start);
 	end = get_register_or_value( &cmd, &length );
@@ -3843,11 +4296,12 @@ static void cmd_dump_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "DUMP arguments",
 			"<end> address missing");
 		edit_cmds_reset();
-        return;
-    }
+		return;
+	}
 	end = rshift(end);
-	asciimode = 1;		/* default to translation table */
-	datasize = ALIGN*2;	/* default to align unit of that CPU */
+	asciimode = 1;			/* default to translation table */
+	pgm_memory_base = 0;	/* default to data mode (offset 0) */
+	datasize = ALIGN*2; 	/* default to align unit of that CPU */
 	data = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0");
 	if( length )
 	{
@@ -3869,36 +4323,51 @@ static void cmd_dump_to_file( void )
 				data = 1;
 			}
 			asciimode = data;
+			/* look if there's also an PROG/DATA mode specified */
+			data = get_option_or_value( &cmd, &length, "PROG\0DATA\0" );
+			if( length )
+			{
+				if( data > 1 )
+				{
+					win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+						"Wrong PROG/DATA mode. Only PROG or DATA\n(also 0,1) are supported");
+					data = 1;
+				}
+				pgm_memory_base = data;
+			}
 		}
-    }
+	}
 
-    file = fopen(filename, "w");
+	if( pgm_memory_base )
+		pgm_memory_base = PGM_MEMORY;
+
+	file = fopen(filename, "w");
 	if( !file )
 	{
 		win_msgbox( cur_col[E_ERROR], "DUMP to file",
 			"Could not create %s", filename);
 		edit_cmds_reset();
-        return;
-    }
+		return;
+	}
 
 	width = (ABITS + ASHIFT + 3) / 4;
 
 	for( x = 0, offs = 0; offs + start <= end; offs++ )
 	{
 		switch( datasize )
-        {
-            case 2:
+		{
+			case 2:
 				address = (start + order(offs,1)) & AMASK;
-                break;
-            case 4:
+				break;
+			case 4:
 				address = (start + order(offs,2)) & AMASK;
-                break;
-            case 8:
+				break;
+			case 8:
 				address = (start + order(offs,4)) & AMASK;
-                break;
-        }
-		buffer[offs & 15] = RDMEM( address );
-        if( (offs & 15) == 0 )
+				break;
+		}
+		buffer[offs & 15] = RDMEM( address + pgm_memory_base );
+		if( (offs & 15) == 0 )
 			fprintf(file, "%0*X: ", width, lshift((start + offs) & AMASK) );
 		fprintf(file, "%02X", buffer[offs & 15] );
 		if( (offs & 15) == 15 )
@@ -3913,7 +4382,7 @@ static void cmd_dump_to_file( void )
 				else
 					for( o = offs - 15; o <= offs; o++ )
 						fputc( (buffer[o] < 32) ? '.' : buffer[o], file );
-            }
+			}
 			fprintf(file, "\n" );
 			x = 0;
 		}
@@ -3929,7 +4398,7 @@ static void cmd_dump_to_file( void )
 	}
 	fclose( file );
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3951,7 +4420,7 @@ static void cmd_save_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "SAVE arguments",
 			"<filename> missing");
 		edit_cmds_reset();
-        return;
+		return;
 	}
 	start = get_register_or_value( &cmd, &length );
 	if( !length )
@@ -3959,7 +4428,7 @@ static void cmd_save_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "SAVE arguments",
 			"<start> address missing");
 		edit_cmds_reset();
-        return;
+		return;
 	}
 	end = get_register_or_value( &cmd, &length );
 	if( !length )
@@ -3967,20 +4436,20 @@ static void cmd_save_to_file( void )
 		win_msgbox( cur_col[E_ERROR], "SAVE arguments",
 			"<end> address missing");
 		edit_cmds_reset();
-        return;
-    }
+		return;
+	}
 
 	save_what = get_option_or_value( &cmd, &length, "OPCODES\0DATA\0");
 	if( !length ) save_what = 0;	/* default to OP_ROM */
 
-    file = fopen(filename, "wb");
+	file = fopen(filename, "wb");
 	if( !file )
 	{
 		win_msgbox( cur_col[E_ERROR], "SAVE to file",
 			"Could not create %s", filename);
 		edit_cmds_reset();
-        return;
-    }
+		return;
+	}
 
 	if( save_what )
 		fwrite( &OP_RAM[start], 1, end+1-start, file );
@@ -3989,7 +4458,7 @@ static void cmd_save_to_file( void )
 
 	fclose( file );
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -3999,30 +4468,30 @@ static void cmd_save_to_file( void )
  **************************************************************************/
 static void cmd_edit_memory( void )
 {
-    char *cmd = CMD;
-    unsigned which, address;
-    int length;
+	char *cmd = CMD;
+	unsigned which, address;
+	int length;
 
-    which = xtou( &cmd, &length );
-    if( length )
-    {
+	which = xtou( &cmd, &length );
+	if( length )
+	{
 		which = (which - 1) % MAX_MEM;
 		address = get_register_or_value( &cmd, &length );
 		address = rshift(address) & AMASK;
-        if( length )
+		if( length )
 		{
 			DBGMEM[which].offset = address % DBGMEM[which].size;
 			DBGMEM[which].base = address - DBGMEM[which].offset;
 			DBGMEM[which].nibble = 0;
 			dump_mem( which, 0 );
-        }
-        switch( which )
-        {
-            case 0: DBG.window = EDIT_MEM1; break;
-            case 1: DBG.window = EDIT_MEM2; break;
-        }
-    }
-    edit_cmds_reset();
+		}
+		switch( which )
+		{
+		case 0: DBG.window = EDIT_MEM1; break;
+		case 1: DBG.window = EDIT_MEM2; break;
+		}
+	}
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4034,13 +4503,13 @@ static void cmd_search_memory(void)
 	static UINT8 search_data[16];
 	static int search_count = 0;
 	UINT32 win = MAX_WINDOWS-3;
-	unsigned which = (DBG.window == WIN_MEM1(activecpu)) ? 0 : 1;
+	unsigned which = (DBG.window == EDIT_MEM1) ? 0 : 1;
 	unsigned w, h;
 	unsigned shift, mask, val;
-    const char *k;
+	const char *k;
 	int i, offset, nibble;
 
-	osd_get_screen_size( &w, &h );
+	get_screen_size( &w, &h );
 	win_create( win, 1, 2, 2, w-4, 2,
 		cur_col[E_PROMPT], cur_col[E_FRAME], ' ',
 		BORDER_TOP | BORDER_BOTTOM | BORDER_LEFT | BORDER_RIGHT );
@@ -4050,7 +4519,7 @@ static void cmd_search_memory(void)
 	offset = 0;
 	nibble = 0;
 
-    do
+	do
 	{
 		win_set_curpos( win, 0, 0 );
 		for( i = 0; i < search_count; i++ )
@@ -4059,37 +4528,37 @@ static void cmd_search_memory(void)
 		win_set_curpos( win, 0, 1 );
 		for( i = 0; i < search_count; i++ )
 			win_printf( win, "%c  ", search_data[i] < 32 ? '.' : search_data[i] );
-        win_erase_eol( win, ' ' );
+		win_erase_eol( win, ' ' );
 
 		win_set_curpos( win, offset * 3 + nibble, 0 );
-		osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+		set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-        i = keyboard_read_sync();
+		i = readkey();
 		k = keyboard_name(i);
 
 		shift = (1 - nibble) * 4;
 		mask = ~(0xf << shift);
 
-        if( strlen(k) == 1 )
+		if( strlen(k) == 1 )
 		{
 			switch( k[0] )
 			{
-				case '0': case '1': case '2': case '3':
-				case '4': case '5': case '6': case '7':
-				case '8': case '9': case 'A': case 'B':
-				case 'C': case 'D': case 'E': case 'F':
-					if( offset == 16 )
-						break;
-					if( offset == search_count )
-						search_count++;
-					val = k[0] - '0';
-					if( val > 9 ) val -= 7;
-					val <<= shift;
-					/* now modify the register */
-					search_data[offset] = (search_data[offset] & mask ) | val;
-					i = KEYCODE_RIGHT;	/* advance to next nibble */
-                    break;
-            }
+			case '0': case '1': case '2': case '3':
+			case '4': case '5': case '6': case '7':
+			case '8': case '9': case 'A': case 'B':
+			case 'C': case 'D': case 'E': case 'F':
+				if( offset == 16 )
+					break;
+				if( offset == search_count )
+					search_count++;
+				val = k[0] - '0';
+				if( val > 9 ) val -= 7;
+				val <<= shift;
+				/* now modify the register */
+				search_data[offset] = (search_data[offset] & mask ) | val;
+				i = KEYCODE_RIGHT;	/* advance to next nibble */
+				break;
+			}
 		}
 
 		switch( i )
@@ -4101,7 +4570,7 @@ static void cmd_search_memory(void)
 						search_data[i] = search_data[i+1];
 					search_count--;
 				}
-                break;
+				break;
 
 			case KEYCODE_INSERT:
 				if( search_count < 16 )
@@ -4111,9 +4580,9 @@ static void cmd_search_memory(void)
 					search_data[offset] = 0;
 					search_count++;
 				}
-                break;
+				break;
 
-            case KEYCODE_BACKSPACE:
+			case KEYCODE_BACKSPACE:
 				if( nibble > 0 || offset > 0 )
 				{
 					if( nibble > 0 )
@@ -4187,7 +4656,6 @@ static void cmd_search_memory(void)
 				win_set_title( win, "[%3.0f%%] %s/%s",
 					100.0 * addr / (AMASK + 1),
 					kilobyte(addr), kilobyte(AMASK + 1) );
-				osd_screen_update();
 			}
 			for( i = 0; i < search_count; i++)
 				if( RDMEM( addr+i ) != search_data[i] )
@@ -4199,14 +4667,14 @@ static void cmd_search_memory(void)
 				DBGMEM[which].offset = addr % DBGMEM[which].size;
 				DBGMEM[which].base = addr - DBGMEM[which].offset;
 				win_close(win);
-                dbg_update = 1;
+				dbg_update = 1;
 				return;
 			}
 		}
 		sprintf(dbg_info, "Not found");
 		dbg_info_once = dbg_info;
-    }
-    win_close(win);
+	}
+	win_close(win);
 }
 
 /**************************************************************************
@@ -4236,13 +4704,8 @@ static void cmd_go_break( void )
 	dbg_update = 0;
 	dbg_active = 0;
 
-    osd_sound_enable(1);
-	osd_set_display(
-		Machine->scrbitmap->width,
-		Machine->scrbitmap->height,
-		Machine->scrbitmap->depth,
-		Machine->drv->video_attributes,
-		Machine->orientation);
+	osd_sound_enable(1);
+	osd_debugger_focus(0);
 }
 
 /**************************************************************************
@@ -4256,15 +4719,10 @@ static void cmd_here( void )
 	dbg_update = 0;
 	dbg_active = 0;
 
-    osd_sound_enable(1);
-	osd_set_display(
-		Machine->scrbitmap->width,
-		Machine->scrbitmap->height,
-		Machine->scrbitmap->depth,
-		Machine->drv->video_attributes,
-		Machine->orientation);
+	osd_sound_enable(1);
+	osd_debugger_focus(0);
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4274,7 +4732,7 @@ static void cmd_here( void )
 static void cmd_set_ignore( void )
 {
 	char *cmd = CMD;
-    unsigned cpunum;
+	unsigned cpunum;
 	int i, length, already_ignored;
 
 	cpunum = xtou( &cmd, &length );
@@ -4290,7 +4748,7 @@ static void cmd_set_ignore( void )
 					"No, I won't do that! ;-)\nIgnoring all CPUs is a bad idea.");
 				edit_cmds_reset();
 				return;
-            }
+			}
 			dbg[cpunum].ignore = 1;
 			if( cpunum == activecpu )
 				cmd_focus_next_cpu();
@@ -4302,7 +4760,7 @@ static void cmd_set_ignore( void )
 			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", totalcpu, totalcpu-1);
 	}
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4312,7 +4770,7 @@ static void cmd_set_ignore( void )
 static void cmd_set_observe( void )
 {
 	char *cmd = CMD;
-    unsigned cpunum;
+	unsigned cpunum;
 	int length;
 
 	cpunum = xtou( &cmd, &length );
@@ -4324,9 +4782,9 @@ static void cmd_set_observe( void )
 	{
 		win_msgbox( cur_col[E_ERROR], "Observe CPU",
 			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", totalcpu, totalcpu-1);
-    }
+	}
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4340,13 +4798,13 @@ static void cmd_jump( void )
 	int length;
 
 	address = get_register_or_value( &cmd, &length );
-    if( length > 0 )
+	if( length > 0 )
 	{
 		DBGDASM.pc_top = address;
 		DBGDASM.pc_cur = DBGDASM.pc_top;
 		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
 	}
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4357,9 +4815,9 @@ static void cmd_jump( void )
  **************************************************************************/
 static void cmd_replace_register( void )
 {
-    char *cmd = CMD;
+	char *cmd = CMD;
 	unsigned regnum, address;
-    int length;
+	int length;
 
 	regnum = get_register_id( &cmd, &length );
 	if( regnum > 0 )
@@ -4380,15 +4838,15 @@ static void cmd_replace_register( void )
 			for( DBGREGS.idx = 0; DBGREGS.idx < DBGREGS.count; DBGREGS.idx++ )
 				if( DBGREGS.id[DBGREGS.idx] == regnum ) break;
 			DBG.window = EDIT_REGS;
-        }
-    }
+		}
+	}
 	else
 	{
 		/* Edit the first register */
 		DBGREGS.idx = 0;
 		DBG.window = EDIT_REGS;
-    }
-    edit_cmds_reset();
+	}
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4402,20 +4860,20 @@ static void cmd_set_memory_mode( void )
 	int length;
 
 	which = dtou( &cmd, &length );
-    if( length )
+	if( length )
 	{
 		which = (which - 1) % 2;
 		mode = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0" );
 		if( !length ) mode = 0; /* default to BYTE */
 		DBGMEM[which].mode = mode;
 	}
-    else
+	else
 	{
 		DBGMEM[0].mode = 0;
 		DBGMEM[1].mode = 0;
-    }
+	}
 	edit_cmds_reset();
-    dbg_update = 1;
+	dbg_update = 1;
 }
 
 /**************************************************************************
@@ -4428,8 +4886,8 @@ static void cmd_set_dasm_relative_jumps( void )
 
 	dbg_dasm_relative_jumps = get_boolean( &cmd, NULL );
 
-    edit_cmds_reset();
-    dbg_update = 1;
+	edit_cmds_reset();
+	dbg_update = 1;
 }
 
 /**************************************************************************
@@ -4463,7 +4921,7 @@ static void cmd_trace_to_file( void )
 		trace_init( filename, regs );
 	}
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4517,7 +4975,7 @@ static void cmd_dasm_up( void )
 			DBGDASM.pc_top = DBGDASM.pc_cur;
 	}
 	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4530,7 +4988,7 @@ static void cmd_dasm_down( void )
 	if( DBGDASM.pc_cur >= DBGDASM.pc_end )
 		  DBGDASM.pc_top = dasm_line( DBGDASM.pc_top, 1 );
 	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4540,23 +4998,23 @@ static void cmd_dasm_down( void )
 static void cmd_dasm_page_up( void )
 {
 	UINT32 i;
-    /*
+	/*
 	 * This uses a 'rolling window' of start addresses to work out
 	 * the best address to use to generate the previous pagefull of
 	 * disassembly - CM 980428
-     */
+	 */
 	if( DBGDASM.pc_top > 0 )
-    {
+	{
 		unsigned dasm_pc_row[50];	/* needs to be > max windows height */
-        unsigned h = win_get_h(WIN_DASM(activecpu));
+		unsigned h = win_get_h(WIN_DASM(activecpu));
 		unsigned dasm_pc_tmp = lshift((rshift(DBGDASM.pc_top) - h * INSTL) & AMASK);
 
 		if( dasm_pc_tmp > DBGDASM.pc_top )
 		{
 			DBGDASM.pc_top = 0;
-        }
-        else
-        {
+		}
+		else
+		{
 			for( i= 0; dasm_pc_tmp < DBGDASM.pc_top; i++ )
 			{
 				dasm_pc_row[i % h] = dasm_pc_tmp;
@@ -4578,10 +5036,10 @@ static void cmd_dasm_page_up( void )
 				DBGDASM.pc_top = dasm_pc_row[(i + 1) % h];
 			}
 		}
-    }
+	}
 	DBGDASM.pc_cur = DBGDASM.pc_top;
 	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4590,12 +5048,12 @@ static void cmd_dasm_page_up( void )
  **************************************************************************/
 static void cmd_dasm_page_down( void )
 {
-    unsigned h = win_get_h(WIN_DASM(activecpu));
+	unsigned h = win_get_h(WIN_DASM(activecpu));
 
 	DBGDASM.pc_top = dasm_line( DBGDASM.pc_top, h );
 	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_cur, h );
 	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4606,7 +5064,7 @@ static void cmd_dasm_home( void )
 {
 	DBGDASM.pc_cur = DBGDASM.pc_top = 0;
 	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4628,7 +5086,7 @@ static void cmd_dasm_end( void )
 	DBGDASM.pc_top = tmp_address;
 	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_top, h - 1 );
 	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4643,15 +5101,15 @@ static void cmd_brk_exec_toggle( void )
 		DBG.brk_exec_times = 0;
 		DBG.brk_exec_reset = 0;
 		dbg_update = 1;
-    }
+	}
 	else
 	if( DBG.brk_exec == DBGDASM.pc_cur )
 	{
 		DBG.brk_exec = INVALID;
 		DBG.brk_exec_times = 0;
-        DBG.brk_exec_reset = 0;
+		DBG.brk_exec_reset = 0;
 		dbg_update = 1;
-    }
+	}
 	else
 	{
 		win_msgbox( cur_col[E_PROMPT], "Breakpoint",
@@ -4668,7 +5126,7 @@ static void cmd_dasm_hist_follow( void )
 {
 	unsigned i, address, access = EA_NONE;
 
-    address = INVALID;
+	address = INVALID;
 	DBGDASM.dst_ea_value = INVALID;
 	DBGDASM.src_ea_value = INVALID;
 
@@ -4678,7 +5136,7 @@ static void cmd_dasm_hist_follow( void )
 	{
 		access = DBGDASM.src_ea_access;
 		address = DBGDASM.src_ea_value;
-    }
+	}
 	if( DBGDASM.dst_ea_value != INVALID )
 	{
 		access = DBGDASM.dst_ea_access;
@@ -4700,8 +5158,8 @@ static void cmd_dasm_hist_follow( void )
 				DBGDASM.pc_top = address;
 				DBGDASM.pc_cur = address;
 				DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-                DBG.hist_cnt++;
-            }
+				DBG.hist_cnt++;
+			}
 			else
 			if( access == EA_MEM_RD || access == EA_MEM_WR || access == EA_MEM_RDWR ||
 				access == EA_ZPG_RD || access == EA_ZPG_WR || access == EA_ZPG_RDWR )
@@ -4710,10 +5168,10 @@ static void cmd_dasm_hist_follow( void )
 				DBGMEM[0].base = address - DBGMEM[0].offset;
 				DBGMEM[0].nibble = 0;
 				dump_mem( 0, 0 );
-                DBG.hist_cnt++;
-            }
-        }
-    }
+				DBG.hist_cnt++;
+			}
+		}
+	}
 }
 
 /**************************************************************************
@@ -4733,7 +5191,7 @@ static void cmd_dasm_hist_back( void )
 		DBGMEM[0].offset = DBG.hist[i].mem1_offset;
 		DBGMEM[0].nibble = DBG.hist[i].mem1_nibble;
 		dump_mem( 0, 0 );
-    }
+	}
 }
 
 /**************************************************************************
@@ -4751,13 +5209,13 @@ static void cmd_brk_data_toggle( void )
 		data = RDMEM(DBG.brk_data);
 		DBG.brk_data_oldval = data;
 		DBG.brk_data_newval = INVALID;
-    }
+	}
 	else
 	if( DBG.brk_data == DBGMEM[which].address )
 	{
 		DBG.brk_data = INVALID;
 		DBG.brk_data_oldval = INVALID;
-        DBG.brk_data_newval = INVALID;
+		DBG.brk_data_newval = INVALID;
 	}
 	else
 	{
@@ -4766,7 +5224,7 @@ static void cmd_brk_data_toggle( void )
 		DBG.brk_data = INVALID;
 	}
 	dbg_update = 1;
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4777,41 +5235,9 @@ static void cmd_run_to_cursor( void )
 {
 	DBG.brk_temp = DBGDASM.pc_cur;
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 
-    cmd_go();
-}
-
-/**************************************************************************
- * cmd_view_screen
- * Show game screen until a key is pressed
- **************************************************************************/
-static void cmd_view_screen( void )
-{
-	unsigned w,h;
-
-	osd_get_screen_size( &w, &h );
-    osd_set_display(
-		Machine->scrbitmap->width,
-		Machine->scrbitmap->height,
-		Machine->scrbitmap->depth,
-		Machine->drv->video_attributes,
-		Machine->orientation);
-
-	/* Let memory changes eventually do something to the video */
-	do
-	{
-		draw_screen(1);
-		update_video_and_audio();
-	} while (keyboard_read_async() == KEYCODE_NONE);
-
-	osd_set_screen_size( w, h );
-	win_invalidate_video();
-	win_show( WIN_REGS(activecpu) );
-	win_show( WIN_DASM(activecpu) );
-	win_show( WIN_MEM1(activecpu) );
-	win_show( WIN_MEM2(activecpu) );
-	win_show( WIN_CMDS(activecpu) );
+	cmd_go();
 }
 
 /**************************************************************************
@@ -4820,15 +5246,15 @@ static void cmd_view_screen( void )
  **************************************************************************/
 static void cmd_focus_next_cpu( void )
 {
-    if( totalcpu > 1 )
-    {
+	if( totalcpu > 1 )
+	{
 		win_set_title(WIN_CMDS(activecpu), "CPU #%d yield", activecpu);
 		cpu_yield();
-        dbg_update = 1;
+		dbg_update = 1;
 		dbg_step = 1;
-    }
+	}
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4838,7 +5264,7 @@ static void cmd_focus_next_cpu( void )
 static void cmd_step( void )
 {
 	dbg_step = 1;
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4853,10 +5279,14 @@ static void cmd_animate( void )
 	data = dtou( &cmd, &length );
 	if( length )
 		dbg_trace_delay = data;
+	else
+		dbg_trace_delay = 0x7fffffff;
+
+	debug_trace_delay = dbg_trace_delay;
 
 	dbg_trace = 1;
 	dbg_step = 1;
-    edit_cmds_reset();
+	edit_cmds_reset();
 }
 
 /**************************************************************************
@@ -4898,15 +5328,26 @@ static void cmd_go( void )
 	dbg_update = 0;
 	dbg_active = 0;
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 
-    osd_sound_enable(1);
-	osd_set_display(
-		Machine->scrbitmap->width,
-		Machine->scrbitmap->height,
-		Machine->scrbitmap->depth,
-		Machine->drv->video_attributes,
-		Machine->orientation);
+	osd_sound_enable(1);
+	osd_debugger_focus(0);
+}
+
+/**************************************************************************
+ * cmd_set_key_repeat
+ * Set the keyboard repeat rate (will decrease to 1/frame)
+ **************************************************************************/
+static void cmd_set_key_repeat( void )
+{
+	char *cmd = CMD;
+
+	dbg_key_repeat = dtou( &cmd, NULL );
+	if( dbg_key_repeat == 0 )
+		dbg_key_repeat = Machine->drv->frames_per_second / 15;
+
+	edit_cmds_reset();
+	dbg_update = 1;
 }
 
 /**************************************************************************
@@ -4922,14 +5363,14 @@ static void cmd_set_dasm_case( void )
 		dbg_dasm_case = 0;
 	else
 	if( toupper(cmd[0]) == 'L' )
-        dbg_dasm_case = 1;
+		dbg_dasm_case = 1;
 	else
 	if( toupper(cmd[0]) == 'U' )
-        dbg_dasm_case = 2;
+		dbg_dasm_case = 2;
 	else
 		dbg_dasm_case = xtou( &cmd, NULL );
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 	dbg_update = 1;
 }
 
@@ -4943,7 +5384,7 @@ static void cmd_set_mem_squeezed( void )
 
 	dbg_mem_squeezed = get_boolean( &cmd, NULL );
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 	dbg_update = 1;
 }
 
@@ -4953,55 +5394,55 @@ static void cmd_set_mem_squeezed( void )
  **************************************************************************/
 static void cmd_set_dasm_opcodes( void )
 {
-    char *cmd = CMD;
+	char *cmd = CMD;
 	UINT32 win = WIN_DASM(activecpu);
-    UINT32 w = win_get_w( win );
+	UINT32 w = win_get_w( win );
 	UINT32 dw = (INSTL / ALIGN) * (ALIGN * 2 + 1);
 	int state;
 
 	state = get_boolean( &cmd, NULL );
 
 	if( dbg_dasm_opcodes != state )
-    {
+	{
 		dbg_dasm_opcodes = state;
-        if( state )
+		if( state )
 		{
 			win_set_prio( win, 0 );
-            win_set_w( win, w + dw  );
+			win_set_w( win, w + dw	);
 		}
 		else
 		{
 			win_set_prio( win, 1 );
-            win_set_w( win, w - dw );
+			win_set_w( win, w - dw );
 		}
 		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-    }
+	}
 
-    edit_cmds_reset();
+	edit_cmds_reset();
 	dbg_update = 1;
 }
 
 static void mame_debug_reset_statics( void )
 {
 	/* Reset the statics */
-    memset( &dbg, 0, sizeof(dbg) );
+	memset( &dbg, 0, sizeof(dbg) );
 
-    activecpu = INVALID;
-    previous_activecpu = INVALID;
-    totalcpu = 0;
-    cputype = 0;
+	activecpu = INVALID;
+	previous_activecpu = INVALID;
+	totalcpu = 0;
+	cputype = 0;
 
-    dbg_fast = 0;
-    dbg_step = 0;
-    dbg_trace = 0;
-    dbg_update = 0;
-    dbg_update_cur = 0;
-    dbg_active = 0;
-    dbg_mem_squeezed = 0;
-    dbg_dasm_opcodes = 0;
-    dbg_dasm_case = 0;
-    dbg_dasm_relative_jumps = 0;
-    dbg_info_once = NULL;
+	dbg_fast = 0;
+	dbg_step = 0;
+	dbg_trace = 0;
+	dbg_update = 0;
+	dbg_update_cur = 0;
+	dbg_active = 0;
+	dbg_mem_squeezed = 0;
+	dbg_dasm_opcodes = 0;
+	dbg_dasm_case = 0;
+	dbg_dasm_relative_jumps = 0;
+	dbg_info_once = NULL;
 }
 
 
@@ -5014,10 +5455,10 @@ void mame_debug_init(void)
 	char filename[127+1];
 	FILE *file;
 
-    mame_debug_reset_statics();
-	osd_set_screen_size( 80, 25 );
+	mame_debug_reset_statics();
+	osd_debugger_focus(1);
 
-    totalcpu = cpu_gettotalcpu();
+	totalcpu = cpu_gettotalcpu();
 
 	for( activecpu = 0; activecpu < totalcpu; activecpu++ )
 	{
@@ -5042,6 +5483,9 @@ void mame_debug_init(void)
 			case 4: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT32; break;
 		}
 	}
+
+	/* set keyboard repeat rate based on the game's frame rate */
+	dbg_key_repeat = Machine->drv->frames_per_second / 15;
 
 	/* create windows for the active CPU */
 	dbg_open_windows();
@@ -5072,37 +5516,37 @@ void mame_debug_init(void)
 		}
 		fclose(file);
 	}
-    for( activecpu = 0; activecpu < totalcpu; activecpu++ )
-    {
+	for( activecpu = 0; activecpu < totalcpu; activecpu++ )
+	{
 		/* See if there is an existing startup file <game>.cf<cpunum> */
 		sprintf( filename, "%s.cf%d", Machine->gamedrv->name, activecpu );
-        file = fopen( filename, "r" );
-        if( file )
-        {
-            char *cmdline = CMD, *p;
-            int cmd;
+		file = fopen( filename, "r" );
+		if( file )
+		{
+			char *cmdline = CMD, *p;
+			int cmd;
 
-            while( !feof(file) )
-            {
-                fgets( cmdline, 80, file );
-                cmdline[80] = '\0';
-                if( *cmdline == ';' || *cmdline == '#' )
-                    continue;
-                p = strchr( cmdline, '\r' );
-                if( p ) *p = '\0';
-                p = strchr( cmdline, '\n' );
-                if( p ) *p = '\0';
+			while( !feof(file) )
+			{
+				fgets( cmdline, 80, file );
+				cmdline[80] = '\0';
+				if( *cmdline == ';' || *cmdline == '#' )
+					continue;
+				p = strchr( cmdline, '\r' );
+				if( p ) *p = '\0';
+				p = strchr( cmdline, '\n' );
+				if( p ) *p = '\0';
 				/* Make it all upper case */
 				strcpy( cmdline, upper(cmdline) );
-                cmd = edit_cmds_parse( cmdline );
-                if( cmd != INVALID && commands[cmd].function )
-                    (*commands[cmd].function)();
-            }
-            fclose(file);
-        }
-    }
+				cmd = edit_cmds_parse( cmdline );
+				if( cmd != INVALID && commands[cmd].function )
+					(*commands[cmd].function)();
+			}
+			fclose(file);
+		}
+	}
 
-    debug_key_pressed = 1;
+	debug_key_pressed = 1;
 
 	first_time = 1;
 }
@@ -5119,191 +5563,177 @@ void mame_debug_exit(void)
 
 /**************************************************************************
  **************************************************************************
- *      MAME_Debug
- *      This function is called from within an execution loop of a
- *      CPU core whenever mame_debug is non zero
+ *		MAME_Debug
+ *		This function is called from within an execution loop of a
+ *		CPU core whenever mame_debug is non zero
  **************************************************************************
  **************************************************************************/
 void MAME_Debug(void)
 {
-    if( ++debug_key_delay == 0x7fff )
-    {
-        debug_key_delay = 0;
-        debug_key_pressed = seq_pressed(input_port_type_seq(IPT_UI_ON_SCREEN_DISPLAY));
-    }
+	if( ++debug_key_delay == 0x7fff )
+	{
+		debug_key_delay = 0;
+		debug_key_pressed = seq_pressed(input_port_type_seq(IPT_UI_ON_SCREEN_DISPLAY));
+	}
 
-    if( dbg_fast )
-    {
-        if( !debug_key_pressed ) return;
+	if( dbg_fast )
+	{
+		if( !debug_key_pressed ) return;
 		dbg_fast = 0;
-    }
+	}
 
-    activecpu = cpu_getactivecpu();
+	activecpu = cpu_getactivecpu();
 
-    /* If this CPU shall be ignore, just return */
-    if( DBG.ignore ) return;
+	/* If this CPU shall be ignored, just return */
+	if( DBG.ignore ) return;
 
-    cputype = Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK;
+	cputype = Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK;
 
-    if( trace_on )
-    {
-        trace_select();
+	if( trace_on )
+	{
+		trace_select();
 		trace_output();
-    }
+	}
 
 	if( DBG.prev_sp )
-    {
-        /* assume we're in debug */
+	{
+		/* assume we're in debug */
 		dbg_active = 1;
-        /* See if we went into a function.
-           A 'return' will cause the CPU's stack pointer to be
-           greater than the previous stack pointer */
+		/* See if we went into a function.
+		   A 'return' will cause the CPU's stack pointer to be
+		   greater than the previous stack pointer */
 		if( cpu_get_pc() != DBG.next_pc && cpu_get_sp() < DBG.prev_sp )
-        {
+		{
 			/* if so, set the temporary breakpoint on the return PC */
 			DBG.brk_temp = DBG.next_pc;
 			dbg_update = 0;
 			dbg_active = 0;
-            osd_sound_enable(1);
-            osd_set_display(
-                Machine->scrbitmap->width,
-                Machine->scrbitmap->height,
-				Machine->scrbitmap->depth,
-				Machine->drv->video_attributes,
-				Machine->orientation);
-        }
+			osd_sound_enable(1);
+			osd_debugger_focus(0);
+		}
 		DBG.prev_sp = 0;
-    }
+	}
 
 	if ( (first_time || hit_brk_exec() || hit_brk_data() || hit_brk_regs() || debug_key_pressed) && !dbg_active )
-    {
-		clock_t curr = clock();
-		unsigned w, h;
-
-        debug_key_pressed = 0;
+	{
+		debug_key_pressed = 0;
 
 		if( !first_time )
 		{
 			osd_sound_enable(0);
-			do
-			{
-				update_video_and_audio();	/* give time to the sound hardware to apply the volume change */
-			} while( (clock() - curr) < (CLOCKS_PER_SEC / 15) );
 		}
 
-        first_time = 0;
-		osd_get_screen_size( &w, &h );
-		osd_set_screen_size( w, h );
-        win_invalidate_video();
+		first_time = 0;
+		osd_debugger_focus(1);
+		win_invalidate_video();
 
 		edit_cmds_reset();
 
 		DBG.brk_temp = INVALID;
 		dbg_active = 1;
 		dbg_update_cur = 1;
-        dbg_trace = 0;
-    }
+		dbg_trace = 0;
+	}
 
 	if( dbg_step )
-    {
+	{
 		DBGDASM.pc_cur = cpu_get_pc();
 		dbg_step = 0;
-    }
+	}
 
-    /* Assume we need to update the windows */
+	/* Assume we need to update the windows */
 	dbg_update = 1;
 
 	while( dbg_active && !dbg_step )
-    {
-        if( dbg_trace )
-        {
-			static int trace_delay;
+	{
+		if( dbg_trace )
+		{
 			dbg_step = 1;
-            if( ++trace_delay < dbg_trace_delay )
+			if( --debug_trace_delay > 0 )
 			{
 				dbg_update = 0;
 			}
 			else
 			{
-				trace_delay = 0;
-
-				if( keyboard_pressed(KEYCODE_SPACE) )
+				update_video_and_audio();
+				debug_trace_delay = dbg_trace_delay;
+				if( debug_key_pressed )
 				{
 					dbg_trace = 0;
 					dbg_step = 0;
+					osd_debugger_focus(1);
 				}
 			}
-        }
+		}
 
 		if( dbg_update )
-        {
-            if( activecpu != previous_activecpu )
-            {
-                if( previous_activecpu != INVALID )
-                {
-                    win_hide( WIN_REGS(previous_activecpu) );
-                    win_hide( WIN_DASM(previous_activecpu) );
-                    win_hide( WIN_MEM1(previous_activecpu) );
-                    win_hide( WIN_MEM2(previous_activecpu) );
-                    win_hide( WIN_CMDS(previous_activecpu) );
-                }
-                win_show( WIN_REGS(activecpu) );
-                win_show( WIN_DASM(activecpu) );
-                win_show( WIN_MEM1(activecpu) );
-                win_show( WIN_MEM2(activecpu) );
-                win_show( WIN_CMDS(activecpu) );
-            }
+		{
+			if( activecpu != previous_activecpu )
+			{
+				if( previous_activecpu != INVALID )
+				{
+					win_hide( WIN_REGS(previous_activecpu) );
+					win_hide( WIN_DASM(previous_activecpu) );
+					win_hide( WIN_MEM1(previous_activecpu) );
+					win_hide( WIN_MEM2(previous_activecpu) );
+					win_hide( WIN_CMDS(previous_activecpu) );
+				}
+				win_show( WIN_REGS(activecpu) );
+				win_show( WIN_DASM(activecpu) );
+				win_show( WIN_MEM1(activecpu) );
+				win_show( WIN_MEM2(activecpu) );
+				win_show( WIN_CMDS(activecpu) );
+			}
 
-            dump_regs();
-            dump_mem( 0, DBG.window != EDIT_MEM1 );
-            dump_mem( 1, DBG.window != EDIT_MEM2 );
+			dump_regs();
+			dump_mem( 0, DBG.window != EDIT_MEM1 );
+			dump_mem( 1, DBG.window != EDIT_MEM2 );
 			DBGDASM.pc_cpu = cpu_get_pc();
-            /* Check if pc_cpu is outside of our disassembly window */
+			/* Check if pc_cpu is outside of our disassembly window */
 			if( DBGDASM.pc_cpu < DBGDASM.pc_top || DBGDASM.pc_cpu >= DBGDASM.pc_end )
 				DBGDASM.pc_top = DBGDASM.pc_cpu;
 			DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
 			if( DBGDASM.pc_cur < DBGDASM.pc_top || DBGDASM.pc_cur >= DBGDASM.pc_end || dbg_update_cur )
-            {
+			{
 				DBGDASM.pc_cur = DBGDASM.pc_cpu;
 				DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
-                dbg_update_cur = 0;
-            }
-			osd_screen_update();
-            dbg_update = 0;
-        }
+				dbg_update_cur = 0;
+			}
+			dbg_update = 0;
+		}
 
-        if( !dbg_trace )
-        {
-            switch( DBG.window )
-            {
-                case EDIT_REGS: edit_regs(); break;
-                case EDIT_DASM: edit_dasm(); break;
-                case EDIT_MEM1: edit_mem(0); break;
-                case EDIT_MEM2: edit_mem(1); break;
-                case EDIT_CMDS: edit_cmds(); break;
-            }
-        }
-    }
+		if( !dbg_trace )
+		{
+			switch( DBG.window )
+			{
+				case EDIT_REGS: edit_regs(); break;
+				case EDIT_DASM: edit_dasm(); break;
+				case EDIT_MEM1: edit_mem(0); break;
+				case EDIT_MEM2: edit_mem(1); break;
+				case EDIT_CMDS: edit_cmds(); break;
+			}
+		}
+	}
 
-    /* update backup copies of memory and registers */
+	/* update backup copies of memory and registers */
 	if( DBGMEM[0].changed )
-    {
+	{
 		DBGMEM[0].changed = 0;
 		memcpy( DBGMEM[0].backup,
 				DBGMEM[0].newval, DBGMEM[0].size );
-    }
+	}
 	if( DBGMEM[1].changed )
-    {
+	{
 		DBGMEM[1].changed = 0;
 		memcpy( DBGMEM[1].backup,
 				DBGMEM[1].newval, DBGMEM[0].size );
-    }
+	}
 	if( DBGREGS.changed )
-    {
+	{
 		DBGREGS.changed = 0;
 		memcpy( DBGREGS.backup,
 				DBGREGS.newval, DBGREGS.count * sizeof(UINT32) );
-    }
+	}
 }
 
 #endif

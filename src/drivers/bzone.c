@@ -305,7 +305,7 @@ INPUT_PORTS_START( bzone )
 	/* per default (busy vector processor). */
  	/* handled by bzone_IN0_r() */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* bit 7 is tied to a 3khz clock */
+	/* bit 7 is tied to a 3kHz clock */
  	/* handled by bzone_IN0_r() */
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -422,7 +422,7 @@ INPUT_PORTS_START( redbaron )
 	/* per default (busy vector processor). */
  	/* handled by bzone_IN0_r() */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* bit 7 is tied to a 3khz clock */
+	/* bit 7 is tied to a 3kHz clock */
  	/* handled by bzone_IN0_r() */
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -511,7 +511,7 @@ static struct MachineDriver machine_driver_bzone =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			bzone_readmem,bzone_writemem,0,0,
 			bzone_interrupt,6 /* 4.1ms */
 		}
@@ -580,7 +580,7 @@ static struct MachineDriver machine_driver_redbaron =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			redbaron_readmem,redbaron_writemem,0,0,
 			bzone_interrupt,4 /* 5.4ms */
 		}

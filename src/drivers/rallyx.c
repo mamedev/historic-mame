@@ -314,7 +314,7 @@ static struct MachineDriver machine_driver_rallyx =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz ? */
 			readmem,writemem,0,writeport,
 			interrupt,1
 		}

@@ -257,7 +257,7 @@ static READ_HANDLER( sound_hardware_r )
 	switch( offset ) {
 		case 0:
 			data = meadows_0c00;
-#if VERBOSE
+#if 0
             {
 				static int last_data = 0;
 				if (data != last_data) {

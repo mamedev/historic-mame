@@ -177,7 +177,7 @@ static struct MachineDriver machine_driver_troangel =
 	{
 		{
 			CPU_Z80,
-			3000000,	/* 3 Mhz ??? */
+			3000000,	/* 3 MHz ??? */
 			troangel_readmem,troangel_writemem,
 			0,0,
 			interrupt,1

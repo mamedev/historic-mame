@@ -188,7 +188,7 @@ static struct MemoryWriteAddress slave_writemem[] =
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xfffffb90), TOBYTE(0xfffffb90), exterm_slave_speedup_w, &exterm_slave_speedup },
+	{ TOBYTE(0xfffffb90), TOBYTE(0xfffffb9f), exterm_slave_speedup_w, &exterm_slave_speedup },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -317,28 +317,28 @@ static struct MachineDriver machine_driver_exterm =
 	{
 		{
 			CPU_TMS34010,
-			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 Mhz */
+			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 MHz */
             master_readmem,master_writemem,0,0,
             ignore_interrupt,0,  /* Display Interrupts caused internally */
             0,0,&master_config
 		},
 		{
 			CPU_TMS34010,
-			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 Mhz */
+			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 MHz */
             slave_readmem,slave_writemem,0,0,
             ignore_interrupt,0,  /* Display Interrupts caused internally */
             0,0,&slave_config
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
+			2000000,	/* 2 MHz */
 			sound_dac_readmem,sound_dac_writemem,0,0,
 			ignore_interrupt,0	/* IRQ caused when sound command is written */
 								/* NMIs are triggered by the YM2151 CPU */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
+			2000000,	/* 2 MHz */
 			sound_ym2151_readmem,sound_ym2151_writemem,0,0,
 			ignore_interrupt,0	/* IRQ caused when sound command is written */
 								/* NMIs are triggered by a programmable timer */

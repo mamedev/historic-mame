@@ -200,7 +200,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct POKEYinterface pokey_interface =
 {
 	3,	/* 3 chips */
-	600000,	/* .6 Mhz */
+	600000,	/* .6 MHz */
 	{ 33, 33, 33 },
 	/* The 8 pot handlers */
 	{ 0, 0, 0 },
@@ -223,7 +223,7 @@ static struct MachineDriver machine_driver_foodf =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 Mhz */
+			6000000,	/* 6 MHz */
 			foodf_readmem,foodf_writemem,0,0,
 			foodf_interrupt,4
 		},

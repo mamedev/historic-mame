@@ -50,9 +50,9 @@ typedef void  (*TX_CALLBACK)( int port, INT32 data );
 **	REGISTER ENUMERATION
 **#################################################################################################*/
 
-enum 
+enum
 {
-	ADSP2100_PC=1, 
+	ADSP2100_PC=1,
 	ADSP2100_AX0, ADSP2100_AX1, ADSP2100_AY0, ADSP2100_AY1, ADSP2100_AR, ADSP2100_AF,
 	ADSP2100_MX0, ADSP2100_MX1, ADSP2100_MY0, ADSP2100_MY1, ADSP2100_MR0, ADSP2100_MR1, ADSP2100_MR2, ADSP2100_MF,
 	ADSP2100_SI, ADSP2100_SE, ADSP2100_SB, ADSP2100_SR0, ADSP2100_SR1,
@@ -64,10 +64,10 @@ enum
 	ADSP2100_IMASK, ADSP2100_ICNTL, ADSP2100_IRQSTATE0, ADSP2100_IRQSTATE1, ADSP2100_IRQSTATE2, ADSP2100_IRQSTATE3,
 	ADSP2100_FLAGIN, ADSP2100_FLAGOUT
 #if SUPPORT_2101_EXTENSIONS
-	, ADSP2100_FL0, ADSP2100_FL1, ADSP2100_FL2 
+	, ADSP2100_FL0, ADSP2100_FL1, ADSP2100_FL2
 #endif
 };
-	
+
 
 /*###################################################################################################
 **	INTERRUPT CONSTANTS
@@ -121,6 +121,12 @@ extern unsigned adsp2100_dasm(char *buffer, unsigned pc);
 #define ADSP2100_WRMEM(A,V) (cpu_writemem16lew(A,V))
 #define ADSP2100_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
 
+/****************************************************************************/
+/* Write a 24-bit value to program memory                                   */
+/****************************************************************************/
+#define ADSP2100_WRPGM(A,V)	(*(UINT32 *)(A) = (V) & 0xffffff)
+
+
 #ifdef MAME_DEBUG
 extern unsigned DasmADSP2100(char *buffer, unsigned pc);
 #endif
@@ -129,6 +135,10 @@ extern unsigned DasmADSP2100(char *buffer, unsigned pc);
 /**************************************************************************
  * ADSP2105 section
  **************************************************************************/
+
+#define ADSP2105_DATA_OFFSET    ADSP2100_DATA_OFFSET
+#define ADSP2105_PGM_OFFSET     ADSP2100_PGM_OFFSET
+#define ADSP2105_SIZE           ADSP2100_SIZE
 
 #define adsp2105_icount adsp2100_icount
 

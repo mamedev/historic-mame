@@ -592,25 +592,25 @@ static struct MachineDriver machine_driver_kingofb =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			main_readmem, main_writemem,0,0,
 			kingobox_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			video_readmem, video_writemem,0,0,
 			kingobox_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			sprite_readmem, sprite_writemem,0,0,
 			kingobox_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			sound_readmem, sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt, 0,
 			nmi_interrupt, 6000	/* Hz */
@@ -654,25 +654,25 @@ static struct MachineDriver machine_driver_ringking =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			rk_main_readmem, rk_main_writemem,0,0,
 			kingobox_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			rk_video_readmem, rk_video_writemem,0,0,
 			kingobox_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			rk_sprite_readmem, rk_sprite_writemem,0,0,
 			kingobox_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4.0 Mhz */
+			4000000,        /* 4.0 MHz */
 			sound_readmem, sound_writemem,rk_sound_readport,rk_sound_writeport,
 			ignore_interrupt, 0,
 			nmi_interrupt, 6000	/* Hz */

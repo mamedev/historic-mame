@@ -11,7 +11,6 @@
 #include "cpu/m6809/m6809.h"
 
 
-static int flipscreen;
 static int nmi_enable;
 
 
@@ -67,11 +66,7 @@ void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 WRITE_HANDLER( yiear_control_w )
 {
 	/* bit 0 flips screen */
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	flip_screen_w(offset, data & 1);
 
 	/* bit 1 is NMI enable */
 	nmi_enable = data & 0x02;
@@ -104,6 +99,12 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
@@ -119,7 +120,7 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (offs/2) / 32;
 			flipx = videoram[offs] & 0x80;
 			flipy = videoram[offs] & 0x40;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -152,7 +153,7 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx = ~spriteram[offs] & 0x40;
 		flipy =  spriteram[offs] & 0x80;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;

@@ -1103,7 +1103,7 @@ static struct MachineDriver machine_driver_exidy440 =
 	{
 		{
 			CPU_M6809,
-			12979200/8,                     /* 12Mhz/8 */
+			12979200/8,                     /* 12MHz/8 */
 			readmem_cpu1,writemem_cpu1,0,0,
 			main_interrupt,1
 		},

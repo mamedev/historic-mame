@@ -1,13 +1,12 @@
 /***************************************************************************
 
-Bagman memory map (preliminary)
+Bagman memory map
 
 driver by Nicola Salmoria
-protection emulation by Jarek Burczynski and Andrew Deschenes
+protection and speech emulation by Jarek Burczynski
+protection info Andrew Deschenes
 
-TODO:
-- speech
-
+memory map:
 
 0000-5fff ROM
 6000-67ff RAM
@@ -20,21 +19,32 @@ c000-ffff ROM (Super Bagman only)
 memory mapped ports:
 
 read:
-a000      PAL16r6 output.
-a800      ? (read only in one place, not used)
-b000      DSW
-b800      watchdog reset?
+a000      PAL16r6 output. (RD4 line)
+a800      ? (read only in one place, not used) (RD5 line)
+b000      DSW (RD6 line)
+b800      watchdog reset (RD7 line)
 
 write:
 a000      interrupt enable
-a001      \ horizontal and vertical flip, I don't know which is which
-a002      /
-a003      video enable??
+a001      horizontal flip
+a002	  vertical flip
+a003      video enable?? (seems to be unused in the schems)
 a004      coin counter
-a007      ?
-a800-a805 PAL16r6 inputs. This chip is custom logic used for guards controlling.
+a007      ? /SCS line in the schems connected to AY8910 pin A4 or AA (schems are unreadable)
+
+a800-a805 these lines control the state machine driving TMS5110 (only bit 0 matters)
+          a800,a801,a802 - speech roms BIT select (000 bit 7, 001 bit 4, 010 bit 2)
+          a803 - 0 keeps the state machine in reset state; 1 starts speech
+          a804 - connected to speech rom 11 (QS) chip enable
+          a805 - connected to speech rom 12 (QT) chip enable
 b000      ?
 b800      ?
+
+
+PAL16r6 This chip is custom logic used for guards controlling.
+		Inputs are connected to buffered address(!!!) lines AB0,AB1,AB2,AB3,AB4,AB5,AB6
+		We simulate this writing a800 to a805 there (which is wrong but works)
+
 
 I/O ports:
 
@@ -48,7 +58,7 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/tms5110.h"
 
 
 READ_HANDLER( bagman_pal16r6_r );
@@ -63,6 +73,112 @@ void bagman_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
+static int speech_rom_address = 0;
+
+static unsigned char ls259_buf[8] = {0,0,0,0,0,0,0,0};
+
+
+static void start_talking (void)
+{
+#if 0
+	logerror("Talk started: selected bit %1i, selected roms QS %i  QT %i\n",
+			(ls259_buf[0]<<2 | ls259_buf[1]<<1 | ls259_buf[2]<<0) ^ 0x7,
+			ls259_buf[4], ls259_buf[5] );
+	if ( (ls259_buf[4] == 0) &&  (ls259_buf[5] == 0) )
+		logerror("BAD SPEECH ROM SELECT (both enabled)\n");
+	if ( (ls259_buf[4] == 1) &&  (ls259_buf[5] == 1) )
+		logerror("BAD SPEECH ROM SELECT (both disabled)\n");
+#endif
+
+	speech_rom_address = 0x0;
+	tms5110_CTL_w(0,TMS5110_CMD_SPEAK);
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+}
+
+static void reset_talking (void)
+{
+/*To be extremely accurate there should be a delays between each of
+  the function calls below. In real they happen with the frequency of 160 kHz.
+*/
+
+	tms5110_CTL_w(0,TMS5110_CMD_RESET);
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+
+	speech_rom_address = 0x0;
+}
+
+
+int bagman_speech_rom_read_bit(void)
+{
+unsigned char *ROM = memory_region(REGION_SOUND1);
+int bit_no = (ls259_buf[0]<<2) | (ls259_buf[1]<<1) | (ls259_buf[2]<<0);
+int byte = 0;
+
+#if 0
+	if ( (ls259_buf[4] == 0) &&  (ls259_buf[5] == 0) )
+		logerror("readbit: BAD SPEECH ROM SELECT (both enabled)\n");
+	if ( (ls259_buf[4] == 1) &&  (ls259_buf[5] == 1) )
+		logerror("readbit: BAD SPEECH ROM SELECT (both disabled)\n");
+#endif
+
+
+	if (ls259_buf[4]==0)	/*ROM 11 chip enable*/
+	{
+		byte |= ROM[ speech_rom_address + 0x0000 ];
+	}
+
+	if (ls259_buf[5]==0)	/*ROM 12 chip enable*/
+	{
+		byte |= ROM[ speech_rom_address + 0x1000 ]; /*0x1000 is because both roms are loaded in one memory region*/
+	}
+
+	speech_rom_address++;
+	speech_rom_address &= 0x0fff;
+
+	return (byte>>(bit_no^0x7)) & 1;
+}
+
+
+READ_HANDLER( bagman_ls259_r )
+{
+	return ls259_buf[offset];
+}
+
+WRITE_HANDLER( bagman_ls259_w )
+{
+	bagman_pal16r6_w(offset,data); /*this is just a simulation*/
+
+	if (ls259_buf[offset] != (data&1) )
+	{
+		ls259_buf[offset] = data&1;
+
+		if (offset==3)
+		{
+			if (ls259_buf[3] == 0)	/* 1->0 transition */
+			{
+				reset_talking();
+			}
+			else
+			{
+				start_talking();	/* 0->1 transition */
+			}
+		}
+	}
+}
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
@@ -70,7 +186,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0x9800, 0x9bff, MRA_RAM },
 	{ 0xa000, 0xa000, bagman_pal16r6_r },
-	{ 0xa800, 0xa800, MRA_NOP },
+	//{ 0xa800, 0xa805, bagman_ls259_r }, /*just for debugging purposes*/
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
 	{ 0xb800, 0xb800, MRA_NOP },
 	{ 0xc000, 0xffff, MRA_ROM },	/* Super Bagman only */
@@ -89,10 +205,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xffff, MWA_ROM },	/* Super Bagman only */
 	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
 									/* here only to initialize the pointer, */
-	{ 0xa7ff, 0xa805, bagman_pal16r6_w },	/* PAL16r6 custom logic */
-														/* writes are handled by colorram_w */
+									/* writes are handled by colorram_w */
+	{ 0xa800, 0xa805, bagman_ls259_w },	/* TMS5110 driving state machine */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
 	{ 0xa004, 0xa004, coin_counter_w },
+
 #if 0
 	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
 	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
@@ -107,7 +224,6 @@ static struct MemoryReadAddress pickin_readmem[] =
 	{ 0x7000, 0x77ff, MRA_RAM },
 	{ 0x8800, 0x8bff, MRA_RAM },
 	{ 0x9800, 0x9bff, MRA_RAM },
-//	{ 0xa000, 0xa000, bagman_pal16r6_r },
 	{ 0xa800, 0xa800, input_port_2_r },
 	{ 0xb800, 0xb800, MRA_NOP },
 	{ -1 }	/* end of table */
@@ -124,8 +240,7 @@ static struct MemoryWriteAddress pickin_writemem[] =
 	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
 	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
 									/* here only to initialize the pointer, */
-//	{ 0xa7ff, 0xa805, bagman_pal16r6_w },	/* PAL16r6 custom logic */
-														/* writes are handled by colorram_w */
+									/* writes are handled by colorram_w */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
 	{ 0xa004, 0xa004, coin_counter_w },
 #if 0
@@ -146,6 +261,7 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x08, 0x08, AY8910_control_port_0_w },
 	{ 0x09, 0x09, AY8910_write_port_0_w },
+	//{ 0x56, 0x56, IOWP_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -392,14 +508,20 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
-	{ 50 },
+	{ 10 },
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
 	{ 0 }
 };
 
-
+static struct TMS5110interface tms5110_interface =
+{
+	640000, /*640 kHz clock*/
+	100,	/*100 % mixing level */
+	0,		/*irq callback function*/
+	bagman_speech_rom_read_bit	/*M0 callback function. Called whenever chip requests a single bit of data*/
+};
 
 static struct MachineDriver machine_driver_bagman =
 {
@@ -407,7 +529,7 @@ static struct MachineDriver machine_driver_bagman =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -434,6 +556,10 @@ static struct MachineDriver machine_driver_bagman =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
+		},
+		{
+			SOUND_TMS5110,
+			&tms5110_interface
 		}
 	}
 };
@@ -444,7 +570,7 @@ static struct MachineDriver machine_driver_pickin =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			pickin_readmem,pickin_writemem,readport,writeport,
 			interrupt,1
 		}
@@ -499,9 +625,10 @@ ROM_START( bagman )
 	ROM_LOAD( "c1_b01.bin",   0x0000, 0x1000, 0x705193b2 )
 	ROM_LOAD( "f1_b03s.bin",  0x1000, 0x1000, 0xdba1eda7 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
@@ -525,9 +652,10 @@ ROM_START( bagnard )
 	ROM_LOAD( "bagnard.001",  0x0000, 0x1000, 0x060b044c )
 	ROM_LOAD( "bagnard.003",  0x1000, 0x1000, 0x8043bc1a )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
@@ -551,9 +679,10 @@ ROM_START( bagmans )
 	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
@@ -577,9 +706,10 @@ ROM_START( bagmans2 )
 	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
@@ -613,9 +743,10 @@ ROM_START( sbagman )
 	ROM_LOAD( "1.1c",         0x0000, 0x1000, 0xa046ff44 )
 	ROM_LOAD( "3.1f",         0x1000, 0x1000, 0xa4422da4 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
@@ -649,9 +780,10 @@ ROM_START( sbagmans )
 	ROM_LOAD( "sbag_1c.bin",  0x0000, 0x1000, 0x262f870a )
 	ROM_LOAD( "sbag_1f.bin",  0x1000, 0x1000, 0x350ed0fb )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
 	ROM_REGION( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
@@ -680,10 +812,10 @@ ROM_END
 
 
 
-GAMEX(1982, bagman,   0,       bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman", GAME_IMPERFECT_SOUND )
-GAMEX(1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard", GAME_IMPERFECT_SOUND )
-GAMEX(1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)", GAME_IMPERFECT_SOUND )
-GAMEX(1984, sbagman,  0,       bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman", GAME_IMPERFECT_SOUND )
-GAMEX(1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)", GAME_IMPERFECT_SOUND )
+GAME(1982, bagman,   0,       bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman" )
+GAME(1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard" )
+GAME(1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
+GAME(1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
+GAME(1984, sbagman,  0,       bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman" )
+GAME(1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
 GAME( 1983, pickin,   0,       pickin, pickin,  0, ROT270, "Valadon Automation", "Pickin'" )

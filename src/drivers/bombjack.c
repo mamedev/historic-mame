@@ -323,13 +323,13 @@ static struct MachineDriver machine_driver_bombjack =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			4000000,	/* 4 MHz */
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz????? */
+			3072000,	/* 3.072 MHz????? */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
 			nmi_interrupt,1
 		}

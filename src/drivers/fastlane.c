@@ -10,7 +10,7 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/m6809/m6809.h"
+#include "cpu/hd6309/hd6309.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
@@ -87,12 +87,12 @@ static WRITE_HANDLER( fastlane_K007232_write_port_1_w )
 static struct MemoryReadAddress fastlane_readmem[] =
 {
 	{ 0x0000, 0x005f, MRA_RAM },
-	{ 0x0800, 0x0800, input_port_2_r },		/* DIPSW #3 */
-	{ 0x0801, 0x0801, input_port_5_r },		/* 2P inputs */
-	{ 0x0802, 0x0802, input_port_4_r },		/* 1P inputs */
-	{ 0x0803, 0x0803, input_port_3_r },		/* COINSW */
-	{ 0x0900, 0x0900, input_port_0_r },		/* DIPSW #1 */
-	{ 0x0901, 0x0901, input_port_1_r },		/* DISPW #2 */
+	{ 0x0800, 0x0800, input_port_2_r }, 	/* DIPSW #3 */
+	{ 0x0801, 0x0801, input_port_5_r }, 	/* 2P inputs */
+	{ 0x0802, 0x0802, input_port_4_r }, 	/* 1P inputs */
+	{ 0x0803, 0x0803, input_port_3_r }, 	/* COINSW */
+	{ 0x0900, 0x0900, input_port_0_r }, 	/* DIPSW #1 */
+	{ 0x0901, 0x0901, input_port_1_r }, 	/* DISPW #2 */
 	{ 0x0d00, 0x0d0d, fastlane_K007232_read_port_0_r },/* 007232 registers (chip 1) */
 	{ 0x0e00, 0x0e0d, fastlane_K007232_read_port_1_r },/* 007232 registers (chip 2) */
 	{ 0x0f00, 0x0f1f, K051733_r },			/* 051733 (protection) */
@@ -129,76 +129,76 @@ static struct MemoryWriteAddress fastlane_writemem[] =
 INPUT_PORTS_START( fastlane )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(	0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(	0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(	0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+	PORT_DIPSETTING(	0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(	0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(	0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(	0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x90, DEF_STR( 1C_7C ) )
+//	PORT_DIPSETTING(	0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPSETTING(	0x03, "2" )
+	PORT_DIPSETTING(	0x02, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x00, "7" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	/* The bonus life affects the starting high score too, 20000 or 30000 */
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "20000 100000" )
-	PORT_DIPSETTING(    0x10, "30000 150000" )
-	PORT_DIPSETTING(    0x08, "20000" )
-	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(	0x18, "20000 100000" )
+	PORT_DIPSETTING(	0x10, "30000 150000" )
+	PORT_DIPSETTING(	0x08, "20000" )
+	PORT_DIPSETTING(	0x00, "30000" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW #3 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* COINSW */
@@ -213,7 +213,7 @@ INPUT_PORTS_START( fastlane )
 	PORT_START	/* PLAYER 1 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -222,7 +222,7 @@ INPUT_PORTS_START( fastlane )
 	PORT_START	/* PLAYER 2 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
@@ -271,7 +271,7 @@ static struct K007232_interface k007232_interface =
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER),
 			K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* volume */
-	{ volume_callback0,  volume_callback1 }	/* external port callback */
+	{ volume_callback0,  volume_callback1 } /* external port callback */
 };
 
 static struct MachineDriver machine_driver_fastlane =
@@ -282,8 +282,8 @@ static struct MachineDriver machine_driver_fastlane =
 			CPU_HD6309,
 			3000000,		/* 24MHz/8? */
 			fastlane_readmem,fastlane_writemem,0,0,
-            fastlane_interrupt,16	/* 1 IRQ + ??? NMI (generated by the 007121) */
-        }
+			fastlane_interrupt,16	/* 1 IRQ + ??? NMI (generated by the 007121) */
+		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -320,11 +320,11 @@ static struct MachineDriver machine_driver_fastlane =
 
 ROM_START( fastlane )
 	ROM_REGION( 0x21000, REGION_CPU1 ) /* code + banked roms */
-	ROM_LOAD( "fl_e05.rom", 0x08000, 0x08000, 0xe1004489 )	/* fixed ROM */
-	ROM_LOAD( "fl_e04.rom", 0x10000, 0x10000, 0xff4d6029 )	/* banked ROM */
+	ROM_LOAD( "fl_e05.rom", 0x08000, 0x08000, 0xe1004489 )  /* fixed ROM */
+	ROM_LOAD( "fl_e04.rom", 0x10000, 0x10000, 0xff4d6029 )  /* banked ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "fl_m02.rom",	0x00000, 0x80000, 0xa126e82d )	/* tiles + sprites */
+	ROM_LOAD( "fl_m02.rom", 0x00000, 0x80000, 0xa126e82d )  /* tiles + sprites */
 
 	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "prom1",      0x0000, 0x0100, 0x00000000 )
@@ -333,12 +333,13 @@ ROM_START( fastlane )
 	ROM_LOAD( "prom4",      0x0300, 0x0100, 0x00000000 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 007232 data */
-	ROM_LOAD( "fl_m01.rom",	0x00000, 0x20000, 0x85d691ed ) /* chip 1 */
+	ROM_LOAD( "fl_m01.rom", 0x00000, 0x20000, 0x85d691ed ) /* chip 1 */
 
 	ROM_REGION( 0x80000, REGION_SOUND2 )	/* 007232 data */
-	ROM_LOAD( "fl_m03.rom",	0x00000, 0x80000, 0x119e9cbf ) /* chip 2 */
+	ROM_LOAD( "fl_m03.rom", 0x00000, 0x80000, 0x119e9cbf ) /* chip 2 */
 ROM_END
 
 
 
 GAMEX( 1987, fastlane, 0, fastlane, fastlane, 0, ROT90, "Konami", "Fast Lane", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS )
+
