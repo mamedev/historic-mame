@@ -4,7 +4,7 @@
 #include <go32.h>
 #include "dirty.h"
 /* for VGA triple buffer - we need the register structure */
-#include "TwkUser.h"
+#include "gen15khz.h"
 
 /* from video.c (required for 15.75KHz Arcade Monitor Modes) */
 extern int half_yres;
@@ -175,7 +175,7 @@ INLINE void unchained_flip(void)
 	"0:\n"
 	"inb    %%dx,%%al \n"
 	"testb  $1,%%al \n"
-	"jz		0b \n"
+	"jz  	0b \n"
 /* change the offset address */
 	"movw   $0x3d4,%%dx \n"
 	"movw   %%cx,%%ax \n"
@@ -349,150 +349,136 @@ void init_unchained_blit(void)
 
 /* Macros for non dirty unchained blits */
 #define UNCHAIN_BLIT_START \
-        int dummy1,dummy2,dummy3; \
-		__asm__ __volatile__ ( \
+	int dummy1,dummy2,dummy3; \
+	__asm__ __volatile__ ( \
 /* save es and set it to our video selector */ \
-        "pushw  %%es \n" \
-        "movw   %%dx,%%es \n" \
-        "movw   $0x102,%%ax \n" \
-        "cld \n" \
-        ".align 4 \n" \
+	"pushw  %%es \n" \
+	"movw   %%dx,%%es \n" \
+	"movw   $0x102,%%ax \n" \
+	"cld \n" \
+	".align 4 \n" \
 /* --bit plane loop-- */ \
-        "0:\n" \
+	"0:\n" \
 /* save everything */ \
-        "pushl  %%ebx \n" \
-        "pushl  %%edi \n" \
-        "pushl  %%eax \n" \
-        "pushl  %%ecx \n" \
+	"pushl  %%ebx \n" \
+	"pushl  %%edi \n" \
+	"pushl  %%eax \n" \
+	"pushl  %%ecx \n" \
 /* set the bit plane */ \
-        "movw   $0x3c4,%%dx \n" \
-        "outw   %%ax,%%dx \n" \
+	"movw   $0x3c4,%%dx \n" \
+	"outw   %%ax,%%dx \n" \
 /* edx now free, so use it for the memwidth */ \
-        "movl   %4,%%edx \n" \
+	"movl   %4,%%edx \n" \
 /* --height loop-- */ \
-        "1:\n" \
+	"1:\n" \
 /* save counter , source + dest address */ \
-        "pushl 	%%ecx \n" \
-		"pushl	%%ebx \n" \
-		"pushl	%%edi \n" \
+	"pushl 	%%ecx \n" \
+	"pushl	%%ebx \n" \
+	"pushl	%%edi \n" \
 /* --width loop-- */ \
-        "movl   %3,%%ecx \n" \
-        "2:\n"
+	"movl   %3,%%ecx \n" \
+	"2:\n" \
+/* get the 4 bytes */ \
+/* bswap should be faster than shift, */ \
+/* movl should be faster then movb */ \
+	"movl   %%ds:12(%%ebx),%%eax \n" \
+	"movb   %%ds:8(%%ebx),%%ah \n" \
+	"bswap  %%eax \n" \
+	"movb   %%ds:(%%ebx),%%al \n" \
+	"movb   %%ds:4(%%ebx),%%ah \n" \
+/* write the thing to video */ \
+	"stosl \n" \
+/* move onto next source address */ \
+	"addl   $16,%%ebx \n" \
+	"loop	2b \n"
 
 #define UNCHAIN_BLIT_END \
 /* --end of width loop-- */ \
 /* get counter, source + dest address back */ \
-		"popl	%%edi \n" \
-		"popl	%%ebx \n" \
-        "popl   %%ecx \n" \
+	"popl	%%edi \n" \
+	"popl	%%ebx \n" \
+	"popl   %%ecx \n" \
 /* move to the next line */ \
-        "addl   %%edx,%%ebx \n" \
-        "addl   %%esi,%%edi \n" \
-        "loop   1b \n" \
+	"addl   %%edx,%%ebx \n" \
+	"addl   %%esi,%%edi \n" \
+	"loop   1b \n" \
 /* --end of height loop-- */ \
 /* get everything back */ \
-        "popl   %%ecx \n" \
-        "popl   %%eax \n"  \
-        "popl   %%edi \n" \
-        "popl   %%ebx \n" \
+	"popl   %%ecx \n" \
+	"popl   %%eax \n"  \
+	"popl   %%edi \n" \
+	"popl   %%ebx \n" \
 /* move onto next bit plane */ \
-        "incl   %%ebx \n" \
-        "shlb   $1,%%ah \n" \
+	"incl   %%ebx \n" \
+	"shlb   $1,%%ah \n" \
 /* check if we've done all 4 or not */ \
-        "testb  $0x10,%%ah \n" \
-        "jz		0b \n" \
+	"testb  $0x10,%%ah \n" \
+	"jz		0b \n" \
 /* --end of bit plane loop-- */ \
 /* restore es */ \
-        "popw   %%es \n" \
+	"popw   %%es \n" \
 /* outputs (aka clobbered input) */ \
-        :"=S" (dummy1), \
-        "=b" (dummy2), \
-        "=d" (dummy3) \
+	:"=S" (dummy1), \
+	"=b" (dummy2), \
+	"=d" (dummy3) \
 /* inputs */ \
 /* %0=width, %1=memwidth, */ \
 /* esi = scrwidth */ \
 /* ebx = src, ecx = height */ \
 /* edx = seg, edi = address */ \
-        :"g" (width), \
-        "g" (memwidth), \
-        "c" (height), \
-        "D" (address), \
-        "0" (scrwidth), \
-        "1" (src), \
-        "2" (seg) \
+	:"g" (width), \
+	"g" (memwidth), \
+	"c" (height), \
+	"D" (address), \
+	"0" (scrwidth), \
+	"1" (src), \
+	"2" (seg) \
 /* registers modified */ \
-        :"ax", "cc", "memory" \
-        );
+	:"ax", "cc", "memory" \
+	);
 
-#define UNCHAIN_BLIT_LOOP \
-		"loop	2b \n"
 
 
 /*asm routine for unchained blit - writes 4 bytes at a time */
 INLINE void unchain_dword_blit(unsigned long *src,short seg,unsigned long address,int width,int height,int memwidth,int scrwidth)
 {
+/* straight forward double word blit */
 	UNCHAIN_BLIT_START
-/* get the 4 bytes */
-/* bswap should be faster than shift, */
-/* movl should be faster then movb */
-        "movl   %%ds:12(%%ebx),%%eax \n"
-        "movb   %%ds:8(%%ebx),%%ah \n"
-        "bswap  %%eax \n"
-        "movb   %%ds:(%%ebx),%%al \n"
-        "movb   %%ds:4(%%ebx),%%ah \n"
-/* write the thing to video */
-        "stosl \n"
-/* move onto next source address */
-        "addl   $16,%%ebx \n"
-	UNCHAIN_BLIT_LOOP
 	UNCHAIN_BLIT_END
 }
 
-/*asm routine for unchained blit - writes 2 bytes at a time */
+/*asm routine for unchained blit - writes 4 bytes at a time, then 2 'odd' bytes at the end of each row */
 INLINE void unchain_word_blit(unsigned long *src,short seg,unsigned long address,int width,int height,int memwidth,int scrwidth)
 {
 	UNCHAIN_BLIT_START
-/* get the 2 bytes */
-        "movl   %%ds:(%%ebx),%%eax \n"
-        "movb   %%ds:4(%%ebx),%%ah \n"
+/* get the extra 2 bytes at end of the row */
+	"movl   %%ds:(%%ebx),%%eax \n"
+	"movb   %%ds:4(%%ebx),%%ah \n"
 /* write the thing to video */
-        "stosw \n"
-/* move onto next source address */
-        "addl   $8,%%ebx \n"
-	UNCHAIN_BLIT_LOOP
+	"stosw \n"
 	UNCHAIN_BLIT_END
 }
 
-/*asm routine for unchained blit - for modes with widths not divisble by 8 */
+/*asm routine for unchained blit - writes 4 bytes at a time, then 1 'odd' byte at the end of each row */
 INLINE void unchain_byte_blit(unsigned long *src,short seg,unsigned long address,int width,int height,int memwidth,int scrwidth)
 {
 	UNCHAIN_BLIT_START
-/* get the 2 bytes */
-        "movl   %%ds:(%%ebx),%%eax \n"
-        "movb   %%ds:4(%%ebx),%%ah \n"
+/* get the extra byte at end of the row */
+	"movb   %%ds:(%%ebx),%%eax \n"
 /* write the thing to video */
-        "stosw \n"
-/* move onto next source address */
-        "addl   $8,%%ebx \n"
-	UNCHAIN_BLIT_LOOP
-/* write out odd byte at end of the row */
-		"movb   %%ds:(%%ebx),%%eax \n"
-		"stosb \n"
+	"stosb \n"
 	UNCHAIN_BLIT_END
 }
-
 
 /* unchained 'non-dirty' modes */
 void blitscreen_dirty0_unchained_vga(void)
 {
 	unsigned long *lb, address;
-
-	static int width4,columns4,column_chained,memwidth,scrwidth,disp_height,word_blit,byte_blit;
+	static int width4,columns4,column_chained,memwidth,scrwidth,disp_height,blit_type;
 
    /* only calculate our statics the first time around */
 	if(xpage==-1)
 	{
-
 		width4 = (scrbitmap->line[1] - scrbitmap->line[0]) >> 2;
 		columns4 = gfx_display_columns >> 2;
 		disp_height = gfx_display_lines >> half_yres;
@@ -500,39 +486,51 @@ void blitscreen_dirty0_unchained_vga(void)
 		xpage = 1;
 		memwidth = (scrbitmap->line[1] - scrbitmap->line[0]) << half_yres;
 		scrwidth = gfx_width >> 2;
+
 		/* check for 'not divisible by 8' */
-		byte_blit = columns4 & 1;
-		/* check if we have to do word rather than double word updates */
-		if ((word_blit = (columns4 & 3)))
-			column_chained = columns4 >> 1;
+		if((columns4 & 1))
+			blit_type = 2;    /* byte blit */
 		else
-			column_chained = columns4 >> 2;
+		{
+			if((columns4 & 2))
+				blit_type = 1; /* word blit */
+			else
+				blit_type = 0; /* double word blit */
+		}
+
+		column_chained = columns4 >> 2;
 	}
 
 	/* get the start of the screen bitmap */
 	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
 	/* and the start address in video memory */
 	address = 0xa0000 + (xpage_size * xpage)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
-	if (word_blit)
+	/* call the appropriate blit routine */
+	switch (blit_type)
 	{
-		if (byte_blit)
-			unchain_byte_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
-		else
+		case 0: /* double word blit */
+			unchain_dword_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
+			break;
+		case 1: /* word blit */
 			unchain_word_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
+			break;
+		case 2: /* byte blit */
+			unchain_byte_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
+			break;
 	}
-	else
-		unchain_dword_blit(lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
 	/* 'bank switch' our unchained output */
 	unchained_flip();
 }
+
+
 
 /* setup register array to be unchained */
 void unchain_vga(Register *pReg)
 {
 /* setup registers for an unchained mode */
-	pReg[15].value = 0x00;
-	pReg[18].value = 0xe3;
-	pReg[20].value = 0x06;
+	pReg[UNDERLINE_LOC_INDEX].value = 0x00;
+	pReg[MODE_CONTROL_INDEX].value = 0xe3;
+	pReg[MEMORY_MODE_INDEX].value = 0x06;
 /* flag the fact it's unchained */
 	unchained = 1;
 }

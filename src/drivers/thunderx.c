@@ -16,8 +16,6 @@ extern int scontra_priority;
 int scontra_vh_start(void);
 void scontra_vh_stop(void);
 void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int thunderx_vh_start(void);
-void thunderx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /***************************************************************************/
 
@@ -36,7 +34,7 @@ static int thunderx_interrupt( void )
 		if (cpu_getiloops() == 0) return KONAMI_INT_IRQ;
 		else if (cpu_getiloops() & 1) return KONAMI_INT_FIRQ;	/* ??? */
 	}
-	return 0;
+	return ignore_interrupt();
 }
 
 
@@ -86,14 +84,91 @@ static void thunderx_bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
+static void calculate_collisions( void ) {
+	unsigned char *ptr1 = &unknownram[0x10], *ptr2;
+	int i, j;
+
+	/* each sprite is defined as: flags height width xpos ypos */
+	for( i = 0; i < 127; i++, ptr1 += 5 ) {
+		int w,h;
+		int	x,y;
+
+		if ( ( ptr1[0] & 0x80 ) == 0x00 )
+			continue;
+
+		ptr2 = ptr1 + 5;
+		w = 4; /* ? */
+		h = 4; /* ? */
+		x = ptr1[3];
+		y = ptr1[4];
+
+		for( j = i+1; j < 128; j++, ptr2 += 5 ) {
+			int x1,y1;
+
+			if ( ( ptr2[0] & 0x80 ) == 0x00 )
+				continue;
+
+			x1 = ptr2[3];
+			y1 = ptr2[4];
+
+			x1 -= x;
+
+			if ( x1 < 0 )
+				x1 = -x1;
+
+			if ( x1 > w )
+				continue;
+
+			y1 -= y;
+
+			if ( y1 < 0 )
+				y1 = -y1;
+
+			if ( y1 > h )
+				continue;
+
+/*
+00 - 02 - our ships
+02 - 40 - our bullets
+42 - 16 - enemy bullets
+58 - 60 - enemy ships
+118 - ? - ?
+*/
+			if ( i > 117 )
+				continue;
+
+			if ( i < 42 ) { /* our ship & bullets */
+				if ( j < 42 ) /* our ship & bullets */
+					continue;
+			} else { /* enemy ships & bullets */
+				if ( j > 41 ) /* enemy ships & bullets */
+					continue;
+			}
+
+			/* bullets dont collide eachother */
+			if ( i > 1 && i < 42 )
+				if ( j > 41 && j < 58 )
+					continue;
+
+			/* collision */
+			if ( ptr1[0] & 0x20 )
+				ptr1[0] |= 0x10;
+
+			if ( ptr2[0] & 0x20 )
+				ptr2[0] |= 0x10;
+		}
+	}
+}
 
 static void thunderx_1f98_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: write %02x to 1f98\n",cpu_get_pc(),data);
+//if (errorlog) fprintf(errorlog,"%04x: write %02x to 1f98\n",cpu_get_pc(),data);
 	/* bit 0 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 1 unknown - used by Thunder Cross during test of RAM C8 (5800-5fff) */
+	if ( data & 2 )
+		calculate_collisions();
 }
 
 void scontra_bankswitch_w(int offset, int data)
@@ -120,7 +195,7 @@ void scontra_bankswitch_w(int offset, int data)
 
 static void thunderx_videobank_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: select video ram bank %02x\n",cpu_get_pc(),data);
+//if (errorlog) fprintf(errorlog,"%04x: select video ram bank %02x\n",cpu_get_pc(),data);
 	/* 0x01 = work RAM at 4000-5fff */
 	/* 0x00 = palette at 5800-5fff */
 	/* 0x10 = unknown RAM at 5800-5fff */
@@ -130,7 +205,8 @@ if (errorlog) fprintf(errorlog,"%04x: select video ram bank %02x\n",cpu_get_pc()
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x04);
 
-	/* bit 3 used but unknown */
+	/* bit 3 controls layer priority (seems to be always 1) */
+	scontra_priority = data & 0x08;
 }
 
 static void thunderx_sh_irqtrigger_w(int offset, int data)
@@ -358,9 +434,7 @@ INPUT_PORTS_START( scontra_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, "Continue Limit" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -464,9 +538,7 @@ INPUT_PORTS_START( thunderx_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -583,9 +655,9 @@ static struct MachineDriver thunderx_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	thunderx_vh_start,
+	scontra_vh_start,
 	scontra_vh_stop,
-	thunderx_vh_screenrefresh,
+	scontra_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -654,6 +726,9 @@ ROM_START( scontra_rom )
 	ROM_LOAD( "775-f04f.bin", 0x50000, 0x10000, 0xb031ef2d )
 	ROM_LOAD( "775-f04g.bin", 0x60000, 0x10000, 0xee107bbb )
 	ROM_LOAD( "775-f04h.bin", 0x70000, 0x10000, 0xfb0fab46 )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( scontraj_rom )
@@ -706,6 +781,9 @@ ROM_START( scontraj_rom )
 	ROM_LOAD( "775-f04f.bin", 0x50000, 0x10000, 0xb031ef2d )
 	ROM_LOAD( "775-f04g.bin", 0x60000, 0x10000, 0xee107bbb )
 	ROM_LOAD( "775-f04h.bin", 0x70000, 0x10000, 0xfb0fab46 )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( thunderx_rom )
@@ -736,6 +814,42 @@ ROM_START( thunderx_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "873h01.f8",    0x0000, 0x8000, 0x990b7a7c )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
+ROM_END
+
+ROM_START( thnderxj_rom )
+	ROM_REGION(0x29000)	/* ROMs + banked RAM */
+	ROM_LOAD( "873-n03.k15", 0x10000, 0x10000, 0xa01e2e3e )
+	ROM_LOAD( "873-n02.k13", 0x20000, 0x08000, 0x55afa2cc )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+
+	ROM_REGION(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD_GFX_EVEN( "873c06a.f6",   0x00000, 0x10000, 0x0e340b67 ) /* Chars */
+	ROM_LOAD_GFX_ODD ( "873c06c.f5",   0x00000, 0x10000, 0xef0e72cd )
+	ROM_LOAD_GFX_EVEN( "873c06b.e6",   0x20000, 0x10000, 0x97ad202e )
+	ROM_LOAD_GFX_ODD ( "873c06d.e5",   0x20000, 0x10000, 0x8393d42e )
+	ROM_LOAD_GFX_EVEN( "873c07a.f4",   0x40000, 0x10000, 0xa8aab84f )
+	ROM_LOAD_GFX_ODD ( "873c07c.f3",   0x40000, 0x10000, 0x2521009a )
+	ROM_LOAD_GFX_EVEN( "873c07b.e4",   0x60000, 0x10000, 0x12a2b8ba )
+	ROM_LOAD_GFX_ODD ( "873c07d.e3",   0x60000, 0x10000, 0xfae9f965 )
+
+	ROM_REGION(0x80000)
+	ROM_LOAD_GFX_EVEN( "873c04a.f11",  0x00000, 0x10000, 0xf7740bf3 ) /* Sprites */
+	ROM_LOAD_GFX_ODD ( "873c04c.f10",  0x00000, 0x10000, 0x5dacbd2b )
+	ROM_LOAD_GFX_EVEN( "873c04b.e11",  0x20000, 0x10000, 0x9ac581da )
+	ROM_LOAD_GFX_ODD ( "873c04d.e10",  0x20000, 0x10000, 0x44a4668c )
+	ROM_LOAD_GFX_EVEN( "873c05a.f9",   0x40000, 0x10000, 0xd73e107d )
+	ROM_LOAD_GFX_ODD ( "873c05c.f8",   0x40000, 0x10000, 0x59903200 )
+	ROM_LOAD_GFX_EVEN( "873c05b.e9",   0x60000, 0x10000, 0x81059b99 )
+	ROM_LOAD_GFX_ODD ( "873c05d.e8",   0x60000, 0x10000, 0x7fa3d7df )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "873-f01.f8",   0x0000, 0x8000, 0xea35ffa3 )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
 /***************************************************************************/
@@ -745,8 +859,8 @@ static void thunderx_banking( int lines )
 	unsigned char *RAM = Machine->memory_region[0];
 	int offs;
 
-	if ( errorlog )
-		fprintf( errorlog, "thunderx %04x: bank select %02x\n", cpu_get_pc(), lines );
+//	if ( errorlog )
+//		fprintf( errorlog, "thunderx %04x: bank select %02x\n", cpu_get_pc(), lines );
 
 	offs = 0x10000 + (((lines & 0x0f) ^ 0x08) * 0x2000);
 	if (offs >= 0x28000) offs -= 0x20000;
@@ -773,8 +887,8 @@ static void thunderx_init_machine( void )
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
-	konami_rom_deinterleave(2);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(2);
 }
 
 
@@ -842,6 +956,31 @@ struct GameDriver thunderx_driver =
 	0,
 
 	thunderx_rom,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	thunderx_input_ports,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver thnderxj_driver =
+{
+	__FILE__,
+	&thunderx_driver,
+	"thnderxj",
+	"Thunder Cross (Japan)",
+	"1988",
+	"Konami",
+	"mish",
+	GAME_NOT_WORKING,
+	&thunderx_machine_driver,
+	0,
+
+	thnderxj_rom,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */

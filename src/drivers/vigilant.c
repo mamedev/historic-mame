@@ -370,7 +370,7 @@ static struct MachineDriver machine_driver =
 								/* RST 28h is caused by the YM2151 */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* no need for interleaving */
 	0,
 

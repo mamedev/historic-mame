@@ -976,9 +976,7 @@ static struct IOWritePort sound_writeport[] =
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )\
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )\
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Service_Mode ) )\
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )\
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )\
 
 /* IN4 - DSW1 MS1-C */
 #define COINAGE_C \
@@ -1368,10 +1366,7 @@ INPUT_PORTS_START( input_ports_street64 )
 	PORT_DIPSETTING(    0x60, "2" )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 void street64_patch(void)
@@ -1540,9 +1535,7 @@ ROM_END
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Service_Mode ) ) \
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )\
 
 INPUT_PORTS_START( input_ports_avspirit )
 	INPUT_PORTS_AVSPIRIT

@@ -200,6 +200,10 @@ typedef struct {
 #define OSD_FILETYPE_ARTWORK 7
 #define OSD_FILETYPE_MEMCARD 8
 #define OSD_FILETYPE_SCREENSHOT 9
+#ifdef MESS
+  #define OSD_FILETYPE_ROM_CART 10
+  #define OSD_FILETYPE_IMAGE 11
+#endif
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */

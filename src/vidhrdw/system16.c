@@ -18,6 +18,10 @@ void dump_tilemap(void);
 //#define SYS16_DEBUG
 //#define SPACEHARRIER_OFFSETS
 
+
+// an attempt at fudging correct gamma for sys16 games, but I'm not sure that it's
+// really worth using.
+//#define GAMMA_ADJUST
 #define TRANSPARENT_SHADOWS
 
 #ifdef TRANSPARENT_SHADOWS
@@ -46,7 +50,6 @@ int sys16_bgxoffset;
 int sys16_fgxoffset;
 int *sys16_obj_bank;
 int sys16_textmode;
-int sys16_yflip;
 int sys16_textlayer_lo_min;
 int sys16_textlayer_lo_max;
 int sys16_textlayer_hi_min;
@@ -54,11 +57,15 @@ int sys16_textlayer_hi_max;
 int sys16_dactype;
 int sys16_bg1_trans;						// alien syn + sys18
 int sys16_bg_priority_mode;
+int sys16_fg_priority_mode;
 int sys16_bg_priority_value;
 int sys16_fg_priority_value;
 int sys16_18_mode;
 int sys16_spritelist_end;
 int sys16_tilebank_switch;
+int sys16_rowscroll_scroll;
+int sys16_quartet_title_kludge;
+int sys16_tilemap_height;					// outrun speedup kludge
 extern void (* sys16_update_proc)( void );
 
 /* video registers */
@@ -102,6 +109,8 @@ static int old_bg_page[4],old_fg_page[4], old_tile_bank1, old_tile_bank0;
 static int old_bg2_page[4],old_fg2_page[4];
 
 char **priority_row_bg=0,**priority_row_bg2=0,**priority_row_fg=0,**priority_row_fg2=0;
+
+static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield );
 
 /***************************************************************************/
 
@@ -309,15 +318,26 @@ static void get_fg_tile_info( int col, int row ){
 		{
 			SET_TILE_INFO( 0, tile_number, (data>>5)&0x7f );
 		}
-		if(sys16_bg_priority_mode == 3)	// sys18 games
+		switch(sys16_fg_priority_mode)
 		{
-			if((data&0xff00) >= sys16_fg_priority_value)
-				tile_info.priority = 1;
-			else
-				tile_info.priority = 0;
+			case 1:		// alien syndrome
+				tile_info.priority = (data&0x8000)?1:0;
+				if(READ_WORD(&paletteram[((data>>6)&0x7f)*16]) !=0 && tile_info.priority==1)
+					tile_info.flags=TILE_IGNORE_TRANSPARENCY;
+				break;
+
+			case 3:
+				if((data&0xff00) >= sys16_fg_priority_value)
+					tile_info.priority = 1;
+				else
+					tile_info.priority = 0;
+				break;
+
+			default:
+				if(sys16_fg_priority_mode>=0)
+					tile_info.priority = (data&0x8000)?1:0;
+				break;
 		}
-		else if(sys16_bg_priority_mode >=0)
-			tile_info.priority = (data&0x8000)?1:0;
 	}
 }
 
@@ -507,19 +527,19 @@ int sys16_vh_start( void ){
 			get_bg_tile_info,
 			TILEMAP_OPAQUE,
 			8,8,
-			64*2,32*2 );
+			64*2,32*sys16_tilemap_height );
 	else
 		background = tilemap_create(
 			get_bg_tile_info,
 			TILEMAP_TRANSPARENT,
 			8,8,
-			64*2,32*2 );
+			64*2,32*sys16_tilemap_height );
 
 	foreground = tilemap_create(
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,
-		64*2,32*2 );
+		64*2,32*sys16_tilemap_height );
 
 	text_layer = tilemap_create(
 		get_text_tile_info,
@@ -539,12 +559,14 @@ int sys16_vh_start( void ){
 		}
 #ifdef TRANSPARENT_SHADOWS
 		{
-			int j,color_g,color_rb;
+			int j,color;
 			for(j = 0, i = Machine->drv->total_colors-NumOfShadowColors;j<sys16_MaxShadowColors;i++,j++)
 			{
-				color_g=j * 128 / (sys16_MaxShadowColors-1);
-				color_rb=color_g | 0x20;
-				palette_change_color(i, j * 128 / (sys16_MaxShadowColors-1), j * 128 / (sys16_MaxShadowColors-1), j * 128 / (sys16_MaxShadowColors-1));
+				color=j * 160 / (sys16_MaxShadowColors-1);
+//				color=j * 128 / (sys16_MaxShadowColors-1);
+				color=color | 0x04;
+				palette_change_color(i, color, color, color);
+//				palette_change_color(i, j * 128 / (sys16_MaxShadowColors-1), j * 128 / (sys16_MaxShadowColors-1), j * 128 / (sys16_MaxShadowColors-1));
 			}
 		}
 		if(sys16_MaxShadowColors==32)
@@ -579,9 +601,9 @@ int sys16_vh_start( void ){
 		sys16_sprxoffset = -0xb8;
 		sys16_textmode = 0;
 		sys16_bgxoffset = 0;
-		sys16_yflip = 0;
 		sys16_dactype = 0;
 		sys16_bg_priority_mode=0;
+		sys16_fg_priority_mode=0;
 		sys16_spritelist_end=0xffff;
 		sys16_tilebank_switch=0x1000;
 
@@ -592,6 +614,31 @@ int sys16_vh_start( void ){
 		sys16_textlayer_hi_max=0xff;
 
 		sys16_18_mode=0;
+
+#ifdef GAMMA_ADJUST
+		{
+			static float sys16_orig_gamma=0;
+			static float sys16_set_gamma=0;
+			float cur_gamma=osd_get_gamma();
+
+			if(sys16_orig_gamma == 0)
+			{
+				sys16_orig_gamma = cur_gamma;
+				sys16_set_gamma = cur_gamma - 0.35;
+				if (sys16_set_gamma < 0.5) sys16_set_gamma = 0.5;
+				if (sys16_set_gamma > 2.0) sys16_set_gamma = 2.0;
+				osd_set_gamma(sys16_set_gamma);
+			}
+			else
+			{
+				if(sys16_orig_gamma == cur_gamma)
+				{
+					osd_set_gamma(sys16_set_gamma);
+				}
+			}
+		}
+#endif
+
 		return 0;
 	}
 	return 1;
@@ -693,6 +740,7 @@ int sys18_vh_start( void ){
 
 		sys16_18_mode=1;
 		sys16_bg_priority_mode=3;
+		sys16_fg_priority_mode=3;
 		sys16_bg_priority_value=0x1800;
 		sys16_fg_priority_value=0x2000;
 		return 0;
@@ -830,6 +878,10 @@ static void get_sprite_info( void ){
 				sprite->total_height = bottom - top;
 				sprite->tile_height = sprite->total_height*(0x400+zoom)/0x400;
 
+#ifdef TRANSPARENT_SHADOWS
+				if (((attributes>>8)&0x3f)==0x3f)	// shadow sprite
+					sprite->flags|= SPRITE_SHADOW;
+#endif
 				width &= 0x7f;
 
 				if( sprite->flags&SPRITE_FLIPY ) width = 0x80-width;
@@ -985,7 +1037,8 @@ static void get_sprite_info( void ){
 						UINT16 width;
 						int gfx;
 
-						if (spr_no==5 && source[4] == 0x1821) spr_pri=2; // tears fix for ending boss (not tested in MAME)
+						if (spr_no==5 && (source[4]&0x00ff) == 0x0021 &&
+							((source[3]&0xff00) == 0x5200 || (source[3]&0xff00) == 0x5300)) spr_pri=2; // tears fix for ending boss
 
 						tsource[2]=source[2];
 						tsource[3]=source[3];
@@ -1183,8 +1236,8 @@ static void get_sprite_info( void ){
 				zoomx=((source[4]>>2) & 0x3f) *(1024/64);
 		        zoomy = (1060*zoomx)/(2048-zoomx);
 
-				if (pal==0x3f)	// ????????????
-					pal=(bank<<1);
+//				if (pal==0x3f)	// ????????????
+//					pal=(bank<<1);
 
 				if((tsource[3] & 0x7f80) == 0x7f80)
 				{
@@ -1215,6 +1268,10 @@ static void get_sprite_info( void ){
 				sprite->flags = SPRITE_VISIBLE;
 				if( width&0x100 ) sprite->flags |= SPRITE_FLIPX;
 				if( width&0x080 ) sprite->flags |= SPRITE_FLIPY;
+
+
+//				sprite->flags|= SPRITE_PARTIAL_SHADOW;
+//				sprite->shadow_pen=10;
 
 				if( sprite->flags&SPRITE_FLIPY ){
 					sprite->line_offset = 512-sprite->line_offset;
@@ -1311,8 +1368,22 @@ static void get_sprite_info( void ){
 				if( width&0x080 ) sprite->flags |= SPRITE_FLIPY;
 
 #ifdef TRANSPARENT_SHADOWS
-				if (pal==sys16_sh_shadowpal)	// shadow sprite
-					sprite->flags|= SPRITE_SHADOW;
+				if (sys16_sh_shadowpal == 0)		// space harrier
+				{
+					if (pal==sys16_sh_shadowpal)	// shadow sprite
+						sprite->flags|= SPRITE_SHADOW;
+					// I think this looks better, but I'm sure it's wrong.
+//					else if(READ_WORD(&paletteram[2048+pal*2+20]) == 0)
+//					{
+//						sprite->flags|= SPRITE_PARTIAL_SHADOW;
+//						sprite->shadow_pen=10;
+//					}
+				}
+				else								// enduro
+				{
+					sprite->flags|= SPRITE_PARTIAL_SHADOW;
+					sprite->shadow_pen=10;
+				}
 #endif
 				if( sprite->flags&SPRITE_FLIPY ){
 					sprite->line_offset = 512-sprite->line_offset;
@@ -1432,13 +1503,16 @@ static void get_sprite_info( void ){
 				width = source[2]>>9;
 
 				x = (source[2] & 0x1ff);
+
+				// patch misplaced sprite on map
+//				if(zoom == 0x3f0 && source[1]==0x142e && (source[0]&0xff)==0x19)
+//					x-=2;
+
 				sprite->y = source[0]&0xff;
 				sprite->priority = 0;
 				sprite->pal_data = base_pal + (pal<<4) + 1024;
 
 				sprite->total_height = (source[5]>>8)+1;
-//				sprite->tile_height = sprite->total_height*(zoom)/0x200;
-//				sprite->total_height = (source[5]>>8);
 				sprite->tile_height = ((sprite->total_height<<4)| 0xf)*(zoom)/0x2000;
 
 				sprite->line_offset = (width&0x7f)*4;
@@ -1447,6 +1521,12 @@ static void get_sprite_info( void ){
 #ifdef TRANSPARENT_SHADOWS
 				if(pal==0)
 					sprite->flags|= SPRITE_SHADOW;
+				else if(source[3]&0x4000)
+//				if(pal==0 || source[3]&0x4000)
+				{
+					sprite->flags|= SPRITE_PARTIAL_SHADOW;
+					sprite->shadow_pen=10;
+				}
 #endif
 				if(!(source[4]&0x2000))
 				{
@@ -1506,9 +1586,7 @@ static void get_sprite_info( void ){
 						if (source[4]&0x8000)
 						{ // patch for car shadow position
 							if (source[4]==0xe1a9 && source[1]==0x5817)
-							{
-								x-=4;		//??
-							}
+								x-=2;
 						}
 					}
 				}
@@ -1650,13 +1728,153 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 	if( sys16_refreshenable ){
 
-		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
+		if(sys18_splittab_bg_x)
+		{
+			if((sys16_bg_scrollx&0xff00)  != sys16_rowscroll_scroll)
+			{
+				tilemap_set_scroll_rows( background , 1 );
+				tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
+			}
+			else
+			{
+				int offset, scroll,i;
 
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
-		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
+				tilemap_set_scroll_rows( background , 64 );
+				offset = 32+((sys16_bg_scrolly&0x1f8) >> 3);
 
-		tilemap_update(  ALL_TILEMAPS  );
+				for(i=0;i<29;i++)
+				{
+					scroll = READ_WORD(&sys18_splittab_bg_x[i*2]);
+					tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
+				}
+			}
+		}
+		else
+		{
+			tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
+		}
+
+		if(sys18_splittab_bg_y)
+		{
+			if((sys16_bg_scrolly&0xff00)  != sys16_rowscroll_scroll)
+			{
+				tilemap_set_scroll_cols( background , 1 );
+				tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
+			}
+			else
+			{
+				int offset, scroll,i;
+
+				tilemap_set_scroll_cols( background , 128 );
+				offset = 127-((sys16_bg_scrollx&0x3f8) >> 3)-40+2;
+
+				for(i=0;i<41;i++)
+				{
+					scroll = READ_WORD(&sys18_splittab_bg_y[(i+24)&0xfffe]);
+					tilemap_set_scrolly( background , (i+offset)&0x7f, -256+(scroll&0x3ff) );
+				}
+			}
+		}
+		else
+		{
+			tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
+		}
+
+		if(sys18_splittab_fg_x)
+		{
+			if((sys16_fg_scrollx&0xff00)  != sys16_rowscroll_scroll)
+			{
+				tilemap_set_scroll_rows( foreground , 1 );
+				tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
+			}
+			else
+			{
+				int offset, scroll,i;
+
+				tilemap_set_scroll_rows( foreground , 64 );
+				offset = 32+((sys16_fg_scrolly&0x1f8) >> 3);
+
+				for(i=0;i<29;i++)
+				{
+					scroll = READ_WORD(&sys18_splittab_fg_x[i*2]);
+
+
+					tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
+				}
+			}
+		}
+		else
+		{
+			tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
+		}
+
+		if(sys18_splittab_fg_y)
+		{
+			if((sys16_fg_scrolly&0xff00)  != sys16_rowscroll_scroll)
+			{
+				tilemap_set_scroll_cols( foreground , 1 );
+				tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
+			}
+			else
+			{
+				int offset, scroll,i;
+
+				tilemap_set_scroll_cols( foreground , 128 );
+				offset = 127-((sys16_fg_scrollx&0x3f8) >> 3)-40+2;
+
+				for(i=0;i<41;i++)
+				{
+					scroll = READ_WORD(&sys18_splittab_fg_y[(i+24)&0xfffe]);
+					tilemap_set_scrolly( foreground , (i+offset)&0x7f, -256+(scroll&0x3ff) );
+				}
+			}
+		}
+		else
+		{
+			tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
+		}
+
+		if(sys16_quartet_title_kludge)
+		{
+			int top,bottom,left,right;
+			int top2,bottom2,left2,right2;
+			struct rectangle clip;
+
+			left = background->clip_left;
+			right = background->clip_right;
+			top = background->clip_top;
+			bottom = background->clip_bottom;
+
+			left2 = foreground->clip_left;
+			right2 = foreground->clip_right;
+			top2 = foreground->clip_top;
+			bottom2 = foreground->clip_bottom;
+
+			clip.min_x=0;
+			clip.min_y=0;
+			clip.max_x=1024;
+			clip.max_y=512;
+
+			tilemap_set_clip( background, &clip );
+			tilemap_set_clip( foreground, &clip );
+
+			tilemap_update(  ALL_TILEMAPS  );
+
+			background->clip_left = left;
+			background->clip_right = right;
+			background->clip_top = top;
+			background->clip_bottom = bottom;
+
+			foreground->clip_left = left2;
+			foreground->clip_right = right2;
+			foreground->clip_top = top2;
+			foreground->clip_bottom = bottom2;
+
+		}
+		else
+			tilemap_update(  ALL_TILEMAPS  );
+
+
 		get_sprite_info();
 
 		palette_init_used_colors();
@@ -1667,17 +1885,30 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		build_shadow_table();
 		tilemap_render(  ALL_TILEMAPS  );
 
-		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY );
-		if(sys16_bg_priority_mode) tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 );
+		if(!sys16_quartet_title_kludge)
+		{
+			tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY );
+			if(sys16_bg_priority_mode) tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 );
+		}
+		else
+			draw_quartet_title_screen( bitmap, 0 );
 
 		sprite_draw(sprite_list,3); // needed for Aurail
 		if(sys16_bg_priority_mode==2) tilemap_draw( bitmap, background, 1 );		// body slam (& wrestwar??)
 		sprite_draw(sprite_list,2);
-		if(sys16_bg_priority_mode==1) tilemap_draw( bitmap, background, 1 );		// alien syndrome
+		if(sys16_bg_priority_mode==1) tilemap_draw( bitmap, background, 1 );		// alien syndrome / aurail
 
-		tilemap_draw( bitmap, foreground, 0 );
-		sprite_draw(sprite_list,1);
-		tilemap_draw( bitmap, foreground, 1 );
+		if(!sys16_quartet_title_kludge)
+		{
+			tilemap_draw( bitmap, foreground, 0 );
+			sprite_draw(sprite_list,1);
+			tilemap_draw( bitmap, foreground, 1 );
+		}
+		else
+		{
+			draw_quartet_title_screen( bitmap, 1 );
+			sprite_draw(sprite_list,1);
+		}
 
 		if(sys16_textlayer_lo_max!=0) tilemap_draw( bitmap, text_layer, 1 ); // needed for Body Slam
 		sprite_draw(sprite_list,0);
@@ -2217,8 +2448,8 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						ver_data = (ver_data-1) << gr_bitmap_width;
 					}
 
-					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data;
-					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data;
+					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
 
 					switch(second_road)
 					{
@@ -2297,8 +2528,8 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						ver_data = (ver_data-1) << gr_bitmap_width;
 					}
 
-					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data;
-					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data;
+					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
 
 					switch(second_road)
 					{
@@ -2381,6 +2612,77 @@ void sys16_or_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 }
 
 
+// hideous kludge to display quartet title screen correctly
+static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
+{
+	unsigned char *xscroll,*yscroll;
+	int r,c,scroll;
+	struct tilemap *tilemap;
+	struct rectangle clip;
+
+	int top,bottom,left,right;
+
+
+	if(playfield==0) // background
+	{
+		xscroll=&sys16_textram[0x0fc0];
+		yscroll=&sys16_textram[0x0f58];
+		tilemap=background;
+		if(errorlog) fprintf(errorlog,"Back\n");
+	}
+	else
+	{
+		xscroll=&sys16_textram[0x0f80];
+		yscroll=&sys16_textram[0x0f30];
+		tilemap=foreground;
+		if(errorlog) fprintf(errorlog,"Front\n");
+	}
+
+	left = tilemap->clip_left;
+	right = tilemap->clip_right;
+	top = tilemap->clip_top;
+	bottom = tilemap->clip_bottom;
+
+	for(r=0;r<14;r++)
+	{
+		clip.min_y=r*16;
+		clip.max_y=r*16+15;
+		for(c=0;c<10;c++)
+		{
+			clip.min_x=c*32;
+			clip.max_x=c*32+31;
+			tilemap_set_clip( tilemap, &clip );
+			scroll = READ_WORD(&xscroll[r*4])&0x3ff;
+			tilemap_set_scrollx( tilemap, 0, (-320-scroll+sys16_bgxoffset)&0x3ff );
+			scroll = READ_WORD(&yscroll[c*4])&0x1ff;
+			tilemap_set_scrolly( tilemap, 0, (-256+scroll)&0x1ff );
+			tilemap_draw( bitmap, tilemap, 0 );
+		}
+	}
+/*
+	for(r=0;r<28;r++)
+	{
+		clip.min_y=r*8;
+		clip.max_y=r*8+7;
+		for(c=0;c<20;c++)
+		{
+			clip.min_x=c*16;
+			clip.max_x=c*16+15;
+			tilemap_set_clip( tilemap, &clip );
+			scroll = READ_WORD(&xscroll[r*2])&0x3ff;
+			tilemap_set_scrollx( tilemap, 0, (-320-scroll+sys16_bgxoffset)&0x3ff );
+			scroll = READ_WORD(&yscroll[c*2])&0x1ff;
+			tilemap_set_scrolly( tilemap, 0, (-256+scroll)&0x1ff );
+			tilemap_draw( bitmap, tilemap, 0 );
+		}
+	}
+*/
+	tilemap->clip_left = left;
+	tilemap->clip_right = right;
+	tilemap->clip_top = top;
+	tilemap->clip_bottom = bottom;
+}
+
 
 #ifdef SYS16_DEBUG
 void dump_tilemap(void)
@@ -2391,7 +2693,7 @@ void dump_tilemap(void)
 
 	if(!keyboard_pressed_memory(KEYCODE_Y) || !errorlog) return;
 
-	fprintf(errorlog,"Back\n");
+	fprintf(errorlog,"Back %2x %2x %2x %2x\n",sys16_bg_page[0],sys16_bg_page[1],sys16_bg_page[2],sys16_bg_page[3]);
 	for(r=0;r<64;r++)
 	{
 		for(c=0;c<128;c++)
@@ -2423,7 +2725,7 @@ void dump_tilemap(void)
 		fprintf(errorlog,"\n");
 	}
 
-	fprintf(errorlog,"Front\n");
+	fprintf(errorlog,"Front %2x %2x %2x %2x\n",sys16_fg_page[0],sys16_fg_page[1],sys16_fg_page[2],sys16_fg_page[3]);
 	for(r=0;r<64;r++)
 	{
 		for(c=0;c<128;c++)
@@ -2454,5 +2756,18 @@ void dump_tilemap(void)
 		}
 		fprintf(errorlog,"\n");
 	}
+
+	fprintf(errorlog,"Text\n");
+	for(r=0;r<28;r++)
+	{
+		for(c=0;c<64;c++)
+		{
+			source = (const UINT16 *)sys16_textram;
+			data = source[r*64+c];
+			fprintf(errorlog,"%4x ",data);
+		}
+		fprintf(errorlog,"\n");
+	}
 }
 #endif
+

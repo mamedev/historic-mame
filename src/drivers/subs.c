@@ -174,7 +174,7 @@ static struct MachineDriver machine_driver =
 			subs_interrupt,4	/* NMI interrupt on the 32V signal if not in self-TEST */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	subs_init_machine,
 

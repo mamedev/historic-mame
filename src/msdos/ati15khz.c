@@ -333,6 +333,7 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 		case MACH64_GU_ID:
 		case MACH64_GP_ID:
 		case MACH64_XP_ID:
+		case MACH64_XP98_ID:
 			ChipType = MACH64_GT;
 			break;
 		default:
@@ -746,11 +747,11 @@ int get_mach64_port(int io_type, int io_base, int io_sel, int mm_sel)
 
 
 
-
-int setmach64DSP()
+int setmach64DSP(void)
 {
 	unsigned short dsp_on, dsp_off, dsp_xclks_per_qw, dsp_prec, loop_latency;
 	long portval;
+
 /* okay, I've been unable to get any reliable information about the DSP */
 /* so these are just values that work for this :- */
 /* dot clock speed, colour depth and video clock speed */
@@ -764,25 +765,42 @@ int setmach64DSP()
 	switch (portval)
 	{
 		case  2: /* 8 bit colour */
-			switch (ChipID)
+			switch (VRAMMemClk)
 			{
-				/* Xpert@Play */
-				case MACH64_XP_ID:
-					dsp_xclks_per_qw = 2239;
+				/* 100MHz -  for newer/faster cards */
+				case 10000:
+                    dsp_xclks_per_qw = 2239;
 					break;
+				/* Standard video memory speed (usually 60MHz)*/
 				default:
-					dsp_xclks_per_qw = 2189;
+                    dsp_xclks_per_qw = 2189;
 			}
+            if (errorlog)
+                fprintf(errorlog,"DSP value %d (8bit)\n",dsp_xclks_per_qw);
+
 			break;
 		case  3: /* 16 bit colour */
 		case  4: /* either 555 or 565 */
-			dsp_xclks_per_qw = 3679;
+			switch (VRAMMemClk)
+			{
+				/* 100MHz -  for newer/faster cards */
+				case 10000:
+                    dsp_xclks_per_qw = 3655;
+					break;
+				/* Standard video memory speed (usually 60MHz)*/
+				default:
+					dsp_xclks_per_qw = 3679;
+			}
+            if (errorlog)
+                fprintf(errorlog,"DSP value %d (16bit)\n",dsp_xclks_per_qw);
+
 			break;
 		default: /* any other colour depth */
 			if (errorlog)
-				fprintf (errorlog, "15.75KHz: Unsupported colour depth for ATI driver\n");
+				fprintf (errorlog, "15.75KHz: Unsupported colour depth for ATI driver (%d)\n",(int)inportb (_mach64_gen_cntrl+1));
 			return 0;
 	}
+
 
 	if (MemSize > MEM_SIZE_1M)
 	{
@@ -816,8 +834,10 @@ int setmach64DSP()
 	outportw (_mach64_dsp_config, ((dsp_prec << 20) & DSP_PRECISION) | ((loop_latency << 16) & DSP_LOOP_LATENCY)
 				| (dsp_xclks_per_qw & DSP_XCLKS_PER_QW));
 	DSPSet = 1;
+
 	return 1;
 }
+
 
 void resetmach64DSP()
 {

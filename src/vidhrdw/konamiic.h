@@ -1,5 +1,7 @@
-/* helper function to join 16-bit ROMs and form a 32-bit data stream */
-void konami_rom_deinterleave(int memory_region);
+/* helper function to join two 16-bit ROMs and form a 32-bit data stream */
+void konami_rom_deinterleave_2(int memory_region);
+/* helper function to join four 16-bit ROMs and form a 64-bit data stream */
+void konami_rom_deinterleave_4(int memory_region);
 
 /*
 You don't have to decode the graphics: the vh_start() routines will do that
@@ -57,7 +59,9 @@ int K051960_word_r(int offset);
 void K051960_word_w(int offset,int data);
 int K051937_r(int offset);
 void K051937_w(int offset,int data);
-void K051960_draw_sprites(struct osd_bitmap *bitmap,int min_priority,int max_priority);
+int K051937_word_r(int offset);
+void K051937_word_w(int offset,int data);
+void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
 void K051960_mark_sprites_colors(void);
 int K051960_is_IRQ_enabled(void);
 
@@ -75,12 +79,55 @@ int K053245_r(int offset);
 void K053245_w(int offset,int data);
 int K053244_r(int offset);
 void K053244_w(int offset,int data);
-void K053245_bankselect(int bank);	/* used by TMNT2 for ROM testing */
-void K053245_draw_sprites(struct osd_bitmap *bitmap,int min_priority,int max_priority);
+void K053244_bankselect(int bank);	/* used by TMNT2 for ROM testing */
+void K053245_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
 void K053245_mark_sprites_colors(void);
+
+
+int K053247_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
+		void (*callback)(int *code,int *color,int *priority));
+void K053247_vh_stop(void);
+int K053247_word_r(int offset);
+void K053247_word_w(int offset,int data);
+int K053247_r(int offset);
+void K053247_w(int offset,int data);
+int K053246_r(int offset);
+void K053246_w(int offset,int data);
+int K053246_word_r(int offset);
+void K053246_word_w(int offset,int data);
+void K053246_set_OBJCHA_line(int state);
+void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
+void K053247_mark_sprites_colors(void);
+int K053247_is_IRQ_enabled(void);
+
+
+/*
+The callback is passed:
+- code (range 00-FF, contents of the first tilemap RAM byte)
+- color (range 00-FF, contents of the first tilemap RAM byte). Note that bit 6
+  seems to be hardcoded as flip X.
+The callback must put:
+- in code the resulting tile number
+- in color the resulting color index
+- if necessary, put flags for the TileMap code in the tile_info
+  structure (e.g. TILE_FLIPX)
+*/
+int K051316_vh_start(int gfx_memory_region,int bpp,
+		void (*callback)(int *code,int *color));
+void K051316_vh_stop(void);
+int K051316_r(int offset);
+void K051316_w(int offset,int data);
+int K051316_rom_r(int offset);
+void K051316_ctrl_w(int offset,int data);
+void K051316_tilemap_update(void);
+void K051316_zoom_draw(struct osd_bitmap *bitmap);
 
 
 void K053251_w(int offset,int data);
 enum { K053251_CI0=0,K053251_CI1,K053251_CI2,K053251_CI3,K053251_CI4 };
 int K053251_get_priority(int ci);
 int K053251_get_palette_index(int ci);
+
+
+void K054000_w(int offset,int data);
+int K054000_r(int offset);

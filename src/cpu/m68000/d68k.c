@@ -866,17 +866,20 @@ static void d68000_asl_ea(void)
 
 static void d68000_bcc_8(void)
 {
-   sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_pc + make_int_8(g_cpu_ir));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bcc_16(void)
 {
-   sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_pc + make_int_16(read_imm_16()));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bcc_32(void)
 {
-   sprintf(g_dasm_str, "b%-2s     %x; (2+)", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_pc + read_imm_32());
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "b%-2s     %x; (2+)", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + read_imm_32());
 }
 
 static void d68000_bchg_r(void)
@@ -1044,17 +1047,20 @@ static void d68020_bftst(void)
 
 static void d68000_bra_8(void)
 {
-   sprintf(g_dasm_str, "bra     %x", g_cpu_pc + make_int_8(g_cpu_ir));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "bra     %x", temp_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bra_16(void)
 {
-   sprintf(g_dasm_str, "bra     %x", g_cpu_pc + make_int_16(read_imm_16()));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "bra     %x", temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bra_32(void)
 {
-   sprintf(g_dasm_str, "bra     %x; (2+)", g_cpu_pc + read_imm_32());
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "bra     %x; (2+)", temp_pc + read_imm_32());
 }
 
 static void d68000_bset_r(void)
@@ -1070,17 +1076,20 @@ static void d68000_bset_s(void)
 
 static void d68000_bsr_8(void)
 {
-   sprintf(g_dasm_str, "bsr     %x", g_cpu_pc + make_int_8(g_cpu_ir));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "bsr     %x", temp_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bsr_16(void)
 {
-   sprintf(g_dasm_str, "bsr     %x", g_cpu_pc + make_int_16(read_imm_16()));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "bsr     %x", temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bsr_32(void)
 {
-   sprintf(g_dasm_str, "bsr     %x; (2+)", g_cpu_pc + peek_imm_32());
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "bsr     %x; (2+)", temp_pc + peek_imm_32());
 }
 
 static void d68000_btst_r(void)
@@ -1295,14 +1304,16 @@ static void d68000_cmpm_32(void)
 static void d68020_cpbcc_16(void)
 {
    uint extension = read_imm_16();
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
+   uint new_pc = g_cpu_pc;
+   new_pc += make_int_16(peek_imm_16());
    sprintf(g_dasm_str, "%db%-4s  %s; %x (extension = %x) (2-3)", (g_cpu_ir>>9)&7, g_cpcc[g_cpu_ir&0x3f], get_imm_str_s16(), new_pc, extension);
 }
 
 static void d68020_cpbcc_32(void)
 {
    uint extension = read_imm_16();
-   uint new_pc = g_cpu_pc + peek_imm_32();
+   uint new_pc = g_cpu_pc;
+   new_pc += peek_imm_32();
    sprintf(g_dasm_str, "%db%-4s  %s; %x (extension = %x) (2-3)", (g_cpu_ir>>9)&7, g_cpcc[g_cpu_ir&0x3f], get_imm_str_s16(), new_pc, extension);
 }
 
@@ -1310,7 +1321,8 @@ static void d68020_cpdbcc(void)
 {
    uint extension1 = read_imm_16();
    uint extension2 = read_imm_16();
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
+   uint new_pc = g_cpu_pc;
+   new_pc += make_int_16(peek_imm_16());
    sprintf(g_dasm_str, "%ddb%-4s D%d,%s; %x (extension = %x) (2-3)", (g_cpu_ir>>9)&7, g_cpcc[extension1&0x3f], g_cpu_ir&7, get_imm_str_s16(), new_pc, extension2);
 }
 
@@ -1378,12 +1390,14 @@ static void d68040_cpush(void)
 
 static void d68000_dbra(void)
 {
-   sprintf(g_dasm_str, "dbra    D%d, %x", g_cpu_ir & 7, g_cpu_pc + make_int_16(read_imm_16()));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "dbra    D%d, %x", g_cpu_ir & 7, temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68000_dbcc(void)
 {
-   sprintf(g_dasm_str, "db%-2s    D%d, %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_ir & 7, g_cpu_pc + make_int_16(read_imm_16()));
+   uint temp_pc = g_cpu_pc;
+   sprintf(g_dasm_str, "db%-2s    D%d, %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_ir & 7, temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68000_divs(void)

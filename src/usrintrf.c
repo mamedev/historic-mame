@@ -2275,6 +2275,7 @@ int showcopyright(void)
 	do
 	{
 		osd_update_video_and_audio();
+		osd_poll_joysticks();
 		if (input_ui_pressed(IPT_UI_CANCEL))
 			return 1;
 		if (keyboard_pressed_memory(KEYCODE_O) ||
@@ -2398,7 +2399,7 @@ static int displaygameinfo(int selected)
 
 		sel = 0;
 		if (keyboard_read_async() != KEYCODE_NONE ||
-				input_ui_pressed(IPT_UI_SELECT))	/* this catches joypress */
+				joystick_read_async() != JOYCODE_NONE)
 			sel = -1;
 	}
 	else
@@ -2510,7 +2511,10 @@ int showgamewarnings(void)
 	osd_clearbitmap(Machine->scrbitmap);
 
 	while (displaygameinfo(0) == 1)
+	{
 		osd_update_video_and_audio();
+		osd_poll_joysticks();
+	}
 
 	osd_clearbitmap(Machine->scrbitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
@@ -3489,6 +3493,7 @@ void usrintf_showmessage(const char *text)
 static int setup_selected;
 static int osd_selected;
 static int jukebox_selected;
+static int single_step;
 
 int handle_user_interface(void)
 {
@@ -3586,13 +3591,16 @@ int handle_user_interface(void)
 		machine_reset();
 
 
-	if (input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
+	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
 
-		osd_sound_enable(0);
-		osd_pause(1);
+		if (single_step == 0)
+		{
+			osd_sound_enable(0);
+			osd_pause(1);
+		}
 
 		while (!input_ui_pressed(IPT_UI_PAUSE))
 		{
@@ -3614,6 +3622,9 @@ int handle_user_interface(void)
 bitmap_dirty = 0;
 #endif
 			profiler_mark(PROFILER_END);
+
+			if (input_ui_pressed(IPT_UI_SNAPSHOT))
+				osd_save_snapshot();
 
 			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
@@ -3646,10 +3657,17 @@ bitmap_dirty = 0;
 			if (messagecounter > 0) displaymessage(messagetext);
 
 			osd_update_video_and_audio();
+			osd_poll_joysticks();
 		}
 
-		osd_pause(0);
-		osd_sound_enable(1);
+		if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+			single_step = 1;
+		else
+		{
+			single_step = 0;
+			osd_pause(0);
+			osd_sound_enable(1);
+		}
 	}
 
 
@@ -3723,6 +3741,8 @@ void init_user_interface(void)
 	osd_selected = 0;
 
 	jukebox_selected = -1;
+
+	single_step = 0;
 }
 
 int onscrd_active(void)

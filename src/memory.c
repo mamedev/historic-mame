@@ -293,6 +293,9 @@ static int memory_allocate_ext (void)
 	struct ExtMemory *ext = ext_memory;
 	int cpu;
 
+	/* A change for MESS */
+	if (Machine->gamedrv->rom == NULL) return 1;
+
 	/* loop over all CPUs */
 	for (cpu = 0; cpu < cpu_gettotalcpu (); cpu++)
 	{
@@ -303,7 +306,7 @@ static int memory_allocate_ext (void)
 		int region = Machine->drv->cpu[cpu].memory_region;
 		int curr = 0, size = 0;
 
-		/* skip through the ROM regions to the matching one */
+      /* skip through the ROM regions to the matching one */
 		while (romp->name || romp->offset || romp->length)
 		{
 			/* headers are all zeros except from the offset */

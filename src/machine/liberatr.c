@@ -6,166 +6,45 @@
   I/O ports)
 
 ***************************************************************************/
-#include <stdio.h>
+
 #include "driver.h"
-#include "cpu/m6502/m6502.h"
-#include "cpuintrf.h"
-#include "machine/atari_vg.h"
-
-extern FILE *dbfile ;
-
-static int ctrld = 1 ;
-
-extern int  liberator_bitmap_r(int address);
-extern void liberator_bitmap_w(int address, int data);
-extern void liberator_colorram_w(int address, int data);
-extern void liberator_basram_w(int address, int data);
-extern void liberator_planetbit_w(int address, int data) ;
-extern void liberator_startlg_w(int address,int data) ;
 
 
-/********************************************************************************************/
-void liberator_init_machine(void)
+UINT8 *liberatr_ctrld;
+
+
+void liberatr_led_w(int offset, int data)
 {
-	/* this function intentionally left blank */
-	return ;
-}
-
-/********************************************************************************************/
-void liberator_w(int address, int data)
-{
-	/* TODO: get rid of this */
-	extern unsigned char *RAM;
-
-	RAM[address] = data;
-
-	if( address == 0x0002 || (address == 0x0341) )
-		liberator_bitmap_w( address, data ) ;
-}
-
-/********************************************************************************************/
-void liberator_port_w(int offset, int data)
-{
-	offset &= 0x0007 ;
-	switch( offset )
-	{
-		case 0 :
-			/* START LED 1 */
-			osd_led_w(0,(data & 0x10) ? 1 : 0) ;
-			break;
-		case 1 :
-			/* START LED 2 */
-			osd_led_w(1,(data & 0x10) ? 1 : 0) ;
-			break;
-		case 2 :
-			/* TBSWP* */
-			break;
-		case 3 :
-			/* SPARE */
-			break;
-		case 4 :
-			/* CTRLD* */
-			ctrld = data ;
-			break;
-		case 5 :
-			/* COINCNTRR */
-			break;
-		case 6 :
-			/* COINCNTRL */
-			break;
-		case 7 :
-			/* PLANET */
-			liberator_planetbit_w( offset, data ) ;
-			break;
-	}
+	osd_led_w(offset, (data >> 4) & 0x01);
 }
 
 
-/********************************************************************************************/
-int liberator_r(int address)
+void liberatr_coin_counter_w(int offset, int data)
 {
-	if( address == 0x0002 )
-	{
-		return( liberator_bitmap_r( address ) ) ;
-	}
-	else
-	{
-		/* TODO: get rid of this */
-		extern unsigned char *RAM;
-
-		return( RAM[address] );
-	}
+	coin_counter_w(offset ^ 0x01, data);
 }
 
-/********************************************************************************************/
-int liberator_port_r(int offset)
+
+int liberatr_input_port_0_r(int offset)
 {
 	int	res ;
 	int xdelta, ydelta;
-	/* TODO: get rid of this */
-	extern unsigned char *RAM;
 
 
-	if( offset == 0x00 )
+	/* CTRLD selects whether we're reading the stick or the coins,
+	   see memory map */
+
+	if(*liberatr_ctrld)
 	{
-		/*
-		HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
-		---------+-----+------------------------+------------------------
-	    5000         R                        D   coin AUX   (CTRLD* set low)
-	    5000         R                     D      coin LEFT  (CTRLD* set low)
-	    5000         R                  D         coin RIGHT (CTRLD* set low)
-	    5000         R               D            SLAM       (CTRLD* set low)
-	    5000         R            D               SPARE      (CTRLD* set low)
-	    5000         R         D                  SPARE      (CTRLD* set low)
-	    5000         R      D                     COCKTAIL   (CTRLD* set low)
-	    5000         R   D                        SELF-TEST  (CTRLD* set low)
-
-	    5000         R               D  D  D  D   HDIR   (CTRLD* set high)
-	    5000         R   D  D  D  D               VDIR   (CTRLD* set high)
-		*/
-
-		if(ctrld)
-		{
-			/* 	mouse support */
-			xdelta = readinputport(4) ;
-			ydelta = readinputport(5) ;
-			res = ( ((ydelta << 4) & 0xF0)  |  (xdelta & 0x0F) ) ;
-		}
-		else
-		{
-			res = readinputport(0) ;
-		}
-	}
-	else if( offset == 0x01 )
-	{
-		/*
-		HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
-		---------+-----+------------------------+------------------------
-	    5001         R                        D   SHIELD 2
-	    5001         R                     D      SHIELD 1
-	    5001         R                  D         FIRE 2
-	    5001         R               D            FIRE 1
-	    5001         R            D               SPARE      (CTRLD* set low)
-	    5001         R         D                  START 2
-	    5001         R      D                     START 1
-	    5001         R   D                        VBLANK
-		*/
-
-		res = readinputport(1) ;
-
+		/* 	mouse support */
+		xdelta = input_port_4_r(0);
+		ydelta = input_port_5_r(0);
+		res = ( ((ydelta << 4) & 0xf0)  |  (xdelta & 0x0f) );
 	}
 	else
 	{
-		res = RAM[0x5000+offset] ;
+		res = input_port_0_r(offset);
 	}
 
-	return( res ) ;
+	return res;
 }
-
-/********************************************************************************************/
-int liberator_interrupt(void)
-{
-	return interrupt();
-}
-
-/* -- eof -- */

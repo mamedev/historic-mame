@@ -264,12 +264,10 @@ INPUT_PORTS_START( GAMENAME##_input_ports )										\
 	/* The lower 4 bits and bit 7 are for trackball x input. */					\
 	/* They are handled by fake input port 6 and a custom routine. */			\
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )								\
-	PORT_DIPNAME(0x10, 0x00, DEF_STR( Cabinet ) )							\
-	PORT_DIPSETTING (   0x00, DEF_STR( Upright ) )										\
-	PORT_DIPSETTING (   0x10, DEF_STR( Cocktail ) )										\
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	\
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )											\
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )											\
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Cabinet ) )								\
+	PORT_DIPSETTING (   0x00, DEF_STR( Upright ) )								\
+	PORT_DIPSETTING (   0x10, DEF_STR( Cocktail ) )								\
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )											\
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )								\
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )								\
 																				\
@@ -299,43 +297,43 @@ INPUT_PORTS_START( GAMENAME##_input_ports )										\
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )				\
 																				\
 	PORT_START	/* IN4 */														\
-	PORT_DIPNAME(0x03, 0x00, "Language" )							\
+	PORT_DIPNAME(0x03, 0x00, "Language" )										\
 	PORT_DIPSETTING (   0x00, "English" )										\
 	PORT_DIPSETTING (   0x01, "German" )										\
 	PORT_DIPSETTING (   0x02, "French" )										\
 	PORT_DIPSETTING (   0x03, FOURTH_LANGUAGE )									\
-	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Lives ) )							\
+	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Lives ) )									\
 	PORT_DIPSETTING (   0x00, "2" )												\
 	PORT_DIPSETTING (   0x04, "3" )												\
 	PORT_DIPSETTING (   0x08, "4" )												\
 	PORT_DIPSETTING (   0x0c, "5" )												\
-	PORT_DIPNAME(0x30, 0x10, DEF_STR( Bonus_Life ) )						\
+	PORT_DIPNAME(0x30, 0x10, DEF_STR( Bonus_Life ) )							\
 	PORT_DIPSETTING (   0x00, "10000" )											\
 	PORT_DIPSETTING (   0x10, "12000" )											\
 	PORT_DIPSETTING (   0x20, "15000" )											\
 	PORT_DIPSETTING (   0x30, "20000" )											\
-	PORT_DIPNAME(0x40, 0x40, DEF_STR( Difficulty ) )						\
+	PORT_DIPNAME(0x40, 0x40, DEF_STR( Difficulty ) )							\
 	PORT_DIPSETTING (   0x40, "Easy" )											\
 	PORT_DIPSETTING (   0x00, "Hard" )											\
-	PORT_DIPNAME(0x80, 0x00, "Credit Minimum" )					\
+	PORT_DIPNAME(0x80, 0x00, "Credit Minimum" )									\
 	PORT_DIPSETTING (   0x00, "1" )												\
 	PORT_DIPSETTING (   0x80, "2" )												\
 																				\
 	PORT_START	/* IN5 */														\
-	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )							\
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )										\
+	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )								\
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )							\
 	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )								\
 	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )								\
 	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )								\
-	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )						\
+	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )										\
 	PORT_DIPSETTING (   0x00, "*1" )											\
 	PORT_DIPSETTING (   0x04, "*4" )											\
 	PORT_DIPSETTING (   0x08, "*5" )											\
 	PORT_DIPSETTING (   0x0c, "*6" )											\
-	PORT_DIPNAME(0x10, 0x00, "Left Coin" )						\
+	PORT_DIPNAME(0x10, 0x00, "Left Coin" )										\
 	PORT_DIPSETTING (   0x00, "*1" )											\
 	PORT_DIPSETTING (   0x10, "*2" )											\
-	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )						\
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )									\
 	PORT_DIPSETTING (   0x00, "None" )											\
 	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )								\
 	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )								\

@@ -113,6 +113,7 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_THROTTLE,          "Throttle",          KEYCODE_F10,   JOYCODE_NONE },
 	{ IPT_UI_SHOW_FPS,          "Show FPS",          KEYCODE_F11,   JOYCODE_NONE },
 	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     KEYCODE_F12,   JOYCODE_NONE },
+	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",      KEYCODE_F5,    JOYCODE_NONE },
 	{ IPT_UI_UP,                "UI Up",             KEYCODE_UP,    JOYCODE_1_UP },
 	{ IPT_UI_DOWN,              "UI Down",           KEYCODE_DOWN,  JOYCODE_1_DOWN },
 	{ IPT_UI_LEFT,              "UI Left",           KEYCODE_LEFT,  JOYCODE_1_LEFT },

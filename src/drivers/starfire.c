@@ -148,9 +148,7 @@ INPUT_PORTS_START( starfire_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Score Table Hold" )
 	PORT_DIPSETTING(    0x00, "fixed length" )
 	PORT_DIPSETTING(    0x40, "fixed length+fire" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1)
@@ -192,9 +190,7 @@ INPUT_PORTS_START( fireone_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1)
@@ -229,7 +225,7 @@ static struct MachineDriver starfire_machine_driver =
             starfire_interrupt,2
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
     0,
 
@@ -264,7 +260,7 @@ static struct MachineDriver fireone_machine_driver =
             starfire_interrupt,2
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
     0,
 

@@ -14,7 +14,7 @@
 	#define BYTE_XOR_LE(a) (a)
 	#define BIG_DWORD_LE(x) (x)
 #else
-	#define BYTE_XOR_LE(a) ( (char*) ((unsigned int) (a) ^ 1) )
+	#define BYTE_XOR_LE(a) ( (unsigned char*) ((unsigned int) (a) ^ 1) )
 	#define BIG_DWORD_LE(x) (((UINT32)(x) >> 16) + ((x) << 16))
 #endif
 

@@ -54,75 +54,75 @@ void mnight_bankselect_w(int offset, int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM},
-	{ 0x8000, 0xbfff, MRA_BANK1},
-	{ 0xc000, 0xf7ff, MRA_RAM},
-	{ 0xf800, 0xf800, input_port_2_r},
-	{ 0xf801, 0xf801, input_port_0_r},
-	{ 0xf802, 0xf802, input_port_1_r},
-	{ 0xf803, 0xf803, input_port_3_r},
-	{ 0xf804, 0xf804, input_port_4_r},
-	{ 0xfa00, 0xfa00, MRA_RAM},
-	{ 0xfa01, 0xfa01, MRA_RAM},
-	{ 0xfa02, 0xfa02, mnight_bankselect_r},
-	{ 0xfa03, 0xfa03, MRA_RAM},
-	{ 0xfa08, 0xfa09, MRA_RAM, &mnight_scrollx_ram},
-	{ 0xfa0a, 0xfa0b, MRA_RAM, &mnight_scrolly_ram},
-	{ 0xfa0c, 0xfa0c, MRA_RAM},
-	{ -1}  /* end of table */
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xf800, input_port_2_r },
+	{ 0xf801, 0xf801, input_port_0_r },
+	{ 0xf802, 0xf802, input_port_1_r },
+	{ 0xf803, 0xf803, input_port_3_r },
+	{ 0xf804, 0xf804, input_port_4_r },
+	{ 0xfa00, 0xfa00, MRA_RAM },
+	{ 0xfa01, 0xfa01, MRA_RAM },
+	{ 0xfa02, 0xfa02, mnight_bankselect_r },
+	{ 0xfa03, 0xfa03, MRA_RAM },
+	{ 0xfa08, 0xfa09, MRA_RAM, &mnight_scrollx_ram },
+	{ 0xfa0a, 0xfa0b, MRA_RAM, &mnight_scrolly_ram },
+	{ 0xfa0c, 0xfa0c, MRA_RAM },
+	{ -1 }  /* end of table */
 };
 
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0xbfff, MWA_ROM},
-	{ 0xc000, 0xd9ff, MWA_RAM},
-	{ 0xda00, 0xdfff, MWA_RAM, &mnight_spriteram, &mnight_spriteram_size},
-	{ 0xe000, 0xe7ff, mnight_bgvideoram_w, &mnight_background_videoram, &mnight_backgroundram_size}, // VFY
-	{ 0xe800, 0xefff, mnight_fgvideoram_w, &mnight_foreground_videoram, &mnight_foregroundram_size}, //VFY
-	{ 0xf000, 0xf5ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram},
-	{ 0xf600, 0xf7ff, MWA_RAM},
-	{ 0xfa00, 0xfa00, soundlatch_w},
-	{ 0xfa01, 0xfa01, MWA_RAM},		   // unknown but used
-	{ 0xfa02, 0xfa02, mnight_bankselect_w},
-	{ 0xfa03, 0xfa03, mnight_sprite_overdraw_w, &mnight_spoverdraw_ram},
-	{ 0xfa08, 0xfa0b, MWA_RAM},
-	{ 0xfa0c, 0xfa0c, mnight_background_enable_w, &mnight_bgenable_ram},
-
-	{ -1}  /* end of table */
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xd9ff, MWA_RAM },
+	{ 0xda00, 0xdfff, MWA_RAM, &mnight_spriteram, &mnight_spriteram_size },
+	{ 0xe000, 0xe7ff, mnight_bgvideoram_w, &mnight_background_videoram, &mnight_backgroundram_size }, // VFY
+	{ 0xe800, 0xefff, mnight_fgvideoram_w, &mnight_foreground_videoram, &mnight_foregroundram_size }, //VFY
+	{ 0xf000, 0xf5ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
+	{ 0xf600, 0xf7ff, MWA_RAM },
+	{ 0xfa00, 0xfa00, soundlatch_w },
+	{ 0xfa01, 0xfa01, MWA_RAM },		   // unknown but used
+	{ 0xfa02, 0xfa02, mnight_bankselect_w },
+	{ 0xfa03, 0xfa03, mnight_sprite_overdraw_w, &mnight_spoverdraw_ram },
+	{ 0xfa08, 0xfa0b, MWA_RAM },
+	{ 0xfa0c, 0xfa0c, mnight_background_enable_w, &mnight_bgenable_ram },
+	{ -1 }  /* end of table */
 };
 
 
 static struct MemoryReadAddress snd_readmem[] =
 {
-	{ 0x0000, 0xbfff, MRA_ROM},
-	{ 0xc000, 0xc7ff, MRA_RAM},
-	{ 0xe000, 0xe000, soundlatch_r},
-	{ 0xefee, 0xefee, MRA_NOP},
-	{ -1}  /* end of table */
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xe000, 0xe000, soundlatch_r },
+	{ 0xefee, 0xefee, MRA_NOP },
+	{ -1 }  /* end of table */
 };
 
 
 static struct MemoryWriteAddress snd_writemem[] =
 {
-	{ 0x0000, 0xbfff, MWA_ROM},
-	{ 0xc000, 0xc7ff, MWA_RAM},
-	{ 0xeff5, 0xeff6, MWA_NOP},			   /* SAMPLE FREQUENCY ??? */
-	{ 0xefee, 0xefee, MWA_NOP},			   /* CHIP COMMAND ?? */
-	{ -1}  /* end of table */
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xeff5, 0xeff6, MWA_NOP },			   /* SAMPLE FREQUENCY ??? */
+	{ 0xefee, 0xefee, MWA_NOP },			   /* CHIP COMMAND ?? */
+	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort snd_writeport[] =
 {
-	{ 0x0000, 0x0000, YM2203_control_port_0_w},
-	{ 0x0001, 0x0001, YM2203_write_port_0_w},
-	{ 0x0080, 0x0080, YM2203_control_port_1_w},
-	{ 0x0081, 0x0081, YM2203_write_port_1_w},
-	{ -1}  /* end of table */
+	{ 0x0000, 0x0000, YM2203_control_port_0_w },
+	{ 0x0001, 0x0001, YM2203_write_port_0_w },
+	{ 0x0080, 0x0080, YM2203_control_port_1_w },
+	{ 0x0081, 0x0081, YM2203_write_port_1_w },
+	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
 
+
+INPUT_PORTS_START( mnight_input_ports )
 	PORT_START /* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -179,9 +179,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START /* DSW1 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -203,7 +201,88 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( arkarea_input_ports )
+	PORT_START /* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )	/* keep pressed during boot to enter service mode */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* DSW1 */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -360,8 +439,50 @@ ROM_START( mnight_rom )
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "mn1-j7.bin",   0x00000, 0x10000, 0xa0782a31 )
-
 ROM_END
+
+ROM_START( arkarea_rom )
+	ROM_REGION(0x30000)
+	ROM_LOAD( "arkarea.008",  0x00000, 0x8000, 0x1ce1b5b9 )
+	ROM_LOAD( "arkarea.009",  0x10000, 0x8000, 0xdb1c81d1 )
+	ROM_LOAD( "arkarea.010",  0x18000, 0x8000, 0x5a460dae )
+	ROM_LOAD( "arkarea.011",  0x20000, 0x8000, 0x63f022c9 )
+	ROM_LOAD( "arkarea.012",  0x28000, 0x8000, 0x3c4c65d5 )
+
+	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "arkarea.007",  0x00000, 0x4000, 0xd5684a27 )   // sprites tiles
+	ROM_CONTINUE(             0x18000, 0x4000 )
+	ROM_CONTINUE(             0x04000, 0x4000 )
+	ROM_CONTINUE(             0x1c000, 0x4000 )
+	ROM_LOAD( "arkarea.006",  0x08000, 0x4000, 0x2c0567d6)
+	ROM_CONTINUE(             0x20000, 0x4000 )
+	ROM_CONTINUE(             0x0c000, 0x4000 )
+	ROM_CONTINUE(             0x24000, 0x4000 )
+	ROM_LOAD( "arkarea.005",  0x10000, 0x4000, 0x9886004d )
+	ROM_CONTINUE(             0x28000, 0x4000 )
+	ROM_CONTINUE(             0x14000, 0x4000 )
+	ROM_CONTINUE(             0x2c000, 0x4000 )
+	ROM_LOAD( "arkarea.003",  0x30000, 0x4000, 0x6f45a308 )   // background tiles
+	ROM_CONTINUE(             0x48000, 0x4000 )
+	ROM_CONTINUE(             0x34000, 0x4000 )
+	ROM_CONTINUE(             0x4c000, 0x4000 )
+	ROM_LOAD( "arkarea.002",  0x38000, 0x4000, 0x051d3482 )
+	ROM_CONTINUE(             0x50000, 0x4000 )
+	ROM_CONTINUE(             0x3c000, 0x4000 )
+	ROM_CONTINUE(             0x54000, 0x4000 )
+	ROM_LOAD( "arkarea.001",  0x40000, 0x4000, 0x09d11ab7 )
+	ROM_CONTINUE(             0x58000, 0x4000 )
+	ROM_CONTINUE(             0x44000, 0x4000 )
+	ROM_CONTINUE(             0x5c000, 0x4000 )
+	ROM_LOAD( "arkarea.004",  0x60000, 0x2000, 0x69e36af2 ) // foreground tiles OK
+	ROM_CONTINUE(             0x64000, 0x2000 )
+	ROM_CONTINUE(             0x62000, 0x2000 )
+	ROM_CONTINUE(             0x66000, 0x2000 )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "arkarea.013",  0x00000, 0x8000, 0x2d409d58 )
+ROM_END
+
 
 
 /****  Mutant Night high score save routine - RJF (April 29, 1999)  ****/
@@ -425,7 +546,7 @@ struct GameDriver mnight_driver =
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	mnight_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -434,3 +555,28 @@ struct GameDriver mnight_driver =
 
 };
 
+struct GameDriver arkarea_driver =
+{
+	__FILE__,
+	0,
+	"arkarea",
+	"Ark Area",
+	"1988?",
+	"UPL",
+	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
+	0,
+	&mnight_machine_driver,
+	0,
+
+	arkarea_rom,
+	0,0,
+	0,
+	0, /* sound prom */
+
+	arkarea_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	mnight_hiload, mnight_hisave
+};

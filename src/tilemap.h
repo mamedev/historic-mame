@@ -28,6 +28,9 @@
 	tile_priority value to specify the part to draw.
 */
 
+#define TILEMAP_BITMASK_TRANSPARENT (0)
+#define TILEMAP_BITMAK_OPAQUE       ((unsigned char *)-1)
+
 extern struct tile_info {
 	unsigned char *pen_data; /* pointer to gfx data */
 	unsigned short *pal_data; /* pointer to palette */
@@ -112,7 +115,6 @@ struct tilemap {
 	int scroll_rows, scroll_cols;
 	int *rowscroll, *colscroll;
 
-	struct rectangle clip;
 	int clip_left,clip_right,clip_top,clip_bottom;
 
 	/* cached color data */

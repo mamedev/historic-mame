@@ -40,12 +40,6 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 
 ***************************************************************************/
 
-#ifdef MESS
-#define ROM_FILETYPE	OSD_FILETYPE_IMAGE /* The IMAGE type requires different handling */
-#else
-#define ROM_FILETYPE	OSD_FILETYPE_ROM
-#endif
-
 int readroms(void)
 {
 	int region;
@@ -135,16 +129,16 @@ int readroms(void)
 			if (osd_display_loading_rom_message(name,++current_rom,total_roms) != 0)
                goto getout;
 
-			f = osd_fopen(Machine->gamedrv->name,name,ROM_FILETYPE,0);
+			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
 			if (f == 0 && Machine->gamedrv->clone_of)
 			{
 				/* if the game is a clone, try loading the ROM from the main version */
-				f = osd_fopen(Machine->gamedrv->clone_of->name,name,ROM_FILETYPE,0);
+				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
 
 				if (f == 0 && Machine->gamedrv->clone_of->clone_of)
 				{
 					/* clone of a clone (for NeoGeo clones) */
-					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,ROM_FILETYPE,0);
+					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,OSD_FILETYPE_ROM,0);
 				}
 			}
 			if (f == 0)
@@ -153,16 +147,16 @@ int readroms(void)
 				char crc[9];
 
 				sprintf(crc,"%08x",romp->crc);
-				f = osd_fopen(Machine->gamedrv->name,crc,ROM_FILETYPE,0);
+				f = osd_fopen(Machine->gamedrv->name,crc,OSD_FILETYPE_ROM,0);
 				if (f == 0 && Machine->gamedrv->clone_of)
 				{
 					/* if the game is a clone, try loading the ROM from the main version */
-					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,ROM_FILETYPE,0);
+					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,OSD_FILETYPE_ROM,0);
 
 					if (f == 0 && Machine->gamedrv->clone_of->clone_of)
 					{
 						/* clone of a clone (for NeoGeo clones) */
-						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,ROM_FILETYPE,0);
+						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,OSD_FILETYPE_ROM,0);
 					}
 				}
 			}
@@ -359,6 +353,8 @@ int readroms(void)
 		{
 			printf ("Press any key to continue\n");
 			keyboard_read_sync();
+			if (keyboard_pressed(KEYCODE_LCONTROL) && keyboard_pressed(KEYCODE_C))
+				return 1;
 		}
 	}
 
@@ -382,8 +378,13 @@ getout:
 
 void printromlist(const struct RomModule *romp,const char *basename)
 {
+#ifdef MESS
+	if (romp == NULL) return;
+#endif
+
 	printf("This is the list of the ROMs required for driver \"%s\".\n"
 			"Name              Size       Checksum\n",basename);
+
 	while (romp->name || romp->offset || romp->length)
 	{
 		romp++;	/* skip memory region definition */

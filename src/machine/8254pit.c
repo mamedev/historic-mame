@@ -2,7 +2,7 @@
 #include "driver.h"
 //#include <stdio.h>
 
-#include "machine\8254pit.h"
+#include "machine/8254pit.h"
 
 //extern void *errorlog;
 

@@ -10,9 +10,9 @@
 #include "gen15khz.h"
 #include "ati15khz.h"
 
-/* tweak values for centering 15.75KHz modes */
-int center_x;
-int center_y;
+/* from video.c */
+void center_mode(Register *pReg,int low_scanrate);
+
 
 int	wait_interlace;      /* config flag - indicates if we're waiting for odd/even updates */
 static int display_interlaced=0;  /* interlaced display */
@@ -143,7 +143,7 @@ int setgeneric15KHz(int vdouble, int width, int height)
 /* indicate we're not interlacing */
 	setinterlaceflag (0);
 /* center the display */
-	center15KHz (scrSVGA_15KHz);
+	center_mode (scrSVGA_15KHz, 1);
 /* write out the array */
 	outRegArray (scrSVGA_15KHz,reglen);
 
@@ -203,121 +203,6 @@ int getVtEndDisplay()
 	return nVert;
 }
 
-
-/* center display */
-void center15KHz(Register *pReg)
-{
-	int hrt, vrt_start, temp, vert_total, vert_display, center, hrt_start;
-	int vblnk_start,vrt,vblnk;
-	int hblnk = 3;
-
-
-/* check for empty array */
-	if (!pReg)
-		return;
-/* check the clock speed, to work out the retrace width */
-	if (pReg[CLOCK_INDEX].value == 0xe7)
-		hrt = 11;
-	else
-		hrt = 10;
-/* our center 'tweak' variable */
-	center = center_x;
-/* check for double scanline rather than half clock */
-	if( pReg[H_TOTAL_INDEX].value > 0x96)
-	{
-		hrt<<=1;
-		hblnk<<=1;
-		center<<=1;
-	}
-/* set the hz retrace */
-	hrt_start = pReg[H_RETRACE_START_INDEX].value;
-	hrt_start += center;
-/* make sure it's legal */
-	if (hrt_start <= pReg[H_DISPLAY_INDEX].value)
-		hrt_start = pReg[H_DISPLAY_INDEX].value + 1;
-
-	pReg[H_RETRACE_START_INDEX].value = hrt_start;
-	temp = hrt_start + hrt;
-	pReg[H_RETRACE_END_INDEX].value = temp&0x1f;
-
- /* set the hz blanking */
-	temp = pReg[H_DISPLAY_INDEX].value;
-   	pReg[H_BLANKING_START_INDEX].value = temp;
-   	temp += hblnk;
-   	pReg[H_BLANKING_END_INDEX].value = (temp&0x1f) | 0x80;
-
-
-/* get the vt retrace */
-	vrt_start = pReg[V_RETRACE_START_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x04) << 6) |
-				((pReg[OVERFLOW_INDEX].value & 0x80) << 2);
-
-/* get the width of it */
-	temp = vrt_start & ~0x0f;
-	temp |=	(pReg[V_RETRACE_END_INDEX].value & 0x0f);
-
-	vrt = temp - vrt_start;
-
-
-/* set the new retrace start */
-	vrt_start += center_y;
-/* check it's legal, get the display line count */
-	vert_display = (pReg[V_END_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x02) << 7) |
-				((pReg[OVERFLOW_INDEX].value & 0x40) << 3)) + 1;
-
-	if (vrt_start < vert_display)
-		vrt_start = vert_display;
-
-/* and get the vertical line count */
-	vert_total = pReg[V_TOTAL_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x01) << 8) |
-				((pReg[OVERFLOW_INDEX].value & 0x20) << 4);
-
-
-
-	pReg[V_RETRACE_START_INDEX].value = (vrt_start & 0xff);
-	pReg[OVERFLOW_INDEX].value &= ~0x84;
-	pReg[OVERFLOW_INDEX].value |= ((vrt_start & 0x100) >> 6);
-	pReg[OVERFLOW_INDEX].value |= ((vrt_start & 0x200) >> 2);
-	temp = vrt_start + vrt;
-
-
-	if (temp > vert_total)
-		temp = vert_total;
-
-
-	pReg[V_RETRACE_END_INDEX].value &= ~0x0f;
-	pReg[V_RETRACE_END_INDEX].value |= (temp & 0x0f);
-
-/* get the start of vt blanking */
-	vblnk_start = pReg[V_BLANKING_START_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x08) << 5) |
-					((pReg[MAXIMUM_SCANLINE_INDEX].value & 0x20) << 4);
-
-/* and the end */
-	temp = vblnk_start & ~0xff;
-	temp |= pReg[V_BLANKING_END_INDEX].value;
-
-/* get the width */
-	vblnk = temp - vblnk_start;
-/* get the new value */
-	vblnk_start += center_y;
-/* check it's legal */
-	if (vblnk_start < vert_display)
-		vblnk_start = vert_display;
-	if (vblnk_start > vert_total)
-		vblnk_start = vert_total;
-
-/* set vblank start */
-	pReg[V_BLANKING_START_INDEX].value = (vblnk_start & 0xff);
-	pReg[OVERFLOW_INDEX].value &= ~0x08;
-	pReg[OVERFLOW_INDEX].value |= ((vblnk_start & 0x100) >> 5);
-	pReg[MAXIMUM_SCANLINE_INDEX].value &= ~0x20;
-	pReg[MAXIMUM_SCANLINE_INDEX].value |= ((vblnk_start &0x200) >> 4);
-/* set the vblank end */
-	temp = vblnk_start + vblnk;
-/* check it's legal */
-	if (temp > vert_total)
-		temp = vert_total;
-	pReg[V_BLANKING_END_INDEX].value = (temp & 0xff);
-}
 
 int sup_15Khz_res(int width,int height)
 {

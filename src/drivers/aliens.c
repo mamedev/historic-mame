@@ -88,7 +88,7 @@ static void aliens_snd_bankswitch_w(int offset, int data)
 	int bank_A = 0x20000*((data >> 1) & 0x01);
 	int bank_B = 0x20000*((data) & 0x01);
 
-	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
+	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
 }
 
 
@@ -184,7 +184,7 @@ INPUT_PORTS_START( input_ports )
 //	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
@@ -214,9 +214,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -452,8 +450,8 @@ static void aliens_init_machine( void )
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
-	konami_rom_deinterleave(2);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(2);
 }
 
 

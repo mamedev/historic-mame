@@ -1,7 +1,6 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
-
 #include "osdepend.h"
 #include "common.h"
 #include "drawgfx.h"
@@ -16,6 +15,7 @@
 #include "cheat.h"
 #include "tilemap.h"
 #include "sprite.h"
+#include "gfxobj.h"
 #include "profiler.h"
 
 #ifdef MAME_NET
@@ -299,6 +299,15 @@ struct GameDriver
 								/* which is called every time the game is reset. */
 
 	const struct RomModule *rom;
+   #ifdef MESS
+   int (*rom_load)(void); /* used to load the ROM and set up memory regions */
+	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
+	int num_of_rom_slots;
+	int num_of_floppy_drives;
+	int num_of_hard_drives;
+	int num_of_cassette_drives;
+ 	#endif
+
 	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
 	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
 									/* if the encryption is different from the above. */
@@ -332,6 +341,9 @@ struct GameDriver
 #define GAME_NO_SOUND			0x0008	/* sound is missing */
 #define GAME_IMPERFECT_SOUND	0x0010	/* sound is known to be wrong */
 
+#ifdef MESS
+ #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
+#endif
 
 #define PROM_MEMORY_REGION(region) ((const unsigned char *)((-(region))-1))
 

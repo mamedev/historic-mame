@@ -1,11 +1,17 @@
 /*********************************************************
 
-	Konami 053260 PCM/ADPCM Sound Chip
+	Konami 053260 PCM Sound Chip
 
 *********************************************************/
 
 #include "driver.h"
 #include "k053260.h"
+
+#define LOG 0
+
+#define BASE_SHIFT	16
+
+#define INTERPOLATE_SAMPLES 0
 
 static struct K053260_channel_def {
 	unsigned long		rate;
@@ -16,9 +22,13 @@ static struct K053260_channel_def {
 	int					play;
 	unsigned long		pan;
 	unsigned long		pos;
+#if INTERPOLATE_SAMPLES
+	int					steps;
+	int					stepcount;
+#endif
 	int					loop;
-	int					adpcm;
-	int					adpcm_data;
+	int					ppcm; /* packed PCM ( 4 bit signed ) */
+	int					ppcm_data;
 } K053260_channel[4];
 
 static struct K053260_chip_def {
@@ -31,11 +41,6 @@ static struct K053260_chip_def {
 	void							*timer; /* SH1 int timer */
 } K053260_chip;
 
-static int adpcm_lookup[] = { /* 4 bit signed */
-	0,		1,		2,		4,		8,		16,		32,		64,
-	0,	  -64,	  -32,	  -16,	   -8,		-4,		-2,		-1
-};
-
 static unsigned long *delta_table;
 
 static void InitDeltaTable( void ) {
@@ -47,10 +52,13 @@ static void InitDeltaTable( void ) {
 	for( i = 0; i < 0x1000; i++ ) {
 		double v = ( double )( 0x1000 - i );
 		double target = max / v;
+		double fixed = ( double )( 1 << BASE_SHIFT );
 
 		if ( target && base ) {
-			target = 65535.0 / ( base / target );
+			target = fixed / ( base / target );
 			val = ( unsigned long )target;
+			if ( val == 0 )
+				val = 1;
 		} else
 			val = 1;
 
@@ -71,8 +79,8 @@ static void K053260_reset( void ) {
 		K053260_channel[i].pan = 0;
 		K053260_channel[i].pos = 0;
 		K053260_channel[i].loop = 0;
-		K053260_channel[i].adpcm = 0;
-		K053260_channel[i].adpcm_data = 0;
+		K053260_channel[i].ppcm = 0;
+		K053260_channel[i].ppcm_data = 0;
 	}
 }
 
@@ -89,26 +97,39 @@ INLINE int limit( int val, int max, int min ) {
 #define MINOUT -0x8000
 
 void K053260_update( int param, void **buffer, int length ) {
-	int i, j, lvol[4], rvol[4], play[4], loop[4], adpcm_data[4], adpcm[4];
+	int i, j, lvol[4], rvol[4], play[4], loop[4], ppcm_data[4], ppcm[4];
 	unsigned char *rom[4];
 	unsigned long delta[4], end[4], pos[4];
 	unsigned char **buf = ( unsigned char ** )buffer;
 	unsigned short **buf16 = ( unsigned short ** )buffer;
 	int dataL, dataR;
 	signed char d;
+#if INTERPOLATE_SAMPLES
+	int steps[4], stepcount[4];
+#endif
 
 	/* precache some values */
 	for ( i = 0; i < 4; i++ ) {
 		rom[i]= &K053260_chip.rom[K053260_channel[i].start + ( K053260_channel[i].bank << 16 )];
-		delta[i] = delta_table[K053260_channel[i].rate & 0x0fff];
+		delta[i] = delta_table[K053260_channel[i].rate];
 		lvol[i] = K053260_channel[i].volume * K053260_channel[i].pan;
 		rvol[i] = K053260_channel[i].volume * ( 8 - K053260_channel[i].pan );
 		end[i] = K053260_channel[i].size;
 		pos[i] = K053260_channel[i].pos;
 		play[i] = K053260_channel[i].play;
 		loop[i] = K053260_channel[i].loop;
-		adpcm[i] = K053260_channel[i].adpcm;
-		adpcm_data[i] = K053260_channel[i].adpcm_data;
+		ppcm[i] = K053260_channel[i].ppcm;
+		ppcm_data[i] = K053260_channel[i].ppcm_data;
+#if INTERPOLATE_SAMPLES
+		steps[i] = K053260_channel[i].steps;
+		stepcount[i] = K053260_channel[i].stepcount;
+#endif
+		if ( ppcm[i] ) {
+			delta[i] /= 2;
+#if INTERPOLATE_SAMPLES
+			steps[i] *= 2;
+#endif
+		}
 	}
 
 	/* 16 bit case */
@@ -121,9 +142,9 @@ void K053260_update( int param, void **buffer, int length ) {
 				/* see if the voice is on */
 				if ( play[i] ) {
 					/* see if we're done */
-					if ( ( pos[i] >> 16 ) >= end[i] ) {
+					if ( ( pos[i] >> BASE_SHIFT ) >= end[i] ) {
 
-						adpcm_data[i] = 0;
+						ppcm_data[i] = 0;
 
 						if ( loop[i] )
 							pos[i] = 0;
@@ -133,31 +154,71 @@ void K053260_update( int param, void **buffer, int length ) {
 						}
 					}
 
-					if ( adpcm[i] ) { /* ADPCM */
-						if ( pos[i] & 0x8000 )
-							adpcm_data[i] += adpcm_lookup[ rom[i][pos[i] >> 16] & 0x0f ];
-						else
-							adpcm_data[i] += adpcm_lookup[ ( ( rom[i][pos[i] >> 16] ) >> 4 ) & 0x0f ];
+					if ( ppcm[i] ) { /* Packed PCM */
+						/* we only update the signal if we're starting or a real sound sample has gone by */
+						/* this is all due to the dynamic sample rate convertion */
+						if ( pos[i] == 0 || ( ( pos[i] ^ ( pos[i] - delta[i] ) ) & 0x8000 ) == 0x8000 ) {
+							if ( pos[i] & 0x8000 )
+								ppcm_data[i] = rom[i][pos[i] >> BASE_SHIFT] & 0x0f;
+							else
+								ppcm_data[i] = ( ( rom[i][pos[i] >> BASE_SHIFT] ) >> 4 ) & 0x0f;
 
-						adpcm_data[i] /= 2; /* Normalize */
+							ppcm_data[i] *= 0x11;
+						}
 
-						if ( K053260_chip.mode & 4 )
-							dataL += ( adpcm_data[i] * lvol[i] ) >> 2;
+						d = ppcm_data[i];
 
-						if ( K053260_chip.mode & 2 )
-							dataR += ( adpcm_data[i] * rvol[i] ) >> 2;
+						d /= 2;
 
-						pos[i] += delta[i] / 2;
+#if INTERPOLATE_SAMPLES
+						if ( steps[i] ) {
+							if ( ( pos[i] >> BASE_SHIFT ) < ( end[i] - 1 ) ) {
+								signed char diff;
+								int next_d;
+
+								if ( pos[i] & 0x8000 )
+									next_d = ( ( ( rom[i][(pos[i] >> BASE_SHIFT)+1] ) >> 4 ) & 0x0f ) * 0x11;
+								else
+									next_d = ( rom[i][( pos[i] >> BASE_SHIFT)] & 0x0f ) * 0x11;
+
+								diff = next_d;
+								diff /= 2;
+								diff -= d;
+
+								diff /= steps[i];
+
+								d += ( diff * stepcount[i]++ );
+
+								if ( stepcount[i] >= steps[i] )
+									stepcount[i] = 0;
+							}
+						}
+#endif
+						pos[i] += delta[i];
 					} else { /* PCM */
-						d = rom[i][pos[i] >> 16];
+						d = rom[i][pos[i] >> BASE_SHIFT];
 
-						if ( K053260_chip.mode & 4 )
-							dataL += ( d * lvol[i] ) >> 2;
+#if INTERPOLATE_SAMPLES
+						if ( steps[i] ) {
+							if ( ( pos[i] >> BASE_SHIFT ) < ( end[i] - 1 ) ) {
+								signed char diff = rom[i][(pos[i] >> BASE_SHIFT) + 1];
+								diff -= d;
+								diff /= steps[i];
 
-						if ( K053260_chip.mode & 2 )
-							dataR += ( d * rvol[i] ) >> 2;
+								d += ( diff * stepcount[i]++ );
+
+								if ( stepcount[i] >= steps[i] )
+									stepcount[i] = 0;
+							}
+						}
+#endif
 
 						pos[i] += delta[i];
+					}
+
+					if ( K053260_chip.mode & 2 ) {
+						dataL += ( d * lvol[i] ) >> 2;
+						dataR += ( d * rvol[i] ) >> 2;
 					}
 				}
 			}
@@ -174,9 +235,9 @@ void K053260_update( int param, void **buffer, int length ) {
 				/* see if the voice is on */
 				if ( play[i] ) {
 					/* see if we're done */
-					if ( ( pos[i] >> 16 ) >= end[i] ) {
+					if ( ( pos[i] >> BASE_SHIFT ) >= end[i] ) {
 
-						adpcm_data[i] = 0;
+						ppcm_data[i] = 0;
 
 						if ( loop[i] )
 							pos[i] = 0;
@@ -186,31 +247,71 @@ void K053260_update( int param, void **buffer, int length ) {
 						}
 					}
 
-					if ( adpcm[i] ) { /* ADPCM */
-						if ( pos[i] & 0x8000 )
-							adpcm_data[i] += adpcm_lookup[ ( rom[i][pos[i] >> 16] ) & 0x0f ];
-						else
-							adpcm_data[i] += adpcm_lookup[ ( ( rom[i][pos[i] >> 16] ) >> 4 ) & 0x0f ];
+					if ( ppcm[i] ) { /* Packed PCM */
+						/* we only update the signal if we're starting or a real sound sample has gone by */
+						/* this is all due to the dynamic sample rate convertion */
+						if ( pos[i] == 0 || ( ( pos[i] ^ ( pos[i] - delta[i] ) ) & 0x8000 ) == 0x8000 ) {
+							if ( pos[i] & 0x8000 )
+								ppcm_data[i] = rom[i][pos[i] >> BASE_SHIFT] & 0x0f;
+							else
+								ppcm_data[i] = ( ( rom[i][pos[i] >> BASE_SHIFT] ) >> 4 ) & 0x0f;
 
-						adpcm_data[i] /= 2; /* Normalize */
+							ppcm_data[i] *= 0x11;
+						}
 
-						if ( K053260_chip.mode & 4 )
-							dataL += ( adpcm_data[i] * lvol[i] ) >> 2;
+						d = ppcm_data[i];
 
-						if ( K053260_chip.mode & 2 )
-							dataR += ( adpcm_data[i] * rvol[i] ) >> 2;
+						d /= 2;
 
-						pos[i] += delta[i] / 2;
+#if INTERPOLATE_SAMPLES
+						if ( steps[i] ) {
+							if ( ( pos[i] >> BASE_SHIFT ) < ( end[i] - 1 ) ) {
+								signed char diff;
+								int next_d;
+
+								if ( pos[i] & 0x8000 )
+									next_d = ( ( ( rom[i][(pos[i] >> BASE_SHIFT)+1] ) >> 4 ) & 0x0f ) * 0x11;
+								else
+									next_d = ( rom[i][( pos[i] >> BASE_SHIFT)] & 0x0f ) * 0x11;
+
+								diff = next_d;
+								diff /= 2;
+								diff -= d;
+
+								diff /= steps[i];
+
+								d += ( diff * stepcount[i]++ );
+
+								if ( stepcount[i] >= steps[i] )
+									stepcount[i] = 0;
+							}
+						}
+#endif
+						pos[i] += delta[i];
 					} else { /* PCM */
-						d = rom[i][pos[i] >> 16];
+						d = rom[i][pos[i] >> BASE_SHIFT];
 
-						if ( K053260_chip.mode & 4 )
-							dataL += ( d * lvol[i] ) >> 2;
+#if INTERPOLATE_SAMPLES
+						if ( steps[i] ) {
+							if ( ( pos[i] >> BASE_SHIFT ) < ( end[i] - 1 ) ) {
+								signed char diff = rom[i][(pos[i] >> BASE_SHIFT) + 1];
+								diff -= d;
+								diff /= steps[i];
 
-						if ( K053260_chip.mode & 2 )
-							dataR += ( d * rvol[i] ) >> 2;
+								d += ( diff * stepcount[i]++ );
+
+								if ( stepcount[i] >= steps[i] )
+									stepcount[i] = 0;
+							}
+						}
+#endif
 
 						pos[i] += delta[i];
+					}
+
+					if ( K053260_chip.mode & 2 ) {
+						dataL += ( d * lvol[i] ) >> 2;
+						dataR += ( d * rvol[i] ) >> 2;
 					}
 				}
 			}
@@ -227,7 +328,10 @@ void K053260_update( int param, void **buffer, int length ) {
 	for ( i = 0; i < 4; i++ ) {
 		K053260_channel[i].pos = pos[i];
 		K053260_channel[i].play = play[i];
-		K053260_channel[i].adpcm_data = adpcm_data[i];
+		K053260_channel[i].ppcm_data = ppcm_data[i];
+#if INTERPOLATE_SAMPLES
+		K053260_channel[i].stepcount = stepcount[i];
+#endif
 	}
 }
 
@@ -303,6 +407,10 @@ INLINE void check_bounds( int channel ) {
 
 		K053260_channel[channel].size = K053260_chip.rom_size - channel_start;
 	}
+#if LOG
+	if ( errorlog )
+		fprintf( errorlog, "K053260: Sample Start = %06x, Sample End = %06x, Sample rate = %04lx, PPCM = %s\n", channel_start, channel_end, K053260_channel[channel].rate, K053260_channel[channel].ppcm ? "yes" : "no" );
+#endif
 }
 
 void K053260_WriteReg( int r,int v ) {
@@ -326,8 +434,15 @@ void K053260_WriteReg( int r,int v ) {
 				if ( v & ( 1 << i ) ) {
 					K053260_channel[i].play = 1;
 					K053260_channel[i].pos = 0;
-					K053260_channel[i].adpcm_data = 0;
+					K053260_channel[i].ppcm_data = 0;
 					check_bounds( i );
+#if INTERPOLATE_SAMPLES
+					if ( delta_table[K053260_channel[i].rate] < ( 1 << BASE_SHIFT ) )
+						K053260_channel[i].steps = ( 1 << BASE_SHIFT ) / delta_table[K053260_channel[i].rate];
+					else
+						K053260_channel[i].steps = 0;
+					K053260_channel[i].stepcount = 0;
+#endif
 				} else
 					K053260_channel[i].play = 0;
 			}
@@ -350,13 +465,13 @@ void K053260_WriteReg( int r,int v ) {
 
 		switch ( ( r - 8 ) & 0x07 ) {
 			case 0: /* sample rate low */
-				K053260_channel[channel].rate &= 0xff00;
+				K053260_channel[channel].rate &= 0x0f00;
 				K053260_channel[channel].rate |= v;
 			break;
 
 			case 1: /* sample rate high */
 				K053260_channel[channel].rate &= 0x00ff;
-				K053260_channel[channel].rate |= v << 8;
+				K053260_channel[channel].rate |= ( v & 0x0f ) << 8;
 			break;
 
 			case 2: /* size low */
@@ -384,7 +499,7 @@ void K053260_WriteReg( int r,int v ) {
 			break;
 
 			case 7: /* volume is 7 bits. Convert to 8 bits now. */
-				K053260_channel[channel].volume = ( v << 1 ) | ( v & 1 );
+				K053260_channel[channel].volume = ( ( v & 0x7f ) << 1 ) | ( v & 1 );
 			break;
 		}
 
@@ -392,12 +507,12 @@ void K053260_WriteReg( int r,int v ) {
 	}
 
 	switch( r ) {
-		case 0x2a: /* loop, adpcm */
+		case 0x2a: /* loop, ppcm */
 			for ( i = 0; i < 4; i++ )
 				K053260_channel[i].loop = ( v & ( 1 << i ) ) != 0;
 
 			for ( i = 4; i < 8; i++ )
-				K053260_channel[i-4].adpcm = ( v & ( 1 << i ) ) != 0;
+				K053260_channel[i-4].ppcm = ( v & ( 1 << i ) ) != 0;
 		break;
 
 		case 0x2c: /* pan */
@@ -412,8 +527,9 @@ void K053260_WriteReg( int r,int v ) {
 
 		case 0x2f: /* control */
 			K053260_chip.mode = v & 7;
-			if ( v & 1 )
-				K053260_reset();
+			/* bit 0 = read ROM */
+			/* bit 1 = enable sound output */
+			/* bit 2 = unknown */
 		break;
 	}
 }
@@ -434,7 +550,7 @@ int K053260_ReadReg( int r ) {
 
 		case 0x2e: /* read rom */
 			if ( K053260_chip.mode & 1 ) {
-				unsigned long offs = K053260_channel[0].start + ( K053260_channel[0].pos >> 16 ) + ( K053260_channel[0].bank << 16 );
+				unsigned long offs = K053260_channel[0].start + ( K053260_channel[0].pos >> BASE_SHIFT ) + ( K053260_channel[0].bank << 16 );
 
 				K053260_channel[0].pos += ( 1 << 16 );
 

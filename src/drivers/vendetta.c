@@ -22,8 +22,6 @@ Notes:
 static void vendetta_init_machine( void );
 static void vendetta_banking( int lines );
 static void vendetta_video_banking( int select );
-int simpsons_sound_interrupt_r( int offset );
-int simpsons_sound_r(int offset);
 
 int vendetta_vh_start(void);
 void vendetta_vh_stop(void);
@@ -105,8 +103,8 @@ static void vendetta_video_banking( int select )
 	{
 		cpu_setbankhandler_r( 2, paletteram_r );
 		cpu_setbankhandler_w( 2, paletteram_xBBBBBGGGGGRRRRR_swap_w );
-		cpu_setbankhandler_r( 3, spriteram_r );
-		cpu_setbankhandler_w( 3, spriteram_w );
+		cpu_setbankhandler_r( 3, K053247_r );
+		cpu_setbankhandler_w( 3, K053247_w );
 	}
 	else
 	{
@@ -130,10 +128,12 @@ static void vendetta_5fe0_w(int offset,int data)
 	/* bit 2 = BRAMBK ?? */
 
 	/* bit 3 = enable char ROM reading through the video RAM */
-	K052109_set_RMRD_line( ( data & 0x08 ) ? ASSERT_LINE : CLEAR_LINE );
+	K052109_set_RMRD_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 4 = INIT ?? */
-	/* bit 5 = OBJCHA ?? */
+
+	/* bit 5 = enable sprite ROM reading */
+	K053246_set_OBJCHA_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static int speedup_r( int offs )
@@ -170,41 +170,24 @@ static void z80_irq_w( int offset, int data )
 	cpu_cause_interrupt( 1, 0xff );
 }
 
-static unsigned char *collision_ram;
-
-static int collision_r( int offs )
+int vendetta_sound_interrupt_r( int offset )
 {
-	int src_x_pos, src_y_pos, src_width, src_height;
-	int tgt_x_pos, tgt_y_pos, tgt_width, tgt_height;
-
-	src_x_pos = ( collision_ram[0x02] << 8 ) | collision_ram[0x03];
-	src_y_pos = ( collision_ram[0x0a] << 8 ) | collision_ram[0x0b];
-	src_width = collision_ram[0x06];
-	src_height = collision_ram[0x07];
-
-	tgt_x_pos = ( collision_ram[0x16] << 8 ) | collision_ram[0x17];
-	tgt_y_pos = ( collision_ram[0x12] << 8 ) | collision_ram[0x13];
-	tgt_width = collision_ram[0x0e];
-	tgt_height = collision_ram[0x0f];
-
-	if (src_x_pos + src_width < tgt_x_pos - tgt_width)
-		return 1;
-
-	if (tgt_x_pos + tgt_width < src_x_pos - src_width)
-		return 1;
-
-	if (src_y_pos + src_height < tgt_y_pos - tgt_height)
-		return 1;
-
-	if (tgt_y_pos + tgt_height < src_y_pos - src_height)
-		return 1;
-
-	return 0;
+	cpu_cause_interrupt( 1, 0xff );
+	return 0x00;
 }
 
-static void collision_w( int offs, int data )
+int vendetta_sound_r(int offset)
 {
-	collision_ram[offs] = data;
+	/* If the sound CPU is running, read the status, otherwise
+	   just make it pass the test */
+	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset);
+	else
+	{
+		static int res = 0x00;
+
+		res = ((res + 1) & 0x07);
+		return offset ? res : 0x00;
+	}
 }
 
 /********************************************/
@@ -214,15 +197,16 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x1fff, MRA_BANK1	},
 	{ 0x28d2, 0x28d2, speedup_r },
 	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x5f98, 0x5f98, collision_r },
+	{ 0x5f80, 0x5f9f, K054000_r },
 	{ 0x5fc0, 0x5fc0, input_port_0_r },
 	{ 0x5fc1, 0x5fc1, input_port_1_r },
 	{ 0x5fd0, 0x5fd0, vendetta_eeprom_r }, /* vblank, service */
 	{ 0x5fd1, 0x5fd1, input_port_2_r },
-	{ 0x5fe4, 0x5fe4, simpsons_sound_interrupt_r },
-	{ 0x5fe6, 0x5fe7, simpsons_sound_r },
+	{ 0x5fe4, 0x5fe4, vendetta_sound_interrupt_r },
+	{ 0x5fe6, 0x5fe7, vendetta_sound_r },
+	{ 0x5fe8, 0x5fe9, K053246_r },
 	{ 0x5fea, 0x5fea, watchdog_reset_r },
-	{ 0x4000, 0x5fff, MRA_BANK3 },
+	{ 0x4000, 0x4fff, MRA_BANK3 },
 	{ 0x6000, 0x6fff, MRA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_r },
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -233,13 +217,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x3fff, MWA_RAM },
-	{ 0x5f80, 0x5f9f, collision_w, &collision_ram },
+	{ 0x5f80, 0x5f9f, K054000_w },
 	{ 0x5fa0, 0x5faf, K053251_w },
+	{ 0x5fb0, 0x5fb7, K053246_w },
 	{ 0x5fe0, 0x5fe0, vendetta_5fe0_w },
 	{ 0x5fe2, 0x5fe2, vendetta_eeprom_w },
 	{ 0x5fe4, 0x5fe4, z80_irq_w },
 	{ 0x5fe6, 0x5fe7, K053260_WriteReg },
-	{ 0x4000, 0x5fff, MWA_BANK3 },
+	{ 0x4000, 0x4fff, MWA_BANK3 },
 	{ 0x6000, 0x6fff, MWA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_w },
 	{ 0x8000, 0xffff, MWA_ROM },
@@ -281,7 +266,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START
@@ -291,7 +276,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START
@@ -312,34 +297,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-/***************************************************************************
 
-	Graphics Decoding
-
-***************************************************************************/
-
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	32768,	/* 32768 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{
-	  2*4, 3*4, 0*4, 1*4,
-	  0x200000*8+2*4, 0x200000*8+3*4, 0x200000*8+0*4, 0x200000*8+1*4,
-	  0x100000*8+2*4, 0x100000*8+3*4, 0x100000*8+0*4, 0x100000*8+1*4,
-	  0x300000*8+2*4, 0x300000*8+3*4, 0x300000*8+0*4, 0x300000*8+1*4,
-	},
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 2, 0x000000, &spritelayout, 0, 128 },
-	{ -1 } /* end of array */
-};
 
 /***************************************************************************
 
@@ -380,8 +338,8 @@ static struct MachineDriver machine_driver =
 			3000000,		/* ? */
 			0,
 			readmem,writemem,0,0,
-            vendetta_irq,1
-        },
+			vendetta_irq,1
+		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
@@ -396,7 +354,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	0,	/* gfx decoded by konamiic.c */
 	2048, 2048,
 	0,
 
@@ -427,7 +385,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vendetta_rom )
-	ROM_REGION( 0x4b000 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -437,8 +395,8 @@ ROM_START( vendetta_rom )
 
 	ROM_REGION( 0x400000 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
-	ROM_LOAD( "081a06", 0x100000, 0x100000, 0xe9fe6d80 ) /* sprites */
-	ROM_LOAD( "081a05", 0x200000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
 	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
@@ -449,7 +407,7 @@ ROM_START( vendetta_rom )
 ROM_END
 
 ROM_START( vendett2_rom )
-	ROM_REGION( 0x4b000 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -459,8 +417,8 @@ ROM_START( vendett2_rom )
 
 	ROM_REGION( 0x400000 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
-	ROM_LOAD( "081a06", 0x100000, 0x100000, 0xe9fe6d80 ) /* sprites */
-	ROM_LOAD( "081a05", 0x200000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
 	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
@@ -471,7 +429,7 @@ ROM_START( vendett2_rom )
 ROM_END
 
 ROM_START( vendettj_rom )
-	ROM_REGION( 0x4b000 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081p01", 0x10000, 0x38000, 0x5fe30242 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -481,8 +439,8 @@ ROM_START( vendettj_rom )
 
 	ROM_REGION( 0x400000 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
-	ROM_LOAD( "081a06", 0x100000, 0x100000, 0xe9fe6d80 ) /* sprites */
-	ROM_LOAD( "081a05", 0x200000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
 	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
@@ -517,8 +475,6 @@ static void vendetta_init_machine( void )
 	konami_cpu_setlines_callback = vendetta_banking;
 
 	paletteram = &Machine->memory_region[0][0x48000];
-	spriteram = &Machine->memory_region[0][0x49000];
-	spriteram_size = 0x1000;
 	irq_enabled = 0;
 
 	/* init banks */
@@ -531,7 +487,8 @@ static void vendetta_init_machine( void )
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_4(2);
 }
 
 static int eeprom_load(void)

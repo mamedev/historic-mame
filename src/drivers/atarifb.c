@@ -288,9 +288,7 @@ INPUT_PORTS_START( atarifb_input_ports )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN2 - Player 1 trackball, y */
@@ -320,9 +318,7 @@ INPUT_PORTS_START( atarifb4_input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_COIN3 )
 	PORT_BIT ( 0x38, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START		/* IN2 */
@@ -398,9 +394,7 @@ INPUT_PORTS_START( abaseb_input_ports )
 	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN2 - Player 1 trackball, y */
@@ -484,7 +478,7 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
+	57, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
 //	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
 	1,	/* single CPU, no need for interleaving */
 	0,
@@ -523,7 +517,7 @@ static struct MachineDriver atarifb4_machine_driver =
 			interrupt,4
 		}
 	},
-	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
+	57, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
 //	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
 	1,	/* single CPU, no need for interleaving */
 	0,

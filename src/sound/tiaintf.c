@@ -23,7 +23,7 @@ static unsigned char *buffer;
 
 int tia_sh_start(const struct MachineSound *msound)
 {
-	int i, res;
+//	int i, res;
 
 	intf = msound->sound_interface;
 

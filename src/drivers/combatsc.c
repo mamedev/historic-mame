@@ -501,10 +501,24 @@ INPUT_PORTS_START( combatsct_input_ports )
 
 	PORT_START
 	//PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
-
 INPUT_PORTS_END
 
-static struct GfxLayout tile_layout = {
+
+
+static struct GfxLayout gfx_layout =
+{
+	8,8,
+	0x2000,
+	4,
+	{ 0,1,2,3 },
+	{ 0*0x4000*8*8, 0*0x4000*8*8+4, 2*0x4000*8*8, 2*0x4000*8*8+4,
+	  1*0x4000*8*8, 1*0x4000*8*8+4, 3*0x4000*8*8, 3*0x4000*8*8+4 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static struct GfxLayout tile_layout =
+{
 	8,8,
 	0x2000, /* number of tiles */
 	4,		/* bitplanes */
@@ -514,7 +528,8 @@ static struct GfxLayout tile_layout = {
 	8*8
 };
 
-static struct GfxLayout sprite_layout = {
+static struct GfxLayout sprite_layout =
+{
 	16,16,
 	0x800,	/* number of sprites */
 	4,		/* bitplanes */
@@ -530,12 +545,21 @@ static struct GfxLayout sprite_layout = {
 	8*8*4
 };
 
+static struct GfxDecodeInfo combatsc_gfxdecodeinfo[] =
+{
+	{ 2, 0x00000, &gfx_layout, 0, 8*16 },
+	{ 2, 0x80000, &gfx_layout, 0, 8*16 },
+	{ 2, 0x10000, &gfx_layout, 0, 8*16 },
+	{ 2, 0x90000, &gfx_layout, 0, 8*16 },
+	{ -1 }
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &tile_layout,		0, 8*16 },
-	{ 2, 0x40000, &tile_layout,		0, 8*16 },
-	{ 2, 0x80000, &sprite_layout,	0, 8*16 },
-	{ 2, 0xc0000, &sprite_layout,	0, 8*16 },
+	{ 2, 0x00000, &tile_layout,   0, 8*16 },
+	{ 2, 0x40000, &tile_layout,   0, 8*16 },
+	{ 2, 0x80000, &sprite_layout, 0, 8*16 },
+	{ 2, 0xc0000, &sprite_layout, 0, 8*16 },
 	{ -1 }
 };
 
@@ -633,7 +657,7 @@ static struct MachineDriver combatsc_machine_driver =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	combatsc_gfxdecodeinfo,
 	128,128*16,combatsc_convert_color_prom,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -687,11 +711,11 @@ ROM_START( combatscb_rom )
 	ROM_LOAD( "combat.018",	0xe0000, 0x10000, 0x575db729 )
 	ROM_LOAD( "combat.020",	0xf0000, 0x10000, 0x8d748a1a )
 
-	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
-	ROM_RELOAD(				0x100, 0x100 )
-	ROM_LOAD( "611g09.h7",	0x200, 0x100, 0x207a7b07 ) /* tilemap clut */
-	ROM_RELOAD(				0x300, 0x100 )
+	ROM_REGION( 0x400 ) /* color lookup table WRONG, the bootleg uses different PROMs */
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
 
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )	/* FAKE - from Konami set! */
@@ -706,17 +730,17 @@ ROM_START( combatsc_rom )
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
-	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
-	ROM_LOAD( "611g06.rom",	0x00000, 0x40000, 0x00000000 ) /* tiles, bank 0 */
-	ROM_LOAD( "611g05.rom",	0x40000, 0x40000, 0x00000000 ) /* tiles, bank 1 */
-	ROM_LOAD( "611g07.rom",	0x80000, 0x40000, 0x00000000 ) /* sprites, bank 0 */
-	ROM_LOAD( "611g08.rom",	0xc0000, 0x40000, 0x00000000 ) /* sprites, bank 1 */
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD( "611g07.rom",	0x00000, 0x40000, 0x4ac64f85 )
+	ROM_LOAD( "611g08.rom",	0x40000, 0x40000, 0x52cf260e )
+	ROM_LOAD( "611g11.rom",	0x80000, 0x40000, 0x6c19d4a9 )
+	ROM_LOAD( "611g12.rom",	0xc0000, 0x40000, 0x24475d25 )
 
 	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
-	ROM_RELOAD(				0x100, 0x100 )
-	ROM_LOAD( "611g09.h7",	0x200, 0x100, 0x207a7b07 ) /* tilemap clut */
-	ROM_RELOAD(				0x300, 0x100 )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
 
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
@@ -733,16 +757,16 @@ ROM_START( combatsct_rom )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
-	ROM_LOAD( "611g06.rom",	0x00000, 0x40000, 0x00000000 ) /* tiles, bank 0 */
-	ROM_LOAD( "611g05.rom",	0x40000, 0x40000, 0x00000000 ) /* tiles, bank 1 */
-	ROM_LOAD( "611g07.rom",	0x80000, 0x40000, 0x00000000 ) /* sprites, bank 0 */
-	ROM_LOAD( "611g08.rom",	0xc0000, 0x40000, 0x00000000 ) /* sprites, bank 1 */
+	ROM_LOAD( "611g07.rom",	0x00000, 0x40000, 0x4ac64f85 )
+	ROM_LOAD( "611g08.rom",	0x40000, 0x40000, 0x52cf260e )
+	ROM_LOAD( "611g11.rom",	0x80000, 0x40000, 0x6c19d4a9 )
+	ROM_LOAD( "611g12.rom",	0xc0000, 0x40000, 0x24475d25 )
 
 	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
-	ROM_RELOAD(				0x100, 0x100 )
-	ROM_LOAD( "611g09.h7",	0x200, 0x100, 0x207a7b07 ) /* tilemap clut */
-	ROM_RELOAD(				0x300, 0x100 )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
 
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
@@ -759,16 +783,16 @@ ROM_START( bootcamp_rom )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
-	ROM_LOAD( "611g06.rom",	0x00000, 0x40000, 0x00000000 ) /* tiles, bank 0 */
-	ROM_LOAD( "611g05.rom",	0x40000, 0x40000, 0x00000000 ) /* tiles, bank 1 */
-	ROM_LOAD( "611g07.rom",	0x80000, 0x40000, 0x00000000 ) /* sprites, bank 0 */
-	ROM_LOAD( "611g08.rom",	0xc0000, 0x40000, 0x00000000 ) /* sprites, bank 1 */
+	ROM_LOAD( "611g07.rom",	0x00000, 0x40000, 0x4ac64f85 )
+	ROM_LOAD( "611g08.rom",	0x40000, 0x40000, 0x52cf260e )
+	ROM_LOAD( "611g11.rom",	0x80000, 0x40000, 0x6c19d4a9 )
+	ROM_LOAD( "611g12.rom",	0xc0000, 0x40000, 0x24475d25 )
 
 	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
-	ROM_RELOAD(				0x100, 0x100 )
-	ROM_LOAD( "611g09.h7",	0x200, 0x100, 0x207a7b07 ) /* tilemap clut */
-	ROM_RELOAD(				0x300, 0x100 )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
 
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
@@ -831,8 +855,7 @@ struct GameDriver combasc_driver =
 	0,
 
 	combatsc_rom,
-	gfx_untangle,
-	0,
+	0, 0,
 	0,
 	0, /* sound_prom */
 
@@ -857,8 +880,7 @@ struct GameDriver combasct_driver =
 	0,
 
 	combatsct_rom,
-	gfx_untangle,
-	0,
+	0, 0,
 	0,
 	0, /* sound_prom */
 
@@ -869,7 +891,8 @@ struct GameDriver combasct_driver =
 	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
 };
 
-struct GameDriver combascb_driver =  {
+struct GameDriver combascb_driver =
+{
 	__FILE__,
 	&combasc_driver,
 	"combascb",
@@ -882,8 +905,7 @@ struct GameDriver combascb_driver =  {
 	0,
 
 	combatscb_rom,
-	gfx_untangle,
-	0,
+	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -908,8 +930,7 @@ struct GameDriver bootcamp_driver =
 	0,
 
 	bootcamp_rom,
-	gfx_untangle,
-	0,
+	0, 0,
 	0,
 	0, /* sound_prom */
 

@@ -37,7 +37,7 @@ c002      DSWA
 c003      IN0
           bit 4-7 = joystick player 2
           bit 0-3 = joystick player 1
-c004      ?
+c004      flipscreen (proper cocktail mode implemented by Chad Hendrickson Aug 1, 1999)
 c005	  IN1
           bit 7 = START 2
 		  bit 6 = unused
@@ -89,6 +89,7 @@ read:
 e000-e008 data from first CPU
 c003      bit 0-3 = joystick
           bit 4-7 = ?
+c004      flipscreen (proper cocktail mode implemented by Chad Hendrickson Aug 1, 1999)
 c005      bit 0 = fire
           bit 1 = fire (again?!)
 		  bit 2 = ?
@@ -122,7 +123,10 @@ void dorunrun_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
+int docastle_flipscreen_off_r(int offset);
+int docastle_flipscreen_on_r(int offset);
+void docastle_flipscreen_off_w(int offset,int data);
+void docastle_flipscreen_on_w(int offset,int data);
 
 
 static struct MemoryReadAddress docastle_readmem[] =
@@ -186,6 +190,8 @@ static struct MemoryReadAddress docastle_readmem2[] =
 	{ 0xc082, 0xc082, input_port_3_r },
 	{ 0xc001, 0xc001, input_port_4_r },
 	{ 0xc081, 0xc081, input_port_4_r },
+	{ 0xc004, 0xc004, docastle_flipscreen_off_r },
+	{ 0xc084, 0xc084, docastle_flipscreen_on_r },
 	{ -1 }	/* end of table */
 };
 
@@ -198,6 +204,8 @@ static struct MemoryWriteAddress docastle_writemem2[] =
 	{ 0xe400, 0xe400, SN76496_1_w },
 	{ 0xe800, 0xe800, SN76496_2_w },
 	{ 0xec00, 0xec00, SN76496_3_w },
+	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
+	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
 	{ -1 }	/* end of table */
 };
 
@@ -215,6 +223,8 @@ static struct MemoryReadAddress dorunrun_readmem2[] =
 	{ 0xc082, 0xc082, input_port_3_r },
 	{ 0xc001, 0xc001, input_port_4_r },
 	{ 0xc081, 0xc081, input_port_4_r },
+	{ 0xc004, 0xc004, docastle_flipscreen_off_r },
+	{ 0xc084, 0xc084, docastle_flipscreen_on_r },
 	{ 0xe000, 0xe008, docastle_shared1_r },
 	{ -1 }	/* end of table */
 };
@@ -227,6 +237,8 @@ static struct MemoryWriteAddress dorunrun_writemem2[] =
 	{ 0xa400, 0xa400, SN76496_1_w },
 	{ 0xa800, 0xa800, SN76496_2_w },
 	{ 0xac00, 0xac00, SN76496_3_w },
+	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
+	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
 	{ 0xe000, 0xe008, docastle_shared0_w },
 	{ -1 }	/* end of table */
 };
@@ -277,10 +289,10 @@ INPUT_PORTS_START( docastle_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Fire */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL ) /* reported as 2 Player Fire */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Jump */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -307,7 +319,7 @@ INPUT_PORTS_START( docastle_input_ports )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Flip Screen?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )	/* flip screen? doesn't work */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Extra" )
@@ -368,7 +380,7 @@ INPUT_PORTS_START( dorunrun_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Flip Screen?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Extra" )
@@ -400,10 +412,10 @@ INPUT_PORTS_START( dowild_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Fire */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL ) /* reported as 2 Player Fire */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Jump */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -430,7 +442,7 @@ INPUT_PORTS_START( dowild_input_ports )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Flip Screen?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Extra" )
@@ -438,7 +450,8 @@ INPUT_PORTS_START( dowild_input_ports )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+
+PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x40, "Special" )
 	PORT_DIPSETTING(    0x40, "Given" )
 	PORT_DIPSETTING(    0x00, "Not Given" )
@@ -462,10 +475,10 @@ INPUT_PORTS_START( jjack_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Fire */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL ) /* reported as 2 Player Fire */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Jump */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -492,7 +505,7 @@ INPUT_PORTS_START( jjack_input_ports )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Flip Screen?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Extra?" )
@@ -553,7 +566,7 @@ INPUT_PORTS_START( kickridr_input_ports )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Flip Screen?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "DSW4" )
@@ -1087,7 +1100,7 @@ struct GameDriver docastle_driver =
 	"Mr. Do's Castle (set 1)",
 	"1983",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nChad Hendrickson",
 	0,
 	&docastle_machine_driver,
 	0,
@@ -1113,7 +1126,7 @@ struct GameDriver docastl2_driver =
 	"Mr. Do's Castle (set 2)",
 	"1983",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nChad Hendrickson",
 	0,
 	&docastle_machine_driver,
 	0,
@@ -1139,7 +1152,7 @@ struct GameDriver dounicorn_driver =
 	"Mr. Do vs. Unicorns",
 	"1983",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nChad Hendrickson",
 	0,
 	&docastle_machine_driver,
 	0,
@@ -1165,7 +1178,7 @@ struct GameDriver dorunrun_driver =
 	"Do! Run Run (set 1)",
 	"1984",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&dorunrun_machine_driver,
 	0,
@@ -1191,7 +1204,7 @@ struct GameDriver dorunru2_driver =
 	"Do! Run Run (set 2)",
 	"1984",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&dorunrun_machine_driver,
 	0,
@@ -1217,7 +1230,7 @@ struct GameDriver dorunruc_driver =
 	"Do! Run Run (Do's Castle hardware)",
 	"1984",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&docastle_machine_driver,
 	0,
@@ -1243,7 +1256,7 @@ struct GameDriver spiero_driver =
 	"Super Pierrot (Japan)",
 	"1987",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&dorunrun_machine_driver,
 	0,
@@ -1269,7 +1282,7 @@ struct GameDriver dowild_driver =
 	"Mr. Do's Wild Ride",
 	"1984",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&dorunrun_machine_driver,
 	0,
@@ -1291,11 +1304,12 @@ struct GameDriver jjack_driver =
 {
 	__FILE__,
 	0,
-	"jjack",
+
+"jjack",
 	"Jumping Jack",
 	"1984",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&dorunrun_machine_driver,
 	0,
@@ -1321,7 +1335,7 @@ struct GameDriver kickridr_driver =
 	"Kick Rider",
 	"1984",
 	"Universal",
-	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
 	&dorunrun_machine_driver,
 	0,

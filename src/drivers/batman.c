@@ -92,7 +92,7 @@ static void latch_w(int offset, int data)
 		else
 			cpu_halt(1, 0);
 	}
-	
+
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ newword) & 0x7000)
 		batman_set_alpha_bank((newword >> 12) & 7);
@@ -172,9 +172,7 @@ INPUT_PORTS_START( batman_ports )
 	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )	/* Input buffer full (@260030) */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )	/* Output buffer full (@260040) */
-	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	JSA_III_PORT	/* audio board port */
@@ -318,13 +316,13 @@ static void batman_init(void)
 		0x0150,0x0218,0x01D0,0x0100,0x01D0,0x0300,0x01D0,0x0600,
 		0x01D0,0x02C8,0x0000
 	};
-	
+
 	atarigen_eeprom_default = default_eeprom;
 	atarijsa_init(1, 3, 2, 0x0040);
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4163, 0x417b);
-	
+
 	/* display messages */
 	atarigen_show_sound_message();
 }

@@ -2,8 +2,6 @@
 
 88 Games (c) 1988 Konami
 
-TODO: hook up samples
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -19,13 +17,9 @@ static void k88games_banking( int lines );
 static unsigned char *ram;
 static int videobank;
 
-extern unsigned char *k88games_zoomram,*k88games_zoomctrl;
 extern int k88games_priority;
 int k88games_vh_start(void);
 void k88games_vh_stop(void);
-int k88games_zoomram_r(int offset);
-void k88games_zoomram_w(int offset,int data);
-void k88games_zoomctrl_w(int offset,int data);
 void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -43,17 +37,17 @@ static int bankedram_r(int offset)
 	if (videobank) return ram[offset];
 	else
 	{
-		if (zoomreadroms && (k88games_zoomctrl[0x0e] & 1) == 0)
-			return Machine->memory_region[3][(offset + (k88games_zoomctrl[0x0c] << 11)) / 2];
+		if (zoomreadroms)
+			return K051316_rom_r(offset);
 		else
-			return k88games_zoomram_r(offset);
+			return K051316_r(offset);
 	}
 }
 
 static void bankedram_w(int offset,int data)
 {
 	if (videobank) ram[offset] = data;
-	else k88games_zoomram_w(offset,data);
+	else K051316_w(offset,data);
 }
 
 static void k88games_5f84_w(int offset,int data)
@@ -115,6 +109,8 @@ static void speech_msg_w( int offset, int data )
 	UPD7759_message_w( speech_chip, data );
 }
 
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },	/* banked ROM + palette RAM */
@@ -134,14 +130,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },	/* banked ROM */
-	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w },	/* banked ROM + palette RAM */
+	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },	/* banked ROM + palette RAM */
 	{ 0x2000, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x3fff, bankedram_w, &ram },
 	{ 0x5f84, 0x5f84, k88games_5f84_w },
 	{ 0x5f88, 0x5f88, watchdog_reset_w },
 	{ 0x5f8c, 0x5f8c, soundlatch_w },
 	{ 0x5f90, 0x5f90, k88games_sh_irqtrigger_w },
-	{ 0x5fc0, 0x5fcf, k88games_zoomctrl_w, &k88games_zoomctrl },
+	{ 0x5fc0, 0x5fcf, K051316_ctrl_w },
 	{ 0x4000, 0x7fff, K052109_051960_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -167,6 +163,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+
+
 /***************************************************************************
 
 	Input Ports
@@ -187,9 +185,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x20, 0x20, "World Records" )
 	PORT_DIPSETTING(    0x20, "Don't Erase" )
 	PORT_DIPSETTING(    0x00, "Erase on Reset" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -248,8 +244,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, "Disabled" )
-
+//	PORT_DIPSETTING(    0x00, "Disabled" )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -278,24 +273,6 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout zoomlayout =
-{
-	16,16,	/* 16*16 tiles */
-	2048,	/* 2048 tiles */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
-			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	128*8	/* every tile takes 128 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 3, 0x000000, &zoomlayout,   0, 128 },
-	{ -1 }
-};
 
 static struct YM2151interface ym2151_interface =
 {
@@ -315,6 +292,8 @@ static struct UPD7759_interface upd7759_interface =
 	{0}
 };
 
+
+
 static struct MachineDriver machine_driver =
 {
 	{
@@ -323,15 +302,15 @@ static struct MachineDriver machine_driver =
 			3000000, /* ? */
 			0,
 			readmem,writemem,0,0,
-            k88games_interrupt,1
-        },
+			k88games_interrupt,1
+		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
 			4,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-        }
+		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -339,7 +318,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	0,	/* gfx decoded by konamiic.c */
 	2048, 2048,
 	0,
 
@@ -364,6 +343,7 @@ static struct MachineDriver machine_driver =
 };
 
 
+
 /***************************************************************************
 
   Game ROMs
@@ -371,9 +351,63 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( k88games_rom )
-	ROM_REGION( 0x21800 ) /* code + banked roms + space for banked ram */
+	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
     ROM_LOAD( "861m01.k18", 0x08000, 0x08000, 0x4a4e2959 )
 	ROM_LOAD( "861m02.k16", 0x10000, 0x10000, 0xe19f15f6 )
+
+	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
+	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
+	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
+	ROM_LOAD_GFX_ODD ( "861a08.d", 0x020000, 0x10000, 0xe01a3802 )
+	ROM_LOAD_GFX_EVEN( "861a09.a", 0x040000, 0x10000, 0xdf8917b6 )
+	ROM_LOAD_GFX_ODD ( "861a09.c", 0x040000, 0x10000, 0xf577b88f )
+	ROM_LOAD_GFX_EVEN( "861a09.b", 0x060000, 0x10000, 0x4917158d )
+	ROM_LOAD_GFX_ODD ( "861a09.d", 0x060000, 0x10000, 0x2bb3282c )
+
+	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_LOAD_GFX_EVEN( "861a05.a", 0x000000, 0x10000, 0xcedc19d0 )	/* sprites */
+	ROM_LOAD_GFX_ODD ( "861a05.e", 0x000000, 0x10000, 0x725af3fc )
+	ROM_LOAD_GFX_EVEN( "861a05.b", 0x020000, 0x10000, 0xdb2a8808 )
+	ROM_LOAD_GFX_ODD ( "861a05.f", 0x020000, 0x10000, 0x32d830ca )
+	ROM_LOAD_GFX_EVEN( "861a05.c", 0x040000, 0x10000, 0xcf03c449 )
+	ROM_LOAD_GFX_ODD ( "861a05.g", 0x040000, 0x10000, 0xfd51c4ea )
+	ROM_LOAD_GFX_EVEN( "861a05.d", 0x060000, 0x10000, 0x97d78c77 )
+	ROM_LOAD_GFX_ODD ( "861a05.h", 0x060000, 0x10000, 0x60d0c8a5 )
+	ROM_LOAD_GFX_EVEN( "861a06.a", 0x080000, 0x10000, 0x85e2e30e )
+	ROM_LOAD_GFX_ODD ( "861a06.e", 0x080000, 0x10000, 0x6f96651c )
+	ROM_LOAD_GFX_EVEN( "861a06.b", 0x0a0000, 0x10000, 0xce17eaf0 )
+	ROM_LOAD_GFX_ODD ( "861a06.f", 0x0a0000, 0x10000, 0x88310bf3 )
+	ROM_LOAD_GFX_EVEN( "861a06.c", 0x0c0000, 0x10000, 0xa568b34e )
+	ROM_LOAD_GFX_ODD ( "861a06.g", 0x0c0000, 0x10000, 0x4a55beb3 )
+	ROM_LOAD_GFX_EVEN( "861a06.d", 0x0e0000, 0x10000, 0xbc70ab39 )
+	ROM_LOAD_GFX_ODD ( "861a06.h", 0x0e0000, 0x10000, 0xd906b79b )
+
+	ROM_REGION( 0x040000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_LOAD( "861a04.a", 0x000000, 0x10000, 0x092a8b15 )	/* zoom/rotate */
+	ROM_LOAD( "861a04.b", 0x010000, 0x10000, 0x75744b56 )
+	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
+	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
+
+	ROM_REGION( 0x10000 ) /* Z80 code */
+	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
+
+	ROM_REGION( 0x20000 ) /* samples for UPD7759 #0 */
+	ROM_LOAD( "861a07.a", 0x000000, 0x10000, 0x5d035d69 )
+	ROM_LOAD( "861a07.b", 0x010000, 0x10000, 0x6337dd91 )
+
+	ROM_REGION( 0x20000 ) /* samples for UPD7759 #1 */
+	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
+	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
+
+	ROM_REGION(0x0200)	/* PROMs */
+	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
+ROM_END
+
+ROM_START( konami88_rom )
+	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
+	ROM_LOAD( "861.e03", 0x08000, 0x08000, 0x55979bd9 )
+	ROM_LOAD( "861.e02", 0x10000, 0x10000, 0x5b7e98a6 )
 
 	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
@@ -474,15 +508,14 @@ static void k88games_init_machine( void )
 {
 	konami_cpu_setlines_callback = k88games_banking;
 	paletteram = &Machine->memory_region[0][0x20000];
-	k88games_zoomram = &Machine->memory_region[0][0x21000];
 }
 
 
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
-	konami_rom_deinterleave(2);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(2);
 }
 
 
@@ -531,6 +564,33 @@ struct GameDriver k88games_driver =
 	0,
 
 	k88games_rom,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+
+	nvram_load, nvram_save
+};
+
+
+struct GameDriver konami88_driver =
+{
+	__FILE__,
+	&k88games_driver,
+	"konami88",
+	"Konami '88",
+	"1988",
+	"Konami",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	konami88_rom,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */

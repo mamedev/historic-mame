@@ -23,6 +23,7 @@
 				This version works fine with the real MCU ROM
 	arkatayt	Another bootleg of the early Japanese one, more heavily modified
 	arkblock	Another bootleg of the early Japanese one, more heavily modified
+	arkbloc2	Another bootleg
 	arkbl3   	Another bootleg of the early Japanese one, more heavily modified
 	arkangc		Game Corporation bootleg with level selector
 
@@ -165,9 +166,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX ( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING ( 0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING ( 0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
@@ -218,9 +217,7 @@ INPUT_PORTS_START( japan_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX ( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING ( 0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING ( 0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
@@ -491,10 +488,26 @@ ROM_START( arkblock_rom )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
+ROM_START( arkbloc2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ark-6.bin",    0x0000, 0x8000, 0x0be015de )
+	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, 0x9f0d4754 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+ROM_END
+
 ROM_START( arkangc_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "arkgc.1",  0x0000, 0x8000, 0xc54232e6 )
-	ROM_LOAD( "arkgc.2",  0x8000, 0x8000, 0x9f0d4754 )
+	ROM_LOAD( "arkgc.1",      0x0000, 0x8000, 0xc54232e6 )
+	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, 0x9f0d4754 )
 
 	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
@@ -722,6 +735,32 @@ struct GameDriver arkblock_driver =
 	0,
 
 	arkblock_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	japan_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver arkbloc2_driver =
+{
+	__FILE__,
+	&arkanoid_driver,
+	"arkbloc2",
+	"Block (Game Corporation bootleg)",
+	"1986",
+	"bootleg",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nHIGHWAYMAN",
+	0,
+	&bootleg_machine_driver,
+	0,
+
+	arkbloc2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

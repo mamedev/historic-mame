@@ -96,26 +96,36 @@ static struct osd_bitmap *create_tmpbitmap( int width, int height ){
 }
 
 void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
-	int left = clip->min_x;
-	int top = clip->min_y;
-	int right = clip->max_x+1;
-	int bottom = clip->max_y+1;
+	int left,top,right,bottom;
 
-	tilemap->clip = *clip;
+	if (clip)
+	{
+		left = clip->min_x;
+		top = clip->min_y;
+		right = clip->max_x+1;
+		bottom = clip->max_y+1;
 
-	if( orientation & ORIENTATION_SWAP_XY ){
-		SWAP(left,top)
-		SWAP(right,bottom)
+		if( orientation & ORIENTATION_SWAP_XY ){
+			SWAP(left,top)
+			SWAP(right,bottom)
+		}
+		if( orientation & ORIENTATION_FLIP_X ){
+			SWAP(left,right)
+			left = screen_width-left;
+			right = screen_width-right;
+		}
+		if( orientation & ORIENTATION_FLIP_Y ){
+			SWAP(top,bottom)
+			top = screen_height-top;
+			bottom = screen_height-bottom;
+		}
 	}
-	if( orientation & ORIENTATION_FLIP_X ){
-		SWAP(left,right)
-		left = screen_width-left;
-		right = screen_width-right;
-	}
-	if( orientation & ORIENTATION_FLIP_Y ){
-		SWAP(top,bottom)
-		top = screen_height-top;
-		bottom = screen_height-bottom;
+	else
+	{
+		left = 0;
+		top = 0;
+		right = tilemap->width;
+		bottom = tilemap->height;
 	}
 
 	tilemap->clip_left = left;
@@ -708,6 +718,9 @@ static int draw_bitmask(
 
 	int x,sx = tile_width*col;
 	int sy,y1,y2,dy;
+
+	if(maskdata==TILEMAP_BITMASK_TRANSPARENT)  return TILE_TRANSPARENT;
+	if(maskdata==TILEMAP_BITMAK_OPAQUE) return TILE_OPAQUE;
 
 	if( flags&TILE_FLIPY ){
 		y1 = tile_height*row+tile_height-1;
@@ -1319,15 +1332,15 @@ void tilemap_update( struct tilemap *tilemap ){
 			if( tilemap->attributes&TILEMAP_FLIPX ) tile_flip |= TILE_FLIPX;
 			if( tilemap->attributes&TILEMAP_FLIPY ) tile_flip |= TILE_FLIPY;
 #ifndef PREROTATE_GFX
-			if( orientation & ORIENTATION_SWAP_XY )
+			if( Machine->orientation & ORIENTATION_SWAP_XY )
 			{
-				if( orientation & ORIENTATION_FLIP_X ) tile_flip ^= TILE_FLIPY;
-				if( orientation & ORIENTATION_FLIP_Y ) tile_flip ^= TILE_FLIPX;
+				if( Machine->orientation & ORIENTATION_FLIP_X ) tile_flip ^= TILE_FLIPY;
+				if( Machine->orientation & ORIENTATION_FLIP_Y ) tile_flip ^= TILE_FLIPX;
 			}
 			else
 			{
-				if( orientation & ORIENTATION_FLIP_X ) tile_flip ^= TILE_FLIPX;
-				if( orientation & ORIENTATION_FLIP_Y ) tile_flip ^= TILE_FLIPY;
+				if( Machine->orientation & ORIENTATION_FLIP_X ) tile_flip ^= TILE_FLIPX;
+				if( Machine->orientation & ORIENTATION_FLIP_Y ) tile_flip ^= TILE_FLIPY;
 			}
 #endif
 

@@ -151,9 +151,7 @@ INPUT_PORTS_START( route16_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* Input Port 2 */
@@ -263,7 +261,7 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 			ignore_interrupt,0								\
 		}													\
 	},														\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */ \
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */ \
 	1,														\
 	0,														\
 															\

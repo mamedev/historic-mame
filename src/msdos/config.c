@@ -24,18 +24,18 @@ extern int gfx_mode, gfx_width, gfx_height;
 
 extern int monitor_type;
 
-extern unsigned char tw224x288ns_h, tw224x288ns_v, tw224x288sc_h, tw224x288sc_v;
-extern unsigned char tw256x256ns_h, tw256x256ns_v, tw256x256sc_h, tw256x256sc_v;
-extern unsigned char tw256x256ns_hor_h, tw256x256ns_hor_v, tw256x256sc_hor_h, tw256x256sc_hor_v;
-extern unsigned char tw256x256ns_57_h, tw256x256ns_57_v, tw256x256sc_57_h, tw256x256sc_57_v;
-extern unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw256x256sc_h57_v;
-extern unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
-extern unsigned char tw320x240ns_h, tw320x240ns_v, tw320x240sc_h, tw320x240sc_v;
-extern unsigned char tw336x240ns_h, tw336x240ns_v, tw336x240sc_h, tw336x240sc_v;
-extern unsigned char tw384x224ns_h, tw384x224ns_v, tw384x224sc_h, tw384x224sc_v;
-extern unsigned char tw384x240ns_h, tw384x240ns_v, tw384x240sc_h, tw384x240sc_v;
-extern unsigned char tw384x256ns_h, tw384x256ns_v, tw384x256sc_h, tw384x256sc_v;
-extern int tw256x224_hor;
+extern unsigned char tw224x288_h, tw224x288_v;
+extern unsigned char tw240x256_h, tw240x256_v;
+extern unsigned char tw256x240_h, tw256x240_v;
+extern unsigned char tw256x256_h, tw256x256_v;
+extern unsigned char tw256x256_hor_h, tw256x256_hor_v;
+extern unsigned char tw288x224_h, tw288x224_v;
+extern unsigned char tw320x240_h, tw320x240_v;
+extern unsigned char tw336x240_h, tw336x240_v;
+extern unsigned char tw384x224_h, tw384x224_v;
+extern unsigned char tw384x240_h, tw384x240_v;
+extern unsigned char tw384x256_h, tw384x256_v;
+
 
 /* Tweak values for 15.75KHz arcade/ntsc/pal modes */
 /* from video.c */
@@ -67,7 +67,7 @@ void decompose_rom_sample_path (char *rompath, char *samplepath);
 extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
-/*from svga15kh.c centering for 15.75KHz modes (req. for 15.75KHz Modes)*/
+/* from video.c, for centering tweaked modes */
 extern int center_x;
 extern int center_y;
 
@@ -424,56 +424,29 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
 
 	/* get tweaked modes info */
-	tw256x224_hor     = get_bool("tweaked", "256x224_hor",    NULL, 1);
-	tw224x288ns_h     = get_int ("tweaked", "224x288ns_h",    NULL, 0x5f);
-	tw224x288ns_v     = get_int ("tweaked", "224x288ns_v",    NULL, 0x53);
-	tw224x288sc_h     = get_int ("tweaked", "224x288sc_h",    NULL, 0x5f);
-	tw224x288sc_v     = get_int ("tweaked", "224x288sc_v",    NULL, 0x43);
-	tw288x224ns_h     = get_int ("tweaked", "288x224ns_h",    NULL, 0x56);
-	tw288x224ns_v     = get_int ("tweaked", "288x224ns_v",    NULL, 0x3f);
-	tw288x224sc_h     = get_int ("tweaked", "288x224sc_h",    NULL, 0x5f);
-	tw288x224sc_v     = get_int ("tweaked", "288x224sc_v",    NULL, 0x0b);
-	tw256x256ns_h     = get_int ("tweaked", "256x256ns_h",    NULL, 0x62);
-	tw256x256ns_v     = get_int ("tweaked", "256x256ns_v",    NULL, 0x42);
-	tw256x256sc_h     = get_int ("tweaked", "256x256sc_h",    NULL, 0x5f);
-	tw256x256sc_v     = get_int ("tweaked", "256x256sc_v",    NULL, 0x23);
-	tw256x256ns_hor_h     = get_int ("tweaked", "256x256ns_hor_h",    NULL, 0x55);
-	tw256x256ns_hor_v     = get_int ("tweaked", "256x256ns_hor_v",    NULL, 0x42);
-	tw256x256sc_hor_h     = get_int ("tweaked", "256x256sc_hor_h",    NULL, 0x52);
-	tw256x256sc_hor_v     = get_int ("tweaked", "256x256sc_hor_v",    NULL, 0x2b);
-	tw256x256ns_57_h     = get_int ("tweaked", "256x256ns_57_h",    NULL, 0x5f);
-	tw256x256ns_57_v     = get_int ("tweaked", "256x256ns_57_v",    NULL, 0x23);
-	tw256x256sc_57_h     = get_int ("tweaked", "256x256sc_57_h",    NULL, 0x5f);
-	tw256x256sc_57_v     = get_int ("tweaked", "256x256sc_57_v",    NULL, 0x12);
-	tw256x256ns_h57_h     = get_int ("tweaked", "256x256ns_h57_h",    NULL, 0x55);
-	tw256x256ns_h57_v     = get_int ("tweaked", "256x256ns_h57_v",    NULL, 0x61);
-	tw256x256sc_h57_h     = get_int ("tweaked", "256x256sc_h57_h",    NULL, 0x54);
-	tw256x256sc_h57_v     = get_int ("tweaked", "256x256sc_h57_v",    NULL, 0x33);
-	/* 320x240 modes */
-	tw320x240ns_h		= get_int ("tweaked", "320x240ns_h",	NULL, 0x5f);
-	tw320x240ns_v		= get_int ("tweaked", "320x240ns_v",    NULL, 0x0b);
-	tw320x240sc_h		= get_int ("tweaked", "320x240sc_h",    NULL, 0x5f);
-	tw320x240sc_v		= get_int ("tweaked", "320x240sc_v",    NULL, 0x07);
-	/* 336x240 modes */
-	tw336x240ns_h		= get_int ("tweaked", "336x240ns_h",	NULL, 0x5f);
-	tw336x240ns_v		= get_int ("tweaked", "336x240ns_v",    NULL, 0x08);
-	tw336x240sc_h		= get_int ("tweaked", "336x240sc_h",    NULL, 0x5f);
-	tw336x240sc_v		= get_int ("tweaked", "336x240sc_v",    NULL, 0x03);
-    /* 384x224 modes */
-	tw384x224ns_h		= get_int ("tweaked", "384x224ns_h",	NULL, 0x6c);
-	tw384x224ns_v		= get_int ("tweaked", "384x224ns_v",	NULL, 0x0c);
-	tw384x224sc_h		= get_int ("tweaked", "384x224sc_h",	NULL, 0x6c);
-	tw384x224sc_v		= get_int ("tweaked", "384x224sc_v",	NULL, 0x05);
-	/* 384x240 modes */
-	tw384x240ns_h		= get_int ("tweaked", "384x240ns_h",	NULL, 0x6c);
-	tw384x240ns_v		= get_int ("tweaked", "384x240ns_v",    NULL, 0x0c);
-	tw384x240sc_h		= get_int ("tweaked", "384x240sc_h",    NULL, 0x6c);
-	tw384x240sc_v		= get_int ("tweaked", "384x240sc_v",    NULL, 0x05);
-	/* 384x256 modes */
-	tw384x256ns_h		= get_int ("tweaked", "384x256ns_h",	NULL, 0x6c);
-	tw384x256ns_v		= get_int ("tweaked", "384x256ns_v",    NULL, 0x32);
-	tw384x256sc_h		= get_int ("tweaked", "384x256sc_h",    NULL, 0x6c);
-	tw384x256sc_v		= get_int ("tweaked", "384x256sc_v",    NULL, 0x19);
+	tw224x288_h		= get_int ("tweaked", "224x288_h",		NULL, 0x5f);
+	tw224x288_v     = get_int ("tweaked", "224x288_v",		NULL, 0x53);
+	tw240x256_h     = get_int ("tweaked", "240x256_h",		NULL, 0x67);
+	tw240x256_v     = get_int ("tweaked", "240x256_v",		NULL, 0x23);
+	tw256x240_h     = get_int ("tweaked", "256x240_h",		NULL, 0x55);
+	tw256x240_v     = get_int ("tweaked", "256x240_v",		NULL, 0x43);
+	tw256x256_h     = get_int ("tweaked", "256x256_h",		NULL, 0x6c);
+	tw256x256_v     = get_int ("tweaked", "256x256_v",		NULL, 0x23);
+	tw256x256_hor_h	= get_int ("tweaked", "256x256_hor_h",	NULL, 0x55);
+	tw256x256_hor_v	= get_int ("tweaked", "256x256_hor_v",	NULL, 0x60);
+	tw288x224_h     = get_int ("tweaked", "288x224_h",		NULL, 0x5f);
+	tw288x224_v     = get_int ("tweaked", "288x224_v",		NULL, 0x0c);
+	tw320x240_h		= get_int ("tweaked", "320x240_h",		NULL, 0x5f);
+	tw320x240_v		= get_int ("tweaked", "320x240_v",		NULL, 0x0c);
+	tw336x240_h		= get_int ("tweaked", "336x240_h",		NULL, 0x5f);
+	tw336x240_v		= get_int ("tweaked", "336x240_v",		NULL, 0x0c);
+	tw384x224_h		= get_int ("tweaked", "384x224_h",		NULL, 0x6c);
+	tw384x224_v		= get_int ("tweaked", "384x224_v",		NULL, 0x0c);
+	tw384x240_h		= get_int ("tweaked", "384x240_h",		NULL, 0x6c);
+	tw384x240_v		= get_int ("tweaked", "384x240_v",		NULL, 0x0c);
+	tw384x256_h		= get_int ("tweaked", "384x256_h",		NULL, 0x6c);
+	tw384x256_v		= get_int ("tweaked", "384x256_v",		NULL, 0x23);
+
 	/* Get 15.75KHz tweak values */
 	tw224x288arc_h		= get_int ("tweaked", "224x288arc_h",	NULL, 0x5d);
 	tw224x288arc_v		= get_int ("tweaked", "224x288arc_v",	NULL, 0x38);

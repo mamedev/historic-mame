@@ -92,8 +92,9 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( aztarac_input_ports )
 
+
+INPUT_PORTS_START( aztarac_input_ports )
 	PORT_START /* IN0 */
 	PORT_ANALOG( 0x1f, 0xf, IPT_AD_STICK_X | IPF_CENTER, 100, 1, 0, 0, 0x1e )
 
@@ -112,8 +113,9 @@ INPUT_PORTS_START( aztarac_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-
 INPUT_PORTS_END
+
+
 
 static struct GfxLayout fakelayout =
 {

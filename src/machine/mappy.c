@@ -154,8 +154,8 @@ int mappy_customio_r_1(int offset)
 	static int credden[] = { 1, 1, 1, 1, 2, 2, 3, 3 };
 	int val, temp, mode = mappy_customio_1[8];
 
-	/*if (errorlog)
-		fprintf (errorlog, "I/O read 1: mode %d offset %d\n", mode, offset);*/
+	if (errorlog)
+		fprintf (errorlog, "I/O read 1: mode %d offset %d\n", mode, offset);
 
 	/* mode 3 is the standard, and returns actual important values */
 	if (mode == 1 || mode == 3)
@@ -211,9 +211,11 @@ int mappy_customio_r_1(int offset)
 			case 5:		/* Player 1 buttons */
 				return readinputport (3) >> 4;
 
-			case 6:		/* Read, but unknown */
-			case 7:		/* Read, but unknown */
-				return 0;
+			case 6:		/* Player 2 joystick */
+				return readinputport (5) & 0x0f;
+
+			case 7:		/* Player 2 joystick */
+				return readinputport (5) >> 4;
 		}
 	}
 
@@ -234,8 +236,8 @@ int mappy_customio_r_2(int offset)
 {
 	int mode = mappy_customio_2[8];
 
-	/*if (errorlog)
-		fprintf (errorlog, "I/O read 2: mode %d, offset %d\n", mappy_customio_2[8], offset);*/
+	if (errorlog)
+		fprintf (errorlog, "I/O read 2: mode %d, offset %d\n", mappy_customio_2[8], offset);
 
 	/* mode 4 is the standard, and returns actual important values */
 	if (mode == 4)
@@ -342,9 +344,11 @@ int digdug2_customio_r_1(int offset)
 				case 5:		/* Player 1 buttons */
 					return readinputport (3) >> 4;
 
-				case 6:		/* Read, but unknown */
-				case 7:		/* Read, but unknown */
-					return 0;
+				case 6:		/* Player 2 joystick */
+					return readinputport (5) & 0x0f;
+
+				case 7:		/* Player 2 buttons */
+					return readinputport (5) >> 4;
 			}
 		}
 	}
@@ -426,19 +430,16 @@ int motos_customio_r_1(int offset)
 
 			case 1:		/* Player 1 joystick */
 				return readinputport (2) & 0x0f;
-
 			case 3:		/* Start buttons, high nibble of port 3 */
 				return readinputport (3) >> 4;
-
 			case 9:
 				return 0;
-
 			case 2:
 			case 4:
 			case 5:
 			case 6:
-			case 7:
-				return 0;
+			case 7:		/* Player 2 joystick */
+				return readinputport (4) & 0x0f;
 		}
 	}
 	else if (mode == 8)  /* I/O tests chip 1 */
@@ -480,9 +481,9 @@ int motos_customio_r_2(int offset)
 			case 4:		/* DSW0, high nibble */
 				return readinputport (0) >> 4;
 
-			case 6:		/* DSW1, high nibble + Player 1 buttons, high nibble */
-				return (readinputport (1) >> 4) | (readinputport (2) >> 4);
+                  case 6:         /* DSW1, high nibble + Player 1 buttons, high nibble + Player 2? button, high nibble */
 
+                        return (readinputport (1) >> 4) | (readinputport (2) >> 4) | (readinputport (4) >> 4);
 			case 0:
 			case 1:
 			case 3:
@@ -578,11 +579,11 @@ int todruaga_customio_r_1(int offset)
 				case 5:		/* Player 1 buttons */
 					return readinputport (3) >> 4;
 
-				case 6:		/* read, but unknown */
-					return 0;
+				case 6:		/* Player 2 joystick */
+					return readinputport (6) & 0x0f;
 
-				case 7:		/* More player 1 buttons? */
-					return readinputport (4) >> 4;
+				case 7:		/* Player 2 buttons */
+					return readinputport (6) >> 4;
 			}
 		}
 	}

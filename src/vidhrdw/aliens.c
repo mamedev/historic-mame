@@ -80,6 +80,13 @@ void aliens_vh_stop( void )
 }
 
 
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
 void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
@@ -93,11 +100,11 @@ void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);	/* ?? */
-	K051960_draw_sprites(bitmap,3,3);
+	K051960_sprites_draw(bitmap,3,3);
 	K052109_tilemap_draw(bitmap,1,0);
-	K051960_draw_sprites(bitmap,2,2);
+	K051960_sprites_draw(bitmap,2,2);
 	K052109_tilemap_draw(bitmap,2,0);
-	K051960_draw_sprites(bitmap,1,1);
+	K051960_sprites_draw(bitmap,1,1);
 	K052109_tilemap_draw(bitmap,0,0);
-	K051960_draw_sprites(bitmap,0,0);
+	K051960_sprites_draw(bitmap,0,0);
 }

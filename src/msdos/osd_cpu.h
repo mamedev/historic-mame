@@ -22,36 +22,20 @@
 *******************************************************************************/
 
 
-/***************************** DOS Section ************************************/
-
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
 
-#if defined DJGPP || defined UNIX
 
-typedef unsigned char	UINT8;
-typedef unsigned short	UINT16;
-typedef unsigned int	UINT32;
-typedef signed char 	INT8;
-typedef signed short	INT16;
-typedef signed int	INT32;
+typedef unsigned char						UINT8;
+typedef unsigned short						UINT16;
+typedef unsigned int						UINT32;
+__extension__ typedef unsigned long long	UINT64;
+typedef signed char 						INT8;
+typedef signed short						INT16;
+typedef signed int							INT32;
+__extension__ typedef signed long long		INT64;
 
-#ifdef UNIX
-
-#ifdef __LP64__
-typedef signed   long	INT64;
-typedef unsigned long	UINT64;
-#else
-typedef signed   long long	INT64;
-typedef unsigned long long	UINT64;
-#endif
-
-#else
-__extension__	typedef signed long long	INT64;
-__extension__	typedef unsigned long long	UINT64;
-#endif
-
-/* Combine to 32-bit integers into a 64-bit integer */
+/* Combine two 32-bit integers into a 64-bit integer */
 #define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (B))
 #define COMBINE_U64_U32_U32(A,B)  COMBINE_64_32_32(A,B)
 
@@ -72,47 +56,6 @@ __extension__	typedef unsigned long long	UINT64;
 #define MUL_64_32_32(A,B)	  ((A)*(INT64)(B))
 #define MUL_U64_U32_U32(A,B)  ((A)*(UINT64)(UINT32)(B))
 
-#endif
-
-/***************************** Mac Section ************************************/
-
-#ifdef macintosh
-
-				typedef unsigned char		UINT8;
-				typedef unsigned short		UINT16;
-				typedef unsigned int		UINT32;
-				typedef unsigned long long	UINT64;
-				typedef signed char 		INT8;
-				typedef signed short		INT16;
-				typedef signed int			INT32;
-				typedef signed long long	INT64;
-
-/* Combine to 32-bit integers into a 64-bit integer */
-#define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (B))
-#define COMBINE_U64_U32_U32(A,B)  COMBINE_64_32_32(A,B)
-
-/* Return upper 32 bits of a 64-bit integer */
-#define HI32_32_64(A)		  (((UINT64)(A)) >> 32)
-#define HI32_U32_U64(A)		  HI32_32_64(A)
-
-/* Return lower 32 bits of a 64-bit integer */
-#define LO32_32_64(A)		  ((A) & 0xffffffff)
-#define LO32_U32_U64(A)		  LO32_32_64(A)
-
-#define DIV_64_64_32(A,B)	  ((A)/(B))
-#define DIV_U64_U64_U32(A,B)  ((A)/(UINT32)(B))
-
-#define MOD_32_64_32(A,B)	  ((A)%(B))
-#define MOD_U32_U64_U32(A,B)  ((A)%(UINT32)(B))
-
-#define MUL_64_32_32(A,B)	  ((A)*(INT64)(B))
-#define MUL_U64_U32_U32(A,B)  ((A)*(UINT64)(UINT32)(B))
-
-#endif
-
-/***************************** OS/2 Section ***********************************/
-
-/***************************** Common types ***********************************/
 
 /******************************************************************************
  * Union of UINT8, UINT16 and UINT32 in native endianess of the target

@@ -135,12 +135,11 @@ void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority )
 			int bank = spriteram[offs+0];
 			if( bank & 4 )
 			{ /* visible */
-				int size = (spriteram[offs + 2] & 3);
-				/* 0 = 8x8 1 = 16x16 2 = 32x32 */
-
 				int which = spriteram[offs+1];
-
 				int code;
+				int size = (spriteram[offs + 2] & 3);
+				/* 0 = 8x8 1 = 16x16 2 = 32x32 3 = 64x64 */
+				if (size == 3) continue;	/* not used by these games */
 
 				if( video_type != 0)
 				  code = (which) + ((bank&0xf8)<<5); /* silkworm */
@@ -254,9 +253,10 @@ palette_init_used_colors();
 		int bank = spriteram[offs+0];
 		if( bank & 4 )
 		{ /* visible */
-			int size = (spriteram[offs + 2] & 3);
-			/* 0 = 8x8 1 = 16x16 2 = 32x32 */
 			int which = spriteram[offs+1];
+			int size = (spriteram[offs + 2] & 3);
+			/* 0 = 8x8 1 = 16x16 2 = 32x32 3 = 64x64 */
+			if (size == 3) continue;	/* not used by these games */
 
 
 			if( video_type != 0 )

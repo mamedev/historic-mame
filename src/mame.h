@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #ifdef MESS
-#include "mess.h"
+#include "mess/mess.h"
 #endif
 
 extern char build_version[];
@@ -73,9 +73,13 @@ struct GameOptions {
 	int antialias;
 	int use_artwork;
 
-#ifdef MESS
-	char file_list[MAX_ROM+MAX_FLOPPY+MAX_HARD+MAX_CASSETTE][32];
-#endif
+	#ifdef MESS
+		/* This is ugly for now, but its temporary! */
+	  char rom_name[MAX_ROM][2048];           /* MESS */
+ 	  char floppy_name[MAX_FLOPPY][2048];     /* MESS */
+	  char hard_name[MAX_HARD][2048];         /* MESS */
+	  char cassette_name[MAX_CASSETTE][2048]; /* MESS */
+	#endif
 };
 
 extern struct GameOptions options;

@@ -111,6 +111,57 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO 1 offset %02x data %02x\n",cpu_g
 			}
 			break;
 
+/*
+Posted by : Gamester
+Date / Time : August 24, 1999 at 07:41:44:
+
+
+Bosconian scoring info
+
+60h = switch to player 1
+68h = switch to player 2
+
+81h = 10 Asteroid
+83h = 20 Cosmo-Mine
+87h = 50 I-Type
+88h = 60 P-Type
+89h = 70 E-Type
+8Dh = 200 Spy Ship
+93h = 200 Bonus
+95h = 300 Bonus
+96h = 400 Bonus
+98h = 600 Bonus
+9Ah = 800 Bonus
+A0h = 500 I-Type Formation
+A1h = 1000 P-Type Formation
+A2h = 1500 E-Type Formation
+A3h = 2000 Bonus
+A5h = 3000 Bonus
+A6h = 4000 Bonus
+A7h = 5000 Bonus
+A8h = 6000 Bonus
+A9h = 7000 Bonus
+B7h = 100 I-Type Leader
+B8h = 120 P-Type Leader
+B9h = 140 E-Type Leader
+
+Bonuses are given at the end of a round if the game is set to auto
+difficulty and the round is completed on one life. Bonus values are:
+
+100x3 95h
+100x4 96h
+100x8 9Ah
+200x4 96h,96h
+200x8 9Ah,9Ah
+300x8 A3h,96h
+400x8 A5h,93h
+500x8 A3h,A3h
+600x8 A6h,9Ah
+700x8 A7h,98h
+800x8 A8h,96h
+900x8 A9h,93h
+1000x8 A6h,A6h
+*/
 		case 0x64:
 			if (offset == 0)
 			{
@@ -159,6 +210,12 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO 1 offset %02x data %02x\n",cpu_g
 					case 0x96:
 						Score += 400;
 						break;
+					case 0x98:
+						Score += 600;
+						break;
+					case 0x9a:
+						Score += 800;
+						break;
 					case 0xA0:
 						Score += 500;
 						break;
@@ -168,11 +225,32 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO 1 offset %02x data %02x\n",cpu_g
 					case 0xA2:
 						Score += 1500;
 						break;
+					case 0xA3:
+						Score += 2000;
+						break;
+					case 0xA5:
+						Score += 3000;
+						break;
+					case 0xA6:
+						Score += 4000;
+						break;
+					case 0xA7:
+						Score += 5000;
+						break;
+					case 0xA8:
+						Score += 6000;
+						break;
+					case 0xA9:
+						Score += 7000;
+						break;
 					case 0xB7:
-						Score += 500;
+						Score += 100;
 						break;
 					case 0xB8:
-						Score += 600;	/* ? center ship of a V-shaped formation */
+						Score += 120;
+						break;
+					case 0xB9:
+						Score += 140;
 						break;
 					case 0xC3:	/*	??	*/
 						break;

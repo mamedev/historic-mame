@@ -968,12 +968,12 @@ struct artwork *artwork_load_size(const char *filename, int start_pen, int max_p
 	/* Scale the original picture to be the same size as the visible area */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 		copybitmapzoom(a->orig_artwork,picture,0,0,0,0,
-			       0, TRANSPARENCY_PEN, 0,
+			       0, TRANSPARENCY_NONE, 0,
 			       (a->orig_artwork->height<<16)/picture->height,
 			       (a->orig_artwork->width<<16)/picture->width);
 	else
 		copybitmapzoom(a->orig_artwork,picture,0,0,0,0,
-			       0, TRANSPARENCY_PEN, 0,
+			       0, TRANSPARENCY_NONE, 0,
 			       (a->orig_artwork->width<<16)/picture->width,
 			       (a->orig_artwork->height<<16)/picture->height);
 

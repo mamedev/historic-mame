@@ -110,6 +110,8 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 #endif
 
 
+
+
 int run_game(int game)
 {
 	int err;
@@ -188,6 +190,21 @@ int run_game(int game)
 	err = 1;
 	bailing = 0;
 
+   #ifdef MESS
+   {
+   int i;
+	/* MESS - set up the storage peripherals */
+	for (i = 0; i < MAX_ROM; i ++)
+		strcpy (rom_name[i], options.rom_name[i]);
+	for (i = 0; i < MAX_FLOPPY; i ++)
+		strcpy (floppy_name[i], options.floppy_name[i]);
+	for (i = 0; i < MAX_HARD; i ++)
+		strcpy (hard_name[i], options.hard_name[i]);
+	for (i = 0; i < MAX_CASSETTE; i ++)
+		strcpy (cassette_name[i], options.cassette_name[i]);
+   }
+   #endif
+
 	if (osd_init() == 0)
 	{
 		if (init_machine() == 0)
@@ -258,6 +275,14 @@ int init_machine(void)
 	}
 
 
+	#ifdef MESS
+   	if (!gamedrv->rom)
+        {
+      	  if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
+          goto load_next;
+        }
+   #endif
+
 	if (readroms() != 0)
 	{
 		free(Machine->input_ports);
@@ -301,6 +326,17 @@ int init_machine(void)
 		(*gamedrv->opcode_decode)();
 	}
 
+   #ifdef MESS
+	load_next:
+	/* The ROM loading routine should allocate the ROM and RAM space and */
+	/* assign them to the appropriate Machine->memory_region blocks. */
+        if (gamedrv->rom_load && (*gamedrv->rom_load)() != 0)
+	{
+		free(Machine->input_ports);
+		printf("Image load failed.\n");
+		return 1;
+	}
+	#endif
 
 	/* read audio samples if available */
 	Machine->samples = readsamples(gamedrv->samplenames,gamedrv->name);
@@ -512,6 +548,7 @@ int run_machine(void)
 	{
 		tilemap_init();
 		sprite_init();
+		gfxobj_init();
 		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)      /* start the video hardware */
 		{
 			if (sound_start() == 0) /* start the audio hardware */
@@ -591,6 +628,7 @@ userquit:
 			printf("Unable to start video emulation\n");
 		}
 
+		gfxobj_close();
 		sprite_close();
 		tilemap_close();
 		vh_close();

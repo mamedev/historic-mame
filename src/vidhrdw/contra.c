@@ -24,7 +24,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *text_tilemap;
 
 /***************************************************************************
 **
-**	Contra has palette RAM, but it also has two lookup table PROMs
+**	Contra has palette RAM, but it also has four lookup table PROMs
 **
 **	0	sprites
 **	1	foreground
@@ -36,15 +36,21 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *text_tilemap;
 void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,pal,clut = 0;
-	for( pal=0; pal<4; pal++ ){
+	for( pal=0; pal<8; pal++ ){
 		switch( pal ){
+			/* sprite lookup tables */
 			case 0:
 			case 2:
+			case 4:
+			case 6:
 			clut = 1;
 			break;
 
+			/* background lookup tables */
 			case 1:
 			case 3:
+			case 5:
+			case 7:
 			clut = 0;
 			break;
 		}
@@ -66,7 +72,7 @@ static void get_fg_tile_info( int col, int row ){
 	int attr = contra_fg_cram[offs];
 	int bank = (attr & 0xf8) >> 3;
 	bank = ((bank & 0x0f) << 1) | ((bank & 0x10) >> 4);
-	SET_TILE_INFO(0, contra_fg_vram[offs]+bank*256, 1*16+(attr&7) )
+	SET_TILE_INFO(0, contra_fg_vram[offs]+bank*256, ((fg_palette_bank&0x30)*2+16)+(attr&7) )
 }
 
 static void get_bg_tile_info( int col, int row ){
@@ -74,7 +80,7 @@ static void get_bg_tile_info( int col, int row ){
 	int attr = contra_bg_cram[offs];
 	int bank = (attr & 0xf8) >> 3;
 	bank = ((bank & 0x0f) << 1) | ((bank & 0x10) >> 4);
-	SET_TILE_INFO(1, contra_bg_vram[offs]+bank*256, 3*16+(attr&7) )
+	SET_TILE_INFO(1, contra_bg_vram[offs]+bank*256, ((bg_palette_bank&0x30)*2+16)+(attr&7) )
 }
 
 static void get_text_tile_info( int col, int row ){
@@ -147,27 +153,21 @@ void contra_0007_w(int offset,int data){
 }
 
 void contra_fg_palette_bank_w(int offset,int data){
-	if (fg_palette_bank != ((data & 0x30) >> 4)){
-		fg_palette_bank = ((data & 0x30) >> 4);
+	if (fg_palette_bank != data){
+		fg_palette_bank = data;
 		tilemap_mark_all_tiles_dirty( fg_tilemap );
 	}
 }
 
 void contra_bg_palette_bank_w(int offset,int data){
-	if (bg_palette_bank != ((data & 0x30) >> 4)){
-		bg_palette_bank = ((data & 0x30) >> 4);
+	if (bg_palette_bank != data ){
+		bg_palette_bank = data;
 		tilemap_mark_all_tiles_dirty( bg_tilemap );
 	}
 }
 
 void contra_sprite_buffer_select( int offset, int data ){
 	spriteram_offset = (data&0x08)?0x000:0x800;
-
-//	CPU #0 PC 819e: warning - write b6 to unmapped memory address 0003
-//	CPU #0 PC 81a1: warning - write b6 to unmapped memory address 0063
-
-//	CPU #0 PC 819e: warning - write be to unmapped memory address 0003
-//	CPU #0 PC 81a1: warning - write be to unmapped memory address 0063
 }
 
 /***************************************************************************
@@ -220,13 +220,17 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 {
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	struct GfxElement *gfx = Machine->gfx[bank];
+
+//	unsigned char *RAM = Machine->memory_region[0];
+//	int limit = (bank)? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
+
 	const unsigned char *source = spriteram + bank*0x2000 + spriteram_offset;
 	const unsigned char *finish = source+(40)*5;
 	int base_color = bank?2:0;
 /*
 	spriteram[0]	tile_number
 	spriteram[1]	XXXX		color
-					    XX		bank (least significant bits of tile_number - needed for 8x8 case)
+					    XX		bank (least significant bits of tile_number)
 					      XX	bank
 	spriteram[2]	ypos
 	spriteram[3]	xpos
@@ -262,7 +266,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 			static int x_offset[4] = {0x0,0x1,0x4,0x5};
 			static int y_offset[4] = {0x0,0x2,0x8,0xa};
 			int x,y, ex, ey;
-			color = base_color*16+(color>>4);
+			int c = base_color*16+(color>>4);
+
 			for( y=0; y<height; y++ ){
 				for( x=0; x<width; x++ ){
 					ex = xflip?(width-1-x):x;
@@ -270,7 +275,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 
 					drawgfx(bitmap,gfx,
 						tile_number+x_offset[ex]+y_offset[ey],
-						color,
+						c,
 						xflip,yflip,
 						40+sx+x*8,sy+y*8,
 						clip,TRANSPARENCY_PEN,0);

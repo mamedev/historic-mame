@@ -107,6 +107,10 @@ int main (int argc, char **argv)
 {
 	int res, i, j, game_index;
     char *playbackname = NULL;
+   #ifdef MESS
+		char *driver;
+      j=0; /* hack????? */
+   #endif
 
 	/* these two are not available in mame.cfg */
 	ignorecfg = 0;
@@ -141,7 +145,11 @@ int main (int argc, char **argv)
 	signal(SIGKILL, signal_handler);
 	signal(SIGQUIT, signal_handler);
 
-	set_config_file ("mame.cfg");
+	#ifdef MESS
+    set_config_file ("mess.cfg");
+   #else
+    set_config_file ("mame.cfg");
+   #endif
 
 	/* Initialize the audio library */
 	if (msdos_init_seal())
@@ -269,6 +277,12 @@ int main (int argc, char **argv)
             return 1;
         }
     }
+
+   #ifdef MESS
+     driver = argv[j];
+     /* This function has been added to MESS.C as load_image() */
+     load_image(argc, argv, driver, j);
+   #endif
 
 	/* parse generic (os-independent) options */
 	parse_cmdline (argc, argv, game_index);

@@ -50,6 +50,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1f93, 0x1f93, input_port_3_r },
 	{ 0x1fc4, 0x1fc4, simpsons_sound_interrupt_r },
 	{ 0x1fc6, 0x1fc7, simpsons_sound_r },	/* K053260 */
+	{ 0x1fc8, 0x1fc9, K053246_r },
 	{ 0x1fca, 0x1fca, watchdog_reset_r },
 	{ 0x2000, 0x3fff, MRA_BANK4 },
 	{ 0x0000, 0x3fff, K052109_r },
@@ -64,6 +65,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_BANK3 },
+	{ 0x1fa0, 0x1fa7, K053246_w },
 	{ 0x1fb0, 0x1fbf, K053251_w },
 	{ 0x1fc0, 0x1fc0, simpsons_coin_counter_w },
 	{ 0x1fc2, 0x1fc2, simpsons_eeprom_w },
@@ -251,36 +253,6 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Graphics Decoding
-
-***************************************************************************/
-
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	32768,	/* 32768 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{
-	  2*4, 3*4, 0*4, 1*4,
-	  0x200000*8+2*4, 0x200000*8+3*4, 0x200000*8+0*4, 0x200000*8+1*4,
-	  0x100000*8+2*4, 0x100000*8+3*4, 0x100000*8+0*4, 0x100000*8+1*4,
-	  0x300000*8+2*4, 0x300000*8+3*4, 0x300000*8+0*4, 0x300000*8+1*4,
-	},
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 2, 0x000000, &spritelayout,	0, 128 },
-	{ -1 } /* end of array */
-};
-
-
-/***************************************************************************
-
 	Machine Driver
 
 ***************************************************************************/
@@ -301,11 +273,11 @@ static struct K053260_interface k053260_interface =
 //	nmi_callback
 };
 
-static int simpsons_irq( void )
+static int simpsons_irq(void)
 {
-	if ( cpu_getiloops() == 0 )
+	if (cpu_getiloops() == 0)
 	{
-		if ( simpsons_firq_enabled )
+		if (simpsons_firq_enabled && K053247_is_IRQ_enabled())
 			return KONAMI_INT_FIRQ;
 	}
 	else
@@ -343,7 +315,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	0,	/* gfx decoded by konamiic.c */
 	2048, 2048,
 	0,
 
@@ -375,7 +347,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( simpsons_rom )
-	ROM_REGION( 0x90000 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x8a000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "g02.16c",      0x10000, 0x20000, 0x580ce1d6 )
 	ROM_LOAD( "g01.17c",      0x30000, 0x20000, 0x9f843def )
 	ROM_LOAD( "j13.13c",      0x50000, 0x20000, 0xaade2abd )
@@ -383,14 +355,14 @@ ROM_START( simpsons_rom )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
 	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
-	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 ) /* tiles */
-	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab ) /* tiles */
+	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
+	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
 	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
-	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad ) /* sprites? */
-	ROM_LOAD( "simp_12n.rom", 0x100000, 0x100000, 0x577dbd53 ) /* sprites? */
-	ROM_LOAD( "simp_8n.rom",  0x200000, 0x100000, 0xaa085093 ) /* sprites? */
-	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d ) /* sprites? */
+	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
+	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
+	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
+	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
 	ROM_REGION( 0x28000 ) /* Z80 code + banks */
 	ROM_LOAD( "e03.6g",       0x00000, 0x08000, 0x866b7a35 )
@@ -402,7 +374,7 @@ ROM_START( simpsons_rom )
 ROM_END
 
 ROM_START( simpsn2p_rom )
-	ROM_REGION( 0x90000 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x8a000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "g02.16c",      0x10000, 0x20000, 0x580ce1d6 )
 	ROM_LOAD( "simp_p01.rom", 0x30000, 0x20000, 0x07ceeaea )
 	ROM_LOAD( "simp_013.rom", 0x50000, 0x20000, 0x8781105a )
@@ -410,14 +382,14 @@ ROM_START( simpsn2p_rom )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
 	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
-	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 ) /* tiles */
-	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab ) /* tiles */
+	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
+	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
 	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
-	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad ) /* sprites? */
-	ROM_LOAD( "simp_12n.rom", 0x100000, 0x100000, 0x577dbd53 ) /* sprites? */
-	ROM_LOAD( "simp_8n.rom",  0x200000, 0x100000, 0xaa085093 ) /* sprites? */
-	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d ) /* sprites? */
+	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
+	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
+	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
+	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
 	ROM_REGION( 0x28000 ) /* Z80 code + banks */
 	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
@@ -429,7 +401,7 @@ ROM_START( simpsn2p_rom )
 ROM_END
 
 ROM_START( simps2pj_rom )
-	ROM_REGION( 0x90000 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x8a000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "072-s02.16c",  0x10000, 0x20000, 0x265f7a47 )
 	ROM_LOAD( "072-t01.17c",  0x30000, 0x20000, 0x91de5c2d )
 	ROM_LOAD( "072-213.13c",  0x50000, 0x20000, 0xb326a9ae )
@@ -437,14 +409,14 @@ ROM_START( simps2pj_rom )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
 	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
-	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 ) /* tiles */
-	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab ) /* tiles */
+	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
+	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
 	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
-	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad ) /* sprites? */
-	ROM_LOAD( "simp_12n.rom", 0x100000, 0x100000, 0x577dbd53 ) /* sprites? */
-	ROM_LOAD( "simp_8n.rom",  0x200000, 0x100000, 0xaa085093 ) /* sprites? */
-	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d ) /* sprites? */
+	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
+	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
+	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
+	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
 	ROM_REGION( 0x28000 ) /* Z80 code + banks */
 	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
@@ -465,7 +437,8 @@ ROM_END
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_4(2);
 }
 
 struct GameDriver simpsons_driver =

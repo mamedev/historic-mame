@@ -72,9 +72,11 @@ struct RomModule
 #ifdef LSB_FIRST
 #define ROM_LOAD_GFX_EVEN  ROM_LOAD_ODD
 #define ROM_LOAD_GFX_ODD   ROM_LOAD_EVEN
+#define ROM_LOAD_GFX_SWAP  ROM_LOAD_WIDE
 #else
 #define ROM_LOAD_GFX_EVEN  ROM_LOAD_EVEN
 #define ROM_LOAD_GFX_ODD   ROM_LOAD_ODD
+#define ROM_LOAD_GFX_SWAP  ROM_LOAD_WIDE_SWAP
 #endif
 
 /* end of table */

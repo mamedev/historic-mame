@@ -4,6 +4,8 @@
 
   Functions to emulate the video hardware of the machine.
 
+  (Cocktail mode flipscreen implemented by Chad Hendrickson Aug 1, 1999)
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -13,7 +15,7 @@
 
 static struct osd_bitmap *tmpbitmap1;
 static char sprite_transparency[256];
-
+static int flipscreen = 0;
 
 
 /***************************************************************************
@@ -200,6 +202,36 @@ void docastle_vh_stop(void)
 }
 
 
+static void setflip(int flip)
+{
+	if (flipscreen != flip)
+	{
+		flipscreen = flip;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+void docastle_flipscreen_off_r(int offset)
+{
+	setflip(0);
+}
+
+void docastle_flipscreen_on_r(int offset)
+{
+	setflip(1);
+}
+
+void docastle_flipscreen_off_w(int offset, int data)
+{
+	setflip(0);
+}
+
+void docastle_flipscreen_on_w(int offset, int data)
+{
+	setflip(1);
+}
+
+
 
 /***************************************************************************
 
@@ -227,10 +259,16 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8*(colorram[offs] & 0x20),
 					colorram[offs] & 0x1f,
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
@@ -239,7 +277,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					videoram[offs] + 8*(colorram[offs] & 0x20),
 					32 + (colorram[offs] & 0x1f),
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -254,23 +292,36 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* order, to have the correct priorities. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int sx,sy,code,color;
+		int sx,sy,flipx,flipy,code,color;
 
 
 		code = spriteram[offs + 3];
 		color = spriteram[offs + 2] & 0x1f;
 		sx = spriteram[offs + 1];
 		sy = spriteram[offs];
+		flipx = spriteram[offs + 2] & 0x40;
+		flipy = spriteram[offs + 2] & 0x80;
+
+
+		if (flipscreen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		drawgfx(bitmap,Machine->gfx[1],
-			code,
-			color,
-			spriteram[offs + 2] & 0x40,spriteram[offs + 2] & 0x80,
-			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+				code,
+				color,
+				flipx,flipy,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 		   The color 7 is used to cover over other sprites.
+
 		   At the beginning we scanned all sprites and marked the ones that contained
 		   at least one pixel of color 7, so we only need to worry about these few. */
 		if (sprite_transparency[code])

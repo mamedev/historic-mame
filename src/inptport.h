@@ -23,6 +23,10 @@ struct InputPort
 	const char *name;		/* name to display */
 	UINT16 keyboard;		/* key affecting the input bits */
 	UINT16 joystick;		/* joystick command affecting the input bits */
+   #ifdef MESS
+	UINT32 arg;				/* extra argument needed in some cases */
+	UINT16 min, max;		/* for analog controls */
+	#endif
 };
 
 
@@ -68,6 +72,7 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_UI_THROTTLE,
 	IPT_UI_SHOW_FPS,
 	IPT_UI_SNAPSHOT,
+	IPT_UI_TOGGLE_CHEAT,
 	IPT_UI_UP,
 	IPT_UI_DOWN,
 	IPT_UI_LEFT,
@@ -168,15 +173,23 @@ enum { IPT_END=1,IPT_PORT,
 	{ mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT }, \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), \
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT },
-/* analog input with extended fields for defining default keys & sensitivities */
 #define PORT_ANALOGX(mask,default,type,sensitivity,delta,clip,min,max,keydec,keyinc,joydec,joyinc) \
 	{ mask, default, type, IP_NAME_DEFAULT, keydec, joydec }, \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), \
 			IP_NAME_DEFAULT, keyinc, joyinc },
 
 /* dip switch definition */
-#define PORT_DIPNAME(mask,default,name) { mask, default, IPT_DIPSWITCH_NAME, name, IP_KEY_NONE, IP_JOY_NONE },
+#ifdef MESS
+ #define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
+#else
+ #define PORT_DIPNAME(mask,default,name) { mask, default, IPT_DIPSWITCH_NAME, name, IP_KEY_NONE, IP_JOY_NONE },
+#endif
 #define PORT_DIPSETTING(default,name) { 0, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE },
+
+#define PORT_SERVICE(mask,default)	\
+	PORT_BITX(    mask, mask & default, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	\
+	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
+	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
 
 
 #define MAX_DEFSTR_LEN 20

@@ -278,7 +278,7 @@ static struct MachineDriver leprechn_machine_driver =
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 	    }
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

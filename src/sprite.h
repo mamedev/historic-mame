@@ -9,6 +9,7 @@
 #define SPRITE_SPECIAL					0x20
 
 #define SPRITE_SHADOW					0x40
+#define SPRITE_PARTIAL_SHADOW			0x80
 
 typedef enum {
 	SPRITE_TYPE_STACK = 0,
@@ -29,6 +30,8 @@ struct sprite {
 	int tile_width, tile_height;
 	int total_width, total_height;	/* in screen coordinates */
 	int x, y;
+
+	int shadow_pen;
 
 	/* private */ const struct sprite *next;
 	/* private */ long mask_offset;

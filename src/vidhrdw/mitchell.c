@@ -45,7 +45,7 @@ static void get_bg_tile_info(int col,int row)
 		Video init
 ***************************************************************************/
 
-int pang_vh_start(void (*getinfo)(int col,int row))
+int pang_vh_start(void)
 {
 	pang_objram=NULL;
 	paletteram=NULL;

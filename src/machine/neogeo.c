@@ -212,7 +212,7 @@ NEO_CYCLE_R(neobombe,0x09f2,0xffff,							READ_WORD(&neogeo_ram[0x448c]))
 NEO_CYCLE_R(trally, 0x1295c,READ_WORD(&neogeo_ram[0x206])-1,READ_WORD(&neogeo_ram[0x0206]))
 //NEO_CYCLE_R(joyjoy,  0x122c,0xffff,							READ_WORD(&neogeo_ram[0x0554]))
 NEO_CYCLE_RX(blazstar,0x3b62,0xffff,							READ_WORD(&neogeo_ram[0x1000]),0)
-NEO_CYCLE_R(ridhero, 0xedb0,0,								READ_WORD(&neogeo_ram[0x00ca]))
+//NEO_CYCLE_R(ridhero, 0xedb0,0,								READ_WORD(&neogeo_ram[0x00ca]))
 NEO_CYCLE_R(cyberlip,0x2218,0x0f0f,							READ_WORD(&neogeo_ram[0x7bb4]))
 NEO_CYCLE_R(lbowling,0x37b0,0,								READ_WORD(&neogeo_ram[0x0098]))
 NEO_CYCLE_R(superspy,0x07ca,0xffff,							READ_WORD(&neogeo_ram[0x108c]))
@@ -534,7 +534,7 @@ static void neogeo_custom_memory(void)
 
 #if 1
 //	if (!strcmp(Machine->gamedrv->name,"joyjoy"))   install_mem_read_handler(0, 0x100554, 0x100555, joyjoy_cycle_r);	// Slower
-	if (!strcmp(Machine->gamedrv->name,"ridhero"))  install_mem_read_handler(0, 0x1000ca, 0x1000cb, ridhero_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"ridhero"))  install_mem_read_handler(0, 0x1000ca, 0x1000cb, ridhero_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"bstars"))   install_mem_read_handler(0, 0x10000a, 0x10000b, bstars_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"cyberlip")) install_mem_read_handler(0, 0x107bb4, 0x107bb4, cyberlip_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"lbowling")) install_mem_read_handler(0, 0x100098, 0x100099, lbowling_cycle_r);

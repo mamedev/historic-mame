@@ -20,7 +20,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/Z80/Z80.h"
+#include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 
 void mnchmobl_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
@@ -186,7 +186,7 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_SPRITES+bank];
 
 
-	int debug_sprites = keyboard_pressed( KEYCODE_X );
+//	int debug_sprites = keyboard_pressed( KEYCODE_X );
 	int i;
 
 	for( i=0; i<0x200; i++ ){
@@ -205,6 +205,7 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 
 			if( mnchmobl_video_reg[7]&0x80 ) sx--;
 
+#if 0
 			if( debug_sprites ){
 				static char digit[16] = "0123456789abcdef";
 				int data = attributes;
@@ -224,6 +225,7 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 					TRANSPARENCY_NONE,0);
 			}
 			else
+#endif
 			drawgfx( bitmap,gfx,
 				0x7f - (tile_number&0x7f),
 				color,
@@ -557,7 +559,7 @@ static struct MachineDriver machine_driver =
 			mnchmobl_interrupt_cpu1,2
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* master-slave */
 	0,
 

@@ -1099,11 +1099,13 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_palette();
 
 	/* kludge for Twinbee Back/foregrounds to flip them the correct way */
+#if 0
 	if(	Machine->orientation == ORIENTATION_ROTATE_90)
 	{
 		Machine->orientation = ORIENTATION_SWAP_XY;
 		flipscreen=1;
 	}
+#endif
 
 	/* Render backgrounds, remove flipscreen kludge later.. */
 	setup_backgrounds(flipscreen);
@@ -1127,10 +1129,12 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* kludge for Twinbee Back/foregrounds to flip them the correct way */
+#if 0
 	if(flipscreen)
 	{
 		Machine->orientation = ORIENTATION_ROTATE_90;
 	}
+#endif
 
 	draw_sprites(bitmap);
 

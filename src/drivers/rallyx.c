@@ -185,9 +185,7 @@ INPUT_PORTS_START( rallyx_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* DSW0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	/* TODO: the bonus score depends on the number of lives */
 	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "A" )
@@ -234,9 +232,7 @@ INPUT_PORTS_START( nrallyx_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* DSW0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	/* TODO: the bonus score depends on the number of lives */
 	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "A" )

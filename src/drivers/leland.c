@@ -39,7 +39,7 @@
 #define LELAND  "Leland Corp."
 #define CINEMAT "Cinematronics"
 
-#include "cpu\z80\z80.h"
+#include "cpu/z80/z80.h"
 
 
 /***********************************************************************

@@ -31,12 +31,6 @@ write:
 a0        background #2 y position
 c0        background control?
 
-
-There's an interesting problem with this game: it is designed to run on an
-horizontal monitor, but the display in MAME is narrow and tall. The reason
-is that the real board doesn't produce square pixels, but rectangular ones
-whose width is almost twice their height.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -182,9 +176,7 @@ INPUT_PORTS_START( mpatrol_input_ports )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	/* Fake port to support the two different coin modes */
 	PORT_START
@@ -285,9 +277,7 @@ INPUT_PORTS_START( mpatrolw_input_ports )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	/* Fake port to support the two different coin modes */
 	PORT_START

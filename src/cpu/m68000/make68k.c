@@ -55,6 +55,9 @@
  *                Some optimising
  *                	shl reg,1 -> add reg,reg
  *                  or ecx,ecx:jz -> jecxz
+ *
+ * 22.08.99 DEO - SBCD/ABCD sets N flag same as carry
+ *
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -5548,6 +5551,7 @@ void abcd_sbcd(void)
   			EffectiveAddressRead(mode,'B',EBX,EBX,"--C-S-B",TRUE);
   			EffectiveAddressRead(mode,'B',ECX,EAX,"-BC-S-B",TRUE);
 
+
             CopyX();
 
 			if ( type == 0 )
@@ -5575,6 +5579,13 @@ void abcd_sbcd(void)
 		    fprintf(fp, "\t\t or    dl,bl         ; Copy across\n\n");
 
 		    fprintf(fp, "%s:\n",Label);
+
+			fprintf(fp, "\t\t mov   bl,dl\n");	/* copy carry into sign */
+			fprintf(fp, "\t\t and   bl,1\n");
+			fprintf(fp, "\t\t shl   bl,7\n");
+			fprintf(fp, "\t\t and   dl,7Fh\n");
+			fprintf(fp, "\t\t or    dl,bl\n");
+
 			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
 
   			EffectiveAddressWrite(mode,'B',ECX,EAX,"---DS-B",TRUE);

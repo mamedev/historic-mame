@@ -1233,7 +1233,7 @@ static struct MachineDriver smashtv_machine_driver =
 			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	smashtv_init_machine,
 
@@ -1295,7 +1295,7 @@ static struct MachineDriver narc_machine_driver =
 			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	narc_init_machine,
 
@@ -1349,7 +1349,7 @@ static struct MachineDriver trog_machine_driver =
 			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	trog_init_machine,
 
@@ -1404,7 +1404,7 @@ static struct MachineDriver mk_machine_driver =
 			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1, /* cpu slices */
 	mk_init_machine,
 
@@ -1452,7 +1452,7 @@ static struct MachineDriver mk2_machine_driver =
 			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	mk2_init_machine,
 
@@ -1492,7 +1492,7 @@ static struct MachineDriver nbajam_machine_driver =
 			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	nbajam_init_machine,
 

@@ -88,9 +88,7 @@ static struct IOWritePort writeport[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Check Mode", KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN3 )
 	PORT_BITX(0x04, IP_ACTIVE_LOW,  0, "Reset All", KEYCODE_F5, IP_JOY_NONE )  /* including battery backed RAM */
 	PORT_BITX(0x08, IP_ACTIVE_LOW,  0, "Clear Stats", KEYCODE_F6, IP_JOY_NONE )

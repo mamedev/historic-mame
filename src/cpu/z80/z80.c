@@ -1198,7 +1198,7 @@ INLINE UINT8 DEC(UINT8 value)
  ***************************************************************/
 #define EXSP(DR)												\
 {																\
-    PAIR tmp;                                                   \
+	PAIR tmp = { { 0, 0, 0, 0 } };								\
 	RM16( _SPD, &tmp ); 										\
 	WM16( _SPD, &Z80.DR );										\
 	Z80.DR = tmp;												\

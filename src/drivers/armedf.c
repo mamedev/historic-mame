@@ -223,9 +223,7 @@ INPUT_PORTS_START( armedf_input_ports )
 
 	PORT_START	/* Test Mode */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX(0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )     /* Tilt */
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -308,9 +306,7 @@ INPUT_PORTS_START( terraf_input_ports )
 
 	PORT_START	/* Test Mode */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX(    0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )     /* Tilt */
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -439,12 +435,12 @@ static struct MachineDriver terraf_machine_driver =
 			interrupt,128
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,
 	0,
 
 	/* video hardware */
-	38*8, 32*8, { 0,38*8-1,8,255-8 },
+	38*8, 32*8, { 0*8, 38*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	2048,2048,
 	0,
@@ -492,7 +488,7 @@ static struct MachineDriver armedf_machine_driver =
 	0,
 
 	/* video hardware */
-	38*8, 32*8, { 0,38*8-1,0,255 },
+	38*8, 32*8, { 0*8, 38*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	2048,2048,
 	0,

@@ -1490,7 +1490,7 @@ struct cpu_interface cpuintf[] =
 		pdp1_info,							/* Get formatted string for a specific register */
 		pdp1_dasm,							/* Disassemble one instruction */
 		0,0,								/* Number of IRQ lines, default IRQ vector */
-		&pd0,_ICount,						/* Pointer to the instruction count  */
+		&pdp1_ICount,						/* Pointer to the instruction count  */
 		0,									/* Interrupt types: none, IRQ, NMI	*/
 		-1,
 		-1,

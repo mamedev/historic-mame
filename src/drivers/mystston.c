@@ -43,10 +43,7 @@ write
 
 Known problems:
 
-* In "intermission" screens, the characters come out black. Is this normal?
-* There appears to be a sound CPU, similar to Mat Mania. The ROMs are missing.
 * Some dipswitches may not be mapped correctly.
-* Not sure if the "cocktail" mode flips the screen or not.
 
 ***************************************************************************/
 
@@ -60,6 +57,7 @@ extern unsigned char *mystston_videoram2,*mystston_colorram2;
 extern int mystston_videoram2_size;
 extern unsigned char *mystston_scroll;
 
+void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int mystston_vh_start(void);
 void mystston_vh_stop(void);
 void mystston_2000_w(int offset,int data);
@@ -161,9 +159,9 @@ static struct MemoryWriteAddress writemem[] =
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 1 )
@@ -171,9 +169,9 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
@@ -181,50 +179,50 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x01, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(   0x01, "3" )
+	PORT_DIPSETTING(   0x00, "5" )
 	PORT_DIPNAME(0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME(0x03, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(   0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(   0x01, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME(0x0c, 0x0c, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(   0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(   0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
@@ -233,9 +231,9 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
+	2048,	/* 2048 characters */
 	3,	/* 3 bits per pixel */
-	{ 2*1024*8*8, 1024*8*8, 0 },	/* the bitplanes are separated */
+	{ 2*2048*8*8, 2048*8*8, 0 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -244,9 +242,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
-	256,    /* 256 sprites */
+	512,    /* 512 sprites */
 	3,	/* 3 bits per pixel */
-	{ 2*256*16*16, 256*16*16, 0 },	/* the bitplanes are separated */
+	{ 2*512*16*16, 512*16*16, 0 },	/* the bitplanes are separated */
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -269,11 +267,9 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   1*8, 1 },
-	{ 1, 0x06000, &charlayout,   1*8, 1 },
+	{ 1, 0x00000, &charlayout,   3*8, 4 },	/* ?? */
 	{ 1, 0x0c000, &tilelayout,   2*8, 1 },
-	{ 1, 0x00000, &spritelayout,   0, 1 },
-	{ 1, 0x06000, &spritelayout,   0, 1 },
+	{ 1, 0x00000, &spritelayout,   0, 2 },
 	{ -1 } /* end of array */
 };
 
@@ -312,8 +308,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	24, 24,
-	0,
+	24+32, 24+32,
+	mystston_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -352,10 +348,10 @@ ROM_START( mystston_rom )
 
 	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ms6",          0x00000, 0x2000, 0x85c83806 )
-	ROM_LOAD( "ms7",          0x02000, 0x2000, 0xd025f84d )
-	ROM_LOAD( "ms8",          0x04000, 0x2000, 0x53765d89 )
-	ROM_LOAD( "ms9",          0x06000, 0x2000, 0xb146c6ab )
-	ROM_LOAD( "ms10",         0x08000, 0x2000, 0xd85015b5 )
+	ROM_LOAD( "ms9",          0x02000, 0x2000, 0xb146c6ab )
+	ROM_LOAD( "ms7",          0x04000, 0x2000, 0xd025f84d )
+	ROM_LOAD( "ms10",         0x06000, 0x2000, 0xd85015b5 )
+	ROM_LOAD( "ms8",          0x08000, 0x2000, 0x53765d89 )
 	ROM_LOAD( "ms11",         0x0a000, 0x2000, 0x919ee527 )
 	ROM_LOAD( "ms12",         0x0c000, 0x2000, 0x72d8331d )
 	ROM_LOAD( "ms13",         0x0e000, 0x2000, 0x845a1f9b )
@@ -363,6 +359,9 @@ ROM_START( mystston_rom )
 	ROM_LOAD( "ms15",         0x12000, 0x2000, 0x4594e53c )
 	ROM_LOAD( "ms16",         0x14000, 0x2000, 0x2f470b0f )
 	ROM_LOAD( "ms17",         0x16000, 0x2000, 0x38966d1b )
+
+	ROM_REGION(0x0020)	/* color PROM */
+	ROM_LOAD( "ic61",         0x0000, 0x0020, 0xe802d6cf )
 ROM_END
 
 
@@ -417,7 +416,7 @@ struct GameDriver mystston_driver =
 	"1984",
 	"Technos",
 	"Nicola Salmoria\nMike Balfour\nBrad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
@@ -428,7 +427,7 @@ struct GameDriver mystston_driver =
 
 	input_ports,
 
-	0, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

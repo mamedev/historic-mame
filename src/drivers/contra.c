@@ -245,9 +245,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, "Sound" )
 	PORT_DIPSETTING(    0x00, "Mono" )
 	PORT_DIPSETTING(    0x08, "Stereo" )
@@ -324,6 +322,8 @@ static struct MachineDriver contra_machine_driver =
 	}
 };
 
+
+
 ROM_START( contra_rom )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "633e03.18a",   0x20000, 0x08000, 0x7fc0d8cf )
@@ -351,9 +351,11 @@ ROM_START( contra_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_REGION(0x0400)	/* color lookup tables */
 	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
 	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
+	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -386,9 +388,11 @@ ROM_START( contrab_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_REGION(0x0400)	/* color lookup tables */
 	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
 	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
+	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -421,9 +425,11 @@ ROM_START( contrajb_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_REGION(0x0400)	/* color lookup tables */
 	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
 	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
+	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -456,9 +462,11 @@ ROM_START( gryzor_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_REGION(0x0400)	/* color lookup tables */
 	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
 	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
+	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )

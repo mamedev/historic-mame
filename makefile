@@ -1,6 +1,3 @@
-# before compiling for the first time, use "make makedir" to create all the
-# necessary subdirectories
-
 AR = ar
 CC = gcc
 LD = gcc
@@ -8,14 +5,15 @@ LD = gcc
 ASM = nasmw
 ASMFLAGS = -f coff
 VPATH=src $(wildcard src/cpu/*)
+EMULATOR_EXE = mame.exe
 
 # uncomment next line to include the debugger
 # DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = flstory_driver
-TINY_OBJS = obj/machine/flstory.o obj/drivers/flstory.o obj/vidhrdw/flstory.o
+TINY_NAME = surpratk_driver
+TINY_OBJS = obj/drivers/surpratk.o obj/vidhrdw/surpratk.o obj/vidhrdw/konamiic.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -120,6 +118,11 @@ endif
 ifeq ($(wildcard $(DJDIR)/lib/libz.a),)
 nozlib:
 	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
+endif
+
+#if obj subdirectory doesn't exist, create the tree before proceeding
+ifeq ($(wildcard ./obj),)
+noobj: makedir all
 endif
 
 
@@ -650,7 +653,8 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
          obj/audit.o obj/info.o obj/png.o obj/artwork.o \
-         obj/tilemap.o obj/sprite.o obj/state.o obj/datafile.o \
+         obj/tilemap.o obj/sprite.o obj/gfxobj.o \
+		 obj/state.o obj/datafile.o \
          $(sort $(CPUOBJS)) \
          obj/sndintrf.o \
 		 obj/sound/streams.o obj/sound/mixer.o \
@@ -705,18 +709,19 @@ else
 	endif
 endif
 
-all: mame.exe romcmp.exe
+all: $(EMULATOR_EXE) romcmp.exe
 
-mame.exe:  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
+$(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c src/version.c -o obj/version.o
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
+ifndef DEBUG
+	upx $(EMULATOR_EXE)
+endif
 
 romcmp.exe: obj/romcmp.o obj/unzip.o
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-compress: mame.exe
-	upx mame.exe
 
 obj/%.o: src/%.c
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c $< -o $@
@@ -869,6 +874,7 @@ obj/taito.a: \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
          obj/drivers/lkage.o obj/vidhrdw/lkage.o \
+         obj/vidhrdw/taitol.o obj/drivers/taitol.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o \
 
@@ -1001,11 +1007,16 @@ obj/konami.a: \
          obj/vidhrdw/mainevt.o obj/drivers/mainevt.o \
          obj/vidhrdw/88games.o obj/drivers/88games.o \
          obj/vidhrdw/crimfght.o obj/drivers/crimfght.o \
+         obj/vidhrdw/bottom9.o obj/drivers/bottom9.o \
          obj/vidhrdw/aliens.o obj/drivers/aliens.o \
+         obj/vidhrdw/surpratk.o obj/drivers/surpratk.o \
          obj/vidhrdw/parodius.o obj/drivers/parodius.o \
+         obj/vidhrdw/rollerg.o obj/drivers/rollerg.o \
+         obj/vidhrdw/xexex.o obj/drivers/xexex.o \
          obj/machine/simpsons.o obj/vidhrdw/simpsons.o obj/drivers/simpsons.o \
          obj/vidhrdw/vendetta.o obj/drivers/vendetta.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
+         obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
 
 obj/exidy.a: \
          obj/machine/exidy.o obj/vidhrdw/exidy.o obj/sndhrdw/exidy.o obj/drivers/exidy.o \
@@ -1246,6 +1257,7 @@ makedir:
 	md obj\cpu\z8000
 	md obj\cpu\tms32010
 	md obj\cpu\ccpu
+	md obj\cpu\pdp1
 	md obj\sound
 	md obj\drivers
 	md obj\machine
@@ -1285,13 +1297,14 @@ clean:
 	del obj\cpu\z8000\*.o
 	del obj\cpu\tms32010\*.o
 	del obj\cpu\ccpu\*.o
+	del obj\cpu\pdp1\*.o
 	del obj\sound\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o
 	del obj\sndhrdw\*.o
 	del obj\msdos\*.o
-	del mame.exe
+	del $(EMULATOR_EXE)
 	del romcmp.exe
 
 cleandebug:
@@ -1325,5 +1338,12 @@ cleandebug:
 	del obj\cpu\z8000\*.o
 	del obj\cpu\tms32010\*.o
 	del obj\cpu\ccpu\*.o
-	del mame.exe
+	del obj\cpu\pdp1\*.o
+	del $(EMULATOR_EXE)
 
+cleantiny:
+	del obj\mame.o
+	del obj\driver.o
+	del obj\usrintrf.o
+	del obj\cheat.o
+	del obj\msdos\fronthlp.o

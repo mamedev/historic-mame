@@ -95,7 +95,7 @@ static void latch_w(int offset, int data)
 		}
 		else
 			cpu_halt(1, 1);
-		
+
 		/* bits 2-5 are the alpha bank */
 		thunderj_set_alpha_bank((data >> 2) & 7);
 	}
@@ -118,7 +118,7 @@ int thunderj_video_control_r(int offset)
 	   VBLANK bit is set appropriately. Unfortunately, due to all the cpu_yield()
 	   calls we make to synchronize the two CPUs, we occasionally get out of time
 	   and generate the interrupt outside of the tight tolerances CPU #2 expects.
-	   
+
 	   So we fake it. Returning scanlines $f5 and $f7 alternately provides the
 	   correct answer that causes CPU #2 to be happy and not aggressively trash
 	   memory (which is what it does if this interrupt test fails -- see the code
@@ -134,7 +134,7 @@ int thunderj_video_control_r(int offset)
 		static int value_counter;
 		return values[value_counter++ % 2];
 	}*/
-	
+
 	/* Use these lines to detect when things go south:
 
 	if (cpu_readmem24_word(0x163482) > 0xfff)
@@ -249,9 +249,7 @@ INPUT_PORTS_START( thunderj_ports )
 
 	PORT_START		/* 260012 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BITX(    0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x0002, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_SERVICE( 0x0002, IP_ACTIVE_LOW )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* Input buffer full (@260030) */
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )	/* Output buffer full (@360030) */
 	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -386,12 +384,12 @@ static void rom_decode(void)
 static void thunderj_init(void)
 {
 	atarigen_eeprom_default = NULL;
-	
+
 	atarijsa_init(2, 3, 2, 0x0002);
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(2, 0x4159, 0x4171);
-	
+
 	/* it looks like they jsr to $800000 as some kind of protection */
 	/* put an RTS there so we don't die */
 	WRITE_WORD(rts_address, 0x4E75);

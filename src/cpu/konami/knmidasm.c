@@ -230,11 +230,26 @@ u = bytes to move
 
 One byte is copied at a time and x and y get incremented for each access.
 
+CUSTOM OPCODE: Move (y,x,u):
+---------------------------------
+0xb7 move y,x,u
+
+y = pointer to source address
+x = pointer to destination address
+u = counter
+
+Copy ONE byte, increment x and y, decrement u.
+
 0xb8 lsrd xx
+0xb9 lsrd indexed
 0xba rord xx ( not confirmed )
+0xbb rord indexed ( not confirmed )
 0xbc asrd xx ( not confirmed )
+0xbd asrd indexed ( not confirmed )
 0xbe asld xx
+0xbf asld indexed ( not confirmed )
 0xc0 rold xx ( not confirmed )
+0xc1 rold indexed ( not confirmed )
 
 0xc2 clrd
 0xc3 clrw indexed ( clears an entire word ) ( not confirmed )
@@ -1441,6 +1456,10 @@ static void bmove( char *buf ) {
 	sprintf( buf, "bmove y,x,u" );
 }
 
+static void move( char *buf ) {
+	sprintf( buf, "move y,x,u" );
+}
+
 static void bset( char *buf ) {
 	sprintf( buf, "bset a,x,u" );
 }
@@ -1477,20 +1496,45 @@ static void lsrd( char *buf ) {
 	sprintf( buf, "lsrd #$%02x", get_next_byte() );
 }
 
+static void lsrd2( char *buf ) {
+	sprintf( buf, "lsrd " );
+	do_addressing( buf );
+}
+
 static void rord( char *buf ) {
 	sprintf( buf, "rord #$%02x", get_next_byte() );
+}
+
+static void rord2( char *buf ) {
+	sprintf( buf, "rord " );
+	do_addressing( buf );
 }
 
 static void asrd( char *buf ) {
 	sprintf( buf, "asrd #$%02x", get_next_byte() );
 }
 
+static void asrd2( char *buf ) {
+	sprintf( buf, "asrd " );
+	do_addressing( buf );
+}
+
 static void asld( char *buf ) {
 	sprintf( buf, "asld #$%02x", get_next_byte() );
 }
 
+static void asld2( char *buf ) {
+	sprintf( buf, "asld " );
+	do_addressing( buf );
+}
+
 static void rold( char *buf ) {
 	sprintf( buf, "rold #$%02x", get_next_byte() );
+}
+
+static void rold2( char *buf ) {
+	sprintf( buf, "rold " );
+	do_addressing( buf );
 }
 
 static void lsrw( char *buf ) {
@@ -1736,18 +1780,18 @@ static konami_opcode_def op_table[256] = {
 	/* b4 */	{ lmul, 0 },
 	/* b5 */	{ divx, 0 },
 	/* b6 */	{ bmove, 1 },
-	/* b7 */	{ illegal, 0 },
+	/* b7 */	{ move, 0 },
 	/* b8 */	{ lsrd, 0 },
-	/* b9 */	{ illegal, 0 },
+	/* b9 */	{ lsrd2, 0 },
 	/* ba */	{ rord, 0 },
-	/* bb */	{ illegal, 0 },
+	/* bb */	{ rord2, 0 },
 	/* bc */	{ asrd, 0 },
-	/* bd */	{ illegal, 0 },
+	/* bd */	{ asrd2, 0 },
 	/* be */	{ asld, 0 },
-	/* bf */	{ illegal, 0 },
+	/* bf */	{ asld2, 0 },
 
 	/* c0 */	{ rold, 0 },
-	/* c1 */	{ illegal, 0 },
+	/* c1 */	{ rold2, 0 },
 	/* c2 */	{ clrd, 1 },
 	/* c3 */	{ clrw, 0 },
 	/* c4 */	{ negd, 0 },

@@ -174,7 +174,6 @@ static void tnk3_draw_background( struct osd_bitmap *bitmap, int scrollx, int sc
 
 static void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *source ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
-	int color = 0; /* probably an unmapped video register */
 	int offs;
 
 	bank*=256;
@@ -182,7 +181,7 @@ static void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *
 	for( offs = 0;offs <0x400; offs++ ){
 		drawgfx( bitmap, gfx,
 			source[offs]+bank,
-			color,
+			source[offs]>>5,
 			0,0, /* no flip */
 			16+(offs/32)*8,(offs%32)*8+8,
 			0,
@@ -193,7 +192,6 @@ static void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *
 static void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char *source ){
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
-	int color = 0; /* probably an unmapped video register */
 	int offs;
 
 	bank *= 256;
@@ -205,7 +203,7 @@ static void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char
 
 		drawgfx(bitmap,gfx,
 			tile_number+bank,
-			color,
+			tile_number>>5,
 			0,0, /* no flip */
 			sx,sy,
 			clip,TRANSPARENCY_NONE,0);
@@ -215,7 +213,7 @@ static void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char
 
 		drawgfx(bitmap,gfx,
 			tile_number+bank,
-			color,
+			tile_number>>5,
 			0,0, /* no flip */
 			sx,sy,
 			clip,TRANSPARENCY_NONE,0);

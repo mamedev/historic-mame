@@ -2872,7 +2872,6 @@ ROM_START( garyoret_rom )
 	ROM_LOAD( "dv02", 0x20000, 0x10000, 0xf9e26ce7 )
 	ROM_LOAD( "dv03", 0x30000, 0x10000, 0x55d8d699 )
 	ROM_LOAD( "dv04", 0x40000, 0x10000, 0xed3d00ee )
-    ROM_LOAD( "dv05", 0x50000, 0x08000, 0xc97c347f )
 
 	ROM_REGION_DISPOSE(0x108000)	/* temporary space for graphics */
 	ROM_LOAD( "dv14", 0x00000, 0x08000, 0xfb2bc581 )	/* Characters */

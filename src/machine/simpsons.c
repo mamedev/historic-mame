@@ -6,6 +6,7 @@
 
 /* from vidhrdw */
 extern void simpsons_video_banking( int select );
+extern unsigned char *simpsons_xtraram;
 
 int simpsons_firq_enabled;
 
@@ -58,7 +59,7 @@ void simpsons_eeprom_w( int offset, int data )
 
 	simpsons_video_banking( data & 3 );
 
-	simpsons_firq_enabled = ( ( data >> 2 ) & 1 ) && ( ( data & 3 ) == 0 );
+	simpsons_firq_enabled = data & 0x04;
 }
 
 /***************************************************************************
@@ -74,9 +75,10 @@ void simpsons_coin_counter_w( int offset, int data )
 	coin_counter_w(1,data & 0x02);
 	/* bit 2 selects mono or stereo sound */
 	/* bit 3 = enable char ROM reading through the video RAM */
-	K052109_set_RMRD_line( ( data & 0x08 ) ? ASSERT_LINE : CLEAR_LINE );
+	K052109_set_RMRD_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 	/* bit 4 = INIT (unknown) */
-	/* bit 5 = OBJCHA (unknown, sprite related) */
+	/* bit 5 = enable sprite ROM reading */
+	K053246_set_OBJCHA_line((~data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 int simpsons_sound_interrupt_r( int offset )
@@ -189,7 +191,7 @@ void simpsons_init_machine( void )
 	konami_cpu_setlines_callback = simpsons_banking;
 
 	paletteram = &RAM[0x88000];
-	spriteram = &RAM[0x8e000];
+	simpsons_xtraram = &RAM[0x89000];
 	simpsons_firq_enabled = 0;
 
 	/* init the default banks */

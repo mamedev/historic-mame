@@ -443,9 +443,7 @@ INPUT_PORTS_START( input_ports )
     PORT_DIPSETTING(    0x80, "Japanese" )
 
     PORT_START  /* dsw1 */
-    PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
     PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
     PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )

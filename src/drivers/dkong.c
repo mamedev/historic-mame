@@ -195,7 +195,7 @@ void dkongjr_sh_test5(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2
 void dkongjr_sh_test4(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
 void dkongjr_sh_tuneselect(int offset, int data) { soundlatch_w(offset,data); }
 
-int  hunchbks_mirror_r(int offset);
+int hunchbks_mirror_r(int offset);
 void hunchbks_mirror_w(int offset,int data);
 unsigned s2650_get_pc(void);
 
@@ -210,7 +210,6 @@ static int  dkong_sh_gettune(int offset)
 	{
 		switch (offset)
 		{
-        	case 0x120:
 			case 0x20:  return soundlatch_r(0);
 		}
 	}
@@ -375,7 +374,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 };
 static struct IOReadPort readport_sound[] =
 {
-	{ 0x00,     0x120,    dkong_sh_gettune },
+	{ 0x00,     0xff,     dkong_sh_gettune },
 	{ I8039_p1, I8039_p1, dkong_sh_getp1 },
 	{ I8039_p2, I8039_p2, dkong_sh_getp2 },
 	{ I8039_t0, I8039_t0, dkong_sh_gett0 },
@@ -386,6 +385,16 @@ static struct IOWritePort writeport_sound[] =
 {
 	{ I8039_p1, I8039_p1, dkong_sh_putp1 },
 	{ I8039_p2, I8039_p2, dkong_sh_putp2 },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort readport_hunchbkd_sound[] =
+{
+	{ I8039_bus,I8039_bus,soundlatch_r },
+	{ I8039_p1, I8039_p1, dkong_sh_getp1 },
+	{ I8039_p2, I8039_p2, dkong_sh_getp2 },
+	{ I8039_t0, I8039_t0, dkong_sh_gett0 },
+	{ I8039_t1, I8039_t1, dkong_sh_gett1 },
 	{ -1 }	/* end of table */
 };
 
@@ -411,6 +420,7 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 	{ 0x7d07, 0x7d07, dkongjr_sh_walk_w },	/* controls pitch of the walk/climb? */
 	{ 0x7d80, 0x7d80, dkongjr_sh_death_w },
 	{ 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },	/* bootleg DKjr only */
 	{ -1 }	/* end of table */
@@ -789,7 +799,7 @@ static struct MachineDriver hunchbkd_machine_driver =
 			CPU_I8035 | CPU_AUDIO_CPU,
 			6000000/15,	/* 6Mhz crystal */
 			3,
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
 			ignore_interrupt,1
 		}
     },

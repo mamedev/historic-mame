@@ -54,9 +54,7 @@ static void bankedram_w(int offset,int data)
 static int parodius_052109_053245_r(int offset)
 {
 	if (videobank & 0x02)
-	{
 		return K053245_r(offset);
-	}
 	else
 		return K052109_r(offset);
 }
@@ -146,9 +144,9 @@ static struct MemoryReadAddress parodius_readmem[] =
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x3f8c, 0x3f8c, input_port_0_r },
 	{ 0x3f8d, 0x3f8d, input_port_1_r },
-	{ 0x3f8e, 0x3f8e, input_port_2_r },
-	{ 0x3f8f, 0x3f8f, input_port_3_r },
-	{ 0x3f90, 0x3f90, input_port_4_r },
+	{ 0x3f8e, 0x3f8e, input_port_4_r },
+	{ 0x3f8f, 0x3f8f, input_port_2_r },
+	{ 0x3f90, 0x3f90, input_port_3_r },
 	{ 0x3fa0, 0x3faf, K053244_r },
 	{ 0x3fc0, 0x3fc0, watchdog_reset_r },
 	{ 0x3fcc, 0x3fcd, parodius_sound_r },	/* K053260 */
@@ -223,24 +221,6 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 
-	PORT_START	/* DSW #3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Upright Type" )
-	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x00, "Vs" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -295,8 +275,24 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
-	PORT_DIPSETTING(    0x00, "Very difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW #3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Upright Controls" )
+	PORT_DIPSETTING(    0x20, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -438,8 +434,8 @@ static void parodius_init_machine( void )
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
-	konami_rom_deinterleave(2);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(2);
 }
 
 
@@ -449,7 +445,7 @@ struct GameDriver parodius_driver =
 	__FILE__,
 	0,
 	"parodius",
-	"Parodius (Japan)",
+	"Parodius DA! (Japan)",
 	"1990",
 	"Konami",
 	"Nicola Salmoria",

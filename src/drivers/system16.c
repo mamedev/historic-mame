@@ -1,18 +1,4 @@
 /*
-
-  sys18 sound fixed - 2612intf.c
-  hangon sound fixed - segapcm.c
-  hangon & super hangon added control centering
-  outrun graphics fixed
-		 + controls changed, centering and 2 button gears
-		 + gradiant color effect fixed on name entry
-  space harrier - 'you're doing great' fixed. Stopped controls working during demo mode.
-  leds added to hangon, sharrier, hwchamp, outrun, shangon (based on s16ae leds. Not sure if they are correct though.)
-
-  enduro racer added (3 sets)
-  eswat (protected) added
-----------------------------------------------
-
 	working:
 		Alex Kidd
 		Alien Storm (bootleg)
@@ -21,25 +7,27 @@
 		Altered Beast (Ver 2)	(No Sound)
 		Atomic Point			(No Sound)
 		Aurail					(Speech quality sounds poor)
+		Aurail (317-0168)
 		Bay Route
 		Body Slam
 		Dynamite Dux (bootleg)
 		Enduro Racer (bootleg)
+		Enduro Racer (custom bootleg)
 		E-Swat (bootleg)
 		Fantasy Zone
-		Flash Point  (bootleg): dipswitches are wrong
+		Flash Point  (bootleg)
 		Golden Axe (Ver 1)
 		Golden Axe (Ver 2)
 		Hang-on
 		Heavyweight Champ: some minor graphics glitches
 		Major League: No game over.
 		Moonwalker (bootleg)
-		Outrun (set 1): road & sprites not correctly synced
-		Outrun (set 2): road & sprites not correctly synced
-		Outrun (custom bootleg): road & sprites not correctly synced
+		Outrun (set 1)
+		Outrun (set 2)
+		Outrun (custom bootleg)
 		Passing Shot (bootleg)
-		Quartet: Glitch on highscore list + title screen rotation effect missing.
-		Quartet 2: Glitch on highscore list + title screen rotation effect missing.
+		Quartet: Glitch on highscore list
+		Quartet 2: Glitch on highscore list
 		Riot City
 		SDI
 		Shadow Dancer
@@ -64,12 +52,10 @@
 		Alien Syndrome
 		Alien Syndrome
 		Alien Storm
-		Aurail (317-0168)
 		Bay Route (317-0116)
 		Bay Route (protected bootleg 1)
 		Bay Route (protected bootleg 2)
 		Enduro Racer
-		Enduro Racer (custom bootleg)
 		E-Swat
 		Flash Point
 		Golden Axe (Ver 2 317-0110)
@@ -118,7 +104,7 @@ left/right side markers. This will fix graphics glitches in several games,
 including ESwat, Alien Storm and Altered Beast.
 */
 #define SPRITE_SIDE_MARKERS
-
+//#define OUTRUN_SPEEDUP
 #define TRANSPARENT_SHADOWS
 
 #ifdef TRANSPARENT_SHADOWS
@@ -161,7 +147,6 @@ extern int sys16_bgxoffset;
 extern int sys16_fgxoffset;
 extern int *sys16_obj_bank;
 extern int sys16_textmode;
-extern int sys16_yflip;
 extern int sys16_textlayer_lo_min;
 extern int sys16_textlayer_lo_max;
 extern int sys16_textlayer_hi_min;
@@ -169,10 +154,14 @@ extern int sys16_textlayer_hi_max;
 extern int sys16_dactype;
 extern int sys16_bg1_trans;
 extern int sys16_bg_priority_mode;
+extern int sys16_fg_priority_mode;
 extern int sys16_bg_priority_value;
 extern int sys16_fg_priority_value;
 extern int sys16_spritelist_end;
 extern int sys16_tilebank_switch;
+extern int sys16_rowscroll_scroll;
+extern int sys16_quartet_title_kludge;
+extern int sys16_tilemap_height;					// outrun speedup kludge
 void (* sys16_update_proc)( void );
 
 /* video driver registers */
@@ -209,9 +198,6 @@ extern int gr_palette_default;
 extern unsigned char gr_colorflip[2][4];
 extern unsigned char *gr_second_road;
 
-/* Kludge to stop Reset Corrupting Memory */
-int sys16_machine_started;
-
 /* video driver has access to these memory regions */
 unsigned char *sys16_tileram;
 unsigned char *sys16_textram;
@@ -242,19 +228,12 @@ void sys16_7751_sh_rom_select_w(int offset, int data);
 // encryption decoding
 void endurob2_decode_data(unsigned char *dest,unsigned char *source,int size);
 void endurob2_decode_data2(unsigned char *dest,unsigned char *source,int size);
+void enduror_decode_data(unsigned char *dest,unsigned char *source,int size);
+void enduror_decode_data2(unsigned char *dest,unsigned char *source,int size);
 
-/* shared memory */
-static int mirror1_hi_addr;
-static int mirror1_lo_addr;
-static int mirror1_word;
-
-static int mirror2_hi_addr;
-static int mirror2_lo_addr;
-static int mirror2_word;
-
-static int mirror3_hi_addr;
-static int mirror3_lo_addr;
-static int mirror3_word;
+void aurail_decode_data(unsigned char *dest,unsigned char *source,int size);
+void aurail_decode_opcode1(unsigned char *dest,unsigned char *source,int size);
+void aurail_decode_opcode2(unsigned char *dest,unsigned char *source,int size);
 
 /***************************************************************************/
 
@@ -273,131 +252,20 @@ static int mirror3_word;
 #define MRA_TEXTRAM		sys16_textram_r
 #define MWA_TEXTRAM		sys16_textram_w,&sys16_textram
 
-#define MRA_EXTRAM		MRA_BANK5
-#define MWA_EXTRAM		MWA_BANK5,&sys16_extraram
+#define MRA_EXTRAM		MRA_BANK3
+#define MWA_EXTRAM		MWA_BANK3,&sys16_extraram
 
-#define MRA_EXTRAM2		MRA_BANK6
-#define MWA_EXTRAM2		MWA_BANK6,&sys16_extraram2
+#define MRA_EXTRAM2		MRA_BANK4
+#define MWA_EXTRAM2		MWA_BANK4,&sys16_extraram2
 
-#define MRA_EXTRAM3		MRA_BANK7
-#define MWA_EXTRAM3		MWA_BANK7,&sys16_extraram3
+#define MRA_EXTRAM3		MRA_BANK5
+#define MWA_EXTRAM3		MWA_BANK5,&sys16_extraram3
 
-#define MRA_EXTRAM4		MRA_BANK8
-#define MWA_EXTRAM4		MWA_BANK8,&sys16_extraram4
+#define MRA_EXTRAM4		MRA_BANK6
+#define MWA_EXTRAM4		MWA_BANK6,&sys16_extraram4
 
-#define MRA_EXTRAM5		MRA_BANK3
-#define MWA_EXTRAM5		MWA_BANK3,&sys16_extraram5
-
-/****************************************************************************
-
-Some System16 games need mirrored addresses.  In MAME this presents some
-difficulties, because memory read/write handlers for 68000 games are
-word-based.  The following private functions make supporting mirrored
-bytes easier.
-
-****************************************************************************/
-
-static void mirror1_w( int offset, int data ){
-	if( (data&0xff000000)==0 ){
-		if( mirror1_hi_addr )
-			cpu_writemem24( mirror1_hi_addr, (data>>8)&0xff );
-		else
-			mirror1_word = (mirror1_word&0x00ff) | (data&0xff00);
-	}
-
-	if( (data&0x00ff0000)==0 ){
-		if( mirror1_lo_addr )
-			cpu_writemem24( mirror1_lo_addr, data&0xff );
-		else
-			mirror1_word = (mirror1_word&0xff00) | (data&0xff);
-	}
-}
-
-static int mirror1_r( int offset ){
-	int data = mirror1_word;
-	if( mirror1_hi_addr ) data |= cpu_readmem24( mirror1_hi_addr )<<8;
-	if( mirror1_lo_addr ) data |= cpu_readmem24( mirror1_lo_addr );
-
-	if( data!= (input_port_0_r(offset) << 8) + input_port_1_r(offset) ){
-		if( errorlog ) fprintf( errorlog, "bad\n" );
-	}
-
-	return data;
-}
-
-static void define_mirror1( int hi_addr, int lo_addr ){
-	mirror1_word = 0;
-	mirror1_hi_addr = hi_addr;
-	mirror1_lo_addr = lo_addr;
-}
-
-static void mirror2_w( int offset, int data ){
-	if( (data&0xff000000)==0 ){
-		if( mirror2_hi_addr )
-			cpu_writemem24( mirror2_hi_addr, (data>>8)&0xff );
-		else
-			mirror2_word = (mirror2_word&0x00ff) | (data&0xff00);
-	}
-
-	if( (data&0x00ff0000)==0 ){
-		if( mirror2_lo_addr )
-			cpu_writemem24( mirror2_lo_addr, data&0xff );
-		else
-			mirror2_word = (mirror2_word&0xff00) | (data&0xff);
-	}
-}
-
-static int mirror2_r( int offset ){
-	int data = mirror2_word;
-	if( mirror2_hi_addr ) data |= cpu_readmem24( mirror2_hi_addr )<<8;
-	if( mirror2_lo_addr ) data |= cpu_readmem24( mirror2_lo_addr );
-
-	if( data!= (input_port_0_r(offset) << 8) + input_port_1_r(offset) ){
-		if( errorlog ) fprintf( errorlog, "bad\n" );
-	}
-
-	return data;
-}
-
-static void define_mirror2( int hi_addr, int lo_addr ){
-	mirror2_word = 0;
-	mirror2_hi_addr = hi_addr;
-	mirror2_lo_addr = lo_addr;
-}
-
-static void mirror3_w( int offset, int data ){
-	if( (data&0xff000000)==0 ){
-		if( mirror3_hi_addr )
-			cpu_writemem24( mirror3_hi_addr, (data>>8)&0xff );
-		else
-			mirror3_word = (mirror3_word&0x00ff) | (data&0xff00);
-	}
-
-	if( (data&0x00ff0000)==0 ){
-		if( mirror3_lo_addr )
-			cpu_writemem24( mirror3_lo_addr, data&0xff );
-		else
-			mirror3_word = (mirror3_word&0xff00) | (data&0xff);
-	}
-}
-
-static int mirror3_r( int offset ){
-	int data = mirror3_word;
-	if( mirror3_hi_addr ) data |= cpu_readmem24( mirror3_hi_addr )<<8;
-	if( mirror3_lo_addr ) data |= cpu_readmem24( mirror3_lo_addr );
-
-	if( data!= (input_port_0_r(offset) << 8) + input_port_1_r(offset) ){
-		if( errorlog ) fprintf( errorlog, "bad\n" );
-	}
-
-	return data;
-}
-
-static void define_mirror3( int hi_addr, int lo_addr ){
-	mirror3_word = 0;
-	mirror3_hi_addr = hi_addr;
-	mirror3_lo_addr = lo_addr;
-}
+#define MRA_EXTRAM5		MRA_BANK7
+#define MWA_EXTRAM5		MWA_BANK7,&sys16_extraram5
 
 /***************************************************************************/
 
@@ -587,16 +455,20 @@ static void (*sys16_custom_irq)(void);
 
 static void sys16_onetime_init_machine(void)
 {
-	sys16_machine_started=0;
 	sys16_bg1_trans=0;
+	sys16_rowscroll_scroll=0;
 	sys18_splittab_bg_x=0;
 	sys18_splittab_bg_y=0;
 	sys18_splittab_fg_x=0;
 	sys18_splittab_fg_y=0;
 
+	sys16_quartet_title_kludge=0;
+	sys16_tilemap_height=2;
+
 	sys16_custom_irq=NULL;
 
 	sys16_MaxShadowColors=NumOfShadowColors;
+
 #ifdef SPACEHARRIER_OFFSETS
 	spaceharrier_patternoffsets=0;
 #endif
@@ -842,8 +714,7 @@ static struct IOWritePort sound_writeport_18[] =
 static struct YM2612interface ym3438_interface =
 {
 	2,	/* 2 chips */
-//	4096000,	/* 3.58 MHZ ? */
-	3579545*2,	// from mmsnd
+	8000000,
 	{ 40,40 },
 	{ 0 },	{ 0 },	{ 0 },	{ 0 }
 };
@@ -857,6 +728,15 @@ static struct YM2203interface ym2203_interface =
 	1,	/* 1 chips */
 	4096000,	/* 3.58 MHZ ? */
 	{ YM2203_VOL(50,50) },
+	{ 0 },	{ 0 },	{ 0 },	{ 0 },	{ 0 },
+	{ 0 }
+};
+
+static struct YM2203interface ym2203_interface2 =
+{
+	3,	/* 1 chips */
+	4096000,	/* 3.58 MHZ ? */
+	{ YM2203_VOL(50,50),YM2203_VOL(50,50),YM2203_VOL(50,50) },
 	{ 0 },	{ 0 },	{ 0 },	{ 0 },	{ 0 },
 	{ 0 }
 };
@@ -916,17 +796,13 @@ static void sound_command_nmi_w(int offset, int data){
 	soundlatch_w( 0,data&0xff );
 	cpu_set_nmi_line(1, PULSE_LINE);
 }
-/*
-static void irq_handler_mus(int irq)
-{
-}
-*/
+
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4096000,	/* 3.58 MHZ ? */
 	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
-	{ /*irq_handler_mus*/0 }
+	{ 0 }
 };
 
 
@@ -1076,7 +952,7 @@ static void set_bg2_page( int data ){
 	in a ROM module definition.  This routine unpacks each sprite nibble
 	into a byte, doubling the memory consumption. */
 
-void sys16_sprite_decode( int num_banks, int bank_size ){
+static void sys16_sprite_decode( int num_banks, int bank_size ){
 	unsigned char *base = Machine->memory_region[2];
 	unsigned char *temp = malloc( bank_size );
 	int i;
@@ -1163,7 +1039,7 @@ void sys16_sprite_decode( int num_banks, int bank_size ){
 	free( temp );
 }
 
-void sys16_sprite_decode2( int num_banks, int bank_size, int side_markers ){
+static void sys16_sprite_decode2( int num_banks, int bank_size, int side_markers ){
 	unsigned char *base = Machine->memory_region[2];
 	unsigned char *temp = malloc( bank_size );
 	int i;
@@ -1328,7 +1204,7 @@ void sys16_sprite_decode2( int num_banks, int bank_size, int side_markers ){
 
 int gr_bitmap_width;
 
-void generate_gr_screen(int w,int bitmap_width,int skip,int start_color,int end_color,int source_size)
+static void generate_gr_screen(int w,int bitmap_width,int skip,int start_color,int end_color,int source_size)
 {
 	UINT8 *buf;
 	UINT8 *gr = Machine->memory_region[5];
@@ -1413,55 +1289,36 @@ void generate_gr_screen(int w,int bitmap_width,int skip,int start_color,int end_
 
 /***************************************************************************/
 
-static int io_player1_r( int offset ){ return input_port_0_r( offset ); }
-static int io_player2_r( int offset ){ return input_port_1_r( offset ); }
-static int io_player3_r( int offset ){ return input_port_5_r( offset ); }
-static int io_service_r( int offset ){ return input_port_2_r( offset ); }
+#define io_player1_r input_port_0_r
+#define io_player2_r input_port_1_r
+#define io_player3_r input_port_5_r
+#define io_service_r input_port_2_r
 
-static int io_dip1_r( int offset ){ return input_port_3_r( offset ); }
-static int io_dip2_r( int offset ){ return input_port_4_r( offset ); }
-static int io_dip3_r( int offset ){ return input_port_5_r( offset ); }
+#define io_dip1_r input_port_3_r
+#define io_dip2_r input_port_4_r
+#define io_dip3_r input_port_5_r
 
 /***************************************************************************/
 
-static void copy_rom64k( int dest, int source ){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	memcpy( &RAM[dest*0x10000], &RAM[source*0x10000], 0x10000 );
-}
 
-static void patch_code( int offset, int data ){
+static void patch_codeX( int offset, int data, int cpu ){
 	int aligned_offset = offset&0xfffffe;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
 	int old_word = READ_WORD( &RAM[aligned_offset] );
 
-	if( offset&1 ){
+	if( offset&1 )
 		data = (old_word&0xff00)|data;
-	}
-	else {
+	else
 		data = (old_word&0x00ff)|(data<<8);
-	}
 
 	WRITE_WORD (&RAM[aligned_offset], data);
 }
 
-static void patch_code2( int offset, int data ){
-	int aligned_offset = offset&0xfffffe;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
-	int old_word = READ_WORD( &RAM[aligned_offset] );
-
-	if( offset&1 ){
-		data = (old_word&0xff00)|data;
-	}
-	else {
-		data = (old_word&0x00ff)|(data<<8);
-	}
-
-	WRITE_WORD (&RAM[aligned_offset], data);
-}
+static void patch_code( int offset, int data ) {patch_codeX(offset,data,0);}
+static void patch_code2( int offset, int data ) {patch_codeX(offset,data,2);}
 
 static void patch_z80code( int offset, int data ){
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-
 	RAM[offset] = data;
 }
 
@@ -1517,16 +1374,6 @@ static void patch_z80code( int offset, int data ){
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 
-#define SYS16_JOY3_SWAPPEDBUTTONS PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 ) \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 ) \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
-
 #define SYS16_SERVICE PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
@@ -1580,9 +1427,9 @@ static void patch_z80code( int offset, int data ){
 ROM_START( alexkidd_rom )
 	ROM_REGION( 0x040000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "epr10427.26", 0x000000, 0x10000, 0xf6e3dd29 )
-	ROM_LOAD_EVEN( "epr10430.43", 0x000000, 0x10000, 0x89e3439f )
+	ROM_LOAD_EVEN( "epr10429.42", 0x000000, 0x10000, 0xbdf49eca )
 	ROM_LOAD_ODD ( "epr10428.25", 0x020000, 0x10000, 0xdbed3210 )
-	ROM_LOAD_EVEN( "epr10429.42", 0x020000, 0x10000, 0xbdf49eca )
+	ROM_LOAD_EVEN( "epr10430.43", 0x020000, 0x10000, 0x89e3439f )
 
 	ROM_REGION( 0x18000 ) /* tiles */
 	ROM_LOAD( "10431.95", 0x00000, 0x08000, 0xa7962c39 )
@@ -1642,7 +1489,7 @@ ROM_START( alexkidda_rom )
 	ROM_REGION(0x1000)      /* 4k for 7751 onboard ROM */
 	ROM_LOAD( "7751.bin",     0x0000, 0x0400, 0x6a9534fc ) /* 7751 - U34 */
 
-	ROM_REGION( 0x10000 ) /* 7751 sound data (not used yet) */
+	ROM_REGION( 0x10000 ) /* 7751 sound data */
 	ROM_LOAD( "10435.1", 0x0000, 0x8000, 0xad89f6e3 )
 	ROM_LOAD( "10436.2", 0x8000, 0x8000, 0x96c76613 )
 ROM_END
@@ -1653,43 +1500,43 @@ static int alexkidd_skip(int offset)
 {
 	if (cpu_get_pc()==0x242c) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xf108]);
+	return READ_WORD(&sys16_workingram[0x3108]);
 }
 
 static struct MemoryReadAddress alexkidd_readmem[] =
 {
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+	{ 0xc40002, 0xc40005, MRA_NOP },		//??
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
-
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc60000, 0xc60001, MRA_NOP },
 	{ 0xfff108, 0xfff109, alexkidd_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress alexkidd_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xc40000, 0xc40001, sound_command_nmi_w },
-	{ 0xc40002, 0xc40003, MWA_NOP },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc40000, 0xc40001, sound_command_nmi_w },
+	{ 0xc40002, 0xc40005, MWA_NOP },		//??
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void alexkidd_update_proc( void ){
+static void alexkidd_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
@@ -1699,20 +1546,19 @@ void alexkidd_update_proc( void ){
 	set_bg_page1( READ_WORD( &sys16_textram[0x0e9c] ) );
 }
 
-void alexkidd_init_machine( void ){
+static void alexkidd_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,00,01,02,03,00,01,02,03,00,01,02,03};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbc;
 	sys16_fgxoffset = sys16_bgxoffset = 7;
-
-	patch_code(0xb0f,0x01);
+	sys16_bg_priority_mode=1;
 
 	sys16_update_proc = alexkidd_update_proc;
 }
 
-void alexkidd_sprite_decode( void ){
+static void alexkidd_sprite_decode( void ){
 	sys16_sprite_decode( 5,0x010000 );
 }
 /***************************************************************************/
@@ -1724,10 +1570,10 @@ INPUT_PORTS_START( alexkidd_input_ports )
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )		// possibly something to do with continues?
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, "Continues" )
+	PORT_DIPSETTING(    0x01, "Only before level 5" )
+	PORT_DIPSETTING(    0x00, "Unlimited" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -1746,13 +1592,42 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x40, "50" )
 	PORT_DIPSETTING(    0x00, "40" )
 
-
 INPUT_PORTS_END
 
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( alexkidd_machine_driver, \
 	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine,gfx8 )
+
+static int alexkidd_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3c30]) == 0x01 &&
+		READ_WORD(&sys16_workingram[0x3c32]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3c00],0x38);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void alexkidd_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3c00],0x38);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver alexkidd_driver =
 {
@@ -1795,7 +1670,7 @@ struct GameDriver alexkida_driver =
 	alexkidd_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	alexkidd_hiload, alexkidd_hisave
 };
 
 /***************************************************************************/
@@ -1898,38 +1773,37 @@ ROM_END
 
 static struct MemoryReadAddress aliensyn_readmem[] =
 {
+	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress aliensyn_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x000000, 0x02ffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x440000, 0x440fff, MWA_SPRITERAM },
 	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc00006, 0xc00007, sound_command_w },
 	{ 0xc40000, 0xc40fff, MWA_EXTRAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 
 /***************************************************************************/
 
-void aliensyn_update_proc( void ){
+static void aliensyn_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -1941,19 +1815,20 @@ void aliensyn_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram[0] ) ); // 0xc40001
 }
 
-void aliensyn_init_machine( void ){
+static void aliensyn_init_machine( void ){
 	static int bank[16] = { 0,0,0,0,0,0,0,6,0,0,0,4,0,2,0,0 };
 	sys16_obj_bank = bank;
 	sys16_bg_priority_mode=1;
+	sys16_fg_priority_mode=1;
 
 	sys16_update_proc = aliensyn_update_proc;
 }
 
-void aliensyn_sprite_decode( void ){
+static void aliensyn_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x20000 );
 }
 
-void aliensyn_onetime_init_machine( void ){
+static void aliensyn_onetime_init_machine( void ){
 	sys16_onetime_init_machine();
 	sys16_bg1_trans=1;
 }
@@ -1970,7 +1845,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -2007,6 +1882,38 @@ static struct UPD7759_interface aliensyn_upd7759_interface =
 MACHINE_DRIVER_7759( aliensyn_machine_driver, \
 	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, gfx1, aliensyn_upd7759_interface )
 
+static int aliensyn_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3346]) == 0x03 &&
+		READ_WORD(&sys16_workingram[0x3348]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3300],0x50);
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void aliensyn_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3300],0x50);
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver aliensyn_driver =
 {
 	__FILE__,
@@ -2026,7 +1933,7 @@ struct GameDriver aliensyn_driver =
 	aliensyn_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	aliensyn_hiload, aliensyn_hisave
 };
 
 struct GameDriver aliensya_driver =
@@ -2085,7 +1992,6 @@ ROM_START( altbeast_rom )
 	ROM_LOAD( "11675", 0x20000, 0x20000, 0x2ef2f144 )
 	ROM_LOAD( "11676", 0x40000, 0x20000, 0x0c04acac )
 
-//	ROM_REGION( 0xe0000*2 ) /* sprites */
 	ROM_REGION( 0x100000*2 ) /* sprites */
 	ROM_LOAD( "opr11677", 0x00000, 0x10000, 0xf8b3684e )
 	ROM_LOAD( "opr11681", 0x10000, 0x10000, 0xae3c2793 )
@@ -2109,7 +2015,6 @@ ROM_START( altbeast_rom )
 	ROM_LOAD( "opr11672",    0x10000, 0x20000, 0xbbd7f460 )
 	ROM_LOAD( "opr11673",    0x30000, 0x20000, 0x400c4a36 )
 ROM_END
-
 
 // sys16B
 ROM_START( altbeas2_rom )
@@ -2155,48 +2060,50 @@ static int altbeast_skip(int offset)
 {
 	if (cpu_get_pc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
 
-	return READ_WORD(&sys16_workingram[0xf01c]);
+	return READ_WORD(&sys16_workingram[0x301c]);
+}
+
+// ??? What is this, input test shows 4 bits to each player, but what does it do?
+static int altbeast_io_r(int offset)
+{
+	return 0xff;
 }
 
 static struct MemoryReadAddress altbeast_readmem[] =
 {
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
+	{ 0xc41004, 0xc41005, altbeast_io_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM },
-
 	{ 0xfff01c, 0xfff01d, altbeast_skip },
-
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x03ffff, MRA_ROM },
-
-
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress altbeast_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40fff, MWA_EXTRAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xfe0006, 0xfe0007, sound_command_w },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 
 /***************************************************************************/
 
-void altbeast_update_proc( void ){
+static void altbeast_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -2205,23 +2112,23 @@ void altbeast_update_proc( void ){
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
 
-	set_tile_bank( READ_WORD( &sys16_workingram[0xf094] ) );
+	set_tile_bank( READ_WORD( &sys16_workingram[0x3094] ) );
 	set_refresh( READ_WORD( &sys16_extraram[0] ) );
 }
 
-void altbeast_init_machine( void ){
+static void altbeast_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 	sys16_obj_bank = bank;
 	sys16_update_proc = altbeast_update_proc;
 }
 
-void altbeas2_init_machine( void ){
+static void altbeas2_init_machine( void ){
 	static int bank[16] = {0x00,0x00,0x02,0x00,0x04,0x00,0x06,0x00,0x08,0x00,0x0A,0x00,0x0C,0x00,0x00,0x00};
 	sys16_obj_bank = bank;
 	sys16_update_proc = altbeast_update_proc;
 }
 
-void altbeast_sprite_decode( void ){
+static void altbeast_sprite_decode( void ){
 	sys16_sprite_decode( 7,0x20000 );
 }
 
@@ -2237,7 +2144,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
 	PORT_DIPSETTING(    0x01, "1 to start, 1 to continue")
 	PORT_DIPSETTING(    0x00, "2 to start, 1 to continue")
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -2262,6 +2169,38 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( altbeast_machine_driver, \
 	altbeast_readmem,altbeast_writemem,altbeast_init_machine, gfx2,upd7759_interface )
 
+static int altbeast_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3c6a]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x3c6c]) == 0x4000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3c00],0x74);
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void altbeast_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3c00],0x74);
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver altbeast_driver =
 {
 	__FILE__,
@@ -2281,7 +2220,7 @@ struct GameDriver altbeast_driver =
 	altbeast_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	altbeast_hiload, altbeast_hisave
 };
 
 MACHINE_DRIVER_7759( altbeas2_machine_driver, \
@@ -2306,7 +2245,7 @@ struct GameDriver altbeas2_driver =
 	altbeast_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	altbeast_hiload, altbeast_hisave
 };
 
 /***************************************************************************/
@@ -2373,17 +2312,16 @@ static int astormbl_skip(int offset)
 {
 	if (cpu_get_pc()==0x3d4c) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xec2c]);
+	return READ_WORD(&sys16_workingram[0x2c2c]);
 }
 
 static struct MemoryReadAddress astormbl_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-
 	{ 0x100000, 0x10ffff, MRA_TILERAM },
-	{ 0x110000, 0x11ffff, MRA_TEXTRAM },
-	{ 0x140000, 0x14ffff, MRA_PALETTERAM },
-	{ 0x200000, 0x20ffff, MRA_SPRITERAM },
+	{ 0x110000, 0x110fff, MRA_TEXTRAM },
+	{ 0x140000, 0x140fff, MRA_PALETTERAM },
+	{ 0x200000, 0x200fff, MRA_SPRITERAM },
 	{ 0xa00000, 0xa00001, io_dip1_r },
 	{ 0xa00002, 0xa00003, io_dip2_r },
 	{ 0xa01002, 0xa01003, io_player1_r },
@@ -2393,9 +2331,8 @@ static struct MemoryReadAddress astormbl_readmem[] =
 	{ 0xa00000, 0xa0ffff, MRA_EXTRAM2 },
 	{ 0xc00000, 0xc0ffff, MRA_EXTRAM },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
-	{ 0xfe0000, 0xfeffff, MRA_EXTRAM4 },
 	{ 0xffec2c, 0xffec2d, astormbl_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -2403,20 +2340,19 @@ static struct MemoryWriteAddress astormbl_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_TILERAM },
-	{ 0x110000, 0x111fff, MWA_TEXTRAM },
-	{ 0x140000, 0x14ffff, MWA_PALETTERAM },
-	{ 0x200000, 0x20ffff, MWA_SPRITERAM },
+	{ 0x110000, 0x110fff, MWA_TEXTRAM },
+	{ 0x140000, 0x140fff, MWA_PALETTERAM },
+	{ 0x200000, 0x200fff, MWA_SPRITERAM },
 	{ 0xa00006, 0xa00007, sound_command_nmi_w },
 	{ 0xa00000, 0xa0ffff, MWA_EXTRAM2 },
 	{ 0xc00000, 0xc0ffff, MWA_EXTRAM },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
-	{ 0xfe0000, 0xfeffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void astormbl_update_proc( void ){
+static void astormbl_update_proc( void ){
 	int data;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
@@ -2453,21 +2389,20 @@ void astormbl_update_proc( void ){
 	sys16_bg2_page[0] = (data>>4)&0xf;
 	sys16_bg2_page[2] = data&0xf;
 
-
-	sys18_bg2_active=0;
-	sys18_fg2_active=0;
-
 	if(sys16_fg2_scrollx | sys16_fg2_scrolly | READ_WORD( &sys16_textram[0x0e84] ))
 		sys18_fg2_active=1;
+	else
+		sys18_fg2_active=0;
 	if(sys16_bg2_scrollx | sys16_bg2_scrolly | READ_WORD( &sys16_textram[0x0e86] ))
 		sys18_bg2_active=1;
-
+	else
+		sys18_bg2_active=0;
 
 	set_tile_bank18( READ_WORD( &sys16_extraram2[0xe] ) ); // 0xa0000f
 	set_refresh_18( READ_WORD( &sys16_extraram3[0x6600] ) ); // 0xc46601
 }
 
-void astormbl_init_machine( void ){
+static void astormbl_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
 	sys16_obj_bank = bank;
 	sys16_fgxoffset = sys16_bgxoffset = -9;
@@ -2530,11 +2465,11 @@ void astormbl_init_machine( void ){
 	sys16_update_proc = astormbl_update_proc;
 }
 
-void astormbl_sprite_decode( void ){
+static void astormbl_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x080000 );
 }
 
-void astormbl_onetime_init_machine( void ){
+static void astormbl_onetime_init_machine( void ){
 	unsigned char *RAM= Machine->memory_region[3];
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
@@ -2582,7 +2517,7 @@ INPUT_PORTS_START( astormbl_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
@@ -2619,6 +2554,35 @@ INPUT_PORTS_END
 
 MACHINE_DRIVER_18( astormbl_machine_driver, \
 	astormbl_readmem,astormbl_writemem,astormbl_init_machine, gfx4 )
+
+static int astorm_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3f48]) == 0x9999)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void astorm_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver astorm_driver =
 {
@@ -2661,13 +2625,13 @@ struct GameDriver astormbl_driver =
 	astormbl_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	astorm_hiload, astorm_hisave
 };
 
 /***************************************************************************/
 // sys16B
 ROM_START( atomicp_rom )
-	ROM_REGION( 0x040000 ) /* 68000 code */
+	ROM_REGION( 0x020000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "ap-t1.bin", 0x000000, 0x10000, 0x5c65fe56 )
 	ROM_LOAD_EVEN( "ap-t2.bin", 0x000000, 0x10000, 0x97421047 )
 
@@ -2686,31 +2650,23 @@ static int atomicp_skip(int offset)
 {
 	if (cpu_get_pc()==0x7fc) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc902]);
+	return READ_WORD(&sys16_workingram[0x0902]);
 }
 
 
 static struct MemoryReadAddress atomicp_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM },
-
-//	{ 0x080000, 0x09ffff, MRA_EXTRAM5 },
-//	{ 0x120000, 0x12ffff, MRA_EXTRAM },
-//	{ 0x3f0000, 0x3f0003, MRA_NOP },
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
 	{ 0x440000, 0x440fff, MRA_SPRITERAM },
 	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41000, 0xc41001, io_player1_r },
 	{ 0xc41002, 0xc41003, io_player2_r },
 	{ 0xc41004, 0xc41005, io_dip1_r },
 	{ 0xc41006, 0xc41007, io_dip2_r },
-//	{ 0xc40000, 0xc40001, MRA_EXTRAM2 },
-//	{ 0xc80000, 0xc8ffff, MRA_EXTRAM4 },
-
 //	{ 0xffc902, 0xffc903, atomicp_skip },
-
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -2724,27 +2680,24 @@ static void atomicp_sound_w(int offset,int data)
 
 static struct MemoryWriteAddress atomicp_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x080000, 0x080003, atomicp_sound_w },
-//	{ 0x120000, 0x12ffff, MWA_EXTRAM },
 	{ 0x3f0000, 0x3f0003, MWA_NOP },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
 	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40001, MWA_EXTRAM2 },
-//	{ 0xc80000, 0xc8ffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
-
 
 //	{ 0x0a, 0x0a, YM2413_register_port_0_w },
 //	{ 0x0b, 0x0b, YM2413_data_port_0_w },
 
 /***************************************************************************/
 
-void atomicp_update_proc( void ){
+static void atomicp_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -2754,13 +2707,13 @@ void atomicp_update_proc( void ){
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
 }
 
-void atomicp_init_machine( void ){
+static void atomicp_init_machine( void ){
 	static int bank[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	sys16_obj_bank = bank;
 	sys16_update_proc = atomicp_update_proc;
 }
 
-void atomicp_sprite_decode( void ){
+static void atomicp_sprite_decode( void ){
 }
 
 /***************************************************************************/
@@ -2838,10 +2791,7 @@ PORT_START  //dip2
 	PORT_DIPNAME( 0x40, 0x00, "Level Select" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
 /***************************************************************************/
@@ -2851,14 +2801,12 @@ static int ap_interrupt( void ){
 	else return 4;
 }
 
-
 static struct YM2413interface ym2413_interface=
 {
     1,
     8000000,	/* ??? */
     { 30 },
 };
-
 
 static struct MachineDriver atomicp_machine_driver =
 {
@@ -2892,6 +2840,36 @@ static struct MachineDriver atomicp_machine_driver =
 	}
 };
 
+static int atomicp_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x192e]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x1930]) == 0x1000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x1900],0x1f0);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void atomicp_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x1900],0x1f0);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver atomicp_driver =
 {
 	__FILE__,
@@ -2911,7 +2889,7 @@ struct GameDriver atomicp_driver =
 	atomicp_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	atomicp_hiload, atomicp_hisave
 };
 
 
@@ -2922,11 +2900,12 @@ struct GameDriver atomicp_driver =
 ***************************************************************************/
 // sys16B
 ROM_START( aurail_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
+	ROM_REGION( 0xc0000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "13576", 0x000000, 0x20000, 0x1e428d94 )
 	ROM_LOAD_EVEN( "13577", 0x000000, 0x20000, 0x6701b686 )
-	ROM_LOAD_ODD ( "13445", 0x040000, 0x20000, 0x28dfc3dd )
-	ROM_LOAD_EVEN( "13447", 0x040000, 0x20000, 0x70a52167 )
+	/* empty 0x40000 - 0x80000 */
+	ROM_LOAD_ODD ( "13445", 0x080000, 0x20000, 0x28dfc3dd )
+	ROM_LOAD_EVEN( "13447", 0x080000, 0x20000, 0x70a52167 )
 
 	ROM_REGION( 0xc0000 ) /* tiles */
 	ROM_LOAD( "aurail.a14", 0x00000, 0x20000, 0x0fc4a7a8 ) /* plane 1 */
@@ -2961,12 +2940,13 @@ ROM_START( aurail_rom )
 ROM_END
 
 ROM_START( auraila_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
+	ROM_REGION( 0xc0000 ) /* 68000 code */
 // custom cpu 317-0168
 	ROM_LOAD_ODD ( "epr13468.a5", 0x000000, 0x20000, 0xce092218 )
 	ROM_LOAD_EVEN( "epr13469.a7", 0x000000, 0x20000, 0xc628b69d )
-	ROM_LOAD_ODD ( "13445", 0x040000, 0x20000, 0x28dfc3dd )
-	ROM_LOAD_EVEN( "13447", 0x040000, 0x20000, 0x70a52167 )
+	/* empty 0x40000 - 0x80000 */
+	ROM_LOAD_ODD ( "13445", 0x080000, 0x20000, 0x28dfc3dd )
+	ROM_LOAD_EVEN( "13447", 0x080000, 0x20000, 0x70a52167 )
 
 	ROM_REGION( 0xc0000 ) /* tiles */
 	ROM_LOAD( "aurail.a14", 0x00000, 0x20000, 0x0fc4a7a8 ) /* plane 1 */
@@ -3007,12 +2987,12 @@ static int aurail_skip(int offset)
 {
 	if (cpu_get_pc()==0xe4e) {cpu_spinuntil_int(); return 0;}
 
-	return READ_WORD(&sys16_workingram[0xe74e]);
+	return READ_WORD(&sys16_workingram[0x274e]);
 }
 
 static struct MemoryReadAddress aurail_readmem[] =
 {
-	{ 0x000000, 0x0fffff, MRA_ROM },
+	{ 0x000000, 0x0bffff, MRA_ROM },
 	{ 0x3f0000, 0x3fffff, MRA_EXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
 	{ 0x410000, 0x410fff, MRA_TEXTRAM },
@@ -3026,28 +3006,27 @@ static struct MemoryReadAddress aurail_readmem[] =
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM2 },
 	{ 0xfc0000, 0xfc0fff, MRA_EXTRAM3 },
 	{ 0xffe74e, 0xffe74f, aurail_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress aurail_writemem[] =
 {
-	{ 0x000000, 0x0fffff, MWA_ROM },
+	{ 0x000000, 0x0bffff, MWA_ROM },
 	{ 0x3f0000, 0x3fffff, MWA_EXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-//	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
 	{ 0xfc0000, 0xfc0fff, MWA_EXTRAM3 },
 	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void aurail_update_proc (void)
+static void aurail_update_proc (void)
 {
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
@@ -3061,31 +3040,30 @@ void aurail_update_proc (void)
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void aurail_init_machine( void ){
+static void aurail_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
-
-	if(sys16_machine_started) return;
-	sys16_machine_started = 1;
 
 	sys16_obj_bank = bank;
 	sys16_spritesystem = 4;
 	sys16_spritelist_end=0x8000;
-
-	copy_rom64k( 0x8, 0x4 );
-	copy_rom64k( 0x9, 0x5 );
-	copy_rom64k( 0xA, 0x6 );
-	copy_rom64k( 0xB, 0x7 );
-	copy_rom64k( 0x4, 0x0 );
-	copy_rom64k( 0x5, 0x1 );
-	copy_rom64k( 0x6, 0x2 );
-	copy_rom64k( 0x7, 0x3 );
+	sys16_bg_priority_mode=1;
 
 	sys16_update_proc = aurail_update_proc;
 }
 
-void aurail_sprite_decode (void)
+static void aurail_sprite_decode (void)
 {
 	sys16_sprite_decode (8,0x40000);
+}
+
+static void aurail_program_decode (void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	memcpy(ROM,RAM,0x40000);
+
+	aurail_decode_data (RAM,RAM,0x10000);
+	aurail_decode_opcode1(ROM,ROM,0x10000);
+	aurail_decode_opcode2(ROM+0x10000,ROM+0x10000,0x10000);
 }
 
 /***************************************************************************/
@@ -3100,7 +3078,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -3127,6 +3105,34 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( aurail_machine_driver, \
 	aurail_readmem,aurail_writemem,aurail_init_machine, gfx4,upd7759_interface )
 
+static int aurail_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3f00]) == 0x4155)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void aurail_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver aurail_driver =
 {
@@ -3147,7 +3153,7 @@ struct GameDriver aurail_driver =
 	aurail_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	aurail_hiload, aurail_hisave
 };
 
 struct GameDriver auraila_driver =
@@ -3159,17 +3165,17 @@ struct GameDriver auraila_driver =
 	"1990",
 	"Sega / Westone",
 	SYS16_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&aurail_machine_driver,
 	sys16_onetime_init_machine,
 	auraila_rom,
-	aurail_sprite_decode, 0,
+	aurail_sprite_decode, aurail_program_decode,
 	0,
 	0,
 	aurail_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	aurail_hiload, aurail_hisave
 };
 
 
@@ -3292,63 +3298,42 @@ ROM_START( bayrtbl2_rom )
 ROM_END
 
 /***************************************************************************/
-/*
-static int bayroute_skip(int offset)
-{
-	if (cpu_get_pc()==0x15a0) {cpu_spinuntil_int(); return 0xffff;}
-
-	return READ_WORD(&sys16_extraram3[0]);
-}
-*/
 
 static struct MemoryReadAddress bayroute_readmem[] =
 {
 	{ 0x000000, 0x0bffff, MRA_ROM },
+	{ 0x500000, 0x503fff, MRA_EXTRAM3 },
+	{ 0x600000, 0x600fff, MRA_SPRITERAM },
+	{ 0x700000, 0x70ffff, MRA_TILERAM },
+	{ 0x710000, 0x710fff, MRA_TEXTRAM },
+	{ 0x800000, 0x800fff, MRA_PALETTERAM },
 	{ 0x901002, 0x901003, io_player1_r },
 	{ 0x901006, 0x901007, io_player2_r },
 	{ 0x901000, 0x901001, io_service_r },
 	{ 0x902002, 0x902003, io_dip1_r },
 	{ 0x902000, 0x902001, io_dip2_r },
-
-	{ 0x710000, 0x710fff, MRA_TEXTRAM },
-	{ 0x700000, 0x70ffff, MRA_TILERAM },
-	{ 0x600000, 0x600fff, MRA_SPRITERAM },
-	{ 0x800000, 0x800fff, MRA_PALETTERAM },
-//	{ 0x500800, 0x500801, bayroute_skip },
-	{ 0x500000, 0x50ffff, MRA_EXTRAM3 },
 	{ 0x900000, 0x900fff, MRA_EXTRAM2 },
-
-
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 
 	{-1}
 };
 
-static void br_sound_command_w(int offset,int data)
-{
-	sound_command_w(0,(data>>8)&0xff);
-	COMBINE_WORD_MEM(&sys16_extraram3[0x88a], data);
-}
-
 static struct MemoryWriteAddress bayroute_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
-
-	{ 0x710000, 0x710fff, MWA_TEXTRAM },
-	{ 0x700000, 0x70ffff, MWA_TILERAM },
+	{ 0x500000, 0x503fff, MWA_EXTRAM3 },
 	{ 0x600000, 0x600fff, MWA_SPRITERAM },
+	{ 0x700000, 0x70ffff, MWA_TILERAM },
+	{ 0x710000, 0x710fff, MWA_TEXTRAM },
 	{ 0x800000, 0x800fff, MWA_PALETTERAM },
-	{ 0x50088a, 0x50088b, br_sound_command_w },
-	{ 0x500000, 0x50ffff, MWA_EXTRAM3 },
 	{ 0x900000, 0x900fff, MWA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xff0006, 0xff0007, sound_command_w },
 
 	{-1}
 };
 
 /***************************************************************************/
 
-void bayroute_update_proc( void ){
+static void bayroute_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -3360,7 +3345,7 @@ void bayroute_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram2[0x0] ) );
 }
 
-void bayroute_init_machine( void ){
+static void bayroute_init_machine( void ){
 	static int bank[16] = { 0,0,0,0,0,0,0,6,0,0,0,4,0,2,0,0 };
 	sys16_obj_bank = bank;
 	sys16_update_proc = bayroute_update_proc;
@@ -3368,15 +3353,15 @@ void bayroute_init_machine( void ){
 	sys16_spritelist_end=0xc000;
 }
 
-void bayroute_sprite_decode( void ){
+static void bayroute_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x20000 );
 }
 
-void bayrouta_sprite_decode( void ){
+static void bayrouta_sprite_decode( void ){
 	sys16_sprite_decode( 2,0x40000 );
 }
 
-void bayrtbl1_sprite_decode( void ){
+static void bayrtbl1_sprite_decode( void ){
 	int i;
 
 	/* invert the graphics bits on the tiles */
@@ -3423,6 +3408,38 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( bayroute_machine_driver, \
 	bayroute_readmem,bayroute_writemem,bayroute_init_machine, gfx1,upd7759_interface )
 
+static int bayroute_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram3[0x158]) == 0x0 &&
+		READ_WORD(&sys16_extraram3[0x15a]) == 0x1000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram3[0x100],0x70);
+			osd_fread(f,&sys16_extraram3[0x180],0x80);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void bayroute_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram3[0x100],0x70);
+		osd_fwrite(f,&sys16_extraram3[0x180],0x80);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver bayroute_driver =
 {
 	__FILE__,
@@ -3442,7 +3459,7 @@ struct GameDriver bayroute_driver =
 	bayroute_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	bayroute_hiload, bayroute_hisave
 };
 
 struct GameDriver bayrouta_driver =
@@ -3533,15 +3550,15 @@ ROM_START( bodyslam_rom )
 
 	ROM_REGION( 0x50000*2 ) /* sprites */
 	ROM_LOAD( "epr10012.c5",  0x000000, 0x08000, 0x990824e8 )
+	ROM_RELOAD(               0x040000, 0x08000 )
 	ROM_LOAD( "epr10016.b2",  0x008000, 0x08000, 0xaf5dc72f )
+	ROM_RELOAD(               0x048000, 0x08000 )
 	ROM_LOAD( "epr10013.c6",  0x010000, 0x08000, 0x9a0919c5 )
 	ROM_LOAD( "epr10017.b3",  0x018000, 0x08000, 0x62aafd95 )
 	ROM_LOAD( "epr10027.c7",  0x020000, 0x08000, 0x3f1c57c7 )
 	ROM_LOAD( "epr10028.b4",  0x028000, 0x08000, 0x80d4946d )
 	ROM_LOAD( "epr10015.c8",  0x030000, 0x08000, 0x582d3b6a )
 	ROM_LOAD( "epr10019.b5",  0x038000, 0x08000, 0xe020c38b )
-	ROM_LOAD( "epr10012.c5",  0x040000, 0x08000, 0x990824e8 )
-	ROM_LOAD( "epr10016.b2",  0x048000, 0x08000, 0xaf5dc72f )
 
 	ROM_REGION( 0x30000 ) /* sound CPU */
 	ROM_LOAD( "epr10026.b1", 0x00000, 0x8000, 0x123b69b8 )
@@ -3549,7 +3566,7 @@ ROM_START( bodyslam_rom )
 	ROM_REGION(0x1000)      /* 4k for 7751 onboard ROM */
 	ROM_LOAD( "7751.bin",     0x0000, 0x0400, 0x6a9534fc ) /* 7751 - U34 */
 
-	ROM_REGION( 0x20000 ) /* 7751 sound data (not used yet) */
+	ROM_REGION( 0x20000 ) /* 7751 sound data */
 	ROM_LOAD( "epr10029.c1", 0x00000, 0x8000, 0x7e4aca83 )
 	ROM_LOAD( "epr10030.c2", 0x08000, 0x8000, 0xdcc1df0b )
 	ROM_LOAD( "epr10031.c3", 0x10000, 0x8000, 0xea3c4472 )
@@ -3562,7 +3579,6 @@ ROM_END
 static struct MemoryReadAddress bodyslam_readmem[] =
 {
 	{ 0x000000, 0x02ffff, MRA_ROM },
-	//	{ 0x3f0000, 0x3fffff, MRA_EXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
 	{ 0x410000, 0x410fff, MRA_TEXTRAM },
 	{ 0x440000, 0x440fff, MRA_SPRITERAM },
@@ -3573,28 +3589,25 @@ static struct MemoryReadAddress bodyslam_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc40000, 0xc400ff, MRA_EXTRAM2 },
-	//	{ 0xfc0000, 0xfc0fff, MRA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress bodyslam_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
-	//	{ 0x3f0000, 0x3fffff, MWA_EXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40001, sound_command_nmi_w },
 	{ 0xc40000, 0xc400ff, MWA_EXTRAM2 },
-	//	{ 0xfc0000, 0xfc0fff, MWA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void bodyslam_update_proc (void)
+static void bodyslam_update_proc (void)
 {
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
@@ -3608,7 +3621,7 @@ void bodyslam_update_proc (void)
 }
 
 
-void bodyslam_init_machine( void ){
+static void bodyslam_init_machine( void ){
 	static int bank[16] = {0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -3626,7 +3639,7 @@ void bodyslam_init_machine( void ){
 	sys16_update_proc = bodyslam_update_proc;
 }
 
-void bodyslam_sprite_decode (void)
+static void bodyslam_sprite_decode (void)
 {
 	sys16_sprite_decode (5,0x10000);
 }
@@ -3634,12 +3647,12 @@ void bodyslam_sprite_decode (void)
 
 // I have no idea if this is needed, but I cannot find any code for the countdown
 // timer in the code and this seems to work ok.
-void bodyslam_irq_timer(void)
+static void bodyslam_irq_timer(void)
 {
-	int flag=READ_WORD(&sys16_workingram[0xc200])>>8;
-	int tick=READ_WORD(&sys16_workingram[0xc200])&0xff;
-	int sec=READ_WORD(&sys16_workingram[0xc202])>>8;
-	int min=READ_WORD(&sys16_workingram[0xc202])&0xff;
+	int flag=READ_WORD(&sys16_workingram[0x200])>>8;
+	int tick=READ_WORD(&sys16_workingram[0x200])&0xff;
+	int sec=READ_WORD(&sys16_workingram[0x202])>>8;
+	int min=READ_WORD(&sys16_workingram[0x202])&0xff;
 
 	if(tick == 0 && sec == 0 && min == 0)
 		flag=1;
@@ -3674,12 +3687,11 @@ void bodyslam_irq_timer(void)
 		else
 			tick--;
 	}
-	WRITE_WORD(&sys16_workingram[0xc200],(flag<<8)+tick);
-	WRITE_WORD(&sys16_workingram[0xc202],(sec<<8)+min);
+	WRITE_WORD(&sys16_workingram[0x200],(flag<<8)+tick);
+	WRITE_WORD(&sys16_workingram[0x202],(sec<<8)+min);
 }
 
-
-void bodyslam_onetime_init_machine( void ){
+static void bodyslam_onetime_init_machine( void ){
 	sys16_onetime_init_machine();
 	sys16_bg1_trans=1;
 	sys16_custom_irq=bodyslam_irq_timer;
@@ -3697,7 +3709,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
@@ -3726,6 +3738,36 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7751( bodyslam_machine_driver, \
 	bodyslam_readmem,bodyslam_writemem,bodyslam_init_machine, gfx8 )
 
+static int bodyslam_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3d06]) == 0x1 &&
+		READ_WORD(&sys16_workingram[0x3d08]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3cc0],0x50);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void bodyslam_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3cc0],0x50);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver bodyslam_driver =
 {
 	__FILE__,
@@ -3745,7 +3787,7 @@ struct GameDriver bodyslam_driver =
 	bodyslam_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	bodyslam_hiload, bodyslam_hisave
 };
 /***************************************************************************/
 // sys16B
@@ -3753,8 +3795,7 @@ ROM_START( dduxbl_rom )
 	ROM_REGION( 0x0c0000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "dduxb05.bin", 0x000000, 0x20000, 0x459d1237 )
 	ROM_LOAD_EVEN( "dduxb03.bin", 0x000000, 0x20000, 0xe7526012 )
-	ROM_LOAD_ODD ( "dduxb05.bin", 0x040000, 0x20000, 0x459d1237 )
-	ROM_LOAD_EVEN( "dduxb03.bin", 0x040000, 0x20000, 0xe7526012 )
+	/* empty 0x40000 - 0x80000 */
 	ROM_LOAD_ODD ( "dduxb04.bin", 0x080000, 0x20000, 0x30c6cb92 )
 	ROM_LOAD_EVEN( "dduxb02.bin", 0x080000, 0x20000, 0xd8ed3132 )
 
@@ -3782,23 +3823,23 @@ static int dduxbl_skip(int offset)
 {
 	if (cpu_get_pc()==0x502) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xf6e0]);
+	return READ_WORD(&sys16_workingram[0x36e0]);
 }
 
 static struct MemoryReadAddress dduxbl_readmem[] =
 {
 	{ 0x000000, 0x0bffff, MRA_ROM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
-	{ 0xc41006, 0xc41007, io_player2_r },
+	{ 0xc41004, 0xc41005, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xfff6e0, 0xfff6e1, dduxbl_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -3806,17 +3847,17 @@ static struct MemoryWriteAddress dduxbl_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40006, 0xc40007, sound_command_w },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void dduxbl_update_proc( void ){
+static void dduxbl_update_proc( void ){
 	sys16_fg_scrollx = (READ_WORD( &sys16_extraram2[0x6018] ) ^ 0xffff) & 0x01ff;
 	sys16_bg_scrollx = (READ_WORD( &sys16_extraram2[0x6008] ) ^ 0xffff) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_extraram2[0x6010] ) & 0x00ff;
@@ -3827,11 +3868,10 @@ void dduxbl_update_proc( void ){
 		unsigned char ru = READ_WORD( &sys16_extraram2[0x6022] ) & 0xff;
 		unsigned char ld = READ_WORD( &sys16_extraram2[0x6024] ) & 0xff;
 		unsigned char rd = READ_WORD( &sys16_extraram2[0x6026] ) & 0xff;
-		int data;
 
 		if (lu==4 && ld==4 && ru==5 && rd==5)
 		{ // fix a bug in chicago round (un-tested in MAME)
-			int vs=READ_WORD(&sys16_workingram[0xf6ec]);
+			int vs=READ_WORD(&sys16_workingram[0x36ec]);
 			sys16_bg_scrolly = vs & 0xff;
 			sys16_fg_scrolly = vs & 0xff;
 			if (vs >= 0x100)
@@ -3843,16 +3883,21 @@ void dduxbl_update_proc( void ){
 				lu=0x04; ru=0x15;
 			}
 		}
-		data = (((rd&0xf)|((ld&0xf)<<4)) << 8)  +  ((ru&0xf)|((lu&0xf)<<4));
-		set_fg_page(data);
-		data = (((rd>>4)|((ld>>4)<<4)) << 8) +  ((ru>>4)|((lu>>4)<<4));
-		set_bg_page(data);
+		sys16_fg_page[0] = ld&0xf;
+		sys16_fg_page[1] = rd&0xf;
+		sys16_fg_page[2] = lu&0xf;
+		sys16_fg_page[3] = ru&0xf;
+
+		sys16_bg_page[0] = ld>>4;
+		sys16_bg_page[1] = rd>>4;
+		sys16_bg_page[2] = lu>>4;
+		sys16_bg_page[3] = ru>>4;
 	}
 
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void dduxbl_init_machine( void ){
+static void dduxbl_init_machine( void ){
 	static int bank[16] = {00,00,00,00,00,00,00,0x06,00,00,00,0x04,00,0x02,00,00};
 
 	sys16_obj_bank = bank;
@@ -3874,7 +3919,7 @@ void dduxbl_init_machine( void ){
 	sys16_sprxoffset = -0x48;
 }
 
-void dduxbl_sprite_decode (void)
+static void dduxbl_sprite_decode (void)
 {
 	int i;
 
@@ -3893,7 +3938,7 @@ INPUT_PORTS_START( dduxbl_input_ports )
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
@@ -3920,7 +3965,40 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( dduxbl_machine_driver, \
-	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine, gfx1 /*,upd7759_interface*/)
+	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine, gfx1)
+
+static int ddux_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3910]) == 0x1 &&
+		READ_WORD(&sys16_workingram[0x3912]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3880],0xb0);
+			osd_fread(f,&sys16_workingram[0x3a00],0x80);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void ddux_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3880],0xb0);
+		osd_fwrite(f,&sys16_workingram[0x3a00],0x80);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver dduxbl_driver =
 {
@@ -3941,7 +4019,7 @@ struct GameDriver dduxbl_driver =
 	dduxbl_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	ddux_hiload, ddux_hisave
 };
 
 /***************************************************************************/
@@ -3970,7 +4048,7 @@ ROM_START( eswat_rom )
 ROM_END
 
 ROM_START( eswatbl_rom )
-	ROM_REGION( 0x050000 ) /* 68000 code */
+	ROM_REGION( 0x080000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "eswat_f.rom", 0x000000, 0x10000, 0xf7b2d388 )
 	ROM_LOAD_EVEN( "eswat_c.rom", 0x000000, 0x10000, 0x1028cc81 )
 	ROM_LOAD_ODD ( "eswat_e.rom", 0x020000, 0x10000, 0x937ddf9a )
@@ -4001,45 +4079,43 @@ static int eswatbl_skip(int offset)
 {
 	if (cpu_get_pc()==0x65c) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc454]);
+	return READ_WORD(&sys16_workingram[0x0454]);
 }
 
 static struct MemoryReadAddress eswatbl_readmem[] =
 {
-	{ 0x000000, 0x04ffff, MRA_ROM },
-	{ 0x3e0000, 0x3effff, MRA_EXTRAM },
+	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x418fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xc80000, 0xc8ffff, MRA_EXTRAM3 },
 	{ 0xffc454, 0xffc455, eswatbl_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress eswatbl_writemem[] =
 {
-	{ 0x000000, 0x04ffff, MWA_ROM },
-	{ 0x3e0000, 0x3effff, MWA_EXTRAM },
+	{ 0x000000, 0x07ffff, MWA_ROM },
+	{ 0x3e2000, 0x3e2001, MWA_NOP },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x418fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc42006, 0xc42007, sound_command_w },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
-	{ 0xc80000, 0xc8ffff, MWA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xc80000, 0xc80001, MWA_NOP },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void eswatbl_update_proc( void ){
+static void eswatbl_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x8008] ) ^ 0xffff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x8018] ) ^ 0xffff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x8000] );
@@ -4051,7 +4127,7 @@ void eswatbl_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void eswatbl_init_machine( void ){
+static void eswatbl_init_machine( void ){
 	static int bank[16] = { 0,2,8,10,16,18,24,26,4,6,12,14,20,22,28,30};
 
 	sys16_obj_bank = bank;
@@ -4062,9 +4138,16 @@ void eswatbl_init_machine( void ){
 	sys16_update_proc = eswatbl_update_proc;
 }
 
-void eswatbl_sprite_decode( void ){
+static void eswatbl_sprite_decode( void ){
 	sys16_sprite_decode( 3,0x080000 );
 }
+
+static void eswatbl_onetime_init_machine( void ){
+	sys16_onetime_init_machine();
+	sys16_rowscroll_scroll=0x8000;
+	sys18_splittab_fg_x=&sys16_textram[0x0f80];
+}
+
 /***************************************************************************/
 
 INPUT_PORTS_START( eswatbl_input_ports )
@@ -4077,7 +4160,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Display Flip" )
@@ -4103,6 +4186,39 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( eswatbl_machine_driver, \
 	eswatbl_readmem,eswatbl_writemem,eswatbl_init_machine, gfx4,upd7759_interface )
 
+
+static int eswat_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x0c3c]) == 0x18 &&
+		READ_WORD(&sys16_workingram[0x0c3e]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x0c00],0x50);
+			osd_fread(f,&sys16_workingram[0x0000],0x80);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void eswat_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x0c00],0x50);
+		osd_fwrite(f,&sys16_workingram[0x0000],0x80);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver eswat_driver =
 {
 	__FILE__,
@@ -4114,7 +4230,7 @@ struct GameDriver eswat_driver =
 	SYS16_CREDITS,
 	0,
 	&eswatbl_machine_driver,
-	sys16_onetime_init_machine,
+	eswatbl_onetime_init_machine,
 	eswat_rom,
 	eswatbl_sprite_decode, 0,
 	0,
@@ -4122,7 +4238,7 @@ struct GameDriver eswat_driver =
 	eswatbl_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	eswat_hiload, eswat_hisave
 };
 
 struct GameDriver eswatbl_driver =
@@ -4136,7 +4252,7 @@ struct GameDriver eswatbl_driver =
 	SYS16_CREDITS,
 	0,
 	&eswatbl_machine_driver,
-	sys16_onetime_init_machine,
+	eswatbl_onetime_init_machine,
 	eswatbl_rom,
 	eswatbl_sprite_decode, 0,
 	0,
@@ -4184,23 +4300,24 @@ static int fantzone_skip(int offset)
 {
 	if (cpu_get_pc()==0x91b2) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc22a]);
+	return READ_WORD(&sys16_workingram[0x022a]);
 }
 
 static struct MemoryReadAddress fantzone_readmem[] =
 {
 	{ 0x000000, 0x02ffff, MRA_ROM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
+	{ 0xc40000, 0xc40003, MRA_EXTRAM2 },
 	{ 0xffc22a, 0xffc22b, fantzone_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -4208,17 +4325,18 @@ static struct MemoryWriteAddress fantzone_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40001, sound_command_nmi_w },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xc40000, 0xc40003, MWA_EXTRAM2 },
+	{ 0xc60000, 0xc60003, MWA_NOP },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void fantzone_update_proc( void ){
+static void fantzone_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
@@ -4228,47 +4346,46 @@ void fantzone_update_proc( void ){
 	set_bg_page1( READ_WORD( &sys16_textram[0x0e9c] ) );
 
 	set_refresh_3d( READ_WORD( &sys16_extraram2[2] ) );	// c40003
-
-	// solving Fantasy Zone scrolling bug
-	{
-		unsigned char t,td,t1,t2;
-		if(sys16_fg_scrollx < 16)
-		{
-			t = (unsigned char) (READ_WORD( &sys16_textram[0x0e9e] ) >> 8);
-			td = (unsigned char) (READ_WORD( &sys16_textram[0x0e9e] ) & 0xff);
-			t1 = t & 0x0f;
-			t2 = t & 0xf0;
-			if (t1<=0x03 && t2<=0x30 && t == td)
-			{
-				switch (t)
-				{
-					case 0x30: t = 0x10; break;
-					case 0x23: t = 0x03; break;
-					case 0x12: t = 0x32; break;
-					case 0x01: t = 0x21; break;
-				}
-				set_fg_page1( (int)t+((int)t<<8) );
-			}
-		}
-	}
 }
 
-void fantzone_init_machine( void ){
+static void fantzone_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,00,01,02,03,00,01,02,03,00,01,02,03};
 
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
 	sys16_spritesystem = 3;
 	sys16_sprxoffset = -0xbe;
-	sys16_fgxoffset = sys16_bgxoffset = 8;
+//	sys16_fgxoffset = sys16_bgxoffset = 8;
+	sys16_fg_priority_mode=3;				// fixes end of game priority
+	sys16_fg_priority_value=0xd000;
 
 	patch_code( 0x20e7, 0x16 );
 	patch_code( 0x30ef, 0x16 );
 
+	// solving Fantasy Zone scrolling bug
+	patch_code(0x308f,0x00);
+
+	// invincible
+/*	patch_code(0x224e,0x4e);
+	patch_code(0x224f,0x71);
+	patch_code(0x2250,0x4e);
+	patch_code(0x2251,0x71);
+
+	patch_code(0x2666,0x4e);
+	patch_code(0x2667,0x71);
+	patch_code(0x2668,0x4e);
+	patch_code(0x2669,0x71);
+
+	patch_code(0x25c0,0x4e);
+	patch_code(0x25c1,0x71);
+	patch_code(0x25c2,0x4e);
+	patch_code(0x25c3,0x71);
+*/
+
 	sys16_update_proc = fantzone_update_proc;
 }
 
-void fantzone_sprite_decode( void ){
+static void fantzone_sprite_decode( void ){
 	sys16_sprite_decode( 3,0x010000 );
 }
 /***************************************************************************/
@@ -4283,7 +4400,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -4309,6 +4426,38 @@ INPUT_PORTS_END
 MACHINE_DRIVER( fantzone_machine_driver, \
 	fantzone_readmem,fantzone_writemem,fantzone_init_machine, gfx8 )
 
+static int fantzone_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3c30]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x3c32]) == 0x1000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3c00],0x38);
+			osd_fread(f,&sys16_workingram[0x022c],0x4);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void fantzone_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3c00],0x38);
+		osd_fwrite(f,&sys16_workingram[0x022c],0x4);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver fantzone_driver =
 {
 	__FILE__,
@@ -4328,7 +4477,7 @@ struct GameDriver fantzone_driver =
 	fantzone_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	fantzone_hiload, fantzone_hisave
 };
 
 /***************************************************************************/
@@ -4391,7 +4540,7 @@ static struct MemoryReadAddress fpointbl_readmem[] =
 	{ 0x44302a, 0x44304d, fp_io_service_dummy_r },
 	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xfe003e, 0xfe003f, fp_io_service_dummy_r },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -4401,14 +4550,14 @@ static struct MemoryWriteAddress fpointbl_writemem[] =
 	{ 0x600006, 0x600007, sound_command_w },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void fpointbl_update_proc( void ){
+static void fpointbl_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -4418,7 +4567,7 @@ void fpointbl_update_proc( void ){
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
 }
 
-void fpointbl_init_machine( void ){
+static void fpointbl_init_machine( void ){
 	static int bank[16] = {00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00};
 
 	sys16_obj_bank = bank;
@@ -4450,12 +4599,12 @@ void fpointbl_init_machine( void ){
 	sys16_update_proc = fpointbl_update_proc;
 }
 
-void fpoint_sprite_decode (void)
+static void fpoint_sprite_decode (void)
 {
 	sys16_sprite_decode( 1,0x020000 );
 }
 
-void fpointbl_sprite_decode (void)
+static void fpointbl_sprite_decode (void)
 {
 	int i;
 
@@ -4495,7 +4644,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
@@ -4522,6 +4671,39 @@ INPUT_PORTS_END
 
 MACHINE_DRIVER( fpointbl_machine_driver, \
 	fpointbl_readmem,fpointbl_writemem,fpointbl_init_machine, gfx1)
+
+// reset clears hi-scores
+static int fpoint_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x1c20]) == 0x4d49)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3000],0xf00);
+			osd_fread(f,&sys16_workingram[0x2c6e],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void fpoint_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3000],0xf00);
+		osd_fwrite(f,&sys16_workingram[0x2c6e],0x100);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver fpoint_driver =
 {
@@ -4564,7 +4746,7 @@ struct GameDriver fpointbl_driver =
 	fpointbl_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	fpoint_hiload, fpoint_hisave
 };
 
 /***************************************************************************/
@@ -4573,6 +4755,7 @@ ROM_START( goldnaxe_rom )
 	ROM_REGION( 0x0c0000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "epr12522.a5", 0x00000, 0x20000, 0xb6c35160 )
 	ROM_LOAD_EVEN( "epr12523.a7", 0x00000, 0x20000, 0x8e6128d7 )
+	/* emtpy 0x40000 - 0x80000 */
 	ROM_LOAD_ODD ( "epr12519.a6", 0x80000, 0x20000, 0x4438ca8e )
 	ROM_LOAD_EVEN( "epr12521.a8", 0x80000, 0x20000, 0x5001d713 )
 
@@ -4601,7 +4784,7 @@ ROM_START( goldnabl_rom )
 	ROM_LOAD_EVEN( "ga6.a22", 0x00000, 0x10000, 0xf95b459f )
 	ROM_LOAD_ODD ( "ga8.a24", 0x20000, 0x10000, 0x37a65839 )
 	ROM_LOAD_EVEN( "ga11.a27",0x20000, 0x10000, 0xf4ef9349 )
-
+	/* emtpy 0x40000 - 0x80000 */
 	ROM_LOAD_ODD ( "ga5.a21", 0x80000, 0x10000, 0x8c77d958 )
 	ROM_LOAD_EVEN( "ga7.a23", 0x80000, 0x10000, 0x056879fd )
 	ROM_LOAD_ODD ( "ga9.a25", 0xa0000, 0x10000, 0x3cf2f725 )
@@ -4653,51 +4836,61 @@ static int goldnaxe_skip(int offset)
 {
 	if (cpu_get_pc()==0x3cb0) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xec1c]);
+	return READ_WORD(&sys16_workingram[0x2c1c]);
+}
+
+static int ga_io_players_r(int offset) {return (io_player1_r(offset) << 8) | io_player2_r(offset);}
+static int ga_io_service_r(int offset)
+{
+	return (io_service_r(offset) << 8) | (READ_WORD(&sys16_workingram[0x2c96]) & 0x00ff);
 }
 
 static struct MemoryReadAddress goldnaxe_readmem[] =
 {
+	{ 0x000000, 0x0bffff, MRA_ROM },
+
+	{ 0x100000, 0x10ffff, MRA_TILERAM },
+	{ 0x110000, 0x110fff, MRA_TEXTRAM },
+	{ 0x140000, 0x140fff, MRA_PALETTERAM },
+	{ 0x1f0000, 0x1f0003, MRA_EXTRAM },
+	{ 0x200000, 0x200fff, MRA_SPRITERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x110000, 0x110fff, MRA_TEXTRAM },
-	{ 0x100000, 0x10ffff, MRA_TILERAM },
-	{ 0x200000, 0x200fff, MRA_SPRITERAM },
-	{ 0x140000, 0x140fff, MRA_PALETTERAM },
-	{ 0x1f0000, 0x1f0003, MRA_EXTRAM },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
-	{ 0xffecd0, 0xffecd1, mirror1_r },
-	{ 0xffec96, 0xffec97, mirror2_r },
-	{ 0xffecfc, 0xffecfd, mirror3_r },
+	{ 0xffecd0, 0xffecd1, ga_io_players_r },
+	{ 0xffec96, 0xffec97, ga_io_service_r },
 	{ 0xffec1c, 0xffec1d, goldnaxe_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x0bffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
+
+static void ga_sound_command_w(int offset,int data)
+{
+	if( (data&0xff000000)==0 )
+		sound_command_w(offset,data>>8);
+	COMBINE_WORD_MEM(&sys16_workingram[0x2cfc],data);
+}
 
 static struct MemoryWriteAddress goldnaxe_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0x110000, 0x110fff, MWA_TEXTRAM },
 	{ 0x100000, 0x10ffff, MWA_TILERAM },
-	{ 0x200000, 0x20ffff, MWA_SPRITERAM },
-	{ 0x140000, 0x14ffff, MWA_PALETTERAM },
+	{ 0x110000, 0x110fff, MWA_TEXTRAM },
+	{ 0x140000, 0x140fff, MWA_PALETTERAM },
 	{ 0x1f0000, 0x1f0003, MWA_EXTRAM },
+	{ 0x200000, 0x200fff, MWA_SPRITERAM },
 	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
-	{ 0xffecd0, 0xffecd1, mirror1_w },
-	{ 0xffec96, 0xffec97, mirror2_w },
-	{ 0xffecfc, 0xffecfd, mirror3_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xc43000, 0xc43001, MWA_NOP },
+	{ 0xffecfc, 0xffecfd, ga_sound_command_w },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void goldnaxe_update_proc( void ){
+static void goldnaxe_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -4705,34 +4898,27 @@ void goldnaxe_update_proc( void ){
 
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
-	set_tile_bank( READ_WORD( &sys16_workingram[0xec94] ) );
+	set_tile_bank( READ_WORD( &sys16_workingram[0x2c94] ) );
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void goldnaxe_init_machine( void ){
+static void goldnaxe_init_machine( void ){
 	static int bank[16] = { 0,2,8,10,16,18,0,0,4,6,12,14,20,22,0,0 };
-
-	if(sys16_machine_started) return;
-	sys16_machine_started = 1;
 
 	sys16_obj_bank = bank;
 
 	patch_code( 0x3CB2, 0x60 );
 	patch_code( 0x3CB3, 0x1e );
 
-	define_mirror1( 0xc41003, 0xc41007 );
-	define_mirror2( 0xc41001, 0 );
-	define_mirror3( 0xfe0007,0 );
-
 	sys16_sprxoffset = -0xb8;
 	sys16_update_proc = goldnaxe_update_proc;
 }
 
-void goldnaxe_sprite_decode( void ){
+static void goldnaxe_sprite_decode( void ){
 	sys16_sprite_decode( 3,0x80000 );
 }
 
-void goldnabl_sprite_decode( void ){
+static void goldnabl_sprite_decode( void ){
 	int i;
 
 	/* invert the graphics bits on the tiles */
@@ -4753,7 +4939,7 @@ INPUT_PORTS_START( goldnaxe_input_ports )
 		PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
 		PORT_DIPSETTING(    0x01, "1 to start, 1 to continue")
 		PORT_DIPSETTING(    0x00, "2 to start, 1 to continue")
-		PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+		PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 		PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 		PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -4779,6 +4965,35 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( goldnaxe_machine_driver, \
 	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine, gfx2,upd7759_interface )
 
+static int goldnaxe_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3f3a]) == 0xffff)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void goldnaxe_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver goldnaxe_driver =
 {
 	__FILE__,
@@ -4798,7 +5013,7 @@ struct GameDriver goldnaxe_driver =
 	goldnaxe_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	goldnaxe_hiload, goldnaxe_hisave
 };
 
 struct GameDriver goldnabl_driver =
@@ -4904,7 +5119,7 @@ static int goldnaxa_skip(int offset)
 {
 	if (cpu_get_pc()==0x3ca0) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xec1c]);
+	return READ_WORD(&sys16_workingram[0x2c1c]);
 }
 
 // This version has somekind of hardware comparitor for collision detection,
@@ -4963,11 +5178,10 @@ static struct MemoryReadAddress goldnaxa_readmem[] =
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
-	{ 0xffecd0, 0xffecd1, mirror1_r },
-	{ 0xffec96, 0xffec97, mirror2_r },
-	{ 0xffecfc, 0xffecfd, mirror3_r },
+	{ 0xffecd0, 0xffecd1, ga_io_players_r },
+	{ 0xffec96, 0xffec97, ga_io_service_r },
 	{ 0xffec1c, 0xffec1d, goldnaxa_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -4983,16 +5197,13 @@ static struct MemoryWriteAddress goldnaxa_writemem[] =
 	{ 0x1f2000, 0x1f2003, MWA_EXTRAM },
 	{ 0x200000, 0x200fff, MWA_SPRITERAM },
 	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
-	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0xffecd0, 0xffecd1, mirror1_w },
-	{ 0xffec96, 0xffec97, mirror2_w },
-	{ 0xffecfc, 0xffecfd, mirror3_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffecfc, 0xffecfd, ga_sound_command_w },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void goldnaxa_update_proc( void ){
+static void goldnaxa_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -5000,24 +5211,17 @@ void goldnaxa_update_proc( void ){
 
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
-	set_tile_bank( READ_WORD( &sys16_workingram[0xec94] ) );
+	set_tile_bank( READ_WORD( &sys16_workingram[0x2c94] ) );
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void goldnaxa_init_machine( void ){
+static void goldnaxa_init_machine( void ){
 	static int bank[16] = { 0,2,8,10,16,18,0,0,4,6,12,14,20,22,0,0 };
-
-	if(sys16_machine_started) return;
-	sys16_machine_started = 1;
 
 	sys16_obj_bank = bank;
 
 	patch_code( 0x3CA2, 0x60 );
 	patch_code( 0x3CA3, 0x1e );
-
-	define_mirror1( 0xc41003, 0xc41007 );
-	define_mirror2( 0xc41001, 0 );
-	define_mirror3( 0xfe0007,0 );
 
 	sys16_sprxoffset = -0xb8;
 	sys16_update_proc = goldnaxa_update_proc;
@@ -5047,7 +5251,7 @@ struct GameDriver goldnaxa_driver =
 	goldnaxe_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	goldnaxe_hiload, goldnaxe_hisave
 };
 
 struct GameDriver goldnaxb_driver =
@@ -5196,14 +5400,15 @@ static struct MemoryReadAddress hwchamp_readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x3f0000, 0x3fffff, MRA_EXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc43020, 0xc43025, hwc_io_handles_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xc40000, 0xc43fff, MRA_EXTRAM2 },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -5212,18 +5417,18 @@ static struct MemoryWriteAddress hwchamp_writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x3f0000, 0x3fffff, MWA_EXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc43020, 0xc43025, hwc_io_handles_w },
 	{ 0xc40000, 0xc43fff, MWA_EXTRAM2 },
 	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void hwchamp_update_proc( void ){
+static void hwchamp_update_proc( void ){
 	int leds;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
@@ -5251,9 +5456,10 @@ void hwchamp_update_proc( void ){
 		osd_led_w(2,1);
 	else
 		osd_led_w(2,0);
+
 }
 
-void hwchamp_init_machine( void ){
+static void hwchamp_init_machine( void ){
 	static int bank[16] = {0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30};
 
 	sys16_obj_bank = bank;
@@ -5262,7 +5468,7 @@ void hwchamp_init_machine( void ){
 	sys16_update_proc = hwchamp_update_proc;
 }
 
-void hwchamp_sprite_decode( void ){
+static void hwchamp_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x040000 );
 }
 /***************************************************************************/
@@ -5289,7 +5495,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Not Used
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Start Level Select" )
@@ -5316,6 +5522,38 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( hwchamp_machine_driver, \
 	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine, gfx4 ,upd7759_interface)
 
+static int hwchamp_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3478]) == 0x10 &&
+		READ_WORD(&sys16_workingram[0x347a]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3400],0x80);
+			osd_fread(f,&sys16_workingram[0x3b00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void hwchamp_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3400],0x80);
+		osd_fwrite(f,&sys16_workingram[0x3b00],0x100);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver hwchamp_driver =
 {
 	__FILE__,
@@ -5335,7 +5573,7 @@ struct GameDriver hwchamp_driver =
 	hwchamp_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hwchamp_hiload, hwchamp_hisave
 };
 
 /***************************************************************************/
@@ -5351,11 +5589,11 @@ ROM_START( mjleague_rom )
 
 	ROM_REGION( 0x18000*2 ) /* tiles */
 	ROM_LOAD( "epr-7051.09a", 0x00000, 0x08000, 0x10ca255a )
-	ROM_LOAD( "epr-7051.09a", 0x08000, 0x08000, 0x10ca255a )
+	ROM_RELOAD(               0x08000, 0x08000 )
 	ROM_LOAD( "epr-7052.10a", 0x10000, 0x08000, 0x2550db0e )
-	ROM_LOAD( "epr-7052.10a", 0x18000, 0x08000, 0x2550db0e )
+	ROM_RELOAD(               0x18000, 0x08000 )
 	ROM_LOAD( "epr-7053.11a", 0x20000, 0x08000, 0x5bfea038 )
-	ROM_LOAD( "epr-7053.11a", 0x28000, 0x08000, 0x5bfea038 )
+	ROM_RELOAD(               0x28000, 0x08000 )
 
 	ROM_REGION( 0x050000*2 ) /* sprites */
 	ROM_LOAD( "epr-7055.05a", 0x000000, 0x008000, 0x1fb860bd )
@@ -5449,8 +5687,8 @@ static int mjl_io_bat_r( int offset )
 static struct MemoryReadAddress mjleague_readmem[] =
 {
 	{ 0x000000, 0x02ffff, MRA_ROM },
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
 	{ 0x440000, 0x440fff, MRA_SPRITERAM },
 	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 
@@ -5463,25 +5701,25 @@ static struct MemoryReadAddress mjleague_readmem[] =
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc60000, 0xc60001, MRA_NOP }, /* What is this? Watchdog? */
 
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress mjleague_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40001, sound_command_nmi_w },
 	{ 0xc40002, 0xc40007, MWA_EXTRAM2},
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void mjleague_update_proc( void ){
+static void mjleague_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
@@ -5493,7 +5731,7 @@ void mjleague_update_proc( void ){
 	set_refresh_3d( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void mjleague_init_machine( void ){
+static void mjleague_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,00,01,02,03,00,01,02,03,00,01,02,03};
 
 	sys16_obj_bank = bank;
@@ -5508,7 +5746,7 @@ void mjleague_init_machine( void ){
 	sys16_update_proc = mjleague_update_proc;
 }
 
-void mjleague_sprite_decode( void ){
+static void mjleague_sprite_decode( void ){
 	sys16_sprite_decode( 5,0x010000 );
 }
 
@@ -5544,7 +5782,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x00, "Starting Points" )
@@ -5564,7 +5802,6 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 
 PORT_START	/* IN5 */
 	PORT_ANALOG ( 0x7f, 0x40, IPT_TRACKBALL_Y, 70, 30, 0, 0, 127 )
@@ -5679,7 +5916,7 @@ static int moonwlkb_skip(int offset)
 {
 	if (cpu_get_pc()==0x308a) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xe02c]);
+	return READ_WORD(&sys16_workingram[0x202c]);
 }
 
 static struct MemoryReadAddress moonwlkb_readmem[] =
@@ -5687,9 +5924,9 @@ static struct MemoryReadAddress moonwlkb_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc00000, 0xc0ffff, MRA_EXTRAM },
 	{ 0xc40000, 0xc40001, io_dip1_r },
 	{ 0xc40002, 0xc40003, io_dip2_r },
@@ -5701,7 +5938,7 @@ static struct MemoryReadAddress moonwlkb_readmem[] =
 	{ 0xe40000, 0xe4ffff, MRA_EXTRAM2 },
 	{ 0xfe0000, 0xfeffff, MRA_EXTRAM4 },
 	{ 0xffe02c, 0xffe02d, moonwlkb_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -5709,20 +5946,20 @@ static struct MemoryWriteAddress moonwlkb_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x411fff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc00000, 0xc0ffff, MWA_EXTRAM },
 	{ 0xc40006, 0xc40007, sound_command_nmi_w },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
 	{ 0xe40000, 0xe4ffff, MWA_EXTRAM2 },
 	{ 0xfe0000, 0xfeffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void moonwlkb_update_proc( void ){
+static void moonwlkb_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -5739,18 +5976,19 @@ void moonwlkb_update_proc( void ){
 	set_fg2_page( READ_WORD( &sys16_textram[0x0e84] ) );
 	set_bg2_page( READ_WORD( &sys16_textram[0x0e86] ) );
 
-	sys18_bg2_active=0;
-	sys18_fg2_active=0;
-
 	if(sys16_fg2_scrollx | sys16_fg2_scrolly | READ_WORD( &sys16_textram[0x0e84] ))
 		sys18_fg2_active=1;
+	else
+		sys18_fg2_active=0;
 	if(sys16_bg2_scrollx | sys16_bg2_scrolly | READ_WORD( &sys16_textram[0x0e86] ))
 		sys18_bg2_active=1;
+	else
+		sys18_bg2_active=0;
 
 	set_tile_bank18( READ_WORD( &sys16_extraram3[0x6800] ) );
 }
 
-void moonwlkb_init_machine( void ){
+static void moonwlkb_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
 	sys16_obj_bank = bank;
 	sys16_bg_priority_value=0x1000;
@@ -5796,21 +6034,18 @@ void moonwlkb_init_machine( void ){
 	patch_code( 0x70212, 0x4e);
 	patch_code( 0x70213, 0x71);
 
-	//mirror( 0xa00007, 0xfe0007, 0xff );
 	sys16_update_proc = moonwlkb_update_proc;
 }
 
-void moonwlkb_sprite_decode( void ){
+static void moonwlkb_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x080000 );
 }
 
-void moonwlkb_onetime_init_machine( void ){
+static void moonwlkb_onetime_init_machine( void ){
 	unsigned char *RAM= Machine->memory_region[3];
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-//	sys18_splittab_fg_y=&sys16_textram[0x0f00];
-//	sys18_splittab_bg_y=&sys16_textram[0x0f40];
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
 }
@@ -5846,7 +6081,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Number of Players" )
@@ -5882,6 +6117,40 @@ INPUT_PORTS_END
 
 MACHINE_DRIVER_18( moonwlkb_machine_driver, \
 	moonwlkb_readmem,moonwlkb_writemem,moonwlkb_init_machine, gfx4 )
+
+static int moonwalk_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3c48]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x3c4a]) == 0x5000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3c00],0x50);
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void moonwalk_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3c00],0x50);
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver moonwalk_driver =
 {
@@ -5924,7 +6193,7 @@ struct GameDriver moonwlkb_driver =
 	moonwlkb_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	moonwalk_hiload, moonwalk_hisave
 };
 
 /***************************************************************************/
@@ -5984,57 +6253,60 @@ ROM_END
 
 static struct MemoryReadAddress passshtb_readmem[] =
 {
+	{ 0x000000, 0x01ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41004, 0xc41005, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x01ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress passshtb_writemem[] =
 {
 	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0xc42006, 0xc42007, sound_command_w },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc42006, 0xc42007, sound_command_w },
 	{ 0xc40000, 0xc40fff, MWA_EXTRAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void passshtb_update_proc( void ){
-	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0xf4be] );
-	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0xf4c2] );
-	sys16_fg_scrolly = READ_WORD( &sys16_workingram[0xf4bc] );
-	sys16_bg_scrolly = READ_WORD( &sys16_workingram[0xf4c0] );
+static void passshtb_update_proc( void ){
+	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0x34be] );
+	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0x34c2] );
+	sys16_fg_scrolly = READ_WORD( &sys16_workingram[0x34bc] );
+	sys16_bg_scrolly = READ_WORD( &sys16_workingram[0x34c0] );
 
 	set_fg_page( READ_WORD( &sys16_textram[0x0ff6] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0ff4] ) );
 	set_refresh( READ_WORD( &sys16_extraram[0] ) );
 }
 
-void passshtb_init_machine( void ){
+static void passshtb_init_machine( void ){
 	static int bank[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,3 };
 	sys16_obj_bank = bank;
 
 	sys16_sprxoffset = -0x48;
 	sys16_spritesystem = 0;
+
+	// fix name entry
+	patch_code( 0x13a8,0xc0);
+
 	sys16_update_proc = passshtb_update_proc;
 }
 
-void passshtb_sprite_decode( void ){
+static void passshtb_sprite_decode( void ){
 	sys16_sprite_decode( 3,0x20000 );
 }
 /***************************************************************************/
@@ -6046,7 +6318,7 @@ INPUT_PORTS_START( passshtb_input_ports )
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0e, 0x0e, "Initial Point" )
@@ -6075,6 +6347,39 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( passshtb_machine_driver, \
 	passshtb_readmem,passshtb_writemem,passshtb_init_machine, gfx1 ,upd7759_interface)
 
+
+static int passsht_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3396]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x3398]) == 0x0601)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x2e00],0x5a0);
+			osd_fread(f,&sys16_workingram[0x3800],0x80);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void passsht_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x2e00],0x5a0);
+		osd_fwrite(f,&sys16_workingram[0x3800],0x80);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver passsht_driver =
 {
 	__FILE__,
@@ -6084,7 +6389,7 @@ struct GameDriver passsht_driver =
 	"????",
 	"Sega",
 	SYS16_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&passshtb_machine_driver,
 	sys16_onetime_init_machine,
 	passsht_rom,
@@ -6116,7 +6421,7 @@ struct GameDriver passshtb_driver =
 	passshtb_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	passsht_hiload, passsht_hisave
 };
 
 /***************************************************************************/
@@ -6166,7 +6471,7 @@ static int quartet_skip(int offset)
 {
 	if (cpu_get_pc()==0x89b2) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc800]);
+	return READ_WORD(&sys16_workingram[0x0800]);
 }
 
 static int io_quartet_p1_r( int offset ) {return input_port_0_r( offset );}
@@ -6179,58 +6484,54 @@ static int io_quartet_dip2_r( int offset ) {return input_port_5_r( offset );}
 static struct MemoryReadAddress quartet_readmem[] =
 {
 	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41000, 0xc41001, io_quartet_p1_r },
 	{ 0xc41002, 0xc41003, io_quartet_p2_r },
 	{ 0xc41004, 0xc41005, io_quartet_p3_r },
 	{ 0xc41006, 0xc41007, io_quartet_p4_r },
-
 	{ 0xc42000, 0xc42001, io_quartet_dip1_r },
 	{ 0xc42002, 0xc42003, io_quartet_dip2_r },
-
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM },
 	{ 0xffc800, 0xffc801, quartet_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress quartet_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
-	{ 0xc40000, 0xc40001, sound_command_nmi_w },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc40000, 0xc40001, sound_command_nmi_w },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void quartet_update_proc( void ){
-
-	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0xcd14] ) & 0x01ff;
-	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0xcd18] ) & 0x01ff;
+static void quartet_update_proc( void ){
+	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0x0d14] ) & 0x01ff;
+	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0x0d18] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
 	sys16_bg_scrolly = READ_WORD( &sys16_textram[0x0f26] ) & 0x01ff;
 
-	if((sys16_extraram[4] & 0xff) == 1)
-	{
-		sys16_fg_scrollx = 0;
-		sys16_bg_scrollx = 0;
-		sys16_fg_scrolly = 0;
-		sys16_bg_scrolly = 0;
-	}
+	if((READ_WORD(&sys16_extraram[4]) & 0xff) == 1)
+		sys16_quartet_title_kludge=1;
+	else
+		sys16_quartet_title_kludge=0;
 
-	set_fg_page1( READ_WORD( &sys16_workingram[0xcd1c] ) );
-	set_bg_page1( READ_WORD( &sys16_workingram[0xcd1e] ) );
+	set_fg_page1( READ_WORD( &sys16_workingram[0x0d1c] ) );
+	set_bg_page1( READ_WORD( &sys16_workingram[0x0d1e] ) );
+
+	set_refresh_3d( READ_WORD( &sys16_extraram[2] ) );
 }
 
-void quartet_init_machine( void ){
+static void quartet_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,00,01,02,03,00,01,02,03,00,01,02,03};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -6241,7 +6542,7 @@ void quartet_init_machine( void ){
 	sys16_update_proc = quartet_update_proc;
 }
 
-void quartet_sprite_decode( void ){
+static void quartet_sprite_decode( void ){
 	sys16_sprite_decode( 5,0x010000 );
 }
 /***************************************************************************/
@@ -6268,7 +6569,7 @@ INPUT_PORTS_START( quartet_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 1 coin 2 really */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 2 coin 2 really */
 	// Player 3
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3  )
@@ -6279,7 +6580,7 @@ INPUT_PORTS_START( quartet_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 1 coin 2 really */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 3 coin 2 really */
 	// Player 4
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY  | IPF_PLAYER4 )
@@ -6290,12 +6591,12 @@ INPUT_PORTS_START( quartet_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 1 coin 2 really */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 4 coin 2 really */
 
 	SYS16_COINAGE
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x00, "Credit Power" )
@@ -6314,15 +6615,45 @@ INPUT_PORTS_START( quartet_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Free Play" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 /***************************************************************************/
 
 MACHINE_DRIVER_7751( quartet_machine_driver, \
 	quartet_readmem,quartet_writemem,quartet_init_machine, gfx8 )
+
+
+static int quartet_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x0710]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x0712]) == 0x0400)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x0400],0x320);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void quartet_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x0400],0x320);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver quartet_driver =
 {
@@ -6343,7 +6674,7 @@ struct GameDriver quartet_driver =
 	quartet_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	quartet_hiload, quartet_hisave
 };
 
 /***************************************************************************/
@@ -6393,17 +6724,16 @@ static int quartet2_skip(int offset)
 {
 	if (cpu_get_pc()==0x8f6c) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc800]);
+	return READ_WORD(&sys16_workingram[0x0800]);
 }
 
 static struct MemoryReadAddress quartet2_readmem[] =
 {
 	{ 0x000000, 0x02ffff, MRA_ROM },
-
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
@@ -6411,43 +6741,42 @@ static struct MemoryReadAddress quartet2_readmem[] =
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM },
 	{ 0xffc800, 0xffc801, quartet2_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress quartet2_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40001, sound_command_nmi_w },
 	{ 0xc40000, 0xc4ffff, MWA_EXTRAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void quartet2_update_proc( void ){
-	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0xcd14] ) & 0x01ff;
-	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0xcd18] ) & 0x01ff;
+static void quartet2_update_proc( void ){
+	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0x0d14] ) & 0x01ff;
+	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0x0d18] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
 	sys16_bg_scrolly = READ_WORD( &sys16_textram[0x0f26] ) & 0x01ff;
 
-	if((sys16_extraram[4] & 0xff) == 1)
-	{
-		sys16_fg_scrollx = 0;
-		sys16_bg_scrollx = 0;
-		sys16_fg_scrolly = 0;
-		sys16_bg_scrolly = 0;
-	}
+	if((READ_WORD(&sys16_extraram[4]) & 0xff) == 1)
+		sys16_quartet_title_kludge=1;
+	else
+		sys16_quartet_title_kludge=0;
 
-	set_fg_page1( READ_WORD( &sys16_workingram[0xcd1c] ) );
-	set_bg_page1( READ_WORD( &sys16_workingram[0xcd1e] ) );
+	set_fg_page1( READ_WORD( &sys16_workingram[0x0d1c] ) );
+	set_bg_page1( READ_WORD( &sys16_workingram[0x0d1e] ) );
+
+	set_refresh_3d( READ_WORD( &sys16_extraram[2] ) );
 }
 
-void quartet2_init_machine( void ){
+static void quartet2_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,00,01,02,03,00,01,02,03,00,01,02,03};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -6458,7 +6787,7 @@ void quartet2_init_machine( void ){
 	sys16_update_proc = quartet2_update_proc;
 }
 
-void quartet2_sprite_decode( void ){
+static void quartet2_sprite_decode( void ){
 	sys16_sprite_decode( 5,0x010000 );
 }
 /***************************************************************************/
@@ -6470,7 +6799,7 @@ INPUT_PORTS_START( quartet2_input_ports )
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x00, "Credit Power" )
@@ -6519,7 +6848,7 @@ struct GameDriver quartet2_driver =
 	quartet2_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	quartet_hiload, quartet_hisave
 };
 
 /***************************************************************************
@@ -6529,11 +6858,12 @@ struct GameDriver quartet2_driver =
 ***************************************************************************/
 // sys16B
 ROM_START( riotcity_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
+	ROM_REGION( 0xc0000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "epr14610.bin", 0x000000, 0x20000, 0xcd4f2c50 )
 	ROM_LOAD_EVEN( "epr14612.bin", 0x000000, 0x20000, 0xa1b331ec )
-	ROM_LOAD_ODD ( "epr14611.bin", 0x040000, 0x20000, 0xd9e6f80b )
-	ROM_LOAD_EVEN( "epr14613.bin", 0x040000, 0x20000, 0x0659df4c )
+	/* empty 0x40000 - 0x80000 */
+	ROM_LOAD_ODD ( "epr14611.bin", 0x080000, 0x20000, 0xd9e6f80b )
+	ROM_LOAD_EVEN( "epr14613.bin", 0x080000, 0x20000, 0x0659df4c )
 
 	ROM_REGION( 0xc0000 ) /* tiles */
 	ROM_LOAD( "epr14616.bin", 0x00000, 0x20000, 0x46d30368 ) /* plane 1 */
@@ -6562,15 +6892,14 @@ static int riotcity_skip(int offset)
 {
 	if (cpu_get_pc()==0x3ce) {cpu_spinuntil_int(); return 0;}
 
-	return READ_WORD(&sys16_workingram[0xecde]);
+	return READ_WORD(&sys16_workingram[0x2cde]);
 }
 
 static struct MemoryReadAddress riotcity_readmem[] =
 {
-	{ 0x000000, 0x0fffff, MRA_ROM },
+	{ 0x000000, 0x0bffff, MRA_ROM },
 	{ 0x3f0000, 0x3fffff, MRA_EXTRAM },
-	{ 0xfa0000, 0xfaffff, MRA_TILERAM },
-	{ 0xfb0000, 0xfb0fff, MRA_TEXTRAM },
+	{ 0xf20000, 0xf20fff, MRA_EXTRAM3 },
 	{ 0xf40000, 0xf40fff, MRA_SPRITERAM },
 	{ 0xf60000, 0xf60fff, MRA_PALETTERAM },
 	{ 0xf81002, 0xf81003, io_player1_r },
@@ -6579,29 +6908,30 @@ static struct MemoryReadAddress riotcity_readmem[] =
 	{ 0xf82002, 0xf82003, io_dip1_r },
 	{ 0xf82000, 0xf82001, io_dip2_r },
 	{ 0xf80000, 0xf8ffff, MRA_EXTRAM2 },
-	{ 0xf20000, 0xf20fff, MRA_EXTRAM3 },
+	{ 0xfa0000, 0xfaffff, MRA_TILERAM },
+	{ 0xfb0000, 0xfb0fff, MRA_TEXTRAM },
 	{ 0xffecde, 0xffecdf, riotcity_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress riotcity_writemem[] =
 {
-	{ 0x000000, 0x0fffff, MWA_ROM },
+	{ 0x000000, 0x0bffff, MWA_ROM },
 	{ 0x3f0000, 0x3fffff, MWA_EXTRAM },
+	{ 0xf00006, 0xf00007, sound_command_w },
+	{ 0xf20000, 0xf20fff, MWA_EXTRAM3 },
+	{ 0xf40000, 0xf40fff, MWA_SPRITERAM },
+	{ 0xf60000, 0xf60fff, MWA_PALETTERAM },
+	{ 0xf80000, 0xf8ffff, MWA_EXTRAM2 },
 	{ 0xfa0000, 0xfaffff, MWA_TILERAM },
 	{ 0xfb0000, 0xfb0fff, MWA_TEXTRAM },
-	{ 0xf40000, 0xf4ffff, MWA_SPRITERAM },
-	{ 0xf60000, 0xf6ffff, MWA_PALETTERAM },
-	{ 0xf80000, 0xf8ffff, MWA_EXTRAM2 },
-	{ 0xf20000, 0xf20fff, MWA_EXTRAM3 },
-	{ 0xf00006, 0xf00007, sound_command_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void riotcity_update_proc (void)
+static void riotcity_update_proc (void)
 {
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
@@ -6617,28 +6947,18 @@ void riotcity_update_proc (void)
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void riotcity_init_machine( void ){
+static void riotcity_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x08,0x0A,0x10,0x12,0x00,0x00,0x04,0x06,0x0C,0x0E,0x14,0x16,0x00,0x00};
-
-	if(sys16_machine_started) return;
-	sys16_machine_started = 1;
 
 	sys16_obj_bank = bank;
 	sys16_spritesystem = 4;
-
-	copy_rom64k( 0x8, 0x4 );
-	copy_rom64k( 0x9, 0x5 );
-	copy_rom64k( 0xA, 0x6 );
-	copy_rom64k( 0xB, 0x7 );
-	copy_rom64k( 0x4, 0x0 );
-	copy_rom64k( 0x5, 0x1 );
-	copy_rom64k( 0x6, 0x2 );
-	copy_rom64k( 0x7, 0x3 );
+	sys16_spritelist_end=0x8000;
+	sys16_bg_priority_mode=1;
 
 	sys16_update_proc = riotcity_update_proc;
 }
 
-void riotcity_sprite_decode (void)
+static void riotcity_sprite_decode (void)
 {
 	sys16_sprite_decode (3,0x80000);
 }
@@ -6655,7 +6975,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
@@ -6681,6 +7001,40 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( riotcity_machine_driver, \
 	riotcity_readmem,riotcity_writemem,riotcity_init_machine, gfx4,upd7759_interface )
 
+
+static int riotcity_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x0e38]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x0e3a]) == 0xc350)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x2d00],0x100);
+			osd_fread(f,&sys16_workingram[0x0e00],0x40);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void riotcity_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x2d00],0x100);
+		osd_fwrite(f,&sys16_workingram[0x0e00],0x40);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver riotcity_driver =
 {
 	__FILE__,
@@ -6700,7 +7054,7 @@ struct GameDriver riotcity_driver =
 	riotcity_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	riotcity_hiload, riotcity_hisave
 };
 
 
@@ -6744,30 +7098,31 @@ static int sdi_skip(int offset)
 {
 	if (cpu_get_pc()==0x5326) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc400]);
+	return READ_WORD(&sys16_workingram[0x0400]);
 }
 
 static struct MemoryReadAddress sdi_readmem[] =
 {
+	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+	{ 0xc40000, 0xc40001, MRA_EXTRAM },
 	{ 0xc41004, 0xc41005, io_player1_r },
 	{ 0xc41002, 0xc41003, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
+	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42004, 0xc42005, io_dip2_r },
 	{ 0xc43000, 0xc43001, io_p1mousex_r },
 	{ 0xc43004, 0xc43005, io_p1mousey_r },
 	{ 0xc43008, 0xc43009, io_p2mousex_r },
 	{ 0xc4300c, 0xc4300d, io_p2mousey_r },
-	{ 0xc42000, 0xc42001, MRA_NOP }, /* What is this? */
+//	{ 0xc42000, 0xc42001, MRA_NOP }, /* What is this? */
 	{ 0xc60000, 0xc60001, MRA_NOP }, /* What is this? */
-
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xffc400, 0xffc401, sdi_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -6775,16 +7130,17 @@ static struct MemoryWriteAddress sdi_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
 	{ 0x123406, 0x123407, sound_command_w },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void sdi_update_proc( void ){
+static void sdi_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -6792,23 +7148,32 @@ void sdi_update_proc( void ){
 
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
+
+	set_refresh( READ_WORD( &sys16_extraram[0] ) );
 }
 
-void sdi_init_machine( void ){
+static void sdi_init_machine( void ){
 	static int bank[16] = {00,00,00,00,00,00,00,0x06,00,00,00,0x04,00,0x02,00,00};
 
 	sys16_obj_bank = bank;
 
-	patch_code( 0x110c, 0x80 );
+	// ??
 	patch_code( 0x102f2, 0x00 );
 	patch_code( 0x102f3, 0x02 );
 
 	sys16_update_proc = sdi_update_proc;
 }
 
-void sdi_sprite_decode( void ){
+static void sdi_sprite_decode( void ){
 	sys16_sprite_decode( 3,0x020000 );
 }
+
+static void sdi_onetime_init_machine( void ){
+	sys16_onetime_init_machine();
+	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
+	sys16_rowscroll_scroll=0xff00;
+}
+
 /***************************************************************************/
 
 INPUT_PORTS_START( sdi_input_ports )
@@ -6840,7 +7205,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -6876,7 +7241,39 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( sdi_machine_driver, \
-	sdi_readmem,sdi_writemem,sdi_init_machine, gfx1 /*,upd7759_interface*/)
+	sdi_readmem,sdi_writemem,sdi_init_machine, gfx1)
+
+
+static int sdi_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3b18]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x3b1a]) == 0x0100)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3800],0x400);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void sdi_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3800],0x400);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver sdi_driver =
 {
@@ -6889,7 +7286,7 @@ struct GameDriver sdi_driver =
 	SYS16_CREDITS,
 	0,
 	&sdi_machine_driver,
-	sys16_onetime_init_machine,
+	sdi_onetime_init_machine,
 	sdi_rom,
 	sdi_sprite_decode, 0,
 	0,
@@ -6897,7 +7294,7 @@ struct GameDriver sdi_driver =
 	sdi_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	sdi_hiload, sdi_hisave
 };
 
 
@@ -6934,7 +7331,7 @@ static int shdancer_skip(int offset)
 {
 	if (cpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc000]);
+	return READ_WORD(&sys16_workingram[0x0000]);
 }
 
 
@@ -6943,20 +7340,18 @@ static struct MemoryReadAddress shdancer_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
-	{ 0xc00000, 0xc0ffff, MRA_EXTRAM },
-	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+	{ 0xc00000, 0xc00007, MRA_EXTRAM },
 	{ 0xe4000a, 0xe4000b, io_dip1_r },
 	{ 0xe4000c, 0xe4000d, io_dip2_r },
 	{ 0xe40000, 0xe40001, io_player1_r },
 	{ 0xe40002, 0xe40003, io_player2_r },
 	{ 0xe40008, 0xe40009, io_service_r },
-	{ 0xe40000, 0xe4ffff, MRA_EXTRAM2 },
-	{ 0xfe0000, 0xfeffff, MRA_EXTRAM4 },
-//	{ 0xffc000, 0xffc001, shdancer_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xe40000, 0xe4001f, MRA_EXTRAM2 },
+	{ 0xe43034, 0xe43035, MRA_NOP },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -6964,20 +7359,19 @@ static struct MemoryWriteAddress shdancer_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x411fff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xc00000, 0xc0ffff, MWA_EXTRAM },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
-	{ 0xe40000, 0xe4ffff, MWA_EXTRAM2 },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc00000, 0xc00007, MWA_EXTRAM },
+	{ 0xe40000, 0xe4001f, MWA_EXTRAM2 },
+	{ 0xe43034, 0xe43035, MWA_NOP },
 	{ 0xfe0006, 0xfe0007, sound_command_nmi_w },
-	{ 0xfe0000, 0xfeffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void shdancer_update_proc( void ){
+static void shdancer_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -7006,7 +7400,7 @@ void shdancer_update_proc( void ){
 	set_refresh_18( READ_WORD( &sys16_extraram2[0x1c] ) );
 }
 
-void shdancer_init_machine( void ){
+static void shdancer_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
 	sys16_obj_bank = bank;
 	sys16_spritelist_end=0x8000;
@@ -7014,17 +7408,15 @@ void shdancer_init_machine( void ){
 	sys16_update_proc = shdancer_update_proc;
 }
 
-void shdancer_sprite_decode( void ){
+static void shdancer_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x080000 );
 }
 
-void shdancer_onetime_init_machine( void ){
+static void shdancer_onetime_init_machine( void ){
 	unsigned char *RAM= Machine->memory_region[3];
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-//	sys18_splittab_fg_y=&sys16_textram[0x0f00];
-//	sys18_splittab_bg_y=&sys16_textram[0x0f40];
 	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip);
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
 
@@ -7060,7 +7452,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -7086,6 +7478,36 @@ INPUT_PORTS_END
 MACHINE_DRIVER_18( shdancer_machine_driver, \
 	shdancer_readmem,shdancer_writemem,shdancer_init_machine, gfx4 )
 
+
+static int shdancer_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3400]) == 0x0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3400],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void shdancer_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3400],0x100);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver shdancer_driver =
 {
 	__FILE__,
@@ -7105,7 +7527,7 @@ struct GameDriver shdancer_driver =
 	shdancer_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	shdancer_hiload, shdancer_hisave
 };
 
 
@@ -7177,7 +7599,7 @@ static int shdancer_skip(int offset)
 {
 	if (cpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
 
-	return READ_WORD(&sys16_workingram[0xc000]);
+	return READ_WORD(&sys16_workingram[0x0000]);
 }
 */
 
@@ -7186,21 +7608,21 @@ static struct MemoryReadAddress shdancbl_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
-	{ 0xc00000, 0xc0ffff, MRA_EXTRAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+	{ 0xc00000, 0xc00007, MRA_EXTRAM },
 	{ 0xc40000, 0xc40001, io_dip1_r },
 	{ 0xc40002, 0xc40003, io_dip2_r },
 
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41004, 0xc41005, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
-	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
-	{ 0xe40000, 0xe400ff, MRA_EXTRAM2 },
-	{ 0xfe0000, 0xfeffff, MRA_EXTRAM4 },
+//	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
+	{ 0xe40000, 0xe4001f, MRA_EXTRAM2 },
+	{ 0xe43034, 0xe43035, MRA_NOP },
 //	{ 0xffc000, 0xffc001, shdancer_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -7208,20 +7630,20 @@ static struct MemoryWriteAddress shdancbl_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x411fff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xc00000, 0xc0ffff, MWA_EXTRAM },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
-	{ 0xe40000, 0xe400ff, MWA_EXTRAM2 },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc00000, 0xc00007, MWA_EXTRAM },
+//	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
+	{ 0xe40000, 0xe4001f, MWA_EXTRAM2 },
+	{ 0xe43034, 0xe43035, MWA_NOP },
 	{ 0xfe0006, 0xfe0007, sound_command_nmi_w },
-	{ 0xfe0000, 0xfeffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void shdancbl_update_proc( void ){
+static void shdancbl_update_proc( void ){
 // this is all wrong and needs re-doing.
 
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
@@ -7263,7 +7685,7 @@ void shdancbl_update_proc( void ){
 }
 
 
-void shdancbl_init_machine( void ){
+static void shdancbl_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
 	sys16_obj_bank = bank;
 	sys16_spritelist_end=0x8000;
@@ -7273,7 +7695,7 @@ void shdancbl_init_machine( void ){
 }
 
 
-void shdancbl_sprite_decode( void ){
+static void shdancbl_sprite_decode( void ){
 	int i;
 
 	/* invert the graphics bits on the tiles */
@@ -7346,7 +7768,7 @@ static int shdancrj_skip(int offset)
 	return READ_WORD(&sys16_workingram[0xc000]);
 }
 
-void shdancrj_init_machine( void ){
+static void shdancrj_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
 	sys16_obj_bank = bank;
 	sys16_spritelist_end=0x8000;
@@ -7355,13 +7777,11 @@ void shdancrj_init_machine( void ){
 	sys16_update_proc = shdancer_update_proc;
 }
 
-void shdancrj_onetime_init_machine( void ){
+static void shdancrj_onetime_init_machine( void ){
 	unsigned char *RAM= Machine->memory_region[3];
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-//	sys18_splittab_fg_y=&sys16_textram[0x0f00];
-//	sys18_splittab_bg_y=&sys16_textram[0x0f40];
 	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancrj_skip);
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
@@ -7369,6 +7789,8 @@ void shdancrj_onetime_init_machine( void ){
 
 /***************************************************************************/
 
+MACHINE_DRIVER_18( shdancrj_machine_driver, \
+	shdancer_readmem,shdancer_writemem,shdancrj_init_machine, gfx4 )
 
 struct GameDriver shdancrj_driver =
 {
@@ -7380,7 +7802,7 @@ struct GameDriver shdancrj_driver =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&shdancer_machine_driver,
+	&shdancrj_machine_driver,
 	shdancrj_onetime_init_machine,
 	shdancrj_rom,
 	shdancer_sprite_decode, 0,
@@ -7389,7 +7811,7 @@ struct GameDriver shdancrj_driver =
 	shdancer_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	shdancer_hiload, shdancer_hisave
 };
 
 /***************************************************************************/
@@ -7429,46 +7851,45 @@ static int shinobi_skip(int offset)
 {
 	if (cpu_get_pc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
 
-	return READ_WORD(&sys16_workingram[0xf01c]);
+	return READ_WORD(&sys16_workingram[0x301c]);
 }
 
 static struct MemoryReadAddress shinobi_readmem[] =
 {
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
-	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
-
+	{ 0xc40000, 0xc40001, MRA_EXTRAM2 },
+	{ 0xc43000, 0xc43001, MRA_NOP },
 	{ 0xfff01c, 0xfff01d, shinobi_skip },
-
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress shinobi_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x440000, 0x440fff, MWA_SPRITERAM },
 	{ 0x840000, 0x840fff, MWA_PALETTERAM },
-	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM2 },
+	{ 0xc43000, 0xc43001, MWA_NOP },
+	{ 0xfe0006, 0xfe0007, sound_command_w },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 
 /***************************************************************************/
 
-void shinobi_update_proc( void ){
+static void shinobi_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -7477,17 +7898,17 @@ void shinobi_update_proc( void ){
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
 
-	set_refresh( READ_WORD( &sys16_workingram[0xf018] )>>8 );
+	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void shinobi_init_machine( void ){
+static void shinobi_init_machine( void ){
 	static int bank[16] = { 0,0,0,0,0,0,0,6,0,0,0,4,0,2,0,0 };
 	sys16_obj_bank = bank;
 	sys16_dactype = 1;
 	sys16_update_proc = shinobi_update_proc;
 }
 
-void shinobi_sprite_decode( void ){
+static void shinobi_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x20000 );
 }
 
@@ -7503,7 +7924,7 @@ PORT_START
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -7530,6 +7951,37 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( shinobi_machine_driver, \
 	shinobi_readmem,shinobi_writemem,shinobi_init_machine, gfx1,upd7759_interface )
 
+static int shinobi_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x3f46]) == 0x9999)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fread(f,&sys16_workingram[0x3c00],0x150);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void shinobi_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fwrite(f,&sys16_workingram[0x3c00],0x150);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver shinobi_driver =
 {
 	__FILE__,
@@ -7549,7 +8001,7 @@ struct GameDriver shinobi_driver =
 	shinobi_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	shinobi_hiload, shinobi_hisave
 };
 
 /***************************************************************************/
@@ -7629,52 +8081,40 @@ ROM_START( shinobl_rom )
 ROM_END
 
 /***************************************************************************/
-/*
-static int shinobl_skip(int offset)
-{
-	if (cpu_get_pc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
-
-	return READ_WORD(&sys16_workingram[0xf01c]);
-}
-*/
 
 static struct MemoryReadAddress shinobl_readmem[] =
 {
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
-	{ 0xc42002, 0xc42003, io_dip1_r },
-	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+	{ 0xc42000, 0xc42001, io_dip1_r },
+	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
-
-	{ 0xfff01c, 0xfff01d, shinobi_skip },
-
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress shinobl_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x440000, 0x440fff, MWA_SPRITERAM },
 	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc40000, 0xc40001, sound_command_nmi_w },
 	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 
 /***************************************************************************/
 
-void shinobl_update_proc( void ){
+static void shinobl_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
@@ -7682,9 +8122,12 @@ void shinobl_update_proc( void ){
 
 	set_fg_page( READ_WORD( &sys16_textram[0x0e9e] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e9c] ) );
+
+	set_refresh_3d( READ_WORD( &sys16_extraram2[2] ) );
+
 }
 
-void shinobl_init_machine( void ){
+static void shinobl_init_machine( void ){
 	static int bank[16] = {0,2,4,6,1,3,5,7,0,0,0,0,0,0,0,0};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -7745,7 +8188,7 @@ struct GameDriver shinobl_driver =
 	shinobi_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	shinobi_hiload, shinobi_hisave
 };
 
 
@@ -7792,18 +8235,20 @@ ROM_END
 
 static struct MemoryReadAddress tetrisbl_readmem[] =
 {
+	{ 0x000000, 0x01ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x418000, 0x41803f, MRA_EXTRAM2 },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+	{ 0xc40000, 0xc40001, MRA_EXTRAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x440fff, MRA_SPRITERAM },
-	{ 0x840000, 0x840fff, MRA_PALETTERAM },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x01ffff, MRA_ROM },
+	{ 0xc80000, 0xc80001, MRA_NOP },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
@@ -7811,26 +8256,32 @@ static struct MemoryWriteAddress tetrisbl_writemem[] =
 {
 	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x418000, 0x41803f, MWA_EXTRAM2 },
 	{ 0x440000, 0x440fff, MWA_SPRITERAM },
 	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM },
 	{ 0xc42006, 0xc42007, sound_command_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xc43034, 0xc43035, MWA_NOP },
+	{ 0xc80000, 0xc80001, MWA_NOP },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void tetrisbl_update_proc( void ){
+static void tetrisbl_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
 	sys16_bg_scrolly = READ_WORD( &sys16_textram[0x0e92] );
 
-	set_fg_page( READ_WORD( &sys16_textram[0x8038] ) );
-	set_bg_page( READ_WORD( &sys16_textram[0x8028] ) );
+	set_fg_page( READ_WORD( &sys16_extraram2[0x38] ) );
+	set_bg_page( READ_WORD( &sys16_extraram2[0x28] ) );
+
+	set_refresh( READ_WORD( &sys16_extraram[0x0] ) );
 }
 
-void tetrisbl_init_machine( void ){
+static void tetrisbl_init_machine( void ){
 	static int bank[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	sys16_obj_bank = bank;
@@ -7842,11 +8293,11 @@ void tetrisbl_init_machine( void ){
 	sys16_update_proc = tetrisbl_update_proc;
 }
 
-void tetris_sprite_decode( void ){
+static void tetris_sprite_decode( void ){
 	sys16_sprite_decode( 1,0x10000 );
 }
 
-void tetrisbl_sprite_decode( void ){
+static void tetrisbl_sprite_decode( void ){
 	sys16_sprite_decode( 1,0x20000 );
 }
 /***************************************************************************/
@@ -7861,7 +8312,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Unknown ) )	// from the code it looks like some kind of difficulty
@@ -7886,6 +8337,38 @@ INPUT_PORTS_END
 
 MACHINE_DRIVER( tetrisbl_machine_driver, \
 	tetrisbl_readmem,tetrisbl_writemem,tetrisbl_init_machine, gfx1 )
+
+
+static int tetris_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x2860]) == 0x03e8)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x2800],0x80);
+			osd_fread(f,&sys16_workingram[0x1c00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void tetris_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x2800],0x80);
+		osd_fwrite(f,&sys16_workingram[0x1c00],0x100);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver tetris_driver =
 {
@@ -7928,7 +8411,7 @@ struct GameDriver tetrisbl_driver =
 	tetrisbl_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	tetris_hiload, tetris_hisave
 };
 
 /***************************************************************************/
@@ -7968,43 +8451,43 @@ static int timscanr_skip(int offset)
 {
 	if (cpu_get_pc()==0x1044c) {cpu_spinuntil_int(); return 0;}
 
-	return READ_WORD(&sys16_workingram[0xc00c]);
+	return READ_WORD(&sys16_workingram[0x000c]);
 }
 
 
 static struct MemoryReadAddress timscanr_readmem[] =
 {
+	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0x400000, 0x40ffff, MRA_TILERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc41004, 0xc41005, io_dip3_r },
-
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
 	{ 0xffc00c, 0xffc00d, timscanr_skip },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x02ffff, MRA_ROM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress timscanr_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
-	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM },
+	{ 0xfe0006, 0xfe0007, sound_command_w },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void timscanr_update_proc( void ){
+static void timscanr_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -8013,18 +8496,17 @@ void timscanr_update_proc( void ){
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
 
-	set_refresh( READ_WORD( &sys16_workingram[0xC010] ) );
+	set_refresh( READ_WORD( &sys16_extraram[0x0] ) );
 }
 
-void timscanr_init_machine( void ){
+static void timscanr_init_machine( void ){
 	static int bank[16] = {00,00,00,00,00,00,00,0x03,00,00,00,0x02,00,0x01,00,00};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
-//	sys16_yflip=1;
 	sys16_update_proc = timscanr_update_proc;
 }
 
-void timscanr_sprite_decode( void ){
+static void timscanr_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x10000 );
 }
 /***************************************************************************/
@@ -8099,6 +8581,38 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( timscanr_machine_driver, \
 	timscanr_readmem,timscanr_writemem,timscanr_init_machine, gfx8,upd7759_interface )
 
+static int timscanr_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x378c]) == 0x0 &&
+		READ_WORD(&sys16_workingram[0x378e]) == 0x1000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3750],0x50);
+			osd_fread(f,&sys16_workingram[0x3f00],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void timscanr_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3750],0x50);
+		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver timscanr_driver =
 {
 	__FILE__,
@@ -8118,7 +8632,7 @@ struct GameDriver timscanr_driver =
 	timscanr_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	timscanr_hiload, timscanr_hisave
 };
 
 /***************************************************************************/
@@ -8167,36 +8681,32 @@ static struct MemoryReadAddress tturf_readmem[] =
 	{ 0x2001e6, 0x2001e7, tt_io_service_r },
 	{ 0x2001e8, 0x2001e9, tt_io_player1_r },
 	{ 0x2001ea, 0x2001eb, tt_io_player2_r },
-	{ 0x100000, 0x2fffff, MRA_EXTRAM },
-	{ 0x300000, 0x30ffff, MRA_SPRITERAM },
+	{ 0x200000, 0x203fff, MRA_EXTRAM },
+	{ 0x300000, 0x300fff, MRA_SPRITERAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x500000, 0x50ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x500000, 0x500fff, MRA_PALETTERAM },
 
 	{ 0x602002, 0x602003, io_dip1_r },
 	{ 0x602000, 0x602001, io_dip2_r },
-	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress tturf_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x2fffff, MWA_EXTRAM },
-	{ 0x300000, 0x30ffff, MWA_SPRITERAM },
+	{ 0x200000, 0x203fff, MWA_EXTRAM },
+	{ 0x300000, 0x300fff, MWA_SPRITERAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x500000, 0x50ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x500000, 0x500fff, MWA_PALETTERAM },
 	{ 0x600000, 0x600005, MWA_EXTRAM2 },
 	{ 0x600006, 0x600007, sound_command_w },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void tturf_update_proc( void ){
+static void tturf_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -8208,14 +8718,14 @@ void tturf_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void tturf_init_machine( void ){
+static void tturf_init_machine( void ){
 	static int bank[16] = {00,00,0x02,00,0x04,00,0x06,00,00,00,00,00,00,00,00,00};
 	sys16_obj_bank = bank;
 
 	sys16_update_proc = tturf_update_proc;
 }
 
-void tturf_sprite_decode (void)
+static void tturf_sprite_decode (void)
 {
 	sys16_sprite_decode( 4,0x20000 );
 }
@@ -8228,33 +8738,64 @@ INPUT_PORTS_START( tturf_input_ports )
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x06, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPNAME( 0x03, 0x00, "Continues" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "Unlimited" )
+	PORT_DIPSETTING(    0x03, "Unlimited" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x10, "2" )
-	PORT_DIPSETTING(    0x18, "3" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x60, 0x60, "Extend Player" )
-	PORT_DIPSETTING(    0x40, "150000" )
-	PORT_DIPSETTING(    0x60, "200000" )
-	PORT_DIPSETTING(    0x20, "300000" )
-	PORT_DIPSETTING(    0x00, "400000" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x30, 0x20, "Starting Energy" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "6" )
+	PORT_DIPSETTING(    0x30, "8" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Bonus Energy" )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
 INPUT_PORTS_END
 
 /***************************************************************************/
 
 MACHINE_DRIVER_7759( tturf_machine_driver, \
 	tturf_readmem,tturf_writemem,tturf_init_machine, gfx1,upd7759_interface )
+
+
+static int tturf_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram[0x1fc]) == 0x482e &&
+		READ_WORD(&sys16_extraram[0x1fe]) == 0x4600)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram[0x0],0x200);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void tturf_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram[0x0],0x200);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver tturf_driver =
 {
@@ -8275,7 +8816,7 @@ struct GameDriver tturf_driver =
 	tturf_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	tturf_hiload, tturf_hisave
 };
 
 /***************************************************************************/
@@ -8302,48 +8843,54 @@ ROM_START( tturfbl_rom )
 	ROM_LOAD( "12276.4b", 0x60000, 0x10000, 0x838bd71f )
 	ROM_LOAD( "12280.8b", 0x70000, 0x10000, 0x639a57cb )
 
-	ROM_REGION( 0x20000 ) /* sound CPU */
-	ROM_LOAD( "tt014d68.rom", 0x0000, 0x10000, 0xd4aab1d9 )
+	ROM_REGION( 0x28000 ) /* sound CPU */
+	ROM_LOAD( "tt014d68.rom", 0x00000, 0x08000, 0xd4aab1d9 )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+	ROM_LOAD( "tt0246ff.rom", 0x18000, 0x10000, 0xbb4bba8f )
 ROM_END
 
 /***************************************************************************/
 
 static struct MemoryReadAddress tturfbl_readmem[] =
 {
-	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x100000, 0x2fffff, MRA_EXTRAM },
-	{ 0x300000, 0x30ffff, MRA_SPRITERAM },
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x2001e6, 0x2001e7, tt_io_service_r },
+	{ 0x2001e8, 0x2001e9, tt_io_player1_r },
+	{ 0x2001ea, 0x2001eb, tt_io_player2_r },
+	{ 0x200000, 0x203fff, MRA_EXTRAM },
+	{ 0x300000, 0x300fff, MRA_SPRITERAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x500000, 0x50ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x500000, 0x500fff, MRA_PALETTERAM },
+	{ 0x600002, 0x600003, io_dip1_r },
+	{ 0x600000, 0x600001, io_dip2_r },
 	{ 0x601002, 0x601003, io_player1_r },
-	{ 0x601006, 0x601007, io_player2_r },
+	{ 0x601004, 0x601005, io_player2_r },
 	{ 0x601000, 0x601001, io_service_r },
 	{ 0x602002, 0x602003, io_dip1_r },
 	{ 0x602000, 0x602001, io_dip2_r },
-	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xc46000, 0xc4601f, MRA_EXTRAM3 },
 	{-1}
 };
 
 static struct MemoryWriteAddress tturfbl_writemem[] =
 {
-	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x100000, 0x2fffff, MWA_EXTRAM },
-	{ 0x300000, 0x30ffff, MWA_SPRITERAM },
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x200000, 0x203fff, MWA_EXTRAM },
+	{ 0x300000, 0x300fff, MWA_SPRITERAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x500000, 0x50ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x500000, 0x500fff, MWA_PALETTERAM },
 	{ 0x600000, 0x600005, MWA_EXTRAM2 },
 	{ 0x600006, 0x600007, sound_command_w },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xc44000, 0xc44001, MWA_NOP },
+	{ 0xc46000, 0xc4601f, MWA_EXTRAM3 },
 	{-1}
 };
 
 /***************************************************************************/
 
-void tturfbl_update_proc( void ){
+static void tturfbl_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -8371,7 +8918,7 @@ void tturfbl_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void tturfbl_init_machine( void ){
+static void tturfbl_init_machine( void ){
 	static int bank[16] = {00,00,00,00,00,00,00,0x06,00,00,00,0x04,00,0x02,00,00};
 	sys16_obj_bank = bank;
 	sys16_sprxoffset = -0x48;
@@ -8379,7 +8926,7 @@ void tturfbl_init_machine( void ){
 	sys16_update_proc = tturfbl_update_proc;
 }
 
-void tturfbl_sprite_decode (void)
+static void tturfbl_sprite_decode (void)
 {
 	int i;
 
@@ -8391,8 +8938,8 @@ void tturfbl_sprite_decode (void)
 }
 /***************************************************************************/
 // sound ??
-MACHINE_DRIVER( tturfbl_machine_driver, \
-	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine, gfx1 /*,upd7759_interface*/ )
+MACHINE_DRIVER_7759( tturfbl_machine_driver, \
+	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver tturfbl_driver =
 {
@@ -8413,13 +8960,13 @@ struct GameDriver tturfbl_driver =
 	tturf_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	tturf_hiload, tturf_hisave
 };
 
 /***************************************************************************/
 // sys16B
 ROM_START( wb3_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
+	ROM_REGION( 0x40000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "epr12258.a5", 0x000000, 0x20000, 0x01f5898c )
 	ROM_LOAD_EVEN( "epr12259.a7", 0x000000, 0x20000, 0x54927c7e )
 
@@ -8443,7 +8990,7 @@ ROM_START( wb3_rom )
 ROM_END
 
 ROM_START( wb3a_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
+	ROM_REGION( 0x40000 ) /* 68000 code */
 // Custom CPU 317-0089
 	ROM_LOAD_ODD ( "epr12136.a5", 0x000000, 0x20000, 0x4cf05003 )
 	ROM_LOAD_EVEN( "epr12137.a7", 0x000000, 0x20000, 0x6f81238e )
@@ -8471,44 +9018,42 @@ ROM_END
 
 static struct MemoryReadAddress wb3_readmem[] =
 {
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x3f0000, 0x3f0001, MRA_EXTRAM },
+	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xdf0000, 0xdf0fff, MRA_EXTRAM3 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static void wb3_sound_command_w(int offset,int data)
 {
-	sound_command_w(offset,data>>8);
+	if( (data&0xff000000)==0 )
+		sound_command_w(offset,data>>8);
 }
 
 static struct MemoryWriteAddress wb3_writemem[] =
 {
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x3f0000, 0x3f0001, MWA_EXTRAM },
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x3f0000, 0x3f0003, MWA_NOP },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
-	{ 0xdf0000, 0xdf0fff, MWA_EXTRAM3 },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM2 },
 	{ 0xffc008, 0xffc009, wb3_sound_command_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void wb3_update_proc( void ){
+static void wb3_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -8520,27 +9065,15 @@ void wb3_update_proc( void ){
 }
 
 
-void wb3_init_machine( void ){
+static void wb3_init_machine( void ){
 	static int bank[16] = {4,0,2,0,6,0,0,0x06,0,0,0,0x04,0,0x02,0,0};
 
-	if(sys16_machine_started) return;
-	sys16_machine_started = 1;
-
 	sys16_obj_bank = bank;
-
-	copy_rom64k( 0x8, 0x4 );
-	copy_rom64k( 0x9, 0x5 );
-	copy_rom64k( 0xA, 0x6 );
-	copy_rom64k( 0xB, 0x7 );
-	copy_rom64k( 0x4, 0x0 );
-	copy_rom64k( 0x5, 0x1 );
-	copy_rom64k( 0x6, 0x2 );
-	copy_rom64k( 0x7, 0x3 );
 
 	sys16_update_proc = wb3_update_proc;
 }
 
-void wb3_sprite_decode (void)
+static void wb3_sprite_decode (void)
 {
 	sys16_sprite_decode( 4,0x20000 );
 }
@@ -8583,8 +9116,38 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( wb3_machine_driver, \
-	wb3_readmem,wb3_writemem,wb3_init_machine, gfx1 /*,upd7759_interface*/)
+	wb3_readmem,wb3_writemem,wb3_init_machine, gfx1 )
 
+static int wb3_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x08de]) == 0x3000)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x08b8],0x28);
+			osd_fread(f,&sys16_workingram[0x1000],0x200);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void wb3_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x08b8],0x28);
+		osd_fwrite(f,&sys16_workingram[0x1000],0x200);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver wb3_driver =
 {
@@ -8605,7 +9168,7 @@ struct GameDriver wb3_driver =
 	wb3_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wb3_hiload, wb3_hisave
 };
 
 struct GameDriver wb3a_driver =
@@ -8662,40 +9225,40 @@ ROM_END
 
 static struct MemoryReadAddress wb3bl_readmem[] =
 {
-	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x3f0000, 0x3f0001, MRA_EXTRAM },
+	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
-	{ 0x410000, 0x41ffff, MRA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MRA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MRA_PALETTERAM },
+	{ 0x410000, 0x410fff, MRA_TEXTRAM },
+	{ 0x440000, 0x440fff, MRA_SPRITERAM },
+	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41004, 0xc41005, io_player2_r },
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xdf0000, 0xdfffff, MRA_EXTRAM3 },
+	{ 0xc46000, 0xc4601f, MRA_EXTRAM3 },
 	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress wb3bl_writemem[] =
 {
-	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x3f0000, 0x3f0001, MWA_EXTRAM },
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x3f0000, 0x3f0003, MWA_NOP },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
-	{ 0x410000, 0x41ffff, MWA_TEXTRAM },
-	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
-	{ 0x840000, 0x84ffff, MWA_PALETTERAM },
+	{ 0x410000, 0x410fff, MWA_TEXTRAM },
+	{ 0x440000, 0x440fff, MWA_SPRITERAM },
+	{ 0x840000, 0x840fff, MWA_PALETTERAM },
 	{ 0xc42006, 0xc42007, sound_command_w },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
-	{ 0xdf0000, 0xdfffff, MWA_EXTRAM3 },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM2 },
+	{ 0xc44000, 0xc44001, MWA_NOP },
+	{ 0xc46000, 0xc4601f, MWA_EXTRAM3 },
 	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 
 /***************************************************************************/
 
-void wb3bl_update_proc( void ){
+static void wb3bl_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_workingram[0xc030] );
 	sys16_bg_scrollx = READ_WORD( &sys16_workingram[0xc038] );
 	sys16_fg_scrolly = READ_WORD( &sys16_workingram[0xc032] );
@@ -8706,7 +9269,7 @@ void wb3bl_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void wb3bl_init_machine( void ){
+static void wb3bl_init_machine( void ){
 	static int bank[16] = {4,0,2,0,6,0,0,0x06,0,0,0,0x04,0,0x02,0,0};
 
 	sys16_obj_bank = bank;
@@ -8736,9 +9299,7 @@ void wb3bl_init_machine( void ){
 	sys16_update_proc = wb3bl_update_proc;
 }
 
-
-
-void wb3bl_sprite_decode (void)
+static void wb3bl_sprite_decode (void)
 {
 	int i;
 
@@ -8752,7 +9313,7 @@ void wb3bl_sprite_decode (void)
 /***************************************************************************/
 
 MACHINE_DRIVER( wb3bl_machine_driver, \
-	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine, gfx1 /*,upd7759_interface*/)
+	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine, gfx1 )
 
 struct GameDriver wb3bl_driver =
 {
@@ -8773,18 +9334,19 @@ struct GameDriver wb3bl_driver =
 	wb3_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wb3_hiload, wb3_hisave
 };
 
 
 /***************************************************************************/
 // sys16B
 ROM_START( wrestwar_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
+	ROM_REGION( 0xc0000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "ww.a5", 0x00000, 0x20000, 0x6714600a )
 	ROM_LOAD_EVEN( "ww.a7", 0x00000, 0x20000, 0xeeaba126 )
-	ROM_LOAD_ODD ( "ww.a6", 0x40000, 0x20000, 0xddf075cb )
-	ROM_LOAD_EVEN( "ww.a8", 0x40000, 0x20000, 0xb77ba665 )
+	/* empty 0x40000 - 0x80000 */
+	ROM_LOAD_ODD ( "ww.a6", 0x80000, 0x20000, 0xddf075cb )
+	ROM_LOAD_EVEN( "ww.a8", 0x80000, 0x20000, 0xb77ba665 )
 
 	ROM_REGION( 0x60000 ) /* tiles */
 	ROM_LOAD( "ww.a14", 0x00000, 0x20000, 0x6a821ab9 )
@@ -8794,68 +9356,66 @@ ROM_START( wrestwar_rom )
 	ROM_REGION( 0x180000*2 ) /* sprites */
 	ROM_LOAD( "ww.b1",  0x000000, 0x20000, 0xffa7d368 )
 	ROM_LOAD( "ww.b5",  0x020000, 0x20000, 0x8d7794c1 )
-
 	ROM_LOAD( "ww.b2",  0x040000, 0x20000, 0x0ed343f2 )
 	ROM_LOAD( "ww.b6",  0x060000, 0x20000, 0x99458d58 )
-
 	ROM_LOAD( "ww.b3",  0x080000, 0x20000, 0x3087104d )
 	ROM_LOAD( "ww.b7",  0x0a0000, 0x20000, 0xabcf9bed )
-
 	ROM_LOAD( "ww.b4",  0x0c0000, 0x20000, 0x41b6068b )
 	ROM_LOAD( "ww.b8",  0x0e0000, 0x20000, 0x97eac164 )
-
 	ROM_LOAD( "ww.a1",  0x100000, 0x20000, 0x260311c5 )
 	ROM_LOAD( "ww.b10", 0x120000, 0x20000, 0x35a4b1b1 )
-
 	ROM_LOAD( "ww.a2",  0x140000, 0x10000, 0x12e38a5c )
 	ROM_LOAD( "ww.b11", 0x160000, 0x10000, 0xfa06fd24 )
 
 	ROM_REGION( 0x50000 ) /* sound CPU */
 	ROM_LOAD( "ww.a10", 0x0000, 0x08000, 0xc3609607 )
-
 	ROM_LOAD( "ww.a11", 0x10000, 0x20000, 0xfb9a7f29 )
 	ROM_LOAD( "ww.a12", 0x30000, 0x20000, 0xd6617b19 )
 ROM_END
 
 /***************************************************************************/
 
+static int ww_io_service_r(int offset)
+{
+	return io_service_r(offset) | (READ_WORD(&sys16_workingram[0x2082]) & 0xff00);
+}
+
 static struct MemoryReadAddress wrestwar_readmem[] =
 {
 
-	{ 0x000000, 0x0fffff, MRA_ROM },
+	{ 0x000000, 0x0bffff, MRA_ROM },
 	{ 0x100000, 0x10ffff, MRA_TILERAM },
-	{ 0x110000, 0x11ffff, MRA_TEXTRAM },
-	{ 0x200000, 0x20ffff, MRA_SPRITERAM },
-	{ 0x300000, 0x30ffff, MRA_PALETTERAM },
-	{ 0x400000, 0x40ffff, MRA_EXTRAM },
-	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
+	{ 0x110000, 0x110fff, MRA_TEXTRAM },
+	{ 0x200000, 0x200fff, MRA_SPRITERAM },
+	{ 0x300000, 0x300fff, MRA_PALETTERAM },
+	{ 0x400000, 0x400003, MRA_EXTRAM },
+	{ 0xc40000, 0xc40001, MRA_EXTRAM2 },
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
-	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xffe082, 0xffe083, mirror1_r },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xffe082, 0xffe083, ww_io_service_r },
+	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress wrestwar_writemem[] =
 {
-	{ 0x000000, 0x0fffff, MWA_ROM },
+	{ 0x000000, 0x0bffff, MWA_ROM },
 	{ 0x100000, 0x10ffff, MWA_TILERAM },
-	{ 0x110000, 0x11ffff, MWA_TEXTRAM },
-	{ 0x200000, 0x20ffff, MWA_SPRITERAM },
-	{ 0x300000, 0x30ffff, MWA_PALETTERAM },
-	{ 0x400000, 0x40ffff, MWA_EXTRAM },
-	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
+	{ 0x110000, 0x110fff, MWA_TEXTRAM },
+	{ 0x200000, 0x200fff, MWA_SPRITERAM },
+	{ 0x300000, 0x300fff, MWA_PALETTERAM },
+	{ 0x400000, 0x400003, MWA_EXTRAM },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM2 },
+	{ 0xc43034, 0xc43035, MWA_NOP },
 	{ 0xffe08e, 0xffe08f, sound_command_w },
-	{ 0xffe082, 0xffe083, mirror1_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xffc000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
 /***************************************************************************/
 
-void wrestwar_update_proc( void ){
+static void wrestwar_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -8867,39 +9427,27 @@ void wrestwar_update_proc( void ){
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
 }
 
-void wrestwar_init_machine( void ){
+static void wrestwar_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
-
-	if(sys16_machine_started) return;
-	sys16_machine_started = 1;
 
 	sys16_obj_bank = bank;
 	sys16_bg_priority_mode=2;
 	sys16_bg_priority_value=0x0a00;
 
-	copy_rom64k( 0x8, 0x4 );
-	copy_rom64k( 0x9, 0x5 );
-	copy_rom64k( 0xA, 0x6 );
-	copy_rom64k( 0xB, 0x7 );
-	copy_rom64k( 0x4, 0x0 );
-	copy_rom64k( 0x5, 0x1 );
-	copy_rom64k( 0x6, 0x2 );
-	copy_rom64k( 0x7, 0x3 );
-
-	define_mirror1( 0,0xc41001 );
-
 	sys16_update_proc = wrestwar_update_proc;
 }
 
-void wrestwar_sprite_decode( void ){
+static void wrestwar_sprite_decode( void ){
 	sys16_sprite_decode( 6,0x40000 );
 }
 
-
-void wrestwar_onetime_init_machine( void ){
+static void wrestwar_onetime_init_machine( void ){
 	sys16_onetime_init_machine();
 	sys16_bg1_trans=1;
 	sys16_MaxShadowColors=16;
+	sys18_splittab_bg_y=&sys16_textram[0x0f40];
+	sys18_splittab_fg_y=&sys16_textram[0x0f00];
+	sys16_rowscroll_scroll=0x8000;
 }
 /***************************************************************************/
 
@@ -8913,7 +9461,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Round Time" )
@@ -8940,6 +9488,38 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( wrestwar_machine_driver, \
 	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine, gfx2,upd7759_interface )
 
+static int wrestwar_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_workingram[0x38a0]) == 0xffff)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_workingram[0x3400],0x200);
+			osd_fread(f,&sys16_workingram[0x3800],0xa2);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void wrestwar_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_workingram[0x3400],0x200);
+		osd_fwrite(f,&sys16_workingram[0x3800],0xa2);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver wrestwar_driver =
 {
 	__FILE__,
@@ -8959,14 +9539,8 @@ struct GameDriver wrestwar_driver =
 	wrestwar_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	wrestwar_hiload, wrestwar_hisave
 };
-
-
-
-
-
-
 
 
 /***************************************************************************/
@@ -8991,7 +9565,9 @@ ROM_START( hangon_rom )
 
 	ROM_REGION( 0x080000*2 ) /* sprites */
 	ROM_LOAD( "6819.rom", 0x000000, 0x008000, 0x469dad07 )
+	ROM_RELOAD(           0x070000, 0x008000 )	/* again? */
 	ROM_LOAD( "6820.rom", 0x008000, 0x008000, 0x87cbc6de )
+	ROM_RELOAD(           0x078000, 0x008000 )	/* again? */
 	ROM_LOAD( "6821.rom", 0x010000, 0x008000, 0x15792969 )
 	ROM_LOAD( "6822.rom", 0x018000, 0x008000, 0xe9718de5 )
 	ROM_LOAD( "6823.rom", 0x020000, 0x008000, 0x49422691 )
@@ -9004,8 +9580,6 @@ ROM_START( hangon_rom )
 	ROM_LOAD( "6830.rom", 0x058000, 0x008000, 0xb1a63aef )
 	ROM_LOAD( "6845.rom", 0x060000, 0x008000, 0xba08c9b8 )
 	ROM_LOAD( "6846.rom", 0x068000, 0x008000, 0xf21e57a3 )
-	ROM_LOAD( "6819.rom", 0x070000, 0x008000, 0x469dad07 )
-	ROM_LOAD( "6820.rom", 0x078000, 0x008000, 0x87cbc6de )
 
 	ROM_REGION( 0x20000 ) /* sound CPU */
 	ROM_LOAD( "6833.rom", 0x00000, 0x4000, 0x3b942f5f )
@@ -9067,37 +9641,37 @@ static int hangon1_skip_r(int offset)
 
 static struct MemoryReadAddress hangon_readmem[] =
 {
+	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x20c400, 0x20c401, hangon1_skip_r },
-	{ 0x200000, 0x20ffff, MRA_EXTRAM },
+	{ 0x20c000, 0x20ffff, MRA_EXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
 	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x600000, 0x60ffff, MRA_SPRITERAM },
-	{ 0xa00000, 0xa0ffff, MRA_PALETTERAM },
-	{ 0xc40000, 0xc7ffff, MRA_EXTRAM2 },
+	{ 0x600000, 0x600fff, MRA_SPRITERAM },
+	{ 0xa00000, 0xa00fff, MRA_PALETTERAM },
+	{ 0xc68000, 0xc68fff, MRA_EXTRAM2 },
+	{ 0xc7e000, 0xc7ffff, MRA_EXTRAM3 },
 	{ 0xe01000, 0xe01001, io_service_r },
 	{ 0xe0100c, 0xe0100d, io_dip2_r },
 	{ 0xe0100a, 0xe0100b, io_dip1_r },
 	{ 0xe03020, 0xe03021, ho_io_highscoreentry_r },
 	{ 0xe03028, 0xe03029, ho_io_x_r },
 	{ 0xe0302a, 0xe0302b, ho_io_y_r },
-	{ 0xe00000, 0xe0ffff, MRA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xe00000, 0xe03fff, MRA_EXTRAM4 },
 	{-1}
 };
 
 static struct MemoryWriteAddress hangon_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x200000, 0x20ffff, MWA_EXTRAM },
+	{ 0x20c000, 0x20ffff, MWA_EXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
-	{ 0x600000, 0x60ffff, MWA_SPRITERAM },
-	{ 0xa00000, 0xa0ffff, MWA_PALETTERAM },
-	{ 0xc40000, 0xc7ffff, MWA_EXTRAM2 },
+	{ 0x600000, 0x600fff, MWA_SPRITERAM },
+	{ 0xa00000, 0xa00fff, MWA_PALETTERAM },
+	{ 0xc68000, 0xc68fff, MWA_EXTRAM2 },
+	{ 0xc7e000, 0xc7ffff, MWA_EXTRAM3 },
 	{ 0xe00000, 0xe00001, sound_command_nmi_w },
-	{ 0xe00000, 0xe0ffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0xe00000, 0xe03fff, MWA_EXTRAM4 },
 	{-1}
 };
 
@@ -9112,14 +9686,16 @@ static struct MemoryReadAddress hangon_readmem2[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0xc7f000, 0xc7f001, hangon2_skip_r },
-	{ 0xc40000, 0xc7ffff, MRA_EXTRAM2 },
+	{ 0xc68000, 0xc68fff, MRA_EXTRAM2 },
+	{ 0xc7e000, 0xc7ffff, MRA_EXTRAM3 },
 	{-1}
 };
 
 static struct MemoryWriteAddress hangon_writemem2[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xc40000, 0xc7ffff, MWA_EXTRAM2 },
+	{ 0xc68000, 0xc68fff, MWA_EXTRAM2 },
+	{ 0xc7e000, 0xc7ffff, MWA_EXTRAM3 },
 	{-1}
 };
 
@@ -9159,7 +9735,7 @@ static struct IOWritePort hangon_sound_writeport[] =
 
 /***************************************************************************/
 
-void hangon_update_proc( void ){
+static void hangon_update_proc( void ){
 	int leds;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
@@ -9168,7 +9744,7 @@ void hangon_update_proc( void ){
 
 	set_fg_page1( READ_WORD( &sys16_textram[0x0e9e] ) );
 	set_bg_page1( READ_WORD( &sys16_textram[0x0e9c] ) );
-//	set_refresh( READ_WORD( &sys16_extraram4[0x2] ) );
+	set_refresh_3d( READ_WORD( &sys16_extraram4[0x2] ) );
 
 	leds=READ_WORD( &sys16_extraram4[0x2] );
 	if(leds & 4)
@@ -9183,9 +9759,10 @@ void hangon_update_proc( void ){
 		osd_led_w(1,0);
 		osd_led_w(2,0);
 	}
+
 }
 
-void hangon_init_machine( void ){
+static void hangon_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,04,05,06,00,01,02,03,04,05,06,00,06};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -9203,7 +9780,7 @@ void hangon_init_machine( void ){
 
 	sys16_update_proc = hangon_update_proc;
 
-	gr_ver = &sys16_extraram2[0x28000];
+	gr_ver = &sys16_extraram2[0x0];
 	gr_hor = gr_ver+0x200;
 	gr_pal = gr_ver+0x400;
 	gr_flip= gr_ver+0x600;
@@ -9221,7 +9798,7 @@ void hangon_init_machine( void ){
 
 
 
-void hangon_sprite_decode( void ){
+static void hangon_sprite_decode( void ){
 	sys16_sprite_decode( 8,0x010000 );
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
@@ -9248,7 +9825,7 @@ PORT_START	/* Accel / Decel */
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
@@ -9326,6 +9903,39 @@ static struct MachineDriver hangon_machine_driver =
 	}
 };
 
+static int hangon_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram[0x1c90]) == 0x2020)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram[0x1800],0x600);
+			osd_fread(f,&sys16_extraram[0x0000],0x80);
+			WRITE_WORD(&sys16_extraram[0x0050],0);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void hangon_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram[0x1800],0x600);
+		osd_fwrite(f,&sys16_extraram[0x0000],0x80);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver hangon_driver =
 {
 	__FILE__,
@@ -9345,7 +9955,7 @@ struct GameDriver hangon_driver =
 	hangon_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hangon_hiload, hangon_hisave
 };
 
 
@@ -9413,9 +10023,6 @@ ROM_START( harrier_rom )
 	ROM_LOAD( "ic72.bin", 0x04000, 0x004000, 0x504e76d9 )
 	ROM_LOAD( "snd7231.256", 0x10000, 0x008000, 0x871c6b14 )
 	ROM_LOAD( "snd7232.256", 0x18000, 0x008000, 0x4b59340c )
-//	ROM_LOAD( "snd7231.256", 0x20000, 0x008000, 0x871c6b14 )
-
-
 
 	ROM_REGION( 0x10000 ) /* second 68000 CPU */
 	ROM_LOAD_ODD( "ic67.bin", 0x0000, 0x8000, 0xa6153af8 )
@@ -9438,27 +10045,18 @@ static int sh_motor_status_r(int offset) { return 0x0; }
 static struct MemoryReadAddress harrier_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-//	{ 0x040492, 0x040493, sh_io_joy_r },
-	{ 0x040000, 0x04ffff, MRA_EXTRAM },
+	{ 0x040000, 0x043fff, MRA_EXTRAM },
 	{ 0x100000, 0x107fff, MRA_TILERAM },
 	{ 0x108000, 0x108fff, MRA_TEXTRAM },
-
-	{ 0x120000, 0x127fff, shared_ram_r, &shared_ram },
-
-	{ 0x130000, 0x13ffff, MRA_SPRITERAM },
-	{ 0x110000, 0x11ffff, MRA_PALETTERAM },
-
-//	{ 0x141000, 0x141001, io_player1_r },
-//	{ 0x140004, 0x140005, io_player2_r },
+	{ 0x110000, 0x110fff, MRA_PALETTERAM },
+	{ 0x124000, 0x127fff, shared_ram_r, &shared_ram },
+	{ 0x130000, 0x130fff, MRA_SPRITERAM },
 	{ 0x140010, 0x140011, io_service_r },
 	{ 0x140014, 0x140015, io_dip1_r },
 	{ 0x140016, 0x140017, io_dip2_r },
-
 	{ 0x140024, 0x140027, sh_motor_status_r },
-
-	{ 0x140000, 0x14ffff, MRA_EXTRAM3 },		//io
-	{ 0xc60000, 0xc7ffff, MRA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0x140000, 0x140027, MRA_EXTRAM3 },		//io
+	{ 0xc68000, 0xc68fff, MRA_EXTRAM2 },
 
 	{-1}
 };
@@ -9466,16 +10064,15 @@ static struct MemoryReadAddress harrier_readmem[] =
 static struct MemoryWriteAddress harrier_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x04ffff, MWA_EXTRAM },
+	{ 0x040000, 0x043fff, MWA_EXTRAM },
 	{ 0x100000, 0x107fff, MWA_TILERAM },
 	{ 0x108000, 0x108fff, MWA_TEXTRAM },
-	{ 0x120000, 0x127fff, shared_ram_w, &shared_ram },
-	{ 0x130000, 0x13ffff, MWA_SPRITERAM },
-	{ 0x110000, 0x11ffff, MWA_PALETTERAM },
+	{ 0x110000, 0x110fff, MWA_PALETTERAM },
+	{ 0x124000, 0x127fff, shared_ram_w, &shared_ram },
+	{ 0x130000, 0x130fff, MWA_SPRITERAM },
 	{ 0x140000, 0x140001, sound_command_nmi_w },
-	{ 0x140000, 0x14ffff, MWA_EXTRAM3 },		//io
-	{ 0xc60000, 0xc7ffff, MWA_EXTRAM2 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0x140000, 0x140027, MWA_EXTRAM3 },		//io
+	{ 0xc68000, 0xc68fff, MWA_EXTRAM2 },
 
 	{-1}
 };
@@ -9483,16 +10080,16 @@ static struct MemoryWriteAddress harrier_writemem[] =
 static struct MemoryReadAddress harrier_readmem2[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xc78000, 0xc7ffff, shared_ram_r, &shared_ram },
-	{ 0xc60000, 0xc7ffff, MRA_EXTRAM2 },
+	{ 0xc68000, 0xc68fff, MRA_EXTRAM2 },
+	{ 0xc7c000, 0xc7ffff, shared_ram_r, &shared_ram },
 	{-1}
 };
 
 static struct MemoryWriteAddress harrier_writemem2[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xc78000, 0xc7ffff, shared_ram_w, &shared_ram },
-	{ 0xc60000, 0xc7ffff, MWA_EXTRAM2 },
+	{ 0xc68000, 0xc68fff, MWA_EXTRAM2 },
+	{ 0xc7c000, 0xc7ffff, shared_ram_w, &shared_ram },
 	{-1}
 };
 
@@ -9529,7 +10126,7 @@ static struct IOWritePort harrier_sound_writeport[] =
 
 /***************************************************************************/
 
-void harrier_update_proc( void ){
+static void harrier_update_proc( void ){
 	int data;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
@@ -9555,16 +10152,23 @@ void harrier_update_proc( void ){
 	set_refresh_3d( data );
 
 	if(data & 8)
+	{
 		osd_led_w(0,1);
+		osd_led_w(2,1);
+	}
 	else
+	{
 		osd_led_w(0,0);
+		osd_led_w(2,0);
+	}
 	if(data & 4)
 		osd_led_w(1,1);
 	else
 		osd_led_w(1,0);
+
 }
 
-void harrier_init_machine( void ){
+static void harrier_init_machine( void ){
 	static int bank[16] = { 00,01,02,03,04,05,06,07,00,00,00,00,00,00,00,00};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -9590,7 +10194,7 @@ void harrier_init_machine( void ){
 
 	sys16_update_proc = harrier_update_proc;
 
-	gr_ver = &sys16_extraram2[0x8000];
+	gr_ver = &sys16_extraram2[0x0];
 	gr_hor = gr_ver+0x200;
 	gr_pal = gr_ver+0x400;
 	gr_flip= gr_ver+0x600;
@@ -9610,12 +10214,12 @@ void harrier_init_machine( void ){
 
 
 
-void harrier_sprite_decode( void ){
+static void harrier_sprite_decode( void ){
 	sys16_sprite_decode2( 8,0x020000 ,1);
 	generate_gr_screen(512,512,0,0,4,0x8000);
 }
 
-void harrier_onetime_init_machine( void )
+static void harrier_onetime_init_machine( void )
 {
 	sys16_onetime_init_machine();
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
@@ -9659,7 +10263,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x01, "Moving" )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -9741,6 +10345,37 @@ static struct MachineDriver harrier_machine_driver =
 	}
 };
 
+static int sharrier_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram[0x37da]) == 0x2020)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram[0x3400],0x600);
+			osd_fread(f,&sys16_extraram[0x0000],0x80);
+			WRITE_WORD(&sys16_extraram[0x0050],0);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void sharrier_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram[0x3400],0x600);
+		osd_fwrite(f,&sys16_extraram[0x0000],0x80);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver sharrier_driver =
 {
@@ -9761,7 +10396,7 @@ struct GameDriver sharrier_driver =
 	harrier_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	sharrier_hiload, sharrier_hisave
 };
 
 
@@ -9876,67 +10511,59 @@ static unsigned char *shared_ram2;
 static int shared_ram2_r(int offset) { return READ_WORD(&shared_ram2[offset]); }
 static void shared_ram2_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram2[offset], data); }
 
-
 static struct MemoryReadAddress shangon_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_EXTRAM },
 	{ 0x20c640, 0x20c647, sound_shared_ram_r },
-	{ 0x200000, 0x20ffff, MRA_EXTRAM5 },
+	{ 0x20c000, 0x20ffff, MRA_EXTRAM5 },
 
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
 	{ 0x410000, 0x410fff, MRA_TEXTRAM },
-	{ 0x450000, 0x45ffff, MRA_EXTRAM3 },
-	{ 0x600000, 0x60ffff, MRA_SPRITERAM },
-	{ 0xa00000, 0xa0ffff, MRA_PALETTERAM },
-	{ 0xc40000, 0xc4ffff, MRA_EXTRAM2 },
-	{ 0xc60000, 0xc7ffff, shared_ram_r, &shared_ram },
+	{ 0x600000, 0x600fff, MRA_SPRITERAM },
+	{ 0xa00000, 0xa00fff, MRA_PALETTERAM },
+	{ 0xc68000, 0xc68fff, shared_ram_r, &shared_ram },
+	{ 0xc7c000, 0xc7ffff, shared_ram2_r, &shared_ram2 },
 	{ 0xe01000, 0xe01001, io_service_r },
 	{ 0xe0100c, 0xe0100d, io_dip2_r },
 	{ 0xe0100a, 0xe0100b, io_dip1_r },
 	{ 0xe030f8, 0xe030f9, ho_io_x_r },
 	{ 0xe030fa, 0xe030fb, ho_io_y_r },
-	{ 0xe00000, 0xe0ffff, MRA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+	{ 0xe00000, 0xe03fff, MRA_EXTRAM4 },	// io
 	{-1}
 };
 
 static struct MemoryWriteAddress shangon_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_EXTRAM },
 	{ 0x20c640, 0x20c647, sound_shared_ram_w },
-	{ 0x200000, 0x20ffff, MWA_EXTRAM5 },
-//	{ 0xfe0006, 0xfe0007, sound_command_w },
+	{ 0x20c000, 0x20ffff, MWA_EXTRAM5 },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
-	{ 0x450000, 0x45ffff, MWA_EXTRAM3 },
-	{ 0x600000, 0x60ffff, MWA_SPRITERAM },
-	{ 0xa00000, 0xa0ffff, MWA_PALETTERAM },
-	{ 0xc40000, 0xc4ffff, MWA_EXTRAM2 },
-	{ 0xc60000, 0xc7ffff, shared_ram_w, &shared_ram },
-	{ 0xe00000, 0xe0ffff, MWA_EXTRAM4 },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+	{ 0x600000, 0x600fff, MWA_SPRITERAM },
+	{ 0xa00000, 0xa00fff, MWA_PALETTERAM },
+	{ 0xc68000, 0xc68fff, shared_ram_w, &shared_ram },
+	{ 0xc7c000, 0xc7ffff, shared_ram2_w, &shared_ram2 },
+	{ 0xe00000, 0xe03fff, MWA_EXTRAM4 },	// io
 	{-1}
 };
 
 static struct MemoryReadAddress shangon_readmem2[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x10ffff, MRA_EXTRAM },
-	{ 0x450000, 0x45ffff, MRA_EXTRAM3 },
-	{ 0x7ffc00, 0x7fffff, shared_ram2_r, &shared_ram2 },
-	{ 0x7e0000, 0x7fffff, shared_ram_r },
+	{ 0x454000, 0x45401f, MRA_EXTRAM3 },
+	{ 0x7e8000, 0x7e8fff, shared_ram_r },
+	{ 0x7fc000, 0x7ffbff, shared_ram2_r },
+	{ 0x7ffc00, 0x7fffff, MRA_EXTRAM },
 	{-1}
 };
 
 static struct MemoryWriteAddress shangon_writemem2[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_EXTRAM },
-	{ 0x450000, 0x45ffff, MWA_EXTRAM3 },
-	{ 0x7ffc00, 0x7fffff, shared_ram2_w, &shared_ram2 },
-	{ 0x7e0000, 0x7fffff, shared_ram_w },
+	{ 0x454000, 0x45401f, MWA_EXTRAM3 },
+	{ 0x7e8000, 0x7e8fff, shared_ram_w },
+	{ 0x7fc000, 0x7ffbff, shared_ram2_w },
+	{ 0x7ffc00, 0x7fffff, MWA_EXTRAM },
 	{-1}
 };
 
@@ -9960,7 +10587,7 @@ static struct MemoryWriteAddress shangon_sound_writemem[] =
 
 /***************************************************************************/
 
-void shangon_update_proc( void ){
+static void shangon_update_proc( void ){
 	int leds;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
@@ -9969,7 +10596,11 @@ void shangon_update_proc( void ){
 
 	set_fg_page1( READ_WORD( &sys16_textram[0x0e9e] ) );
 	set_bg_page1( READ_WORD( &sys16_textram[0x0e9c] ) );
+
+	set_refresh_3d( READ_WORD( &sys16_extraram4[2] ) );
+
 	leds=READ_WORD( &sys16_extraram4[0x2] );
+
 	if(leds & 4)
 	{
 		osd_led_w(0,1);
@@ -9982,9 +10613,10 @@ void shangon_update_proc( void ){
 		osd_led_w(1,0);
 		osd_led_w(2,0);
 	}
+
 }
 
-void shangon_init_machine( void ){
+static void shangon_init_machine( void ){
 	static int bank[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 	sys16_obj_bank = bank;
 	sys16_textmode=1;
@@ -10003,7 +10635,7 @@ void shangon_init_machine( void ){
 
 	sys16_update_proc = shangon_update_proc;
 
-	gr_ver = &shared_ram[0x8000];
+	gr_ver = &shared_ram[0x0];
 	gr_hor = gr_ver+0x200;
 	gr_pal = gr_ver+0x400;
 	gr_flip= gr_ver+0x600;
@@ -10021,7 +10653,7 @@ void shangon_init_machine( void ){
 
 
 
-void shangon_sprite_decode( void ){
+static void shangon_sprite_decode( void ){
 	sys16_sprite_decode( 9,0x020000 );
 	generate_gr_screen(512,1024,0,0,4,0x8000);
 	//??
@@ -10029,7 +10661,7 @@ void shangon_sprite_decode( void ){
 	patch_z80code( 0x1088, 0x01);
 }
 
-void shangonb_sprite_decode( void ){
+static void shangonb_sprite_decode( void ){
 	sys16_sprite_decode( 9,0x020000 );
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
@@ -10065,7 +10697,7 @@ PORT_START
 	SYS16_COINAGE
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
@@ -10147,6 +10779,37 @@ static struct MachineDriver shangon_machine_driver =
 	}
 };
 
+static int shangon_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram5[0x15ac]) == 0x4b20)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram5[0x1400],0x200);
+			osd_fread(f,&sys16_extraram5[0x0000],0x80);
+			WRITE_WORD(&sys16_extraram[0x0050],0);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void shangon_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram5[0x1400],0x200);
+		osd_fwrite(f,&sys16_extraram5[0x0000],0x80);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver shangon_driver =
@@ -10190,7 +10853,7 @@ struct GameDriver shangonb_driver =
 	shangon_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	shangon_hiload, shangon_hisave
 };
 
 
@@ -10428,23 +11091,22 @@ static struct MemoryReadAddress outrun_readmem[] =
 	{ 0x060892, 0x060893, or_io_acc_steer_r },
 	{ 0x060894, 0x060895, or_io_brake_r },
 	{ 0x060900, 0x060907, sound_shared_ram_r },		//???
-	{ 0x060000, 0x07ffff, MRA_EXTRAM5 },
+	{ 0x060000, 0x067fff, MRA_EXTRAM5 },
 
 	{ 0x100000, 0x10ffff, MRA_TILERAM },
 	{ 0x110000, 0x110fff, MRA_TEXTRAM },
 
-	{ 0x130000, 0x13ffff, MRA_SPRITERAM },
-	{ 0x120000, 0x12ffff, MRA_PALETTERAM },
+	{ 0x130000, 0x130fff, MRA_SPRITERAM },
+	{ 0x120000, 0x121fff, MRA_PALETTERAM },
 
 	{ 0x140010, 0x140011, or_io_service_r },
 	{ 0x140014, 0x140015, io_dip1_r },
 	{ 0x140016, 0x140017, io_dip2_r },
 
-	{ 0x140000, 0x14ffff, MRA_EXTRAM3 },		//io
-	{ 0x200000, 0x23ffff, MRA_BANK4 },
-	{ 0x260000, 0x27ffff, shared_ram_r, &shared_ram },
+	{ 0x140000, 0x140071, MRA_EXTRAM3 },		//io
+	{ 0x200000, 0x23ffff, MRA_BANK8 },
+	{ 0x260000, 0x267fff, shared_ram_r, &shared_ram },
 	{ 0xe00000, 0xe00001, or_reset2_r },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 
 	{-1}
 };
@@ -10452,44 +11114,32 @@ static struct MemoryReadAddress outrun_readmem[] =
 static void outrun_sound_write_w(int offset,int data)
 {
 	sound_shared_ram[0]=data&0xff;
-	COMBINE_WORD_MEM(&sys16_workingram[0xff06], data);
 }
 
 static struct MemoryWriteAddress outrun_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x060900, 0x060907, sound_shared_ram_w },		//???
-	{ 0x060000, 0x07ffff, MWA_EXTRAM5 },
+	{ 0x060000, 0x067fff, MWA_EXTRAM5 },
 
 	{ 0x100000, 0x10ffff, MWA_TILERAM },
 	{ 0x110000, 0x110fff, MWA_TEXTRAM },
 
-	{ 0x130000, 0x13ffff, MWA_SPRITERAM },
-	{ 0x120000, 0x12ffff, MWA_PALETTERAM },
+	{ 0x130000, 0x130fff, MWA_SPRITERAM },
+	{ 0x120000, 0x121fff, MWA_PALETTERAM },
 
-
-	{ 0x140000, 0x14ffff, MWA_EXTRAM3 },		//io
-	{ 0x200000, 0x23ffff, MWA_BANK4 },
-	{ 0x260000, 0x27ffff, shared_ram_w, &shared_ram },
+	{ 0x140000, 0x140071, MWA_EXTRAM3 },		//io
+	{ 0x200000, 0x23ffff, MWA_BANK8 },
+	{ 0x260000, 0x267fff, shared_ram_w, &shared_ram },
 	{ 0xffff06, 0xffff07, outrun_sound_write_w },
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
 
 	{-1}
 };
 
-static int outrun_p2_skip_r(int offset)
-{
-	int pc=cpu_get_pc();
-	if (pc==0x1066 || pc==0x1186) {cpu_spinuntil_int(); return 0xffff;}
-
-	return READ_WORD(&shared_ram[0x3800]);
-}
-
 static struct MemoryReadAddress outrun_readmem2[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x063800, 0x063801, outrun_p2_skip_r },
-	{ 0x060000, 0x07ffff, shared_ram_r },
+	{ 0x060000, 0x067fff, shared_ram_r },
 	{ 0x080000, 0x09ffff, MRA_EXTRAM },		// gr
 
 	{-1}
@@ -10498,7 +11148,7 @@ static struct MemoryReadAddress outrun_readmem2[] =
 static struct MemoryWriteAddress outrun_writemem2[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x060000, 0x07ffff, shared_ram_w },
+	{ 0x060000, 0x067fff, shared_ram_w },
 	{ 0x080000, 0x09ffff, MWA_EXTRAM },		// gr
 
 	{-1}
@@ -10528,23 +11178,39 @@ static struct MemoryWriteAddress outrun_sound_writemem[] =
 
 /***************************************************************************/
 
-void outrun_update_proc( void ){
+static void outrun_update_proc( void ){
 	int data;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
 	sys16_bg_scrolly = READ_WORD( &sys16_textram[0x0e92] );
-
+#ifndef OUTRUN_SPEEDUP
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
+#else
 
-	data=READ_WORD( &sys16_extraram5[0xb6e] );
-	set_refresh( data );
+	data = READ_WORD( &sys16_textram[0x0e80] );
+	sys16_fg_page[0] = (data>>4)&0xf;
+	sys16_fg_page[1] = data&0xf;
+
+	data = READ_WORD( &sys16_textram[0x0e82] );
+	sys16_bg_page[0] = (data>>4)&0xf;
+	sys16_bg_page[1] = data&0xf;
+#endif
+
+	set_refresh( READ_WORD( &sys16_extraram5[0xb6e] ) );
+	data=READ_WORD( &sys16_extraram5[0xb6c] );
 
 	if(data & 0x2)
+	{
 		osd_led_w(0,1);
+		osd_led_w(2,1);
+	}
 	else
+	{
 		osd_led_w(0,0);
+		osd_led_w(2,0);
+	}
 
 	if(data & 0x4)
 		osd_led_w(1,1);
@@ -10552,7 +11218,7 @@ void outrun_update_proc( void ){
 		osd_led_w(1,0);
 }
 
-void outrun_init_machine( void ){
+static void outrun_init_machine( void ){
 	static int bank[16] = { 07,00,01,04,05,02,03,06,00,00,00,00,00,00,00,00};
 	sys16_obj_bank = bank;
 	sys16_spritesystem = 7;
@@ -10560,6 +11226,7 @@ void outrun_init_machine( void ){
 	sys16_textlayer_lo_max=0;
 	sys16_textlayer_hi_min=0;
 	sys16_textlayer_hi_max=0xff;
+	sys16_sprxoffset = -0xc0;
 
 // cpu 0 reset opcode resets cpu 2?
 	patch_code(0x7d44,0x4a);
@@ -10572,35 +11239,14 @@ void outrun_init_machine( void ){
 // *forced sound cmd
 	patch_code( 0x55ed, 0x00);
 
+// rogue tile on music selection screen
+//	patch_code( 0x38545, 0x80);
+
 // *freeze time
 //	patch_code( 0xb6b6, 0x4e);
 //	patch_code( 0xb6b7, 0x71);
 
-// *clean transparent palette masks
-
-	patch_code( 0x14faf, 0);
-	patch_code( 0x1588f, 0);
-	patch_code( 0x158af, 0);
-	patch_code( 0x158cf, 0);
-	patch_code( 0x1646e, 0x03);
-	patch_code( 0x1646f, 0x44);
-	patch_code( 0x167ae, 0x03);
-	patch_code( 0x167af, 0x44);
-	patch_code( 0x15ece, 0x03);
-	patch_code( 0x15ecf, 0x44);
-	patch_code( 0x166ae, 0);
-	patch_code( 0x166af, 0);
-	patch_code( 0x1598e, 0);
-	patch_code( 0x1598f, 0);
-	patch_code( 0x1668e, 0);
-	patch_code( 0x1668f, 0);
-	patch_code( 0x16b4f, 0);
-	patch_code( 0x167ee, 0);
-	patch_code( 0x167ef, 0);
-	patch_code( 0x16b6e, 0);
-	patch_code( 0x16b6f, 0);
-
-	cpu_setbank(4, Machine->memory_region[4]);
+	cpu_setbank(8, Machine->memory_region[4]);
 
 	sys16_update_proc = outrun_update_proc;
 
@@ -10609,11 +11255,11 @@ void outrun_init_machine( void ){
 	gr_flip= gr_ver+0xc00;
 	gr_palette= 0xf00 / 2;
 	gr_palette_default = 0x800 /2;
-	gr_colorflip[0][0]=0x06 / 2;
+	gr_colorflip[0][0]=0x08 / 2;
 	gr_colorflip[0][1]=0x04 / 2;
 	gr_colorflip[0][2]=0x00 / 2;
 	gr_colorflip[0][3]=0x00 / 2;
-	gr_colorflip[1][0]=0x02 / 2;
+	gr_colorflip[1][0]=0x0a / 2;
 	gr_colorflip[1][1]=0x06 / 2;
 	gr_colorflip[1][2]=0x02 / 2;
 	gr_colorflip[1][3]=0x00 / 2;
@@ -10622,7 +11268,7 @@ void outrun_init_machine( void ){
 
 }
 
-void outruna_init_machine( void ){
+static void outruna_init_machine( void ){
 	static int bank[16] = { 07,00,01,04,05,02,03,06,00,00,00,00,00,00,00,00};
 	sys16_obj_bank = bank;
 	sys16_spritesystem = 7;
@@ -10642,34 +11288,14 @@ void outruna_init_machine( void ){
 // *forced sound cmd
 	patch_code( 0x5661, 0x00);
 
+// rogue tile on music selection screen
+//	patch_code( 0x38455, 0x80);
+
 // *freeze time
 //	patch_code( 0xb6b6, 0x4e);
 //	patch_code( 0xb6b7, 0x71);
 
-// *clean transparent palette masks
-	patch_code( 0x14faf +0xbe, 0);
-	patch_code( 0x1588f +0xbe, 0);
-	patch_code( 0x158af +0xbe, 0);
-	patch_code( 0x158cf +0xbe, 0);
-	patch_code( 0x1646e +0xbe, 0x03);
-	patch_code( 0x1646f +0xbe, 0x44);
-	patch_code( 0x167ae +0xbe, 0x03);
-	patch_code( 0x167af +0xbe, 0x44);
-	patch_code( 0x15ece +0xbe, 0x03);
-	patch_code( 0x15ecf +0xbe, 0x44);
-	patch_code( 0x166ae +0xbe, 0);
-	patch_code( 0x166af +0xbe, 0);
-	patch_code( 0x1598e +0xbe, 0);
-	patch_code( 0x1598f +0xbe, 0);
-	patch_code( 0x1668e +0xbe, 0);
-	patch_code( 0x1668f +0xbe, 0);
-	patch_code( 0x16b4f +0xbe, 0);
-	patch_code( 0x167ee +0xbe, 0);
-	patch_code( 0x167ef +0xbe, 0);
-	patch_code( 0x16b6e +0xbe, 0);
-	patch_code( 0x16b6f +0xbe, 0);
-
-	cpu_setbank(4, Machine->memory_region[4]);
+	cpu_setbank(8, Machine->memory_region[4]);
 
 	sys16_update_proc = outrun_update_proc;
 
@@ -10678,11 +11304,11 @@ void outruna_init_machine( void ){
 	gr_flip= gr_ver+0xc00;
 	gr_palette= 0xf00 / 2;
 	gr_palette_default = 0x800 /2;
-	gr_colorflip[0][0]=0x06 / 2;
+	gr_colorflip[0][0]=0x08 / 2;
 	gr_colorflip[0][1]=0x04 / 2;
 	gr_colorflip[0][2]=0x00 / 2;
 	gr_colorflip[0][3]=0x00 / 2;
-	gr_colorflip[1][0]=0x02 / 2;
+	gr_colorflip[1][0]=0x0a / 2;
 	gr_colorflip[1][1]=0x06 / 2;
 	gr_colorflip[1][2]=0x02 / 2;
 	gr_colorflip[1][3]=0x00 / 2;
@@ -10692,20 +11318,30 @@ void outruna_init_machine( void ){
 }
 
 
-void outrun_sprite_decode( void ){
+static void outrun_sprite_decode( void ){
 	sys16_sprite_decode2( 4,0x040000, 0 );
 	generate_gr_screen(512,2048,0,0,3,0x8000);
 }
 
-void outrunb_sprite_decode( void ){
+static void outrunb_sprite_decode( void ){
 	sys16_sprite_decode2( 4,0x040000,0  );
 }
 
-void outrunb_onetime_init_machine( void ){
+static void outrun_onetime_init_machine( void ){
+	sys16_onetime_init_machine();
+#ifdef OUTRUN_SPEEDUP
+	sys16_tilemap_height=1;
+#endif
+}
+
+static void outrunb_onetime_init_machine( void ){
 	unsigned char *RAM = Machine->memory_region[0];
 	int i;
 	int odd,even,word;
 	sys16_onetime_init_machine();
+#ifdef OUTRUN_SPEEDUP
+	sys16_tilemap_height=1;
+#endif
 /*
   Main Processor
 	Comparing the bootleg with the custom bootleg, it seems that:-
@@ -10826,7 +11462,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x01, "Mini Up" )
 	PORT_DIPSETTING(    0x03, "Moving" )
 //	PORT_DIPSETTING(    0x00, "No Use" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
@@ -10884,7 +11520,7 @@ static struct MachineDriver GAMENAME = \
 			12000000, \
 			4, \
 			outrun_readmem2,outrun_writemem2,0,0, \
-			sys16_interrupt,2 /* ?? */ \
+			sys16_interrupt,2 \
 		}, \
 	}, \
 	60, 100 /*DEFAULT_60HZ_VBLANK_DURATION*/, \
@@ -10915,6 +11551,38 @@ static struct MachineDriver GAMENAME = \
 MACHINE_DRIVER_OUTRUN(outrun_machine_driver,outrun_init_machine)
 MACHINE_DRIVER_OUTRUN(outruna_machine_driver,outruna_init_machine)
 
+static int outrun_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram5[0x0584]) == 0x2020)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram5[0x0460],0x200);
+			osd_fread(f,&sys16_extraram5[0x7800],0x100);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void outrun_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram5[0x0460],0x200);
+		osd_fwrite(f,&sys16_extraram5[0x7800],0x100);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver outrun_driver =
 {
 	__FILE__,
@@ -10926,7 +11594,7 @@ struct GameDriver outrun_driver =
 	SYS16_CREDITS,
 	0,
 	&outrun_machine_driver,
-	sys16_onetime_init_machine,
+	outrun_onetime_init_machine,
 	outrun_rom,
 	outrun_sprite_decode, 0,
 	0,
@@ -10934,7 +11602,7 @@ struct GameDriver outrun_driver =
 	outrun_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	outrun_hiload, outrun_hisave
 };
 
 
@@ -10949,7 +11617,7 @@ struct GameDriver outruna_driver =
 	SYS16_CREDITS,
 	0,
 	&outruna_machine_driver,
-	sys16_onetime_init_machine,
+	outrun_onetime_init_machine,
 	outruna_rom,
 	outrun_sprite_decode, 0,
 	0,
@@ -10957,7 +11625,7 @@ struct GameDriver outruna_driver =
 	outrun_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	outrun_hiload, outrun_hisave
 };
 
 struct GameDriver outrunb_driver =
@@ -10979,7 +11647,7 @@ struct GameDriver outrunb_driver =
 	outrun_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	outrun_hiload, outrun_hisave
 };
 
 
@@ -10993,67 +11661,70 @@ ROM_START( enduror_rom )
 
 	ROM_LOAD_ODD ( "7637.rom", 0x10000, 0x8000, 0x82a27a8c )
 	ROM_LOAD_EVEN( "7641.rom", 0x10000, 0x8000, 0x2503ae7c )
-	ROM_LOAD_ODD ( "7638.rom", 0x20000, 0x8000, 0x70544779 )
-	ROM_LOAD_EVEN( "7642.rom", 0x20000, 0x8000, 0x1c453bea )
+	ROM_LOAD_ODD ( "7638.rom", 0x20000, 0x8000, 0x70544779 )	// looks like encrypted versions of
+	ROM_LOAD_EVEN( "7642.rom", 0x20000, 0x8000, 0x1c453bea )	// enduro.a06 / .a09
 
 	ROM_REGION( 0x18000 ) /* tiles */
-	ROM_LOAD( "46.1-1", 0x00000, 0x08000, 0xe7a4ff90 )
-	ROM_LOAD( "47.1-2", 0x08000, 0x08000, 0x4caa0095 )
-	ROM_LOAD( "48.1-3", 0x10000, 0x08000, 0x7e432683 )
+	ROM_LOAD( "7644.rom", 0x00000, 0x08000, 0xe7a4ff90 )
+	ROM_LOAD( "7645.rom", 0x08000, 0x08000, 0x4caa0095 )
+	ROM_LOAD( "7646.rom", 0x10000, 0x08000, 0x7e432683 )
 
 	ROM_REGION( 0x100000*2 ) /* sprites */
 
-	ROM_LOAD( "29.47", 0x000000, 0x008000, 0x9fb5e656 )
-	ROM_LOAD( "21.39", 0x008000, 0x008000, 0xdbbe2f6e )
-	ROM_LOAD( "45.31", 0x010000, 0x008000, 0xcb0c13c5 )
-	ROM_LOAD( "37.23", 0x018000, 0x008000, 0x2db6520d )
+	ROM_LOAD( "7678.rom", 0x000000, 0x008000, 0x9fb5e656 )
+	ROM_LOAD( "7670.rom", 0x008000, 0x008000, 0xdbbe2f6e )
+	ROM_LOAD( "7662.rom", 0x010000, 0x008000, 0xcb0c13c5 )
+	ROM_LOAD( "7654.rom", 0x018000, 0x008000, 0x2db6520d )
 
-	ROM_LOAD( "28.46", 0x020000, 0x008000, 0x7764765b )
-	ROM_LOAD( "20.38", 0x028000, 0x008000, 0xf9525faa )
-	ROM_LOAD( "44.30", 0x030000, 0x008000, 0xfe93a79b )
-	ROM_LOAD( "36.22", 0x038000, 0x008000, 0x46a52114 )
+	ROM_LOAD( "7677.rom", 0x020000, 0x008000, 0x7764765b )
+	ROM_LOAD( "7669.rom", 0x028000, 0x008000, 0xf9525faa )
+	ROM_LOAD( "7661.rom", 0x030000, 0x008000, 0xfe93a79b )
+	ROM_LOAD( "7653.rom", 0x038000, 0x008000, 0x46a52114 )
 
-	ROM_LOAD( "27.45", 0x040000, 0x008000, 0x2e42e0d4 )
-	ROM_LOAD( "19.37", 0x048000, 0x008000, 0xe115ce33 )
-	ROM_LOAD( "43.29", 0x050000, 0x008000, 0x86dfbb68 )
-	ROM_LOAD( "35.21", 0x058000, 0x008000, 0x2880cfdb )
+	ROM_LOAD( "7676.rom", 0x040000, 0x008000, 0x2e42e0d4 )
+	ROM_LOAD( "7668.rom", 0x048000, 0x008000, 0xe115ce33 )
+	ROM_LOAD( "7660.rom", 0x050000, 0x008000, 0x86dfbb68 )
+	ROM_LOAD( "7652.rom", 0x058000, 0x008000, 0x2880cfdb )
 
-	ROM_LOAD( "26.44", 0x060000, 0x008000, 0x05cd2d61 )
-	ROM_LOAD( "18.36", 0x068000, 0x008000, 0x923bde9d )
-	ROM_LOAD( "42.28", 0x070000, 0x008000, 0x629dc8ce )
-	ROM_LOAD( "34.20", 0x078000, 0x008000, 0xd7902bad )
+	ROM_LOAD( "7675.rom", 0x060000, 0x008000, 0x05cd2d61 )
+	ROM_LOAD( "7667.rom", 0x068000, 0x008000, 0x923bde9d )
+	ROM_LOAD( "7659.rom", 0x070000, 0x008000, 0x629dc8ce )
+	ROM_LOAD( "7651.rom", 0x078000, 0x008000, 0xd7902bad )
 
-	ROM_LOAD( "25.43", 0x080000, 0x008000, 0x1a129acf )
-	ROM_LOAD( "17.35", 0x088000, 0x008000, 0x23697257 )
-	ROM_LOAD( "41.27", 0x090000, 0x008000, 0x1677f24f )
-	ROM_LOAD( "33.19", 0x098000, 0x008000, 0x642635ec )
+	ROM_LOAD( "7674.rom", 0x080000, 0x008000, 0x1a129acf )
+	ROM_LOAD( "7666.rom", 0x088000, 0x008000, 0x23697257 )
+	ROM_LOAD( "7658.rom", 0x090000, 0x008000, 0x1677f24f )
+	ROM_LOAD( "7650.rom", 0x098000, 0x008000, 0x642635ec )
 
-	ROM_LOAD( "24.42", 0x0a0000, 0x008000, 0x82602394 )
-	ROM_LOAD( "16.34", 0x0a8000, 0x008000, 0x12d77607 )
-	ROM_LOAD( "40.26", 0x0b0000, 0x008000, 0x8158839c )
-	ROM_LOAD( "32.18", 0x0b8000, 0x008000, 0x4edba14c )
+	ROM_LOAD( "7673.rom", 0x0a0000, 0x008000, 0x82602394 )
+	ROM_LOAD( "7665.rom", 0x0a8000, 0x008000, 0x12d77607 )
+	ROM_LOAD( "7657.rom", 0x0b0000, 0x008000, 0x8158839c )
+	ROM_LOAD( "7649.rom", 0x0b8000, 0x008000, 0x4edba14c )
 
-	ROM_LOAD( "23.41", 0x0c0000, 0x008000, 0xd11452f7 )
-	ROM_LOAD( "15.33", 0x0c8000, 0x008000, 0x0df2cfad )
-	ROM_LOAD( "39.25", 0x0d0000, 0x008000, 0x6c741272 )
-	ROM_LOAD( "31.17", 0x0d8000, 0x008000, 0x983ea830 )
+	ROM_LOAD( "7672.rom", 0x0c0000, 0x008000, 0xd11452f7 )
+	ROM_LOAD( "7664.rom", 0x0c8000, 0x008000, 0x0df2cfad )
+	ROM_LOAD( "7656.rom", 0x0d0000, 0x008000, 0x6c741272 )
+	ROM_LOAD( "7648.rom", 0x0d8000, 0x008000, 0x983ea830 )
 
-	ROM_LOAD( "22.40", 0x0e0000, 0x008000, 0xb0c7fdc6 )
+	ROM_LOAD( "7671.rom", 0x0e0000, 0x008000, 0xb0c7fdc6 )
 	ROM_LOAD( "7663.rom", 0x0e8000, 0x008000, 0x2b0b8f08 )
-	ROM_LOAD( "38.24", 0x0f0000, 0x008000, 0x3433fe7b )
-	ROM_LOAD( "30.16", 0x0f8000, 0x008000, 0x2e7fbec0 )
+	ROM_LOAD( "7655.rom", 0x0f0000, 0x008000, 0x3433fe7b )
+	ROM_LOAD( "7647.rom", 0x0f8000, 0x008000, 0x2e7fbec0 )
 
 	ROM_REGION( 0x28000 ) /* sound CPU */
-	ROM_LOAD( "7635a.rom",0x00000, 0x8000, 0xb2fce96f )
-	ROM_LOAD( "10.f2", 0x10000, 0x008000, 0xbc0c4d12 )
-	ROM_LOAD( "11.e2", 0x18000, 0x008000, 0x627b3c8c )
+	ROM_LOAD( "7682.rom", 0x00000, 0x008000, 0xc4efbf48 )
+	ROM_LOAD( "7681.rom", 0x10000, 0x008000, 0xbc0c4d12 )
+	ROM_LOAD( "7680.rom", 0x18000, 0x008000, 0x627b3c8c )
 
 	ROM_REGION( 0x10000 ) /* second 68000 CPU */
-	ROM_LOAD_ODD ("3.8f", 0x0000, 0x8000, 0x22f762ab )
-	ROM_LOAD_EVEN("2.8e", 0x0000, 0x8000, 0x3e07fd32 )
+	ROM_LOAD_ODD ("7635.rom", 0x0000, 0x8000, 0x22f762ab )
+	ROM_LOAD_EVEN("7634.rom", 0x0000, 0x8000, 0x3e07fd32 )
+	// alternate version??
+//	ROM_LOAD_ODD ("7635a.rom", 0x0000, 0x8000, 0xb2fce96f )
+//	ROM_LOAD_EVEN("7634a.rom", 0x0000, 0x8000, 0xaec83731 )
 
 	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
-	ROM_LOAD( "1.3a", 0x0000, 0x8000, 0x6f146210 )
+	ROM_LOAD( "7633.rom", 0x0000, 0x8000, 0x6f146210 )
 ROM_END
 
 
@@ -11067,68 +11738,69 @@ ROM_START( endurobl_rom )
 
 	ROM_LOAD_ODD ( "5.14h", 0x010000, 0x08000, 0x0a97992c )
 	ROM_LOAD_EVEN( "8.14j", 0x010000, 0x08000, 0x2153154a )
-	ROM_LOAD_ODD ( "6.15h", 0x020000, 0x08000, 0x54b1885a )
-	ROM_LOAD_EVEN( "9.15j", 0x020000, 0x08000, 0xdb3bff1c )
+	ROM_LOAD_ODD ( "6.15h", 0x020000, 0x08000, 0x54b1885a )		// one byte difference from
+	ROM_LOAD_EVEN( "9.15j", 0x020000, 0x08000, 0xdb3bff1c )		// enduro.a06 / enduro.a09
 
 	ROM_REGION( 0x18000 ) /* tiles */
-	ROM_LOAD( "46.1-1", 0x00000, 0x08000, 0xe7a4ff90 )
-	ROM_LOAD( "47.1-2", 0x08000, 0x08000, 0x4caa0095 )
-	ROM_LOAD( "48.1-3", 0x10000, 0x08000, 0x7e432683 )
+	ROM_LOAD( "7644.rom", 0x00000, 0x08000, 0xe7a4ff90 )
+	ROM_LOAD( "7645.rom", 0x08000, 0x08000, 0x4caa0095 )
+	ROM_LOAD( "7646.rom", 0x10000, 0x08000, 0x7e432683 )
 
 	ROM_REGION( 0x100000*2 ) /* sprites */
 
-	ROM_LOAD( "29.47", 0x000000, 0x008000, 0x9fb5e656 )
-	ROM_LOAD( "21.39", 0x008000, 0x008000, 0xdbbe2f6e )
-	ROM_LOAD( "45.31", 0x010000, 0x008000, 0xcb0c13c5 )
-	ROM_LOAD( "37.23", 0x018000, 0x008000, 0x2db6520d )
+	ROM_LOAD( "7678.rom", 0x000000, 0x008000, 0x9fb5e656 )
+	ROM_LOAD( "7670.rom", 0x008000, 0x008000, 0xdbbe2f6e )
+	ROM_LOAD( "7662.rom", 0x010000, 0x008000, 0xcb0c13c5 )
+	ROM_LOAD( "7654.rom", 0x018000, 0x008000, 0x2db6520d )
 
-	ROM_LOAD( "28.46", 0x020000, 0x008000, 0x7764765b )
-	ROM_LOAD( "20.38", 0x028000, 0x008000, 0xf9525faa )
-	ROM_LOAD( "44.30", 0x030000, 0x008000, 0xfe93a79b )
-	ROM_LOAD( "36.22", 0x038000, 0x008000, 0x46a52114 )
+	ROM_LOAD( "7677.rom", 0x020000, 0x008000, 0x7764765b )
+	ROM_LOAD( "7669.rom", 0x028000, 0x008000, 0xf9525faa )
+	ROM_LOAD( "7661.rom", 0x030000, 0x008000, 0xfe93a79b )
+	ROM_LOAD( "7653.rom", 0x038000, 0x008000, 0x46a52114 )
 
-	ROM_LOAD( "27.45", 0x040000, 0x008000, 0x2e42e0d4 )
-	ROM_LOAD( "19.37", 0x048000, 0x008000, 0xe115ce33 )
-	ROM_LOAD( "43.29", 0x050000, 0x008000, 0x86dfbb68 )
-	ROM_LOAD( "35.21", 0x058000, 0x008000, 0x2880cfdb )
+	ROM_LOAD( "7676.rom", 0x040000, 0x008000, 0x2e42e0d4 )
+	ROM_LOAD( "7668.rom", 0x048000, 0x008000, 0xe115ce33 )
+	ROM_LOAD( "7660.rom", 0x050000, 0x008000, 0x86dfbb68 )
+	ROM_LOAD( "7652.rom", 0x058000, 0x008000, 0x2880cfdb )
 
-	ROM_LOAD( "26.44", 0x060000, 0x008000, 0x05cd2d61 )
-	ROM_LOAD( "18.36", 0x068000, 0x008000, 0x923bde9d )
-	ROM_LOAD( "42.28", 0x070000, 0x008000, 0x629dc8ce )
-	ROM_LOAD( "34.20", 0x078000, 0x008000, 0xd7902bad )
+	ROM_LOAD( "7675.rom", 0x060000, 0x008000, 0x05cd2d61 )
+	ROM_LOAD( "7667.rom", 0x068000, 0x008000, 0x923bde9d )
+	ROM_LOAD( "7659.rom", 0x070000, 0x008000, 0x629dc8ce )
+	ROM_LOAD( "7651.rom", 0x078000, 0x008000, 0xd7902bad )
 
-	ROM_LOAD( "25.43", 0x080000, 0x008000, 0x1a129acf )
-	ROM_LOAD( "17.35", 0x088000, 0x008000, 0x23697257 )
-	ROM_LOAD( "41.27", 0x090000, 0x008000, 0x1677f24f )
-	ROM_LOAD( "33.19", 0x098000, 0x008000, 0x642635ec )
+	ROM_LOAD( "7674.rom", 0x080000, 0x008000, 0x1a129acf )
+	ROM_LOAD( "7666.rom", 0x088000, 0x008000, 0x23697257 )
+	ROM_LOAD( "7658.rom", 0x090000, 0x008000, 0x1677f24f )
+	ROM_LOAD( "7650.rom", 0x098000, 0x008000, 0x642635ec )
 
-	ROM_LOAD( "24.42", 0x0a0000, 0x008000, 0x82602394 )
-	ROM_LOAD( "16.34", 0x0a8000, 0x008000, 0x12d77607 )
-	ROM_LOAD( "40.26", 0x0b0000, 0x008000, 0x8158839c )
-	ROM_LOAD( "32.18", 0x0b8000, 0x008000, 0x4edba14c )
+	ROM_LOAD( "7673.rom", 0x0a0000, 0x008000, 0x82602394 )
+	ROM_LOAD( "7665.rom", 0x0a8000, 0x008000, 0x12d77607 )
+	ROM_LOAD( "7657.rom", 0x0b0000, 0x008000, 0x8158839c )
+	ROM_LOAD( "7649.rom", 0x0b8000, 0x008000, 0x4edba14c )
 
-	ROM_LOAD( "23.41", 0x0c0000, 0x008000, 0xd11452f7 )
-	ROM_LOAD( "15.33", 0x0c8000, 0x008000, 0x0df2cfad )
-	ROM_LOAD( "39.25", 0x0d0000, 0x008000, 0x6c741272 )
-	ROM_LOAD( "31.17", 0x0d8000, 0x008000, 0x983ea830 )
+	ROM_LOAD( "7672.rom", 0x0c0000, 0x008000, 0xd11452f7 )
+	ROM_LOAD( "7664.rom", 0x0c8000, 0x008000, 0x0df2cfad )
+	ROM_LOAD( "7656.rom", 0x0d0000, 0x008000, 0x6c741272 )
+	ROM_LOAD( "7648.rom", 0x0d8000, 0x008000, 0x983ea830 )
 
-	ROM_LOAD( "22.40", 0x0e0000, 0x008000, 0xb0c7fdc6 )
+	ROM_LOAD( "7671.rom", 0x0e0000, 0x008000, 0xb0c7fdc6 )
 	ROM_LOAD( "7663.rom", 0x0e8000, 0x008000, 0x2b0b8f08 )
-	ROM_LOAD( "38.24", 0x0f0000, 0x008000, 0x3433fe7b )
-	ROM_LOAD( "30.16", 0x0f8000, 0x008000, 0x2e7fbec0 )
+	ROM_LOAD( "7655.rom", 0x0f0000, 0x008000, 0x3433fe7b )
+	ROM_LOAD( "7647.rom", 0x0f8000, 0x008000, 0x2e7fbec0 )
+
 
 	ROM_REGION( 0x28000 ) /* sound CPU */
 	ROM_LOAD( "13.16d", 0x00000, 0x004000, 0x81c82fc9 )
 	ROM_LOAD( "12.16e", 0x04000, 0x004000, 0x755bfdad )
-	ROM_LOAD( "10.f2", 0x10000, 0x008000, 0xbc0c4d12 )
-	ROM_LOAD( "11.e2", 0x18000, 0x008000, 0x627b3c8c )
+	ROM_LOAD( "7681.rom", 0x10000, 0x008000, 0xbc0c4d12 )
+	ROM_LOAD( "7680.rom", 0x18000, 0x008000, 0x627b3c8c )
 
 	ROM_REGION( 0x10000 ) /* second 68000 CPU */
-	ROM_LOAD_ODD ("3.8f", 0x0000, 0x8000, 0x22f762ab )
-	ROM_LOAD_EVEN("2.8e", 0x0000, 0x8000, 0x3e07fd32 )
+	ROM_LOAD_ODD ("7635.rom", 0x0000, 0x8000, 0x22f762ab )
+	ROM_LOAD_EVEN("7634.rom", 0x0000, 0x8000, 0x3e07fd32 )
 
 	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
-	ROM_LOAD( "1.3a", 0x0000, 0x8000, 0x6f146210 )
+	ROM_LOAD( "7633.rom", 0x0000, 0x8000, 0x6f146210 )
 ROM_END
 
 ROM_START( endurob2_rom )
@@ -11141,63 +11813,63 @@ ROM_START( endurob2_rom )
 	ROM_LOAD_EVEN( "enduro.a09", 0x020000, 0x08000, 0xf6391091 )
 
 	ROM_REGION( 0x18000 ) /* tiles */
-	ROM_LOAD( "46.1-1", 0x00000, 0x08000, 0xe7a4ff90 )
-	ROM_LOAD( "47.1-2", 0x08000, 0x08000, 0x4caa0095 )
-	ROM_LOAD( "48.1-3", 0x10000, 0x08000, 0x7e432683 )
+	ROM_LOAD( "7644.rom", 0x00000, 0x08000, 0xe7a4ff90 )
+	ROM_LOAD( "7645.rom", 0x08000, 0x08000, 0x4caa0095 )
+	ROM_LOAD( "7646.rom", 0x10000, 0x08000, 0x7e432683 )
 
 	ROM_REGION( 0x100000*2 ) /* sprites */
 
-	ROM_LOAD( "29.47", 0x000000, 0x008000, 0x9fb5e656 )
-	ROM_LOAD( "21.39", 0x008000, 0x008000, 0xdbbe2f6e )
-	ROM_LOAD( "45.31", 0x010000, 0x008000, 0xcb0c13c5 )
-	ROM_LOAD( "37.23", 0x018000, 0x008000, 0x2db6520d )
+	ROM_LOAD( "7678.rom", 0x000000, 0x008000, 0x9fb5e656 )
+	ROM_LOAD( "7670.rom", 0x008000, 0x008000, 0xdbbe2f6e )
+	ROM_LOAD( "7662.rom", 0x010000, 0x008000, 0xcb0c13c5 )
+	ROM_LOAD( "7654.rom", 0x018000, 0x008000, 0x2db6520d )
 
-	ROM_LOAD( "28.46", 0x020000, 0x008000, 0x7764765b )
-	ROM_LOAD( "20.38", 0x028000, 0x008000, 0xf9525faa )
+	ROM_LOAD( "7677.rom", 0x020000, 0x008000, 0x7764765b )
+	ROM_LOAD( "7669.rom", 0x028000, 0x008000, 0xf9525faa )
 	ROM_LOAD( "enduro.a34", 0x030000, 0x008000, 0x296454d8 )
-	ROM_LOAD( "36.22", 0x038000, 0x008000, 0x46a52114 )
+	ROM_LOAD( "7653.rom", 0x038000, 0x008000, 0x46a52114 )
 
-	ROM_LOAD( "27.45", 0x040000, 0x008000, 0x2e42e0d4 )
-	ROM_LOAD( "19.37", 0x048000, 0x008000, 0xe115ce33 )
+	ROM_LOAD( "7676.rom", 0x040000, 0x008000, 0x2e42e0d4 )
+	ROM_LOAD( "7668.rom", 0x048000, 0x008000, 0xe115ce33 )
 	ROM_LOAD( "enduro.a35", 0x050000, 0x008000, 0x1ebe76df )
-	ROM_LOAD( "35.21", 0x058000, 0x008000, 0x2880cfdb )
+	ROM_LOAD( "7652.rom", 0x058000, 0x008000, 0x2880cfdb )
 
 	ROM_LOAD( "enduro.a20", 0x060000, 0x008000, 0x7c280bc8 )
 	ROM_LOAD( "enduro.a28", 0x068000, 0x008000, 0x321f034b )
 	ROM_LOAD( "enduro.a36", 0x070000, 0x008000, 0x243e34e5 )
 	ROM_LOAD( "enduro.a44", 0x078000, 0x008000, 0x84bb12a1 )
 
-	ROM_LOAD( "25.43", 0x080000, 0x008000, 0x1a129acf )
-	ROM_LOAD( "17.35", 0x088000, 0x008000, 0x23697257 )
-	ROM_LOAD( "41.27", 0x090000, 0x008000, 0x1677f24f )
-	ROM_LOAD( "33.19", 0x098000, 0x008000, 0x642635ec )
+	ROM_LOAD( "7674.rom", 0x080000, 0x008000, 0x1a129acf )
+	ROM_LOAD( "7666.rom", 0x088000, 0x008000, 0x23697257 )
+	ROM_LOAD( "7658.rom", 0x090000, 0x008000, 0x1677f24f )
+	ROM_LOAD( "7650.rom", 0x098000, 0x008000, 0x642635ec )
 
-	ROM_LOAD( "24.42", 0x0a0000, 0x008000, 0x82602394 )
-	ROM_LOAD( "16.34", 0x0a8000, 0x008000, 0x12d77607 )
-	ROM_LOAD( "40.26", 0x0b0000, 0x008000, 0x8158839c )
-	ROM_LOAD( "32.18", 0x0b8000, 0x008000, 0x4edba14c )
+	ROM_LOAD( "7673.rom", 0x0a0000, 0x008000, 0x82602394 )
+	ROM_LOAD( "7665.rom", 0x0a8000, 0x008000, 0x12d77607 )
+	ROM_LOAD( "7657.rom", 0x0b0000, 0x008000, 0x8158839c )
+	ROM_LOAD( "7649.rom", 0x0b8000, 0x008000, 0x4edba14c )
 
-	ROM_LOAD( "23.41", 0x0c0000, 0x008000, 0xd11452f7 )
-	ROM_LOAD( "15.33", 0x0c8000, 0x008000, 0x0df2cfad )
+	ROM_LOAD( "7672.rom", 0x0c0000, 0x008000, 0xd11452f7 )
+	ROM_LOAD( "7664.rom", 0x0c8000, 0x008000, 0x0df2cfad )
 	ROM_LOAD( "enduro.a39", 0x0d0000, 0x008000, 0x1ff3a5e2 )
-	ROM_LOAD( "31.17", 0x0d8000, 0x008000, 0x983ea830 )
+	ROM_LOAD( "7648.rom", 0x0d8000, 0x008000, 0x983ea830 )
 
-	ROM_LOAD( "22.40", 0x0e0000, 0x008000, 0xb0c7fdc6 )
+	ROM_LOAD( "7671.rom", 0x0e0000, 0x008000, 0xb0c7fdc6 )
 	ROM_LOAD( "7663.rom", 0x0e8000, 0x008000, 0x2b0b8f08 )
-	ROM_LOAD( "38.24", 0x0f0000, 0x008000, 0x3433fe7b )
-	ROM_LOAD( "30.16", 0x0f8000, 0x008000, 0x2e7fbec0 )
+	ROM_LOAD( "7655.rom", 0x0f0000, 0x008000, 0x3433fe7b )
+	ROM_LOAD( "7647.rom", 0x0f8000, 0x008000, 0x2e7fbec0 )
 
 	ROM_REGION( 0x28000 ) /* sound CPU */
 	ROM_LOAD( "enduro.a16", 0x00000, 0x008000, 0xd2cb6eb5 )
-	ROM_LOAD( "10.f2", 0x10000, 0x008000, 0xbc0c4d12 )
-	ROM_LOAD( "11.e2", 0x18000, 0x008000, 0x627b3c8c )
+	ROM_LOAD( "7681.rom", 0x10000, 0x008000, 0xbc0c4d12 )
+	ROM_LOAD( "7680.rom", 0x18000, 0x008000, 0x627b3c8c )
 
 	ROM_REGION( 0x10000 ) /* second 68000 CPU */
-	ROM_LOAD_ODD ("3.8f", 0x0000, 0x8000, 0x22f762ab )
-	ROM_LOAD_EVEN("2.8e", 0x0000, 0x8000, 0x3e07fd32 )
+	ROM_LOAD_ODD ("7635.rom", 0x0000, 0x8000, 0x22f762ab )
+	ROM_LOAD_EVEN("7634.rom", 0x0000, 0x8000, 0x3e07fd32 )
 
 	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
-	ROM_LOAD( "1.3a", 0x0000, 0x8000, 0x6f146210 )
+	ROM_LOAD( "7633.rom", 0x0000, 0x8000, 0x6f146210 )
 ROM_END
 
 /***************************************************************************/
@@ -11237,14 +11909,14 @@ static int er_reset2_r( int offset )
 static struct MemoryReadAddress enduror_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x04ffff, MRA_EXTRAM },
+	{ 0x040000, 0x043fff, MRA_EXTRAM },
 	{ 0x100000, 0x107fff, MRA_TILERAM },
 	{ 0x108000, 0x108fff, MRA_TEXTRAM },
+	{ 0x110000, 0x110fff, MRA_PALETTERAM },
 
 	{ 0x124000, 0x127fff, shared_ram_r, &shared_ram },
 
-	{ 0x130000, 0x13ffff, MRA_SPRITERAM },
-	{ 0x110000, 0x11ffff, MRA_PALETTERAM },
+	{ 0x130000, 0x130fff, MRA_SPRITERAM },
 
 	{ 0x140010, 0x140011, io_service_r },
 	{ 0x140014, 0x140015, io_dip1_r },
@@ -11254,24 +11926,20 @@ static struct MemoryReadAddress enduror_readmem[] =
 
 	{ 0x140000, 0x1400ff, MRA_EXTRAM3 },		//io
 	{ 0xe00000, 0xe00001, er_reset2_r },
-	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
-
 	{-1}
 };
 
 static struct MemoryWriteAddress enduror_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x04ffff, MWA_EXTRAM },
+	{ 0x040000, 0x043fff, MWA_EXTRAM },
 	{ 0x100000, 0x107fff, MWA_TILERAM },
 	{ 0x108000, 0x108fff, MWA_TEXTRAM },
+	{ 0x110000, 0x110fff, MWA_PALETTERAM },
 	{ 0x124000, 0x127fff, shared_ram_w, &shared_ram },
-	{ 0x130000, 0x13ffff, MWA_SPRITERAM },
-	{ 0x110000, 0x11ffff, MWA_PALETTERAM },
+	{ 0x130000, 0x130fff, MWA_SPRITERAM },
 	{ 0x140000, 0x140001, sound_command_nmi_w },
 	{ 0x140000, 0x1400ff, MWA_EXTRAM3 },		//io
-	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
-
 	{-1}
 };
 
@@ -11286,17 +11954,17 @@ static int enduro_p2_skip_r(int offset)
 static struct MemoryReadAddress enduror_readmem2[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xc68000, 0xc68fff, MRA_EXTRAM2 },
 	{ 0xc7e000, 0xc7e001, enduro_p2_skip_r },
 	{ 0xc7c000, 0xc7ffff, shared_ram_r, &shared_ram },
-	{ 0xc60000, 0xc7ffff, MRA_EXTRAM2 },
 	{-1}
 };
 
 static struct MemoryWriteAddress enduror_writemem2[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0xc68000, 0xc68fff, MWA_EXTRAM2 },
 	{ 0xc7c000, 0xc7ffff, shared_ram_w, &shared_ram },
-	{ 0xc60000, 0xc7ffff, MWA_EXTRAM2 },
 	{-1}
 };
 
@@ -11331,6 +11999,44 @@ static struct IOWritePort enduror_sound_writeport[] =
 	{ -1 }
 };
 
+static struct MemoryReadAddress enduror_b2_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+//	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xf000, 0xf7ff, SEGAPCMReadReg },
+	{ 0xf800, 0xffff, MRA_RAM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress enduror_b2_sound_writemem[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },
+//	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xf000, 0xf7ff, SEGAPCMWriteReg },
+	{ 0xf800, 0xffff, MWA_RAM },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort enduror_b2_sound_readport[] =
+{
+	{ 0x00, 0x00, YM2203_status_port_0_r },
+	{ 0x80, 0x80, YM2203_status_port_1_r },
+	{ 0xc0, 0xc0, YM2203_status_port_2_r },
+	{ 0x40, 0x40, soundlatch_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort enduror_b2_sound_writeport[] =
+{
+	{ 0x00, 0x00, YM2203_control_port_0_w },
+	{ 0x01, 0x01, YM2203_write_port_0_w },
+	{ 0x80, 0x80, YM2203_control_port_1_w },
+	{ 0x81, 0x81, YM2203_write_port_1_w },
+	{ 0xc0, 0xc0, YM2203_control_port_2_w },
+	{ 0xc1, 0xc1, YM2203_write_port_2_w },
+	{ -1 }
+};
+
 /***************************************************************************/
 static void enduror_update_proc( void ){
 	int data;
@@ -11352,7 +12058,21 @@ static void enduror_update_proc( void ){
 	sys16_bg_page[3] = (data>>4)&0xf;
 	sys16_bg_page[2] = data&0xf;
 
-	set_refresh_3d( READ_WORD( &sys16_extraram3[2] ) );
+	data = READ_WORD( &sys16_extraram3[2] );
+	set_refresh_3d( data );
+
+	if(data & 4)
+	{
+		osd_led_w(0,1);
+		osd_led_w(1,1);
+		osd_led_w(2,1);
+	}
+	else
+	{
+		osd_led_w(0,0);
+		osd_led_w(1,0);
+		osd_led_w(2,0);
+	}
 }
 
 
@@ -11372,7 +12092,7 @@ static void enduror_init_machine( void ){
 
 	sys16_update_proc = enduror_update_proc;
 
-	gr_ver = &sys16_extraram2[0x8000];
+	gr_ver = &sys16_extraram2[0x0];
 	gr_hor = gr_ver+0x200;
 	gr_pal = gr_ver+0x400;
 	gr_flip= gr_ver+0x600;
@@ -11393,6 +12113,16 @@ static void enduror_init_machine( void ){
 
 
 static void enduror_sprite_decode( void ){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	sys16_sprite_decode2( 8,0x020000 ,1);
+	generate_gr_screen(512,1024,8,0,4,0x8000);
+
+//	enduror_decode_data (RAM,RAM,0x10000);	// no decrypt info.
+	enduror_decode_data (RAM+0x10000,RAM+0x10000,0x10000);
+	enduror_decode_data2(RAM+0x20000,RAM+0x20000,0x10000);
+}
+
+static void endurob_sprite_decode( void ){
 	sys16_sprite_decode2( 8,0x020000 ,1);
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
@@ -11414,7 +12144,7 @@ static void endurob2_opcode_decode( void ){
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	memcpy(ROM,RAM,0x30000);
 
-	endurob2_decode_data(RAM,ROM,0x10000);
+	endurob2_decode_data (RAM,ROM,0x10000);
 	endurob2_decode_data2(RAM+0x10000,ROM+0x10000,0x10000);
 
 	// patch code to force a reset on cpu2 when starting a new game.
@@ -11428,8 +12158,8 @@ static void endurob2_opcode_decode( void ){
 static void enduror_onetime_init_machine( void )
 {
 	sys16_onetime_init_machine();
-//	sys16_MaxShadowColors=NumOfShadowColors / 2;
-	sys16_MaxShadowColors=0;
+	sys16_MaxShadowColors=NumOfShadowColors / 2;
+//	sys16_MaxShadowColors=0;
 
 }
 /***************************************************************************/
@@ -11474,7 +12204,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x60, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -11535,6 +12265,88 @@ static struct MachineDriver enduror_machine_driver =
 	}
 };
 
+static struct MachineDriver enduror_b2_machine_driver =
+{
+	{
+		{
+			CPU_M68000,
+			10000000,
+			0,
+			enduror_readmem,enduror_writemem,0,0,
+			sys16_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4096000,
+			3,
+			enduror_b2_sound_readmem,enduror_b2_sound_writemem,enduror_b2_sound_readport,enduror_b2_sound_writeport,
+			ignore_interrupt,1
+		},
+		{
+			CPU_M68000,
+			10000000,
+			4,
+			enduror_readmem2,enduror_writemem2,0,0,
+			sys16_interrupt,1
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	2,
+	enduror_init_machine,
+	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
+	gfx8,
+	2048+NumOfShadowColors,2048+NumOfShadowColors,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	sys16_ho_vh_start,
+	sys16_vh_stop,
+	sys16_ho_vh_screenrefresh,
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface2
+		},
+		{
+			SOUND_SEGAPCM,
+			&segapcm_interface_15k,
+		}
+	}
+};
+
+static int enduror_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&sys16_extraram[0x389e]) == 0x2020)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&sys16_extraram[0x3400],0x600);
+			osd_fread(f,&sys16_extraram[0x0000],0x80);
+			WRITE_WORD(&sys16_extraram[0x0050],0);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void enduror_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&sys16_extraram[0x3400],0x600);
+		osd_fwrite(f,&sys16_extraram[0x0000],0x80);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver enduror_driver =
 {
@@ -11571,13 +12383,13 @@ struct GameDriver endurobl_driver =
 	&enduror_machine_driver,
 	enduror_onetime_init_machine,
 	endurobl_rom,
-	enduror_sprite_decode, endurora_opcode_decode,
+	endurob_sprite_decode, endurora_opcode_decode,
 	0,
 	0,
 	enduror_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	enduror_hiload, enduror_hisave
 };
 
 struct GameDriver endurob2_driver =
@@ -11590,16 +12402,16 @@ struct GameDriver endurob2_driver =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&enduror_machine_driver,
+	&enduror_b2_machine_driver,
 	enduror_onetime_init_machine,
 	endurob2_rom,
-	enduror_sprite_decode, endurob2_opcode_decode,
+	endurob_sprite_decode, endurob2_opcode_decode,
 	0,
 	0,
 	enduror_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	enduror_hiload, enduror_hisave
 };
 
 
@@ -11630,12 +12442,12 @@ static struct MemoryWriteAddress sys16_dummy_writemem[] =
 	{-1}
 };
 
-void sys16_dummy_init_machine( void ){
+static void sys16_dummy_init_machine( void ){
 	static int bank[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	sys16_obj_bank = bank;
 }
 
-void sys16_dummy_sprite_decode( void ){
+static void sys16_dummy_sprite_decode( void ){
 //	sys16_sprite_decode( 4,0x040000 );
 }
 

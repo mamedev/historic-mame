@@ -7,15 +7,17 @@ TODO:
 
 (*) Global
 - Sprites priorities/clip.
-- Fix timing?? Foreground layer disappear during the game!!!!
+- Fix timing?? Foreground layer flickers during the game!!!!
 - Add sound.
-- Dipswitch/hiscore.
+- hiscore.
 
 (*) Blood Bros
 
 (*) West Story
 - Sprites problems. (decode problems?)
 
+
+Notes on sound by Bryan:
 Interesting trivia - take a look in the sound cpu code and you'll see
 it's credited (c) 1986 Seibu!
 
@@ -125,11 +127,11 @@ int bloodbro_r_read(int offset) {
      //if( errorlog ) fprintf( errorlog, "INPUT e000[%x] \n", offset);
      switch (offset) {
        case 0x0: /* DIPSW 1&2 */
-                 return (0xffff);
+                 return readinputport(4) + readinputport(5)*256;
        case 0x2: /* IN1-IN2 */
-                 return (readinputport(0) + readinputport(1)*256);
+                 return readinputport(0) + readinputport(1)*256;
        case 0x4: /* ???-??? */
-                 return (readinputport(2) + readinputport(3)*256);
+                 return readinputport(2) + readinputport(3)*256;
        default: return (0xffff);
      }
 }
@@ -237,12 +239,12 @@ static struct MemoryReadAddress readmem_sound[] = {
 static struct MemoryWriteAddress writemem_sound[] = {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x27ff, MWA_RAM },
-//	{ 0x4000, 0x4007, MWA_NOP },
+//{ 0x4000, 0x4007, MWA_NOP },
 	{ 0x4008, 0x4008, YM3812_control_port_0_w }, //??
 	{ 0x4009, 0x4009, YM3812_write_port_0_w },   //??
-//	{ 0x4018, 0x4018, bloodbro_playsample },   //ADPCM??
-//	{ 0x4019, 0x4019, MWA_NOP },               //ADPCM??
-//	{ 0x401b, 0x401b, MWA_NOP },               //ADPCM??
+//{ 0x4018, 0x4018, bloodbro_playsample },   //ADPCM??
+//{ 0x4019, 0x4019, MWA_NOP },               //ADPCM??
+//{ 0x401b, 0x401b, MWA_NOP },               //ADPCM??
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
@@ -251,7 +253,7 @@ static struct MemoryWriteAddress writemem_sound[] = {
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY)
@@ -261,7 +263,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -271,7 +273,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1)
 	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -281,6 +283,53 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Coin Mode" )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x01, "Free Play" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x20, 0x20, "Starting Coin" )
+	PORT_DIPSETTING(    0x20, "Normal" )
+	PORT_DIPSETTING(    0x00, "x2" )
+	PORT_DIPNAME( 0x40, 0x40, "Unused 1" )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Unused 2" )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x80, "Yes" )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "300K 500K" )
+	PORT_DIPSETTING(    0x08, "500K 500K" )
+	PORT_DIPSETTING(    0x04, "500K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x80, "Yes" )
 INPUT_PORTS_END
 
 /**** West Story Input Ports *******************************************/
@@ -420,7 +469,7 @@ static struct YM3812interface ym3812_interface = {
 	1,			/* 1 chip (no more supported) */
 	3250000,	/* 3.25 MHz ? (hand tuned) */
 	{ 255 },	/* (not supported) */
-	{0}
+	{ 0 },
 };
 
 static struct ADPCMinterface adpcm_interface = {
@@ -442,7 +491,7 @@ static struct MachineDriver bloodbro_machine_driver = {
 			12000000, /* 12 Mhz */
 			0,
 			readmem_cpu,writemem_cpu,0,0,
-			bloodbro_interrupt,1
+		        bloodbro_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -458,7 +507,6 @@ static struct MachineDriver bloodbro_machine_driver = {
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-
 	bloodbro_gfxdecodeinfo,
 	2048,2048,
 	0,
@@ -497,7 +545,7 @@ static struct MachineDriver weststry_machine_driver = {
 			10000000, /* 12 Mhz */
 			0,
 			weststry_readmem_cpu,weststry_writemem_cpu,0,0,
-			weststry_interrupt,1
+		        weststry_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -512,34 +560,23 @@ static struct MachineDriver weststry_machine_driver = {
 	0, /* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	256, 256, { 0, 255, 16, 239 },
 
 	weststry_gfxdecodeinfo,
-	1024,1024,
-	0,
+        1024,1024,
+        0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 
 	0,
-	bloodbro_vh_start,
-	bloodbro_vh_stop,
+        bloodbro_vh_start,
+        bloodbro_vh_stop,
 	weststry_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
+	0,0,0,0
+
 };
-
-
 
 ROM_START( bloodbro_rom )
 	ROM_REGION(0x90000)	/* 64k for cpu code */
@@ -611,7 +648,6 @@ ROM_START( weststry_rom )
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "bb_08.bin" ,   0x00000, 0x20000, 0xdeb1b975 )
 ROM_END
-
 
 static void gfx_untangle( void ){
        unsigned char *gfx = Machine->memory_region[4];

@@ -335,7 +335,7 @@ static struct YM3526interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 255 }		/* (not supported) */
+	{ 60 }		/* (not supported) */
 };
 
 static struct MSM5205interface msm5205_interface =
@@ -344,7 +344,7 @@ static struct MSM5205interface msm5205_interface =
 	384000,				/* 384KHz             */
 	{ toki_adpcm_int },/* interrupt function */
 	{ MSM5205_S96_4B},	/* 4KHz               */
-	{ 70 }
+	{ 60 }
 };
 
 static struct MachineDriver toki_machine_driver =
@@ -370,7 +370,7 @@ static struct MachineDriver toki_machine_driver =
 								/* NMIs are caused by the ADPCM chip */
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 	/* video hardware */
@@ -385,7 +385,7 @@ static struct MachineDriver toki_machine_driver =
 	toki_vh_stop,
 	toki_vh_screenrefresh,
 
-	/* sound hardware; only samples because we still haven't YM 3812 */
+	/* sound hardware */
 	0,0,0,0,
 	{
 		{
@@ -422,7 +422,7 @@ static struct MachineDriver tokib_machine_driver =
 								/* NMIs are caused by the ADPCM chip */
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 	/* video hardware */
@@ -437,7 +437,7 @@ static struct MachineDriver tokib_machine_driver =
 	toki_vh_stop,
 	toki_vh_screenrefresh,
 
-	/* sound hardware; only samples because we still haven't YM 3812 */
+	/* sound hardware */
 	0,0,0,0,
 	{
 		{

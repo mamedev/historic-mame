@@ -425,7 +425,7 @@ static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	sizeof(astinvad_palette)/3, 0,
 	0,

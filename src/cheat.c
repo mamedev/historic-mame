@@ -6,9 +6,9 @@
 
 /* Please don't move these #define : they'll be easier to find at the top of the file :) */
 
-#define LAST_UPDATE	"99.07.12"
+#define LAST_UPDATE	"99.07.17"
 #define LAST_CODER	"JCK"
-#define CHEAT_VERSION	"v0.9"
+#define CHEAT_VERSION	"v1.00"
 
 /* JCK 981123 Please do not remove ! Just comment it out ! */
 /* #define JCK */
@@ -49,7 +49,7 @@
 |*|	JB 980505:	Changes to help functions to make more readable, easier
 |*|			to maintain, less redundant.
 |*|
-|*|   JB 980506:	New tables osd_key_chars[] and osd_key_caps[], rewrite
+|*|   JB 980506:	New tables KEYCODE_chars[] and KEYCODE_caps[], rewrite
 |*|			in EditCheat() to reduce code size, improve readability.
 |*|
 |*|	Modifications/Thoughts By James R. Twine
@@ -609,7 +609,8 @@
 |*|	JCK 990701: Fixed cheat types 061 & 071
 |*|			Added a message in function SelectValue if value is out of range
 |*|
-|*|	JCK 990712: Removed old comments that were no more useful
+|*|	JCK 990717: Cheat types 060 to 075 are now correctly saved to the text file
+|*|			Watches are correctly dipslayed when you move them with the I,J,K,L keys
 |*|
 |*|
 |*|  Modifications by Felipe de Almeida Leme (FAL)
@@ -926,7 +927,7 @@ static char righthilight[2]  = "\x1B";
 static char uparrow[2]       = "\x18";
 static char downarrow[2]     = "\x19";
 
-static unsigned char osd_key_chars[] =
+static unsigned char KEYCODE_chars[] =
 {
 /* 0    1    2    3    4    5    6    7    8    9 */
    0 ,  0 , '1', '2', '3', '4', '5', '6', '7', '8',    /* 0 */
@@ -943,7 +944,7 @@ static unsigned char osd_key_chars[] =
   '0',  0 , '=', '/', '*',  0
 };
 
-static unsigned char osd_key_caps[] =
+static unsigned char KEYCODE_caps[] =
 {
 /* 0    1    2    3    4    5    6    7    8    9 */
    0 ,  0 , '!', '@', '#', '$', '%', '^', '&', '*',    /* 0 */
@@ -1244,7 +1245,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 						case KEYCODE_7:
 						case KEYCODE_8:
 						case KEYCODE_9:
-							c = osd_key_chars[key];
+							c = KEYCODE_chars[key];
 							break;
 						case KEYCODE_A:
 						case KEYCODE_B:
@@ -1252,7 +1253,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 						case KEYCODE_D:
 						case KEYCODE_E:
 						case KEYCODE_F:
-							c = osd_key_caps[key];
+							c = KEYCODE_caps[key];
 							break;
 					}
 				}
@@ -1260,9 +1261,9 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 				{
 					if (keyboard_pressed (KEYCODE_LSHIFT) ||
 						 keyboard_pressed (KEYCODE_RSHIFT))
-						c = osd_key_caps[key];
+						c = KEYCODE_caps[key];
 					else
-						c = osd_key_chars[key];
+						c = KEYCODE_chars[key];
 				}
 
 				if (c)
@@ -2135,14 +2136,36 @@ int SaveCheat(int NoCheat)
 				fprintf(f, "\r");     /* force DOS-style line enders */
 				#endif
 
-				if (fprintf(f, fmt, Machine->gamedrv->name,
-						LoadedCheatTable[i].CpuNo,
-						LoadedCheatTable[i].Address,
-						LoadedCheatTable[i].Data,
-						LoadedCheatTable[i].Special,
-						LoadedCheatTable[i].Name,
-	                              (addmore ? LoadedCheatTable[i].More : "")))
-					count ++;
+				/* JCK 990717 BEGIN */
+				if (	(LoadedCheatTable[LoadedCheatTotal].Special>=60)	&&
+					(LoadedCheatTable[LoadedCheatTotal].Special<=75)	)
+				{
+					if (fprintf(f, fmt, Machine->gamedrv->name,
+							LoadedCheatTable[i].CpuNo,
+							LoadedCheatTable[i].Address,
+							LoadedCheatTable[i].Maximum,
+							LoadedCheatTable[i].Special,
+							LoadedCheatTable[i].Name,
+	                              	(addmore ? LoadedCheatTable[i].More : "")))
+					{
+						count ++;
+					}
+				}
+				else
+				{
+					if (fprintf(f, fmt, Machine->gamedrv->name,
+							LoadedCheatTable[i].CpuNo,
+							LoadedCheatTable[i].Address,
+							LoadedCheatTable[i].Data,
+							LoadedCheatTable[i].Special,
+							LoadedCheatTable[i].Name,
+	                              	(addmore ? LoadedCheatTable[i].More : "")))
+					{
+						count ++;
+					}
+				}
+				/* JCK 990717 END */
+
 			}
 		}
 		fclose (f);
@@ -2386,7 +2409,6 @@ int LoadHelp(char *filename, struct TextLine *table)
 void InitMemoryAreas(void)
 {
 	const struct MemoryWriteAddress *mwa = Machine->drv->cpu[SearchCpuNo].memory_write;
-
     char buffer[40];
 
 	MemoryAreasSelected = 0;
@@ -5658,6 +5680,11 @@ void ChooseWatch(void)
   int countAdded;
   int OldCpuNo = 0;
 
+  /* JCK 990717 BEGIN */
+  int dx = 0;
+  int dy = 0;
+  /* JCK 990717 END */
+
   int trueorientation;
   /* hack: force the display into standard orientation to avoid */
   /* rotating the user interface */
@@ -5701,9 +5728,6 @@ void ChooseWatch(void)
   done = 0;
   do
   {
-	int dx = 0;
-	int dy = 0;
-
 	DisplayWatches(1, &WatchX, &WatchY, buf, s, dx, dy);
 	ChooseWatchFooter();
 	countAdded = 0;
@@ -5753,6 +5777,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_LEFT:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (Watches[ s ] <= 0)
 				Watches[ s ] = MAX_ADDRESS(WatchesCpuNo[ s ]);
 			else
@@ -5761,6 +5789,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_RIGHT:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (Watches[ s ] >= MAX_ADDRESS(WatchesCpuNo[ s ]))
 				Watches[ s ] = 0;
 			else
@@ -5769,6 +5801,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_PGDN:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (Watches[ s ] <= 0x100)
 				Watches[ s ] |= (0xFFFFFF00 & MAX_ADDRESS(WatchesCpuNo[ s ]));
 			else
@@ -5777,6 +5813,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_PGUP:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (Watches[ s ] >= 0xFF00)
 				Watches[ s ] |= (0xFFFF00FF & MAX_ADDRESS(WatchesCpuNo[ s ]));
 			else
@@ -5785,14 +5825,34 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_8:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ADDRESS_BITS(WatchesCpuNo[s]) < 29) break;
 		case KEYCODE_7:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ADDRESS_BITS(WatchesCpuNo[s]) < 25) break;
 		case KEYCODE_6:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ADDRESS_BITS(WatchesCpuNo[s]) < 21) break;
 		case KEYCODE_5:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ADDRESS_BITS(WatchesCpuNo[s]) < 17) break;
 		case KEYCODE_4:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ADDRESS_BITS(WatchesCpuNo[s]) < 13) break;
 		case KEYCODE_3:
 		case KEYCODE_2:
@@ -5801,6 +5861,11 @@ void ChooseWatch(void)
 				int addr = Watches[ s ];	/* copy address*/
 				int digit = (KEYCODE_8 - key);	/* if key is KEYCODE_8, digit = 0 */
 				int mask;
+
+				/* JCK 990717 BEGIN */
+				dx = 0;
+				dy = 0;
+				/* JCK 990717 END */
 
 				/* adjust digit based on cpu address range */
 				/* digit -= (6 - ADDRESS_BITS(0) / 4); */
@@ -5825,6 +5890,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_9:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ManyCpus)
 			{
 				OldCpuNo = WatchesCpuNo[ s ];
@@ -5860,6 +5929,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_0:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (ManyCpus)
 			{
 				OldCpuNo = WatchesCpuNo[ s ];
@@ -5896,6 +5969,10 @@ void ChooseWatch(void)
 
 		case KEYCODE_DEL:
 			while (keyboard_pressed(key)); /* wait for key release */
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			OldCpuNo = WatchesCpuNo[ s ];
 			WatchesCpuNo[ s ] = 0;
 			Watches[ s ] = MAX_ADDRESS(WatchesCpuNo[ s ]);
@@ -5924,6 +6001,10 @@ void ChooseWatch(void)
 
 		case KEYCODE_F1:
 			while (keyboard_pressed(key)); /* wait for key release */
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
                   oldkey = 0;
 			if (Watches[s] == MAX_ADDRESS(WatchesCpuNo[s]))
 				break;
@@ -5952,6 +6033,10 @@ void ChooseWatch(void)
 
 		case KEYCODE_F3:
 			while (keyboard_pressed(key));
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
                   oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
@@ -5972,6 +6057,10 @@ void ChooseWatch(void)
 
 		case KEYCODE_F4:
 			while (keyboard_pressed(key)); /* wait for key release */
+			/* JCK 990717 BEGIN */
+                        dx = 0;
+                        dy = 0;
+			/* JCK 990717 END */
                   oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
@@ -6015,6 +6104,10 @@ void ChooseWatch(void)
 
 		case KEYCODE_F6:
 			while (keyboard_pressed(key)); /* wait for key release */
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
                   oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
@@ -6048,6 +6141,10 @@ void ChooseWatch(void)
 
 		case KEYCODE_F7:
 			while (keyboard_pressed(key)); /* wait for key release */
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
                   oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
@@ -6065,12 +6162,20 @@ void ChooseWatch(void)
 
 		case KEYCODE_F10:
 			while (keyboard_pressed(key)); /* wait for key release */
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
                   oldkey = 0;
 			ChooseWatchHelp();								/* Show Help */
 			y = ChooseWatchHeader();
 			break;
 
 		case KEYCODE_ENTER:
+			/* JCK 990717 BEGIN */
+			dx = 0;
+			dy = 0;
+			/* JCK 990717 END */
 			if (s == 0)
 				break;
 			OldCpuNo = WatchesCpuNo[ s ];
@@ -6591,14 +6696,12 @@ void DoCheat(void)
 	} /* end for */
 
   /* KEYCODE_CHEAT_TOGGLE Enable/Disable the active cheats on the fly. Required for some cheat */
-#if 0
-  if ( keyboard_pressed_memory( KEYCODE_CHEAT_TOGGLE ) && ActiveCheatTotal )
+  if (input_ui_pressed(IPT_UI_TOGGLE_CHEAT) && ActiveCheatTotal)
   {
       CheatEnabled ^= 1;
       cheat_framecounter = Machine->drv->frames_per_second / 2;
       cheat_updatescreen = 1;
   }
-#endif
 
   if (cheat_updatescreen)
   {

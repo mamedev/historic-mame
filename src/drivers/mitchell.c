@@ -1,9 +1,13 @@
 /***************************************************************************
 
-  "Mitchell hardware". Actually used mostly by Capcom.
+"Mitchell hardware". Actually used mostly by Capcom.
 
-  All games run on the same hardware except mgakuen, which runs on an
-  earlier version, without RAM banking and not encrypted (standard Z80).
+All games run on the same hardware except mgakuen, which runs on an
+earlier version, without RAM banking and not encrypted (standard Z80).
+
+Other games that might run on this hardware:
+"Chi-toitsu"(YUGA 1988)-Another version of"Mahjong Gakuen"
+"MIRAGE -Youjyu mahjong den-"(MITCHELL 1994)
 
 
 TODO:
@@ -563,9 +567,7 @@ INPUT_PORTS_START( mgakuen_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, "Player 1 Skill" )

@@ -13,13 +13,22 @@
 /*extra functions for 15.75KHz modes */
 #include "gen15khz.h"
 
+/* function to make scanline mode */
+Register *make_scanline_mode(Register *inreg,int entries);
+
 /*15.75KHz SVGA driver (req. for 15.75KHz Arcade Monitor Modes)*/
 SVGA15KHZDRIVER *SVGA15KHzdriver;
+
 
 /* from blit.c, for VGA triple buffering */
 extern int xpage_size;
 extern int no_xpages;
 void unchain_vga(Register *pReg);
+
+
+/* tweak values for centering tweaked modes */
+int center_x;
+int center_y;
 
 BEGIN_GFX_DRIVER_LIST
 	GFX_DRIVER_VGA
@@ -45,7 +54,7 @@ char *dirty_new=grid2;
 
 void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 
-
+void center_mode(Register *pReg,int low_scanrate);
 
 /* in msdos/sound.c */
 int msdos_update_audio(void);
@@ -215,7 +224,7 @@ char *mode_desc;
 int gfx_mode;
 int gfx_width;
 int gfx_height;
-int tw256x224_hor;
+
 
 /*new 'half' flag (req. for 15.75KHz Arcade Monitor Modes)*/
 int half_yres=0;
@@ -253,43 +262,48 @@ static uclock_t start_time,end_time;    /* to calculate fps average on exit */
 #define FRAMES_TO_SKIP 20       /* skip the first few frames from the FPS calculation */
 							/* to avoid counting the copyright and info screens */
 
-unsigned char tw224x288ns_h, tw224x288ns_v, tw224x288sc_h, tw224x288sc_v;
-unsigned char tw256x256ns_h, tw256x256ns_v, tw256x256sc_h, tw256x256sc_v;
-unsigned char tw256x256ns_hor_h, tw256x256ns_hor_v, tw256x256sc_hor_h, tw256x256sc_hor_v;
-unsigned char tw256x256ns_57_h, tw256x256ns_57_v, tw256x256sc_57_h, tw256x256sc_57_v;
-unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw256x256sc_h57_v;
-unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
-unsigned char tw320x240ns_h, tw320x240ns_v, tw320x240sc_h, tw320x240sc_v;
-unsigned char tw336x240ns_h, tw336x240ns_v, tw336x240sc_h, tw336x240sc_v;
-unsigned char tw384x224ns_h, tw384x224ns_v, tw384x224sc_h, tw384x224sc_v;
-unsigned char tw384x240ns_h, tw384x240ns_v, tw384x240sc_h, tw384x240sc_v;
-unsigned char tw384x256ns_h, tw384x256ns_v, tw384x256sc_h, tw384x256sc_v;
+unsigned char tw224x288_h, tw224x288_v;
+unsigned char tw240x256_h, tw240x256_v;
+unsigned char tw256x240_h, tw256x240_v;
+unsigned char tw256x256_h, tw256x256_v;
+unsigned char tw256x256_hor_h, tw256x256_hor_v;
+unsigned char tw288x224_h, tw288x224_v;
+unsigned char tw320x240_h, tw320x240_v;
+unsigned char tw336x240_h, tw336x240_v;
+unsigned char tw384x224_h, tw384x224_v;
+unsigned char tw384x240_h, tw384x240_v;
+unsigned char tw384x256_h, tw384x256_v;
 
-struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines;
-					int unchained; };
+struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int unchained; int vertical_mode; };
 struct vga_tweak vga_tweaked[] = {
-	{ 256, 256, scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 1, 1, 0 },
-	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1, 0 },
-	{ 224, 288, scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 2, 1, 0 },
-/* 320x204 runs at 70Hz - to get a 60Hz modes, timings would be the same as
- the 320x240 mode - just more blanking, so might as well just use that */
-//	{ 320, 204, scr320x204, sizeof(scr320x204)/sizeof(Register), -1, 0, 0 },
-	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0, 0 },
+  	{ 240, 256, scr240x256, sizeof(scr240x256)/sizeof(Register),  1, 0, 1 },
+	{ 256, 240, scr256x240, sizeof(scr256x240)/sizeof(Register),  0, 0, 0 },
+	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0, 1 },
+	{ 256, 256, scr256x256hor, sizeof(scr256x256hor)/sizeof(Register),  0, 0, 0 },
+	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0, 1 },
 	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0, 0 },
-	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0, 0 },
-	{ 200, 320, scr200x320, sizeof(scr200x320)/sizeof(Register), -1, 0, 0 },
-	{ 320, 240, scr320x240scanlines, sizeof(scr320x240scanlines)/sizeof(Register),  0, 1, 1 },
-	{ 320, 240, scr320x240, sizeof(scr320x240)/sizeof(Register),  0, 0, 1 },
-	{ 336, 240, scr336x240scanlines, sizeof(scr336x240scanlines)/sizeof(Register),  0, 1, 1 },
-	{ 336, 240, scr336x240, sizeof(scr336x240)/sizeof(Register),  0, 0, 1 },
-/* 384x224 modes put back in - as 384x240 and above are too large to triple buffer */
-/* but 384x224 just squeezes in */
-	{ 384, 224, scr384x224scanlines, sizeof(scr384x224scanlines)/sizeof(Register),  1, 1, 1 },
-	{ 384, 224, scr384x224, sizeof(scr384x224)/sizeof(Register),  1, 0, 1 },
-	{ 384, 240, scr384x240scanlines, sizeof(scr384x240scanlines)/sizeof(Register),  1, 1, 1 },
-	{ 384, 240, scr384x240, sizeof(scr384x240)/sizeof(Register),  1, 0, 1 },
-	{ 384, 256, scr384x256scanlines, sizeof(scr384x256scanlines)/sizeof(Register),  1, 1, 1 },
-	{ 384, 256, scr384x256, sizeof(scr384x256)/sizeof(Register),  1, 0, 1 },
+	{ 320, 240, scr320x240, sizeof(scr320x240)/sizeof(Register),  0, 1, 0 },
+	{ 336, 240, scr336x240, sizeof(scr336x240)/sizeof(Register),  0, 1, 0 },
+	{ 384, 224, scr384x224, sizeof(scr384x224)/sizeof(Register),  1, 1, 0 },
+	{ 384, 240, scr384x240, sizeof(scr384x240)/sizeof(Register),  1, 1, 0 },
+	{ 384, 256, scr384x256, sizeof(scr384x256)/sizeof(Register),  1, 1, 0 },
+	{ 0, 0 }
+};
+struct mode_adjust  {int x, y; unsigned char *hadjust; unsigned char *vadjust; int vertical_mode; };
+
+/* horizontal and vertical total tweak values for above modes */
+struct mode_adjust  pc_adjust[] = {
+	{ 240, 256, &tw240x256_h, &tw240x256_v, 1 },
+	{ 256, 240, &tw256x240_h, &tw256x240_v, 0 },
+	{ 256, 256, &tw256x256_hor_h, &tw256x256_hor_v, 0 },
+	{ 256, 256, &tw256x256_h, &tw256x256_v, 1 },
+	{ 224, 288, &tw224x288_h, &tw224x288_v, 1 },
+	{ 288, 224, &tw288x224_h, &tw288x224_v, 0 },
+	{ 320, 240, &tw320x240_h, &tw320x240_v, 0 },
+	{ 336, 240, &tw336x240_h, &tw336x240_v, 0 },
+	{ 384, 224, &tw384x224_h, &tw384x224_v, 0 },
+	{ 384, 240, &tw384x240_h, &tw384x240_v, 0 },
+	{ 384, 256, &tw384x256_h, &tw384x256_v, 0 },
 	{ 0, 0 }
 };
 
@@ -311,7 +325,7 @@ struct vga_15KHz_tweak arcade_tweaked[] = {
 	{ 224, 288, scr224x288_15KHz, sizeof(scr224x288_15KHz)/sizeof(Register), 0, 0, 0, 0, 224 },
 	{ 256, 240, scr256x240_15KHz, sizeof(scr256x240_15KHz)/sizeof(Register), 0, 0, 1, 0, 256 },
 	{ 256, 256, scr256x256_15KHz, sizeof(scr256x256_15KHz)/sizeof(Register), 0, 0, 0, 0, 256 },
-	{ 288, 224, scr288x224_NTSC,  sizeof(scr288x224_NTSC) /sizeof(Register), 0, 0, 1, 0, 288 },
+	{ 288, 224, scr288x224_15KHz, sizeof(scr288x224_15KHz)/sizeof(Register), 0, 0, 1, 0, 288 },
 	{ 320, 240, scr320x240_15KHz, sizeof(scr320x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 320 },
 	{ 320, 256, scr320x256_15KHz, sizeof(scr320x256_15KHz)/sizeof(Register), 1, 0, 0, 0, 320 },
 	{ 352, 240, scr352x240_15KHz, sizeof(scr352x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 352 },
@@ -329,6 +343,25 @@ struct vga_15KHz_tweak arcade_tweaked[] = {
 /* 'half y' VGA modes, used to fake hires if 'tweaked' is on */
 	{ 512, 448, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 512 },
 	{ 512, 512, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 512 },
+	{ 0, 0 }
+};
+
+/* horizontal and vertical total tweak values for above modes */
+struct mode_adjust  arcade_adjust[] = {
+	{ 224, 288, &tw224x288arc_h, &tw224x288arc_v, 0 },
+	{ 256, 240, &tw256x240arc_h, &tw256x240arc_v, 0 },
+	{ 256, 256, &tw256x256arc_h, &tw256x256arc_v, 0 },
+	{ 288, 224, &tw288x224arc_h, &tw256x256arc_v, 0 },
+	{ 320, 240, &tw320x240arc_h, &tw320x240arc_v, 0 },
+	{ 352, 240, &tw352x240arc_h, &tw352x240arc_v, 0 },
+	{ 352, 256, &tw352x256arc_h, &tw352x256arc_v, 0 },
+	{ 368, 224, &tw368x224arc_h, &tw368x224arc_v, 0 },
+	{ 368, 240, &tw368x240arc_h, &tw368x240arc_v, 0 },
+	{ 368, 256, &tw368x256arc_h, &tw368x256arc_v, 0 },
+	{ 512, 224, &tw512x224arc_h, &tw512x224arc_v, 0 },
+	{ 512, 256, &tw512x256arc_h, &tw512x256arc_v, 0 },
+	{ 512, 448, &tw512x224arc_h, &tw512x224arc_v, 0 },
+	{ 512, 512, &tw512x256arc_h, &tw512x256arc_v, 0 },
 	{ 0, 0 }
 };
 
@@ -607,22 +640,6 @@ static void select_display_mode(void)
 
 	}
 
-	/* Select desired tweaked mode for 256x224 */
-	/* still no real 256x224 mode supported */
-	/* changed to not override specific user request */
-	if (!gfx_width && !gfx_height && use_tweaked && width <= 256 && height <= 224)
-	{
-		if (tw256x224_hor)
-		{
-			gfx_width = 256;
-			gfx_height = 256;
-		}
-		else
-		{
-			gfx_width = 288;
-			gfx_height = 224;
-		}
-	}
 
 	/* If using tweaked modes, check if there exists one to fit
 	   the screen in, otherwise use VESA */
@@ -633,14 +650,24 @@ static void select_display_mode(void)
 			if (width <= vga_tweaked[i].x &&
 				height <= vga_tweaked[i].y)
 			{
-				gfx_width  = vga_tweaked[i].x;
-				gfx_height = vga_tweaked[i].y;
-				/* if a resolution was chosen that is only available as */
-				/* noscanline, we need to reset the scanline global */
-				if (vga_tweaked[i].scanlines == 0)
-					scanlines = 0;
-				use_vesa = 0;
-				/* leave the loop on match */
+				/*check for 57Hz modes which would fit into a 60Hz mode*/
+				if (gfx_width <= 256 && gfx_height <= 256 &&
+  					video_sync && Machine->drv->frames_per_second == 57)
+				{
+					gfx_width = 256;
+					gfx_height = 256;
+					use_vesa = 0;
+					break;
+				}
+
+				/* check for correct horizontal/vertical modes */
+				if((!vga_tweaked[i].vertical_mode && !(Machine->orientation & ORIENTATION_SWAP_XY)) ||
+					(vga_tweaked[i].vertical_mode && (Machine->orientation & ORIENTATION_SWAP_XY)))
+				{
+					gfx_width  = vga_tweaked[i].x;
+					gfx_height = vga_tweaked[i].y;
+					use_vesa = 0;
+					/* leave the loop on match */
 
 if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 {
@@ -648,7 +675,8 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 	gfx_width = 0;
 	gfx_height = 0;
 }
-				break;
+					break;
+				}
 			}
 		}
 		/* If we didn't find a tweaked VGA mode, use VESA */
@@ -1091,6 +1119,8 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 /* set the actual display screen but don't allocate the screen bitmap */
 int osd_set_display(int width,int height, int attributes)
 {
+	struct mode_adjust *adjust_array;
+
 	int     i;
 	/* moved 'found' to here (req. for 15.75KHz Arcade Monitor Modes) */
 	int     found;
@@ -1183,60 +1213,60 @@ int osd_set_display(int width,int height, int attributes)
 			return 0;
 		}
 		/* center the mode */
-		center15KHz (reg);
+		center_mode (reg, 1);
 	}
 
 	if (use_vesa != 1 && use_tweaked == 1)
 	{
-		/* setup tweaked modes */
-		/* handle special noscanlines 256x256 57Hz tweaked mode */
-		if (!found && gfx_width == 256 && gfx_height == 256 &&
-				video_sync && Machine->drv->frames_per_second == 57)
-		{
-			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-			{
-				reg = (scanlines ? scr256x256horscanlines_57 : scr256x256hor_57);
-				reglen = sizeof(scr256x256hor_57)/sizeof(Register);
-				videofreq = 0;
-				found = 1;
-			}
-			else
-			{
-				reg = scr256x256_57;
-						/* still no -scanlines mode */
-				reglen = sizeof(scr256x256_57)/sizeof(Register);
-				videofreq = 0;
-				found = 1;
-			}
-		}
 
-		/* handle special 256x256 horizontal tweaked mode */
-		if (!found && gfx_width == 256 && gfx_height == 256 &&
-				!(Machine->orientation & ORIENTATION_SWAP_XY))
+		/* setup tweaked modes */
+		/* handle 57Hz games which fit into 60Hz mode */
+		if (!found && gfx_width <= 256 && gfx_height <= 256 &&
+  				video_sync && Machine->drv->frames_per_second == 57)
 		{
-			reg = (scanlines ? scr256x256horscanlines : scr256x256hor);
-			reglen = sizeof(scr256x256hor)/sizeof(Register);
-			videofreq = 0;
 			found = 1;
+  			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+			{
+	  			reg = scr256x256hor;
+				reglen = sizeof(scr256x256hor)/sizeof(Register);
+				videofreq = 0;
+			}
+  			else
+			{
+				reg = scr256x256;
+				reglen = sizeof(scr256x256)/sizeof(Register);
+				videofreq = 1;
+	  		}
 		}
 
 		/* find the matching tweaked mode */
-		/* use noscanline modes if scanline modes not possible */
 		for (i=0; ((vga_tweaked[i].x != 0) && !found); i++)
 		{
-			int scan;
-			scan = vga_tweaked[i].scanlines;
-
 			if (gfx_width  == vga_tweaked[i].x &&
-				gfx_height == vga_tweaked[i].y &&
-				(scanlines == scan || scan == 0))
+				gfx_height == vga_tweaked[i].y)
 			{
-				reg = vga_tweaked[i].reg;
-				reglen = vga_tweaked[i].reglen;
-				if (videofreq == -1)
-					videofreq = vga_tweaked[i].syncvgafreq;
-				found = 1;
-				unchained = vga_tweaked[i].unchained;
+				/* check for correct horizontal/vertical modes */
+
+				if((!vga_tweaked[i].vertical_mode && !(Machine->orientation & ORIENTATION_SWAP_XY)) ||
+					(vga_tweaked[i].vertical_mode && (Machine->orientation & ORIENTATION_SWAP_XY)))
+				{
+					reg = vga_tweaked[i].reg;
+					reglen = vga_tweaked[i].reglen;
+					if (videofreq == -1)
+						videofreq = vga_tweaked[i].syncvgafreq;
+					found = 1;
+					unchained = vga_tweaked[i].unchained;
+					if(unchained)
+					{
+						/* for unchained modes, turn off dirty updates */
+						/* as any speed gain is lost in the complex mulit-page update needed */
+						/* plus - non-dirty updates remove unchained 'shearing' */
+						use_dirty = 0;
+						/* also - turn triple buffering on (if the mode will take it) */
+						/* as there's no performance hit from doing it */
+						use_triplebuf = 1;
+					}
+				}
 			}
 		}
 
@@ -1248,6 +1278,8 @@ int osd_set_display(int width,int height, int attributes)
 		}
 		else
 		{
+			/* center the mode */
+			center_mode (reg, 0);
 			use_vesa = 0;
 			if (videofreq < 0) videofreq = 0;
 			else if (videofreq > 3) videofreq = 3;
@@ -1480,238 +1512,47 @@ int osd_set_display(int width,int height, int attributes)
 		}
 
 		/* set the horizontal and vertical total */
-		if(scanrate15KHz)
+		if (scanrate15KHz)
+			/* 15.75KHz modes */
+			adjust_array = arcade_adjust;
+  		else
+			/* PC monitor modes */
+			adjust_array = pc_adjust;
+
+		for (i=0; adjust_array[i].x != 0; i++)
 		{
-			/*15.75KHz modes*/
-			if ((gfx_width == 224) && (gfx_height == 288))
+			if ((gfx_width == adjust_array[i].x) && (gfx_height == adjust_array[i].y))
 			{
-				reg[1].value = tw224x288arc_h;
-				reg[7].value = tw224x288arc_v;
-			}
-			else if ((gfx_width == 256) && (gfx_height == 256))
-			{
-				reg[1].value = tw256x256arc_h;
-				reg[7].value = tw256x256arc_v;
-			}
-			else if ((gfx_width == 256) && (gfx_height == 240))
-			{
-				reg[1].value = tw256x240arc_h;
-				reg[7].value = tw256x240arc_v;
-			}
-			else if ((gfx_width == 288) && (gfx_height == 224))
-			{
-				reg[1].value = tw288x224arc_h;
-				reg[7].value = tw288x224arc_v;
-			}
-			else if ((gfx_width == 320) && (gfx_height == 240))
-			{
-				reg[1].value = tw320x240arc_h;
-				reg[7].value = tw320x240arc_v;
-			}
-			else if ((gfx_width == 320) && (gfx_height == 256))
-			{
-				reg[1].value = tw320x256arc_h;
-				reg[7].value = tw320x256arc_v;
-			}
-			else if ((gfx_width == 352) && (gfx_height == 240))
-			{
-				reg[1].value = tw352x240arc_h;
-				reg[7].value = tw352x240arc_v;
-			}
-			else if ((gfx_width == 352) && (gfx_height == 256))
-			{
-				reg[1].value = tw352x256arc_h;
-				reg[7].value = tw352x256arc_v;
-			}
-			else if ((gfx_width == 368) && (gfx_height == 224))
-			{
-				reg[1].value = tw368x224arc_h;
-				reg[7].value = tw368x224arc_v;
-			}
-			else if ((gfx_width == 368) && (gfx_height == 240))
-			{
-				reg[1].value = tw368x240arc_h;
-				reg[7].value = tw368x240arc_v;
-			}
-			else if ((gfx_width == 368) && (gfx_height == 256))
-			{
-				reg[1].value = tw368x256arc_h;
-				reg[7].value = tw368x256arc_v;
-			}
-			else if ((gfx_width == 512) && (gfx_height == 224))
-			{
-				reg[1].value = tw512x224arc_h;
-				reg[7].value = tw512x224arc_v;
-			}
-			else if ((gfx_width == 512) && (gfx_height == 256))
-			{
-				reg[1].value = tw512x256arc_h;
-				reg[7].value = tw512x256arc_v;
-			}
-			else if ((gfx_width == 512) && (gfx_height == 448))
-			{
-				reg[1].value = tw512x448arc_h;
-				reg[7].value = tw512x448arc_v;
-			}
-			else if ((gfx_width == 512) && (gfx_height == 512))
-			{
-				reg[1].value = tw512x512arc_h;
-				reg[7].value = tw512x512arc_v;
-			}
-		}
-		else
-		{
-			/* normal PC monitor modes */
-			if ((gfx_width == 224) && (gfx_height == 288))
-			{
-				if (scanlines)
+				/* check for 'special vertical' modes */
+				if((!adjust_array[i].vertical_mode && !(Machine->orientation & ORIENTATION_SWAP_XY)) ||
+					(adjust_array[i].vertical_mode && (Machine->orientation & ORIENTATION_SWAP_XY)))
 				{
-					reg[1].value = tw224x288sc_h;
-					reg[7].value = tw224x288sc_v;
-				}
-				else
-				{
-					reg[1].value = tw224x288ns_h;
-					reg[7].value = tw224x288ns_v;
-				}
-			}
-			else if ((gfx_width == 288) && (gfx_height == 224))
-			{
-				if (scanlines)
-				{
-					reg[1].value = tw288x224sc_h;
-					reg[7].value = tw288x224sc_v;
-				}
-				else
-				{
-					reg[1].value = tw288x224ns_h;
-					reg[7].value = tw288x224ns_v;
-				}
-			}
-			/* 320x240 mode */
-			else if ((gfx_width == 320) && (gfx_height == 240))
-			{
-				if (scanlines)
-				{
-					reg[1].value = tw320x240sc_h;
-					reg[7].value = tw320x240sc_v;
-				}
-				else
-				{
-					reg[1].value = tw320x240ns_h;
-					reg[7].value = tw320x240ns_v;
-				}
-			}
-			/* 336x240 mode */
-			else if ((gfx_width == 336) && (gfx_height == 240))
-			{
-				if (scanlines)
-				{
-					reg[1].value = tw336x240sc_h;
-					reg[7].value = tw336x240sc_v;
-				}
-				else
-				{
-					reg[1].value = tw336x240ns_h;
-					reg[7].value = tw336x240ns_v;
-				}
-			}
-			/* 384x224 mode */
-			else if ((gfx_width == 384) && (gfx_height == 224))
-			{
-				if (scanlines)
-				{
-					reg[1].value = tw384x224sc_h;
-					reg[7].value = tw384x224sc_v;
-				}
-				else
-				{
-					reg[1].value = tw384x224ns_h;
-					reg[7].value = tw384x224ns_v;
-				}
-			}
-			/* 384x240 mode */
-			else if ((gfx_width == 384) && (gfx_height == 240))
-			{
-				if (scanlines)
-				{
-					reg[1].value = tw384x240sc_h;
-					reg[7].value = tw384x240sc_v;
-				}
-				else
-				{
-					reg[1].value = tw384x240ns_h;
-					reg[7].value = tw384x240ns_v;
-				}
-			}
-			else if ((gfx_width == 256) && (gfx_height == 256))
-			{
-				if (Machine->orientation & ORIENTATION_SWAP_XY)
-				{
-					/* vertical 256x256 */
-					if (Machine->drv->frames_per_second != 57)
-					{
-						if (scanlines)
-						{
-							reg[1].value = tw256x256sc_h;
-							reg[7].value = tw256x256sc_v;
-						}
-						else
-						{
-							reg[1].value = tw256x256ns_h;
-							reg[7].value = tw256x256ns_v;
-						}
-					}
-					else
-					{
-						if (scanlines)
-						{
-							reg[1].value = tw256x256sc_57_h;
-							reg[7].value = tw256x256sc_57_v;
-						}
-						else
-						{
-							reg[1].value = tw256x256ns_57_h;
-							reg[7].value = tw256x256ns_57_v;
-						}
-					}
-				}
-				else
-				{
-					/* horizontal 256x256 */
-					if (Machine->drv->frames_per_second != 57)
-					{
-						if (scanlines)
-						{
-							reg[1].value = tw256x256sc_hor_h;
-							reg[7].value = tw256x256sc_hor_v;
-						}
-						else
-						{
-							reg[1].value = tw256x256ns_hor_h;
-							reg[7].value = tw256x256ns_hor_v;
-						}
-					}
-					else
-					{
-						if (scanlines)
-						{
-							reg[1].value = tw256x256sc_h57_h;
-							reg[7].value = tw256x256sc_h57_v;
-						}
-						else
-						{
-							reg[1].value = tw256x256ns_h57_h;
-							reg[7].value = tw256x256ns_h57_v;
-						}
-					}
+					reg[H_TOTAL_INDEX].value = *adjust_array[i].hadjust;
+					reg[V_TOTAL_INDEX].value = *adjust_array[i].vadjust;
+					break;
 				}
 			}
 		}
+
+		/*if scanlines were requested - change the array values to get a scanline mode */
+		if (scanlines && !scanrate15KHz)
+			reg = make_scanline_mode(reg,reglen);
+
 		/* big hack: open a mode 13h screen using Allegro, then load the custom screen */
 		/* definition over it. */
 		if (set_gfx_mode(GFX_VGA,320,200,0,0) != 0)
 			return 0;
+
+		if (errorlog)
+		{
+			fprintf(errorlog,"Generated Tweak Values :-\n");
+			for (i=0; i<reglen; i++)
+			{
+				fprintf(errorlog,"{ 0x%02x, 0x%02x, 0x%02x},",reg[i].port,reg[i].index,reg[i].value);
+				if (!((i+1)%3))
+					fprintf(errorlog,"\n");
+			}
+		}
 
 		/* tweak the mode */
 		outRegArray(reg,reglen);
@@ -1720,9 +1561,6 @@ int osd_set_display(int width,int height, int attributes)
 		if (unchained)
 		{
 			unsigned long address;
-			/* turn off any other 'vsync's */
-  			video_sync = 0;
-			wait_vsync = 0;
 			/* clear all 4 bit planes */
 			outportw (0x3c4, (0x02 | (0x0f << 0x08)));
 			for (address = 0xa0000; address < 0xb0000; address += 4)
@@ -1754,9 +1592,11 @@ int osd_set_display(int width,int height, int attributes)
 
 		vsync();
 		b = uclock();
+
 		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
 
-		if (errorlog) fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
+		if (errorlog)
+			fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
 
 		/* don't allow more than 8% difference between target and actual frame rate */
 		while (rate > Machine->drv->frames_per_second * 108 / 100)
@@ -1765,19 +1605,20 @@ int osd_set_display(int width,int height, int attributes)
 		if (rate < Machine->drv->frames_per_second * 92 / 100)
 		{
 			osd_close_display();
-if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
-					"video refresh frequency = %dHz, target frame rate = %dfps\n",
-					(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
+			if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
+						"video refresh frequency = %dHz, target frame rate = %dfps\n",
+						(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
 		}
 
-if (errorlog) fprintf(errorlog,"adjusted video frame rate = %3.2fHz\n",rate);
-		vsync_frame_rate = rate;
+		if (errorlog) fprintf(errorlog,"adjusted video frame rate = %3.2fHz\n",rate);
+			vsync_frame_rate = rate;
 
 		if (Machine->sample_rate)
 		{
 			Machine->sample_rate = Machine->sample_rate * Machine->drv->frames_per_second / rate;
-if (errorlog) fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",Machine->sample_rate);
+			if (errorlog)
+				fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",Machine->sample_rate);
 		}
 	}
 
@@ -2457,3 +2298,208 @@ void osd_pause(int paused)
 		dirtypalette = 1;
 	}
 }
+
+Register *make_scanline_mode(Register *inreg,int entries)
+{
+	static Register outreg[32];
+	int maxscan,maxscanout;
+	int overflow,overflowout;
+	int ytotalin,ytotalout;
+	int ydispin,ydispout;
+	int vrsin,vrsout,vreout,vblksin,vblksout,vblkeout;
+
+/* copy across our standard display array */
+	memcpy (&outreg, inreg, entries * sizeof(Register));
+/*keep hold of the overflow register - as we'll need to refer to it a lot */
+	overflow = inreg[OVERFLOW_INDEX].value;
+	overflowout = 0;
+/* and the max scanline */
+	maxscan = inreg[MAXIMUM_SCANLINE_INDEX].value;
+/* set a large line compare value  - as we won't be doing any split window scrolling etc.*/
+	maxscanout = 0x40;
+/* half all the y values */
+/* total */
+	ytotalin = inreg[V_TOTAL_INDEX].value;
+	ytotalin |= ((overflow & 1)<<0x08) | ((overflow & 0x20)<<0x04);
+    ytotalout = ytotalin >> 1;
+/* display enable end */
+	ydispin = inreg[13].value | ((overflow & 0x02)<< 0x07) | ((overflow & 0x040) << 0x03);
+	ydispin ++;
+	ydispout = ydispin >> 1;
+	ydispout --;
+	overflowout |= ((ydispout & 0x100) >> 0x07) | ((ydispout && 0x200) >> 0x03);
+	outreg[V_END_INDEX].value = (ydispout & 0xff);
+
+
+/* vertical retrace start */
+/* for with a 'tight' display total compared to the mode's vertical total, */
+/* use the line count as the vrs - */
+/* this avoids top overscan on some cards */
+/* (if user explicitly wants to move screen with centery - overide the above) */
+	if ((ytotalin - ydispin) < 40 && !center_y)
+	{
+		vrsout = ydispout;
+		/* give ourselves a scanline cushion */
+		ytotalout += 2;
+	}
+	else
+	{
+		vrsin = inreg[V_RETRACE_START_INDEX].value | ((overflow & 0x04)<<0x06) | ((overflow & 0x80)<<0x02);
+		vrsout = vrsin >> 1;
+/* check it's legal */
+		if (vrsout < ydispout)
+			vrsout = ydispout;
+	}
+
+/*update our output overflow */
+	overflowout |= (((vrsout & 0x100) >> 0x06) | ((vrsout & 0x200) >> 0x02));
+	outreg[V_RETRACE_START_INDEX].value = (vrsout & 0xff);
+/* vertical retrace end */
+	vreout = vrsout + 2;
+/* make sure the retrace fits into our adjusted display size */
+	if (vreout > ytotalout)
+		ytotalout = vreout + 2;
+/* write out the vertical retrace end */
+	outreg[V_RETRACE_END_INDEX].value &= ~0x0f;
+	outreg[V_RETRACE_END_INDEX].value |= (vreout & 0x0f);
+/*update our output overflow */
+	overflowout |= ((ytotalout & 0x100) >> 0x08) | ((ytotalout & 0x200) >> 0x04);
+/* write out the new vertical total */
+	outreg[V_TOTAL_INDEX].value = (ytotalout & 0xff);
+/* vertical blanking start */
+	vblksin = inreg[V_BLANKING_START_INDEX].value | ((overflow & 0x08) << 0x05) | ((maxscan & 0x20) << 0x04);
+	vblksout = vblksin >> 1;
+	overflowout |= ((vblksout & 0x100) >> 0x05);
+	maxscanout |= ((vblksout & 0x200) >> 0x04);
+	outreg[V_BLANKING_START_INDEX].value = (vblksout & 0xff);
+/* vertical blanking end */
+	vblkeout = vblksout + 2;
+	outreg[V_BLANKING_END_INDEX].value = (vblkeout & 0xff);
+/* write out our over flows */
+	outreg[OVERFLOW_INDEX].value = overflowout;
+/* finally the max scan line */
+	outreg[MAXIMUM_SCANLINE_INDEX].value = maxscanout;
+/* and we're done */
+	return outreg;
+
+}
+
+void center_mode(Register *pReg,int low_scanrate)
+{
+	int center;
+	int hrt_start, hrt_end, hrt, hblnk_start, hblnk_end;
+	int vrt_start, vrt_end, vert_total, vert_display, vblnk_start, vrt, vblnk_end;
+
+
+/* check for empty array */
+	if (!pReg)
+		return;
+/* vertical retrace width */
+	vrt = 2;
+/* check the clock speed, to work out the retrace width */
+	if (pReg[CLOCK_INDEX].value == 0xe7)
+	{
+		if(low_scanrate)
+			hrt = 11;
+		else
+			hrt = 6;
+	}
+	else
+	{
+		if(low_scanrate)
+			hrt = 10;
+		else
+			hrt = 5;
+	}
+/* our center x tweak value */
+	center = center_x;
+/* check for double scanline rather than half clock */
+	if( pReg[H_TOTAL_INDEX].value > 0x96)
+	{
+		hrt<<=1;
+		center<<=1;
+	}
+/* set the hz retrace */
+	hrt_start = pReg[H_RETRACE_START_INDEX].value;
+	hrt_start += center;
+/* make sure it's legal */
+	if (hrt_start <= pReg[H_DISPLAY_INDEX].value)
+		hrt_start = pReg[H_DISPLAY_INDEX].value + 1;
+	pReg[H_RETRACE_START_INDEX].value = hrt_start;
+/*set hz retrace end */
+	hrt_end = hrt_start + hrt;
+/* make sure it's legal */
+	if( hrt_end > pReg[H_TOTAL_INDEX].value)
+		hrt_end = pReg[H_TOTAL_INDEX].value;
+
+ /* set the hz blanking */
+	hblnk_start = pReg[H_DISPLAY_INDEX].value + 1;
+/* make sure it's legal */
+	if (hblnk_start > hrt_start)
+		hblnk_start = pReg[H_RETRACE_START_INDEX].value;
+
+	pReg[H_BLANKING_START_INDEX].value = hblnk_start;
+/* the horizontal blanking end */
+	hblnk_end = hrt_end + 2;
+/* make sure it's legal */
+	if( hblnk_end > pReg[H_TOTAL_INDEX].value)
+		hblnk_end = pReg[H_TOTAL_INDEX].value;
+
+	pReg[H_BLANKING_END_INDEX].value = (hblnk_end & 0x1f) | 0x80;
+/* include the 5th bit of the horizontal blanking in the horizontal retrace reg. */
+	hrt_end = ((hrt_end & 0x1f) | ((hblnk_end & 0x20) << 2));
+	pReg[H_RETRACE_END_INDEX].value = hrt_end;
+
+
+/* get the vt retrace */
+	vrt_start = pReg[V_RETRACE_START_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x04) << 6) |
+				((pReg[OVERFLOW_INDEX].value & 0x80) << 2);
+
+/* set the new retrace start */
+	vrt_start += center_y;
+/* check it's legal, get the display line count */
+	vert_display = (pReg[V_END_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x02) << 7) |
+				((pReg[OVERFLOW_INDEX].value & 0x40) << 3)) + 1;
+
+	if (vrt_start < vert_display)
+		vrt_start = vert_display;
+
+/* and get the vertical line count */
+	vert_total = pReg[V_TOTAL_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x01) << 8) |
+				((pReg[OVERFLOW_INDEX].value & 0x20) << 4);
+
+
+
+	pReg[V_RETRACE_START_INDEX].value = (vrt_start & 0xff);
+	pReg[OVERFLOW_INDEX].value &= ~0x84;
+	pReg[OVERFLOW_INDEX].value |= ((vrt_start & 0x100) >> 6);
+	pReg[OVERFLOW_INDEX].value |= ((vrt_start & 0x200) >> 2);
+	vrt_end = vrt_start + vrt;
+
+
+	if (vrt_end > vert_total)
+		vrt_end = vert_total;
+
+/* write retrace end, include CRT protection and IRQ2 bits */
+	pReg[V_RETRACE_END_INDEX].value = (vrt_end  & 0x0f) | 0x80 | 0x10;
+
+/* get the start of vt blanking */
+	vblnk_start = vert_display + 1;
+/* check it's legal */
+	if (vblnk_start > vrt_start)
+		vblnk_start = vrt_start;
+/* and the end */
+	vblnk_end = vrt_end + 2;
+/* check it's legal */
+	if (vblnk_end > vert_total)
+		vblnk_end = vert_total;
+/* set vblank start */
+	pReg[V_BLANKING_START_INDEX].value = (vblnk_start & 0xff);
+	pReg[OVERFLOW_INDEX].value &= ~0x08;
+	pReg[OVERFLOW_INDEX].value |= ((vblnk_start & 0x100) >> 5);
+	pReg[MAXIMUM_SCANLINE_INDEX].value &= ~0x20;
+	pReg[MAXIMUM_SCANLINE_INDEX].value |= ((vblnk_start &0x200) >> 4);
+/* set the vblank end */
+	pReg[V_BLANKING_END_INDEX].value = (vblnk_end & 0xff);
+}
+

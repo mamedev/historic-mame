@@ -15,7 +15,7 @@ unsigned char mappy_scroll;
 
 static unsigned char *transparency;
 static int special_display;
-
+static int flipscreen;
 
 /***************************************************************************
 
@@ -189,6 +189,14 @@ void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int co
 		TRANSPARENCY_COLOR,16);
 }
 
+void mappy_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
 
 /***************************************************************************
 
@@ -212,9 +220,12 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* characters with bit 0x40 set are higher priority than sprites; remember and redraw later */
 		if (color & 0x40)
+		{
 			if (!transparency[(video << 6) + (color & 0x3f)])
+			{
 				*save++ = offs;
-
+			}
+		}
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,mx,my;
@@ -271,10 +282,16 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sy = my;
 			}
 
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 59 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					video,
 					color,
-					0,0,8*sx,8*sy,
+					flipscreen,flipscreen,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -289,6 +306,12 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll[offs] = -mappy_scroll;
 		for (offs = 34;offs < 36;offs++)
 			scroll[offs] = 0;
+
+		if (flipscreen)
+		{
+			for (offs = 0;offs < 36;offs++)
+				scroll[offs] = 224 - scroll[offs];
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -305,6 +328,12 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int y = 28*8-spriteram_2[offs];
 			int flipx = spriteram_3[offs] & 1;
 			int flipy = spriteram_3[offs] & 2;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			switch (spriteram_3[offs] & 0x0c)
 			{
@@ -416,10 +445,16 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (8*sy-mappy_scroll);
 		}
 
+		if (flipscreen)
+		{
+			sx = 35 - sx;
+			sy = 216 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
 				colorram[offs],
-				0,0,8*sx,sy,
+				flipscreen,flipscreen,8*sx,sy,
 				0,TRANSPARENCY_COLOR,0);
 	}
 }

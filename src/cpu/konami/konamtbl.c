@@ -284,10 +284,25 @@ INLINE void negw_ix(void); /* 6309 ? */
 INLINE void negw_di(void); /* 6309 ? */
 INLINE void negw_ex(void); /* 6309 ? */
 INLINE void lsrd( void ); /* 6309 */
+INLINE void lsrd_di( void ); /* 6309 */
+INLINE void lsrd_ix( void ); /* 6309 */
+INLINE void lsrd_ex( void ); /* 6309 */
 INLINE void rord( void ); /* 6309 ? */
+INLINE void rord_di( void ); /* 6309 */
+INLINE void rord_ix( void ); /* 6309 */
+INLINE void rord_ex( void ); /* 6309 */
 INLINE void asrd( void ); /* 6309 ? */
+INLINE void asrd_di( void ); /* 6309 */
+INLINE void asrd_ix( void ); /* 6309 */
+INLINE void asrd_ex( void ); /* 6309 */
 INLINE void asld( void ); /* 6309 */
+INLINE void asld_di( void ); /* 6309 */
+INLINE void asld_ix( void ); /* 6309 */
+INLINE void asld_ex( void ); /* 6309 */
 INLINE void rold( void ); /* 6309 ? */
+INLINE void rold_di( void ); /* 6309 */
+INLINE void rold_ix( void ); /* 6309 */
+INLINE void rold_ex( void ); /* 6309 */
 INLINE void tstd(void);
 INLINE void tstw_di( void );
 INLINE void tstw_ix( void );
@@ -299,6 +314,7 @@ INLINE void setline_ix( void );
 INLINE void setline_di( void );
 INLINE void setline_ex( void );
 INLINE void bmove( void );
+INLINE void move( void );
 INLINE void decbjnz( void );
 INLINE void decxjnz( void );
 INLINE void bset( void );
@@ -355,7 +371,7 @@ static void (*konami_main[0x100])(void) = {
 	illegal,asra   ,asrb   ,illegal,asla   ,aslb   ,illegal,rti    ,
 	rola   ,rolb   ,illegal,illegal,illegal,illegal,illegal,illegal,	/* a0 */
 	illegal,illegal,bsr    ,lbsr   ,decbjnz,decxjnz,nop	   ,illegal,
-	abx    ,daa	   ,sex    ,mul    ,lmul   ,divx   ,bmove  ,illegal,	/* b0 */
+	abx    ,daa	   ,sex    ,mul    ,lmul   ,divx   ,bmove  ,move   ,	/* b0 */
 	lsrd   ,illegal,rord   ,illegal,asrd   ,illegal,asld   ,illegal,
 	rold   ,illegal,clrd   ,illegal,negd   ,illegal,incd   ,illegal,	/* c0 */
 	decd   ,illegal,tstd   ,illegal,absa   ,absb   ,absd   ,bset   ,
@@ -391,8 +407,8 @@ static void (*konami_indexed[0x100])(void) = {
 	illegal,illegal,rol_ix ,lsrw_ix,rorw_ix,asrw_ix,aslw_ix,rolw_ix,	/* a0 */
 	jmp_ix ,jsr_ix ,illegal,illegal,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* b0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,clrw_ix,illegal,negw_ix,illegal,incw_ix,	/* c0 */
+	illegal,lsrd_ix,illegal,rord_ix,illegal,asrd_ix,illegal,asld_ix,
+	illegal,rold_ix,illegal,clrw_ix,illegal,negw_ix,illegal,incw_ix,	/* c0 */
 	illegal,decw_ix,illegal,tstw_ix,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* d0 */
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
@@ -426,8 +442,8 @@ static void (*konami_direct[0x100])(void) = {
 	illegal,illegal,rol_di ,lsrw_di,rorw_di,asrw_di,aslw_di,rolw_di,	/* a0 */
 	jmp_di ,jsr_di ,illegal,illegal,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* b0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,clrw_di,illegal,negw_di,illegal,incw_di,	/* c0 */
+	illegal,lsrd_di,illegal,rord_di,illegal,asrd_di,illegal,asld_di,
+	illegal,rold_di,illegal,clrw_di,illegal,negw_di,illegal,incw_di,	/* c0 */
 	illegal,decw_di,illegal,tstw_di,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* d0 */
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
@@ -461,8 +477,8 @@ static void (*konami_extended[0x100])(void) = {
 	illegal,illegal,rol_ex ,lsrw_ex,rorw_ex,asrw_ex,aslw_ex,rolw_ex,	/* a0 */
 	jmp_ex ,jsr_ex ,illegal,illegal,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* b0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,clrw_ex,illegal,negw_ex,illegal,incw_ex,	/* c0 */
+	illegal,lsrd_ex,illegal,rord_ex,illegal,asrd_ex,illegal,asld_ex,
+	illegal,rold_ex,illegal,clrw_ex,illegal,negw_ex,illegal,incw_ex,	/* c0 */
 	illegal,decw_ex,illegal,tstw_ex,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* d0 */
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,

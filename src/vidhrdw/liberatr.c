@@ -11,69 +11,60 @@
      from the arcade video system in order to make the planet
      appear round.
 
-   Two methods have been tried using the #defines below and in
-     the driver.c file.  In the 342x256 case, every 3rd bitmap x
-     pixel is doubled, and the planet data is subsampled.  In the
-     512x384 case, every bitmap pixel is doubled in x, and
-     every other bitmap and planet line is doubled in y.  The larger
-     method looks better on the screen (in particular the cursor, missile
-     tracks and the spare ships look better) but is somewhat
-     slower because of the extra pixels to bash around.
-
-   As it is, the 512x384 driver runs only about 80% frame rate
-     on my PowerMac 7100/80 (80MHz 601) using Frameskip3.  The 342x256
-     driver runs ~85-95%.  Ideas on speed up welcomed.  I leave it
-     to the powers that be to decide which version to ship.  My
-     preference is 512x384, but if it is too slow on the 'reference'
-     machine, then so be it...
-
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define LIB_VIDEORAM_SIZE	(0x100*0x100)
 
-/*
-// The following structure describes the (up to 32) line segments
-//   that make up one horizontal line (latitude) for one display frame of the planet.
-// Note: this and the following structure is only used to collect the
-//   data before it is packed for actual use.
-*/
-typedef struct {
-	unsigned char	nsegs;			/* the number of segments on this line */
-	unsigned char	xmax ;			/* the maximum value of x_a for this line */
-	unsigned short	align ;
-	unsigned char	cc_a[32] ;		/* the color values  */
-	unsigned char	x_a[32] ;		/* and maximum x values for each segment  */
-} LibSegs ; /* 32 + 32 + 4 = 68 bytes */
-
-/*
-// The following structure describes the lines (latitudes)
-//   that make up one complete display frame of the planet.
-// Note: this and the previous structure is only used to collect the
-//   data before it is packed for actual use.
-*/
-typedef struct {
-	LibSegs line[ 128 ] ;
-} LibView ; /* 68 * 128 = 8704 bytes */
-
-/*
-// The following structure collects the 256 views of the
-//   planet (one per value of startlg (start longitude).
-// The data is packed nsegs,xstrt,cc,xx,cc,xx,...  then
-//                    nsegs,xstrt,cc,xx,cc,xx...  for the next line, etc
-//   for the 128 lines.
-*/
-typedef struct {
-	unsigned char	*view[ 256 ] ;
-} LibPlanet ; /* 4 * 256 = 1024 bytes */
+void liberatr_vh_stop(void);
 
 
 /*
-//	The following two arrays are Prom dumps off the processor
-//	board.  Should we generate a function instead?
+	The following structure describes the (up to 32) line segments
+	that make up one horizontal line (latitude) for one display frame of the planet.
+	Note: this and the following structure is only used to collect the
+	data before it is packed for actual use.
 */
-static unsigned char ltscale[] = {
+typedef struct
+{
+	UINT8	segment_count;		/* the number of segments on this line */
+	UINT8	max_x;				/* the maximum value of x_array for this line */
+	UINT8	color_array[32];	/* the color values  */
+	UINT8	x_array[32];		/* and maximum x values for each segment  */
+} Liberator_Segs;
+
+/*
+	The following structure describes the lines (latitudes)
+	that make up one complete display frame of the planet.
+	Note: this and the previous structure is only used to collect the
+	data before it is packed for actual use.
+*/
+typedef struct
+{
+	Liberator_Segs line[ 0x80 ];
+} Liberator_Frame;
+
+
+/*
+	The following structure collects the 256 frames of the
+	planet (one per value of longitude).
+	The data is packed segment_count,segment_start,color,length,color,length,...  then
+                       segment_count,segment_start,color,length,color,length...  for the next line, etc
+	for the 128 lines.
+*/
+typedef struct
+{
+	UINT8 *frame[256];
+} Liberator_Planet;
+
+
+/*
+	The following two arrays are Prom dumps off the processor
+	board.
+*/
+
+static UINT8 latitude_scale[] = {
 	0x25,0x3A,0x4A,0x55,0x5F,0x6A,0x75,0x7A,0x80,0x8A,0x8F,0x95,0x9A,0xA0,0xA5,0xAA,
 	0xB0,0xB5,0xB5,0xBA,0xC0,0xC0,0xC5,0xCA,0xCA,0xCF,0xCF,0xD5,0xD5,0xDA,0xDA,0xDF,
 	0xDF,0xE5,0xE5,0xE5,0xEA,0xEA,0xEA,0xEF,0xEF,0xEF,0xEF,0xF5,0xF5,0xF5,0xF5,0xFA,
@@ -81,9 +72,9 @@ static unsigned char ltscale[] = {
 	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFA,0xFA,0xFA,0xFA,0xFA,0xFA,
 	0xFA,0xF5,0xF5,0xF5,0xF5,0xEF,0xEF,0xEF,0xEF,0xEA,0xEA,0xEA,0xE5,0xE5,0xE5,0xDF,
 	0xDF,0xDA,0xDA,0xD5,0xD5,0xCF,0xCF,0xCA,0xCA,0xC5,0xC0,0xC0,0xBA,0xB5,0xB5,0xB0,
-	0xAA,0xA5,0xA0,0x9A,0x95,0x8F,0x8A,0x80,0x7A,0x75,0x6A,0x5F,0x55,0x4A,0x3A,0x25 } ;
+	0xAA,0xA5,0xA0,0x9A,0x95,0x8F,0x8A,0x80,0x7A,0x75,0x6A,0x5F,0x55,0x4A,0x3A,0x25 };
 
-static unsigned char lgscale[] = {
+static UINT8 longitude_scale[] = {
 	0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x03,
 	0x03,0x03,0x04,0x04,0x05,0x05,0x05,0x06,0x06,0x07,0x07,0x08,0x08,0x09,0x09,0x0A,
 	0x0A,0x0B,0x0B,0x0C,0x0C,0x0D,0x0E,0x0E,0x0F,0x10,0x10,0x11,0x12,0x12,0x13,0x14,
@@ -99,238 +90,103 @@ static unsigned char lgscale[] = {
 	0xAF,0xB0,0xB1,0xB2,0xB2,0xB3,0xB4,0xB5,0xB5,0xB6,0xB7,0xB7,0xB8,0xB9,0xB9,0xBA,
 	0xBB,0xBB,0xBC,0xBC,0xBD,0xBD,0xBE,0xBE,0xBF,0xBF,0xC0,0xC0,0xC1,0xC1,0xC2,0xC2,
 	0xC2,0xC3,0xC3,0xC4,0xC4,0xC4,0xC5,0xC5,0xC5,0xC5,0xC6,0xC6,0xC6,0xC6,0xC6,0xC7,
-	0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xFF,0xFF,0xFF,0xFF,0xFF } ;
+	0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0xFF,0xFF,0xFF,0xFF,0xFF };
 
-unsigned char				*lib_videoram = NULL,
-							*lib_raw_colorram = NULL,
-							*lib_basram = NULL  ;
-static int					lib_planetbit = 0 ;
-static int					lib_startlg = 0 ;
+
+UINT8 *liberatr_base_ram;
+UINT8 *liberatr_planet_frame;
+UINT8 *liberatr_planet_select;
+UINT8 *liberatr_x;
+UINT8 *liberatr_y;
+
+static UINT8 *liberatr_videoram;
 
 /*
-// The following array collects the 2 different planet
-//   descriptions, which are selected with lib_planetbit
+	The following array collects the 2 different planet
+	descriptions, which are selected by liberatr_planetbit
 */
-static LibPlanet *lib_planet_segs[2] = { NULL, NULL } ;
+static Liberator_Planet *liberatr_planet_segs[2];
 
 
-/********************************************************************************************/
-static void lib_drawplanet(int data) ;
-static void lib_init_planet(void) ;
-
-
-/********************************************************************************************/
-void liberator_startlg_w(int offset,int data)
+INLINE void bitmap_common_w(UINT8 x, UINT8 y, int data)
 {
-	lib_startlg = data ;
+	int pen;
 
-} /* liberator_startlg_w */
+	liberatr_videoram[(y<<8) | x] = data;
 
-/********************************************************************************************/
-void liberator_planetbit_w(int offset,int data)
+	pen = Machine->pens[(data >> 5) + 0x10];
+	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = pen;
+}
+
+void liberatr_bitmap_xy_w(int offset, int data)
 {
-	lib_planetbit = (data & 0x10) ? 1 : 0 ;
+	bitmap_common_w(*liberatr_x, *liberatr_y, data);
+}
 
-} /* liberator_planetbit_w */
-
-/********************************************************************************************/
-void liberator_bitmap_w(int offset, int data)
+void liberatr_bitmap_w(int offset, int data)
 {
-	int addr;
-	int	d ;
-	unsigned char tmb ;
-	/* TODO: get rid of this */
-	extern unsigned char *RAM;
-	int xcoor = RAM[ 0x0000 ] ;
-	int ycoor = RAM[ 0x0001 ] ;
+	UINT8 x = (offset & 0x3f) << 2;
+	UINT8 y = (offset >> 6);
 
-	if( offset == 2 )
-	{
-		addr = ((ycoor<<8) + xcoor)>>0 ;
-		d = data & 0xe0 ;
+    bitmap_common_w(x , y, data);
+    bitmap_common_w(x+1, y, data);
+    bitmap_common_w(x+2, y, data);
+    bitmap_common_w(x+3, y, data);
+}
 
-		lib_videoram[addr] = d ;
 
-		tmb = Machine->pens[(d >> 5) + 0x10];
-
-		tmpbitmap->line[ycoor][xcoor] = tmb ;
-	}
-	else if( offset == 0x341 )		/* part of the write to clear the bitmap RAM	*/
-	{
-		memset( lib_videoram , 0x00 , LIB_VIDEORAM_SIZE ) ;
-		for( ycoor = 0 ; ycoor < Machine->drv->screen_height ; ycoor++)
-			for( xcoor = 0 ; xcoor < Machine->drv->screen_width ; xcoor++ )
-				tmpbitmap->line[ycoor][xcoor] = Machine->pens[0x10];
-	}
-
-} /* liberator_bitmap_w */
-
-/********************************************************************************************/
-int liberator_bitmap_r (int address)
+INLINE int bitmap_common_r(UINT8 x, UINT8 y)
 {
-	int addr,data;
-	/* TODO: get rid of this */
-	extern unsigned char *RAM;
-	int xcoor = RAM[ 0x0000 ] ;
-	int ycoor = RAM[ 0x0001 ] ;
+	return liberatr_videoram[(y<<8) | x];
+}
 
-	addr = (ycoor<<8) + xcoor ;
-	data = lib_videoram[addr] ;
-
-	return( data ) ;
-} /* liberator_bitmap_r */
-
-
-/********************************************************************************************/
-void liberator_basram_w(int address, int data)
+int liberatr_bitmap_xy_r(int offset)
 {
-	int	addr ;
+	UINT8 x = *liberatr_x;
+	UINT8 y = *liberatr_y;
 
-	addr = address & 0x1f ;
+	return bitmap_common_r(x, y);
+}
 
-	lib_basram[ addr ] = data ;
-
-} /* liberator_basram_w */
-
-/********************************************************************************************/
-void liberator_colorram_w(int offset,int data)
+int liberatr_bitmap_r(int offset, int data)
 {
-	unsigned char	red, green, blue ;
-	static unsigned char	map[]     = {0xff,0xdf,0xb8,0x97,0x68,0x47,0x20,0x00} ;
-	static unsigned char	bluemap[] = {0xff,0x00,0xb8,0x00,0x68,0x00,0x00,0x00} ;
+	UINT8 x = (offset & 0x3f) << 2;
+	UINT8 y = (offset >> 6);
+
+	return bitmap_common_r(x, y);
+}
+
+
+void liberatr_colorram_w(int offset,int data)
+{
+	UINT8 r,g,b;
+
 	/* handle the hardware flip of the bit order from 765 to 576 that
-	//   hardware does between vram and color ram */
-	static unsigned char	penmap[]={0x10,0x12,0x14,0x16,0x11,0x13,0x15,0x17} ;
+	   hardware does between vram and color ram */
+	static UINT8 penmap[] = {0x10,0x12,0x14,0x16,0x11,0x13,0x15,0x17};
 
 
-	red   = map[((data >> 3) & 0x07)] ;
-	green = map[((data     ) & 0x07)] ;
-	blue  = bluemap[((data >> 5) & 0x06)] ;
-
-	lib_raw_colorram[offset] = data ;
+	/* scale it from 0x00-0xff */
+	r = ((~data >> 3) & 0x07) * 0x24 + 3;  if (r == 3)  r = 0;
+	g = ((~data     ) & 0x07) * 0x24 + 3;  if (g == 3)  g = 0;
+	b = ((~data >> 5) & 0x06) * 0x24 + 3;  if (b == 3)  b = 0;
 
 	if (offset & 0x10)
 	{
 		/* bitmap colorram values */
-		offset = penmap[offset & 0x07] ;
+		offset = penmap[offset & 0x07];
  	}
 	else
 	{
 		offset ^= 0x0f;
 	}
 
-	palette_change_color(offset,red,green,blue);
+	palette_change_color(offset,r,g,b);
+}
 
-} /* liberator_colorram_w */
-
-
-/********************************************************************************************/
-void liberator_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	/* put the planet into tmpbitmap */
-	lib_drawplanet( lib_startlg ) ;
-
-	/* copy tmpbitmap to the screen */
-	copybitmap(
-		bitmap,							/* struct osd_bitmap *dest,			*/
-		tmpbitmap,						/* struct osd_bitmap *src,			*/
-		0,0,							/* int flipx,int flipy,				*/
-		0,0,							/* int sx,int sy,					*/
-		&Machine->drv->visible_area,	/* const struct rectangle *clip,	*/
-		TRANSPARENCY_NONE,				/* int transparency,				*/
-		0								/* int transparent_color			*/
-		) ;
-} /* liberator_vh_update */
-
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int liberator_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	lib_videoram     	= calloc( 1 , LIB_VIDEORAM_SIZE ) ;
-	lib_raw_colorram 	= calloc( 1 , 0x20 ) ;
-	lib_basram      	= calloc( 1 , 0x20 ) ;
-
-
-	/*
-	// allocate the planet descriptor structure
-	*/
-	if( lib_planet_segs[0] == NULL )
-	{
-		lib_planet_segs[0] = calloc( 1 , sizeof( LibPlanet ) ) ;
-	}
-	if( lib_planet_segs[1] == NULL )
-	{
-		lib_planet_segs[1] = calloc( 1 , sizeof( LibPlanet ) ) ;
-	}
-
-	/*
-	// for each planet in the planet ROMs
-	*/
-	lib_planetbit = 1 ;
-	lib_init_planet() ;
-
-	lib_planetbit = 0 ;
-	lib_init_planet() ;
-
-	return 0;
-} /* liberator_vh_start */
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void liberator_vh_stop(void)
-{
-	int i ;
-
-	if( lib_videoram )
-	{
-		free( lib_videoram ) ;
-		lib_videoram = NULL ;
-	}
-	if( lib_raw_colorram )
-	{
-		free( lib_raw_colorram ) ;
-		lib_raw_colorram = NULL ;
-	}
-	if( lib_basram )
-	{
-		free( lib_basram ) ;
-		lib_basram = NULL ;
-	}
-	if( lib_planet_segs[0] )
-	{
-		for( i = 0 ; i < 256 ; i++ )
-			if( (*lib_planet_segs[0]).view[i] )
-				free( (*lib_planet_segs[0]).view[i] ) ;
-		free( lib_planet_segs[0] ) ;
-		lib_planet_segs[0] = NULL ;
-	}
-	if( lib_planet_segs[1] )
-	{
-		for( i = 0 ; i < 256 ; i++ )
-			if( (*lib_planet_segs[1]).view[i] )
-				free( (*lib_planet_segs[1]).view[i] ) ;
-		free( lib_planet_segs[1] ) ;
-		lib_planet_segs[1] = NULL ;
-	}
-
-	osd_free_bitmap(tmpbitmap);
-	tmpbitmap = NULL ;
-
-} /* liberator_vh_stop */
 
 /********************************************************************************************
-  lib_init_planet()
+  liberatr_init_planet()
 
   The data for the planet is stored in ROM using a run-length type of encoding.  This
   function does the conversion to the above structures and then a smaller
@@ -339,232 +195,300 @@ void liberator_vh_stop(void)
   Its a multi-step process, reflecting the history of the code.  Not quite as efficient
   as it might be, but this is not realtime stuff, so who cares...
  ********************************************************************************************/
-static void
-lib_init_planet()
+static int liberatr_init_planet(int planet_select)
 {
-	unsigned long	i, addr, cc, lg, misc, fsg, lgs, lts, x=0, nsegs, maxnsegs=0, totalnsegs=0, strt_scg ;
-	unsigned long	x_a[32],cc_a[32],fsg_a[32] ;
-	unsigned long	startlg, vdl, scg;
-	unsigned char	*buf ;
-	unsigned short	pprom ;
-	LibSegs			*line = NULL ;
-	LibView			*view = NULL ;
+	UINT16 longitude;
+	UINT8 *planet_rom;
 
-	/*
-	// for each starting longitude
-	*/
-	for(startlg=0 ; startlg < 0x100 ; startlg++)
+
+	planet_rom = Machine->memory_region[1];
+
+	/* for each starting longitude */
+	for (longitude = 0; longitude < 0x100; longitude++)
 	{
-		totalnsegs = 0 ;
+		UINT8  i, latitude, start_segment, segment_count;
+		UINT16 total_segment_count;
+		UINT8  *buffer;
+		Liberator_Frame frame;
+		Liberator_Segs *line = 0;
 
-		if( view == NULL )
-			if( (view = (LibView *)calloc( 1, sizeof( LibView ) )) == NULL )
-				return ;
 
-		/*
-		// for each latitude (vdl)
-		*/
-		for( vdl = 0 ; vdl <= 0x7f ; vdl++ )
+		total_segment_count = 0;
+
+		/* for each latitude */
+		for (latitude = 0; latitude < 0x80; latitude++)
 		{
-			/*
-			// point to the structure which will hold the data for this line
-			*/
-			line = &(*view).line[ vdl ] ;
+			UINT8 segment, longitude_scale_factor, latitude_scale_factor, color, x=0;
+			UINT8 x_array[32], color_array[32], visible_array[32];
 
-			/*
-			// latitude scaling factor
-			*/
-			lts = ltscale[ vdl ] ;
 
-			/*
-			// for this latitude (vdl), load the 32 segments into the _a arrays
-			*/
-			memset( fsg_a , 0 , 32*sizeof(unsigned long) ) ;
-			for( scg = 0 ; scg <= 0x1f ; scg++ )
+			/* point to the structure which will hold the data for this line */
+			line = &frame.line[ latitude ];
+
+			latitude_scale_factor = latitude_scale[ latitude ];
+
+			/* for this latitude, load the 32 segments into the arrays */
+			for (segment = 0; segment < 0x20; segment++)
 			{
+				UINT16 length, planet_data, address;
+
+
 				/*
-				// read the planet picture ROM and get the
-				//   latitude and longitude scaled from the scaling PROMS
+				   read the planet picture ROM and get the
+				   latitude and longitude scaled from the scaling PROMS
 				*/
-				addr = (vdl << 5) + scg ;
-				if( lib_planetbit )
-					pprom = (ROM[0x0000+addr] << 8) + ROM[0x1000+addr] ;
+				address = (latitude << 5) + segment;
+				if (planet_select)
+					planet_data = (planet_rom[0x0000+address] << 8) + planet_rom[0x1000+address];
 				else
-					pprom = (ROM[0x2000+addr] << 8) + ROM[0x3000+addr] ;
+					planet_data = (planet_rom[0x2000+address] << 8) + planet_rom[0x3000+address];
 
-				misc =  (pprom >> 12) & 0x07 ;
-				cc   =  (pprom >>  8) & 0x0f ;
-				lg   = ((pprom <<  1) & 0x1fe) + ((pprom >> 15) & 0x01) ;
+				color  =  (planet_data >> 8) & 0x0f;
+				length = ((planet_data << 1) & 0x1fe) + ((planet_data >> 15) & 0x01);
 
-				/*
-				// scale the longitude limit (adding the starting longitude)
-				*/
-				addr = startlg + ( lg >> 1 ) + ( lg & 1 ) ;		/* shift with rounding */
-				fsg        =
-				fsg_a[scg] = (( addr & 0x100 ) ? 1 : 0) ;
-				if( addr & 0x80 )
+
+				/* scale the longitude limit (adding the starting longitude) */
+				address = longitude + ( length >> 1 ) + ( length & 1 );		/* shift with rounding */
+				visible_array[segment] = (( address & 0x100 ) ? 1 : 0);
+				if (address & 0x80)
 				{
-					lgs = 0xff ;
+					longitude_scale_factor = 0xff;
 				}
 				else
 				{
-					addr = ((addr & 0x7f) << 1) + (((lg & 1) || fsg) ? 0 : 1) ;
-					lgs = lgscale[ addr ] ;
+					address = ((address & 0x7f) << 1) + (((length & 1) || visible_array[segment]) ? 0 : 1);
+					longitude_scale_factor = longitude_scale[ address ];
 				}
 
-				/*
-				// x_a  is the x coordinate limit for this segment
-				// cc_a is the color of this segment
-				*/
-				x_a[ scg ]  = ((lts * lgs) + 0x80) >> 8 ;	/* round it */
-				cc_a[ scg ] = cc ;
-
-			} /* scg */
-
-			/*
-			// determine which segment is the western horizon and
-			//   leave scg indexing it.
-			*/
-			for( scg = 0 ; scg < 0x20 ; scg++ )
-				if( fsg_a[scg] ) break;
-			if( scg >= 0x20 )
-				scg = 0x1f ;
-
-			/*
-			// transfer from the temporary arrays to the structure
-			*/
-			(*line).xmax =  (lts * 0xc0) >> 8 ;
-			if( (*line).xmax & 1 )
-				(*line).xmax += 1 ; 				/* make it even */
-
-			/*
-			// as part of the quest to reduce memory usage (and to a lesser degree
-			//   execution time), stitch together segments that have the same color
-			*/
-			nsegs = 0 ;
-			i = 0 ;
-			strt_scg = scg ;
-			do {
-				cc = cc_a[scg] ;
-				while( cc == cc_a[scg] )
-				{
-					x = x_a[scg] ;
-					scg = (scg+1) & 0x1f ;
-					if( scg == strt_scg )
-						break;
-				}
-				(*line).cc_a[ i ] = cc ;
-				(*line).x_a[ i ]  = (x > (*line).xmax) ? (*line).xmax : x ;
-				i++ ;
-				nsegs++ ;
-			} while( (i < 32) && (x <= (*line).xmax) ) ;
-			if( nsegs > maxnsegs ) maxnsegs = nsegs ;
-			totalnsegs += nsegs ;
-			(*line).nsegs = nsegs ;
-
-		} /* vdl */
-
-		/* now that the all the lines have been processed, and we know how
-		//   many segments it will take to store the description, allocate the
-		//   space for it and copy the data to it.
-		*/
-		if( (buf = (unsigned char *)calloc( sizeof(unsigned char), 2*(128 + totalnsegs) ) ) == NULL)
-			return ;
-		(*lib_planet_segs[ lib_planetbit ]).view[ startlg ] = buf ;
-		for( vdl = 0 ; vdl < 128 ; vdl++ )
-		{
-			line  = &(*view).line[ vdl ] ;
-			nsegs  = (*line).nsegs ;
-			*buf++ = nsegs ;
-			/* calculate the tmpbitmap's x coordinate for the western horizon
-			//   center of tmpbitmap - (the number of planet pixels) / 4 */
-			*buf++ = Machine->drv->screen_width/2 - (((*line).xmax) + 2) / 4 ;
-
-			for( i = 0 ; i < nsegs ; i++ )
-			{
-				*buf++ = (*line).cc_a[ i ] ;
-				*buf++ = ((*line).x_a[ i ] + 1) / 2;
+				x_array[segment] = (((UINT16)latitude_scale_factor * (UINT16)longitude_scale_factor) + 0x80) >> 8;	/* round it */
+				color_array[segment] = color;
 			}
 
+			/*
+			   determine which segment is the western horizon and
+			     leave 'segment' indexing it.
+			*/
+			for (segment = 0; segment < 0x1f; segment++)	/* if not found, 'segment' = 0x1f */
+				if (visible_array[segment]) break;
+
+			/* transfer from the temporary arrays to the structure */
+			line->max_x = (latitude_scale_factor * 0xc0) >> 8;
+			if (line->max_x & 1)
+				line->max_x += 1; 				/* make it even */
+
+			/*
+			   as part of the quest to reduce memory usage (and to a lesser degree
+			     execution time), stitch together segments that have the same color
+			*/
+			segment_count = 0;
+			i = 0;
+			start_segment = segment;
+			do
+			{
+				color = color_array[segment];
+				while (color == color_array[segment])
+				{
+					x = x_array[segment];
+					segment = (segment+1) & 0x1f;
+					if (segment == start_segment)
+						break;
+				}
+				line->color_array[ i ] = color;
+				line->x_array[ i ]     = (x > line->max_x) ? line->max_x : x;
+				i++;
+				segment_count++;
+			} while ((i < 32) && (x <= line->max_x));
+
+			total_segment_count += segment_count;
+			line->segment_count = segment_count;
 		}
 
-	} /* startlg */
+		/* now that the all the lines have been processed, and we know how
+		   many segments it will take to store the description, allocate the
+		   space for it and copy the data to it.
+		*/
+		if ((buffer = (UINT8 *)malloc(2*(128 + total_segment_count))) == 0)
+			return 1;
 
-	if( view != NULL )
-		free( view ) ;
+		liberatr_planet_segs[ planet_select ]->frame[ longitude ] = buffer;
 
-	return ;
+		for (latitude = 0; latitude < 0x80; latitude++)
+		{
+			UINT8 last_x;
 
-} /* lib_init_planet */
+
+			line = &frame.line[ latitude ];
+			segment_count = line->segment_count;
+			*buffer++ = segment_count;
+			last_x = 0;
+
+			/* calculate the tmpbitmap's x coordinate for the western horizon
+			   center of tmpbitmap - (the number of planet pixels) / 4 */
+			*buffer++ = Machine->drv->screen_width/2 - (line->max_x + 2) / 4;
+
+			for (i = 0; i < segment_count; i++)
+			{
+				UINT8 current_x = (line->x_array[ i ] + 1) / 2;
+				*buffer++ = line->color_array[ i ];
+				*buffer++ = current_x - last_x;
+				last_x = current_x;
+			}
+		}
+	}
+
+	return 0;
+}
 
 
-/********************************************************************************************/
-static void lib_drawplanet(int data)
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+int liberatr_vh_start(void)
 {
-	unsigned int	vdl, scg, startlg ;
-	unsigned int	xa , cc, base, x, y, nsegs  ;
-	unsigned int	tbmX  ;
-	unsigned char	*tbm ;
-	unsigned char	*buf ;
-	unsigned char reverse_map[256];
+    liberatr_videoram = 0;
+    liberatr_planet_segs[0] = 0;
+    liberatr_planet_segs[1] = 0;
 
 
-	for (x = 0;x < 0x20;x++)
+	if ((liberatr_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height)) == 0)
+	{
+		liberatr_vh_stop();
+		return 1;
+	}
+
+	/* allocate the planet descriptor structure */
+	if (((liberatr_planet_segs[0] = malloc(sizeof(Liberator_Planet))) == 0) ||
+	    ((liberatr_planet_segs[1] = malloc(sizeof(Liberator_Planet))) == 0))
+	{
+		liberatr_vh_stop();
+		return 1;
+	}
+
+	memset(liberatr_planet_segs[0], 0, sizeof(Liberator_Planet));
+	memset(liberatr_planet_segs[1], 0, sizeof(Liberator_Planet));
+
+	/* for each planet in the planet ROMs */
+	if (liberatr_init_planet(0) ||
+		liberatr_init_planet(1))
+	{
+		liberatr_vh_stop();
+		return 1;
+	}
+
+	return generic_bitmapped_vh_start();
+}
+
+/***************************************************************************
+
+  Stop the video hardware emulation.
+
+***************************************************************************/
+void liberatr_vh_stop(void)
+{
+	int i;
+
+	if (liberatr_videoram)
+	{
+		free(liberatr_videoram);
+		liberatr_videoram = 0;
+	}
+	if (liberatr_planet_segs[0])
+	{
+		for (i = 0; i < 256; i++)
+			if (liberatr_planet_segs[0]->frame[i])
+				free(liberatr_planet_segs[0]->frame[i]);
+		free(liberatr_planet_segs[0]);
+		liberatr_planet_segs[0] = 0;
+	}
+	if (liberatr_planet_segs[1])
+	{
+		for (i = 0; i < 256; i++)
+			if (liberatr_planet_segs[1]->frame[i])
+				free(liberatr_planet_segs[1]->frame[i]);
+		free(liberatr_planet_segs[1]);
+		liberatr_planet_segs[1] = 0;
+	}
+
+    generic_bitmapped_vh_stop();
+}
+
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
+
+static void liberatr_draw_planet(void)
+{
+	UINT8 latitude, x;
+	UINT8 *buffer;
+	UINT8 reverse_map[256];
+
+
+	for (x = 0; x < Machine->drv->total_colors; x++)
 		reverse_map[Machine->pens[x]] = x;
 
-	startlg = data & 0xff ;
 
-	if( lib_planet_segs[ lib_planetbit ] )
-		buf = (*lib_planet_segs[ lib_planetbit ]).view[ startlg ] ;
-	else
-		return ;
+	buffer = liberatr_planet_segs[ (*liberatr_planet_select >> 4) & 0x01 ]->frame[ *liberatr_planet_frame ];
 
-	/*
-	// for each latitude (vdl)
-	*/
-	for( vdl = 0 ; vdl <= 0x7f ; vdl++ )
+	/* for each latitude */
+	for (latitude = 0; latitude < 0x80; latitude++)
 	{
-		/*
-		// grab the color value for the base (if any) at this latitude
-		*/
-		base = lib_basram[ (vdl>>3) & 0x0f ] ;
-		base = base ^ 0x0f ;
+		UINT8 base_color, segment, segment_count, segment_x, y;
+		UINT8 *bitmap, *temp_bitmap;
 
-		x = 0 ;					/* from the western horizon */
-		nsegs = *buf++ ;
-		tbmX  = *buf++ ;
+		/* grab the color value for the base (if any) at this latitude */
+		base_color = liberatr_base_ram[latitude>>3] ^ 0x0f;
 
-		y = 64 + vdl ;
+		segment_count = *buffer++;
+		segment_x     = *buffer++;
 
-		/*
-		// run through the segments, drawing its color
-		//   until its x_a value comes up.
-		*/
-		for( scg = 0 ; scg < nsegs ; scg++ )
+		y = 64 + latitude;
+
+		     bitmap = &(Machine->scrbitmap->line[y][segment_x]);
+		temp_bitmap = &(         tmpbitmap->line[y][segment_x]);
+
+		/* run through the segments, drawing its color until its x_array value comes up. */
+		for (segment = 0; segment < segment_count; segment++)
 		{
-			cc = *buf++ ;
-			xa = *buf++ ;
-			if( (cc & 0x0c) == 0x0c )
-				cc = base ;
+			UINT8 color, segment_length;
+			UINT16 pen;
 
-			while( x < xa )
+			color = *buffer++;
+			if ((color & 0x0c) == 0x0c)
+				color = base_color;
+
+			pen = Machine->pens[color];
+
+			segment_length = *buffer++;
+
+			for (x = 0; x < segment_length; x++)
 			{
 				/* planet video doesn't overwrite bitmap video, so
-				//   check the tmpbitmap where we want to draw into.
-				// bitmap writes into the tmpbitmap all have bit 4 (0x10) set
-				//   (they use pens 0x10-0x17)
+				     check the tmpbitmap where we want to draw into.
+				   bitmap writes into the tmpbitmap all have bit 4 (0x10) set
+				     (they use pens 0x10-0x17)
 				*/
-				tbm = &(tmpbitmap->line[y][tbmX]) ;
-				if (reverse_map[*tbm] <= 0x10)
-					*tbm = Machine->pens[cc];
-				x++ ;
-				tbmX++ ;
+				if (reverse_map[*temp_bitmap] <= 0x10)
+					*bitmap = *temp_bitmap = pen;
 
-			} /* while */
-		} /* scg */
-	} /* vdl */
-
-} /* lib_drawplanet */
+				bitmap++;
+				temp_bitmap++;
+			}
+		}
+	}
+}
 
 
-/* -- eof -- */
+void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* draw the planet */
+	liberatr_draw_planet();
+
+	generic_bitmapped_vh_screenrefresh(bitmap, full_refresh);
+}

@@ -365,9 +365,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -477,9 +475,7 @@ INPUT_PORTS_START( dv_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -734,6 +730,31 @@ ROM_START( devstor2_rom )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
+ROM_START( garuka_rom )
+	ROM_REGION(0x40000)
+	ROM_LOAD( "890w02.bin",   0x10000, 0x08000, 0xb2f6f538 )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+    ROM_REGION(0x40000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
+	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
+	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
+
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
+ 	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
+ROM_END
+
 
 
 static int hiload(void)
@@ -774,8 +795,8 @@ static void hisave(void)
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
-	konami_rom_deinterleave(2);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(2);
 }
 
 
@@ -884,3 +905,28 @@ struct GameDriver devstor2_driver =
 	0,0
 };
 
+struct GameDriver garuka_driver =
+{
+	__FILE__,
+	&devstors_driver,
+ 	"garuka",
+	"Garuka (Japan)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	GAME_NOT_WORKING,
+	&dv_machine_driver,
+	0,
+
+	garuka_rom,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	dv_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};

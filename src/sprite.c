@@ -406,7 +406,7 @@ static void do_blit_zoom( const struct sprite *sprite ){
 		if( y1>=y2 ) return;
 	}
 
-	if(!(sprite->flags & SPRITE_SHADOW))
+	if(!(sprite->flags & (SPRITE_SHADOW | SPRITE_PARTIAL_SHADOW)))
 	{
 		const unsigned char *pen_data = sprite->pen_data;
 		const unsigned short *pal_data = sprite->pal_data;
@@ -436,7 +436,8 @@ static void do_blit_zoom( const struct sprite *sprite ){
 					}
 					pen = *source;
 					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
-					if( pen ) *dest1 = pal_data[pen];
+/*					if( pen==10 ) *dest1 = shade_table[*dest1];
+					else */if( pen ) *dest1 = pal_data[pen];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
@@ -460,10 +461,76 @@ skip1:
 					}
 					pen = *source;
 					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
-					if( pen ) dest[x] = pal_data[pen];
+/*					if( pen==10 ) dest[x] = shade_table[dest[x]];
+					else */if( pen ) dest[x] = pal_data[pen];
 					xcount += sprite->tile_width;
 				}
 skip:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+	else if(sprite->flags & SPRITE_PARTIAL_SHADOW)
+	{
+		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned short *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy;
+		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				unsigned char *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip6; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) *dest1 = shade_table[*dest1];
+					else if( pen ) *dest1 = pal_data[pen];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip6:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip5; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) dest[x] = shade_table[dest[x]];
+					else if( pen ) dest[x] = pal_data[pen];
+					xcount += sprite->tile_width;
+				}
+skip5:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
@@ -638,7 +705,11 @@ static void sprite_update_helper( struct sprite_list *sprite_list ){
 	if( orientation & ORIENTATION_FLIP_X ){
 		struct sprite *sprite = sprite_table;
 		const struct sprite *finish = &sprite[sprite_list->num_sprites];
+#ifndef PREROTATE_GFX
+		int toggle_bit = SPRITE_FLIPX;
+#else
 		int toggle_bit = (sprite_list->flags & SPRITE_LIST_RAW_DATA)?SPRITE_FLIPX:0;
+#endif
 		while( sprite<finish ){
 			sprite->x = screen_width - (sprite->x+sprite->total_width);
 			sprite->flags ^= toggle_bit;
@@ -651,7 +722,11 @@ static void sprite_update_helper( struct sprite_list *sprite_list ){
 	if( orientation & ORIENTATION_FLIP_Y ){
 		struct sprite *sprite = sprite_table;
 		const struct sprite *finish = &sprite[sprite_list->num_sprites];
+#ifndef PREROTATE_GFX
+		int toggle_bit = SPRITE_FLIPY;
+#else
 		int toggle_bit = (sprite_list->flags & SPRITE_LIST_RAW_DATA)?SPRITE_FLIPY:0;
+#endif
 		while( sprite<finish ){
 			sprite->y = screen_height - (sprite->y+sprite->total_height);
 			sprite->flags ^= toggle_bit;

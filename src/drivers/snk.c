@@ -1124,9 +1124,7 @@ BUTTONS
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* DSW 1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1483,10 +1481,7 @@ INPUT_PORTS_START( ftsoccer_input_ports )
 	PORT_DIPSETTING(    0x50, "1:20" )
 	PORT_DIPSETTING(    0x60, "1:10" )
 	PORT_DIPSETTING(    0x10, "1:00" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -4033,7 +4028,7 @@ struct GameDriver legofair_driver =
 	__FILE__,
 	&chopper_driver,
 	"legofair",
-	"The Legend of Air Cavalry",
+	"Koukuu Kihei Monogatari - The Legend of Air Cavalry",
 	"1988",
 	"SNK",
 	CREDITS,

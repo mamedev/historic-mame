@@ -33,16 +33,14 @@ static void mainevt_tile_callback(int layer,int bank,int *code,int *color)
 	else tile_info.priority = 0;
 
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x1c) << 7);
-	*color = ((*color & 0xc0) >> 6);
-	*color += layer_colorbase[layer];
+	*color = layer_colorbase[layer] + ((*color & 0xc0) >> 6);
 }
 
 static void dv_tile_callback(int layer,int bank,int *code,int *color)
 {
 	tile_info.flags = (*color & 0x02) ? TILE_FLIPX : 0;
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x3c) << 7);
-	*color = ((*color & 0xc0) >> 6);
-	*color += layer_colorbase[layer];
+	*color = layer_colorbase[layer] + ((*color & 0xc0) >> 6);
 }
 
 
@@ -129,11 +127,11 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-	K051960_draw_sprites(bitmap,0,0);
+	K051960_sprites_draw(bitmap,0,0);
 	K052109_tilemap_draw(bitmap,2,1);	/* low priority part of layer */
-	K051960_draw_sprites(bitmap,2,2);
+	K051960_sprites_draw(bitmap,2,2);
 	K052109_tilemap_draw(bitmap,2,0);	/* high priority part of layer */
-	K051960_draw_sprites(bitmap,1,1);
+	K051960_sprites_draw(bitmap,1,1);
 	K052109_tilemap_draw(bitmap,0,0);
 }
 
@@ -148,6 +146,6 @@ void dv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
 	K052109_tilemap_draw(bitmap,2,0);
-	K051960_draw_sprites(bitmap,0,0);
+	K051960_sprites_draw(bitmap,0,0);
 	K052109_tilemap_draw(bitmap,0,0);
 }

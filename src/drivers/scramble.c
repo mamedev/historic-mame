@@ -701,9 +701,7 @@ INPUT_PORTS_START( triplep_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_SERVICE( 0x20, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -1948,7 +1946,7 @@ static int ckongs_hiload(void)
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
         {
 			int hi;
-        	osd_fread(f,&RAM[0x6107],155);
+        	osd_fread(f,&RAM[0x6107],161);
 			osd_fclose(f);
 
 			hi = (RAM[0x610b] &0x0f) * 0x10 +
@@ -1975,7 +1973,7 @@ static void ckongs_hisave(void)
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
-        osd_fwrite(f,&RAM[0x6107],155);
+        osd_fwrite(f,&RAM[0x6107],161);
         osd_fclose(f);
     }
 }

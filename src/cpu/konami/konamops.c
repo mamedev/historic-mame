@@ -2901,6 +2901,17 @@ INLINE void bmove( void )
 	}
 }
 
+INLINE void move( void )
+{
+	UINT8	t;
+
+	t = RM(Y);
+	WM(X,t);
+	Y++;
+	X++;
+	U--;
+}
+
 /* CLRD inherent -0100 */
 INLINE void clrd( void )
 {
@@ -3192,6 +3203,7 @@ INLINE void tstd( void )
 INLINE void tstw_di( void )
 {
 	PAIR t;
+	CLR_NZV;
 	DIRWORD(t);
 	SET_NZ16(t.d);
 }
@@ -3200,6 +3212,7 @@ INLINE void tstw_di( void )
 INLINE void tstw_ix( void )
 {
 	PAIR t;
+	CLR_NZV;
 	RM16(EA, &t);
 	SET_NZ16(t.d);
 }
@@ -3208,6 +3221,7 @@ INLINE void tstw_ix( void )
 INLINE void tstw_ex( void )
 {
 	PAIR t;
+	CLR_NZV;
 	EXTWORD(t);
 	SET_NZ16(t.d);
 }
@@ -3469,4 +3483,250 @@ INLINE void absd( void )
 	CLR_NZVC;
 	SET_FLAGS16(0,D,r);
 	D = r;
+}
+
+/* LSRD direct -0*-* */
+INLINE void lsrd_di( void )
+{
+	UINT8 t;
+
+	DIRBYTE( t );
+
+	while ( t-- ) {
+		CLR_NZC;
+		CC |= (D & CC_C);
+		D >>= 1;
+		SET_Z16(D);
+	}
+}
+
+/* RORD direct -**-* */
+INLINE void rord_di( void )
+{
+	UINT16 r;
+	UINT8  t;
+
+	DIRBYTE(t);
+
+	while ( t-- ) {
+		r = (CC & CC_C) << 15;
+		CLR_NZC;
+		CC |= (D & CC_C);
+		r |= D >> 1;
+		SET_NZ16(r);
+		D = r;
+	}
+}
+
+/* ASRD direct ?**-* */
+INLINE void asrd_di( void )
+{
+	UINT8 t;
+
+	DIRBYTE(t);
+
+	while ( t-- ) {
+		CLR_NZC;
+		CC |= (D & CC_C);
+		D = (D & 0x8000) | (D >> 1);
+		SET_NZ16(D);
+	}
+}
+
+/* ASLD direct ?**** */
+INLINE void asld_di( void )
+{
+	UINT32	r;
+	UINT8	t;
+
+	DIRBYTE( t );
+
+	while ( t-- ) {
+		r = D << 1;
+		CLR_NZVC;
+		SET_FLAGS16(D,D,r);
+		D = r;
+	}
+}
+
+/* ROLD direct -**-* */
+INLINE void rold_di( void )
+{
+	UINT16 r;
+	UINT8  t;
+
+	DIRBYTE(t);
+
+	while ( t-- ) {
+		CLR_NZC;
+		if ( D & 0x8000 ) SEC;
+		r = CC & CC_C;
+		r |= D << 1;
+		SET_NZ16(r);
+		D = r;
+	}
+}
+
+/* LSRD indexed -0*-* */
+INLINE void lsrd_ix( void )
+{
+	UINT8 t;
+
+	t=RM(EA);
+
+	while ( t-- ) {
+		CLR_NZC;
+		CC |= (D & CC_C);
+		D >>= 1;
+		SET_Z16(D);
+	}
+}
+
+/* RORD indexed -**-* */
+INLINE void rord_ix( void )
+{
+	UINT16 r;
+	UINT8  t;
+
+	t=RM(EA);
+
+	while ( t-- ) {
+		r = (CC & CC_C) << 15;
+		CLR_NZC;
+		CC |= (D & CC_C);
+		r |= D >> 1;
+		SET_NZ16(r);
+		D = r;
+	}
+}
+
+/* ASRD indexed ?**-* */
+INLINE void asrd_ix( void )
+{
+	UINT8 t;
+
+	t=RM(EA);
+
+	while ( t-- ) {
+		CLR_NZC;
+		CC |= (D & CC_C);
+		D = (D & 0x8000) | (D >> 1);
+		SET_NZ16(D);
+	}
+}
+
+/* ASLD indexed ?**** */
+INLINE void asld_ix( void )
+{
+	UINT32	r;
+	UINT8	t;
+
+	t=RM(EA);
+
+	while ( t-- ) {
+		r = D << 1;
+		CLR_NZVC;
+		SET_FLAGS16(D,D,r);
+		D = r;
+	}
+}
+
+/* ROLD indexed -**-* */
+INLINE void rold_ix( void )
+{
+	UINT16 r;
+	UINT8  t;
+
+	t=RM(EA);
+
+	while ( t-- ) {
+		CLR_NZC;
+		if ( D & 0x8000 ) SEC;
+		r = CC & CC_C;
+		r |= D << 1;
+		SET_NZ16(r);
+		D = r;
+	}
+}
+
+/* LSRD extended -0*-* */
+INLINE void lsrd_ex( void )
+{
+	UINT8 t;
+
+	EXTBYTE(t);
+
+	while ( t-- ) {
+		CLR_NZC;
+		CC |= (D & CC_C);
+		D >>= 1;
+		SET_Z16(D);
+	}
+}
+
+/* RORD extended -**-* */
+INLINE void rord_ex( void )
+{
+	UINT16 r;
+	UINT8  t;
+
+	EXTBYTE(t);
+
+	while ( t-- ) {
+		r = (CC & CC_C) << 15;
+		CLR_NZC;
+		CC |= (D & CC_C);
+		r |= D >> 1;
+		SET_NZ16(r);
+		D = r;
+	}
+}
+
+/* ASRD extended ?**-* */
+INLINE void asrd_ex( void )
+{
+	UINT8 t;
+
+	EXTBYTE(t);
+
+	while ( t-- ) {
+		CLR_NZC;
+		CC |= (D & CC_C);
+		D = (D & 0x8000) | (D >> 1);
+		SET_NZ16(D);
+	}
+}
+
+/* ASLD extended ?**** */
+INLINE void asld_ex( void )
+{
+	UINT32	r;
+	UINT8	t;
+
+	EXTBYTE(t);
+
+	while ( t-- ) {
+		r = D << 1;
+		CLR_NZVC;
+		SET_FLAGS16(D,D,r);
+		D = r;
+	}
+}
+
+/* ROLD extended -**-* */
+INLINE void rold_ex( void )
+{
+	UINT16 r;
+	UINT8  t;
+
+	EXTBYTE(t);
+
+	while ( t-- ) {
+		CLR_NZC;
+		if ( D & 0x8000 ) SEC;
+		r = CC & CC_C;
+		r |= D << 1;
+		SET_NZ16(r);
+		D = r;
+	}
 }

@@ -382,9 +382,7 @@ INPUT_PORTS_START( pspikes_input_ports )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BITX(    0x0100, 0x0100, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0600, 0x0600, "Initial Score" )
 	PORT_DIPSETTING(      0x0600, "12-12" )
 	PORT_DIPSETTING(      0x0400, "11-11" )
@@ -458,9 +456,7 @@ INPUT_PORTS_START( turbofrc_input_ports )
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BITX(    0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -570,9 +566,7 @@ INPUT_PORTS_START( aerofgtb_input_ports )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x4000, "200000" )
 	PORT_DIPSETTING(      0x0000, "300000" )
-	PORT_BITX(    0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0000, "Country" )
@@ -659,9 +653,7 @@ INPUT_PORTS_START( aerofgt_input_ports )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0040, "200000" )
 	PORT_DIPSETTING(      0x0000, "300000" )
-	PORT_BITX(    0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 
 	PORT_START
 	PORT_DIPNAME( 0x000f, 0x0000, "Country" )
@@ -885,7 +877,7 @@ static void irqhandler(int irq)
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-struct YM2610interface ym2610_interface =
+static struct YM2610interface ym2610_interface =
 {
 	1,
 	8000000,	/* 8 MHz??? */
@@ -1172,7 +1164,7 @@ ROM_START( turbofrc_rom )
 	ROM_REGION_DISPOSE(0x3c0000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "tfrcu94.bin",  0x000000, 0x080000, 0xbaa53978 )
 	ROM_LOAD( "tfrcu95.bin",  0x080000, 0x020000, 0x71a6c573 )
-	/* 0a0000-11ffff - u105 - missing */
+	ROM_LOAD( "tfrcu105.bin", 0x0a0000, 0x080000, 0x00000000 )
 	ROM_LOAD( "tfrcu106.bin", 0x120000, 0x020000, 0xc6479eb5 )
 	ROM_LOAD( "tfrcu116.bin", 0x140000, 0x080000, 0xdf210f3b )
 	ROM_LOAD( "tfrcu118.bin", 0x1c0000, 0x040000, 0xf61d1d79 )

@@ -3,17 +3,13 @@
 	(c) Taito 1985
 
 	Known Issues:
-	- adpcm sounds rough
-	- text layer colors are bogus for two reasons:
-		it isn't clear what part of the palette should be used
-		one of Samurai's GFX ROMs is bad
-	- colors need verification
+	- some color problems (need screenshots)
 	- Nunchackun has wrong colors; sprites look better if you subtract sprite color from 0x2d
 	- Yuke Yuke Yamaguchi-kun isn't playable (sprite problem only?)
 */
 
 #include "driver.h"
-#include "cpu/Z80/Z80.h"
+#include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #define CREDITS "Phil Stroffolino"
 
@@ -41,12 +37,9 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MSM5205interface msm5205_interface =
+static struct DACinterface dac_interface =
 {
 	2,			/* number of chips */
-	384000,		/* 384KHz? */
-	{ 0, 0 },
-	{ MSM5205_S64_4B, MSM5205_S64_4B },	/* ? */
 	{ 20, 20 }
 };
 
@@ -109,7 +102,6 @@ static struct MemoryWriteAddress writemem[] = {
 	{ 0xe800, 0xefff, tsamurai_bg_videoram_w },
 	{ 0xf000, 0xf3ff, MWA_RAM },
 
-	/* adpcm */
 	{ 0xf400, 0xf400, MWA_NOP },
 	{ 0xf401, 0xf401, sound_command1_w },
 	{ 0xf402, 0xf402, sound_command2_w },
@@ -142,7 +134,7 @@ static int sound_command1_r( int offset ){
 }
 
 static void sound_out1_w( int offset, int data ){
-	MSM5205_data_w(0,data>>4);
+	DAC_data_w(0,data);
 }
 
 static struct MemoryReadAddress readmem_sound1[] = {
@@ -165,7 +157,7 @@ static int sound_command2_r( int offset ){
 }
 
 static void sound_out2_w( int offset, int data ){
-	MSM5205_data_w(1,data>>4);
+	DAC_data_w(1,data);
 }
 
 static struct MemoryReadAddress readmem_sound2[] = {
@@ -281,8 +273,8 @@ static struct MachineDriver machine_driver =
 			&ay8910_interface
 		},
 		{
-			SOUND_MSM5205,
-			&msm5205_interface
+			SOUND_DAC,
+			&dac_interface
 		}
 	}
 };
@@ -309,8 +301,8 @@ ROM_START( tsamurai_rom )
 	ROM_LOAD( "08.12j",	0x0a000, 0x4000, 0xa07d6dc3 )
 	ROM_LOAD( "09.12k",	0x0e000, 0x4000, 0xc0784a0e )
 	ROM_LOAD( "10.11n",	0x12000, 0x1000, 0x0b5a0c45 ) // characters
-	ROM_LOAD( "12.11r",	0x13000, 0x1000, 0x00000000 ) // this ROM is bad (all 0xff) should go at 14000
 	ROM_LOAD( "11.11q",	0x13000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "12.11r",	0x14000, 0x1000, 0xf4c69d8a )
 
 	ROM_REGION( 0x300 )
 	ROM_LOAD( "tbp24s10.2j", 0x000, 0x100, 0x72d8b332 )
@@ -325,12 +317,12 @@ ROM_START( nunchaku_rom )
 	ROM_LOAD( "nunchack.p3",	0x8000, 0x4000, 0xcde5d674 )
 
 	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
-	ROM_LOAD( "nunchack.m1",	0x0000, 0x2000, 0xb53d73f6 )
-	ROM_LOAD( "nunchack.m2",	0x2000, 0x2000, 0xf37d7c49 )
-
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
 	ROM_LOAD( "nunchack.m3",	0x0000, 0x2000, 0x9036c945 )
 	ROM_LOAD( "nunchack.m4",	0x2000, 0x2000, 0xe7206724 )
+
+	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
+	ROM_LOAD( "nunchack.m1",	0x0000, 0x2000, 0xb53d73f6 )
+	ROM_LOAD( "nunchack.m2",	0x2000, 0x2000, 0xf37d7c49 )
 
 	ROM_REGION_DISPOSE( 0x15000 )
 	ROM_LOAD( "nunchack.b1",	0x00000, 0x2000, 0x48c88fea ) // tiles
@@ -632,7 +624,7 @@ struct GameDriver tsamurai_driver =  {
 	"1985",
 	"Taito",
 	CREDITS,
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 

@@ -577,7 +577,7 @@ static struct MachineDriver machine_driver =
 			gameplan_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,							/* CPU slices per frame */
     0,							/* init_machine */
 

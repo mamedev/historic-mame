@@ -31,6 +31,8 @@ void m68000_abcd_rr(void)
 
 	*d_dst = MASK_OUT_BELOW_8(*d_dst) | MASK_OUT_ABOVE_8(res);
 
+	CPU_N = GET_MSB_8(res); /* officially undefined */
+
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
 	USE_CLKS(6);
@@ -51,6 +53,8 @@ void m68000_abcd_mm_ax7(void)
 		res -= 0xa0;
 
 	m68ki_write_8(ea, res);
+
+	CPU_N = GET_MSB_8(res); /* officially undefined */
 
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
@@ -73,6 +77,8 @@ void m68000_abcd_mm_ay7(void)
 
 	m68ki_write_8(ea, res);
 
+	CPU_N = GET_MSB_8(res); /* officially undefined */
+
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
 	USE_CLKS(18);
@@ -94,6 +100,8 @@ void m68000_abcd_mm_axy7(void)
 
 	m68ki_write_8(ea, res);
 
+	CPU_N = GET_MSB_8(res); /* officially undefined */
+
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
 	USE_CLKS(18);
@@ -112,6 +120,8 @@ void m68000_abcd_mm(void)
 	res += HIGH_NIBBLE(src) + HIGH_NIBBLE(dst);
 	if ((CPU_X = CPU_C = res > 0x99) != 0)
 		res -= 0xa0;
+
+	CPU_N = GET_MSB_8(res); /* officially undefined */
 
 	m68ki_write_8(ea, res);
 
@@ -7815,6 +7825,8 @@ void m68000_sbcd_rr(void)
 
 	*d_dst = MASK_OUT_BELOW_8(*d_dst) | MASK_OUT_ABOVE_8(res);
 
+	CPU_N = GET_MSB_8(res); /* officially undefined */
+
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
 	USE_CLKS(6);
@@ -7835,6 +7847,8 @@ void m68000_sbcd_mm_ax7(void)
 		res += 0xa0;
 
 	m68ki_write_8(ea, res);
+
+	CPU_N = GET_MSB_8(res); /* officially undefined */
 
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
@@ -7857,6 +7871,8 @@ void m68000_sbcd_mm_ay7(void)
 
 	m68ki_write_8(ea, res);
 
+	CPU_N = GET_MSB_8(res); /* officially undefined */
+
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
 	USE_CLKS(18);
@@ -7878,6 +7894,8 @@ void m68000_sbcd_mm_axy7(void)
 
 	m68ki_write_8(ea, res);
 
+	CPU_N = GET_MSB_8(res); /* officially undefined */
+
 	if (MASK_OUT_ABOVE_8(res) != 0)
 		CPU_NOT_Z = 1;
 	USE_CLKS(18);
@@ -7896,6 +7914,8 @@ void m68000_sbcd_mm(void)
 	res += HIGH_NIBBLE(dst) - HIGH_NIBBLE(src);
 	if ((CPU_X = CPU_C = res > 0x99) != 0)
 		res += 0xa0;
+
+	CPU_N = GET_MSB_8(res); /* officially undefined */
 
 	m68ki_write_8(ea, res);
 

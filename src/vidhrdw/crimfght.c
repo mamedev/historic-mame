@@ -88,6 +88,14 @@ int crimfght_vh_start( void )
 	return 0;
 }
 
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
 void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
@@ -100,9 +108,9 @@ void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-	K051960_draw_sprites(bitmap,2,2);
+	K051960_sprites_draw(bitmap,2,2);
 	K052109_tilemap_draw(bitmap,2,0);
-	K051960_draw_sprites(bitmap,1,1);
+	K051960_sprites_draw(bitmap,1,1);
 	K052109_tilemap_draw(bitmap,0,0);
-	K051960_draw_sprites(bitmap,0,0);
+	K051960_sprites_draw(bitmap,0,0);
 }

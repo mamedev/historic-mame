@@ -379,7 +379,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60, 3500,	/* frames per second, vblank duration (complete guess) */
+	57, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -420,7 +420,7 @@ static struct MachineDriver robotbowl_machine_driver =
 			interrupt,1
 		}
 	},
-	60, 3500,	/* frames per second, vblank duration (complete guess) */
+	57, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -458,7 +458,7 @@ static struct MachineDriver crash_machine_driver =
 			interrupt,2
 		}
 	},
-	60, 3500,	/* frames per second, vblank duration (complete guess) */
+	57, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -496,7 +496,7 @@ static struct MachineDriver ripcord_machine_driver =
 			ripcord_interrupt,1
 		}
 	},
-	60, 3500,	/* frames per second, vblank duration (complete guess) */
+	57, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 

@@ -24,8 +24,11 @@
 #define	V_RETRACE_END_INDEX		12
 #define	V_END_INDEX				13
 #define	MEM_OFFSET_INDEX		14
+#define	UNDERLINE_LOC_INDEX		15
 #define	V_BLANKING_START_INDEX	16
 #define	V_BLANKING_END_INDEX	17
+#define MODE_CONTROL_INDEX		18
+#define	MEMORY_MODE_INDEX		20
 
 
 
@@ -46,9 +49,6 @@ typedef struct
 
 /* find the driver for the card */
 int getSVGA15KHzdriver(SVGA15KHZDRIVER **driver15KHz);
-
-/* center the mode */
-void center15KHz(Register *pReg);
 
 /* our 'generic' SVGA 15.75KHz functions */
 int genericsvga(void);

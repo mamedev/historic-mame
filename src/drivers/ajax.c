@@ -33,12 +33,9 @@ int ajax_interrupt_2( void );
 void ajax_sh_irqtrigger_w( int offset, int data );
 
 /* from vidhrdw/ajax.c */
-extern unsigned char *ajax_051316_ram;
-int ajax_zoomram_r(int offset);
-void ajax_zoomram_w(int offset,int data);
-int ajax_052109_vh_start( void );
-void ajax_052109_vh_stop( void );
-void ajax_052109_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+int ajax_vh_start( void );
+void ajax_vh_stop( void );
+void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 
 
 
@@ -58,12 +55,6 @@ static void sound_bank_w(int offset, int data)
 }
 
 
-static unsigned char *bank;
-
-int ajax_051316_r(int offset)
-{
-	return Machine->memory_region[3][offset + (*bank << 11)];
-}
 
 /****************************************************************************/
 
@@ -111,8 +102,8 @@ static struct MemoryWriteAddress ajax_writemem[] =
 
 static struct MemoryReadAddress ajax_readmem_2[] =
 {
-	{ 0x0000, 0x07ff, ajax_zoomram_r },
-	{ 0x1000, 0x17ff, ajax_051316_r },		/* 051316 (ROM test) */
+	{ 0x0000, 0x07ff, K051316_r },
+	{ 0x1000, 0x17ff, K051316_rom_r },		/* 051316 (ROM test) */
 	{ 0x2000, 0x3fff, ajax_sharedram_r },	/* shared RAM with the 052001 */
 	{ 0x4000, 0x7fff, K052109_r },			/* video RAM + color RAM + video registers */
 	{ 0x8000, 0x9fff, MRA_BANK1 },					/* banked ROM */
@@ -122,9 +113,8 @@ static struct MemoryReadAddress ajax_readmem_2[] =
 
 static struct MemoryWriteAddress ajax_writemem_2[] =
 {
-	{ 0x0000, 0x07ff, ajax_zoomram_w, &ajax_051316_ram },
-	{ 0x080c, 0x080c, MWA_RAM, &bank },	/* 051316 for ROM testing */
-//	{ 0x080e, 0x080e, ajax_051316rmrd_w },	/* 051316, 0 = test ROMs */
+	{ 0x0000, 0x07ff, K051316_w },
+	{ 0x0800, 0x080f, K051316_ctrl_w },
 	{ 0x1800, 0x1800, ajax_bankswitch_w_2 },	/* bankswitch control */
 	{ 0x2000, 0x3fff, ajax_sharedram_w, &ajax_sharedram },/* shared RAM with the 052001 */
 	{ 0x4000, 0x7fff, K052109_w },			/* video RAM + color RAM + video registers */
@@ -224,12 +214,10 @@ INPUT_PORTS_START( ajax_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )	/* service mode calls this cabinet */
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )		/* type (alternating/interactive) */
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )		/* but it doesn't apply */
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, "Control in 3D Stages" )
 	PORT_DIPSETTING(	0x08, "Normal" )
 	PORT_DIPSETTING(	0x00, "Inverted" )
@@ -265,27 +253,6 @@ INPUT_PORTS_START( ajax_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
-
-
-
-static struct GfxLayout zoomlayout =
-{
-	16,16,	/* 16*16 tiles */
-	2048,	/* 2048 tiles */
-	7,	/* 7 bits per pixel */
-	{ 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
-			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128 },
-	256*8	/* every tile takes 256 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 3, 0x000000, &zoomlayout,   0, 16 },
-	{ -1 }
-};
 
 
 
@@ -357,14 +324,14 @@ static struct MachineDriver ajax_machine_driver =
 
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	0,	/* gfx decoded by konamiic.c */
 	2048, 2048,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	ajax_052109_vh_start,
-	ajax_052109_vh_stop,
-	ajax_052109_vh_screenrefresh,
+	ajax_vh_start,
+	ajax_vh_stop,
+	ajax_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -422,8 +389,8 @@ ROM_END
 
 static void gfx_untangle(void)
 {
-	konami_rom_deinterleave(1);
-	konami_rom_deinterleave(2);
+	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(2);
 }
 
 

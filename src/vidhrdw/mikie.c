@@ -170,7 +170,8 @@ void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipy = spriteram[offs] & 0x20;
 		if (flipscreen)
 		{
-			sy -= 2;
+			sy = 242 - sy;
+			flipy = !flipy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[(spriteram[offs+2] & 0x40) ? 2 : 1],

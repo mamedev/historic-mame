@@ -423,6 +423,7 @@ Keys
 Tab          Toggles the configuration menu
 Tilde        Toggles the On Screen Display
 P            Pause
+Shift+P      While paused, advance to next frame
 F3           Reset
 F4           Show the game graphics. Use cursor keys to change set/color,
              F4 or Esc to return to the emulation.

@@ -934,7 +934,7 @@ static struct MachineDriver targ_machine_driver =
 			exidy_interrupt,1
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	1,
 	exidy_init_machine,
 
@@ -1000,7 +1000,7 @@ static struct MachineDriver mtrap_machine_driver =
 	    	ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
     32, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	exidy_init_machine,
 
@@ -1052,7 +1052,7 @@ static struct MachineDriver venture_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	exidy_init_machine,
 
@@ -1102,7 +1102,7 @@ static struct MachineDriver pepper2_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	exidy_init_machine,
 
@@ -1153,7 +1153,7 @@ static struct MachineDriver fax_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	exidy_init_machine,
 

@@ -263,7 +263,7 @@ void romident(const char* name,int enter_dirs) {
 
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
-		LIST_WRONGORIENTATION, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE };
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE };
 
 int frontend_help (int argc, char **argv)
 {
@@ -316,6 +316,7 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
 #endif
 		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
+		if (!stricmp(argv[i],"-wrongfps")) list = LIST_WRONGFPS;
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
 
 		/* these options REQUIRES gamename field to work */
@@ -681,6 +682,25 @@ int frontend_help (int argc, char **argv)
 						printf("%s %dx%d\n",drivers[i]->name,
 								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
 								drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1);
+				}
+				i++;
+			}
+			return 0;
+			break;
+
+		case LIST_WRONGFPS: /* list drivers with too high frame rate */
+			while (drivers[i])
+			{
+				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
+						drivers[i]->clone_of == 0 &&
+						drivers[i]->drv->frames_per_second > 57 &&
+						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 > 244 &&
+						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 <= 256)
+				{
+					printf("%s %dx%d %dHz\n",drivers[i]->name,
+							drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
+							drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1,
+							drivers[i]->drv->frames_per_second);
 				}
 				i++;
 			}

@@ -623,9 +623,7 @@ static struct MachineDriver machine_driver =
 			cska_interrupt,6
 		}
 	},
-	60,
-
-	DEFAULT_60HZ_VBLANK_DURATION,
+	57, DEFAULT_60HZ_VBLANK_DURATION,
 
 	1, /* cpu slices */
 	cpk_initmachine, /* init machine */
@@ -657,9 +655,7 @@ static struct MachineDriver csk234it_machine_driver =
 			cska_interrupt,6
 		}
 	},
-	60,
-
-	DEFAULT_60HZ_VBLANK_DURATION,
+	57,	DEFAULT_60HZ_VBLANK_DURATION,
 
 	1, /* cpu slices */
 	cpk_initmachine, /* init machine */
