@@ -84,11 +84,15 @@ void phoenix_sound_control_a_w(int offset,int data)
            switch (noise) {
              case 1 : if (lastnoise != noise)
                         osd_play_sample(2,Machine->samples->sample[0]->data,
-                                          Machine->samples->sample[0]->length,max_freq,255,0);
+                                          Machine->samples->sample[0]->length,
+                                          Machine->samples->sample[0]->smpfreq,
+                                          Machine->samples->sample[0]->volume,0);
                       break;
              case 2 : if (lastnoise != noise)
                         osd_play_sample(2,Machine->samples->sample[1]->data,
-                                          Machine->samples->sample[1]->length,max_freq,255,0);
+                                          Machine->samples->sample[1]->length,
+                                          Machine->samples->sample[1]->smpfreq,
+                                          Machine->samples->sample[1]->volume,0);
                       break;
            }
            lastnoise = noise;

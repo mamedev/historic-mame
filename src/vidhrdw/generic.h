@@ -5,6 +5,7 @@ extern unsigned char *videoram;
 extern unsigned char *colorram;
 extern unsigned char *spriteram;
 extern unsigned char *spriteram_2;
+extern unsigned char *spriteram_3;
 extern unsigned char *dirtybuffer;
 extern struct osd_bitmap *tmpbitmap;
 

@@ -11,12 +11,14 @@
 #include "driver.h"
 #include "Z80.h"
 #include "M6502.h"
+#include "M6809.h"
 
 extern void I86_Execute();
 extern void I86_Reset(unsigned char *mem,int cycles);
 
 
 static int activecpu;
+static int cpurunning[MAX_CPU];
 
 static const struct MemoryReadAddress *memoryread;
 static const struct MemoryWriteAddress *memorywrite;
@@ -33,6 +35,16 @@ struct z80context
 	int irq;
 };
 
+/* DS...*/
+struct m6809context
+{
+	m6809_Regs	regs;
+	int	icount;
+	int iperiod;
+	int	irq;
+};
+/* ...DS */
+
 
 
 void cpu_run(void)
@@ -48,9 +60,12 @@ void cpu_run(void)
 	while (totalcpu < MAX_CPU)
 	{
 		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
+
 		/* if sound is disabled, don't emulate the audio CPU */
 		if (play_sound == 0 && (Machine->drv->cpu[totalcpu].cpu_type & CPU_AUDIO_CPU))
-			break;
+			cpurunning[totalcpu] = 0;
+		else
+			cpurunning[totalcpu] = 1;
 
 		totalcpu++;
 	}
@@ -96,6 +111,24 @@ reset:
 				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
 				I86_Reset(RAM,cycles);
 				break;
+			/* DS... */
+			case CPU_M6809:
+				{
+					struct m6809context *ctxt;
+
+					ctxt = (struct m6809context *)cpucontext[activecpu];
+					/* m6809_reset() needs to read memory to get the PC start address */
+					RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
+					memoryread = Machine->drv->cpu[activecpu].memory_read;
+					m6809_IPeriod = cycles;
+					m6809_reset();
+					m6809_GetRegs(&ctxt->regs);
+					ctxt->icount = cycles;
+					ctxt->iperiod = cycles;
+					ctxt->irq = INT_NONE;
+				}
+				break;
+			/* ...DS */
 		}
 	}
 
@@ -104,50 +137,76 @@ reset:
 	{
 		for (activecpu = 0;activecpu < totalcpu;activecpu++)
 		{
-			int loops;
-
-
-			memoryread = Machine->drv->cpu[activecpu].memory_read;
-			memorywrite = Machine->drv->cpu[activecpu].memory_write;
-
-			RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
-			/* opcode decryption is currently supported only for the first memory region */
-			if (activecpu == 0) ROM = ROM0;
-			else ROM = RAM;
-
-			switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+			if (cpurunning[activecpu])
 			{
-				case CPU_Z80:
-					{
-						struct z80context *ctxt;
+				int loops;
 
 
-						ctxt = (struct z80context *)cpucontext[activecpu];
+				memoryread = Machine->drv->cpu[activecpu].memory_read;
+				memorywrite = Machine->drv->cpu[activecpu].memory_write;
 
-						Z80_SetRegs(&ctxt->regs);
-						Z80_ICount = ctxt->icount;
-						Z80_IPeriod = ctxt->iperiod;
-						Z80_IRQ = ctxt->irq;
+				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
+				/* opcode decryption is currently supported only for the first memory region */
+				if (activecpu == 0) ROM = ROM0;
+				else ROM = RAM;
 
+
+				switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+				{
+					case CPU_Z80:
+						{
+							struct z80context *ctxt;
+
+
+							ctxt = (struct z80context *)cpucontext[activecpu];
+
+							Z80_SetRegs(&ctxt->regs);
+							Z80_ICount = ctxt->icount;
+							Z80_IPeriod = ctxt->iperiod;
+							Z80_IRQ = ctxt->irq;
+
+							for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
+								Z80_Execute();
+
+							Z80_GetRegs(&ctxt->regs);
+							ctxt->icount = Z80_ICount;
+							ctxt->iperiod = Z80_IPeriod;
+							ctxt->irq = Z80_IRQ;
+						}
+						break;
+
+					case CPU_M6502:
 						for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
-							Z80_Execute();
+							Run6502((M6502 *)cpucontext[activecpu]);
+						break;
 
-						Z80_GetRegs(&ctxt->regs);
-						ctxt->icount = Z80_ICount;
-						ctxt->iperiod = Z80_IPeriod;
-						ctxt->irq = Z80_IRQ;
-					}
-					break;
+					case CPU_I86:
+						for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
+							I86_Execute();
+						break;
+					/* DS... */
+					case CPU_M6809:
+						{
+							struct m6809context *ctxt;
 
-				case CPU_M6502:
-					for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
-						Run6502((M6502 *)cpucontext[activecpu]);
-					break;
+							ctxt = (struct m6809context *)cpucontext[activecpu];
 
-				case CPU_I86:
-					for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
-						I86_Execute();
-					break;
+							m6809_SetRegs(&ctxt->regs);
+							m6809_ICount = ctxt->icount;
+							m6809_IPeriod = ctxt->iperiod;
+							m6809_IRequest = ctxt->irq;
+
+							for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
+								m6809_execute();
+
+							m6809_GetRegs(&ctxt->regs);
+							ctxt->icount = m6809_ICount;
+							ctxt->iperiod = m6809_IPeriod;
+							ctxt->irq = m6809_IRequest;
+						}
+						break;
+					/* ...DS */
+				}
 			}
 		}
 
@@ -155,6 +214,20 @@ reset:
 		if (usres == 2)	/* user asked to reset the machine */
 			goto reset;
 	} while (usres == 0);
+}
+
+
+
+/***************************************************************************
+
+  Use this function to stop and restart CPUs
+
+***************************************************************************/
+void cpu_halt(int cpunum,int running)
+{
+	if (cpunum >= MAX_CPU) return;
+
+	cpurunning[cpunum] = running;
 }
 
 
@@ -170,6 +243,12 @@ int cpu_getpc(void)
 		case CPU_M6502:
 			return ((M6502 *)cpucontext[activecpu])->PC.W;
 			break;
+
+		/* DS... */
+		case CPU_M6809:
+			return m6809_GetPC();
+			break;
+		/* ...DS */
 
 		default:
 	if (errorlog) fprintf(errorlog,"cpu_getpc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
@@ -192,6 +271,12 @@ int cpu_geticount(void)
 			return ((M6502 *)cpucontext[activecpu])->ICount;
 			break;
 
+		/* DS... */
+		case CPU_M6809:
+			return m6809_ICount;
+			break;
+		/* ...DS */
+
 		default:
 	if (errorlog) fprintf(errorlog,"cpu_geticycles: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
 			return -1;
@@ -212,6 +297,12 @@ void cpu_seticount(int cycles)
 		case CPU_M6502:
 			((M6502 *)cpucontext[activecpu])->ICount = cycles;
 			break;
+
+		/* DS... */
+		case CPU_M6809:
+			m6809_ICount = cycles;
+			break;
+		/* ...DS */
 
 		default:
 	if (errorlog) fprintf(errorlog,"cpu_seticycles: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
@@ -359,6 +450,13 @@ int interrupt(void)
 			if (interrupt_enable == 0) return INT_NONE;
 			else return INT_IRQ;
 			break;
+
+		/* DS... */
+		case CPU_M6809:
+			if (interrupt_enable == 0) return INT_NONE;
+			else return INT_IRQ;
+			break;
+		/* ...DS */
 
 		default:
 	if (errorlog) fprintf(errorlog,"interrupt: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);

@@ -2,7 +2,7 @@ CC	= gcc
 LD	= gcc
 
 DEFS   = -DX86_ASM -DLSB_FIRST
-CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 \
+CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 \
          -fstrength-reduce -fomit-frame-pointer -O3 -m486 -Wall
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
@@ -52,7 +52,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/drivers/pepper2.o \
          obj/vidhrdw/gottlieb.o obj/drivers/reactor.o \
          obj/sndhrdw/gottlieb.o obj/drivers/qbert.o \
-         obj/drivers/krull.o \
+         obj/machine/gottlieb.o obj/drivers/krull.o \
          obj/drivers/mplanets.o \
          obj/vidhrdw/junglek.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
          obj/machine/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
@@ -60,9 +60,12 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/sndhrdw/arabian.o obj/drivers/arabian.o \
          obj/machine/1942.o obj/vidhrdw/1942.o obj/sndhrdw/1942.o obj/drivers/1942.o \
          obj/sndhrdw/gyruss.o obj/vidhrdw/gyruss.o obj/drivers/gyruss.o \
-         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o
+         obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
+         obj/machine/galaga.o obj/vidhrdw/galaga.o obj/drivers/galaga.o \
+         obj/machine/kangaroo.o obj/sndhrdw/kangaroo.o obj/vidhrdw/kangaroo.o obj/drivers/kangaroo.o \
+         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/M6809.o
 
-VPATH = src src/Z80 src/M6502 src/I86
+VPATH = src src/Z80 src/M6502 src/I86 src/M6809
 
 all: mame.exe
 
@@ -79,6 +82,7 @@ obj/%.o: src/%.c mame.h common.h driver.h
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
 obj/I86/I86.o:	I86.c I86.h global.h instr.h mytypes.h
+obj/M6809/M6809.o:  M6809.c M6809.h
 
 
 clean:
@@ -86,6 +90,7 @@ clean:
 	del obj\Z80\*.o
 	del obj\M6502\*.o
 	del obj\I86\*.o
+	del obj\M6809\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o

@@ -17,7 +17,8 @@
 
 unsigned char *moonqsr_attributesram;
 unsigned char *moonqsr_bulletsram;
-static int stars_on,stars_scroll;
+static int stars_on;
+static unsigned int stars_scroll;
 
 struct star
 {
@@ -303,6 +304,6 @@ void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap)
 				bitmap->line[y][x] = stars[offs].col;
 		}
 
-		stars_scroll++;
+		stars_scroll += frameskip+1;
 	}
 }

@@ -81,7 +81,7 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-                    charcode,(charcode>>6)+1,
+					charcode,(charcode>>6)+1,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}

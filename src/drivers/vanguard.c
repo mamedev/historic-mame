@@ -30,6 +30,8 @@ write
 extern unsigned char *vanguard_videoram2;
 extern unsigned char *vanguard_characterram;
 
+extern void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+
 extern int vanguard_interrupt(void);
 void vanguard_videoram2_w(int offset,int data);
 void vanguard_scrollx_w (int offset,int data);
@@ -97,6 +99,19 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 5, "MOVE UP" },
+        { 0, 7, "MOVE LEFT"  },
+        { 0, 6, "MOVE RIGHT" },
+        { 0, 4, "MOVE DOWN" },
+        { 0, 1, "FIRE UP" },
+        { 0, 3, "FIRE LEFT"  },
+        { 0, 2, "FIRE RIGHT" },
+        { 0, 0, "FIRE DOWN" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -112,7 +127,7 @@ struct GfxLayout vanguard_charlayout =
         8,8,    /* 8*8 characters */
         256,    /* 256 characters */
         2,      /* 2 bits per pixel */
-        { 0, 256*8*8 }, /* the two bitplanes are separated */
+        { 256*8*8, 0 }, /* the two bitplanes are separated */
         { 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
         { 0, 1, 2, 3, 4, 5, 6, 7 },
         8*8     /* every char takes 8 consecutive bytes */
@@ -123,7 +138,7 @@ static struct GfxLayout charlayout2 =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 256*8*8, 0 },	/* the two bitplanes are separated */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -139,7 +154,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
+#if 0
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,   /* black      */
@@ -186,6 +201,19 @@ static unsigned char colortable[] =
 	black, darkcyan,  red,        darkwhite
 };
 
+#endif
+
+static unsigned char color_prom[] =
+{
+	/* Sprite palette */
+        0x00, 0x2F, 0xF4, 0xFF, 0xEF, 0xF8, 0xFF, 0x07, 0xFE, 0xC0, 0x07, 0x3F, 0xFF, 0x3F, 0xC6, 0xC0,
+        0x00, 0x38, 0xE7, 0x07, 0xEF, 0xC0, 0xF4, 0xFF, 0xFE, 0xFF, 0xF8, 0xC0, 0xFF, 0xC6, 0xE7, 0xC0,
+
+	/* background palette */
+        0x00, 0x80, 0x3F, 0xC6, 0xEF, 0xC6, 0x2F, 0xF8, 0xFE, 0xC6, 0xE7, 0xC0, 0xFF, 0x2F, 0x38, 0xC6,
+        0x00, 0x07, 0x80, 0x2F, 0xEF, 0x07, 0xF8, 0xFF, 0xFE, 0xFF, 0xF8, 0xC0, 0xFF, 0xE7, 0xC6, 0xF4
+
+};
 
 
 static struct MachineDriver machine_driver =
@@ -206,8 +234,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	256, 64,
+	vanguard_vh_convert_color_prom,
 
 	0,
 	generic_vh_start,
@@ -258,9 +286,9 @@ struct GameDriver vanguard_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
 		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
 		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },

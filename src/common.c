@@ -9,6 +9,7 @@
 #include "driver.h"
 
 
+
 /***************************************************************************
 
   Read ROMs into memory.
@@ -202,16 +203,30 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 			{
 				if (fseek(f,0,SEEK_END) == 0)
 				{
-					int len;
+                                        int dummy;
+                                        unsigned char smpvol=0, smpres=0;
+					unsigned smplen=0, smpfrq=0;
 
-
-					len = ftell(f);
-					if (len != -1 && (samples->sample[i] = malloc(sizeof(struct GameSample) + (len-1)*sizeof(char))) != 0)
-					{
-						samples->sample[i]->length = len;
-						fseek(f,0,SEEK_SET);
-						fread(samples->sample[i]->data,1,len,f);
-					}
+					fseek(f,0,SEEK_SET);
+                                        fread(buf,1,4,f);
+                                        if (memcmp(buf, "MAME", 4) == 0) {
+                                           fread(&smplen,1,4,f);   /* all datas are LITTLE ENDIAN */
+                                           fread(&smpfrq,1,4,f);
+                                           fread(&smpres,1,1,f);
+                                           fread(&smpvol,1,1,f);
+                                           fread(&dummy,1,2,f);
+/*
+                                           if (errorlog) fprintf(errorlog, "len: %d  frq: %d  res: %d  vol: %d\n",smplen,smpfrq,smpres,smpvol);
+*/
+					   if ((smplen != 0) && (samples->sample[i] = malloc(sizeof(struct GameSample) + (smplen)*sizeof(char))) != 0)
+					   {
+						   samples->sample[i]->length = smplen;
+						   samples->sample[i]->volume = smpvol;
+						   samples->sample[i]->smpfreq = smpfrq;
+						   samples->sample[i]->resolution = smpres;
+						   fread(samples->sample[i]->data,1,smplen,f);
+					   }
+                                        }
 				}
 
 				fclose(f);
@@ -1077,6 +1092,73 @@ int setdipswitches(void)
 				(Machine->gamedrv->input_ports[dswsettings[total].num].default_value
 				& ~dswsettings[total].mask) | settings[total];
 	}
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
+
+	if (key == OSD_KEY_ESC) return 1;
+	else return 0;
+}
+
+
+int setkeysettings(void)
+{
+	struct DisplayText dt[40];
+	int i,s,key;
+	int total;
+	const struct KEYSet *keysettings;
+
+
+	keysettings = Machine->gamedrv->keysettings;
+
+	total = 0;
+	while (keysettings[total].num != -1) total++;
+
+        if (total == 0) return 0;
+
+	s = 0;
+	do
+	{
+		for (i = 0;i < total;i++)
+		{
+			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
+			dt[2 * i].text = keysettings[i].name;
+			dt[2 * i].x = 2*Machine->gfx[0]->width;
+			dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
+			dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
+			dt[2 * i + 1].text = osd_key_name( Machine->gamedrv->input_ports[ keysettings[i].num ].keyboard[ keysettings[i].mask ] );
+			dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
+			dt[2 * i + 1].y = dt[2 * i].y;
+		}
+		dt[2 * i].text = 0;	/* terminate array */
+
+		displaytext(dt,1);
+
+		key = osd_read_key();
+
+		switch (key)
+		{
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				break;
+
+			case OSD_KEY_UP:
+				if (s > 0) s--;
+				break;
+
+                        case OSD_KEY_ENTER: {
+			        dt[2 * s + 1].text = "            ";
+			        dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * s + 1].text);
+		                displaytext(dt,1);
+		                key = osd_read_key();
+                                Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = key;
+                                key = OSD_KEY_ENTER;
+                                }
+                                break;
+		}
+	} while (key != OSD_KEY_F8 && key != OSD_KEY_ESC);
+
+	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);

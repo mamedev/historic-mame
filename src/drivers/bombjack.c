@@ -169,6 +169,16 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 2, "MOVE UP" },
+        { 0, 1, "MOVE LEFT"  },
+        { 0, 0, "MOVE RIGHT" },
+        { 0, 3, "MOVE DOWN" },
+        { 0, 4, "JUMP" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -421,7 +431,7 @@ struct GameDriver bombjack_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */

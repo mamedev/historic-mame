@@ -207,6 +207,16 @@ static struct InputPort pacman_input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct KEYSet keys[] =
+{
+        { 0, 0, "MOVE UP" },
+        { 0, 1, "MOVE LEFT"  },
+        { 0, 2, "MOVE RIGHT" },
+        { 0, 3, "MOVE DOWN" },
+        { -1 }
+};
+
+
 static struct InputPort crush_input_ports[] =
 {
 	{	/* IN0 */
@@ -609,7 +619,7 @@ struct GameDriver pacman_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw,
+	pacman_input_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -630,7 +640,7 @@ struct GameDriver pacmod_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw,
+	pacman_input_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -651,7 +661,7 @@ struct GameDriver namcopac_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw,
+	pacman_input_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -672,7 +682,7 @@ struct GameDriver hangly_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw,
+	pacman_input_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -693,7 +703,7 @@ struct GameDriver puckman_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw,
+	pacman_input_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -714,7 +724,7 @@ struct GameDriver piranha_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw,
+	pacman_input_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -735,7 +745,7 @@ struct GameDriver mspacman_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, mspacman_dsw,
+	pacman_input_ports, mspacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -756,7 +766,7 @@ struct GameDriver crush_driver =
 	0, 0,
 	0,
 
-	crush_input_ports, crush_dsw,
+	crush_input_ports, crush_dsw, keys,
 
 	crush_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

@@ -20,7 +20,9 @@ void gyruss_sh_soundfx_on_w(int offset, int data)
         if (data) {
           if (Machine->samples->sample[data-1])
             osd_play_sample(7,Machine->samples->sample[data-1]->data,
-                          Machine->samples->sample[data-1]->length,emulation_rate,200,0);
+                          Machine->samples->sample[data-1]->length,
+                          Machine->samples->sample[data-1]->smpfreq,
+                          Machine->samples->sample[data-1]->volume,0);
         }
         else osd_stop_sample(7);
 

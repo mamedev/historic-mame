@@ -605,7 +605,18 @@ static void inir(void)
  else Z80_ICount+=5;
 }
 
-static void jp(void) { M_JP; }
+/*static void jp(void) { M_JP; }	-NS- changed to speed up busy loops */
+static void jp(void)
+{
+  dword oldpc,newpc;
+
+  oldpc = R.PC.D-1;
+  M_JP;
+  newpc = R.PC.D;
+  if (newpc == oldpc) { if (Z80_ICount > 0) Z80_ICount = 0; } /* speed up busy loop */
+  else if (newpc == oldpc-3 && M_RDOP(newpc) == 0x31)	/* LD SP,#xxxx - Galaga */
+	  { if (Z80_ICount > 10) Z80_ICount = 10; }
+}
 static void jp_hl(void) { R.PC.D=R.HL.D; }
 static void jp_ix(void) { R.PC.D=R.IX.D; }
 static void jp_iy(void) { R.PC.D=R.IY.D; }
@@ -618,7 +629,18 @@ static void jp_pe(void) { if (M_PE) { M_JP; } else { M_SKIP_JP; } }
 static void jp_po(void) { if (M_PO) { M_JP; } else { M_SKIP_JP; } }
 static void jp_z(void) { if (M_Z) { M_JP; } else { M_SKIP_JP; } }
 
-static void jr(void) { M_JR; }
+/*static void jr(void) { M_JR; }	-NS- changed to speed up busy loops */
+static void jr(void)
+{
+  dword oldpc,newpc;
+
+  oldpc = R.PC.D-1;
+  M_JR;
+  newpc = R.PC.D;
+  if (newpc == oldpc) { if (Z80_ICount > 0) Z80_ICount = 0; } /* speed up busy loop */
+  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0xfb)	/* EI - 1942 */
+	  { if (Z80_ICount > 4) Z80_ICount = 4; }
+}
 static void jr_c(void) { if (M_C) { M_JR; } else { M_SKIP_JR; } }
 static void jr_nc(void) { if (M_NC) { M_JR; } else { M_SKIP_JR; } }
 static void jr_nz(void) { if (M_NZ) { M_JR; } else { M_SKIP_JR; } }
@@ -2438,11 +2460,11 @@ static void InitTables (void)
 /****************************************************************************/
 static void Interrupt (int j)
 {
-Z80_IRQ = j;	/* added by Nicola Salmoria for MAME */
+Z80_IRQ = j;	/* -NS- sticky interrupts */
  if (j==Z80_IGNORE_INT) return;
  if (j==Z80_NMI_INT || R.IFF1)
  {
-Z80_IRQ = Z80_IGNORE_INT;	/* added by Nicola Salmoria for MAME */
+Z80_IRQ = Z80_IGNORE_INT;	/* -NS- */
   /* Clear interrupt flip-flop 1 */
   R.IFF1=0;
   /* Check if processor was halted */

@@ -181,6 +181,16 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 3, "PLANE UP" },
+        { 0, 1, "PLANE LEFT"  },
+        { 0, 0, "PLANE RIGHT" },
+        { 0, 2, "PLANE DOWN" },
+        { 0, 4, "FIRE" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -527,7 +537,7 @@ struct GameDriver zaxxon_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,	/* numbers */

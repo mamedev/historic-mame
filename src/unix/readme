@@ -1,4 +1,4 @@
-X-Mame version 0.17.2
+X-Mame version 0.20.0
 
 patched by jantonio@dit.upm.es 
 
@@ -9,24 +9,37 @@ xmame-0.17      Original sources from:
 xmame-0.17.1 	Joystick support under Linux
 		Reorder src/unix directory to support *ix dependent archs
 xmame-0.17.2    Support for sound under Solaris ( very beta, but works )
+xmame-0.18	Rebuilt from main source tree
+xmame-0.18.1    Sound support under IRIX
+		Improved mixer code
+xmame-0.18.2    Improved sound under Solaris
+		Changes to main source to eliminate non-POSIX items
+xmame-0.19	Non-compilable/neither runnable under **IX
+xmame-0.19.1	Incorportate 0.18.2 into mame-0.19. Now works
+xmame-0.20	New Makefile.UNIX
+		Patch to allow simultaneous X-Y axis in linux joystick
+xmame-0.20.1	Check for available 8bit depth Visual. if no, warns and quit
+		Check for available and runable MIT-SHM. 
+		Added command line -display "displayname"
+		Added command line -nomitshm to disable test & use of it
+		Rewritten most of video code
+		Several bugs fixed
+xmame-0.20.2	src/unix directory structure changed
+		added a specific src/unix/Makefile
+		makefile.unix changed according to src/unix/changes
 
 TODO:
 	- Sound support under SunOS ( should be easy, basically is the same
 	  code that solaris one, but no time (and no machine) to test..... )
 
-	- Sound support under IRIX ( Hard. in-built audio mixer in kernel
-          "unlimited" audio buffer size , but should be done in a week ... )
-
 	- Rewrite audio code under *ix. No more Timer alarms to fill audio
 	  buffer, please ( to many sync problems and audio "glitches" )
 
+	- Need to improve speed. ( too slow if frameskip not used )
+
+	- Multiuser support ( two users in two machines sharing game )
+
 ( Yes, I'm asking for help )
-
-this is a -still beta, but playable- patched version of xmame-0.17.1 with
-sound support for Sun's Sparc machines running Solaris 2.5.X
-
-	I've tested it on a Sun Sparc5 ( acceptable ) and in a Sun Sparc1+
-( extremely slooooooow sound )
 
 	Several things:
 
@@ -59,10 +72,11 @@ distributed freely if:
 2- This copyright notice is distributed with the package
 ------------------------------------------------------------------------------
 
-	Send bug,patches and suggestions to: mix@lim.dsi.unimi.it 
+	Send bug,patches and suggestions to: mame@lim.dsi.unimi.it 
 					     avdbas@wi.leidenuniv.nl
 					     dick@ph.tn.tudelft.nl 
-					     jantonio@dit.upm.es
+					     mame@drake.dit.upm.es
+	See X-Mame Home page at http://www.dit.upm.es/~jantonio/mame
 
 ==============================================================================
 Juan Antonio Martinez			Universidad Politecnica de Madrid

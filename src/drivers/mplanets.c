@@ -2,6 +2,9 @@
 
 Mad Planets' memory map
 
+Thanks to Richard Davies who provided a keyboard/joystick substitute for the
+dialer (anyone interested in adding a joystick's knob support in Mame ?-)
+
 Main processor (8088 minimum mode) memory map.
 0000-0fff RAM
 1000-1fff RAM
@@ -18,13 +21,13 @@ memory mapped ports:
 read:
 5800    Dip switch
 5801    Inputs 10-17
-5802    trackball input (optional)
-5803    trackball input (optional)
+5802    trackball input
+5803    trackball input
 5804    Inputs 40-47
 
 write:
 5800    watchdog timer clear
-5801    trackball output (optional)
+5801    trackball output
 5802    Outputs 20-27
 5803    Flipflop outputs:
 		b7: F/B priority
@@ -63,6 +66,8 @@ extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
 extern void gottlieb_output(int offset, int data);
+extern int mplanets_IN1_r(int offset);
+extern int mplanets_dial_r(int offset);
 extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_spriteram;
@@ -75,9 +80,9 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
-	{ 0x5802, 0x5802, input_port_2_r },     /* trackball: not used */
-	{ 0x5803, 0x5803, input_port_3_r },     /* trackball: not used */
+	{ 0x5801, 0x5801, mplanets_IN1_r },     /* buttons */
+	{ 0x5802, 0x5802, input_port_2_r },     /* trackball H: not used */
+	{ 0x5803, 0x5803, mplanets_dial_r },     /* trackball V: dialer */
 	{ 0x5804, 0x5804, input_port_4_r },     /* joystick */
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -111,17 +116,17 @@ static struct InputPort input_ports[] =
 		{ OSD_KEY_3, OSD_KEY_4, /* coin 1 and 2 */
 		  0,0,                  /* not connected ? */
 		  0,0,                  /* not connected ? */
-		  OSD_KEY_S,            /* select */
-		  0 },                  /* diag mode */
+		  OSD_KEY_F2,           /* select */
+		  0 },                  /* test mode */
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* trackball: not used yet */
-		0xff,
+	{       /* trackball H: not used */
+		0x00,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* trackball: not used yet */
-		0xff,
+	{       /* trackball V: dialer */
+		0x00,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -130,9 +135,21 @@ static struct InputPort input_ports[] =
 		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
 		OSD_KEY_CONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_ALT},
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
-					OSD_JOY_FIRE, 0, 0, 0 }
+					OSD_JOY_FIRE1, 0, 0, OSD_JOY_FIRE2 }
 	},
 	{ -1 }  /* end of table */
+};
+
+
+static struct KEYSet keys[] =
+{
+        { 4, 0, "MOVE UP" },
+        { 4, 3, "MOVE LEFT"  },
+        { 4, 1, "MOVE RIGHT" },
+        { 4, 2, "MOVE DOWN" },
+        { 4, 4, "FIRE1"     },
+        { 4, 7, "FIRE2"     },
+        { -1 }
 };
 
 
@@ -149,7 +166,7 @@ static struct DSW dsw[] =
 	{ 0, 0x20, "SHIPS PER GAME", { "3", "5" } },
 	{ 0, 0x02, "EXTRA SHIP EVERY", { "10000", "12000" } },
 	{ 0, 0xC0, "DIFFICULTY", { "STANDARD", "EASY", "HARD", "VERY HARD" } },
-	{ 1, 0x80, "TEST MODE", {"ON", "OFF"} },
+	/*{ 1, 0x80, "TEST MODE", {"ON", "OFF"} },*/
 	{ -1 }
 };
 
@@ -291,7 +308,7 @@ struct GameDriver mplanets_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	(char *)mplanets_colors,
 	0,0,    /* palette, colortable */

@@ -154,6 +154,14 @@ static struct InputPort galaxian_input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 2, "MOVE LEFT"  },
+        { 0, 3, "MOVE RIGHT" },
+        { 0, 4, "FIRE"       },
+        { -1 }
+};
+
 
 static struct InputPort warofbug_input_ports[] =
 {
@@ -177,6 +185,16 @@ static struct InputPort warofbug_input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+
+static struct KEYSet wbug_keys[] =
+{
+        { 0, 6, "MOVE UP" },
+        { 0, 2, "MOVE LEFT"  },
+        { 0, 3, "MOVE RIGHT" },
+        { 0, 7, "MOVE DOWN" },
+        { 0, 4, "FIRE"      },
+        { -1 }
+};
 
 
 static struct DSW galaxian_dsw[] =
@@ -587,7 +605,7 @@ struct GameDriver galaxian_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -608,7 +626,7 @@ struct GameDriver galmidw_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -629,7 +647,7 @@ struct GameDriver galnamco_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galboot_dsw,
+	galaxian_input_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -650,7 +668,7 @@ struct GameDriver superg_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galboot_dsw,
+	galaxian_input_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -671,7 +689,7 @@ struct GameDriver galapx_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galboot_dsw,
+	galaxian_input_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -692,7 +710,7 @@ struct GameDriver galap1_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galboot_dsw,
+	galaxian_input_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -713,7 +731,7 @@ struct GameDriver galap4_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galboot_dsw,
+	galaxian_input_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -734,7 +752,7 @@ struct GameDriver galturbo_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, galboot_dsw,
+	galaxian_input_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -755,7 +773,7 @@ struct GameDriver pisces_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, pisces_dsw,
+	galaxian_input_ports, pisces_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -776,7 +794,7 @@ struct GameDriver japirem_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, japirem_dsw,
+	galaxian_input_ports, japirem_dsw, keys,
 
 	japirem_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -797,7 +815,7 @@ struct GameDriver uniwars_driver =
 	0, 0,
 	0,
 
-	galaxian_input_ports, japirem_dsw,
+	galaxian_input_ports, japirem_dsw, keys,
 
 	uniwars_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -818,7 +836,7 @@ struct GameDriver warofbug_driver =
 	0, 0,
 	0,
 
-	warofbug_input_ports, warofbug_dsw,
+	warofbug_input_ports, warofbug_dsw, wbug_keys,
 
 	japirem_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

@@ -85,7 +85,7 @@ void panic_videoram_w(int offset,int data)
 	{
 	    panic_videoram[offset] = data;
 
-        /* Restrict to visible area only*/
+        /* Restrict to visible area only */
 
         if (offset > 0x3ff)
 	    {
@@ -122,14 +122,14 @@ void panic_videoram_w(int offset,int data)
 	    }
         else
         {
-            if (offset >= 0x2FC && offset <= 0x2FE) /* Colour Map Registers */
+          if (offset >= 0x2FC && offset <= 0x2FE) /* Colour Map Registers */
     	    {
                 int x,y,col,ColTab;
 
                 ColourMap = (RAM[0x42fc]>>7) + (RAM[0x42fd]>>6) + (RAM[0x42fe]>>5);
 
                 for(x=0;x<256;x++) /* Need to re-colour existing screen! */
-				{
+		{
                     for(y=0;y<256;y++)
                     {
                         if(tmpbitmap->line[y][x] != Machine->gfx[0]->colortable[0])

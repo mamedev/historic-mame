@@ -24,6 +24,7 @@ extern struct GameDriver seicross_driver;
 extern struct GameDriver ckong_driver;
 extern struct GameDriver ckongs_driver;
 extern struct GameDriver dkong_driver;
+extern struct GameDriver dkongjp_driver;
 extern struct GameDriver dkongjr_driver;
 extern struct GameDriver dkong3_driver;
 extern struct GameDriver mario_driver;
@@ -70,6 +71,7 @@ extern struct GameDriver carnival_driver;
 extern struct GameDriver invaders_driver;
 extern struct GameDriver earthinv_driver;
 extern struct GameDriver spaceatt_driver;
+extern struct GameDriver invrvnge_driver;
 extern struct GameDriver invdelux_driver;
 extern struct GameDriver galxwars_driver;
 extern struct GameDriver lrescue_driver;
@@ -104,11 +106,14 @@ extern struct GameDriver panic_driver;
 extern struct GameDriver arabian_driver;
 extern struct GameDriver reactor_driver;
 extern struct GameDriver c1942_driver;
-
 extern struct GameDriver popeyebl_driver;
 extern struct GameDriver warpwarp_driver;
 extern struct GameDriver gyruss_driver;
 extern struct GameDriver krull_driver;
+extern struct GameDriver superpac_driver;
+extern struct GameDriver kangaroo_driver;
+extern struct GameDriver galaga_driver;
+extern struct GameDriver galagabl_driver;
 
 
 const struct GameDriver *drivers[] =
@@ -135,6 +140,7 @@ const struct GameDriver *drivers[] =
 	&ckong_driver,
 	&ckongs_driver,
 	&dkong_driver,
+        &dkongjp_driver,
 	&dkongjr_driver,
 	&dkong3_driver,
 	&mario_driver,
@@ -181,6 +187,7 @@ const struct GameDriver *drivers[] =
 	&invaders_driver,
 	&earthinv_driver,
 	&spaceatt_driver,
+	&invrvnge_driver,
 	&invdelux_driver,
 	&galxwars_driver,
 	&lrescue_driver,
@@ -219,5 +226,9 @@ const struct GameDriver *drivers[] =
         &c1942_driver,
         &gyruss_driver,
         &krull_driver,
+        &superpac_driver,
+        &kangaroo_driver,
+        &galaga_driver,
+        &galagabl_driver,
 	0	/* end of array */
 };

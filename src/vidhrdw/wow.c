@@ -58,7 +58,7 @@ void wow_videoram_w(int offset,int data)
 
 			if (data & 0x80) *bm |= 1;
 			if (data & 0x40) *bm |= 2;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
 			bm++;
 			data <<= 2;

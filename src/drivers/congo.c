@@ -170,6 +170,16 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 1, "MOVE LEFT UP" },
+        { 0, 2, "MOVE RIGHT UP"  },
+        { 0, 0, "MOVE RIGHT DOWN" },
+        { 0, 3, "MOVE LEFT DOWN" },
+        { 0, 4, "JUMP" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -475,7 +485,7 @@ struct GameDriver congo_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,	/* numbers */

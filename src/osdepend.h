@@ -10,7 +10,6 @@ struct osd_bitmap
 };
 
 
-
 #define OSD_KEY_ESC         1        /* keyboard scan codes */
 #define OSD_KEY_1           2        /* (courtesy of allegro.h) */
 #define OSD_KEY_2           3
@@ -95,6 +94,7 @@ struct osd_bitmap
 #define OSD_KEY_DEL         83
 #define OSD_KEY_F11         87
 #define OSD_KEY_F12         88
+#define OSD_MAX_KEY         88
 
 
 #define OSD_JOY_LEFT	1
@@ -125,8 +125,10 @@ void osd_play_sample(int channel,unsigned char *data,int len,int freq,int volume
 void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,int volume);
 void osd_adjust_sample(int channel,int freq,int volume);
 void osd_stop_sample(int channel);
+void osd_set_mastervolume(int volume);
 int osd_key_pressed(int keycode);
 int osd_read_key(void);
+const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
 int osd_joy_pressed(int joycode);
 

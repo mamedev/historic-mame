@@ -17,32 +17,33 @@ unsigned char *invaders_videoram;
 
 void invaders_videoram_w(int offset,int data)
 {
-	if (invaders_videoram[offset] != data)
-	{
-		int i,x,y;
+        if (invaders_videoram[offset] != data)
+        {
+                int i,x,y;
 
 
-		invaders_videoram[offset] = data;
+                invaders_videoram[offset] = data;
 
-		x = offset / 32 + 16;
-		y = 256-8 - 8 * (offset % 32);
+                x = offset / 32 + 16;
+                y = 256-8 - 8 * (offset % 32);
 
-		for (i = 0;i < 8;i++)
-		{
-			int col;
+                for (i = 0;i < 8;i++)
+                {
+                        int col;
 
 
-			col = Machine->gfx[0]->colortable[1];	/* white */
-			if (y >= 192) col = Machine->gfx[0]->colortable[3];	/* green */
-			if (y > 32 && y < 64) col = Machine->gfx[0]->colortable[5];	/* red */
+                        col = Machine->gfx[0]->colortable[1];   /* white */
+                        if (y >= 192 && y < 240) col = Machine->gfx[0]->colortable[3];     /* green */
+                        if (y >= 240 && x > 32 && x < 150) col = Machine->gfx[0]->colortable[3];     /* green */
+                        if (y > 32 && y < 64) col = Machine->gfx[0]->colortable[5];     /* red */
 
-			if (data & 0x80) tmpbitmap->line[y][x] = col;
-			else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0];	/* black */
+                        if (data & 0x80) tmpbitmap->line[y][x] = col;
+                        else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0];    /* black */
 
-			y++;
-			data <<= 1;
-		}
-	}
+                        y++;
+                        data <<= 1;
+                }
+        }
 }
 
 
@@ -56,6 +57,6 @@ void invaders_videoram_w(int offset,int data)
 ***************************************************************************/
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+        /* copy the character mapped graphics */
+        copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

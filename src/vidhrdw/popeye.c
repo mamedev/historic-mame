@@ -9,8 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 #define VIDEO_RAM_SIZE 0x1000
 
 unsigned char *popeye_videoram,*popeye_colorram,*popeye_backgroundram;
@@ -125,15 +123,19 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
 
+/* Since the visible area misses 1 char each side,    */
+/* skip the first rows, don't seem to be used anyway  */
+
+/* Move colour table calculation out of loop          */
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+
+	for (offs = 128;offs < VIDEO_RAM_SIZE-128;offs++)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy,y;
-
+			int sx,sy,y,colour;
 
 			dirtybuffer[offs] = 0;
 
@@ -145,25 +147,38 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 					sy >= Machine->drv->visible_area.min_y &&
 					sy+7 <= Machine->drv->visible_area.max_y)
 			{
+                colour = Machine->gfx[3]->colortable[(popeye_backgroundram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
 				for (y = 0;y < 4;y++)
-					memset(&tmpbitmap->line[sy+y][sx],
-							Machine->gfx[3]->colortable[
-									(popeye_backgroundram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)],8);
+					memset(&tmpbitmap->line[sy+y][sx],colour,8);
+
+                colour = Machine->gfx[3]->colortable[(popeye_backgroundram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
 				for (y = 4;y < 8;y++)
-					memset(&tmpbitmap->line[sy+y][sx],
-							Machine->gfx[3]->colortable[
-									(popeye_backgroundram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)],8);
+					memset(&tmpbitmap->line[sy+y][sx],colour,8);
 			}
 		}
 	}
 
 
 	/* copy the background graphics */
-	clearbitmap(bitmap);
-	copybitmap(bitmap,tmpbitmap,0,0,
-			400 - 2*popeye_background_pos[0],2 * (256 - popeye_background_pos[1]),
-			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+/* Sets X & Y offset to 0 when background not wanted   */
+/* otherwise copy the bitmap to where it's needed      */
+
+	if (popeye_background_pos[0] == 0)
+    {
+        clearbitmap(bitmap);
+    }
+    else
+    {
+		copybitmap(bitmap,tmpbitmap,0,0,
+			400 - 2 * popeye_background_pos[0],
+			2 * (256 - popeye_background_pos[1]),
+  			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    }
+
+
+/* Don't draw sprites with offset of 0 (off screen anyway) */
+/* hopefully skips unused sprites (seems to work)          */
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
@@ -180,28 +195,32 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 		 * bit 1 \ color (with bit 2 as well)
 		 * bit 0 /
 	 	 */
-		drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x04) ? 1 : 2],
-				0xff - (spriteram[offs + 2] & 0x7f) - 8*(spriteram[offs + 3] & 0x10),
-				(spriteram[offs + 3] & 0x07) + 8*(*popeye_palette_bank & 0x07),
-				spriteram[offs + 2] & 0x80,spriteram[offs + 3] & 0x08,
-				2*(spriteram[offs])-7,2*(256-spriteram[offs + 1]) - 16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+        if (spriteram[offs] != 0)
+	        drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x04) ? 1 : 2],
+			        0xff - (spriteram[offs + 2] & 0x7f) - 8*(spriteram[offs + 3] & 0x10),
+			        (spriteram[offs + 3] & 0x07) + 8*(*popeye_palette_bank & 0x07),
+			        spriteram[offs + 2] & 0x80,spriteram[offs + 3] & 0x08,
+			        2*(spriteram[offs])-7,2*(256-spriteram[offs + 1]) - 16,
+			        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
+
+/* move the sx,sy calculation inside the conditional part */
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
 		int sx,sy;
 
-
-		sx = 16 * (offs % 32);
-		sy = 16 * (offs / 32) - 16;
-
 		if (popeye_videoram[offs] != 0xff)	/* don't draw spaces */
+        {
+			sx = 16 * (offs % 32);
+			sy = 16 * (offs / 32) - 16;
+
 			drawgfx(bitmap,Machine->gfx[0],
 					popeye_videoram[offs],popeye_colorram[offs],
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+        }
 	}
 }

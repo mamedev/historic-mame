@@ -22,30 +22,6 @@ unsigned char *warpwarp_bulletsram;
 
 ***************************************************************************/
 
-void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < 255;i++)
-	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	}
-}
-
 void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -58,12 +34,6 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtybuffer[offs])
 		{
 			int mx,my,sx,sy;
-
-	/* Even if Pengo's screen is 28x36, the memory layout is 32x32. We therefore */
-	/* have to convert the memory coordinates into screen coordinates. */
-	/* Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM */
-	/* don't map to a screen position. We don't check that here, however: range */
-	/* checking is performed by drawgfx(). */
 
 			mx = (offs / 32);
 			my = (offs % 32);
@@ -87,7 +57,7 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-					0 /* videoram[offs+VIDEO_RAM_SIZE] */,
+					colorram[offs]&0xF,
 					0,0,8*sx ,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
@@ -100,24 +70,26 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	{
 		int x,y;
-		int color;
-		color = Machine->gfx[0]->colortable[0x01];
+		int colour;
+		colour = Machine->gfx[0]->colortable[0x09];
 
 		x = warpwarp_bulletsram[1];
 		x += 8;
 		if (x >= Machine->drv->visible_area.min_x && x <= Machine->drv->visible_area.max_x)
 		{
 			y = 256 - warpwarp_bulletsram[0];
-			y += 5;
-			if (y >= 0)
-			{
-				int j;
-
-				for (j = 0; j < 2; j++)
+			if (y<256-16) {
+				y += 5;
+				if (y >= 0)
 				{
-					bitmap->line[y+j][x+0] = color;
-					bitmap->line[y+j][x+1] = color;
-					bitmap->line[y+j][x+2] = color;
+					int j;
+
+					for (j = 0; j < 2; j++)
+					{
+						bitmap->line[y+j][x+0] = colour;
+						bitmap->line[y+j][x+1] = colour;
+	/*					bitmap->line[y+j][x+2] = colour; */
+					}
 				}
 			}
 		}

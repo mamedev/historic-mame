@@ -8,7 +8,9 @@
 
 #ifdef solaris
 
-#define AUDIO_TIMER_FREQ 64
+#define __SOLARIS_C
+#include "xmame.h"
+#include "lin2ulaw.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +26,6 @@ audio_device_t		a_dev;  /* info about audio hardware */
 
 int sysdep_init(void) {
 
-        struct itimerval        timer_value;
 	int 			i;
 	if (use_joystick) {
 		printf("Joystick is no still supported under Solaris. Sorry\n");
@@ -134,30 +135,8 @@ int sysdep_init(void) {
                         close(audioctl_fd);
                         exit(1);
                 }
-                /* now set a timer for filling audio buffers */
-
+		/* set all audio channels off */
                 for (i = 0; i < AUDIO_NUM_VOICES; i++) audio_on[i] = FALSE;
-               
-                /* set timer frequency */ 
-                timer_value.it_interval.tv_sec =
-                timer_value.it_value.tv_sec    = 0;
-                timer_value.it_interval.tv_usec=
-                timer_value.it_value.tv_usec   = 1000000L / audio_timer_freq;
-
-                sig_action.sa_handler = audio_timer;
-                sig_action.sa_flags   = SA_RESTART;
-
-                /* catch signals */
-                if ( sigaction (SIGALRM, &sig_action, NULL) < 0) {
-                        printf("Sigaction failed\n");
-                        return TRUE;
-                }
-
-                /* start the timer */
-                if (setitimer (ITIMER_REAL, &timer_value, NULL) <0 ) {
-                        printf ("Error: %d Setting the timer failed.\n",errno);
-                        return (TRUE);
-                }
         }
         return (TRUE);
 }

@@ -19,7 +19,9 @@ void dkong_sh1_w(int offset,int data)
 	{
 		if ((Machine->samples->sample[offset] != 0) && (data))
 			osd_play_sample(offset,Machine->samples->sample[offset]->data,
-					Machine->samples->sample[offset]->length,emulation_rate, 255,0);
+					Machine->samples->sample[offset]->length,
+                                        Machine->samples->sample[offset]->smpfreq,
+                                        Machine->samples->sample[offset]->volume,0);
 
 		state[offset] = data;
 	}
@@ -40,7 +42,9 @@ void dkong_sh3_w(int offset,int data)
 		{
 			if (Machine->samples->sample[24])
 				osd_play_sample(0,Machine->samples->sample[24]->data,
-						Machine->samples->sample[24]->length,emulation_rate,255,0);
+						Machine->samples->sample[24]->length,
+                                                Machine->samples->sample[24]->smpfreq,
+                                                Machine->samples->sample[24]->volume,0);
 			osd_stop_sample(1);		  /* kill other samples */
 			osd_stop_sample(2);
 			osd_stop_sample(3);
@@ -76,7 +80,9 @@ void dkong_sh2_w(int offset,int data)
 		       if (Machine->samples->sample[data+8] != 0)
 			   {
 			   	  osd_play_sample(3,Machine->samples->sample[data+8]->data,
-				     Machine->samples->sample[data+8]->length,emulation_rate,255,0);
+				     Machine->samples->sample[data+8]->length,
+                                     Machine->samples->sample[data+8]->smpfreq,
+                                     Machine->samples->sample[data+8]->volume,0);
 			   }
 			   hit = 1;
 			}
@@ -87,7 +93,9 @@ void dkong_sh2_w(int offset,int data)
 		    if (Machine->samples->sample[data+8] != 0)
 			{
 			   osd_play_sample(3,Machine->samples->sample[data+8]->data,
-				  Machine->samples->sample[data+8]->length,emulation_rate,255,0);
+				  Machine->samples->sample[data+8]->length,
+                                  Machine->samples->sample[data+8]->smpfreq,
+                                  Machine->samples->sample[data+8]->volume,0);
 			}
 			break;
 
@@ -100,7 +108,9 @@ void dkong_sh2_w(int offset,int data)
 			if (Machine->samples->sample[data+8] != 0)
 			{
 				osd_play_sample(4,Machine->samples->sample[data+8]->data,
-						Machine->samples->sample[data+8]->length,emulation_rate,255,1);
+						Machine->samples->sample[data+8]->length,
+                                                Machine->samples->sample[data+8]->smpfreq,
+                                                Machine->samples->sample[data+8]->volume,1);
 			}
 			break;
 
@@ -110,7 +120,10 @@ void dkong_sh2_w(int offset,int data)
 				if (Machine->samples->sample[data+8] != 0)
 				{
 					osd_play_sample(4,Machine->samples->sample[data+8]->data,
-							Machine->samples->sample[data+8]->length,emulation_rate,255,0);
+							Machine->samples->sample[data+8]->length,
+                                                        Machine->samples->sample[data+8]->smpfreq,
+                                                        Machine->samples->sample[data+8]->volume,0);
+
 				}
 			}
 			break;

@@ -147,12 +147,12 @@ if (osd_key_pressed(OSD_KEY_V))
 
 			drawgfx(tmpbitmap1,Machine->gfx[bose],
 					elevator_videoram3[offs],
-1,/*                    elevator_attributesram[2 * sy + 1],*/
+1,/*					elevator_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap2,Machine->gfx[bose],
 					elevator_videoram2[offs],
-0,/*                    elevator_attributesram[2 * sy + 1],*/
+0,/*					elevator_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -207,7 +207,7 @@ if (osd_key_pressed(OSD_KEY_V))
 		if (videoram[offs])
 			drawgfx(bitmap,Machine->gfx[bose],
 					videoram[offs],
-2,/*                    elevator_attributesram[2 * sy + 1],*/
+2,/*					elevator_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

@@ -124,6 +124,21 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 2, 3, "PL1 MOVE UP" },
+        { 2, 1, "PL1 MOVE LEFT"  },
+        { 2, 0, "PL1 MOVE RIGHT" },
+        { 2, 2, "PL1 MOVE DOWN" },
+        { 0, 4, "PL1 FIRE" },
+        { 3, 3, "PL2 MOVE UP" },
+        { 3, 1, "PL2 MOVE LEFT"  },
+        { 3, 0, "PL2 MOVE RIGHT" },
+        { 3, 2, "PL2 MOVE DOWN" },
+        { 1, 4, "PL2 FIRE" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -315,7 +330,7 @@ struct GameDriver milliped_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,	/* numbers */

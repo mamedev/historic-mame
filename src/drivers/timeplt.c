@@ -141,6 +141,16 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 1, 2, "MOVE UP" },
+        { 1, 0, "MOVE LEFT"  },
+        { 1, 1, "MOVE RIGHT" },
+        { 1, 3, "MOVE DOWN" },
+        { 1, 4, "FIRE" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -356,7 +366,7 @@ struct GameDriver timeplt_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
 
@@ -378,7 +388,7 @@ struct GameDriver spaceplt_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	{ 0x13,0x49,0xa8,0xcd,0xf3,0xae,0x42,0xb0,0x17,0x5d,	/* numbers */

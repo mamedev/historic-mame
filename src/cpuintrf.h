@@ -4,6 +4,9 @@
 
 void cpu_run(void);
 
+void cpu_halt(int cpunum,int running);
+
+
 int cpu_getpc(void);
 int cpu_geticount(void);
 void cpu_seticount(int cycles);

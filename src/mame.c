@@ -4,7 +4,6 @@
 
 
 #if defined (UNIX) || defined (__MWERKS__)
-#define stricmp strcasecmp
 #define uclock_t clock_t
 #define	uclock clock
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
@@ -21,6 +20,9 @@ static char hiscorename[50];
 
 
 int frameskip;
+int VolumiDefault[] = {100, 75, 50, 25, 0};
+int VolumePTR = 0;
+int ActualVolume = 100;
 
 
 #define MAX_COLORS 256	/* can't handle more than 256 colors on screen */
@@ -355,6 +357,18 @@ int updatescreen(void)
 		return 2;
 	}
 
+        if (osd_key_pressed(OSD_KEY_F9)) {
+                if (++VolumePTR > 4) VolumePTR = 0;
+                ActualVolume = VolumiDefault[VolumePTR];
+                osd_set_mastervolume(ActualVolume);
+		while (osd_key_pressed(OSD_KEY_F9)) {
+                  if (*drv->sh_update) {
+		     (*drv->sh_update)();	/* update sound */
+		     osd_update_audio();
+                  }
+                }
+        }
+
 	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
 	{
 		struct DisplayText dt[2];
@@ -368,7 +382,14 @@ int updatescreen(void)
 		dt[1].text = 0;
 		displaytext(dt,0);
 
-		while (osd_key_pressed(OSD_KEY_P));	/* wait for key release */
+                osd_set_mastervolume(0);
+		while (osd_key_pressed(OSD_KEY_P)) {
+                  if (*drv->sh_update) {
+		     (*drv->sh_update)();	/* update sound */
+		     osd_update_audio();
+                  }
+                }
+                	/* wait for key release */
 		do
 		{
 			key = osd_read_key();
@@ -381,19 +402,50 @@ int updatescreen(void)
 				displaytext(dt,0);
 			}
 		} while (key != OSD_KEY_P);
-		while (osd_key_pressed(key));	/* wait for key release */
+		while (osd_key_pressed(key));
+                osd_set_mastervolume(ActualVolume);
 	}
 
 	/* if the user pressed TAB, go to dipswitch setup menu */
 	if (osd_key_pressed(OSD_KEY_TAB))
 	{
+                osd_set_mastervolume(0);
+		while (osd_key_pressed(OSD_KEY_TAB)) {
+                  if (*drv->sh_update) {
+		     (*drv->sh_update)();	/* update sound */
+		     osd_update_audio();
+                  }
+                }
 		if (setdipswitches()) return 1;
+                osd_set_mastervolume(ActualVolume);
+	}
+
+	/* if the user pressed F8, go to keys setup menu */
+	if (osd_key_pressed(OSD_KEY_F8))
+	{
+                osd_set_mastervolume(0);
+		while (osd_key_pressed(OSD_KEY_F8)) {
+                  if (*drv->sh_update) {
+		     (*drv->sh_update)();	/* update sound */
+		     osd_update_audio();
+                  }
+                }
+                if (setkeysettings()) return 1;
+                osd_set_mastervolume(ActualVolume);
 	}
 
 	/* if the user pressed F4, show the character set */
 	if (osd_key_pressed(OSD_KEY_F4))
 	{
+                osd_set_mastervolume(0);
+		while (osd_key_pressed(OSD_KEY_F4)) {
+                  if (*drv->sh_update) {
+		     (*drv->sh_update)();	/* update sound */
+		     osd_update_audio();
+                  }
+                }
 		if (showcharset()) return 1;
+                osd_set_mastervolume(ActualVolume);
 	}
 
 	if (*drv->sh_update)
@@ -484,7 +536,7 @@ int run_machine(const char *gamename)
 			{
 				FILE *f;
 				char name[100];
-				int i,incount;
+				int i,incount, keycount;
 
 
 				incount = 0;
@@ -499,6 +551,22 @@ int run_machine(const char *gamename)
 					{
 						for (i = 0;i < incount;i++)
 							gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
+					}
+					fclose(f);
+				}
+
+				keycount = 0;
+				while (gamedrv->keysettings[keycount].num != -1) keycount++;
+
+				/* read dipswitch settings from disk */
+				sprintf(name,"%s/%s.key",gamename,gamename);
+				if ((f = fopen(name,"rb")) != 0)
+				{
+					/* use name as temporary buffer */
+					if (fread(name,1,keycount,f) == keycount)
+					{
+						for (i = 0;i < keycount;i++)
+							gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
 					}
 					fclose(f);
 				}
@@ -526,6 +594,18 @@ int run_machine(const char *gamename)
 						name[i] = gamedrv->input_ports[i].default_value;
 
 					fwrite(name,1,incount,f);
+					fclose(f);
+				}
+
+				/* write key settings to disk */
+				sprintf(name,"%s/%s.key",gamename,gamename);
+				if ((f = fopen(name,"wb")) != 0)
+				{
+					/* use name as temporary buffer */
+					for (i = 0;i < keycount;i++)
+						name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ];
+
+					fwrite(name,1,keycount,f);
 					fclose(f);
 				}
 

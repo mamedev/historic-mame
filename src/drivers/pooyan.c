@@ -92,6 +92,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa180, 0xa180, interrupt_enable_w },
 	{ 0xa187, 0xa187, MWA_NOP },
 	{ 0xa100, 0xa100, sound_command_w },
+        { 0xa028, 0xa028, MWA_RAM },
+        { 0xa000, 0xa000, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -100,6 +102,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
+        { 0x8000, 0x8fff, MRA_RAM },
 	{ 0x3000, 0x33ff, MRA_RAM },
 	{ 0x4000, 0x4000, AY8910_read_port_0_r },
 	{ 0x6000, 0x6000, AY8910_read_port_1_r },
@@ -109,6 +112,7 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+        { 0x8000, 0x8fff, MWA_RAM },
 	{ 0x3000, 0x33ff, MWA_RAM },
 	{ 0x5000, 0x5000, AY8910_control_port_0_w },
 	{ 0x4000, 0x4000, AY8910_write_port_0_w },
@@ -150,6 +154,16 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+
+static struct KEYSet keys[] =
+{
+        { 1, 2, "MOVE UP" },
+        { 1, 0, "MOVE LEFT"  },
+        { 1, 1, "MOVE RIGHT" },
+        { 1, 3, "MOVE DOWN" },
+        { 1, 4, "FIRE"      },
+        { -1 }
+};
 
 
 static struct DSW dsw[] =
@@ -368,7 +382,7 @@ struct GameDriver pooyan_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

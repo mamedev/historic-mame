@@ -126,6 +126,12 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { -1 }
+};
+
+
 
 static struct DSW venture_dsw[] =
 {
@@ -361,7 +367,7 @@ struct GameDriver venture_driver =
 	0, 0,
 	0,
 
-	input_ports, venture_dsw,
+	input_ports, venture_dsw, keys,
 
 	0, palette, venture_colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -382,7 +388,7 @@ struct GameDriver mtrap_driver =
 	0, 0,
 	0,
 
-	input_ports, mtrap_dsw,
+	input_ports, mtrap_dsw, keys,
 
 	0, palette, mtrap_colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

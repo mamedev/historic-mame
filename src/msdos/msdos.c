@@ -48,6 +48,8 @@ int vs_lastline;
 #define SAMPLE_BUFFER_LENGTH 50000
 HAC hVoice[NUMVOICES];
 LPAUDIOWAVE lpWave[NUMVOICES];
+int Volumi[NUMVOICES];
+int MasterVolume = 100;
 
 
 /* put here anything you need to do when the program is started. Return 0 if */
@@ -264,8 +266,8 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 Register scr224x288[] =
 {
 	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x37},
-	{ 0x3d4, 0x02, 0x38},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
-	{ 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x55},{ 0x3d4, 0x07, 0xf0},
+	{ 0x3d4, 0x02, 0x38},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4f},
+	{ 0x3d4, 0x05, 0x98},{ 0x3d4, 0x06, 0x55},{ 0x3d4, 0x07, 0xf0},
 	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x61},{ 0x3d4, 0x10, 0x40},
 	{ 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0x3f},{ 0x3d4, 0x13, 0x1c},
 	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x40},{ 0x3d4, 0x16, 0x4a},
@@ -286,6 +288,7 @@ Register scr224x288scanlines[] =
 	{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
 	{ 0x3c0, 0x13, 0x00}
 };
+
 
 Register scr256x256[] =
 {
@@ -421,7 +424,7 @@ struct osd_bitmap *osd_create_display(int width,int height)
 			}
 			else
 			{
-				reg = scr224x288scanlines;
+			        reg = scr224x288scanlines;
 				reglen = sizeof(scr224x288scanlines)/sizeof(Register);
 			}
 		}
@@ -631,11 +634,12 @@ void osd_play_sample(int channel,unsigned char *data,int len,int freq,int volume
 	lpWave[channel]->dwLoopStart = 0;
 	lpWave[channel]->dwLoopEnd = len;
 	lpWave[channel]->dwLength = len;
+        Volumi[channel] = volume/4;
 	/* upload the data to the audio DRAM local memory */
 	AWriteAudioData(lpWave[channel],0,len);
 	APlayVoice(hVoice[channel],lpWave[channel]);
 	ASetVoiceFrequency(hVoice[channel],freq);
-	ASetVoiceVolume(hVoice[channel],volume/4);
+	ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
 }
 
 
@@ -658,11 +662,12 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 		lpWave[channel]->dwLoopStart = 0;
 		lpWave[channel]->dwLoopEnd = 3*len;
 		lpWave[channel]->dwLength = 3*len;
+                Volumi[channel] = volume/4;
 		/* upload the data to the audio DRAM local memory */
 		AWriteAudioData(lpWave[channel],0,len);
 		APlayVoice(hVoice[channel],lpWave[channel]);
 		ASetVoiceFrequency(hVoice[channel],freq);
-		ASetVoiceVolume(hVoice[channel],volume/4);
+		ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
 		playing[channel] = 1;
 		c[channel] = 1;
 	}
@@ -692,8 +697,9 @@ void osd_adjust_sample(int channel,int freq,int volume)
 {
 	if (play_sound == 0 || channel >= NUMVOICES) return;
 
+        Volumi[channel] = volume/4;
 	ASetVoiceFrequency(hVoice[channel],freq);
-	ASetVoiceVolume(hVoice[channel],volume/4);
+	ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
 }
 
 
@@ -705,6 +711,16 @@ void osd_stop_sample(int channel)
 	AStopVoice(hVoice[channel]);
 }
 
+
+void osd_set_mastervolume(int volume)
+{
+        int channel;
+
+        MasterVolume = volume;
+        for (channel=0; channel < NUMVOICES; channel++) {
+          ASetVoiceVolume(hVoice[channel],MasterVolume*Volumi[channel]/100);
+        }
+}
 
 
 /* check if a key is pressed. The keycode is the standard PC keyboard code, as */
@@ -721,6 +737,24 @@ int osd_read_key(void)
 {
 	clear_keybuf();
 	return readkey() >> 8;
+}
+
+
+/* return the name of a key */
+const char *osd_key_name(int keycode)
+{
+  static char *keynames[] = { "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
+                               "MINUS", "EQUAL", "BACKSPACE", "TAB", "Q", "W", "E", "R", "T", "Y",
+                               "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER", "CONTROL",
+                               "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE",
+                               "TILDE", "LEFTSHIFT", "NULL", "Z", "X", "C", "V", "B", "N", "M", "COMMA",
+                               "STOP", "SLASH", "RIGHTSHIFT", "ASTERISK", "ALT", "SPACE", "CAPSLOCK",
+                               "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "NUMLOCK",
+                               "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD", "LEFT", "5 PAD", "RIGHT",
+                               "PLUS PAD", "END", "DOWN", "PGDN", "INS", "DEL", "F11", "F12" };
+
+  if (keycode && keycode <= OSD_MAX_KEY) return (char*)keynames[keycode-1];
+  else return 0;
 }
 
 

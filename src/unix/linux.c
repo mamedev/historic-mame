@@ -4,7 +4,9 @@
 
 #ifdef linux
 
-#define AUDIO_TIMER_FREQ 90
+#define __LINUX_C
+
+#include "xmame.h"
 
 #ifdef JOYSTICK
 
@@ -25,7 +27,6 @@ int sysdep_init ()
 	int			i;
   	int                     tmps;
 	int			dspfreq, dspbyte, dspstereo;
-	struct itimerval	timer_value;
 	/**********  initialize joystick device */
 
 #ifdef JOYSTICK
@@ -101,26 +102,6 @@ int sysdep_init ()
 
 		for (i = 0; i < AUDIO_NUM_VOICES; i++) audio_on[i] = FALSE;
 	
-		sig_action.sa_handler = audio_timer;
-
-/* I didn't have time to check this out but I get an error under FreeBSD */
-/* with this compiling. Sound is broken anyway *shrug* */
-/* Jack Patton (jpatton@intserv.com) */
-
-#ifndef FREEBSD_SOUND_WORKAROUND
-		sig_action.sa_flags   = SA_NOMASK | SA_RESTART;
-#endif
-		sigaction (SIGALRM, &sig_action, NULL);
-
-  		timer_value.it_interval.tv_sec =
- 		timer_value.it_value.tv_sec    = 0L;
-  		timer_value.it_interval.tv_usec=
-  		timer_value.it_value.tv_usec   = 1000000L / audio_timer_freq;
-
-		if (setitimer (ITIMER_REAL, &timer_value, NULL)) {
- 			printf ("Setting the timer failed.\n");
-  			return (TRUE);
-  		}
 	}
 	return (TRUE);
 }

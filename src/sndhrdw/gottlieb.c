@@ -1,6 +1,5 @@
 #include "driver.h"
 
-
 void gottlieb_sh_w(int offset,int data)
 {
    int fx= 255-data;
@@ -38,7 +37,7 @@ void gottlieb_sh_w(int offset,int data)
 			if (fx_priority[fx] >= fx_priority[current_fx])
 			{
 			  /*      osd_stop_sample(0);    */
-				osd_play_sample(0,samp_buf[fx],buf_size[fx],44100,255,0);
+				osd_play_sample(0,samp_buf[fx],buf_size[fx],smpfreq[fx],255,0);
 
 			}
 			break;
@@ -64,11 +63,15 @@ void gottlieb_sh_w(int offset,int data)
 		case 23: /* noser fall */
 		case 25: /* noser on disk */
 		     osd_play_sample(1,Machine->samples->sample[fx]->data,
-					Machine->samples->sample[fx]->length,44100,255,0);
+					Machine->samples->sample[fx]->length,
+                                         Machine->samples->sample[fx]->smpfreq,
+                                          Machine->samples->sample[fx]->volume,0);
 		     break;
 		default:
 		     osd_play_sample(0,Machine->samples->sample[fx]->data,
-					Machine->samples->sample[fx]->length,44100,255,0);
+					Machine->samples->sample[fx]->length,
+                                         Machine->samples->sample[fx]->smpfreq,
+                                          Machine->samples->sample[fx]->volume,0);
 		     break;
 	}
 #endif

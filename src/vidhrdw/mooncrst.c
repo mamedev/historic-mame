@@ -19,7 +19,8 @@ unsigned char *mooncrst_attributesram;
 unsigned char *mooncrst_bulletsram;
 static int gfx_extend;	/* used by Moon Cresta only */
 static int gfx_bank;	/* used by Pisces and "japirem" only */
-static int stars_on,stars_scroll;
+static int stars_on;
+static unsigned int stars_scroll;
 
 struct star
 {
@@ -334,6 +335,6 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 				bitmap->line[y][x] = stars[offs].col;
 		}
 
-		stars_scroll++;
+		stars_scroll += frameskip+1;
 	}
 }

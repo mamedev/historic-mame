@@ -275,7 +275,7 @@ static void _AYUpdateChip(int num)
     PSG->Volnoise = (
 	( ( PSG->Regs[AY_ENABLE] & 010 ) ? 0 : PSG->Vol0 ) +
 	( ( PSG->Regs[AY_ENABLE] & 020 ) ? 0 : PSG->Vol1 ) +
-	( ( PSG->Regs[AY_ENABLE] & 040 ) ? 0 : PSG->Vol2 ) ) / 2;
+	( ( PSG->Regs[AY_ENABLE] & 040 ) ? 0 : PSG->Vol2 ) );
 
     PSG->Vol0 = ( PSG->Regs[AY_ENABLE] & 001 ) ? 0 : PSG->Vol0;
     PSG->Vol1 = ( PSG->Regs[AY_ENABLE] & 002 ) ? 0 : PSG->Vol1;
@@ -331,8 +331,8 @@ static void _AYUpdateChip(int num)
 	}
 
 	PSG->Buf[i] = AUDIO_CONV (
-            ( l0 * PSG->Vol0 + l1 * PSG->Vol1 + l2 * PSG->Vol2 ) / 6 +
-	    ( PSG->StateNoise ? PSG->Volnoise : -PSG->Volnoise ) );
+            ( l0 * PSG->Vol0 + l1 * PSG->Vol1 + l2 * PSG->Vol2 ) +
+	    ( PSG->StateNoise ? 12*PSG->Volnoise : -12*PSG->Volnoise ) ) / 8;
     }
 }
 

@@ -37,6 +37,9 @@ struct RomModule
 struct GameSample
 {
 	int length;
+        int smpfreq;
+        unsigned char resolution;
+        unsigned char volume;
 	char data[1];	/* extendable */
 };
 
@@ -113,6 +116,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void clearbitmap(struct osd_bitmap *bitmap);
 int setdipswitches(void);
+int setkeysettings(void);
 void displaytext(const struct DisplayText *dt,int erase);
 int showcharset(void);
 

@@ -47,15 +47,15 @@ CFLAGS = $(DBGFLAGS) -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/unix -fstrength-reduce -f
 ###########################################################################
 # No configurable options below this line....
 
-COMMON     = obj.$(ARCH)/mame.o obj.$(ARCH)/common.o \
+COMMON = obj.$(ARCH)/mame.o obj.$(ARCH)/common.o \
 	     obj.$(ARCH)/driver.o obj.$(ARCH)/cpuintrf.o \
              obj.$(ARCH)/vidhrdw/generic.o obj.$(ARCH)/sndhrdw/generic.o \
 	     obj.$(ARCH)/sndhrdw/psg.o obj.$(ARCH)/sndhrdw/8910intf.o \
 	     obj.$(ARCH)/sndhrdw/pokey.o obj.$(ARCH)/sndhrdw/sn76496.o
 
-OBJMICROS  = obj.$(ARCH)/Z80/Z80.o obj.$(ARCH)/M6502/M6502.o obj.$(ARCH)/I86/I86.o
+OBJMICROS = obj.$(ARCH)/Z80/Z80.o obj.$(ARCH)/M6502/M6502.o obj.$(ARCH)/I86/I86.o
 
-OBJOSDEP   = obj.$(ARCH)/osdepend.o
+OBJOSDEP = obj.$(ARCH)/unix/osdepend.a
 
 OBJGAMES = obj.$(ARCH)/machine/pacman.o obj.$(ARCH)/vidhrdw/pacman.o obj.$(ARCH)/drivers/pacman.o \
          obj.$(ARCH)/vidhrdw/pengo.o obj.$(ARCH)/sndhrdw/pengo.o obj.$(ARCH)/drivers/pengo.o \
@@ -108,26 +108,31 @@ OBJGAMES = obj.$(ARCH)/machine/pacman.o obj.$(ARCH)/vidhrdw/pacman.o obj.$(ARCH)
          obj.$(ARCH)/machine/panic.o obj.$(ARCH)/vidhrdw/panic.o obj.$(ARCH)/drivers/panic.o \
          obj.$(ARCH)/machine/arabian.o obj.$(ARCH)/vidhrdw/arabian.o obj.$(ARCH)/sndhrdw/arabian.o obj.$(ARCH)/drivers/arabian.o \
          obj.$(ARCH)/machine/1942.o obj.$(ARCH)/vidhrdw/1942.o obj.$(ARCH)/sndhrdw/1942.o obj.$(ARCH)/drivers/1942.o \
-         obj.$(ARCH)/vidhrdw/gyruss.o obj.$(ARCH)/sndhrdw/gyruss.o obj.$(ARCH)/drivers/gyruss.o \
+         obj.$(ARCH)/vidhrdw/gyruss.o obj.$(ARCH)/sndhrdw/gyruss.o obj.$(ARCH)/drivers/gyruss.o
 
-OBJS= $(COMMON) $(OBJMACHINE) $(OBJGAMES) $(OBJMICROS) $(OBJOSDEP)
+OBJS = $(COMMON) $(OBJMACHINE) $(OBJGAMES) $(OBJMICROS) $(OBJOSDEP)
 
 VPATH = src src/Z80 src/M6502 src/I86
 
-all: objdirs xmame.$(ARCH)
+all: objdirs xmame.$(ARCH) sndserver
 
 objdirs: 
 	-mkdir obj.$(ARCH) obj.$(ARCH)/msdos obj.$(ARCH)/unix 2>/dev/null
 	-mkdir obj.$(ARCH)/I86 obj.$(ARCH)/Z80 obj.$(ARCH)/M6502 2>/dev/null
 	-mkdir obj.$(ARCH)/drivers obj.$(ARCH)/machine obj.$(ARCH)/sndhrdw obj.$(ARCH)/vidhrdw 2>/dev/null
 
-xmame.$(ARCH):  $(OBJS)
+xmame.$(ARCH):	$(OBJS)
 	$(LD) -g3 -o  xmame.$(ARCH) $(OBJS) $(LIBS.$(ARCH))
 
-obj.$(ARCH)/osdepend.o: src/unix/unix.c src/unix/linux.c src/unix/irix.c \
-		src/unix/sunos.c src/unix/solaris.c
-	 $(CC) $(DEFS.$(ARCH)) $(MS) $(JS) $(CFLAGS) -Isrc/unix -o $@ -c src/unix/unix.c
+obj.$(ARCH)/unix/osdepend.a:
+	 ( \
+	 cd src/unix; \
+	  make CC="$(CC)" ARCH="$(ARCH)" DEFS="$(DEFS.$(ARCH))" MS="$(MS)" JS="$(JS)" CFLAGS="$(CFLAGS)" \
+	 )
 
+sndserver: obj.$(ARCH)/unix/sndserver.o obj.$(ARCH)/unix/osdepend.a 
+	$(LD) -g3 -o  sndserver.$(ARCH) obj.$(ARCH)/unix/sndserver.o $(LIBS.$(ARCH))
+	
 obj.$(ARCH)/%.o: src/%.c
 	 $(CC) $(DEFS.$(ARCH)) $(MS) $(JS) $(CFLAGS) -o $@ -c $<
 

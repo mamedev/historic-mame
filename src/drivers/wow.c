@@ -180,6 +180,17 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 2, 0, "MOVE UP" },
+        { 2, 2, "MOVE LEFT"  },
+        { 2, 3, "MOVE RIGHT" },
+        { 2, 1, "MOVE DOWN" },
+        { 2, 5, "FIRE1" },
+        { 2, 4, "FIRE2" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -325,7 +336,7 @@ struct GameDriver wow_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -346,7 +357,7 @@ struct GameDriver robby_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -367,7 +378,7 @@ struct GameDriver gorf_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

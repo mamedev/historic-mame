@@ -127,6 +127,16 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 2, "MOVE UP" },
+        { 0, 1, "MOVE LEFT"  },
+        { 0, 0, "MOVE RIGHT" },
+        { 0, 3, "MOVE DOWN" },
+        { 0, 4, "JUMP" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -386,7 +396,7 @@ struct GameDriver mario_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

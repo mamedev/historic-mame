@@ -40,19 +40,18 @@ C020			Sound Port 2 (??)
 
 ***************************************************************************/
 
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
 extern unsigned char *warpwarp_bulletsram;
 extern void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 extern int warpwarp_input_c000_7_r(int offset);
 extern int warpwarp_input_c020_27_r(int offset);
 extern int warpwarp_input_controller_r(int offset);
 extern int warpwarp_interrupt();
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -60,9 +59,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x37ff, MRA_ROM },
 	{ 0x4000, 0x47FF, MRA_RAM },
 	{ 0x4800, 0x4FFF, MRA_ROM },
-        { 0xc000, 0xc007, warpwarp_input_c000_7_r },
-        { 0xc010, 0xc010, warpwarp_input_controller_r },
-        { 0xc020, 0xc027, warpwarp_input_c020_27_r },
+   { 0xc000, 0xc007, warpwarp_input_c000_7_r },
+   { 0xc010, 0xc010, warpwarp_input_controller_r },
+   { 0xc020, 0xc027, warpwarp_input_c020_27_r },
 	{ -1 }	/* end of table */
 };
 
@@ -81,22 +80,44 @@ static struct MemoryWriteAddress writemem[] =
 static struct InputPort input_ports[] =
 {
 	{	/* DSW1 */
-		0xe9,
+		0x0D,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ /* Controls get mapped to correct read location in Machine.c code */
+		0xFF,
+		{ OSD_KEY_3, 0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_CONTROL },
+		{ 0        , 0, 0        , 0        , OSD_JOY_FIRE2}
+	},
+	{
+		0x00,
+		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN },
+		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN }
+	},
+	{	/* Test setting */
+		0x1,
+		{ 0},
+		{ 0}
 	},
 	{ -1 }	/* end of table */
 };
 
 
-/* These are NOT correct at all */
+static struct KEYSet keys[] =
+{
+        { -1 }
+};
+
+
 
 static struct DSW dsw[] =
 {
-	{ 0, 0x0c, "LIVES", { "1", "2", "3", "5" } },
-	{ 0, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
-	{ 0, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
-	{ 0, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
+	{ 0, 0x03, "CREDITS", { "FREEPLAY", "1 COIN 1 CREDIT","1 COIN 2 CREDITS","2 COINS 1 CREDIT" } },
+	{ 0, 0x0C, "NO FIGHTERS", { "2", "3", "4", "5" } },
+/* The bonus setting changes depending on the no of lives */
+	{ 0, 0x30, "BONUS", {	"SETTING 1","SETTING 2","SETTING 3","SETTING 4", } },
+	{ 0, 0x40, "DEMO SOUND", { "ON", "OFF" } },
+	{ 1, 1<<5, "TEST MODE", { "ON", "OFF" } },
 	{ -1 }
 };
 
@@ -130,27 +151,55 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 2 },
-	{ 1, 0x0000, &spritelayout, 0, 2 },
+	{ 1, 0x0000, &charlayout,   0, 16 },
+	{ 1, 0x0000, &spritelayout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,   /* black      */
-	0xff,0xff,0xff    /* white  */
+	0, 0, 0,
+	0, 165, 255,
+	231, 231, 0,
+	165, 0, 0,	
+	181, 181, 181, 
+	239, 0, 239,	
+	247, 0, 156,	
+	255, 0, 0,
+	255, 132, 0,	
+	255, 181, 115,	
+	255, 255, 255,
+	255, 0, 255,
+	0, 255, 255,
+	0, 0, 255,
+	255, 0, 0 
 };
 
 enum
 {
-	black, white
+	black, white, yellow
 };
 
 static unsigned char colortable[] =
 {
-	black, white,
-        black, white,
+	0,0,
+	0,1,
+	0,2,
+	0,3,
+	0,4,
+	0,5,
+	0,6,
+	0,7,
+	0,8,
+	0,9,
+	0,9,
+	0,10,
+	0,11,
+	0,12,
+	0,13,
+	0,14,
+	0,15
 };
 
 
@@ -171,10 +220,10 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-  	32*8, 34*8, { 0*8, 32*8-1, 0*8, 34*8-1 },
+  	31*8, 34*8, { 0*8, 31*8-1, 0*8, 34*8-1 },
 	gfxdecodeinfo,
 
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3 ,sizeof(colortable),
 	0,
 
 	0,
@@ -215,14 +264,14 @@ struct GameDriver warpwarp_driver =
 	0, 0,
         0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	            /* numbers */
+	{ 0x2A,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	            /* numbers */
 	  0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
 	  0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20,0x21,0x22,0x23 },
-	0, 3,
-	8*13, 8*16, 2,
+	2, 3,
+	8*13, 8*16, 4,
 
 	0, 0
 };

@@ -52,9 +52,9 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x4000, 0x5FFF, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
-    { 0x6803, 0x6803, input_port_0_r },
-    { 0x6800, 0x6800, input_port_1_r },
-    { 0x6802, 0x6802, input_port_2_r }, /* DSW */
+        { 0x6803, 0x6803, input_port_0_r },
+        { 0x6800, 0x6800, input_port_1_r },
+        { 0x6802, 0x6802, input_port_2_r }, /* DSW */
 	{ -1 }	/* end of table */
 };
 
@@ -99,6 +99,17 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }
+};
+
+static struct KEYSet keys[] =
+{
+        { 1, 4, "MOVE UP" },
+        { 1, 2, "MOVE LEFT"  },
+        { 1, 1, "MOVE RIGHT" },
+        { 1, 3, "MOVE DOWN" },
+        { 1, 7, "FILL" },
+        { 1, 0, "DIG" },
+        { -1 }
 };
 
 
@@ -157,9 +168,9 @@ static struct GfxLayout spritelayout1 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 0, 751, &charlayout, 0, 8 },
-    { 1, 0x0A00, &spritelayout0, 0, 8 },    /* Monsters             */
-    { 1, 0x0200, &spritelayout0, 0, 8 },    /* Monsters eating Man  */
-    { 1, 0x0800, &spritelayout1, 0, 8 },    /* Man                  */
+	{ 1, 0x0A00, &spritelayout0, 0, 8 },	/* Monsters             */
+	{ 1, 0x0200, &spritelayout0, 0, 8 },    /* Monsters eating Man  */
+	{ 1, 0x0800, &spritelayout1, 0, 8 },    /* Man                  */
 	{ -1 } /* end of array */
 };
 
@@ -192,7 +203,7 @@ static unsigned char colortable[] =
 	black, blue,         0,          0,         /* Screen Colours */
 	0,     purple,       orange,     0,
 	0,     0,            green,      cyan,
-    0,     0,            0,          white
+        0,     0,            0,          white
 };
 
 static struct MachineDriver machine_driver =
@@ -282,7 +293,7 @@ ROM_START( panic_rom )
 	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800)
 	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800)
 	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800)
-    ROM_LOAD( "spcpanic.8", 0x3800, 0x0800)         /* Colour Table */
+        ROM_LOAD( "spcpanic.8", 0x3800, 0x0800)         /* Colour Table */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 
@@ -300,9 +311,9 @@ struct GameDriver panic_driver =
 
 	panic_rom,
 	0, 0,
-    0,
+        0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	            /* numbers */

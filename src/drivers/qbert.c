@@ -70,6 +70,7 @@ extern void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, uns
 extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
 extern void gottlieb_output(int offset, int data);
+extern int qbert_IN1_r(int offset);
 extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_spriteram;
@@ -82,7 +83,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
+	{ 0x5801, 0x5801, qbert_IN1_r },     /* buttons */
 	{ 0x5802, 0x5802, input_port_2_r },     /* trackball: not used */
 	{ 0x5803, 0x5803, input_port_3_r },     /* trackball: not used */
 	{ 0x5804, 0x5804, input_port_4_r },     /* joystick */
@@ -117,8 +118,8 @@ static struct InputPort input_ports[] =
 	},
 	{       /* buttons */
 		0x40,   /* test mode off */
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
-				0, 0, 0, OSD_KEY_ALT },
+		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, 0 /* coin 2 */,
+				0, 0, 0, OSD_KEY_F2 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* trackball: not used */
@@ -142,6 +143,15 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 4, 0, "MOVE DOWN RIGHT" },
+        { 4, 1, "MOVE UP LEFT"  },
+        { 4, 2, "MOVE UP RIGHT" },
+        { 4, 3, "MOVE DOWN LEFT" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -151,7 +161,7 @@ static struct DSW dsw[] =
 	{ 0, 0x04, "", { "UPRIGHT", "COCKTAIL" } },
 	{ 0, 0x02, "KICKER", { "OFF", "ON" } },
 /* the following switch must be connected to the IP16 line */
-	{ 1, 0x40, "TEST MODE", {"ON", "OFF"} },
+/*	{ 1, 0x40, "TEST MODE", {"ON", "OFF"} },*/
 	{ -1 }
 };
 
@@ -252,48 +262,48 @@ ROM_END
 
 const char *gottlieb_sample_names[] =
 {
-	"FX_00",
-	"FX_01",
-	"FX_02",
-	"FX_03",
-	"FX_04",
-	"FX_05",
-	"FX_06",
-	"FX_07",
-	"FX_08",
-	"FX_09",
-	"FX_10",
-	"FX_11",
-	"FX_12",
-	"FX_13",
-	"FX_14",
-	"FX_15",
-	"FX_16",
-	"FX_17",
-	"FX_18",
-	"FX_19",
-	"FX_20",
-	"FX_21",
-	"FX_22",
-	"FX_23",
-	"FX_24",
-	"FX_25",
-	"FX_26",
-	"FX_27",
-	"FX_28",
-	"FX_29",
-	"FX_30",
-	"FX_31",
-	"FX_32",
-	"FX_33",
-	"FX_34",
-	"FX_35",
-	"FX_36",
-	"FX_37",
-	"FX_38",
-	"FX_39",
-	"FX_40",
-	"FX_41",
+	"FX_00.SAM",
+	"FX_01.SAM",
+	"FX_02.SAM",
+	"FX_03.SAM",
+	"FX_04.SAM",
+	"FX_05.SAM",
+	"FX_06.SAM",
+	"FX_07.SAM",
+	"FX_08.SAM",
+	"FX_09.SAM",
+	"FX_10.SAM",
+	"FX_11.SAM",
+	"FX_12.SAM",
+	"FX_13.SAM",
+	"FX_14.SAM",
+	"FX_15.SAM",
+	"FX_16.SAM",
+	"FX_17.SAM",
+	"FX_18.SAM",
+	"FX_19.SAM",
+	"FX_20.SAM",
+	"FX_21.SAM",
+	"FX_22.SAM",
+	"FX_23.SAM",
+	"FX_24.SAM",
+	"FX_25.SAM",
+	"FX_26.SAM",
+	"FX_27.SAM",
+	"FX_28.SAM",
+	"FX_29.SAM",
+	"FX_30.SAM",
+	"FX_31.SAM",
+	"FX_32.SAM",
+	"FX_33.SAM",
+	"FX_34.SAM",
+	"FX_35.SAM",
+	"FX_36.SAM",
+	"FX_37.SAM",
+	"FX_38.SAM",
+	"FX_39.SAM",
+	"FX_40.SAM",
+	"FX_41.SAM",
 	0       /* end of array */
 };
 
@@ -343,7 +353,7 @@ struct GameDriver qbert_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	(char *)qbert_colors,
 	0,0,    /* palette, colortable */
@@ -366,7 +376,7 @@ struct GameDriver qbertjp_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	(char *)qbert_colors,
 	0,0,    /* palette, colortable */

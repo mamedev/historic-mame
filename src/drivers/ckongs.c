@@ -193,6 +193,23 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 0, "PL1 MOVE UP" },
+        { 0, 5, "PL1 MOVE LEFT"  },
+        { 0, 4, "PL1 MOVE RIGHT" },
+        { 2, 0, "PL1 MOVE DOWN" },
+        { 0, 1, "PL1 FIRE1" },
+        { 0, 3, "PL1 FIRE2" },
+        { 2, 4, "PL1 MOVE UP" },
+        { 1, 5, "PL1 MOVE LEFT"  },
+        { 1, 4, "PL1 MOVE RIGHT" },
+        { 2, 6, "PL1 MOVE DOWN" },
+        { 1, 2, "PL1 FIRE1" },
+        { 1, 3, "PL1 FIRE2" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -337,7 +354,7 @@ struct GameDriver ckongs_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

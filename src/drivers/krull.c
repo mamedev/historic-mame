@@ -63,6 +63,7 @@ extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
 extern void gottlieb_output(int offset, int data);
+extern int krull_IN1_r(int offset);
 extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_spriteram;
@@ -79,7 +80,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
+	{ 0x5801, 0x5801, krull_IN1_r },     /* buttons */
 	{ 0x5802, 0x5802, input_port_2_r },     /* trackball: not used */
 	{ 0x5803, 0x5803, input_port_3_r },     /* trackball: not used */
 	{ 0x5804, 0x5804, input_port_4_r },     /* joystick */
@@ -114,7 +115,7 @@ static struct InputPort input_ports[] =
 	{       /* buttons */
 		0x01,
 		{ 0,                    /* diag mode */
-          OSD_KEY_G,            /* select */
+		  OSD_KEY_F2,            /* select */
 		  OSD_KEY_3, OSD_KEY_4, /* coin 1 & 2 */
 		  0,0,                  /* not connected ? */
 		  OSD_KEY_1,
@@ -134,12 +135,25 @@ static struct InputPort input_ports[] =
 	{       /* joysticks */
 		0x00,
 		{
-        OSD_KEY_W,OSD_KEY_D,OSD_KEY_S,OSD_KEY_A,
+		OSD_KEY_E,OSD_KEY_F,OSD_KEY_D,OSD_KEY_S,
 		OSD_KEY_UP,OSD_KEY_RIGHT,OSD_KEY_DOWN,OSD_KEY_LEFT},
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
-					OSD_JOY_FIRE, 0, 0, 0 }
+					0, 0, 0, 0 }
 	},
 	{ -1 }  /* end of table */
+};
+
+static struct KEYSet keys[] =
+{
+        { 4, 4, "MOVE UP" },
+        { 4, 7, "MOVE LEFT"  },
+        { 4, 5, "MOVE RIGHT" },
+        { 4, 6, "MOVE DOWN" },
+        { 4, 0, "FIRE UP" },
+        { 4, 3, "FIRE LEFT"  },
+        { 4, 1, "FIRE RIGHT" },
+        { 4, 2, "FIRE DOWN" },
+        { -1 }
 };
 
 
@@ -161,7 +175,7 @@ static struct DSW dsw[] =
 		"LIFE AT 40000 THEN EVERY 50000",
 		"LIFE AT 50000 THEN EVERY 75000"
 		} },
-	{ 1, 0x01, "TEST MODE", {"ON", "OFF"} },
+	/*{ 1, 0x01, "TEST MODE", {"ON", "OFF"} },*/
 	{ -1 }
 };
 
@@ -303,7 +317,7 @@ struct GameDriver krull_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	(char *)krull_colors,
 	0,0,    /* palette, colortable */

@@ -13,7 +13,8 @@
 unsigned char *videoram;
 unsigned char *colorram;
 unsigned char *spriteram;	/* not used in this module... */
-unsigned char *spriteram_2;	/* ... here just for convenience */
+unsigned char *spriteram_2;	/* ... */
+unsigned char *spriteram_3;	/* ... here just for convenience */
 unsigned char *dirtybuffer;
 struct osd_bitmap *tmpbitmap;
 

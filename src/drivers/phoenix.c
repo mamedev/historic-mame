@@ -123,6 +123,15 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 6, "MOVE LEFT"  },
+        { 0, 5, "MOVE RIGHT" },
+        { 0, 7, "BARRIER"    },
+        { 0, 4, "FIRE" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -340,7 +349,7 @@ struct GameDriver phoenix_driver =
 	0, 0,
         phoenix_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,	/* numbers */
@@ -361,7 +370,7 @@ struct GameDriver pleiads_driver =
 	0, 0,
         0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,	/* numbers */

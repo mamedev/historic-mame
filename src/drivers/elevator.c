@@ -108,9 +108,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll1 },
 	{ 0xd50d, 0xd50d, MWA_NOP },
 	{ 0xd50e, 0xd50e, elevatob_bankswitch_w },
-{ 0xd40e, 0xd40f, MWA_RAM },
-{ 0xd509, 0xd50a, MWA_RAM },
-{ 0x8800, 0x8800, MWA_NOP },
+        { 0xd40e, 0xd40f, MWA_RAM },
+        { 0xd509, 0xd50a, MWA_RAM },
+        { 0x8800, 0x8800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -147,13 +147,24 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSW3 */
-		0xbc,
+		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
 };
 
+
+static struct KEYSet keys[] =
+{
+        { 0, 3, "MOVE UP" },
+        { 0, 0, "MOVE LEFT"  },
+        { 0, 1, "MOVE RIGHT" },
+        { 0, 2, "MOVE DOWN" },
+        { 0, 4, "FIRE" },
+        { 0, 5, "JUMP" },
+        { -1 }
+};
 
 
 static struct DSW dsw[] =
@@ -375,7 +386,7 @@ struct GameDriver elevator_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
@@ -396,14 +407,14 @@ struct GameDriver elevatob_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
 		0x1c,0x29,0x2e,0x30,0x1e,0x27,0x28,0x2b,0x2c,0x2c,0x21,0x1b,0x20,	/* letters */
 		0x25,0x2f,0x1a,0x2f,0x1f,0x2d,0x31,0x22,0x23,0x26,0x21,0x1d,0x12 },	/* j, k, q and z are missing */
-	0x06, 0x04,
-	8*13, 8*16, 0x00,
+	0x01, 0x02,
+	8*13, 8*16, 0x01,
 
 	0, 0
 };

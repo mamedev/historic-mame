@@ -57,7 +57,7 @@ static struct AY8910interface interface =
 	1,	/* 1 chip */
 	1789750000,	/* 1.78975 MHZ ?? */
 	{ 255 },
-	{ sound_command_r },
+	{ sound_command_latch_r },
 	{ frogger_portB_r },
 	{ },
 	{ }

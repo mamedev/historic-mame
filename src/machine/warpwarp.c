@@ -13,6 +13,10 @@
 
 int warpwarp_input_c000_7_r(int offset)
 {
+	int res;
+	res = readinputport(1);
+	return(res & (1<<offset) ? 1 : 0);
+/*
 	switch (offset&7) {
 		case 0x0 : if (osd_key_pressed(OSD_KEY_3)) return(0); else return(1);
 		case 0x1 : return(1);
@@ -26,23 +30,30 @@ int warpwarp_input_c000_7_r(int offset)
 			break;
 	}
 	return(0);
+*/
 }
 
+/* Read the Dipswitches */
 int warpwarp_input_c020_27_r(int offset)
 {
 	int res;
-	struct InputPort *in;
 
-	in = &Machine->gamedrv->input_ports[0];
-
-	res = in->default_value;
-
-	return(res & (1<<(offset & 7)));
+	res = readinputport(0);
+	return(res & (1<<(offset & 7)) ? 1 : 0);
 }
+
 int warpwarp_input_controller_r(int offset)
 {
-	unsigned char value=255;
+	int res;
 
+	res = readinputport(2);
+	if (res & 1) return(111);
+	if (res & 2) return(167);
+	if (res & 4) return(63);
+	if (res & 8) return(23);
+	return(255);
+/*
+	unsigned char value=255;
 	if (osd_key_pressed(OSD_KEY_LEFT)) {
 		value=111;
 	} else if (osd_key_pressed(OSD_KEY_RIGHT)) {
@@ -53,9 +64,6 @@ int warpwarp_input_controller_r(int offset)
 		value=23;
 	}
 	return(value);
+*/
 }
 
-int warpwarp_interrupt(void)
-{
-	return 0x38;
-}

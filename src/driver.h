@@ -85,6 +85,16 @@ struct InputPort
 
 
 
+/* Key setting definition */
+struct KEYSet
+{
+	int num;	      /* input port affected */
+			      /* -1 terminates the array */
+	int mask;	      /* bit affected */
+	const char *name;     /* name of the setting */
+};
+
+
 /* dipswitch setting definition */
 struct DSW
 {
@@ -125,9 +135,10 @@ struct MachineCPU
 	int interrupts_per_frame;	/* usually 1 */
 };
 
-#define CPU_Z80 1
-#define CPU_M6502 2
-#define CPU_I86 3
+#define CPU_Z80    1
+#define CPU_M6502  2
+#define CPU_I86    3
+#define CPU_M6809  4
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* play_sound == 0, therefore speeding up a lot the emulation. */
@@ -175,13 +186,14 @@ struct GameDriver
 	const struct MachineDriver *drv;
 
 	const struct RomModule *rom;
-	unsigned (*rom_decode)(int A);	/* used to decrypt the ROMs after loading them */
+	unsigned (*rom_decode)(int A);	        /* used to decrypt the ROMs after loading them */
 	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
-	const char **samplenames;	/* optional array of names of samples to load. */
-							/* drivers can retrieve them in Machine->samples */
+	const char **samplenames;	        /* optional array of names of samples to load. */
+						/* drivers can retrieve them in Machine->samples */
 
 	struct InputPort *input_ports;
 	const struct DSW *dswsettings;
+        const struct KEYSet *keysettings;
 
 		/* if they are available, provide a dump of the color proms (there is no */
 		/* copyright infringement in that, since you can't copyright a color scheme) */
@@ -197,14 +209,14 @@ struct GameDriver
 		/* usually be consecutive, but in some cases (e.g. Time Pilot) they */
 		/* are scattered. */
 	const short int charset[10+26];
-	int white_text,yellow_text;	/* color codes - used by the dip switch menu */
+	int white_text,yellow_text;	        /* color codes - used by the dip switch menu */
 	int paused_x,paused_y,paused_color;	/* used to print PAUSED on the screen */
-								/* paused_color is also used for the startup notice */
+						/* paused_color is also used for the startup notice */
 
 	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
-											/* returns nonzero */
+						/* returns nonzero */
 	void (*hiscore_save)(const char *name);	/* will not be loaded if hiscore_load() hasn't yet */
-										/* returned nonzero, to avoid saving an invalid table */
+						/* returned nonzero, to avoid saving an invalid table */
 };
 
 

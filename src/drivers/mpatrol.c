@@ -122,6 +122,15 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 1, 1, "MOVE LEFT"  },
+        { 1, 0, "MOVE RIGHT" },
+        { 1, 5, "JUMP" },
+        { 1, 7, "FIRE" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -189,91 +198,96 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,   /* black      */
-	0x94,0x00,0xd8,   /* darkpurple */
-	0xd8,0x00,0x00,   /* darkred    */
-	0xf8,0x64,0xd8,   /* pink       */
-	0x00,0xd8,0x00,   /* darkgreen  */
-	0x00,0x00,0x80,   /* darkblue   */
-	0xd8,0xd8,0x94,   /* darkyellow */
-	0xd8,0xf8,0xd8,   /* darkwhite  */
-	0xf8,0x94,0x44,   /* orange     */
-	0x00,0x00,0xd8,   /* blue   */
-	0xf8,0x00,0x00,   /* red    */
-	0xff,0x00,0xff,   /* purple */
-	0x00,0xf8,0x00,   /* green  */
-	0x00,0xff,0xff,   /* cyan   */
-	0xf8,0xf8,0x00,   /* yellow */
-	0xff,0xff,0xff,    /* white  */
-	255,183,115,    /* LTBROWN */
-	167,3,3,        /* DKBROWN */
+        0x00,0x00,0x00,   /* black      */
+        0x94,0x00,0xd8,   /* darkpurple */
+        0xd8,0x00,0x00,   /* darkred    */
+        0xf8,0x64,0xd8,   /* pink       */
+        0x00,0xd8,0x00,   /* darkgreen  */
+        0x00,0x00,0x80,   /* darkblue   */
+        0xd8,0xd8,0x94,   /* darkyellow */
+        0xd8,0xf8,0xd8,   /* darkwhite  */
+        0xf8,0x94,0x44,   /* orange     */
+        0x00,0x00,0xd8,   /* blue   */
+        0xf8,0x00,0x00,   /* red    */
+        0xff,0x00,0xff,   /* purple */
+        0x00,0xf8,0x00,   /* green  */
+        0x00,0xff,0xff,   /* cyan   */
+        0xf8,0xf8,0x00,   /* yellow */
+        0xff,0xff,0xff,    /* white  */
+        255,183,115,    /* LTBROWN */
+        167,3,3,        /* DKBROWN */
 };
 
 enum
 {
-	black, darkpurple, darkred, pink, darkgreen, darkblue, darkyellow,
-		darkwhite, orange, blue, red, purple, green, cyan, yellow, white,
-		ltbrown,dkbrown
+        black, darkpurple, darkred, pink, darkgreen, darkblue, darkyellow,
+                darkwhite, orange, blue, red, purple, green, cyan, yellow, white,
+                ltbrown,dkbrown
 };
 
 static unsigned char colortable[] =
 {
-	/* chars */
-	0,cyan,white,3,	/* MOON PATROL on title screen */
-	blue,red,white,1,	/* score beginner course */
-	cyan,black,red,blue,	/* point / time beginner course */
-	cyan,3,red,2,	/* lit caution led on champion course */
-	0,orange,15,red,	/* ground */
-	0,1,3,5,
-	blue,black,1,2,	/* high score point letter on beginner course */
-	cyan,pink,1,2,	/* point letter on champion course */
-	0,4,6,8,
-	blue,black,red,2,	/* high score beginner course */
-	0,9,12,15,
-	pink,black,1,2,	/* high score point letter on champion course */
-	pink,red,yellow,1,	/* score champion course */
-	cyan,black,red,pink,	/* point / time champion course */
-	pink,black,red,2,	/* high score champion course */
-	0,7,10,13,
-	0,1,2,3,
-	0,4,5,6,
-	0,orange,white,9,	/* starting ramp */
-	0,10,11,12,
-	0,13,14,15,
-	0,1,3,5,
-	0,7,9,11,
-	0,13,15,2,
-	0,4,6,8,
-	0,10,12,14,
-	0,1,4,7,
-	0,10,13,2,
-	0,5,8,11,
-	0,14,3,6,
-	0,9,12,15,
-	0,7,10,13,
+        /* chars */
+        0,cyan,white,3, /* MOON PATROL on title screen */
+        blue,red,white,1,       /* score beginner course */
+        cyan,black,red,blue,    /* point / time beginner course */
+        cyan,3,red,2,   /* lit caution led on champion course */
+        green,orange,15,red,        /* ground */
+        0,1,3,5,
+        blue,black,1,2, /* high score point letter on beginner course */
+        cyan,pink,1,2,  /* point letter on champion course */
+        0,4,6,8,
+        blue,black,red,2,       /* high score beginner course */
+        0,9,12,15,
+        pink,black,1,2, /* high score point letter on champion course */
+        pink,red,yellow,1,      /* score champion course */
+        cyan,black,red,pink,    /* point / time champion course */
+        pink,black,red,2,       /* high score champion course */
+        0,7,10,13,
+        0,1,2,3,
+        0,4,5,6,
+        0,orange,orange,9,       /* starting ramp */
+        0,10,11,12,
+        0,13,14,15,
+        0,1,3,5,
+        0,7,9,11,
+        0,13,15,2,
+        0,4,6,8,
+        0,10,12,14,
+        0,1,4,7,
+        0,10,13,2,
+        0,5,8,11,
+        0,14,3,6,
+        0,9,12,15,
+        0,7,10,13,
 
-	/* sprites */
-	0,black,pink,cyan,	/* moon patrol on beginner course */
-	0,4,5,6,
-	0,7,8,9,
-	0,10,11,12,
-	0,ltbrown,14,dkbrown,
-	0,1,3,5,
-	0,7,9,11,
-	0,13,15,2,
-	0,4,6,8,
-	0,10,12,14,
-	0,1,4,7,
-	0,10,13,2,
-	0,black,red,cyan,	/* moon patrol on champion course */
-	0,14,3,6,
-	0,9,12,15,
-	0,7,10,13,
+        /* sprites */
+        0,black,pink,cyan,      /* moon patrol on beginner course */
+        0,4,5,6,                /* buggy-shot, droping bomb, explosion 1 */
+        0,7,8,9,                /* grabbing plant */
+        0,10,11,12,             /* explosion 2 (on ground) */
+        0,ltbrown,14,dkbrown,   /* boulders */
+        0,1,3,5,
+        0,7,9,11,
+        0,13,15,2,              /* space crafts */
+        0,4,6,8,                /* bottom part of plant */
+        0,10,12,14,             /* any enemy  cars */
 
-	/* backgrounds */
-	0,yellow,blue,green,
-	0,1,darkgreen,green,
-	0,white,darkblue,blue,
+        0,1,4,7,                /* tri star bomb 1 */
+
+        0,10,13,2,              /* tri star bomb 1 */
+
+        0,black,red,cyan,       /* moon patrol on champion course */
+
+        0,14,3,6,
+        0,9,12,15,
+        0,7,10,13,
+
+        /* backgrounds */
+        0,yellow,blue,green,
+        0,1,darkgreen,green,
+/*        0,white,darkblue,blue,*/
+        0,0,darkblue,blue,
 };
 
 
@@ -365,7 +379,7 @@ struct GameDriver mpatrol_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
@@ -386,7 +400,7 @@ struct GameDriver mranger_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */

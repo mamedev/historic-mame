@@ -7,10 +7,10 @@ MAIN BOARD:
 4000-47ff RAM
 4800-4bff Video RAM
 5000-50ff Object RAM
-  5000-503f  screen attributes
-  5040-505f  sprites
-  5060-507f  bullets
-  5080-50ff  unused?
+5000-503f  screen attributes
+5040-505f  sprites
+5060-507f  bullets
+5080-50ff  unused?
 
 read:
 7000      Watchdog Reset
@@ -196,6 +196,23 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+
+static struct KEYSet keys[] =
+{
+        { 0, 0, "PL1 MOVE UP" },
+        { 0, 5, "PL1 MOVE LEFT"  },
+        { 0, 4, "PL1 MOVE RIGHT" },
+        { 2, 0, "PL1 MOVE DOWN" },
+        { 0, 3, "PL1 FIRE FRONT" },
+        { 0, 1, "PL1 FIRE DOWN" },
+        { 2, 4, "PL2 MOVE UP" },
+        { 1, 5, "PL2 MOVE LEFT"  },
+        { 1, 4, "PL2 MOVE RIGHT" },
+        { 2, 6, "PL2 MOVE DOWN" },
+        { 1, 3, "PL2 FIRE FRONT" },
+        { 1, 2, "PL2 FIRE DOWN" },
+        { -1 }
+};
 
 
 static struct DSW scramble_dsw[] =
@@ -461,7 +478,7 @@ struct GameDriver scramble_driver =
 	0, 0,
 	0,
 
-	input_ports, scramble_dsw,
+	input_ports, scramble_dsw, keys,
 
 	scramble_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -482,7 +499,7 @@ struct GameDriver atlantis_driver =
 	0, 0,
 	0,
 
-	input_ports, atlantis_dsw,
+	input_ports, atlantis_dsw, keys,
 
 	scramble_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -503,7 +520,7 @@ struct GameDriver theend_driver =
 	0, 0,
 	0,
 
-	input_ports, theend_dsw,
+	input_ports, theend_dsw, keys,
 
 	scramble_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -524,7 +541,7 @@ struct GameDriver froggers_driver =
 	0, 0,
 	0,
 
-	input_ports, scramble_dsw,
+	input_ports, scramble_dsw, keys,
 
 	froggers_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

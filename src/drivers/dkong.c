@@ -206,6 +206,16 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 0, 2, "MOVE UP" },
+        { 0, 1, "MOVE LEFT"  },
+        { 0, 0, "MOVE RIGHT" },
+        { 0, 3, "MOVE DOWN" },
+        { 0, 4, "JUMP" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -632,6 +642,26 @@ ROM_START( dkong_rom )
 	ROM_LOAD( "dk.3f",  0x0800, 0x0800 )
 ROM_END
 
+ROM_START( dkongjp_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "5f.cpu",  0x0000, 0x1000 )
+	ROM_LOAD( "5g.cpu",  0x1000, 0x1000 )
+	ROM_LOAD( "5h.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "5k.cpu",  0x3000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5h.vid",  0x0000, 0x0800 )
+	ROM_LOAD( "5k.vid",  0x0800, 0x0800 )
+	ROM_LOAD( "4m.clk",  0x1000, 0x0800 )
+	ROM_LOAD( "4n.clk",  0x1800, 0x0800 )
+	ROM_LOAD( "4r.clk",  0x2000, 0x0800 )
+	ROM_LOAD( "4s.clk",  0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "3i.sou",  0x0000, 0x0800 )
+	ROM_LOAD( "3j.sou",  0x0800, 0x0800 )
+ROM_END
+
 ROM_START( dkongjr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkj.5b",  0x0000, 0x1000 )
@@ -661,7 +691,7 @@ ROM_END
 
 static const char *sample_names[] =
 {
-	"effect00.sam",    
+	"effect00.sam",
 	"effect01.sam",
 	"effect02.sam",
 	"effect03.sam",
@@ -669,21 +699,21 @@ static const char *sample_names[] =
 	"effect05.sam",
 	"effect06.sam",
 	"effect07.sam",
-	"tune00.sam",   
-	"tune01.sam",   
-	"tune02.sam",   
+	"tune00.sam",
+	"tune01.sam",
+	"tune02.sam",
 	"tune03.sam",
-	"tune04.sam",   
-	"tune05.sam",   
-	"tune06.sam",   
+	"tune04.sam",
+	"tune05.sam",
+	"tune06.sam",
 	"tune07.sam",
-	"tune08.sam",   
-	"tune09.sam",   
+	"tune08.sam",
+	"tune09.sam",
 	"tune0a.sam",
 	"tune0b.sam",
-	"tune0c.sam",   
-	"tune0d.sam",   
-	"tune0e.sam",   
+	"tune0c.sam",
+	"tune0d.sam",
+	"tune0e.sam",
 	"tune0f.sam",
 	"interupt.sam",
     0	/* end of array */
@@ -712,7 +742,7 @@ static int hiload(const char *name)
 			cpu_writemem(0x7601,RAM[0x6109]);
 			cpu_writemem(0x75e1,RAM[0x610a]);
 			cpu_writemem(0x75c1,RAM[0x610b]);
-			cpu_writemem(0x75a1,RAM[0x610b]);
+			cpu_writemem(0x75a1,RAM[0x610c]);
 			fclose(f);
 		}
 
@@ -746,7 +776,28 @@ struct GameDriver dkong_driver =
 	0, 0,
 	sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
+
+	0, palette, dkong_colortable,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
+	0, 45,
+	8*13, 8*16, 4,
+
+	hiload, hisave
+};
+
+struct GameDriver dkongjp_driver =
+{
+	"dkongjp",
+	&dkong_machine_driver,
+
+	dkongjp_rom,
+	0, 0,
+	sample_names,
+
+	input_ports, dsw, keys,
 
 	0, palette, dkong_colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -767,7 +818,7 @@ struct GameDriver dkongjr_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, dkongjr_colortable,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

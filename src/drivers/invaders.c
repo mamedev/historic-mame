@@ -71,9 +71,9 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
-   { 0x03, 0x03, invaders_sh_port3_w },
+        { 0x03, 0x03, invaders_sh_port3_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
-   { 0x05, 0x05, invaders_sh_port5_w },
+        { 0x05, 0x05, invaders_sh_port5_w },
 	{ -1 }	/* end of table */
 };
 
@@ -98,6 +98,17 @@ static struct InputPort input_ports[] =
 	{ -1 }
 };
 
+
+static struct KEYSet keys[] =
+{
+        { 0, 5, "PL1 MOVE LEFT"  },
+        { 0, 6, "PL1 MOVE RIGHT" },
+        { 0, 4, "PL1 FIRE"       },
+        { 1, 5, "PL1 MOVE LEFT"  },
+        { 1, 6, "PL1 MOVE RIGHT" },
+        { 1, 4, "PL1 FIRE"       },
+        { -1 }
+};
 
 
 static struct DSW dsw[] =
@@ -211,6 +222,14 @@ ROM_START( spaceatt_rom )
 	ROM_LOAD( "spaceatt.e", 0x1800, 0x0800)
 ROM_END
 
+ROM_START( invrvnge_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "invrvnge.h", 0x0000, 0x0800)
+	ROM_LOAD( "invrvnge.g", 0x0800, 0x0800)
+	ROM_LOAD( "invrvnge.f", 0x1000, 0x0800)
+	ROM_LOAD( "invrvnge.e", 0x1800, 0x0800)
+ROM_END
+
 ROM_START( invdelux_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "invdelux.h", 0x0000, 0x0800)
@@ -255,15 +274,15 @@ ROM_END
 
 static const char *invaders_sample_names[] =
 {
-	"0.raw",
-	"1.raw",
-	"2.raw",
-	"3.raw",
-	"4.raw",
-	"5.raw",
-	"6.raw",
-	"7.raw",
-	"8.raw",
+	"0.SAM",
+	"1.SAM",
+	"2.SAM",
+	"3.SAM",
+	"4.SAM",
+	"5.SAM",
+	"6.SAM",
+	"7.SAM",
+	"8.SAM",
 	0	/* end of array */
 };
 
@@ -313,7 +332,7 @@ struct GameDriver invaders_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -334,7 +353,7 @@ struct GameDriver earthinv_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -346,6 +365,7 @@ struct GameDriver earthinv_driver =
 	0, 0
 };
 
+
 struct GameDriver spaceatt_driver =
 {
 	"spaceatt",
@@ -355,7 +375,28 @@ struct GameDriver spaceatt_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
+
+	0, palette, colortable,
+	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
+		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
+		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver invrvnge_driver =
+{
+	"invrvnge",
+	&machine_driver,
+
+	invrvnge_rom,
+	0, 0,
+	invaders_sample_names,
+
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -376,7 +417,7 @@ struct GameDriver invdelux_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -397,7 +438,7 @@ struct GameDriver galxwars_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -418,7 +459,7 @@ struct GameDriver lrescue_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -439,7 +480,7 @@ struct GameDriver desterth_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */

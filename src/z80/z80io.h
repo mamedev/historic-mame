@@ -70,7 +70,8 @@ extern byte *ROM;
 /* can be used to slightly speed up emulation                               */
 /****************************************************************************/
 /*#define Z80_RDSTACK(A)		Z80_RDMEM(A)*/
-#define Z80_RDSTACK(A) (RAM[A])
+/*#define Z80_RDSTACK(A) (RAM[A])  Galaga doesn't work with this */
+#define Z80_RDSTACK(A) ((unsigned)cpu_readmem(A))
 
 /****************************************************************************/
 /* Z80_WRSTACK() is identical to Z80_WRMEM() except it is used for writing  */
@@ -78,4 +79,5 @@ extern byte *ROM;
 /* can be used to slightly speed up emulation                               */
 /****************************************************************************/
 /*#define Z80_WRSTACK(A,V)	Z80_WRMEM(A,V)*/
-#define Z80_WRSTACK(A,V) (RAM[A]=V)
+/*#define Z80_WRSTACK(A,V) (RAM[A]=V)  Galaga doesn't work with this */
+#define Z80_WRSTACK(A,V) (cpu_writemem(A,V))

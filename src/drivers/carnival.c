@@ -107,6 +107,14 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 1, 4, "MOVE LEFT"  },
+        { 1, 5, "MOVE RIGHT" },
+        { 2, 5, "JUMP" },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -265,7 +273,7 @@ struct GameDriver carnival_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	0, palette, colortable,
 	{ 0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* numbers */

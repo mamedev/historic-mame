@@ -28,9 +28,9 @@ The list doesn't include variants of the same game.
 ==============================================================================
 | 1942                        |  Yes   |  Yes   |  Yes   |  Yes   | 1942     |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Amidar                      |  Yes   | Close  |  Yes   |   No   | amidar   |
+| Amidar                      |  Yes   |  Yes   |  Yes   |   No   | amidar   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Arabian                     |  Yes   |   No   |  Yes   |   No   | arabian  |
+| Arabian                     |  Yes   | Close  |  Yes   |   No   | arabian  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Bagman                      |  Yes   |   No   | Music  |   No   | bagman   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -64,6 +64,10 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Frogger                     |  Yes   | Close  |  Yes   |   No   | frogger  |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Galaga                      |  Yes   |  Yes   | Yes(1) |   No   | galaga   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Galaga - Bootleg            |  Yes   |  Yes   | Yes(1) |   No   | galagabl |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Galaxian                    |  Yes   |  Yes   | Limited|  Yes   | galaxian |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gorf                        |   No   |   No   |   No   |  n/a   | gorf     |
@@ -78,6 +82,8 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Jungle King                 |  Yes   |   No   |   No   |   No   | junglek  |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Kangaroo                    |  Yes   |   No   |  Yes   |  n/a   | kangaroo |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Krull                       |  Yes   |  Yes   |   No   |  n/a   | krull    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Lady Bug                    |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
@@ -86,7 +92,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mario Bros.                 |  Yes   | Close  |   No   |  Yes   | mario    |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Mad Planets                 |  Yes   |  Yes?  |   No   |   No   | mplanets |
+| Mad Planets                 |  Yes   |  Yes?  |   No   | Yes(1) | mplanets |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Millipede                   |  Yes   |   No   |   No   |  Yes   | milliped |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -136,13 +142,15 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Super Cobra                 |  Yes   |   No   |  Yes   |   No   | scobra   |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Super PacMan                |  Yes   | Close  |   No   |   No   | superpac |
+|-----------------------------|--------|--------|--------|--------|----------|
 | The Adventures of Robby Roto|   No   |   No   |   No   |  n/a   | robby    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | The End                     |  Yes   |   No   |  Yes   |   No   | theend   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Time Pilot                  |  Yes   | Close  |  Yes   |  Yes   | timeplt  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Turtles                     |  Yes   | Close  |  Yes   |   No   | turtles  |
+| Turtles                     |  Yes   |  Yes?  |  Yes   |   No   | turtles  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Vanguard                    |  Yes   |   No   |   No   |   No   | vanguard |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -308,6 +316,12 @@ Donkey Kong ("dkong")
 Arrows  Move around
 CTRL    Jump
 
+Clone supported:
+  japanese nintendo version ("dkongjp").  This version has the bug that
+  barrels do not come down when at the top of a ladder, but the levels
+  play in the order barrels-pies-elevators-girders instead of
+  barrels-girders-barrels-elevators-girders...
+
 
 
 Donkey Kong Jr. ("dkongjr")
@@ -333,18 +347,13 @@ Elevator Action ("elevator")
 ============================
 Should run on hardware similar to Jungle King.
 
-Known issues:
-- Collision detect not yet implemented.
-
 
 
 Elevator Action - Bootleg ("elevatob")
 ======================================
 Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- Collision detect not yet implemented.
+CTRL    Fire1
+ALT     Fire2
 
 
 
@@ -364,6 +373,23 @@ Clones supported:
   alternate version, smaller, with different help, but still (C) Sega 1981
      ("frogsega")
   bootleg version, which runs on a modified Scramble board ("froggers")
+
+
+
+Galaga ("galaga")
+=====================
+Original version with Namco copyright
+
+Arrows  Move around
+CTRL    Fire
+
+Clone supported:
+  a version with a Z80 that emulates custom I/O chips.  However we don't
+  care this because we emulate the chips instead ("galagabl")
+
+Known issues:
+- Explosions are implemented in a tricky way (reset game and you'll see!)
+- Hiscore support not ready yet
 
 
 
@@ -461,9 +487,19 @@ Jungle King ("junglek")
 Arrows  Move around
 CTRL    Jump
 
+Clones supported:
+  bootleg version called Jungle Hunt ("jhunt")
+
 Known issues:
 - I haven't the gfx bank selector switch, therefore the background graphics
   are not selected appropriately. Use C and V to change the gfx set.
+
+
+
+Kangaroo ("kangaroo")
+=====================
+Arrows  Move around
+CTRL    Kick
 
 
 
@@ -473,8 +509,10 @@ Runs on the same hardware as Q*Bert
 
 Arrows  Move around
 CTRL    Fire
-A,W,D,S Firing joystick (Left, Up, Right, Down)
-G       Select
+E,S,D,F Firing joystick
+F1      Test mode
+F2      Select
+
 
 
 Lady Bug ("ladybug")
@@ -832,6 +870,25 @@ Known issues:
 
 
 
+Super Pacman ("superpac")
+=========================
+Arrows  Move around
+CTRL    Speed
+
+Known issues:
+- Large sprites in main sprite RAM (0x0810) do not work right. This
+  affects the intermissions.
+- Adding credits does not work right.
+- Some colors are almost right but still off (i.e., orange is too light
+  in the logo).
+- Bonus star is blue (should be yellow?). GAME OVER is white (should be
+  red?).
+- Can't enter initials at high score screen.
+- Sound CPU is not emulated.
+- High score saving not implemented.
+
+
+
 The Adventures of Robby Roto ("robby")
 ======================================
 This game runs on the same hardware as Wizard of Wor, but doesn't work yet. I
@@ -960,6 +1017,11 @@ M6502 Emulator Copyright (C) Marat Fayzullin, Alex Krasivsky 1996
    Note: the version used in MAME is slightly modified. You can find the
    original version at http://freeflight.com/fms/.
 I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
+M6809 emulator is based on L.C. Benschop's 6809 Simulator V09.
+  Copyright 1994,1995 L.C. Benschop, Eidnhoven The Netherlands.
+  This version of the program is distributed under the terms and conditions
+  of the GNU General Public License version 2. See the file COPYING.
+  THERE IS NO WARRANTY ON THIS PROGRAM!!!
 Allegro library by Shawn Hargreaves, 1994/96
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
    Carlos Hasan. All Rights Reserved.
@@ -980,7 +1042,7 @@ Gyruss, Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers
    provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Arabian driver provided by Jarek Burczynski (pbk01@ikp.atm.com.pl).
-Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
+Congo Bongo and Kangaroo drivers provided by Ville Laitinen (ville@sms.fi).
 Millipede driver provided by Ivan Mackintosh (ivan@rcp.co.uk).
 Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
 Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
@@ -1011,9 +1073,10 @@ Information about the Crazy Climber machine hardware (including palette)
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
+Kevin Brisley's SUPERPAC.KEG file (for his excellent REPLAY emulator)
+  provided the crucial info on Super Pacman.
 Very special thanks to Michael Cuddy for the extensive information on
    Gyruss hardware (You'r right, it's a bear of a game!).
-Gyruss samples are a courtesy of Michel Cuddy (mcuddy@fensende.com)
 Special thanks to Brad Thomas (bradt@nol.net) and Gary Shepherdson for the
    extensive information on Donkey Kong and Donkey Kong Jr.
 Info on Bagman, Galaxian, Moon Cresta and many other games taken from Arcade
@@ -1027,7 +1090,7 @@ Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
 Space Invaders information gathered from the Space Invaders Emulator by
    Michael Strutt (mstrutt@pixie.co.za)
 Thanks to Paul Leaman (paull@phonelink.com) for exaustive documentation on
-   1942 arcade board, and for providing us the correct color proms.
+   1942 arcade board.
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
    indications and gfx info.

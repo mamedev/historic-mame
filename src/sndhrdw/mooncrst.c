@@ -48,7 +48,7 @@ int mooncrst_sh_start(void)
 	for (i = 0;i < NOISE_LENGTH;i++)
 		noise[i] = (rand() % (2*WAVE_AMPLITUDE)) - WAVE_AMPLITUDE;
 	for (i = 0;i < TONE_LENGTH;i++)
-		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
+		tone[i] = WAVE_AMPLITUDE * sin(2*M_PI*i/TONE_PERIOD);
 
 	osd_play_sample(0,tone,TONE_LENGTH,1000,0,1);
 	osd_play_sample(1,noise,NOISE_LENGTH,NOISE_RATE,0,1);

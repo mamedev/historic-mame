@@ -838,50 +838,85 @@ void osd_update_display (void)
 #ifdef CS1
   /* CS: scaling - here's the CPU burner.  Buy a faster computer
          sez Micro$oft. Ignore the ugly framerate stuff.*/
+
+  /* Lame framerate code for optimization anaylsis
+  	static int count = 0;
+
+  	printf("%d ",count++);
+  	fflush(stdout); 
+	*/
 	
-    if (scaling) { /* IF SCALING ACTIVE */
-	byte *start,*end;
-	int x,y,i,linechanged;
-        register byte *from = buffer_ptr;
-	register byte *to   = scaled_buffer_ptr;
-	
-	start=end=to; /* not really needed, but compiler blames */
-	for (y=0;y<bitmap->height;y++,to+=(heightscale-1)*widthscale*bitmap->width) {
-	    linechanged=0;
-	    for (x=0; x<bitmap->width; x++,from++,to+=widthscale) {
-		if ( *to == *from ) continue;
-		for (i=0;i<widthscale;i++) *(to+i)=*from;
-		if (!linechanged) { start=to; linechanged++; }
-		end=to+i-1;
-	    } /* end of x search. if line changed, use memcpy to update */
-	    if(linechanged) for (i=1;i<heightscale;i++)
-		memcpy((start+i*bitmap->width*widthscale),start,end-start+1);
-	} /* end of lines in bitmap */
+  if (scaling) 
+	{          
+		/* IF SCALING ACTIVE */
+    int i, j, k, l, linechanged;
+
+    for (i = 0; i < bitmap->height; i++) 
+		{
+    	linechanged = 0;
+      for (j = 0; j < bitmap->width; j++) 
+  		{
+      	k = (i * heightscale) * bitmap->width * widthscale + j * widthscale;
+
+        if (scaled_buffer_ptr[k] == buffer_ptr[i*bitmap->width+j])
+  			{
+          continue;
+        }
+  		  linechanged = 1;
+
+        for (l = 0; l < widthscale; l++)
+  			{  
+  				/* fill width fills */
+          scaled_buffer_ptr[k++] = buffer_ptr[i*bitmap->width+j];
+  			}
+      }
+      if (linechanged) 
+  		{
+        for (l =0; l < heightscale; l++) 
+        {
+          /* fill extra rows */
+
+  		    memcpy(scaled_buffer_ptr+(i*heightscale+l)*(bitmap->width*widthscale),
+         		     scaled_buffer_ptr+(i*heightscale)*(bitmap->width*widthscale),
+            		  bitmap->width*widthscale);
+        }
+      }
+		}
 
 #ifdef MITSHM
-	XShmPutImage (display, window, gc, image, 0, 0, 0, 0,
+	  XShmPutImage (display, window, gc, image, 0, 0, 0, 0,
   					      bitmap->width*widthscale, bitmap->height*heightscale, FALSE);
 #else
-	XPutImage (display, window, gc, image, 0, 0, 0, 0,
+	  XPutImage (display, window, gc, image, 0, 0, 0, 0,
     			     bitmap->width*widthscale, bitmap->height*heightscale);
 #endif
 
-    } else { /* NO SCALING ACTIVE - JUST PUTIMAGE */
+  }
+	else 
+	{            
+		/* NO SCALING ACTIVE - JUST PUTIMAGE */
 
 #ifdef MITSHM
- 	 XShmPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height, FALSE);
+ 	 	XShmPutImage (display, window, gc, image, 0, 0, 0, 0,
+  				        bitmap->width, bitmap->height, FALSE);
 #else
-	 XPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
+	 	XPutImage (display, window, gc, image, 0, 0, 0, 0,
+   				     bitmap->width, bitmap->height);
 #endif
-    } /* if scaling */
 
+  }
 #else
-/* NOT CS1 */
 
 #ifdef MITSHM
-  XShmPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height, FALSE);
+
+  XShmPutImage (display, window, gc, image, 0, 0, 0, 0,
+   		bitmap->width, bitmap->height, FALSE);
+
 #else
-  XPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
+
+  XPutImage (display, window, gc, image, 0, 0, 0, 0,
+  		 bitmap->width, bitmap->height);
+
 #endif
 
 #endif

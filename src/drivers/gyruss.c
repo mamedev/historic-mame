@@ -198,6 +198,17 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct KEYSet keys[] =
+{
+        { 1, 2, "MOVE UP" },
+        { 1, 0, "MOVE LEFT"  },
+        { 1, 1, "MOVE RIGHT" },
+        { 1, 3, "MOVE DOWN" },
+        { 1, 4, "FIRE" },
+        { -1 }
+};
+
+
 
 static struct DSW dsw[] =
 {
@@ -370,13 +381,13 @@ ROM_END
 
 static const char *gyruss_sample_names[] =
 {
-	"audio01.out",
-	"audio02.out",
-	"audio03.out",
-	"audio04.out",
-	"audio05.out",
-	"audio06.out",
-	"audio07.out",
+	"AUDIO01.SAM",
+	"AUDIO02.SAM",
+	"AUDIO03.SAM",
+	"AUDIO04.SAM",
+	"AUDIO05.SAM",
+	"AUDIO06.SAM",
+	"AUDIO07.SAM",
 	0	/* end of array */
 };
 
@@ -437,7 +448,7 @@ struct GameDriver gyruss_driver =
 	0, 0,
 	gyruss_sample_names,
 
-	input_ports, dsw,
+	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
 
