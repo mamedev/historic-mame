@@ -932,10 +932,9 @@ ROM_END
 
 /***************************************************************************/
 
-
 static int altbeast_skip(int offset)
 {
-	if (cpu_getpc()==0x3994) cpu_spinuntil_int();
+	if (cpu_getpc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
 
 	return READ_WORD(&sys16_workingram[0xf01c]);
 }
@@ -1963,7 +1962,7 @@ struct GameDriver fpointbl_driver =
 	"1989",
 	"bootleg",
 	SYS16_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&fpointbl_machine_driver,
 	0,
 	fpointbl_rom,
@@ -2783,7 +2782,7 @@ struct GameDriver sdi_driver =
 	"1987",
 	"Sega",
 	SYS16_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&sdi_machine_driver,
 	0,
 	sdi_rom,
@@ -2828,11 +2827,10 @@ ROM_END
 
 static int shinobi_skip(int offset)
 {
-	if (cpu_getpc()==0x32e0) cpu_spinuntil_int();
+	if (cpu_getpc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
 
 	return READ_WORD(&sys16_workingram[0xf01c]);
 }
-
 
 static struct MemoryReadAddress shinobi_readmem[] =
 {
@@ -3080,7 +3078,7 @@ struct GameDriver tetrisbl_driver =
 
 /***************************************************************************/
 
-ROM_START( timescan_rom )
+ROM_START( timscanr_rom )
 	ROM_REGION( 0x030000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "ts10850.bin", 0x00000, 0x8000, 0xf1575732 )
 	ROM_LOAD_EVEN( "ts10853.bin", 0x00000, 0x8000, 0x24d7c5fb )
@@ -3110,7 +3108,7 @@ ROM_END
 
 /***************************************************************************/
 
-static struct MemoryReadAddress timescan_readmem[] =
+static struct MemoryReadAddress timscanr_readmem[] =
 {
 	{ 0xc41002, 0xc41003, io_player1_r },
 	{ 0xc41006, 0xc41007, io_player2_r },
@@ -3127,7 +3125,7 @@ static struct MemoryReadAddress timescan_readmem[] =
 	{-1}
 };
 
-static struct MemoryWriteAddress timescan_writemem[] =
+static struct MemoryWriteAddress timscanr_writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
 	{ 0xfe0006, 0xfe0007, sound_command_w },
@@ -3140,7 +3138,7 @@ static struct MemoryWriteAddress timescan_writemem[] =
 };
 /***************************************************************************/
 
-void timescan_update_proc( void ){
+void timscanr_update_proc( void ){
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -3153,13 +3151,13 @@ void timescan_update_proc( void ){
 	//refresh:0x00c011
 }
 
-void timescan_init_machine( void ){
+void timscanr_init_machine( void ){
 	static int bank[16] = {00,00,00,00,00,00,00,0x03,00,00,00,0x02,00,0x01,00,00};
 	sys16_obj_bank = bank;
-	sys16_update_proc = timescan_update_proc;
+	sys16_update_proc = timscanr_update_proc;
 }
 
-void timescan_sprite_decode( void ){
+void timscanr_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x10000 );
 }
 /***************************************************************************/
@@ -3167,7 +3165,7 @@ void timescan_sprite_decode( void ){
 //labeljoy:_ LEFT_FLIPPER RIGHT_FLIPPER _ _ PUSH_DOWN PUSH_RIGHT PUSH_LEFT
 //labelgen:COIN_1 COIN_2 TEST SERVICE 1P_START 2P_START _ _
 
-INPUT_PORTS_START( timescan_input_ports )
+INPUT_PORTS_START( timscanr_input_ports )
 	SYS16_JOY1
 	SYS16_JOY2
 	SYS16_SERVICE
@@ -3177,26 +3175,26 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( timescan_machine_driver, \
-	timescan_readmem,timescan_writemem,timescan_init_machine, gfx1 )
+MACHINE_DRIVER( timscanr_machine_driver, \
+	timscanr_readmem,timscanr_writemem,timscanr_init_machine, gfx1 )
 
-struct GameDriver timescan_driver =
+struct GameDriver timscanr_driver =
 {
 	__FILE__,
 	0,
-	"timescan",
+	"timscanr",
 	"Time Scanner",
 	"1987",
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&timescan_machine_driver,
+	&timscanr_machine_driver,
 	0,
-	timescan_rom,
-	timescan_sprite_decode, 0,
+	timscanr_rom,
+	timscanr_sprite_decode, 0,
 	0,
 	0,
-	timescan_input_ports,
+	timscanr_input_ports,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0

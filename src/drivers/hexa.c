@@ -140,7 +140,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			4000000,		/* 4 MHz ??????? */
+			6000000,		/* 6 MHz ??????? */
 			0,				/* memory region */
 			readmem,writemem,0,0,
 			interrupt,1
@@ -242,6 +242,21 @@ static void hexa_hisave(void)
 }
 
 
+static void hexa_patch(void)
+{
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* Hexa is not protected or anything, but it keeps writing 0x3f to register */
+	/* 0x07 of the AY8910, to read the input ports. This causes clicks in the */
+	/* music since the output channels are continuously disabled and reenabled. */
+	/* To avoid that, we just NOP out the 0x3f write. */
+	RAM[0x0124] = 0x00;
+	RAM[0x0125] = 0x00;
+	RAM[0x0126] = 0x00;
+}
+
+
 struct GameDriver hexa_driver =
 {
 	__FILE__,
@@ -256,8 +271,8 @@ struct GameDriver hexa_driver =
 	0,
 
 	hexa_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	hexa_patch, 0,
+	0,
 	0,
 
 	input_ports,

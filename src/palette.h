@@ -190,6 +190,10 @@ void paletteram_RRRRGGGGBBBBxxxx_swap_w(int offset,int data);
 void paletteram_RRRRGGGGBBBBxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
 void paletteram_RRRRGGGGBBBBxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
 void paletteram_RRRRGGGGBBBBxxxx_word_w(int offset,int data);
+void paletteram_BBBBGGGGRRRRxxxx_swap_w(int offset,int data);
+void paletteram_BBBBGGGGRRRRxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
+void paletteram_BBBBGGGGRRRRxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_BBBBGGGGRRRRxxxx_word_w(int offset,int data);
 void paletteram_xBBBBBGGGGGRRRRR_w(int offset,int data);
 void paletteram_xBBBBBGGGGGRRRRR_swap_w(int offset,int data);
 void paletteram_xBBBBBGGGGGRRRRR_word_w(int offset,int data);

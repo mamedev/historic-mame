@@ -195,7 +195,7 @@ int sound_start(void)
 					goto getout;
 				break;
 			case SOUND_AY8910:
-				if (AY8910_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+				if (AY8910_sh_start(Machine->drv->sound[totalsound].sound_interface,"AY8910") != 0)
 					goto getout;
 				break;
 			case SOUND_YM2203:
@@ -216,6 +216,10 @@ int sound_start(void)
 				break;
 			case SOUND_YM2413:
 				if (YM2413_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+					goto getout;
+				break;
+			case SOUND_YM2610:
+				if (YM2610_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 			case SOUND_SN76496:
@@ -314,6 +318,9 @@ void sound_stop(void)
 			case SOUND_YM2413:
 				YM2413_sh_stop();
 				break;
+			case SOUND_YM2610:
+				YM2610_sh_stop();
+				break;
 			case SOUND_SN76496:
 				SN76496_sh_stop();
 				break;
@@ -399,6 +406,9 @@ void sound_update(void)
 				break;
 			case SOUND_YM2413:
 				YM2413_sh_update();
+				break;
+			case SOUND_YM2610:
+				YM2610_sh_update();
 				break;
 			case SOUND_SN76496:
 				SN76496_sh_update();

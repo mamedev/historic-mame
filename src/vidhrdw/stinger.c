@@ -26,6 +26,8 @@ void stinger_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	int i;
 
 
+	if (!color_prom) return;	/* Scion PROMs are missing */
+
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3;
@@ -142,12 +144,18 @@ void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (flipscreen[0])
 		{
 			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = (stinger_bg_attributesram[2 * offs]);
+			{
+				scroll[31-offs] = (stinger_bg_attributesram[2 * offs]);
+				if (flipscreen[1]) scroll[31-offs] = -scroll[31-offs];
+			}
 		}
 		else
 		{
 			for (offs = 0;offs < 32;offs++)
+			{
 				scroll[offs] = -(stinger_bg_attributesram[2 * offs]);
+				if (flipscreen[1]) scroll[offs] = -scroll[offs];
+			}
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

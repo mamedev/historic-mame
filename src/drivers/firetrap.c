@@ -330,7 +330,7 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,		0, 16 },
+	{ 1, 0x00000, &charlayout,	        0, 16 },
 	{ 1, 0x02000, &tilelayout,	     16*4,  4 },
 	{ 1, 0x06000, &tilelayout,	     16*4,  4 },
 	{ 1, 0x12000, &tilelayout,	     16*4,  4 },

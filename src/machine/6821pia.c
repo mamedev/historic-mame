@@ -290,7 +290,9 @@ void pia_write (int which, int offset, int data)
 		case 2:
 
 			/* CA2 is configured as output and in set/reset mode */
-			if (C2_OUTPUT (data) && C2_SET_MODE (data))
+			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CA2 */
+//			if (C2_OUTPUT (data) && C2_SET_MODE (data))
+			if (C2_OUTPUT (data))
 			{
 				/* determine the new value */
 				int temp = SET_C2 (data) ? 1 : 0;
@@ -311,7 +313,9 @@ void pia_write (int which, int offset, int data)
 		case 3:
 
 			/* CB2 is configured as output and in set/reset mode */
-			if (C2_OUTPUT (data) && C2_SET_MODE (data))
+			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CB2 */
+//			if (C2_OUTPUT (data) && C2_SET_MODE (data))
+			if (C2_OUTPUT (data))
 			{
 				/* determine the new value */
 				int temp = SET_C2 (data) ? 1 : 0;

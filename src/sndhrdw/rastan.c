@@ -2,16 +2,32 @@
 #include "Z80/Z80.h"
 
 
-/*#define REPORT_SLAVE_MODE_CHANGE      */
-/*#define REPORT_SLAVE_MODE_READ_ITSELF */
-/*#define REPORT_MAIN_MODE_READ_SLAVE */
-/*#define REPORT_DATA_FLOW */
+/**********************************************************************************************
+	Soundboard Status bitfield definition:
+	 bit meaning
+	  0  Set if theres any data pending that the main cpu sent to the slave
+	  1  ??? ( Its not being checked both on Rastan and SSI
+	  2  Set if theres any data pending that the slave sent to the main cpu
 
+***********************************************************************************************
+
+	It seems like 1 nibble commands are only for control purposes.
+	2 nibble commands are the real messages passed from one board to the other.
+
+**********************************************************************************************/
+
+/* Some logging defines */
+#if 0
+#define REPORT_SLAVE_MODE_CHANGE
+#define REPORT_SLAVE_MODE_READ_ITSELF
+#define REPORT_MAIN_MODE_READ_SLAVE
+#define REPORT_DATA_FLOW
+#endif
 
 static int nmi_enabled=0; /* interrupts off */
 
-static int SlaveContrStat; /*last control byte written to controller by soundboard*/
-static int MainContrStat;  /*last control byte written to controller by motherboard*/
+/* status of soundboard ( reports any commands pending ) */
+static unsigned char SlaveContrStat = 0;
 
 static int transmit=0; /* number of bytes to transmit/receive */
 static int tr_mode;    /* transmit mode (1 or 2 bytes) */
@@ -21,11 +37,11 @@ static int m_transmit=0; /* as above but for motherboard*/
 static int m_tr_mode;    /* as above */
 static int m_lasthalf=0; /* as above */
 
-static int NMI_req=0; /*no request*/
 static int IRQ_req=0; /*no request*/
+static int NMI_req=0; /*no request*/
 
-static int soundcommand;
-static int soundboarddata;
+static unsigned char soundcommand;
+static unsigned char soundboarddata;
 
 /***********************************************************************/
 /*  looking from sound board point of view ...                         */
@@ -50,21 +66,14 @@ void r_wr_d000(int offset, int data)
 
 void Interrupt_Controller(void)
 {
-	if (transmit==0)
-	{
-		if (IRQ_req)
-		{
-			cpu_cause_interrupt(1,0);
-			IRQ_req = 0;
-		}
-		else
-		{
-			if (NMI_req==1)
-			{
-				cpu_cause_interrupt (1, Z80_NMI_INT);
-				NMI_req = 2;
-			}
-		}
+	if (IRQ_req) {
+		cpu_cause_interrupt(1,0);
+		IRQ_req = 0;
+	}
+
+	if ( NMI_req && nmi_enabled ) {
+		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		NMI_req = 0;
 	}
 }
 
@@ -76,7 +85,7 @@ int r_rd_a001(int offset)
 
 	if (transmit == 0)
 	{
-		if (errorlog) fprintf(errorlog,"Slave unexpected receiving!\n");
+		if (errorlog) fprintf(errorlog,"Slave unexpected receiving! (PC = %04x)\n", cpu_getpc() );
 	}
 	else
 	{
@@ -84,7 +93,7 @@ int r_rd_a001(int offset)
 		{
 			pom = SlaveContrStat;
 #ifdef REPORT_SLAVE_MODE_READ_ITSELF
-			if (errorlog) fprintf(errorlog,"Slave has read status of itself %02x\n",pom);
+			if (errorlog) fprintf(errorlog,"Slave has read status of itself %02x (PC = %04x)\n",pom, cpu_getpc() );
 #endif
 		}
 		else
@@ -93,15 +102,16 @@ int r_rd_a001(int offset)
 			{
 				pom = soundcommand & 0x0f;
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave has read pom1=%02x\n",pom);
+				if (errorlog) fprintf(errorlog,"Slave has read pom1=%02x (PC = %04x)\n",pom, cpu_getpc() );
 #endif
 			}
 			else
 			{
 				pom = (soundcommand & 0xf0) >> 4;
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave has read pom2=%02x\n",pom);
+				if (errorlog) fprintf(errorlog,"Slave has read pom2=%02x (PC = %04x)\n",pom,cpu_getpc() );
 #endif
+				SlaveContrStat &= 0xfe; /* Ready to receive new commands */;
 			}
 		}
 		transmit--;
@@ -118,13 +128,12 @@ void r_wr_a000(int offset,int data)
 	int pom;
 
 	if (transmit != 0)
-		if (errorlog) fprintf(errorlog,"Slave mode changed while expecting to transmit !\n");
+		if (errorlog) fprintf(errorlog,"Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_getpc() );
 
 #ifdef REPORT_SLAVE_MODE_CHANGE
-	if (errorlog) fprintf(errorlog,"Slave changing its mode to %02x\n",data);
+	if (errorlog) fprintf(errorlog,"Slave changing its mode to %02x (PC = %04x) \n",data, cpu_getpc());
 #endif
 
-	SlaveContrStat = data;
 	pom = (data >> 2 ) & 0x01;
 	transmit = 1 + (1 - pom); /* one or two bytes long transmission */
 	lasthalf = 0;
@@ -137,14 +146,11 @@ void r_wr_a000(int offset,int data)
 	if (pom == 0x02)
 	{
 		nmi_enabled = 1; /* on */
-		if (NMI_req==2)
-			NMI_req=0;
 	}
 
 	if (pom == 0x03)
-		if (errorlog) fprintf(errorlog,"Int mode = 3!\n");
+		if (errorlog) fprintf(errorlog,"Int mode = 3! (PC = %04x)\n", cpu_getpc() );
 }
-
 
 void r_wr_a001(int offset,int data)
 {
@@ -152,7 +158,7 @@ void r_wr_a001(int offset,int data)
 
 	if (transmit == 0)
 	{
-		if (errorlog) fprintf(errorlog,"Slave unexpected transmission!\n");
+		if (errorlog) fprintf(errorlog,"Slave unexpected transmission! (PC = %04x)\n", cpu_getpc() );
 	}
 	else
 	{
@@ -164,14 +170,17 @@ void r_wr_a001(int offset,int data)
 			if (tr_mode == 2)
 			{
 				soundboarddata = lasthalf + (data << 4);
+				SlaveContrStat |= 4; /* report data pending on main */
+				cpu_spin(); /* writing should take longer than emulated, so spin */
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave sent double %02x\n",lasthalf+(data<<4) );
+				if (errorlog) fprintf(errorlog,"Slave sent double %02x (PC = %04x)\n",lasthalf+(data<<4), cpu_getpc() );
 #endif
 			}
 			else
 			{
-				/*soundboarddata = data;*/
-				/*if (errorlog) fprintf(errorlog,"What now? (Slave sent single %02x)\n",data );*/
+#ifdef REPORT_DATA_FLOW
+				if (errorlog) fprintf(errorlog,"Slave issued control value %02x (PC = %04x)\n",data, cpu_getpc() );
+#endif
 			}
 		}
 	}
@@ -182,7 +191,6 @@ void r_wr_a001(int offset,int data)
 void rastan_irq_handler (void)
 {
 	IRQ_req = 1;
-/*	Interrupt_Controller();*/
 }
 
 /***********************************************************************/
@@ -193,31 +201,11 @@ void rastan_sound_port_w(int offset,int data)
 {
 	int pom;
 
-	if (m_transmit != 0)
-		if (errorlog) fprintf(errorlog,"Main mode changed while expecting to transmit !\n");
-
-	MainContrStat = data;
 	pom = (data >> 2 ) & 0x01;
 	m_transmit = 1 + (1 - pom); /* one or two bytes long transmission */
 	m_lasthalf = 0;
 	m_tr_mode = m_transmit;
 }
-
-
-void rastan_delayed_callback (int param)
-{
-	if (NMI_req==0)
-	{
-		soundcommand = param;
-		NMI_req = 1 ;
-/*		Interrupt_Controller();*/
-	}
-	else
-	{
-		if (errorlog) fprintf(errorlog,"Command write skipped because last command hasn't been read!\n");
-	}
-}
-
 
 void rastan_sound_comm_w(int offset,int data)
 {
@@ -225,7 +213,7 @@ void rastan_sound_comm_w(int offset,int data)
 
 	if (m_transmit == 0)
 	{
-		if (errorlog) fprintf(errorlog,"Main unexpected transmission!\n");
+		if (errorlog) fprintf(errorlog,"Main unexpected transmission! (PC = %08x)\n", cpu_getpc() );
 	}
 	else
 	{
@@ -238,15 +226,31 @@ void rastan_sound_comm_w(int offset,int data)
 		{
 			if (m_tr_mode == 2)
 			{
-				timer_set (TIME_NOW, m_lasthalf + (data << 4), rastan_delayed_callback);
+				soundcommand = m_lasthalf + (data << 4);
+				SlaveContrStat |= 1; /* report data pending for slave */
+				NMI_req = 1;
+
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Main sent double %02x\n",m_lasthalf+(data<<4) );
+				if (errorlog) fprintf(errorlog,"Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_getpc() );
 #endif
 			}
 			else
 			{
-				/*timer_set (TIME_NOW, data, rastan_delayed_callback);*/
-				/*if (errorlog) fprintf(errorlog,"What now? (Main sent single %02x)\n",data );*/
+#ifdef REPORT_DATA_FLOW
+				if (errorlog) fprintf(errorlog,"Main issued control value %02x (PC = %08x) \n",data, cpu_getpc() );
+#endif
+				/* this does a hi-lo transition to reset the sound cpu */
+				switch( data ) {
+					case 0x00:
+						cpu_halt( 1, 1 );
+					break;
+
+					case 0x01:
+						cpu_reset( 1 );
+						cpu_halt( 1, 0 );
+					break;
+				}
+				m_transmit++;
 			}
 		}
 	}
@@ -261,15 +265,22 @@ int rastan_sound_comm_r(int offset)
 	if (m_tr_mode==2)
 	{
 #ifdef REPORT_DATA_FLOW
-		if (errorlog) fprintf(errorlog,"Main read double %02x\n",soundboarddata );
+		if (errorlog) fprintf(errorlog,"Main read double %02x (PC = %08x)\n",soundboarddata, cpu_getpc() );
 #endif
-		return soundboarddata; /*wyn;*/
+		SlaveContrStat &= 0xfb; /* clear pending data for main bit */
+
+		if ( m_transmit == 1 )
+			return soundboarddata & 0x0f;
+
+		return ( soundboarddata >> 4 ) & 0x0f;
+
 	}
 	else
 	{
 #ifdef REPORT_MAIN_MODE_READ_SLAVE
-		if (errorlog) fprintf(errorlog,"Main read status of Slave %02x\n",SlaveContrStat );
+		if (errorlog) fprintf(errorlog,"Main read status of Slave %02x (PC = %08x)\n",SlaveContrStat, cpu_getpc() );
 #endif
+		m_transmit++;
 		return SlaveContrStat;
 	}
 }

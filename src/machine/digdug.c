@@ -104,7 +104,7 @@ int digdug_customio_data_r(int offset)
 				if (mode)	/* switch mode */
 				{
 					/* bit 7 is the service switch */
-					return readinputport(3);
+                                        return readinputport(4);
 				}
 				else	/* credits mode: return number of credits in BCD format */
 				{
@@ -113,7 +113,7 @@ int digdug_customio_data_r(int offset)
 					static int rightcoininserted;
 
 
-					in = readinputport(3);
+                                        in = readinputport(4);
 
 					/* check if the user inserted a coin */
 					if (leftcoinpercred > 0)
@@ -176,6 +176,32 @@ int digdug_customio_data_r(int offset)
 				}
 
 				return p2;
+			}
+                        else if (offset == 2)
+			{
+                                int p2 = readinputport (3);
+
+				if (mode == 0)
+				{
+					/* check directions, according to the following 8-position rule */
+					/*         0          */
+					/*        7 1         */
+					/*       6 8 2        */
+					/*        5 3         */
+					/*         4          */
+					if ((p2 & 0x01) == 0)		/* up */
+						p2 = (p2 & ~0x0f) | 0x00;
+					else if ((p2 & 0x02) == 0)	/* right */
+						p2 = (p2 & ~0x0f) | 0x02;
+					else if ((p2 & 0x04) == 0)	/* down */
+						p2 = (p2 & ~0x0f) | 0x04;
+					else if ((p2 & 0x08) == 0) /* left */
+						p2 = (p2 & ~0x0f) | 0x06;
+					else
+						p2 = (p2 & ~0x0f) | 0x08;
+				}
+
+                                return p2; /*p2 jochen*/
 			}
 			break;
 

@@ -835,14 +835,14 @@ int Dasm68000 (unsigned char *pBase, char *buffer, int pc)
 			if ((lo & 0x30) == 0)
 			{
 				if (lo & 0x08)
-					sprintf (buffer, "SBCD.B   -(A%d),-(A%d)", rlo, rhi);
+					sprintf (buffer, "SBCD.B   -(A%d),-(A%d)", rlo, rhi);
 				else
-					sprintf (buffer, "SBCD.B   D%d,D%d", rlo, rhi);
+					sprintf (buffer, "SBCD.B   D%d,D%d", rlo, rhi);
 			}
 			else
 			{
 				ea = MakeEA (lo, p, 1, &count); p += count;
-				sprintf (buffer, "OR.B     D%d,%s", rhi, ea);
+				sprintf (buffer, "OR.B     D%d,%s", rhi, ea);
 			}
 			break;
 		case 0x8140: case 0x8340: case 0x8540: case 0x8740: case 0x8940: case 0x8b40: case 0x8d40: case 0x8f40:

@@ -493,7 +493,7 @@ static void (* EXIRQHandler)(int n,int irq) = 0;
 
 /* --------------------- subroutines  --------------------- */
 /* ----- key on  ----- */
-static inline void FM_KEYON(FM_CH *CH , int s )
+INLINE void FM_KEYON(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if( SLOT->evm<= ENV_MOD_RR)
@@ -522,7 +522,7 @@ static inline void FM_KEYON(FM_CH *CH , int s )
 	}
 }
 /* ----- key off ----- */
-static inline void FM_KEYOFF(FM_CH *CH , int s )
+INLINE void FM_KEYOFF(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if( SLOT->evm > ENV_MOD_RR)
@@ -538,7 +538,7 @@ static inline void FM_KEYOFF(FM_CH *CH , int s )
 
 /* ---------- calcrate Envelope Generator & Phase Generator ---------- */
 /* return : envelope output */
-static inline signed int FM_CALC_SLOT( FM_SLOT *SLOT )
+INLINE signed int FM_CALC_SLOT( FM_SLOT *SLOT )
 {
 	/* calcrate phage generator */
 	SLOT->Cnt += SLOT->Incr;
@@ -693,7 +693,7 @@ static void set_algorythm( FM_CH *CH )
 }
 
 /* set detune & multiple */
-static inline void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
+INLINE void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
 {
 	SLOT->mul = MUL_TABLE[v&0x0f];
 	SLOT->DT  = ST->DT_TABLE[(v>>4)&7];
@@ -701,7 +701,7 @@ static inline void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
 }
 
 /* set total level */
-static inline void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v,int csmflag)
+INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v,int csmflag)
 {
 	v &= 0x7f;
 	v = (v<<7)|v; /* 7bit -> 14bit */
@@ -713,7 +713,7 @@ static inline void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v,int csmflag)
 }
 
 /* set attack rate & key scale  */
-static inline void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v,signed int *ar_table)
+INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v,signed int *ar_table)
 {
 	SLOT->KSR  = 3-(v>>6);
 	SLOT->AR   = (v&=0x1f) ? &ar_table[v<<1] : RATE_0;
@@ -722,21 +722,21 @@ static inline void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v,signed int *ar_table
 	CH->SLOT[SLOT1].Incr=-1;
 }
 /* set decay rate */
-static inline void set_dr(FM_SLOT *SLOT,int v,signed int *dr_table)
+INLINE void set_dr(FM_SLOT *SLOT,int v,signed int *dr_table)
 {
 	SLOT->DR = (v&=0x1f) ? &dr_table[v<<1] : RATE_0;
 	SLOT->evsd = SLOT->DR[SLOT->ksr];
 	if( SLOT->evm == ENV_MOD_DR ) SLOT->evs = SLOT->evsd;
 }
 /* set sustain rate */
-static inline void set_sr(FM_SLOT *SLOT,int v,signed int *dr_table)
+INLINE void set_sr(FM_SLOT *SLOT,int v,signed int *dr_table)
 {
 	SLOT->SR = (v&=0x1f) ? &dr_table[v<<1] : RATE_0;
 	SLOT->evss = SLOT->SR[SLOT->ksr];
 	if( SLOT->evm == ENV_MOD_SR ) SLOT->evs = SLOT->evss;
 }
 /* set release rate */
-static inline void set_sl_rr(FM_SLOT *SLOT,int v,signed int *dr_table)
+INLINE void set_sl_rr(FM_SLOT *SLOT,int v,signed int *dr_table)
 {
 	SLOT->SL = SL_TABLE[(v>>4)];
 	SLOT->RR = &dr_table[((v&0x0f)<<2)|2];
@@ -747,7 +747,7 @@ static inline void set_sl_rr(FM_SLOT *SLOT,int v,signed int *dr_table)
 /* operator output calcrator */
 #define OP_OUT(slot,env,con)   SIN_TABLE[((slot.Cnt+con)/(0x1000000/SIN_ENT))&(SIN_ENT-1)][env]
 /* ---------- calcrate one of channel ---------- */
-static inline void FM_CALC_CH( FM_CH *CH )
+INLINE void FM_CALC_CH( FM_CH *CH )
 {
 	int op_out;
 	int env_out;
@@ -791,7 +791,7 @@ static inline void FM_CALC_CH( FM_CH *CH )
 		*CH->connect4 += OP_OUT(CH->SLOT[SLOT4],env_out, feedback4  /* +LFOOut[SLOT->AMS]*/ );
 }
 /* ---------- frequency counter for operater update ---------- */
-static inline void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
+INLINE void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
 {
 	int ksr;
 
@@ -812,7 +812,7 @@ static inline void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
 }
 
 /* ---------- frequency counter  ---------- */
-static inline void CALC_FCOUNT(FM_CH *CH )
+INLINE void CALC_FCOUNT(FM_CH *CH )
 {
 	if( CH->SLOT[SLOT1].Incr==-1){
 		int fc = CH->fc;
@@ -825,7 +825,7 @@ static inline void CALC_FCOUNT(FM_CH *CH )
 }
 
 /* ---------- frequency counter  ---------- */
-static inline void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
+INLINE void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
 {
 	if( CH->SLOT[SLOT1].Incr==-1)
 	{
@@ -985,7 +985,7 @@ static void FMCloseTable( void )
 }
 
 /* OPN/OPM Mode  Register Write */
-static inline void FMSetMode( FM_ST *ST ,int n,int v )
+INLINE void FMSetMode( FM_ST *ST ,int n,int v )
 {
 	/* b7 = CSM MODE */
 	/* b6 = 3 slot mode */
@@ -1051,7 +1051,7 @@ static inline void FMSetMode( FM_ST *ST ,int n,int v )
 
 
 /* Timer A Overflow */
-static inline void TimerAOver(int n,FM_ST *ST)
+INLINE void TimerAOver(int n,FM_ST *ST)
 {
 	if(ST->mode & 0x04)
 	{
@@ -1068,7 +1068,7 @@ static inline void TimerAOver(int n,FM_ST *ST)
 	ST->TAC = 0;
 }
 /* Timer B Overflow */
-static inline void TimerBOver(int n,FM_ST *ST)
+INLINE void TimerBOver(int n,FM_ST *ST)
 {
 	if(ST->mode & 0x08)
 	{
@@ -1085,7 +1085,7 @@ static inline void TimerBOver(int n,FM_ST *ST)
 	ST->TBC = 0;
 }
 /* CSM Key Controll */
-static inline void CSMKeyControll(FM_CH *CH)
+INLINE void CSMKeyControll(FM_CH *CH)
 {
 	int ksl = KSL[CH->kcode];
 	/* all key off */
@@ -1107,7 +1107,7 @@ static inline void CSMKeyControll(FM_CH *CH)
 
 #ifdef INTERNAL_TIMER
 /* ---------- calcrate timer A ---------- */
-static inline void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
+INLINE void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
 {
 	if( ST->TAC &&  (EXTimerHandler==0) )
 	{
@@ -1120,7 +1120,7 @@ static inline void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
 	}
 }
 /* ---------- calcrate timer B ---------- */
-static inline void CALC_TIMER_B(FM_ST *ST,int step)
+INLINE void CALC_TIMER_B(FM_ST *ST,int step)
 {
 	if( ST->TBC && (EXTimerHandler==0) )
 		if( (ST->TBC -= ST->freqbase*step) <= 0 )
@@ -1596,7 +1596,7 @@ int YM2203TimerOver(int n,int c)
 /*******************************************************************************/
 
 /* Get next pcm data */
-static inline int YM2608ReadADPCM(int n)
+INLINE int YM2608ReadADPCM(int n)
 {
 	YM2203 *F2203 = &(FMOPN[n]);
 	YM2608 *F2608 = &(FM2608[n]);
@@ -1620,7 +1620,7 @@ static inline int YM2608ReadADPCM(int n)
 }
 
 /* Put decoded data */
-static inline void YM2608WriteADPCM(int n,int v)
+INLINE void YM2608WriteADPCM(int n,int v)
 {
 	YM2203 *F2203 = &(FMOPN[n]);
 	YM2608 *F2608 = &(FM2608[n]);
@@ -1642,7 +1642,7 @@ static inline void YM2608WriteADPCM(int n,int v)
 }
 
 /* ---------- ADPCM Register Write 0x100-0x10f ---------- */
-static inline void YM2608ADPCMWrite(int n,int r,int v)
+INLINE void YM2608ADPCMWrite(int n,int r,int v)
 {
 	YM2203 *F2203 = &(FMOPN[n]);
 	YM2608 *F2608 = &(FM2608[n]);
@@ -1719,7 +1719,7 @@ static inline void YM2608ADPCMWrite(int n,int r,int v)
 }
 
 /* ---------- Rhythm Register Write 0x10-0x1f ---------- */
-static inline void YM2608RhythmWrite(int n,int r,int v)
+INLINE void YM2608RhythmWrite(int n,int r,int v)
 {
 	YM2608 *F2608 = &(FM2608[n]);
 	int c;
@@ -1763,7 +1763,7 @@ static inline void YM2608RhythmWrite(int n,int r,int v)
 }
 
 /* ---------- IRQ flag Controll Write 0x110 ---------- */
-static inline void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
+INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
 {
 	if( v & 0x80 )
 	{	/* Reset IRQ flag */

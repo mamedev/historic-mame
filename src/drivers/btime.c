@@ -855,14 +855,6 @@ static unsigned char hamburge_color_prom[] =
 	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7
 };
 
-static unsigned char eggs_color_prom[] =
-{
-	/* screggco.c6 */
-	0x21,0x07,0x00,0x3F,0xC0,0x26,0x91,0xFF,0x21,0x07,0x00,0x3F,0x00,0x26,0x00,0xFF,
-	0x21,0x07,0x00,0x3F,0xC0,0x26,0x91,0xFF,0x21,0x07,0x00,0x3F,0xC0,0x26,0x91,0xFF,
-};
-
-
 static unsigned char zoar_color_prom[] =
 {
 	// z20-1l
@@ -1111,7 +1103,7 @@ ROM_START( eggs_rom )
 	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
 	ROM_LOAD( "b14.bin",      0x6000, 0x1000, 0x5c11c00e )
 	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
-	ROM_RELOAD(          0xf000, 0x1000 )   /* for reset/interrupt vectors */
+	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "g12.bin",      0x0000, 0x1000, 0x679f8af7 )
@@ -1120,6 +1112,9 @@ ROM_START( eggs_rom )
 	ROM_LOAD( "h10.bin",      0x3000, 0x1000, 0x3cfb3a8e )
 	ROM_LOAD( "j12.bin",      0x4000, 0x1000, 0xce4a2e46 )
 	ROM_LOAD( "j10.bin",      0x5000, 0x1000, 0xa1bcaffc )
+
+	ROM_REGION(0x0020)	/* color PROM */
+	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )
 ROM_END
 
 ROM_START( scregg_rom )
@@ -1129,7 +1124,7 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, 0x4455f262 )
 	ROM_LOAD( "scregg.b14",   0x6000, 0x1000, 0x044ac5d2 )
 	ROM_LOAD( "scregg.a14",   0x7000, 0x1000, 0xb5a0814a )
-	ROM_RELOAD(             0xf000, 0x1000 )        /* for reset/interrupt vectors */
+	ROM_RELOAD(               0xf000, 0x1000 )        /* for reset/interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "scregg.g12",   0x0000, 0x1000, 0xff3c2894 )
@@ -1138,6 +1133,9 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "scregg.h10",   0x3000, 0x1000, 0x72bd89ee )
 	ROM_LOAD( "scregg.j12",   0x4000, 0x1000, 0xa485c10c )
 	ROM_LOAD( "scregg.j10",   0x5000, 0x1000, 0x1fd4e539 )
+
+	ROM_REGION(0x0020)	/* color PROM */
+	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )
 ROM_END
 
 /* There is a flyer with a screen shot for Lock'n'Chase at:
@@ -1624,7 +1622,7 @@ struct GameDriver eggs_driver =
 
 	eggs_input_ports,
 
-	eggs_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	eggs_hiload, eggs_hisave
@@ -1650,7 +1648,7 @@ struct GameDriver scregg_driver =
 
 	eggs_input_ports,
 
-	eggs_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	eggs_hiload, eggs_hisave

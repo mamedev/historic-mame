@@ -8,6 +8,8 @@
 
 #include "driver.h"
 
+extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
+
 extern int nocheat;
 
 /* Variables for stat menu */
@@ -206,7 +208,7 @@ struct GfxElement *builduifont(void)
 	trueorientation = Machine->orientation;
 	Machine->orientation = ORIENTATION_DEFAULT;
 
-	if (Machine->scrbitmap->width >= 480)
+	if (Machine->uiwidth >= 420)
 		font = decodegfx(fontdata6x8,&fontlayout12x16);
 	else
 		font = decodegfx(fontdata6x8,&fontlayout6x8);
@@ -316,40 +318,46 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 	if (update_screen) osd_update_display();
 }
 
-
-
-void drawbox(int leftx,int topy,int width,int height)
+static inline void drawpixel(int x, int y, unsigned short color)
 {
-	int x,y;
-	int black,white;
+	if (Machine->scrbitmap->depth == 16)
+		*(unsigned short *)&Machine->scrbitmap->line[y][x*2] = color;
+	else
+		Machine->scrbitmap->line[y][x] = color;
+}
 
-
-	if (leftx < 0) leftx = 0;
-	if (topy < 0) topy = 0;
-	if (width > Machine->uiwidth) width = Machine->uiwidth;
-	if (height > Machine->uiheight) height = Machine->uiheight;
-
-	leftx += Machine->uixmin;
-	topy += Machine->uiymin;
-
-	black = Machine->uifont->colortable[0];
-	white = Machine->uifont->colortable[1];
-
-	memset(&Machine->scrbitmap->line[topy][leftx],white,width);
-	for (y = topy+1;y < topy+height-1;y++)
+static inline void drawhline(int x, int w, int y, unsigned short color)
+{
+	if (Machine->scrbitmap->depth == 16)
 	{
-		Machine->scrbitmap->line[y][leftx] = white;
-		memset(&Machine->scrbitmap->line[y][leftx+1],black,width-2);
-		Machine->scrbitmap->line[y][leftx+width-1] = white;
+        int i;
+		for (i = x; i < x+w; i++)
+			*(unsigned short *)&Machine->scrbitmap->line[y][i*2] = color;
 	}
-	memset(&Machine->scrbitmap->line[topy+height-1][leftx],white,width);
+	else
+		memset(&Machine->scrbitmap->line[y][x], color, w);
+}
+
+static inline void drawvline(int x, int y, int h, unsigned short color)
+{
+int i;
+	if (Machine->scrbitmap->depth == 16)
+	{
+		for (i = y; i < y+h; i++)
+			*(unsigned short *)&Machine->scrbitmap->line[i][x*2] = color;
+	}
+	else
+	{
+		for (i = y; i < y+h; i++)
+			Machine->scrbitmap->line[i][x] = color;
+	}
 }
 
 
-void drawbar(int leftx,int topy,int width,int height,int percentage)
+static void drawbox(int leftx,int topy,int width,int height)
 {
 	int x,y;
-	int black,white;
+	unsigned short black,white;
 
 
 	if (leftx < 0) leftx = 0;
@@ -363,27 +371,51 @@ void drawbar(int leftx,int topy,int width,int height,int percentage)
 	black = Machine->uifont->colortable[0];
 	white = Machine->uifont->colortable[1];
 
-	for (y = topy;y < topy + height/8;y++)
+	drawhline(leftx,width,topy, 		white);
+	drawhline(leftx,width,topy+height-1,white);
+	drawvline(leftx,		topy,height,white);
+	drawvline(leftx+width-1,topy,height,white);
+    for (y = topy+1;y < topy+height-1;y++)
+		drawhline(leftx+1,width-2,y,black);
+}
+
+
+static void drawbar(int leftx,int topy,int width,int height,int percentage)
+{
+	int x,y;
+	unsigned short black,white;
+
+
+	if (leftx < 0) leftx = 0;
+	if (topy < 0) topy = 0;
+	if (width > Machine->uiwidth) width = Machine->uiwidth;
+	if (height > Machine->uiheight) height = Machine->uiheight;
+
+	leftx += Machine->uixmin;
+	topy += Machine->uiymin;
+
+	black = Machine->uifont->colortable[0];
+	white = Machine->uifont->colortable[1];
+
+    for (y = topy;y < topy + height/8;y++)
 	{
-		Machine->scrbitmap->line[y][leftx] = white;
-		Machine->scrbitmap->line[y][leftx+1] = white;
-		Machine->scrbitmap->line[y][leftx+width/2-1] = white;
-		Machine->scrbitmap->line[y][leftx+width/2] = white;
-		Machine->scrbitmap->line[y][leftx+width-2] = white;
-		Machine->scrbitmap->line[y][leftx+width-1] = white;
+		drawpixel(leftx,			y, white);
+		drawpixel(leftx+1,			y, white);
+		drawpixel(leftx+width/2-1,	y, white);
+		drawpixel(leftx+width/2,	y, white);
+		drawpixel(leftx+width-2,	y, white);
+		drawpixel(leftx+width-1,	y, white);
 	}
 	for (y = topy+height/8;y < topy+height-height/8;y++)
-	{
-		memset(&Machine->scrbitmap->line[y][leftx],white,width*percentage/100);
-	}
+		drawhline(leftx,width*percentage/100,y,white);
 	for (y = topy+height-height/8;y < topy + height;y++)
 	{
-		Machine->scrbitmap->line[y][leftx] = white;
-		Machine->scrbitmap->line[y][leftx+1] = white;
-		Machine->scrbitmap->line[y][leftx+width/2-1] = white;
-		Machine->scrbitmap->line[y][leftx+width/2] = white;
-		Machine->scrbitmap->line[y][leftx+width-2] = white;
-		Machine->scrbitmap->line[y][leftx+width-1] = white;
+		drawpixel(leftx,			y, white);
+		drawpixel(leftx+1,			y, white);
+		drawpixel(leftx+width/2-1,	y, white);
+		drawpixel(leftx+width/2,	y, white);
+		drawpixel(leftx+width-2,	y, white);
+		drawpixel(leftx+width-1,	y, white);
 	}
 }
 
@@ -544,8 +576,8 @@ static void displaymessagewindow(const char *text)
 		len = 0;
 		while (*c && *c != '\n')
 		{
-			c++;
 			len++;
+			c++;
 		}
 
 		if (*c == '\n') c++;
@@ -579,9 +611,16 @@ static void displaymessagewindow(const char *text)
 			c++;
 		}
 
+		if (*c2 == '\t')	/* center text */
+		{
+			c2++;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * (c - c2)) / 2;
+		}
+		else
+			dt[curr_dt].x = leftoffs + Machine->uifont->width/2;
+
 		dt[curr_dt].text = c2;
 		dt[curr_dt].color = DT_COLOR_WHITE;
-		dt[curr_dt].x = leftoffs + Machine->uifont->width/2;
 		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
 		curr_dt++;
 
@@ -863,9 +902,8 @@ static int setdipswitches(int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -970,9 +1008,8 @@ static int setkeysettings(int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -1107,9 +1144,8 @@ static int setjoysettings(int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -1439,9 +1475,8 @@ static int settraksettings(int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -1498,7 +1533,11 @@ static int mame_stats(int selected)
 	displaymessagewindow(buf);
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
-			|| osd_key_pressed_memory(OSD_KEY_ENTER))
+			|| osd_key_pressed_memory(OSD_KEY_ENTER)
+			|| osd_key_pressed_memory(OSD_KEY_LEFT)
+			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
+			|| osd_key_pressed_memory(OSD_KEY_UP)
+			|| osd_key_pressed_memory(OSD_KEY_DOWN))
 		sel = -1;
 
 	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
@@ -1506,9 +1545,8 @@ static int mame_stats(int selected)
 
 	if (sel == -1 || sel == -2)
 	{
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -1546,38 +1584,50 @@ int showcopyright(void)
 	return 0;
 }
 
-int showcredits(void)
+static int displaycredits(int selected)
 {
 	int key;
-	struct DisplayText dt[2];
 	char buf[2048];
+	int sel;
 
 
-	strcpy(buf,"The following people contributed to this driver:\n\n");
-	strcat(buf,Machine->gamedrv->credits);
-	dt[0].text = buf;
-	dt[0].color = DT_COLOR_WHITE;
-	dt[0].x = 0;
-	dt[0].y = 0;
-	dt[1].text = 0;
-	displaytext(dt,1,1);
+	sel = selected - 1;
 
-	key = osd_read_key(1);
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+	sprintf(buf,"The following people\ncontributed to this driver:\n\n%s",Machine->gamedrv->credits);
 
-	osd_clearbitmap(Machine->scrbitmap);
-	osd_update_display();
+	displaymessagewindow(buf);
 
-	return 0;
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+			|| osd_key_pressed_memory(OSD_KEY_ENTER)
+			|| osd_key_pressed_memory(OSD_KEY_LEFT)
+			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
+			|| osd_key_pressed_memory(OSD_KEY_UP)
+			|| osd_key_pressed_memory(OSD_KEY_DOWN))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
+
+	return sel + 1;
 }
 
-int showgameinfo(void)
+void showcredits(void)
 {
-	int key;
+	while (displaycredits(1) == 1)
+		osd_update_display();
+	osd_update_display();
+}
+
+static int displaygameinfo(int selected)
+{
 	int i;
-	struct DisplayText dt[3];
 	char buf[2048];
-	char mamever[80];
 	static char *cpunames[] =
 	{
 		"",
@@ -1593,6 +1643,7 @@ int showgameinfo(void)
 		"T-11",
 		"S2650",
 		"TMS34010"
+		"TMS9900"
 	};
 	static char *soundnames[] =
 	{
@@ -1604,8 +1655,9 @@ int showgameinfo(void)
 		"YM2203",
 		"YM2151",
 		"YM2151",
-		"YM3812",
 		"YM2413",
+		"YM2610",
+		"YM3812",
 		"SN76496",
 		"Pokey",
 		"Namco",
@@ -1618,7 +1670,106 @@ int showgameinfo(void)
 		"HC-55516 CVSD",
 		"Astrocade 'IO' chip"
 	};
+	int sel;
 
+
+	sel = selected - 1;
+
+
+	sprintf(buf,"%s\n%s %s\n\nCPU:\n",Machine->gamedrv->description,Machine->gamedrv->year,Machine->gamedrv->manufacturer);
+	i = 0;
+	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
+	{
+		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
+				cpunames[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK],
+				Machine->drv->cpu[i].cpu_clock / 1000000,
+				Machine->drv->cpu[i].cpu_clock % 1000000);
+
+		if (Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
+			strcat(buf," (sound)");
+
+		strcat(buf,"\n");
+
+		i++;
+	}
+
+	sprintf(&buf[strlen(buf)],"\nSound:\n");
+	i = 0;
+	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
+	{
+		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
+				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
+			sprintf(&buf[strlen(buf)],"%d x ",((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->num);
+
+		sprintf(&buf[strlen(buf)],"%s",
+				soundnames[Machine->drv->sound[i].sound_type]);
+
+		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
+				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
+			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
+					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock / 1000000,
+					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock % 1000000);
+
+		strcat(buf,"\n");
+
+		i++;
+	}
+
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		sprintf(&buf[strlen(buf)],"\nVector Game\n");
+	else
+	{
+		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
+		if (Machine->gamedrv->orientation & ORIENTATION_SWAP_XY)
+			sprintf(&buf[strlen(buf)],"%d x %d (vert) %d Hz\n",
+					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
+					Machine->drv->frames_per_second);
+		else
+			sprintf(&buf[strlen(buf)],"%d x %d (horz) %d Hz\n",
+					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
+					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+					Machine->drv->frames_per_second);
+		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
+		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
+			strcat(buf,"(16-bit required)\n");
+		else if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+			strcat(buf,"(dynamic)\n");
+		else strcat(buf,"(static)\n");
+	}
+
+	strcat(buf,"\n\n\tMAME ");	/* \t means that the line will be centered */
+	strcat(buf,mameversion);
+
+
+	displaymessagewindow(buf);
+
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+			|| osd_key_pressed_memory(OSD_KEY_ENTER)
+			|| osd_key_pressed_memory(OSD_KEY_LEFT)
+			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
+			|| osd_key_pressed_memory(OSD_KEY_UP)
+			|| osd_key_pressed_memory(OSD_KEY_DOWN))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
+
+	return sel + 1;
+}
+
+int showgamewarnings(void)
+{
+	int i;
+	int key;
+	char buf[2048];
+	struct DisplayText dt[3];
 
 	if (Machine->gamedrv->flags)
 	{
@@ -1687,89 +1838,11 @@ int showgameinfo(void)
 	}
 
 
-	sprintf(buf,"%s\n%s %s\n\nCPU:\n",Machine->gamedrv->description,Machine->gamedrv->year,Machine->gamedrv->manufacturer);
-	i = 0;
-	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
-	{
-		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-				cpunames[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK],
-				Machine->drv->cpu[i].cpu_clock / 1000000,
-				Machine->drv->cpu[i].cpu_clock % 1000000);
+	osd_clearbitmap(Machine->scrbitmap);
 
-		if (Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
-			strcat(buf," (sound)");
-
-		strcat(buf,"\n");
-
-		i++;
-	}
-
-	sprintf(&buf[strlen(buf)],"\nSound:\n");
-	i = 0;
-	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
-	{
-		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
-				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
-			sprintf(&buf[strlen(buf)],"%d x ",((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->num);
-
-		sprintf(&buf[strlen(buf)],"%s",
-				soundnames[Machine->drv->sound[i].sound_type]);
-
-		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
-				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
-			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock / 1000000,
-					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock % 1000000);
-
-		strcat(buf,"\n");
-
-		i++;
-	}
-
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		sprintf(&buf[strlen(buf)],"\nVector Game\n");
-	else
-	{
-		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
-		if (Machine->gamedrv->orientation & ORIENTATION_SWAP_XY)
-			sprintf(&buf[strlen(buf)],"%d x %d (vert) %d Hz\n",
-					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
-					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
-					Machine->drv->frames_per_second);
-		else
-			sprintf(&buf[strlen(buf)],"%d x %d (horz) %d Hz\n",
-					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
-					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
-					Machine->drv->frames_per_second);
-		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
-		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
-			strcat(buf,"(16-bit required)\n");
-		else if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-			strcat(buf,"(dynamic)\n");
-		else strcat(buf,"(static)\n");
-	}
-
-
-	strcpy(mamever,"MAME ");
-	strcat(mamever,mameversion);
-
-
-	dt[0].text = buf;
-	dt[0].color = DT_COLOR_WHITE;
-	dt[0].x = 0;
-	dt[0].y = 0;
-	dt[1].text = mamever;
-	dt[1].color = DT_COLOR_WHITE;
-	dt[1].x = (Machine->uiwidth - Machine->uifont->width * strlen(mamever)) / 2;
-	dt[1].y = Machine->uiheight - Machine->uifont->height;
-	dt[2].text = 0;
-	displaytext(dt,1,1);
-
-	key = osd_read_key(1);
-	while (osd_key_pressed(key)) ;	/* wait for key release */
-	if (key == OSD_KEY_ESC ||
-		key == OSD_KEY_FAST_EXIT)
-		return 1;
+	while (displaygameinfo(1) == 1)
+		osd_update_display();
+	osd_update_display();
 
 	osd_clearbitmap(Machine->scrbitmap);
 	osd_update_display();
@@ -1785,6 +1858,7 @@ enum { UI_SWITCH = 0, UI_KEY, UI_JOY, UI_ANALOG, UI_STATS, UI_CREDITS, UI_GAMEIN
 static const char *menu_item[MAX_SETUPMENU_ITEMS];
 static int menu_action[MAX_SETUPMENU_ITEMS];
 static int menu_total;
+
 
 static void setup_menu_init(void)
 {
@@ -1833,11 +1907,11 @@ static void setup_menu_init(void)
 static int setup_menu(int selected)
 {
 	int sel,res;
-	static int lastselected = 0;
+	static int menu_lastselected = 0;
 
 
 	if (selected == -1)
-		sel = lastselected;
+		sel = menu_lastselected;
 	else sel = selected - 1;
 
 	if (sel > 0xff)
@@ -1848,7 +1922,7 @@ static int setup_menu(int selected)
 				res = setdipswitches(sel >> 8);
 				if (res == -1)
 				{
-					lastselected = sel;
+					menu_lastselected = sel;
 					sel = -1;
 				}
 				else
@@ -1859,7 +1933,7 @@ static int setup_menu(int selected)
 				res = setkeysettings(sel >> 8);
 				if (res == -1)
 				{
-					lastselected = sel;
+					menu_lastselected = sel;
 					sel = -1;
 				}
 				else
@@ -1870,7 +1944,7 @@ static int setup_menu(int selected)
 				res = setjoysettings(sel >> 8);
 				if (res == -1)
 				{
-					lastselected = sel;
+					menu_lastselected = sel;
 					sel = -1;
 				}
 				else
@@ -1881,7 +1955,7 @@ static int setup_menu(int selected)
 				res = settraksettings(sel >> 8);
 				if (res == -1)
 				{
-					lastselected = sel;
+					menu_lastselected = sel;
 					sel = -1;
 				}
 				else
@@ -1892,7 +1966,7 @@ static int setup_menu(int selected)
 				res = mame_stats(sel >> 8);
 				if (res == -1)
 				{
-					lastselected = sel;
+					menu_lastselected = sel;
 					sel = -1;
 				}
 				else
@@ -1900,21 +1974,25 @@ static int setup_menu(int selected)
 				break;
 
 			case UI_CREDITS:
-osd_sound_enable(0);
-while (osd_key_pressed(OSD_KEY_ENTER))
-	osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-				showcredits();
-osd_sound_enable(1);
-sel = sel & 0xff;
+				res = displaycredits(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
 				break;
 
 			case UI_GAMEINFO:
-osd_sound_enable(0);
-while (osd_key_pressed(OSD_KEY_ENTER))
-	osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-				showgameinfo();
-osd_sound_enable(1);
-sel = sel & 0xff;
+				res = displaygameinfo(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
 				break;
 
 			case UI_CHEAT:
@@ -1952,13 +2030,12 @@ sel = sel & 0xff;
 			case UI_GAMEINFO:
 			case UI_CHEAT:
 				sel |= 0x100;
-		/* redraw the screen before changing menu */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+				/* tell updatescreen() to clean after us */
+				need_to_clear_bitmap = 1;
 				break;
 
 			case UI_EXIT:
-				lastselected = 0;
+				menu_lastselected = 0;
 				sel = -1;
 				break;
 		}
@@ -1967,15 +2044,14 @@ sel = sel & 0xff;
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
 			osd_key_pressed_memory(OSD_KEY_CONFIGURE))
 	{
-		lastselected = sel;
+		menu_lastselected = sel;
 		sel = -1;
 	}
 
 	if (sel == -1)
 	{
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -2030,19 +2106,23 @@ static void onscrd_volume(int increment,int arg)
 		attenuation = osd_get_mastervolume();
 		attenuation += 1 * increment;
 		if (attenuation > 0) attenuation = 0;
-		if (attenuation < -24) attenuation = -24;
+		if (attenuation < -32) attenuation = -32;
 		osd_set_mastervolume(attenuation);
 	}
 	attenuation = osd_get_mastervolume();
 
 	sprintf(buf,"Volume %3ddB",attenuation);
-	displayosd(buf,100 * (attenuation + 24) / 24);
+	displayosd(buf,100 * (attenuation + 32) / 32);
 }
 
 static void onscrd_streamvol(int increment,int arg)
 {
 	char buf[40];
-	int volume;
+	int volume,ch;
+	int doallstreams = 0;
+
+	if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
+		doallstreams = 1;
 
 	if (increment)
 	{
@@ -2050,11 +2130,21 @@ static void onscrd_streamvol(int increment,int arg)
 		volume += 10 * increment;
 		if (volume > 255) volume = 255;
 		if (volume < 0) volume = 0;
-		stream_set_volume(arg,volume);
+
+		if (doallstreams)
+		{
+			for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
+				stream_set_volume(ch,volume);
+		}
+		else
+			stream_set_volume(arg,volume);
 	}
 	volume = stream_get_volume(arg);
 
-	sprintf(buf,"%s Volume %3d",stream_get_name(arg),volume);
+	if (doallstreams)
+		sprintf(buf,"ALL CHANNELS Volume %3d%%",volume*100/255);
+	else
+		sprintf(buf,"%s Volume %3d%%",stream_get_name(arg),volume*100/255);
 	displayosd(buf,100 * volume / 255);
 }
 
@@ -2148,9 +2238,9 @@ static int on_screen_display(int selected)
 
 	increment = 0;
 	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
-		increment = -1;
+        increment = -1;
 	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
-		increment = 1;
+        increment = 1;
 	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
 		sel = (sel + 1) % onscrd_total_items;
 	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
@@ -2164,9 +2254,8 @@ static int on_screen_display(int selected)
 	{
 		sel = -1;
 
-		/* redraw the screen before quitting */
-		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
 	}
 
 	return sel + 1;
@@ -2180,13 +2269,11 @@ static int on_screen_display(int selected)
 
 
 
+static int setup_selected;
+static int osd_selected;
+
 int handle_user_interface(void)
 {
-	static int setup_selected = 0;
-	static int osd_selected = 0;
-
-
-
 	/* This call is for the cheat, it must be called at least each frames */
 	if (nocheat == 0) DoCheat();
 
@@ -2197,15 +2284,25 @@ int handle_user_interface(void)
 
 	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
 	{
-		setup_menu_init();
 		setup_selected = -1;
+		if (osd_selected != 0)
+		{
+			osd_selected = 0;	/* disable on screen display */
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
+		}
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
 
 	if (osd_selected == 0 && osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
 	{
-		onscrd_init();
 		osd_selected = -1;
+		if (setup_selected != 0)
+		{
+			setup_selected = 0;	/* disable setup menu */
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
+		}
 	}
 	if (osd_selected != 0) osd_selected = on_screen_display(osd_selected);
 
@@ -2276,4 +2373,14 @@ int handle_user_interface(void)
 		osd_save_snapshot();
 
 	return 0;
+}
+
+
+void init_user_interface(void)
+{
+	setup_menu_init();
+	setup_selected = 0;
+
+	onscrd_init();
+	osd_selected = 0;
 }

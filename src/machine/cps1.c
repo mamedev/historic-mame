@@ -30,7 +30,7 @@ void cps1_dump_driver(void)
 	if (fp)
 	{
 		int i;
-                unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 		unsigned char *p=RAM;
 		for (i=0; i<0x80000; i++)
 		{
@@ -40,15 +40,24 @@ void cps1_dump_driver(void)
 		}
 		fclose(fp);
 	}
-        fp=fopen("EEPROM.DMP", "w+b");
+	fp=fopen("EEPROM.DMP", "w+b");
 	if (fp)
 	{
-                fwrite(cps1_eeprom, cps1_eeprom_size, 1, fp);
+		fwrite(cps1_eeprom, cps1_eeprom_size, 1, fp);
 		fclose(fp);
 	}
-
-
 }
+
+#define DEBUG_DUMP_DRV() \
+{                         \
+	if (osd_key_pressed(OSD_KEY_F))\
+	{                              \
+	     cps1_dump_video();        \
+	     cps1_dump_driver();       \
+	}                              \
+}
+#else
+#define DEBUG_DUMP_DRV()
 #endif
 
 int cps1_input_r(int offset)
@@ -64,13 +73,7 @@ int cps1_player_input_r(int offset)
 
 int cps1_interrupt(void)
 {
-#ifdef MAME_DEBUG
-	if (osd_key_pressed(OSD_KEY_F))
-	{
-		cps1_dump_video();
-		cps1_dump_driver();
-	}
-#endif
+	DEBUG_DUMP_DRV();
 	return 6;
 }
 
@@ -78,17 +81,17 @@ int cps1_interrupt(void)
 int cps1_interrupt2(void)
 {
 	if (cpu_getiloops() == 0)
-        {
-#ifdef MAME_DEBUG
-		if (osd_key_pressed(OSD_KEY_F))
-		{
-			cps1_dump_video();
-			cps1_dump_driver();
-		}
-#endif
-                 return 2;
-        }
+	{
+		DEBUG_DUMP_DRV();
+		return 2;
+	}
 	else return 4;
 }
 
+
+int cps1_interrupt3(void)
+{
+	DEBUG_DUMP_DRV();
+	return 2;
+}
 

@@ -159,8 +159,10 @@ struct osd_bitmap
 #define OSD_KEY_SHOW_FPS			138
 #define OSD_KEY_SHOW_PROFILE		139
 #define OSD_KEY_SNAPSHOT			140
+#define OSD_KEY_CHEAT_TOGGLE		141
+#define OSD_KEY_DEBUGGER			142
 
-#define OSD_MAX_PSEUDO				140
+#define OSD_MAX_PSEUDO				142
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -360,4 +362,19 @@ osd_profiler(OSD_PROFILE_END);
 */
 
 void osd_profiler(int type);
+
+
+#ifdef MAME_NET
+/* Network */
+void osd_update_keys(char keys[OSD_MAX_KEY+1], char globkeys[OSD_MAX_KEY+1]);
+void osd_build_global_keys(void);
+int osd_send_msg(void *msg, int size);
+int osd_receive_msg(void *msg, int size);
+void osd_network_synchronise(void);
+void osd_cleanup_network(void);
+void osd_net_init(void);
+int osd_net_map_key(int keycode, int playermask);
+void osd_build_global_inputs(void *inputs, int inputsize);
+#endif /* MAME_NET */
+
 #endif

@@ -436,13 +436,8 @@ int frontend_help (int argc, char **argv)
 			for (i = 0; drivers[i]; i++)
 			{
 				get_rom_sample_path (argc, argv, i);
-				if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
-				{
-					/* if the game is a clone, try loading the ROM from the main version */
-					if (drivers[i]->clone_of == 0 ||
-							!osd_faccess(drivers[i]->clone_of->name,OSD_FILETYPE_ROM))
-						printf ("%s\n", drivers[i]->name);
-				}
+				if (RomsetMissing (i))
+					printf ("%s\n", drivers[i]->name);
 			}
 			return 0;
 			break;
@@ -493,6 +488,7 @@ int frontend_help (int argc, char **argv)
 						case CPU_T11   :printf("T-11    "); break;
 						case CPU_S2650 :printf("S2650   "); break;
 						case CPU_TMS34010 :printf("TMS34010"); break;
+						case CPU_TMS9900:printf("TMS9900"); break;
 
 						case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
 						case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
@@ -506,6 +502,7 @@ int frontend_help (int argc, char **argv)
 						case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
 						case CPU_S2650 |CPU_AUDIO_CPU: printf("[S2650] "); break;
 						case CPU_TMS34010 |CPU_AUDIO_CPU: printf("[TMS34010] "); break;
+						case CPU_TMS9900|CPU_AUDIO_CPU: printf("[TMS9900] "); break;
                     }
                 }
 
@@ -542,8 +539,9 @@ int frontend_help (int argc, char **argv)
 									case SOUND_YM2203:     printf("YM-2203 "); break;
 									case SOUND_YM2151:     printf("YM-2151 "); break;
 									case SOUND_YM2151_ALT: printf("YM-2151a"); break;
-									case SOUND_YM3812:     printf("YM-3812 "); break;
 									case SOUND_YM2413:     printf("YM-2413 "); break;
+									case SOUND_YM2610:     printf("YM-2610 "); break;
+									case SOUND_YM3812:     printf("YM-3812 "); break;
 									case SOUND_SN76496:    printf("SN76496 "); break;
 									case SOUND_POKEY:      printf("Pokey   "); break;
 									case SOUND_NES:        printf("NES     "); break;
@@ -707,7 +705,10 @@ int frontend_help (int argc, char **argv)
 			if (verify == 1)
 			{
 				res = VerifyRomSet (i,(verify_printf_proc)printf);
-				if (res)
+
+				if (res == CLONE_NOTFOUND) continue;
+
+				if (res != CORRECT)
 					printf ("romset %s ", drivers[i]->name);
 			}
 			if (verify == 2)
@@ -718,13 +719,13 @@ int frontend_help (int argc, char **argv)
 					continue;
 
 				res = VerifySampleSet (i,(verify_printf_proc)printf);
-				if (res)
+				if (res != CORRECT)
 					printf ("sampleset %s ", drivers[i]->name);
 			}
 
-			if (res == 1)
+			if (res == NOTFOUND)
 				printf ("not found\n");
-			else if (res == 2)
+			else if (res == INCORRECT)
 			{
 				printf ("incorrect\n");
 				incorrect++;

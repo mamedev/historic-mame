@@ -213,16 +213,16 @@ INPUT_PORTS_START( tnzs_input_ports )
     PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
 
 	PORT_START      /* DSW B - ef0f */
-    PORT_DIPNAME( 0x03, 0x02, "Difficulty", IP_KEY_NONE)
-    PORT_DIPSETTING(    0x03, "Easy" )
-    PORT_DIPSETTING(    0x02, "Medium" )
+    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE)
+    PORT_DIPSETTING(    0x02, "Easy" )
+    PORT_DIPSETTING(    0x03, "Medium" )
     PORT_DIPSETTING(    0x01, "Hard" )
     PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_DIPNAME( 0x0C, 0x00, "Bonus Life", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "10000 100000" )
-    PORT_DIPSETTING(    0x0C, "10000 150000" )
-    PORT_DIPSETTING(    0x08, "10000 200000" )
-    PORT_DIPSETTING(    0x04, "10000 300000" )
+    PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x00, "50000 150000" )
+    PORT_DIPSETTING(    0x0c, "70000 200000" )
+    PORT_DIPSETTING(    0x04, "100000 250000" )
+    PORT_DIPSETTING(    0x08, "200000 300000" )
     PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
     PORT_DIPSETTING(    0x20, "2" )
     PORT_DIPSETTING(    0x30, "3" )
@@ -231,8 +231,9 @@ INPUT_PORTS_START( tnzs_input_ports )
     PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
     PORT_DIPSETTING(    0x00, "No" )
     PORT_DIPSETTING(    0x40, "Yes" )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
-
+    PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x80, "Off" )
+    PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =

@@ -7,7 +7,7 @@ LD = gcc
 #ASM = nasm
 ASM = nasmw
 ASMFLAGS = -f coff
-VPATH=src src/Z80 src/M6502 src/I86 src/M6809 src/TMS34010
+VPATH=src src/Z80 src/M6502 src/I86 src/M6809 src/TMS34010 src/TMS9900
 
 # uncomment next line to use Assembler 6808 engine
 # X86_ASM_6808 = 1
@@ -75,6 +75,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/ay8910.o obj/sndhrdw/psgintf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
          obj/sndhrdw/ym2151.o obj/sndhrdw/ym2413.o \
+         obj/sndhrdw/ym2610.o obj/sndhrdw/2610intf.o \
          obj/sndhrdw/ym3812.o obj/sndhrdw/3812intf.o \
 		 obj/sndhrdw/tms5220.o obj/sndhrdw/5220intf.o obj/sndhrdw/vlm5030.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/pokyintf.o obj/sndhrdw/sn76496.o \
@@ -95,6 +96,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/TMS34010/tms34010.o obj/TMS34010/34010fld.o \
          $(M6808OBJS) \
          $(M68KOBJS) \
+         obj/TMS9900/tms9900.o obj/TMS9900/9900dasm.o \
          obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o obj/I86/I86dasm.o obj/I8085/8085dasm.o \
          obj/M6809/6809dasm.o obj/M6805/6805dasm.o  obj/I8039/8039dasm.o \
          obj/S2650/2650dasm.o obj/T11/t11dasm.o obj/TMS34010/34010dsm.o obj/M68000/m68kdasm.o \
@@ -234,7 +236,8 @@ obj/taito2.a: \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/drivers/arkanoi2.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
-         obj/vidhrdw/ssi.o obj/drivers/ssi.o
+         obj/vidhrdw/superman.o obj/drivers/superman.o \
+         obj/vidhrdw/ssi.o obj/drivers/ssi.o \
 
 obj/williams.a: \
          obj/machine/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o
@@ -365,6 +368,7 @@ obj/atarivg.a: \
 obj/centiped.a: \
          obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
          obj/machine/milliped.o obj/vidhrdw/milliped.o obj/drivers/milliped.o \
+         obj/vidhrdw/qwakprot.o obj/drivers/qwakprot.o \
          obj/vidhrdw/warlord.o obj/drivers/warlord.o
 
 obj/kangaroo.a: \
@@ -476,6 +480,7 @@ obj/other.a: \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
          obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
          obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
+         obj/vidhrdw/zerozone.o obj/drivers/zerozone.o \
 
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
@@ -484,6 +489,7 @@ obj/I86/I86.o:  I86.c I86.h I86intrf.h ea.h host.h instr.h modrm.h
 obj/M6809/m6809.o:  m6809.c m6809.h 6809ops.c
 obj/M6808/M6808.o:  m6808.c m6808.h
 obj/TMS34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
+obj/TMS9900/tms9900.o: tms9900.h
 
 
 makedir:
@@ -500,6 +506,7 @@ makedir:
 	md obj\S2650
 	md obj\T11
 	md obj\TMS34010
+	md obj\TMS9900
 	md obj\drivers
 	md obj\machine
 	md obj\vidhrdw
@@ -525,6 +532,7 @@ clean:
 	del obj\S2650\*.o
 	del obj\T11\*.o
 	del obj\TMS34010\*.o
+	del obj\TMS9900\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o
@@ -536,6 +544,7 @@ cleandebug:
 	del obj\*.o
 	del obj\Z80\*.o
 	del obj\M6502\*.o
+	del obj\I86\*.o
 	del obj\I8039\*.o
 	del obj\I8085\*.o
 	del obj\M6809\*.o
@@ -549,4 +558,5 @@ cleandebug:
 	del obj\S2650\*.o
 	del obj\T11\*.o
 	del obj\TMS34010\*.o
+	del obj\TMS9900\*.o
 	del mame.exe

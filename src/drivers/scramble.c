@@ -703,6 +703,7 @@ ROM_START( theend_rom )
 	ROM_LOAD( "ic31",         0x0800, 0x0800, 0xaf6d09b6 )
 
 	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "ic56",         0x0000, 0x0800, 0x3b2c2f70 )
@@ -1023,7 +1024,7 @@ struct GameDriver theend_driver =
 
 	theend_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	theend_hiload, theend_hisave

@@ -28,6 +28,7 @@ struct RomModule
 #define ROMFLAG_MASK          0xf0000000           /* 4 bits worth of flags in the high nibble */
 #define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd */
 #define ROMFLAG_DISPOSE       0x80000000           /* Dispose of this region when done */
+#define ROMFLAG_IGNORE        0x40000000           /* BM: Ignored - drivers must load this region themselves */
 #define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
 #define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
 
@@ -37,6 +38,9 @@ struct RomModule
 #define ROM_REGION(length) { 0, length, 0, 0 },
 /* start of disposable memory region */
 #define ROM_REGION_DISPOSE(length) { 0, length | ROMFLAG_DISPOSE, 0, 0 },
+
+/* Optional */
+#define ROM_REGION_OPTIONAL(length) { 0, length | ROMFLAG_IGNORE, 0, 0 },
 
 /* ROM to load */
 #define ROM_LOAD(name,offset,length,crc) { name, offset, length, crc },

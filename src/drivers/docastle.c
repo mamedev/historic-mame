@@ -341,8 +341,9 @@ ROM_START( docastle_rom )
 	ROM_LOAD( "04j_a8.bin",   0x8000, 0x2000, 0x9afb16e9 )
 	ROM_LOAD( "04h_a9.bin",   0xa000, 0x2000, 0xaf24bce0 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "09c.bin",      0x0000, 0x0200, 0x066f52bc )
+	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_LOAD( "09c.bin",      0x0000, 0x0200, 0x066f52bc ) /* color prom */
+	ROM_LOAD( "01d.bin",      0x0200, 0x0200, 0x2747ca77 ) /* ??? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "07n_a0.bin",   0x0000, 0x4000, 0xf23b5cdb )
@@ -362,8 +363,9 @@ ROM_START( docastl2_rom )
 	ROM_LOAD( "04j_a8.bin",   0x8000, 0x2000, 0x9afb16e9 )
 	ROM_LOAD( "04h_a9.bin",   0xa000, 0x2000, 0xaf24bce0 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "09c.bin",      0x0000, 0x0200, 0x066f52bc )
+	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_LOAD( "09c.bin",      0x0000, 0x0200, 0x066f52bc ) /* color prom */
+	ROM_LOAD( "01d.bin",      0x0200, 0x0200, 0x2747ca77 ) /* ??? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "a10",          0x0000, 0x4000, 0x45f7f69b )
@@ -383,8 +385,9 @@ ROM_START( dounicorn_rom )
 	ROM_LOAD( "dorev8.bin",   0x8000, 0x2000, 0x7143ca68 )
 	ROM_LOAD( "dorev9.bin",   0xa000, 0x2000, 0x893fc004 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "dorevc9.bin",  0x0000, 0x0200, 0x96624ebe )
+	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_LOAD( "dorevc9.bin",  0x0000, 0x0200, 0x96624ebe ) /* color prom */
+	ROM_LOAD( "dorevd1.bin",  0x0200, 0x0200, 0x2747ca77 ) /* ??? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "dorev10.bin",  0x0000, 0x4000, 0x4b1925e3 )

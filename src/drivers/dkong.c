@@ -206,10 +206,22 @@ static int  dkong_sh_gettune(int offset)
 	}
 	return (SND[2048+(page & 7)*256+offset]);
 }
+
+#include <math.h>
+
+static double envelope,tt;
+static int decay;
+
+#define TSTEP 0.001
+
 static void dkong_sh_putp1(int offset, int data)
 {
-	DAC_data_w(0,data);
+	envelope=exp(-tt);
+	DAC_data_w(0,(int)(data*envelope));
+	if (decay) tt+=TSTEP;
+	else tt=0;
 }
+
 static void dkong_sh_putp2(int offset, int data)
 {
 	/*   If P2.Bit7 -> is apparently an external signal decay or other output control
@@ -217,6 +229,7 @@ static void dkong_sh_putp2(int offset, int data)
 	 *   P2.Bit2-0  -> select the 256 byte bank for external ROM
 	 */
 
+	decay = !(data & 0x80);
 	page = (data & 0x47);
 }
 

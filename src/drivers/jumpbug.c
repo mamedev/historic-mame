@@ -169,16 +169,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* this is NOT the original color PROM */
-static unsigned char color_prom[] =
-{
-	/* palette */
-	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
-};
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
@@ -255,6 +245,9 @@ ROM_START( jumpbug_rom )
 	ROM_LOAD( "jbl",          0x1800, 0x0800, 0x9a091b0a )
 	ROM_LOAD( "jbm",          0x2000, 0x0800, 0x8a0fc082 )
 	ROM_LOAD( "jbn",          0x2800, 0x0800, 0x155186e0 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "6331-1.11r",   0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( jbugsega_rom )
@@ -269,6 +262,9 @@ ROM_START( jbugsega_rom )
 	ROM_LOAD( "jbl",          0x1800, 0x0800, 0x9a091b0a )
 	ROM_LOAD( "jbm",          0x2000, 0x0800, 0x8a0fc082 )
 	ROM_LOAD( "jbn",          0x2800, 0x0800, 0x155186e0 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "6331-1.11r",   0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 
@@ -351,7 +347,7 @@ struct GameDriver jumpbug_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -377,7 +373,7 @@ struct GameDriver jbugsega_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

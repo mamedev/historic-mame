@@ -83,10 +83,10 @@ int osd_key_pressed(int keycode)
                 return key[OSD_KEY_F10];
 
             case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11] && !key[OSD_KEY_LSHIFT];
+                return key[OSD_KEY_F11] && !(key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
 
             case OSD_KEY_SHOW_PROFILE:
-                return key[OSD_KEY_F11] && key[OSD_KEY_LSHIFT];
+                return key[OSD_KEY_F11] && (key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
 
             case OSD_KEY_CONFIGURE:
                 return key[OSD_KEY_F12];
@@ -122,6 +122,9 @@ int osd_key_pressed(int keycode)
 			case OSD_KEY_RESET_MACHINE:
                 return key[OSD_KEY_F3];
 
+            case OSD_KEY_CHEAT_TOGGLE:
+				return key[OSD_KEY_F5];
+
             case OSD_KEY_JOY_CALIBRATE:
 				return key[OSD_KEY_F7];
 
@@ -132,10 +135,10 @@ int osd_key_pressed(int keycode)
                 return key[OSD_KEY_F10];
 
             case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11] && !key[OSD_KEY_LSHIFT];
+                return key[OSD_KEY_F11] && !(key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
 
             case OSD_KEY_SHOW_PROFILE:
-                return key[OSD_KEY_F11] && key[OSD_KEY_LSHIFT];
+                return key[OSD_KEY_F11] && (key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
 
             case OSD_KEY_CONFIGURE:
 				return key[OSD_KEY_TAB];
@@ -144,6 +147,12 @@ int osd_key_pressed(int keycode)
 			{
 				extern int mame_debug;
 				return (key[OSD_KEY_TILDE] && !mame_debug);
+			}
+
+            case OSD_KEY_DEBUGGER:
+			{
+				extern int mame_debug;
+				return (key[OSD_KEY_TILDE] && mame_debug);
 			}
 
             case OSD_KEY_PAUSE:
@@ -317,7 +326,7 @@ int key_to_pseudo_code(int k)
             return OSD_KEY_THROTTLE;
 
         case OSD_KEY_F11:
-            if (key[OSD_KEY_LSHIFT])
+            if ((key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]))
                 return OSD_KEY_SHOW_PROFILE;
             return OSD_KEY_SHOW_FPS;
 
@@ -346,6 +355,9 @@ int key_to_pseudo_code(int k)
         case OSD_KEY_F4:
             return OSD_KEY_SHOW_GFX;
 
+		case OSD_KEY_F5:
+			return OSD_KEY_CHEAT_TOGGLE;
+
 		case OSD_KEY_F7:
 			return OSD_KEY_JOY_CALIBRATE;
 
@@ -359,7 +371,7 @@ int key_to_pseudo_code(int k)
             return OSD_KEY_THROTTLE;
 
         case OSD_KEY_F11:
-            if (key[OSD_KEY_LSHIFT])
+            if ((key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]))
                 return OSD_KEY_SHOW_PROFILE;
             return OSD_KEY_SHOW_FPS;
 
@@ -367,7 +379,12 @@ int key_to_pseudo_code(int k)
             return OSD_KEY_CONFIGURE;
 
         case OSD_KEY_TILDE:
-            return OSD_KEY_ON_SCREEN_DISPLAY;
+		{
+			extern int mame_debug;
+
+			if (mame_debug) return OSD_KEY_DEBUGGER;
+			else return OSD_KEY_ON_SCREEN_DISPLAY;
+		}
 
         case OSD_KEY_P:
             return OSD_KEY_PAUSE;

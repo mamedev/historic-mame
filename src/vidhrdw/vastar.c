@@ -11,7 +11,7 @@
 
 
 
-unsigned char *vastar_bg1colorram2;
+unsigned char *vastar_bg1colorram2, *vastar_sprite_priority;
 unsigned char *vastar_fgvideoram,*vastar_fgcolorram1,*vastar_fgcolorram2;
 unsigned char *vastar_bg2videoram,*vastar_bg2colorram1,*vastar_bg2colorram2;
 unsigned char *vastar_bg1scroll,*vastar_bg2scroll;
@@ -49,13 +49,6 @@ void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		color_prom++;
-	}
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		if (i % 4) colortable[i] = i;
-		else colortable[i] = 0;
 	}
 }
 
@@ -145,6 +138,47 @@ void vastar_bg2colorram2_w(int offset,int data)
 }
 
 
+void vastar_draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = 0; offs < spriteram_size; offs += 2)
+	{
+		int code;
+
+
+		code = ((spriteram_3[offs] & 0xfc) >> 2) + ((spriteram_2[offs] & 0x01) << 6)
+				+ ((offs & 0x20) << 2);
+
+		if (spriteram_2[offs] & 0x08)	/* double width */
+		{
+			drawgfx(bitmap,Machine->gfx[2],
+					code/2,
+					spriteram[offs+1] & 0x3f,
+					spriteram_3[offs] & 0x02,spriteram_3[offs] & 0x01,
+					spriteram_3[offs + 1],224-spriteram[offs],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			/* redraw with wraparound */
+			drawgfx(bitmap,Machine->gfx[2],
+					code/2,
+					spriteram[offs+1] & 0x3f,
+					spriteram_3[offs] & 0x02,spriteram_3[offs] & 0x01,
+					spriteram_3[offs + 1],256+224-spriteram[offs],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+		else
+			drawgfx(bitmap,Machine->gfx[1],
+					code,
+					spriteram[offs+1] & 0x3f,
+					spriteram_3[offs] & 0x02,spriteram_3[offs] & 0x01,
+					spriteram_3[offs + 1],240-spriteram[offs],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+
 
 /***************************************************************************
 
@@ -209,45 +243,17 @@ void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll[offs] = -vastar_bg2scroll[offs];
 		copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+		if (*vastar_sprite_priority == 2)
+		{
+			vastar_draw_sprites(bitmap);	/* sprite must appear behind background */
+			copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,92);
+		}
+		else if (*vastar_sprite_priority == 0)
+			vastar_draw_sprites(bitmap);
+
 		for (offs = 0;offs < 32;offs++)
 			scroll[offs] = -vastar_bg1scroll[offs];
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
-	{
-		int code;
-
-
-		code = ((spriteram_3[offs] & 0xfc) >> 2) + ((spriteram_2[offs] & 0x01) << 6)
-				+ ((spriteram[offs+1] & 0x04) << 5);
-
-		if (spriteram_2[offs] & 0x08)	/* double width */
-		{
-			drawgfx(bitmap,Machine->gfx[2],
-					code/2,
-					(spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x38) >> 1),	/* ?? */
-					0,spriteram_3[offs] & 0x01,
-					spriteram_3[offs + 1],224-spriteram[offs],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			/* redraw with wraparound */
-			drawgfx(bitmap,Machine->gfx[2],
-					code/2,
-					(spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x38) >> 1),	/* ?? */
-					0,spriteram_3[offs] & 0x01,
-					spriteram_3[offs + 1],256+224-spriteram[offs],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
-		else
-			drawgfx(bitmap,Machine->gfx[1],
-					code,
-					(spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x38) >> 1),	/* ?? */
-					0,spriteram_3[offs] & 0x01,
-					spriteram_3[offs + 1],240-spriteram[offs],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -267,4 +273,7 @@ void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
+
+	if (*vastar_sprite_priority == 3)
+		vastar_draw_sprites(bitmap);
 }

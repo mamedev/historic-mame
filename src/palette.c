@@ -1182,6 +1182,51 @@ void paletteram_RRRRGGGGBBBBxxxx_word_w(int offset,int data)
 }
 
 
+INLINE void changecolor_BBBBGGGGRRRRxxxx(int color,int data)
+{
+	int r,g,b;
+
+
+	r = (data >>  4) & 0x0f;
+	g = (data >>  8) & 0x0f;
+	b = (data >> 12) & 0x0f;
+
+	r = (r << 4) | r;
+	g = (g << 4) | g;
+	b = (b << 4) | b;
+
+	palette_change_color(color,r,g,b);
+}
+
+void paletteram_BBBBGGGGRRRRxxxx_swap_w(int offset,int data)
+{
+	paletteram[offset] = data;
+	changecolor_BBBBGGGGRRRRxxxx(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
+}
+
+void paletteram_BBBBGGGGRRRRxxxx_split1_w(int offset,int data)
+{
+	paletteram[offset] = data;
+	changecolor_BBBBGGGGRRRRxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
+}
+
+void paletteram_BBBBGGGGRRRRxxxx_split2_w(int offset,int data)
+{
+	paletteram_2[offset] = data;
+	changecolor_BBBBGGGGRRRRxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
+}
+
+void paletteram_BBBBGGGGRRRRxxxx_word_w(int offset,int data)
+{
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+
+	WRITE_WORD(&paletteram[offset],newword);
+	changecolor_BBBBGGGGRRRRxxxx(offset / 2,newword);
+}
+
+
 INLINE void changecolor_xBBBBBGGGGGRRRRR(int color,int data)
 {
 	int r,g,b;

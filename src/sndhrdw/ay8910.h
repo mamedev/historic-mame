@@ -56,7 +56,7 @@ void AY8910_write_port_2_w(int offset,int data);
 void AY8910_write_port_3_w(int offset,int data);
 void AY8910_write_port_4_w(int offset,int data);
 
-int AY8910_sh_start(struct AY8910interface *interface);
+int AY8910_sh_start(struct AY8910interface *interface,const char *chipname);
 void AY8910_sh_stop(void);
 void AY8910_sh_update(void);
 

@@ -342,6 +342,27 @@ ROM_START( mrdu_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
+ROM_START( mrdoy_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dosnow.1",     0x0000, 0x2000, 0xd3454e2c )
+	ROM_LOAD( "dosnow.2",     0x2000, 0x2000, 0x5120a6b2 )
+	ROM_LOAD( "dosnow.3",     0x4000, 0x2000, 0x96416dbe )
+	ROM_LOAD( "dosnow.4",     0x6000, 0x2000, 0xc05051b6 )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dosnow.9",     0x0000, 0x1000, 0x85d16217 )
+	ROM_LOAD( "dosnow.10",    0x1000, 0x1000, 0x61a7f54b )
+	ROM_LOAD( "dosnow.8",     0x2000, 0x1000, 0x2bd1239a )
+	ROM_LOAD( "dosnow.7",     0x3000, 0x1000, 0xac8ffddf )
+	ROM_LOAD( "dosnow.5",     0x4000, 0x1000, 0x7662d828 )
+	ROM_LOAD( "dosnow.6",     0x5000, 0x1000, 0x413f88d1 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
+ROM_END
+
 
 
 static int hiload(void)
@@ -486,3 +507,29 @@ struct GameDriver mrdu_driver =
 	hiload, hisave
 };
 
+
+struct GameDriver mrdoy_driver =
+{
+	__FILE__,
+	&mrdo_driver,
+	"mrdoy",
+	"Mr. Do! (Yukidaruma)",
+	"1982",
+	"bootleg",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
+	0,
+	&machine_driver,
+	0,
+
+	mrdoy_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};

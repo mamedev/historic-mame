@@ -128,6 +128,7 @@ int nmi_interrupt(void);
 int ignore_interrupt(void);
 
 void* cpu_getcontext (int _activecpu);
+int cpu_is_saving_context(int _activecpu);
 
 /* IFDEF Z80_DAISYCHAIN */
 void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain );

@@ -1,13 +1,12 @@
 #ifndef __UNZIP_H
 #define __UNZIP_H
 
-/*********************************************************************
-  unzip.h
-  Support for retrieving files from zipfiles
- *********************************************************************/
-
 #include "types.h"
 #include <stdio.h>
+
+/***************************************************************************
+ * Support for retrieving files from zipfiles
+ ***************************************************************************/
 
 struct zipent {
 	dword	cent_file_header_sig;

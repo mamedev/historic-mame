@@ -122,8 +122,6 @@ void jackal_spriteram_w(int offset,int data);
 void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-unsigned char jackal_ym2151_trigger = 0;
-
 
 static unsigned char intenable;
 
@@ -262,7 +260,7 @@ INPUT_PORTS_START( jackal_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* DSW0 */
+	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
@@ -285,7 +283,7 @@ INPUT_PORTS_START( jackal_input_ports )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-	PORT_START
+	PORT_START	/* DSW3 */
 	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -295,9 +293,9 @@ INPUT_PORTS_START( jackal_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Sound Mode", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Mono" )
 	PORT_DIPSETTING(    0x00, "Stereo" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Sound Adj", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
 INPUT_PORTS_END
 
 

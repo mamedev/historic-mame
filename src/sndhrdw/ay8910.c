@@ -426,7 +426,7 @@ void AY8910_reset(int chip)
 								/* has not been initialized. */
 }
 
-static int AY8910_init(int chip,int clock,int sample_rate,int sample_bits,
+static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,int sample_bits,
 		int (*portAread)(int offset),int (*portBread)(int offset),
 		void (*portAwrite)(int offset,int data),void (*portBwrite)(int offset,int data))
 {
@@ -445,7 +445,7 @@ static int AY8910_init(int chip,int clock,int sample_rate,int sample_bits,
 		char name[40];
 
 
-		sprintf(name,"AY8910 #%d Ch %c",chip,'A'+i);
+		sprintf(name,"%s #%d Ch %c",chipname,chip,'A'+i);
 		PSG->Channel[i] = stream_init(
 				name,sample_rate,sample_bits,
 				3*chip+i,(sample_bits == 16) ? AY8910Update_16 : AY8910Update_8);
@@ -462,14 +462,14 @@ static int AY8910_init(int chip,int clock,int sample_rate,int sample_bits,
 
 
 
-int AY8910_sh_start(struct AY8910interface *interface)
+int AY8910_sh_start(struct AY8910interface *interface,const char *chipname)
 {
 	int chip;
 
 
 	for (chip = 0;chip < interface->num;chip++)
 	{
-		if (AY8910_init(chip,interface->clock,Machine->sample_rate,Machine->sample_bits,
+		if (AY8910_init(chip,chipname,interface->clock,Machine->sample_rate,Machine->sample_bits,
 				interface->portAread[chip],interface->portBread[chip],
 				interface->portAwrite[chip],interface->portBwrite[chip]) != 0)
 			return 1;

@@ -665,9 +665,10 @@ static void Interrupt(void)
 			take = 0xfffffec0;		
 		}
 		else
-		if ((IOREG(REG_INTPEND) & TMS34010_DI)) /* This was only generated if enabled */
+		if ((IOREG(REG_INTPEND) & TMS34010_DI) &&
+			(IOREG(REG_INTENB)  & TMS34010_DI))
 		{
-			take = 0xfffffea0;		
+			take = 0xfffffea0;
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_WV) &&
@@ -921,46 +922,55 @@ int TMS34010_io_register_r(int reg)
 	return IOREG(reg);
 }
 
+#define FINDCONTEXT(cpu, context)       \
+	if (cpu_is_saving_context(cpu))     \
+	{                                   \
+		context = cpu_getcontext(cpu);  \
+	}                                   \
+	else                                \
+	{                                   \
+		context = &state;               \
+	}                                   \
+
+
 void TMS34010_set_shiftreg_functions(int cpu,
 									 void (*to_shiftreg  )(UINT32, UINT16*),
 									 void (*from_shiftreg)(UINT32, UINT16*))
 {
-	TMS34010_Regs* context = cpu_getcontext(cpu);
+	TMS34010_Regs* context;
+	FINDCONTEXT(cpu, context);
 	context->to_shiftreg   = to_shiftreg;		
 	context->from_shiftreg = from_shiftreg;		
 }
 
 int TMS34010_io_display_blanked(int cpu)
 {
-	TMS34010_Regs* context = cpu_getcontext(cpu);
+	TMS34010_Regs* context;
+	FINDCONTEXT(cpu, context);
 	return (!(context->IOregs[REG_DPYCTL] & 0x8000));
 }
 
 int TMS34010_get_DPYSTRT(int cpu)
 {
-	TMS34010_Regs* context = cpu_getcontext(cpu);
+	TMS34010_Regs* context;
+	FINDCONTEXT(cpu, context);
 	return context->IOregs[REG_DPYSTRT];
 }
 
 static void TMS34010_io_intcallback(int param)
 {
-	TMS34010_Regs* context = cpu_getcontext(param);
-
 	/* Reset timer for next frame */
 	double interval = TIME_IN_HZ (Machine->drv->frames_per_second);
 	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);	
-
-	/* This is not 100% accurate, but faster */
-	if (context->IOregs[REG_INTENB] & TMS34010_DI)
-	{
-		cpu_cause_interrupt(param, TMS34010_DI);
-	}
+	cpu_cause_interrupt(param, TMS34010_DI);
 }
 
 
 void TMS34010_State_Save(int cpunum, void *f)
 {
-	osd_fwrite(f,cpu_getcontext(cpunum),sizeof(state));
+	TMS34010_Regs* context;
+	FINDCONTEXT(cpunum, context);
+	osd_fwrite(f,context,sizeof(state));
 	osd_fwrite(f,&TMS34010_ICount,sizeof(TMS34010_ICount));
 	osd_fwrite(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
@@ -972,7 +982,10 @@ void TMS34010_State_Load(int cpunum, void *f)
 	void (*to_shiftreg_save)  (UINT32, UINT16*) = state.to_shiftreg;
 	void (*from_shiftreg_save)(UINT32, UINT16*) = state.from_shiftreg;
 
-	osd_fread(f,cpu_getcontext(cpunum),sizeof(state));
+	TMS34010_Regs* context;
+	FINDCONTEXT(cpunum, context);
+
+	osd_fread(f,context,sizeof(state));
 	osd_fread(f,&TMS34010_ICount,sizeof(TMS34010_ICount));
 	change_pc29(PC);
 	SET_FW();

@@ -62,16 +62,27 @@ void checkintegrity(const struct fileinfo *file,int side)
 
 	if (mask0 != 0xff || mask1 != 0x00)
 	{
+		int allfixed;
+
+		allfixed = 1;
 		printf("%-23s %-23s SOME FIXED BITS (",side ? "" : file->name,side ? file->name : "");
 		for (i = 0;i < 8;i++)
 		{
 			if ((mask0 & 0x80) == 0) printf("0");
 			else if (mask1 & 0x80) printf("1");
-			else printf("x");
+			else
+			{
+				printf("x");
+				allfixed = 0;
+			}
 			mask0 <<= 1;
 			mask1 <<= 1;
 		}
 		printf(")\n");
+
+		/* if the file contains a fixed value, we don't need to do the other */
+		/* validity checks */
+		if (allfixed) return;
 	}
 
 	for (i = 0;i < file->size/2;i++)
@@ -81,6 +92,17 @@ void checkintegrity(const struct fileinfo *file,int side)
 
 	if (i == file->size/2)
 		printf("%-23s %-23s FIRST AND SECOND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "",mask0);
+	else
+	{
+		for (i = 0;i < file->size/4;i++)
+		{
+			if (file->buf[file->size/2 + 2*i+1] != 0xff) break;
+			if (file->buf[2*i+1] != file->buf[file->size/2 + 2*i]) break;
+		}
+
+		if (i == file->size/4)
+			printf("%-23s %-23s BAD NEOGEO DUMP - CUT 2ND HALF\n",side ? "" : file->name,side ? file->name : "",mask0);
+	}
 }
 
 

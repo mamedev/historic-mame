@@ -4,6 +4,7 @@
 #include "8910intf.h"
 #include "2203intf.h"
 #include "2151intf.h"
+#include "2610intf.h"
 #include "3812intf.h"
 #include "2413intf.h"
 #include "sn76496.h"

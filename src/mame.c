@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.34 BETA 5 ("__DATE__")";
+char mameversion[] = "0.34 BETA 6 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -343,6 +343,8 @@ static int vh_open(void)
 
 ***************************************************************************/
 
+int need_to_clear_bitmap;	/* set by the user interface */
+
 int updatescreen(void)
 {
 	static int framecount = 0;
@@ -361,6 +363,11 @@ int updatescreen(void)
 	if (!skipme)
 	{
 		osd_profiler(OSD_PROFILE_VIDEO);
+		if (need_to_clear_bitmap)
+		{
+			osd_clearbitmap(Machine->scrbitmap);
+			need_to_clear_bitmap = 0;
+		}
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 		osd_profiler(OSD_PROFILE_END);
 
@@ -413,8 +420,10 @@ int run_machine(void)
 					showcredits();
 				}
 
-				if (showgameinfo() == 0)  /* show info about the game */
+				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
 				{
+					init_user_interface();
+
 					if (nocheat == 0) InitCheat();
 
 					cpu_run();      /* run the emulation! */

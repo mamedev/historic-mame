@@ -821,6 +821,37 @@ static struct MachineDriver gemini_machine_driver =
 
 ROM_START( rygar_rom )
 	ROM_REGION(0x18000)	/* 64k for code */
+	ROM_LOAD( "5.5p",         0x00000, 0x08000, 0x062cd55d ) /* code */
+	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
+	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
+
+	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
+
+	ROM_LOAD( "vid_6k.bin",   0x08000, 0x08000, 0xaba6db9e )	/* sprites */
+	ROM_LOAD( "vid_6j.bin",   0x10000, 0x08000, 0xae1f2ed6 )	/* sprites */
+	ROM_LOAD( "vid_6h.bin",   0x18000, 0x08000, 0x46d9e7df )	/* sprites */
+	ROM_LOAD( "vid_6g.bin",   0x20000, 0x08000, 0x45839c9a )	/* sprites */
+
+	ROM_LOAD( "vid_6p.bin",   0x28000, 0x08000, 0x9eae5f8e )
+	ROM_LOAD( "vid_6o.bin",   0x30000, 0x08000, 0x5a10a396 )
+	ROM_LOAD( "vid_6n.bin",   0x38000, 0x08000, 0x7b12cf3f )
+	ROM_LOAD( "vid_6l.bin",   0x40000, 0x08000, 0x3cea7eaa )
+
+	ROM_LOAD( "vid_6f.bin",   0x48000, 0x08000, 0x9840edd8 )
+	ROM_LOAD( "vid_6e.bin",   0x50000, 0x08000, 0xff65e074 )
+	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
+	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
+
+	ROM_REGION(0x4000)	/* ADPCM samples */
+	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
+ROM_END
+
+ROM_START( rygar2_rom )
+	ROM_REGION(0x18000)	/* 64k for code */
 	ROM_LOAD( "cpu_5p.bin",   0x00000, 0x08000, 0xe79c054a ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
@@ -844,7 +875,7 @@ ROM_START( rygar_rom )
 	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x4000, 0x70522571 )
+	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
@@ -876,7 +907,7 @@ ROM_START( rygarj_rom )
 	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x4000, 0x70522571 )
+	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
@@ -1169,7 +1200,7 @@ struct GameDriver rygar_driver =
 	__FILE__,
 	0,
 	"rygar",
-	"Rygar (US)",
+	"Rygar (US set 1)",
 	"1986",
 	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
@@ -1178,6 +1209,32 @@ struct GameDriver rygar_driver =
 	0,
 
 	rygar_rom,
+	0, 0,
+	0,
+	(void *)rygar_samples,	/* sound_prom */
+
+	rygar_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	rygar_hiload, rygar_hisave
+};
+
+struct GameDriver rygar2_driver =
+{
+	__FILE__,
+	&rygar_driver,
+	"rygar2",
+	"Rygar (US set 2)",
+	"1986",
+	"Tecmo",
+	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
+	0,
+	&rygar_machine_driver,
+	0,
+
+	rygar2_rom,
 	0, 0,
 	0,
 	(void *)rygar_samples,	/* sound_prom */

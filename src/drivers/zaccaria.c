@@ -336,17 +336,17 @@ static struct MachineDriver machine_driver =
 ROM_START( monymony_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1a",           0x0000, 0x1000, 0x13c227ca )
-	ROM_CONTINUE(   0x8000, 0x1000 )
+	ROM_CONTINUE(             0x8000, 0x1000 )
 	ROM_LOAD( "1b",           0x1000, 0x1000, 0x87372545 )
-	ROM_CONTINUE(   0x9000, 0x1000 )
+	ROM_CONTINUE(             0x9000, 0x1000 )
 	ROM_LOAD( "1c",           0x2000, 0x1000, 0x6aea9c01 )
-	ROM_CONTINUE(   0xa000, 0x1000 )
+	ROM_CONTINUE(             0xa000, 0x1000 )
 	ROM_LOAD( "1d",           0x3000, 0x1000, 0x5fdec451 )
-	ROM_CONTINUE(   0xb000, 0x1000 )
+	ROM_CONTINUE(             0xb000, 0x1000 )
 	ROM_LOAD( "2a",           0x4000, 0x1000, 0xaf830e3c )
-	ROM_CONTINUE(   0xc000, 0x1000 )
+	ROM_CONTINUE(             0xc000, 0x1000 )
 	ROM_LOAD( "2c",           0x5000, 0x1000, 0x31da62b1 )
-	ROM_CONTINUE(   0xd000, 0x1000 )
+	ROM_CONTINUE(             0xd000, 0x1000 )
 
 	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "2d",           0x0000, 0x2000, 0x82ab4d1a )
@@ -357,13 +357,18 @@ ROM_START( monymony_rom )
 	ROM_LOAD( "monymony.9g",  0x0000, 0x0200, 0xfc9a0f21 )
 	ROM_LOAD( "monymony.9f",  0x0200, 0x0200, 0x93106704 )
 
-	/* there are also sound ROMs. CPU is 6802 */
+	/* there are also sound ROMs. CPU is 6802, not emulated yet */
+	ROM_REGION(0x2000)
+	ROM_LOAD( "1g",           0x0000, 0x2000, 0x1e8ffe3e )
+	ROM_LOAD( "1h",           0x0000, 0x2000, 0xaad76193 )
+	ROM_LOAD( "1i",           0x0000, 0x2000, 0x94e3858b )
+	ROM_LOAD( "2g",           0x0000, 0x2000, 0x78b01b98 )
 ROM_END
 
 ROM_START( jackrabt_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cpu-01.1a",    0x0000, 0x1000, 0x499efe97 )
-	ROM_CONTINUE(          0x8000, 0x1000 )
+	ROM_CONTINUE(             0x8000, 0x1000 )
 	ROM_LOAD( "cpu-01.2l",    0x1000, 0x1000, 0x4772e557 )
 	ROM_LOAD( "cpu-01.3l",    0x2000, 0x1000, 0x1e844228 )
 	ROM_LOAD( "cpu-01.4l",    0x3000, 0x1000, 0xebffcc38 )
@@ -376,18 +381,84 @@ ROM_START( jackrabt_rom )
 	ROM_LOAD( "cpu-01.6h",    0xd000, 0x1000, 0xdd5979cf )
 
 	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-01.1l",     0x0000, 0x1000, 0xb6ad50de )
-	ROM_LOAD( "bg-01.1h",     0x1000, 0x1000, 0x72752077 )
-	ROM_LOAD( "bg-01.2l",     0x2000, 0x1000, 0x89ac4021 )
-	ROM_LOAD( "bg-01.2h",     0x3000, 0x1000, 0xf0d3b985 )
-	ROM_LOAD( "bg-01.3l",     0x4000, 0x1000, 0x30daae8e )
-	ROM_LOAD( "bg-01.3h",     0x5000, 0x1000, 0x91250845 )
+	ROM_LOAD( "1bg.2d",       0x0000, 0x2000, 0x9f880ef5 )
+	ROM_LOAD( "2bg.1f",       0x2000, 0x2000, 0xafc04cd7 )
+	ROM_LOAD( "3bg.1e",       0x4000, 0x2000, 0x14f23cdd )
 
 	ROM_REGION(0x0400)      /* color proms */
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	/* there are also sound ROMs. CPU is 6802 */
+	/* there are also sound ROMs. CPU is 6802, not emulated yet */
+	ROM_REGION(0x2000)
+	ROM_LOAD( "7snd.1g",      0x0000, 0x2000, 0xc722eff8 )
+	ROM_LOAD( "8snd.1h",      0x0000, 0x2000, 0xf4507111 )
+	ROM_LOAD( "9snd.1i",      0x0000, 0x2000, 0x3dab977f )
+	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
+ROM_END
+
+ROM_START( jackrab2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "1cpu2.1a",     0x0000, 0x1000, 0xf9374113 )
+	ROM_CONTINUE(             0x8000, 0x1000 )
+	ROM_LOAD( "2cpu2.1b",     0x1000, 0x1000, 0x0a0eea4a )
+	ROM_CONTINUE(             0x9000, 0x1000 )
+	ROM_LOAD( "3cpu2.1c",     0x2000, 0x1000, 0x291f5772 )
+	ROM_CONTINUE(             0xa000, 0x1000 )
+	ROM_LOAD( "4cpu2.1d",     0x3000, 0x1000, 0x10972cfb )
+	ROM_CONTINUE(             0xb000, 0x1000 )
+	ROM_LOAD( "5cpu2.2a",     0x4000, 0x1000, 0xaa95d06d )
+	ROM_CONTINUE(             0xc000, 0x1000 )
+	ROM_LOAD( "6cpu2.2c",     0x5000, 0x1000, 0x404496eb )
+	ROM_CONTINUE(             0xd000, 0x1000 )
+
+	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1bg.2d",       0x0000, 0x2000, 0x9f880ef5 )
+	ROM_LOAD( "2bg.1f",       0x2000, 0x2000, 0xafc04cd7 )
+	ROM_LOAD( "3bg.1e",       0x4000, 0x2000, 0x14f23cdd )
+
+	ROM_REGION(0x0400)      /* color proms */
+	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
+	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
+
+	/* there are also sound ROMs. CPU is 6802, not emulated yet */
+	ROM_REGION(0x2000)
+	ROM_LOAD( "7snd.1g",      0x0000, 0x2000, 0xc722eff8 )
+	ROM_LOAD( "8snd.1h",      0x0000, 0x2000, 0xf4507111 )
+	ROM_LOAD( "9snd.1i",      0x0000, 0x2000, 0x3dab977f )
+	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
+ROM_END
+
+ROM_START( jackrabs_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "1cpu.1a",      0x0000, 0x1000, 0x6698dc65 )
+	ROM_CONTINUE(             0x8000, 0x1000 )
+	ROM_LOAD( "2cpu.1b",      0x1000, 0x1000, 0x42b32929 )
+	ROM_CONTINUE(             0x9000, 0x1000 )
+	ROM_LOAD( "3cpu.1c",      0x2000, 0x1000, 0x89b50c9a )
+	ROM_CONTINUE(             0xa000, 0x1000 )
+	ROM_LOAD( "4cpu.1d",      0x3000, 0x1000, 0xd5520665 )
+	ROM_CONTINUE(             0xb000, 0x1000 )
+	ROM_LOAD( "5cpu.2a",      0x4000, 0x1000, 0x0f9a093c )
+	ROM_CONTINUE(             0xc000, 0x1000 )
+	ROM_LOAD( "6cpu.2c",      0x5000, 0x1000, 0xf53d6356 )
+	ROM_CONTINUE(             0xd000, 0x1000 )
+
+	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1bg.2d",       0x0000, 0x2000, 0x9f880ef5 )
+	ROM_LOAD( "2bg.1f",       0x2000, 0x2000, 0xafc04cd7 )
+	ROM_LOAD( "3bg.1e",       0x4000, 0x2000, 0x14f23cdd )
+
+	ROM_REGION(0x0400)      /* color proms */
+	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
+	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
+
+	/* there are also sound ROMs. CPU is 6802, not emulated yet */
+	ROM_REGION(0x2000)
+	ROM_LOAD( "7snd.1g",      0x0000, 0x2000, 0xc722eff8 )
+	ROM_LOAD( "8snd.1h",      0x0000, 0x2000, 0xf4507111 )
+	ROM_LOAD( "9snd.1i",      0x0000, 0x2000, 0x3dab977f )
+	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
 
@@ -423,7 +494,7 @@ struct GameDriver jackrabt_driver =
 	__FILE__,
 	0,
 	"jackrabt",
-	"Jack Rabbit",
+	"Jack Rabbit (set 1)",
 	"1984",
 	"Zaccaria",
 	"Nicola Salmoria",
@@ -432,6 +503,58 @@ struct GameDriver jackrabt_driver =
 	0,
 
 	jackrabt_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver jackrab2_driver =
+{
+	__FILE__,
+	&jackrabt_driver,
+	"jackrab2",
+	"Jack Rabbit (set 2)",
+	"1984",
+	"Zaccaria",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	jackrab2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver jackrabs_driver =
+{
+	__FILE__,
+	&jackrabt_driver,
+	"jackrabs",
+	"Jack Rabbit (special)",
+	"1984",
+	"Zaccaria",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	jackrabs_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

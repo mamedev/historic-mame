@@ -213,7 +213,7 @@ void draw_sprites(struct osd_bitmap *bitmap)
 					break;
 			}
 
-			if (active)
+//			if (active)
 			{
 				sx = READ_WORD(&spriteram[adress+10]);
 				sy = READ_WORD(&spriteram[adress+12]);

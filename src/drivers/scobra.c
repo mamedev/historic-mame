@@ -65,9 +65,6 @@ TODO:
 	Need correct color PROMs for:
 		Super Bond
 		Anteater
-		Lost Tomb
-		Strategy X
-		Armored Car
 
 ***************************************************************************/
 
@@ -1474,7 +1471,7 @@ ROM_START( scobra_rom )
 	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scobra.clr",   0x0000, 0x0020, 0xfd35c561 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	/* the ROMs were bad - I took the ones from the Konami version */
@@ -1497,7 +1494,7 @@ ROM_START( scobrak_rom )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scobra.clr",   0x0000, 0x0020, 0xfd35c561 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xd4346959 )
@@ -1525,7 +1522,7 @@ ROM_START( scobrab_rom )
 	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scobra.clr",   0x0000, 0x0020, 0xfd35c561 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
@@ -1588,6 +1585,27 @@ ROM_START( armorcar_rom )
 	ROM_LOAD( "cpu.5h",       0x0800, 0x0800, 0x85bdb113 )
 
 	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "prom.6e",      0x0000, 0x0020, 0x9b87f90d )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
+	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
+ROM_END
+
+ROM_START( armorca2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c",           0x0000, 0x1000, 0xe393bd2f )
+	ROM_LOAD( "2e",           0x1000, 0x1000, 0xb7d443af )
+	ROM_LOAD( "2g",           0x2000, 0x1000, 0xe67380a4 )
+	ROM_LOAD( "2h",           0x3000, 0x1000, 0x72af7b37 )
+	ROM_LOAD( "2j",           0x4000, 0x1000, 0xe6b0dd7f )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu.5f",       0x0000, 0x0800, 0x8a3da4d1 )
+	ROM_LOAD( "cpu.5h",       0x0800, 0x0800, 0x85bdb113 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "prom.6e",      0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
@@ -1600,6 +1618,25 @@ ROM_START( moonwar2_rom )
 	ROM_LOAD( "mw2.2e",       0x1000, 0x1000, 0x1b6362be )
 	ROM_LOAD( "mw2.2f",       0x2000, 0x1000, 0x4fd8ba4b )
 	ROM_LOAD( "mw2.2h",       0x3000, 0x1000, 0x56879f0d )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mw2.5f",       0x0000, 0x0800, 0xc5fa1aa0 )
+	ROM_LOAD( "mw2.5h",       0x0800, 0x0800, 0xa6ccc652 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "mw2.clr",      0x0000, 0x20, 0x99614c6c )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
+	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
+ROM_END
+
+ROM_START( monwar2a_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c",           0x0000, 0x1000, 0xbc20b734 )
+	ROM_LOAD( "2e",           0x1000, 0x1000, 0xdb6ffec2 )
+	ROM_LOAD( "2f",           0x2000, 0x1000, 0x378931b8 )
+	ROM_LOAD( "2h",           0x3000, 0x1000, 0x031dbc2c )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mw2.5f",       0x0000, 0x0800, 0xc5fa1aa0 )
@@ -2334,11 +2371,11 @@ struct GameDriver armorcar_driver =
 	__FILE__,
 	0,
 	"armorcar",
-	"Armored Car",
+	"Armored Car (set 1)",
 	"1981",
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
-	GAME_WRONG_COLORS,
+	0,
 	&armorcar_machine_driver,
 	0,
 
@@ -2349,7 +2386,33 @@ struct GameDriver armorcar_driver =
 
 	armorcar_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	armorcar_hiload, armorcar_hisave
+};
+
+struct GameDriver armorca2_driver =
+{
+	__FILE__,
+	&armorcar_driver,
+	"armorca2",
+	"Armored Car (set 2)",
+	"1981",
+	"Stern",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
+	&armorcar_machine_driver,
+	0,
+
+	armorca2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	armorcar_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	armorcar_hiload, armorcar_hisave
@@ -2360,7 +2423,7 @@ struct GameDriver moonwar2_driver =
 	__FILE__,
 	0,
 	"moonwar2",
-	"Moon War II",
+	"Moon War II (set 1)",
 	"1981",
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
@@ -2369,6 +2432,32 @@ struct GameDriver moonwar2_driver =
 	0,
 
 	moonwar2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	moonwar2_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	moonwar2_hiload, moonwar2_hisave
+};
+
+struct GameDriver monwar2a_driver =
+{
+	__FILE__,
+	&moonwar2_driver,
+	"monwar2a",
+	"Moon War II (set 2)",
+	"1981",
+	"Stern",
+	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
+	0,
+	&moonwar2_machine_driver,
+	0,
+
+	monwar2a_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

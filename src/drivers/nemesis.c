@@ -61,6 +61,7 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 int irq_on = 0;
+
 int nemesis_interrupt(void)
 {
 	if (irq_on)
@@ -68,6 +69,56 @@ int nemesis_interrupt(void)
 	else
 		return(0);
 }
+
+int irq1_on = 0;
+int irq2_on = 0;
+int irq4_on = 0;
+
+int gx400_interrupt(void)
+{
+	if (irq1_on) return 1;
+	if (irq2_on) return 2;
+	if (irq4_on) return 4;
+	return 0;
+}
+
+void gx400_irq1_enable_w(int offset,int data)
+{
+	if ((data & 0x00ff0000) == 0)
+		irq1_on = data & 0x0001;
+	else
+if (errorlog) fprintf(errorlog,"irq1en = %08x\n",data);
+}
+
+void gx400_irq2_enable_w(int offset,int data)
+{
+	if ((data & 0x00ff0000) == 0)
+		irq2_on = data & 0x0001;
+	else
+if (errorlog) fprintf(errorlog,"irq2en = %08x\n",data);
+}
+
+void gx400_irq4_enable_w(int offset,int data)
+{
+	if ((data & 0xff000000) == 0)
+		irq4_on = data & 0x0100;
+	else
+if (errorlog) fprintf(errorlog,"irq4en = %08x\n",data);
+}
+
+static unsigned char *gx400_shared_ram;
+
+int gx400_sharedram_r(int offset)
+{
+	return gx400_shared_ram[offset / 2];
+}
+
+void gx400_sharedram_w(int offset,int data)
+{
+	gx400_shared_ram[offset / 2] = data;
+}
+
+
 
 int salamand_interrupt(void)
 {
@@ -147,7 +198,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x05e000, 0x05e001, &nemesis_irq_enable_w },	/* Nemesis */
 	{ 0x05e002, 0x05e003, &nemesis_irq_enable_w },	/* Konami GT */
 /*	{ 0x05e004, 0x05e005, },	bit 8 of the word probably triggers IRQ on sound board */
-
 	{ 0x060000, 0x067fff, MWA_BANK6, &ram },	/* WORK RAM */
 	{ -1 }  /* end of table */
 };
@@ -166,6 +216,79 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0xe006, 0xe006, AY8910_control_port_0_w },
+	{ 0xe106, 0xe106, AY8910_write_port_0_w },
+	{ 0xe005, 0xe005, AY8910_control_port_1_w },
+	{ 0xe405, 0xe405, AY8910_write_port_1_w },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress gx400_readmem[] =
+{
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x010000, 0x01ffff, MRA_RAM },
+	{ 0x020000, 0x027fff, gx400_sharedram_r },
+	{ 0x030000, 0x03ffff, nemesis_characterram_r },
+	{ 0x050000, 0x0503ff, MRA_RAM },
+	{ 0x050400, 0x0507ff, MRA_RAM },
+	{ 0x050800, 0x050bff, MRA_RAM },
+	{ 0x050c00, 0x050fff, MRA_RAM },
+	{ 0x052000, 0x053fff, nemesis_videoram1_r },
+	{ 0x054000, 0x055fff, nemesis_videoram2_r },
+	{ 0x056000, 0x056fff, MRA_RAM },
+	{ 0x05a000, 0x05afff, paletteram_word_r },
+	{ 0x05c402, 0x05c403, input_port_4_r },	/* DSW0 */
+	{ 0x05c404, 0x05c405, input_port_5_r },	/* DSW1 */
+	{ 0x05c406, 0x05c407, input_port_3_r },	/* TEST */
+	{ 0x05cc00, 0x05cc01, input_port_0_r },	/* IN0 */
+	{ 0x05cc02, 0x05cc03, input_port_1_r },	/* IN1 */
+	{ 0x05cc04, 0x05cc05, input_port_2_r },	/* IN2 */
+	{ 0x060000, 0x067fff, MRA_RAM },
+	{ 0x080000, 0x0cffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress gx400_writemem[] =
+{
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x010000, 0x01ffff, MWA_RAM },
+	{ 0x020000, 0x027fff, gx400_sharedram_w },
+	{ 0x030000, 0x03ffff, nemesis_characterram_w, &nemesis_characterram },
+	{ 0x050000, 0x0503ff, MWA_RAM, &nemesis_xscroll1 },
+	{ 0x050400, 0x0507ff, MWA_RAM, &nemesis_xscroll2 },
+	{ 0x050800, 0x050bff, MWA_RAM },
+	{ 0x050c00, 0x050fff, MWA_RAM, &nemesis_yscroll },
+	{ 0x052000, 0x053fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
+	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
+	{ 0x056000, 0x056fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x05a000, 0x05afff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x05c000, 0x05c001, nemesis_soundlatch_w },
+	{ 0x05c800, 0x05c801, watchdog_reset_w },	/* probably */
+	{ 0x05e000, 0x05e001, &gx400_irq2_enable_w },	/* ?? */
+	{ 0x05e002, 0x05e003, &gx400_irq1_enable_w },	/* ?? */
+/*	{ 0x05e004, 0x05e005, },	bit 8 of the word probably triggers IRQ on sound board */
+	{ 0x05e008, 0x05e009, MWA_NOP },	/* IRQ acknowledge??? */
+	{ 0x05e00e, 0x05e00f, &gx400_irq4_enable_w },	/* ?? */
+	{ 0x060000, 0x067fff, MWA_RAM, &ram },	/* WORK RAM */
+	{ 0x080000, 0x0cffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress gx400_sound_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_RAM },
+	{ 0xe001, 0xe001, soundlatch_r },
+	{ 0xe086, 0xe086, AY8910_read_port_0_r },
+	{ 0xe205, 0xe205, AY8910_read_port_1_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress gx400_sound_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x7fff, MWA_RAM, &gx400_shared_ram },
 	{ 0xe006, 0xe006, AY8910_control_port_0_w },
 	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
@@ -420,6 +543,113 @@ INPUT_PORTS_END
 INPUT_PORTS_START( salamand_input_ports )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( gwarrior_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* TEST */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Version", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x00, "Vs" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "30k 100k 200k 400k" )
+	PORT_DIPSETTING(    0x10, "40k 120k 240k 480k" )
+	PORT_DIPSETTING(    0x08, "50k 150k 300k 600k" )
+	PORT_DIPSETTING(    0x00, "100k 200k 400k 800k" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -474,14 +704,14 @@ static struct MachineDriver nemesis_machine_driver =
 	{
 		{
 			CPU_M68000,
-			8000000,       /* 8 Mhz?? */
+			14318180/2,	/* ??? guess */
 			0,
 			readmem,writemem,0,0,
 			nemesis_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,       /* 3 Mhz ?? */
+			3579545,	/* 3.579545 MHz */
 			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -553,6 +783,52 @@ static struct MachineDriver salamand_machine_driver =
 	}
 };
 
+static struct MachineDriver gx400_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			14318180/2,	/* ??? guess */
+			0,
+			gx400_readmem,gx400_writemem,0,0,
+			gx400_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* 3.579545 MHz */
+			2,
+			gx400_sound_readmem,gx400_sound_writemem,0,0,
+			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
+		},
+	},
+
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	nemesis_vh_start,
+	nemesis_vh_stop,
+	nemesis_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
 /***************************************************************************
 
   Game driver(s)
@@ -561,14 +837,14 @@ static struct MachineDriver salamand_machine_driver =
 
 ROM_START( nemesis_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.bin",   0x00000, 0x008000, 0x35ff1aaa )
-	ROM_LOAD_ODD  ( "12c_05.bin",   0x00000, 0x008000, 0x23155faa )
-	ROM_LOAD_EVEN ( "13a_02.bin",   0x10000, 0x008000, 0xac0cf163 )
-	ROM_LOAD_ODD  ( "13c_06.bin",   0x10000, 0x008000, 0x023f22a9 )
-	ROM_LOAD_EVEN ( "14a_03.bin",   0x20000, 0x008000, 0x8cefb25f )
-	ROM_LOAD_ODD  ( "14c_07.bin",   0x20000, 0x008000, 0xd50b82cb )
-	ROM_LOAD_EVEN ( "15a_04.bin",   0x30000, 0x008000, 0x9ca75592 )
-	ROM_LOAD_ODD  ( "15c_08.bin",   0x30000, 0x008000, 0x03c0b7f5 )
+	ROM_LOAD_EVEN ( "12a_01.bin",   0x00000, 0x8000, 0x35ff1aaa )
+	ROM_LOAD_ODD  ( "12c_05.bin",   0x00000, 0x8000, 0x23155faa )
+	ROM_LOAD_EVEN ( "13a_02.bin",   0x10000, 0x8000, 0xac0cf163 )
+	ROM_LOAD_ODD  ( "13c_06.bin",   0x10000, 0x8000, 0x023f22a9 )
+	ROM_LOAD_EVEN ( "14a_03.bin",   0x20000, 0x8000, 0x8cefb25f )
+	ROM_LOAD_ODD  ( "14c_07.bin",   0x20000, 0x8000, 0xd50b82cb )
+	ROM_LOAD_EVEN ( "15a_04.bin",   0x30000, 0x8000, 0x9ca75592 )
+	ROM_LOAD_ODD  ( "15c_08.bin",   0x30000, 0x8000, 0x03c0b7f5 )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -580,14 +856,14 @@ ROM_END
 
 ROM_START( nemesuk_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.uk",    0x00000, 0x008000, 0xe1993f91 )
-	ROM_LOAD_ODD  ( "12c_05.uk",    0x00000, 0x008000, 0xc9761c78 )
-	ROM_LOAD_EVEN ( "13a_02.uk",    0x10000, 0x008000, 0xf6169c4b )
-	ROM_LOAD_ODD  ( "13c_06.uk",    0x10000, 0x008000, 0xaf58c548 )
-	ROM_LOAD_EVEN ( "14a_03.bin",   0x20000, 0x008000, 0x8cefb25f )
-	ROM_LOAD_ODD  ( "14c_07.bin",   0x20000, 0x008000, 0xd50b82cb )
-	ROM_LOAD_EVEN ( "15a_04.uk",    0x30000, 0x008000, 0x322423d0 )
-	ROM_LOAD_ODD  ( "15c_08.uk",    0x30000, 0x008000, 0xeb656266 )
+	ROM_LOAD_EVEN ( "12a_01.uk",    0x00000, 0x8000, 0xe1993f91 )
+	ROM_LOAD_ODD  ( "12c_05.uk",    0x00000, 0x8000, 0xc9761c78 )
+	ROM_LOAD_EVEN ( "13a_02.uk",    0x10000, 0x8000, 0xf6169c4b )
+	ROM_LOAD_ODD  ( "13c_06.uk",    0x10000, 0x8000, 0xaf58c548 )
+	ROM_LOAD_EVEN ( "14a_03.bin",   0x20000, 0x8000, 0x8cefb25f )
+	ROM_LOAD_ODD  ( "14c_07.bin",   0x20000, 0x8000, 0xd50b82cb )
+	ROM_LOAD_EVEN ( "15a_04.uk",    0x30000, 0x8000, 0x322423d0 )
+	ROM_LOAD_ODD  ( "15c_08.uk",    0x30000, 0x8000, 0xeb656266 )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -599,14 +875,14 @@ ROM_END
 
 ROM_START( konamigt_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "c01.rom",      0x00000, 0x008000, 0x56245bfd )
-	ROM_LOAD_ODD  ( "c05.rom",      0x00000, 0x008000, 0x8d651f44 )
-	ROM_LOAD_EVEN ( "c02.rom",      0x10000, 0x008000, 0x3407b7cb )
-	ROM_LOAD_ODD  ( "c06.rom",      0x10000, 0x008000, 0x209942d4 )
-	ROM_LOAD_EVEN ( "b03.rom",      0x20000, 0x008000, 0xaef7df48 )
-	ROM_LOAD_ODD  ( "b07.rom",      0x20000, 0x008000, 0xe9bd6250 )
-	ROM_LOAD_EVEN ( "b04.rom",      0x30000, 0x008000, 0x94bd4bd7 )
-	ROM_LOAD_ODD  ( "b08.rom",      0x30000, 0x008000, 0xb7236567 )
+	ROM_LOAD_EVEN ( "c01.rom",      0x00000, 0x8000, 0x56245bfd )
+	ROM_LOAD_ODD  ( "c05.rom",      0x00000, 0x8000, 0x8d651f44 )
+	ROM_LOAD_EVEN ( "c02.rom",      0x10000, 0x8000, 0x3407b7cb )
+	ROM_LOAD_ODD  ( "c06.rom",      0x10000, 0x8000, 0x209942d4 )
+	ROM_LOAD_EVEN ( "b03.rom",      0x20000, 0x8000, 0xaef7df48 )
+	ROM_LOAD_ODD  ( "b07.rom",      0x20000, 0x8000, 0xe9bd6250 )
+	ROM_LOAD_EVEN ( "b04.rom",      0x30000, 0x8000, 0x94bd4bd7 )
+	ROM_LOAD_ODD  ( "b08.rom",      0x30000, 0x8000, 0xb7236567 )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -618,14 +894,74 @@ ROM_END
 
 ROM_START( salamand_rom )
 	ROM_REGION(0x200000)    /* 64k for code */
-	ROM_LOAD_EVEN ( "18b_d02.bin",  0x00000, 0x010000, 0x0 )
-	ROM_LOAD_ODD  ( "18c_d05.bin",  0x00000, 0x010000, 0x0 )
-	ROM_LOAD_EVEN ( "17b_u.bin",    0x20000, 0x010000, 0x0 )
-	ROM_LOAD_ODD  ( "17c_u.bin",    0x20000, 0x010000, 0x0 )
+	ROM_LOAD_EVEN ( "18b_d02.bin",  0x00000, 0x10000, 0x0 )
+	ROM_LOAD_ODD  ( "18c_d05.bin",  0x00000, 0x10000, 0x0 )
+	ROM_LOAD_EVEN ( "17b_u.bin",    0x20000, 0x10000, 0x0 )
+	ROM_LOAD_ODD  ( "17c_u.bin",    0x20000, 0x10000, 0x0 )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
+ROM_END
+
+ROM_START( rf2_rom )
+	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN ( "561-a07.17l",  0x80000, 0x20000, 0xed6e7098 )
+	ROM_LOAD_ODD  ( "561-a05.12l",  0x80000, 0x20000, 0xdfe04425 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
+ROM_END
+
+ROM_START( twinbee_rom )
+	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN ( "412-a07.17l",  0x80000, 0x20000, 0xd93c5499 )
+	ROM_LOAD_ODD  ( "412-a05.12l",  0x80000, 0x20000, 0x2b357069 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
+ROM_END
+
+ROM_START( gradius_rom )
+	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN ( "456-a07.17l",  0x80000, 0x20000, 0x92df792c )
+	ROM_LOAD_ODD  ( "456-a05.12l",  0x80000, 0x20000, 0x5cafb263 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
+ROM_END
+
+ROM_START( gwarrior_rom )
+	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN ( "578-a07.17l",  0x80000, 0x20000, 0x0aedacb5 )
+	ROM_LOAD_ODD  ( "578-a05.12l",  0x80000, 0x20000, 0x76240e2e )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
 ROM_END
 
 
@@ -672,7 +1008,7 @@ struct GameDriver nemesis_driver =
 	"Nemesis (hacked?)",
 	"1985",
 	"Konami",
-	"Allard van der Bas (MAME driver)",
+	"Allard van der Bas",
 	0,
 	&nemesis_machine_driver,
 	0,
@@ -698,7 +1034,7 @@ struct GameDriver nemesuk_driver =
 	"Nemesis (UK)",
 	"1985",
 	"Konami",
-	"Allard van der Bas (MAME driver)",
+	"Allard van der Bas",
 	0,
 	&nemesis_machine_driver,
 	0,
@@ -724,7 +1060,7 @@ struct GameDriver konamigt_driver =
 	"Konami GT",
 	"1985",
 	"Konami",
-	"Allard van der Bas (MAME driver)",
+	"Allard van der Bas",
 	GAME_NOT_WORKING,
 	&nemesis_machine_driver,
 	0,
@@ -761,6 +1097,110 @@ struct GameDriver salamand_driver =
 	0,      /* sound_prom */
 
 	salamand_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver rf2_driver =
+{
+	__FILE__,
+	0,
+	"rf2",
+	"RF2",
+	"1985",
+	"Konami",
+	"Allard van der Bas\nNicola Salmoria",
+	GAME_NOT_WORKING,
+	&gx400_machine_driver,
+	0,
+
+	rf2_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	gwarrior_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver twinbee_driver =
+{
+	__FILE__,
+	0,
+	"twinbee",
+	"Twinbee",
+	"????",
+	"Konami",
+	"Allard van der Bas\nNicola Salmoria",
+	GAME_NOT_WORKING,
+	&gx400_machine_driver,
+	0,
+
+	twinbee_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	gwarrior_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};
+
+struct GameDriver gradius_driver =
+{
+	__FILE__,
+	0,
+	"gradius",
+	"Gradius",
+	"????",
+	"Konami",
+	"Allard van der Bas\nNicola Salmoria",
+	GAME_NOT_WORKING,
+	&gx400_machine_driver,
+	0,
+
+	gradius_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	gwarrior_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver gwarrior_driver =
+{
+	__FILE__,
+	0,
+	"gwarrior",
+	"Galactic Warriors",
+	"1985",
+	"Konami",
+	"Allard van der Bas\nNicola Salmoria",
+	GAME_NOT_WORKING,
+	&gx400_machine_driver,
+	0,
+
+	gwarrior_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	gwarrior_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

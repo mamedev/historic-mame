@@ -135,6 +135,46 @@ PSG1-F -> $c80b
 PSG2-E -> $c809
 PSG2-F -> $c80a - DIP Switch Bank 2 (Test mode is here)
 
+-------------------------------GET STAR------------------------------------
+		following info by Luca Elia (eliavit@unina.it)
+
+				Interesting locations
+				---------------------
+
+c803	credits
+c806	used as a watchdog: main cpu reads then writes FF.
+	If FF was read, jp 0000h. Sound cpu zeroes it.
+
+c807(1p)	left	7			c809	DSW1(cpl'd)
+c808(2p)	down	6			c80a	DSW2(cpl'd)
+active_H	right	5			c80b	ip 1(cpl'd)
+		up	4
+		0	3
+		0	2
+		but2	1
+		but1	0
+
+c21d(main)	1p lives
+
+Main cpu writes to unmapped ports 0e,0f,05,03 at startup.
+Before playing, f1 is written to e802 and 00 to port 03.
+If flip screen dsw is on, ff is written to e802 an 00 to port 02, instead.
+
+				Interesting routines (main cpu)
+				-------------------------------
+4a3	wait A irq's
+432	init the Ath sprite
+569	reads a sequence from e803
+607	prints the Ath string (FF terminated). String info is stored at
+	65bc in the form of: attribute, dest. address, string address (5 bytes)
+b73	checks lives. If zero, writes 0 to port 04 then jp 0000h.
+	Before that, sets I to FF as a flag, for the startup ram check
+	routine, to not alter the credit counter.
+1523	put name in hi-scores?
+
+---------------------------------------------------------------------------
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -164,11 +204,17 @@ int  slapfight_port_00_r(int offset);
 
 void slapfight_port_00_w(int offset, int data);
 void slapfight_port_01_w(int offset, int data);
+void getstar_port_04_w(int offset, int data);
 void slapfight_port_06_w(int offset, int data);
 void slapfight_port_07_w(int offset, int data);
 void slapfight_port_08_w(int offset, int data);
 void slapfight_port_09_w(int offset, int data);
 
+
+int getstar_e803_r(int offset);
+void getstar_sh_intenable_w(int offset, int data);
+extern int getstar_sequence_index;
+int getstar_interrupt(void);
 
 
 /* Driver structure definition */
@@ -181,7 +227,6 @@ static struct MemoryReadAddress tigerh_readmem[] =
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 } /* end of table */
@@ -196,7 +241,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe000, 0xe7ff, MRA_RAM },		/* LE 151098 */
+	{ 0xe803, 0xe803, getstar_e803_r }, /* LE 151098 */
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 } /* end of table */
@@ -236,7 +282,7 @@ static struct MemoryWriteAddress slapbtuk_writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x00, slapfight_port_00_r },
+	{ 0x00, 0x00, slapfight_port_00_r },	/* status register */
 	{ -1 } /* end of table */
 };
 
@@ -253,10 +299,11 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
+//	{ 0x04, 0x04, getstar_port_04_w   },
 	{ 0x06, 0x06, slapfight_port_06_w },
 	{ 0x07, 0x07, slapfight_port_07_w },
-	{ 0x08, 0x08, slapfight_port_08_w },
-	{ 0x09, 0x09, slapfight_port_09_w },
+	{ 0x08, 0x08, slapfight_port_08_w },	/* select bank 0 */
+	{ 0x09, 0x09, slapfight_port_09_w },	/* select bank 1 */
 	{ -1 } /* end of table */
 };
 
@@ -278,10 +325,12 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xa082, 0xa082, AY8910_write_port_0_w },
 	{ 0xa090, 0xa090, AY8910_control_port_1_w },
 	{ 0xa092, 0xa092, AY8910_write_port_1_w },
+	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
 	{ 0xc800, 0xc80f, MWA_RAM, &slapfight_dpram },
 	{ 0xc810, 0xcfff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
+
 
 
 
@@ -426,6 +475,78 @@ INPUT_PORTS_START( slapfigh_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( getstar_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Dipswitch Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x10, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+
+	PORT_START  /* DSW2 */
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "30000 100000" )
+	PORT_DIPSETTING(    0x00, "50000 150000" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -580,7 +701,7 @@ static struct MachineDriver slapfigh_machine_driver =
 			6000000,
 			3,
 			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt, 3,    /* p'tit Seb 980926 this way it sound much better ! */
+				getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
 			0,0                  /* I think music is not so far from correct speed */
 /*			ignore_interrupt, 0,
 			slapfight_sound_interrupt, 27306667 */
@@ -630,7 +751,7 @@ static struct MachineDriver slapbtuk_machine_driver =
 			6000000,
 			3,
 			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt, 3,    /* p'tit Seb 980926 this way it sound much better ! */
+			getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
 			0,0                  /* I think music is not so far from correct speed */
 /*			ignore_interrupt, 0,
 			slapfight_sound_interrupt, 27306667 */
@@ -857,6 +978,34 @@ ROM_START( slapbtuk_rom )
 ROM_END
 
 
+ROM_START( getstar_rom )
+
+	ROM_REGION(0x18000)		/* Region 0 - main cpu code */
+	ROM_LOAD( "gs_14.rom", 0x00000, 0x4000, 0x1a57a920 )
+	ROM_LOAD( "gs_13.rom", 0x04000, 0x4000, 0x805f8e77 )
+	ROM_LOAD( "gs_12.rom", 0x10000, 0x8000, 0x3567da17 )
+
+	ROM_REGION_DISPOSE(0x44000)	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "gs_07.rom", 0x00000, 0x2000, 0xe3d409e7 )  /* Chars */
+	ROM_LOAD( "gs_08.rom", 0x02000, 0x2000, 0x6e5ac9d4 )
+	ROM_LOAD( "gs_06.rom", 0x04000, 0x8000, 0xa293cc2e )  /* Tiles */
+	ROM_LOAD( "gs_09.rom", 0x0c000, 0x8000, 0x37662375 )
+	ROM_LOAD( "gs_10.rom", 0x14000, 0x8000, 0xcf1a964c )
+	ROM_LOAD( "gs_11.rom", 0x1c000, 0x8000, 0x05f9eb9a )
+	ROM_LOAD( "gs_01.rom", 0x24000, 0x8000, 0x83161ed0 )  /* Sprites */
+	ROM_LOAD( "gs_02.rom", 0x2c000, 0x8000, 0x6da86aea )
+	ROM_LOAD( "gs_03.rom", 0x34000, 0x8000, 0xf24158cf )
+	ROM_LOAD( "gs_04.rom", 0x3c000, 0x8000, 0x643fb282 )
+
+/* colors missing but ought to load something */
+	ROM_REGION(0x2000)		/* Region 2 - color proms */
+	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
+
+	ROM_REGION(0x10000)		/* Region 3 - sound cpu code */
+	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
+
+ROM_END
+
 
 /* High scores are at location C060 - C0A5 ( 70 bytes )	*/
 /* 10 * 3 bytes for score				*/
@@ -944,6 +1093,82 @@ void	*f;
 	 }
 
 }
+
+
+
+
+/* High scores are at location C0D2 - C11A ( 70+3 bytes )		*/
+/*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
+/* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
+/* 10 * 3 bytes for initials							*/
+/* 10 * 1 byte for level reached		 				*/
+
+static int getstar_hiload(void)
+{
+unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+static int phase = 0;
+
+/* phase 0: dirty memory just 1 byte ahead of hi-scores */
+
+	if (phase==0)
+	{
+		RAM[0xc11b]=0xFF;
+		phase++;		/* goto phase 1 */
+		return 0;		/* can't load hi-scores yet */
+	}
+
+/* phase 1: wait for the ram check of c000-cfff to pass the hi-scores area */
+
+	if (phase==1)
+	{
+		if (RAM[0xc11b]==0xFF)	/* if still dirty */
+			return 0;		/* can't load hi-scores yet */
+		else
+		{
+			RAM[0xc11a]=0xFF;	/* dirty last byte of hi-scores */
+			phase++;		/* goto phase 2 (final) */
+		}
+	}
+
+/* phase 2: check to see if high scores have been initialised */
+
+	if (phase==2)
+	{
+
+		if ((memcmp(&RAM[0xc0d2],"\x00\x20\x00\x00\x20\x00",6) == 0) &&
+		    (RAM[0xc11a] == 0))
+		{
+		  void	*f;
+
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+				osd_fread(f, &RAM[0xc0d2], 10*7+3);
+				osd_fclose(f);
+			}
+
+			return 1;	/* hi scores loaded */
+		}
+		else
+			return 0;	/* high scores not loaded yet */
+	}
+	else return 0;
+}
+
+
+
+static void getstar_hisave(void)
+{
+unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+void	*f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	 {
+	  osd_fwrite(f,&RAM[0xc0d2],10*7+3);
+	  osd_fclose(f);
+	 }
+
+}
+
 
 
 
@@ -1127,4 +1352,30 @@ struct GameDriver slapbtuk_driver =
 	ORIENTATION_ROTATE_270,
 
 	slapfigh_hiload, slapfigh_hisave
+};
+
+struct GameDriver getstar_driver =
+{
+	__FILE__,
+	0,
+	"getstar",
+	"Get Star (bootleg)",
+	"1986",
+	"bootleg",
+	"Keith Wilkins\nCarlos Baides\nNicola Salmoria\nLuca Elia",
+	GAME_WRONG_COLORS,
+	&slapfigh_machine_driver,
+	0,
+
+	getstar_rom,
+	0, 0,
+	0,
+	0,
+
+	getstar_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
 };

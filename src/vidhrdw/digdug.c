@@ -14,6 +14,7 @@ unsigned char *digdug_vlatches;
 static int playfield, alphacolor, playenable, playcolor;
 
 static int pflastindex = -1, pflastcolor = -1;
+static int flipscreen;
 
 
 /***************************************************************************
@@ -140,6 +141,16 @@ void digdug_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
 }
 
 
+
+void digdug_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -210,6 +221,11 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx = 29 - mx;
 				sy = my + 2;
 			}
+			if (flipscreen)
+			{
+				sx = 27 - sx;
+				sy = 35 - sy;
+			}
 
 			vrval = videoram[offs];
 			if (pf)
@@ -219,7 +235,8 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[2],
 						pfval,
 						(pfval >> 4) + pfcolor,
-						0,0,8*sx,8*sy,
+						flipscreen,flipscreen,
+						8*sx,8*sy,
 						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 				/* overlay with the character */
@@ -227,7 +244,8 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					drawgfx(tmpbitmap,Machine->gfx[0],
 							vrval,
 							(vrval >> 5) | ((vrval >> 4) & 1),
-							0,0,8*sx,8*sy,
+							flipscreen,flipscreen,
+							8*sx,8*sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
@@ -236,7 +254,8 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						vrval,
 						(vrval >> 5) | ((vrval >> 4) & 1),
-						0,0,8*sx,8*sy,
+						flipscreen,flipscreen,
+						8*sx,8*sy,
 						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
@@ -258,12 +277,17 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int flipx = spriteram_3[offs] & 2;
 			int flipy = spriteram_3[offs] & 1;
 
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
 			if (y < 8) y += 256;
 
 			/* normal size? */
 			if (sprite < 0x80)
 				digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-
 			/* double size? */
 			else
 			{

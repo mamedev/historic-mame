@@ -1,4 +1,5 @@
 #include "driver.h"
+#include <inflate.h>
 
 /* This reads a PNG file.
  *
@@ -22,14 +23,7 @@ int png_read_backdrop(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned 
 int png_read_overlay(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette, unsigned char *trans, int *num_trans);
 /* ------- */
 
-extern int mame_inflate (void);
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
-
-extern unsigned char *slide;			/* 32K sliding window for inflate.c */
-extern unsigned char *g_nextbyte;		/* pointer to next byte of input */
-extern unsigned char *g_inputlimit;		/* pointer to first byte beyond input buffer */
-extern unsigned char *g_outbuf;			/* pointer to next byte in output buffer */
-extern unsigned char *g_outputlimit;	/* pointer to first byte beyond output buffer */
 
 #define PNG_Signature       "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
 #define PNG_MaxChunkLength  0x7FFFFFFFL
@@ -184,29 +178,14 @@ static int inflate_image (struct png_info *p)
 		return 0;
 	}
 
-	if ((slide = (unsigned char *)malloc (0x8000))==NULL)
-	{
-		error("out of memory");
-		free (p->zimage);
-		free (p->fimage);
-		return 0;
-	}
-
-	g_nextbyte = p->zimage+2;
-	g_inputlimit = p->zimage+p->zlength;
-	g_outbuf = p->fimage;
-	g_outputlimit = p->fimage+(p->height*(p->rowbytes+2));
-
-	if (mame_inflate ()!=0)
+	if ( inflate_memory(p->zimage+2, p->zlength-2, p->fimage, p->height*(p->rowbytes+2) ) )
 	{
 		error ("error inflating compressed data");
 		free (p->zimage);
 		free (p->fimage);
-		free (slide);
 		return 0;
 	}
 	free (p->zimage);
-	free (slide);
 	return 1;
 }
 
@@ -509,5 +488,7 @@ int png_read_overlay(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned c
 	*num_trans = p.num_trans;
 	return 1;
 }
+
+
 
 

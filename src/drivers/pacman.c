@@ -970,12 +970,12 @@ ROM_START( eyes_rom )
 	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )	/* wrong! from Pac Man */
-	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )	/* wrong! from Pac Man */
+	ROM_LOAD( "82s123.8h",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s129.1k",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s129.3k",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mrtnt_rom )
@@ -990,12 +990,12 @@ ROM_START( mrtnt_rom )
 	ROM_LOAD( "tnt.6",        0x1000, 0x1000, 0x97634d8b )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )	/* wrong! from Pac Man */
-	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )	/* wrong! from Pac Man */
+	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x2fc650bd )	/* wrong! from Pac Man */
+	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x3eb3a8e4 )	/* wrong! from Pac Man */
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "mrtnt01.bin",  0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "mrtnt03.bin",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( lizwiz_rom )
@@ -1746,7 +1746,7 @@ struct GameDriver eyes_driver =
 	"1982",
 	"Digitrex Techstar (Rock-ola license)",
 	"Zsolt Vasvari\n"BASE_CREDITS,
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
@@ -1772,7 +1772,7 @@ struct GameDriver mrtnt_driver =
 	"1983",
 	"Telko",
 	"Zsolt Vasvari\n"BASE_CREDITS,
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 

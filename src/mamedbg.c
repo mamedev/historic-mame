@@ -1611,7 +1611,7 @@ static void update_debug_key (void)
 	if (++delay == 0x7fff)
 	{
 		delay = 0;
-		debug_key_pressed = osd_key_pressed (OSD_KEY_TILDE);
+		debug_key_pressed = osd_key_pressed (OSD_KEY_DEBUGGER);
 	}
 }
 

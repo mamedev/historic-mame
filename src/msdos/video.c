@@ -1002,6 +1002,10 @@ retry:
 			vsync();
 			a = uclock();
 		}
+
+		/* small delay for really really fast machines */
+		for (i = 0;i < 100000;i++) ;
+
 		vsync();
 		b = uclock();
 		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
@@ -2099,7 +2103,8 @@ void osd_update_display(void)
 	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP))
 	{
 		frameskip = (frameskip + 1) % 4;
-		showfpstemp = 2*Machine->drv->frames_per_second;
+		if (showfps == 0)
+			showfpstemp = 2*Machine->drv->frames_per_second;
 
 		/* reset the frame counter every time the frameskip key is pressed, so */
 		/* we'll measure the average FPS on a consistent status. */
@@ -2117,10 +2122,18 @@ void osd_update_display(void)
 
 	if (osd_key_pressed_memory(OSD_KEY_SHOW_FPS))
 	{
-		showfps ^= 1;
-		if (showfps == 0)
+		if (showfpstemp)
 		{
+			showfpstemp = 0;
 			need_to_clear_bitmap = 1;
+		}
+		else
+		{
+			showfps ^= 1;
+			if (showfps == 0)
+			{
+				need_to_clear_bitmap = 1;
+			}
 		}
 	}
 

@@ -407,12 +407,17 @@ int robotron_catch_loop_r(int offset);
 extern unsigned char *stargate_catch;
 int stargate_catch_loop_r(int offset);
 
+extern unsigned char *mayday_catch;
+int mayday_catch_loop_r(int offset);
+
 extern unsigned char *defender_catch;
 extern unsigned char *defender_bank_base;
 int defender_catch_loop_r(int offset);
 void defender_bank_select_w(int offset,int data);
 
 void colony7_bank_select_w(int offset,int data);
+
+extern void defcomnd_bank_select_w(int offset,int data);
 
 extern unsigned char *blaster_catch;
 extern unsigned char *blaster_bank2_base;
@@ -447,6 +452,9 @@ void blaster_video_bits_w(int offset, int data);
 int sinistar_vh_start(void);
 
 void defender_videoram_w(int offset,int data);
+
+
+static void defndjeu_decode(void);
 
 
 
@@ -661,6 +669,58 @@ static struct MemoryWriteAddress defender_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+
+/*
+ *   Read/Write mem for Defense Command
+ */
+
+static struct MemoryReadAddress defcomnd_readmem[] =
+{
+//	{ 0xa05d, 0xa05d, defender_catch_loop_r, &defender_catch },
+	{ 0x0000, 0xbfff, MRA_RAM },
+	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress defcomnd_writemem[] =
+{
+	{ 0x0000, 0x97ff, defender_videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0xbfff, MWA_RAM },
+	{ 0xc000, 0xcfff, MWA_BANK1, &defender_bank_base }, /* non map */
+	{ 0xc000, 0xc00f, MWA_RAM, &paletteram },   /* here only to initialize the pointers */
+    { 0xd000, 0xdfff, defcomnd_bank_select_w },
+	{ 0xe000, 0xffff, MWA_ROM },
+
+    { -1 }  /* end of table */
+};
+
+/*
+ *   Read/Write mem for Mayday
+ *
+ * Don't know where busy loop is: E7EA or D665...
+ */
+
+static struct MemoryReadAddress mayday_readmem[] =
+{
+//    { 0xa03a, 0xa03a, mayday_catch_loop_r, &mayday_catch },
+//    { 0xa05d, 0xa05d, mayday_catch_loop_r, &mayday_catch },
+	{ 0x0000, 0xbfff, MRA_RAM },
+	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress mayday_writemem[] =
+{
+	{ 0x0000, 0x97ff, defender_videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0xbfff, MWA_RAM },
+	{ 0xc000, 0xcfff, MWA_BANK1, &defender_bank_base }, /* non map */
+	{ 0xc000, 0xc00f, MWA_RAM, &paletteram },   /* here only to initialize the pointers */
+	{ 0xd000, 0xd000, defender_bank_select_w },       /* Bank Select */
+	{ 0xd001, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
 
 
 /*
@@ -1656,6 +1716,116 @@ static struct MachineDriver lottofun_machine_driver =
 	}
 };
 
+
+/*
+ *   Defense Command driver
+ */
+
+static struct MachineDriver defcomnd_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
+			0,                      /* memory region */
+			defcomnd_readmem,       /* MemoryReadAddress */
+			defcomnd_writemem,      /* MemoryWriteAddress */
+			0,                      /* IOReadPort */
+			0,                      /* IOWritePort */
+			williams_interrupt,     /* interrupt routine */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	defender_init_machine,          /* init machine routine */
+
+	/* video hardware */
+	304, 256,                               /* screen_width, screen_height */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
+	williams_vh_convert_color_prom,         /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,                                      /* vh_init routine */
+	williams_vh_start,                      /* vh_start routine */
+	williams_vh_stop,                       /* vh_stop routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+/*
+ *   Mayday Driver
+ */
+
+static struct MachineDriver mayday_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
+			0,                      /* memory region */
+            mayday_readmem,       /* MemoryReadAddress */
+            mayday_writemem,      /* MemoryWriteAddress */
+			0,                      /* IOReadPort */
+			0,                      /* IOWritePort */
+			williams_interrupt,     /* interrupt routine */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	defender_init_machine,          /* init machine routine */
+
+	/* video hardware */
+	304, 256,                               /* screen_width, screen_height */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
+	williams_vh_convert_color_prom,         /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,                                      /* vh_init routine */
+	williams_vh_start,                      /* vh_start routine */
+	williams_vh_stop,                       /* vh_stop routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
 
 /***************************************************************************
 
@@ -2740,4 +2910,311 @@ struct GameDriver lottofun_driver =
 	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
+};
+
+
+/*
+ *   Defense Command
+ */
+
+ROM_START( defcomnd_rom )
+	ROM_REGION(0x15000)
+        ROM_LOAD( "dfndr-c.rom", 0x0d000, 0x1000, 0x2a256b93 )
+        ROM_LOAD( "dfndr-b.rom", 0x0e000, 0x1000, 0xe34e87fc )
+        ROM_LOAD( "dfndr-a.rom", 0x0f000, 0x1000, 0xf78d62fa )
+	/* bank 0 is the place for CMOS ram */
+        ROM_LOAD( "dfndr-d.rom", 0x10000, 0x1000, 0xef2179fe )
+        ROM_LOAD( "dfndr-e.rom", 0x11000, 0x1000, 0x4fa3d99c )
+        ROM_LOAD( "dfndr-f.rom", 0x12000, 0x1000, 0x03721aa7 )
+        ROM_LOAD( "dfndr-i.rom", 0x13000, 0x1000, 0x5998a4cf )
+        ROM_LOAD( "dfndr-g.rom", 0x14000, 0x1000, 0xa1b63291 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+        ROM_LOAD( "dfndr-h.rom", 0xf000, 0x1000, 0x30fced3d )
+ROM_END
+
+struct GameDriver defcomnd_driver =
+{
+	__FILE__,
+	0,
+	"defcomnd",
+	"Defense Command",
+	"1980?",
+	"???",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	GAME_NOT_WORKING,
+	&defcomnd_machine_driver,       /* MachineDriver * */
+        0,
+
+	defcomnd_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+/*
+ *   May Day (Alternate)
+ */
+
+ROM_START( mayday_rom )
+	ROM_REGION(0x15000)
+    ROM_LOAD( "mayday.c", 0x0d000, 0x1000, 0x872a2f2d )
+    ROM_LOAD( "mayday.b", 0x0e000, 0x1000, 0xc4ab5e22 )
+    ROM_LOAD( "mayday.a", 0x0f000, 0x1000, 0x329a1318 )
+	/* bank 0 is the place for CMOS ram */
+    ROM_LOAD( "mayday.d", 0x10000, 0x1000, 0xc2ae4716 )
+    ROM_LOAD( "mayday.e", 0x11000, 0x1000, 0x41225666 )
+    ROM_LOAD( "mayday.f", 0x12000, 0x1000, 0xc39be3c0 )
+    ROM_LOAD( "mayday.g", 0x13000, 0x1000, 0x2bd0f106 )
+    ROM_RELOAD(           0x14000, 0x1000 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+    ROM_LOAD( "mayday.snd", 0xf800, 0x0800, 0xfefd5b48 )
+ROM_END
+
+struct GameDriver mayday_driver =
+{
+	__FILE__,
+	0,
+    "mayday",
+    "MayDay",
+	"1980?",
+	"???",
+    "Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nDavid Winter",
+	GAME_NOT_WORKING,
+    &mayday_machine_driver,       /* MachineDriver * */
+    0,
+
+    mayday_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+ROM_START( maydaya_rom )
+	ROM_REGION(0x15000)
+    ROM_LOAD( "ic03-3.bin", 0x0d000, 0x1000, 0xa1ff6e62 )
+    ROM_LOAD( "ic02-2.bin", 0x0e000, 0x1000, 0x62183aea )
+    ROM_LOAD( "ic01-1.bin", 0x0f000, 0x1000, 0x5dcb113f )
+	/* bank 0 is the place for CMOS ram */
+    ROM_LOAD( "ic04-4.bin", 0x10000, 0x1000, 0xea6a4ec8 )
+    ROM_LOAD( "ic05-5.bin", 0x11000, 0x1000, 0x0d797a3e )
+    ROM_LOAD( "ic06-6.bin", 0x12000, 0x1000, 0xee8bfcd6 )
+    ROM_LOAD( "ic07-7d.bin", 0x13000, 0x1000, 0xd9c065e7 )
+    ROM_RELOAD(           0x14000, 0x1000 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+    ROM_LOAD( "ic28-8.bin", 0xf800, 0x0800, 0xfefd5b48 )
+    /* Sound ROM is same in both versions. Can be merged !!! */
+ROM_END
+
+struct GameDriver maydaya_driver =
+{
+	__FILE__,
+	0,
+    "maydaya",
+    "MayDay (Alternate)",
+	"1980?",
+    "Nova",
+    "Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nDavid Winter",
+	GAME_NOT_WORKING,
+    &mayday_machine_driver,       /* MachineDriver (suppose same as 'mayday') * */
+    0,
+
+    maydaya_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+
+/*
+ *  Defender (?) by Jeutel
+ */
+
+static void defndjeu_decode(void)
+{
+/*
+    Note: Please do not remove these comments in BETA versions. They are
+          helpful to get the games working. When they will work, useless
+          comments may be removed as desired.
+
+    The encryption in this game is one of the silliest I have ever seen.
+    I just wondered if the ROMs were encrypted, and figured out how they
+    were in just about 5 mins...
+    Very simple: bits 0 and 7 are swapped in the ROMs (not sound).
+
+    Game does not work due to bad ROMs 16 and 20. However, the others are
+    VERY similar (if not nearly SAME) to MAYDAY and DEFENSE ones (and NOT
+    DEFENDER), although MAYDAY ROMs are more similar than DEFENSE ones...
+    By putting MAYDAY ROMs and encrypting them, I got a first machine test
+    and then, reboot... The test was the random graphic drawings, which
+    were bad. Each time the full screen was drawn, the game rebooted.
+    Unfortunately, I don't remember which roms I took to get that, and I
+    could not get the same result anymore (I did not retry ALL the
+    possibilities I did at 01:30am). :-(
+
+
+    ROM equivalences (not including the sound ROM):
+
+    MAYDAY      MAYDAY (Alternate)    DEFENSE       JEUTEL's Defender
+    -----------------------------------------------------------------
+    ROMC.BIN    IC03-3.BIN            DFNDR-C.ROM           15
+    ROMB.BIN    IC02-2.BIN            DFNDR-B.ROM           16
+    ROMA.BIN    IC01-1.BIN            DFNDR-A.ROM           17
+    ROMG.BIN    IC07-7D.BIN           DFNDR-G.ROM           18
+    ROMF.BIN    IC06-6.BIN            DFNDR-F.ROM           19
+    ROME.BIN    IC05-5.BIN            DFNDR-E.ROM           20
+    ROMD.BIN    IC04-4.BIN            DFNDR-D.ROM           21
+*/
+
+    int x;
+    unsigned char *DEF_ROM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+    for (x = 0xd000; x < 0x15000; x++)
+	{
+        unsigned char src, dst;
+
+        src = DEF_ROM[x];
+        dst = DEF_ROM[x] & 0x7e;
+
+        if (src & 0x80)
+            dst = dst | 0x01;
+
+        if (src & 0x01)
+            dst = dst | 0x80;
+
+        DEF_ROM[x] = dst;
+	}
+}
+
+
+ROM_START( defndjeu_rom )
+	ROM_REGION(0x15000)
+    ROM_LOAD( "15", 0x0d000, 0x1000, 0x706a24bd )
+    ROM_LOAD( "16", 0x0e000, 0x1000, 0x03201532 )
+    ROM_LOAD( "17", 0x0f000, 0x1000, 0x25287eca )
+	/* bank 0 is the place for CMOS ram */
+    ROM_LOAD( "18", 0x10000, 0x1000, 0xe99d5679 )
+    ROM_LOAD( "19", 0x11000, 0x1000, 0x769f5984 )
+    ROM_LOAD( "20", 0x12000, 0x1000, 0x12fa0788 )
+    ROM_LOAD( "21", 0x13000, 0x1000, 0xbddb71a3 )
+    ROM_RELOAD(           0x14000, 0x1000 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+    ROM_LOAD( "s", 0xf800, 0x0800, 0xcb79ae42 )
+ROM_END
+
+
+struct GameDriver defndjeu_driver =
+{
+	__FILE__,
+	0,
+    "defndjeu",
+    "Defender ? (Bootleg)",
+    "1980",
+    "Jeutel",
+    "Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nDavid Winter",
+	GAME_NOT_WORKING,
+    &mayday_machine_driver,       /* MachineDriver (suppose same as 'mayday') * */
+    0,
+
+    defndjeu_rom,                   /* RomModule * */
+    0, defndjeu_decode,            /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+
+ROM_START( defcmnd_rom )
+	ROM_REGION(0x15000)
+    ROM_LOAD( "defcmnda.1", 0x0d000, 0x1000, 0x68effc1d )
+    ROM_LOAD( "defcmnda.2", 0x0e000, 0x1000, 0x1126adc9 )
+    ROM_LOAD( "defcmnda.3", 0x0f000, 0x1000, 0x7340209d )
+	/* bank 0 is the place for CMOS ram */
+    ROM_LOAD( "defcmnda.10", 0x10000, 0x0800, 0x3dddae75 )
+    ROM_LOAD( "defcmnda.7", 0x10800, 0x0800, 0x3f1e7cf8 )
+    ROM_LOAD( "defcmnda.9", 0x11000, 0x0800, 0x8882e1ff )
+    ROM_LOAD( "defcmnda.6", 0x11800, 0x0800, 0xd068f0c5 )
+    ROM_LOAD( "defcmnda.8", 0x12000, 0x0800, 0xfef4cb77 )
+    ROM_LOAD( "defcmnda.5", 0x12800, 0x0800, 0x49b50b40 )
+    ROM_LOAD( "defcmnda.4", 0x13000, 0x0800, 0x43d42a1b )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+    ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
+ROM_END
+
+
+struct GameDriver defcmnd_driver =
+{
+	__FILE__,
+	&defender_driver,
+    "defcmnd",
+    "Defense Command",
+    "1980",
+    "bootleg",
+    "Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nDavid Winter",
+    0,
+    &mayday_machine_driver,       /* MachineDriver (suppose same as 'mayday') * */
+    0,
+
+    defcmnd_rom,                   /* RomModule * */
+    0, 0,            /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
 };

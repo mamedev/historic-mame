@@ -186,6 +186,15 @@ int main (int argc, char **argv)
 	/* parse generic (os-independent) options */
 	parse_cmdline (argc, argv, &options, game_index);
 
+{	/* Mish:  I need sample rate initialised _before_ rom loading for optional rom regions */
+	extern int soundcard;
+
+	if (soundcard == 0) {    /* silence, this would be -1 if unknown in which case all roms are loaded */
+		Machine->sample_rate = 0; /* update the Machine structure to show that sound is disabled */
+		options.samplerate=0;
+	}
+}
+
 	/* handle record and playback. These are not available in mame.cfg */
 	for (i = 1; i < argc; i++)
 	{

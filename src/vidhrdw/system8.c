@@ -796,27 +796,31 @@ void wbml_backgroundrefresh(struct osd_bitmap *bitmap, int trasp)
 				int x = (startx+col) & 0x1ff;
 				int y = (starty+row) & 0x1ff;
 				if (x > 256) x -= 512;
-				if (y > 256) y -= 512;
+				if (y > 224) y -= 512;
 
 
-				code = source[0] + (source[1] << 8);
-				priority = code & 0x800;
-				code = ((code >> 4) & 0x800) | (code & 0x7ff);
+				if (x > -8 && y > -8)
+				{
+					code = source[0] + (source[1] << 8);
+					priority = code & 0x800;
+					code = ((code >> 4) & 0x800) | (code & 0x7ff);
 
-				if (!trasp)
-					drawgfx(bitmap,Machine->gfx[0],
-							code,
-							((code >> 5) & 0x3f) + 64,
-							0,0,
-							x,y,
-							&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-				else if (priority)
-					drawgfx(bitmap,Machine->gfx[0],
-							code,
-							((code >> 5) & 0x3f) + 64,
-							0,0,
-							x,y,
-							&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					if (!trasp)
+						drawgfx(bitmap,Machine->gfx[0],
+								code,
+								((code >> 5) & 0x3f) + 64,
+								0,0,
+								x,y,
+								&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+					else if (priority)
+						drawgfx(bitmap,Machine->gfx[0],
+								code,
+								((code >> 5) & 0x3f) + 64,
+								0,0,
+								x,y,
+								&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+				}
+
 				source+=2;
 			}
 		}

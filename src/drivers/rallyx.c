@@ -101,6 +101,7 @@ void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
+void rallyx_init(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -470,7 +471,7 @@ struct GameDriver rallyx_driver =
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
 	0,
 	&machine_driver,
-	0,
+	rallyx_init,
 
 	rallyx_rom,
 	0, 0,
@@ -496,7 +497,7 @@ struct GameDriver nrallyx_driver =
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	rallyx_init,
 
 	nrallyx_rom,
 	0, 0,

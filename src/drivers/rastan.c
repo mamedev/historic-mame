@@ -53,6 +53,14 @@ static int rastan_cycle_r(int offset)
 	return READ_WORD(&rastan_ram[0x1c10]);
 }
 
+static int rastan_sound_spin(int offset)
+{
+	if ( (cpu_getpc()==0x1c5) && !(Machine->memory_region[2][ 0x8f27 ] & 0x01) )
+		cpu_spin();
+
+	return Machine->memory_region[2][ 0x8f27 ];
+}
+
 
 static struct MemoryReadAddress rastan_readmem[] =
 {
@@ -96,6 +104,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 static struct MemoryReadAddress rastan_s_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8f27, 0x8f27, rastan_sound_spin },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },

@@ -315,8 +315,14 @@ options:
               for different games, you may need to recalibrate your joystick
               every time.
 
--fm/-nofm (default: -nofm) use the SoundBlaster OPL chip for music emulation
-              in some games. This is faster, but emulation is less faithful.
+-ym2203opl/-noym2203opl (default: -noym2203opl) use the SoundBlaster OPL chip
+              for music emulation of the YM2203 chip. This is faster, but
+              emulation is less faithful.
+-ym3812opl/-noym3812opl (default: -ym3812opl) use the SoundBlaster OPL chip for
+              music emulation of the YM3812 chip. This is faster, and is
+              reasonably accurate since the chips are 100% compatible. However,
+              the pitch might be wrong. Also note that with -no3812opl you need
+              some external drum samples.
 -log          create a log of illegal memory accesses in ERROR.LOG
 -help, -?     display current MAME version and copyright notice
 -list         display a list of currently supported games
@@ -357,9 +363,10 @@ options:
 -ignorecfg    ignore mame.cfg and start with the default settings
 
 
-The following keys work in all emulators:
-Tab          Enter configuration menu. Press Tab or Esc to get back to the
-             emulation.
+Keys
+----
+Tab          Toggles the configuration menu
+Tilde        Toggles the On Screen Display
 P            Pause
 F3           Reset
 F4           Show the game graphics. Use cursor keys to change set/color,
@@ -371,6 +378,4 @@ F11          Toggle speed display
 F12          Save a screen snapshot. The default target directory is PCX, you
              have to create it yourself, it will not be created by the program
              if it isn't there.
-numpad +/-   Volume adjust
-left shift + numpad +/- Gamma correction adjust
 ESC          Exit emulator

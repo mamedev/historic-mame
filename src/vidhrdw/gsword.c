@@ -68,14 +68,14 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 int gsword_vh_start(void)
 {
-        if ((dirtybuffer = malloc(gs_videoram_size)) == 0) return 1;
-        if ((bitmap_bg = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((dirtybuffer = malloc(gs_videoram_size)) == 0) return 1;
+	if ((bitmap_bg = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
 	}
-        memset(dirtybuffer,1,gs_videoram_size);
-        return 0;
+	memset(dirtybuffer,1,gs_videoram_size);
+	return 0;
 }
 
 void gsword_vh_stop(void)

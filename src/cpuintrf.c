@@ -21,6 +21,7 @@
 #include "T11/t11.h"
 #include "TMS34010/tms34010.h"
 #include "I86/I86intrf.h"
+#include "TMS9900/TMS9900.h"
 #include "timer.h"
 
 
@@ -343,6 +344,24 @@ struct cpu_interface cpuintf[] =
 		29,                                /* CPU address bits */
 		ABITS1_29,ABITS2_29,ABITS_MIN_29   /* Address bits, for the memory system */
 	},
+	/* #define CPU_TMS9900 13 */
+	{
+		TMS9900_Reset,                          /* Reset CPU */
+		TMS9900_Execute,                        /* Execute a number of cycles */
+		(void (*)(void *))TMS9900_SetRegs,      /* Set the contents of the registers */
+		(void (*)(void *))TMS9900_GetRegs,      /* Get the contents of the registers */
+		(unsigned int (*)(void))TMS9900_GetPC,  /* Return the current PC */
+		TMS9900_Cause_Interrupt,                /* Generate an interrupt */
+		TMS9900_Clear_Pending_Interrupts,       /* Clear pending interrupts */
+		&TMS9900_ICount,                        /* Pointer to the instruction count */
+		TMS9900_NONE,-1,-1,			/* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                          /* Memory read */
+		cpu_writemem16,                         /* Memory write */
+		cpu_setOPbase16,                        /* Update CPU opcode base */
+		16,                                     /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16        /* Address bits, for the memory system */
+        /* Were all ...LEW */
+	}
 };
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
@@ -1430,6 +1449,12 @@ static void cpu_inittimers (void)
 	}
 }
 
+
+/* AJP 981016 */
+int cpu_is_saving_context(int _activecpu)
+{
+	return (cpu[_activecpu].save_context);
+}
 
 
 /* JB 971019 */

@@ -4,15 +4,20 @@
 
   This file contains drivers for:
 
-    * Heavy Barrel (USA set)
-    * Heavy Barrel (Japanese set)
-  	* Bad Dudes vs Dragonninja
-    * Dragonninja
-    * Robocop (Pirate rom set)
-    * Hippodrome
-    * Fighting Fantasy
-    * Sly Spy
-    * Midnight Resistance
+    * Heavy Barrel                            (USA set)
+    * Heavy Barrel                            (Japanese set)
+	* Bad Dudes vs Dragonninja                (USA set)
+    * Dragonninja                             (Japanese version of above)
+    * Robocop                                 (Japanese pirate rom set)
+    * Hippodrome                              (USA set)
+    * Fighting Fantasy                        (Japanese version of above)
+    * Sly Spy                                 (USA set)
+	* Midnight Resistance                     (USA set)
+    * Midnight Resistance                     (Japanese set)
+
+To do:
+Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg).
+Birdie Try runs on this hardware, roms are needed.
 
   Notes:
 	Missing scroll field in Hippodrome
@@ -195,12 +200,6 @@ static int robocop_skip(int offset)
 	return READ_WORD(&ram_robo[0x8]);
 }
 
-static int robocop_skip2(int offset)
-{
-	if (cpu_getpc()==0x17c0) cpu_spinuntil_int();
-	return READ_WORD(&ram_robo[0x8]);
-}
-
 static int midres_skip(int offset)
 {
 	cpu_spinuntil_int();
@@ -216,9 +215,6 @@ static struct MemoryReadAddress dec0_readmem[] =
 	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_r },
 	{ 0x300000, 0x30001f, dec0_rotary_read },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
-
-{ 0xff8212, 0xff8213, dude_skip },
-
 	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_gen }, /* Main ram */
 	{ 0xffc000, 0xffcfff, MRA_BANK2 }, /* Sprites */
 	{ -1 }  /* end of table */
@@ -260,8 +256,6 @@ static struct MemoryReadAddress robocop_readmem[] =
 	{ 0x242800, 0x243fff, MRA_BANK3 }, /* Used for attract mode, pictures at beginning & ending */
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
-
-{ 0xff8008, 0xff8009, robocop_skip },
 	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_robo }, /* Main ram */
 	{ 0xffc000, 0xffcfff, MRA_BANK2 }, /* Sprites */
 	{ -1 }  /* end of table */
@@ -391,7 +385,6 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 static struct MemoryReadAddress midres_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-{ 0x10207c, 0x10207d, midres_skip },
 	{ 0x100000, 0x103fff, MRA_BANK1, &ram_midres },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x180000, 0x18000f, midres_controls_read },
@@ -454,48 +447,58 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( hbarrel_input_ports )
-	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
+#define DEC0_PLAYER1_CONTROL \
+	PORT_START	/* Player 1 controls */										\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )				\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )			\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )			\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )			\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )							\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )							\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* Button 3 - unused */		\
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) /* Button 4 - unused */
 
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
+#define DEC0_PLAYER2_CONTROL \
+	PORT_START	/* Player 2 controls */												\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )		\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )						\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )						\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* Button 3 - unused */				\
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) /* Button 4 - unused */
 
-	PORT_START	/* Credits, start buttons */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* PL1 Button 5 - unused */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* PL2 Button 5 - unused */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+#define DEC0_MACHINE_CONTROL \
+	PORT_START	/* Credits, start buttons */										\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED ) /* PL1 Button 5 - unused */			\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED ) /* PL2 Button 5 - unused */			\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )										\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )										\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )										\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )										\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service */						\
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )	/* could be ACTIVE_LOW, not sure */
 
+#define DEC0_COIN_SETTING \
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )	\
+	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )		\
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )		\
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )	\
+	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )		\
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )		\
+
+INPUT_PORTS_START( hbarrel_input_ports )
+	DEC0_PLAYER1_CONTROL
+	DEC0_PLAYER2_CONTROL
+	DEC0_MACHINE_CONTROL
+
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	DEC0_COIN_SETTING
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -538,47 +541,12 @@ INPUT_PORTS_START( hbarrel_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( baddudes_input_ports )
-	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
-
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
-
-	PORT_START	/* Credits, start buttons */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* PL1 Button 5 - unused */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* PL2 Button 5 - unused */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )	/* could be ACTIVE_LOW, not sure */
+	DEC0_PLAYER1_CONTROL
+	DEC0_PLAYER2_CONTROL
+	DEC0_MACHINE_CONTROL
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	DEC0_COIN_SETTING
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -618,50 +586,13 @@ INPUT_PORTS_START( baddudes_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( robocop_input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
-
-	PORT_START	/* Credits */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )	/* could be ACTIVE_LOW, not sure */
+	DEC0_PLAYER1_CONTROL
+	DEC0_PLAYER2_CONTROL
+	DEC0_MACHINE_CONTROL
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	DEC0_COIN_SETTING
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
@@ -696,49 +627,13 @@ INPUT_PORTS_START( robocop_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hippodrm_input_ports )
-	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
-
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Button 4 - unused */
-
-	PORT_START	/* Credits, start buttons */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )	/* could be ACTIVE_LOW, not sure */
+	DEC0_PLAYER1_CONTROL
+	DEC0_PLAYER2_CONTROL
+	DEC0_MACHINE_CONTROL
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
+	DEC0_COIN_SETTING
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
@@ -774,26 +669,32 @@ INPUT_PORTS_START( hippodrm_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( slyspy_input_ports )
-	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+#define DEC1_PLAYER1_CONTROL \
+	PORT_START	/* Player 1 controls */										\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )				\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )			\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )			\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )			\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )							\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )							\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */		\
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+#define DEC1_PLAYER2_CONTROL \
+	PORT_START	/* Player 2 controls */										\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )		\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )						\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )						\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */				\
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+
+INPUT_PORTS_START( slyspy_input_ports )
+	DEC1_PLAYER1_CONTROL
+	DEC1_PLAYER2_CONTROL
 
 	PORT_START	/* Credits, start buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -806,16 +707,7 @@ INPUT_PORTS_START( slyspy_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	DEC0_COIN_SETTING
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -849,25 +741,8 @@ INPUT_PORTS_START( slyspy_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( midres_input_ports )
-	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	DEC1_PLAYER1_CONTROL
+	DEC1_PLAYER2_CONTROL
 
 	PORT_START	/* Credits */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -880,16 +755,7 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	DEC0_COIN_SETTING
 	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -978,6 +844,11 @@ static struct GfxDecodeInfo midres_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
+static void sound_irq(void)
+{
+	cpu_cause_interrupt(1,M6502_INT_IRQ);
+}
+
 static struct YM2203interface ym2203_interface =
 {
 	1,
@@ -993,7 +864,8 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 255 }		/* (not supported) */
+	{ 255 },	/* (not supported) */
+	sound_irq,
 };
 
 static struct OKIM6295interface okim6295_interface =
@@ -1028,10 +900,10 @@ static struct MachineDriver hbarrel_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,
+			900000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
-			interrupt,16
+			ignore_interrupt,0
 		}
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
@@ -1082,10 +954,10 @@ static struct MachineDriver baddudes_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,	/* Unknown speed */
+			1250000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
-			interrupt,32
+			ignore_interrupt,0
 		}
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
@@ -1136,10 +1008,10 @@ static struct MachineDriver robocop_machine_driver =
 		} ,
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,	/* Unconfirmed */
+			1250000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
-			interrupt,32
+			ignore_interrupt,0
 		}
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
@@ -1190,10 +1062,10 @@ static struct MachineDriver hippodrm_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,
+			1200000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
-			interrupt,32
+			ignore_interrupt,0
 		}
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
@@ -1725,6 +1597,42 @@ ROM_START( midres_rom )
 	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
 ROM_END
 
+ROM_START( midresj_rom )
+	ROM_REGION(0x80000) /* 68000 code */
+	ROM_LOAD_EVEN ( "fk_14.rom", 0x00000, 0x20000, 0xde7522df )
+	ROM_LOAD_ODD  ( "fk_12.rom", 0x00000, 0x20000, 0x3494b8c9 )
+	ROM_LOAD_EVEN ( "fl15", 0x40000, 0x20000, 0x1328354e )
+	ROM_LOAD_ODD  ( "fl13", 0x40000, 0x20000, 0xe3b3955e )
+
+	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fk_05.rom", 0x008000, 0x08000, 0x3cdb7453 )	/* chars */
+	ROM_CONTINUE(     0x000000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fk_04.rom", 0x018000, 0x08000, 0x325ba20c )
+	ROM_CONTINUE(     0x010000, 0x08000 )
+	ROM_LOAD( "fl09", 0x020000, 0x20000, 0x907d5910 )	/* tiles */
+	ROM_LOAD( "fl08", 0x040000, 0x20000, 0xa936c03c )
+	ROM_LOAD( "fl07", 0x060000, 0x20000, 0x2068c45c )
+	ROM_LOAD( "fl06", 0x080000, 0x20000, 0xb7241ab9 )
+	ROM_LOAD( "fl11", 0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
+	/* 0d0000-0dffff empty */
+	ROM_CONTINUE(     0x0c0000, 0x10000 )
+	/* 110000-11ffff empty */
+	ROM_LOAD( "fl10", 0x0e0000, 0x10000, 0x92245b29 )
+	/* 0b0000-0bffff empty */
+	ROM_CONTINUE(     0x100000, 0x10000 )
+	/* 0f0000-0fffff empty */
+	ROM_LOAD( "fl01", 0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
+	ROM_LOAD( "fl03", 0x140000, 0x20000, 0x1eefed3c )
+	ROM_LOAD( "fl00", 0x160000, 0x20000, 0x756fb801 )
+	ROM_LOAD( "fl02", 0x180000, 0x20000, 0x54d2c120 )
+
+	ROM_REGION(0x10000)	/* Unknown or corrupt sound CPU */
+	ROM_LOAD( "fl16", 0x00000, 0x10000, 0x66360bdf )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fl17", 0x00000, 0x20000, 0x9029965d )
+ROM_END
+
 /******************************************************************************/
 
 static void hbarrel_patch(void)
@@ -2196,14 +2104,30 @@ static void midres_hisave(void)
         }
 }
 
+/* Cycle skip patches */
+static void baddudes_custom_memory(void)
+{
+	install_mem_read_handler(0, 0xff8212, 0xff8213, dude_skip);
+}
 
+static void robocop_custom_memory(void)
+{
+	install_mem_read_handler(0, 0xff8008, 0xff8009, robocop_skip);
+}
+
+static void midres_custom_memory(void)
+{
+	install_mem_read_handler(0, 0x10207c, 0x10207d, midres_skip);
+}
+
+/******************************************************************************/
 
 struct GameDriver hbarrel_driver =
 {
 	__FILE__,
 	0,
 	"hbarrel",
-	"Heavy Barrel (US)",
+	"Heavy Barrel",
 	"1987",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
@@ -2253,13 +2177,13 @@ struct GameDriver baddudes_driver =
 	__FILE__,
 	0,
 	"baddudes",
-	"Bad Dudes",
+	"Bad Dudes vs Dragonninja",
 	"1988",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&baddudes_machine_driver,
-	0,
+	baddudes_custom_memory,
 
 	baddudes_rom,
 	baddudes_patch, 0,
@@ -2284,7 +2208,7 @@ struct GameDriver drgninja_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&baddudes_machine_driver,
-	0,
+	baddudes_custom_memory,
 
 	drgninja_rom,
 	drgninja_patch, 0,
@@ -2309,7 +2233,7 @@ struct GameDriver robocopp_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&robocop_machine_driver,
-	0,
+	robocop_custom_memory,
 
 	robocopp_rom,
 	0, 0,
@@ -2409,7 +2333,7 @@ struct GameDriver midres_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&midres_machine_driver,
-	0,
+	midres_custom_memory,
 
 	midres_rom,
 	0, 0,
@@ -2422,3 +2346,29 @@ struct GameDriver midres_driver =
 	ORIENTATION_DEFAULT,
 	midres_hiload, midres_hisave
 };
+
+struct GameDriver midresj_driver =
+{
+	__FILE__,
+	&midres_driver,
+	"midresj",
+	"Midnight Resistance (Japan)",
+	"1989",
+	"Data East Corporation",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&midres_machine_driver,
+	midres_custom_memory,
+
+	midresj_rom,
+	0, 0,
+	0,
+	(void *)midres_samples,
+
+	midres_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	midres_hiload, midres_hisave
+};
+

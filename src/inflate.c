@@ -1,4 +1,4 @@
-/* inflate.c -- put in the public domain by Mark Adler
+/*inflate.c -- put in the public domain by Mark Adler
    version c15c, 28 March 1997 */
 
 /* Modified for MAME project by John Butler 23-JAN-98 */
@@ -230,14 +230,17 @@ struct tGlobals
 static struct tGlobals G;
 
 
-extern unsigned char *slide;		/* 32K sliding window -- malloced in unzip.c */
-extern FILE *errorlog;				/* MAME's errorlog */
+/* Support variable implemented later */
+static unsigned char *inflate_slide;		/* 32K sliding window */
 
-#define redirSlide slide
+/* Support functions implemented later */
+static void inflate_FLUSH(unsigned char *buffer, unsigned long n);
+static int inflate_NEXTBYTE(void);
 
-/* support functions in unzip.c */
-extern void inflate_FLUSH (unsigned char *buffer, unsigned long n);
-extern int mame_nextbyte (void);
+/* MAME's errorlog */
+extern FILE *errorlog;
+
+#define redirSlide inflate_slide
 
 #define PKZIP_BUG_WORKAROUND    /* PKZIP 1.93a problem--live with it */
 
@@ -268,7 +271,7 @@ extern int mame_nextbyte (void);
 
 /* default is to simply get a byte from stdin */
 /* we'll read from input buffer -- JB */
-#define NEXTBYTE	mame_nextbyte()
+#define NEXTBYTE	inflate_NEXTBYTE()
 
 /* only used twice, for fixed strings--NOT general-purpose */
 #define MESSAGE(str,len,flag)  {if (errorlog) fprintf(errorlog,(char *)(str));}
@@ -844,7 +847,7 @@ static int inflate_block(int *e)
 
 
 
-int inflate(void)
+static int inflate(void)
 /* decompress an inflated entry */
 {
   int e;                /* last block flag */
@@ -1125,3 +1128,171 @@ int huft_free(struct huft *t)
   }
   return 0;
 }
+
+/***************************************************************************
+ * Support for inflate data
+ ***************************************************************************/
+
+#include <inflate.h>
+
+/* Inflate corrupt flag */
+static int	inflate_corrupt_flag = 0;	/* flag is set when corruption is detected during inflate */
+
+/* Inflate sliding window for inflate.c */
+/*unsigned char *inflate_slide; */
+
+/* Inflate input file */
+static FILE* inflate_input_file;
+static unsigned inflate_input_mac; /* byte already read */
+static unsigned inflate_input_max; /* total byte to read */
+
+/* Inflate input buffer */
+#define INFLATE_INPUT_BUFFER_MAX 16384 /* size of buffer */
+static unsigned char* inflate_input_buffer_map; /* buffer */
+static unsigned inflate_input_buffer_mac; /* byte already read */
+static unsigned inflate_input_buffer_max; /* total byte to read */
+
+/* Inflate output buffer */
+static unsigned char* inflate_output_map;
+static unsigned inflate_output_mac;  /* byte already write */
+static unsigned inflate_output_max; /* total byte to write */
+
+/* Flush data to output buffer -- used by mame_inflate() */
+static void inflate_FLUSH (unsigned char *buffer, unsigned long n)
+{
+	if (inflate_output_mac + n <= inflate_output_max) {
+		memcpy(inflate_output_map + inflate_output_mac, buffer, n );
+		inflate_output_mac += n;
+	} else {
+		/* inflate attempted write beyond end of output buffer */
+		inflate_corrupt_flag = 1;
+	}
+}
+
+/* Read next byte of input -- used by mame_inflate() */
+static int inflate_NEXTBYTE(void)
+{
+	if (inflate_input_buffer_mac < inflate_input_buffer_max) {
+		return inflate_input_buffer_map[inflate_input_buffer_mac++];
+	}
+
+	if (inflate_input_mac < inflate_input_max) {
+		inflate_input_buffer_max = inflate_input_max - inflate_input_mac;
+		if (inflate_input_buffer_max > INFLATE_INPUT_BUFFER_MAX) inflate_input_buffer_max = INFLATE_INPUT_BUFFER_MAX;
+
+		if (fread( inflate_input_buffer_map, inflate_input_buffer_max, 1, inflate_input_file ) != 1) {
+			inflate_corrupt_flag = 1;
+			return 256; /* signal EOF */
+		}
+		inflate_input_mac += inflate_input_buffer_max;
+
+		inflate_input_buffer_mac = 1;
+		return inflate_input_buffer_map[0];
+	}
+
+	/* inflate attempted read beyond end of input buffer */
+	inflate_corrupt_flag = 1;
+	return 256;	/* signal EOF */
+}
+
+/* Inflate a file
+   in:
+	in_file stream to inflate
+	in_size size of the compressed data to read
+	out_size size of decompressed data
+   out:
+	out_data buffer for decompressed data
+   return:
+	==0 ok
+*/
+int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data, unsigned out_size) {
+	int result;
+
+	inflate_input_buffer_mac = 0;
+	inflate_input_buffer_max = 0;
+	inflate_input_buffer_map = (unsigned char*)malloc(INFLATE_INPUT_BUFFER_MAX);
+	if (!inflate_input_buffer_map) {
+		return -1;
+	}
+
+	inflate_input_mac = 0;
+	inflate_input_max = in_size;
+	inflate_input_file = in_file;
+
+	inflate_output_mac = 0;
+	inflate_output_max = out_size;
+	inflate_output_map = out_data;
+
+	inflate_slide = (unsigned char*)malloc(0x8000);
+	if (!inflate_slide) {
+		free(inflate_input_buffer_map);
+		return -1;
+	}
+
+	/* reset corrupt flag */
+	inflate_corrupt_flag = 0;
+
+	result = inflate();
+
+	free(inflate_input_buffer_map);
+	free(inflate_slide);
+
+	if (inflate_output_mac!=inflate_output_max)
+		return -1;
+	if (inflate_input_mac!=inflate_input_max)
+		return -1;
+	if (inflate_input_buffer_mac!=inflate_input_buffer_max)
+		return -1;
+	if (result || inflate_corrupt_flag)
+		return -1;
+
+	return 0;
+}
+
+/* Inflate a memory region
+   in:
+	in_data data to inflate
+	in_size size of the compressed data to read
+	out_size size of decompressed data
+   out:
+	out_data buffer for decompressed data
+   return:
+	==0 ok
+*/
+int inflate_memory(const unsigned char* in_data, unsigned in_size, unsigned char* out_data, unsigned out_size) {
+	int result;
+
+	inflate_input_buffer_mac = 0;
+	inflate_input_buffer_max = in_size;
+	inflate_input_buffer_map = (unsigned char*)in_data; /* const override */
+
+	inflate_input_mac = 0;
+	inflate_input_max = 0;
+	inflate_input_file = 0;
+
+	inflate_output_mac = 0;
+	inflate_output_max = out_size;
+	inflate_output_map = out_data;
+
+	inflate_slide = (unsigned char*)malloc(0x8000);
+	if (!inflate_slide) {
+		return -1;
+	}
+
+	/* reset corrupt flag */
+	inflate_corrupt_flag = 0;
+
+	result = inflate();
+
+	free(inflate_slide);
+
+	if (inflate_output_mac!=inflate_output_max)
+		return -1;
+	if (inflate_input_buffer_mac!=inflate_input_buffer_max)
+		return -1;
+	if (result || inflate_corrupt_flag)
+		return -1;
+
+	return 0;
+}
+

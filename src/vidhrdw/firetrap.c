@@ -314,7 +314,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 //		if (spriteram[offs] & 0x20)
 		{
-			int sx,sy,flipx,code,color;
+			int sx,sy,flipx,flipy,code,color;
 
 
 			/* the meaning of bit 3 of [offs] is unknown */
@@ -324,11 +324,13 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code = spriteram[offs + 3] + 4 * (spriteram[offs + 1] & 0xc0);
 			color = ((spriteram[offs + 1] & 0x08) >> 2) | (spriteram[offs + 1] & 0x01);
 			flipx = spriteram[offs + 1] & 0x02;
+			flipy = spriteram[offs + 1] & 0x04;
 			if (flipscreen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
 				flipx = !flipx;
+				flipy = !flipy;
 			}
 
 			if (spriteram[offs + 1] & 0x10)	/* double width */
@@ -338,13 +340,13 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(bitmap,Machine->gfx[9],
 						code & ~1,
 						color,
-						flipx,flipscreen,
+						flipx,flipy,
 						flipx ? sx : sx - 16,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
-						flipx,flipscreen,
+						flipx,flipy,
 						flipx ? sx - 16 : sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
@@ -352,13 +354,13 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(bitmap,Machine->gfx[9],
 						code & ~1,
 						color,
-						flipx,flipscreen,
+						flipx,flipy,
 						flipx ? sx : sx - 16,sy - 256,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
-						flipx,flipscreen,
+						flipx,flipy,
 						flipx ? sx - 16 : sx,sy - 256,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
@@ -367,7 +369,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(bitmap,Machine->gfx[9],
 						code,
 						color,
-						flipx,flipscreen,
+						flipx,flipy,
 						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
@@ -375,7 +377,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(bitmap,Machine->gfx[9],
 						code,
 						color,
-						flipx,flipscreen,
+						flipx,flipy,
 						sx,sy - 256,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}

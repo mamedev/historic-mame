@@ -28,6 +28,8 @@
  *
  **************************************************************************** */
 
+#ifndef xgl  /* GLmame provides its own vector implementation */
+
 #include <math.h>
 #include "osinline.h"
 #include "driver.h"
@@ -812,3 +814,5 @@ void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		new++;
 	}
 }
+
+#endif /* ifndef xgl */

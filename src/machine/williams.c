@@ -30,6 +30,7 @@ unsigned char *stargate_catch;
 unsigned char *defender_catch;
 unsigned char *splat_catch;
 unsigned char *blaster_catch;
+unsigned char *mayday_catch;
 
 /* internal bank switching tracks */
 int blaster_bank;
@@ -637,6 +638,22 @@ int defender_catch_loop_r(int offset)
 }
 
 
+/* DW 980925 - speed up very busy loop in Mayday */
+/* There are two possible loops:
+
+   E7EA: LDA   $3A   ; 96 3A       D665: LDA   $5D   ; 96 5D
+   E7EC: BEQ   $E7EA ; 27 FC       D667: BEQ   $D66B ; 27 02
+
+   Consider the E7EA loop for the moment   */
+
+int mayday_catch_loop_r(int offset)
+{
+    unsigned char t = *mayday_catch;
+    if (t == 0 && cpu_getpc () == 0xe7ec)
+//    if (t == 0 && cpu_getpc () == 0xd667)
+		cpu_seticount (0);
+	return t;
+}
 
 /***************************************************************************
 
@@ -652,6 +669,45 @@ void colony7_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0xc000 };
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* set bank address */
+	cpu_setbank (1, &RAM[bank[data & 7]]);
+	if (bank[data] < 0x10000)
+	{
+		/* i/o area map */
+		cpu_setbankhandler_r (1, defender_io_r);
+		cpu_setbankhandler_w (1, defender_io_w);
+	}
+	else
+	{
+		/* bank rom map */
+		cpu_setbankhandler_r (1, MRA_BANK1);
+		cpu_setbankhandler_w (1, MWA_ROM);
+	}
+}
+
+
+/***************************************************************************
+
+	Defense Command-specific routines
+
+***************************************************************************/
+
+/*
+ *  Defense Command Select a bank
+ *  There is just data in bank 0
+ */
+void defcomnd_bank_select_w (int offset,int data)
+{
+	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x13000, 0x0c000, 0x0c000, 0x14000 };
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	static int bankhit[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	if ((errorlog) && (bankhit[data & 7] == 0))
+		fprintf(errorlog,"bank = %02X\n",data);
+
+	bankhit[data & 7] = 1;
 
 	/* set bank address */
 	cpu_setbank (1, &RAM[bank[data & 7]]);

@@ -32,6 +32,7 @@ extern int gfx_mode, gfx_width, gfx_height;
 
 /* from sound.c */
 extern int usefm, soundcard;
+extern int use_emulated_ym3812;
 
 /* from input.c */
 extern int use_mouse, joystick;
@@ -292,7 +293,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
-	usefm               = get_bool ("config", "oplfm",      "fm",  0);
+	usefm               = get_bool ("config", "ym2203opl",  NULL,  0);
+	use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
 	options->samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	options->samplebits = get_int  ("config", "samplebits", "sb", 8);
 
@@ -303,7 +305,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	/* misc configuration */
 	options->cheat      = get_bool ("config", "cheat", NULL, 0);
 	options->mame_debug = get_bool ("config", "debug", NULL, 0);
-	cheatfile  = get_string ("config", "cheatfile", NULL, "CHEAT.DAT");    /* JCK 980917 */
+	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
 	use_profiler        = get_bool ("config", "profiler", NULL,  0);
 
 	/* get resolution */

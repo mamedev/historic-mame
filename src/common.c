@@ -127,6 +127,18 @@ int readroms(void)
 		unsigned int region_size;
 		const char *name;
 
+		/* Mish:  An 'optional' rom region, only loaded if sound emulation is turned on */
+		if (Machine->sample_rate==0 && (romp->offset & ROMFLAG_IGNORE)) {
+			if (errorlog) fprintf(errorlog,"readroms():  Ignoring rom region %d\n",region);
+			region++;
+
+			romp++;
+			while (romp->name || romp->length)
+				romp++;
+
+			continue;
+		}
+
 		if (romp->name || romp->length)
 		{
 			printf("Error in RomModule definition: expecting ROM_REGION\n");
@@ -136,7 +148,7 @@ int readroms(void)
 		region_size = romp->offset & ~ROMFLAG_MASK;
 		if ((Machine->memory_region[region] = malloc(region_size)) == 0)
 		{
-			printf("Unable to allocate %d bytes of RAM\n",region_size);
+			printf("readroms():  Unable to allocate %d bytes of RAM\n",region_size);
 			goto getout;
 		}
 		Machine->memory_region_length[region] = region_size;

@@ -27,7 +27,7 @@ extern "C" {
 
 // This volume is something I made up that sounds ok
 
-#define ym3812_StdVolume 64
+#define ym3812_StdVolume 128
 
 // Some bit defines (Status and Timer Control bit masks)
 
@@ -100,14 +100,11 @@ typedef struct ym3812_s {
 	int				f16Bit;				// True if 16 bit samples.
 	int				aVolumes[256];		// Volume conversion table
 	char			*pBuffer;			// A sample buffer to update
-	char			*pDrum[5];			// Pointer to samples (11025 Hz)
+	signed char		*pDrum[5];			// Pointer to samples (11025 Hz)
 	int				nDrumSize[5];		// Size of samples
 	int				nDrumOffs[5];		// Current (playing) offset of samples
-	int				nBufSize;			// The size of the sample buffer
+	int				nDrumRate[5];		// Rate of each individual drum
 	int				nReplayFrq;			// The replay frequency (for calculating number of samples to play)
-	int				nOPLVol;			// Extra setting to control this chip's portion of the full volume
-	int				nEmuFreq;			// The frequency for updates (like 60 Hz or so)
-	float			vFrameDelay;		// This is really 1/nEmuFreq
 	void			(*SetTimer)(int, double, struct ym3812_s *, int);	// Routine that starts/removes an IRQ timer.
 } ym3812;
 
@@ -118,9 +115,9 @@ typedef struct ym3812_s {
 #define cTRUE 1
 #endif
 
-extern ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, int f16Bit );
+extern ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit );
 extern ym3812* ym3812_DeInit( ym3812 *pOPL );
-extern void ym3812_Update( ym3812 *pOPL );
+extern void ym3812_Update_stream( ym3812* pOPL, void *pBuffer_in, int nLength );
 extern int ym3812_ReadStatus( ym3812 *pOPL );
 extern int	ym3812_ReadReg( ym3812 *pOPL );
 extern void ym3812_SetReg( ym3812 *pOPL, unsigned char nReg );

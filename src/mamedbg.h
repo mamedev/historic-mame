@@ -42,6 +42,7 @@
 #include "TMS34010/tms34010.h"
 #include "S2650/s2650.h" /* HJB 110698 */
 #include "t11/t11.h"    /* ASG 030598 */
+#include "tms9900/tms9900.h"
 
 
 int Dasm6502 (char *buf, int pc);
@@ -52,6 +53,7 @@ int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
 int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
 int Dasm34010 (unsigned char *pBase, char *buffer, int pc);
 int DasmI86 (unsigned char *pBase, char *buffer, int pc); /* AM 980925 */
+int Dasm9900 (char *buffer, int pc);
 
 /* JB 980214 */
 void asg_2650Trace(unsigned char *RAM, int PC);
@@ -69,6 +71,9 @@ void asg_8039Trace(unsigned char *RAM, int PC);
 void asg_T11Trace(unsigned char *RAM, int PC);	/* ASG 030598 */
 void asg_34010Trace(unsigned char *RAM, int PC); /* AJP 080298 */
 void asg_I86Trace(unsigned char *RAM, int PC); /* AM 980925 */
+void asg_9900Trace(unsigned char *RAM, int PC);
+
+
 extern int traceon;
 
 extern int CurrentVolume;
@@ -107,7 +112,7 @@ void DummyTrace(int PC){;}	/* JB 980214 */
 int TempDasm6808 (char *buffer, int pc) { return (Dasm6808 (&ROM[pc], buffer, pc)); }
 int TempDasm6805 (char *buffer, int pc) { return (Dasm6805 (&ROM[pc], buffer, pc)); }
 int TempDasm6809 (char *buffer, int pc) { return (Dasm6809 (buffer, pc)); }
-int TempDasm68000 (char *buffer, int pc){ return (Dasm68000 (&OP_ROM[pc], buffer, pc));}
+int TempDasm68000 (char *buffer, int pc){ change_pc24(pc); return (Dasm68000 (&OP_ROM[pc], buffer, pc));}
 int TempDasm8085 (char *buffer, int pc)  { return (Dasm8085 (buffer, pc)); }
 int TempDasm8039 (char *buffer, int pc)  { return (Dasm8039 (buffer, &ROM[pc])); }
 int TempDasmT11 (char *buffer, int pc){ return (DasmT11 (&ROM[pc], buffer, pc));}	/* ASG 030598 */
@@ -115,6 +120,7 @@ int TempDasmZ80 (char *buffer, int pc)  { return (DasmZ80 (buffer, pc)); }
 int TempDasm2650 (char *buffer, int pc) { return (Dasm2650 (buffer, pc)); }
 int TempDasm34010 (char *buffer, int pc){ return (Dasm34010 (&OP_ROM[((unsigned int) pc)>>3], buffer, pc));}
 int TempDasmI86 (char *buffer, int pc) { return (DasmI86 (&OP_ROM[pc], buffer, pc));}	/* AM 980925 */
+int TempDasm9900 (char *buffer, int pc) { return (Dasm9900 (buffer, pc)); }
 
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
@@ -129,6 +135,7 @@ void Temp8039Trace (int PC) { asg_8039Trace (ROM, PC); } /* AM 200698 */
 void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }  /* ASG 030598 */
 void Temp34010Trace (int PC) { asg_34010Trace (OP_ROM, PC); }  /* AJP 080298 */
 void TempI86Trace (int PC) { asg_I86Trace (ROM, PC); }  /* AM 980925 */
+void Temp9900Trace (int PC) { asg_9900Trace (ROM, PC); }
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -443,6 +450,16 @@ static tBackupReg BackupRegisters[] =
 			{ "B12", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[12], 4, 67, 15 },
 			{ "B13", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[13], 4, 67, 16 },
 			{ "B14", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[14], 4, 67, 17 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_TMS9900   13 */
+	{
+		{
+			{ "PC", (int *)&((TMS9900_Regs *)bckrgs)->PC, 2, 2, 1 },
+			{ "IR", (int *)&((TMS9900_Regs *)bckrgs)->IR, 2, 10, 1 },
+			{ "WP", (int *)&((TMS9900_Regs *)bckrgs)->WP, 2, 18, 1 },
+			{ "ST", (int *)&((TMS9900_Regs *)bckrgs)->STATUS, 2, 26, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
@@ -761,6 +778,24 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "B12", (int *)&((TMS34010_Regs *)rgs)->Bregs[12], 4, 67, 16 },
 			{ "B13", (int *)&((TMS34010_Regs *)rgs)->Bregs[13], 4, 67, 17 },
 			{ "B14", (int *)&((TMS34010_Regs *)rgs)->Bregs[14], 4, 67, 18 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_TMS9900   13 */
+	{
+		"9900", 21,
+		DrawDebugScreen16,
+		TempDasm9900, Temp9900Trace, 22, 8, /* JB 980103 */
+		"LAECVPX.....IIII", (int *)&((TMS9900_Regs *)rgs)->STATUS, 16,
+		"%04X:", 0xffff,
+		33, 39, 61, 8,
+		6, 2,					/* CM 980428 */
+		(int *)&((TMS9900_Regs *)rgs)->WP, 2,
+		{
+			{ "PC", (int *)&((TMS9900_Regs *)rgs)->PC,     2, 2, 1 },
+			{ "IR", (int *)&((TMS9900_Regs *)rgs)->IR,     2, 10, 1 },
+			{ "WP", (int *)&((TMS9900_Regs *)rgs)->WP,     2, 18, 1 },
+			{ "ST", (int *)&((TMS9900_Regs *)rgs)->STATUS, 2, 26, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},

@@ -234,13 +234,28 @@ static struct MachineDriver machine_driver =
 
 
 
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 ROM_START( warpwarp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "warp_2r.bin",  0x0000, 0x1000, 0x916ffa35 )
-	ROM_LOAD( "warp_2m.bin",  0x1000, 0x1000, 0x398bb87b )
-	ROM_LOAD( "warp_1p.bin",  0x2000, 0x1000, 0x6b962fc4 )
-	ROM_LOAD( "warp_1t.bin",  0x3000, 0x0800, 0x60a67e76 )
-	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800, 0x00e6a326 )
+	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
+	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
+	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
+	ROM_LOAD( "g-09613.1t",   0x3000, 0x0800, 0x60a67e76 )
+	ROM_LOAD( "g-9611.4c",    0x4800, 0x0800, 0x00e6a326 )
+ROM_END
+
+ROM_START( warpwar2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
+	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
+	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
+	ROM_LOAD( "g-09612.1t",   0x3000, 0x0800, 0xb91e9e79 )
+	ROM_LOAD( "g-9611.4c",    0x4800, 0x0800, 0x00e6a326 )
 ROM_END
 
 
@@ -287,7 +302,7 @@ struct GameDriver warpwarp_driver =
 	__FILE__,
 	0,
 	"warpwarp",
-	"Warp Warp",
+	"Warp Warp (set 1)",
 	"1981",
 	"[Namco] (Rock-ola license)",
 	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
@@ -296,6 +311,32 @@ struct GameDriver warpwarp_driver =
 	0,
 
 	warpwarp_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver warpwar2_driver =
+{
+	__FILE__,
+	&warpwarp_driver,
+	"warpwar2",
+	"Warp Warp (set 2)",
+	"1981",
+	"[Namco] (Rock-ola license)",
+	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	warpwar2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

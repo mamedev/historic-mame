@@ -326,6 +326,30 @@ ROM_END
 ROM_START( bagmans_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
+	ROM_LOAD( "a5-9f",        0x1000, 0x1000, 0x2ddf6bb9 )
+	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
+	ROM_LOAD( "a5-9k",        0x3000, 0x1000, 0xf91d617b )
+	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
+	ROM_LOAD( "a5-9n",        0x5000, 0x1000, 0x68e4b64d )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
+	ROM_LOAD( "a2_1j.bin",    0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
+	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+
+	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
+ROM_END
+
+ROM_START( bagmans2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a4_9f.bin",    0x1000, 0x1000, 0x7871206e )
 	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
 	ROM_LOAD( "a4_9k.bin",    0x3000, 0x1000, 0x36b6a944 )
@@ -349,26 +373,60 @@ ROM_END
 
 ROM_START( sbagman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, 0xc19696f2 )
-	ROM_LOAD( "sbag_9f.bin",  0x1000, 0x1000, 0xac49cb82 )
-	ROM_LOAD( "sbag_9j.bin",  0x2000, 0x1000, 0x9a1c778d )
-	ROM_LOAD( "sbag_9k.bin",  0x3000, 0x1000, 0xb94fbb73 )
-	ROM_LOAD( "sbag_9m.bin",  0x4000, 0x1000, 0xb21e246e )
-	ROM_LOAD( "sbag_9n.bin",  0x5000, 0x1000, 0x5f750918 )
-	ROM_LOAD( "sbag_d8.bin",  0xc000, 0x0e00, 0x944a4453 )
-	ROM_CONTINUE(            0xfe00, 0x0200 )
-	ROM_LOAD( "sbag_f8.bin",  0xd000, 0x0400, 0x0f3e6de4 )
-	ROM_CONTINUE(            0xe400, 0x0200 )
-	ROM_CONTINUE(            0xd600, 0x0a00 )
-	ROM_LOAD( "sbag_j8.bin",  0xe000, 0x0400, 0xfe924879 )
-	ROM_CONTINUE(            0xd400, 0x0200 )
-	ROM_CONTINUE(            0xe600, 0x0a00 )
-	ROM_LOAD( "sbag_k8.bin",  0xf000, 0x0e00, 0xb77eb1f5 )
-	ROM_CONTINUE(            0xce00, 0x0200 )
+	ROM_LOAD( "5.9e",         0x0000, 0x1000, 0x1b1d6b0a )
+	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
+	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
+	ROM_LOAD( "8.9k",         0x3000, 0x1000, 0xb94fbb73 )
+	ROM_LOAD( "9.9m",         0x4000, 0x1000, 0x601f34ba )
+	ROM_LOAD( "10.9n",        0x5000, 0x1000, 0x5f750918 )
+	ROM_LOAD( "13.8d",        0xc000, 0x0e00, 0x944a4453 )
+	ROM_CONTINUE(             0xfe00, 0x0200 )
+	ROM_LOAD( "14.8f",        0xd000, 0x0400, 0x83b10139 )
+	ROM_CONTINUE(             0xe400, 0x0200 )
+	ROM_CONTINUE(             0xd600, 0x0a00 )
+	ROM_LOAD( "15.8j",        0xe000, 0x0400, 0xfe924879 )
+	ROM_CONTINUE(             0xd400, 0x0200 )
+	ROM_CONTINUE(             0xe600, 0x0a00 )
+	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
+	ROM_CONTINUE(             0xce00, 0x0200 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sbag_1e.bin",  0x0000, 0x1000, 0xf4d3d4e6 )
-	ROM_LOAD( "sbag_1j.bin",  0x1000, 0x1000, 0x2c6a510d )
+	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
+	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
+	ROM_LOAD( "1.1c",         0x2000, 0x1000, 0xa046ff44 )
+	ROM_LOAD( "3.1f",         0x3000, 0x1000, 0xa4422da4 )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+
+	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
+	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
+ROM_END
+
+ROM_START( sbagmans_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, 0xc19696f2 )
+	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
+	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
+	ROM_LOAD( "8.9k",         0x3000, 0x1000, 0xb94fbb73 )
+	ROM_LOAD( "sbag_9m.bin",  0x4000, 0x1000, 0xb21e246e )
+	ROM_LOAD( "10.9n",        0x5000, 0x1000, 0x5f750918 )
+	ROM_LOAD( "13.8d",        0xc000, 0x0e00, 0x944a4453 )
+	ROM_CONTINUE(             0xfe00, 0x0200 )
+	ROM_LOAD( "sbag_f8.bin",  0xd000, 0x0400, 0x0f3e6de4 )
+	ROM_CONTINUE(             0xe400, 0x0200 )
+	ROM_CONTINUE(             0xd600, 0x0a00 )
+	ROM_LOAD( "15.8j",        0xe000, 0x0400, 0xfe924879 )
+	ROM_CONTINUE(             0xd400, 0x0200 )
+	ROM_CONTINUE(             0xe600, 0x0a00 )
+	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
+	ROM_CONTINUE(             0xce00, 0x0200 )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
+	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
 	ROM_LOAD( "sbag_1c.bin",  0x2000, 0x1000, 0x262f870a )
 	ROM_LOAD( "sbag_1f.bin",  0x3000, 0x1000, 0x350ed0fb )
 
@@ -377,8 +435,8 @@ ROM_START( sbagman_rom )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
 	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
-	ROM_LOAD( "sbag_9r.bin",  0x0000, 0x1000, 0x2e0057ff )
-	ROM_LOAD( "sbag_9t.bin",  0x1000, 0x1000, 0xb2120edd )
+	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
+	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 
@@ -435,7 +493,7 @@ struct GameDriver bagman_driver =
 	"Bagman",
 	"1982",
 	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
@@ -458,15 +516,41 @@ struct GameDriver bagmans_driver =
 	__FILE__,
 	&bagman_driver,
 	"bagmans",
-	"Bagman (Stern)",
+	"Bagman (Stern set 1)",
 	"1982",
 	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
 
 	bagmans_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	bagman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver bagmans2_driver =
+{
+	__FILE__,
+	&bagman_driver,
+	"bagmans2",
+	"Bagman (Stern set 2)",
+	"1982",
+	"Valadon Automation (Stern license)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	0,
+	&machine_driver,
+	0,
+
+	bagmans2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -486,13 +570,39 @@ struct GameDriver sbagman_driver =
 	"sbagman",
 	"Super Bagman",
 	"1984",
-	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
+	"Valadon Automation",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
 
 	sbagman_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	sbagman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver sbagmans_driver =
+{
+	__FILE__,
+	&sbagman_driver,
+	"sbagmans",
+	"Super Bagman (Stern)",
+	"1984",
+	"Valadon Automation (Stern license)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	0,
+	&machine_driver,
+	0,
+
+	sbagmans_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

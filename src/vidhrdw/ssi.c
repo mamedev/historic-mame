@@ -29,80 +29,34 @@ void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i,x,y,offs,code,color,spritecont,flipx,flipy;
 	int xcurrent,ycurrent;
 
+
 	/* update the palette usage */
 	{
-		unsigned short palette_map[128];
+		unsigned short palette_map[256];
 
 		memset (palette_map, 0, sizeof (palette_map));
 
-		x=0;
-		y=0;
-		xcurrent=0;
-		ycurrent=0;
-		color=0;
+		color = 0;
 
-		for(offs=0;offs<0x3400;offs+=16)
+		for (offs = 0;offs < 0x3400;offs += 16)
 		{
-	        spritecont = (READ_WORD(&videoram[offs+8]) & 0xff00)>>8;
+			spritecont = (READ_WORD(&videoram[offs+8]) & 0xff00) >> 8;
 
-			if((spritecont&0x10)==0)
+			if ((spritecont & 0x04) == 0)
 			{
-				if((spritecont&0x04)==0)
-				{
-					x = READ_WORD(&videoram[offs+6]) & 0x0fff;
-					if(x>0x7FF)
-						x=16-((x^0xFFF)+1);
-					else
-						x=16+x;
-					xcurrent=x;
-				}
-				else
-					x=xcurrent;
-			}
-			else
-			{			// ???
-				if((spritecont&0x20)!=0)
-				{	// OK
-					x+=16;
-				}
+				color = READ_WORD(&videoram[offs+8]) & 0x00ff;
 			}
 
-			if((spritecont&0x40)==0)
-			{
-				if((spritecont&0x04)==0)
-				{
-					y = READ_WORD(&videoram[offs+4]) & 0x0fff;
-					if(y>0x7FF)
-						y=(320+((y^0xFFF)+1));
-					else
-						y=(320-y);
-					ycurrent=y;
-				}
-				else
-					y=ycurrent;
-			}
-			else
-			{			// ???
-				if((spritecont&0x80)!=0)
-				{	// OK
-					y-=16;
-				}
-			}
+			code = READ_WORD(&videoram[offs]) & 0x1fff;
 
-			if((spritecont&0x04)==0)
-		        color=(READ_WORD(&videoram[offs+8])&0x007f);
-
-			if((x>0)&&(y>0)&&(x<224+16)&&(y<320+16))
-			{
-		        code=((READ_WORD(&videoram[offs])&0x1fff)<<8);
-				if (code != 0)
-					palette_map[color] |= Machine->gfx[0]->pen_usage[code>>8];
-			}
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
 		}
 
-		for (i = 0; i < 128; i++)
+		for (i = 0;i < 256;i++)
 		{
-			int usage = palette_map[i], j;
+			int usage = palette_map[i];
+			int j;
+
 			if (usage)
 			{
 				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -113,116 +67,58 @@ void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
 			}
 			else
-				memset (&palette_used_colors[i * 16], PALETTE_COLOR_UNUSED, 16);
+				memset(&palette_used_colors[i * 16],PALETTE_COLOR_UNUSED,16);
 		}
 
 		palette_recalc ();
 	}
 
 	osd_clearbitmap(bitmap);
-	x=0;
-	y=0;
-	xcurrent=0;
-	ycurrent=0;
-	color=0;
-	for(offs=0;offs<0x3400;offs+=16)
+	x = 0;
+	y = 0;
+	xcurrent = 0;
+	ycurrent = 0;
+	color = 0;
+
+	for (offs = 0;offs < 0x3400;offs += 16)
 	{
+        spritecont = (READ_WORD(&videoram[offs+8]) & 0xff00) >> 8;
 
-	        spritecont = (READ_WORD(&videoram[offs+8]) & 0xff00)>>8;
+		flipx = spritecont & 0x01;
+		flipy = spritecont & 0x02;
 
-		flipy = spritecont&0x01;
-		flipx = (spritecont&0x02)>>1;
-
-		if((spritecont&0x10)==0)
+		if ((spritecont & 0x04) == 0)
 		{
-		        if((spritecont&0x04)==0)
-			{
-			        x = READ_WORD(&videoram[offs+6]) & 0x0fff;
-				if(x>0x7FF)
-				{
-				        x=16-((x^0xFFF)+1);
-				}
-				else
-				{
-				        x=16+x;
-				}
-				xcurrent=x;
-			}
-			else
-			{
-			        x=xcurrent;
-			}
+			x = READ_WORD(&videoram[offs+4]) & 0x0fff;
+			if (x >= 0x800) x -= 0x1000;
+			xcurrent = x;
+
+			y = READ_WORD(&videoram[offs+6]) & 0x0fff;
+			if (y >= 0x800) y -= 0x1000;
+			ycurrent = y;
+
+			color = READ_WORD(&videoram[offs+8]) & 0x00ff;
 		}
 		else
-		{			// ???
-		        if((spritecont&0x20)!=0)
-			{	// OK
-			        x+=16;
-			}
-		}
-
-		if((spritecont&0x40)==0)
 		{
-		        if((spritecont&0x04)==0)
-			{
-			        y = READ_WORD(&videoram[offs+4]) & 0x0fff;
-				if(y>0x7FF)
-				{
-				        y=(320+((y^0xFFF)+1));
-				}
-				else
-				{
-				        y=(320-y);
-				}
-				ycurrent=y;
-			}
-			else
-			{
-			        y=ycurrent;
-			}
-		}
-		else
-		{			// ???
-		        if((spritecont&0x80)!=0)
-			{	// OK
-			        y-=16;
-			}
+			if ((spritecont & 0x10) == 0)
+				y = ycurrent;
+			else if ((spritecont & 0x20) != 0)
+				y += 16;
+
+			if ((spritecont & 0x40) == 0)
+				x = xcurrent;
+			else if ((spritecont & 0x80) != 0)
+				x += 16;
 		}
 
-		if((spritecont&0x04)==0)
-		{
-		        color=(READ_WORD(&videoram[offs+8])&0x007f);
-		}
+		code = READ_WORD(&videoram[offs]) & 0x1fff;
 
-		if((x>0)&&(y>0)&&(x<224+16)&&(y<320+16))
-		{
-
-		if (errorlog&&(flipy||flipy)) fprintf(errorlog,"fx %d; fy %d\n",flipx,flipy);
-		        code=((READ_WORD(&videoram[offs])&0x1fff)<<8);
-			if (code != 0)
-			{
-				drawgfx(bitmap,Machine->gfx[0],
-					(code>>8),
-					color,
-					flipx,flipy,
-					x,y,
-					&Machine->drv->visible_area,
-					TRANSPARENCY_PEN,0);
-
-			}
-
-		}
-
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
+				color,
+				flipx,flipy,
+				x,y,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-
 }
-
-
-
-
-int ssi_interrupt(void)
-{
-return MC68000_IRQ_5;
-}
-
-

@@ -93,7 +93,7 @@ int YM2203_sh_start(struct YM2203interface *interface)
 	int i;
 	int rate = Machine->sample_rate;
 
-	if( AY8910_sh_start(interface) ) return 1;
+	if( AY8910_sh_start(interface,"YM2203") ) return 1;
 
 	/* FM init */
 	if( No_FM ) FMMode = CHIP_YM2203_DAC;

@@ -3,9 +3,10 @@
 #define AUDIT_H
 
 /* return values from VerifyRomSet and VerifySampleSet */
-#define CORRECT   0
-#define NOTFOUND  1
-#define INCORRECT 2
+#define CORRECT   		0
+#define NOTFOUND  		1
+#define INCORRECT 		2
+#define CLONE_NOTFOUND	3
 
 /* rom status values for tAuditRecord.status */
 #define AUD_ROM_GOOD		0
@@ -19,12 +20,12 @@
 
 typedef struct
 {
-	char	rom[20];		/* name of rom file */
-	unsigned int explength;	/* expected length of rom file */
-	unsigned int length;	/* actual length of rom file */
+	char rom[20];				/* name of rom file */
+	unsigned int explength;		/* expected length of rom file */
+	unsigned int length;		/* actual length of rom file */
 	unsigned int expchecksum;	/* expected checksum of rom file */
-	unsigned int checksum;	/* actual checksum of rom file */
-	int		status;			/* status of rom file */
+	unsigned int checksum;		/* actual checksum of rom file */
+	int status;					/* status of rom file */
 } tAuditRecord;
 
 typedef struct
@@ -38,6 +39,8 @@ int AuditRomSet (int game, tAuditRecord **audit);
 int VerifyRomSet(int game,verify_printf_proc verify_printf);
 int AuditSampleSet (int game, tMissingSample **audit);
 int VerifySampleSet(int game,verify_printf_proc verify_printf);
+int RomInSet (const struct GameDriver *gamedrv, unsigned int crc);
+int RomsetMissing (int game);
 
 
 #endif

@@ -7,6 +7,59 @@ static tAuditRecord *gAudits = NULL;
 static tMissingSample *gMissingSamples = NULL;
 
 
+
+/* returns 1 if rom is defined in this set */
+int RomInSet (const struct GameDriver *gamedrv, unsigned int crc)
+{
+	const struct RomModule *romp = gamedrv->rom;
+
+	while (romp->name || romp->offset || romp->length)
+	{
+		romp++;	/* skip ROM_REGION */
+
+		while (romp->length)
+		{
+			if (romp->crc == crc) return 1;
+			do
+			{
+				romp++;
+				/* skip ROM_CONTINUEs and ROM_RELOADs */
+			}
+			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+		}
+	}
+	return 0;
+}
+
+
+/* returns nonzero if romset is missing */
+int RomsetMissing (int game)
+{
+	const struct GameDriver *gamedrv = drivers[game];
+
+	if (gamedrv->clone_of)
+	{
+		tAuditRecord	*aud;
+		int				count;
+		int 			i;
+		int 			cloneRomsFound = 0;
+
+		if ((count = AuditRomSet (game, &aud)) == 0)
+			return 1;
+
+		/* count number of roms found that are unique to clone */
+		for (i = 0; i < count; i++)
+			if (aud[i].status != AUD_ROM_NOT_FOUND)
+				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+					cloneRomsFound++;
+
+		return !cloneRomsFound;
+	}
+	else
+		return !osd_faccess (gamedrv->name, OSD_FILETYPE_ROM);
+}
+
+
 /* Fills in an audit record for each rom in the romset. Sets 'audit' to
    point to the list of audit records. Returns total number of roms
    in the romset (same as number of audit records), 0 if romset missing. */
@@ -101,12 +154,28 @@ int AuditRomSet (int game, tAuditRecord **audit)
    call AuditRomSet() instead and implement their own reporting (like MacMAME). */
 int VerifyRomSet (int game, verify_printf_proc verify_printf)
 {
-	tAuditRecord	*aud;
-	int				count;
-	int				badarchive = 0;
+	tAuditRecord			*aud;
+	int						count;
+	int						badarchive = 0;
+	const struct GameDriver *gamedrv = drivers[game];
 
 	if ((count = AuditRomSet (game, &aud)) == 0)
 		return NOTFOUND;
+
+	if (gamedrv->clone_of)
+	{
+		int i;
+		int cloneRomsFound = 0;
+
+		/* count number of roms found that are unique to clone */
+		for (i = 0; i < count; i++)
+			if (aud[i].status != AUD_ROM_NOT_FOUND)
+				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+					cloneRomsFound++;
+
+		if (cloneRomsFound == 0)
+			return CLONE_NOTFOUND;
+	}
 
 	while (count--)
 	{

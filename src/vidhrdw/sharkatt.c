@@ -58,7 +58,7 @@ void sharkatt_videoram_w(int offset,int data)
 		videoram[offset] = data;
 
 		y = offset / 32;
-		x = 256+16 + 8 * (offset % 32);
+		x = 8 * (offset % 32);
 
 		for (i = 0;i < 8;i++)
 		{
@@ -67,10 +67,10 @@ void sharkatt_videoram_w(int offset,int data)
 
 			col = Machine->pens[color_plane & 0x0F];
 
-			if (data & 0x80) tmpbitmap->line[y][x] = col;
-			else tmpbitmap->line[y][x] = Machine->pens[0];
+			if (data & 0x80) Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = col;
+			else Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[0];
 
-			osd_mark_dirty(x,y,x+1,y+1,0);
+			osd_mark_dirty(x,y,x,y,0);
 
 			x++;
 			data <<= 1;
@@ -88,6 +88,7 @@ void sharkatt_videoram_w(int offset,int data)
 ***************************************************************************/
 void sharkatt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	if (full_refresh)
+		/* copy the character mapped graphics */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

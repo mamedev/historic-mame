@@ -199,6 +199,7 @@ struct MachineCPU
 #define CPU_T11      10
 #define CPU_S2650    11
 #define CPU_TMS34010 12
+#define CPU_TMS9900  13	/* ARJ 210798 */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -228,20 +229,21 @@ struct MachineSound
 #define SOUND_YM2203     5
 #define SOUND_YM2151     6
 #define SOUND_YM2151_ALT 7
-#define SOUND_YM3812     8
+#define SOUND_YM2413     8
+#define SOUND_YM2610     9
+#define SOUND_YM3812    10
 #define SOUND_YM3526    SOUND_YM3812	/* 100% compatible, less features */
-#define SOUND_YM2413     9
-#define SOUND_SN76496   10
-#define SOUND_POKEY     11
-#define SOUND_NAMCO     12
-#define SOUND_NES       13
-#define SOUND_TMS5220   14
-#define SOUND_VLM5030   15
-#define SOUND_ADPCM     16
-#define SOUND_OKIM6295  17	/* ROM-based ADPCM system */
-#define SOUND_MSM5205   18	/* CPU-based ADPCM system */
-#define SOUND_HC55516   19	/* Harris family of CVSD CODECs */
-#define SOUND_ASTROCADE 20	/* Custom I/O chip from Bally/Midway */
+#define SOUND_SN76496   11
+#define SOUND_POKEY     12
+#define SOUND_NAMCO     13
+#define SOUND_NES       14
+#define SOUND_TMS5220   15
+#define SOUND_VLM5030   16
+#define SOUND_ADPCM     17
+#define SOUND_OKIM6295  18	/* ROM-based ADPCM system */
+#define SOUND_MSM5205   19	/* CPU-based ADPCM system */
+#define SOUND_HC55516   20	/* Harris family of CVSD CODECs */
+#define SOUND_ASTROCADE 21	/* Custom I/O chip from Bally/Midway */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */

@@ -56,7 +56,8 @@ void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void jungler_init(void);
+void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -125,6 +126,32 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa080, 0xa080, input_port_1_r },	/* IN1 */
 	{ 0xa100, 0xa100, input_port_2_r },	/* IN2 */
 	{ 0xa180, 0xa180, input_port_3_r },	/* DSW */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress jungler_writemem[] =
+{
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
+	{ 0x8800, 0x8bff, colorram_w, &colorram },
+	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
+	{ 0x9800, 0x9fff, MWA_RAM },
+	{ 0xa034, 0xa03f, MWA_RAM, &rallyx_radarcarcolor },
+	{ 0xa080, 0xa080, watchdog_reset_w },
+	{ 0xa100, 0xa100, soundlatch_w },
+	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
+	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
+	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
+	{ 0xa180, 0xa180, locomotn_sh_irqtrigger_w },
+	{ 0xa181, 0xa181, interrupt_enable_w },
+	{ 0xa183, 0xa183, rallyx_flipscreen_w },
+	{ 0xa184, 0xa185, osd_led_w },
+	{ 0xa186, 0xa186, MWA_NOP },
+	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
+	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
+	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarcarx, &rallyx_radarram_size },	/* ditto */
+	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radarcary },
 	{ -1 }	/* end of table */
 };
 
@@ -388,7 +415,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
+	512,	/* 512 characters (256 in Jungler) */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
 	{ 8*8+0,8*8+1,8*8+2,8*8+3, 0, 1, 2, 3 },
@@ -399,7 +426,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
+	128,	/* 128 sprites (64 in Jungler) */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
 	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3,
@@ -425,7 +452,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,        0, 64 },
 	{ 1, 0x0000, &spritelayout,      0, 64 },
-	{ 1, 0x0000, &radardotlayout,  64*4, 4 },
+	{ 1, 0x0000, &radardotlayout, 64*4,  4 },
 	{ -1 } /* end of array */
 };
 
@@ -480,7 +507,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 			CPU_Z80,                                                \
 			3072000,	/* 3.072 Mhz ? */                           \
 			0,                                                      \
-			readmem,writemem,0,0,                                   \
+			readmem,GAMENAME##_writemem,0,0,                        \
 			nmi_interrupt,1                                         \
 		},                                                          \
 		{                                                           \
@@ -517,6 +544,9 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	}                                                               \
 };
 
+#define locomotn_writemem writemem
+#define commsega_writemem writemem
+#define jungler_vh_screenrefresh rallyx_vh_screenrefresh
 MACHINE_DRIVER(locomotn)
 MACHINE_DRIVER(jungler)
 MACHINE_DRIVER(commsega)
@@ -527,6 +557,29 @@ MACHINE_DRIVER(commsega)
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( jungler_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "jungr1",       0x0000, 0x1000, 0x5bd6ad15 )
+	ROM_LOAD( "jungr2",       0x1000, 0x1000, 0xdc99f1e3 )
+	ROM_LOAD( "jungr3",       0x2000, 0x1000, 0x3dcc03da )
+	ROM_LOAD( "jungr4",       0x3000, 0x1000, 0xf92e9940 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5k",           0x0000, 0x0800, 0x924262bf )
+	ROM_LOAD( "5m",           0x0800, 0x0800, 0x131a08ac )
+	/* 1000-1fff empty for my convenience */
+
+	ROM_REGION(0x0260)	/* color PROMs */
+	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
+	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
+	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
+	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "82s129.10g",   0x0160, 0x0100, 0x2ef89356 ) /* ?? */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
+ROM_END
 
 ROM_START( locomotn_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -548,21 +601,27 @@ ROM_START( locomotn_rom )
 	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
-ROM_START( jungler_rom )
+ROM_START( junglers_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "jungr1",       0x0000, 0x1000, 0x5bd6ad15 )
-	ROM_LOAD( "jungr2",       0x1000, 0x1000, 0xdc99f1e3 )
-	ROM_LOAD( "jungr3",       0x2000, 0x1000, 0x3dcc03da )
-	ROM_LOAD( "jungr4",       0x3000, 0x1000, 0xf92e9940 )
+	ROM_LOAD( "5c",           0x0000, 0x1000, 0xedd71b28 )
+	ROM_LOAD( "5a",           0x1000, 0x1000, 0x61ea4d46 )
+	ROM_LOAD( "4d",           0x2000, 0x1000, 0x557c7925 )
+	ROM_LOAD( "4c",           0x3000, 0x1000, 0x51aac9a5 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jungr9",       0x0000, 0x1000, 0x4190c6c0 )
-	ROM_LOAD( "jungr10",      0x1000, 0x1000, 0x5c001c66 )
+	ROM_LOAD( "5k",           0x0000, 0x0800, 0x924262bf )
+	ROM_LOAD( "5m",           0x0800, 0x0800, 0x131a08ac )
+	/* 1000-1fff empty for my convenience */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGION(0x0260)	/* color PROMs */
+	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
+	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
+	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
+	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "82s129.10g",   0x0160, 0x0100, 0x2ef89356 ) /* ?? */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "jungb1t",      0x0000, 0x1000, 0xf86999c3 )
+	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
 ROM_START( commsega_rom )
@@ -701,6 +760,58 @@ static void commsega_hisave(void)
 
 
 
+struct GameDriver jungler_driver =
+{
+	__FILE__,
+	0,
+	"jungler",
+	"Jungler (Konami)",
+	"1981",
+	"Konami",
+	"Nicola Salmoria",
+	0,
+	&jungler_machine_driver,
+	jungler_init,
+
+	jungler_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	jungler_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	jungler_hiload, jungler_hisave
+};
+
+struct GameDriver junglers_driver =
+{
+	__FILE__,
+	&jungler_driver,
+	"junglers",
+	"Jungler (Stern)",
+	"1981",
+	"Stern",
+	"Nicola Salmoria",
+	0,
+	&jungler_machine_driver,
+	jungler_init,
+
+	junglers_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	jungler_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	jungler_hiload, jungler_hisave
+};
+
 struct GameDriver locomotn_driver =
 {
 	__FILE__,
@@ -725,32 +836,6 @@ struct GameDriver locomotn_driver =
 	ORIENTATION_ROTATE_90,
 
 	locomotn_hiload, locomotn_hisave
-};
-
-struct GameDriver jungler_driver =
-{
-	__FILE__,
-	0,
-	"jungler",
-	"Jungler",
-	"1981",
-	"Konami",
-	"Nicola Salmoria",
-	GAME_WRONG_COLORS,
-	&jungler_machine_driver,
-	0,
-
-	jungler_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	jungler_input_ports,
-
-	wrong_color_prom, 0, 0,	/* wrong */
-	ORIENTATION_ROTATE_90,
-
-	jungler_hiload, jungler_hisave
 };
 
 struct GameDriver commsega_driver =

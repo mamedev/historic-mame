@@ -1,26 +1,16 @@
 /*$DEADSERIOUSCLAN$*********************************************************************
 * FILE
-*	Yamaha 3812 emulator
+*	Yamaha 3812 emulator - MAME VERSION
 *
 * CREATED BY
 *	(c) Carl-Henrik Skårstedt, Dead Serious Clan. http://www.deadserious.com/
 *
 * UPDATE LOG
-*	CHS 1998-10-16	Fixed very old typo.
-*	CHS 1998-10-05	Fixed bug that caused ym3526 games to overwrite other OPL registers.
-*	EHC 1998-09-25	Changed timers to double precision for Bubble Bobble fix (see comment in WriteReg)
-*	CHS 1998-09-22	Release version 1.0.
-*	CHS 1998-09-17	Fixed bug group: All C++ specific stuff was removed. Now actually compiles as C code.
-*	CHS 1998-09-16	Fixed bug: the octave was shifted right 1 bit too much. Fixed related bugs.
-*	CHS 1998-09-15	Fixed the update routine to output sound more like the original chip.
-*	CHS 1998-09-12	Added subdivision of the update loop (recalc of envelop etc. during update loop) Warning: Using this feature adds noise.
-*	CHS 1998-09-01	Beta version.
+*	CHS 1998-10-16	Mame 0.34 specific version - Separated from general version
 *
 * TO DO
 *	KSR correction
-*	ym2413 stuff
 *	Computer Speech Mode (requires real timers and a speech driver which makes testing a bit difficult) (later update)
-*	Scale drum samples in init rather than realtime (not sure)
 *
 * Version 1.0 (fixed):
 * --------------------
@@ -50,7 +40,8 @@
 * useful modifications of the source if redistributed (carl@c64.org).
 * The legal, distribution, licensing, guarantee, support and credits
 * sections in the file header may not be altered in redistributed modified
-* source form.
+* source form. The Mame version is available from the Mame source archive,
+* the non-Mame version is available on request to <carl@c64.org>
 *
 * Licensing:
 * ----------
@@ -93,7 +84,7 @@
 * Initialize with:
 *
 * // This will allocate a structure and initialize it
-* pOPL = ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, int f16Bit );
+* pOPL = ym3812_Init( int nReplayFrq, int nClock, int f16Bit );
 * pOPL->SetTimer = My_Timer_Code;
 *
 * Where pOPL is the work structure for the ym3812 emulator and
@@ -103,8 +94,6 @@
 *
 * The parameters for the Init function are:
 * nReplayFrq = The frequency you intend to play the generated sample with (for example 44100 Hz)
-* nBufSize = How many samples you want for each update *1
-* nUpdateFreq = Update frequency (60 Hz in Shark, how often you call ym3812_Update() )
 * nClock = Set to ym3812_StdClock unless you know it is tweaked for something else.
 * f16Bit = false means generate 8 bit samples, true means generate 16 bit samples.
 *
@@ -128,11 +117,6 @@
 * If you wish the emulator to subdivide the generated sound
 * more than each frame ( refresh envelope, vibrato, etc.), put the
 * number of subdivisions in pOPL->nSubDivide after the initialization.
-*
-* It is OK to change the values of pOPL->nBufSize and pOPL->nReplayFrq
-* runtime (Buffer size for one update and replay frequency). Be warned
-* that things can sound strange if you don't know what you put into
-* these variables.
 *
 * (And don't forget to replay the buffer)
 *
@@ -171,22 +155,22 @@
 *
 * void My_Timer_Code(int nTimer, float vPeriod, ym3812_s *pOPL, int fRemove)
 * {
-*    switch( nTimer )
-*    {
-*       case 1:
-*           if( fRemove )   timer_delete( __Timer1ID );
-*           else            timer_create( __Timer1ID, My_Timer_Event_1, vPeriod );
-*           break;
-*       case 2:
-*           if( fRemove )   timer_delete( __Timer2ID );
-*           else            timer_create( __Timer2ID, My_Timer_Event_2, vPeriod );
-*           break;
-*    }
+*	 switch( nTimer )
+*	 {
+*		case 1:
+*			if( fRemove )	timer_delete( __Timer1ID );
+*			else			timer_create( __Timer1ID, My_Timer_Event_1, vPeriod );
+*			break;
+*		case 2:
+*			if( fRemove )	timer_delete( __Timer2ID );
+*			else			timer_create( __Timer2ID, My_Timer_Event_2, vPeriod );
+*			break;
+*	 }
 * }
 *
 * void My_Timer_Event_1()
 * {
-*    if( ym3812_TimerEvent( pOPL, 1 ) ) Generate_Sound_Interrupt_From_Timer1();
+*	 if( ym3812_TimerEvent( pOPL, 1 ) ) Generate_Sound_Interrupt_From_Timer1();
 * }
 *
 * And My_Timer_Event_2() would be similar to My_Timer_Event_1().
@@ -207,7 +191,6 @@
 *	The MAME define is meant to be symbolic to show what is specifically updated for MAME.
 *
 ****************************************************************************************/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -217,12 +200,8 @@
 #include <memory.h>
 #endif
 
-// REMOVE IF NOT MAME!
-#define MAME
-
-#ifdef MAME
 #include "driver.h"
-#endif
+#include "common.h"
 #include "ym3812.h"
 
 // The number of entries in the sinus table! Do not change!
@@ -245,12 +224,12 @@
 * NOTES
 *  Gives the relation between address and slot...
 ****************************************************************************************/
-int	RegSlot_Relation[] =
+int RegSlot_Relation[] =
 {
 	0x00,0x02,0x04,0x01,0x03,0x05,-1,-1,
 	0x06,0x08,0x0a,0x07,0x09,0x0b,-1,-1,
 	0x0c,0x0e,0x10,0x0d,0x0f,0x11,-1,-1,
-	  -1,  -1,  -1,  -1,  -1,  -1,-1,-1,
+	  -1,  -1,	-1,  -1,  -1,  -1,-1,-1,
 };
 
 /*$DEADSERIOUSCLAN$*********************************************************************
@@ -287,28 +266,35 @@ float	ym3812_aDecayTime[16];
 * NOTES
 *  Sample file names for each drum
 ****************************************************************************************/
-char *ym3812_pDrumNames[5] = { "ym3812/bassdrum.raw", "ym3812/snardrum.raw", "ym3812/tomtom.raw", "ym3812/topcmbal.raw", "ym3812/hihat.raw" };
+static const char *ym3812_pDrumNames[] =
+{
+	"bassdrum.sam",
+	"snardrum.sam",
+	"tomtom.sam",
+	"topcmbal.sam",
+	"hihat.sam",
+	0
+};
+
 
 /*$DEADSERIOUSCLAN$*********************************************************************
 * ROUTINE
-*  ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, int f16Bit )
+*  ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 * FUNCTION
 * NOTES
 ****************************************************************************************/
-ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, int f16Bit )
+ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 {
-	int		k,l;
-	ym3812	*pOPL;
-	FILE	*pFile;
-	char	*pSamp;
-	float	vValue;
+	int 				k,l;
+	ym3812				*pOPL;
+	signed char 		*pSamp;
+	float				vValue;
+	struct GameSamples	*psSamples;
+	signed char 		*pDrum,*pDrum8;
+	signed short		*pDrum16;
 
 	pOPL = (ym3812*)malloc(sizeof(ym3812));
 	memset( pOPL, 0x00, sizeof(ym3812));
-
-	// Set a volume level... (Volume is per channel..)
-
-	pOPL->nOPLVol = ym3812_StdVolume;
 
 	// Set appropriate sample type (16bit or 8bit)
 
@@ -317,9 +303,6 @@ ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, 
 	// Insert stuff from host
 
 	pOPL->nReplayFrq = nReplayFrq;
-	pOPL->nBufSize = nBufSize;
-	pOPL->nEmuFreq = nUpdateFreq;
-	pOPL->vFrameDelay = 1.0f/(float)nUpdateFreq;
 	pOPL->nYM3812Clk = nClock;
 	pOPL->nYM3812DivClk = nClock/72;
 	pOPL->vTimer1IntCnt = 0;
@@ -329,7 +312,7 @@ ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, 
 
 	// Generate some volume levels.. (ln)
 
-	vValue = (float)ym3812_StdVolume;
+		vValue = (float)ym3812_StdVolume;
 	for( l=0 ; l<256 ; l++ )
 	{
 		pOPL->aVolumes[255-l] = (int)(vValue*128.0f+(255-l)/2);
@@ -374,6 +357,8 @@ ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, 
 		pOPL->nRelease[l] = 0x8;
 		pOPL->nCurrPos[l] = rand() * SINTABLE_SIZE / RAND_MAX;
 	}
+
+	// Initialize all channels
 	for( l=0; l<9; l++ )
 	{
 		pOPL->nFNumber[l]=0x100;
@@ -385,28 +370,32 @@ ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, 
 
 	// Load Rhythm sounds
 
-	for( l=0 ; l<5 ; l++ )
+	// MAME version
+	psSamples = readsamples(ym3812_pDrumNames,"ym3812");
+	for( l=0; l<5; l++ )
 	{
 		pOPL->pDrum[l] = NULL;
 		pOPL->nDrumOffs[l] = -1;
-		pFile = fopen( ym3812_pDrumNames[l], "rb" );
-		if( pFile != NULL )
+		if( psSamples->sample[l] != 0 )
 		{
-			fseek( pFile, 0, SEEK_END );									// Go to end
-			pOPL->nDrumSize[l] = ftell( pFile );							// Get file size
-			fseek( pFile, 0, SEEK_SET );									// Rewind
-			pOPL->pDrum[l] = (char*) malloc( pOPL->nDrumSize[l]+1024 );		// Alloc buffer
+			pOPL->nDrumRate[l] = psSamples->sample[l]->smpfreq; 			// Get frequency
+			pOPL->nDrumSize[l] = psSamples->sample[l]->length;				// Get size
+			pOPL->pDrum[l] = (signed char*) malloc( pOPL->nDrumSize[l]+1024 );
 			memset( pOPL->pDrum[l], 0, pOPL->nDrumSize[l]+1024 );			// Clear buffer
-			fread( pOPL->pDrum[l], pOPL->nDrumSize[l], 1, pFile );			// Read buffer
-			fclose( pFile );												// Close file
-			//Make sample signed.. Originally unsigned.
-			pSamp = pOPL->pDrum[l];
+
+			pDrum8 = psSamples->sample[l]->data;							// Get ptr to sample
+
+			pDrum16 = (signed short*) pDrum8;								// Get 16 bit ptr to sample
+			pDrum = pOPL->pDrum[l];
 			for( k=pOPL->nDrumSize[l]; k>0; k-- )
 			{
-				*pSamp++ ^= 0x80;
+				if( psSamples->sample[l]->resolution==16 )	*pDrum++ = (*pDrum16++)>>8;
+				else										*pDrum++ = *pDrum8++;
 			}
 		}
 	}
+	freesamples( psSamples );
+
 	return pOPL;
 }
 
@@ -418,7 +407,7 @@ ym3812* ym3812_Init( int nReplayFrq, int nBufSize, int nUpdateFreq, int nClock, 
 ****************************************************************************************/
 ym3812* ym3812_DeInit( ym3812 *pOPL )
 {
-	int	l;
+	int l;
 
 	if( pOPL != NULL )
 	{
@@ -472,7 +461,7 @@ int ym3812_CheckTimer2Int( ym3812 *pOPL )
 			if( pOPL->vTimer2IntCnt > 0.250f ) pOPL->vTimer2IntCnt = 0.0f;	// Avoid incremental overflow of counter
 			return cTRUE;
 		}
- 	}
+	}
 	return cFALSE;
 }
 
@@ -480,7 +469,7 @@ int ym3812_CheckTimer2Int( ym3812 *pOPL )
 * ROUTINE
 *	void ym3812_UpdateTimers( float vTime )
 * AUTHOR
-*       Carl-Henrik Skårstedt
+*		Carl-Henrik Skårstedt
 * FUNCTION/NOTES
 *	Call this with the time that has passed from previous UpdateTimers.
 *	Do not use this function externally if you have opted to update timers
@@ -557,7 +546,7 @@ void ym3812_SetBuffer( ym3812 *pOPL, char *pBuffer )
 ****************************************************************************************/
 void ym3812_KeyOn( ym3812 *pOPL, int nChannel )
 {
-	int	nSlot;
+	int nSlot;
 
 	if( !pOPL->fKeyDown[nChannel] )
 	{
@@ -597,14 +586,14 @@ int ym3812_ReadStatus( ym3812 *pOPL )
 
 /*$DEADSERIOUS$*******************************************************************
 * ROUTINE
-*	int	ym3812_ReadReg( ym3812 *pOPL )
+*	int ym3812_ReadReg( ym3812 *pOPL )
 * AUTHOR
 *	Carl-Henrik Skårstedt
 * FUNCTION/NOTES
 *	Reads back register contents.
 **********************************************************************************/
 
-int	ym3812_ReadReg( ym3812 *pOPL )
+int ym3812_ReadReg( ym3812 *pOPL )
 {
 	return pOPL->aRegArray[pOPL->nReg];
 }
@@ -628,7 +617,7 @@ void ym3812_SetReg( ym3812 *pOPL, unsigned char nReg )
 ****************************************************************************************/
 void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 {
-	int		nReg, nCh, nSlot, nTemp;
+	int 	nReg, nCh, nSlot, nTemp;
 
 	nReg = pOPL->nReg;
 
@@ -643,21 +632,13 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 			/* EHC 09/25/98 */
 			/* Adjusted timers for higher precision */
 			/* Bubble Bobble loses sound after a while otherwise */
-#ifdef MAME
 			pOPL->vTimer1 = TIME_IN_USEC ((256-nData) * 80) * ( (double)ym3812_StdClock / (double)pOPL->nYM3812Clk );
-#else
-			pOPL->vTimer1 = ((256-nData)*0.00008f) * pOPL->nYM3812Clk / ym3812_StdClock;
-#endif
 			return;
 		case 0x03:		// DATA OF TIMER 2
 			/* EHC 09/25/98 */
 			/* Adjusted timers for higher precision */
 			/* Bubble Bobble loses sound after a while otherwise */
-#ifdef MAME
 			pOPL->vTimer2 = TIME_IN_USEC ((256-nData) * 320) * ( (double)ym3812_StdClock / (double)pOPL->nYM3812Clk );
-#else
-			pOPL->vTimer2 = ((256-nData)*0.00032f) * pOPL->nYM3812Clk / ym3812_StdClock;
-#endif
 			return;
 		case 0x04:		// IRQ-RESET/CONTROL OF TIMER 1 AND 2
 			if( nData & ym3812_TCIRQRES )
@@ -673,7 +654,7 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 			if( (nData&(~nTemp)) & ym3812_TCST1 )
 			{			// Start new timer if START TIMER1 was set this write.
 				if(pOPL->SetTimer!=NULL) (*pOPL->SetTimer)( 1, pOPL->vTimer1, pOPL, cFALSE );
-				pOPL->vTimer1IntCnt = 0.0f;	// Set timer to 0
+				pOPL->vTimer1IntCnt = 0.0f; // Set timer to 0
 			}
 			else if( ((~nData)&nTemp) & ym3812_TCST1 )
 			{			// Remove existing timer if START TIMER1 was cleared this write.
@@ -682,7 +663,7 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 			if( (nData&(~nTemp)) & ym3812_TCST2 )
 			{			// Start new timer if START TIMER2 was set this write.
 				if(pOPL->SetTimer!=NULL) (*pOPL->SetTimer)( 2, pOPL->vTimer2, pOPL, cFALSE );
-				pOPL->vTimer2IntCnt = 0.0f;	// Set timer to 0
+				pOPL->vTimer2IntCnt = 0.0f; // Set timer to 0
 			}
 			else if( ((~nData)&nTemp) & ym3812_TCST2 )
 			{			// Remove existing timer if START TIMER2 was cleared this write.
@@ -768,50 +749,50 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 				return;
 		}
 	}
-	return;	// Writing to unused register - probably a bug
+	return; // Writing to unused register - probably a bug
 }
 
-/*$DEADSERIOUSCLAN$*********************************************************************
+/*$DEADSERIOUS$********************************************
 * ROUTINE
-*	ym3812_Update( ym3812 *pOPL )
-* FUNCTION
-*	Updates one frame of sound. Does absolutely EVERYTHING of the emulation..
-* NOTES
-*	Amplitude modulation is either 1 or 4.8 dB of 47.25 dB max volume
-*	Vibrato max is either 14 percent or 7 percent of frequency
+*	void ym3812_Update_stream( int nChipID, void *pBuffer_in, int nLength )
 *
-****************************************************************************************/
-void ym3812_Update( ym3812 *pOPL )
+* FUNCTION
+*	This routine plays streamed audio rather than a
+*	set size buffer. Tailored for Mame streaming sounds.
+*
+***********************************************************/
+void ym3812_Update_stream( ym3812* pOPL, void *pBuffer_in, int nLength )
 {
-	int		nCurrVol[18],nCurrAdd[18];		// Volume for each slot, Frequency per channel
-	int		fPlaying[9];					// Is channel X playing??
-	int		nVibMul,nAMAdd;					// Vibrato and Amplitude modulation numbers
-	int		nRhythm,l,samp,Value,f16Bit;
-	int		nSlot,nSlot2,nOffs,nOffs2,nDiffAdd,nAdd;
-	int		nSubDiv,nBufSize,nBufferLeft,nCh;
-	float	vMulLevel,vTime;				// Temporary max volume level in envelope generator
-	char	*pBuffer,*pRhythm[5];
-	short   *pBuffer16;
+	int 		nCurrVol[18],nCurrAdd[18];		// Volume for each slot, Frequency per channel
+	int 		fPlaying[9];					// Is channel X playing??
+	int 		nVibMul,nAMAdd; 				// Vibrato and Amplitude modulation numbers
+	int 		nRhythm,l,samp,Value,f16Bit;
+	int 		nSlot,nSlot2,nOffs,nOffs2,nDiffAdd[5],nAdd[5];
+	int 		nSubDiv,nBufSize,nBufferLeft,nCh;
+	float		vMulLevel,vTime;				// Temporary max volume level in envelope generator
+	int			nElapseTime;
+	signed char *pRhythm[5];
+	char		*pBuffer;
+	short		*pBuffer16;
+
+	if( nLength == 0 ) return;
 
 // 16bit or 8bit samples?
 
 	f16Bit = pOPL->f16Bit;
-	pBuffer = pOPL->pBuffer;
+	pBuffer = pBuffer_in;
 	pBuffer16 = (short*)pBuffer;
 
-	nBufferLeft = pOPL->nBufSize;
+	nBufferLeft = nLength;
 
-// Update Timers
-
-#ifdef ym3812_AUTOMATIC
-	ym3812_UpdateTimers( pOPL, pOPL->vFrameDelay );
-#endif
+	if( pOPL->nReplayFrq == 0 ) return;
+	nElapseTime = (nLength<<16) / pOPL->nReplayFrq;	// Time is in 16:16 format in seconds.
 
 // Do the subdivision stuff
 
 	for( nSubDiv=0; nSubDiv<pOPL->nSubDivide; nSubDiv++ )
 	{
-		nBufSize = (pOPL->nBufSize / pOPL->nSubDivide) + 1;
+		nBufSize = (nLength / pOPL->nSubDivide) + 1;
 		nBufferLeft -= nBufSize;
 		if (nBufferLeft < 0) nBufSize += nBufferLeft;
 
@@ -825,7 +806,9 @@ void ym3812_Update( ym3812 *pOPL )
 				if( (pOPL->pDrum[l]!=NULL)&&(pOPL->nDrumOffs[l]<pOPL->nDrumSize[l]) )
 				{
 					pRhythm[nRhythm] = pOPL->pDrum[l]+pOPL->nDrumOffs[l];
-					pOPL->nDrumOffs[l] += 11025/pOPL->nEmuFreq;
+					pOPL->nDrumOffs[l] += (pOPL->nDrumRate[l] * nElapseTime) >> 16;
+					nDiffAdd[nRhythm] = (pOPL->nDrumRate[l]<<8)/(pOPL->nReplayFrq);
+					nAdd[nRhythm] = nDiffAdd[nRhythm]>>1;
 					nRhythm += 1;
 				}
 				else
@@ -835,14 +818,12 @@ void ym3812_Update( ym3812 *pOPL )
 			}
 		}
 
-// Update Vibrato and AMDepth sinus offsets and get values
+// Get values from and then update Vibrato and AMDepth sinus offsets.
 
-		pOPL->nVibratoOffs += (int)(SINTABLE_SIZE * 6.4 / pOPL->nEmuFreq / pOPL->nSubDivide);	// Vibrato @ 6.4 Hz (3.6 MHz OPL)
-		pOPL->nAMDepthOffs += (int)(SINTABLE_SIZE * 3.7 / pOPL->nEmuFreq / pOPL->nSubDivide);	// AMDepth @ 3.7 Hz (3.6 MHz OPL)
-		pOPL->nVibratoOffs &= SINTABLE_SIZE-1;
-		pOPL->nAMDepthOffs &= SINTABLE_SIZE-1;
+		pOPL->nVibratoOffs += (int)(SINTABLE_SIZE * 6.4 * pOPL->nYM3812Clk / ym3812_StdClock / pOPL->nSubDivide * nElapseTime)>>16;	// Vibrato @ 6.4 Hz (3.6 MHz OPL)
+		pOPL->nAMDepthOffs += (int)(SINTABLE_SIZE * 3.7 * pOPL->nYM3812Clk / ym3812_StdClock / pOPL->nSubDivide * nElapseTime)>>16;	// AMDepth @ 3.7 Hz (3.6 MHz OPL)
 
-		nVibMul = (int)(ym3812_aSinTable[0][pOPL->nVibratoOffs] * 0.014f);
+		nVibMul = (int)(ym3812_aSinTable[0][pOPL->nVibratoOffs] * 0.007f);
 		if( pOPL->nDepthRhythm & 0x40 ) nVibMul *= 2;
 		if( pOPL->nDepthRhythm & 0x80 )
 		{	// 4.8 dB max Amplitude Modulation
@@ -852,6 +833,8 @@ void ym3812_Update( ym3812 *pOPL )
 		{	// 1.0 dB max Amplitude Modulation
 			nAMAdd = (int)(ym3812_aSinTable[0][pOPL->nAMDepthOffs] / (47.25*(SINTABLE_MAX/256)));
 		}
+		pOPL->nVibratoOffs &= SINTABLE_SIZE-1;
+		pOPL->nAMDepthOffs &= SINTABLE_SIZE-1;
 
 // Calculate frequency for each slot
 
@@ -873,7 +856,6 @@ void ym3812_Update( ym3812 *pOPL )
 			else
 			{
 				nCh = l>>1;
-				pOPL->vEnvTime[l] += pOPL->vFrameDelay / pOPL->nSubDivide;
 				vMulLevel = (float)(0x3f-pOPL->nTotalLevel[l]);
 
 				// Emulate KSL
@@ -904,7 +886,7 @@ void ym3812_Update( ym3812 *pOPL )
 						vTime = ym3812_aAttackTime[pOPL->nAttack[l]];
 						if( pOPL->vEnvTime[l] < vTime )
 						{	// The attack is actually linear, so this is not a typo.
- 							nCurrVol[l] = (int)(pOPL->aVolumes[(int)vMulLevel] * pOPL->vEnvTime[l] / vTime);
+							nCurrVol[l] = (int)(pOPL->aVolumes[(int)vMulLevel] * pOPL->vEnvTime[l] / vTime);
 							break;	// Do not fall through to Decay
 						}
 						else
@@ -955,59 +937,59 @@ void ym3812_Update( ym3812 *pOPL )
 							break;
 						}
 				}
+				// Update envelop time for _NEXT_ frame
+				pOPL->vEnvTime[l] += (float)nElapseTime/65536.0f/(float)pOPL->nSubDivide;
 				if( nCurrVol[l]>0 ) fPlaying[nCh] = cTRUE;
 			}
 		}
 
-		nDiffAdd = (11025<<8)/(pOPL->nReplayFrq);
-		nAdd = nDiffAdd>>1;
-
-// Calculate one sample from all active FM channels
+		// Generate sample buffer
 		for( samp=nBufSize; samp>=0; --samp )
 		{
+			// Calculate one sample from all active FM channels
 			Value = 0;
 
-			for( l=8; l>=0; --l )				// Do all channels
+			for( l=8; l>=0; --l )												// Do all channels
 			{
-				if( fPlaying[l] )				// Is this channel playing at all?
+				if( fPlaying[l] )												// Is this channel playing at all?
 				{
 					nSlot = l<<1;												// Set Slot A
 					nSlot2 = nSlot+1;											// Set Slot B
 					nOffs = ( pOPL->nCurrPos[nSlot] >> 8);						// Calculate sintable offset this frame Slot A
 					nOffs2 = ( pOPL->nCurrPos[nSlot2] >> 8);					// Calculate sintable offset this frame Slot B
 
-					if( pOPL->nFeedback[l]!=0 )									// Fix feedback
+					if( pOPL->nFeedback[l]!=0 ) 								// Fix feedback
 					{
-						nOffs += (pOPL->nSinValue[nSlot])>>(pOPL->nFeedback[l]);	// Add feedback offset
+						nOffs += (pOPL->nSinValue[nSlot])>>(pOPL->nFeedback[l]);// Add feedback offset
 					}
-					pOPL->nSinValue[nSlot] = ym3812_aSinTable0[nOffs&(SINTABLE_SIZE-1)];	// Set old sample value
+					nOffs &= SINTABLE_SIZE-1;
+					pOPL->nSinValue[nSlot] = ym3812_aSinTable0[nOffs];			// Set old sample value
 
 					if( pOPL->fConnection[l] )									// Connect or Parallell?
 					{
-						Value += nCurrVol[nSlot] * ym3812_aSinTable[pOPL->nWave[nSlot]][nOffs&(SINTABLE_SIZE-1)] +
+						Value += nCurrVol[nSlot] * ym3812_aSinTable[pOPL->nWave[nSlot]][nOffs] +
 								 nCurrVol[nSlot2] * ym3812_aSinTable[pOPL->nWave[nSlot2]][nOffs2&(SINTABLE_SIZE-1)];
 					}
 					else
 					{
 						Value += nCurrVol[nSlot2]*ym3812_aSinTable[pOPL->nWave[nSlot2]][(nOffs2 +
-							((nCurrVol[nSlot]*ym3812_aSinTable0[nOffs&(SINTABLE_SIZE-1)])>>(14))) & (SINTABLE_SIZE-1)];
+							((nCurrVol[nSlot]*ym3812_aSinTable0[nOffs])>>(14))) & (SINTABLE_SIZE-1)];
 					}
 					pOPL->nCurrPos[nSlot] += nCurrAdd[nSlot];					// Increase sintable offset Slot A
-					pOPL->nCurrPos[nSlot2] += nCurrAdd[nSlot2];					// Increase sintable offset Slot B
+					pOPL->nCurrPos[nSlot2] += nCurrAdd[nSlot2]; 				// Increase sintable offset Slot B
 				}
 			}
-// Calculate one sample from all active Rhythm sounds
 
+			// Calculate one sample from all active Rhythm sounds
 			for( l=0; l<nRhythm; l++ )
 			{
-				Value += (*pRhythm[l] * pOPL->nOPLVol)<<(SINTABLE_SHIFT);//((*pRhythm[l]++^0x80) * pOPL->nOPLVol)>>8;
-				pRhythm[l] += nAdd>>8;
+				Value += (*pRhythm[l] * ym3812_StdVolume)<<(SINTABLE_SHIFT);
+				pRhythm[l] += nAdd[l]>>8;
+				nAdd[l] = (nAdd[l]&0xff)+nDiffAdd[l];
 			}
-			nAdd = (nAdd&0xff)+nDiffAdd;
 
-// Put sample value into sample buffer
-
-            if( f16Bit )    *pBuffer16++ = ym3812_Sign16(Value >> ( SINTABLE_SHIFT+1 ));
+			// Put sample value into sample buffer
+			if( f16Bit )	*pBuffer16++ = ym3812_Sign16(Value >> ( SINTABLE_SHIFT+1 ));
 			else			*pBuffer++ = ym3812_Sign8(Value >> ( SINTABLE_SHIFT+1+8 ));
 		}
 	}

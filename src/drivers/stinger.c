@@ -87,7 +87,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( stinger_input_ports )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -158,6 +158,78 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( scion_input_ports )
+	PORT_START	/* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0x18, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 
@@ -282,6 +354,29 @@ ROM_START( stinger_rom )
 	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 ROM_END
 
+ROM_START( scion_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1.5j",         0x0000, 0x2000, 0x5aaf571e )
+	ROM_LOAD( "2.6j",         0x2000, 0x2000, 0xd5a66ac9 )
+	ROM_LOAD( "3.8j",         0x4000, 0x2000, 0x6e616f28 )
+	ROM_LOAD( "4.9j",         0x6000, 0x2000, 0x0f40d002 )
+	ROM_LOAD( "5.10j",        0x8000, 0x2000, 0xdc4923b7 )
+
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "7.10e",        0x0000, 0x2000, 0x223e0d2a )
+	ROM_LOAD( "8.12e",        0x2000, 0x2000, 0xd3e39b48 )
+	ROM_LOAD( "9.15e",        0x4000, 0x2000, 0x630861b5 )
+	ROM_LOAD( "10.10h",       0x6000, 0x2000, 0x0d2a0d1e )
+	ROM_LOAD( "11.12h",       0x8000, 0x2000, 0xdc6ef8ab )
+	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	/* missing! */
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
+ROM_END
+
 
 
 static void stinger_decode(void)
@@ -349,9 +444,34 @@ struct GameDriver stinger_driver =
 	0,
 	0,
 
-	input_ports,
+	stinger_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
+	0, 0
+};
+
+struct GameDriver scion_driver =
+{
+	__FILE__,
+	0,
+	"scion",
+	"Scion",
+	"1984",
+	"Seibu Denshi [Cinematronics license]",
+	"Nicola Salmoria",
+	GAME_WRONG_COLORS,
+	&machine_driver,
+	0,
+
+	scion_rom,
+	0, 0,
+	0,
+	0,
+
+	scion_input_ports,
+
+	0, 0, 0,	//	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
 	0, 0
 };

@@ -510,7 +510,7 @@ struct GameDriver ropeman_driver =
 	"1983",
 	"bootleg",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 	0,
 

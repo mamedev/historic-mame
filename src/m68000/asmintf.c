@@ -15,7 +15,7 @@ extern void M68KRESET(void);
 /* Interface routines to link Mame -> 68KEM */
 /********************************************/
 
-regstruct regs;
+// regstruct regs; - now in assembler module
 
 void MC68000_Reset(void)
 {
@@ -23,7 +23,11 @@ void MC68000_Reset(void)
 
     regs.a[7] = regs.isp = get_long(0);
     regs.pc   = get_long(4) & 0xffffff;
-    regs.statusflags = 0x27;
+    regs.sr_high = 0x27;
+
+#ifdef MAME_DEBUG
+   	regs.sr = 0x2700;
+#endif
 
     M68KRESET();
 }
@@ -40,11 +44,10 @@ int  MC68000_Execute(int cycles)
     do
     {
         #if 0				/* Trace */
+
         if (errorlog)
         {
 			int mycount, areg, dreg;
-
-	       	MakeSR();
 
             areg = dreg = 0;
 	        for (mycount=7;mycount>=0;mycount--)
@@ -63,7 +66,6 @@ int  MC68000_Execute(int cycles)
 
 			if (mame_debug)
             {
-		       	MakeSR();
 				MAME_Debug();
             }
 		}

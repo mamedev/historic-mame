@@ -1,63 +1,14 @@
-/***************************************************************************
-  unzip.c
-  Support for retrieving files from zipfiles
- ***************************************************************************/
-
-#include "unzip.h"
+#include <unzip.h>
+#include <inflate.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 /* public globals */
 int	gUnzipQuiet = 0;		/* flag controls error messages */
 
-/* private globals */
-static int	gZipfileCorrupt = 0;	/* flag is set when corruption is detected during inflate */
-
-/*----------------------------------
-	inflate.c support
-----------------------------------*/
-extern int mame_inflate (void);
-
-unsigned char *slide;					/* 32K sliding window for inflate.c */
-unsigned char *g_nextbyte;		/* pointer to next byte of input */
-unsigned char *g_inputlimit;		/* pointer to first byte beyond input buffer */
-unsigned char *g_outbuf;			/* pointer to next byte in output buffer */
-unsigned char *g_outputlimit;	/* pointer to first byte beyond output buffer */
-
-/* flush data to output buffer -- used by mame_inflate() */
-void inflate_FLUSH (unsigned char *buffer, unsigned long n)
-{
-	if ( (g_outbuf + n) <= g_outputlimit)
-	{
-		memcpy (g_outbuf, buffer, n);
-		g_outbuf += n;
-	}
-	else
-	{
-		/* inflate attempted write beyond end of output buffer */
-		gZipfileCorrupt = 1;
-	}
-}
-
-/* read next byte of input -- used by mame_inflate() */
-int mame_nextbyte (void)
-{
-	if (g_nextbyte < g_inputlimit)
-		return *g_nextbyte++;
-
-	/* inflate attempted read beyond end of input buffer */
-	gZipfileCorrupt = 1;
-	return 256;	/* signal EOF */
-}
-/*----------------------------------
-     end of inflate.c support
-----------------------------------*/
-
-/* -------------------------------------------------------------------------
-   Mame support
- ------------------------------------------------------------------------- */
 extern FILE *errorlog;
 
 #define ERROR_CORRUPT "The zipfile seems to be corrupt, please check it"
@@ -440,14 +391,12 @@ void rewindzip(ZIP* zip) {
 	zip->cd_pos = 0;
 }
 
-/* Read compressed data
-   out:
-	data compressed data read
+/* Seek zip->fp to compressed data
    return:
 	==0 success
 	<0 error
 */
-int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
+int seekcompresszip(ZIP* zip, struct zipent* ent) {
 	char buf[ZIPNAME];
 	long offset;
 
@@ -478,10 +427,26 @@ int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
 			return -1;
 		}
 
-		if (fread(data, ent->compressed_size, 1, zip->fp)!=1) {
-			errormsg ("Reading compressed data", ERROR_CORRUPT, zip->zip);
-			return -1;
-		}
+	}
+
+	return 0;
+}
+
+/* Read compressed data
+   out:
+	data compressed data read
+   return:
+	==0 success
+	<0 error
+*/
+int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
+	int err = seekcompresszip(zip,ent);
+	if (err!=0)
+		return err;
+
+	if (fread(data, ent->compressed_size, 1, zip->fp)!=1) {
+		errormsg ("Reading compressed data", ERROR_CORRUPT, zip->zip);
+		return -1;
 	}
 
 	return 0;
@@ -507,8 +472,6 @@ int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
 		return readcompresszip(zip,ent,data);
 	} else if (ent->compression_method == 0x0008) {
 		/* file is compressed using "Deflate" method */
-		char* compdata;
-
 		if (ent->version_needed_to_extract > 0x14) {
 			errormsg("Version too new", ERROR_UNSUPPORTED,zip->zip);
 			return -2;
@@ -524,45 +487,16 @@ int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
 			return -2;
 		}
 
-		compdata = (char*)malloc( ent->compressed_size );
-		if (!compdata) {
-			return -1;
-		}
-
 		/* read compressed data */
-		if (readcompresszip(zip,ent,compdata)!=0) {
-			free(compdata);
+		if (seekcompresszip(zip,ent)!=0) {
 			return -1;
 		}
 
-		/* configure inflate input */
-		g_nextbyte = (unsigned char*)compdata;
-		g_inputlimit = g_nextbyte + ent->compressed_size;
-
-		/* configure inflate output */
-		g_outbuf = (unsigned char*)data;
-		g_outputlimit = g_outbuf + ent->uncompressed_size;
-
-		slide = (unsigned char*)malloc(0x8000);
-		if (!slide) {
-			free(compdata);
-			return -1;
-		}
-
-		/* Reset Corrupt flag */
-		gZipfileCorrupt = 0;
-
-		/* inflate the compressed file (now in memory) */
-		if (mame_inflate()!=0 || gZipfileCorrupt) {
-			errormsg("Inflating compressed data", ERROR_CORRUPT,zip->zip);
-			free(slide);
-			free(compdata);
+		/* configure inflate */
+		if (inflate_file( zip->fp, ent->compressed_size, (unsigned char*)data, ent->uncompressed_size )) {
+			errormsg("Inflating compressed data", ERROR_CORRUPT, zip->zip);
 			return -3;
 		}
-
-		free(slide);
-		free(compdata);
-
 
 		return 0;
 	} else {
@@ -626,7 +560,6 @@ static ZIP* cache_openzip(const char* zipfile) {
 	if (errorlog)
 		fprintf(errorlog,"Zip cache FAIL for %s\n", zipfile);
 */
-
 
 	/* open the zip */
 	zip = openzip( zipfile );
@@ -763,9 +696,28 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 
 	ent = readzip(zip);
 	while (ent) {
-		/* NS981003: support for "load by CRC" */
-		if (equal_filename(ent->name, filename) ||
-				(*sum && ent->crc32 == *sum))
+		if (equal_filename(ent->name, filename))
+		{
+			*length = ent->uncompressed_size;
+			*sum = ent->crc32;
+			cache_suspendzip(zip);
+			return 0;
+		}
+
+		/* next entry */
+		ent = readzip(zip);
+	}
+
+	cache_suspendzip(zip);
+
+	/* NS981003: support for "load by CRC" */
+	zip = cache_openzip(zipfile);
+	if (!zip)
+		return -1;
+
+	ent = readzip(zip);
+	while (ent) {
+		if (*sum && ent->crc32 == *sum)
 		{
 			*length = ent->uncompressed_size;
 			*sum = ent->crc32;

@@ -8,65 +8,67 @@
 /*                                                                          */
 /* Exidy                                                                    */
 /* -----                                                                    */
-/* Bandido (bandido)                                                        */
+/* Bandido                               (bandido)                          */
 /*                                                                          */
 /* Midway                                                                   */
 /* ------                                                                   */
-/* 596 - Sea Wolf (seawolf)                                                 */
-/* 597 - Gunfight (gunfight)                                                */
-/* 605 - Tornado Baseball (tornbase)                                        */
-/* 610 - 280-ZZZAP (zzzap)                                                  */
-/* 611 - Amazing Maze (maze)                                                */
-/* 612 - Boot Hill (boothill)                                               */
-/* 615 - Checkmate                                                          */
-/* 618 - Desert Gun                                                         */
-/* 619 - Double Play                                                        */
-/* 622 - Laguna Racer                                                       */
-/* 623 - Guided Missile (gmissile)                                          */
-/* 626 - M-4 (m4)                                                           */
-/* 630 - Clowns (clowns)                                                    */
-/* 640 - Space Walk                                                         */
-/* 642 - Extra Innings                                                      */
-/* 643 - Shuffleboard                                                       */
-/* 644 - Dog Patch (dogpatch)                                               */
-/* 645 - Space Encounters (spcenctr)                                        */
-/* 652 - Phantom II                                                         */
-/* 730 - 4 Player Bowling                                                   */
-/* 739 - Space Invaders (invaders)                                          */
-/* 742 - Blue Shark                                                         */
+/* 596 - Sea Wolf                        (seawolf)                          */
+/* 597 - Gunfight                        (gunfight)                         */
+/* 605 - Tornado Baseball                (tornbase)                         */
+/* 610 - 280-ZZZAP                       (zzzap)                            */
+/* 611 - Amazing Maze                    (maze)                             */
+/* 612 - Boot Hill                       (boothill)                         */
+/* 615 - Checkmate                       (checkmat)                         */
+/* 618 - Desert Gun                      NO DRIVER                          */
+/* 619 - Double Play                     (dplay)                            */
+/* 622 - Laguna Racer                    (lracer)                           */
+/* 623 - Guided Missile                  (gmissile)                         */
+/* 626 - M-4                             (m4)                               */
+/* 630 - Clowns                          (clowns)                           */
+/* 640 - Space Walk                      NO DRIVER                          */
+/* 642 - Extra Innings                   (einnings)                         */
+/* 643 - Shuffleboard                    NO DRIVER                          */
+/* 644 - Dog Patch                       (dogpatch)                         */
+/* 645 - Space Encounters                (spcenctr)                         */
+/* 652 - Phantom II                      (phantom2)                         */
+/* 730 - 4 Player Bowling                (midwbowl)                         */
+/* 739 - Space Invaders                  (invaders)                         */
+/* 742 - Blue Shark                      (blueshrk)                         */
 /* 851 - Space Invaders Part II (Midway) (invdelux)                         */
-/* 852 - Space Invaders Deluxe                                              */
+/* 852 - Space Invaders Deluxe           NO DRIVER                          */
 /*                                                                          */
 /* Taito                                                                    */
 /* -----                                                                    */
-/* Space Invaders Part II (Taito) (invadpt2)                                */
-/* Space Laser (GPI Intruder)                                               */
-/* Galaxy Wars (galxwars)                                                   */
-/* Lunar Rescue (lrescue)                                                   */
-/* Lupin III (lupin3)                                                       */
-/* Space Chaser (schaser)                                                   */
+/* Space Invaders Part II (Taito)        (invadpt2)                         */
+/* Space Laser  "GPI Intruder"           (intruder)                         */
+/* Galaxy Wars                           (galxwars)                         */
+/* Lunar Rescue                          (lrescue)                          */
+/* Lupin III                             (lupin3)                           */
+/* Ozma Wars                             (ozmawars)                         */
+/* Space Chaser                          (schaser)                          */
 /*                                                                          */
 /* Nichibutsu                                                               */
 /* ----------                                                               */
-/* Rolling Crash - Moon Base (rollingc)                                     */
+/* Rolling Crash - Moon Base             (rollingc)                         */
 /*                                                                          */
 /* Nintendo                                                                 */
 /* --------                                                                 */
-/* Heli Fire                                                                */
-/* Space Fever                                                              */
+/* Heli Fire                             (helifire)                         */
+/* Space Fever  (color)                  (sfever)                           */
+/* Space Fever  (B&W)                    (sfeverbw)                         */
 /*                                                                          */
 /* Universal                                                                */
 /* ---------                                                                */
-/* Cosmic Monsters (cosmicmo)                                               */
+/* Cosmic Monsters                       (cosmicmo)                         */
 /*                                                                          */
 /* Zeltec                                                                   */
 /* ------                                                                   */
-/* Space Attack II (spaceatt)                                               */
-/* Invaders Revenge (invrvnge)                                              */
+/* Space Attack II                       (spaceatt)                         */
+/* Invaders Revenge                      (invrvnge)                         */
 /*                                                                          */
-/* Super Earth Invasion (earthinv)                                          */
-/* Destination Earth (desterth)                                             */
-/* Space Phantoms (spaceph)                                                 */
+/* Super Earth Invasion                  (earthinv)                         */
+/* Destination Earth                     (desterth)                         */
+/* Space Phantoms                        (spaceph)                          */
 /*                                                                          */
 /*                                                                          */
 /* Notes:                                                                   */
@@ -81,7 +83,8 @@
 /* List of Changes                                                          */
 /* ---------------                                                          */
 /* 	MJC - 22.01.98 - Boot hill controls/memory mappings                     */
-/* 	LBO - 5 May 98 - Cleaned up the code, added Al's extra drivers, rotation support */
+/* 	LBO - 5 May 98 - Cleaned up the code, added Al's extra drivers,         */
+/*                   rotation support                                       */
 /*                                                                          */
 /****************************************************************************/
 
@@ -93,6 +96,8 @@
 int  invaders_shift_data_r(int offset);
 int  midbowl_shift_data_r(int offset);
 int  midbowl_shift_data_rev_r(int offset);
+int  blueshrk_shift_data_r(int offset);
+int  blueshrk_shift_data_rev_r(int offset);
 void invaders_shift_amount_w(int offset,int data);
 void invaders_shift_data_w(int offset,int data);
 int  invaders_interrupt(void);
@@ -114,6 +119,7 @@ extern unsigned char *invaders_videoram;
 
 void boothill_videoram_w(int offset,int data);   /* MAB */
 void invaders_videoram_w(int offset,int data);
+void invdelux_videoram_w(int offset,int data);   /* V.V */
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
 void lrescue_videoram_w(int offset,int data);    /* V.V */
 void rollingc_videoram_w(int offset,int data);   /* L.T */
@@ -126,6 +132,8 @@ void invaders_sh_port4_w(int offset,int data);
 void invadpt2_sh_port3_w(int offset,int data);
 void invaders_sh_port5_w(int offset,int data);
 void invaders_sh_update(void);
+void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
 {
@@ -197,6 +205,7 @@ static struct IOWritePort writeport[] =
 	{ 0x06, 0x06, invaders_dummy_write },
 	{ -1 }  /* end of table */
 };
+
 INPUT_PORTS_START( invaders_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -870,6 +879,15 @@ static struct IOReadPort invdelux_readport[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryWriteAddress invdelux_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, invdelux_videoram_w, &invaders_videoram },
+	{ 0x4000, 0x57ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
 INPUT_PORTS_START( invdelux_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -921,7 +939,7 @@ static struct MachineDriver invdelux_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem, writemem, invdelux_readport, writeport,
+			readmem, invdelux_writemem, invdelux_readport, writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -1032,6 +1050,48 @@ ROM_START( astlaser_rom )
 	ROM_LOAD( "4.u33",        0x1800, 0x0800, 0x10a160a1 )
 ROM_END
 
+INPUT_PORTS_START( astlaser_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* N ? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(	0x01, "Cocktail" )
+INPUT_PORTS_END
+
 struct GameDriver astlaser_driver =
 {
 	__FILE__,
@@ -1050,7 +1110,7 @@ struct GameDriver astlaser_driver =
 	invaders_sample_names,
 	0,      /* sound_prom */
 
-	invdelux_input_ports,
+	astlaser_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_ROTATE_270,
@@ -1072,6 +1132,48 @@ ROM_START( intruder_rom )
 	ROM_LOAD( "la04",         0x1800, 0x0800, 0x5116b234 )
 ROM_END
 
+INPUT_PORTS_START( intruder_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* N ? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(	0x01, "Cocktail" )
+INPUT_PORTS_END
+
 struct GameDriver intruder_driver =
 {
 	__FILE__,
@@ -1090,7 +1192,7 @@ struct GameDriver intruder_driver =
 	invaders_sample_names,
 	0,      /* sound_prom */
 
-	invdelux_input_ports,
+	intruder_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_ROTATE_270,
@@ -1783,6 +1885,9 @@ struct GameDriver rollingc_driver =
 /*                                                     */
 /* Exidy "Bandido"                                     */
 /*                                                     */
+/* Nintendo game which was sold outside of the US as   */
+/* "Sheriff"                                           */
+/*                                                     */
 /*******************************************************/
 
 ROM_START( bandido_rom )                                                                                /* MJC */
@@ -1799,7 +1904,7 @@ ROM_START( bandido_rom )                                                        
 	ROM_LOAD( "baj2-2",       0x2400, 0x0400, 0xa10b848a )
 
 #if 0
-	ROM_REGION_DISPOSE(0x0010)              /* Not Used */
+	ROM_REGION(0x0010)              /* Not Used */
 
     ROM_REGION(0x0800)                  /* Sound 8035 + 76477 Sound Generator */
     ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x0 )
@@ -2608,7 +2713,7 @@ static struct MachineDriver seawolf_machine_driver =
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
-    invaders_vh_screenrefresh,
+    seawolf_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -2940,6 +3045,7 @@ static struct MemoryWriteAddress lupin3_writemem[] =
 	{ 0x4000, 0x57ff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+
 INPUT_PORTS_START( lupin3_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -3066,9 +3172,9 @@ ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "tub.j2b",      0x2400, 0x0400, 0x5e2b5877 )
 
 #if 0
-	ROM_REGION_DISPOSE(0x0010)              /* Not Used */
+	ROM_REGION(0x0010)              /* Not Used */
 
-	ROM_REGION(0x0800)   /* Sound 8035 + 76477 Sound Generator */
+        ROM_REGION(0x0800)   /* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tub.snd",      0x0000, 0x0400, 0x0 )
 #endif
 ROM_END
@@ -3168,7 +3274,7 @@ ROM_REGION(0x10000)             /* 64k for code */
         ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
 
 #if 0
-	ROM_REGION_DISPOSE(0x0010)              /* Not Used */
+	ROM_REGION(0x0010)              /* Not Used */
 
        ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
        ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x0 )
@@ -3233,6 +3339,56 @@ struct GameDriver spacefev_driver =
 	ORIENTATION_ROTATE_270,
 
 	0,0
+};
+
+/*******************************************************/
+/*                                                     */
+/* Nintendo "Space Fever" (B&W)                        */
+/*                                                     */
+/*******************************************************/
+ROM_START( sfeverbw_rom )
+ROM_REGION(0x10000)             /* 64k for code */
+        ROM_LOAD( "spacefev.f1", 0x0000, 0x0400, 0xb8887351 )
+        ROM_LOAD( "spacefev.f2", 0x0400, 0x0400, 0xcda933a7 )
+        ROM_LOAD( "spacefev.g1", 0x0800, 0x0400, 0xde17578a )
+        ROM_LOAD( "spacefev.g2", 0x0C00, 0x0400, 0xf1a90948 )
+        ROM_LOAD( "spacefev.h1", 0x1000, 0x0400, 0xeefb4273 )
+        ROM_LOAD( "spacefev.h2", 0x1400, 0x0400, 0xe91703e8 )
+        ROM_LOAD( "spacefev.i1", 0x1800, 0x0400, 0x41e18df9 )
+        ROM_LOAD( "spacefev.i2", 0x1c00, 0x0400, 0xeff9f82d )
+
+#if 0
+        ROM_REGION(0x0010)              /* Not Used */
+
+       ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
+       ROM_LOAD( "TSF.SND", 0x0000, 0x0400, 0x0 )
+#endif
+
+ROM_END
+struct GameDriver sfeverbw_driver =
+{
+        __FILE__,
+        0,
+        "sfeverbw",
+        "Space Fever (B&W)",
+        "1980",
+        "Nintendo",
+        "The Space Invaders Team",
+        0,
+        &bandido_machine_driver,
+		0,
+
+        sfeverbw_rom,
+        0, 0,
+        0,
+        0,      /* sound_prom */
+
+        spacefev_input_ports,
+
+        0, palette, 0,
+        ORIENTATION_ROTATE_270,
+
+        0,0
 };
 
 /*******************************************************/
@@ -3594,7 +3750,8 @@ struct GameDriver m4_driver =
 /*                                                     */
 /* Midway "Phantom II"                                 */
 /*                                                     */
-/* To Do : clouds                                      */
+/* To Do : little fluffy clouds                        */
+/*         you still see them sometimes in the desert  */
 /*                                                     */
 /*******************************************************/
 
@@ -3987,39 +4144,44 @@ ROM_START( blueshrk_rom )
 	ROM_LOAD( "blueshrk.f",   0x1000, 0x0800, 0x86cca79d )
 ROM_END
 
-INPUT_PORTS_START( blueshrk_input_ports )
-	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x1f, 0x01, IPT_PADDLE, 100, 0, 0x01, 0xfe)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+static struct IOReadPort blueshrk_readport[] =
+{
+	{ 0x00, 0x00, blueshrk_shift_data_rev_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_0_r },
+	{ 0x03, 0x03, blueshrk_shift_data_r },
+	{ -1 }  /* end of table */
+};
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+static struct IOWritePort blueshrk_writeport[] =
+{
+	{ 0x01, 0x01, invaders_shift_amount_w },
+	{ 0x02, 0x02, invaders_shift_data_w },
+	{ 0x03, 0x03, invaders_dummy_write },
+	{ 0x04, 0x04, invaders_dummy_write },
+	{ -1 }  /* end of table */
+};
+
+INPUT_PORTS_START( blueshrk_input_ports )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x01, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin  - 1 Player" )
-	PORT_DIPSETTING(    0x01, "2 Coins  - 1 Player" )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x60, 0x00, "Replay", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x20, "Replay", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x20, "14000" )
 	PORT_DIPSETTING(    0x40, "18000" )
 	PORT_DIPSETTING(    0x60, "22000" )
-	PORT_DIPNAME( 0x80, 0x00, "Test Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Play Mode")
-	PORT_DIPSETTING(    0x80, "Test Mode")
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Play Mode")
+	PORT_DIPSETTING(    0x00, "Test Mode")
+
+	PORT_START      /* IN1 */
+	PORT_ANALOG ( 0x7f, 0x45, IPT_PADDLE, 100, 0, 0xf, 0x7f)
+
 INPUT_PORTS_END
 
 static struct MachineDriver blueshrk_machine_driver =
@@ -4028,10 +4190,10 @@ static struct MachineDriver blueshrk_machine_driver =
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			2000000,
 			0,
-			readmem, writemem, readport, writeport,
-			invaders_interrupt,2    /* two interrupts per frame */
+			readmem, boothill_writemem, blueshrk_readport, blueshrk_writeport,
+			invaders_interrupt, 2    /* two interrupts per frame */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
@@ -4048,7 +4210,7 @@ static struct MachineDriver blueshrk_machine_driver =
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
-	invaders_vh_screenrefresh,
+	blueshrk_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -4298,7 +4460,7 @@ struct GameDriver maze_driver =
 	__FILE__,
 	0,
 	"maze",
-	"The Amazing Maze Game",
+	"Amazing Maze",
 	"1976",
 	"Midway",
 	"Space Invaders Team\nLee Taylor\n",
@@ -4436,3 +4598,238 @@ struct GameDriver tornbase_driver =
 	0,0
 };
 
+/*******************************************************/
+/*                                                     */
+/* Midway "Checkmate"                                  */
+/*                                                     */
+/*******************************************************/
+
+ROM_START( checkmat_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "checkmat.h", 0x0000, 0x0400, 0x3481a6d1 )
+	ROM_LOAD( "checkmat.g", 0x0400, 0x0400, 0xdf5fa551 )
+	ROM_LOAD( "checkmat.f", 0x0800, 0x0400, 0x25586406 )
+	ROM_LOAD( "checkmat.e", 0x0c00, 0x0400, 0x59330d84 )
+ROM_END
+
+static struct IOReadPort checkmat_readport[] =
+{
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, input_port_3_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort checkmat_writeport[] =
+{
+	{ -1 }  /* end of table */
+};
+
+INPUT_PORTS_START( checkmat_input_ports )
+	PORT_START      /* IN0  */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+
+	PORT_START      /* IN1  */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
+
+	PORT_START      /* IN2 Dips & Coins */
+	PORT_DIPNAME( 0x01, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin / Player" )
+	PORT_DIPSETTING(    0x01, "2 Coin / 2 Players" )
+	PORT_DIPNAME( 0x0C, 0x00, "Rounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0C, "5" )
+	PORT_DIPNAME( 0x60, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x20, "German" )
+	PORT_DIPSETTING(    0x40, "French" )
+	PORT_DIPSETTING(    0x60, "Spanish" )
+	PORT_DIPNAME( 0x80, 0x00, "Test", IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+    PORT_START       /* IN3  */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START4 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+INPUT_PORTS_END
+
+static struct MachineDriver checkmat_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem,boothill_writemem,checkmat_readport,checkmat_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+    invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+struct GameDriver checkmat_driver =
+{
+	__FILE__,
+	0,
+	"checkmat",
+	"Checkmate",
+	"1977",
+	"Midway",
+	"The Space Invaders Team\n",
+	0,
+	&checkmat_machine_driver,
+	0,
+
+	checkmat_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	checkmat_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+/*******************************************************/
+/*                                                     */
+/* Taito "Ozma Wars"                                   */
+/*                                                     */
+/*******************************************************/
+
+ROM_START( ozmawars_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mw01", 0x0000, 0x0800, 0x31f4397d )
+	ROM_LOAD( "mw02", 0x0800, 0x0800, 0xd8e77c62 )
+	ROM_LOAD( "mw03", 0x1000, 0x0800, 0x3bfa418f )
+	ROM_LOAD( "mw04", 0x1800, 0x0800, 0xe190ce6c )
+	ROM_LOAD( "mw05", 0x4000, 0x0800, 0x3bc7d4c7 )
+	ROM_LOAD( "mw06", 0x4800, 0x0800, 0x99ca2eae )
+ROM_END
+
+INPUT_PORTS_START( ozmawars_input_ports )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* N ? */
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(	0x01, "Cocktail" )
+INPUT_PORTS_END
+
+struct GameDriver ozmawars_driver =
+{
+	__FILE__,
+	0,
+	"ozmawars",
+	"Ozma Wars",
+	"1979",
+	"SNK",
+	"The Space Invaders Team",
+	0,
+	&invadpt2_machine_driver,
+	0,
+
+	ozmawars_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	ozmawars_input_ports,
+
+	0,palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};

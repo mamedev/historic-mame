@@ -16,7 +16,7 @@
   0x02-0x03     Scroll1 RAM base (/256)
   0x04-0x05     Scroll2 RAM base (/256)
   0x06-0x07     Scroll3 RAM base (/256)
-  0x08-0x09     ??? Base address of something (this could be important) ???
+  0x08-0x09     Scroll distortion
   0x0a-0x0b     Palette base (/256)
   0x0c-0x0d     Scroll 1 X
   0x0e-0x0f     Scroll 1 Y
@@ -62,7 +62,7 @@ const int cps1_scroll1_size=0x4000;
 const int cps1_scroll2_size=0x4000;
 const int cps1_scroll3_size=0x4000;
 const int cps1_obj_size    =0x4000;
-const int cps1_unknown_size=0x4000;
+const int cps1_other_size=0x4000;
 const int cps1_palette_size=0x1000;
 
 static unsigned char *cps1_scroll1;
@@ -70,7 +70,7 @@ static unsigned char *cps1_scroll2;
 static unsigned char *cps1_scroll3;
 static unsigned char *cps1_obj;
 static unsigned char *cps1_palette;
-static unsigned char *cps1_unknown;
+static unsigned char *cps1_other;
 static unsigned char *cps1_old_palette;
 
 static int cps1_last_sprite_offset;     /* Offset of the last sprite */
@@ -83,7 +83,7 @@ struct CPS1config *cps1_game_config;
 #define CPS1_SCROLL1_BASE       0x02    /* Base address of scroll 1 */
 #define CPS1_SCROLL2_BASE       0x04    /* Base address of scroll 2 */
 #define CPS1_SCROLL3_BASE       0x06    /* Base address of scroll 3 */
-#define CPS1_UNKNOWN_BASE       0x08    /* Base address of unknown video */
+#define CPS1_OTHER_BASE         0x08    /* Base address of other video */
 #define CPS1_PALETTE_BASE       0x0a    /* Base address of palette */
 #define CPS1_SCROLL1_SCROLLX    0x0c    /* Scroll 1 X */
 #define CPS1_SCROLL1_SCROLLY    0x0e    /* Scroll 1 Y */
@@ -134,10 +134,10 @@ void cps1_dump_video(void)
 		fclose(fp);
 	}
 
-	fp=fopen("UNKNOWN.DMP", "w+b");
+        fp=fopen("OTHER.DMP", "w+b");
 	if (fp)
 	{
-		fwrite(cps1_unknown, cps1_unknown_size, 1, fp);
+                fwrite(cps1_other, cps1_other_size, 1, fp);
 		fclose(fp);
 	}
 
@@ -153,6 +153,13 @@ void cps1_dump_video(void)
 		fwrite(cps1_output, cps1_output_size, 1, fp);
 		fclose(fp);
 	}
+	fp=fopen("VIDEO.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_gfxram, cps1_gfxram_size, 1, fp);
+		fclose(fp);
+	}
+
 }
 #endif
 
@@ -165,7 +172,7 @@ INLINE void cps1_get_video_base(void)
 	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
 	cps1_obj    =cps1_base(CPS1_OBJ_BASE);
 	cps1_palette=cps1_base(CPS1_PALETTE_BASE);
-	cps1_unknown=cps1_base(CPS1_UNKNOWN_BASE);
+        cps1_other=cps1_base(CPS1_OTHER_BASE);
 }
 
 /***************************************************************************
@@ -310,7 +317,7 @@ INLINE void cps1_palette_scroll1(unsigned short *base)
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
-                        code=READ_WORD(&cps1_scroll1[offs]);
+			code=READ_WORD(&cps1_scroll1[offs]);
 
 			if (code >= base_scroll1 && code != space_char)
 			{
@@ -348,19 +355,22 @@ INLINE void cps1_render_scroll1(struct osd_bitmap *bitmap)
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
-                        code=READ_WORD(&cps1_scroll1[offs]);
+			code=READ_WORD(&cps1_scroll1[offs]);
 
 			if (code >= base_scroll1 && code != space_char)
 			{
 				/* Optimization: only draw non-spaces */
 				int colour=READ_WORD(&cps1_scroll1[offs+2]);
-				code -= base_scroll1;
-				drawgfx(bitmap,Machine->gfx[0],
+		if (! (colour & 0x8000))
+		{
+		    code -= base_scroll1;
+		    drawgfx(bitmap,Machine->gfx[0],
 						code,
 						colour&0x1f,
 						colour&0x20,colour&0x40,sx,sy,
 						&Machine->drv->visible_area,
 						TRANSPARENCY_PEN,15);
+		 }
 			 }
 			 sy+=8;
 		 }
@@ -433,13 +443,8 @@ INLINE void cps1_palette_sprites(unsigned short *base)
 		int y=READ_WORD(&cps1_obj[i+2]);
 		if (x && y)
 		{
-			int code=READ_WORD(&cps1_obj[i+4]);
 			int col=READ_WORD(&cps1_obj[i+6])& 0x1f;
-			code &= 0x3fff;
-			if (code >= base_obj)
-			{
-				base[col] |= 0x7fff;
-			}
+	    base[col] |= 0x7fff;
 		}
 	}
 }
@@ -465,7 +470,6 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 			int col=colour&0x1f;
 
 			x-=0x40;
-			code &= 0x3fff;
 			if (code >= base_obj && !(colour & 0x8000))
 			{
 				code -= base_obj;
@@ -1190,7 +1194,6 @@ INLINE void cps1_palette_scroll2(unsigned short *base)
 	}
 }
 
-
 INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 {
 	int base_scroll2=cps1_game_config->base_scroll2;
@@ -1209,7 +1212,7 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 			int n;
 			n=ny+sy;
 			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
-			offsx=((nx+sx)*0x040)&0xfff;
+                        offsx=((nx+sx)*0x040)&0xfff;
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
@@ -1259,6 +1262,123 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 		}
 	}
 }
+
+
+INLINE void cps1_palette_scroll2_distort(unsigned short *base)
+{
+	int base_scroll2=cps1_game_config->base_scroll2;
+	int space_char=cps1_game_config->space_scroll2;
+	int sx, sy;
+	int nx=(scroll2x>>4)+4;        /* Rough X */
+	int ny=(scroll2y>>4);          /* Rough Y */
+
+	int elements = Machine->gfx[2]->total_elements;
+
+	for (sx=0; sx<0x32/2+1; sx++)
+	{
+                int other=0x600;
+
+		for (sy=0; sy<0x09*2; sy++)
+		{
+			int offsy, offsx, offs, colour, code;
+			int n;
+                        int xdistort=READ_WORD(&cps1_other[other]);
+
+			n=ny+sy;
+			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
+                        offsx=((nx+sx+(xdistort>>4))*0x040)&0xfff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
+
+			code=READ_WORD(&cps1_scroll2[offs]);
+			if (code >= base_scroll2 && code != space_char )
+			{
+				code -= base_scroll2;
+				colour=READ_WORD(&cps1_scroll2[offs+2]);
+
+				base[colour&0x1f] |= Machine->gfx[2]->pen_usage[code % elements];
+			}
+		}
+                other+=32;
+	}
+}
+
+
+INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
+{
+	int base_scroll2=cps1_game_config->base_scroll2;
+	int space_char=cps1_game_config->space_scroll2;
+	int sx, sy;
+        int nxoffset;
+        int nxo=scroll2x&0x0f;    /* Smooth X */
+	int nyoffset=scroll2y&0x0f;    /* Smooth Y */
+
+	int nx=(scroll2x>>4)+4;        /* Rough X */
+	int ny=(scroll2y>>4);          /* Rough Y */
+
+	for (sx=0; sx<0x32/2+1; sx++)
+	{
+                int other=0x600;
+		for (sy=0; sy<0x09*2; sy++)
+		{
+			int offsy, offsx, offs, colour, code;
+			int n;
+                        int xdistort=READ_WORD(&cps1_other[other]);
+                        nxoffset=nxo+(xdistort&0x0f);
+			n=ny+sy;
+			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
+                        offsx=((nx+sx+(xdistort>>4))*0x040)&0xfff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
+
+			code=READ_WORD(&cps1_scroll2[offs]);
+			if (code >= base_scroll2 && code != space_char )
+			{
+				code -= base_scroll2;
+				colour=READ_WORD(&cps1_scroll2[offs+2]);
+				if (priority)
+				{
+					int mask=colour & 0x0180;
+
+					if (mask)
+					{
+
+						int transp=0;
+#if 0
+						cps1_debug(colour & 0x1f);
+						if (errorlog && osd_key_pressed(OSD_KEY_L))
+						{
+							fprintf(errorlog, "%04x\n", colour);
+						}
+#endif
+						transp=cps1_transparency_table[colour>>7];
+
+						drawgfx(bitmap,Machine->gfx[2],
+								code,
+								colour&0x1f,
+								colour&0x20,colour&0x40,
+								16*sx-nxoffset,16*sy-nyoffset,
+								&Machine->drv->visible_area,
+								TRANSPARENCY_PENS,transp);
+					}
+				}
+				else
+				{
+					/* Draw entire tile */
+					drawgfx(bitmap,Machine->gfx[2],
+						code,
+						colour&0x1f,
+						colour&0x20,colour&0x40,
+						16*sx-nxoffset,16*sy-nyoffset,
+						&Machine->drv->visible_area,
+						TRANSPARENCY_PEN,15);
+				}
+			}
+		}
+                other+=32;
+	}
+}
+
 
 
 /***************************************************************************
@@ -1412,6 +1532,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scroll1priority;
 	int scroll2priority;
 	int i,offset;
+        int distort_scroll2;
 
 	/* Get video memory base registers */
 	cps1_get_video_base();
@@ -1424,7 +1545,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
 	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 
-
+        distort_scroll2=0;
 	/*
 	 Welcome to kludgesville... I have no idea how this is supposed
 	 to work. The layer priority register is different from machine
@@ -1461,8 +1582,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
 			scrl1on=1;
-                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+			scrl2on=layercontrol&0x08;      /* Not quite should probably */
+			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
 			/* Scroll 2 / 3 priority */
 			scroll2priority=(layercontrol&0x040);
@@ -1533,16 +1654,94 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll2priority=(layercontrol&0x040);
 			break;
 
-                case 9:
-                        layercontrolport=0x6c;
+		case 9:
+			layercontrolport=0x6c;
 			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
 			scrl1on=1;
-                        scrl2on=layercontrol&0x04;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+			scrl2on=layercontrol&0x04;
+			scrl3on=layercontrol&0x08;
 
 			/* Scroll 2 / 3 priority */
 			scroll2priority=(layercontrol&0x040);
+			break;
+
+		case 10:
+			layercontrolport=0x60;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=layercontrol&0x04;
+			scrl3on=layercontrol&0x08;
+	       scrl2on=1;
+	       scrl3on=1;
+			/* Scroll 2 / 3 priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
+
+		case 11:
+			layercontrolport=0x4c;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+	    scrl2on=layercontrol&0x04;
+	    scrl3on=layercontrol&0x08;
+			/* Scroll 2 / 3 priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
+
+                case 12:
+                        /* Street Fighter 2 */
+                        layercontrolport=0x54;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+                        scrl2on=1;
+                        scrl3on=1;
+			/* Scroll 2 / 3 priority */
+                        scroll2priority=(layercontrol&0x600)==0x200;
+                        distort_scroll2=1;
+			break;
+
+                case 13:
+                        /* Street Fighter 2 (turbo )*/
+                        layercontrolport=0x66;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+                        scrl2on=1;
+                        scrl3on=1;
+			/* Scroll 2 / 3 priority */
+                        scroll2priority=(layercontrol&0x600)==0x200;
+                        distort_scroll2=1;
+			break;
+
+
+                case 14:
+                        {
+                                static int s;
+                                static int s1;
+
+                                if (osd_key_pressed(OSD_KEY_L))
+                                {
+                                   while (osd_key_pressed(OSD_KEY_L)) ;
+                                   s=~s;
+                                }
+                                if (osd_key_pressed(OSD_KEY_K))
+                                {
+                                   while (osd_key_pressed(OSD_KEY_K)) ;
+                                   s1^=0x80;
+                                }
+                                layercontrol=s1;
+
+
+			/* Layers on / off */
+			scrl1on=1;
+                        scrl2on=1;
+                        scrl3on=1;
+			/* Scroll 2 / 3 priority */
+                        scroll2priority=s;
+                        }
 			break;
 
 
@@ -1550,10 +1749,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			layercontrolport=0;
 			layercontrol=0xffff;
 			scrl1on=1;
-			scrl2on=layercontrol&0x08;      /* Not quite should probably */
-			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
-
-			layercontrol|=0x0080;           /* Force scroll1 priority */
+	    scrl2on=1;
+	    scrl3on=1;
 
 			/* Scroll 2 / 3 priority */
 			scroll2priority=1;
@@ -1572,7 +1769,16 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (scrl1on)
 		cps1_palette_scroll1 (&palette_usage[32]);
 	if (scrl2on)
-		cps1_palette_scroll2 (&palette_usage[32+32]);
+        {
+                if (distort_scroll2)
+                {
+                       cps1_palette_scroll2_distort (&palette_usage[32+32]);
+                }
+                else
+                {
+                        cps1_palette_scroll2 (&palette_usage[32+32]);
+                }
+        }
 	if (scrl3on)
 		cps1_palette_scroll3 (&palette_usage[32+32+32]);
 	for (i = offset = 0; i < 32*4; i++)
@@ -1616,14 +1822,28 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		if (scrl2on)
 		{
-			cps1_render_scroll2(bitmap, 0);
+                        if (distort_scroll2)
+                        {
+                                cps1_render_scroll2_distort(bitmap, 0);
+                        }
+                        else
+                        {
+                                cps1_render_scroll2(bitmap, 0);
+                        }
 		}
 	}
 	else
 	{
 		if (scrl2on)
 		{
-			cps1_render_scroll2(bitmap, 0);
+                        if (distort_scroll2)
+                        {
+                                cps1_render_scroll2_distort(bitmap, 0);
+                        }
+                        else
+                        {
+                                cps1_render_scroll2(bitmap, 0);
+                        }
 		}
 		if (scrl3on)
 		{
@@ -1641,14 +1861,29 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		if (scrl2on)
 		{
-			cps1_render_scroll2(bitmap, 0x0100);
+                        if (distort_scroll2)
+                        {
+                                cps1_render_scroll2_distort(bitmap, 0x0100);
+                        }
+                        else
+                        {
+                                cps1_render_scroll2(bitmap, 0x0100);
+                        }
 		}
 	}
 	else
 	{
 		if (scrl2on)
 		{
-			cps1_render_scroll2(bitmap, 0x0100);
+                        if (distort_scroll2)
+                        {
+                                cps1_render_scroll2_distort(bitmap, 0x0100);
+                        }
+                        else
+                        {
+
+                                cps1_render_scroll2(bitmap, 0x0100);
+                        }
 		}
 		if (scrl3on)
 		{
@@ -1660,5 +1895,30 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		cps1_render_scroll1(bitmap);
 	}
+
+
+#if 0
+	{
+		int i;
+		int nReg=layercontrolport;
+		int nVal=cps1_port(nReg);
+		struct DisplayText dt[2];
+		char szBuffer[40];
+		int count = 0;
+
+		char *pszPriority="SCROLL 2";
+		if (!scroll2priority)
+		{
+			pszPriority="SCROLL 3";
+		}
+		sprintf(szBuffer, "%04x=%04x %s", nReg, nVal, pszPriority);
+		dt[0].text = szBuffer;
+		dt[0].color = DT_COLOR_RED;
+		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[0].text)) / 2;
+		dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2 + 2;
+		dt[1].text = 0;
+		displaytext(dt,0);
+	}
+#endif
 }
 

@@ -1,3 +1,19 @@
+/*$DEADSERIOUSCLAN$*********************************************************************
+* FILE
+*	Yamaha 3812 emulator interface - MAME VERSION
+*
+* CREATED BY
+*	Ernesto Corvi
+*
+* UPDATE LOG
+*	CHS 1998-10-23	Mame streaming sound chip update
+*	EC	1998		Created Interface
+*
+* NOTES
+*	The ym3812 emulator supports several OPL (OPL1/OPL2/OPLL etc.) chips, update the
+*	interface if you want to use this feature!!!
+*
+***************************************************************************************/
 #include "driver.h"
 #include "3812intf.h"
 #include "fm.h"
@@ -5,10 +21,11 @@
 
 /* Main emulated vs non-emulated switch */
 /* default : Use non-emulated YM3812 */
-int use_emulated_ym3812 = 0;
+int use_emulated_ym3812 = 1;
 
 /* Emulated YM3812 variables and defines */
 static ym3812* ym = 0;
+static int ym_channel = 0;
 static int emulation_rate;
 static int buffer_len;
 static int sample_bits;
@@ -215,6 +232,12 @@ void timer_handler( int timer, double period, ym3812 *pOPL, int Tremove ) {
 	}
 }
 
+void emu_ym3812_fixed_pointer_problem_update( int nNoll, void *pBuffer, int nLength )
+{
+	// The ym3812 supports several ym chips, update the interface if you want to use this feature!!!
+	ym3812_Update_stream( ym, pBuffer, nLength );
+}
+
 int emu_YM3812_sh_start( struct YM3812interface *interface ) {
 	int rate = Machine->sample_rate;
 
@@ -223,16 +246,9 @@ int emu_YM3812_sh_start( struct YM3812interface *interface ) {
 
 	intf = interface;
 
-	buffer_len = rate / Machine->drv->frames_per_second;
-    emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	sample_bits = Machine->sample_bits;
 
-	if ( ( buffer = malloc( ( sample_bits / 8 ) * buffer_len ) ) == 0 )
-		return 1;
-
-	memset( buffer,0, buffer_len * ( sample_bits / 8 ) );
-
-    ym = ym3812_Init( emulation_rate, buffer_len, Machine->drv->frames_per_second, intf->clock, ( sample_bits == 16 ) );
+    ym = ym3812_Init( rate, intf->clock, ( sample_bits == 16 ) );
 
 	if ( ym == NULL )
 		return -1;
@@ -240,8 +256,9 @@ int emu_YM3812_sh_start( struct YM3812interface *interface ) {
 	timer1 = timer2 = 0;
 	ym->SetTimer = timer_handler;
 
-	channel = get_play_channels(intf->num);
-
+   ym_channel = stream_init(
+			"OPL 1/2/L",rate,sample_bits,
+			0,emu_ym3812_fixed_pointer_problem_update);
 	return 0;
 }
 
@@ -267,17 +284,6 @@ void emu_YM3812_sh_stop( void ) {
 }
 
 void emu_YM3812_sh_update( void ) {
-
-	if ( Machine->sample_rate == 0 )
-		return;
-
-	ym3812_SetBuffer( ym, buffer );
-	ym3812_Update( ym );
-
-	if ( sample_bits == 16 )
-                osd_play_streamed_sample_16( channel, buffer, 2 * buffer_len, emulation_rate, intf->volume[0] );
-	else
-                osd_play_streamed_sample( channel, buffer, buffer_len, emulation_rate, intf->volume[0] );
 }
 
 int emu_YM3812_status_port_0_r( int offset ) {
@@ -289,6 +295,7 @@ void emu_YM3812_control_port_0_w( int offset, int data ) {
 }
 
 void emu_YM3812_write_port_0_w( int offset, int data ) {
+//	stream_update( ym_channel );	// Update the buffer before writing new regs
 	ym3812_WriteReg( ym, data );
 }
 
@@ -325,7 +332,7 @@ int YM3812_sh_start( struct YM3812interface *interface ) {
 		read_port_0_r = nonemu_YM3812_read_port_0_r;
 	}
 
-	/* now call the proper handler */
+   /* now call the proper handler */
 	return (*sh_start)(interface);
 }
 

@@ -15,6 +15,7 @@ extern int cps1_player_input_r(int offset);    /* Input ports */
 
 extern int cps1_interrupt(void);       /* Ghouls and Ghosts */
 extern int cps1_interrupt2(void);      /* Everything else */
+extern int cps1_interrupt3(void);      /* (apart from Street Fighter) */
 
 extern int  cps1_vh_start(void);
 extern void cps1_vh_stop(void);
