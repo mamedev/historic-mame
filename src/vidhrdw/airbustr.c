@@ -3,7 +3,7 @@
 								Air Buster
 						    (C) 1990  Kaneko
 
-				    driver by Luca Elia (eliavit@unina.it)
+				    driver by Luca Elia (l.elia@tin.it)
 
 [Screen]
  	Size:				256 x 256

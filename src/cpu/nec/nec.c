@@ -125,6 +125,7 @@ void nec_reset (void *param)
     }
 
 	I.ZeroVal = I.ParityVal = 1;
+	I.DF = 1;
 	SetMD(1);						/* set the mode-flag = native mode */
 
     for (i = 0; i < 256; i++)
@@ -1071,7 +1072,7 @@ const char *v20_info(void *context, int regnum)
     static int which = 0, flags;
     nec_Regs *r = context;
 
-    which = ++which % 32;
+    which = (which+1) % 32;
     buffer[which][0] = '\0';
     if( !context )
         r = &I;
@@ -1120,7 +1121,7 @@ const char *v20_info(void *context, int regnum)
         case CPU_INFO_FAMILY: return "NEC V-Series";
         case CPU_INFO_VERSION: return "1.6";
         case CPU_INFO_FILE: return __FILE__;
-        case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
+        case CPU_INFO_CREDITS: return "NEC emulator v1.4 by Bryan McPhail";
         case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
         case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
     }
@@ -1166,7 +1167,7 @@ const char *v30_info(void *context, int regnum)
     static int which = 0;
     nec_Regs *r = context;
 
-    which = ++which % 32;
+    which = (which+1) % 32;
     buffer[which][0] = '\0';
     if( !context )
         r = &I;
@@ -1219,7 +1220,7 @@ const char *v33_info(void *context, int regnum)
     static int which = 0;
     nec_Regs *r = context;
 
-    which = ++which % 32;
+    which = (which+1) % 32;
     buffer[which][0] = '\0';
     if( !context )
         r = &I;

@@ -326,6 +326,16 @@ WRITE16_HANDLER( nmk_scroll_2_w )
 	}
 }
 
+WRITE16_HANDLER( vandyke_scroll_w )
+{
+	static UINT16 scroll[4];
+
+	scroll[offset] = data;
+
+	tilemap_set_scrollx(bg_tilemap,0,scroll[0] * 256 + (scroll[1] >> 8));
+	tilemap_set_scrolly(bg_tilemap,0,scroll[2] * 256 + (scroll[3] >> 8));
+}
+
 WRITE16_HANDLER( nmk_flipscreen_w )
 {
 	if (ACCESSING_LSB)

@@ -2,7 +2,7 @@
 
 							  -= Tetris Plus 2 =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  TMP68HC000P-12

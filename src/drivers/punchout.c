@@ -825,12 +825,12 @@ static const struct MachineDriver machine_driver_##NAME =									\
 	0,																				\
 																					\
 	/* video hardware */															\
-	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },										\
+	32*8, 28*8*2, { 0*8, 32*8-1, 0*8, 28*8*2-1 },									\
 	GFX##_gfxdecodeinfo,															\
 	1024+1, COLORTABLE,																\
 	GFX##_vh_convert_color_prom,													\
 																					\
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,											\
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(4,6),				\
 	0,																				\
 	GFX##_vh_start,																	\
 	punchout_vh_stop,																\

@@ -298,7 +298,7 @@ void irem_cpu_decrypt(int cpu,unsigned char *decryption_table)
 	diff = memory_region_length(cpu+REGION_CPU1) / 2;
 
 	memory_set_opcode_base(cpu,rom+diff);
-	for (A = 0;A < 0x100000;A++)
+	for (A = 0;A < diff;A++)
 		rom[A + diff] = decryption_table[rom[A]];
 
 	for (A=0; A<256; A++) {

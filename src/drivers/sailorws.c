@@ -216,7 +216,7 @@ static void sailorws_dipswbitsel_w(int data)
 		case	0x80:
 			break;
 		case	0xc0:
-			sailorws_dipswbitsel = ((sailorws_dipswbitsel++) & 0x0f);
+			sailorws_dipswbitsel = ((sailorws_dipswbitsel+1) & 0x0f);
 			break;
 		default:
 			break;
@@ -3662,7 +3662,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV2( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \

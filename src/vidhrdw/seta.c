@@ -2,7 +2,7 @@
 
 								-= Seta Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
@@ -430,6 +430,19 @@ void blandia_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 		}
 }
 
+
+
+/* layers have 6 bits per pixel, but the color code has a 16 colors granularity */
+void jjsquawk_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int color, pen;
+	for( color = 0; color < 32; color++ )
+		for( pen = 0; pen < 64; pen++ )
+		{
+			colortable[color * 64 + pen + 32*16 + 32*64*0] = ((color * 16 + pen)%(32*16)) + 32*16*2;
+			colortable[color * 64 + pen + 32*16 + 32*64*1] = ((color * 16 + pen)%(32*16)) + 32*16*1;
+		}
+}
 
 
 /* layer 0 is 6 bit per pixel, but the color code has a 16 colors granularity */

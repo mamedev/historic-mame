@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -44,6 +45,7 @@ int TC0150ROD_vh_start(void)
 
 	if (!TC0150ROD_ram) return 1;
 
+	state_save_register_UINT16("TC0150ROD", 0, "memory", TC0150ROD_ram, TC0150ROD_RAM_SIZE/2);
 	return 0;
 }
 
@@ -215,7 +217,7 @@ static int has_TC0110PCR(void)
 	return 0;
 }
 
-int taitoz_core_vh_start (void)
+static int taitoz_core_vh_start (void)
 {
 	/* Up to $2000/8 big sprites, requires 0x400 * sizeof(*spritelist)
 	   Multiply this by 32 to give room for the number of small sprites,
@@ -225,9 +227,9 @@ int taitoz_core_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-	if (has_TC0480SCP())	/* it's a tc0480scp game */
+	if (has_TC0480SCP())	/* it's Dblaxle, a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x26,0x08,-1,0,0,0,0))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x21,0x08,4,0,0,0,0))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */
@@ -299,21 +301,16 @@ WRITE16_HANDLER( sci_spriteframe_w )
 
 /*********************************************************
 				PALETTE
-
-&tile_mask is there to prevent occasional page faults
-from the line: Machine->gfx[0]->pen_usage[code];
-I assume this can behave badly if code is out of
-valid bounds (for instance during spriteram tests)...
 *********************************************************/
 
-void contcirc_update_palette (void)
+static void contcirc_update_palette (void)
 {
 	int i,j;
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	int map_offset,sprite_chunk,code;
 	int offs,data,tilenum,color;
-	unsigned short palette_map[256];
+	UINT16 palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -355,7 +352,7 @@ void contcirc_update_palette (void)
 	}
 }
 
-void chasehq_update_palette (void)
+static void chasehq_update_palette (void)
 {
 	int i,j;
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
@@ -363,7 +360,7 @@ void chasehq_update_palette (void)
 	UINT16 tile_mask_2 = (Machine->gfx[2]->total_elements) - 1;
 	int map_offset,sprite_chunk,code;
 	int offs,data,tilenum,color,zoomx;
-	unsigned short palette_map[256];
+	UINT16 palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -435,14 +432,14 @@ void chasehq_update_palette (void)
 	}
 }
 
-void bshark_update_palette (void)
+static void bshark_update_palette (void)
 {
 	int i,j;
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	int map_offset,sprite_chunk,code;
 	int offs,data,tilenum,color;
-	unsigned short palette_map[256];
+	UINT16 palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -484,14 +481,14 @@ void bshark_update_palette (void)
 	}
 }
 
-void aquajack_update_palette (void)
+static void aquajack_update_palette (void)
 {
 	int i,j;
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	int map_offset,sprite_chunk,code;
 	int offs,data,tilenum,color;
-	unsigned short palette_map[256];
+	UINT16 palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -533,14 +530,14 @@ void aquajack_update_palette (void)
 	}
 }
 
-void spacegun_update_palette (void)
+static void spacegun_update_palette (void)
 {
 	int i,j;
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	int map_offset,sprite_chunk,code;
 	int offs,data,tilenum,color;
-	unsigned short palette_map[256];
+	UINT16 palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -1510,7 +1507,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -1524,8 +1521,9 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	contcirc_draw_sprites_16x8(bitmap,1,3);
@@ -1540,7 +1538,7 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -1554,8 +1552,9 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	chasehq_draw_sprites_16x16(bitmap,1,0);
@@ -1568,7 +1567,7 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -1582,8 +1581,9 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	bshark_draw_sprites_16x8(bitmap,1,8);
@@ -1596,7 +1596,7 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -1610,8 +1610,9 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	sci_draw_sprites_16x8(bitmap,1,6);
@@ -1624,7 +1625,7 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -1638,8 +1639,9 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	aquajack_draw_sprites_16x8(bitmap,1,3);
@@ -1652,7 +1654,7 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -1666,8 +1668,9 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
 
@@ -1729,8 +1732,8 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (screeny > 0xf0) screeny = 0xf0;
 		}
 
-		//fudge x and y to show in centre of scope, note that screenx, screeny
-		//are confirmed to match those stored by the game at $317540, $317542
+		/* fudge x and y to show in centre of scope, note that screenx, screeny
+		   are confirmed to match those stored by the game at $317540, $317542 */
 		--screenx;
 		screeny += 15;
 
@@ -1776,8 +1779,8 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (screeny > 0xf0) screeny = 0xf0;
 		}
 
-		//fudge x and y to show in centre of scope, note that screenx, screeny
-		//are confirmed to match those stored by the game at $317544, $317546
+		/* fudge x and y to show in centre of scope, note that screenx, screeny
+		   are confirmed to match those stored by the game at $317544, $317546 */
 		--screenx;
 		screeny += 15;
 
@@ -1796,6 +1799,7 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	bshark_update_palette();
 
+	/* This needs replacing with Bryan's superior method ! */
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	{
 		int i;
@@ -1815,9 +1819,10 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[4] = 4;   /* text layer always over bg layers */
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,0,NULL);
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
-	TC0480SCP_tilemap_draw(bitmap,layer[0],0,0);
+	TC0480SCP_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0480SCP_tilemap_draw(bitmap,layer[1],0,0);
 	TC0480SCP_tilemap_draw(bitmap,layer[2],0,0);
 

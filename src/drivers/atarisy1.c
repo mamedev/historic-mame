@@ -866,7 +866,7 @@ static const struct MachineDriver machine_driver_atarisy1 =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	atarisys1_vh_start,
 	atarisys1_vh_stop,
@@ -901,6 +901,51 @@ static const struct MachineDriver machine_driver_atarisy1 =
  *************************************/
 
 ROM_START( marble )
+	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
+	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, 0x3c79ef05 )
+	ROM_LOAD16_BYTE( "136033.623",   0x10000, 0x04000, 0x284ed2e9 )
+	ROM_LOAD16_BYTE( "136033.624",   0x10001, 0x04000, 0xd541b021 )
+	ROM_LOAD16_BYTE( "136033.625",   0x18000, 0x04000, 0x563755c7 )
+	ROM_LOAD16_BYTE( "136033.626",   0x18001, 0x04000, 0x860feeb3 )
+	ROM_LOAD16_BYTE( "136033.627",   0x20000, 0x04000, 0xd1dbd439 )
+	ROM_LOAD16_BYTE( "136033.628",   0x20001, 0x04000, 0x957d6801 )
+	ROM_LOAD16_BYTE( "136033.229",   0x28000, 0x04000, 0xc81d5c14 )
+	ROM_LOAD16_BYTE( "136033.630",   0x28001, 0x04000, 0x687a09f7 )
+	ROM_LOAD16_BYTE( "136033.107",   0x80000, 0x04000, 0xf3b8745b )
+	ROM_LOAD16_BYTE( "136033.108",   0x80001, 0x04000, 0xe51eecaa )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for 6502 code */
+	ROM_LOAD( "136033.421",   0x8000, 0x4000, 0x78153dc3 )
+	ROM_LOAD( "136033.422",   0xc000, 0x4000, 0x2e66300e )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
+
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
+	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
+	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
+	ROM_LOAD( "136033.140",   0x0c000, 0x04000, 0x8a82467b )
+	ROM_LOAD( "136033.141",   0x10000, 0x04000, 0x52448965 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136033.142",   0x14000, 0x04000, 0xb4a70e4f )
+	ROM_LOAD( "136033.143",   0x18000, 0x04000, 0x7156e449 )  /* bank 1, plane 3 */
+	ROM_LOAD( "136033.144",   0x1c000, 0x04000, 0x4c3e4c79 )
+	ROM_LOAD( "136033.145",   0x20000, 0x04000, 0x9062be7f )  /* bank 1, plane 4 */
+	ROM_LOAD( "136033.146",   0x24000, 0x04000, 0x14566dca )
+
+	ROM_FILL(                 0x30000, 0x30000, 0xff )
+	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
+	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
+	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
+
+	ROM_REGION( 0x400, REGION_PROMS, 0 )	/* graphics mapping PROMs */
+	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
+	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
+ROM_END
+
+
+ROM_START( marble2 )
 	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, 0x3c79ef05 )
@@ -941,7 +986,7 @@ ROM_START( marble )
 ROM_END
 
 
-ROM_START( marble2 )
+ROM_START( marble3 )
 	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, 0x3c79ef05 )
@@ -982,7 +1027,7 @@ ROM_START( marble2 )
 ROM_END
 
 
-ROM_START( marblea )
+ROM_START( marble4 )
 	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, 0x3c79ef05 )
@@ -1510,7 +1555,8 @@ static void init_roadblst(void)
 
 GAME( 1984, marble,   0,        atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 1)" )
 GAME( 1984, marble2,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 2)" )
-GAME( 1984, marblea,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 3)" )
+GAME( 1984, marble3,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 3)" )
+GAME( 1984, marble4,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 4)" )
 GAME( 1984, peterpak, 0,        atarisy1, peterpak, peterpak, ROT0, "Atari Games", "Peter Pack-Rat" )
 GAME( 1985, indytemp, 0,        atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 1)" )
 GAME( 1985, indytem2, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 2)" )

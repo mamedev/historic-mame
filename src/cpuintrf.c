@@ -154,6 +154,9 @@
 #if (HAS_Z80GB)
 #include "mess/cpu/z80gb/z80gb.h"
 #endif
+#if (HAS_Z80_MSX)
+#include "cpu/z80/z80_msx.h"
+#endif
 
 #endif
 
@@ -673,6 +676,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
 #endif
+#if (HAS_Z80_MSX)
+	CPU1(Z80_MSX,  z80_msx,	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
+#endif
 #endif
 };
 
@@ -1034,7 +1040,7 @@ WRITE_HANDLER( watchdog_reset_w )
 READ_HANDLER( watchdog_reset_r )
 {
 	watchdog_reset();
-	return 0;
+	return 0xff;
 }
 
 WRITE16_HANDLER( watchdog_reset16_w )
@@ -1045,7 +1051,7 @@ WRITE16_HANDLER( watchdog_reset16_w )
 READ16_HANDLER( watchdog_reset16_r )
 {
 	watchdog_reset();
-	return 0;
+	return 0xffff;
 }
 
 
@@ -3423,14 +3429,25 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 
+#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 {
 	void m68k_set_reset_instr_callback(void  (*callback)(void));
 
-	if (CPU_TYPE(cpunum) != CPU_M68000 &&
-		CPU_TYPE(cpunum) != CPU_M68010 &&
-		CPU_TYPE(cpunum) != CPU_M68020 &&
-		CPU_TYPE(cpunum) != CPU_M68EC020)
+	if ( 1
+#if (HAS_M68000)
+		&& CPU_TYPE(cpunum) != CPU_M68000
+#endif
+#if (HAS_M68010)
+		&& CPU_TYPE(cpunum) != CPU_M68010
+#endif
+#if (HAS_M68020)
+		&& CPU_TYPE(cpunum) != CPU_M68020
+#endif
+#if (HAS_M68EC020)
+		&& CPU_TYPE(cpunum) != CPU_M68EC020
+#endif
+		)
 	{
 		logerror("Trying to set m68k reset vector on non-68k cpu\n");
 		exit(1);
@@ -3454,3 +3471,4 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 			if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 	}
 }
+#endif

@@ -502,7 +502,7 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	else
 	{
 		tilemap_set_scroll_rows(tilemap[1],1);
-		tilemap_set_scrollx( tilemap[1],0,K007121_ctrlram[1][0x00] | ((K007121_ctrlram[1][0x01] & 0x01) << 8));
+		tilemap_set_scrollx(tilemap[1],0,K007121_ctrlram[1][0x00] | ((K007121_ctrlram[1][0x01] & 0x01) << 8));
 	}
 
 	tilemap_set_scrolly(tilemap[0],0,K007121_ctrlram[0][0x02]);

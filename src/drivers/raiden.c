@@ -6,7 +6,6 @@
 
     driver by Oliver Bergmann, Bryan McPhail, Randy Mongenel
 
-
 	The alternate hardware version is probably earlier than the main set.
 	It looks closer to Dynamite Duke (1989 game), while the main set looks
 	closer to the newer 68000 games in terms of graphics registers used, etc.
@@ -327,7 +326,7 @@ static const struct MachineDriver machine_driver_raiden =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	70,	/* CPU interleave  */
+	200,	/* CPU interleave  */
 	seibu_sound_init_2,
 
 	/* video hardware */
@@ -370,7 +369,7 @@ static const struct MachineDriver machine_driver_raidena =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	60,	/* CPU interleave  */
+	120,	/* CPU interleave  */
 	seibu_sound_init_2,
 
 	/* video hardware */

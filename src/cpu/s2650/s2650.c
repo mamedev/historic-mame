@@ -1492,7 +1492,7 @@ const char *s2650_info(void *context, int regnum)
 	static int which = 0;
 	s2650_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	buffer[which][0] = '\0';
 
     if( !context )

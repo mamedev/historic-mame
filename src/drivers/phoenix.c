@@ -14,10 +14,22 @@ To Do:
 
 Survival:
 
-- Protection
-- Check CPU/AY8910 clocks
+- Protection.  There is a 14 pin part connected to the 8910 Port B D0 labeled DL57S22.
+  There is a loop at $2002 that reads the player controls -- the game sits in this
+  loop as long as Port B changes.  Also, Port B seems to invert the input bits, and
+  the game checks for this at $2f32.  The game also uses the RIM instruction a lot,
+  that's purpose is unclear, as the result doesn't seem to be used (even when it's
+  stored, the result is never read again.)  I would think that this advances the
+  protection chip somehow, but isn't RIM a read only operation?
+
 - Check background visibile area.  When the background scrolls up, it
   currently shows below the top and bottom of the border of the play area.
+
+
+Pleiads:
+
+- Palette banking.  Controlled by 3 custom chips marked T-X, T-Y and T-Z.
+  These chips are reponsible for the protection as well.
 
 ***************************************************************************/
 
@@ -32,6 +44,8 @@ WRITE_HANDLER( pleiads_videoreg_w );
 WRITE_HANDLER( phoenix_scroll_w );
 READ_HANDLER( phoenix_input_port_0_r );
 READ_HANDLER( pleiads_input_port_0_r );
+READ_HANDLER( survival_input_port_0_r );
+READ_HANDLER( survival_protection_r );
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  phoenix_vh_start(void);
@@ -69,7 +83,7 @@ static MEMORY_READ_START( survival_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
 	{ 0x6900, 0x69ff, AY8910_read_port_0_r },
-	{ 0x7000, 0x73ff, phoenix_input_port_0_r }, /* IN0 or IN1 */
+	{ 0x7000, 0x73ff, survival_input_port_0_r },/* IN0 or IN1 */
 	{ 0x7800, 0x7bff, input_port_2_r },			/* DSW */
 MEMORY_END
 
@@ -131,10 +145,10 @@ INPUT_PORTS_START( phoenix )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "3000" )
-	PORT_DIPSETTING(	0x04, "4000" )
-	PORT_DIPSETTING(	0x08, "5000" )
-	PORT_DIPSETTING(	0x0c, "6000" )
+	PORT_DIPSETTING(	0x00, "3K 30K" )
+	PORT_DIPSETTING(	0x04, "4K 40K" )
+	PORT_DIPSETTING(	0x08, "5K 50K" )
+	PORT_DIPSETTING(	0x0c, "6K 60K" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
@@ -180,10 +194,10 @@ INPUT_PORTS_START( phoenixa )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "3000" )
-	PORT_DIPSETTING(	0x04, "4000" )
-	PORT_DIPSETTING(	0x08, "5000" )
-	PORT_DIPSETTING(	0x0c, "6000" )
+	PORT_DIPSETTING(	0x00, "3K 30K" )
+	PORT_DIPSETTING(	0x04, "4K 40K" )
+	PORT_DIPSETTING(	0x08, "5K 50K" )
+	PORT_DIPSETTING(	0x0c, "6K 60K" )
 	/* Coinage is backwards from phoenix (Amstar) */
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
@@ -230,10 +244,10 @@ INPUT_PORTS_START( phoenixt )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "3000" )
-	PORT_DIPSETTING(	0x04, "4000" )
-	PORT_DIPSETTING(	0x08, "5000" )
-	PORT_DIPSETTING(	0x0c, "6000" )
+	PORT_DIPSETTING(	0x00, "3K 30K" )
+	PORT_DIPSETTING(	0x04, "4K 40K" )
+	PORT_DIPSETTING(	0x08, "5K 50K" )
+	PORT_DIPSETTING(	0x0c, "6K 60K" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -279,10 +293,10 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "3000" )
-	PORT_DIPSETTING(	0x04, "4000" )
-	PORT_DIPSETTING(	0x08, "5000" )
-	PORT_DIPSETTING(	0x0c, "6000" )
+	PORT_DIPSETTING(	0x00, "3K 30K" )
+	PORT_DIPSETTING(	0x04, "4K 40K" )
+	PORT_DIPSETTING(	0x08, "5K 50K" )
+	PORT_DIPSETTING(	0x0c, "6K 60K" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -328,19 +342,68 @@ INPUT_PORTS_START( pleiads )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "3000" )
-	PORT_DIPSETTING(	0x04, "4000" )
-	PORT_DIPSETTING(	0x08, "5000" )
-	PORT_DIPSETTING(	0x0c, "6000" )
+	PORT_DIPSETTING(	0x00, "3K 30K" )
+	PORT_DIPSETTING(	0x04, "4K 40K" )
+	PORT_DIPSETTING(	0x08, "5K 50K" )
+	PORT_DIPSETTING(	0x0c, "6K 60K" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pleiadce )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL )	   /* Protection. See 0x0552 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
+
+	PORT_START		/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x02, "5" )
+	PORT_DIPSETTING(	0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "7K 70K" )
+	PORT_DIPSETTING(	0x04, "8K 80K" )
+	PORT_DIPSETTING(	0x08, "9K 90K" )
+  /*PORT_DIPSETTING(	0x0c, "INVALID" )   Sets bonus to A000 */
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START		/* fake port for non-memory mapped dip switch */
@@ -467,10 +530,10 @@ static struct CustomSound_interface pleiads_custom_interface =
 static struct AY8910interface survival_ay8910_interface =
 {
 	1,	/* 1 chip */
-	1789750,	/* Wrong */
+	11000000/4,
 	{ 50 },
 	{ 0 },
-	{ 0 },  /* Port B - read protection */
+	{ survival_protection_r },
 	{ 0 },
 	{ 0 }
 };
@@ -484,8 +547,8 @@ static struct MachineDriver machine_driver_##NAME = 				\
 	/* basic machine hardware */									\
 	{																\
 		{															\
-			CPU_8080,												\
-			3072000,	/* 3 MHz ? */								\
+			CPU_8085A,												\
+			11000000/4,	/* 2.75 MHz */								\
 			NAME##_readmem,NAME##_writemem,0,0,						\
 			ignore_interrupt,1										\
 		}															\
@@ -532,7 +595,7 @@ static const struct MachineDriver machine_driver_survival =
 	{
 		{
 			CPU_8085A,
-			3072000,	/* 3 MHz ? */
+			11000000/4,	/* 2.75 MHz */
 			survival_readmem,survival_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -787,12 +850,22 @@ ROM_START( survival )
 ROM_END
 
 
-GAME ( 1980, phoenix,  0,       phoenix,  phoenix,  0, ROT90, "Amstar", "Phoenix (Amstar)" )
-GAME ( 1980, phoenixa, phoenix, phoenix,  phoenixa, 0, ROT90, "Amstar (Centuri license)", "Phoenix (Centuri)" )
-GAME ( 1980, phoenixt, phoenix, phoenix,  phoenixt, 0, ROT90, "Taito", "Phoenix (Taito)" )
-GAME ( 1980, phoenix3, phoenix, phoenix,  phoenix3, 0, ROT90, "bootleg", "Phoenix (T.P.N.)" )
-GAME ( 1981, phoenixc, phoenix, phoenix,  phoenixt, 0, ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)" )
-GAME ( 1981, pleiads,  0,       pleiads,  pleiads,  0, ROT90, "Tehkan", "Pleiads (Tehkan)" )
-GAME ( 1981, pleiadbl, pleiads, pleiads,  pleiads,  0, ROT90, "bootleg", "Pleiads (bootleg)" )
-GAME ( 1981, pleiadce, pleiads, pleiads,  pleiads,  0, ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)" )
-GAMEX( 1982, survival, 0,       survival, survival, 0, ROT90, "Rock-ola", "Survival", GAME_UNEMULATED_PROTECTION )
+static void init_survival(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+	rom[0x0157] = 0x21;	/* ROM check */
+	rom[0x02e8] = 0x21; /* crash due to protection, it still locks up somewhere else */
+}
+
+
+
+GAME ( 1980, phoenix,  0,       phoenix,  phoenix,  0,        ROT90, "Amstar", "Phoenix (Amstar)" )
+GAME ( 1980, phoenixa, phoenix, phoenix,  phoenixa, 0,        ROT90, "Amstar (Centuri license)", "Phoenix (Centuri)" )
+GAME ( 1980, phoenixt, phoenix, phoenix,  phoenixt, 0,        ROT90, "Taito", "Phoenix (Taito)" )
+GAME ( 1980, phoenix3, phoenix, phoenix,  phoenix3, 0,        ROT90, "bootleg", "Phoenix (T.P.N.)" )
+GAME ( 1981, phoenixc, phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)" )
+GAMEX( 1981, pleiads,  0,       pleiads,  pleiads,  0,        ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_IMPERFECT_COLORS )
+GAMEX( 1981, pleiadbl, pleiads, pleiads,  pleiads,  0,        ROT90, "bootleg", "Pleiads (bootleg)", GAME_IMPERFECT_COLORS )
+GAMEX( 1981, pleiadce, pleiads, pleiads,  pleiadce, 0,        ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)", GAME_IMPERFECT_COLORS )
+GAMEX( 1982, survival, 0,       survival, survival, survival, ROT90, "Rock-ola", "Survival", GAME_UNEMULATED_PROTECTION )

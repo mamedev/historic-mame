@@ -136,7 +136,7 @@ PSG2-E -> $c809
 PSG2-F -> $c80a - DIP Switch Bank 2 (Test mode is here)
 
 -------------------------------GET STAR------------------------------------
-		following info by Luca Elia (eliavit@unina.it)
+		following info by Luca Elia (l.elia@tin.it)
 
 				Interesting locations
 				---------------------

@@ -7,6 +7,7 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "machine/7474.h"
 
 
 
@@ -54,21 +55,31 @@ READ_HANDLER( scramble_portB_r )
 
 WRITE_HANDLER( scramble_sh_irqtrigger_w )
 {
-	static int last;
+	/* the complement of bit 3 is connected to the flip-flop's clock */
+	TTL7474_set_inputs(0, -1, -1, ~data & 0x08, -1);
+}
 
+static int scramble_sh_irq_callback(int irqline)
+{
+	/* interrupt acknowledge clears the flip-flop --
+	   we need to pulse the CLR line because MAME's core never clears this
+	   line, only asserts it */
+	TTL7474_set_inputs(0, 1, -1, -1, -1);
+	TTL7474_set_inputs(0, 0, -1, -1, -1);
 
-	if (last == 0 && (data & 0x08) != 0)
-	{
-		/* setting bit 3 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1, Z80_IRQ_INT);
-	}
+	return 0;
+}
 
-	last = data & 0x08;
+static void scramble_sh_7474_callback(void)
+{
+	/* the Q bar is connected to the Z80's INT line.  But since INT is complemented, */
+	/* we need to complement Q bar */
+	cpu_set_irq_line(1, 0, !TTL7474_output_comp_r(0) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 WRITE_HANDLER( hotshock_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1, Z80_IRQ_INT);
+	cpu_set_irq_line(1, 0, PULSE_LINE);
 }
 
 
@@ -91,4 +102,20 @@ WRITE_HANDLER( scramble_filter_w )
 	filter_w(0, 0, (offset >>  6) & 3);
 	filter_w(0, 1, (offset >>  8) & 3);
 	filter_w(0, 2, (offset >> 10) & 3);
+}
+
+
+static const struct TTL7474_interface scramble_sh_7474_intf =
+{
+	scramble_sh_7474_callback
+};
+
+void scramble_sh_init(void)
+{
+	cpu_set_irq_callback(1, scramble_sh_irq_callback);
+
+	TTL7474_config(0, &scramble_sh_7474_intf);
+
+	/* PR is always 0, D is always 1 */
+	TTL7474_set_inputs(0, 0, 0, -1, 1);
 }

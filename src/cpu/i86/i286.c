@@ -207,8 +207,8 @@ void i286_reset (void *param)
 	I.sregs[DS]=I.sregs[SS]=I.sregs[ES]=0;
 	I.base[DS]=I.base[SS]=I.base[ES]=0;
 	I.msw=0xfff0;
-	I.ZeroVal = I.ParityVal = 1; /* !? */
 	I.flags=2;
+	ExpandFlags(I.flags);
 	I.idtr.base=0;I.idtr.limit=0x3ff;
 
 	CHANGE_PC(I.pc);
@@ -426,7 +426,7 @@ const char *i286_info(void *context, int regnum)
 	static int which = 0;
 	i286_Regs *r = context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &I;

@@ -13,7 +13,7 @@
 
 unsigned char *finalizr_scroll;
 unsigned char *finalizr_videoram2,*finalizr_colorram2;
-static int spriterambank;
+static int spriterambank,charbank;
 
 
 
@@ -97,6 +97,12 @@ void finalizr_vh_stop(void)
 
 WRITE_HANDLER( finalizr_videoctrl_w )
 {
+	if (charbank != (data & 3))
+	{
+		charbank = data & 3;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
 	spriterambank = data & 8;
 
 	/* other bits unknown */
@@ -131,7 +137,7 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = offs / 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0xc0) << 2),
+					videoram[offs] + ((colorram[offs] & 0xc0) << 2) + (charbank<<10),
 					(colorram[offs] & 0x0f),
 					colorram[offs] & 0x10,colorram[offs] & 0x20,
 					8*sx,8*sy,

@@ -128,37 +128,41 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 
 struct ipd inputport_defaults[] =
 {
-	{ IPT_UI_CONFIGURE,         "Config Menu",       SEQ_DEF_1(KEYCODE_TAB) },
-	{ IPT_UI_ON_SCREEN_DISPLAY, "On Screen Display", SEQ_DEF_1(KEYCODE_TILDE) },
-	{ IPT_UI_PAUSE,             "Pause",             SEQ_DEF_1(KEYCODE_P) },
-	{ IPT_UI_RESET_MACHINE,     "Reset Game",        SEQ_DEF_1(KEYCODE_F3) },
-	{ IPT_UI_SHOW_GFX,          "Show Gfx",          SEQ_DEF_1(KEYCODE_F4) },
-	{ IPT_UI_FRAMESKIP_DEC,     "Frameskip Dec",     SEQ_DEF_1(KEYCODE_F8) },
-	{ IPT_UI_FRAMESKIP_INC,     "Frameskip Inc",     SEQ_DEF_1(KEYCODE_F9) },
-	{ IPT_UI_THROTTLE,          "Throttle",          SEQ_DEF_1(KEYCODE_F10) },
-	{ IPT_UI_SHOW_FPS,          "Show FPS",          SEQ_DEF_5(KEYCODE_F11, CODE_NOT, KEYCODE_LCONTROL, CODE_NOT, KEYCODE_LSHIFT) },
-	{ IPT_UI_SHOW_PROFILER,     "Show Profiler",     SEQ_DEF_2(KEYCODE_F11, KEYCODE_LSHIFT) },
+	{ IPT_UI_CONFIGURE,         "Config Menu",			SEQ_DEF_1(KEYCODE_TAB) },
+	{ IPT_UI_ON_SCREEN_DISPLAY, "On Screen Display",	SEQ_DEF_1(KEYCODE_TILDE) },
+	{ IPT_UI_PAUSE,             "Pause",				SEQ_DEF_1(KEYCODE_P) },
+	{ IPT_UI_RESET_MACHINE,     "Reset Game",			SEQ_DEF_1(KEYCODE_F3) },
+	{ IPT_UI_SHOW_GFX,          "Show Gfx",				SEQ_DEF_1(KEYCODE_F4) },
+	{ IPT_UI_FRAMESKIP_DEC,     "Frameskip Dec",		SEQ_DEF_1(KEYCODE_F8) },
+	{ IPT_UI_FRAMESKIP_INC,     "Frameskip Inc",		SEQ_DEF_1(KEYCODE_F9) },
+	{ IPT_UI_THROTTLE,          "Throttle",				SEQ_DEF_1(KEYCODE_F10) },
+	{ IPT_UI_SHOW_FPS,          "Show FPS",				SEQ_DEF_5(KEYCODE_F11, CODE_NOT, KEYCODE_LCONTROL, CODE_NOT, KEYCODE_LSHIFT) },
+	{ IPT_UI_SHOW_PROFILER,     "Show Profiler",		SEQ_DEF_2(KEYCODE_F11, KEYCODE_LSHIFT) },
 #ifdef MAME_DEBUG
-	{ IPT_UI_SHOW_COLORS,       "Show Colors",	 SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL) },
+	{ IPT_UI_SHOW_COLORS,       "Show Colors",			SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL) },
 #endif
 #ifdef MESS
-	{ IPT_UI_TOGGLE_UI,         "UI Toggle",         SEQ_DEF_1(KEYCODE_SCRLOCK) },
+	{ IPT_UI_TOGGLE_UI,         "UI Toggle",			SEQ_DEF_1(KEYCODE_SCRLOCK) },
 #endif
-	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     SEQ_DEF_1(KEYCODE_F12) },
-	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",      SEQ_DEF_1(KEYCODE_F6) },
-	{ IPT_UI_UP,                "UI Up",             SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP) },
-	{ IPT_UI_DOWN,              "UI Down",           SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN) },
-	{ IPT_UI_LEFT,              "UI Left",           SEQ_DEF_3(KEYCODE_LEFT, CODE_OR, JOYCODE_1_LEFT) },
-	{ IPT_UI_RIGHT,             "UI Right",          SEQ_DEF_3(KEYCODE_RIGHT, CODE_OR, JOYCODE_1_RIGHT) },
-	{ IPT_UI_SELECT,            "UI Select",         SEQ_DEF_3(KEYCODE_ENTER, CODE_OR, JOYCODE_1_BUTTON1) },
-	{ IPT_UI_CANCEL,            "UI Cancel",         SEQ_DEF_1(KEYCODE_ESC) },
-	{ IPT_UI_PAN_UP,            "Pan Up",            SEQ_DEF_3(KEYCODE_PGUP, CODE_NOT, KEYCODE_LSHIFT) },
-	{ IPT_UI_PAN_DOWN,          "Pan Down",          SEQ_DEF_3(KEYCODE_PGDN, CODE_NOT, KEYCODE_LSHIFT) },
-	{ IPT_UI_PAN_LEFT,          "Pan Left",          SEQ_DEF_2(KEYCODE_PGUP, KEYCODE_LSHIFT) },
-	{ IPT_UI_PAN_RIGHT,         "Pan Right",         SEQ_DEF_2(KEYCODE_PGDN, KEYCODE_LSHIFT) },
-	{ IPT_UI_TOGGLE_DEBUG,      "Toggle Debugger",   SEQ_DEF_1(KEYCODE_F5) },
-	{ IPT_UI_SAVE_STATE,        "Save state",        SEQ_DEF_2(KEYCODE_F7, KEYCODE_LSHIFT) },
-	{ IPT_UI_LOAD_STATE,        "Load state",        SEQ_DEF_3(KEYCODE_F7, CODE_NOT, KEYCODE_LSHIFT) },
+	{ IPT_UI_SNAPSHOT,          "Save Snapshot",		SEQ_DEF_1(KEYCODE_F12) },
+	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",			SEQ_DEF_1(KEYCODE_F6) },
+	{ IPT_UI_UP,                "UI Up",				SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP) },
+	{ IPT_UI_DOWN,              "UI Down",				SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN) },
+	{ IPT_UI_LEFT,              "UI Left",				SEQ_DEF_3(KEYCODE_LEFT, CODE_OR, JOYCODE_1_LEFT) },
+	{ IPT_UI_RIGHT,             "UI Right",				SEQ_DEF_3(KEYCODE_RIGHT, CODE_OR, JOYCODE_1_RIGHT) },
+	{ IPT_UI_SELECT,            "UI Select",			SEQ_DEF_3(KEYCODE_ENTER, CODE_OR, JOYCODE_1_BUTTON1) },
+	{ IPT_UI_CANCEL,            "UI Cancel",			SEQ_DEF_1(KEYCODE_ESC) },
+	{ IPT_UI_PAN_UP,            "Pan Up",				SEQ_DEF_3(KEYCODE_PGUP, CODE_NOT, KEYCODE_LSHIFT) },
+	{ IPT_UI_PAN_DOWN,          "Pan Down",				SEQ_DEF_3(KEYCODE_PGDN, CODE_NOT, KEYCODE_LSHIFT) },
+	{ IPT_UI_PAN_LEFT,          "Pan Left",				SEQ_DEF_2(KEYCODE_PGUP, KEYCODE_LSHIFT) },
+	{ IPT_UI_PAN_RIGHT,         "Pan Right",			SEQ_DEF_2(KEYCODE_PGDN, KEYCODE_LSHIFT) },
+	{ IPT_UI_TOGGLE_DEBUG,      "Toggle Debugger",		SEQ_DEF_1(KEYCODE_F5) },
+	{ IPT_UI_SAVE_STATE,        "Save State",			SEQ_DEF_2(KEYCODE_F7, KEYCODE_LSHIFT) },
+	{ IPT_UI_LOAD_STATE,        "Load State",			SEQ_DEF_3(KEYCODE_F7, CODE_NOT, KEYCODE_LSHIFT) },
+	{ IPT_UI_ADD_CHEAT,			"Add Cheat",			SEQ_DEF_1(KEYCODE_A) },
+	{ IPT_UI_DELETE_CHEAT,		"Delete Cheat",			SEQ_DEF_1(KEYCODE_D) },
+	{ IPT_UI_SAVE_CHEAT,		"Save Cheat",			SEQ_DEF_1(KEYCODE_S) },
+	{ IPT_UI_WATCH_VALUE,		"Watch Value",			SEQ_DEF_1(KEYCODE_W) },
 	{ IPT_START1, "1 Player Start",  SEQ_DEF_1(KEYCODE_1) },
 	{ IPT_START2, "2 Players Start", SEQ_DEF_1(KEYCODE_2) },
 	{ IPT_START3, "3 Players Start", SEQ_DEF_1(KEYCODE_3) },
@@ -1248,10 +1252,27 @@ void update_analog_port(int port)
 
 	if (check_bounds)
 	{
-		if ((current * sensitivity + 50) / 100 < min)
-			current = (min * 100 + sensitivity/2) / sensitivity;
-		if ((current * sensitivity + 50) / 100 > max)
-			current = (max * 100 + sensitivity/2) / sensitivity;
+		int temp;
+
+		if (current >= 0)
+			temp = (current * sensitivity + 50) / 100;
+		else
+			temp = (-current * sensitivity + 50) / -100;
+
+		if (temp < min)
+		{
+			if (min >= 0)
+				current = (min * 100 + sensitivity/2) / sensitivity;
+			else
+				current = (-min * 100 + sensitivity/2) / -sensitivity;
+		}
+		if (temp > max)
+		{
+			if (max >= 0)
+				current = (max * 100 + sensitivity/2) / sensitivity;
+			else
+				current = (-max * 100 + sensitivity/2) / -sensitivity;
+		}
 	}
 
 	input_analog_current_value[port] = current;
@@ -1302,6 +1323,7 @@ void update_input_ports(void)
 #define MAX_INPUT_BITS 1024
 static int impulsecount[MAX_INPUT_BITS];
 static int waspressed[MAX_INPUT_BITS];
+static int pbwaspressed[MAX_INPUT_BITS];
 #define MAX_JOYSTICKS 3
 #define MAX_PLAYERS 4
 #ifdef MRU_JOYSTICK
@@ -1478,7 +1500,7 @@ if (Machine->drv->vblank_duration == 0)
 						}
 
 						/* if IPF_RESET set, reset the first CPU */
-						if ((in->type & IPF_RESETCPU) && waspressed[ib] == 0)
+						if ((in->type & IPF_RESETCPU) && waspressed[ib] == 0 && !playback)
 							cpu_set_reset_line(0,PULSE_LINE);
 
 						if (in->type & IPF_IMPULSE)
@@ -1593,9 +1615,34 @@ if (IP_GET_IMPULSE(in) == 0)
 	{
 		int i;
 
+		ib=0;
+		in = Machine->input_ports;
+		in++;
 		for (i = 0; i < MAX_INPUT_PORTS; i ++)
+		{
 			readword(playback,&input_port_value[i]);
+
+			/* check if the input port includes an IPF_RESETCPU bit
+			   and reset the CPU on first "press", no need to check
+			   the impulse count as this was done during recording */
+			for (; in->type != IPT_END && in->type != IPT_PORT; in++, ib++)
+			{
+				if (in->type & IPF_RESETCPU)
+				{
+					if((input_port_value[i] ^ in->default_value) & in->mask)
+					{
+						if (pbwaspressed[ib] == 0)
+							cpu_set_reset_line(0,PULSE_LINE);
+						pbwaspressed[ib] = 1;
+					}
+					else
+						pbwaspressed[ib] = 0;
+				}
+			}
+			if (in->type == IPT_PORT) in++;
+		}
 	}
+
 	if (record)
 	{
 		int i;

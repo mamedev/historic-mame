@@ -188,24 +188,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00, /* BLACK  */
-	0xff,0xff,0xff, /* WHITE  */
-};
-
 #define ARTWORK_COLORS (2 + 32768)
-
-static unsigned short colortable[ARTWORK_COLORS] =
-{
-	0, 0,  /* Don't draw */
-	0, 1,  /* Draw */
-};
 
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	/* 2 colors in the palette: black & white */
+	memset(game_palette, 0, ARTWORK_COLORS * 3 * sizeof(game_palette[0]));
+	game_palette[1*3+0] = game_palette[1*3+1] = game_palette[1*3+2] = 0xff;
+
+	/* 4 entries in the color table */
+	memset(game_colortable, 0, ARTWORK_COLORS * sizeof(game_colortable[0]));
+	game_colortable[3] = 1;
 }
 
 

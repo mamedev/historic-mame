@@ -34,10 +34,6 @@
 /* better to leave this on; otherwise, you end up playing entire games out of the left speaker */
 #define USE_MONO_SOUND			1
 
-/* don't use this; it's incredibly slow (10k interrupts/second!) and doesn't really work */
-/* it's left in primarily for documentation purposes */
-#define EMULATE_SOUND_68000 	0
-
 
 
 /*************************************
@@ -335,8 +331,6 @@ MEMORY_END
  *
  *************************************/
 
-#if EMULATE_SOUND_68000
-
 static MEMORY_READ16_START( sound_68k_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0xff8000, 0xff87ff, cyberbal_sound_68k_r },
@@ -351,8 +345,6 @@ static MEMORY_WRITE16_START( sound_68k_writemem )
 	{ 0xff9800, 0xff9fff, cyberbal_sound_68k_dac_w },
 	{ 0xfff000, 0xffffff, MWA16_RAM },
 MEMORY_END
-
-#endif
 
 
 
@@ -439,14 +431,14 @@ INPUT_PORTS_START( cyberbal )
 	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* audio board port */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN4 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )	/* output buffer full */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )		/* input buffer full */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )	/* self test */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* output buffer full */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	/* input buffer full */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* self test */
 INPUT_PORTS_END
 
 
@@ -557,20 +549,15 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-#if EMULATE_SOUND_68000
 static struct DACinterface dac_interface =
 {
 	2,
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
-};
+#if USE_MONO_SOUND
+	{ MIXER(50,MIXER_PAN_CENTER), MIXER(50,MIXER_PAN_CENTER) }
 #else
-static struct CustomSound_interface samples_interface =
-{
-	cyberbal_samples_start,
-	cyberbal_samples_stop,
-	NULL
-};
+	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
 #endif
+};
 
 
 
@@ -602,16 +589,14 @@ static const struct MachineDriver machine_driver_cyberbal =
 			ATARI_CLOCK_14MHz/2,
 			extra_readmem,extra_writemem,0,0,
 			atarigen_video_int_gen,1
-		}
-#if EMULATE_SOUND_68000
-		,{
+		},
+		{
 			CPU_M68000,		/* verified */
 			ATARI_CLOCK_14MHz/2,
 			sound_68k_readmem,sound_68k_writemem,0,0,
 			0,0,
 			cyberbal_sound_68k_irq_gen,10000
 		}
-#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,
@@ -623,7 +608,7 @@ static const struct MachineDriver machine_driver_cyberbal =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
 			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
@@ -637,17 +622,10 @@ static const struct MachineDriver machine_driver_cyberbal =
 			SOUND_YM2151,
 			&ym2151_interface
 		},
-#if EMULATE_SOUND_68000
 		{
 			SOUND_DAC,
 			&dac_interface
 		}
-#else
-		{
-			SOUND_CUSTOM,
-			&samples_interface
-		}
-#endif
 	},
 
 	atarigen_nvram_handler

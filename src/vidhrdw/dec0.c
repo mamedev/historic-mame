@@ -641,7 +641,7 @@ static void dec0_pf3_update(int transparent, int special)
 			}
 			break;
 		default:
-			logerror("error: pf3_update with unknown shape %04x\n",dec0_pf3_control_0[6]);
+			logerror("error: pf3_update with unknown shape %04x\n",dec0_pf3_control_0[3]);
 			return;
 	}
 

@@ -27,6 +27,7 @@ int avalnche_interrupt(void);
 
 /* vidhrdw/avalnche.c */
 WRITE_HANDLER( avalnche_videoram_w );
+int avalnche_vh_start(void);
 void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static MEMORY_READ_START( readmem )
@@ -78,20 +79,22 @@ INPUT_PORTS_START( avalnche )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLANK */
 
 	PORT_START /* IN2 */
-	PORT_ANALOG( 0xff, 0x00, IPT_PADDLE, 50, 10, 0x40, 0xb7 )
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 50, 10, 0x40, 0xb7 )
 INPUT_PORTS_END
 
 
 
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-};
+#define ARTWORK_COLORS (2 + 32768)
 
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	memcpy(game_palette,palette,sizeof(palette));
+	/* 2 colors in the palette: black & white */
+	memset(game_palette, 0, ARTWORK_COLORS * 3 * sizeof(game_palette[0]));
+	game_palette[1*3+0] = game_palette[1*3+1] = game_palette[1*3+2] = 0xff;
+
+	/* 4 entries in the color table */
+	memset(game_colortable, 0, ARTWORK_COLORS * sizeof(game_colortable[0]));
+	game_colortable[1] = 1;
 }
 
 
@@ -121,13 +124,13 @@ static const struct MachineDriver machine_driver_avalnche =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 32*8-1 },
 	0,
-	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	0,
-	0,
+	avalnche_vh_start,
+	generic_vh_stop,
 	avalnche_vh_screenrefresh,
 
 	/* sound hardware */
@@ -138,7 +141,6 @@ static const struct MachineDriver machine_driver_avalnche =
 			&dac_interface
 		}
 	}
-
 };
 
 

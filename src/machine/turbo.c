@@ -60,143 +60,125 @@ static void update_samples(void)
 	3 = IC6 - CPU Board, Sheet 5, D7
 */
 
-static int portA_r(int chip)
+static WRITE_HANDLER(chip0_portA_w)
 {
-	if (chip == 3)
-		return readinputport(4);	 /* Wheel */
-	return 0;
+	turbo_opa = data;	/* signals 0PA0 to 0PA7 */
 }
 
-static int portB_r(int chip)
+static WRITE_HANDLER(chip0_portB_w)
 {
-	if (chip == 3)
-		return readinputport(2);	/* DSW 2 */
-	return 0;
+	turbo_opb = data;	/* signals 0PB0 to 0PB7 */
 }
 
-static void portA_w(int chip, int data)
+static WRITE_HANDLER(chip0_portC_w)
 {
-	switch (chip)
+	turbo_opc = data;	/* signals 0PC0 to 0PC7 */
+}
+
+
+static WRITE_HANDLER(chip1_portA_w)
+{
+	turbo_ipa = data;	/* signals 1PA0 to 1PA7 */
+}
+
+static WRITE_HANDLER(chip1_portB_w)
+{
+	turbo_ipb = data;	/* signals 1PB0 to 1PB7 */
+}
+
+static WRITE_HANDLER(chip1_portC_w)
+{
+	turbo_ipc = data;	/* signals 1PC0 to 1PC7 */
+}
+
+
+static WRITE_HANDLER(chip2_portA_w)
+{
+	/*
+		2PA0 = /CRASH
+		2PA1 = /TRIG1
+		2PA2 = /TRIG2
+		2PA3 = /TRIG3
+		2PA4 = /TRIG4
+		2PA5 = OSEL0
+		2PA6 = /SLIP
+		2PA7 = /CRASHL
+	*/
+	/* missing short crash sample, but I've never seen it triggered */
+	if (!(data & 0x02)) sample_start(0, 0, 0);
+	if (!(data & 0x04)) sample_start(0, 1, 0);
+	if (!(data & 0x08)) sample_start(0, 2, 0);
+	if (!(data & 0x10)) sample_start(0, 3, 0);
+	if (!(data & 0x40)) sample_start(1, 4, 0);
+	if (!(data & 0x80)) sample_start(2, 5, 0);
+	osel = (osel & 6) | ((data >> 5) & 1);
+	update_samples();
+}
+
+static WRITE_HANDLER(chip2_portB_w)
+{
+	/*
+		2PB0 = ACC0
+		2PB1 = ACC1
+		2PB2 = ACC2
+		2PB3 = ACC3
+		2PB4 = ACC4
+		2PB5 = ACC5
+		2PB6 = /AMBU
+		2PB7 = /SPIN
+	*/
+	accel = data & 0x3f;
+	update_samples();
+	if (!(data & 0x40))
 	{
-		case 0: /* signals 0PA0 to 0PA7 */
-			turbo_opa = data;
-			break;
-
-		case 1: /* signals 1PA0 to 1PA7 */
-			turbo_ipa = data;
-			break;
-
-		case 2: /* signals 2PA0 to 2PA7 */
-			/*
-				2PA0 = /CRASH
-				2PA1 = /TRIG1
-				2PA2 = /TRIG2
-				2PA3 = /TRIG3
-				2PA4 = /TRIG4
-				2PA5 = OSEL0
-				2PA6 = /SLIP
-				2PA7 = /CRASHL
-			*/
-			/* missing short crash sample, but I've never seen it triggered */
-			if (!(data & 0x02)) sample_start(0, 0, 0);
-			if (!(data & 0x04)) sample_start(0, 1, 0);
-			if (!(data & 0x08)) sample_start(0, 2, 0);
-			if (!(data & 0x10)) sample_start(0, 3, 0);
-			if (!(data & 0x40)) sample_start(1, 4, 0);
-			if (!(data & 0x80)) sample_start(2, 5, 0);
-			osel = (osel & 6) | ((data >> 5) & 1);
-			update_samples();
-			break;
+		if (!sample_playing(7))
+			sample_start(7, 8, 0);
+		else
+			logerror("ambu didnt start\n");
 	}
+	else
+		sample_stop(7);
+	if (!(data & 0x80)) sample_start(3, 6, 0);
 }
 
-static void portB_w(int chip, int data)
+static WRITE_HANDLER(chip2_portC_w)
 {
-	switch (chip)
-	{
-		case 0: /* signals 0PB0 to 0PB7 */
-			turbo_opb = data;
-			break;
-
-		case 1: /* signals 1PB0 to 1PB7 */
-			turbo_ipb = data;
-			break;
-
-		case 2: /* signals 2PB0 to 2PB7 */
-			/*
-				2PB0 = ACC0
-				2PB1 = ACC1
-				2PB2 = ACC2
-				2PB3 = ACC3
-				2PB4 = ACC4
-				2PB5 = ACC5
-				2PB6 = /AMBU
-				2PB7 = /SPIN
-			*/
-			accel = data & 0x3f;
-			update_samples();
-			if (!(data & 0x40))
-			{
-				if (!sample_playing(7))
-					sample_start(7, 8, 0);
-				else
-					logerror("ambu didnt start\n");
-			}
-			else
-				sample_stop(7);
-			if (!(data & 0x80)) sample_start(3, 6, 0);
-			break;
-	}
+	/*
+		2PC0 = OSEL1
+		2PC1 = OSEL2
+		2PC2 = BSEL0
+		2PC3 = BSEL1
+		2PC4 = SPEED0
+		2PC5 = SPEED1
+		2PC6 = SPEED2
+		2PC7 = SPEED3
+	*/
+	turbo_speed = (data >> 4) & 0x0f;
+	bsel = (data >> 2) & 3;
+	osel = (osel & 1) | ((data & 3) << 1);
+	update_samples();
 }
 
-static void portC_w(int chip, int data)
+
+static WRITE_HANDLER(chip3_portC_w)
 {
-	switch (chip)
-	{
-		case 0: /* signals 0PC0 to 0PC7 */
-			turbo_opc = data;
-			break;
-
-		case 1: /* signals 1PC0 to 1PC7 */
-			turbo_ipc = data;
-			break;
-
-		case 2: /* signals 2PC0 to 2PC7 */
-			/*
-				2PC0 = OSEL1
-				2PC1 = OSEL2
-				2PC2 = BSEL0
-				2PC3 = BSEL1
-				2PC4 = SPEED0
-				2PC5 = SPEED1
-				2PC6 = SPEED2
-				2PC7 = SPEED3
-			*/
-			turbo_speed = (data >> 4) & 0x0f;
-			bsel = (data >> 2) & 3;
-			osel = (osel & 1) | ((data & 3) << 1);
-			update_samples();
-			break;
-
-		case 3:
-			/* bit 0-3 = signals PLA0 to PLA3 */
-			/* bit 4-6 = signals COL0 to COL2 */
-			/* bit 7 = unused */
-			turbo_fbpla = data & 0x0f;
-			turbo_fbcol = (data & 0x70) >> 4;
-			break;
-	}
+	/* bit 0-3 = signals PLA0 to PLA3 */
+	/* bit 4-6 = signals COL0 to COL2 */
+	/* bit 7 = unused */
+	turbo_fbpla = data & 0x0f;
+	turbo_fbcol = (data & 0x70) >> 4;
 }
+
 
 static ppi8255_interface intf =
 {
 	4, /* 4 chips */
-	portA_r, /* Port A read */
-	portB_r, /* Port B read */
-		  0, /* Port C read */
-	portA_w, /* Port A write */
-	portB_w, /* Port B write */
-	portC_w, /* Port C write */
+	{0, 0, 0, input_port_4_r}, /* Port A read */
+	{0, 0, 0, input_port_2_r}, /* Port B read */
+	{0, 0, 0, 0}, /* Port C read */
+	{chip0_portA_w, chip1_portA_w, chip2_portA_w, 0}, /* Port A write */
+	{chip0_portB_w, chip1_portB_w, chip2_portB_w, 0}, /* Port B write */
+	{chip0_portC_w, chip1_portC_w, chip2_portC_w, chip3_portC_w} /* Port C write */
 };
 
 

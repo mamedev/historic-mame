@@ -2524,7 +2524,7 @@ const char *z180_info(void *context, int regnum)
 	static int which = 0;
 	Z180_Regs *r = context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &Z180;

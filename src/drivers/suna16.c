@@ -2,7 +2,7 @@
 
 							-=  SunA 16 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 CPU:	68000   +  Z80 [Music]  +  Z80 x 2 [4 Bit PCM]

@@ -57,15 +57,16 @@ TODO :
  - Fix sprite coordinates.
  - Improve zoom y coordinate.
  - Text layer scroll if exists.
- - Speed up and clean up the code.
+ - Speed up and clean up the code [some of video routines now in taitoic.c]
 
 ****************************************************************************/
 
 
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
-#include "vidhrdw/taitoic.h"		/* For input ports (TC0220IOC) */
+#include "vidhrdw/taitoic.h"
 
 
 
@@ -77,43 +78,9 @@ TODO :
 
 static data16_t *taitoh_68000_mainram;
 
-extern data16_t	*taitoh_tx_videoram_0;
-extern data16_t	*taitoh_tx_videoram_1;
-extern data16_t	*taitoh_tx_charram;
-extern data16_t *taitoh_tx_videoram_0;
-extern data16_t *taitoh_tx_videoram_1;
-extern data16_t	*taitoh_bg0_videoram_0;
-extern data16_t	*taitoh_bg1_videoram_0;
-extern data16_t	*taitoh_bg0_videoram_1;
-extern data16_t	*taitoh_bg1_videoram_1;
-extern data16_t	*taitoh_scrollram;
-extern data16_t	*taitoh_chainram_0;
-extern data16_t	*taitoh_chainram_1;
-extern data16_t	*taitoh_spriteram;
-
-READ16_HANDLER( taitoh_tx_charram_0_r );
-READ16_HANDLER( taitoh_tx_charram_1_r );
-READ16_HANDLER( taitoh_tx_videoram_0_r );
-READ16_HANDLER( taitoh_tx_videoram_1_r );
-READ16_HANDLER( taitoh_bg0_videoram_0_r );
-READ16_HANDLER( taitoh_bg1_videoram_0_r );
-READ16_HANDLER( taitoh_bg0_videoram_1_r );
-READ16_HANDLER( taitoh_bg1_videoram_1_r );
-READ16_HANDLER( taitoh_scrollram_r );
-
-WRITE16_HANDLER( taitoh_tx_charram_0_w );
-WRITE16_HANDLER( taitoh_tx_charram_1_w );
-WRITE16_HANDLER( taitoh_tx_videoram_0_w );
-WRITE16_HANDLER( taitoh_tx_videoram_1_w );
-WRITE16_HANDLER( taitoh_bg0_videoram_0_w );
-WRITE16_HANDLER( taitoh_bg1_videoram_0_w );
-WRITE16_HANDLER( taitoh_bg0_videoram_1_w );
-WRITE16_HANDLER( taitoh_bg1_videoram_1_w );
-WRITE16_HANDLER( taitoh_scrollram_w );
-
-
-int 		syvalion_vh_start(void);
-int			recordbr_vh_start(void);
+int		syvalion_vh_start(void);
+int		recordbr_vh_start(void);
+int		dleague_vh_start(void);
 void 		syvalion_vh_stop (void);
 void 		syvalion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void		recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -161,6 +128,217 @@ static struct YM2610interface dleague_ym2610_interface =
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
+
+
+/***************************************************************************
+
+  Memory Handler(s)
+
+***************************************************************************/
+
+static READ16_HANDLER( taitoh_mirrorram_r )
+{
+	/* This is a read handler of main RAM mirror. */
+	return taitoh_68000_mainram[offset];
+}
+
+static READ16_HANDLER( TC0220IOC_halfword_port_r )
+{
+	return TC0220IOC_port_r( offset );
+}
+
+static WRITE16_HANDLER( TC0220IOC_halfword_port_w )
+{
+	if (ACCESSING_LSB)
+		TC0220IOC_port_w( offset, data & 0xff );
+}
+
+static READ16_HANDLER( TC0220IOC_halfword_portreg_r )
+{
+	return TC0220IOC_portreg_r( offset );
+}
+
+static WRITE16_HANDLER( TC0220IOC_halfword_portreg_w )
+{
+	if (ACCESSING_LSB)
+		TC0220IOC_portreg_w( offset, data & 0xff );
+}
+
+static READ16_HANDLER( TC0220IOC_halfword_r )
+{
+	return TC0220IOC_r( offset );
+}
+
+static WRITE16_HANDLER( TC0220IOC_halfword_w )
+{
+	if (ACCESSING_LSB)
+		TC0220IOC_w( offset, data & 0xff );
+}
+
+static READ16_HANDLER( syvalion_input_bypass_r )
+{
+	/* Bypass TC0220IOC controller for analog input */
+
+	data8_t	port = TC0220IOC_port_r(0);	/* read port number */
+
+	switch( port )
+	{
+		case 0x08:				/* trackball y coords bottom 8 bits for 2nd player */
+			return input_port_7_r(0);
+
+		case 0x09:				/* trackball y coords top 8 bits for 2nd player */
+			if (input_port_7_r(0) & 0x80)	/* y- direction (negative value) */
+				return 0xff;
+			else							/* y+ direction (positive value) */
+				return 0x00;
+
+		case 0x0a:				/* trackball x coords bottom 8 bits for 2nd player */
+			return input_port_6_r(0);
+
+		case 0x0b:				/* trackball x coords top 8 bits for 2nd player */
+			if (input_port_6_r(0) & 0x80)	/* x- direction (negative value) */
+				return 0xff;
+			else							/* x+ direction (positive value) */
+				return 0x00;
+
+		case 0x0c:				/* trackball y coords bottom 8 bits for 2nd player */
+			return input_port_5_r(0);
+
+		case 0x0d:				/* trackball y coords top 8 bits for 1st player */
+			if (input_port_5_r(0) & 0x80)	/* y- direction (negative value) */
+				return 0xff;
+			else							/* y+ direction (positive value) */
+				return 0x00;
+
+		case 0x0e:				/* trackball x coords bottom 8 bits for 1st player */
+			return input_port_4_r(0);
+
+		case 0x0f:				/* trackball x coords top 8 bits for 1st player */
+			if (input_port_4_r(0) & 0x80)	/* x- direction (negative value) */
+				return 0xff;
+			else							/* x+ direction (positive value) */
+				return 0x00;
+
+		default:
+			return TC0220IOC_portreg_r( offset );
+	}
+}
+
+
+static int banknum = -1;
+
+static void reset_sound_region(void)
+{
+	cpu_setbank(1, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000);
+}
+
+static WRITE_HANDLER( sound_bankswitch_w )
+{
+	banknum = (data - 1) & 3;
+	reset_sound_region();
+}
+
+
+/***************************************************************************
+
+  Memory Map(s)
+
+***************************************************************************/
+
+static MEMORY_READ16_START( syvalion_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
+	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
+	{ 0x200000, 0x200001, syvalion_input_bypass_r },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
+	{ 0x300000, 0x300001, MRA16_NOP },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
+	{ 0x400000, 0x420fff, TC0080VCO_word_r },
+	{ 0x500800, 0x500c1f, paletteram16_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( syvalion_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
+	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
+	{ 0x400000, 0x420fff, TC0080VCO_word_w },
+	{ 0x500800, 0x500c1f, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+MEMORY_END
+
+static MEMORY_READ16_START( recordbr_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
+	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
+	{ 0x300000, 0x300001, MRA16_NOP },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
+	{ 0x400000, 0x420fff, TC0080VCO_word_r },
+	{ 0x500800, 0x500bff, paletteram16_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( recordbr_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
+	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
+	{ 0x400000, 0x420fff, TC0080VCO_word_w },
+	{ 0x500800, 0x500bff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+MEMORY_END
+
+static MEMORY_READ16_START( dleague_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
+	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },
+	{ 0x300000, 0x300001, MRA16_NOP },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
+	{ 0x400000, 0x420fff, TC0080VCO_word_r },
+	{ 0x500800, 0x500c1f, paletteram16_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( dleague_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },
+	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
+	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
+	{ 0x400000, 0x420fff, TC0080VCO_word_w },
+	{ 0x500800, 0x500c1f, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+MEMORY_END
+
+
+static MEMORY_READ_START( sound_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
+	{ 0xe001, 0xe001, YM2610_read_port_0_r },
+	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
+	{ 0xe200, 0xe200, MRA_NOP },
+	{ 0xe201, 0xe201, taitosound_slave_comm_r },
+	{ 0xea00, 0xea00, MRA_NOP },
+MEMORY_END
+
+static MEMORY_WRITE_START( sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
+	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
+	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
+	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
+	{ 0xe200, 0xe200, taitosound_slave_port_w },
+	{ 0xe201, 0xe201, taitosound_slave_comm_w },
+	{ 0xe400, 0xe403, MWA_NOP },		/* pan control */
+	{ 0xee00, 0xee00, MWA_NOP }, 		/* ? */
+	{ 0xf000, 0xf000, MWA_NOP }, 		/* ? */
+	{ 0xf200, 0xf200, sound_bankswitch_w },
+MEMORY_END
 
 
 /***************************************************************************
@@ -386,262 +564,6 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-  Memory Handler(s)
-
-***************************************************************************/
-
-static READ16_HANDLER( taitoh_mirrorram_r )
-{
-	/* This is a read handler of main RAM mirror. */
-	return taitoh_68000_mainram[offset];
-}
-
-static READ16_HANDLER( TC0220IOC_halfword_port_r )
-{
-	return TC0220IOC_port_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_port_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_port_w( offset, data & 0xff );
-}
-
-static READ16_HANDLER( TC0220IOC_halfword_portreg_r )
-{
-	return TC0220IOC_portreg_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_portreg_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_portreg_w( offset, data & 0xff );
-}
-
-static READ16_HANDLER( TC0220IOC_halfword_r )
-{
-	return TC0220IOC_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_w( offset, data & 0xff );
-}
-
-static READ16_HANDLER( syvalion_input_bypass_r )
-{
-	/* Bypass TC0220IOC controller for analog input */
-
-	data8_t	port = TC0220IOC_port_r(0);	/* read port number */
-
-	switch( port )
-	{
-		case 0x08:				/* trackball y coords bottom 8 bits for 2nd player */
-			return input_port_7_r(0);
-
-		case 0x09:				/* trackball y coords top 8 bits for 2nd player */
-			if (input_port_7_r(0) & 0x80)	/* y- direction (negative value) */
-				return 0xff;
-			else							/* y+ direction (positive value) */
-				return 0x00;
-
-		case 0x0a:				/* trackball x coords bottom 8 bits for 2nd player */
-			return input_port_6_r(0);
-
-		case 0x0b:				/* trackball x coords top 8 bits for 2nd player */
-			if (input_port_6_r(0) & 0x80)	/* x- direction (negative value) */
-				return 0xff;
-			else							/* x+ direction (positive value) */
-				return 0x00;
-
-		case 0x0c:				/* trackball y coords bottom 8 bits for 2nd player */
-			return input_port_5_r(0);
-
-		case 0x0d:				/* trackball y coords top 8 bits for 1st player */
-			if (input_port_5_r(0) & 0x80)	/* y- direction (negative value) */
-				return 0xff;
-			else							/* y+ direction (positive value) */
-				return 0x00;
-
-		case 0x0e:				/* trackball x coords bottom 8 bits for 1st player */
-			return input_port_4_r(0);
-
-		case 0x0f:				/* trackball x coords top 8 bits for 1st player */
-			if (input_port_4_r(0) & 0x80)	/* x- direction (negative value) */
-				return 0xff;
-			else							/* x+ direction (positive value) */
-				return 0x00;
-
-		default:
-			return TC0220IOC_portreg_r( offset );
-	}
-}
-
-static WRITE_HANDLER( taitoh_sound_bankswitch_w )
-{
-	data8_t *RAM = (data8_t *)memory_region(REGION_CPU2);
-
-	cpu_setbank( 1, &RAM[ 0x10000 + ( ((data - 1) & 3) * 0x4000 ) ] );
-}
-
-
-/***************************************************************************
-
-  Memory Map(s)
-
-***************************************************************************/
-
-static MEMORY_READ16_START( syvalion_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
-	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
-	{ 0x200000, 0x200001, syvalion_input_bypass_r },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
-	{ 0x300000, 0x300001, MRA16_NOP },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x400fff, taitoh_tx_charram_0_r },
-	{ 0x401000, 0x401fff, taitoh_tx_videoram_0_r },
-	{ 0x402000, 0x40bfff, MRA16_RAM },
-	{ 0x40c000, 0x40dfff, taitoh_bg0_videoram_0_r },
-	{ 0x40e000, 0x40ffff, taitoh_bg1_videoram_0_r },
-	{ 0x410000, 0x410fff, taitoh_tx_charram_1_r },
-	{ 0x411000, 0x411fff, taitoh_tx_videoram_1_r },
-	{ 0x412000, 0x41bfff, MRA16_RAM },
-	{ 0x41c000, 0x41dfff, taitoh_bg0_videoram_1_r },
-	{ 0x41e000, 0x41ffff, taitoh_bg1_videoram_1_r },
-	{ 0x420400, 0x4207ff, MRA16_RAM },
-	{ 0x420800, 0x42080f, taitoh_scrollram_r },
-	{ 0x500800, 0x500c1f, paletteram16_word_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( syvalion_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
-	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x400fff, taitoh_tx_charram_0_w },
-	{ 0x401000, 0x401fff, taitoh_tx_videoram_0_w, &taitoh_tx_videoram_0 },
-	{ 0x402000, 0x40bfff, MWA16_RAM, &taitoh_chainram_0 },
-	{ 0x40c000, 0x40dfff, taitoh_bg0_videoram_0_w, &taitoh_bg0_videoram_0 },
-	{ 0x40e000, 0x40ffff, taitoh_bg1_videoram_0_w, &taitoh_bg1_videoram_0 },
-	{ 0x410000, 0x410fff, taitoh_tx_charram_1_w },
-	{ 0x411000, 0x411fff, taitoh_tx_videoram_1_w, &taitoh_tx_videoram_1 },
-	{ 0x412000, 0x41bfff, MWA16_RAM, &taitoh_chainram_1 },
-	{ 0x41c000, 0x41dfff, taitoh_bg0_videoram_1_w, &taitoh_bg0_videoram_1 },
-	{ 0x41e000, 0x41ffff, taitoh_bg1_videoram_1_w, &taitoh_bg1_videoram_1 },
-	{ 0x420000, 0x4203ff, MWA16_NOP },
-	{ 0x420400, 0x4207ff, MWA16_RAM, &taitoh_spriteram },
-	{ 0x420800, 0x42080f, taitoh_scrollram_w, &taitoh_scrollram },
-	{ 0x500800, 0x500c1f, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
-
-static MEMORY_READ16_START( recordbr_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
-	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
-	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
-	{ 0x300000, 0x300001, MRA16_NOP },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x40bfff, MRA16_RAM },
-	{ 0x40c000, 0x40dfff, taitoh_bg0_videoram_0_r },
-	{ 0x40e000, 0x40ffff, taitoh_bg1_videoram_0_r },
-	{ 0x410000, 0x41bfff, MRA16_RAM },
-	{ 0x41c000, 0x41dfff, taitoh_bg0_videoram_1_r },
-	{ 0x41e000, 0x41ffff, taitoh_bg1_videoram_1_r },
-	{ 0x420400, 0x4207ff, MRA16_RAM },
-	{ 0x420800, 0x42080f, taitoh_scrollram_r },
-	{ 0x500800, 0x500bff, paletteram16_word_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( recordbr_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
-	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
-	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x40bfff, MWA16_RAM, &taitoh_chainram_0 },
-	{ 0x40c000, 0x40dfff, taitoh_bg0_videoram_0_w, &taitoh_bg0_videoram_0 },
-	{ 0x40e000, 0x40ffff, taitoh_bg1_videoram_0_w, &taitoh_bg1_videoram_0 },
-	{ 0x410000, 0x41bfff, MWA16_RAM, &taitoh_chainram_1 },
-	{ 0x41c000, 0x41dfff, taitoh_bg0_videoram_1_w, &taitoh_bg0_videoram_1 },
-	{ 0x41e000, 0x41ffff, taitoh_bg1_videoram_1_w, &taitoh_bg1_videoram_1 },
-	{ 0x420000, 0x4203ff, MWA16_NOP },
-	{ 0x420400, 0x4207ff, MWA16_RAM, &taitoh_spriteram },
-	{ 0x420800, 0x42080f, taitoh_scrollram_w, &taitoh_scrollram },
-	{ 0x500800, 0x500bff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
-
-static MEMORY_READ16_START( dleague_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },				/* 68000 RAM */
-	{ 0x110000, 0x11ffff, taitoh_mirrorram_r },		/* 68000 RAM (Mirror) */
-	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },
-	{ 0x300000, 0x300001, MRA16_NOP },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x40bfff, MRA16_RAM },
-	{ 0x40c000, 0x40dfff, taitoh_bg0_videoram_0_r },
-	{ 0x40e000, 0x40ffff, taitoh_bg1_videoram_0_r },
-	{ 0x410000, 0x41bfff, MRA16_RAM },
-	{ 0x41c000, 0x41dfff, taitoh_bg0_videoram_1_r },
-	{ 0x41e000, 0x41ffff, taitoh_bg1_videoram_1_r },
-	{ 0x420400, 0x4207ff, MRA16_RAM },
-	{ 0x420800, 0x42080f, taitoh_scrollram_r },
-	{ 0x500800, 0x500c1f, paletteram16_word_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( dleague_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM, &taitoh_68000_mainram },
-	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },
-	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
-	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x40bfff, MWA16_RAM, &taitoh_chainram_0 },
-	{ 0x40c000, 0x40dfff, taitoh_bg0_videoram_0_w, &taitoh_bg0_videoram_0 },
-	{ 0x40e000, 0x40ffff, taitoh_bg1_videoram_0_w, &taitoh_bg1_videoram_0 },
-	{ 0x410000, 0x41bfff, MWA16_RAM, &taitoh_chainram_1 },
-	{ 0x41c000, 0x41dfff, taitoh_bg0_videoram_1_w, &taitoh_bg0_videoram_1 },
-	{ 0x41e000, 0x41ffff, taitoh_bg1_videoram_1_w, &taitoh_bg1_videoram_1 },
-	{ 0x420000, 0x4203ff, MWA16_NOP },
-	{ 0x420400, 0x4207ff, MWA16_RAM, &taitoh_spriteram },
-	{ 0x420800, 0x42080f, taitoh_scrollram_w, &taitoh_scrollram },
-	{ 0x500800, 0x500c1f, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
-
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-	{ 0xea00, 0xea00, MRA_NOP },
-MEMORY_END
-
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP },		/* pan control */
-	{ 0xee00, 0xee00, MWA_NOP }, 		/* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, 		/* ? */
-	{ 0xf200, 0xf200, taitoh_sound_bankswitch_w },
-MEMORY_END
-
-
-/***************************************************************************
-
   Machine Driver(s)
 
 ***************************************************************************/
@@ -659,7 +581,6 @@ static struct GfxLayout tilelayout =
 	16*16
 };
 
-/* for Syvalion */
 static struct GfxLayout charlayout =
 {
 	8, 8,	/* 8x8 pixels */
@@ -675,7 +596,6 @@ static struct GfxLayout charlayout =
 static struct GfxDecodeInfo syvalion_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0,     32*16 },
-	{ 0,           0, &charlayout, 32*16, 16    },	/* this is dynamically changed */
 	{ -1 } /* end of array */
 };
 
@@ -688,7 +608,7 @@ static struct GfxDecodeInfo recordbr_gfxdecodeinfo[] =
 static struct GfxDecodeInfo dleague_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0,     32*16 },
-	{ REGION_GFX2, 0, &charlayout, 32*16, 16    },
+	{ REGION_GFX2, 0, &charlayout, 32*16, 16    },	// seems to be bogus...?
 	{ -1 } /* end of array */
 };
 
@@ -764,7 +684,7 @@ static const struct MachineDriver machine_driver_recordbr =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	recordbr_vh_start,
-	0,
+	syvalion_vh_stop,
 	recordbr_vh_screenrefresh,
 
 	/* sound hardware */
@@ -805,8 +725,8 @@ static const struct MachineDriver machine_driver_dleague =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	recordbr_vh_start,
-	0,
+	dleague_vh_start,
+	syvalion_vh_stop,
 	dleague_vh_screenrefresh,
 
 	/* sound hardware */
@@ -922,7 +842,15 @@ ROM_START( dleague )
 	ROM_LOAD( "c02-01.31", 0x00000, 0x80000, 0xd5a3d1aa )
 ROM_END
 
+
+static void init_taitoh(void)
+{
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
+}
+
+
 /*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT     MONITOR  COMPANY  FULLNAME */
-GAME( 1988, syvalion, 0,        syvalion, syvalion, 0,       ROT0,    "Taito Corporation", "Syvalion (Japan)" )
-GAME( 1988, recordbr, 0,        recordbr, recordbr, 0,       ROT0,    "Taito Corporation Japan", "Recordbreaker (World)" )
-GAME( 1990, dleague,  0,        dleague,  dleague,  0,       ROT0,    "Taito Corporation", "Dynamite League (Japan)" )
+GAME( 1988, syvalion, 0,        syvalion, syvalion, taitoh,  ROT0,    "Taito Corporation", "Syvalion (Japan)" )
+GAME( 1988, recordbr, 0,        recordbr, recordbr, taitoh,  ROT0,    "Taito Corporation Japan", "Recordbreaker (World)" )
+GAME( 1990, dleague,  0,        dleague,  dleague,  taitoh,  ROT0,    "Taito Corporation", "Dynamite League (Japan)" )

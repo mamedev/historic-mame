@@ -30,6 +30,14 @@
 	arkbl3   	Another bootleg of the early Japanese one, more heavily modified
 	arkangc		Game Corporation bootleg with level selector
 
+
+	Most if not all Arkanoid sets have a bug in their game code. It occurs on the
+	final level where the player has to dodge falling objects. The bug resides in
+	the collision detection routine which sometimes reads from unmapped addresses
+	above $F000. For these addresses it is vital to read zero values, or else the
+	player will die for no reason.
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -60,18 +68,18 @@ READ_HANDLER( arkanoid_input_2_r );
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
 	{ 0xd00c, 0xd00c, arkanoid_68705_input_0_r },  /* mainly an input port, with 2 bits from the 68705 */
 	{ 0xd010, 0xd010, input_port_1_r },
 	{ 0xd018, 0xd018, arkanoid_Z80_mcu_r },  /* input from the 68705 */
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_NOP },	/* fixes instant death in final level */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xd000, 0xd000, AY8910_control_port_0_w },
 	{ 0xd001, 0xd001, AY8910_write_port_0_w },
 	{ 0xd008, 0xd008, arkanoid_d008_w },	/* gfx bank, flip screen etc. */
@@ -80,23 +88,22 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe840, 0xefff, MWA_RAM },
-	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( boot_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
 	{ 0xd00c, 0xd00c, input_port_0_r },
 	{ 0xd010, 0xd010, input_port_1_r },
 	{ 0xd018, 0xd018, arkanoid_input_2_r },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_NOP },	/* fixes instant death in final level */
 MEMORY_END
 
 static MEMORY_WRITE_START( boot_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xd000, 0xd000, AY8910_control_port_0_w },
 	{ 0xd001, 0xd001, AY8910_write_port_0_w },
 	{ 0xd008, 0xd008, arkanoid_d008_w },	/* gfx bank, flip screen etc. */
@@ -105,7 +112,6 @@ static MEMORY_WRITE_START( boot_writemem )
 	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe840, 0xefff, MWA_RAM },
-	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
 
 

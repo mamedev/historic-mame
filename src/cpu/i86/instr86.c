@@ -46,8 +46,8 @@ static void PREFIX86(_interrupt)(unsigned int_num)
 #ifdef I286
 	}
 #endif
-	CHANGE_PC(I.pc);	
-	
+	CHANGE_PC(I.pc);
+
 	I.extra_cycles += cycles.exception;
 }
 
@@ -384,55 +384,55 @@ static void PREFIX86(_rotate_shift_Word)(unsigned ModRM, unsigned count)
 }
 #endif
 
-static void PREFIX(rep)(int flagval) 
-{ 
-    /* Handles rep- and repnz- prefixes. flagval is the value of ZF for the 
-		 loop  to continue for CMPS and SCAS instructions. */ 
- 
-	unsigned next = FETCHOP; 
-	unsigned count = I.regs.w[CX]; 
- 
-    switch(next) 
-    { 
-	case 0x26:  /* ES: */ 
-		seg_prefix=TRUE; 
-		prefix_base=I.base[ES]; 
+static void PREFIX(rep)(int flagval)
+{
+    /* Handles rep- and repnz- prefixes. flagval is the value of ZF for the
+		 loop  to continue for CMPS and SCAS instructions. */
+
+	unsigned next = FETCHOP;
+	unsigned count = I.regs.w[CX];
+
+    switch(next)
+    {
+	case 0x26:  /* ES: */
+		seg_prefix=TRUE;
+		prefix_base=I.base[ES];
 		ICOUNT -= cycles.override;
-		PREFIX(rep)(flagval); 
-		break; 
-	case 0x2e:  /* CS: */ 
-		seg_prefix=TRUE; 
-		prefix_base=I.base[CS]; 
+		PREFIX(rep)(flagval);
+		break;
+	case 0x2e:  /* CS: */
+		seg_prefix=TRUE;
+		prefix_base=I.base[CS];
 		ICOUNT -= cycles.override;
-		PREFIX(rep)(flagval); 
-		break; 
-	case 0x36:  /* SS: */ 
-		seg_prefix=TRUE; 
-		prefix_base=I.base[SS]; 
+		PREFIX(rep)(flagval);
+		break;
+	case 0x36:  /* SS: */
+		seg_prefix=TRUE;
+		prefix_base=I.base[SS];
 		ICOUNT -= cycles.override;
-		PREFIX(rep)(flagval); 
-		break; 
-	case 0x3e:  /* DS: */ 
-		seg_prefix=TRUE; 
-		prefix_base=I.base[DS]; 
+		PREFIX(rep)(flagval);
+		break;
+	case 0x3e:  /* DS: */
+		seg_prefix=TRUE;
+		prefix_base=I.base[DS];
 		ICOUNT -= cycles.override;
-		PREFIX(rep)(flagval); 
-		break; 
-#ifndef I86 
+		PREFIX(rep)(flagval);
+		break;
+#ifndef I86
 	case 0x6c:	/* REP INSB */
 		ICOUNT -= cycles.rep_ins8_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			PutMemB(ES,I.regs.w[DI],read_port(I.regs.w[DX]));
 			I.regs.w[DI] += I.DirVal;
 			ICOUNT -= cycles.rep_ins8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0x6d:  /* REP INSW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0x6d:  /* REP INSW */
 		ICOUNT -= cycles.rep_ins16_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			PutMemB(ES,I.regs.w[DI],read_port(I.regs.w[DX]));
@@ -440,22 +440,22 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[DI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_ins16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0x6e:  /* REP OUTSB */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0x6e:  /* REP OUTSB */
 		ICOUNT -= cycles.rep_outs8_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
 			I.regs.w[DI] += I.DirVal;
 			ICOUNT -= cycles.rep_outs8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0x6f:  /* REP OUTSW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0x6f:  /* REP OUTSW */
 		ICOUNT -= cycles.rep_outs16_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
@@ -463,15 +463,15 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[DI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_outs16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-#endif 
-	case 0xa4:  /* REP MOVSB */ 
+		I.regs.w[CX]=count;
+		break;
+#endif
+	case 0xa4:  /* REP MOVSB */
 		ICOUNT -= cycles.rep_movs8_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			BYTE tmp;
-			
+
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			tmp = GetMemB(DS,I.regs.w[SI]);
 			PutMemB(ES,I.regs.w[DI], tmp);
@@ -479,14 +479,14 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[SI] += I.DirVal;
 			ICOUNT -= cycles.rep_movs8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xa5:  /* REP MOVSW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xa5:  /* REP MOVSW */
 		ICOUNT -= cycles.rep_movs16_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			WORD tmp;
-			
+
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			tmp = GetMemW(DS,I.regs.w[SI]);
 			PutMemW(ES,I.regs.w[DI], tmp);
@@ -494,14 +494,14 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[SI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_movs16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xa6:  /* REP(N)E CMPSB */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xa6:  /* REP(N)E CMPSB */
 		ICOUNT -= cycles.rep_cmps8_base;
-		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--) 
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
 		{
 			unsigned dst, src;
-			
+
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			dst = GetMemB(ES, I.regs.w[DI]);
 			src = GetMemB(DS, I.regs.w[SI]);
@@ -510,14 +510,14 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[SI] += I.DirVal;
 			ICOUNT -= cycles.rep_cmps8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xa7:  /* REP(N)E CMPSW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xa7:  /* REP(N)E CMPSW */
 		ICOUNT -= cycles.rep_cmps16_base;
-		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--) 
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
 		{
 			unsigned dst, src;
-			
+
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			dst = GetMemB(ES, I.regs.w[DI]);
 			src = GetMemB(DS, I.regs.w[SI]);
@@ -526,22 +526,22 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[SI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_cmps16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xaa:  /* REP STOSB */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xaa:  /* REP STOSB */
 		ICOUNT -= cycles.rep_stos8_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			PutMemB(ES,I.regs.w[DI],I.regs.b[AL]);
 			I.regs.w[DI] += I.DirVal;
 			ICOUNT -= cycles.rep_stos8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xab:  /* REP STOSW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xab:  /* REP STOSW */
 		ICOUNT -= cycles.rep_stos16_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			PutMemB(ES,I.regs.w[DI],I.regs.b[AL]);
@@ -549,36 +549,36 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[DI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_stos16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xac:  /* REP LODSB */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xac:  /* REP LODSB */
 		ICOUNT -= cycles.rep_lods8_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			I.regs.b[AL] = GetMemB(DS,I.regs.w[SI]);
 			I.regs.w[SI] += I.DirVal;
 			ICOUNT -= cycles.rep_lods8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xad:  /* REP LODSW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xad:  /* REP LODSW */
 		ICOUNT -= cycles.rep_lods16_base;
-		for (; count > 0; count--) 
+		for (; count > 0; count--)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			I.regs.w[AX] = GetMemW(DS,I.regs.w[SI]);
 			I.regs.w[SI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_lods16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xae:  /* REP(N)E SCASB */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xae:  /* REP(N)E SCASB */
 		ICOUNT -= cycles.rep_scas8_base;
-		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--) 
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
 		{
 			unsigned src, dst;
-			
+
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			src = GetMemB(ES, I.regs.w[DI]);
 			dst = I.regs.b[AL];
@@ -586,14 +586,14 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[DI] += I.DirVal;
 			ICOUNT -= cycles.rep_scas8_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	case 0xaf:  /* REP(N)E SCASW */ 
+		I.regs.w[CX]=count;
+		break;
+	case 0xaf:  /* REP(N)E SCASW */
 		ICOUNT -= cycles.rep_scas16_base;
-		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--) 
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
 		{
 			unsigned src, dst;
-			
+
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			src = GetMemW(ES, I.regs.w[DI]);
 			dst = I.regs.w[AX];
@@ -601,12 +601,12 @@ static void PREFIX(rep)(int flagval)
 			I.regs.w[DI] += 2 * I.DirVal;
 			ICOUNT -= cycles.rep_scas16_count;
 		}
-		I.regs.w[CX]=count; 
-		break; 
-	default: 
-		PREFIX(_instruction)[next](); 
-	} 
-} 
+		I.regs.w[CX]=count;
+		break;
+	default:
+		PREFIX(_instruction)[next]();
+	}
+}
 
 #ifndef I186
 static void PREFIX86(_add_br8)(void)    /* Opcode 0x00 */
@@ -2008,7 +2008,7 @@ static void PREFIX86(_popf)(void)    /* Opcode 0x9d */
     POP(tmp);
 	ICOUNT -= cycles.popf;
     ExpandFlags(tmp);
-	
+
 	if (I.TF) PREFIX(_trap)();
 
 	/* if the IF is set, and an interrupt is pending, signal an interrupt */
@@ -2051,7 +2051,7 @@ static void PREFIX86(_mov_axdisp)(void)    /* Opcode 0xa1 */
 
 	addr = FETCH;
 	addr += FETCH << 8;
-	
+
 	ICOUNT -= cycles.mov_am16;
 	I.regs.b[AL] = GetMemB(DS, addr);
 	I.regs.b[AH] = GetMemB(DS, addr+1);
@@ -2060,10 +2060,10 @@ static void PREFIX86(_mov_axdisp)(void)    /* Opcode 0xa1 */
 static void PREFIX86(_mov_dispal)(void)    /* Opcode 0xa2 */
 {
     unsigned addr;
-	
+
 	addr = FETCH;
 	addr += FETCH << 8;
-	
+
 	ICOUNT -= cycles.mov_ma8;
 	PutMemB(DS, addr, I.regs.b[AL]);
 }
@@ -2071,7 +2071,7 @@ static void PREFIX86(_mov_dispal)(void)    /* Opcode 0xa2 */
 static void PREFIX86(_mov_dispax)(void)    /* Opcode 0xa3 */
 {
 	unsigned addr;
-	
+
 	addr = FETCH;
 	addr += FETCH << 8;
 
@@ -2306,7 +2306,7 @@ static void PREFIX86(_les_dw)(void)    /* Opcode 0xc4 */
 {
 	unsigned ModRM = FETCH;
     WORD tmp = GetRMWord(ModRM);
-	
+
     RegWord(ModRM)= tmp;
 #ifdef I286
 	i286_data_descriptor(ES,GetnextRMWord);
@@ -2352,7 +2352,7 @@ static void PREFIX86(_retf_d16)(void)    /* Opcode 0xca */
 	count += FETCH << 8;
 
 #ifdef I286
-	{ 
+	{
 		int tmp, tmp2;
 		POP(tmp2);
 		POP(tmp);
@@ -2372,7 +2372,7 @@ static void PREFIX86(_retf_d16)(void)    /* Opcode 0xca */
 static void PREFIX86(_retf)(void)    /* Opcode 0xcb */
 {
 #ifdef I286
-	{ 
+	{
 		int tmp, tmp2;
 		POP(tmp2);
 		POP(tmp);
@@ -2425,7 +2425,7 @@ static void PREFIX86(_iret)(void)    /* Opcode 0xcf */
 {
 	ICOUNT -= cycles.iret;
 #ifdef I286
-	{ 
+	{
 		int tmp, tmp2;
 		POP(tmp2);
 		POP(tmp);
@@ -2490,15 +2490,15 @@ static void PREFIX86(_aam)(void)    /* Opcode 0xd4 */
 		SetSZPF_Word(I.regs.w[AX]);
 	}
 #else
- 
-	if (mult == 0) 
-		PREFIX(_interrupt)(0,0); 
-    else 
-    { 
-		I.regs.b[AH] = I.regs.b[AL] / 10; 
-		I.regs.b[AL] %= 10; 
-		SetSZPF_Word(I.regs.w[AX]); 
-    } 
+
+	if (mult == 0)
+		PREFIX(_interrupt)(0,0);
+    else
+    {
+		I.regs.b[AH] = I.regs.b[AL] / 10;
+		I.regs.b[AL] %= 10;
+		SetSZPF_Word(I.regs.w[AX]);
+    }
 #endif
 }
 
@@ -2516,18 +2516,18 @@ static void PREFIX86(_aad)(void)    /* Opcode 0xd5 */
 	SetPF(I.regs.b[AL]);
 	I.SignVal = 0;
 #else
-/* OB: Opcode works on NEC V-Series but not the Variants 	*/ 
-/*     one could specify any byte value as operand but the NECs */ 
-/*     always substitute 0x0a.					*/ 
-	I.regs.b[AL] = I.regs.b[AH] * 10 + I.regs.b[AL]; 
-	I.regs.b[AH] = 0; 
- 
-	SetZF(I.regs.b[AL]); 
-	SetPF(I.regs.b[AL]); 
-	I.SignVal = 0; 
-	mult=0; 
+/* OB: Opcode works on NEC V-Series but not the Variants 	*/
+/*     one could specify any byte value as operand but the NECs */
+/*     always substitute 0x0a.					*/
+	I.regs.b[AL] = I.regs.b[AH] * 10 + I.regs.b[AL];
+	I.regs.b[AH] = 0;
+
+	SetZF(I.regs.b[AL]);
+	SetPF(I.regs.b[AL]);
+	I.SignVal = 0;
+	mult=0;
 #endif
-} 
+}
 
 
 static void PREFIX86(_xlat)(void)    /* Opcode 0xd7 */
@@ -2599,7 +2599,7 @@ static void PREFIX86(_jcxz)(void)    /* Opcode 0xe3 */
 		I.pc += disp;
 /* ASG - can probably assume this is safe
 		CHANGE_PC(I.pc);*/
-	} else 
+	} else
 		ICOUNT -= cycles.jcxz_nt;
 }
 
@@ -2640,7 +2640,7 @@ static void PREFIX86(_outax)(void)    /* Opcode 0xe7 */
 static void PREFIX86(_call_d16)(void)    /* Opcode 0xe8 */
 {
 	WORD ip, tmp;
-	
+
 	FETCHWORD(tmp);
 	ip = I.pc - I.base[CS];
 	PUSH(ip);
@@ -2653,7 +2653,7 @@ static void PREFIX86(_call_d16)(void)    /* Opcode 0xe8 */
 static void PREFIX86(_jmp_d16)(void)    /* Opcode 0xe9 */
 {
 	WORD ip, tmp;
-	
+
 	FETCHWORD(tmp);
 	ip = I.pc - I.base[CS] + tmp;
 	I.pc = (ip + I.base[CS]) & AMASK;
@@ -3181,7 +3181,7 @@ static void PREFIX86(_ffpre)(void)    /* Opcode 0xff */
 
     case 0x28:  /* JMP FAR ea */
 		ICOUNT -= cycles.jmp_m32;
-		
+
 #ifdef I286
 		tmp = GetRMWord(ModRM);
 		i286_code_descriptor(GetnextRMWord, tmp);

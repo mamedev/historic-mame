@@ -52,7 +52,7 @@ WRITE_HANDLER( rthunder_tilebank_select_1_w );
 /* signed/unsigned 8-bit conversion macros */
 #define AUDIO_CONV(A) ((A)^0x80)
 
-static int rt_totalsamples[6];
+static int rt_totalsamples[7];
 static int rt_decode_mode;
 
 

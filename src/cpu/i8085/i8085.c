@@ -41,6 +41,8 @@
  *
  *****************************************************************************/
 
+//int survival_prot = 0;
+
 #define VERBOSE 0
 
 #include "driver.h"
@@ -246,6 +248,7 @@ INLINE void execute_one(int opcode)
 			{
 				i8085_ICount -= 7;		/* RIM	*/
 				I.AF.b.h = I.IM;
+//				survival_prot ^= 0x01;
 			}
 			else
 			{
@@ -1108,12 +1111,12 @@ static void Interrupt(void)
 			change_pc16(I.PC.d);
 			break;
 		default:
-			switch( I.IRQ1 )
+			switch( I.ISRV )
 			{
-				case I8085_TRAP:
-				case I8085_RST75:
-				case I8085_RST65:
-				case I8085_RST55:
+				case IM_TRAP:
+				case IM_RST75:
+				case IM_RST65:
+				case IM_RST55:
 					M_PUSH(PC);
 					if (I.IRQ1 != I8085_RST75)
 						I.PC.d = I.IRQ1;
@@ -1528,7 +1531,7 @@ const char *i8085_info(void *context, int regnum)
 	static int which = 0;
 	i8085_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &I;

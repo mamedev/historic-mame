@@ -1863,7 +1863,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			5000000/1,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1894,7 +1894,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 

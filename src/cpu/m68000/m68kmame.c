@@ -419,7 +419,7 @@ const char *m68000_info(void *context, int regnum)
 	static int which = 0;
 	int sr;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 
 	switch( regnum )
@@ -700,7 +700,7 @@ const char *m68010_info(void *context, int regnum)
 	static int which = 0;
 	int sr;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 
 	switch( regnum )
@@ -995,7 +995,7 @@ const char *m68ec020_info(void *context, int regnum)
 	static int which = 0;
 	int sr;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 
 	switch( regnum )
@@ -1287,7 +1287,7 @@ const char *m68020_info(void *context, int regnum)
 	static int which = 0;
 	int sr;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 
 	switch( regnum )

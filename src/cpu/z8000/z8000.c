@@ -685,7 +685,7 @@ const char *z8000_info(void *context, int regnum)
 	static int which = 0;
 	z8000_Regs *r = (z8000_Regs *)context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
     buffer[which][0] = '\0';
 	if( !context )
 		r = &Z;

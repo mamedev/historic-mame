@@ -510,8 +510,6 @@ logerror("shrinked palette uses %d colors\n",used);
 		Machine->debug_remapped_colortable[2*i+1] = Machine->debug_pens[i % DEBUGGER_TOTAL_COLORS];
 	}
 
-	artwork_remap();
-
 	return 0;
 }
 

@@ -446,7 +446,7 @@ const char *m4510_info(void *context, int regnum)
 	static int which = 0;
 	m4510_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &m4510;

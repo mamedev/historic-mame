@@ -223,7 +223,7 @@ static void scanline_update(int scanline)
 	{
 		/* generate the 32V interrupt (IRQ 2) */
 		if ((scanline % 64) == 0)
-			if (READ_WORD(&interrupt_enable[0]) & 4)
+			if (interrupt_enable[0] & 4)
 				atarigen_scanline_int_gen();
 	}
 }
@@ -263,7 +263,7 @@ static void init_machine(void)
 static int vblank_interrupt(void)
 {
 	/* clock the VBLANK through */
-	if (READ_WORD(&interrupt_enable[0]) & 8)
+	if (interrupt_enable[0] & 8)
 		atarigen_video_int_gen();
 
 	return 0;
@@ -449,7 +449,7 @@ static READ16_HANDLER( sound_r )
 static WRITE_HANDLER( sound_6502_w )
 {
 	/* clock the state through */
-	p2portwr_state = (READ_WORD(&interrupt_enable[0]) & 2) != 0;
+	p2portwr_state = (interrupt_enable[0] & 2) != 0;
 	atarigen_update_interrupts();
 
 	/* handle it normally otherwise */
@@ -460,7 +460,7 @@ static WRITE_HANDLER( sound_6502_w )
 static READ_HANDLER( sound_6502_r )
 {
 	/* clock the state through */
-	p2portrd_state = (READ_WORD(&interrupt_enable[0]) & 1) != 0;
+	p2portrd_state = (interrupt_enable[0] & 1) != 0;
 	atarigen_update_interrupts();
 
 	/* handle it normally otherwise */
@@ -1204,7 +1204,7 @@ static const struct MachineDriver machine_driver_paperboy =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarisys2_vh_start,
 	atarisys2_vh_stop,

@@ -224,7 +224,8 @@ WRITE16_HANDLER(es5510_dsp_w)
 
 		case 0xa0: /* Write select - GPR */
 	//		logerror("ES5510:  Write GPR %06x %06x (0x%04x:=0x%06x\n",data,es5510_gpr_latch,data,snd_mem[es5510_gpr_latch>>8]);
-			es5510_gpr[data]=snd_mem[es5510_gpr_latch>>8];
+			if (data<0xc0)
+				es5510_gpr[data]=snd_mem[es5510_gpr_latch>>8];
 			break;
 
 		case 0xc0: /* Write select - INSTR */

@@ -3,7 +3,7 @@
 
 					      (C)   1986 & 1988 Konami
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 - Note: press F2 to enter service mode -
 

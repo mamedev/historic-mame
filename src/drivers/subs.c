@@ -176,12 +176,12 @@ static const struct MachineDriver machine_driver_subs =
 	subs_init_machine,
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },
+	64*8, 32*8, { 0*8, 64*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	generic_vh_start,
 	generic_vh_stop,

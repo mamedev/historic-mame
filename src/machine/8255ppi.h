@@ -6,13 +6,14 @@
 typedef struct
 {
 	int num;							 /* number of PPIs to emulate */
-	int (*portA_r)( int chip );
-	int (*portB_r)( int chip );
-	int (*portC_r)( int chip );
-	void (*portA_w)( int chip, int data );
-	void (*portB_w)( int chip, int data );
-	void (*portC_w)( int chip, int data );
+	mem_read_handler portAread[MAX_8255];
+	mem_read_handler portBread[MAX_8255];
+	mem_read_handler portCread[MAX_8255];
+	mem_write_handler portAwrite[MAX_8255];
+	mem_write_handler portBwrite[MAX_8255];
+	mem_write_handler portCwrite[MAX_8255];
 } ppi8255_interface;
+
 
 /* Init */
 void ppi8255_init( ppi8255_interface *intfce);
@@ -20,6 +21,14 @@ void ppi8255_init( ppi8255_interface *intfce);
 /* Read/Write */
 int ppi8255_r ( int which, int offset );
 void ppi8255_w( int which, int offset, int data );
+
+void ppi8255_set_portAread( int which, mem_read_handler portAread);
+void ppi8255_set_portBread( int which, mem_read_handler portBread);
+void ppi8255_set_portCread( int which, mem_read_handler portCread);
+
+void ppi8255_set_portAwrite( int which, mem_write_handler portAwrite);
+void ppi8255_set_portBwrite( int which, mem_write_handler portBwrite);
+void ppi8255_set_portCwrite( int which, mem_write_handler portCwrite);
 
 #ifdef MESS
 /* Peek at the ports */

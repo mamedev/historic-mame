@@ -30,7 +30,7 @@ READ16_HANDLER( demonwld_dsp_r )
 	unsigned int input_data = 0;
 
 	switch (main_ram_seg) {
-		case 0xc00000:	input_data = READ_WORD(&(cpu_bankbase[1][(dsp_addr_w)])); break;
+		case 0xc00000:	input_data = *((data16_t *)&(cpu_bankbase[1][(dsp_addr_w)])); break;
 
 		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
 	}
@@ -58,7 +58,7 @@ WRITE16_HANDLER( demonwld_dsp_w )
 
 		dsp_execute = 0;
 		switch (main_ram_seg) {
-			case 0xc00000:	WRITE_WORD(&(cpu_bankbase[1][(dsp_addr_w)]),data);
+			case 0xc00000:	*((data16_t *)&(cpu_bankbase[1][(dsp_addr_w)])) = data;
 							if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
 			default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
 		}

@@ -448,7 +448,7 @@ static void cerberus_bankswitch(void)
 }
 
 
-/* bankswitching for Mayhem 2002, World Series Baseball, and Alley Master */
+/* bankswitching for Mayhem 2002, Power Play, World Series Baseball, and Alley Master */
 static void mayhem_bankswitch(void)
 {
 	UINT8 *address;
@@ -563,11 +563,13 @@ static void offroad_bankswitch(void)
 
 #define SERIAL_TYPE_NONE		0
 #define SERIAL_TYPE_ADD			1
-#define SERIAL_TYPE_ENCRYPT		2
-#define SERIAL_TYPE_ENCRYPT_XOR	3
+#define SERIAL_TYPE_ADD_XOR		2
+#define SERIAL_TYPE_ENCRYPT		3
+#define SERIAL_TYPE_ENCRYPT_XOR	4
 
 static void init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offset, UINT8 serial_type)
 {
+	UINT8 xorval = (serial_type == SERIAL_TYPE_ADD_XOR || serial_type == SERIAL_TYPE_ENCRYPT_XOR) ? 0xff : 0x00;
 	UINT32 serial;
 
 	/* initialize everything to the default value */
@@ -593,6 +595,7 @@ static void init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offs
 	switch (serial_type)
 	{
 		case SERIAL_TYPE_ADD:
+		case SERIAL_TYPE_ADD_XOR:
 		{
 			int i;
 			for (i = 0; i < 10; i++)
@@ -604,9 +607,10 @@ static void init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offs
 				else
 					digit = ((serial << (i * 4)) >> 28) & 15;
 				digit = ('0' + digit) * 2;
-				eeprom_data[serial_offset * 2 +  0 + (i ^ 1)] = digit / 3;
-				eeprom_data[serial_offset * 2 + 10 + (i ^ 1)] = digit / 3;
-				eeprom_data[serial_offset * 2 + 20 + (i ^ 1)] = digit - (2 * (digit / 3));
+
+				eeprom_data[serial_offset * 2 +  0 + (i ^ 1)] = (digit / 3) ^ xorval;
+				eeprom_data[serial_offset * 2 + 10 + (i ^ 1)] = (digit / 3) ^ xorval;
+				eeprom_data[serial_offset * 2 + 20 + (i ^ 1)] = (digit - (2 * (digit / 3))) ^ xorval;
 			}
 			break;
 		}
@@ -628,20 +632,11 @@ static void init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offs
 			l ^= e;
 			e ^= 0x2a;
 
-			/* optionally XOR the result */
-			if (serial_type == SERIAL_TYPE_ENCRYPT_XOR)
-			{
-				h ^= 0xff;
-				l ^= 0xff;
-				d ^= 0xff;
-				e ^= 0xff;
-			}
-
 			/* store the bytes */
-			eeprom_data[serial_offset * 2 + 0] = h;
-			eeprom_data[serial_offset * 2 + 1] = l;
-			eeprom_data[serial_offset * 2 + 2] = d;
-			eeprom_data[serial_offset * 2 + 3] = e;
+			eeprom_data[serial_offset * 2 + 0] = h ^ xorval;
+			eeprom_data[serial_offset * 2 + 1] = l ^ xorval;
+			eeprom_data[serial_offset * 2 + 2] = d ^ xorval;
+			eeprom_data[serial_offset * 2 + 3] = e ^ xorval;
 			break;
 		}
 	}
@@ -2045,6 +2040,51 @@ ROM_START( mayhem )
     ROM_REGION( battery_ram_size, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
 
+ROM_START( powrplay )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
+	ROM_LOAD( "13306.101",   0x00000, 0x02000, 0x981fc215 )
+	ROM_LOAD( "13307.102",   0x10000, 0x02000, 0x38a6ddfe )
+	ROM_CONTINUE(            0x1c000, 0x02000 )
+	ROM_LOAD( "13308.103",   0x12000, 0x02000, 0x7fa2ab9e )
+	ROM_CONTINUE(            0x1e000, 0x02000 )
+	ROM_LOAD( "13309.104",   0x14000, 0x02000, 0xbd9e6fa8 )
+	ROM_CONTINUE(            0x20000, 0x02000 )
+	ROM_LOAD( "13310.105",   0x16000, 0x02000, 0xb6df3a5a )
+	ROM_CONTINUE(            0x22000, 0x02000 )
+	ROM_LOAD( "13311.106",   0x18000, 0x02000, 0x5e17fe84 )
+	ROM_CONTINUE(            0x24000, 0x02000 )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "13305.003",  0x00000, 0x02000, 0xdf8fbeed )
+	ROM_LOAD( "13313.004",  0x10000, 0x02000, 0x081eb88f )
+	ROM_CONTINUE(           0x1c000, 0x02000 )
+	ROM_LOAD( "13314.005",  0x12000, 0x02000, 0xb8e61f8c )
+	ROM_CONTINUE(           0x1e000, 0x02000 )
+	ROM_LOAD( "13315.006",  0x14000, 0x02000, 0x776d3c40 )
+	ROM_CONTINUE(           0x20000, 0x02000 )
+	ROM_LOAD( "13316.007",  0x16000, 0x02000, 0x9b3ec2a1 )
+	ROM_CONTINUE(           0x22000, 0x02000 )
+	ROM_LOAD( "13317.008",  0x18000, 0x02000, 0xa081a031 )
+	ROM_CONTINUE(           0x24000, 0x02000 )
+
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "13302.093", 0x00000, 0x02000, 0x9beaa403 )
+	ROM_LOAD( "13303.094", 0x02000, 0x02000, 0x2bf711d0 )
+	ROM_LOAD( "13304.095", 0x04000, 0x02000, 0x06b8675b )
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )   /* Ordering: 70/92/69/91/68/90/67/89 */
+	ROM_LOAD( "13301.070", 0x00000, 0x2000, 0xaa6d3b9d )
+	/* U92 = Empty */
+	/* U69 = Empty */
+	/* U91 = Empty */
+	/* U68 = Empty */
+	/* U90 = Empty */
+	/* U67 = Empty */
+	/* U89 = Empty */
+
+    ROM_REGION( battery_ram_size, REGION_USER2, 0 ) /* extra RAM regions */
+ROM_END
+
 ROM_START( wseries )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "13409-01.101",   0x00000, 0x02000, 0xb5eccf5c )
@@ -3061,6 +3101,34 @@ static void init_mayhem(void)
 	init_master_ports(0x00, 0xc0);
 }
 
+static void init_powrplay(void)
+{
+	/* initialize the default EEPROM state */
+	static const UINT16 powrplay_eeprom_data[] =
+	{
+		0x21,0xfffe,
+		0x22,0xfffe,
+		0x23,0xfffe,
+		0x24,0xfffe,
+		0x25,0xfffb,
+		0x26,0xfffb,
+		0x27,0xfefe,
+		0x28,0x0000,
+		0x29,0xd700,
+		0x2a,0xd7dc,
+		0x2b,0xffdc,
+		0x2c,0xfffb,
+		0xffff
+	};
+	init_eeprom(0xff, powrplay_eeprom_data, 0x2d, SERIAL_TYPE_ADD_XOR);
+
+	/* master CPU bankswitching */
+	update_master_bank = mayhem_bankswitch;
+
+	/* set up the master CPU I/O ports */
+	init_master_ports(0x40, 0x80);
+}
+
 static void init_wseries(void)
 {
 	/* initialize the default EEPROM state */
@@ -3509,6 +3577,7 @@ static void init_pigout(void)
 /* small master banks, small slave banks */
 GAME( 1985, cerberus, 0,       leland,  cerberus, cerberus, ROT0,   "Cinematronics", "Cerberus" )
 GAME( 1985, mayhem,   0,       leland,  mayhem,   mayhem,   ROT0,   "Cinematronics", "Mayhem 2002" )
+GAME( 1985, powrplay, 0,       leland,  mayhem,   powrplay, ROT0,   "Cinematronics", "Power Play" )
 GAME( 1985, wseries,  0,       leland,  wseries,  wseries,  ROT0,   "Cinematronics", "World Series: The Season" )
 GAME( 1986, alleymas, 0,       leland,  alleymas, alleymas, ROT270, "Cinematronics", "Alley Master" )
 

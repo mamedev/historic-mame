@@ -47,7 +47,7 @@ static int has_TC0110PCR(void)
 }
 
 
-int othunder_core_vh_start (void)
+static int othunder_core_vh_start (void)
 {
 	/* Up to $800/8 big sprites, requires 0x100 * sizeof(*spritelist)
 	   Multiply this by 32 to give room for the number of small sprites,
@@ -99,7 +99,7 @@ void othunder_vh_stop (void)
 				PALETTE
 *********************************************************/
 
-void othunder_update_palette (void)
+static void othunder_update_palette (void)
 {
 	int i,j;
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);

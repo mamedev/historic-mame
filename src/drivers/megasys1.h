@@ -2,7 +2,7 @@
 
 						-= Jaleco Mega System 1 =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+				driver by	Luca Elia (l.elia@tin.it)
 
 
 	This file contains definitions used across multiple megasys1

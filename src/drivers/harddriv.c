@@ -852,7 +852,7 @@ static struct MachineDriver machine_driver_harddriv =
 	256*4,256*4,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,

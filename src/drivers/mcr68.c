@@ -92,7 +92,7 @@ static data16_t control_word;
  *
  *************************************/
 
-READ16_HANDLER( zwackery_port_2_r )
+READ_HANDLER( zwackery_port_2_r )
 {
 	int result = readinputport(2);
 	int wheel = readinputport(5);

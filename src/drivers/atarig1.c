@@ -318,7 +318,7 @@ static const struct MachineDriver machine_driver_atarig1 =
 	1280,1280,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarig1_vh_start,
 	atarig1_vh_stop,

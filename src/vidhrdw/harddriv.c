@@ -697,7 +697,7 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 static void harddriv_fast_draw(void)
 {
 	UINT32 a5 = cpu_get_reg(TMS34010_A5);
-	UINT8 *data = &hdgsp_vram[TOBYTE(a5) & vram_mask];
+	UINT16 *data = (UINT16 *)&hdgsp_vram[TOBYTE(a5) & vram_mask];
 	UINT32 rowbytes = cpu_get_reg(TMS34010_B3);
 	UINT32 offset = cpu_get_reg(TMS34010_B4);
 	UINT32 b5 = cpu_get_reg(TMS34010_B5);
@@ -713,10 +713,10 @@ static void harddriv_fast_draw(void)
 		return;
 	offset -= 0x02000000;
 
-	lx = (INT16)READ_WORD(data); data += 2;
-	rx = (INT16)READ_WORD(data) + 1; data += 2;
+	lx = (INT16)*data++;
+	rx = (INT16)*data++ + 1;
 
-	cury = (INT16)READ_WORD(data); data += 2;
+	cury = (INT16)*data++;
 	b8 = (cury << 1) & 31;
 	pattern = (pattern << b8) | (pattern >> (32 - b8));
 	lfrac = rfrac = 0x8000;
@@ -725,23 +725,23 @@ static void harddriv_fast_draw(void)
 	FILL_SCANLINE(1)
 
 	/* handle wireframe case */
-	if (READ_WORD(&hdgsp_vram[TOBYTE(0xffc36e40) & vram_mask]) ||
-		(READ_WORD(&hdgsp_vram[TOBYTE(0xffc3d580) & vram_mask]) & 8))
+	if (*(UINT16 *)&hdgsp_vram[TOBYTE(0xffc36e40) & vram_mask] ||
+		(*(UINT16 *)&hdgsp_vram[TOBYTE(0xffc3d580) & vram_mask] & 8))
 	{
 		while (1)
 		{
-			rdelta = READ_WORD(data); rdelta |= READ_WORD(data + 2) << 16; data += 4;
+			rdelta = *data++; rdelta |= *data++ << 16;
 			if (rdelta == 0xffffffff)
 			{
 				FILL_SCANLINE(1)
 
-				cpu_set_reg(TMS34010_A5, ((data - hdgsp_vram) * 8) | (a5 & ~vram_mask));
+				cpu_set_reg(TMS34010_A5, (((UINT8 *)data - hdgsp_vram) * 8) | (a5 & ~vram_mask));
 				cpu_set_reg(TMS34010_PC, cpu_get_pc() + 0xffc05c80 - 0xffc05700);
 				EAT_CYCLES();
 				return;
 			}
-			ldelta = READ_WORD(data); ldelta |= READ_WORD(data + 2) << 16; data += 4;
-			count = READ_WORD(data); data += 2;
+			ldelta = *data++; ldelta |= *data++ << 16;
+			count = *data++;
 
 			while (--count)
 			{
@@ -777,16 +777,16 @@ static void harddriv_fast_draw(void)
 	{
 		while (1)
 		{
-			rdelta = READ_WORD(data); rdelta |= READ_WORD(data + 2) << 16; data += 4;
+			rdelta = *data++; rdelta |= *data++ << 16;
 			if (rdelta == 0xffffffff)
 			{
-				cpu_set_reg(TMS34010_A5, ((data - hdgsp_vram) * 8) | (a5 & ~vram_mask));
+				cpu_set_reg(TMS34010_A5, (((UINT8 *)data - hdgsp_vram) * 8) | (a5 & ~vram_mask));
 				cpu_set_reg(TMS34010_PC, cpu_get_pc() + 0xffc05920 - 0xffc05700);
 				EAT_CYCLES();
 				return;
 			}
-			ldelta = READ_WORD(data); ldelta |= READ_WORD(data + 2) << 16; data += 4;
-			count = READ_WORD(data); data += 2;
+			ldelta = *data++; ldelta |= *data++ << 16;
+			count = *data++;
 
 			while (--count)
 			{
@@ -813,7 +813,7 @@ static void harddriv_fast_draw(void)
 static void stunrun_fast_draw(void)
 {
 	UINT32 a5 = cpu_get_reg(TMS34010_A5);
-	UINT8 *data = &hdgsp_vram[TOBYTE(a5) & vram_mask];
+	UINT16 *data = (UINT16 *)&hdgsp_vram[TOBYTE(a5) & vram_mask];
 	UINT32 rx = (INT16)cpu_get_reg(TMS34010_A6) + 1;
 	UINT32 lx = (INT16)cpu_get_reg(TMS34010_B0);
 	UINT32 rowbytes = cpu_get_reg(TMS34010_B3) >> 1;
@@ -831,7 +831,7 @@ static void stunrun_fast_draw(void)
 		return;
 	offset = (INT32)(offset - 0x02000000) >> 1;
 
-	cury = (INT16)READ_WORD(data) + 1; data += 2;
+	cury = (INT16)*data++ + 1;
 	b8 = (cury << 2) & 31;
 	pattern = (pattern << b8) | (pattern >> (32 - b8));
 	lfrac = rfrac = 0x8000;
@@ -841,16 +841,16 @@ static void stunrun_fast_draw(void)
 
 	while (1)
 	{
-		rdelta = READ_WORD(data); rdelta |= READ_WORD(data + 2) << 16; data += 4;
+		rdelta = *data++; rdelta |= *data++ << 16;
 		if (rdelta == 0xffffffff)
 		{
-			cpu_set_reg(TMS34010_A5, ((data - hdgsp_vram) * 8) | (a5 & ~vram_mask));
+			cpu_set_reg(TMS34010_A5, (((UINT8 *)data - hdgsp_vram) * 8) | (a5 & ~vram_mask));
 			cpu_set_reg(TMS34010_PC, cpu_get_pc() + 0xfff45630 - 0xfff45360);
 			EAT_CYCLES();
 			return;
 		}
-		ldelta = READ_WORD(data); ldelta |= READ_WORD(data + 2) << 16; data += 4;
-		count = READ_WORD(data); data += 2;
+		ldelta = *data++; ldelta |= *data++ << 16;
+		count = *data++;
 
 		while (--count)
 		{

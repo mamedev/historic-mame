@@ -496,7 +496,63 @@ static WRITE16_HANDLER( sprite_mirror_w )
 
 /******************************************************************************/
 
-static void hbarrel_custom_memory(void)
+static void h6280_decrypt(int memory_area)
+{
+	int i;
+	unsigned char *RAM = memory_region(memory_area);
+
+	/* Read each byte, decrypt it */
+	for (i=0x00000; i<0x10000; i++)
+		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x1) << 7) | ((RAM[i] & 0x80) >> 7);
+}
+
+void init_hippodrm(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU3);
+
+	install_mem_read16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
+	install_mem_write16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
+	install_mem_write16_handler(0, 0xffc800, 0xffcfff, sprite_mirror_w);
+
+	h6280_decrypt(REGION_CPU3);
+
+	/* The protection cpu has additional memory mapped protection! */
+	RAM[0x189]=0x60; /* RTS prot area */
+	RAM[0x1af]=0x60; /* RTS prot area */
+	RAM[0x1db]=0x60; /* RTS prot area */
+	RAM[0x21a]=0x60; /* RTS prot area */
+}
+
+void init_slyspy(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU2);
+
+	h6280_decrypt(REGION_CPU2);
+
+	/* Slyspy sound cpu has some protection */
+	RAM[0xf2d]=0xea;
+	RAM[0xf2e]=0xea;
+}
+
+void init_robocop(void)
+{
+}
+
+void init_baddudes(void)
+{
+	GAME=2;
+}
+
+void init_hbarrel(void)
+{
+	GAME=1;
+{ /* Remove this patch once processing time of i8751 is simulated */
+data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+rom[0xb68/2] = 0x8008;
+}
+}
+
+void init_hbarrelw(void)
 {
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
@@ -505,39 +561,7 @@ rom[0xb3e/2] = 0x8008;
 }
 }
 
-static void hbarrelu_custom_memory(void)
+void init_birdtry(void)
 {
-	GAME=1;
-
-{ /* Remove this patch once processing time of i8751 is simulated */
-data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
-rom[0xb68/2] = 0x8008;
-}
-}
-
-static void robocop_custom_memory(void)
-{
-	/* To do */
-}
-
-static void hippodrm_custom_memory(void)
-{
-	install_mem_read16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
-	install_mem_write16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
-	install_mem_write16_handler(0, 0xffc800, 0xffcfff, sprite_mirror_w);
-}
-
-void dec0_custom_memory(void)
-{
-	GAME=0;
-	i8751_timer=NULL;
-
-	if (!strcmp(Machine->gamedrv->name,"hbarrelw")) hbarrel_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"hbarrel")) hbarrelu_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"baddudes")) GAME=2;
-	if (!strcmp(Machine->gamedrv->name,"drgninja"))	GAME=2;
-	if (!strcmp(Machine->gamedrv->name,"birdtry")) 	GAME=3;
-	if (!strcmp(Machine->gamedrv->name,"robocop")) robocop_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"hippodrm")) hippodrm_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"ffantasy")) hippodrm_custom_memory();
+	GAME=3;
 }

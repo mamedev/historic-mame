@@ -2,7 +2,7 @@
 
 							  -= Cave Games =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+				driver by	Luca Elia (l.elia@tin.it)
 
 
 Main  CPU   :	MC68000

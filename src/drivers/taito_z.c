@@ -11,13 +11,14 @@ source was very helpful in many areas particularly the sprites.)
 
 - Changes Log -
 
+04-12-01 Centered steering AD inputs, added digital steer
 02-18-01 Added Spacegun gunsights (Insideoutboy)
 
 
 				*****
 
-The Taito Z system has a number of similarities with the Taito F2 system, as
-they use some of the same custom Taito components (e.g. the TC0100SCN).
+The Taito Z system has a number of similarities with the Taito F2 system,
+and uses some of the same custom Taito components.
 
 TaitoZ supports 5 separate layers of graphics - one 64x64 tiled scrolling
 background plane of 8x8 tiles, a similar foreground plane, another optional
@@ -25,24 +26,22 @@ plane used for drawing a road (e.g. Chasehq), a sprite plane [with varying
 properties], and a text plane with character definitions held in ram.
 
 (Double Axle has four rather than two background planes, and they contain
-32x32 16x16 tiles. This is because it has a TC0480SCP rather than the
+32x32 16x16 tiles. This is because it uses a TC0480SCP rather than the
 older TC0100SCN tilemap generator used in previous Taito Z games. The
 hardware for Taito's Super Chase was a further development of this, with a
-68020 for main CPU and Ensoniq sound [entailing an extra 68000] - both
-standard features of Taito's F3 system. Taito's F3 system effectively
-superceded both Taito B and F2 systems, but the Taito Z system was enhanced
-with F3 features and lived on in games like Super Chase and Under Fire up
-to the mid 1990s.)
+68020 for main CPU and Ensoniq sound - standard features of Taito's F3
+system. Taito's F3 system superceded both Taito B and F2 systems, but the
+Taito Z system was enhanced with F3 features and continued in games like
+Super Chase and Under Fire up to the mid 1990s.)
 
 The sprites are typically 16x8 tiles aggregated through a spritemap rom
 into bigger sizes. Spacegun has 64x64 sprites, but some of the games use
 different [128x128] or even multiple sizes. Some of the games aggregate
 16x16 tiles to create their sprites. The size of the sprite ram area varies
-from 0x400 to 0x4000 bytes, suggesting there is no standard obj chip in
-TaitoZ games.
+from 0x400 to 0x4000 bytes, suggesting there is no standard object chip.
 
 The Z system has twin 68K CPUs which communicate via shared ram.
-Typically they share $4000 bytes, but Spacegun shares $10000.
+Typically they share $4000 bytes, but Spacegun / Dbleaxle share $10000.
 
 The first 68000 handles screen, palette and sprites, and sometimes other
 jobs [e.g. inputs; in one game it also handles the road].
@@ -71,19 +70,8 @@ Memory map for Space Gun
 0x310000 - 0x31ffff : 64K shared RAM
 0x500000 - 0x5005ff : sprite RAM
 0x900000 - 0x90ffff : TC0100SCN tilemap generator (\vidhrdw\taitoic.c for details)
-{
-0x900000 - 0x903fff : 64x64 background layer (bg0)
-0x904000 - 0x905fff : 64x64 foreground (text) layer (fg)
-0x906000 - 0x906fff : 256 character generator RAM
-0x908000 - 0x90bfff : 64x64 2nd background layer (bg1)
-}
 0x920000 - 0x92000f : TC0100SCN control registers
-{
-0x920000 - 0x920005 : x scroll for 3 layers
-0x920006 - 0x92000b : y scroll for 3 layers
-0x92000c - 0x92000f : other TC0100SCN control regs
-}
-0xb00000 - 0b00007 : TC0110PCR palette generator
+0xb00000 - 0xb00007 : TC0110PCR palette generator
 
 (2) 68000B
     ======
@@ -296,18 +284,21 @@ DIPs
 Continental Circus
 ------------------
 
-No road. Wheel control poor-ish.
+No road.
 
-Stuff often written in high byte of sound word, don't think
-it matters.
+The 8 level accel / brake should be possible to control with
+analogue pedal. Don't think mame can do this.
+
+Junk (?) stuff often written in high byte of sound word.
 
 
 Chasehq
 -------
 
-No road. Wheel control poor-ish.
+No road.
 
-Mask sprites not implemented, refer to Raine code...
+Mask sprites not implemented, Raine seems to fudge these...
+(e.g. junk sprites when you reach criminal car)
 
 
 Battle Shark
@@ -319,10 +310,10 @@ No road [only used on some levels].
 Chasehq2
 --------
 
-No road. Wheel control poor-ish.
+No road.
 
 Sprite frames were plotted in opposite order so flickered.
-Reversing this has lost us alternate frames: probably we have
+Reversing this has lost us alternate frames: we may have
 to buffer sprite ram by one frame to solve this?
 
 
@@ -342,7 +333,7 @@ that may relate to some sort of sit-in cockpit version of game?
 [CPUA int4 at $11c0 calls sub which writes to control stick area
 requesting a/d conversion. When done this hardware causes int6
 ($106xx) which reads out the value from the hardware [and also
-requests another a/d conversion, causing another int6... maybe
+requests another a/d conversion, causing another int6... probably
 4 per frame to get all the necessary values]. Bshark stick works
 in a similar way.]
 
@@ -381,15 +372,16 @@ Spacegun
 
 Problem with the zoomed sprites not matching up very well
 when forming the background. They jerk a bit relative to
-each other... could be a cpu sync thing.
+each other... probably a cpu sync thing, perhaps also some
+fine-tuning required on the zoomed sprite dimension calcs.
 
-Light gun interrupt timing is arbitrary.
+Light gun interrupt timing arbitrary.
 
 
 Double Axle
 -----------
 
-No road. Wheel control poor-ish.
+No road.
 
 Double Axle has poor sound: one ADPCM rom should be twice as long?
 [In log we saw stuff like this, suggesting extra ADPCM rom needed:
@@ -400,17 +392,19 @@ Various sprites go missing e.g. mountains half way through cross
 country course. Fall off the ledge and crash and you will see
 the explosion sprites make other mountain sprites vanish, as
 though their entries in spriteram are being overwritten. (Perhaps
-be an int6 timing/number issue?)
-
-Offsets of TC0480SCP bg layers correct?
+an int6 timing/number issue: sprites seem to be ChaseHQ2ish with
+a spriteframe toggle - currently this never changes which seems
+wrong.)
 
 No sprite/tile variable priority implemented, I'm hoping it is
-only sprite/road priority that changes.
+only sprite/road priority that changes - but it's probaby more
+complicated.
 
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/generic.h"
@@ -436,7 +430,7 @@ WRITE16_HANDLER( sci_spriteframe_w );
 READ16_HANDLER ( TC0150ROD_word_r );	/* Road generator */
 WRITE16_HANDLER( TC0150ROD_word_w );
 
-static int old_cpua_ctrl = 0xff;
+static UINT16 cpua_ctrl = 0xff;
 static int sci_int6 = 0;
 static int dblaxle_int6 = 0;
 static int ioc220_port = 0;
@@ -457,29 +451,42 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&taitoz_sharedram[offset]);
 }
 
+static void parse_control(void)
+{
+	/* bit 0 enables cpu B */
+	/* however this fails when recovering from a save state
+	   if cpu B is disabled !! */
+	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+
+}
+
+static void parse_control_noz80(void)
+{
+	/* bit 0 enables cpu B */
+	/* however this fails when recovering from a save state
+	   if cpu B is disabled !! */
+	cpu_set_reset_line(1,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+
+}
+
 static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
-		data = data >> 8;	/* for Wgp, no longer necessary */
+		data = data >> 8;	/* for Wgp */
+	cpua_ctrl = data;
 
-	/* bit 0 enables cpu B */
-	cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
-
-	/* is there an irq enable ? */
-
-	old_cpua_ctrl = data;
+	parse_control();
 
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
 {
-	/* bit 0 enables cpu B */
-	cpu_set_reset_line(1,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	if ((data &0xff00) && ((data &0xff) == 0))
+		data = data >> 8;	/* for Wgp */
+	cpua_ctrl = data;
 
-	/* is there an irq enable ? */
-
-	old_cpua_ctrl = data;
+	parse_control_noz80();
 
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
 }
@@ -496,7 +503,7 @@ static int taitoz_interrupt(void)
 	return 4;
 }
 
-void taitoz_interrupt6(int x)
+static void taitoz_interrupt6(int x)
 {
 	cpu_cause_interrupt(0,6);
 }
@@ -508,19 +515,19 @@ static int taitoz_cpub_interrupt(void)
 	return 4;
 }
 
-void taitoz_cpub_interrupt5(int x)
+static void taitoz_cpub_interrupt5(int x)
 {
-	cpu_cause_interrupt(2,5);	// assumes Z80 sandwiched between the 68Ks
+	cpu_cause_interrupt(2,5);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
-void taitoz_sg_cpub_interrupt5(int x)
+static void taitoz_sg_cpub_interrupt5(int x)
 {
-	cpu_cause_interrupt(1,5);	// assumes no Z80
+	cpu_cause_interrupt(1,5);	/* assumes no Z80 */
 }
 
-void taitoz_cpub_interrupt6(int x)
+static void taitoz_cpub_interrupt6(int x)
 {
-	cpu_cause_interrupt(2,6);	// assumes Z80 sandwiched between the 68Ks
+	cpu_cause_interrupt(2,6);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
@@ -693,34 +700,54 @@ static WRITE16_HANDLER( eeprom_w )
 
 static READ16_HANDLER( contcirc_ioc_r )
 {
+	int steer = 0;
+	int fake = input_port_5_word_r(0,0);
+
+	if (!(fake &0x10))	/* Analogue steer (the real control method) */
+	{
+		steer = input_port_4_word_r(0,0);	/* IN2 */
+
+	}
+	else	/* Digital steer */
+	{
+		if (fake &0x4)
+		{
+			steer = 0x60;
+		}
+		else if (fake &0x8)
+		{
+			steer = 0xff9f;
+		}
+	}
+
 	switch (offset)
 	{
 		case 0x00:
+		{
+			switch (ioc220_port & 0xf)
 			{
-				switch (ioc220_port & 0xf)
-				{
-					case 0x00:
-						return input_port_2_word_r(0,mem_mask);	/* DSW A */
+				case 0x00:
+					return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
-					case 0x01:
-						return input_port_3_word_r(0,mem_mask);	/* DSW B */
+				case 0x01:
+					return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
-					case 0x02:
-						return input_port_0_word_r(0,mem_mask);	/* IN0 */
+				case 0x02:
+					return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
-					case 0x03:
-						return input_port_1_word_r(0,mem_mask);	/* IN1 */
+				case 0x03:
+					return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
-					case 0x08:
-						return input_port_4_word_r(0,mem_mask) &0xff;	/* steer */
+				case 0x08:
+					return steer &0xff;
 
-					case 0x09:
-						return input_port_4_word_r(0,mem_mask) >> 8;	/* steer */
-				}
+				case 0x09:
+					return steer >> 8;
+			}
 
 logerror("CPU #1 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
-					return 0;
-			}
+			return 0;
+		}
 
 		case 0x01:
 			return ioc220_port;
@@ -745,46 +772,66 @@ static WRITE16_HANDLER( contcirc_ioc_w )
 
 static READ16_HANDLER( chasehq_ioc_r )
 {
+	int steer = 0;
+	int fake = input_port_9_word_r(0,0);
+
+	if (!(fake &0x10))	/* Analogue steer (the real control method) */
+	{
+		steer = input_port_8_word_r(0,0);	/* IN6 */
+
+	}
+	else	/* Digital steer */
+	{
+		if (fake &0x4)
+		{
+			steer = 0xff80;
+		}
+		else if (fake &0x8)
+		{
+			steer = 0x7f;
+		}
+	}
+
 	switch (offset)
 	{
 		case 0x00:
+		{
+			switch (ioc220_port & 0xf)
 			{
-				switch (ioc220_port & 0xf)
-				{
-					case 0x00:
-						return input_port_2_word_r(0,mem_mask);	/* DSW A */
+				case 0x00:
+					return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
-					case 0x01:
-						return input_port_3_word_r(0,mem_mask);	/* DSW B */
+				case 0x01:
+					return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
-					case 0x02:
-						return input_port_0_word_r(0,mem_mask);	/* IN0 */
+				case 0x02:
+					return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
-					case 0x03:
-						return input_port_1_word_r(0,mem_mask);	/* IN1 */
+				case 0x03:
+					return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
-					case 0x08:
-						return input_port_4_word_r(0,mem_mask);	/* IN2 */
+				case 0x08:
+					return input_port_4_word_r(0,mem_mask);	/* IN2 */
 
-					case 0x09:
-						return input_port_5_word_r(0,mem_mask);	/* etc. */
+				case 0x09:
+					return input_port_5_word_r(0,mem_mask);	/* etc. */
 
-					case 0x0a:
-						return input_port_6_word_r(0,mem_mask);
+				case 0x0a:
+					return input_port_6_word_r(0,mem_mask);
 
-					case 0x0b:
-						return input_port_7_word_r(0,mem_mask);
+				case 0x0b:
+					return input_port_7_word_r(0,mem_mask);
 
-					case 0x0c:
-						return input_port_8_word_r(0,mem_mask) &0xff;	/* steer */
+				case 0x0c:
+					return steer &0xff;
 
-					case 0x0d:
-						return input_port_8_word_r(0,mem_mask) >> 8;	/* steer */
-				}
+				case 0x0d:
+					return steer >> 8;
+			}
 
 logerror("CPU #0 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
-					return 0;
-			}
+			return 0;
+		}
 
 		case 0x01:
 			return ioc220_port;
@@ -889,7 +936,24 @@ static WRITE16_HANDLER( bshark_stick_w )
 
 static READ16_HANDLER( sci_input_r )
 {
-	int steer = input_port_4_word_r(0,0) - 0x80;	/* IN2 */
+	int steer = 0;
+	int fake = input_port_5_word_r(0,0);
+
+	if (!(fake &0x10))	/* Analogue steer (the real control method) */
+	{
+		steer = input_port_4_word_r(0,0) - 0x80;	/* IN2 */
+	}
+	else	/* Digital steer */
+	{
+		if (fake &0x4)
+		{
+			steer = 0xffa0;
+		}
+		else if (fake &0x8)
+		{
+			steer = 0x5f;
+		}
+	}
 
 	switch (offset)
 	{
@@ -982,6 +1046,25 @@ static WRITE16_HANDLER( spacegun_lightgun_w )
 
 static READ16_HANDLER( dblaxle_input_r )
 {
+	int steer = 0;
+	int fake = input_port_6_word_r(0,0);
+
+	if (!(fake &0x10))	/* Analogue steer (the real control method) */
+	{
+		steer = input_port_5_word_r(0,0);	/* IN3 */
+	}
+	else	/* Digital steer */
+	{
+		if (fake &0x4)
+		{
+			steer = 0xffc0;
+		}
+		else if (fake &0x8)
+		{
+			steer = 0x3f;
+		}
+	}
+
 	switch (offset)
 	{
 		case 0x00:
@@ -1000,10 +1083,10 @@ static READ16_HANDLER( dblaxle_input_r )
 			return input_port_4_word_r(0,mem_mask);	/* IN2 */
 
 		case 0x0c:
-			return input_port_5_word_r(0,mem_mask) >> 8;	/* steer */
+			return steer >> 8;
 
 		case 0x0d:
-			return input_port_5_word_r(0,mem_mask) &0xff;	/* steer */
+			return steer &0xff;
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_pc(),offset);
@@ -1015,18 +1098,20 @@ logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_p
 				SOUND
 *****************************************************/
 
-static WRITE_HANDLER( bankswitch_w )	// assumes Z80 sandwiched between 68Ks
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
+static int banknum = -1;
 
-#ifdef MAME_DEBUG
-	if (banknum>3) logerror("CPU#3 (Z80) switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
-#endif
-	cpu_setbank (10, &RAM [0x10000 + (banknum * 0x4000)]);
+static void reset_sound_region(void)
+{
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-WRITE16_HANDLER( taitoz_sound_w )
+static WRITE_HANDLER( sound_bankswitch_w )	/* assumes Z80 sandwiched between 68Ks */
+{
+	banknum = (data - 1) & 7;
+	reset_sound_region();
+}
+
+static WRITE16_HANDLER( taitoz_sound_w )
 {
 	if (offset == 0)
 		taitosound_port_w (0, data & 0xff);
@@ -1044,14 +1129,14 @@ WRITE16_HANDLER( taitoz_sound_w )
 #endif
 }
 
-READ16_HANDLER( taitoz_sound_r )
+static READ16_HANDLER( taitoz_sound_r )
 {
 	if (offset == 1)
 		return ((taitosound_comm_r (0) & 0xff));
 	else return 0;
 }
 
-WRITE16_HANDLER( taitoz_msb_sound_w )
+static WRITE16_HANDLER( taitoz_msb_sound_w )
 {
 	if (offset == 0)
 		taitosound_port_w (0,(data >> 8) & 0xff);
@@ -1069,7 +1154,7 @@ WRITE16_HANDLER( taitoz_msb_sound_w )
 #endif
 }
 
-READ16_HANDLER( taitoz_msb_sound_r )
+static READ16_HANDLER( taitoz_msb_sound_r )
 {
 	if (offset == 1)
 		return ((taitosound_comm_r (0) & 0xff) << 8);
@@ -1470,7 +1555,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, bankswitch_w },
+	{ 0xf200, 0xf200, sound_bankswitch_w },
 MEMORY_END
 
 
@@ -1487,17 +1572,17 @@ INPUT_PORTS_START( contcirc )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// main accel key
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
 
-	PORT_START      /* IN1: b3 not mapped: I standardized on holding b4=lo gear */
+	PORT_START      /* IN1: b3 not mapped: standardized on holding b4=lo gear */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// gear shift lo/hi
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// main brake key
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -1546,8 +1631,15 @@ INPUT_PORTS_START( contcirc )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START      /* "handle", used for steering */
+	PORT_START      /* IN2, "handle" used for steering */
 	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0xff9f, 0x60)
+
+	PORT_START      /* IN3, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( chasehq )	// IN2-5 perhaps used with cockpit setup?
@@ -1557,17 +1649,17 @@ INPUT_PORTS_START( chasehq )	// IN2-5 perhaps used with cockpit setup?
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	// brake
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	// turbo
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* turbo */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// gear
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	// accel
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
@@ -1658,6 +1750,13 @@ INPUT_PORTS_START( chasehq )	// IN2-5 perhaps used with cockpit setup?
 
 	PORT_START      /* IN6, steering */
 	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0xff80, 0x7f )
+
+	PORT_START      /* IN7, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bshark )
@@ -1678,8 +1777,8 @@ INPUT_PORTS_START( bshark )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// "Fire"
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	// same as "Fire"
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* "Fire" */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* same as "Fire" */
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -1738,27 +1837,27 @@ INPUT_PORTS_START( bshark )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* values chosen to match allowed crosshair area */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd4, 0x31)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd4, 0x31)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sci )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	// fire
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* fire */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// brake
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON5 | IPF_PLAYER1 )	// turbo
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON5 | IPF_PLAYER1 )	/* turbo */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON6 | IPF_PLAYER1 )	// "center"
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON6 | IPF_PLAYER1 )	/* "center" */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// gear
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	// accel
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
@@ -1809,7 +1908,14 @@ INPUT_PORTS_START( sci )
 	PORT_DIPSETTING(    0x00, "Low" )
 
 	PORT_START      /* IN2, steering */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x20, 0xdf )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x20, 0xdf )
+
+	PORT_START      /* IN3, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nightstr )
@@ -1915,7 +2021,7 @@ INPUT_PORTS_START( aquajack )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2, what is it ??? */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_PLAYER1, 50, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x80, IPT_DIAL | IPF_PLAYER1, 50, 10, 0, 0 )
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
@@ -2032,41 +2138,41 @@ INPUT_PORTS_START( spacegun )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 22, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 22, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 22, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 22, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 20, 22, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 20, 22, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER2, 20, 22, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 20, 22, 0, 0xff)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dblaxle )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	// shift
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	/* shift */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// brake
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	// "back"
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	/* "back" */
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	// nitro
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	// "center"
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* "center" */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// accel
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -2129,6 +2235,13 @@ INPUT_PORTS_START( dblaxle )
 
 	PORT_START      /* IN3, steering: unsure of range */
 	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xffc0, 0x3f )
+
+	PORT_START      /* IN4, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
 
@@ -2707,7 +2820,7 @@ Contcirc, Dblaxle sound sample rom order is uncertain but I
 haven't found a better one.
 ***************************************************************************/
 
-ROM_START( contcirc )	// The US set had better naming conventions, copied here
+ROM_START( contcirc )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "ic25",      0x00000, 0x20000, 0xf5c92e42 )
 	ROM_LOAD16_BYTE( "cc_26.bin", 0x00001, 0x20000, 0x1345ebe6 )
@@ -2808,8 +2921,8 @@ ROM_START( chasehq )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD32_BYTE( "b52-m34.rom", 0x000000, 0x080000, 0x7d8dce36 )
 	ROM_LOAD32_BYTE( "b52-m35.rom", 0x000001, 0x080000, 0x78eeec0d )	/* OBJ A: each rom has 1 bitplane, forming 16x16 tiles */
-	ROM_LOAD32_BYTE( "b52-m36.rom", 0x000002, 0x080000, 0x61e89e91 )	/* These are grouped according to a sprite map */
-	ROM_LOAD32_BYTE( "b52-m37.rom", 0x000003, 0x080000, 0xf02e47b9 )	/* rom to create the big sprites the game uses. */
+	ROM_LOAD32_BYTE( "b52-m36.rom", 0x000002, 0x080000, 0x61e89e91 )
+	ROM_LOAD32_BYTE( "b52-m37.rom", 0x000003, 0x080000, 0xf02e47b9 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "b52-m28.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
@@ -2817,8 +2930,8 @@ ROM_START( chasehq )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD32_BYTE( "b52-m30.rom", 0x000000, 0x080000, 0x1b8cc647 )
 	ROM_LOAD32_BYTE( "b52-m31.rom", 0x000001, 0x080000, 0xf1998e20 )	/* OBJ B: each rom has 1 bitplane, forming 16x16 tiles */
-	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )	/* These are grouped according to a sprite map */
-	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )	/* rom to create the big sprites the game uses. */
+	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )
+	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b52-m38.fix", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY, index used to create big sprites on the fly */
@@ -2860,8 +2973,8 @@ ROM_START( chasehqj )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD32_BYTE( "b52-m34.rom", 0x000000, 0x080000, 0x7d8dce36 )
 	ROM_LOAD32_BYTE( "b52-m35.rom", 0x000001, 0x080000, 0x78eeec0d )	/* OBJ A: each rom has 1 bitplane, forming 16x16 tiles */
-	ROM_LOAD32_BYTE( "b52-m36.rom", 0x000002, 0x080000, 0x61e89e91 )	/* These are grouped according to a sprite map */
-	ROM_LOAD32_BYTE( "b52-m37.rom", 0x000003, 0x080000, 0xf02e47b9 )	/* rom to create the big sprites the game uses. */
+	ROM_LOAD32_BYTE( "b52-m36.rom", 0x000002, 0x080000, 0x61e89e91 )
+	ROM_LOAD32_BYTE( "b52-m37.rom", 0x000003, 0x080000, 0xf02e47b9 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "b52-m28.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
@@ -2869,8 +2982,8 @@ ROM_START( chasehqj )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD32_BYTE( "b52-m30.rom", 0x000000, 0x080000, 0x1b8cc647 )
 	ROM_LOAD32_BYTE( "b52-m31.rom", 0x000001, 0x080000, 0xf1998e20 )	/* OBJ B: each rom has 1 bitplane, forming 16x16 tiles */
-	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )	/* These are grouped according to a sprite map */
-	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )	/* rom to create the big sprites the game uses. */
+	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )
+	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b52-m38.fix", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY, index used to create big sprites on the fly */
@@ -3368,15 +3481,30 @@ ROM_START( pwheelsj )
 ROM_END
 
 
-void init_taitoz(void)
+static void init_taitoz(void)
 {
 //	taitosnd_setz80_soundcpu( 2 );
-	old_cpua_ctrl = 0xff;
+
+	cpua_ctrl = 0xff;
+	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_func_postload(parse_control);
+
+	/* these are specific to various games: we ought to split the inits */
+	state_save_register_int   ("main2", 0, "control", &sci_int6);
+	state_save_register_int   ("main3", 0, "control", &dblaxle_int6);
+	state_save_register_int   ("main4", 0, "register", &ioc220_port);
+
+	state_save_register_int   ("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
 }
 
-void init_bshark(void)
+static void init_bshark(void)
 {
-	old_cpua_ctrl = 0xff;
+	cpua_ctrl = 0xff;
+	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_func_postload(parse_control_noz80);
+
+	state_save_register_UINT16("main2", 0, "control", &eep_latch, 1);
 }
 
 

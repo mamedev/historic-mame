@@ -123,7 +123,7 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 void atarijsa3_init_adpcm(int region)
 {
 	UINT8 *base = memory_region(region);
-	
+
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
 	memcpy(&base[0x00000], &base[0x80000], 0x20000);
@@ -254,8 +254,12 @@ static WRITE_HANDLER( jsa1_io_w )
 				if (((data ^ last_ctl) & 0x02) && (data & 0x02))
 					tms5220_data_w(0, speech_data);
 				count = 5 | ((data >> 2) & 2);
-				tms5220_set_frequency(ATARI_CLOCK_14MHz/2 / (16 - count));
+				tms5220_set_frequency(ATARI_CLOCK_3MHz*2 / (16 - count));
 			}
+
+			/* coin counters */
+			coin_counter_w(1, (data >> 5) & 1);
+			coin_counter_w(0, (data >> 4) & 1);
 
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
@@ -375,8 +379,12 @@ static WRITE_HANDLER( jsa2_io_w )
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 
+			/* coin counters */
+			coin_counter_w(1, (data >> 5) & 1);
+			coin_counter_w(0, (data >> 4) & 1);
+
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -496,8 +504,12 @@ static WRITE_HANDLER( jsa3_io_w )
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 
+			/* coin counters */
+			coin_counter_w(1, (data >> 5) & 1);
+			coin_counter_w(0, (data >> 4) & 1);
+
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -633,9 +645,13 @@ static WRITE_HANDLER( jsa3s_io_w )
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 
+			/* coin counters */
+			coin_counter_w(1, (data >> 5) & 1);
+			coin_counter_w(0, (data >> 4) & 1);
+
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
-			OKIM6295_set_frequency(1, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(1, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -761,7 +777,7 @@ MEMORY_END
 
 struct TMS5220interface atarijsa_tms5220_interface =
 {
-	ATARI_CLOCK_14MHz/2/11,	/* potentially ATARI_CLOCK_14MHz/2/9 as well */
+	ATARI_CLOCK_3MHz*2/11,	/* potentially ATARI_CLOCK_3MHz/9 as well */
 	100,
 	0
 };
@@ -770,7 +786,7 @@ struct TMS5220interface atarijsa_tms5220_interface =
 struct POKEYinterface atarijsa_pokey_interface =
 {
 	1,			/* 1 chip */
-	ATARI_CLOCK_14MHz/8,
+	ATARI_CLOCK_3MHz/2,
 	{ 40 },
 };
 
@@ -778,7 +794,7 @@ struct POKEYinterface atarijsa_pokey_interface =
 struct YM2151interface atarijsa_ym2151_interface_mono =
 {
 	1,			/* 1 chip */
-	ATARI_CLOCK_14MHz/4,
+	ATARI_CLOCK_3MHz,
 	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
 	{ atarigen_ym2151_irq_gen }
 };
@@ -787,7 +803,7 @@ struct YM2151interface atarijsa_ym2151_interface_mono =
 struct YM2151interface atarijsa_ym2151_interface_stereo =
 {
 	1,			/* 1 chip */
-	ATARI_CLOCK_14MHz/4,
+	ATARI_CLOCK_3MHz,
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ atarigen_ym2151_irq_gen }
 };
@@ -796,7 +812,7 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 struct YM2151interface atarijsa_ym2151_interface_stereo_swapped =
 {
 	1,			/* 1 chip */
-	ATARI_CLOCK_14MHz/4,
+	ATARI_CLOCK_3MHz,
 	{ YM3012_VOL(60,MIXER_PAN_RIGHT,60,MIXER_PAN_LEFT) },
 	{ atarigen_ym2151_irq_gen }
 };
@@ -805,7 +821,7 @@ struct YM2151interface atarijsa_ym2151_interface_stereo_swapped =
 struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 {
 	1,              /* 1 chip */
-	{ ATARI_CLOCK_14MHz/4/3/132 },
+	{ ATARI_CLOCK_3MHz/3/132 },
 	{ REGION_SOUND1 },
 	{ 75 }
 };
@@ -814,7 +830,7 @@ struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1 =
 {
 	2, 				/* 2 chips */
-	{ ATARI_CLOCK_14MHz/4/3/132, ATARI_CLOCK_14MHz/4/3/132 },
+	{ ATARI_CLOCK_3MHz/3/132, ATARI_CLOCK_3MHz/3/132 },
 	{ REGION_SOUND1, REGION_SOUND1 },
 	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) }
 };

@@ -298,7 +298,6 @@ READ_HANDLER( taitosj_gfxrom_r )
 }
 
 
-
 WRITE_HANDLER( taitosj_videoram2_w )
 {
 	if (taitosj_videoram2[offset] != data)
@@ -379,6 +378,10 @@ WRITE_HANDLER( taitosj_characterram_w )
 	}
 }
 
+WRITE_HANDLER( junglhbr_characterram_w )
+{
+	taitosj_characterram_w(offset, data ^ 0xfc);
+}
 
 /***************************************************************************
 

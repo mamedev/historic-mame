@@ -393,7 +393,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	flipx = tailrot&0x08;
 	flipy = tailrot&0x10;
 	sx = flipx?(hpos-47):(255-hpos-47);
-	sy = flipy?(sy = vpos-47):(255-vpos-47);
+	sy = flipy?(vpos-47):(255-vpos-47);
 
 	drawgfx( bitmap,
 		Machine->gfx[2],

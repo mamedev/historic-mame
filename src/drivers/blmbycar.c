@@ -2,7 +2,7 @@
 
 							  -= Blomby Car =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  68000

@@ -4,7 +4,7 @@
 						(c) 1990 & 1991, 1994 Jaleco
 
 
-				    driver by Luca Elia (eliavit@unina.it)
+				    driver by Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:

@@ -833,7 +833,7 @@ static const struct MachineDriver machine_driver_ns1 =
 		128*16+6*256+1,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -2387,10 +2387,10 @@ ROM_END
 GAME( 1987, shadowld, 0,        ns1,     ns1,     shadowld, ROT0_16BIT,   "Namco", "Shadow Land" )
 GAME( 1987, youkaidk, shadowld, ns1,     ns1,     shadowld, ROT0_16BIT,   "Namco", "Yokai Douchuuki (Japan new version)" )
 GAME( 1987, yokaidko, shadowld, ns1,     ns1,     shadowld, ROT0_16BIT,   "Namco", "Yokai Douchuuki (Japan old version)" )
-GAME( 1987, dspirit,  0,        ns1,     dspirit, dspirit,  ROT270,       "Namco", "Dragon Spirit (new version)" )
-GAME( 1987, dspirito, dspirit,  ns1,     dspirit, dspirit,  ROT270,       "Namco", "Dragon Spirit (old version)" )
+GAME( 1987, dspirit,  0,        ns1,     dspirit, dspirit,  ROT270_16BIT, "Namco", "Dragon Spirit (new version)" )
+GAME( 1987, dspirito, dspirit,  ns1,     dspirit, dspirit,  ROT270_16BIT, "Namco", "Dragon Spirit (old version)" )
 GAME( 1987, blazer,   0,        ns1,     ns1,     blazer,   ROT270,       "Namco", "Blazer (Japan)" )
-GAME( 1987, quester,  0,        quester, quester, quester,  ROT270,       "Namco", "Quester (Japan)" )
+GAME( 1987, quester,  0,        quester, quester, quester,  ROT270_16BIT, "Namco", "Quester (Japan)" )
 GAME( 1987, pacmania, 0,        ns1,     ns1,     pacmania, ROT90_16BIT,  "Namco", "Pac-Mania" )
 GAME( 1987, pacmanij, pacmania, ns1,     ns1,     pacmania, ROT270_16BIT, "Namco", "Pac-Mania (Japan)" )
 GAME( 1987, galaga88, 0,        ns1,     ns1,     galaga88, ROT90_16BIT,  "Namco", "Galaga '88 (set 1)" )

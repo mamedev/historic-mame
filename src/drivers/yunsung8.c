@@ -1,13 +1,21 @@
 /***************************************************************************
 
-						-=  Magix  & Cannon Ball =-
-							(c) 1995  Yun Sung
+						  -= Yun Sung 8 Bit Games =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (eliavit@unina.it)
 
-CPU : Z80B
-SND : Z80A + YM3812 + OKI M5205
-OSC : 16.000 MHz
+
+Main  CPU    :  Z80B
+Sound CPU    :  Z80A
+Video Chips  :	?
+Sound Chips  :	OKI M5205 + YM3812
+
+---------------------------------------------------------------------------
+Year + Game         Board#
+---------------------------------------------------------------------------
+95 Cannon Ball      ?
+95 Magix / Rock     ?
+---------------------------------------------------------------------------
 
 Notes:
 
@@ -25,48 +33,48 @@ To Do:
 
 /* Variables defined in vidhrdw: */
 
-extern unsigned char *magix_videoram_0,*magix_videoram_1;
-extern int magix_layers_ctrl;
+extern data8_t *yunsung8_videoram_0, *yunsung8_videoram_1;
+extern int yunsung8_layers_ctrl;
 
 /* Functions defined in vidhrdw: */
 
-WRITE_HANDLER( magix_videobank_w );
+WRITE_HANDLER( yunsung8_videobank_w );
 
-READ_HANDLER ( magix_videoram_r );
-WRITE_HANDLER( magix_videoram_w );
+READ_HANDLER ( yunsung8_videoram_r );
+WRITE_HANDLER( yunsung8_videoram_w );
 
-WRITE_HANDLER( magix_flipscreen_w );
+WRITE_HANDLER( yunsung8_flipscreen_w );
 
-int  magix_vh_start(void);
-void magix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int  yunsung8_vh_start(void);
+void yunsung8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void magix_init_machine( void )
+void yunsung8_init_machine( void )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1) + 0x24000;
 
-	magix_videoram_0 = RAM + 0x0000;	// Ram is banked
-	magix_videoram_1 = RAM + 0x2000;
-	magix_videobank_w(0,0);
+	yunsung8_videoram_0 = RAM + 0x0000;	// Ram is banked
+	yunsung8_videoram_1 = RAM + 0x2000;
+	yunsung8_videobank_w(0,0);
 }
 
 
 /***************************************************************************
 
 
-								Main CPU
+							Memory Maps - Main CPU
 
 
 ***************************************************************************/
 
 
-WRITE_HANDLER( magix_bankswitch_w )
+WRITE_HANDLER( yunsung8_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int bank			=	data & 7;		// ROM bank
-	magix_layers_ctrl	=	data & 0x30;	// Layers enable
+	yunsung8_layers_ctrl	=	data & 0x30;	// Layers enable
 
 	if (data & ~0x37)	logerror("CPU #0 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
 
@@ -85,25 +93,23 @@ WRITE_HANDLER( magix_bankswitch_w )
 	d000-dfff	Tiles	""
 */
 
-static MEMORY_READ_START( magix_readmem )
+static MEMORY_READ_START( yunsung8_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM				},	// ROM
 	{ 0x8000, 0xbfff, MRA_BANK1				},	// Banked ROM
-	{ 0xc000, 0xdfff, magix_videoram_r		},	// Video RAM (Banked)
+	{ 0xc000, 0xdfff, yunsung8_videoram_r	},	// Video RAM (Banked)
 	{ 0xe000, 0xffff, MRA_RAM				},	// RAM
 MEMORY_END
 
-static MEMORY_WRITE_START( magix_writemem )
+static MEMORY_WRITE_START( yunsung8_writemem )
 	{ 0x0000, 0x0000, MWA_ROM				},	// ROM
-	{ 0x0001, 0x0001, magix_bankswitch_w	},	// ROM Bank (again?)
+	{ 0x0001, 0x0001, yunsung8_bankswitch_w	},	// ROM Bank (again?)
 	{ 0x0002, 0xbfff, MWA_ROM				},	// ROM
-	{ 0xc000, 0xdfff, magix_videoram_w		},	// Video RAM (Banked)
+	{ 0xc000, 0xdfff, yunsung8_videoram_w	},	// Video RAM (Banked)
 	{ 0xe000, 0xffff, MWA_RAM				},	// RAM
 MEMORY_END
 
 
-
-
-static PORT_READ_START( magix_readport )
+static PORT_READ_START( yunsung8_readport )
 	{ 0x00, 0x00, input_port_0_r		},	// Coins
 	{ 0x01, 0x01, input_port_1_r		},	// P1
 	{ 0x02, 0x02, input_port_2_r		},	// P2
@@ -111,23 +117,20 @@ static PORT_READ_START( magix_readport )
 	{ 0x04, 0x04, input_port_4_r		},	// DSW 2
 PORT_END
 
-static PORT_WRITE_START( magix_writeport )
-	{ 0x00, 0x00, magix_videobank_w		},	// Video RAM Bank
-	{ 0x01, 0x01, magix_bankswitch_w	},	// ROM Bank + Layers Enable
+static PORT_WRITE_START( yunsung8_writeport )
+	{ 0x00, 0x00, yunsung8_videobank_w	},	// Video RAM Bank
+	{ 0x01, 0x01, yunsung8_bankswitch_w	},	// ROM Bank + Layers Enable
 	{ 0x02, 0x02, soundlatch_w			},	// To Sound CPU
-	{ 0x06, 0x06, magix_flipscreen_w	},	// Flip Screen
+	{ 0x06, 0x06, yunsung8_flipscreen_w	},	// Flip Screen
 	{ 0x07, 0x07, IOWP_NOP				},	// ? (end of IRQ, random value)
 PORT_END
-
-
-
 
 
 
 /***************************************************************************
 
 
-								Sound CPU
+							Memory Maps - Sound CPU
 
 
 ***************************************************************************/
@@ -135,7 +138,7 @@ PORT_END
 
 static int adpcm;
 
-WRITE_HANDLER( magix_sound_bankswitch_w )
+WRITE_HANDLER( yunsung8_sound_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bank = data & 7;
@@ -150,7 +153,7 @@ WRITE_HANDLER( magix_sound_bankswitch_w )
 	MSM5205_reset_w(0,data & 0x20);
 }
 
-WRITE_HANDLER( magix_adpcm_w )
+WRITE_HANDLER( yunsung8_adpcm_w )
 {
 	/* Swap the nibbles */
 	adpcm = ((data&0xf)<<4) | ((data >>4)&0xf);
@@ -158,23 +161,22 @@ WRITE_HANDLER( magix_adpcm_w )
 
 
 
-static MEMORY_READ_START( magix_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM			},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK2			},	// Banked ROM
-	{ 0xf000, 0xf7ff, MRA_RAM			},	// RAM
-	{ 0xf800, 0xf800, soundlatch_r		},	// From Main CPU
+static MEMORY_READ_START( yunsung8_sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM						},	// ROM
+	{ 0x8000, 0xbfff, MRA_BANK2						},	// Banked ROM
+	{ 0xf000, 0xf7ff, MRA_RAM						},	// RAM
+	{ 0xf800, 0xf800, soundlatch_r					},	// From Main CPU
 MEMORY_END
 
-static MEMORY_WRITE_START( magix_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
-	{ 0x8000, 0xbfff, MWA_ROM					},	// Banked ROM
-	{ 0xe000, 0xe000, magix_sound_bankswitch_w	},	// ROM Bank
-	{ 0xe400, 0xe400, magix_adpcm_w				},
-	{ 0xec00, 0xec00, YM3812_control_port_0_w	},	// YM3812
-	{ 0xec01, 0xec01, YM3812_write_port_0_w		},
-	{ 0xf000, 0xf7ff, MWA_RAM					},	// RAM
+static MEMORY_WRITE_START( yunsung8_sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM						},	// ROM
+	{ 0x8000, 0xbfff, MWA_ROM						},	// Banked ROM
+	{ 0xe000, 0xe000, yunsung8_sound_bankswitch_w	},	// ROM Bank
+	{ 0xe400, 0xe400, yunsung8_adpcm_w				},
+	{ 0xec00, 0xec00, YM3812_control_port_0_w		},	// YM3812
+	{ 0xec01, 0xec01, YM3812_write_port_0_w			},
+	{ 0xf000, 0xf7ff, MWA_RAM						},	// RAM
 MEMORY_END
-
 
 
 
@@ -397,7 +399,7 @@ static struct GfxLayout layout_8x8x8 =
 	8*8*8/4
 };
 
-static struct GfxDecodeInfo magix_gfxdecodeinfo[] =
+static struct GfxDecodeInfo yunsung8_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x8, 0, 0x08 }, // [0] Tiles (Background)
 	{ REGION_GFX2, 0, &layout_8x8x4, 0,	0x40 }, // [1] Tiles (Text)
@@ -415,11 +417,7 @@ static struct GfxDecodeInfo magix_gfxdecodeinfo[] =
 ***************************************************************************/
 
 
-/***************************************************************************
-									Magix
-***************************************************************************/
-
-static void magix_adpcm_int(int irq)
+static void yunsung8_adpcm_int(int irq)
 {
 	static int toggle=0;
 
@@ -431,7 +429,7 @@ static void magix_adpcm_int(int irq)
 		cpu_set_nmi_line(1,PULSE_LINE);
 }
 
-static struct YM3812interface magix_ym3812_interface =
+static struct YM3812interface yunsung8_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
@@ -439,58 +437,56 @@ static struct YM3812interface magix_ym3812_interface =
 	{  0 },
 };
 
-struct MSM5205interface magix_msm5205_interface =
+struct MSM5205interface yunsung8_msm5205_interface =
 {
 	1,
 	384000,
-	{ magix_adpcm_int },	/* interrupt function */
+	{ yunsung8_adpcm_int },	/* interrupt function */
 	{ MSM5205_S96_4B },		/* 4KHz, 4 Bits */
 	{ 80 }
 };
 
 
-static const struct MachineDriver machine_driver_magix =
+static const struct MachineDriver machine_driver_yunsung8 =
 {
 	{
 		{
 			CPU_Z80,					/* Z80B */
 			8000000,					/* ? */
-			magix_readmem, magix_writemem,magix_readport,magix_writeport,
+			yunsung8_readmem,  yunsung8_writemem,
+			yunsung8_readport, yunsung8_writeport,
 			interrupt, 1	/* No nmi routine */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,	/* Z80A */
 			4000000,					/* ? */
-			magix_sound_readmem, magix_sound_writemem,0,0,
+			yunsung8_sound_readmem, yunsung8_sound_writemem,
+			0,0,
 			interrupt, 1	/* NMI caused by the MSM5205? */
 		}
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
 	1,
-	magix_init_machine,
+	yunsung8_init_machine,
 
 	/* video hardware */
 	512, 256, { 0+64, 512-64-1, 0+8, 256-8-1 },
-	magix_gfxdecodeinfo,
+	yunsung8_gfxdecodeinfo,
 	0x800, 0x800,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	magix_vh_start,
+	yunsung8_vh_start,
 	0,
-	magix_vh_screenrefresh,
+	yunsung8_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{	SOUND_YM3812,	&magix_ym3812_interface		},
-		{	SOUND_MSM5205,	&magix_msm5205_interface	}
+		{ SOUND_YM3812,  &yunsung8_ym3812_interface  },
+		{ SOUND_MSM5205, &yunsung8_msm5205_interface }
 	}
 };
-
-
-
-
 
 
 /***************************************************************************
@@ -500,8 +496,6 @@ static const struct MachineDriver machine_driver_magix =
 
 
 ***************************************************************************/
-
-
 
 /***************************************************************************
 
@@ -517,24 +511,24 @@ OSC : 16.000
 ROM_START( magix )
 
 	ROM_REGION( 0x24000+0x4000, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "magix.07", 0x00000, 0x0c000, 0xd4d0b68b )
+	ROM_LOAD( "yunsung8.07", 0x00000, 0x0c000, 0xd4d0b68b )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 	/* $2000 bytes for bank 0 of video ram (text) */
 	/* $2000 bytes for bank 1 of video ram (background) */
 
 	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Sound Z80 Code */
-	ROM_LOAD( "magix.08", 0x00000, 0x0c000, 0x6fd60be9 )
+	ROM_LOAD( "yunsung8.08", 0x00000, 0x0c000, 0x6fd60be9 )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
-	ROM_LOAD( "magix.04",  0x000000, 0x80000, 0x0a100d2b )
-	ROM_LOAD( "magix.03",  0x080000, 0x80000, 0xc8cb0373 )
-	ROM_LOAD( "magix.02",  0x100000, 0x80000, 0x09efb8e5 )
-	ROM_LOAD( "magix.01",  0x180000, 0x80000, 0x4590d782 )
+	ROM_LOAD( "yunsung8.04",  0x000000, 0x80000, 0x0a100d2b )
+	ROM_LOAD( "yunsung8.03",  0x080000, 0x80000, 0xc8cb0373 )
+	ROM_LOAD( "yunsung8.02",  0x100000, 0x80000, 0x09efb8e5 )
+	ROM_LOAD( "yunsung8.01",  0x180000, 0x80000, 0x4590d782 )
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
-	ROM_LOAD( "magix.05", 0x00000, 0x20000, 0x862d378c )	// only first $8000 bytes != 0
-	ROM_LOAD( "magix.06", 0x20000, 0x20000, 0x8b2ab901 )	// only first $8000 bytes != 0
+	ROM_LOAD( "yunsung8.05", 0x00000, 0x20000, 0x862d378c )	// only first $8000 bytes != 0
+	ROM_LOAD( "yunsung8.06", 0x20000, 0x20000, 0x8b2ab901 )	// only first $8000 bytes != 0
 
 ROM_END
 
@@ -587,5 +581,5 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX( 1995, cannball, 0, magix, cannball, 0, ROT0_16BIT, "Yun Sung / Soft Vision", "Cannon Ball",  GAME_IMPERFECT_SOUND )
-GAMEX( 1995, magix,    0, magix, magix,    0, ROT0_16BIT, "Yun Sung",               "Magix / Rock", GAME_IMPERFECT_SOUND ) // Title: DSW
+GAMEX( 1995, cannball, 0, yunsung8, cannball, 0, ROT0_16BIT, "Yun Sung / Soft Vision", "Cannon Ball",  GAME_IMPERFECT_SOUND )
+GAMEX( 1995, magix,    0, yunsung8, magix,    0, ROT0_16BIT, "Yun Sung",               "Magix / Rock", GAME_IMPERFECT_SOUND ) // Title: DSW

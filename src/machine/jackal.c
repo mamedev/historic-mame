@@ -60,6 +60,9 @@ READ_HANDLER( jackal_spriteram_r )
 
 WRITE_HANDLER( jackal_rambank_w )
 {
+if (data & 0xc4) usrintf_showmessage("jackal_rambank_w %02x",data);
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
 	jackal_rambank = &((memory_region(REGION_CPU1))[((data & 0x10) << 12)]);
 	jackal_spritebank = &((memory_region(REGION_CPU1))[((data & 0x08) << 13)]);
 	cpu_setbank(1,&((memory_region(REGION_CPU1))[((data & 0x20) << 11) + 0x4000]));

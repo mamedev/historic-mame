@@ -166,7 +166,7 @@ extern int mips_ICount;
 #define MIPS_READ_LONG(a)		(*(UINT32 *)(a))
 #define MIPS_WRITE_LONG(a,d) 	(*(UINT32 *)(a) = (d))
 #else
-#define MIPS_READ_LONG(a)		READ_WORD(a+2)<<16|READ_WORD(a)
+#define MIPS_READ_LONG(a)		(READ_WORD(a+2)<<16)|READ_WORD(a)
 #define MIPS_WRITE_LONG(a,d)	WRITE_WORD(a+2,d>>16);WRITE_WORD(a,d & 0xffff)
 #endif
 

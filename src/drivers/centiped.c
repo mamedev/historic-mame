@@ -339,7 +339,7 @@ MEMORY_END
 
 #define PORTS(GAMENAME, FOURTH_LANGUAGE)										\
 																				\
-INPUT_PORTS_START( GAMENAME## )										\
+INPUT_PORTS_START( GAMENAME )													\
 	PORT_START	/* IN0 */														\
 	/* The lower 4 bits and bit 7 are for trackball x input. */					\
 	/* They are handled by fake input port 6 and a custom routine. */			\
@@ -527,7 +527,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =							\
 	4+4*4, 4+4*4,																\
 	0,																			\
 																				\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,									\
 	0,																			\
 	generic_vh_start,															\
 	generic_vh_stop,															\

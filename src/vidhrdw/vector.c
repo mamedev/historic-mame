@@ -477,6 +477,7 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 	int dx,dy,sx,sy,cx,cy,width;
 	static int x1,yy1;
 	int xx,yy;
+	int xy_swap;
 
 #if 0
 	logerror("line:%d,%d nach %d,%d color %d\n",x1,yy1,x2,y2,col);
@@ -489,10 +490,26 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 
 	/* [2] fix display orientation */
 
+	if ((Machine->orientation ^ vector_orientation) & ORIENTATION_SWAP_XY)
+		xy_swap = 1;
+	else
+		xy_swap = 0;
+
 	if (vector_orientation & ORIENTATION_FLIP_X)
-		x2 = ((vecwidth-1)<<16)-x2;
+	{
+		if (xy_swap)
+			x2 = ((vecheight-1)<<16)-x2;
+		else
+			x2 = ((vecwidth-1)<<16)-x2;
+	}
 	if (vector_orientation & ORIENTATION_FLIP_Y)
-		y2 = ((vecheight-1)<<16)-y2;
+	{
+		if (xy_swap)
+			y2 = ((vecwidth-1)<<16)-y2;
+		else
+			y2 = ((vecheight-1)<<16)-y2;
+	}
+
 	if ((Machine->orientation ^ vector_orientation) & ORIENTATION_SWAP_XY)
 	{
 		int temp;

@@ -192,11 +192,6 @@ static WRITE_HANDLER( galaxian_leds_w )
 	set_led_status(offset,data & 1);
 }
 
-static READ_HANDLER( galapx_funky_r )
-{
-	return 0xff;
-}
-
 
 /* Send sound data to the sound cpu and cause an nmi */
 static int kingball_speech_dip;
@@ -234,13 +229,6 @@ static WRITE_HANDLER( kingball_sound2_w )
 static void machine_init_galaxian(void)
 {
 	install_mem_write_handler(0, 0x6002, 0x6002, galaxian_coin_lockout_w);
-}
-
-static void machine_init_galapx(void)
-{
-    /* for the title screen */
-	install_mem_read_handler(0, 0x7800, 0x78ff, galapx_funky_r);
-	machine_init_galaxian();
 }
 
 static void machine_init_kingball(void)
@@ -314,7 +302,7 @@ static MEMORY_READ_START( galaxian_readmem )
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
-	{ 0x7800, 0x7800, watchdog_reset_r },
+	{ 0x7800, 0x78ff, watchdog_reset_r },	/* galapx title screen relies on this to return 0xff */
 MEMORY_END
 
 static MEMORY_WRITE_START( galaxian_writemem )
@@ -1926,7 +1914,6 @@ static const struct MachineDriver machine_driver_##NAME =								\
 /*			 MEM  	   INTERRUPT  MACHINE_INIT           GFXDECODE  VH_START */
 MACHINE_DRIVER(galaxian, galaxian, galaxian,  machine_init_galaxian, galaxian,  galaxian)
 MACHINE_DRIVER(warofbug, galaxian, galaxian,  0,                     galaxian,  galaxian)
-MACHINE_DRIVER(galapx,   galaxian, galaxian,  machine_init_galapx,   galaxian,  galaxian)
 MACHINE_DRIVER(pisces,   galaxian, galaxian,  0,                     galaxian,  pisces)
 MACHINE_DRIVER(mooncrgx, galaxian, galaxian,  0,                     galaxian,  mooncrgx)
 MACHINE_DRIVER(pacmanbl, galaxian, galaxian,  0,                     pacmanbl,  galaxian)
@@ -3173,7 +3160,7 @@ GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "
 GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
 GAME( 1979, galmidw,  galaxian, galaxian, galaxian, 0,        ROT90,  "[Namco] (Midway license)", "Galaxian (Midway)" )
 GAME( 1979, superg,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Super Galaxians" )
-GAME( 1979, galapx,   galaxian, galapx,   superg,   0,        ROT90,  "hack", "Galaxian Part X" )
+GAME( 1979, galapx,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Part X" )
 GAME( 1979, galap1,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Space Invaders Galactica" )
 GAME( 1979, galap4,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Part 4" )
 GAME( 1979, galturbo, galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Turbo" )

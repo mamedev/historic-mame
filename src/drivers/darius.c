@@ -371,7 +371,7 @@ static UINT32 darius_def_vol[0x10];
 static UINT8 darius_vol[DARIUS_VOL_MAX];
 static UINT8 darius_pan[DARIUS_PAN_MAX];
 
-void update_fm0( void )
+static void update_fm0( void )
 {
 	int left, right;
 	left  = (        darius_pan[0]  * darius_vol[6])>>8;
@@ -379,7 +379,7 @@ void update_fm0( void )
 	mixer_set_stereo_volume( 6, left, right ); /* FM #0 */
 }
 
-void update_fm1( void )
+static void update_fm1( void )
 {
 	int left, right;
 	left  = (        darius_pan[1]  * darius_vol[7])>>8;
@@ -387,7 +387,7 @@ void update_fm1( void )
 	mixer_set_stereo_volume( 7, left, right ); /* FM #1 */
 }
 
-void update_psg0( int port )
+static void update_psg0( int port )
 {
 	int left, right;
 	left  = (        darius_pan[2]  * darius_vol[port])>>8;
@@ -395,7 +395,7 @@ void update_psg0( int port )
 	mixer_set_stereo_volume( port, left, right );
 }
 
-void update_psg1( int port )
+static void update_psg1( int port )
 {
 	int left, right;
 	left  = (        darius_pan[3]  * darius_vol[port + 3])>>8;
@@ -403,7 +403,7 @@ void update_psg1( int port )
 	mixer_set_stereo_volume( port + 3, left, right );
 }
 
-void update_da( void )
+static void update_da( void )
 {
 	int left, right;
 	left  = darius_def_vol[(darius_pan[4]>>4)&0x0f];
@@ -534,7 +534,7 @@ static MEMORY_WRITE_START( darius_sound2_writemem )
 MEMORY_END
 
 
-void darius_adpcm_int (int data)
+static void darius_adpcm_int (int data)
 {
 	if (nmi_enable)
 	{
@@ -868,7 +868,7 @@ static const struct MachineDriver machine_driver_darius =
 	4096*2, 4096*2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
 	0,
 	darius_vh_start,
 	darius_vh_stop,
@@ -1118,11 +1118,20 @@ ROM_START( dariuse )
 ROM_END
 
 
-void init_darius(void)
+static void init_darius(void)
 {
 //	taitosnd_setz80_soundcpu( 2 );
+
 	cpua_ctrl = 0xff;
+	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_func_postload(parse_control);
+
 	banknum = -1;
+	// (there are other sound vars that may need saving too) //
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_int("sound2", 0, "sound region", &adpcm_command);
+	state_save_register_int("sound3", 0, "sound region", &nmi_enable);
+	state_save_register_func_postload(reset_sound_region);
 }
 
 
@@ -1150,15 +1159,6 @@ void init_darius_machine( void )
 		//logerror( "calc %d = %d\n", i, (int)(100.0f / (float)pow(10.0f, (32.0f - (i * (32.0f / (float)(0xf)))) / 20.0f)) );
 		darius_def_vol[i] = (int)(100.0f / (float)pow(10.0f, (32.0f - (i * (32.0f / (float)(0xf)))) / 20.0f));
 	}
-
-	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
-	state_save_register_func_postload(parse_control);
-
-	// (there are other sound vars that may need saving too) //
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_int("sound2", 0, "sound region", &adpcm_command);
-	state_save_register_int("sound3", 0, "sound region", &nmi_enable);
-	state_save_register_func_postload(reset_sound_region);
 }
 
 

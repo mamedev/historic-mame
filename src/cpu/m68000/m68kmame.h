@@ -106,9 +106,9 @@ INLINE unsigned int m68k_read_pcrelative_32(unsigned int address)
 // cores can't agree on the same name for the icount variable, so we force the
 // issue with a Mac-specific hack.
 #ifdef macintosh
-extern int M68000_ICount;
+extern int m68k_ICount;
 #else
-#define M68000_ICount m68ki_remaining_cycles
+#define m68ki_remaining_cycles m68k_ICount
 #endif
 
 /* M68K Variants */
@@ -132,7 +132,7 @@ extern int M68000_ICount;
 #ifdef macintosh
 extern int M68020_ICount;
 #else
-#define M68020_ICount m68ki_remaining_cycles
+#define m68ki_remaining_cycles m68k_ICount
 #endif
 
 #undef  M68K_EMULATE_010

@@ -220,9 +220,9 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0x040000, &pfmolayout,  512, 64 },		/* sprites & playfield */
-	{ REGION_GFX2, 0x000000, &pfmolayout,  256, 64 },		/* sprites & playfield */
-	{ REGION_GFX1, 0x000000, &anlayout,      0, 64 },		/* characters 8x8 */
+	{ REGION_GFX3, 0, &pfmolayout,  512, 64 },		/* sprites & playfield */
+	{ REGION_GFX2, 0, &pfmolayout,  256, 64 },		/* sprites & playfield */
+	{ REGION_GFX1, 0, &anlayout,      0, 64 },		/* characters 8x8 */
 	{ -1 }
 };
 
@@ -256,7 +256,7 @@ static const struct MachineDriver machine_driver_batman =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	batman_vh_start,
 	batman_vh_stop,
@@ -292,26 +292,25 @@ ROM_START( batman )
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "085-2009.10m",  0x00000, 0x20000, 0xa82d4923 )	/* alphanumerics */
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "085-1010.13r",  0x000000, 0x20000, 0x466e1365 )	/* graphics, plane 0 */
 	ROM_LOAD( "085-1014.14r",  0x020000, 0x20000, 0xef53475a )
-	ROM_LOAD( "085-1018.15r",  0x040000, 0x20000, 0x4c14f1e5 )
-	ROM_LOAD( "085-1022.16r",  0x060000, 0x20000, 0x7476a15d )
+	ROM_LOAD( "085-1011.13m",  0x040000, 0x20000, 0x8cda5efc )	/* graphics, plane 1 */
+	ROM_LOAD( "085-1015.14m",  0x060000, 0x20000, 0x043e7f8b )
+	ROM_LOAD( "085-1012.13f",  0x080000, 0x20000, 0xb017f2c3 )	/* graphics, plane 2 */
+	ROM_LOAD( "085-1016.14f",  0x0a0000, 0x20000, 0x70aa2360 )
+	ROM_LOAD( "085-1013.13c",  0x0c0000, 0x20000, 0x68b64975 )	/* graphics, plane 3 */
+	ROM_LOAD( "085-1017.14c",  0x0e0000, 0x20000, 0xe4af157b )
 
-	ROM_LOAD( "085-1011.13m",  0x080000, 0x20000, 0x8cda5efc )	/* graphics, plane 1 */
-	ROM_LOAD( "085-1015.14m",  0x0a0000, 0x20000, 0x043e7f8b )
-	ROM_LOAD( "085-1019.15m",  0x0c0000, 0x20000, 0x2046d9ec )
-	ROM_LOAD( "085-1023.16m",  0x0e0000, 0x20000, 0x75cac686 )
-
-	ROM_LOAD( "085-1012.13f",  0x100000, 0x20000, 0xb017f2c3 )	/* graphics, plane 2 */
-	ROM_LOAD( "085-1016.14f",  0x120000, 0x20000, 0x70aa2360 )
-	ROM_LOAD( "085-1020.15f",  0x140000, 0x20000, 0xcc4f4b94 )
-	ROM_LOAD( "085-1024.16f",  0x160000, 0x20000, 0xd60d35e0 )
-
-	ROM_LOAD( "085-1013.13c",  0x180000, 0x20000, 0x68b64975 )	/* graphics, plane 3 */
-	ROM_LOAD( "085-1017.14c",  0x1a0000, 0x20000, 0xe4af157b )
-	ROM_LOAD( "085-1021.15c",  0x1c0000, 0x20000, 0x9c8ef9ba )
-	ROM_LOAD( "085-1025.16c",  0x1e0000, 0x20000, 0x5d30bcd1 )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "085-1018.15r",  0x000000, 0x20000, 0x4c14f1e5 )
+	ROM_LOAD( "085-1022.16r",  0x020000, 0x20000, 0x7476a15d )
+	ROM_LOAD( "085-1019.15m",  0x040000, 0x20000, 0x2046d9ec )
+	ROM_LOAD( "085-1023.16m",  0x060000, 0x20000, 0x75cac686 )
+	ROM_LOAD( "085-1020.15f",  0x080000, 0x20000, 0xcc4f4b94 )
+	ROM_LOAD( "085-1024.16f",  0x0a0000, 0x20000, 0xd60d35e0 )
+	ROM_LOAD( "085-1021.15c",  0x0c0000, 0x20000, 0x9c8ef9ba )
+	ROM_LOAD( "085-1025.16c",  0x0e0000, 0x20000, 0x5d30bcd1 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* 1MB for ADPCM */
 	ROM_LOAD( "085-1041.19e",  0x80000, 0x20000, 0xd97d5dbb )

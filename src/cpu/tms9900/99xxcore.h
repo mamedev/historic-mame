@@ -1376,7 +1376,7 @@ const char *TMS99XX_INFO(void *context, int regnum)
 	static int which = 0;
 	tms99xx_Regs *r = context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 
 	if( !context )

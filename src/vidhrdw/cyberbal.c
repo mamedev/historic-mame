@@ -46,13 +46,13 @@ static int cyberbal_vh_start_common(int screens)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x000,		/* index of palette base */
 		0x600,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x01fff,	/* tile data index mask */
 		0x77800,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -65,13 +65,13 @@ static int cyberbal_vh_start_common(int screens)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x800,		/* index of palette base */
 		0x600,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x01fff,	/* tile data index mask */
 		0x77800,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -109,7 +109,7 @@ static int cyberbal_vh_start_common(int screens)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0,0,0,0x0010 }},	/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
@@ -145,7 +145,7 @@ static int cyberbal_vh_start_common(int screens)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0,0,0,0x0010 }},	/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0					/* resulting value to indicate "ignore" */
 	};
@@ -154,7 +154,7 @@ static int cyberbal_vh_start_common(int screens)
 	{
 		2,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x780,		/* index of palette base */
 		0x080,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -169,7 +169,7 @@ static int cyberbal_vh_start_common(int screens)
 	{
 		2,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0xf80,		/* index of palette base */
 		0x080,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -179,7 +179,7 @@ static int cyberbal_vh_start_common(int screens)
 		0x8000,		/* tile data hflip mask */
 		0			/* tile data opacity mask */
 	};
-	
+
 	/* set the slip variables */
 	atarimo_0_slipram = &current_slip[0];
 	atarimo_1_slipram = &current_slip[1];
@@ -187,7 +187,7 @@ static int cyberbal_vh_start_common(int screens)
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pf0desc))
 		goto cant_create_pf0;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &mo0desc))
 		goto cant_create_mo0;
@@ -196,22 +196,22 @@ static int cyberbal_vh_start_common(int screens)
 	if (!atarian_init(0, &an0desc))
 		goto cant_create_an0;
 
-	/* allocate the second screen if necessary */	
+	/* allocate the second screen if necessary */
 	if (screens == 2)
 	{
 		/* initialize the playfield */
 		if (!ataripf_init(1, &pf1desc))
 			goto cant_create_pf1;
-		
+
 		/* initialize the motion objects */
 		if (!atarimo_init(1, &mo1desc))
 			goto cant_create_mo1;
-	
+
 		/* initialize the alphanumerics */
 		if (!atarian_init(1, &an1desc))
 			goto cant_create_an1;
 	}
-	
+
 	/* reset statics */
 	current_slip[0] = 0;
 	current_slip[1] = 0;
@@ -319,15 +319,8 @@ INLINE void set_palette_entry(int entry, UINT16 value)
 
 WRITE16_HANDLER( cyberbal_paletteram_0_w )
 {
-	int oldword = cyberbal_paletteram_0[offset];
-	int newword = oldword;
-	COMBINE_DATA(&newword);
-	
-	if (oldword != newword)
-	{
-		cyberbal_paletteram_0[offset] = newword;
-		set_palette_entry(offset, newword);
-	}
+	COMBINE_DATA(&cyberbal_paletteram_0[offset]);
+	set_palette_entry(offset, cyberbal_paletteram_0[offset]);
 }
 
 READ16_HANDLER( cyberbal_paletteram_0_r )
@@ -338,15 +331,8 @@ READ16_HANDLER( cyberbal_paletteram_0_r )
 
 WRITE16_HANDLER( cyberbal_paletteram_1_w )
 {
-	int oldword = cyberbal_paletteram_1[offset];
-	int newword = oldword;
-	COMBINE_DATA(&newword);
-	
-	if (oldword != newword)
-	{
-		cyberbal_paletteram_1[offset] = newword;
-		set_palette_entry(offset + 0x800, newword);
-	}
+	COMBINE_DATA(&cyberbal_paletteram_1[offset]);
+	set_palette_entry(offset + 0x800, cyberbal_paletteram_1[offset]);
 }
 
 READ16_HANDLER( cyberbal_paletteram_1_r )
@@ -365,19 +351,19 @@ READ16_HANDLER( cyberbal_paletteram_1_r )
 void cyberbal_scanline_update(int scanline)
 {
 	int i;
-	
+
 	/* loop over screens */
 	for (i = 0; i < total_screens; i++)
 	{
 		data16_t *vram = atarian_get_vram(i);
 		data16_t *base = &vram[((scanline - 8) / 8) * 64 + 47];
-	
+
 		/* keep in range */
 		if (base < vram)
 			base += 0x800;
 		else if (base >= &vram[0x800])
 			return;
-	
+
 		/* update the current parameters */
 		if (!(base[3] & 1))
 			ataripf_set_bankbits(i, ((base[3] >> 1) & 7) << 16, scanline);

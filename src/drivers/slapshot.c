@@ -474,7 +474,7 @@ static struct MachineDriver machine_driver_slapshot =
 	8192, 8192,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
 	taito_no_buffer_eof_callback,
 	slapshot_vh_start,
 	slapshot_vh_stop,

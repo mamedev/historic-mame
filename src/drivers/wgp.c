@@ -5,8 +5,8 @@ World Grand Prix	(c) Taito Corporation 1989
 
 David Graves
 
-(this is based on the TaitoZ driver. Thanks to Richard Bush and the
-Raine team, whose open source was helpful in many areas.)
+(Thanks to Richard Bush and the Raine team for their
+preliminary driver.)
 
 				*****
 
@@ -93,11 +93,6 @@ $ac3e sub (called off int4) at $ac78 does three calcs to the six
 	It is the third one, ($d26,A5) which gets displayed
 	in service mode as brake.
 
-Some junky looking brown sprites in-game. Perhaps the data rom
-needs redumping? Despite the "ROM OK!" message in test mode,
-the data rom is NOT checked by the program. Different clock
-speeds / int timing make no difference to these sprites.
-
 
 Wgp2
 ----
@@ -133,9 +128,145 @@ CPUB code at $104d8 had already detected error on LAN and set $142048
 to 4. We now return correct lan status read from $380000, so
 no LAN problem is detected.]
 
+
+Code Documentation
+------------------
+
+CPUA
+----
+
+$1064e main game loop starting with a trap#$5
+
+Calls $37e78 sub off which spriteram eventually gets updated
+
+Strangely main loop does not seem to be synced to any interrupt.
+This may be why the sprites are so glitchy and don't seem to
+update every frame. Maybe trap#$5 should be getting us to a known
+point in the frame ??
+
+$21f4 copies sprite tilemapping data from data rom to tilemap
+area then flows into:
+
+$223c code that fills a sprite entry in spriteram
+
+[$12770 - $133cd seems to be an irregular lookup table used to
+calculate extra zoom word poked into each sprite entry.]
+
+$23a8 picks data out of data rom and stores it to sprite tile-
+mapping area by heading through to $21f4. (May also enter sprite
+details into spriteram.) It uses $a0000 area of data rom.
+
+(Alternate entry point at $23c2 uses $90000 area of data rom.)
+
+$25ee routine stores data from rom into sprite tilemapping area
+including the bad parts that produce junk sprites.
+
+It calls interesting sub at $25be which has a table of the number
+of sequential words to be pulled out of the data rom, depending
+on the first word value in the data rom for that entry ("code").
+Each code will pull out the following multiple of 16 words:
+
+	Code  Words   Tiles    Actual data rom entry
+	 0      1      4x4      [same]
+	 1      2      8x4      [same]
+	 2      4      8x8      [same]
+	 3      3      12x4     [same, see $98186]
+	 4      6      12x8
+	 5      9      12x12    [same]
+	 6      2      4x8      [WRONG! says 8x12 in data rom, see $982bf]
+	 7      6      8x12     [WRONG! says 4x8 in data rom]
+	 8      1      (2x2)*4  [2x2 in data rom]  (copies 12 unwanted
+	                                  words - causing junk sprites)
+
+$4083c0-47f in sprite mapping area has junk words - due to code 7
+making it read 6*16 words. 0x60 words are copied from the data rom
+when 0x20 would be correct. Careless programming: in the lookup
+table Taito got codes 6 and 7 back to front. Enable the patch in
+init_wgp to correct this... I can't see what changes.
+
+I'm guessing sprites may be variable size, and the junk sprites
+mapped +0x9b80-9d80 are 2x2 tiles rather than 4x4.
+
+If we only use the first 4 tilemapping words, then the junk sprites
+look fine. But their spacing is bad: they have gaps left between
+them. They'll need to be magnified to 2x size - the pixel zoom
+value must do this automatically.
+
+This ties in with the lookup table we need to draw the sprites:
+it makes sense if our standard 4x4 tile sprite is actually 4 2x2
+sprites.
+
+But what tells the sprite hardware if a sprite is 2x2 or 4x4 ??
+
+
+Data rom entry
+--------------
+
++0x00  Control word
+        (determines how many words copied to tilemapping area)
+
++0x01  Sprite X size  [tiles]
+        (2,4,8 or 12)
+
++0x02  Sprite Y size  [tiles]
+        (2,4,8 or 12)
+
++0x03  sprite tile words, total (X size * Y size)
+ on...
+
+The X size and Y size values don't seem to be used by the game, and
+may be a hangover from the gfx development system used.
+
+
+Data Rom
+--------
+
+$80000-$8ffff   piv tilemaps, preceded by lookup table
+$90000-$9ffff   sprite tilemap data, preceded by lookup table
+$a0000-$affff   sprite tilemap data, preceded by lookup table
+$b0000-$cffff   TC0100SCN tilemaps, preceded by lookup table
+
+	Note that only just over half this space is used, rest is
+	0xff fill.
+
+$d0000-$dffff is the pivot port data table
+
+	Four separate start points are available, contained in the
+	first 4 long words.
+
+	(Data words up to $da410 then 0xff fill)
+
+$e0000-$e7ffe is a logarithmic curve table
+
+	This is used to look up perceived height of an object at
+	"distance" (offset/2).
+
+	ffff 8000 5555 4000 3333 2aaa  etc.
+	(tapering to value of 4 towards the end)
+
+	The sprite routine shifts this one bit right and subtracts one
+	before poking into spriteram. Hence 4 => 1
+
+$e7fff-$e83fe is an unknown word table
+$e83ff-$effff empty (0xff fill)
+$f0000-$f03ff unknown lookup table
+$f0400-$fcbff series of unknown lookup tables
+
+	Seems to be a series of (zoom/rotate ??) lookup
+	tables all $400 words long. (Total no. of tables = 25?)
+
+	Each table starts at zero and tends upwards: the first reaches 0xfe7.
+	The final one reaches 0x3ff (i.e. each successive word is 1 higher
+	than the last). The values in the tables tend to go up smoothly but
+	with discontinuities at regular intervals. The intervals change
+	between tables.
+
+$fcc00-$fffff empty (0xff fill)
+
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -146,14 +277,9 @@ int wgp2_vh_start (void);
 void wgp_vh_stop (void);
 void wgp_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
-static int old_cpua_ctrl = 0xff;
-
 //static data16_t *wgp_ram;
-
 extern data16_t *wgp_spritemap;
 extern size_t    wgp_spritemap_size;
-READ16_HANDLER ( wgp_spritemap_word_r );
-WRITE16_HANDLER( wgp_spritemap_word_w );
 
 extern data16_t *wgp_pivram;
 READ16_HANDLER ( wgp_pivram_word_r );
@@ -163,6 +289,7 @@ extern data16_t *wgp_piv_ctrlram;
 READ16_HANDLER ( wgp_piv_ctrl_word_r );
 WRITE16_HANDLER( wgp_piv_ctrl_word_w );
 
+static UINT16 cpua_ctrl = 0xff;
 static UINT16 port_sel=0;
 extern UINT16 wgp_rotate_ctrl[8];
 
@@ -179,19 +306,23 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&sharedram[offset]);
 }
 
-static WRITE16_HANDLER( cpua_ctrl_w )	// assumes Z80 sandwiched between 68Ks
+static void parse_control(void)
+{
+	/* bit 0 enables cpu B */
+	/* however this fails when recovering from a save state
+	   if cpu B is disabled !! */
+	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+
+	/* bit 1 is "vibration" acc. to test mode */
+}
+
+static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
-		data = data >> 8;	/* needed for Wgp */
+		data = data >> 8;	/* for Wgp */
+	cpua_ctrl = data;
 
-	/* bit 0 enables cpu B */
-
-	if ((data &0x1)!=(old_cpua_ctrl &0x1))	// unnecessary ?
-		cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
-
-	/* is there an irq enable ??? */
-
-	old_cpua_ctrl = data;
+	parse_control();
 
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
 }
@@ -217,14 +348,9 @@ void wgp_interrupt6(int x)
 
 /* 68000 B */
 
-void wgp_cpub_interrupt4(int x)
-{
-	cpu_cause_interrupt(2,4);	// assumes Z80 sandwiched between the 68Ks
-}
-
 void wgp_cpub_interrupt6(int x)
 {
-	cpu_cause_interrupt(2,6);	// assumes Z80 sandwiched between the 68Ks
+	cpu_cause_interrupt(2,6);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
@@ -233,18 +359,16 @@ void wgp_cpub_interrupt6(int x)
 
 static int wgp_interrupt(void)
 {
-//	timer_set(TIME_IN_CYCLES(200000-5000,0),0, wgp_interrupt4);
 	return 4;
 }
 
-/* FWIW offset of 10000,10500 on ints gets CPUB obeying the
-   first CPUA command the same frame, maybe not necessary */
+/* FWIW offset of 10000,10500 on ints can get CPUB obeying the
+   first CPUA command the same frame; probably not necessary */
 
 static int wgp_cpub_interrupt(void)
 {
-	timer_set(TIME_IN_CYCLES(10000,0),0, wgp_cpub_interrupt4);
-	timer_set(TIME_IN_CYCLES(10500,0),0, wgp_cpub_interrupt6);
-	return 0;
+	timer_set(TIME_IN_CYCLES(200000-500,0),0, wgp_cpub_interrupt6);
+	return 4;
 }
 
 
@@ -256,7 +380,7 @@ static READ16_HANDLER( lan_status_r )
 {
 	logerror("CPU #2 PC %06x: warning - read lan status\n",cpu_get_pc());
 
-	return  (0x4 << 8);	// CPUB expects this value in code at $104d0 (Wgp)
+	return  (0x4 << 8);	/* CPUB expects this in code at $104d0 (Wgp) */
 }
 
 static WRITE16_HANDLER( rotate_port_w )
@@ -386,11 +510,17 @@ static WRITE16_HANDLER( wgp_adinput_w )
 				SOUND
 **********************************************************/
 
-static WRITE_HANDLER( bankswitch_w )	// assumes Z80 sandwiched between 68Ks
+static int banknum = -1;
+
+static void reset_sound_region(void)	/* assumes Z80 sandwiched between the 68Ks */
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
-	cpu_setbank (10, &RAM [0x10000 + (banknum * 0x4000)]);
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+}
+
+static WRITE_HANDLER( sound_bankswitch_w )
+{
+	banknum = (data - 1) & 7;
+	reset_sound_region();
 }
 
 WRITE16_HANDLER( wgp_sound_w )
@@ -416,12 +546,12 @@ READ16_HANDLER( wgp_sound_r )
 static MEMORY_READ16_START( wgp_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, MRA16_RAM },	/* main CPUA ram */
-	{ 0x140000, 0x143fff, sharedram_r },
+	{ 0x140000, 0x143fff, MRA16_RAM },
 	{ 0x180000, 0x18000f, wgp_input_r },
 	{ 0x200000, 0x20000f, wgp_adinput_r },
 	{ 0x300000, 0x30ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x320000, 0x32000f, TC0100SCN_ctrl_word_0_r },
-	{ 0x400000, 0x40bfff, wgp_spritemap_word_r },	/* sprite tilemaps */
+	{ 0x400000, 0x40bfff, MRA16_RAM },	/* sprite tilemaps */
 	{ 0x40c000, 0x40dfff, MRA16_RAM },	/* sprite ram */
 	{ 0x500000, 0x501fff, MRA16_RAM },	/* unknown/unused */
 	{ 0x502000, 0x517fff, wgp_pivram_word_r },	/* piv tilemaps */
@@ -432,14 +562,14 @@ MEMORY_END
 static MEMORY_WRITE16_START( wgp_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x140000, 0x143fff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x140000, 0x143fff, MWA16_RAM, &sharedram, &sharedram_size },
 	{ 0x180000, 0x180001, MWA16_NOP },	/* watchdog ? */
 	{ 0x180008, 0x180009, MWA16_NOP },	/* coin ctr / lockout ? */
 	{ 0x1c0000, 0x1c0001, cpua_ctrl_w },
 	{ 0x200000, 0x20000f, wgp_adinput_w },
 	{ 0x300000, 0x30ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x320000, 0x32000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x400000, 0x40bfff, wgp_spritemap_word_w, &wgp_spritemap, &wgp_spritemap_size },
+	{ 0x400000, 0x40bfff, MWA16_RAM, &wgp_spritemap, &wgp_spritemap_size },
 	{ 0x40c000, 0x40dfff, MWA16_RAM, &spriteram16, &spriteram_size  },	/* sprite ram */
 	{ 0x40fff0, 0x40fff1, MWA16_NOP },	// ?? (writes 0x8000 and 0 alternately - Wgp2 just 0)
 	{ 0x500000, 0x501fff, MWA16_RAM },	/* unknown/unused */
@@ -449,7 +579,7 @@ static MEMORY_WRITE16_START( wgp_writemem )
 	{ 0x700000, 0x701fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 MEMORY_END
 
-static MEMORY_READ16_START( wgp_cpub_readmem )	// LAN areas not mapped
+static MEMORY_READ16_START( wgp_cpub_readmem )	/* LAN areas not mapped... */
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x103fff, MRA16_RAM },
 	{ 0x140000, 0x143fff, sharedram_r },
@@ -462,7 +592,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( wgp_cpub_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x140000, 0x143fff, sharedram_w, &sharedram },
+	{ 0x140000, 0x143fff, sharedram_w },
 	{ 0x200000, 0x200003, wgp_sound_w },
 MEMORY_END
 
@@ -493,7 +623,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, bankswitch_w },
+	{ 0xf200, 0xf200, sound_bankswitch_w },
 MEMORY_END
 
 
@@ -503,9 +633,9 @@ MEMORY_END
 
 INPUT_PORTS_START( wgp )	// Wgp2 no "lumps" ?
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON7 | IPF_PLAYER1 )	// freeze
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON4 | IPF_PLAYER1 )	// shift up
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	// shift down
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON7 | IPF_PLAYER1 )	/* freeze */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON4 | IPF_PLAYER1 )	/* shift up */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* shift down */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -513,8 +643,8 @@ INPUT_PORTS_START( wgp )	// Wgp2 no "lumps" ?
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	// "start lump" (lamp?)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	// "brake lump" (lamp?)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* "start lump" (lamp?) */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* "brake lump" (lamp?) */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -584,8 +714,8 @@ INPUT_PORTS_START( wgp )	// Wgp2 no "lumps" ?
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// accel
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// brake
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
 
 /* It's not clear for accel and brake which is the input and
    which the offset, but that doesn't matter. These continuous
@@ -798,7 +928,7 @@ static struct MachineDriver machine_driver_wgp =
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* CPU slices */
+	250,	/* CPU slices */
 	0,
 
 	/* video hardware */
@@ -882,7 +1012,7 @@ ROM_START( wgp )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c32-25.12",      0x00000, 0x20000, 0x0cc81e77 )
 	ROM_LOAD16_BYTE( "c32-29.13",      0x00001, 0x20000, 0xfab47cf0 )
-	ROM_LOAD16_WORD_SWAP( "c32-10.09", 0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c32-10.9",  0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
 
 	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
 	ROM_LOAD16_BYTE( "c32-28.64", 0x00000, 0x20000, 0x38f3c7bf )
@@ -896,7 +1026,7 @@ ROM_START( wgp )
 	ROM_LOAD( "c32-09.16", 0x00000, 0x80000, 0x96495f35 )	/* SCR */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "c32-04.09", 0x000000, 0x80000, 0x473a19c9 )	/* PIV */
+	ROM_LOAD32_BYTE( "c32-04.9",  0x000000, 0x80000, 0x473a19c9 )	/* PIV */
 	ROM_LOAD32_BYTE( "c32-03.10", 0x000001, 0x80000, 0x9ec3e134 )
 	ROM_LOAD32_BYTE( "c32-02.11", 0x000002, 0x80000, 0xc5721f3a )
 	ROM_LOAD32_BYTE( "c32-01.12", 0x000003, 0x80000, 0xd27d7d93 )
@@ -908,10 +1038,10 @@ ROM_START( wgp )
 	ROM_LOAD16_BYTE( "c32-08.68", 0x100001, 0x80000, 0xfaab63b0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c32-11.08", 0x00000, 0x80000, 0x2b326ff0 )
+	ROM_LOAD( "c32-11.8",  0x00000, 0x80000, 0x2b326ff0 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
-	ROM_LOAD( "c32-12.07", 0x00000, 0x80000, 0xdf48a37b )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "c32-12.7",  0x00000, 0x80000, 0xdf48a37b )
 
 //	Pals (not dumped)
 //	ROM_LOAD( "c32-18.64", 0x00000, 0x00???, 0x00000000 )
@@ -930,7 +1060,7 @@ ROM_START( wgpj )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c32-48.12",      0x00000, 0x20000, 0x819cc134 )
 	ROM_LOAD16_BYTE( "c32-49.13",      0x00001, 0x20000, 0x4a515f02 )
-	ROM_LOAD16_WORD_SWAP( "c32-10.09", 0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c32-10.9",  0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
 
 	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
 	ROM_LOAD16_BYTE( "c32-28.64", 0x00000, 0x20000, 0x38f3c7bf )
@@ -944,7 +1074,7 @@ ROM_START( wgpj )
 	ROM_LOAD( "c32-09.16", 0x00000, 0x80000, 0x96495f35 )	/* SCR */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "c32-04.09", 0x000000, 0x80000, 0x473a19c9 )	/* PIV */
+	ROM_LOAD32_BYTE( "c32-04.9",  0x000000, 0x80000, 0x473a19c9 )	/* PIV */
 	ROM_LOAD32_BYTE( "c32-03.10", 0x000001, 0x80000, 0x9ec3e134 )
 	ROM_LOAD32_BYTE( "c32-02.11", 0x000002, 0x80000, 0xc5721f3a )
 	ROM_LOAD32_BYTE( "c32-01.12", 0x000003, 0x80000, 0xd27d7d93 )
@@ -956,17 +1086,17 @@ ROM_START( wgpj )
 	ROM_LOAD16_BYTE( "c32-08.68", 0x100001, 0x80000, 0xfaab63b0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c32-11.08", 0x00000, 0x80000, 0x2b326ff0 )
+	ROM_LOAD( "c32-11.8", 0x00000, 0x80000, 0x2b326ff0 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
-	ROM_LOAD( "c32-12.07", 0x00000, 0x80000, 0xdf48a37b )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "c32-12.7", 0x00000, 0x80000, 0xdf48a37b )
 ROM_END
 
 ROM_START( wgpjoy )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c32-57.12",      0x00000, 0x20000, 0x13a78911 )
 	ROM_LOAD16_BYTE( "c32-58.13",      0x00001, 0x20000, 0x326d367b )
-	ROM_LOAD16_WORD_SWAP( "c32-10.09", 0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c32-10.9",  0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
 
 	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
 	ROM_LOAD16_BYTE( "c32-60.64", 0x00000, 0x20000, 0x7a980312 )
@@ -980,7 +1110,7 @@ ROM_START( wgpjoy )
 	ROM_LOAD( "c32-09.16", 0x00000, 0x80000, 0x96495f35 )	/* SCR */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "c32-04.09", 0x000000, 0x80000, 0x473a19c9 )	/* PIV */
+	ROM_LOAD32_BYTE( "c32-04.9",  0x000000, 0x80000, 0x473a19c9 )	/* PIV */
 	ROM_LOAD32_BYTE( "c32-03.10", 0x000001, 0x80000, 0x9ec3e134 )
 	ROM_LOAD32_BYTE( "c32-02.11", 0x000002, 0x80000, 0xc5721f3a )
 	ROM_LOAD32_BYTE( "c32-01.12", 0x000003, 0x80000, 0xd27d7d93 )
@@ -992,17 +1122,17 @@ ROM_START( wgpjoy )
 	ROM_LOAD16_BYTE( "c32-08.68", 0x100001, 0x80000, 0xfaab63b0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c32-11.08", 0x00000, 0x80000, 0x2b326ff0 )
+	ROM_LOAD( "c32-11.8", 0x00000, 0x80000, 0x2b326ff0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
-	ROM_LOAD( "c32-12.07", 0x00000, 0x80000, 0xdf48a37b )
+	ROM_LOAD( "c32-12.7", 0x00000, 0x80000, 0xdf48a37b )
 ROM_END
 
 ROM_START( wgp2 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c73-01.12",      0x00000, 0x20000, 0Xc6434834 )
 	ROM_LOAD16_BYTE( "c73-02.13",      0x00001, 0x20000, 0xc67f1ed1 )
-	ROM_LOAD16_WORD_SWAP( "c32-10.09", 0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c32-10.9",  0x80000, 0x80000, 0xa44c66e9 )	/* data rom */
 
 	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
 	ROM_LOAD16_BYTE( "c73-04.64", 0x00000, 0x20000, 0x383aa776 )
@@ -1016,7 +1146,7 @@ ROM_START( wgp2 )
 	ROM_LOAD( "c32-09.16", 0x00000, 0x80000, 0x96495f35 )	/* SCR */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "c32-04.09", 0x000000, 0x80000, 0x473a19c9 )	/* PIV */
+	ROM_LOAD32_BYTE( "c32-04.9",  0x000000, 0x80000, 0x473a19c9 )	/* PIV */
 	ROM_LOAD32_BYTE( "c32-03.10", 0x000001, 0x80000, 0x9ec3e134 )
 	ROM_LOAD32_BYTE( "c32-02.11", 0x000002, 0x80000, 0xc5721f3a )
 	ROM_LOAD32_BYTE( "c32-01.12", 0x000003, 0x80000, 0xd27d7d93 )
@@ -1028,10 +1158,10 @@ ROM_START( wgp2 )
 	ROM_LOAD16_BYTE( "c32-08.68", 0x100001, 0x80000, 0xfaab63b0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c32-11.08", 0x00000, 0x80000, 0x2b326ff0 )
+	ROM_LOAD( "c32-11.8", 0x00000, 0x80000, 0x2b326ff0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
-	ROM_LOAD( "c32-12.07", 0x00000, 0x80000, 0xdf48a37b )
+	ROM_LOAD( "c32-12.7", 0x00000, 0x80000, 0xdf48a37b )
 
 //	WGP2 security board (has TC0190FMC)
 //	ROM_LOAD( "c73-06", 0x00000, 0x00???, 0x00000000 )
@@ -1040,8 +1170,21 @@ ROM_END
 
 void init_wgp(void)
 {
+#if 0
+	/* Patch for coding error that causes corrupt data in
+	   sprite tilemapping area from $4083c0-847f */
+	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	ROM[0x25dc / 2] = 0x0602;	// faulty value is 0x0206
+#endif
+
 //	taitosnd_setz80_soundcpu( 2 );
-	old_cpua_ctrl = 0xff;
+	cpua_ctrl = 0xff;
+
+	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_func_postload(parse_control);
+
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
 }
 
 void init_wgp2(void)
@@ -1056,11 +1199,11 @@ void init_wgp2(void)
 
 /* Working Games with graphics problems */
 
-GAMEX( 1989, wgp,    0,      wgp,    wgp,    wgp,    ROT0, "Taito America Corporation", "World Grand Prix (US)", GAME_IMPERFECT_COLORS )
-GAMEX( 1989, wgpj,   wgp,    wgp,    wgp,    wgp,    ROT0, "Taito Corporation", "World Grand Prix (Japan)", GAME_IMPERFECT_COLORS )
-GAMEX( 1989, wgpjoy, wgp,    wgp,    wgpjoy, wgp,    ROT0, "Taito Corporation", "World Grand Prix (joystick version) (Japan)", GAME_IMPERFECT_COLORS )
+GAMEX( 1989, wgp,    0,      wgp,    wgp,    wgp,    ROT0, "Taito America Corporation", "World Grand Prix (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, wgpj,   wgp,    wgp,    wgp,    wgp,    ROT0, "Taito Corporation", "World Grand Prix (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, wgpjoy, wgp,    wgp,    wgpjoy, wgp,    ROT0, "Taito Corporation", "World Grand Prix (joystick version) (Japan)", GAME_IMPERFECT_GRAPHICS )
 
 /* Game with worse graphics problems */
 
-GAMEX( 1990, wgp2,   wgp,    wgp2,   wgp,    wgp2,   ROT0, "Taito Corporation", "World Grand Prix 2 (Japan)", GAME_NOT_WORKING )
+GAMEX( 1990, wgp2,   wgp,    wgp2,   wgp,    wgp2,   ROT0, "Taito Corporation", "World Grand Prix 2 (Japan)", GAME_NOT_WORKING |GAME_IMPERFECT_GRAPHICS )
 

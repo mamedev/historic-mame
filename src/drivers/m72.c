@@ -411,6 +411,9 @@ static void init_loht(void)
 	install_protection_handler(loht_code,loht_crc);
 
 	install_port_write_handler(0,0xc0,0xc0,loht_sample_trigger_w);
+
+	/* since we skip the startup tests, clear video RAM to prevent garbage on title screen */
+	memset(m72_videoram2,0,0x4000);
 }
 
 static void init_xmultipl(void)

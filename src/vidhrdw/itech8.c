@@ -12,6 +12,7 @@
 
 
 void itech8_update_interrupts(int periodic, int tms34061, int blitter);
+void slikshot_extra_draw(struct osd_bitmap *bitmap);
 
 
 /*************************************
@@ -70,6 +71,8 @@ static UINT8 palette_data[3];
 static UINT8 blitter_data[16];
 static UINT8 blit_in_progress;
 
+static UINT8 slikshot;
+
 static struct tms34061_display tms_state;
 static UINT8 *grom_base;
 static UINT32 grom_size;
@@ -121,12 +124,20 @@ int itech8_vh_start(void)
 	/* reset statics */
 	palette_addr = 0;
 	palette_index = 0;
+	slikshot = 0;
 
 	/* fetch the GROM base */
 	grom_base = memory_region(REGION_GFX1);
 	grom_size = memory_region_length(REGION_GFX1);
 
 	return 0;
+}
+
+int slikshot_vh_start(void)
+{
+	int result = itech8_vh_start();
+	slikshot = 1;
+	return result;
 }
 
 
@@ -827,4 +838,8 @@ void itech8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			draw_scanline8(bitmap, 0, y, 256, &base[0x00000 + 256 * ty], Machine->pens, 0);
 		}
 	}
+
+	/* extra rendering for slikshot */
+	if (slikshot)
+		slikshot_extra_draw(bitmap);
 }

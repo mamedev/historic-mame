@@ -78,6 +78,8 @@ int atarirle_get_yscroll(int map);
 /* write handlers */
 WRITE16_HANDLER( atarirle_0_spriteram_w );
 
+WRITE32_HANDLER( atarirle_0_spriteram32_w );
+
 
 
 /*##########################################################################
@@ -85,6 +87,8 @@ WRITE16_HANDLER( atarirle_0_spriteram_w );
 ##########################################################################*/
 
 extern data16_t *atarirle_0_spriteram;
+
+extern data32_t *atarirle_0_spriteram32;
 
 
 #endif

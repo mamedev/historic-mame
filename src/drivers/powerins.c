@@ -3,7 +3,7 @@
 						  -= Power Instinct =-
 							(C) 1993 Atlus
 
-				driver by	Luca Elia (eliavit@unina.it)
+				driver by	Luca Elia (l.elia@tin.it)
 
 CPU:	MC68000
 Sound:	OKIM6295

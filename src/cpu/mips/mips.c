@@ -1906,7 +1906,7 @@ const char *mips_info( void *context, int regnum )
 	static int which = 0;
 	mips_cpu_context *r = context;
 
-	which = ++which % 64;
+	which = (which+1) % 64;
 	buffer[ which ][ 0 ] = '\0';
 	if( !context )
 	{

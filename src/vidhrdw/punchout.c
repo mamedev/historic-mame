@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 
 
-#define TOP_MONITOR_ROWS 30
-#define BOTTOM_MONITOR_ROWS 30
+#define TOP_MONITOR_ROWS 28
+#define BOTTOM_MONITOR_ROWS 28
 
 #define BIGSPRITE_WIDTH 128
 #define BIGSPRITE_HEIGHT 256
@@ -36,17 +36,17 @@ static int top_palette_bank,bottom_palette_bank;
 static struct rectangle topvisiblearea =
 {
 	0*8, 32*8-1,
-	0*8, (TOP_MONITOR_ROWS-2)*8-1
+	0*8, TOP_MONITOR_ROWS*8-1
 };
 static struct rectangle bottomvisiblearea =
 {
 	0*8, 32*8-1,
-	(TOP_MONITOR_ROWS+2)*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
+	TOP_MONITOR_ROWS*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
 };
 static struct rectangle backgroundvisiblearea =
 {
 	0*8, 64*8-1,
-	(TOP_MONITOR_ROWS+2)*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
+	TOP_MONITOR_ROWS*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
 };
 
 
@@ -456,7 +456,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					videoram[offs] + 256 * (videoram[offs + 1] & 0x03),
 					((videoram[offs + 1] & 0x7c) >> 2) + 64 * top_palette_bank,
 					videoram[offs + 1] & 0x80,0,
-					8*sx,8*sy - 8*(32-TOP_MONITOR_ROWS),
+					8*sx,8*sy - 16,
 					&topvisiblearea,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -478,7 +478,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					punchout_videoram2[offs] + 256 * (punchout_videoram2[offs + 1] & 0x03),
 					((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank,
 					punchout_videoram2[offs + 1] & 0x80,0,
-					8*sx,8*sy + 8*TOP_MONITOR_ROWS,
+					8*sx,8*sy + 8*TOP_MONITOR_ROWS - 16,
 					&backgroundvisiblearea,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -538,7 +538,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (offs = 0;offs < TOP_MONITOR_ROWS;offs++)
 			scroll[offs] = 0;
 		for (offs = 0;offs < BOTTOM_MONITOR_ROWS;offs++)
-			scroll[TOP_MONITOR_ROWS + offs] = -(58 + punchout_scroll[2*offs] + 256 * (punchout_scroll[2*offs + 1] & 0x01));
+			scroll[TOP_MONITOR_ROWS + offs] = -(58 + punchout_scroll[2*(offs+2)] + 256 * (punchout_scroll[2*(offs+2) + 1] & 0x01));
 
 		copyscrollbitmap(bitmap,tmpbitmap,TOP_MONITOR_ROWS + BOTTOM_MONITOR_ROWS,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -577,7 +577,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty + 0x200*(32-TOP_MONITOR_ROWS) * zoom,
+					startx,starty + 0x200*(2) * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&topvisiblearea,TRANSPARENCY_COLOR,1024,0);
@@ -585,7 +585,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
+					startx,starty - 0x200*(TOP_MONITOR_ROWS+2) * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
@@ -605,7 +605,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		copybitmap(bitmap,bs2tmpbitmap,
 				punchout_bigsprite2[4] & 1,0,
-				sx,sy + 8*TOP_MONITOR_ROWS,
+				sx,sy + 8*TOP_MONITOR_ROWS - 16,
 				&bottomvisiblearea,TRANSPARENCY_COLOR,1024);
 	}
 }
@@ -640,7 +640,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 								8 * (punchout_videoram2[offs + 1] & 0x80),
 						((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * top_palette_bank,
 						0,0,
-						8*sx,8*sy - 8*(32-TOP_MONITOR_ROWS),
+						8*sx,8*sy - 16,
 						&topvisiblearea,TRANSPARENCY_NONE,0);
 			}
 			else
@@ -649,7 +649,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						punchout_videoram2[offs] + 256 * (punchout_videoram2[offs + 1] & 0x03),
 						128 + ((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank,
 						punchout_videoram2[offs + 1] & 0x80,0,
-						8*sx,8*sy + 8*TOP_MONITOR_ROWS,
+						8*sx,8*sy + 8*TOP_MONITOR_ROWS - 16,
 						&backgroundvisiblearea,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -744,7 +744,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty + 0x200*(32-TOP_MONITOR_ROWS) * zoom,
+					startx,starty + 0x200*(2) * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&topvisiblearea,TRANSPARENCY_COLOR,1024,0);
@@ -752,7 +752,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
+					startx,starty - 0x200*(TOP_MONITOR_ROWS+2) * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
@@ -772,7 +772,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		copybitmap(bitmap,bs2tmpbitmap,
 				punchout_bigsprite2[4] & 1,0,
-				sx,sy + 8*TOP_MONITOR_ROWS,
+				sx,sy + 8*TOP_MONITOR_ROWS - 16,
 				&bottomvisiblearea,TRANSPARENCY_COLOR,1024);
 	}
 
@@ -793,7 +793,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				videoram[offs] + 256 * (videoram[offs + 1] & 0x07),
 				((videoram[offs + 1] & 0xf8) >> 3) + 32 * bottom_palette_bank,
 				videoram[offs + 1] & 0x80,0,
-				8*sx,8*sy + 8*TOP_MONITOR_ROWS,
+				8*sx,8*sy + 8*TOP_MONITOR_ROWS - 16,
 				&backgroundvisiblearea,TRANSPARENCY_PEN,7);
 	}
 }

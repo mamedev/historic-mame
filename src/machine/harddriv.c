@@ -1381,7 +1381,7 @@ WRITE16_HANDLER( racedriv_asic61_w )
 		case 0x02:
 //			if (asic61_log) fprintf(asic61_log, "%06X:mem W @ %08X=%04X\n", cpu_getpreviouspc(), asic61_addr, data);
 			asic61_w(asic61_addr, data, mem_mask);
-			asic61_addr = (asic61_addr & 0xffff0000) | (++asic61_addr & 0x0000ffff);
+			asic61_addr = (asic61_addr & 0xffff0000) | ((asic61_addr+1) & 0x0000ffff);
 			break;
 
 		case 0x0b:
@@ -1410,7 +1410,7 @@ READ16_HANDLER( racedriv_asic61_r )
 
 		case 0x02:
 //			if (asic61_log) fprintf(asic61_log, "%06X:mem R @ %08X=%04X\n", cpu_getpreviouspc(), asic61_addr, asic61_r(asic61_addr));
-			asic61_addr = (asic61_addr & 0xffff0000) | (++asic61_addr & 0x0000ffff);
+			asic61_addr = (asic61_addr & 0xffff0000) | ((asic61_addr+1) & 0x0000ffff);
 
 			/* special case: reading from 0x613e08 seems to be a flag */
 			if (orig_addr == 0x613e08 && asic61_r(orig_addr,0) == 1)

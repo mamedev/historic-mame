@@ -17,6 +17,11 @@ static struct rectangle spritevisiblearea =
 	0*8, 30*8-1
 };
 
+static struct rectangle spritevisiblearea_flip =
+{
+	1*8, 31*8-1,
+	2*8, 32*8-1
+};
 
 
 /***************************************************************************
@@ -127,7 +132,12 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			if (flip_screen)
+			{
+				sy += 2;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					(videoram[offs] & 0x3f) + 0x40,
 					(sy + 1) / 8,	/* support midframe palette changes in test mode */
 					flip_screen,flip_screen,
@@ -136,26 +146,27 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
+
+	/* copy the temporary bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+
 	/* Draw the sprites */
 	for (offs = 0;offs < 0x10;offs++)
 	{
-		int spritenum,color;
+		int code,color;
 		int flipx;
 		int x, y;
-		int sx, sy;
 
 
-		spritenum = spriteram[offs] & 0x3f;
-		if (spritenum & 1) spritenum = spritenum / 2 + 64;
-		else spritenum = spritenum / 2;
-
+		code = ((spriteram[offs] & 0x3e) >> 1) | ((spriteram[offs] & 0x01) << 6);
 		flipx = (spriteram[offs] & 0x80);
 		x = spriteram[offs + 0x20];
 		y = 240 - spriteram[offs + 0x10];
 
 		if (flip_screen)
 		{
-			flipx = !flipx;
+			y += 16;
 		}
 
 		/* Centipede is unusual because the sprite color code specifies the */
@@ -173,32 +184,10 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 0) & 3)];
 
 		drawgfx(bitmap,Machine->gfx[1],
-				spritenum,0,
+				code,0,
 				flip_screen,flipx,
 				x,y,
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
-
-		/* mark tiles underneath as dirty */
-		sx = x >> 3;
-		sy = y >> 3;
-
-		{
-			int max_x = 1;
-			int max_y = 2;
-			int x2, y2;
-
-			if (x & 0x07) max_x ++;
-			if (y & 0x0f) max_y ++;
-
-			for (y2 = sy; y2 < sy + max_y; y2 ++)
-			{
-				for (x2 = sx; x2 < sx + max_x; x2 ++)
-				{
-					if ((x2 < 32) && (y2 < 30) && (x2 >= 0) && (y2 >= 0))
-						dirtybuffer[x2 + 32*y2] = 1;
-				}
-			}
-		}
-
+				flip_screen ? &spritevisiblearea_flip : &spritevisiblearea,
+				TRANSPARENCY_PEN,0);
 	}
 }

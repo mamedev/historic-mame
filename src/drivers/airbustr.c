@@ -3,7 +3,7 @@
 								Air Buster
 						    (C) 1990  Kaneko
 
-				    driver by Luca Elia (eliavit@unina.it)
+				    driver by Luca Elia (l.elia@tin.it)
 
 CPU   : Z-80 x 3
 SOUND : YM2203C		M6295

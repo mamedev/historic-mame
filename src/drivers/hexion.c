@@ -211,14 +211,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency? */
+	{ 8000 },           /* 8000Hz frequency */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
 
 static struct k051649_interface k051649_interface =
 {
-	2000000,	/* ?????? Clock */
+	24000000/16,	/* Clock */
 	100,			/* Volume */
 };
 
@@ -239,9 +239,9 @@ static const struct MachineDriver machine_driver_hexion =
 	{
 		{
 			CPU_Z80,
-			24000000/4,	/* 6 MHz ??? */
+			24000000/4,	/* Z80B 6 MHz */
 			readmem,writemem,0,0,
-			hexion_interrupt,2	/* both IRQ and NMI are used */
+			hexion_interrupt,3	/* both IRQ and NMI are used */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

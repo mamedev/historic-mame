@@ -5737,7 +5737,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitm
 
 DECLAREG(draw_scanline, (
 		struct osd_bitmap *bitmap,int x,int y,int length,
-		DATA_TYPE *src,UINT32 *pens,int transparent_pen),
+		const DATA_TYPE *src,UINT32 *pens,int transparent_pen),
 {
 	/* 8bpp destination */
 	if (bitmap->depth == 8)
@@ -5907,7 +5907,7 @@ DECLAREG(draw_scanline, (
 
 DECLAREG(pdraw_scanline, (
 		struct osd_bitmap *bitmap,int x,int y,int length,
-		DATA_TYPE *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri),
+		const DATA_TYPE *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri),
 {
 	/* 8bpp destination */
 	if (bitmap->depth == 8)
@@ -6079,6 +6079,78 @@ DECLAREG(pdraw_scanline, (
 	}
 }
 )
+
+#undef ADJUST_FOR_ORIENTATION
+
+#define ADJUST_FOR_ORIENTATION(type, orientation, bitmap, x, y)				\
+	type *src = &((type *)bitmap->line[y])[x];								\
+	int xadv = 1;															\
+	if (orientation)														\
+	{																		\
+		int dy = bitmap->line[1] - bitmap->line[0];							\
+		int tx = x, ty = y, temp;											\
+		if (orientation & ORIENTATION_SWAP_XY)								\
+		{																	\
+			temp = tx; tx = ty; ty = temp;									\
+			xadv = dy / sizeof(type);										\
+		}																	\
+		if (orientation & ORIENTATION_FLIP_X)								\
+		{																	\
+			tx = bitmap->width - 1 - tx;									\
+			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;			\
+		}																	\
+		if (orientation & ORIENTATION_FLIP_Y)								\
+		{																	\
+			ty = bitmap->height - 1 - ty;									\
+			if (orientation & ORIENTATION_SWAP_XY) xadv = -xadv;			\
+		}																	\
+		/* can't lookup line because it may be negative! */					\
+		src = (type *)(bitmap->line[0] + dy * ty) + tx;						\
+	}
+
+DECLAREG(extract_scanline, (
+		struct osd_bitmap *bitmap,int x,int y,int length,
+		DATA_TYPE *dst),
+{
+	/* 8bpp destination */
+	if (bitmap->depth == 8)
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT8, Machine->orientation, bitmap, x, y);
+
+		while (length--)
+		{
+			*dst++ = *src;
+			src += xadv;
+		}
+	}
+
+	/* 16bpp destination */
+	else if(bitmap->depth == 15 || bitmap->depth == 16)
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation, bitmap, x, y);
+
+		while (length--)
+		{
+			*dst++ = *src;
+			src += xadv;
+		}
+	}
+
+	/* 32bpp destination */
+	else
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT32, Machine->orientation, bitmap, x, y);
+
+		while (length--)
+		{
+			*dst++ = *src;
+			src += xadv;
+		}
+	}
+})
 
 #undef ADJUST_FOR_ORIENTATION
 

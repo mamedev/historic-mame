@@ -62,12 +62,12 @@ void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* generate a second bank of sprite palette with red changed to purple */
 	for (i = 0;i < 256;i++)
 	{
-		*(palette++) = palette[-256*3];
-		*(palette++) = palette[-256*3];
+		palette[3*i+0] = palette[3*i+0-256*3];
+		palette[3*i+1] = palette[3*i+1-256*3];
 		if ((i & 0x0f) == 0x09)
-			*(palette++) = 0xff;
+			palette[3*i+2] = 0xff;
 		else
-			*(palette++) = palette[-256*3];
+			palette[3*i+2] = palette[3*i+2-256*3];
 	}
 }
 

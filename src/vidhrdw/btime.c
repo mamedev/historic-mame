@@ -568,7 +568,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         for (i = 0; i < 4; i++)
         {
             btime_tilemap[i] = start | (bnj_scroll1 & 0x04);
-            start = (++start & 0x03);
+            start = (start+1) & 0x03;
         }
 
         drawbackground(bitmap, btime_tilemap);

@@ -24,7 +24,7 @@ static int volume_table[8] =
 	AMP(2200), AMP(3200), AMP(4400), AMP(5400),
 	AMP(6900), AMP(7900), AMP(9100), AMP(10100)
 };
-static int sample_offsets[4];
+static int sample_offsets[5];
 
 /************************************/
 /* Stream updater                   */

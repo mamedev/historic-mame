@@ -1010,8 +1010,8 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 
 /* A macro for the palette_init functions */
 #define VEC_PAL_INIT(name, paltype) \
-void avg_init_palette_##name## (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) \
-{ avg_init_palette (##paltype##, palette, colortable, color_prom); }
+void avg_init_palette_##name (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) \
+{ avg_init_palette (paltype, palette, colortable, color_prom); }
 
 /* The functions referenced from gamedriver */
 VEC_PAL_INIT(white,    VEC_PAL_WHITE)

@@ -856,7 +856,7 @@ const char *m6805_info(void *context, int regnum)
 	static int which = 0;
 	m6805_Regs *r = context;
 
-	which = ++which % 8;
+	which = (which+1) % 8;
     buffer[which][0] = '\0';
 
     if( !context )
@@ -1056,7 +1056,7 @@ const char *hd63705_info(void *context, int regnum)
 	static int which = 0;
 	m6805_Regs *r = context;
 
-	which = ++which % 8;
+	which = (which+1) % 8;
     buffer[which][0] = '\0';
 
     if( !context )

@@ -381,7 +381,7 @@ const char *h6280_info(void *context, int regnum)
 	static int which = 0;
 	h6280_Regs *r = context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &h6280;

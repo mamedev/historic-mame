@@ -8,6 +8,25 @@
 #include "vidhrdw/generic.h"
 
 
+static UINT8 pf_flip;
+
+
+/*************************************
+ *
+ *	Cocktail flip
+ *
+ *************************************/
+
+void foodf_set_flip(int flip)
+{
+	if (flip != pf_flip)
+	{
+		pf_flip = flip;
+		memset(dirtybuffer, 1, videoram_size / 2);
+	}
+}
+
+
 
 /*************************************
  *
@@ -94,7 +113,7 @@ void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = (offs / 32 + 1) % 32;
 			sy = offs % 32;
 
-			drawgfx(tmpbitmap, Machine->gfx[0], pict, color, 0, 0,
+			drawgfx(tmpbitmap, Machine->gfx[0], pict, color, pf_flip, pf_flip,
 					8 * sx, 8 * sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 		}
 
@@ -102,7 +121,7 @@ void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* walk the motion object list. */
-	for (offs = 0; offs < spriteram_size / 2; offs += 2)
+	for (offs = 0; offs < spriteram_size / 4; offs += 2)
 	{
 		int data1 = spriteram16[offs];
 		int data2 = spriteram16[offs+1];

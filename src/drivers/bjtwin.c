@@ -122,6 +122,7 @@ WRITE16_HANDLER( nmk_tilebank_w );
 WRITE16_HANDLER( bioship_scroll_w );
 WRITE16_HANDLER( bioship_bank_w );
 WRITE16_HANDLER( mustang_scroll_w );
+WRITE16_HANDLER( vandyke_scroll_w );
 
 int macross_vh_start(void);
 int gunnail_vh_start(void);
@@ -423,13 +424,13 @@ static MEMORY_WRITE16_START( vandyke_writemem )
 	{ 0x080018, 0x080019, nmk_tilebank_w },
 	{ 0x08001e, 0x08001f, macross_mcu_w },
 	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
-	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x08c000, 0x08c007, vandyke_scroll_w },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
-	{ 0x094000, 0x097fff, MWA16_RAM },
+//	{ 0x094000, 0x097fff, MWA16_RAM }, /* what is this */
 	{ 0x09d000, 0x09d7ff, nmk_txvideoram_w, &nmk_txvideoram },
 	{ 0x0f0000, 0x0f7fff, MWA16_RAM },
 	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x0f9000, 0x0fffff, MWA16_RAM }, /* Mostly Unused? */
+	{ 0x0f9000, 0x0fffff, MWA16_RAM }, /* not tested in tests .. hardly used probably some registers not ram */
 MEMORY_END
 
 static READ16_HANDLER(logr)
@@ -2231,7 +2232,7 @@ static const struct MachineDriver machine_driver_vandyke =
 			CPU_M68000,
 			10000000, /* 10 MHz ? */
 			vandyke_readmem,vandyke_writemem,0,0,
-			m68_level4_irq,1,
+			nmk_interrupt,2,
 			m68_level1_irq,112	/* ???????? */
 		}
 	},
@@ -2744,10 +2745,10 @@ ROM_START( vandyke )
 	ROM_LOAD( "vdk-01.13",		0x000000, 0x080000, 0x195a24be )	/* 16x16 tiles */
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "vdk-04.2-1",	0x000000, 0x080000, 0x0a730547 )	/* Sprites */
-	ROM_LOAD16_BYTE( "vdk-05.3-1",	0x000001, 0x080000, 0xba456d27 )	/* Sprites */
-	ROM_LOAD16_BYTE( "vdk-07.202",	0x100000, 0x080000, 0x42d41f06 )	/* Sprites */
-	ROM_LOAD16_BYTE( "vdk-06.203",	0x100001, 0x080000, 0xd54722a8 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-07.202",	0x000000, 0x080000, 0x42d41f06 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-06.203",	0x000001, 0x080000, 0xd54722a8 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-04.2-1",	0x100000, 0x080000, 0x0a730547 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-05.3-1",	0x100001, 0x080000, 0xba456d27 )	/* Sprites */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "vdk-02.126",     0x000000, 0x080000, 0xb2103274 )	/* all banked */
@@ -3029,6 +3030,35 @@ ROM_START( strahl )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "strahl-2.82", 0x00000, 0x20000, 0xc9d008ae )
 	ROM_LOAD16_BYTE( "strahl-1.83", 0x00001, 0x20000, 0xafc3c4d6 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "strahl-3.73",  0x000000, 0x10000, 0x2273b33e ) /* Characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "str7b2r0.275", 0x000000, 0x40000, 0x5769e3e1 ) /* Tiles */
+
+	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "strl3-01.32",  0x000000, 0x80000, 0xd8337f15 ) /* Sprites */
+	ROM_LOAD( "strl4-02.57",  0x080000, 0x80000, 0x2a38552b )
+	ROM_LOAD( "strl5-03.58",  0x100000, 0x80000, 0xa0e7d210 )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "str6b1w1.776", 0x000000, 0x80000, 0xbb1bb155 ) /* Tiles */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "strahl-4.66",    0x00000, 0x10000, 0x60a799c4 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "str8pmw1.540",    0x00000, 0x80000, 0x01d6bb6a )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "str9pew1.639",    0x00000, 0x80000, 0x6bb3eb9f )
+ROM_END
+
+ROM_START( strahla )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "rom2", 0x00000, 0x20000, 0xf80a22ef )
+	ROM_LOAD16_BYTE( "rom1", 0x00001, 0x20000, 0x802ecbfc )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "strahl-3.73",  0x000000, 0x10000, 0x2273b33e ) /* Characters */
@@ -3365,9 +3395,15 @@ static void decode_tdragonb(void)
 	rom = memory_region(REGION_CPU1);
 	for (A = 0;A < memory_region_length(REGION_CPU1);A += 2)
 	{
+#ifdef LSB_FIRST
 		unsigned short tmp = decode_word( rom[A+1]*256 + rom[A], decode_data_tdragonb[0]);
 		rom[A+1] = tmp >> 8;
 		rom[A] = tmp & 0xff;
+#else
+		unsigned short tmp = decode_word( rom[A]*256 + rom[A+1], decode_data_tdragonb[0]);
+		rom[A] = tmp >> 8;
+		rom[A+1] = tmp & 0xff;
+#endif
 	}
 
 	rom = memory_region(REGION_GFX2);
@@ -3481,11 +3517,12 @@ GAMEX( 1990, mustang,  0,       mustang,  mustang,  0,        ROT0,         "UPL
 GAMEX( 1990, mustangs, mustang, mustang,  mustang,  0,        ROT0,         "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,         "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,         "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
-GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270,       "UPL",							"Vandyke (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270,       "UPL",							"Vandyke (Japan)",  GAME_NO_SOUND )
 GAMEX( 1991, blkheart, 0,       macross,  vandyke,  0,        ROT0,         "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, blkhearj, blkheart,macross,  vandyke,  0,        ROT0,         "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, acrobatm, 0,       acrobatm, strahl,   acrobatm, ROT270,       "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,         "UPL",							"Strahl", GAME_NO_SOUND )
+GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,         "UPL",							"Strahl (Japan set 1)", GAME_NO_SOUND )
+GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,         "UPL",							"Strahl (Japan set 2)", GAME_NO_SOUND )
 GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270,       "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, tdragonb, tdragon, tdragon,  tdragon,  tdragonb, ROT270,       "NMK / Tecmo",					"Thunder Dragon (Bootleg)", GAME_NO_SOUND )
 GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,         "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )

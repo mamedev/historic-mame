@@ -75,12 +75,6 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static WRITE16_HANDLER( K053251_halfword_w )
-{
-	if ((data & 0x00ff0000) == 0)
-		K053251_w(offset >> 1,data & 0xff);
-}
-
 /* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
 /* of RAM, but they put 0x8000 there. The CPU can access them all. Address lines */
 /* A1, A5 and A6 don't go to the 053247. */

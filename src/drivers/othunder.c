@@ -59,7 +59,6 @@ DIPs
 
 int othunder_vh_start (void);
 void othunder_vh_stop (void);
-
 void othunder_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 static data16_t eep_latch = 0;
@@ -76,7 +75,7 @@ static int othunder_interrupt(void)
 	return 5;
 }
 
-void othunder_gun_interrupt(int x)
+static void othunder_gun_interrupt(int x)
 {
 	cpu_cause_interrupt(0,6);
 }
@@ -219,13 +218,13 @@ static void reset_sound_region(void)
 	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 7;
 	reset_sound_region();
 }
 
-WRITE16_HANDLER( othunder_sound_w )
+static WRITE16_HANDLER( othunder_sound_w )
 {
 	if (offset == 0)
 		taitosound_port_w (0, data & 0xff);
@@ -233,7 +232,7 @@ WRITE16_HANDLER( othunder_sound_w )
 		taitosound_comm_w (0, data & 0xff);
 }
 
-READ16_HANDLER( othunder_sound_r )
+static READ16_HANDLER( othunder_sound_r )
 {
 	if (offset == 1)
 		return ((taitosound_comm_r (0) & 0xff));
@@ -300,7 +299,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, bankswitch_w },
+	{ 0xf200, 0xf200, sound_bankswitch_w },
 MEMORY_END
 
 
@@ -402,16 +401,16 @@ INPUT_PORTS_START( othunder )
 	   inaccurate, and 10 is too slow. */
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 25, 13, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 13, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 25, 13, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( othundu )
@@ -477,16 +476,16 @@ INPUT_PORTS_START( othundu )
 	   inaccurate, and 10 is too slow. */
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 25, 13, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 13, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 25, 13, 0, 0xff)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
 INPUT_PORTS_END
 
 
@@ -672,7 +671,7 @@ ROM_START( othundu )
 ROM_END
 
 
-void init_othunder(void)
+static void init_othunder(void)
 {
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

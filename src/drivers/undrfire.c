@@ -51,20 +51,22 @@
 
 
 	Todo:
-		Game seems to misbehave in attract, I reckon from 68020 core bugs.
+		Game seems to misbehave in attract, probably from 68020 core bugs.
 
 		Strange behaviour is evident in-game as soon as the screen starts
 		to scroll around: the BG layers get filled with junk (but
 		the sprites seem to remain ok). Also it seems impossible to hit
 		enemies with bullets, only the shotgun works.
 
-		The light gun inputs don't move around fast enough, I think
-		the delta needs to be around 15*256, but 255 seems to be the
-		maximum allowed.
+		The guns seem erratic and hard to calibrate: we need to get a
+		standard calibration file which allows you the full screen area
+		plus a little margin off the edge to allow you to reload your
+		magazine.
 
-		Calibration is a nightmare: we need to get a standard calibration
-		file which allows you the full screen area plus a little margin
-		off the edge to allow you to reload your magazine.
+		What is the unknown hardware at 0x600000... an alternative
+		lightgun hookup perhaps?
+
+		What does the 0xb00000 area do?
 
 		"Pivot port" which may be used to rotate sprites / bg ?
 
@@ -93,6 +95,8 @@ WRITE16_HANDLER(f3_es5505_bank_w);
 void f3_68681_reset(void);
 extern data32_t *f3_shared_ram;
 
+static UINT16 coin_word;
+static int port_sel = 0;
 //static data32_t *undrfire_ram;
 
 /***********************************************************
@@ -119,8 +123,6 @@ static WRITE32_HANDLER( color_ram_w )
 
 /***********************************************************
 				INTERRUPTS
-
-I don't think any int3's are wanted in Undrfire...
 ***********************************************************/
 
 void undrfire_interrupt5(int x)
@@ -130,9 +132,6 @@ void undrfire_interrupt5(int x)
 
 static int undrfire_interrupt(void)
 {
-	/* int3 is triggered by write to $340000 stick area */
-
-	timer_set(TIME_IN_CYCLES(200000-500,0),0, undrfire_interrupt5);
 	return 4;
 }
 
@@ -146,8 +145,6 @@ static READ32_HANDLER( undrfire_input_r )
 	{
 		case 0x00:
 		{
-//logerror("CPU #0 PC %06x: read input %06x\n",cpu_get_pc(),offset);
-
 			return (input_port_0_word_r(0,0) << 16) | input_port_1_word_r(0,0) |
 				  (EEPROM_read_bit() << 7);
 		}
@@ -156,7 +153,7 @@ static READ32_HANDLER( undrfire_input_r )
 		{
 //logerror("CPU #0 PC %06x: read input %06x\n",cpu_get_pc(),offset);
 
-			return input_port_2_word_r(0,0);
+			return input_port_2_word_r(0,0) | (coin_word << 16);
 		}
  	}
 
@@ -165,12 +162,29 @@ static READ32_HANDLER( undrfire_input_r )
 
 static WRITE32_HANDLER( undrfire_input_w )
 {
+
+#if 0
+{
+char t[64];
+static data32_t mem[2];
+COMBINE_DATA(&mem[offset]);
+
+sprintf(t,"%08x %08x",mem[0],mem[1]);
+usrintf_showmessage(t);
+}
+#endif
+
 	switch (offset)
 	{
 		case 0x00:
 		{
+			if (ACCESSING_MSB32)	/* $500000 is watchdog */
+			{
+				watchdog_reset_w(0,data >> 24);
+			}
 
-			if (ACCESSING_LSB) {
+			if (ACCESSING_LSB32)
+			{
 				EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 				EEPROM_write_bit(data & 0x40);
 				EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
@@ -182,31 +196,112 @@ static WRITE32_HANDLER( undrfire_input_w )
 
 		case 0x01:
 		{
-			if (ACCESSING_MSB)
-				return;	/* ?? */
+//logerror("CPU #0 PC %06x: warning - write %08x to unmapped input offset %06x\n",cpu_get_pc(),data,offset);
+
+			if (ACCESSING_MSB32)
+			{
+				coin_lockout_w(0,~data & 0x01000000);
+				coin_lockout_w(1,~data & 0x02000000);
+				coin_counter_w(0, data & 0x04000000);
+				coin_counter_w(1, data & 0x08000000);
+				coin_word = (data >> 16) &0xffff;
+			}
+		}
+	}
+}
+
+
+/* Some unknown hardware byte mapped at $600002-5; if there's something
+   at $600000/1 then this code will need changing */
+
+static READ32_HANDLER( unknown_hardware_r )
+{
+	switch (offset)	/* four single bytes are read in sequence at $156e */
+	{
+		case 0x00:	/* $600002-3 */
+		{
+			return 0xffff;	// no idea what they should be
+		}
+
+		case 0x01:	/* $600004-5 */
+		{
+			return 0xffff0000;	// no idea what they should be
 		}
 	}
 
-//logerror("CPU #0 PC %06x: warning - write %08x to unmapped input offset %06x\n",cpu_get_pc(),data,offset);
+	return 0x0;
+}
+
+
+static WRITE32_HANDLER( unknown_int_req_w )
+{
+	/* 10000 cycle delay is arbitrary */
+	timer_set(TIME_IN_CYCLES(10000,0),0, undrfire_interrupt5);
 }
 
 
 static READ32_HANDLER( undrfire_lightgun_r )
 {
+	int x,y;
+
 	switch (offset)
 	{
-		case 0x00:	/* bytes need swapping */
-			return ((input_port_3_word_r(0,0) << 24) &0xff000000) | ((input_port_3_word_r(0,0) << 8) &0x1f0000)
-				 | ((input_port_4_word_r(0,0) << 8) &0xff00) | ((input_port_4_word_r(0,0) >> 8)&0x1f) ;
+		/* NB we may not be raising the raw inputs the ideal amount ?? */
 
-		case 0x01:	/* bytes need swapping */
-			return ((input_port_5_word_r(0,0) << 24) &0xff000000) | ((input_port_5_word_r(0,0) << 8) &0xff0000)
-				 | ((input_port_6_word_r(0,0) << 8) &0xff00) | (input_port_6_word_r(0,0) >> 8) ;
+		case 0x00:	/* P1 */
+		{
+			x = input_port_3_word_r(0,0) << 6;
+			y = input_port_4_word_r(0,0) << 6;
+
+			return ((x << 24) &0xff000000) | ((x << 8) &0xff0000)
+				 | ((y << 8) &0xff00) | ((y >> 8) &0xff) ;
+		}
+
+		case 0x01:	/* P2 */
+		{
+			x = input_port_5_word_r(0,0) << 6;
+			y = input_port_6_word_r(0,0) << 6;
+
+			return ((x << 24) &0xff000000) | ((x << 8) &0xff0000)
+				 | ((y << 8) &0xff00) | ((y >> 8) &0xff) ;
+		}
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped lightgun offset %06x\n",cpu_get_pc(),offset);
 
 	return 0x0;
+}
+
+
+static WRITE32_HANDLER( rotate_control_w )
+{
+		if (ACCESSING_LSW32)
+		{
+//logerror("CPU #0 PC %06x: warning - rotate port %04x write %04x\n",cpu_get_pc(),port_sel,data&0xffff);
+			return;
+		}
+
+		if (ACCESSING_MSW32)
+		{
+			port_sel = (data &0x70000) >> 16;
+		}
+}
+
+
+static WRITE32_HANDLER( motor_control_w )
+{
+/*
+	Standard value poked is 0x00910200 (we ignore lsb and msb
+	which seem to be always zero)
+
+	0x0, 0x8000 and 0x9100 are written at startup
+
+	Two bits are written in test mode to this middle word
+	to test gun vibration:
+
+	........ .x......   P1 gun vibration
+	........ x.......   P2 gun vibration
+*/
 }
 
 /***********************************************************
@@ -218,6 +313,7 @@ static MEMORY_READ32_START( undrfire_readmem )
 	{ 0x200000, 0x21ffff, MRA32_RAM },	/* main CPUA ram */
 	{ 0x300000, 0x303fff, MRA32_RAM },	/* sprite ram */
 	{ 0x500000, 0x500007, undrfire_input_r },
+	{ 0x600000, 0x600007, unknown_hardware_r },	/* unknown byte reads at $156e */
 	{ 0x700000, 0x7007ff, MRA32_RAM },
 	{ 0x800000, 0x80ffff, TC0480SCP_long_r },	  /* tilemaps */
 	{ 0x830000, 0x83002f, TC0480SCP_ctrl_long_r },	/* debugging */
@@ -232,7 +328,11 @@ static MEMORY_WRITE32_START( undrfire_writemem )
 	{ 0x000000, 0x1fffff, MWA32_ROM },
 	{ 0x200000, 0x21ffff, MWA32_RAM },
 	{ 0x300000, 0x303fff, MWA32_RAM, &spriteram32, &spriteram_size },
+//	{ 0x304000, 0x304003, MWA32_NOP },	// ???
+//	{ 0x304400, 0x304403, MWA32_NOP },	// ???
+	{ 0x400000, 0x400003, motor_control_w },	/* gun vibration */
 	{ 0x500000, 0x500007, undrfire_input_w },	/* eerom etc. */
+	{ 0x600000, 0x600007, unknown_int_req_w },	/* int request for unknown hardware */
 	{ 0x700000, 0x7007ff, MWA32_RAM, &f3_shared_ram },
 	{ 0x800000, 0x80ffff, TC0480SCP_long_w },	  /* tilemaps */
 	{ 0x830000, 0x83002f, TC0480SCP_ctrl_long_w },
@@ -240,8 +340,7 @@ static MEMORY_WRITE32_START( undrfire_writemem )
 	{ 0x920000, 0x92000f, TC0100SCN_ctrl_long_w },
 	{ 0xa00000, 0xa0ffff, color_ram_w, &paletteram32 },
 	{ 0xb00000, 0xb003ff, MWA32_RAM },	// ?? written as single bytes
-	{ 0xd00000, 0xd00003, MWA32_NOP },	/* looks like port based rotate control aka Wgp */
-//	{ 0xf00000, 0xf00007, undrfire_lightgun_w },	// bogus
+	{ 0xd00000, 0xd00003, rotate_control_w },	/* looks like port based rotate control aka Wgp */
 MEMORY_END
 
 /******************************************************************************/
@@ -319,19 +418,19 @@ INPUT_PORTS_START( undrfire )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
-	/* Light gun inputs */
+	/* Light gun inputs (real range is 0-0xffff, we use standard 0-255 and shift later) */
 
 	PORT_START	/* IN 3, P1X */
-	PORT_ANALOG( 0x1ff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 25, 255, 0, 0x1ff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 15, 0, 0xff)
 
 	PORT_START	/* IN 4, P1Y */
-	PORT_ANALOG( 0x1ff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 255, 0, 0x1ff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 15, 0, 0xff)
 
 	PORT_START	/* IN 5, P2X */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 60, 255, 0, 0xffff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 20, 15, 0, 0xff)
 
 	PORT_START	/* IN 6, P2Y */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER2, 60, 255, 0, 0xffff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 20, 15, 0, 0xff)
 INPUT_PORTS_END
 
 
@@ -439,8 +538,8 @@ static void nvram_handler(void *file,int read_or_write)
 		EEPROM_save(file);
 	else {
 		EEPROM_init(&undrfire_eeprom_interface);
-//		if (file)
-//			EEPROM_load(file);
+		if (file)
+			EEPROM_load(file);
 	}
 }
 
@@ -471,7 +570,7 @@ static struct MachineDriver machine_driver_undrfire =
 	16384, 16384,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	undrfire_vh_start,
 	undrfire_vh_stop,

@@ -66,6 +66,8 @@ struct atarian_data
 data16_t *atarian_0_base;
 data16_t *atarian_1_base;
 
+data32_t *atarian_0_base32;
+
 
 
 /*##########################################################################
@@ -73,6 +75,7 @@ data16_t *atarian_1_base;
 ##########################################################################*/
 
 static struct atarian_data atarian[ATARIAN_MAX];
+static offs_t address_xor;
 
 
 
@@ -207,6 +210,16 @@ int atarian_init(int map, const struct atarian_desc *desc)
 	
 	/* adjust the color base */
 	an->gfxelement.colortable = &Machine->remapped_colortable[an->palettebase];
+	
+	/* by default we don't need to swap */
+	address_xor = 0;
+	
+	/* copy the 32-bit base */
+	if (cpunum_databus_width(0) == 32)
+	{
+		address_xor = 1;
+		atarian_0_base = (data16_t *)atarian_0_base32;
+	}
 
 	logerror("atarian_init:\n");
 	logerror("  width=%d (shift=%d),  height=%d (shift=%d)\n", gfx->width, an->tilexshift, gfx->height, an->tileyshift);
@@ -272,7 +285,7 @@ void atarian_render(int map, struct osd_bitmap *bitmap)
 		/* loop over columns */
 		for (x = 0; x < an->xtiles; x++, offs++)
 		{
-			int data = base[offs] | an->bankbits;
+			int data = base[offs ^ address_xor] | an->bankbits;
 			UINT32 lookup = an->lookup[(data >> ATARIAN_LOOKUP_DATABITS) & an->lookupmask];
 			int code = ATARIAN_LOOKUP_CODE(lookup, data);
 			int opaque = ATARIAN_LOOKUP_OPAQUE(lookup);
@@ -316,7 +329,7 @@ void atarian_mark_palette(int map)
 		/* loop over columns */
 		for (x = 0; x < an->xtiles; x++, offs++)
 		{
-			int data = base[offs] | an->bankbits;
+			int data = base[offs ^ address_xor] | an->bankbits;
 			UINT32 lookup = an->lookup[(data >> ATARIAN_LOOKUP_DATABITS) & an->lookupmask];
 			int code = ATARIAN_LOOKUP_CODE(lookup, data);
 			int opaque = ATARIAN_LOOKUP_OPAQUE(lookup);
@@ -401,4 +414,14 @@ WRITE16_HANDLER( atarian_0_vram_w )
 WRITE16_HANDLER( atarian_1_vram_w )
 {
 	COMBINE_DATA(&atarian_1_base[offset]);
+}
+
+
+/*---------------------------------------------------------------
+	atarian_vram_w: Write handler for the alphanumerics RAM.
+---------------------------------------------------------------*/
+
+WRITE32_HANDLER( atarian_0_vram32_w )
+{
+	COMBINE_DATA(&atarian_0_base32[offset]);
 }

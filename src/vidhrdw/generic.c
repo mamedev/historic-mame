@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 
 data8_t *videoram;
@@ -41,6 +42,10 @@ data32_t *dirtybuffer32;
 struct osd_bitmap *tmpbitmap;
 
 
+void generic_vh_postload(void)
+{
+	memset(dirtybuffer,1,videoram_size);
+}
 
 /***************************************************************************
 
@@ -67,6 +72,8 @@ logerror("Error: generic_vh_start() called but videoram_size not initialized\n")
 		free(dirtybuffer);
 		return 1;
 	}
+
+	state_save_register_func_postload(generic_vh_postload);
 
 	return 0;
 }

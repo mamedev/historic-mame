@@ -504,3 +504,48 @@ void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
+
+void ixion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/* copy the background */
+	if (*zaxxon_background_enable)
+	{
+		int scroll;
+
+		scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+
+		if (*zaxxon_background_color_bank & 1)
+			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		else
+			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy;
+		int code,color;
+
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		code = videoram[offs];
+		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
+
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
+				color,
+				0,0,
+				8*sx,8*sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+	draw_sprites(bitmap);
+
+}
+

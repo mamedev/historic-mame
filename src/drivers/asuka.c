@@ -22,7 +22,7 @@ Sound   : Z80 & YM2151 + MSM5205
 Memory map for Asuka & Asuka
 ----------------------------
 
-The other games seem to be identical (Eto is slightly different).
+The other games seem identical but Eto is slightly different.
 
 0x000000 - 0x0fffff : ROM (not all used for each game)
 0x100000 - 0x103fff : 16k of RAM
@@ -30,17 +30,7 @@ The other games seem to be identical (Eto is slightly different).
 0x400000 - 0x40000f : input ports and dipswitches
 0x3a0000 - 0x3a0003 : sprite control
 0x3e0000 - 0x3e0003 : communication with sound CPU
-0xc00000 - c200000f Standard TC0100SCN memory map, including:
-{
-	0xc00000 - 0xc03fff : 64x64 background layer (bg0)
-	0xc04000 - 0xc05fff : 64x64 foreground (text) layer (fg)
-	0xc06000 - 0xc06fff : 256 character generator RAM
-	0xc08000 - 0xc0bfff : 64x64 2nd background layer (bg1)
-
-	0xc20000 - 0xc20005 : x scroll for 3 layers
-	0xc20006 - 0xc2000b : y scroll for 3 layers
-	0xc2000c - 0xc2000f : tilemap layers control
-}
+0xc00000 - 0xc2000f : TC0100SCN (see taitoic.c)
 0xd00000 - 0xd007ff : sprite RAM
 
 
@@ -53,11 +43,12 @@ The original title of the game called B68 is unknown.
 This PCB is the same as the one that is used with EARTH-JOKER.
 <I think B68 is the Taito ROM id# for Asuka & Asuka - B.Troha>
 
-Comments on use of TC0100SCN
-----------------------------
+
+Use of TC0100SCN
+----------------
 
 Asuka & Asuka: $e6a init code clearing TC0100SCN areas is erroneous.
-It only clears 1/8 of the BG layers; then it clears way too much of the
+It only clears 1/8 of the BG layers; then it clears too much of the
 rowscroll areas [0xc000, 0xc400] causing overrun into next 64K block.
 
 Asuka is one of the early Taito games using the TC0100SCN. (Ninja
@@ -73,45 +64,25 @@ TODO
 
 DIPs
 
+Mofflot: $14c46 sub inits sound system: in a pause loop during this
+it reads a dummy address.
 
-Mofflot
--------
+Earthjkr: Wrong screen size? Left edge of green blueprints in
+attract looks like it's incorrectly off screen.
 
-[$14c46 sub inits sound system: in a pause loop during this it reads
-a dummy address.]
+Galmedes: Test mode has select1/2 stuck at on.
 
-
-Earthjkr
---------
-
-Wrong screen size? Left edge of green blueprints in attract looks
-like it's incorrectly off screen.
-
-
-Galmedes
---------
-
-Test mode has select1/2 stuck at on.
-
-
-Eto
----
-
-$76d0 might be a protection check? It reads to and writes from the
-prog rom. Doesn't seem to cause problems though.
-
+Eto: $76d0 might be a protection check? It reads to and writes from
+the prog rom. Doesn't seem to cause problems though.
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
-
-//extern data16_t *asuka_ram;
-
-void asuka_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( asuka_spritectrl_w );
 WRITE16_HANDLER( asuka_spriteflip_w );
@@ -121,6 +92,7 @@ int rastan_s_interrupt(void);
 
 int asuka_vh_start(void);
 int galmedes_vh_start(void);
+void asuka_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void asuka_vh_stop(void);
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
@@ -144,26 +116,15 @@ int asuka_interrupt(void)
 				GAME INPUTS
 **********************************************************/
 
-static READ16_HANDLER( asuka_input_r )
+static READ16_HANDLER( TC0220IOC_halfword_r )
 {
-	switch (offset)
-	{
-		case 0x00:
-			return input_port_3_word_r(0,mem_mask);	/* DSW A */
-		case 0x01:
-			return input_port_4_word_r(0,mem_mask);	/* DSW B */
-		case 0x02:
-			return input_port_0_word_r(0,mem_mask);	/* IN0 */
-		case 0x03:
-			return input_port_1_word_r(0,mem_mask);	/* IN1 */
-		case 0x07:
-			return input_port_2_word_r(0,mem_mask);	/* IN2 */
-	}
+	return TC0220IOC_r( offset );
+}
 
-if (offset!=4)	// fills up log too much
-	logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
-
-	return 0xff;
+static WRITE16_HANDLER( TC0220IOC_halfword_w )
+{
+	if (ACCESSING_LSB)
+		TC0220IOC_w( offset, data & 0xff );
 }
 
 
@@ -171,13 +132,17 @@ if (offset!=4)	// fills up log too much
 			SOUND
 ************************************************/
 
-static WRITE_HANDLER( asuka_bankswitch_w )
-{
-	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU2);
+static int banknum = -1;
 
-	bankaddress = 0x10000 + ((data-1) & 0x03) * 0x4000;
-	cpu_setbank(10,&RAM[bankaddress]);
+static void reset_sound_region(void)
+{
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+}
+
+static WRITE_HANDLER( sound_bankswitch_w )
+{
+	banknum = (data-1) & 0x03;
+	reset_sound_region();
 }
 
 
@@ -192,7 +157,7 @@ static MEMORY_READ16_START( asuka_readmem )
 	{ 0x200000, 0x20000f, TC0110PCR_word_r },
 	{ 0x3e0000, 0x3e0001, MRA16_NOP },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
-	{ 0x400000, 0x40000f, asuka_input_r },
+	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
 	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
@@ -205,8 +170,7 @@ static MEMORY_WRITE16_START( asuka_writemem )
 	{ 0x3a0000, 0x3a0003, asuka_spritectrl_w },
 	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0x400000, 0x400001, MWA16_NOP },	/* watchdog ?? */
-	{ 0x400008, 0x400009, MWA16_NOP },	/* ??? */
+	{ 0x400000, 0x40000f, TC0220IOC_halfword_w },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xc10000, 0xc103ff, MWA16_NOP },	/* error in Asuka init code */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
@@ -218,8 +182,8 @@ static MEMORY_READ16_START( eto_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x100000, 0x10000f, TC0110PCR_word_r },
 	{ 0x200000, 0x203fff, MRA16_RAM },	/* RAM */
-	{ 0x300000, 0x30000f, asuka_input_r },
-	{ 0x400000, 0x40000f, asuka_input_r },	/* service mode mirror */
+	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },
+	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },	/* service mode mirror */
 	{ 0x4e0000, 0x4e0001, MRA16_NOP },
 	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_r },
 	{ 0xc00000, 0xc007ff, MRA16_RAM },	/* sprite ram */
@@ -227,12 +191,11 @@ static MEMORY_READ16_START( eto_readmem )
 	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_r },
 MEMORY_END
 
-static MEMORY_WRITE16_START( eto_writemem )	// N.B. tc100scn mirror overlaps spriteram
+static MEMORY_WRITE16_START( eto_writemem )	/* N.B. tc100scn mirror overlaps spriteram */
 	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x100000, 0x10000f, TC0110PCR_step1_word_w },
 	{ 0x200000, 0x203fff, MWA16_RAM },
-	{ 0x300000, 0x300001, MWA16_NOP },	/* watchdog ?? */
-	{ 0x300008, 0x300009, MWA16_NOP },	/* ??? */
+	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },
 	{ 0x4a0000, 0x4a0003, asuka_spritectrl_w },
 	{ 0x4e0000, 0x4e0001, taitosound_port16_lsb_w },
 	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_w },
@@ -309,21 +272,12 @@ MEMORY_END
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
 
 
 INPUT_PORTS_START( asuka )
-	/* IN0 */
-	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
-
-	/* IN1 */
-	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
-
-	/* IN2 */
-	ASUKA_SYSTEM_INPUT
-
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -361,9 +315,7 @@ INPUT_PORTS_START( asuka )
 	PORT_DIPSETTING(    0xc0, "Up to Level 2" )
 	PORT_DIPSETTING(    0x80, "Up to Level 3" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-INPUT_PORTS_END
 
-INPUT_PORTS_START( mofflott )
 	/* IN0 */
 	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
@@ -372,7 +324,9 @@ INPUT_PORTS_START( mofflott )
 
 	/* IN2 */
 	ASUKA_SYSTEM_INPUT
+INPUT_PORTS_END
 
+INPUT_PORTS_START( mofflott )
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -404,9 +358,7 @@ INPUT_PORTS_START( mofflott )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
 
-INPUT_PORTS_START( galmedes )
 	/* IN0 */
 	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
@@ -415,7 +367,9 @@ INPUT_PORTS_START( galmedes )
 
 	/* IN2 */
 	ASUKA_SYSTEM_INPUT
+INPUT_PORTS_END
 
+INPUT_PORTS_START( galmedes )
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -447,9 +401,7 @@ INPUT_PORTS_START( galmedes )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
 
-INPUT_PORTS_START( earthjkr )
 	/* IN0 */
 	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
@@ -458,7 +410,9 @@ INPUT_PORTS_START( earthjkr )
 
 	/* IN2 */
 	ASUKA_SYSTEM_INPUT
+INPUT_PORTS_END
 
+INPUT_PORTS_START( earthjkr )
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -491,9 +445,7 @@ INPUT_PORTS_START( earthjkr )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
 
-INPUT_PORTS_START( eto )
 	/* IN0 */
 	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
@@ -502,7 +454,9 @@ INPUT_PORTS_START( eto )
 
 	/* IN2 */
 	ASUKA_SYSTEM_INPUT
+INPUT_PORTS_END
 
+INPUT_PORTS_START( eto )
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -536,6 +490,15 @@ INPUT_PORTS_START( eto )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
 INPUT_PORTS_END
 
 
@@ -560,15 +523,17 @@ static struct GfxLayout tilelayout =
 	RGN_FRAC(1,1),
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4, 10*4, 11*4, 8*4, 9*4, 14*4, 15*4, 12*4, 13*4 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64, 8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4,
+	  10*4, 11*4, 8*4, 9*4, 14*4, 15*4, 12*4, 13*4 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+	  8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
-	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
+	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* OBJ */
+	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* SCR */
 	{ -1 } /* end of array */
 };
 
@@ -591,7 +556,7 @@ static struct YM2151interface ym2151_interface =
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ irq_handler },
-	{ asuka_bankswitch_w }
+	{ sound_bankswitch_w }
 };
 
 
@@ -760,7 +725,6 @@ ROM_START( asuka )
 	ROM_LOAD16_BYTE( "asuka_12.rom",  0x00001, 0x20000, 0x271eeee9 )
 
 	/* 0x040000 - 0x7ffff is intentionally empty */
-
 	ROM_LOAD16_WORD( "asuka_03.rom",  0x80000, 0x80000, 0xd3a59b10 )	/* Fix ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -785,7 +749,6 @@ ROM_START( mofflott )
 	ROM_LOAD16_BYTE( "c17-08.bin",  0x00001, 0x20000, 0xd0aacffd )
 
 	/* 0x40000 - 0x7ffff is intentionally empty */
-
 	ROM_LOAD16_WORD( "c17-03.bin",  0x80000, 0x80000, 0x27047fc3 )	/* Fix ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -810,7 +773,6 @@ ROM_START( galmedes )
 	ROM_LOAD16_BYTE( "gm-prg0.bin",  0x00001, 0x20000, 0xfae546a4 )
 
 	/* 0x40000 - 0x7ffff is intentionally empty */
-
 	ROM_LOAD16_WORD( "gm-30.rom",    0x80000, 0x80000, 0x4da2a407 )	/* Fix ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -833,7 +795,6 @@ ROM_START( earthjkr )
 	ROM_LOAD16_BYTE( "ej_3a.rom",  0x00001, 0x20000, 0x9c8050c6 )
 
 	/* 0x40000 - 0x7ffff is intentionally empty */
-
 	ROM_LOAD16_WORD( "ej_30e.rom", 0x80000, 0x80000, 0x49d1f77f )	/* Fix ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -858,7 +819,6 @@ ROM_START( eto )
 	ROM_LOAD16_BYTE( "eto-0.8",   0x00001, 0x20000, 0x57b79370 )
 
 	/* 0x40000 - 0x7ffff is intentionally empty */
-
 	ROM_LOAD16_WORD( "eto-2.30",    0x80000, 0x80000, 0x12f46fb5 )	/* Fix ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -875,11 +835,17 @@ ROM_START( eto )
 	/* empty region */
 ROM_END
 
-/* Working games */
+
+static void init_asuka(void)
+{
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
+}
+
 
 /*    year  rom       parent    machine   inp       init */
-GAME( 1988, asuka,    0,        asuka,    asuka,    0, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
-GAME( 1989, mofflott, 0,        galmedes, mofflott, 0, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
-GAME( 1992, galmedes, 0,        galmedes, galmedes, 0, ROT270, "Visco", "Galmedes (Japan)" )
-GAME( 1993, earthjkr, 0,        galmedes, earthjkr, 0, ROT270, "Visco", "U.N. Defense Force: Earth Joker (Japan)" )
-GAME( 1994, eto,      0,        eto,      eto,      0, ROT0,   "Visco", "Kokontouzai Eto Monogatari (Japan)" )
+GAME( 1988, asuka,    0,        asuka,    asuka,    asuka,   ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
+GAME( 1989, mofflott, 0,        galmedes, mofflott, asuka,   ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
+GAME( 1992, galmedes, 0,        galmedes, galmedes, asuka,   ROT270, "Visco", "Galmedes (Japan)" )
+GAME( 1993, earthjkr, 0,        galmedes, earthjkr, asuka,   ROT270, "Visco", "U.N. Defense Force: Earth Joker (Japan)" )
+GAME( 1994, eto,      0,        eto,      eto,      asuka,   ROT0,   "Visco", "Kokontouzai Eto Monogatari (Japan)" )

@@ -81,9 +81,7 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0000, MWA_NOP },	/* ??? */
 	{ 0x0001, 0x0001, MWA_RAM, &finalizr_scroll },
-	{ 0x0002, 0x0002, MWA_NOP },	/* ??? */
 	{ 0x0003, 0x0003, finalizr_videoctrl_w },
 	{ 0x0004, 0x0004, MWA_RAM, &finalizr_interrupt_enable },
 //	{ 0x0020, 0x003f, MWA_RAM, &finalizr_scroll },
@@ -343,26 +341,26 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	4096,	/* 4096 characters */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x10000*8+0*4, 0x10000*8+1*4, 2*4, 3*4, 0x10000*8+2*4, 0x10000*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	1024,	/* 1024 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x10000*8+0*4, 0x10000*8+1*4, 2*4, 3*4, 0x10000*8+2*4, 0x10000*8+3*4,
-           16*8+0*4, 16*8+1*4, 16*8+0x10000*8+0*4, 16*8+0x10000*8+1*4, 16*8+2*4, 16*8+3*4, 16*8+0x10000*8+2*4, 16*8+0x10000*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-           16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	32*32
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -456,14 +454,13 @@ ROM_START( finalizr )
 															/* the original has a custom IC */
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "523h04.5e",    0x00000, 0x4000, 0xc056d710 )
-	ROM_LOAD( "523h05.6e",    0x04000, 0x4000, 0xae0d0f76 )
-	ROM_LOAD( "523h06.7e",    0x08000, 0x4000, 0xd2db9689 )
-	/* 0c000-0ffff empty */
-	ROM_LOAD( "523h07.5f",    0x10000, 0x4000, 0x50e512ba )
-	ROM_LOAD( "523h08.6f",    0x14000, 0x4000, 0x79f44e17 )
-	ROM_LOAD( "523h09.7f",    0x18000, 0x4000, 0x8896dc85 )
-	/* 1c000-1ffff empty */
+	ROM_LOAD16_BYTE( "523h04.5e",    0x00000, 0x4000, 0xc056d710 )
+	ROM_LOAD16_BYTE( "523h07.5f",    0x00001, 0x4000, 0x50e512ba )
+	ROM_LOAD16_BYTE( "523h05.6e",    0x08000, 0x4000, 0xae0d0f76 )
+	ROM_LOAD16_BYTE( "523h08.6f",    0x08001, 0x4000, 0x79f44e17 )
+	ROM_LOAD16_BYTE( "523h06.7e",    0x10000, 0x4000, 0xd2db9689 )
+	ROM_LOAD16_BYTE( "523h09.7f",    0x10001, 0x4000, 0x8896dc85 )
+	/* 18000-1ffff empty */
 
 	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "523h10.2f",    0x0000, 0x0020, 0xec15dd15 ) /* palette */
@@ -481,14 +478,13 @@ ROM_START( finalizb )
 	ROM_LOAD( "d8749hd.bin",  0x0000, 0x0800, 0x978dfc33 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "523h04.5e",    0x00000, 0x4000, 0xc056d710 )
-	ROM_LOAD( "523h05.6e",    0x04000, 0x4000, 0xae0d0f76 )
-	ROM_LOAD( "523h06.7e",    0x08000, 0x4000, 0xd2db9689 )
-	/* 0c000-0ffff empty */
-	ROM_LOAD( "523h07.5f",    0x10000, 0x4000, 0x50e512ba )
-	ROM_LOAD( "523h08.6f",    0x14000, 0x4000, 0x79f44e17 )
-	ROM_LOAD( "523h09.7f",    0x18000, 0x4000, 0x8896dc85 )
-	/* 1c000-1ffff empty */
+	ROM_LOAD16_BYTE( "523h04.5e",    0x00000, 0x4000, 0xc056d710 )
+	ROM_LOAD16_BYTE( "523h07.5f",    0x00001, 0x4000, 0x50e512ba )
+	ROM_LOAD16_BYTE( "523h05.6e",    0x08000, 0x4000, 0xae0d0f76 )
+	ROM_LOAD16_BYTE( "523h08.6f",    0x08001, 0x4000, 0x79f44e17 )
+	ROM_LOAD16_BYTE( "523h06.7e",    0x10000, 0x4000, 0xd2db9689 )
+	ROM_LOAD16_BYTE( "523h09.7f",    0x10001, 0x4000, 0x8896dc85 )
+	/* 18000-1ffff empty */
 
 	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "523h10.2f",    0x0000, 0x0020, 0xec15dd15 ) /* palette */

@@ -99,7 +99,7 @@ static void bsktball_note_32H(int foo)
 		note_count=256;
 
 	if (note_count > ((256-note_timer)>>1)+note_timer)
-		DAC_data_w(0,255);			/* MB: Generate a square, 50% duty cycle _|-|_| */
+		DAC_data_w(0,63);			/* MB: Generate a square, 50% duty cycle _|-|_| */
 	else
 		DAC_data_w(0,0);
 
@@ -112,7 +112,7 @@ static void bsktball_note_32H(int foo)
 static WRITE_HANDLER( bsktball_bounce_w )
 {
 	/* D0-D3 = crowd */
-	crowd_mask = (data & 0x0F) << 4;
+	crowd_mask = (data & 0x0F) << 2;
 	if (noise)
 		DAC_data_w(2,crowd_mask);
 	else
@@ -120,11 +120,10 @@ static WRITE_HANDLER( bsktball_bounce_w )
 
 	/* D4 = bounce */
 	if (data & 0x10)
-		DAC_data_w(1,255);
+		DAC_data_w(1,63);
 	else
 		DAC_data_w(1,0);
 }
-
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, /* Zero Page RAM */
@@ -138,16 +137,16 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
-	{ 0x1000, 0x1000, MWA_RAM }, /* Timer Reset */
-	{ 0x1010, 0x101f, bsktball_bounce_w }, /* Crowd Amp / Bounce */
-	{ 0x1022, 0x1023, MWA_RAM }, /* Coin Counter */
+	{ 0x1000, 0x1000, MWA_NOP }, /* Timer Reset */
+	{ 0x1010, 0x1010, bsktball_bounce_w }, /* Crowd Amp / Bounce */
+	{ 0x1022, 0x1023, MWA_NOP }, /* Coin Counter */
 	{ 0x1024, 0x1025, bsktball_led1_w }, /* LED 1 */
 	{ 0x1026, 0x1027, bsktball_led2_w }, /* LED 2 */
 	{ 0x1028, 0x1029, bsktball_ld1_w }, /* LD 1 */
 	{ 0x102a, 0x102b, bsktball_ld2_w }, /* LD 2 */
 	{ 0x102c, 0x102d, bsktball_noise_reset_w }, /* Noise Reset */
 	{ 0x102e, 0x102f, bsktball_nmion_w }, /* NMI On */
-	{ 0x1030, 0x103f, bsktball_note_w }, /* Music Ckt Note Dvsr */
+	{ 0x1030, 0x1030, bsktball_note_w }, /* Music Ckt Note Dvsr */
 	{ 0x1800, 0x1bbf, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
 	{ 0x1bc0, 0x1bff, MWA_RAM, &bsktball_motion },
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
@@ -187,16 +186,16 @@ INPUT_PORTS_START( bsktball )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) /* COIN 2 */
 
 	PORT_START		/* DSW */
-	PORT_DIPNAME( 0x07, 0x00, "Coin Mode" )
+	PORT_DIPNAME( 0x07, 0x00, "Play Time per Credit" )
 	PORT_DIPSETTING(	0x07, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(	0x06, "2:30/Credit" )
-	PORT_DIPSETTING(	0x05, "2:00/Credit" )
-	PORT_DIPSETTING(	0x04, "1:30/Credit" )
-	PORT_DIPSETTING(	0x03, "1:15/Credit" )
-	PORT_DIPSETTING(	0x02, "0:45/Credit" )
-	PORT_DIPSETTING(	0x01, "0:30/Credit" )
-	PORT_DIPSETTING(	0x00, "1:00/Credit" )
-	PORT_DIPNAME( 0x18, 0x00, "Dollar Coin Mode" )
+	PORT_DIPSETTING(	0x06, "2:30" )
+	PORT_DIPSETTING(	0x05, "2:00" )
+	PORT_DIPSETTING(	0x04, "1:30" )
+	PORT_DIPSETTING(	0x03, "1:15" )
+	PORT_DIPSETTING(	0x02, "0:45" )
+	PORT_DIPSETTING(	0x01, "0:30" )
+	PORT_DIPSETTING(	0x00, "1:00" )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( 1C_5C ) )

@@ -37,6 +37,11 @@
 		FLIPX support in taitoic.c is not quite correct - the Taito logo is wrong,
 		and the floor in the Doom levels has horizontal scrolling where it shouldn't.
 
+		No networked machine support
+
+		Coin lockout not working (see gunbustr_input_w): perhaps this
+		was a prototype version without proper coin handling?
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -50,7 +55,8 @@ int gunbustr_vh_start (void);
 void gunbustr_vh_stop (void);
 void gunbustr_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
-static data32_t *gunbustr_ram, coin_word;
+static UINT16 coin_word;
+static data32_t *gunbustr_ram;
 extern data32_t *f3_shared_ram;
 
 /* F3 sound */
@@ -114,8 +120,7 @@ static READ32_HANDLER( gunbustr_input_r )
 
 		case 0x01:
 		{
-//logerror("CPU #0 PC %06x: read input %06x\n",cpu_get_pc(),offset);
-			return input_port_2_word_r(0,0)|(coin_word<<16);
+			return input_port_2_word_r(0,0) | (coin_word << 16);
 		}
  	}
 logerror("CPU #0 PC %06x: read input %06x\n",cpu_get_pc(),offset);
@@ -137,25 +142,56 @@ usrintf_showmessage(t);
 }
 #endif
 
-	switch (offset) {
+	switch (offset)
+	{
 		case 0x00:
-			if (ACCESSING_LSB) {
+		{
+			if (ACCESSING_MSB32)	/* $400000 is watchdog */
+			{
+				watchdog_reset_w(0,data >> 24);
+			}
+
+			if (ACCESSING_LSB32)
+			{
 				EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 				EEPROM_write_bit(data & 0x40);
 				EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 				return;
 			}
 			return;
+		}
 
 		case 0x01:
-			if (ACCESSING_MSB32) {
-//				coin_lockout_w(0,~data & 0x01000000);
-//				coin_lockout_w(1,~data & 0x02000000);
-//				coin_counter_w(0, data & 0x04000000);
-//				coin_counter_w(1, data & 0x08000000);
-				coin_word=(data>>16)&0xffff;
+		{
+			if (ACCESSING_MSB32)
+			{
+				/* game does not write a separate counter for coin 2!
+				   It should disable both coins when 9 credits reached
+				   see code $1d8a-f6... but for some reason it's not */
+				coin_lockout_w(0, data & 0x01000000);
+				coin_lockout_w(1, data & 0x02000000);
+				coin_counter_w(0, data & 0x04000000);
+				coin_counter_w(1, data & 0x04000000);
+				coin_word = (data >> 16) &0xffff;
 			}
+//logerror("CPU #0 PC %06x: write input %06x\n",cpu_get_pc(),offset);
+		}
 	}
+}
+
+static WRITE32_HANDLER( motor_control_w )
+{
+/*
+	Standard value poked into MSW is 0x3c00
+	(0x2000 and zero are written at startup)
+
+	Three bits are written in test mode to test
+	lamps and motors:
+
+	......x. ........   Hit motor
+	.......x ........   Solenoid
+	........ .....x..   Hit lamp
+*/
 }
 
 
@@ -167,6 +203,7 @@ static READ32_HANDLER( gunbustr_gun_r )
 
 static WRITE32_HANDLER( gunbustr_gun_w )
 {
+	/* 10000 cycle delay is arbitrary */
 	timer_set(TIME_IN_CYCLES(10000,0),0, gunbustr_interrupt5);
 }
 
@@ -192,6 +229,7 @@ static MEMORY_WRITE32_START( gunbustr_writemem )
 	{ 0x000000, 0x0fffff, MWA32_ROM },
 	{ 0x200000, 0x21ffff, MWA32_RAM, &gunbustr_ram },
 	{ 0x300000, 0x301fff, MWA32_RAM, &spriteram32, &spriteram_size },
+	{ 0x380000, 0x380003, motor_control_w },	/* motor, lamps etc. */
 	{ 0x390000, 0x3907ff, MWA32_RAM, &f3_shared_ram },
 	{ 0x400000, 0x400007, gunbustr_input_w },	/* eerom etc. */
 	{ 0x500000, 0x500003, gunbustr_gun_w },	/* gun int request */
@@ -287,16 +325,16 @@ INPUT_PORTS_START( gunbustr )
 	/* Light gun inputs */
 
 	PORT_START	/* IN 3, P1X */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 35, 20, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 30, 20, 0, 0xff)
 
 	PORT_START	/* IN 4, P1Y */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 35, 20, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 30, 20, 0, 0xff)
 
 	PORT_START	/* IN 5, P2X */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER2, 20, 15, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER2, 30, 20, 0, 0xff)
 
 	PORT_START	/* IN 6, P2Y */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER2, 20, 15, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER2, 30, 20, 0, 0xff)
 INPUT_PORTS_END
 
 
@@ -425,7 +463,7 @@ static struct MachineDriver machine_driver_gunbustr =
 	8192, 8192,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	gunbustr_vh_start,
 	gunbustr_vh_stop,

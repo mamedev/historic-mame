@@ -18,6 +18,7 @@ unsigned char *ddrible_spriteram_1;
 unsigned char *ddrible_spriteram_2;
 
 static int ddribble_vregs[2][5];
+static int charbank[2];
 
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
@@ -38,36 +39,34 @@ WRITE_HANDLER( K005885_0_w )
 {
 	switch (offset){
 		case 0x03:	/* char bank selection for set 1 */
-			if ((data & 0x02) != ddribble_vregs[0][3]){
-				ddribble_vregs[0][3] = (data & 0x02);
+			if ((data & 0x03) != charbank[0])
+			{
+				charbank[0] = data & 0x03;
 				tilemap_mark_all_tiles_dirty( fg_tilemap );
 			}
 			break;
 		case 0x04:	/* IRQ control, flipscreen */
 			ddrible_int_enable_0 = data & 0x02;
-			ddribble_vregs[0][4] = data;
 			break;
-		default:	/* 0x00: scrolly, 0x01-0x02: scrollx */
-			ddribble_vregs[0][offset] = data;
 	}
+	ddribble_vregs[0][offset] = data;
 }
 
 WRITE_HANDLER( K005885_1_w )
 {
 	switch (offset){
 		case 0x03:	/* char bank selection for set 2 */
-			if (((data & 0x03) << 1) != ddribble_vregs[1][3]){
-				ddribble_vregs[1][3] = (data & 0x03) << 1;
+			if ((data & 0x03) != charbank[1])
+			{
+				charbank[1] = data & 0x03;
 				tilemap_mark_all_tiles_dirty( bg_tilemap );
 			}
 			break;
 		case 0x04:	/* IRQ control, flipscreen */
 			ddrible_int_enable_1 = data & 0x02;
-			ddribble_vregs[1][4] = data;
 			break;
-		default:	/* 0x00: scrolly, 0x01-0x02: scrollx */
-			ddribble_vregs[1][offset] = data;
 	}
+	ddribble_vregs[1][offset] = data;
 }
 
 /***************************************************************************
@@ -85,8 +84,8 @@ static UINT32 tilemap_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = ddrible_fg_videoram[tile_index];
-	int bank = ((attr & 0xc0) >> 6) + 4*(((attr & 0x20) >> 5) | ddribble_vregs[0][3]);
-	int num = ddrible_fg_videoram[tile_index + 0x400] + 256*bank;
+	int num = ddrible_fg_videoram[tile_index + 0x400] +
+			((attr & 0xc0) << 2) + ((attr & 0x20) << 5) + ((charbank[0] & 2) << 10);
 	SET_TILE_INFO(0,num,0);
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
 }
@@ -94,8 +93,8 @@ static void get_fg_tile_info(int tile_index)
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = ddrible_bg_videoram[tile_index];
-	int bank = ((attr & 0xc0) >> 6) + 4*(((attr & 0x20) >> 5) | ddribble_vregs[1][3]);
-	int num = ddrible_bg_videoram[tile_index + 0x400] + 256*bank;
+	int num = ddrible_bg_videoram[tile_index + 0x400] +
+			((attr & 0xc0) << 2) + ((attr & 0x20) << 5) + (charbank[1] << 11);
 	SET_TILE_INFO(1,num,0);
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
 }

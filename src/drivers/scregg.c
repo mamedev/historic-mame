@@ -1,10 +1,14 @@
 /***************************************************************************
 
-Eggs
+Eggs & Dommy
 
 Very similar to Burger Time hardware (and uses its video driver)
 
 driver by Nicola Salmoria
+
+To Do:
+Sprite Priorities in Dommy
+Is the Colour Decoding in Dommy Ok?
 
 ***************************************************************************/
 
@@ -23,7 +27,31 @@ READ_HANDLER( btime_mirrorcolorram_r );
 WRITE_HANDLER( btime_mirrorcolorram_w );
 WRITE_HANDLER( btime_video_control_w );
 
+static MEMORY_READ_START( dommy_readmem )
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2800, 0x2bff, btime_mirrorvideoram_r },
+	{ 0x4000, 0x4000, input_port_2_r },     /* DSW1 */
+	{ 0x4001, 0x4001, input_port_3_r },     /* DSW2 */
+/*	{ 0x4004, 0x4004, },  */ /* this is read */
+	{ 0x4002, 0x4002, input_port_0_r },     /* IN0 */
+	{ 0x4003, 0x4003, input_port_1_r },     /* IN1 */
+	{ 0xa000, 0xffff, MRA_ROM },
+MEMORY_END
 
+static MEMORY_WRITE_START( dommy_writemem )
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
+	{ 0x2400, 0x27ff, colorram_w, &colorram },
+	{ 0x2800, 0x2bff, btime_mirrorvideoram_w },
+	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x4001, 0x4001, btime_video_control_w },
+	{ 0x4004, 0x4004, AY8910_control_port_0_w },
+	{ 0x4005, 0x4005, AY8910_write_port_0_w },
+	{ 0x4006, 0x4006, AY8910_control_port_1_w },
+	{ 0x4007, 0x4007, AY8910_write_port_1_w },
+	{ 0xa000, 0xffff, MWA_ROM },
+MEMORY_END
 
 static MEMORY_READ_START( eggs_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -52,8 +80,6 @@ static MEMORY_WRITE_START( eggs_writemem )
 	{ 0x2007, 0x2007, AY8910_write_port_1_w },
 	{ 0x3000, 0x7fff, MWA_ROM },
 MEMORY_END
-
-
 
 INPUT_PORTS_START( scregg )
 	PORT_START      /* IN0 */
@@ -167,6 +193,42 @@ static struct AY8910interface ay8910_interface =
 };
 
 
+static const struct MachineDriver machine_driver_dommy =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1500000,
+			dommy_readmem,dommy_writemem,0,0,
+			interrupt,1
+		}
+	},
+	57, 3072,        /* frames per second, vblank duration taken from Burger Time */
+	1,      /* single CPU, no need from interleaving  */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
+	gfxdecodeinfo,
+	8, 8,
+	btime_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	0,
+	btime_vh_start,
+	generic_vh_stop,
+	eggs_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
 
 static const struct MachineDriver machine_driver_scregg =
 {
@@ -205,7 +267,22 @@ static const struct MachineDriver machine_driver_scregg =
 	}
 };
 
+ROM_START( dommy )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "dommy.e01",  0xa000, 0x2000, 0x9ae064ed )
+	ROM_LOAD( "dommy.e11",  0xc000, 0x2000, 0x7c4fad5c )
+	ROM_LOAD( "dommy.e21",  0xe000, 0x2000, 0xcd1a4d55 )
 
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "dommy.e30",  0x0000, 0x2000, 0x4e68bb12 )
+	ROM_LOAD( "dommy.e40",  0x2000, 0x2000, 0x4d1c36fb )
+	ROM_LOAD( "dommy.e50",  0x4000, 0x2000, 0x5e9db0a4 )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 ) /* palette decoding is probably wrong */
+	ROM_LOAD( "dommy.e70",  0x0018, 0x0008, 0x50c1d86e )	/* palette */
+	ROM_CONTINUE(			  0x0000, 0x0018 )
+	ROM_LOAD( "dommy.e60",  0x0020, 0x0020, 0x24da2b63 )	/* unknown */
+ROM_END
 
 ROM_START( scregg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -252,6 +329,6 @@ ROM_START( eggs )
 ROM_END
 
 
-
+GAMEX(198?, dommy,  0,      dommy,  scregg, 0, ROT270, "Technos", "Dommy", GAME_IMPERFECT_COLORS )
 GAME( 1983, scregg, 0,      scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg" )
 GAME( 1983, eggs,   scregg, scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs" )

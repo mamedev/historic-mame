@@ -142,7 +142,7 @@ static UINT8 *				writemem_lookup;				/* memory write lookup table */
 static UINT8 *				readport_lookup;				/* port read lookup table */
 static UINT8 *				writeport_lookup;				/* port write lookup table */
 
-offs_t						memory_amask;					/* memory address mask */
+offs_t						mem_amask;						/* memory address mask */
 static offs_t				port_amask;						/* port address mask */
 
 UINT8 *						cpu_bankbase[STATIC_COUNT];		/* array of bank bases */
@@ -177,7 +177,7 @@ offs_t encrypted_opcode_start[MAX_CPU],encrypted_opcode_end[MAX_CPU];
 	PROTOTYPES
 -------------------------------------------------*/
 
-static int fatalerror(const char *string, ...);
+static int CLIB_DECL fatalerror(const char *string, ...);
 static UINT8 get_handler_index(struct handler_data *table, void *handler, offs_t start);
 static UINT8 alloc_new_subtable(const struct memport_data *memport, struct table_data *tabledata, UINT8 previous_value);
 static void populate_table(struct memport_data *memport, int iswrite, offs_t start, offs_t stop, UINT8 handler);
@@ -195,7 +195,8 @@ static int allocate_memory(void);
 static int populate_memory(void);
 static int populate_ports(void);
 static void register_banks(void);
-static int address_bits_of_cpu(int cpu);
+static int mem_address_bits_of_cpu(int cpu);
+static int port_address_bits_of_cpu(int cpu);
 static int init_static(void);
 
 #ifdef MEM_DUMP
@@ -315,7 +316,7 @@ void memory_set_context(int activecpu)
 	readport_lookup = cpudata[activecpu].port.read.table;
 	writeport_lookup = cpudata[activecpu].port.write.table;
 
-	memory_amask = cpudata[activecpu].mem.mask;
+	mem_amask = cpudata[activecpu].mem.mask;
 	port_amask = cpudata[activecpu].port.mask;
 
 	opbasefunc = cpudata[activecpu].opbase;
@@ -668,7 +669,7 @@ void install_port_write32_handler(int cpu, offs_t start, offs_t end, port_write3
 	exit immediately
 -------------------------------------------------*/
 
-int fatalerror(const char *string, ...)
+int CLIB_DECL fatalerror(const char *string, ...)
 {
 	va_list arg;
 	va_start(arg, string);
@@ -959,11 +960,11 @@ static int init_cpudata(void)
 		encrypted_opcode_end[cpu] = 0;
 
 		/* initialize the readmem and writemem tables */
-		if (!init_memport(cpu, &cpudata[cpu].mem, address_bits_of_cpu(cpu), cpunum_databus_width(cpu), 1))
+		if (!init_memport(cpu, &cpudata[cpu].mem, mem_address_bits_of_cpu(cpu), cpunum_databus_width(cpu), 1))
 			return 0;
 
 		/* initialize the readport and writeport tables */
-		if (!init_memport(cpu, &cpudata[cpu].port, PORT_BITS, cpunum_databus_width(cpu), 0))
+		if (!init_memport(cpu, &cpudata[cpu].port, port_address_bits_of_cpu(cpu), cpunum_databus_width(cpu), 0))
 			return 0;
 
 #if HAS_Z80
@@ -2148,7 +2149,7 @@ void name(offs_t pc)																	\
 	}																					\
 																						\
 	/* perform the lookup */															\
-	pc &= memory_amask;																	\
+	pc &= mem_amask;																	\
 	entry = readmem_lookup[LEVEL1_INDEX(pc,abits,minbits)];								\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = readmem_lookup[LEVEL2_INDEX(entry,pc,abits,minbits)];					\
@@ -2182,71 +2183,113 @@ void name(offs_t pc)																	\
 	the handlers needed for a given memory type
 -------------------------------------------------*/
 
-#define GENERATE_HANDLERS_8BIT(abits) \
-	    READBYTE8(cpu_readmem##abits,             abits, readmem_lookup,  rmemhandler8,  memory_amask) \
-	   WRITEBYTE8(cpu_writemem##abits,            abits, writemem_lookup, wmemhandler8,  memory_amask) \
-	    SETOPBASE(cpu_setopbase##abits,           abits, 0, rmemhandler8)
+#define GENERATE_HANDLERS_8BIT(type, abits) \
+	    READBYTE8(cpu_read##type##abits,             abits, read##type##_lookup,  r##type##handler8,  type##_amask) \
+	   WRITEBYTE8(cpu_write##type##abits,            abits, write##type##_lookup, w##type##handler8,  type##_amask)
 
-#define GENERATE_HANDLERS_16BIT_BE(abits) \
-	 READBYTE16BE(cpu_readmem##abits##bew,        abits, readmem_lookup,  rmemhandler16, memory_amask) \
-	   READWORD16(cpu_readmem##abits##bew_word,   abits, readmem_lookup,  rmemhandler16, memory_amask) \
-	WRITEBYTE16BE(cpu_writemem##abits##bew,       abits, writemem_lookup, wmemhandler16, memory_amask) \
-	  WRITEWORD16(cpu_writemem##abits##bew_word,  abits, writemem_lookup, wmemhandler16, memory_amask) \
-	    SETOPBASE(cpu_setopbase##abits##bew,      abits, 1, rmemhandler16)
+#define GENERATE_HANDLERS_16BIT_BE(type, abits) \
+	 READBYTE16BE(cpu_read##type##abits##bew,        abits, read##type##_lookup,  r##type##handler16, type##_amask) \
+	   READWORD16(cpu_read##type##abits##bew_word,   abits, read##type##_lookup,  r##type##handler16, type##_amask) \
+	WRITEBYTE16BE(cpu_write##type##abits##bew,       abits, write##type##_lookup, w##type##handler16, type##_amask) \
+	  WRITEWORD16(cpu_write##type##abits##bew_word,  abits, write##type##_lookup, w##type##handler16, type##_amask)
 
-#define GENERATE_HANDLERS_16BIT_LE(abits) \
-	 READBYTE16LE(cpu_readmem##abits##lew,        abits, readmem_lookup,  rmemhandler16, memory_amask) \
-	   READWORD16(cpu_readmem##abits##lew_word,   abits, readmem_lookup,  rmemhandler16, memory_amask) \
-	WRITEBYTE16LE(cpu_writemem##abits##lew,       abits, writemem_lookup, wmemhandler16, memory_amask) \
-	  WRITEWORD16(cpu_writemem##abits##lew_word,  abits, writemem_lookup, wmemhandler16, memory_amask) \
-	    SETOPBASE(cpu_setopbase##abits##lew,      abits, 1, rmemhandler16)
+#define GENERATE_HANDLERS_16BIT_LE(type, abits) \
+	 READBYTE16LE(cpu_read##type##abits##lew,        abits, read##type##_lookup,  r##type##handler16, type##_amask) \
+	   READWORD16(cpu_read##type##abits##lew_word,   abits, read##type##_lookup,  r##type##handler16, type##_amask) \
+	WRITEBYTE16LE(cpu_write##type##abits##lew,       abits, write##type##_lookup, w##type##handler16, type##_amask) \
+	  WRITEWORD16(cpu_write##type##abits##lew_word,  abits, write##type##_lookup, w##type##handler16, type##_amask)
 
-#define GENERATE_HANDLERS_32BIT_BE(abits) \
-	 READBYTE32BE(cpu_readmem##abits##bedw,       abits, readmem_lookup,  rmemhandler32, memory_amask) \
-	 READWORD32BE(cpu_readmem##abits##bedw_word,  abits, readmem_lookup,  rmemhandler32, memory_amask) \
-	   READLONG32(cpu_readmem##abits##bedw_dword, abits, readmem_lookup,  rmemhandler32, memory_amask) \
-	WRITEBYTE32BE(cpu_writemem##abits##bedw,      abits, writemem_lookup, wmemhandler32, memory_amask) \
-	WRITEWORD32BE(cpu_writemem##abits##bedw_word, abits, writemem_lookup, wmemhandler32, memory_amask) \
-	  WRITELONG32(cpu_writemem##abits##bedw_dword,abits, writemem_lookup, wmemhandler32, memory_amask) \
-	    SETOPBASE(cpu_setopbase##abits##bedw,     abits, 2, rmemhandler32)
+#define GENERATE_HANDLERS_32BIT_BE(type, abits) \
+	 READBYTE32BE(cpu_read##type##abits##bedw,       abits, read##type##_lookup,  r##type##handler32, type##_amask) \
+	 READWORD32BE(cpu_read##type##abits##bedw_word,  abits, read##type##_lookup,  r##type##handler32, type##_amask) \
+	   READLONG32(cpu_read##type##abits##bedw_dword, abits, read##type##_lookup,  r##type##handler32, type##_amask) \
+	WRITEBYTE32BE(cpu_write##type##abits##bedw,      abits, write##type##_lookup, w##type##handler32, type##_amask) \
+	WRITEWORD32BE(cpu_write##type##abits##bedw_word, abits, write##type##_lookup, w##type##handler32, type##_amask) \
+	  WRITELONG32(cpu_write##type##abits##bedw_dword,abits, write##type##_lookup, w##type##handler32, type##_amask)
 
-#define GENERATE_HANDLERS_32BIT_LE(abits) \
-	 READBYTE32LE(cpu_readmem##abits##ledw,       abits, readmem_lookup,  rmemhandler32, memory_amask) \
-	 READWORD32LE(cpu_readmem##abits##ledw_word,  abits, readmem_lookup,  rmemhandler32, memory_amask) \
-	   READLONG32(cpu_readmem##abits##ledw_dword, abits, readmem_lookup,  rmemhandler32, memory_amask) \
-	WRITEBYTE32LE(cpu_writemem##abits##ledw,      abits, writemem_lookup, wmemhandler32, memory_amask) \
-	WRITEWORD32LE(cpu_writemem##abits##ledw_word, abits, writemem_lookup, wmemhandler32, memory_amask) \
-	  WRITELONG32(cpu_writemem##abits##ledw_dword,abits, writemem_lookup, wmemhandler32, memory_amask) \
-	    SETOPBASE(cpu_setopbase##abits##ledw,     abits, 2, rmemhandler32)
+#define GENERATE_HANDLERS_32BIT_LE(type, abits) \
+	 READBYTE32LE(cpu_read##type##abits##ledw,       abits, read##type##_lookup,  r##type##handler32, type##_amask) \
+	 READWORD32LE(cpu_read##type##abits##ledw_word,  abits, read##type##_lookup,  r##type##handler32, type##_amask) \
+	   READLONG32(cpu_read##type##abits##ledw_dword, abits, read##type##_lookup,  r##type##handler32, type##_amask) \
+	WRITEBYTE32LE(cpu_write##type##abits##ledw,      abits, write##type##_lookup, w##type##handler32, type##_amask) \
+	WRITEWORD32LE(cpu_write##type##abits##ledw_word, abits, write##type##_lookup, w##type##handler32, type##_amask) \
+	  WRITELONG32(cpu_write##type##abits##ledw_dword,abits, write##type##_lookup, w##type##handler32, type##_amask)
+
+
+/*-------------------------------------------------
+	GENERATE_MEM_HANDLERS - memory handler
+	variants of the GENERATE_HANDLERS
+-------------------------------------------------*/
+
+#define GENERATE_MEM_HANDLERS_8BIT(abits) \
+GENERATE_HANDLERS_8BIT(mem, abits) \
+SETOPBASE(cpu_setopbase##abits,           abits, 0, rmemhandler8)
+
+#define GENERATE_MEM_HANDLERS_16BIT_BE(abits) \
+GENERATE_HANDLERS_16BIT_BE(mem, abits) \
+SETOPBASE(cpu_setopbase##abits##bew,      abits, 1, rmemhandler16)
+
+#define GENERATE_MEM_HANDLERS_16BIT_LE(abits) \
+GENERATE_HANDLERS_16BIT_LE(mem, abits) \
+SETOPBASE(cpu_setopbase##abits##lew,      abits, 1, rmemhandler16)
+
+#define GENERATE_MEM_HANDLERS_32BIT_BE(abits) \
+GENERATE_HANDLERS_32BIT_BE(mem, abits) \
+SETOPBASE(cpu_setopbase##abits##bedw,     abits, 2, rmemhandler32)
+
+#define GENERATE_MEM_HANDLERS_32BIT_LE(abits) \
+GENERATE_HANDLERS_32BIT_LE(mem, abits) \
+SETOPBASE(cpu_setopbase##abits##ledw,     abits, 2, rmemhandler32)
+
+
+/*-------------------------------------------------
+	GENERATE_PORT_HANDLERS - port handler
+	variants of the GENERATE_HANDLERS
+-------------------------------------------------*/
+
+#define GENERATE_PORT_HANDLERS_8BIT(abits) \
+GENERATE_HANDLERS_8BIT(port, abits)
+
+#define GENERATE_PORT_HANDLERS_16BIT_BE(abits) \
+GENERATE_HANDLERS_16BIT_BE(port, abits)
+
+#define GENERATE_PORT_HANDLERS_16BIT_LE(abits) \
+GENERATE_HANDLERS_16BIT_LE(port, abits)
+
+#define GENERATE_PORT_HANDLERS_32BIT_BE(abits) \
+GENERATE_HANDLERS_32BIT_BE(port, abits)
+
+#define GENERATE_PORT_HANDLERS_32BIT_LE(abits) \
+GENERATE_HANDLERS_32BIT_LE(port, abits)
 
 
 /*-------------------------------------------------
 	the memory handlers we need to generate
 -------------------------------------------------*/
 
-GENERATE_HANDLERS_8BIT(16)
-GENERATE_HANDLERS_8BIT(20)
-GENERATE_HANDLERS_8BIT(21)
-GENERATE_HANDLERS_8BIT(24)
+GENERATE_MEM_HANDLERS_8BIT(16)
+GENERATE_MEM_HANDLERS_8BIT(20)
+GENERATE_MEM_HANDLERS_8BIT(21)
+GENERATE_MEM_HANDLERS_8BIT(24)
 
-GENERATE_HANDLERS_16BIT_BE(16)
-GENERATE_HANDLERS_16BIT_BE(24)
-GENERATE_HANDLERS_16BIT_BE(32)
+GENERATE_MEM_HANDLERS_16BIT_BE(16)
+GENERATE_MEM_HANDLERS_16BIT_BE(24)
+GENERATE_MEM_HANDLERS_16BIT_BE(32)
 
-GENERATE_HANDLERS_16BIT_LE(16)
-GENERATE_HANDLERS_16BIT_LE(17)
-GENERATE_HANDLERS_16BIT_LE(29)
-GENERATE_HANDLERS_16BIT_LE(32)
+GENERATE_MEM_HANDLERS_16BIT_LE(16)
+GENERATE_MEM_HANDLERS_16BIT_LE(17)
+GENERATE_MEM_HANDLERS_16BIT_LE(29)
+GENERATE_MEM_HANDLERS_16BIT_LE(32)
 
-GENERATE_HANDLERS_32BIT_BE(24)
-GENERATE_HANDLERS_32BIT_BE(29)
-GENERATE_HANDLERS_32BIT_BE(32)
+GENERATE_MEM_HANDLERS_32BIT_BE(24)
+GENERATE_MEM_HANDLERS_32BIT_BE(29)
+GENERATE_MEM_HANDLERS_32BIT_BE(32)
 
-GENERATE_HANDLERS_32BIT_LE(26)
-GENERATE_HANDLERS_32BIT_LE(29)
-GENERATE_HANDLERS_32BIT_LE(32)
+GENERATE_MEM_HANDLERS_32BIT_LE(26)
+GENERATE_MEM_HANDLERS_32BIT_LE(29)
+GENERATE_MEM_HANDLERS_32BIT_LE(32)
 
-GENERATE_HANDLERS_32BIT_BE(18)	/* HACK -- used for pdp-1 */
+GENERATE_MEM_HANDLERS_32BIT_BE(18)	/* HACK -- used for pdp-1 */
 
 /* make sure you add an entry to this list whenever you add a set of handlers */
 static const struct memory_address_table readmem_to_bits[] =
@@ -2281,39 +2324,23 @@ static const struct memory_address_table readmem_to_bits[] =
 	the port handlers we need to generate
 -------------------------------------------------*/
 
-READBYTE8    (cpu_readport16,            16, readport_lookup,  rporthandler8,  port_amask)
-WRITEBYTE8   (cpu_writeport16,           16, writeport_lookup, wporthandler8,  port_amask)
+GENERATE_PORT_HANDLERS_8BIT(16)
 
-READBYTE16BE (cpu_readport16bew,         16, readport_lookup,  rporthandler16, port_amask)
-READWORD16   (cpu_readport16bew_word,    16, readport_lookup,  rporthandler16, port_amask)
-WRITEBYTE16BE(cpu_writeport16bew,        16, writeport_lookup, wporthandler16, port_amask)
-WRITEWORD16  (cpu_writeport16bew_word,   16, writeport_lookup, wporthandler16, port_amask)
+GENERATE_PORT_HANDLERS_16BIT_BE(16)
 
-READBYTE16LE (cpu_readport16lew,         16, readport_lookup,  rporthandler16, port_amask)
-READWORD16   (cpu_readport16lew_word,    16, readport_lookup,  rporthandler16, port_amask)
-WRITEBYTE16LE(cpu_writeport16lew,        16, writeport_lookup, wporthandler16, port_amask)
-WRITEWORD16  (cpu_writeport16lew_word,   16, writeport_lookup, wporthandler16, port_amask)
+GENERATE_PORT_HANDLERS_16BIT_LE(16)
 
-READBYTE32BE (cpu_readport16bedw,        16, readport_lookup,  rporthandler32, port_amask)
-READWORD32BE (cpu_readport16bedw_word,   16, readport_lookup,  rporthandler32, port_amask)
-READLONG32   (cpu_readport16bedw_dword,  16, readport_lookup,  rporthandler32, port_amask)
-WRITEBYTE32BE(cpu_writeport16bedw,       16, writeport_lookup, wporthandler32, port_amask)
-WRITEWORD32BE(cpu_writeport16bedw_word,  16, writeport_lookup, wporthandler32, port_amask)
-WRITELONG32  (cpu_writeport16bedw_dword, 16, writeport_lookup, wporthandler32, port_amask)
+GENERATE_PORT_HANDLERS_32BIT_BE(16)
 
-READBYTE32LE (cpu_readport16ledw,        16, readport_lookup,  rporthandler32, port_amask)
-READWORD32LE (cpu_readport16ledw_word,   16, readport_lookup,  rporthandler32, port_amask)
-READLONG32   (cpu_readport16ledw_dword,  16, readport_lookup,  rporthandler32, port_amask)
-WRITEBYTE32LE(cpu_writeport16ledw,       16, writeport_lookup, wporthandler32, port_amask)
-WRITEWORD32LE(cpu_writeport16ledw_word,  16, writeport_lookup, wporthandler32, port_amask)
-WRITELONG32  (cpu_writeport16ledw_dword, 16, writeport_lookup, wporthandler32, port_amask)
+GENERATE_PORT_HANDLERS_32BIT_LE(16)
+GENERATE_PORT_HANDLERS_32BIT_LE(24)
 
 
 /*-------------------------------------------------
 	get address bits from a read handler
 -------------------------------------------------*/
 
-int address_bits_of_cpu(int cpu)
+int mem_address_bits_of_cpu(int cpu)
 {
 	read8_handler handler = cpuintf[Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK].memory_read;
 	int	idx;
@@ -2327,6 +2354,21 @@ int address_bits_of_cpu(int cpu)
 	fatalerror("CPU #%d memory handlers don't have a table entry in readmem_to_bits!\n");
 	exit(1);
 	return 0;
+}
+
+
+/*-------------------------------------------------
+	get address bits from a read handler
+-------------------------------------------------*/
+
+int port_address_bits_of_cpu(int cpu)
+{
+	return 16;
+/*
+	// fix me: in the future, we will need to make this work better
+	int cpu_type = Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK;
+	return (cpu_type == NEC_V60) ? 24 : 16;
+*/
 }
 
 

@@ -1,365 +1,440 @@
 /***************************************************************************
 
-  vidhrdw.c
+	Atari Return of the Jedi hardware
 
-  Functions to emulate the video hardware of the machine.
+	driver by Dan Boris
 
 ***************************************************************************/
-
-#define JEDI_PLAYFIELD
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *jedi_backgroundram;
+
+/* globals */
+UINT8 *jedi_backgroundram;
 size_t jedi_backgroundram_size;
-unsigned char *jedi_PIXIRAM;
-static unsigned int jedi_vscroll;
-static unsigned int jedi_hscroll;
-static unsigned int jedi_alpha_bank;
-static int video_off,smooth_table;
-static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
+UINT8 *jedi_PIXIRAM;
+
+
+/* local variables */
+static UINT32 jedi_vscroll;
+static UINT32 jedi_hscroll;
+static UINT32 jedi_alpha_bank;
+static int video_off, smooth_table;
+static UINT8 *fgdirty, *bgdirty;
+static struct osd_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
 
 
 
-/* Color RAM format
-   Color RAM is 1024x12
-   RAM address: A0..A3 = Playfield color code
-                A4..A7 = Motion object color code
-                A8..A9 = Alphanumeric color code
-   RAM data:
-                0..2 = Blue
-                3..5 = Green
-                6..8 = Blue
-                9..11 = Intensity
-    Output resistor values:
-               bit 0 = 22K
-               bit 1 = 10K
-               bit 2 = 4.7K
-*/
+/*************************************
+ *
+ *	Video startup
+ *
+ *************************************/
 
-
-WRITE_HANDLER( jedi_paletteram_w )
-{
-    int r,g,b;
-	int bits,intensity;
-    unsigned int color;
-
-
-	paletteram[offset] = data;
-	color = paletteram[offset & 0x3FF] | (paletteram[offset | 0x400] << 8);
-	intensity = (color >> 9) & 0x07;
-	bits = (color >> 6) & 0x07;
-	r = 5 * bits * intensity;
-	bits = (color >> 3) & 0x07;
-	g = 5 * bits * intensity;
-	bits = (color >> 0) & 0x07;
-	b = 5 * bits * intensity;
-
-	palette_change_color (offset & 0x3ff,r,g,b);
-}
-
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
 int jedi_vh_start(void)
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-	{
+	/* allocate dirty buffer for the foreground characters */
+	fgdirty = dirtybuffer = malloc(videoram_size);
+	if (!fgdirty)
 		return 1;
-	}
-	memset(dirtybuffer,1,videoram_size);
+	memset(fgdirty, 1, videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
+	/* allocate an 8bpp bitmap for the raw foreground characters */
+	fgbitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	if (!fgbitmap)
 	{
-		free(dirtybuffer);
+		free(fgdirty);
 		return 1;
 	}
 
-	if ((dirtybuffer2 = malloc(jedi_backgroundram_size)) == 0)
+	/* allocate an 8bpp bitmap for the motion objects */
+	mobitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	if (!mobitmap)
 	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+		bitmap_free(fgbitmap);
+		free(fgdirty);
 		return 1;
 	}
-	memset(dirtybuffer2,1,jedi_backgroundram_size);
+	fillbitmap(mobitmap, 0, &Machine->visible_area);
 
-	if ((tmpbitmap2 = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
+	/* allocate dirty buffer for the background characters */
+	bgdirty = malloc(jedi_backgroundram_size);
+	if (!bgdirty)
 	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
+		bitmap_free(mobitmap);
+		bitmap_free(fgbitmap);
+		free(fgdirty);
 		return 1;
 	}
+	memset(bgdirty, 1, jedi_backgroundram_size);
 
 	/* the background area is 256x256, doubled by the hardware*/
-	if ((tmpbitmap3 = bitmap_alloc_depth(256,256,8)) == 0)
+	bgbitmap = bitmap_alloc_depth(256, 256, 8);
+	if (!bgbitmap)
 	{
-		bitmap_free(tmpbitmap);
-		bitmap_free(tmpbitmap2);
-		free(dirtybuffer);
-		free(dirtybuffer2);
+		bitmap_free(fgbitmap);
+		bitmap_free(mobitmap);
+		free(fgdirty);
+		free(bgdirty);
+		return 1;
+	}
+
+	/* the expanded background area is 512x512 */
+	bgexbitmap = bitmap_alloc_depth(512, 512, 8);
+	if (!bgexbitmap)
+	{
+		bitmap_free(fgbitmap);
+		bitmap_free(mobitmap);
+		bitmap_free(bgbitmap);
+		free(fgdirty);
+		free(bgdirty);
 		return 1;
 	}
 
 	/* reserve color 1024 for black (disabled display) */
-	palette_change_color(1024,0,0,0);
-
+	palette_change_color(1024, 0, 0, 0);
 	return 0;
 }
 
+
+
+/*************************************
+ *
+ *	Video shutdown
+ *
+ *************************************/
+
 void jedi_vh_stop(void)
 {
-	bitmap_free(tmpbitmap);
-	bitmap_free(tmpbitmap2);
-	bitmap_free(tmpbitmap3);
-	free(dirtybuffer);
-	free(dirtybuffer2);
+	bitmap_free(fgbitmap);
+	bitmap_free(mobitmap);
+	bitmap_free(bgbitmap);
+	bitmap_free(bgexbitmap);
+	free(fgdirty);
+	free(bgdirty);
 }
 
 
+
+/*************************************
+ *
+ *	Palette RAM
+ *
+ *************************************
+ *
+ *	Color RAM format
+ *	Color RAM is 1024x12
+ *
+ *	RAM address: A0..A3 = Playfield color code
+ *		A4..A7 = Motion object color code
+ *		A8..A9 = Alphanumeric color code
+ *
+ *	RAM data:
+ *		0..2 = Blue
+ *		3..5 = Green
+ *		6..8 = Blue
+ *		9..11 = Intensity
+ *
+ *	Output resistor values:
+ *		bit 0 = 22K
+ *		bit 1 = 10K
+ *		bit 2 = 4.7K
+ *
+ *************************************/
+
+WRITE_HANDLER( jedi_paletteram_w )
+{
+    int r, g, b, bits, intensity;
+    UINT32 color;
+
+	paletteram[offset] = data;
+	color = paletteram[offset & 0x3FF] | (paletteram[offset | 0x400] << 8);
+
+	intensity = (color >> 9) & 7;
+	bits = (color >> 6) & 7;
+	r = 5 * bits * intensity;
+	bits = (color >> 3) & 7;
+	g = 5 * bits * intensity;
+	bits = (color >> 0) & 7;
+	b = 5 * bits * intensity;
+
+	palette_change_color(offset & 0x3ff, r, g, b);
+}
+
+
+
+/*************************************
+ *
+ *	Background access
+ *
+ *************************************/
 
 WRITE_HANDLER( jedi_backgroundram_w )
 {
 	if (jedi_backgroundram[offset] != data)
 	{
-		dirtybuffer2[offset] = 1;
-
+		bgdirty[offset] = 1;
 		jedi_backgroundram[offset] = data;
 	}
 }
+
+
+
+/*************************************
+ *
+ *	Foreground banking
+ *
+ *************************************/
+
+WRITE_HANDLER( jedi_alpha_banksel_w )
+{
+	if (jedi_alpha_bank != 2 * (data & 0x80))
+	{
+		jedi_alpha_bank = 2 * (data & 0x80);
+		memset(fgdirty, 1, videoram_size);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Scroll offsets
+ *
+ *************************************/
 
 WRITE_HANDLER( jedi_vscroll_w )
 {
     jedi_vscroll = data | (offset << 8);
 }
 
+
 WRITE_HANDLER( jedi_hscroll_w )
 {
     jedi_hscroll = data | (offset << 8);
 }
 
-WRITE_HANDLER( jedi_alpha_banksel_w )
-{
-	if (jedi_alpha_bank != 2*(data & 0x80))
-	{
-		jedi_alpha_bank = 2*(data & 0x80);
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
+
+
+/*************************************
+ *
+ *	Video control
+ *
+ *************************************/
 
 WRITE_HANDLER( jedi_video_off_w )
 {
 	video_off = data;
 }
 
+
 WRITE_HANDLER( jedi_PIXIRAM_w )
 {
 	smooth_table = data & 0x03;
+	memset(bgdirty, 1, jedi_backgroundram_size);
 }
 
 
 
-/***************************************************************************
+/*************************************
+ *
+ *	Background smoothing
+ *
+ *************************************/
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+static void update_smoothing(int bgtilerow, int first, int last)
+{
+	UINT8 *prom = memory_region(REGION_PROMS) + smooth_table * 0x100;
+	UINT8 bgscan[2][256];
+	UINT8 *bgcurr = bgscan[0], *bglast = bgscan[1];
+	int xstart, xstop, x, y;
 
-***************************************************************************/
+	/*
+		smoothing notes:
+			* even scanlines blend the previous (Y-1) and current (Y) line
+			* odd scanlines are just taken from the current line (Y)
+			* therefore, if we modify source scanlines 8-15, we must update dest scanlines 16-32
+
+			* even pixels are just taken from the current pixel (X)
+			* odd pixels blend the current (X) and next (X+1) pixels
+			* therefore, if we modify source pixels 8-15, we must update dest pixels 15-31
+	*/
+
+	/* compute x start/stop in destination coordinates */
+	xstart = first * 16 - 1;
+	xstop = last * 16 + 15;
+
+	/* extract the previous bg scanline */
+	extract_scanline8(bgbitmap, 0, ((bgtilerow * 16 - 1) & 0x1ff) / 2, 256, bgcurr);
+
+	/* loop over height */
+	for (y = 0; y <= 16; y++)
+	{
+		int curry = (bgtilerow * 16 + y) & 0x1ff;
+
+		/* swap background buffers */
+		UINT8 *bgtemp = bgcurr;
+		bgcurr = bglast;
+		bglast = bgtemp;
+
+		/* extract current bg scanline */
+		extract_scanline8(bgbitmap, 0, curry / 2, 256, bgcurr);
+
+		/* loop over columns */
+		for (x = xstart; x <= xstop; x++)
+		{
+			int tr = bglast[((x + 1) & 0x1ff) / 2];
+			int br = bgcurr[((x + 1) & 0x1ff) / 2];
+
+			/* smooth pixels */
+			if (x & 1)
+			{
+				int tl = bglast[(x & 0x1ff) / 2];
+				int bl = bgcurr[(x & 0x1ff) / 2];
+				int mixt = prom[16 * tl + tr];
+				int mixb = prom[16 * bl + br];
+				plot_pixel(bgexbitmap, x & 0x1ff, curry, prom[0x400 + 16 * mixt + mixb]);
+			}
+			else
+				plot_pixel(bgexbitmap, x & 0x1ff, curry, prom[0x400 + 16 * tr + br]);
+		}
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Core video refresh
+ *
+ *************************************/
+
 void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int bgexdirty[32][2];
 	int offs;
 
+	/* update the palette; we don't need to dirty anything as a result, because */
+	/* we keep it all in raw pens */
+	palette_recalc();
 
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,jedi_backgroundram_size);
-	}
-
+	/* if no video, clear it all to black */
 	if (video_off)
 	{
-		fillbitmap(bitmap,Machine->pens[1024],&Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[1024], &Machine->visible_area);
 		return;
 	}
 
-
-	/* Return of the Jedi has a peculiar playfield/sprite priority system. That */
+	/* Return of the Jedi has a peculiar playfield/motion object priority system. That */
 	/* is, there is no priority system ;-) The color of the pixel which appears on */
-	/* screen depends on all three of the foreground, background and sprites. The */
+	/* screen depends on all three of the foreground, background and motion objects. The */
 	/* 1024 colors palette is appropriately set up by the program to "emulate" a */
 	/* priority system, but it can also be used to display completely different */
 	/* colors (see the palette test in service mode) */
 
-    /* foreground */
-    for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
+    /* update foreground bitmap as a raw bitmap*/
+    for (offs = videoram_size - 1; offs >= 0; offs--)
+		if (fgdirty[offs])
 		{
-			int sx,sy;
+			int sx = offs % 64;
+			int sy = offs / 64;
 
+			fgdirty[offs] = 0;
 
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + jedi_alpha_bank,
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE_RAW,0);
+			drawgfx(fgbitmap, Machine->gfx[0], videoram[offs] + jedi_alpha_bank,
+					0, 0, 0, 8*sx, 8*sy, &Machine->visible_area, TRANSPARENCY_NONE_RAW, 0);
 		}
-    }
 
+	/* reset the expanded dirty array */
+	for (offs = 0; offs < 32; offs++)
+		bgexdirty[offs][0] = bgexdirty[offs][1] = -1;
 
-	/* background */
-	for (offs = jedi_backgroundram_size/2 - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer2[offs] != 0 || dirtybuffer2[offs + 0x400] != 0)
+    /* update background bitmap as a raw bitmap */
+	for (offs = jedi_backgroundram_size / 2 - 1; offs >= 0; offs--)
+		if (bgdirty[offs] || bgdirty[offs + 0x400])
 		{
-			int sx,sy,b,c;
+			int sx = offs % 32;
+			int sy = offs / 32;
+			int code = (jedi_backgroundram[offs] & 0xFF);
+			int bank = (jedi_backgroundram[offs + 0x400] & 0x0F);
 
+			/* shuffle the bank bits in */
+			code |= (bank & 0x01) << 8;
+			code |= (bank & 0x08) << 6;
+			code |= (bank & 0x02) << 9;
 
-			dirtybuffer2[offs] = dirtybuffer2[offs + 0x400] = 0;
+			bgdirty[offs] = bgdirty[offs + 0x400] = 0;
 
-			sx = offs % 32;
-			sy = offs / 32;
-			c = (jedi_backgroundram[offs] & 0xFF);
-			b = (jedi_backgroundram[offs + 0x400] & 0x0F);
-			c |= (b & 0x01) << 8;
-			c |= (b & 0x08) << 6;
-			c |= (b & 0x02) << 9;
+			/* update expanded dirty status (assumes we go right-to-left) */
+			if (bgexdirty[sy][1] == -1)
+				bgexdirty[sy][1] = sx;
+			bgexdirty[sy][0] = sx;
 
-			drawgfx(tmpbitmap3,Machine->gfx[1],
-					c,
-					0,
-					b & 0x04,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE_RAW,0);
+			drawgfx(bgbitmap, Machine->gfx[1], code,
+					0, bank & 0x04, 0, 8*sx, 8*sy, 0, TRANSPARENCY_NONE_RAW, 0);
 		}
-	}
 
+	/* update smoothed version of background */
+	for (offs = 0; offs < 32; offs++)
+		if (bgexdirty[offs][1] != -1)
+			update_smoothing(offs, bgexdirty[offs][0], bgexdirty[offs][1]);
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	fillbitmap(tmpbitmap2,0,&Machine->visible_area);
-
-    for (offs = 0;offs < 0x30;offs++)
+	/* draw the motion objects -- note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities */
+    for (offs = 0; offs < 0x30; offs++)
 	{
-		int x,y,flipx,flipy;
-		int b,c;
-
-
-		b = ((spriteram[offs+0x40] & 0x02) >> 1);
-		b = b | ((spriteram[offs+0x40] & 0x40) >> 5);
-		b = b | (spriteram[offs+0x40] & 0x04);
-
-		c = spriteram[offs] + (b * 256);
-		if (spriteram[offs+0x40] & 0x08) c |= 1;	/* double height */
-
 		/* coordinates adjustments made to match screenshot */
-		x = spriteram[offs+0x100] + ((spriteram[offs+0x40] & 0x01) << 8) - 2;
-		y = 240-spriteram[offs+0x80] + 1;
-		flipx = spriteram[offs+0x40] & 0x10;
-		flipy = spriteram[offs+0x40] & 0x20;
+		int x = spriteram[offs + 0x100] + ((spriteram[offs + 0x40] & 0x01) << 8) - 2;
+		int y = 240 - spriteram[offs + 0x80] + 1;
+		int flipx = spriteram[offs + 0x40] & 0x10;
+		int flipy = spriteram[offs + 0x40] & 0x20;
+		int tall = spriteram[offs + 0x40] & 0x08;
+		int code, bank;
 
-		drawgfx(tmpbitmap2,Machine->gfx[2],
-				c,
-				0,
-				flipx,flipy,
-				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN_RAW,0);
+		/* shuffle the bank bits in */
+		bank  = ((spriteram[offs + 0x40] & 0x02) >> 1);
+		bank |= ((spriteram[offs + 0x40] & 0x40) >> 5);
+		bank |=  (spriteram[offs + 0x40] & 0x04);
+		code = spriteram[offs] + (bank * 256);
 
-		if (spriteram[offs+0x40] & 0x08)	/* double height */
-			drawgfx(tmpbitmap2,Machine->gfx[2],
-					c-1,
-					0,
-					flipx,flipy,
-					x,y-16,
-					&Machine->visible_area,TRANSPARENCY_PEN_RAW,0);
+		/* adjust for double-height */
+		if (tall)
+			code |= 1;
+
+		/* draw motion object */
+		drawgfx(mobitmap, Machine->gfx[2], code,
+				0, flipx, flipy, x, y, &Machine->visible_area, TRANSPARENCY_PEN_RAW, 0);
+
+		/* handle double-height */
+		if (tall)
+			drawgfx(mobitmap, Machine->gfx[2], code - 1,
+					0, flipx, flipy, x, y - 16, &Machine->visible_area, TRANSPARENCY_PEN_RAW, 0);
     }
-
 
 	/* compose the three layers */
 	{
-		int x,y;
-		UINT8 *s1,*s2,*s3,*s3b;
-		UINT8 *prom = memory_region(REGION_PROMS) + smooth_table * 0x100;
-
-
-		if (bitmap->depth == 16)
-		{
-			for (y = 0;y < bitmap->height;y++)
-			{
-				UINT16 *d = (UINT16 *)bitmap->line[y];
-
-				s1 = tmpbitmap->line[y];
-				s2 = tmpbitmap2->line[y];
-				s3 = tmpbitmap3->line[((y + jedi_vscroll) & 0x1ff) / 2];
-				s3b = tmpbitmap3->line[((y + jedi_vscroll - 1) & 0x1ff) / 2];
-
-				for (x = 0;x < bitmap->width;x++)
-				{
-					int tl,tr,bl,br,mixt,mixb,mix;
-
-					tr = s3b[((x + jedi_hscroll + 1) & 0x1ff) / 2];
-					br = s3 [((x + jedi_hscroll + 1) & 0x1ff) / 2];
-
-					if ((x + jedi_hscroll) & 1)
-					{
-						tl = s3b[((x + jedi_hscroll) & 0x1ff) / 2];
-						bl = s3 [((x + jedi_hscroll) & 0x1ff) / 2];
-						mixt = prom[16 * tl + tr];
-						mixb = prom[16 * bl + br];
-						mix = prom[0x400 + 16 * mixt + mixb];
-					}
-					else
-						mix = prom[0x400 + 16 * tr + br];
-
-					*(d++) = Machine->pens[(*(s1++) << 8) | (*(s2++) << 4) | mix ];
-				}
-			}
-		}
-		else
-		{
-			for (y = 0;y < bitmap->height;y++)
-			{
-				UINT8 *d = bitmap->line[y];
-
-				s1 = tmpbitmap->line[y];
-				s2 = tmpbitmap2->line[y];
-				s3 = tmpbitmap3->line[((y + jedi_vscroll) & 0x1ff) / 2];
-				s3b = tmpbitmap3->line[((y + jedi_vscroll - 1) & 0x1ff) / 2];
-
-				for (x = 0;x < bitmap->width;x++)
-				{
-					int tl,tr,bl,br,mixt,mixb,mix;
-
-					tr = s3b[((x + jedi_hscroll + 1) & 0x1ff) / 2];
-					br = s3 [((x + jedi_hscroll + 1) & 0x1ff) / 2];
-
-					if ((x + jedi_hscroll) & 1)
-					{
-						tl = s3b[((x + jedi_hscroll) & 0x1ff) / 2];
-						bl = s3 [((x + jedi_hscroll) & 0x1ff) / 2];
-						mixt = prom[16 * tl + tr];
-						mixb = prom[16 * bl + br];
-						mix = prom[0x400 + 16 * mixt + mixb];
-					}
-					else
-						mix = prom[0x400 + 16 * tr + br];
-
-					*(d++) = Machine->pens[(*(s1++) << 8) | (*(s2++) << 4) | mix ];
-				}
-			}
-		}
+		int xscroll = -jedi_hscroll;
+		int yscroll = -jedi_vscroll;
+		copyscrollbitmap(bitmap, bgexbitmap, 1, &xscroll, 1, &yscroll, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copybitmap(bitmap, mobitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND_RAW, 4);
+		copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 8);
 	}
+
+	/* erase the motion objects */
+    for (offs = 0; offs < 0x30; offs++)
+	{
+		/* coordinates adjustments made to match screenshot */
+		int x = spriteram[offs + 0x100] + ((spriteram[offs + 0x40] & 0x01) << 8) - 2;
+		int y = 240 - spriteram[offs + 0x80] + 1;
+		int tall = spriteram[offs + 0x40] & 0x08;
+		struct rectangle bounds;
+
+		/* compute the bounds */
+		bounds.min_x = x;
+		bounds.max_x = x + 15;
+		bounds.min_y = tall ? (y - 16) : y;
+		bounds.max_y = y + (tall ? 31 : 15);
+		fillbitmap(mobitmap, 0, &bounds);
+    }
 }

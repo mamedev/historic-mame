@@ -2,7 +2,7 @@
 
 						-= Sky Fox / Exerizer =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+				driver by	Luca Elia (l.elia@tin.it)
 
 
 CPU  :	Z80A x 2

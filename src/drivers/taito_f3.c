@@ -8,31 +8,15 @@
 	rom interface and ES5505 emulator!
 
 	Current suspected 68020 core problems:
-		Landmaker: In game problems - worked with previous version of the core.
-		EAction2:  Game over as soon as game starts.
-		Pbobble4:  Controls don't work in game.
-		Bubblem:   Hangs soon into game. (Fixed via a patch)
 		DariusG/Gekirido/Cleopatr:  Garbage written into sprite block control bits
 		PBobble3:  Tries to execute code in spriteram and crashes (patched)
-		Twin Qix:  Hangs in game.
 
 	Main Issues:
-		Alpha blending not supported.
-		Pixel layer colours are often wrong (kludged in some games).
+		Alpha blending not supported (sprite & playfield).
 		Some games could fit in 8 bit colour - but marking pens is difficult
 			because graphics are 6bpp with 4bpp palette indexes.
-		Zoom layer positioning is not quite pixel accurate - it used to be
-			better than it is now, but I can't figure out what I broke...
-		Column scroll is not totally understand - there are at least two modes;
-			simple addition to Y offset on source bitmap (used by Riding Fight,
-			TRStars, Space Invaders DX) and another mode where a control bit is
-			unset - used by the football games to move the crowd and boards
-			relative to the pitch - currently not implemented.
 		Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
-			use by the current ES5505 core (which righly should be 16 bit).
-		Sound is slow...  Mainly due to the amount of interrupts the 68k gets, plus
-			context switching between the 68020 and 68k (no, underclocking them	won't
-			help..)
+			use by the current ES5505 core (which rightly should be 16 bit).
 		Only 270 degree rotation is supported in the custom renderer (so you must use
 			flipscreen on Gunlock & Gseeker which are really 90 degree rotation games).
 		Zoomed layers are not always positioned quite correctly in flipscreen mode
@@ -41,8 +25,7 @@
 		Bats in Arkretrn/Puchicar can fly off one side of the screen and appear
 			on the other - analogue input problem.
 		Dsp isn't hooked up.
-		PBobble 2 (zoomed) background layer is incorrect.
-		Crowd/boards not shown in the football games (see above)
+		Crowd/boards not shown in the football games
 		Sound doesn't work in RidingF/RingRage/QTheater?
 		Input bit to switch between analogue/digital control panels for Arkanoid/
 			Puchi Carat is not found.
@@ -62,6 +45,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "drivers/taito_f3.h"
+#include "state.h"
 
 int  f3_vh_start(void);
 void f3_vh_stop(void);
@@ -80,6 +64,7 @@ WRITE32_HANDLER( f3_palette_24bit_w );
 WRITE32_HANDLER( f3_pf_data_w );
 WRITE32_HANDLER( f3_vram_w );
 WRITE32_HANDLER( f3_pivot_w );
+WRITE32_HANDLER( f3_videoram_w );
 
 /* from Machine.c */
 READ16_HANDLER(f3_68000_share_r);
@@ -195,7 +180,7 @@ static MEMORY_WRITE32_START( f3_writemem )
 	{ 0x4a0000, 0x4a001f, f3_control_w },
 	{ 0x600000, 0x60ffff, MWA32_RAM, &spriteram32, &spriteram_size },
 	{ 0x610000, 0x61bfff, f3_pf_data_w, &f3_pf_data },
-	{ 0x61c000, 0x61dfff, MWA32_RAM, &videoram32 },
+	{ 0x61c000, 0x61dfff, f3_videoram_w, &videoram32 },
 	{ 0x61e000, 0x61ffff, f3_vram_w, &f3_vram },
 	{ 0x620000, 0x62ffff, MWA32_RAM, &f3_line_ram },
 	{ 0x630000, 0x63ffff, f3_pivot_w, &f3_pivot_ram },
@@ -453,11 +438,6 @@ static void f3_machine_reset(void)
 	f3_68681_reset();
 }
 
-static void f3_sound_irq(int state)
-{
-	logerror("irq! %d\n",state);
-}
-
 static struct ES5505interface es5505_interface =
 {
 	1,					/* total number of chips */
@@ -465,7 +445,6 @@ static struct ES5505interface es5505_interface =
 	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
 	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
-	{ f3_sound_irq }	/* irq callback */
 };
 
 static struct EEPROM_interface f3_eeprom_interface =
@@ -507,18 +486,24 @@ static struct MachineDriver machine_driver_f3 =
 			ignore_interrupt,0
 		}
 	},
-	57.33, 204, /* Really 57.33 Hz, 204ms vblank time */
+	60, 624, /* 58.97 Hz, 624us vblank time */
 	1,
 	f3_machine_reset,
 
  	/* video hardware */
 	40*8+48*2, 32*8, { 46, 40*8-1+46, 3*8, 32*8-1 },
+//	40*8+48*2, 64*8, { 46, 64*8-1+46, 3*8, 64*8-1 },
 
 	gfxdecodeinfo,
 	8192, 8192,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+#if TRY_ALPHA
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
+#else
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+#endif
+
 	f3_eof_callback,
 	f3_vh_start,
 	f3_vh_stop,
@@ -1839,17 +1824,18 @@ ROM_START( twinqix )
 	ROM_LOAD32_BYTE("scr0-1.b06",  0x000002, 0x080000, 0xe9bef879 )
 	ROM_LOAD32_BYTE("scr0-2.b05",  0x000001, 0x080000, 0xcac6854b )
 	ROM_LOAD32_BYTE("scr0-3.b04",  0x000003, 0x080000, 0xce063034 )
- 	ROM_LOAD16_BYTE("scr0-5.b02",  0x300000, 0x080000, 0xfdd1a85b )
+	ROM_LOAD16_BYTE("scr0-4.b03",  0x300000, 0x080000, 0xd32280fe )
+	ROM_LOAD16_BYTE("scr0-5.b02",  0x300001, 0x080000, 0xfdd1a85b )
 
 	ROM_REGION(0x180000, REGION_CPU2, 0)	/* sound CPU */
 	ROM_LOAD16_BYTE("spr0-1.b66", 0x100000, 0x40000, 0x4b20e99d )
 	ROM_LOAD16_BYTE("spr0-0.b65", 0x100001, 0x40000, 0x2569eb30 )
 
-	ROM_REGION16_BE(0x600000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("snd-0.b43", 0x000000, 0x80000, 0xad5405a9 )
-	ROM_LOAD16_BYTE("snd-14.b10",0x100000, 0x80000, 0x26312451 )
-	ROM_LOAD16_BYTE("snd-1.b44", 0x200000, 0x80000, 0x274864af )
-	ROM_LOAD16_BYTE("snd-15.b11",0x300000, 0x80000, 0x2edaa9dc )
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("snd-0.b43", 0xe00000, 0x80000, 0xad5405a9 )
+	ROM_LOAD16_BYTE("snd-14.b10",0x000000, 0x80000, 0x26312451 )
+	ROM_LOAD16_BYTE("snd-1.b44", 0xf00000, 0x80000, 0x274864af )
+	ROM_LOAD16_BYTE("snd-15.b11",0x100000, 0x80000, 0x2edaa9dc )
 ROM_END
 
 ROM_START( quizhuhu )
@@ -2343,7 +2329,7 @@ ROM_START( pbobbl4j )
  	ROM_LOAD32_BYTE("e49.12", 0x000000, 0x80000, 0xfffea203 )
 	ROM_LOAD32_BYTE("e49.11", 0x000001, 0x80000, 0xbf69a087 )
 	ROM_LOAD32_BYTE("e49.10", 0x000002, 0x80000, 0x0307460b )
-	ROM_LOAD32_BYTE("e49-09.17", 0x000003, 0x80000, 0x7d0526b2 )
+	ROM_LOAD32_BYTE("e49-09.17", 0x000003, 0x80000, 0xe40c7708 )
 
 	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
 	ROM_LOAD16_BYTE("e49.02", 0x000000, 0x100000, 0xc7d2f40b )
@@ -2509,6 +2495,7 @@ static void tile_decode(int uses_5bpp_tiles)
 		gfx[offset] = (d3<<2) | (d4<<6);
 		offset++;
 	}
+	state_save_register_UINT32("f3", 0, "coinword", coin_word, 2);
 }
 
 #define F3_IRQ_SPEEDUP_1_R(GAME, counter, mem_addr, mask) 		\
@@ -2538,7 +2525,7 @@ static READ32_HANDLER( irq_speedup_r_##GAME )					\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
-
+//logerror("ptr is %08x, pc is %08x\n",ptr,cpu_get_pc());
 F3_IRQ_SPEEDUP_2_R(arabianm, 0x238,    0x8124/4, 0xff000000 )
 F3_IRQ_SPEEDUP_1_R(gseeker,  0x43ac,   0xad94/4, 0xffff0000 )
 F3_IRQ_SPEEDUP_1_R(gunlock,  0x646,    0x0004/4, 0xffffffff )
@@ -2562,6 +2549,7 @@ F3_IRQ_SPEEDUP_3_R(dariusg,  0x1d8e,   0x6ba8/4, 0x00001a76 )
 F3_IRQ_SPEEDUP_2_R(puchicar, 0x9dc,    0x24d8/4, 0x80000000 )
 F3_IRQ_SPEEDUP_2_R(popnpop,  0x9bc,    0x1cf8/4, 0x00008000 )
 F3_IRQ_SPEEDUP_2_R(arkretrn, 0x960,    0x2154/4, 0x0000ffff )
+F3_IRQ_SPEEDUP_3_R(landmakr, 0x146c,   0x0824/4, 0x00000000 )
 
 static void init_ringrage(void)
 {
@@ -2704,11 +2692,6 @@ static void init_bubsymph(void)
 
 static void init_bubblem(void)
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
-
-	/* Game hangs in this loop - D0 is wrong value - bitfield bug? */
-    RAM[0x199b4/4]=0x4e710000 | (RAM[0x199b4/4]&0xffff);
-
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_bubblem );
 	f3_game=BUBBLEM;
 	tile_decode(1);
@@ -2736,6 +2719,7 @@ static void init_popnpop(void)
 
 static void init_landmakr(void)
 {
+	install_mem_read32_handler(0, 0x400824, 0x400827, irq_speedup_r_landmakr );
 	f3_game=LANDMAKR;
 	tile_decode(0);
 }
@@ -2853,8 +2837,8 @@ GAME( 1994, kaiserkn, 0       , f3, kn, kaiserkn, ROT0_16BIT,   "Taito Corporati
 GAME( 1994, kaiserkj, kaiserkn, f3, kn, kaiserkn, ROT0_16BIT,   "Taito Corporation",         "Kaiser Knuckle (Japan)" )
 GAME( 1994, gblchmp,  kaiserkn, f3, kn, kaiserkn, ROT0_16BIT,   "Taito America Corporation", "Global Champion (US)" )
 GAME( 1994, dankuga,  kaiserkn, f3, kn, kaiserkn, ROT0_16BIT,   "Taito Corporation",         "Dan-Ku-Ga (Japan)" )
-GAMEX(1994, dariusg,  0       , f3, f3, dariusg,  ROT0_16BIT,   "Taito Corporation",         "Darius Gaiden - Silver Hawk", GAME_NOT_WORKING )
-GAMEX(1994, dariusgx, dariusg , f3, f3, dariusg,  ROT0_16BIT,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version)", GAME_NOT_WORKING )
+GAME( 1994, dariusg,  0       , f3, f3, dariusg,  ROT0_16BIT,   "Taito Corporation",         "Darius Gaiden - Silver Hawk" )
+GAME( 1994, dariusgx, dariusg , f3, f3, dariusg,  ROT0_16BIT,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version)" )
 GAME( 1994, bublbob2, 0       , f3, f3, bubsymph, ROT0_16BIT,   "Taito Corporation Japan",   "Bubble Bobble 2 (World)" )
 GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0_16BIT,   "Taito Corporation",         "Bubble Symphony (Japan)" )
 GAME( 1994, bubsympu, bublbob2, f3, f3, bubsymph, ROT0_16BIT,   "Taito America Corporation", "Bubble Symphony (US)" )
@@ -2863,14 +2847,14 @@ GAME( 1995, pwrgoal,  0       , f3, f3, hthero95, ROT0_16BIT,   "Taito Corporati
 GAME( 1995, hthero95, pwrgoal , f3, f3, hthero95, ROT0_16BIT,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
 GAME( 1995, hthro95u, pwrgoal , f3, f3, hthero95, ROT0_16BIT,   "Taito America Corporation", "Hat Trick Hero '95 (US)" )
 GAME( 1994, qtheater, 0       , f3, f3, qtheater, ROT0_16BIT,   "Taito Corporation",         "Quiz Theater - 3tsu no Monogatari (Japan)" )
-GAMEX(1994, elvactr,  0       , f3, f3, elvactr,  ROT0_16BIT,   "Taito Corporation Japan",   "Elevator Action Returns (World)", GAME_NOT_WORKING )
-GAMEX(1994, elvactrj, elvactr , f3, f3, elvactr,  ROT0_16BIT,   "Taito Corporation",         "Elevator Action Returns (Japan)", GAME_NOT_WORKING )
-GAMEX(1994, elvact2u, elvactr , f3, f3, elvactr,  ROT0_16BIT,   "Taito America Corporation", "Elevator Action 2 (US)", GAME_NOT_WORKING )
+GAME( 1994, elvactr,  0       , f3, f3, elvactr,  ROT0_16BIT,   "Taito Corporation Japan",   "Elevator Action Returns (World)" )
+GAME( 1994, elvactrj, elvactr , f3, f3, elvactr,  ROT0_16BIT,   "Taito Corporation",         "Elevator Action Returns (Japan)" )
+GAME( 1994, elvact2u, elvactr , f3, f3, elvactr,  ROT0_16BIT,   "Taito America Corporation", "Elevator Action 2 (US)" )
 /* There is also a prototype Elevator Action 2 (US) pcb with the graphics in a different rom format (same program code) */
 GAME( 1995, akkanvdr, 0       , f3, f3, spcinv95, ROT270_16BIT, "Taito Corporation",         "Akkanvader (Japan)" )
 /* Space Invaders '95 - Attack Of The Lunar Loonies */
-GAMEX(1995, twinqix,  0       , f3, f3, twinqix,  ROT0_16BIT,   "Taito America Corporation", "Twin Qix (US Prototype)", GAME_NOT_WORKING )
-GAMEX(1995, gekirido, 0       , f3, f3, gekirido, ROT270_16BIT, "Taito Corporation",         "Gekirindan (Japan)", GAME_NOT_WORKING )
+GAME( 1995, twinqix,  0       , f3, f3, twinqix,  ROT0_16BIT,   "Taito America Corporation", "Twin Qix (US Prototype)" )
+GAME( 1995, gekirido, 0       , f3, f3, gekirido, ROT270_16BIT, "Taito Corporation",         "Gekirindan (Japan)" )
 GAME( 1995, quizhuhu, 0       , f3, f3, quizhuhu, ROT0_16BIT,   "Taito Corporation",         "Moriguchi Hiroko no Quiz de Hyuuhyuu (Japan)" )
 GAME( 1995, pbobble2, 0       , f3, f3, pbobble2, ROT0_16BIT,   "Taito Corporation Japan",	 "Puzzle Bobble 2 (World)" )
 GAME( 1995, pbobbl2j, pbobble2, f3, f3, pbobble2, ROT0_16BIT,   "Taito Corporation", 		 "Puzzle Bobble 2 (Japan)" )
@@ -2887,8 +2871,8 @@ GAME( 1996, pbobbl3j, pbobble3, f3, f3, pbobble3, ROT0_16BIT,   "Taito Corporati
 GAME( 1997, arkretrn, 0       , f3, f3, arkretrn, ROT0_16BIT,   "Taito Corporation", "Arkanoid Returns (Japan)" )
 GAME( 1997, kirameki, 0       , f3, f3, kirameki, ROT0_16BIT,   "Taito Corporation", "Kirameki Star Road (Japan)" )
 GAME( 1997, puchicar, 0       , f3, f3, puchicar, ROT0_16BIT,   "Taito Corporation", "Puchi Carat (Japan)" )
-GAMEX(1997, pbobble4, 0       , f3, f3, pbobble4, ROT0_16BIT,   "Taito Corporation", "Puzzle Bobble 4 (World)", GAME_NOT_WORKING )
-GAMEX(1997, pbobbl4j, pbobble4, f3, f3, pbobble4, ROT0_16BIT,   "Taito Corporation", "Puzzle Bobble 4 (Japan)", GAME_NOT_WORKING )
-GAMEX(1997, pbobbl4u, pbobble4, f3, f3, pbobble4, ROT0_16BIT,   "Taito Corporation", "Puzzle Bobble 4 (US)", GAME_NOT_WORKING )
+GAME( 1997, pbobble4, 0       , f3, f3, pbobble4, ROT0_16BIT,   "Taito Corporation", "Puzzle Bobble 4 (World)" )
+GAME( 1997, pbobbl4j, pbobble4, f3, f3, pbobble4, ROT0_16BIT,   "Taito Corporation", "Puzzle Bobble 4 (Japan)" )
+GAME( 1997, pbobbl4u, pbobble4, f3, f3, pbobble4, ROT0_16BIT,   "Taito Corporation", "Puzzle Bobble 4 (US)" )
 GAME( 1997, popnpop,  0       , f3, f3, popnpop,  ROT0_16BIT,   "Taito Corporation", "Pop 'N Pop (Japan)" )
-GAMEX(1998, landmakr, 0       , f3, f3, landmakr, ROT0_16BIT,   "Taito Corporation", "Landmaker (Japan)", GAME_NOT_WORKING )
+GAME( 1998, landmakr, 0       , f3, f3, landmakr, ROT0_16BIT,   "Taito Corporation", "Landmaker (Japan)" )

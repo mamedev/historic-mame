@@ -123,6 +123,7 @@ Chris Moore        chris.moore@writeme.com
 Brad Oliver        bradman@pobox.com
 Andrew Scott       ascott@utkux.utcc.utk.edu
 Zsolt Vasvari      vaszs01@banet.net
+Luca Elia          l.elia@tin.it
 
 DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.
 

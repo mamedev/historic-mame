@@ -418,7 +418,7 @@ static READ_HANDLER( cosmicg_videoram_r )
 
 static WRITE_HANDLER( flip_screen_w )
 {
-	flip_screen_set(data);
+	flip_screen_set(data&0x80);
 }
 
 
@@ -1373,7 +1373,7 @@ static void init_cosmicg(void)
     memory_region(REGION_CPU1)[0x1e9e] = 0x04;
     memory_region(REGION_CPU1)[0x1e9f] = 0xc0;
 #else
-	WRITE_WORD(memory_region(REGION_CPU1) + 0x1e9e, 0x04c0);
+	((data16_t *)memory_region(REGION_CPU1))[0x1e9e/2] = 0x04c0;
 #endif
 }
 

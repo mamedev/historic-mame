@@ -614,6 +614,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		dummygfx.gfxdata = &trans_bitmap_mo->line[data->clip.min_y][data->clip.min_x];
 		dummygfx.line_modulo = trans_bitmap_mo->line[1] - trans_bitmap_mo->line[0];
 		dummygfx.char_modulo = 0;
+		dummygfx.flags = 0;
 		mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
 				data->clip.min_x, data->clip.min_y, &data->clip, TRANSPARENCY_NONE, 0, 0x0003);
 

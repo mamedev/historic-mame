@@ -13,7 +13,7 @@ NA-1 Games:
 -	F/A (wrong screen orientation)
 -	Super World Court (C354, C357)
 -	Nettou! Gekitou! Quiztou!! (C354, C365 - both are 32pin)
--	Exbania (C350, C354)
+-	Exvania (C350, C354)
 -	Cosmo Gang the Puzzle (C356)
 -	Tinkle Pit (C354, C367)
 -	Emeraldia (C354, C358)
@@ -880,7 +880,7 @@ ROM_START( emeralda )
 	ROM_LOAD16_BYTE( "ep1u",  0x180000, 0x080000, 0x4e969152 )
 ROM_END
 
-ROM_START( exbania )
+ROM_START( exvania )
 	ROM_REGION( 0x580000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ex1-ep0l.bin", 0x080001, 0x080000, 0x18c12015 ) /* 0xc00000 */
 	ROM_LOAD16_BYTE( "ex1-ep0u.bin", 0x080000, 0x080000, 0x07d054d1 )
@@ -979,7 +979,7 @@ ROM_END
 /*          rom   parent machine    inp       		init */
 GAMEX( 1992,bkrtmaq,  0, namcona1w, namcona1_quiz,	bkrtmaq,  ROT0_16BIT, "Namco", "Bakuretsu Quiz Ma-Q Dai Bouken (Japan)", GAME_NO_SOUND )
 GAMEX( 1992,cgangpzl, 0, namcona1w, namcona1_joy,	cgangpzl, ROT0_16BIT, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,exbania,  0, namcona1,  namcona1_joy,	exbania,  ROT0_16BIT, "Namco", "Exbania (Japan)", GAME_NO_SOUND )
+GAMEX( 1992,exvania,  0, namcona1,  namcona1_joy,	exbania,  ROT0_16BIT, "Namco", "Exvania (Japan)", GAME_NO_SOUND )
 GAMEX( 1992,fa,       0, namcona1,  namcona1_joy,	fa,       ROT0_16BIT/*ROT90_16BIT*/,"Namco", "F/A (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
 GAMEX( 1992,knckhead, 0, namcona1,  namcona1_joy,	knckhead, ROT0_16BIT, "Namco", "Knuckle Heads (Japan)", GAME_NO_SOUND )
 GAMEX( 1992,swcourt,  0, namcona1w, namcona1_joy,	swcourt,  ROT0_16BIT, "Namco", "Super World Court (Japan)", GAME_NO_SOUND )

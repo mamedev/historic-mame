@@ -1419,7 +1419,7 @@ ROM_END
 
 GAME( 1981, spacfury, 0,		spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
 GAME( 1981, spacfura, spacfury, spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision A)" )
-GAME( 1982, zektor,   0,		zektor,   zektor,	zektor,   ROT0,   "Sega", "Zektor" )
+GAME( 1982, zektor,   0,		zektor,   zektor,	zektor,   ROT0,   "Sega", "Zektor (revision B)" )
 GAME( 1982, tacscan,  0,		tacscan,  tacscan,	tacscan,  ROT270, "Sega", "Tac/Scan" )
 GAME( 1981, elim2,	  0,		elim2,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
 GAME( 1981, elim2a,   elim2,	elim2,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )

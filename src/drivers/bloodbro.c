@@ -121,6 +121,9 @@ static MEMORY_WRITE16_START( weststry_writemem_cpu )
 	{ 0x0c1000, 0x0c17ff, MWA16_RAM },
 	{ 0x128000, 0x1287ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x120000, 0x128fff, MWA16_RAM },
+	/* the following handler is fake, it's here only to allocates ram */
+	/* for the seibu system so it doesn't crash */
+	{ 0x0a0000, 0x0a001f, bloodbro_sound_w, (data16_t **)&seibu_shared_sound_ram },
 MEMORY_END
 
 /******************************************************************************/

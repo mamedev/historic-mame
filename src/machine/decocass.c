@@ -1237,7 +1237,7 @@ READ_HANDLER( decocass_type4_r )
 
 			data = prom[type4_ctrs];
 			LOG(3,("%9.7f 6502-PC: %04x decocass_type5_r(%02x): $%02x '%c' <- PROM[%04x]\n", timer_get_time(), cpu_getpreviouspc(), offset, data, (data >= 32) ? data : '.', type4_ctrs));
-			type4_ctrs = ++type4_ctrs & 0x7fff;
+			type4_ctrs = (type4_ctrs+1) & 0x7fff;
 		}
 		else
 		{

@@ -1855,7 +1855,7 @@ static void williams_dcs_irq(int state)
 
 	/* copy the current data into the buffer */
 	for (i = 0; i < dcs.size / 2; i++)
-		dcs.buffer[dcs.buffer_in++ & DCS_BUFFER_MASK] = READ_WORD(&dcs.mem[source + i * 2]);
+		dcs.buffer[dcs.buffer_in++ & DCS_BUFFER_MASK] = ((UINT16 *)&dcs.mem[source])[i];
 
 	/* increment it */
 	reg += dcs.incs * dcs.size / 2;

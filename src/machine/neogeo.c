@@ -48,8 +48,9 @@ void neogeo_init_machine(void)
 	res = src & 0x3;
 
 	/* Console/arcade mode */
-//	if (src & 0x04)
-		res |= 0x8000;
+#ifndef CONSOLE
+	res |= 0x8000;
+#endif
 
 	/* write the ID in the system BIOS ROM */
 	mem16[0x0200] = res;

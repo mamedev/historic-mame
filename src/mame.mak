@@ -132,7 +132,7 @@ DRVLIBS = \
 	$(OBJ)/sun.a $(OBJ)/suna.a $(OBJ)/dooyong.a $(OBJ)/tong.a \
 	$(OBJ)/comad.a $(OBJ)/playmark.a $(OBJ)/pacific.a $(OBJ)/tecfri.a \
 	$(OBJ)/metro.a $(OBJ)/venture.a $(OBJ)/yunsung.a $(OBJ)/zilec.a \
-	$(OBJ)/other.a $(OBJ)/neogeo.a \
+	$(OBJ)/fuuki.a $(OBJ)/other.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o \
@@ -149,6 +149,7 @@ $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/yamato.o \
 	$(OBJ)/vidhrdw/seicross.o $(OBJ)/sndhrdw/wiping.o $(OBJ)/drivers/seicross.o \
 	$(OBJ)/vidhrdw/wiping.o $(OBJ)/drivers/wiping.o \
+	$(OBJ)/vidhrdw/tubep.o $(OBJ)/drivers/tubep.o \
 	$(OBJ)/vidhrdw/magmax.o $(OBJ)/drivers/magmax.o \
 	$(OBJ)/vidhrdw/cop01.o $(OBJ)/drivers/cop01.o \
 	$(OBJ)/vidhrdw/terracre.o $(OBJ)/drivers/terracre.o \
@@ -298,6 +299,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/undrfire.o $(OBJ)/drivers/undrfire.o \
 	$(OBJ)/vidhrdw/taito_f2.o $(OBJ)/drivers/taito_f2.o \
 	$(OBJ)/vidhrdw/taito_f3.o $(OBJ)/sndhrdw/taito_f3.o $(OBJ)/drivers/taito_f3.o \
+	$(OBJ)/drivers/taitoair.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
@@ -343,7 +345,7 @@ $(OBJ)/capcom.a: \
 $(OBJ)/itech.a: \
 	$(OBJ)/vidhrdw/tms34061.o \
 	$(OBJ)/machine/capbowl.o $(OBJ)/vidhrdw/capbowl.o $(OBJ)/drivers/capbowl.o \
-	$(OBJ)/vidhrdw/itech8.o $(OBJ)/drivers/itech8.o \
+	$(OBJ)/vidhrdw/itech8.o $(OBJ)/drivers/itech8.o $(OBJ)/machine/slikshot.o \
 	$(OBJ)/vidhrdw/itech32.o $(OBJ)/drivers/itech32.o \
 
 $(OBJ)/gremlin.a: \
@@ -523,11 +525,12 @@ $(OBJ)/atari.a: \
 	$(OBJ)/vidhrdw/arabian.o $(OBJ)/drivers/arabian.o \
 	$(OBJ)/machine/missile.o $(OBJ)/vidhrdw/missile.o $(OBJ)/drivers/missile.o \
 	$(OBJ)/vidhrdw/foodf.o $(OBJ)/drivers/foodf.o \
+	$(OBJ)/drivers/tunhunt.o \
 	$(OBJ)/vidhrdw/liberatr.o $(OBJ)/drivers/liberatr.o \
 	$(OBJ)/vidhrdw/ccastles.o $(OBJ)/drivers/ccastles.o \
 	$(OBJ)/vidhrdw/cloak.o $(OBJ)/drivers/cloak.o \
 	$(OBJ)/vidhrdw/cloud9.o $(OBJ)/drivers/cloud9.o \
-	$(OBJ)/machine/jedi.o $(OBJ)/vidhrdw/jedi.o $(OBJ)/sndhrdw/jedi.o $(OBJ)/drivers/jedi.o \
+	$(OBJ)/vidhrdw/jedi.o $(OBJ)/drivers/jedi.o \
 	$(OBJ)/machine/atarigen.o $(OBJ)/sndhrdw/atarijsa.o $(OBJ)/vidhrdw/ataripf.o \
 	$(OBJ)/vidhrdw/atarimo.o $(OBJ)/vidhrdw/atarian.o $(OBJ)/vidhrdw/atarirle.o \
 	$(OBJ)/machine/slapstic.o \
@@ -555,6 +558,9 @@ $(OBJ)/atari.a: \
 	$(OBJ)/vidhrdw/offtwall.o $(OBJ)/drivers/offtwall.o \
 	$(OBJ)/vidhrdw/arcadecl.o $(OBJ)/drivers/arcadecl.o \
 	$(OBJ)/vidhrdw/beathead.o $(OBJ)/drivers/beathead.o \
+	$(OBJ)/vidhrdw/atarig42.o $(OBJ)/drivers/atarig42.o \
+ 	$(OBJ)/drivers/atarigx2.o \
+	$(OBJ)/drivers/atarigt.o \
 
 $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/rockola.o $(OBJ)/sndhrdw/rockola.o $(OBJ)/drivers/rockola.o \
@@ -745,11 +751,14 @@ $(OBJ)/venture.a: \
 	$(OBJ)/drivers/looping.o \
 
 $(OBJ)/yunsung.a: \
-	$(OBJ)/vidhrdw/magix.o $(OBJ)/drivers/magix.o \
-	$(OBJ)/vidhrdw/shocking.o $(OBJ)/drivers/shocking.o \
+	$(OBJ)/vidhrdw/yunsung8.o $(OBJ)/drivers/yunsung8.o \
+	$(OBJ)/vidhrdw/yunsun16.o $(OBJ)/drivers/yunsun16.o \
 
 $(OBJ)/zilec.a: \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
+
+$(OBJ)/fuuki.a: \
+	$(OBJ)/vidhrdw/fuuki16.o $(OBJ)/drivers/fuuki16.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
@@ -760,6 +769,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/machine/spiders.o $(OBJ)/vidhrdw/crtc6845.o $(OBJ)/vidhrdw/spiders.o $(OBJ)/drivers/spiders.o \
 	$(OBJ)/machine/stactics.o $(OBJ)/vidhrdw/stactics.o $(OBJ)/drivers/stactics.o \
 	$(OBJ)/vidhrdw/kingobox.o $(OBJ)/drivers/kingobox.o \
+	$(OBJ)/vidhrdw/clshroad.o $(OBJ)/drivers/clshroad.o \
 	$(OBJ)/vidhrdw/ambush.o $(OBJ)/drivers/ambush.o \
 	$(OBJ)/vidhrdw/starcrus.o $(OBJ)/drivers/starcrus.o \
 	$(OBJ)/drivers/dlair.o \
@@ -773,7 +783,6 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/amspdwy.o $(OBJ)/drivers/amspdwy.o \
 	$(OBJ)/vidhrdw/shangkid.o $(OBJ)/drivers/shangkid.o \
 	$(OBJ)/vidhrdw/othldrby.o $(OBJ)/drivers/othldrby.o \
-	$(OBJ)/vidhrdw/pbancho.o $(OBJ)/drivers/pbancho.o \
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
 
@@ -782,8 +791,4 @@ TEXTS += gamelist.txt
 
 gamelist.txt: $(EMULATOR)
 	@echo Generating $@...
-	@$(EMULATOR) -gamelistheader -noclones > gamelist.txt
-	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
-	@$(EMULATOR) -gamelistfooter >> gamelist.txt
-
-
+	@$(CURPATH)$(EMULATOR) -gamelist -noclones -sortname > gamelist.txt

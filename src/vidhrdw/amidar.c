@@ -14,6 +14,8 @@
 unsigned char *amidar_attributesram;
 
 
+static int background_color = 0;
+
 static struct rectangle spritevisiblearea =
 {
 	2*8+1, 32*8-1,
@@ -43,6 +45,13 @@ static struct rectangle spritevisibleareaflipx =
         -- 470 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
+
+  The background color generator is connected this way:
+
+  BLUE  - 390 ohm resistor
+  GREEN - 470 ohm resistor
+  RED   - 390 ohm resistor
+
 ***************************************************************************/
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -51,7 +60,7 @@ void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < Machine->drv->total_colors - 8;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -72,6 +81,19 @@ void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		*(palette++) = 0x4f * bit0 + 0xa8 * bit1;
 
 		color_prom++;
+	}
+
+
+	/* background colors */
+
+	for (i = 0; i < 8; i++)
+	{
+		/* red component */
+		*(palette++) = (i & 0x01) ? 0x55 : 0x00;
+		/* green component */
+		*(palette++) = (i & 0x02) ? 0x47 : 0x00;
+		/* blue component */
+		*(palette++) = (i & 0x04) ? 0x55 : 0x00;
 	}
 
 
@@ -100,6 +122,26 @@ WRITE_HANDLER( amidar_attributes_w )
 }
 
 
+WRITE_HANDLER( amidar_bcr_w )
+{
+	int new_background_color = (background_color & 0x06) | (data & 0x01);
+
+	set_vh_global_attribute(&background_color, new_background_color);
+}
+
+WRITE_HANDLER( amidar_bcg_w )
+{
+	int new_background_color = (background_color & 0x05) | ((data & 0x01) << 1);
+
+	set_vh_global_attribute(&background_color, new_background_color);
+}
+
+WRITE_HANDLER( amidar_bcb_w )
+{
+	int new_background_color = (background_color & 0x03) | ((data & 0x01) << 2);
+
+	set_vh_global_attribute(&background_color, new_background_color);
+}
 
 /***************************************************************************
 
@@ -125,7 +167,7 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,color;
 
 
 			dirtybuffer[offs] = 0;
@@ -136,9 +178,13 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (flip_screen_x) sx = 31 - sx;
 			if (flip_screen_y) sy = 31 - sy;
 
+			color = amidar_attributesram[2 * (offs % 32) + 1] & 0x07;
+
+			/* set up the background color */
+			Machine->gfx[0]->colortable[color * Machine->gfx[0]->color_granularity] = Machine->pens[background_color + 32];
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					amidar_attributesram[2 * (offs % 32) + 1] & 0x07,
+					videoram[offs], color,
 					flip_screen_x,flip_screen_y,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);

@@ -58,8 +58,38 @@ Changes:
 		  release. As yet, no variable volume, but I will be combining the features from
 		  Brad's driver into mine ASAP.
 
-***************************************************************************/
+****************************************************************************
 
+Ixion Board Info
+
+Ixion
+Sega(prototype)  7/1/1983
+
+
+Board set is a modified Super Zaxxon, similar to Razzmatazz
+
+[G80 Sound board]
+
+
+
+                        U51
+                        U50
+
+[834-0214 ZAXXON-SOUNDII]
+
+                                   315-5013  U27 U28 U29
+
+
+         U68 U69      U72
+                                        U98
+
+[         ZAXXON-VIDEOII]
+
+
+U77 U78 U79                                U90 U91 U92 U93
+                          U111 U112 U113
+
+****************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -77,6 +107,7 @@ int  razmataz_vh_start(void);
 void zaxxon_vh_stop(void);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ixion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int zaxxon_vid_type;
 
 WRITE_HANDLER( zaxxon_sound_w );
@@ -173,6 +204,19 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xfff8, 0xfff9, MWA_RAM, &zaxxon_background_position },
 	{ 0xfffa, 0xfffa, MWA_RAM, &zaxxon_background_color_bank },
 	{ 0xfffb, 0xfffb, MWA_RAM, &zaxxon_background_enable },
+MEMORY_END
+
+static MEMORY_READ_START( ixion_readmem )
+	{ 0x0000, 0x4fff, MRA_ROM },
+	{ 0x6000, 0x6fff, MRA_RAM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0xa000, 0xa0ff, MRA_RAM },
+	{ 0xc000, 0xc000, razmataz_dial_0_r }, /* IN0 */
+	{ 0xc001, 0xc001, input_port_1_r }, /* IN1 */
+	{ 0xc002, 0xc002, input_port_3_r }, /* DSW0 */
+	{ 0xc003, 0xc003, input_port_4_r }, /* DSW1 */
+	{ 0xc100, 0xc100, input_port_2_r }, /* IN2 */
+	{ 0xff3c, 0xff3c, razmataz_unknown2_r },	/* no idea .. timer? in razmataz */
 MEMORY_END
 
 static MEMORY_WRITE_START( futspy_writemem )
@@ -328,6 +372,90 @@ INPUT_PORTS_START( zaxxon )
 	PORT_DIPSETTING(	0x90, DEF_STR ( 1C_4C ) )
 	PORT_DIPSETTING(	0x10, DEF_STR ( 1C_5C ) )
 	PORT_DIPSETTING(	0xe0, DEF_STR ( 1C_6C ) )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ixion )
+	PORT_START	/* IN0 */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 30, 15, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(	0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(	0x06, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(	0x07, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x38, 0x18, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(	0x18, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(	0x28, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(	0x38, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -739,7 +867,36 @@ static const struct MachineDriver machine_driver_razmataz =
 	0,0,0,0,
 };
 
+static const struct MachineDriver machine_driver_ixion =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 MHz ?? */
+			ixion_readmem,razmataz_writemem,0,0,
+			zaxxon_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	zaxxon_init_machine,
 
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	256,32*8,
+	zaxxon_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	razmataz_vh_start,
+	zaxxon_vh_stop,
+	ixion_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+};
 
 /***************************************************************************
 
@@ -943,7 +1100,41 @@ ROM_START( razmataz )
 	ROM_LOAD( "1924.u51",      0x0800, 0x0800, 0xa75e0011 )
 ROM_END
 
+ROM_START( ixion )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "1937d.u27",           0x0000, 0x2000, 0xf447aac5 )
+	ROM_LOAD( "1938b.u28",           0x2000, 0x2000, 0x17f48640 )
+	ROM_LOAD( "1955b.u29",           0x4000, 0x1000, 0x78636ec6 )
 
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1939a.u68",      0x0000, 0x0800, 0xc717ddc7 )  /* characters */
+	ROM_LOAD( "1940a.u69",      0x0800, 0x0800, 0xec4bb3ad )
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "1952a.113",      0x0000, 0x2000, 0xffb9b03d )  /* background tiles */
+	ROM_LOAD( "1951a.112",      0x2000, 0x2000, 0xdb743f1b )
+	ROM_LOAD( "1950a.111",      0x4000, 0x2000, 0xc2de178a )
+
+	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "1945a.u77",      0x0000, 0x2000, 0x3a3fbfe7 )  /* sprites */
+	ROM_LOAD( "1946a.u78",      0x2000, 0x2000, 0xf2cb1b53 )
+	ROM_LOAD( "1947a.u79",      0x4000, 0x2000, 0xd2421e92 )
+
+	ROM_REGION( 0x8000, REGION_GFX4, ROMREGION_DISPOSE )	/* background tilemaps converted in vh_start */
+	ROM_LOAD( "1948a.u91",      0x0000, 0x2000, 0x7a7fcbbe )
+	ROM_LOAD( "1953a.u90",      0x2000, 0x2000, 0x6b626ea7 )
+	ROM_LOAD( "1949a.u93",      0x4000, 0x2000, 0xe7722d09 )
+	ROM_LOAD( "1954a.u92",      0x6000, 0x2000, 0xa970f5ff )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "1942a.u98",       0x0000, 0x0100, 0x3a8e6f74 ) /* palette */
+	ROM_LOAD( "1941a.u72",       0x0100, 0x0100, 0xa5d0d97e ) /* char lookup */
+
+	ROM_REGION( 0x1000, REGION_SOUND1, 0 ) /* sound? */
+	ROM_LOAD( "1943a.u50",      0x0000, 0x0800, 0x77e5a1f0 )
+	ROM_LOAD( "1944a.u51",      0x0800, 0x0800, 0x88215098 )
+ROM_END
 
 static void init_zaxxonb(void)
 {
@@ -1035,6 +1226,11 @@ static void init_razmataz(void)
 	nprinces_decode();
 }
 
+static void init_ixion(void)
+{
+	szaxxon_decode();
+}
+
 
 GAMEX( 1982, zaxxon,   0,	   zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1982, zaxxon2,  zaxxon, zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 2)", GAME_NO_COCKTAIL )
@@ -1042,4 +1238,5 @@ GAMEX( 1982, zaxxonb,  zaxxon, zaxxon,	 zaxxon,   zaxxonb,  ROT90,  "bootleg", "
 GAMEX( 1982, szaxxon,  0,	   zaxxon,	 zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon", GAME_NO_COCKTAIL )
 GAMEX( 1984, futspy,   0,	   futspy,	 futspy,   futspy,	 ROT270, "Sega",    "Future Spy", GAME_NO_COCKTAIL )
 GAMEX( 1983, razmataz, 0,	   razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1983, ixion,    0,	   ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND )
 

@@ -9,7 +9,8 @@ void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 	int i;
 
-	for ( i = 0; i < Machine->drv->total_colors; i++ ) {
+	for ( i = 0; i < Machine->drv->total_colors; i++ )
+	{
 		int bit0,bit1,bit2,bit3;
 
 

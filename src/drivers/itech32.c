@@ -10,7 +10,8 @@
 		* Bloodstorm (3 sets)
 		* Hard Yardage (2 sets)
 		* Pairs
-		* Street Fighter: The Movie (2 sets)
+		* Shuffleshot
+		* Street Fighter: The Movie (3 sets)
 
 	Games not supported because IT is still selling them:
 		* World Class Bowling
@@ -23,7 +24,6 @@
 	Games that might use this hardware, but have no known (good) dumps:
 		* Dyno-Bop
 		* Poker Dice
-		* Neck & Neck
 		* Driver's Edge
 
 ****************************************************************************
@@ -156,13 +156,15 @@ void itech32_update_interrupts(int vint, int xint, int qint)
 
 void itech32_update_interrupts_fast(int vint, int xint, int qint)
 {
-	int level = determine_irq_state(vint, xint, qint);
+	itech32_update_interrupts(vint, xint, qint);
+//	int level = determine_irq_state(vint, xint, qint);
 
 	/* update it */
-	if (level)
-		(*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].set_irq_line)(level, ASSERT_LINE);
-	else
-		(*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].set_irq_line)(7, CLEAR_LINE);
+//	if (level)
+//		(*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].set_irq_line)(level, ASSERT_LINE);
+//	else
+//		(*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].set_irq_line)(7, CLEAR_LINE);
+
 }
 
 
@@ -248,12 +250,79 @@ static READ32_HANDLER( trackball32_8bit_r )
 
 static READ32_HANDLER( trackball32_4bit_r )
 {
-	int lower = readinputport(6);
-	int upper = readinputport(7);
-	int result;
+	static int effx, effy;
+	static int lastresult;
+	static double lasttime;
+	double curtime = timer_get_time();
 
-	result = (lower & 15) | ((upper & 15) << 4);
-	return result | (result << 16);
+	if (curtime - lasttime > cpu_getscanlineperiod())
+	{
+		int upper, lower;
+		int dx, dy;
+
+		int curx = readinputport(6);
+		int cury = readinputport(7);
+
+		dx = curx - effx;
+		if (dx < -0x80) dx += 0x100;
+		else if (dx > 0x80) dx -= 0x100;
+		if (dx > 7) dx = 7;
+		else if (dx < -7) dx = -7;
+		effx = (effx + dx) & 0xff;
+		lower = effx & 15;
+
+		dy = cury - effy;
+		if (dy < -0x80) dy += 0x100;
+		else if (dy > 0x80) dy -= 0x100;
+		if (dy > 7) dy = 7;
+		else if (dy < -7) dy = -7;
+		effy = (effy + dy) & 0xff;
+		upper = effy & 15;
+
+		lastresult = lower | (upper << 4);
+	}
+
+	lasttime = curtime;
+	return lastresult | (lastresult << 16);
+}
+
+
+static READ32_HANDLER( trackball32_4bit_p2_r )
+{
+	static int effx, effy;
+	static int lastresult;
+	static double lasttime;
+	double curtime = timer_get_time();
+
+	if (curtime - lasttime > cpu_getscanlineperiod())
+	{
+		int upper, lower;
+		int dx, dy;
+
+		int curx = readinputport(8);
+		int cury = readinputport(9);
+
+		dx = curx - effx;
+		if (dx < -0x80) dx += 0x100;
+		else if (dx > 0x80) dx -= 0x100;
+		if (dx > 7) dx = 7;
+		else if (dx < -7) dx = -7;
+		effx = (effx + dx) & 0xff;
+		lower = effx & 15;
+
+		dy = cury - effy;
+		if (dy < -0x80) dy += 0x100;
+		else if (dy > 0x80) dy -= 0x100;
+		if (dy > 7) dy = 7;
+		else if (dy < -7) dy = -7;
+		effy = (effy + dy) & 0xff;
+		upper = effy & 15;
+
+		lastresult = lower | (upper << 4);
+	}
+
+	lasttime = curtime;
+	return lastresult | (lastresult << 16);
 }
 
 
@@ -663,7 +732,7 @@ static MEMORY_READ32_START( itech020_readmem )
 	{ 0x500000, 0x5000ff, itech020_video_r },
 	{ 0x578000, 0x57ffff, MRA32_NOP },				/* touched by protection */
 	{ 0x580000, 0x59ffff, MRA32_RAM },
-	{ 0x600000, 0x601fff, MRA32_RAM },
+	{ 0x600000, 0x603fff, MRA32_RAM },
 	{ 0x680000, 0x680003, itech020_prot_result_r },
 	{ 0x800000, 0x9fffff, MRA32_ROM },
 MEMORY_END
@@ -678,7 +747,7 @@ static MEMORY_WRITE32_START( itech020_writemem )
 	{ 0x480000, 0x480003, sound_data32_w },
 	{ 0x500000, 0x5000ff, itech020_video_w, (data32_t **)&itech32_video },
 	{ 0x580000, 0x59ffff, itech020_paletteram_w, &paletteram32 },
-	{ 0x600000, 0x601fff, MWA32_RAM, &nvram, &nvram_size },
+	{ 0x600000, 0x603fff, MWA32_RAM, &nvram, &nvram_size },
 	{ 0x680000, 0x680003, MWA32_NOP },				/* written by protection */
 	{ 0x700000, 0x700003, itech020_plane_w },
 	{ 0x800000, 0x9fffff, MWA32_ROM, (data32_t **)&main_rom },
@@ -968,6 +1037,62 @@ INPUT_PORTS_START( pairs )
 
 	PORT_START	/* 780000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( shufshot )
+	PORT_START	/* 080000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 100000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 180000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 200000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 280000 */
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
+	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+
+	PORT_START	/* 780000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL, 25, 32, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1378,14 +1503,86 @@ ROM_START( pairs )
 	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x80000, 0x3be7031b )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, 0x9fdc4825 )
+//	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, 0x9fdc4825 )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x1d96c581 )
 ROM_END
 
 
+ROM_START( shufshot )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "pgm0v1.39", 0x00000, 0x20000, 0xe811fc4a )
+	ROM_LOAD32_BYTE( "pgm1v1.39", 0x00001, 0x20000, 0xf9d120c5 )
+	ROM_LOAD32_BYTE( "pgm2v1.39", 0x00002, 0x20000, 0x9f12414d )
+	ROM_LOAD32_BYTE( "pgm3v1.39", 0x00003, 0x20000, 0x108a69be )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "sndv1.1", 0x10000, 0x18000, 0xe37d599d )
+	ROM_CONTINUE(        0x08000, 0x08000 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "grom0_0", 0x000000, 0x80000, 0x832a3d6a )
+	ROM_LOAD32_BYTE( "grom0_1", 0x000001, 0x80000, 0x155e48a2 )
+	ROM_LOAD32_BYTE( "grom0_2", 0x000002, 0x80000, 0x9f2b470d )
+	ROM_LOAD32_BYTE( "grom0_3", 0x000003, 0x80000, 0x3855a16a )
+	ROM_LOAD32_BYTE( "grom1_0", 0x200000, 0x80000, 0xed140389 )
+	ROM_LOAD32_BYTE( "grom1_1", 0x200001, 0x80000, 0xbd2ffbca )
+	ROM_LOAD32_BYTE( "grom1_2", 0x200002, 0x80000, 0xc6de4187 )
+	ROM_LOAD32_BYTE( "grom1_3", 0x200003, 0x80000, 0x0c707aa2 )
+	ROM_LOAD32_BYTE( "grom2_0", 0x400000, 0x80000, 0x529b4259 )
+	ROM_LOAD32_BYTE( "grom2_1", 0x400001, 0x80000, 0x4b52ab1a )
+	ROM_LOAD32_BYTE( "grom2_2", 0x400002, 0x80000, 0xf45fad03 )
+	ROM_LOAD32_BYTE( "grom2_3", 0x400003, 0x80000, 0x1bcb26c8 )
+	ROM_LOAD32_BYTE( "grom3_0", 0x600000, 0x80000, 0xa29763db )
+	ROM_LOAD32_BYTE( "grom3_1", 0x600001, 0x80000, 0xc757084c )
+	ROM_LOAD32_BYTE( "grom3_2", 0x600002, 0x80000, 0x2971cb25 )
+	ROM_LOAD32_BYTE( "grom3_3", 0x600003, 0x80000, 0x4fcbee51 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x9a3cb6c9 )
+	ROM_LOAD16_BYTE( "srom1", 0x200000, 0x80000, 0x8c89948a )
+ROM_END
+
+
 ROM_START( sftm )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "sftmrom0.112", 0x00000, 0x40000, 0x9d09355c )
+	ROM_LOAD32_BYTE( "sftmrom1.112", 0x00001, 0x40000, 0xa58ac6a9 )
+	ROM_LOAD32_BYTE( "sftmrom2.112", 0x00002, 0x40000, 0x2f21a4f6 )
+	ROM_LOAD32_BYTE( "sftmrom3.112", 0x00003, 0x40000, 0xd26648d9 )
+
+	ROM_REGION( 0x48000, REGION_CPU2, 0 )
+	ROM_LOAD( "snd-v10.bin", 0x10000, 0x38000, 0x10d85366 )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+
+	ROM_REGION( 0x2080000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "rm0-0.bin",  0x0000000, 0x400000, 0x09ef29cb )
+	ROM_LOAD32_BYTE( "rm0-1.bin",  0x0000001, 0x400000, 0x6f5910fa )
+	ROM_LOAD32_BYTE( "rm0-2.bin",  0x0000002, 0x400000, 0xb8a2add5 )
+	ROM_LOAD32_BYTE( "rm0-3.bin",  0x0000003, 0x400000, 0x6b6ff867 )
+	ROM_LOAD32_BYTE( "rm1-0.bin",  0x1000000, 0x400000, 0xd5d65f77 )
+	ROM_LOAD32_BYTE( "rm1-1.bin",  0x1000001, 0x400000, 0x90467e27 )
+	ROM_LOAD32_BYTE( "rm1-2.bin",  0x1000002, 0x400000, 0x903e56c2 )
+	ROM_LOAD32_BYTE( "rm1-3.bin",  0x1000003, 0x400000, 0xfac35686 )
+	ROM_LOAD32_BYTE( "grm3_0.bin", 0x2000000, 0x020000, 0x3e1f76f7 )
+	ROM_LOAD32_BYTE( "grm3_1.bin", 0x2000001, 0x020000, 0x578054b6 )
+	ROM_LOAD32_BYTE( "grm3_2.bin", 0x2000002, 0x020000, 0x9af2f698 )
+	ROM_LOAD32_BYTE( "grm3_3.bin", 0x2000003, 0x020000, 0xcd38d1d6 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom0.bin", 0x000000, 0x200000, 0x6ca1d3fc )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND4, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom3.bin",  0x000000, 0x080000, 0x4f181534 )
+ROM_END
+
+
+ROM_START( sftm110 )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 
 	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
@@ -1514,14 +1711,28 @@ static void init_sftm_common(int prot_addr, int sound_pc)
 
 static void init_sftm(void)
 {
-	init_sftm_common(0x7a66, 0x9059);
-}
-
-static void init_sftmj(void)
-{
 	init_sftm_common(0x7a6a, 0x905f);
 }
 
+static void init_sftm110(void)
+{
+	init_sftm_common(0x7a66, 0x9059);
+}
+
+static void init_shufshot(void)
+{
+	init_program_rom();
+	init_sound_speedup(0x2011, 0x906c);
+	itech32_vram_height = 1024;
+	itech32_planes = 1;
+
+	itech020_prot_address = 0x111a;
+
+	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
+	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
+	install_mem_read32_handler(0, 0x180800, 0x180803, trackball32_4bit_r);
+	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
+}
 
 
 /*************************************
@@ -1538,5 +1749,7 @@ GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Stra
 GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
 GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
 GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Pairs" )
-GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.1)" )
-GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftmj,    ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )
+GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )
+GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )
+GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )
+GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0_16BIT,  "Strata/Incredible Technologies", "Shuffleshot" )

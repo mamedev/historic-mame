@@ -154,10 +154,12 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT32 *pens,int transparent_pen);
-void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT32 *pens,int transparent_pen);
-void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
-void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
+void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,const UINT8 *src,UINT32 *pens,int transparent_pen);
+void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,const UINT16 *src,UINT32 *pens,int transparent_pen);
+void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,const UINT8 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
+void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,const UINT16 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
+void extract_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *dst);
+void extract_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *dst);
 
 
 /* Alpha blending functions */

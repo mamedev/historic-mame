@@ -133,7 +133,7 @@ logerror("MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
 
 		/* 0x08 - INC_BIC */
 		if (IP15_8 & INC_BIC)
-			BIC = (++BIC) & 0x1ff; /* Restrict to 9 bits */
+			BIC = (BIC+1) & 0x1ff; /* Restrict to 9 bits */
 
 		/* 0x10 - CLEAR_ACC */
 		if (IP15_8 & CLEAR_ACC)

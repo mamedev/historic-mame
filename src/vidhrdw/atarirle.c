@@ -122,6 +122,8 @@ struct atarirle_data
 
 data16_t *atarirle_0_spriteram;
 
+data32_t *atarirle_0_spriteram32;
+
 
 
 /*##########################################################################
@@ -385,7 +387,7 @@ void atarirle_mark_palette(int map)
 {
 	struct atarirle_data *mo = &atarirle[map];
 	struct atarirle_entry *obj = mo->spriteram;
-	int i;
+	int i, j;
 
 	/* loop over objects in spriteram */
 	for (i = 0; i < mo->spriteramsize; i++, obj++)
@@ -407,16 +409,16 @@ void atarirle_mark_palette(int map)
 
 				/* mark colors in the lower area */
 				if (usage)
-					for (i = 0; i < 32; i++, usage >>= 1)
+					for (j = 0; j < 32; j++, usage >>= 1)
 						if (usage & 1)
-							used[i] = PALETTE_COLOR_USED;
+							used[j] = PALETTE_COLOR_USED;
 
 				/* mark colors in the upper area */
 				usage = rle->pen_usage_hi;
 				if (usage)
-					for (i = 0; i < 32; i++, usage >>= 1)
+					for (j = 0; j < 32; j++, usage >>= 1)
 						if (usage & 1)
-							used[i + 32] = PALETTE_COLOR_USED;
+							used[j + 32] = PALETTE_COLOR_USED;
 			}
 		}
 	}
@@ -547,6 +549,26 @@ WRITE16_HANDLER( atarirle_0_spriteram_w )
 	entry = (offset >> 3) & atarirle[0].spriterammask;
 	idx = offset & 7;
 	COMBINE_DATA(&atarirle[0].spriteram[entry].data[idx]);
+}
+
+
+/*---------------------------------------------------------------
+	atarirle_0_spriteram32_w: Write handler for the spriteram.
+---------------------------------------------------------------*/
+
+WRITE32_HANDLER( atarirle_0_spriteram32_w )
+{
+	int entry, idx, newword;
+
+	COMBINE_DATA(&atarirle_0_spriteram32[offset]);
+
+	entry = (offset >> 2) & atarirle[0].spriterammask;
+	idx = 2 * (offset & 3);
+
+	newword = (atarirle[0].spriteram[entry].data[idx+0] << 16) | atarirle[0].spriteram[entry].data[idx+1];
+	COMBINE_DATA(&newword);
+	atarirle[0].spriteram[entry].data[idx+0] = newword >> 16;
+	atarirle[0].spriteram[entry].data[idx+1] = newword;
 }
 
 

@@ -468,7 +468,7 @@ void MemoryBanking(int BaseCode)
 #endif
 
    /* Mask to n bits */
-   fprintf(fp, "\t\t and   esi,[_memory_amask]\n");
+   fprintf(fp, "\t\t and   esi,[_mem_amask]\n");
 
 #if 0
 #ifdef KEEPHIGHPC
@@ -7529,7 +7529,7 @@ void CodeSegmentBegin(void)
 	/* ASG - only one interface to memory now */
    fprintf(fp, "\t\t EXTERN _m68k_ICount\n");
    fprintf(fp, "\t\t EXTERN _a68k_memory_intf\n");
-   fprintf(fp, "\t\t EXTERN _memory_amask\n");
+   fprintf(fp, "\t\t EXTERN _mem_amask\n");
 
    fprintf(fp, "; Vars Mame declares / needs access to\n\n");
 
@@ -7574,7 +7574,7 @@ void CodeSegmentBegin(void)
    fprintf(fp, "RESET0:\n");
    fprintf(fp, "\t\t mov   eax,[esi]\n");
    fprintf(fp, "\t\t mov   ecx,eax\n");
-   fprintf(fp, "\t\t and   eax,[_memory_amask]\n");	/* ASG - now mask against global */
+   fprintf(fp, "\t\t and   eax,[_mem_amask]\n");	/* ASG - now mask against global */
    fprintf(fp, "\t\t add   eax,ebp\n");
    fprintf(fp, "\t\t add   esi,byte 4\n");
 

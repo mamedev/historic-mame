@@ -24,7 +24,7 @@ static int beamx,beamy;
 
 /***************************************************************************/
 
-void rastan_coin_ctrl(void)
+static void rastan_coin_ctrl(void)
 {
 		/* bits 0 and 1 are coin lockout */
 		coin_lockout_w(1,~sprite_ctrl & 0x01);
@@ -120,7 +120,7 @@ WRITE16_HANDLER( rastan_spriteflip_w )
 
 /***************************************************************************/
 
-void rastan_update_palette(void)
+static void rastan_update_palette(void)
 {
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
 	{
@@ -148,7 +148,7 @@ void rastan_update_palette(void)
 	}
 }
 
-void rastan_draw_sprites(struct osd_bitmap *bitmap,int y_offs)
+static void rastan_draw_sprites(struct osd_bitmap *bitmap,int y_offs)
 {
 	int offs,tile;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;

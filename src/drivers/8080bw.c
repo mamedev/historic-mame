@@ -56,6 +56,7 @@ READ_HANDLER( invaders_shift_data_r );
 READ_HANDLER( invaders_shift_data_rev_r );
 READ_HANDLER( invaders_shift_data_comp_r );
 int  invaders_interrupt(void);
+int  polaris_interrupt(void);
 
 READ_HANDLER( boothill_shift_data_r );
 
@@ -2259,7 +2260,7 @@ static const struct MachineDriver machine_driver_polaris =
 			CPU_8080,
 			1996800,        /* 19.968MHz / 10 */
 			schaser_readmem,schaser_writemem,invaders_readport,writeport_0_3,
-			invaders_interrupt,2    /* two interrupts per frame */
+			polaris_interrupt,2    /* two interrupts per frame */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */

@@ -18,12 +18,12 @@ Twinbee             GX412*1985   68000           GX400
 Yie Ar Kung Fu      GX407*1985    6809
 Gradius / Nemesis   GX456*1985   68000           GX400
 Shao-lins Road      GX477*1985    6809
-Jail Break          GX507*1986 KONAMI-1          005849
-Finalizer           GX523*1985 KONAMI-1          005885
+Jail Break          GX507*1986 KONAMI-1          005849                   PROMs
+Finalizer           GX523*1985 KONAMI-1          005885                   PROMs
 Konami's Ping Pong  GX555*1985     Z80
-Iron Horse          GX560*1986    6809           005885
+Iron Horse          GX560*1986    6809           005885                   PROMs
 Konami GT           GX561*1985   68000           GX400
-Green Beret         GX577*1985     Z80           005849
+Green Beret         GX577*1985     Z80           005849                   PROMs
 Galactic Warriors   GX578*1985   68000           GX400
 Salamander          GX587*1986   68000           GX400
 WEC Le Mans 24      GX602*1986 2x68000
@@ -168,16 +168,81 @@ Hexion              pass
 THE FOLLOWING INFORMATION IS PRELIMINARY AND INACCURATE. DON'T RELY ON IT.
 
 
+005885
+------
+Some games use two of these in pair. Jackal even puts together the two 4bpp
+tilemaps to form a single 8bpp one.
+It manages sprites and 32x32 or 64x32 tilemap (only Double Dribble uses the
+64x32 one).
+The chip also generates clock and interrupt signals suitable for a 6809.
+It uses 0x2000 bytes of RAM for the tilemaps and sprites, and an additional
+0x100 bytes, maybe for scroll RAM and line buffers. The maximum addressable
+ROM is 0x20000 bytes (addressed 16 bits at a time). Tile and sprite data both
+come from the same ROM space. Double Dribble and Jackal have external circuitry
+to extend the limits and use separated addressing spaces for sprites and tiles.
+All games use external circuitry to reuse one or both the tile flip attributes
+as an additional address bit.
+Two 256x4 lookup PROMs are also used to increase the color combinations.
+All tilemap / sprite priority handling is done internally and the chip exports
+5 bits of color code, composed of 1 bit indicating tile or sprite, and 4 bits
+of ROM data remapped through the PROM.
+
+inputs:
+- address lines (A0-A13)
+- data lines (DB0-DB7)
+- misc interface stuff
+- data from the gfx ROMs (RDL0-RDL7, RDU0-RDU7)
+- data from the tile lookup PROMs (VCD0-VCD3)
+- data from the sprite lookup PROMs (OCD0-OCD3)
+
+outputs:
+- address lines for tilemap RAM (AX0-AX12)
+- data lines for tilemap RAM (VO0-VO7)
+- address lines for the small RAM (FA0-FA7)
+- data lines for the small RAM (FD0-FD7)
+- address lines for the gfx ROMs (R0-R15)
+- address lines for the tile lookup PROMs (VCF0-VCF3, VCB0-VCB3)
+- address lines for the sprite lookup PROMs (OCB0-OCB3, OCF0-OCF3)
+- NNMI, NIRQ, NFIR, NCPE, NCPQ, NEQ for the main CPU
+- misc interface stuff
+- color code to be output on screen (COL0-COL4)
+
+
+control registers
+000:          scroll y
+001:          scroll x (low 8 bits)
+002: -------x scroll x (high bit)
+     ----xxx- row/colscroll control
+              000 = solid scroll (finalizr, ddribble bg)
+              100 = solid scroll (jackal)
+              001 = ? (ddribble fg)
+              011 = colscroll (jackal high scores)
+              101 = rowscroll (ironhors, jackal map)
+003: ------xx high bits of the tile code
+     -----x-- unknown (finalizr)
+     ----x--- selects sprite buffer (and makes a copy to a private buffer?)
+     --x----- unknown (ironhors)
+     -x------ unknown (ironhors)
+     x------- unknown (ironhors, jackal)
+004: -------x nmi enable
+     ------x- irq enable
+     -----x-- firq enable
+     ----x--- flip screen
+
+
+
 007121
 ------
-This is an interesting beast. Many games use two of these in pair.
+This is an interesting beast. It is an evolution of the 005885, with more
+features. Many games use two of these in pair.
 It manages sprites and two 32x32 tilemaps. The tilemaps can be joined to form
 a single 64x32 one, or one of them can be moved to the side of screen, giving
 a high score display suitable for vertical games.
 The chip also generates clock and interrupt signals suitable for a 6809.
 It uses 0x2000 bytes of RAM for the tilemaps and sprites, and an additional
 0x100 bytes, maybe for scroll RAM and line buffers. The maximum addressable
-ROM is 0x80000 bytes (addressed 16 bits at a time).
+ROM is 0x80000 bytes (addressed 16 bits at a time). Tile and sprite data both
+come from the same ROM space.
 Two 256x4 lookup PROMs are also used to increase the color combinations.
 All tilemap / sprite priority handling is done internally and the chip exports
 7 bits of color code, composed of 2 bits of palette bank, 1 bit indicating tile
@@ -245,9 +310,7 @@ control registers
      output to pins R12-R15. The bit of the attribute byte to use is the
      specified bit (0-3) + 3, that is one of bits 3-6. Bit 7 is hardcoded as
      bit 8 of the code. Bits 0-2 are used for the color, however note that
-     some games (combat school, flak attack, maybe fast lane) use bit 3 as well,
-     and indeed there are 4 lines going to the color lookup PROM, so there has
-     to be a way to select this.
+     some games use bit 3 as well (see below).
      ------xx attribute bit to use for tile code bit  9
      ----xx-- attribute bit to use for tile code bit 10
      --xx---- attribute bit to use for tile code bit 11
@@ -263,14 +326,14 @@ control registers
               labyrunr)
               Note that hcastle sets this bit for layer 0, and bit 6 of the
               attribute is also used as bit 12 of the tile code, however that
-              bit is ALWAYS set thoughout the game.
-              combasc uses the bit inthe "graduation" scene during attract mode,
+              bit is ALWAYS set throughout the game.
+              combasc uses the bit in the "graduation" scene during attract mode,
               to place soldiers behind the stand.
               Use in labyrunr has not been investigated yet.
      --xx---- palette bank (both tiles and sprites, see contra)
 007: -------x nmi enable
      ------x- irq enable
-     -----x-- firq enable (probably)
+     -----x-- firq enable
      ----x--- flip screen
      ---x---- unknown (contra, labyrunr)
 
@@ -970,8 +1033,6 @@ void konami_rom_deinterleave_4(int mem_region)
 
 
 
-/*#define MAX_K007121 2*/
-
 /*static*/ unsigned char K007121_ctrlram[MAX_K007121][8];
 static int K007121_flipscreen[MAX_K007121];
 
@@ -1026,7 +1087,7 @@ WRITE_HANDLER( K007121_ctrl_1_w )
  *   4  | ----xxx- | sprite size 000=16x16 001=16x8 010=8x16 011=8x8 100=32x32
  *   4  | -------x | x position (high bit)
  *
- * Flack Attack uses a different, "wider" layout with 32 bytes per sprites,
+ * Flack Attack uses a different, "wider" layout with 32 bytes per sprite,
  * mapped as follows, and the priority order is reversed. Maybe it is a
  * compatibility mode with an older custom IC. It is not known how this
  * alternate layout is selected.
@@ -3524,7 +3585,7 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap)
 	/* prebuild a sorted table */
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-//		if (READ_WORD(&K053247_ram[offs]) & 0x8000)
+//		if (K053247_ram[offs] & 0x8000)
 		sortedlist[K053247_ram[offs] & 0x00ff] = offs;
 	}
 

@@ -248,10 +248,10 @@ void cps_tileviewer_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     if (cps1_palette)
     {
-        for (i=0; i<cps1_palette_size; i+=2)
+        for (i=0; i<cps1_palette_size/2; i++)
         {
             int color=0x0fff+((i&0x0f)<<(8+4));
-            WRITE_WORD(&cps1_palette[i],color);
+            cps1_palette[i] = color;
         }
     }
 

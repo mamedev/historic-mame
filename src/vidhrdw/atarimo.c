@@ -35,6 +35,7 @@ struct atarimo_data
 {
 	int					timerallocated;		/* true if we've allocated the timer */
 	int					gfxchanged;			/* true if the gfx info has changed */
+	struct GfxElement	gfxelement[MAX_GFX_ELEMENTS]; /* local copy of graphics elements */
 
 	int					linked;				/* are the entries linked? */
 	int					split;				/* are entries split or together? */
@@ -148,7 +149,6 @@ data16_t *atarimo_1_slipram;
 ##########################################################################*/
 
 static struct atarimo_data atarimo[ATARIMO_MAX];
-static struct GfxElement gfxelement[MAX_GFX_ELEMENTS];
 
 
 
@@ -369,8 +369,8 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->prevcache = NULL;
 
 	/* initialize the gfx elements */
-	gfxelement[desc->gfxindex] = *Machine->gfx[desc->gfxindex];
-	gfxelement[desc->gfxindex].colortable = &Machine->remapped_colortable[mo->palettebase];
+	mo->gfxelement[desc->gfxindex] = *Machine->gfx[desc->gfxindex];
+	mo->gfxelement[desc->gfxindex].colortable = &Machine->remapped_colortable[mo->palettebase];
 
 	logerror("atarimo_init:\n");
 	logerror("  width=%d (shift=%d),  height=%d (shift=%d)\n", gfx->width, mo->tilexshift, gfx->height, mo->tileyshift);
@@ -535,7 +535,7 @@ void atarimo_mark_palette(int map)
 		}
 
 		/* advance by the color granularity of the gfx */
-		used_colors += gfxelement[mo->gfxlookup[0]].color_granularity;
+		used_colors += mo->gfxelement[mo->gfxlookup[0]].color_granularity;
 	}
 }
 
@@ -580,7 +580,7 @@ void atarimo_set_palettebase(int map, int base, int scanline)
 
 	mo->palettebase = base;
 	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
-		gfxelement[i].colortable = &Machine->remapped_colortable[base];
+		mo->gfxelement[i].colortable = &Machine->remapped_colortable[base];
 }
 
 
@@ -784,8 +784,8 @@ static void mo_process(struct atarimo_data *mo, mo_callback callback, void *para
 		for (i = 0; i < round_to_powerof2(mo->gfxmask.mask); i++)
 		{
 			int idx = mo->gfxlookup[i];
-			gfxelement[idx] = *Machine->gfx[idx];
-			gfxelement[idx].colortable = &Machine->remapped_colortable[mo->palettebase];
+			mo->gfxelement[idx] = *Machine->gfx[idx];
+			mo->gfxelement[idx].colortable = &Machine->remapped_colortable[mo->palettebase];
 		}
 	}
 
@@ -954,7 +954,7 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 static void mo_usage_callback(struct atarimo_data *mo, const struct atarimo_entry *entry)
 {
 	int gfxindex = mo->gfxlookup[EXTRACT_DATA(entry, mo->gfxmask)];
-	const unsigned int *usage = gfxelement[gfxindex].pen_usage;
+	const unsigned int *usage = mo->gfxelement[gfxindex].pen_usage;
 	UINT32 *colormap = mo->process_param;
 	int code = mo->codelookup[EXTRACT_DATA(entry, mo->codemask)] | (EXTRACT_DATA(entry, mo->codehighmask) << mo->codehighshift);
 	int width = EXTRACT_DATA(entry, mo->widthmask) + 1;
@@ -983,7 +983,7 @@ static void mo_usage_callback(struct atarimo_data *mo, const struct atarimo_entr
 static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_entry *entry)
 {
 	int gfxindex = mo->gfxlookup[EXTRACT_DATA(entry, mo->gfxmask)];
-	const struct GfxElement *gfx = &gfxelement[gfxindex];
+	const struct GfxElement *gfx = &mo->gfxelement[gfxindex];
 	const unsigned int *usage = gfx->pen_usage;
 	struct osd_bitmap *bitmap = mo->process_param;
 	struct ataripf_overrender_data overrender_data;

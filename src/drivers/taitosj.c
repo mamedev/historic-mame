@@ -152,6 +152,7 @@ WRITE_HANDLER( taitosj_paletteram_w );
 WRITE_HANDLER( taitosj_colorbank_w );
 WRITE_HANDLER( taitosj_videoenable_w );
 WRITE_HANDLER( taitosj_characterram_w );
+WRITE_HANDLER( junglhbr_characterram_w );
 READ_HANDLER( taitosj_collision_reg_r );
 WRITE_HANDLER( taitosj_collision_reg_clear_w );
 int taitosj_vh_start(void);
@@ -1827,14 +1828,14 @@ ROM_START( junglek )
     ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
 
     ROM_REGION( 0x8000, REGION_GFX1, 0 )   /* graphic ROMs used at runtime */
-    ROM_LOAD( "kn29.bin",     0x0000, 0x1000, 0x8f83c290 )
-    ROM_LOAD( "kn30.bin",     0x1000, 0x1000, 0x89fd19f1 )
-    ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
-    ROM_LOAD( "kn52.bin",     0x3000, 0x1000, 0xbcbac1a3 )
-    ROM_LOAD( "kn53.bin",     0x4000, 0x1000, 0xb946c87d )
-    ROM_LOAD( "kn34.bin",     0x5000, 0x1000, 0x320db2e1 )
-    ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
-    ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
+	ROM_LOAD( "kn29.bin",     0x0000, 0x1000, 0x8f83c290 )
+	ROM_LOAD( "kn30.bin",     0x1000, 0x1000, 0x89fd19f1 )
+	ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
+	ROM_LOAD( "kn52.bin",     0x3000, 0x1000, 0xbcbac1a3 )
+	ROM_LOAD( "kn53.bin",     0x4000, 0x1000, 0xb946c87d )
+	ROM_LOAD( "kn34.bin",     0x5000, 0x1000, 0x320db2e1 )
+	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
+	ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
     ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
@@ -1899,6 +1900,35 @@ ROM_START( jungleh )
 	ROM_LOAD( "kn54a",        0x5000, 0x1000, 0xd41428c7 )
 	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
 	ROM_LOAD( "kn56a",        0x7000, 0x1000, 0x679c1101 )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
+	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
+ROM_END
+
+ROM_START( junglhbr )
+	ROM_REGION( 0x12000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "ic1.bin",      0x00000, 0x2000, 0x3255a10e )
+	ROM_LOAD( "ic2.bin",      0x02000, 0x2000, 0x8482bc63 )
+	ROM_LOAD( "ic3.bin",      0x04000, 0x2000, 0x1abc661d )
+	ROM_LOAD( "kn47.bin",     0x06000, 0x1000, 0x5c3199e0 )
+	ROM_LOAD( "kn48a",        0x07000, 0x1000, 0xef80e931 )
+	/* 10000-10fff space for another banked ROM (not used) */
+	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 ) /* banked at 7000 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "kn37.bin",     0x0000, 0x1000, 0xdee7f5d4 )
+	ROM_LOAD( "kn38.bin",     0x1000, 0x1000, 0xbffd3d21 )
+	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
+
+	ROM_REGION( 0x8000, REGION_GFX1, 0 )   /* graphic ROMs used at runtime */
+	ROM_LOAD( "kn29.bin",     0x0000, 0x1000, 0x8f83c290 )
+	ROM_LOAD( "kn30.bin",     0x1000, 0x1000, 0x89fd19f1 )
+	ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
+	ROM_LOAD( "kn52.bin",     0x3000, 0x1000, 0xbcbac1a3 )
+	ROM_LOAD( "kn53.bin",     0x4000, 0x1000, 0xb946c87d )
+	ROM_LOAD( "kn34.bin",     0x5000, 0x1000, 0x320db2e1 )
+	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
+	ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
@@ -2185,9 +2215,9 @@ ROM_START( waterski )
 	ROM_LOAD( "a03-14",       0x1000, 0x1000, 0x31f991ca )
 
 	ROM_REGION( 0x8000, REGION_GFX1, 0 )       /* graphic ROMs used at runtime */
-	ROM_LOAD( "a03-08",       0x0000, 0x1000, 0x00000000 )  /* minor bit rot */
+	ROM_LOAD( "a03-08",       0x0000, 0x1000, 0xc206d870 )
 	ROM_LOAD( "a03-09",       0x1000, 0x1000, 0x48ac912a )
-	ROM_LOAD( "a03-10",       0x2000, 0x1000, 0x00000000 )  /* corrupt! */
+	ROM_LOAD( "a03-10",       0x2000, 0x1000, 0xa056defb )
 	ROM_LOAD( "a03-11",       0x3000, 0x1000, 0xf06cddd6 )
 	ROM_LOAD( "a03-12",       0x4000, 0x1000, 0x27dfd8c2 )
 
@@ -2321,12 +2351,19 @@ static void init_alpinea(void)
 	install_mem_write_handler(0, 0xd50e, 0xd50e, alpinea_bankswitch_w);
 }
 
+static void init_junglhbr(void)
+{
+	/* inverter on bits 0 and 1 */
+	install_mem_write_handler (0, 0x9000, 0xbfff, junglhbr_characterram_w);
+}
+
 
 
 GAME( 1981, spaceskr, 0,        nomcu, spaceskr,   0,       ROT180, "Taito Corporation", "Space Seeker" )
 GAME( 1982, junglek,  0,        nomcu, junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan)" )
 GAME( 1982, junglkj2, junglek,  nomcu, junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
 GAME( 1982, jungleh,  junglek,  nomcu, junglek,    0,       ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )
+GAME( 1983, junglhbr, junglek,  nomcu, junglek,    junglhbr,ROT0,   "Taito do Brasil",   "Jungle Hunt (Brazil)" )
 GAME( 1982, alpine,   0,        nomcu, alpine,     alpine,  ROT270, "Taito Corporation", "Alpine Ski (set 1)" )
 GAME( 1982, alpinea,  alpine,   nomcu, alpinea,    alpinea, ROT270, "Taito Corporation", "Alpine Ski (set 2)" )
 GAME( 1982, timetunl, 0,        nomcu, timetunl,   0,       ROT0,   "Taito Corporation", "Time Tunnel" )

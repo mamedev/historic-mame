@@ -852,5 +852,5 @@ static void init_ringkin3(void)
 
 GAME( 1985, kingofb,  0,       kingofb,  kingofb,  0,        ROT90, "Woodplace Inc.", "King of Boxer (English)" )
 GAME( 1985, ringking, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (set 1)" )
-GAMEX(1985, ringkin2, kingofb, ringking, kingofb,  0,        ROT90, "<unknown>", "Ring King (set 2)", GAME_NOT_WORKING )
+GAME( 1985, ringkin2, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (set 2)" )
 GAME( 1985, ringkin3, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Data East USA", "Ring King (set 3)" )

@@ -17,6 +17,9 @@ static struct tempsprite *spritelist;
 
 void gunbustr_vh_stop (void)
 {
+	free(spritelist);
+	spritelist = 0;
+
 	TC0480SCP_vh_stop();
 }
 
@@ -26,7 +29,6 @@ int gunbustr_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-//	if (TC0480SCP_vh_start(1,0,0x20,0x07,-1,-1,0))
 	if (TC0480SCP_vh_start(1,0,0x20,0x07,-1,-1,-1,0,0))
 		return 1;
 
@@ -47,13 +49,14 @@ from the spritemap rom, creating a 64x64 sprite like this:
 	12 13 14 15
 
 (where the number is the word offset into the spritemap rom).
+It can also create 32x32 sprites.
 
 NB: unused portions of the spritemap rom contain hex FF's.
 It is a useful coding check to warn in the log if these
 are being accessed. [They can be inadvertently while
 spriteram is being tested, take no notice of that.]
 
-The games make heavy use of sprite zooming.
+Heavy use is made of sprite zooming.
 
 		***
 

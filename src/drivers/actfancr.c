@@ -289,7 +289,6 @@ INPUT_PORTS_START( triothep )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_START /* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "8" )
 	PORT_DIPSETTING(    0x01, "10" )

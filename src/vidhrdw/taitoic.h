@@ -25,6 +25,18 @@ void PC080SN_set_trans_pen(int chip,int tilemap_num,int pen);
 void PC080SN_tilemap_update(void);
 void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority);
 
+/***************************************************************************/
+
+int TC0080VCO_vh_start(int gfxnum,int has_text_layer,int zoom_xoffs,int zoom_yoffs);
+void TC0080VCO_vh_stop(void);
+
+READ16_HANDLER ( TC0080VCO_word_r );
+WRITE16_HANDLER( TC0080VCO_word_w );
+
+void TC0080VCO_tilemap_update(void);
+void TC0080VCO_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority);
+void TC0080VCO_draw_sprites(void);
+
 
 /***************************************************************************/
 

@@ -27,19 +27,14 @@ Taito got round the limitations of the tilemap generator they were using
 the TC0100SCN in "Thunderfox".]
 
 Top Speed's sprites are 16x8 tiles aggregated through a RAM sprite map
-area into 128x128 big sprites. (The TaitoZ system also used this sprite
-map system, but moved the sprite map from RAM to ROM.)
+area into 128x128 big sprites. (The TaitoZ system also used a similar
+sprite map system, but moved the sprite map from RAM to ROM.)
 
 Top Speed has twin 68K CPUs which communicate via $10000 bytes of
-shared ram.
-
-The first 68000 handles screen, palette and sprites, and the road.
-
-The second 68000 handles inputs/dips, and does data processing in
-shared ram to relieve CPUA.
-
-There is also a Z80, which takes over sound duties. Commands are
-written to it by the first 68000.
+shared ram. The first 68000 handles screen, palette and sprites, and
+the road. The second 68000 handles inputs/dips, and does data processing
+in shared ram to relieve CPUA. There is also a Z80, which takes over
+sound duties.
 
 
 Dumper's info (topspedu)
@@ -62,9 +57,24 @@ Part number: b14-31 - Sharp LH763J-70
 TODO Lists
 ==========
 
+(Want to verify 68000 clocks)
+
+Accel and brake bits work differently depending on cab DSW
+Mame cannot yet support this, so accel/brake are not hooked up
+sensibly when upright cabinet is selected.
+
+The 8 level brake and accel inputs for the cockpit version
+should be mapped to a pedal for analogue pedal control.
+(Warlock did this but his changes need remerging.)
+
+Minor black glitches on the road: these are all on the right
+hand edge of the tilemap making up the "left" half: this is
+the upper of the two road tilemaps so any gunk will be visible.
+Maybe a road color issue or a timing glitch?
+
 Extra effects to make road "move"? The unknown 0xffff memory
-area may relate to this. First 0x800 of this looks as though it
-contains per-pixel-row information for the two road tilemaps.
+area could be responsible. First 0x800 of this looks as though
+it contains per-pixel-row information for the two road tilemaps.
 It consists of words from 0xffe0 to 0x001f (-31 to +31).
 These change quite a bit.
 
@@ -83,6 +93,7 @@ DIPs
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -99,7 +110,7 @@ WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
 WRITE_HANDLER( rastan_d000_w );
 
-static int old_cpua_ctrl = 0xff;
+static UINT16 cpua_ctrl = 0xff;
 static int ioc220_port = 0;
 
 //static data16_t *topspeed_ram;
@@ -118,19 +129,22 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&sharedram[offset]);
 }
 
-static WRITE16_HANDLER( cpua_ctrl_w )	// assumes Z80 sandwiched between 68Ks
+static void parse_control(void)	/* assumes Z80 sandwiched between 68Ks */
+{
+	/* bit 0 enables cpu B */
+	/* however this fails when recovering from a save state
+	   if cpu B is disabled !! */
+	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+
+}
+
+static WRITE16_HANDLER( cpua_ctrl_w )
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
-		data = data >> 8;	/* for Wgp, no longer necessary */
+		data = data >> 8;	/* for Wgp */
+	cpua_ctrl = data;
 
-	/* bit 0 enables cpu B */
-
-	if ((data &0x1)!=(old_cpua_ctrl &0x1))	// perhaps unnecessary but it's often written with same value
-		cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
-
-	/* is there an irq enable ??? */
-
-	old_cpua_ctrl = data;
+	parse_control();
 
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
 }
@@ -151,22 +165,20 @@ void topspeed_interrupt6(int x)
 
 void topspeed_cpub_interrupt6(int x)
 {
-	cpu_cause_interrupt(2,6);	// assumes Z80 sandwiched between the 68Ks
+	cpu_cause_interrupt(2,6);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
-/***** Routines for particular games *****/
-
 static int topspeed_interrupt(void)
 {
-	// Unsure how many int6's per frame
+	/* Unsure how many int6's per frame */
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, topspeed_interrupt6);
 	return 5;
 }
 
 static int topspeed_cpub_interrupt(void)
 {
-	// Unsure how many int6's per frame
+	/* Unsure how many int6's per frame */
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, topspeed_cpub_interrupt6);
 	return 5;
 }
@@ -179,51 +191,61 @@ static int topspeed_cpub_interrupt(void)
 
 static READ16_HANDLER( topspeed_ioc_r )
 {
-	UINT16 steer = 0;
+	int steer = 0;
+	int analogue_steer = input_port_4_word_r(0,0);
+	int fake = input_port_5_word_r(0,0);
 
-	if (input_port_4_word_r(0,0) & 0x8)	/* pressing down */
-		steer = 0xff40;
+	if (!(fake &0x10))	/* Analogue steer (the real control method) */
+	{
+		steer = analogue_steer;
 
-	if (input_port_4_word_r(0,0) & 0x2)	/* pressing right */
-		steer = 0x007f;
+	}
+	else	/* Digital steer */
+	{
+		if (fake & 0x8)	/* pressing down */
+			steer = 0xff40;
 
-	if (input_port_4_word_r(0,0) & 0x1)	/* pressing left */
-		steer = 0xff80;
+		if (fake & 0x2)	/* pressing right */
+			steer = 0x007f;
 
-	/* To allow hiscore input we must let you return to
-	   continuous input type while you press up */
+		if (fake & 0x1)	/* pressing left */
+			steer = 0xff80;
 
-	if (input_port_4_word_r(0,0) & 0x4)	/* pressing up */
-		steer = input_port_5_word_r(0,0);
+		/* To allow hiscore input we must let you return to
+		   continuous input type while you press up */
+
+		if (fake & 0x4)	/* pressing up */
+			steer = analogue_steer;
+	}
 
 	switch (offset)
 	{
 		case 0x00:
+		{
+			switch (ioc220_port & 0xf)
 			{
-				switch (ioc220_port & 0xf)
-				{
-					case 0x00:
-						return input_port_2_word_r(0,mem_mask);	/* DSW A */
+				case 0x00:
+					return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
-					case 0x01:
-						return input_port_3_word_r(0,mem_mask);	/* DSW B */
+				case 0x01:
+					return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
-					case 0x02:
-						return input_port_0_word_r(0,mem_mask);	/* IN0 */
+				case 0x02:
+					return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
-					case 0x03:
-						return input_port_1_word_r(0,mem_mask);	/* IN1 */
+				case 0x03:
+					return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
-					case 0x0c:
-						return steer &0xff;
+				case 0x0c:
+					return steer &0xff;
 
-					case 0x0d:
-						return steer >> 8;
-				}
+				case 0x0d:
+					return steer >> 8;
+			}
 
 logerror("CPU #1 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
 					return 0;
-			}
+		}
 
 		case 0x01:
 			return ioc220_port;
@@ -255,15 +277,17 @@ static READ16_HANDLER( topspeed_unknown_r )
 				SOUND
 *****************************************************/
 
-static WRITE_HANDLER( topspeed_bankswitch_w )	// assumes Z80 sandwiched between 68Ks
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
+static int banknum = -1;
 
-#ifdef MAME_DEBUG
-	if (banknum>3) logerror("CPU#3 (Z80) switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
-#endif
-	cpu_setbank (10, &RAM [0x10000 + (banknum * 0x4000)]);
+static void reset_sound_region(void)
+{
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+}
+
+static WRITE_HANDLER( sound_bankswitch_w )	/* assumes Z80 sandwiched between 68Ks */
+{
+	banknum = (data - 1) & 7;
+	reset_sound_region();
 }
 
 
@@ -274,7 +298,7 @@ static WRITE_HANDLER( topspeed_bankswitch_w )	// assumes Z80 sandwiched between 
 
 static MEMORY_READ16_START( topspeed_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x400000, 0x40ffff, sharedram_r },	// this block of ram seems to be all shared
+	{ 0x400000, 0x40ffff, sharedram_r },	// block of ram seems to be all shared?
 	{ 0x500000, 0x503fff, paletteram16_word_r },
 	{ 0x7e0000, 0x7e0001, MRA16_NOP },
 	{ 0x7e0002, 0x7e0003, taitosound_comm16_lsb_r },
@@ -398,26 +422,28 @@ INPUT_PORTS_START( topspeed )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// main brake key
+	/* Next bit is brake key (active low) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	// nitro
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// gear shift lo/hi
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// main accel key
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit ?" )
-	PORT_DIPSETTING(    0x02, "Standard Cockpit ?" )
-	PORT_DIPSETTING(    0x01, "Upright / Steering Lock ?" )
-	PORT_DIPSETTING(    0x00, "Upright / No Steering Lock ?" )
+	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit" )
+	PORT_DIPSETTING(    0x02, "Upright (?)" )
+	PORT_DIPSETTING(    0x01, "Upright (alt?)" )
+	PORT_DIPSETTING(    0x00, "Standard Cockpit" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -443,14 +469,21 @@ INPUT_PORTS_START( topspeed )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START      /* fake inputs, used for steering */
+	/* Note that sensitivity is chosen to suit keyboard control (for
+	   sound selection in test mode and hi score name entry). With
+	   an analogue wheel, the user will need to adjust this. */
+
+	PORT_START	/* continuous steer */
+	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 10, 2, 0xff7f, 0x80)
+
+	PORT_START      /* fake, allowing digital steer */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-
-	PORT_START	/* continuous steer */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 13, 3, 0xff7f, 0x80)
+	PORT_DIPNAME( 0x10, 0x10, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( topspedu )
@@ -460,26 +493,28 @@ INPUT_PORTS_START( topspedu )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// main brake key
+	/* Next bit is brake key (active low) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	// nitro
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// gear shift lo/hi
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// main accel key
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
 
-	PORT_START /* DSW A, coinage varies between countries */
+	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit ?" )
-	PORT_DIPSETTING(    0x02, "Standard Cockpit ?" )
-	PORT_DIPSETTING(    0x01, "Upright / Steering Lock ?" )
-	PORT_DIPSETTING(    0x00, "Upright / No Steering Lock ?" )
+	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit" )
+	PORT_DIPSETTING(    0x02, "Upright (?)" )
+	PORT_DIPSETTING(    0x01, "Upright (alt?)" )
+	PORT_DIPSETTING(    0x00, "Standard Cockpit" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -505,14 +540,21 @@ INPUT_PORTS_START( topspedu )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START      /* fake inputs, used for steering */
+	/* Note that sensitivity is chosen to suit keyboard control (for
+	   sound selection in test mode and hi score name entry). With
+	   an analogue wheel, the user will need to adjust this. */
+
+	PORT_START	/* continuous steer */
+	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 10, 2, 0xff7f, 0x80)
+
+	PORT_START      /* fake, allowing digital steer */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-
-	PORT_START	/* continuous steer */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 13, 3, 0xff7f, 0x80)
+	PORT_DIPNAME( 0x10, 0x10, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fullthrl )
@@ -522,26 +564,28 @@ INPUT_PORTS_START( fullthrl )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// main brake key
+	/* Next bit is brake key (active low) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	// nitro
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// gear shift lo/hi
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// main accel key
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
 
-	PORT_START /* DSW A, coinage varies between countries */
+	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit ?" )
-	PORT_DIPSETTING(    0x02, "Standard Cockpit ?" )
-	PORT_DIPSETTING(    0x01, "Upright / Steering Lock ?" )
-	PORT_DIPSETTING(    0x00, "Upright / No Steering Lock ?" )
+	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit" )
+	PORT_DIPSETTING(    0x02, "Upright (?)" )
+	PORT_DIPSETTING(    0x01, "Upright (alt?)" )
+	PORT_DIPSETTING(    0x00, "Standard Cockpit" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -567,15 +611,23 @@ INPUT_PORTS_START( fullthrl )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START      /* fake inputs, used for steering */
+	/* Note that sensitivity is chosen to suit keyboard control (for
+	   sound selection in test mode and hi score name entry). With
+	   an analogue wheel, the user will need to adjust this. */
+
+	PORT_START	/* continuous steer */
+	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 10, 2, 0xff7f, 0x80)
+
+	PORT_START      /* fake, allowing digital steer */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-
-	PORT_START	/* continuous steer */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 13, 3, 0xff7f, 0x80)
+	PORT_DIPNAME( 0x10, 0x10, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
+
 
 /**************************************************************
 				GFX DECODING
@@ -618,11 +670,10 @@ static struct GfxDecodeInfo topspeed_gfxdecodeinfo[] =
 
 /* handler called by the YM2151 emulator when the internal timers cause an IRQ */
 
-static void irq_handler(int irq)
+static void irq_handler(int irq)	/* assumes Z80 sandwiched between 68Ks */
 {
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
-
 
 static struct YM2151interface ym2151_interface =
 {
@@ -630,9 +681,8 @@ static struct YM2151interface ym2151_interface =
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ irq_handler },
-	{ topspeed_bankswitch_w }
+	{ sound_bankswitch_w }
 };
-
 
 static struct ADPCMinterface adpcm_interface =
 {
@@ -834,7 +884,15 @@ ROM_END
 void init_topspeed(void)
 {
 //	taitosnd_setz80_soundcpu( 2 );
-	old_cpua_ctrl = 0xff;
+
+	cpua_ctrl = 0xff;
+	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_func_postload(parse_control);
+
+	state_save_register_int   ("main2", 0, "register", &ioc220_port);
+
+	state_save_register_int   ("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
 }
 
 

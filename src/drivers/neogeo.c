@@ -4411,7 +4411,9 @@ ROM_START( kof99 ) /* Original Version - Encrypted Code(?) & GFX */
 	ROM_LOAD16_WORD_SWAP( "kof99_p2.rom", 0x100000, 0x400000, 0x00000000 ) /* 0x400000 0x90175f12 */
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from elsewhere? */
-	NEO_SFIX_128K( "kof99_s1.rom", 0x00000000 )
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_128K( "kof99_m1.rom", 0x5e74539c )
 
@@ -4423,10 +4425,8 @@ ROM_START( kof99 ) /* Original Version - Encrypted Code(?) & GFX */
 	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "kof99_v4.rom", 0x000000, 0x200000, 0xb49e6178 )
 
-	NO_DELTAT_REGION
-
 	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
-	/* This Looks to be Encrypted */
+	/* Encrypted */
 	ROM_LOAD16_BYTE( "kof99_c1.rom", 0x0000000, 0x800000, 0x0f9e93fe )
 	ROM_LOAD16_BYTE( "kof99_c2.rom", 0x0000001, 0x800000, 0xe71e2ea3 )
 	ROM_LOAD16_BYTE( "kof99_c3.rom", 0x1000000, 0x800000, 0x238755d2 )
@@ -4470,13 +4470,38 @@ ROM_START( kof99p ) /* Prototype Version - Possibly Hacked */
 	ROM_LOAD16_BYTE( "kf99p_c8.rom", 0x3000001, 0x800000, 0xead513ce ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( ganryu ) /* Original Version - Encrypted GFX */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "252-p1.bin", 0x100000, 0x100000, 0x4b8ac4fb )
+	ROM_CONTINUE(						0x000000, 0x100000 )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from elsewhere? */
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+
+	NEO_BIOS_SOUND_128K( "252-m1.bin", 0x30cc4099 )
+
+	ROM_REGION( 0x0400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "252-v1.bin", 0x000000, 0x400000, 0xe5946733 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	/* Encrypted */
+	ROM_LOAD16_BYTE( "252-c1.bin", 0x0000000, 0x800000, 0x50ee7882 )
+	ROM_LOAD16_BYTE( "252-c2.bin", 0x0000001, 0x800000, 0x62585474 )
+ROM_END
+
 ROM_START( preisle2 ) /* Original Version, Encrypted GFX Roms -NOT DUMPED- */
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "pi2_p1.rom", 0x000000, 0x100000, 0xdfa3c0f3 )
 	ROM_LOAD16_WORD_SWAP( "pi2_p2.rom", 0x100000, 0x400000, 0x42050b80 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from elsewhere? */
-	NEO_SFIX_128K( "pi2_s1.rom", 0x00000000 )
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_128K( "pi2_m1.rom", 0x8efd4014 )
 
@@ -4486,9 +4511,10 @@ ROM_START( preisle2 ) /* Original Version, Encrypted GFX Roms -NOT DUMPED- */
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
 	/* this would be encrypted, and the roms aren't dumped yet. */
-	ROM_LOAD( "pi2_gfx", 0x0000000, 0x4000000, 0x00000000 )
+	ROM_LOAD16_BYTE( "pi2_c1.bin", 0x0000000, 0x800000, 0x00000000 )
+	ROM_LOAD16_BYTE( "pi2_c2.bin", 0x0000001, 0x800000, 0x00000000 )
 ROM_END
 
 ROM_START( garoup ) /* Prototype Version, seems genuine */
@@ -4556,8 +4582,8 @@ GAME( 1990, cyberlip, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Cyb
 GAME( 1990, superspy, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "The Super Spy" )
 GAME( 1992, mutnat,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Mutation Nation" )
 GAME( 1991, kotm,     neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "King of the Monsters" )
-GAME( 1991, sengoku,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 1)" )
-GAME( 1991, sengokh,  sengoku,  neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 2)" )
+GAME( 1991, sengoku,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sengoku / Sengoku Denshou (set 1)" )
+GAME( 1991, sengokh,  sengoku,  raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sengoku / Sengoku Denshou (set 2)" )
 GAME( 1991, burningf, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 1)" )
 GAME( 1991, burningh, burningf, neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 2)" )
 GAME( 1990, lbowling, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "League Bowling" )
@@ -4581,7 +4607,7 @@ GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 C
 GAME( 1992, aof,      neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
 GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
 GAME( 1994, tophuntr, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
-GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
+GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
 GAME( 1992, ssideki,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Super Sidekicks / Tokuten Ou" )
 GAME( 1994, kof94,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '94" )
 GAME( 1994, aof2,     neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 2 / Ryuuko no Ken 2" )
@@ -4672,7 +4698,7 @@ GAME( 1995, quizkof,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "
 GAME( 1995, stakwin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
 GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Operation Ragnagard / Shin-Oh-Ken" )
 GAME( 1996, pgoal,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
-GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner 2" )
+GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Stakes Winner 2" )
 GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers" )
 GAME( 1997, shocktrj, shocktro, neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers (Japan)" )
 GAME( 1998, shocktr2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers - 2nd Squad" )
@@ -4711,7 +4737,7 @@ GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Video Syst
 /* Visco */
 GAME( 1992, androdun, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Andro Dunos" )
 GAME( 1995, puzzledp, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito (Visco license)", "Puzzle De Pon" )
-GAME( 1996, neomrdo,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Neo Mr. Do!" )
+GAME( 1996, neomrdo,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Neo Mr. Do!" )
 GAME( 1995, goalx3,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Goal! Goal! Goal!" )
 GAME( 1996, neodrift, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Neo Drift Out - New Technology" )
 GAME( 1996, breakers, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers" )
@@ -4719,3 +4745,4 @@ GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo, ROT0,       "Taito (Vis
 GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers Revenge")
 GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Battle Flip Shot" )
 GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Captain Tomaday" )
+GAMEX(1999, ganryu,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Musashi Ganryuuki", GAME_NOT_WORKING )

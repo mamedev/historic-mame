@@ -101,6 +101,10 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_UI_TOGGLE_DEBUG,
 	IPT_UI_SAVE_STATE,
 	IPT_UI_LOAD_STATE,
+	IPT_UI_ADD_CHEAT,
+	IPT_UI_DELETE_CHEAT,
+	IPT_UI_SAVE_CHEAT,
+	IPT_UI_WATCH_VALUE,
 	__ipt_max
 };
 
@@ -191,12 +195,16 @@ enum { IPT_END=1,IPT_PORT,
 	{ 0, 0, IPT_PORT, 0 },
 
 /* input bit definition */
+#define PORT_BIT_NAME(mask,default,type,name) \
+	{ mask, default, type, name },
 #define PORT_BIT(mask,default,type) \
-	{ mask, default, type, IP_NAME_DEFAULT },
+	PORT_BIT_NAME(mask, default, type, IP_NAME_DEFAULT)
 
 /* impulse input bit definition */
+#define PORT_BIT_IMPULSE_NAME(mask,default,type,duration,name) \
+	PORT_BIT_NAME(mask, default, type | IPF_IMPULSE | ((duration & 0xff) << 8), name)
 #define PORT_BIT_IMPULSE(mask,default,type,duration) \
-	{ mask, default, type | IPF_IMPULSE | ((duration & 0xff) << 8), IP_NAME_DEFAULT },
+	PORT_BIT_IMPULSE_NAME(mask, default, type, duration, IP_NAME_DEFAULT)
 
 /* key/joy code specification */
 #define PORT_CODE(key,joy) \
@@ -204,26 +212,26 @@ enum { IPT_END=1,IPT_PORT,
 
 /* input bit definition with extended fields */
 #define PORT_BITX(mask,default,type,name,key,joy) \
-	{ mask, default, type, name }, \
+	PORT_BIT_NAME(mask, default, type, name) \
 	PORT_CODE(key,joy)
 
 /* analog input */
 #define PORT_ANALOG(mask,default,type,sensitivity,delta,min,max) \
-	{ mask, default, type, IP_NAME_DEFAULT }, \
+	PORT_BIT(mask, default, type) \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta), IP_NAME_DEFAULT },
 
 #define PORT_ANALOGX(mask,default,type,sensitivity,delta,min,max,keydec,keyinc,joydec,joyinc) \
-	{ mask, default, type, IP_NAME_DEFAULT  }, \
+	PORT_BIT(mask, default, type) \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta), IP_NAME_DEFAULT }, \
 	PORT_CODE(keydec,joydec) \
 	PORT_CODE(keyinc,joyinc)
 
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name) \
-	{ mask, default, IPT_DIPSWITCH_NAME, name },
+	PORT_BIT_NAME(mask, default, IPT_DIPSWITCH_NAME, name)
 
 #define PORT_DIPSETTING(default,name) \
-	{ 0, default, IPT_DIPSWITCH_SETTING, name },
+	PORT_BIT_NAME(0, default, IPT_DIPSWITCH_SETTING, name)
 
 
 #define PORT_SERVICE(mask,default)	\

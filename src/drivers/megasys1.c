@@ -2,39 +2,40 @@
 
 						-= Jaleco Mega System 1 =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 To enter service mode in some games press service1+F3.
 
 
-Game						Year	System		Protection
------------------------------------------------------------
-Legend of Makai (World) /	1988	Z
-Makai Densetsu  (Japan)		1988	Z
-P-47  (World) /				1988	A
-P-47  (Japan)				1988	A
-Kick Off (Japan)			1988	A		*
-Takeda Shingen (Japan)		1988	A		*	      Encryption (key 1)
-Iga Ninjyutsuden (Japan)	1988	A		*	Yes + Encryption (key 1)
-Astyanax          (World) /	1989	A		*	Yes + Encryption (key 2)
-The Lord of King  (Japan)	1989	A	 	*	Yes + Encryption (key 2)
-Hachoo!						1989	A		*	Yes + Encryption (key 2)
-Plus Alpha					1989	A			Yes + Encryption (key 2)
-Saint Dragon				1989	A			Yes + Encryption (key 1)
-RodLand  (World) /			1990	A			      Encryption (key 3)
-RodLand  (Japan)			1990	A			      Encryption (key 2)
-Phantasm        (Japan)	/	1990	A			      Encryption (key 1)
-Avenging Spirit (World) 	1991	B			Inputs
-Earth Defense Force			1991	B			Inputs
-64th Street  (World) /		1991	C		*	Inputs
-64th Street  (Japan)		1991	C		*	Inputs
-Soldam (Japan)				1992	A			      Encryption (key 2)
-Big Striker					1992	C		*	Inputs
-Chimera Beast				1993	C		*	Inputs
-Cybattler					1993	C			Inputs
-Peek-a-Boo!					1993	D			Inputs
---------------------------------------------^--------------
+Year + Game							System		Protection
+----------------------------------------------------------------------------
+88	Legend of Makai (World) /		Z
+	Makai Densetsu  (Japan)			Z
+	P-47  (World) /					A
+	P-47  (Japan)					A
+	Kick Off (Japan)				A		*
+	Takeda Shingen (Japan)			A		*	      Encryption (key 1)
+	Iga Ninjyutsuden (Japan)		A		*	Yes + Encryption (key 1)
+89	Astyanax          (World) /		A		*	Yes + Encryption (key 2)
+	The Lord of King  (Japan)		A	 	*	Yes + Encryption (key 2)
+	Hachoo!							A		*	Yes + Encryption (key 2)
+	Jitsuryoku!! Pro Yakyuu (Japan)	A			Yes + Encryption (key 2)
+	Plus Alpha						A			Yes + Encryption (key 2)
+	Saint Dragon					A			Yes + Encryption (key 1)
+90	RodLand  (World) /				A			      Encryption (key 3)
+	RodLand  (Japan)				A			      Encryption (key 2)
+	Phantasm        (Japan)	/		A			      Encryption (key 1)
+91	Avenging Spirit (World) 		B			Inputs
+	Earth Defense Force				B			Inputs
+	64th Street  (World) /			C		*	Inputs
+	64th Street  (Japan)			C		*	Inputs
+92	Soldam (Japan)					A			      Encryption (key 2)
+	Big Striker						C		*	Inputs
+93	Chimera Beast					C		*	Inputs
+	Cybattler						C			Inputs
+	Peek-a-Boo!						D			Inputs
+--------------------------------------------^-------------------------------
 											|
 							The Priority Prom is missing for these games !
 
@@ -667,14 +668,8 @@ static const struct MachineDriver machine_driver_system_##_type_ = \
 	/* sound hardware */ \
 	SOUND_SUPPORTS_STEREO,0,0,0, \
 	{ \
-		{ \
-			SOUND_YM2151, \
-			&ym2151_interface \
-		},\
-		{\
-			SOUND_OKIM6295, \
-			&okim6295_interface \
-		} \
+		{	SOUND_YM2151,	&ym2151_interface	}, \
+		{	SOUND_OKIM6295,	&okim6295_interface	}  \
 	} \
 };
 
@@ -688,6 +683,43 @@ MEGASYS1_MACHINE( B, 12000000,7000000 )
 /* OSC: 7, 24 MHz */
 MEGASYS1_MACHINE( C, 12000000,7000000 )
 
+/* OSC:	4, 8, 7, 12 MHz - Type A, but only one interrupt per frame on the sound CPU */
+static const struct MachineDriver machine_driver_jitsupro =
+{
+	{
+		{
+			CPU_M68000,
+			12000000,
+			readmem_A,writemem_A,0,0,
+			interrupt_A,INTERRUPT_NUM_A
+		},
+		{
+			CPU_M68000 | CPU_AUDIO_CPU,
+			7000000,
+			sound_readmem_A,sound_writemem_A,0,0,
+			sound_interrupt,1,
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	megasys1_init_machine,
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo_ABC,
+	1024, 1024,
+	megasys1_convert_prom,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	megasys1_vh_start,
+	0,
+	megasys1_vh_screenrefresh,
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{	SOUND_YM2151,	&ym2151_interface	},
+		{	SOUND_OKIM6295,	&okim6295_interface	}
+	}
+};
 
 
 /***************************************************************************
@@ -735,10 +767,7 @@ static const struct MachineDriver machine_driver_system_D =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface_D
-		}
+		{	SOUND_OKIM6295,	&okim6295_interface_D	}
 	}
 };
 
@@ -806,10 +835,7 @@ static const struct MachineDriver machine_driver_system_Z =
 	/* sound hardware */
 	0,0,0,0, /* This system is mono */
 	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
+		{	SOUND_YM2203,	&ym2203_interface	},
 	}
 };
 
@@ -1847,6 +1873,115 @@ INPUT_PORTS_START( iganinju )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_END
+
+
+
+/***************************************************************************
+
+						[ Jitsuryoku!! Pro Yakyuu ]
+
+(JPN Ver.)
+(c)1989 Jaleco
+Mega-System
+MB-8842
+A-Type
+CPU  :TMP68000P-8 x2
+Sound:YM2151,YM3012
+OSC  :12.000MHz,7.000MHz
+
+Sub
+MB-M02A (EB-88003-3001-1)
+Sound:OKI M6295
+OSC  :4.000MHz
+Other:JALECO GS-88000
+
+BS.BPR       [85b30ac4] (82S131)
+
+***************************************************************************/
+
+ROM_START( jitsupro )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD16_BYTE( "jp_2.bin", 0x000000, 0x020000, 0x5d842ff2 )
+	ROM_LOAD16_BYTE( "jp_1.bin", 0x000001, 0x020000, 0x0056edec )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "jp_5.bin", 0x000000, 0x010000, 0x84454e9e )	// 11xxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "jp_6.bin", 0x000001, 0x010000, 0x1fa9b75b )	// 11xxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "jp_14.bin", 0x000000, 0x080000, 0xdb112abf )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "jp_18.bin", 0x000000, 0x080000, 0x3ed855e3 )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "jp_19.bin", 0x000000, 0x020000, 0xff59111f )
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "jp_23.bin", 0x000000, 0x080000, 0x275f48bd )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "jp_10.bin", 0x000000, 0x040000, 0x178e43c0 )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(          0x000000, 0x040000             )
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "jp_8.bin",  0x000000, 0x040000, 0xeca67632 )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(          0x000000, 0x040000             )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "bs.bpr",    0x0000, 0x0200, 0x85b30ac4 )
+ROM_END
+
+
+INPUT_PORTS_START( jitsupro )
+
+	COINS						/* IN0 0x80001.b */
+	//	shoot	change view		change bat
+	JOY_3BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_3BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
+
+	PORT_START			/* IN4 0x80006.b */
+	COINAGE_6BITS
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 1-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START			/* IN5 0x80007.b */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0*" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 2-1*" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )	// $200-140
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )	// $400-140
+	PORT_DIPNAME( 0x3c, 0x3c, "Unknown 2-2345*" )
+	PORT_DIPSETTING(    0x3c, "0"  )
+	PORT_DIPSETTING(    0x38, "1"  )
+	PORT_DIPSETTING(    0x34, "2"  )
+	PORT_DIPSETTING(    0x30, "3"  )
+	PORT_DIPSETTING(    0x2c, "4"  )
+	PORT_DIPSETTING(    0x28, "5"  )
+	PORT_DIPSETTING(    0x24, "6"  )
+	PORT_DIPSETTING(    0x20, "7"  )
+	PORT_DIPSETTING(    0x1c, "8"  )
+	PORT_DIPSETTING(    0x18, "9"  )
+	PORT_DIPSETTING(    0x14, "10" )
+	PORT_DIPSETTING(    0x10, "11" )
+	PORT_DIPSETTING(    0x0c, "12" )
+	PORT_DIPSETTING(    0x08, "13" )
+	PORT_DIPSETTING(    0x04, "14" )
+	PORT_DIPSETTING(    0x00, "15" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6*" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2967,7 +3102,47 @@ ROM_START( tshingen )
 	ROM_LOAD( "takeda10.bin", 0x020000, 0x020000, 0xc9959d71 )
 
 	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
-	ROM_LOAD( "takeda8.bin",  0x000000, 0x040000, 0xdde779d2 )
+	ROM_LOAD( "shing_07.rom",  0x000000, 0x020000, 0xc37ecbdc )
+	ROM_LOAD( "shing_08.rom",  0x020000, 0x020000, 0x36d56c8c )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+ROM_END
+
+ROM_START( tshingna )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD16_BYTE( "shing_02.rom", 0x000000, 0x020000, 0xd9ab5b78 )
+	ROM_LOAD16_BYTE( "shing_01.rom", 0x000001, 0x020000, 0xa9d2de20 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "takeda5.bin", 0x000000, 0x010000, 0xfbdc51c0 )
+	ROM_LOAD16_BYTE( "takeda6.bin", 0x000001, 0x010000, 0x8fa65b69 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "takeda11.bin", 0x000000, 0x020000, 0xbf0b40a6 )
+	ROM_LOAD( "shing_12.rom", 0x020000, 0x020000, 0x5e4adedb )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "shing_15.rom", 0x000000, 0x020000, 0x9db18233 )
+	ROM_LOAD( "takeda16.bin", 0x020000, 0x020000, 0xceda9dd6 )
+	ROM_LOAD( "takeda17.bin", 0x040000, 0x020000, 0x3d4371dc )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "shing_19.rom", 0x000000, 0x010000, 0x97282d9d )
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "shing_20.rom", 0x000000, 0x020000, 0x7f6f8384 )
+	ROM_LOAD( "takeda21.bin", 0x020000, 0x020000, 0x12fb006b )
+	ROM_LOAD( "takeda22.bin", 0x040000, 0x020000, 0xb165b6ae )
+	ROM_LOAD( "takeda23.bin", 0x060000, 0x020000, 0x37cb9214 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "takeda9.bin",  0x000000, 0x020000, 0xdb7f3f4f )
+	ROM_LOAD( "takeda10.bin", 0x020000, 0x020000, 0xc9959d71 )
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "shing_07.rom",  0x000000, 0x020000, 0xc37ecbdc )
+	ROM_LOAD( "shing_08.rom",  0x020000, 0x020000, 0x36d56c8c )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
 	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
@@ -3159,25 +3334,48 @@ static void rodlandj_gfx_unmangle(int region)
 	free(buffer);
 }
 
-
-
-
-static void init_tshingen(void)
+static void jitsupro_gfx_unmangle(int region)
 {
-	phantasm_rom_decode(0);
+	data8_t *rom = memory_region(REGION_GFX1+region);
+	int size = memory_region_length(REGION_GFX1+region);
+	data8_t *buffer;
+	int i;
+
+	/* data lines swap: 76543210 -> 43576210 */
+	for (i = 0;i < size;i++)
+		rom[i] =   BITSWAP8(rom[i],0x4,0x3,0x5,0x7,0x6,0x2,0x1,0x0);
+
+	buffer = malloc(size);
+	if (!buffer) return;
+
+	memcpy(buffer,rom,size);
+
+	/* address lines swap: fedcba9876543210 -> fe8cb39d7654a210 */
+	for (i = 0;i < size;i++)
+	{
+		int a = (i & ~0xffff) |
+	BITSWAP16(i,0xf,0xe,0x8,0xc,0xb,0x3,0x9,0xd,0x7,0x6,0x5,0x4,0xa,0x2,0x1,0x0);
+
+		rom[i] = buffer[a];
+	}
+
+	free(buffer);
 }
 
-static void init_iganinju(void)
+
+
+
+static void init_64street(void)
 {
-	data16_t *RAM;
+//	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+//	RAM[0x006b8/2] = 0x6004;		// d8001 test
+//	RAM[0x10EDE/2] = 0x6012;		// watchdog
 
-	phantasm_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x02f000/2] = 0x835d;	// protection
-
-	RAM[0x00006e/2] = 0x0420;	// the only game that does
-								// not like lev 3 interrupts
+	ip_select_values[0] = 0x57;
+	ip_select_values[1] = 0x53;
+	ip_select_values[2] = 0x54;
+	ip_select_values[3] = 0x55;
+	ip_select_values[4] = 0x56;
 }
 
 static void init_astyanax(void)
@@ -3188,63 +3386,6 @@ static void init_astyanax(void)
 
 	RAM = (data16_t *) memory_region(REGION_CPU1);
 	RAM[0x0004e6/2] = 0x6040;	// protection
-}
-
-static void init_hachoo(void)
-{
-	data16_t *RAM;
-
-	astyanax_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x0006da/2] = 0x6000;	// protection
-}
-
-static void init_plusalph(void)
-{
-	data16_t *RAM;
-
-	astyanax_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x0012b6/2] = 0x0000;	// protection
-}
-
-static void init_stdragon(void)
-{
-	data16_t *RAM;
-
-	phantasm_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x00045e/2] = 0x0098;	// protection
-}
-
-static void init_rodland(void)
-{
-	rodland_rom_decode(0);
-}
-
-static void init_rodlandj(void)
-{
-	rodlandj_gfx_unmangle(0);
-	rodlandj_gfx_unmangle(3);
-
-	astyanax_rom_decode(0);
-}
-
-static void init_soldam(void)
-{
-	astyanax_rom_decode(0);
-
-	/* Sprite RAM is mirrored. Why? */
-	install_mem_read16_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram16_r);
-	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
-}
-
-static void init_phantasm(void)
-{
-	phantasm_rom_decode(0);
 }
 
 static void init_avspirit(void)
@@ -3259,28 +3400,6 @@ static void init_avspirit(void)
 	/* following is needed to make vh_start() pick the correct address */
 	/* for spriteram16. */
 	megasys1_ram += 0x10000/2;
-}
-
-static void init_edf(void)
-{
-	ip_select_values[0] = 0x20;
-	ip_select_values[1] = 0x21;
-	ip_select_values[2] = 0x22;
-	ip_select_values[3] = 0x23;
-	ip_select_values[4] = 0x24;
-}
-
-static void init_64street(void)
-{
-//	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
-//	RAM[0x006b8/2] = 0x6004;		// d8001 test
-//	RAM[0x10EDE/2] = 0x6012;		// watchdog
-
-	ip_select_values[0] = 0x57;
-	ip_select_values[1] = 0x53;
-	ip_select_values[2] = 0x54;
-	ip_select_values[3] = 0x55;
-	ip_select_values[4] = 0x56;
 }
 
 static void init_bigstrik(void)
@@ -3311,37 +3430,145 @@ static void init_cybattlr(void)
 	ip_select_values[4] = 0x55;
 }
 
+static void init_edf(void)
+{
+	ip_select_values[0] = 0x20;
+	ip_select_values[1] = 0x21;
+	ip_select_values[2] = 0x22;
+	ip_select_values[3] = 0x23;
+	ip_select_values[4] = 0x24;
+}
+
+static void init_hachoo(void)
+{
+	data16_t *RAM;
+
+	astyanax_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0006da/2] = 0x6000;	// protection
+}
+
+static void init_iganinju(void)
+{
+	data16_t *RAM;
+
+	phantasm_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x02f000/2] = 0x835d;	// protection
+
+	RAM[0x00006e/2] = 0x0420;	// the only game that does
+								// not like lev 3 interrupts
+}
+
+static WRITE16_HANDLER( OKIM6295_data_0_both_w )
+{
+	if (ACCESSING_LSB)	OKIM6295_data_0_w(0, (data >> 0) & 0xff );
+	else				OKIM6295_data_0_w(0, (data >> 8) & 0xff );
+}
+static WRITE16_HANDLER( OKIM6295_data_1_both_w )
+{
+	if (ACCESSING_LSB)	OKIM6295_data_1_w(0, (data >> 0) & 0xff );
+	else				OKIM6295_data_1_w(0, (data >> 8) & 0xff );
+}
+
+static void init_jitsupro(void)
+{
+	data16_t *RAM  = (data16_t *) memory_region(REGION_CPU1);
+
+	astyanax_rom_decode(0);		// Code
+
+	jitsupro_gfx_unmangle(0);	// Gfx
+	jitsupro_gfx_unmangle(3);
+
+	RAM[0x436/2] = 0x4e71;	// protection
+	RAM[0x438/2] = 0x4e71;	//
+
+	/* the sound code writes oki commands to both the lsb and msb */
+	install_mem_write16_handler(1, 0xa0000, 0xa0003, OKIM6295_data_0_both_w);
+	install_mem_write16_handler(1, 0xc0000, 0xc0003, OKIM6295_data_1_both_w);
+}
+
 static void init_peekaboo(void)
 {
 	install_mem_read16_handler (0, 0x100000, 0x100001, protection_peekaboo_r);
 	install_mem_write16_handler(0, 0x100000, 0x100001, protection_peekaboo_w);
 }
 
+static void init_phantasm(void)
+{
+	phantasm_rom_decode(0);
+}
+
+static void init_plusalph(void)
+{
+	data16_t *RAM;
+
+	astyanax_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0012b6/2] = 0x0000;	// protection
+}
+
+static void init_rodland(void)
+{
+	rodland_rom_decode(0);
+}
+
+static void init_rodlandj(void)
+{
+	rodlandj_gfx_unmangle(0);
+	rodlandj_gfx_unmangle(3);
+
+	astyanax_rom_decode(0);
+}
+
+static void init_soldam(void)
+{
+	astyanax_rom_decode(0);
+
+	/* Sprite RAM is mirrored. Why? */
+	install_mem_read16_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram16_r);
+	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
+}
+
+static void init_stdragon(void)
+{
+	data16_t *RAM;
+
+	phantasm_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x00045e/2] = 0x0098;	// protection
+}
 
 
 
-GAME ( 1988, lomakai,  0,        system_Z, lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
-GAME ( 1988, makaiden, lomakai,  system_Z, lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
-GAME ( 1988, p47,      0,        system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
-GAME ( 1988, p47j,     p47,      system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
-GAME ( 1988, kickoff,  0,        system_A, kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
-GAME ( 1988, tshingen, 0,        system_A, tshingen, tshingen, ROT0,       "Jaleco", "Takeda Shingen (Japan)" )
-GAME ( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
-GAME ( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
-GAME ( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
-GAMEX( 1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
-GAME ( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
-GAME ( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
-GAME ( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,       "Jaleco", "Rod-Land (World)" )
-GAME ( 1990, rodlandj, rodland,  system_A, rodland,  rodlandj, ROT0,       "Jaleco", "Rod-Land (Japan)" )
-GAME ( 1990, rodlndjb, rodland,  system_A, rodland,  0,        ROT0,       "Jaleco", "Rod-Land (Japan bootleg)" )
-GAME ( 1991, avspirit, 0,        system_B, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
-GAME ( 1990, phantasm, avspirit, system_A, avspirit, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
-GAME ( 1991, edf,      0,        system_B, edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
-GAME ( 1991, 64street, 0,        system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
-GAME ( 1991, 64streej, 64street, system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
-GAME ( 1992, soldamj,  0,        system_A, soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
-GAME ( 1992, bigstrik, 0,        system_C, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
-GAME ( 1993, chimerab, 0,        system_C, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
-GAME ( 1993, cybattlr, 0,        system_C, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
-GAME ( 1993, peekaboo, 0,        system_D, peekaboo, peekaboo, ROT0,       "Jaleco", "Peek-a-Boo!" )
+GAME( 1988, lomakai,  0,        system_Z, lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
+GAME( 1988, makaiden, lomakai,  system_Z, lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
+GAME( 1988, p47,      0,        system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
+GAME( 1988, p47j,     p47,      system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
+GAME( 1988, kickoff,  0,        system_A, kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
+GAME( 1988, tshingen, 0,        system_A, tshingen, phantasm, ROT0,       "Jaleco", "Takeda Shingen (Japan, Japanese)" )
+GAME( 1988, tshingna, tshingen, system_A, tshingen, phantasm, ROT0,       "Jaleco", "Shingen Samurai-Fighter (Japan, English)" )
+GAME( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
+GAME( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
+GAME( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
+GAMEX(1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
+GAME( 1989, jitsupro, 0,        jitsupro, jitsupro, jitsupro, ROT0,       "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
+GAME( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
+GAME( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
+GAME( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,       "Jaleco", "Rod-Land (World)" )
+GAME( 1990, rodlandj, rodland,  system_A, rodland,  rodlandj, ROT0,       "Jaleco", "Rod-Land (Japan)" )
+GAME( 1990, rodlndjb, rodland,  system_A, rodland,  0,        ROT0,       "Jaleco", "Rod-Land (Japan bootleg)" )
+GAME( 1991, avspirit, 0,        system_B, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
+GAME( 1990, phantasm, avspirit, system_A, avspirit, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
+GAME( 1991, edf,      0,        system_B, edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
+GAME( 1991, 64street, 0,        system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
+GAME( 1991, 64streej, 64street, system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
+GAME( 1992, soldamj,  0,        system_A, soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
+GAME( 1992, bigstrik, 0,        system_C, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
+GAME( 1993, chimerab, 0,        system_C, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
+GAME( 1993, cybattlr, 0,        system_C, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
+GAME( 1993, peekaboo, 0,        system_D, peekaboo, peekaboo, ROT0,       "Jaleco", "Peek-a-Boo!" )

@@ -152,6 +152,12 @@ struct MachineDriver
 /* game wants to use a hicolor or truecolor bitmap (e.g. for alpha blending) */
 #define VIDEO_RGB_DIRECT 0x0200
 
+/* generic aspect ratios */
+#define VIDEO_ASPECT_RATIO_MASK		0xffff0000
+#define VIDEO_ASPECT_RATIO_NUM(a)	(((a) >> 24) & 0xff)
+#define VIDEO_ASPECT_RATIO_DEN(a)	(((a) >> 16) & 0xff)
+#define VIDEO_ASPECT_RATIO(n,d)		((((n) & 0xff) << 24) | (((d) & 0xff) << 16))
+
 
 /* flags for sound_attributes */
 #define	SOUND_SUPPORTS_STEREO		0x0001
@@ -198,7 +204,7 @@ struct GameDriver
 #define GAME_NO_COCKTAIL			0x0200	/* screen flip support is missing */
 #define GAME_UNEMULATED_PROTECTION	0x0400	/* game's protection not fully emulated */
 #define GAME_IMPERFECT_GRAPHICS		0x0800	/* graphics are wrong/incomplete */
-#define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_ and by "containers" */
+#define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_0 and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS
 #define GAME_COMPUTER               0x8000  /* Driver is a computer (needs full keyboard) */

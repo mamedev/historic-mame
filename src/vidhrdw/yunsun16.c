@@ -1,6 +1,6 @@
 /***************************************************************************
 
-								  -= Shocking =-
+						  -= Yun Sung 16 Bit Games =-
 
 					driver by	Luca Elia (eliavit@unina.it)
 
@@ -34,9 +34,9 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-data16_t *shocking_vram_0,   *shocking_vram_1;
-data16_t *shocking_scroll_0, *shocking_scroll_1;
-data16_t *shocking_priority;
+data16_t *yunsun16_vram_0,   *yunsun16_vram_1;
+data16_t *yunsun16_scroll_0, *yunsun16_scroll_1;
+data16_t *yunsun16_priority;
 
 
 /***************************************************************************
@@ -55,7 +55,7 @@ static struct tilemap *tilemap_0, *tilemap_1;
 #define PAGES_PER_TMAP_X	(0x4)
 #define PAGES_PER_TMAP_Y	(0x4)
 
-UINT32 shocking_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+UINT32 yunsun16_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
 	return	(row / TILES_PER_PAGE_Y) * TILES_PER_PAGE_X * TILES_PER_PAGE_Y * PAGES_PER_TMAP_X +
 			(row % TILES_PER_PAGE_Y) +
@@ -66,31 +66,29 @@ UINT32 shocking_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 
 
 static void get_tile_info_0(int tile_index)
 {
-	data16_t code = shocking_vram_0[ 2 * tile_index + 0 ];
-	data16_t attr = shocking_vram_0[ 2 * tile_index + 1 ];
+	data16_t code = yunsun16_vram_0[ 2 * tile_index + 0 ];
+	data16_t attr = yunsun16_vram_0[ 2 * tile_index + 1 ];
 	SET_TILE_INFO(TMAP_GFX, code, attr & 0xf);
-	tile_info.priority	=	attr & 7;
 }
 
 static void get_tile_info_1(int tile_index)
 {
-	data16_t code = shocking_vram_1[ 2 * tile_index + 0 ];
-	data16_t attr = shocking_vram_1[ 2 * tile_index + 1 ];
+	data16_t code = yunsun16_vram_1[ 2 * tile_index + 0 ];
+	data16_t attr = yunsun16_vram_1[ 2 * tile_index + 1 ];
 	SET_TILE_INFO(TMAP_GFX, code, attr & 0xf);
-	tile_info.priority	=	attr & 7;
 }
 
-WRITE16_HANDLER( shocking_vram_0_w )
+WRITE16_HANDLER( yunsun16_vram_0_w )
 {
-	data16_t old_data	=	shocking_vram_0[offset];
-	data16_t new_data	=	COMBINE_DATA(&shocking_vram_0[offset]);
+	data16_t old_data	=	yunsun16_vram_0[offset];
+	data16_t new_data	=	COMBINE_DATA(&yunsun16_vram_0[offset]);
 	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_0,offset/2);
 }
 
-WRITE16_HANDLER( shocking_vram_1_w )
+WRITE16_HANDLER( yunsun16_vram_1_w )
 {
-	data16_t old_data	=	shocking_vram_1[offset];
-	data16_t new_data	=	COMBINE_DATA(&shocking_vram_1[offset]);
+	data16_t old_data	=	yunsun16_vram_1[offset];
+	data16_t new_data	=	COMBINE_DATA(&yunsun16_vram_1[offset]);
 	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_1,offset/2);
 }
 
@@ -105,14 +103,14 @@ WRITE16_HANDLER( shocking_vram_1_w )
 
 static int sprites_scrolldx, sprites_scrolldy;
 
-int shocking_vh_start(void)
+int yunsun16_vh_start(void)
 {
-	tilemap_0 = tilemap_create(	get_tile_info_0,shocking_tilemap_scan_pages,
+	tilemap_0 = tilemap_create(	get_tile_info_0,yunsun16_tilemap_scan_pages,
 								TILEMAP_TRANSPARENT,
 								16,16,
 								TILES_PER_PAGE_X*PAGES_PER_TMAP_X,TILES_PER_PAGE_Y*PAGES_PER_TMAP_Y);
 
-	tilemap_1 = tilemap_create(	get_tile_info_1,shocking_tilemap_scan_pages,
+	tilemap_1 = tilemap_create(	get_tile_info_1,yunsun16_tilemap_scan_pages,
 								TILEMAP_TRANSPARENT,
 								16,16,
 								TILES_PER_PAGE_X*PAGES_PER_TMAP_X,TILES_PER_PAGE_Y*PAGES_PER_TMAP_Y);
@@ -145,24 +143,31 @@ int shocking_vh_start(void)
 
 		4.w								Code
 
-		6.w		fedc ba98 765- ----
+		6.w		fedc ba98 7--- ----
+				---- ---- -6-- ----		Flip Y
+				---- ---- --5- ----		Flip X
 				---- ---- ---4 3210		Color
 
-- Flip X&Y ?
 
 ***************************************************************************/
 
-static void shocking_draw_sprites(struct osd_bitmap *bitmap)
+static void yunsun16_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 	int max_x		=	Machine->visible_area.max_x+1;
 	int max_y		=	Machine->visible_area.max_y+1;
 
-	int pri			=	*shocking_priority & 7;
-	int pri_mask	=	~((1 << (pri-1)) - 1);	// above the first "pri" levels
+	int pri			=	*yunsun16_priority & 7;
+	int pri_mask;
 
-	if (pri == 7)	pri_mask = 0;	// above all
+	switch( pri & 7 )
+	{
+		case 5:		pri_mask = (1<<1)|(1<<2)|(1<<3);	break;
+		case 6:		pri_mask = (1<<2)|(1<<3);			break;
+		case 7:
+		default:	pri_mask = 0;
+	}
 
 	for ( offs = (spriteram_size-8)/2 ; offs >= 0; offs -= 8/2 )
 	{
@@ -170,8 +175,8 @@ static void shocking_draw_sprites(struct osd_bitmap *bitmap)
 		int y		=	spriteram16[offs + 1];
 		int code	=	spriteram16[offs + 2];
 		int attr	=	spriteram16[offs + 3];
-		int flipx	=	0;	// not used?
-		int flipy	=	0;
+		int flipx	=	attr & 0x20;
+		int flipy	=	attr & 0x40;
 
 		x	+=	sprites_scrolldx;
 		y	+=	sprites_scrolldy;
@@ -192,7 +197,7 @@ static void shocking_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void shocking_mark_sprites_colors(void)
+static void yunsun16_mark_sprites_colors(void)
 {
 	int count = 0;
 	int offs,i,col,colmask[0x20];
@@ -248,15 +253,15 @@ static void shocking_mark_sprites_colors(void)
 ***************************************************************************/
 
 
-void shocking_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void yunsun16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i,layers_ctrl = -1;
+	int layers_ctrl = -1;
 
-	tilemap_set_scrollx(tilemap_0, 0, shocking_scroll_0[ 0 ]);
-	tilemap_set_scrolly(tilemap_0, 0, shocking_scroll_0[ 1 ]);
+	tilemap_set_scrollx(tilemap_0, 0, yunsun16_scroll_0[ 0 ]);
+	tilemap_set_scrolly(tilemap_0, 0, yunsun16_scroll_0[ 1 ]);
 
-	tilemap_set_scrollx(tilemap_1, 0, shocking_scroll_1[ 0 ]);
-	tilemap_set_scrolly(tilemap_1, 0, shocking_scroll_1[ 1 ]);
+	tilemap_set_scrollx(tilemap_1, 0, yunsun16_scroll_1[ 0 ]);
+	tilemap_set_scrolly(tilemap_1, 0, yunsun16_scroll_1[ 1 ]);
 
 #ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z))
@@ -264,13 +269,13 @@ if (keyboard_pressed(KEYCODE_Z))
 	int msk = 0;
 	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
 	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
+//	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
 	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 
 #if 0
 {	char buf[10];
-	sprintf(buf,"%04X", *shocking_priority);
+	sprintf(buf,"%04X", *yunsun16_priority);
 	usrintf_showmessage(buf);	}
 #endif
 }
@@ -280,30 +285,24 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	palette_init_used_colors();
 
-	shocking_mark_sprites_colors();
+	yunsun16_mark_sprites_colors();
 
 	palette_recalc();
 
 	/* The color of the this layer's transparent pen goes below everything */
-	if (layers_ctrl & 1)
-		for (i = 0; i <= 7; i++)	tilemap_draw(bitmap,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY | i, 0);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
 	else
-	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-		fillbitmap(priority_bitmap,0,NULL);
-	}
+	{						fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+							fillbitmap(priority_bitmap,0,NULL);		}
 
-	/* Priority 0 seems the frontmost */
-	if (layers_ctrl & 1)
-		for (i = 0; i <= 7; i++)	tilemap_draw(bitmap,tilemap_0, i, (i-1)&7);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, 0, 1);
 
-	if (layers_ctrl & 2)
-		for (i = 0; i <= 7; i++)	tilemap_draw(bitmap,tilemap_1, i, (i-1)&7);
+	if (layers_ctrl & 2)	tilemap_draw(bitmap,tilemap_1, 0, 2);
 
-	if (layers_ctrl & 8)	shocking_draw_sprites(bitmap);
+	if (layers_ctrl & 8)	yunsun16_draw_sprites(bitmap);
 
 	/* tilemap.c only copes with screen widths which are a multiple of 8 pixels */
-	if (Machine->visible_area.max_x < (Machine->drv->screen_width-1))
+	if ( (Machine->drv->screen_width-1-Machine->visible_area.max_x) & 7 )
 	{
 		struct rectangle clip;
 		clip.min_x = Machine->visible_area.max_x+1;

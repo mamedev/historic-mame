@@ -1305,7 +1305,7 @@ const char *tms34010_info(void *context, int regnum)
 	static int which = 0;
 	tms34010_regs *r = context;
 
-	which = ++which % 40;
+	which = (which+1) % 40;
 	buffer[which][0] = '\0';
 	if (!context)
 		r = &state;

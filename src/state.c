@@ -26,7 +26,7 @@ enum {
 	SS_MSB_FIRST = 0x02
 };
 
-#define VERBOSE
+//#define VERBOSE
 
 #ifdef VERBOSE
 #define TRACE(x) do {x;} while(0)
@@ -47,7 +47,9 @@ enum {
 	SS_DOUBLE
 };
 
+#ifdef VERBOSE
 static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "int", "dbl" };
+#endif
 static int		   ss_size[] =	{	 1,    1,	  2,	 2, 	4,	   4,	  4,	 8 };
 
 static void ss_c2(unsigned char *, unsigned);
@@ -144,25 +146,41 @@ static UINT32 ss_get_signature(void)
 
 void state_save_reset(void)
 {
-	if(ss_registry) {
-		ss_module *m = ss_registry;
-		while(m) {
-			ss_module *mn = m->next;
-			int i;
-			for(i=0; i<MAX_INSTANCES; i++) {
-				ss_entry *e = m->instances[i];
-				while(e) {
-					ss_entry *en = e->next;
-					free(e->name);
-					free(e);
-					e = en;
-				}
+	ss_func *f;
+	ss_module *m = ss_registry;
+	while(m) {
+		ss_module *mn = m->next;
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e = m->instances[i];
+			while(e) {
+				ss_entry *en = e->next;
+				free(e->name);
+				free(e);
+				e = en;
 			}
-			free(m->name);
-			m = mn;
 		}
-		ss_registry = 0;
+		free(m->name);
+		m = mn;
 	}
+	ss_registry = 0;
+
+	f = ss_prefunc_reg;
+	while(f) {
+		ss_func *fn = f->next;
+		free(f);
+		f = fn;
+	}
+	ss_prefunc_reg = 0;
+
+	f = ss_postfunc_reg;
+	while(f) {
+		ss_func *fn = f->next;
+		free(f);
+		f = fn;
+	}
+	ss_postfunc_reg = 0;
+
 	ss_current_tag = 0;
 	ss_dump_array = 0;
 	ss_dump_file = 0;

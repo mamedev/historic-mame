@@ -88,12 +88,15 @@ void atarigen_update_interrupts(void);
 void atarigen_scanline_int_set(int scanline);
 int atarigen_scanline_int_gen(void);
 WRITE16_HANDLER( atarigen_scanline_int_ack_w );
+WRITE32_HANDLER( atarigen_scanline_int_ack32_w );
 
 int atarigen_sound_int_gen(void);
 WRITE16_HANDLER( atarigen_sound_int_ack_w );
+WRITE32_HANDLER( atarigen_sound_int_ack32_w );
 
 int atarigen_video_int_gen(void);
 WRITE16_HANDLER( atarigen_video_int_ack_w );
+WRITE32_HANDLER( atarigen_video_int_ack32_w );
 
 
 /*---------------------------------------------------------------
@@ -106,6 +109,10 @@ WRITE16_HANDLER( atarigen_eeprom_enable_w );
 WRITE16_HANDLER( atarigen_eeprom_w );
 READ16_HANDLER( atarigen_eeprom_r );
 READ16_HANDLER( atarigen_eeprom_upper_r );
+
+WRITE32_HANDLER( atarigen_eeprom_enable32_w );
+WRITE32_HANDLER( atarigen_eeprom32_w );
+READ32_HANDLER( atarigen_eeprom_upper32_r );
 
 void atarigen_nvram_handler(void *file,int read_or_write);
 void atarigen_hisave(void);
@@ -143,6 +150,9 @@ WRITE16_HANDLER( atarigen_sound_w );
 READ16_HANDLER( atarigen_sound_r );
 WRITE16_HANDLER( atarigen_sound_upper_w );
 READ16_HANDLER( atarigen_sound_upper_r );
+
+WRITE32_HANDLER( atarigen_sound_upper32_w );
+READ32_HANDLER( atarigen_sound_upper32_r );
 
 void atarigen_sound_reset(void);
 WRITE16_HANDLER( atarigen_sound_reset_w );
@@ -188,6 +198,7 @@ int atarigen_get_hblank(void);
 WRITE16_HANDLER( atarigen_halt_until_hblank_0_w );
 WRITE16_HANDLER( atarigen_666_paletteram_w );
 WRITE16_HANDLER( atarigen_expanded_666_paletteram_w );
+WRITE32_HANDLER( atarigen_666_paletteram32_w );
 
 
 /*---------------------------------------------------------------

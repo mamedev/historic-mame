@@ -430,7 +430,7 @@ struct GfxElement *builduifont(void)
 
 static void erase_screen(struct osd_bitmap *bitmap)
 {
-	fillbitmap(Machine->scrbitmap,Machine->uifont->colortable[0],NULL);
+	fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
 	schedule_full_refresh();
 }
 
@@ -1050,7 +1050,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 					int table_offs;
 					int flipx,flipy;
 
-					if (palette_used_colors)
+					if (palette_used_colors && Machine->gfx[bank]->colortable)
 					{
 						memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
 						table_offs = Machine->gfx[bank]->colortable - Machine->remapped_colortable
@@ -1082,7 +1082,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 								flipx,flipy,
 								(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
 								Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-								0,TRANSPARENCY_NONE,0);
+								0,Machine->gfx[bank]->colortable ? TRANSPARENCY_NONE : TRANSPARENCY_NONE_RAW,0);
 
 						lastdrawn = i+firstdrawn;
 					}
@@ -3637,42 +3637,33 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	if (request_loadsave != LOADSAVE_NONE)
 	{
 		int file = 0;
-		int i;
-		InputSeq seq;
-
-		for(i=0; i<SEQ_MAX; i++)
-			seq[i] = CODE_NONE;
 
 		osd_sound_enable(0);
 		osd_pause(1);
-		seq_read_async_start();
 
 		do
 		{
-			int ret;
+			InputCode code;
+
 			if (request_loadsave == LOADSAVE_SAVE)
 				displaymessage(bitmap, "Select position to save to");
 			else
 				displaymessage(bitmap, "Select position to load from");
 
 			update_video_and_audio();
-			ret = seq_read_async(&seq, 1);
 
-			if (ret == 1)
-				file = -1;
-			else if (ret == 0)
+			if (input_ui_pressed(IPT_UI_CANCEL))
+				break;
+
+			code = code_read_async();
+			if (code != CODE_NONE)
 			{
-				if (seq[1] != CODE_NONE)
-				{
-					for(i=0; i<SEQ_MAX; i++)
-						seq[i] = CODE_NONE;
-					seq_read_async_start();
-				} else if (seq[0] >= KEYCODE_A && seq[0] <= KEYCODE_Z)
-					file = 'a' + (seq[0] - KEYCODE_A);
-				else if (seq[0] >= KEYCODE_0 && seq[0] <= KEYCODE_9)
-					file = '0' + (seq[0] - KEYCODE_0);
-				else if (seq[0] >= KEYCODE_0_PAD && seq[0] <= KEYCODE_9_PAD)
-					file = '0' + (seq[0] - KEYCODE_0);
+				if (code >= KEYCODE_A && code <= KEYCODE_Z)
+					file = 'a' + (code - KEYCODE_A);
+				else if (code >= KEYCODE_0 && code <= KEYCODE_9)
+					file = '0' + (code - KEYCODE_0);
+				else if (code >= KEYCODE_0_PAD && code <= KEYCODE_9_PAD)
+					file = '0' + (code - KEYCODE_0);
 			}
 		}
 		while (!file);

@@ -950,7 +950,10 @@ void decode_and_filter_cvsd(UINT8 *input, int bytes, int maskbits, int frequency
 		chunk_start = (total_samples > 512) ? total_samples - 512 : 0;
 		data = output + chunk_start;
 		for ( ; chunk_start < total_samples; chunk_start++)
-			*data++ = (*data * ((total_samples - chunk_start) >> 9));
+		{
+			*data = (*data * ((total_samples - chunk_start) >> 9));
+			data++;
+		}
 	}
 }
 

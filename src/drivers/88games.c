@@ -102,7 +102,7 @@ static READ_HANDLER( cheat_r )
 	{
 		res |= 0x55;
 		res &= bits[cheat];
-		cheat = (++cheat)%4;
+		cheat = (cheat+1)%4;
 	}
 	return res;
 }

@@ -647,7 +647,7 @@ const char *m6809_info(void *context, int regnum)
 	static int which = 0;
 	m6809_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
     buffer[which][0] = '\0';
 	if( !context )
 		r = &m6809;

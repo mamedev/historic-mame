@@ -35,6 +35,7 @@ const char * default_text[] =
 	"On",
 	"Off",
 	"NA",
+	"OK",
 	"INVALID",
 	"(none)",
 	"CPU",
@@ -160,6 +161,10 @@ const char * default_text[] =
 	"Name",
 	"Description",
 	"Code",
+	"Max",
+	"Set",
+	"Cheat conflict found: disable",
+	"Help not available yet",
 
 	/* watchpoints */
 	"Number of bytes",
@@ -170,17 +175,19 @@ const char * default_text[] =
 	"Watch",
 
 	/* searching */
-	"Lives (or some other value)",
+	"Lives (or another value)",
 	"Timers (+/- some value)",
 	"Energy (greater or less)",
 	"Status (bits or flags)",
-	"Slow but sure (changed or not)",
-	"Change Search Speed",
+	"Change search speed",
 	"Matches found",
 	"Search not initialized",
 	"No previous values saved",
 	"Previous values already restored",
 	"Restoration successful",
+	"Select a value",
+	"All values saved",
+	"One match found - added to list",
 
 	NULL
 };

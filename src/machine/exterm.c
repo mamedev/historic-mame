@@ -1,8 +1,6 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 
-unsigned char *exterm_master_speedup, *exterm_slave_speedup;
-
 static int aimpos1, aimpos2;
 
 
@@ -66,29 +64,4 @@ WRITE_HANDLER( exterm_output_port_0_w )
 	coin_counter_w(1, data & 0x4000);
 
 	last = data;
-}
-
-
-READ_HANDLER( exterm_master_speedup_r )
-{
-	int value = READ_WORD(&exterm_master_speedup[offset]);
-
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == 0xfff4d9b0 && !value)
-	{
-		cpu_spinuntil_int();
-	}
-
-	return value;
-}
-
-WRITE_HANDLER( exterm_slave_speedup_w )
-{
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == 0xfffff050)
-	{
-		cpu_spinuntil_int();
-	}
-
-	WRITE_WORD(&exterm_slave_speedup[offset], data);
 }

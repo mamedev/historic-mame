@@ -26,6 +26,8 @@
 #define FM_LFO_SUPPORT 1
 /* support OPN SSG type envelope mode */
 #define FM_SEG_SUPPORT 0
+/* busy flag enulation , The definition of FM_GET_TIME_NOW() is necessary. */
+#define FM_BUSY_FLAG_SUPPORT 1
 
 /* --- external SSG(YM2149/AY-3-8910)emulator interface port */
 /* used by YM2203,YM2608,and YM2610 */
@@ -52,6 +54,12 @@
 #define SSGReset(chip) AY8910_reset(chip)
 
 /* --- external callback funstions for realtime update --- */
+
+/* for busy flag emulation , function FM_GET_TIME_NOW() should be */
+/* return the present time in second unit with (double) value     */
+  /* in timer.c */
+  #define FM_GET_TIME_NOW() timer_get_time()
+
 #if BUILD_YM2203
   /* in 2203intf.c */
   #define YM2203UpdateReq(chip) YM2203UpdateRequest(chip)

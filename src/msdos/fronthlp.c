@@ -305,13 +305,13 @@ void romident(const char* name,int enter_dirs) {
 
 #ifndef MESS
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
-		LIST_LMR, LIST_LISTDETAILS, LIST_GAMELISTHEADER, LIST_GAMELISTFOOTER, LIST_GAMELIST,
+		LIST_LMR, LIST_LISTDETAILS, LIST_GAMELIST,
 		LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
 		LIST_LISTROMSIZE, LIST_LISTCPU, LIST_SOURCEFILE };
 #else
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
-		LIST_LMR, LIST_LISTDETAILS, LIST_GAMELISTHEADER, LIST_GAMELISTFOOTER, LIST_GAMELIST,
+		LIST_LMR, LIST_LISTDETAILS, LIST_GAMELIST,
 		LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
 		LIST_LISTROMSIZE, LIST_LISTCPU, LIST_SOURCEFILE, LIST_MESSINFO };
@@ -329,6 +329,22 @@ void CLIB_DECL terse_printf(char *fmt,...)
 }
 
 
+int CLIB_DECL compare_names(const void *elem1, const void *elem2)
+{
+	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
+	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+	return strcmp(drv1->description, drv2->description);
+}
+
+
+int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
+{
+	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
+	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+	return strcmp(drv1->name, drv2->name);
+}
+
+
 int frontend_help (int argc, char **argv)
 {
 	int i, j;
@@ -338,6 +354,7 @@ int frontend_help (int argc, char **argv)
 	int ident = 0;
 	int help = 1;    /* by default is TRUE */
 	char gamename[9];
+	int sortby = 0;
 
 	/* covert '/' in '-' */
 	for (i = 1;i < argc;i++) if (argv[i][0] == '/') argv[i][0] = '-';
@@ -367,8 +384,6 @@ int frontend_help (int argc, char **argv)
  		if (!stricmp(argv[i],"-listinfo")) list = LIST_LISTINFO;
 		if (!stricmp(argv[i],"-listfull")) list = LIST_LISTFULL;
         if (!stricmp(argv[i],"-listdetails")) list = LIST_LISTDETAILS; /* A detailed MAMELIST.TXT type roms lister */
-        if (!stricmp(argv[i],"-gamelistheader")) list = LIST_GAMELISTHEADER; /* GAMELIST.TXT */
-        if (!stricmp(argv[i],"-gamelistfooter")) list = LIST_GAMELISTFOOTER; /* GAMELIST.TXT */
         if (!stricmp(argv[i],"-gamelist")) list = LIST_GAMELIST; /* GAMELIST.TXT */
 		if (!stricmp(argv[i],"-listgames")) list = LIST_LISTGAMES;
 		if (!stricmp(argv[i],"-listclones")) list = LIST_LISTCLONES;
@@ -385,6 +400,8 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
 		if (!stricmp(argv[i],"-wrongfps")) list = LIST_WRONGFPS;
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
+		if (!stricmp(argv[i],"-sortname")) sortby = 1;
+		if (!stricmp(argv[i],"-sortdriver")) sortby = 2;
 		#ifdef MESS
 				if (!stricmp(argv[i],"-listdevices"))  list = LIST_MESSINFO;
 				if (!stricmp(argv[i],"-listtext")) list = LIST_MESSINFO;
@@ -431,6 +448,21 @@ int frontend_help (int argc, char **argv)
 		showmessinfo();
 		#endif
 		return 0;
+	}
+
+	/* sort the list if requested */
+	if (sortby)
+	{
+		int count = 0;
+
+		/* first count the drivers */
+		while (drivers[count]) count++;
+
+		/* qsort as appropriate */
+		if (sortby == 1)
+			qsort(drivers, count, sizeof(drivers[0]), compare_names);
+		else if (sortby == 2)
+			qsort(drivers, count, sizeof(drivers[0]), compare_driver_names);
 	}
 
 	switch (list)  /* front-end utilities ;) */
@@ -692,7 +724,7 @@ int frontend_help (int argc, char **argv)
 			return 0;
 			break;
 
-		case LIST_GAMELISTHEADER: /* GAMELIST.TXT */
+		case LIST_GAMELIST: /* GAMELIST.TXT */
 			printf("This is the complete list of games supported by MAME %s.\n",build_version);
 			if (!listclones)
 				printf("Variants of the same game are not included, you can use the -listclones command\n"
@@ -749,19 +781,7 @@ int frontend_help (int argc, char **argv)
 			printf("|                                  |       |Correct|       |Screen | Internal |\n");
 			printf("| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n");
 			printf("+----------------------------------+-------+-------+-------+-------+----------+\n");
-			return 0;
-			break;
 
-		case LIST_GAMELISTFOOTER: /* GAMELIST.TXT */
-			printf("+----------------------------------+-------+-------+-------+-------+----------+\n\n");
-			printf("(1) There are variants of the game (usually bootlegs) that work correctly\n");
-#if (HAS_SAMPLES)
-			printf("(2) Needs samples provided separately\n");
-#endif
-			return 0;
-			break;
-
-		case LIST_GAMELIST: /* GAMELIST.TXT */
 			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
@@ -874,6 +894,12 @@ int frontend_help (int argc, char **argv)
 
 					printf("| %-8s |\n",drivers[i]->name);
 				}
+
+			printf("+----------------------------------+-------+-------+-------+-------+----------+\n\n");
+			printf("(1) There are variants of the game (usually bootlegs) that work correctly\n");
+#if (HAS_SAMPLES)
+			printf("(2) Needs samples provided separately\n");
+#endif
 			return 0;
 			break;
 

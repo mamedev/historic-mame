@@ -8,6 +8,9 @@
 #include "machine/atarigen.h"
 
 
+#define ATARI_CLOCK_3MHz		3579000
+
+
 void atarijsa_init(int cpunum, int inputport, int testport, int testmask);
 void atarijsa3_init_adpcm(int region);
 void atarijsa_reset(void);
@@ -136,37 +139,37 @@ extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 #define JSA_I_CPU											\
 	{														\
 		CPU_M6502,											\
-		ATARI_CLOCK_14MHz/8,								\
+		ATARI_CLOCK_3MHz/2,									\
 		atarijsa1_readmem,atarijsa1_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)) \
 	}
 
 #define JSA_II_CPU											\
 	{														\
 		CPU_M6502,											\
-		ATARI_CLOCK_14MHz/8,								\
+		ATARI_CLOCK_3MHz/2,									\
 		atarijsa2_readmem,atarijsa2_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)) \
 	}
 
 #define JSA_III_CPU											\
 	{														\
 		CPU_M6502,											\
-		ATARI_CLOCK_14MHz/8,								\
+		ATARI_CLOCK_3MHz/2,									\
 		atarijsa3_readmem,atarijsa3_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)) \
 	}
 
 #define JSA_IIIS_CPU										\
 	{														\
 		CPU_M6502,											\
-		ATARI_CLOCK_14MHz/8,								\
+		ATARI_CLOCK_3MHz/2,									\
 		atarijsa3s_readmem,atarijsa3s_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)) \
 	}
 
 

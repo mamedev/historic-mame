@@ -906,8 +906,8 @@ ROM_START( ckongalc )
 	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "ck6v.bin",     0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "ck6u.bin",     0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0xb4e827a5 )
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
@@ -935,8 +935,8 @@ ROM_START( monkeyd )
 	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, BADCRC( 0x751c3325 ) )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, BADCRC( 0xab1940fa ) )
+	ROM_LOAD( "ck6v.bin",     0x0000, 0x0020, BADCRC( 0x751c3325 ) )
+	ROM_LOAD( "ck6u.bin",     0x0020, 0x0020, BADCRC( 0xab1940fa ) )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, BADCRC( 0xb4e827a5 ) )
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */

@@ -1,9 +1,8 @@
 /***************************************************************************
 
-						-=  Magix  & Cannon Ball =-
-							(c) 1995  Yun Sung
+						  -= Yun Sung 8 Bit Games =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (eliavit@unina.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
@@ -33,13 +32,13 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-unsigned char *magix_videoram_0,*magix_videoram_1;
-int magix_layers_ctrl;
+data8_t *yunsung8_videoram_0, *yunsung8_videoram_1;
+int yunsung8_layers_ctrl;
 
 /* Variables only used here: */
 
 static struct tilemap *tilemap_0, *tilemap_1;
-static int magix_videobank;
+static int yunsung8_videobank;
 
 
 /***************************************************************************
@@ -48,37 +47,37 @@ static int magix_videobank;
 
 ***************************************************************************/
 
-WRITE_HANDLER( magix_videobank_w )
+WRITE_HANDLER( yunsung8_videobank_w )
 {
-	magix_videobank = data;
+	yunsung8_videobank = data;
 }
 
 
-READ_HANDLER( magix_videoram_r )
+READ_HANDLER( yunsung8_videoram_r )
 {
 	int bank;
 
 	/*	Bit 1 of the bankswitching register contols the c000-c7ff
 		area (Palette). Bit 0 controls the c800-dfff area (Tiles) */
 
-	if (offset < 0x0800)	bank = magix_videobank & 2;
-	else					bank = magix_videobank & 1;
+	if (offset < 0x0800)	bank = yunsung8_videobank & 2;
+	else					bank = yunsung8_videobank & 1;
 
-	if (bank)	return magix_videoram_0[offset];
-	else		return magix_videoram_1[offset];
+	if (bank)	return yunsung8_videoram_0[offset];
+	else		return yunsung8_videoram_1[offset];
 }
 
 
-WRITE_HANDLER( magix_videoram_w )
+WRITE_HANDLER( yunsung8_videoram_w )
 {
 	if (offset < 0x0800)		// c000-c7ff	Banked Palette RAM
 	{
-		int bank = magix_videobank & 2;
+		int bank = yunsung8_videobank & 2;
 		unsigned char *RAM;
 		int r,g,b,color;
 
-		if (bank)	RAM = magix_videoram_0;
-		else		RAM = magix_videoram_1;
+		if (bank)	RAM = yunsung8_videoram_0;
+		else		RAM = yunsung8_videoram_1;
 
 		RAM[offset] = data;
 		color = RAM[offset & ~1] | (RAM[offset | 1] << 8);
@@ -93,32 +92,23 @@ WRITE_HANDLER( magix_videoram_w )
 	else
 	{
 		int tile;
-		int bank = magix_videobank & 1;
+		int bank = yunsung8_videobank & 1;
 
 		if (offset < 0x1000)	tile = (offset-0x0800);		// c800-cfff: Banked Color RAM
 		else				 	tile = (offset-0x1000)/2;	// d000-dfff: Banked Tiles RAM
 
-		if (bank)	{	magix_videoram_0[offset] = data;
+		if (bank)	{	yunsung8_videoram_0[offset] = data;
 						tilemap_mark_tile_dirty(tilemap_0, tile);	}
-		else		{	magix_videoram_1[offset] = data;
+		else		{	yunsung8_videoram_1[offset] = data;
 						tilemap_mark_tile_dirty(tilemap_1, tile);	}
 	}
 }
 
 
-WRITE_HANDLER( magix_flipscreen_w )
+WRITE_HANDLER( yunsung8_flipscreen_w )
 {
 	tilemap_set_flip(ALL_TILEMAPS, (data & 1) ? (TILEMAP_FLIPX|TILEMAP_FLIPY) : 0);
 }
-
-
-
-
-/***************************************************************************
-
-						Callbacks for the TileMap code
-
-***************************************************************************/
 
 
 /***************************************************************************
@@ -127,9 +117,10 @@ WRITE_HANDLER( magix_flipscreen_w )
 
 	Offset:
 
-	Videoram + 0000.b		Code (Low  Bits)
-	Videoram + 0001.b		Code (High Bits)
-	Colorram + 0000.b		Color
+	Video RAM + 0000.b		Code (Low  Bits)
+	Video RAM + 0001.b		Code (High Bits)
+
+	Color RAM + 0000.b		Color
 
 
 ***************************************************************************/
@@ -141,8 +132,8 @@ WRITE_HANDLER( magix_flipscreen_w )
 
 static void get_tile_info_0( int tile_index )
 {
-	int code  =  magix_videoram_0[0x1000+tile_index * 2 + 0] + magix_videoram_0[0x1000+tile_index * 2 + 1] * 256;
-	int color =  magix_videoram_0[0x0800+ tile_index] & 0x07;
+	int code  =  yunsung8_videoram_0[0x1000+tile_index * 2 + 0] + yunsung8_videoram_0[0x1000+tile_index * 2 + 1] * 256;
+	int color =  yunsung8_videoram_0[0x0800+ tile_index] & 0x07;
 	SET_TILE_INFO( 0, code, color );
 }
 
@@ -153,8 +144,8 @@ static void get_tile_info_0( int tile_index )
 
 static void get_tile_info_1( int tile_index )
 {
-	int code  =  magix_videoram_1[0x1000+ tile_index * 2 + 0] + magix_videoram_1[0x1000+tile_index * 2 + 1] * 256;
-	int color =  magix_videoram_1[0x0800+ tile_index] & 0x3f;
+	int code  =  yunsung8_videoram_1[0x1000+ tile_index * 2 + 0] + yunsung8_videoram_1[0x1000+tile_index * 2 + 1] * 256;
+	int color =  yunsung8_videoram_1[0x0800+ tile_index] & 0x3f;
 	SET_TILE_INFO( 1, code, color );
 }
 
@@ -169,7 +160,7 @@ static void get_tile_info_1( int tile_index )
 
 ***************************************************************************/
 
-int magix_vh_start(void)
+int yunsung8_vh_start(void)
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 								TILEMAP_OPAQUE, 8,8, DIM_NX_0, DIM_NY_0 );
@@ -195,9 +186,9 @@ int magix_vh_start(void)
 
 ***************************************************************************/
 
-void magix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void yunsung8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layers_ctrl = (~magix_layers_ctrl) >> 4;
+	int layers_ctrl = (~yunsung8_layers_ctrl) >> 4;
 
 #ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z))

@@ -2,7 +2,7 @@
 
 							-= American Speedway =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 - 8x8 4 Color Tiles (with 8 palettes) used for both:

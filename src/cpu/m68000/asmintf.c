@@ -755,7 +755,7 @@ const char *m68000_info(void *context, int regnum)
 	static int which;
 	a68k_cpu_context *r = context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &M68000_regs;

@@ -793,4 +793,4 @@ ROM_END
 /*           rom       parent  machine   inp       init	    vidflags */
 GAMEX( 1984, dynamski, 0,      dynamski, dynamski, dynamski,	ROT90,	"Taiyo",	"Dynamic Ski", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
 GAME(  1984, chinhero, 0,	   chinhero, chinhero, chinhero,	ROT90,	"Taiyo",	"Chinese Hero" )
-GAMEX( 1985, shangkid, 0,      shangkid, shangkid, shangkid,	0,		"Taiyo (Data East license)",	"Shanghai Kid (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1985, shangkid, 0,      shangkid, shangkid, shangkid,	0,		"Taiyo (Data East license)",	"Shanghai Kid", GAME_NO_COCKTAIL )

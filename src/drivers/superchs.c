@@ -44,8 +44,9 @@ int superchs_vh_start (void);
 void superchs_vh_stop (void);
 void superchs_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
 
+static UINT16 coin_word;
 static data32_t *superchs_ram;
-static data32_t *shared_ram, coin_word;
+static data32_t *shared_ram;
 extern data32_t *f3_shared_ram;
 
 static int steer=0;
@@ -150,25 +151,35 @@ static WRITE32_HANDLER( superchs_input_w )
 	{
 		case 0x00:
 		{
-			if (ACCESSING_LSB) {
+			if (ACCESSING_MSB32)	/* $300000 is watchdog */
+			{
+				watchdog_reset_w(0,data >> 24);
+			}
+
+			if (ACCESSING_LSB32)
+			{
 				EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 				EEPROM_write_bit(data & 0x40);
 				EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 				return;
 			}
 
-			return;	/* many writes to $300000, watchdog ?? */
+			return;
 		}
 
+		/* there are 'vibration' control bits somewhere! */
+
 		case 0x01:
-			if (ACCESSING_MSB32) {
+		{
+			if (ACCESSING_MSB32)
+			{
 				coin_lockout_w(0,~data & 0x01000000);
 				coin_lockout_w(1,~data & 0x02000000);
 				coin_counter_w(0, data & 0x04000000);
 				coin_counter_w(1, data & 0x08000000);
-				coin_word=(data>>16)&0xffff;
+				coin_word=(data >> 16) &0xffff;
 			}
-			//there are 'vibration' control bits somewhere!
+		}
 	}
 }
 
@@ -485,7 +496,7 @@ static struct MachineDriver machine_driver_superchs =
 	8192, 8192,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	superchs_vh_start,
 	superchs_vh_stop,

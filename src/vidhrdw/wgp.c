@@ -1,23 +1,11 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
 #define TC0100SCN_GFX_NUM 1
 
 static struct tilemap *piv_tilemap[3];
-
-/*
-struct tempsprite
-{
-	int gfx;
-	int code,color;
-	int flipx,flipy;
-	int x,y;
-	int zoomx,zoomy;
-	int primask;
-};
-static struct tempsprite *spritelist;
-*/
 
 data16_t *wgp_spritemap;
 size_t wgp_spritemap_size;
@@ -26,8 +14,10 @@ data16_t *wgp_piv_ctrlram;
 
 static UINT16 piv_ctrl_reg;
 static UINT16 piv_zoom[3],piv_scrollx[3],piv_scrolly[3];
-
 UINT16 wgp_rotate_ctrl[8];
+
+void wgp_vh_stop(void);
+
 
 static int has_TC0110PCR(void)
 {
@@ -55,14 +45,15 @@ static int has_TC0110PCR(void)
 
 static void common_get_piv_tile_info(int num,int tile_index)
 {
-	UINT16 tilenum  = wgp_pivram[tile_index + num*0x1000];	// 3 blocks of $2000
-	UINT16 attr = wgp_pivram[tile_index + num*0x1000 + 0x8000];	// 3 blocks of $2000
-	UINT16 colbank = wgp_pivram[tile_index/4 + num*0x400 + 0x3400] >> 8;	// 3 blocks of $800
+	UINT16 tilenum  = wgp_pivram[tile_index + num*0x1000];	/* 3 blocks of $2000 */
+	UINT16 attr = wgp_pivram[tile_index + num*0x1000 + 0x8000];	/* 3 blocks of $2000 */
+	UINT16 colbank = wgp_pivram[tile_index/4 +
+				num*0x400 + 0x3400] >> 8;	/* 3 blocks of $800 */
 
-	int a = (colbank &0xe0);	// keep 3 msbs
-	colbank = ((colbank &0xf) << 1) | a;	// shift 4 lsbs up
+	int a = (colbank &0xe0);	/* kill bit 4 */
+	colbank = ((colbank &0xf) << 1) | a;
 
-	SET_TILE_INFO(2, tilenum & 0x3fff, colbank + (attr & 0x3f));	// hmm, attr &0x1 ?
+	SET_TILE_INFO(2, tilenum & 0x3fff, colbank + (attr & 0x3f));	/* or attr &0x1 ?? */
 	tile_info.flags = TILE_FLIPYX( (attr & 0xc0) >> 6);
 }
 
@@ -81,32 +72,34 @@ static void get_piv2_tile_info(int tile_index)
 	common_get_piv_tile_info(2,tile_index);
 }
 
+static void dirty_piv_tilemaps(void)
+{
+	tilemap_mark_all_tiles_dirty(piv_tilemap[0]);
+	tilemap_mark_all_tiles_dirty(piv_tilemap[1]);
+	tilemap_mark_all_tiles_dirty(piv_tilemap[2]);
+}
+
 
 int wgp_core_vh_start (int tc0100scn_hide_pixels, int piv_xoffs, int piv_yoffs)
 {
-	/* Up to $1000/8 big sprites, requires 0x200 * sizeof(*spritelist)
-	   Multiply this by 32 to give room for the number of small sprites,
-	   which are what actually get put in the structure. */
-
-// Plan to move this driver over to pdrawgfx...
-//	spritelist = malloc(0x4000 * sizeof(*spritelist));
-//	if (!spritelist)
-//		return 1;
-
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,tc0100scn_hide_pixels))
-		return 1;
-
-	if (has_TC0110PCR())
-		if (TC0110PCR_vh_start())
-			return 1;
-
-	piv_tilemap[0] = tilemap_create(get_piv0_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,64);
+	piv_tilemap[0] = tilemap_create(get_piv0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	piv_tilemap[1] = tilemap_create(get_piv1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	piv_tilemap[2] = tilemap_create(get_piv2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 
 	if (!piv_tilemap[0] || !piv_tilemap[1] || !piv_tilemap[2] )
 		return 1;
 
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,tc0100scn_hide_pixels))
+		return 1;
+
+	if (has_TC0110PCR())
+		if (TC0110PCR_vh_start())
+		{
+			wgp_vh_stop();
+			return 1;
+		}
+
+	tilemap_set_transparent_pen( piv_tilemap[0],0 );
 	tilemap_set_transparent_pen( piv_tilemap[1],0 );
 	tilemap_set_transparent_pen( piv_tilemap[2],0 );
 
@@ -124,6 +117,9 @@ int wgp_core_vh_start (int tc0100scn_hide_pixels, int piv_xoffs, int piv_yoffs)
 
 	TC0100SCN_set_colbanks(0x80,0xc0,0x40);
 
+	/* colors from saved states are often screwy (and this doesn't help...) */
+	state_save_register_func_postload(dirty_piv_tilemaps);
+
 	return 0;
 }
 
@@ -139,9 +135,6 @@ int wgp2_vh_start (void)
 
 void wgp_vh_stop (void)
 {
-//	free(spritelist);
-//	spritelist = 0;
-
 	TC0100SCN_vh_stop();
 
 	if (has_TC0110PCR())
@@ -187,7 +180,7 @@ custom chip capable of four rather than three tilemaps.)
 
 50a000  ? maybe piv0 rowscroll [sky]  (not seen anything here yet)
 50c000  piv1 rowscroll [road] (values 0xfd00 - 0x400)
-50e000  piv2 rowscroll [road] (values 0xfd00 - 0x403)
+50e000  piv2 rowscroll [road or scenery] (values 0xfd00 - 0x403)
 
 510000 - 511fff : unknown/unused
 512000 - 517fff : piv tilemaps 0-2 [just tile colors?]
@@ -240,7 +233,7 @@ WRITE16_HANDLER( wgp_piv_ctrl_word_w )
 	{
 		case 0x00:
 			a = -data;
-			b = (a &0xffe0) >> 1;
+			b = (a &0xffe0) >> 1;	/* kill bit 4 */
 			piv_scrollx[0] = (a &0xf) | b;
 			break;
 
@@ -269,41 +262,32 @@ WRITE16_HANDLER( wgp_piv_ctrl_word_w )
 			break;
 
 		case 0x06:
-			/* looks like overall control reg, apparently always 0x39 */
-			/* %00111001 */
+			/* Overall control reg (?)
+			   0x39  %00111001   normal
+			   0x2d  %00101101   piv2 layer goes under piv1
+			         seen on Wgp stages 4,5,7 in which piv 2 used
+			         for cloud or scenery wandering up screen */
+
 			piv_ctrl_reg = data;
 			break;
 
 		case 0x08:
-			// piv 0 zoom? (0x7f = normal, not seen other values)
+			/* piv 0 zoom? (0x7f = normal, not seen others) */
 			piv_zoom[0] = data;
 			break;
 
 		case 0x09:
-			// piv 1 zoom? (0x7f = normal, values 0 & 0xff7f-ffbc in Wgp2)
+			/* piv 1 zoom? (0x7f = normal, values 0 &
+			      0xff7f-ffbc in Wgp2) */
 			piv_zoom[1] = data;
 			break;
 
 		case 0x0a:
-			// piv 2 zoom? (0x7f = normal, values 0 & 0xff7f-ffbc in Wgp2)
+			/* piv 2 zoom? (0x7f = normal, values 0 &
+			      0xff7f-ffbc in Wgp2, 0-0x98 in Wgp round 4/5) */
 			piv_zoom[2] = data;
 			break;
 	}
-}
-
-
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-READ16_HANDLER( wgp_spritemap_word_r )
-{
-	return wgp_spritemap[offset];
-}
-
-WRITE16_HANDLER( wgp_spritemap_word_w )
-{
-	COMBINE_DATA(&wgp_spritemap[offset]);
 }
 
 
@@ -317,7 +301,7 @@ void wgp_update_palette (void)
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	int offs,code,tile,color;
 	int bigsprite,map_index;
-	unsigned short palette_map[256];
+	UINT16 palette_map[256];
 
 	memset (palette_map, 0, sizeof (palette_map));
 
@@ -365,26 +349,20 @@ void wgp_update_palette (void)
 TODO
 ====
 
-Implement rotation/zoom properly. (Screen shots show that
-close-to sprites aren't big enough.)
+Implement rotation/zoom properly.
 
-Sprite/piv priority: two later circuits have wide sprites which
-wander up the screen once per lap, and look like they ought to
-be *under* the 2 road piv layers.
+Sprite/piv priority: sprites always over?
 
-Wgp1 has some junky brown sprites in-game. I think they are meant
-to be mud banks on the track edge.
+Wgp had some junky brown mud bank sprites in-game.
 
-(They are indexed 0xe720-e790. 0x2720*4 => 0x9c80 thru 9e80 is
-the spritemap area defining these junk sprites. Data there is
-read in from the data rom, so perhaps that is a partial bad dump.
-The odd thing in this spritemap area is the presence of tile
-numbers 1,2,4,8: these are the dark brown lumps which appear
-in the junk sprites. Even zeroing those, many of the remaining
-tiles look wrong.)
+They are indexed 0xe720-e790. 0x2720*4 => +0x9c80-9e80 in
+the spritemap area. They should be 2x2 not 4x4 tiles. We
+kludge this. Round 2 +0x9d40-9f40 contains the 2x2 sprites.
+What *really* controls number of tiles in a sprite?
 
-Sprite colors ok? (dust after crash in Wgp2 is odd; some
-black/grey barrels on late Wgp circuit also look strange)
+Sprite colors: dust after crash in Wgp2 is odd; some
+black/grey barrels on late Wgp circuit also look strange -
+possibly the same wrong color.
 
 
 Memory Map
@@ -400,9 +378,12 @@ Memory Map
 	........ ...x....  unknown (Wgp2 only)
 	........ ....cccc  color (0-15)
 
-	Tile map for each big sprite is 64 bytes.
-	(= 32 words = 16 tiles: every big sprite comprises 4x4
-	16x16 tiles so is 64x64 pixels)
+	Tile map for each standard big sprite is 64 bytes (16 tiles).
+	(standard big sprite comprises 4x4 16x16 tiles)
+
+	Tile map for each small sprite only uses 16 of the 64 bytes.
+      The remaining 48 bytes are garbage and should be ignored.
+	(small sprite comprises 2x2 16x16 tiles)
 
 40c000 - 40dbff : Sprite Table
 
@@ -412,34 +393,44 @@ Memory Map
 	(0x1c0 [no.of entries] * 0x40 [bytes for big sprite] = 0x6fff
 	of sprite tile mapping area can be addressed at any one time.)
 
-	Sprite entry (preliminary)
+	Sprite entry     (preliminary)
 	------------
-      +0x00  x pos (signed)
-      +0x02  y pos (signed)
-      +0x04  index to tile mapping area [2 msbs always set?]
 
-		(400000 + (index &0x3fff) * 4) points to relevant part
-		of sprite tile mapping area. Can't have index > 0x2fff
+	+0x00  x pos (signed)
+	+0x02  y pos (signed)
+	+0x04  index to tile mapping area [2 msbs always set]
 
-      +0x06  ? usually around 1 thru 0x5f, maybe zoom.
-		  0x3f (63) = standard ?
-	+0x08  rotation? (usually stuck at 0xf800)
-	+0x0a  rotation? (usually stuck at 0xf800)
-      +0x0c  zoom? around 0x1400 means sprite is small,
-	        0x400 = standard size, <0x400 and it's magnified
-	+0x0e  non-zero only during rotation (?)
+	       (400000 + (index &0x3fff) << 2) points to relevant part of
+	       sprite tile mapping area. Index >0x2fff would be invalid.
 
-	(No longer used entries often have 0xfff6 in +0x06 and +0x08.)
+	+0x06  zoom size (pixels) [typical range 0x1-5f, 0x3f = standard]
+	       Looked up from a logarithm table in the data rom indexed
+	       by the z coordinate. Max size prog allows before it blanks
+	       the sprite is 0x140.
 
-	Only 2 rotation examples (i) at 40c000, when Taito
-	logo displayed (Wgp only). (ii) the stage with rain.
+	+0x08  incxx ?? (usually stuck at 0xf800)
+	+0x0a  incyy ?? (usually stuck at 0xf800)
+
+	+0x0c  z coordinate i.e. how far away the sprite is from you
+	       going into the screen. Max distance prog allows before it
+	       blanks the sprite is 0x3fff. 0x1400 is about the farthest
+	       away that the code creates sprites. 0x400 = standard
+	       distance corresponding to 0x3f zoom.  <0x400 = close to
+
+	+0x0e  non-zero only during rotation.
+
+	NB: +0x0c and +0x0e are paired. Equivalent of incyx and incxy ??
+
+	(No longer used entries typically have 0xfff6 in +0x06 and +0x08.)
+
+	Only 2 rotation examples (i) at 0x40c000 when Taito
+	logo displayed (Wgp only). (ii) stage 5 (rain).
 	Other in-game sprites are simply using +0x06 and +0x0c,
-	i.e. zoom.
 
 	So the sprite rotation in Wgp screenshots must be a *blanket*
 	rotate effect, identical to the one applied to piv layers.
-	This explains why sprite/piv positions are mostly okay
-	despite my failure to implement rotation.
+	This explains why sprite/piv positions are basically okay
+	despite failure to implement rotation.
 
 40dc00 - 40dfff: Active Sprites list
 
@@ -454,7 +445,8 @@ Memory Map
 ****************************************************************/
 
 /* Sprite tilemapping area doesn't have a straightforward
-   structure for each big sprite, so we use a lookup table. */
+   structure for each big sprite: the hardware is probably
+   constructing each 4x4 sprite from 4 2x2 sprites... */
 
 static UINT8 xlookup[16] =
 	{ 0, 1, 0, 1,
@@ -470,11 +462,11 @@ static UINT8 ylookup[16] =
 
 static void wgp_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 {
-	int offs,code,i,j,k;
-	int x,y,bigsprite;
-	int col,flipx,flipy,zoomx,zoomy;
-	int curx,cury,zx,zy;
-	UINT16 map_index;
+	int offs,i,j,k;
+	int x,y,curx,cury;
+	int zx,zy,zoomx,zoomy;
+	UINT8 small_sprite,col,flipx,flipy;
+	UINT16 code,bigsprite,map_index;
 	UINT16 rotate=0;
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 
@@ -492,10 +484,9 @@ static void wgp_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 
 			/* The last five words [i + 3 thru 7] must be zoom/rotation
 			   control: for time being we kludge zoom using 1 word.
-			   Int timing must be bad: the fff6/0 "dead" sprites should
-			   surely not be referenced by the active sprites list. */
+			   Timing problems are causing many glitches. */
 
-if ((spriteram16[i + 4]=0xfff6) && (spriteram16[i + 5]=0))
+if ((spriteram16[i + 4]==0xfff6) && (spriteram16[i + 5]==0))
 	continue;
 
 if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
@@ -505,43 +496,83 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 	rotate = i << 1;
 
 	/***** Begin zoom kludge ******/
-			zoomx = (spriteram16[i + 3] &0x7f) + 1;
-			zoomy = (spriteram16[i + 3] &0x7f) + 1;
+
+			zoomx = (spriteram16[i + 3] &0x1ff) + 1;
+			zoomy = (spriteram16[i + 3] &0x1ff) + 1;
 
 			y -=4;
-			y -=((0x40-zoomy)/4);	// distant sprites were some 16 pixels too far down
+	// distant sprites were some 16 pixels too far down //
+			y -=((0x40-zoomy)/4);
+
 	/****** end zoom kludge *******/
 
 			/* Treat coords as signed */
 			if (x & 0x8000)  x -= 0x10000;
 			if (y & 0x8000)  y -= 0x10000;
 
-			map_index = bigsprite << 1;	/* now we can access the sprite tile map */
+			map_index = bigsprite << 1;	/* now we access sprite tilemap */
 
-			for (i=0;i<16;i++)
+			/* don't know what selects 2x2 sprites: we use a nasty kludge
+			   which seems to work ok */
+			i = wgp_spritemap[map_index + 0xa];
+			j = wgp_spritemap[map_index + 0xc];
+			small_sprite = ((i > 0) & (i <=8) & (j > 0) & (j <=8));
+
+			if (small_sprite)
 			{
-				code = wgp_spritemap[(map_index + (i << 1))] &tile_mask;
-				col  = wgp_spritemap[(map_index + (i << 1) + 1)] &0xf;
+				for (i=0;i<4;i++)
+				{
+					code = wgp_spritemap[(map_index + (i << 1))] &tile_mask;
+					col  = wgp_spritemap[(map_index + (i << 1) + 1)] &0xf;
 
-				flipx=0;	// no flip xy if sprites are rotatable?
-				flipy=0;
+					flipx=0;	// no flip xy?
+					flipy=0;
 
-				k = xlookup[i];	// assumes no xflip
-				j = ylookup[i];	// assumes no yflip
+					k = xlookup[i];	// assumes no xflip
+					j = ylookup[i];	// assumes no yflip
 
-				curx = x + ((k*zoomx)/4);
-				cury = y + ((j*zoomy)/4);
+					curx = x + ((k*zoomx)/2);
+					cury = y + ((j*zoomy)/2);
 
-				zx= x + (((k+1)*zoomx)/4) - curx;
-				zy= y + (((j+1)*zoomy)/4) - cury;
+					zx= x + (((k+1)*zoomx)/2) - curx;
+					zy= y + (((j+1)*zoomy)/2) - cury;
 
-				drawgfxzoom(bitmap, Machine->gfx[0],
-						code,
-						col,
-						flipx, flipy,
-						curx,cury,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
-						zx << 12, zy << 12);
+					drawgfxzoom(bitmap, Machine->gfx[0],
+							code,
+							col,
+							flipx, flipy,
+							curx,cury,
+							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							zx << 12, zy << 12);
+				}
+			}
+			else
+			{
+				for (i=0;i<16;i++)
+				{
+					code = wgp_spritemap[(map_index + (i << 1))] &tile_mask;
+					col  = wgp_spritemap[(map_index + (i << 1) + 1)] &0xf;
+
+					flipx=0;	// no flip xy?
+					flipy=0;
+
+					k = xlookup[i];	// assumes no xflip
+					j = ylookup[i];	// assumes no yflip
+
+					curx = x + ((k*zoomx)/4);
+					cury = y + ((j*zoomy)/4);
+
+					zx= x + (((k+1)*zoomx)/4) - curx;
+					zy= y + (((j+1)*zoomy)/4) - cury;
+
+					drawgfxzoom(bitmap, Machine->gfx[0],
+							code,
+							col,
+							flipx, flipy,
+							curx,cury,
+							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							zx << 12, zy << 12);
+				}
 			}
 		}
 
@@ -563,10 +594,11 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 
 void wgp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int a,b,i,j,layer[3];
+	int a,b,i,j;
+	UINT8 layer[3];
 
 #ifdef MAME_DEBUG
-	static int dislayer[4];
+	static UINT8 dislayer[4];
 	char buf[80];
 #endif
 
@@ -655,30 +687,40 @@ void wgp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+//	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+
+	layer[0] = 0;
+	layer[1] = 1;
+	layer[2] = 2;
+
+	if (piv_ctrl_reg == 0x2d)
+	{
+		layer[1] = 2;
+		layer[2] = 1;
+	}
+
+/* We should draw the following on a 1024x1024 bitmap... */
 
 #ifdef MAME_DEBUG
-	if (dislayer[0]==0)
+	if (dislayer[layer[0]]==0)
 #endif
-	tilemap_draw(bitmap,piv_tilemap[0],0,0);
-
-/// A few sprites may need to be drawn here (under road) ///
+	tilemap_draw(bitmap,piv_tilemap[layer[0]],TILEMAP_IGNORE_TRANSPARENCY,0);
 
 #ifdef MAME_DEBUG
-	if (dislayer[1]==0)
+	if (dislayer[layer[1]]==0)
 #endif
-	tilemap_draw(bitmap,piv_tilemap[1],0,0);
+	tilemap_draw(bitmap,piv_tilemap[layer[1]],0,0);
 
 #ifdef MAME_DEBUG
-	if (dislayer[2]==0)
+	if (dislayer[layer[2]]==0)
 #endif
-	tilemap_draw(bitmap,piv_tilemap[2],0,0);
+	tilemap_draw(bitmap,piv_tilemap[layer[2]],0,0);
 
 	wgp_draw_sprites(bitmap,0,16);
 
-/// Here we should apply rotation from wgp_rotate_ctrl[] to entire bitmap ///
-/// before we draw TC0100SCN layers
+/* Then here we should apply rotation from wgp_rotate_ctrl[] to
+   the bitmap _before_ we draw the TC0100SCN layers on it */
 
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
@@ -692,15 +734,9 @@ void wgp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 
-	{
-// Use pdrawgfx for sprites when sprite/tile priority understood...
-//		int primasks[2] = {0xf0,0xfc};
-	}
-
 #if 0
 	{
 		char buf[80];
-
 		sprintf(buf,"piv_ctrl_reg: %04x zoom: %04x %04x %04x",piv_ctrl_reg,piv_zoom[0],piv_zoom[1],piv_zoom[2]);
 		usrintf_showmessage(buf);
 	}

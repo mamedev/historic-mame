@@ -1962,7 +1962,7 @@ const char *i8x41_info(void *context, int regnum)
 	static int which = 0;
 	I8X41 *r = context;
 
-	which = ++which % 8;
+	which = (which+1) % 8;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &i8x41;

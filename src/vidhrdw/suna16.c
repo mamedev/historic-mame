@@ -2,7 +2,7 @@
 
 							-=  SunA 16 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 	These games have only sprites, of a peculiar type:

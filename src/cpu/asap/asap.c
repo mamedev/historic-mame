@@ -761,7 +761,7 @@ const char *asap_info(void *context, int regnum)
 	asap_regs *r = context;
 	UINT32 *regbase = r->r;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
     buffer[which][0] = '\0';
 
 	if (!context)

@@ -13,7 +13,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(sort $(SOUNDOBJS)) \
 	$(OBJ)/sound/votrax.o \
 	$(OBJ)/machine/z80fmly.o $(OBJ)/machine/6821pia.o \
-	$(OBJ)/machine/8255ppi.o \
+	$(OBJ)/machine/8255ppi.o $(OBJ)/machine/7474.o \
 	$(OBJ)/vidhrdw/generic.o $(OBJ)/vidhrdw/vector.o \
 	$(OBJ)/vidhrdw/avgdvg.o $(OBJ)/machine/mathbox.o \
 	$(OBJ)/machine/ticket.o $(OBJ)/machine/eeprom.o \

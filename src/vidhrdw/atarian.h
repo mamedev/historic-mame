@@ -92,6 +92,8 @@ data16_t *atarian_get_vram(int map);
 WRITE16_HANDLER( atarian_0_vram_w );
 WRITE16_HANDLER( atarian_1_vram_w );
 
+WRITE32_HANDLER( atarian_0_vram32_w );
+
 
 
 /*##########################################################################
@@ -100,6 +102,8 @@ WRITE16_HANDLER( atarian_1_vram_w );
 
 extern data16_t *atarian_0_base;
 extern data16_t *atarian_1_base;
+
+extern data32_t *atarian_0_base32;
 
 
 #endif

@@ -4,30 +4,6 @@ IronHorse
 
 driver by Mirko Buffoni
 
-memory map (preliminary)
-
-0000-00ff  Work area
-2000-23ff  ColorRAM
-2400-27ff  VideoRAM
-2800-2fff  RAM
-3000-30ff  First sprite bank?
-3800-38ff  Second sprite bank?
-3f00-3fff  Stack AREA
-4000-ffff  ROM
-
-Read:
-0b01:	Player 2 controls
-0b02:	Player 1 controls
-0b03:	Coin + selftest
-0a00:	DSW1
-0b00:	DSW2
-0900:	DSW3
-
-Write:
-0003:       Bit 1 selects the 1024 char bank, bit 3 the sprite RAM bank, other bits unknown
-0004:       Bit 0 controls NMI, bit 3 controls FIRQ, other bits unknown
-0020-003f:  Scroll registers
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -63,16 +39,23 @@ static WRITE_HANDLER( ironhors_sh_irqtrigger_w )
 	cpu_cause_interrupt(1,0xff);
 }
 
+static WRITE_HANDLER( ironhors_filter_w )
+{
+	set_RC_filter(0,1000,2200,1000,data & 0x04 ? 220000 : 0); /* YM2203-SSG-A */
+	set_RC_filter(1,1000,2200,1000,data & 0x02 ? 220000 : 0); /* YM2203-SSG-B */
+	set_RC_filter(2,1000,2200,1000,data & 0x01 ? 220000 : 0); /* YM2203-SSG-C */
+}
+
 
 
 static MEMORY_READ_START( ironhors_readmem )
 	{ 0x0020, 0x003f, MRA_RAM },
-	{ 0x0b03, 0x0b03, input_port_0_r },	/* coins + selftest */
-	{ 0x0b02, 0x0b02, input_port_1_r },	/* player 1 controls */
-	{ 0x0b01, 0x0b01, input_port_2_r },	/* player 2 controls */
+	{ 0x0900, 0x0900, input_port_5_r },	/* Dipswitch settings 2 */
 	{ 0x0a00, 0x0a00, input_port_3_r },	/* Dipswitch settings 0 */
 	{ 0x0b00, 0x0b00, input_port_4_r },	/* Dipswitch settings 1 */
-	{ 0x0900, 0x0900, input_port_5_r },	/* Dipswitch settings 2 */
+	{ 0x0b01, 0x0b01, input_port_2_r },	/* player 2 controls */
+	{ 0x0b02, 0x0b02, input_port_1_r },	/* player 1 controls */
+	{ 0x0b03, 0x0b03, input_port_0_r },	/* coins + selftest */
 	{ 0x2000, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
@@ -84,7 +67,7 @@ static MEMORY_WRITE_START( ironhors_writemem )
 	{ 0x0020, 0x003f, MWA_RAM, &ironhors_scroll },
 	{ 0x0800, 0x0800, soundlatch_w },
 	{ 0x0900, 0x0900, ironhors_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x0a00, 0x0a00, ironhors_palettebank_w },
+	{ 0x0a00, 0x0a00, ironhors_palettebank_w },	/* + coin counters */
 	{ 0x0b00, 0x0b00, watchdog_reset_w },
 	{ 0x2000, 0x23ff, colorram_w, &colorram },
 	{ 0x2400, 0x27ff, videoram_w, &videoram, &videoram_size },
@@ -117,12 +100,12 @@ static PORT_WRITE_START( ironhors_sound_writeport )
 PORT_END
 
 
-
 static MEMORY_READ_START( farwest_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x8000, 0x8000, soundlatch_r },
 MEMORY_END
+
 static MEMORY_WRITE_START( farwest_sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
@@ -136,7 +119,7 @@ INPUT_PORTS_START( ironhors )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -236,14 +219,14 @@ INPUT_PORTS_START( ironhors )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dairesya )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -342,39 +325,40 @@ INPUT_PORTS_START( dairesya )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
+
 
 
 static struct GfxLayout ironhors_charlayout =
 {
-	8,8,	/* 8*8 characters */
-	2048,	/* 2048 characters */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x8000*8+0*4, 0x8000*8+1*4, 2*4, 3*4, 0x8000*8+2*4, 0x8000*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
 };
 
 static struct GfxLayout ironhors_spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	512,	/* 512 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x8000*8+0*4, 0x8000*8+1*4, 2*4, 3*4, 0x8000*8+2*4, 0x8000*8+3*4,
-           16*8+0*4, 16*8+1*4, 16*8+0x8000*8+0*4, 16*8+0x8000*8+1*4, 16*8+2*4, 16*8+3*4, 16*8+0x8000*8+2*4, 16*8+0x8000*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-           16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	32*32
 };
 
 static struct GfxDecodeInfo ironhors_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &ironhors_charlayout,         0, 16*8 },
-	{ REGION_GFX2, 0, &ironhors_spritelayout, 16*8*16, 16*8 },
-	{ REGION_GFX2, 0, &ironhors_charlayout,   16*8*16, 16*8 },  /* to handle 8x8 sprites */
+	{ REGION_GFX1, 0, &ironhors_spritelayout, 16*8*16, 16*8 },
+	{ REGION_GFX1, 0, &ironhors_charlayout,   16*8*16, 16*8 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -426,29 +410,27 @@ static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	18432000/6,		/* 3.07 MHz?  mod by Shingo Suzuki 1999/10/15 */
+	18432000/6,		/* 3.072 MHz */
 	{ YM2203_VOL(40,40) },
 	{ 0 },
 	{ 0 },
-	{ 0 },
+	{ ironhors_filter_w },
 	{ 0 }
 };
 
 
-
 static const struct MachineDriver machine_driver_ironhors =
 {
-	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
+			18432000/6,        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
+			18432000/6,        /* 3.072 MHz */
 			ironhors_sound_readmem,ironhors_sound_writemem,ironhors_sound_readport,ironhors_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -481,17 +463,16 @@ static const struct MachineDriver machine_driver_ironhors =
 
 static const struct MachineDriver machine_driver_farwest =
 {
-	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			2000000,        /* ? */
+			18432000/6,        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
+			18432000/6,        /* 3.072 MHz */
 			farwest_sound_readmem,farwest_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -538,13 +519,11 @@ ROM_START( ironhors )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio cpu */
 	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 
-	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "09f_h07.bin",  0x00000, 0x8000, 0xc761ec73 )
-	ROM_LOAD( "06f_h04.bin",  0x08000, 0x8000, 0xc1486f61 )
-
-	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "08f_h06.bin",  0x00000, 0x8000, 0xf21d8c93 )
-	ROM_LOAD( "07f_h05.bin",  0x08000, 0x8000, 0x60107859 )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "08f_h06.bin",  0x00000, 0x8000, 0xf21d8c93 )
+	ROM_LOAD16_BYTE( "07f_h05.bin",  0x00001, 0x8000, 0x60107859 )
+	ROM_LOAD16_BYTE( "09f_h07.bin",  0x10000, 0x8000, 0xc761ec73 )
+	ROM_LOAD16_BYTE( "06f_h04.bin",  0x10001, 0x8000, 0xc1486f61 )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
@@ -562,13 +541,11 @@ ROM_START( dairesya )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio cpu */
 	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
 
-	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "560-k07.9f",   0x00000, 0x8000, 0xc8a1b840 )
-	ROM_LOAD( "560-k04.6f",   0x08000, 0x8000, 0xc883d856 )
-
-	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "560-j06.8f",   0x00000, 0x8000, 0xa6e8248d )
-	ROM_LOAD( "560-j05.7f",   0x08000, 0x8000, 0xf75893d4 )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "560-j06.8f",   0x00000, 0x8000, 0xa6e8248d )
+	ROM_LOAD16_BYTE( "560-j05.7f",   0x00001, 0x8000, 0xf75893d4 )
+	ROM_LOAD16_BYTE( "560-k07.9f",   0x10000, 0x8000, 0xc8a1b840 )
+	ROM_LOAD16_BYTE( "560-k04.6f",   0x10001, 0x8000, 0xc883d856 )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
@@ -609,4 +586,4 @@ ROM_END
 
 GAMEX( 1986, ironhors, 0,        ironhors, ironhors, 0, ROT0, "Konami", "Iron Horse", GAME_NO_COCKTAIL )
 GAMEX( 1986, dairesya, ironhors, ironhors, dairesya, 0, ROT0, "[Konami] (Kawakusu license)", "Dai Ressya Goutou (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

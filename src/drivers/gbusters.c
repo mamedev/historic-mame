@@ -91,7 +91,7 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 
 static WRITE_HANDLER( gbusters_unknown_w )
 {
-	logerror("%04x: (???) write %02x\n",cpu_get_pc(), data);
+	logerror("%04x: write %02x to 0x1f9c\n",cpu_get_pc(), data);
 
 {
 char baf[40];

@@ -269,6 +269,9 @@ enum
 #if (HAS_Z80GB)
 	CPU_Z80GB,
 #endif
+#if (HAS_Z80_MSX)
+	CPU_Z80_MSX,
+#endif
 #endif
     CPU_COUNT
 };

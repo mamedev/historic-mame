@@ -474,7 +474,11 @@ void ataripf_free(void)
 		/* free the extended usage maps */
 		for (i = 0; i < MAX_GFX_ELEMENTS; i++)
 			if (pf->gfxelement[i].usage)
+			{
 				free(pf->gfxelement[i].usage);
+				pf->gfxelement[i].usage = NULL;
+				pf->gfxelement[i].initialized = 0;
+			}
 
 		pf->initialized = 0;
 	}

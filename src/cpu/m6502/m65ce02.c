@@ -69,7 +69,7 @@ extern void m65ce02_runtime_loader_init(void)
 /* Layout of the registers in the debugger */
 static UINT8 m65ce02_reg_layout[] = {
 	M65CE02_A,M65CE02_X,M65CE02_Y,M65CE02_Z,M65CE02_S,M65CE02_PC,
-	M65CE02_P, 
+	M65CE02_P,
 	-1,
 	M65CE02_EA,M65CE02_ZP,M65CE02_NMI_STATE,M65CE02_IRQ_STATE, M65CE02_B,
 	0
@@ -380,7 +380,7 @@ const char *m65ce02_info(void *context, int regnum)
 	static int which = 0;
 	m65ce02_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &m65ce02;

@@ -9,7 +9,6 @@
 
   This video driver is used by the following drivers:
   - galaxian.c
-  - mooncrst.c
   - scramble.c
   - scobra.c
 
@@ -59,9 +58,11 @@ static struct star stars[MAX_STARS];
 static int total_stars;
 static void (*modify_charcode  )(int*,int);            /* function to call to do character banking */
 static void (*modify_spritecode)(int*,int*,int*,int);  /* function to call to do sprite banking */
+static int  (*get_bullet_color)(int);            	   /* function to call to get the color for a bullet */
 static int mooncrst_gfxextend;
 static int pisces_gfxbank;
 static int jumpbug_gfxbank[5];
+static int darkplnt_bullet_color;
 
 static int background_on;
 static unsigned char backcolor[256];
@@ -71,6 +72,7 @@ static WRITE_HANDLER( mooncrgx_gfxextend_w );
 static void mooncrst_modify_charcode  (int *charcode,int offs);
 static void  moonqsr_modify_charcode  (int *charcode,int offs);
 static void   pisces_modify_charcode  (int *charcode,int offs);
+static void  batman2_modify_charcode  (int *charcode,int offs);
 static void  mariner_modify_charcode  (int *charcode,int offs);
 static void  jumpbug_modify_charcode  (int *charcode,int offs);
 
@@ -79,7 +81,12 @@ static void  moonqsr_modify_spritecode(int *spritecode,int *flipx,int *flipy,int
 static void   ckongs_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void  calipso_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void   pisces_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
+static void  batman2_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void  jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
+
+static int  galaxian_get_bullet_color (int offs);
+static int  scramble_get_bullet_color (int offs);
+static int  darkplnt_get_bullet_color (int offs);
 
 /***************************************************************************
 
@@ -120,7 +127,9 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	color_mask = (Machine->gfx[0]->color_granularity == 4) ? 7 : 3;
 
+
 	/* first, the character/sprite palette */
+
 	for (i = 0;i < 32;i++)
 	{
 		int bit0,bit1,bit2;
@@ -143,7 +152,9 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		color_prom++;
 	}
 
+
 	/* now the stars */
+
 	for (i = 0;i < 64;i++)
 	{
 		int bits;
@@ -158,12 +169,15 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		*(palette++) = map[bits];
 	}
 
+
 	/* characters and sprites use the same palette */
+
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
 		/* 00 is always mapped to pen 0 */
 		if ((i & (Machine->gfx[0]->color_granularity - 1)) == 0)  COLOR(0,i) = 0;
 	}
+
 
 	/* bullets can be either white or yellow */
 
@@ -172,15 +186,76 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	COLOR(2,2) = 0;
 	COLOR(2,3) = 0x3f + STARS_COLOR_BASE;	/* white */
 
-	/* default blue background */
+
+	/* blue background */
+
 	*(palette++) = 0;
 	*(palette++) = 0;
 	*(palette++) = 0x55;
+
+
+	/* background color table */
 
 	for (i = 0;i < TOTAL_COLORS(3);i++)
 	{
 		COLOR(3,i) = 96 + (i % (Machine->drv->total_colors - 96));
 	}
+}
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Dark Planet has one 32 bytes palette PROM, connected to the RGB output this way:
+
+  bit 5 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 1  kohm resistor  -- BLUE
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+  The RGB outputs have a 470 ohm pull-down each.
+
+***************************************************************************/
+void darkplnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+    galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+
+
+	/* first, the character/sprite palette */
+
+	for (i = 0;i < 32;i++)
+	{
+		int bit0,bit1,bit2;
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		*(palette++) = 0x00;
+		/* blue component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+
+	/* bullets can be either red or blue selected by an output port */
+
+	COLOR(2,0) = 0;
+	COLOR(2,1) = 0x05;
+	COLOR(2,2) = 0;
+	COLOR(2,3) = 0x0d;
 }
 
 void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -190,9 +265,10 @@ void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
     galaxian_vh_convert_color_prom(palette, colortable, color_prom);
 
+
 	/* set up background colors */
 
-   	/* Graduated Blue */
+   	/* graduated blue */
 
    	for (i = 0; i < 64; i++)
     {
@@ -201,7 +277,7 @@ void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *color
        	palette[96*3 + i*3 + 2] = i * 4;
     }
 
-    /* Graduated Brown */
+    /* graduated brown */
 
    	for (i = 0; i < 64; i++)
     {
@@ -218,9 +294,10 @@ void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
     galaxian_vh_convert_color_prom(palette, colortable, color_prom);
 
+
 	/* set up background colors */
 
-   	/* Graduated Blue */
+   	/* graduated blue */
 
    	for (i = 0; i < 64; i++)
     {
@@ -233,6 +310,7 @@ void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
     galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+
 
 	/* set up background colors */
 
@@ -252,6 +330,7 @@ void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	int i;
 
     galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+
 
 	/* set up background colors */
 
@@ -321,7 +400,8 @@ static int common_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-    /* Default alternate background - Solid Blue */
+
+    /* default alternate background - solid blue */
 
     for (x=0; x<256; x++)
 	{
@@ -388,6 +468,7 @@ static int common_vh_start(void)
 int galaxian_vh_start(void)
 {
 	stars_type = 0;
+	get_bullet_color = galaxian_get_bullet_color;
 	return common_vh_start();
 }
 
@@ -424,9 +505,26 @@ int pisces_vh_start(void)
 	return ret;
 }
 
+int batman2_vh_start(void)
+{
+	int ret = galaxian_vh_start();
+
+	modify_charcode   = batman2_modify_charcode;
+	modify_spritecode = batman2_modify_spritecode;
+	return ret;
+}
+
 int scramble_vh_start(void)
 {
 	stars_type = 1;
+	get_bullet_color = scramble_get_bullet_color;
+	return common_vh_start();
+}
+
+int darkplnt_vh_start(void)
+{
+	stars_type = -1;
+	get_bullet_color = darkplnt_get_bullet_color;
 	return common_vh_start();
 }
 
@@ -434,11 +532,12 @@ int rescue_vh_start(void)
 {
 	int x;
 
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = 2;
 
-    /* Setup background color array (blue sky, blue sea, black bottom line) */
+
+    /* setup background color array (blue sky, blue sea, black bottom line) */
 
     for (x=0;x<64;x++)
 	{
@@ -463,11 +562,12 @@ int minefld_vh_start(void)
 {
 	int x;
 
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = 2;
 
-    /* Setup background color array (blue sky, brown ground, black bottom line) */
+
+    /* setup background color array (blue sky, brown ground, black bottom line) */
 
     for (x=0;x<64;x++)
 	{
@@ -492,11 +592,12 @@ int stratgyx_vh_start(void)
 {
 	int x;
 
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = -1;
 
-    /* Setup background color array (blue left side, brown ground */
+
+    /* setup background color array (blue left side, brown ground */
 
     for (x=0;x<48;x++)
 	{
@@ -515,7 +616,7 @@ int stratgyx_vh_start(void)
 
 int ckongs_vh_start(void)
 {
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = 1;
 	modify_spritecode = ckongs_modify_spritecode;
@@ -524,7 +625,7 @@ int ckongs_vh_start(void)
 
 int calipso_vh_start(void)
 {
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = 1;
 	modify_spritecode = calipso_modify_spritecode;
@@ -537,7 +638,7 @@ int mariner_vh_start(void)
 	unsigned char *background_prom;
 
 
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = 3;
 	modify_charcode = mariner_modify_charcode;
@@ -571,7 +672,7 @@ int mariner_vh_start(void)
 
 int jumpbug_vh_start(void)
 {
-	int ret = common_vh_start();
+	int ret = scramble_vh_start();
 
 	stars_type = 5;
 
@@ -618,6 +719,10 @@ WRITE_HANDLER( galaxian_stars_w )
 	stars_scroll = 0;
 }
 
+WRITE_HANDLER( darkplnt_bullet_color_w )
+{
+	darkplnt_bullet_color = data;
+}
 
 WRITE_HANDLER( mooncrst_gfxextend_w )
 {
@@ -707,6 +812,14 @@ static void pisces_modify_charcode(int *charcode,int offs)
 	}
 }
 
+static void batman2_modify_charcode(int *charcode,int offs)
+{
+	if ((*charcode & 0x80) && pisces_gfxbank)
+	{
+		*charcode += 256;
+	}
+}
+
 static void mariner_modify_charcode(int *charcode,int offs)
 {
 	/* I don't really know if this is correct, but I don't see
@@ -773,6 +886,13 @@ static void pisces_modify_spritecode(int *spritecode,int *flipx,int *flipy,int o
 	}
 }
 
+static void batman2_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs)
+{
+	/* only the upper 64 sprites are used */
+
+	*spritecode += 64;
+}
+
 static void jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs)
 {
 	if (((*spritecode & 0x30) == 0x20) &&
@@ -782,6 +902,25 @@ static void jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int 
 		                    (( jumpbug_gfxbank[1] & 1) << 5) +
 		                    ((~jumpbug_gfxbank[4] & 1) << 6);
 	}
+}
+
+
+static int galaxian_get_bullet_color (int offs)
+{
+	if (offs == 7*4)
+		return 0;	/* yellow */
+	else
+		return 1;	/* white */
+}
+
+static int scramble_get_bullet_color (int offs)
+{
+	return 0;	/* yellow */
+}
+
+static int darkplnt_get_bullet_color (int offs)
+{
+	return darkplnt_bullet_color;
 }
 
 /***************************************************************************
@@ -881,8 +1020,7 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int color;
 
 
-		if (offs == 7*4) color = 0;	/* yellow */
-		else color = 1;	/* white */
+		color = get_bullet_color(offs);
 
 		x = 255 - galaxian_bulletsram[offs + 3] - Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
 		y = 255 - galaxian_bulletsram[offs + 1];

@@ -132,10 +132,9 @@ void i86_reset(void *param)
 	I.sregs[CS] = 0xf000;
 	I.base[CS] = SegBase(CS);
 	I.pc = 0xffff0 & AMASK;
+	ExpandFlags(I.flags);
 
 	change_pc20(I.pc);
-
-	I.ZeroVal = I.ParityVal = 1;
 }
 
 void i86_exit(void)
@@ -338,7 +337,7 @@ const char *i86_info(void *context, int regnum)
 	static int which = 0;
 	i86_Regs *r = context;
 
-	which = ++which % 32;
+	which = (which+1) % 32;
 	buffer[which][0] = '\0';
 	if (!context)
 		r = &I;

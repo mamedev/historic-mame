@@ -9,7 +9,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.37
+** Version 0.37a
 **
 */
 
@@ -92,6 +92,7 @@
 /***** shared function building option ****/
 #define BUILD_OPN (BUILD_YM2203||BUILD_YM2608||BUILD_YM2610||BUILD_YM2612)
 #define BUILD_OPNB (BUILD_YM2610||BUILD_YM2610B)
+#define BUILD_OPN_PRESCALER (BUILD_YM2203||BUILD_YM2608)
 #define BUILD_FM_ADPCMA (BUILD_YM2608||BUILD_OPNB)
 #define BUILD_FM_ADPCMB (BUILD_YM2608||BUILD_OPNB)
 #define BUILD_STEREO (BUILD_YM2608||BUILD_YM2610||BUILD_YM2612||BUILD_YM2151)
@@ -229,7 +230,6 @@ typedef struct fm_chan {
 	UINT32 ams;				/* AMS depth level of channel */
 	/* Phase Generator */
 	UINT32 fc;			/* fnum,blk    :adjusted to sampling rate */
-	UINT8 fn_h;			/* freq latch  :                   */
 	UINT8 kcode;		/* key code    :                   */
 } FM_CH;
 
@@ -240,11 +240,16 @@ typedef struct fm_state {
 	int rate;			/* sampling rate (Hz)  */
 	double freqbase;	/* frequency base      */
 	double TimerBase;	/* Timer base time     */
+#if FM_BUSY_FLAG_SUPPORT
+	double BusyExpire;	/* ExpireTime of Busy clear */
+#endif
 	UINT8 address;		/* address register    */
 	UINT8 irq;			/* interrupt level     */
 	UINT8 irqmask;		/* irq mask            */
 	UINT8 status;		/* status flag         */
 	UINT32 mode;		/* mode  CSM / 3SLOT   */
+	UINT8 prescaler_sel;/* priscaler slelector */
+	UINT8 fn_h;			/* freq latch          */
 	int TA;				/* timer a             */
 	int TAC;			/* timer a counter     */
 	UINT8 TB;			/* timer b             */
@@ -478,6 +483,29 @@ INLINE void FM_IRQMASK_SET(FM_ST *ST,int flag)
 	FM_STATUS_SET(ST,0);
 	FM_STATUS_RESET(ST,0);
 }
+
+#if FM_BUSY_FLAG_SUPPORT
+INLINE UINT8 FM_STATUS_FLAG(FM_ST *ST)
+{
+	if( ST->BusyExpire )
+	{
+		if( (ST->BusyExpire - FM_GET_TIME_NOW()) > 0)
+			return ST->status | 0x80; /* with busy */
+		/* expire */
+		ST->BusyExpire = 0;
+	}
+	return ST->status;
+}
+INLINE void FM_BUSY_SET(FM_ST *ST,int busyclock )
+{
+	ST->BusyExpire = FM_GET_TIME_NOW() + (ST->TimerBase * busyclock);
+}
+#define FM_BUSY_CLEAR(ST) ((ST)->BusyExpire = 0)
+#else
+#define FM_STATUS_FLAG(ST) ((ST)->status)
+#define FM_BUSY_SET(ST,bclock) {}
+#define FM_BUSY_CLEAR(ST) {}
+#endif
 
 /* ---------- event hander of Phase Generator ---------- */
 
@@ -822,8 +850,7 @@ INLINE void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
 	int ksr;
 
 	/* frequency step counter */
-	SLOT->Incr= (fc+SLOT->DT[kc])*SLOT->mul;	/* verified on real chip */
-	/*	SLOT->Incr= fc*SLOT->mul + SLOT->DT[kc]; */
+	SLOT->Incr= (fc+SLOT->DT[kc])*SLOT->mul;
 	ksr = kc >> SLOT->KSR;
 	if( SLOT->ksr != ksr )
 	{
@@ -1100,7 +1127,7 @@ INLINE void CSMKeyControll(FM_CH *CH)
 /* OPN 3slot struct */
 typedef struct opn_3slot {
 	UINT32  fc[3];		/* fnum3,blk3  :calcrated */
-	UINT8 fn_h[3];		/* freq3 latch            */
+	UINT8 fn_h;			/* freq3 latch            */
 	UINT8 kcode[3];		/* key code    :          */
 }FM_3SLOT;
 
@@ -1276,8 +1303,8 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 		switch( OPN_SLOT(r) ){
 		case 0:		/* 0xa0-0xa2 : FNUM1 */
 			{
-				UINT32 fn  = (((UINT32)( (CH->fn_h)&7))<<8) + v;
-				UINT8 blk = CH->fn_h>>3;
+				UINT32 fn  = (((UINT32)( (OPN->ST.fn_h)&7))<<8) + v;
+				UINT8 blk = OPN->ST.fn_h>>3;
 				/* make keyscale code */
 				CH->kcode = (blk<<2)|OPN_FKTABLE[(fn>>7)];
 				/* make basic increment counter 32bit = 1 cycle */
@@ -1286,13 +1313,13 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 			}
 			break;
 		case 1:		/* 0xa4-0xa6 : FNUM2,BLK */
-			CH->fn_h = v&0x3f;
+			OPN->ST.fn_h = v&0x3f;
 			break;
 		case 2:		/* 0xa8-0xaa : 3CH FNUM1 */
 			if( r < 0x100)
 			{
-				UINT32 fn  = (((UINT32)(OPN->SL3.fn_h[c]&7))<<8) + v;
-				UINT8 blk = OPN->SL3.fn_h[c]>>3;
+				UINT32 fn  = (((UINT32)(OPN->SL3.fn_h&7))<<8) + v;
+				UINT8 blk = OPN->SL3.fn_h>>3;
 				/* make keyscale code */
 				OPN->SL3.kcode[c]= (blk<<2)|OPN_FKTABLE[(fn>>7)];
 				/* make basic increment counter 32bit = 1 cycle */
@@ -1302,7 +1329,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 			break;
 		case 3:		/* 0xac-0xae : 3CH FNUM2,BLK */
 			if( r < 0x100)
-				OPN->SL3.fn_h[c] = v&0x3f;
+				OPN->SL3.fn_h = v&0x3f;
 			break;
 		}
 		break;
@@ -1344,6 +1371,33 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 	}
 }
 #endif /* BUILD_OPN */
+
+#if BUILD_OPN_PRESCALER
+void OPNPrescaler_w(FM_OPN *OPN , int pre_divider)
+{
+	static const int opn_pres[4] = { 2*12 , 2*12 , 6*12 , 3*12 };
+	static const int ssg_pres[4] = { 1    ,    1 ,    4 ,    2 };
+	int sel;
+
+	switch(OPN->ST.address)
+	{
+	case 0x2d:	/* divider sel : select 1/1 for 1/3line    */
+		OPN->ST.prescaler_sel |= 0x01;
+		break;
+	case 0x2e:	/* divider sel , select 1/3line for output */
+		OPN->ST.prescaler_sel |= 0x02;
+		break;
+	case 0x2f:	/* divider sel , clear both selector to 1/2,1/2 */
+		OPN->ST.prescaler_sel = 0;
+		break;
+	}
+	sel = OPN->ST.prescaler_sel & 3;
+	/* update priscaler */
+	OPNSetPris( OPN,	opn_pres[sel]*pre_divider,
+						opn_pres[sel]*pre_divider,
+						ssg_pres[sel]*pre_divider );
+}
+#endif /* BUILD_OPN_PRESCALER */
 
 #if BUILD_YM2203
 /*******************************************************************************/
@@ -1417,11 +1471,12 @@ void YM2203ResetChip(int num)
 	FM_OPN *OPN = &(FM2203[num].OPN);
 
 	/* Reset Priscaler */
-	OPNSetPris( OPN , 6*12 , 6*12 ,4); /* 1/6 , 1/4 */
+	OPNSetPris( OPN, 6*12 , 6*12 ,4); /* 1/6 , 1/4 */
 	/* reset SSG section */
 	SSGReset(OPN->ST.index);
 	/* status clear */
 	FM_IRQMASK_SET(&OPN->ST,0x03);
+	FM_BUSY_CLEAR(&OPN->ST);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 	reset_channel( &OPN->ST , FM2203[num].CH , 3 );
 	/* reset OPerator paramater */
@@ -1489,21 +1544,12 @@ int YM2203Write(int n,int a,UINT8 v)
 
 	if( !(a&1) )
 	{	/* address port */
-		OPN->ST.address = v & 0xff;
+		OPN->ST.address = (v &= 0xff);
 		/* Write register to SSG emurator */
 		if( v < 16 ) SSGWrite(n,0,v);
-		switch(OPN->ST.address)
-		{
-		case 0x2d:	/* divider sel */
-			OPNSetPris( OPN, 6*12, 6*12 ,4); /* OPN 1/6 , SSG 1/4 */
-			break;
-		case 0x2e:	/* divider sel */
-			OPNSetPris( OPN, 3*12, 3*12,2); /* OPN 1/3 , SSG 1/2 */
-			break;
-		case 0x2f:	/* divider sel */
-			OPNSetPris( OPN, 2*12, 2*12,1); /* OPN 1/2 , SSG 1/1 */
-			break;
-		}
+		/* prescaler selecter : 2d,2e,2f  */
+		if( v >= 0x2d && v <= 0x2f )
+			OPNPrescaler_w(OPN, 1 );
 	}
 	else
 	{	/* data port */
@@ -1517,13 +1563,14 @@ int YM2203Write(int n,int a,UINT8 v)
 		case 0x20:	/* 0x20-0x2f : Mode section */
 			YM2203UpdateReq(n);
 			/* write register */
-			 OPNWriteMode(OPN,addr,v);
+			OPNWriteMode(OPN,addr,v);
 			break;
 		default:	/* 0x30-0xff : OPN section */
 			YM2203UpdateReq(n);
 			/* write register */
-			 OPNWriteReg(OPN,addr,v);
+			OPNWriteReg(OPN,addr,v);
 		}
+		FM_BUSY_SET(&OPN->ST,1);
 	}
 	return OPN->ST.irq;
 }
@@ -1536,7 +1583,7 @@ UINT8 YM2203Read(int n,int a)
 
 	if( !(a&1) )
 	{	/* status port */
-		ret = F2203->OPN.ST.status;
+		ret = FM_STATUS_FLAG(&F2203->OPN.ST);
 	}
 	else
 	{	/* data port (ONLY SSG) */
@@ -2082,11 +2129,12 @@ void YM2608ResetChip(int num)
 	YM_DELTAT *DELTAT = &(F2608[num].deltaT);
 
 	/* Reset Priscaler */
-	OPNSetPris( OPN, 6*24, 6*24,4*2); /* OPN 1/6 , SSG 1/4 */
+	OPNSetPris( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
 	/* reset SSG section */
 	SSGReset(OPN->ST.index);
 	/* status clear */
 	FM_IRQMASK_SET(&OPN->ST,0x1f);
+	FM_BUSY_CLEAR(&OPN->ST);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
 	/* extend 3ch. disable */
@@ -2146,23 +2194,14 @@ int YM2608Write(int n, int a,UINT8 v)
 
 	switch(a&3){
 	case 0:	/* address port 0 */
-		OPN->ST.address = v & 0xff;
+		OPN->ST.address = (v &= 0xff);
 		/* Write register to SSG emurator */
 		if( v < 16 ) SSGWrite(n,0,v);
-		switch(OPN->ST.address)
+		/* prescaler selecter : 2d,2e,2f  */
+		if( v >= 0x2d && v <= 0x2f )
 		{
-		case 0x2d:	/* divider sel */
-			OPNSetPris( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
+			OPNPrescaler_w(OPN, 2 );
 			F2608->deltaT.freqbase = OPN->ST.freqbase;
-			break;
-		case 0x2e:	/* divider sel */
-			OPNSetPris( OPN, 3*24, 3*24,2*2); /* OPN 1/3 , SSG 1/2 */
-			F2608->deltaT.freqbase = OPN->ST.freqbase;
-			break;
-		case 0x2f:	/* divider sel */
-			OPNSetPris( OPN, 2*24, 2*24,1*2); /* OPN 1/2 , SSG 1/1 */
-			F2608->deltaT.freqbase = OPN->ST.freqbase;
-			break;
 		}
 		break;
 	case 1:	/* data port 0    */
@@ -2246,7 +2285,7 @@ UINT8 YM2608Read(int n,int a)
 	case 0:	/* status 0 : YM2203 compatible */
 		/* BUSY:x:x:x:x:x:FLAGB:FLAGA */
 		if(addr==0xff) ret = 0x00; /* ID code */
-		else ret = F2608->OPN.ST.status & 0x83;
+		else ret = FM_STATUS_FLAG(&F2608->OPN.ST)&0x83;
 		break;
 	case 1:	/* status 0 */
 		if( addr < 16 ) ret = SSGRead(n);
@@ -2254,7 +2293,7 @@ UINT8 YM2608Read(int n,int a)
 	case 2:	/* status 1 : + ADPCM status */
 		/* BUSY:x:PCMBUSY:ZERO:BRDY:EOS:FLAGB:FLAGA */
 		if(addr==0xff) ret = 0x00; /* ID code */
-		else ret = F2608->OPN.ST.status | (F2608->adpcm[6].flag ? 0x20 : 0);
+		else ret = FM_STATUS_FLAG(&F2608->OPN.ST) | (F2608->adpcm[6].flag ? 0x20 : 0);
 		break;
 	case 3:
 		ret = 0;
@@ -2550,6 +2589,7 @@ void YM2610ResetChip(int num)
 	SSGReset(OPN->ST.index);
 	/* status clear */
 	FM_IRQMASK_SET(&OPN->ST,0x03);
+	FM_BUSY_CLEAR(&OPN->ST);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
 	reset_channel( &OPN->ST , F2610->CH , 6 );
@@ -2671,7 +2711,7 @@ UINT8 YM2610Read(int n,int a)
 
 	switch( a&3){
 	case 0:	/* status 0 : YM2203 compatible */
-		ret = F2610->OPN.ST.status & 0x83;
+		ret = FM_STATUS_FLAG(&F2610->OPN.ST) & 0x83;
 		break;
 	case 1:	/* data 0 */
 		if( addr < 16 ) ret = SSGRead(n);
@@ -2870,9 +2910,10 @@ void YM2612ResetChip(int num)
 	YM2612 *F2612 = &(FM2612[num]);
 	FM_OPN *OPN   = &(FM2612[num].OPN);
 
-	OPNSetPris( OPN , 12*12, 12*12, 0);
+	OPNSetPris( OPN, 6*24, 6*24, 0);
 	/* status clear */
 	FM_IRQMASK_SET(&OPN->ST,0x03);
+	FM_BUSY_CLEAR(&OPN->ST);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
 	reset_channel( &OPN->ST , &F2612->CH[0] , 6 );
@@ -2950,12 +2991,12 @@ UINT8 YM2612Read(int n,int a)
 
 	switch( a&3){
 	case 0:	/* status 0 */
-		return F2612->OPN.ST.status;
+		return FM_STATUS_FLAG(&F2612->OPN.ST);
 	case 1:
 	case 2:
 	case 3:
 		LOG(LOG_WAR,("YM2612 #%d:A=%d read unmapped area\n"));
-		return F2612->OPN.ST.status;
+		return FM_STATUS_FLAG(&F2612->OPN.ST);
 	}
 	return 0;
 }
@@ -3362,12 +3403,6 @@ static void OPMWriteReg(int n, int r, int v)
     }
 }
 
-/* ---------- read status port ---------- */
-static UINT8 OPMReadStatus(int n)
-{
-	return FMOPM[n].ST.status;
-}
-
 int YM2151Write(int n,int a,UINT8 v)
 {
 	YM2151 *F2151 = &(FMOPM[n]);
@@ -3381,7 +3416,8 @@ int YM2151Write(int n,int a,UINT8 v)
 		int addr = F2151->ST.address;
 		YM2151UpdateReq(n);
 		/* write register */
-		 OPMWriteReg(n,addr,v);
+		OPMWriteReg(n,addr,v);
+		FM_BUSY_SET(&OPN->ST,1);
 	}
 	return F2151->ST.irq;
 }
@@ -3396,6 +3432,7 @@ void OPMResetChip(int num)
 	reset_channel( &OPM->ST , &OPM->CH[0] , 8 );
 	/* status clear */
 	FM_IRQMASK_SET(&OPM->ST,0x03);
+	FM_BUSY_CLEAR(&OPM->ST);
 	OPMWriteReg(num,0x1b,0x00);
 	/* reset OPerator paramater */
 	for(i = 0xff ; i >= 0x20 ; i-- ) OPMWriteReg(num,i,0);
@@ -3460,7 +3497,7 @@ void OPMShutdown()
 UINT8 YM2151Read(int n,int a)
 {
 	if( !(a&1) ) return 0;
-	else         return FMOPM[n].ST.status;
+	else         return FM_STATUS_FLAG(&FMOPM[n].ST);
 }
 
 /* ---------- make digital sound data ---------- */

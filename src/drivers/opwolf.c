@@ -86,14 +86,14 @@ static WRITE16_HANDLER( cchip_w )
 				INTERRUPTS
 ***********************************************************/
 
-void opwolf_irq_handler(int irq);
+//void opwolf_irq_handler(int irq);
 
-int opwolf_interrupt(void)
+static int opwolf_interrupt(void)
 {
 	return 5;  /* interrupt vector 5: others are RTE */
 }
 
-int sub_z80_interrupt(void)
+static int sub_z80_interrupt(void)
 {
 	return 1;  // ??
 }
@@ -378,7 +378,7 @@ INPUT_PORTS_START( opwolf )
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 25, 15, 0x00, 0xff)
 
 	PORT_START	/* P1Y (span allows you to be slightly offscreen) */
-	PORT_ANALOG( 0xff, 0x70, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 15, 0x00, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 25, 15, 0x00, 0xff)
 INPUT_PORTS_END
 
 
@@ -661,7 +661,7 @@ ROM_START( opwolfb )
 ROM_END
 
 
-void init_opwolf(void)
+static void init_opwolf(void)
 {
 	opwolf_gun_xoffs = 0;
 	opwolf_gun_yoffs = 0;
@@ -673,7 +673,7 @@ void init_opwolf(void)
 	state_save_register_func_postload(reset_sound_region);
 }
 
-void init_opwolfb(void)
+static void init_opwolfb(void)
 {
 	/* bootleg needs different range of raw gun coords */
 	opwolf_gun_xoffs = -2;

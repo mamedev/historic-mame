@@ -31,10 +31,10 @@ int undrfire_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,50))	// aligns piv layers with window
+	/* aligns piv layers with window but vertical align may be bad */
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,50))
 		return 1;
 
-//	if (TC0480SCP_vh_start(1,0,0x24,0,-1,0,0))
 	if (TC0480SCP_vh_start(1,0,0x24,0,-1,0,0,0,0))
 		return 1;
 
@@ -55,13 +55,14 @@ from the spritemap rom, creating a 64x64 sprite like this:
 	12 13 14 15
 
 (where the number is the word offset into the spritemap rom).
+It can also create 32x32 sprites.
 
 NB: unused portions of the spritemap rom contain hex FF's.
 It is a useful coding check to warn in the log if these
 are being accessed. [They can be inadvertently while
 spriteram is being tested, take no notice of that.]
 
-The games make heavy use of sprite zooming.
+Heavy use is made of sprite zooming.
 
 		***
 

@@ -4,7 +4,7 @@
 						(c) 1990 & 1991, 1994 Jaleco
 
 
-				    driver by Luca Elia (eliavit@unina.it)
+				    driver by Luca Elia (l.elia@tin.it)
 
 - Note: press F2 to enter service mode -
 
@@ -1541,7 +1541,7 @@ ROM_START( cischeat )
 	ROM_LOAD( "ch9071.r23", 0x000000, 0x080000, 0xc7dbb992 ) // 2 x 0x40000
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* samples */
-	ROM_LOAD( "ch9071.r24", 0x000000, 0x080000, BADCRC(0xe87ca4d7) ) // 2 x 0x40000 (FIRST AND SECOND HALF IDENTICAL)
+	ROM_LOAD( "ch9071.r24", 0x000000, 0x080000, 0xe87ca4d7 ) // 2 x 0x40000 (FIRST AND SECOND HALF IDENTICAL)
 
 	ROM_REGION( 0x40000, REGION_USER2, 0 )		/* ? Unused ROMs ? */
 	ROM_LOAD( "ch9072.01",  0x000000, 0x020000, 0xb2efed33 ) // FIXED BITS (xxxxxxxx0xxxxxxx)

@@ -120,7 +120,7 @@ int splash_vh_start(void)
 	screen[1] = tilemap_create(get_tile_info_splash_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	screen2 = bitmap_alloc (512, 256);
 
-	if (!screen[0] || !screen[1] || !screen[2])
+	if (!screen[0] || !screen[1] || !screen2)
 		return 1;
 
 	tilemap_set_transparent_pen(screen[0],0);

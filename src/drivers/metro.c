@@ -2,7 +2,7 @@
 
 							  -= Metro Games =-
 
-				driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  MC68000
@@ -11,8 +11,10 @@ Video Chips  :  Imagetek 14100 052 9227KK701	Or
                 Imagetek 14220 071 9338EK707	Or
 				Imagetek 14300 095
 
-Sound Chips  :	NEC78C10 (CPU, unemulated) + OKIM6295 + YM2413  or
-                YRW801-M + YMF278B (unemulated)
+Sound CPU    :  NEC78C10 [Optional]
+
+Sound Chips  :	OKIM6295 + YM2413  or
+                YRW801-M + YMF278B [Unemulated]
 
 Other        :  Memory Blitter
 
@@ -31,8 +33,9 @@ Year + Game						PCB			Video Chip	Issues / Notes
 95	Daitoride					MTR5260-A	14220
 95	Puzzli 						MTR5260-A	14220
 95	Pururun						MTR5260-A	14220
-96	Bal Cube					?			14220
+96	Bal Cube					?			14220		No sound CPU
 96	Mouja						VG410-B		14300		No sound CPU
+96	Bang Bang Ball				?			14220		No sound CPU
 ---------------------------------------------------------------------------
 Not dumped yet:
 94	Gun Master
@@ -43,7 +46,7 @@ To Do:
 -	Priorities (pdrawgfxzoom). Priorities are particularly bad in blzntrnd.
 -	Sprite palette marking doesn't know about 8bpp.
 -	1 pixel granularity in the window's placement (8 pixels now, see daitorid title)
--	Sound (as soon as the NEC78C10 gets emulated)
+-	Sound
 -	Coin lockout
 -	Some gfx problems in ladykill and puzzli
 -	To save memory, 8bpp tiles are handled fetching data directly from the ROMs,
@@ -198,6 +201,15 @@ int metro_interrupt(void)
 			update_irq_state();
 			break;
 	}
+	return ignore_interrupt();
+}
+
+/* Lev 1. Lev 2 seems sound related */
+int bangball_interrupt(void)
+{
+	requested_irq[0] = 1;	// set scroll regs if a flag is set
+	requested_irq[4] = 1;	// clear that flag
+	update_irq_state();
 	return ignore_interrupt();
 }
 
@@ -737,31 +749,32 @@ WRITE16_HANDLER( metro_blitter_w )
 									Bal Cube
 ***************************************************************************/
 
-/* Really weird way of mapping 3 DSWs (only 2 used) */
+/* Really weird way of mapping 3 DSWs */
 static READ16_HANDLER( balcube_dsw_r )
 {
-	data16_t dsw = readinputport(2);
+	data16_t dsw1 = readinputport(2) >> 0;
+	data16_t dsw2 = readinputport(2) >> 8;
+	data16_t dsw3 = readinputport(3);
 
 	switch (offset*2)
 	{
-		/* The 3rd (unused) DSW is read from bit 7 of the following range */
-		case 0x1FFFC:	return (dsw & 0x0001) ? 0x0040 : 0x0000;
-		case 0x1FFFA:	return (dsw & 0x0002) ? 0x0040 : 0x0000;
-		case 0x1FFF6:	return (dsw & 0x0004) ? 0x0040 : 0x0000;
-		case 0x1FFEE:	return (dsw & 0x0008) ? 0x0040 : 0x0000;
-		case 0x1FFDE:	return (dsw & 0x0010) ? 0x0040 : 0x0000;
-		case 0x1FFBE:	return (dsw & 0x0020) ? 0x0040 : 0x0000;
-		case 0x1FF7E:	return (dsw & 0x0040) ? 0x0040 : 0x0000;
-		case 0x1FEFE:	return (dsw & 0x0080) ? 0x0040 : 0x0000;
+		case 0x1FFFC:	return ((dsw1 & 0x01) ? 0x40 : 0) | ((dsw3 & 0x01) ? 0x80 : 0);
+		case 0x1FFFA:	return ((dsw1 & 0x02) ? 0x40 : 0) | ((dsw3 & 0x02) ? 0x80 : 0);
+		case 0x1FFF6:	return ((dsw1 & 0x04) ? 0x40 : 0) | ((dsw3 & 0x04) ? 0x80 : 0);
+		case 0x1FFEE:	return ((dsw1 & 0x08) ? 0x40 : 0) | ((dsw3 & 0x08) ? 0x80 : 0);
+		case 0x1FFDE:	return ((dsw1 & 0x10) ? 0x40 : 0) | ((dsw3 & 0x10) ? 0x80 : 0);
+		case 0x1FFBE:	return ((dsw1 & 0x20) ? 0x40 : 0) | ((dsw3 & 0x20) ? 0x80 : 0);
+		case 0x1FF7E:	return ((dsw1 & 0x40) ? 0x40 : 0) | ((dsw3 & 0x40) ? 0x80 : 0);
+		case 0x1FEFE:	return ((dsw1 & 0x80) ? 0x40 : 0) | ((dsw3 & 0x80) ? 0x80 : 0);
 
-		case 0x1FDFE:	return (dsw & 0x0100) ? 0x0040 : 0x0000;
-		case 0x1FBFE:	return (dsw & 0x0200) ? 0x0040 : 0x0000;
-		case 0x1F7FE:	return (dsw & 0x0400) ? 0x0040 : 0x0000;
-		case 0x1EFFE:	return (dsw & 0x0800) ? 0x0040 : 0x0000;
-		case 0x1DFFE:	return (dsw & 0x1000) ? 0x0040 : 0x0000;
-		case 0x1BFFE:	return (dsw & 0x2000) ? 0x0040 : 0x0000;
-		case 0x17FFE:	return (dsw & 0x4000) ? 0x0040 : 0x0000;
-		case 0x0FFFE:	return (dsw & 0x8000) ? 0x0040 : 0x0000;
+		case 0x1FDFE:	return (dsw2 & 0x01) ? 0x40 : 0;
+		case 0x1FBFE:	return (dsw2 & 0x02) ? 0x40 : 0;
+		case 0x1F7FE:	return (dsw2 & 0x04) ? 0x40 : 0;
+		case 0x1EFFE:	return (dsw2 & 0x08) ? 0x40 : 0;
+		case 0x1DFFE:	return (dsw2 & 0x10) ? 0x40 : 0;
+		case 0x1BFFE:	return (dsw2 & 0x20) ? 0x40 : 0;
+		case 0x17FFE:	return (dsw2 & 0x40) ? 0x40 : 0;
+		case 0x0FFFE:	return (dsw2 & 0x80) ? 0x40 : 0;
 	}
 	logerror("CPU #0 PC %06X : unknown dsw address read: %04X\n",cpu_get_pc(),offset);
 	return 0xffff;
@@ -772,7 +785,7 @@ static MEMORY_READ16_START( balcube_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
 	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
 	{ 0x300000, 0x300001, MRA16_NOP				},	// Sound
-	{ 0x400000, 0x41ffff, balcube_dsw_r			},	// DSW x 2
+	{ 0x400000, 0x41ffff, balcube_dsw_r			},	// DSW x 3
 	{ 0x600000, 0x61ffff, MRA16_RAM				},	// Layer 0
 	{ 0x620000, 0x63ffff, MRA16_RAM				},	// Layer 1
 	{ 0x640000, 0x65ffff, MRA16_RAM				},	// Layer 2
@@ -807,6 +820,54 @@ static MEMORY_WRITE16_START( balcube_writemem )
 	{ 0x6788aa, 0x6788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
 	{ 0x6788ac, 0x6788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
 	{ 0x679700, 0x679713, MWA16_RAM, &metro_videoregs	},	// Video Registers
+MEMORY_END
+
+
+/***************************************************************************
+								Bang Bang Ball
+***************************************************************************/
+
+static MEMORY_READ16_START( bangball_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
+	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
+	{ 0xf10000, 0xf10fff, MRA16_RAM				},	// RAM (bug in the ram test routine)
+	{ 0xb00000, 0xb00001, MRA16_NOP				},	// Sound
+	{ 0xc00000, 0xc1ffff, balcube_dsw_r			},	// DSW x 3
+	{ 0xd00000, 0xd00001, input_port_0_word_r	},	// Inputs
+	{ 0xd00002, 0xd00003, input_port_1_word_r	},	//
+	{ 0xd00006, 0xd00007, MRA16_NOP				},	//
+	{ 0xe00000, 0xe1ffff, MRA16_RAM				},	// Layer 0
+	{ 0xe20000, 0xe3ffff, MRA16_RAM				},	// Layer 1
+	{ 0xe40000, 0xe5ffff, MRA16_RAM				},	// Layer 2
+	{ 0xe60000, 0xe6ffff, metro_bankedrom_r		},	// Banked ROM
+	{ 0xe70000, 0xe73fff, MRA16_RAM				},	// Palette
+	{ 0xe74000, 0xe74fff, MRA16_RAM				},	// Sprites
+	{ 0xe78000, 0xe787ff, MRA16_RAM				},	// Tiles Set
+	{ 0xe788a2, 0xe788a3, metro_irq_cause_r		},	// IRQ Cause
+MEMORY_END
+
+static MEMORY_WRITE16_START( bangball_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM
+	{ 0xf10000, 0xf10fff, MWA16_RAM						},	// RAM
+	{ 0xb00000, 0xb0000b, MWA16_NOP						},	// Sound
+	{ 0xd00002, 0xd00009, metro_coin_lockout_4words_w	},	// Coin Lockout
+	{ 0xe00000, 0xe1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
+	{ 0xe20000, 0xe3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
+	{ 0xe40000, 0xe5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
+	{ 0xe70000, 0xe73fff, metro_paletteram_w, &paletteram16	},	// Palette
+	{ 0xe74000, 0xe74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
+	{ 0xe78000, 0xe787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size		},	// Tiles Set
+	{ 0xe78840, 0xe7884d, metro_blitter_w, &metro_blitter_regs		},	// Tiles Blitter
+	{ 0xe78860, 0xe7886b, metro_window_w, &metro_window				},	// Tilemap Window
+	{ 0xe78870, 0xe7887b, MWA16_RAM, &metro_scroll		},	// Scroll
+	{ 0xe78880, 0xe78881, MWA16_NOP						},	// ? increasing
+	{ 0xe78890, 0xe78891, MWA16_NOP						},	// ? increasing
+	{ 0xe788a2, 0xe788a3, metro_irq_cause_w				},	// IRQ Acknowledge
+	{ 0xe788a4, 0xe788a5, metro_irq_enable_w			},	// IRQ Enable
+	{ 0xe788aa, 0xe788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
+	{ 0xe788ac, 0xe788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
+	{ 0xe79700, 0xe79713, MWA16_RAM, &metro_videoregs	},	// Video Registers
 MEMORY_END
 
 
@@ -1471,6 +1532,54 @@ INPUT_PORTS_START( balcube )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+
+	PORT_START	// IN3 - Strangely mapped in the 0x400000-0x41ffff range
+	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )	// unused
+
+INPUT_PORTS_END
+
+
+/***************************************************************************
+								Bang Bang Ball
+***************************************************************************/
+
+INPUT_PORTS_START( bangball )
+
+	PORT_START	// IN0 - $d00000
+	COINS
+
+	PORT_START	// IN1 - $d00002
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+
+	PORT_START	// IN2 - Strangely mapped in the 0xc00000-0xc1ffff range
+	COINAGE_DSW
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0200, "Easy"    )
+	PORT_DIPSETTING(      0x0300, "Normal"  )
+	PORT_DIPSETTING(      0x0100, "Hard"    )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0800, "2" )
+	PORT_DIPSETTING(      0x0400, "3" )
+	PORT_DIPSETTING(      0x0c00, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN3 - Strangely mapped in the 0xc00000-0xc1ffff range
+	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )	// used for debug
 
 INPUT_PORTS_END
 
@@ -2376,6 +2485,39 @@ static const struct MachineDriver machine_driver_balcube =
 };
 
 
+static const struct MachineDriver machine_driver_bangball =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			bangball_readmem, bangball_writemem,0,0,
+			bangball_interrupt, 1
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	320, 224, { 0, 320-1, 0, 224-1 },
+	gfxdecodeinfo_8bit,
+	0x2000, 0x2000,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	metro_vh_start_14220,
+	metro_vh_stop,
+	metro_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ 0 },	/* YMF278B (unemulated) + YRW801-M (Standard Samples ROM) */
+	},
+};
+
+
 static const struct MachineDriver machine_driver_daitorid =
 {
 	{
@@ -2910,6 +3052,54 @@ ROM_START( balcube )
 
 	ROM_REGION( 0x200000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ? YRW801-M ? */
 	ROM_LOAD( "yrw801m", 0x000000, 0x200000, 0x00000000 )	// Yamaha YRW801 2MB ROM with samples for the OPL4.
+ROM_END
+
+
+/***************************************************************************
+
+Bang Bang Ball
+(c)1996 Banpresto/Kunihiko Tashiro/Goodhouse
+
+CPU  : TMP68HC000P-16
+Sound: YAMAHA OPL YMF278B-F
+OSC  : 16.0000MHz (OSC1) 26.6660MHz (OSC2) 33.869?MHz (OSC3)
+
+ROMs:
+rom#005.u19 - Main programs (27c020)
+rom#006.u18 /
+
+rom#007.u49 - Sound program (27c040)
+yrw801-m.u52 - Wave data ROM (44pin SOP 16M mask (LH537019), not dumped)
+
+bp963a.u27 - Graphics (mask, read as 27c800)
+bp963a.u28 |
+bp963a.u29 |
+bp963a.u30 /
+
+PLD:
+ALTERA EPM7032LC44-15T D9522
+
+Custom chip:
+Imagetek, Inc. I4220 071 9403EK701
+
+***************************************************************************/
+
+ROM_START( bangball )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom#006.u18", 0x000000, 0x040000, 0x0e4124bc )
+	ROM_LOAD16_BYTE( "rom#005.u19", 0x000001, 0x040000, 0x3fa08587 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "bp963a.u30", 0x000000, 0x100000, 0xb0ca8e39, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "bp963a.u29", 0x000002, 0x100000, 0xd934468f, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "bp963a.u28", 0x000004, 0x100000, 0x96d03c6a, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "bp963a.u27", 0x000006, 0x100000, 0x5e3c7732, ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "rom#007.u49", 0x000000, 0x080000, 0x04cc91a9 )
+
+	ROM_REGION( 0x200000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "yrw801-m", 0x000000, 0x200000, 0x0000000 )
 ROM_END
 
 
@@ -3575,5 +3765,6 @@ GAMEX( 1995, puzzli,   0,        daitorid, puzzli,   metro,    ROT0_16BIT, "Metr
 GAMEX( 1995, pururun,  0,        pururun,  pururun,  metro,    ROT0,       "Metro / Banpresto",  "Pururun",                  GAME_NO_SOUND )
 GAMEX( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0_16BIT, "Metro",              "Bal Cube",                 GAME_NO_SOUND )
 GAMEX( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,       "Etona",              "Mouja (Japan)",            GAME_NO_COCKTAIL )
+GAMEX( 1996, bangball, 0,        bangball, bangball, balcube,  ROT0_16BIT, "Banpresto / Kunihiko Tashiro+Goodhouse", "Bang Bang Ball (v1.05)", GAME_NO_SOUND )
 
 GAMEX( 1994, blzntrnd, 0,        blzntrnd, blzntrnd, blzntrnd, ROT0_16BIT, "Human Amusement",    "Blazing Tornado",          GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -3,7 +3,7 @@
 							Ginga NinkyouDen
 							(C) 1987 Jaleco
 
-					driver by Luca Elia (eliavit@unina.it)
+					driver by Luca Elia (l.elia@tin.it)
 
 CPU   : 68000 68B09
 SOUND : YM2149 Y8950(MSX AUDIO)

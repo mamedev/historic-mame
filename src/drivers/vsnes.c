@@ -1430,7 +1430,7 @@ static struct MachineDriver machine_driver_vsdual =
 	2*4*16, 2*4*16,
 	vsdual_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	vsdual_vh_start,
 	vsnes_vh_stop,

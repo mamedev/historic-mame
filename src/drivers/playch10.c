@@ -681,7 +681,7 @@ static const struct MachineDriver machine_driver_##name =						\
 	256+4*16, 256+4*8,													\
 	playch10_vh_convert_color_prom,										\
 																		\
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,								\
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(4,6),	\
 	0,																	\
 	playch10_vh_start,													\
 	playch10_vh_stop,													\

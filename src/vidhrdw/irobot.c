@@ -252,6 +252,7 @@ static void draw_line (int x1, int y1, int x2, int y2, int col)
 
 void run_video(void)
 {
+	UINT16 *combase16 = (UINT16 *)irobot_combase;
 	int sx,sy,ex,ey,sx2,ey2;
 	int color;
 	unsigned int d1;
@@ -267,75 +268,73 @@ void run_video(void)
 		polybitmap = polybitmap1;
 
 	lpnt=0;
-	while (lpnt < 0xFFF)
+	while (lpnt < 0x7FF)
 	{
-		d1 = READ_WORD(&irobot_combase[lpnt]);
-		lpnt+=2;
+		d1 = combase16[lpnt++];
 		if (d1 == 0xFFFF) break;
-		spnt = (d1 & 0x07FF) << 1;
+		spnt = d1 & 0x07FF;
 		shp = (d1 & 0xF000) >> 12;
 
 		/* Pixel */
 		if (shp == 0x8)
 		{
-			while (spnt < 0xFFE)
+			while (spnt < 0x7FF)
 			{
-				sx = READ_WORD(&irobot_combase[spnt]);
+				sx = combase16[spnt];
 				if (sx == 0xFFFF) break;
-				sy = READ_WORD(&irobot_combase[spnt+2]);
+				sy = combase16[spnt+1];
 				color = sy & 0x3F;
 				sx = ROUND_TO_PIXEL(sx);
 				sy = ROUND_TO_PIXEL(sy);
 	        	if (sx >= ir_xmin && sx < ir_xmax && sy >= ir_ymin && sy < ir_ymax)
 					draw_pixel(sx,sy,color);
-				spnt+=4;
+				spnt+=2;
 			}//while object
 		}//if point
 
 		/* Line */
 		if (shp == 0xC)
 		{
-			while (spnt < 0xFFF)
+			while (spnt < 0x7FF)
 			{
-				ey = READ_WORD(&irobot_combase[spnt]);
+				ey = combase16[spnt];
 				if (ey == 0xFFFF) break;
 				ey = ROUND_TO_PIXEL(ey);
-				sy = READ_WORD(&irobot_combase[spnt+2]);
+				sy = combase16[spnt+1];
 				color = sy & 0x3F;
 				sy = ROUND_TO_PIXEL(sy);
-				sx = READ_WORD(&irobot_combase[spnt+6]);
-				word1 = (INT16)READ_WORD(&irobot_combase[spnt+4]);
+				sx = combase16[spnt+3];
+				word1 = (INT16)combase16[spnt+2];
 				ex = sx + word1 * (ey - sy + 1);
 				draw_line(ROUND_TO_PIXEL(sx),sy,ROUND_TO_PIXEL(ex),ey,color);
-				spnt+=8;
+				spnt+=4;
 			}//while object
 		}//if line
 
 		/* Polygon */
 		if (shp == 0x4)
 		{
-			spnt2 = READ_WORD(&irobot_combase[spnt]);
-			spnt2 = (spnt2 & 0x7FF) << 1;
+			spnt2 = combase16[spnt] & 0x7FF;
 
-			sx = READ_WORD(&irobot_combase[spnt+2]);
-			sx2 = READ_WORD(&irobot_combase[spnt+4]);
-			sy = READ_WORD(&irobot_combase[spnt+6]);
+			sx = combase16[spnt+1];
+			sx2 = combase16[spnt+2];
+			sy = combase16[spnt+3];
 			color = sy & 0x3F;
 			sy = ROUND_TO_PIXEL(sy);
-			spnt+=8;
+			spnt+=4;
 
-			word1 = (INT16)READ_WORD(&irobot_combase[spnt]);
-			ey = READ_WORD(&irobot_combase[spnt+2]);
+			word1 = (INT16)combase16[spnt];
+			ey = combase16[spnt+1];
 			if (word1 != -1 || ey != 0xFFFF)
 			{
 				ey = ROUND_TO_PIXEL(ey);
-				spnt+=4;
+				spnt+=2;
 
 			//	sx += word1;
 
-				word2 = (INT16)READ_WORD(&irobot_combase[spnt2]);
-				ey2 = ROUND_TO_PIXEL(READ_WORD(&irobot_combase[spnt2+2]));
-				spnt2+=4;
+				word2 = (INT16)combase16[spnt2];
+				ey2 = ROUND_TO_PIXEL(combase16[spnt2+1]);
+				spnt2+=2;
 
 			//	sx2 += word2;
 
@@ -357,21 +356,21 @@ void run_video(void)
 
 					if (sy > ey)
 					{
-						word1 = (INT16)READ_WORD(&irobot_combase[spnt]);
-						ey = READ_WORD(&irobot_combase[spnt+2]);
+						word1 = (INT16)combase16[spnt];
+						ey = combase16[spnt+1];
 						if (word1 == -1 && ey == 0xFFFF)
 							break;
 						ey = ROUND_TO_PIXEL(ey);
-						spnt+=4;
+						spnt+=2;
 					}
 					else
 						sx += word1;
 
 					if (sy > ey2)
 					{
-						word2 = (INT16)READ_WORD(&irobot_combase[spnt2]);
-						ey2 = ROUND_TO_PIXEL(READ_WORD(&irobot_combase[spnt2+2]));
-						spnt2+=4;
+						word2 = (INT16)combase16[spnt2];
+						ey2 = ROUND_TO_PIXEL(combase16[spnt2+1]);
+						spnt2+=2;
 					}
 					else
 						sx2 += word2;

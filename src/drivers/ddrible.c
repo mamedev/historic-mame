@@ -283,60 +283,38 @@ INPUT_PORTS_START( ddribble )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout1 =
+
+
+static struct GfxLayout charlayout =
 {
-	8,8,			/* 8*8 characters */
-	4096,			/* 4096 characters */
-	4,				/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x20000*8+0*4, 0x20000*8+1*4, 2*4, 3*4, 0x20000*8+2*4, 0x20000*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8			/* every char takes 16 consecutive bytes */
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
 };
 
-static struct GfxLayout charlayout2 =
+static struct GfxLayout spritelayout =
 {
-	8,8,			/* 8*8 characters */
-	8192,			/* 8192 characters */
-	4,				/* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x20000*8+0*4, 0x20000*8+1*4, 2*4, 3*4, 0x20000*8+2*4, 0x20000*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8			/* every char takes 16 consecutive bytes */
-};
-
-static struct GfxLayout spritelayout1 =
-{
-	16,16,			/* 16*16 sprites */
-	1024,			/* 1024 sprites */
-	4,				/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x20000*8+0*4, 0x20000*8+1*4, 2*4, 3*4, 0x20000*8+2*4, 0x20000*8+3*4,
-		16*8+0*4, 16*8+1*4, 0x20000*8+16*8+0*4, 0x20000*8+16*8+1*4, 16*8+2*4, 16*8+3*4, 0x20000*8+16*8+2*4, 0x20000*8+16*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	64*8			/* every sprite takes 64 consecutive bytes */
-};
-
-static struct GfxLayout spritelayout2 =
-{
-	16,16,			/* 16*16 sprites */
-	2048,			/* 2048 sprites */
-	4,				/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0x20000*8+0*4, 0x20000*8+1*4, 2*4, 3*4, 0x20000*8+2*4, 0x20000*8+3*4,
-		16*8+0*4, 16*8+1*4, 0x20000*8+16*8+0*4, 0x20000*8+16*8+1*4, 16*8+2*4, 16*8+3*4, 0x20000*8+16*8+2*4, 0x20000*8+16*8+3*4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	64*8			/* every sprite takes 64 consecutive bytes */
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	32*32
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &charlayout1,	 48,  1 },	/* colors 48-63 */
-	{ REGION_GFX2, 0x00000, &charlayout2,	 16,  1 },	/* colors 16-31 */
-	{ REGION_GFX1, 0x10000, &spritelayout1,  32,  1 },	/* colors 32-47 */
-	{ REGION_GFX2, 0x40000, &spritelayout2,  64, 16 },	/* colors  0-15 but using lookup table */
+	{ REGION_GFX1, 0x00000, &charlayout,    48,  1 },	/* colors 48-63 */
+	{ REGION_GFX2, 0x00000, &charlayout,    16,  1 },	/* colors 16-31 */
+	{ REGION_GFX1, 0x20000, &spritelayout,  32,  1 },	/* colors 32-47 */
+	{ REGION_GFX2, 0x40000, &spritelayout,  64, 16 },	/* colors  0-15 but using lookup table */
 	{ -1 } /* end of array */
 };
 
@@ -426,14 +404,14 @@ ROM_START( ddribble )
 	ROM_LOAD( "690b01.bin", 0x08000, 0x08000, 0x806b8453 )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "690a05.bin",	0x00000, 0x20000, 0x6a816d0d )	/* characters (set 1) & obtects (set 1) */
-	ROM_LOAD( "690a06.bin",	0x20000, 0x20000, 0x46300cd0 )	/* characters (set 1) & objects (set 1) */
+	ROM_LOAD16_BYTE( "690a05.bin",	0x00000, 0x20000, 0x6a816d0d )	/* characters & objects */
+	ROM_LOAD16_BYTE( "690a06.bin",	0x00001, 0x20000, 0x46300cd0 )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "690a10.bin", 0x00000, 0x20000, 0x61efa222 )	/* characters (set 2) */
-	ROM_LOAD( "690a09.bin", 0x20000, 0x20000, 0xab682186 )	/* characters (set 2) */
-	ROM_LOAD( "690a08.bin",	0x40000, 0x20000, 0x9a889944 )	/* objects (set 2) */
-	ROM_LOAD( "690a07.bin",	0x60000, 0x20000, 0xfaf81b3f )	/* objects (set 2) */
+	ROM_LOAD16_BYTE( "690a10.bin", 0x00000, 0x20000, 0x61efa222 )	/* characters */
+	ROM_LOAD16_BYTE( "690a09.bin", 0x00001, 0x20000, 0xab682186 )
+	ROM_LOAD16_BYTE( "690a08.bin", 0x40000, 0x20000, 0x9a889944 )	/* objects */
+	ROM_LOAD16_BYTE( "690a07.bin", 0x40001, 0x20000, 0xfaf81b3f )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */

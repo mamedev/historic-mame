@@ -113,6 +113,7 @@ Colscroll effects?
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -124,12 +125,6 @@ void warriorb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 //static data16_t *warriorb_ram;
 
-
-WRITE16_HANDLER( TC0100SCN_dual_screen_w )
-{
-	TC0100SCN_word_0_w(offset,data,mem_mask);
-	TC0100SCN_word_1_w(offset,data,mem_mask);
-}
 
 /***********************************************************
 				INTERRUPTS
@@ -175,18 +170,20 @@ logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_p
 			SOUND
 *****************************************/
 
-static WRITE_HANDLER( bankswitch_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
+static int banknum = -1;
 
-#ifdef MAME_DEBUG
-	if (banknum>3) logerror("CPU#1 (Z80) switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
-#endif
-	cpu_setbank (10, &RAM [0x10000 + (banknum * 0x4000)]);
+static void reset_sound_region(void)
+{
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-WRITE16_HANDLER( warriorb_sound_w )
+static WRITE_HANDLER( sound_bankswitch_w )
+{
+	banknum = (data - 1) & 7;
+	reset_sound_region();
+}
+
+static WRITE16_HANDLER( warriorb_sound_w )
 {
 	if (offset == 0)
 		taitosound_port_w (0, data & 0xff);
@@ -204,7 +201,7 @@ WRITE16_HANDLER( warriorb_sound_w )
 #endif
 }
 
-READ16_HANDLER( warriorb_sound_r )
+static READ16_HANDLER( warriorb_sound_r )
 {
 	if (offset == 1)
 		return ((taitosound_comm_r (0) & 0xff));
@@ -305,7 +302,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, bankswitch_w },
+	{ 0xf200, 0xf200, sound_bankswitch_w },
 MEMORY_END
 
 
@@ -499,7 +496,7 @@ static struct GfxDecodeInfo warriorb_gfxdecodeinfo[] =
 
 
 /**************************************************************
-			     YM2610 (SOUND)
+				YM2610 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -524,6 +521,29 @@ static struct YM2610interface ym2610_interface =
 };
 
 
+/**************************************************************
+			     SUBWOOFER (SOUND)
+**************************************************************/
+
+static int subwoofer_sh_start(const struct MachineSound *msound)
+{
+	/* Adjust the lowpass filter of the first three YM2610 channels */
+
+	mixer_set_lowpass_frequency(0,100);
+	mixer_set_lowpass_frequency(1,100);
+	mixer_set_lowpass_frequency(2,100);
+
+	return 0;
+}
+
+static struct CustomSound_interface subwoofer_interface =
+{
+	subwoofer_sh_start,
+	0, /* none */
+	0 /* none */
+};
+
+
 /***********************************************************
 			     MACHINE DRIVERS
 ***********************************************************/
@@ -533,13 +553,13 @@ static struct MachineDriver machine_driver_darius2d =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
+			12000000,	/* 12 MHz ??? (Might well be 16!!) */
 			darius2d_readmem,darius2d_writemem,0,0,
 			warriorb_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
+			16000000/4,	/* 4 MHz ? */
 			z80_sound_readmem, z80_sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		},
@@ -549,13 +569,13 @@ static struct MachineDriver machine_driver_darius2d =
 	0,
 
 	/* video hardware */
-	81*8, 32*8, { 0*8+4, 80*8+4-1, 3*8, 32*8-1 },
+	80*8, 32*8, { 0*8, 80*8-1, 3*8, 32*8-1 },
 
 	warriorb_gfxdecodeinfo,
 	4096*2, 4096*2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	warriorb_vh_start,
 	warriorb_vh_stop,
@@ -567,6 +587,10 @@ static struct MachineDriver machine_driver_darius2d =
 		{
 			SOUND_YM2610,
 			&ym2610_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&subwoofer_interface
 		}
 	}
 };
@@ -576,13 +600,13 @@ static struct MachineDriver machine_driver_warriorb =
 	{
 		{
 			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
+			16000000,	/* 16 MHz ? */
 			warriorb_readmem,warriorb_writemem,0,0,
 			warriorb_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
+			16000000/4,	/* 4 MHz ? */
 			z80_sound_readmem, z80_sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		},
@@ -592,7 +616,7 @@ static struct MachineDriver machine_driver_warriorb =
 	0,
 
 	/* video hardware */
-	81*8, 32*8, { 0*8+4, 80*8+4-1, 2*8, 32*8-1 },
+	80*8, 32*8, { 0*8, 80*8-1, 2*8, 32*8-1 },
 
 	warriorb_gfxdecodeinfo,
 	4096*2, 4096*2,
@@ -750,10 +774,16 @@ ROM_START( warriorb )
 ROM_END
 
 
+static void init_warriorb(void)
+{
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
+}
+
 
 /* Working Games */
 
-GAME( 1989, darius2d, darius2,  darius2d, darius2d, 0, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)" )
-GAME( 1989, drius2do, darius2,  darius2d, darius2d, 0, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)" )
-GAME( 1991, warriorb, 0,        warriorb, warriorb, 0, ROT0, "Taito Corporation", "Warrior Blade (Japan)" )
+GAME( 1989, darius2d, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)" )
+GAME( 1989, drius2do, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)" )
+GAME( 1991, warriorb, 0,        warriorb, warriorb, warriorb, ROT0, "Taito Corporation", "Warrior Blade (Japan)" )
 

@@ -171,6 +171,12 @@ WRITE16_HANDLER( atarigen_scanline_int_ack_w )
 	(*update_int_callback)();
 }
 
+WRITE32_HANDLER( atarigen_scanline_int_ack32_w )
+{
+	atarigen_scanline_int_state = 0;
+	(*update_int_callback)();
+}
+
 
 /*---------------------------------------------------------------
 	atarigen_sound_int_gen: Standard interrupt routine which
@@ -196,6 +202,12 @@ WRITE16_HANDLER( atarigen_sound_int_ack_w )
 	(*update_int_callback)();
 }
 
+WRITE32_HANDLER( atarigen_sound_int_ack32_w )
+{
+	atarigen_sound_int_state = 0;
+	(*update_int_callback)();
+}
+
 
 /*---------------------------------------------------------------
 	atarigen_video_int_gen: Standard interrupt routine which
@@ -216,6 +228,12 @@ int atarigen_video_int_gen(void)
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_video_int_ack_w )
+{
+	atarigen_video_int_state = 0;
+	(*update_int_callback)();
+}
+
+WRITE32_HANDLER( atarigen_video_int_ack32_w )
 {
 	atarigen_video_int_state = 0;
 	(*update_int_callback)();
@@ -263,6 +281,11 @@ WRITE16_HANDLER( atarigen_eeprom_enable_w )
 	eeprom_unlocked = 1;
 }
 
+WRITE32_HANDLER( atarigen_eeprom_enable32_w )
+{
+	eeprom_unlocked = 1;
+}
+
 
 /*---------------------------------------------------------------
 	atarigen_eeprom_w: Writes a "word" to the EEPROM, which is
@@ -280,6 +303,15 @@ WRITE16_HANDLER( atarigen_eeprom_w )
 	eeprom_unlocked = 0;
 }
 
+WRITE32_HANDLER( atarigen_eeprom32_w )
+{
+	if (!eeprom_unlocked)
+		return;
+
+	COMBINE_DATA(&((data32_t *)atarigen_eeprom)[offset]);
+	eeprom_unlocked = 0;
+}
+
 
 /*---------------------------------------------------------------
 	atarigen_eeprom_r: Reads a "word" from the EEPROM, which is
@@ -294,6 +326,11 @@ READ16_HANDLER( atarigen_eeprom_r )
 READ16_HANDLER( atarigen_eeprom_upper_r )
 {
 	return atarigen_eeprom[offset] | 0x00ff;
+}
+
+READ32_HANDLER( atarigen_eeprom_upper32_r )
+{
+	return (atarigen_eeprom[offset * 2] << 16) | atarigen_eeprom[offset * 2 + 1] | 0x00ff00ff;
 }
 
 
@@ -533,6 +570,12 @@ WRITE16_HANDLER( atarigen_sound_upper_w )
 		timer_set(TIME_NOW, (data >> 8) & 0xff, delayed_sound_w);
 }
 
+WRITE32_HANDLER( atarigen_sound_upper32_w )
+{
+	if (ACCESSING_MSB32)
+		timer_set(TIME_NOW, (data >> 24) & 0xff, delayed_sound_w);
+}
+
 
 /*---------------------------------------------------------------
 	atarigen_sound_r: Handles reading data communicated from the
@@ -553,6 +596,13 @@ READ16_HANDLER( atarigen_sound_upper_r )
 	atarigen_sound_to_cpu_ready = 0;
 	atarigen_sound_int_ack_w(0, 0, 0);
 	return (atarigen_sound_to_cpu << 8) | 0x00ff;
+}
+
+READ32_HANDLER( atarigen_sound_upper32_r )
+{
+	atarigen_sound_to_cpu_ready = 0;
+	atarigen_sound_int_ack32_w(0, 0, 0);
+	return (atarigen_sound_to_cpu << 24) | 0x00ffffff;
 }
 
 
@@ -1143,6 +1193,48 @@ WRITE16_HANDLER( atarigen_expanded_666_paletteram_w )
 		b = (b << 2) | (b >> 4);
 
 		palette_change_color(palentry & 0x1ff, r, g, b);
+	}
+}
+
+
+/*---------------------------------------------------------------
+	atarigen_666_paletteram32_w: 6-6-6 RGB palette RAM handler.
+---------------------------------------------------------------*/
+
+WRITE32_HANDLER( atarigen_666_paletteram32_w )
+{
+	int newword, r, g, b;
+
+	COMBINE_DATA(&paletteram32[offset]);
+	
+	if (ACCESSING_MSW32)
+	{
+		newword = paletteram32[offset] >> 16;
+	
+		r = ((newword >> 9) & 0x3e) | ((newword >> 15) & 1);
+		g = ((newword >> 4) & 0x3e) | ((newword >> 15) & 1);
+		b = ((newword << 1) & 0x3e) | ((newword >> 15) & 1);
+	
+		r = (r << 2) | (r >> 4);
+		g = (g << 2) | (g >> 4);
+		b = (b << 2) | (b >> 4);
+	
+		palette_change_color(offset * 2, r, g, b);
+	}
+
+	if (ACCESSING_LSW32)
+	{
+		newword = paletteram32[offset] & 0xffff;
+	
+		r = ((newword >> 9) & 0x3e) | ((newword >> 15) & 1);
+		g = ((newword >> 4) & 0x3e) | ((newword >> 15) & 1);
+		b = ((newword << 1) & 0x3e) | ((newword >> 15) & 1);
+	
+		r = (r << 2) | (r >> 4);
+		g = (g << 2) | (g >> 4);
+		b = (b << 2) | (b >> 4);
+	
+		palette_change_color(offset * 2 + 1, r, g, b);
 	}
 }
 

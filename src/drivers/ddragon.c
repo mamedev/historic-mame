@@ -196,6 +196,20 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
+static MEMORY_READ_START( dd2_readmem )
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2fff, ddragon_spriteram_r },
+	{ 0x3000, 0x37ff, MRA_RAM },
+	{ 0x3800, 0x3800, input_port_0_r },
+	{ 0x3801, 0x3801, input_port_1_r },
+	{ 0x3802, 0x3802, port4_r },
+	{ 0x3803, 0x3803, input_port_2_r },
+	{ 0x3804, 0x3804, input_port_3_r },
+	{ 0x3c00, 0x3fff, MRA_RAM },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
+	{ 0x8000, 0xffff, MRA_ROM },
+MEMORY_END
+
 static MEMORY_WRITE_START( dd2_writemem )
 	{ 0x0000, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, ddragon_fgvideoram_w, &ddragon_fgvideoram },
@@ -274,7 +288,7 @@ MEMORY_END
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK ) /* verified to be active high (palette fades in ddragon2) */ \
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* sub cpu busy */ \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
@@ -572,7 +586,7 @@ static const struct MachineDriver machine_driver_ddragon2 =
 		{
  			CPU_HD6309,
 			3579545,	/* 3.579545 MHz */
-			readmem,dd2_writemem,0,0,
+			dd2_readmem,dd2_writemem,0,0,
 			ddragon_interrupt,1
 		},
 		{
@@ -753,6 +767,42 @@ ROM_START( ddragon2 )
 	ROM_LOAD( "26a9-04.bin",  0x08000, 0x8000, 0xf2cfc649 )
 	ROM_LOAD( "26aa-03.bin",  0x10000, 0x8000, 0x44dd5d4b )
 	ROM_LOAD( "26ab-0.bin",   0x18000, 0x8000, 0x49ddddcd )
+	ROM_LOAD( "26ac-0e.63",   0x20000, 0x8000, 0x57acad2c )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sprite CPU 64kb (Upper 16kb = 0) */
+	ROM_LOAD( "26ae-0.bin",   0x00000, 0x10000, 0xea437867 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* music CPU, 64kb */
+	ROM_LOAD( "26ad-0.bin",   0x00000, 0x8000, 0x75e36cd6 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "26a8-0e.19",   0x00000, 0x10000, 0x4e80cd36 )	/* chars */
+
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "26j0-0.bin",   0x00000, 0x20000, 0xdb309c84 )	/* sprites */
+	ROM_LOAD( "26j1-0.bin",   0x20000, 0x20000, 0xc3081e0c )
+	ROM_LOAD( "26af-0.bin",   0x40000, 0x20000, 0x3a615aad )
+	ROM_LOAD( "26j2-0.bin",   0x60000, 0x20000, 0x589564ae )
+	ROM_LOAD( "26j3-0.bin",   0x80000, 0x20000, 0xdaf040d6 )
+	ROM_LOAD( "26a10-0.bin",  0xa0000, 0x20000, 0x6d16d889 )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "26j4-0.bin",   0x00000, 0x20000, 0xa8c93e76 )	/* tiles */
+	ROM_LOAD( "26j5-0.bin",   0x20000, 0x20000, 0xee555237 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* adpcm samples */
+	ROM_LOAD( "26j6-0.bin",   0x00000, 0x20000, 0xa84b2a29 )
+	ROM_LOAD( "26j7-0.bin",   0x20000, 0x20000, 0xbc6a48d5 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.16",      0x0000, 0x0200, 0x46339529 )	/* unknown (same as ddragon) */
+ROM_END
+
+ROM_START( ddragn2u )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "26a9-04.bin",  0x08000, 0x8000, 0xf2cfc649 )
+	ROM_LOAD( "26aa-03.bin",  0x10000, 0x8000, 0x44dd5d4b )
+	ROM_LOAD( "26ab-0.bin",   0x18000, 0x8000, 0x49ddddcd )
 	ROM_LOAD( "26ac-02.bin",  0x20000, 0x8000, 0x097eaf26 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sprite CPU 64kb (Upper 16kb = 0) */
@@ -786,7 +836,8 @@ ROM_END
 
 
 
-GAME( 1987, ddragon,  0,       ddragon,  ddragon,  0, ROT0, "Technos", "Double Dragon (Japan)" )
-GAME( 1987, ddragonu, ddragon, ddragon,  ddragon,  0, ROT0, "[Technos] (Taito America license)", "Double Dragon (US)" )
-GAME( 1987, ddragonb, ddragon, ddragonb, ddragon,  0, ROT0, "bootleg", "Double Dragon (bootleg)" )
-GAME( 1988, ddragon2, 0,       ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge" )
+GAME( 1987, ddragon,  0,        ddragon,  ddragon,  0, ROT0, "Technos", "Double Dragon (Japan)" )
+GAME( 1987, ddragonu, ddragon,  ddragon,  ddragon,  0, ROT0, "[Technos] (Taito America license)", "Double Dragon (US)" )
+GAME( 1987, ddragonb, ddragon,  ddragonb, ddragon,  0, ROT0, "bootleg", "Double Dragon (bootleg)" )
+GAME( 1988, ddragon2, 0,        ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge (World)" )
+GAME( 1988, ddragn2u, ddragon2, ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge (US)" )

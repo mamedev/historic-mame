@@ -69,6 +69,9 @@ int darius_vh_start (void)
 
 void darius_vh_stop(void)
 {
+	free(spritelist);
+	spritelist = 0;
+
 	PC080SN_vh_stop();
 }
 

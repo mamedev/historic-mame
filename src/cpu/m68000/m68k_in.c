@@ -3413,6 +3413,7 @@ M68KMAKE_OP(chk, 16, ., .)
 
 M68KMAKE_OP(chk, 32, ., d)
 {
+	logerror("%08x: Chk 32d\n",cpu_get_pc());
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		sint src = MAKE_INT_32(DX);
@@ -3432,6 +3433,8 @@ M68KMAKE_OP(chk, 32, ., d)
 
 M68KMAKE_OP(chk, 32, ., .)
 {
+		logerror("%08x: Chk 32\n",cpu_get_pc());
+
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		sint src = MAKE_INT_32(DX);
@@ -3460,9 +3463,9 @@ M68KMAKE_OP(chk2cmp2, 8, ., pcdi)
 		uint upper_bound = m68ki_read_pcrel_8(ea + 1);
 
 		if(!BIT_F(word2))
-			compare = MAKE_INT_8(compare);
-
-		FLAG_C = compare - lower_bound;
+			FLAG_C = MAKE_INT_8(compare) - MAKE_INT_8(lower_bound);
+		else
+			FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
 		if(COND_CS())
 		{
@@ -3493,9 +3496,9 @@ M68KMAKE_OP(chk2cmp2, 8, ., pcix)
 		uint upper_bound = m68ki_read_pcrel_8(ea + 1);
 
 		if(!BIT_F(word2))
-			compare = MAKE_INT_8(compare);
-
-		FLAG_C = compare - lower_bound;
+			FLAG_C = MAKE_INT_8(compare) - MAKE_INT_8(lower_bound);
+		else
+			FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
 		if(COND_CS())
 		{
@@ -3526,9 +3529,9 @@ M68KMAKE_OP(chk2cmp2, 8, ., .)
 		uint upper_bound = m68ki_read_8(ea + 1);
 
 		if(!BIT_F(word2))
-			compare = MAKE_INT_8(compare);
-
-		FLAG_C = compare - lower_bound;
+			FLAG_C = MAKE_INT_8(compare) - MAKE_INT_8(lower_bound);
+		else
+			FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
 		if(COND_CS())
 		{
@@ -3556,12 +3559,12 @@ M68KMAKE_OP(chk2cmp2, 16, ., pcdi)
 		uint compare = REG_DA[(word2 >> 12) & 15];
 		uint ea = EA_PCDI_16();
 		uint lower_bound = m68ki_read_pcrel_16(ea);
-		uint upper_bound = m68ki_read_pcrel_16(ea + 1);
+		uint upper_bound = m68ki_read_pcrel_16(ea + 2);
 
 		if(!BIT_F(word2))
-			compare = MAKE_INT_16(compare);
-
-		FLAG_C = compare - lower_bound;
+			FLAG_C = MAKE_INT_16(compare) - MAKE_INT_16(lower_bound);
+		else
+			FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS())
@@ -3571,7 +3574,10 @@ M68KMAKE_OP(chk2cmp2, 16, ., pcdi)
 			return;
 		}
 
-		FLAG_C = upper_bound - compare;
+		if(!BIT_F(word2))
+			FLAG_C = MAKE_INT_16(upper_bound) - MAKE_INT_16(compare);
+		else
+			FLAG_C = upper_bound - compare;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS() && BIT_B(word2))
@@ -3591,12 +3597,12 @@ M68KMAKE_OP(chk2cmp2, 16, ., pcix)
 		uint compare = REG_DA[(word2 >> 12) & 15];
 		uint ea = EA_PCIX_16();
 		uint lower_bound = m68ki_read_pcrel_16(ea);
-		uint upper_bound = m68ki_read_pcrel_16(ea + 1);
+		uint upper_bound = m68ki_read_pcrel_16(ea + 2);
 
 		if(!BIT_F(word2))
-			compare = MAKE_INT_16(compare);
-
-		FLAG_C = compare - lower_bound;
+			FLAG_C = MAKE_INT_16(compare) - MAKE_INT_16(lower_bound);
+		else
+			FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS())
@@ -3606,7 +3612,10 @@ M68KMAKE_OP(chk2cmp2, 16, ., pcix)
 			return;
 		}
 
-		FLAG_C = upper_bound - compare;
+		if(!BIT_F(word2))
+			FLAG_C = MAKE_INT_16(upper_bound) - MAKE_INT_16(compare);
+		else
+			FLAG_C = upper_bound - compare;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS() && BIT_B(word2))
@@ -3626,12 +3635,13 @@ M68KMAKE_OP(chk2cmp2, 16, ., .)
 		uint compare = REG_DA[(word2 >> 12) & 15];
 		uint ea = M68KMAKE_GET_EA_AY_16;
 		uint lower_bound = m68ki_read_16(ea);
-		uint upper_bound = m68ki_read_16(ea + 1);
+		uint upper_bound = m68ki_read_16(ea + 2);
 
 		if(!BIT_F(word2))
-			compare = MAKE_INT_16(compare);
+			FLAG_C = MAKE_INT_16(compare) - MAKE_INT_16(lower_bound);
+		else
+			FLAG_C = compare - lower_bound;
 
-		FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS())
@@ -3640,13 +3650,15 @@ M68KMAKE_OP(chk2cmp2, 16, ., .)
 				m68ki_exception_trap(EXCEPTION_CHK);
 			return;
 		}
+		if(!BIT_F(word2))
+			FLAG_C = MAKE_INT_16(upper_bound) - MAKE_INT_16(compare);
+		else
+			FLAG_C = upper_bound - compare;
 
-		FLAG_C = upper_bound - compare;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS() && BIT_B(word2))
 				m68ki_exception_trap(EXCEPTION_CHK);
-
 		return;
 	}
 	m68ki_exception_illegal();
@@ -3661,7 +3673,7 @@ M68KMAKE_OP(chk2cmp2, 32, ., pcdi)
 		uint compare = REG_DA[(word2 >> 12) & 15];
 		uint ea = EA_PCDI_32();
 		uint lower_bound = m68ki_read_pcrel_32(ea);
-		uint upper_bound = m68ki_read_pcrel_32(ea + 1);
+		uint upper_bound = m68ki_read_pcrel_32(ea + 4);
 
 		FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
@@ -3693,7 +3705,7 @@ M68KMAKE_OP(chk2cmp2, 32, ., pcix)
 		uint compare = REG_DA[(word2 >> 12) & 15];
 		uint ea = EA_PCIX_32();
 		uint lower_bound = m68ki_read_pcrel_32(ea);
-		uint upper_bound = m68ki_read_pcrel_32(ea + 1);
+		uint upper_bound = m68ki_read_pcrel_32(ea + 4);
 
 		FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
@@ -3725,7 +3737,7 @@ M68KMAKE_OP(chk2cmp2, 32, ., .)
 		uint compare = REG_DA[(word2 >> 12) & 15];
 		uint ea = M68KMAKE_GET_EA_AY_32;
 		uint lower_bound = m68ki_read_32(ea);
-		uint upper_bound = m68ki_read_32(ea + 1);
+		uint upper_bound = m68ki_read_32(ea + 4);
 
 		FLAG_C = compare - lower_bound;
 		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);

@@ -56,8 +56,6 @@ WRITE_HANDLER( battlane_palette_w )
 	int bit0,bit1,bit2;
 
 
-	paletteram[offset] = data;
-
 	/* red component */
 	bit0 = (~data >> 0) & 0x01;
 	bit1 = (~data >> 1) & 0x01;
@@ -140,11 +138,11 @@ WRITE_HANDLER( battlane_bitmap_w )
 	{
 		if (data & 1<<i)
 		{
-		    screen_bitmap->line[(offset / 0x100) * 8+i][(0x2000-offset) % 0x100]|=orval;
+		    screen_bitmap->line[offset % 0x100][(offset / 0x100) * 8+i] |= orval;
 		}
 		else
 		{
-		    screen_bitmap->line[(offset / 0x100) * 8+i][(0x2000-offset) % 0x100]&=~orval;
+		    screen_bitmap->line[offset % 0x100][(offset / 0x100) * 8+i] &= ~orval;
 		}
 	}
 	battlane_bitmap[offset]=data;
@@ -154,40 +152,6 @@ READ_HANDLER( battlane_bitmap_r )
 {
 	return battlane_bitmap[offset];
 }
-
-
-
-
-#ifdef MAME_DEBUG
-void battlane_dump_bitmap(void)
-{
-    int i;
-    FILE *fp=fopen("SCREEN.DMP", "w+b");
-    if (fp)
-    {
-        for ( i=0; i<0x20*8-1; i++)
-        {
-            fwrite(screen_bitmap->line[i], 0x20*8, 1, fp);
-        }
-        fclose(fp);
-    }
-	fp=fopen("SPRITES.DMP", "w+b");
-	if (fp)
-	{
-		fwrite(battlane_spriteram, 0x100, 1, fp);
-		fclose(fp);
-	}
-
-    fp=fopen("TILES.DMP", "w+b");
-	if (fp)
-	{
-        fwrite(battlane_tileram, 0x800, 1, fp);
-		fclose(fp);
-	}
-
-
-}
-#endif
 
 
 
@@ -294,10 +258,6 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         scrly=-scrolly;
         copyscrollbitmap(bitmap,bkgnd_bitmap,1,&scrly,1,&scrlx,&Machine->visible_area,TRANSPARENCY_NONE,0);
     }
-    {
-    char baf[256];
-    char baf2[40];
-    baf[0]=0;
 
     /* Draw sprites */
     for (offs=0; offs<0x0100; offs+=4)
@@ -316,11 +276,6 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
           int code=battlane_spriteram[offs+3];
           code += 256*((attr>>6) & 0x02);
           code += 256*((attr>>5) & 0x01);
-          if (offs > 0x00a0)
-          {
-               sprintf(baf2, "%02x ", attr);
-               strcat(baf,baf2);
-          }
 
           if (attr & 0x01)
 	      {
@@ -372,45 +327,34 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
           }
 	}
 
-
-//    usrintf_showmessage(baf);
-    }
     /* Draw foreground bitmap */
-    if (flipscreen)
-    {
-        for (y=0; y<0x20*8; y++)
-        {
-            for (x=0; x<0x20*8; x++)
-            {
-                int data=screen_bitmap->line[y][x];
-                if (data)
-                {
-                    bitmap->line[255-y][255-x]=Machine->pens[data];
-                }
-            }
-        }
-    }
-    else
-    {
-        for (y=0; y<0x20*8; y++)
-        {
-            for (x=0; x<0x20*8; x++)
-            {
-                int data=screen_bitmap->line[y][x];
-                if (data)
-                {
-                    bitmap->line[y][x]=Machine->pens[data];
-                }
-            }
-        }
+	if (flipscreen)
+	{
+		for (y=0; y<0x20*8; y++)
+		{
+			for (x=0; x<0x20*8; x++)
+			{
+				int data=screen_bitmap->line[y][x];
+				if (data)
+				{
+					plot_pixel(bitmap,255-x,255-y,Machine->pens[data]);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y=0; y<0x20*8; y++)
+		{
+			for (x=0; x<0x20*8; x++)
+			{
+				int data=screen_bitmap->line[y][x];
+				if (data)
+				{
+					plot_pixel(bitmap,x,y,Machine->pens[data]);
+				}
+			}
+		}
 
-    }
-
-#ifdef MAME_DEBUG
-    if (keyboard_pressed(KEYCODE_S))
-    {
-         battlane_dump_bitmap();
-    }
-#endif
-
+	}
 }

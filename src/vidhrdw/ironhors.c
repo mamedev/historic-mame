@@ -95,9 +95,9 @@ void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 WRITE_HANDLER( ironhors_charbank_w )
 {
-	if (charbank != (data & 1))
+	if (charbank != (data & 3))
 	{
-		charbank = data & 1;
+		charbank = data & 3;
 		memset(dirtybuffer,1,videoram_size);
 	}
 
@@ -115,6 +115,11 @@ WRITE_HANDLER( ironhors_palettebank_w )
 		palettebank = data & 7;
 		memset(dirtybuffer,1,videoram_size);
 	}
+
+	coin_counter_w(0,data & 0x10);
+	coin_counter_w(1,data & 0x20);
+
+if (data & 0xc8) usrintf_showmessage("ironhors_palettebank_w %02x",data);
 }
 
 
@@ -146,7 +151,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 16*(colorram[offs] & 0x20) + 4*(colorram[offs] & 0x40) + 1024 * charbank,
+					videoram[offs] + ((colorram[offs] & 0x40)<<2) + ((colorram[offs] & 0x20)<<4) + (charbank<<10),
 					(colorram[offs] & 0x0f) + 16 * palettebank,
 					colorram[offs] & 0x10,colorram[offs] & 0x20,
 					sx,sy,
@@ -178,74 +183,71 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		for (offs = 0;offs < spriteram_size;offs += 5)
 		{
-			if (sr[offs+2])
+			int sx,sy,flipx,flipy,code,color;
+
+
+			sx = sr[offs+3];
+			sy = sr[offs+2];
+			flipx = sr[offs+4] & 0x20;
+			flipy = sr[offs+4] & 0x40;
+			code = (sr[offs] << 2) + ((sr[offs+1] & 0x03) << 10) + ((sr[offs+1] & 0x0c) >> 2);
+			color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
+
+			switch (sr[offs+4] & 0x0c)
 			{
-				int sx,sy,flipx,flipy,code,color;
+				case 0x00:	/* 16x16 */
+					drawgfx(bitmap,Machine->gfx[1],
+							code/4,
+							color,
+							flipx,flipy,
+							sx,sy,
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
+					break;
 
+				case 0x04:	/* 16x8 */
+					{
+						drawgfx(bitmap,Machine->gfx[2],
+								code & ~1,
+								color,
+								flipx,flipy,
+								flipx?sx+8:sx,sy,
+								&Machine->visible_area,TRANSPARENCY_PEN,0);
+						drawgfx(bitmap,Machine->gfx[2],
+								code | 1,
+								color,
+								flipx,flipy,
+								flipx?sx:sx+8,sy,
+								&Machine->visible_area,TRANSPARENCY_PEN,0);
+					}
+					break;
 
-				sx = sr[offs+3];
-				sy = sr[offs+2];
-				flipx = sr[offs+4] & 0x20;
-				flipy = sr[offs+4] & 0x40;
-				code = (sr[offs] << 2) + ((sr[offs+1] & 0x01) << 10) + ((sr[offs+1] & 0x0c) >> 2);
-				color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
+				case 0x08:	/* 8x16 */
+					{
+						drawgfx(bitmap,Machine->gfx[2],
+								code & ~2,
+								color,
+								flipx,flipy,
+								sx,flipy?sy+8:sy,
+								&Machine->visible_area,TRANSPARENCY_PEN,0);
+						drawgfx(bitmap,Machine->gfx[2],
+								code | 2,
+								color,
+								flipx,flipy,
+								sx,flipy?sy:sy+8,
+								&Machine->visible_area,TRANSPARENCY_PEN,0);
+					}
+					break;
 
-				switch (sr[offs+4] & 0x0c)
-				{
-					case 0x00:	/* 16x16 */
-						drawgfx(bitmap,Machine->gfx[1],
-								code/4,
+				case 0x0c:	/* 8x8 */
+					{
+						drawgfx(bitmap,Machine->gfx[2],
+								code,
 								color,
 								flipx,flipy,
 								sx,sy,
 								&Machine->visible_area,TRANSPARENCY_PEN,0);
-						break;
-
-					case 0x04:	/* 16x8 */
-						{
-							drawgfx(bitmap,Machine->gfx[2],
-									code & ~1,
-									color,
-									flipx,flipy,
-									flipx?sx+8:sx,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0);
-							drawgfx(bitmap,Machine->gfx[2],
-									code | 1,
-									color,
-									flipx,flipy,
-									flipx?sx:sx+8,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0);
-						}
-						break;
-
-					case 0x08:	/* 8x16 */
-						{
-							drawgfx(bitmap,Machine->gfx[2],
-									code & ~2,
-									color,
-									flipx,flipy,
-									sx,flipy?sy+8:sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0);
-							drawgfx(bitmap,Machine->gfx[2],
-									code | 2,
-									color,
-									flipx,flipy,
-									sx,flipy?sy:sy+8,
-									&Machine->visible_area,TRANSPARENCY_PEN,0);
-						}
-						break;
-
-					case 0x0c:	/* 8x8 */
-						{
-							drawgfx(bitmap,Machine->gfx[2],
-									code,
-									color,
-									flipx,flipy,
-									sx,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0);
-						}
-						break;
-				}
+					}
+					break;
 			}
 		}
 	}

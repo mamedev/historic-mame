@@ -514,6 +514,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int scroll_offset)
 static void update_screen(struct osd_bitmap *bitmap, int scroll_offset)
 {
 	int y, sy;
+	int beamx, beamy;
 
 	/* recompute the palette, and mark all scanlines dirty if we need to redraw */
 	if (palette_recalc())
@@ -530,13 +531,28 @@ static void update_screen(struct osd_bitmap *bitmap, int scroll_offset)
 		/* only redraw if dirty */
 		if (scanline_dirty[sy])
 		{
-			draw_scanline8(bitmap, 0, sy, 320, &local_videoram[sy * 512], Machine->pens, -1);
+			draw_scanline8(bitmap, 0, y, 320, &local_videoram[sy * 512], Machine->pens, -1);
 			scanline_dirty[sy] = 0;
 		}
 	}
 
 	/* draw the sprites */
 	draw_sprites(bitmap, scroll_offset);
+
+	/* draw the crosshair (but not for topsecret) */
+	if(!exidy440_topsecret)
+	{
+		beamx = ((input_port_4_r(0) & 0xff) * 320) >> 8;
+		beamy = ((input_port_5_r(0) & 0xff) * 240) >> 8;
+
+		draw_crosshair(bitmap, beamx, beamy, &Machine->visible_area);
+
+		/* dirty scanlines */
+		/* we can ignore scroll (topsecret is the only game which uses scroll)  */
+		for(y = beamy - 5; y <= beamy + 5; y++)
+			if((y >= 0) && (y < 256))
+				scanline_dirty[y] = 1;
+	}
 }
 
 
@@ -555,8 +571,7 @@ void exidy440_update_callback(int param)
 
 	struct osd_bitmap *bitmap = Machine->scrbitmap;
 
-	int y, i;
-	int xoffs, yoffs;
+	int i;
 	double time, increment;
 	int beamx, beamy;
 
@@ -580,20 +595,6 @@ void exidy440_update_callback(int param)
 	time = compute_pixel_time(beamx, beamy) - increment * 6;
 	for (i = 0; i <= 12; i++, time += increment)
 		timer_set(time, beamx, beam_firq_callback);
-
-	/* draw a crosshair */
-	xoffs = beamx - 3;
-	yoffs = beamy - 3;
-	for (y = -3; y <= 3; y++, yoffs++, xoffs++)
-	{
-		if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 320)
-		{
-			plot_pixel(bitmap, beamx, yoffs, Machine->pens[256]);
-			scanline_dirty[yoffs] = 1;
-		}
-		if (xoffs >= 0 && xoffs < 320 && beamy >= 0 && beamy < 240)
-			plot_pixel(bitmap, xoffs, beamy, Machine->pens[256]);
-	}
 }
 
 
@@ -611,6 +612,7 @@ void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		memset(scanline_dirty, 1, 256);
 
 	/* if we're Top Secret, do our refresh here; others are done in the update function above */
+	/* unless we're doing a full refresh (eg. when the driver is paused) */
 	if (exidy440_topsecret)
 	{
 		/* if the scroll changed, mark everything dirty */
@@ -622,5 +624,12 @@ void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		/* redraw the screen */
 		update_screen(bitmap, topsecex_yscroll);
+	}
+	else
+	{
+		if(full_refresh)
+		{
+			update_screen(bitmap, 0);
+		}
 	}
 }

@@ -76,6 +76,25 @@ static WRITE16_HANDLER( K052109_word_noA12_w )
 	K052109_word_w(offset,data,mem_mask);
 }
 
+WRITE16_HANDLER( punkshot_K052109_word_w )
+{
+	/* it seems that a word write is supposed to affect only the MSB. The */
+	/* "ROUND 1" text in punkshtj goes lost otherwise. */
+	if (ACCESSING_MSB)
+		K052109_w(offset,(data >> 8) & 0xff);
+	else if (ACCESSING_LSB)
+		K052109_w(offset + 0x2000,data & 0xff);
+}
+
+static WRITE16_HANDLER( punkshot_K052109_word_noA12_w )
+{
+	/* some games have the A12 line not connected, so the chip spans */
+	/* twice the memory range, with mirroring */
+	offset = ((offset & 0x3000) >> 1) | (offset & 0x07ff);
+	punkshot_K052109_word_w(offset,data,mem_mask);
+}
+
+
 /* the interface with the 053245 is weird. The chip can address only 0x800 bytes */
 /* of RAM, but they put 0x4000 there. The CPU can access them all. Address lines */
 /* A1, A5 and A6 don't go to the 053245. */
@@ -580,7 +599,7 @@ static MEMORY_WRITE16_START( punkshot_writemem )
 	{ 0x0a0040, 0x0a0041, K053260_0_lsb_w },
 	{ 0x0a0060, 0x0a007f, K053251_lsb_w },
 	{ 0x0a0080, 0x0a0081, watchdog_reset16_w },
-	{ 0x100000, 0x107fff, K052109_word_noA12_w },
+	{ 0x100000, 0x107fff, punkshot_K052109_word_noA12_w },
 	{ 0x110000, 0x110007, K051937_word_w },
 	{ 0x110400, 0x1107ff, K051960_word_w },
 MEMORY_END
@@ -743,9 +762,9 @@ WRITE16_HANDLER( tmnt2_1c0800_w )
 		/* It fixes the enemies, though, they are not all purple when you throw them around. */
 		/* Also, the bosses don't blink when they are about to die - don't know */
 		/* if this is correct or not. */
-//		if (READ_WORD( &sunset_104000[CellVar + 0x2a] ) & 0x001f)
+//		if (sunset_104000[CellVar + 0x15] & 0x001f)
 //			cpu_writemem24bew_word(dst+0x18,(cpu_readmem24bew_word(dst+0x18) & 0xffe0) |
-//					(READ_WORD( &sunset_104000[CellVar + 0x2a] ) & 0x001f));
+//					(sunset_104000[CellVar + 0x15] & 0x001f));
 
 		x = src[2];
 		if (sunset_104000[CellVar + 0x00] & 0x4000)
@@ -2653,6 +2672,40 @@ ROM_END
 
 ROM_START( tmnt )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD16_BYTE( "963-x23",      0x00000, 0x20000, 0xa9549004 )
+	ROM_LOAD16_BYTE( "963-x24",      0x00001, 0x20000, 0xe5cc9067 )
+	ROM_LOAD16_BYTE( "963-x21",      0x40000, 0x10000, 0x5789cf92 )
+	ROM_LOAD16_BYTE( "963-x22",      0x40001, 0x10000, 0x0a74e277 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "963-e20",      0x00000, 0x08000, 0x1692a6d6 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a28",      0x000000, 0x80000, 0xdb4769a8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29",      0x080000, 0x80000, 0x8069cd2e )        /* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a17",      0x000000, 0x80000, 0xb5239a44 )        /* sprites */
+	ROM_LOAD( "963-a18",      0x080000, 0x80000, 0xdd51adef )        /* sprites */
+	ROM_LOAD( "963-a15",      0x100000, 0x80000, 0x1f324eed )        /* sprites */
+	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
+
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
+
+	ROM_REGION( 0x80000, REGION_SOUND3, 0 )	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
+ROM_END
+
+ROM_START( tmntu )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
 	ROM_LOAD16_BYTE( "963-r23",      0x00000, 0x20000, 0xa7f61195 )
 	ROM_LOAD16_BYTE( "963-r24",      0x00001, 0x20000, 0x661e056a )
 	ROM_LOAD16_BYTE( "963-r21",      0x40000, 0x10000, 0xde047bb6 )
@@ -2672,8 +2725,8 @@ ROM_START( tmnt )
 	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
-	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
@@ -2706,8 +2759,8 @@ ROM_START( tmht )
 	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
-	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
@@ -2721,10 +2774,10 @@ ROM_END
 
 ROM_START( tmntj )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD16_BYTE( "963-x23",      0x00000, 0x20000, 0xa9549004 )
-	ROM_LOAD16_BYTE( "963-x24",      0x00001, 0x20000, 0xe5cc9067 )
-	ROM_LOAD16_BYTE( "963-x21",      0x40000, 0x10000, 0x5789cf92 )
-	ROM_LOAD16_BYTE( "963-x22",      0x40001, 0x10000, 0x0a74e277 )
+	ROM_LOAD16_BYTE( "963_223.j17",  0x00000, 0x20000, 0x0d34a5ff )
+	ROM_LOAD16_BYTE( "963_224.k17",  0x00001, 0x20000, 0x2fd453f2 )
+	ROM_LOAD16_BYTE( "963_221.j15",  0x40000, 0x10000, 0xfa8e25fd )
+	ROM_LOAD16_BYTE( "963_222.k15",  0x40001, 0x10000, 0xca437a4f )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "963-e20",      0x00000, 0x08000, 0x1692a6d6 )
@@ -2740,8 +2793,8 @@ ROM_START( tmntj )
 	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
-	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
@@ -2774,8 +2827,8 @@ ROM_START( tmht2p )
 	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
-	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
@@ -2808,8 +2861,8 @@ ROM_START( tmnt2pj )
 	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
-	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
@@ -2842,8 +2895,8 @@ ROM_START( tmnt2po )
 	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
-	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
@@ -3608,7 +3661,8 @@ static void init_glfgreat(void)
 GAME( 1989, mia,      0,        mia,      mia,      mia,      ROT0,  "Konami", "Missing in Action (version T)" )
 GAME( 1989, mia2,     mia,      mia,      mia,      mia,      ROT0,  "Konami", "Missing in Action (version S)" )
 
-GAME( 1989, tmnt,     0,        tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (US 4 Players)" )
+GAME( 1989, tmnt,     0,        tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (World 4 Players)" )
+GAME( 1989, tmntu,    tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (US 4 Players)" )
 GAME( 1989, tmht,     tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Hero Turtles (UK 4 Players)" )
 GAME( 1989, tmntj,    tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (Japan 4 Players)" )
 GAME( 1989, tmht2p,   tmnt,     tmnt,     tmnt2p,   tmnt,     ROT0,  "Konami", "Teenage Mutant Hero Turtles (UK 2 Players)" )

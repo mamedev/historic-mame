@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -19,7 +20,7 @@ struct tempsprite
 static struct tempsprite *spritelist;
 
 static int taito_hide_pixels;
-
+void asuka_vh_stop(void);
 
 /**********************************************************/
 
@@ -49,16 +50,25 @@ static int has_TC0110PCR(void)
 
 int asuka_core_vh_start (void)
 {
-	spritelist = malloc(0x100 * sizeof(*spritelist));
-	if (!spritelist)
-		return 1;
-
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
 		return 1;
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			asuka_vh_stop();
 			return 1;
+		}
+
+	spritelist = malloc(0x100 * sizeof(*spritelist));
+	if (!spritelist)
+	{
+		asuka_vh_stop();
+		return 1;
+	}
+
+	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
+	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
 
 	return 0;
 }
@@ -84,7 +94,6 @@ void asuka_vh_stop (void)
 
 	if (has_TC0110PCR())
 		TC0110PCR_vh_stop();
-
 }
 
 
@@ -109,10 +118,10 @@ WRITE16_HANDLER( asuka_spriteflip_w )
 
 void asuka_update_palette (void)
 {
-	int i,j;
-	int offs,data,tilenum,color;
-	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
-	unsigned short palette_map[256];
+	int i,j,offs;
+	UINT8 color,sprite_colbank = (sprite_ctrl & 0x3c) << 2;
+	UINT16 data,tilenum;
+	UINT16 palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -211,9 +220,10 @@ void asuka_update_palette (void)
 
 static void asuka_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 {
-	int offs, data, tilenum, color, flipx, flipy;
-	int x, y, code, curx, cury;
-	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
+	int offs, flipx, flipy;
+	int x, y, curx, cury;
+	UINT8 color, sprite_colbank = (sprite_ctrl & 0x3c) << 2;
+	UINT16 data, code, tilenum;
 
 	/* Mofflot sets this, I haven't seen the other games do so */
 	int priority = (sprite_ctrl & 0x2000) >> 13;	/* 1 = sprites under top bg layer */
@@ -304,7 +314,7 @@ static void asuka_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_off
 
 void asuka_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -318,8 +328,11 @@ void asuka_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine->visible_area);
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
 

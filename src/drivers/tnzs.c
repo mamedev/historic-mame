@@ -87,7 +87,7 @@ f000-f003 inputs (used only by Arkanoid 2)
 
 						driver by
 
-				Luca Elia (eliavit@unina.it)
+				Luca Elia (l.elia@tin.it)
 				Mirko Buffoni
 
 - The game doesn't write to f800-fbff (static palette)

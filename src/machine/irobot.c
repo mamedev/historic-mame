@@ -351,11 +351,11 @@ UINT32 irmb_din(const irmb_ops *curop)
 		UINT32 ad = curop->diradd | (irmb_latch & curop->latchmask);
 
 		if (curop->diren || (irmb_latch & 0x6000) == 0)
-			d = READ_WORD(&mbRAM[(ad << 1) & 0x1fff]);		/* MB RAM read */
+			d = ((UINT16 *)mbRAM)[ad & 0xfff];				/* MB RAM read */
 		else if (irmb_latch & 0x4000)
-			d = READ_WORD(&mbROM[(ad << 1) + 0x4000]);		/* MB ROM read, CEMATH = 1 */
+			d = ((UINT16 *)mbROM)[ad + 0x2000];				/* MB ROM read, CEMATH = 1 */
 		else
-			d = READ_WORD(&mbROM[(ad << 1) & 0x3fff]);		/* MB ROM read, CEMATH = 0 */
+			d = ((UINT16 *)mbROM)[ad & 0x1fff];				/* MB ROM read, CEMATH = 0 */
 	}
 	return d;
 }
@@ -365,7 +365,7 @@ void irmb_dout(const irmb_ops *curop, UINT32 d)
 {
 	/* Write to video com ram */
 	if (curop->ramsel == 3)
-		WRITE_WORD(&irobot_combase_mb[(irmb_latch << 1) & 0xfff], d);
+		((UINT16 *)irobot_combase_mb)[irmb_latch & 0x7ff] = d;
 
     /* Write to mathox ram */
 	if (!(curop->flags & FL_MBMEMDEC))
@@ -373,7 +373,7 @@ void irmb_dout(const irmb_ops *curop, UINT32 d)
 		UINT32 ad = curop->diradd | (irmb_latch & curop->latchmask);
 
 		if (curop->diren || (irmb_latch & 0x6000) == 0)
-			WRITE_WORD(&mbRAM[(ad << 1) & 0x1fff], d);		/* MB RAM write */
+			((UINT16 *)mbRAM)[ad & 0xfff] = d;				/* MB RAM write */
 	}
 }
 

@@ -20,6 +20,7 @@ enum
 	UI_on,
 	UI_off,
 	UI_NA,
+	UI_OK,
 	UI_INVALID,
 	UI_none,
 	UI_cpu,
@@ -127,6 +128,10 @@ enum
 	UI_cheatname,
 	UI_cheatdescription,
 	UI_code,
+	UI_max,
+	UI_set,
+	UI_conflict_found,
+	UI_no_help_available,
 
 	/* watchpoint stuff */
 	UI_watchlength,
@@ -141,13 +146,15 @@ enum
 	UI_search_timers,
 	UI_search_energy,
 	UI_search_status,
-	UI_search_slow,
 	UI_search_speed,
 	UI_search_matches_found,
 	UI_search_noinit,
 	UI_search_nosave,
 	UI_search_done,
 	UI_search_OK,
+	UI_search_select_value,
+	UI_search_all_values_saved,
+	UI_search_one_match_found_added,
 
 	UI_last_entry
 };

@@ -1,10 +1,3 @@
-/****************************************************************************/
-/*            real mode i286 emulator by Fabrice Frances                    */
-/*           (initial work based on David Hedley's pcemu)                   */
-/*                                                                          */
-/****************************************************************************/
-/* OB[19.07.99] added Mode Flag V30 */
-
 typedef enum { ES, CS, SS, DS } SREGS;
 typedef enum { AW, CW, DW, BW, SP, BP, IX, IY } WREGS;
 
@@ -159,9 +152,9 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 	int tmp = (int)((INT8)FETCH);			\
 	if (flag)								\
 	{										\
-		UINT8 table[3]={10,10,3}; 			\
+		const UINT8 table[3]={3,10,10}; 	\
 		I.ip = (WORD)(I.ip+tmp);			\
-		nec_ICount-=table[cpu_type];		\
+		nec_ICount-=table[cpu_type/8];		\
 		change_pc20((I.sregs[CS]<<4) + I.ip);\
 		return;								\
 	}
@@ -287,11 +280,11 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 	int count = (I.regs.b[CL]+1)/2;							\
 	unsigned di = I.regs.w[IY];								\
 	unsigned si = I.regs.w[IX];								\
-	UINT8 table[3]={19,19,18};	 							\
+	const UINT8 table[3]={18,19,19};	 					\
 	if (seg_prefix) logerror("%06x: Warning: seg_prefix defined for add4s\n",cpu_get_pc());	\
 	I.ZeroVal = I.CarryVal = 0;								\
 	for (i=0;i<count;i++) {									\
-		nec_ICount-=table[cpu_type];						\
+		nec_ICount-=table[cpu_type/8];						\
 		tmp = GetMemB(DS, si);								\
 		tmp2 = GetMemB(ES, di);								\
 		v1 = (tmp>>4)*10 + (tmp&0xf);						\
@@ -312,11 +305,11 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 	int i,v1,v2,result;										\
     unsigned di = I.regs.w[IY];								\
 	unsigned si = I.regs.w[IX];								\
-	UINT8 table[3]={19,19,18};	 							\
+	const UINT8 table[3]={18,19,19};	 					\
 	if (seg_prefix) logerror("%06x: Warning: seg_prefix defined for sub4s\n",cpu_get_pc());	\
 	I.ZeroVal = I.CarryVal = 0;								\
 	for (i=0;i<count;i++) {									\
-		nec_ICount-=table[cpu_type];						\
+		nec_ICount-=table[cpu_type/8];						\
 		tmp = GetMemB(ES, di);								\
 		tmp2 = GetMemB(DS, si);								\
 		v1 = (tmp>>4)*10 + (tmp&0xf);						\
@@ -342,11 +335,11 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 	int i,v1,v2,result;										\
     unsigned di = I.regs.w[IY];								\
 	unsigned si = I.regs.w[IX];								\
-	UINT8 table[3]={19,19,14};	 							\
+	const UINT8 table[3]={14,19,19};						\
 	if (seg_prefix) logerror("%06x: Warning: seg_prefix defined for cmp4s\n",cpu_get_pc());	\
 	I.ZeroVal = I.CarryVal = 0;								\
 	for (i=0;i<count;i++) {									\
-		nec_ICount-=table[cpu_type];						\
+		nec_ICount-=table[cpu_type/8];						\
 		tmp = GetMemB(ES, di);								\
 		tmp2 = GetMemB(DS, si);								\
 		v1 = (tmp>>4)*10 + (tmp&0xf);						\

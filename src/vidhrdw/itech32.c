@@ -826,6 +826,7 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 	int xleft, y, count = 0, val = 0, innercount;
 	int xdststep = 0x100;
 	int ydststep = VIDEO_DST_YSTEP;
+	int startx = (VIDEO_TRANSFER_X & 0xfff) << 8;
 
 	/* adjust for scaling */
 	if (VIDEO_TRANSFER_FLAGS & XFERFLAG_DSTXSCALE)
@@ -850,7 +851,7 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 		}
 
 		/* compute the address */
-		sx = (VIDEO_TRANSFER_X & 0xfff) << 8;
+		sx = startx;
 		dstbase = &base[compute_safe_address(clip_rect.min_x, sy >> 8) - clip_rect.min_x];
 
 		/* loop until gone */
@@ -882,6 +883,12 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 			else
 				sx += xdststep * innercount;
 		}
+
+		/* apply skew */
+		if (VIDEO_TRANSFER_FLAGS & XFERFLAG_DXDYSIGN)
+			startx += VIDEO_XSTEP_PER_Y;
+		else
+			startx -= VIDEO_XSTEP_PER_Y;
 	}
 }
 
@@ -894,7 +901,7 @@ static void draw_rle(UINT16 *base, UINT16 color)
 		disable_clipping();
 
 	/* if we have an X scale, draw it slow */
-	if ((VIDEO_TRANSFER_FLAGS & XFERFLAG_DSTXSCALE) && VIDEO_DST_XSTEP != 0x100)
+	if (((VIDEO_TRANSFER_FLAGS & XFERFLAG_DSTXSCALE) && VIDEO_DST_XSTEP != 0x100) || VIDEO_XSTEP_PER_Y)
 		draw_rle_slow(base, color);
 
 	/* else draw it fast */
