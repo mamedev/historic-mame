@@ -22,6 +22,9 @@ Warlords Driver by Lee Taylor and John Clegg
            R       D                     VBLANK  (1 = VBlank)
            R          D                  SELF TEST
 0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
+           R             D               Slam (0 = On)
+           R                D            Player 4 Start Switch (0 = On)
+           R                   D         Player 3 Start Switch (0 = On)
            R                      D      Player 2 Start Switch (0 = On)
            R                         D   Player 1 Start Switch (0 = On)
 --------------------------------------------------------------------------------------
@@ -93,12 +96,42 @@ Off On  On                          For every 5 coins, add 1 coin
 #include "sndhrdw/pokyintf.h"
 
 
-int warlord_pots(int offset);
+int warlord_pot1_r (int offset);
+int warlord_pot2_r (int offset);
+int warlord_pot3_r (int offset);
+int warlord_pot4_r (int offset);
 int warlord_trakball_r (int offset);
 
 void warlord_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void warlord_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+
+/* Misc sound code */
+static struct POKEYinterface interface =
+{
+	1,	/* 1 chip */
+	1,	/* 1 update per video frame (low quality) */
+	FREQ_17_APPROX,
+	255,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ input_port_4_r },
+	{ warlord_pot2_r },
+	{ warlord_pot3_r },
+	{ warlord_pot4_r },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ 0 },
+};
+
+
+int warlord_sh_start(void)
+{
+	return pokey_sh_start (&interface);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -106,12 +139,12 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
 	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ 0xf800, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
 	{ 0x0c00, 0x0c00, input_port_0_r },	/* IN0 */
 	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
-	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
-	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
-	{ 0x1000, 0x100f, warlord_pots },   /* Read the 4 pokey pot values & the random # gen */
+	{ 0x1000, 0x100f, pokey1_r },		/* Read the 4 paddle values & the random # gen */
+	{ 0x0800, 0x0800, input_port_2_r },	/* DSW1 */
+	{ 0x0801, 0x0801, input_port_3_r },	/* DSW2 */
 	{ -1 }	/* end of table */
 };
 
@@ -130,72 +163,74 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_DIPNAME (0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Upright" )
+	PORT_DIPSETTING (   0x80, "Cocktail" )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0x20,
- 		{ 0, 0, 0, 0, 0, OSD_KEY_F2, IPB_VBLANK, OSD_KEY_C },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, OSD_KEY_3, 0 },
-                { OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN3 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-                { 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x00,
-                { 0, 0, 0, 0, 0, 0, 0, 0 },
-                { 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x02,
-                { 0, 0, 0, 0, 0, 0, 0, 0 },
-                { 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "1p Button/Start", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "2p Button/Start", OSD_KEY_ALT, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3, "3p Button/Start", OSD_KEY_SPACE, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4, "4p Button/Start", OSD_KEY_L, IP_JOY_NONE, 0 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	
+	PORT_START	/* IN2 */
+	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x01, "French" )
+	PORT_DIPSETTING (   0x02, "Spanish" )
+	PORT_DIPSETTING (   0x03, "German" )
+	PORT_DIPNAME (0x04, 0x00, "Music", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "End of game" )
+	PORT_DIPSETTING (   0x04, "High score only" )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME (0x60, 0x00, "Credits", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1p/2p = 1 credit" )
+	PORT_DIPSETTING (   0x20, "1p = 1, 2p = 2" )
+	PORT_DIPSETTING (   0x60, "1p/2p = 2 credits" )
 
-static struct TrakPort trak_ports[] =
-{
-        {
-          X_AXIS,
-          1,
-          1.0,
-          warlord_trakball_r
-        },
-        { -1 }
-};
+	PORT_START	/* IN3 */
+	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Free Play" )
+	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
 
+	PORT_START	/* IN4 - fake to control player 1 paddle */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 32, 0x1d, 0xcb )
 
-static struct KEYSet keys[] =
-{
-        { 1, 0, "PL1 FIRE / START" },
-        { 1, 1, "PL2 FIRE / START" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 5, 0x03, "COINS PER CRED", { "FREE PLAY", "1CO=2CR", "1CO=1CR", "2CO=1CR" } },
-	{ 5, 0x0C, "RIGHT COIN MULTIPLIER", { "X1", "X4", "X5", "X6" } },
-	{ 5, 0x10, "LEFT COIN MULTIPLIER", { "X1", "X2" } },
-	{ 4, 0x30, "CRED PER PLAY", { "1&2UP=1", "1UP=1,2UP=2", "N/A", "1&2UP=2" } },
-	{ 4, 0x04, "END MUSIC", { "ALWAYS", "HISCORE" } },
-	{ 4, 0x03, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
-	{ -1 }
-};
+	PORT_START	/* IN5 - fake to control players 2-4 with keyboard */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2, "2p Right", OSD_KEY_A, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2, "2p Right", OSD_KEY_S, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER3, "3p Right", OSD_KEY_V, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER3, "3p Right", OSD_KEY_B, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER4, "4p Right", OSD_KEY_O, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER4, "4p Right", OSD_KEY_P, IP_JOY_NONE, 0 )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -232,6 +267,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,
 	0,
 
 	/* video hardware */
@@ -249,7 +285,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	pokey1_sh_start,
+	warlord_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -278,14 +314,14 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	return 0;
 }
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
 
 }
@@ -303,7 +339,7 @@ struct GameDriver warlord_driver =
 	0, 0,
 	0,
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

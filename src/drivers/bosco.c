@@ -210,7 +210,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN0 */
 		0xff,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_FIRE, 0, 0, 0 },
 	},
 	{ -1 }	/* end of table */
@@ -383,6 +383,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	bosco_init_machine,
 
 	/* video hardware */
@@ -439,6 +441,30 @@ ROM_START( bosco_rom )
 	ROM_LOAD( "5100.5l", 0x2000, 0x1000, 0x0c0be19b )
 ROM_END
 
+ROM_START( bosconm_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "bos1_1.bin",  0x0000, 0x1000, 0x345df511 )
+	ROM_LOAD( "bos1_2.bin",  0x1000, 0x1000, 0xf9998bad )
+	ROM_LOAD( "bos1_3.bin",  0x2000, 0x1000, 0x810c3c4e )
+	ROM_LOAD( "bos1_4b.bin", 0x3000, 0x1000, 0x5cf9f585 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bos1_14.bin", 0x0000, 0x1000, 0x1610cd08 )
+	ROM_LOAD( "bos1_13.bin", 0x1000, 0x1000, 0xb04edf54 )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "bos1_5c.bin", 0x0000, 0x1000, 0x36dceeb2 )
+	ROM_LOAD( "bos1_6.bin",  0x1000, 0x1000, 0xf773c773 )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "bos1_7.bin", 0x0000, 0x1000, 0x6b74d2ca )
+
+	ROM_REGION(0x3000)	/* ROMs for digitised speech */
+	ROM_LOAD( "bos1_9.bin",  0x0000, 0x1000, 0x409e4312 )
+	ROM_LOAD( "bos1_10.bin", 0x1000, 0x1000, 0x01fce73c )
+	ROM_LOAD( "bos1_11.bin", 0x2000, 0x1000, 0x0c0be19b )
+ROM_END
+
 static const char *bosco_sample_names[] =
 {
 	"MIDBANG.SAM",
@@ -448,9 +474,9 @@ static const char *bosco_sample_names[] =
 };
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	FILE *f;
+	void *f;
 	int		i;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
@@ -460,13 +486,13 @@ static int hiload(const char *name)
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8bd3],"\x18",1) == 0)
 	{
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x8BC5], 15, 1, f);
-			fread(&RAM[0x8BE4], 16, 1, f);
-			fread(&RAM[0x885C], 4, 1, f);
-			fread(&RAM[0x8060], 8, 1, f);
-			fclose(f);
+			osd_fread(f,&RAM[0x8BC5],15);
+			osd_fread(f,&RAM[0x8BE4],16);
+			osd_fread(f,&RAM[0x885C],4);
+			osd_fread(f,&RAM[0x8060],8);
+			osd_fclose(f);
 		}
 		HiScore = 0;
 		for (i = 0; i < 3; i++)
@@ -486,33 +512,52 @@ static int hiload(const char *name)
 }
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8BC5], 15, 1, f);
-		fwrite(&RAM[0x8BE4], 16, 1, f);
-		fwrite(&RAM[0x885C], 4, 1, f);
-		fwrite(&RAM[0x8060], 8, 1, f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8BC5],15);
+		osd_fwrite(f,&RAM[0x8BE4],16);
+		osd_fwrite(f,&RAM[0x885C],4);
+		osd_fwrite(f,&RAM[0x8060],8);
+		osd_fclose(f);
 	}
 }
 
 
 struct GameDriver bosco_driver =
 {
-	"Bosconian",
+	"Bosconian (Midway)",
 	"bosco",
 	"MARTIN SCRAGG\nAARON GILES\nNICOLA SALMORIA\nMIRKO BUFFONI",
 	&machine_driver,
 
 	bosco_rom,
+	0, 0,
+	bosco_sample_names,
+
+	input_ports, 0, trak_ports, bosco_dsw, keys,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver bosconm_driver =
+{
+	"Bosconian (Namco)",
+	"bosconm",
+	"MARTIN SCRAGG\nAARON GILES\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	&machine_driver,
+
+	bosconm_rom,
 	0, 0,
 	bosco_sample_names,
 

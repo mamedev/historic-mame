@@ -1,4 +1,21 @@
 #include "driver.h"
+#include "sndhrdw\generic.h"
+#include "M6808.h"
+
+
+unsigned char *williams_dac;
+
+
+#define AUDIO_CONV(A) (A+0x80)
+
+#define TARGET_EMULATION_RATE 44100     /* will be adapted to be a multiple of buffer_len */
+static int emulation_rate;
+static int buffer_len;
+static unsigned char *buffer;
+static int sample_pos;
+
+static unsigned char amplitude_DAC;
+
 
 
 /* #define HARDWARE_SOUND */
@@ -30,54 +47,66 @@
 #define Parallel 0x378
 #endif
 
+
 void williams_sh_w(int offset,int data)
 {
-int fx;
-static int Snd49Flag;
-
 #ifdef HARDWARE_SOUND
 	outp(Parallel,data);
 	return;
 #endif
 
-	if (Machine->samples == 0/* || Machine->samples->sample[0] == 0*/) return;
+	soundlatch_w(0,data);
+	cpu_cause_interrupt(1,M6808_INT_IRQ);
+}
 
-  fx = data & 0x3F;
 
-/*
- To Do:
-  -Special numbers:
-   39 = play a tune
-   42 or 44? play a note on Defender only.
-   ?? play a Sinistar voice sample
-  -In Splat, the last samples cannot be interrupted (from 57 to 63)
-     but there no way to do that here!!!
 
- Done:
-  -In Robotron do not restart the sound 49 when wave change
-*/
- if(fx == 49)
-  if(Snd49Flag == 1)
-   return;
+void williams_digital_out_w(int offset,int data)
+{
+	int totcycles,leftcycles,newpos;
 
-  if(fx == 0x3F){
-   if(Snd49Flag == 1)
-    return;
-    osd_stop_sample(0);
-  }else{
-	 if (Machine->samples->sample[fx] != 0){
-    osd_play_sample(0,Machine->samples->sample[fx]->data,
-     Machine->samples->sample[fx]->length,
-     Machine->samples->sample[fx]->smpfreq,
-     Machine->samples->sample[fx]->volume,0);
-    if(fx == 49)
-      Snd49Flag = 1;
-    else
-      Snd49Flag = 0;
-   }
-  }
+
+	*williams_dac = data;
+
+	totcycles = Machine->drv->cpu[1].cpu_clock / Machine->drv->frames_per_second;
+	leftcycles = cpu_getfcount();
+	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
+
+	while (sample_pos < newpos-1)
+	    buffer[sample_pos++] = amplitude_DAC;
+
+    amplitude_DAC=AUDIO_CONV(data);
+
+    buffer[sample_pos++] = amplitude_DAC;
+}
+
+
+
+int williams_sh_start(void)
+{
+    buffer_len = TARGET_EMULATION_RATE / Machine->drv->frames_per_second;
+    emulation_rate = buffer_len * Machine->drv->frames_per_second;
+
+    if ((buffer = malloc(buffer_len)) == 0)
+		return 1;
+    memset(buffer,0x80,buffer_len);
+
+    sample_pos = 0;
+
+	return 0;
+}
+
+void williams_sh_stop(void)
+{
+    free(buffer);
 }
 
 void williams_sh_update(void)
 {
+	while (sample_pos < buffer_len)
+		buffer[sample_pos++] = amplitude_DAC;
+
+	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
+
+	sample_pos=0;
 }

@@ -14,7 +14,7 @@
 unsigned char *carnival_characterram;
 static unsigned char dirtycharacter[256];
 
-
+int	ColourBank = 0;
 
 /***************************************************************************
 
@@ -28,11 +28,11 @@ static unsigned char dirtycharacter[256];
   bit 7 -- 22 ohm resistor  -- RED   \
         -- 22 ohm resistor  -- BLUE  |  foreground
         -- 22 ohm resistor  -- GREEN /
-        --
+        -- Unused
         -- 22 ohm resistor  -- RED   \
         -- 22 ohm resistor  -- BLUE  |  background
         -- 22 ohm resistor  -- GREEN /
-  bit 0 --
+  bit 0 -- Unused
 
 ***************************************************************************/
 void carnival_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -77,7 +77,14 @@ void carnival_characterram_w(int offset,int data)
 	}
 }
 
+void carnival_colour_bank_w(int offset, int data)
+{
+	/* Offset to first colour */
 
+	ColourBank = data * 8;
+
+    if (errorlog) fprintf(errorlog,"Colour Bank %d\n",data);
+}
 
 /***************************************************************************
 
@@ -93,6 +100,7 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
+
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
@@ -120,7 +128,7 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,
-					charcode >> 5,
+					(charcode >> 5) + ColourBank,
 					0,0,
 					sx + 16,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

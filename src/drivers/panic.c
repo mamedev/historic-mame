@@ -92,7 +92,7 @@ static struct InputPort input_ports[] =
 	},
 	{       /* IN1 */
 		0xFF,
-		{ OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP, 0, 0, OSD_KEY_ALT },
+		{ OSD_KEY_LCONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP, 0, 0, OSD_KEY_ALT },
 		{ OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP, 0, 0, OSD_JOY_FIRE2 }
 	},
 	{	/* DSW */
@@ -211,6 +211,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -241,20 +242,20 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-static int panic_hiload(const char *name)
+static int panic_hiload(void)
 {
 	/* wait for default to be copied */
 	if (RAM[0x40c1] == 0x00 && RAM[0x40c2] == 0x03 && RAM[0x40c3] == 0x04)
 	{
-		FILE *f;
+		void *f;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
         	RAM[0x4004] = 0x01;	/* Prevent program resetting high score */
 
-			fread(&RAM[0x40C1],1,5,f);
-                fread(&RAM[0x5C00],1,12,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x40C1],5);
+                osd_fread(f,&RAM[0x5C00],12);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -264,16 +265,16 @@ static int panic_hiload(const char *name)
 
 
 
-static void panic_hisave(const char *name)
+static void panic_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x40C1],1,5,f);
-        fwrite(&RAM[0x5C00],1,12,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x40C1],5);
+        osd_fwrite(f,&RAM[0x5C00],12);
+		osd_fclose(f);
 	}
 }
 

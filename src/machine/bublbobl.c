@@ -37,13 +37,9 @@
 #endif /* RELEASE */
 
 /* fixed */
-#define MODIFY_ROM(addr,val)		    \
-    Machine->memory_region[0][addr] = val; \
-    Machine->memory_region[0][addr+0x10000] = val; \
-    Machine->memory_region[0][addr+0x20000] = val; \
-    Machine->memory_region[0][addr+0x30000] = val;
+#define MODIFY_ROM(addr,val) Machine->memory_region[0][addr] = val;
 
-#define MOD_PAGE(page,addr,data) Machine->memory_region[0][addr+0x10000*page] = data;
+#define MOD_PAGE(page,addr,data) Machine->memory_region[0][page ? addr-0x8000+0x10000+0x4000*(page-1) : addr] = data;
 
 #define MODIFY_ROM_WORD(addr,val)   \
     MODIFY_ROM(addr, (val)&0xff);   \
@@ -69,9 +65,9 @@
 #define MAKE_ITEM_TRIVIAL(item) \
 	SET_ITEM_THRESHOLD(item, 0);
 
-#define CURRENT_LEVEL	  bublbobl_sharedram[0x264b]
-#define P1_EXTEND_LETTERS bublbobl_sharedram[0x2742]
-#define P2_EXTEND_LETTERS bublbobl_sharedram[0x2743]
+#define CURRENT_LEVEL	  bublbobl_sharedram1[0x264b]
+#define P1_EXTEND_LETTERS bublbobl_sharedram1[0x2742]
+#define P2_EXTEND_LETTERS bublbobl_sharedram1[0x2743]
 int start_level = 0;		/* set by '-level <n>' flag' */
 int easy_item = -1;
 int always_item = -1;
@@ -79,8 +75,7 @@ int always_item = -1;
 #include "driver.h"
 
 typedef unsigned char byte;
-unsigned char *bublbobl_sharedram;
-extern byte *ROM;
+unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
 
 /* SOUND EFFECT CODES - from Oliver White */
 
@@ -147,7 +142,7 @@ static char *sound_descriptions[] =
 
 int bublbobl_interrupt(void)
 {
-    bublbobl_sharedram[0x3c85] = 0x37;
+    bublbobl_sharedram2[0xfc85-0xfc01] = 0x37;
 
     if (start_level) CURRENT_LEVEL = start_level;
 
@@ -157,16 +152,16 @@ int bublbobl_interrupt(void)
 #endif
 
 #ifdef LOTSA_CANES
-    bublbobl_sharedram[0x25f8] = 0x0a;	/* always give a cane which causes
+    bublbobl_sharedram1[0x25f8] = 0x0a;	/* always give a cane which causes
 				   giant fruit to appear */
 #endif
 
 #ifdef LOTSA_POTIONS
-    bublbobl_sharedram[0x25e7] = POTION_TYPE; /* always give a potion of this type */
+    bublbobl_sharedram1[0x25e7] = POTION_TYPE; /* always give a potion of this type */
 #endif
 
 #ifdef LOTSA_SHOES
-    bublbobl_sharedram[0x25e6] = 0x10; /* always give running shoes */
+    bublbobl_sharedram1[0x25e6] = 0x10; /* always give running shoes */
 #endif
 
 #ifdef MAKE_ITEMS_EASY
@@ -239,56 +234,7 @@ int bublbobl_interrupt(void)
 
 
 
-int bublbobl_sharedram_r(int offset)
-{
-  return bublbobl_sharedram[offset];
-}
-
-
-
-int bublbobl_read_f66e(int offset)
-{
-    static int i;
-#if 0
-    if (errorlog)
-	fprintf(errorlog, "bublbobl_read_f66e with offset %d\n", offset);
-#endif
-    return (i++ / 0x10000) & 0xff;
-}
-
-
-
-void boblbobl_init(void)
-{
-    /* set level 0 to have just one baby */
-    /* MOD_PAGE(1, 0xA73E, 0x00);
-    MOD_PAGE(1, 0xA73F, 0x10);
-    MOD_PAGE(1, 0xA740, 0x00); */
-
-    /* speed up the 'wonderful journey' message */
-    MODIFY_ROM_WORD(0x25F6, WONDERFUL_JOURNEY_TIME);
-
-    /* these shouldn't be necessary, surely - this is a bootleg ROM
-     * with the protection removed - so what are all these JP's to
-     * 0xa288 doing?  and why does the emulator fail the ROM checks?
-     */
-
-    MOD_PAGE(3,0x9a71,0x00); MOD_PAGE(3,0x9a72,0x00); MOD_PAGE(3,0x9a73,0x00);
-    MOD_PAGE(3,0xa4af,0x00); MOD_PAGE(3,0xa4b0,0x00); MOD_PAGE(3,0xa4b1,0x00);
-    MOD_PAGE(3,0xa55d,0x00); MOD_PAGE(3,0xa55e,0x00); MOD_PAGE(3,0xa55f,0x00);
-    MOD_PAGE(3,0xb561,0x00); MOD_PAGE(3,0xb562,0x00); MOD_PAGE(3,0xb563,0x00);
-
-    /* ease up on the RAM check */
-    MODIFY_ROM(0x00c5, 1); MODIFY_ROM(0x00c6, 0);
-    MODIFY_ROM(0x00f5, 2); MODIFY_ROM(0x00f6, 0);
-    MODIFY_ROM(0x00fb, 0); MODIFY_ROM(0x00fc, 0); MODIFY_ROM(0x00fc, 0);
-    MODIFY_ROM(0x0102, 0); MODIFY_ROM(0x0103, 0); MODIFY_ROM(0x0104, 0);
-    MODIFY_ROM(0x0108, 0); MODIFY_ROM(0x0109, 0); MODIFY_ROM(0x010a, 0);
-}
-
-
-
-void bublbobl_init(void)
+void bublbobl_patch(void)
 {
     /* LOG_PAGE(1, 0xA73E); LOG_PAGE(1, 0xA73F); LOG_PAGE(1, 0xA740); */
 
@@ -327,7 +273,7 @@ void bublbobl_init(void)
     /* ease up on the RAM check */
     MODIFY_ROM(0x00c5, 1); MODIFY_ROM(0x00c6, 0);
     MODIFY_ROM(0x00f5, 2); MODIFY_ROM(0x00f6, 0);
-    MODIFY_ROM(0x00fb, 0); MODIFY_ROM(0x00fc, 0); MODIFY_ROM(0x00fc, 0);
+    MODIFY_ROM(0x00fb, 0); MODIFY_ROM(0x00fc, 0); MODIFY_ROM(0x00fd, 0);
     MODIFY_ROM(0x0102, 0); MODIFY_ROM(0x0103, 0); MODIFY_ROM(0x0104, 0);
     MODIFY_ROM(0x0109, 0); MODIFY_ROM(0x010a, 0); MODIFY_ROM(0x010b, 0);
     MODIFY_ROM(0x010f, 0); MODIFY_ROM(0x0110, 0); MODIFY_ROM(0x0111, 0);
@@ -358,6 +304,21 @@ void bublbobl_init(void)
     MOD_PAGE(2, 0xB4F0, 0x76); MOD_PAGE(2, 0xBB0E, 0x76);
 }
 
+void boblbobl_patch(void)
+{
+    /* these shouldn't be necessary, surely - this is a bootleg ROM
+     * with the protection removed - so what are all these JP's to
+     * 0xa288 doing?  and why does the emulator fail the ROM checks?
+     */
+
+	MOD_PAGE(3,0x9a71,0x00); MOD_PAGE(3,0x9a72,0x00); MOD_PAGE(3,0x9a73,0x00);
+	MOD_PAGE(3,0xa4af,0x00); MOD_PAGE(3,0xa4b0,0x00); MOD_PAGE(3,0xa4b1,0x00);
+	MOD_PAGE(3,0xa55d,0x00); MOD_PAGE(3,0xa55e,0x00); MOD_PAGE(3,0xa55f,0x00);
+	MOD_PAGE(3,0xb561,0x00); MOD_PAGE(3,0xb562,0x00); MOD_PAGE(3,0xb563,0x00);
+}
+
+
+
 void bublbobl_play_sound(int offset, int data)
 {
 #ifdef LOG_SOUND_EFFECTS
@@ -375,23 +336,28 @@ void bublbobl_play_sound(int offset, int data)
 
 
 
-void bublbobl_sharedram_w(int offset, int data)
+int bublbobl_sharedram1_r(int offset)
 {
-  bublbobl_sharedram[offset] = data;
+  return bublbobl_sharedram1[offset];
+}
+int bublbobl_sharedram2_r(int offset)
+{
+  return bublbobl_sharedram2[offset];
 }
 
-
-
-void bublbobl_write_f7fe(int offset, int data)
+void bublbobl_sharedram1_w(int offset, int data)
 {
-  if (errorlog) fprintf(errorlog,
-	    "bublbobl_write_f7fe with offset %d, data %d\n",
-	    offset, data);
+  bublbobl_sharedram1[offset] = data;
+}
+void bublbobl_sharedram2_w(int offset, int data)
+{
+  bublbobl_sharedram2[offset] = data;
 }
 
 
 
 void bublbobl_bankswitch_w(int offset,int data)
 {
-	ROM = RAM = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0x10000*(data & 3)];
+	if ((data & 3) == 0) { cpu_setbank(1,&RAM[0x8000]); }
+	else { cpu_setbank(1,&RAM[0x10000 + 0x4000 * ((data & 3) - 1)]); }
 }

@@ -91,6 +91,9 @@ int panic_vh_start(void)
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
+	/* initialize the bitmap to our background color */
+	fillbitmap(tmpbitmap,Machine->gfx[0]->colortable[0],&Machine->drv->visible_area);
+
 	return 0;
 }
 

@@ -365,10 +365,8 @@ static unsigned char ckong_color_prom[] =
 	0x00,0x2F,0xC0,0x16,0x00,0x07,0x27,0xD0,0x00,0x17,0x27,0xE8,0x00,0x07,0x1F,0xFF,
 	0x00,0xE8,0xD8,0x07,0x00,0x3D,0xFF,0xE8,0x00,0x07,0x3F,0xD2,0x00,0xFF,0xD0,0xE0,
 	/* bigsprite palette */
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x16,0x27,0x2F,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x40,0x08,0xFF
-/*	0x00,0xFF,0xC6,0x8F,0x00,0xFF,0xC6,0x8F,0x00,0xFF,0xC0,0x67,0x00,0xFF,0xC0,0x67, */
-/*	0x00,0x88,0x47,0x7F,0x00,0x88,0x47,0x7F,0x00,0x40,0x08,0xFF,0x00,0x40,0x08,0xFF, */
+	0x00,0xFF,0x18,0xC0,0x00,0xFF,0xC6,0x8F,0x00,0x16,0x27,0x2F,0x00,0xFF,0xC0,0x67,
+	0x00,0x47,0x7F,0x88,0x00,0x88,0x47,0x7F,0x00,0x7F,0x88,0x47,0x00,0x40,0x08,0xFF,
 };
 
 
@@ -386,12 +384,13 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	96,4*24,
+	96,16*4+8*4,
 	cclimber_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -704,19 +703,19 @@ ROM_END
 
 
 
-static int cclimber_hiload(const char *name)
+static int cclimber_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8083],"\x02\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x808f],"\x02\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x8083],1,17*5,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x8083],17*5);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -726,36 +725,36 @@ static int cclimber_hiload(const char *name)
 
 
 
-static void cclimber_hisave(const char *name)
+static void cclimber_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8083],1,17*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8083],17*5);
+		osd_fclose(f);
 	}
 }
 
 
 
-static int ckong_hiload(const char *name)
+static int ckong_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
 			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x6100],1,34*5,f);
+			osd_fread(f,&RAM[0x6100],34*5);
 			RAM[0x60b8] = RAM[0x611d];
 			RAM[0x60b9] = RAM[0x611e];
 			RAM[0x60ba] = RAM[0x611f];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -765,15 +764,15 @@ static int ckong_hiload(const char *name)
 
 
 
-static void ckong_hisave(const char *name)
+static void ckong_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x6100],1,34*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x6100],34*5);
+		osd_fclose(f);
 	}
 }
 
@@ -842,7 +841,7 @@ struct GameDriver ckong_driver =
 {
 	"Crazy Kong (Crazy Climber hardware)",
 	"ckong",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (colors)",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	ckong_rom,
@@ -861,7 +860,7 @@ struct GameDriver ckonga_driver =
 {
 	"Crazy Kong (alternate version)",
 	"ckonga",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (colors)",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	ckonga_rom,
@@ -880,7 +879,7 @@ struct GameDriver ckongjeu_driver =
 {
 	"Crazy Kong (Jeutel bootleg)",
 	"ckongjeu",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (colors)",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	ckongjeu_rom,

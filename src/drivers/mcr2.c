@@ -66,9 +66,6 @@ int mcr_readport(int port);
 void mcr_soundstatus_w (int offset,int data);
 int mcr_soundlatch_r (int offset);
 
-int wacko_trakball_xy(int data);
-int wacko_trakball_x_r(int offset);
-int wacko_trakball_y_r(int offset);
 int kroozr_dial_r(int offset);
 int kroozr_trakball_x_r(int offset);
 int kroozr_trakball_y_r(int offset);
@@ -154,8 +151,8 @@ static struct IOReadPort readport[] =
 static struct IOReadPort wacko_readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, wacko_trakball_x_r }, /* trackball x */
-   { 0x02, 0x02, wacko_trakball_y_r }, /* trackball y */
+   { 0x01, 0x01, input_port_1_r },
+   { 0x02, 0x02, input_port_2_r },
    { 0x03, 0x03, input_port_3_r },
    { 0x04, 0x04, input_port_4_r },
    { 0x05, 0xff, mcr_readport },
@@ -193,7 +190,7 @@ INPUT_PORTS_START( tron_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN1 -- controls spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -218,7 +215,7 @@ INPUT_PORTS_START( tron_input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 50 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 50, 0, 0, 0 )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -238,7 +235,7 @@ INPUT_PORTS_START( twotiger_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN1 -- player 1 spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
 
 	PORT_START	/* IN2 -- buttons for player 1 & player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -251,7 +248,7 @@ INPUT_PORTS_START( twotiger_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 -- player 2 spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 50 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 50, 0, 0, 0 )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -338,10 +335,10 @@ INPUT_PORTS_START( wacko_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN1 -- controls joystick x-axis */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 50, 8, 0, 0 )
 
 	PORT_START	/* IN2 -- controls joystick y-axis */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 8, 0, 0 )
 
 	PORT_START	/* IN3 -- dipswitches */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -398,27 +395,8 @@ INPUT_PORTS_START( kroozr_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* dummy extra port for dial control */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 40 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 40, 0, 0, 0 )
 INPUT_PORTS_END
-
-
-
-static struct TrakPort wacko_trak_ports[] =
-{
-	{
-		X_AXIS,
-		1,
-		-0.5,
-		wacko_trakball_xy
-	},
-	{
-		Y_AXIS,
-		1,
-		0.5,
-		wacko_trakball_xy
-	},
-   { -1 }
-};
 
 
 /* 512 characters; used by all the mcr2 games */
@@ -511,12 +489,13 @@ static struct MachineDriver tron_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	mcr2_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -553,12 +532,13 @@ static struct MachineDriver domino_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	mcr2_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -595,12 +575,13 @@ static struct MachineDriver wacko_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	mcr2_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	wacko_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -637,12 +618,13 @@ static struct MachineDriver kroozr_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	mcr2_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -679,12 +661,13 @@ static struct MachineDriver journey_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	journey_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	journey_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -708,59 +691,59 @@ static struct MachineDriver journey_machine_driver =
 
 ***************************************************************************/
 
-static int mcr2_hiload (const char *name, int addr, int len)
+static int mcr2_hiload(int addr, int len)
 {
    unsigned char *RAM = Machine->memory_region[0];
 
    /* see if it's okay to load */
    if (mcr_loadnvram)
    {
-      FILE *f;
+      void *f;
 
-		f = fopen (name, "rb");
+		f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
       if (f)
       {
-			fread (&RAM[addr], 1, len, f);
-			fclose (f);
+			osd_fread(f,&RAM[addr],len);
+			osd_fclose (f);
       }
       return 1;
    }
    else return 0;	/* we can't load the hi scores yet */
 }
 
-static void mcr2_hisave (const char *name, int addr, int len)
+static void mcr2_hisave(int addr, int len)
 {
    unsigned char *RAM = Machine->memory_region[0];
-   FILE *f;
+   void *f;
 
-	f = fopen (name, "wb");
+	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
    if (f)
    {
-      fwrite (&RAM[addr], 1, len, f);
-      fclose (f);
+      osd_fwrite(f,&RAM[addr],len);
+      osd_fclose (f);
    }
 }
 
-static int  domino_hiload (const char *name)   { return mcr2_hiload (name, 0xc000, 0x92); }
-static void domino_hisave (const char *name)   {        mcr2_hisave (name, 0xc000, 0x92); }
+static int  domino_hiload(void)   { return mcr2_hiload(0xc000, 0x92); }
+static void domino_hisave(void)   {        mcr2_hisave(0xc000, 0x92); }
 
-static int  journey_hiload (const char *name)  { return mcr2_hiload (name, 0xc000, 0x9e); }
-static void journey_hisave (const char *name)  {        mcr2_hisave (name, 0xc000, 0x9e); }
+static int  journey_hiload(void)  { return mcr2_hiload(0xc000, 0x9e); }
+static void journey_hisave(void)  {        mcr2_hisave(0xc000, 0x9e); }
 
-static int  tron_hiload (const char *name)     { return mcr2_hiload (name, 0xc4f0, 0x97); }
-static void tron_hisave (const char *name)     {        mcr2_hisave (name, 0xc4f0, 0x97); }
+static int  tron_hiload(void)     { return mcr2_hiload(0xc4f0, 0x97); }
+static void tron_hisave(void)     {        mcr2_hisave(0xc4f0, 0x97); }
 
-static int  kroozr_hiload (const char *name)   { return mcr2_hiload (name, 0xc466, 0x95); }
-static void kroozr_hisave (const char *name)   {        mcr2_hisave (name, 0xc466, 0x95); }
+static int  kroozr_hiload(void)   { return mcr2_hiload(0xc466, 0x95); }
+static void kroozr_hisave(void)   {        mcr2_hisave(0xc466, 0x95); }
 
-static int  shollow_hiload (const char *name)  { return mcr2_hiload (name, 0xc600, 0x8a); }
-static void shollow_hisave (const char *name)  {        mcr2_hisave (name, 0xc600, 0x8a); }
+static int  shollow_hiload(void)  { return mcr2_hiload(0xc600, 0x8a); }
+static void shollow_hisave(void)  {        mcr2_hisave(0xc600, 0x8a); }
 
-static int  twotiger_hiload (const char *name) { return mcr2_hiload (name, 0xc000, 0xa0); }
-static void twotiger_hisave (const char *name) {        mcr2_hisave (name, 0xc000, 0xa0); }
+static int  twotiger_hiload(void) { return mcr2_hiload(0xc000, 0xa0); }
+static void twotiger_hisave(void) {        mcr2_hisave(0xc000, 0xa0); }
 
-static int  wacko_hiload (const char *name)    { return mcr2_hiload (name, 0xc000, 0x91); }
-static void wacko_hisave (const char *name)    {        mcr2_hisave (name, 0xc000, 0x91); }
+static int  wacko_hiload(void)    { return mcr2_hiload(0xc000, 0x91); }
+static void wacko_hisave(void)    {        mcr2_hisave(0xc000, 0x91); }
 
 
 /***************************************************************************
@@ -966,7 +949,7 @@ struct GameDriver wacko_driver =
 	0, 0,
 	0,
 
-	0/*TBR*/,wacko_input_ports, wacko_trak_ports,0/*TBR*/,0/*TBR*/,
+	0/*TBR*/,wacko_input_ports, 0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,

@@ -362,6 +362,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	pepper2_init_machine,
 
 	/* video hardware */
@@ -413,7 +414,7 @@ ROM_START( pepper2_rom )
 ROM_END
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -423,13 +424,13 @@ static int hiload(const char *name)
 	if ((memcmp(&RAM[0x0360],"\x00\x06\x0C\x12\x18",5) == 0) &&
 		(memcmp(&RAM[0x0380],"\x15\x20\x11",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x0360],1,5+6*5,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0x0360],5+6*5);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -439,19 +440,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* 5 bytes for score order, 6 bytes per score/initials */
-                fwrite(&RAM[0x0360],1,5+6*5,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x0360],5+6*5);
+		osd_fclose(f);
 	}
 
 }

@@ -36,8 +36,6 @@ struct RunningMachine
 
 
 extern struct RunningMachine *Machine;
-extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
-extern unsigned char *ROM;
 extern int throttle;	/* toggled by F10 */
 
 

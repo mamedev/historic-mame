@@ -40,10 +40,8 @@ void mcr2_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 	}
 
 	/* characters and sprites use the same palette */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 1;
+		COLOR(0,i) = i;
 
    /* sprite color is 1 by default */
   	sprite_color = 1;
@@ -182,10 +180,8 @@ void journey_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 	}
 
 	/* characters and sprites use the same palette */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 1;
+		COLOR(0,i) = i;
 
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {

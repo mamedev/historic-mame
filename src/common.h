@@ -38,6 +38,9 @@ struct RomModule
 #define ROM_CONTINUE(offset,length) { 0, offset, length, 0 },
 /* restart loading the previous ROM to a new address */
 #define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
+/* load the ROM at even/odd addresses. Useful with 16 bit games */
+#define ROM_LOAD_EVEN(name,offset,length,checksum) { name, offset & ~1, length | 0x80000000, checksum },
+#define ROM_LOAD_ODD(name,offset,length,checksum)  { name, offset |  1, length | 0x80000000, checksum },
 /* end of table */
 #define ROM_END { 0, 0, 0, 0 } };
 
@@ -119,6 +122,6 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void clearbitmap(struct osd_bitmap *bitmap);
+void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);
 
 #endif

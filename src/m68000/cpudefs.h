@@ -7,9 +7,14 @@
 
 
 #include <stdlib.h>
+#include "memory.h"
 
 #ifndef __WATCOMC__
+#ifdef WIN32
+#define __inline__ __inline
+#else
 #define __inline__  inline
+#endif
 #endif
 #ifdef __WATCOMC__
 #define __inline__
@@ -49,25 +54,35 @@ LONG wat_readmeml(void *a);
        "mov eax,[esi]"\
        "bswap eax    "\
        parm [esi] \
-       value [eax];       
-#define READ_MEML(a,b) b=wat_readmeml(a) 
+       value [eax];
+#define READ_MEML(a,b) b=wat_readmeml(a)
 WORD wat_readmemw(void *a);
 #pragma aux wat_readmemw=\
        "mov ax,[esi]"\
        "xchg al,ah    "\
        parm [esi] \
-       value [ax];       
+       value [ax];
 #define READ_MEMW(a,b) b=wat_readmemw(a)
 #endif
 
 extern unsigned char *RAM;
 
+/* ASG 971010 -- changed to macros: */
+#if 0
 extern /*inline*/ UBYTE get_byte(LONG a); /* LBO 090597 */
 extern UWORD get_word(LONG a);
 extern ULONG get_long(LONG a);
 extern void put_byte(LONG a, UBYTE b);
 extern void put_word(LONG a, UWORD b);
 extern void put_long(LONG a, ULONG b);
+#else
+#define get_byte(a) cpu_readmem24(a)
+#define get_word(a) cpu_readmem24_word(a)
+#define get_long(a) cpu_readmem24_dword(a)
+#define put_byte(a,b) cpu_writemem24(a,b)
+#define put_word(a,b) cpu_writemem24_word(a,b)
+#define put_long(a,b) cpu_writemem24_dword(a,b)
+#endif
 
 /* LBO 090597 - unused
 BYTE *cart_rom;
@@ -232,7 +247,7 @@ static __inline__ void MakeFromSR(void)
            regs.a[7] = regs.isp;
         }
      }
-   
+
 }
 
 

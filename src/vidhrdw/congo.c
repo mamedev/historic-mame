@@ -54,7 +54,7 @@ int congo_vh_start(void)
 		sx = 8 * (511 - offs / 32);
 		sy = 8 * (offs % 32);
 
-		drawgfx(prebitmap,Machine->gfx[2],
+		drawgfx(prebitmap,Machine->gfx[1],
                                 Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
                                 Machine->memory_region[2][0x4000 + offs] >> 4,
 				0,0,
@@ -152,7 +152,7 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			skew -= 2;
 		}
 	}
-	else clearbitmap(bitmap);
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -169,7 +169,7 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		if (spriteram[offs+2] != 0xff)
 		{
-			drawgfx(bitmap,Machine->gfx[1],
+			drawgfx(bitmap,Machine->gfx[2],
 					spriteram[offs+2+1]& 0x7f,spriteram[offs+2+2],
 					spriteram[offs+2+1] & 0x80,spriteram[offs+2+2] & 0x80,
 					spriteram[offs+2] - 16,((spriteram[offs+2+3] + 16) & 0xff) - 31,
@@ -187,10 +187,10 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		sx = 8 * (31 - offs / 32);
 		sy = 8 * (offs % 32);
 
-                if (videoram[offs] != 0x60)      /* don't draw spaces */
+		if (videoram[offs] != 0x60)      /* don't draw spaces */
 			drawgfx(bitmap,Machine->gfx[0],
-                                        videoram[offs],
-                                    colorram[offs],
+					videoram[offs],
+					colorram[offs],
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

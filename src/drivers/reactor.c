@@ -69,7 +69,6 @@ void gottlieb_sh_w(int offset, int data);
 void gottlieb_characterram_w(int offset, int data);
 int gottlieb_sh_init(const char *gamename);
 void gottlieb_sh_update(void);
-extern const char *gottlieb_sample_names[];
 void gottlieb_output(int offset, int data);
 int reactor_IN1_r(int offset);
 int reactor_tb_H_r(int offset);
@@ -144,7 +143,7 @@ static struct InputPort input_ports[] =
 	{       /* buttons */
 		0x00,
 		{ OSD_KEY_1, OSD_KEY_2,         /* energy & decoy player 1. */
-		  OSD_KEY_ALT, OSD_KEY_CONTROL, /* decoy & energy player 2. Also for 1 & 2 player start, long plays */
+		  OSD_KEY_ALT, OSD_KEY_LCONTROL, /* decoy & energy player 2. Also for 1 & 2 player start, long plays */
 		  OSD_KEY_3, 0 /* coin 2 */, 0, 0 },
 		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0, 0, 0 }
 	},
@@ -244,12 +243,13 @@ static const struct MachineDriver machine_driver =
 		}
 	},
 	60,     /* frames / second */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1+16, 16,
+	16, 16,
 	gottlieb_vh_init_color_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -290,28 +290,28 @@ ROM_START( reactor_rom )
 		ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	FILE *f;
+	void *f;
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (RAM[0x4D8]!=0x0A) return 0;
-	f=fopen(name,"rb");
+	f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	if (f) {
-		fread(RAM+0x4D8,0x557-0x4D8,1,f);
-		fclose(f);
+		osd_fread(f,RAM+0x4D8,0x557-0x4D8);
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f=fopen(name,"wb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
-		fwrite(RAM+0x4D8,0x557-0x4D8,1,f);
-		fclose(f);
+		osd_fwrite(f,RAM+0x4D8,0x557-0x4D8);
+		osd_fclose(f);
 	}
 }
 
@@ -324,7 +324,7 @@ struct GameDriver reactor_driver =
 
 	reactor_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	gottlieb_sample_names,
+	0,
 
 	input_ports, 0, trak_ports, dsw, keys,
 

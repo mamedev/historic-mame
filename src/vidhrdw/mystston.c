@@ -51,10 +51,8 @@ void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	}
 
 	/* initialize the color table */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
 	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i + 1;
+		colortable[i] = i;
 }
 
 
@@ -117,9 +115,7 @@ void mystston_paletteram_w(int offset,int data)
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
-	osd_modify_pen(Machine->pens[offset + 1],r,g,b);
+	osd_modify_pen(Machine->pens[offset],r,g,b);
 }
 
 

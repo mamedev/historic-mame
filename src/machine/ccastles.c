@@ -13,7 +13,7 @@
 
 int bankaddress;
 
-
+#if 0
 int ccastles_trakball_x(int data) {
   return((unsigned char)data);
 }
@@ -39,13 +39,8 @@ int ccastles_trakball_r(int offset) {
 
     trak_y = input_trak_0_r(0);
 
-    if(trak_y == NO_TRAK) {
-      RAM[0x9500] = y;
-      return(y);
-    } else {
       RAM[0x9500] = trak_y;
       return(trak_y);
-    }
 
     break;
   case 0x01:
@@ -60,29 +55,25 @@ int ccastles_trakball_r(int offset) {
 
     trak_x = input_trak_1_r(0);
 
-    if(trak_x == NO_TRAK) {
-      RAM[0x9501] = x;
-      return(x);
-    } else {
       RAM[0x9501] = trak_x;
       return(trak_x);
-    }
 
     break;
   }
 
   return(0);
 }
+#endif
 
 int ccastles_rom_r(int offset) {
   return(RAM[bankaddress+offset]);
 }
 
-
+#if 0
 int ccastles_random_r(int offset) {
   return rand();
 }
-
+#endif
 
 void ccastles_bankswitch_w(int offset, int data) {
   if(data) {

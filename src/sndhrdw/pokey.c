@@ -157,7 +157,7 @@ static uint8 Outbit[4 * MAXPOKEYS]; /* current state of the output (high or low)
 
 static uint8 Outvol[4 * MAXPOKEYS]; /* last output volume for each channel */
 
-static uint8 rng[MAXPOKEYS];		/* Determines if the random number generator is */
+/*static*/ uint8 rng[MAXPOKEYS];	/* Determines if the random number generator is */
                                     /* generating new random values or returning the */
                                     /* same value */
 
@@ -194,6 +194,8 @@ static uint32 Samp_n_max,     /* Sample max.  For accuracy, it is *256 */
               Samp_n_cnt[2];  /* Sample cnt. */
 
 static uint32 Base_mult[MAXPOKEYS]; /* selects either 64Khz or 15Khz clock mult */
+
+static uint8  clip; /* LBO 101297 */
 
 /*****************************************************************************/
 /* In my routines, I treat the sample output as another divide by N counter  */
@@ -238,7 +240,7 @@ static uint32 Base_mult[MAXPOKEYS]; /* selects either 64Khz or 15Khz clock mult 
 /*                                                                           */
 /*****************************************************************************/
 
-void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
+void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys, uint8 use_clip)
 {
    uint8 chan,chip;
    int32 n;
@@ -287,6 +289,7 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 
    /* set the number of pokey chips currently emulated */
    Num_pokeys = num_pokeys;
+   clip = use_clip; /* LBO 101297 */
 
 /*    _enable();*/		/* RSF - removed for portability 31-MAR-97 */
 }
@@ -782,13 +785,19 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
 #endif
 
 #ifdef CLIP                         /* if clipping is selected */
-          if (cur_val > 127)        /* then check high limit */
-          {
-             *buffer++ = 127;       /* and limit if greater */
-          }
-          else if (cur_val < -128)     /* else check low limit */
-          {
-             *buffer++ = -128;         /* and limit if less */
+		  if (clip) {
+              if (cur_val > 127)        /* then check high limit */
+              {
+                 *buffer++ = 127;       /* and limit if greater */
+              }
+              else if (cur_val < -128)     /* else check low limit */
+              {
+                 *buffer++ = -128;         /* and limit if less */
+              }
+              else                      /* otherwise use raw value */
+              {
+                 *buffer++ = (uint8)cur_val;
+              }
           }
           else                      /* otherwise use raw value */
           {
@@ -802,42 +811,4 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
           n--;
        }
     }
-}
-
-/*****************************************************************************/
-/* Module:  Read_pokey_regs()                                                */
-/* Purpose: To return the values of the Pokey registers. Currently, only the */
-/*          random number generator register is returned.                    */
-/*                                                                           */
-/* Author:  Brad Oliver & Eric Smith                                         */
-/* Date:    August 8, 1997                                                   */
-/*                                                                           */
-/* Inputs:  addr - the address of the parameter to be changed                */
-/*          chip - the pokey chip to read                                    */
-/*                                                                           */
-/* Outputs: Adjusts local globals, returns the register in question          */
-/*                                                                           */
-/*****************************************************************************/
-
-int Read_pokey_regs (uint16 addr, uint8 chip)
-{
-    static uint8 random[MAXPOKEYS];
-
-    switch (addr & 0x0f)
-    {
-    	/* Currently only the random number generator value is emulated */
-		case RANDOM_C:
-			/* If the random number generator is enabled, get a new random number */
-			if (rng[chip]) {
-				random[chip] = rand();
-				}
-			return random[chip];
-			break;
-		default:
-#ifdef MAME_DEBUG
-			if (errorlog) fprintf (errorlog, "Pokey #%d read from register %02x\n", chip, addr);
-#endif
-			return 0;
-			break;
-	}
 }

@@ -2,18 +2,18 @@ CC      = gcc
 LD	= gcc
 
 DEFS   = -DX86_ASM -DLSB_FIRST
-CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 -Isrc/M68000 \
+CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 -Isrc/M6808 -Isrc/M68000 \
          -fstrength-reduce -fomit-frame-pointer -O3 -m486 -Wall -Werror
 LIBS   = -lalleg
-OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/inptport.o \
-         obj/osdepend.o \
+OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/memory.o \
+         obj/inptport.o obj/cheat.o obj/osdepend.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/pokyintf.o obj/sndhrdw/sn76496.o \
 		 obj/sndhrdw/votrax.o \
          obj/machine/z80fmly.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
-         obj/vidhrdw/vector.o obj/machine/mathbox.o \
+         obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
          obj/machine/pacman.o obj/drivers/pacman.o \
          obj/machine/jrpacman.o obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
@@ -44,16 +44,16 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/sndhrdw/pleiads.o \
          obj/machine/carnival.o obj/vidhrdw/carnival.o obj/sndhrdw/carnival.o obj/drivers/carnival.o \
          obj/machine/invaders.o obj/vidhrdw/invaders.o obj/sndhrdw/invaders.o obj/drivers/invaders.o \
-         obj/vidhrdw/mario.o obj/drivers/mario.o \
+         obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
          obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
-         obj/vidhrdw/congo.o obj/drivers/congo.o \
+         obj/vidhrdw/congo.o obj/sndhrdw/congo.o obj/drivers/congo.o \
          obj/vidhrdw/bombjack.o obj/sndhrdw/bombjack.o obj/drivers/bombjack.o \
          obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
          obj/machine/milliped.o obj/vidhrdw/milliped.o obj/drivers/milliped.o \
          obj/machine/warlord.o obj/vidhrdw/warlord.o obj/drivers/warlord.o \
          obj/machine/vanguard.o obj/vidhrdw/vanguard.o obj/sndhrdw/vanguard.o obj/drivers/vanguard.o \
          obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
-         obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
+         obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o  obj/sndhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/vidhrdw/btime.o obj/sndhrdw/btime.o obj/drivers/btime.o \
          obj/sndhrdw/jumpbug.o obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
          obj/machine/gberet.o obj/vidhrdw/gberet.o obj/sndhrdw/gberet.o obj/drivers/gberet.o \
@@ -64,9 +64,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/drivers/qbertqub.o \
          obj/drivers/mplanets.o \
          obj/drivers/3stooges.o \
-         obj/vidhrdw/taito.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
-         obj/machine/elevator.o obj/sndhrdw/elevator.o obj/drivers/elevator.o \
-         obj/drivers/wwestern.o \
+         obj/machine/taito.o obj/vidhrdw/taito.o obj/sndhrdw/taito.o obj/drivers/taito.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/sndhrdw/arabian.o obj/drivers/arabian.o \
          obj/machine/1942.o obj/vidhrdw/1942.o obj/drivers/1942.o obj/sndhrdw/capcom.o \
@@ -79,11 +77,12 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
          obj/machine/galaga.o obj/vidhrdw/galaga.o obj/drivers/galaga.o \
          obj/machine/kangaroo.o obj/sndhrdw/kangaroo.o obj/vidhrdw/kangaroo.o obj/drivers/kangaroo.o \
-         obj/sndhrdw/kungfum.o obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
+         obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/machine/qix.o obj/vidhrdw/qix.o obj/drivers/qix.o \
+         obj/machine/zookeep.o obj/drivers/zookeep.o \
          obj/machine/williams.o obj/sndhrdw/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o \
          obj/machine/starforc.o obj/sndhrdw/starforc.o obj/vidhrdw/starforc.o obj/drivers/starforc.o \
-         obj/machine/naughtyb.o obj/vidhrdw/naughtyb.o obj/drivers/naughtyb.o \
+         obj/vidhrdw/naughtyb.o obj/drivers/naughtyb.o \
          obj/machine/mystston.o obj/vidhrdw/mystston.o obj/drivers/mystston.o \
          obj/machine/tutankhm.o obj/sndhrdw/tutankhm.o obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
          obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
@@ -92,17 +91,15 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/machine/yiear.o obj/vidhrdw/yiear.o obj/drivers/yiear.o \
          obj/machine/digdug.o obj/vidhrdw/digdug.o obj/drivers/digdug.o \
          obj/machine/asteroid.o obj/sndhrdw/asteroid.o \
-		 obj/machine/atari_vg.o obj/vidhrdw/atari_vg.o obj/drivers/asteroid.o \
-         obj/drivers/bwidow.o \
-         obj/machine/bzone.o obj/drivers/bzone.o \
-         obj/drivers/llander.o obj/machine/llander.o \
-         obj/drivers/redbaron.o obj/machine/redbaron.o \
-         obj/machine/spacduel.o \
+		 obj/machine/atari_vg.o obj/drivers/asteroid.o \
+         obj/machine/bwidow.o obj/drivers/bwidow.o \
+         obj/machine/bzone.o obj/sndhrdw/bzone.o  obj/drivers/bzone.o \
+         obj/sndhrdw/redbaron.o \
          obj/drivers/tempest.o obj/machine/tempest.o \
          obj/machine/starwars.o obj/machine/swmathbx.o obj/drivers/starwars.o obj/sndhrdw/starwars.o \
          obj/machine/missile.o obj/vidhrdw/missile.o obj/drivers/missile.o \
-         obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
-         obj/vidhrdw/eggs.o obj/drivers/eggs.o \
+         obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/sndhrdw/bublbobl.o obj/drivers/bublbobl.o \
+         obj/vidhrdw/eggs.o obj/sndhrdw/eggs.o obj/drivers/eggs.o \
          obj/machine/bosco.o obj/sndhrdw/bosco.o obj/vidhrdw/bosco.o obj/drivers/bosco.o \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
          obj/vidhrdw/blueprnt.o obj/sndhrdw/blueprnt.o obj/drivers/blueprnt.o \
@@ -117,13 +114,24 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
          obj/machine/tp84.o obj/vidhrdw/tp84.o obj/sndhrdw/tp84.o obj/drivers/tp84.o \
          obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
-         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/m6809.o \
+         obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
+         obj/machine/lwings.o obj/vidhrdw/lwings.o obj/drivers/lwings.o \
+         obj/machine/berzerk.o obj/vidhrdw/berzerk.o obj/drivers/berzerk.o \
+         obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/sndhrdw/capbowl.o obj/drivers/capbowl.o \
+         obj/machine/1943.o obj/vidhrdw/1943.o obj/drivers/1943.o \
+         obj/machine/gunsmoke.o obj/vidhrdw/gunsmoke.o obj/drivers/gunsmoke.o \
+         obj/machine/blktiger.o obj/vidhrdw/blktiger.o obj/drivers/blktiger.o \
+         obj/machine/silkworm.o obj/vidhrdw/silkworm.o obj/drivers/silkworm.o \
+         obj/vidhrdw/sidearms.o obj/drivers/sidearms.o \
+         obj/vidhrdw/champbas.o obj/sndhrdw/champbas.o obj/drivers/champbas.o \
+         obj/vidhrdw/punchout.o obj/drivers/punchout.o \
+         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/m6809.o obj/M6808/m6808.o \
          obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \
          obj/M68000/opcode6.o obj/M68000/opcode7.o obj/M68000/opcode8.o obj/M68000/opcode9.o obj/M68000/opcodeb.o \
          obj/M68000/opcodec.o obj/M68000/opcoded.o obj/M68000/opcodee.o obj/M68000/mc68kmem.o \
          obj/M68000/cpufunc.o
 
-VPATH = src src/Z80 src/M6502 src/I86 src/M6809
+VPATH = src src/Z80 src/M6502 src/I86 src/M6809 src/M6808
 
 all: mame.exe
 
@@ -141,6 +149,7 @@ obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
 obj/I86/I86.o:  I86.c I86.h I86intrf.h ea.h host.h instr.h modrm.h
 obj/M6809/m6809.o:  m6809.c m6809.h 6809ops.c
+obj/M6808/M6808.o:  m6808.c m6808.h
 
 
 clean:
@@ -149,6 +158,7 @@ clean:
 	del obj\M6502\*.o
 	del obj\I86\*.o
 	del obj\M6809\*.o
+	del obj\M6808\*.o
 	del obj\M68000\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o

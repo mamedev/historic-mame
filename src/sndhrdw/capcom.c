@@ -39,7 +39,5 @@ static struct AY8910interface interface =
 
 int capcom_sh_start(void)
 {
-	pending_commands = 0;
-
 	return AY8910_sh_start(&interface);
 }

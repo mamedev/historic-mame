@@ -10,23 +10,23 @@
       0000-01FF  R/W   D  D  D  D  D  D  D  D   512 bytes working ram
 
       0200-05FF  R/W   D  D  D  D  D  D  D  D   3rd color bit region
-						                                    of screen ram.
-      																          Each bit of every odd byte is the low color
-      																          bit for the bottom scanlines
-      																          The schematics say that its for the bottom
-      																          32 scanlines, although the code only accesses
-      																          $401-$5FF for the bottom 8 scanlines...
-      																          Pretty wild, huh?
+                                                of screen ram.
+                                                Each bit of every odd byte is the low color
+                                                bit for the bottom scanlines
+                                                The schematics say that its for the bottom
+                                                32 scanlines, although the code only accesses
+                                                $401-$5FF for the bottom 8 scanlines...
+                                                Pretty wild, huh?
 
       0600-063F  R/W   D  D  D  D  D  D  D  D   More working ram.
 
       0640-3FFF  R/W   D  D  D  D  D  D  D  D   2-color bit region of
-																								screen ram.
-																								Writes to 4 bytes each
-																								and mapped to $1900-$FFFF
+                                                screen ram.
+                                                Writes to 4 bytes each
+                                                and mapped to $1900-$FFFF
 
-			1900-FFFF  R/W   D  D                     2-color bit region of
-																						    screen ram
+      1900-FFFF  R/W   D  D                     2-color bit region of
+                                                screen ram
 			                                          Only accessed with
 			                                           LDA ($ZZ,X) and
 			                                           STA ($ZZ,X)
@@ -82,7 +82,7 @@
 
 
 
-      MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
+MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
 ---------------------------------------------
 
 
@@ -154,6 +154,31 @@ void missile_vh_update(struct osd_bitmap *bitmap);
 
 
 
+static struct POKEYinterface interface =
+{
+	1,	/* 1 chip */
+	1,	/* 1 update per video frame (low quality) */
+	FREQ_17_APPROX,	/* 1.7 Mhz */
+	255,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ input_port_3_r },
+};
+
+
+int missile_sh_start(void)
+{
+	return pokey_sh_start (&interface);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -257,10 +282,11 @@ static struct KEYSet keys[] =
 
 static struct DSW dsw[] =
 {
-	{ 2, 0x60, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
-	{ 3, 0x03, "NUMBER OF CITIES", { "6", "4", "5", "7" } },
+	{ 2, 0x03, "COINAGE", { "1 COIN 1 PLAY", "2 COINS 1 PLAY", "FREE PLAY", "1 COIN 2 PLAYS" } },
+	{ 2, 0x60, "LANGUAGE", { "ENGLISH", "FRENCH", "GERMAN", "SPANISH" } },
+	{ 3, 0x03, "NUMBER OF CITIES", { "7", "5", "4", "6" } },
 /* 	{ 3, 0x08, "TRACKBALL", { "LARGE", "MINI" } }, not very useful */
-	{ 3, 0x70, "BONUS AT", { "10000", "12000", "14000", "15000", "18000", "20000", "8000", "0" } },
+	{ 3, 0x70, "BONUS AT", { "NO BONUS", "8000", "20000", "18000", "15000", "14000", "12000", "10000" } },
 /* 	{ 3, 0x80, "MODEL", { "UPRIGHT", "COCKTAIL" } }, */
 	{ -1 }
 };
@@ -326,6 +352,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,
 	missile_init_machine,
 
 	/* video hardware */
@@ -343,7 +370,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	pokey1_sh_start,
+	missile_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -370,16 +397,16 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	FILE *f;
+	void *f;
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x002C],"\x47\x4A\x4C", 3) == 0 &&
 			memcmp(&RAM[0x0044],"\x50\x69\x00", 3) == 0){
 
-		if ((f = fopen(name,"rb")) != 0){
-			fread(&RAM[0x002C],1,6*8,f);
-			fclose(f);
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0){
+			osd_fread(f,&RAM[0x002C],6*8);
+			osd_fclose(f);
 		}
 		return 1;
 	}else
@@ -388,13 +415,13 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0){
-		fwrite(&RAM[0x002C],1,6*8,f);
-		fclose(f);
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0){
+		osd_fwrite(f,&RAM[0x002C],6*8);
+		osd_fclose(f);
 	}
 }
 
@@ -404,7 +431,7 @@ struct GameDriver missile_driver =
 {
 	"Missile Command",
 	"missile",
-	"RAY GIARRATANA",
+	"Ray Giarratana\nMarco Cassili",
 	&machine_driver,
 
 	missile_rom,

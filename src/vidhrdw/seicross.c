@@ -16,6 +16,61 @@ unsigned char *seicross_row_scroll;
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Seicross has two 32x8 palette PROMs, connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
+void seicross_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+
+	/* character and sprite lookup table */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+}
+
+
+
 void seicross_colorram_w(int offset,int data)
 {
 	if (colorram[offset] != data)
@@ -86,7 +141,7 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 4 : 3],
+		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 3 : 2],
 				(spriteram[offs] & 0x3f),
 				spriteram[offs + 1] & 0x0f,
 				spriteram[offs] & 0x80,spriteram[offs] & 0x40,

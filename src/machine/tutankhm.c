@@ -20,14 +20,14 @@ int tutankhm_interrupt(void)
 
 	count = (count + 1) % 2;
 
-	if (count) return INT_IRQ;
-	else return INT_NONE;
+	if (count) return interrupt();
+	else return ignore_interrupt();
 }
 
 void tutankhm_init_machine(void)
 {
 	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_OP | M6809_FAST_S;    /* thanks to Dave Dahl for suggestion */
+	m6809_Flags = M6809_FAST_S;    /* thanks to Dave Dahl for suggestion */
 }
 
 

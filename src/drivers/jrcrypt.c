@@ -410,7 +410,7 @@ rom file,\n");
 
 void write_rom_section(char *prefix,char *suffix,int start,int end)
 {
-	FILE *out;
+	void *out;
 	char file[100];
 	int i;
 
@@ -422,7 +422,7 @@ void write_rom_section(char *prefix,char *suffix,int start,int end)
 			putc(shadowROM[i],out);
 		else
 			putc(RAM[i],out);
-	fclose(out);
+	osd_fclose(out);
 }
 #endif
 
@@ -514,12 +514,12 @@ void main()
 
 void Load(char *name,byte *buffer,int from, int length)
 {
-	FILE *file = fopen(name,"rb");
+	void *file = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	if (!file)
 		return;
 	while (length--)
 		buffer[from++]=fgetc(file);
-	fclose(file);
+	osd_fclose(file);
 }
 
 void CreateJrDecodeTable(byte *x, int length)

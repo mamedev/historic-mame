@@ -181,7 +181,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 / IN1 */
 		0x00,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, 0, 0, 0 },
+				OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -331,6 +331,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -378,49 +379,108 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+        /* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+        unsigned char *RAM = Machine->memory_region[0];
+
+        if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
+            memcmp(&RAM[0x9181],"\x18",1) == 0 &&
+            memcmp(&RAM[0x91a1],"\x18",1) == 0 &&
+            memcmp(&RAM[0x91c1],"\x21",1) == 0 &&
+            memcmp(&RAM[0x91e1],"\x18",1) == 0 &&
+            memcmp(&RAM[0x9201],"\x1d",1) == 0)
+
+        {
+                void *f;
+
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        int highscore;
+
+                        osd_fread(f,&RAM[0x8038],112);
+                        RAM[0x8348] = RAM[0x803d];
+                        RAM[0x8349] = RAM[0x803c];
+                        RAM[0x834a] = RAM[0x803b];
+                        RAM[0x834b] = RAM[0x803a];
+
+                        /* Highscore video displaying */
+                        /* Algorythm by: Kevin Brisley */
+                        /* Replay emulator */
+                        highscore = (RAM[0x803d] & 0x0f) + (RAM[0x803d] >> 4) * 10 +
+                                    (RAM[0x803c] & 0x0f) * 100 + (RAM[0x803c] >> 4) * 1000 +
+                                    (RAM[0x803b] & 0x0f) * 10000 + (RAM[0x803b] >> 4) * 100000 +
+                                    (RAM[0x803a] & 0x0f) * 1000000 + (RAM[0x803a] >> 4) * 10000000;
 
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x803a],"\x00\x05\x08\x00",4) == 0 &&
-			memcmp(&RAM[0x809d],"\x00\x01\x80\x00",4) == 0)
-	{
-		FILE *f;
+                        if (highscore > 9999999)
+                        {
+                                RAM[0x9261] = 0x18 + (RAM[0x803a] >> 4);
+                                if (RAM[0x9261] >= 0x20) RAM[0x9261] = RAM[0x9261] + 1;
+                        }
+                        if (highscore > 999999)
+                        {
+                                RAM[0x9241] = 0x18 + (RAM[0x803a] & 0x0f);
+                                if (RAM[0x9241] >= 0x20) RAM[0x9241] = RAM[0x9241] + 1;
+                        }
+                        if (highscore > 99999)
+                        {
+                                RAM[0x9221] = 0x18 + (RAM[0x803b] >> 4);
+                                if (RAM[0x9221] >= 0x20) RAM[0x9221] = RAM[0x9221] + 1;
+                        }
+                        if (highscore > 9999)
+                        {
+                                RAM[0x9201] = 0x18 + (RAM[0x803b] & 0x0f);
+                                if (RAM[0x9201] >= 0x20) RAM[0x9201] = RAM[0x9201] + 1;
+                        }
+                        if (highscore > 999)
+                        {
+                                RAM[0x91e1] = 0x18 + (RAM[0x803c] >> 4);
+                                if (RAM[0x91e1] >= 0x20) RAM[0x91e1] = RAM[0x91e1] + 1;
+                        }
+                        if (highscore > 99)
+                        {
+                                RAM[0x91c1] = 0x18 + (RAM[0x803c] & 0x0f);
+                                if (RAM[0x91c1] >= 0x20) RAM[0x91c1] = RAM[0x91c1] + 1;
+                        }
+                        if (highscore > 9)
+                        {
+                                RAM[0x91a1] = 0x18 + (RAM[0x803d] >> 4);
+                                if (RAM[0x91a1] >= 0x20) RAM[0x91a1] = RAM[0x91a1] + 1;
+                        }
+                        RAM[0x9181] = 0x18 + (RAM[0x803d] & 0x0f);
+                        if (RAM[0x9181] >= 0x20) RAM[0x9181] = RAM[0x9181] + 1;
 
-
-		if ((f = fopen(name,"rb")) != 0)
-		{
-			fread(&RAM[0x803a],1,11*10,f);
-			RAM[0x8348] = RAM[0x803d];
-			RAM[0x8349] = RAM[0x803c];
-			RAM[0x834a] = RAM[0x803b];
-			RAM[0x834b] = RAM[0x803a];
-			fclose(f);
+			osd_fclose(f);
 		}
 
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+
 }
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+        void *f;
+        int i;
+
+        /* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
+        /* Bug to solve the problem about resetting in the hi-score screen */
+        for (i = 0x8039; i < 0x80a0; i+=0x0b)
+                if (RAM[i] == 0x02) RAM[i] = 0x01;
 
-	if ((f = fopen(name,"wb")) != 0)
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x803a],1,11*10,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x8038],112);
+
+                osd_fclose(f);
 	}
 }
 
@@ -430,7 +490,7 @@ struct GameDriver starforc_driver =
 {
 	"Star Force",
 	"starforc",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nTATSUYUKI SATOH",
+        "MIRKO BUFFONI\nNICOLA SALMORIA\nTATSUYUKI SATOH\nJuan Carlos Lorente",
 	&machine_driver,
 
 	starforc_rom,

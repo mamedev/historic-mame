@@ -15,30 +15,37 @@ email it to me at agiles@sirius.com
 ======== ======== ======== ======== ======== =========== ======== ==========================
 rom      drivers  machine  sndhrdw  vidhrdw  sound       cpus     name
 ======== ======== ======== ======== ======== =========== ======== ==========================
+1942     1942     1942     capcom   1942     AY8910x2    Z80x2    1942
+1943     1943     1943     capcom   1943     AY8910x2    Z80x2    1943
+3stooges 3stooges gottlieb gottlieb gottlieb samples     I86      Three Stooges
 amidar   amidar   --       amidar   amidar   AY8910x2    Z80x2    Amidar (US version)
 amidarjp amidar   --       amidar   amidar   AY8910x2    Z80x2    Amidar (Japanese version)
+amigo    amidar   --       amidar   amidar   AY8910x2    Z80x2    Amidar (Amidar US bootleg)
 anteater scobra   scramble scramble galaxian AY8910x2    Z80x2    Anteater
 arabian  arabian  arabian  arabian  arabian  AY8910      Z80      Arabian
 astdelux asteroid asteroid asteroid atari_vg POKEY+samp  6502     Asteroids Deluxe
-astdelu1 asteroid asteroid asteroid atari_vg POKEY+samp  6502     Asteroids Deluxe (alternate version)
 asteroi2 asteroid asteroid asteroid atari_vg samples     6502     Asteroids (alternate version)
 asteroid asteroid asteroid asteroid atari_vg samples     6502     Asteroids
 atlantis scramble scramble scramble galaxian AY8910x2    Z80x2    Battle of Atlantis
 bagman   bagman   bagman   bagman   bagman   AY8910      Z80      Bagman
 bankp    bankp    --       bankp    bankp    SN76496x3   Z80      Bank Panic
-blaster  williams williams williams williams samples     6809     Blaster
+berzerk  berzerk  berzerk  --       berzerk  --          Z80      Berzerk
+berzerk1 berzerk  berzerk  --       berzerk  --          Z80      Berzerk (version 1)
+blaster  williams williams williams williams 6808+DAC    6809     Blaster
+blktiger blktiger blktiger capcom   blktiger AY8910x2    Z80x2    Black Tiger
 blueprnt blueprnt --       blueprnt blueprnt AY8910x2    Z80x2    Blue Print
-boblbobl bublbobl bublbobl --       bublbobl --          Z80x2    Bobble Bobble
+boblbobl bublbobl bublbobl --       bublbobl --          Z80x2    Bobble Bobble (bootleg Bubble Bobble)
 bombjack bombjack --       bombjack bombjack AY8910x3    Z80x2    Bomb Jack
 bosco    bosco    bosco    bosco    bosco    waveform    Z80x3    Bosconian
+bosconm  bosco    bosco    bosco    bosco    waveform    Z80x3    Bosconian (Namco)
 btime    btime    --       btime    bitme    AY8910x2    6502x2   Burger Time (Midway)
 btimea   btime    --       btime    bitme    AY8910x2    6502x2   Burger Time (Data East)
-bubbles  williams williams williams williams samples     6809     Bubbles
+bubbles  williams williams williams williams 6808+DAC    6809     Bubbles
 bublbobl bublbobl bublbobl --       bublbobl --          Z80x2    Bubble Bobble
 bwidow   bwidow   --       pokey    atari_vg POKEYx2     6502     Black Widow
 bzone    bzone    bzone    pokey    atari_vg POKEY       6502     Battle Zone
 bzone2   bzone    bzone    pokey    atari_vg POKEY       6502     Battle Zone (alternate version)
-c1942    1942     1942     capcom   1942     AY8910x2    Z80x2    1942
+capbowl  capbowl  capbowl  capbowl  capbowl  ???         6809x2   Capcom Bowling
 carnival carnival carnival carnival carnival samples     Z80      Carnival
 cavenger ladybug  --       ladybug  ladybug  SN76496x2   Z80      Cosmic Avenger
 ccastles ccastles ccastles pokey    ccastles POKEYx2     6502     Crystal Castles
@@ -46,24 +53,30 @@ ccboot   cclimber --       cclimber cclimber AY8910      Z80      Crazy Climber 
 ccjap    cclimber --       cclimber cclimber AY8910      Z80      Crazy Climber (Japanese version)
 cclimber cclimber --       cclimber cclimber AY8910      Z80      Crazy Climber (US version)
 centiped centiped centiped pokey    centiped Pokey       6502     Centipede
+champbas champbas --       --       champbas --          Z80      Champion Baseball
 ckong    cclimber --       cclimber cclimber AY8910      Z80      Crazy Kong (Crazy Climber hardware)
 ckonga   cclimber --       cclimber cclimber AY8910      Z80      Crazy Kong (alternate version)
 ckongjeu cclimber --       cclimber cclimber AY8910      Z80      Crazy Kong (Jeutel bootleg)
 ckongs   ckongs   --       scramble galaxian AY8910x2    Z80x2    Crazy Kong (Scramble Hardware)
-commando commando capcom   capcom   commando AY8910x2    Z80x2    Commando
-congo    congo    --       --       congo    --          Z80      Congo Bongo
+cloak    cloak    cloak    pokey    cloak    POKEYx2     6502x2   Cloak & Dagger
+commandj commando capcom   capcom   commando AY8910x2    Z80x2    Commando (Japanese version)
+commando commando capcom   capcom   commando AY8910x2    Z80x2    Commando (US version)
+congo    congo    --       congo    congo    SN76496x2+s Z80      Congo Bongo
 crush    pacman   pacman   pengo    pengo    waveform    Z80      Crush Roller
-defender williams williams williams williams samples     6809     Defender
+defender williams williams williams williams 6808+DAC    6809     Defender
 destderb mcr3     mcr      mcr      mcr3     AY8910x2    Z80x2    Demolition Derby
 desterth invaders invaders invaders invaders samples     Z80      Destination Earth
 diamond  gng      gng      capcom   gng      AY8910x2    6809+Z80 Diamond Run
 digdug2  mappy    mappy    mappy    mappy    waveform    6809x2   Dig Dug 2
 digdugat digdug   digdug   digdug   digdug   waveform    Z80x3    Dig Dug (Atari)
 digdugnm digdug   digdug   digdug   digdug   waveform    Z80x3    Dig Dug (Namco)
+dkjrbl   dkong    --       --       dkong    --          Z80      Donkey Kong Jr. (Bootleg)
+dkjrjp   dkong    --       --       dkong    --          Z80      Donkey Kong Jr. (Japanese version)
 dkong    dkong    --       dkong    dkong    samples     Z80      Donkey Kong
 dkong3   dkong    --       --       dkong    --          Z80      Donkey Kong 3
 dkongjp  dkong    --       dkong    dkong    samples     Z80      Donkey Kong (Japanese version)
 dkongjr  dkong    --       --       dkong    --          Z80      Donkey Kong Jr.
+docastl2 docastle docastle docastle docastle SN76496x4   Z80x2    Mr. Do's Castle (alternate version)
 docastle docastle docastle docastle docastle SN76496x4   Z80x2    Mr. Do's Castle
 domino   mcr2     mcr      mcr      mcr3     AY8910x2    Z80x2    Domino Man
 dorunrun dowild   docastle docastle docastle SN76496x4   Z80x2    Mr. Do! Run Run
@@ -72,8 +85,8 @@ douni    docastle docastle docastle docastle SN76496x4   Z80x2    Mr. Do VS The 
 dowild   dowild   docastle docastle docastle SN76496x4   Z80x2    Mr. Do! Wild Ride
 earthinv invaders invaders invaders invaders samples     Z80      Super Earth Invasion
 eggs     eggs     --       --       eggs     --          6502     Eggs
-elevatob elevator elevator elevator taito    AY8910x4    Z80x2    Elevator Action (bootleg)
-elevator elevator elevator elevator taito    AY8910x4    Z80x2    Elevator Action
+elevatob taito    taito    taito    taito    AY8910x4    Z80x2    Elevator Action (bootleg)
+elevator taito    taito    taito    taito    AY8910x4    Z80x2    Elevator Action
 elim2    sega     sega     sega     sega     samples     Z80      Eliminator (2 player)
 espial   espial   espial   --       espial   AY8910      Z80      Espial
 exedexes exedexes c1942    capcom   exedexes AY8910x2    Z80x2    Exed Exes
@@ -82,7 +95,7 @@ fantazia mooncrst --       mooncrst galaxian waveform    Z80      Fantazia
 frogger  frogger  --       frogger  frogger  AY8910      Z80x2    Frogger
 froggers scramble scramble scramble galaxian AY8910x2    Z80x2    Frog
 frogsega frogger  --       frogger  frogger  AY8910      Z80x2    Frogger (alternate version)
-frontlin wwestern elevator elevator taito    AY8910x4    Z80x2    Front Line
+frontlin taito    taito    taito    taito    AY8910x4    Z80x2    Front Line
 galaga   galaga   galaga   pengo    galaga   waveform    Z80x3    Galaga (Midway)
 galagabl galaga   galaga   pengo    galaga   waveform    Z80x3    Galaga (bootleg)
 galaganm galaga   galaga   pengo    galaga   waveform    Z80x3    Galaga (Namco)
@@ -98,42 +111,50 @@ galxwars invaders invaders invaders invaders samples     Z80      Galaxy Wars
 gberet   gberet   gberet   gberet   gberet   SN76496     Z80      Green Beret
 gng      gng      gng      capcom   gng      AY8910x2    6809+Z80 Ghosts'n Goblins
 gngcross gng      gng      capcom   gng      AY8910x2    6809+Z80 Ghosts'n Goblins (Cross)
-gorf     wow      wow      --       wow      --          Z80      Gorf
+gorf     wow      wow      wow      wow      Votrax      Z80      Gorf
 gravitar bwidow   --       pokey    atari_vg POKEYx2     6502     Gravitar
-gyruss   gyruss   --       gyruss   gyruss   AY8910x5    Z80      Gyruss
+gunsmoke gunsmoke gunsmoke capcom   gunsmoke AY8910x2    Z80x2    Gunsmoke
+gyruss   gyruss   --       gyruss   gyruss   AY8910x5    Z80      Gyruss (Konami)
+gyrussce gyruss   --       gyruss   gyruss   AY8910x5    Z80      Gyruss (Centuri)
 hangly   pacman   pacman   pengo    pengo    waveform    Z80      Hangly Man
-hunchy   scobra   scramble scramble galaxian AY8910x2    Z80x2    Hunchback
+hunchy   dkong    --       --       dkong    --          Z80      Hunchback
 invaders invaders invaders invaders invaders samples     Z80      Space Invaders
 invdelux invaders invaders invaders invaders samples     Z80      Invaders Deluxe
+invho2   carnival carnival carnival carnival samples     Z80      Invinco/Head On 2
+invinco  carnival carnival carnival carnival samples     Z80      Invinco
 invrvnge invaders invaders invaders invaders samples     Z80      Invaders Revenge
 japirem  galaxian --       mooncrst galaxian waveform    Z80      Gingateikoku No Gyakushu
 jbugsega jumpbug  --       jumpbug  jumpbug  AY8910      Z80      Jump Bug (bootleg)
-jhunt    junglek  --       junglek  taito    AY8910x4    Z80x2    Jungle Hunt
+jhunt    taito    taito    taito    taito    AY8910x4    Z80x2    Jungle Hunt
 journey  mcr2     mcr      mcr      mcr2     AY8910x2    Z80x2    Journey
-joust    williams williams williams williams samples     6809     Joust
+joust    williams williams williams williams 6808+DAC    6809     Joust
 jrpacman jrpacman jrpacman pengo    jrpacman waveform    Z80      Jr. Pac Man
 jumpbug  jumpbug  --       jumpbug  jumpbug  AY8910      Z80      Jump Bug
-junglek  junglek  --       junglek  taito    AY8910x4    Z80x2    Jungle King
+junglek  taito    taito    taito    taito    AY8910x4    Z80x2    Jungle King
 kangaroo kangaroo kangaroo kangaroo kangaroo AY8910      Z80x2    Kangaroo
 kick     mcr1     mcr      mcr      mcr1     AY8910x2    Z80x2    Kick
 kickridr dowild   docastle docastle docastle SN76496x4   Z80x2    Kick Rider
 kroozr   mcr2     mcr      mcr      mcr2     AY8910x2    Z80x2    Kosmik Krooz'r
 krull    krull    gottlieb gottlieb gottlieb 6502+DAC    I86      Krull
-kungfub  kungfum  --       kungfum  kungfum  waveform    Z80      Kung Fu Master (bootleg)
-kungfum  kungfum  --       kungfum  kungfum  waveform    Z80      Kung Fu Master
+kungfub  kungfum  --       mpatrol  kungfum  AY8910x2    Z80+6803 Kung Fu Master (bootleg)
+kungfum  kungfum  --       mpatrol  kungfum  AY8910x2    Z80+6803 Kung Fu Master
 ladybug  ladybug  --       ladybug  ladybug  SN76496x2   Z80      Lady Bug
 llander  llander  llander  --       atari_vg --          6502     Lunar Lander
 locomotn locomotn --       pooyan   locomotn AY8910x2    Z80x2    Loco-Motion
 losttomb scobra   scramble scramble galaxian AY8910x2    Z80x2    Lost Tomb
 lrescue  invaders invaders invaders invaders samples     Z80      Lunar Rescue
+lwings   lwings   lwings   capcom   lwings   AY8910x2    Z80x2    Legendary Wings
 mappy    mappy    mappy    mappy    mappy    waveform    6809x2   Mappy
-mario    mario    --       --       mario    --          Z80      Mario Bros.
+mappyjp  mappy    mappy    mappy    mappy    waveform    6809x2   Mappy (Japanese version)
+mario    mario    --       mario    mario    samples     Z80      Mario Bros.
 milliped milliped milliped pokey    milliped POKEYx2     6502     Millipede
 missile  missile  missile  --       missile  --          6502     Missile Command
-mooncrsb mooncrst --       mooncrst galaxian waveform    Z80      Moon Cresta (Gremlin)
+mooncrsb mooncrst --       mooncrst galaxian waveform    Z80      Moon Cresta (Bootleg)
+mooncrsg mooncrst --       mooncrst galaxian waveform    Z80      Moon Cresta (Gremlin)
 mooncrst mooncrst --       mooncrst galaxian waveform    Z80      Moon Cresta (Nichibutsu)
 moonqsr  moonqsr  --       mooncrst galaxian waveform    Z80      Moon Quasar
-mpatrol  mpatrol  mpatrol  --       mpatrol  --          Z80      Moon Patrol
+motos    mappy    mappy    mappy    mappy    waveform    6809x2   Motos
+mpatrol  mpatrol  mpatrol  mpatrol  mpatrol  AY8910x2    Z80+6803 Moon Patrol
 mplanets mplanets gottlieb gottlieb gottlieb 6502+DAC    I86      Mad Planets
 mranger  mpatrol  mpatrol  --       mpatrol  --          Z80      Moon Ranger (bootleg Moon Patrol)
 mrdo     mrdo     mrdo     ladybug  mrdo     SN76496x2   Z80      Mr. Do! (Universal)
@@ -146,8 +167,10 @@ mystston mystston mystston --       mystston --          6502     Mysterious Sto
 namcopac pacman   pacman   pengo    pengo    waveform    Z80      Pac Man (Namco)
 naughtyb naughtyb naughtyb --       naughtyb --          Z80      Naughty Boy
 nibbler  nibbler  vanguard vanguard nibbler  waveform    6502     Nibbler
+nrallyx  rallyx   --       pengo    rallyx   waveform    Z80      New Rally X
 omegrace omegrace omegrace omegrace atari_vg AY8910x2    Z80x2    Omega Race
 pacman   pacman   pacman   pengo    pengo    waveform    Z80      Pac Man (Midway)
+pacmanbl pacman   pacman   pengo    pengo    waveform    Z80      Pac Man (bootleg on Galaxian hardware)
 pacmanjp pacman   pacman   pengo    pengo    waveform    Z80      Pac Man (Namco, alternate)
 pacmod   pacman   pacman   pengo    pengo    waveform    Z80      Pac Man (modified)
 pacnpal  superpac superpac mappy    superpac waveform    6809x2   Pac & Pal
@@ -168,27 +191,38 @@ pooyan   pooyan   --       pooyan   pooyan   AY8910x2    Z80x2    Pooyan
 popeyebl popeye   --       popeye   popeye   AY8910      Z80      Popeye (bootleg)
 popflame naughtyb naughtyb --       naughtyb --          Z80      Pop Flamer
 puckman  pacman   pacman   pengo    pengo    waveform    Z80      Puck Man
+pulsar   carnival carnival carnival carnival samples     Z80      Pulsar
+punchout punchout --       --       punchout --          Z80      Punch Out
 qbert    qbert    gottlieb gottlieb gottlieb 6502+DAC    I86      Q*Bert (US version)
 qbertjp  qbert    gottlieb gottlieb gottlieb 6502+DAC    I86      Q*Bert (Japanese version)
 qbertqub qbertqub gottlieb gottlieb gottlieb 6502+DAC    I86      Q*Bert Qubes
 qix      qix      qix      --       qix      --          6809     Qix
+radarscp dkong    --       dkong    dkong    samples     Z80      Radarscope
 rallyx   rallyx   --       pengo    rallyx   waveform    Z80      Rally X
 rampage  mcr3     mcr      --       mcr2     --          Z80      Rampage
+rastan   rastan   --       rastan   rastan   waveform    68000+Z80 Rastan
+rastsaga rastan   --       rastan   rastan   waveform    68000+Z80 Rastan Saga
 reactor  reactor  gottlieb gottlieb gottlieb 6502+DAC    I86      Reactor
 redbaron redbaron redbaron pokey    atari_vg POKEY       6502     Red Baron
+redufo   galaxian --       mooncrst galaxian waveform    Z80      Defend the Terra Attack on the Red UFO
 rescue   scobra   scramble scramble galaxian AY8910x2    Z80x2    Rescue
 robby    wow      wow      --       wow      --          Z80      Robby Roto
-robotron williams williams williams williams samples     6809     Robotron
+robotron williams williams williams williams 6808+DAC    6809     Robotron
 rushatck gberet   gberet   gberet   gberet   SN76496     Z80      Rush'n Attack
 sbagman  bagman   bagman   bagman   bagman   AY8910      Z80      Super Bagman
+sbasketb sbasketb --       --       sbasketb AY8910+VLM  6809+Z80 Super Basketball
+sboblbob bublbobl bublbobl --       bublbobl --          Z80x2    Bobble Bobble (bootleg Bubble Bobble, alternate version)
 scobra   scobra   scramble scramble galaxian AY8910x2    Z80x2    Super Cobra
 scobrab  scobra   scramble scramble galaxian AY8910x2    Z80x2    Super Cobra (bootleg)
 scobrak  scobra   scramble scramble galaxian AY8910x2    Z80x2    Super Cobra (Konami)
 scramble scramble scramble scramble galaxian AY8910x2    Z80x2    Scramble
-seawolf  wow      wow      --       wow      --          Z80      Sea Wolf II
+seawolf2 wow      wow      --       wow      --          Z80      Sea Wolf II
+sectionz lwings   lwings   capcom   lwings   AY8910x2    Z80x2    Section Z
 seicross seicross seicross seicross seicross AY8910      Z80      Seicross
 shollow  mcr2     mcr      mcr      mcr2     AY8910x2    Z80x2    Satan's Hollow
-sinistar williams williams williams williams samples     6809     Sinistar
+sidearms sidearms --       --       sidearms --          Z80x2    Sidearms
+silkworm silkworm silkworm --       silkworm --          Z80      Silkworm
+sinistar williams williams williams williams 6808+DAC    6809     Sinistar
 snapjack ladybug  --       ladybug  ladybug  SN76496x2   Z80      Snap Jack
 solarfox mcr1     mcr      mcr      mcr1     AY8910x2    Z80x2    Solar Fox
 sonson   sonson   --       capcom   sonson   AY8910x2    6809x2   Son Son
@@ -198,14 +232,13 @@ spacefb  spacefb  spacefb  --       spacefb  --          Z80      Space Firebird
 spaceplt timeplt  --       timeplt  timeplt  AY8910x2    Z80x2    Space Pilot (bootleg Time Pilot)
 spacezap wow      wow      --       wow      --          Z80      Space Zap
 spacfury sega     sega     sega     sega     samples     Z80      Space Fury
-splat    williams williams williams williams samples     6809     Splat
+splat    williams williams williams williams 6808+DAC    6809     Splat
 spyhunt  mcr3     mcr      mcr      mcr3     AY8910x2    Z80x2    Spy Hunter
+sspaceat carnival carnival carnival carnival samples     Z80      Sega Space Attack
 starforc starforc starforc starforc starforc SN76496x3   Z80x2    Star Force
-stargate williams williams williams williams samples     6809     Stargate
+stargate williams williams williams williams 6808+DAC    6809     Stargate
 startrek sega     sega     sega     sega     samples     Z80      Star Trek
 starwars starwars starwars starwars atari_vg POKEYx4+sam 6809x2   Star Wars
-stooges  3stooges gottlieb gottlieb gottlieb samples     I86      Three Stooges
-sbasketb sbasketb --       --       sbasketb AY8910+VLM  Z80      Super Basketball
 superg   galaxian --       mooncrst galaxian waveform    Z80      Super Galaxian
 superpac superpac superpac mappy    superpac waveform    6809x2   Super Pac Man
 sxevious xevious  xevious  pengo    xevious  waveform    Z80x3    Super Xevious
@@ -215,7 +248,9 @@ tempest  tempest  tempest  pokey    atari_vg POKEYx2     6502     Tempest
 theend   scramble scramble scramble galaxian AY8910x2    Z80x2    The End
 timber   mcr3     mcr      mcr      mcr3     AY8910x2    Z80x2    Timber
 timeplt  timeplt  --       timeplt  timeplt  AY8910x2    Z80x2    Time Pilot
+todruaga mappy    mappy    mappy    mappy    waveform    6809x2   The Tower of Druaga
 tp84     tp84     tp84     tp84     tp84     AN76496x3   6809x2+Z80 Time Pilot 84
+triplep  scramble scramble scramble galaxian AY8910x2    Z80x2    Triple Punch
 tron     mcr2     mcr      mcr      mcr2     AY8910x2    Z80x2    Tron
 turpin   amidar   --       amidar   amidar   AY8910x2    Z80x2    Turpin
 turtles  amidar   --       amidar   amidar   AY8910x2    Z80x2    Turtles
@@ -229,11 +264,12 @@ wacko    mcr2     mcr      mcr      mcr2     AY8910x2    Z80x2    Wacko
 warlord  warlord  warlord  --       warlord  --          6502     Warlords
 warofbug galaxian --       mooncrst galaxian waveform    Z80      War of the Bugs
 warpwarp warpwarp warpwarp --       warpwarp --          Z80      Warp Warp
-wow      wow      wow      --       wow      --          Z80      Wizard of Wor
-wwestern wwestern elevator elevator taito    AY8910x4    Z80x2    Wild Western
+wow      wow      wow      wow      wow      Votrax      Z80      Wizard of Wor
+wwestern taito    taito    taito    taito    AY8910x4    Z80x2    Wild Western
 xevious  xevious  xevious  pengo    xevious  waveform    Z80x3    Xevious (Atari/Namco copyright)
 xeviousn xevious  xevious  pengo    xevious  waveform    Z80x3    Xevious (Namco copyright)
-yard     yard     --       --       yard     --          Z80      10 Yard Fight
+yard     yard     --       mpatrol  yard     AY8910x2    Z80+6803 10 Yard Fight
 yiear    yiear    yiear    --       yiear    --          6809     Yie Ar Kung Fu (Konami)
 zaxxon   zaxxon   --       --       zaxxon   --          Z80      Zaxxon
 zektor   sega     sega     sega     sega     samples     Z80      Zektor
+zookeep  zookeep  zookeep  --       qix      --          6809     Zookeeper

@@ -143,7 +143,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN2 */
 		0x00,
-		{ OSD_KEY_CONTROL, 0, 0, 0, 0, 0, 0, 0 },
+		{ OSD_KEY_LCONTROL, 0, 0, 0, 0, 0, 0, 0 },
 		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN3 */
@@ -155,7 +155,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN4 */
 		0x00,
-		{ OSD_KEY_CONTROL, 0, 0, 0, 0, 0, 0, 0 },
+		{ OSD_KEY_LCONTROL, 0, 0, 0, 0, 0, 0, 0 },
 		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN5 */
@@ -265,6 +265,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -315,20 +316,20 @@ ROM_END
 
 
 
-static int arabian_hiload(const char *name)
+static int arabian_hiload(void)
 {
   unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
+  void *f;
 
   /* Wait for hiscore table initialization to be done. */
   if (memcmp(&RAM[0xd384], "\x00\x00\x00\x01\x00\x00", 6) != 0)
     return 0;
 
-  if ((f = fopen(name,"rb")) != 0)
+  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
     {
       /* Load and set hiscore table. */
-      fread(&RAM[0xd384],1,6*10,f);
-      fclose(f);
+      osd_fread(f,&RAM[0xd384],6*10);
+      osd_fclose(f);
     }
 
   return 1;
@@ -336,16 +337,16 @@ static int arabian_hiload(const char *name)
 
 
 
-static void arabian_hisave(const char *name)
+static void arabian_hisave(void)
 {
   unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
+  void *f;
 
-  if ((f = fopen(name,"wb")) != 0)
+  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
       /* Write hiscore table. */
-      fwrite(&RAM[0xd384],1,6*10,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0xd384],6*10);
+      osd_fclose(f);
     }
 }
 

@@ -11,12 +11,12 @@
 
 struct osd_bitmap *sprite_bm;
 struct osd_bitmap *maskbitmap;
-static int dirtypalette;
 
 static int ax;
 static int ay;
 static unsigned char xcoor;
 static unsigned char ycoor;
+static int flipscreen;
 
 
 
@@ -24,7 +24,7 @@ static unsigned char ycoor;
 
   Convert the color PROMs into a more useable format.
 
-  Csyrstal Castles doesn't have a color PROM. It uses RAM to dynamically
+  Crystal Castles doesn't have a color PROM. It uses RAM to dynamically
   create the palette. The resolution is 9 bit (3 bits per gun). The palette
   contains 32 entries, but it is accessed through a memory windows 64 bytes
   long: writing to the first 32 bytes sets the msb of the red component to 0,
@@ -63,12 +63,11 @@ void ccastles_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 
 	/* sprites */
-	/* we should use colors 0-15, but we swap them with 16-31 to have a black color 0 */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 16;
+		COLOR(0,i) = i;
 	/* background */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i;
+		COLOR(1,i) = i + 16;
 }
 
 
@@ -78,10 +77,6 @@ void ccastles_paletteram_w(int offset,int data)
 	int r,g,b;
 	int bit0,bit1,bit2;
 
-
-	/* we swap colors 0-15 with colors 16-31 because color 0 is red and color */
-	/* 16 is black. The MS-DOS version looks better with a black color 0. */
-	offset ^= 0x10;
 
 	r = (data & 0xC0) >> 6;
 	b = (data & 0x38) >> 3;
@@ -239,14 +234,30 @@ void ccastles_bitmode_w(int offset, int data) {
 		j = 2*(addr - 0xc00);
 		x = j%256;
 		y = j/256;
-		tmpbitmap->line[y][x] = Machine->gfx[1]->colortable[(RAM[addr] & 0xF0) >> 4];
-		tmpbitmap->line[y][x+1] = Machine->gfx[1]->colortable[RAM[addr] & 0x0F];
+		if (!flipscreen) {
+			tmpbitmap->line[y][x] = Machine->gfx[1]->colortable[(RAM[addr] & 0xF0) >> 4];
+			tmpbitmap->line[y][x+1] = Machine->gfx[1]->colortable[RAM[addr] & 0x0F];
 
-		/* if bit 3 of the pixel is set, background has priority over sprites when */
-		/* the sprite has the priority bit set. We use a second bitmap to remember */
-		/* which pixels have priority. */
-		maskbitmap->line[y][x] = RAM[addr] & 0x80;
-		maskbitmap->line[y][x+1] = RAM[addr] & 0x08;
+			/* if bit 3 of the pixel is set, background has priority over sprites when */
+			/* the sprite has the priority bit set. We use a second bitmap to remember */
+			/* which pixels have priority. */
+			maskbitmap->line[y][x] = RAM[addr] & 0x80;
+			maskbitmap->line[y][x+1] = RAM[addr] & 0x08;
+			}
+		else {
+			y = 231-y;
+			x = 254-x;
+			if (y >= 0) {
+				tmpbitmap->line[y][x+1] = Machine->gfx[1]->colortable[(RAM[addr] & 0xF0) >> 4];
+				tmpbitmap->line[y][x] = Machine->gfx[1]->colortable[RAM[addr] & 0x0F];
+
+				/* if bit 3 of the pixel is set, background has priority over sprites when */
+				/* the sprite has the priority bit set. We use a second bitmap to remember */
+				/* which pixels have priority. */
+				maskbitmap->line[y][x+1] = RAM[addr] & 0x80;
+				maskbitmap->line[y][x] = RAM[addr] & 0x08;
+				}
+			}
 	}
   }
 
@@ -268,6 +279,14 @@ void ccastles_bitmode_w(int offset, int data) {
   }
 }
 
+void ccastles_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+	}
+}
+
 
 
 /***************************************************************************
@@ -286,29 +305,15 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int scrollx,scrolly;
 
 
-	/* if colors have changed, redraw the whole screen. This doesn't happen often, */
-	/* so we can do it without affecting performance */
-	if (dirtypalette)
-	{
-		j = 0;
-
-		for(i = 0x0C00;i < 0x8000;i += 2)
-		{
-			tmpbitmap->line[j/256][j%256] = Machine->gfx[1]->colortable[(RAM[i] & 0xF0) >> 4];
-			tmpbitmap->line[j/256][j%256+1] = Machine->gfx[1]->colortable[RAM[i] & 0x0F];
-			tmpbitmap->line[j/256][j%256+2] = Machine->gfx[1]->colortable[(RAM[i+1] & 0xF0) >> 4];
-			tmpbitmap->line[j/256][j%256+3] = Machine->gfx[1]->colortable[RAM[i+1] & 0x0F];
-
-			j+=4;
-		}
-
-		dirtypalette = 0;
-	}
-
 	scrollx = 256 - RAM[0x9c80];
 	scrolly = 256 - RAM[0x9d00];
 
-	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,
+	if (flipscreen) {
+		scrollx = 254 - scrollx;
+		scrolly = 231 - scrolly;
+		}
+
+	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,
 		   &Machine->drv->visible_area,
 		   TRANSPARENCY_NONE,0);
 
@@ -329,10 +334,10 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		if (RAM[spriteaddr+offs+2] & 0x80)	/* background can have priority over the sprite */
 		{
-			clearbitmap(sprite_bm);
+			fillbitmap(sprite_bm,Machine->gfx[0]->colortable[7],0);
 			drawgfx(sprite_bm,Machine->gfx[0],
 					RAM[spriteaddr+offs],1,
-					0,0,
+					flipscreen,flipscreen,
 					0,0,
 					0,TRANSPARENCY_PEN,7);
 
@@ -344,25 +349,24 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap)
 					{
 						unsigned char pixa,pixb;
 
-
 						pixa = sprite_bm->line[j][i];
 						pixb = maskbitmap->line[(y+scrolly+j)%232][(x+scrollx+i)%256];
 
 						/* if background has priority over sprite, make the */
 						/* temporary bitmap transparent */
 						if (pixb != 0 && (pixa != Machine->gfx[0]->colortable[0]))
-							sprite_bm->line[j][i] = Machine->pens[0];
+							sprite_bm->line[j][i] = Machine->gfx[0]->colortable[7];
 					}
 				}
 			}
 
-			copybitmap(bitmap,sprite_bm,0,0,x,y,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			copybitmap(bitmap,sprite_bm,0,0,x,y,&Machine->drv->visible_area,TRANSPARENCY_PEN,Machine->gfx[0]->colortable[7]);
 		}
 		else
 		{
 			drawgfx(bitmap,Machine->gfx[0],
 					RAM[spriteaddr+offs],1,
-					0,0,
+					flipscreen,flipscreen,
 					x,y,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,7);
 		}

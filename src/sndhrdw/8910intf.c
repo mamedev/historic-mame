@@ -23,6 +23,11 @@ static struct AY8910interface *intf;
 static unsigned char *buffer[MAX_8910];
 
 
+/* ASG 971010 - added this include to support Mac-specific sound functionality */
+#ifdef macintosh
+#include "mac8910.c"
+#endif
+
 
 static unsigned char porthandler(int num,AY8910 *chip, int port, int iswrite, unsigned char val)
 {

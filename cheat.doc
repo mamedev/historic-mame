@@ -1,0 +1,379 @@
+
+
+                     Mame Action Replay
+                     ==================
+
+
+What is this?
+=============
+
+I know that using cheat will probably spoil a game, but I did
+that because there is many games that I want to see but
+never will if I have to play several weeks to finish them.
+
+It is also very useful for driver makers like me because it
+allow me to see all the levels of a game without having to play them.
+Its very frustrating to play a game you do not really like, all
+night just to pass the first level because someone tell you
+that there is a bug in your driver on the second level.
+
+
+The cheater in Mame operate much like the Pro Action Replay.
+You can use cheat made by others, or you can search yourself
+for a new cheat.
+
+The file CHEAT.DAT contents several cheats that I have found.
+This file is in pure text format, so you can see or edit
+it with a text editor like Notepad.
+Its a good idea to check that file just to have an idea of
+what cheat are available. Its a lot faster than trying
+all the games one after the others.
+
+
+Operation
+=========
+
+-Start a game like usual in Mame.
+-After the ram/rom test is passed, whenever you want to, press
+  Tab to go to the menu.
+ Note: it is important that you do not enable a cheat before the
+  ram test is passed because it will probably fail and the game
+  will not start. (The test is the garbage that you see when you
+  start most games)
+-Select CHEAT
+-You should see:
+
+  LOAD / ENABLE CHEAT
+  START A NEW SEARCH
+    CONTINUE SEARCH
+     MEMORY WATCH
+
+  RETURN TO MAIN MENU
+
+    Active Cheats:
+     --- NONE ---
+
+-The first line is where to go to enable a cheat.
+  The others lines are to search yourself for new cheats.
+  Below that, you have a list of the currently active cheats.
+  The first time you go there, no cheats are active so it
+  display --- NONE --- to tell you that.
+-Select LOAD/ENABLE CHEAT
+-The upper part of the screen is where you can select the cheat you
+  want to enable.
+  The lower part is the list of the currently active cheats.
+-If nothing appear between the lines:
+
+       Select a Cheat
+            and
+       Active Cheats:
+
+  it is because there is no cheat available for this game.
+  Normally you will at least have the line:
+
+    Infinite Lives
+
+-To enable a cheat, just press ENTER on it.
+  The name of the cheat should appear in the Active Cheats list.
+-Pressing ENTER on a cheat that is already in the Active Cheats list
+  delete it from that list.
+-The Delete F1 and F2 buttons will be helpful when you will search
+  your own cheat.
+  Note: Delete, do not delete that cheat from the CHEAT.DAT file, it just
+   delete it from the list in memory.
+   But Pressing F1 on a cheat will save it to that file, so, pressing
+	 F1 on an already saved cheat will save it again in the file. So next time
+   you will have the same cheat twice.
+   To remove it from the file, you will have to edit the CHEAT.DAT file
+   with a text editor like Notepad.
+-Press ESC/TAB three times to return to the game.
+-Start a game, you should see a difference.
+-During the game, if you have to disable the cheats temporarily, press F7.
+  (Has I write those lines I am not sure that it is F7 that will be chosen
+   to do that, see the Mame docs if not)
+
+NOTE: Enabling a cheat, even for a short time, will disable the
+ hi-score saving. If you want to reenable hi-score saving, you will
+ have to restart Mame.
+
+
+
+How to search for new cheat code
+================================
+
+Mame Action Replay only change values that are in RAM
+The idea is to replace a memory location with a fixed value.
+The program will never be able to change that location during the
+time the cheat is activated.
+So, if you know where the lives are, placing a 3 at that location
+will do that you will always have 3 lives.
+
+The easiest thing to find are lives or other numbers that you can see
+on the screen.
+But you can also search to have a certain power for a long time instead
+of just for a short time normally.
+In the game 1984, if you perform a looping, you are invincible during the
+time you are in looping. So you can search to have that invincibility
+during all the game.
+In Pacman, you can search for a code that keep the ghost blue
+all the time.
+
+
+Here is what to do when you want to start searching for a cheat code.
+More later on what to do after.
+
+There is 5 methods available to search for a cheat code.
+Each of them has their own advantage, with practice
+you will learn witch to choose from depending on what
+is you are searching for.
+Here is the description of the methods and an example of
+how to use them.
+
+-Method 1 is to search a known number and follow its value.
+      Good for lives or other numbers.
+  -Here is the steps to find the lives in Dig Dug (Namco).
+  -Start Mame.
+  -Start a game.
+  -Goto the START NEW SEARCH menu.
+  -Select "Lives or other number"
+  -With the arrow enter the number of lives you had at the bottom
+    of the screen while in the game. Normally 2, but depend of
+    your Dip Switch setting. Then Press ENTER.
+  -Return to the game.
+  -Die.
+  -Go to the CONTINUE SEARCH menu.
+  -Enter the number of lives you have left. Normally 1.
+  -The program will display all the locations that match your criteria.
+    If you have done it properly (starting with 2 lives) you should see
+    2 entrys:
+     840A = 02
+     840C = 02
+    It mean that the locations $840A and $840C had 02 in them when you
+    started the search and its the only two locations that have 1 in them now.
+  -We will try to narrow the list to 1 entry.
+  -Return to the game
+  -Die again.
+  -Goto the CONTINUE SEARCH menu.
+  -Enter the number of lives you have left. Normally 0.
+  -The list is the same, so we will try to find witch is the good one.
+  -Press F2 to copy them in the Loaded Cheat list. Or Press ENTER
+    on each of them.
+  -Press ESC/TAB
+  -Go to the LOAD/ENABLE CHEAT menu
+  -You should see your 2 entry in the upper list.
+  -Select the first (840A) press ENTER on it to copy it in the Active Cheat list.
+  -Return to the game.
+  -Die.
+  -Since it was your last life you should be Game Over but you are not.
+    Its a Good code.
+    What was the other for?
+    Try it.
+  -Go to the LOAD/ENABLE CHEAT menu
+  -Press ENTER on the 840A entry to remove it from the Active list
+  -Press ENTER on the 840C entry to copy it in the Active list.
+  -Return to the game.
+  -Die. It do the same thing of the other cheat.
+    It happen, there is 2 locations for the lives in that game.
+    So either one should good.
+  -Return to the LOAD/ENABLE CHEAT menu
+  -Select the 840A or 840C entry, press F1 to save it in the file.
+  -In this version you cannot edit the name of the cheat.
+   So the only thing you have to do is to edit the CHEAT.DAT file
+    to put a meaningful comment instead of the 840A = 02
+    The last line of the file should be:
+
+    digdugnm:0:840A:2:0:840A = 02
+
+    While you are there, you can change the 2 to 6 so you will see
+    5 or 6 lives at the bottom of the screen when you will activate this
+    cheat. Finish result:
+
+    digdugnm:0:840A:6:0:Infinite Lives
+  -From now on when you will start Dig Dug you will have Infinite Lives
+    in the list of cheats for that game.
+
+
+  Note: With lives, you can have 2 value: the number of
+   lives displayed or the number displayed + 1 witch is
+	 the real number if lives you have. The method 1 will
+   search for the number you enter and the number - 1.
+
+   In Pacman you will find the 2, because there is one
+   variable that is your lives that when it will reach 0
+   you will die, and there is the variable of the lives
+   left displayed on the screen.
+
+-Method 2 ask by how much the number you search has changed
+  since the last time. Good for timers ,lives and level search.
+  Note that this search is not perform in reference to the
+  start value but from a backup of the ram that is done each
+	time you select continue search.
+
+  Start a game with 3 lives, start the cheater, he will backup the ram.
+  Lose one live, tell the cheater that the value is now -1 since
+  the start. Lose another live, tell the cheater that the value
+  is another -1 since the last time. the cheater save the ram
+  each time you tell him a value.
+
+-Method 3 is to search for energy bar or any value that you can tell
+   if it is lower, equal or greater than the last time.
+  Note that this search is not perform in reference to when you started
+	but in reference to the last time you continued the search.
+	In Kung Fu Master the player have an energy bar, we will find it.
+  -Start a game in Hung Fu Master.
+  -Wait a little for the game to start.
+  -When you can start moving, your energy bar is full.
+	-Go to START NEW SEARCH
+  -Select "Energy (less or more)"
+	-Return to the game.
+  -Wait for an enemy to grab you
+  -Your energy will start to decrease
+  -Go to CONTINUE SEARCH
+	-Select "New value is smaller"
+	-Return to the game.
+  -Wait just a little bit that your energy can decrease a little more
+  -Go to CONTINUE SEARCH
+	-Select "New value is smaller"
+	-Return to the game.
+  -Wait just a little bit that your energy can decrease a little more
+  -Go to CONTINUE SEARCH
+	-Select "New value is smaller"
+  -You should have less than 10 entrys
+    But we will try to eliminate more of them
+	-Return to the game.
+  -Wait till you die, wait so that your energy is now full
+  -Go to CONTINUE SEARCH
+	-Select "New value is greater"
+	-Return to the game.
+  -Wait just a little, your energy should remain full
+  -Go to CONTINUE SEARCH
+	-Select "New value is equal"
+  -Ah, 2 entrys left, press F2 to register them in the list
+
+  -You will see later that the first is the good one (E709 = 3F)
+    the second (E81A = 3F) is only for displaying the bar, you
+    are dying after a while but the bar display full.
+
+-Method 4 is to search for a status bit.
+  Good to search for invincibility and weapon.
+  In 1942 you are invincible when you perform a looping, we will try
+  to search for that state.
+  -Start a game.
+	-Press the looping button.
+	-While in looping go to START NEW SEARCH
+  -Select "Status (bit)"
+	-Return to the game.
+	-When the looping is finished, wait a little
+  -Go to CONTINUE SEARCH
+	-Select "Opposite from start"
+	-Goto the game.
+	-Start a looping.
+	-While in the looping, go to CONTINUE SEARCH
+	-Select "Same as start"
+  -Repeat as many times as required to narrow the list to a minimum
+  -After about 10 times I had 6 entry.
+  -Follow the procedure describe above and you should find that
+    E0A5 = 02  is the cheat for invincibility.
+
+-Method 5 is the last resort. The cheater will search for a byte that
+  is the same or different from when you started. Its very much
+  like method 4 but since it will search for a whole byte, you
+  will have different result with this method.
+
+
+NOTE: While in the game, press ` (tilde) to go directly to the CONTINUE CHEAT
+       page. (Has I write those lines, I am not certain that ` is
+       the key choosen to do this. See the Mame docs if it do not work.
+       Or it may be that this key is not implemented at all.)
+
+NOTE2: To find certain cheat, you may want to reset the emulation
+        with F3. This will not affect the status of the current
+				search and may be useful if you want to start a new game
+				and redo the same actions but with just a little difference.
+
+
+
+When searching for lives, 2-3 times of telling the cheater
+ the number of lives you have and you probably will have a list
+ of 1 or 2 value. But when searching for a Status, you probably
+ will be stuck with more than 10 or 20 values. When you see that
+ the length of the list do not decrease anymore, do the following:
+
+-When you have the list on the screen, press F2 to copy them
+  in the loaded list. The limit of the Loaded list is 100 entrys.
+-Go to the LOAD/ENABLE CHEAT screen.
+-You should have your list there.
+-Enable some of them (5 to 10)
+  You cannot enable more than 10 at the same time.
+-Go to the game to see what effect this have.
+-If there is no noticeable effect, or if the effect is not what
+  you where searching for, return in the LOAD/ENABLE CHEAT screen.
+-Delete those entry that you precedently enabled by pressing the Delete button.
+  Don't worry disabling them from the active list, deleting a code from
+  the upper list delete it also in the active list.
+  Like I said earlier, Delete do not affect the CHEAT.DAT file.
+  So, you may delete the already found codes like Infinite Lives to
+  have more space. This list is limited to 100 entrys.
+-Enable other codes, return to the game to see what happen.
+-When you have the effect you want in the game, you will be sure
+  that the wanted code is in the ones you enabled, so , go enable
+  them one at the time.
+-When you have found one code that you want to keep, press F1 when he
+  is highlighted to save it in the CHEAT.DAT file.
+  In this version, you cannot assign a name to cheats, you will have
+  to edit the CHEAT.DAT file with a text editor. (Like Notepad)
+
+
+NOTE: With this version, you cannot edit the parameters of the cheat.
+  But you can edit them in the CHEAT.DAT file.
+  Normally, for Infinite Lives, I put a larger than usual number
+  so that the player will see an abnormal number of lives remembering
+  him that he cheat.
+  A line in that file consist of 5 fields separated by a colon (:)
+   -The name of the game (short)
+   -The number of the CPU for games with multiple CPU
+	      (Always 0 in this version)
+   -The address to affect (in Hexadecimal)
+   -The data to put at that address (in Hexadecimal)
+   -Special function, see below, usually 0
+   -The description (30 characters)
+  A line that begin by a semicolon (;) is a comments.
+
+Special function:
+ 0-Normal, update ram when DoCheat is Called
+ 1-Write in ram just one time then delete cheat from active list
+ 2-Wait a second between 2 writes
+ 3-Wait 2 second between 2 writes
+ 4-Wait 5 second between 2 writes
+ 5-When the original value is not like the cheat, wait 1 second then write it
+    Needed by Tempest for the Super Zapper
+ 6-When the original value is not like the cheat, wait 2 second then write it
+ 7-When the original value is not like the cheat, wait 5 second then write it
+ 8-Do not change if value decrease by 1 each frames
+ 9-Do not change if value decrease by 2 each frames
+10-Do not change if value decrease by 3 each frames
+11-Do not change if value decrease by 4 each frames
+
+Note: 8,9,10,11 are used to try to not lock the game if a bonus is awarded
+       for energy or timer at the end of a level.
+
+
+MEMORY WATCH
+============
+
+This feature can be useful when searching for cheats. It allow
+you to examine the behaviour of a memory location in real time
+when you play.
+
+
+
+   Have fun.
+
+
+
+Excuse my english, I speak english like you speak french ;-).
+
+
+ Marc Lafontaine
+ marclaf@sympatico.ca
+ http://www3.sympatico.ca/marclaf

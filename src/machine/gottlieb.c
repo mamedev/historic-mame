@@ -86,11 +86,7 @@ int mplanets_dial_r(int offset)
 	return res;
         trak = input_trak_0_r(0);
 
-	if(trak == NO_TRAK) {
-	  return res;
-	} else {
 	  return trak;
-	}
 }
 
 int reactor_tb_H_r(int offset)
@@ -106,11 +102,7 @@ int reactor_tb_H_r(int offset)
 
         trak = input_trak_0_r(0);
 
-	if(trak == NO_TRAK) {
-	  return res;
-	} else {
 	  return trak;
-	}
 }
 
 int reactor_tb_V_r(int offset)
@@ -126,11 +118,7 @@ int reactor_tb_V_r(int offset)
 
         trak = input_trak_1_r(0);
 
-	if(trak == NO_TRAK) {
-	  return res;
-	} else {
 	  return trak;
-	}
 }
 
 int gottlieb_trakball(int data) {

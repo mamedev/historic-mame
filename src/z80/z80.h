@@ -24,11 +24,7 @@
 /****************************************************************************/
 /* If your compiler doesn't know about inlined functions, uncomment this    */
 /****************************************************************************/
-#ifdef WIN32
-#define INLINE __inline
-#else
 /* #define INLINE static */
-#endif
 
 #ifndef EMU_TYPES
 #define EMU_TYPES
@@ -98,7 +94,7 @@ typedef struct
   z80_pair AF2,BC2,DE2,HL2;	/* -NS- */
   unsigned IFF1,IFF2,HALT,IM,I,R,R2;
 
-  int pending_irq,pending_nmi;
+  int pending_irq,pending_nmi;	/* NS 970904 */
 } Z80_Regs;
 
 /****************************************************************************/

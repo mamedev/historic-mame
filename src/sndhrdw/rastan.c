@@ -395,3 +395,19 @@ wyn[0] ^= 0xff;
 
   return wyn[0];
 }
+
+
+void rastan_sound_w(int offset,int data)
+{
+	if (offset == 1)
+		rastan_sound_port_w(0,data);
+	else if (offset == 3)
+		rastan_sound_comm_w(0,data);
+}
+
+int rastan_sound_r(int offset)
+{
+	if (offset == 3)
+		return rastan_sound_comm_r(0);
+	else return 0;
+}

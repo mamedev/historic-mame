@@ -281,12 +281,13 @@ static const struct MachineDriver machine_driver =
 		}
 	},
 	60,     /* frames / second */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1+16, 16,
+	16, 16,
 	gottlieb_vh_init_color_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -347,109 +348,60 @@ ROM_END
 
 
 
-const char *gottlieb_sample_names[] =
+static int hiload(void)
 {
-	"FX_00.SAM",
-	"FX_01.SAM",
-	"FX_02.SAM",
-	"FX_03.SAM",
-	"FX_04.SAM",
-	"FX_05.SAM",
-	"FX_06.SAM",
-	"FX_07.SAM",
-	"FX_08.SAM",
-	"FX_09.SAM",
-	"FX_10.SAM",
-	"FX_11.SAM",
-	"FX_12.SAM",
-	"FX_13.SAM",
-	"FX_14.SAM",
-	"FX_15.SAM",
-	"FX_16.SAM",
-	"FX_17.SAM",
-	"FX_18.SAM",
-	"FX_19.SAM",
-	"FX_20.SAM",
-	"FX_21.SAM",
-	"FX_22.SAM",
-	"FX_23.SAM",
-	"FX_24.SAM",
-	"FX_25.SAM",
-	"FX_26.SAM",
-	"FX_27.SAM",
-	"FX_28.SAM",
-	"FX_29.SAM",
-	"FX_30.SAM",
-	"FX_31.SAM",
-	"FX_32.SAM",
-	"FX_33.SAM",
-	"FX_34.SAM",
-	"FX_35.SAM",
-	"FX_36.SAM",
-	"FX_37.SAM",
-	"FX_38.SAM",
-	"FX_39.SAM",
-	"FX_40.SAM",
-	"FX_41.SAM",
-	0       /* end of array */
-};
-
-
-
-static int hiload(const char *name)
-{
-	FILE *f=fopen(name,"rb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	/* no need to wait for anything: Q*bert doesn't touch the tables
 	if the checksum is correct */
 	if (f) {
-		fread(RAM+0xA00,1,2,f); /* hiscore table checksum */
-		fread(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		fread(RAM+0xBB0,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
-		fclose(f);
+		osd_fread(f,RAM+0xA00,2); /* hiscore table checksum */
+		osd_fread(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		osd_fread(f,RAM+0xBB0,12); /* operator parameters : coins/credits, lives, extra-lives points */
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f=fopen(name,"wb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
 	/* not saving distributions tables : does anyone really want them ? */
-		fwrite(RAM+0xA00,1,2,f); /* hiscore table checksum */
-		fwrite(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		fwrite(RAM+0xBB0,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
-		fclose(f);
+		osd_fwrite(f,RAM+0xA00,2); /* hiscore table checksum */
+		osd_fwrite(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		osd_fwrite(f,RAM+0xBB0,12); /* operator parameters : coins/credits, lives, extra-lives points */
+		osd_fclose(f);
 	}
 }
 
-static int hiload_jp(const char *name)
+static int qbertjp_hiload(void)
 {
-	FILE *f=fopen(name,"rb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
-		fread(RAM+0xA00,1,2,f); /* hiscore table checksum */
-		fread(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		fread(RAM+0xC0C,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
-		fclose(f);
+		osd_fread(f,RAM+0xA00,2); /* hiscore table checksum */
+		osd_fread(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		osd_fread(f,RAM+0xC0C,12); /* operator parameters : coins/credits, lives, extra-lives points */
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave_jp(const char *name)
+static void qbertjp_hisave(void)
 {
-	FILE *f=fopen(name,"wb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
-		fwrite(RAM+0xA00,1,2,f); /* hiscore table checksum */
-		fwrite(RAM+0xA02,23,10,f); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		fwrite(RAM+0xC0C,12,1,f); /* operator parameters : coins/credits, lives, extra-lives points */
-		fclose(f);
+		osd_fwrite(f,RAM+0xA00,2); /* hiscore table checksum */
+		osd_fwrite(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
+		osd_fwrite(f,RAM+0xC0C,12); /* operator parameters : coins/credits, lives, extra-lives points */
+		osd_fclose(f);
 	}
 }
 
@@ -488,5 +440,5 @@ struct GameDriver qbertjp_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload_jp,hisave_jp     /* hi-score load and save */
+	qbertjp_hiload,qbertjp_hisave     /* hi-score load and save */
 };

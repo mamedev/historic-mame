@@ -80,11 +80,12 @@ void missile_4800_w(int offset, int data)
 
 
 /********************************************************************************************/
+#if 0
 int missile_4008_r(int offset)
 {
 	return(readinputport(3));
 }
-
+#endif
 
 
 /********************************************************************************************/
@@ -150,6 +151,8 @@ void missile_w(int address, int data)
 
 	if(address == 0x4800){
 		ctrld = data & 1;
+		osd_led_w(0, ~data>>1);
+		osd_led_w(1, ~data>>2);
 		return;
 	}
 
@@ -173,18 +176,19 @@ int missile_r(int address)
 {
 	int pc, opcode;
 
+	if (address < 0x1900) return (RAM[address]);
 
 	pc = cpu_getpreviouspc();
 	opcode = RAM[pc];
 
 
-	if((opcode == 0xA1) && (address >=0x1900 && address <= 0xFFF9)){
+	if((opcode == 0xA1) && (address >= 0x1900 && address <= 0xFFF9)){
 	/* 		LDA ($00,X)  */
 		return(missile_video_r(address));
 	}
 
-	if(address == 0x4008)
-		return(missile_4008_r(0));
+//	if(address == 0x4008)
+//		return(missile_4008_r(0));
 	if ((address >= 0x4000) && (address <= 0x400f))
 		return(pokey1_r (address & 0x0f));
 	if(address == 0x4800)
@@ -197,5 +201,5 @@ int missile_r(int address)
 /* 	if(address >= 0xFFF9 && address <= 0xFFFF) */
 /* 		return(ROM[address]); */
 
-	return(RAM[address]);
+	return (RAM[address]);
 }

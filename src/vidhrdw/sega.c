@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vector.h"
+#include "avgdvg.h"
 #include "math.h"
 
 /* ASG 080697 -- begin */
@@ -32,7 +32,7 @@ static struct { int width; int height;
 	 int x_min; int y_min;
 	 int x_max; int y_max; } vg_video;
 
-int vectorram_size;
+extern int vectorram_size;
 /* static int frameCount = 1; */
 int portrait;
 
@@ -195,7 +195,8 @@ void sega_vg_draw (void)
 
 	int draw;
 
-	open_page (&x_res, &y_res, 0);
+	if (osd_update_vectors(&x_res, &y_res, 0))
+		return;
 
 	symbolIndex = 0;					/* Reset vector PC to 0 */
 
@@ -221,12 +222,12 @@ void sega_vg_draw (void)
 			if (portrait) {
 				currentX = ((currentX & 0x7ff) - vg_video.y_min) << VEC_SHIFT;
 				currentY = (vg_video.x_max - (currentY & 0x7ff)) << VEC_SHIFT;
-				draw_to (VEC_X (currentY, xscale), VEC_Y (vg_video.y_max-currentX, yscale), -1);
+				osd_draw_to (VEC_X (currentY, xscale), VEC_Y (vg_video.y_max-currentX, yscale), -1);
 
 			} else {
 				currentX = ((currentX & 0x7ff) - vg_video.x_min) << VEC_SHIFT;
 				currentY = (vg_video.y_max - (currentY & 0x7ff)) << VEC_SHIFT;
-				draw_to (VEC_X (currentX, xscale), VEC_Y (currentY, yscale), -1);
+				osd_draw_to (VEC_X (currentX, xscale), VEC_Y (currentY, yscale), -1);
 			}
 			vectorIndex &= 0xfff;
 
@@ -258,9 +259,9 @@ void sega_vg_draw (void)
 					color = -1;
 
 					if (portrait)
-						draw_to (VEC_X (currentY, xscale), VEC_Y (vg_video.y_max-currentX, yscale), color);
+						osd_draw_to (VEC_X (currentY, xscale), VEC_Y (vg_video.y_max-currentX, yscale), color);
 					else
-						draw_to (VEC_X (currentX, xscale), VEC_Y (currentY, yscale), color);
+						osd_draw_to (VEC_X (currentX, xscale), VEC_Y (currentY, yscale), color);
 
 			} while (!(attrib & 0x80));
 		}
@@ -275,7 +276,6 @@ void sega_vg_draw (void)
 	  * all done, push it out to the screen
 	  */
 
-	close_page ();
 }
 /* ASG 080797 -- end */
 
@@ -335,7 +335,8 @@ void sega_vg_draw (void) {
 	int symbolIndex;
 	unsigned char lastColor = 0;
 
-	open_page (&x_res,&y_res,0);
+	if (osd_update_vectors(&x_res,&y_res,0))
+		return;
 
 	symbolIndex = 0;					/* Reset vector PC to 0 */
 
@@ -375,14 +376,14 @@ void sega_vg_draw (void) {
 			/* Position the pen */
 #ifdef USE_SCALING
 			if (portrait)
-				draw_to (x_res - currentY, y_res - currentX, -1);
+				osd_draw_to (x_res - currentY, y_res - currentX, -1);
 			else
-				draw_to (currentX, y_res - currentY, -1);
+				osd_draw_to (currentX, y_res - currentY, -1);
 #else
 			if (portrait)
-				draw_to (BASE/2 - (currentY >> 1), BASE/2 - (currentX >> 1), -1);
+				osd_draw_to (BASE/2 - (currentY >> 1), BASE/2 - (currentX >> 1), -1);
 			else
-				draw_to (currentX >> 1, BASE/2 - (currentY >> 1), -1);
+				osd_draw_to (currentX >> 1, BASE/2 - (currentY >> 1), -1);
 #endif
 
 			vectorIndex = sym.vectorAdr & 0xfff;
@@ -424,14 +425,14 @@ void sega_vg_draw (void) {
 
 #ifdef USE_SCALING
 			if (portrait)
-				draw_to (x_res - currentY, y_res - currentX, color);
+				osd_draw_to (x_res - currentY, y_res - currentX, color);
 			else
-				draw_to (currentX, y_res - currentY, color);
+				osd_draw_to (currentX, y_res - currentY, color);
 #else
 			if (portrait)
-				draw_to (BASE/2 - (currentY >> 1), BASE/2 - (currentX >> 1), color);
+				osd_draw_to (BASE/2 - (currentY >> 1), BASE/2 - (currentX >> 1), color);
 			else
-				draw_to (currentX >> 1, BASE/2 - (currentY >> 1), color);
+				osd_draw_to (currentX >> 1, BASE/2 - (currentY >> 1), color);
 #endif
 
 				} while ((vec.attrib & 0x80) == 0);
@@ -451,7 +452,6 @@ void sega_vg_draw (void) {
 	  * all done, push it out to the screen
 	  */
 
-	close_page();
 	}
 #endif
 /*	ASG 080697 -- end removal */

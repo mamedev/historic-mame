@@ -31,9 +31,16 @@ void btime_sh_interrupt_enable_w(int offset,int data)
 
 int btime_sh_interrupt(void)
 {
-	if (pending_commands) return INT_IRQ;
-	else if (interrupt_enable != 0) return INT_NMI;
-	else return INT_NONE;
+	if (cpu_getiloops() % 2 == 0)
+	{
+		if (interrupt_enable != 0) return nmi_interrupt();
+		else return ignore_interrupt();
+	}
+	else
+	{
+		if (pending_commands) return interrupt();
+		else return ignore_interrupt();
+	}
 }
 
 

@@ -103,7 +103,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 },
 	},
@@ -256,6 +256,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -316,22 +317,22 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xd900],"\x03\x30\x00",3) == 0 &&
 			memcmp(&RAM[0xd91b],"\x01\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xd900],1,6*10,f);
+			osd_fread(f,&RAM[0xd900],6*10);
 			RAM[0xdb06] = RAM[0xd900];
 			RAM[0xdb07] = RAM[0xd901];
 			RAM[0xdb08] = RAM[0xd902];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -341,15 +342,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xd900],1,6*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xd900],6*10);
+		osd_fclose(f);
 	}
 }
 

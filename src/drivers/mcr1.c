@@ -62,9 +62,6 @@ int mcr_readport(int port);
 void mcr_soundstatus_w (int offset,int data);
 int mcr_soundlatch_r (int offset);
 
-int kick_trakball_r(int offset);
-int kick_trakball_x(int data);
-
 int mcr_sh_interrupt(void);
 int mcr_sh_start(void);
 
@@ -135,26 +132,13 @@ static struct IOReadPort readport[] =
 static struct IOReadPort kick_readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, kick_trakball_r },
+   { 0x01, 0x01, input_port_1_r },
    { 0x02, 0x02, input_port_2_r },
    { 0x03, 0x03, input_port_3_r },
    { 0x04, 0x04, input_port_4_r },
    { 0x05, 0xff, mcr_readport },
    { -1 }
 };
-
-
-static struct TrakPort kick_trak_ports[] =
-{
-	{
-		X_AXIS,
-		1,
-		1.0,
-		kick_trakball_x
-	},
-   { -1 }
-};
-
 
 INPUT_PORTS_START( kick_input_ports )
 	PORT_START	/* IN0 */
@@ -169,14 +153,17 @@ INPUT_PORTS_START( kick_input_ports )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-	PORT_START	/* IN1 -- actually not used at all, but read as a trakport */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START	/* IN1 -- this is the Kick spinner input.  */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 5, 0, 0 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 -- dipswitches */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+ 	PORT_DIPNAME( 0x01, 0x00, "Music", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -184,10 +171,6 @@ INPUT_PORTS_START( kick_input_ports )
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* dummy extra port for keyboard movement */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( solarfox_input_ports )
@@ -322,12 +305,13 @@ static struct MachineDriver kick_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 29*16, { 0, 32*16-1, 0, 29*16-1 },
 	kick_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -365,12 +349,13 @@ static struct MachineDriver solarfox_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 29*16, { 0, 32*16-1, 0, 29*16-1 },
 	solarfox_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	solarfox_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -395,56 +380,56 @@ static struct MachineDriver solarfox_machine_driver =
 
 ***************************************************************************/
 
-static int mcr1_hiload (const char *name, int addr, int len)
+static int mcr1_hiload(int addr, int len)
 {
    unsigned char *RAM = Machine->memory_region[0];
 
    /* see if it's okay to load */
    if (mcr_loadnvram)
    {
-      FILE *f;
+      void *f;
 
-		f = fopen (name, "rb");
+		f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
       if (f)
       {
-			fread (&RAM[addr], 1, len, f);
-			fclose (f);
+			osd_fread(f,&RAM[addr],len);
+			osd_fclose (f);
       }
       return 1;
    }
    else return 0;	/* we can't load the hi scores yet */
 }
 
-static void mcr1_hisave (const char *name, int addr, int len)
+static void mcr1_hisave(int addr, int len)
 {
    unsigned char *RAM = Machine->memory_region[0];
-   FILE *f;
+   void *f;
 
-	f = fopen (name, "wb");
+	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
    if (f)
    {
-      fwrite (&RAM[addr], 1, len, f);
-      fclose (f);
+      osd_fwrite(f,&RAM[addr],len);
+      osd_fclose (f);
    }
 }
 
-static int  kick_hiload (const char *name)     { return mcr1_hiload (name, 0x7000, 0x91); }
-static void kick_hisave (const char *name)     {        mcr1_hisave (name, 0x7000, 0x91); }
+static int  kick_hiload(void)     { return mcr1_hiload(0x7000, 0x91); }
+static void kick_hisave(void)     {        mcr1_hisave(0x7000, 0x91); }
 
-static int  solarfox_hiload (const char *name)
+static int  solarfox_hiload(void)
 {
    unsigned char *RAM = Machine->memory_region[0];
 
    /* see if it's okay to load */
    if (mcr_loadnvram)
    {
-      FILE *f;
+      void *f;
 
-		f = fopen (name, "rb");
+		f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
       if (f)
       {
-			fread (&RAM[0x7000], 1, 0x86, f);
-			fclose (f);
+			osd_fread(f,&RAM[0x7000],0x86);
+			osd_fclose (f);
       }
       else
       {
@@ -456,7 +441,7 @@ static int  solarfox_hiload (const char *name)
    }
    else return 0;	/* we can't load the hi scores yet */
 }
-static void solarfox_hisave (const char *name) {        mcr1_hisave (name, 0x7000, 0x86); }
+static void solarfox_hisave(void) {        mcr1_hisave(0x7000, 0x86); }
 
 
 /***************************************************************************
@@ -525,7 +510,7 @@ struct GameDriver kick_driver =
 	0, 0,
 	0,
 
-	0/*TBR*/, kick_input_ports, kick_trak_ports, 0/*TBR*/, 0/*TBR*/,
+	0/*TBR*/, kick_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0,0,
 	ORIENTATION_SWAP_XY,

@@ -88,8 +88,8 @@ void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 void frogger_attributes_w(int offset,int data);
 void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+void frogger_sh_irqtrigger_w(int offset,int data);
 int frogger_sh_interrupt(void);
-int frogger_sh_init(const char *gamename);
 int frogger_sh_start(void);
 
 
@@ -114,7 +114,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
 	{ 0xb040, 0xb05f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb808, 0xb808, interrupt_enable_w },
-	{ 0xd000, 0xd000, sound_command_w },
+	{ 0xd000, 0xd000, soundlatch_w },
+	{ 0xd002, 0xd002, frogger_sh_irqtrigger_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -279,6 +280,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -363,7 +365,7 @@ static void frogger_decode(void)
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -374,15 +376,15 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0x83f1],"\x63\x04",2) == 0 &&
 			memcmp(&RAM[0x83f9],"\x27\x01",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x83f1],1,2*5,f);
+			osd_fread(f,&RAM[0x83f1],2*5);
 			RAM[0x83ef] = RAM[0x83f1];
 			RAM[0x83f0] = RAM[0x83f2];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -392,18 +394,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x83f1],1,2*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x83f1],2*5);
+		osd_fclose(f);
 	}
 }
 

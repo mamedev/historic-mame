@@ -34,6 +34,8 @@ c0        background control?
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -47,8 +49,19 @@ void mpatrol_bg2ypos_w(int offset,int data);
 void mpatrol_bgcontrol_w(int offset,int data);
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
+void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+extern unsigned char *mpatrol_io_ram;
+extern unsigned char *mpatrol_sample_data;
+extern unsigned char *mpatrol_sample_table;
+int mpatrol_sh_init(const char *);
+int mpatrol_sh_start(void);
+int mpatrol_sh_interrupt(void);
+void mpatrol_io_w(int offset, int value);
+int mpatrol_io_r(int offset);
+void mpatrol_sample_trigger_w(int offset,int value);
+void mpatrol_sound_cmd_w(int offset, int value);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -56,13 +69,13 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xd000, 0xd000, input_port_0_r },	/* IN0 */
-	{ 0xd001, 0xd001, input_port_1_r },	/* IN1 */
-	{ 0xd002, 0xd002, input_port_2_r },	/* IN2 */
-	{ 0xd003, 0xd003, input_port_3_r },	/* DSW1 */
-	{ 0xd004, 0xd004, input_port_4_r },	/* DSW2 */
+	{ 0xd000, 0xd000, input_port_0_r },     /* IN0 */
+	{ 0xd001, 0xd001, input_port_1_r },     /* IN1 */
+	{ 0xd002, 0xd002, input_port_2_r },     /* IN2 */
+	{ 0xd003, 0xd003, input_port_3_r },     /* DSW1 */
+	{ 0xd004, 0xd004, input_port_4_r },     /* DSW2 */
 	{ 0x8800, 0x8800, mpatrol_protection_r },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -72,8 +85,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
 	{ 0xc820, 0xc87f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc8a0, 0xc8ff, MWA_RAM, &spriteram_2 },
+	{ 0xd000, 0xd001, mpatrol_sound_cmd_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
@@ -86,54 +100,75 @@ static struct IOWritePort writeport[] =
 	{ 0x80, 0x80, mpatrol_bg2xpos_w },
 	{ 0xa0, 0xa0, mpatrol_bg2ypos_w },
 	{ 0xc0, 0xc0, mpatrol_bgcontrol_w },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x0000, 0x001f, mpatrol_io_r, &mpatrol_io_ram },
+	{ 0x0080, 0x00ff, MRA_RAM },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0xf400, 0xf43f, MRA_ROM, &mpatrol_sample_table },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x0000, 0x001f, mpatrol_io_w },
+	{ 0x00c3, 0x00ca, mpatrol_sample_trigger_w, &mpatrol_sample_data },
+	{ 0x0080, 0x00ff, MWA_RAM },
+	{ 0x0801, 0x0802, MWA_NOP },
+	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 
 
 static struct InputPort input_ports[] =
 {
-	{	/* IN0 */
+	{       /* IN0 */
 		0xff,
 		{ OSD_KEY_1, OSD_KEY_2, 0, OSD_KEY_3, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{	/* IN1 */
+	{       /* IN1 */
 		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0, 0, OSD_KEY_ALT, 0, OSD_KEY_CONTROL },
+		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0, 0, OSD_KEY_ALT, 0, OSD_KEY_LCONTROL },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0, 0, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1 },
 	},
-	{	/* IN2 */
+	{       /* IN2 */
 		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{	/* DSW1 */
+	{       /* DSW1 */
 		0xfd,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{	/* DSW2 */
+	{       /* DSW2 */
 		0xfd,
 		{ 0, 0, 0, 0, 0, 0, 0, OSD_KEY_F2 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct TrakPort trak_ports[] =
 {
-        { -1 }
+	{ -1 }
 };
 
 
 static struct KEYSet keys[] =
 {
-        { 1, 1, "MOVE LEFT"  },
-        { 1, 0, "MOVE RIGHT" },
-        { 1, 5, "JUMP" },
-        { 1, 7, "FIRE" },
-        { -1 }
+	{ 1, 1, "MOVE LEFT"  },
+	{ 1, 0, "MOVE RIGHT" },
+	{ 1, 5, "JUMP" },
+	{ 1, 7, "FIRE" },
+	{ -1 }
 };
 
 
@@ -150,32 +185,32 @@ static struct DSW dsw[] =
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the two bitplanes are separated */
+	8,8,    /* 8*8 characters */
+	512,    /* 512 characters */
+	2,      /* 2 bits per pixel */
+	{ 0, 512*8*8 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8     /* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 128*16*16 },	/* the two bitplanes are separated */
+	16,16,  /* 16*16 sprites */
+	128,    /* 128 sprites */
+	2,      /* 2 bits per pixel */
+	{ 0, 128*16*16 },       /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8    /* every sprite takes 32 consecutive bytes */
 };
 static struct GfxLayout bgcharlayout =
 {
-	64,64,	/* 64*64 characters */
-	4,	/* 4 characters (actually, it is just 1 big 256x64 image) */
-	2,	/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	64,64,  /* 64*64 characters */
+	4,      /* 4 characters (actually, it is just 1 big 256x64 image) */
+	2,      /* 2 bits per pixel */
+	{ 4, 0 },       /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3, 2*8+0, 2*8+1, 2*8+2, 2*8+3, 3*8+0, 3*8+1, 3*8+2, 3*8+3,
 			4*8+0, 4*8+1, 4*8+2, 4*8+3, 5*8+0, 5*8+1, 5*8+2, 5*8+3, 6*8+0, 6*8+1, 6*8+2, 6*8+3, 7*8+0, 7*8+1, 7*8+2, 7*8+3,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 9*8+0, 9*8+1, 9*8+2, 9*8+3, 10*8+0, 10*8+1, 10*8+2, 10*8+3, 11*8+0, 11*8+1, 11*8+2, 11*8+3,
@@ -191,108 +226,58 @@ static struct GfxLayout bgcharlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 32 },
-	{ 1, 0x2000, &spritelayout, 32*4, 16 },
-	{ 1, 0x4000, &bgcharlayout, 48*4,  1 },
-	{ 1, 0x5000, &bgcharlayout, 49*4,  1 },
-	{ 1, 0x6000, &bgcharlayout, 50*4,  1 },
+	{ 1, 0x0000, &charlayout,               0, 64 },
+	{ 1, 0x2000, &spritelayout,          64*4, 16 },
+	{ 1, 0x4000, &bgcharlayout, 64*4+16*4+0*4,  1 },
+	{ 1, 0x5000, &bgcharlayout, 64*4+16*4+1*4,  1 },
+	{ 1, 0x6000, &bgcharlayout, 64*4+16*4+2*4,  1 },
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-        0x00,0x00,0x00,   /* black      */
-        0x94,0x00,0xd8,   /* darkpurple */
-        0xd8,0x00,0x00,   /* darkred    */
-        0xf8,0x64,0xd8,   /* pink       */
-        0x00,0xd8,0x00,   /* darkgreen  */
-        0x00,0x00,0x80,   /* darkblue   */
-        0xd8,0xd8,0x94,   /* darkyellow */
-        0xd8,0xf8,0xd8,   /* darkwhite  */
-        0xf8,0x94,0x44,   /* orange     */
-        0x00,0x00,0xd8,   /* blue   */
-        0xf8,0x00,0x00,   /* red    */
-        0xff,0x00,0xff,   /* purple */
-        0x00,0xf8,0x00,   /* green  */
-        0x00,0xff,0xff,   /* cyan   */
-        0xf8,0xf8,0x00,   /* yellow */
-        0xff,0xff,0xff,    /* white  */
-        255,183,115,    /* LTBROWN */
-        167,3,3,        /* DKBROWN */
-};
-
-enum
-{
-        black, darkpurple, darkred, pink, darkgreen, darkblue, darkyellow,
-                darkwhite, orange, blue, red, purple, green, cyan, yellow, white,
-                ltbrown,dkbrown
-};
-
-static unsigned char colortable[] =
-{
-        /* chars */
-        0,cyan,white,3, /* MOON PATROL on title screen */
-        blue,red,white,1,       /* score beginner course */
-        cyan,black,red,blue,    /* point / time beginner course */
-        cyan,3,red,2,   /* lit caution led on champion course */
-        green,orange,15,red,        /* ground */
-        0,1,3,5,
-        blue,black,1,2, /* high score point letter on beginner course */
-        cyan,pink,1,2,  /* point letter on champion course */
-        0,4,6,8,
-        blue,black,red,2,       /* high score beginner course */
-        0,9,12,15,
-        pink,black,1,2, /* high score point letter on champion course */
-        pink,red,yellow,1,      /* score champion course */
-        cyan,black,red,pink,    /* point / time champion course */
-        pink,black,red,2,       /* high score champion course */
-        0,7,10,13,
-        0,1,2,3,
-        0,4,5,6,
-        0,orange,orange,9,       /* starting ramp */
-        0,10,11,12,
-        0,13,14,15,
-        0,1,3,5,
-        0,7,9,11,
-        0,13,15,2,
-        0,4,6,8,
-        0,10,12,14,
-        0,1,4,7,
-        0,10,13,2,
-        0,5,8,11,
-        0,14,3,6,
-        0,9,12,15,
-        0,7,10,13,
-
-        /* sprites */
-        0,black,pink,cyan,      /* moon patrol on beginner course */
-        0,4,5,6,                /* buggy-shot, droping bomb, explosion 1 */
-        0,7,8,9,                /* grabbing plant */
-        0,10,11,12,             /* explosion 2 (on ground) */
-        0,ltbrown,14,dkbrown,   /* boulders */
-        0,1,3,5,
-        0,7,9,11,
-        0,13,15,2,              /* space crafts */
-        0,4,6,8,                /* bottom part of plant */
-        0,10,12,14,             /* any enemy  cars */
-
-        0,1,4,7,                /* tri star bomb 1 */
-
-        0,10,13,2,              /* tri star bomb 1 */
-
-        0,black,red,cyan,       /* moon patrol on champion course */
-
-        0,14,3,6,
-        0,9,12,15,
-        0,7,10,13,
-
-        /* backgrounds */
-        0,yellow,blue,green,
-        0,1,darkgreen,green,
-/*        0,white,darkblue,blue,*/
-        0,0,darkblue,blue,
+	/* 2A - character palette */
+	0x00,0xE8,0xFF,0x0F,0xC8,0x0F,0x3F,0xC8,0xE8,0x01,0x0F,0xC8,0xE8,0x28,0x87,0x00,
+	0x00,0x67,0x00,0x5C,0x67,0x01,0x00,0x00,0xC8,0x87,0x01,0xE8,0xE8,0x87,0x00,0x00,
+	0x00,0xFF,0x00,0x00,0xC8,0x01,0x0F,0x00,0xE8,0x87,0x00,0x00,0x9D,0x87,0x91,0xE8,
+	0x9D,0x0F,0x3F,0x9D,0xE8,0x01,0x0F,0x9D,0x9D,0x01,0x0F,0x00,0x00,0x01,0xBD,0xE8,
+	0x00,0x67,0xBD,0xE8,0x00,0x07,0xBD,0xE8,0x00,0x67,0xBD,0xE8,0x00,0x67,0xBD,0x01,
+	0x00,0x67,0xE8,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	/* 1M - background palette */
+	0x00,0x20,0x00,0x70,0xC0,0x20,0x00,0x70,0x00,0x20,0x00,0x70,0xA0,0x20,0x00,0x70,
+	0x00,0x00,0x77,0x70,0xC0,0x00,0x77,0x70,0x00,0x00,0x77,0x70,0xA0,0x00,0x77,0x70,
+	/* 1c1j - sprite palette */
+	0x00,0x01,0xC6,0x37,0xB8,0xC0,0x38,0x80,0xFF,0xF8,0x98,0x50,0x47,0xE8,0x6F,0x18,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	/* 2hx - sprite lookup table */
+	0x00,0x01,0x02,0x03,0x00,0x00,0x00,0x00,0x00,0x04,0x02,0x05,0x00,0x00,0x00,0x00,
+	0x00,0x05,0x06,0x07,0x00,0x00,0x00,0x00,0x00,0x07,0x08,0x09,0x00,0x00,0x00,0x00,
+	0x00,0x0A,0x00,0x0B,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x09,0x0E,0x05,0x00,0x00,0x00,0x00,
+	0x00,0x05,0x03,0x0F,0x00,0x00,0x00,0x00,0x00,0x09,0x01,0x05,0x00,0x00,0x00,0x00,
+	0x00,0x01,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x05,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x01,0x05,0x03,0x00,0x00,0x00,0x00,0x00,0x04,0x0D,0x05,0x00,0x00,0x00,0x00,
+	0x00,0x05,0x00,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x05,0x05,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
 
@@ -303,20 +288,28 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,        /* 3.072 Mhz ? */
 			0,
 			readmem,writemem,0,writeport,
 			interrupt,1
+		},
+		{
+			CPU_M6808,
+			1000000,        /* 1.0 Mhz ? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			mpatrol_sh_interrupt,68 /* 68 ints per frame = 4080 ints/sec -- can this be right? */
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	128+32+32,64*4+16*4+3*4,
+	mpatrol_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -326,10 +319,10 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0,
-	0,
-	0
+	mpatrol_sh_init,
+	mpatrol_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -341,38 +334,81 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( mpatrol_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x138439c6 )
 	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000, 0x0c1bc43b )
 	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000, 0x56b4c738 )
 	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000, 0x9e598a75 )
 
-	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xc8e818a2 )	/* chars */
+	ROM_REGION(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xc8e818a2 )       /* chars */
 	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x080d9163 )
-	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 )	/* sprites */
+	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 )       /* sprites */
 	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 )
-	ROM_LOAD( "mp-e.3h", 0x4000, 0x1000, 0x89ce19a8 )	/* background graphics */
+	ROM_LOAD( "mp-e.3l", 0x4000, 0x1000, 0x48b86bb0 )       /* background graphics */
 	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000, 0x48d8cace )
-	ROM_LOAD( "mp-e.3l", 0x6000, 0x1000, 0x48b86bb0 )
+	ROM_LOAD( "mp-e.3h", 0x6000, 0x1000, 0x89ce19a8 )
+
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb )
 ROM_END
 
 ROM_START( mranger_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mr-a.3m", 0x0000, 0x1000, 0x0440639c )
 	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000, 0xf25e07f8 )
 	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000, 0x6e686d92 )
 	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000, 0x39412cd3 )
 
-	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000, 0xefe9bb1d )	/* chars */
+	ROM_REGION(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000, 0xefe9bb1d )       /* chars */
 	ROM_LOAD( "mr-e.3f", 0x1000, 0x1000, 0x796d8525 )
-	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000, 0xfe518a23 )	/* sprites */
+	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000, 0xfe518a23 )       /* sprites */
 	ROM_LOAD( "mr-b.3n", 0x3000, 0x1000, 0x974b35c3 )
-	ROM_LOAD( "mr-e.3h", 0x4000, 0x1000, 0x89ce19a8 )	/* background graphics */
+	ROM_LOAD( "mr-e.3l", 0x4000, 0x1000, 0x48b86bb0 )       /* background graphics */
 	ROM_LOAD( "mr-e.3k", 0x5000, 0x1000, 0x48d8cace )
-	ROM_LOAD( "mr-e.3l", 0x6000, 0x1000, 0x48b86bb0 )
+	ROM_LOAD( "mr-e.3h", 0x6000, 0x1000, 0x89ce19a8 )
+
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mr-snd.1a", 0xf000, 0x1000, 0x506d76fb )
 ROM_END
+
+
+
+static int hiload(void)     /* V.V */
+{
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0E008],"\x00\x00\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0E008],44);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+
+}
+
+
+static void hisave(void)    /* V.V */
+{
+	void *f;
+
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0E008],44);
+		osd_fclose(f);
+	}
+}
 
 
 
@@ -380,7 +416,7 @@ struct GameDriver mpatrol_driver =
 {
 	"Moon Patrol",
 	"mpatrol",
-	"NICOLA SALMORIA\nCHRIS HARDY",
+	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)",
 	&machine_driver,
 
 	mpatrol_rom,
@@ -389,17 +425,17 @@ struct GameDriver mpatrol_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver mranger_driver =
 {
 	"Moon Ranger (bootleg Moon Patrol)",
 	"mranger",
-	"NICOLA SALMORIA\nCHRIS HARDY",
+	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)",
 	&machine_driver,
 
 	mranger_rom,
@@ -408,8 +444,8 @@ struct GameDriver mranger_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

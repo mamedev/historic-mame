@@ -189,10 +189,9 @@ void Reset6502(M6502 *R)
   R->S=0xFF;
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);
-  R->ICount=R->IPeriod;
+/*  R->ICount=R->IPeriod; */	/* NS 970908 */
 /*  R->IRequest=INT_NONE; */	/* NS 970904 */
-  R->pending_irq = 0;	/* NS 970904 */
-  R->pending_nmi = 0;	/* NS 970904 */
+  M6502_Clear_Pending_Interrupts(R);	/* NS 970904 */
   R->AfterCLI=0;
 }
 

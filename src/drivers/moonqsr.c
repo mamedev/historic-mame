@@ -37,7 +37,7 @@ extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
-int galaxian_vh_start(void);
+int moonqsr_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int galaxian_vh_interrupt(void);
 
@@ -92,7 +92,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0x00,
 		{ OSD_KEY_3, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_CONTROL, 0, 0, 0 },
+				OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -211,6 +211,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -221,7 +222,7 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	galaxian_vh_start,
+	moonqsr_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -315,19 +316,19 @@ for (A = 0;A < 0x10000;A++)
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0x805a],"\x00\x50\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x804e],1,10*5,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x804e],10*5);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -337,15 +338,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x804e],1,10*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x804e],10*5);
+		osd_fclose(f);
 	}
 }
 

@@ -81,7 +81,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Clear the bitmap */
-	clearbitmap(bitmap);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 	/* Draw the sprite/chars */
 	for (offs = 0,spriteno = spacefb_vref;offs < 128;offs++,spriteno++)
@@ -104,7 +104,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 						charnum,
 						2,
 						0,0,v,h,
-						0,TRANSPARENCY_PEN,0);
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 			} else if (cnt & 0x40) {
 				unsigned char charnum = 255-chr;
@@ -114,7 +114,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 						charnum,
 						pal,
 						0,0,v,h,
-						0,TRANSPARENCY_NONE,0);
+						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 	}

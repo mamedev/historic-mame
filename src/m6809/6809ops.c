@@ -13,7 +13,11 @@ HNZVC
 
 */
 
+#ifdef NEW
+static void illegal( void )
+#else
 INLINE void illegal( void )
+#endif
 {
 	if(errorlog)fprintf(errorlog, "M6809: illegal opcode\n");
 }
@@ -98,7 +102,11 @@ INLINE void dec_di( void )
 {
 	byte t;
 	DIRBYTE(t); --t;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8D(t);
+#else
 	CLR_NZV; if(t==0x7F) SEV; SET_NZ8(t);
+#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -109,7 +117,11 @@ INLINE void inc_di( void )
 {
 	byte t;
 	DIRBYTE(t); ++t;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8I(t);
+#else
 	CLR_NZV; if(t==0x80) SEV; SET_NZ8(t);
+#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -123,7 +135,7 @@ INLINE void tst_di( void )
 /* $0E JMP direct ----- */
 INLINE void jmp_di( void )
 {
-	DIRECT; pcreg=eaddr;
+	DIRECT; pcreg=eaddr;change_pc(pcreg);/* ASG 971005 */
 }
 
 /* $0F CLR direct -0100 */
@@ -162,18 +174,18 @@ INLINE void sync( void )
 /* $16 LBRA relative ----- */
 INLINE void lbra( void )
 {
-	IMMWORD(eaddr); pcreg+=eaddr;
+	IMMWORD(eaddr); pcreg+=eaddr;change_pc(pcreg);/* ASG 971005 */
 }
 
 /* $17 LBSR relative ----- */
 INLINE void lbsr( void )
 {
-	IMMWORD(eaddr); PUSHWORD(pcreg); pcreg+=eaddr;
+	IMMWORD(eaddr); PUSHWORD(pcreg); pcreg+=eaddr;change_pc(pcreg);/* ASG 971005 */
 }
 
 /* $18 ILLEGAL */
 
-#if 0
+#if 1
 /* $19 DAA inherent (areg) -**0* */
 INLINE void daa( void )
 {
@@ -185,7 +197,7 @@ INLINE void daa( void )
 	if( msn>0x90 || cc&0x01 ) cf |= 0x60;
 	t = cf + areg;
 	CLR_NZV; /* keep carry from previous operation */
-	SET_NZ8(t); SET_C8(t);
+	SET_NZ8((byte)t); SET_C8(t);
 	areg = t;
 }
 #else
@@ -195,7 +207,7 @@ INLINE void daa( void )
 	word t;
 	t=areg;
 	if (cc&0x20) t+=0x06;
-	if ((t&0x0f)>9) t+=0x06;
+	if ((t&0x0f)>9) t+=0x06;		/* ASG -- this code is broken! $66+$99=$FF -> DAA should = $65, we get $05! */
 	if (cc&0x01) t+=0x60;
 	if ((t&0xf0)>0x90) t+=0x60;
 	if (t&0x100) SEC;
@@ -254,7 +266,11 @@ INLINE void tfr( void )
 INLINE void bra( void )
 {
 	byte t;
+#ifdef NEW_BR
+	IMMBYTE(t);pcreg+=SIGNED(t);change_pc(pcreg);	/* TS 971002 */
+#else
 	BRANCH(1);
+#endif
 	/* JB 970823 - speed up busy loops */
 	if (t==0xfe) m6809_ICount = 0;
 }
@@ -263,14 +279,22 @@ INLINE void bra( void )
 INLINE void brn( void )
 {
 	byte t;
+#ifdef NEW_BR
+	IMMBYTE(t);
+#else
 	BRANCH(0);
+#endif
 }
 
 /* $1021 LBRN relative ----- */
 INLINE void lbrn( void )
 {
 	word t;
+#ifdef NEW_BR
+	IMMWORD(t);
+#else
 	LBRANCH(0);
+#endif
 }
 
 /* $22 BHI relative ----- */
@@ -524,7 +548,7 @@ INLINE void puls( void )
 	if(t&0x10) PULLWORD(xreg);
 	if(t&0x20) PULLWORD(yreg);
 	if(t&0x40) PULLWORD(ureg);
-	if(t&0x80) PULLWORD(pcreg);
+	if(t&0x80){ PULLWORD(pcreg);change_pc(pcreg); }	/* TS 971002 */
 }
 
 /* $36 PSHU inherent ----- */
@@ -554,7 +578,7 @@ INLINE void pulu( void )
 	if(t&0x10) PULUWORD(xreg);
 	if(t&0x20) PULUWORD(yreg);
 	if(t&0x40) PULUWORD(sreg);
-	if(t&0x80) PULUWORD(pcreg);
+	if(t&0x80) { PULUWORD(pcreg);change_pc(pcreg); }	/* TS 971002 */
 }
 
 /* $38 ILLEGAL */
@@ -562,7 +586,7 @@ INLINE void pulu( void )
 /* $39 RTS inherent ----- */
 INLINE void rts( void )
 {
-	PULLWORD(pcreg);
+	PULLWORD(pcreg);change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $3A ABX inherent ----- */
@@ -575,8 +599,9 @@ INLINE void abx( void )
 INLINE void rti( void )
 {
 	byte t;
-	t=cc&0x80;
+/*	ASG 971016 t=cc&0x80; */
 	PULLBYTE(cc);
+	t=cc&0x80;	/*	ASG 971016 */
 	if(t)
 	{
 		m6809_ICount -= 9;
@@ -587,7 +612,7 @@ INLINE void rti( void )
 		PULLWORD(yreg);
 		PULLWORD(ureg);
 	}
-	PULLWORD(pcreg);
+	PULLWORD(pcreg);change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $3C CWAI inherent ----1 */
@@ -624,7 +649,7 @@ INLINE void swi( void )
 	PUSHBYTE(areg);
 	PUSHBYTE(cc);
 	cc|=0x50;
-	pcreg = M_RDMEM_WORD(0xfffa);
+	pcreg = M_RDMEM_WORD(0xfffa);change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $103F SWI2 absolute indirect ----- */
@@ -639,7 +664,7 @@ INLINE void swi2( void )
 	PUSHBYTE(breg);
 	PUSHBYTE(areg);
 	PUSHBYTE(cc);
-	pcreg = M_RDMEM_WORD(0xfff4);
+	pcreg = M_RDMEM_WORD(0xfff4);change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $113F SWI3 absolute indirect ----- */
@@ -654,7 +679,7 @@ INLINE void swi3( void )
 	PUSHBYTE(breg);
 	PUSHBYTE(areg);
 	PUSHBYTE(cc);
-	pcreg = M_RDMEM_WORD(0xfff2);
+	pcreg = M_RDMEM_WORD(0xfff2);change_pc(pcreg);	/* TS 971002 */
 }
 
 #if macintosh
@@ -730,7 +755,11 @@ INLINE void rola( void )
 INLINE void deca( void )
 {
 	--areg;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8D(areg);
+#else
 	CLR_NZV; if(areg==0x7F) SEV; SET_NZ8(areg);
+#endif
 }
 
 /* $4B ILLEGAL */
@@ -739,7 +768,11 @@ INLINE void deca( void )
 INLINE void inca( void )
 {
 	++areg;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8I(areg);
+#else
 	CLR_NZV; if(areg==0x80) SEV; SET_NZ8(areg);
+#endif
 }
 
 /* $4D TSTA inherent -**0- */
@@ -830,7 +863,11 @@ INLINE void rolb( void )
 INLINE void decb( void )
 {
 	--breg;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8D(breg);
+#else
 	CLR_NZV; if(breg==0x7F) SEV; SET_NZ8(breg);
+#endif
 }
 
 /* $5B ILLEGAL */
@@ -839,7 +876,11 @@ INLINE void decb( void )
 INLINE void incb( void )
 {
 	++breg;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8I(breg);
+#else
 	CLR_NZV; if(breg==0x80) SEV; SET_NZ8(breg);
+#endif
 }
 
 /* $5D TSTB inherent -**0- */
@@ -937,7 +978,11 @@ INLINE void dec_ix( void )
 {
 	byte t;
 	t=M_RDMEM(eaddr)-1;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8D(t);
+#else
 	CLR_NZV; if(t==0x7F) SEV; SET_NZ8(t);
+#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -948,7 +993,11 @@ INLINE void inc_ix( void )
 {
 	byte t;
 	t=M_RDMEM(eaddr)+1;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8I(t);
+#else
 	CLR_NZV; if(t==0x80) SEV; SET_NZ8(t);
+#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -962,7 +1011,7 @@ INLINE void tst_ix( void )
 /* $6E JMP indexed ----- */
 INLINE void jmp_ix( void )
 {
-	pcreg=eaddr;
+	pcreg=eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $6F CLR indexed -0100 */
@@ -1052,7 +1101,11 @@ INLINE void dec_ex( void )
 {
 	byte t;
 	EXTBYTE(t); --t;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8D(t);
+#else
 	CLR_NZV; if(t==0x7F) SEV; SET_NZ8(t);
+#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -1063,7 +1116,11 @@ INLINE void inc_ex( void )
 {
 	byte t;
 	EXTBYTE(t); ++t;
+#ifdef NEW_FLAG
+	CLR_NZV; SET_FLAGS8I(t);
+#else
 	CLR_NZV; if(t==0x80) SEV; SET_NZ8(t);
+#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -1077,7 +1134,7 @@ INLINE void tst_ex( void )
 /* $7E JMP extended ----- */
 INLINE void jmp_ex( void )
 {
-	EXTENDED; pcreg=eaddr;
+	EXTENDED; pcreg=eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $7F CLR extended -0100 */
@@ -1236,7 +1293,7 @@ INLINE void cmps_im( void )
 INLINE void bsr( void )
 {
 	byte t;
-	IMMBYTE(t); PUSHWORD(pcreg); pcreg += SIGNED(t);
+	IMMBYTE(t); PUSHWORD(pcreg); pcreg += SIGNED(t);change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $8E LDX (LDY) immediate -**0- */
@@ -1416,7 +1473,7 @@ INLINE void cmps_di( void )
 INLINE void jsr_di( void )
 {
 	DIRECT; PUSHWORD(pcreg);
-	pcreg = eaddr;
+	pcreg = eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $9E LDX (LDY) direct -**0- */
@@ -1592,7 +1649,7 @@ INLINE void cmps_ix( void )
 INLINE void jsr_ix( void )
 {
 	PUSHWORD(pcreg);
-	pcreg = eaddr;
+	pcreg = eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $aE LDX (LDY) indexed -**0- */
@@ -1770,7 +1827,7 @@ INLINE void cmps_ex( void )
 INLINE void jsr_ex( void )
 {
 	EXTENDED; PUSHWORD(pcreg);
-	pcreg = eaddr;
+	pcreg = eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
 /* $bE LDX (LDY) extended -**0- */

@@ -12,13 +12,13 @@ See drivers\starwars.c for notes
 ***************************************************************************/
 
 #include "driver.h"
-#include "pokey.h"
+#include "sndhrdw/pokyintf.h"
 #include "starwars.h"
 
 /* These lines were modified from milliped.c */
 
-#define emulation_rate (1500000/(28*4))
-#define buffer_len (emulation_rate/Machine->drv->frames_per_second)
+//#define emulation_rate (1500000/(28*4))
+//#define buffer_len (emulation_rate/Machine->drv->frames_per_second)
 
 #define SNDDEBUG 0
 #define FIFODEBUG 0
@@ -60,45 +60,72 @@ int port_A_ddr = 0;      /* 6532 Data Direction Register A */
 int port_B_ddr = 0;      /* 6532 Data Direction Register B */
                          /* for each bit, 0 = input, 1 = output */
 
+static struct POKEYinterface interface =
+{
+	4,			/* 4 chips */
+	1,			/* 1 update per video frame (low quality) */
+//	12,			/* 12 updates per video frame (good quality) */
+	1500000,
+	255,	/* volume */
+	USE_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	/* The allpot handler */
+	{ 0, 0, 0, 0 },
+};
+
 int starwars_sh_start(void)
 {
-        /* Derived from milliped.c */
-        Pokey_sound_init(1500000,emulation_rate,4);
-	return 0;
+	return pokey_sh_start (&interface);
 }
 
-void starwars_sh_stop(void)
+void starwars_pokey_sound_w (int offset,int data)
 {
-}
-
-
-void starwars_pokey_sound_w(int offset,int data)
-{
-        Update_pokey_sound(offset%8,data,offset>>3,3);
+	int pokey_num = offset >> 3;
+	int pokey_reg = offset % 8;
+	
+	switch (pokey_num) {
+		case 0:
+			pokey1_w (pokey_reg, data);
+			break;
+		case 1:
+			pokey2_w (pokey_reg, data);
+			break;
+		case 2:
+			pokey3_w (pokey_reg, data);
+			break;
+		case 3:
+			pokey4_w (pokey_reg, data);
+			break;
+		}	
 }
 
 void starwars_pokey_ctl_w(int offset,int data)
 {
-        Update_pokey_sound((offset%8)|8,data,offset>>3,3);
-}
-
-void starwars_sh_update(void)
-{
-        /* Derived from milliped.c */
-
-        unsigned char buffer[emulation_rate/30];
-	static int playing;
-
-	if (play_sound == 0) return;
-
-	Pokey_process(buffer,buffer_len);
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-        if (!playing)
-        {
-	        osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-	        osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-	        playing = 1;
-        }
+	int pokey_num = offset >> 3;
+	int pokey_reg = (offset % 8) | 8;
+	
+	switch (pokey_num) {
+		case 0:
+			pokey1_w (pokey_reg, data);
+			break;
+		case 1:
+			pokey2_w (pokey_reg, data);
+			break;
+		case 2:
+			pokey3_w (pokey_reg, data);
+			break;
+		case 3:
+			pokey4_w (pokey_reg, data);
+			break;
+		}	
 }
 
 /********************************************************/
@@ -109,14 +136,15 @@ int starwars_snd_interrupt(void)
 	/* has expired.  If so - IRQ, otherwise ignore            */
 	if (timer_running)
 	{
-                if (--timer == 0)
+		if (--timer == 0)
 		{
 			timer_running = 0;
-                        interrupt_flags |= 0x80; /* set timer interrupt flag */
+			interrupt_flags |= 0x80; /* set timer interrupt flag */
 			return interrupt();
 		}
 	}
 
+//	pokey_update();
 	return ignore_interrupt();
 }
 /********************************************************/
@@ -131,11 +159,11 @@ int m6532_r(int offset)
 
             /* if the fifo is empty, the main ready flag (bit 7) looks */
             /* reset to the sound board.  If not, flag appears set     */
-            
+
             /* Note: bit 4 is always set to avoid sound self test */
 
             if (items_in_fifo == 0)
-                return (port_A&0x7f)|0x10;  
+                return (port_A&0x7f)|0x10;
             else
                 return (port_A&0x7f)|0x90;
 

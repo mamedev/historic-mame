@@ -9,8 +9,9 @@
 #define NOISE_LENGTH 8000
 #define NOISE_RATE 1000
 #define WAVE_AMPLITUDE 70
-#define MAXFREQ 220
-#define MINFREQ 110
+#define MAXFREQ 200
+#define MINFREQ 80
+
 #define STEP 1
 
 static char *tone;
@@ -24,6 +25,7 @@ static int t=0;
 static int LastPort1=0;
 static int LastPort2=0;
 static int lfo_rate=0;
+static int lfo_active=0;
 static int freq=MAXFREQ;
 static int lforate0=0;
 static int lforate1=0;
@@ -70,7 +72,7 @@ void mooncrst_noise_w(int offset,int data)
                            Machine->samples->sample[1]->volume,0);
            LastPort1=data;
         }
-        else 
+        else
         {
   	  if (data & 1) osd_adjust_sample(1,NOISE_RATE,255);
 	  else osd_adjust_sample(1,NOISE_RATE,0);
@@ -79,8 +81,12 @@ void mooncrst_noise_w(int offset,int data)
 
 void mooncrst_background_w(int offset,int data)
 {
+     static int playBackground = 0;
+       if (data & 1)
+       lfo_active=1;
+       else
+       lfo_active=0;
 
-        static int playBackground = 0;
         if (backgroundsampleloaded)
         {
           if (data & 1)
@@ -91,13 +97,13 @@ void mooncrst_background_w(int offset,int data)
                                Machine->samples->sample[2]->length,
                                Machine->samples->sample[2]->smpfreq,
                                Machine->samples->sample[2]->volume,1);
-                playBackground = 1; 
+                playBackground = 1;
              }
           }
           else
           {
              playBackground = 0;
-             osd_stop_sample(3); 
+             osd_stop_sample(3);
           }
 
         }
@@ -106,7 +112,7 @@ void mooncrst_background_w(int offset,int data)
 
 void mooncrst_shoot_w(int offset,int data)
 {
-        
+
       if (data & 1 && !(LastPort2 & 1) && shootsampleloaded)
          osd_play_sample(2,Machine->samples->sample[0]->data,
                            Machine->samples->sample[0]->length,
@@ -138,7 +144,10 @@ int mooncrst_sh_start(void)
         if (!deathsampleloaded)
    	    osd_play_sample(1,noise,NOISE_LENGTH,NOISE_RATE,0,1);
         if (!backgroundsampleloaded)
+        {
             osd_play_sample(3, &Machine->drv->samples[32],32,1000,0,1);
+            osd_play_sample(4, &Machine->drv->samples[32],32,1000,0,1);
+        }
 	return 0;
 }
 
@@ -152,12 +161,13 @@ void mooncrst_sh_stop(void)
         osd_stop_sample(1);
         osd_stop_sample(2);
         osd_stop_sample(3);
+        osd_stop_sample(4);
 }
 
 void mooncrst_sound_freq_sel_w(int offset,int data)
 {
         if (offset==1 && (data & 1))
-            F=1;    
+            F=1;
         else
             F=2;
 }
@@ -168,19 +178,19 @@ void mooncrst_lfo_freq_w(int offset,int data)
         if (offset==2) lforate2=(data & 1);
         if (offset==1) lforate1=(data & 1);
         if (offset==0) lforate0=(data & 1);
-        lfo_rate=lforate3*8+lforate2*4+lforate1*2+lforate0;    
+        lfo_rate=lforate3*8+lforate2*4+lforate1*2+lforate0;
         lfo_rate=16-lfo_rate;
-
 }
 
 void mooncrst_sh_update(void)
 {
   if (!backgroundsampleloaded)
   {
-    if (lfo_rate!=1)
+    if (lfo_active)
     {
-      osd_adjust_sample(3,freq*32,64);
-      if (t==0)  
+      osd_adjust_sample(3,freq*32,48);
+      osd_adjust_sample(4,(freq+60)*32,48);
+      if (t==0)
          freq-=lfo_rate;
       if (freq<=MINFREQ)
          freq=MAXFREQ;
@@ -188,8 +198,9 @@ void mooncrst_sh_update(void)
     else
     {
       osd_adjust_sample(3,1000,0);
+      osd_adjust_sample(4,1000,0);
     }
     t++;
     if (t==3) t=0;
-   }
+  }
 }

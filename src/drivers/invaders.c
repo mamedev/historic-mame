@@ -200,14 +200,14 @@ static struct InputPort input_ports[] =
 	{       /* IN0 */
 		0x81,
 		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
-				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{       /* IN1 */
 		0x00,
 		{ 0, 0, OSD_KEY_T, 0,
-				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
@@ -224,14 +224,14 @@ static struct InputPort invdelux_input_ports[] =
 	{       /* IN1 */
 		0x81,
 		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
-				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{       /* IN2 */
 		0x00,
 		{ 0, 0, OSD_KEY_T, 0,
-                	    OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+                	    OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0, OSD_JOY_FIRE,    OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{ -1 }
@@ -331,7 +331,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
-        0,
+	1,	/* single CPU, no need for interleaving */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -367,7 +368,8 @@ static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function
 		}
 	},
 	60,
-        0,
+	1,	/* single CPU, no need for interleaving */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -403,6 +405,7 @@ static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole functio
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -440,7 +443,8 @@ static struct MachineDriver invdelux_machine_driver =
 		}
 	},
 	60,
-        0,
+	1,	/* single CPU, no need for interleaving */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -552,17 +556,17 @@ static const char *invaders_sample_names[] =
 
 
 
-static int invaders_hiload(const char *name)
+static int invaders_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x20f4],"\x00\x00",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x20f4],1,2,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x20f4],2);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -572,32 +576,32 @@ static int invaders_hiload(const char *name)
 
 
 
-static void invaders_hisave(const char *name)
+static void invaders_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x20f4],1,2,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x20f4],2);
+		osd_fclose(f);
 	}
 }
 
 
-static int invdelux_hiload(const char *name)
+static int invdelux_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x2340],"\x1b\x1b",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 	 /* Load the actual score */
-		   fread(&RAM[0x20f4],1, 0x2,f);
+		   osd_fread(f,&RAM[0x20f4], 0x2);
 	 /* Load the name */
-		   fread(&RAM[0x2340],1, 0xa,f);
-			fclose(f);
+		   osd_fread(f,&RAM[0x2340], 0xa);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -605,36 +609,98 @@ static int invdelux_hiload(const char *name)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-static void invdelux_hisave(const char *name)
+static void invdelux_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
       /* Save the actual score */
-		fwrite(&RAM[0x20f4],1, 0x2,f);
+		osd_fwrite(f,&RAM[0x20f4], 0x2);
       /* Save the name */
-		fwrite(&RAM[0x2340],1, 0xa,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x2340], 0xa);
+		osd_fclose(f);
 	}
 }
 
-static int lrescue_hiload(const char *name)     /* V.V */ /* Whole function */
+static int invrvnge_hiload(void)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x2019],"\x00\x00\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x2019],3);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+static void invrvnge_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x2019],3);
+		osd_fclose(f);
+	}
+}
+
+static int galxwars_hiload(void)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x2004],"\x00\x00",2) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x2004],7);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void galxwars_hisave(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x2004],7);
+		osd_fclose(f);
+	}
+}
+
+static int lrescue_hiload(void)     /* V.V */ /* Whole function */
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x20CF],"\x1b\x1b",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	       {
 	 /* Load the actual score */
-		   fread(&RAM[0x20F4],1, 0x2,f);
+		   osd_fread(f,&RAM[0x20F4], 0x2);
 	 /* Load the name */
-		   fread(&RAM[0x20CF],1, 0xa,f);
+		   osd_fread(f,&RAM[0x20CF], 0xa);
 	 /* Load the high score length */
-		   fread(&RAM[0x20DB],1, 0x1,f);
-		   fclose(f);
+		   osd_fread(f,&RAM[0x20DB], 0x1);
+		   osd_fclose(f);
 		}
 
 		return 1;
@@ -643,47 +709,45 @@ static int lrescue_hiload(const char *name)     /* V.V */ /* Whole function */
 
 }
 
-static int desterth_hiload(const char *name)     /* V.V */ /* Whole function */
+static void lrescue_hisave(void)    /* V.V */ /* Whole function */
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+      /* Save the actual score */
+		osd_fwrite(f,&RAM[0x20F4],0x02);
+      /* Save the name */
+		osd_fwrite(f,&RAM[0x20CF],0xa);
+      /* Save the high score length */
+		osd_fwrite(f,&RAM[0x20DB],0x1);
+		osd_fclose(f);
+	}
+}
+
+static int desterth_hiload(void)     /* V.V */ /* Whole function */
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x20CF],"\x1b\x07",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	       {
 	 /* Load the actual score */
-		   fread(&RAM[0x20F4],1, 0x2,f);
+		   osd_fread(f,&RAM[0x20F4], 0x2);
 	 /* Load the name */
-		   fread(&RAM[0x20CF],1, 0xa,f);
+		   osd_fread(f,&RAM[0x20CF], 0xa);
 	 /* Load the high score length */
-		   fread(&RAM[0x20DB],1, 0x1,f);
-			fclose(f);
+		   osd_fread(f,&RAM[0x20DB], 0x1);
+			osd_fclose(f);
 		}
 
 		return 1;
 	}
 	else return 0;   /* we can't load the hi scores yet */
-
 }
 
-
-
-static void lrescue_hisave(const char *name)    /* V.V */ /* Whole function */
-{
-	FILE *f;
-
-	if ((f = fopen(name,"wb")) != 0)
-	{
-      /* Save the actual score */
-		fwrite(&RAM[0x20F4],1,0x02,f);
-      /* Save the name */
-		fwrite(&RAM[0x20CF],1,0xa,f);
-      /* Save the high score length */
-		fwrite(&RAM[0x20DB],1,0x1,f);
-		fclose(f);
-	}
-}
 
 
 
@@ -710,7 +774,7 @@ struct GameDriver earthinv_driver =
 {
 	"Super Earth Invasion",
 	"earthinv",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	invaders_rom,
@@ -724,7 +788,6 @@ struct GameDriver earthinv_driver =
 
 	0, 0
 };
-
 
 struct GameDriver spaceatt_driver =
 {
@@ -742,14 +805,14 @@ struct GameDriver spaceatt_driver =
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	invaders_hiload, invaders_hisave
 };
 
 struct GameDriver invrvnge_driver =
 {
 	"Invaders Revenge",
 	"invrvnge",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nMarco Cassili (high score save)",
 	&invrvnge_machine_driver,
 
 	invrvnge_rom,
@@ -761,7 +824,7 @@ struct GameDriver invrvnge_driver =
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	invrvnge_hiload, invrvnge_hisave
 };
 
 struct GameDriver invdelux_driver =
@@ -799,7 +862,7 @@ struct GameDriver galxwars_driver =
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	galxwars_hiload, galxwars_hisave
 };
 
 struct GameDriver lrescue_driver =

@@ -25,21 +25,27 @@
  q=M_RDMEM_OPCODE_WORD();   \
  M_PUSH(PC);                \
  R.PC.D=q;                  \
+ change_pc(R.PC.D);   	/* TS 971002 */      \
  Z80_ICount-=7;             \
 }
 #define M_JP                \
-        R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((R.PC.D+1)&65535))<<8)
+        R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((R.PC.D+1)&65535))<<8)\
+        ;change_pc(R.PC.D)	/* TS 971002 */
 #define M_JR                \
-        R.PC.W.l+=((offset)M_RDOP_ARG(R.PC.D))+1; Z80_ICount-=5
-#define M_RET           M_POP(PC); Z80_ICount-=6
-#define M_RST(Addr)     M_PUSH(PC); R.PC.D=Addr
+        R.PC.W.l+=((offset)M_RDOP_ARG(R.PC.D))+1; Z80_ICount-=5\
+        ;change_pc(R.PC.D)	/* TS 971002 */
+#define M_RET           M_POP(PC); Z80_ICount-=6\
+        ;change_pc(R.PC.D)	/* TS 971002 */
+#define M_RST(Addr)     M_PUSH(PC); R.PC.D=Addr\
+        ;change_pc(R.PC.D)	/* TS 971002 */
 #define M_SET(Bit,Reg)  Reg|=1<<Bit
 #define M_RES(Bit,Reg)  Reg&=~(1<<Bit)
 #define M_BIT(Bit,Reg)      \
         R.AF.B.l=(R.AF.B.l&C_FLAG)|H_FLAG| \
         ((Reg&(1<<Bit))? ((Bit==7)?S_FLAG:0):Z_FLAG)
 #define M_IN(Reg)           \
-        Reg=Z80_In(R.BC.B.l); R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSPTable[Reg]
+        Reg=DoIn(R.BC.B.l,R.BC.B.h); \
+        R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSPTable[Reg]
 
 #define M_ADDW(Reg1,Reg2)    \
 {                            \
@@ -435,42 +441,7 @@ _INLINE void M_CP (byte Reg)
   "0" (R.AF.B.h)
  );
 }
-/*
-#define M_ADDW(Reg1,Reg2)                              \
-{                                                      \
- int q;                                                \
- q=R.Reg1.D+R.Reg2.D;                                  \
- R.AF.B.l=(R.AF.B.l&(S_FLAG|Z_FLAG|V_FLAG))|           \
-          (((R.Reg1.D^q^R.Reg2.D)&0x1000)>>8)|         \
-          ((q>>16)&1);                                 \
- R.Reg1.W.l=q;                                         \
-}
 
-#define M_ADCW(Reg)                                            \
-{                                                              \
- int q;                                                        \
- q=R.HL.D+R.Reg.D+(R.AF.D&1);                                  \
- R.AF.B.l=(((R.HL.D^q^R.Reg.D)&0x1000)>>8)|                    \
-          ((q>>16)&1)|                                         \
-          ((q&0x8000)>>8)|                                     \
-          ((q&65535)?0:Z_FLAG)|                                \
-          (((R.Reg.D^R.HL.D^0x8000)&(R.Reg.D^q)&0x8000)>>13);  \
- R.HL.W.l=q;                                                   \
-}
-
-#define M_SBCW(Reg)                                    \
-{                                                      \
- int q;                                                \
- q=R.HL.D-R.Reg.D-(R.AF.D&1);                          \
- R.AF.B.l=(((R.HL.D^q^R.Reg.D)&0x1000)>>8)|            \
-          ((q>>16)&1)|                                 \
-          ((q&0x8000)>>8)|                             \
-          ((q&65535)?0:Z_FLAG)|                        \
-          (((R.Reg.D^R.HL.D)&(R.Reg.D^q)&0x8000)>>13)| \
-          N_FLAG;                                      \
- R.HL.W.l=q;                                           \
-}
-*/
 #define M_RLCA              \
  R.AF.B.h=(R.AF.B.h<<1)|((R.AF.B.h&0x80)>>7); \
  R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&C_FLAG)

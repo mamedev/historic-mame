@@ -99,7 +99,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_ALT, OSD_KEY_CONTROL, 0, OSD_KEY_3 },
+				OSD_KEY_ALT, OSD_KEY_LCONTROL, 0, OSD_KEY_3 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0 }
 	},
@@ -217,12 +217,13 @@ static struct MachineDriver machine_driver =
 		},
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	1+24, 3*8,
+	24, 3*8,
 	mystston_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -273,7 +274,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -283,13 +284,13 @@ static int hiload(const char *name)
         if ((memcmp(&RAM[0x0308],"\x00\x00\x21",3) == 0) &&
 		(memcmp(&RAM[0x033C],"\x0C\x1D\x0C",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x0308],1,11*5,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0x0308],11*5);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -299,19 +300,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                fwrite(&RAM[0x0308],1,11*5,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x0308],11*5);
+		osd_fclose(f);
 	}
 
 }

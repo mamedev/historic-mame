@@ -145,7 +145,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0x00,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, 0, 0, 0 },
+				OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -192,12 +192,15 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 3, 0x30, "LIVES", { "3", "4", "5", "2" } },
-	{ 4, 0x18, "DIFFICULTY 1", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
+	{ 4, 0x18, "DIFFICULTY 1 (BIRD)", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
 	{ 4, 0x60, "DIFFICULTY 2", { "MEDIUM", "EASY", "HARD", "HARDEST" } },
 		/* not a mistake, MEDIUM and EASY are swapped */
 	{ 4, 0x80, "SPECIAL", { "EASY", "HARD" } },
+	{ 3, 0x40, "CABINET", { "COCKTAIL", "UPRIGHT" } },
 	{ 3, 0x80, "DEMO SOUNDS", { "OFF", "ON" } },
 	{ 4, 0x07, "INITIAL HIGH SCORE", { "10000", "100000", "30000", "50000", "100000", "50000", "100000", "50000" } },
+	{ 3, 0x03, "COIN 1", { "1/1", "1/2", "1/3", "1/6" } },
+	{ 3, 0x0c, "COIN 2", { "1/1", "2/1", "1/2", "1/3" } },
 	{ -1 }
 };
 
@@ -289,6 +292,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -347,7 +351,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -362,16 +366,16 @@ static int hiload(const char *name)
 			memcmp(&RAM[0x8100],"\x00\x00\x05\x00",4) == 0 ||
 			memcmp(&RAM[0x8100],"\x00\x00\x10\x00",4) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			char buf[10];
 			int hi;
 
 
-			fread(&RAM[0x8100],1,15*10,f);
+			osd_fread(f,&RAM[0x8100],15*10);
 			RAM[0x80e2] = RAM[0x8100];
 			RAM[0x80e3] = RAM[0x8101];
 			RAM[0x80e4] = RAM[0x8102];
@@ -395,7 +399,7 @@ static int hiload(const char *name)
 			videoram_w(0x009f,buf[5]);
 			videoram_w(0x007f,buf[6]);
 			videoram_w(0x005f,buf[7]);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -405,18 +409,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8100],1,15*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8100],15*10);
+		osd_fclose(f);
 	}
 }
 

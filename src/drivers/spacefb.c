@@ -152,7 +152,7 @@ static struct InputPort input_ports[] =
 	},
 	{ /* P1 and P2 IO */
 		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0,0,OSD_KEY_ALT, 0,0, OSD_KEY_CONTROL},
+		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0,0,OSD_KEY_ALT, 0,0, OSD_KEY_LCONTROL},
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, 0,0,OSD_JOY_FIRE2, 0,0, OSD_JOY_FIRE}
 	},
 	{
@@ -256,6 +256,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */

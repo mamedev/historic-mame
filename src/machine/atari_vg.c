@@ -8,22 +8,14 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine/atari_vg.h"
-#include "vidhrdw/vector.h"
 
 static int earom_offset;
 static int earom_data;
 static char earom[64];
 
-void atari_vg_go(int offset, int data)
-{
-	vg_go(cpu_gettotalcycles());
-}
-
-
 int atari_vg_earom_r (int offset)
 {
-	if (errorlog) 
+	if (errorlog)
 		fprintf (errorlog, "read earom: %d\n",offset);
 	return (earom_data);
 }
@@ -37,7 +29,7 @@ void atari_vg_earom_w (int offset, int data)
 }
 
 /* 0,8 and 14 get written to this location, too.
- * Don't know what they do exactly 
+ * Don't know what they do exactly
  */
 void atari_vg_earom_ctrl (int offset, int data)
 {
@@ -51,27 +43,27 @@ void atari_vg_earom_ctrl (int offset, int data)
 }
 
 
-int atari_vg_earom_load(const char *name)
+int atari_vg_earom_load(void)
 {
 	/* We read the EAROM contents from disk */
         /* No check necessary */
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"rb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		fread(&earom[0],1,0x40,f);
+		osd_fread(f,&earom[0],0x40);
 		fclose(f);
 	}
 	return 1;
 }
 
-void atari_vg_earom_save(const char *name)
+void atari_vg_earom_save(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&earom[0],1,0x40,f);
+		osd_fwrite(f,&earom[0],0x40);
 		fclose(f);
 	}
 }

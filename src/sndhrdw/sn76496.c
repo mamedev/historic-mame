@@ -84,20 +84,17 @@ void SN76496Update(struct SN76496 *R)
 		else R->Frequency[i] = R->Clock / (32 * n);
 	}
 
-	R->NoiseShiftRate = R->Clock/64;
+        R->Noisemode = R->Register[6] & 0x04;
 
 	n = R->Register[6] & 3;
-	if (n == 3)
-	{
-		static int count;
+        switch(n)
+        {
+        case 0: R->NoiseShiftRate = R->Clock  / 512;break;
+        case 1: R->NoiseShiftRate = R->Clock  / 1024;break;
+        case 2: R->NoiseShiftRate = R->Clock  / 2048;break;
+        default: R->NoiseShiftRate = R->Frequency[2];
+        }
 
-
-		/* kludge just to play something */
-		count++;
-		if (count > 2) count = 0;
-		R->NoiseShiftRate = 64 << count;
-	}
-	else R->NoiseShiftRate = 64 << n;
 }
 
 void SN76496UpdateB(struct SN76496 *R , int rate , char *buffer , int size)
@@ -129,18 +126,16 @@ void SN76496UpdateB(struct SN76496 *R , int rate , char *buffer , int size)
 		}
 	}
 
-	R->NoiseShiftRate = R->Clock/64;
+        R->Noisemode = R->Register[6] & 4;
 
 	n = R->Register[6] & 3;
-	if (n == 3)
-	{
-		static int count;
-		/* kludge just to play something */
-		count++;
-		if (count > 2) count = 0;
-		R->NoiseShiftRate = 64 << count;
-	}
-	else R->NoiseShiftRate = 64 << n;
+        switch (n)
+        {
+        case 0: R->NoiseShiftRate = R->Clock / 512;break;
+        case 1: R->NoiseShiftRate = R->Clock / 1024;break;
+        case 2: R->NoiseShiftRate = R->Clock / 2048;break ;
+        default: R->NoiseShiftRate = R->Frequency[2];
+        }
 
 	incr[3] = (0x10000 * R->NoiseShiftRate) / rate;
 
@@ -182,15 +177,28 @@ void SN76496UpdateB(struct SN76496 *R , int rate , char *buffer , int size)
 
 		if( vbn ){
 			R->Counter[3] &= 0xffff;
-			if( ( R->Counter[3] += incr[3] ) & 0xffff0000 ) {
+			if( ( R->Counter[3] += incr[3] ) & 0xffff0000 )
+                          {
+                                if(!R->Noisemode)
+                                {
+                                        if(!(i%18)  ) /*VL I guess this should be tied to the clock rate*/
+                                                vbn = -vbn;
+                                }
+                                else
+                                {
 			    /* The following code is a random bit generator  */
-				if( ( R->NoiseGen <<= 1 ) & 0x80000000 ){
-					R->NoiseGen ^= 0x00040001;
-					vbn = R->Volume[3];
-				}else {
-					vbn = -R->Volume[3];
-				}
-			}
+                                        if( ( R->NoiseGen <<= 1 ) & 0x80000000 )
+                                        {
+                                                R->NoiseGen ^= 0x00040001;
+                                                vbn = R->Volume[3];
+                                        }
+                                        else
+                                            {
+                                                vbn = -R->Volume[3];
+                                            }
+                                }  
+
+                        }
 		}
 		buffer[i] = ( l0 + l1 + l2 + vbn ) / 8;
 	}

@@ -10,7 +10,7 @@
 /***     Please, notify me, if you make any changes to this file          ***/
 /****************************************************************************/
 
-#include "cpuintrf.h"
+#include "memory.h"
 
 /****************************************************************************/
 /* Input a byte from given I/O port                                         */
@@ -28,13 +28,14 @@
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
 /*unsigned Z80_RDMEM(dword A);*/
-#define Z80_RDMEM(A) ((unsigned)cpu_readmem(A))
+/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
+#define Z80_RDMEM(A) ((unsigned)cpu_readmem16(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
 /*void Z80_WRMEM(dword A,byte V);*/
-#define Z80_WRMEM(A,V) (cpu_writemem(A,V))
+#define Z80_WRMEM(A,V) (cpu_writemem16(A,V))
 
 /****************************************************************************/
 /* Just to show you can actually use macros as well                         */
@@ -52,10 +53,7 @@
 /* used to greatly speed up emulation                                       */
 /****************************************************************************/
 /*#define Z80_RDOP(A)		Z80_RDMEM(A)*/
-extern byte *RAM;
-extern byte *ROM;
-#define Z80_RDOP(A) (ROM[A])
-/*#define Z80_RDOP(A) ((unsigned)cpu_readmem(A))*/
+#define Z80_RDOP(A) ((unsigned)cpu_readop(A))
 
 /****************************************************************************/
 /* Z80_RDOP_ARG() is identical to Z80_RDOP() except it is used for reading  */
@@ -63,8 +61,7 @@ extern byte *ROM;
 /* use different encoding mechanisms for opcodes and opcode arguments       */
 /****************************************************************************/
 /*#define Z80_RDOP_ARG(A)		Z80_RDOP(A)*/
-#define Z80_RDOP_ARG(A) (RAM[A])
-/*#define Z80_RDOP_ARG(A) ((unsigned)cpu_readmem(A))*/
+#define Z80_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
 /****************************************************************************/
 /* Z80_RDSTACK() is identical to Z80_RDMEM() except it is used for reading  */
@@ -72,8 +69,8 @@ extern byte *ROM;
 /* can be used to slightly speed up emulation                               */
 /****************************************************************************/
 /*#define Z80_RDSTACK(A)		Z80_RDMEM(A)*/
-/*#define Z80_RDSTACK(A) (RAM[A])  Galaga doesn't work with this */
-#define Z80_RDSTACK(A) ((unsigned)cpu_readmem(A))
+/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
+#define Z80_RDSTACK(A) ((unsigned)cpu_readmem16(A))
 
 /****************************************************************************/
 /* Z80_WRSTACK() is identical to Z80_WRMEM() except it is used for writing  */
@@ -81,5 +78,4 @@ extern byte *ROM;
 /* can be used to slightly speed up emulation                               */
 /****************************************************************************/
 /*#define Z80_WRSTACK(A,V)	Z80_WRMEM(A,V)*/
-/*#define Z80_WRSTACK(A,V) (RAM[A]=V)  Galaga doesn't work with this */
-#define Z80_WRSTACK(A,V) (cpu_writemem(A,V))
+#define Z80_WRSTACK(A,V) (cpu_writemem16(A,V))

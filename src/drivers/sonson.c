@@ -51,7 +51,7 @@ write:
 void sonson_init_machine(void)
 {
 	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_OP | M6809_FAST_S | M6809_FAST_U;
+	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
 extern unsigned char *sonson_scrollx;
@@ -300,6 +300,7 @@ static struct MachineDriver machine_driver =
 		},
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	sonson_init_machine,
 
 	/* video hardware */
@@ -349,7 +350,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -363,17 +364,17 @@ static int hiload(const char *name)
 			memcmp(&RAM[0x0328],"\x00\x02\x00\x00",4) == 0 &&
 			memcmp(&RAM[0x0358],"\x00\x02\x00\x00",4) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x0300],1,8*5+12*5,f);
+			osd_fread(f,&RAM[0x0300],8*5+12*5);
 			RAM[0x00d8] = RAM[0x0300];
 			RAM[0x00d9] = RAM[0x0301];
 			RAM[0x00da] = RAM[0x0302];
 			RAM[0x00db] = RAM[0x0303];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -383,18 +384,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x0300],1,8*5+12*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x0300],8*5+12*5);
+		osd_fclose(f);
 	}
 }
 

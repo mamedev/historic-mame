@@ -45,15 +45,16 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 /* drop lines A16-A19 for a 64KB memory (yes, I know this should be done after adding the offset 8-) */
 #define SegBase(Seg) ((sregs[Seg] << 4) & 0xFFFF)
 
-#define GetMemB(Seg,Off) (cycle_count-=6,(BYTE)cpu_readmem((Seg)+(Off)))
+/* ASG 971005 -- changed to cpu_readmem20/cpu_writemem20 */
+#define GetMemB(Seg,Off) (cycle_count-=6,(BYTE)cpu_readmem20((Seg)+(Off)))
 #define GetMemW(Seg,Off) (cycle_count-=10,(WORD)GetMemB(Seg,Off)+(WORD)(GetMemB(Seg,(Off)+1)<<8))
-#define PutMemB(Seg,Off,x) { cycle_count-=7; cpu_writemem((Seg)+(Off),(x)); }
+#define PutMemB(Seg,Off,x) { cycle_count-=7; cpu_writemem20((Seg)+(Off),(x)); }
 #define PutMemW(Seg,Off,x) { cycle_count-=11; PutMemB(Seg,Off,(BYTE)(x)); PutMemB(Seg,(Off)+1,(BYTE)((x)>>8)); }
 
-#define ReadByte(ea) (cycle_count-=6,(BYTE)cpu_readmem(ea))
-#define ReadWord(ea) (cycle_count-=10,cpu_readmem(ea)+(cpu_readmem((ea)+1)<<8))
-#define WriteByte(ea,val) { cycle_count-=7; cpu_writemem(ea,val); }
-#define WriteWord(ea,val) { cycle_count-=11; cpu_writemem(ea,(BYTE)(val)); cpu_writemem(ea+1,(val)>>8); }
+#define ReadByte(ea) (cycle_count-=6,(BYTE)cpu_readmem20(ea))
+#define ReadWord(ea) (cycle_count-=10,cpu_readmem20(ea)+(cpu_readmem20((ea)+1)<<8))
+#define WriteByte(ea,val) { cycle_count-=7; cpu_writemem20(ea,val); }
+#define WriteWord(ea,val) { cycle_count-=11; cpu_writemem20(ea,(BYTE)(val)); cpu_writemem20(ea+1,(val)>>8); }
 
 #define read_port(port) cpu_readport(port)
 #define write_port(port,val) cpu_writeport(port,val)

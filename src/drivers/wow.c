@@ -42,6 +42,9 @@ int  gorf_interrupt(void);
 int  gorf_timer_r(int offset);
 int  Gorf_IO_r(int offset);
 
+int  wow_vh_start(void);
+void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap);
+
 int  wow_sh_start(void);
 void wow_sh_stop(void);
 void wow_sh_update(void);
@@ -114,7 +117,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN2 */
 		0xff,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_ALT, OSD_KEY_CONTROL, 0, OSD_KEY_O  },
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_ALT, OSD_KEY_LCONTROL, 0, OSD_KEY_O  },
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, OSD_JOY_FIRE, 0, 0 }
 	},
 	{	/* DSW */
@@ -450,7 +453,7 @@ static struct InputPort wow_input_ports[] =
 	},
 	{	/* IN2 */
 		0xef,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_ALT, OSD_KEY_CONTROL, 0, 0},
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_ALT, OSD_KEY_LCONTROL, 0, 0},
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, OSD_JOY_FIRE, 0, 0 }
 	},
 	{	/* DSW */
@@ -485,6 +488,7 @@ static struct MachineDriver wow_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -495,9 +499,9 @@ static struct MachineDriver wow_machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
+	wow_vh_start,
 	generic_vh_stop,
-	wow_vh_screenrefresh,
+	wow_vh_screenrefresh_stars,
 
 	/* sound hardware */
 	0,
@@ -507,20 +511,20 @@ static struct MachineDriver wow_machine_driver =
     wow_sh_update               /* Update audio */
 };
 
-static int wow_hiload(const char *name)
+static int wow_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xD004],"\x00\x00",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            fread(&RAM[0xD004],1,20,f);
+            osd_fread(f,&RAM[0xD004],20);
 			/* stored twice in memory??? */
 			memcpy(&RAM[0xD304],&RAM[0xD004],20);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -530,14 +534,14 @@ static int wow_hiload(const char *name)
 
 
 
-static void wow_hisave(const char *name)
+static void wow_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        fwrite(&RAM[0xD004],1,20,f);
-		fclose(f);
+        osd_fwrite(f,&RAM[0xD004],20);
+		osd_fclose(f);
 	}
 
 }
@@ -611,6 +615,7 @@ static struct MachineDriver robby_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -633,21 +638,21 @@ static struct MachineDriver robby_machine_driver =
 	0
 };
 
-static int robby_hiload(const char *name)
+static int robby_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0xE13B],"\x10\x27",2) == 0) &&
 		(memcmp(&RAM[0xE1E4],"COCK",4) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            fread(&RAM[0xE13B],1,0xAD,f);
+            osd_fread(f,&RAM[0xE13B],0xAD);
 			/* appears twice in memory??? */
 			memcpy(&RAM[0xE33B],&RAM[0xE13B],0xAD);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -657,14 +662,14 @@ static int robby_hiload(const char *name)
 
 
 
-static void robby_hisave(const char *name)
+static void robby_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        fwrite(&RAM[0xE13B],1,0xAD,f);
-		fclose(f);
+        osd_fwrite(f,&RAM[0xE13B],0xAD);
+		osd_fclose(f);
 	}
 
 }
@@ -744,7 +749,7 @@ static struct InputPort Gorf_input_ports[] =
 	},
 	{	/* IN2 */
 		0x9f,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* DSW */
@@ -790,6 +795,7 @@ static struct MachineDriver gorf_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -812,18 +818,18 @@ static struct MachineDriver gorf_machine_driver =
     wow_sh_update               /* Update audio */
 };
 
-static int gorf_hiload(const char *name)
+static int gorf_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if ((RAM[0xD00B]==0xFF) && (RAM[0xD03D]=0x33))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            fread(&RAM[0xD010],1,0x22,f);
-			fclose(f);
+            osd_fread(f,&RAM[0xD010],0x22);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -833,14 +839,14 @@ static int gorf_hiload(const char *name)
 
 
 
-static void gorf_hisave(const char *name)
+static void gorf_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        fwrite(&RAM[0xD010],1,0x22,f);
-		fclose(f);
+        osd_fwrite(f,&RAM[0xD010],0x22);
+		osd_fclose(f);
 	}
 
 }
@@ -891,7 +897,7 @@ static struct InputPort spacezap_input_ports[] =
 	},
 	{	/* IN2 */
 		0xff,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* DSW */
@@ -932,6 +938,7 @@ static struct MachineDriver spacezap_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -954,20 +961,20 @@ static struct MachineDriver spacezap_machine_driver =
 	0
 };
 
-static int spacezap_hiload(const char *name)
+static int spacezap_hiload(void)
 {
 	/* check if memory has already been initialized */
         if (memcmp(&RAM[0xD024],"\x01\x01",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            fread(&RAM[0xD01D],1,6,f);
+            osd_fread(f,&RAM[0xD01D],6);
 			/* Appears twice in memory??? */
 			memcpy(&RAM[0xD041],&RAM[0xD01D],6);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -977,14 +984,14 @@ static int spacezap_hiload(const char *name)
 
 
 
-static void spacezap_hisave(const char *name)
+static void spacezap_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        fwrite(&RAM[0xD01D],1,6,f);
-		fclose(f);
+        osd_fwrite(f,&RAM[0xD01D],6);
+		osd_fclose(f);
 	}
 
 }
@@ -1040,7 +1047,7 @@ static struct InputPort seawolf2_input_ports[] =
 {
 	{	/* IN0 */
 		0x0,
-		{ 0, 0, 0, 0, 0, 0, 0, OSD_KEY_CONTROL },
+		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0, 0, 0, 0, OSD_KEY_LCONTROL },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN1 */
@@ -1105,6 +1112,7 @@ static struct MachineDriver seawolf_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -1127,18 +1135,18 @@ static struct MachineDriver seawolf_machine_driver =
 	0
 };
 
-static int seawolf_hiload(const char *name)
+static int seawolf_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xC20D],"\xD8\x19",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            fread(&RAM[0xC208],1,2,f);
-			fclose(f);
+            osd_fread(f,&RAM[0xC208],2);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -1148,14 +1156,14 @@ static int seawolf_hiload(const char *name)
 
 
 
-static void seawolf_hisave(const char *name)
+static void seawolf_hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        fwrite(&RAM[0xC208],1,2,f);
-		fclose(f);
+        osd_fwrite(f,&RAM[0xC208],2);
+		osd_fclose(f);
 	}
 
 }

@@ -84,6 +84,7 @@ int scramble_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
 
+void scramble_sh_irqtrigger_w(int offset,int data);
 int scramble_sh_interrupt(void);
 int scramble_sh_start(void);
 
@@ -111,7 +112,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa804, 0xa804, galaxian_stars_w },
-	{ 0xa000, 0xa000, sound_command_w },
+	{ 0xa000, 0xa000, soundlatch_w },
+	{ 0xa001, 0xa001, scramble_sh_irqtrigger_w },
 	{ 0x0000, 0x6fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -156,7 +158,7 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
-		{ 0, OSD_KEY_ALT, OSD_KEY_3, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0 },
+		{ 0, OSD_KEY_ALT, OSD_KEY_3, OSD_KEY_LCONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0 },
 		{ 0, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN1 */
@@ -219,7 +221,7 @@ static struct InputPort LTinput_ports[] =
 	},
 	{	/* IN1 */
 		0xfd,
-		{ 0, 0, OSD_KEY_E, OSD_KEY_D, OSD_KEY_F, OSD_KEY_S, OSD_KEY_CONTROL, OSD_KEY_1 },
+		{ 0, 0, OSD_KEY_E, OSD_KEY_D, OSD_KEY_F, OSD_KEY_S, OSD_KEY_LCONTROL, OSD_KEY_1 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN2 */
@@ -287,12 +289,12 @@ static struct InputPort Rescueinput_ports[] =
 {
         {       /* IN0 */
                 0xff,
-                { OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
+                { OSD_KEY_LCONTROL, OSD_KEY_ALT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
                 { 0, 0, 0, 0, 0, 0, 0, 0 }
         },
         {       /* IN1 */
                 0xff,
-                { 0, 0, OSD_KEY_E, OSD_KEY_D, OSD_KEY_F, OSD_KEY_S, OSD_KEY_CONTROL, OSD_KEY_1 },
+                { 0, 0, OSD_KEY_E, OSD_KEY_D, OSD_KEY_F, OSD_KEY_S, OSD_KEY_LCONTROL, OSD_KEY_1 },
                 { 0, 0, 0, 0, 0, 0, 0, 0 }
         },
         {       /* IN2 */
@@ -346,7 +348,7 @@ static struct InputPort AntEaterinput_ports[] =
 {
         {       /* IN0 */
                 0xff,
-                { OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
+                { OSD_KEY_LCONTROL, OSD_KEY_ALT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
                 { OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
         },
         {       /* IN1 */
@@ -430,11 +432,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
+static unsigned char scobra_color_prom[] =
 {
-	/* palette */
-	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
+	0x00,0xF6,0x07,0xF0,0x00,0x80,0x3F,0xC7,0x00,0xFF,0x07,0x27,0x00,0xFF,0xC9,0x39,
+	0x00,0x3C,0x07,0xF0,0x00,0x27,0x29,0xFF,0x00,0xC7,0x17,0xF6,0x00,0xC7,0x39,0x3F
 };
 
 /* This is the original color PROM, however the colors are still not correct - */
@@ -444,6 +445,14 @@ static unsigned char rescue_color_prom[] =
 	/* palette */
 	0x00,0xA4,0x18,0x5B,0x00,0xB6,0x07,0x36,0x00,0xDB,0xA3,0x9B,0x00,0xDC,0x27,0xAD,
 	0x00,0xC0,0x2B,0x5F,0x00,0xAD,0x2F,0x85,0x00,0xE4,0x3F,0x28,0x00,0x9A,0xC0,0x27
+};
+
+/* this is NOT the original color PROM - it's the Scramble one */
+static unsigned char wrong_color_prom[] =
+{
+	/* palette */
+	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
+	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
 };
 
 
@@ -468,6 +477,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -612,27 +622,6 @@ ROM_START( rescue_rom )
 	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xfdbb116f )
 ROM_END
 
-ROM_START( hunchy_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "1b.bin", 0x0000, 0x1000, 0xedc7328b )
-	ROM_LOAD( "2a.bin", 0x1000, 0x1000, 0x07a951d3 )
-	ROM_LOAD( "3a.bin", 0x2000, 0x1000, 0x84d6fc0e )
-	ROM_LOAD( "4c.bin", 0x3000, 0x1000, 0xe2a39fbd )
-	ROM_LOAD( "5a.bin", 0x4000, 0x1000, 0x2f46d302 )
-	ROM_LOAD( "6c.bin", 0x5000, 0x1000, 0x8d6b2637 )
-
-	ROM_REGION(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "8a.bin",  0x0000, 0x0800, 0x7afe3b86 )
-	ROM_LOAD( "9b.bin",  0x0800, 0x0800, 0x015ee94c )
-	ROM_LOAD( "10b.bin", 0x1000, 0x0800, 0x72d82f86 )
-	ROM_LOAD( "11a.bin", 0x1800, 0x0800, 0xf5280414 )
-
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "5b_snd.bin", 0x0000, 0x0800, 0xd71b1c53 )
-ROM_END
-
-
-
 
 
 static int bit(int i,int n)
@@ -752,11 +741,47 @@ Machine -> memory_region[ 0 ][ 0x0099 ] = 0;
 
 
 
+static int scobra_hiload(void)
+{
+  unsigned char *RAM = Machine->memory_region[0];
+  void *f;
+
+  /* Wait for machine initialization to be done. */
+  if (memcmp(&RAM[0x8200], "\x00\x00\x01", 3) != 0) return 0;
+
+  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+    {
+      /* Load and set hiscore table. */
+      osd_fread(f,&RAM[0x8200],3*10);
+      /* copy high score */
+      memcpy(&RAM[0x80A8],&RAM[0x8200],3);
+
+      osd_fclose(f);
+    }
+
+  return 1;
+}
+
+static void scobra_hisave(void)
+{
+  unsigned char *RAM = Machine->memory_region[0];
+  void *f;
+
+  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+      /* Write hiscore table. */
+      osd_fwrite(f,&RAM[0x8200],3*10);
+      osd_fclose(f);
+    }
+}
+
+
+
 struct GameDriver scobra_driver =
 {
 	"Super Cobra (Stern)",
 	"scobra",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	scobra_rom,
@@ -765,17 +790,17 @@ struct GameDriver scobra_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	color_prom, 0, 0,
+	scobra_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	scobra_hiload, scobra_hisave
 };
 
 struct GameDriver scobrak_driver =
 {
 	"Super Cobra (Konami)",
 	"scobrak",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	scobrak_rom,
@@ -784,17 +809,17 @@ struct GameDriver scobrak_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	color_prom, 0, 0,
+	scobra_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	scobra_hiload, scobra_hisave
 };
 
 struct GameDriver scobrab_driver =
 {
 	"Super Cobra (bootleg)",
 	"scobrab",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	scobrab_rom,
@@ -803,10 +828,10 @@ struct GameDriver scobrab_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	color_prom, 0, 0,
+	scobra_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	scobra_hiload, scobra_hisave
 };
 
 struct GameDriver losttomb_driver =
@@ -822,41 +847,41 @@ struct GameDriver losttomb_driver =
 
 	LTinput_ports, 0, trak_ports, LTdsw, LTkeys,
 
-	color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
 
-static int anteater_hiload(const char *name)
+static int anteater_hiload(void)
 {
   unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
+  void *f;
 
   /* Wait for machine initialization to be done. */
   if (memcmp(&RAM[0x146a], "\x01\x04\x80", 3) != 0) return 0;
 
-  if ((f = fopen(name,"rb")) != 0)
+  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
     {
       /* Load and set hiscore table. */
-      fread(&RAM[0x146a],1,6*10,f);
-      fclose(f);
+      osd_fread(f,&RAM[0x146a],6*10);
+      osd_fclose(f);
     }
 
   return 1;
 }
 
-static void anteater_hisave(const char *name)
+static void anteater_hisave(void)
 {
   unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
+  void *f;
 
-  if ((f = fopen(name,"wb")) != 0)
+  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
       /* Write hiscore table. */
-      fwrite(&RAM[0x80ef],1,6*10,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0x80ef],6*10);
+      osd_fclose(f);
     }
 }
 
@@ -874,7 +899,7 @@ struct GameDriver anteater_driver =
 
 	AntEaterinput_ports, 0, trak_ports, AntEaterdsw, AntEaterkeys,
 
-	color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	anteater_hiload, anteater_hisave
@@ -898,24 +923,4 @@ struct GameDriver rescue_driver =
 	ORIENTATION_ROTATE_90,
 
 	0, 0
-};
-
-
-struct GameDriver hunchy_driver =
-{
-        "Hunchback",
-        "hunchy",
-        "JAMES R. TWINE\nCHRIS HARDY",
-        &machine_driver,
-
-        hunchy_rom,
-        0, 0,
-        0,
-
-        LTinput_ports, 0, trak_ports, LTdsw, LTkeys,
-
-        color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-        0, 0
 };

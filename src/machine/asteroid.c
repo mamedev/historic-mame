@@ -8,107 +8,91 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
+#include "machine/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
 
-#define IN0_HYPER	(1 << 3)
-#define IN0_FIRE	(1 << 4)
-#define IN0_SLAM	(1 << 6)
-#define IN0_TEST	(1 << 7)
+int asteroid_interrupt (void)
+{
+	if (cpu_getiloops() == 5)
+		avgdvg_clr_busy();
 
-#define IN1_COIN	(1 << 0)
-#define IN1_COIN2	(1 << 1)
-#define IN1_COIN3	(1 << 2)
-#define IN1_P1		(1 << 3)
-#define IN1_P2		(1 << 4)
-#define IN1_THRUST	(1 << 5)
-#define IN1_RIGHT	(1 << 6)
-#define IN1_LEFT	(1 << 7)
+	/* Turn off interrupts if self-test is enabled */
+	if (readinputport(0) & 0x80)
+		return ignore_interrupt();
+	else
+		return nmi_interrupt();
+}
 
-static int bank = 0;
+int llander_interrupt (void)
+{
+	if (cpu_getiloops() == 5)
+		avgdvg_clr_busy();
 
+	/* Turn off interrupts if self-test is enabled */
+	if (readinputport(0) & 0x02)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
+/*
+ * We catch the following busy loop in Asteroids:
+ * 6812 lda $2002
+ * 6815 bmi $6812
+ *
+ * and the following busy loop in Asteroid Deluxe
+ * 6014 bit $2002
+ * 6017 bmi $6014
+ */
 int asteroid_IN0_r (int offset) {
 
 	int res;
-	int res1;
+	int bitmask;
 
-	res1 = readinputport(0);
-	res = 0x00;
+	res=readinputport(0);
 
-	switch (offset & 0x07) {
-		case 0: /* nothing */
-			break;
-		case 1:  /* clock toggles at 3 KHz*/
-			if (cpu_gettotalcycles() & 0x100)
-				res = 0x80;
-		case 2: /* vector generator halt */
-			break;
-		case 3: /* hyperspace/shield */
-			if (res1 & IN0_HYPER) res |= 0x80;
-			break;
-		case 4: /* fire */
-			if (res1 & IN0_FIRE) res |= 0x80;
-			break;
-		case 5: /* diagnostics */
-			break;
-		case 6: /* slam */
-			if (res1 & IN0_SLAM) res |= 0x80;
-			break;
-		case 7: /* self test */
-			if (res1 & IN0_TEST) res |= 0x80;
-			break;
-		}
-	return res;
+	bitmask = (1 << offset);
+
+	if (cpu_gettotalcycles() & 0x100)
+		res |= 0x02;
+	if (!avgdvg_done()) {
+		if (cpu_getpc()==0x6815)
+			cpu_seticount(0);
+		if (cpu_getpc()==0x6017)
+			cpu_seticount(0);
+		res |= 0x04;
 	}
+
+	if (res & bitmask)
+		res = 0x80;
+	else
+		res = ~0x80;
+
+	return res;
+}
 
 /*
+ * These 7 memory locations are used to read the player's controls.
+ * Typically, only the high bit is used. This is handled by one input port.
+ */
 
-These 7 memory locations are used to read the player's controls.
-Typically, only the high bit is used. Note that the coin inputs are active-low.
-
-*/
-
-int asteroid_IN1_r (int offset) {
-
+int asteroid_IN1_r (int offset)
+{
 	int res;
-	int res1;
+	int bitmask;
 
-	res1 = readinputport(1);
-	res = 0x00;
+	res=readinputport(1);
+	bitmask = (1 << offset);
 
-	switch (offset & 0x07) {
-		case 0: /* left coin slot */
-			res = 0x80;
-			if (res1 & IN1_COIN) res &= ~0x80;
-			break;
-		case 1:  /* center coin slot */
-			res = 0x80;
-/*			if (res1 & IN1_COIN2) res &= ~0x80; */
-			break;
-		case 2: /* right coin slot */
-			res = 0x80;
-/*			if (res1 & IN1_COIN3) res &= ~0x80; */
-			break;
-		case 3: /* 1P start */
-			if (res1 & IN1_P1) res |= 0x80;
-			break;
-		case 4: /* 2P start */
-			if (res1 & IN1_P2) res |= 0x80;
-			break;
-		case 5: /* thrust */
-			if (res1 & IN1_THRUST) res |= 0x80;
-			break;
-		case 6: /* rotate right */
-			if (res1 & IN1_RIGHT) res |= 0x80;
-			break;
-		case 7: /* rotate left */
-			if (res1 & IN1_LEFT) res |= 0x80;
-			break;
-		}
-	return res;
-	}
+	if (res & bitmask)
+		res = 0x80;
+	else
+	 	res = ~0x80;
+	return (res);
+}
 
-int asteroid_DSW1_r (int offset) {
-
+int asteroid_DSW1_r (int offset)
+{
 	int res;
 	int res1;
 
@@ -116,66 +100,96 @@ int asteroid_DSW1_r (int offset) {
 
 	res = 0xfc | ((res1 >> (2 * (3 - (offset & 0x3)))) & 0x3);
 	return res;
-	}
+}
 
-void asteroid_bank_switch_w (int offset,int data) {
 
-	int newbank;
+void asteroid_bank_switch_w (int offset,int data)
+{
+	static int asteroid_bank = 0;
+	int asteroid_newbank;
 
-	newbank = (data >> 2) & 1;
-	if (bank != newbank) {
-		/* Perform bankswitching on page 1 and page 2 */
+	asteroid_newbank = (data >> 2) & 1;
+	if (asteroid_bank != asteroid_newbank) {
+		/* Perform bankswitching on page 2 and page 3 */
 		int temp;
 		int i;
 
-		bank = newbank;
+		asteroid_bank = asteroid_newbank;
 		for (i = 0; i < 0x100; i++) {
-			temp = RAM[0x100 + i];
-			RAM[0x100 + i] = RAM[0x200 + i];
-			RAM[0x200 + i] = temp;
-			}
+			temp = RAM[0x200 + i];
+			RAM[0x200 + i] = RAM[0x300 + i];
+			RAM[0x300 + i] = temp;
 		}
 	}
+}
 
-void astdelux_bank_switch_w (int offset,int data) {
+void astdelux_bank_switch_w (int offset,int data)
+{
+	static int astdelux_bank = 0;
+	int astdelux_newbank;
 
-	int newbank;
+	astdelux_newbank = (data >> 7) & 1;
+	if (astdelux_bank != astdelux_newbank) {
+		/* Perform bankswitching on page 2 and page 3 */
+		int temp;
+		int i;
 
-	switch (offset & 0x07) {
-		case 0: /* Player 1 start LED */
-			break;
-		case 1:  /* Player 2 start LED */
-			break;
-		case 2:
-			break;
-		case 3: /* Thrust sound */
-			break;
-		case 4: /* bank switch */
-			newbank = (data >> 2) & 1;
-			if (bank != newbank) {
-				/* Perform bankswitching on page 1 and page 2 */
-				int temp;
-				int i;
-
-				bank = newbank;
-				for (i = 0; i < 0x100; i++) {
-					temp = RAM[0x100 + i];
-					RAM[0x100 + i] = RAM[0x200 + i];
-				RAM[0x200 + i] = temp;
-					}
-				}
-			break;
-		case 5: /* left coin counter */
-			break;
-		case 6: /* center coin counter */
-			break;
-		case 7: /* right coin counter */
-			break;
+		astdelux_bank = astdelux_newbank;
+		for (i = 0; i < 0x100; i++) {
+			temp = RAM[0x200 + i];
+			RAM[0x200 + i] = RAM[0x300 + i];
+			RAM[0x300 + i] = temp;
 		}
 	}
+}
 
 void asteroid_init_machine(void)
 {
-	bank = 0;
+	asteroid_bank_switch_w (0,0);
+	avgdvg_clr_busy();
 }
 
+void astdelux_init_machine(void)
+{
+	avg_fake_colorram_w(7,3);
+	avgdvg_clr_busy();
+}
+
+/*
+ * This is Lunar Lander's Inputport 0.
+ * We also catch the following busyloop:
+ * 6531 lda $2000
+ * 6534 lsr
+ * 6535 bcc 6531
+ */
+int llander_IN0_r (int offset)
+{
+	int res;
+
+	if (cpu_getpc()==0x6534)
+		cpu_seticount(0);
+
+	res = readinputport(0);
+
+	if (avgdvg_done())
+		res |= 0x01;
+	if (cpu_gettotalcycles() & 0x100)
+		res |= 0x40;
+
+	return res;
+}
+
+void llander_init_machine(void)
+{
+	avgdvg_clr_busy();
+}
+
+int llander_zeropage_r(int offset)
+{
+	return RAM[0x0100+offset];
+}
+
+void llander_zeropage_w(int offset,int data)
+{
+	RAM[0x0100+offset]=data;
+}

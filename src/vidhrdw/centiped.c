@@ -12,7 +12,7 @@
 
 
 unsigned char *centiped_charpalette,*centiped_spritepalette;
-
+static int flipscreen;
 
 
 /***************************************************************************
@@ -49,6 +49,7 @@ void centiped_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 			palette[3*i + 2] = 0xff * ((i >> 2) & 1);
 		}
 	}
+	flipscreen = 0;
 }
 
 
@@ -59,6 +60,15 @@ void centiped_vh_charpalette_w(int offset, int data)
 	Machine->gfx[0]->colortable[offset] = Machine->pens[15 - data];
 
 	memset(dirtybuffer,1,videoram_size);
+}
+
+void centiped_vh_flipscreen_w (int offset,int data)
+{
+	if (flipscreen != (data & 0x80))
+	{
+		flipscreen = data & 0x80;
+		memset (dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -89,7 +99,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					(videoram[offs] & 0x3f) + 0x40,0,
-					0,0,
+					flipscreen,flipscreen,
 					8*(sx+1),8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -106,11 +116,14 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (spriteram[offs + 0x20] < 0xf8)
 		{
 			int spritenum,color;
+			int flipx;
 
 
 			spritenum = spriteram[offs] & 0x3f;
 			if (spritenum & 1) spritenum = spritenum / 2 + 64;
 			else spritenum = spritenum / 2;
+
+			flipx = (spriteram[offs] & 0x80) ^ flipscreen;
 
 			color = spriteram[offs+0x30];
 			Machine->gfx[1]->colortable[3] =
@@ -121,7 +134,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 					Machine->pens[15 - centiped_spritepalette[(color >> 0) & 3]];
 			drawgfx(bitmap,Machine->gfx[1],
 					spritenum,0,
-					spriteram[offs] & 0x80,0,
+					flipx,flipscreen,
 					248 - spriteram[offs + 0x10],248 - spriteram[offs + 0x20],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}

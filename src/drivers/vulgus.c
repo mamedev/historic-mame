@@ -82,7 +82,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scrolllow },
 	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scrollhigh },
-	{ 0xc800, 0xc800, sound_command_w },
+	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -92,7 +92,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, sound_command_latch_r },
+	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -120,7 +120,7 @@ static struct InputPort input_ports[] =
 	{	/* IN1 */
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
 				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
 	},
@@ -349,6 +349,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -406,7 +407,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -417,16 +418,16 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0xee00],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0xee34],"\x00\x32\x50",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xee00],1,13*5,f);
+			osd_fread(f,&RAM[0xee00],13*5);
 			RAM[0xee47] = RAM[0xee00];
 			RAM[0xee48] = RAM[0xee01];
 			RAM[0xee49] = RAM[0xee02];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -436,18 +437,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xee00],1,13*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xee00],13*5);
+		osd_fclose(f);
 	}
 }
 

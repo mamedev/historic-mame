@@ -14,8 +14,9 @@ int qbert_IN1_r(int offset);
 extern unsigned char *gottlieb_paletteram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern const char *gottlieb_sample_names[];
 
+extern struct MemoryReadAddress gottlieb_sound_readmem[];
+extern struct MemoryWriteAddress gottlieb_sound_writemem[];
 int gottlieb_sh_start(void);
 void gottlieb_sh_stop(void);
 void gottlieb_sh_update(void);
@@ -49,6 +50,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+
 
 
 
@@ -167,15 +169,23 @@ static const struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU ,
+			3579545/4,
+			2,             /* memory region #2 */
+			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,
+			gottlieb_sh_interrupt,1
 		}
 	},
 	60,     /* frames / second */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1+16, 16,
+	16, 16,
 	gottlieb_vh_init_color_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -208,48 +218,54 @@ ROM_START( qbertqub_rom )
 	ROM_LOAD( "qq-fg2.bin", 0x6000, 0x4000, 0xa6a4660c )       /* sprites */
 	ROM_LOAD( "qq-fg1.bin", 0xA000, 0x4000, 0x038fc633 )       /* sprites */
 	ROM_LOAD( "qq-fg0.bin", 0xE000, 0x4000, 0x65b1f0f1 )       /* sprites */
+
+	ROM_REGION(0x10000)      /* 64k for sound cpu */
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_RELOAD(0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	FILE *f=fopen(name,"rb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	/* no need to wait for anything: Q*bert Qub doesn't touch the tables
 		if the checksum is correct */
 	if (f) {
-		fread(RAM+0x200,2*20,15,f); /* hi-score entries */
-		fread(RAM+0x458,8,1,f); /* checksum */
-		fclose(f);
+		osd_fread(f,RAM+0x200,2*20*15); /* hi-score entries */
+		osd_fread(f,RAM+0x458,8); /* checksum */
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f=fopen(name,"wb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
-		fwrite(RAM+0x200,2*20,15,f); /* hi-score entries */
-		fwrite(RAM+0x458,8,1,f); /* checksum */
-		fclose(f);
+		osd_fwrite(f,RAM+0x200,2*20*15); /* hi-score entries */
+		osd_fwrite(f,RAM+0x458,8); /* checksum */
+		osd_fclose(f);
 	}
 }
 
 
 struct GameDriver qbertqub_driver =
 {
-        "Q*Bert Qubes",
+	"Q*Bert Qubes",
 	"qbertqub",
-        "FABRICE FRANCES\nRODIMUS PRIME",
+	"FABRICE FRANCES",
 	&machine_driver,
 
 	qbertqub_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	gottlieb_sample_names,
+	0,
 
 	input_ports, 0, trak_ports, dsw, keys,
 

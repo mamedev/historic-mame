@@ -113,3 +113,21 @@ int sound_pending_commands_r(int offset)
 	if (pending_commands > 0) return 0xff;
 	else return 0;
 }
+
+
+
+static int latch,read_debug;
+
+void soundlatch_w(int offset,int data)
+{
+if (errorlog && read_debug == 0)
+	fprintf(errorlog,"Warning: sound latch written before being read. Previous: %02x, new: %02x\n",latch,data);
+	latch = data;
+	read_debug = 0;
+}
+
+int soundlatch_r(int offset)
+{
+	read_debug = 1;
+	return latch;
+}

@@ -8,19 +8,30 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
+#include "vidhrdw/avgdvg.h"
 #include "Z80.h"
 
-int omegrace_vg_start(void)
+/* Omega Race expects the vector ram to be zeroedo
+ * and the vector processor to be ready.
+ */
+void omegrace_init_machine(void)
 {
-	if (vg_init(0x2000, USE_DVG,0))
-		return 1;
-	return 0;
+	/* vector ram */
+	memset (&(Machine->memory_region[0][0x8000]),0,0x1000);
+	/* reset vector processor */
+	avgdvg_clr_busy();
+}
+
+int omegrace_interrupt(void)
+{
+	update_analog_ports();
+	if (cpu_getiloops()==5) avgdvg_clr_busy();
+	return interrupt();
 }
 
 int omegrace_vg_go(int data)
 {
-	vg_go(cpu_gettotalcycles()>>1);
+	avgdvg_go(0,0);
 	return 0;
 }
 
@@ -31,10 +42,9 @@ int omegrace_watchdog_r(int offset)
 
 int omegrace_vg_status_r(int offset)
 {
-/*	if (errorlog) fprintf(errorlog,"reading vg_halt\n");*/
-	if (vg_done(cpu_gettotalcycles()>>1))
+	if (avgdvg_done())
 		return 0;
-	else 
+	else
 		return 0x80;
 }
 
@@ -60,30 +70,12 @@ static char spinnerTable[64] = {
 	0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
 	0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08 };
 
-#define SPINNER_SENSITY 5 
 
 int omegrace_spinner1_r(int offset)
 {
-	static int spinner=0;
-	static int spintime=SPINNER_SENSITY;
 	int res;
+	res=readinputport(4);
 
-	res=readtrakport(0);
-	if (res != NO_TRAK) spinner+=res;
-	
-	if ((spintime--) == 0) {
-		res=readinputport(4);
-		if (res & 0x01)
-			spinner--;
-		if (res & 0x02)
-			spinner++;
-		spintime=SPINNER_SENSITY;
-	}
-	return (spinnerTable[spinner & 0x3f]);
+	return (spinnerTable[res&0x3f]);
 }
 
-int omegrace_spinner2_r(int offset)
-{
-	if (errorlog) fprintf(errorlog,"reading spinner 2\n");
-	return (0);
-}

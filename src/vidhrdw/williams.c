@@ -10,40 +10,516 @@
 #include "vidhrdw/generic.h"
 #include "M6809.h"
 
-/*  The normal height for a Williams game is 256, but not all the
- *  lines are used. 240 lines is just enough and more compatible
- *  with the PC resolutions
- */
 
-#define HEIGHT_240
-
-/*  Skip some lines at the top of the screen because we lose bottom lines
- *  used only with HEIGHT_240
- */
-
-#define START_OFFSET 4
-#define VIDEO_RAM_SIZE 0x9800
-
-extern int video_counter;
-extern int defender_bank;
-extern int bank_address;
-
-/*  0 = I/O
- *  1 = BANK 1
- *  2 = BANK 2
- *  3 = BANK 3
- *  7 = BANK 4
- */
+#define SCREEN_WIDTH 304
+#define SCREEN_HEIGHT 256
 
 
-int Erase_screen_each_vbl;
+extern unsigned char *williams_bank_select;
+extern unsigned char *blaster_bank_ram;
 
-void Williams_Palette_w(int offset,int data);
 
-static unsigned char *williams_videoram;
+unsigned char *williams_blitterram;
+unsigned char *williams_paletteram;
+unsigned char *williams_videoram;
+unsigned char *blaster_remap_select;
+unsigned char *blaster_video_bits;
+int williams_paletteram_size;
+
+unsigned char *blaster_color_zero_table;
+unsigned char *blaster_color_zero_flags;
+
+
 static struct osd_bitmap *williams_bitmap;
-
 static unsigned char inverse_colors[256];
+
+
+static void williams_videoram_blitter_w (int offset, int data, int flag, int p1, int p2);
+
+
+/*
+ *  Utility function to put 2 Pixels in the real bitmap
+ */
+
+inline void PutPix2 (int y, int x, int p1, int p2)
+{
+	unsigned char *lookup = Machine->gfx[0]->colortable;
+	int dx = 1;
+
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = SCREEN_WIDTH-1 - x, dx = -1;
+
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = SCREEN_HEIGHT-1 - y;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		williams_bitmap->line[x][y] = lookup[p1];
+		williams_bitmap->line[x+dx][y] = lookup[p2];
+	}
+	else
+	{
+		unsigned char *p = &williams_bitmap->line[y][x];
+		p[0] = lookup[p1];
+		p[dx] = lookup[p2];
+	}
+
+}
+
+
+/***************************************************************************
+
+	Common Williams routines
+
+***************************************************************************/
+
+/*
+ *  Create the palette
+ */
+
+void williams_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
+	}
+
+	/* initialize the color table */
+	/* we reserve pen 0 for the background black which makes the */
+	/* MS-DOS version look better */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i + 1;
+
+}
+
+
+
+/*
+ *  Start the video hardware emulation
+ */
+
+int williams_vh_start (void)
+{
+	int i;
+
+	/* Allocate the offscreen bitmap */
+	if ((williams_bitmap = osd_create_bitmap (SCREEN_WIDTH, SCREEN_HEIGHT)) == 0)
+		return 1;
+
+   /* Allocate space for video ram  */
+	if ((williams_videoram = malloc (videoram_size)) == 0)
+	{
+		osd_free_bitmap (williams_bitmap);
+		return 1;
+	}
+	memset (williams_videoram, 0, videoram_size);
+
+	/* Generate the inverse colors table */
+	memset (inverse_colors, 0, sizeof (inverse_colors));
+	for (i = 0; i < 16; i++)
+		inverse_colors[Machine->gfx[0]->colortable[i]] = i;
+
+	return 0;
+}
+
+
+/*
+ *  Stop the video hardware emulation
+ */
+
+void williams_vh_stop (void)
+{
+	free (williams_videoram);
+	osd_free_bitmap (williams_bitmap);
+}
+
+
+/*
+ *  Video update
+ */
+
+void williams_vh_screenrefresh (struct osd_bitmap *bitmap)
+{
+	if (Machine->drv->visible_area.max_y == SCREEN_HEIGHT-1)
+		copybitmap (bitmap, williams_bitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	else
+	{
+		int scrollx = 0, scrolly = -4;
+		copyscrollbitmap (bitmap, williams_bitmap, 0, &scrollx, 1, &scrolly, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	}
+}
+
+
+/*
+ *  Generic videoram write function; works for every game
+ */
+
+void williams_videoram_w (int offset, int data)
+{
+	int x, y;
+
+	/* Put the byte in the videoram */
+	williams_videoram[offset] = data;
+
+	/* Put the pixels in our bitmap */
+	x = offset % 256;
+	y = offset / 256;
+	PutPix2 (x, y*2, data >> 4, data & 0x0f);
+}
+
+
+/*
+ *  Generic videoram read function; works for every game except Blaster
+ */
+
+int williams_videoram_r (int offset)
+{
+	/* Read the video ram or the ROM */
+	if (*williams_bank_select == 0)
+			return williams_videoram[offset];
+	else
+		return RAM[offset];
+}
+
+
+/*
+ *  Generic palette write function; works for every game
+ */
+
+void williams_palette_w (int offset, int data)
+{
+	int r, g, b;
+	int bit0,bit1,bit2;
+
+
+   williams_paletteram[offset] = data;
+
+
+	/* red component */
+	bit0 = (data >> 0) & 0x01;
+	bit1 = (data >> 1) & 0x01;
+	bit2 = (data >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* green component */
+	bit0 = (data >> 3) & 0x01;
+	bit1 = (data >> 4) & 0x01;
+	bit2 = (data >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* blue component */
+	bit0 = 0;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen (Machine->gfx[0]->colortable[offset], r, g, b);
+}
+
+
+/*
+ *  Blitter access for most games, except blaster
+ */
+
+void williams_blitter_w (int offset, int data)
+{
+	unsigned short source, dest, start;
+	int i, j, w, h, offs;
+
+	if (offset)
+	{
+		williams_blitterram[offset] = data;
+		return;
+	}
+
+	offs = SCREEN_HEIGHT - williams_blitterram[7];
+	source = (williams_blitterram[2] << 8) + williams_blitterram[3];
+	start = (williams_blitterram[4] << 8) + williams_blitterram[5];
+	dest = start;
+
+	w = williams_blitterram[6] ^ 4;
+	h = williams_blitterram[7] ^ 4;
+
+/*Patch for Sinistar*/
+	if(h == 255)
+		h++;
+
+	if (w == 0)
+	{
+		/*
+		 *  Special case for Bubbles , will work correctly when my blitter routine
+		 *  will check the transparent flag
+		 *  Blit some code from rom to ram.
+		 */
+		for (i = 0; i <= h; i++)
+		{
+			for (j = 0; j <= w; j++)
+			{
+				int pix = RAM[source];
+				int p1 = pix >> 4;
+				int p2 = pix & 0x0f;
+
+				williams_videoram_blitter_w (dest, pix, data, p1, p2);
+				source++;
+				dest += SCREEN_HEIGHT;
+			}
+			start += 1;
+			dest = start;
+		}
+	}
+	else
+	{
+		for (i = 0; i < h; i++)
+		{
+			for (j = 0; j < w; j++)
+			{
+				int pix = williams_videoram_r (source);
+				int p1 = pix >> 4;
+				int p2 = pix & 0x0f;
+
+				williams_videoram_blitter_w (dest, pix, data, p1, p2);
+				source++;
+				dest += SCREEN_HEIGHT;
+			}
+			start += 1;
+			dest = start;
+		}
+	}
+
+	/* Log blits */
+	if (errorlog)
+	{
+		fprintf(errorlog,"---------- Blit %02X--------------PC: %04X\n",data,m6809_GetPC());
+		fprintf(errorlog,"Source : %02X %02X\n",williams_blitterram[2],williams_blitterram[3]);
+		fprintf(errorlog,"Dest   : %02X %02X\n",williams_blitterram[4],williams_blitterram[5]);
+		fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",williams_blitterram[6],williams_blitterram[7],williams_blitterram[6]^4,williams_blitterram[7]^4);
+		fprintf(errorlog,"Mask   : %02X\n",williams_blitterram[1]);
+	}
+}
+
+
+/*
+ *  Core blitting routine; used by everyone
+ */
+
+static void williams_videoram_blitter_w (int offset, int data, int flag, int p1, int p2)
+{
+	unsigned char *bm1, *bm2;
+	int x, y, dx = 1;
+	int pb1, pb2;
+
+/*Sinistar*/
+/*
+		if ((offset >= 0x7000) && (offset <= 0x9800))
+			return;
+*/
+
+	/* Clip if outside the video then it is in RAM[] -- Bubble blit some code at $9800 + */
+	if (offset >= 0x9800)
+	{
+
+		/* But do not write on ROM, Joust blit at $FXXX when a shape pass the left of the screen */
+		if (offset >= 0xc000)
+			return;
+
+		RAM[offset] = data;
+		return;
+	}
+
+	/*  Calcul the real x-y	 */
+	x = offset / 256;
+	x = (x * 2) + ((flag >> 5) & 1);
+	y = offset % 256;
+
+	/*
+	 *  1000 0000 Do not process half the byte 4-7
+	 *  0100 0000 Do not process half the byte 0-3
+	 *  0010 0000 Shift the shape one pixel right (to display a shape on an odd pixel)
+	 *  0001 0000 Remap, if shape != 0 then = mask
+	 *  0000 1000 Source  1 = take source 0 = take Mask only
+	 *  0000 0100
+	 *  0000 0010 Transparent
+	 *  0000 0001
+	 */
+
+	/*  Background pixels  */
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = SCREEN_WIDTH-1 - x, dx = -1;
+
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = SCREEN_HEIGHT-1 - y;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		bm1 = &williams_bitmap->line[x][y];
+		bm2 = &williams_bitmap->line[x+dx][y];
+	}
+	else
+	{
+		bm1 = &williams_bitmap->line[y][x];
+		bm2 = bm1 + dx;
+	}
+
+	pb1 = inverse_colors[*bm1];
+	pb2 = inverse_colors[*bm2];
+
+	/*  Not optimized yet, there must be a way to do that faster  */
+	if ((flag & 0x08) == 0)
+	{
+		if ((flag & 0x10) == 0)
+		{
+/*02 or 00*/
+			if ((flag & 0x80) == 0)
+				pb1 = p1;
+			if((flag & 0x40) == 0)
+				pb2 = p2;
+		}
+		else
+		{
+/*12 or 10*/
+			if ((flag & 0x80) == 0)
+				pb1 = williams_blitterram[1] >> 4;
+			if ((flag & 0x40) == 0)
+				pb2 = williams_blitterram[1] & 0x0F;
+		}
+	}
+	else
+	{
+		if ((flag & 0x10) == 0)
+		{
+/*0A or 08*/
+			if (p1 != 0)
+				if ((flag & 0x80) == 0)
+					pb1 = p1;
+			if (p2 != 0)
+				if ((flag & 0x40) == 0)
+					pb2 = p2;
+		}
+		else
+		{
+/*1A or 18*/
+			if (p1 != 0)
+				if ((flag & 0x80) == 0)
+					pb1 = williams_blitterram[1] >> 4;
+			if (p2 != 0)
+				if ((flag & 0x40) == 0)
+					pb2 = williams_blitterram[1] & 0x0f;
+		}
+
+	}
+
+
+	/*
+	 *  Put the byte in the videoram
+	 *  Not really good if flag & 0x20 != 0
+	 *  But the games seem to never read the video ram.
+	 */
+
+	williams_videoram[offset] = (pb1 << 4) + pb2;
+
+	/*  Put the pixels in our bitmap  */
+	*bm1 = Machine->gfx[0]->colortable[pb1];
+	*bm2 = Machine->gfx[0]->colortable[pb2];
+}
+
+
+
+/***************************************************************************
+
+	Splat-specific routines
+
+***************************************************************************/
+
+/*
+ * Same as williams_blitter_w but no ^ 4 with the Width and Length
+ * For Splat or any game that use SC2 chips.
+ */
+
+void splat_blitter_w(int offset,int data)
+{
+	unsigned short source, dest, start;
+	int i, j, w, h, offs;
+
+	if (offset)
+	{
+		williams_blitterram[offset] = data;
+		return;
+	}
+
+	offs = SCREEN_HEIGHT - williams_blitterram[7];
+	source = (williams_blitterram[2] << 8) + williams_blitterram[3];
+	start = (williams_blitterram[4] << 8) + williams_blitterram[5];
+	dest = start;
+
+	w = williams_blitterram[6];
+	h = williams_blitterram[7];
+
+	for (i = 0; i < h; i++)
+	{
+		for (j = 0; j < w; j++)
+		{
+			int pix = williams_videoram_r (source);
+			int p1 = pix >> 4;
+			int p2 = pix & 0x0F;
+
+			williams_videoram_blitter_w (dest, pix, data, p1, p2);
+			source++;
+			dest += SCREEN_HEIGHT;
+		}
+		start += 1;
+		dest = start;
+	}
+
+	/* Log blits */
+	if (errorlog)
+	{
+		fprintf(errorlog,"---------- Blit %02X--------------\n",data);
+		fprintf(errorlog,"Source : %02X %02X\n",williams_blitterram[2],williams_blitterram[3]);
+		fprintf(errorlog,"Dest   : %02X %02X\n",williams_blitterram[4],williams_blitterram[5]);
+		fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",williams_blitterram[6],williams_blitterram[7],williams_blitterram[6],williams_blitterram[7]);
+		fprintf(errorlog,"Mask   : %02X\n",williams_blitterram[1]);
+	}
+}
+
+
+
+/***************************************************************************
+
+	Defender-specific routines
+
+***************************************************************************/
+
+/*
+ * Defender video ram Write
+ * Same as the others but Write in RAM[]
+ */
+
+void defender_videoram_w (int offset, int data)
+{
+	int x, y;
+
+	/* Write to the real video RAM */
+	videoram[offset] = data;
+
+	/* Put the pixels in our bitmap */
+	x = offset % 256;
+	y = offset / 256;
+	PutPix2 (x, y*2, data >> 4, data & 0x0f);
+}
+
+
+
+/***************************************************************************
+
+	Blaster-specific routines
+
+***************************************************************************/
 
 /*
  *  Prom to remap the colors of the shapes of Blaster.
@@ -52,7 +528,8 @@ static unsigned char inverse_colors[256];
  *  0xC940 bits 0-6 is plugged at A4-A10 of the Prom
  */
 
-static char BlasterRemapProm[] = {
+static char BlasterRemapProm[] =
+{
      0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
      0x00,0x01,0x02,0x03,0x04,0x05,0x04,0x01,0x03,0x09,0x0A,0x01,0x0C,0x0D,0x0F,0x0F,
      0x00,0x01,0x02,0x03,0x04,0x05,0x0C,0x0D,0x0A,0x09,0x0A,0x0C,0x0C,0x0D,0x0B,0x0F,
@@ -183,555 +660,177 @@ static char BlasterRemapProm[] = {
 };
 
 
-void williams_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+/*
+ *  Create the palette
+ */
+void blaster_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	unsigned char *pal;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
+	pal = palette;
 
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
+/* Set all the 256 colors because we need tham to remap the color 0 */
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
+		int bit0,bit1,bit2;
+
+		/* red component */
+		bit0 = (i >> 0) & 0x01;
+		bit1 = (i >> 1) & 0x01;
+		bit2 = (i >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (i >> 3) & 0x01;
+		bit1 = (i >> 4) & 0x01;
+		bit2 = (i >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (i >> 6) & 0x01;
+		bit2 = (i >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 	}
 
-	/* initialize the color table */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
+/* Keep at leat the pure red ones since the first 16 will be used for the game */
+/* This important because the Robot grid user those reds */
+	for(i=0;i<16*3;i++)
+		pal[i+64*3] = pal[i];
+
+/* all gfx elements use the same palette */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 1;
+		COLOR(0,i) = i;
+
+
 }
-
-
-/**************
- * Put 2 Pixels in the real bitmap
- */
-inline void PutPix2(int x,int y,int p1,int p2)
-{
-	unsigned char *p = &williams_bitmap->line[x][y];
-	unsigned char *lookup = Machine->gfx[0]->colortable;
-	p[0] = lookup[p1];
-	p[1] = lookup[p2];
-}
-
-
-
-/**************
- *
- */
-void williams_videoram_w(int offset,int data)
-{
-	int x,y;
-
-	/* Put the byte in the videoram */
-	williams_videoram[offset] = data;
-
-	/* Put the pixels in our bitmap */
-	x = offset % 256;
-
-#ifdef HEIGHT_240
-	x -= START_OFFSET;
-	if (x<0)
-		return;
-	if (x>=240)
-		return;
-#endif
-
-	y = offset / 256;
-	PutPix2(x, (y*2),   data>>4, data & 0x0F);
-}
-
-/**************
- *
- */
-void blaster_videoram_w(int offset,int data)
-{
-	int x,y;
-
-	/*Put the byte in the videoram*/
-	RAM[offset] = data;
-
-	/*Put the pixels in our bitmap*/
-	x = offset % 256;
-
-#ifdef HEIGHT_240
-	x -= START_OFFSET;
-	if(x<0)
-		return;
-	if(x>=240)
-		return;
-#endif
-
-	y = offset / 256;
-	PutPix2(x,(y*2),data>>4,data&0x0F);
-}
-
-/**************
- *
- */
-int williams_videoram_r(int offset)
-{
-	/* Read the video ram or the ROM */
-	if (RAM[0xc900] == 0)
-	{
-		if (offset>>8 >= 0x98)
-			return RAM[offset];
-		else
-			return williams_videoram[offset];
-	}
-	else
-		return RAM[offset];
-}
-
-
-/**************
- *
- */
-int blaster_videoram_r(int offset)
-{
-	if (offset>>8 < 0x40)
-	{
-		if (RAM[0xc900] == 0)
-			return RAM[offset];
-		else
-			return RAM[bank_address+offset];
-	}
-
-
-	/*   Read the video ram or the ROM 	*/
-
-	if (RAM[0xc900] == 0)
-		return RAM[offset];
-	else
-	{
-		if (offset>>8 >= 0x97)
-			return RAM[offset];
-		else
-			return RAM[0x40000+offset];
-	}
-}
-
-
-
-
-/**************
- * Write in the video ram for the blitter
- */
-void williams_videoram_blitter_w(int offset,int data,int flag,int p1,int p2,unsigned char *vram)
-{
-	int x,y;
-	int pb1,pb2;
-	unsigned char *bm;
-
-	/*  Calcul the real x-y	 */
-	x = offset % 256;
-	y = offset / 256;
-
-#ifdef HEIGHT_240
-	x -= START_OFFSET;
-	if (x<0 || x>=240)
-		return;
-#endif
-
-/*
- 1000 0000 Do not process half the byte 4-7
- 0100 0000 Do not process half the byte 0-3
- 0010 0000 Shift the shape one pixel right (to display a shape on an odd pixel)
- 0001 0000 Remap, if shape != 0 then = mask
- 0000 1000 Source  1 = take source 0 = take Mask only
- 0000 0100
- 0000 0010 Transparent
- 0000 0001
-*/
-
-	/*  Background pixels  */
-	bm = &williams_bitmap->line[x][(y * 2) + ((flag >> 5) & 1)];
-	pb1 = inverse_colors[bm[0]];
-	pb2 = inverse_colors[bm[1]];
-
-	/*  Not optimized yet, there must be a way to do that faster  */
-	if ((flag & 0x08) == 0)
-	{
-		if ((flag & 0x10) == 0)
-		{
-			if ((flag & 0x80) == 0)
-				pb1 = p1;
-			if((flag & 0x40) == 0)
-				pb2 = p2;
-		}
-		else
-		{
-			if ((flag & 0x80) == 0)
-				pb1 = RAM[0xCA01] >> 4;
-			if ((flag & 0x40) == 0)
-				pb2 = RAM[0xCA01] & 0x0F;
-		}
-	}
-	else
-	{
-		if ((flag & 0x10) == 0)
-		{
-			if (p1 != 0)
-				if ((flag & 0x80) == 0)
-					pb1 = p1;
-			if (p2 != 0)
-				if ((flag & 0x40) == 0)
-					pb2 = p2;
-		}
-		else
-		{
-			if (p1 != 0)
-				if ((flag & 0x80) == 0)
-					pb1 = RAM[0xCA01] >> 4;
-			if (p2 != 0)
-				if ((flag & 0x40) == 0)
-					pb2 = RAM[0xCA01] & 0x0f;
-		}
-
-	}
-
-
-/*   Clip if outside the video then it is in RAM[]
- *   Bubble blit some code at $9800 +
- */
-
-	if (offset >= 0x9800)
-	{
-
-/*   But do not write on ROM, Joust blit at $FXXX when a shape pass the
- *   left of the screen
- */
-
-		if (offset >= 0xE000)
-			return;
-		RAM[offset] = data;
-		return;
-	}
-
-/*  Put the byte in the videoram
- *  Not really good if flag & 0x20 != 0
- *  But the games seem to never read the video ram.
- */
-	vram[offset] = (pb1 << 4) + pb2;
-
-	/*  Put the pixels in our bitmap  */
-	bm[0] = Machine->gfx[0]->colortable[pb1];
-	bm[1] = Machine->gfx[0]->colortable[pb2];
-}
-
 
 
 /*
-label CA01 blitter_mask
-label CA02 blitter_source   hi
-label CA03 blitter_source   lo
-label CA04 blitter_dest     hi
-label CA05 blitter_dest     lo
-label CA06 blitter_w_h      H +1
-label CA07 blitter_w_h      W +1
-*/
-
-#define SCREEN_WIDTH 256
-
-
-/**************
- *
+ *  Blaster-specific screen refresh; handles the erase screen bit
  */
-void williams_StartBlitter(int offset,int data)
+
+void blaster_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int i,j,offs;
-	unsigned short source,dest,start;
-
-	offs = SCREEN_WIDTH - RAM[0xCA07];
-	source = (RAM[0xCA02]<<8) + RAM[0xCA03];
-	start = (RAM[0xCA04]<<8) + RAM[0xCA05];
-	dest = start;
-
-
-	if((RAM[0xCA06]^4) == 0)
-	{
-
-/*  Special case for Bubbles , will work correctly when my blitter routine
- *  will check the transparent flag
- *  Blit some code from rom to ram.
- */
-
-		for(i=0;i<=(RAM[0xCA07]^4);i++)
-		{
-			for(j=0;j<=(RAM[0xCA06]^4);j++)
-			{
-				int pix = RAM[source];
-				int p1 = pix >> 4;
-				int p2 = pix & 0x0F;
-			/*      williams_videoram_blitter_w(dest,williams_videoram_r(source),data);
-			*/
-				williams_videoram_blitter_w(dest,pix,data,p1,p2,williams_videoram);
-				source++;
-				dest+=SCREEN_WIDTH;
-			}
-			start += 1;
-			dest = start;
-		}
-	}
-	else
-	{
-		for(i=0;i<(RAM[0xCA07]^4);i++)
-		{
-			for(j=0;j<(RAM[0xCA06]^4);j++)
-			{
-				int pix = williams_videoram_r(source);
-				int p1 = pix >> 4;
-				int p2 = pix & 0x0F;
-				williams_videoram_blitter_w(dest,pix,data,p1,p2,williams_videoram);
-				source++;
-				dest+=SCREEN_WIDTH;
-			}
-			start += 1;
-			dest = start;
-		}
-	}
-
-/*  Log blits
- */
-
-	if (errorlog)
-	{
-		fprintf(errorlog,"---------- Blit %02X--------------PC: %04X\n",data,m6809_GetPC());
-		fprintf(errorlog,"Source : %02X %02X\n",RAM[0xCA02],RAM[0xCA03]);
-		fprintf(errorlog,"Dest   : %02X %02X\n",RAM[0xCA04],RAM[0xCA05]);
-		fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",RAM[0xCA06],RAM[0xCA07],RAM[0xCA06]^4,RAM[0xCA07]^4);
-		fprintf(errorlog,"Mask   : %02X\n",RAM[0xCA01]);
-	}
-}
-
-
-/**************
- * Same as StartBlitter but call williams_videoram_blaster_blitter_w
- * instead of williams_videoram_blitter_w to remap with the Remap Prom
- */
-void williams_BlasterStartBlitter(int offset,int data)
-{
-int i,j,offs;
-unsigned short source,dest,start;
-unsigned char *remap = BlasterRemapProm + RAM[0xc940] * 16;
-
-  offs = SCREEN_WIDTH - RAM[0xCA07];
-  source = (RAM[0xCA02]<<8) + RAM[0xCA03];
-  start = (RAM[0xCA04]<<8) + RAM[0xCA05];
-  dest = start;
-
-  for(i=0;i<RAM[0xCA07];i++){
-    for(j=0;j<RAM[0xCA06];j++){
-      int pix = blaster_videoram_r(source);
-		int p1 = pix >> 4;
-		int p2 = pix & 0x0F;
-      williams_videoram_blitter_w(dest,pix,data,remap[p1],remap[p2],RAM);
-      source++;
-      dest+=SCREEN_WIDTH;
-    }
-    start += 1;
-    dest = start;
-  }
-
-/*  Log blits
- */
-	if (errorlog){
-	 fprintf(errorlog,"---------- Blit %02X--------------PC: %04X\n",data,m6809_GetPC());
-	 fprintf(errorlog,"Source : %02X %02X\n",RAM[0xCA02],RAM[0xCA03]);
-	 fprintf(errorlog,"Dest   : %02X %02X\n",RAM[0xCA04],RAM[0xCA05]);
-	 fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",RAM[0xCA06],RAM[0xCA07],RAM[0xCA06]^4,RAM[0xCA07]^4);
-	 fprintf(errorlog,"Mask   : %02X\n",RAM[0xCA01]);
-
-	}
-}
-
-/**************
- * Same as StartBlitter but no ^ 4 with the Width and Length
- * For Splat or any game that use SC2 ships.
- */
-void williams_StartBlitter2(int offset,int data)
-{
-int i,j,offs;
-unsigned short source,dest,start;
-
-  offs = SCREEN_WIDTH - RAM[0xCA07];
-  source = (RAM[0xCA02]<<8) + RAM[0xCA03];
-  start = (RAM[0xCA04]<<8) + RAM[0xCA05];
-  dest = start;
-
-  for(i=0;i<(RAM[0xCA07]);i++){
-    for(j=0;j<(RAM[0xCA06]);j++){
-      int pix = williams_videoram_r(source);
-		int p1 = pix >> 4;
-		int p2 = pix & 0x0F;
-      williams_videoram_blitter_w(dest,pix,data,p1,p2,williams_videoram);
-      source++;
-      dest+=SCREEN_WIDTH;
-    }
-    start += 1;
-    dest = start;
-  }
-
-/*  Log blits
- */
-	if (errorlog){
-	 fprintf(errorlog,"---------- Blit %02X--------------\n",data);
-	 fprintf(errorlog,"Source : %02X %02X\n",RAM[0xCA02],RAM[0xCA03]);
-	 fprintf(errorlog,"Dest   : %02X %02X\n",RAM[0xCA04],RAM[0xCA05]);
-	 fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",RAM[0xCA06],RAM[0xCA07],RAM[0xCA06],RAM[0xCA07]);
-	 fprintf(errorlog,"Mask   : %02X\n",RAM[0xCA01]);
-
-	}
-}
-
-
-void Williams_Palette_w(int offset,int data)
-{
+/*
+	int data;
 	int r, g, b;
-
 	int bit0,bit1,bit2;
+*/
+int i,j;
+int back_color;
+int pen0 = Machine->pens[0];	/* ASG 071001 -- we don't translate color 0, but pen 0 */
+int back_pen;	/* ASG 071001 -- look up the pen before blitting */
 
-
-   RAM[offset+0xC000] = data;
-
-
-	/* red component */
-	bit0 = (data >> 0) & 0x01;
-	bit1 = (data >> 1) & 0x01;
-	bit2 = (data >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	/* green component */
-	bit0 = (data >> 3) & 0x01;
-	bit1 = (data >> 4) & 0x01;
-	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	/* blue component */
-	bit0 = 0;
-	bit1 = (data >> 6) & 0x01;
-	bit2 = (data >> 7) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	osd_modify_pen (Machine->gfx[0]->colortable[offset], r, g, b);
-}
-
-
-
-/********************* Defender ******************************/
-
-
-/**************
- * Defender video ram Write
- * Same as the others but Write in RAM[]
- */
-void defender_videoram_w(int offset,int data)
-{
-	int x,y;
-
-/*  defender only!!
- */
-
-  RAM[offset] = data;
-
-/*  Put the pixels in our bitmap
- */
-
-  x = offset % 256;
-
-#ifdef HEIGHT_240
-  x -= START_OFFSET;
-  if(x<0)
-    return;
-  if(x>=240)
-    return;
-#endif
-  y = offset / 256;
-
-  PutPix2(x,(y*2),data>>4,data&0x0F);
-
-}
-
-
-
-
-
-
-/***************************************************************************
-  Start the video hardware emulation.
-***************************************************************************/
-
-int williams_vh_start(void)
-{
-	int i;
-
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-        /*  Allocate space for video ram  */
-	if ((williams_videoram = malloc(VIDEO_RAM_SIZE)) == 0)
-	{
-		osd_free_bitmap(tmpbitmap);
-		return 1;
-	}
-	memset(williams_videoram,0,VIDEO_RAM_SIZE);
-
-	defender_bank = 0;
-        Erase_screen_each_vbl = 0;
-
-   williams_bitmap = tmpbitmap;
-
-	/* generate the inverse colors table */
-	memset (inverse_colors, 0, sizeof (inverse_colors));
-	for (i = 0; i < 16; i++)
-		inverse_colors[Machine->gfx[0]->colortable[i]] = i;
-
-	return 0;
-}
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void williams_vh_stop(void)
-{
-	free(williams_videoram);
-	osd_free_bitmap(tmpbitmap);
-}
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-void williams_vh_screenrefresh(struct osd_bitmap *bitmap)
-{
-	copybitmap(bitmap,williams_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-}
-
-void blaster_vh_screenrefresh(struct osd_bitmap *bitmap)
-{
+/* Copy williams_bitmap in bitmap */
 	williams_vh_screenrefresh (bitmap);
 
-	/* Toggle the erase video ram each frames (for Blaster) */
+/* The color 0 of the palette can change at each video line */
+/* Since we cannot do that on a PC, we do that in a copy of the bitmap */
+/* This cannot be done in williams_bitmap because we have to keep
+    the original bitmap intact */
+if((*blaster_video_bits & 0x01) != 0){
+  back_color = 0;
 
-	if (osd_key_pressed(OSD_KEY_EQUALS))
+  for(j=0;j<256;j++){
+		if((blaster_color_zero_flags[j] & 0x01) != 0){
+			back_color = blaster_color_zero_table[j]^0xFF;
+
+      if(back_color != 0)
+	      if(back_color < 16)
+	      	back_color += 64; /* Since we lose the 16 first colors point elsewhere */
+    }
+
+    if(back_color == 0)
+    	continue;
+
+	back_pen = Machine->pens[back_color];	/* ASG 071001 -- look up the pen */
+
+		for(i=0;i<SCREEN_WIDTH-2;i++){
+      if(bitmap->line[j][i] == pen0)	/* ASG 071001 -- compare vs. pen 0 */
+			  bitmap->line[j][i] = back_pen;	/* ASG 071001 -- use the pen */
+    }
+  }
+}
+
+	/* Automatic erase video ram each frames (for Blaster) */
+	/* Clear the bitmap but not the upper 24 lines */
+  if((*blaster_video_bits & 0x02) != 0)
+	{	/* ASG 071001 -- changed to use fillbitmap */
+		struct rectangle clip;
+		clip.min_x = 0;
+		clip.max_x = SCREEN_WIDTH;
+		clip.min_y = 24;
+		clip.max_y = SCREEN_HEIGHT;
+		fillbitmap (williams_bitmap, pen0, &clip);
+	}
+}
+
+
+/*
+ *  Blaster-specific videoram read function; handles extra ROM banks
+ */
+
+int blaster_videoram_r (int offset)
+{
+	if (*williams_bank_select == 0)
+		return williams_videoram[offset];
+	else if (offset < 0x4000)
+		return blaster_bank_ram[offset];
+	else
+		return RAM[offset];
+}
+
+
+/*
+ *  Blitter access for Blaster; same as above, except it uses the remap table
+ */
+
+void blaster_blitter_w(int offset,int data)
+{
+	unsigned char *remap = BlasterRemapProm + *blaster_remap_select * 16;
+	unsigned short source, dest, start;
+	int i, j, w, h, offs;
+
+	if (offset)
 	{
-		Erase_screen_each_vbl ^= 1;
-		while (osd_key_pressed(OSD_KEY_EQUALS));	/* wait for key release */
+		williams_blitterram[offset] = data;
+		return;
 	}
 
-	/* Semi automatic erase video ram each frames (for Blaster) */
+	offs = SCREEN_HEIGHT - williams_blitterram[7];
+	source = (williams_blitterram[2] << 8) + williams_blitterram[3];
+	start = (williams_blitterram[4] << 8) + williams_blitterram[5];
+	dest = start;
 
-	if (Erase_screen_each_vbl != 0)
-#ifdef HEIGHT_240
-		memset(williams_bitmap->line[20],0, 304*220);
-#else
-		memset(williams_bitmap->line[24],0, 304*(256-24));
-#endif
+	w = williams_blitterram[6];
+	h = williams_blitterram[7];
+
+	for (i = 0; i < h; i++)
+	{
+		for (j = 0; j < w; j++)
+		{
+			int pix = blaster_videoram_r (source);
+			int p1 = remap[pix >> 4];
+			int p2 = remap[pix & 0x0F];
+
+			williams_videoram_blitter_w (dest, pix, data, p1, p2);
+			source++;
+			dest += SCREEN_HEIGHT;
+		}
+		start += 1;
+		dest = start;
+	}
+
+	/* Log blits */
+	if (errorlog)
+	{
+		fprintf(errorlog,"---------- Blit %02X--------------\n",data);
+		fprintf(errorlog,"Source : %02X %02X\n",williams_blitterram[2],williams_blitterram[3]);
+		fprintf(errorlog,"Dest   : %02X %02X\n",williams_blitterram[4],williams_blitterram[5]);
+		fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",williams_blitterram[6],williams_blitterram[7],williams_blitterram[6],williams_blitterram[7]);
+		fprintf(errorlog,"Mask   : %02X\n",williams_blitterram[1]);
+	}
 }

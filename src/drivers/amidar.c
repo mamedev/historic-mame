@@ -63,6 +63,7 @@ void amidar_flipy_w(int offset,int data);
 void amidar_attributes_w(int offset,int data);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+void amidar_sh_irqtrigger_w(int offset,int data);
 int amidar_sh_interrupt(void);
 int amidar_sh_start(void);
 
@@ -95,8 +96,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa018, 0xa018, amidar_flipy_w },
 	{ 0xa030, 0xa030, MWA_NOP },
 	{ 0xa038, 0xa038, MWA_NOP },
-	{ 0xb800, 0xb800, sound_command_w },
-	{ 0xb810, 0xb810, MWA_NOP },
+	{ 0xb800, 0xb800, soundlatch_w },
+	{ 0xb810, 0xb810, amidar_sh_irqtrigger_w },
 	{ -1 }	/* end of table */
 };
 
@@ -170,6 +171,88 @@ INPUT_PORTS_START( amidar_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "30000 70000" )
 	PORT_DIPSETTING(    0x04, "50000 80000" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x08, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x0e, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x80, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable All Coins" )
+INPUT_PORTS_END
+
+/* absolutely identical to amidar, the only difference is the BONUS dip switch */
+INPUT_PORTS_START( amidarjp_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "255" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "30000 50000" )
+	PORT_DIPSETTING(    0x04, "50000 50000" )
 	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x08, "Cocktail" )
@@ -384,6 +467,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -499,7 +583,7 @@ ROM_END
 
 
 
-static int amidar_hiload(const char *name)
+static int amidar_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -510,16 +594,16 @@ static int amidar_hiload(const char *name)
 	if (memcmp(&RAM[0x8200],"\x00\x00\x01",3) == 0 &&
 			memcmp(&RAM[0x821b],"\x00\x00\x01",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x8200],1,3*10,f);
+			osd_fread(f,&RAM[0x8200],3*10);
 			RAM[0x80a8] = RAM[0x8200];
 			RAM[0x80a9] = RAM[0x8201];
 			RAM[0x80aa] = RAM[0x8202];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -529,18 +613,71 @@ static int amidar_hiload(const char *name)
 
 
 
-static void amidar_hisave(const char *name)
+static int turtles_hiload(void) /* V.V */
 {
-	FILE *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* same as Amidar, but the high score table is initialized with zeros */
+	/* a working quick-and-dirty solution is to update the top high score */
+	/* and the whole table at different times */
+	/* further study of the game code may provide a cleaner solution */
+
+	static int first_pass = 0;
+	static unsigned char top_score[] = { 0, 0, 0 };
+
+	if (first_pass == 0)
+	{
+		void *f;
+
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+				osd_fread(f,top_score,3);
+				osd_fclose(f);
+			}
+		first_pass = 1;
+	}
+
+	if ((memcmp(&RAM[0x80A0],"\xc0\xc0\x00",3) == 0))
+	{
+		RAM[0x80a8] = top_score[0];
+		RAM[0x80a9] = top_score[1];
+		RAM[0x80aa] = top_score[2];
+		return 0;
+	} /* continuously updating top high score - really dirty solution */
+
+	else if (memcmp(&RAM[0x80A0],"\xc6\xc6\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8200],3*10);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+
+static void amidar_hisave(void)
+{
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8200],1,3*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8200],3*10);
+		osd_fclose(f);
 	}
 }
 
@@ -576,7 +713,7 @@ struct GameDriver amidarjp_driver =
 	0, 0,
 	0,
 
-	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	0/*TBR*/,amidarjp_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	amidar_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -607,7 +744,7 @@ struct GameDriver turtles_driver =
 {
 	"Turtles",
 	"turtles",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	turtles_rom,
@@ -619,14 +756,14 @@ struct GameDriver turtles_driver =
 	turtles_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	turtles_hiload, amidar_hisave
 };
 
 struct GameDriver turpin_driver =
 {
 	"Turpin",
 	"turpin",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	turpin_rom,
@@ -638,5 +775,5 @@ struct GameDriver turpin_driver =
 	turtles_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	turtles_hiload, amidar_hisave
 };

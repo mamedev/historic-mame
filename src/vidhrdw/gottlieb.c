@@ -92,10 +92,8 @@ void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *color
 	}
 
 	/* characters and sprites use the same palette */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 1;
+		COLOR(0,i) = i;
 }
 
 
@@ -228,6 +226,6 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 					&Machine->drv->visible_area,
 			/* the background pen for the game is actually 1, not 0, because we reserved */
 			/* pen 0 for the background black */
-					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,background_priority ? 1 : 0);
+					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,0);
 	}
 }

@@ -296,7 +296,6 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap)
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-
 	/* Draw the sprites. */
 	coloffset = ((col0&0x07) << 4);
 	for (i = 95;i >= 0; i--)
@@ -309,12 +308,12 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		drawgfx(bitmap,Machine->gfx[1],
 				tp84_sharedram[4*i + 1],
-				(tp84_sharedram[4*i + 2]&0x0F)+coloffset,
+				(i>=94?15:((tp84_sharedram[4*i + 2]&0x0F)+coloffset)),
 				!(tp84_sharedram[4*i + 2] & 0x40),   /*hflip*/
 				tp84_sharedram[4*i + 2] & 0x80,      /*vflip*/
 				tp84_sharedram[4*i + 0],             /*xpos*/
 				240-tp84_sharedram[4*i + 3],         /*ypos*/
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->drv->visible_area,(i>=94?TRANSPARENCY_PEN:TRANSPARENCY_COLOR),0);
 	}
 
 

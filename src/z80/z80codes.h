@@ -22,14 +22,19 @@
  q=M_RDMEM_OPCODE_WORD();   \
  M_PUSH(PC);                \
  R.PC.D=q;                  \
+ change_pc(R.PC.D);   	/* TS 971002 */      \
  Z80_ICount-=7;             \
 }
 #define M_JP                \
-        R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((R.PC.D+1)&65535))<<8)
+        R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((R.PC.D+1)&65535))<<8)\
+        ;change_pc(R.PC.D)	/* TS 971002 */
 #define M_JR                \
-        R.PC.W.l+=((offset)M_RDOP_ARG(R.PC.D))+1; Z80_ICount-=5
-#define M_RET           M_POP(PC); Z80_ICount-=6
-#define M_RST(Addr)     M_PUSH(PC); R.PC.D=Addr
+        R.PC.W.l+=((offset)M_RDOP_ARG(R.PC.D))+1; Z80_ICount-=5\
+        ;change_pc(R.PC.D)	/* TS 971002 */
+#define M_RET           M_POP(PC); Z80_ICount-=6\
+        ;change_pc(R.PC.D)	/* TS 971002 */
+#define M_RST(Addr)     M_PUSH(PC); R.PC.D=Addr\
+        ;change_pc(R.PC.D)	/* TS 971002 */
 #define M_SET(Bit,Reg)  Reg|=1<<Bit
 #define M_RES(Bit,Reg)  Reg&=~(1<<Bit)
 #define M_BIT(Bit,Reg)      \
@@ -39,7 +44,8 @@
 #define M_OR(Reg)       R.AF.B.h|=Reg; R.AF.B.l=ZSPTable[R.AF.B.h]
 #define M_XOR(Reg)      R.AF.B.h^=Reg; R.AF.B.l=ZSPTable[R.AF.B.h]
 #define M_IN(Reg)           \
-        Reg=Z80_In(R.BC.B.l); R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSPTable[Reg]
+        Reg=DoIn(R.BC.B.l,R.BC.B.h); \
+        R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSPTable[Reg]
 
 #define M_RLCA              \
  R.AF.B.h=(R.AF.B.h<<1)|((R.AF.B.h&0x80)>>7); \
@@ -158,7 +164,7 @@
  q=R.AF.B.h-Reg;                                        \
  R.AF.B.l=ZSTable[q&255]|((q&256)>>8)|N_FLAG|           \
           ((R.AF.B.h^q^Reg)&H_FLAG)|                    \
-          (((Reg^R.AF.B.h)&(Reg^q)&0x80)>>5);           \
+          (((Reg^R.AF.B.h)&(R.AF.B.h^q)&0x80)>>5);   /* MB & FB 220997 */     \
  R.AF.B.h=q;                                            \
 }
 
@@ -168,7 +174,7 @@
  q=R.AF.B.h-Reg-(R.AF.B.l&1);                           \
  R.AF.B.l=ZSTable[q&255]|((q&256)>>8)|N_FLAG|           \
           ((R.AF.B.h^q^Reg)&H_FLAG)|                    \
-          (((Reg^R.AF.B.h)&(Reg^q)&0x80)>>5);           \
+          (((Reg^R.AF.B.h)&(R.AF.B.h^q)&0x80)>>5);   /* MB & FB 220997 */     \
  R.AF.B.h=q;                                            \
 }
 
@@ -178,7 +184,7 @@
  q=R.AF.B.h-Reg;                                        \
  R.AF.B.l=ZSTable[q&255]|((q&256)>>8)|N_FLAG|           \
           ((R.AF.B.h^q^Reg)&H_FLAG)|                    \
-          (((Reg^R.AF.B.h)&(Reg^q)&0x80)>>5);           \
+          (((Reg^R.AF.B.h)&(R.AF.B.h^q)&0x80)>>5);   /* MB & FB 220997 */   \
 }
 
 #define M_ADDW(Reg1,Reg2)                              \
@@ -211,7 +217,7 @@
           ((q>>16)&1)|                                 \
           ((q&0x8000)>>8)|                             \
           ((q&65535)?0:Z_FLAG)|                        \
-          (((R.Reg.D^R.HL.D)&(R.Reg.D^q)&0x8000)>>13)| \
+          (((R.Reg.D^R.HL.D)&(R.HL.D^q)&0x8000)>>13)|	/* ASG 220997 */ \
           N_FLAG;                                      \
  R.HL.W.l=q;                                           \
 }

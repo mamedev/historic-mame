@@ -23,41 +23,64 @@ typedef struct {
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Gyruss has one 32x8 palette PROM and two 256x4 lookup table PROMs
+  (one for characters, one for sprites).
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bits;
+		int bit0,bit1,bit2;
 
 
-		bits = (i >> 5) & 0x07;
-		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 2) & 0x07;
-		palette[3*i + 1] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 0) & 0x03;
-		palette[3*i + 2] = bits | (bits >> 2) | (bits << 4) | (bits << 6);
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
-	for (i = 0;i < 320;i++)
-		colortable[i] = color_prom[i];
-}
+	/* color_prom now points to the beginning of the sprite lookup table */
 
+	/* sprites */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = *(color_prom++) & 0x0f;
 
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int gyruss_vh_start(void)
-{
-	if (generic_vh_start() != 0)
-		return 1;
-
-	return 0;
+	/* characters */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
 
@@ -82,14 +105,14 @@ static int SprTrans(Sprites *u)
 	u->y = (table[theta2+1] * ro) >> 8;
 	if (u->y >= 0x80)
 	{
-		u->y = 0;
+		u->x = 0;
 		return 0;
 	}
 	if (table[theta2] != 0)	/* negative */
 	{
 		if (u->y >= 0x78)	/* avoid wraparound from top to bottom of screen */
 		{
-			u->y = 0;
+			u->x = 0;
 			return 0;
 		}
 		u->y = -u->y;
@@ -101,7 +124,7 @@ static int SprTrans(Sprites *u)
 	u->x = (table[theta2+1] * ro) >> 8;
 	if (u->x >= 0x80)
 	{
-		u->y = 0;
+		u->x = 0;
 		return 0;
 	}
 	if (table[theta2] != 0)	/* negative */
@@ -162,7 +185,7 @@ void gyruss_queuereg_w (int offset,int data)
 		{
 			SprTrans(SPR(4));	/* #4 - polar coordinates - ship */
 
-			SPR(5)->y = 0;	/* #5 - unused */
+			SPR(5)->x = 0;	/* #5 - unused */
 
 			/* #6-#23 - planet */
         }
@@ -172,7 +195,7 @@ void gyruss_queuereg_w (int offset,int data)
 			{
 				SprTrans(SPR(n));
 
-				SPR(n+1)->y = 0;
+				SPR(n+1)->x = 0;
 			}
 		}
 
@@ -204,7 +227,7 @@ void gyruss_queuereg_w (int offset,int data)
 				SPR(n+8)->y = SPR(n)->x + 4;
 			}
 			else
-				SPR(n+8)->y = 0;
+				SPR(n+8)->x = 0;
 		}
 	}
 }
@@ -223,7 +246,32 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 
 
-	clearbitmap(bitmap);
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = 31 - offs / 32;
+			sy = offs % 32;
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
+					colorram[offs] & 0x80,colorram[offs] & 0x40,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/*
@@ -253,59 +301,48 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			if (sr[2 + offs] & 0x10)	/* double height */
 			{
-				if (sr[offs + 0] > 2)
-				{
-					drawgfx(bitmap,Machine->gfx[(sr[offs + 2] & 0x20) ? 5 : 6],
-							sr[offs + 1]/2,
-							sr[offs + 2] & 0x0f,
-							sr[offs + 2] & 0x80,!(sr[offs + 2] & 0x40),
-							sr[offs + 3],sr[offs + 0],
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
+				drawgfx(bitmap,Machine->gfx[(sr[offs + 2] & 0x20) ? 5 : 6],
+						sr[offs + 1]/2,
+						sr[offs + 2] & 0x0f,
+						sr[offs + 2] & 0x80,!(sr[offs + 2] & 0x40),
+						sr[offs + 3],sr[offs + 0],
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else	/* single height */
 			{
-				if (sr[offs + 0] > 2)
-				{
-					drawgfx(bitmap,Machine->gfx[((sr[offs + 2] & 0x20) ? 1 : 3) + (sr[offs + 1] & 1)],
-							sr[offs + 1]/2,
-							sr[offs + 2] & 0x0f,
-							sr[offs + 2] & 0x80,!(sr[offs + 2] & 0x40),
-							sr[offs + 3],sr[offs + 0],
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
+				drawgfx(bitmap,Machine->gfx[((sr[offs + 2] & 0x20) ? 1 : 3) + (sr[offs + 1] & 1)],
+						sr[offs + 1]/2,
+						sr[offs + 2] & 0x0f,
+						sr[offs + 2] & 0x80,!(sr[offs + 2] & 0x40),
+						sr[offs + 3],sr[offs + 0],
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-				if (sr[offs + 4] > 2)
-				{
-					drawgfx(bitmap,Machine->gfx[((sr[offs + 6] & 0x20) ? 1 : 3) + (sr[offs + 5] & 1)],
-							sr[offs + 5]/2,
-							sr[offs + 6] & 0x0f,
-							sr[offs + 6] & 0x80,!(sr[offs + 6] & 0x40),
-							sr[offs + 7],sr[offs + 4],
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
+				drawgfx(bitmap,Machine->gfx[((sr[offs + 6] & 0x20) ? 1 : 3) + (sr[offs + 5] & 1)],
+						sr[offs + 5]/2,
+						sr[offs + 6] & 0x0f,
+						sr[offs + 6] & 0x80,!(sr[offs + 6] & 0x40),
+						sr[offs + 7],sr[offs + 4],
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
 
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	/* redraw the characters which have priority over sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy,charcode;
+		int sx,sy;
 
 
-		sx = 8 * (31 - offs / 32);
-		sy = 8 * (offs % 32);
+		sx = 31 - offs / 32;
+		sy = offs % 32;
 
-		charcode = videoram[offs] + 8 * (colorram[offs] & 0x20);
-
-		if (charcode != 0x83) /* don't draw spaces */
+		if ((colorram[offs] & 0x10) != 0)
 			drawgfx(bitmap,Machine->gfx[0],
-					charcode,
-					colorram[offs] & 0x3f,
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
 					colorram[offs] & 0x80,colorram[offs] & 0x40,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }

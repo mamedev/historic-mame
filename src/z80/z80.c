@@ -22,6 +22,9 @@
 #define M_RDSTACK(A)    Z80_RDSTACK(A)
 #define M_WRSTACK(A,V)  Z80_WRSTACK(A,V)
 
+#define DoIn(lo,hi)     Z80_In((lo)+(((unsigned)(hi))<<8))
+#define DoOut(lo,hi,v)  Z80_Out((lo)+(((unsigned)(hi))<<8),v)
+
 static void Interrupt(void/*int j*/);	/* NS 970904 */
 static void ei(void);
 
@@ -326,22 +329,8 @@ static void cpd(void)
 
 static void cpdr(void)
 {
- byte i,j;
- R.R-=2;
- do
- {
-  R.R+=2;
-  i=M_RDMEM(R.HL.D);
-  j=R.AF.B.h-i;
-  --R.HL.W.l;
-  --R.BC.W.l;
-  Z80_ICount-=21;
- }
- while (R.BC.D && j && Z80_ICount>0);
- R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSTable[j]|
-          ((R.AF.B.h^i^j)&H_FLAG)|(R.BC.D? V_FLAG:0)|N_FLAG;
- if (R.BC.D && j) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ cpd ();
+ if (R.BC.D && !(R.AF.B.l&Z_FLAG)) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 
 static void cpi(void)
@@ -357,22 +346,8 @@ static void cpi(void)
 
 static void cpir(void)
 {
- byte i,j;
- R.R-=2;
- do
- {
-  R.R+=2;
-  i=M_RDMEM(R.HL.D);
-  j=R.AF.B.h-i;
-  ++R.HL.W.l;
-  --R.BC.W.l;
-  Z80_ICount-=21;
- }
- while (R.BC.D && j && Z80_ICount>0);
- R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSTable[j]|
-          ((R.AF.B.h^i^j)&H_FLAG)|(R.BC.D? V_FLAG:0)|N_FLAG;
- if (R.BC.D && j) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ cpi ();
+ if (R.BC.D && !(R.AF.B.l&Z_FLAG)) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 
 static void cpl(void) { R.AF.B.h^=0xFF; R.AF.B.l|=(H_FLAG|N_FLAG); }
@@ -509,7 +484,11 @@ static void in_h_c(void) { M_IN(R.HL.B.h); }
 static void in_l_c(void) { M_IN(R.HL.B.l); }
 static void in_0_c(void) { byte i; M_IN(i); }
 
-static void in_a_byte(void) { byte i=M_RDMEM_OPCODE(); R.AF.B.h=Z80_In(i); }
+static void in_a_byte(void)
+{
+ byte i=M_RDMEM_OPCODE();
+ R.AF.B.h=DoIn(i,R.AF.B.h);
+}
 
 static void inc_xhl(void)
 {
@@ -557,52 +536,30 @@ static void inc_sp(void) { ++R.SP.W.l; }
 
 static void ind(void)
 {
- M_WRMEM(R.HL.D,Z80_In(R.BC.B.l));
- --R.HL.W.l;
  --R.BC.B.h;
+ M_WRMEM(R.HL.D,DoIn(R.BC.B.l,R.BC.B.h));
+ --R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(N_FLAG|Z_FLAG);
 }
 
 static void indr(void)
 {
- R.R-=2;
- do
- {
-  R.R+=2;
-  M_WRMEM(R.HL.D,Z80_In(R.BC.B.l));
-  --R.HL.W.l;
-  --R.BC.B.h;
-  Z80_ICount-=21;
- }
- while (R.BC.B.h && Z80_ICount>0);
- R.AF.B.l=(R.BC.B.h)? N_FLAG:(N_FLAG|Z_FLAG);
- if (R.BC.B.h) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ ind ();
+ if (R.BC.B.h) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 
 static void ini(void)
 {
- M_WRMEM(R.HL.D,Z80_In(R.BC.B.l));
- ++R.HL.W.l;
  --R.BC.B.h;
+ M_WRMEM(R.HL.D,DoIn(R.BC.B.l,R.BC.B.h));
+ ++R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(N_FLAG|Z_FLAG);
 }
 
 static void inir(void)
 {
- R.R-=2;
- do
- {
-  R.R+=2;
-  M_WRMEM(R.HL.D,Z80_In(R.BC.B.l));
-  ++R.HL.W.l;
-  --R.BC.B.h;
-  Z80_ICount-=21;
- }
- while (R.BC.B.h && Z80_ICount>0);
- R.AF.B.l=(R.BC.B.h)? N_FLAG:(N_FLAG|Z_FLAG);
- if (R.BC.B.h) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ ini ();
+ if (R.BC.B.h) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 
 /*static void jp(void) { M_JP; }	-NS- changed to speed up busy loops */
@@ -617,9 +574,9 @@ static void jp(void)
   else if (newpc == oldpc-3 && M_RDOP(newpc) == 0x31)	/* LD SP,#xxxx - Galaga */
 	  { if (Z80_ICount > 10) Z80_ICount = 10; }
 }
-static void jp_hl(void) { R.PC.D=R.HL.D; }
-static void jp_ix(void) { R.PC.D=R.IX.D; }
-static void jp_iy(void) { R.PC.D=R.IY.D; }
+static void jp_hl(void) { R.PC.D=R.HL.D;change_pc(R.PC.D); }	/* TS 971002 */
+static void jp_ix(void) { R.PC.D=R.IX.D;change_pc(R.PC.D); }	/* TS 971002 */
+static void jp_iy(void) { R.PC.D=R.IY.D;change_pc(R.PC.D); }	/* TS 971002 */
 static void jp_c(void) { if (M_C) { M_JP; } else { M_SKIP_JP; } }
 static void jp_m(void) { if (M_M) { M_JP; } else { M_SKIP_JP; } }
 static void jp_nc(void) { if (M_NC) { M_JP; } else { M_SKIP_JP; } }
@@ -804,29 +761,29 @@ static void ld_ixh_b(void) { R.IX.B.h=R.BC.B.h; }
 static void ld_ixh_c(void) { R.IX.B.h=R.BC.B.l; }
 static void ld_ixh_d(void) { R.IX.B.h=R.DE.B.h; }
 static void ld_ixh_e(void) { R.IX.B.h=R.DE.B.l; }
-static void ld_ixh_h(void) { R.IX.B.h=R.HL.B.h; }
-static void ld_ixh_l(void) { R.IX.B.h=R.HL.B.l; }
+static void ld_ixh_ixh(void) { }
+static void ld_ixh_ixl(void) { R.IX.B.h=R.IX.B.l; }
 static void ld_ixl_a(void) { R.IX.B.l=R.AF.B.h; }
 static void ld_ixl_b(void) { R.IX.B.l=R.BC.B.h; }
 static void ld_ixl_c(void) { R.IX.B.l=R.BC.B.l; }
 static void ld_ixl_d(void) { R.IX.B.l=R.DE.B.h; }
 static void ld_ixl_e(void) { R.IX.B.l=R.DE.B.l; }
-static void ld_ixl_h(void) { R.IX.B.l=R.HL.B.h; }
-static void ld_ixl_l(void) { R.IX.B.l=R.HL.B.l; }
+static void ld_ixl_ixh(void) { R.IX.B.l=R.IX.B.h; }
+static void ld_ixl_ixl(void) { }
 static void ld_iyh_a(void) { R.IY.B.h=R.AF.B.h; }
 static void ld_iyh_b(void) { R.IY.B.h=R.BC.B.h; }
 static void ld_iyh_c(void) { R.IY.B.h=R.BC.B.l; }
 static void ld_iyh_d(void) { R.IY.B.h=R.DE.B.h; }
 static void ld_iyh_e(void) { R.IY.B.h=R.DE.B.l; }
-static void ld_iyh_h(void) { R.IY.B.h=R.HL.B.h; }
-static void ld_iyh_l(void) { R.IY.B.h=R.HL.B.l; }
+static void ld_iyh_iyh(void) { }
+static void ld_iyh_iyl(void) { R.IY.B.h=R.IY.B.l; }
 static void ld_iyl_a(void) { R.IY.B.l=R.AF.B.h; }
 static void ld_iyl_b(void) { R.IY.B.l=R.BC.B.h; }
 static void ld_iyl_c(void) { R.IY.B.l=R.BC.B.l; }
 static void ld_iyl_d(void) { R.IY.B.l=R.DE.B.h; }
 static void ld_iyl_e(void) { R.IY.B.l=R.DE.B.l; }
-static void ld_iyl_h(void) { R.IY.B.l=R.HL.B.h; }
-static void ld_iyl_l(void) { R.IY.B.l=R.HL.B.l; }
+static void ld_iyl_iyh(void) { R.IY.B.l=R.IY.B.h; }
+static void ld_iyl_iyl(void) { }
 static void ld_bc_xword(void) { R.BC.D=M_RDMEM_WORD(M_RDMEM_OPCODE_WORD()); }
 static void ld_bc_word(void) { R.BC.D=M_RDMEM_OPCODE_WORD(); }
 static void ld_de_xword(void) { R.DE.D=M_RDMEM_WORD(M_RDMEM_OPCODE_WORD()); }
@@ -865,20 +822,8 @@ static void ldd(void)
 }
 static void lddr(void)
 {
- R.R-=2;
- do
- {
-  R.R+=2;
-  M_WRMEM(R.DE.D,M_RDMEM(R.HL.D));
-  --R.DE.W.l;
-  --R.HL.W.l;
-  --R.BC.W.l;
-  Z80_ICount-=21;
- }
- while (R.BC.D && Z80_ICount>0);
- R.AF.B.l=(R.AF.B.l&0xE9)|(R.BC.D? V_FLAG:0);
- if (R.BC.D) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ ldd ();
+ if (R.BC.D) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 static void ldi(void)
 {
@@ -890,20 +835,8 @@ static void ldi(void)
 }
 static void ldir(void)
 {
- R.R-=2;
- do
- {
-  R.R+=2;
-  M_WRMEM(R.DE.D,M_RDMEM(R.HL.D));
-  ++R.DE.W.l;
-  ++R.HL.W.l;
-  --R.BC.W.l;
-  Z80_ICount-=21;
- }
- while (R.BC.D && Z80_ICount>0);
- R.AF.B.l=(R.AF.B.l&0xE9)|(R.BC.D? V_FLAG:0);
- if (R.BC.D) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ ldi ();
+ if (R.BC.D) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 
 static void neg(void)
@@ -934,60 +867,42 @@ static void or_byte(void) { byte i=M_RDMEM_OPCODE(); M_OR(i); }
 
 static void outd(void)
 {
- Z80_Out (R.BC.B.l,M_RDMEM(R.HL.D));
- --R.HL.W.l;
  --R.BC.B.h;
+ DoOut (R.BC.B.l,R.BC.B.h,M_RDMEM(R.HL.D));
+ --R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(Z_FLAG|N_FLAG);
 }
 static void otdr(void)
 {
- R.R-=2;
- do
- {
-  R.R+=2;
-  Z80_Out (R.BC.B.l,M_RDMEM(R.HL.D));
-  --R.HL.W.l;
-  --R.BC.B.h;
-  Z80_ICount-=21;
- }
- while (R.BC.B.h && Z80_ICount>0);
- R.AF.B.l=(R.BC.B.h)? N_FLAG:(Z_FLAG|N_FLAG);
- if (R.BC.B.h) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ outd ();
+ if (R.BC.B.h) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 static void outi(void)
 {
- Z80_Out (R.BC.B.l,M_RDMEM(R.HL.D));
- ++R.HL.W.l;
  --R.BC.B.h;
+ DoOut (R.BC.B.l,R.BC.B.h,M_RDMEM(R.HL.D));
+ ++R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(Z_FLAG|N_FLAG);
 }
 static void otir(void)
 {
- R.R-=2;
- do
- {
-  R.R+=2;
-  Z80_Out (R.BC.B.l,M_RDMEM(R.HL.D));
-  ++R.HL.W.l;
-  --R.BC.B.h;
-  Z80_ICount-=21;
- }
- while (R.BC.B.h && Z80_ICount>0);
- R.AF.B.l=(R.BC.B.h)? N_FLAG:(Z_FLAG|N_FLAG);
- if (R.BC.B.h) R.PC.W.l-=2;
- else Z80_ICount+=5;
+ outi ();
+ if (R.BC.B.h) { Z80_ICount-=5; R.PC.W.l-=2; }
 }
 
-static void out_c_a(void) { Z80_Out(R.BC.B.l,R.AF.B.h); }
-static void out_c_b(void) { Z80_Out(R.BC.B.l,R.BC.B.h); }
-static void out_c_c(void) { Z80_Out(R.BC.B.l,R.BC.B.l); }
-static void out_c_d(void) { Z80_Out(R.BC.B.l,R.DE.B.h); }
-static void out_c_e(void) { Z80_Out(R.BC.B.l,R.DE.B.l); }
-static void out_c_h(void) { Z80_Out(R.BC.B.l,R.HL.B.h); }
-static void out_c_l(void) { Z80_Out(R.BC.B.l,R.HL.B.l); }
-static void out_c_0(void) { Z80_Out(R.BC.B.l,0); }
-static void out_byte_a(void) { byte i=M_RDMEM_OPCODE(); Z80_Out(i,R.AF.B.h); }
+static void out_c_a(void) { DoOut(R.BC.B.l,R.BC.B.h,R.AF.B.h); }
+static void out_c_b(void) { DoOut(R.BC.B.l,R.BC.B.h,R.BC.B.h); }
+static void out_c_c(void) { DoOut(R.BC.B.l,R.BC.B.h,R.BC.B.l); }
+static void out_c_d(void) { DoOut(R.BC.B.l,R.BC.B.h,R.DE.B.h); }
+static void out_c_e(void) { DoOut(R.BC.B.l,R.BC.B.h,R.DE.B.l); }
+static void out_c_h(void) { DoOut(R.BC.B.l,R.BC.B.h,R.HL.B.h); }
+static void out_c_l(void) { DoOut(R.BC.B.l,R.BC.B.h,R.HL.B.l); }
+static void out_c_0(void) { DoOut(R.BC.B.l,R.BC.B.h,0); }
+static void out_byte_a(void)
+{
+ byte i=M_RDMEM_OPCODE();
+ DoOut(i,R.AF.B.h,R.AF.B.h);
+}
 
 static void pop_af(void) { M_POP(AF); }
 static void pop_bc(void) { M_POP(BC); }
@@ -2021,8 +1936,8 @@ static unsigned cycles_xx[256]=
   0,0,0,0,9,9,19,0,
   0,0,0,0,9,9,19,0,
   0,0,0,0,9,9,19,0,
-  9,9,9,9,9,9,9,9,
-  9,9,9,9,9,9,9,9,
+  9,9,9,9,9,9,19,9,	/* ASG 220997 */
+  9,9,9,9,9,9,19,9,	/* ASG 220997 */
   19,19,19,19,19,19,19,19,
   0,0,0,0,9,9,19,0,
   0,0,0,0,9,9,19,0,
@@ -2066,8 +1981,8 @@ static unsigned cycles_ed[256]=
   0,0,0,0,0,0,0,0,
   16,16,16,16,0,0,0,0,
   16,16,16,16,0,0,0,0,
-  0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,
+  16,16,16,16,0,0,0,0,  /* ASG 220997 */
+  16,16,16,16,0,0,0,0,	/* ASG 220997 */
   0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,
@@ -2208,38 +2123,38 @@ static opcode_fn opcode_cb[256]=
 
 static opcode_fn opcode_dd[256]=
 {
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,add_ix_bc ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,add_ix_de ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,ld_ix_word,ld_xword_ix,inc_ix   ,inc_ixh  ,dec_ixh  ,ld_ixh_byte,no_op   ,
-  no_op   ,add_ix_ix ,ld_ix_xword,dec_ix   ,inc_ixl  ,dec_ixl  ,ld_ixl_byte,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,inc_xix  ,dec_xix  ,ld_xix_byte,no_op   ,
-  no_op   ,add_ix_sp ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_b_ixh ,ld_b_ixl ,ld_b_xix   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_c_ixh ,ld_c_ixl ,ld_c_xix   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_d_ixh ,ld_d_ixl ,ld_d_xix   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_e_ixh ,ld_e_ixl ,ld_e_xix   ,no_op   ,
-  ld_ixh_b,ld_ixh_c  ,ld_ixh_d   ,ld_ixh_e ,ld_ixh_h ,ld_ixh_l ,ld_h_xix   ,ld_ixh_a,
-  ld_ixl_b,ld_ixl_c  ,ld_ixl_d   ,ld_ixl_e ,ld_ixl_h ,ld_ixl_l ,ld_l_xix   ,ld_ixl_a,
-  ld_xix_b,ld_xix_c  ,ld_xix_d   ,ld_xix_e ,ld_xix_h ,ld_xix_l ,no_op      ,ld_xix_a,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_a_ixh ,ld_a_ixl ,ld_a_xix   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,add_a_ixh,add_a_ixl,add_a_xix  ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,adc_a_ixh,adc_a_ixl,adc_a_xix  ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,sub_ixh  ,sub_ixl  ,sub_xix    ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,sbc_a_ixh,sbc_a_ixl,sbc_a_xix  ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,and_ixh  ,and_ixl  ,and_xix    ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,xor_ixh  ,xor_ixl  ,xor_xix    ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,or_ixh   ,or_ixl   ,or_xix     ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,cp_ixh   ,cp_ixl   ,cp_xix     ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,dd_cb    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,pop_ix    ,no_op      ,ex_xsp_ix,no_op    ,push_ix  ,no_op      ,no_op   ,
-  no_op   ,jp_ix     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,ld_sp_ix  ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,add_ix_bc ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,add_ix_de ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,ld_ix_word,ld_xword_ix,inc_ix   ,inc_ixh    ,dec_ixh    ,ld_ixh_byte,no_op   ,
+  no_op   ,add_ix_ix ,ld_ix_xword,dec_ix   ,inc_ixl    ,dec_ixl    ,ld_ixl_byte,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,inc_xix    ,dec_xix    ,ld_xix_byte,no_op   ,
+  no_op   ,add_ix_sp ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_b_ixh   ,ld_b_ixl   ,ld_b_xix   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_c_ixh   ,ld_c_ixl   ,ld_c_xix   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_d_ixh   ,ld_d_ixl   ,ld_d_xix   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_e_ixh   ,ld_e_ixl   ,ld_e_xix   ,no_op   ,
+  ld_ixh_b,ld_ixh_c  ,ld_ixh_d   ,ld_ixh_e ,ld_ixh_ixh ,ld_ixh_ixl ,ld_h_xix   ,ld_ixh_a,
+  ld_ixl_b,ld_ixl_c  ,ld_ixl_d   ,ld_ixl_e ,ld_ixl_ixh ,ld_ixl_ixl ,ld_l_xix   ,ld_ixl_a,
+  ld_xix_b,ld_xix_c  ,ld_xix_d   ,ld_xix_e ,ld_xix_h   ,ld_xix_l   ,no_op      ,ld_xix_a,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_a_ixh   ,ld_a_ixl   ,ld_a_xix   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,add_a_ixh  ,add_a_ixl  ,add_a_xix  ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,adc_a_ixh  ,adc_a_ixl  ,adc_a_xix  ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,sub_ixh    ,sub_ixl    ,sub_xix    ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,sbc_a_ixh  ,sbc_a_ixl  ,sbc_a_xix  ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,and_ixh    ,and_ixl    ,and_xix    ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,xor_ixh    ,xor_ixl    ,xor_xix    ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,or_ixh     ,or_ixl     ,or_xix     ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,cp_ixh     ,cp_ixl     ,cp_xix     ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,dd_cb    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,pop_ix    ,no_op      ,ex_xsp_ix,no_op      ,push_ix    ,no_op      ,no_op   ,
+  no_op   ,jp_ix     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,ld_sp_ix  ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op
 };
 
 static opcode_fn opcode_ed[256]=
@@ -2280,38 +2195,38 @@ static opcode_fn opcode_ed[256]=
 
 static opcode_fn opcode_fd[256]=
 {
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,add_iy_bc ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,add_iy_de ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,ld_iy_word,ld_xword_iy,inc_iy   ,inc_iyh  ,dec_iyh  ,ld_iyh_byte,no_op   ,
-  no_op   ,add_iy_iy ,ld_iy_xword,dec_iy   ,inc_iyl  ,dec_iyl  ,ld_iyl_byte,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,inc_xiy  ,dec_xiy  ,ld_xiy_byte,no_op   ,
-  no_op   ,add_iy_sp ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_b_iyh ,ld_b_iyl ,ld_b_xiy   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_c_iyh ,ld_c_iyl ,ld_c_xiy   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_d_iyh ,ld_d_iyl ,ld_d_xiy   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_e_iyh ,ld_e_iyl ,ld_e_xiy   ,no_op   ,
-  ld_iyh_b,ld_iyh_c  ,ld_iyh_d   ,ld_iyh_e ,ld_iyh_h ,ld_iyh_l ,ld_h_xiy   ,ld_iyh_a,
-  ld_iyl_b,ld_iyl_c  ,ld_iyl_d   ,ld_iyl_e ,ld_iyl_h ,ld_iyl_l ,ld_l_xiy   ,ld_iyl_a,
-  ld_xiy_b,ld_xiy_c  ,ld_xiy_d   ,ld_xiy_e ,ld_xiy_h ,ld_xiy_l ,no_op      ,ld_xiy_a,
-  no_op   ,no_op     ,no_op      ,no_op    ,ld_a_iyh ,ld_a_iyl ,ld_a_xiy   ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,add_a_iyh,add_a_iyl,add_a_xiy  ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,adc_a_iyh,adc_a_iyl,adc_a_xiy  ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,sub_iyh  ,sub_iyl  ,sub_xiy    ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,sbc_a_iyh,sbc_a_iyl,sbc_a_xiy  ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,and_iyh  ,and_iyl  ,and_xiy    ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,xor_iyh  ,xor_iyl  ,xor_xiy    ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,or_iyh   ,or_iyl   ,or_xiy     ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,cp_iyh   ,cp_iyl   ,cp_xiy     ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,fd_cb    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,pop_iy    ,no_op      ,ex_xsp_iy,no_op    ,push_iy  ,no_op      ,no_op   ,
-  no_op   ,jp_iy     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,no_op     ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op   ,
-  no_op   ,ld_sp_iy  ,no_op      ,no_op    ,no_op    ,no_op    ,no_op      ,no_op
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,add_iy_bc ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,add_iy_de ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,ld_iy_word,ld_xword_iy,inc_iy   ,inc_iyh    ,dec_iyh    ,ld_iyh_byte,no_op   ,
+  no_op   ,add_iy_iy ,ld_iy_xword,dec_iy   ,inc_iyl    ,dec_iyl    ,ld_iyl_byte,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,inc_xiy    ,dec_xiy    ,ld_xiy_byte,no_op   ,
+  no_op   ,add_iy_sp ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_b_iyh   ,ld_b_iyl   ,ld_b_xiy   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_c_iyh   ,ld_c_iyl   ,ld_c_xiy   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_d_iyh   ,ld_d_iyl   ,ld_d_xiy   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_e_iyh   ,ld_e_iyl   ,ld_e_xiy   ,no_op   ,
+  ld_iyh_b,ld_iyh_c  ,ld_iyh_d   ,ld_iyh_e ,ld_iyh_iyh ,ld_iyh_iyl ,ld_h_xiy   ,ld_iyh_a,
+  ld_iyl_b,ld_iyl_c  ,ld_iyl_d   ,ld_iyl_e ,ld_iyl_iyh ,ld_iyl_iyl ,ld_l_xiy   ,ld_iyl_a,
+  ld_xiy_b,ld_xiy_c  ,ld_xiy_d   ,ld_xiy_e ,ld_xiy_h   ,ld_xiy_l   ,no_op      ,ld_xiy_a,
+  no_op   ,no_op     ,no_op      ,no_op    ,ld_a_iyh   ,ld_a_iyl   ,ld_a_xiy   ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,add_a_iyh  ,add_a_iyl  ,add_a_xiy  ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,adc_a_iyh  ,adc_a_iyl  ,adc_a_xiy  ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,sub_iyh    ,sub_iyl    ,sub_xiy    ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,sbc_a_iyh  ,sbc_a_iyl  ,sbc_a_xiy  ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,and_iyh    ,and_iyl    ,and_xiy    ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,xor_iyh    ,xor_iyl    ,xor_xiy    ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,or_iyh     ,or_iyl     ,or_xiy     ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,cp_iyh     ,cp_iyl     ,cp_xiy     ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,fd_cb    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,pop_iy    ,no_op      ,ex_xsp_iy,no_op      ,push_iy    ,no_op      ,no_op   ,
+  no_op   ,jp_iy     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,no_op     ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op   ,
+  no_op   ,ld_sp_iy  ,no_op      ,no_op    ,no_op      ,no_op      ,no_op      ,no_op
 };
 
 static void cb(void)
@@ -2394,6 +2309,10 @@ static void ei(void)
  /* IRQ line. If not, simply set interrupt flip-flop 2                      */
  if (!R.IFF1)
  {
+#ifdef DEBUG
+  if (R.PC.D==Z80_Trap) Z80_Trace=1;
+  if (Z80_Trace) Z80_Debug(&R);
+#endif
   R.IFF1=R.IFF2=1;
   ++R.R;
   opcode=M_RDOP(R.PC.D);
@@ -2412,6 +2331,7 @@ static void ei(void)
 void Z80_Reset (void)
 {
  memset (&R,0,sizeof(Z80_Regs));
+ change_pc(R.PC.D);	/* TS 971002 */
  R.SP.D=0xF000;
  R.R=rand();
 /* Z80_ICount=Z80_IPeriod;*/  /* NS 970904 */
@@ -2461,15 +2381,12 @@ static void InitTables (void)
 /****************************************************************************/
 static void Interrupt (void/*int j*/)	/* NS 970904 */
 {
-/* Z80_IRQ = j;	* -NS- sticky interrupts *	* NS 970901 */
-
 /* if (j==Z80_IGNORE_INT) return; */ /* NS 970904*/
 /* if (j==Z80_NMI_INT || R.IFF1) */
 
 	if (R.pending_irq == Z80_IGNORE_INT && R.pending_nmi == 0) return;	/* NS 970904 */
 	if (R.pending_nmi != 0 || R.IFF1)	/* NS 970904 */
  {
-/*Z80_IRQ = Z80_IGNORE_INT;*/	/* NS 970904 */
   /* Clear interrupt flip-flop 1 */
   R.IFF1=0;
   /* Check if processor was halted */
@@ -2526,6 +2443,7 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
     }
   }
  }
+ change_pc(R.PC.D);	/* TS 971002 */
 }
 
 /****************************************************************************/
@@ -2534,6 +2452,7 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
 void Z80_SetRegs (Z80_Regs *Regs)
 {
  R=*Regs;
+ change_pc(R.PC.D);	/* TS 971002 */
 }
 
 /****************************************************************************/
@@ -2550,20 +2469,6 @@ void Z80_GetRegs (Z80_Regs *Regs)
 unsigned Z80_GetPC (void)
 {
  return R.PC.D;
-}
-
-
-void Z80_Cause_Interrupt(int type)	/* NS 970904 */
-{
-	if (type == Z80_NMI_INT)
-		R.pending_nmi = 1;
-	else if (type != Z80_IGNORE_INT)
-		R.pending_irq = type;
-}
-void Z80_Clear_Pending_Interrupts(void)	/* NS 970904 */
-{
-	R.pending_irq = Z80_IGNORE_INT;
-	R.pending_nmi = 0;
 }
 
 /****************************************************************************/
@@ -2599,18 +2504,17 @@ if (R.pending_nmi != 0 || R.pending_irq != Z80_IGNORE_INT) Interrupt();	/* NS 97
  while (Z80_ICount>0);
 
  return cycles - Z80_ICount;	/* NS 970904 */
+}
 
 #if 0	/* NS 970904 */
  Z80_ICount+=Z80_IPeriod;
  Interrupt (Z80_Interrupt());
  return Z80_Running;
-#endif
 }
 
 /****************************************************************************/
 /* Interpret Z80 code                                                       */
 /****************************************************************************/
-#if 0	/* NS 970904 */
 word Z80 (void)
 {
  while (Z80_Execute());
@@ -2636,4 +2540,34 @@ void Z80_RegisterDump (void)
  puts ("PC TRACE:");
  for (i=1;i<=256;++i) printf ("%04X\n",pc_trace[(pc_count-i)&255]);
 #endif
+}
+
+/****************************************************************************/
+/* Set number of memory refresh wait states (i.e. extra cycles inserted     */
+/* when the refresh register is being incremented)                          */
+/****************************************************************************/
+void Z80_SetWaitStates (int n)
+{
+ int i;
+ for (i=0;i<256;++i)
+ {
+  cycles_main[i]+=n;
+  cycles_cb[i]+=n;
+  cycles_ed[i]+=n;
+  cycles_xx[i]+=n;
+ }
+}
+
+
+void Z80_Cause_Interrupt(int type)	/* NS 970904 */
+{
+	if (type == Z80_NMI_INT)
+		R.pending_nmi = 1;
+	else if (type != Z80_IGNORE_INT)
+		R.pending_irq = type;
+}
+void Z80_Clear_Pending_Interrupts(void)	/* NS 970904 */
+{
+	R.pending_irq = Z80_IGNORE_INT;
+	R.pending_nmi = 0;
 }

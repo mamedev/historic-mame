@@ -30,7 +30,7 @@ int jrpacman_interrupt(void)
 	/* speed up cheat */
 	if (speedcheat)
 	{
-		if (osd_key_pressed(OSD_KEY_CONTROL) || osd_joy_pressed(OSD_JOY_FIRE))
+		if (osd_key_pressed(OSD_KEY_LCONTROL) || osd_joy_pressed(OSD_JOY_FIRE))
 			RAM[0x180b] = 0x01;
 		else
 			RAM[0x180b] = 0xbe;

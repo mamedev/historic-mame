@@ -1,10 +1,43 @@
 #ifndef pokyintf_h
 #define pokyintf_h
 
+#include "sndhrdw/pokey.h"
+
+#define NO_CLIP		0
+#define USE_CLIP	1
+
+struct POKEYinterface
+{
+	int num;	/* total number of pokeys in the machine */
+	int updates_per_frame;	/* you have to call pokey_update() this number of */
+							/* times each video frame. This is usually done from */
+							/* inside the interrupt handler. If you set this to */
+							/* 1, you don't HAVE /you may if you want to) to call */
+							/* pokey_update(), it will be called automatically by */
+							/* pokey_sh_update() */
+	int clock;
+	int volume;
+	int clip;				/* determines if pokey.c will clip the sample range */
+	/* Handlers for reading the pot values. Some Atari games use ALLPOT to return */
+	/* dipswitch settings and other things */
+	int (*pot0_r[MAXPOKEYS])(int offset);
+	int (*pot1_r[MAXPOKEYS])(int offset);
+	int (*pot2_r[MAXPOKEYS])(int offset);
+	int (*pot3_r[MAXPOKEYS])(int offset);
+	int (*pot4_r[MAXPOKEYS])(int offset);
+	int (*pot5_r[MAXPOKEYS])(int offset);
+	int (*pot6_r[MAXPOKEYS])(int offset);
+	int (*pot7_r[MAXPOKEYS])(int offset);
+	int (*allpot_r[MAXPOKEYS])(int offset);
+};
+
 int pokey1_sh_start (void);
 int pokey2_sh_start (void);
 int pokey4_sh_start (void);
 
+void pokey_update(void);
+
+int pokey_sh_start (struct POKEYinterface *interface);
 void pokey_sh_stop (void);
 
 int pokey1_r (int offset);

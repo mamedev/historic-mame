@@ -71,7 +71,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0x00,
 		{ OSD_KEY_3, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_CONTROL, 0, 0, 0 },
+				OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -164,11 +164,13 @@ static unsigned char mooncrst_color_prom[] =
 	0x00,0x36,0x07,0xf0,0x00,0x33,0x3f,0xdb,0x00,0x3f,0x57,0xc6,0x00,0xc6,0x3f,0xff
 };
 
+/* this PROM was bad (bit 3 always set). I tried to "fix" it to get more reasonable */
+/* colors, but it should not be considered correct. It's a bootleg anyway. */
 static unsigned char fantazia_color_prom[] =
 {
 	/* palette */
-	0x08,0x3B,0xCB,0xFE,0x08,0x1F,0xC8,0x3F,0x08,0xD8,0x0F,0x3F,0x08,0xC8,0xCC,0x0F,
-	0x08,0xC8,0xB8,0x1F,0x08,0x1E,0x79,0x0F,0x08,0xFE,0x0F,0xF8,0x08,0x7E,0x0F,0xCE
+	0x00,0x3B,0xCB,0xFE,0x00,0x1F,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xCC,0x07,
+	0x00,0xC0,0xB8,0x1F,0x00,0x1E,0x79,0x0F,0x00,0xFE,0x07,0xF8,0x00,0x7E,0x07,0xC6
 };
 
 static unsigned char samples[32*2] =
@@ -197,6 +199,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -251,6 +254,24 @@ ROM_START( mooncrst_rom )
 	ROM_CONTINUE(    0x1e00, 0x0200 )
 ROM_END
 
+ROM_START( mooncrsg_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "EPR194", 0x0000, 0x0800, 0x719fde2d )
+	ROM_LOAD( "EPR195", 0x0800, 0x0800, 0xb592b35a )
+	ROM_LOAD( "EPR196", 0x1000, 0x0800, 0xa68c9f7e )
+	ROM_LOAD( "EPR197", 0x1800, 0x0800, 0xdd96a2c2 )
+	ROM_LOAD( "EPR198", 0x2000, 0x0800, 0xb3df4fd5 )
+	ROM_LOAD( "EPR199", 0x2800, 0x0800, 0x4b7654e0 )
+	ROM_LOAD( "EPR200", 0x3000, 0x0800, 0x765799c9 )
+	ROM_LOAD( "EPR201", 0x3800, 0x0800, 0xb1cd92a3 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "EPR203", 0x0000, 0x0800, 0xa27f5447 )
+	ROM_LOAD( "EPR172", 0x0800, 0x0800, 0xdfbc68ba )
+	ROM_LOAD( "EPR202", 0x1000, 0x0800, 0xec79cbdb )
+	ROM_LOAD( "EPR171", 0x1800, 0x0800, 0xc1dc1cde )
+ROM_END
+
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "EPR194", 0x0000, 0x0800, 0x1c6e3b4a )
@@ -286,6 +307,16 @@ ROM_START( fantazia_rom )
 	ROM_LOAD( "1k_1_11.bin", 0x1000, 0x0800, 0xf93f9153 )
 	ROM_LOAD( "1h_2_09.bin", 0x1800, 0x0800, 0xc1dc1cde )
 ROM_END
+
+
+
+static const char *mooncrst_sample_names[] =
+{
+	"shot.sam",
+        "death.sam",
+        "backgrnd.sam",
+	0	/* end of array */
+};
 
 
 
@@ -343,19 +374,19 @@ for (A = 0;A < 0x10000;A++)
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8042],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x8042],1,17*5,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x8042],17*5);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -363,27 +394,51 @@ static int hiload(const char *name)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8042],1,17*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8042],17*5);
+		osd_fclose(f);
 	}
 }
 
-static const char *mooncrst_sample_names[] =
+static int mooncrsg_hiload(void)
 {
-	"shot.sam",
-        "death.sam",
-        "backgrnd.sam",
-	0	/* end of array */
-};
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8045],"\x00\x50\x00",3) == 0 &&
+			memcmp(&RAM[0x8051],"\x00\x50\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8045],17*5);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void mooncrsg_hisave(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8045],17*5);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver mooncrst_driver =
 {
@@ -404,9 +459,28 @@ struct GameDriver mooncrst_driver =
 	hiload, hisave
 };
 
-struct GameDriver mooncrsb_driver =
+struct GameDriver mooncrsg_driver =
 {
 	"Moon Cresta (Gremlin)",
+	"mooncrsg",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	&machine_driver,
+
+	mooncrsg_rom,
+	0, 0,
+	mooncrst_sample_names,
+
+	input_ports, 0, trak_ports, dsw, keys,
+
+	mooncrst_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	mooncrsg_hiload, mooncrsg_hisave
+};
+
+struct GameDriver mooncrsb_driver =
+{
+	"Moon Cresta (bootleg)",
 	"mooncrsb",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
 	&machine_driver,

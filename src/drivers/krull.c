@@ -61,7 +61,6 @@ int krull_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
 void gottlieb_sh_update(void);
-extern const char *gottlieb_sample_names[];
 void gottlieb_output(int offset, int data);
 int krull_IN1_r(int offset);
 extern unsigned char *gottlieb_paletteram;
@@ -130,7 +129,7 @@ static struct MemoryReadAddress krull_sound_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-struct MemoryWriteAddress krull_sound_writemem[] =
+static struct MemoryWriteAddress krull_sound_writemem[] =
 {
 	{ 0x0000, 0x01ff, riot_ram_w },
 	{ 0x0200, 0x03ff, gottlieb_riot_w },
@@ -285,12 +284,13 @@ static const struct MachineDriver machine_driver =
 
 	},
 	60,     /* frames / second */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1+16, 16,
+	16, 16,
 	gottlieb_vh_init_color_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -335,20 +335,25 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0b3d],"\x7F\x7F\x7F\x00\x00\x00\x00\x00\x00\x00",10) == 0 &&
 			memcmp(&RAM[0x0c2d],"\x7F\x7F\x7F\x00\x00\x00\x00\x00\x00\x00",10) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x0ace],10*10,1,f);
-			fread(&RAM[0x0b3d],10*25,1,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x0ace],10*10);
+			osd_fread(f,&RAM[0x0b3d],10*25);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -358,16 +363,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x0ace],10*10,1,f);
-		fwrite(&RAM[0x0b3d],10*25,1,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x0ace],10*10);
+		osd_fwrite(f,&RAM[0x0b3d],10*25);
+		osd_fclose(f);
 	}
 }
 
@@ -382,7 +390,7 @@ struct GameDriver krull_driver =
 
 	krull_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	gottlieb_sample_names,
+	0,
 
 	input_ports, 0, trak_ports, dsw, keys,
 

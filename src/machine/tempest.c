@@ -8,18 +8,31 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
+#include "sndhrdw/pokyintf.h"
 
-#define IN0_3KHZ (1<<7)
-#define IN0_VG_HALT (1<<6)
+/*
+ * Catch the following busy loop:
+ * C7A7	LDA $53
+ * C7A9 CMP #$09
+ * C7AB BCC C7A7
+ *
+ * Unfortunately, we'll have to put a memory hook on $53, which
+ * affects performace, since zero page access can no longer take
+ * the "shortcut" in MAME's memory handler. It's probably not worth
+ * it, however let's try :-)
+ */
 
-
-
-/* hack to avoid lockup at 150,000 points */
-int tempest_freakout(int data)
+int tempest_catch_busyloop (int offset)
 {
-	return (0);
+	int data;
+
+	data = RAM[0x0053];
+	if (cpu_getpreviouspc()==0xc7a7)
+	{
+		cpu_seticount(0);
+	}
+	return RAM[0x0053];
 }
 
 int tempest_IN0_r(int offset)
@@ -28,44 +41,23 @@ int tempest_IN0_r(int offset)
 
 	res = readinputport(0);
 
+	if (avgdvg_done())
+		res|=0x40;
+
 	/* Emulate the 3Khz source on bit 7 (divide 1.5Mhz by 512) */
-	if (cpu_geticount() & 0x100) {
-		res &=~IN0_3KHZ;
-	} else {
-		res|=IN0_3KHZ;
-	}
+	if (cpu_gettotalcycles() & 0x100)
+		res |=0x80;
 
-	if (vg_done(cpu_gettotalcycles()))
-		res |=IN0_VG_HALT;
-	else
-		res &=~IN0_VG_HALT;
-	return (res);
+	return res;
 }
 
-int tempest_IN1_r(int offset)
+
+int tempest_interrupt(void)
 {
-	static int spinner = 0;
-	int res, trak_in;
-
-	res = readinputport(1);
-	if (res & 1)
-		spinner--;
-	if (res & 2)
-		spinner++;
-	trak_in = readtrakport(0);
-	if (trak_in != NO_TRAK)
-		spinner += trak_in;
-	spinner &= 0x0f;
-	return ((res & 0xf0) | spinner);
+	update_analog_ports();
+	/* We cheat and update the pokey sound here since it needs frequent attention */
+	pokey_update ();
+	if (cpu_getiloops() == 5)
+		avgdvg_clr_busy();
+	return interrupt();
 }
-
-int tempest_spinner(int data)
-{
-	if (data>7)
-		data=7;
-	if (data<-7)
-		data=-7;
-	return (data);
-}
-
-

@@ -98,10 +98,16 @@ int kungfum_vh_start(void);
 void kungfum_vh_stop(void);
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void kungfum_sh_port0_w(int offset, int data);
-int  kungfum_sh_init(const char *gamename);
-void kungfum_sh_update(void);
-
+extern unsigned char *mpatrol_io_ram;
+extern unsigned char *mpatrol_sample_data;
+extern unsigned char *mpatrol_sample_table;
+int mpatrol_sh_init(const char *);
+int mpatrol_sh_start(void);
+int mpatrol_sh_interrupt(void);
+void mpatrol_io_w(int offset, int value);
+int mpatrol_io_r(int offset);
+void mpatrol_sample_trigger_w(int offset,int value);
+void mpatrol_sound_cmd_w(int offset, int value);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -137,7 +143,28 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-        { 0x00, 0x00, kungfum_sh_port0_w },
+	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ -1 }	/* end of table */
+};
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x0000, 0x001f, mpatrol_io_r, &mpatrol_io_ram },
+	{ 0x0080, 0x00ff, MRA_RAM },
+	{ 0xa000, 0xffff, MRA_ROM },
+	{ 0xe900, 0xe93f, MRA_ROM, &mpatrol_sample_table },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x0000, 0x001f, mpatrol_io_w },
+	{ 0x00c3, 0x00ca, mpatrol_sample_trigger_w, &mpatrol_sample_data },
+	{ 0x0080, 0x00ff, MWA_RAM },
+	{ 0x0801, 0x0802, MWA_NOP },
+	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
+	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -152,7 +179,7 @@ static struct InputPort input_ports[] =
 	{	/* IN1 */
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				0, OSD_KEY_CONTROL, 0, OSD_KEY_ALT },
+				0, OSD_KEY_LCONTROL, 0, OSD_KEY_ALT },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
 				0, OSD_JOY_FIRE1, 0, OSD_JOY_FIRE2 }
 	},
@@ -211,7 +238,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
 	3,	/* 2 bits per pixel */
-	{ 0, 0x2000*8, 0x4000*8 },
+	{ 2*1024*8*8, 1024*8*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 8*0, 8*1, 8*2, 8*3, 8*4, 8*5, 8*6, 8*7 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -221,7 +248,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	256,	/* 256 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0x10000*8, 0, 0x8000*8 },
+	{ 0x10000*8, 0x8000*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8},
 	32*8	/* every sprite takes 32 consecutive bytes */
@@ -360,8 +387,16 @@ static struct MachineDriver machine_driver =
 			readmem,writemem,readport, writeport,
 			interrupt,1
 		},
+		{
+			CPU_M6803,
+			1000000,	/* 1.0 Mhz ? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			mpatrol_sh_interrupt,68	/* 68 ints per frame = 4080 ints/sec */
+		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -378,10 +413,10 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	kungfum_sh_init,
-	0,
-	0,
-	kungfum_sh_update
+	mpatrol_sh_init,
+	mpatrol_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -398,27 +433,25 @@ ROM_START( kungfum_rom )
 	ROM_LOAD( "a-4d-c.bin", 0x4000, 0x4000, 0x8cba3ca0 )
 
 	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g-4e-a.bin", 0x00000, 0x2000, 0x8844653c )	/* characters */
+	ROM_LOAD( "g-4c-a.bin", 0x00000, 0x2000, 0x039d270f )	/* characters */
 	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, 0x63ea9db4 )
-	ROM_LOAD( "g-4c-a.bin", 0x04000, 0x2000, 0x039d270f )
-	ROM_LOAD( "b-3n-.bin",  0x06000, 0x2000, 0x914a85c8 )	/* sprites */
-	ROM_LOAD( "b-4n-.bin",  0x08000, 0x2000, 0xc75445d4 )
-	ROM_LOAD( "b-4m-.bin",  0x0a000, 0x2000, 0x7397e287 )
-	ROM_LOAD( "b-3m-.bin",  0x0c000, 0x2000, 0x97089d1e )
-	ROM_LOAD( "b-4k-.bin",  0x0e000, 0x2000, 0x8d7ed674 )
-	ROM_LOAD( "b-4f-.bin",  0x10000, 0x2000, 0x5b150b93 )
-	ROM_LOAD( "b-4l-.bin",  0x12000, 0x2000, 0xec6d1b3f )
-	ROM_LOAD( "b-4h-.bin",  0x14000, 0x2000, 0x1a4951cf )
+	ROM_LOAD( "g-4e-a.bin", 0x04000, 0x2000, 0x8844653c )
+	ROM_LOAD( "b-4k-.bin",  0x06000, 0x2000, 0x8d7ed674 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",  0x08000, 0x2000, 0x5b150b93 )
+	ROM_LOAD( "b-4l-.bin",  0x0a000, 0x2000, 0xec6d1b3f )
+	ROM_LOAD( "b-4h-.bin",  0x0c000, 0x2000, 0x1a4951cf )
+	ROM_LOAD( "b-3n-.bin",  0x0e000, 0x2000, 0x914a85c8 )
+	ROM_LOAD( "b-4n-.bin",  0x10000, 0x2000, 0xc75445d4 )
+	ROM_LOAD( "b-4m-.bin",  0x12000, 0x2000, 0x7397e287 )
+	ROM_LOAD( "b-3m-.bin",  0x14000, 0x2000, 0x97089d1e )
 	ROM_LOAD( "b-4c-.bin",  0x16000, 0x2000, 0x21d4b868 )
 	ROM_LOAD( "b-4e-.bin",  0x18000, 0x2000, 0x01e029aa )
 	ROM_LOAD( "b-4d-.bin",  0x1a000, 0x2000, 0x1ae251dc )
 	ROM_LOAD( "b-4a-.bin",  0x1c000, 0x2000, 0x64f6568c )
 
-	ROM_REGION(0x4000)	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3e-.bin", 0x0000, 0x2000, 0x5d39e85b )
-	ROM_LOAD( "a-3f-.bin", 0x2000, 0x2000, 0x52c61b44 )
-
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin", 0xa000, 0x2000, 0x5d39e85b )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin", 0xc000, 0x2000, 0x52c61b44 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000, 0x9d1c669e )
 ROM_END
 
@@ -428,27 +461,25 @@ ROM_START( kungfub_rom )
 	ROM_LOAD( "kf5", 0x4000, 0x4000, 0x3f93ee29 )
 
 	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "kf6",  0x00000, 0x2000, 0x8844653c )	/* characters */
+	ROM_LOAD( "kf8",  0x00000, 0x2000, 0x039d270f )	/* characters */
 	ROM_LOAD( "kf7",  0x02000, 0x2000, 0x63ea9db4 )
-	ROM_LOAD( "kf8",  0x04000, 0x2000, 0x039d270f )
-	ROM_LOAD( "kf9",  0x06000, 0x4000, 0x589ec01c )	/* sprites */
-	ROM_LOAD( "kf10", 0x0a000, 0x4000, 0x0a9f7f99 )
-	ROM_LOAD( "kf11", 0x0e000, 0x4000, 0xe893dde7 )
-	ROM_LOAD( "kf12", 0x12000, 0x4000, 0x06b64af0 )
+	ROM_LOAD( "kf6",  0x04000, 0x2000, 0x8844653c )
+	ROM_LOAD( "kf11", 0x06000, 0x4000, 0xe893dde7 )	/* sprites */
+	ROM_LOAD( "kf12", 0x0a000, 0x4000, 0x06b64af0 )
+	ROM_LOAD( "kf9",  0x0e000, 0x4000, 0x589ec01c )
+	ROM_LOAD( "kf10", 0x12000, 0x4000, 0x0a9f7f99 )
 	ROM_LOAD( "kf14", 0x16000, 0x4000, 0x23b491c2 )
 	ROM_LOAD( "kf13", 0x1a000, 0x4000, 0x7fd80750 )
 
-	ROM_REGION(0x4000)	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "kf3", 0x0000, 0x2000, 0x5d39e85b )
-	ROM_LOAD( "kf2", 0x2000, 0x2000, 0x52c61b44 )
-
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "kf3", 0xa000, 0x2000, 0x5d39e85b )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "kf2", 0xc000, 0x2000, 0x52c61b44 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "kf1", 0xe000, 0x2000, 0x9d1c669e )
 ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -459,16 +490,16 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0xea06],"\x00\x14\x95",3) == 0 &&
 			memcmp(&RAM[0xea78],"\x00\x48\x52",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xea06],1,6*20,f);
+			osd_fread(f,&RAM[0xea06],6*20);
 			RAM[0xe980] = RAM[0xea7a];
 			RAM[0xe981] = RAM[0xea79];
 			RAM[0xe982] = RAM[0xea78];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -478,18 +509,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xea06],1,6*20,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xea06],6*20);
+		osd_fclose(f);
 	}
 }
 
@@ -499,7 +530,7 @@ struct GameDriver kungfum_driver =
 {
 	"Kung Fu Master",
 	"kungfum",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nISHMAIR\nPAUL SWAN",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)",
 	&machine_driver,
 
 	kungfum_rom,
@@ -518,7 +549,7 @@ struct GameDriver kungfub_driver =
 {
 	"Kung Fu Master (bootleg)",
 	"kungfub",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nISHMAIR\nPAUL SWAN",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)",
 	&machine_driver,
 
 	kungfub_rom,

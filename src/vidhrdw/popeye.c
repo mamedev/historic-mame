@@ -196,6 +196,18 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
+	{
+		static int lastpos[2] = { -1, -1 };
+		if (/*popeye_background_pos[0] != 0 ||*/ popeye_background_pos[0] != lastpos[0] || 
+		    popeye_background_pos[1] != lastpos[1])
+		{
+			/* mark the whole screen dirty if we're scrolling */
+			osd_mark_dirty (Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y, 
+				Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
+			lastpos[0] = popeye_background_pos[0];
+			lastpos[1] = popeye_background_pos[1];
+		}
+	}
 
 	if (popeye_background_pos[0] == 0)	/* no background */
 	{

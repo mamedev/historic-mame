@@ -91,7 +91,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, pengo_flipscreen_w },
-	{ 0x5004, 0x5007, MWA_NOP },
+ 	{ 0x5004, 0x5005, osd_led_w },
+ 	{ 0x5006, 0x5007, MWA_NOP },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, MWA_NOP },
@@ -164,7 +165,7 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_CONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
 INPUT_PORTS_END
@@ -222,7 +223,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_CONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
 INPUT_PORTS_END
@@ -297,8 +298,8 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
+	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
+			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3, 0, 1, 2, 3 },
 	64*8	/* every sprite takes 64 bytes */
@@ -405,6 +406,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	pacman_init_machine,
 
 	/* video hardware */
@@ -555,12 +557,12 @@ ROM_END
 
 ROM_START( mspacatk_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.1", 0x0000, 0x1000, 0xbefc1968 )
-	ROM_LOAD( "%s.2", 0x1000, 0x1000, 0xe800e6f4 )
-	ROM_LOAD( "%s.3", 0x2000, 0x1000, 0xd16668e8 )
-	ROM_LOAD( "%s.4", 0x3000, 0x1000, 0x0652d280 )
-	ROM_LOAD( "%s.5", 0x8000, 0x1000, 0xf98d457b )
-	ROM_LOAD( "%s.6", 0x9000, 0x1000, 0x33f15633 )
+	ROM_LOAD( "mspacatk.1", 0x0000, 0x1000, 0xbefc1968 )
+	ROM_LOAD( "mspacatk.2", 0x1000, 0x1000, 0xe800e6f4 )
+	ROM_LOAD( "mspacatk.3", 0x2000, 0x1000, 0xd16668e8 )
+	ROM_LOAD( "mspacatk.4", 0x3000, 0x1000, 0x0652d280 )
+	ROM_LOAD( "mspacatk.5", 0x8000, 0x1000, 0xf98d457b )
+	ROM_LOAD( "mspacatk.6", 0x9000, 0x1000, 0x33f15633 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5e",    0x0000, 0x1000, 0x02d51d73 )
@@ -588,7 +590,7 @@ ROM_END
 
 
 
-static int pacman_hiload(const char *name)
+static int pacman_hiload(void)
 {
 	static int resetcount;
 
@@ -599,18 +601,18 @@ static int pacman_hiload(const char *name)
 	/* wait for "HIGH SCORE" to be on screen */
 	if (memcmp(&RAM[0x43d1],"\x48\x47\x49\x48",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
 		resetcount = 0;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			char buf[10];
 			int hi;
 
 
-			fread(&RAM[0x4e88],1,4,f);
+			osd_fread(f,&RAM[0x4e88],4);
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
 			hi = (RAM[0x4e88] & 0x0f) +
@@ -629,9 +631,9 @@ static int pacman_hiload(const char *name)
 				if (buf[4] != ' ') videoram_w(0x03f0,buf[4]-'0');
 				if (buf[5] != ' ') videoram_w(0x03ef,buf[5]-'0');
 				if (buf[6] != ' ') videoram_w(0x03ee,buf[6]-'0');
-				cpu_writemem(0x43ed,buf[7]-'0');
+				cpu_writemem16(0x43ed,buf[7]-'0');	/* ASG 971005 */
 			}
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -641,21 +643,21 @@ static int pacman_hiload(const char *name)
 
 
 
-static void pacman_hisave(const char *name)
+static void pacman_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x4e88],1,4,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x4e88],4);
+		osd_fclose(f);
 	}
 }
 
 
 
-static int crush_hiload(const char *name)
+static int crush_hiload(void)
 {
 	static int resetcount;
 
@@ -666,18 +668,18 @@ static int crush_hiload(const char *name)
 	/* wait for "HI SCORE" to be on screen */
 	if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
 		resetcount = 0;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			char buf[10];
 			int hi;
 
 
-			fread(&RAM[0x4c80],1,3,f);
+			osd_fread(f,&RAM[0x4c80],3);
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
 			hi = (RAM[0x4c82] & 0x0f) +
@@ -694,9 +696,9 @@ static int crush_hiload(const char *name)
 				if (buf[4] != ' ') videoram_w(0x03f1,buf[4]-'0');
 				if (buf[5] != ' ') videoram_w(0x03f0,buf[5]-'0');
 				if (buf[6] != ' ') videoram_w(0x03ef,buf[6]-'0');
-				cpu_writemem(0x43ee,buf[7]-'0');
+				cpu_writemem16(0x43ee,buf[7]-'0');	/* ASG 971005 */
 			}
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -706,15 +708,15 @@ static int crush_hiload(const char *name)
 
 
 
-static void crush_hisave(const char *name)
+static void crush_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x4c80],1,3,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x4c80],3);
+		osd_fclose(f);
 	}
 }
 
@@ -893,7 +895,7 @@ struct GameDriver mspacman_driver =
 
 struct GameDriver mspacatk_driver =
 {
-	"Ms. Pac Man Attacks",
+	"Miss Pac Plus",
 	"mspacatk",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,

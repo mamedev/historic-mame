@@ -86,7 +86,7 @@ static struct InputPort input_ports[] =
 	},
 	{ /* Controls get mapped to correct read location in Machine.c code */
 		0xFF,
-		{ OSD_KEY_3, 0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_CONTROL },
+		{ OSD_KEY_3, 0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_LCONTROL },
 		{ 0        , 0, 0        , 0        , OSD_JOY_FIRE2}
 	},
 	{
@@ -218,6 +218,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -257,11 +258,47 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+
+        void *f;
+
+        if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
+                memcmp(&RAM[0x8373],"\x18\x18\x18",3) == 0)
+
+        {
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&RAM[0x8358],3*10);
+                        RAM[0x831d] = RAM[0x8364];
+                        RAM[0x831e] = RAM[0x8365];
+                        RAM[0x831f] = RAM[0x8366];
+                        osd_fclose(f);
+                }
+                return 1;
+        }
+        else
+                return 0;
+}
+
+static void hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x8358],3*10);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver warpwarp_driver =
 {
 	"Warp Warp",
 	"warpwarp",
-	"CHRIS HARDY",
+	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)",
 	&machine_driver,
 
 	warpwarp_rom,
@@ -273,6 +310,6 @@ struct GameDriver warpwarp_driver =
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 

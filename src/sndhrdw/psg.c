@@ -242,7 +242,8 @@ unsigned char AYReadReg(int n, int r)
     return PSG->Regs[r];
 }
 
-static void _AYUpdateChip(int num)
+/* ASG 971010 -- modified to accept arbitrary buffer length and buffer pointers */
+static void _AYUpdateChip(int num, SAMPLE *buffer, int length)
 {
     AY8910 *PSG = &(AYPSG[num]);
     int i, x;
@@ -263,7 +264,7 @@ static void _AYUpdateChip(int num)
     PSG->Incrnoise = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = (PSG->Regs[AY_EFINE]+((unsigned)PSG->Regs[AY_ECOARSE]<<8));
-    PSG->Increnv = x ? AYClockFreq / AYSoundRate * 4 / x * AYBufSize : 0;
+    PSG->Increnv = x ? AYClockFreq / AYSoundRate * 4 / x * length/*ASG - AYBufSize*/ : 0;
 
     PSG->Envelope = _AYEnvForms[PSG->Regs[AY_ESHAPE]][(PSG->Countenv>>16)&0x1F];
 
@@ -302,23 +303,23 @@ static void _AYUpdateChip(int num)
 
 	/* set voltage base of output */
 	if( !(vb0 = PSG->Vol0*((PSG->Counter0&0x8000)?-16:16))){
-		PSG->Counter0 = (PSG->Counter0 + PSG->Incr0*AYBufSize)&0xffff;
+		PSG->Counter0 = (PSG->Counter0 + PSG->Incr0*length/*ASG - AYBufSize*/)&0xffff;
 	}
 	if( !(vb1 = PSG->Vol1*((PSG->Counter1&0x8000)?-16:16))){
-		PSG->Counter1 = (PSG->Counter1 + PSG->Incr1*AYBufSize)&0xffff;
+		PSG->Counter1 = (PSG->Counter1 + PSG->Incr1*length/*ASG - AYBufSize*/)&0xffff;
 	}
 	if( !(vb2 = PSG->Vol2*((PSG->Counter2&0x8000)?-16:16))){
-		PSG->Counter2 = (PSG->Counter2 + PSG->Incr2*AYBufSize)&0xffff;
+		PSG->Counter2 = (PSG->Counter2 + PSG->Incr2*length/*ASG - AYBufSize*/)&0xffff;
 	}
 	vbn = PSG->Volnoise*((PSG->NoiseGen&1)?12:-12);
 
 	if( !PSG->Vol0 && !PSG->Vol1 && !PSG->Vol2 && !PSG->Volnoise ){
 		/* all silent */
-	    memset(PSG->Buf,AUDIO_CONV(0),AYBufSize);
+	    memset(buffer/*ASG PSG->Buf*/,AUDIO_CONV(0),length/*ASG - AYBufSize*/);
 		return;
 	}
 
-    for( i=0; i<AYBufSize; ++i ) {
+    for( i=0; i<length/*ASG - AYBufSize*/; ++i ) {
 
    	/*
 	** These strange tricks are needed for getting rid
@@ -371,20 +372,28 @@ static void _AYUpdateChip(int num)
 			}
 		}
 	}
-	PSG->Buf[i] = AUDIO_CONV ( l0 + l1 + l2 + vbn ) / 8;
+	buffer/*ASG PSG->Buf*/[i] = AUDIO_CONV ( l0 + l1 + l2 + vbn ) / 8;
     }
 }
 
 /*
 ** called to update all chips
 */
+/* ASG 971010 -- modified to pass arbitrary buffer length and buffer pointers */
 void AYUpdate(void)
 {
     int i;
 
     for ( i = 0 ; i < AYNumChips; i++ ) {
-	_AYUpdateChip(i);
+	_AYUpdateChip(i /*ASG - add:*/, AYPSG[i].Buf, AYBufSize);
     }
+}
+
+
+/* ASG 971010 -- added to support arbitrary chip number, buffer length and buffer pointers */
+void AYUpdateOne(int chip, void *buffer, int length)
+{
+	_AYUpdateChip(chip, buffer, length);
 }
 
 

@@ -52,7 +52,6 @@ int stooges_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh2_w(int offset, int data);
 void gottlieb_sh_update(void);
-extern const char *gottlieb_sample_names[];
 void gottlieb_output(int offset, int data);
 int stooges_IN1_r(int offset);
 int stooges_joysticks(int offset);
@@ -163,7 +162,7 @@ static struct InputPort input_ports[] =
 	{       /* joystick 1 (Curly) */
 		0x00,
 		{ OSD_KEY_E, OSD_KEY_F, OSD_KEY_D, OSD_KEY_S,
-		0,OSD_KEY_CONTROL,0,0 },        /* Larry fire */
+		0,OSD_KEY_LCONTROL,0,0 },        /* Larry fire */
 		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0 }
 	},
 	{       /* joystick 3 (Larry) */
@@ -259,14 +258,15 @@ static const struct MachineDriver machine_driver =
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
-},
+	},
 	60,     /* frames / second */
+	1,	/* single CPU, no need for interleaving */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1+16,256,
+	16,256,
 	gottlieb_vh_init_color_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -303,26 +303,26 @@ ROM_START( stooges_rom )
 //      ROM_RELOAD(0x6000, 0x2000) /* A15 not decoded ?? */
 ROM_END
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	FILE *f=fopen(name,"rb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
-		fread(RAM+0x485,22,7,f); /* 21 hiscore entries + 1 (?) */
-		fclose(f);
+		osd_fread(f,RAM+0x485,22*7); /* 21 hiscore entries + 1 (?) */
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f=fopen(name,"wb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
-		fwrite(RAM+0x485,22,7,f); /* hiscore entries */
-		fclose(f);
+		osd_fwrite(f,RAM+0x485,22*7); /* hiscore entries */
+		osd_fclose(f);
 	}
 }
 
@@ -336,7 +336,7 @@ struct GameDriver stooges_driver =
 
 	stooges_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	gottlieb_sample_names,
+	0,
 
 	input_ports, 0, trak_ports, dsw, keys,
 

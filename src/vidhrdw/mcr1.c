@@ -36,10 +36,8 @@ void mcr1_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 	}
 
 	/* characters and sprites use the same palette */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 1;
+		COLOR(0,i) = i;
 
 	/* no sprite offset by default */
    spriteoffs = 0;

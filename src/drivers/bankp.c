@@ -236,6 +236,7 @@ static struct MachineDriver machine_driver =
 		},
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -286,7 +287,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	/* this check is really stupid and almost useless, but better than nothing */
@@ -294,14 +295,14 @@ static int hiload(const char *name)
 			memcmp(&RAM[0xe620],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
 			memcmp(&RAM[0xe018],"\x00\x00\x00\x00\x00\x00\x00",7) == 0)	/* high score */
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xe590],1,16*10,f);
+			osd_fread(f,&RAM[0xe590],16*10);
 			memcpy(&RAM[0xe018],&RAM[0xe590],7);	/* copy high score */
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -311,15 +312,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xe590],1,16*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xe590],16*10);
+		osd_fclose(f);
 	}
 }
 

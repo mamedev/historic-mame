@@ -8,6 +8,7 @@
 
 ***************************************************************************/
 
+#include <math.h>
 #include <pc.h>
 #include <conio.h>
 #include <sys/farptr.h>
@@ -19,14 +20,23 @@
 #include "ym2203.h"
 
 struct osd_bitmap *bitmap;
-int first_free_pen;
+
+
+unsigned char current_palette[256][3];
+PALETTE adjusted_palette;
+unsigned char dirtycolor[256];
 
 int videofreq;
 int video_sync;
 int play_sound;
 int use_joystick;
+int use_mouse;
 int use_alternate;
 int vector_game;
+int vector_updates;
+int vector_sign;
+int use_anti_alias;
+int use_dirty;
 
 int vesa_mode;
 int vesa_width;
@@ -40,8 +50,8 @@ int noscanlines;
 int nodouble;
 
 struct { char *desc; int x, y; } gfx_res[] = {
-        { "-224x288"    , 224, 288 },
-        { "-224"        , 224, 288 },
+	{ "-224x288"    , 224, 288 },
+	{ "-224"        , 224, 288 },
 	{ "-320x240"	, 320, 240 },
 	{ "-320"	, 320, 240 },
 	{ "-512x384"	, 512, 384 },
@@ -53,46 +63,17 @@ struct { char *desc; int x, y; } gfx_res[] = {
 	{ "-800"	, 800, 600 },
 	{ "-1024x768"	, 1024, 768 },
 	{ "-1024"	, 1024, 768 },
+	{ "-1280x1024"	, 1280, 1024 },
+	{ "-1280"	, 1280, 1024 },
+	{ "-1600x1200"	, 1600, 1200 },
+	{ "-1600"	, 1600, 1200 },
 	{ NULL		, 0, 0 }
 	};
 
-
-/* NTB: Mouse specific variables. */
-static int mouse_left = 0, mouse_right = 0, mouse_up = 0, mouse_down = 0;
-static int mouse_ox, mouse_oy;
-static int mouse_poll_count = 0;
-static int use_mouse = 0;
-
-#define MOUSE_CENTRE_X 160
-#define MOUSE_CENTRE_Y 120
-#define MOUSE_THRESHOLD 0
-#define TAN_22_5        106
-#define TAN_67_5        618
-
-void osd_poll_mouse(void);
-int osd_mouse_pressed(int joycode);
-
-
-/*
- *   Trackball Related stuff
- */
-
-extern volatile int mouse_x, mouse_y;
-static int use_trak = 0;
-static int large_trak_x = 0;
-static int large_trak_y = 0;
-
-#define TRAK_MAXX_RES 120
-#define TRAK_MAXY_RES 120
-#define TRAK_CENTER_X TRAK_MAXX_RES/2
-#define TRAK_CENTER_Y TRAK_MAXY_RES/2
-#define TRAK_MIN_X TRAK_MAXX_RES/6
-#define TRAK_MAX_X TRAK_MAXX_RES*5/6
-#define TRAK_MIN_Y TRAK_MAXY_RES/6
-#define TRAK_MAX_Y TRAK_MAXY_RES*5/6
-
-int osd_trak_read(int axis);
-int osd_trak_pressed(int joycode);
+char *vesa_desc[6]= {
+	"AUTO??", "VGA??", "MODEX??",
+	"VESA 1.2", "VESA 2.0 (banked)", "VESA 2 (linear)"
+};
 
 
 /* audio related stuff */
@@ -114,46 +95,50 @@ int osd_init(int argc,char **argv)
 	int soundcard;
 
 
-	first_free_pen = 0;
-
 	vector_game = 0;
+	vector_updates = 0;
+	use_anti_alias = -1; /* auto */
+	use_dirty = 0;
 	vesa_mode = 0;
-	vesa_width = 800;
-	vesa_height = 600;
+	vesa_width = 0;
+	vesa_height = 0;
 	noscanlines = 0;
 	nodouble = 0;
 	videofreq = 0;
 	video_sync = 0;
 	play_sound = 1;
 	use_joystick = 1;
+	use_mouse = 1;
 	soundcard = -1;
 	for (i = 1;i < argc;i++)
 	{
 
-		if (stricmp(argv[i],"-vesa") == 0)
+		if (stricmp(argv[i],"-vesa1") == 0)
 			vesa_mode = GFX_VESA1;
 		if (stricmp(argv[i],"-vesa2b") == 0)
 			vesa_mode = GFX_VESA2B;
 		if (stricmp(argv[i],"-vesa2l") == 0)
+			vesa_mode = GFX_VESA2L;
+		if (stricmp(argv[i],"-vesa") == 0)
 			vesa_mode = GFX_VESA2L;
 		if (stricmp(argv[i],"-skiplines") == 0)
 		{
 			i++;
 			if (i < argc) skiplines = atoi(argv[i]);
 		}
-                for (j=0; gfx_res[j].desc != NULL; j++)
+		for (j=0; gfx_res[j].desc != NULL; j++)
 		{
 			if (stricmp(argv[i], gfx_res[j].desc) == 0)
 			{
-                                if (gfx_res[j].x == 224)
-                                  use_alternate = 1;
-                                else
-                                {
-				  if (!vesa_mode)
-					vesa_mode = GFX_VESA1;
-				  vesa_width=gfx_res[j].x;
-				  vesa_height=gfx_res[j].y;
-                                }
+				if (gfx_res[j].x == 224)
+					use_alternate = 1;
+				else
+				{
+					if (!vesa_mode)
+						vesa_mode = GFX_VESA2L;
+					vesa_width = gfx_res[j].x;
+					vesa_height = gfx_res[j].y;
+				}
 				break;
 			}
 		}
@@ -163,9 +148,6 @@ int osd_init(int argc,char **argv)
 			nodouble = 1;
 		if (stricmp(argv[i],"-vsync") == 0)
 			video_sync = 1;
-
-		if (stricmp(argv[i],"-vg") == 0)
-			vector_game = 1;
 
 		if (stricmp(argv[i],"-soundcard") == 0)
 		{
@@ -185,18 +167,18 @@ int osd_init(int argc,char **argv)
                         No_FM = 1;
 
                 /* NTB */
-                if (stricmp(argv[i],"-mouse") == 0)
-                {
-                    use_mouse = 1;
-                    use_joystick = 0;
-                }
+                if (stricmp(argv[i],"-nomouse") == 0)
+			use_mouse = 0;
 
-		if (stricmp(argv[i],"-trak") == 0)
-		{
-		    use_mouse = 0;
-                    use_joystick = 1;
-                    use_trak = 1;
-                }
+		if (stricmp(argv[i],"-aa") == 0)
+		 	use_anti_alias=1;
+		if (stricmp(argv[i],"-naa") == 0)
+			use_anti_alias=0;
+
+		/* Just in case */
+		/* Does not work yet since MAME does not cut the */
+		/* game name out of the argv field. */
+		/* printf ("Warning: unrecognized option %s.\n",argv[i]);*/
 	}
 
 	if (play_sound)
@@ -296,33 +278,38 @@ int osd_init(int argc,char **argv)
 
 	allegro_init();
 	install_keyboard();		/* Allegro keyboard handler */
+	set_leds(0);	/* turn off all leds */
 
 	if (use_joystick)
 	{
 		/* Try to install Allegro joystick handler */
+		/* Support 4 button sticks */
+
+		joy_type=JOY_TYPE_4BUTTON;
 		if (initialise_joystick())
 			use_joystick = 0; /* joystick not found */
+
 	}
 
         /* NTB: Initialiase mouse */
-        if( use_mouse || use_trak )
-        {
-            if( install_mouse() == - 1 )
-            {
-                use_mouse = 0;
-		use_trak = 0;
-            }
-            else
-            {
-	        if( use_mouse )
-                {
-                    set_mouse_speed( 0, 0 );
-                    position_mouse( MOUSE_CENTRE_X, MOUSE_CENTRE_Y );
-                    mouse_ox = MOUSE_CENTRE_X;
-                    mouse_oy = MOUSE_CENTRE_Y;
-                }
-            }
-        }
+        if (use_mouse && (install_mouse() == -1))
+		use_mouse = 0;
+
+
+	/* Look if this is a vector game and set default vesa-res */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	{
+		vector_game=1;
+		use_dirty=1;
+		vector_sign=1;
+		if (vesa_mode && !vesa_width)
+		{
+			vesa_width=640;
+			vesa_height=480;
+		}
+	}
+	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+		use_dirty=1;
 
 	return 0;
 }
@@ -358,8 +345,7 @@ void osd_exit(void)
 }
 
 
-
-/* Create a bitmap. Also call clearbitmap() to appropriately initialize it to */
+/* Create a bitmap. Also calls clearbitmap() to appropriately initialize it to */
 /* the background color. */
 struct osd_bitmap *osd_create_bitmap(int width,int height)
 {
@@ -393,10 +379,22 @@ struct osd_bitmap *osd_create_bitmap(int width,int height)
 
 		bitmap->_private = bm;
 
-		clearbitmap(bitmap);
+		osd_clearbitmap(bitmap);
 	}
 
 	return bitmap;
+}
+
+
+
+/* set the bitmap to black */
+void osd_clearbitmap(struct osd_bitmap *bitmap)
+{
+	int i;
+
+
+	for (i = 0;i < bitmap->height;i++)
+		memset(bitmap->line[i],0,bitmap->width);
 }
 
 
@@ -543,18 +541,65 @@ Register scr240x272[] =
         { 0x3c0, 0x13, 0x00}
 };
 
+
+#define MAXDIRTY 1600
+char line1[MAXDIRTY];
+char line2[MAXDIRTY];
+char *dirty_old=line1;
+char *dirty_new=line2;
+
+
+/* ASG 971011 */
+void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
+{
+	/* DOS doesn't do dirty rects ... yet */
+	/* But the VESA code does dirty lines now. BW */
+	if (use_dirty)
+	{
+		if (y1 < 0) y1 = 0;
+		if (y2 >= MAXDIRTY) y2 = MAXDIRTY-1;
+
+		memset(&dirty_new[y1], 1, y2-y1+1);
+	}
+}
+
+void init_dirty(char dirty)
+{
+	memset(&dirty_new[0], dirty, MAXDIRTY);
+}
+
+void swap_dirty(void)
+{
+	char *tmp;
+
+	tmp = dirty_old;
+	dirty_old = dirty_new;
+	dirty_new = tmp;
+}
+
+
 /* Create a display screen, or window, large enough to accomodate a bitmap */
-/* of the given dimensions. I don't do any test here (224x288 will just do */
-/* for now) but one could e.g. open a window of the exact dimensions */
-/* provided. Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int attributes)
+/* of the given dimensions. Attributes are the ones defined in driver.h. */
+/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
+/* in *pens the pen values corresponding to the requested colors. */
+/* Return a osd_bitmap pointer or 0 in case of error. */
+struct osd_bitmap *osd_create_display(int width,int height,int totalcolors,
+		const unsigned char *palette,unsigned char *pens,int attributes)
 {
 	Register *reg = 0;
 	int reglen = 0;
 
 	double x_scale, y_scale, scale;
 
-	if (vector_game)
+	/* Mark the dirty buffers as dirty */
+	if (use_dirty)
+	{
+		init_dirty(1);
+		swap_dirty();
+		init_dirty(1);
+	}
+
+	if (vector_game && vesa_mode)
 	{
 		if (Machine->orientation & ORIENTATION_SWAP_XY)
 		{
@@ -571,11 +616,28 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 		else
 			scale=y_scale;
 		width=(int)((double)width*scale);
-		width-=width % 4;
 		height=(int)((double)height*scale);
+		if (nodouble)
+		{
+			height = height/2;
+			width = width/2;
+		}
+		/* Padding to an dword value */
+		width-=width % 4;
 		height-=height % 4;
+
 	}
+
 	bitmap = osd_create_bitmap(width,height);
+
+	/*  anti aliasing? */
+	if (use_anti_alias == -1)
+	{
+		if (height > 480)
+			use_anti_alias=1;
+		else
+			use_anti_alias=0;
+	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -590,22 +652,53 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
  	/* Check if there exists a tweaked mode to fit
            the screen in, otherwise use VESA */
 	if (!vesa_mode &&
-	    !(width == 224 && height == 288) &&
-            !(width == 256 && height == 256) &&
-            !(width == 256 && height == 232) &&
-	    !(width == 288 && height == 224) &&
-	    !(width == 320 && height == 204) &&
-            !(width == 240 && height == 272))
- 		vesa_mode = GFX_VESA1;
+			!(width == 224 && height == 288) &&
+			!(width <= 256 && height <= 256) &&
+			!(width == 288 && height == 224) &&
+			!(width == 320 && height == 204) &&
+			!(width == 240 && height == 272))
+		vesa_mode = GFX_VESA2L;
+
+        /* If we still don't know about the VESA resolution to use,
+           we now choose a sensible one. Only 640x480 and 800x600
+           are supported by all VESA drivers. */
+
+        if (vesa_mode && !vesa_width)
+        {
+                if (((height<=240) && (width <=320)) ||
+                    ((height> 300) && (width <=640)))
+                {
+                        vesa_width=640;
+                        vesa_height=480;
+                }
+                /* Hopefully no game needs more than 800x600 */
+                else
+                {       vesa_width=800;
+                        vesa_height=600;
+                }
+        }
 
  	if (vesa_mode)
   	{
- 		if (set_gfx_mode(vesa_mode,vesa_width,vesa_height,0,0) != 0)
-  		{
-			printf ("%dx%d not possible\n", vesa_width,vesa_height);
-			printf ("%s\n",allegro_error);
-			return 0;
+ 		int mode;
+
+		/* Try the specified vesamode and all lower ones BW 131097 */
+		for (mode=vesa_mode; mode>=GFX_VESA1; mode--)
+		{
+			if (errorlog)
+				fprintf (errorlog,"Trying %s\n", vesa_desc[mode]);
+			if (set_gfx_mode(mode,vesa_width,vesa_height,0,0) == 0)
+				break;
+			if (errorlog)
+				fprintf (errorlog,"%s\n",allegro_error);
  		}
+		if (mode < GFX_VESA1) {
+			printf ("No %dx%d VESA modes available. Try using UNIVBE\n", vesa_width,vesa_height);
+			return 0;
+		}
+
+		vesa_mode = mode;
+
  		if ((width > vesa_width/2) || nodouble)
  		{
                         nodouble = 1;
@@ -654,7 +747,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 				reglen = sizeof(scr224x288scanlines)/sizeof(Register);
 			}
 		}
-		else if (width == 256 && height == 256)
+		else if (width <= 256 && height <= 256)
 		{
 			if (noscanlines)
 			{
@@ -662,19 +755,6 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 				  reg = scr256x256_synced;
 				else
 				  reg = scr256x256;
-				reglen = sizeof(scr256x256)/sizeof(Register);
-			}
-			else
-			{
-				reg = scr256x256scanlines;
-				reglen = sizeof(scr256x256scanlines)/sizeof(Register);
-			}
-		}
-		else if (width == 256 && height == 232)
-		{
-			if (noscanlines)
-			{
-			        reg = scr256x256;
 				reglen = sizeof(scr256x256)/sizeof(Register);
 			}
 			else
@@ -714,12 +794,38 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 		outRegArray(reg,reglen);
 	}
 
-	/* We need to do this AFTER the screen is made... */
-	if( use_trak ) {
-	  set_mouse_speed( 0, 0 );
-          set_mouse_range(0, 0, TRAK_MAXX_RES-1, TRAK_MAXY_RES-1);
-	  position_mouse( TRAK_CENTER_X, TRAK_CENTER_Y );
+	/* initialize the palette */
+	{
+		int i;
+
+		for (i = 0;i < 256;i++)
+		{
+			current_palette[i][0] = current_palette[i][1] = current_palette[i][2] = 0;
+			dirtycolor[i] = 1;
+		}
+
+		if (totalcolors < 256)
+		{
+			/* if we have free places, fill the palette starting from the end, */
+			/* so we don't touch color 0, which is better left black */
+			for (i = 0;i < totalcolors;i++)
+				pens[i] = 255-i;
+		}
+		else
+		{
+			for (i = 0;i < totalcolors;i++)
+				pens[i] = i;
+		}
+
+
+		for (i = 0;i < totalcolors;i++)
+		{
+			current_palette[pens[i]][0] = palette[3*i];
+			current_palette[pens[i]][1] = palette[3*i+1];
+			current_palette[pens[i]][2] = palette[3*i+2];
+		}
 	}
+
 
 	return bitmap;
 }
@@ -735,53 +841,27 @@ void osd_close_display(void)
 
 
 
-int osd_obtain_pen(unsigned char red, unsigned char green, unsigned char blue)
-{
-	RGB rgb;
-	int res;
-
-
-	res = first_free_pen;
-
-	rgb.r = red >> 2;
-	rgb.g = green >> 2;
-	rgb.b = blue >> 2;
-	set_color(res,&rgb);
-
-	/* I could just increase first_free_pen. However, many driver writers */
-	/* assume that the palette is contiguous and forget to use Machine->pens[] */
-	/* to access it. This works on MS-DOS but not on the Mac. Mangling the */
-	/* palette this way ensures that DOS developers immediately notice that */
-	/* there's something wrong in the driver. */
-	first_free_pen = (first_free_pen + 3) % 256;
-
-	return res;
-}
-
-
-/* ASG 081897 -- begin */
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
 {
-	RGB rgb;
+	if (current_palette[pen][0] != red ||
+			current_palette[pen][1] != green ||
+			current_palette[pen][2] != blue)
+	{
+		current_palette[pen][0] = red;
+		current_palette[pen][1] = green;
+		current_palette[pen][2] = blue;
 
-	rgb.r = red >> 2;
-	rgb.g = green >> 2;
-	rgb.b = blue >> 2;
-
-	set_color(pen,&rgb);
+		dirtycolor[pen] = 1;
+	}
 }
-/* ASG 081897 -- end */
+
 
 
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
 {
-	RGB rgb;
-
-	get_color(pen,&rgb);
-
-	*red = (rgb.r << 2) | (rgb.r >> 4);
-	*green = (rgb.g << 2) | (rgb.g >> 4);
-	*blue = (rgb.b << 2) | (rgb.b >> 4);
+	*red = current_palette[pen][0];
+	*green = current_palette[pen][1];
+	*blue = current_palette[pen][2];
 }
 
 
@@ -831,8 +911,18 @@ inline void update_vesa(void)
 	width4 = bitmap->width /4;
 	lb = bitmap->_private + bitmap->width*skiplines;
 
-	for (y = vesa_display_lines;y !=0 ; y--)
+	for (y = 0; y < vesa_display_lines; y++)
 	{
+		if (use_dirty)
+		if ((dirty_new[y+skiplines]+dirty_old[y+skiplines]) == 0) {
+			lb+=width4;
+			vesa_line++;
+			if (!nodouble)
+				vesa_line++;
+			/* No need to update. Next line */
+			continue;
+		}
+
 		address = bmp_write_line (screen, vesa_line) + vesa_xoffset;
 		if (!nodouble)
 		{
@@ -848,7 +938,7 @@ inline void update_vesa(void)
 			_movedatal (src_seg,(unsigned long)lb,dest_seg,address,width4);
 			vesa_line++;
 		}
-		lb += width4;
+		lb+=width4;
 	}
 }
 
@@ -857,7 +947,85 @@ inline void update_vesa(void)
 /* when the user presses F5. This is not required for porting. */
 void osd_update_display(void)
 {
+	int i;
+	static float gamma_correction = 1.00;
+	static float gamma_update = 0.00;
+	static int showgammatemp;
+
+
 	if (video_sync) vsync();
+
+
+	if (osd_key_pressed(OSD_KEY_LSHIFT) &&
+			(osd_key_pressed(OSD_KEY_PLUS_PAD) || osd_key_pressed(OSD_KEY_MINUS_PAD)))
+	{
+		for (i = 0;i < 256;i++) dirtycolor[i] = 1;
+
+		if (osd_key_pressed(OSD_KEY_MINUS_PAD)) gamma_update -= 0.02;
+		if (osd_key_pressed(OSD_KEY_PLUS_PAD)) gamma_update += 0.02;
+
+		if (gamma_update < -0.09)
+		{
+			gamma_update = 0.00;
+			gamma_correction -= 0.10;
+		}
+		if (gamma_update > 0.09)
+		{
+			gamma_update = 0.00;
+			gamma_correction += 0.10;
+		}
+
+		if (gamma_correction < 0.2) gamma_correction = 0.2;
+		if (gamma_correction > 3.0) gamma_correction = 3.0;
+
+		showgammatemp = Machine->drv->frames_per_second;
+	}
+
+	if (showgammatemp > 0)
+	{
+		char buf[20];
+		int trueorientation,l,x,y;
+
+
+		showgammatemp--;
+
+		/* hack: force the display into standard orientation to avoid */
+		/* rotating the text */
+		trueorientation = Machine->orientation;
+		Machine->orientation = ORIENTATION_DEFAULT;
+
+		sprintf(buf,"Gamma = %1.1f",gamma_correction);
+		l = strlen(buf);
+		x = (Machine->scrbitmap->width - Machine->uifont->width * l) / 2;
+		y = (Machine->scrbitmap->height - Machine->uifont->height) / 2;
+		for (i = 0;i < l;i++)
+			drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
+					x + i*Machine->uifont->width,y,0,TRANSPARENCY_NONE,0);
+
+		Machine->orientation = trueorientation;
+	}
+
+	for (i = 0;i < 256;i++)
+	{
+		if (dirtycolor[i])
+		{
+			int r,g,b;
+
+
+			dirtycolor[i] = 0;
+
+			r = 255 * pow(current_palette[i][0] / 255.0, 1 / gamma_correction);
+			g = 255 * pow(current_palette[i][1] / 255.0, 1 / gamma_correction);
+			b = 255 * pow(current_palette[i][2] / 255.0, 1 / gamma_correction);
+
+			adjusted_palette[i].r = r >> 2;
+			adjusted_palette[i].g = g >> 2;
+			adjusted_palette[i].b = b >> 2;
+
+			set_color(i,&adjusted_palette[i]);
+		}
+	}
+
 
 	if (vesa_mode)
 	{
@@ -866,14 +1034,32 @@ void osd_update_display(void)
 		/* Check for PGUP, PGDN and scroll screen */
 		if (osd_key_pressed(OSD_KEY_PGDN) &&
 			(skiplines+vesa_display_lines < bitmap->height))
+		{
 			skiplines++;
+			if (use_dirty) init_dirty(1);
+		}
 		if (osd_key_pressed(OSD_KEY_PGUP) && (skiplines>0))
+		{
 			skiplines--;
+			if (use_dirty) init_dirty(1);
+		}
 	}
 	else 	/* no vesa-modes */
 	{
 		/* copy the bitmap to screen memory */
 		_dosmemputl(bitmap->_private,bitmap->width * bitmap->height / 4,0xa0000);
+	}
+
+	if (use_dirty)
+	{
+		/* Vector games may not have updated the screen */
+		if (!vector_game || (vector_updates != 0))
+		{
+			/* for the vector games */
+			vector_updates=0;
+			swap_dirty();
+			init_dirty(0);
+		}
 	}
 
 	/* if the user pressed F12, save a snapshot of the screen. */
@@ -1155,59 +1341,50 @@ int osd_read_keyrepeat(void)
 /* return the name of a key */
 const char *osd_key_name(int keycode)
 {
-  static char *keynames[] = { "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
-                               "MINUS", "EQUAL", "BACKSPACE", "TAB", "Q", "W", "E", "R", "T", "Y",
-                               "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER", "CONTROL",
-                               "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE",
-                               "TILDE", "LEFTSHIFT", "NULL", "Z", "X", "C", "V", "B", "N", "M", "COMMA",
-                               "STOP", "SLASH", "RIGHTSHIFT", "ASTERISK", "ALT", "SPACE", "CAPSLOCK",
-                               "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "NUMLOCK",
-                               "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD", "LEFT", "5 PAD", "RIGHT",
-                               "PLUS PAD", "END", "DOWN", "PGDN", "INS", "DEL", "F11", "F12" };
+	static char *keynames[] =
+	{
+		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+		"0", "MINUS", "EQUAL", "BACKSPACE", "TAB", "Q", "W", "E", "R", "T",
+		"Y", "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER", "LEFTCONTROL",	"A",
+		"S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE",
+		"TILDE", "LEFTSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M",
+		"COMMA", "STOP", "SLASH", "RIGHTSHIFT", "ASTERISK", "ALT", "SPACE", "CAPSLOCK",	"F1", "F2",
+		"F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "NUMLOCK",	"SCRLOCK",
+		"HOME", "UP", "PGUP", "MINUS PAD", "LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
+		"PGDN", "INS", "DEL", "RIGHTCONTROL", "ALTGR", "Error", "F11", "F12"
+	};
+	static char *nonedefined = "None";
 
-  static char *nonedefined = "None";
-
-  if (keycode && keycode <= OSD_MAX_KEY) return (char*)keynames[keycode-1];
-  else return (char *)nonedefined;
+	if (keycode && keycode <= OSD_MAX_KEY) return keynames[keycode-1];
+	else return (char *)nonedefined;
 }
 
 
 /* return the name of a joystick button */
 const char *osd_joy_name(int joycode)
 {
-  static char *joynames[] = { "LEFT", "RIGHT", "UP", "DOWN", "Button A",
-			      "Button B", "Button C", "Button D", "Any Button" };
-  static char *nonedefined = "None";
+   static char *joynames[] =
+   {
+      "Left", "Right", "Up", "Down", "Button A",
+      "Button B", "Button C", "Button D", "Button E", "Button F",
+      "Button G", "Button H", "Button I", "Button J", "Any Button",
+      "J2 Left", "J2 Right", "J2 Up", "J2 Down", "J2 Button A",
+      "J2 Button B", "J2 Button C", "J2 Button D", "J2 Button E", "J2 Button F",
+      "J2 Button G", "J2 Button H", "J2 Button I", "J2 Button J", "J2 Any Button",
+   };
 
-  if (joycode && joycode <= OSD_MAX_JOY) return (char*)joynames[joycode-1];
-  else return (char *)nonedefined;
+   if (joycode && joycode <= OSD_MAX_JOY)
+      return (char *)joynames[joycode-1];
+
+   return "Unknown";
 }
 
-
-
-int joy_b3, joy_b4;
 
 void osd_poll_joystick(void)
 {
-        /* NTB. */
-        if( use_mouse == 1 )
-        {
-            osd_poll_mouse();
-            return;
-        }
-
 	if (use_joystick == 1)
-	{
-		unsigned char joystatus;
-
-
 		poll_joystick();
-		joystatus = inportb(0x201);
-		joy_b3 = ((joystatus & 0x40) == 0);
-		joy_b4 = ((joystatus & 0x80) == 0);
-	}
 }
-
 
 
 /* check if the joystick is moved in the specified direction, defined in */
@@ -1217,18 +1394,7 @@ int osd_joy_pressed(int joycode)
 	/* compiler bug? If I don't declare these variables as volatile, */
 	/* joystick right is not detected */
 	extern volatile int joy_left, joy_right, joy_up, joy_down;
-	extern volatile int joy_b1, joy_b2;
-
-
-        /* NTB. */
-        if( use_mouse == 1 )
-        {
-            return( osd_mouse_pressed( joycode ));
-        }
-
-	if( use_trak == 1) {
-	  return( osd_trak_pressed(joycode));
-	}
+	extern volatile int joy_b1, joy_b2, joy_b3, joy_b4;
 
 	switch (joycode)
 	{
@@ -1245,242 +1411,72 @@ int osd_joy_pressed(int joycode)
 			return joy_down;
 			break;
 		case OSD_JOY_FIRE1:
-			return joy_b1;
+			return (joy_b1 || (mouse_b & 1));
 			break;
 		case OSD_JOY_FIRE2:
-			return joy_b2;
+			return (joy_b2 || (mouse_b & 2));
 			break;
 		case OSD_JOY_FIRE3:
-			return joy_b3;
+			return (joy_b3 || (mouse_b & 4));
 			break;
 		case OSD_JOY_FIRE4:
 			return joy_b4;
 			break;
 		case OSD_JOY_FIRE:
-			return (joy_b1 || joy_b2 || joy_b3 || joy_b4);
+			return (joy_b1 || joy_b2 || joy_b3 || joy_b4 || mouse_b);
 			break;
 		default:
-			return 0;
+//			if (errorlog)
+//				fprintf (errorlog,"Error: osd_joy_pressed called with no valid joyname\n");
 			break;
 	}
+	return 0;
 }
 
 
-/* NTB. Read the mouse movement and equate it to a joystick direction. */
-
-void osd_poll_mouse(void)
+int osd_trak_read(int axis)
 {
-    int mouse_dx, mouse_dy;
-    int mouse_tan;
+	static int deltax;
+	static int deltay;
+	int mickeyx, mickeyy;
+	int ret;
 
-    extern volatile int mouse_x, mouse_y;
+	if (!use_mouse)
+		return(0);
 
+	get_mouse_mickeys(&mickeyx,&mickeyy);
 
-    ++mouse_poll_count;
+	deltax+=mickeyx;
+	deltay+=mickeyy;
 
-    if( mouse_poll_count == 2 )
-	{
-        mouse_left = mouse_right = mouse_up = mouse_down = 0;
-
-        mouse_dx = mouse_x - mouse_ox;
-        mouse_dy = mouse_y - mouse_oy;
-
-        /* Only register mouse movement over a certain threshold */
-        if( ( abs(mouse_dx) > MOUSE_THRESHOLD ) ||
-            ( abs(mouse_dy) > MOUSE_THRESHOLD )
-        )
-        {
-            /* Pre-check for division by zero */
-            if( mouse_dy == 0 )
-            {
-                ++mouse_dy;
-            }
-
-            /* Calculate the mouse delta tangent using fixed pt. */
-            mouse_tan = (mouse_dx * 256)/mouse_dy;
-
-            /* Approximate the mouse direction to a joystick direction */
-            if( mouse_dy <= 0 )
-            {
-                if( mouse_tan < -TAN_67_5 )
-                {
-                    mouse_right = 1;
-                }
-                else if( mouse_tan < -TAN_22_5 )
-                {
-                    mouse_up = 1;
-                    mouse_right = 1;
-                }
-                else if( mouse_tan < TAN_22_5 )
-                {
-                    mouse_up = 1;
-                }
-                else if( mouse_tan < TAN_67_5 )
-                {
-                    mouse_up = 1;
-                    mouse_left = 1;
-                }
-                else
-                {
-                    mouse_left = 1;
-                }
-            }
-            else
-            {
-                if( mouse_tan < -TAN_67_5 )
-                {
-                    mouse_left = 1;
-                }
-                else if( mouse_tan < -TAN_22_5 )
-                {
-                    mouse_down = 1;
-                    mouse_left = 1;
-                }
-                else if( mouse_tan < TAN_22_5 )
-                {
-                    mouse_down = 1;
-                }
-                else if( mouse_tan < TAN_67_5 )
-                {
-                    mouse_down = 1;
-                    mouse_right = 1;
-                }
-                else
-                {
-                    mouse_right = 1;
-                }
-            }
-        }
-        position_mouse( MOUSE_CENTRE_X, MOUSE_CENTRE_Y );
-        mouse_ox = MOUSE_CENTRE_X;
-        mouse_oy = MOUSE_CENTRE_Y;
-        mouse_poll_count = 0;
-	}
-}
-
-/* NTB. Same as osd_joy_pressed() */
-
-int osd_mouse_pressed(int joycode)
-{
-	switch (joycode)
-	{
-		case OSD_JOY_LEFT:
-            return mouse_left;
+	switch(axis) {
+		case X_AXIS:
+			ret=deltax;
+			deltax=0;
 			break;
-		case OSD_JOY_RIGHT:
-            return mouse_right;
-			break;
-		case OSD_JOY_UP:
-            return mouse_up;
-			break;
-		case OSD_JOY_DOWN:
-            return mouse_down;
-			break;
-		case OSD_JOY_FIRE1:
-            return (mouse_b & 1);
-			break;
-		case OSD_JOY_FIRE2:
-            return (mouse_b & 2);
-			break;
-		case OSD_JOY_FIRE3:
-            return (mouse_b & 4);
-			break;
-		case OSD_JOY_FIRE:
-            return ((mouse_b & 1) || (mouse_b & 2) || (mouse_b & 4));
+		case Y_AXIS:
+			ret=deltay;
+			deltay=0;
 			break;
 		default:
-			return 0;
-			break;
+			ret=0;
+			if (errorlog)
+				fprintf (errorlog, "Error: no axis in osd_track_read\n");
 	}
+
+	return ret;
 }
 
-int osd_trak_pressed(int joycode)
-{
-	switch (joycode)
-	{
-		case OSD_JOY_LEFT:
-            return 0;
-			break;
-		case OSD_JOY_RIGHT:
-            return 0;
-			break;
-		case OSD_JOY_UP:
-            return 0;
-			break;
-		case OSD_JOY_DOWN:
-            return 0;
-			break;
-		case OSD_JOY_FIRE1:
-            return (mouse_b & 1);
-			break;
-		case OSD_JOY_FIRE2:
-            return (mouse_b & 2);
-			break;
-		case OSD_JOY_FIRE3:
-            return (mouse_b & 4);
-			break;
-		case OSD_JOY_FIRE:
-            return ((mouse_b & 1) || (mouse_b & 2) || (mouse_b & 4));
-			break;
-		default:
-			return 0;
-			break;
-	}
-}
 
-int osd_trak_read(int axis) {
-  if(!use_trak) {
-    return(NO_TRAK);
-  }
-
-  if(mouse_x > TRAK_MAX_X) {
-    large_trak_x++;
-    position_mouse(TRAK_MIN_X+(mouse_x-TRAK_MAX_X),mouse_y);
-  }
-
-  if(mouse_x < TRAK_MIN_X) {
-    large_trak_x--;
-    position_mouse(TRAK_MAX_X-(TRAK_MIN_X-mouse_x),mouse_y);
-  }
-
-  if(mouse_y > TRAK_MAX_Y) {
-    large_trak_y++;
-    position_mouse(mouse_x,TRAK_MIN_Y+(mouse_y-TRAK_MAX_Y));
-  }
-
-  if(mouse_y < TRAK_MIN_Y) {
-    large_trak_y--;
-    position_mouse(mouse_x,TRAK_MAX_Y-(TRAK_MIN_Y-mouse_y));
-  }
-
-  switch(axis) {
-  case X_AXIS:
-    return((large_trak_x*TRAK_MAXX_RES*2/3)+mouse_x-TRAK_CENTER_X);
-    break;
-  case Y_AXIS:
-    return((large_trak_y*TRAK_MAXY_RES*2/3)+mouse_y-TRAK_CENTER_Y);
-    break;
-  }
-
-  return(0);
-}
-
-void osd_trak_center_x(void) {
-  large_trak_x = 0;
-  position_mouse(TRAK_CENTER_X, mouse_y);
-}
-
-void osd_trak_center_y(void) {
-  large_trak_y = 0;
-  position_mouse(mouse_x, TRAK_CENTER_Y);
-}
 
 
 #define MAXPIXELS 100000
 char * pixel[MAXPIXELS];
 int p_index=-1;
 
-inline void draw_pixel (int x, int y, int col)
+int dirty_sequence_nr;
+
+inline void osd_draw_pixel (int x, int y, int col)
 {
 	char *address;
 
@@ -1495,12 +1491,32 @@ inline void draw_pixel (int x, int y, int col)
 		p_index++;
 		pixel[p_index]=address;
 	}
+
+	/* This is a _very_ simple scheme to support "dirty" lines */
+	/* It can result in artefacts remaining on the screen for  */
+	/* a while. BW 141097 */
+#if 0   /* try it out yourself */
+	if (vector_sign)
+		dirty_new[y]+=(col+(x<<4));
+	else
+		dirty_new[y]-=(col+(x<<4));
+	dirty_new[y]^=((col+(x<<4))<<16);
+#else
+	dirty_new[y]=1;
+#endif
 }
 
-void open_page (int *x_res, int *y_res, int step)
+int osd_update_vectors (int *x_res, int *y_res, int step)
 {
 	int i;
 	unsigned char bg;
+
+	/* At most one update per MAME frame */
+	vector_updates++;
+	if (vector_updates>1) {
+		if (errorlog) fprintf(errorlog,"Vector update #%d in the same frame.\n", vector_updates);
+		return 1;
+	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -1512,25 +1528,24 @@ void open_page (int *x_res, int *y_res, int step)
 		*x_res=bitmap->width;
 		*y_res=bitmap->height;
 	}
+
+	/* Clear the old bitmap. Delete pixel for pixel, this is
+           faster than memset. */
 	bg=Machine->pens[0];
 	for (i=p_index; i>=0; i--)
 	{
 		*(pixel[i])=bg;
 	}
 	p_index=-1;
+
+	return 0;
 }
 
-void close_page (void)
+void osd_draw_to (int x2, int y2, int col)
 {
-}
-
-void draw_to (int x2, int y2, int col)
-{
-	static int x1=0;
-	static int y1=0;
-
-	int temp_x, temp_y, orientation;
+	int orientation;
 	int dx,dy,cx,cy,sx,sy;
+	static int x1,y1;
 
 #if 0
 	if (errorlog)
@@ -1556,7 +1571,6 @@ void draw_to (int x2, int y2, int col)
 			y2 = bitmap->height-1-y2;
 	}
 
-	temp_x = x2; temp_y = y2;
 	if (col<0)
 	{
 		x1=x2;
@@ -1566,16 +1580,9 @@ void draw_to (int x2, int y2, int col)
 		col=Machine->gfx[0]->colortable[col];
 
 
-
 	dx=abs(x1-x2);
 	dy=abs(y1-y2);
 
-	if ((dx>=dy && x1>x2) || (dy>dx && y1>y2))
-	{
-		int temp;
-		temp = x1; x1 = x2; x2 = temp;
-		temp = y1; y1 = y2; y2 = temp;
-	}
 	sx = ((x1 <= x2) ? 1 : -1);
 	sy = ((y1 <= y2) ? 1 : -1);
 	cx=dx/2;
@@ -1583,9 +1590,12 @@ void draw_to (int x2, int y2, int col)
 
 	if (dx>=dy)
 	{
-		while (x1 <= x2)
+		for (;;)
 		{
-			draw_pixel(x1,y1,col);
+			osd_draw_pixel(x1,y1,col);
+			if (use_anti_alias)
+				osd_draw_pixel(x1,y1+1,col);
+			if (x1 == x2) break;
 			x1+=sx;
 			cx-=dy;
 			if (cx < 0)
@@ -1593,13 +1603,16 @@ void draw_to (int x2, int y2, int col)
 				y1+=sy;
 				cx+=dx;
 			}
-		}
+		 }
 	}
 	else
 	{
-		while (y1 <= y2)
+		for (;;)
 		{
-			draw_pixel(x1,y1,col);
+			osd_draw_pixel(x1,y1,col);
+			if (use_anti_alias)
+				osd_draw_pixel(x1+1,y1,col);
+			if (y1 == y2) break;
 			y1+=sy;
 			cy-=dx;
 			if (cy < 0)
@@ -1609,7 +1622,103 @@ void draw_to (int x2, int y2, int col)
 			}
 		}
 	}
+}
 
-	y1=temp_y;
-	x1=temp_x;
+
+
+
+
+/* file handling routines */
+
+/* gamename holds the driver name, filename is only used for ROMs and samples. */
+/* if 'write' is not 0, the file is opened for write. Otherwise it is opened */
+/* for read. */
+void *osd_fopen(const char *gamename,const char *filename,int filetype,int write)
+{
+	char name[100];
+	void *f;
+
+
+	switch (filetype)
+	{
+		case OSD_FILETYPE_ROM:
+		case OSD_FILETYPE_SAMPLE:
+			sprintf(name,"%s/%s",gamename,filename);
+			f = fopen(name,write ? "wb" : "rb");
+			if (f == 0)
+			{
+				/* try with a .zip directory (if ZipMagic is installed) */
+				sprintf(name,"%s.zip/%s",gamename,filename);
+				f = fopen(name,write ? "wb" : "rb");
+			}
+			if (f == 0)
+			{
+				/* try with a .zif directory (if ZipFolders is installed) */
+				sprintf(name,"%s.zif/%s",gamename,filename);
+				f = fopen(name,write ? "wb" : "rb");
+			}
+			return f;
+			break;
+		case OSD_FILETYPE_HIGHSCORE:
+			sprintf(name,"hi/%s.hi",gamename);
+			return fopen(name,write ? "wb" : "rb");
+			break;
+		case OSD_FILETYPE_CONFIG:
+			sprintf(name,"cfg/%s.cfg",gamename);
+			return fopen(name,write ? "wb" : "rb");
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+
+
+int osd_fread(void *file,void *buffer,int length)
+{
+	return fread(buffer,1,length,(FILE *)file);
+}
+
+
+
+int osd_fwrite(void *file,const void *buffer,int length)
+{
+	return fwrite(buffer,1,length,(FILE *)file);
+}
+
+
+
+int osd_fseek(void *file,int offset,int whence)
+{
+	return fseek((FILE *)file,offset,whence);
+}
+
+
+
+void osd_fclose(void *file)
+{
+	fclose((FILE *)file);
+}
+
+
+
+static int leds=0;
+static const int led_flags[3] = {
+  KB_NUMLOCK_FLAG,
+  KB_CAPSLOCK_FLAG,
+  KB_SCROLOCK_FLAG
+};
+void osd_led_w(int led,int on) {
+  int temp=leds;
+  if (led<3) {
+    if (on&1)
+        temp |=  led_flags[led];
+    else
+        temp &= ~led_flags[led];
+    if (temp!=leds) {
+        leds=temp;
+        set_leds (leds);
+    }
+  }
 }

@@ -13,6 +13,8 @@
 
 unsigned char mappy_scroll;
 
+static unsigned char *transparency;
+
 
 /***************************************************************************
 
@@ -60,8 +62,41 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 		colortable[i] = 31 - ((color_prom[(i^3) + 32] & 0x0f) + 0x10);
 
 	/* sprites */
-	for (i = 64*4;i < 128*4;i++)
+	for (i = 64*4;i < Machine->drv->color_table_len;i++)
 		colortable[i] = 31 - (color_prom[i + 32] & 0x0f);
+
+   /* now check our characters and mark which ones are completely solid-color */
+   {
+      struct GfxElement *gfx;
+      unsigned char *dp;
+      int i, x, y, color;
+      
+      transparency = malloc (64*256);
+      if (!transparency)
+      	return;
+      memset (transparency, 0, 64*256);
+
+      gfx = Machine->gfx[0];
+      for (i = 0; i < gfx->total_elements; i++)
+      {
+			color = gfx->gfxdata->line[i * gfx->height][0];
+
+			for (y = 0; y < gfx->height; y++)
+			{
+				dp = gfx->gfxdata->line[i * gfx->height + y];
+				for (x = 0; x < gfx->width; x++)
+					if (dp[x] != color)
+						goto done;
+			}
+
+			for (y = 0; y < 64; y++)
+				if (colortable[y*4 + color] == 0)
+					transparency[(i << 6) + y] = 1;
+
+		done:
+			;
+      }
+   }
 }
 
 
@@ -69,11 +104,11 @@ int mappy_vh_start(void)
 {
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	memset (dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(60*8,36*8)) == 0)
+	if ((tmpbitmap = osd_create_bitmap (60*8,36*8)) == 0)
 	{
-		free(dirtybuffer);
+		free (dirtybuffer);
 		return 1;
 	}
 
@@ -89,6 +124,7 @@ int mappy_vh_start(void)
 ***************************************************************************/
 void mappy_vh_stop(void)
 {
+	free(transparency);
 	free(dirtybuffer);
 	osd_free_bitmap(tmpbitmap);
 }
@@ -147,9 +183,13 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
+		int color = colorram[offs];
+		int video = videoram[offs];
+		
 		/* characters with bit 0x40 set are higher priority than sprites; remember and redraw later */
-		if (colorram[offs] & 0x40)
-			*save++ = offs;
+		if (color & 0x40)
+			if (!transparency[(video << 6) + (color & 0x3f)])
+				*save++ = offs;
 		
 		if (dirtybuffer[offs])
 		{
@@ -187,8 +227,8 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs],
+					video,
+					color,
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -203,7 +243,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (offs = 0;offs < 2;offs++)
 			scroll[offs] = 0;
 		for (offs = 2;offs < 34;offs++)
-			scroll[offs] = mappy_scroll - 255;
+			scroll[offs] = mappy_scroll - 256;
 		for (offs = 34;offs < 36;offs++)
 			scroll[offs] = 0;
 
@@ -331,7 +371,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 59 - mx;
 			sy = my + 2;
 			
-			sx = (8*sx+mappy_scroll-255);
+			sx = (8*sx+mappy_scroll-256);
 		}
 		
 		drawgfx(bitmap,Machine->gfx[0],

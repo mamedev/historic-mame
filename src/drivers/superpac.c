@@ -141,105 +141,164 @@ static struct MemoryWriteAddress pacnpal_writemem_cpu2[] =
 };
 
 
-/* input ports & dip switches */
-static struct InputPort superpac_input_ports[] =
-{
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, 0, OSD_KEY_CONTROL, 0, 0 },
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, OSD_JOY_FIRE, 0, 0 },
-	},
-	{	/* IN1 */
-		0x00,
-		{ OSD_KEY_3, 0, 0, 0, OSD_KEY_1, OSD_KEY_2, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	},
-	{ -1 }	/* end of table */
-};
+/* input from the outside world */
+INPUT_PORTS_START( superpac_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Rank 0-Normal" )
+	PORT_DIPSETTING(    0x01, "Rank 1-Easy" )
+	PORT_DIPSETTING(    0x02, "Rank 2" )
+	PORT_DIPSETTING(    0x03, "Rank 3" )
+	PORT_DIPSETTING(    0x04, "Rank 4" )
+	PORT_DIPSETTING(    0x05, "Rank 5" )
+	PORT_DIPSETTING(    0x06, "Rank 6" )
+	PORT_DIPSETTING(    0x07, "Rank 7" )
+	PORT_DIPSETTING(    0x08, "Rank 8-Default" )
+	PORT_DIPSETTING(    0x09, "Rank 9" )
+	PORT_DIPSETTING(    0x0a, "Rank A" )
+	PORT_DIPSETTING(    0x0b, "Rank B-Hard" )
+	PORT_DIPSETTING(    0x0c, "Rank C-Easy Auto" )
+	PORT_DIPSETTING(    0x0d, "Rank D-Auto" )
+	PORT_DIPSETTING(    0x0e, "Rank E-Auto" )
+	PORT_DIPSETTING(    0x0f, "Rank F-Hard Auto" )
+	PORT_DIPNAME( 0x30, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "2 Coins/3 Credits" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x38, "None" )
+	PORT_DIPSETTING(    0x30, "30k" )
+	PORT_DIPSETTING(    0x08, "30k 80k" )
+	PORT_DIPSETTING(    0x00, "30k 100k" )
+	PORT_DIPSETTING(    0x20, "30k 120k" )
+	PORT_DIPSETTING(    0x10, "30k 80k 80k" )
+	PORT_DIPSETTING(    0x18, "30k 100k 100k" )
+	PORT_DIPSETTING(    0x28, "30k 120k 120k" )
+	PORT_DIPNAME( 0xc0, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by mappy_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0x0c, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_DIPNAME( 0x40, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
 
 
-/* input ports & dip switches */
-static struct InputPort pacnpal_input_ports[] =
-{
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x98,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_CONTROL, 0, 0, 0 },
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{	/* IN1 */
-		0x00,
-		{ OSD_KEY_3, 0, 0, 0, OSD_KEY_1, OSD_KEY_2, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( pacnpal_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, "Rank", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "A" )
+	PORT_DIPSETTING(    0x04, "B" )
+	PORT_DIPSETTING(    0x08, "C" )
+	PORT_DIPSETTING(    0x0c, "D" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x38, "30k" )
+	PORT_DIPSETTING(    0x18, "20k 70k" )
+	PORT_DIPSETTING(    0x20, "30k 70k" )
+	PORT_DIPSETTING(    0x28, "30k 80k" )
+	PORT_DIPSETTING(    0x30, "30k 100k" )
+	PORT_DIPSETTING(    0x08, "20k 70k 70k" )
+	PORT_DIPSETTING(    0x10, "30k 80k 80k" )
+	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
 
-static struct TrakPort trak_ports[] =
-{
-	{ -1 }
-};
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by mappy_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-
-/* keyboard info */
-static struct KEYSet keys[] =
-{
-	{ 2, 0, "MOVE UP" },
-	{ 2, 3, "MOVE LEFT"  },
-	{ 2, 1, "MOVE RIGHT" },
-	{ 2, 2, "MOVE DOWN" },
-	{ 2, 5, "FIRE" },
-	{ -1 }
-};
-
-
-/* dip switches... */
-static struct DSW superpac_dsw[] =
-{
-	{ 0, 0x0F, "DIFFICULTY", { "R0 NORMAL","R1 EASIEST","R2","R3","R4","R5","R6","R7","R8 DEFAULT",\
-								"R9","RA","RB HARDEST","RC EASIEST AUTO","RD","RE","RF HARDEST AUTO" } },
-	{ 0, 0x40, "DEMO SOUND", { "ON", "OFF" }, 1 },
-	{ 1, 0x07, "COINS", { "1 COIN 1 CREDIT", "1 COIN 2 CREDIT", "1 COIN 3 CREDIT",\
-						 "1 COIN 6 CREDIT", "1 COIN 7 CREDIT", "2 COIN 1 CREDIT", \
-						 "2 COIN 3 CREDIT", "3 COIN 1 CREDIT" } },
-	{ 1, 0x38, "BONUS AT", { "30000 100000", "30000 80000", "30000 120000", "30000 80000@@@",\
-							 "30000 100000@@@", "30000 120000@@@", "80000", "NONE" } },
-	{ 1, 0xc0, "LIVES", { "3", "1", "2", "5" } },
-	{ -1 }
-};
-
-
-/* dip switches... */
-static struct DSW pacnpal_dsw[] =
-{
-	{ 0, 0x0c, "RANK", { "A", "B", "C", "D" } },
-	{ 1, 0x07, "COINS", { "1 COIN 1 CREDIT", "1 COIN 2 CREDIT", "1 COIN 3 CREDIT",\
-						 "1 COIN 6 CREDIT", "1 COIN 7 CREDIT", "2 COIN 1 CREDIT", \
-						 "2 COIN 3 CREDIT", "3 COIN 1 CREDIT" } },
-	{ 1, 0x38, "BONUS AT", { "NONE", "20K 70K 70K", "30K 30K 80K", "20K 70K", "30K 70K", "30K 80K", "30K 100K", "30K" } },
-	{ 1, 0xc0, "LIVES", { "1", "2", "3", "5" } },
-	{ -1 }
-};
+	PORT_START	/* FAKE */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT( 0x0c, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_DIPNAME( 0x40, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
 
 
 /* SUPERPAC -- ROM SPV-1.3C (4K) */
@@ -446,6 +505,8 @@ static struct MachineDriver superpac_machine_driver =
 		}
 	},
 	60,                        /* frames per second */
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	superpac_init_machine,     /* init machine routine */
 
 	/* video hardware */
@@ -498,6 +559,7 @@ static struct MachineDriver pacnpal_machine_driver =
 		}
 	},
 	60,                        /* frames per second */
+	1,	/* TODO: an higher setting causes the game to run too fast. Understand why. */
 	superpac_init_machine,     /* init machine routine */
 
 	/* video hardware */
@@ -554,10 +616,10 @@ ROM_END
 
 
 /* load the high score table */
-static int superpac_hiload(const char *name)
+static int superpac_hiload(void)
 {
    int writing = 0;
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
@@ -568,10 +630,10 @@ static int superpac_hiload(const char *name)
        RAM[0x1087] == 0 && RAM[0x1089] == 0 && RAM[0x1088] != 0 && /* check for main high score value */
    	 memcmp(&RAM[0x3ee],"000",3) == 0)           /* see if main high score was written to screen */
    {
-      if ((f = fopen(name,"rb")) != 0)
+      if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
       {
-         fread(&RAM[0x1138],1,40,f);
-         fclose(f);
+         osd_fread(f,&RAM[0x1138],40);
+         osd_fclose(f);
 
          /* also copy over the high score */
          RAM[0x1087] = RAM[0x1138];
@@ -601,27 +663,27 @@ static int superpac_hiload(const char *name)
 
 
 /* save the high score table */
-static void superpac_hisave(const char *name)
+static void superpac_hisave(void)
 {
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
    unsigned char *RAM = Machine->memory_region[0];
 
-   if ((f = fopen(name,"wb")) != 0)
+   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
-      fwrite(&RAM[0x1138],1,40,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0x1138],40);
+      osd_fclose(f);
    }
 }
 
 
 /* load the high score table */
-static int pacnpal_hiload(const char *name)
+static int pacnpal_hiload(void)
 {
    int writing = 0;
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
@@ -632,10 +694,10 @@ static int pacnpal_hiload(const char *name)
        RAM[0x116d] == 0 && RAM[0x116f] == 0 && RAM[0x116e] != 0 && /* check for main high score value */
    	 memcmp(&RAM[0x3ed],"\x0\x0\x0",3) == 0)           /* see if main high score was written to screen */
    {
-      if ((f = fopen(name,"rb")) != 0)
+      if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
       {
-         fread(&RAM[0x104c],1,40,f);
-         fclose(f);
+         osd_fread(f,&RAM[0x104c],40);
+         osd_fclose(f);
 
          /* also copy over the high score */
          RAM[0x116d] = RAM[0x104d];
@@ -665,18 +727,18 @@ static int pacnpal_hiload(const char *name)
 
 
 /* save the high score table */
-static void pacnpal_hisave(const char *name)
+static void pacnpal_hisave(void)
 {
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
    unsigned char *RAM = Machine->memory_region[0];
 
-   if ((f = fopen(name,"wb")) != 0)
+   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
-      fwrite(&RAM[0x104c],1,40,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0x104c],40);
+      osd_fclose(f);
    }
 }
 
@@ -685,17 +747,14 @@ struct GameDriver superpac_driver =
 {
 	"Super Pac-Man",
 	"superpac",
-	"AARON GILES\nKEVIN BRISLEY\nALAN J MCCORMICK",
+	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	&superpac_machine_driver, /* MachineDriver * */
 
 	superpac_rom,             /* RomModule * */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
 
-	superpac_input_ports, 0,     /* InputPort  */
-	trak_ports,
-	superpac_dsw,             /* DSW        */
-        keys,                     /* KEY def    */
+	0/*TBR*/,superpac_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	superpac_color_prom,		  /* color prom */
 	0,                        /* palette */
@@ -709,17 +768,14 @@ struct GameDriver pacnpal_driver =
 {
 	"Pac & Pal",
 	"pacnpal",
-	"AARON GILES\nKEVIN BRISLEY\nLAWNMOWER MAN",
+	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	&pacnpal_machine_driver,  /* MachineDriver * */
 
 	pacnpal_rom,              /* RomModule * */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
 
-	pacnpal_input_ports, 0,      /* InputPort  */
-	trak_ports,
-	pacnpal_dsw,              /* DSW        */
-        keys,                     /* KEY def    */
+	0/*TBR*/,pacnpal_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacnpal_color_prom,       /* color prom */
 	0,                        /* palette */

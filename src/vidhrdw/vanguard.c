@@ -74,7 +74,7 @@ void vanguard_characterram_w(int offset,int data)
 void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-
+   int set = RAM[0x004D] & 0x08 ? 0 : 256;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -91,7 +91,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = offs % 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs],
+					videoram[offs]+set,
 					(colorram[offs] >> 3) & 0x07,
 					0,0,
 					8*sx,8*sy,
@@ -129,7 +129,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		if (charcode != 0x30)	/* don't draw spaces */
 		{
-			sx = (31 - offs / 32) - 2;
+			sx = (31 - offs / 32);
 			sy = (offs % 32);
 
 			drawgfx(bitmap,Machine->gfx[0],

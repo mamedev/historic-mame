@@ -248,36 +248,37 @@ extern unsigned char *pengo_soundregs;
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6800, 0x6807, xevious_dsw_r },
 	{ 0x7000, 0x700f, xevious_customio_data_r },
 	{ 0x7100, 0x7100, xevious_customio_r },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0xf000, 0xffff, xevious_bb_r },
-	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu2[] =
 {
+	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6800, 0x6807, xevious_dsw_r },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0xf000, 0xffff, xevious_bb_r },
-	{ 0x0000, 0x1fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu3[] =
 {
-	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-        { 0x6820, 0x6820, xevious_interrupt_enable_1_w },
-        { 0x6821, 0x6821, xevious_interrupt_enable_2_w },
-        { 0x6822, 0x6822, xevious_interrupt_enable_3_w },
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x6820, 0x6820, xevious_interrupt_enable_1_w },
+	{ 0x6821, 0x6821, xevious_interrupt_enable_2_w },
+	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
 	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
 	{ 0x7000, 0x700f, xevious_customio_data_w },
@@ -289,7 +290,6 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0xc800, 0xcfff, xevious_videoram2_w, &xevious_videoram2 },
 	{ 0xd000, 0xd07f, xevious_vh_latch_w, &xevious_vlatches }, /* ?? */
 	{ 0xf000, 0xffff, xevious_bs_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8780, 0x87ff, MWA_RAM, &spriteram_2 },	/* here only */
 	{ 0x9780, 0x97ff, MWA_RAM, &spriteram_3 },	/* to initialize */
 	{ 0xa780, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },	/* the pointers */
@@ -298,28 +298,25 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-        { 0x6820, 0x6820, xevious_interrupt_enable_1_w },
-        { 0x6821, 0x6821, xevious_interrupt_enable_2_w },
-        { 0x6822, 0x6822, xevious_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
-	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x6823, 0x6823, xevious_halt_w },			/* reset control */
+	{ 0x6830, 0x683f, MWA_NOP },				/* watch dog reset */
 	{ 0x7800, 0xafff, xevious_sharedram_w },
 	{ 0xb000, 0xb7ff, colorram_w },
 	{ 0xb800, 0xbfff, xevious_colorram2_w },
 	{ 0xc000, 0xc7ff, videoram_w },
 	{ 0xc800, 0xcfff, xevious_videoram2_w },
-	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
+	{ 0xd000, 0xd07f, xevious_vh_latch_w, &xevious_vlatches }, /* ?? */
 	{ 0xf000, 0xffff, xevious_bs_w },
-	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu3[] =
 {
-	{ 0x7800, 0xcfff, xevious_sharedram_w },
+	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
 	{ 0x6822, 0x6822, xevious_interrupt_enable_3_w },
-	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x7800, 0xcfff, xevious_sharedram_w },
 	{ -1 }	/* end of table */
 };
 
@@ -328,15 +325,15 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 INPUT_PORTS_START( xevious_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x02, "Yes" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
@@ -381,19 +378,19 @@ INPUT_PORTS_START( xevious_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
-												/* handled by galaga_customio_data_r() */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
-												/* handled by galaga_customio_data_r() */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
@@ -417,15 +414,15 @@ INPUT_PORTS_END
 INPUT_PORTS_START( xeviousn_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x02, "Yes" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
@@ -469,19 +466,19 @@ INPUT_PORTS_START( xeviousn_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
-												/* handled by galaga_customio_data_r() */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
-												/* handled by galaga_customio_data_r() */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
@@ -506,15 +503,15 @@ INPUT_PORTS_END
 INPUT_PORTS_START( sxevious_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x02, "Yes" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
@@ -558,19 +555,19 @@ INPUT_PORTS_START( sxevious_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
-												/* handled by galaga_customio_data_r() */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY  | IPF_COCKTAIL)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
-												/* handled by galaga_customio_data_r() */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
@@ -861,6 +858,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* TODO: higher values cause sound not to work and sprites to scroll jerkily. */
+		/* Understand why. */
 	xevious_init_machine,
 
 	/* video hardware */
@@ -985,11 +984,56 @@ static const char *xevious_sample_names[] =
 };
 
 
+
+static int hiload(void) /* V.V */
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8024],"\x00\x40\x00",3) == 0 &&
+			memcmp(&RAM[0x8510],"\x00\x40\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8024],3);
+			osd_fread(f,&RAM[0x8510],16*5);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void) /* V.V */
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8024],3);
+		osd_fwrite(f,&RAM[0x8510],16*5);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver xevious_driver =
 {
 	"Xevious (Atari/Namco copyright)",
 	"xevious",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
+	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	xevious_rom,
@@ -1001,16 +1045,14 @@ struct GameDriver xevious_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	/* to whomever will add high score support: remember that the table can hold 10 */
-	/* letters. The Copyright dip switch selects 3 for Atari/Namco, 10 for Namco. */
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver xeviousn_driver =
 {
 	"Xevious (Namco copyright)",
 	"xeviousn",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
+	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	xeviousn_rom,
@@ -1022,14 +1064,14 @@ struct GameDriver xeviousn_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver sxevious_driver =
 {
 	"Super Xevious",
 	"sxevious",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
+	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	sxevious_rom,
@@ -1041,5 +1083,5 @@ struct GameDriver sxevious_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

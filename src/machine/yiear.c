@@ -14,6 +14,6 @@
 void yiear_init_machine(void)
 {
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_OP | M6809_FAST_S;
+	m6809_Flags = M6809_FAST_S;
 }
 

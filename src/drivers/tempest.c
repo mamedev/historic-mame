@@ -165,52 +165,75 @@ High Scores:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/mathbox.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
 #include "sndhrdw/pokyintf.h"
 
 
-int tempest_freakout(int data);
+int tempest_interrupt(void);
+int tempest_catch_busyloop (int offset);
 int tempest_IN0_r(int offset);
-int tempest_IN1_r(int offset);
-int tempest_spinner(int offset);
+
+/* Misc sound code */
+static struct POKEYinterface interface =
+{
+	2,	/* 2 chips */
+	6,	/* 6 updates per video frame - tied to interrupts per frame */
+	FREQ_17_APPROX,	/* 1.7 Mhz */
+	255,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	/* The allpot handler */
+	{ input_port_1_r, input_port_2_r },
+};
+
+
+int tempest_sh_start(void)
+{
+	return pokey_sh_start (&interface);
+}
 
 static struct MemoryReadAddress readmem[] =
 {
-//	{ 0x011f, 0x011f, tempest_freakout },	/* hack to avoid lockup at 150,000 points */
+//	{ 0x0053, 0x0053, tempest_catch_busyloop },
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xdfff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ 0x2000, 0x2fff, MRA_RAM, &vectorram },
+	{ 0x2000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },
 	{ 0x0c00, 0x0c00, tempest_IN0_r },	/* IN0 */
-	{ 0x60c8, 0x60c8, tempest_IN1_r },	/* IN1/DSW0 */
-	{ 0x60d8, 0x60d8, input_port_2_r },	/* IN2 */
+	{ 0x60c0, 0x60cf, pokey1_r },
+	{ 0x60d0, 0x60df, pokey2_r },
 	{ 0x0d00, 0x0d00, input_port_3_r },	/* DSW1 */
 	{ 0x0e00, 0x0e00, input_port_4_r },	/* DSW2 */
 	{ 0x6040, 0x6040, mb_status_r },
 	{ 0x6050, 0x6050, atari_vg_earom_r },
 	{ 0x6060, 0x6060, mb_lo_r },
 	{ 0x6070, 0x6070, mb_hi_r },
-	{ 0x60c0, 0x60cf, pokey1_r },
-	{ 0x60d0, 0x60df, pokey2_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x080f, atari_vg_colorram_w },
-	{ 0x2000, 0x2fff, MWA_RAM, &vectorram },
+	{ 0x0800, 0x080f, tempest_colorram_w },
+	{ 0x2000, 0x2fff, MWA_RAM },
 	{ 0x6000, 0x603f, atari_vg_earom_w },
 	{ 0x6040, 0x6040, atari_vg_earom_ctrl },
 	{ 0x60c0, 0x60cf, pokey1_w },
 	{ 0x60d0, 0x60df, pokey2_w },
 	{ 0x6080, 0x609f, mb_go },
-	{ 0x4800, 0x4800, atari_vg_go },
+	{ 0x4800, 0x4800, avgdvg_go },
 	{ 0x5000, 0x5000, MWA_RAM },
-	{ 0x5800, 0x5800, vg_reset },
+	{ 0x5800, 0x5800, avgdvg_reset },
 	{ 0x9000, 0xdfff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4000, MWA_NOP },
@@ -224,23 +247,22 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT)
-	PORT_DIPNAME ( 0x10, 0x10, "Test", OSD_KEY_F2 )
-	PORT_DIPSETTING(     0x10, "Off" )
-	PORT_DIPSETTING(     0x00, "On" )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	/* bit 6 is the VG HALT bit */
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+ 	/* handled by tempest_IN0_r() */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* bit 7 is tied to a 3khz (?) clock */
-	/* they are both handled by tempest_IN0_r() */
+ 	/* handled by tempest_IN0_r() */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1/DSW0 */
-	/* The four lower bits are for the spinner. We cheat here
-	 * by asking for joystick/keyboard input. It might be a good
-	 * idea to have generic IPT-definitions for trackball support
-	 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* spinner bit 2 */
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* spinner bit 3 */
+	/* This is the Tempest spinner input. It only uses 4 bits. It also clips the */
+	/* returned value to a maximum of +/- 7 */
+	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 100, 7, 0, 0 )
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
@@ -316,17 +338,6 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x80, "5" )
 INPUT_PORTS_END
 
-static struct TrakPort trak_ports[] =
-{
-	{
-		X_AXIS,
-		1,
-		1.0,
-		tempest_spinner
-	},
-        { -1 }
-};
-
 /*
  * Tempest does not really have a colorprom, nor any graphics to
  * decode. It has a 16 byte long colorram, but only the lower nibble
@@ -355,20 +366,20 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char color_prom[] =
 {
-	0x02,0x02,0x02,	/* WHITE */
-	0x01,0x01,0x01,	/* WHITE */
-	0x00,0x02,0x02, /* CYAN */
-	0x00,0x01,0x01, /* CYAN */
-	0x02,0x02,0x00, /* YELLOW */
-	0x01,0x01,0x00, /* YELLOW */
-	0x00,0x02,0x00, /* GREEN */
-	0x00,0x01,0x00, /* GREEN */
-	0x02,0x00,0x02, /* MAGENTA */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x00,0x00,0x02,	/* BLUE */
-	0x00,0x00,0x01,	/* BLUE */
-	0x02,0x00,0x00, /* RED */
-	0x01,0x00,0x00, /* RED */
+	0xff,0xff,0xff,	/* WHITE */
+	0xaf,0xaf,0xaf,	/* WHITE */
+	0x00,0xff,0xff, /* CYAN */
+	0x00,0xaf,0xaf, /* CYAN */
+	0xff,0xff,0x00, /* YELLOW */
+	0xaf,0xaf,0x00, /* YELLOW */
+	0x00,0xff,0x00, /* GREEN */
+	0x00,0xaf,0x00, /* GREEN */
+	0xff,0x00,0xff, /* MAGENTA */
+	0xaf,0x00,0xaf, /* MAGENTA */
+	0x00,0x00,0xff,	/* BLUE */
+	0x00,0x00,0xaf,	/* BLUE */
+	0xff,0x00,0x00, /* RED */
+	0xaf,0x00,0x00, /* RED */
 	0x00,0x00,0x00, /* BLACK */
 	0x00,0x00,0x00  /* BLACK */
 };
@@ -382,28 +393,29 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			interrupt,4 /* 4 interrupts per frame? */
+			tempest_interrupt,6 /* approx. 250Hz */
 		}
 	},
-	60, /* frames per second */
+	45, /* frames per second */
+	1,
 	0,
 
 	/* video hardware */
 	224, 288, { 0, 580, 0, 540 },
 	gfxdecodeinfo,
 	256,256,
-	atari_vg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	atari_vg_avg_start,
-	atari_vg_stop,
-	atari_vg_screenrefresh,
+	avg_start,
+	avg_stop,
+	avg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	pokey2_sh_start,
+	tempest_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -416,39 +428,13 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-static int hiload(const char *name)
-{
-	/* check if the hi score table has already been initialized */
-	/* I think the whole block of 0x200 needs saving but I'm not positive - LBO */
-	if (memcmp(&RAM[0x0606],"\x07\x04\x01",3))
-	{
-		FILE *f;
+/*
+ * Tempest now uses the EAROM routines to load/save scores.
+ * Just in case, here is a snippet of the old code:
+ * if (memcmp(&RAM[0x0606],"\x07\x04\x01",3))
+ *	osd_fread(f,&RAM[0x0600],0x200);
+ */
 
-
-		if ((f = fopen(name,"rb")) != 0)
-		{
-			fread(&RAM[0x0600],1,0x200,f);
-			fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-/* This is no longer valid. We save the earom instead */
-static void hisave(const char *name)
-{
-	FILE *f;
-
-
-	if ((f = fopen(name,"wb")) != 0)
-	{
-		fwrite(&RAM[0x0600],1,0x200,f);
-		fclose(f);
-	}
-}
 
 ROM_START( tempest_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -469,7 +455,7 @@ ROM_START( tempest_rom )
 ROM_END
 
 #if 0
-ROM_START( tempest_rom )
+ROM_START( tempest3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tempest.x", 0x9000, 0x1000, -1 )
 	ROM_LOAD( "tempest.1", 0xa000, 0x1000, -1 )
@@ -486,24 +472,17 @@ struct GameDriver tempest_driver =
 {
 	"Tempest",
 	"tempest",
-	"Al Kossow\n"
-	"Hedley Rainnie\n"
-	"Eric Smith\n"
-	"  (original VECSIM code)\n"
-	"Brad Oliver\n"
-	"  (MAME driver)\n"
-	"Bernd Wiebelt\n"
-	"Allard van der Bas\n"
-	"  (additional work)\n"
-	"Neil Bradley\n"
-	"  (critical bug fix)\n",
+	VECTOR_TEAM
+	"Neil Bradley\n  (AVG jsr $0)\n"
+	"Keith Gerdes\n  (Pokey RNG protection)",
+
 	&machine_driver,
 
 	tempest_rom,
 	0, 0,
 	0,
 
-	0/*TBR*/,input_ports, trak_ports,0/*TBR*/,0/*TBR*/,
+	0/*TBR*/,input_ports, 0/*TBR*/, 0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

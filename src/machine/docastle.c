@@ -15,13 +15,21 @@
 unsigned char *docastle_intkludge1,*docastle_intkludge2;
 
 static unsigned char buffer0[9],buffer1[9];
-static int nmi;
 
 
 
 int docastle_shared0_r(int offset)
 {
-if (errorlog && offset == 8) fprintf(errorlog,"shared0r\n");
+	if (offset == 8)
+	{
+		if (errorlog) fprintf(errorlog,"shared0r\n");
+
+		/* this shouldn't be done, however it's the only way I've found */
+		/* to make dip switches work in most games. They still DON'T work */
+		/* in Do's Castle, though. */
+		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_seticount(0);
+	}
 	return buffer0[offset];
 }
 
@@ -44,48 +52,25 @@ if (errorlog && offset == 8) fprintf(errorlog,"shared0w %02x %02x %02x %02x %02x
 
 void docastle_shared1_w(int offset,int data)
 {
-if (errorlog && offset == 8) fprintf(errorlog,"shared1w %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		buffer1[0],buffer1[1],buffer1[2],buffer1[3],buffer1[4],buffer1[5],buffer1[6],buffer1[7],data);
-
 	buffer1[offset] = data;
 
-	/* To prevent a "bad communication" error with Mr. Do's Wild Ride, prepare a valid */
-	/* response. This hack is necessary because MAME currently doesn't interleave the */
-	/* execution of the two CPUs, so the first CPU tries to read the reply from the second */
-	/* before the second has had a chance to run. */
-	if (offset == 8 && memcmp(buffer1,"\x04\x00\x00\x00\x00\x00\x00\x00\x04",9) == 0)
-		memcpy(buffer0,"\x20\x11\x11\x00\x00\x00\x00\x00\x42",9);
+	if (offset == 8)
+	{
+		if (errorlog) fprintf(errorlog,"shared1w %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+				buffer1[0],buffer1[1],buffer1[2],buffer1[3],buffer1[4],buffer1[5],buffer1[6],buffer1[7],data);
 
-	/* Horrible kludge to make Do's Castle read the dip switch settings during boot. */
-	/* Again, this is necessary because of the limited control MAME has on multiple CPUs. */
-	if (offset == 8 && memcmp(buffer1,"\x44\x00\x00\x00\x00\x00\x00\x00\x44",9) == 0)
-		cpu_seticount(3000);
+		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_seticount(0);	/* we must immediately run the second CPU */
+	}
 }
 
 
 
 void docastle_nmitrigger(int offset,int data)
 {
-	nmi++;
-}
-
-
-
-int docastle_interrupt2(void)
-{
-	static int count;
-
-
-//fprintf(errorlog,"interrupt %04x\n",cpu_getpc());
-	count++;
-	if (count & 1)
-	{
-		if (nmi)
-		{
-			nmi--;
-			return Z80_NMI_INT;
-		}
-		else return Z80_IGNORE_INT;
-	}
-	else return 0xff;
+	/* we should cause a NMI interrupt on the second CPU here; however, to */
+	/* make things tick the way they are supposed to be (due to the way the */
+	/* hardware works) we trigger it in docastle_shared1_w(), when the */
+	/* first CPU has finised writing to the shared area. */
+//	cpu_cause_interrupt(1,Z80_NMI_INT);
 }

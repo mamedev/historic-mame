@@ -7,14 +7,12 @@
 *********************************************************************/
 
 #include "driver.h"
-#include "dirent.h"
 
 /* LBO */
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
 #else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x &
-0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
+#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #endif
 
 
@@ -39,11 +37,7 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
                                  as defined in common.h.
 
   const char *basename - Name of the directory where the files are
-                         stored. The function also supports the
-						 control sequence %s in file names: for example,
-						 if the RomModule gives the name "%s.bar", and
-						 the basename is "foo", the file "foo/foo.bar"
-						 will be loaded.
+                         stored.
 
 ***************************************************************************/
 int readroms(const struct RomModule *rommodule,const char *basename)
@@ -64,6 +58,7 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 	while (romp->name || romp->offset || romp->length)
 	{
 		unsigned int region_size;
+		const char *name;
 
 
 		if (romp->name || romp->length)
@@ -86,11 +81,7 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 
 		while (romp->length)
 		{
-			FILE *f;
-                        DIR *dirp;
-                        struct dirent *dp;
-			char buf[100];
-			char name[100];
+			void *f;
 			int sum,xor,expchecksum;
 
 
@@ -105,24 +96,8 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 				goto getout;
 			}
 
-			sprintf(buf,romp->name,basename);
-
-                        /* jamc: code to perform a upper/lowercase rom search */
-                        /* try to open directory */
-                        if ( (dirp=opendir(basename)) == (DIR *)0) {
-                           fprintf(stderr,"Unable to open ROM directory %s\n",basename);
-                           goto printromlist;
-                        }
-                        /* search entry and upcasecompare to desired rom name */
-                        for (dp=readdir(dirp); dp ; dp=readdir(dirp))
-                            if (! strcasecmp(dp->d_name,buf)) break;
-                        if ( dp ) sprintf( name,"%s/%s",basename,dp->d_name);
-                        else      sprintf( name,"%s/%s",basename,buf);
-                        closedir(dirp);
-
-			/* sprintf(name,"%s/%s",basename,buf); */
-
-			if ((f = fopen(name,"rb")) == 0)
+			name = romp->name;
+			if ((f = osd_fopen(basename,name,OSD_FILETYPE_ROM,0)) == 0)
 			{
 				fprintf(stderr, "Unable to open ROM %s\n",name);
 				goto printromlist;
@@ -134,44 +109,89 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 
 			do
 			{
+/* ASG 970926 -- begin */
 				unsigned char *c;
 				unsigned int i;
+				unsigned int length = romp->length & ~0x80000000;
 
 
 				/* ROM_RELOAD */
 				if (romp->name == (char *)-1)
 				{
-					fseek(f,0,SEEK_SET);
+					osd_fseek(f,0,SEEK_SET);
 					/* reinitialize checksum counters as well */
 					sum = 0;
 					xor = 0;
 				}
 
-				if (romp->offset + romp->length > region_size)
+				if (romp->offset + length > region_size)
 				{
 					printf("Error in RomModule definition: %s out of memory region space\n",name);
-					fclose(f);
+					osd_fclose(f);
 					goto getout;
 				}
 
-				if (fread(Machine->memory_region[region] + romp->offset,1,romp->length,f) != romp->length)
+				if (romp->length & 0x80000000)
 				{
-					printf("Unable to read ROM %s\n",name);
-					fclose(f);
-					goto printromlist;
-				}
+					unsigned char *temp;
 
-				/* calculate the checksum */
-				c = Machine->memory_region[region] + romp->offset;
-				for (i = 0;i < romp->length;i+=2)
+
+					temp = malloc (length);
+
+					if (!temp)
+					{
+						printf("Out of memory reading ROM %s\n",name);
+						osd_fclose(f);
+						goto getout;
+					}
+
+					if (osd_fread(f,temp,length) != length)
+					{
+						printf("Unable to read ROM %s\n",name);
+						free(temp);
+						osd_fclose(f);
+						goto printromlist;
+					}
+
+					/* copy the ROM data and calculate the checksum */
+					c = Machine->memory_region[region] + romp->offset;
+					for (i = 0;i < length;i+=2)
+					{
+						int j;
+
+
+						j = 256 * temp[i] + temp[i+1];
+						sum += j;
+						xor ^= j;
+
+						c[i*2] = temp[i];
+						c[i*2+2] = temp[i+1];
+					}
+
+					free(temp);
+				}
+				else
 				{
-					int j;
+					if (osd_fread(f,Machine->memory_region[region] + romp->offset,length) != length)
+					{
+						printf("Unable to read ROM %s\n",name);
+						osd_fclose(f);
+						goto printromlist;
+					}
+
+					/* calculate the checksum */
+					c = Machine->memory_region[region] + romp->offset;
+					for (i = 0;i < length;i+=2)
+					{
+						int j;
 
 
-					j = 256 * c[i] + c[i+1];
-					sum += j;
-					xor ^= j;
+						j = 256 * c[i] + c[i+1];
+						sum += j;
+						xor ^= j;
+					}
 				}
+/* ASG 970926 -- end */
 
 				romp++;
 			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
@@ -184,10 +204,10 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 							"WARNING: the game might not run correctly.\n"
 							"Name         Expected  Found\n");
 				checksumwarning++;
-				printf("%-12s %08x %08x\n",buf,expchecksum,sum);
+				printf("%-12s %08x %08x\n",name,expchecksum,sum);
 			}
 
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		region++;
@@ -226,7 +246,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 {
 	printf("This is the list of the ROMs required.\n"
 			"All the ROMs must reside in a subdirectory called \"%s\".\n"
-			"Name             Size\n",basename);
+			"Name             Size      Checksum\n",basename);
 	while (romp->name || romp->offset || romp->length)
 	{
 		romp++;	/* skip memory region definition */
@@ -234,10 +254,11 @@ void printromlist(const struct RomModule *romp,const char *basename)
 		while (romp->length)
 		{
 			char name[100];
-			int length;
+			int length,expchecksum;
 
 
 			sprintf(name,romp->name,basename);
+			expchecksum = romp->checksum;
 
 			length = 0;
 
@@ -247,12 +268,12 @@ void printromlist(const struct RomModule *romp,const char *basename)
 				if (romp->name == (char *)-1)
 					length = 0;	/* restart */
 
-				length += romp->length;
+				length += romp->length & ~0x80000000;
 
 				romp++;
 			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
-			printf("%-12s %5d bytes\n",name,length);
+			printf("%-12s %5d bytes   %08x\n",name,length,expchecksum);
 		}
 	}
 }
@@ -285,46 +306,43 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 
 	for (i = 0;i < samples->total;i++)
 	{
-		FILE *f;
+		void *f;
 		char buf[100];
-		char name[100];
 
 
 		if (samplenames[i][0])
 		{
-			sprintf(buf,samplenames[i],basename);
-			sprintf(name,"%s/%s",basename,buf);
-
-			if ((f = fopen(name,"rb")) != 0)
+			if ((f = osd_fopen(basename,samplenames[i],OSD_FILETYPE_SAMPLE,0)) != 0)
 			{
-				if (fseek(f,0,SEEK_END) == 0)
+				if (osd_fseek(f,0,SEEK_END) == 0)
 				{
-                                        int dummy;
-                                        unsigned char smpvol=0, smpres=0;
+					int dummy;
+					unsigned char smpvol=0, smpres=0;
 					unsigned smplen=0, smpfrq=0;
 
-					fseek(f,0,SEEK_SET);
-                                        fread(buf,1,4,f);
-                                        if (memcmp(buf, "MAME", 4) == 0) {
-                                           fread(&smplen,1,4,f);         /* all datas are LITTLE ENDIAN */
-                                           fread(&smpfrq,1,4,f);
-					   smplen = intelLong (smplen);  /* so convert them in the right endian-ness */
-					   smpfrq = intelLong (smpfrq);
-                                           fread(&smpres,1,1,f);
-                                           fread(&smpvol,1,1,f);
-                                           fread(&dummy,1,2,f);
-					   if ((smplen != 0) && (samples->sample[i] = malloc(sizeof(struct GameSample) + (smplen)*sizeof(char))) != 0)
-					   {
+					osd_fseek(f,0,SEEK_SET);
+					osd_fread(f,buf,4);
+					if (memcmp(buf, "MAME", 4) == 0)
+					{
+						osd_fread(f,&smplen,4);         /* all datas are LITTLE ENDIAN */
+						osd_fread(f,&smpfrq,4);
+						smplen = intelLong (smplen);  /* so convert them in the right endian-ness */
+						smpfrq = intelLong (smpfrq);
+						osd_fread(f,&smpres,1);
+						osd_fread(f,&smpvol,1);
+						osd_fread(f,&dummy,2);
+						if ((smplen != 0) && (samples->sample[i] = malloc(sizeof(struct GameSample) + (smplen)*sizeof(char))) != 0)
+						{
 						   samples->sample[i]->length = smplen;
 						   samples->sample[i]->volume = smpvol;
 						   samples->sample[i]->smpfreq = smpfrq;
 						   samples->sample[i]->resolution = smpres;
-						   fread(samples->sample[i]->data,1,smplen,f);
-					   }
-                                        }
+						   osd_fread(f,samples->sample[i]->data,smplen);
+						}
+					}
 				}
 
-				fclose(f);
+				osd_fclose(f);
 			}
 		}
 	}
@@ -407,13 +425,7 @@ void freesamples(struct GameSamples *samples)
 ***************************************************************************/
 static int readbit(const unsigned char *src,int bitnum)
 {
-	int bit;
-
-
-	bit = src[bitnum / 8] << (bitnum % 8);
-
-	if (bit & 0x80) return 1;
-	else return 0;
+	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
 }
 
 
@@ -545,9 +557,10 @@ void freegfx(struct GfxElement *gfx)
 									 has priority over them.
 
 ***************************************************************************/
-void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
+/* ASG 971011 -- moved this into a "core" function */
+void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color)
+		const struct rectangle *clip,int transparency,int transparent_color,int dirty)
 {
 	int ox,oy,ex,ey,x,y,start,dy;
 	const unsigned char *sd;
@@ -597,12 +610,12 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
-		int temp;
-
-
 		sy = dest->height - gfx->height - sy;
 		if (clip)
 		{
+			int temp;
+
+
 			myclip.min_x = clip->min_x;
 			myclip.max_x = clip->max_x;
 			temp = clip->min_y;
@@ -628,6 +641,9 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	if (ey >= dest->height) ey = dest->height-1;
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
+
+	if (dirty)
+		osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
 	/* start = (code % gfx->total_elements) * gfx->height; */
 	if (flipy)	/* Y flop */
@@ -1010,6 +1026,14 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 }
 
+/* ASG 971011 - this is the real draw gfx now */
+void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color)
+{
+	drawgfx_core(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
+}
+
 
 
 /***************************************************************************
@@ -1030,7 +1054,7 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 	mygfx.width = src->width;
 	mygfx.height = src->height;
 	mygfx.gfxdata = src;
-	drawgfx(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color);
+	drawgfx_core(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,0);	/* ASG 971011 */
 }
 
 
@@ -1065,7 +1089,6 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		srcwidth = src->width;
 		srcheight = src->height;
 	}
-
 
 	if (rows == 0)
 	{
@@ -1264,11 +1287,70 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 
 
 
-void clearbitmap(struct osd_bitmap *bitmap)
+/* fill a bitmap using the specified pen */
+void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 {
-	int i;
+	int sx,sy,ex,ey,y;
+	struct rectangle myclip;
 
 
-	for (i = 0;i < bitmap->height;i++)
-		memset(bitmap->line[i],Machine->pens[0],bitmap->width);
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		if (clip)
+		{
+			myclip.min_x = clip->min_y;
+			myclip.max_x = clip->max_y;
+			myclip.min_y = clip->min_x;
+			myclip.max_y = clip->max_x;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		if (clip)
+		{
+			int temp;
+
+
+			temp = clip->min_x;
+			myclip.min_x = dest->width-1 - clip->max_x;
+			myclip.max_x = dest->width-1 - temp;
+			myclip.min_y = clip->min_y;
+			myclip.max_y = clip->max_y;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		if (clip)
+		{
+			int temp;
+
+
+			myclip.min_x = clip->min_x;
+			myclip.max_x = clip->max_x;
+			temp = clip->min_y;
+			myclip.min_y = dest->height-1 - clip->max_y;
+			myclip.max_y = dest->height-1 - temp;
+			clip = &myclip;
+		}
+	}
+
+
+	sx = 0;
+	ex = dest->width - 1;
+	sy = 0;
+	ey = dest->height - 1;
+
+	if (clip && sx < clip->min_x) sx = clip->min_x;
+	if (clip && ex > clip->max_x) ex = clip->max_x;
+	if (sx > ex) return;
+	if (clip && sy < clip->min_y) sy = clip->min_y;
+	if (clip && ey > clip->max_y) ey = clip->max_y;
+	if (sy > ey) return;
+
+	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
+
+	for (y = sy;y <= ey;y++)
+		memset(&dest->line[y][sx],pen,ex-sx+1);
 }

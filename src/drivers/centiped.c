@@ -121,6 +121,11 @@ Off  On   Off                            For every 3 coins inserted, game logic
 -------------------------------------------------------------------------------------
 $ = Manufacturer's suggested settings
 
+Known issues:
+
+* The self-test mode doesn't work. This may be related to interrupts much like
+the Atari vector games.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -130,13 +135,46 @@ $ = Manufacturer's suggested settings
 
 int centiped_IN0_r(int offset);
 
-int centiped_trakball_x(int data);
-int centiped_trakball_y(int data);
+int centiped_trakball_x (int data);
+int centiped_trakball_y (int data);
 
 extern unsigned char *centiped_charpalette,*centiped_spritepalette;
-void centiped_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void centiped_vh_screenrefresh(struct osd_bitmap *bitmap);
-void centiped_vh_charpalette_w(int offset, int data);
+void centiped_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void centiped_vh_screenrefresh (struct osd_bitmap *bitmap);
+void centiped_vh_charpalette_w (int offset, int data);
+void centiped_vh_flipscreen_w (int offset, int data);
+
+/* Misc sound code */
+static struct POKEYinterface interface =
+{
+	1,	/* 1 chip */
+	1,	/* 10 updates per video frame (good quality) */
+	FREQ_17_APPROX,	/* 1.7 Mhz */
+	255,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ 0 },
+};
+
+
+int centiped_sh_start(void)
+{
+	return pokey_sh_start (&interface);
+}
+
+void centiped_led_w(int offset,int data)
+{
+	osd_led_w(offset,~data >> 7);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -164,7 +202,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1404, 0x1407, centiped_vh_charpalette_w, &centiped_charpalette },
 	{ 0x140c, 0x140f, MWA_RAM, &centiped_spritepalette },
 	{ 0x1800, 0x1800, MWA_NOP },
-	{ 0x1c00, 0x1c07, MWA_NOP },
+	{ 0x1c00, 0x1c02, MWA_NOP },
+	{ 0x1c03, 0x1c04, centiped_led_w },
+	{ 0x1c05, 0x1c06, MWA_NOP },
+	{ 0x1c07, 0x1c07, centiped_vh_flipscreen_w },
 	{ 0x1680, 0x1680, MWA_NOP },
 	{ 0x2000, 0x2000, MWA_NOP },
 	{ 0x2000, 0x3fff, MWA_ROM },
@@ -173,42 +214,86 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0x20,
-		{ 0, 0, 0, 0, 0, OSD_KEY_F2, IPB_VBLANK, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_CONTROL, OSD_KEY_CONTROL, 0, 0, OSD_KEY_3, 0 },
-		{ 0, 0, OSD_JOY_FIRE, OSD_JOY_FIRE, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN3 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT },
-		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT }
-	},
-	{	/* DSW1 */
-		0x54,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x02,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bits for trackball x */
+	PORT_DIPNAME (0x10, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Upright" )
+	PORT_DIPSETTING (   0x10, "Cocktail" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* sign bit for trackball */
+
+	PORT_START	/* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT ( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bits for trackball y */
+
+	PORT_START	/* IN3 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+
+	PORT_START	/* IN4 */
+	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x01, "German" )
+	PORT_DIPSETTING (   0x02, "French" )
+	PORT_DIPSETTING (   0x03, "Spanish" )
+	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2" )
+	PORT_DIPSETTING (   0x04, "3" )
+	PORT_DIPSETTING (   0x08, "4" )
+	PORT_DIPSETTING (   0x0c, "5" )
+	PORT_DIPNAME (0x30, 0x10, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "10000" )
+	PORT_DIPSETTING (   0x10, "12000" )
+	PORT_DIPSETTING (   0x20, "15000" )
+	PORT_DIPSETTING (   0x30, "20000" )
+	PORT_DIPNAME (0x40, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Hard" )
+	PORT_DIPSETTING (   0x10, "Easy" )
+	PORT_DIPNAME (0x80, 0x00, "Credit Minimum", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1" )
+	PORT_DIPSETTING (   0x10, "2" )
+
+	PORT_START	/* IN5 */
+	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Free Play" )
+	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
+	PORT_DIPSETTING (   0x0a, "4 credits/3 coins" )
+INPUT_PORTS_END
 
 static struct TrakPort trak_ports[] = {
   {
@@ -225,29 +310,6 @@ static struct TrakPort trak_ports[] = {
   },
   { -1 }
 };
-
-
-static struct KEYSet keys[] =
-{
-        { 3, 0, "MOVE UP" },
-        { 3, 2, "MOVE LEFT"  },
-        { 3, 3, "MOVE RIGHT" },
-        { 3, 1, "MOVE DOWN" },
-        { 1, 2, "PL1 FIRE" },
-        { 1, 3, "PL2 FIRE" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 4, 0x0c, "LIVES", { "2", "3", "4", "5" } },
-	{ 4, 0x30, "BONUS", { "10000", "12000", "15000", "20000" } },
-	{ 4, 0x40, "DIFFICULTY", { "HARD", "EASY" }, 1 },
-	{ 4, 0x03, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
-	{ -1 }
-};
-
 
 
 static struct GfxLayout charlayout =
@@ -296,6 +358,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,
 	0,
 
 	/* video hardware */
@@ -313,7 +376,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	pokey1_sh_start,
+	centiped_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -341,19 +404,19 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0002],"\x43\x65\x01",3) == 0 &&
 			memcmp(&RAM[0x0017],"\x02\x21\x01",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x0002],1,6*8,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x0002],6*8);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -363,15 +426,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x0002],1,6*8,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x0002],6*8);
+		osd_fclose(f);
 	}
 }
 
@@ -381,14 +444,21 @@ struct GameDriver centiped_driver =
 {
 	"Centipede",
 	"centiped",
-	"IVAN MACKINTOSH\nEDWARD MASSEY\nPETE RITTWAGE\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Ivan Mackintosh\n"
+	"Edward Massey\n"
+	"Pete Rittwage\n"
+	"Nicola Salmoria\n"
+	"Mirko Buffoni\n"
+	"   (MAME driver)\n"
+	"Brad Oliver\n"
+	"   (additional code)",
 	&machine_driver,
 
 	centiped_rom,
 	0, 0,
 	0,
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, trak_ports, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

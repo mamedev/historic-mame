@@ -111,14 +111,14 @@
 
 #define MAXPOKEYS         4        /* max number of emulated chips */
 
-/*#define CLIP*/                       /* required to force clipping */
+#define CLIP                       /* required to force clipping */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void Pokey_sound_init (uint32 freq17, uint16 playback_freq,
-                       uint8 num_pokeys);
+                       uint8 num_pokeys, uint8 use_clip);
 void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain);
 void Pokey_process_2 (register unsigned char *buffer, register uint16 n);
 void Pokey_process (register unsigned char *buffer, register uint16 n);

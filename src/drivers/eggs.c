@@ -3,10 +3,25 @@
 Eggs memory map (preliminary)
 
 0000-07ff RAM
-1000-13ff Video RAM
-1800-181f Sprites
+1000-13ff Video RAM (the left column contains sprites)
+1400-17ff Attributes RAM
 1800-1bff Mirror address of video RAM, but x and y coordinates are swapped
+1c00-1fff Mirror address of color RAM, but x and y coordinates are swapped
 3000-7fff ROM
+
+read:
+2000      DSW1
+2001      DSW2??
+2002      IN0
+2003      IN1
+
+write:
+2000      flip screen
+2001      Watchdog reset? interrupt acknowledge?
+2004      8910 #0 control port
+2005      8910 #0 write port
+2006      8910 #1 control port
+2007      8910 #1 write port
 
 ***************************************************************************/
 
@@ -17,29 +32,28 @@ Eggs memory map (preliminary)
 
 
 
-void eggs_mirrorvideoram_w(int offset,int data);
+int btime_mirrorvideoram_r(int offset);
+int btime_mirrorcolorram_r(int offset);
+void btime_mirrorvideoram_w(int offset,int data);
+void btime_mirrorcolorram_w(int offset,int data);
 void eggs_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-
-int pop(int offs)
-{
-	int res;
+int eggs_sh_start(void);
 
 
-	res = readinputport(2);
-
-	return res;
-}
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x2000, 0x2000, input_port_2_r },
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x13ff, MRA_RAM },
+	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
+	{ 0x1c00, 0x1fff, btime_mirrorcolorram_r },
+	{ 0x2000, 0x2000, input_port_2_r },	/* DSW1 */
+	{ 0x2001, 0x2001, input_port_3_r },	/* DSW2?? */
+	{ 0x2002, 0x2002, input_port_0_r },	/* IN0 */
+	{ 0x2003, 0x2003, input_port_1_r },	/* IN1 */
 	{ 0x3000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* reset/interrupt vectors */
-	{ 0x2002, 0x2002, input_port_0_r },
-	{ 0x2003, 0x2003, input_port_1_r },
 	{ -1 }	/* end of table */
 };
 
@@ -47,8 +61,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
-	{ 0x1800, 0x181f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1800, 0x1bff, eggs_mirrorvideoram_w },
+	{ 0x1400, 0x17ff, colorram_w, &colorram },
+	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
+	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
+	{ 0x2001, 0x2001, MWA_NOP },
+	{ 0x2004, 0x2004, AY8910_control_port_0_w },
+	{ 0x2005, 0x2005, AY8910_write_port_0_w },
+	{ 0x2006, 0x2006, AY8910_control_port_1_w },
+	{ 0x2007, 0x2007, AY8910_write_port_1_w },
 	{ 0x3000, 0x7fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -61,7 +81,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, 0, 0, OSD_KEY_3 },
+				OSD_KEY_LCONTROL, 0, OSD_KEY_3, OSD_KEY_4 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -70,9 +90,14 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{
-		0xff,
+	{	/* DSW1 */
+		0x3f,
 		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW2?? */
+		0xff,
+		{ OSD_KEY_Q, OSD_KEY_W, OSD_KEY_E, OSD_KEY_R, OSD_KEY_T, OSD_KEY_Y, OSD_KEY_U, OSD_KEY_I },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -97,14 +122,12 @@ static struct KEYSet keys[] =
 
 static struct DSW dsw[] =
 {
-	{ 2, 0x01, "LIVES", { "5", "3" }, 1 },
-	{ 2, 0x02, "SW2", { "0", "1" } },
-	{ 2, 0x04, "SW3", { "0", "1" } },
-	{ 2, 0x08, "SW4", { "0", "1" } },
-	{ 2, 0x10, "SW5", { "0", "1" } },
-	{ 2, 0x20, "SW6", { "0", "1" } },
-	{ 2, 0x40, "SW7", { "0", "1" } },
-	{ 2, 0x80, "SW8", { "0", "1" } },
+	{ 3, 0x01, "LIVES", { "5", "3" }, 1 },
+	{ 3, 0x02, "COIN A", { "1 COIN 2 PLAYS", "1 COIN 1 PLAY" }, 1 },
+	{ 3, 0x0c, "COIN B", { "2 COINS 1 PLAY",  "1 COIN 2 PLAYS",  "1 COIN 3 PLAYS", "1 COIN 1 PLAY" }, 1 },
+	{ 3, 0x10, "SW5", { "0", "1" } },
+	{ 3, 0x20, "SW6", { "0", "1" } },
+	{ 3, 0x40, "CABINET", { "UPRIGHT", "COCKTAIL" } },
 	{ -1 }
 };
 
@@ -193,10 +216,11 @@ static struct MachineDriver machine_driver =
 		},
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,
@@ -210,9 +234,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	eggs_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -243,21 +267,21 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if (	(memcmp(&RAM[0x0400],"\x17\x25\x19",3)==0) &&
 		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x0400],1,0x1E,f);
+                        osd_fread(f,&RAM[0x0400],0x1E);
 			/* Fix hi score at top */
 			memcpy(&RAM[0x0015],&RAM[0x0403],3);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -267,15 +291,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                fwrite(&RAM[0x0400],1,0x1E,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x0400],0x1E);
+		osd_fclose(f);
 	}
 
 }

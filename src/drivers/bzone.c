@@ -74,136 +74,377 @@ XX01   Left and center coin mechanisms on one coin counter, right on second
 XX10   Center and right coin mechanisms on one coin counter, left on second
 XX00   Each coin mechanism has it's own counter
 
+
+++++++++++++++++++++++++++
+
+
+
+Red Baron memory map (preliminary)
+
+0000-04ff RAM
+0800      COIN_IN
+0a00      IN1
+0c00      IN2
+
+1200      Vector generator start (write)
+1400
+1600      Vector generator reset (write)
+
+1800      Mathbox Status register
+1802      Button inputs
+1804      Mathbox value (lo-byte)
+1806      Mathbox value (hi-byte)
+1808      Red Baron Sound (bit 1 selects joystick pot to read also)
+1810-181f POKEY I/O
+1818      Joystick inputs
+1860-187f Mathbox RAM
+
+2000-2fff Vector generator RAM
+3000-37ff Mathbox ROM
+5000-7fff ROM
+
+RED BARON DIP SWITCH SETTINGS
+Donated by Dana Colbert
+
+
+$=Default
+"K" = 1,000
+
+Switch at position P10
+                                  8    7    6    5    4    3    2    1
+                                _________________________________________
+English                        $|    |    |    |    |    |    |Off |Off |
+Spanish                         |    |    |    |    |    |    |Off | On |
+French                          |    |    |    |    |    |    | On |Off |
+German                          |    |    |    |    |    |    | On | On |
+                                |    |    |    |    |    |    |    |    |
+ Bonus airplane granted at:     |    |    |    |    |    |    |    |    |
+Bonus at 2K, 10K and 30K        |    |    |    |    |Off |Off |    |    |
+Bonus at 4K, 15K and 40K       $|    |    |    |    |Off | On |    |    |
+Bonus at 6K, 20K and 50K        |    |    |    |    | On |Off |    |    |
+No bonus airplanes              |    |    |    |    | On | On |    |    |
+                                |    |    |    |    |    |    |    |    |
+2 aiplanes per game             |    |    |Off |Off |    |    |    |    |
+3 airplanes per game           $|    |    |Off | On |    |    |    |    |
+4 airplanes per game            |    |    | On |Off |    |    |    |    |
+5 airplanes per game            |    |    | On | On |    |    |    |    |
+                                |    |    |    |    |    |    |    |    |
+1-play minimum                 $|    |Off |    |    |    |    |    |    |
+2-play minimum                  |    | On |    |    |    |    |    |    |
+                                |    |    |    |    |    |    |    |    |
+Self-adj. game difficulty: on  $|Off |    |    |    |    |    |    |    |
+Self-adj. game difficulty: off  | On |    |    |    |    |    |    |    |
+                                -----------------------------------------
+
+  If self-adjusting game difficulty feature is
+turned on, the program strives to maintain the
+following average game lengths (in seconds):
+
+                                        Airplanes per game:
+     Bonus airplane granted at:          2   3     4     5
+2,000, 10,000 and 30,000 points         90  105$  120   135
+4,000, 15,000 and 40,000 points         75   90   105   120
+6,000, 20,000 and 50,000 points         60   75    90   105
+             No bonus airplanes         45   60    75    90
+
+
+
+Switch at position M10
+                                  8    7    6    5    4    3    2    1
+                                _________________________________________
+    50  PER PLAY                |    |    |    |    |    |    |    |    |
+ Straight 25  Door:             |    |    |    |    |    |    |    |    |
+No Bonus Coins                  |Off |Off |Off |Off |Off |Off | On | On |
+Bonus $1= 3 plays               |Off | On | On |Off |Off |Off | On | On |
+Bonus $1= 3 plays, 75 = 2 plays |Off |Off | On |Off |Off |Off | On | On |
+                                |    |    |    |    |    |    |    |    |
+ 25 /$1 Door or 25 /25 /$1 Door |    |    |    |    |    |    |    |    |
+No Bonus Coins                  |Off |Off |Off |Off |Off | On | On | On |
+Bonus $1= 3 plays               |Off | On | On |Off |Off | On | On | On |
+Bonus $1= 3 plays, 75 = 2 plays |Off |Off | On |Off |Off | On | On | On |
+                                |    |    |    |    |    |    |    |    |
+    25  PER PLAY                |    |    |    |    |    |    |    |    |
+ Straight 25  Door:             |    |    |    |    |    |    |    |    |
+No Bonus Coins                  |Off |Off |Off |Off |Off |Off | On |Off |
+Bonus 50 = 3 plays              |Off |Off | On |Off |Off |Off | On |Off |
+Bonus $1= 5 plays               |Off | On |Off |Off |Off |Off | On |Off |
+                                |    |    |    |    |    |    |    |    |
+ 25 /$1 Door or 25 /25 /$1 Door |    |    |    |    |    |    |    |    |
+No Bonus Coins                  |Off |Off |Off |Off |Off | On | On |Off |
+Bonus 50 = 3 plays              |Off |Off | On |Off |Off | On | On |Off |
+Bonus $1= 5 plays               |Off | On |Off |Off |Off | On | On |Off |
+                                -----------------------------------------
+
+Switch at position L11
+                                                      1    2    3    4
+                                                    _____________________
+All 3 mechs same denomination                       | On | On |    |    |
+Left and Center same, right different denomination  | On |Off |    |    |
+Right and Center same, left differnnt denomination  |Off | On |    |    |
+All different denominations                         |Off |Off |    |    |
+                                                    ---------------------
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/mathbox.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
 #include "sndhrdw/pokyintf.h"
 
+void bzone_init_machine(void);
+void redbaron_init_machine(void);
+int bzone_interrupt(void);
+
 int bzone_IN0_r(int offset);
-int bzone_IN3_r(int offset);
 
+int bzone_sh_start (void);
+void bzone_sounds_w (int offset,int data);
+void bzone_pokey_w (int offset,int data);
 
-static struct MemoryReadAddress readmem[] =
+int redbaron_joy_r (int offset);
+int redbaron_sh_start (void);
+void redbaron_sounds_w (int offset,int data);
+
+static struct MemoryReadAddress bzone_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x5000, 0x7fff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-	{ 0x2000, 0x2fff, MRA_RAM, &vectorram },
+	{ 0x2000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
 	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
-	{ 0x1828, 0x1828, bzone_IN3_r },	/* IN3 */
+	{ 0x1820, 0x182f, pokey1_r },
 	{ 0x1800, 0x1800, mb_status_r },
 	{ 0x1810, 0x1810, mb_lo_r },
 	{ 0x1818, 0x1818, mb_hi_r },
-	{ 0x1820, 0x182f, pokey1_r },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress bzone_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x2000, 0x2fff, MWA_RAM, &vectorram },
-	{ 0x1820, 0x182f, pokey1_w },
+	{ 0x2000, 0x2fff, MWA_RAM },
+	{ 0x1820, 0x182f, bzone_pokey_w },
 	{ 0x1860, 0x187f, mb_go },
-	{ 0x1200, 0x1200, atari_vg_go },
+	{ 0x1200, 0x1200, avgdvg_go },
 	{ 0x1000, 0x1000, MWA_NOP }, /* coin out */
 	{ 0x1400, 0x1400, MWA_NOP }, /* watchdog clear */
-	{ 0x1600, 0x1600, vg_reset },
-	{ 0x1840, 0x1840, MWA_NOP }, /* bzone sound, yet todo */
+	{ 0x1600, 0x1600, avgdvg_reset },
+	{ 0x1840, 0x1840, bzone_sounds_w },
 	{ 0x5000, 0x7fff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
+INPUT_PORTS_START( bzone_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+ 	/* handled by bzone_IN0_r() */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* bit 7 is tied to a 3khz clock */
+ 	/* handled by bzone_IN0_r() */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct InputPort input_ports[] =
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME (0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2" )
+	PORT_DIPSETTING (   0x01, "3" )
+	PORT_DIPSETTING (   0x02, "4" )
+	PORT_DIPSETTING (   0x03, "5" )
+	PORT_DIPNAME (0x0c, 0x04, "Missile appears at", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "5000" )
+	PORT_DIPSETTING (   0x04, "10000" )
+	PORT_DIPSETTING (   0x08, "20000" )
+	PORT_DIPSETTING (   0x0c, "30000" )
+	PORT_DIPNAME (0x30, 0x10, "Bonus Tank", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Never" )
+	PORT_DIPSETTING (   0x10, "15k and 100k" )
+	PORT_DIPSETTING (   0x20, "20k and 100k" )
+	PORT_DIPSETTING (   0x30, "50k and 100k" )
+	PORT_DIPNAME (0xc0, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x40, "French" )
+	PORT_DIPSETTING (   0x80, "German" )
+	PORT_DIPSETTING (   0xc0, "Spanish" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Free Play" )
+	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_2WAY )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", OSD_KEY_SPACE, OSD_JOY_FIRE, 0 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN4 - fake port for single joystick control */
+	/* This fake port is handled via bzone_IN3_r */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+
+
+INPUT_PORTS_END
+
+
+static struct MemoryReadAddress redbaron_readmem[] =
 {
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_4, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 */
-		0x11,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW2 */
-		0x02,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN3 */
-		0x00,
-		{ OSD_KEY_K, OSD_KEY_I, OSD_KEY_S, OSD_KEY_W, OSD_KEY_SPACE, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* This is just a fake to play BZONE with only one joystick */
-		/* And to get the "directors cut" switch */
-		/* Director's cut (red/green) is activated! */
-		0x80,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, 0, 0, 0 },
-		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{ -1 }
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x5000, 0x7fff, MRA_ROM },
+	{ 0x3000, 0x3fff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
+	{ 0x2000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
+	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
+	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
+	{ 0x1810, 0x181f, pokey1_r },
+	{ 0x1802, 0x1802, input_port_4_r },	/* IN4 */
+	{ 0x1800, 0x1800, mb_status_r },
+	{ 0x1804, 0x1804, mb_lo_r },
+	{ 0x1806, 0x1806, mb_hi_r },
+	{ 0x1820, 0x185f, atari_vg_earom_r },
+	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
+static struct MemoryWriteAddress redbaron_writemem[] =
 {
-        { -1 }
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x2000, 0x2fff, MWA_RAM },
+	{ 0x1808, 0x1808, redbaron_sounds_w },	/* used for selecting joystick pot also */
+	{ 0x1000, 0x1000, MWA_NOP },			/* coin out */
+	{ 0x180a, 0x180a, MWA_NOP },			/* sound reset, yet todo */
+	{ 0x180c, 0x180c, atari_vg_earom_ctrl },
+	{ 0x1810, 0x181f, pokey1_w },
+	{ 0x1820, 0x185f, atari_vg_earom_w },
+	{ 0x1860, 0x187f, mb_go },
+	{ 0x1200, 0x1200, avgdvg_go },
+	{ 0x1400, 0x1400, MWA_NOP },			/* watchdog clear */
+	{ 0x1600, 0x1600, avgdvg_reset },
+	{ 0x5000, 0x7fff, MWA_ROM },
+	{ 0x3000, 0x3fff, MWA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
-static struct KEYSet keys[] =
-{
-        { 3, 0, "RIGHT BACKWARD" },
-        { 3, 1, "RIGHT FORWARD" },
-        { 3, 2, "LEFT BACKWARD" },
-        { 3, 3, "LEFT FORWARD" },
-	{ 3, 4, "FIRE" },
-        { 4, 0, "UP" },
-	{ 4, 1, "DOWN" },
-	{ 4, 2, "TURN LEFT" },
-	{ 4, 3, "TURN RIGHT" },
-	{ 4, 4, "FIRE" },
-        { -1 }
-};
+INPUT_PORTS_START( redbaron_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+ 	/* handled by bzone_IN0_r() */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* bit 7 is tied to a 3khz clock */
+ 	/* handled by bzone_IN0_r() */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
+	PORT_START	/* DSW0 */
+	/* See the table above if you are really interested */
+	PORT_DIPNAME (0xff, 0xfd, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0xfd, "Normal" )
 
-static struct DSW dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "2", "3", "4", "5" } },
-	{ 1, 0x0c, "MISSILE APPEARS AT", { "5000", "10000", "20000", "30000" } },
-	{ 1, 0x30, "BONUS TANK", { "NONE", "15K AND 100K", "20K AND 100K", "50K AND 100K" } },
-	{ 1, 0xc0, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
-	{ 4, 0x80, "COLORS", { "GREENISH", "DIRECTOR'S CUT" } },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME (0x03, 0x03, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "German" )
+	PORT_DIPSETTING (   0x01, "French" )
+	PORT_DIPSETTING (   0x02, "Spanish" )
+	PORT_DIPSETTING (   0x03, "English" )
+	PORT_DIPNAME (0x0c, 0x04, "Bonus Plane", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x04, "6K 20K 50K" )
+	PORT_DIPSETTING (   0x08, "4K 15K 40K" )
+	PORT_DIPSETTING (   0x0c, "2K 10K 30K" )
+	PORT_DIPNAME (0x30, 0x20, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "5" )
+	PORT_DIPSETTING (   0x10, "4" )
+	PORT_DIPSETTING (   0x20, "3" )
+	PORT_DIPSETTING (   0x30, "2" )
+	PORT_DIPNAME (0x40, 0x40, "One Play Minimum", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING (   0x40, "Off" )
+	PORT_DIPNAME (0x80, 0x80, "Self Adjust Diff", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING (   0x80, "Off" )
 
+	/* IN3 - the real machine reads either the X or Y axis from this port */
+	/* Instead, we use the two fake 5 & 6 ports and bank-switch the proper */
+	/* value based on the lsb of the byte written to the sound port */
+	PORT_START	
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+
+	PORT_START	/* IN4 - misc controls */
+	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+
+	/* These 2 are fake - they are bank-switched from reads to IN3 */
+	/* Red Baron doesn't seem to use the full 0-255 range. */
+	PORT_START	/* IN5 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 64, 192 )
+
+	PORT_START	/* IN6 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 50, 0, 64, 192 )
+INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
 {
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
+	1,1,
+	0,
+	1,
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
+	{ 0, 0,      &fakelayout,     0, 256 },
+	{ -1 } /* end of array */
 };
 
 
@@ -229,19 +470,19 @@ static unsigned char color_prom[] =
 
 
 
-static int hiload(const char *name)
+static int bzone_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0300],"\x05\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x0339],"\x22\x28\x38",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x0300],1,6*10,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x0300],6*10);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -251,19 +492,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void bzone_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x0300],1,6*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x0300],6*10);
+		osd_fclose(f);
 	}
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver bzone_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -271,29 +512,30 @@ static struct MachineDriver machine_driver =
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
 			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,4 /* 4 interrupts per frame? */
+			bzone_readmem,bzone_writemem,0,0,
+			bzone_interrupt,6 /* approx 250Hz */
 		}
 	},
-	60, /* frames per second */
-	0,
+	45, /* frames per second */
+	1,
+	bzone_init_machine,
 
 	/* video hardware */
-	288, 224, { 0, 480, 0, 400 },
+	288, 224, { 0, 580, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
-	atari_vg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	atari_vg_avg_start,
-	atari_vg_stop,
-	atari_vg_screenrefresh,
+	avg_start_bzone,
+	avg_stop,
+	avg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	pokey1_sh_start,
+	bzone_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -304,6 +546,17 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
+static const char *bzone_sample_names[] =
+{
+	"fire.sam",
+	"fire2.sam",
+	"engine1.sam",
+	"engine2.sam",
+	"explode1.sam",
+	"explode2.sam",
+    0	/* end of array */
+};
 
 ROM_START( bzone_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -339,38 +592,130 @@ struct GameDriver bzone_driver =
 {
 	"Battle Zone",
 	"bzone",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
-	"ALLARD VAN DER BAS\nBERND WIEBELT\nMAURO MINENNA\n",
-	&machine_driver,
+	VECTOR_TEAM
+	"Neil Bradley\n  (fps info)\n"
+	"Mauro Minenna\n  (solo joystick code)\n",
+	&bzone_machine_driver,
 
 	bzone_rom,
 	0, 0,
-	0,
+	bzone_sample_names,
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0, bzone_input_ports, 0, 0, 0,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	bzone_hiload, bzone_hisave
 };
 
 struct GameDriver bzone2_driver =
 {
 	"Battle Zone (alternate version)",
 	"bzone2",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
-	"ALLARD VAN DER BAS\nBERND WIEBELT",
-	&machine_driver,
+	VECTOR_TEAM
+	"Neil Bradley\n  (fps info)\n"
+	"Mauro Minenna\n  (solo joystick code)\n",
+	&bzone_machine_driver,
 
 	bzone2_rom,
 	0, 0,
-	0,
+	bzone_sample_names,
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0, bzone_input_ports, 0, 0, 0,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	bzone_hiload, bzone_hisave
 };
+
+
+
+static struct MachineDriver redbaron_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1500000,	/* 1.5 Mhz */
+			0,
+			redbaron_readmem,redbaron_writemem,0,0,
+			bzone_interrupt,6 /* approx 250Hz */
+		}
+	},
+	45, /* frames per second */
+	1,
+	redbaron_init_machine,
+
+	/* video hardware */
+	288, 224, { 0, 520, 0, 400 },
+	gfxdecodeinfo,
+	256, 256,
+	avg_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	avg_start,
+	avg_stop,
+	avg_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	redbaron_sh_start,
+	pokey_sh_stop,
+	pokey_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+static const char *redbaron_sample_names[] =
+{
+	"fire.sam",
+	"spin.sam",
+	"explode1.sam",
+    0	/* end of array */
+};
+
+ROM_START( redbaron_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "037587.01",  0x4800, 0x0800, 0x8e42eeee )
+	ROM_CONTINUE(           0x5800, 0x0800 )
+	ROM_LOAD( "037000.01E", 0x5000, 0x0800, 0x6dea3bc4 )
+	ROM_LOAD( "036998.01E", 0x6000, 0x0800, 0x0c59f20d )
+	ROM_LOAD( "036997.01E", 0x6800, 0x0800, 0x31e948b7 )
+	ROM_LOAD( "036996.01E", 0x7000, 0x0800, 0xd2c126d9 )
+	ROM_LOAD( "036995.01E", 0x7800, 0x0800, 0x2d259e61 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "037006.01E", 0x3000, 0x0800, 0xbd8f807f )
+	ROM_LOAD( "037007.01E", 0x3800, 0x0800, 0xd59dec13 )
+ROM_END
+
+struct GameDriver redbaron_driver =
+{
+	"Red Baron",
+	"redbaron",
+	VECTOR_TEAM
+	"Baloo\n  (joystick code)\n",
+	&redbaron_machine_driver,
+
+	redbaron_rom,
+	0, 0,
+	redbaron_sample_names,
+
+	0/*TBR*/, redbaron_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+

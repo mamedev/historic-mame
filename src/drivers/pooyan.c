@@ -131,7 +131,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0xff,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* IN2 */
@@ -276,6 +276,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -326,7 +327,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -337,18 +338,18 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0x8a00],"\x00\x00\x01",3) == 0 &&
 			memcmp(&RAM[0x8a1b],"\x00\x00\x01",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x89c0],1,3*10,f);
-			fread(&RAM[0x8a00],1,3*10,f);
-			fread(&RAM[0x8e00],1,3*10,f);
+			osd_fread(f,&RAM[0x89c0],3*10);
+			osd_fread(f,&RAM[0x8a00],3*10);
+			osd_fread(f,&RAM[0x8e00],3*10);
 			RAM[0x88a8] = RAM[0x8a00];
 			RAM[0x88a9] = RAM[0x8a01];
 			RAM[0x88aa] = RAM[0x8a02];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -358,20 +359,20 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x89c0],1,3*10,f);
-		fwrite(&RAM[0x8a00],1,3*10,f);
-		fwrite(&RAM[0x8e00],1,3*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x89c0],3*10);
+		osd_fwrite(f,&RAM[0x8a00],3*10);
+		osd_fwrite(f,&RAM[0x8e00],3*10);
+		osd_fclose(f);
 	}
 }
 

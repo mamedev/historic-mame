@@ -24,9 +24,8 @@ unsigned char *gng_scrollx, *gng_scrolly;
 static unsigned char *dirtybuffer2;
 static unsigned char *spritebuffer1,*spritebuffer2;
 static struct osd_bitmap *tmpbitmap2;
+static int spacechar;
 
-
-void gng_paletteram_w(int offset,int data);
 
 
 /***************************************************************************
@@ -82,7 +81,7 @@ void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
   Start the video hardware emulation.
 
 ***************************************************************************/
-int gng_vh_start(void)
+static int vh_start(void)
 {
 	if (generic_vh_start() != 0)
 		return 1;
@@ -120,6 +119,18 @@ int gng_vh_start(void)
 	}
 
 	return 0;
+}
+
+int gng_vh_start(void)
+{
+	spacechar = 0x20;
+	return vh_start();
+}
+
+int diamond_vh_start(void)
+{
+	spacechar = 0x29;
+	return vh_start();
 }
 
 
@@ -204,7 +215,7 @@ int gng_interrupt(void)
 	memcpy(spritebuffer2,spritebuffer1,spriteram_size);
 	memcpy(spritebuffer1,spriteram,spriteram_size);
 
-	return INT_IRQ;
+	return interrupt();
 }
 
 
@@ -313,7 +324,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		charcode = videoram[offs] + 4 * (colorram[offs] & 0x40);
 
-		if (charcode != 0x20)	/* don't draw spaces */
+		if (charcode != spacechar)	/* don't draw spaces */
 		{
 			int sx,sy;
 

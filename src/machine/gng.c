@@ -12,21 +12,16 @@
 
 
 
-static int bankaddress;
-
-
-
 void gng_bankswitch_w(int offset,int data)
 {
-	bankaddress = 0x10000 + data * 0x2000;
+/* ASG 091197 -- old code looked like this:
+	bankaddress = 0x10000 + data * 0x2000;*/
+
+	static int bank[] = { 0x10000, 0x12000, 0x14000, 0x16000, 0x04000, 0x18000 };
+	cpu_setbank (1, &RAM[bank[data]]);
 }
 
 
-
-int gng_bankedrom_r(int offset)
-{
-	return RAM[bankaddress + offset];
-}
 
 /* JB 970823 - speed up busy loop
 	617F: LDX $12    ; dp=0

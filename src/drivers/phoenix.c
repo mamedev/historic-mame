@@ -57,15 +57,13 @@ read-only:
 
 
 extern unsigned char *phoenix_videoram2;
+extern unsigned char *phoenix_scroll;
 
 int phoenix_DSW_r (int offset);
 int phoenix_interrupt (void);
 
-void phoenix_videoram2_w(int offset,int data);
-void phoenix_scrollreg_w (int offset,int data);
 void phoenix_videoreg_w (int offset,int data);
-int phoenix_vh_start(void);
-void phoenix_vh_stop(void);
+void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void phoenix_sound_control_a_w(int offset, int data);
@@ -82,7 +80,7 @@ void pleiads_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x7800, 0x7Bff, input_port_1_r },	/* DSW */
+	{ 0x7800, 0x7bff, input_port_1_r },	/* DSW */
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_RAM },	/* video RAM */
 	{ 0x5000, 0x6fff, MRA_RAM },
@@ -95,13 +93,13 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, phoenix_videoram2_w, &phoenix_videoram2 },
+	{ 0x4000, 0x43ff, MWA_RAM, &phoenix_videoram2 },
 	{ 0x4400, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
 	{ 0x4C00, 0x4fff, MWA_RAM },
 	{ 0x5000, 0x53ff, phoenix_videoreg_w },
 	{ 0x5400, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5bff, phoenix_scrollreg_w },
+	{ 0x5800, 0x5bff, MWA_RAM, &phoenix_scroll },
 	{ 0x5C00, 0x5fff, MWA_RAM },
         { 0x6000, 0x63ff, phoenix_sound_control_a_w },
 	{ 0x6400, 0x67ff, MWA_RAM },
@@ -115,13 +113,13 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryWriteAddress pl_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, phoenix_videoram2_w, &phoenix_videoram2 },
+	{ 0x4000, 0x43ff, MWA_RAM, &phoenix_videoram2 },
 	{ 0x4400, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
 	{ 0x4C00, 0x4fff, MWA_RAM },
 	{ 0x5000, 0x53ff, phoenix_videoreg_w },
 	{ 0x5400, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5bff, phoenix_scrollreg_w },
+	{ 0x5800, 0x5bff, MWA_RAM, &phoenix_scroll },
 	{ 0x5C00, 0x5fff, MWA_RAM },
         { 0x6000, 0x63ff, pleiads_sound_control_a_w },
 	{ 0x6400, 0x67ff, MWA_RAM },
@@ -138,7 +136,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0,
-			OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_ALT },
+			OSD_KEY_LCONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_ALT },
 		{ 0, 0, 0, 0, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_FIRE2 }
 	},
 	{	/* DSW */
@@ -179,7 +177,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 256*8*8, 0 },	/* the two bitplanes are separated */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },	/* pretty straightforward layout */
 	8*8	/* every char takes 8 consecutive bytes */
@@ -187,115 +185,49 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 16 },
-	{ 1, 0x1000, &charlayout, 64, 16 },
+	{ 1, 0x0000, &charlayout,    0, 16 },
+	{ 1, 0x1000, &charlayout, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0xff,0xff,	/* WHITE */
-	0xff,0x00,0x00,	/* RED */
-	0x49,0xdb,0x00,	/* GREEN */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xdb,0x95,	/* CYAN, */
-	0xff,0xff,0x00,	/* YELLOW, */
-	0xff,0xb6,0xdb,	/* PINK */
-	0xff,0xb6,0x49,	/* ORANGE */
-        0xff,0x24,0xb6, /* LTPURPLE */
-	0xff,0xb6,0x00,	/* DKORANGE */
-        0xb6,0x24,0xff, /* DKPURPLE */
-        0x95,0x95,0x95, /* GREY */
-	0xdb,0xdb,0x00,	/* DKYELLOW */
-        0x00,0x95,0xff, /* BLUISH */
-        0xff,0x00,0xff, /* PURPLE */
-};
-
-enum {pBLACK,pWHITE,pRED,pGREEN,pBLUE,pCYAN,pYELLOW,pPINK,pORANGE,pLTPURPLE,pDKORANGE,
-                pDKPURPLE,pGREY,pDKYELLOW,pBLUISH,pPURPLE};
-
-/* 4 colors per pixel * 8 groups of characters * 2 charsets * 2 pallettes */
-static unsigned char colortable[] =
-{
-        /* charset A pallette A */
-        pBLACK,pBLACK,pCYAN,pCYAN,          /* Background, Unused, Letters, asterisks */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship middle, Numbers/Ship, Ship edge */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship middle, Ship, Ship edge/bullets */
-        pBLACK,pPINK,pPURPLE,pYELLOW,       /* Background, Bird eyes, Bird middle, Bird Wings */
-        pBLACK,pPINK,pPURPLE,pYELLOW,       /* Background, Bird eyes, Bird middle, Bird Wings */
-        pBLACK,pPINK,pPURPLE,pYELLOW,       /* Background, Bird eyes, Bird middle, Bird Wings */
-        pBLACK,pWHITE,pPURPLE,pYELLOW,      /* Background, Explosions */
-        pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Barrier */
-        /* charset A pallette B */
-        pBLACK,pBLUE,pCYAN,pCYAN,           /* Background, Unused, Letters, asterisks */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship middle, Numbers/Ship, Ship edge */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship middle, Ship, Ship edge/bullets */
-        pBLACK,pYELLOW,pGREEN,pPURPLE,      /* Background, Bird eyes, Bird middle, Bird Wings */
-        pBLACK,pYELLOW,pGREEN,pPURPLE,      /* Background, Bird eyes, Bird middle, Bird Wings */
-        pBLACK,pYELLOW,pGREEN,pPURPLE,      /* Background, Bird eyes, Bird middle, Bird Wings */
-        pBLACK,pWHITE,pRED,pPURPLE,         /* Background, Explosions */
-        pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Barrier */
-        /* charset B pallette A */
-        pBLACK,pRED,pBLUE,pGREY,            /* Background, Starfield */
-        pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Planets */
-        pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Mothership: turrets, u-body, l-body */
-        pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Motheralien: face, body, feet */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Eagles: face, body, shell */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Eagles: face, body, feet */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Eagles: face, body, feet */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Eagles: face, body, feet */
-        /* charset B pallette B */
-        pBLACK,pRED,pBLUE,pGREY,            /* Background, Starfield */
-        pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Planets */
-        pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Mothership: turrets, upper body, lower body */
-        pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Motheralien: face, body, feet */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Eagles: face, body, shell */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Eagles: face, body, feet */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Eagles: face, body, feet */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN     /* Background, Eagles: face, body, feet */
-};
-
-static unsigned char pl_colortable[] =
-{
-        /* charset A pallette A */
-        pBLACK,pBLACK,pCYAN,pCYAN,          /* Background, Unused, Letters, asterisks */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Numbers/Ship, Ship gun */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Ship body, Ship gun */
-        pBLACK,pYELLOW,pBLACK,pYELLOW,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
-        pBLACK,pYELLOW,pBLACK,pYELLOW,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
-        pBLACK,pPINK,pPURPLE,pYELLOW,       /* Background, UFO edge, UFO middle, UFO eyes */
-        pBLACK,pWHITE,pPURPLE,pYELLOW,      /* Background, Martian2 legs, Martian2 head, Martian2 eyes */
-        pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Explosions */
-        /* charset A pallette B */
-        pBLACK,pBLUE,pCYAN,pCYAN,           /* Background, Unused, Letters, asterisks */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Numbers/Ship, Ship gun */
-        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Ship body, Ship gun */
-        pBLACK,pYELLOW,pBLUISH,pWHITE,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
-        pBLACK,pYELLOW,pBLUISH,pWHITE,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
-        pBLACK,pYELLOW,pGREEN,pPURPLE,      /* Background, UFO edge, UFO middle, UFO eyes */
-        pBLACK,pWHITE,pRED,pPURPLE,         /* Background, Martian2 legs, Martian2 head, Martian2 eyes */
-        pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Explosions */
-        /* charset B pallette A */
-        pBLACK,pRED,pBLUE,pGREY,            /* Background, Stars & planets */
-        pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Battleship: body, eyes, edge */
-        pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Radar dish inside, Radar base/parked ship, Radar dish outside */
-        pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Building/Landing light(off?), parked ship, Landing light(on?) */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: face, body, horns/claws */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: face, body, horns/claws */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: face, body, horns/claws */
-        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: body, horns/claws */
-        /* charset B pallette B */
-        pBLACK,pRED,pBLUE,pGREY,            /* Background, Stars & planets */
-        pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Battleship: body, eyes, edge */
-        pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Radar dish inside, Radar base/parked ship, Radar dish outside */
-        pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Building/Landing light(off?), parked ship, Landing light(on?) */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: face, body, horns/claws */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: face, body, horns/claws */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: face, body, horns/claws */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: body, horns/claws */
+	/* IC40 - palette low bits */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x04,0x02,0x05,0x02,0x02,0x02,
+	0x00,0x01,0x02,0x00,0x02,0x01,0x01,0x01,0x00,0x01,0x01,0x01,0x06,0x04,0x04,0x04,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x01,0x01,0x03,0x03,0x03,0x01,0x00,
+	0x02,0x05,0x05,0x01,0x01,0x01,0x07,0x00,0x06,0x07,0x07,0x05,0x05,0x05,0x03,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x04,0x02,0x01,0x01,0x01,0x01,
+	0x00,0x01,0x02,0x00,0x02,0x02,0x02,0x02,0x00,0x01,0x01,0x01,0x04,0x04,0x04,0x04,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x01,0x01,0x04,0x04,0x04,0x03,0x04,
+	0x02,0x05,0x05,0x05,0x05,0x05,0x07,0x00,0x05,0x07,0x07,0x03,0x03,0x03,0x05,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	/* IC41 - palette high bits */
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x06,0x05,0x03,0x05,0x06,0x06,0x06,
+	0x01,0x03,0x03,0x06,0x02,0x03,0x03,0x03,0x07,0x05,0x05,0x03,0x07,0x05,0x05,0x05,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x01,0x01,0x03,0x03,0x03,0x01,0x04,
+	0x06,0x05,0x05,0x07,0x07,0x07,0x07,0x03,0x06,0x07,0x07,0x05,0x05,0x05,0x03,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x05,0x03,0x03,0x03,0x03,0x03,
+	0x01,0x03,0x03,0x06,0x06,0x06,0x06,0x06,0x05,0x05,0x05,0x03,0x05,0x05,0x05,0x05,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x01,0x01,0x04,0x04,0x04,0x03,0x04,
+	0x06,0x05,0x05,0x05,0x05,0x05,0x07,0x03,0x05,0x07,0x07,0x07,0x07,0x07,0x05,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
 
 
@@ -335,18 +267,19 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 3*8, 29*8-1, 0*8, 31*8-1 },
+	32*8, 32*8, { 6*8, 32*8-1, 0*8, 31*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	256,16*4+16*4,
+	phoenix_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	phoenix_vh_start,
-	phoenix_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	phoenix_vh_screenrefresh,
 
 	/* sound hardware */
@@ -370,18 +303,19 @@ static struct MachineDriver pleiads_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 3*8, 29*8-1, 0*8, 31*8-1 },
+	32*8, 32*8, { 6*8, 32*8-1, 0*8, 31*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	256,16*4+16*4,
+	phoenix_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	phoenix_vh_start,
-	phoenix_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	phoenix_vh_screenrefresh,
 
 	/* sound hardware */
@@ -417,10 +351,10 @@ ROM_START( phoenix_rom )
 	ROM_LOAD( "ic52", 0x3800, 0x0800, 0xce53b2e1 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic39", 0x0000, 0x0800, 0x721b653d )
-	ROM_LOAD( "ic40", 0x0800, 0x0800, 0x8ee80800 )
-	ROM_LOAD( "ic23", 0x1000, 0x0800, 0x1461bf99 )
-	ROM_LOAD( "ic24", 0x1800, 0x0800, 0xa8b5c2b1 )
+	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 )
+	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 )
+	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d )
+	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 )
 ROM_END
 
 ROM_START( phoenixt_rom )
@@ -435,10 +369,10 @@ ROM_START( phoenixt_rom )
 	ROM_LOAD( "phoenix.52", 0x3800, 0x0800, 0xd456acde )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "phoenix.39", 0x0000, 0x0800, 0x721b653d )
-	ROM_LOAD( "phoenix.40", 0x0800, 0x0800, 0x8ee80800 )
-	ROM_LOAD( "phoenix.23", 0x1000, 0x0800, 0x1461bf99 )
-	ROM_LOAD( "phoenix.24", 0x1800, 0x0800, 0xa8b5c2b1 )
+	ROM_LOAD( "phoenix.23", 0x0000, 0x0800, 0x1461bf99 )
+	ROM_LOAD( "phoenix.24", 0x0800, 0x0800, 0xa8b5c2b1 )
+	ROM_LOAD( "phoenix.39", 0x1000, 0x0800, 0x721b653d )
+	ROM_LOAD( "phoenix.40", 0x1800, 0x0800, 0x8ee80800 )
 ROM_END
 
 ROM_START( phoenix3_rom )
@@ -453,10 +387,10 @@ ROM_START( phoenix3_rom )
 	ROM_LOAD( "phoenix.52", 0x3800, 0x0800, 0xcc51b4e3 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "phoenix.39", 0x0000, 0x0800, 0xa93f0f43 )
-	ROM_LOAD( "phoenix.40", 0x0800, 0x0800, 0x8ee80800 )
-	ROM_LOAD( "phoenix.23", 0x1000, 0x0800, 0x1461bf99 )
-	ROM_LOAD( "phoenix.24", 0x1800, 0x0800, 0xa8b5c2b1 )
+	ROM_LOAD( "phoenix.23", 0x0000, 0x0800, 0x1461bf99 )
+	ROM_LOAD( "phoenix.24", 0x0800, 0x0800, 0xa8b5c2b1 )
+	ROM_LOAD( "phoenix.39", 0x1000, 0x0800, 0xa93f0f43 )
+	ROM_LOAD( "phoenix.40", 0x1800, 0x0800, 0x8ee80800 )
 ROM_END
 
 ROM_START( pleiads_rom )
@@ -471,45 +405,46 @@ ROM_START( pleiads_rom )
 	ROM_LOAD( "pleiades.54", 0x3800, 0x0800, 0x1d125968 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pleiades.27", 0x0000, 0x0800, 0x880280d4 )
-	ROM_LOAD( "pleiades.26", 0x0800, 0x0800, 0x96ac4eb6 )
-	ROM_LOAD( "pleiades.45", 0x1000, 0x0800, 0x3617f459 )
-	ROM_LOAD( "pleiades.44", 0x1800, 0x0800, 0x35271f77 )
+	ROM_LOAD( "pleiades.45", 0x0000, 0x0800, 0x3617f459 )
+	ROM_LOAD( "pleiades.44", 0x0800, 0x0800, 0x35271f77 )
+	ROM_LOAD( "pleiades.27", 0x1000, 0x0800, 0x880280d4 )
+	ROM_LOAD( "pleiades.26", 0x1800, 0x0800, 0x96ac4eb6 )
 ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-   FILE *f;
+	void *f;
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
-   /* check if the hi score table has already been initialized */
-   if (memcmp(&RAM[0x438a],"\x00\x00\x0f",3) == 0)
-   {
-      if ((f = fopen(name,"rb")) != 0)
-      {
-         fread(&RAM[0x4388],1,4,f);
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x438a],"\x00\x00\x0f",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4388],4);
 
-/*       // I suppose noone can do such an HISCORE!!! ;)
-         phoenix_videoram2_w(0x0221, (RAM[0x4388] >> 4)+0x20);
-         phoenix_videoram2_w(0x0201, (RAM[0x4388] & 0xf)+0x20);
-*/
-         phoenix_videoram2_w(0x01e1, (RAM[0x4389] >> 4)+0x20);
-         phoenix_videoram2_w(0x01c1, (RAM[0x4389] & 0xf)+0x20);
-         phoenix_videoram2_w(0x01a1, (RAM[0x438a] >> 4)+0x20);
-         phoenix_videoram2_w(0x0181, (RAM[0x438a] & 0xf)+0x20);
-         phoenix_videoram2_w(0x0161, (RAM[0x438b] >> 4)+0x20);
-         phoenix_videoram2_w(0x0141, (RAM[0x438b] & 0xf)+0x20);
-         fclose(f);
-      }
+			/* copy the high score to the screen */
+			/*       // I suppose noone can do such an HISCORE!!! ;)
+			phoenix_videoram2_w(0x0221, (RAM[0x4388] >> 4)+0x20);
+			phoenix_videoram2_w(0x0201, (RAM[0x4388] & 0xf)+0x20);
+			*/
+			RAM[0x49e1] = (RAM[0x4389] >> 4) + 0x20;
+			RAM[0x49c1] = (RAM[0x4389] & 0xf) + 0x20;
+			RAM[0x49a1] = (RAM[0x438a] >> 4) + 0x20;
+			RAM[0x4981] = (RAM[0x438a] & 0xf) + 0x20;
+			RAM[0x4961] = (RAM[0x438b] >> 4) + 0x20;
+			RAM[0x4941] = (RAM[0x438b] & 0xf) + 0x20;
+			osd_fclose(f);
+		}
 
-      return 1;
-   }
-   else return 0; /* we can't load the hi scores yet */
+		return 1;
+	}
+	else return 0; /* we can't load the hi scores yet */
 }
 
 
@@ -519,10 +454,10 @@ static unsigned long get_score(char *score)
      return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
    unsigned long score1,score2,hiscore;
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
@@ -536,10 +471,10 @@ static void hisave(const char *name)
    else if (score2 > hiscore) RAM += 0x4384;
    else RAM += 0x4388;
 
-   if ((f = fopen(name,"wb")) != 0)
+   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
-      fwrite(&RAM[0],1,4,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0],4);
+      osd_fclose(f);
    }
 }
 
@@ -549,7 +484,7 @@ struct GameDriver phoenix_driver =
 {
 	"Phoenix (Amstar)",
 	"phoenix",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT\nTim Lindquist (color info)",
 	&machine_driver,
 
 	phoenix_rom,
@@ -558,7 +493,7 @@ struct GameDriver phoenix_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -568,7 +503,7 @@ struct GameDriver phoenixt_driver =
 {
 	"Phoenix (Taito)",
 	"phoenixt",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT\nTim Lindquist (color info)",
 	&machine_driver,
 
 	phoenixt_rom,
@@ -577,7 +512,7 @@ struct GameDriver phoenixt_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -587,7 +522,7 @@ struct GameDriver phoenix3_driver =
 {
 	"Phoenix (T.P.N.)",
 	"phoenix3",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT\nTim Lindquist (color info)",
 	&machine_driver,
 
 	phoenix3_rom,
@@ -596,7 +531,7 @@ struct GameDriver phoenix3_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -611,11 +546,11 @@ struct GameDriver pleiads_driver =
 
 	pleiads_rom,
 	0, 0,
-        phoenix_sample_names,
+	phoenix_sample_names,
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-        0, palette, pl_colortable,
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

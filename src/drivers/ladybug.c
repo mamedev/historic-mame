@@ -466,6 +466,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -546,20 +547,20 @@ ROM_END
 
 
 
-static int ladybug_hiload(const char *name)
+static int ladybug_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6073],"\x01\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x608b],"\x01\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x6073],1,3*9,f);
-			fread(&RAM[0xd380],1,13*9,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x6073],3*9);
+			osd_fread(f,&RAM[0xd380],13*9);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -569,34 +570,34 @@ static int ladybug_hiload(const char *name)
 
 
 
-static void ladybug_hisave(const char *name)
+static void ladybug_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x6073],1,3*9,f);
-		fwrite(&RAM[0xd380],1,13*9,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x6073],3*9);
+		osd_fwrite(f,&RAM[0xd380],13*9);
+		osd_fclose(f);
 	}
 }
 
 
 
-static int cavenger_hiload(const char *name)
+static int cavenger_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x6025],"\x01\x00\x00",3) == 0) &&
 		(memcmp(&RAM[0x6063],"\x0A\x15\x28",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x6025],1,0x41,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0x6025],0x41);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -606,33 +607,33 @@ static int cavenger_hiload(const char *name)
 
 
 
-static void cavenger_hisave(const char *name)
+static void cavenger_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                fwrite(&RAM[0x6025],1,0x41,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x6025],0x41);
+		osd_fclose(f);
 	}
 
 }
 
-static int snapjack_hiload(const char *name)
+static int snapjack_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x6A94],"\x01\x00\x00",3) == 0) &&
 		(memcmp(&RAM[0x6AA0],"\x01\x00\x00\x1E",4) == 0) &&
 		(memcmp(&RAM[0x6AD2],"\x0A\x15\x24",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x6A94],1,0x41,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0x6A94],0x41);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -642,15 +643,15 @@ static int snapjack_hiload(const char *name)
 
 
 
-static void snapjack_hisave(const char *name)
+static void snapjack_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                fwrite(&RAM[0x6A94],1,0x41,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x6A94],0x41);
+		osd_fclose(f);
 	}
 
 }

@@ -19,9 +19,8 @@ static int background_image;
 
   Convert the color PROMs into a more useable format.
 
-  Actually Burger Time uses RAM, not PROMs to store the palette. However the
-  game doesn't seem to use this feature, so we don't care to emulate dynamic
-  palette adjustments.
+  Burger Time doesn't have a color PROM. It uses RAM to dynamically
+  create the palette.
   The palette RAM is connected to the RGB output this way:
 
   bit 7 -- 15 kohm resistor  -- BLUE (inverted)
@@ -37,29 +36,109 @@ static int background_image;
 void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 16;i++)
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (~color_prom[i] >> 0) & 0x01;
-		bit1 = (~color_prom[i] >> 1) & 0x01;
-		bit2 = (~color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x2e * bit0 + 0x41 * bit1 + 0x90 * bit2;
-		bit0 = (~color_prom[i] >> 3) & 0x01;
-		bit1 = (~color_prom[i] >> 4) & 0x01;
-		bit2 = (~color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x2e * bit0 + 0x41 * bit1 + 0x90 * bit2;
-		bit0 = 0;
-		bit1 = (~color_prom[i] >> 6) & 0x01;
-		bit2 = (~color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x2e * bit0 + 0x41 * bit1 + 0x90 * bit2;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
 
-	for (i = 0;i < 2 * 8;i++)
-		colortable[i] = i;
+
+	/* characters and sprites use colors 0-7 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* background tiles use colors 8-15 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+		COLOR(2,i) = i + 8;
+}
+
+
+
+void btime_paletteram_w(int offset,int data)
+{
+	int r,g,b;
+	int bit0,bit1,bit2;
+
+
+	r = (~data & 0x07);
+	g = (~data & 0x38) >> 3;
+	b = (~data & 0xC0) >> 6;
+
+	bit0 = (r >> 0) & 0x01;
+	bit1 = (r >> 1) & 0x01;
+	bit2 = (r >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	bit0 = (g >> 0) & 0x01;
+	bit1 = (g >> 1) & 0x01;
+	bit2 = (g >> 2) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	bit0 = 0;
+	bit1 = (b >> 0) & 0x01;
+	bit2 = (b >> 1) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen(Machine->pens[offset],r,g,b);
+}
+
+
+
+int btime_mirrorvideoram_r(int offset)
+{
+	int x,y;
+
+
+	/* swap x and y coordinates */
+	x = offset / 32;
+	y = offset % 32;
+	offset = 32 * y + x;
+
+	return videoram_r(offset);
+}
+
+int btime_mirrorcolorram_r(int offset)
+{
+	int x,y;
+
+
+	/* swap x and y coordinates */
+	x = offset / 32;
+	y = offset % 32;
+	offset = 32 * y + x;
+
+	return colorram_r(offset);
+}
+
+void btime_mirrorvideoram_w(int offset,int data)
+{
+	int x,y;
+
+
+	/* swap x and y coordinates */
+	x = offset / 32;
+	y = offset % 32;
+	offset = 32 * y + x;
+
+	videoram_w(offset,data);
+}
+
+void btime_mirrorcolorram_w(int offset,int data)
+{
+	int x,y;
+
+
+	/* swap x and y coordinates */
+	x = offset / 32;
+	y = offset % 32;
+	offset = 32 * y + x;
+
+	colorram_w(offset,data);
 }
 
 
@@ -71,16 +150,6 @@ void btime_background_w(int offset,int data)
 		memset(dirtybuffer,1,videoram_size);
 
 		background_image = data;
-
-		/* kludge to make the sprites disappear when the screen is cleared */
-		if (data == 0)
-		{
-			int i;
-
-
-			for (i = 0;i < spriteram_size;i += 4)
-				spriteram[i] = 0;
-		}
 	}
 }
 
@@ -140,16 +209,16 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 						bx,by,
 						&clip,TRANSPARENCY_NONE,0);
 
-				drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 2) ? 1 : 0],
-						videoram[offs] + 256 * (colorram[offs] & 1),
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						videoram[offs] + 256 * (colorram[offs] & 3),
 						0,
 						0,0,
 						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
-				drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 2) ? 1 : 0],
-						videoram[offs] + 256 * (colorram[offs] & 1),
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						videoram[offs] + 256 * (colorram[offs] & 3),
 						0,
 						0,0,
 						sx,sy,
@@ -163,16 +232,14 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = 0;offs < videoram_size;offs += 4*0x20)
 	{
-		if (spriteram[offs] & 0x01)
-		{
-			drawgfx(bitmap,Machine->gfx[3],
-					spriteram[offs + 1],
+		if (videoram[offs + 0] & 0x01)
+			drawgfx(bitmap,Machine->gfx[1],
+					videoram[offs + 0x20],
 					0,
-					spriteram[offs] & 0x02,0,
-					239 - spriteram[offs + 2],spriteram[offs + 3],
+					videoram[offs + 0] & 0x02,videoram[offs + 0] & 0x04,
+					239 - videoram[offs + 2*0x20],videoram[offs + 3*0x20],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
 	}
 }

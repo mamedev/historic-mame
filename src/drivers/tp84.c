@@ -210,7 +210,7 @@ static struct InputPort TP84_input_ports[] =
 	},
 	{	/* Player 1 joystick */
 		0xFF,	/* default_value */
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0},
+		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0},
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0}
 	},
 	{	/* Second player joystick */
@@ -421,6 +421,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,							/* frames per second */
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	tp84_init_machine,		/* init machine routine */ /* JB 970829 */
 
 	/* video hardware */
@@ -473,42 +475,40 @@ ROM_END
 
 
 
-static int tp84_hiload(const char *name)
+static int hiload(void)
 {
-  unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
+	unsigned char *RAM = Machine->memory_region[0];
+	void *f;
 
-  /* Wait for hiscore table initialization to be done. */
-  if (memcmp(&RAM[0x57a0], "\x00\x02\x00\x47\x53\x58", 6) != 0)
-    return 0;
+	/* Wait for hiscore table initialization to be done. */
+	if (memcmp(&RAM[0x57a0], "\x00\x02\x00\x47\x53\x58", 6) != 0)
+		return 0;
 
-  if ((f = fopen(name,"rb")) != 0)
-    {
-      /* Load and set hiscore table. */
-      fread(&RAM[0x57a0],1,5*6,f);
-      fclose(f);
-    }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		/* Load and set hiscore table. */
+		osd_fread(f,&RAM[0x57a0],5*6);
+		RAM[0x5737] = RAM[0x57a1];
+		RAM[0x5738] = RAM[0x57a2];
+		osd_fclose(f);
+	}
 
-/*The Top score seem to be there but it do not work */
-/*  fread(&RAM[0x5736],1,6,f);*/
-
-  return 1;
+	return 1;
 }
 
 
 
-static void tp84_hisave(const char *name)
+static void hisave(void)
 {
-  unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
+	unsigned char *RAM = Machine->memory_region[0];
+	void *f;
 
-  if ((f = fopen(name,"wb")) != 0)
-    {
-      /* Write hiscore table. */
-      fwrite(&RAM[0x57a0],1,5*6,f);
-      fclose(f);
-    }
-/*  fwrite(&RAM[0x5736],1,6,f);*/
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		/* Write hiscore table. */
+		osd_fwrite(f,&RAM[0x57a0],5*6);
+		osd_fclose(f);
+	}
 }
 
 
@@ -517,7 +517,7 @@ struct GameDriver tp84_driver =
 {
 	"Time Pilot 84",
 	"tp84",
-	"MARC LAFONTAINE",
+	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)",
 	&machine_driver,		/* MachineDriver * */
 
 	tp84_rom,			/* RomModule * */
@@ -535,6 +535,6 @@ struct GameDriver tp84_driver =
 	0, 	          /* color table */
 	ORIENTATION_ROTATE_90,
 
-	tp84_hiload, tp84_hisave
+	hiload, hisave
 };
 

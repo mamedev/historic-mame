@@ -118,8 +118,9 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
-        { 0x6806, 0x6807, mooncrst_sound_freq_sel_w },
-        { 0x6004, 0x6007, mooncrst_lfo_freq_w },
+	{ 0x6806, 0x6807, mooncrst_sound_freq_sel_w },
+	{ 0x6000, 0x6001, osd_led_w },
+	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x0000, 0x27ff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -136,9 +137,10 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
-        { 0x6806, 0x6807, mooncrst_sound_freq_sel_w },
-        { 0x6004, 0x6007, mooncrst_lfo_freq_w },
+	{ 0x6806, 0x6807, mooncrst_sound_freq_sel_w },
+	{ 0x6000, 0x6001, osd_led_w },
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
+	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
 	{ -1 }	/* end of table */
@@ -151,7 +153,7 @@ static struct InputPort galaxian_input_ports[] =
 	{	/* IN0 */
 		0x00,
 		{ 0, OSD_KEY_3, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_CONTROL, 0, OSD_KEY_F2, 0 },
+				OSD_KEY_LCONTROL, 0, OSD_KEY_F2, 0 },
 		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -188,7 +190,7 @@ static struct InputPort warofbug_input_ports[] =
 	{	/* IN0 */
 		0x00,
 		{ OSD_KEY_3, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_CONTROL, 0, OSD_KEY_DOWN, OSD_KEY_UP },
+				OSD_KEY_LCONTROL, 0, OSD_KEY_DOWN, OSD_KEY_UP },
 		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
 				OSD_JOY_FIRE, 0, OSD_JOY_DOWN, OSD_JOY_UP }
 	},
@@ -206,13 +208,45 @@ static struct InputPort warofbug_input_ports[] =
 };
 
 
-static struct KEYSet wbug_keys[] =
+static struct KEYSet warofbug_keys[] =
 {
-        { 0, 6, "MOVE UP" },
+        { 0, 7, "MOVE UP" },
         { 0, 2, "MOVE LEFT"  },
         { 0, 3, "MOVE RIGHT" },
-        { 0, 7, "MOVE DOWN" },
+        { 0, 6, "MOVE DOWN" },
         { 0, 4, "FIRE"      },
+        { -1 }
+};
+
+
+static struct InputPort pacmanbl_input_ports[] =
+{
+	{	/* IN0 */
+		0x00,
+		{ OSD_KEY_3, OSD_KEY_4, OSD_KEY_LEFT, OSD_KEY_RIGHT,
+				0, OSD_KEY_DOWN, 0, OSD_KEY_UP },
+		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
+				0, OSD_JOY_DOWN, 0, OSD_JOY_UP }
+	},
+	{	/* IN1 */
+		0xc0,
+		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+static struct KEYSet pacmanbl_keys[] =
+{
+        { 0, 7, "MOVE UP" },
+        { 0, 2, "MOVE LEFT"  },
+        { 0, 3, "MOVE RIGHT" },
+        { 0, 5, "MOVE DOWN" },
         { -1 }
 };
 
@@ -245,8 +279,6 @@ static struct DSW pisces_dsw[] =
 	{ -1 }
 };
 
-
-
 static struct DSW japirem_dsw[] =
 {
 	{ 2, 0x04, "LIVES", { "3", "5" } },
@@ -255,13 +287,22 @@ static struct DSW japirem_dsw[] =
 	{ -1 }
 };
 
-
-
 static struct DSW warofbug_dsw[] =
 {
 	{ 2, 0x03, "LIVES", { "1", "2", "3", "4" } },
 	{ 2, 0x04, "SW5", { "OFF", "ON" } },
 	{ 2, 0x08, "SW6", { "OFF", "ON" } },
+	{ -1 }
+};
+
+static struct DSW pacmanbl_dsw[] =
+{
+	{ 1, 0x40, "COIN1", { "2 COINS 1 CREDIT", "1 COIN 1 CREDIT" } },
+	{ 1, 0x80, "COIN2", { "1 COIN 6 CREDITS", "1 COIN 3 CREDITS" } },
+	{ 2, 0x01, "BONUS", { "15000", "20000" } },
+	{ 2, 0x02, "DIFFICULTY", { "EASY", "HARD" } },
+	{ 2, 0x04, "LIVES", { "3", "5" } },
+	{ 2, 0x08, "CABINET", { "UPRIGHT", "COCKTAIL" } },
 	{ -1 }
 };
 
@@ -339,6 +380,13 @@ static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
 	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
 	{ -1 } /* end of array */
 };
+static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &galaxian_charlayout,    0,  8 },
+	{ 1, 0x1000, &galaxian_spritelayout,  0,  8 },
+	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ -1 } /* end of array */
+};
 
 
 
@@ -346,10 +394,8 @@ static unsigned char galaxian_color_prom[] =
 {
 	/* palette */
 	0x00,0x00,0x00,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC0,0xA0,0x0C,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
+	0x00,0xC0,0xA0,0x07,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
 };
-
-
 
 static unsigned char japirem_color_prom[] =
 {
@@ -358,14 +404,28 @@ static unsigned char japirem_color_prom[] =
 	0x00,0x36,0x07,0xF0,0x00,0x33,0x3F,0xDB,0x00,0x3F,0x57,0xC6,0x00,0xC6,0x3F,0xFF
 };
 
-
-
 static unsigned char uniwars_color_prom[] =
 {
 	/* palette */
 	0x00,0xe8,0x17,0x3f,0x00,0x2f,0x87,0x20,0x00,0xff,0x3f,0x38,0x00,0x83,0x3f,0x06,
 	0x00,0xdc,0x1f,0xd0,0x00,0xef,0x20,0x96,0x00,0x3f,0x17,0xf0,0x00,0x3f,0x17,0x14
 };
+
+static unsigned char warofbug_color_prom[] =
+{
+	/* palette */
+	0x00,0xFF,0x07,0xC0,0x00,0x07,0xC0,0x3F,0x00,0x38,0x07,0xC0,0x00,0x07,0xC0,0x38,
+	0x00,0x3F,0x38,0x07,0x00,0xC0,0x3F,0x07,0x00,0xF8,0x07,0x38,0x00,0xC0,0x38,0xC7,
+};
+
+static unsigned char pacmanbl_color_prom[] =
+{
+	/* palette */
+	0x00,0x00,0x00,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
+	0x00,0xC0,0xA0,0x0C,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
+};
+
+
 
 static unsigned char samples[32*2] =
 {
@@ -392,6 +452,7 @@ static struct MachineDriver galaxian_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -429,11 +490,48 @@ static struct MachineDriver pisces_machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pisces_gfxdecodeinfo,
+	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	galaxian_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	samples,
+	mooncrst_sh_init,
+	mooncrst_sh_start,
+	mooncrst_sh_stop,
+	mooncrst_sh_update
+};
+
+static struct MachineDriver pacmanbl_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,pisces_writemem,0,0,
+			galaxian_vh_interrupt,1
+		}
+	},
+	60,
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	pacmanbl_gfxdecodeinfo,
 	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
 	galaxian_vh_convert_color_prom,
 
@@ -618,24 +716,55 @@ ROM_START( warofbug_rom )
 	ROM_LOAD( "warofbug.z",  0x2000, 0x0800, 0x3dc8509c )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "warofbug.1j", 0x0000, 0x0800, 0x50dd974f )
-	ROM_LOAD( "warofbug.1k", 0x0800, 0x0800, 0x9dd46522 )
+	ROM_LOAD( "warofbug.1k", 0x0000, 0x0800, 0x9dd46522 )
+	ROM_LOAD( "warofbug.1j", 0x0800, 0x0800, 0x50dd974f )
+ROM_END
+
+ROM_START( redufo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ru1a", 0x0000, 0x0800, 0xae67005f )
+	ROM_LOAD( "ru2a", 0x0800, 0x0800, 0xcbbacf42 )
+	ROM_LOAD( "ru3a", 0x1000, 0x0800, 0xb210562a )
+	ROM_LOAD( "ru4a", 0x1800, 0x0800, 0xeeac4674 )
+	ROM_LOAD( "ru5a", 0x2000, 0x0800, 0xe75718fd )
+	ROM_LOAD( "ru6a", 0x2800, 0x0800, 0xaf51b219 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ruhja", 0x0000, 0x0800, 0xbdc668f6 )
+	ROM_LOAD( "rukla", 0x0800, 0x0800, 0xa902210e )
+ROM_END
+
+ROM_START( pacmanbl_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "blpac1b",  0x0000, 0x0800, 0x4bd21c86 )
+	ROM_LOAD( "blpac2b",  0x0800, 0x0800, 0xe07062da )
+	ROM_LOAD( "blpac3b",  0x1000, 0x0800, 0xafc1dd17 )
+	ROM_LOAD( "blpac4b",  0x1800, 0x0800, 0x8ed7013f )
+	ROM_LOAD( "blpac5b",  0x2000, 0x0800, 0x64a3d81d )
+	ROM_LOAD( "blpac6b",  0x2800, 0x0800, 0x3c79c681 )
+	ROM_LOAD( "blpac7b",  0x3000, 0x0800, 0x9b4800c6 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blpac12b", 0x0000, 0x0800, 0xb3aff349 )
+	ROM_LOAD( "blpac11b", 0x0800, 0x0800, 0x068fcb5b )
+	ROM_LOAD( "blpac10b", 0x1000, 0x0800, 0x93c21554 )
+	ROM_LOAD( "blpac9b",  0x1800, 0x0800, 0x9df6dba6 )
 ROM_END
 
 
 
-static int galaxian_hiload(const char *name)
+static int galaxian_hiload(void)
 {
 	/* wait for the checkerboard pattern to be on screen */
 	if (memcmp(&RAM[0x5000],"\x30\x32",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x40a8],1,3,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x40a8],3);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -645,32 +774,32 @@ static int galaxian_hiload(const char *name)
 
 
 
-static void galaxian_hisave(const char *name)
+static void galaxian_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x40a8],1,3,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x40a8],3);
+		osd_fclose(f);
 	}
 }
 
 
 
-static int pisces_hiload(const char *name)
+static int pisces_hiload(void)
 {
 	/* wait for the screen to initialize */
 	if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x4021],1,3,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x4021],3);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -680,30 +809,30 @@ static int pisces_hiload(const char *name)
 
 
 
-static void pisces_hisave(const char *name)
+static void pisces_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x4021],1,3,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x4021],3);
+		osd_fclose(f);
 	}
 }
 
-static int warofbug_hiload(const char *name)
+static int warofbug_hiload(void)
 {
 	/* wait for memory to be set */
 	if (memcmp(&RAM[0x4045],"\x1F\x1F",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x4034],1,3,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x4034],3);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -713,15 +842,15 @@ static int warofbug_hiload(const char *name)
 
 
 
-static void warofbug_hisave(const char *name)
+static void warofbug_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x4034],1,3,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x4034],3);
+		osd_fclose(f);
 	}
 }
 
@@ -914,7 +1043,7 @@ struct GameDriver japirem_driver =
 	japirem_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	galaxian_hiload, galaxian_hisave
 };
 
 struct GameDriver uniwars_driver =
@@ -933,24 +1062,62 @@ struct GameDriver uniwars_driver =
 	uniwars_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	galaxian_hiload, galaxian_hisave
 };
 
 struct GameDriver warofbug_driver =
 {
 	"War of the Bugs",
 	"warofbug",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nMIKE BALFOUR",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nMIKE BALFOUR\nTim Lindquist (color info)",
 	&galaxian_machine_driver,
 
 	warofbug_rom,
 	0, 0,
 	mooncrst_sample_names,
 
-	warofbug_input_ports, 0, trak_ports, warofbug_dsw, wbug_keys,
+	warofbug_input_ports, 0, trak_ports, warofbug_dsw, warofbug_keys,
 
-	japirem_color_prom, 0, 0,
+	warofbug_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	warofbug_hiload, warofbug_hisave
+};
+
+struct GameDriver redufo_driver =
+{
+	"Defend the Terra Attack on the Red UFO",
+	"redufo",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	&galaxian_machine_driver,
+
+	redufo_rom,
+	0, 0,
+	mooncrst_sample_names,
+
+	galaxian_input_ports, 0, trak_ports, galaxian_dsw, keys,
+
+	galaxian_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver pacmanbl_driver =
+{
+	"Pac Man (bootleg on Galaxian hardware)",
+	"pacmanbl",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	&pacmanbl_machine_driver,
+
+	pacmanbl_rom,
+	0, 0,
+	mooncrst_sample_names,
+
+	pacmanbl_input_ports, 0, trak_ports, pacmanbl_dsw, pacmanbl_keys,
+
+	pacmanbl_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

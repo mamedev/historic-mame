@@ -18,11 +18,18 @@ J Clegg
 unsigned char *yard_scroll_x_low;
 unsigned char *yard_scroll_x_high;
 unsigned char *yard_scroll_y_low;
+unsigned char *yard_sprite_priority; /* JB 970912 */
 
+/* JB 970912 */
 static struct rectangle spritevisiblearea =
 {
-	0, (24*8)-1,          //8 protected chars on right of screen
-	0, (31*8)-1
+	0, (26*8)-1,          //6 protected chars on right of screen
+	8, (31*8)-1
+};
+static struct rectangle spritevisiblearea2 =
+{
+	0, (31*8)-1,
+	8, (31*8)-1
 };
 
 
@@ -30,71 +37,90 @@ static struct rectangle spritevisiblearea =
 
   Convert the color PROMs into a more useable format.
 
-  Kung Fu Master has a six 256x4 palette PROMs (one per gun; three for
-  characters, three for sprites).
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output. I assumed these values (the same as Commando)
+  10 Yard Fight has two 256x4 character palette PROMs, one 32x8 sprite
+  palette PROM, one 256x4 sprite color lookup table PROM, and two 256x4
+  radar palette PROMs.
 
-  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
-        -- 470 ohm resistor  -- RED/GREEN/BLUE
-        -- 1  kohm resistor  -- RED/GREEN/BLUE
-  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
+  I don't know for sure how the palette PROMs are connected to the RGB
+  output, but it's probably something like this; note that RED and BLUE
+  are swapped wrt the usual configuration.
+
+  bit 7 -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+  bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
 void yard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
-	int i,j,used;
-	unsigned char allocated[3*256];
+	int i;
+	const unsigned char *spritepalette;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* The game has 512 colors, but we are limited to a maximum of 256. */
-	/* Luckily, many of the colors are duplicated, so the total number of */
-	/* different colors is less than 256. We select the unique colors and */
-	/* put them in our palette. */
-
-	memset(palette,0,3 * Machine->drv->total_colors);
-
-	used = 0;
-	for (i = 0;i < 512;i++)
+	/* build a palette with all possible colors */
+	for (i = 0;i < 256;i++)
 	{
-		for (j = 0;j < used;j++)
-		{
-			if (allocated[j] == color_prom[i] &&
-					allocated[j+256] == color_prom[i+512] &&
-					allocated[j+2*256] == color_prom[i+2*512])
-				break;
-		}
-		if (j == used)
-		{
-			int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2;
 
 
-			used++;
+		/* red component */
+		bit0 = 0;
+		bit1 = (i >> 6) & 0x01;
+		bit2 = (i >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (i >> 3) & 0x01;
+		bit1 = (i >> 4) & 0x01;
+		bit2 = (i >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (i >> 0) & 0x01;
+		bit1 = (i >> 1) & 0x01;
+		bit2 = (i >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	}
 
-			allocated[j] = color_prom[i];
-			allocated[j+256] = color_prom[i+512];
-			allocated[j+2*256] = color_prom[i+2*512];
 
-			bit0 = (color_prom[i] >> 0) & 0x01;
-			bit1 = (color_prom[i] >> 1) & 0x01;
-			bit2 = (color_prom[i] >> 2) & 0x01;
-			bit3 = (color_prom[i] >> 3) & 0x01;
-			palette[3*j] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-			bit0 = (color_prom[i+512] >> 0) & 0x01;
-			bit1 = (color_prom[i+512] >> 1) & 0x01;
-			bit2 = (color_prom[i+512] >> 2) & 0x01;
-			bit3 = (color_prom[i+512] >> 3) & 0x01;
-			palette[3*j + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-			bit0 = (color_prom[i+512*2] >> 0) & 0x01;
-			bit1 = (color_prom[i+512*2] >> 1) & 0x01;
-			bit2 = (color_prom[i+512*2] >> 2) & 0x01;
-			bit3 = (color_prom[i+512*2] >> 3) & 0x01;
-			palette[3*j + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		}
+	/* character lookup table */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+	{
+		COLOR(0,i) = (color_prom[0] & 0x0f) | (color_prom[Machine->drv->total_colors] << 4);
+		color_prom++;
+	}
 
-		colortable[i] = j;
+	color_prom += TOTAL_COLORS(0);
+	/* color_prom now points to the beginning of the sprite palette */
+
+	spritepalette = color_prom;
+
+	color_prom += 32;
+	/* color_prom now points to the beginning of the sprite lookup table */
+
+	/* sprite lookup table */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+	{
+		COLOR(1,i) = spritepalette[(*color_prom & 0x0f)];
+		/* replace black with dark blue to preserve transparency */
+		if (COLOR(1,i) == 0 && (*color_prom & 0x0f) != 0) COLOR(1,i) = 1;
+		color_prom++;
+	}
+
+	/* color_prom now points to the beginning of the radar palette */
+
+	/* radar lookup table */
+	for (i = 0;i < TOTAL_COLORS(3);i++)
+	{
+		COLOR(3,i) = (color_prom[0] & 0x0f) | (color_prom[Machine->drv->total_colors] << 4);
+		color_prom++;
 	}
 }
+
 
 
 /***************************************************************************
@@ -141,13 +167,13 @@ void yard_vh_stop(void)
 void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
+	struct rectangle *visible_rect;/* JB 970912 */
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-
 	for (offs = 0x1000-2;offs >= 0;offs-=2)
 	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+1] )
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
 		{
 			int sx,sy;
 			dirtybuffer[offs] = 0;
@@ -156,16 +182,16 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * ( ( offs % 64 ) / 2 ) ;
 			sy = 8 * ( offs / 64 ) ;
 
-                        if ( offs >= 0x800 )
-                        {
-                          sy -= 32 * 8 ;
-                          sx += 32 * 8 ;
-                        }
+			if ( offs >= 0x800 )
+			{
+				sy -= 32 * 8;
+				sx += 32 * 8;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 4 * (videoram[offs+1] & 0xc0),
 					videoram[offs+1] & 0x1f,
-					0,0,
+					videoram[offs+1] & 0x20,0,/* JB 970912 */
 					sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -178,52 +204,57 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 		scroll_x = - ( ( *yard_scroll_x_high * 0x100 ) + *yard_scroll_x_low ) ;
 		scroll_y = - *yard_scroll_y_low ;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&spritevisiblearea,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	/* draw the static bitmapped area to screen */
-	for (offs = 0x1000;offs <= 0x1FFF;offs++)
+	if (! *yard_sprite_priority)	/* JB 971008 */
 	{
-		if (dirtybuffer[offs])
+		/* draw the static bitmapped area to screen */
+		for (offs = 0x1000;offs <= 0x1FFF;offs++)
 		{
-			int sx,sy,n;
+			int sx,sy,n,i;
+			
 			dirtybuffer[offs] = 0;
-			sx = ( ( offs - 0x1000 ) % 16 ) * 4 + ( 24 * 8 ) ;
+			sx = ( ( offs - 0x1000 ) % 16 ) * 4 + ( 25 * 8 ) - 4;/* JB 970912 */
 			sy = ( ( offs - 0x1000 ) / 16 ) ;
-			n = videoram [ offs ] ;
-			bitmap->line[sy][sx + 3] = Machine->pens[( ( n & 0x80 ) ? 0x10 : 0x00 ) | ( ( n & 0x08 ) ? 0x01 : 0x00 )] ;
-			bitmap->line[sy][sx + 2] = Machine->pens[( ( n & 0x40 ) ? 0x10 : 0x00 ) | ( ( n & 0x04 ) ? 0x01 : 0x00 )] ;
-			bitmap->line[sy][sx + 1] = Machine->pens[( ( n & 0x20 ) ? 0x10 : 0x00 ) | ( ( n & 0x02 ) ? 0x01 : 0x00 )] ;
-			bitmap->line[sy][sx + 0] = Machine->pens[( ( n & 0x10 ) ? 0x10 : 0x00 ) | ( ( n & 0x01 ) ? 0x01 : 0x00 )] ;
+			if (sy >= Machine->drv->visible_area.min_y &&
+					sy <= Machine->drv->visible_area.max_y)
+			{
+				n = videoram [ offs ];
+				for (i = 0;i < 4;i++)
+				{
+					int col;
+	
+	
+					col = (n >> i) & 0x11;
+					col = ((col >> 3) | col) & 3;
+					if (sx+i >= Machine->drv->visible_area.max_x-(6*8-1) &&
+							sx+i <= Machine->drv->visible_area.max_x)
+						bitmap->line[sy][sx + i] = Machine->gfx[3]->colortable[(sy & 0xfc) + col];
+				}
+			}
 		}
 	}
 
+	visible_rect = (*yard_sprite_priority ? &spritevisiblearea2 : &spritevisiblearea);/* JB 970912 */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sprt,bank;
 		bank = ((spriteram[offs + 1] & 0x020) >> 5) + 1;
 		sprt = spriteram[offs + 2];
-		if (sprt > 0x7f && bank != 1)
-		{
-			sprt = sprt - 0x40;
-		}
+		sprt &= 0xbf;
 		drawgfx(bitmap,Machine->gfx[bank],
 				sprt,//spriteram[offs + 2] ,
-				spriteram[offs + 1] & 0x3f,
+				spriteram[offs + 1] & 0x1f,
 				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
 				spriteram[offs + 3],241 - spriteram[offs],
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
+				visible_rect,TRANSPARENCY_COLOR,0);
 		sprt = sprt + 0x40;
-		if (((spriteram[offs + 1] & 0xfb) != 0  && bank == 1) || (bank == 2) || (bank == 1 && sprt < 0x80))
-		{
 		drawgfx(bitmap,Machine->gfx[bank],
 				sprt,//spriteram[offs + 2] ,
-				spriteram[offs + 1] & 0x3f,
+				spriteram[offs + 1] & 0x1f,
 				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
 				spriteram[offs + 3],241 - spriteram[offs] + 16,
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
-		}
-
+				visible_rect,TRANSPARENCY_COLOR,0);
 	}
-
 }

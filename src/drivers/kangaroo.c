@@ -194,7 +194,7 @@ static struct InputPort k_input_ports[] =
 	{	/* IN1 */
                 0x00,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-                                OSD_KEY_CONTROL, 0, 0, 0 },
+                                OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
                                 OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -206,7 +206,7 @@ static struct InputPort k_input_ports[] =
 	{	/* IN3 */
                 0x00,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-                                OSD_KEY_CONTROL, 0, 0, 0 },
+                                OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
                                 OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -319,7 +319,7 @@ static unsigned char colortable[] =
 };
 
 /* 971706 -V- */
-static int kangaroo_hiload(const char *name)
+static int kangaroo_hiload(void)
 {
         /* Ok, we need to explicitly tell what RAM to read...*/
         /* realizing this was necessary took me quite a long time :( -V- */
@@ -329,28 +329,28 @@ static int kangaroo_hiload(const char *name)
         /* just a guess really... */
         if ( RAM[0xe1da] == 0x50 )
         {
-                FILE *f;
-                if (( f = fopen(name, "rb")) != 0)
+                void *f;
+                if (( f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        fread(&RAM[0xe1a0], 1, 0x40, f);
+                        osd_fread(f,&RAM[0xe1a0],0x40);
                         /* is this enough ??? */
-                        fclose(f);
+                        osd_fclose(f);
                 }
                 return 1;
          }
          else return 0; /* didn't load them yet, do stop by later ;-) -V- */
 }
 /* 970617 -V- */
-static void kangaroo_hisave(const char *name)
+static void kangaroo_hisave(void)
 {
-        FILE *f;
+        void *f;
 
         unsigned char *RAM = Machine->memory_region[0];
 
-        if ((f = fopen(name , "wb")) != 0)
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                fwrite(&RAM[0xe1a0], 1, 0x40, f);
-                fclose(f);
+                osd_fwrite(f,&RAM[0xe1a0],0x40);
+                osd_fclose(f);
         }
 }
 
@@ -362,20 +362,21 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-                        3000000,        /* 3 Mhz */
+			3000000,        /* 3 Mhz */
 			0,
-                        readmem,writemem,0,0,
-                        interrupt,1
-                },
-                {
-                        CPU_Z80 | CPU_AUDIO_CPU,
-                        2500000,
-                        3,
-                        sh_readmem,sh_writemem,sh_readport,sh_writeport,
-                        kangaroo_interrupt,1
-                }
+			readmem,writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2500000,
+			3,
+			sh_readmem,sh_writemem,sh_readport,sh_writeport,
+			kangaroo_interrupt,1
+		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */

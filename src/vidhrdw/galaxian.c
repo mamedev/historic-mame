@@ -24,6 +24,19 @@
 
 
 
+static struct rectangle spritevisiblearea =
+{
+	2*8, 32*8-1,
+	2*8, 30*8-1
+};
+static struct rectangle spritevisibleareaflipx =
+{
+	0*8, 30*8-1,
+	2*8, 30*8-1
+};
+
+
+
 #define MAX_STARS 250
 #define STARS_COLOR_BASE 32
 
@@ -42,6 +55,7 @@ static struct star stars[MAX_STARS];
 static int total_stars;
 static int gfx_bank;	/* used by Pisces and "japirem" only */
 static int gfx_extend;	/* used by Moon Cresta only */
+static int bank_mask;	/* different games have different gfx bank switching */
 static int flipscreen[2];
 
 
@@ -75,8 +89,6 @@ static int flipscreen[2];
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
-
-
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
@@ -199,12 +211,36 @@ static int common_vh_start(void)
 
 int galaxian_vh_start(void)
 {
+	gfx_bank = 0;
+	gfx_extend = 0;
+	bank_mask = 0;
+	stars_type = 0;
+	return common_vh_start();
+}
+
+int moonqsr_vh_start(void)
+{
+	gfx_bank = 0;
+	gfx_extend = 0;
+	bank_mask = 0x20;
 	stars_type = 0;
 	return common_vh_start();
 }
 
 int scramble_vh_start(void)
 {
+	gfx_bank = 0;
+	gfx_extend = 0;
+	bank_mask = 0;
+	stars_type = 1;
+	return common_vh_start();
+}
+
+int ckongs_vh_start(void)
+{
+	gfx_bank = 0;
+	gfx_extend = 0;
+	bank_mask = 0x10;
 	stars_type = 1;
 	return common_vh_start();
 }
@@ -365,48 +401,41 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		sx = spriteram[offs + 3];
-		if (sx > 8)	/* ??? */
+		sy = 240 - spriteram[offs];
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
+
+		if (flipscreen[0])
 		{
-			sy = 240 - spriteram[offs];
-			flipx = spriteram[offs + 1] & 0x40;
-			flipy = spriteram[offs + 1] & 0x80;
-
-			if (flipscreen[0])
-			{
-				flipx = !flipx;
-				sx = 240 - sx;
-			}
-			if (flipscreen[1])
-			{
-				flipy = !flipy;
-				sy = 240 - sy;
-			}
-
-			spritecode = spriteram[offs + 1] & 0x3f;
-
-			/* bit 4 of [offs+2] is used only by Crazy Kong */
-			if (spriteram[offs + 2] & 0x10)
-				spritecode += 64;
-
-			/* bit 5 of [offs+2] is used only by Moon Quasar */
-			if (spriteram[offs + 2] & 0x20)
-				spritecode += 64;
-
-			/* gfx_bank is used by Pisces and japirem/Uniwars only */
-			if (gfx_bank)
-				spritecode += 64;
-
-			/* gfx_extend is used by Moon Cresta only */
-			if ((gfx_extend & 4) && (spritecode & 0x30) == 0x20)
-				spritecode = (spritecode & 0x0f) | (gfx_extend << 4);
-
-			drawgfx(bitmap,Machine->gfx[1],
-					spritecode,
-					spriteram[offs + 2] & 0x07,
-					flipx,flipy,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			flipx = !flipx;
+			sx = 240 - sx;
 		}
+		if (flipscreen[1])
+		{
+			flipy = !flipy;
+			sy = 240 - sy;
+		}
+
+		spritecode = spriteram[offs + 1] & 0x3f;
+
+		/* Moon Quasar and Crazy Kong have different bank selection bits*/
+		if (spriteram[offs + 2] & bank_mask)
+			spritecode += 64;
+
+		/* gfx_bank is used by Pisces and japirem/Uniwars only */
+		if (gfx_bank)
+			spritecode += 64;
+
+		/* gfx_extend is used by Moon Cresta only */
+		if ((gfx_extend & 4) && (spritecode & 0x30) == 0x20)
+			spritecode = (spritecode & 0x0f) | (gfx_extend << 4);
+
+		drawgfx(bitmap,Machine->gfx[1],
+				spritecode,
+				spriteram[offs + 2] & 0x07,
+				flipx,flipy,
+				sx,sy,
+				flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 
 

@@ -51,7 +51,7 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (dirtybuffer[offs])
+		if (1||dirtybuffer[offs])
 		{
 			int sx,sy;
 
@@ -61,9 +61,10 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (31 - offs / 32);
 			sy = 8 * (offs % 32);
 
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
-					colorram[offs] & 0x3f,
+					colorram[offs] & 0x1f,
 					colorram[offs] & 0x80,colorram[offs] & 0x40,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

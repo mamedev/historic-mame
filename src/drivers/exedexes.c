@@ -4,17 +4,12 @@ Exed Exes memory map (preliminary) - RD 29/07/97
 
 MAIN CPU
 0000-bfff ROM
-        There is probably a block of code which should be bank switched
-        in this area, but I have been unable to find how.
-
 d000-d3ff Character Video RAM
 d400-d7ff Character Color RAM
-e000-efff Work ? RAM
-f000-ffff Sprite ? RAM
+e000-efff RAM
+f000-ffff Sprites
         Sprite information (4 bytes long) is stored every 32 bytes in the
         regions f000-f5ff and f800-fbff, possibly in other areas as well.
-        I can only assume that the rest of the information stored here is
-        the background, but I've not been able to understand how.
 
         Sprite Data layout:
                 Byte 0 - Sprite number 0-255
@@ -49,7 +44,6 @@ d800-d83f only seems to use:
         d806-d807 ?
 
 SOUND CPU
-        Might use FM, dunno.
 0000-3fff ROM
 4000-47ff RAM
 
@@ -58,85 +52,6 @@ write:
 8001      YM2203 #1 write
 8002      YM2203 #2 control ?
 8003      YM2203 #2 write ?
-
-
-Exed Exes Switch Settings (from Dave's Video Game Classics)
-
-|-----------------------------------------------------------------------------|
-|                                 Exed Exes                                   |
-|                                                                             |
-|                           DIP Switch A Settings                             |
-|-----------------------------------------------------------------------------|
-|  Function:                        | SW#1 SW#2 SW#3 SW#4 SW#5 SW#6 SW#7 SW#8 |
-|-----------------------------------|-----------------------------------------|
-| Test Mode:                        |                                         |
-|   Normal                          | Off                                     |
-|   Test                            | On                                      |
-| Picture:                          |                                         |
-|   Normal                          |      Off                                |
-|   Freeze                          |      On                                 |
-| Country:                          |                                         |
-|   Domestic                        |           Off                           |
-|   Other Country                   |           On                            |
-| Coin Mechs:                       |                                         |
-|   Separate                        |                Off                      |
-|   Same                            |                On                       |
-| Number of Men:                    |                                         |
-|   3                               |                     Off  Off            |
-|   1                               |                     Off  On             |
-|   2                               |                     On   Off            |
-|   5                               |                     On   On             |
-| *Difficulty:                      |                                         |
-|   Easy                            |                               Off  Off  |
-|   Medium                          |                               Off  On   |
-|   Hard                            |                               On   Off  |
-|   Difficult                       |                               On   On   |
-|-----------------------------------------------------------------------------|
-
-* Note:
-      Easy = Extra Man at 5000, 10000, 25000, 50000, 75000, ...
-      Medium = Extra Man at 10000, 25000, 50000, 75000, 100000, ...
-      Hard = Extra Man at 10,000, 25000, 50000, 100000, 200000, ...
-      Difficult = Extra Man at 20000, 50000, 100000, 200000, ...
-
-* RD - this seems to be extra bomb, not extra man. *
-
-|-----------------------------------------------------------------------------|
-|                                 Exed Exes                                   |
-|                                                                             |
-|                           DIP Switch B Settings                             |
-|-----------------------------------------------------------------------------|
-|  Function:                        | SW#1 SW#2 SW#3 SW#4 SW#5 SW#6 SW#7 SW#8 |
-|-----------------------------------|-----------------------------------------|
-| Sound in Attract Mode:            |                                         |
-|   With                            | Off                                     |
-|   Without                         | On                                      |
-| Continue Mode:                    |                                         |
-|   Continue                        |      Off                                |
-|   No Continue                     |      On                                 |
-| Credits Per Coin:                 |                                         |
-|                                   |            Coin Mech 1                  |
-|                                   |            -----------                  |
-|   1 Coin  1 Credit                |           Off  Off  Off                 |
-|   1 Coin  2 Credits               |           Off  Off  On                  |
-|   1 Coin  3 Credits               |           Off  On   Off                 |
-|   1 Coin  4 Credits               |           Off  On   On                  |
-|   1 Coin  5 Credits               |           On   Off  Off                 |
-|   2 Coins 1 Credit                |           On   Off  On                  |
-|   3 Coins 1 Credit                |           On   On   Off                 |
-|   4 Coins 1 Credit                |           On   On   On                  |
-|                                   |                                         |
-|                                   |                           Coin Mech 2   |
-|                                   |                           -----------   |
-|   1 Coin  1 Credit                |                          Off  Off  Off  |
-|   1 Coin  2 Credits               |                          Off  Off  On   |
-|   1 Coin  3 Credits               |                          Off  On   Off  |
-|   1 Coin  4 Credits               |                          Off  On   On   |
-|   1 Coin  5 Credits               |                          On   Off  Off  |
-|   2 Coins 1 Credit                |                          On   Off  On   |
-|   3 Coins 1 Credit                |                          On   On   Off  |
-|   4 Coins 1 Credit                |                          On   On   On   |
-|-----------------------------------------------------------------------------|
 
 ***************************************************************************/
 
@@ -151,16 +66,9 @@ void c1942_bankswitch_w(int offset,int data);
 int c1942_bankedrom_r(int offset);
 int c1942_interrupt(void);
 
-extern unsigned char *exedexes_backgroundram;
-extern int exedexes_backgroundram_size;
 extern unsigned char *exedexes_bg_scroll;
 extern unsigned char *exedexes_nbg_yscroll;
 extern unsigned char *exedexes_nbg_xscroll;
-extern unsigned char *exedexes_palette_bank;
-void exedexes_background_w(int offset,int data);
-int exedexes_vh_init(const char *name);
-int exedexes_vh_start(void);
-void exedexes_vh_stop(void);
 void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap);
 
@@ -171,33 +79,29 @@ int capcom_sh_interrupt(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0xe000, 0xefff, MRA_RAM }, /* Work RAM */
-        { 0xf000, 0xffff, MRA_RAM }, /* Sprite RAM */
+	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
-        { 0x0000, 0xbfff, MRA_ROM },
+	{ 0xe000, 0xefff, MRA_RAM }, /* Work RAM */
+	{ 0xf000, 0xffff, MRA_RAM }, /* Sprite RAM */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0xe000, 0xefff, MWA_RAM },
-        { 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-        { 0xd400, 0xd7ff, colorram_w, &colorram },
-        { 0xf000, 0xfbff, MWA_RAM, &spriteram, &spriteram_size },
-        { 0xfc00, 0xffff, exedexes_background_w, &exedexes_backgroundram, &exedexes_backgroundram_size }, /* Dummy Tile RAM */
-        { 0xc800, 0xc800, sound_command_w },
-//        { 0xc804, 0xc804, exedexes_palette_bank_w, &exedexes_palette_bank },
-//        { 0xc806, 0xc806, MWA_RAM },  /* Bank switch... usually zero! */
-        { 0xd800, 0xd801, MWA_RAM, &exedexes_nbg_yscroll },
-        { 0xd802, 0xd803, MWA_RAM, &exedexes_nbg_xscroll },
-        { 0xd804, 0xd805, MWA_RAM, &exedexes_bg_scroll },
-/*        { 0xd806, 0xd807, MWA_RAM, ... }  unknown */
-        { 0xd808, 0xd83f, MWA_RAM },  /* Unused Write Ports */
 	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc800, 0xc800, soundlatch_w },
+	{ 0xc806, 0xc806, MWA_NOP }, /* Watchdog ?? */
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd800, 0xd801, MWA_RAM, &exedexes_nbg_yscroll },
+	{ 0xd802, 0xd803, MWA_RAM, &exedexes_nbg_xscroll },
+	{ 0xd804, 0xd805, MWA_RAM, &exedexes_bg_scroll },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 	{ -1 }	/* end of table */
 };
 
@@ -205,97 +109,107 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, sound_command_latch_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x6000, 0x6000, soundlatch_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x4000, 0x47ff, MWA_RAM },
-        { 0x8000, 0x8000, AY8910_control_port_0_w },
-        { 0x8001, 0x8001, AY8910_write_port_0_w },
-        { 0x8002, 0x8002, AY8910_control_port_1_w },
-        { 0x8003, 0x8003, AY8910_write_port_1_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x8000, 0x8000, AY8910_control_port_0_w },
+	{ 0x8001, 0x8001, AY8910_write_port_0_w },
+	{ 0x8002, 0x8002, AY8910_control_port_1_w },
+	{ 0x8003, 0x8003, AY8910_write_port_1_w },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-                { OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, OSD_KEY_4, OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-                                OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-                { OSD_KEY_D, OSD_KEY_A, OSD_KEY_S, OSD_KEY_W,
-                                OSD_KEY_J, OSD_KEY_K, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-                0xdf,
-                { 0, 0, 0, 0, 0, 0, 0, OSD_KEY_F2 },
-                { 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-                { 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
-static struct KEYSet keys[] =
-{
-        { 1, 3, "PLAYER 1 MOVE UP" },
-        { 1, 1, "PLAYER 1 MOVE LEFT"  },
-        { 1, 0, "PLAYER 1 MOVE RIGHT" },
-        { 1, 2, "PLAYER 1 MOVE DOWN" },
-        { 1, 4, "PLAYER 1 FIRE" },
-        { 1, 5, "PLAYER 1 INVULNERABILITY" },
-        { 2, 3, "PLAYER 2 MOVE UP" },
-        { 2, 1, "PLAYER 2 MOVE LEFT"  },
-        { 2, 0, "PLAYER 2 MOVE RIGHT" },
-        { 2, 2, "PLAYER 2 MOVE DOWN" },
-        { 2, 4, "PLAYER 2 FIRE" },
-        { 2, 5, "PLAYER 2 INVULNERABILITY" },
-        { -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x10, 0x10, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Credits" )
+	PORT_DIPNAME( 0x20, 0x20, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Japanese")
+	PORT_DIPSETTING(    0x00, "English")
+	PORT_DIPNAME( 0x40, 0x40, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off")
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x07, "Coin 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0x38, 0x38, "Coin 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x18, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
 
-static struct DSW dsw[] =
-{
-        { 3, 0x0c, "LIVES", { "5", "2", "1", "3" }, 1 },
-        { 3, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "NORMAL", "EASY" }, 1 },
-        { 3, 0x20, "LANGUAGE", { "ENGLISH", "JAPANESE", }, 1 },
-        { 3, 0x40, "PICTURE", { "FROZEN", "NORMAL", }, 1 },
-        { 4, 0x80, "ATTRACT SOUND", { "OFF", "ON", }, 1 },
-        { 4, 0x40, "CONTINUE", { "OFF", "ON", }, 1 },
-        { 3, 0x10, "1 CREDIT", { "1 OR 2 PLAYERS", "1 PLAYER", }, 1 },
-        { 4, 0x38, "COIN A", { "4 COINS 1 CREDIT", "3 COINS 1 CREDIT", "2 COIN 1 CREDIT", "1 COIN 5 CREDITS",
-                               "1 COIN 4 CREDITS", "1 COIN 3 CREDITS", "1 COIN 2 CREDITS", "1 COIN 1 CREDIT" }, 1 },
-        { 4, 0x07, "COIN B", { "4 COINS 1 CREDIT", "3 COINS 1 CREDIT", "2 COIN 1 CREDIT", "1 COIN 5 CREDITS",
-                               "1 COIN 4 CREDITS", "1 COIN 3 CREDITS", "1 COIN 2 CREDITS", "1 COIN 1 CREDIT" }, 1 },
-        { -1 }
-};
 
 
 
@@ -323,14 +237,19 @@ static struct GfxLayout spritelayout =
 };
 static struct GfxLayout tilelayout =
 {
-        16,8,  /* 16*16 tiles - wrong */
-        512,    /* 256 tiles - wrong */
-        2,      /* 2 bits per pixel */
-        { 4, 0 },
+	32,32,  /* 32*32 tiles */
+	64,    /* 64 tiles */
+	2,      /* 2 bits per pixel */
+	{ 4, 0 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
-	32*8	/* every sprite takes 64 consecutive bytes */
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16,
+			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,
+			24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16 },
+	{ 192*8+8+3, 192*8+8+2, 192*8+8+1, 192*8+8+0, 192*8+3, 192*8+2, 192*8+1, 192*8+0,
+			128*8+8+3, 128*8+8+2, 128*8+8+1, 128*8+8+0, 128*8+3, 128*8+2, 128*8+1, 128*8+0,
+			64*8+8+3, 64*8+8+2, 64*8+8+1, 64*8+8+0, 64*8+3, 64*8+2, 64*8+1, 64*8+0,
+			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
+	256*8	/* every tile takes 256 consecutive bytes */
 };
 
 
@@ -370,7 +289,6 @@ static unsigned char color_prom[] =
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-
 	0x00,0x02,0x03,0x04,0x06,0x05,0x06,0x07,0x09,0x03,0x04,0x05,0x06,0x07,0x08,0x00,
 	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
 	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
@@ -509,6 +427,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -518,9 +437,9 @@ static struct MachineDriver machine_driver =
 	exedexes_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
-	exedexes_vh_init,
-	exedexes_vh_start,
-	exedexes_vh_stop,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
 	exedexes_vh_screenrefresh,
 
 	/* sound hardware */
@@ -539,13 +458,9 @@ ROM_START( exedexes_rom )
 	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xe52f8109 )
 	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0xe7ee4e3e )
 
-	/*ROM_LOAD( "h04_ee09.bin", 0x14000, 0x2000, 0x00000000 )
-	ROM_LOAD( "09m_ee02.bin", 0x18000, 0x4000, 0x00000000 )*/
-	/* might use bank switching, not sure about ee2 and ee9 */
-
 	ROM_REGION(0x16000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0x21890673 ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x92c19717 ) /* 8x? tiles planes 0-1 */
+	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x92c19717 ) /* 32x32 tiles planes 0-1 */
 	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x2cd31109 ) /* 16x16 tiles planes 0-1 */
 	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xc3ef9bc9 ) /* 16x16 tiles planes 2-3 */
 	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0x9fa65502 ) /* Sprites planes 0-1 */
@@ -554,14 +469,14 @@ ROM_START( exedexes_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x65d4f412 )
 
-        ROM_REGION(0x4000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x00000, 0x4000, 0x1ffca036 ) /* Tile Map */
-
+	ROM_REGION(0x6000)      /* For Tile background */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x1ffca036 )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0xbff79735 )	/* Back Tile map */
 ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -571,15 +486,15 @@ static int hiload(const char *name)
         if ((memcmp(&RAM[0xE680],"\x00\x00\x00",3) == 0) &&
 		(memcmp(&RAM[0xE6CD],"\x24\x1E\x19",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xE680],1,0x50,f);
+			osd_fread(f,&RAM[0xE680],0x50);
 			/* fix the score at the top */
 			memcpy(&RAM[0xE600],&RAM[0xE680],8);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -589,19 +504,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xE680],1,0x50,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xE680],0x50);
+		osd_fclose(f);
 	}
 
 }
@@ -619,7 +534,7 @@ struct GameDriver exedexes_driver =
 	0, 0,
 	0,
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

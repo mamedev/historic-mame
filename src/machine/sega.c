@@ -72,14 +72,14 @@ int zektor_IN4_r (int offset) {
 			dir = 0;
 			}
 		trak_in = readtrakport(0);
-		if (trak_in != NO_TRAK) {
+
 			if (trak_in < 0) {
 				dir = 1;
 				trak_in = abs(trak_in);
 			} else if (trak_in > 0)
 				dir = 0;
 			spinner += trak_in;
-		}
+
 		return ((spinner << 1) | dir);
 	}
 }

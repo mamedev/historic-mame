@@ -1,6 +1,6 @@
                            ******* Z80Em *******
                         Portable Zilog Z80 Emulator
-                         Version 1.1 (13-02-1997)
+                         Version 1.2 (04-09-1997)
                                      
                 Copyright (C) Marcel de Kogel 1996,1997
                               
@@ -27,6 +27,7 @@ http://www.komkon.org/~dekogel/
 
 History
 -------
+1.2   04-09-97   Fixed some more bugs
 1.1   13-02-97   Fixed several bugs and compatibility problems
 1.0   31-01-97   Initial release
 

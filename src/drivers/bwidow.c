@@ -204,26 +204,53 @@ $Manufacturer's suggested settings
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
 #include "sndhrdw/pokyintf.h"
 
-int spacduel_IN3_r(int offset);
 
 int bzone_IN0_r(int offset);
+int spacduel_IN3_r(int offset);
 
+int bwidow_interrupt(void);
+int gravitar_interrupt(void);
+int spacduel_interrupt(void);
+
+/* Misc sound code */
+static struct POKEYinterface interface =
+{
+	2,	/* 2 chips */
+	1,	/* 1 update per video frame (low quality) */
+	FREQ_17_APPROX,	/* 1.7 Mhz */
+	255,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	/* The allpot handler */
+	{ input_port_1_r, input_port_2_r },
+};
+
+
+int bwidow_sh_start(void)
+{
+	return pokey_sh_start (&interface);
+}
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xffff, MRA_ROM },
 	{ 0x2800, 0x5fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM, &vectorram },
+	{ 0x2000, 0x27ff, MRA_RAM, &vectorram, &vectorram_size },
 	{ 0x7000, 0x7000, atari_vg_earom_r },
 	{ 0x7800, 0x7800, bzone_IN0_r },	/* IN0 */
-	{ 0x6008, 0x6008, input_port_1_r },	/* DSW1 */
-	{ 0x6808, 0x6808, input_port_2_r },	/* DSW2 */
 	{ 0x8000, 0x8000, input_port_3_r },	/* IN1 */
 	{ 0x8800, 0x8800, input_port_4_r },	/* IN1 */
 	{ 0x6000, 0x600f, pokey1_r },
@@ -234,12 +261,12 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x27ff, MWA_RAM, &vectorram },
+	{ 0x2000, 0x27ff, MWA_RAM },
 	{ 0x6000, 0x67ff, pokey1_w },
 	{ 0x6800, 0x6fff, pokey2_w },
 	{ 0x8800, 0x8800, MWA_NOP }, /* coin out */
-	{ 0x8840, 0x8840, atari_vg_go },
-	{ 0x8880, 0x8880, vg_reset },
+	{ 0x8840, 0x8840, avgdvg_go },
+	{ 0x8880, 0x8880, avgdvg_reset },
 	{ 0x88c0, 0x88c0, MWA_NOP }, /* interrupt acknowledge */
 	{ 0x8900, 0x8900, atari_vg_earom_ctrl },
 	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
@@ -255,13 +282,10 @@ static struct MemoryReadAddress spacduel_readmem[] =
 	{ 0x4000, 0x8fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ 0x2800, 0x3fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM, &vectorram },
+	{ 0x2000, 0x27ff, MRA_RAM, &vectorram, &vectorram_size },
 	{ 0x0a00, 0x0a00, atari_vg_earom_r },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
-	{ 0x1008, 0x1008, input_port_1_r },	/* DSW1 */
-	{ 0x1408, 0x1408, input_port_2_r },	/* DSW2 */
 	{ 0x0900, 0x0907, spacduel_IN3_r },	/* IN1 */
-	{ 0x0900, 0x0907, input_port_3_r },	/* IN1 */
 	{ 0x1000, 0x100f, pokey1_r },
 	{ 0x1400, 0x140f, pokey2_r },
 	{ -1 }	/* end of table */
@@ -275,9 +299,9 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ 0x1400, 0x17ff, pokey2_w },
 	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
 	{ 0x0c00, 0x0c00, MWA_NOP }, /* coin out */
-	{ 0x0c80, 0x0c80, atari_vg_go },
+	{ 0x0c80, 0x0c80, avgdvg_go },
 	{ 0x0d00, 0x0d00, MWA_NOP }, /* watchdog clear */
-	{ 0x0d80, 0x0d80, vg_reset },
+	{ 0x0d80, 0x0d80, avgdvg_reset },
 	{ 0x0e00, 0x0e00, MWA_NOP }, /* interrupt acknowledge */
 	{ 0x0e80, 0x0e80, atari_vg_earom_ctrl },
 	{ 0x0f00, 0x0f3f, atari_vg_earom_w },
@@ -287,189 +311,244 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( bwidow_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* bit 7 is tied to a 3khz clock */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x02, "Free Play" )
+	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/6 coins" )
+	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME (0x03, 0x01, "Max Start", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Lev 13" )
+	PORT_DIPSETTING (   0x01, "Lev 21" )
+	PORT_DIPSETTING (   0x02, "Lev 37" )
+	PORT_DIPSETTING (   0x03, "Lev 53" )
+	PORT_DIPNAME (0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x04, "4" )
+	PORT_DIPSETTING (   0x08, "5" )
+	PORT_DIPSETTING (   0x0c, "6" )
+	PORT_DIPNAME (0x30, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Easy" )
+	PORT_DIPSETTING (   0x10, "Medium" )
+	PORT_DIPSETTING (   0x20, "Hard" )
+	PORT_DIPSETTING (   0x30, "Demo" )
+	PORT_DIPNAME (0xc0, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "20000" )
+	PORT_DIPSETTING (   0x40, "30000" )
+	PORT_DIPSETTING (   0x80, "40000" )
+	PORT_DIPSETTING (   0xc0, "None" )
+
+	PORT_START	/* IN3 - Movement joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN4 - Firing joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
 
 
-static struct InputPort bwidow_input_ports[] =
-{
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_4, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW2 */
-		0x11,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN1 */
-		0xff,
-		{ OSD_KEY_F, OSD_KEY_S, OSD_KEY_D, OSD_KEY_E,
-			0, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-			0, 0, 0, 0 }
-	},
-	{       /* IN2 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-			0, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_FIRE4, OSD_JOY_FIRE1, OSD_JOY_FIRE3, OSD_JOY_FIRE2,
-			0, 0, 0, 0 }
-	},
-	{ -1 }
-};
+INPUT_PORTS_START( gravitar_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* bit 7 is tied to a 3khz clock */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x04, "4" )
+	PORT_DIPSETTING (   0x08, "5" )
+	PORT_DIPSETTING (   0x0c, "6" )
+	PORT_DIPNAME (0x10, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Easy" )
+	PORT_DIPSETTING (   0x10, "Hard" )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME (0xc0, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "10000" )
+	PORT_DIPSETTING (   0x40, "20000" )
+	PORT_DIPSETTING (   0x80, "30000" )
+	PORT_DIPSETTING (   0xc0, "None" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x02, "Free Play" )
+	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/6 coins" )
+	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
+
+	PORT_START	/* IN3 - Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN4 - Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
 
 
-static struct KEYSet bwidow_keys[] =
-{
-        { 3, 0, "MOVE RIGHT" },
-        { 3, 1, "MOVE LEFT" },
-        { 3, 2, "MOVE DOWN" },
-        { 3, 3, "MOVE UP" },
-        { 4, 0, "FIRE RIGHT" },
-        { 4, 1, "FIRE LEFT" },
-        { 4, 2, "FIRE DOWN" },
-        { 4, 3, "FIRE UP" },
-        { -1 }
-};
+INPUT_PORTS_START( spacduel_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	/* bit 6 is the VG HALT bit. We set it to "low" */
+	/* per default (busy vector processor). */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* bit 7 is tied to a 3khz clock */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME (0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "4" )
+	PORT_DIPSETTING (   0x01, "3" )
+	PORT_DIPSETTING (   0x02, "6" )
+	PORT_DIPSETTING (   0x03, "5" )
+	PORT_DIPNAME (0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Normal" )
+	PORT_DIPSETTING (   0x04, "Easy" )
+	PORT_DIPSETTING (   0x08, "Hard" )
+	PORT_DIPSETTING (   0x0c, "Medium" )
+	PORT_DIPNAME (0x30, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x10, "German" )
+	PORT_DIPSETTING (   0x20, "French" )
+	PORT_DIPSETTING (   0x30, "Spanish" )
+	PORT_DIPNAME (0xc0, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "10000" )
+	PORT_DIPSETTING (   0x40, "15000" )
+	PORT_DIPSETTING (   0x80, "8000" )
+	PORT_DIPSETTING (   0xc0, "None" )
 
-static struct DSW bwidow_dsw[] =
-{
-	{ 1, 0x03, "COINS", { "1 COIN 1 CREDIT", "2 COINS 1 CREDIT", "FREE PLAY", "1 COIN 2 CREDITS" } },
-	{ 2, 0x03, "MAX START", { "LEVEL 13", "LEVEL 21", "LEVEL 37", "LEVEL 53" } },
-	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" } },
-	{ 2, 0x30, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "DEMO" } },
-	{ 2, 0xc0, "BONUS", { "20000", "30000", "40000", "NONE" } },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x02, "Free Play" )
+	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/6 coins" )
+	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
 
-static struct InputPort gravitar_input_ports[] =
-{
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_4, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 */
-		0x13,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN1 */
-		0xff,
-		{ OSD_KEY_ALT, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT,
-			OSD_KEY_UP, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_FIRE2, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT,
-			OSD_JOY_UP, 0, 0, 0 }
-	},
-	{       /* IN2 */
-		0xff,
-		{ OSD_KEY_ALT, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT,
-			OSD_KEY_UP, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_FIRE2, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT,
-			OSD_JOY_UP, 0, 0, 0 }
-	},
-	{ -1 }
-};
+	/* See machine/spacduel.c for more info on these 2 ports */
+	PORT_START	/* IN3 - Player 1 - spread over 8 memory locations */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-static struct KEYSet gravitar_keys[] =
-{
-        { 3, 0, "P1 SHIELD" },
-        { 3, 1, "P1 FIRE" },
-        { 3, 2, "P1 RIGHT" },
-        { 3, 3, "P1 LEFT" },
-        { 3, 4, "P1 THRUST" },
-        { 4, 0, "P2 SHIELD" },
-        { 4, 1, "P2 FIRE" },
-        { 4, 2, "P2 RIGHT" },
-        { 4, 3, "P2 LEFT" },
-        { 4, 4, "P2 THRUST" },
-        { -1 }
-};
+	PORT_START	/* IN4 - Player 2 - spread over 8 memory locations */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
-static struct DSW gravitar_dsw[] =
-{
-	{ 2, 0x03, "COINS", { "1 COIN 1 CREDIT", "2 COINS 1 CREDIT", "FREE PLAY", "1 COIN 2 CREDITS" } },
-	{ 1, 0xc0, "BONUS", { "10000", "20000", "30000", "NONE" } },
-	{ 1, 0x10, "DIFFICULTY", { "HARD", "EASY" } },
-	{ 1, 0x0c, "LIVES", { "3", "4", "5", "6" } },
-	{ -1 }
-};
-
-static struct InputPort spacduel_input_ports[] =
-{
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_4, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	/* These next 2 are shared between 7 memory locations. See machine/spacduel.c for more */
-	{       /* IN1 - player 1 controls */
-		0x00,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, OSD_KEY_ALT,
-			OSD_KEY_UP, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE1, OSD_JOY_FIRE2,
-			OSD_JOY_UP, 0, 0, 0 }
-	},
-	{       /* IN2  - player 2 controls */
-		0x00,
-		{ OSD_KEY_A, OSD_KEY_D, OSD_KEY_SPACE, OSD_KEY_S,
-			OSD_KEY_W, 0, 0, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE1, OSD_JOY_FIRE2,
-			OSD_JOY_UP, 0, 0, 0 }
-	},
-	{ -1 }
-};
-
-static struct KEYSet spacduel_keys[] =
-{
-        { 3, 0, "P1 LEFT" },
-        { 3, 1, "P1 RIGHT" },
-        { 3, 2, "P1 FIRE" },
-        { 3, 3, "P1 SHIELD" },
-        { 3, 4, "P1 THRUST" },
-        { 4, 0, "P2 LEFT" },
-        { 4, 1, "P2 RIGHT" },
-        { 4, 2, "P2 FIRE" },
-        { 4, 3, "P2 SHIELD" },
-        { 4, 4, "P2 THRUST" },
-        { -1 }
-};
-
-static struct DSW spacduel_dsw[] =
-{
-	{ 1, 0x03, "COINS", { "1 COIN 1 CREDIT", "2 COINS 1 CREDIT", "FREE PLAY", "1 COIN 2 CREDIT" } },
-	{ 2, 0xc0, "BONUS", { "10000", "15000", "8000", "NONE" } },
-	{ 2, 0x30, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
-	{ 2, 0x0c, "DIFFICULTY", { "NORMAL", "EASY", "HARD", "MEDIUM" } },
-	{ 2, 0x03, "LIVES", { "4", "3", "6", "5" } },
-	{ -1 }
-};
 
 static struct GfxLayout fakelayout =
 {
@@ -505,7 +584,8 @@ static unsigned char color_prom[] =
 	0x01,0x00,0x00, /* RED */
 	0x01,0x00,0x01, /* MAGENTA */
 	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01	/* WHITE */};
+	0x01,0x01,0x01	/* WHITE */
+};
 
 static struct MachineDriver bwidow_machine_driver =
 {
@@ -516,31 +596,33 @@ static struct MachineDriver bwidow_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			interrupt,4 /* 1 interrupt per frame? */
+			bwidow_interrupt,6 /* 4 interrupts per frame? */
 		}
 	},
-	60, /* frames per second */
+	45, /* frames per second */
+	1,
 	0,
 
 	/* video hardware */
 	288, 224, { 0, 480, 0, 440 },
 	gfxdecodeinfo,
 	256, 256,
-	atari_vg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	atari_vg_avg_start,
-	atari_vg_stop,
-	atari_vg_screenrefresh,
+	avg_start,
+	avg_stop,
+	avg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	pokey2_sh_start,
+	bwidow_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
+
 static struct MachineDriver gravitar_machine_driver =
 {
 	/* basic machine hardware */
@@ -550,28 +632,29 @@ static struct MachineDriver gravitar_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			interrupt,4 /* 1 interrupt per frame? */
+			gravitar_interrupt,6 /* 4 interrupts per frame? */
 		}
 	},
-	60, /* frames per second */
+	45, /* frames per second */
+	1,
 	0,
 
 	/* video hardware */
 	288, 224, { 0, 420, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
-	atari_vg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	atari_vg_avg_start,
-	atari_vg_stop,
-	atari_vg_screenrefresh,
+	avg_start,
+	avg_stop,
+	avg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	pokey2_sh_start,
+	bwidow_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -585,28 +668,29 @@ static struct MachineDriver spacduel_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			spacduel_readmem,spacduel_writemem,0,0,
-			interrupt,4 /* 1 interrupt per frame? */
+			spacduel_interrupt,6 /* 4 interrupts per frame? */
 		}
 	},
-	60, /* frames per second */
+	45, /* frames per second */
+	1,
 	0,
 
 	/* video hardware */
 	288, 224, { 0, 540, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
-	atari_vg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	atari_vg_avg_start,
-	atari_vg_stop,
-	atari_vg_screenrefresh,
+	avg_start,
+	avg_stop,
+	avg_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	pokey2_sh_start,
+	bwidow_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -625,36 +709,36 @@ static struct MachineDriver spacduel_machine_driver =
  * emulated
  */
 
-static int bwidow_hiload(const char *name)
+static int bwidow_hiload(void)
 {
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0310],"\x00\x00\x00",3) == 0 &&
-                        memcmp(&RAM[0x03a0],"\x01\x01\x11",3) == 0)
-        {
-                FILE *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0310],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x03a0],"\x01\x01\x11",3) == 0)
+	{
+		void *f;
 
 
-                if ((f = fopen(name,"rb")) != 0)
-                {
-                        fread(&RAM[0x0310],1,7*21,f);
-                        fclose(f);
-                }
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0310],7*21);
+			osd_fclose(f);
+		}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
-static void bwidow_hisave(const char *name)
+static void bwidow_hisave(void)
 {
-        FILE *f;
+	void *f;
 
 
-        if ((f = fopen(name,"wb")) != 0)
-        {
-                fwrite(&RAM[0x0310],1,7*21,f);
-                fclose(f);
-        }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0310],7*21);
+		osd_fclose(f);
+	}
 }
 
 
@@ -680,15 +764,15 @@ struct GameDriver bwidow_driver =
 {
 	"Black Widow",
 	"bwidow",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
-	"ALLARD VAN DER BAS\nBERND WIEBELT",
+	VECTOR_TEAM,
+
 	&bwidow_machine_driver,
 
 	bwidow_rom,
 	0, 0,
 	0,
 
-	bwidow_input_ports, 0, trak_ports, bwidow_dsw, bwidow_keys,
+	0/*TBR*/, bwidow_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0,0,
 	ORIENTATION_DEFAULT,
@@ -704,7 +788,7 @@ struct GameDriver bwidow_driver =
 
 /* Gravitar now uses the earom routines
  * However, we keep the highscore location, just in case
- *		fwrite(&RAM[0x041e],1,3*16,f);
+ *		osd_fwrite(f,&RAM[0x041e],3*16);
  */
 
 ROM_START( gravitar_rom )
@@ -729,15 +813,15 @@ struct GameDriver gravitar_driver =
 {
 	"Gravitar",
 	"gravitar",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH"
-	"ALLARD VAN DER BAS\nBERND WIEBELT",
+	VECTOR_TEAM,
+
 	&gravitar_machine_driver,
 
 	gravitar_rom,
 	0, 0,
 	0,
 
-	gravitar_input_ports, 0, trak_ports, gravitar_dsw, gravitar_keys,
+	0/*TBR*/, gravitar_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -753,7 +837,7 @@ struct GameDriver gravitar_driver =
 
 /* Space Duel now uses the earom routines
  * However, we keep the highscore location, just in case
- *	fwrite(&RAM[0x00dd],1,3*20+3*25,f);
+ *	osd_fwrite(f,&RAM[0x00dd],3*20+3*25);
  */
 
 ROM_START( spacduel_rom )
@@ -780,15 +864,15 @@ struct GameDriver spacduel_driver =
 {
 	"Space Duel",
 	"spacduel",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
-	"ALLARD VAN DER BAS\nBERND WIEBELT",
+	VECTOR_TEAM,
+
 	&spacduel_machine_driver,
 
 	spacduel_rom,
 	0, 0,
 	0,
 
-	spacduel_input_ports, 0, trak_ports, spacduel_dsw, spacduel_keys,
+	0/*TBR*/, spacduel_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

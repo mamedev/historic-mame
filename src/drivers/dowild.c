@@ -12,6 +12,7 @@ b400-b7ff Color RAM
 
 write:
 a800      Watchdog reset?
+b800      Trigger NMI on second CPU (?)
 
 SECOND CPU:
 0000-3fff ROM
@@ -48,7 +49,6 @@ int docastle_shared1_r(int offset);
 void docastle_shared0_w(int offset,int data);
 void docastle_shared1_w(int offset,int data);
 void docastle_nmitrigger(int offset,int data);
-int docastle_interrupt2(void);
 
 void dowild_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int docastle_vh_start(void);
@@ -89,23 +89,19 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-static int pup(int offs)
-{
-	return 0xfc;
-}
 static struct MemoryReadAddress readmem2[] =
 {
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xc003, 0xc003, input_port_0_r },
+	{ 0xc083, 0xc083, input_port_0_r },
 	{ 0xc005, 0xc005, input_port_1_r },
+	{ 0xc085, 0xc085, input_port_1_r },
 	{ 0xc007, 0xc007, input_port_2_r },
+	{ 0xc087, 0xc087, input_port_2_r },
 	{ 0xc002, 0xc002, input_port_3_r },
+	{ 0xc082, 0xc082, input_port_3_r },
+	{ 0xc001, 0xc001, input_port_4_r },
 	{ 0xc081, 0xc081, input_port_4_r },
-	{ 0xc085, 0xc085, input_port_5_r },
-{ 0xc082,0xc082,pup},
-{ 0xc083,0xc083,pup},
-{ 0xc084,0xc084,pup},
-{ 0xc087,0xc087,pup},
 	{ 0xe000, 0xe008, docastle_shared1_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -136,13 +132,13 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0xff,
-		{ OSD_KEY_CONTROL, 0, 0, OSD_KEY_1,
+		{ OSD_KEY_LCONTROL, 0, 0, OSD_KEY_1,
 				0, 0, 0, OSD_KEY_2 },
 		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN2 */
 		0xff,
-		{ 0, 0, 0, 0, OSD_KEY_3, 0, 0, 0 },
+		{ OSD_KEY_T, OSD_KEY_C, OSD_KEY_5, OSD_KEY_Z, OSD_KEY_4, OSD_KEY_3, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSWA */
@@ -153,11 +149,6 @@ static struct InputPort input_ports[] =
 	{	/* COIN */
 		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* TEST */
-		0xff,
-		{ OSD_KEY_F2, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -324,10 +315,12 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz ??? */
 			2,	/* memory region #2 */
 			readmem2, writemem2,0,0,
-			docastle_interrupt2,16
+			interrupt,8
 		}
 	},
 	60,
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	0,
 
 	/* video hardware */
@@ -415,7 +408,7 @@ ROM_END
 
 
 
-static int dowild_hiload(const char *name)
+static int dowild_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -426,13 +419,13 @@ static int dowild_hiload(const char *name)
 	if (memcmp(&RAM[0x2020],"\x01\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x2068],"\x01\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x2020],1,10*8,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x2020],10*8);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -442,24 +435,24 @@ static int dowild_hiload(const char *name)
 
 
 
-static void dowild_hisave(const char *name)
+static void dowild_hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x2020],1,10*8,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x2020],10*8);
+		osd_fclose(f);
 	}
 }
 
 
 
-static int dorunrun_hiload(const char *name)
+static int dorunrun_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -470,13 +463,13 @@ static int dorunrun_hiload(const char *name)
 	if (memcmp(&RAM[0x2010],"\x00\x10\x00",3) == 0 &&
 			memcmp(&RAM[0x2198],"\x00\x10\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x2010],1,50*8,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x2010],50*8);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -486,18 +479,18 @@ static int dorunrun_hiload(const char *name)
 
 
 
-static void dorunrun_hisave(const char *name)
+static void dorunrun_hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x2010],1,50*8,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x2010],50*8);
+		osd_fclose(f);
 	}
 }
 

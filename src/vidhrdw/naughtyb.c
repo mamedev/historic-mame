@@ -48,6 +48,85 @@ static struct rectangle bottomvisiblearea =
 
 /***************************************************************************
 
+  Convert the color PROMs into a more useable format.
+
+  Naughty Boy has two 256x4 palette PROMs, one containing the high bits and
+  the other the low bits (2x2x2 color space).
+  The palette PROMs are connected to the RGB output this way:
+
+  bit 3 --
+        -- 270 ohm resistor  -- GREEN
+        -- 270 ohm resistor  -- BLUE
+  bit 0 -- 270 ohm resistor  -- RED
+
+  bit 3 --
+        -- GREEN
+        -- BLUE
+  bit 0 -- RED
+
+  plus 270 ohm pullup and pulldown resistors on all lines
+
+***************************************************************************/
+void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1;
+
+
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		bit0 = (color_prom[0] >> 2) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		bit0 = (color_prom[0] >> 1) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+
+		color_prom++;
+	}
+
+	/* first bank of characters use colors 0-31, 64-95, 128-159 and 192-223 */
+	for (i = 0;i < 8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 4;j++)
+		{
+			COLOR(0,4*i + j*4*8) = i + j*64;
+			COLOR(0,4*i + j*4*8 + 1) = 8 + i + j*64;
+			COLOR(0,4*i + j*4*8 + 2) = 2*8 + i + j*64;
+			COLOR(0,4*i + j*4*8 + 3) = 3*8 + i + j*64;
+		}
+	}
+
+	/* second bank of characters use colors 32-63, 96-127, 160-191 and 224-255 */
+	for (i = 0;i < 8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 4;j++)
+		{
+			COLOR(1,4*i + j*4*8) = i + 32 + j*64;
+			COLOR(1,4*i + j*4*8 + 1) = 8 + i + 32 + j*64;
+			COLOR(1,4*i + j*4*8 + 2) = 2*8 + i + 32 + j*64;
+			COLOR(1,4*i + j*4*8 + 3) = 3*8 + i + 32 + j*64;
+		}
+	}
+}
+
+
+
+/***************************************************************************
+
   Start the video hardware emulation.
 
 ***************************************************************************/
@@ -192,16 +271,16 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sy = 64 + (offs - 0x700) % 4;
 			}
 
-			drawgfx(tmpbitmap,Machine->gfx[1],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					naughtyb_videoram2[offs] + 256*bankreg,
-					(naughtyb_videoram2[offs] >> 5) + 8*palreg,
+					(naughtyb_videoram2[offs] >> 5) + 8*palreg + 16*bankreg,
 					0,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs] + 256*bankreg,
-					(videoram[offs] >> 5) + 8*palreg,
+					(videoram[offs] >> 5) + 8*palreg + 16*bankreg,
 					0,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_PEN,0);

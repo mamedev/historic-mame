@@ -203,53 +203,85 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 };
 
 
+/* input from the outside world */
+INPUT_PORTS_START( digdug_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x07, 0x01, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x38, "10k" )
+	PORT_DIPSETTING(    0x28, "10k 40k" )
+	PORT_DIPSETTING(    0x18, "20k 60k" )
+	PORT_DIPSETTING(    0x20, "10k 40k 40k" )
+	PORT_DIPSETTING(    0x10, "10k 50k 50k" )
+	PORT_DIPSETTING(    0x30, "20k 60k 60k" )
+	PORT_DIPSETTING(    0x08, "20k 70k 70k" )
+	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
+	
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0xc0, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "2 Coins/3 Credits" )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Continuation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Orientation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "A-Easy" )
+	PORT_DIPSETTING(    0x02, "B-Medium" )
+	PORT_DIPSETTING(    0x01, "C-Hard" )
+	PORT_DIPSETTING(    0x03, "D-Expert" )
 
-static struct InputPort input_ports[] =
-{
-	{	/* DSW1 */
-		0x98,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x24,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, 0, OSD_KEY_CONTROL, 0, 0 },
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, OSD_JOY_FIRE, 0, 0 },
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by digdug_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-static struct KEYSet keys[] =
-{
-        { 2, 3, "MOVE LEFT"  },
-        { 2, 1, "MOVE RIGHT" },
-        { 2, 0, "MOVE UP"    },
-        { 2, 2, "MOVE DOWN"  },
-	{ 2, 5, "PUMP"       },
-        { -1 }
-};
-
-
-static struct DSW digdug_dsw[] =
-{
-	{ 0, 0xc0, "LIVES", { "1", "2", "3", "5" } },
- 	{ 0, 0x38, "BONUS", { "NONE", "20K 70K 70K", "10K 50K 50K", "20K 60K", "10K 40K 40K", "10K 40K", "20K 60K 60K", "10K" }, 1 },
-	{ 1, 0x03, "RANK", { "A", "C", "B", "D" } },
-	{ 1, 0x10, "DEMO SOUND", { "ON", "OFF" }, 1 },
-	{ 1, 0x08, "CONTINUATION", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
-
+	PORT_START	/* FAKE */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout1 =
 {
@@ -395,6 +427,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	digdig_init_machine,
 
 	/* video hardware */
@@ -480,9 +514,9 @@ ROM_START( digdugat_rom )
 ROM_END
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
@@ -491,10 +525,10 @@ static int hiload(const char *name)
    /* check if the hi score table has already been initialized (works for Namco & Atari) */
    if (RAM[0x89b1] == 0x35 && RAM[0x89b4] == 0x35)
    {
-      if ((f = fopen(name,"rb")) != 0)
+      if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
       {
-         fread(&RAM[0x89a0],1,37,f);
-         fclose(f);
+         osd_fread(f,&RAM[0x89a0],37);
+         osd_fclose(f);
          digdug_hiscoreloaded = 1;
       }
 
@@ -505,18 +539,18 @@ static int hiload(const char *name)
 }
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
    unsigned char *RAM = Machine->memory_region[0];
 
-   if ((f = fopen(name,"wb")) != 0)
+   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
-      fwrite(&RAM[0x89a0],1,37,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0x89a0],37);
+      osd_fclose(f);
    }
 }
 
@@ -525,14 +559,14 @@ struct GameDriver digdugnm_driver =
 {
 	"Dig Dug (Namco)",
 	"digdugnm",
-	"AARON GILES\nMARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI\nALAN J MCCORMICK",
+	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
 	&machine_driver,
 
 	digdugnm_rom,
 	0, 0,
 	0,
 
-	input_ports, 0, trak_ports, digdug_dsw, keys,
+	0/*TBR*/,digdug_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -545,14 +579,14 @@ struct GameDriver digdugat_driver =
 {
 	"Dig Dug (Atari)",
 	"digdugat",
-	"AARON GILES\nMARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI\nALAN J MCCORMICK",
+	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
 	&machine_driver,
 
 	digdugat_rom,
 	0, 0,
 	0,
 
-	input_ports, 0, trak_ports, digdug_dsw, keys,
+	0/*TBR*/,digdug_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

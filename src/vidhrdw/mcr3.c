@@ -36,10 +36,8 @@ void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 	}
 
 	/* characters and sprites use the same palette */
-	/* we reserve pen 0 for the background black which makes the */
-	/* MS-DOS version look better */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 1;
+		COLOR(0,i) = i;
 
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {
@@ -163,7 +161,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16)+1);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16));
       }
    }
 }
@@ -254,7 +252,7 @@ void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16)+1);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16));
       }
    }
 }
@@ -280,24 +278,24 @@ void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
    mcr3_vh_convert_color_prom(palette,colortable,color_prom);
 
    /* plus some colors for the alpha RAM */
+   palette[(8*16)*3+0] = 0;
+   palette[(8*16)*3+1] = 0;
+   palette[(8*16)*3+2] = 0;
    palette[(8*16+1)*3+0] = 0;
-   palette[(8*16+1)*3+1] = 0;
+   palette[(8*16+1)*3+1] = 255;
    palette[(8*16+1)*3+2] = 0;
    palette[(8*16+2)*3+0] = 0;
-   palette[(8*16+2)*3+1] = 255;
-   palette[(8*16+2)*3+2] = 0;
-   palette[(8*16+3)*3+0] = 0;
-   palette[(8*16+3)*3+1] = 0;
+   palette[(8*16+2)*3+1] = 0;
+   palette[(8*16+2)*3+2] = 255;
+   palette[(8*16+3)*3+0] = 255;
+   palette[(8*16+3)*3+1] = 255;
    palette[(8*16+3)*3+2] = 255;
-   palette[(8*16+4)*3+0] = 255;
-   palette[(8*16+4)*3+1] = 255;
-   palette[(8*16+4)*3+2] = 255;
 
    /* put them into the color table */
-   colortable[8*16+0] = 8*16+1;
-   colortable[8*16+1] = 8*16+2;
-   colortable[8*16+2] = 8*16+3;
-   colortable[8*16+3] = 8*16+4;
+   colortable[8*16+0] = 8*16;
+   colortable[8*16+1] = 8*16+1;
+   colortable[8*16+2] = 8*16+2;
+   colortable[8*16+3] = 8*16+3;
 }
 
 
@@ -400,7 +398,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+16+1);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+16);
       }
    }
 

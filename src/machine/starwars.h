@@ -1,3 +1,6 @@
+#ifndef m_starwars_h
+#define m_starwars_h
+
 /***************************************************************************
 machine\starwars.h
 
@@ -9,15 +12,8 @@ See drivers\starwars.c for notes
 
 ***************************************************************************/
 
-int starwars_trakball_r(int data);
-int starwars_interrupt(void);
-
 int banked_rom_r(int);
-int input_bank_0_r(int);
 int input_bank_1_r(int);
-int opt_0_r(int);
-int opt_1_r(int);
-int adc_r(int);
 void evggo(int, int);
 void evgres(int, int);
 void wdclr(int, int);
@@ -28,8 +24,9 @@ void mpage(int, int);
 void led1(int,int);
 void recall(int, int);
 void nstore(int, int);
-void adcstart0(int, int);
-void adcstart1(int, int);
-void adcstart2(int, int);
 
+int control_r (int offset);
+void control_w (int offset, int data);
+int starwars_interrupt (void);
 
+#endif

@@ -96,10 +96,11 @@ extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
-int scramble_vh_start(void);
+int ckongs_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
 
+void scramble_sh_irqtrigger_w(int offset,int data);
 int scramble_sh_interrupt(void);
 int scramble_sh_start(void);
 
@@ -129,7 +130,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa804, 0xa804, galaxian_stars_w },
 	{ 0xa802, 0xa802, MWA_NOP },
 	{ 0xa806, 0xa807, MWA_NOP },
-	{ 0x7800, 0x7800, sound_command_w },
+	{ 0x7800, 0x7800, soundlatch_w },
+	{ 0x7801, 0x7801, scramble_sh_irqtrigger_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -174,14 +176,14 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
-		{ OSD_KEY_UP, OSD_KEY_ALT, 0, OSD_KEY_CONTROL,
+		{ OSD_KEY_UP, OSD_KEY_ALT, 0, OSD_KEY_LCONTROL,
 				OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, OSD_KEY_3 },
 		{ OSD_JOY_UP, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1,
 				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN1 */
 		0xff,
-		{ 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL,
+		{ 0, 0, OSD_KEY_ALT, OSD_KEY_LCONTROL,
 				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_2, OSD_KEY_1 },
 		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1,
 				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
@@ -302,6 +304,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -312,7 +315,7 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	scramble_vh_start,
+	ckongs_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 

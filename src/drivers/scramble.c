@@ -105,6 +105,7 @@ int scramble_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
 
+void scramble_sh_irqtrigger_w(int offset,int data);
 int scramble_sh_interrupt(void);
 int scramble_sh_start(void);
 int frogger_sh_interrupt(void);
@@ -137,7 +138,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6804, 0x6804, galaxian_stars_w },
 	{ 0x6802, 0x6802, MWA_NOP },
 	{ 0x6806, 0x6807, MWA_NOP },
-	{ 0x8200, 0x8200, sound_command_w },
+	{ 0x8200, 0x8200, soundlatch_w },
+	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -210,14 +212,14 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
-		{ OSD_KEY_UP, OSD_KEY_ALT, OSD_KEY_5, OSD_KEY_CONTROL,
+		{ OSD_KEY_UP, OSD_KEY_ALT, OSD_KEY_5, OSD_KEY_LCONTROL,
 				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_4, OSD_KEY_3 },
 		{ OSD_JOY_UP, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1,
 				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN1 */
 		0xfc,
-		{ 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL,
+		{ 0, 0, OSD_KEY_ALT, OSD_KEY_LCONTROL,
 				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_2, OSD_KEY_1 },
 		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1,
 				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
@@ -270,7 +272,6 @@ static struct DSW atlantis_dsw[] =
 {
 	{ 1, 0x02, "LIVES", { "5", "3" }, 1 },
 	{ 1, 0x01, "SW1", { "OFF", "ON" } },
-	/* don't know the values for coinage, since ROM 2H is bad */
 	{ 2, 0x0e, "COINAGE", { "0", "1", "2", "3", "4", "5", "6", "7" } },
 	{ -1 }
 };
@@ -278,6 +279,15 @@ static struct DSW froggers_dsw[] =
 {
 	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
 	{ 2, 0x06, "COINAGE", { "A 1/1 B 1/1 C 1/1", "A 2/1 B 2/1 C 2/1", "A 2/1 B 1/3 C 2/1", "A 1/1 B 1/6 C 1/1" } },
+	{ -1 }
+};
+static struct DSW triplep_dsw[] =
+{
+	{ 1, 0x01, "SW1", { "OFF", "ON" } },
+	{ 1, 0x02, "SW2", { "OFF", "ON" } },
+	{ 2, 0x02, "SW3", { "OFF", "ON" } },
+	{ 2, 0x04, "SW4", { "OFF", "ON" } },
+	{ 2, 0x08, "SW5", { "OFF", "ON" } },
 	{ -1 }
 };
 
@@ -355,13 +365,18 @@ static unsigned char scramble_color_prom[] =
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
 };
 
-
-
 static unsigned char froggers_color_prom[] =
 {
 	/* palette */
 	0x00,0xF6,0x79,0x4F,0x00,0xC0,0x3F,0x17,0x00,0x87,0xF8,0x7F,0x00,0xC1,0x7F,0x38,
 	0x00,0x7F,0xCF,0xF9,0x00,0x57,0xB7,0xC3,0x00,0xFF,0x7F,0x87,0x00,0x79,0x4F,0xFF
+};
+
+static unsigned char triplep_color_prom[] =
+{
+	/* palette */
+	0x00,0x14,0xF0,0x3F,0x00,0xF8,0x9F,0x3F,0x00,0x80,0x3D,0xFB,0x00,0x07,0x00,0xA5,
+	0x00,0x24,0xFF,0x3F,0x00,0x1E,0x2F,0x07,0x00,0x5E,0xD9,0xBF,0x00,0x07,0xFF,0x3F
 };
 
 
@@ -386,6 +401,7 @@ static struct MachineDriver scramble_machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -431,6 +447,7 @@ static struct MachineDriver theend_machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -475,6 +492,7 @@ static struct MachineDriver froggers_machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -531,7 +549,7 @@ ROM_START( atlantis_rom )
 	ROM_LOAD( "2c", 0x0000, 0x0800, 0x35c37f85 )
 	ROM_LOAD( "2e", 0x0800, 0x0800, 0x9a1cf98e )
 	ROM_LOAD( "2f", 0x1000, 0x0800, 0xc43738d5 )
-	ROM_LOAD( "2h", 0x1800, 0x0800, 0x00000000 )	/* this one seems to be bad */
+	ROM_LOAD( "2h", 0x1800, 0x0800, 0x4c0e5004 )
 	ROM_LOAD( "2j", 0x2000, 0x0800, 0x08db4581 )
 	ROM_LOAD( "2l", 0x2800, 0x0800, 0x88d349cb )
 
@@ -584,6 +602,20 @@ ROM_START( froggers_rom )
 	ROM_LOAD( "snd_e5.bin", 0x1000, 0x0800, 0x7ec0f39e )
 ROM_END
 
+ROM_START( triplep_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "triplep.2g", 0x0000, 0x1000, 0x62f9bd01 )
+	ROM_LOAD( "triplep.2h", 0x1000, 0x1000, 0x3a8878fc )
+	ROM_LOAD( "triplep.2k", 0x2000, 0x1000, 0x410b1bdb )
+	ROM_LOAD( "triplep.2l", 0x3000, 0x1000, 0x9b85297b )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "triplep.5f", 0x0000, 0x0800, 0x5c3c843c )
+	ROM_LOAD( "triplep.5h", 0x0800, 0x0800, 0x4c6246e0 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+ROM_END
+
 
 
 static void froggers_decode(void)
@@ -600,7 +632,7 @@ static void froggers_decode(void)
 
 
 
-static int scramble_hiload(const char *name)
+static int scramble_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -610,15 +642,15 @@ static int scramble_hiload(const char *name)
         if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
 		(memcmp(&RAM[0x421B],"\x00\x00\x01",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x4200],1,0x1E,f);
+			osd_fread(f,&RAM[0x4200],0x1E);
 			/* copy high score */
 			memcpy(&RAM[0x40A8],&RAM[0x4200],3);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -628,25 +660,25 @@ static int scramble_hiload(const char *name)
 
 
 
-static void scramble_hisave(const char *name)
+static void scramble_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x4200],1,0x1E,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x4200],0x1E);
+		osd_fclose(f);
 	}
 
 }
 
 
-static int atlantis_hiload(const char *name)
+static int atlantis_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -655,13 +687,13 @@ static int atlantis_hiload(const char *name)
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x403D],"\x00\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x403D],1,4*11,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x403D],4*11);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -671,24 +703,24 @@ static int atlantis_hiload(const char *name)
 
 
 
-static void atlantis_hisave(const char *name)
+static void atlantis_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x403D],1,4*11,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x403D],4*11);
+		osd_fclose(f);
 	}
 
 }
 
-static int theend_hiload(const char *name)
+static int theend_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -697,18 +729,18 @@ static int theend_hiload(const char *name)
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x43C0],"\x00\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			/* This seems to have more than 5 scores in memory. */
 			/* If this DISPLAYS more than 5 scores, change 3*5 to 3*10 or */
 			/* however many it should be. */
-			fread(&RAM[0x43C0],1,3*5,f);
+			osd_fread(f,&RAM[0x43C0],3*5);
 			/* copy high score */
 			memcpy(&RAM[0x40A8],&RAM[0x43C0],3);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -718,28 +750,28 @@ static int theend_hiload(const char *name)
 
 
 
-static void theend_hisave(const char *name)
+static void theend_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* This seems to have more than 5 scores in memory. */
 		/* If this DISPLAYS more than 5 scores, change 3*5 to 3*10 or */
 		/* however many it should be. */
-		fwrite(&RAM[0x43C0],1,3*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x43C0],3*5);
+		osd_fclose(f);
 	}
 
 }
 
 
-static int froggers_hiload(const char *name)
+static int froggers_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -750,15 +782,15 @@ static int froggers_hiload(const char *name)
 	if (memcmp(&RAM[0x43f1],"\x63\x04",2) == 0 &&
 			memcmp(&RAM[0x43f8],"\x27\x01",2) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x43f1],1,2*5,f);
+			osd_fread(f,&RAM[0x43f1],2*5);
 			RAM[0x43ef] = RAM[0x43f1];
 			RAM[0x43f0] = RAM[0x43f2];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -768,18 +800,18 @@ static int froggers_hiload(const char *name)
 
 
 
-static void froggers_hisave(const char *name)
+static void froggers_hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x43f1],1,2*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x43f1],2*5);
+		osd_fclose(f);
 	}
 }
 
@@ -859,4 +891,27 @@ struct GameDriver froggers_driver =
 	ORIENTATION_ROTATE_90,
 
 	froggers_hiload, froggers_hisave
+};
+
+/* Triple Punch isn't working yet. Commenting out the line 6801 - interrupt_enable_w */
+/* from writemem makes it start, however it resets soon after you start a game */
+/* This game also has a test mode - I got it once but haven't been able to get */
+/* it again. */
+struct GameDriver triplep_driver =
+{
+	"Triple Punch",
+	"triplep",
+	"NICOLA SALMORIA",
+	&scramble_machine_driver,
+
+	triplep_rom,
+	0, 0,
+	0,
+
+	input_ports, 0, trak_ports, triplep_dsw, keys,
+
+	triplep_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

@@ -41,6 +41,7 @@ Known issues:
 * Destruction Derby player 3 and 4 steering wheels are not properly muxed
 * Rampage has no sound (uses a 68000-based sound board -- we're SOL for now)
 * Spy Hunter has no sound (music uses a 68000-based board; SSIO ROMs are corrupt)
+* Discs of Tron halts between levels 6? and 7? Could be speech-related...
 
 ***************************************************************************/
 
@@ -246,8 +247,8 @@ INPUT_PORTS_START( dotron_input_ports )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-	PORT_START	/* IN1 -- actually not used at all, but read as a trakport */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START	/* IN1 */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -286,12 +287,12 @@ INPUT_PORTS_START( destderb_input_ports )
 	PORT_START	/* IN1 -- the high 6 bits contain the sterring wheel value */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_ANALOG ( 0xfc, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
 
 	PORT_START	/* IN2 -- the high 6 bits contain the sterring wheel value */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_ANALOG ( 0xfc, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
 
 	PORT_START	/* IN3 -- dipswitches */
  	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
@@ -494,7 +495,7 @@ static struct IOReadPort readport[] =
 static struct IOReadPort dotron_readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, input_trak_0_r },
+   { 0x01, 0x01, input_port_1_r },
    { 0x02, 0x02, input_port_2_r },
    { 0x03, 0x03, input_port_3_r },
    { 0x04, 0x04, input_port_4_r },
@@ -533,17 +534,6 @@ static struct IOWritePort sh_writeport[] =
 {
    { 0, 0xFF, spyhunt_writeport },
    { -1 }	/* end of table */
-};
-
-static struct TrakPort mcr3_trak_ports[] =
-{
-	{
-		X_AXIS,
-		0,
-		-0.5,
-		0
-	},
-   { -1 }
 };
 
 
@@ -751,12 +741,13 @@ static struct MachineDriver tapper_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	tapper_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -793,12 +784,13 @@ static struct MachineDriver dotron_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	dotron_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -835,12 +827,13 @@ static struct MachineDriver destderb_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	destderb_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -877,12 +870,13 @@ static struct MachineDriver timber_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	timber_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -912,12 +906,13 @@ static struct MachineDriver rampage_machine_driver =
 		},
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine_no_watchdog,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	rampage_gfxdecodeinfo,
-	1+8*16, 8*16,
+	8*16, 8*16,
 	rampage_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -954,12 +949,13 @@ static struct MachineDriver spyhunt_machine_driver =
 		}
 	},
 	30,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	mcr_init_machine,
 
 	/* video hardware */
 	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
 	spyhunt_gfxdecodeinfo,
-	1+8*16+4, 8*16+4,
+	8*16+4, 8*16+4,
 	spyhunt_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -1127,56 +1123,56 @@ ROM_START( spyhunt_rom )
 ROM_END
 
 
-static int mcr3_hiload (const char *name, int addr, int len)
+static int mcr3_hiload(int addr, int len)
 {
    unsigned char *RAM = Machine->memory_region[0];
 
    /* see if it's okay to load */
    if (mcr_loadnvram)
    {
-      FILE *f;
+      void *f;
 
-		f = fopen (name, "rb");
+		f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
       if (f)
       {
-			fread (&RAM[addr], 1, len, f);
-			fclose (f);
+			osd_fread(f,&RAM[addr],len);
+			osd_fclose (f);
       }
       return 1;
    }
    else return 0;	/* we can't load the hi scores yet */
 }
 
-static void mcr3_hisave (const char *name, int addr, int len)
+static void mcr3_hisave(int addr, int len)
 {
    unsigned char *RAM = Machine->memory_region[0];
-   FILE *f;
+   void *f;
 
-	f = fopen (name, "wb");
+	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
    if (f)
    {
-      fwrite (&RAM[addr], 1, len, f);
-      fclose (f);
+      osd_fwrite(f,&RAM[addr],len);
+      osd_fclose (f);
    }
 }
 
-static int  tapper_hiload (const char *name)   { return mcr3_hiload (name, 0xe000, 0x9d); }
-static void tapper_hisave (const char *name)   {        mcr3_hisave (name, 0xe000, 0x9d); }
+static int  tapper_hiload(void)   { return mcr3_hiload(0xe000, 0x9d); }
+static void tapper_hisave(void)   {        mcr3_hisave(0xe000, 0x9d); }
 
-static int  dotron_hiload (const char *name)   { return mcr3_hiload (name, 0xe543, 0xac); }
-static void dotron_hisave (const char *name)   {        mcr3_hisave (name, 0xe543, 0xac); }
+static int  dotron_hiload(void)   { return mcr3_hiload(0xe543, 0xac); }
+static void dotron_hisave(void)   {        mcr3_hisave(0xe543, 0xac); }
 
-static int  destderb_hiload (const char *name) { return mcr3_hiload (name, 0xe4e6, 0x153); }
-static void destderb_hisave (const char *name) {        mcr3_hisave (name, 0xe4e6, 0x153); }
+static int  destderb_hiload(void) { return mcr3_hiload(0xe4e6, 0x153); }
+static void destderb_hisave(void) {        mcr3_hisave(0xe4e6, 0x153); }
 
-static int  timber_hiload (const char *name)   { return mcr3_hiload (name, 0xe000, 0x9f); }
-static void timber_hisave (const char *name)   {        mcr3_hisave (name, 0xe000, 0x9f); }
+static int  timber_hiload(void)   { return mcr3_hiload(0xe000, 0x9f); }
+static void timber_hisave(void)   {        mcr3_hisave(0xe000, 0x9f); }
 
-static int  rampage_hiload (const char *name)  { return mcr3_hiload (name, 0xe631, 0x3f); }
-static void rampage_hisave (const char *name)  {        mcr3_hisave (name, 0xe631, 0x3f); }
+static int  rampage_hiload(void)  { return mcr3_hiload(0xe631, 0x3f); }
+static void rampage_hisave(void)  {        mcr3_hisave(0xe631, 0x3f); }
 
-static int  spyhunt_hiload (const char *name)  { return mcr3_hiload (name, 0xf42b, 0xfb); }
-static void spyhunt_hisave (const char *name)  {        mcr3_hisave (name, 0xf42b, 0xfb); }
+static int  spyhunt_hiload(void)  { return mcr3_hiload(0xf42b, 0xfb); }
+static void spyhunt_hisave(void)  {        mcr3_hisave(0xf42b, 0xfb); }
 
 static void spyhunt_decode (void)
 {
@@ -1229,7 +1225,7 @@ struct GameDriver dotron_driver =
 	0, 0,
 	0,
 
-	0, dotron_input_ports, mcr3_trak_ports, 0, 0,
+	0, dotron_input_ports, 0, 0, 0,
 
 	0, 0,0,
 	ORIENTATION_FLIP_X,
@@ -1248,7 +1244,7 @@ struct GameDriver destderb_driver =
 	0, 0,
 	0,
 
-	0, destderb_input_ports, mcr3_trak_ports, 0, 0,
+	0, destderb_input_ports, 0, 0, 0,
 
 	0, 0,0,
 	ORIENTATION_DEFAULT,

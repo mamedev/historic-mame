@@ -64,7 +64,6 @@ int mplanets_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
 void gottlieb_sh_update(void);
-extern const char *gottlieb_sample_names[];
 void gottlieb_output(int offset, int data);
 int mplanets_IN1_r(int offset);
 int mplanets_dial_r(int offset);
@@ -136,7 +135,7 @@ static struct InputPort input_ports[] =
 	{       /* joystick */
 		0x00,
 		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		OSD_KEY_CONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_ALT},
+		OSD_KEY_LCONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_ALT},
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
 					OSD_JOY_FIRE1, 0, 0, OSD_JOY_FIRE2 }
 	},
@@ -234,12 +233,13 @@ static const struct MachineDriver machine_driver =
 
 	},
 	60,     /* frames / second */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1+16, 16,
+	16, 16,
 	gottlieb_vh_init_color_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -282,31 +282,31 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-	FILE *f=fopen(name,"rb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	/* no need to wait for anything: Mad Planets doesn't touch the tables
 		if the checksum is correct */
 	if (f) {
-		fread(RAM+0x536,1,2,f); /* hiscore table checksum */
-		fread(RAM+0x538,41,7,f); /* 20+20+1 hiscore entries */
-		fclose(f);
+		osd_fread(f,RAM+0x536,2); /* hiscore table checksum */
+		osd_fread(f,RAM+0x538,41*7); /* 20+20+1 hiscore entries */
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f=fopen(name,"wb");
+	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 	unsigned char *RAM=Machine->memory_region[0];
 
 	if (f) {
 	/* not saving distributions tables : does anyone really want them ? */
-		fwrite(RAM+0x536,1,2,f); /* hiscore table checksum */
-		fwrite(RAM+0x538,41,7,f); /* 20+20+1 hiscore entries */
-		fclose(f);
+		osd_fwrite(f,RAM+0x536,2); /* hiscore table checksum */
+		osd_fwrite(f,RAM+0x538,41*7); /* 20+20+1 hiscore entries */
+		osd_fclose(f);
 	}
 }
 
@@ -320,7 +320,7 @@ struct GameDriver mplanets_driver =
 
 	mplanets_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	gottlieb_sample_names,
+	0,
 
 	input_ports, 0, trak_ports, dsw, keys,
 

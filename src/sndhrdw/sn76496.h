@@ -7,7 +7,7 @@ struct SN76496
 	int Volume[4];	/* volume of voice 0-2 and noise. Range is 0-255 */
 	int Frequency[3];	/* tone frequency in Hz */
 	int NoiseShiftRate;	/* sample rate for the noise sample */
-
+        int Noisemode;          /* noise mode 0=white noise, 1=periodic noise */
 	/* private */
 	int Register[8];
 	int LastRegister;

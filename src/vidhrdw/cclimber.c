@@ -46,31 +46,46 @@ static int flipscreen[2];
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 4 * 24;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (color_prom[i] >> 3) & 0x01;
-		bit1 = (color_prom[i] >> 4) & 0x01;
-		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
-	for (i = 0;i < 4 * 24;i++)
+
+	/* character and sprite lookup table */
+	/* they use colors 0-63 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* big sprite lookup table */
+	/* it uses colors 64-95 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		if ((i & 3) == 0) colortable[i] = 0;
-		else colortable[i] = i;
+		if (i % 4 == 0) COLOR(2,i) = 0;
+		else COLOR(2,i) = i + 64;
 	}
 }
 

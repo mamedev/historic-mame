@@ -15,6 +15,18 @@ unsigned char *amidar_attributesram;
 static int flipscreen[2];
 
 
+static struct rectangle spritevisiblearea =
+{
+	2*8, 32*8-1,
+	2*8, 30*8-1
+};
+static struct rectangle spritevisibleareaflipx =
+{
+	0*8, 30*8-1,
+	2*8, 30*8-1
+};
+
+
 
 /***************************************************************************
 
@@ -189,6 +201,6 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs + 2] & 0x07,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 }

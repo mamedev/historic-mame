@@ -5,82 +5,16 @@
 #include "common.h"
 #include "mame.h"
 #include "cpuintrf.h"
+#include "memory.h"
 #include "inptport.h"
 #include "usrintrf.h"
-
-
-/***************************************************************************
-
-Note that the memory hooks are not passed the actual memory address where
-the operation takes place, but the offset from the beginning of the block
-they are assigned to. This makes handling of mirror addresses easier, and
-makes the handlers a bit more "object oriented". If you handler needs to
-read/write the main memory area, provide a "base" pointer: it will be
-initialized by the main engine to point to the beginning of the memory block
-assigned to the handler. You may also provided a pointer to "size": it
-will be set to the length of the memory area processed by the handler.
-
-***************************************************************************/
-struct MemoryReadAddress
-{
-	int start,end;
-	int (*handler)(int offset);	/* see special values below */
-	unsigned char **base;	/* optional (see explanation above) */
-	int *size;	/* optional (see explanation above) */
-};
-
-#define MRA_NOP 0	/* don't care, return 0 */
-#define MRA_RAM ((int(*)())-1)	/* plain RAM location (return its contents) */
-#define MRA_ROM ((int(*)())-2)	/* plain ROM location (return its contents) */
-
-
-struct MemoryWriteAddress
-{
-	int start,end;
-	void (*handler)(int offset,int data);	/* see special values below */
-	unsigned char **base;	/* optional (see explanation above) */
-	int *size;	/* optional (see explanation above) */
-};
-
-#define MWA_NOP 0	/* do nothing */
-#define MWA_RAM ((void(*)())-1)	/* plain RAM location (store the value) */
-#define MWA_ROM ((void(*)())-2)	/* plain ROM location (do nothing) */
-/* RAM[] and ROM[] are usually the same, but they aren't if the CPU opcodes are */
-/* encrypted. In such a case, opcodes are fetched from ROM[], and arguments from */
-/* RAM[]. If the program dynamically creates code in RAM and executes it, it */
-/* won't work unless writes to RAM affects both RAM[] and ROM[]. */
-#define MWA_RAMROM ((void(*)())-3)	/* write to both the RAM[] and ROM[] array. */
-
-
-/***************************************************************************
-
-IN and OUT ports are handled like memory accesses, the hook template is the
-same so you can interchange them. Of course there is no 'base' pointer for
-IO ports.
-
-***************************************************************************/
-struct IOReadPort
-{
-	int start,end;
-	int (*handler)(int offset);	/* see special values below */
-};
-
-#define IORP_NOP 0	/* don't care, return 0 */
-
-
-struct IOWritePort
-{
-	int start,end;
-	void (*handler)(int offset,int data);	/* see special values below */
-};
-
-#define IOWP_NOP 0	/* do nothing */
+#include "cheat.h"
 
 
 
 /***************************************************************************
 
-Don't confuse this with the I/O ports above. This is used to handle game
+Don't confuse this with the I/O ports in memory.h. This is used to handle game
 inputs (joystick, coin slots, etc). Typically, you will read them using
 input_port_[n]_r(), which you will associate to the appropriate memory
 address or I/O port.
@@ -127,7 +61,7 @@ enum { IPT_END=1,IPT_PORT,
 	/* analog inputs */
 	/* the "arg" field contains the default sensitivity expressed as a percentage */
 	/* (100 = default, 50 = half, 200 = twice) */
-	IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y,
+	IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y, IPT_AD_STICK_X, IPT_AD_STICK_Y,
 
 	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
 	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
@@ -176,14 +110,25 @@ enum { IPT_END=1,IPT_PORT,
 #define IPF_REVERSE    0x00400000	/* By default, analog inputs like IPT_TRACKBALL increase */
 									/* when going right/up. This flag inverts them. */
 
+#define IPF_CENTER     0x00800000	/* always preload in->default, autocentering the STICK/TRACKBALL */
+
+/* LBO - These 4 byte values are packed into the arg field and are typically used with analog ports */
+/* Since the sensivity is only one byte, we want to have 100% = 2^16, */
+/* 50% = 2^8, 200% = 2^32 and so on. BW	*/
+#define IPF_SENSITIVITY(percent)	(((percent*16)/100)&0xff)
+#define IPF_CLIP(clip)			((clip&0xff) << 8  )
+#define IPF_MIN(min)			((min&0xff)  << 16 )
+#define IPF_MAX(max)			((max&0xff)  << 24 )
 
 #define IP_NAME_DEFAULT ((const char *)-1)
 
 #define IP_KEY_DEFAULT -1
 #define IP_KEY_NONE -2
+#define IP_KEY_PREVIOUS -3	/* use the same key as the previous input bit */
 
 #define IP_JOY_DEFAULT -1
 #define IP_JOY_NONE -2
+#define IP_JOY_PREVIOUS -3	/* use the same joy as the previous input bit */
 
 /* start of table */
 #define INPUT_PORTS_START(name) static struct NewInputPort name[] = {
@@ -195,8 +140,8 @@ enum { IPT_END=1,IPT_PORT,
 #define PORT_BIT(mask,default,type) { mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 },
 /* input bit definition with extended fields */
 #define PORT_BITX(mask,default,type,name,key,joy,arg) { mask, default, type, name, key, joy, arg },
-/* analog input */
-#define PORT_ANALOG(mask,default,type,sensitivity) { mask, default, type, IP_NAME_DEFAULT, 0, 0, sensitivity },
+/* LBO - analog input */
+#define PORT_ANALOG(mask,default,type,sensitivity,clip,min,max) { mask, default, type, IP_NAME_DEFAULT, 0, 0, IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip) | IPF_MIN(min) | IPF_MAX(max) },
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
 #define PORT_DIPSETTING(default,name) { -1, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE, 0 },
@@ -277,8 +222,10 @@ struct MachineCPU
 #define CPU_Z80    1
 #define CPU_M6502  2
 #define CPU_I86    3
-#define CPU_M6809  4
-#define CPU_M68000 5 /* LBO */
+#define CPU_M6803  4
+#define CPU_M6808  CPU_M6803
+#define CPU_M6809  5
+#define CPU_M68000 6
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* play_sound == 0, therefore speeding up a lot the emulation. */
@@ -287,7 +234,8 @@ struct MachineCPU
 #define CPU_FLAGS_MASK 0xff00
 
 
-#define MAX_CPU 5 /* LBO */
+#define MAX_CPU 4	/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
+					/* can run at the same time. Currently, 4 is enough. */
 
 
 /* ASG 081897 -- added these flags for the video hardware */
@@ -309,6 +257,13 @@ struct MachineDriver
 	/* basic machine hardware */
 	struct MachineCPU cpu[MAX_CPU];
 	int frames_per_second;
+	int cpu_slices_per_frame;	/* for multicpu games. 1 is the minimum, meaning */
+								/* that each CPU runs for the whole video frame */
+								/* before giving control to the others. The higher */
+								/* this setting, the more closely CPUs are interleaved */
+								/* and therefore the more accurate the emulation is. */
+								/* However, an higher setting also means slower */
+								/* performance. */
 	void (*init_machine)(void);
 
 	/* video hardware */
@@ -365,9 +320,9 @@ struct GameDriver
 	const unsigned char *colortable;
 	int orientation;	/* orientation of the monitor; see defines below */
 
-	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
+	int (*hiscore_load)(void);	/* will be called every vblank until it */
 						/* returns nonzero */
-	void (*hiscore_save)(const char *name);	/* will not be called if hiscore_load() hasn't yet */
+	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
 };
 
@@ -387,11 +342,5 @@ struct GameDriver
 
 
 extern const struct GameDriver *drivers[];
-
-#ifdef WIN32
-#pragma warning(disable:4113)
-#define PI 3.1415926535
-#define inline __inline
-#endif
 
 #endif

@@ -146,20 +146,25 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
-		/* handle double width sprites (clouds) */
-		if (offs <= 2*2 || offs >= 19*2)
-			drawgfx(bitmap,Machine->gfx[2],
-					spriteram[offs + 1],
-					spriteram_2[offs] & 0x3f,
-					spriteram_2[offs] & 0x80,!(spriteram_2[offs] & 0x40),
-					2 * spriteram_2[offs + 1] - 16,spriteram[offs],
-					&spritevisiblearea,TRANSPARENCY_PEN,0);
-		else
+		if (spriteram_2[offs + 1] < 240)
+		{
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 1],
 					spriteram_2[offs] & 0x3f,
 					spriteram_2[offs] & 0x80,!(spriteram_2[offs] & 0x40),
 					spriteram_2[offs + 1] - 1,spriteram[offs],
 					&spritevisiblearea,TRANSPARENCY_PEN,0);
+
+			/* clouds are drawn twice, offset by 128 pixels horizontally and vertically */
+			if (offs <= 2*2 || offs >= 19*2)
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						spriteram[offs + 1],
+						spriteram_2[offs] & 0x3f,
+						spriteram_2[offs] & 0x80,!(spriteram_2[offs] & 0x40),
+						(spriteram_2[offs + 1] - 1 + 128) & 0xff,(spriteram[offs] + 128) & 0xff,
+						&spritevisiblearea,TRANSPARENCY_PEN,0);
+			}
+		}
 	}
 }

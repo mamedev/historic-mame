@@ -204,19 +204,18 @@ Sound Commands:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
 
+void omegrace_init_machine(void);
 int omegrace_vg_status_r(int offset);
 int omegrace_vg_go(int offset);
-int omegrace_vg_start(void);
 int omegrace_watchdog_r(int offset);
 int omegrace_spinner1_r(int offset);
-int omegrace_spinner2_r(int offset);
 
+int omegrace_interrupt(void);
 int omegrace_sh_interrupt(void);
 int omegrace_sh_start(void);
 
@@ -225,7 +224,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
 	{ 0x5c00, 0x5cff, MRA_RAM }, /* NVRAM */
-	{ 0x8000, 0x9fff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x8000, 0x8fff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x9000, 0x9fff, MRA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
 
 	/* 9000-9fff is ROM, hopefully there are no writes to it */
@@ -233,9 +233,11 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
 	{ 0x4000, 0x4bff, MWA_RAM },
 	{ 0x5c00, 0x5cff, MWA_RAM }, /* NVRAM */
-	{ 0x8000, 0x9fff, MWA_RAM, &vectorram },
+	{ 0x8000, 0x8fff, MWA_RAM }, /* vector ram */
+	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
 };
 
@@ -265,13 +267,13 @@ static struct IOReadPort readport[] =
 	{ 0x11, 0x11, input_port_2_r }, /* Player 1 input */
 	{ 0x12, 0x12, input_port_3_r }, /* Player 2 input */
 	{ 0x15, 0x15, omegrace_spinner1_r }, /* 1st controller */
-	{ 0x16, 0x16, omegrace_spinner2_r }, /* 2nd, not supported */
+	{ 0x16, 0x16, input_port_5_r }, /* 2nd controller (cocktail) */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-  	{ 0x0a, 0x0a, vg_reset },
+  	{ 0x0a, 0x0a, avgdvg_reset },
  	{ 0x13, 0x13, IOWP_NOP }, /* diverse outputs */
 	{ 0x14, 0x14, sound_command_w }, /* Sound command */
 	{ -1 }	/* end of table */
@@ -292,70 +294,84 @@ static struct IOWritePort sound_writeport[] =
         { -1 }  /* end of table */
 };
 
+INPUT_PORTS_START( input_ports )
+	PORT_START /* SW0 */
+	PORT_DIPNAME ( 0x03, 0x00, "1st Bonus Ship", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "40K" )
+	PORT_DIPSETTING (    0x01, "50K" )
+	PORT_DIPSETTING (    0x02, "70K" )
+	PORT_DIPSETTING (    0x03, "100K" )
+	PORT_DIPNAME ( 0x0c, 0x00, "2nd/3rd Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "150K 250K" )
+	PORT_DIPSETTING (    0x04, "250K 500K" )
+	PORT_DIPSETTING (    0x08, "500K 750K" )
+	PORT_DIPSETTING (    0x0c, "750K 1000K" )
+	PORT_DIPNAME ( 0x30, 0x00, "Credit/Ship", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "1/2 2/4" )
+	PORT_DIPSETTING (    0x10, "1/2 2/5" )
+	PORT_DIPSETTING (    0x20, "1/3 2/6" )
+	PORT_DIPSETTING (    0x30, "1/3 2/7" )
+	PORT_DIPNAME ( 0x40, 0x00, "Unknown1", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "Off" )
+	PORT_DIPSETTING (    0x40, "On" )
+	PORT_DIPNAME ( 0x80, 0x00, "Unknown2", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "Off" )
+	PORT_DIPSETTING (    0x80, "On" )
 
-static struct InputPort input_ports[] =
-{
-	{       /* DSW0 - port 0x10 - bonus settings */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 - port 0x17 - cocktail + various credits settings */
-		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN2 - port 0x11 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_4, 0, 0, OSD_KEY_F1, OSD_KEY_ALT, OSD_KEY_CONTROL, OSD_KEY_F2 },
-		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0 }
-	},
-	{       /* IN3 - port 0x12 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN4 - port 0x15 - spinner emulation */
-		0x00,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0, 0, 0, 0, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN5 - port 0x16 - second spinner not emulated */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }
-};
+	PORT_START /* SW1 */
+	PORT_DIPNAME ( 0x07, 0x07, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (    0x01, "1 Coin/3 Credits" )
+	PORT_DIPSETTING (    0x02, "1 Coin/5 Credits" )
+	PORT_DIPSETTING (    0x03, "4 Coins/5 Credits" )
+	PORT_DIPSETTING (    0x04, "3 Coins/4 Credits" )
+	PORT_DIPSETTING (    0x05, "2 Coins/3 Credits" )
+	PORT_DIPSETTING (    0x06, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (    0x07, "1 Coin/1 Credit" )
+	PORT_DIPNAME ( 0x38, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (    0x08, "1 Coin/3 Credits" )
+	PORT_DIPSETTING (    0x10, "1 Coin/5 Credits" )
+	PORT_DIPSETTING (    0x18, "4 Coins/5 Credits" )
+	PORT_DIPSETTING (    0x20, "3 Coins/4 Credits" )
+	PORT_DIPSETTING (    0x28, "2 Coins/3 Credits" )
+	PORT_DIPSETTING (    0x30, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (    0x38, "1 Coin/1 Credit" )
+	PORT_DIPNAME ( 0x40, 0x00, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "Off" )
+	PORT_DIPSETTING (    0x40, "On" )
+	PORT_DIPNAME ( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "Upright" )
+	PORT_DIPSETTING (    0x80, "Cocktail" )
 
-static struct TrakPort trak_ports[] =
-{
-	{
-		X_AXIS,
-		1,
-		0.5,
-		0
-	},
-        { -1 }
-};
+	PORT_START /* IN2 -port 0x11 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX ( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING( 0x80, "Off" )
+	PORT_DIPSETTING( 0x00, "On" )
 
-static struct KEYSet keys[] =
-{
-        { 4, 0, "ROTATE LEFT" },
-        { 4, 1, "ROTATE RIGHT"  },
-        { 2, 5, "THRUST" },
-        { 2, 6, "FIRE" },
-        { -1 }
-};
+	PORT_START /* IN3 - port 0x12 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_START3 | IPF_COCKTAIL )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START4 | IPF_COCKTAIL )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
+	PORT_START /* IN4 - port 0x15 - spinner */
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 100, 0, 0, 0 )
 
-static struct DSW dsw[] =
-{
-	{ 0, 0x03, "FIRST BONUS", { "40000", "50000", "70000", "100000" } },
-	{ 0, 0x0c, "BONUS 2/3", { "150000 250000", "250000 500000", "500000 750000", "750000 1500000" } },
-	{ 0, 0x30, "CREDITS/SHIPS" , { "1-2/2-4", "1-2/2-5", "1-3/2-6", "1-3/2-7" } },
-	{ -1 }
-};
+	PORT_START /* IN5 - port 0x16 - second spinner */
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 100, 0, 0, 0 )
+INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
 {
@@ -404,30 +420,32 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3.0 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			interrupt,4 	/* approx. 240Hz */
+			omegrace_interrupt,6 	/* 240 Hz */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 Mhz */
 			2, 		/* memory region 1*/
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			omegrace_sh_interrupt,8
+			omegrace_sh_interrupt,12 /* gets divided by 2, so 240Hz */
 		}
 	},
-	60,
-	0,
+	40,
+	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	omegrace_init_machine,
 
 	/* video hardware */
 	288, 224, { 0, 1020, -10, 1010 },
 	gfxdecodeinfo,
 	256,256,
-	atari_vg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	omegrace_vg_start,
-	atari_vg_stop,
-	atari_vg_screenrefresh,
+	dvg_start,
+	dvg_stop,
+	dvg_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -454,13 +472,11 @@ ROM_START( omegrace_rom )
 	ROM_LOAD( "omega.f1", 0x9800, 0x0800, 0xe63e51e2 )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sound.k5", 0x0000, 0x0800, 0x7f858859 )	/* not needed - could be removed */
-
 	ROM_REGION(0x10000)	/* 64k for audio cpu */
 	ROM_LOAD( "sound.k5", 0x0000, 0x0800, 0x7f858859 )
 ROM_END
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -468,27 +484,27 @@ static int hiload(const char *name)
 
 	/* no reason to check hiscore table. It's an NV_RAM! */
 	/* However, it does not work yet. Don't know why. BW */
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"rb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		fread(&RAM[0x5c00],1,0x100,f);
-		fclose(f);
+		osd_fread(f,&RAM[0x5c00],0x100);
+		osd_fclose(f);
 	}
 	return 1;
 }
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x5c00],1,0x100,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x5c00],0x100);
+		osd_fclose(f);
 	}
 }
 
@@ -496,16 +512,20 @@ struct GameDriver omegrace_driver =
 {
 	"Omega Race",
 	"omegrace",
-	"AL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
-	"BERND WIEBELT\n  dedicated to Natalia\n"
-	"  and Lara Anna Maria",
+	"Al Kossow (hardware info)\n"
+	"Hedley Rainnie (dvg code)\n"
+	"Eric Smith (dvg code)\n"
+	"Bernd Wiebelt (MAME driver)\n"
+	"-------\n"
+	"  dedicated to Natalia\n"
+	"  and Lara Anna Maria\n",
 	&machine_driver,
 
 	omegrace_rom,
 	0, 0,
 	0,
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0,input_ports, 0, 0, 0,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

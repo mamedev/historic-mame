@@ -231,6 +231,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -283,49 +284,22 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "IC53", 0x0800, 0x0800, 0xbe207f5e )
 ROM_END
 
-ROM_START( fantasy_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic12.cpu", 0x3000, 0x1000, 0xbe01e827 )
-	ROM_LOAD( "ic07.cpu", 0x4000, 0x1000, 0x66f038dc )
-	ROM_LOAD( "ic08.cpu", 0x5000, 0x1000, 0x89f3afb1 )
-	ROM_LOAD( "ic09.cpu", 0x6000, 0x1000, 0x3cc9498f )
-	ROM_LOAD( "ic10.cpu", 0x7000, 0x1000, 0x120a97b6 )
-	ROM_LOAD( "ic14.cpu", 0x8000, 0x1000, 0xf3845850 )
-	ROM_RELOAD(           0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "ic15.cpu", 0x9000, 0x1000, 0xfa21e08f )
-	ROM_LOAD( "ic16.cpu", 0xa000, 0x1000, 0x757af434 )
-	ROM_LOAD( "ic17.cpu", 0xb000, 0x1000, 0xb5417a91 )
-
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic50.vid", 0x0000, 0x1000, 0xcfa87668 )
-	ROM_LOAD( "ic51.vid", 0x1000, 0x1000, 0xf9730c57 )
-
-	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "ic51.cpu", 0x0000, 0x0800, 0xf433dd21 )
-	ROM_LOAD( "ic52.cpu", 0x0800, 0x0800, 0xd968fa48 )
-
-/*	ROM_LOAD( "ic53.cpu", 0x????, 0x0800 ) ?? */
-/*	ROM_LOAD( "ic07.dau", 0x????, 0x0800 ) ?? */
-/*	ROM_LOAD( "ic08.dau", 0x????, 0x0800 ) ?? */
-/*	ROM_LOAD( "ic11.dau", 0x????, 0x0800 ) ?? */
-ROM_END
 
 
-
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0290],"\x00\x50\x00\x00",4) == 0 &&
 			memcmp(&RAM[0x02b4],"\x00\x05\x00\x00",4) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x0290],1,4*10,f);
-			fread(&RAM[0x02d0],1,3*10,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x0290],4*10);
+			osd_fread(f,&RAM[0x02d0],3*10);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -335,16 +309,16 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x0290],1,4*10,f);
-		fwrite(&RAM[0x02d0],1,3*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x0290],4*10);
+		osd_fwrite(f,&RAM[0x02d0],3*10);
+		osd_fclose(f);
 	}
 }
 
@@ -369,21 +343,3 @@ struct GameDriver nibbler_driver =
 	hiload, hisave
 };
 
-struct GameDriver fantasy_driver =
-{
-	"Fantasy",
-	"fantasy",
-	"NICOLA SALMORIA\nBRIAN LEVINE\nMIRKO BUFFONI",
-	&machine_driver,
-
-	fantasy_rom,
-	0, 0,
-	0,
-
-	input_ports, 0, trak_ports, dsw, keys,
-
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};

@@ -119,7 +119,7 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0xff,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_CONTROL, 0, 0, 0 },
+		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LCONTROL, 0, 0, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* IN2 */
@@ -190,26 +190,12 @@ static struct GfxLayout spritelayout =
 			16*8+0, 16*8+1, 16*8+2, 16*8+3,  24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
-static struct GfxLayout dwspritelayout =
-{
-	32,16,	/* 2x16*16 sprites */
-	256,	/* 256 sprites */
-	2,	/* 2 bits per pixel */
-	{ 4, 0 },
-	{ 39*8, 39*8, 38*8, 38*8, 37*8, 37*8, 36*8, 36*8, 35*8, 35*8, 34*8, 34*8, 33*8, 33*8, 32*8, 32*8,
-			7*8, 7*8, 6*8, 6*8, 5*8, 5*8, 4*8, 4*8, 3*8, 3*8, 2*8, 2*8, 1*8, 1*8, 0*8, 0*8 },
-	{ 0, 1, 2, 3,  8*8, 8*8+1, 8*8+2, 8*8+3,
-			16*8+0, 16*8+1, 16*8+2, 16*8+3,  24*8+0, 24*8+1, 24*8+2, 24*8+3 },
-	64*8	/* every sprite takes 64 consecutive bytes */
-};
-
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,        0, 32 },
 	{ 1, 0x2000, &spritelayout,   32*4, 64 },
-	{ 1, 0x2000, &dwspritelayout, 32*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -224,7 +210,6 @@ static unsigned char color_prom[] =
 	/* B5 - palette */
 	0x00,0x3E,0x3E,0x80,0xFE,0x00,0xAC,0xEE,0xAC,0xC0,0x14,0x00,0x28,0x38,0x16,0xBC,
 	0x00,0x3E,0x00,0xC0,0xFE,0xC0,0x3E,0x80,0x3E,0xF6,0x00,0x80,0x80,0x00,0x0C,0xBC,
-
 	/* E9 - sprite lookup table */
 	0x00,0x0D,0x0F,0x05,0x00,0x0E,0x06,0x0A,0x00,0x04,0x09,0x01,0x00,0x04,0x09,0x01,
 	0x00,0x04,0x09,0x01,0x00,0x0C,0x05,0x01,0x00,0x0E,0x05,0x01,0x00,0x0D,0x05,0x01,
@@ -242,9 +227,7 @@ static unsigned char color_prom[] =
 	0x00,0x06,0x01,0x0F,0x00,0x04,0x01,0x0F,0x00,0x0A,0x03,0x01,0x00,0x0A,0x02,0x0C,
 	0x00,0x05,0x09,0x01,0x00,0x0A,0x02,0x01,0x00,0x0E,0x02,0x09,0x00,0x0E,0x02,0x0C,
 	0x00,0x01,0x04,0x0F,0x00,0x01,0x04,0x0F,0x00,0x0F,0x0F,0x0F,0x00,0x00,0x00,0x00,
-
 	/* E12 (or F15?) - char lookup table */
-	/* The PROM is 256x4, but only the first 128 bytes are used */
 	0x00,0x0D,0x0F,0x0C,0x0A,0x04,0x01,0x0F,0x0B,0x04,0x01,0x0F,0x0C,0x04,0x01,0x0F,
 	0x0E,0x04,0x01,0x0F,0x00,0x04,0x01,0x0F,0x0A,0x04,0x05,0x01,0x0B,0x04,0x05,0x01,
 	0x0C,0x04,0x05,0x01,0x0E,0x04,0x05,0x01,0x00,0x04,0x05,0x01,0x0A,0x06,0x08,0x02,
@@ -285,12 +268,13 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	32,32*16,
+	32,32*4+64*4,
 	timeplt_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -347,7 +331,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -358,16 +342,16 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0xab09],"\x00\x00\x01",3) == 0 &&
 			memcmp(&RAM[0xab29],"\x00\x43\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xab08],1,8*5,f);
+			osd_fread(f,&RAM[0xab08],8*5);
 			RAM[0xa98b] = RAM[0xab09];
 			RAM[0xa98c] = RAM[0xab0a];
 			RAM[0xa98d] = RAM[0xab0b];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -377,18 +361,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xab08],1,8*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xab08],8*5);
+		osd_fclose(f);
 	}
 }
 
@@ -398,7 +382,7 @@ struct GameDriver timeplt_driver =
 {
 	"Time Pilot",
 	"timeplt",
-	"NICOLA SALMORIA\nALAN J MCCORMICK\nMIKE CUDDY",
+	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)",
 	&machine_driver,
 
 	timeplt_rom,
@@ -417,7 +401,7 @@ struct GameDriver spaceplt_driver =
 {
 	"Space Pilot (bootleg Time Pilot)",
 	"spaceplt",
-	"NICOLA SALMORIA\nALAN J MCCORMICK\nMIKE CUDDY",
+	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)",
 	&machine_driver,
 
 	spaceplt_rom,

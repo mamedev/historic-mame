@@ -131,11 +131,6 @@ int xevious_dsw_r(int offset)
 
  Emulate the custom IO chip.
 
- In the real Xevious machine, the chip would cause an NMI on CPU #1 to ask
- for data to be transferred. We don't bother causing the NMI, we just look
- into the CPU register to see where the data has to be read/written to, and
- emulate the behaviour of the NMI interrupt.
-
 ***************************************************************************/
 static int customio_command;
 static int mode,credits;
@@ -281,33 +276,21 @@ if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read
 			else if (offset == 1)
 			{
 				int in;
-				static int fire;
 
 
 				in = readinputport(2);	/* player 1 input */
-				in = namco_key[in & 0x0f] | (in & 0xf0);
-				if ((in & 0x20) == 0)
-				{
-					if (fire == 0) in &= ~0x10;	/* fire button impulse */
-					fire = 1;
-				}
-				else fire = 0;
+				if (mode == 0)	/* convert joystick input only when in credits mode */
+					in = namco_key[in & 0x0f] | (in & 0xf0);
 				return in;
 			}
 			else if (offset == 2)
 			{
 				int in;
-				static int fire;
 
 
 				in = readinputport(3);	/* player 2 input */
-				in = namco_key[in & 0x0f] | (in & 0xf0);
-				if ((in & 0x20) == 0)
-				{
-					if (fire == 0) in &= ~0x10;	/* fire button impulse */
-					fire = 1;
-				}
-				else fire = 0;
+				if (mode == 0)	/* convert joystick input only when in credits mode */
+					in = namco_key[in & 0x0f] | (in & 0xf0);
 				return in;
 			}
 
@@ -372,6 +355,8 @@ int xevious_interrupt_1(void)
 	{
 		if (interrupt_enable_1) return interrupt();
 	}
+	/* the custom I/O chip generates NMI to cause data to be transferred */
+	/* by the main CPU to/from the command registers. */
 	else if (customio_command != 0x10)
 		return nmi_interrupt();
 

@@ -133,7 +133,7 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
-		{ 0, 0, OSD_KEY_3, OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0 },
+		{ 0, 0, OSD_KEY_3, OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0 },
 		{ 0, 0, 0, OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0 }
 	},
 	{	/* IN1 */
@@ -284,6 +284,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -332,7 +333,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -344,12 +345,12 @@ static int hiload(const char *name)
 
 	if (!ROMloaded)
 	{
-		FILE *f;
+		void *f;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x0931],1,3,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0x0931],3);
+			osd_fclose(f);
 		}
 		ROMloaded=1;
 	}
@@ -358,13 +359,13 @@ static int hiload(const char *name)
         if ((memcmp(&RAM[0x9F00],&RAM[0x0931],3) == 0) &&
 		(memcmp(&RAM[0x9F75],"\x3E\x3E\x3E",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0x9F00],1,12*10,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0x9F00],12*10);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -374,19 +375,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                fwrite(&RAM[0x9F00],1,12*10,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x9F00],12*10);
+		osd_fclose(f);
 	}
 
 }

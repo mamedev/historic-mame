@@ -20,11 +20,9 @@ unsigned char *taito_gfxpointer,*taito_paletteram;
 unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
-static const unsigned char *colors;
-static int dirtypalette;
 static unsigned char dirtycharacter1[256],dirtycharacter2[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
-static int frontcharset,spacechar;
+static int flipscreen[2];
 
 
 
@@ -32,32 +30,83 @@ static int frontcharset,spacechar;
 
   Convert the color PROMs into a more useable format.
 
+  The Taito games don't have a color PROM. They use RAM to dynamically
+  create the palette. The resolution is 9 bit (3 bits per gun).
+
+  The RAM is connected to the RGB output this way:
+
+  bit 0 -- inverter -- 220 ohm resistor  -- RED
+  bit 7 -- inverter -- 470 ohm resistor  -- RED
+        -- inverter -- 1  kohm resistor  -- RED
+        -- inverter -- 220 ohm resistor  -- GREEN
+        -- inverter -- 470 ohm resistor  -- GREEN
+        -- inverter -- 1  kohm resistor  -- GREEN
+        -- inverter -- 220 ohm resistor  -- BLUE
+        -- inverter -- 470 ohm resistor  -- BLUE
+  bit 0 -- inverter -- 1  kohm resistor  -- BLUE
+
 ***************************************************************************/
 void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	colors = color_prom;	/* we'll need the colors later to dynamically remap the characters */
-
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (~color_prom[2*i+1] >> 6) & 0x01;
-		bit1 = (~color_prom[2*i+1] >> 7) & 0x01;
-		bit2 = (~color_prom[2*i] >> 0) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (~color_prom[2*i+1] >> 3) & 0x01;
-		bit1 = (~color_prom[2*i+1] >> 4) & 0x01;
-		bit2 = (~color_prom[2*i+1] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (~color_prom[2*i+1] >> 0) & 0x01;
-		bit1 = (~color_prom[2*i+1] >> 1) & 0x01;
-		bit2 = (~color_prom[2*i+1] >> 2) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
+
+
+	/* all gfx elements use the same palette */
+	for (i = 0;i < 64;i++)
+	{
+		COLOR(0,i) = i;
+		/* we create both a "normal" lookup table and one where pen 0 is */
+		/* always mapped to color 0. This is needed for transparency. */
+		if (i % 8 == 0) COLOR(0,i + 64) = 0;
+		else COLOR(0,i + 64) = i;
+	}
+}
+
+
+
+void taito_paletteram_w(int offset,int data)
+{
+	int bit0,bit1,bit2;
+	int r,g,b,val;
+
+
+	taito_paletteram[offset] = data;
+
+	/* red component */
+	val = taito_paletteram[offset | 1];
+	bit0 = (~val >> 6) & 0x01;
+	bit1 = (~val >> 7) & 0x01;
+	val = taito_paletteram[offset & ~1];
+	bit2 = (~val >> 0) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	/* green component */
+	val = taito_paletteram[offset | 1];
+	bit0 = (~val >> 3) & 0x01;
+	bit1 = (~val >> 4) & 0x01;
+	bit2 = (~val >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	/* blue component */
+	val = taito_paletteram[offset | 1];
+	bit0 = (~val >> 0) & 0x01;
+	bit1 = (~val >> 1) & 0x01;
+	bit2 = (~val >> 2) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen(Machine->pens[offset / 2],r,g,b);
 }
 
 
@@ -67,7 +116,7 @@ void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
   Start the video hardware emulation.
 
 ***************************************************************************/
-static int taito_vh_start(void)
+int taito_vh_start(void)
 {
 	if (generic_vh_start() != 0)
 		return 1;
@@ -105,27 +154,6 @@ static int taito_vh_start(void)
 	}
 
 	return 0;
-}
-
-int elevator_vh_start(void)
-{
-	frontcharset = 0;
-	spacechar = 0;
-	return taito_vh_start();
-}
-
-int junglek_vh_start(void)
-{
-	frontcharset = 2;
-	spacechar = 0xff;
-	return taito_vh_start();
-}
-
-int wwestern_vh_start(void)
-{
-	frontcharset = 0;
-	spacechar = 0xbb;
-	return taito_vh_start();
 }
 
 
@@ -187,27 +215,39 @@ void taito_videoram3_w(int offset,int data)
 
 
 
-void taito_paletteram_w(int offset,int data)
-{
-	if (taito_paletteram[offset] != data)
-	{
-		dirtypalette = 1;
-
-		taito_paletteram[offset] = data;
-	}
-}
-
-
-
 void taito_colorbank_w(int offset,int data)
 {
 	if (taito_colorbank[offset] != data)
 	{
+if (errorlog) fprintf(errorlog,"colorbank %d = %02x\n",offset,data);
 		memset(dirtybuffer,1,videoram_size);
 		memset(dirtybuffer2,1,videoram_size);
 		memset(dirtybuffer3,1,videoram_size);
 
 		taito_colorbank[offset] = data;
+	}
+}
+
+
+
+void taito_videoenable_w(int offset,int data)
+{
+	if (*taito_video_enable != data)
+	{
+if (errorlog) fprintf(errorlog,"videoenable = %02x\n",data);
+
+
+		if ((*taito_video_enable & 3) != (data & 3))
+		{
+			flipscreen[0] = data & 1;
+			flipscreen[1] = data & 2;
+
+			memset(dirtybuffer,1,videoram_size);
+			memset(dirtybuffer2,1,videoram_size);
+			memset(dirtybuffer3,1,videoram_size);
+		}
+
+		*taito_video_enable = data;
 	}
 }
 
@@ -240,7 +280,169 @@ void taito_characterram_w(int offset,int data)
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
+
+  I call the three planes with the conventional names "front", "middle" and
+  "back", because that's their default order, but they can be arranged,
+  together with the sprites, in any order. The priority is selected by
+  register 0xd300, which works as follow:
+
+  bits 0-3 go to A4-A7 of a 256x4 PROM
+  bit 4 selects D0/D1 or D2/D3 of the PROM
+  bit 5-7 n.c.
+  A0-A3 of the PROM is fed with a mask of the inactive planes
+  (i.e. all-zero) in the order sprites-front-middle-back
+  the 2-bit code which comes out from the PROM selects the plane
+  to display.
+
+  Here is a dump of the PROM; on the right is the resulting order
+  (s = sprites f = front m = middle b = back)
+
+                                                        d300 pri    d300 pri
+  00: 08 09 08 0A 00 05 00 0F 08 09 08 0A 00 05 00 0F |  00  sfmb    10  msfb
+  10: 08 09 08 0B 00 0D 00 0F 08 09 08 0A 00 05 00 0F |  01  sfbm    11  msbf
+  20: 08 0A 08 0A 04 05 00 0F 08 0A 08 0A 04 05 00 0F |  02  smfb    12  mfsb
+  30: 08 0A 08 0A 04 07 0C 0F 08 0A 08 0A 04 05 00 0F |  03  smbf    13  mfbs
+  40: 08 0B 08 0B 0C 0F 0C 0F 08 09 08 0A 00 05 00 0F |  04  sbfm    14  mbsf
+  50: 08 0B 08 0B 0C 0F 0C 0F 08 0A 08 0A 04 05 00 0F |  05  sbmf    15  mbfs
+  60: 0D 0D 0C 0E 0D 0D 0C 0F 01 05 00 0A 01 05 00 0F |  06  fsmb    16  bsfm
+  70: 0D 0D 0C 0F 0D 0D 0C 0F 01 09 00 0A 01 05 00 0F |  07  fsbm    17  bsmf
+  80: 0D 0D 0E 0E 0D 0D 0C 0F 05 05 02 0A 05 05 00 0F |  08  fmsb    18  bfsm
+  90: 0D 0D 0E 0E 0D 0D 0F 0F 05 05 0A 0A 05 05 00 0F |  09  fmbs    19  bfms
+  A0: 0D 0D 0F 0F 0D 0D 0F 0F 09 09 08 0A 01 05 00 0F |  0A  fbsm    1A  bmsf
+  B0: 0D 0D 0F 0F 0D 0D 0F 0F 09 09 0A 0A 05 05 00 0F |  0B  fbms    1B  bmfs
+  C0: 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F |  0C   -      1C   -
+  D0: 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F |  0D   -      1D   -
+  E0: 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F |  0E   -      1E   -
+  F0: 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F |  0F   -      1F   -
+
 ***************************************************************************/
+static int draworder[32][4] =
+{
+	{ 3,2,1,0 },{ 2,3,1,0 },{ 3,1,2,0 },{ 1,3,2,0 },{ 2,1,3,0 },{ 1,2,3,0 },
+	{ 3,2,0,1 },{ 2,3,0,1 },{ 3,0,2,1 },{ 0,3,2,1 },{ 2,0,3,1 },{ 0,2,3,1 },
+	{ 3,3,3,3 },{ 3,3,3,3 },{ 3,3,3,3 },{ 3,3,3,3 },
+	{ 3,1,0,2 },{ 1,3,0,2 },{ 3,0,1,2 },{ 0,3,1,2 },{ 1,0,3,2 },{ 0,1,3,2 },
+	{ 2,1,0,3 },{ 1,2,0,3 },{ 2,0,1,3 },{ 0,2,1,3 },{ 1,0,2,3 },{ 0,1,2,3 },
+	{ 3,3,3,3 },{ 3,3,3,3 },{ 3,3,3,3 },{ 3,3,3,3 },
+};
+
+
+static void drawsprites(struct osd_bitmap *bitmap)
+{
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	if (*taito_video_enable & 0x80)
+	{
+		int offs;
+
+
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		{
+			int sx,sy,flipx,flipy;
+
+
+			sx = ((spriteram[offs] + 13) & 0xff) - 15;	/* ?? */
+			sy = 240 - spriteram[offs + 1];
+			flipx = spriteram[offs + 2] & 1;
+			flipy = spriteram[offs + 2] & 2;
+			if (flipscreen[0])
+			{
+				sx = 240 - sx;
+				flipx = !flipx;
+			}
+			if (flipscreen[1])
+			{
+				sy = 240 - sy;
+				flipy = !flipy;
+			}
+
+
+			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
+					spriteram[offs + 3] & 0x3f,
+					2 * ((taito_colorbank[1] >> 4) & 0x03) + ((spriteram[offs + 2] >> 2) & 1),
+					flipx,flipy,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
+
+static void drawplayfield1(struct osd_bitmap *bitmap)
+{
+	if (*taito_video_enable & 0x10)
+	{
+		int i,scrollx,scrolly[32];
+
+
+/* TODO: support flipscreen */
+		scrollx = -*taito_scrollx1 + 15;
+		for (i = 0;i < 32;i++)
+			scrolly[i] = -taito_colscrolly1[i] - *taito_scrolly1;
+
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	}
+}
+
+
+static void drawplayfield2(struct osd_bitmap *bitmap)
+{
+	if (*taito_video_enable & 0x20)
+	{
+		int i,scrollx,scrolly[32];
+
+
+/* TODO: support flipscreen */
+		scrollx = *taito_scrollx2;
+		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
+		for (i = 0;i < 32;i++)
+			scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
+
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	}
+}
+
+
+static void drawplayfield3(struct osd_bitmap *bitmap)
+{
+	if (*taito_video_enable & 0x40)
+	{
+		int i,scrollx,scrolly[32];
+
+
+/* TODO: support flipscreen */
+		scrollx = *taito_scrollx3;
+		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 18;
+		for (i = 0;i < 32;i++)
+			scrolly[i] = -taito_colscrolly3[i] - *taito_scrolly3;
+
+		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	}
+}
+
+
+
+static void drawplane(int n,struct osd_bitmap *bitmap)
+{
+	switch (n)
+	{
+		case 0:
+			drawsprites(bitmap);
+			break;
+		case 1:
+			drawplayfield1(bitmap);
+			break;
+		case 2:
+			drawplayfield2(bitmap);
+			break;
+		case 3:
+			drawplayfield3(bitmap);
+			break;
+	}
+}
+
+
+
 void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,i;
@@ -276,41 +478,6 @@ void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-	/* if the palette has changed, rebuild the color lookup table */
-	if (dirtypalette)
-	{
-		dirtypalette = 0;
-
-		for (i = 0;i < 8*8;i++)
-		{
-			int col;
-
-
-			offs = 0;
-			while (offs < Machine->drv->total_colors)
-			{
-				if ((taito_paletteram[2*i] & 1) == colors[2*offs] &&
-						taito_paletteram[2*i+1] == colors[2*offs+1])
-					break;
-
-				offs++;
-			}
-
-			/* avoid undesired transparency */
-			if (offs == 0 && i % 8 != 0) offs = 1;
-			col = Machine->pens[offs];
-			Machine->gfx[0]->colortable[i] = col;
-			if (i % 8 == 0) col = Machine->pens[0];	/* create also an alternate color code with transparent pen 0 */
-			Machine->gfx[0]->colortable[i+8*8] = col;
-		}
-
-		/* redraw everything */
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
-		memset(dirtybuffer3,1,videoram_size);
-	}
-
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -324,12 +491,15 @@ void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			sx = offs % 32;
 			sy = offs / 32;
+			if (flipscreen[0]) sx = 31 - sx;
+			if (flipscreen[1]) sy = 31 - sy;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[taito_colorbank[0] & 0x08 ? 2 : 0],
 					videoram[offs],
-					taito_colorbank[0] & 0x0f,
-					0,0,8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					(taito_colorbank[0] & 0x07) + 8,	/* use transparent pen 0 */
+					flipscreen[0],flipscreen[1],
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
 		}
 
 		if (dirtybuffer2[offs])
@@ -339,13 +509,16 @@ void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer2[offs] = 0;
 
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
+			sx = offs % 32;
+			sy = offs / 32;
+			if (flipscreen[0]) sx = 31 - sx;
+			if (flipscreen[1]) sy = 31 - sy;
 
-			drawgfx(tmpbitmap2,Machine->gfx[0],
+			drawgfx(tmpbitmap2,Machine->gfx[taito_colorbank[0] & 0x80 ? 2 : 0],
 					taito_videoram2[offs],
-					((taito_colorbank[0] >> 4) & 0x0f) + 8,	/* use transparent pen 0 */
-					0,0,sx,sy,
+					((taito_colorbank[0] >> 4) & 0x07) + 8,	/* use transparent pen 0 */
+					flipscreen[0],flipscreen[1],
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 
@@ -356,101 +529,25 @@ void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer3[offs] = 0;
 
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
+			sx = offs % 32;
+			sy = offs / 32;
+			if (flipscreen[0]) sx = 31 - sx;
+			if (flipscreen[1]) sy = 31 - sy;
 
-			drawgfx(tmpbitmap3,Machine->gfx[0],
+			drawgfx(tmpbitmap3,Machine->gfx[taito_colorbank[1] & 0x08 ? 2 : 0],
 					taito_videoram3[offs],
-					taito_colorbank[1] & 0x0f,
-					0,0,sx,sy,
+					(taito_colorbank[1] & 0x07) + 8,	/* use transparent pen 0 */
+					flipscreen[0],flipscreen[1],
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
-	/* copy the first playfield */
-	{
-		int scrollx,scrolly[32];
+	/* first of all, fill the screen with the background color */
+	fillbitmap(bitmap,Machine->gfx[0]->colortable[8 * (taito_colorbank[1] & 0x07)],
+			&Machine->drv->visible_area);
 
-
-		scrollx = *taito_scrollx3;
-		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 18;
-		for (i = 0;i < 32;i++)
-			scrolly[i] = -taito_colscrolly3[i] - *taito_scrolly3;
-
-		if (*taito_video_enable & 0x40)
-			copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		else
-			clearbitmap(bitmap);
-	}
-
-	/* copy the second playfield if it has not priority over sprites */
-	if ((*taito_video_enable & 0x20) && (*taito_video_priority & 0x08) == 0)
-	{
-		int scrollx,scrolly[32];
-
-
-		scrollx = *taito_scrollx2;
-		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
-		for (i = 0;i < 32;i++)
-			scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	if (*taito_video_enable & 0x80)
-	{
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-		{
-			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
-					spriteram[offs + 3] & 0x3f,
-					2 * ((taito_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
-					spriteram[offs + 2] & 1,0,
-					((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
-
-
-	/* copy the second playfield if it has priority over sprites */
-	if ((*taito_video_enable & 0x20) && (*taito_video_priority & 0x08) != 0)
-	{
-		int scrollx,scrolly[32];
-
-
-		scrollx = *taito_scrollx2;
-		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
-		for (i = 0;i < 32;i++)
-			scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	if (*taito_video_enable & 0x10)
-	{
-		for (offs = videoram_size - 1;offs >= 0;offs--)
-		{
-			if (videoram[offs] != spacechar)	/* don't draw spaces */
-			{
-				int sx,sy;
-
-
-				sx = offs % 32;
-				sy = (8*(offs / 32) - taito_colscrolly1[sx] - *taito_scrolly1) & 0xff;
-				/* horizontal scrolling of the frontmost playfield is not implemented */
-				sx = 8*sx;
-
-				drawgfx(bitmap,Machine->gfx[frontcharset],
-						videoram[offs],
-						taito_colorbank[0] & 0x0f,
-						0,0,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
+	for (i = 0;i < 4;i++)
+		drawplane(draworder[*taito_video_priority & 0x1f][i],bitmap);
 }

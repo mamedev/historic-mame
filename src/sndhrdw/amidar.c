@@ -45,12 +45,28 @@ static int amidar_portB_r(int offset)
 
 
 
+void amidar_sh_irqtrigger_w(int offset,int data)
+{
+	static int last;
+
+
+	if (last == 0 && (data & 0x08) != 0)
+	{
+		/* setting bit 3 low then high triggers IRQ on the sound CPU */
+		cpu_cause_interrupt(1,0xff);
+	}
+
+	last = data & 0x08;
+}
+
+
+
 int amidar_sh_interrupt(void)
 {
 	AY8910_update();
 
-	if (pending_commands) return interrupt();
-	else return ignore_interrupt();
+	/* interrupts don't happen here, the handler is used only to update the 8910 */
+	return ignore_interrupt();
 }
 
 
@@ -61,7 +77,7 @@ static struct AY8910interface interface =
 	10,	/* 10 updates per video frame (good quality) */
 	1789750000,	/* 1.78975 Mhz (? the crystal is 14.318 MHz) */
 	{ 255, 255 },
-	{ sound_command_r },
+	{ soundlatch_r },
 	{ amidar_portB_r },
 	{ 0 },
 	{ 0 }
@@ -71,7 +87,5 @@ static struct AY8910interface interface =
 
 int amidar_sh_start(void)
 {
-	pending_commands = 0;
-
 	return AY8910_sh_start(&interface);
 }

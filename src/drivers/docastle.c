@@ -15,7 +15,7 @@ a000-a008 data from second CPU
 write:
 a000-a008 data for second CPU
 a800      Watchdog reset?
-e000      Trigger NMI on second CPU (?)
+e000      Trigger NMI on second CPU
 
 SECOND CPU:
 0000-3fff ROM
@@ -23,7 +23,10 @@ SECOND CPU:
 
 read:
 a000-a008 data from first CPU
-c001      DSWB (unused?)
+all the following ports can be read both from c00x and from c08x. I don't know
+what's the difference.
+c001      DSWB
+c081      coins per play
 c002      DSWA
           bit 6-7 = lives
 		  bit 5 = upright/cocktail (0 = upright)
@@ -44,18 +47,17 @@ c005	  IN1
 		  bit 2 = unused
           bit 1 = jump player 1(same effect as fire)
           bit 0 = fire player 1
+c085      during the boot sequence, clearing any of bits 0, 1, 3, 4, 5, 7 enters the
+          test mode, while clearing bit 2 or 6 seems to lock the machine.
 c007      IN2
           bit 7 = unused
           bit 6 = unused
           bit 5 = COIN 2
           bit 4 = COIN 1
           bit 3 = PAUSE
-          bit 2 = SERVICE (doesn't work?)
+          bit 2 = SERVICE (keep pressed)
           bit 1 = TEST (doesn't work?)
           bit 0 = TILT
-c081      coins per play
-c085      during the boot sequence, clearing any of bits 0, 1, 3, 4, 5, 7 enters the
-          test mode, while clearing bit 2 or 6 seems to lock the machine.
 
 write:
 a000-a008 data for first CPU
@@ -79,7 +81,6 @@ int docastle_shared1_r(int offset);
 void docastle_shared0_w(int offset,int data);
 void docastle_shared1_w(int offset,int data);
 void docastle_nmitrigger(int offset,int data);
-int docastle_interrupt2(void);
 
 void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int docastle_vh_start(void);
@@ -124,11 +125,15 @@ static struct MemoryReadAddress readmem2[] =
 {
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xc003, 0xc003, input_port_0_r },
+	{ 0xc083, 0xc083, input_port_0_r },
 	{ 0xc005, 0xc005, input_port_1_r },
+	{ 0xc085, 0xc085, input_port_1_r },
 	{ 0xc007, 0xc007, input_port_2_r },
+	{ 0xc087, 0xc087, input_port_2_r },
 	{ 0xc002, 0xc002, input_port_3_r },
+	{ 0xc082, 0xc082, input_port_3_r },
+	{ 0xc001, 0xc001, input_port_4_r },
 	{ 0xc081, 0xc081, input_port_4_r },
-	{ 0xc085, 0xc085, input_port_5_r },
 	{ 0xa000, 0xa008, docastle_shared1_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -159,13 +164,13 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0xff,
-		{ OSD_KEY_CONTROL, 0, 0, OSD_KEY_1,
+		{ OSD_KEY_LCONTROL, 0, 0, OSD_KEY_1,
 				0, 0, 0, OSD_KEY_2 },
 		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN2 */
 		0xff,
-		{ 0, 0, 0, 0, OSD_KEY_3, 0, 0, 0 },
+		{ OSD_KEY_T, OSD_KEY_C, OSD_KEY_5, OSD_KEY_Z, OSD_KEY_4, OSD_KEY_3, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSWA */
@@ -176,11 +181,6 @@ static struct InputPort input_ports[] =
 	{	/* COIN */
 		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* TEST */
-		0xff,
-		{ OSD_KEY_F2, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -295,10 +295,12 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz ??? */
 			2,	/* memory region #2 */
 			readmem2,writemem2,0,0,
-			docastle_interrupt2,16
+			interrupt,8
 		}
 	},
 	60,
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	0,
 
 	/* video hardware */
@@ -384,7 +386,7 @@ ROM_START( dounicorn_rom )
 ROM_END
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -395,13 +397,13 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0x8020],"\x01\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x8068],"\x01\x00\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x8020],1,10*8,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x8020],10*8);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -411,18 +413,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8020],1,10*8,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8020],10*8);
+		osd_fclose(f);
 	}
 }
 

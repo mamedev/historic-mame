@@ -20,6 +20,67 @@ static struct osd_bitmap *backgroundbitmap1,*backgroundbitmap2;
 
 /***************************************************************************
 
+  Convert the color PROMs into a more useable format.
+
+  Zaxxon has one 256x8 palette PROM and one 256x4 PROM which contains the
+  color codes to use for characters on a per row/column basis (groups of
+  of 4 characters in the same row).
+  Congo Bongo has similar hardware, but it has color RAM instead of the
+  lookup PROM.
+
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
+void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+
+	/* all gfx elements use the same palette */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+}
+
+
+
+/***************************************************************************
+
   Start the video hardware emulation.
 
 ***************************************************************************/
@@ -62,7 +123,7 @@ int zaxxon_vh_start(void)
 		sx = 8 * (511 - offs / 32);
 		sy = 8 * (offs % 32);
 
-		drawgfx(prebitmap,Machine->gfx[2],
+		drawgfx(prebitmap,Machine->gfx[1],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
 				Machine->memory_region[2][0x4000 + offs] >> 4,
 				0,0,
@@ -96,7 +157,7 @@ int zaxxon_vh_start(void)
 		sx = 8 * (511 - offs / 32);
 		sy = 8 * (offs % 32);
 
-		drawgfx(prebitmap,Machine->gfx[2],
+		drawgfx(prebitmap,Machine->gfx[1],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
 				16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
 				0,0,
@@ -162,31 +223,6 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 
 
-#if 0
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					videoram[offs] >> 4,
-					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-#endif
-
-
 	/* copy the background */
 	if (*zaxxon_background_enable)
 	{
@@ -213,7 +249,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 			skew -= 2;
 		}
 	}
-	else clearbitmap(bitmap);
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -222,8 +258,9 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (spriteram[offs] != 0xff)
 		{
-			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs+1],spriteram[offs+2],
+				drawgfx(bitmap,Machine->gfx[2],
+					spriteram[offs+1] & 0x3f,
+					spriteram[offs+2] & 0x3f,
 					spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x40,
 					spriteram[offs] - 15,((spriteram[offs+3] + 16) & 0xff) - 32,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -231,25 +268,41 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-#if 0
-	/* copy the frontmost playfield */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-#endif
-
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
+		static unsigned char color_prom[] =
+		{
+			/* U72 - character color lookup table */
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x03,0x06,0x06,0x06,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01,
+			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+			0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01
+		};
 
 
-		sx = 8 * (31 - offs / 32);
-		sy = 8 * (offs % 32);
+		sx = 31 - offs / 32;
+		sy = offs % 32;
 
 		if (videoram[offs] != 0x60)	/* don't draw spaces */
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					videoram[offs] >> 4,
-					0,0,sx,sy,
+					color_prom[sy + 32 * (7-sx/4)],
+					0,0,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

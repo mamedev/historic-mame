@@ -14,7 +14,7 @@
 #ifndef M6502_H
 #define M6502_H
 
-#include "cpuintrf.h"
+#include "memory.h"
 
                                /* Compilation options:       */
 /* #define FAST_RDOP */        /* Separate Op6502()/Rd6502() */
@@ -64,7 +64,8 @@ typedef struct
   pair previousPC;		/* -RAY- */
                                 /* pc before a memory read/write */
 
-  int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
+/*  int IPeriod  NS 970927 */
+ int ICount; /* Set IPeriod to number of CPU cycles */
                       /* between calls to Loop6502()         */
 /*  byte IRequest; */     /* Set to the INT_IRQ when pending IRQ */
 byte pending_irq;	/* NS 970904 */
@@ -113,15 +114,14 @@ word Run6502(register M6502 *R,int cycles);	/* NS 970904 */
 /** required if there is a #define FAST_RDOP.               **/
 /************************************ TO BE WRITTEN BY USER **/
 /*void Wr6502(register word Addr,register byte Value);*/
-#define Wr6502(A,V) (cpu_writemem(A,V))
+/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
+#define Wr6502(A,V) (cpu_writemem16(A,V))
 /*byte Rd6502(register word Addr);*/
-#define Rd6502(A) ((unsigned)cpu_readmem(A))
+#define Rd6502(A) ((unsigned)cpu_readmem16(A))
 /*byte Op6502(register word Addr);*/
-extern byte *RAM;
-extern byte *ROM;
 #define FAST_RDOP
-#define Op6502(A) (RAM[A])
-#define Op6502_1(A) (ROM[A])
+#define Op6502(A) ((unsigned)cpu_readop_arg(A))
+#define Op6502_1(A) ((unsigned)cpu_readop(A))
 
 /** Debug6502() **********************************************/
 /** This function should exist if DEBUG is #defined. When   **/

@@ -18,18 +18,18 @@ ALL CPUS:
 
 read:
 6800-6807 dip switches (only bits 0 and 1 are used - bit 0 is DSW1, bit 1 is DSW2)
-          dsw1:
-            bit 6-7 lives
-            bit 3-5 bonus
-            bit 0-2 coins per play
+	  dsw1:
+	    bit 6-7 lives
+	    bit 3-5 bonus
+	    bit 0-2 coins per play
 		  dsw2: (bootleg version, the original version is slightly different)
 		    bit 7 cocktail/upright (1 = upright)
-            bit 6 ?
-            bit 5 RACK TEST
-            bit 4 pause (0 = paused, 1 = not paused)
-            bit 3 ?
-            bit 2 ?
-            bit 0-1 difficulty
+	    bit 6 ?
+	    bit 5 RACK TEST
+	    bit 4 pause (0 = paused, 1 = not paused)
+	    bit 3 ?
+	    bit 2 ?
+	    bit 0-1 difficulty
 7000-     custom IO chip return values
 7100      custom IO chip status ($10 = command executed)
 
@@ -52,7 +52,8 @@ write:
 7100      custom IO chip command (see machine/galaga.c for more details)
 a000-a001 starfield scroll speed (only bit 0 is significant)
 a002      starfield scroll direction (0 = backwards) (only bit 0 is significant)
-a003-a005 starfield blink?
+a003-a004 starfield blink
+a005      starfield enable
 a007      flip screen
 
 Interrupts:
@@ -105,9 +106,9 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7000, 0x700f, galaga_customio_data_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
-        { 0x02b9, 0x02bd, galaga_hiscore_print_r },
+	{ 0x02b9, 0x02bd, galaga_hiscore_print_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu2[] =
@@ -115,7 +116,7 @@ static struct MemoryReadAddress readmem_cpu2[] =
 	{ 0x8000, 0x9fff, galaga_sharedram_r },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu3[] =
@@ -123,7 +124,7 @@ static struct MemoryReadAddress readmem_cpu3[] =
 	{ 0x8000, 0x9fff, galaga_sharedram_r },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu1[] =
@@ -138,12 +139,12 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x6823, 0x6823, galaga_halt_w },
 	{ 0xa007, 0xa007, galaga_flipscreen_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size },	/* these three are here just to initialize */
-	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },	/* the pointers. The actual writes are */
-	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },	/* handled by galaga_sharedram_w() */
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },	/* dirtybuffer[] handling is not needed because */
-	{ 0x8400, 0x87ff, MWA_RAM, &colorram },	/* characters are redrawn every frame */
-	{ -1 }	/* end of table */
+	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size },       /* these three are here just to initialize */
+	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },      /* the pointers. The actual writes are */
+	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },      /* handled by galaga_sharedram_w() */
+	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size }, /* dirtybuffer[] handling is not needed because */
+	{ 0x8400, 0x87ff, MWA_RAM, &colorram }, /* characters are redrawn every frame */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu2[] =
@@ -151,7 +152,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x8000, 0x9fff, galaga_sharedram_w },
 	{ 0x6821, 0x6821, galaga_interrupt_enable_2_w },
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu3[] =
@@ -160,13 +161,13 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
 	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
 
 INPUT_PORTS_START( galaga_input_ports )
-	PORT_START	/* DSW0 */
+	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
@@ -192,7 +193,7 @@ INPUT_PORTS_START( galaga_input_ports )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0xc0, "5" )
 
-	PORT_START	/* DSW1 */
+	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "1 Player" )
 	PORT_DIPSETTING(    0x01, "2 Players" )
@@ -217,7 +218,7 @@ INPUT_PORTS_START( galaga_input_ports )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 
-	PORT_START	/* FAKE */
+	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
 	/* These fake input ports are read by galaga_customio_data_r() */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -226,20 +227,22 @@ INPUT_PORTS_START( galaga_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* FAKE */
+	PORT_START      /* FAKE */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* FAKE */
+	PORT_START      /* FAKE */
 	/* the button here is used to trigger the sound in the test screen */
-	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,	0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
@@ -257,7 +260,7 @@ INPUT_PORTS_END
 
 /* same as galaga, dip switches are slightly different */
 INPUT_PORTS_START( galaganm_input_ports )
-	PORT_START	/* DSW0 */
+	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
@@ -283,7 +286,7 @@ INPUT_PORTS_START( galaganm_input_ports )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0xc0, "5" )
 
-	PORT_START	/* DSW1 */
+	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -308,7 +311,7 @@ INPUT_PORTS_START( galaganm_input_ports )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 
-	PORT_START	/* FAKE */
+	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
 	/* These fake input ports are read by galaga_customio_data_r() */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -317,20 +320,22 @@ INPUT_PORTS_START( galaganm_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* FAKE */
+	PORT_START      /* FAKE */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* FAKE */
+	PORT_START      /* FAKE */
 	/* the button here is used to trigger the sound in the test screen */
-	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,	0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
@@ -350,26 +355,26 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	       /* 8*8 characters */
-	128,	       /* 128 characters */
+	8,8,           /* 8*8 characters */
+	128,           /* 128 characters */
 	2,             /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },   /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
-	16*8	       /* every char takes 16 bytes */
+	16*8           /* every char takes 16 bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	        /* 16*16 sprites */
-	128,	        /* 128 sprites */
-	2,	        /* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	16,16,          /* 16*16 sprites */
+	128,            /* 128 sprites */
+	2,              /* 2 bits per pixel */
+	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
 			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3 },
-	64*8	/* every sprite takes 64 bytes */
+	64*8    /* every sprite takes 64 bytes */
 };
 
 
@@ -447,33 +452,35 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3125000,	/* 3.125 Mhz */
+			3125000,        /* 3.125 Mhz */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			galaga_interrupt_1,100
 		},
 		{
 			CPU_Z80,
-			3125000,	/* 3.125 Mhz */
-			2,	/* memory region #2 */
+			3125000,        /* 3.125 Mhz */
+			2,      /* memory region #2 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			galaga_interrupt_2,1
 		},
 		{
 			CPU_Z80,
-			3125000,	/* 3.125 Mhz */
-			3,	/* memory region #3 */
+			3125000,        /* 3.125 Mhz */
+			3,      /* memory region #3 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			galaga_interrupt_3,2
 		}
 	},
 	60,
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	galaga_init_machine,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
-	32+64,64*4,	/* 32 for the characters, 64 for the stars */
+	32+64,64*4,     /* 32 for the characters, 64 for the stars */
 	galaga_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -499,78 +506,78 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( galaga_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
 	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
 	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
 	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "2600j_4l.bin", 0x0000, 0x1000, 0x730600f0 )
 	ROM_LOAD( "2800l_4d.bin", 0x1000, 0x1000, 0xffdf703b )
 	ROM_LOAD( "2700k.bin",    0x2000, 0x1000, 0xa83e9cae )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
 	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
 ROM_END
 
 ROM_START( galaganm_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
 	ROM_LOAD( "04k_g02.bin", 0x1000, 0x1000, 0x938e00f8 )
 	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
 	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
 	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
 	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
 	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
 ROM_START( galagabl_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "galagabl.1_1", 0x0000, 0x1000, 0xdf86b6ec )
 	ROM_LOAD( "galagabl.1_2", 0x1000, 0x1000, 0x6bb57bbf )
 	ROM_LOAD( "galagabl.1_3", 0x2000, 0x1000, 0x8fe52561 )
 	ROM_LOAD( "galagabl.1_4", 0x3000, 0x1000, 0xca530147 )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galagabl.1_8", 0x0000, 0x1000, 0x730600f0 )
 	ROM_LOAD( "galagabl.1_a", 0x1000, 0x1000, 0xffdf703b )
 	ROM_LOAD( "galagabl.1_9", 0x2000, 0x1000, 0xa83e9cae )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "galagabl.1_5", 0x0000, 0x1000, 0x6079fa7d )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
 	ROM_LOAD( "galagabl.1_7", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
 ROM_START( gallag_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gallag.1", 0x0000, 0x1000, 0xdf86b6ec )
 	ROM_LOAD( "gallag.2", 0x1000, 0x1000, 0x7ca470a4 )
 	ROM_LOAD( "gallag.3", 0x2000, 0x1000, 0x8fe52561 )
 	ROM_LOAD( "gallag.4", 0x3000, 0x1000, 0xca530147 )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gallag.8", 0x0000, 0x1000, 0x0c670ff9 )
 	ROM_LOAD( "gallag.a", 0x1000, 0x1000, 0xffdf703b )
 	ROM_LOAD( "gallag.9", 0x2000, 0x1000, 0xa83e9cae )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "gallag.5", 0x0000, 0x1000, 0x6079fa7d )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
 	ROM_LOAD( "gallag.7", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
@@ -579,14 +586,14 @@ ROM_END
 static const char *galaga_sample_names[] =
 {
 	"BANG.SAM",
-	0	/* end of array */
+	0       /* end of array */
 };
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
@@ -595,13 +602,19 @@ static int hiload(const char *name)
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x8a4c],"\x18\x6e",2) == 0)
    {
-      if ((f = fopen(name,"rb")) != 0)
+      if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
       {
-         fread(&RAM[0x8A20],1,45,f);
-         fclose(f);
-         galaga_hiscoreloaded = 1;
+	 osd_fread(f,&RAM[0x8A20],45);
+	 osd_fclose(f);
+	 /* V.V: copy top score to video RAM */
+	 RAM[0x83ED]=RAM[0x8A20];
+	 RAM[0x83EE]=RAM[0x8A21];
+	 RAM[0x83EF]=RAM[0x8A22];
+	 RAM[0x83F0]=RAM[0x8A23];
+	 RAM[0x83F1]=RAM[0x8A24];
+	 RAM[0x83F2]=RAM[0x8A25];
+	 galaga_hiscoreloaded = 1;
       }
-
       return 1;
    }
    else
@@ -609,18 +622,18 @@ static int hiload(const char *name)
 }
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-   FILE *f;
+   void *f;
 
    /* get RAM pointer (this game is multiCPU, we can't assume the global */
    /* RAM pointer is pointing to the right place) */
    unsigned char *RAM = Machine->memory_region[0];
 
-   if ((f = fopen(name,"wb")) != 0)
+   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
-      fwrite(&RAM[0x8A20],1,45,f);
-      fclose(f);
+      osd_fwrite(f,&RAM[0x8A20],45);
+      osd_fclose(f);
    }
 }
 
@@ -629,7 +642,7 @@ struct GameDriver galaga_driver =
 {
 	"Galaga (Midway)",
 	"galaga",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	&machine_driver,
 
 	galaga_rom,
@@ -648,7 +661,7 @@ struct GameDriver galaganm_driver =
 {
 	"Galaga (Namco)",
 	"galaganm",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	&machine_driver,
 
 	galaganm_rom,
@@ -667,7 +680,7 @@ struct GameDriver galagabl_driver =
 {
 	"Galaga (bootleg)",
 	"galagabl",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	&machine_driver,
 
 	galagabl_rom,
@@ -686,7 +699,7 @@ struct GameDriver gallag_driver =
 {
 	"Gallag (bootleg Galaga)",
 	"gallag",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	&machine_driver,
 
 	gallag_rom,

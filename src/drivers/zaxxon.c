@@ -48,6 +48,7 @@ extern unsigned char *zaxxon_background_enable;
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int  zaxxon_vh_start(void);
 void zaxxon_vh_stop(void);
+void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -203,8 +204,19 @@ static struct GfxLayout charlayout1 =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	3,	/* 3 bits per pixel (actually 2, the third plane is 0) */
+	{ 2*256*8*8, 256*8*8, 0 },	/* the bitplanes are separated */
+	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+
+static struct GfxLayout charlayout2 =
+{
+	8,8,	/* 8*8 characters */
+	1024,	/* 1024 characters */
+	3,	/* 3 bits per pixel */
+	{ 2*1024*8*8, 1024*8*8, 0 },	/* the bitplanes are separated */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -215,7 +227,7 @@ static struct GfxLayout spritelayout =
 	32,32,	/* 32*32 sprites */
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
+	{ 2*64*128*8, 64*128*8, 0 },	/* the bitplanes are separated */
 	{ 103*8, 102*8, 101*8, 100*8, 99*8, 98*8, 97*8, 96*8,
 			71*8, 70*8, 69*8, 68*8, 67*8, 66*8, 65*8, 64*8,
 			39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
@@ -227,24 +239,13 @@ static struct GfxLayout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout charlayout2 =
-{
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,          0, 16 },	/* characters */
-	{ 1, 0x1000, &spritelayout,      16*4, 32 },	/* sprites */
-	{ 1, 0x7000, &charlayout2,  16*4+32*8, 32 },	/* background tiles */
+	{ 1, 0x0000, &charlayout1,   0, 32 },	/* characters */
+	{ 1, 0x1800, &charlayout2,   0, 32 },	/* background tiles */
+	{ 1, 0x7800, &spritelayout,  0, 32 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -325,58 +326,22 @@ enum {BLACK,RED,BROWN,PINK,WHITE,CYAN,DKCYAN,DKORANGE,
 
 static unsigned char colortable[] =
 {
-	/* chars */
-	0,BLACK,BLACK,WHITE,          /* 0-9 */
-	0,BLACK,BLACK,WHITE,          /* A-O */
-	0,BLACK,BLACK,WHITE,          /* P-Z */
-	0,BLACK,BLACK,WHITE,          /* = */
-	0,0,0,0,
-	0,0,0,0,
-	0,0,0,0,
-	0,0,0,0,
-	0,BLACK,YELLOW,BLACK,         /* Round Flag - Stick */
-	0,BLACK,YELLOW,RED,           /* Round Flag - Flag */
-	0,BLACK,BACK5,BLACK,
-	0,0,0,0,
-	0,0,0,0,
-	0,BLACK,BACK5,RED,            /* Altitude Bar - Foreground */
-	0,BLACK,BACK5,BLACK,          /* Altitude Bar - Background */
-	0,BLACK,YELLOW,RED,           /* Fuel Bar & Remaining Ships */
-
- /*       0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,
-	0,BLACK,WHITE,WHITE,    */
-
-	/* sprites */
-	0,YELLOW3,YELLOW1,YELLOW2,YELLOW2,YELLOW1,YELLOW5,DKORANGE,   /* Explosion Space */
-	0,RED,WHITE,CYAN,YELLOW,BLUE,GREEN,DKORANGE,                  /* Explosion plane 1 */
-	0,DKRED,YELLOW,CYAN,RED,BLUE,GREEN,DKORANGE,                  /* Explosion plane 2 */
-	0,RED,DKRED,RED,DKORANGE,RED,DKRED,DKRED2,                    /* Explosion Rocket 1 and NMI bullet in space (low level)*/
-	0,BLACK,BLACK,RED,DKORANGE,RED,DKRED,DKRED2,                /* Player Bullet and NMI in space */
-	0,0,0,0,0,0,0,0,
-	0,RED,RED,RED,RED,RED,RED,RED,                            /* NMI Bullet */
+	0,BLACK,BACK5,YELLOW2,YELLOW2,YELLOW1,YELLOW5,DKORANGE,   /* Explosion Space */
+	0,BLACK,BACK5,CYAN,YELLOW,BLUE,GREEN,DKORANGE,                  /* Explosion plane 1 */
+	0,BLACK,BACK5,CYAN,RED,BLUE,GREEN,DKORANGE,                  /* Explosion plane 2 */
+	0,BLACK,BACK5,RED,DKORANGE,RED,DKRED,DKRED2,                    /* Explosion Rocket 1 and NMI bullet in space (low level)*/
+	0,BLACK,BACK5,RED,DKORANGE,RED,DKRED,DKRED2,                /* Player Bullet and NMI in space */
+	0,0,2,3,0,0,0,0,
+	0,BLACK,YELLOW,RED,RED,RED,RED,RED,                            /* NMI Bullet */
 	0,BLUE2,RED,BACK5,BACK4,BLUE1,BLUE3,BLACK,                /* Satellite 1/2 */
 	0,DKRED,BLACK,DKCYAN,RED,RED,RED,RED,                     /* Plane When Hit and Cannon bullet */
 	0,BLACK,GRAY5,GRAY1,GRAY2,GRAY3,GRAY4,GRAY6,              /* Cannon 2 */
 	0,WHITE,BACK3,BACK5,BACK6,BACK9,DKORANGE,BLACK,           /* NMI Plane 1 (and Standing planes) */
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,BLACK,WHITE,BLACK,BLACK,BLACK,BLACK,BLACK,              /* Cross-Target */
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
+	0,BACK2, BACK7, BLACK, BLACK, BACK4,BACK8,BLACK,              /* BG-Zaxxon Arena */
+	0,DKCYAN,LTBLUE,BLUE,  DKBLUE,BLACK,WHITE,CYAN,             /* BG-Space BG */
+	0,BLACK, WHITE, BACK2, BACK1, BACK6,BACK5,BACK4,              /* BG-City BG 2 */
+	0,BACK6, BACK5, BACK3, BACK2, BACK1,BACK4,BLACK,              /* BG-City BG 1 */
+	0,BACK5, BACK6, YELLOW,WHITE, BACK4,BLACK,BACK2,             /* BG-Buildings */
 	0,CUSTOM1,RED,BACK5,CUSTOM3,CUSTOM4,BLACK,WHITE,          /* Plane and Force field */
 	0,YELLOW1,YELLOW2,YELLOW3,YELLOW4,YELLOW5,BLACK,BLACK,    /* NMI Plane 2 */
 	0,BLACK,GREEN3,RED,CUSTOM3,GREEN1,GREEN2,GREEN2,          /* Cannon 1 */
@@ -388,46 +353,36 @@ static unsigned char colortable[] =
 	0,WHITE,PINK,DKORANGE,CYAN,RED,DKRED,BLACK,               /* Zaxxon 2 (RED) */
 	0,RED,DKRED,RED,DKORANGE,YELLOW,LTORANGE,LTORANGE,        /* Rocket 2 */
 	0,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,              /* Shadow of Plane */
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,BROWN,DKORANGE,DKRED2,RED,DKRED,DKRED2,BLACK,           /* Zaxxon Dead (more RED) */
-	0,0,0,0,0,0,0,0,
+	0,DKRED2,BLACK, RED,   BLACK, DKRED3,BLACK, BLACK,              /* BG-Zaxxon Arena */
+	0,DKCYAN,BLUE,  WHITE, DKBLUE,DKRED2,LTBLUE,CYAN,            /* BG-Space BG */
+	0,BLACK, DKRED2,BACK4, DKRED3,WHITE, WHITE, BACK10,           /* BG-City BG 2 */
+	0,WHITE, BACK3, BACK10,DKRED2,DKRED3,BACK4, BLACK,           /* Zaxxon Dead + BG-City BG 1 */
+	0,BACK4, YELLOW,BLACK, WHITE, BACK10,WHITE, DKRED2            /* BG-Buildings */
+};
 
-	/* background tiles (normal) */
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,BLACK,BACK7,BACK8,BACK2,BACK4,BLACK,BLACK,              /* Zaxxon Arena */
-	0,DKBLUE,LTBLUE,WHITE,DKCYAN,BLACK,BLUE,CYAN,             /* Space BG */
-	0,BACK1,WHITE,BACK5,BLACK,BACK6,BACK2,BACK4,              /* City BG 2 */
-	0,BACK2,BACK5,BACK4,BACK6,BACK1,BACK3,BLACK,              /* City BG 1 */
-	0,WHITE,BACK6,BLACK,BACK5,BACK4,YELLOW,BACK2,             /* Buildings */
-	/* background tiles (during death sequence) */
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,BLACK,BLACK,RED,DKRED2,DKRED3,BLACK,BLACK,              /* Zaxxon Arena */
-	0,DKBLUE,LTBLUE,WHITE,DKCYAN,DKRED2,BLUE,CYAN,            /* Space BG */
-	0,DKRED3,WHITE,BACK4,BLACK,WHITE,DKRED2,BACK10,           /* City BG 2 */
-	0,DKRED2,BACK4,BACK10,WHITE,DKRED3,BACK3,BLACK,           /* City BG 1 */
-	0,WHITE,WHITE,BLACK,BACK4,BACK10,YELLOW,DKRED2            /* Buildings */
+
+
+static unsigned char color_prom[] =
+{
+	/* U98 - palette */
+	/* many of the colors coming out from this don't seem to be right. Either this */
+	/* dump isn't good, or I've done something wrong in the decoding. */
+	0x00,0x00,0xF0,0xF0,0x36,0x26,0x00,0xFF,0x00,0x00,0xF0,0xF6,0x26,0x36,0x00,0xFF,
+	0x00,0x00,0xF0,0x36,0x00,0x06,0x00,0xFF,0x00,0x00,0xF0,0x06,0x06,0x00,0x00,0x00,
+	0x00,0x00,0xF0,0x38,0x06,0x06,0x00,0x00,0x00,0x00,0x36,0xC6,0x46,0x85,0x00,0xFF,
+	0x00,0x00,0x36,0x06,0x06,0x06,0x06,0x00,0x00,0xC0,0xDB,0xF6,0xF0,0xE0,0x80,0x06,
+	0x00,0x04,0x02,0xF0,0x06,0x06,0x04,0x02,0x00,0x00,0x9B,0xA3,0xA4,0xEC,0xA3,0xA4,
+	0x00,0xF0,0xE0,0x36,0x26,0x06,0xFF,0x00,0x00,0x18,0x85,0xB4,0xAC,0x14,0x84,0xE0,
+	0x00,0x24,0x1B,0x82,0xE0,0x36,0x12,0x80,0x00,0x00,0xF6,0x18,0x40,0xB4,0xAC,0xA4,
+	0x00,0xB4,0xAC,0xE0,0x18,0x40,0xA4,0x00,0x00,0xAC,0xB4,0x36,0xF6,0xA4,0x00,0x18,
+	0x00,0xC6,0x06,0xF0,0x36,0x26,0x04,0x34,0x00,0xF6,0xDB,0xE0,0x06,0x26,0x03,0x00,
+	0x00,0x00,0x20,0x06,0x26,0x34,0x32,0x30,0x00,0xF6,0x00,0xB4,0xAC,0x52,0xA5,0x06,
+	0x00,0xA4,0x00,0x05,0x04,0x16,0x26,0xF6,0x00,0xA3,0x36,0x34,0x30,0xA4,0x16,0x20,
+	0x00,0x26,0x85,0xF6,0xD2,0xC0,0x80,0x82,0x00,0x26,0x85,0xF6,0x30,0x28,0x20,0x18,
+	0x00,0x26,0x85,0xF6,0x07,0x06,0x05,0x04,0x00,0xA3,0x26,0x06,0x04,0xA4,0x16,0x5D,
+	0x00,0xF6,0x36,0x06,0x04,0x26,0x03,0x00,0x00,0x16,0x00,0xEE,0xE6,0xC6,0x5D,0x00,
+	0x00,0x07,0x06,0x04,0xC4,0x85,0x05,0x05,0x00,0x00,0x36,0x16,0x05,0xEE,0xE6,0xC6,
+	0x00,0xEE,0xE6,0xC4,0x16,0x05,0xC6,0x00,0x00,0xE6,0xEE,0x85,0x36,0xC6,0x00,0x16
 };
 
 
@@ -445,13 +400,14 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	256,32*8,
+	zaxxon_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -481,15 +437,16 @@ ROM_START( zaxxon_rom )
 	ROM_LOAD( "zaxxon.2", 0x2000, 0x2000, 0x37df69f1 )
 	ROM_LOAD( "zaxxon.1", 0x4000, 0x1000, 0xba9f739d )
 
-	ROM_REGION(0xd000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zaxxon.15", 0x0000, 0x0800, 0x77cd19bf )
-	ROM_LOAD( "zaxxon.14", 0x0800, 0x0800, 0xec944b06 )
-	ROM_LOAD( "zaxxon.13", 0x1000, 0x2000, 0xe2f87f5c )
-	ROM_LOAD( "zaxxon.12", 0x3000, 0x2000, 0x4b4f1449 )
-	ROM_LOAD( "zaxxon.11", 0x5000, 0x2000, 0x666b4c71 )
-	ROM_LOAD( "zaxxon.6",  0x7000, 0x2000, 0x27b35545 )
-	ROM_LOAD( "zaxxon.5",  0x9000, 0x2000, 0x1b73959d )
-	ROM_LOAD( "zaxxon.4",  0xb000, 0x2000, 0x3deedf22 )
+	ROM_REGION(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zaxxon.14", 0x0000, 0x0800, 0xec944b06 )	/* characters */
+	ROM_LOAD( "zaxxon.15", 0x0800, 0x0800, 0x77cd19bf )
+	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "zaxxon.6",  0x1800, 0x2000, 0x27b35545 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5",  0x3800, 0x2000, 0x1b73959d )
+	ROM_LOAD( "zaxxon.4",  0x5800, 0x2000, 0x3deedf22 )
+	ROM_LOAD( "zaxxon.11", 0x7800, 0x2000, 0x666b4c71 )	/* sprites */
+	ROM_LOAD( "zaxxon.12", 0x9800, 0x2000, 0x4b4f1449 )
+	ROM_LOAD( "zaxxon.13", 0xb800, 0x2000, 0xe2f87f5c )
 
 	ROM_REGION(0x8000)	/* background graphics */
 	ROM_LOAD( "zaxxon.8",  0x0000, 0x2000, 0x974ee47c )
@@ -500,22 +457,22 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6110],"\x00\x89\x00",3) == 0 &&
 			memcmp(&RAM[0x6179],"\x00\x37\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x6100],1,21*6,f);
+			osd_fread(f,&RAM[0x6100],21*6);
 			RAM[0x6038] = RAM[0x6110];
 			RAM[0x6039] = RAM[0x6111];
 			RAM[0x603a] = RAM[0x6112];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -525,19 +482,19 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
 	/* make sure that the high score table is still valid (entering the */
 	/* test mode corrupts it) */
 	if (memcmp(&RAM[0x6110],"\x00\x00\x00",3) != 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"wb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 		{
-			fwrite(&RAM[0x6100],1,21*6,f);
-			fclose(f);
+			osd_fwrite(f,&RAM[0x6100],21*6);
+			osd_fclose(f);
 		}
 	}
 }
@@ -548,7 +505,7 @@ struct GameDriver zaxxon_driver =
 {
 	"Zaxxon",
 	"zaxxon",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nMarc Vergoossen (colors)\nMarc LaFontaine (colors)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	zaxxon_rom,
@@ -557,7 +514,7 @@ struct GameDriver zaxxon_driver =
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
-	0, palette, colortable,
+	color_prom, palette, colortable,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

@@ -15,15 +15,19 @@ See drivers\starwars.c for notes
 #include "driver.h"
 #include "cpuintrf.h"
 #include "swmathbx.h"
-#include "vidhrdw/vector.h"
+#include "vidhrdw/avgdvg.h"
 
-static int bankaddress = 0x10000; /* base address of banked ROM */
 
 /*   If 1 then log functions called */
 #define MACHDEBUG 0
 #define SNDDEBUG 0
 
-static unsigned char ADC_VAL=0;
+/* control select values for ADC_R */
+#define kPitch	0
+#define kYaw	1
+#define kThrust	2
+static unsigned char control_num = kPitch;
+
 
 /**********************************************************/
 /**********************************************************/
@@ -49,11 +53,13 @@ void math_ram_w(int offset, int data)
 
 /********************************************************/
 
-/* Read from ROM 0. Use bankaddress as base address */
+/* Read from ROM 0. Use bankaddress as base address
 int banked_rom_r(int offset)
    {
    return RAM[bankaddress + offset];
-   }
+   }*/
+
+#if 0
 /********************************************************/
 int input_bank_0_r(int offset)
    {
@@ -65,23 +71,26 @@ int input_bank_0_r(int offset)
    #endif
    return x;
    }
+#endif
+
 /********************************************************/
 int input_bank_1_r(int offset)
    {
    int x;
    x=input_port_1_r(0); // Read memory mapped port 2
+
+#if 0
    x=x&0x34; /* Clear out bit 3 (SPARE 2), and 0 and 1 (UNUSED) */
              /* MATH_RUN (bit 7) set to 0 */
-#if 0
    x=x|(0x40);  /* Set bit 6 to 1 (VGHALT) */
 #endif
 
 /* Kludge to enable Starwars Mathbox Self-test                  */
 /* The mathbox looks like it's running, from this address... :) */
    if (cpu_getpc() == 0xf978)
-        x|=0x80; 
+        x|=0x80;
 
-   if (vg_done(cpu_gettotalcycles()))
+   if (avgdvg_done())
 	x|=0x40;
    else
 	x&=~0x40;
@@ -91,40 +100,21 @@ int input_bank_1_r(int offset)
    return x;
    }
 /*********************************************************/
-
-/* Dip switch bank zero */
-int opt_0_r(int offset)
-   {
-   int x;
-   x=input_port_2_r(0); /* Read DIP switch bank 0 */
-   #if(MACHDEBUG==1)
-   printf("(%x)opt_0_r   (Returning: %xh\n", cpu_getpc(), x);
-   #endif
-   return x;
-   }
-
 /********************************************************/
+int control_r (int offset) {
 
-/* Dip switch bank 1 */
-int opt_1_r(int offset)
-   {
-   int x;
-   x=input_port_3_r(0); /* Read DIP switch bank 1 */
-   #if(MACHDEBUG==1)
-   printf("(%x)opt_1_r   (Returning: %xh\n", cpu_getpc(), x);
-   #endif
-   return x;
-   }
+	if (control_num == kPitch)
+		return readinputport (4);
+	else if (control_num == kYaw)
+		return readinputport (5);
+	/* default to unused thrust */
+	else return 0;
+	}
 
-/********************************************************/
-int adc_r(int offset)
-   {
-   #if(MACHDEBUG==1)
-   printf("adc_r [Returning %d]\n",ADC_VAL);
-   #endif
-   return ADC_VAL;
-   }
+void control_w (int offset, int data) {
 
+	control_num = offset;
+	}
 
 /************************************************************/
 /************************************************************/
@@ -156,10 +146,10 @@ void led2(int offset, int data)
 /* Switch bank of ROM 0 */
 void mpage(int offset, int data) /* MSB toggles bank */
 {
-if ((data & 0x80)==0)
-    bankaddress = 0x10000; /* First half of ROM */
-else
-    bankaddress = 0x12000; /* Second half of ROM */
+	if ((data & 0x80)==0)
+		cpu_setbank (1, &RAM[0x6000])
+	else
+		cpu_setbank (1, &RAM[0x10000]);
 
    #if(MACHDEBUG==1)
    printf("mpage [Page %d]\n",((data&0x80)>>7) );
@@ -188,89 +178,10 @@ void nstore(int offset, int data)
    #endif
    }
 
-/********************************************************/
-/********************************************************/
-
-void adcstart0(int offset, int data) /* PITCH control */
-{
-        static int PITCH=127;
-
-      int delta=0;
-        #define KEYMOVE 2
-
-/* 	keyboard & joystick support	 */
-        if(osd_key_pressed(OSD_KEY_DOWN) || osd_joy_pressed(OSD_JOY_UP))
-                if(PITCH-KEYMOVE>=0) PITCH -= KEYMOVE;
-        if(osd_key_pressed(OSD_KEY_UP) || osd_joy_pressed(OSD_JOY_DOWN))
-                if(PITCH+KEYMOVE<=255) PITCH += KEYMOVE;
-
-/* 	mouse support */
-        delta = readtrakport(1);
-
-        if( ((PITCH-delta)>=0) & ((PITCH-delta)<=255)) PITCH -= delta;
-
-ADC_VAL=PITCH;
-}
-
-/********************************************************/
-
-void adcstart1(int offset, int data) // YAW control
-{
-        static int YAW=127;
-
-        #define KEYMOVE 2
-
-       int delta=0;
-
-/* 	keyboard & joystick support	 */
-        if(osd_key_pressed(OSD_KEY_RIGHT) || osd_joy_pressed(OSD_JOY_RIGHT))
-                if(YAW+KEYMOVE<=255) YAW += KEYMOVE;
-        if(osd_key_pressed(OSD_KEY_LEFT) || osd_joy_pressed(OSD_JOY_LEFT))
-                if(YAW-KEYMOVE>=0) YAW -= KEYMOVE;
-
-/* 	mouse support */
-        delta = readtrakport(0);
-
-		if( ((YAW+delta)>=0) & ((YAW+delta)<=255)) YAW += delta;
-
-
-ADC_VAL=YAW;
-}
-
-/********************************************************/
-void adcstart2(int offset, int data)
-   {
-/* Unfortunately, the game doesn't ever seem to look at this
-   so despite the schematic labelling, there isn't a thrust
-   control after all. Oh well. */
-
-   static unsigned int THRUST=0;
-   #if(MACHDEBUG==1)
-   printf("adcstart2\n");
-   #endif
-   ADC_VAL=THRUST;
-   }
-/********************************************************/
-
-int starwars_trakball_r(int data)
-{
-    #define MAXMOVE 8
-
-	data = data >> 1;
-	if(data > MAXMOVE)
-		data = MAXMOVE;
-	else if(data < -MAXMOVE)
-		data = -MAXMOVE;
-	return data;
-}
-
 int starwars_interrupt(void)
-   {
-#if(VIDEBUG==1)
-printf("starwars_interrupt\n");
-#endif
-/*   vblank=1;  */
-   return interrupt();
-   }
-
+{
+	if (cpu_getiloops() == 5)
+		avgdvg_clr_busy();
+	return interrupt();
+}
 

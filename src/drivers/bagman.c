@@ -13,7 +13,7 @@ c000-ffff ROM (Super Bagman only)
 memory mapped ports:
 
 read:
-a000      random number generator?
+a000 random number generator? No, PAL rather - this is why guards get stuck...
 a800      ? (read only in one place, not used)
 b000      DSW
 b800      watchdog reset?
@@ -52,6 +52,7 @@ int bagman_rand_r(int offset);
 extern unsigned char *bagman_video_enable;
 void bagman_flipscreen_w(int offset,int data);
 void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bagman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
 
 int bagman_sh_start(void);
 
@@ -243,79 +244,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
-static unsigned char palette[] =
+static unsigned char bagman_color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0x49,0x00,0x00,	/* DKRED1 */
-	0x92,0x00,0x00,	/* DKRED2 */
-	0xff,0x00,0x00,	/* RED */
-	0x00,0x24,0x00,	/* DKGRN1 */
-	0x92,0x24,0x00,	/* DKBRN1 */
-	0xb6,0x24,0x00,	/* DKBRN2 */
-	0xff,0x24,0x00,	/* LTRED1 */
-	0xdb,0x49,0x00,	/* BROWN */
-	0x00,0x6c,0x00,	/* DKGRN2 */
-	0xff,0x6c,0x00,	/* LTORG1 */
-	0x00,0x92,0x00,	/* DKGRN3 */
-	0x92,0x92,0x00,	/* DKYEL */
-	0xdb,0x92,0x00,	/* DKORG */
-	0xff,0x92,0x00,	/* ORANGE */
-	0x00,0xdb,0x00,	/* GREEN1 */
-	0x6d,0xdb,0x00,	/* LTGRN1 */
-	0x00,0xff,0x00,	/* GREEN2 */
-	0x49,0xff,0x00,	/* LTGRN2 */
-	0xff,0xff,0x00,	/* YELLOW */
-	0x00,0x00,0x55,	/* DKBLU1 */
-	0xff,0x00,0x55,	/* DKPNK1 */
-	0xff,0x24,0x55,	/* DKPNK2 */
-	0xff,0x6d,0x55,	/* LTRED2 */
-	0xdb,0x92,0x55,	/* LTBRN */
-	0xff,0x92,0x55,	/* LTORG2 */
-	0x24,0xff,0x55,	/* LTGRN3 */
-	0x49,0xff,0x55,	/* LTGRN4 */
-	0xff,0xff,0x55,	/* LTYEL */
-	0x00,0x00,0xaa,	/* DKBLU2 */
-	0xff,0x00,0xaa,	/* PINK1 */
-	0x00,0x24,0xaa,	/* DKBLU3 */
-	0xff,0x24,0xaa,	/* PINK2 */
-	0xdb,0xdb,0xaa,	/* CREAM */
-	0xff,0xdb,0xaa,	/* LTORG3 */
-	0x00,0x00,0xff,	/* BLUE */
-	0xdb,0x00,0xff,	/* PURPLE */
-	0x00,0xb6,0xff,	/* LTBLU1 */
-	0x92,0xdb,0xff,	/* LTBLU2 */
-	0xdb,0xdb,0xff,	/* WHITE1 */
-	0xff,0xff,0xff	/* WHITE2 */
+	0x00,0x07,0x3F,0xC0,0x00,0x07,0x3F,0xC0,0x00,0x07,0x38,0xEA,0x00,0xFB,0xC7,0x3E,
+	0x00,0x07,0xEA,0xFF,0x00,0x0F,0x8F,0xFA,0x00,0x07,0x3F,0xFF,0x00,0x2F,0xF7,0xA7,
+	0x00,0x2F,0x4F,0xFF,0x00,0x07,0x3F,0xC0,0x00,0x17,0x27,0xE8,0x00,0x07,0x1F,0xFF,
+	0x00,0x27,0xEA,0xFF,0x00,0x3D,0xFF,0xE8,0x00,0x38,0x38,0x38,0x00,0x26,0x1D,0xFD
 };
-
-enum {BLACK,DKRED1,DKRED2,RED,DKGRN1,DKBRN1,DKBRN2,LTRED1,BROWN,DKGRN2,
-	LTORG1,DKGRN3,DKYEL,DKORG,ORANGE,GREEN1,LTGRN1,GREEN2,LTGRN2,YELLOW,
-	DKBLU1,DKPNK1,DKPNK2,LTRED2,LTBRN,LTORG2,LTGRN3,LTGRN4,LTYEL,DKBLU2,
-	PINK1,DKBLU3,PINK2,CREAM,LTORG3,BLUE,PURPLE,LTBLU1,LTBLU2,WHITE1,
-	WHITE2};
-
-static unsigned char colortable[] =
-{
-	/* characters and sprites */
-	BLACK,BLUE,LTYEL,LTBLU1,	/* an axe, picked bag */
-	BLACK,BLUE,LTYEL,LTBLU1,	/* a bag */
-	BLACK,WHITE1,DKGRN3,BLUE,	/* cactus */
-	BLACK,RED,BLUE,LTBLU1,		/*  */
-	BLACK,RED,BLUE,WHITE1,		/* a bomb, the train */
-	BLACK,BLUE,WHITE1,LTBLU1,	/* picked gun */
-	BLACK,BLUE,WHITE1,LTBLU1,	/* logo, gun */
-	BLACK,LTYEL,BROWN,WHITE1,	/*  */
-	BLACK,LTBRN,BROWN,CREAM,	/*  */
-	BLACK,RED,LTRED1,YELLOW,	/*  */
-	BLACK,LTBRN,CREAM,LTRED1,	/*  */
-	BLACK,LTYEL,BLUE,BROWN,		/*  */
-	BLACK,LTBRN,BLUE,CREAM,	/* policeman, big bagman (game front) */
-	BLACK,YELLOW,BLUE,RED,		/*  */
-	BLACK,DKGRN3,LTBLU1,BROWN,	/*  */
-	BLACK,BROWN,DKBRN1,LTBLU1,	/* ground, the stairs, the drabina */
-};
-
 
 
 static struct MachineDriver machine_driver =
@@ -331,13 +266,14 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	64,64,
+	bagman_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -409,11 +345,56 @@ ROM_START( sbagman_rom )
 	ROM_LOAD( "sbag_9t.bin", 0x1000, 0x1000, 0x7ee35909 )
 ROM_END
 
+
+
+static int hiload(void)
+{
+
+	/* wait for "HIGH SCORE" to be on screen */
+        if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        /* The game only allows to enter three letters but
+                         * we could enter until thirteen by accesing to memory
+                         * directly. In Super Bagman the default high-score
+                         * names have more than three letters */
+                        osd_fread(f,&RAM[0x6217],5*16);
+
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+
+                osd_fwrite(f,&RAM[0x6217],5*16);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver bagman_driver =
 {
 	"Bagman",
 	"bagman",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (colors)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (colors)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
 	&machine_driver,
 
 	bagman_rom,
@@ -422,10 +403,10 @@ struct GameDriver bagman_driver =
 
 	0/*TBR*/,bagman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
-	0, palette, colortable,
+	bagman_color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver sbagman_driver =
@@ -441,8 +422,8 @@ struct GameDriver sbagman_driver =
 
 	0/*TBR*/,sbagman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
-	0, palette, colortable,
+	bagman_color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	hiload, hisave
 };

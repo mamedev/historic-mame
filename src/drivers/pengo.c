@@ -200,8 +200,8 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
+	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
+			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3, 0, 1, 2, 3 },
 	64*8	/* every sprite takes 64 bytes */
@@ -292,6 +292,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -536,22 +537,22 @@ static void penta_decode(void)
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8840],"\xd0\x07",2) == 0 &&
 			memcmp(&RAM[0x8858],"\xd0\x07",2) == 0 &&
 			memcmp(&RAM[0x880c],"\xd0\x07",2) == 0)	/* high score */
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x8840],1,6*5,f);
+			osd_fread(f,&RAM[0x8840],6*5);
 			RAM[0x880c] = RAM[0x8858];
 			RAM[0x880d] = RAM[0x8859];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -561,15 +562,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8840],1,6*5,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8840],6*5);
+		osd_fclose(f);
 	}
 }
 

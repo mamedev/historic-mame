@@ -133,7 +133,7 @@ void bosco_customio_w_1(int offset,int data)
 
 		case 0x64:
 			Z80_GetRegs(&regs);
-			switch(cpu_readmem(regs.HL2.D))
+			switch(cpu_readmem16(regs.HL2.D))	/* ASG 971005 */
 			{
 				case 0x01:	/*	??	*/
 					break;
@@ -200,7 +200,7 @@ void bosco_customio_w_1(int offset,int data)
 				default:
 					if (errorlog)
 						fprintf(errorlog,"unknown score: %02x\n",
-								cpu_readmem(regs.HL2.D));
+								cpu_readmem16(regs.HL2.D));	/* ASG 971005 */
 					break;
 			}
 			break;
@@ -285,12 +285,12 @@ void bosco_customio_w_1(int offset,int data)
 
 				if (mode)	/* switch mode */
 /* TODO: investigate what each bit does. bit 7 is the service switch */
-					cpu_writemem(0x7000,0x80);
+					cpu_writemem16(0x7000,0x80);	/* ASG 971005 */
 				else	/* credits mode: return number of credits in BCD format */
-					cpu_writemem(0x7000,(credits / 10) * 16 + credits % 10);
+					cpu_writemem16(0x7000,(credits / 10) * 16 + credits % 10);	/* ASG 971005 */
 
-				cpu_writemem(0x7000 + 1,dir);
-				cpu_writemem(0x7000 + 2,dir);
+				cpu_writemem16(0x7000 + 1,dir);	/* ASG 971005 */
+				cpu_writemem16(0x7000 + 2,dir);	/* ASG 971005 */
 			}
 			break;
 
@@ -309,27 +309,27 @@ void bosco_customio_w_1(int offset,int data)
 				tmp0 -= tmp2 * 1000000;
 				if (Score >= HiScore)
 				{
-					cpu_writemem(0x7000, ((tmp1 * 16) + tmp2) | 0x80);
+					cpu_writemem16(0x7000, ((tmp1 * 16) + tmp2) | 0x80);	/* ASG 971005 */
 					HiScore = Score;
 				}
 				else
 				{
-					cpu_writemem(0x7000, (tmp1 * 16) + tmp2);
+					cpu_writemem16(0x7000, (tmp1 * 16) + tmp2);	/* ASG 971005 */
 				}
 				tmp1 = tmp0 / 100000;
 				tmp0 -= tmp1 * 100000;
 				tmp2 = tmp0 / 10000;
 				tmp0 -= tmp2 * 10000;
-				cpu_writemem(0x7000 + 1, (tmp1 * 16) + tmp2);
+				cpu_writemem16(0x7000 + 1, (tmp1 * 16) + tmp2);	/* ASG 971005 */
 				tmp1 = tmp0 / 1000;
 				tmp0 -= tmp1 * 1000;
 				tmp2 = tmp0 / 100;
 				tmp0 -= tmp2 * 100;
-				cpu_writemem(0x7000 + 2, (tmp1 * 16) + tmp2);
+				cpu_writemem16(0x7000 + 2, (tmp1 * 16) + tmp2);	/* ASG 971005 */
 				tmp1 = tmp0 / 10;
 				tmp0 -= tmp1 * 10;
 				tmp2 = tmp0;
-				cpu_writemem(0x7000 + 3, (tmp1 * 16) + tmp2);
+				cpu_writemem16(0x7000 + 3, (tmp1 * 16) + tmp2);	/* ASG 971005 */
 			}
 			break;
 
@@ -346,9 +346,9 @@ void bosco_customio_w_1(int offset,int data)
 			break;
 
 		case 0x91:
-			cpu_writemem(0x7000,0);
-			cpu_writemem(0x7000 + 1,0);
-			cpu_writemem(0x7000 + 2,0);
+			cpu_writemem16(0x7000,0);	/* ASG 971005 */
+			cpu_writemem16(0x7000 + 1,0);	/* ASG 971005 */
+			cpu_writemem16(0x7000 + 2,0);	/* ASG 971005 */
 			mode = 0;
 			break;
 
@@ -365,7 +365,7 @@ void bosco_customio_w_1(int offset,int data)
 	Z80_GetRegs(&regs);
 	while (regs.BC2.D > 0)
 	{
-		cpu_writemem(regs.DE2.D,cpu_readmem(regs.HL2.D));
+		cpu_writemem16(regs.DE2.D,cpu_readmem16(regs.HL2.D));	/* ASG 971005 */
 		++regs.DE2.W.l;
 		++regs.HL2.W.l;
 		--regs.BC2.W.l;
@@ -412,10 +412,10 @@ void bosco_customio_w_2(int offset,int data)
 			break;
 
 		case 0x91:
-			cpu_writemem(0x9000,0);
-			cpu_writemem(0x9000 + 1,0);
-			cpu_writemem(0x9000 + 2,0);
-			cpu_writemem(0x9000 + 3,0);
+			cpu_writemem16(0x9000,0);	/* ASG 971005 */
+			cpu_writemem16(0x9000 + 1,0);	/* ASG 971005 */
+			cpu_writemem16(0x9000 + 2,0);	/* ASG 971005 */
+			cpu_writemem16(0x9000 + 3,0);	/* ASG 971005 */
 			break;
 
 		case 0xA1:
@@ -426,7 +426,7 @@ void bosco_customio_w_2(int offset,int data)
 	Z80_GetRegs(&regs);
 	while (regs.BC2.D > 0)
 	{
-		cpu_writemem(regs.DE2.D,cpu_readmem(regs.HL2.D));
+		cpu_writemem16(regs.DE2.D,cpu_readmem16(regs.HL2.D));	/* ASG 971005 */
 		++regs.DE2.W.l;
 		++regs.HL2.W.l;
 		--regs.BC2.W.l;

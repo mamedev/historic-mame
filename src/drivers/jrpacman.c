@@ -314,6 +314,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	1,	/* single CPU, no need for interleaving */
 	jrpacman_init_machine,
 
 	/* video hardware */
@@ -412,7 +413,7 @@ static void jrpacman_decode(void)
 }
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	static int resetcount;
 
@@ -424,18 +425,18 @@ static int hiload(const char *name)
 	if ((memcmp(&RAM[0x476d],"\x40\x40\x40\x40",4) == 0) &&
             (memcmp(&RAM[0x4751],"\x48\x47\x49\x48",4) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
 		resetcount = 0;
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			char buf[10];
 			int hi;
 
 
-			fread(&RAM[0x4e88],1,4,f);
+			osd_fread(f,&RAM[0x4e88],4);
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
 			hi = (RAM[0x4e88] & 0x0f) +
@@ -456,7 +457,7 @@ static int hiload(const char *name)
 				if (buf[6] != ' ') jrpacman_videoram_w(0x076e,buf[6]-'0');
 				jrpacman_videoram_w(0x076d,buf[7]-'0');
 			}
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -466,14 +467,14 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x4e88],1,4,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x4e88],4);
+		osd_fclose(f);
 	}
 }
 

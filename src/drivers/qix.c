@@ -145,7 +145,6 @@ int qix_vh_start(void);
 void qix_vh_stop(void);
 void qix_init_machine(void);
 
-int qix_data_interrupt(void);	/* JB 970825 */
 
 
 static struct MemoryReadAddress readmem_cpu_data[] =
@@ -212,7 +211,7 @@ static struct InputPort input_ports[] =
 		/* keyboard controls */
 		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
 		  OSD_KEY_ALT /* slow draw */, OSD_KEY_2 /* 2P start */,
-		  OSD_KEY_1 /* 1P start */,  OSD_KEY_CONTROL /* fast draw */ },
+		  OSD_KEY_1 /* 1P start */,  OSD_KEY_LCONTROL /* fast draw */ },
 
 		/* joystick controls */
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
@@ -222,10 +221,11 @@ static struct InputPort input_ports[] =
 		0xff,	/* default_value */
 
 		/* keyboard controls */
-		{ OSD_KEY_F1 /* adv. test */, OSD_KEY_F2 /* sub. test */,/* EBM 970519 */
-		  OSD_KEY_F5 /* slew up */, OSD_KEY_F6 /* slew down */,  /* EBM 970519 */
+		{ OSD_KEY_F1, OSD_KEY_F2, OSD_KEY_UP, OSD_KEY_DOWN,
+//		{ OSD_KEY_F1 /* adv. test */, OSD_KEY_F2 /* sub. test */,/* EBM 970519 */
+//		  OSD_KEY_F5 /* slew up */, OSD_KEY_F6 /* slew down */,  /* EBM 970519 */
 		  OSD_KEY_3 /* left coin */, OSD_KEY_4 /* right coin */, /* EBM 970517 */
-		  0 /* coin sw */,  OSD_KEY_F9 /* tilt */ },
+		  OSD_KEY_5 /* coin sw */,  OSD_KEY_T /* tilt */ },
 
 		/* joystick controls (not used)  */
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -256,10 +256,6 @@ static struct KEYSet keys[] =
 /* Qix has no DIP switches */
 static struct DSW qix_dsw[] =
 {
-	/* Fake a switch to configure CMOS. Pressing adv. test (F1) causes
-	   machine to reset and show config screens, so we flip the adv. test
-	   bit here to force it. */ /* JB 970525 */
-	{ 1, 0x01, "CONFIGURE CMOS", { "YES", "NO" } },
 	{ -1 }
 };
 
@@ -277,8 +273,8 @@ static struct MachineDriver machine_driver =
 			writemem_cpu_data,	/* MemoryWriteAddress */
 			0,			/* IOReadPort */
 			0,			/* IOWritePort */
-			qix_data_interrupt,		/* JB 970825 - custom interrupt routine */
-			1						/* JB 970825 - true interrupts per frame is only 1 */
+			interrupt,
+			1
 		},
 		{
 			CPU_M6809,
@@ -290,6 +286,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,					/* frames per second */
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	qix_init_machine,			/* init machine routine */ /* JB 970526 */
 
 	/* video hardware */
@@ -352,17 +350,17 @@ ROM_END
 
 
 /* Loads high scores and all other CMOS settings */
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (data is in second CPU's memory region) */
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"rb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		fread(&RAM[0x8400],1,0x400,f);
-		fclose(f);
+		osd_fread(f,&RAM[0x8400],0x400);
+		osd_fclose(f);
 	}
 
 	return 1;
@@ -370,17 +368,17 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
 	/* get RAM pointer (data is in second CPU's memory region) */
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x8400],1,0x400,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x8400],0x400);
+		osd_fclose(f);
 	}
 }
 

@@ -34,6 +34,78 @@ static struct rectangle radarvisiblearea =
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Rally X has one 32x8 palette PROM and one 256x4 color lookup table PROM.
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
+void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+	/* color_prom now points to the beginning of the lookup table */
+
+	/* character lookup table */
+	/* sprites use the same color lookup table as characters */
+	/* characters use colors 0-15 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = *(color_prom++) & 0x0f;
+
+	/* radar dots lookup table */
+	/* they use colors 16-31 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+	{
+		if (i % 2 == 0) COLOR(2,i) = 0;
+		else COLOR(2,i) = (i / 2) + 16;
+	}
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int rallyx_vh_start(void)
 {
 	if (generic_vh_start() != 0)
@@ -118,7 +190,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					rallyx_videoram2[offs],
-					rallyx_colorram2[offs] & 0x1f,
+					rallyx_colorram2[offs] & 0x3f,
 					!(rallyx_colorram2[offs] & 0x40),rallyx_colorram2[offs] & 0x80,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -138,7 +210,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						videoram[offs],
-						colorram[offs] & 0x1f,
+						colorram[offs] & 0x3f,
 						!(colorram[offs] & 0x40),colorram[offs] & 0x80,
 						8 * ((sx ^ 4) + 28),8*(sy-2),
 						&radarvisiblearea,TRANSPARENCY_NONE,0);
@@ -170,8 +242,9 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] >> 2,spriteram_2[offs + 1],
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				spriteram[offs + 1] - 1,224 - spriteram_2[offs],
-				&visiblearea,TRANSPARENCY_PEN,0);
+				&visiblearea,TRANSPARENCY_COLOR,0);
 	}
+
 
 	/* draw the cars on the radar */
 	for (offs = 0; offs < 9; offs++)
@@ -181,7 +254,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		/* TODO: map to the correct color */
-		color = rallyx_radarcarcolor[offs] & 0xfe;
+		color = ((rallyx_radarcarcolor[offs] >> 1) - 1) & 0x03;	/* ?????? */
 
 		x = rallyx_radarcarx[offs] + 256 * (1 - (rallyx_radarcarcolor[offs] & 1));
 		y = 237 - rallyx_radarcary[offs];

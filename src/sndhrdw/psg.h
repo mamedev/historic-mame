@@ -99,6 +99,9 @@ void AYResetChip(int num);
 */
 void AYUpdate(void);
 
+/* ASG 971010 -- added to support arbitrary chip number, buffer length and buffer pointers */
+void AYUpdateOne(int buf, void *buffer, int length);
+
 /*
 ** write 'v' to register 'r' on AY8910 chip number 'n'
 */

@@ -29,11 +29,12 @@ void exidy_characterram_w(int offset,int data)
 {
 	if (exidy_characterram[offset] != data)
 	{
-		exidy_dirtycharacter[offset / 8] = 1;
+		exidy_dirtycharacter[offset / 8 % 256] = 1;
 
 		exidy_characterram[offset] = data;
 	}
 }
+
 
 
 /***************************************************************************

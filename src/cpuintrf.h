@@ -12,6 +12,8 @@ void machine_reset(void);
 void cpu_halt(int cpunum,int running);
 /* This function returns CPUNUM current status (running or halted) */
 int  cpu_getstatus(int cpunum);
+int cpu_gettotalcpu(void);
+int cpu_getactivecpu(void);
 
 int cpu_getpc(void);
 int cpu_getpreviouspc(void);  /* -RAY- */
@@ -33,12 +35,6 @@ void cpu_seticount(int cycles);
   that the interrupt handler will be called once.
 */
 int cpu_getiloops(void);
-
-int cpu_readmem(int address);
-void cpu_writemem(int address,int data);
-
-int cpu_readport(int Port);
-void cpu_writeport(int Port,int Value);
 
 
 /* cause an interrupt on a CPU */

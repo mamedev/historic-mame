@@ -8,6 +8,7 @@
 
 #include "driver.h"
 
+extern int nocheat;
 
 
 static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
@@ -242,7 +243,9 @@ void displaytext(const struct DisplayText *dt,int erase)
 	Machine->uifont->colortable[10] = findbestcolor(0xff,0x00,0x00);	/* red */
 
 
-	if (erase) clearbitmap(Machine->scrbitmap);
+	if (erase) osd_clearbitmap(Machine->scrbitmap);
+
+	osd_mark_dirty (0,0,Machine->scrbitmap->width-1,Machine->scrbitmap->height-1,1);	/* ASG 971011 */
 
 	while (dt->text)
 	{
@@ -368,7 +371,7 @@ int showcharset(void)
 
 	do
 	{
-		clearbitmap(Machine->scrbitmap);
+		osd_clearbitmap(Machine->scrbitmap);
 
 		cpx = Machine->scrbitmap->width / Machine->gfx[bank]->width;
 		cpy = Machine->scrbitmap->height / Machine->gfx[bank]->height;
@@ -435,7 +438,7 @@ int showcharset(void)
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	Machine->orientation = trueorientation;
 
@@ -474,6 +477,8 @@ static int old_setdipswitches(void)
 
 		total++;
 	}
+
+	if (total == 0) return 0;
 
 	for (i = 0;i < total;i++)
 	{
@@ -581,7 +586,7 @@ static int old_setdipswitches(void)
 	}
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -600,7 +605,7 @@ static int old_setkeysettings(void)
 	total = 0;
 	while (keysettings[total].num != -1) total++;
 
-        if (total == 0) return 0;
+	if (total == 0) return 0;
 
 	for (i = 0;i < total;i++)
 	{
@@ -680,7 +685,7 @@ static int old_setkeysettings(void)
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -768,7 +773,13 @@ static int old_setjoysettings(void)
 
                                         /* Allows for "All buttons" */
                                         if (osd_key_pressed(OSD_KEY_A)) {
-                                          Machine->gamedrv->input_ports[ keysettings[s].num ].joystick[ keysettings[s].mask ] = OSD_MAX_JOY;
+                                          Machine->gamedrv->input_ports[
+keysettings[s].num ].joystick[ keysettings[s].mask ] = OSD_JOY_FIRE;
+                                          joypressed = 1;
+                                        }
+                                        if (osd_key_pressed(OSD_KEY_B)) {
+                                          Machine->gamedrv->input_ports[
+keysettings[s].num ].joystick[ keysettings[s].mask ] = OSD_JOY2_FIRE;
                                           joypressed = 1;
                                         }
                                         /* Clears entry "None" */
@@ -800,7 +811,7 @@ static int old_setjoysettings(void)
 	while (osd_key_pressed(key));   /* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -944,7 +955,7 @@ if (Machine->input_ports == 0)
 
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -1074,7 +1085,7 @@ if (Machine->input_ports == 0)
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -1177,7 +1188,11 @@ if (Machine->input_ports == 0)
 
                                         /* Allows for "All buttons" */
                                         if (osd_key_pressed(OSD_KEY_A)) {
-                                          entry[s]->joystick = OSD_MAX_JOY;
+                                          entry[s]->joystick = OSD_JOY_FIRE;
+                                          joypressed = 1;
+                                        }
+                                        if (osd_key_pressed(OSD_KEY_B)) {
+                                          entry[s]->joystick = OSD_JOY2_FIRE;
                                           joypressed = 1;
                                         }
                                         /* Clears entry "None" */
@@ -1208,7 +1223,7 @@ if (Machine->input_ports == 0)
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -1225,6 +1240,7 @@ static int settraksettings(void)
 	char number[10][6];
 
 	traksettings = Machine->gamedrv->trak_ports;
+	if (traksettings == 0) return 0;
 
 	total = 0;
 	while (traksettings[total].axis != -1) total++;
@@ -1320,7 +1336,7 @@ static int settraksettings(void)
 	while (osd_key_pressed(key));   /* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;
@@ -1331,7 +1347,7 @@ int showcredits(void)
 {
 	int key;
 	struct DisplayText dt[2];
-	char buf[256];
+	char buf[1024];
 
 
 	strcpy(buf,"The following people contributed to this driver:\n\n");
@@ -1358,20 +1374,21 @@ int setup_menu(void)
 	int total;
 
 
-	total = 6;
+	total = nocheat ? 6 : 7;
 	dt[0].text = "DIP SWITCH SETUP";
 	dt[1].text = "KEYBOARD SETUP";
 	dt[2].text = "JOYSTICK SETUP";
         dt[3].text = "TRACKBALL SETUP";
 	dt[4].text = "CREDITS";
-	dt[5].text = "RETURN TO GAME";
+	if (nocheat == 0) dt[5].text = "CHEAT";
+	dt[total-1].text = "RETURN TO GAME";
 	for (i = 0;i < total;i++)
 	{
 		dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
 		dt[i].y = i * 2*Machine->uifont->height + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total - 1)) / 2;
 		if (i == total-1) dt[i].y += 2*Machine->uifont->height;
 	}
-	dt[6].text = 0; /* terminate array */
+	dt[total].text = 0; /* terminate array */
 
 	s = 0;
 	done = 0;
@@ -1427,6 +1444,11 @@ int setup_menu(void)
 						break;
 
 					case 5:
+						if (nocheat) done = 1;
+						else cheat_menu();
+						break;
+
+					case 6:
 						done = 1;
 						break;
 				}
@@ -1442,7 +1464,7 @@ int setup_menu(void)
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
+	osd_clearbitmap(Machine->scrbitmap);
 
 	if (done == 2) return 1;
 	else return 0;

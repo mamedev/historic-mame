@@ -47,9 +47,35 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
 int milliped_IN_r(int offset);
 int centiped_trakball_x(int data);
 int centiped_trakball_y(int data);
-int milliped_interrupt(void);
 /* End 11-JUL-97 */
 
+
+/* Misc sound code */
+static struct POKEYinterface interface =
+{
+	2,	/* 2 chips */
+	1,	/* 1 update per video frame (low quality) */
+	FREQ_17_APPROX,	/* 1.7 Mhz */
+	255,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	/* The allpot handler */
+	{ input_port_4_r, input_port_5_r },
+};
+
+
+int milliped_sh_start(void)
+{
+	return pokey_sh_start (&interface);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -60,13 +86,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 /*	{ 0x2000, 0x2000, input_port_0_r },
 	{ 0x2001, 0x2001, input_port_1_r }, */ /* Replaced 11-JUL-97 JB */
-		{ 0x2000, 0x2001, milliped_IN_r }, /* Added 11-JUL-97 JB */
+	{ 0x2000, 0x2001, milliped_IN_r }, /* Added 11-JUL-97 JB */
 	{ 0x2010, 0x2010, input_port_2_r },
-        { 0x2011, 0x2011, input_port_3_r },
-        { 0x0408, 0x0408, input_port_4_r },
-        { 0x0808, 0x0808, input_port_5_r },
-	{ 0x400, 0x40f, pokey1_r },
-	{ 0x800, 0x80f, pokey2_r },
+	{ 0x2011, 0x2011, input_port_3_r },
+	{ 0x0400, 0x040f, pokey1_r },
+	{ 0x0800, 0x080f, pokey2_r },
 	{ -1 }	/* end of table */
 };
 
@@ -89,12 +113,12 @@ static struct InputPort input_ports[] =
 {
 	{
 		0xf8,
-		{ 0, 0, 0, 0, OSD_KEY_CONTROL, OSD_KEY_1, 0, 0},
+		{ 0, 0, 0, 0, OSD_KEY_LCONTROL, OSD_KEY_1, IPB_VBLANK, 0},
 		{ 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0,0}
 	},
 	{
 		0xf0,
-		{ 0, 0, 0, 0, OSD_KEY_CONTROL, OSD_KEY_2, 0, 0 },
+		{ 0, 0, 0, 0, OSD_KEY_LCONTROL, OSD_KEY_2, 0, 0 },
 		{ 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0, 0}
 	},
 	{
@@ -142,12 +166,7 @@ static struct TrakPort trak_ports[] = {
 };
 /* End 11-JUL-97 JB */
 
-/* Removed 22-JUL-97 JB
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-*/
+
 
 static struct KEYSet keys[] =
 {
@@ -262,10 +281,11 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			milliped_interrupt,2		/* ASG -- 2 per frame, once for VBLANK and once not? */
+			interrupt,2		/* ASG -- 2 per frame, once for VBLANK and once not? */
 		}
 	},
 	60,
+	10,
 	0,
 
 	/* video hardware */
@@ -283,7 +303,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	pokey2_sh_start,
+	milliped_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
 };
@@ -311,19 +331,19 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0064],"\x75\x91\x08",3) == 0 &&
 			memcmp(&RAM[0x0079],"\x16\x19\x04",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0x0064],1,6*8,f);
-			fclose(f);
+			osd_fread(f,&RAM[0x0064],6*8);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -333,15 +353,15 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x0064],1,6*8,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x0064],6*8);
+		osd_fclose(f);
 	}
 }
 

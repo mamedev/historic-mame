@@ -8,22 +8,13 @@
 #define	uclock clock
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
 #else
-#if defined (WIN32)
-#include <windows.h>
-LONGLONG osd_win32_uclocks_per_sec();
-
-#define uclock_t DWORDLONG
-#define uclock osd_win32_uclock
-#define UCLOCKS_PER_SEC osd_win32_uclocks_per_sec()
-
-int strcasecmp(const char *a,const char *b)
-{
-   return stricmp(a,b);
-}
+#if defined(WIN32)
+#include "uclock.h"
 #endif
 #endif
 
-static char mameversion[8] = "0.28";   /* M.Z.: current version */
+
+static char mameversion[8] = "0.29";   /* M.Z.: current version */
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -31,8 +22,8 @@ static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
 
 int hiscoreloaded;
-char hiscorename[50];
 
+int nocheat;	/* 0 when the -chaet option was specified */
 
 
 int frameskip;
@@ -108,11 +99,11 @@ int main(int argc,char **argv)
 				if (!(i % 7)) printf("\n");
 			}
 			if (i % 7) printf("\n");
-			printf("\nTotal games supported: %4d\n", i);
+			printf("\nTotal ROM sets supported: %4d\n", i);
 			return 0;
 			break;
 		case 2:      /* games list with descriptions */
-			printf("NAMES:    DESCRIPTIONS:\n");
+			printf("NAME:     DESCRIPTION:\n");
 			i = 0;
 			while (drivers[i])
 			{
@@ -193,7 +184,6 @@ int main(int argc,char **argv)
 int init_machine(const char *gamename,int argc,char **argv)
 {
 	int i;
-	int nocheat;
 
 
 	frameskip = 0;
@@ -340,6 +330,13 @@ for (i = 1;i < argc;i++)
 	/* other initialization routines */
 	cpu_init();
 
+	/* ASG 971007 move from mame.c */
+	if( !initmemoryhandlers() )
+	{
+		free(Machine->input_ports);
+		return 1;
+	}
+
 	if (drv->vh_init && (*drv->vh_init)(gamename) != 0)
 		/* TODO: should also free the resources allocated before */
 		return 1;
@@ -361,6 +358,9 @@ void shutdown_machine(void)
 	/* free audio samples */
 	freesamples(Machine->samples);
 	Machine->samples = 0;
+
+	/* ASG 971007 free memory element map */
+	shutdownmemoryhandler();
 
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
@@ -433,11 +433,10 @@ int vh_open(void)
 
 
 	/* create the display bitmap, and allocate the palette */
-	if ((Machine->scrbitmap = osd_create_display(drv->screen_width,drv->screen_height,drv->video_attributes)) == 0)
+	if ((Machine->scrbitmap = osd_create_display(
+			drv->screen_width,drv->screen_height,drv->total_colors,
+			palette,Machine->pens,drv->video_attributes)) == 0)
 		return 1;
-
-	for (i = 0;i < drv->total_colors;i++)
-		Machine->pens[i] = osd_obtain_pen(palette[3*i],palette[3*i+1],palette[3*i+2]);
 
 	for (i = 0;i < drv->color_table_len;i++)
 		remappedtable[i] = Machine->pens[colortable[i]];
@@ -473,10 +472,11 @@ int updatescreen(void)
 
 	/* read hi scores from disk */
 	if (hiscoreloaded == 0 && gamedrv->hiscore_load)
-		hiscoreloaded = (*gamedrv->hiscore_load)(hiscorename);
+		hiscoreloaded = (*gamedrv->hiscore_load)();
 
 	/* if the user pressed ESC, stop the emulation */
 	if (osd_key_pressed(OSD_KEY_ESC)) return 1;
+
 
 	/* if the user pressed F3, reset the emulation */
 	if (osd_key_pressed(OSD_KEY_F3))
@@ -505,15 +505,17 @@ int updatescreen(void)
 		showfpstemp = 50;
 	}
 
-	if (osd_key_pressed(OSD_KEY_MINUS_PAD))     /* decrease volume */
+	if (osd_key_pressed(OSD_KEY_MINUS_PAD) && osd_key_pressed(OSD_KEY_LSHIFT) == 0)
 	{
+		/* decrease volume */
 		if (CurrentVolume > 0) CurrentVolume--;
 		osd_set_mastervolume(CurrentVolume);
 		showvoltemp = 50;
 	}
 
-	if (osd_key_pressed(OSD_KEY_PLUS_PAD))      /* increase volume */
+	if (osd_key_pressed(OSD_KEY_PLUS_PAD) && osd_key_pressed(OSD_KEY_LSHIFT) == 0)
 	{
+		/* increase volume */
 		if (CurrentVolume < 100) CurrentVolume++;
 		osd_set_mastervolume(CurrentVolume);
 		showvoltemp = 50;
@@ -540,7 +542,7 @@ int updatescreen(void)
 		{
 			if (osd_key_pressed(OSD_KEY_TAB)) setup_menu();	/* call the configuration menu */
 
-			clearbitmap(Machine->scrbitmap);
+			osd_clearbitmap(Machine->scrbitmap);
 			(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
 
 			if (uclock() % UCLOCKS_PER_SEC < UCLOCKS_PER_SEC/2)
@@ -552,7 +554,7 @@ int updatescreen(void)
 		while (osd_key_pressed(OSD_KEY_P));	/* ditto */
 
 			osd_set_mastervolume(CurrentVolume);
-			clearbitmap(Machine->scrbitmap);
+			osd_clearbitmap(Machine->scrbitmap);
 	}
 
 	/* if the user pressed TAB, go to the setup menu */
@@ -599,7 +601,7 @@ int updatescreen(void)
 			if (f11pressed == 0)
 			{
 				showfps ^= 1;
-				if (showfps == 0) clearbitmap(Machine->scrbitmap);
+				if (showfps == 0) osd_clearbitmap(Machine->scrbitmap);
 			}
 			f11pressed = 1;
 		}
@@ -608,13 +610,13 @@ int updatescreen(void)
 		if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
 		{
 			showfpstemp--;
-			if ((showfps == 0) && (showfpstemp == 0)) clearbitmap(Machine->scrbitmap);
+			if ((showfps == 0) && (showfpstemp == 0)) osd_clearbitmap(Machine->scrbitmap);
 		}
 
 		if (showvoltemp)
 		{
 			showvoltemp--;
-			if (!showvoltemp) clearbitmap(Machine->scrbitmap);
+			if (!showvoltemp) osd_clearbitmap(Machine->scrbitmap);
 		}                        /* MAURY_END: nuove opzioni */
 
 		if (osd_key_pressed(OSD_KEY_F10))
@@ -626,6 +628,9 @@ int updatescreen(void)
 
 
 		(*drv->vh_update)(Machine->scrbitmap);	/* update screen */
+
+		/* This call is for the cheat, it must be called at least each frames */
+		if (nocheat == 0) DoCheat(CurrentVolume);
 
 		if (showfps || showfpstemp) /* MAURY: nuove opzioni */
 		{
@@ -639,8 +644,8 @@ int updatescreen(void)
 			trueorientation = Machine->orientation;
 			Machine->orientation = ORIENTATION_DEFAULT;
 
-			fps = (Machine->drv->frames_per_second * speed + 50) / 100;
-			sprintf(buf," %d%% (%-3dfps)",speed,fps);
+			fps = (Machine->drv->frames_per_second / (frameskip+1) * speed + 50) / 100;
+			sprintf(buf," %3d%%(%3d/%d fps)",speed,fps,Machine->drv->frames_per_second);
 			l = strlen(buf);
 			for (i = 0;i < l;i++)
 				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,Machine->scrbitmap->width-(l-i)*Machine->uifont->width,0,0,TRANSPARENCY_NONE,0);
@@ -737,35 +742,35 @@ int run_machine(const char *gamename)
 				while (osd_key_pressed(i));	        /* wait for key release */
 				if (i != OSD_KEY_ESC)
 				{
-					char cfgname[100];
-
-
 					showcredits();	/* show the driver credits */
 
-					clearbitmap(Machine->scrbitmap);
+					osd_clearbitmap(Machine->scrbitmap);
 					osd_update_display();
 
 
-					sprintf(cfgname,"%s/%s.cfg",gamename,gamename);
 					/* load input ports settings (keys, dip switches, and so on) */
-					load_input_port_settings(cfgname);
+					load_input_port_settings();
 
 					/* we have to load the hi scores, but this will be done while */
 					/* the game is running */
 					hiscoreloaded = 0;
-					sprintf(hiscorename,"%s/%s.hi",gamename,gamename);
+
+					if (nocheat == 0) InitCheat();
 
 					cpu_run();	/* run the emulation! */
+
+					if (nocheat == 0) StopCheat();
 
 					if (drv->sh_stop) (*drv->sh_stop)();
 					if (drv->vh_stop) (*drv->vh_stop)();
 
 					/* write hi scores to disk */
-					if (hiscoreloaded != 0 && gamedrv->hiscore_save)
-						(*gamedrv->hiscore_save)(hiscorename);
+					if(he_did_cheat == 0 &&		/* No scores saving if cheat */
+							hiscoreloaded != 0 && gamedrv->hiscore_save)
+						(*gamedrv->hiscore_save)();
 
 					/* save input ports settings */
-					save_input_port_settings(cfgname);
+					save_input_port_settings();
 				}
 
 				res = 0;

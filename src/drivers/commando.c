@@ -60,29 +60,29 @@ int capcom_sh_interrupt(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xe000, 0xfdff, MRA_RAM },
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
+	{ 0xe000, 0xff7f, MRA_RAM },
+	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xfdff, MWA_RAM },
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc800, 0xc800, soundlatch_w },
+	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
+	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram, &commando_bgvideoram_size },
 	{ 0xdc00, 0xdfff, commando_bgcolorram_w, &commando_bgcolorram },
+	{ 0xe000, 0xfdff, MWA_RAM },
 	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
-	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
-	{ 0xc800, 0xc800, sound_command_w },
-	{ 0x0000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -90,20 +90,20 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x6000, sound_command_latch_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x6000, 0x6000, soundlatch_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
 	{ 0x8001, 0x8001, AY8910_write_port_0_w },
 	{ 0x8002, 0x8002, AY8910_control_port_1_w },
 	{ 0x8003, 0x8003, AY8910_write_port_1_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -119,7 +119,7 @@ static struct InputPort input_ports[] =
 	{	/* IN1 */
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
 				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
 	},
@@ -296,6 +296,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
@@ -378,11 +379,6 @@ ROM_END
 
 static void commando_decode(void)
 {
-int A;
-
-
-for (A = 0;A < 0x10000;A++)
-{
 	static const unsigned char xortable[] =
 	{
 		0x00,0x00,0x22,0x22,0x44,0x44,0x66,0x66,0x88,0x88,0xaa,0xaa,0xcc,0xcc,0xee,0xee,
@@ -402,15 +398,18 @@ for (A = 0;A < 0x10000;A++)
 		0xee,0xee,0xcc,0xcc,0xaa,0xaa,0x88,0x88,0x66,0x66,0x44,0x44,0x22,0x22,0x00,0x00,
 		0xee,0xee,0xcc,0xcc,0xaa,0xaa,0x88,0x88,0x66,0x66,0x44,0x44,0x22,0x22,0x00,0x00
 	};
+	int A;
 
 
-	if (A > 0) ROM[A] = RAM[A] ^ xortable[RAM[A]];
+	for (A = 0;A < 0xc000;A++)
+	{
+		if (A > 0) ROM[A] = RAM[A] ^ xortable[RAM[A]];
+	}
 }
-}
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -421,16 +420,16 @@ static int hiload(const char *name)
 	if (memcmp(&RAM[0xee00],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0xee4e],"\x00\x08\x00",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			fread(&RAM[0xee00],1,13*7,f);
+			osd_fread(f,&RAM[0xee00],13*7);
 			RAM[0xee97] = RAM[0xee00];
 			RAM[0xee98] = RAM[0xee01];
 			RAM[0xee99] = RAM[0xee02];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -440,18 +439,18 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0xee00],1,13*7,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0xee00],13*7);
+		osd_fclose(f);
 	}
 }
 

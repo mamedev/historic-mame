@@ -20,14 +20,16 @@ unsigned char *espial_column_scroll;
 
   Convert the color PROMs into a more useable format.
 
-  Amidar has one 32 bytes palette PROM, connected to the RGB output this
-  way:
+  Espial has two 256x4 palette PROMs.
 
-  bit 7 -- 220 ohm resistor  -- BLUE
+  I don't know for sure how the palette PROMs are connected to the RGB
+  output, but it's probably the usual:
+
+  bit 3 -- 220 ohm resistor  -- BLUE
         -- 470 ohm resistor  -- BLUE
         -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
+  bit 0 -- 470 ohm resistor  -- GREEN
+  bit 3 -- 1  kohm resistor  -- GREEN
         -- 220 ohm resistor  -- RED
         -- 470 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
@@ -36,33 +38,38 @@ unsigned char *espial_column_scroll;
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i + 0] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (color_prom[i] >> 3) & 0x01;
-		bit1 = (color_prom[i] >> 4) & 0x01;
-		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[0] >> 3) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
 
-	for (i = 0;i < 4 * 8;i++)
-	{
-		if (i & 3) colortable[i] = i;
-		else colortable[i] = 0;
-	}
+	/* characters and sprites use the same palette */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
 }
 
 

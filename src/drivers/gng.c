@@ -183,6 +183,7 @@ extern unsigned char *gng_scrollx,*gng_scrolly;
 void gng_bgvideoram_w(int offset,int data);
 void gng_bgcolorram_w(int offset,int data);
 int gng_vh_start(void);
+int diamond_vh_start(void);
 void gng_vh_stop(void);
 void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -195,7 +196,7 @@ int capcom_sh_interrupt(void);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM },
-	{ 0x4000, 0x5fff, gng_bankedrom_r },
+	{ 0x4000, 0x5fff, MRA_BANK1 },
 	{ 0x6184, 0x6184, gng_catch_loop_r }, /* JB 970823 */
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
@@ -211,7 +212,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryReadAddress diamond_readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM },
-	{ 0x4000, 0x5fff, gng_bankedrom_r },
+	{ 0x4000, 0x5fff, MRA_BANK1 },
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
 	{ 0x3000, 0x3000, input_port_0_r },
@@ -273,7 +274,7 @@ static struct InputPort input_ports[] =
 	{	/* IN1 */
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
 				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
 	},
@@ -389,6 +390,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	gng_init_machine,
 
 	/* video hardware */
@@ -432,6 +434,7 @@ static struct MachineDriver diamond_machine_driver =
 		}
 	},
 	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	gng_init_machine,
 
 	/* video hardware */
@@ -442,7 +445,7 @@ static struct MachineDriver diamond_machine_driver =
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
-	gng_vh_start,
+	diamond_vh_start,
 	gng_vh_stop,
 	gng_vh_screenrefresh,
 
@@ -463,10 +466,9 @@ static struct MachineDriver diamond_machine_driver =
 ***************************************************************************/
 
 ROM_START( gng_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
 	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_RELOAD(          0x18000, 0x4000 )	/* copy for my convenience */
 	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 e 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
@@ -489,10 +491,9 @@ ROM_START( gng_rom )
 ROM_END
 
 ROM_START( gngcross_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
 	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_RELOAD(          0x18000, 0x4000 )	/* copy for my convenience */
 	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 e 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
@@ -515,11 +516,12 @@ ROM_START( gngcross_rom )
 ROM_END
 
 ROM_START( diamond_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "d5",  0x00000, 0x8000, 0x89e5a985 )
-	ROM_LOAD( "d3",  0x08000, 0x8000, 0x38d5bcc9 )
-	ROM_LOAD( "d5o", 0x10000, 0x8000, 0x06f68aa8 )
-	ROM_LOAD( "d3o", 0x18000, 0x4000, 0x76c09ea4 )
+	ROM_REGION(0x1a000)	/* 64k for code * 6 pages (is it really 6?) */
+	ROM_LOAD( "d5",       0x0000, 0x8000, 0x89e5a985 )
+	ROM_LOAD( "d3",       0x8000, 0x8000, 0x38d5bcc9 )
+	ROM_LOAD( "d3o",      0x4000, 0x2000, 0x76c09ea4 )	/* 4000-5fff is page 0 */
+	ROM_CONTINUE(        0x18000, 0x2000 )
+	ROM_LOAD( "d5o",     0x10000, 0x8000, 0x06f68aa8 )	/* page 1, 2, 3 e 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "d1",  0x00000, 0x4000, 0x7da60000 )	/* characters */
@@ -542,7 +544,7 @@ ROM_END
 
 
 
-static int gng_hiload(const char *name)
+static int gng_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -553,21 +555,21 @@ static int gng_hiload(const char *name)
 	if (memcmp(&RAM[0x152c],"\x00\x01\x00\x00",4) == 0 &&
 			memcmp(&RAM[0x156b],"\x00\x01\x00\x00",4) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			int offs;
 
 
-			fread(&RAM[0x1518],1,9*10,f);
+			osd_fread(f,&RAM[0x1518],9*10);
 			offs = RAM[0x1518] * 256 + RAM[0x1519];
 			RAM[0x00d0] = RAM[offs];
 			RAM[0x00d1] = RAM[offs+1];
 			RAM[0x00d2] = RAM[offs+2];
 			RAM[0x00d3] = RAM[offs+3];
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -577,24 +579,24 @@ static int gng_hiload(const char *name)
 
 
 
-static void gng_hisave(const char *name)
+static void gng_hisave(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		fwrite(&RAM[0x1518],1,9*10,f);
-		fclose(f);
+		osd_fwrite(f,&RAM[0x1518],9*10);
+		osd_fclose(f);
 	}
 }
 
 
 
-static int diamond_hiload(const char *name)
+static int diamond_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -603,13 +605,13 @@ static int diamond_hiload(const char *name)
 	/* We're just going to blast the hi score table into ROM and be done with it */
         if (memcmp(&RAM[0xC10E],"KLE",3) == 0)
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        fread(&RAM[0xC10E],1,0x80,f);
-			fclose(f);
+                        osd_fread(f,&RAM[0xC10E],0x80);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -619,20 +621,20 @@ static int diamond_hiload(const char *name)
 
 
 
-static void diamond_hisave(const char *name)
+static void diamond_hisave(void)
 {
-	FILE *f;
+	void *f;
 
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* The RAM location of the hi score table */
-                fwrite(&RAM[0x105F],1,0x80,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x105F],0x80);
+		osd_fclose(f);
 	}
 
 }

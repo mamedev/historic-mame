@@ -11,21 +11,6 @@
 
 
 
-void eggs_mirrorvideoram_w(int offset,int data)
-{
-	int x,y;
-
-
-	/* swap x and y coordinates */
-	x = offset / 32;
-	y = offset % 32;
-	offset = 32 * y + x;
-
-	videoram_w(offset,data);
-}
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -36,24 +21,13 @@ void eggs_mirrorvideoram_w(int offset,int data)
 void eggs_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-static int base;
-if (osd_key_pressed(OSD_KEY_Z))
-{
-	while (osd_key_pressed(OSD_KEY_Z));
-	base -= 0x400;
-}
-if (osd_key_pressed(OSD_KEY_X))
-{
-	while (osd_key_pressed(OSD_KEY_X));
-	base += 0x400;
-}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (1||dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
 			int sx,sy;
 
@@ -64,8 +38,8 @@ if (osd_key_pressed(OSD_KEY_X))
 			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs+base],
-0,//					colorram[offs],
+					videoram[offs] + 256 * (colorram[offs] & 3),
+					0,
 					0,0,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -78,14 +52,14 @@ if (osd_key_pressed(OSD_KEY_X))
 
 
 	/* Draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = 0;offs < videoram_size;offs += 4*0x20)
 	{
-		if (spriteram[offs + 0] & 0x01)
+		if (videoram[offs + 0] & 0x01)
 			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs + 1],
+					videoram[offs + 0x20],
 					0,
-					spriteram[offs + 0] & 0x02,spriteram[offs + 0] & 0x04,
-					240 - spriteram[offs + 2],spriteram[offs + 3],
+					videoram[offs + 0] & 0x02,videoram[offs + 0] & 0x04,
+					239 - videoram[offs + 2*0x20],videoram[offs + 3*0x20],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

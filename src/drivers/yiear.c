@@ -49,6 +49,7 @@ Memory map
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+void yiear_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
 void yiear_init_machine(void);
 void yiear_videoram_w(int offset,int data);
@@ -86,7 +87,7 @@ static struct InputPort input_ports[] =
 	{	/* joy1 */
 		0xff,
 		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_SPACE, 0 },
+				OSD_KEY_LCONTROL, OSD_KEY_ALT, OSD_KEY_SPACE, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_FIRE3, 0 }
 	},
@@ -146,10 +147,10 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8 by 8 */
 	512,	/* 512 characters */
 	4,		/* 4 bits per pixel */
-	{ 0,4,65536L, 65536L+4 },		/* plane */
+	{ 4, 0, 512*16*8+4, 512*16*8+0 },		/* plane */
 	{ 0, 1, 2, 3, 64, 65, 66, 67},		/* x */
 	{ 0, 8, 16, 24, 32, 40, 48, 56},	/* y */
-	128
+	16*8
 };
 
 static struct GfxLayout spritelayout =
@@ -157,12 +158,12 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16 by 16 */
 	512,	/* 512 sprites */
 	4,		/* 4 bits per pixel */
-	{ 0, 4, 32768L*8L, 32768L*8L+4 },	/* plane offsets */
+	{ 512*64*8+4, 512*64*8+0, 4, 0 },	/* plane offsets */
 	{ 0, 1, 2, 3, 64, 65, 66, 67,
 	  128+0, 128+1, 128+2, 128+3, 128+64, 128+65, 128+66, 128+67 },
 	{ 0, 8, 16, 24, 32, 40, 48, 56,
 	  256+0, 256+8, 256+16, 256+24, 256+32, 256+40, 256+48, 256+56 },
-	512
+	64*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -172,46 +173,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette[] =
-{
-	/* characters */
-	0,0,0,			/* black */
-	255,0,0,		/* red */
-	180,242,255,		/* bluegreen */
-	144,82,67,		/* reddish */
-	88,148,48,		/* green */
-	50,50,80,		/* dark blue */
-	41,93,80,		/* green */
-	20,20,20,		/* dark grey */
-	128,0,100,		/* temple trim */
-	224,255,214,		/* sky */
-	130,212,88,		/* lgreen */
-	165,159,64,		/* temple lawn */
-	100,100,100,		/* grey */
-	136,152,126,		/* brownish */
-	130,138,236,		/* lblue */
-	0xFF, 0xFF, 0xFF,	/* white */
 
-	/* sprites */
-	0x00,0x00,0x00, 	/* (transparent) */
-	0xFF,0xFF,0x00, 	/* yellow */
-	0xFF,0x0F,0x0F, 	/* bright red */
-	0,255,0,		/* lime */
-	0x5F,0x5F,0xFF, 	/* blue */
-	255,255,153,    	/* light flesh */
-	153,51,0,		/* brown */
-	0xBF,0xBF,0xBF, 	/* dark grey */
-	0,0,0,			/* black */
-	204,153,51,		/* dark flesh */
-	218,104,112,     	/* dark red */
-	0x1F,0x7F,0, 	        /* green */
-	185,255,253,     	/* light grey */
-	255,204,153,	        /* flesh */
-	153,102,51, 	        /* wood */
-	0xFF,0xFF,0xFF         /* white */
+
+static unsigned char color_prom[] =
+{
+	0x00,0x49,0xE0,0xFD,0x06,0xA7,0x5D,0x2E,0x3F,0xAE,0xBF,0xB7,0x3D,0x72,0xAD,0xFF,
+	0x00,0xF5,0x5E,0x66,0xA5,0x70,0xFE,0x2E,0x29,0x20,0x00,0x80,0xA0,0xE3,0xAD,0xFF
 };
 
-static unsigned char colortable[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
+
 
 static struct MachineDriver machine_driver =
 {
@@ -230,7 +200,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,					/* frames per second */
-	0,//yiear_init_machine,	/* init machine routine - needed?*/
+	1,	/* single CPU, no need for interleaving */
+	0,
 
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */
@@ -239,7 +210,7 @@ static struct MachineDriver machine_driver =
 
 	32,						/* total colors */
 	32,						/* color table length */
-	0,						/* convert color prom routine */
+	yiear_vh_convert_color_prom,						/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,						/* vh_init routine */
@@ -278,22 +249,22 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
 		(memcmp(&RAM[0x55A9],"\x10\x10\x10",3) == 0))
 	{
-		FILE *f;
+		void *f;
 
 
-		if ((f = fopen(name,"rb")) != 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			/* Read the scores */
-                        fread(&RAM[0x5520],1,14*10,f);
+                        osd_fread(f,&RAM[0x5520],14*10);
 			/* reset score at top */
 			memcpy(&RAM[0x521C],&RAM[0x5520],3);
-			fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -303,16 +274,16 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void hisave(void)
 {
-	FILE *f;
+	void *f;
 
 
-	if ((f = fopen(name,"wb")) != 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* Save the scores */
-                fwrite(&RAM[0x5520],1,14*10,f);
-		fclose(f);
+                osd_fwrite(f,&RAM[0x5520],14*10);
+		osd_fclose(f);
 	}
 
 }
@@ -323,7 +294,7 @@ struct GameDriver yiear_driver =
 {
 	"Yie Ar Kung Fu (Konami)",
 	"yiear",
-	"ENRIQUE SANCHEZ\nPHILIP STROFFOLINO\nMIKE BALFOUR",
+	"ENRIQUE SANCHEZ\nPHILIP STROFFOLINO\nMike Balfour (high score)\nTim Lindquist (color info)",
 	&machine_driver,
 
 	yiear_rom,
@@ -332,7 +303,7 @@ struct GameDriver yiear_driver =
 
 	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, colortable,   /* colors, palette, colortable */
+	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

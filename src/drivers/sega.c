@@ -104,7 +104,7 @@ SWITCH MAPPINGS
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
+#include "vidhrdw/avgdvg.h"
 
 
 int zektor_IN4_r (int offset);
@@ -117,11 +117,16 @@ void sega_mult1_w (int offset, int data);
 void sega_mult2_w (int offset, int data);
 void sega_switch_w (int offset, int data);
 
+/* Sound hardware prototypes */
 int sega_sh_start (void);
 int sega_sh_r (int offset);
 void sega_sh_speech_w (int offset, int data);
 void sega_sh_update(void);
+int tacscan_sh_start (void);
+void tacscan_sh_w (int offset, int data);
+void tacscan_sh_update(void);
 
+/* Video hardware prototypes */
 void sega_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int sega_vh_start (void);
 int tacscan_vh_start(void);
@@ -188,6 +193,15 @@ static struct IOWritePort zektor_writeport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct IOWritePort tacscan_writeport[] =
+{
+	{ 0x3f, 0x3f, tacscan_sh_w },
+  	{ 0xbd, 0xbd, sega_mult1_w },
+ 	{ 0xbe, 0xbe, sega_mult2_w },
+ 	{ 0xf8, 0xf8, sega_switch_w },
+	{ -1 }	/* end of table */
+};
+
 static struct IOReadPort elim2_readport[] =
 {
  	{ 0x3f, 0x3f, sega_sh_r },
@@ -232,7 +246,7 @@ static struct InputPort spacfury_input_ports[] =
 	},
 	{       /* IN3 - port 0xfb */
 		0xfc,
-		{ 0, 0, 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL, 0, 0 },
+		{ 0, 0, 0, 0, OSD_KEY_ALT, OSD_KEY_LCONTROL, 0, 0 },
 		{ 0, 0, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0 }
 	},
 	{ -1 }
@@ -262,7 +276,7 @@ static struct InputPort zektor_input_ports[] =
 	},
 	{       /* IN4 - port 0xfc */
 		0x00,
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT },
+		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT },
 		{ 0, 0, OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT }
 	},
 	{ -1 }
@@ -317,7 +331,7 @@ static struct InputPort elim2_input_ports[] =
 	},
 	{       /* IN3 - port 0xfb */
 		0xfc,
-		{ 0, 0, 0, 0, OSD_KEY_A, OSD_KEY_CONTROL, 0, 0 },
+		{ 0, 0, 0, 0, OSD_KEY_A, OSD_KEY_LCONTROL, 0, 0 },
 		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE1, 0, 0 }
 	},
 	{       /* IN4 - port 0xfc */
@@ -494,6 +508,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	40,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -606,6 +621,7 @@ static struct MachineDriver zektor_machine_driver =
 		}
 	},
 	40,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -655,6 +671,24 @@ struct GameDriver zektor_driver =
 
 ***************************************************************************/
 
+static const char *tacscan_sample_names[] =
+{
+	/* Player ship thrust sounds */
+	"01.sam",
+	"02.sam",
+	"03.sam",
+	"plaser.sam",
+	"pexpl.sam",
+	"pship.sam",
+	"tunnelh.sam",
+	"sthrust.sam",
+	"slaser.sam",
+	"sexpl.sam",
+	"eshot.sam",
+	"eexpl.sam",
+    0	/* end of array */
+};
+
 ROM_START( tacscan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1711.BIN", 0x0000, 0x0800, 0xc6225a26 )
@@ -689,11 +723,12 @@ static struct MachineDriver tacscan_machine_driver =
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz */
 			0,
-			readmem,writemem,zektor_readport,zektor_writeport,
+			readmem,writemem,zektor_readport,tacscan_writeport,
 			sega_interrupt,1
 		}
 	},
 	40,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -711,9 +746,9 @@ static struct MachineDriver tacscan_machine_driver =
 	/* sound hardware */
 	0,
 	0,
+	tacscan_sh_start,
 	0,
-	0,
-	0
+	tacscan_sh_update
 };
 
 struct GameDriver tacscan_driver =
@@ -725,7 +760,7 @@ struct GameDriver tacscan_driver =
 
 	tacscan_rom,
 	0, 0,
-	0,
+	tacscan_sample_names,
 
 	zektor_input_ports, 0, spinner_trak_ports, dsw, tacscan_keys,
 
@@ -772,6 +807,7 @@ static struct MachineDriver elim2_machine_driver =
 		}
 	},
 	40,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -888,6 +924,7 @@ static struct MachineDriver startrek_machine_driver =
 		}
 	},
 	40,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */

@@ -1,7 +1,4 @@
 #include "cpudefs.h"
-#ifndef macintosh /* LBO - I think this next line can be removed */
-#include <go32.h>
-#endif
 #include "driver.h"
 #include "cpuintrf.h"
 #include "readcpu.h"
@@ -23,8 +20,10 @@ extern MC68000_disasm(CPTR, CPTR*, int);
 extern void BuildCPU(void);
 
 #define MC68000_interrupt() (cpu_interrupt())
-#define ReadMEM(A) (cpu_readmem(A))
-#define WriteMEM(A,V) (cpu_writemem(A,V))
+
+/* ASG 971005 -- changed to cpu_readmem24/cpu_writemem24 */
+#define ReadMEM(A) (cpu_readmem24(A))
+#define WriteMEM(A,V) (cpu_writemem24(A,V))
 
 static int icount=0;
 static int MC68000_IPeriod=0;
@@ -71,7 +70,7 @@ void m68k_dumpstate()
 
 
 
-
+/* ASG 971010 -- removed to macros in cpudefs.h
 #ifdef ASM_MEMORY
 UBYTE get_byte(LONG a);
 void put_byte(LONG a, UBYTE b);
@@ -114,7 +113,7 @@ void put_long(LONG a, ULONG b) {
    WriteMEM(a+3, (UBYTE)(b&0x000000FF));
 }
 
-#endif
+#endif*/
 
 
 /*
@@ -161,7 +160,7 @@ void inline Exception(int nr, CPTR oldpc)
       regs.a[7]=regs.isp;
       regs.s=1;
    }
-   
+
    regs.a[7] -= 4;
    put_long (regs.a[7], m68k_getpc ());
    regs.a[7] -= 2;
@@ -223,7 +222,7 @@ void MC68000_Execute(void)
 		opcode=nextiword_opcode();
 	      #else
 		opcode=nextiword();
-	      #endif   
+	      #endif
 
 		icount -= 15;
 		cpufunctbl[opcode](opcode);

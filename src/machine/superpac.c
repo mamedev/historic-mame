@@ -16,7 +16,7 @@ unsigned char *superpac_customio_1,*superpac_customio_2;
 unsigned char *pacnpal_loop_val_1;
 
 static unsigned char interrupt_enable_1,interrupt_enable_2;
-static int coin, credits, fire, start;
+static int coin1, coin2, credits, start1, start2;
 
 static int crednum[] = { 1, 2, 3, 6, 7, 1, 3, 1 };
 static int credden[] = { 1, 1, 1, 1, 1, 2, 2, 3 };
@@ -25,13 +25,13 @@ static int credden[] = { 1, 1, 1, 1, 1, 2, 2, 3 };
 void superpac_init_machine(void)
 {
 	/* Reset all flags */
-	coin = credits = fire = start = 0;
+	coin1 = coin2 = start1 = start2 = credits = 0;
 
 	/* Disable interrupts */
 	interrupt_enable_1 = interrupt_enable_2 = 0;
 
 	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_OP | M6809_FAST_S | M6809_FAST_U;
+	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
 
@@ -90,25 +90,29 @@ void superpac_update_credits (void)
 	int val = readinputport (3) & 0x0f, temp;
 	if (val & 1)
 	{
-		if (coin) val &= ~1;
-		else coin = 1, credits += 1;
+		if (!coin1) credits++, coin1++;
 	}
-	else coin = 0;
+	else coin1 = 0;
+
+	if (val & 2)
+	{
+		if (!coin2) credits++, coin2++;
+	}
+	else coin2 = 0;
 
 	temp = readinputport (1) & 7;
 	val = readinputport (3) >> 4;
 	if (val & 1)
 	{
-		if (start || credits < credden[temp]) val &= ~1;
-		else credits -= credden[temp], start = 1;
+		if (!start1 && credits >= credden[temp]) credits -= credden[temp], start1++;
 	}
-	else start = 0;
+	else start1 = 0;
+	
 	if (val & 2)
 	{
-		if (start || credits < 2 * credden[temp]) val &= ~2;
-		else credits -= 2 * credden[temp], start = 1;
+		if (!start2 && credits >= 2 * credden[temp]) credits -= 2 * credden[temp], start2++;
 	}
-	else start = 0;
+	else start2 = 0;
 }
 
 
@@ -116,26 +120,16 @@ int superpac_customio_r_1(int offset)
 {
 	int val, temp;
 
+	superpac_update_credits ();
 	switch (superpac_customio_1[8])
 	{
-		/* mode 1 & 3 are used by Pac & Pals, and returns actual important values */
+		/* mode 1 & 3 are used by Pac & Pal, and returns actual important values */
 		case 1:
 		case 3:
 			switch (offset)
 			{
-				static int cointrig;
 				case 0:
 					val = readinputport (3) & 0x0f;
-					if (val & 1)
-					{
-						if (coin)
-						{
-							if (!cointrig) val &= ~1;
-							else cointrig -= 1;
-						}
-						else coin = cointrig = 1, credits += 1;
-					}
-					else coin = 0;
 					break;
 
 				case 1:
@@ -147,21 +141,8 @@ int superpac_customio_r_1(int offset)
 					break;
 
 				case 3:
-					temp = readinputport (1) & 7;
-					val = readinputport (3) >> 4;
+					val = (readinputport (3) >> 4) & 3;
 					val |= val << 2;
-					if (val & 1)
-					{
-						if (start || credits < credden[temp]) val &= ~1;
-						else credits -= credden[temp], start = 1;
-					}
-					else start = 0;
-					if (val & 2)
-					{
-						if (start || credits < 2 * credden[temp]) val &= ~2;
-						else credits -= 2 * credden[temp], start = 1;
-					}
-					else start = 0;
 
 					/* I don't know the exact mix, but the low bit is used both for
 					   the fire button and for player 1 start; I'm just ORing for now */
@@ -186,13 +167,13 @@ int superpac_customio_r_1(int offset)
 			switch (offset)
 			{
 				case 0:
-					superpac_update_credits ();
+//					superpac_update_credits ();
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) / 10;
 					break;
 
 				case 1:
-					superpac_update_credits ();
+//					superpac_update_credits ();
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) % 10;
 					break;
@@ -203,11 +184,6 @@ int superpac_customio_r_1(int offset)
 
 				case 5:
 					val = readinputport (2) >> 4;
-					if (val & 2)
-					{
-						if (!fire) val |= 1, fire = 1;
-					}
-					else fire = 0;
 					break;
 
 				case 6:
@@ -237,7 +213,7 @@ int superpac_customio_r_2(int offset)
 
 	switch (superpac_customio_2[8])
 	{
-		/* mode 3 is the standard for Pac & Pals, and returns actual important values */
+		/* mode 3 is the standard for Pac & Pal, and returns actual important values */
 		case 3:
 			switch (offset)
 			{
@@ -261,9 +237,7 @@ int superpac_customio_r_2(int offset)
 					break;
 
 				case 7:
-					val = 0;
-					/* bit 3 = configuration mode */
-					/* val |= 0x08; */
+					val = (readinputport (3) >> 4) & 0x0c;
 					break;
 
 				default:
@@ -301,9 +275,7 @@ int superpac_customio_r_2(int offset)
 					break;
 
 				case 6:
-					val = 0;
-					/* bit 3 = configuration mode? */
-					/* val |= 0x08; */
+					val = (readinputport (3) >> 4) & 0x0c;
 					break;
 
 				case 7:
@@ -335,8 +307,8 @@ void superpac_interrupt_enable_1_w(int offset,int data)
 
 int superpac_interrupt_1(void)
 {
-	if (interrupt_enable_1) return INT_IRQ;
-	else return INT_NONE;
+	if (interrupt_enable_1) return interrupt();
+	else return ignore_interrupt();
 }
 
 
@@ -358,6 +330,6 @@ void superpac_cpu_enable_w(int offset,int data)
 
 int pacnpal_interrupt_2(void)
 {
-	if (interrupt_enable_2) return INT_IRQ;
-	else return INT_NONE;
+	if (interrupt_enable_2) return interrupt();
+	else return ignore_interrupt();
 }

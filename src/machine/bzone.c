@@ -8,8 +8,8 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/atari_vg.h"
+#include "vidhrdw/avgdvg.h"
+#include "machine/atari_vg.h"
 
 #define IN0_3KHZ (1<<7)
 #define IN0_VG_HALT (1<<6)
@@ -20,15 +20,15 @@ int bzone_IN0_r(int offset)
 
 	res = readinputport(0);
 
-	if (cpu_geticount() & 0x100)
-		res|=IN0_3KHZ;
+	if (cpu_gettotalcycles() & 0x100)
+		res |= IN0_3KHZ;
 	else
-		res&=~IN0_3KHZ;
+		res &= ~IN0_3KHZ;
 
-	if (vg_done(cpu_gettotalcycles()))
-		res|=IN0_VG_HALT;
+	if (avgdvg_done())
+		res |= IN0_VG_HALT;
 	else
-		res&=~IN0_VG_HALT;
+		res &= ~IN0_VG_HALT;
 
 	return res;
 }
@@ -43,25 +43,43 @@ static int one_joy_trans[32]={
 
 int bzone_IN3_r(int offset)
 {
-    static int directors_cut=0x80; /* JB 970901 */
 	int res,res1;
 
+	res=readinputport(3);
 	res1=readinputport(4);
 
-	/* Decide between red/green or red only */
-	if ((res1 & 0x80) != directors_cut) {
-		directors_cut=res1&0x80;
-		if (directors_cut) {
-			atari_vg_colorram_w(3,3);
-			atari_vg_colorram_w(11,11);
-		} else {
-			atari_vg_colorram_w(3,0);
-			atari_vg_colorram_w(11,8);
-		}
-	}
-
-	res=readinputport(3);
 	res|=one_joy_trans[res1&0x1f];
 
 	return (res);
+}
+
+int bzone_interrupt(void)
+{
+	if (cpu_getiloops() == 5)
+		avgdvg_clr_busy();
+	if (readinputport(0) & 0x10)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
+void bzone_init_machine(void)
+{
+	avgdvg_clr_busy();
+}
+
+void redbaron_init_machine(void)
+{
+	avgdvg_clr_busy();
+	avg_fake_colorram_w(0,3);
+}
+
+int rb_input_select;
+
+int redbaron_joy_r (int offset)
+{
+	if (rb_input_select)
+		return readinputport (5);
+	else
+		return readinputport (6);
 }

@@ -18,10 +18,9 @@ unsigned char *galaga_starcontrol;
 static unsigned int stars_scroll;
 static int flipscreen;
 
-
 struct star
 {
-	int x,y,col;
+	int x,y,col,set;
 };
 static struct star stars[MAX_STARS];
 static int total_stars;
@@ -107,6 +106,7 @@ int galaga_vh_start(void)
 {
 	int generator;
 	int x,y;
+	int set = 0;
 
 
 	if (generic_vh_start() != 0)
@@ -144,6 +144,9 @@ int galaga_vh_start(void)
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
 					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
+					stars[total_stars].set = set;
+					if (++set > 3)
+						set = 0;
 
 					total_stars++;
 				}
@@ -293,6 +296,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the stars */
+	if (galaga_starcontrol[5] & 1)
 	{
 		int bpen;
 
@@ -301,13 +305,30 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (offs = 0;offs < total_stars;offs++)
 		{
 			int x,y;
-
+			int set;
+			int starset[4][2] = {{0,3},{0,1},{2,3},{2,1}};
 
 			x = stars[offs].x;
 			y = (stars[offs].y + stars_scroll/2) % 256 + 16;
 
-			if (((x & 1) ^ ((y >> 4) & 1)) &&
-					(bitmap->line[y][x] == bpen))
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+			{
+				int temp;
+
+
+				temp = x;
+				x = y;
+				y = temp;
+			}
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+				x = bitmap->width - 1 - x;
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+				y = bitmap->height - 1 - y;
+
+			set = ((galaga_starcontrol[4] << 1) | galaga_starcontrol[3]) & 3;
+			if ((bitmap->line[y][x] == bpen) &&
+					((stars[offs].set == starset[set][0]) ||
+					 (stars[offs].set == starset[set][1])))
 				bitmap->line[y][x] = stars[offs].col;
 		}
 	}

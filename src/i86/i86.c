@@ -7,7 +7,7 @@
 #include "host.h"
 #include "I86.h"
 #include "I86intrf.h"
-#include "cpuintrf.h"
+#include "memory.h"
 
 /***************************************************************************/
 /* cpu state                                                               */
@@ -45,7 +45,7 @@ void I86_Reset(unsigned char *mem,int cycles)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
-    
+
     cycles_per_run=cycles;
     int86_pending=0;
     for (i = 0; i < 4; i++) sregs[i] = 0;
@@ -60,25 +60,25 @@ void I86_Reset(unsigned char *mem,int cycles)
     ip = 0;
 
     Memory=mem;
-    
+
     for (i = 0;i < 256; i++)
     {
 	for (j = i, c = 0; j > 0; j >>= 1)
 	    if (j & 1) c++;
-	
+
 	parity_table[i] = !(c & 1);
     }
-    
+
     TF = IF = DF = 0;
     SignVal=CarryVal=AuxVal=OverVal=0;
     ZeroVal=ParityVal=1;
-    
+
     for (i = 0; i < 256; i++)
     {
 	Mod_RM.reg.b[i] = reg_name[(i & 0x38) >> 3];
 	Mod_RM.reg.w[i] = (i & 0x38) >> 3;
     }
-    
+
     for (i = 0xc0; i < 0x100; i++)
     {
 	Mod_RM.RM.w[i] = i & 7;
@@ -127,10 +127,10 @@ static void i_add_br8(void)
     unsigned src = RegByte(ModRM);
     unsigned tmp = GetRMByte(ModRM);
     unsigned tmp2 = tmp;
-    
+
     cycle_count-=3;
     tmp += src;
-    
+
     SetCFB(tmp);
     SetOFB_Add(tmp,src,tmp2);
     SetAF(tmp,src,tmp2);
@@ -274,7 +274,7 @@ static void i_or_br8(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Byte(dest);
     PutbackRMByte(ModRM,(BYTE)dest);
-}   
+}
 
 static void i_or_wr16(void)
 {
@@ -287,7 +287,7 @@ static void i_or_wr16(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Word(dest);
     PutbackRMWord(ModRM,dest);
-}     
+}
 
 static void i_or_r8b(void)
 {
@@ -300,7 +300,7 @@ static void i_or_r8b(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Byte(dest);
     RegByte(ModRM)=(BYTE)dest;
-}    
+}
 
 static void i_or_r16w(void)
 {
@@ -650,7 +650,7 @@ static void i_and_br8(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Byte(dest);
     PutbackRMByte(ModRM,(BYTE)dest);
-}   
+}
 
 static void i_and_wr16(void)
 {
@@ -663,7 +663,7 @@ static void i_and_wr16(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Word(dest);
     PutbackRMWord(ModRM,dest);
-}     
+}
 
 static void i_and_r8b(void)
 {
@@ -676,7 +676,7 @@ static void i_and_r8b(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Byte(dest);
     RegByte(ModRM)=(BYTE)dest;
-}    
+}
 
 static void i_and_r16w(void)
 {
@@ -927,7 +927,7 @@ static void i_xor_br8(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Byte(dest);
     PutbackRMByte(ModRM,(BYTE)dest);
-}   
+}
 
 static void i_xor_wr16(void)
 {
@@ -940,7 +940,7 @@ static void i_xor_wr16(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Word(dest);
     PutbackRMWord(ModRM,dest);
-}     
+}
 
 static void i_xor_r8b(void)
 {
@@ -953,7 +953,7 @@ static void i_xor_r8b(void)
     CarryVal = OverVal = AuxVal = 0;
     SetSZPF_Byte(dest);
     RegByte(ModRM)=(BYTE)dest;
-}    
+}
 
 static void i_xor_r16w(void)
 {
@@ -1596,41 +1596,41 @@ static void i_80pre(void)
     unsigned tmp = GetRMByte(ModRM);
     unsigned src = FETCH;
     unsigned tmp2;
-    
-    
+
+
     switch (ModRM & 0x38)
     {
     case 0x00:  /* ADD eb,d8 */
 	cycle_count-=4;
 	tmp2 = src + tmp;
-	
+
 	SetCFB(tmp2);
 	SetOFB_Add(tmp2,src,tmp);
 	SetAF(tmp2,src,tmp);
 	SetSZPF_Byte(tmp2);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp2);
 	break;
     case 0x08:  /* OR eb,d8 */
 	cycle_count-=4;
 	tmp |= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x10:  /* ADC eb,d8 */
 	cycle_count-=4;
 	src += CF;
 	tmp2 = src + tmp;
-	
+
 	SetCFB(tmp2);
 	SetOFB_Add(tmp2,src,tmp);
 	SetAF(tmp2,src,tmp);
 	SetSZPF_Byte(tmp2);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp2);
 	break;
     case 0x18:  /* SBB eb,b8 */
@@ -1638,56 +1638,56 @@ static void i_80pre(void)
 	src += CF;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFB(tmp);
 	SetOFB_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x20:  /* AND eb,d8 */
 	cycle_count-=4;
 	tmp &= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x28:  /* SUB eb,d8 */
 	cycle_count-=4;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFB(tmp);
 	SetOFB_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x30:  /* XOR eb,d8 */
 	cycle_count-=4;
 	tmp ^= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x38:  /* CMP eb,d8 */
 	cycle_count-=4;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFB(tmp);
 	SetOFB_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Byte(tmp);
-	
+
 	break;
     }
 }
@@ -1709,34 +1709,34 @@ static void i_81pre(void)
     case 0x00:  /* ADD ew,d16 */
 	cycle_count-=2;
 	tmp2 = src + tmp;
-	
+
 	SetCFW(tmp2);
 	SetOFW_Add(tmp2,src,tmp);
 	SetAF(tmp2,src,tmp);
 	SetSZPF_Word(tmp2);
-	
+
 	PutbackRMWord(ModRM,tmp2);
 	break;
     case 0x08:  /* OR ew,d16 */
 	cycle_count-=2;
 	tmp |= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x10:  /* ADC ew,d16 */
 	cycle_count-=2;
 	src += CF;
 	tmp2 = src + tmp;
-	
+
 	SetCFW(tmp2);
 	SetOFW_Add(tmp2,src,tmp);
 	SetAF(tmp2,src,tmp);
 	SetSZPF_Word(tmp2);
-	
+
 	PutbackRMWord(ModRM,tmp2);
 	break;
     case 0x18:  /* SBB ew,d16 */
@@ -1744,56 +1744,56 @@ static void i_81pre(void)
 	src += CF;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFW(tmp);
 	SetOFW_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x20:  /* AND ew,d16 */
 	cycle_count-=2;
 	tmp &= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x28:  /* SUB ew,d16 */
 	cycle_count-=2;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFW(tmp);
 	SetOFW_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x30:  /* XOR ew,d16 */
 	cycle_count-=2;
 	tmp ^= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x38:  /* CMP ew,d16 */
 	cycle_count-=2;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFW(tmp);
 	SetOFW_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	break;
     }
 }
@@ -1807,40 +1807,40 @@ static void i_83pre(void)
     unsigned tmp = GetRMWord(ModRM);
     unsigned src = (WORD)((INT16)((INT8)FETCH));
     unsigned tmp2;
-    
+
     switch (ModRM & 0x38)
     {
     case 0x00:  /* ADD ew,d8 */
 	cycle_count-=2;
 	tmp2 = src + tmp;
-	
+
 	SetCFW(tmp2);
 	SetOFW_Add(tmp2,src,tmp);
 	SetAF(tmp2,src,tmp);
 	SetSZPF_Word(tmp2);
-	
+
 	PutbackRMWord(ModRM,tmp2);
 	break;
     case 0x08:  /* OR ew,d8 */
 	cycle_count-=2;
 	tmp |= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x10:  /* ADC ew,d8 */
 	cycle_count-=2;
 	src += CF;
 	tmp2 = src + tmp;
-	
+
 	SetCFW(tmp2);
 	SetOFW_Add(tmp2,src,tmp);
 	SetAF(tmp2,src,tmp);
 	SetSZPF_Word(tmp2);
-	
+
 	PutbackRMWord(ModRM,tmp2);
 	break;
     case 0x18:  /* SBB ew,d8 */
@@ -1848,57 +1848,57 @@ static void i_83pre(void)
 	src += CF;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFW(tmp);
 	SetOFW_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x20:  /* AND ew,d8 */
 	cycle_count-=2;
 	tmp &= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x28:  /* SUB ew,d8 */
 	cycle_count-=2;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFW(tmp);
 	SetOFW_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x30:  /* XOR ew,d8 */
 	cycle_count-=2;
 	tmp ^= src;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
-	
+
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
-	
+
     case 0x38:  /* CMP ew,d8 */
 	cycle_count-=2;
 	tmp2 = tmp;
 	tmp -= src;
-	
+
 	SetCFW(tmp);
 	SetOFW_Sub(tmp,src,tmp2);
 	SetAF(tmp,src,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	break;
     }
 }
@@ -2025,10 +2025,10 @@ static void i_lea(void)
 static void i_mov_sregw(void)
 {
     /* Opcode 0x8e */
-    
+
     unsigned ModRM = FETCH;
     WORD src = GetRMWord(ModRM);
-    
+
     cycle_count-=2;
     switch (ModRM & 0x38)
     {
@@ -2047,7 +2047,7 @@ static void i_mov_sregw(void)
 	break;
     case 0x08:  /* mov cs,ew */
 	break;
-	
+
     }
 }
 
@@ -2055,7 +2055,7 @@ static void i_mov_sregw(void)
 static void i_popw(void)
 {
     /* Opcode 0x8f */
-    
+
     unsigned ModRM = FETCH;
     WORD tmp;
     POP(tmp);
@@ -2136,7 +2136,7 @@ static void i_cbw(void)
     cycle_count-=2;
     regs.b[AH] = (regs.b[AL] & 0x80) ? 0xff : 0;
 }
-	
+
 static void i_cwd(void)
 {
     /* Opcode 0x99 */
@@ -2190,7 +2190,7 @@ static void i_popf(void)
     POP(tmp);
     cycle_count-=2;
     ExpandFlags(tmp);
-    
+
     if (TF) trap();
 }
 
@@ -2297,7 +2297,7 @@ static void i_movsw(void)
 
     unsigned di = regs.w[DI];
     unsigned si = regs.w[SI];
-    
+
     WORD tmp = GetMemW(base[DS],si);
 
     PutMemW(base[ES],di, tmp);
@@ -2320,7 +2320,7 @@ static void i_cmpsb(void)
     unsigned src = GetMemB(base[ES], di);
     unsigned tmp = GetMemB(base[DS], si);
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFB(tmp);
@@ -2346,7 +2346,7 @@ static void i_cmpsw(void)
     unsigned src = GetMemW(base[ES], di);
     unsigned tmp = GetMemW(base[DS], si);
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFW(tmp);
@@ -2383,7 +2383,7 @@ static void i_test_axd16(void)
 
     unsigned tmp1 = (unsigned)regs.w[AX];
     unsigned tmp2;
-    
+
     tmp2 = (unsigned) FETCH;
     tmp2 += FETCH << 8;
 
@@ -2442,7 +2442,7 @@ static void i_lodsw(void)
     regs.w[AX]=tmp;
     cycle_count-=6;
 }
-    
+
 static void i_scasb(void)
 {
     /* Opcode 0xae */
@@ -2451,7 +2451,7 @@ static void i_scasb(void)
     unsigned src = GetMemB(base[ES], di);
     unsigned tmp = regs.b[AL];
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFB(tmp);
@@ -2474,7 +2474,7 @@ static void i_scasw(void)
     unsigned src = GetMemW(base[ES], di);
     unsigned tmp = regs.w[AX];
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFW(tmp);
@@ -2773,7 +2773,7 @@ static void i_iret(void)
     POP(sregs[CS]);
     base[CS] = SegBase(CS);
     i_popf();
-}    
+}
 
 
 static void i_d0pre(void)
@@ -2810,20 +2810,20 @@ static void i_d0pre(void)
     case 0x20:  /* SHL eb,1 */
     case 0x30:
 	tmp <<= 1;
-	
+
 	SetCFB(tmp);
 	SetOFB_Add(tmp,tmp2,tmp2);
 	AuxVal = 1;
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM, (BYTE)tmp);
 	break;
     case 0x28:  /* SHR eb,1 */
 	CarryVal = tmp & 0x01;
 	OverVal = tmp & 0x80;
-	
+
 	tmp2 = tmp >> 1;
-	
+
 	SetSZPF_Byte(tmp2);
 	AuxVal = 1;
 	PutbackRMByte(ModRM,(BYTE)tmp2);
@@ -2831,9 +2831,9 @@ static void i_d0pre(void)
     case 0x38:  /* SAR eb,1 */
 	CarryVal = tmp & 0x01;
 	OverVal = 0;
-	
+
 	tmp2 = (tmp >> 1) | (tmp & 0x80);
-	
+
 	SetSZPF_Byte(tmp2);
 	AuxVal = 1;
 	PutbackRMByte(ModRM,(BYTE)tmp2);
@@ -2880,20 +2880,20 @@ static void i_d1pre(void)
     case 0x20:  /* SHL ew,1 */
     case 0x30:
 	tmp <<= 1;
-	
+
 	SetCFW(tmp);
 	SetOFW_Add(tmp,tmp2,tmp2);
 	AuxVal = 1;
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x28:  /* SHR ew,1 */
 	CarryVal = tmp & 0x01;
 	OverVal = tmp & 0x8000;
-	
+
 	tmp2 = tmp >> 1;
-	
+
 	SetSZPF_Word(tmp2);
 	AuxVal = 1;
 	PutbackRMWord(ModRM,tmp2);
@@ -2901,9 +2901,9 @@ static void i_d1pre(void)
     case 0x38:  /* SAR ew,1 */
 	CarryVal = tmp & 0x01;
 	OverVal = 0;
-	
+
 	tmp2 = (tmp >> 1) | (tmp & 0x8000);
-	
+
 	SetSZPF_Word(tmp2);
 	AuxVal = 1;
 	PutbackRMWord(ModRM,tmp2);
@@ -2985,10 +2985,10 @@ static void i_d2pre(void)
 	    tmp <<= count;
 	    SetCFB(tmp);
 	}
-	
+
 	AuxVal = 1;
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x28:  /* SHR eb,CL */
@@ -3002,17 +3002,17 @@ static void i_d2pre(void)
 	    CarryVal = (tmp >> (count-1)) & 0x1;
 	    tmp >>= count;
 	}
-	
+
 	SetSZPF_Byte(tmp);
 	AuxVal = 1;
 	PutbackRMByte(ModRM,(BYTE)tmp);
 	break;
     case 0x38:  /* SAR eb,CL */
 	tmp2 = tmp & 0x80;
-	CarryVal = ((INT8)tmp >> (count-1)) & 0x01;        
+	CarryVal = ((INT8)tmp >> (count-1)) & 0x01;
 	for (; count > 0; count--)
 	    tmp = (tmp >> 1) | tmp2;
-	
+
 	SetSZPF_Byte(tmp);
 	AuxVal = 1;
 	PutbackRMByte(ModRM,(BYTE)tmp);
@@ -3094,10 +3094,10 @@ static void i_d3pre(void)
 	    tmp <<= count;
 	    SetCFW(tmp);
 	}
-	
+
 	AuxVal = 1;
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x28:  /* SHR ew,CL */
@@ -3111,17 +3111,17 @@ static void i_d3pre(void)
 	    CarryVal = (tmp >> (count-1)) & 0x1;
 	    tmp >>= count;
 	}
-	
+
 	SetSZPF_Word(tmp);
 	AuxVal = 1;
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x38:  /* SAR ew,CL */
 	tmp2 = tmp & 0x8000;
-	CarryVal = ((INT16)tmp >> (count-1)) & 0x01;        
+	CarryVal = ((INT16)tmp >> (count-1)) & 0x01;
 	for (; count > 0; count--)
 	    tmp = (tmp >> 1) | tmp2;
-	
+
 	SetSZPF_Word(tmp);
 	AuxVal = 1;
 	PutbackRMWord(ModRM,tmp);
@@ -3166,7 +3166,7 @@ static void i_xlat(void)
     /* Opcode 0xd7 */
 
     unsigned dest = regs.w[BX]+regs.b[AL];
-    
+
     cycle_count-=5;
     regs.b[AL] = GetMemB(base[DS], dest);
 }
@@ -3230,7 +3230,7 @@ static void i_jcxz(void)
     /* Opcode 0xe3 */
 
     int disp = (int)((INT8)FETCH);
-    
+
     if (regs.w[CX] == 0) {
 	cycle_count-=18;
 	ip = (WORD)(ip+disp);
@@ -3257,7 +3257,7 @@ static void i_inax(void)
     regs.b[AL] = read_port(port);
     regs.b[AH] = read_port(port+1);
 }
-    
+
 static void i_outal(void)
 {
     /* Opcode 0xe6 */
@@ -3475,7 +3475,7 @@ static void rep(int flagval)
 	instruction[next]();
     }
 }
-	    
+
 
 static void i_repne(void)
 {
@@ -3514,34 +3514,34 @@ static void i_f6pre(void)
     unsigned ModRM = FETCH;
     unsigned tmp = (unsigned)GetRMByte(ModRM);
     unsigned tmp2;
-    
-    
+
+
     switch (ModRM & 0x38)
     {
     case 0x00:  /* TEST Eb, data8 */
     case 0x08:  /* ??? */
 	cycle_count-=5;
 	tmp &= FETCH;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
 	SetSZPF_Byte(tmp);
 	break;
-	
+
     case 0x10:  /* NOT Eb */
 	cycle_count-=3;
 	PutbackRMByte(ModRM,~tmp);
 	break;
-	
+
     case 0x18:  /* NEG Eb */
 	cycle_count-=3;
 	tmp2 = tmp;
 	tmp = -tmp;
-	
+
 	CarryVal = (int)tmp2 > 0;
-	
+
 	SetAF(tmp,0,tmp2);
 	SetSZPF_Byte(tmp);
-	
+
 	PutbackRMByte(ModRM,tmp);
 	break;
     case 0x20:  /* MUL AL, Eb */
@@ -3549,10 +3549,10 @@ static void i_f6pre(void)
 	{
 	    UINT16 result;
 	    tmp2 = regs.b[AL];
-	
+
 	    SetSF((INT8)tmp2);
 	    SetPF(tmp2);
-	
+
 	    result = (UINT16)tmp2*tmp;
 	    regs.w[AX]=(WORD)result;
 
@@ -3564,17 +3564,17 @@ static void i_f6pre(void)
 	cycle_count-=80;
 	{
 	    INT16 result;
-	
+
 	    tmp2 = (unsigned)regs.b[AL];
-	
+
 	    SetSF((INT8)tmp2);
 	    SetPF(tmp2);
-	
+
 	    result = (INT16)((INT8)tmp2)*(INT16)((INT8)tmp);
 	    regs.w[AX]=(WORD)result;
-	
+
 	    SetZF(regs.w[AX]);
-	
+
 	    CarryVal = OverVal = (result >> 7 != 0) && (result >> 7 != -1);
 	}
 	break;
@@ -3582,9 +3582,9 @@ static void i_f6pre(void)
 	cycle_count-=90;
 	{
 	    UINT16 result;
-	
+
 	    result = regs.w[AX];
-	
+
 	    if (tmp)
 	    {
 	    if ((result / tmp) > 0xff)
@@ -3597,7 +3597,7 @@ static void i_f6pre(void)
 		regs.b[AH] = result % tmp;
 		regs.b[AL] = result / tmp;
 	    }
-	    
+
 	    }
 	    else
 	    {
@@ -3610,13 +3610,13 @@ static void i_f6pre(void)
 	cycle_count-=106;
 	{
 	    INT16 result;
-	
+
 	    result = regs.w[AX];
-	
+
 	    if (tmp)
 	    {
 	    tmp2 = result % (INT16)((INT8)tmp);
-	    
+
 	    if ((result /= (INT16)((INT8)tmp)) > 0xff)
 	    {
 		I86_interrupt(0);
@@ -3645,8 +3645,8 @@ static void i_f7pre(void)
     unsigned ModRM = FETCH;
     unsigned tmp = GetRMWord(ModRM);
     unsigned tmp2;
-    
-    
+
+
     switch (ModRM & 0x38)
     {
     case 0x00:  /* TEST Ew, data16 */
@@ -3654,29 +3654,29 @@ static void i_f7pre(void)
 	cycle_count-=3;
 	tmp2 = FETCH;
 	tmp2 += FETCH << 8;
-	
+
 	tmp &= tmp2;
-	
+
 	CarryVal = OverVal = AuxVal = 0;
 	SetSZPF_Word(tmp);
 	break;
-	
+
     case 0x10:  /* NOT Ew */
 	cycle_count-=3;
 	tmp = ~tmp;
 	PutbackRMWord(ModRM,tmp);
 	break;
-	
+
     case 0x18:  /* NEG Ew */
 	cycle_count-=3;
 	tmp2 = tmp;
 	tmp = -tmp;
-	
+
 	CarryVal = (int)tmp2 > 0;
-	
+
 	SetAF(tmp,0,tmp2);
 	SetSZPF_Word(tmp);
-	
+
 	PutbackRMWord(ModRM,tmp);
 	break;
     case 0x20:  /* MUL AX, Ew */
@@ -3684,7 +3684,7 @@ static void i_f7pre(void)
 	{
 	    UINT32 result;
 	    tmp2 = regs.w[AX];
-	
+
 	    SetSF((INT16)tmp2);
 	    SetPF(tmp2);
 
@@ -3697,17 +3697,17 @@ static void i_f7pre(void)
 	    CarryVal = OverVal = (regs.w[DX] != 0);
 	}
 	break;
-	
+
     case 0x28:  /* IMUL AX, Ew */
 	cycle_count-=150;
 	{
 	    INT32 result;
-	
+
 	    tmp2 = regs.w[AX];
-	
+
 	    SetSF((INT16)tmp2);
 	    SetPF(tmp2);
-	
+
 	    result = (INT32)((INT16)tmp2)*(INT32)((INT16)tmp);
 	    CarryVal = OverVal = (result >> 15 != 0) && (result >> 15 != -1);
 
@@ -3722,9 +3722,9 @@ static void i_f7pre(void)
 	cycle_count-=158;
 	{
 	    UINT32 result;
-	
+
 	    result = (regs.w[DX] << 16) + regs.w[AX];
-	
+
 	    if (tmp)
 	    {
 	    tmp2 = result % tmp;
@@ -3751,13 +3751,13 @@ static void i_f7pre(void)
 	cycle_count-=180;
 	{
 	    INT32 result;
-	
+
 	    result = (regs.w[DX] << 16) + regs.w[AX];
-	
+
 	    if (tmp)
 	    {
 	    tmp2 = result % (INT32)((INT16)tmp);
-	    
+
 	    if ((result /= (INT32)((INT16)tmp)) > 0xffff)
 	    {
 		I86_interrupt(0);
@@ -3841,7 +3841,7 @@ static void i_fepre(void)
     unsigned ModRM = FETCH;
     unsigned tmp = GetRMByte(ModRM);
     unsigned tmp1;
-    
+
     cycle_count-=3; /* 2 if dest is in memory */
     if ((ModRM & 0x38) == 0)  /* INC eb */
     {
@@ -3853,10 +3853,10 @@ static void i_fepre(void)
 	tmp1 = tmp-1;
 	SetOFB_Sub(tmp1,1,tmp);
     }
-    
+
     SetAF(tmp1,tmp,1);
     SetSZPF_Byte(tmp1);
-    
+
     PutbackRMByte(ModRM,(BYTE)tmp1);
 }
 
@@ -3875,33 +3875,33 @@ static void i_ffpre(void)
 	cycle_count-=3; /* 2 if dest is in memory */
 	tmp = GetRMWord(ModRM);
 	tmp1 = tmp+1;
-	
+
 	SetOFW_Add(tmp1,tmp,1);
 	SetAF(tmp1,tmp,1);
 	SetSZPF_Word(tmp1);
-	
+
 	PutbackRMWord(ModRM,(WORD)tmp1);
 	break;
-	
+
     case 0x08:  /* DEC ew */
 	cycle_count-=3; /* 2 if dest is in memory */
 	tmp = GetRMWord(ModRM);
 	tmp1 = tmp-1;
-	
+
 	SetOFW_Sub(tmp1,1,tmp);
 	SetAF(tmp1,tmp,1);
 	SetSZPF_Word(tmp1);
-	
+
 	PutbackRMWord(ModRM,(WORD)tmp1);
 	break;
-	
+
     case 0x10:  /* CALL ew */
 	cycle_count-=9; /* 8 if dest is in memory */
 	tmp = GetRMWord(ModRM);
 	PUSH(ip);
 	ip = (WORD)tmp;
 	break;
-	
+
     case 0x18:  /* CALL FAR ea */
 	cycle_count-=11;
 	PUSH(sregs[CS]);
@@ -3910,23 +3910,23 @@ static void i_ffpre(void)
 	sregs[CS] = GetnextRMWord;
 	base[CS] = SegBase(CS);
 	break;
-	
+
     case 0x20:  /* JMP ea */
 	cycle_count-=11; /* 8 if address in memory */
 	ip = GetRMWord(ModRM);
 	break;
-	
+
     case 0x28:  /* JMP FAR ea */
 	cycle_count-=4;
 	ip = GetRMWord(ModRM);
 	sregs[CS] = GetnextRMWord;
 	base[CS] = SegBase(CS);
 	break;
-	
+
     case 0x30:  /* PUSH ea */
 	cycle_count-=3;
 	tmp = GetRMWord(ModRM);
-	PUSH(tmp);       
+	PUSH(tmp);
 	break;
     }
 }
