@@ -93,8 +93,8 @@ int palette_start(void)
 		case PALETTIZED_16BIT:
 			total_shrinked_pens = Machine->drv->total_colors + RESERVED_PENS;
 			break;
-		colormode = DIRECT_15BIT;
-		colormode = DIRECT_32BIT;
+        case DIRECT_15BIT:
+        case DIRECT_32BIT:
 			total_shrinked_pens = 3;
 			break;
 		default:

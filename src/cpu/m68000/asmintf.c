@@ -157,7 +157,7 @@ static const struct m68k_memory_interface interface_a24_d16 =
 	cpu_readmem24bew_word,
 	readlong_a24_d16,
 	cpu_readmem24bew_word,
-	readlong_a24_d16,
+	readlong_a24_d16
 };
 
 #endif // A68k0
@@ -247,7 +247,7 @@ static const struct m68k_memory_interface interface_a24_d32 =
 	readword_a24_d32,
 	readlong_a24_d32,
 	readword_a24_d32,
-	readlong_a24_d32,
+	readlong_a24_d32
 };
 
 
@@ -334,7 +334,7 @@ static const struct m68k_memory_interface interface_a32_d32 =
 	readword_a32_d32,
 	readlong_a32_d32,
 	readword_a32_d32,
-	readlong_a32_d32,
+	readlong_a32_d32
 };
 
 #endif // A68K2
@@ -362,18 +362,50 @@ static void m68k16_reset_common(void)
     M68000_RESET();
 }
 
+void m68000_memory_interface_set(int entry,void *MemRoutine)
+{
+    // ** Change Entry **
+
+    typedef data8_t(*tdef_memory_read8)(offs_t offset);
+    typedef data16_t(*tdef_memory_read16)(offs_t offset);
+    typedef data32_t(*tdef_memory_read32)(offs_t offset);
+
+    switch( entry )
+    {
+		case  8: a68k_memory_intf.read8pc  = (tdef_memory_read8)MemRoutine;
+                 break;
+
+		case  9: a68k_memory_intf.read16pc = (tdef_memory_read16)MemRoutine;
+                 break;
+
+		case 10: a68k_memory_intf.read32pc = (tdef_memory_read32)MemRoutine;
+                 break;
+
+		case 11: a68k_memory_intf.read16d  = (tdef_memory_read16)MemRoutine;
+                 break;
+
+		case 12: a68k_memory_intf.read32d  = (tdef_memory_read32)MemRoutine;
+                 break;
+
+    }
+}
+
 void m68000_reset(void *param)
 {
-	// Allocate Correct Memory routines
+    // Default Memory Routines
+    a68k_memory_intf = interface_a24_d16;
 
-	if (a68k_memory_intf.read8 != cpu_readmem24bew)
-		a68k_memory_intf = interface_a24_d16;
+    // Check for Override
+	if(Machine->drv->init_machine)
+    {
+	    // Driver Over-ride
+        (*Machine->drv->init_machine)();
+    }
 
 	m68k16_reset_common();
 
     M68000_regs.Memory_Interface = a68k_memory_intf;
 }
-
 
 void m68000_exit(void)
 {
@@ -623,6 +655,7 @@ const char *m68000_info(void *context, int regnum)
 #ifdef MAME_DEBUG
 //extern int m68k_disassemble(char* str_buff, int pc, int cputype);
 #endif
+
     static char buffer[32][47+1];
 	static int which;
 	a68k_cpu_context *r = context;
@@ -689,7 +722,7 @@ const char *m68000_info(void *context, int regnum)
 
 unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-	change_pc24bew(pc);
+//	change_pc24bew(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68000);
 #else

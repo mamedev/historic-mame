@@ -649,7 +649,7 @@ static WRITE16_HANDLER( neo_irq2pos_16_w )
 
 static MEMORY_READ16_START( neogeo_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },			/* Rom bank 1 */
-	{ 0x100000, 0x10ffff, MRA16_RAM },			/* Ram bank 1 */
+    { 0x100000, 0x10ffff, MRA16_BANK1 },          /* Ram bank 1 */
 	{ 0x200000, 0x2fffff, MRA16_BANK4 },		/* Rom bank 2 */
 
 	{ 0x300000, 0x300001, controller1_16_r },
@@ -673,7 +673,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( neogeo_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },	  /* ghost pilots writes to ROM */
-	{ 0x100000, 0x10ffff, MWA16_RAM, &neogeo_ram16 },	// WORK RAM
+    { 0x100000, 0x10ffff, MWA16_BANK1 },   // WORK RAM
 /*	{ 0x200000, 0x200fff, whp copies ROM data here. Why? Is there RAM in the banked ROM space? */
 /* trally writes to 200000-200003 as well, probably looking for a serial link */
 /* both games write to 0000fe before writing to 200000. The two things could be related. */

@@ -12,7 +12,7 @@ TARGET = mame
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68000 engine
-# X86_ASM_68000 = 1
+X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1

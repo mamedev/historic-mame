@@ -85,6 +85,10 @@ void init_neogeo(void)
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
 	data8_t *mem08;
 
+    /* Allocate ram banks */
+    neogeo_ram16 = malloc (0x10000);
+    cpu_setbank(1, neogeo_ram16);
+
 	if (memory_region(REGION_SOUND2))
 	{
 		logerror("using memory region %d for Delta T samples\n",REGION_SOUND2);

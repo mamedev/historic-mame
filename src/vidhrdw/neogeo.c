@@ -109,6 +109,10 @@ void neogeo_vh_stop(void)
 	if (neogeo_vidram16)
 		free (neogeo_vidram16);
 	neogeo_vidram16 = NULL;
+
+    if (neogeo_ram16)
+        free (neogeo_ram16);
+    neogeo_ram16 = NULL;
 }
 
 static int common_vh_start(void)

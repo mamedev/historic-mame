@@ -66,6 +66,7 @@ extern void m68000_set_irq_line(int irqline, int state);
 extern void m68000_set_irq_callback(int (*callback)(int irqline));
 extern const char *m68000_info(void *context, int regnum);
 extern unsigned m68000_dasm(char *buffer, unsigned pc);
+extern void m68000_memory_interface_set(int Entry,void * memory_routine);
 
 /****************************************************************************
  * M68010 section

@@ -1,14 +1,13 @@
 /*---------------------------------------------------------------
  * Motorola 68000 32 Bit emulator
  *
- * Copyright 1998,99 Mike Coates, 	All rights reserved
- *                   Darren Olafson
+ * Copyright 1998-2001 Mike Coates, 	All rights reserved
+ *                     Darren Olafson
  *---------------------------------------------------------------
  *
  * Thanks to ...
  *
- * Neil Bradley    Neil Bradley   (lots of optimisation help & ideas)
- * Aaron Giles     Dissassembler  (used to comment each routine)
+ * Neil Bradley    (lots of optimisation help & ideas)
  *
  *---------------------------------------------------------------
  * History (so we know what bugs have been fixed)
@@ -97,6 +96,7 @@
  *                  fixed $6xff branching
  * 23.01.01 MJC   - Spits out seperate code for 68000 & 68020
  *                  allows seperate optimising!
+ * 17.02.01 MJC   - Support for encrypted PC relative fetch calls
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -132,7 +132,6 @@
 #undef  STALLCHECK      /* Affects fetching of Opcode */
 #define SAVEPPC         /* Save Previous PC */
 #define ENCRYPTED       /* PC relative = decrypted */
-#define ENCRYPTCODEONLY /* Opcodes and PC Rel encrypted only */
 #define ASMBANK         /* Memory banking algorithm to use */
 #define A7ROUTINE       /* Define to use separate routines for -(a7)/(a7)+ */
 #define ALIGNMENT 4     /* Alignment to use for branches */
@@ -163,8 +162,6 @@ int      DisOp;
 #undef cpu_readmem24bew_word
 
 #include "cpuintrf.h"
-
-
 
 /*
  * Defines used by Program
@@ -555,6 +552,8 @@ void Completed(void)
 {
 
    /* Flag Processing to be finished off ? */
+
+   AccessType = NORMAL;
 
    if (FlagProcess > 0)
    {
@@ -1018,23 +1017,6 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 
       case PCREL :
 
-   	    #ifdef ENCRYPTCODEONLY
-          switch (Size)
-          {
-             case 66 :
-  	      		fprintf(fp, "\t\t movzx EAX,byte [%s+ebp]\n",regnameslong[AReg]);
-                break;
-
-             case 87 :
-  	      		fprintf(fp, "\t\t movzx EAX,word [%s+ebp]\n",regnameslong[AReg]);
-                break;
-
-             case 76 :
-  	      		fprintf(fp, "\t\t mov   EAX,dword [%s+ebp]\n",regnameslong[AReg]);
-                break;
-          }
-
-        #else
           switch (Size)
           {
              case 66 :
@@ -1049,10 +1031,11 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
                 fprintf(fp, "\t\t call  [_a68k_memory_intf+40]\n");
                 break;
           }
-        #endif
-
           break;
    }
+
+// AccessType = NORMAL;
+
 #else
 
    switch (Size)
@@ -1323,7 +1306,6 @@ void Memory_Fetch(char Size,int Dreg,int Extend)
       }
    }
 }
-
 
 /**********************/
 /* Push PC onto Stack */
@@ -1634,8 +1616,9 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
       case 9:
 
          AccessType = PCREL;
+
          Memory_Fetch('W',EAX,TRUE);
-         fprintf(fp, "\t\t movsx eax,ax\n");
+//       fprintf(fp, "\t\t movsx eax,ax\n");
          fprintf(fp, "\t\t mov   EDI,ESI           ; Get PC\n");
          fprintf(fp, "\t\t add   esi,byte 2\n");
          fprintf(fp, "\t\t add   edi,eax         ; Add Offset to PC\n");
@@ -1643,9 +1626,10 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
 
       case 10:
 
+         AccessType = PCREL;
+
          /* Get PC */
 
-         AccessType = PCREL;
          fprintf(fp, "\t\t mov   edi,esi           ; Get PC\n");
 
          /* Add Extension Details */
@@ -1692,6 +1676,7 @@ void EffectiveAddressRead(int mode,char Size,int Rreg,int Dreg,const char *flags
    int   MaskMode;
    char Flags[8];
 
+   AccessType = NORMAL;
 
    strcpy(Flags,flags);
 
@@ -7815,6 +7800,7 @@ void CodeSegmentBegin(void)
    fprintf(fp, "\t\t add   eax,[%s]\n",REG_VBR);     /* 68010+ Vector Base */
 
    /* Direct Read */
+
    Memory_Read('L',EAX,"------B",0);
 
    fprintf(fp, "\t\t mov   esi,eax\t\t;Set PC\n");
