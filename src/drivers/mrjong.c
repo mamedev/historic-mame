@@ -40,10 +40,6 @@ Notes:
      ROMs 4H and 5h: 2732
 ROMs 6A, 7A, 8A, 9A: 2764
 
-Developers:
-           More info reqd? Email me....
-           theguru@emuunlim.com
-
 ***************************************************************************/
 
 #include "driver.h"

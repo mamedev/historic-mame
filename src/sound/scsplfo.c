@@ -104,7 +104,7 @@ void LFO_Init(void)
 	}
 }
 
-signed int inline PLFO_Step(struct _LFO *LFO)
+INLINE signed int PLFO_Step(struct _LFO *LFO)
 {
 	int p;
     LFO->phase+=LFO->phase_step;    
@@ -116,7 +116,7 @@ signed int inline PLFO_Step(struct _LFO *LFO)
 	return p<<(SHIFT-LFO_SHIFT);
 }
 
-signed int inline ALFO_Step(struct _LFO *LFO)
+INLINE signed int ALFO_Step(struct _LFO *LFO)
 {
 	int p;
     LFO->phase+=LFO->phase_step;    

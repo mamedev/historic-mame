@@ -265,7 +265,7 @@ static struct GfxDecodeInfo raiden_gfxdecodeinfo[] =
 /******************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_RAIDEN_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 static INTERRUPT_GEN( raiden_interrupt )
 {

@@ -9,6 +9,7 @@
 static struct tilemap *tilemap;
 
 /*
+
 Color prom dump(only 0x00-0x10 range has valid data)
 0:---- ---- 0x00 Black
 1:---- -x-- 0x04
@@ -26,12 +27,12 @@ c:--x- xxxx 0x2f
 d:xx-- ---- 0xc0
 e:--xx -xx- 0x36
 f:xxx- x--- 0xe8
+
 */
 
 PALETTE_INIT( speedatk )
 {
 	int i;
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 	for (i = 0;i < 0x10;i++)
 	{
@@ -59,18 +60,26 @@ PALETTE_INIT( speedatk )
 	color_prom += 0x10;
 
 	/* Colortable entry */
+	for(i = 0; i < 0x100; i++)
+		colortable[i] = color_prom[i];	
 }
 
 WRITE_HANDLER( speedatk_videoram_w )
 {
-	videoram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(tilemap, offset);
+	}
 }
 
 WRITE_HANDLER( speedatk_colorram_w )
 {
-	colorram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(tilemap, offset);
+	}
 }
 
 WRITE_HANDLER( speedatk_flip_screen_w )
@@ -85,6 +94,10 @@ static void get_tile_info(int tile_index)
 	code = videoram[tile_index] + ((colorram[tile_index] & 0xe0) << 3);
 	color = colorram[tile_index] & 0x0f;
 	region = (colorram[tile_index] & 0x10) >> 4;
+
+	color += 2;
+	if(region)
+		color += 0x10;
 
 	SET_TILE_INFO(region, code, color, 0)
 }

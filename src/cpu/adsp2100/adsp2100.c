@@ -32,8 +32,9 @@
 /* chip types */
 #define CHIP_TYPE_ADSP2100	0
 #define CHIP_TYPE_ADSP2101	1
-#define CHIP_TYPE_ADSP2105	2
-#define CHIP_TYPE_ADSP2115	3
+#define CHIP_TYPE_ADSP2104	2
+#define CHIP_TYPE_ADSP2105	3
+#define CHIP_TYPE_ADSP2115	4
 
 
 /*###################################################################################################
@@ -240,6 +241,15 @@ INLINE void set_core_2100(void)
 INLINE void set_core_2101(void)
 {
 	chip_type = CHIP_TYPE_ADSP2101;
+	mstat_mask = 0x7f;
+	imask_mask = 0x3f;
+}
+#endif
+
+#if (HAS_ADSP2104)
+INLINE void set_core_2104(void)
+{
+	chip_type = CHIP_TYPE_ADSP2104;
 	mstat_mask = 0x7f;
 	imask_mask = 0x3f;
 }
@@ -471,6 +481,7 @@ void adsp2100_reset(void *param)
 			break;
 
 		case CHIP_TYPE_ADSP2101:
+		case CHIP_TYPE_ADSP2104:
 		case CHIP_TYPE_ADSP2105:
 		case CHIP_TYPE_ADSP2115:
 			adsp2100.pc = 0;
@@ -1889,6 +1900,114 @@ void adsp2101_set_tx_callback(TX_CALLBACK cb)
 
 #endif
 
+#if (HAS_ADSP2104)
+/**************************************************************************
+ * ADSP2104 section
+ **************************************************************************/
+
+static UINT8 adsp2104_reg_layout[] =
+{
+	ADSP2100_PC,		ADSP2100_AX0,	ADSP2100_MX0,	-1,
+	ADSP2100_CNTR, 		ADSP2100_AX1,	ADSP2100_MX1,	-1,
+	ADSP2100_MSTAT, 	ADSP2100_AY0,	ADSP2100_MY0,	-1,
+	ADSP2100_SSTAT, 	ADSP2100_AY1,	ADSP2100_MY1,	-1,
+	ADSP2100_PX, 		ADSP2100_AR,	ADSP2100_MR0,	-1,
+	ADSP2100_PCSP, 		ADSP2100_AF,	ADSP2100_MR1,	-1,
+	ADSP2100_CNTRSP, 	ADSP2100_SI,	ADSP2100_MR2,	-1,
+	ADSP2100_STATSP, 	ADSP2100_SE,	ADSP2100_MF,	-1,
+	ADSP2100_LOOPSP, 	ADSP2100_SB,	100,			-1,
+	ADSP2100_IMASK,		ADSP2100_SR0,	100,			-1,
+	ADSP2100_ICNTL,		ADSP2100_SR1,	100,			-1,
+	ADSP2100_I0,		ADSP2100_L0,	ADSP2100_M0,	-1,
+	ADSP2100_I1,		ADSP2100_L1,	ADSP2100_M1,	-1,
+	ADSP2100_I2,		ADSP2100_L2,	ADSP2100_M2,	-1,
+	ADSP2100_I3,		ADSP2100_L3,	ADSP2100_M3,	-1,
+	ADSP2100_I4,		ADSP2100_L4,	ADSP2100_M4,	-1,
+	ADSP2100_I5,		ADSP2100_L5,	ADSP2100_M5,	-1,
+	ADSP2100_I6,		ADSP2100_L6,	ADSP2100_M6,	-1,
+	ADSP2100_I7,		ADSP2100_L7,	ADSP2100_M7,	0
+};
+
+static UINT8 adsp2104_win_layout[] =
+{
+	 0, 0,30,20,	/* register window (top rows) */
+	31, 0,48,14,	/* disassembler window (left colums) */
+	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
+	31,15,48, 7,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void adsp2104_init(void)
+{
+	adsp2100_init();
+}
+
+void adsp2104_reset(void *param)
+{
+	set_core_2104();
+	adsp2100_reset(param);
+}
+
+void adsp2104_exit(void)
+{
+	adsp2100_exit();
+	sport_rx_callback = 0;
+	sport_tx_callback = 0;
+}
+int adsp2104_execute(int cycles) { return adsp2100_execute(cycles); }
+unsigned adsp2104_get_context(void *dst) { return adsp2100_get_context(dst); }
+void adsp2104_set_context(void *src)  { set_core_2104(); adsp2100_set_context(src); }
+unsigned adsp2104_get_reg(int regnum) { return adsp2100_get_reg(regnum); }
+void adsp2104_set_reg(int regnum, unsigned val) { adsp2100_set_reg(regnum,val); }
+void adsp2104_set_irq_line(int irqline, int state) { adsp2100_set_irq_line(irqline,state); }
+void adsp2104_set_irq_callback(int (*callback)(int irqline)) { adsp2100_set_irq_callback(callback); }
+const char *adsp2104_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "ADSP2104";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)adsp2104_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)adsp2104_win_layout;
+	}
+	return adsp2100_info(context,regnum);
+}
+
+unsigned adsp2104_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	extern unsigned dasm2100(char *, unsigned);
+    return dasm2100(buffer, pc);
+#else
+	sprintf(buffer, "$%06X", RWORD_PGM(pc));
+	return 1;
+#endif
+}
+
+void adsp2104_set_rx_callback(RX_CALLBACK cb)
+{
+	sport_rx_callback = cb;
+}
+
+void adsp2104_set_tx_callback(TX_CALLBACK cb)
+{
+	sport_tx_callback = cb;
+}
+
+void adsp2104_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+{
+	/* see how many words we need to copy */
+	int pagelen = (srcdata[BYTE_XOR_LE(3)] + 1) * 8;
+	int i;
+	for (i = 0; i < pagelen; i++)
+	{
+		UINT32 opcode = (srcdata[BYTE_XOR_LE(i*4+0)] << 16) | (srcdata[BYTE_XOR_LE(i*4+1)] << 8) | srcdata[BYTE_XOR_LE(i*4+2)];
+		ADSP2100_WRPGM(&dstdata[i], opcode);
+	}
+}
+
+#endif
+
 #if (HAS_ADSP2105)
 /**************************************************************************
  * ADSP2105 section
@@ -1985,21 +2104,7 @@ void adsp2105_set_tx_callback(TX_CALLBACK cb)
 
 void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
-	/* see how many words we need to copy */
-#ifdef LSB_FIRST
-	UINT32 size = 8 * (srcdata[3] + 1), i;
-#else
-	UINT32 size = 8 * (srcdata[2] + 1), i;
-#endif
-	for (i = 0; i < size; i++)
-	{
-#ifdef LSB_FIRST
-		UINT32 opcode = (srcdata[i*4+0] << 16) | (srcdata[i*4+1] << 8) | srcdata[i*4+2];
-#else
-		UINT32 opcode = (srcdata[i*4+1] << 16) | (srcdata[i*4+0] << 8) | srcdata[i*4+3];
-#endif
-		ADSP2100_WRPGM(&dstdata[i], opcode);
-	}
+	adsp2104_load_boot_data(srcdata, dstdata);
 }
 
 #endif
@@ -2101,21 +2206,7 @@ void adsp2115_set_tx_callback(TX_CALLBACK cb)
 
 void adsp2115_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
-	/* see how many words we need to copy */
-#ifdef LSB_FIRST
-	UINT32 size = 8 * (srcdata[3] + 1), i;
-#else
-	UINT32 size = 8 * (srcdata[2] + 1), i;
-#endif
-	for (i = 0; i < size; i++)
-	{
-#ifdef LSB_FIRST
-		UINT32 opcode = (srcdata[i*4+0] << 16) | (srcdata[i*4+1] << 8) | srcdata[i*4+2];
-#else
-		UINT32 opcode = (srcdata[i*4+1] << 16) | (srcdata[i*4+0] << 8) | srcdata[i*4+3];
-#endif
-		ADSP2100_WRPGM(&dstdata[i], opcode);
-	}
+	adsp2104_load_boot_data(srcdata, dstdata);
 }
 
 #endif

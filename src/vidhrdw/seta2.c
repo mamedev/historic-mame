@@ -163,8 +163,8 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 {
 	/* Sprites list */
 
-	data16_t *s1  = spriteram16 + 0x3000/2;
-	data16_t *end = &spriteram16[spriteram_size/2];
+	data16_t *s1  = buffered_spriteram16 + 0x3000/2;
+	data16_t *end = &buffered_spriteram16[spriteram_size/2];
 
 	for ( ; s1 < end; s1+=4 )
 	{
@@ -175,7 +175,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 		int sprite	= s1[3];
 
 		/* Single-sprite address */
-		data16_t *s2 = &spriteram16[(sprite & 0x7fff) * 4];
+		data16_t *s2 = &buffered_spriteram16[(sprite & 0x7fff) * 4];
 
 		/* Single-sprite tile size */
 		int global_sizex = xoffs & 0x0c00;
@@ -273,7 +273,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 						if (px < clip.min_x - 0x10) continue;
 						if (px > clip.max_x) continue;
 
-						s3	=	&spriteram16[2 * ((page * 0x2000/4) + ((y & 0x1f) << 6) + (x & 0x03f))];
+						s3	=	&buffered_spriteram16[2 * ((page * 0x2000/4) + ((y & 0x1f) << 6) + (x & 0x03f))];
 
 						attr  = s3[0];
 						code  = s3[1] + ((attr & 0x0007) << 16);
@@ -361,6 +361,8 @@ VIDEO_START( seta2 )
 	Machine->gfx[4]->color_granularity = 16;
 	Machine->gfx[5]->color_granularity = 16;
 
+	buffered_spriteram16 = auto_malloc(spriteram_size);
+
 	yoffset = 0;
 	return 0;
 }
@@ -383,3 +385,8 @@ VIDEO_UPDATE( seta2 )
 	seta2_draw_sprites(bitmap,cliprect);
 }
 
+VIDEO_EOF( seta2 )
+{
+	/* Buffer sprites by 1 frame */
+	memcpy(buffered_spriteram16,spriteram16,spriteram_size);
+}

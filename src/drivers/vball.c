@@ -23,15 +23,24 @@
  -Confirmed the Background graphics are contained in that unusual looking dip package on the US board,
   (need help figuring out the pinout so I can try and dump it)
 
+
  Remaining Issues:
  -1) IRQ & NMI code is totally guessed, and needs to be solved properly
+
+Measurements from Guru (someone needs to rewrite INTERRUPT_GEN() in vidhrdw/vball.c):
+6502 /IRQ = 1.720kHz
+6202 /NMI = 58 Hz
+VBlank = 58Hz
+
+
  -2) X Line Scrolling doesn't work 100% when Flip Screen Dip is set
  -3) 2 Player Version - Dips for difficulty don't seem to work or just need more testing
- -4) 2 Player Version - Can't figure out how the speech hardware is working...
-                        pretty sure it's not using an oki6295 like the US version, need confirmation from the person
-						that dumped the 2 player roms.
- -5) YM2151 emulation is not 100% correct - this can be heard on certain sound effects during the music.
-  **********************************************************************************************************************
+
+ -4) 2 Player Version - sound ROM is different and the adpmc chip is addressed differently
+                        Changed it to use a rom that was dumped from original PCB (readme below),
+                        this makes the non-working ROM not used - i don't know where it come from.
+
+
 
   U.S. Championship V'Ball (Japan)
   Technos, 1988
@@ -82,8 +91,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
-#include "sound/adpcm.h"
-#include "sound/msm5205.h"
 
 /* from vidhrdw */
 extern unsigned char *vb_attribram;
@@ -107,16 +114,7 @@ INTERRUPT_GEN( vball_interrupt );
 
 /* end of extern code & data */
 
-/* private globals */
-static int sound_irq, ym_irq;
-//static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
-/* end of private globals */
 
-static MACHINE_INIT( vb ) {
-	sound_irq = IRQ_LINE_NMI;
-	ym_irq = 0;//-1000;
-
-}
 
 /* bit 0 = bank switch
    bit 1 = ?
@@ -144,62 +142,9 @@ static WRITE_HANDLER( vb_bankswitch_w )
 
 WRITE_HANDLER( cpu_sound_command_w ) {
 	soundlatch_w( offset, data );
-	cpu_set_irq_line( 1, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
-	logerror("Sound_command_w = %x\n",data);
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 }
 
-#if 0
-static WRITE_HANDLER( dd_adpcm_w )
-{
-	int chip = 0;
-	logerror("dd_adpcm_w: %d %d\n",offset, data);
-	switch (offset)
-	{
-		case 0:
-			adpcm_idle[chip] = 1;
-			MSM5205_reset_w(chip,1);
-			break;
-
-		case 3:
-			adpcm_pos[chip] = (data) * 0x200;
-			adpcm_end[chip] = (data + 1) * 0x200;
-			break;
-
-		case 1:
-			adpcm_idle[chip] = 0;
-			MSM5205_reset_w(chip,0);
-			break;
-	}
-}
-
-static void dd_adpcm_int(int chip)
-{
-	static int adpcm_data[2] = { -1, -1 };
-	if (adpcm_pos[chip] >= adpcm_end[chip] || adpcm_pos[chip] >= 0x10000)
-	{
-		adpcm_idle[chip] = 1;
-		MSM5205_reset_w(chip,1);
-	}
-	else if (adpcm_data[chip] != -1)
-	{
-		MSM5205_data_w(chip,adpcm_data[chip] & 0x0f);
-		adpcm_data[chip] = -1;
-	}
-	else
-	{
-		unsigned char *ROM = memory_region(REGION_SOUND1) + 0x10000 * chip;
-
-		adpcm_data[chip] = ROM[adpcm_pos[chip]++];
-		MSM5205_data_w(chip,adpcm_data[chip] >> 4);
-	}
-}
-
-static READ_HANDLER( dd_adpcm_status_r )
-{
-//	logerror("dd_adpcm_status_r\n");
-	return adpcm_idle[0] + (adpcm_idle[1] << 1);
-}
-#endif
 
 /* bit 0 = flip screen
    bit 1 = scrollx hi
@@ -217,7 +162,6 @@ WRITE_HANDLER( vb_scrollx_hi_w )
 	vb_bgprombank_w((data >> 2)&0x07);
 	vb_spprombank_w((data >> 5)&0x07);
 	//logerror("%04x: vb_scrollx_hi = %d\n",activecpu_get_previouspc(), vb_scrollx_hi);
-
 }
 
 static MEMORY_READ_START( readmem )
@@ -281,23 +225,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_0_w },
-MEMORY_END
-
-static MEMORY_READ_START( vball2pj_sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-//	{ 0x9800, 0x9800, dd_adpcm_status_r },
-	{ 0xA000, 0xA000, soundlatch_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( vball2pj_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, YM2151_register_port_0_w },
-	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-//	{ 0x9800, 0x9807, dd_adpcm_w },
+	{ 0x9800, 0x9803, OKIM6295_data_0_w },
 MEMORY_END
 
 #define COMMON_PORTS_BEFORE  PORT_START \
@@ -459,14 +387,15 @@ static struct GfxDecodeInfo vb_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static void vball_irq_handler(int irq) {
-		cpu_set_irq_line( 1, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
+static void vball_irq_handler(int irq)
+{
+	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* ??? */
+	3579545,	/* 3579545 Hz */
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ vball_irq_handler }
 };
@@ -476,19 +405,8 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	{ 1056000/132 },           /* frequency (Hz) */
 	{ REGION_SOUND1 },  /* memory region */
-	{ 20000 }
+	{ 100 }
 };
-
-#if 0
-static struct MSM5205interface msm5205_interface =
-{
-	1,					/* 2 chips             */
-	384000,				/* 384KHz             */
-	{ dd_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B },	/* 8kHz and 6kHz      */
-	{ 40 }				/* volume */
-};
-#endif
 
 static MACHINE_DRIVER_START( vball )
 
@@ -504,11 +422,9 @@ static MACHINE_DRIVER_START( vball )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(vb)
-
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-    MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)	/* 240 x 240 */
 	MDRV_GFXDECODE(vb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
@@ -525,18 +441,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( vball2pj )
 
 	/* basic machine hardware */
- 	MDRV_CPU_ADD(M6502, 2000000)	/* 3.579545 MHz */
+ 	MDRV_CPU_ADD(M6502, 2000000)	/* 2.0 MHz */
 	MDRV_CPU_MEMORY(vball2pj_readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
-	MDRV_CPU_MEMORY(vball2pj_sound_readmem,vball2pj_sound_writemem)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	MDRV_MACHINE_INIT(vb)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -551,8 +465,7 @@ static MACHINE_DRIVER_START( vball2pj )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	//MDRV_SOUND_ADD(MSM5205, msm5205_interface)
-	//MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -570,7 +483,7 @@ ROM_START( vball )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
 	ROM_LOAD( "vball.47",  0x00000, 0x8000,  CRC(10ca79ad) SHA1(aad4a09d6745ca0b5665cb00ff7a4e08ea434068) )
 
-	/* These are from the bootleg; the original has the image data stored in a special dip rom which has not been dumped */
+	/* These are from the bootleg; the original has the image data stored in a special dip rom */
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
 	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, CRC(f26df8e1) SHA1(72186c1430d07c7fd9211245b539f05a0660bebe) ) /* 0,1,2,3 */
 	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, CRC(c9798d0e) SHA1(ec156f6c7ecccaa216ce8076f75ad7627ee90945) ) /* 0,1,2,3 */
@@ -597,34 +510,24 @@ ROM_END
 
 ROM_START( vball2pj )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* Main CPU */
-	ROM_LOAD( "vball01.bin",  0x10000, 0x08000,  CRC(432509c4) SHA1(6de50e21d279f4ac9674bc91990ba9535e80908c) )/* Bankswitched */
+	ROM_LOAD( "25j2-2-5.124",  0x10000, 0x08000,  CRC(432509c4) SHA1(6de50e21d279f4ac9674bc91990ba9535e80908c) )/* Bankswitched */
 	ROM_CONTINUE(		  0x08000, 0x08000 )		 /* Static code  */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
-	ROM_LOAD( "vball04.bin",  0x00000, 0x8000,  CRC(534dfbd9) SHA1(d0cb37caf94fa85da4ebdfe15e7a78109084bf91) )
-//	ROM_LOAD( "vball.47",  0x00000, 0x8000,  CRC(10ca79ad) SHA1(aad4a09d6745ca0b5665cb00ff7a4e08ea434068) )
+	ROM_LOAD( "25j1-0.47",  0x00000, 0x8000,  CRC(10ca79ad) SHA1(aad4a09d6745ca0b5665cb00ff7a4e08ea434068) )
+//ROM_LOAD( "vball04.bin",  0x00000, 0x8000,  CRC(534dfbd9) SHA1(d0cb37caf94fa85da4ebdfe15e7a78109084bf91) )
 
-	/* These are from the bootleg; the original has the image data stored in a special dip rom which has not been dumped */
-	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
-	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, CRC(f26df8e1) SHA1(72186c1430d07c7fd9211245b539f05a0660bebe) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, CRC(c9798d0e) SHA1(ec156f6c7ecccaa216ce8076f75ad7627ee90945) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball15.bin",  0x20000, 0x10000, CRC(68e69c4b) SHA1(9870674c91cab7215ad8ed40eb82facdee478fde) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball16.bin",  0x30000, 0x10000, CRC(936457ba) SHA1(1662bbd777fcd33a298d192a3f06681809b9d049) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball09.bin",  0x40000, 0x10000, CRC(42874924) SHA1(a75eed7934e089f035000b7f35f6ba8dd96f1e98) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball10.bin",  0x50000, 0x10000, CRC(6cc676ee) SHA1(6e8c590946211baa9266b19b871f252829057696) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball11.bin",  0x60000, 0x10000, CRC(4754b303) SHA1(8630f077b542590ef1340a2f0a6b94086ff91c40) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball12.bin",  0x70000, 0x10000, CRC(21294a84) SHA1(b36ea9ddf6879443d3104241997fa0f916856528) ) /* 0,1,2,3 */
+   /* the original has the image data stored in a special ceramic embedded package made by Toshiba
+     with part number 'TOSHIBA TRJ-101' (which has been dumped using a custom made adapter)
+     there are a few bytes different between the bootleg and the original (the original is correct though!) */
+    ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* fg tiles */
+    ROM_LOAD( "trj-101.96",  0x00000, 0x80000, CRC(f343eee4) SHA1(1ce95285631f7ec91fe3f6c3d62b13f565d3816a) )
 
 	ROM_REGION(0x40000, REGION_GFX2, ROMREGION_DISPOSE )	 /* sprites */
-	ROM_LOAD( "vball08.bin",  0x00000, 0x10000, CRC(b18d083c) SHA1(8c7a39b8a9c79a13682a4f283470801c3cbb748c) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball07.bin",  0x10000, 0x10000, CRC(79a35321) SHA1(0953730b1baa9bda4b2eb703258476423e5448f5) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball06.bin",  0x20000, 0x10000, CRC(49c6aad7) SHA1(6c026ddd97a5dfd138fb65781504f192c11ee6aa) ) /* 0,1,2,3 */
-	ROM_LOAD( "vball05.bin",  0x30000, 0x10000, CRC(9bb95651) SHA1(ec8a481cc7f0d6e469489db7c51103446910ae80) ) /* 0,1,2,3 */
+	ROM_LOAD( "25j4-0.35",  0x00000, 0x20000, CRC(877826d8) SHA1(fd77298f9343051f66259dad9127f40afb95f385) ) /* 0,1,2,3 */
+	ROM_LOAD( "25j3-0.5",   0x20000, 0x20000, CRC(c6afb4fa) SHA1(6d7c966300ce5fb2094476b393434486965d62b4) ) /* 0,1,2,3 */
 
 	ROM_REGION(0x20000, REGION_SOUND1, 0 ) /* Sound region#1: adpcm */
-	/* the following 2 were on the bootleg */
-//	ROM_LOAD( "vball.78a",  0x00000, 0x10000, CRC(f3e63b76) SHA1(da54d1d7d7d55b73e49991e4363bc6f46e0f70eb) )
-//	ROM_LOAD( "vball.78b",  0x10000, 0x10000, CRC(7ad9d338) SHA1(3e3c270fa69bda93b03f07a54145eb5e211ec8ba) )
 	ROM_LOAD( "25j0-0.78",  0x00000, 0x20000, CRC(8e04bdbf) SHA1(baafc5033c9442b83cb332c2c453c13117b31a3b) )
 
 	ROM_REGION(0x1000, REGION_PROMS, 0 )	/* color PROMs */
@@ -635,4 +538,4 @@ ROM_END
 
 
 GAME( 1988, vball,    0,     vball,    vball,    0, ROT0, "Technos", "U.S. Championship V'ball (set 1)" )
-GAMEX(1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan)" )

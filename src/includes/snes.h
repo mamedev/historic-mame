@@ -25,6 +25,7 @@
 #define SNES_VRAM_SIZE		0x20000	/* 128kb of video ram */
 #define SNES_CGRAM_SIZE		0x202	/* 256 16-bit colours + 1 tacked on 16-bit colour for fixed colour */
 #define SNES_OAM_SIZE		0x440	/* 1088 bytes of Object Attribute Memory */
+#define SNES_SPCRAM_SIZE	0x10000	/* 64kb of spc700 ram */
 #define FIXED_COLOUR		256		/* Position in cgram for fixed colour */
 /* Definitions for PPU Memory-Mapped registers */
 #define INIDISP			0x2100
@@ -365,6 +366,15 @@ struct SNES_PPU_STRUCT
 		UINT32 map;
 		UINT8 map_size;
 		UINT8 tile_size;
+		struct
+		{
+			UINT16 horizontal;
+			UINT16 vertical;
+			UINT16 tile_horz;
+			UINT8 shift_horz;
+			UINT16 tile_vert;
+			UINT16 shift_vert;
+		} offset;
 	} layer[5];
 	struct
 	{
@@ -401,6 +411,7 @@ struct SNES_PPU_STRUCT
 	UINT8 clipmasks[6][SNES_SCR_WIDTH + 8];
 	UINT8 update_windows;
 	UINT8 update_palette;
+	UINT8 update_offsets;
 	UINT8 mode;
 };
 extern struct SNES_PPU_STRUCT snes_ppu;
@@ -409,12 +420,15 @@ extern struct SNES_PPU_STRUCT snes_ppu;
 extern UINT8 *spc_ram;			/* SPC main memory */
 extern UINT8 spc_port_in[4];	/* SPC input ports */
 extern UINT8 spc_port_out[4];	/* SPC output ports */
-extern READ_HANDLER( spc_r_io );
-extern WRITE_HANDLER( spc_w_io );
+extern UINT8 spc_usefakeapu;	/* Fake the APU behaviour */
+extern READ_HANDLER( spc_io_r );
+extern WRITE_HANDLER( spc_io_w );
+extern READ_HANDLER( spc_bank_r );
+extern WRITE_HANDLER( spc_bank_w );
 extern int snes_sh_start( const struct MachineSound *driver );
 extern void snes_sh_update( int param, INT16 **buffer, int length );
 /* Fake APU functions for when sound is disabled */
-extern void snes_fakeapu_w_port( UINT8 port, UINT8 data );
-extern UINT8 snes_fakeapu_r_port( UINT8 port );
+extern READ_HANDLER( fakespc_port_r );
+extern WRITE_HANDLER( fakespc_port_w );
 
 #endif /* _SNES_H_ */

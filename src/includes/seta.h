@@ -50,6 +50,7 @@ WRITE16_HANDLER( seta2_vregs_w );
 VIDEO_START( seta2 );
 VIDEO_START( seta2_offset );
 VIDEO_UPDATE( seta2 );
+VIDEO_EOF( seta2 );
 
 
 /* Variables and functions defined in sndhrdw/seta.c */

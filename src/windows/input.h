@@ -41,5 +41,7 @@ typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
 
 void start_led(void);
 void stop_led(void);
+void input_mouse_button_down(int button, int x, int y);
+void input_mouse_button_up(int button);
 
 #endif /* ifndef __INPUTD_H */

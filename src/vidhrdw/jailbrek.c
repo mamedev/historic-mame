@@ -1,9 +1,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *jailbrek_scroll_x;
-unsigned char *jailbrek_scroll_dir;
+UINT8 *jailbrek_scroll_x;
+UINT8 *jailbrek_scroll_dir;
 
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( jailbrek )
 {
@@ -47,33 +48,57 @@ PALETTE_INIT( jailbrek )
 		COLOR(1,i) = *color_prom++;
 }
 
+WRITE_HANDLER( jailbrek_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( jailbrek_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0xc0) << 2);
+	int color = attr & 0x0f;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
 VIDEO_START( jailbrek )
 {
-	if ( ( dirtybuffer = auto_malloc( videoram_size ) ) == 0 )
-		return 1;
-	memset( dirtybuffer, 1, videoram_size );
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	if ( ( tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width * 2,Machine->drv->screen_height) ) == 0 )
+	if ( !bg_tilemap )
 		return 1;
 
 	return 0;
 }
 
-static void drawsprites( struct mame_bitmap *bitmap )
+static void jailbrek_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int i;
 
-	for ( i = 0; i < spriteram_size; i += 4 ) {
-		int tile, color, sx, sy, flipx, flipy;
-
-		/* attributes = ?tyxcccc */
-
-		sx = spriteram[i+2] - ( ( spriteram[i+1] & 0x80 ) << 1 );
-		sy = spriteram[i+3];
-		tile = spriteram[i] + ( ( spriteram[i+1] & 0x40 ) << 2 );
-		flipx = spriteram[i+1] & 0x10;
-		flipy = spriteram[i+1] & 0x20;
-		color = spriteram[i+1] & 0x0f;
+	for (i = 0; i < spriteram_size; i += 4)
+	{
+		int attr = spriteram[i + 1];	// attributes = ?tyxcccc
+		int code = spriteram[i] + ((attr & 0x40) << 2);
+		int color = attr & 0x0f;
+		int flipx = attr & 0x10;
+		int flipy = attr & 0x20;
+		int sx = spriteram[i + 2] - ((attr & 0x80) << 1);
+		int sy = spriteram[i + 3];
 
 		if (flip_screen)
 		{
@@ -83,11 +108,8 @@ static void drawsprites( struct mame_bitmap *bitmap )
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[1],
-				tile,color,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy,
+			sx, sy, cliprect, TRANSPARENCY_COLOR, 0);
 	}
 }
 
@@ -95,56 +117,31 @@ VIDEO_UPDATE( jailbrek )
 {
 	int i;
 
-	if ( get_vh_global_attribute_changed() )
-		memset( dirtybuffer, 1, videoram_size );
-
-	for ( i = 0; i < videoram_size; i++ )
+	// added support for vertical scrolling (credits).  23/1/2002  -BR
+	// bit 2 appears to be horizontal/vertical scroll control
+	if (jailbrek_scroll_dir[0] & 0x04)
 	{
-		if ( dirtybuffer[i] ) {
-			int sx,sy, code;
+		tilemap_set_scroll_cols(bg_tilemap, 32);
+		tilemap_set_scroll_rows(bg_tilemap, 1);
+		tilemap_set_scrollx(bg_tilemap, 0, 0);
 
-			dirtybuffer[i] = 0;
+		for (i = 0; i < 32; i++)
+		{
+			tilemap_set_scrolly(bg_tilemap, i, ((jailbrek_scroll_x[i + 32] << 8) + jailbrek_scroll_x[i]));
+		}
+	}
+	else
+	{
+		tilemap_set_scroll_rows(bg_tilemap, 32);
+		tilemap_set_scroll_cols(bg_tilemap, 1);
+		tilemap_set_scrolly(bg_tilemap, 0, 0);
 
-			sx = ( i % 64 );
-			sy = ( i / 64 );
-
-			code = videoram[i] + ( ( colorram[i] & 0xc0 ) << 2 );
-
-			if (flip_screen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					code,
-					colorram[i] & 0x0f,
-					flip_screen,flip_screen,
-					sx*8,sy*8,
-					0,TRANSPARENCY_NONE,0);
+		for (i = 0; i < 32; i++)
+		{
+			tilemap_set_scrollx(bg_tilemap, i, ((jailbrek_scroll_x[i + 32] << 8) + jailbrek_scroll_x[i]));
 		}
 	}
 
-	{
-		int scrollx[32];
-
-		if (flip_screen)
-		{
-			for ( i = 0; i < 32; i++ )
-				scrollx[i] = 256 + ( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
-		}
-		else
-		{
-			for ( i = 0; i < 32; i++ )
-				scrollx[i] = -( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
-		}
-
-		/* added support for vertical scrolling (credits).  23/1/2002  -BR */
-		if( jailbrek_scroll_dir[0x00] & 0x04 )  /* bit 2 appears to be horizontal/vertical scroll control */
-			copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scrollx,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		else
-			copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-	drawsprites( bitmap );
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	jailbrek_draw_sprites(bitmap, cliprect);
 }

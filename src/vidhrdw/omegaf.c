@@ -548,6 +548,10 @@ WRITE_HANDLER( omegaf_sprite_overdraw_w )
 	}
 }
 
+WRITE_HANDLER( omegaf_flipscreen_w )
+{
+	flip_screen_set(data & 0x80);
+}
 
 /***************************************************************************
   Screen refresh
@@ -578,6 +582,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			flipx = spriteram[offs + 2] & 0x10;
 			flipy = spriteram[offs + 2] & 0x20;
 			color = spriteram[offs + 4] & 0x0f;
+
 			drawgfx(bitmap,Machine->gfx[(big) ? 4 : 3],
 					tile,
 					color,

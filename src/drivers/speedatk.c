@@ -8,8 +8,6 @@ TODO:
  - Coinage Dip Switch doesn't match the readme? Also there are wrong coin insertions even
    with the bit impulse macro. There are chances that there's a circuitry which controls
    both...
- - Wrong Colors: the palette entry seems right, but the colortable interface is completely
-   wrong.
 
 How to play:
  - A to D selects a card.
@@ -242,8 +240,8 @@ static struct GfxLayout charlayout_1bpp =
 {
 	8,8,
 	RGN_FRAC(1,1),
-	1,
-	{ 0 },
+	3,
+	{ 0, 0, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
@@ -254,7 +252,7 @@ static struct GfxLayout charlayout_3bpp =
 	8,8,
 	RGN_FRAC(1,3),
 	3,
-	{ RGN_FRAC(0,3), RGN_FRAC(2,3), RGN_FRAC(1,3) },
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
@@ -263,8 +261,8 @@ static struct GfxLayout charlayout_3bpp =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout_1bpp,   0, 16 },
-	{ REGION_GFX2, 0, &charlayout_3bpp,   0, 16 },
+	{ REGION_GFX1, 0, &charlayout_1bpp,   0, 32 },
+	{ REGION_GFX2, 0, &charlayout_3bpp,   0, 32 },
 	{ -1 }
 };
 
@@ -318,12 +316,12 @@ ROM_START( speedatk )
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "cb0-5",        0x0000, 0x2000, CRC(47a966e7) SHA1(fdaa0f88656afc431bae367679ce6298fa962e0f) )
 	ROM_LOAD( "cb0-6",        0x2000, 0x2000, CRC(cc1da937) SHA1(1697bb008bfa5c33a282bd470ac39c324eea7509) )
-	ROM_LOAD( "cb0-7",        0x4000, 0x2000, CRC(a86007b5) SHA1(8e5cab76c37a8d53e1355000cd1a0a85ffae0e8c) )
-	ROM_FILL( 				  0x4000, 0x1000, 0x00 ) //Don't load the Text for this GFX.
+	ROM_COPY( REGION_GFX2,    0x0000, 0x4000, 0x1000 ) /* Fill the blank space with cards gfx */
+	ROM_COPY( REGION_GFX1,    0x1000, 0x5000, 0x1000 ) /* Gfx from cb0-7 */
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "cb1.bpr",      0x0000, 0x0020, CRC(a0176c23) SHA1(133fb9eef8a6595cac2dcd7edce4789899a59e84) ) /* color PROM */
 	ROM_LOAD( "cb2.bpr",      0x0020, 0x0100, CRC(a604cf96) SHA1(a4ef6e77dcd3abe4c27e8e636222a5ee711a51f5) ) /* lookup table */
 ROM_END
 
-GAMEX( 1984, speedatk, 0, speedatk, speedatk, 0, ROT0, "Seta Kikaku Corp.", "Speed Attack!", GAME_WRONG_COLORS )
+GAME( 1984, speedatk, 0, speedatk, speedatk, 0, ROT0, "Seta Kikaku Corp.", "Speed Attack!" )

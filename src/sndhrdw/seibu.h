@@ -84,6 +84,24 @@ static struct OKIM6295interface okim6295_interface =				\
 	{ 40 }															\
 }
 
+#define SEIBU_SOUND_SYSTEM_RAIDEN_YM3812_HARDWARE(freq1,freq2,region)		\
+																	\
+static struct YM3812interface ym3812_interface =					\
+{																	\
+	1,																\
+	freq1,															\
+	{ 100 },														\
+	{ seibu_ym3812_irqhandler },									\
+};																	\
+																	\
+static struct OKIM6295interface okim6295_interface =				\
+{																	\
+	1,																\
+	{ freq2 },														\
+	{ region },														\
+	{ 100 }															\
+}
+
 #define SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE	\
 	\
 static struct ADPCMinterface adpcm_interface =			\

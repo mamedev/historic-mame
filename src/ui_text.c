@@ -10,12 +10,15 @@
 #include "driver.h"
 #include "ui_text.h"
 
+#ifdef MESS
+extern const char *mess_default_text[];
+#endif /* MESS */
+
+
 struct lang_struct lang;
 
-char *trans_text[UI_last_entry + 1];
-
 /* All entries in this table must match the enum ordering in "ui_text.h" */
-const char * default_text[] =
+static const char *mame_default_text[] =
 {
 #ifndef MESS
 	"MAME",
@@ -90,17 +93,6 @@ const char * default_text[] =
 	"The game has protection which isn't fully emulated.",
 	"There are working clones of this game. They are:",
 	"Type OK to continue",
-#ifdef MESS
-	"The emulated system is a computer: ",
-	"The keyboard emulation may not be 100% accurate.",
-	"Keyboard Emulation Status",
-	"-------------------------",
-	"Mode: PARTIAL Emulation",
-	"Mode: FULL Emulation",
-	"UI:   Enabled",
-	"UI:   Disabled",
-	"**Use ScrLock to toggle**",
-#endif
 
 	/* main menu */
 	"Input (general)",
@@ -108,6 +100,7 @@ const char * default_text[] =
 	"Analog Controls",
 	"Calibrate Joysticks",
 	"Bookkeeping Info",
+
 #ifndef MESS
 	"Input (this game)",
 	"Game Information",
@@ -120,39 +113,8 @@ const char * default_text[] =
 	"Machine Usage & History",
 	"Reset Machine",
 	"Return to Machine",
-	"Image Information",
-	"File Manager",
-	"Tape Control",
+#endif /* MESS */
 
-	"recording",
-	"playing",
-	"(recording)",
-	"(playing)",
-	"stopped",
-	"Pause/Stop",
-	"Record",
-	"Play",
-	"Rewind",
-	"Fast Forward",
-	"Mount",
-	"Unmount",
-	"[empty slot]",
-	"Configuration",
-	"Quit Fileselector",
-	"File Specification",	/* IMPORTANT: be careful to ensure that the following */
-	"Cartridge",		/* device list matches the order found in device.h    */
-	"Floppy Disk",		/* and is ALWAYS placed after "File Specification"    */
-	"Hard Disk",
-	"Cylinder",
-	"Cassette",
-	"Punched Card",
-	"Punched Tape",
-	"Printer",
-	"Serial Port",
-	"Parallel Port",
-	"Snapshot",
-	"Quickload",
-#endif
 	"Cheat",
 	"Memory Card",
 
@@ -170,9 +132,6 @@ const char * default_text[] =
 	"Load Memory Card",
 	"Eject Memory Card",
 	"Create Memory Card",
-#ifdef MESS
-	"Call Memory Card Manager (RESET)",
-#endif
 	"Failed To Load Memory Card!",
 	"Load OK!",
 	"Memory Card Ejected!",
@@ -245,6 +204,22 @@ const char * default_text[] =
 	NULL
 };
 
+
+
+static const char **default_text[] =
+{
+	mame_default_text,
+#ifdef MESS
+	mess_default_text,
+#endif /* MESS */
+	NULL
+};
+
+
+
+static const char **trans_text;
+
+
 int uistring_init (mame_file *langfile)
 {
 	/*
@@ -255,22 +230,40 @@ int uistring_init (mame_file *langfile)
 
 	*/
 
-	int i;
+	int i, j, str;
 	char curline[255];
 	char section[255] = "\0";
 	char *ptr;
+	int string_count;
 
-	/* Clear out any default strings */
-	for (i = 0; i <= UI_last_entry; i ++)
+	/* count the total amount of strings */
+	string_count = 0;
+	for (i = 0; default_text[i]; i++)
 	{
-		trans_text[i] = NULL;
+		for (j = 0; default_text[i][j]; j++)
+			string_count++;
+	}
+
+	/* allocate the translated text array, and set defaults */
+	trans_text = auto_malloc(sizeof(const char *) * string_count);
+	if (!trans_text)
+		return 1;
+
+	/* copy in references to all of the strings */
+	str = 0;
+	for (i = 0; default_text[i]; i++)
+	{
+		for (j = 0; default_text[i][j]; j++)
+			trans_text[str++] = default_text[i][j];
 	}
 
 	memset(&lang, 0, sizeof(lang));
 
-	if (!langfile) return 0;
+	/* if no language file, exit */
+	if (!langfile)
+		return 0;
 
-	while (mame_fgets (curline, 255, langfile) != NULL)
+	while (mame_fgets (curline, sizeof(curline) / sizeof(curline[0]), langfile) != NULL)
 	{
 		/* Ignore commented and blank lines */
 		if (curline[0] == ';') continue;
@@ -320,9 +313,12 @@ int uistring_init (mame_file *langfile)
 			ptr = strtok (curline, "\n\r");
 
 			/* Find a matching default string */
-			for (i = 0; i < UI_last_entry; i ++)
+			str = 0;
+			for (i = 0; default_text[i]; i++)
 			{
-				if (strcmp (curline, default_text[i]) == 0)
+				for (j = 0; default_text[i][j]; j++)
+				{
+					if (strcmp (curline, default_text[i][j]) == 0)
 				{
 					char transline[255];
 
@@ -333,11 +329,11 @@ int uistring_init (mame_file *langfile)
 					ptr = strtok (transline, "\n\r");
 
 					/* Allocate storage and copy the string */
-					trans_text[i] = malloc (strlen(transline)+1);
-					strcpy (trans_text[i], transline);
-
-					/* Done searching */
-					break;
+						trans_text[str] = auto_strdup(transline);
+						if (!trans_text[str])
+							return 1;
+					}
+					str++;
 				}
 			}
 		}
@@ -347,27 +343,9 @@ int uistring_init (mame_file *langfile)
 	return 0;
 }
 
-void uistring_shutdown (void)
-{
-	int i;
 
-	/* Deallocate storage for the strings */
-	for (i = 0; i <= UI_last_entry; i ++)
-	{
-		if (trans_text[i])
-		{
-			free (trans_text[i]);
-			trans_text[i] = NULL;
-		}
-	}
-}
 
 const char * ui_getstring (int string_num)
 {
-	/* Try to use the language file strings first */
-	if (trans_text[string_num] != NULL)
 		return trans_text[string_num];
-	else
-		/* That failed, use the default strings */
-		return default_text[string_num];
 }

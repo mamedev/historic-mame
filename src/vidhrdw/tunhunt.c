@@ -6,7 +6,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "tunhunt.h"
+
+extern UINT8 tunhunt_control;
 
 /****************************************************************************************/
 
@@ -44,7 +45,18 @@
 #define MOBSC0	0x1080	// SCAN ROM START FOR MOBJ (unused?)
 #define MOBSC1	0x1081	// (unused?)
 
+static struct tilemap *fg_tilemap;
+
 /****************************************************************************************/
+
+WRITE_HANDLER( tunhunt_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( tunhunt_mott_w )
 {
@@ -53,6 +65,16 @@ WRITE_HANDLER( tunhunt_mott_w )
 		spriteram[offset] = data;
 		dirtybuffer[offset>>4] = 1;
 	}
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = videoram[tile_index];
+	int code = attr & 0x3f;
+	int color = attr >> 6;
+	int flags = color ? TILE_IGNORE_TRANSPARENCY : 0;
+
+	SET_TILE_INFO(0, code, color, flags)
 }
 
 VIDEO_START( tunhunt )
@@ -70,6 +92,15 @@ VIDEO_START( tunhunt )
 	tmpbitmap = auto_bitmap_alloc( 256, 64 );
 	if (!tmpbitmap)
 		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+	tilemap_set_scrollx(fg_tilemap, 0, 64);
 
 	return 0;
 }
@@ -180,31 +211,6 @@ static void update_palette( void )
 		blue	= APPLY_SHADE(blue,shade);
 
 		palette_set_color( i,red,green,blue );
-	}
-}
-
-static void draw_text( struct mame_bitmap *bitmap )
-{
-	/* 8 columns, 32 rows */
-	int offs;
-	int sx,sy,tile,color;
-	const UINT8 *source = videoram;
-	for( offs=0; offs<0x100; offs++ )
-	{
-		sx = (offs/32)*8 + 256 - 64;
-		sy = (offs%32)*8;
-		tile = source[offs];
-		color = tile>>6;
-
-		drawgfx( bitmap, Machine->gfx[0],
-			tile&0x3f,	/* lower 6 bits of character code */
-			color,		/* upper 2 bits of character code */
-			0,0,		/* flipx, flipy */
-			sx,sy,		/* character placement */
-			&Machine->visible_area, /* clip */
-			/* if hilite = 0, make the character background transparent */
-			(color==0)?TRANSPARENCY_PEN:TRANSPARENCY_NONE,
-			0 );
 	}
 }
 
@@ -421,5 +427,5 @@ VIDEO_UPDATE( tunhunt )
 		pMem[SHL1ST],	/* vstretch */
 		tunhunt_control&0x10 ); /* hstretch */
 
-	draw_text( bitmap );
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 }

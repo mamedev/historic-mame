@@ -1050,7 +1050,7 @@ ROM_START( primrage )
 ROM_END
 
 
-ROM_START( primrag2 )
+ROM_START( primraga )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
 	ROM_LOAD32_BYTE( "0044b", 0x000000, 0x80000, CRC(26139575) SHA1(22e59ab621d58e56969b64701fc59aec085193dd) )
 	ROM_LOAD32_BYTE( "0043b", 0x000001, 0x80000, CRC(928d2447) SHA1(9bbbdbf056a7b986d985d79be889b9876a710631) )
@@ -1166,7 +1166,7 @@ static void primrage_init_common(offs_t cage_speedup)
 }
 
 static DRIVER_INIT( primrage ) { primrage_init_common(0x42f2); }
-static DRIVER_INIT( primrag2 ) { primrage_init_common(0x48a4); }
+static DRIVER_INIT( primraga ) { primrage_init_common(0x48a4); }
 
 
 
@@ -1179,4 +1179,4 @@ static DRIVER_INIT( primrag2 ) { primrage_init_common(0x48a4); }
 GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
 GAME ( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)" )
 GAMEX( 1994, primrage, 0,        atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrag2, primrage, atarigt,  primrage, primrag2, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primraga, primrage, atarigt,  primrage, primraga, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )

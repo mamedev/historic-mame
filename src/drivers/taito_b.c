@@ -84,13 +84,86 @@ List of known B-System games:
 	Sel Feena						(YM2610 sound)
 	Ryujin							(YM2610 sound)
 
-	Violence Fight					(YM2203 sound, 2xMSM6295 )
+	Violence Fight					(YM2203 sound, 1xMSM6295 )
 	Hit The Ice						(YM2203 sound, 2xMSM6295 )
 	Master of Weapons				(YM2203 sound)
 
 	Quiz Sekai wa SHOW by shobai	(YM2610-B sound, MB87078 - electronic volume control)
 	Puzzle Bobble					(YM2610-B sound, MB87078 - electronic volume control)
 	Sonic Blast Man					(YM2610-B sound)
+
+Nastar
+Taito, 1988
+
+PCB Layout
+----------
+
+K1100419A  J1100178A
+|---------------------------------------|
+|68000  B81-13.31  B81-08.50  DSWA  DSWB|
+|       B81-09.30  B81-10.49  TCO220IOC |
+|24MHz B81-05.21 6264  6264             |
+|      B81-06.22 6264  6264             |
+|                           27.164MHz   |
+|B81-04.15                             J|
+|B81-03.14                             A|
+|             TCO180VCU     6264       M|
+|62256 62256                           M|
+|                           TCO260DAR  A|
+|62256 62256                            |
+|                              MB3735   |
+|62256 62256                 6264       |
+|             TCO140SYT      B81-11.37  |
+|62256 62256                 Z80A       |
+|                       16MHz           |
+|B81-02.2                               |
+|B81-01.1     YM2610 YM3016  TL074 TL074|
+|---------------------------------------|
+
+Notes:
+      68000 clock: 12.000MHz (24 / 2)
+        Z80 clock: 4.000MHz  (16 / 4)
+     YM2610 clock: 8.000MHz  (16 / 2)
+            Vsync: 60Hz
+
+
+
+Violence Fight
+Taito, 1989
+
+PCB Layout
+----------
+
+K1100511A  J1100213A
+|---------------------------------------|
+|C16-01.1   6264     6264     DSWA DSWB |
+|C16-02.2 C16-06.22 C16-07.41 TCO220IOC |
+|C16-03.3 C16-14.23 C16-11.42           |
+|C16-04.4      68000        6116        |
+|               / C16-08                |
+|           PALS\ C16-09    TCO260DAR  J|
+|   TCO180VCU                          A|
+|                                      M|
+|        27.164MHz               TL074 M|
+|                                      A|
+|        24MHz                          |
+|                               YM3014B |
+|            PC060HA      YM2203        |
+| 62256 62256            C16-05.47      |
+| 62256 62256 Z80B                MB3735|
+| 62256 62256 C16-12.32                 |
+| 62256 62256 6264        M6295  TL074  |
+|                  4.224MHz             |
+|---------------------------------------|
+
+Notes:
+      68000 clock: 12.000MHz (24 / 2)
+        Z80 clock: 6.000MHz  (24 / 4)
+     YM2203 clock: 3.000MHz  (24 / 8)
+      M6295 clock: 1.056MHz  (4.224 / 4), sample rate = 1056000 / 132
+            Vsync: 60Hz
+
+
 
 ***************************************************************************/
 
@@ -949,6 +1022,16 @@ static MEMORY_WRITE_START( hitice_sound_writemem )
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
 	{ 0xb000, 0xb000, OKIM6295_data_0_w },
 	{ 0xb001, 0xb001, OKIM6295_data_1_w },
+	{ 0xa000, 0xa000, taitosound_slave_port_w },
+	{ 0xa001, 0xa001, taitosound_slave_comm_w },
+MEMORY_END
+
+static MEMORY_WRITE_START( viofight_sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x8fff, MWA_RAM },
+	{ 0x9000, 0x9000, YM2203_control_port_0_w },
+	{ 0x9001, 0x9001, YM2203_write_port_0_w },
+	{ 0xb000, 0xb001, OKIM6295_data_0_w },		/* yes, both addresses for the same chip */
 	{ 0xa000, 0xa000, taitosound_slave_port_w },
 	{ 0xa001, 0xa001, taitosound_slave_comm_w },
 MEMORY_END
@@ -2509,7 +2592,7 @@ static struct YM2610interface ym2610_interface_crimec =
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	3000000,				/* ?? */
+	3000000,				/* 3 MHz (verified on Viofight PCB) */
 	{ YM2203_VOL(80,25) },	/* ?? */
 	{ 0 },
 	{ 0 },
@@ -2524,6 +2607,13 @@ static struct OKIM6295interface okim6295_interface =
 	{ 8000,8000 },			/* ?? */
 	{ REGION_SOUND1,REGION_SOUND1 }, /* memory regions */
 	{ 50,65 }				/* ?? */
+};
+static struct OKIM6295interface okim6295_interface_viofight =
+{
+	1,	/* 1 chip */
+	{ 8000 },			/* 8KHz, verified on viofight PCB */
+	{ REGION_SOUND1 }, /* memory region */
+	{ 50 }				/* ?? */
 };
 
 /*
@@ -2917,8 +3007,8 @@ static MACHINE_DRIVER_START( viofight )
 	MDRV_CPU_MEMORY(viofight_readmem,viofight_writemem)
 	MDRV_CPU_VBLANK_INT(viofight_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
-	MDRV_CPU_MEMORY(hitice_sound_readmem,hitice_sound_writemem)
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz verified */
+	MDRV_CPU_MEMORY(hitice_sound_readmem, viofight_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2937,7 +3027,7 @@ static MACHINE_DRIVER_START( viofight )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_viofight)
 MACHINE_DRIVER_END
 
 #if 0
@@ -3122,67 +3212,72 @@ MACHINE_DRIVER_END
 ROM_START( rastsag2 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "b81-08.50" , 0x00000, 0x20000, CRC(d6da9169) SHA1(33d74315754576e6f879059de033f96f9003f819) )
-	ROM_LOAD16_BYTE( "b81-07.bin", 0x00001, 0x20000, CRC(8edf17d7) SHA1(b0c03002ed520abffefd55d4969d0ed4fcf3a3a4) )
+	ROM_LOAD16_BYTE( "b81-07.31" , 0x00001, 0x20000, CRC(8edf17d7) SHA1(b0c03002ed520abffefd55d4969d0ed4fcf3a3a4) )
 	ROM_LOAD16_BYTE( "b81-10.49" , 0x40000, 0x20000, CRC(53f34344) SHA1(9930c3fd9c17f7d9b654221da3896d0ff5778c97) )
 	ROM_LOAD16_BYTE( "b81-09.30" , 0x40001, 0x20000, CRC(630d34af) SHA1(42452111b10f1d543e03661012dda879218dea62) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "b81-11.bin", 0x00000, 0x4000, CRC(3704bf09) SHA1(a0a37b23e3df482c5f5aa43825345ea8affbba34) )
+	ROM_LOAD( "b81-11.37", 0x00000, 0x4000, CRC(3704bf09) SHA1(a0a37b23e3df482c5f5aa43825345ea8affbba34) )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b81-03.bin", 0x000000, 0x080000, CRC(551b75e6) SHA1(5b8388ee2c6262f359c9e6d04c951ea8dc3901c9) )
-	ROM_LOAD( "b81-04.bin", 0x080000, 0x080000, CRC(cf734e12) SHA1(4201a74468058761454515738fbf3a7b22a66e00) )
+	ROM_LOAD( "b81-03.14", 0x000000, 0x080000, CRC(551b75e6) SHA1(5b8388ee2c6262f359c9e6d04c951ea8dc3901c9) )
+	ROM_LOAD( "b81-04.15", 0x080000, 0x080000, CRC(cf734e12) SHA1(4201a74468058761454515738fbf3a7b22a66e00) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "b81-01.bin", 0x00000, 0x80000, CRC(b33f796b) SHA1(6cdb32f56283acdf20eb46a1e658e3bd7c97978c) )
+	ROM_LOAD( "b81-01.1", 0x00000, 0x80000, CRC(b33f796b) SHA1(6cdb32f56283acdf20eb46a1e658e3bd7c97978c) )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "b81-02.bin", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
+	ROM_LOAD( "b81-02.2", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
 ROM_END
 
 ROM_START( nastarw )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "b81-08.50" , 0x00000, 0x20000, CRC(d6da9169) SHA1(33d74315754576e6f879059de033f96f9003f819) )
-	ROM_LOAD16_BYTE( "b81-12.31",  0x00001, 0x20000, CRC(f9d82741) SHA1(f5f3a1101d92b6c241e819dcdcdcdc4b125140f7) )
+	ROM_LOAD16_BYTE( "b81-12.31" , 0x00001, 0x20000, CRC(f9d82741) SHA1(f5f3a1101d92b6c241e819dcdcdcdc4b125140f7) )
 	ROM_LOAD16_BYTE( "b81-10.49" , 0x40000, 0x20000, CRC(53f34344) SHA1(9930c3fd9c17f7d9b654221da3896d0ff5778c97) )
 	ROM_LOAD16_BYTE( "b81-09.30" , 0x40001, 0x20000, CRC(630d34af) SHA1(42452111b10f1d543e03661012dda879218dea62) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "b81-11.bin", 0x00000, 0x4000, CRC(3704bf09) SHA1(a0a37b23e3df482c5f5aa43825345ea8affbba34) )
+	ROM_LOAD( "b81-11.37", 0x00000, 0x4000, CRC(3704bf09) SHA1(a0a37b23e3df482c5f5aa43825345ea8affbba34) )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b81-03.bin", 0x000000, 0x080000, CRC(551b75e6) SHA1(5b8388ee2c6262f359c9e6d04c951ea8dc3901c9) )
-	ROM_LOAD( "b81-04.bin", 0x080000, 0x080000, CRC(cf734e12) SHA1(4201a74468058761454515738fbf3a7b22a66e00) )
+	ROM_LOAD( "b81-03.14", 0x000000, 0x080000, CRC(551b75e6) SHA1(5b8388ee2c6262f359c9e6d04c951ea8dc3901c9) )
+	ROM_LOAD( "b81-04.15", 0x080000, 0x080000, CRC(cf734e12) SHA1(4201a74468058761454515738fbf3a7b22a66e00) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "b81-01.bin", 0x00000, 0x80000, CRC(b33f796b) SHA1(6cdb32f56283acdf20eb46a1e658e3bd7c97978c) )
+	ROM_LOAD( "b81-01.1", 0x00000, 0x80000, CRC(b33f796b) SHA1(6cdb32f56283acdf20eb46a1e658e3bd7c97978c) )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "b81-02.bin", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
+	ROM_LOAD( "b81-02.2", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
 ROM_END
 
 ROM_START( nastar )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "b81-08.50" , 0x00000, 0x20000, CRC(d6da9169) SHA1(33d74315754576e6f879059de033f96f9003f819) )
-	ROM_LOAD16_BYTE( "b81-13.bin", 0x00001, 0x20000, CRC(60d176fb) SHA1(fbe3a0603bcd23e565b0d474a63742d20a3ce8cc) )
+	ROM_LOAD16_BYTE( "b81-13.31" , 0x00001, 0x20000, CRC(60d176fb) SHA1(fbe3a0603bcd23e565b0d474a63742d20a3ce8cc) )
 	ROM_LOAD16_BYTE( "b81-10.49" , 0x40000, 0x20000, CRC(53f34344) SHA1(9930c3fd9c17f7d9b654221da3896d0ff5778c97) )
 	ROM_LOAD16_BYTE( "b81-09.30" , 0x40001, 0x20000, CRC(630d34af) SHA1(42452111b10f1d543e03661012dda879218dea62) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "b81-11.bin", 0x00000, 0x4000, CRC(3704bf09) SHA1(a0a37b23e3df482c5f5aa43825345ea8affbba34) )
+	ROM_LOAD( "b81-11.37", 0x00000, 0x4000, CRC(3704bf09) SHA1(a0a37b23e3df482c5f5aa43825345ea8affbba34) )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b81-03.bin", 0x000000, 0x080000, CRC(551b75e6) SHA1(5b8388ee2c6262f359c9e6d04c951ea8dc3901c9) )
-	ROM_LOAD( "b81-04.bin", 0x080000, 0x080000, CRC(cf734e12) SHA1(4201a74468058761454515738fbf3a7b22a66e00) )
+	ROM_LOAD( "b81-03.14", 0x000000, 0x080000, CRC(551b75e6) SHA1(5b8388ee2c6262f359c9e6d04c951ea8dc3901c9) )
+	ROM_LOAD( "b81-04.15", 0x080000, 0x080000, CRC(cf734e12) SHA1(4201a74468058761454515738fbf3a7b22a66e00) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "b81-01.bin", 0x00000, 0x80000, CRC(b33f796b) SHA1(6cdb32f56283acdf20eb46a1e658e3bd7c97978c) )
+	ROM_LOAD( "b81-01.1", 0x00000, 0x80000, CRC(b33f796b) SHA1(6cdb32f56283acdf20eb46a1e658e3bd7c97978c) )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "b81-02.bin", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
+	ROM_LOAD( "b81-02.2", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
+
+//	ROM_REGION( 0x1000, REGION_USER1)	/* PALs */
+//	ROM_LOAD( "b81-05.21", 0x0000, 0x0001 )
+//	ROM_LOAD( "b81-06.22", 0x0000, 0x0001 )
+
 ROM_END
 
 ROM_START( crimec )
@@ -3491,23 +3586,28 @@ ROM_END
 
 ROM_START( viofight )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )     /* 1M for 68000 code */
-	ROM_LOAD16_BYTE( "c16-11.rom", 0x00000, 0x10000, CRC(23dbd388) SHA1(488f928826d16b201dcc4b491b09955d0af91f19) )
-	ROM_LOAD16_BYTE( "c16-14.rom", 0x00001, 0x10000, CRC(dc934f6a) SHA1(36d7b10478f2b97d0521edb84f1f4fa5a11f962b) )
-	ROM_LOAD16_BYTE( "c16-07.rom", 0x40000, 0x20000, CRC(64d1d059) SHA1(643ac7fa5076147b24810a8e1b925dfe09f75864) )
-	ROM_LOAD16_BYTE( "c16-06.rom", 0x40001, 0x20000, CRC(043761d8) SHA1(4587cadd73b628b4b9ac5c537cec20f90fb4959d) )
+	ROM_LOAD16_BYTE( "c16-11.42", 0x00000, 0x10000, CRC(23dbd388) SHA1(488f928826d16b201dcc4b491b09955d0af91f19) )
+	ROM_LOAD16_BYTE( "c16-14.23", 0x00001, 0x10000, CRC(dc934f6a) SHA1(36d7b10478f2b97d0521edb84f1f4fa5a11f962b) )
+	ROM_LOAD16_BYTE( "c16-07.41", 0x40000, 0x20000, CRC(64d1d059) SHA1(643ac7fa5076147b24810a8e1b925dfe09f75864) )
+	ROM_LOAD16_BYTE( "c16-06.22", 0x40001, 0x20000, CRC(043761d8) SHA1(4587cadd73b628b4b9ac5c537cec20f90fb4959d) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 128k for Z80 code */
-	ROM_LOAD(  "c16-12.rom", 0x00000, 0x04000, CRC(6fb028c7) SHA1(a808d82e872914f994652e95dca3fcad00ba02fc) )
+	ROM_LOAD(  "c16-12.32", 0x00000, 0x04000, CRC(6fb028c7) SHA1(a808d82e872914f994652e95dca3fcad00ba02fc) )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c16-01.rom", 0x000000, 0x080000, CRC(7059ce83) SHA1(1e6825ab944254cd4ba6574762172245b3352319) )
-	ROM_LOAD( "c16-02.rom", 0x080000, 0x080000, CRC(b458e905) SHA1(b712cbf4a4015e1fc2243871fe753e230f0172c2) )
-	ROM_LOAD( "c16-03.rom", 0x100000, 0x080000, CRC(515a9431) SHA1(836be28614326d093be8841617cca83cef8d55cc) )
-	ROM_LOAD( "c16-04.rom", 0x180000, 0x080000, CRC(ebf285e2) SHA1(0f806e42778e28e9687d85b2601ee08dd786869b) )
+	ROM_LOAD( "c16-01.1", 0x000000, 0x080000, CRC(7059ce83) SHA1(1e6825ab944254cd4ba6574762172245b3352319) )
+	ROM_LOAD( "c16-02.2", 0x080000, 0x080000, CRC(b458e905) SHA1(b712cbf4a4015e1fc2243871fe753e230f0172c2) )
+	ROM_LOAD( "c16-03.3", 0x100000, 0x080000, CRC(515a9431) SHA1(836be28614326d093be8841617cca83cef8d55cc) )
+	ROM_LOAD( "c16-04.4", 0x180000, 0x080000, CRC(ebf285e2) SHA1(0f806e42778e28e9687d85b2601ee08dd786869b) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "c16-05.rom", 0x000000, 0x80000, CRC(a49d064a) SHA1(f9ed675cfaae69b68c99c7dce7c2a457b5b5c293) )
+	ROM_LOAD( "c16-05.47", 0x000000, 0x80000, CRC(a49d064a) SHA1(f9ed675cfaae69b68c99c7dce7c2a457b5b5c293) )
+
+//	ROM_REGION( 0x1000, REGION_USER1)	/* PALs */
+//	ROM_LOAD( "c16-08.34", 0x0000, 0x0001 )
+//	ROM_LOAD( "c16-09.35", 0x0000, 0x0001 )
+
 ROM_END
 
 ROM_START( masterw )

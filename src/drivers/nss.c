@@ -61,18 +61,18 @@ MEMORY_END
 
 static MEMORY_READ_START( spc_readmem )
 	{ 0x0000, 0x00ef, MRA_RAM },			/* lower 32k ram */
-	{ 0x00f0, 0x00ff, spc_r_io },			/* spc io */
-	{ 0x0100, 0x7fff, MRA_RAM },			/* lower 32k ram */
-	{ 0x8000, 0xffbf, MRA_NOP },			/* Not connected in SNES - normally upper 32k ram */
-	{ 0xffc0, 0xffff, MRA_ROM },			/* Initial program loader ROM */
+	{ 0x00f0, 0x00ff, spc_io_r },			/* spc io */
+	{ 0x0100, 0x7fff, MRA_RAM },			/* lower 32k ram continued */
+	{ 0x8000, 0xffbf, MRA_RAM },			/* upper 32k ram */
+	{ 0xffc0, 0xffff, spc_bank_r },			/* upper 32k ram continued or Initial Program Loader ROM */
 MEMORY_END
 
 static MEMORY_WRITE_START( spc_writemem )
 	{ 0x0000, 0x00ef, MWA_RAM },			/* lower 32k ram */
-	{ 0x00f0, 0x00ff, spc_w_io },			/* spc io */
-	{ 0x0100, 0x7fff, MWA_RAM },			/* lower 32k ram */
-	{ 0x8000, 0xffbf, MWA_NOP },			/* Not connected in SNES - normally upper 32k ram  */
-	{ 0xffc0, 0xffff, MWA_ROM },			/* Initial program loader ROM */
+	{ 0x00f0, 0x00ff, spc_io_w },			/* spc io */
+	{ 0x0100, 0x7fff, MWA_RAM },			/* lower 32k ram continued */
+	{ 0x8000, 0xffbf, MWA_RAM },			/* upper 32k ram */
+	{ 0xffc0, 0xffff, spc_bank_w },			/* upper 32k ram continued or Initial Program Loader ROM */
 MEMORY_END
 
 INPUT_PORTS_START( snes )
@@ -239,7 +239,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_VIDEO_UPDATE( snes )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(SNES_SCR_WIDTH, SNES_SCR_HEIGHT)
+	MDRV_SCREEN_SIZE(SNES_SCR_WIDTH * 2, SNES_SCR_HEIGHT * 2)
 	MDRV_VISIBLE_AREA(0, SNES_SCR_WIDTH-1, 0, SNES_SCR_HEIGHT-1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32768)
@@ -248,6 +248,7 @@ static MACHINE_DRIVER_START( snes )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, snes_sound_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 MACHINE_DRIVER_END
 
 /***************************************************************************

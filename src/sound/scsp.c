@@ -1,4 +1,4 @@
-/*	
+/*
 	Sega/Yamaha YMF292-F (SCSP = Saturn Custom Sound Processor) emulation
 	By ElSemi
 	MAME/M1 conversion and cleanup by R. Belmont
@@ -8,8 +8,14 @@
 	for the FM still comes from the wavetable RAM.
 
 	Unsupported:
-		- FM mode (no known Model 2/3, Saturn, or ST-V game uses it)
+		- FM mode (VF3 uses it, Hanagumi might late in the title song...)
 		- on-board programmable DSP and related functionality
+
+	ChangeLog:
+	* November 25, 2003 (ES) Fixed buggy timers and envelope overflows.
+                            (RB) Improved sample rates other than 44100, multiple
+	             		 chips now works properly.
+	* December 02, 2003 (ES) Added DISDL register support, improves mix.
 */
 
 #include <math.h>
@@ -17,13 +23,9 @@
 #include "driver.h"
 #include "cpuintrf.h"
 
-#define TIMER_LIMITSA  (0x100)
-#define TIMER_LIMITSB  (0x100)
-#define TIMER_LIMITSC  (0x100)
-
 #define ICLIP16(x) (x<-32768)?-32768:((x>32767)?32767:x)
 
-static signed short *bufferl;		
+static signed short *bufferl;
 static signed short *bufferr;
 
 static int length;
@@ -50,9 +52,9 @@ static int TimCnt[3];
 // DMA stuff
 static UINT32 scsp_dmea;
 static UINT16 scsp_drga;
-#define		  scsp_dgate			scsp_regs[0x416/2] & 0x4000
-#define		  scsp_ddir				scsp_regs[0x416/2] & 0x2000
-#define       scsp_dexe 			scsp_regs[0x416/2] & 0x1000
+#define	scsp_dgate		scsp_regs[0x416/2] & 0x4000
+#define	scsp_ddir		scsp_regs[0x416/2] & 0x2000
+#define scsp_dexe 		scsp_regs[0x416/2] & 0x1000
 #define dma_transfer_end	((scsp_regs[0x424/2] & 0x10)>>4)|(((scsp_regs[0x426/2] & 0x10)>>4)<<1)|(((scsp_regs[0x428/2] & 0x10)>>4)<<2)
 static UINT16 scsp_dtlg;
 static void dma_scsp(void); 		/*SCSP DMA transfer function*/
@@ -193,7 +195,7 @@ struct _SCSP
 		data8_t datab[0x30];
 	} udata;
 	struct _SLOT Slots[32];
-	unsigned char *SCSPRAM;	
+	unsigned char *SCSPRAM;
 	char Master;
 	void (*Int68kCB)(int irq);
 	int stream;
@@ -212,7 +214,7 @@ static unsigned char DecodeSCI(unsigned char irq)
 	return SCI;
 }
 
-static void CheckPendingIRQ(void)
+void CheckPendingIRQ(void)
 {
 	data32_t pend=SCSP[0].udata.data[0x20/2];
 	data32_t en=SCSP[0].udata.data[0x1e/2];
@@ -294,6 +296,8 @@ static int EG_Update(struct _SLOT *slot)
 			if(slot->EG.volume>=(0x3ff<<EG_SHIFT))
 			{
 				slot->EG.state=DECAY1;
+				if(slot->EG.D1R>=(1024<<EG_SHIFT)) //Skip DECAY1, go directly to DECAY2
+					slot->EG.state=DECAY2;
 				slot->EG.volume=0x3ff<<EG_SHIFT;
 			}
 			if(slot->EG.EGHOLD)
@@ -337,9 +341,9 @@ static data32_t SCSP_Step(struct _SLOT *slot)
 	else
 		Fo<<=octave;
 	Fn=Fo*(((FNS(slot))<<(SHIFT-10))|(1<<SHIFT));
-	return Fn/Machine->sample_rate;
+	return Fn/(44100);
 }
-		 
+
 static void Compute_LFO(struct _SLOT *slot)
 {
 	if(PLFOS(slot)!=0)
@@ -353,7 +357,7 @@ static void SCSP_StartSlot(struct _SLOT *slot)
 	slot->active=1;
 	slot->base=SCSP->SCSPRAM+SA(slot);
 	slot->cur_addr=0;
-	slot->step=SCSP_Step(slot);	
+	slot->step=SCSP_Step(slot);
 	Compute_EG(slot);
 	slot->EG.state=ATTACK;
 	slot->EG.volume=0;
@@ -408,7 +412,7 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 		int iSDL=(i>>0xD)&0x07;
 		float TL=1.0;
 		float SegaDB=0;
-		float SDL=1.0;
+		float fSDL=1.0;
 		float PAN=1.0;
 		float LPAN,RPAN;
 
@@ -444,18 +448,18 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 		}
 
 		if(iSDL)
-			SDL=pow(10.0,(SDLT[iSDL])/20.0);
+			fSDL=pow(10.0,(SDLT[iSDL])/20.0);
 		else
-			SDL=0.0;
-		
-		LPANTABLE[i]=FIX((LPAN*TL*SDL));
-		RPANTABLE[i]=FIX((RPAN*TL*SDL));
+			fSDL=0.0;
+
+		LPANTABLE[i]=FIX((4.0*LPAN*TL*fSDL));
+		RPANTABLE[i]=FIX((4.0*RPAN*TL*fSDL));
 	}
 
 	for(i=0;i<62;++i)
 	{
 		double t=BaseTimes2[i/2]/AR2DR;	//In ms
-		double step=(1023*1000.0)/((float) Machine->sample_rate*t);
+		double step=(1023*1000.0)/((float) 44100*t);
 		double scale=(double) (1<<EG_SHIFT);
 		ARTABLE[i]=(int) (step*scale);
 		step/=AR2DR;
@@ -463,18 +467,22 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 	}
 	ARTABLE[62]=DRTABLE[62]=1024<<EG_SHIFT;
 	ARTABLE[63]=DRTABLE[63]=1024<<EG_SHIFT;
-	
+
 	for(i=0;i<32;++i)
+	{
 		SCSPs[0].Slots[i].slot=i;
+		SCSPs[1].Slots[i].slot=i;
+	}
 
 	LFO_Init();
-	buffertmpl=(signed int*) malloc(44100*sizeof(signed int));
-	buffertmpr=(signed int*) malloc(44100*sizeof(signed int));
+	buffertmpl=(signed int*) auto_malloc(44100*sizeof(signed int));
+	buffertmpr=(signed int*) auto_malloc(44100*sizeof(signed int));
 	memset(buffertmpl,0,44100*sizeof(signed int));
 	memset(buffertmpr,0,44100*sizeof(signed int));
 
 	// no "pend"
 	SCSP[0].udata.data[0x20/2] = 0;
+	SCSP[1].udata.data[0x20/2] = 0;
 	TimCnt[0] = 0xffff;
 	TimCnt[1] = 0xffff;
 	TimCnt[2] = 0xffff;
@@ -509,7 +517,7 @@ static void SCSP_UpdateSlotReg(int s,int r)
 			break;
 		case 0x10:
 		case 0x11:
-			slot->step=SCSP_Step(slot);	
+			slot->step=SCSP_Step(slot);
 			break;
 		case 0xA:
 		case 0xB:
@@ -540,31 +548,32 @@ static void SCSP_UpdateReg(int reg)
 			break;
 		case 0x18:
 		case 0x19:
-			if(SCSP->Master)	
+			if(SCSP->Master)
 			{
 				TimPris[0]=1<<((SCSP->udata.data[0x18/2]>>8)&0x7);
-				TimCnt[0]=SCSP->udata.data[0x18/2]&0xff;
+				TimCnt[0]=(SCSP->udata.data[0x18/2]&0xff)<<8;
 			}
 			break;
 		case 0x1a:
 		case 0x1b:
-			if(SCSP->Master)	
+			if(SCSP->Master)
 			{
 				TimPris[1]=1<<((SCSP->udata.data[0x1A/2]>>8)&0x7);
-				TimCnt[1]=SCSP->udata.data[0x1A/2]&0xff;
+				TimCnt[1]=(SCSP->udata.data[0x1A/2]&0xff)<<8;
 			}
 			break;
 		case 0x1C:
 		case 0x1D:
-			if(SCSP->Master)	
+			if(SCSP->Master)
 			{
 				TimPris[2]=1<<((SCSP->udata.data[0x1C/2]>>8)&0x7);
-				TimCnt[2]=SCSP->udata.data[0x1C/2]&0xff;
+				TimCnt[2]=(SCSP->udata.data[0x1C/2]&0xff)<<8;
 			}
 			break;
 		case 0x22:	//SCIRE
 		case 0x23:
-			if(SCSP->Master)	
+
+			if(SCSP->Master)
 			{
 				SCSP->udata.data[0x20/2]&=~SCSP->udata.data[0x22/2];
 				CheckPendingIRQ();
@@ -612,7 +621,7 @@ static void SCSP_UpdateRegR(int reg)
 		case 8:
 		case 9:
 			{
-				unsigned char slot=SCSP->udata.data[0x8/2]>>11;	
+				unsigned char slot=SCSP->udata.data[0x8/2]>>11;
 				unsigned int CA=SCSP->Slots[slot&0x1f].cur_addr>>(SHIFT+12);
 				SCSP->udata.data[0x8/2]&=~(0x780);
 				SCSP->udata.data[0x8/2]|=CA<<7;
@@ -641,7 +650,7 @@ static void SCSP_w16(unsigned int addr,unsigned short val)
 		{
 			SCSP_UpdateReg(addr&0xff);
 		}
-	}	
+	}
 }
 
 static unsigned short SCSP_r16(unsigned int addr)
@@ -665,90 +674,50 @@ static unsigned short SCSP_r16(unsigned int addr)
 			SCSP_UpdateRegR(addr&0xff);
 		}
 		v= *((unsigned short *) (SCSP->udata.datab+((addr&0xff))));
-	}	
+	}
 	return v;
 }
 
 
 #define REVSIGN(v) ((~v)+1)
 
-static void SCSP_TimersAddTicks(int ticks)
+void SCSP_TimersAddTicks(int ticks)
 {
-		//Update timers
-		data16_t cnt;
-		data16_t step;
-		//Timer A
-		
-		if(!TimPris[0])
+	if(TimCnt[0]<=0xff00)
+	{
+ 		TimCnt[0] += ticks << (8-((SCSPs[0].udata.data[0x18/2]>>8)&0x7));
+		if (TimCnt[0] > 0xFF00)
 		{
-			cnt=TimCnt[0];
-			if(cnt==0xffff)
-				goto noTA;
-			++cnt;
-			++TimCnt[0];
-			if(cnt>=TIMER_LIMITSA)
-			{
-				SCSPs[0].udata.data[0x20/2]|=0x40;
-				cnt=0xff;
-				TimCnt[0]=0xffff;
-			}
-			step=1<<((SCSPs[0].udata.data[0x18/2]>>8)&0x7);
-			TimPris[0]=step;
-			SCSPs[0].udata.data[0x18/2]&=0xff00;
-			SCSPs[0].udata.data[0x18/2]|=cnt;
+			TimCnt[0] = 0xFFFF;
+			SCSPs[0].udata.data[0x20/2]|=0x40;
 		}
+		SCSPs[0].udata.data[0x18/2]&=0xff00;
+		SCSPs[0].udata.data[0x18/2]|=TimCnt[0]>>8;
+	}
 
-		TimPris[0]--;
-noTA:
-;
-		//Timer B
-		
-		if(!TimPris[1])
+	if(TimCnt[1]<=0xff00)
+	{
+		TimCnt[1] += ticks << (8-((SCSPs[0].udata.data[0x1a/2]>>8)&0x7));
+		if (TimCnt[1] > 0xFF00)
 		{
-			cnt=TimCnt[1];
-			if(cnt==0xffff)
-				goto noTB;
-			++cnt;
-			++TimCnt[1];
-			if(cnt>=TIMER_LIMITSB)
-			{
-				SCSPs[0].udata.data[0x20/2]|=0x80;
-				cnt=0xff;
-				TimCnt[1]=0xffff;
-			}
-			step=1<<((SCSP[0].udata.data[0x1a/2]>>8)&0x7);
-			TimPris[1]=step;
-			SCSPs[0].udata.data[0x1a/2]&=0xff00;
-			SCSPs[0].udata.data[0x1a/2]|=cnt;
+			TimCnt[1] = 0xFFFF;
+			SCSPs[0].udata.data[0x20/2]|=0x80;
 		}
+		SCSPs[0].udata.data[0x1a/2]&=0xff00;
+		SCSPs[0].udata.data[0x1a/2]|=TimCnt[1]>>8;
+	}
 
-		TimPris[1]--;
-noTB:
-;
-		//Timer C
-		
-		if(!TimPris[2])
+	if(TimCnt[2]<=0xff00)
+	{
+		TimCnt[2] += ticks << (8-((SCSPs[0].udata.data[0x1c/2]>>8)&0x7));
+		if (TimCnt[2] > 0xFF00)
 		{
-			cnt=TimCnt[2];
-			if(cnt==0xffff)
-				goto noTC;
-			++cnt;
-			++TimCnt[2];
-			if(cnt>=TIMER_LIMITSC)
-			{
-				SCSP[0].udata.data[0x20/2]|=0x100;
-				cnt=0xff;
-				TimCnt[2]=0xffff;
-			}
-			step=1<<((SCSPs[0].udata.data[0x1c/2]>>8)&0x7);
-			TimPris[2]=step;
-			SCSPs[0].udata.data[0x1c/2]&=0xff00;
-			SCSPs[0].udata.data[0x1c/2]|=cnt;
+			TimCnt[2] = 0xFFFF;
+			SCSPs[0].udata.data[0x20/2]|=0x100;
 		}
-
-		TimPris[2]--;
-noTC:
-;
+		SCSPs[0].udata.data[0x1c/2]&=0xff00;
+		SCSPs[0].udata.data[0x1c/2]|=TimCnt[2]>>8;
+	}
 }
 
 signed int *bufl1,*bufr1;
@@ -782,7 +751,7 @@ SCSPNAME(_8bit,lfo,alfo,loop)\
 		}\
 		else\
 		{\
-			signed short *p=(signed short *) (slot->base+(slot->cur_addr>>SHIFT));\
+			signed short *p=(signed short *) (slot->base+((slot->cur_addr>>(SHIFT-1))&(~1)));\
 			signed int fpart;\
 			fpart=slot->cur_addr&((1<<SHIFT)-1);\
 			sample=p[0];\
@@ -875,7 +844,7 @@ static void SCSP_DoMasterSamples(int chip, int nsamples)
 	int sl, s;
 
 	SCSP = &SCSPs[chip];
-	
+
 	for(sl=0;sl<32;++sl)
 	{
 		bufr1=buffertmpr;
@@ -884,7 +853,7 @@ static void SCSP_DoMasterSamples(int chip, int nsamples)
 		if(SCSPs[chip].Slots[sl].active)
 		{
 			struct _SLOT *slot=SCSPs[chip].Slots+sl;
-			unsigned short Enc=((TL(slot))<<0x0)|((DIPAN(slot))<<0x8)|((0x7)<<0xd);
+			unsigned short Enc=((TL(slot))<<0x0)|((DIPAN(slot))<<0x8)|((DISDL(slot))<<0xd);
 			unsigned int mode=LPCTL(slot);
 			if(PLFOS(slot))
 				mode|=8;
@@ -956,7 +925,7 @@ static void dma_scsp()
 	{
 		for(;scsp_dtlg > 0;scsp_dtlg-=2)
 		{
-			cpu_writemem24bedw_word(0x100000|scsp_drga,cpu_readmem24bedw_word(scsp_dmea));
+  			cpu_writemem24bedw_word(0x100000|scsp_drga,cpu_readmem24bedw_word(scsp_dmea));
 			scsp_dmea+=2;
 			scsp_drga+=2;
 		}
@@ -1008,13 +977,13 @@ int SCSP_sh_start(const struct MachineSound *msound)
 	{
 		SCSPs[i].Int68kCB = intf->irq_callback[i];
 
-		sprintf(buf[0], "SCSP %d R", i); 
-		sprintf(buf[1], "SCSP %d L", i); 
+		sprintf(buf[0], "SCSP %d R", i);
+		sprintf(buf[1], "SCSP %d L", i);
 		name[0] = buf[0];
 		name[1] = buf[1];
 		vol[1]=intf->mixing_level[i] >> 16;
 		vol[0]=intf->mixing_level[i] & 0xffff;
-		SCSPs[i].stream = stream_init_multi(2, name, vol, Machine->sample_rate, 0, SCSP_Update);
+		SCSPs[i].stream = stream_init_multi(2, name, vol, 44100, i, SCSP_Update);
 	}
 
 	SCSP = &SCSPs[0];
@@ -1029,7 +998,7 @@ void SCSP_sh_stop(void)
 READ16_HANDLER( SCSP_0_r )
 {
 	SCSP = &SCSPs[0];
-	
+
 	stream_update(SCSPs[0].stream, 0);
 
 	return SCSP_r16(offset*2);

@@ -3,7 +3,7 @@
   Namco System 11 - Arcade PSX Hardware
   =====================================
   Driver by smf & Ryan Holtz
-  Board notes by The Guru
+  Board notes by The Guru & Brian A. Troha
   Thanks to R Belmont & The Zinc Team.
 
   Issues:
@@ -95,7 +95,7 @@ Notes:
 CPU Board
 ---------
 
-GP-11  COH-100
+GP-11  COH-100  S-L1B 1-655-543-12
 |-------------------------------------|
 |         SONY           KM48V514BJ-6 |
 |         CXD8530AQ      KM48V514BJ-6 |
@@ -114,10 +114,30 @@ GP-11  COH-100
 |           D482445LGW-A70            |
 |-------------------------------------|
 
-Notes:
-      There is a revision CPU board (GP-13 COH-110) that uses 2x 32MBit RAMs instead of
-      the 4x D482445LGW-A70 RAMs above and the 2 main SONY IC's are updated revisions,
-      though the functionality of them is identical.
+CXD8530BQ may be used instead of CXD8530AQ
+
+
+GP-13  COH-110  S-XMB 1-660-276-11
+|-------------------------------------|
+|         SONY           KM48V514BJ-6 |
+|         CXD8530CQ      KM48V514BJ-6 |
+|              67.737MHz KM48V514BJ-6 |
+|                        KM48V514BJ-6 |
+|                        KM48V514BJ-6 |
+|                        KM48V514BJ-6 |
+|         SONY           KM48V514BJ-6 |
+|(CONN2)  CXD8561Q       KM48V514BJ-6 |
+|              53.69MHz               |
+|                                     |
+|                         Motorola    |
+|                         XC44200FUD  |
+|    32Meg  32Meg                     |
+|                                     |
+|                                     |
+|-------------------------------------|
+
+32Meg = KM4132G271Q-12
+
 
 ***************************************************************************/
 
@@ -430,7 +450,7 @@ static UINT32 m_p_n_bankoffset[ 8 ];
 INLINE void bankswitch_update( int n_bank )
 {
 	verboselog( 1, "bankswitch_update( %d ) = %08x\n", n_bank, m_p_n_bankoffset[ n_bank ] );
-	cpu_setbank( 6 + n_bank, memory_region( REGION_USER3 ) + m_p_n_bankoffset[ n_bank ] );
+	cpu_setbank( 7 + n_bank, memory_region( REGION_USER3 ) + m_p_n_bankoffset[ n_bank ] );
 }
 
 static void bankswitch_update_all( void )
@@ -500,9 +520,11 @@ static WRITE32_HANDLER( bankswitch_rom64_w )
 
 static MEMORY_WRITE32_START( namcos11_writemem )
 	{ 0x00000000, 0x003fffff, MWA32_RAM },    /* ram */
-	{ 0x1f800000, 0x1f8003ff, MWA32_BANK5 },  /* scratchpad */
-	{ 0x1f801000, 0x1f80102f, MWA32_NOP },
-	{ 0x1f801040, 0x1f80104f, psx_sio_w },
+	{ 0x1f800000, 0x1f8003ff, MWA32_BANK1 },  /* scratchpad */
+	{ 0x1f801000, 0x1f801007, MWA32_NOP },
+	{ 0x1f801008, 0x1f80100b, MWA32_RAM },    /* ?? */
+	{ 0x1f80100c, 0x1f80102f, MWA32_NOP },
+	{ 0x1f801040, 0x1f80105f, psx_sio_w },
 	{ 0x1f801060, 0x1f80106f, MWA32_NOP },
 	{ 0x1f801070, 0x1f801077, psx_irq_w },
 	{ 0x1f801080, 0x1f8010ff, psx_dma_w },
@@ -510,7 +532,7 @@ static MEMORY_WRITE32_START( namcos11_writemem )
 	{ 0x1f801810, 0x1f801817, psx_gpu_w },
 	{ 0x1f801820, 0x1f801827, psx_mdec_w },
 	{ 0x1f801c00, 0x1f801dff, MWA32_NOP },
-	{ 0x1f802020, 0x1f80202f, MWA32_RAM },
+	{ 0x1f802020, 0x1f802033, MWA32_RAM },
 	{ 0x1f802040, 0x1f802043, MWA32_NOP },
 	{ 0x1fa04000, 0x1fa0ffff, sharedram_w, &namcos11_sharedram }, /* shared ram */
 	{ 0x1fa20000, 0x1fa2ffff, keycus_w, &namcos11_keycus, &namcos11_keycus_size }, /* keycus */
@@ -518,37 +540,42 @@ static MEMORY_WRITE32_START( namcos11_writemem )
 	{ 0x1fb00000, 0x1fb00003, MWA32_NOP },    /* ?? */
 	{ 0x1fbf6000, 0x1fbf6003, MWA32_NOP },    /* ?? */
 	{ 0x1fc00000, 0x1fffffff, MWA32_ROM },    /* bios */
-	{ 0x80000000, 0x803fffff, MWA32_BANK2 },  /* ram mirror */
-	{ 0xa0000000, 0xa03fffff, MWA32_BANK3 },  /* ram mirror */
+	{ 0x80000000, 0x803fffff, MWA32_BANK3 },  /* ram mirror */
+	{ 0x9fc00000, 0x9fffffff, MWA32_ROM },    /* bios */
+	{ 0xa0000000, 0xa03fffff, MWA32_BANK5 },  /* ram mirror */
 	{ 0xbfc00000, 0xbfffffff, MWA32_ROM },    /* bios */
 	{ 0xfffe0130, 0xfffe0133, MWA32_NOP },
 MEMORY_END
 
 static MEMORY_READ32_START( namcos11_readmem )
 	{ 0x00000000, 0x003fffff, MRA32_RAM },    /* ram */
-	{ 0x1f000000, 0x1f0fffff, MRA32_BANK6 },  /* banked roms */
-	{ 0x1f100000, 0x1f1fffff, MRA32_BANK7 },
-	{ 0x1f200000, 0x1f2fffff, MRA32_BANK8 },
-	{ 0x1f300000, 0x1f3fffff, MRA32_BANK9 },
-	{ 0x1f400000, 0x1f4fffff, MRA32_BANK10 },
-	{ 0x1f500000, 0x1f5fffff, MRA32_BANK11 },
-	{ 0x1f600000, 0x1f6fffff, MRA32_BANK12 },
-	{ 0x1f700000, 0x1f7fffff, MRA32_BANK13 },
-	{ 0x1f800000, 0x1f8003ff, MRA32_BANK5 },  /* scratchpad */
+	{ 0x1f000000, 0x1f0fffff, MRA32_BANK7 },  /* banked roms */
+	{ 0x1f100000, 0x1f1fffff, MRA32_BANK8 },
+	{ 0x1f200000, 0x1f2fffff, MRA32_BANK9 },
+	{ 0x1f300000, 0x1f3fffff, MRA32_BANK10 },
+	{ 0x1f400000, 0x1f4fffff, MRA32_BANK11 },
+	{ 0x1f500000, 0x1f5fffff, MRA32_BANK12 },
+	{ 0x1f600000, 0x1f6fffff, MRA32_BANK13 },
+	{ 0x1f700000, 0x1f7fffff, MRA32_BANK14 },
+	{ 0x1f800000, 0x1f8003ff, MRA32_BANK1 },  /* scratchpad */
+	{ 0x1f801008, 0x1f80100b, MRA32_RAM },    /* ?? */
 	{ 0x1f801010, 0x1f801013, MRA32_NOP },
-	{ 0x1f801040, 0x1f80104f, psx_sio_r },
+	{ 0x1f801014, 0x1f801017, MRA32_NOP },
+	{ 0x1f801040, 0x1f80105f, psx_sio_r },
 	{ 0x1f801070, 0x1f801077, psx_irq_r },
 	{ 0x1f801080, 0x1f8010ff, psx_dma_r },
 	{ 0x1f801100, 0x1f80113f, psx_counter_r },
 	{ 0x1f801810, 0x1f801817, psx_gpu_r },
 	{ 0x1f801820, 0x1f801827, psx_mdec_r },
-	{ 0x1f802020, 0x1f80202f, MRA32_RAM },
+	{ 0x1f801c00, 0x1f801dff, MRA32_NOP },
+	{ 0x1f802020, 0x1f802033, MRA32_RAM },
 	{ 0x1fa04000, 0x1fa0ffff, sharedram_r },  /* shared ram */
 	{ 0x1fa30000, 0x1fa30fff, MRA32_RAM },    /* flash */
-	{ 0x1fc00000, 0x1fffffff, MRA32_BANK1 },  /* bios */
-	{ 0x80000000, 0x803fffff, MRA32_BANK2 },  /* ram mirror */
-	{ 0xa0000000, 0xa03fffff, MRA32_BANK3 },  /* ram mirror */
-	{ 0xbfc00000, 0xbfffffff, MRA32_BANK4 },  /* bios */
+	{ 0x1fc00000, 0x1fffffff, MRA32_BANK2 },  /* bios mirror */
+	{ 0x80000000, 0x803fffff, MRA32_BANK3 },  /* ram mirror */
+	{ 0x9fc00000, 0x9fffffff, MRA32_BANK4 },  /* bios mirror */
+	{ 0xa0000000, 0xa03fffff, MRA32_BANK5 },  /* ram mirror */
+	{ 0xbfc00000, 0xbfffffff, MRA32_BANK6 },  /* bios */
 MEMORY_END
 
 static struct
@@ -580,11 +607,12 @@ static DRIVER_INIT( namcos11 )
 {
 	int n_game;
 
-	cpu_setbank( 1, memory_region( REGION_USER2 ) );
-	cpu_setbank( 2, memory_region( REGION_CPU1 ) );
+	cpu_setbank( 1, memory_region( REGION_USER1 ) );
+	cpu_setbank( 2, memory_region( REGION_USER2 ) );
 	cpu_setbank( 3, memory_region( REGION_CPU1 ) );
 	cpu_setbank( 4, memory_region( REGION_USER2 ) );
-	cpu_setbank( 5, memory_region( REGION_USER1 ) );
+	cpu_setbank( 5, memory_region( REGION_CPU1 ) );
+	cpu_setbank( 6, memory_region( REGION_USER2 ) );
 
 	n_game = 0;
 	while( namcos11_config_table[ n_game ].s_name != NULL )

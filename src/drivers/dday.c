@@ -122,17 +122,17 @@ INPUT_PORTS_START( dday )
                                                   /* accessed */
 	PORT_START      /* DSW 0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x00, "A=2 B=5" )
+	PORT_DIPSETTING(    0x01, "A=3 B=6" )
+	PORT_DIPSETTING(    0x02, "A=4 B=7" )
+	PORT_DIPSETTING(    0x03, "A=5 B=8" )
 	PORT_DIPNAME( 0x0c, 0x00, "Extended Play At" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x04, "15000" )
 	PORT_DIPSETTING(    0x08, "20000" )
 	PORT_DIPSETTING(    0x0c, "25000" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )//No Difficulty setting?
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )// Clearly old code revision, ddayc works much better
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -140,9 +140,9 @@ INPUT_PORTS_START( dday )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )  // has to do with lives
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Start with 20000 Pts" )//Works the same as Centuri License, but not as well
+	PORT_DIPSETTING(    0x80, "No (Lives =A)" )// Doesn't mention extended play, just gives lives
+	PORT_DIPSETTING(    0x00, "Yes (Lives =B)" )// Also alters table for Extended Play
 
 	PORT_START      /* DSW 1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -196,10 +196,10 @@ INPUT_PORTS_START( ddayc )
                                                   // accessed
 	PORT_START      /* DSW 0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x00, "A=2 B=5" )
+	PORT_DIPSETTING(    0x01, "A=3 B=6" )
+	PORT_DIPSETTING(    0x02, "A=4 B=7" )
+	PORT_DIPSETTING(    0x03, "A=5 B=8" )
 	PORT_DIPNAME( 0x0c, 0x00, "Extended Play At" )
 	PORT_DIPSETTING(    0x00, "4000" )
 	PORT_DIPSETTING(    0x04, "6000" )
@@ -214,8 +214,8 @@ INPUT_PORTS_START( ddayc )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Start with 20000 Pts" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPSETTING(    0x80, "No (Lives =A)" )
+	PORT_DIPSETTING(    0x00, "Yes (Lives =B)" )
 
 	PORT_START      /* DSW 1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )

@@ -49,9 +49,6 @@ TCH-SS7.u59     "     |  Gfx          3DDah
 TCH-SS8.u39     "     |               A9B5h
 TCH-SS9.u34     "     /               AB2Bh
 
-Developers:
-More info Reqd? Email me....
-theguru@emuunlim.com
 
 ******************************************************************************/
 

@@ -6,6 +6,7 @@ New Fantasia     1995 Comad
 Fantasy '95      1995 Hi-max Technology Inc. (Running on a Comad PCB)
 Miss World '96   1996 Comad
 Fantasia II      1997 Comad
+Gals Hustler     1997 Ace International
 
 driver by Nicola Salmoria
 
@@ -86,6 +87,9 @@ Stephh's additional notes :
       * The Comad games are definitively based on this version, the main
         differences being that read/writes to 0xe00000 have been replaced.
 
+ - On Gals Hustler there is an extra test mode if you hold down player 2
+   button 1, I have no idea if its complete or not
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -114,6 +118,17 @@ static INTERRUPT_GEN( galpanic_interrupt )
 	else
 		cpu_set_irq_line(0, 3, HOLD_LINE);
 }
+
+static INTERRUPT_GEN( galhustl_interrupt )
+{
+	switch ( cpu_getiloops() )
+	{
+		case 2:  cpu_set_irq_line(0, 5, HOLD_LINE); break;
+		case 1:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
+		case 0:  cpu_set_irq_line(0, 3, HOLD_LINE); break;
+	}
+}
+
 
 static WRITE16_HANDLER( galpanic_6295_bankswitch_w )
 {
@@ -226,7 +241,15 @@ static WRITE16_HANDLER(galpanib_calc_w)
 	}
 }
 
-
+static WRITE16_HANDLER( galpanic_bgvideoram_mirror_w )
+{
+	int i;
+	for(i = 0; i < 8; i++)
+	{
+		// or offset + i * 0x2000 ?
+		galpanic_bgvideoram_w(offset * 8 + i, data, mem_mask);
+	}
+}
 
 static MEMORY_READ16_START( galpanic_readmem )
 	{ 0x000000, 0x3fffff, MRA16_ROM },
@@ -345,6 +368,38 @@ static MEMORY_WRITE16_START( fantsia2_writemem )
 	{ 0xc80000, 0xc80001, OKIM6295_data_0_msb_w },
 MEMORY_END
 
+
+static MEMORY_READ16_START( galhustl_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+    { 0x500000, 0x51ffff, MRA16_RAM },
+	{ 0x580000, 0x583fff, MRA16_RAM },
+	{ 0x600000, 0x6007ff, MRA16_RAM },
+	{ 0x600800, 0x600fff, MRA16_RAM },
+	{ 0x680000, 0x68001f, MRA16_RAM },
+	{ 0x700000, 0x700fff, MRA16_RAM },
+	{ 0x780000, 0x78001f, MRA16_RAM },
+	{ 0x800000, 0x800001, input_port_0_word_r },
+	{ 0x800002, 0x800003, input_port_1_word_r },
+	{ 0x800004, 0x800005, input_port_2_word_r },
+	{ 0xd00000, 0xd00001, OKIM6295_status_0_msb_r },
+	{ 0xe80000, 0xe8ffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( galhustl_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+    { 0x500000, 0x51ffff, MWA16_RAM, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
+	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },
+	{ 0x580000, 0x583fff, galpanic_bgvideoram_mirror_w },
+	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram16 },	/* 1024 colors, but only 512 seem to be used */
+	{ 0x600800, 0x600fff, MWA16_RAM }, // writes only 1?
+	{ 0x680000, 0x68001f, MWA16_RAM }, // regs?
+	{ 0x700000, 0x700fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x780000, 0x78001f, MWA16_RAM }, // regs?
+	{ 0xa00000, 0xa00001, MWA16_NOP }, // ?
+	{ 0x900000, 0x900001, galpanic_6295_bankswitch_w },
+	{ 0xd00000, 0xd00001, OKIM6295_data_0_msb_w },
+	{ 0xe80000, 0xe8ffff, MWA16_RAM },
+MEMORY_END
 
 
 INPUT_PORTS_START( galpanic )
@@ -714,6 +769,81 @@ INPUT_PORTS_START( missw96 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( galhustl )
+	PORT_START
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "6" )
+	PORT_DIPSETTING(      0x0001, "7" )
+	PORT_DIPSETTING(      0x0003, "8" )
+	PORT_DIPSETTING(      0x0002, "10" )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0010, "Easy" )			/* 5000 - 7000 */
+	PORT_DIPSETTING(      0x0018, "Normal" )		/* 4000 - 6000 */
+	PORT_DIPSETTING(      0x0008, "Hard" )			/* 6000 - 8000 */
+	PORT_DIPSETTING(      0x0000, "Hardest" )		/* 7000 - 9000 */
+	PORT_DIPNAME( 0x0060, 0x0060, "Play Time" )
+	PORT_DIPSETTING(      0x0040, "120 Sec" )
+	PORT_DIPSETTING(      0x0060, "100 Sec" )
+	PORT_DIPSETTING(      0x0020, "80 Sec" )
+	PORT_DIPSETTING(      0x0000, "70 Sec" )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout spritelayout =
@@ -813,7 +943,17 @@ static MACHINE_DRIVER_START( fantsia2 )
 	MDRV_VIDEO_UPDATE(comad)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( galhustl )
 
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(comad)
+	MDRV_CPU_REPLACE("main", M68000, 12000000)	/* ? */
+	MDRV_CPU_MEMORY(galhustl_readmem,galhustl_writemem)
+	MDRV_CPU_VBLANK_INT(galhustl_interrupt,3)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(comad)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -988,7 +1128,20 @@ ROM_START( fantsia2 )
 	ROM_LOAD( "music1.1a",    0xc0000, 0x80000, CRC(864167c2) SHA1(c454b26b6dea993e6bd64546f92beef05e46d7d7) )
 ROM_END
 
+ROM_START( galhustl )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "ue17.3", 0x00000, 0x80000, CRC(b2583dbb) SHA1(536f4aa2246ec816c4f270f9d42acc090718ee8b) )
+	ROM_LOAD16_BYTE( "ud17.4", 0x00001, 0x80000, CRC(470a3668) SHA1(ad86e96ab8f1f5da23fb1feaabfb9c757965418e) )
 
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
+	ROM_LOAD( "galhstl1.ub6", 0x00000, 0x80000,  CRC(23848790) SHA1(2e77fbe04f46e258daecb4c5917e383c7c06a306) )
+	ROM_RELOAD(               0x40000, 0x80000 )
+	ROM_LOAD( "galhstl2.uc6", 0xc0000, 0x80000,  CRC(2168e54a) SHA1(87534334b16d3ddc3daefcb1b8086aff44157ccf) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )
+	ROM_LOAD( "galhstl5.u5", 0x00000, 0x80000, CRC(44a18f15) SHA1(1217cf7fbbb442358b15016099efeface5dcbd22) )
+ROM_END
 
 GAMEX( 1990, galpanic, 0,        galpanic, galpanic, 0, ROT90, "Kaneko", "Gals Panic (set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1990, galpanib, galpanic, galpanib, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 2)", GAME_NO_COCKTAIL )
@@ -997,3 +1150,4 @@ GAMEX( 1995, newfant,  0,        comad,    fantasia, 0, ROT90, "Comad & New Japa
 GAMEX( 1995, fantsy95, 0,        comad,    fantasia, 0, ROT90, "Hi-max Technology Inc.", "Fantasy '95", GAME_NO_COCKTAIL )
 GAMEX( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )
 GAMEX( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II", GAME_NO_COCKTAIL )
+GAME(  1997, galhustl, 0,        galhustl, galhustl, 0, ROT0,  "ACE International", "Gals Hustler" )

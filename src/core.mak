@@ -28,9 +28,9 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/mamedbg.o $(OBJ)/window.o \
 	$(OBJ)/profiler.o \
 	$(OBJ)/hash.o $(OBJ)/sha1.o \
-	$(OBJ)/harddisk.o $(OBJ)/md5.o $(OBJ)/machine/idectrl.o \
+	$(OBJ)/chd.o $(OBJ)/harddisk.o $(OBJ)/md5.o $(OBJ)/machine/idectrl.o \
 	$(OBJ)/sound/wavwrite.o \
 	$(OBJ)/x86drc.o \
 	$(sort $(DBGOBJS))
 
-TOOLS = romcmp$(EXE) hdcomp$(EXE) xml2info$(EXE)
+TOOLS = romcmp$(EXE) chdman$(EXE) xml2info$(EXE)

@@ -39,13 +39,11 @@
 
 #include "driver.h"
 #include "state.h"
+#include "artwork.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/idectrl.h"
 #include "sound/k054539.h"
 #include "vidhrdw/konamiic.h"
-
-// light LED as neon instead of 1P/2P/Effect buttons.
-//#define LED_AS_NEON
 
 
 extern data32_t *djmain_obj_ram;
@@ -426,72 +424,55 @@ static WRITE32_HANDLER( ide_alt_w )
 
 static WRITE32_HANDLER( light_ctrl_1_w )
 {
-	//printf("%08X: light_ctrl_1 write %08X: %08X & %08X\n", activecpu_get_previouspc(), offset, data, ~mem_mask);
-
 	if (ACCESSING_MSW32)
 	{
 		switch (game_type)
 		{
-#ifdef LED_AS_NEON
 		case BEATMANIA:
-			set_led_status(0, !(data & 0x02000000));	// Left blue HIGHLIGHT
-			set_led_status(2, !(data & 0x00200000));	// Right blue HIGHLIGHT
+			artwork_show("right-red-hlt",  !(data & 0x08000000));	// Right red HIGHLIGHT
+			artwork_show("left-red-hlt",   !(data & 0x04000000));	// Left red HIGHLIGHT
+			artwork_show("left-blue-hlt",  !(data & 0x02000000));	// Left blue HIGHLIGHT
+			artwork_show("right-blue-hlt", !(data & 0x00200000));	// Right blue HIGHLIGHT
 			break;
 		case POPNMUSIC:
+			set_led_status(0, data & 0x00080000);			// Button 4
+			set_led_status(1, data & 0x00100000);			// Button 5
+			set_led_status(2, data & 0x00400000);			// Button 6
 			break;
 		case POPNSTAGE:
-			set_led_status(0, data & 0x00010000);		// Left R&G HIGHLIGHT
-			set_led_status(1, data & 0x000a0000);		// Y&B HIGHLIGHT
-			set_led_status(2, data & 0x00040000);		// Right R&G HIGHLIGHT
+			artwork_show("right-rg-hlt",   data & 0x00010000);	// Left R&G HIGHLIGHT
+			artwork_show("right-yb-hlt",   data & 0x00020000);	// Left Y&B HIGHLIGHT
+			artwork_show("left-rg-hlt",    data & 0x00040000);	// Right R&G HIGHLIGHT
+			artwork_show("left-yb-hlt",    data & 0x00080000);	// Right Y&B HIGHLIGHT
 			break;
-#else /* LED_AS_NEON */
-		case POPNMUSIC:
-			set_led_status(0, data & 0x00080000);		// Button 4
-			set_led_status(1, data & 0x00100000);		// Button 5
-			set_led_status(2, data & 0x00400000);		// Button 6
-			break;
-		case BEATMANIA:
-			break;
-		case POPNSTAGE:
-			break;
-#endif /* LED_AS_NEON */
 		}
 	}
 }
 
 static WRITE32_HANDLER( light_ctrl_2_w )
 {
-	//printf("%08X: light_ctrl_2 write %08X: %08X & %08X\n", activecpu_get_previouspc(), offset, data, ~mem_mask);
-
 	if (ACCESSING_MSW32)
 	{
 		switch (game_type)
 		{
-#ifdef LED_AS_NEON
 		case BEATMANIA:
-			set_led_status(1, data & 0x08000000);		// SSR
+			artwork_show("left-ssr",       data & 0x08000000);	// SSR
+			artwork_show("right-ssr",      data & 0x08000000);	// SSR
+			set_led_status(0, data & 0x00010000);			// 1P START
+			set_led_status(1, data & 0x00020000);			// 2P START
+			set_led_status(2, data & 0x00040000);			// EFFECT
 			break;
 		case POPNMUSIC:
-			set_led_status(0, data & 0x00010000);		// Left blue HIGHLIGHT
-			set_led_status(1, data & 0x000a0000);		// Red HIGHLIGHT
-			set_led_status(2, data & 0x00040000);		// Right blue HIGHLIGHT
+			artwork_show("left-blue-hlt",  data & 0x00010000);	// Left blue HIGHLIGHT
+			artwork_show("left-red-hlt",   data & 0x00020000);	// Left red HIGHLIGHT
+			artwork_show("right-blue-hlt", data & 0x00040000);	// Right blue HIGHLIGHT
+			artwork_show("right-red-hlt",  data & 0x00080000);	// Right red HIGHLIGHT
 			break;
 		case POPNSTAGE:
+			set_led_status(0, data & 0x04000000);			// Left selection
+			set_led_status(1, data & 0x08000000);			// Middle selection
+			set_led_status(2, data & 0x10000000);			// Right selection
 			break;
-#else /* LED_AS_NEON */
-		case BEATMANIA:
-			set_led_status(0, data & 0x00010000);		// 1P START
-			set_led_status(1, data & 0x00020000);		// 2P START
-			set_led_status(2, data & 0x00040000);		// EFFECT
-			break;
-		case POPNMUSIC:
-			break;
-		case POPNSTAGE:
-			set_led_status(0, data & 0x04000000);		// Left selection
-			set_led_status(1, data & 0x08000000);		// Middle selection
-			set_led_status(2, data & 0x10000000);		// Right selection
-			break;
-#endif /* LED_AS_NEON */
 		}
 	}
 }
@@ -844,6 +825,21 @@ MEMORY_END
 	PORT_DIPSETTING(    0x00, "On Stage Last" ) \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 3-6 */
 
+#define BMDCT_DSW3 \
+	PORT_START      /* IN 5 */ \
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_DIPNAME( 0x20, 0x20, "Event Mode" ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x1c, 0x1c, "Normal / Event Mode Stages" ) \
+	PORT_DIPSETTING(    0x0c, "3 / 1" ) \
+	PORT_DIPSETTING(    0x14, "3 / 2" ) \
+	PORT_DIPSETTING(    0x10, "4 / 3" ) \
+	PORT_DIPSETTING(    0x1c, "3 / 4" ) \
+	PORT_DIPSETTING(    0x08, "3 / 5" ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 3-5 */ \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 3-6 */
+
 
 INPUT_PORTS_START( beatmania )
 	BEATMANIA_INPUT			/* IN 0-2 */
@@ -882,6 +878,14 @@ INPUT_PORTS_START( hmcompm2 )
 	BEATMANIA_DSW1(0x00, 0xff)	/* IN 3 */
 	BEATMANIA_DSW2			/* IN 4 */
 	HMCOMPM2_DSW3			/* IN 5 */
+	BEATMANIA_SCRATCH		/* IN 6 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bmdct )
+	BEATMANIA_INPUT			/* IN 0-2 */
+	BEATMANIA_DSW1(0x00, 0xff)	/* IN 3 */
+	BEATMANIA_DSW2			/* IN 4 */
+	BMDCT_DSW3			/* IN 5 */
 	BEATMANIA_SCRATCH		/* IN 6 */
 INPUT_PORTS_END
 
@@ -1028,7 +1032,49 @@ ROM_START( bm1stmix )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
 	// There is an alternate image: MD5(260c9b72f4a03055e3abad61c6225324)
-	DISK_IMAGE( "753jaa11.chd", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) )	/* ver 1.00 JA */
+	DISK_IMAGE( "753jaa11.chd", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) SHA1(71d200d1bd3f1f3a01f4daa78dc9abcca8b8a1fb) )	/* ver 1.00 JA */
+ROM_END
+
+ROM_START( bm2ndmix )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* MC68EC020FG25 MPU */
+	ROM_LOAD16_BYTE( "853jab01.6a", 0x000000, 0x80000, CRC(C8DF72C0) SHA1(6793b587ba0611bc3da8c4955d6a87e47a19a223) )
+	ROM_LOAD16_BYTE( "853jab02.8a", 0x000001, 0x80000, CRC(BF6ACE08) SHA1(29d3fdf1c73a73a0a66fa5a4c4ac3f293cb82e37) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0)		/* SPRITE */
+	ROM_LOAD16_BYTE( "853jaa03.19a", 0x000000, 0x80000, CRC(1462ED23) SHA1(fdfda3060c8d367ac2e8e43dedaba8ab9012cc77) )
+	ROM_LOAD16_BYTE( "853jaa04.20a", 0x000001, 0x80000, CRC(98C9B331) SHA1(51f24b3c3773c53ff492ed9bad17c9867fd94e28) )
+	ROM_LOAD16_BYTE( "853jaa05.22a", 0x100000, 0x80000, CRC(0DA3FEF9) SHA1(f9ef24144c00c054ecc4650bb79e74c57c6d6b3c) )
+	ROM_LOAD16_BYTE( "853jaa06.24a", 0x100001, 0x80000, CRC(6A66978C) SHA1(460178a6f35e554a157742d77ed5ea6989fbcee1) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )		/* TILEMAP */
+	ROM_LOAD16_BYTE( "853jaa07.22d", 0x000000, 0x80000, CRC(728C0010) SHA1(18888b402e0b7ccf63c7b3cb644673df1746dba7) )
+	ROM_LOAD16_BYTE( "853jaa08.23d", 0x000001, 0x80000, CRC(926FC37C) SHA1(f251cba56ca201f0e748112462116cff218b66da) )
+	ROM_LOAD16_BYTE( "853jaa09.25d", 0x100000, 0x80000, CRC(8584E21E) SHA1(3d1ca6de00f9ac07bbe7cd1e67093cca7bf484bb) )
+	ROM_LOAD16_BYTE( "853jaa10.27d", 0x100001, 0x80000, CRC(9CB92D98) SHA1(6ace4492ba0b5a8f94a9e7b4f7126b31c6254637) )
+
+	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
+	DISK_IMAGE( "853jaa11.chd", 0, MD5(37281741b748bea7dfa711a956649d1e) SHA1(03d6cc5aea5920163fbaba34c4f838ca605a87e3) )	/* ver 1.00 JA */
+ROM_END
+
+ROM_START( bm2ndmxa )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* MC68EC020FG25 MPU */
+	ROM_LOAD16_BYTE( "853jaa01.6a", 0x000000, 0x80000, CRC(4F0BF5D0) SHA1(4793bb411e85f2191eb703a170c16cf163ea79e7) )
+	ROM_LOAD16_BYTE( "853jaa02.8a", 0x000001, 0x80000, CRC(E323925B) SHA1(1f9f52a7ab6359b617e87f8b3d7ac4269885c621) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0)		/* SPRITE */
+	ROM_LOAD16_BYTE( "853jaa03.19a", 0x000000, 0x80000, CRC(1462ED23) SHA1(fdfda3060c8d367ac2e8e43dedaba8ab9012cc77) )
+	ROM_LOAD16_BYTE( "853jaa04.20a", 0x000001, 0x80000, CRC(98C9B331) SHA1(51f24b3c3773c53ff492ed9bad17c9867fd94e28) )
+	ROM_LOAD16_BYTE( "853jaa05.22a", 0x100000, 0x80000, CRC(0DA3FEF9) SHA1(f9ef24144c00c054ecc4650bb79e74c57c6d6b3c) )
+	ROM_LOAD16_BYTE( "853jaa06.24a", 0x100001, 0x80000, CRC(6A66978C) SHA1(460178a6f35e554a157742d77ed5ea6989fbcee1) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )		/* TILEMAP */
+	ROM_LOAD16_BYTE( "853jaa07.22d", 0x000000, 0x80000, CRC(728C0010) SHA1(18888b402e0b7ccf63c7b3cb644673df1746dba7) )
+	ROM_LOAD16_BYTE( "853jaa08.23d", 0x000001, 0x80000, CRC(926FC37C) SHA1(f251cba56ca201f0e748112462116cff218b66da) )
+	ROM_LOAD16_BYTE( "853jaa09.25d", 0x100000, 0x80000, CRC(8584E21E) SHA1(3d1ca6de00f9ac07bbe7cd1e67093cca7bf484bb) )
+	ROM_LOAD16_BYTE( "853jaa10.27d", 0x100001, 0x80000, CRC(9CB92D98) SHA1(6ace4492ba0b5a8f94a9e7b4f7126b31c6254637) )
+
+	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
+	DISK_IMAGE( "853jaa11.chd", 0, MD5(37281741b748bea7dfa711a956649d1e) SHA1(03d6cc5aea5920163fbaba34c4f838ca605a87e3) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bmcompmx )
@@ -1049,7 +1095,7 @@ ROM_START( bmcompmx )
 	ROM_LOAD16_BYTE( "858jaa10.27d", 0x100001, 0x80000, CRC(00B124EE) SHA1(435d28a327c2707833a8ddfe841104df65ffa3f8) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "858jaa11.chd", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) )	/* ver 1.00 JA */
+	DISK_IMAGE( "858jaa11.chd", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) SHA1(86f8bb393d3db3c3f492f007a5b4eaec58dfca09) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( hmcompmx )
@@ -1070,7 +1116,7 @@ ROM_START( hmcompmx )
 	ROM_LOAD16_BYTE( "858uaa10.27d", 0x100001, 0x80000, CRC(20AA7145) SHA1(eeff87eb9a9864985d751f45e843ee6e73db8cfd) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "858jaa11.chd", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) )	/* ver 1.00 JA */
+	DISK_IMAGE( "858jaa11.chd", 0, MD5(e7b26f6f03f807a32b2e5e291324d582) SHA1(86f8bb393d3db3c3f492f007a5b4eaec58dfca09) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bm4thmix )
@@ -1091,7 +1137,7 @@ ROM_START( bm4thmix )
 	ROM_LOAD16_BYTE( "847jab10.27d", 0x100001, 0x80000, CRC(C78516F5) SHA1(1adf5805c808dc55de14a9a9b20c3d2cf7bf414d) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "847jaa11.chd", 0, MD5(47cb5c1b856aa11cf38f0c7ea4a7d1c3) )	/* ver 1.00 JA */
+	DISK_IMAGE( "847jaa11.chd", 0, MD5(47cb5c1b856aa11cf38f0c7ea4a7d1c3) SHA1(374d5d5340d4a8818577f9ae81021651d6ee3429) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( hmcompm2 )
@@ -1112,7 +1158,28 @@ ROM_START( hmcompm2 )
 	ROM_LOAD16_BYTE( "988uaa10.27d", 0x100001, 0x80000, CRC(DAB0F3C9) SHA1(6fd899e753e32f60262c54ab8553c686c7ef28de) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "988jaa11.chd", 0, MD5(cc21d58d6bee58f1c4baf08f345fe2c5) )	/* ver 1.00 JA */
+	DISK_IMAGE( "988jaa11.chd", 0, MD5(cc21d58d6bee58f1c4baf08f345fe2c5) SHA1(9ccc04973b035d20dada83842c8ee5387472870e) )	/* ver 1.00 JA */
+ROM_END
+
+ROM_START( bmdct )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* MC68EC020FG25 MPU */
+	ROM_LOAD16_BYTE( "995jaa01.6a", 0x000000, 0x80000, CRC(2C224169) SHA1(0608469fa0a15026f461be5141ed29bf740144ca) )
+	ROM_LOAD16_BYTE( "995jaa02.8a", 0x000001, 0x80000, CRC(A2EDB472) SHA1(795e44e56dfee6c5eceb28172bc20ba5b31c366b) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0)		/* SPRITE */
+	ROM_LOAD16_BYTE( "995jaa03.19a", 0x000000, 0x80000, CRC(77A7030C) SHA1(8f7988ca5c248d0846ec22c0975ae008d85e8d72) )
+	ROM_LOAD16_BYTE( "995jaa04.20a", 0x000001, 0x80000, CRC(A12EA45D) SHA1(9bd48bc25c17f885d74e859de153ec49012a4e39) )
+	ROM_LOAD16_BYTE( "995jaa05.22a", 0x100000, 0x80000, CRC(1493FD98) SHA1(4cae2ebccc79b21d7e21b984dc6fe10ab3013a2d) )
+	ROM_LOAD16_BYTE( "995jaa06.24a", 0x100001, 0x80000, CRC(86BFF0BB) SHA1(658280f78987eaee31b60a7826db6df105601f0a) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )		/* TILEMAP */
+	ROM_LOAD16_BYTE( "995jaa07.22d", 0x000000, 0x80000, CRC(CE030EDF) SHA1(1e2594a6a04559d70b09750bb665d8cd3d0288ea) )
+	ROM_LOAD16_BYTE( "995jaa08.23d", 0x000001, 0x80000, CRC(375D3D17) SHA1(180cb5ad4497b3745aa9317764f237b30a678b31) )
+	ROM_LOAD16_BYTE( "995jaa09.25d", 0x100000, 0x80000, CRC(1510A9C2) SHA1(daf1ab26b7b6b0fe0123b3fbee68684157c2ce51) )
+	ROM_LOAD16_BYTE( "995jaa10.27d", 0x100001, 0x80000, CRC(F9E4E9F2) SHA1(fe91badf6b0baeea690d75399d8c66fabcf6d352) )
+
+	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
+	DISK_IMAGE( "995jaa11.chd", 0, MD5(8f5936d2b0b0914b5c88f5432c6cac21) SHA1(deed0fca533f3e56e04f9967f3f76145ca106f06) )	/* ver 1.00 JA */
 ROM_END
 
 ROM_START( bmcorerm )
@@ -1133,7 +1200,7 @@ ROM_START( bmcorerm )
 	ROM_LOAD16_BYTE( "a05jaa10.27d", 0x100001, 0x80000, CRC(99D75C36) SHA1(9599420863aa0a9492d3caeb03f8ac5fd4c3cdb2) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "a05jaa11.chd", 0, MD5(180f7b1b2145fab2d2ba717780f2ca26) )	/* ver 1.00 JA */
+	DISK_IMAGE( "a05jaa11.chd", 0, MD5(180f7b1b2145fab2d2ba717780f2ca26) SHA1(1a45e99667c158517d8edcd66453cd56631b5f6a) )	/* ver 1.00 JA */
 ROM_END
 
 
@@ -1227,6 +1294,23 @@ static DRIVER_INIT( hmcompm2 )
 	ide_set_user_password(0, hmcompm2_user_password);
 }
 
+static DRIVER_INIT( bmdct )
+{
+	static UINT8 bmdct_user_password[2 + 32] =
+	{
+		0x00, 0x00,
+		0x52, 0x47, 0x30, 0x3f, 0x2f, 0x39, 0x54, 0x5e,
+		0x4f, 0x4b, 0x65, 0x3e, 0x07, 0x6e, 0x6c, 0x67,
+		0x7d, 0x79, 0x7b, 0x16, 0x6d, 0x73, 0x65, 0x06,
+		0x0e, 0x0a, 0x05, 0x0f, 0x13, 0x74, 0x09, 0x19
+	};
+
+	init_beatmania();
+
+	ide_set_master_password(0, beatmania_master_password);
+	ide_set_user_password(0, bmdct_user_password);
+}
+
 static DRIVER_INIT( bmcorerm )
 {
 	static UINT8 bmcorerm_user_password[2 + 32] =
@@ -1253,8 +1337,11 @@ static DRIVER_INIT( bmcorerm )
  *************************************/
 
 GAME( 1997, bm1stmix, 0,        djmain,   bm1stmix,  beatmania, ROT0, "Konami", "beatmania (ver JA-B)" )
+GAME( 1998, bm2ndmix, 0,        djmain,   bm1stmix,  beatmania, ROT0, "Konami", "beatmania 2nd MIX (ver JA-B)" )
+GAME( 1998, bm2ndmxa, bm2ndmix, djmain,   bm1stmix,  beatmania, ROT0, "Konami", "beatmania 2nd MIX (ver JA-A)" )
 GAME( 1999, bmcompmx, 0,        djmain,   bmcompmx,  beatmania, ROT0, "Konami", "beatmania complete MIX (ver JA-B)" )
 GAME( 1999, hmcompmx, bmcompmx, djmain,   bmcompmx,  hmcompmx,  ROT0, "Konami", "hiphopmania complete MIX (ver UA-B)" )
 GAME( 1999, bm4thmix, 0,        djmain,   bm4thmix,  bm4thmix,  ROT0, "Konami", "beatmania 4th MIX (ver JA-A)" )
 GAME( 2000, hmcompm2, 0,        djmain,   hmcompm2,  hmcompm2,  ROT0, "Konami", "hiphopmania complete MIX 2 (ver UA-A)" )
+GAME( 2000, bmdct,    0,        djmain,   bmdct,     bmdct,     ROT0, "Konami", "beatmania f. Dreams Come True (ver JA-A)" )
 GAME( 2000, bmcorerm, 0,        djmain,   beatmania, bmcorerm,  ROT0, "Konami", "beatmania CORE REMIX (ver JA-A)" )

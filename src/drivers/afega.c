@@ -841,10 +841,6 @@ rom10.112   27C040   \  Main Program
 rom11.107   27C040   /
 
 
-Developers......
-                More info reqd? or a redump?
-                Email me....
-                theguru@emuunlim.com
 
 
 ***************************************************************************/

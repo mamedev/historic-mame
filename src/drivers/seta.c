@@ -773,9 +773,6 @@ ROMs  :
 06.bin to 11.bin   GFX
 
 
-Developers:
-           More info reqd? Redump needed? Email me....
-           theguru@emuunlim.com
 
 ***************************************************************************/
 
@@ -912,9 +909,6 @@ Notes:
       VSync: 58Hz
       HSync: 15.22kHz
 
-Developers:
-           More info reqd? Email me....
-           theguru@emuunlim.com
 
 ***************************************************************************/
 
@@ -1026,9 +1020,6 @@ Notes:
       VSync: 60Hz
       HSync: 15.21kHz
 
-Developers:
-           More info reqd? Email me....
-           theguru@emuunlim.com
 
 1.048.576 93uta03.63
 1.048.576 93uta04.64
@@ -5709,19 +5700,19 @@ INPUT_PORTS_START( zingzip )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-3" )	// remaining switches seem unused
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-4" )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-5" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-6" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-7" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )

@@ -65,11 +65,13 @@ struct ioasic_state
 	UINT8	has_dcs;
 	UINT8	has_cage;
 	UINT8	dcs_cpu;
+	UINT8	shuffle_type;
 	UINT8	shuffle_active;
 	UINT8 *	shuffle_map;
 	void 	(*irq_callback)(int);
 	UINT8	irq_state;
 	UINT16	sound_irq_state;
+	UINT8	auto_ack;
 	
 	UINT16	fifo[FIFO_SIZE];
 	UINT16	fifo_in;
@@ -306,9 +308,21 @@ void midway_serial_pic2_w(UINT8 data)
 
 			/* fetch the serial number */
 			case 1:
-				memcpy(pic.buffer, serial.data, 16);
-				pic.total = 16;
-				pic.index = 0;
+				/* note: Biofreaks assumes that it can latch the next byte this way */
+				if (pic.index < pic.total)
+					pic.latch = 0x400 | pic.buffer[pic.index++];
+				else
+				{
+					memcpy(pic.buffer, serial.data, 16);
+					pic.total = 16;
+					pic.index = 0;
+#ifdef MAME_DEBUG
+{
+	extern int debug_key_pressed;
+	debug_key_pressed = 1;
+}
+#endif
+				}
 				break;
 
 			/* read the clock */
@@ -440,13 +454,15 @@ enum
 	IOASIC_PICOUT,		/* c: PIC output port */
 	IOASIC_PICIN,		/* d: PIC input port */
 	IOASIC_INTSTAT,		/* e: interrupt status */
-	IOASIC_INTCTL,		/* f: interrupt control */
+	IOASIC_INTCTL		/* f: interrupt control */
 };
 
 
 static UINT16 ioasic_fifo_r(void);
 static UINT16 ioasic_fifo_status_r(void);
 static void ioasic_fifo_reset_w(int state);
+static void ioasic_input_empty(int state);
+static void ioasic_output_full(int state);
 static void update_ioasic_irq(void);
 static void cage_irq_handler(int state);
 
@@ -454,20 +470,22 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 {
 	static UINT8 shuffle_maps[][16] =
 	{
-		{ 0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf },	/* WarGods, WG3DH, SFRush */
-		{ 0x4,0x5,0x6,0x7,0xb,0xa,0x9,0x8,0x3,0x2,0x1,0x0,0xf,0xe,0xd,0xc },	/* Blitz99 */
+		{ 0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf },	/* WarGods, WG3DH, SFRush, MK4 */
+		{ 0x4,0x5,0x6,0x7,0xb,0xa,0x9,0x8,0x3,0x2,0x1,0x0,0xf,0xe,0xd,0xc },	/* Blitz, Blitz99 */
 		{ 0x7,0x3,0x2,0x0,0x1,0xc,0xd,0xe,0xf,0x4,0x5,0x6,0x8,0x9,0xa,0xb },	/* Carnevil */
-		{ 0x8,0x9,0xa,0xb,0x0,0x1,0x2,0x3,0xf,0xe,0xc,0xd,0x4,0x5,0x6,0x7 },	/* Calspeed */
-	//    --- --- --- --- --- --- --- --- --- --- --- --- --- ---     
-		{ 0xf,0xe,0xd,0xc,0x4,0x6,0x5,0x7,0x9,0x8,0xa,0xb,0x2,0x3,0x1,0x0 },	/* Mace */
-	//    --- --- --- ---         ---     --- --- --- --- --- --- --- ---
+		{ 0x8,0x9,0xa,0xb,0x0,0x1,0x2,0x3,0xf,0xe,0xc,0xd,0x4,0x5,0x6,0x7 },	/* Calspeed, Gauntlet Legends */
+		{ 0xf,0xe,0xd,0xc,0x4,0x5,0x6,0x7,0x9,0x8,0xa,0xb,0x2,0x3,0x1,0x0 },	/* Mace */
+		{ 0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x7,0x8,0x9,0xb,0xa,0x5,0x6,0x4 },	/* Gauntlet Dark Legacy */
+		{ 0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf },	/* Invasion */
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
 	ioasic.has_dcs = (mame_find_cpu_index("dcs2") != -1);
 	ioasic.has_cage = (mame_find_cpu_index("cage") != -1);
 	ioasic.dcs_cpu = mame_find_cpu_index("dcs2");
+	ioasic.shuffle_type = shuffle;
 	ioasic.shuffle_map = &shuffle_maps[shuffle][0];
+	ioasic.auto_ack = 0;
 	ioasic.irq_callback = irq_callback;
 	
 	/* initialize the PIC */
@@ -478,7 +496,10 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 	
 	/* configure the fifo */
 	if (ioasic.has_dcs)
-		dcs_set_fifo(ioasic_fifo_r, ioasic_fifo_status_r);
+	{
+		dcs_set_fifo_callbacks(ioasic_fifo_r, ioasic_fifo_status_r);
+		dcs_set_io_callbacks(ioasic_output_full, ioasic_input_empty);
+	}
 	ioasic_fifo_reset_w(1);
 	
 	/* configure the CAGE IRQ */
@@ -487,9 +508,16 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 }
 
 
+void midway_ioasic_set_auto_ack(int auto_ack)
+{
+	ioasic.auto_ack = auto_ack;
+}
+
+
 void midway_ioasic_reset(void)
 {
 	ioasic.shuffle_active = 0;
+	ioasic.sound_irq_state = 0x0080;
 	ioasic.reg[IOASIC_INTCTL] = 0;
 	if (ioasic.has_dcs)
 		ioasic_fifo_reset_w(1);
@@ -529,6 +557,28 @@ static void cage_irq_handler(int reason)
 		ioasic.sound_irq_state |= 0x0040;
 	if (reason & CAGE_IRQ_REASON_BUFFER_EMPTY)
 		ioasic.sound_irq_state |= 0x0080;
+	update_ioasic_irq();
+}
+
+
+static void ioasic_input_empty(int state)
+{
+	logerror("ioasic_input_empty(%d)\n", state);
+	if (state)
+		ioasic.sound_irq_state |= 0x0080;
+	else
+		ioasic.sound_irq_state &= ~0x0080;
+	update_ioasic_irq();
+}
+
+
+static void ioasic_output_full(int state)
+{
+	logerror("ioasic_output_full(%d)\n", state);
+	if (state)
+		ioasic.sound_irq_state |= 0x0040;
+	else
+		ioasic.sound_irq_state &= ~0x0040;
 	update_ioasic_irq();
 }
 
@@ -646,6 +696,17 @@ void midway_ioasic_fifo_w(data16_t data)
  *
  *************************************/
 
+READ32_HANDLER( midway_ioasic_packed_r )
+{
+	data32_t result = 0;
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+		result |= midway_ioasic_r(offset*2, 0xffff0000) & 0xffff;
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+		result |= (midway_ioasic_r(offset*2+1, 0xffff0000) & 0xffff) << 16;
+	return result;
+}
+
+
 READ32_HANDLER( midway_ioasic_r )
 {
 	data32_t result;
@@ -699,9 +760,18 @@ READ32_HANDLER( midway_ioasic_r )
 		case IOASIC_SOUNDIN:
 			result = 0;
 			if (ioasic.has_dcs)
+			{
 				result = dcs_data_r();
+				if (ioasic.auto_ack)
+					dcs_ack_w();
+			}
 			else if (ioasic.has_cage)
 				result = main_from_cage_r();
+			else
+			{
+				static UINT16 val = 0;
+				result = val = ~val;
+			}
 			break;
 		
 		case IOASIC_PICIN:
@@ -716,6 +786,15 @@ READ32_HANDLER( midway_ioasic_r )
 		logerror("%06X:ioasic_r(%d) = %08X\n", activecpu_get_pc(), offset, result);
 
 	return result;
+}
+
+
+WRITE32_HANDLER( midway_ioasic_packed_w )
+{
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+		midway_ioasic_w(offset*2, data & 0xffff, 0xffff0000);
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+		midway_ioasic_w(offset*2+1, data >> 16, 0xffff0000);
 }
 
 
@@ -740,6 +819,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 				ioasic.shuffle_active = 1;
 				logerror("*** I/O ASIC shuffling enabled!\n");
 				ioasic.reg[IOASIC_INTCTL] = 0;
+				ioasic.reg[IOASIC_UNKNOWN4] = 0;	/* bug in 10th Degree assumes this */
 			}
 			break;
 			
@@ -758,7 +838,10 @@ WRITE32_HANDLER( midway_ioasic_w )
 		case IOASIC_SOUNDCTL:
 			/* sound reset? */
 			if (ioasic.has_dcs)
+			{
 				dcs_reset_w(~newreg & 1);
+				
+			}
 			else if (ioasic.has_cage)
 			{
 				if ((oldreg ^ newreg) & 1)
@@ -793,6 +876,8 @@ WRITE32_HANDLER( midway_ioasic_w )
 			/* interrupt enables */
 			/* bit  0 = global interrupt enable */
 			/* bit  3 = FIFO empty */
+			/* bit  6 = sound input buffer full */
+			/* bit  7 = sound output buffer empty */
 			/* bit 14 = LED? */
 			if ((oldreg ^ newreg) & 0x3ff6)
 				logerror("IOASIC int control = %04X\n", data);

@@ -38,7 +38,8 @@ WRITE_HANDLER( dynax_blit_palette01_w );
 WRITE_HANDLER( dynax_blit_palette2_w );
 WRITE_HANDLER( dynax_blit_palbank_w );
 WRITE_HANDLER( dynax_blit_dest_w );
-WRITE_HANDLER( hanamai_layer_dest_w );
+WRITE_HANDLER( hanamai_layer_half_w );
+WRITE_HANDLER( hnoridur_layer_half2_w );
 WRITE_HANDLER( hanamai_priority_w );
 WRITE_HANDLER( mjdialq2_blit_dest_w );
 WRITE_HANDLER( dynax_layer_enable_w );
@@ -50,9 +51,9 @@ WRITE_HANDLER( dynax_extra_scrolly_w );
 
 VIDEO_START( hanamai );
 VIDEO_START( hnoridur );
+VIDEO_START( mcnpshnt );
 VIDEO_START( sprtmtch );
 VIDEO_START( mjdialq2 );
-
 
 VIDEO_UPDATE( hanamai );
 VIDEO_UPDATE( hnoridur );

@@ -1048,7 +1048,7 @@ ROM_START( chwy )
 	/* no dumped dongle data, type1? its an early game if its highway chase */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "chwy.cas",   0x0000, 0x8000, CRC(68a48064) )
+	ROM_LOAD( "chwy.cas",   0x0000, 0x8000, CRC(68a48064) SHA1(7e389737972fd0c54f398d296159c561f5ec3a93) )
 ROM_END
 
 ROM_START( cflyball )
@@ -1057,7 +1057,7 @@ ROM_START( cflyball )
 	/* no dumped dongle data */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, CRC(cb40d043) )
+	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, CRC(cb40d043) SHA1(57698bac7e0d552167efa99d08116bf19a3b29c9) )
 ROM_END
 
 ROM_START( czeroize )
@@ -1066,7 +1066,7 @@ ROM_START( czeroize )
 	/* no dumped dongle data */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "czeroize.cas",   0x0000, 0x10000, CRC(3ef0a406) )
+	ROM_LOAD( "czeroize.cas",   0x0000, 0x10000, CRC(3ef0a406) SHA1(645b34cd477e0bb5539c8fe937a7a2dbd8369003) )
 ROM_END
 
 

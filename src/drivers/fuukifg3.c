@@ -29,6 +29,64 @@ Notes so far:
 
 - The scroll values are generally wrong when flip screen is on and rasters are often incorrect
 
+Asura Blade
+Fuuki Co. Ltd., 1998
+
+PCB Layout
+----------
+
+Top Board
+
+FG-3J MAIN-J Revision:1.1
+|-----------------------------------------------------|
+|  YAC516  YMF278 N341256(x4) N341028 (x4)    FI-002K |
+|  33.8688MHz                 N341512(x4)             |
+|   PAL N341256                                       |
+|   Z80                     N341256                   |
+|                           N341256                   |
+|J DSW1                                               |
+|A                                                    |
+|M       12MHz                   FI-003K  N341256(x2) |
+|M DSW2                N341256(x3)                    |
+|A               PAL                                  |
+|         40MHz  PAL                                  |
+|  DSW3          PAL  N341256                         |
+|         68020  PAL  N341256                         |
+|        N341256      28.432MHz    M60067-0901FP      |
+|  DSW4  N341256 PAL                                  |
+|-----------------------------------------------------|
+
+Notes:
+      68020 clock: 20.000MHz
+        Z80 clock: 6.000MHz
+      YM278 clock: 33.8688MHz
+            VSync: 60Hz
+            Hsync: 15.81kHz
+
+
+Bottom Board
+
+FG-3J ROM-J 507KA0301P04       Rev:1.3
+|--------------------------------|
+|                          SROM  |
+|                                |
+|  SP01*      SP89         PCM   |
+|                                |
+|  SP23       SPAB               |
+|                                |
+|  SP45       SPCD         MAP   |
+|                                |
+|  SP67       SPEF*        PGM3  |
+|                                |
+|                          PGM2  |
+|                                |
+|  BG2123     BG1113       PGM1  |
+|                                |
+|  BG2022     BG1012       PGM0  |
+|--------------------------------|
+
+* = Not populated
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -436,11 +494,11 @@ static INTERRUPT_GEN( fuuki32_interrupt )
 static MACHINE_DRIVER_START( fuuki32 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68EC020, 16000000) /* Complete guess ?? */
+	MDRV_CPU_ADD(M68EC020, 20000000) /* verified */
 	MDRV_CPU_MEMORY(fuuki32_readmem,fuuki32_writemem)
 	MDRV_CPU_VBLANK_INT(fuuki32_interrupt,INTERRUPTS_NUM)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 3500000) /* Complete guess ?? */
+	MDRV_CPU_ADD_TAG("sound", Z80, 6000000) /* verified */
 	MDRV_CPU_MEMORY(fuuki32_sound_readmem,fuuki32_sound_writemem)
 	MDRV_CPU_PORTS(fuuki32_sound_readport,fuuki32_sound_writeport)
 

@@ -881,22 +881,22 @@ REF: 950510-1
 
 ROM_START( touchgo )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE(	"tg56",	0x000000, 0x080000, CRC(6d0f5c65) )
-	ROM_LOAD16_BYTE(	"tg57",	0x000001, 0x080000, CRC(845787b5) )
+	ROM_LOAD16_BYTE(	"tg56",	0x000000, 0x080000, CRC(6d0f5c65) SHA1(00db7a7da3ec1676169aa78fe4f08a7746c3accf) )
+	ROM_LOAD16_BYTE(	"tg57",	0x000001, 0x080000, CRC(845787b5) SHA1(27c9910cd9f38328326ecb5cd093dfeb6d4f6244) )
 
 	ROM_REGION( 0x1400000, REGION_GFX1, 0 ) /* GFX + Sound */
 	/* 0x0000000-0x0ffffff filled in in the DRIVER_INIT */
-	ROM_LOAD( "ic69",		0x1000000, 0x0200000, BAD_DUMP CRC(bba9aed5)  )	/* GFX only */
+	ROM_LOAD( "ic69",		0x1000000, 0x0200000, BAD_DUMP CRC(bba9aed5) SHA1(5ae1d082dafd82c406e0979f2884093deea17f86) )	/* GFX only */
 	/* 	the first 3/4 of this ROM contain gfx data for tiles 0x0000-0xbfff
 		 the last 1/4 of this ROM contain gfx data for tiles 0x8000-0xbfff
 		 it's a bad dump??? For now, we fill that area with 0 */
 	ROM_FILL(				0x1180000, 0x0280000, 0x0 )
 
 	ROM_REGION( 0x0c00000, REGION_GFX2, ROMREGION_DISPOSE ) /* Temporary storage */
-	ROM_LOAD( "ic65",		0x0000000, 0x0400000, CRC(91b89c7c) )	/* GFX only */
-	ROM_LOAD( "ic66",		0x0400000, 0x0200000, CRC(52682953) )	/* Sound only */
+	ROM_LOAD( "ic65",		0x0000000, 0x0400000, CRC(91b89c7c) SHA1(1c24b494b56845b0f21be40ab737f251d7683c7d) )	/* GFX only */
+	ROM_LOAD( "ic66",		0x0400000, 0x0200000, CRC(52682953) SHA1(82cde061bdd827ed4a47a9a4256cd0e887ebc29d) )	/* Sound only */
 	ROM_FILL(				0x0600000, 0x0200000, 0x0 )			/* Empty */
-	ROM_LOAD( "ic67",		0x0800000, 0x0400000, CRC(c0a2ce5b) )	/* GFX only */
+	ROM_LOAD( "ic67",		0x0800000, 0x0400000, CRC(c0a2ce5b) SHA1(94b024373c7c546c0f4fe9737639f02e9c7ebbdb) )	/* GFX only */
 ROM_END
 
 

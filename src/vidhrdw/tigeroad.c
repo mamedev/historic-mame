@@ -52,7 +52,7 @@ WRITE16_HANDLER( tigeroad_videoctrl_w )
 
 WRITE16_HANDLER( tigeroad_scroll_w )
 {
-	int scroll;
+	int scroll = 0;
 
 	COMBINE_DATA(&scroll);
 

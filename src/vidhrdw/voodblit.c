@@ -28,14 +28,14 @@ void RENDERFUNC(void)
 #if (PER_PIXEL_LOD)
 	float sscale0 = (float)(trex_width[0] * trex_width[0]) * (1. / 65536.);
 	float tscale0 = (float)(trex_height[0] * trex_height[0]) * (1. / 65536.);
-	float tex0x = sqrtf(tri_ds0dx * tri_ds0dx * sscale0 + tri_dt0dx * tri_dt0dx * tscale0);
-	float tex0y = sqrtf(tri_ds0dy * tri_ds0dy * sscale0 + tri_dt0dy * tri_dt0dy * tscale0);
+	float tex0x = (float) sqrt(tri_ds0dx * tri_ds0dx * sscale0 + tri_dt0dx * tri_dt0dx * tscale0);
+	float tex0y = (float) sqrt(tri_ds0dy * tri_ds0dy * sscale0 + tri_dt0dy * tri_dt0dy * tscale0);
 	float lodbase0 = ((tex0x > tex0y) ? tex0x : tex0y) * 256.0f;
 #if (NUM_TMUS > 1)
 	float sscale1 = (float)(trex_width[1] * trex_width[1]) * (1. / 65536.);
 	float tscale1 = (float)(trex_height[1] * trex_height[1]) * (1. / 65536.);
-	float tex1x = sqrtf(tri_ds1dx * tri_ds1dx * sscale1 + tri_dt1dx * tri_dt1dx * tscale1);
-	float tex1y = sqrtf(tri_ds1dy * tri_ds1dy * sscale1 + tri_dt1dy * tri_dt1dy * tscale1);
+	float tex1x = (float) sqrt(tri_ds1dx * tri_ds1dx * sscale1 + tri_dt1dx * tri_dt1dx * tscale1);
+	float tex1y = (float) sqrt(tri_ds1dy * tri_ds1dy * sscale1 + tri_dt1dy * tri_dt1dy * tscale1);
 	float lodbase1 = ((tex1x > tex1y) ? tex1x : tex1y) * 256.0f;
 #endif
 #endif
@@ -50,6 +50,45 @@ void RENDERFUNC(void)
 	float dxdy_minmid, dxdy_minmax, dxdy_midmax;
 	int starty, stopy;
 	float fptemp;
+
+#if (0)
+	if (FBZMODE_BITS(4,1) || FBZMODE_BITS(10,1))
+	{
+		static const char *funcs[] = { "never", "lt", "eq", "le", "gt", "ne", "ge", "always" };
+		if (!FBZMODE_BITS(20,1))
+		{
+			if (!FBZMODE_BITS(3,1))
+				logerror("Depth Z: %c%c %s %08X,%08X,%08X -> %04X,%04X,%04X", FBZMODE_BITS(4,1) ? 'T' : ' ', FBZMODE_BITS(10,1) ? 'W' : ' ', funcs[FBZMODE_BITS(5,3)],
+					tri_startz,
+					tri_startz + (INT32)((tri_vb.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * (float)tri_dzdx),
+					tri_startz + (INT32)((tri_vc.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * (float)tri_dzdx),
+					(UINT16)(tri_startz >> 12),
+					(UINT16)(tri_startz + (INT32)((tri_vb.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * (float)tri_dzdx)) >> 12,
+					(UINT16)(tri_startz + (INT32)((tri_vc.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * (float)tri_dzdx)) >> 12);
+			else if (!FBZMODE_BITS(21,1))
+				logerror("Depth Wf: %c%c %s %f,%f,%f -> %04X,%04X,%04X", FBZMODE_BITS(4,1) ? 'T' : ' ', FBZMODE_BITS(10,1) ? 'W' : ' ', funcs[FBZMODE_BITS(5,3)],
+					tri_startw,
+					tri_startw + (INT32)((tri_vb.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dwdx),
+					tri_startw + (INT32)((tri_vc.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dwdx),
+					float_to_depth(tri_startw),
+					float_to_depth(tri_startw + (INT32)((tri_vb.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dwdx)),
+					float_to_depth(tri_startw + (INT32)((tri_vc.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dwdx)));
+			else
+				logerror("Depth Wz: %c%c %s %08X,%08X,%08X -> %04X,%04X,%04X", FBZMODE_BITS(4,1) ? 'T' : ' ', FBZMODE_BITS(10,1) ? 'W' : ' ', funcs[FBZMODE_BITS(5,3)],
+					tri_startz,
+					tri_startz + (INT32)((tri_vb.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * (float)tri_dzdx),
+					tri_startz + (INT32)((tri_vc.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * (float)tri_dzdx),
+					float_to_depth((float)(tri_startz) * (1.0 / 4096.0)),
+					float_to_depth((float)(tri_startz + (INT32)((tri_vb.y - tri_va.y) * tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dzdx)) * (1.0 / 4096.0)),
+					float_to_depth((float)(tri_startz + (INT32)((tri_vc.y - tri_va.y) * tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dzdx)) * (1.0 / 4096.0)));
+			
+			if (FBZMODE_BITS(16,1))
+				logerror(" + %04X\n", (UINT16)voodoo_regs[zaColor]);
+		}
+		else
+			logerror("Depth const: %04X\n", (UINT16)voodoo_regs[zaColor]);
+	}
+#endif
 
 #if (TRACK_LOD)
 	int lodbin[9];
@@ -79,18 +118,6 @@ void RENDERFUNC(void)
 	if ((voodoo_regs[tLOD] >> 24) & 1)
 		printf("tmultibaseaddr\n");
 	
-	/* wacky verticies are just tossed */
-	if (tri_va.x < -1000. || tri_va.x > 2000. ||
-		tri_va.y < -1000. || tri_va.y > 2000. ||
-		tri_vb.x < -1000. || tri_vb.x > 2000. ||
-		tri_vb.y < -1000. || tri_vb.y > 2000. ||
-		tri_vc.x < -1000. || tri_vc.x > 2000. ||
-		tri_vc.y < -1000. || tri_vc.y > 2000.)
-	{
-		logerror("Tossed triangle: (%f,%f)-(%f,%f)-(%f,%f)\n", tri_va.x, tri_va.y, tri_vb.x, tri_vb.y, tri_vc.x, tri_vc.y);
-		return;
-	}
-
 	/* sort the verticies */
 	vmin = &tri_va;
 	vmid = &tri_vb;
@@ -214,7 +241,7 @@ void RENDERFUNC(void)
 			ADD_TO_PIXEL_COUNT(stopx - startx);
 			for (x = startx; x < stopx; x++)
 			{
-				INT32 r = 0, g = 0, b = 0, a = 0, depthval = 0;
+				INT32 r = 0, g = 0, b = 0, a = 0, depthval;
 				UINT32 texel = 0, c_local = 0;
 				
 				/* rotate stipple pattern */
@@ -240,24 +267,43 @@ void RENDERFUNC(void)
 					}
 				}
 
+				/* compute depth value (W or Z) for this pixel */
+				if (!FBZMODE_BITS(3,1))
+				{
+					depthval = curz >> 12;
+					if (depthval >= 0xffff)
+						depthval = 0xffff;
+					else if (depthval < 0)
+						depthval = 0;
+				}
+				else if (!FBZMODE_BITS(21,1))
+					depthval = float_to_depth(curw);
+				else
+					depthval = float_to_depth((float)curz * (1.0 / 4096.0));
+					
 				/* handle depth buffer testing */
 				if (FBZMODE_BITS(4,1))
 				{
-					/* compute bias */
-					INT32 depthbias = 0;
-					if (FBZMODE_BITS(16,1))
-						depthbias = (INT16)voodoo_regs[zaColor];
+					INT32 depthsource;
 				
-					/* compute depth for this pixel */
+					/* the source depth is either the iterated W/Z+bias or a constant value */
 					if (!FBZMODE_BITS(20,1))
 					{
-						if (!FBZMODE_BITS(3,1))
-							depthval = curz >> 12;
-						else
-							depthval = float_to_depth(1.0f / curw);
+						depthsource = depthval;
+
+						/* add the bias */
+						if (FBZMODE_BITS(16,1))
+						{
+							depthsource += (INT16)voodoo_regs[zaColor];
+						
+							if (depthsource >= 0xffff)
+								depthsource = 0xffff;
+							else if (depthsource < 0)
+								depthsource = 0;
+						}
 					}
 					else
-						depthval = voodoo_regs[zaColor] & 0xffff;
+						depthsource = voodoo_regs[zaColor] & 0xffff;
 
 					/* test against the depth buffer */
 					switch (FBZMODE_BITS(5,3))
@@ -265,27 +311,27 @@ void RENDERFUNC(void)
 						case 0:
 							goto skipdrawdepth;
 						case 1:
-							if ((depthval + depthbias) >= depth[x])
+							if (depthsource >= depth[x])
 								goto skipdrawdepth;
 							break;
 						case 2:
-							if ((depthval + depthbias) != depth[x])
+							if (depthsource != depth[x])
 								goto skipdrawdepth;
 							break;
 						case 3:
-							if ((depthval + depthbias) > depth[x])
+							if (depthsource > depth[x])
 								goto skipdrawdepth;
 							break;
 						case 4:
-							if ((depthval + depthbias) <= depth[x])
+							if (depthsource <= depth[x])
 								goto skipdrawdepth;
 							break;
 						case 5:
-							if ((depthval + depthbias) == depth[x])
+							if (depthsource == depth[x])
 								goto skipdrawdepth;
 							break;
-						case 6:
-							if ((depthval + depthbias) < depth[x])
+						case 6: 
+							if (depthsource < depth[x])
 								goto skipdrawdepth;
 							break;
 						case 7:
@@ -398,7 +444,7 @@ void RENDERFUNC(void)
 						else
 						{
 							INT32 ts0, tt0, ts1, tt1;
-							UINT32 factor, ag, rb;
+							UINT32 factor, factorsum, ag, rb;
 						
 							/* convert to int */
 							INT32 s, t;
@@ -458,7 +504,7 @@ void RENDERFUNC(void)
 							t >>= lod;
 								
 							/* texel 0 */
-							factor = ((0x100 - (s & 0xff)) * (0x100 - (t & 0xff))) >> 8;
+							factorsum = factor = ((0x100 - (s & 0xff)) * (0x100 - (t & 0xff))) >> 8;
 							
 							/* fetch raw texel data */
 							if (!TEXTUREMODE1_BITS(11,1))
@@ -472,7 +518,7 @@ void RENDERFUNC(void)
 							rb = (texel & 0x00ff00ff) * factor;
 								
 							/* texel 1 */
-							factor = ((s & 0xff) * (0x100 - (t & 0xff))) >> 8;
+							factorsum += factor = ((s & 0xff) * (0x100 - (t & 0xff))) >> 8;
 							if (factor)
 							{
 								/* fetch raw texel data */
@@ -488,7 +534,7 @@ void RENDERFUNC(void)
 							}
 
 							/* texel 2 */
-							factor = ((0x100 - (s & 0xff)) * (t & 0xff)) >> 8;
+							factorsum += factor = ((0x100 - (s & 0xff)) * (t & 0xff)) >> 8;
 							if (factor)
 							{
 								/* fetch raw texel data */
@@ -504,7 +550,7 @@ void RENDERFUNC(void)
 							}
 								
 							/* texel 3 */
-							factor = ((s & 0xff) * (t & 0xff)) >> 8;
+							factor = 0x100 - factorsum;
 							if (factor)
 							{
 								/* fetch raw texel data */
@@ -754,7 +800,7 @@ void RENDERFUNC(void)
 					else
 					{
 						INT32 ts0, tt0, ts1, tt1;
-						UINT32 factor, ag, rb;
+						UINT32 factor, factorsum, ag, rb;
 					
 						/* convert to int */
 						INT32 s, t;
@@ -814,21 +860,21 @@ void RENDERFUNC(void)
 						t >>= lod;
 							
 						/* texel 0 */
-						factor = ((0x100 - (s & 0xff)) * (0x100 - (t & 0xff))) >> 8;
+						factorsum = factor = ((0x100 - (s & 0xff)) * (0x100 - (t & 0xff))) >> 8;
 						
 						/* fetch raw texel data */
 						if (!TEXTUREMODE0_BITS(11,1))
 							texel = *((UINT8 *)texturebase + (tt0 << lodshift) + ts0);
 						else
 							texel = *((UINT16 *)texturebase + (tt0 << lodshift) + ts0);
-						
+
 						/* convert to ARGB */
 						texel = lookup0[texel];
 						ag = ((texel >> 8) & 0x00ff00ff) * factor;
 						rb = (texel & 0x00ff00ff) * factor;
 							
 						/* texel 1 */
-						factor = ((s & 0xff) * (0x100 - (t & 0xff))) >> 8;
+						factorsum += factor = ((s & 0xff) * (0x100 - (t & 0xff))) >> 8;
 						if (factor)
 						{
 							/* fetch raw texel data */
@@ -844,7 +890,7 @@ void RENDERFUNC(void)
 						}
 
 						/* texel 2 */
-						factor = ((0x100 - (s & 0xff)) * (t & 0xff)) >> 8;
+						factorsum += factor = ((0x100 - (s & 0xff)) * (t & 0xff)) >> 8;
 						if (factor)
 						{
 							/* fetch raw texel data */
@@ -860,7 +906,7 @@ void RENDERFUNC(void)
 						}
 							
 						/* texel 3 */
-						factor = ((s & 0xff) * (t & 0xff)) >> 8;
+						factor = 0x100 - factorsum;
 						if (factor)
 						{
 							/* fetch raw texel data */
@@ -878,7 +924,7 @@ void RENDERFUNC(void)
 						/* this becomes the local color */
 						c_local = (ag & 0xff00ff00) | ((rb >> 8) & 0x00ff00ff);
 					}
-#endif					
+#endif
 					/* zero/other selection */
 					if (!TEXTUREMODE0_BITS(12,1))				/* tc_zero_other */
 					{
@@ -994,8 +1040,11 @@ void RENDERFUNC(void)
 					}
 
 					/* add local color */
-					if (TEXTUREMODE0_BITS(27,1) ||
-						TEXTUREMODE0_BITS(28,1))				/* tca_add_clocal/tca_add_alocal */
+					/* how do you add c_local to the alpha???? */
+					/* CalSpeed does this in its FMV */
+					if (TEXTUREMODE0_BITS(27,1))				/* tca_add_clocal */
+						ta += (c_local >> 24) & 0xff;
+					if (TEXTUREMODE0_BITS(28,1))				/* tca_add_alocal */
 						ta += (c_local >> 24) & 0xff;
 					
 					/* clamp */
@@ -1080,20 +1129,39 @@ void RENDERFUNC(void)
 				/* scale RGB */
 				if (FBZCOLORPATH_BITS(10,3) != 0)			/* cc_mselect mux */
 				{
-					INT32 rm = 0, gm = 0, bm = 0;
+					INT32 rm, gm, bm;
 					
-					if (FBZCOLORPATH_BITS(10,3) == 1)		/* cc_mselect mux == c_local */
+					switch (FBZCOLORPATH_BITS(10,3))
 					{
-						rm = (c_local >> 16) & 0xff;
-						gm = (c_local >> 8) & 0xff;
-						bm = (c_local >> 0) & 0xff;
+						case 1:		/* cc_mselect mux == c_local */
+							rm = (c_local >> 16) & 0xff;
+							gm = (c_local >> 8) & 0xff;
+							bm = (c_local >> 0) & 0xff;
+							break;
+
+						case 2:		/* cc_mselect mux == a_other */
+							if (FBZCOLORPATH_BITS(2,2) == 0)			/* cca_localselect mux == iterated alpha */
+								rm = gm = bm = cura >> 16;
+							else if (FBZCOLORPATH_BITS(2,2) == 1)		/* cca_localselect mux == texture alpha */
+								rm = gm = bm = (texel >> 24) & 0xff;
+							else if (FBZCOLORPATH_BITS(2,2) == 2)		/* cca_localselect mux == color1 alpha */
+								rm = gm = bm = (voodoo_regs[color1] >> 24) & 0xff;
+							else
+								rm = gm = bm = 0;
+							break;
+						
+						case 3:		/* cc_mselect mux == a_local */
+							rm = gm = bm = c_local >> 24;
+							break;
+						
+						case 4:		/* cc_mselect mux == texture alpha */
+							rm = gm = bm = texel >> 24;
+							break;
+						
+						default:
+							rm = gm = bm = 0;
+							break;
 					}
-//					if (FBZCOLORPATH_BITS(10,3) == 2)		/* cc_mselect mux == a_other */
-//						rm = gm = bm = c_other >> 24;
-					if (FBZCOLORPATH_BITS(10,3) == 3)		/* cc_mselect mux == a_local */
-						rm = gm = bm = c_local >> 24;
-					if (FBZCOLORPATH_BITS(10,3) == 4)		/* cc_mselect mux == texture alpha */
-						rm = gm = bm = texel >> 24;
 
 					if (FBZCOLORPATH_BITS(13,1))			/* cc_reverse_blend */
 					{
@@ -1145,15 +1213,34 @@ void RENDERFUNC(void)
 				/* scale alpha */
 				if (FBZCOLORPATH_BITS(19,3) != 0)			/* cca_mselect mux */
 				{
-					INT32 am = 0;
+					INT32 am;
 					
-					if (FBZCOLORPATH_BITS(19,3) == 1 || 
-						FBZCOLORPATH_BITS(19,3) == 3)		/* cca_mselect mux == a_local */
-						am = c_local >> 24;
-//					if (FBZCOLORPATH_BITS(19,3) == 2)		/* cca_mselect mux == a_other */
-//						am = c_other >> 24;
-					if (FBZCOLORPATH_BITS(19,3) == 4)		/* cca_mselect mux == texture alpha */
-						am = texel >> 24;
+					switch (FBZCOLORPATH_BITS(19,3))
+					{
+						case 1:		/* cca_mselect mux == a_local */
+						case 3:		/* cca_mselect mux == a_local */
+							am = c_local >> 24;
+							break;
+
+						case 2:		/* cca_mselect mux == a_other */
+							if (FBZCOLORPATH_BITS(2,2) == 0)			/* cca_localselect mux == iterated alpha */
+								am = cura >> 16;
+							else if (FBZCOLORPATH_BITS(2,2) == 1)		/* cca_localselect mux == texture alpha */
+								am = (texel >> 24) & 0xff;
+							else if (FBZCOLORPATH_BITS(2,2) == 2)		/* cca_localselect mux == color1 alpha */
+								am = (voodoo_regs[color1] >> 24) & 0xff;
+							else
+								am = 0;
+							break;
+						
+						case 4:		/* cca_mselect mux == texture alpha */
+							am = texel >> 24;
+							break;
+						
+						default:
+							am = 0;
+							break;
+					}
 					
 					if (FBZCOLORPATH_BITS(22,1))			/* cca_reverse_blend */
 						a = (a * (am + 1)) >> 8;
@@ -1231,7 +1318,7 @@ void RENDERFUNC(void)
 							fogalpha = (cura >> 16) & 0xff;
 						else
 						{
-							INT32 wval = (FBZMODE_BITS(20,1) && FBZMODE_BITS(3,1)) ? depthval : float_to_depth(1.0f / curw);
+							INT32 wval = float_to_depth(curw);
 							fogalpha = fog_blend[wval >> 10];
 							fogalpha += (fog_delta[wval >> 10] * ((wval >> 2) & 0xff)) >> 10;
 						}

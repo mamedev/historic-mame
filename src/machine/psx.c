@@ -10,7 +10,7 @@
 #include "state.h"
 #include "includes/psx.h"
 
-#define VERBOSE_LEVEL ( 0 )
+#define VERBOSE_LEVEL ( 1 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
@@ -28,51 +28,6 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 static UINT8 *m_p_n_ram;
 static size_t m_n_ramsize;
 
-static UINT32 m_n_irqdata;
-static UINT32 m_n_irqmask;
-
-static UINT32 m_p_n_dmabase[ 7 ];
-static UINT32 m_p_n_dmablockcontrol[ 7 ];
-static UINT32 m_p_n_dmachannelcontrol[ 7 ];
-static void *m_p_timer_dma[ 7 ];
-static psx_dma_read_handler m_p_fn_dma_read[ 7 ];
-static psx_dma_write_handler m_p_fn_dma_write[ 7 ];
-static UINT32 m_p_n_dma_lastscanline[ 7 ];
-static UINT32 m_n_dpcp;
-static UINT32 m_n_dicr;
-
-#define	DCTSIZE ( 8 )
-#define	DCTSIZE2 ( DCTSIZE * DCTSIZE )
-
-static INT32 m_p_n_mdec_quantize_y[ DCTSIZE2 ];
-static INT32 m_p_n_mdec_quantize_uv[ DCTSIZE2 ];
-static INT32 m_p_n_mdec_cos[ DCTSIZE2 ];
-static INT32 m_p_n_mdec_cos_precalc[ DCTSIZE2 * DCTSIZE2 ];
-
-static UINT32 m_n_mdec0_command;
-static UINT32 m_n_mdec0_address;
-static UINT32 m_n_mdec0_size;
-static UINT32 m_n_mdec1_command;
-static UINT32 m_n_mdec1_status;
-
-static UINT16 m_p_n_mdec_r15[ 256 * 3 ];
-static UINT16 m_p_n_mdec_g15[ 256 * 3 ];
-static UINT16 m_p_n_mdec_b15[ 256 * 3 ];
-
-static UINT32 m_p_n_mdec_zigzag[ DCTSIZE2 ] =
-{
-	 0,  1,  8, 16,  9,  2,  3, 10,
-	17, 24, 32, 25, 18, 11,  4,  5,
-	12, 19, 26, 33, 40, 48, 41, 34,
-	27, 20, 13,  6,  7, 14, 21, 28,
-	35, 42, 49, 56, 57, 50, 43, 36,
-	29, 22, 15, 23, 30, 37, 44, 51,
-	58, 59, 52, 45, 38, 31, 39, 46,
-	53, 60, 61, 54, 47, 55, 62, 63
-};
-
-static INT32 m_p_n_mdec_unpacked[ DCTSIZE2 * 6 * 2 ];
-
 INLINE UINT8 psxreadbyte( UINT32 n_address )
 {
 	return m_p_n_ram[ BYTE_XOR_LE( n_address ) ];
@@ -82,6 +37,11 @@ INLINE UINT16 psxreadword( UINT32 n_address )
 {
 	return *( (UINT16 *)&m_p_n_ram[ WORD_XOR_LE( n_address ) ] );
 }
+
+/* IRQ */
+
+static UINT32 m_n_irqdata;
+static UINT32 m_n_irqmask;
 
 static void psx_irq_update( void )
 {
@@ -107,7 +67,7 @@ WRITE32_HANDLER( psx_irq_w )
 		break;
 	case 0x01:
 		m_n_irqmask = ( m_n_irqmask & mem_mask ) | data;
-		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 ) ) != 0 )
+		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 | 0x40 | 0x400 ) ) != 0 )
 		{
 			verboselog( 0, "psx_irq_w( %08x, %08x, %08x ) unknown irq\n", offset, data, mem_mask );
 		}
@@ -141,6 +101,18 @@ void psx_irq_set( UINT32 data )
 	m_n_irqdata |= data;
 	psx_irq_update();
 }
+
+/* DMA */
+
+static UINT32 m_p_n_dmabase[ 7 ];
+static UINT32 m_p_n_dmablockcontrol[ 7 ];
+static UINT32 m_p_n_dmachannelcontrol[ 7 ];
+static void *m_p_timer_dma[ 7 ];
+static psx_dma_read_handler m_p_fn_dma_read[ 7 ];
+static psx_dma_write_handler m_p_fn_dma_write[ 7 ];
+static UINT32 m_p_n_dma_lastscanline[ 7 ];
+static UINT32 m_n_dpcp;
+static UINT32 m_n_dicr;
 
 static void dma_timer( int n_channel, UINT32 n_scanline )
 {
@@ -199,6 +171,7 @@ WRITE32_HANDLER( psx_dma_w )
 			m_p_n_dmablockcontrol[ n_channel ] = data;
 			break;
 		case 2:
+			verboselog( 2, "dmachannelcontrol( %d ) = %08x\n", n_channel, data );
 			m_p_n_dmachannelcontrol[ n_channel ] = data;
 			if( ( m_p_n_dmachannelcontrol[ n_channel ] & ( 1L << 0x18 ) ) != 0 && ( m_n_dpcp & ( 1 << ( 3 + ( n_channel * 4 ) ) ) ) != 0 )
 			{
@@ -206,11 +179,11 @@ WRITE32_HANDLER( psx_dma_w )
 				UINT32 n_address;
 				UINT32 n_nextaddress;
 
-				n_address = m_p_n_dmabase[ n_channel ] & m_n_ramsize;
-				n_size = (UINT32)( m_p_n_dmablockcontrol[ n_channel ] & 0xffff );
+				n_address = ( m_p_n_dmabase[ n_channel ] & m_n_ramsize );
+				n_size = m_p_n_dmablockcontrol[ n_channel ];
 				if( ( m_p_n_dmachannelcontrol[ n_channel ] & 0x200 ) != 0 )
 				{
-					n_size *= (UINT32)( m_p_n_dmablockcontrol[ n_channel ] >> 16 );
+					n_size = ( n_size & 0xffff ) * ( n_size >> 16 );
 				}
 
 				if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000000 && 
@@ -248,6 +221,8 @@ WRITE32_HANDLER( psx_dma_w )
 					n_channel == 2 &&
 					m_p_fn_dma_write[ n_channel ] != NULL )
 				{
+					UINT32 n_segments = 0;
+
 					verboselog( 1, "dma %d write linked list %08x\n",
 						n_channel, m_p_n_dmabase[ n_channel ] );
 					do
@@ -256,13 +231,21 @@ WRITE32_HANDLER( psx_dma_w )
 						n_nextaddress = *( (UINT32 *)&m_p_n_ram[ n_address ] );
 						m_p_fn_dma_write[ n_channel ]( n_address + 4, n_nextaddress >> 24 );
 						n_address = ( n_nextaddress & 0xffffff );
+
+						n_segments++;
+						if( n_segments == 10000 )
+						{
+							/* todo: find a better way of detecting this */
+							verboselog( 1, "dma looped\n" );
+							break;
+						}
 					} while( n_address != 0xffffff );
 					dma_finished( n_channel );
 				}
 				else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x11000002 &&
 					n_channel == 6 )
 				{
-					verboselog( 1, "dma %d reverse clear %08x %08x\n",
+					verboselog( 1, "dma 6 reverse clear %08x %08x\n",
 						m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
 					if( n_size > 0 )
 					{
@@ -283,7 +266,7 @@ WRITE32_HANDLER( psx_dma_w )
 					verboselog( 0, "dma %d unknown mode %08x\n", n_channel, m_p_n_dmachannelcontrol[ n_channel ] );
 				}
 			}
-			else
+			else if( m_p_n_dmachannelcontrol[ n_channel ] != 0 )
 			{
 				verboselog( 1, "psx_dma_w( %04x, %08x, %08x ) channel not enabled\n", offset, m_p_n_dmachannelcontrol[ n_channel ], mem_mask );
 			}
@@ -352,50 +335,314 @@ READ32_HANDLER( psx_dma_r )
 	return 0;
 }
 
+/* Root Counters */
+
+static void *m_p_timer_root[ 7 ];
+static data16_t m_p_n_root_count[ 3 ];
+static data16_t m_p_n_root_mode[ 3 ];
+static data16_t m_p_n_root_target[ 3 ];
+
+static void root_finished( int n_counter )
+{
+	if( ( m_p_n_root_mode[ n_counter ] & 0x50 ) != 0 )
+	{
+		psx_irq_set( 0x10 << n_counter );
+	}
+}
+
+static void root_timer( int n_counter )
+{
+	int n_duration;
+
+	n_duration = m_p_n_root_target[ n_counter ] - m_p_n_root_count[ n_counter ];
+	if( n_duration < 1 )
+	{
+		n_duration += 0x10000;
+	}
+
+	if( n_counter == 0 )
+	{
+		n_duration *= 1200;
+	}
+	else if( n_counter == 1 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x08 ) ) != 0 )
+	{
+		n_duration *= 4800;
+	}
+	else if( n_counter == 2 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x09 ) ) != 0 )
+	{
+		n_duration *= 480;
+	}
+
+	timer_adjust( m_p_timer_root[ n_counter ], (double)n_duration / 33868800, n_counter, 0 );
+}
+
 WRITE32_HANDLER( psx_counter_w )
 {
+	int n_counter;
+
 	verboselog( 1, "psx_counter_w ( %08x, %08x, %08x )\n", offset, data, mem_mask );
+
+	n_counter = offset / 4;
+
+	switch( offset % 4 )
+	{
+	case 0:
+		m_p_n_root_count[ n_counter ] = data;
+		break;
+	case 1:
+		m_p_n_root_mode[ n_counter ] = data;
+		break;
+	case 2:
+		m_p_n_root_target[ n_counter ] = data;
+		break;
+	}
+
+	root_timer( n_counter );
 }
 
 READ32_HANDLER( psx_counter_r )
 {
+	int n_counter;
 	data32_t data;
 
-	switch( offset )
+	n_counter = offset / 4;
+
+	switch( offset % 4 )
 	{
-	case 4:
-		data = activecpu_gettotalcycles() & 0xffff;
-		verboselog( 1, "psx_counter_r ( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	case 0:
+		if( n_counter == 0 )
+		{
+			data = ( activecpu_gettotalcycles() / 1200 ) & 0xffff;
+		}
+		else if( n_counter == 1 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x08 ) ) != 0 )
+		{
+			data = ( activecpu_gettotalcycles() / 4800 ) & 0xffff;
+		}
+		else if( n_counter == 2 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x09 ) ) != 0 )
+		{
+			data = ( activecpu_gettotalcycles() / 480 ) & 0xffff;
+		}
+		else
+		{
+			data = activecpu_gettotalcycles() & 0xffff;
+		}
+		m_p_n_root_count[ n_counter ] = data;
+		break;
+	case 1:
+		data = m_p_n_root_mode[ n_counter ];
+		break;
+	case 2:
+		data = m_p_n_root_target[ n_counter ];
 		break;
 	default:
 		data = 0;
-		verboselog( 0, "psx_counter_r ( %08x, %08x, %08x )\n", offset, data, mem_mask );
 		break;
 	}
+	verboselog( 1, "psx_counter_r ( %08x, %08x ) %08x\n", offset, mem_mask, data );
 	return data;
+}
+
+/* SIO */
+
+static data16_t m_p_n_sio_status[ 2 ];
+static data16_t m_p_n_sio_mode[ 2 ];
+static data16_t m_p_n_sio_control[ 2 ];
+static data16_t m_p_n_sio_baud[ 2 ];
+static data8_t *m_p_p_n_sio_buf[ 2 ];
+static data16_t m_p_n_sio_rx[ 2 ];
+static data16_t m_p_n_sio_read[ 2 ];
+static psx_sio_write_handler m_p_f_sio_write[ 2 ];
+
+static void sio_interrupt( int n_port )
+{
+	verboselog( 1, "sio_interrupt( %d ) %08x\n", n_port );
+	m_p_n_sio_status[ n_port ] |= ( 1 << 9 );
+	psx_irq_set( 0x80 );
+}
+
+void psx_sio_send( int n_port, data8_t n_data )
+{
+	if( m_p_n_sio_rx[ n_port ] < 256 )
+	{
+		verboselog( 1, "psx_sio_send( %d, %u )\n", n_port, n_data );
+		m_p_n_sio_status[ n_port ] |= ( 1 << 1 );
+		m_p_p_n_sio_buf[ n_port ][ m_p_n_sio_rx[ n_port ]++ ] = n_data;
+		if( ( m_p_n_sio_control[ n_port ] & ( 1 << 11 ) ) != 0 )
+		{
+			sio_interrupt( n_port );
+		}
+	}
+	else
+	{
+		verboselog( 0, "psx_sio_send( %d, %u ) buffer overrun\n", n_port, n_data );
+	}
 }
 
 WRITE32_HANDLER( psx_sio_w )
 {
-	verboselog( 1, "psx_sio_w ( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	int n_port;
+
+	n_port = offset / 4;
+
+	switch( offset % 4 )
+	{
+	case 0:
+		verboselog( 1, "psx_sio_w %d data %08x, %08x\n", n_port, data, mem_mask );
+		if( ( m_p_n_sio_control[ n_port ] & ( 1 << 10 ) ) != 0 )
+		{
+			sio_interrupt( n_port );
+		}
+		if( m_p_f_sio_write[ n_port ] != NULL )
+		{
+			m_p_f_sio_write[ n_port ]( data );
+		}
+		else
+		{
+			psx_sio_send( n_port, 0 ); /* kludge */
+		}
+		break;
+	case 1:
+		verboselog( 0, "psx_sio_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+		break;
+	case 2:
+		if( ACCESSING_LSW32 )
+		{
+			m_p_n_sio_mode[ n_port ] = data & 0xffff;
+			verboselog( 1, "psx_sio_w %d mode %04x\n", n_port, data & 0xffff );
+		}
+		if( ACCESSING_MSW32 )
+		{
+			m_p_n_sio_control[ n_port ] = data >> 16;
+			verboselog( 1, "psx_sio_w %d control %04x\n", n_port, data >> 16 );
+			if( ( m_p_n_sio_control[ n_port ] & ( 1 << 4 ) ) != 0 )
+			{
+				m_p_n_sio_status[ n_port ] &= ~( 1 << 9 );
+				m_p_n_sio_control[ n_port ] &= ~( 1 << 4 );
+			}
+		}
+		break;
+	case 3:
+		if( ACCESSING_LSW32 )
+		{
+			verboselog( 0, "psx_sio_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+		}
+		if( ACCESSING_MSW32 )
+		{
+			m_p_n_sio_baud[ n_port ] = data >> 16;
+			verboselog( 1, "psx_sio_w %d baud %04x\n", n_port, data >> 16 );
+		}
+		break;
+	default:
+		verboselog( 0, "psx_sio_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+		break;
+	}
 }
 
 READ32_HANDLER( psx_sio_r )
 {
 	data32_t data;
+	int n_port;
 
-	switch( offset )
+	n_port = offset / 4;
+
+	switch( offset % 4 )
 	{
+	case 0:
+		if( m_p_n_sio_rx[ n_port ] != 0 )
+		{
+			data = m_p_p_n_sio_buf[ n_port ][ m_p_n_sio_read[ n_port ]++ ];
+			if( m_p_n_sio_read[ n_port ] == m_p_n_sio_rx[ n_port ] )
+			{
+				m_p_n_sio_read[ n_port ] = 0;
+				m_p_n_sio_rx[ n_port ] = 0;
+				m_p_n_sio_status[ n_port ] &= ~( 1 << 1 );
+			}
+		}
+		else
+		{
+			data = 0;
+		}
+		verboselog( 1, "psx_sio_r %d data %02x\n", n_port, data );
+		break;
 	case 1:
-		data = 0x0000d02b;
+		data = m_p_n_sio_status[ n_port ];
+		if( ACCESSING_LSW32 )
+		{
+			verboselog( 1, "psx_sio_r %d status %04x\n", n_port, data & 0xffff );
+		}
+		if( ACCESSING_MSW32 )
+		{
+			verboselog( 1, "psx_sio_r %d mode %04x\n", n_port, data >> 16 );
+		}
+		break;
+	case 2:
+		data = ( m_p_n_sio_control[ n_port ] << 16 ) | m_p_n_sio_mode[ n_port ];
+		if( ACCESSING_LSW32 )
+		{
+			verboselog( 1, "psx_sio_r %d mode %04x\n", n_port, data & 0xffff );
+		}
+		if( ACCESSING_MSW32 )
+		{
+			verboselog( 1, "psx_sio_r %d control %04x\n", n_port, data >> 16 );
+		}
+		break;
+	case 3:
+		data = m_p_n_sio_baud[ n_port ] << 16;
+		if( ACCESSING_LSW32 )
+		{
+			verboselog( 0, "psx_sio_r( %08x, %08x ) %08x\n", offset, mem_mask, data );
+		}
+		if( ACCESSING_MSW32 )
+		{
+			verboselog( 1, "psx_sio_r %d baud %04x\n", n_port, data >> 16 );
+		}
 		break;
 	default:
 		data = 0;
+		verboselog( 0, "psx_sio_r( %08x, %08x ) %08x\n", offset, mem_mask, data );
 		break;
 	}
-	verboselog( 1, "psx_sio_r( %08x, %08x ) %08x\n", offset, data, mem_mask );
 	return data;
 }
+
+void psx_sio_install_write_handler( int n_port, psx_sio_write_handler p_f_write )
+{
+	m_p_f_sio_write[ n_port ] = p_f_write;
+}
+
+/* MDEC */
+
+#define	DCTSIZE ( 8 )
+#define	DCTSIZE2 ( DCTSIZE * DCTSIZE )
+
+static INT32 m_p_n_mdec_quantize_y[ DCTSIZE2 ];
+static INT32 m_p_n_mdec_quantize_uv[ DCTSIZE2 ];
+static INT32 m_p_n_mdec_cos[ DCTSIZE2 ];
+static INT32 m_p_n_mdec_cos_precalc[ DCTSIZE2 * DCTSIZE2 ];
+
+static UINT32 m_n_mdec0_command;
+static UINT32 m_n_mdec0_address;
+static UINT32 m_n_mdec0_size;
+static UINT32 m_n_mdec1_command;
+static UINT32 m_n_mdec1_status;
+
+static UINT16 m_p_n_mdec_r15[ 256 * 3 ];
+static UINT16 m_p_n_mdec_g15[ 256 * 3 ];
+static UINT16 m_p_n_mdec_b15[ 256 * 3 ];
+
+static UINT32 m_p_n_mdec_zigzag[ DCTSIZE2 ] =
+{
+	 0,  1,  8, 16,  9,  2,  3, 10,
+	17, 24, 32, 25, 18, 11,  4,  5,
+	12, 19, 26, 33, 40, 48, 41, 34,
+	27, 20, 13,  6,  7, 14, 21, 28,
+	35, 42, 49, 56, 57, 50, 43, 36,
+	29, 22, 15, 23, 30, 37, 44, 51,
+	58, 59, 52, 45, 38, 31, 39, 46,
+	53, 60, 61, 54, 47, 55, 62, 63
+};
+
+static INT32 m_p_n_mdec_unpacked[ DCTSIZE2 * 6 * 2 ];
 
 #define MDEC_COS_PRECALC_BITS ( 21 )
 
@@ -559,8 +806,8 @@ INLINE UINT16 mdec_clamp_b15( INT32 n_b )
 
 INLINE UINT32 mdec_makergb15( INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y )
 {
-	return mdec_clamp_r15( p_n_y[ 0 ] + n_r ) | mdec_clamp_g15( p_n_y[ 0 ] + n_g ) | mdec_clamp_b15( p_n_y[ 0 ] + n_b ) |
-		( mdec_clamp_r15( p_n_y[ 1 ] + n_r ) | mdec_clamp_g15( p_n_y[ 1 ] + n_g ) | mdec_clamp_b15( p_n_y[ 1 ] + n_b ) ) << 16;
+	return mdec_clamp_r15( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_r ) | mdec_clamp_g15( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_g ) | mdec_clamp_b15( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_b ) |
+		( mdec_clamp_r15( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_r ) | mdec_clamp_g15( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_g ) | mdec_clamp_b15( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_b ) ) << 16;
 }
 
 static void mdec_yuv2_to_rgb15( UINT32 n_address )
@@ -747,13 +994,18 @@ void psx_machine_init( void )
 
 static void psx_postload( void )
 {
-	int n_channel;
+	int n;
 
 	psx_irq_update();
 
-	for( n_channel = 0; n_channel < 7; n_channel++ )
+	for( n = 0; n < 7; n++ )
 	{
-		dma_timer( n_channel, m_p_n_dma_lastscanline[ n_channel ] );
+		dma_timer( n, m_p_n_dma_lastscanline[ n ] );
+	}
+
+	for( n = 0; n < 3; n++ )
+	{
+		root_timer( n );
 	}
 
 	mdec_cos_precalc();
@@ -770,6 +1022,11 @@ void psx_driver_init( void )
 		m_p_fn_dma_write[ n ] = NULL;
 	}
 
+	for( n = 0; n < 3; n++ )
+	{
+		m_p_timer_root[ n ] = timer_alloc( root_finished );
+	}
+
 	for( n = 0; n < 256; n++ )
 	{
 		m_p_n_mdec_r15[ n ] = 0;
@@ -783,6 +1040,18 @@ void psx_driver_init( void )
 		m_p_n_mdec_b15[ n ] = 0;
 		m_p_n_mdec_b15[ n + 256 ] = ( n >> 3 );
 		m_p_n_mdec_b15[ n + 512 ] = ( 255 >> 3 );
+	}
+
+	for( n = 0; n < 2; n++ )
+	{
+		m_p_n_sio_status[ n ] = ( 1 << 2 ) | ( 1 << 0 );
+		m_p_n_sio_mode[ n ] = 0;
+		m_p_n_sio_control[ n ] = 0;
+		m_p_n_sio_baud[ n ] = 0;
+		m_p_p_n_sio_buf[ n ] = malloc( 256 );
+		m_p_n_sio_rx[ n ] = 0;
+		m_p_n_sio_read[ n ] = 0;
+		m_p_f_sio_write[ n ] = NULL;
 	}
 
 	psx_dma_install_read_handler( 1, mdec1_read );
@@ -802,6 +1071,17 @@ void psx_driver_init( void )
 	state_save_register_UINT32( "psx", 0, "m_p_n_dma_lastscanline", m_p_n_dma_lastscanline, 7 );
 	state_save_register_UINT32( "psx", 0, "m_n_dpcp", &m_n_dpcp, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_dicr", &m_n_dicr, 1 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_root_count", m_p_n_root_count, 3 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_root_mode", m_p_n_root_mode, 3 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_root_target", m_p_n_root_target, 3 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sio_status", m_p_n_sio_status, 2 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sio_mode", m_p_n_sio_mode, 2 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sio_control", m_p_n_sio_control, 2 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sio_baud", m_p_n_sio_baud, 2 );
+	state_save_register_UINT8( "psx", 0, "m_p_p_n_sio_buf0", m_p_p_n_sio_buf[ 0 ], 256 );
+	state_save_register_UINT8( "psx", 0, "m_p_p_n_sio_buf1", m_p_p_n_sio_buf[ 1 ], 256 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sio_rx", m_p_n_sio_rx, 2 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sio_read", m_p_n_sio_read, 2 );
 	state_save_register_UINT32( "psx", 0, "m_n_mdec0_command", &m_n_mdec0_command, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_mdec0_address", &m_n_mdec0_address, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_mdec0_size", &m_n_mdec0_size, 1 );

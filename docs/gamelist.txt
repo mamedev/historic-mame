@@ -1,4 +1,4 @@
-This is the complete list of games supported by MAME 0.77 (Nov 11 2003).
+This is the complete list of games supported by MAME 0.78 (Dec 24 2003).
 Variants of the same game are not included, you can use the -listclones command
 to get a list of the alternate versions of a given game.
 
@@ -76,12 +76,14 @@ Internal Name
 | 4-in-1 bootleg                   |   No  |  Yes  |  Yes  |  Yes  | 4in1boot |
 | 64th. Street - A Detective Story |  Yes  |  Yes  |  Yes  |  Yes  | 64street |
 | 720 Degrees                      |  Yes  |  Yes  |  Yes  |  Yes  | 720      |
+| 7jigen no Youseitachi - Mahjong 7|  Yes  |  Yes  |  Yes  |  Yes  | 7jigen   |
 | APB - All Points Bulletin        |  Yes  |  Yes  |  Yes  |  Yes  | apb      |
 | ASO - Armored Scrum Object       |  Yes  |  Yes  |  Yes  |   No  | aso      |
 | AV2Mahjong No.1 Bay Bridge no Sei|   No  |  Yes  |  Yes  |  Yes  | av2mj1bb |
 | AV2Mahjong No.2 Rouge no Kaori   |   No  |  Yes  |  Yes  |  Yes  | av2mj2rg |
 | Ace                              |  Yes  | Close |   No  |  Yes  | ace      |
 | Ace Attacker                     |   No  |  Yes  |  Yes  |  Yes  | aceattac |
+| Ace Driver                       |   No  |  Yes  |   No  |  Yes  | acedrvrw |
 | Ace Driver: Victory Lap          |   No  |  Yes  |   No  |  Yes  | victlapw |
 | Acrobat Mission                  |  Yes  |  Yes  |   No  |  Yes  | acrobatm |
 | Acrobatic Dog-Fight              |  Yes  |  Yes  |  Yes  |  Yes  | dogfgt   |
@@ -97,18 +99,18 @@ Internal Name
 | Air Buster                       |  Yes  |  Yes  |  Yes  |  Yes  | airbustr |
 | Air Combat                       |   No  |  Yes  |  Yes  |  Yes  | aircombj |
 | Air Combat 22                    |   No  |  Yes  |   No  |  Yes  | airco22b |
-| Air Duel                         |  Yes  |  Yes  |  Yes  |   No  | airduel  |
+| Air Duel                         |  Yes  |  Yes  |  Yes  |  Yes  | airduel  |
 | Air Gallet                       |  Yes  |  Yes  |  Yes  |  Yes  | agallet  |
 | Air Inferno                      |   No  |  Yes  |  Yes  |  Yes  | ainferno |
 | Airwolf                          |  Yes  |  Yes  |  Yes  |  Yes  | airwolf  |
 | Ajax                             |  Yes  |  Yes  |  Yes  |  Yes  | ajax     |
 | Alex Kidd: The Lost Stars        | No(1) |  Yes  |  Yes  |  Yes  | alexkidd |
 | Ali Baba and 40 Thieves          |   No  |   No  |  Yes  |  Yes  | alibaba  |
-| Alien 3                          |  Yes  |  Yes  |  Yes  |  Yes  | alien3   |
 | Alien Storm                      | No(1) |  Yes  |  Yes  |  Yes  | astorm   |
 | Alien Syndrome                   |  Yes  |  Yes  |  Yes  |  Yes  | aliensyn |
 | Alien vs. Predator               |  Yes  |  Yes  |  Yes  |  Yes  | avsp     |
 | Aliens                           |  Yes  |  Yes  |  Yes  |  Yes  | aliens   |
+| Alien³: The Gun                  |  Yes  |  Yes  |  Yes  |  Yes  | alien3   |
 | All American Football            |  Yes  |  Yes  |  Yes  |  Yes  | aafb     |
 | Alley Master                     |  Yes  |  Yes  |  Yes  |  Yes  | alleymas |
 | Alligator Hunt                   | No(1) |  Yes  |  Yes  |  Yes  | aligator |
@@ -131,7 +133,7 @@ Internal Name
 | Apparel Night                    |  Yes  |  Yes  |  Yes  |  Yes  | apparel  |
 | Appoooh                          |  Yes  |  Yes  |  Yes  |  Yes  | appoooh  |
 | Aqua Jack                        |  Yes  |  Yes  |  Yes  |  Yes  | aquajack |
-| Aqua Rush                        |   No  |  Yes  |   No  |  Yes  | aquarush |
+| Aqua Rush                        |  Yes  |  Yes  |   No  |  Yes  | aquarush |
 | Aquarium                         |  Yes  |  Yes  |Partial|   No  | aquarium |
 | Arabian                          |  Yes  |  Yes  |  Yes  |  Yes  | arabian  |
 | Arabian Fight                    |  Yes  |  Yes  |  Yes  |  Yes  | arabfgt  |
@@ -156,6 +158,7 @@ Internal Name
 | Art of Fighting / Ryuuko no Ken  |  Yes  |  Yes  |  Yes  |  Yes  | aof      |
 | Art of Fighting 2 / Ryuuko no Ken|  Yes  |  Yes  |  Yes  |  Yes  | aof2     |
 | Art of Fighting 3 - The Path of t|  Yes  |  Yes  |  Yes  |  Yes  | aof3     |
+| Ashita no Joe                    |  Yes  |  Yes  |Partial|  Yes  | ashnojoe |
 | Ashura Blaster                   |  Yes  |  Yes  |  Yes  |  Yes  | ashura   |
 | Assault                          |  Yes  |  Yes  |  Yes  |  Yes  | assault  |
 | Asterix                          |  Yes  |  Yes  |  Yes  |  Yes  | asterix  |
@@ -186,6 +189,7 @@ Internal Name
 | Azurian Attack                   |  Yes  |  Yes  |  Yes  |  Yes  | azurian  |
 | B-Wings                          |  Yes  |  Yes  |  Yes  |  Yes  | bwing    |
 | B.Rap Boys                       |   No  |  Yes  |  Yes  |  Yes  | brapboys |
+| BC Story                         |   No  |  Yes  |  Yes  |  Yes  | bcstry   |
 | Back Street Soccer               |  Yes  |  Yes  |  Yes  |  Yes  | bssoccer |
 | Bad Dudes vs. Dragonninja        |  Yes  |  Yes  |  Yes  |  Yes  | baddudes |
 | Bad Lands                        |  Yes  |  Yes  |  Yes  |  Yes  | badlands |
@@ -214,8 +218,8 @@ Internal Name
 | Batman Forever                   |   No  |  Yes  |   No  |  Yes  | batmanfr |
 | Batsugun                         |  Yes  |  Yes  |   No  |  Yes  | batsugun |
 | Battlantis                       |  Yes  |  Yes  |  Yes  |  Yes  | battlnts |
-| Battle Arena Toshinden 2         |   No  |  Yes  |  Yes  |  Yes  | ts2j     |
-| Battle Bakraid - unlimited versio|  Yes  |  Yes  |  Yes  |  Yes  | bbakraid |
+| Battle Arena Toshinden 2         |   No  |  Yes  |  Yes  |  Yes  | ts2      |
+| Battle Bakraid                   |  Yes  |  Yes  |  Yes  |  Yes  | bbakraid |
 | Battle Chopper                   |  Yes  |  Yes  |  Yes  |   No  | bchopper |
 | Battle Circuit                   |  Yes  |  Yes  |  Yes  |  Yes  | batcir   |
 | Battle Cross                     |  Yes  |  Yes  |  Yes  |  Yes  | battlex  |
@@ -234,6 +238,7 @@ Internal Name
 | Bay Route                        |  Yes  |  Yes  |  Yes  |  Yes  | bayroute |
 | Beam Invader                     |  Yes  |  Yes  |   No  |  Yes  | beaminv  |
 | Beast Busters                    |  Yes  |  Yes  |  Yes  |  Yes  | bbusters |
+| Beastorizer                      |   No  |  Yes  |   No  |  Yes  | beastrzr |
 | Beastorizer                      |   No  |  Yes  |   No  |  Yes  | beastrzb |
 | BeatHead                         |  Yes  |  Yes  |  Yes  |  Yes  | beathead |
 | Beezer                           |  Yes  |  Yes  |Partial|  Yes  | beezer   |
@@ -243,7 +248,7 @@ Internal Name
 | Berlin Wall, The                 |  Yes  |  Yes  |  Yes  |  Yes  | berlwall |
 | Bermuda Triangle                 |  Yes  |  Yes  |  Yes  |   No  | bermudat |
 | Berzerk                          |  Yes  |  Yes  | Yes(2)|  Yes  | berzerk  |
-| Best Bout Boxing                 |  Yes  |  Yes  |   No  |  Yes  | bbbxing  |
+| Best Bout Boxing                 |  Yes  |  Yes  |Partial|  Yes  | bbbxing  |
 | Big Bucks                        |  Yes  |  Yes  |  Yes  |  Yes  | bigbucks |
 | Big Event Golf                   |  Yes  |  Yes  |  Yes  |  Yes  | bigevglf |
 | Big Karnak                       |  Yes  |  Yes  |  Yes  |  Yes  | bigkarnk |
@@ -257,6 +262,7 @@ Internal Name
 | Billiard Academy Real Break      |  Yes  |  Yes  |  Yes  |  Yes  | realbrk  |
 | Bio Attack                       |  Yes  |  Yes  |  Yes  |  Yes  | bioatack |
 | Bio-ship Paladin                 |  Yes  |  Yes  |   No  |  Yes  | bioship  |
+| BioFreaks                        |  Yes  |  Yes  |  Yes  |  Yes  | biofreak |
 | Biomechanical Toy                |  Yes  |  Yes  |  Yes  |  Yes  | biomtoy  |
 | Bionic Commando                  |  Yes  |  Yes  |  Yes  |  Yes  | bionicc  |
 | Birdie King                      |  Yes  |  Yes  |  Yes  |  Yes  | bking    |
@@ -307,11 +313,12 @@ Internal Name
 | Bomb Jack                        |  Yes  |  Yes  |  Yes  |  Yes  | bombjack |
 | Bomber Man World                 |  Yes  |  Yes  |Partial|   No  | bbmanw   |
 | Bombjack Twin                    |  Yes  |  Yes  |  Yes  |   No  | bjtwin   |
-| Bonanza Bros                     |   No  |  Yes  |  Yes  |  Yes  | bnzabros |
+| Bonanza Bros                     |  Yes  |  Yes  |  Yes  |  Yes  | bnzabros |
 | Bonks Adventure                  |   No  |  Yes  |  Yes  |  Yes  | bonkadv  |
 | Bonze Adventure                  |  Yes  |  Yes  |  Yes  |  Yes  | bonzeadv |
 | Boomer Rang'r / Genesis          |  Yes  |  Yes  |  Yes  |  Yes  | boomrang |
 | Boot Hill                        |  Yes  |  Yes  | Yes(2)|  Yes  | boothill |
+| Borderline                       |  Yes  |  Yes  |   No  |  Yes  | brdrlinb |
 | Borench                          |  Yes  |  Yes  |  Yes  |  Yes  | borench  |
 | Bosconian                        |  Yes  |  Yes  | Yes(2)|  Yes  | bosco    |
 | Bottom of the Ninth              |  Yes  |  Yes  |  Yes  |  Yes  | bottom9  |
@@ -352,11 +359,11 @@ Internal Name
 | Cadash                           |  Yes  |  Yes  |  Yes  |  Yes  | cadash   |
 | Cadillacs and Dinosaurs          |  Yes  |  Yes  |  Yes  |  Yes  | dino     |
 | Caliber 50                       |  Yes  |  Yes  |  Yes  |  Yes  | calibr50 |
-| California Speed                 |   No  |  Yes  |  Yes  |  Yes  | calspeed |
+| California Speed                 |  Yes  |  Yes  |  Yes  |  Yes  | calspeed |
 | Calipso                          |  Yes  |  Yes  |  Yes  |  Yes  | calipso  |
 | Cameltry                         |  Yes  |  Yes  |  Yes  |  Yes  | cameltry |
-| Cannon Ball                      |  Yes  |  Yes  |Partial|  Yes  | cannball |
 | Cannon Ball                      |  Yes  |  Yes  |  Yes  |  Yes  | cannonb  |
+| Cannon Ball                      |  Yes  |  Yes  |Partial|  Yes  | cannball |
 | Canyon Bomber                    |  Yes  |  Yes  |  Yes  |  Yes  | canyon   |
 | Capcom Baseball                  |  Yes  |  Yes  |  Yes  |  Yes  | cbasebal |
 | Capcom Bowling                   |  Yes  |  Yes  |  Yes  |  Yes  | capbowl  |
@@ -446,7 +453,7 @@ Internal Name
 | Clay Shoot                       |  Yes  |  Yes  |   No  |  Yes  | clayshoo |
 | Cleopatra Fortune                |  Yes  |  Yes  |  Yes  |  Yes  | cleopatr |
 | Cliffhanger - Edward Randy, The  |  Yes  |  Yes  |  Yes  |  Yes  | edrandy  |
-| Cloak & Dagger                   |  Yes  |  Yes  |  Yes  |   No  | cloak    |
+| Cloak & Dagger                   |  Yes  |  Yes  |  Yes  |  Yes  | cloak    |
 | Cloud 9                          |  Yes  |  Yes  |  Yes  |   No  | cloud9   |
 | Clowns                           |  Yes  |  Yes  |Part(2)|  Yes  | clowns   |
 | Clutch Hitter                    |   No  |  Yes  |  Yes  |  Yes  | cltchitr |
@@ -457,7 +464,7 @@ Internal Name
 | Columns II - The Voyage Through T|  Yes  |  Yes  |  Yes  |  Yes  | columns2 |
 | Combat                           |  Yes  |  Yes  |  Yes  |  Yes  | combat   |
 | Combat School                    |  Yes  |  Yes  |  Yes  |  Yes  | combasc  |
-| Combatribes, The                 |  Yes  |  Yes  |  Yes  |   No  | ctribe   |
+| Combatribes, The                 |  Yes  |  Yes  |  Yes  |  Yes  | ctribe   |
 | Commando                         |  Yes  |  Yes  |  Yes  |  Yes  | commsega |
 | Commando                         |  Yes  |  Yes  |  Yes  |  Yes  | commando |
 | Comotion                         |  Yes  |  Yes  |Part(2)|  Yes  | comotion |
@@ -466,7 +473,7 @@ Internal Name
 | Congo Bongo                      |  Yes  |  Yes  | Yes(2)|  Yes  | congo    |
 | Continental Circus               |  Yes  |  Yes  |  Yes  |  Yes  | contcirc |
 | Contra                           |  Yes  |  Yes  |  Yes  |  Yes  | contra   |
-| Cookie and Bibi 2                |   No  |  Yes  |  Yes  |  Yes  | cookbib2 |
+| Cookie and Bibi 2                |  Yes  |  Yes  |  Yes  |  Yes  | cookbib2 |
 | Cool Pool                        |   No  |  Yes  |   No  |  Yes  | coolpool |
 | Cop 01                           |  Yes  |  Yes  |  Yes  |  Yes  | cop01    |
 | Cops'n Robbers                   |  Yes  |  Yes  |   No  |  Yes  | copsnrob |
@@ -483,6 +490,7 @@ Internal Name
 | Cotton 2                         |  Yes  |  Yes  |Partial|  Yes  | cotton2  |
 | Cotton Boomerang                 |  Yes  |  Yes  |Partial|  Yes  | cottonbm |
 | Counter Run                      |   No  |  Yes  |  Yes  |  Yes  | countrun |
+| Crackdown                        |   No  |  Yes  |  Yes  |  Yes  | crkdown  |
 | Crackshot                        |  Yes  |  Yes  |  Yes  |  Yes  | cracksht |
 | Crash                            |  Yes  |  Yes  |Partial|  Yes  | crash    |
 | Crater Raider                    |  Yes  |  Yes  |  Yes  |  Yes  | crater   |
@@ -494,6 +502,7 @@ Internal Name
 | Crazy Rally                      |  Yes  |  Yes  |  Yes  |  Yes  | crzrally |
 | Crime City                       |  Yes  |  Yes  |  Yes  |  Yes  | crimec   |
 | Crime Fighters                   |  Yes  |  Yes  |  Yes  |  Yes  | crimfght |
+| Cross Pang                       |  Yes  |  Yes  |   No  |  Yes  | crospang |
 | Cross Shooter                    |   No  |  Yes  |   No  |  Yes  | cshooter |
 | Crossbow                         |  Yes  |  Yes  |  Yes  |  Yes  | crossbow |
 | Crossed Swords                   |  Yes  |  Yes  |  Yes  |  Yes  | crsword  |
@@ -502,6 +511,7 @@ Internal Name
 | Cruis'n USA                      |  Yes  |  Yes  |  Yes  |  Yes  | crusnusa |
 | Cruis'n World                    |  Yes  |  Yes  |  Yes  |  Yes  | crusnwld |
 | Crush Roller                     |  Yes  |  Yes  |  Yes  |  Yes  | crush    |
+| Crypt Killer                     |  Yes  |  Yes  |  Yes  |  Yes  | cryptklr |
 | Crystal Castles                  |  Yes  |  Yes  |  Yes  |  Yes  | ccastles |
 | Crystal Gal                      |   No  |  Yes  |  Yes  |  Yes  | crystalg |
 | Crystal Gal 2                    |   No  |  Yes  |  Yes  |  Yes  | crystal2 |
@@ -530,7 +540,7 @@ Internal Name
 | Dancing Eyes                     |  Yes  |  Yes  |   No  |  Yes  | danceyes |
 | Dangar - Ufo Robo                |  Yes  |  Yes  |  Yes  |  Yes  | dangar   |
 | Danger Zone                      |  Yes  |  Yes  |  Yes  |  Yes  | dangerz  |
-| Dangerous Dungeons               |  Yes  |  Yes  |  Yes  |   No  | ddungeon |
+| Dangerous Dungeons               |  Yes  |  Yes  |  Yes  |  Yes  | ddungeon |
 | Dangerous Seed                   |  Yes  |  Yes  |  Yes  |  Yes  | dangseed |
 | Dangun Feveron                   |  Yes  |  Yes  |  Yes  |  Yes  | dfeveron |
 | Danny Sullivan's Indy Heat       |  Yes  |  Yes  |  Yes  |  Yes  | indyheat |
@@ -541,7 +551,7 @@ Internal Name
 | Dark Edge                        |   No  |  Yes  |  Yes  |  Yes  | darkedge |
 | Dark Planet                      |  Yes  |  Yes  |  Yes  |  Yes  | darkplnt |
 | Dark Seal                        |  Yes  |  Yes  |  Yes  |  Yes  | darkseal |
-| Dark Tower                       |  Yes  |  Yes  |  Yes  |   No  | darktowr |
+| Dark Tower                       |  Yes  |  Yes  |  Yes  |  Yes  | darktowr |
 | Dark Warrior                     |  Yes  |  Yes  |Partial|   No  | darkwar  |
 | Darkstalkers: The Night Warriors |  Yes  |  Yes  |  Yes  |  Yes  | dstlk    |
 | Darwin 4078                      |  Yes  |  Yes  |  Yes  |  Yes  | darwin   |
@@ -564,7 +574,7 @@ Internal Name
 | Derby Quiz My Dream Horse        |   No  |  Yes  |   No  |  Yes  | mdhorse  |
 | Deroon DeroDero                  |   No  |  Yes  |   No  |  Yes  | deroon   |
 | Desert Gun                       |  Yes  |  Yes  |   No  |  Yes  | desertgu |
-| Desert War / Wangan Sensou       |  Yes  |  Yes  |   No  |  Yes  | desertwr |
+| Desert War / Wangan Sensou       |  Yes  |  Yes  |Partial|  Yes  | desertwr |
 | Destroyer                        |  Yes  |  Yes  |   No  |  Yes  | destroyr |
 | Devastators                      |  Yes  |  Yes  |  Yes  |  Yes  | devstors |
 | Devil Fish                       |  Yes  |  Yes  |  Yes  |  Yes  | devilfsh |
@@ -608,14 +618,14 @@ Internal Name
 | Double Axle                      |  Yes  |  Yes  |  Yes  |  Yes  | dblaxle  |
 | Double Dragon                    |  Yes  |  Yes  |  Yes  |  Yes  | ddragon  |
 | Double Dragon                    |  Yes  |  Yes  |  Yes  |  Yes  | doubledr |
-| Double Dragon 3 - The Rosetta Sto|  Yes  |  Yes  |  Yes  |   No  | ddragon3 |
+| Double Dragon 3 - The Rosetta Sto|  Yes  |  Yes  |  Yes  |  Yes  | ddragon3 |
 | Double Dragon II - The Revenge   |  Yes  |  Yes  |  Yes  |  Yes  | ddragon2 |
 | Double Dribble                   |  Yes  |  Yes  |  Yes  |  Yes  | ddribble |
 | DownTown                         |  Yes  |  Yes  |  Yes  |  Yes  | downtown |
 | Dr. Micro                        |  Yes  |  Yes  |  Yes  |  Yes  | drmicro  |
 | Dr. Toppel's Adventure           |  Yes  |  Yes  |  Yes  |  Yes  | drtoppel |
 | Drag Race                        |  Yes  |  Yes  |  Yes  |  Yes  | dragrace |
-| Dragon Ball Z VRVS               |   No  |  Yes  |  Yes  |  Yes  | dbzvrvs  |
+| Dragon Ball Z V.R.V.S.           |   No  |  Yes  |  Yes  |  Yes  | dbzvrvs  |
 | Dragon Blaze                     |  Yes  |  Yes  |  Yes  |  Yes  | dragnblz |
 | Dragon Breed                     |  Yes  |  Yes  |  Yes  |   No  | dbreed   |
 | Dragon Buster                    |  Yes  |  Yes  |  Yes  |  Yes  | drgnbstr |
@@ -645,6 +655,7 @@ Internal Name
 | Dunk Shot                        |   No  |  Yes  |  Yes  |  Yes  | dunkshot |
 | Dyger                            |  Yes  |  Yes  |  Yes  |  Yes  | dyger    |
 | Dynablaster                      |  Yes  |  Yes  |  Yes  |   No  | dynablst |
+| Dynamic Country Club             |  Yes  |  Yes  |  Yes  |  Yes  | dcclub   |
 | Dynamic Ski                      |  Yes  |  Yes  |  Yes  |   No  | dynamski |
 | Dynamite Duke                    |  Yes  |  Yes  |  Yes  |  Yes  | dynduke  |
 | Dynamite Dux                     |  Yes  |  Yes  |  Yes  |  Yes  | dduxbl   |
@@ -658,7 +669,7 @@ Internal Name
 | Eco Fighters                     |  Yes  |  Yes  |  Yes  |  Yes  | ecofghtr |
 | Egg Venture                      |  Yes  |  Yes  |  Yes  |  Yes  | eggventr |
 | Eggor                            |  Yes  |   No  |Partial|  Yes  | eggor    |
-| Ehrgeiz                          |   No  |  Yes  |   No  |  Yes  | ehrgeiz  |
+| Ehrgeiz                          |  Yes  |  Yes  |   No  |  Yes  | ehrgeiz  |
 | Eight Ball Action                |  Yes  |  Yes  |  Yes  |  Yes  | 8ballact |
 | Eight Forces                     |  Yes  |  Yes  |  Yes  |  Yes  | eightfrc |
 | Eight Man                        |  Yes  |  Yes  |  Yes  |  Yes  | eightman |
@@ -727,7 +738,7 @@ Internal Name
 | Fighting Dragon Legend Elan Doree|   No  |  Yes  |   No  |  Yes  | elandore |
 | Fighting Golf                    |  Yes  |  Yes  |  Yes  |   No  | fitegolf |
 | Fighting Hawk                    |  Yes  |  Yes  |  Yes  |  Yes  | fhawk    |
-| Fighting Layer                   |   No  |  Yes  |   No  |  Yes  | fgtlayer |
+| Fighting Layer                   |  Yes  |  Yes  |   No  |  Yes  | fgtlayer |
 | Fighting Roller                  |  Yes  | Close |Partial|  Yes  | fightrol |
 | Fighting Soccer                  |  Yes  |  Yes  |  Yes  |   No  | ftsoccer |
 | Final Blow                       |  Yes  |  Yes  |  Yes  |  Yes  | finalb   |
@@ -775,12 +786,14 @@ Internal Name
 | Funky Fish                       |  Yes  |  Yes  |  Yes  |  Yes  | fnkyfish |
 | Funky Head Boxers                |   No  |  Yes  |   No  |  Yes  | fhboxers |
 | Funky Jet                        |  Yes  |  Yes  |  Yes  |  Yes  | funkyjet |
+| Funny Bubble                     |  Yes  |  Yes  |Partial|  Yes  | funybubl |
 | Funny Mouse                      |  Yes  |  Yes  |  Yes  |  Yes  | funnymou |
 | Future Spy                       |  Yes  |  Yes  | Yes(2)|  Yes  | futspy   |
 | G-Darius                         |   No  |  Yes  |   No  |  Yes  | gdarius  |
 | GI Joe                           |  Yes  |  Yes  |  Yes  |  Yes  | gijoe    |
 | Gaia Crusaders                   |  Yes  |  Yes  |Partial|  Yes  | gaia     |
 | Gaiapolis                        |  Yes  |  Yes  |  Yes  |  Yes  | gaiapols |
+| Gain Ground                      |   No  |  Yes  |  Yes  |  Yes  | gground  |
 | Galactic Warriors                |  Yes  |  Yes  |  Yes  |  Yes  | gwarrior |
 | Galaga                           |  Yes  |  Yes  | Yes(2)|  Yes  | galaga   |
 | Galaga '88                       |  Yes  |  Yes  |  Yes  |  Yes  | galaga88 |
@@ -792,13 +805,14 @@ Internal Name
 | Gallop Racer                     |   No  |  Yes  |   No  |  Yes  | glpracr  |
 | Gallop Racer 2                   |   No  |  Yes  |   No  |  Yes  | glpracr2 |
 | Galmedes                         |  Yes  |  Yes  |  Yes  |  Yes  | galmedes |
+| Gals Hustler                     |  Yes  |  Yes  |  Yes  |  Yes  | galhustl |
 | Gals Panic                       |  Yes  |  Yes  |  Yes  |   No  | galpanic |
 | Gals Panic 4                     |  Yes  |  Yes  |  Yes  |  Yes  | galpani4 |
 | Gals Panic II                    |   No  |  Yes  |  Yes  |  Yes  | galpani2 |
 | Gals Panic S - Extra Edition     |  Yes  |  Yes  |  Yes  |  Yes  | galpanis |
 | Gals Panic S2                    |  Yes  |  Yes  |  Yes  |  Yes  | galpans2 |
 | Gals Pinball                     |  Yes  |  Yes  |  Yes  |   No  | galspnbl |
-| Game Paradise - Master of Shootin|  Yes  |  Yes  |   No  |  Yes  | gametngk |
+| Game Paradise - Master of Shootin|  Yes  |  Yes  |Partial|  Yes  | gametngk |
 | Games V18.7C                     |  Yes  |  Yes  |  Yes  |  Yes  | usg185   |
 | Games V25.4X                     |  Yes  |  Yes  |  Yes  |  Yes  | usg252   |
 | Ganbare Ginkun                   |  Yes  |  Yes  |  Yes  |   No  | ginkun   |
@@ -841,7 +855,7 @@ Internal Name
 | Gold Medalist                    |  Yes  |  Yes  |  Yes  |  Yes  | goldmedl |
 | Golden Axe                       |  Yes  |  Yes  |  Yes  |  Yes  | goldnaxe |
 | Golden Axe - The Duel            |   No  |  Yes  |   No  |  Yes  | gaxeduel |
-| Golden Axe - The Revenge of Death|  Yes  |  Yes  |  Yes  |  Yes  | ga2      |
+| Golden Axe: The Revenge of Death |  Yes  |  Yes  |  Yes  |  Yes  | ga2      |
 | Golden Fire II                   |  Yes  |  Yes  |  Yes  |  Yes  | gfire2   |
 | Golden Tee Golf                  |  Yes  |  Yes  |  Yes  |  Yes  | gtg      |
 | Golden Tee Golf II               |  Yes  |  Yes  |  Yes  |  Yes  | gtg2     |
@@ -858,8 +872,9 @@ Internal Name
 | Grand Cross                      |  Yes  |  Yes  |Partial|   No  | gcpinbal |
 | Grand Prix Star                  |  Yes  |  Yes  |  Yes  |  Yes  | f1gpstar |
 | Grand Striker                    |  Yes  |  Yes  |  Yes  |  Yes  | gstriker |
+| Grand Striker 2                  |  Yes  |  Yes  |  Yes  |  Yes  | gstrik2  |
 | Grand Tour                       |  Yes  |  Yes  |  Yes  |  Yes  | grndtour |
-| Gratia - Second Earth            |  Yes  |  Yes  |   No  |  Yes  | gratia   |
+| Gratia - Second Earth            |  Yes  |  Yes  |Partial|  Yes  | gratia   |
 | Gravitar                         |  Yes  |  Yes  |  Yes  |  Yes  | gravitar |
 | Great 1000 Miles Rally           |  Yes  |  Yes  |  Yes  |  Yes  | gtmr     |
 | Great Guns                       |  Yes  |  Yes  |  Yes  |  Yes  | greatgun |
@@ -911,7 +926,7 @@ Internal Name
 | Halley's Comet                   |  Yes  |  Yes  |  Yes  |   No  | halleys  |
 | Hammerin' Harry                  |  Yes  |  Yes  |  Yes  |   No  | hharry   |
 | Hana Awase                       |  Yes  |  Yes  |  Yes  |  Yes  | hanaawas |
-| Hana Oriduru                     |   No  |  Yes  |  Yes  |  Yes  | hnoridur |
+| Hana Oriduru                     |  Yes  |  Yes  |  Yes  |  Yes  | hnoridur |
 | Hana Yayoi                       |  Yes  |  Yes  |  Yes  |  Yes  | hnayayoi |
 | Hana no Mai                      |  Yes  |  Yes  |  Yes  |  Yes  | hanamai  |
 | Hana to Ojisan [BET]             |  Yes  |  Yes  |  Yes  |  Yes  | hanaoji  |
@@ -930,10 +945,10 @@ Internal Name
 | Hard Yardage                     |  Yes  |  Yes  |  Yes  |  Yes  | hardyard |
 | Hasamu                           |  Yes  |  Yes  |  Yes  |   No  | hasamu   |
 | Hat Trick                        |  Yes  |  Yes  |  Yes  |  Yes  | hattrick |
-| Hatch Catch                      |   No  |  Yes  |  Yes  |  Yes  | htchctch |
+| Hatch Catch                      |  Yes  |  Yes  |  Yes  |  Yes  | htchctch |
 | Hatris                           |  Yes  |  Yes  |  Yes  |  Yes  | hatris   |
 | Haunted Castle                   |  Yes  |  Yes  |  Yes  |  Yes  | hcastle  |
-| Hayaoshi Quiz Ouza Ketteisen     |  Yes  |  Yes  |   No  |  Yes  | hayaosi1 |
+| Hayaoshi Quiz Ouza Ketteisen     |  Yes  |  Yes  |Partial|  Yes  | hayaosi1 |
 | Head On                          |  Yes  |  Yes  |   No  |  Yes  | headon   |
 | Head On 2                        |  Yes  |  Yes  |   No  |  Yes  | headon2  |
 | Head Panic                       |  Yes  |  Yes  |  Yes  |  Yes  | hedpanic |
@@ -967,7 +982,7 @@ Internal Name
 | Horizon                          |  Yes  |  Yes  |Partial|  Yes  | horizon  |
 | Hot Chase                        |  Yes  |  Yes  |  Yes  |  Yes  | hotchase |
 | Hot Pinball                      |  Yes  |  Yes  |  Yes  |   No  | hotpinbl |
-| Hot Rod                          |   No  |  Yes  |  Yes  |  Yes  | hotrod   |
+| Hot Rod                          |  Yes  |  Yes  |  Yes  |  Yes  | hotrod   |
 | Hot Shocker                      |  Yes  |  Yes  |  Yes  |  Yes  | hotshock |
 | Hot Shots Tennis                 |  Yes  |  Yes  |  Yes  |  Yes  | hstennis |
 | Hot Smash                        |   No  |  Yes  |  Yes  |  Yes  | hotsmash |
@@ -988,7 +1003,7 @@ Internal Name
 | IPM Invader                      |  Yes  | Close |   No  |   No  | ipminvad |
 | IQ-Block                         |  Yes  |  Yes  |  Yes  |  Yes  | iqblock  |
 | Ichidant-R                       |  Yes  |  Yes  |  Yes  |  Yes  | ichidant |
-| Idol Janshi Su-Chi-Pie 2         |  Yes  |  Yes  |   No  |  Yes  | 47pie2   |
+| Idol Janshi Su-Chi-Pie 2         |  Yes  |  Yes  |Partial|  Yes  | 47pie2   |
 | Idol no Himitsu [BET]            |  Yes  |  Yes  |  Yes  |  Yes  | idhimitu |
 | Idol-Mahjong Final Romance       |  Yes  |  Yes  |  Yes  |  Yes  | fromance |
 | Idol-Mahjong Housoukyoku         |  Yes  |  Yes  |  Yes  |  Yes  | idolmj   |
@@ -997,14 +1012,14 @@ Internal Name
 | Ikari III - The Rescue           |  Yes  |  Yes  |  Yes  |  Yes  | ikari3   |
 | Ikari Warriors                   |  Yes  |  Yes  |  Yes  |   No  | ikari    |
 | Ikki                             |  Yes  |  Yes  |  Yes  |  Yes  | ikki     |
-| Image Fight                      |  Yes  |  Yes  |  Yes  |   No  | imgfight |
+| Image Fight                      |  Yes  |  Yes  |  Yes  |  Yes  | imgfight |
 | Imago                            |  Yes  |   No  |  Yes  |  Yes  | imago    |
 | Imekura Mahjong                  |  Yes  |  Yes  |  Yes  |  Yes  | imekura  |
 | In The Hunt                      |  Yes  |  Yes  |  Yes  |  Yes  | inthunt  |
 | Indiana Jones and the Temple of D|  Yes  |  Yes  |  Yes  |  Yes  | indytemp |
 | Indoor Soccer                    |  Yes  |  Yes  |Partial|  Yes  | idsoccer |
-| Inferno                          |  Yes  |  Yes  |   No  |  Yes  | minferno |
 | Inferno                          |  Yes  |  Yes  |Partial|  Yes  | inferno  |
+| Inferno                          |  Yes  |  Yes  |   No  |  Yes  | minferno |
 | Insector                         |  Yes  |  Yes  |  Yes  |  Yes  | insector |
 | Insector X                       |  Yes  |  Yes  |  Yes  |  Yes  | insectx  |
 | Intrepid                         |  Yes  |  Yes  |  Yes  |  Yes  | intrepid |
@@ -1022,6 +1037,7 @@ Internal Name
 | Jack Rabbit                      |  Yes  |  Yes  |Partial|  Yes  | jackrabt |
 | Jack the Giantkiller             |  Yes  |  Yes  |  Yes  |  Yes  | jack     |
 | Jackal                           |  Yes  | Close |  Yes  |   No  | jackal   |
+| Jackie Chan - Kung Fu Master     |   No  |  Yes  |   No  |  Yes  | jchan    |
 | Jail Break                       |  Yes  |  Yes  |  Yes  |  Yes  | jailbrek |
 | Jan Jan Paradise                 |  Yes  |  Yes  |  Yes  |  Yes  | jjparads |
 | Jan Jan Paradise 2               |  Yes  |  Yes  |  Yes  |  Yes  | jjparad2 |
@@ -1034,7 +1050,8 @@ Internal Name
 | Joust 2 - Survival of the Fittest|  Yes  |  Yes  |  Yes  |  Yes  | joust2   |
 | Joyful Road                      |  Yes  |  Yes  |Partial|   No  | joyfulr  |
 | Jr. Pac-Man                      |  Yes  |  Yes  |  Yes  |  Yes  | jrpacman |
-| Judge Dredd                      |  Yes  |  Yes  |  Yes  |  Yes  | jdredd   |
+| Judge Dredd                      |  Yes  |  Yes  |  Yes  |  Yes  | jdreddp  |
+| Judge Dredd                      |   No  |  Yes  |   No  |  Yes  | jdredd   |
 | Jump Bug                         |  Yes  |  Yes  |  Yes  |  Yes  | jumpbug  |
 | Jump Coaster                     |  Yes  |  Yes  |  Yes  |  Yes  | jumpcoas |
 | Jump Kids                        |  Yes  |  Yes  |   No  |  Yes  | jumpkids |
@@ -1135,6 +1152,7 @@ Internal Name
 | Last Fortress - Toride           |  Yes  |  Yes  |   No  |  Yes  | lastfort |
 | Last Mission                     |  Yes  |  Yes  |  Yes  |  Yes  | lastmisn |
 | Last Resort                      |  Yes  |  Yes  |  Yes  |  Yes  | lresort  |
+| Last Striker / Kyuukyoku no Strik|  Yes  |  Yes  |  Yes  |  Yes  | kyustrkr |
 | Lazer Command                    |  Yes  |  Yes  |  Yes  |  Yes  | lazercmd |
 | League Bowling                   |  Yes  |  Yes  |  Yes  |  Yes  | lbowling |
 | Legend                           |  Yes  |  Yes  |  Yes  |  Yes  | legend   |
@@ -1168,7 +1186,7 @@ Internal Name
 | Lode Runner                      |  Yes  |  Yes  |  Yes  |  Yes  | ldrun    |
 | Lode Runner - The Dig Fight      |  Yes  |  Yes  |  Yes  |  Yes  | loderndf |
 | Lode Runner II - The Bungeling St|  Yes  |  Yes  |  Yes  |  Yes  | ldrun2   |
-| Lode Runner III - Majin No Fukkat|  Yes  |  Yes  |  Yes  |  Yes  | ldrun3   |
+| Lode Runner III - The Golden Laby|  Yes  |  Yes  |  Yes  |  Yes  | ldrun3   |
 | Lode Runner IV - Teikoku Karano D|  Yes  |  Yes  |  Yes  |  Yes  | ldrun4   |
 | Logger                           |  Yes  |  Yes  |Partial|   No  | logger   |
 | Logic Pro                        |  Yes  |  Yes  |  Yes  |  Yes  | logicpro |
@@ -1212,9 +1230,12 @@ Internal Name
 | Magix / Rock                     |  Yes  |  Yes  |Partial|  Yes  | magix    |
 | Mah-jong, The                    |  Yes  |  Yes  |  Yes  |  Yes  | themj    |
 | Mahjong                          |  Yes  |  Yes  |  Yes  |  Yes  | ttmahjng |
+| Mahjong Angel Kiss               |  Yes  |  Yes  |Partial|  Yes  | akiss    |
+| Mahjong Angels - Comic Theater Vo|  Yes  |  Yes  |  Yes  |  Yes  | mjangels |
 | Mahjong Banana Dream [BET]       |  Yes  |  Yes  |  Yes  |  Yes  | bananadr |
 | Mahjong CLUB 90's                |  Yes  |  Yes  |  Yes  |  Yes  | club90s  |
 | Mahjong Camera Kozou             |  Yes  |  Yes  |  Yes  |  Yes  | mjcamera |
+| Mahjong Campus Hunting           |  Yes  |  Yes  |  Yes  |  Yes  | mcnpshnt |
 | Mahjong Channel Zoom In          |   No  |  Yes  |   No  |  Yes  | mjzoomin |
 | Mahjong Chinmoku no Hentai       |  Yes  |  Yes  |  Yes  |  Yes  | chinmoku |
 | Mahjong Circuit no Mehyou        |  Yes  |  Yes  |  Yes  |  Yes  | cmehyou  |
@@ -1283,6 +1304,7 @@ Internal Name
 | Mahjong Uranai Densetsu          |  Yes  |  Yes  |  Yes  |  Yes  | mjuraden |
 | Mahjong Vanilla Syndrome         |  Yes  |  Yes  |  Yes  |  Yes  | vanilla  |
 | Mahjong Vitamin C                |  Yes  |  Yes  |  Yes  |  Yes  | vitaminc |
+| Mahjong Yarunara                 |  Yes  |  Yes  |  Yes  |  Yes  | yarunara |
 | Mahjong Yuugi                    |  Yes  |  Yes  |  Yes  |  Yes  | mjyuugi  |
 | Mahjong-yougo no Kisotairyoku    |  Yes  |  Yes  |  Yes  |  Yes  | mjyougo  |
 | Mahjong-zukino Korinai Menmen    |  Yes  |  Yes  |  Yes  |  Yes  | korinai  |
@@ -1294,6 +1316,7 @@ Internal Name
 | Major League                     |  Yes  |  Yes  |  Yes  |  Yes  | mjleague |
 | Major Title                      |  Yes  |  Yes  |  Yes  |   No  | majtitle |
 | Major Title 2                    |  Yes  |  Yes  |  Yes  |  Yes  | majtitl2 |
+| Malzak                           |   No  |  Yes  |   No  |  Yes  | malzak   |
 | Mania Challenge                  |  Yes  |  Yes  |  Yes  |  Yes  | maniach  |
 | Maniac Square                    |  Yes  |  Yes  |  Yes  |  Yes  | maniacsq |
 | Many Block                       |  Yes  |  Yes  |Partial|   No  | manybloc |
@@ -1342,6 +1365,7 @@ Internal Name
 | MegaTack                         |  Yes  |  Yes  |  Yes  |  Yes  | megatack |
 | MegaTech: Afterburner            |   No  |  Yes  |  Yes  |  Yes  | mt_aftrb |
 | MegaTech: Altered Beast          |   No  |  Yes  |  Yes  |  Yes  | mt_beast |
+| MegaTech: Arnold Palmer Tournamen|   No  |  Yes  |  Yes  |  Yes  | mt_tgolf |
 | MegaTech: Astro Warrior          |   No  |  Yes  |  Yes  |  Yes  | mt_astro |
 | MegaTech: Bonanza Bros.          |   No  |  Yes  |  Yes  |  Yes  | mt_bbros |
 | MegaTech: E-Swat                 |   No  |  Yes  |  Yes  |  Yes  | mt_eswat |
@@ -1405,6 +1429,7 @@ Internal Name
 | Mister Viking                    |  Yes  |  Yes  |  Yes  |  Yes  | mrviking |
 | Miyasu Nonki no Quiz 18-Kin      |  Yes  |  Yes  |  Yes  |   No  | quiz18k  |
 | Mobile Suit Gundam               |  Yes  |  Yes  |  Yes  |  Yes  | msgundam |
+| Mobile Suit Gundam EX Revue      |  Yes  |  Yes  |  Yes  |  Yes  | gundamex |
 | Moero Pro Yakyuu Homerun         |  Yes  |  Yes  |  Yes  |  Yes  | homerun  |
 | Moguchan                         |  Yes  |   No  |  Yes  |  Yes  | moguchan |
 | Mogura Desse                     |  Yes  |  Yes  |  Yes  |  Yes  | mogura   |
@@ -1412,7 +1437,7 @@ Internal Name
 | Momoko 120%                      |  Yes  |  Yes  |  Yes  |  Yes  | momoko   |
 | Money Money                      |  Yes  |  Yes  |Partial|  Yes  | monymony |
 | Money Puzzle Exchanger / Money Id|  Yes  |  Yes  |  Yes  |  Yes  | miexchng |
-| Monkey Mole Panic                |   No  |  Yes  |  Yes  |   No  | mmpanic  |
+| Monkey Mole Panic                |  Yes  |  Yes  |  Yes  |   No  | mmpanic  |
 | Monster Bash                     |  Yes  |  Yes  | Yes(2)|  Yes  | monsterb |
 | Monster Slider                   |  Yes  |  Yes  |  Yes  |   No  | mslider  |
 | Monte Carlo                      |  Yes  |  Yes  |  Yes  |  Yes  | montecar |
@@ -1433,7 +1458,8 @@ Internal Name
 | Mouja                            |  Yes  |  Yes  |  Yes  |   No  | mouja    |
 | Mouse Trap                       |  Yes  |  Yes  |  Yes  |  Yes  | mtrap    |
 | Mouser                           |  Yes  |  Yes  |  Yes  |  Yes  | mouser   |
-| Mr Driller                       |   No  |  Yes  |   No  |  Yes  | mrdrillr |
+| Mr Driller                       |  Yes  |  Yes  |   No  |  Yes  | mrdrillr |
+| Mr Driller 2                     |   No  |  Yes  |   No  |  Yes  | mrdrilr2 |
 | Mr. Do!                          |  Yes  |  Yes  |  Yes  |  Yes  | mrdo     |
 | Mr. Do's Castle                  |  Yes  |  Yes  |  Yes  |  Yes  | docastle |
 | Mr. Do's Wild Ride               |  Yes  |  Yes  |  Yes  |  Yes  | dowild   |
@@ -1450,7 +1476,7 @@ Internal Name
 | Mutant Night                     |  Yes  |  Yes  |  Yes  |  Yes  | mnight   |
 | Mutation Nation                  |  Yes  |  Yes  |  Yes  |  Yes  | mutnat   |
 | My Hero                          |  Yes  |  Yes  |  Yes  |  Yes  | myhero   |
-| Mysterious Stones                |  Yes  |  Yes  |  Yes  |  Yes  | mystston |
+| Mysterious Stones - Dr. John's Ad|  Yes  |  Yes  |  Yes  |  Yes  | mystston |
 | Mystic Marathon                  |  Yes  |  Yes  |  Yes  |  Yes  | mysticm  |
 | Mystic Riders                    |  Yes  |  Yes  |  Yes  |  Yes  | mysticri |
 | Mystic Warriors                  |  Yes  |  Yes  |  Yes  |  Yes  | mystwarr |
@@ -1459,7 +1485,10 @@ Internal Name
 | NATO Defense                     |  Yes  |  Yes  | Yes(2)|  Yes  | natodef  |
 | NBA Hangtime                     |  Yes  |  Yes  |  Yes  |  Yes  | nbahangt |
 | NBA Jam                          |  Yes  |  Yes  |  Yes  |  Yes  | nbajam   |
+| NBA Jam Extreme                  |   No  |  Yes  |   No  |  Yes  | nbajamex |
+| NFL Blitz                        |  Yes  |  Yes  |  Yes  |  Yes  | blitz    |
 | NFL Blitz '99                    |  Yes  |  Yes  |  Yes  |  Yes  | blitz99  |
+| NFL Blitz 2000                   |  Yes  |  Yes  |  Yes  |  Yes  | blitz2k  |
 | Namco Classics Collection Vol.1  |  Yes  |  Yes  |   No  |  Yes  | ncv1     |
 | Namco Classics Collection Vol.2  |   No  |  Yes  |   No  |  Yes  | ncv2     |
 | Name That Tune                   |  Yes  |  Yes  |  Yes  |  Yes  | nametune |
@@ -1481,6 +1510,7 @@ Internal Name
 | Neo Turf Masters / Big Tournament|  Yes  |  Yes  |  Yes  |  Yes  | turfmast |
 | Neo-Geo Cup '98 - The Road to the|  Yes  |  Yes  |  Yes  |  Yes  | neocup98 |
 | Net Wars                         |  Yes  |  Yes  |  Yes  |  Yes  | netwars  |
+| Nettoh Quiz Champion             |  Yes  | Close |  Yes  |   No  | nettoqc  |
 | Nettou! Gekitou! Quiztou!!       |  Yes  |  Yes  |Partial|  Yes  | quiztou  |
 | New Fantasia                     |  Yes  |  Yes  |  Yes  |   No  | newfant  |
 | New Rally X                      |  Yes  |  Yes  | Yes(2)|  Yes  | nrallyx  |
@@ -1564,17 +1594,17 @@ Internal Name
 | Ozma Wars                        |  Yes  |  Yes  | Yes(2)|  Yes  | ozmawars |
 | Ozon I                           |  Yes  |  Yes  |  Yes  |  Yes  | ozon1    |
 | P-47 - The Phantom Fighter       |  Yes  |  Yes  |  Yes  |  Yes  | p47      |
-| P-47 Aces                        |  Yes  |  Yes  |   No  |  Yes  | p47aces  |
+| P-47 Aces                        |  Yes  |  Yes  |Partial|  Yes  | p47aces  |
 | P.O.W. - Prisoners of War        |  Yes  |  Yes  |  Yes  |  Yes  | pow      |
 | Pac & Pal                        |  Yes  |  Yes  |  Yes  |  Yes  | pacnpal  |
-| Pac-Land                         |  Yes  |  Yes  |  Yes  |   No  | pacland  |
+| Pac-Land                         |  Yes  |  Yes  |  Yes  |  Yes  | pacland  |
 | Pac-Man Plus                     |  Yes  |  Yes  |  Yes  |  Yes  | pacplus  |
 | Pac-Mania                        |  Yes  |  Yes  |  Yes  |  Yes  | pacmania |
 | Paca Paca Passion                |   No  |  Yes  |   No  |  Yes  | pacapp   |
 | Pachinko Sexy Reaction           |  Yes  |  Yes  |  Yes  |   No  | sxyreact |
 | Paddle Mania                     |  Yes  |  Yes  |  Yes  |  Yes  | paddlema |
-| Pairs                            |  Yes  |  Yes  |  Yes  |  Yes  | pairs    |
 | Pairs                            |  Yes  |  Yes  |Partial|  Yes  | pairsten |
+| Pairs                            |  Yes  |  Yes  |  Yes  |  Yes  | pairs    |
 | Palamedes                        |  Yes  |  Yes  |  Yes  |  Yes  | palamed  |
 | Pandora's Palace                 |  Yes  |  Yes  |  Yes  |  Yes  | pandoras |
 | Pang                             |  Yes  |  Yes  |  Yes  |  Yes  | pang     |
@@ -1585,7 +1615,7 @@ Internal Name
 | Paperboy                         |  Yes  |  Yes  |  Yes  |  Yes  | paperboy |
 | Paradise                         |  Yes  |  Yes  |  Yes  |  Yes  | paradise |
 | Parodius DA!                     |  Yes  |  Yes  |  Yes  |  Yes  | parodius |
-| Pass                             |  Yes  |  Yes  |Partial|  Yes  | pass     |
+| Pass                             |  Yes  |  Yes  |  Yes  |  Yes  | pass     |
 | Passing Shot                     | No(1) |  Yes  |  Yes  |  Yes  | passsht  |
 | Pastel Gal                       |  Yes  |  Yes  |  Yes  |  Yes  | pastelgl |
 | Pebble Beach - The Great Shot    |   No  |  Yes  |   No  |  Yes  | pblbeach |
@@ -1711,19 +1741,20 @@ Internal Name
 | Power Drive                      |  Yes  |  Yes  |  Yes  |  Yes  | powerdrv |
 | Power Instinct                   |  Yes  |  Yes  |  Yes  |  Yes  | powerins |
 | Power Instinct 2                 |  Yes  |  Yes  |  Yes  |  Yes  | pwrinst2 |
-| Power Instinct 3 - Groove On Figh|   No  |  Yes  |   No  |  Yes  | groovef  |
+| Power Instinct 3 - Groove On Figh|   No  |  Yes  |Partial|  Yes  | groovef  |
 | Power Play                       |  Yes  |  Yes  |  Yes  |  Yes  | powrplay |
 | Power Spikes                     |  Yes  |  Yes  |  Yes  |   No  | pspikes  |
 | Power Spikes II                  |  Yes  |  Yes  |  Yes  |  Yes  | pspikes2 |
 | Power Surge                      |  Yes  |  Yes  |  Yes  |  Yes  | psurge   |
 | Prebillian                       |  Yes  |  Yes  |Partial|  Yes  | pbillian |
 | Prehistoric Isle 2               |  Yes  |  Yes  |  Yes  |  Yes  | preisle2 |
-| Prehistoric Isle in 1930         |  Yes  |  Yes  |  Yes  |   No  | prehisle |
+| Prehistoric Isle in 1930         |  Yes  |  Yes  |  Yes  |  Yes  | prehisle |
 | Premier Soccer                   |  Yes  |  Yes  |  Yes  |  Yes  | prmrsocr |
 | Pretty Soldier Sailor Moon       |  Yes  |  Yes  |  Yes  |  Yes  | sailormn |
 | Primal Rage                      |   No  |  Yes  |  Yes  |  Yes  | primrage |
+| Primal Rage 2                    |   No  |  Yes  |   No  |  Yes  | primrag2 |
 | Prime Goal EX                    |  Yes  |  Yes  |   No  |  Yes  | primglex |
-| Princess Clara Daisakusen        |   No  |  Yes  |   No  |  Yes  | prikura  |
+| Princess Clara Daisakusen        |   No  |  Yes  |Partial|  Yes  | prikura  |
 | Print Club                       |   No  |  Yes  |  Yes  |  Yes  | pclubj   |
 | Pro Mahjong Kiwame               |  Yes  |  Yes  |  Yes  |  Yes  | kiwame   |
 | Pro Mahjong Kiwame S             |   No  |  Yes  |   No  |  Yes  | kiwames  |
@@ -1733,7 +1764,7 @@ Internal Name
 | Progress                         |  Yes  |  Yes  |  Yes  |  Yes  | progress |
 | Prop Cycle                       |  Yes  |  Yes  |   No  |  Yes  | propcycl |
 | Prosport                         |   No  |  Yes  |  Yes  |  Yes  | prosport |
-| Psychic 5                        |  Yes  |  Yes  |  Yes  |   No  | psychic5 |
+| Psychic 5                        |  Yes  |  Yes  |  Yes  |  Yes  | psychic5 |
 | Psychic Force                    |   No  |  Yes  |  Yes  |  Yes  | psyforce |
 | Psycho Soldier                   |  Yes  |  Yes  |  Yes  |   No  | psychos  |
 | Psycho-Nics Oscar                |  Yes  |  Yes  |  Yes  |  Yes  | oscar    |
@@ -1793,23 +1824,26 @@ Internal Name
 | Quiz Meitantei Neo & Geo - Quiz D|  Yes  |  Yes  |  Yes  |  Yes  | quizdai2 |
 | Quiz Mekurumeku Story            |  Yes  |  Yes  |  Yes  |  Yes  | quizmeku |
 | Quiz Nanairo Dreams: Nijiirochou |  Yes  |  Yes  |  Yes  |  Yes  | qndream  |
-| Quiz Panicuru Fantasy            |   No  |  Yes  |  Yes  |  Yes  | quizpani |
+| Quiz Panicuru Fantasy            |  Yes  |  Yes  |  Yes  |  Yes  | quizpani |
 | Quiz Quest - Hime to Yuusha no Mo|  Yes  |  Yes  |  Yes  |  Yes  | qzquest  |
-| Quiz Rouka Ni Tattenasai         |   No  |  Yes  |  Yes  |  Yes  | qrouka   |
+| Quiz Rouka Ni Tattenasai         |  Yes  |  Yes  |  Yes  |  Yes  | qrouka   |
 | Quiz Sangokushi                  |  Yes  |  Yes  |  Yes  |  Yes  | qsangoku |
 | Quiz Sekai wa SHOW by shobai     |  Yes  |  Yes  |  Yes  |  Yes  | qzshowby |
+| Quiz Syukudai wo Wasuremashita   |   No  |  Yes  |  Yes  |  Yes  | qsww     |
+| Quiz TV Gassyuukoku Q&Q          |  Yes  |  Yes  |  Yes  |  Yes  | quiztvqq |
 | Quiz Theater - 3tsu no Monogatari|  Yes  |  Yes  |Partial|  Yes  | qtheater |
 | Quiz Tonosama no Yabou           |  Yes  |  Yes  |  Yes  |  Yes  | qtono1   |
 | Quiz Tonosama no Yabou 2 Zenkoku-|  Yes  |  Yes  |  Yes  |  Yes  | qtono2   |
 | Quiz Torimonochou                |  Yes  |  Yes  |  Yes  |  Yes  | qtorimon |
 | Quiz de Idol! Hot Debut          |  Yes  |  Yes  |  Yes  |  Yes  | hotdebut |
 | Quiz-Mahjong Hayaku Yatteyo!     |  Yes  |  Yes  |  Yes  |  Yes  | qmhayaku |
-| Qwak                             |  Yes  |  Yes  |  Yes  |   No  | qwakprot |
+| Qwak                             |  Yes  |  Yes  |  Yes  |  Yes  | qwak     |
 | R-Shark                          |  Yes  |  Yes  |  Yes  |  Yes  | rshark   |
 | R-Type                           |  Yes  |  Yes  |  Yes  |   No  | rtype    |
 | R-Type II                        |  Yes  |  Yes  |  Yes  |   No  | rtype2   |
 | R-Type Leo                       |  Yes  |  Yes  |  Yes  |  Yes  | rtypeleo |
 | R2D Tank                         |  Yes  |  Yes  |   No  |  Yes  | r2dtank  |
+| Rabbit                           |   No  |  Yes  |   No  |  Yes  | rabbit   |
 | Rabio Lepus                      |  Yes  |  Yes  |  Yes  |  Yes  | rabiolep |
 | Race Drivin'                     |  Yes  |  Yes  |  Yes  |  Yes  | racedriv |
 | Racin' Force                     |   No  |  Yes  |  Yes  |  Yes  | racinfrc |
@@ -1895,6 +1929,7 @@ Internal Name
 | Roc'n Rope                       |  Yes  |  Yes  |  Yes  |  Yes  | rocnrope |
 | Rock 'n Rage                     |  Yes  |  Yes  |  Yes  |  Yes  | rockrage |
 | Rock Climber                     |  Yes  |  Yes  |  Yes  |  Yes  | rockclim |
+| Rock'n Tread                     |  Yes  |  Yes  |   No  |  Yes  | rockn    |
 | Rod-Land                         |  Yes  |  Yes  |  Yes  |  Yes  | rodland  |
 | Rohga Armour Force               |   No  |  Yes  |  Yes  |  Yes  | rohga    |
 | Roller Jammer                    |  Yes  |  Yes  |  Yes  |  Yes  | rjammer  |
@@ -1912,18 +1947,19 @@ Internal Name
 | Royal Mahjong                    |  Yes  |  Yes  |  Yes  |  Yes  | royalmah |
 | Run and Gun                      |  Yes  | Close |Partial|  Yes  | rungun   |
 | Run and Gun 2                    |   No  |  Yes  |  Yes  |  Yes  | rungun2  |
+| Runaway                          |  Yes  |  Yes  |  Yes  |  Yes  | runaway  |
 | Rushing Heroes                   |   No  |  Yes  |  Yes  |  Yes  | rushhero |
 | Rygar                            |  Yes  |  Yes  |  Yes  |  Yes  | rygar    |
 | Ryu Jin                          |  Yes  |  Yes  |  Yes  |  Yes  | ryujin   |
 | Ryukyu                           |   No  |  Yes  |  Yes  |  Yes  | ryukyu   |
-| Ryuusei Janshi Kirara Star       |  Yes  |  Yes  |   No  |  Yes  | kirarast |
+| Ryuusei Janshi Kirara Star       |  Yes  |  Yes  |Partial|  Yes  | kirarast |
 | S.P.Y. - Special Project Y       |  Yes  |  Yes  |  Yes  |  Yes  | spy      |
 | S.R.D. Mission                   |  Yes  |  Yes  |  Yes  |  Yes  | srdmissn |
 | S.S. Mission                     |  Yes  |  Yes  |  Yes  |   No  | ssmissin |
 | S.T.U.N. Runner                  |  Yes  |  Yes  |  Yes  |  Yes  | stunrun  |
 | SAR - Search And Rescue          |  Yes  |  Yes  |  Yes  |  Yes  | searchar |
 | SD Gundam Neo Battling           |  Yes  |  Yes  |  Yes  |  Yes  | neobattl |
-| SD Gundam Psycho Salamander no Ky|  Yes  |  Yes  |   No  |   No  | sdgndmps |
+| SD Gundam Psycho Salamander no Ky|  Yes  |  Yes  |  Yes  |   No  | sdgndmps |
 | SD Gundam Sangokushi Rainbow Tair|   No  |  Yes  |  Yes  |  Yes  | sdgndmrb |
 | SDI - Strategic Defense Initiativ|  Yes  |  Yes  |  Yes  |  Yes  | sdi      |
 | SF-X                             |  Yes  |  Yes  |  Yes  |  Yes  | sfx      |
@@ -1959,6 +1995,7 @@ Internal Name
 | Scion                            |  Yes  | Close |Partial|  Yes  | scion    |
 | Scorpion                         |  Yes  |  Yes  |  Yes  |  Yes  | scorpnmc |
 | Scramble                         |  Yes  |  Yes  |  Yes  |  Yes  | scramble |
+| Scramble Spirits                 |   No  |  Yes  |  Yes  |  Yes  | sspirits |
 | Scrambled Egg                    |  Yes  |  Yes  |  Yes  |  Yes  | scregg   |
 | Screw Loose                      |  Yes  |  Yes  |  Yes  |  Yes  | screwloo |
 | Scud Hammer                      |  Yes  |  Yes  |  Yes  |  Yes  | scudhamm |
@@ -1969,6 +2006,7 @@ Internal Name
 | Second Love                      |  Yes  |  Yes  |  Yes  |  Yes  | secolove |
 | Section Z                        |  Yes  |  Yes  |  Yes  |  Yes  | sectionz |
 | Sega Ninja                       |  Yes  |  Yes  |  Yes  |  Yes  | seganinj |
+| Segasonic the Hedgehog           | No(1) |  Yes  |  Yes  |  Yes  | sonic    |
 | Seibu Cup Soccer                 | No(1) |  Yes  |  Yes  |  Yes  | cupsoc   |
 | Seicross                         |  Yes  |  Yes  |  Yes  |   No  | seicross |
 | Seiha                            |  Yes  |  Yes  |  Yes  |  Yes  | seiha    |
@@ -1988,7 +2026,7 @@ Internal Name
 | Shadow Land                      |  Yes  |  Yes  |  Yes  |  Yes  | shadowld |
 | Shadow Warriors                  |  Yes  |  Yes  |  Yes  |  Yes  | shadoww  |
 | Shanghai                         |  Yes  |  Yes  |  Yes  |  Yes  | shanghai |
-| Shanghai - The Great Wall / Shang|   No  |  Yes  |   No  |  Yes  | shanhigw |
+| Shanghai - The Great Wall / Shang|   No  |  Yes  |Partial|  Yes  | shanhigw |
 | Shanghai II                      |  Yes  |  Yes  |  Yes  |  Yes  | shangha2 |
 | Shanghai III                     |  Yes  |  Yes  |  Yes  |  Yes  | shangha3 |
 | Shanghai Kid                     |  Yes  |  Yes  |  Yes  |   No  | shangkid |
@@ -2065,7 +2103,6 @@ Internal Name
 | Solvalou                         |  Yes  |  Yes  |  Yes  |  Yes  | solvalou |
 | Son Son                          |  Yes  |  Yes  |  Yes  |  Yes  | sonson   |
 | Son of Phoenix                   |  Yes  |  Yes  |  Yes  |  Yes  | sonofphx |
-| Sonic                            | No(1) |  Yes  |  Yes  |  Yes  | sonic    |
 | Sonic Blast Man                  |  Yes  |  Yes  |  Yes  |  Yes  | sbm      |
 | Sonic Wings Limited              |   No  |  Yes  |   No  |  Yes  | sncwgltd |
 | Sotsugyo Shousho                 |  Yes  |  Yes  |  Yes  |  Yes  | sotsugyo |
@@ -2116,7 +2153,7 @@ Internal Name
 | Special Forces                   |  Yes  |  Yes  |   No  |  Yes  | spclforc |
 | Special Forces II                |  Yes  |  Yes  |   No  |  Yes  | spcfrcii |
 | Spectar                          |  Yes  |  Yes  | Yes(2)|  Yes  | spectar  |
-| Speed Attack!                    |  Yes  |   No  |  Yes  |  Yes  | speedatk |
+| Speed Attack!                    |  Yes  |  Yes  |  Yes  |  Yes  | speedatk |
 | Speed Ball                       |  Yes  |  Yes  |  Yes  |  Yes  | speedbal |
 | Speed Ball                       |  Yes  |  Yes  |  Yes  |  Yes  | spdball  |
 | Speed Buggy                      |   No  |  Yes  |   No  |  Yes  | spdbuggy |
@@ -2126,7 +2163,7 @@ Internal Name
 | Speed Spin                       |  Yes  |  Yes  |  Yes  |  Yes  | speedspn |
 | Spelunker                        |  Yes  |  Yes  |  Yes  |  Yes  | spelunkr |
 | Spelunker II                     |  Yes  |  Yes  |  Yes  |  Yes  | spelunk2 |
-| Spiderman                        |  Yes  |  Yes  |  Yes  |  Yes  | spidey   |
+| Spider-Man: The Videogame        |  Yes  |  Yes  |  Yes  |  Yes  | spidey   |
 | Spiders                          |  Yes  |  Yes  |   No  |   No  | spiders  |
 | Spiker                           |  Yes  |  Yes  |  Yes  |  Yes  | spiker   |
 | Spin Master / Miracle Adventure  |  Yes  |  Yes  |  Yes  |  Yes  | spinmast |
@@ -2153,6 +2190,7 @@ Internal Name
 | Star Fighter                     |   No  |  Yes  |  Yes  |  Yes  | starfigh |
 | Star Fire                        |  Yes  |  Yes  |   No  |  Yes  | starfire |
 | Star Force                       |  Yes  |  Yes  |  Yes  |  Yes  | starforc |
+| Star Gladiator                   |   No  |  Yes  |  Yes  |  Yes  | starglad |
 | Star Gladiator 2                 |   No  |  Yes  |  Yes  |  Yes  | sg2j     |
 | Star Guards                      |  Yes  |  Yes  |  Yes  |  Yes  | stargrds |
 | Star Hawk                        |  Yes  |  Yes  |   No  |  Yes  | starhawk |
@@ -2193,7 +2231,7 @@ Internal Name
 | Street Smart                     |  Yes  |  Yes  |  Yes  |  Yes  | streetsm |
 | Strength & Skill                 |  Yes  |  Yes  |  Yes  |  Yes  | strnskil |
 | Strider                          |  Yes  |  Yes  |  Yes  |  Yes  | strider  |
-| Strider Hiryu 2                  |   No  |  Yes  |  Yes  |  Yes  | shiryu2  |
+| Strider 2                        |   No  |  Yes  |  Yes  |  Yes  | strider2 |
 | Strike Bowling                   |  Yes  | Close |Partial|  Yes  | sbowling |
 | Strike Force                     |  Yes  |  Yes  |  Yes  |  Yes  | strkforc |
 | Strike Gunner S.T.G              |  Yes  |  Yes  |  Yes  |  Yes  | stg      |
@@ -2236,6 +2274,7 @@ Internal Name
 | Super Locomotive                 |  Yes  |  Yes  |  Yes  |  Yes  | suprloco |
 | Super Major League               |   No  |  Yes  |   No  |  Yes  | sleague  |
 | Super Marukin-Ban                |  Yes  |  Yes  |  Yes  |  Yes  | marukin  |
+| Super Masters Golf               |   No  |  Yes  |  Yes  |  Yes  | sgmast   |
 | Super Pac-Man                    |  Yes  |  Yes  |  Yes  |  Yes  | superpac |
 | Super Pang                       |  Yes  |  Yes  |  Yes  |  Yes  | spang    |
 | Super Pinball Action             |  Yes  |  Yes  |  Yes  |  Yes  | spbactn  |
@@ -2263,11 +2302,12 @@ Internal Name
 | Super Stingray                   |  Yes  |   No  |  Yes  |   No  | sstingry |
 | Super Street Fighter 2: The New C|  Yes  |  Yes  |  Yes  |  Yes  | ssf2     |
 | Super Strike Bowling             |   No  |  Yes  |  Yes  |  Yes  | sstrike  |
+| Super Tank                       |  Yes  |  Yes  |  Yes  |  Yes  | supertnk |
 | Super Ten V8.3                   |  Yes  |  Yes  |  Yes  |  Yes  | usg83    |
 | Super Toffy                      |  Yes  |  Yes  |  Yes  |  Yes  | stoffy   |
 | Super Triv II                    |  Yes  |   No  |  Yes  |  Yes  | supertr2 |
 | Super Trivia Master              |  Yes  |   No  |Partial|   No  | strvmstr |
-| Super Visual Football            |  Yes  |  Yes  |  Yes  |  Yes  | svf      |
+| Super Visual Football: European S|  Yes  |  Yes  |  Yes  |  Yes  | svf      |
 | Super Volleyball                 |  Yes  |  Yes  |  Yes  |  Yes  | svolley  |
 | Super World Court                |  Yes  |  Yes  |Partial|  Yes  | swcourt  |
 | Super World Stadium '92          |  Yes  |  Yes  |  Yes  |  Yes  | sws92    |
@@ -2317,6 +2357,7 @@ Internal Name
 | Tao Taido                        |  Yes  |  Yes  |  Yes  |   No  | taotaido |
 | Tapper                           |  Yes  |  Yes  |  Yes  |  Yes  | tapper   |
 | Targ                             |  Yes  |  Yes  | Yes(2)|  Yes  | targ     |
+| Target Ball                      |   No  |  Yes  |  Yes  |  Yes  | tgtball  |
 | Target Hits                      |   No  |  Yes  |  Yes  |  Yes  | targeth  |
 | Task Force Harrier               |   No  |  Yes  |  Yes  |  Yes  | tharrier |
 | Tattoo Assassins                 |  Yes  |  Yes  |  Yes  |  Yes  | tattass  |
@@ -2335,7 +2376,7 @@ Internal Name
 | Teki Paki                        |  Yes  |  Yes  |   No  |  Yes  | tekipaki |
 | Tekken                           |  Yes  |  Yes  |   No  |  Yes  | tekken   |
 | Tekken 2 Ver.B                   |  Yes  |  Yes  |   No  |  Yes  | tekken2  |
-| Tekken 3                         |   No  |  Yes  |   No  |  Yes  | tekken3  |
+| Tekken 3                         |  Yes  |  Yes  |   No  |  Yes  | tekken3  |
 | Tekken Tag Tournament            |   No  |  Yes  |   No  |  Yes  | tekkentt |
 | Tel Jan                          |  Yes  |  Yes  |  Yes  |  Yes  | teljan   |
 | Telephone Mahjong                |  Yes  |  Yes  |  Yes  |  Yes  | telmahjn |
@@ -2344,9 +2385,9 @@ Internal Name
 | Terminator 2 - Judgment Day      |  Yes  |  Yes  |  Yes  |  Yes  | term2    |
 | Terra Cresta                     |  Yes  |  Yes  |  Yes  |  Yes  | terracre |
 | Terra Force                      |   No  |  Yes  |  Yes  |  Yes  | terraf   |
-| Tetris                           |  Yes  |  Yes  |  Yes  |  Yes  | atetris  |
 | Tetris                           | No(1) |  Yes  |  Yes  |  Yes  | tetris   |
-| Tetris Plus                      |  Yes  |  Yes  |   No  |  Yes  | tetrisp  |
+| Tetris                           |  Yes  |  Yes  |  Yes  |  Yes  | atetris  |
+| Tetris Plus                      |  Yes  |  Yes  |Partial|  Yes  | tetrisp  |
 | Tetris Plus 2                    |  Yes  |  Yes  |  Yes  |  Yes  | tetrisp2 |
 | Tetris The Grand Master          |   No  |  Yes  |  Yes  |  Yes  | tgmj     |
 | Thief                            |  Yes  |  Yes  | Yes(2)|  Yes  | thief    |
@@ -2355,7 +2396,7 @@ Internal Name
 | Three Wonders                    |  Yes  |  Yes  |  Yes  |  Yes  | 3wonders |
 | Thunder & Lightning              |  Yes  |  Yes  |  Yes  |  Yes  | thunderl |
 | Thunder Blade                    |   No  |  Yes  |  Yes  |  Yes  | thndrbld |
-| Thunder Ceptor II                |  Yes  |  Yes  |  Yes  |  Yes  | tceptor2 |
+| Thunder Ceptor                   |  Yes  |  Yes  |  Yes  |  Yes  | tceptor  |
 | Thunder Cross                    |  Yes  |  Yes  |  Yes  |  Yes  | thunderx |
 | Thunder Cross II                 |  Yes  |  Yes  |  Yes  |  Yes  | thndrx2  |
 | Thunder Dragon                   | No(1) |  Yes  |   No  |  Yes  | tdragon  |
@@ -2385,6 +2426,7 @@ Internal Name
 | Toggle                           |  Yes  |  Yes  |  Yes  |  Yes  | toggle   |
 | Toki                             |  Yes  |  Yes  |  Yes  |  Yes  | toki     |
 | Toki no Senshi - Chrono Soldier  |  Yes  |  Yes  |  Yes  |   No  | tokisens |
+| Tokimeki Mahjong Paradise - Dear |   No  |  Yes  |   No  |  Yes  | tmmjprd  |
 | Tokimeki Memorial Taisen Puzzle-d|  Yes  |  Yes  |  Yes  |  Yes  | tkmmpzdm |
 | Tokio / Scramble Formation       | No(1) |  Yes  |  Yes  |  Yes  | tokio    |
 | Tokoro San no MahMahjan          |  Yes  |  Yes  |  Yes  |  Yes  | mahmajn  |
@@ -2424,11 +2466,11 @@ Internal Name
 | Triple Hunt                      |  Yes  |  Yes  |   No  |  Yes  | triplhnt |
 | Triple Punch                     |  Yes  |  Yes  |  Yes  |  Yes  | triplep  |
 | Triv Quiz                        |  Yes  |   No  |  Yes  |  Yes  | trivquiz |
-| Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviag2 |
-| Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviag1 |
 | Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviabb |
+| Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviag2 |
 | Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviayp |
 | Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviasp |
+| Trivial Pursuit                  |  Yes  |  Yes  |  Yes  |  Yes  | triviag1 |
 | Trog                             |  Yes  |  Yes  |  Yes  |  Yes  | trog     |
 | Trojan                           |  Yes  |  Yes  |  Yes  |  Yes  | trojan   |
 | Tron                             |  Yes  |  Yes  |  Yes  |  Yes  | tron     |
@@ -2508,7 +2550,7 @@ Internal Name
 | Victory Road                     |  Yes  |  Yes  |  Yes  |   No  | victroad |
 | Video Eight Ball                 |  Yes  |  Yes  |Partial|   No  | 8ball    |
 | Video Hustler                    |  Yes  |  Yes  |  Yes  |  Yes  | hustler  |
-| Video Pinball                    |   No  |  Yes  |   No  |  Yes  | videopin |
+| Video Pinball                    |  Yes  |  Yes  |   No  |  Yes  | videopin |
 | Viewpoint                        |  Yes  |  Yes  |  Yes  |  Yes  | viewpoin |
 | Vigilante                        |  Yes  |  Yes  |  Yes  |   No  | vigilant |
 | Vimana                           |  Yes  |  Yes  |   No  |  Yes  | vimana   |
@@ -2548,8 +2590,8 @@ Internal Name
 | Vs. Slalom                       |  Yes  |  Yes  |  Yes  |  Yes  | vsslalom |
 | Vs. Soccer                       |  Yes  |  Yes  |  Yes  |  Yes  | vssoccer |
 | Vs. Star Luster                  |  Yes  |  Yes  |  Yes  |  Yes  | starlstr |
-| Vs. Stroke and Match Golf        |  Yes  |  Yes  |  Yes  |  Yes  | smgolf   |
 | Vs. Stroke and Match Golf        |  Yes  |  Yes  |  Yes  |  Yes  | ladygolf |
+| Vs. Stroke and Match Golf        |  Yes  |  Yes  |  Yes  |  Yes  | smgolf   |
 | Vs. Super Mario Bros.            |  Yes  |  Yes  |  Yes  |  Yes  | suprmrio |
 | Vs. Super SkyKid                 |  Yes  |  Yes  |  Yes  |  Yes  | vsskykid |
 | Vs. Super Xevious                |  Yes  |  Yes  |  Yes  |  Yes  | supxevs  |
@@ -2672,9 +2714,11 @@ Internal Name
 | Zwackery                         |  Yes  |  Yes  |  Yes  |  Yes  | zwackery |
 | Zzyzzyxx                         |  Yes  |  Yes  |  Yes  |  Yes  | zzyzzyxx |
 | beatmania                        |  Yes  |  Yes  |  Yes  |  Yes  | bm1stmix |
+| beatmania 2nd MIX                |  Yes  |  Yes  |  Yes  |  Yes  | bm2ndmix |
 | beatmania 4th MIX                |  Yes  |  Yes  |  Yes  |  Yes  | bm4thmix |
 | beatmania CORE REMIX             |  Yes  |  Yes  |  Yes  |  Yes  | bmcorerm |
 | beatmania complete MIX           |  Yes  |  Yes  |  Yes  |  Yes  | bmcompmx |
+| beatmania f. Dreams Come True    |  Yes  |  Yes  |  Yes  |  Yes  | bmdct    |
 | hiphopmania complete MIX 2       |  Yes  |  Yes  |  Yes  |  Yes  | hmcompm2 |
 +----------------------------------+-------+-------+-------+-------+----------+
 

@@ -166,7 +166,7 @@ sound hardware is also different
 */
 
 static MEMORY_READ16_START( hyperpac_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, MRA16_RAM },
 
 	{ 0x500000, 0x500001, input_port_0_word_r },
@@ -178,7 +178,7 @@ static MEMORY_READ16_START( hyperpac_readmem )
 MEMORY_END
 
 static MEMORY_WRITE16_START( hyperpac_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM, &hyperpac_ram },
 	{ 0x300000, 0x300001, semicom_soundcmd_w },
 //	{ 0x400000, 0x400001,  }, ???
@@ -432,6 +432,83 @@ INPUT_PORTS_START( hyperpac )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( cookbib2 )
+	PORT_START	/* 500000.w */
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Lives ) )	// "Language" in the "test mode"
+	PORT_DIPSETTING(      0x0002, "3" )					// "Korean"
+	PORT_DIPSETTING(      0x0000, "5" )					// "English"
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, "Easy" )
+	PORT_DIPSETTING(      0x0060, "Normal" )
+	PORT_DIPSETTING(      0x0040, "Hard" )
+	PORT_DIPSETTING(      0x0020, "Hardest" )			// "Very Hard"
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// jump
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// fire
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// test mode only?
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500002.w */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )	// jump
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )	// fire
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )	// test mode only?
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500004.w */
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 /* SnowBros */
 
 static struct GfxLayout tilelayout =
@@ -584,7 +661,11 @@ static MACHINE_DRIVER_START( hyperpac )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
-
+static MACHINE_DRIVER_START( _4in1 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hyperpac)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -671,7 +752,7 @@ ROM_END
 /* SemiCom Games */
 
 ROM_START( hyperpac )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "hyperpac.h12", 0x00001, 0x20000, CRC(2cf0531a) SHA1(c4321d728845035507352d0bcf4348d28b92e85e) )
 	ROM_LOAD16_BYTE( "hyperpac.i12", 0x00000, 0x20000, CRC(9c7d85b8) SHA1(432d5fbe8bef875ce4a9aeb74a7b57dc79c709fd) )
 
@@ -688,7 +769,7 @@ ROM_START( hyperpac )
 ROM_END
 
 ROM_START( hyperpcb )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "hpacuh12.bin", 0x00001, 0x20000, CRC(633ab2c6) SHA1(534435fa602adebf651e1d42f7c96b01eb6634ef) )
 	ROM_LOAD16_BYTE( "hpacui12.bin", 0x00000, 0x20000, CRC(23dc00d1) SHA1(8d4d00f450b94912adcbb24073f9b3b01eab0450) )
 
@@ -705,39 +786,39 @@ ROM_START( hyperpcb )
 ROM_END
 
 ROM_START( moremorp )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "mmp_u52.bin",  0x00001, 0x40000, CRC(66baf9b2) )
-	ROM_LOAD16_BYTE( "mmp_u74.bin",  0x00000, 0x40000, CRC(7c6fede5) )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "mmp_u52.bin",  0x00001, 0x40000, CRC(66baf9b2) SHA1(f1d383a94ef4313cb02c59ace17b9562eddcfb3c) )
+	ROM_LOAD16_BYTE( "mmp_u74.bin",  0x00000, 0x40000, CRC(7c6fede5) SHA1(41bc539a6efe9eb2304243701857b972d2170bcf) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , CRC(4d098cad) )
+	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , CRC(4d098cad) SHA1(a79d417e7525a25dd6697da9f3d1de269e759d2e) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, CRC(211a2566) )
+	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, CRC(211a2566) SHA1(48138547822a8e76c101dd4189d581f80eee1e24) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "mmp_u75.bin", 0x000000, 0x80000, CRC(af9e824e) )
-	ROM_LOAD( "mmp_u76.bin", 0x080000, 0x80000, CRC(c42af064) )
-	ROM_LOAD( "mmp_u77.bin", 0x100000, 0x80000, CRC(1d7396e1) )
-	ROM_LOAD( "mmp_u78.bin", 0x180000, 0x80000, CRC(5508d80b) )
+	ROM_LOAD( "mmp_u75.bin", 0x000000, 0x80000, CRC(af9e824e) SHA1(2b68813bf025a34b8958033108e4f8d39fd618cb) )
+	ROM_LOAD( "mmp_u76.bin", 0x080000, 0x80000, CRC(c42af064) SHA1(f9d755e7cb52828d8594f7871932daf11443689f) )
+	ROM_LOAD( "mmp_u77.bin", 0x100000, 0x80000, CRC(1d7396e1) SHA1(bde7e925051408dd2371b5da8235a6a4cae8cf6a) )
+	ROM_LOAD( "mmp_u78.bin", 0x180000, 0x80000, CRC(5508d80b) SHA1(1b9a70a502b237fa11d1d55dce761e2def18873a) )
 ROM_END
 
 ROM_START( 3in1semi )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "u52",  0x00001, 0x40000, CRC(b0e4a0f7) )
-	ROM_LOAD16_BYTE( "u74",  0x00000, 0x40000, CRC(266862c4) )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "u52",  0x00001, 0x40000, CRC(b0e4a0f7) SHA1(e1f8b8ef020a85fcd7817814cf6c5d560e9e608d) )
+	ROM_LOAD16_BYTE( "u74",  0x00000, 0x40000, CRC(266862c4) SHA1(2c5c513fee99bdb6e0ae3e0e644e516bdaddd629) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(e40481da) )
+	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(e40481da) SHA1(1c1fabcb67693235eaa6ff59ae12a35854b5564a) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(c83c11be) )
+	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(c83c11be) SHA1(c05d96d61e5b8245232c85cbbcb7cc1e4e066492) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "u75", 0x000000, 0x80000, CRC(b66a0db6) )
-	ROM_LOAD( "u76", 0x080000, 0x80000, CRC(5f4b48ea) )
-	ROM_LOAD( "u77", 0x100000, 0x80000, CRC(d44211e3) )
-	ROM_LOAD( "u78", 0x180000, 0x80000, CRC(af596afc) )
+	ROM_LOAD( "u75", 0x000000, 0x80000, CRC(b66a0db6) SHA1(a4e604eb3c0a5b16b4b0bb99219045bf2146287c) )
+	ROM_LOAD( "u76", 0x080000, 0x80000, CRC(5f4b48ea) SHA1(e9dd1100d55b021b060990988c1e5271ce1ae35b) )
+	ROM_LOAD( "u77", 0x100000, 0x80000, CRC(d44211e3) SHA1(53af19dec03e76912632450414cdbcbb31cc094c) )
+	ROM_LOAD( "u78", 0x180000, 0x80000, CRC(af596afc) SHA1(875d7a51ff5c741cae4483d8da33df9cae8de52a) )
 ROM_END
 
 ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
@@ -751,28 +832,378 @@ ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
 
-	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* Sprites */
-	/* this only seems to have snowbros gfx? */
-	ROM_LOAD( "u78", 0x000000, 0x100000, BAD_DUMP CRC(0f925f01) SHA1(74f35185ffb19ca291673ce8a5330fd11fede276) )
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "u78", 0x000000, 0x100000, BAD_DUMP CRC(5a06a928) SHA1(d35f239f2dddfe174547c1404aed6faf6b61e19f) ) // half missing
 ROM_END
 
 
 ROM_START( cookbib2 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "cookbib2.01",  0x00000, 0x40000, CRC(65aafde2) )
-	ROM_LOAD16_BYTE( "cookbib2.02",  0x00001, 0x40000, CRC(b2909460) )
+	ROM_LOAD16_BYTE( "cookbib2.02",  0x00001, 0x40000, CRC(b2909460) SHA1(2438638af870cfc105631d2b5e5a27a64ab5394d) )
+	ROM_LOAD16_BYTE( "cookbib2.01",  0x00000, 0x40000, CRC(65aafde2) SHA1(01f9f261527c35182f0445d641d987aa86ad750f) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "cookbib2.07", 0x00000, 0x10000 , CRC(f59f1c9a) )
+	ROM_LOAD( "cookbib2.07", 0x00000, 0x10000 , CRC(f59f1c9a) SHA1(2830261fd55249e015514fcb4cf8392e83b7fd0d) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(ae6d8ed5) SHA1(410cdacb9b90ea345c0e4be85e60a138f45a51f1) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "cookbib2.06", 0x00000, 0x20000, CRC(5e6f76b8) )
+	ROM_LOAD( "cookbib2.06", 0x00000, 0x20000, CRC(5e6f76b8) SHA1(725800143dfeaa6093ed5fcc5b9f15678ae9e547) )
 
 	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "cookbib2.05", 0x000000, 0x80000, CRC(89fb38ce) )
-	ROM_LOAD( "cookbib2.04", 0x080000, 0x80000, CRC(f240111f) )
-	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, CRC(e1604821) )
+	ROM_LOAD( "cookbib2.05", 0x000000, 0x80000, CRC(89fb38ce) SHA1(1b39dd9c2743916b8d8af590bd92fe4819c2454b) )
+	ROM_LOAD( "cookbib2.04", 0x080000, 0x80000, CRC(f240111f) SHA1(b2c3b6e3d916fc68e1fd258b1279b6c39e1f0108) )
+	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, CRC(e1604821) SHA1(bede6bdd8331128b9f2b229d718133470bf407c9) )
 ROM_END
+
+static DRIVER_INIT( cookbib2 )
+{
+//	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
+//	hyperpac_ram[0xf000/2] = 0x46fc;
+//	hyperpac_ram[0xf002/2] = 0x2700;
+
+// verified on real hardware, need to move this to a file really
+
+//	static data16_t cookbib2_mcu68k[] =
+//	{
+//		// moved to protdata.bin
+//	};
+
+
+
+
+//for (i = 0;i < sizeof(cookbib2_mcu68k)/sizeof(cookbib2_mcu68k[0]);i++)
+//		hyperpac_ram[0xf000/2 + i] = cookbib2_mcu68k[i];
+
+	for (i = 0;i < 0x200/2;i++)
+		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+
+
+	// trojan is actually buggy and gfx flicker like crazy
+	// but we can pause the system after bootup with HALT line of 68k to get the table before
+	// it goes nuts
+
+	//	hyperpac_ram[0xf07a/2] = 0x4e73;
+	//	hyperpac_ram[0xf000/2] = 0x4e73;
+
+#if 0
+
+	/* interrupt wait loop? */
+	HCROM[0x014942/2] = 0x4eb9;
+	HCROM[0x014944/2] = 0x0004;
+	HCROM[0x014946/2] = 0x8000;
+	HCROM[0x014948/2] = 0x4e71;
+
+	/* interrupt wait loop? */
+	HCROM[0x014968/2] = 0x4eb9;
+	HCROM[0x01496a/2] = 0x0004;
+	HCROM[0x01496c/2] = 0x8100;
+	HCROM[0x01496e/2] = 0x4e71;
+
+	/* interrupt wait loop? */
+	HCROM[0x014560/2] = 0x4eb9;
+	HCROM[0x014562/2] = 0x0004;
+	HCROM[0x014564/2] = 0x8200;
+	HCROM[0x014566/2] = 0x4e71;
+
+	/* new code for interrupt wait */
+	HCROM[0x048000/2] = 0x4a79;
+	HCROM[0x048002/2] = 0x0010;
+	HCROM[0x048004/2] = 0x2462;
+	HCROM[0x048006/2] = 0x66f8;
+	HCROM[0x048008/2] = 0x4eb9;
+	HCROM[0x04800a/2] = 0x0004;
+	HCROM[0x04800c/2] = 0x8300;
+	HCROM[0x04800e/2] = 0x4e75;
+
+	/* new code for interrupt wait */
+	HCROM[0x048100/2] = 0x4a79;
+	HCROM[0x048102/2] = 0x0010;
+	HCROM[0x048104/2] = 0x2460;
+	HCROM[0x048106/2] = 0x66f8;
+	HCROM[0x048108/2] = 0x4eb9;
+	HCROM[0x04810a/2] = 0x0004;
+	HCROM[0x04810c/2] = 0x8300;
+	HCROM[0x04810e/2] = 0x4e75;
+
+	/* new code for interrupt wait */
+	HCROM[0x048200/2] = 0x4a79;
+	HCROM[0x048202/2] = 0x0010;
+	HCROM[0x048204/2] = 0x2490;
+	HCROM[0x048206/2] = 0x66f8;
+	HCROM[0x048208/2] = 0x4eb9;
+	HCROM[0x04820a/2] = 0x0004;
+	HCROM[0x04820c/2] = 0x8300;
+	HCROM[0x04820e/2] = 0x4e75;
+
+
+
+	/* put registers on stack */
+	HCROM[0x048300/2] = 0x48e7;
+	HCROM[0x048302/2] = 0xfffe;
+
+	/* wipe sprite ram (fill with 0x0002) */
+
+	/* put the address we want to write TO in A2 */
+	HCROM[0x048304/2] = 0x45f9;
+	HCROM[0x048306/2] = 0x0070;
+	HCROM[0x048308/2] = 0x0000;
+
+	/* put the number of words we want to clear into D0 */
+	HCROM[0x04830a/2] = 0x203c;
+	HCROM[0x04830c/2] = 0x0000;
+	HCROM[0x04830e/2] = 0x1000;
+
+	/* write 0x0002 to A2 */
+	HCROM[0x048310/2] = 0x34bc;
+	HCROM[0x048312/2] = 0x0002;
+
+
+	/* add 1 to write address a2 */
+	HCROM[0x048314/2] = 0xd5fc;
+	HCROM[0x048316/2] = 0x0000;
+	HCROM[0x048318/2] = 0x0002;
+
+	/* decrease counter d0 */
+	HCROM[0x04831a/2] = 0x5380;
+
+	/* compare d0 to 0 */
+	HCROM[0x04831c/2] = 0x0c80;
+	HCROM[0x04831e/2] = 0x0000;
+	HCROM[0x048320/2] = 0x0000;
+
+	/* if its not 0 then branch back */
+	HCROM[0x048322/2] = 0x66ec;
+
+	/* ram has been wiped */
+
+	/* put the address we want to read protection data  in A2 */
+	HCROM[0x048324/2] = 0x45f9;
+	HCROM[0x048326/2] = 0x0010;
+//	HCROM[0x048328/2] = 0xf000;
+//	HCROM[0x048328/2] = 0xf000+0xb4;
+	HCROM[0x048328/2] = 0xf000+0xb4+0xb4;
+
+	/* put the address of spriteram  in A0 */
+	HCROM[0x04832a/2] = 0x41f9;
+	HCROM[0x04832c/2] = 0x0070;
+	HCROM[0x04832e/2] = 0x0000;
+
+	/* put the number of rows into D3 */
+	HCROM[0x048330/2] = 0x263c;
+	HCROM[0x048332/2] = 0x0000;
+	HCROM[0x048334/2] = 0x0012;
+
+	/* put the y co-ordinate of rows into D6 */
+	HCROM[0x048336/2] = 0x2c3c;
+	HCROM[0x048338/2] = 0x0000;
+	HCROM[0x04833a/2] = 0x0014;
+
+	/* put the number of bytes per row into D2 */
+	HCROM[0x04833c/2] = 0x243c;
+	HCROM[0x04833e/2] = 0x0000;
+	HCROM[0x048340/2] = 0x000a;
+
+	/* put the x co-ordinate of rows into D5 */
+	HCROM[0x048342/2] = 0x2a3c;
+	HCROM[0x048344/2] = 0x0000;
+	HCROM[0x048346/2] = 0x0010;
+
+	// move content of a2 to d4 (byte)
+	HCROM[0x048348/2] = 0x1812;
+
+	HCROM[0x04834a/2] = 0xe84c; // shift d4 right by 4
+
+	HCROM[0x04834c/2] = 0x0244; // mask with 0x000f
+	HCROM[0x04834e/2] = 0x000f; //
+
+	/* jump to character draw to draw first bit */
+	HCROM[0x048350/2] = 0x4eb9;
+	HCROM[0x048352/2] = 0x0004;
+	HCROM[0x048354/2] = 0x8600;
+
+	// increase x-cord
+	HCROM[0x048356/2] = 0x0645;
+	HCROM[0x048358/2] = 0x000a;
+
+
+	/* add 0x10 to draw address a0 */
+	HCROM[0x04835a/2] = 0xd1fc;
+	HCROM[0x04835c/2] = 0x0000;
+	HCROM[0x04835e/2] = 0x0010;
+
+
+	// move content of a2 to d4 (byte)
+	HCROM[0x048360/2] = 0x1812;
+
+	HCROM[0x048362/2] = 0x0244; // mask with 0x000f
+	HCROM[0x048364/2] = 0x000f; //
+
+	/* jump to character draw to draw second bit */
+	HCROM[0x048366/2] = 0x4eb9;
+	HCROM[0x048368/2] = 0x0004;
+	HCROM[0x04836a/2] = 0x8600;
+
+	// increase x-cord
+	HCROM[0x04836c/2] = 0x0645;
+	HCROM[0x04836e/2] = 0x000c;
+
+	/* add 0x10 to draw address a0 */
+	HCROM[0x048370/2] = 0xd1fc;
+	HCROM[0x048372/2] = 0x0000;
+	HCROM[0x048374/2] = 0x0010;
+
+// newcode
+	/* add 1 to read address a2 */
+	HCROM[0x048376/2] = 0xd5fc;
+	HCROM[0x048378/2] = 0x0000;
+	HCROM[0x04837a/2] = 0x0001;
+
+	/* decrease counter d2 (row count)*/
+	HCROM[0x04837c/2] = 0x5382;
+
+	/* compare d2 to 0 */
+	HCROM[0x04837e/2] = 0x0c82;
+	HCROM[0x048380/2] = 0x0000;
+	HCROM[0x048382/2] = 0x0000;
+
+	/* if its not 0 then branch back */
+	HCROM[0x048384/2] = 0x66c2;
+
+	// increase y-cord d6
+	HCROM[0x048386/2] = 0x0646;
+	HCROM[0x048388/2] = 0x000c;
+
+	/* decrease counter d3 */
+	HCROM[0x04838a/2] = 0x5383;
+
+	/* compare d3 to 0 */
+	HCROM[0x04838c/2] = 0x0c83;
+	HCROM[0x04838e/2] = 0x0000;
+	HCROM[0x048390/2] = 0x0000;
+
+	/* if its not 0 then branch back */
+	HCROM[0x048392/2] = 0x66a8;
+
+	/* get back registers from stack*/
+	HCROM[0x048394/2] = 0x4cdf;
+	HCROM[0x048396/2] = 0x7fff;
+
+	/* rts */
+	HCROM[0x048398/2] = 0x4e75;
+
+	/* Draw a character! */
+	/* D6 = y-coordinate
+	   D5 = x-coordinate
+	   D4 = value to draw
+
+	   A0 = spriteram base */
+
+	// 0002 0002 0002 0010 00xx 00yy 00nn 000n
+
+	// 357c 0020 000c
+	// 337c = a1
+	// move.w #$20, (#$c, A2)
+
+	HCROM[0x048600/2] = 0x317c;
+	HCROM[0x048602/2] = 0x0010;
+	HCROM[0x048604/2] = 0x0006;
+
+	HCROM[0x048606/2] = 0x3145;
+	HCROM[0x048608/2] = 0x0008;
+
+	HCROM[0x04860a/2] = 0x3146;
+	HCROM[0x04860c/2] = 0x000a;
+
+/* get true value */
+
+	/* put lookuptable address in  A3 */
+	HCROM[0x04860e/2] = 0x47f9;
+	HCROM[0x048610/2] = 0x0004;
+	HCROM[0x048612/2] = 0x8800;
+
+	HCROM[0x048614/2] = 0x3004; // d4 -> d0
+	HCROM[0x048616/2] = 0xe348;
+
+	HCROM[0x048618/2] = 0x3173;
+	HCROM[0x04861a/2] = 0x0000;
+	HCROM[0x04861c/2] = 0x000c;
+
+/* not value */
+
+	HCROM[0x04861e/2] = 0x317c;
+	HCROM[0x048620/2] = 0x0000;
+	HCROM[0x048622/2] = 0x000e;
+
+	/* rts */
+	HCROM[0x048624/2] = 0x4e75;
+
+
+	/* table used for lookup by the draw routine to get real tile numbers */
+
+	HCROM[0x048800/2] = 0x0010;
+	HCROM[0x048802/2] = 0x0011;
+	HCROM[0x048804/2] = 0x0012;
+	HCROM[0x048806/2] = 0x0013;
+	HCROM[0x048808/2] = 0x0014;
+	HCROM[0x04880a/2] = 0x0015;
+	HCROM[0x04880c/2] = 0x0016;
+	HCROM[0x04880e/2] = 0x0017;
+	HCROM[0x048810/2] = 0x0018;
+	HCROM[0x048812/2] = 0x0019;
+	HCROM[0x048814/2] = 0x0021;
+	HCROM[0x048816/2] = 0x0022;
+	HCROM[0x048818/2] = 0x0023;
+	HCROM[0x04881a/2] = 0x0024;
+	HCROM[0x04881c/2] = 0x0025;
+	HCROM[0x04881e/2] = 0x0026;
+
+
+
+/*
+10 0
+11 1
+12 2
+13 3
+14 4
+15 5
+16 6
+17 7
+18 8
+19 9
+21 a
+22 b
+23 c
+24 d
+25 e
+26 f
+*/
+
+
+
+
+
+	{
+		FILE *fp;
+
+		fp=fopen("cookie", "w+b");
+		if (fp)
+		{
+			fwrite(HCROM, 0x80000, 1, fp);
+			fclose(fp);
+		}
+	}
+#endif
+}
+
 
 static DRIVER_INIT( hyperpac )
 {
@@ -786,6 +1217,11 @@ static DRIVER_INIT( hyperpac )
 	hyperpac_ram[0xe082/2] = 0xba98;
 	hyperpac_ram[0xe084/2] = 0x7654;
 	hyperpac_ram[0xe086/2] = 0x3210;
+}
+
+READ16_HANDLER ( _4in1_02_read )
+{
+	return 0x0202;
 }
 
 static DRIVER_INIT(4in1boot)
@@ -819,18 +1255,8 @@ static DRIVER_INIT(4in1boot)
 		free(buffer);
 	}
 
-	/* is this swapped too? i'm not sure */
-	src = memory_region(REGION_GFX1);
-	len = memory_region_length(REGION_GFX1);
+	install_mem_read16_handler (0, 0x200000, 0x200001, _4in1_02_read );
 
-	if ((buffer = malloc(len)))
-	{
-		int i;
-		for (i = 0;i < len; i++)
-			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)];
-		memcpy(src,buffer,len);
-		free(buffer);
-	}
 
 }
 
@@ -842,10 +1268,10 @@ GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Win
 /* SemiCom Games */
 GAME( 1995, hyperpac, 0,        hyperpac, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
 GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
+GAME (1996, cookbib2, 0,        hyperpac, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" ) // sound cuts out in later levels? (investigate)
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
 GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1996, cookbib2, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Cookie and Bibi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-/* bad dump? */
-GAMEX(199?, 4in1boot, 0,        hyperpac, hyperpac, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING )
+/* bad dump */
+GAMEX(199?, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING ) // gfx rom is half the size it should be, pacman 2 and snowbros are playable tho

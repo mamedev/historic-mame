@@ -15,7 +15,6 @@ Supported games :
 
 Known issues :
 ================
- - Dip switch settings in Atomic Robokid may be wrong.
  - Cocktail mode has not been supported yet.
  - Omega Fighter has a input protection. Currently it is hacked instead
    of emulated.
@@ -27,17 +26,21 @@ Known issues :
  - When RAM and ROM check and color test mode, the palette is overflows.
    16 bit color is needed ?
 
-TODO :
-========
- - Correct dip switch settings in Atomic Robokid
- - Support cocktail mode
- - Emulate input protection for Omega Fighter.
-
 NOTE :
 ========
  - To skip dip setting display, press 1P + 2P start in Atomic Robokid.
 
 ***************************************************************************/
+
+/*
+
+	TODO:
+
+	- "XXX Intturupt Hold ???" msg at post screen
+	- coin counters/lockouts
+	- sprites are invisible in flipscreen mode
+
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -47,43 +50,44 @@ NOTE :
   Variables
 **************************************************************************/
 
-extern unsigned char *omegaf_fg_videoram;
+extern UINT8 *omegaf_fg_videoram;
 extern size_t omegaf_fgvideoram_size;
 
-extern unsigned char *omegaf_bg0_scroll_x;
-extern unsigned char *omegaf_bg1_scroll_x;
-extern unsigned char *omegaf_bg2_scroll_x;
-extern unsigned char *omegaf_bg0_scroll_y;
-extern unsigned char *omegaf_bg1_scroll_y;
-extern unsigned char *omegaf_bg2_scroll_y;
+extern UINT8 *omegaf_bg0_scroll_x;
+extern UINT8 *omegaf_bg1_scroll_x;
+extern UINT8 *omegaf_bg2_scroll_x;
+extern UINT8 *omegaf_bg0_scroll_y;
+extern UINT8 *omegaf_bg1_scroll_y;
+extern UINT8 *omegaf_bg2_scroll_y;
 
-WRITE_HANDLER( omegaf_bg0_bank_w );
-WRITE_HANDLER( omegaf_bg1_bank_w );
-WRITE_HANDLER( omegaf_bg2_bank_w );
-READ_HANDLER( omegaf_bg0_videoram_r );
-READ_HANDLER( omegaf_bg1_videoram_r );
-READ_HANDLER( omegaf_bg2_videoram_r );
-WRITE_HANDLER( omegaf_bg0_videoram_w );
-WRITE_HANDLER( omegaf_bg1_videoram_w );
-WRITE_HANDLER( omegaf_bg2_videoram_w );
-WRITE_HANDLER( robokid_bg0_videoram_w );
-WRITE_HANDLER( robokid_bg1_videoram_w );
-WRITE_HANDLER( robokid_bg2_videoram_w );
-WRITE_HANDLER( omegaf_bg0_scrollx_w );
-WRITE_HANDLER( omegaf_bg1_scrollx_w );
-WRITE_HANDLER( omegaf_bg2_scrollx_w );
-WRITE_HANDLER( omegaf_bg0_scrolly_w );
-WRITE_HANDLER( omegaf_bg1_scrolly_w );
-WRITE_HANDLER( omegaf_bg2_scrolly_w );
-WRITE_HANDLER( omegaf_fgvideoram_w );
-WRITE_HANDLER( omegaf_bg0_enabled_w );
-WRITE_HANDLER( omegaf_bg1_enabled_w );
-WRITE_HANDLER( omegaf_bg2_enabled_w );
-WRITE_HANDLER( omegaf_sprite_overdraw_w );
+extern WRITE_HANDLER( omegaf_bg0_bank_w );
+extern WRITE_HANDLER( omegaf_bg1_bank_w );
+extern WRITE_HANDLER( omegaf_bg2_bank_w );
+extern READ_HANDLER( omegaf_bg0_videoram_r );
+extern READ_HANDLER( omegaf_bg1_videoram_r );
+extern READ_HANDLER( omegaf_bg2_videoram_r );
+extern WRITE_HANDLER( omegaf_bg0_videoram_w );
+extern WRITE_HANDLER( omegaf_bg1_videoram_w );
+extern WRITE_HANDLER( omegaf_bg2_videoram_w );
+extern WRITE_HANDLER( robokid_bg0_videoram_w );
+extern WRITE_HANDLER( robokid_bg1_videoram_w );
+extern WRITE_HANDLER( robokid_bg2_videoram_w );
+extern WRITE_HANDLER( omegaf_bg0_scrollx_w );
+extern WRITE_HANDLER( omegaf_bg1_scrollx_w );
+extern WRITE_HANDLER( omegaf_bg2_scrollx_w );
+extern WRITE_HANDLER( omegaf_bg0_scrolly_w );
+extern WRITE_HANDLER( omegaf_bg1_scrolly_w );
+extern WRITE_HANDLER( omegaf_bg2_scrolly_w );
+extern WRITE_HANDLER( omegaf_fgvideoram_w );
+extern WRITE_HANDLER( omegaf_bg0_enabled_w );
+extern WRITE_HANDLER( omegaf_bg1_enabled_w );
+extern WRITE_HANDLER( omegaf_bg2_enabled_w );
+extern WRITE_HANDLER( omegaf_sprite_overdraw_w );
+extern WRITE_HANDLER( omegaf_flipscreen_w );
 
-VIDEO_START( omegaf );
-VIDEO_START( robokid );
-VIDEO_UPDATE( omegaf );
+extern VIDEO_START( omegaf );
+extern VIDEO_START( robokid );
+extern VIDEO_UPDATE( omegaf );
 
 static int omegaf_bank_latch = 2;
 
@@ -94,7 +98,7 @@ static int omegaf_bank_latch = 2;
 
 static DRIVER_INIT( omegaf )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/* Hack the input protection. $00 and $01 code is written to $C005 */
 	/* and $C006.                                                      */
@@ -144,8 +148,7 @@ INPUT_PORTS_START( omegaf )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START			/* Player 2 inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -154,16 +157,14 @@ INPUT_PORTS_START( omegaf )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START			/* System inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -191,10 +192,10 @@ INPUT_PORTS_START( omegaf )
 
 	PORT_START 			/* DSW 1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "20k" )
-	PORT_DIPSETTING(    0x03, "30k" )
-	PORT_DIPSETTING(    0x01, "50k" )
-	PORT_DIPSETTING(    0x02, "100k" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x03, "30000" )
+	PORT_DIPSETTING(    0x01, "50000" )
+	PORT_DIPSETTING(    0x02, "100000" )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) )
@@ -221,10 +222,9 @@ INPUT_PORTS_START( robokid )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	// fire
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )	// jump
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START			/* Player 2 inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -233,16 +233,15 @@ INPUT_PORTS_START( robokid )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START			/* System inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -251,11 +250,11 @@ INPUT_PORTS_START( robokid )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x02, "50k, then every 100k" )
-	PORT_DIPSETTING(	0x00, "None" )
+	PORT_DIPSETTING(    0x02, "50K 100K+" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Normal" )
-	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -273,18 +272,7 @@ INPUT_PORTS_START( robokid )
 
 	PORT_START 			/* DSW 1 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x1e, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
@@ -296,16 +284,16 @@ INPUT_PORTS_START( robokid )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( robokidj )
 	PORT_START			/* Player 1 inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	// fire
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )	// jump
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START			/* Player 2 inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -314,16 +302,14 @@ INPUT_PORTS_START( robokidj )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START			/* System inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )	/* keep pressed during boot to enter service mode */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -332,11 +318,11 @@ INPUT_PORTS_START( robokidj )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x02, "30k, then every 50k" )
-	PORT_DIPSETTING(	0x00, "50k, then every 80k" )
+	PORT_DIPSETTING(    0x02, "30K 50K+" )
+	PORT_DIPSETTING(	0x00, "50K 80K+" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Normal" )
-	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -354,18 +340,7 @@ INPUT_PORTS_START( robokidj )
 
 	PORT_START 			/* DSW 1 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x1e, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
@@ -384,7 +359,7 @@ INPUT_PORTS_END
 
 static WRITE_HANDLER( omegaf_bankselect_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	if ( (data & 0x0f) != omegaf_bank_latch )
@@ -429,7 +404,7 @@ MEMORY_END
 static MEMORY_WRITE_START( omegaf_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc000, soundlatch_w },
-	{ 0xc001, 0xc001, MWA_NOP },
+	{ 0xc001, 0xc001, omegaf_flipscreen_w },
 	{ 0xc002, 0xc002, omegaf_bankselect_w },
 	{ 0xc003, 0xc003, omegaf_sprite_overdraw_w },
 	{ 0xc004, 0xc004, MWA_NOP },							/* input protection */
@@ -484,6 +459,7 @@ static MEMORY_WRITE_START( robokid_writemem )
 	{ 0xd400, 0xd7ff, robokid_bg1_videoram_w },				/* BG1 video RAM */
 	{ 0xd800, 0xdbff, robokid_bg0_videoram_w },				/* BG0 video RAM */
 	{ 0xdc00, 0xdc00, soundlatch_w },
+	{ 0xdc01, 0xdc01, omegaf_flipscreen_w },
 	{ 0xdc02, 0xdc02, omegaf_bankselect_w },
 	{ 0xdc03, 0xdc03, omegaf_sprite_overdraw_w },
 	{ 0xdd00, 0xdd01, omegaf_bg0_scrollx_w, &omegaf_bg0_scroll_x },
@@ -515,6 +491,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xe000, 0xe000, MWA_NOP },
 	{ 0xeff5, 0xeff6, MWA_NOP },	/* sample frequency ??? */
 	{ 0xefee, 0xefee, MWA_NOP },	/* chip command ?? */
+	{ 0xf000, 0xf000, MWA_NOP },	// ???
 MEMORY_END
 
 static PORT_READ_START( sound_readport )
@@ -661,7 +638,7 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( omegaf )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)		/* 12000000/2 ??? */
+	MDRV_CPU_ADD_TAG("main", Z80, 12000000/2)		/* 12000000/2 ??? */
 	MDRV_CPU_MEMORY(omegaf_readmem,omegaf_writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(omegaf_interrupt,1)
 
@@ -691,34 +668,13 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( robokid )
+	MDRV_IMPORT_FROM(omegaf)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)		/* 12000000/2 ??? */
-	MDRV_CPU_MEMORY(robokid_readmem,robokid_writemem)	/* very sensitive to these settings */
-	MDRV_CPU_VBLANK_INT(omegaf_interrupt,1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(robokid_readmem,robokid_writemem)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(10)					/* number of slices per frame */
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*16, 32*16)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
 	MDRV_GFXDECODE(robokid_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
-
 	MDRV_VIDEO_START(robokid)
-	MDRV_VIDEO_UPDATE(omegaf)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
 

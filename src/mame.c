@@ -189,17 +189,19 @@ static struct artwork_callbacks mame_artwork_callbacks =
 
 ***************************************************************************/
 
-static void *mame_hard_disk_open(const char *filename, const char *mode);
-static void mame_hard_disk_close(void *file);
-static UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mame_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer);
+static struct chd_interface_file *mame_chd_open(const char *filename, const char *mode);
+static void mame_chd_close(struct chd_interface_file *file);
+static UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 mame_chd_length(struct chd_interface_file *file);
 
-static struct hard_disk_interface mame_hard_disk_interface =
+static struct chd_interface mame_chd_interface =
 {
-	mame_hard_disk_open,
-	mame_hard_disk_close,
-	mame_hard_disk_read,
-	mame_hard_disk_write
+	mame_chd_open,
+	mame_chd_close,
+	mame_chd_read,
+	mame_chd_write,
+	mame_chd_length
 };
 
 
@@ -378,7 +380,7 @@ static int init_machine(void)
 	}
 
 	/* init the hard drive interface now, before attempting to load */
-	hard_disk_set_interface(&mame_hard_disk_interface);
+	chd_set_interface(&mame_chd_interface);
 
 	/* load the ROMs if we have some */
 	if (gamedrv->rom && rom_load(gamedrv->rom) != 0)
@@ -603,7 +605,7 @@ static void shutdown_machine(void)
 		free_memory_region(i);
 
 	/* close all hard drives */
-	hard_disk_close_all();
+	chd_close_all();
 
 	/* reset the CPU system */
 	cpu_exit();
@@ -614,9 +616,6 @@ static void shutdown_machine(void)
 
 	/* close down the input system */
 	code_close();
-
-	/* close down the localization */
-	uistring_shutdown();
 
 	/* reset the saved states */
 	state_save_reset();
@@ -1558,11 +1557,11 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 
 
 /*-------------------------------------------------
-	mame_hard_disk_open - interface for opening
+	mame_chd_open - interface for opening
 	a hard disk image
 -------------------------------------------------*/
 
-void *mame_hard_disk_open(const char *filename, const char *mode)
+struct chd_interface_file *mame_chd_open(const char *filename, const char *mode)
 {
 	/* look for read-only drives first in the ROM path */
 	if (mode[0] == 'r' && !strchr(mode, '+'))
@@ -1582,17 +1581,17 @@ void *mame_hard_disk_open(const char *filename, const char *mode)
 	}
 
 	/* look for read/write drives in the diff area */
-	return mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
+	return (struct chd_interface_file *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
 }
 
 
 
 /*-------------------------------------------------
-	mame_hard_disk_close - interface for closing
+	mame_chd_close - interface for closing
 	a hard disk image
 -------------------------------------------------*/
 
-void mame_hard_disk_close(void *file)
+void mame_chd_close(struct chd_interface_file *file)
 {
 	mame_fclose((mame_file *)file);
 }
@@ -1600,11 +1599,11 @@ void mame_hard_disk_close(void *file)
 
 
 /*-------------------------------------------------
-	mame_hard_disk_read - interface for reading
+	mame_chd_read - interface for reading
 	from a hard disk image
 -------------------------------------------------*/
 
-UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
+UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fread((mame_file *)file, buffer, count);
@@ -1613,14 +1612,25 @@ UINT32 mame_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer
 
 
 /*-------------------------------------------------
-	mame_hard_disk_write - interface for writing
+	mame_chd_write - interface for writing
 	to a hard disk image
 -------------------------------------------------*/
 
-UINT32 mame_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
+UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fwrite((mame_file *)file, buffer, count);
+}
+
+
+/*-------------------------------------------------
+	mame_chd_length - interface for getting
+	the length a hard disk image
+-------------------------------------------------*/
+
+UINT64 mame_chd_length(struct chd_interface_file *file)
+{
+	return mame_fsize((mame_file *)file);
 }
 
 
@@ -1769,7 +1779,6 @@ static int validitychecks(void)
 				}
 				if (ROMENTRY_ISFILE(romp))
 				{
-					int pre,post;
 					const char *hash;
 
 					last_name = c = ROM_GETNAME(romp);
@@ -1781,25 +1790,6 @@ static int validitychecks(void)
 							error = 1;
 						}
 						c++;
-					}
-
-					c = ROM_GETNAME(romp);
-					pre = 0;
-					post = 0;
-					while (*c && *c != '.')
-					{
-						pre++;
-						c++;
-					}
-					while (*c)
-					{
-						post++;
-						c++;
-					}
-					if (pre > 8 || post > 4)
-					{
-						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,ROM_GETNAME(romp));
-						error = 1;
 					}
 
 					hash = ROM_GETHASHDATA(romp);
@@ -1997,7 +1987,7 @@ static int validitychecks(void)
 									printf("%s: %s wrong port read handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->source_file,drivers[i]->name,pra->start,pra->end,alignunit);
 									error = 1;
 								}
-							
+
 							}
 							pra++;
 						}
@@ -2053,7 +2043,7 @@ static int validitychecks(void)
 									printf("%s: %s wrong port write handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->source_file,drivers[i]->name,pwa->start,pwa->end,alignunit);
 									error = 1;
 								}
-						
+
 							}
 							pwa++;
 						}

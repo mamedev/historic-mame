@@ -94,7 +94,13 @@ struct rc_option fileio_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+#ifndef MESS
 	{ "rompath", "rp", rc_string, &pathlist[FILETYPE_ROM].rawpath, "roms", 0, 0, NULL, "path to romsets" },
+#else
+	{ "biospath", "bp", rc_string, &pathlist[FILETYPE_ROM].rawpath, "bios", 0, 0, NULL, "path to BIOS sets" },
+	{ "softwarepath", "swp", rc_string, &pathlist[FILETYPE_IMAGE].rawpath, "software", 0, 0, NULL, "path to software" },
+	{ "CRC_directory", "crc", rc_string, &pathlist[FILETYPE_CRC].rawpath, "crc", 0, 0, NULL, "path to CRC files" },
+#endif
 	{ "samplepath", "sp", rc_string, &pathlist[FILETYPE_SAMPLE].rawpath, "samples", 0, 0, NULL, "path to samplesets" },
 #ifdef __WIN32__
 	{ "inipath", NULL, rc_string, &pathlist[FILETYPE_INI].rawpath, ".;ini", 0, 0, NULL, "path to ini files" },
@@ -112,8 +118,13 @@ struct rc_option fileio_opts[] =
 	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "diff", 0, 0, NULL, "directory for hard drive image difference files" },
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, "ctrlr", 0, 0, NULL, "directory to save controller definitions" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
+#ifdef MESS
+	{ "sysinfo_file", NULL, rc_string, &history_filename, "sysinfo.dat", 0, 0, NULL, NULL },
+	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, "messinfo.dat", 0, 0, NULL, NULL },
+#else
 	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
+#endif
 
 #ifdef MMSND
 	{ "MMSND directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -391,6 +402,11 @@ static void compose_path(TCHAR *output, int pathtype, int pathindex, const char 
 {
 	const char *basepath = get_path_for_filetype(pathtype, pathindex, NULL);
 	TCHAR *p;
+
+#ifdef MESS
+	if (osd_is_absolute_path(filename))
+		basepath = NULL;
+#endif
 
 	/* compose the full path */
 	*output = 0;
@@ -672,6 +688,22 @@ void osd_fclose(osd_file *file)
 }
 
 
+
+#ifdef MESS
+//============================================================
+//	osd_create_directory
+//============================================================
+
+int osd_create_directory(int pathtype, int pathindex, const char *dirname)
+{
+	TCHAR fullpath[1024];
+
+	/* compose the full path */
+	compose_path(fullpath, pathtype, pathindex, dirname);
+
+	return CreateDirectory(fullpath, NULL) ? 0 : 1;
+}
+#endif
 
 //============================================================
 //	osd_display_loading_rom_message

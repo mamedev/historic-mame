@@ -1337,13 +1337,11 @@ ROM_START( magspot )
 	ROM_LOAD( "ms8.bin",	  0x0000, 0x0800, CRC(9e1d63a2) SHA1(d8642e515871da44880e105e6891c4b25222744f) )
 	ROM_LOAD( "ms7.bin",	  0x0800, 0x0800, CRC(1ab338d3) SHA1(4e3bf93f94119fd10c40953245cec735db8417fb) )
 
-	// from magspot2 - verify its the same on this
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ms.d9",        0x0000, 0x0020, BAD_DUMP CRC(36e2aa2a) SHA1(4813b013cb8260157858e3adc7323efc6654e170) )
+	ROM_LOAD( "ms.d9",        0x0000, 0x0020, CRC(36e2aa2a) SHA1(4813b013cb8260157858e3adc7323efc6654e170) )
 
-	// from magspot2 - verify its the same on this
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
-	ROM_LOAD( "ms.e2",        0x0000, 0x0400, BAD_DUMP CRC(89f23ebd) SHA1(a56bda82f8be8e541a50d2a411ada89a6d9c0373) )
+	ROM_LOAD( "ms.e2",        0x0000, 0x0400, CRC(89f23ebd) SHA1(a56bda82f8be8e541a50d2a411ada89a6d9c0373) )
 ROM_END
 
 ROM_START( magspot2 )

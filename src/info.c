@@ -975,9 +975,8 @@ static void print_mame_data(int OUTPUT_XML, FILE* out, const struct GameDriver* 
 		print_game_info(OUTPUT_XML, out, games[j]);
 
 	/* print the resources (only if linked) */
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
 	PRINT_RESOURCE(OUTPUT_XML, neogeo);
-#if !defined(NEOMAME)
 	PRINT_RESOURCE(OUTPUT_XML, cvs);
 	PRINT_RESOURCE(OUTPUT_XML, decocass);
 	PRINT_RESOURCE(OUTPUT_XML, playch10);
@@ -992,7 +991,6 @@ static void print_mame_data(int OUTPUT_XML, FILE* out, const struct GameDriver* 
 	PRINT_RESOURCE(OUTPUT_XML, cpzn2);
 	PRINT_RESOURCE(OUTPUT_XML, tps);
 	PRINT_RESOURCE(OUTPUT_XML, taitofx1);
-#endif
 #endif
 }
 

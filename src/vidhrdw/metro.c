@@ -86,6 +86,16 @@ static void metro_K053936_get_tile_info(int tile_index)
 			0)
 }
 
+static void metro_K053936_gstrik2_get_tile_info(int tile_index)
+{
+	int code = metro_K053936_ram[tile_index];
+
+	SET_TILE_INFO(
+			2,
+			(code & 0x7fff)>>2,
+			0x1e,
+			0)
+}
 
 WRITE16_HANDLER( metro_K053936_w )
 {
@@ -95,6 +105,18 @@ WRITE16_HANDLER( metro_K053936_w )
 		tilemap_mark_tile_dirty(metro_K053936_tilemap,offset);
 }
 
+UINT32 tilemap_scan_gstrik2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	int val;
+
+	val = (row&0x3f)*(256*2) + (col*2);
+
+	if (row&0x40) val+=1;
+	if (row&0x80) val+=256;
+
+	return val;
+}
 
 
 /***************************************************************************
@@ -490,6 +512,28 @@ VIDEO_START( blzntrnd )
 	return 0;
 }
 
+VIDEO_START( gstrik2 )
+{
+	if (video_start_metro_14220())
+		return 1;
+
+	has_zoom = 1;
+
+	metro_K053936_tilemap = tilemap_create(metro_K053936_gstrik2_get_tile_info, tilemap_scan_gstrik2,
+								TILEMAP_OPAQUE, 16,16, 128, 256 );
+
+	if (!metro_K053936_tilemap)
+		return 1;
+
+	K053936_wraparound_enable(0, 0);
+	K053936_set_offset(0, -69, -19);
+
+	tilemap_set_scrolldx(tilemap[0], 8, -8);
+	tilemap_set_scrolldx(tilemap[1], 0, 0);
+	tilemap_set_scrolldx(tilemap[2], 8, -8);
+
+	return 0;
+}
 
 /***************************************************************************
 

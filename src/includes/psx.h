@@ -4,6 +4,8 @@
 
 ***************************************************************************/
 
+#if !defined( PSX_H )
+
 /* vidhrdw */
 PALETTE_INIT( psx );
 VIDEO_START( psx_type1_1024x1024 );
@@ -32,7 +34,13 @@ WRITE32_HANDLER( psx_counter_w );
 READ32_HANDLER( psx_counter_r );
 WRITE32_HANDLER( psx_sio_w );
 READ32_HANDLER( psx_sio_r );
+typedef void ( *psx_sio_write_handler )( data8_t );
+extern void psx_sio_install_write_handler( int, psx_sio_write_handler );
+extern void psx_sio_send( int, data8_t );
 WRITE32_HANDLER( psx_mdec_w );
 READ32_HANDLER( psx_mdec_r );
 extern void psx_machine_init( void );
 extern void psx_driver_init( void );
+
+#define PSX_H ( 1 )
+#endif

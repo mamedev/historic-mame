@@ -945,25 +945,25 @@ ROM_START( countrun )
 	ROM_LOAD( "countrun.cpu", 0x00000, 0x10000, NO_DUMP ) // missing
 
 	ROM_REGION( 0x08000, REGION_USER1, 0 ) /* sound data */
-	ROM_LOAD( "c-run.e1", 0x00000, 0x08000, CRC(2c3b6f8f) )
+	ROM_LOAD( "c-run.e1", 0x00000, 0x08000, CRC(2c3b6f8f) SHA1(ee7d71e6d8bb7138d5d029a10a95471d387b5f29) )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD( "c-run.h1", 0x000000, 0x04000, CRC(3385b7b5) ) // rom 2
-	ROM_LOAD( "c-run.j1", 0x004000, 0x04000, CRC(58dc148d) ) // rom 3
-	ROM_LOAD( "c-run.l1", 0x008000, 0x04000, CRC(3201f1e9) ) // rom 4
+	ROM_LOAD( "c-run.h1", 0x000000, 0x04000, CRC(3385b7b5) SHA1(3f8f96f2a5406369dd56a9fe9f509ebee4a0179a) ) // rom 2
+	ROM_LOAD( "c-run.j1", 0x004000, 0x04000, CRC(58dc148d) SHA1(3b2e5c6ced885d945f6c02fbab7c6d40db78c66a) ) // rom 3
+	ROM_LOAD( "c-run.l1", 0x008000, 0x04000, CRC(3201f1e9) SHA1(72bd35600bf6e38741730f39bfd2a19f359bfb93) ) // rom 4
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD( "c-run.m1", 0x000000, 0x04000, CRC(1efab3b4) ) // rom 5
-	ROM_LOAD( "c-run.p1", 0x004000, 0x04000, CRC(d0bf8d42) ) // rom 6
-	ROM_LOAD( "c-run.r1", 0x008000, 0x04000, CRC(4bb4a3e3) ) // rom 7
+	ROM_LOAD( "c-run.m1", 0x000000, 0x04000, CRC(1efab3b4) SHA1(7ce39cecf2809d3a7cbca5c6dffee738ba6f7b11) ) // rom 5
+	ROM_LOAD( "c-run.p1", 0x004000, 0x04000, CRC(d0bf8d42) SHA1(b8d1bd155dba065475c84db768f14a3562fe21e0) ) // rom 6
+	ROM_LOAD( "c-run.r1", 0x008000, 0x04000, CRC(4bb4a3e3) SHA1(179696464fce548ec333eec233025840fdb1eac2) ) // rom 7
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "prom5.bpr",    0x0000, 0x0100, CRC(63c114ad) )
-	ROM_LOAD( "prom2.bpr",    0x0100, 0x0100, CRC(d16f95cc) )
-	ROM_LOAD( "prom4.bpr",    0x0200, 0x0100, CRC(217db2c1) )
-	ROM_LOAD( "prom1.bpr",    0x0300, 0x0100, CRC(8d983949) )
-	ROM_LOAD( "prom6.bpr",    0x0400, 0x0100, CRC(33e87550) )
-	ROM_LOAD( "prom3.bpr",    0x0500, 0x0100, CRC(c77d0077) )
+	ROM_LOAD( "prom5.bpr",    0x0000, 0x0100, CRC(63c114ad) SHA1(db881c4ff92cb04a94988587503346a44eb89b69) )
+	ROM_LOAD( "prom2.bpr",    0x0100, 0x0100, CRC(d16f95cc) SHA1(041bb84576bd8492c1ad3e492d8cb3e04d316527) )
+	ROM_LOAD( "prom4.bpr",    0x0200, 0x0100, CRC(217db2c1) SHA1(f2af1a74b0ce56290b1c119e1a9707287132194a) )
+	ROM_LOAD( "prom1.bpr",    0x0300, 0x0100, CRC(8d983949) SHA1(d7331900d18a53ceb133f8a8848d3c108e03323a) )
+	ROM_LOAD( "prom6.bpr",    0x0400, 0x0100, CRC(33e87550) SHA1(951ce0dc975b799c1056ce8eb005256cbb43a112) )
+	ROM_LOAD( "prom3.bpr",    0x0500, 0x0100, CRC(c77d0077) SHA1(4cbbf625ad5e45d00ca6aebe9566538ff0a3348d) )
 ROM_END
 
 ROM_START( countrnb )
@@ -974,25 +974,25 @@ ROM_START( countrnb )
 	ROM_LOAD( "68705.uc",  0x00000, 0x01000, NO_DUMP )
 
 	ROM_REGION( 0x08000, REGION_USER1, 0 ) /* sound data */
-	ROM_LOAD( "c-run.e1", 0x00000, 0x08000, CRC(2c3b6f8f) )
+	ROM_LOAD( "c-run.e1", 0x00000, 0x08000, CRC(2c3b6f8f) SHA1(ee7d71e6d8bb7138d5d029a10a95471d387b5f29) )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD( "c-run.h1", 0x000000, 0x04000, CRC(3385b7b5) ) // rom 2
-	ROM_LOAD( "c-run.j1", 0x004000, 0x04000, CRC(58dc148d) ) // rom 3
-	ROM_LOAD( "c-run.l1", 0x008000, 0x04000, CRC(3201f1e9) ) // rom 4
+	ROM_LOAD( "c-run.h1", 0x000000, 0x04000, CRC(3385b7b5) SHA1(3f8f96f2a5406369dd56a9fe9f509ebee4a0179a) ) // rom 2
+	ROM_LOAD( "c-run.j1", 0x004000, 0x04000, CRC(58dc148d) SHA1(3b2e5c6ced885d945f6c02fbab7c6d40db78c66a) ) // rom 3
+	ROM_LOAD( "c-run.l1", 0x008000, 0x04000, CRC(3201f1e9) SHA1(72bd35600bf6e38741730f39bfd2a19f359bfb93) ) // rom 4
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD( "c-run.m1", 0x000000, 0x04000, CRC(1efab3b4) ) // rom 5
-	ROM_LOAD( "c-run.p1", 0x004000, 0x04000, CRC(d0bf8d42) ) // rom 6
-	ROM_LOAD( "c-run.r1", 0x008000, 0x04000, CRC(4bb4a3e3) ) // rom 7
+	ROM_LOAD( "c-run.m1", 0x000000, 0x04000, CRC(1efab3b4) SHA1(7ce39cecf2809d3a7cbca5c6dffee738ba6f7b11) ) // rom 5
+	ROM_LOAD( "c-run.p1", 0x004000, 0x04000, CRC(d0bf8d42) SHA1(b8d1bd155dba065475c84db768f14a3562fe21e0) ) // rom 6
+	ROM_LOAD( "c-run.r1", 0x008000, 0x04000, CRC(4bb4a3e3) SHA1(179696464fce548ec333eec233025840fdb1eac2) ) // rom 7
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "prom5.bpr",    0x0000, 0x0100, CRC(63c114ad) )
-	ROM_LOAD( "prom2.bpr",    0x0100, 0x0100, CRC(d16f95cc) )
-	ROM_LOAD( "prom4.bpr",    0x0200, 0x0100, CRC(217db2c1) )
-	ROM_LOAD( "prom1.bpr",    0x0300, 0x0100, CRC(8d983949) )
-	ROM_LOAD( "prom6.bpr",    0x0400, 0x0100, CRC(33e87550) )
-	ROM_LOAD( "prom3.bpr",    0x0500, 0x0100, CRC(c77d0077) )
+	ROM_LOAD( "prom5.bpr",    0x0000, 0x0100, CRC(63c114ad) SHA1(db881c4ff92cb04a94988587503346a44eb89b69) )
+	ROM_LOAD( "prom2.bpr",    0x0100, 0x0100, CRC(d16f95cc) SHA1(041bb84576bd8492c1ad3e492d8cb3e04d316527) )
+	ROM_LOAD( "prom4.bpr",    0x0200, 0x0100, CRC(217db2c1) SHA1(f2af1a74b0ce56290b1c119e1a9707287132194a) )
+	ROM_LOAD( "prom1.bpr",    0x0300, 0x0100, CRC(8d983949) SHA1(d7331900d18a53ceb133f8a8848d3c108e03323a) )
+	ROM_LOAD( "prom6.bpr",    0x0400, 0x0100, CRC(33e87550) SHA1(951ce0dc975b799c1056ce8eb005256cbb43a112) )
+	ROM_LOAD( "prom3.bpr",    0x0500, 0x0100, CRC(c77d0077) SHA1(4cbbf625ad5e45d00ca6aebe9566538ff0a3348d) )
 ROM_END
 
 

@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "namcos2.h"	/* for game-specific hacks */
 #include "namcoic.h"
@@ -775,6 +776,8 @@ static unsigned char *mpRoadDirty;
 static int mbRoadSomethingIsDirty;
 static int mRoadGfxBank;
 static struct tilemap *mpRoadTilemap;
+static pen_t mRoadTransparentColor;
+static int mbRoadNeedTransparent;
 
 #define ROAD_COLS			64
 #define ROAD_ROWS			512
@@ -867,9 +870,17 @@ UpdateRoad( void )
 	}
 }
 
+static void
+RoadMarkAllDirty(void)
+{
+	memset( mpRoadDirty,0x01,ROAD_TILE_COUNT_MAX );
+	mbRoadSomethingIsDirty = 1;
+}
+
 int
 namco_road_init( int gfxbank )
 {
+	mbRoadNeedTransparent = 0;
 	mRoadGfxBank = gfxbank;
 	mpRoadDirty = auto_malloc(ROAD_TILE_COUNT_MAX);
 	if( mpRoadDirty )
@@ -894,6 +905,10 @@ namco_road_init( int gfxbank )
 
 				if( mpRoadTilemap )
 				{
+					state_save_register_UINT8 ("namco_road", 0, "RoadDirty", mpRoadDirty, ROAD_TILE_COUNT_MAX);
+					state_save_register_UINT16("namco_road", 0, "RoadRAM",   mpRoadRAM,   0x20000 / 2);
+					state_save_register_func_postload(RoadMarkAllDirty);
+
 					return 0;
 				}
 			}
@@ -901,6 +916,13 @@ namco_road_init( int gfxbank )
 	}
 	return -1;
 } /* namco_road_init */
+
+void
+namco_road_set_transparent_color(pen_t pen)
+{
+	mbRoadNeedTransparent = 1;
+	mRoadTransparentColor = pen;
+}
 
 void
 namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
@@ -919,7 +941,7 @@ namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, i
 		UINT16 *pDest = bitmap->line[i];
 		int screenx	= mpRoadRAM[0x1fa00/2+i+15];
 
-        if( pri == ((screenx&0xe000)>>13) )
+		if( pri == ((screenx&0xe000)>>13) )
 		{
 			unsigned zoomx	= mpRoadRAM[0x1fe00/2+i+15]&0x3ff;
 			if( zoomx )
@@ -953,12 +975,28 @@ namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, i
 					numpixels = bitmap->width - screenx;
 				}
 
-				while( numpixels-- > 0 )
+				/* BUT: support transparent color for Thunder Ceptor */
+				if (mbRoadNeedTransparent)
 				{
-					int pen = pSourceGfx[sourcex>>16];
-					/* TBA: work out palette mapping for Final Lap, Suzuka */
-					pDest[screenx++] = pen;
-					sourcex += dsourcex;
+					while( numpixels-- > 0 )
+					{
+						int pen = pSourceGfx[sourcex>>16];
+						/* TBA: work out palette mapping for Final Lap, Suzuka */
+						if (pen != mRoadTransparentColor)
+							pDest[screenx] = pen;
+						screenx++;
+						sourcex += dsourcex;
+					}
+				}
+				else
+				{
+					while( numpixels-- > 0 )
+					{
+						int pen = pSourceGfx[sourcex>>16];
+						/* TBA: work out palette mapping for Final Lap, Suzuka */
+						pDest[screenx++] = pen;
+						sourcex += dsourcex;
+					}
 				}
 			}
 		}

@@ -9,6 +9,8 @@ champbbj and champbb2 don't work due to protection - a custom mcu probably.
 The protection involves locations a006-a007 and 6000-63ff.  It pulls
 addresses to routines from there.
 
+champbja is a patched version of champbbj with different protection.
+
 0000-5fff ROM
 7800-7fff ROM (Champion Baseball 2 only)
 8000-83ff Video RAM
@@ -301,12 +303,34 @@ ROM_START( champbbj )
 	ROM_LOAD( "5k.bpr",    0x0020, 0x0100, CRC(2e481ffa) SHA1(bc8979efd43bee8be0ce96ebdacc873a5821e06e) ) /* look-up table */
 ROM_END
 
+ROM_START( champbja )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "10",         0x0000, 0x2000, CRC(f7cdaf8e) SHA1(d4c840f2107394fadbcf822d64aaa381ac900367) ) 
+	ROM_LOAD( "09",         0x2000, 0x2000, CRC(9d39e5b3) SHA1(11c1a1d2296c0bf16d7610eaa79b034bfd813740) ) 
+	ROM_LOAD( "08",         0x4000, 0x2000, CRC(53468a0f) SHA1(d4b5ea48b27754eebe593c8b4fcf5bf117f27ae4) ) 
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the speech CPU */
+	ROM_LOAD( "16.2k",      0x0000, 0x2000, CRC(24c482ee) SHA1(c25bdf77014e095fc11a9a6b17f16858f19db451) )
+	ROM_LOAD( "17.2l",      0x2000, 0x2000, CRC(f10b148b) SHA1(d66516d509f6f16e51ee59d27c4867e276064c3f) )
+	ROM_LOAD( "18.2n",      0x4000, 0x2000, CRC(2dc484dd) SHA1(28bd68c787d7e6989849ca52009948dbd5cdcc79) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "14.5e",      0x0000, 0x2000, CRC(1b8202b3) SHA1(889b77fc3d0cb029baf8c47be260f513f3ed59bd) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "15.5g",      0x0000, 0x2000, CRC(a67c0c40) SHA1(3845839eff8c1624d26937f28ffde67a5fcb4805) )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "clr",       0x0000, 0x0020, CRC(8f989357) SHA1(d0916fb5ef4b43bdf84663cd403418ffc5e98c17) ) /* palette */ 
+	ROM_LOAD( "5k.bpr",    0x0020, 0x0100, CRC(2e481ffa) SHA1(bc8979efd43bee8be0ce96ebdacc873a5821e06e) ) /* look-up table */
+ROM_END
+
 ROM_START( champbb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "epr5932",      0x0000, 0x2000, CRC(528e3c78) )
-	ROM_LOAD( "epr5929",      0x2000, 0x2000, CRC(17b6057e) )
-	ROM_LOAD( "epr5930",      0x4000, 0x2000, CRC(b6570a90) )
-	ROM_LOAD( "epr5931",      0x7800, 0x0800, CRC(0592434d) )
+	ROM_LOAD( "epr5932",      0x0000, 0x2000, CRC(528e3c78) SHA1(ee300201580c1bace783f1340bd4f1ea2a00dffa) )
+	ROM_LOAD( "epr5929",      0x2000, 0x2000, CRC(17b6057e) SHA1(67c5aed950acf4d045edf39019066af2896265e1) )
+	ROM_LOAD( "epr5930",      0x4000, 0x2000, CRC(b6570a90) SHA1(5a2651aeac986000913b5854792b2d81df6b2fc6) )
+	ROM_LOAD( "epr5931",      0x7800, 0x0800, CRC(0592434d) SHA1(a7f61546c39ffdbff46c4db485c9b3f6eefcf1ac) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the speech CPU */
 	ROM_LOAD( "epr5933",      0x0000, 0x2000, CRC(26ab3e16) SHA1(019b9d34233a6b7a53e204154b782ceb42915d2b) )
@@ -314,10 +338,10 @@ ROM_START( champbb2 )
 	ROM_LOAD( "epr5935",      0x4000, 0x2000, CRC(3c911786) SHA1(eea0c467e213d237b5bb9d04b19a418d6090c2dc) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr5936",      0x0000, 0x2000, CRC(c4a4df75) )
+	ROM_LOAD( "epr5936",      0x0000, 0x2000, CRC(c4a4df75) SHA1(7b85dbf405697b0b8881f910c08f6db6c828b19a) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr5937",      0x0000, 0x2000, CRC(5c80ec42) )
+	ROM_LOAD( "epr5937",      0x0000, 0x2000, CRC(5c80ec42) SHA1(9b79737577e48a6b2ec20ce145252545955e82c3) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "pr5957",       0x0000, 0x020, CRC(f5ce825e) SHA1(956f580840f1a7d24bfbd72b2929d14e9ee1b660) ) /* palette */
@@ -327,5 +351,6 @@ ROM_END
 
 
 GAME(1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
-GAMEX(1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan)", GAME_NOT_WORKING )
+GAMEX(1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 1)", GAME_NOT_WORKING )
+GAMEX(1983, champbja, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 2)", GAME_NOT_WORKING )
 GAMEX(1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball II", GAME_NOT_WORKING )

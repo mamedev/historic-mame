@@ -420,24 +420,24 @@ data in the custom SIPs. I am not sure though.
 
 ROM_START( cshooter )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	// Main CPU?
-	ROM_LOAD( "r1",  0x00000, 0x08000, CRC(fbe8c518) )
+	ROM_LOAD( "r1",  0x00000, 0x08000, CRC(fbe8c518) SHA1(bff8319f4892e6d06f1c7a679f67dc8407279cfa) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
-	ROM_LOAD( "r4",  0x00000, 0x08000, CRC(84fed017) )
+	ROM_LOAD( "r4",  0x00000, 0x08000, CRC(84fed017) SHA1(9a564c9379eb48569cfba48562889277991864d8) )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
-	ROM_LOAD( "r3",  0x00000, 0x02000, CRC(67b50a47) )	// only 1 byte difference with 3.f11, bad dump?
+	ROM_LOAD( "r3",  0x00000, 0x02000, CRC(67b50a47) SHA1(b1f4aefc9437edbeefba5371149cc08c0b55c741) )	// only 1 byte difference with 3.f11, bad dump?
 
 	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// Sprites & Backgrounds ?
-	ROM_LOAD( "r2",  0x00000, 0x10000, CRC(5ddf9f4e) )
+	ROM_LOAD( "r2",  0x00000, 0x10000, CRC(5ddf9f4e) SHA1(69e4d422ca272bf2e9f00edbe7d23760485fdfe6) )
 
 	ROM_REGION( 0x220, REGION_PROMS, 0 )
-	ROM_LOAD( "0.bpr", 0x0000, 0x0020, CRC(93e2d292) )	/* priority? (not used) */
-	ROM_LOAD( "1.bpr", 0x0020, 0x0100, CRC(cf14ba30) )	/* timing? (not used) */
-	ROM_LOAD( "2.bpr", 0x0120, 0x0100, CRC(0eaf5158) )	/* timing? (not used) */
+	ROM_LOAD( "0.bpr", 0x0000, 0x0020, CRC(93e2d292) SHA1(af8edd0cfe85f28ede9604cfaf4516d54e5277c9) )	/* priority? (not used) */
+	ROM_LOAD( "1.bpr", 0x0020, 0x0100, CRC(cf14ba30) SHA1(3284b6809075756b3c8e07d9705fc7eacb7556f1) )	/* timing? (not used) */
+	ROM_LOAD( "2.bpr", 0x0120, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* timing? (not used) */
 ROM_END
 
 /*
@@ -468,26 +468,24 @@ Note, all ROMs have official sticker, "(C) SEIBU KAIHATSU INC." and a number.
 4.g8   TMM24256 Mask   Sound (Samples?)
 5.g6   TMM2764         Sound program
 
-any more info needed, email me
-theguru@emuunlim.com
 
 */
 
 ROM_START( cshootre )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	// Main CPU?
-	ROM_LOAD( "1.k19",  0x00000, 0x08000, CRC(71418952) )
+	ROM_LOAD( "1.k19",  0x00000, 0x08000, CRC(71418952) SHA1(9745ca006576381c9e9595d8e42ab276bab80a41) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
-	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) )	// 5.g6
+	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) SHA1(6c61200ee8888d6270c8cec50423b3b5602c2027) )	// 5.g6
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
-	ROM_LOAD( "3.f11",  0x00000, 0x02000, CRC(704c26d7) )	// only 1 byte difference with R3, bad dump?
+	ROM_LOAD( "3.f11",  0x00000, 0x02000, CRC(704c26d7) SHA1(e5964f409cbc2c4752e3969f3e84ace08d5ad9cb) )	// only 1 byte difference with R3, bad dump?
 
 	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// Sprites & Backgrounds ?
-	ROM_LOAD( "2.k20",  0x00000, 0x10000, CRC(5812fe72) )
+	ROM_LOAD( "2.k20",  0x00000, 0x10000, CRC(5812fe72) SHA1(3b28bff6b62a411d2195bb228952db62ad32ef3d) )
 
 	ROM_REGION( 0x08000, REGION_GFX3, 0 )	// ?? sound ?? unknown rom
-	ROM_LOAD( "4.7f",  0x00000, 0x08000, CRC(3cd715b4) )	// 4.g8
+	ROM_LOAD( "4.7f",  0x00000, 0x08000, CRC(3cd715b4) SHA1(da735fb5d262908ddf7ed7dacdea68899f1723ff) )	// 4.g8
 ROM_END
 
 /*
@@ -514,19 +512,19 @@ SEI0030BU          SEI0060BU                             sw1 xx xxxxx
 
 ROM_START( airraid )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	// Main CPU?
-	ROM_LOAD( "1.16j",  0x00000, 0x08000, CRC(7ac2cedf) )
+	ROM_LOAD( "1.16j",  0x00000, 0x08000, CRC(7ac2cedf) SHA1(272831f51a2731e067b5aec6dba6bddd3c5350c9) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
-	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) )
+	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) SHA1(6c61200ee8888d6270c8cec50423b3b5602c2027) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
-	ROM_LOAD( "3.13e",  0x00000, 0x02000, CRC(672ec0e8) )
+	ROM_LOAD( "3.13e",  0x00000, 0x02000, CRC(672ec0e8) SHA1(a11cd90d6494251ceee3bc7c72f4e7b1580b77e2) )
 
 	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// Sprites & Backgrounds ?
-	ROM_LOAD( "2.19j",  0x00000, 0x10000, CRC(842ae6c2) )
+	ROM_LOAD( "2.19j",  0x00000, 0x10000, CRC(842ae6c2) SHA1(0468445e4ab6f42bac786f9a258df3972fd1fde9) )
 
 	ROM_REGION( 0x08000, REGION_GFX3, 0 )	// ?? sound ?? unknown rom
-	ROM_LOAD( "4.7f",  0x00000, 0x08000, CRC(3cd715b4) )
+	ROM_LOAD( "4.7f",  0x00000, 0x08000, CRC(3cd715b4) SHA1(da735fb5d262908ddf7ed7dacdea68899f1723ff) )
 ROM_END
 
 

@@ -48,7 +48,7 @@ VIDEO_UPDATE( powerins );
 
 static int oki_bank;
 
-WRITE16_HANDLER( powerins_okibank_w )
+static WRITE16_HANDLER( powerins_okibank_w )
 {
 	if (ACCESSING_LSB)
 	{
@@ -63,6 +63,14 @@ WRITE16_HANDLER( powerins_okibank_w )
 	}
 }
 
+static WRITE16_HANDLER( powerin2_soundlatch_w )
+{
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(0, data & 0xff);
+		cpu_set_irq_line(1,0,HOLD_LINE);
+	}
+}
 
 static MEMORY_READ16_START( powerins_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
@@ -83,7 +91,7 @@ static MEMORY_WRITE16_START( powerins_writemem )
 	{ 0x100014, 0x100015, powerins_flipscreen_w					},	// Flip Screen
 	{ 0x100016, 0x100017, MWA16_NOP								},	// ? always 1
 	{ 0x100018, 0x100019, powerins_tilebank_w					},	// Tiles Banking (VRAM 0)
-//	{ 0x10001e, 0x10001f, MWA16_NOP								},	//
+	{ 0x10001e, 0x10001f, powerin2_soundlatch_w					},	// Sound Latch
 	{ 0x100030, 0x100031, powerins_okibank_w					},	// Sound
 	{ 0x10003e, 0x10003f, OKIM6295_data_0_lsb_w					},	//
 	{ 0x120000, 0x120fff, powerins_paletteram16_w, &paletteram16	},	// Palette
@@ -98,7 +106,33 @@ MEMORY_END
    that calls the data writtent to $10001e "sound code".
    This is a bootleg, so the original may have a sound CPU */
 
+static MEMORY_READ_START( readmem_snd )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe000, MRA_NOP }, // ?
+MEMORY_END
 
+static MEMORY_WRITE_START( writemem_snd )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe000, MWA_NOP }, // ? written only once ?
+	{ 0xe001, 0xe001, MWA_NOP }, // ?
+MEMORY_END
+
+static PORT_READ_START( readport_snd )
+	{ 0x00, 0x00, soundlatch_r },
+	{ 0x01, 0x01, MRA_NOP }, // ?
+	{ 0x80, 0x80, OKIM6295_status_0_r },
+	{ 0x88, 0x88, OKIM6295_status_1_r },
+PORT_END
+
+static PORT_WRITE_START( writeport_snd )
+	{ 0x00, 0x00, MWA_NOP }, // ?
+	{ 0x01, 0x01, MWA_NOP }, // ?
+	{ 0x80, 0x80, OKIM6295_data_0_w },
+	{ 0x88, 0x88, OKIM6295_data_1_w },
+	{ 0x90, 0x97, MWA_NOP }, // oki bank ?
+PORT_END
 
 /***************************************************************************
 
@@ -281,10 +315,18 @@ static struct OKIM6295interface powerins_okim6295_interface =
 	{ 100 }
 };
 
+static struct OKIM6295interface powerin2_okim6295_interface =
+{
+	2,
+	{ 4000 },		/* 4 Mhz */
+	{ REGION_SOUND1, REGION_SOUND2 },
+	{ 100, 100 }
+};
+
 static MACHINE_DRIVER_START( powerins )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000)	/* ? (it affects the game's speed!) */
+	MDRV_CPU_ADD(M68000, 12000000)	/* ? (it affects the game's speed!) */
 	MDRV_CPU_MEMORY(powerins_readmem,powerins_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
@@ -304,11 +346,21 @@ static MACHINE_DRIVER_START( powerins )
 	MDRV_VIDEO_UPDATE(powerins)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, powerins_okim6295_interface)
+	MDRV_SOUND_ADD_TAG("sound", OKIM6295, powerins_okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( powerina )
 
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(powerins)
 
+	MDRV_CPU_ADD(Z80, 6000000) /* 6 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_snd,writemem_snd)
+	MDRV_CPU_PORTS(readport_snd,writeport_snd)
+
+	MDRV_SOUND_REPLACE("sound", OKIM6295, powerin2_okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -374,5 +426,109 @@ ROM_START( powerins )
 	ROM_CONTINUE(     0x040000, 0x050000 )
 ROM_END
 
+/***************************************************************************
 
-GAME( 1993, powerins, 0, powerins, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg)" )
+Power Instinct
+Atlus, 1993
+
+This is a bootleg US version with different sound hardware to the existing bootleg set.
+The PCB is very large and has 2 plug-in daughterboards and many MASK ROMs.
+The addition of the contents of the MASK ROMs would probably equal the contents of presumably
+larger MASK ROMs found on the original PCB....
+
+PCB Layout
+
+|-------------------------------------------------------------|
+|   M6295    4A 5A                             62256  62256   |
+|   M6295    4B 5B                             62256  62256   |
+|            4C 5C                             62256  62256   |
+|            4D 5D                             62256  62256   |
+| Z80        16MHz                             62256  62256   |
+| 1F                                           62256  62256   |
+| 6264       6116                              62256  62256   |
+|            6116                              62256  62256   |
+|J                                                            |
+|A                                                            |
+|M                                                            |
+|M                                                            |
+|A                                    82S123  11G 12G 13G  14G|
+|                                             11I             |
+|                           TPC1020  6116     11J             |
+|DSW1        6116  6N                6116     11K     13K     |
+|DSW2        6116              6264           11L     13L  14M|
+|                      82S147  6264           11O     13O  14N|
+|                                             11P 12P 13P  14P|
+|      2Q    62256                            11Q     13Q     |
+|      2R    62256                                    13R     |
+|      68000                                                  |
+| 12MHz              14.31818MHz                              |
+|-------------------------------------------------------------|
+
+Notes:
+      68000 clock: 12.000MHz
+      Z80 clock  :  6.000MHz
+      M6295 clock:  4.000MHz (both); sample rate = 4000000/165 (both)
+      VSync      :  60Hz
+
+      ROMs 1F and 6N are 1M MASK (MX27C1000), all other ROMs are 4M MASK (MX27C4000).
+      ROMS at 5* are located on a plug-in daughterboard.
+      ROMS at 11*, 12*, 13G, 13P and 14* are located on a plug-in daughterboard.
+      82S123 and 82S147 are PROMs.
+
+***************************************************************************/
+
+ROM_START( powerina )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "2q.bin", 0x000000, 0x80000, CRC(11bf3f2a) SHA1(c840add78da9b19839c667f9bbd77e0a7c560ed7) )
+	ROM_LOAD16_BYTE( "2r.bin", 0x000001, 0x80000, CRC(d8d621be) SHA1(91d501ac661c1ff52c85eee96c455c008a7dad1c) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "1f.bin",  0x000000, 0x20000, CRC(4b123cc6) SHA1(ed61d3a2ab20c86b91fd7bafa717be3ce26159be) )
+
+	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "13k.bin", 0x000000, 0x80000, CRC(1975b4b8) SHA1(cb400967744fa602df1bd2d88950dfdbdc77073f) )
+	ROM_LOAD( "13l.bin", 0x080000, 0x80000, CRC(376e4919) SHA1(12baa17382c176838df1b5ef86f1fa6dbcb978dd) )
+	ROM_LOAD( "13o.bin", 0x100000, 0x80000, CRC(0d5ff532) SHA1(4febdb9cdacd85903a4a28e8df945dee0ce85558) )
+	ROM_LOAD( "13q.bin", 0x180000, 0x80000, CRC(99b25791) SHA1(82f4bb5780826773d2e5f7143afb3ba209f57652) )
+	ROM_LOAD( "13r.bin", 0x200000, 0x80000, CRC(2dd76149) SHA1(975e4d371fdfbbd9a568da4d4c91ffd3f0ae636e) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "6n.bin", 0x000000, 0x20000, CRC(6a579ee0) SHA1(438e87b930e068e0cf7352e614a14049ebde6b8a) )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD16_BYTE( "14g.bin", 0x000000, 0x80000, CRC(8b9b89c9) SHA1(f1d39d1a62e40a14642d8f22fc38b764465a8daa) )
+	ROM_LOAD16_BYTE( "11g.bin", 0x000001, 0x80000, CRC(4d127bdf) SHA1(26a7c277e7660a7c7c0c11cacadf815d2487ba8a) )
+	ROM_LOAD16_BYTE( "13g.bin", 0x100000, 0x80000, CRC(298eb50e) SHA1(2b922c1473bb559a1e8bd6221619141658179bb9) )
+	ROM_LOAD16_BYTE( "11i.bin", 0x100001, 0x80000, CRC(57e6d283) SHA1(4701576c8663ba47f388a02e61ef078a9dbbd212) )
+	ROM_LOAD16_BYTE( "12g.bin", 0x200000, 0x80000, CRC(fb184167) SHA1(20924d3f35509f2f6af61f565b852ea72326d02c) )
+	ROM_LOAD16_BYTE( "11j.bin", 0x200001, 0x80000, CRC(1b752a4d) SHA1(1b13f28af208542bee9da298d6e9db676cbc0845) )
+	ROM_LOAD16_BYTE( "14m.bin", 0x300000, 0x80000, CRC(2f26ba7b) SHA1(026f960fa4de09ed940dd83a3db467c3676c5024) )
+	ROM_LOAD16_BYTE( "11k.bin", 0x300001, 0x80000, CRC(0263d89b) SHA1(526b8ed05dffcbe98a44372bd55ad7b0ba91fc0f) )
+	ROM_LOAD16_BYTE( "14n.bin", 0x400000, 0x80000, CRC(c4633294) SHA1(9578f516eaf09e743ee0262ce227f811bea1be8f) )
+	ROM_LOAD16_BYTE( "11l.bin", 0x400001, 0x80000, CRC(5e4b5655) SHA1(f86509e75ec0c68f728715a5a325f6d1a30cfd93) )
+	ROM_LOAD16_BYTE( "14p.bin", 0x500000, 0x80000, CRC(4d4b0e4e) SHA1(782c5edc533f10757cb18d2411046e44aa075ba1) )
+	ROM_LOAD16_BYTE( "11o.bin", 0x500001, 0x80000, CRC(7e9f2d2b) SHA1(cfee03c38a6c781ad370638748244a164b83d588) )
+	ROM_LOAD16_BYTE( "13p.bin", 0x600000, 0x80000, CRC(0e7671f2) SHA1(301af5c4229451cba9fdf40285dd7243626ffed4) )
+	ROM_LOAD16_BYTE( "11p.bin", 0x600001, 0x80000, CRC(ee59b1ec) SHA1(437bc50c3b32c2edee549f5021345f1c924896b4) )
+	ROM_LOAD16_BYTE( "12p.bin", 0x700000, 0x80000, CRC(9ab1998c) SHA1(fadaa4a46cefe0093ee1ebeddbae63143fa7bb5a) )
+	ROM_LOAD16_BYTE( "11q.bin", 0x700001, 0x80000, CRC(1ab0c88a) SHA1(8bc72732f5911e0d4e0cf12fd2fb12d67e03299e) )
+
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* 8 bit adpcm (banked) */
+	ROM_LOAD( "4a.bin", 0x040000, 0x80000, CRC(8cd6824e) SHA1(aa6d8917558de4f2aa8d80527209b9fe91122eb3) )
+	ROM_LOAD( "4b.bin", 0x0c0000, 0x80000, CRC(e31ae04d) SHA1(c08d58a4250d8bdb68b8e5012624f345936520e1) )
+	ROM_LOAD( "4c.bin", 0x140000, 0x80000, CRC(c4c9f599) SHA1(1d74acd626406052bec533a918ca24e14a2578f2) )
+	ROM_LOAD( "4d.bin", 0x1c0000, 0x80000, CRC(f0a9f0e1) SHA1(4221e0824cdc8bcd6ea1c3811f4e3b7cd99478f2) )
+
+	ROM_REGION( 0x240000, REGION_SOUND2, 0 )	/* 8 bit adpcm (banked) */
+	ROM_LOAD( "5a.bin", 0x040000, 0x80000, CRC(62557502) SHA1(d72abdaec1c6f55f9b0099b7a8a297e0e14f920c) )
+	ROM_LOAD( "5b.bin", 0x0c0000, 0x80000, CRC(dbc86bd7) SHA1(6f1bc3c7e6976fdcd4b2341cea07002fb0cefb14) )
+	ROM_LOAD( "5c.bin", 0x140000, 0x80000, CRC(5839a2bd) SHA1(53988086ef97b2671044f6da9d97b1886900b64d) )
+	ROM_LOAD( "5d.bin", 0x1c0000, 0x80000, CRC(446f9dc3) SHA1(5c81eb9a7cbea995db9a10d3b6460d02e104825f) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )		/* unknown */
+	ROM_LOAD( "82s123.bin", 0x0000, 0x0020, CRC(67d5ec4b) SHA1(87d32948a0c88277dcdd0eaa035bde40fc7db5fe) )
+	ROM_LOAD( "82s147.bin", 0x0020, 0x0200, CRC(d7818542) SHA1(e94f8004c804f260874a117d59dfa0637c5d3d73) )
+ROM_END
+
+GAME( 1993, powerins, 0,		powerins, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg) (set 1)" )
+GAMEX(1993, powerina, powerins, powerina, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg) (set 2)", GAME_NO_SOUND )

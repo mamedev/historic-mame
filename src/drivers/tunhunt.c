@@ -50,8 +50,14 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "tunhunt.h"
 
+
+extern WRITE_HANDLER( tunhunt_videoram_w );
+extern WRITE_HANDLER( tunhunt_mott_w );
+
+extern PALETTE_INIT( tunhunt );
+extern VIDEO_START( tunhunt );
+extern VIDEO_UPDATE( tunhunt );
 
 
 /*************************************
@@ -60,7 +66,7 @@
  *
  *************************************/
 
-data8_t tunhunt_control;
+UINT8 tunhunt_control;
 
 WRITE_HANDLER( tunhunt_control_w )
 {
@@ -156,7 +162,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1800, 0x1800, MWA_RAM }, /* SHEL0H */
 	{ 0x1a00, 0x1a00, MWA_RAM }, /* SHEL1H */
 	{ 0x1c00, 0x1c00, MWA_RAM }, /* MOBJV */
-	{ 0x1e00, 0x1eff, MWA_RAM, &videoram },	/* ALPHA */
+	{ 0x1e00, 0x1eff, tunhunt_videoram_w, &videoram },	/* ALPHA */
 	{ 0x2c00, 0x2fff, tunhunt_mott_w, &spriteram },
 	{ 0x2000, 0x2000, MWA_NOP }, /* watchdog */
 	{ 0x2400, 0x2400, MWA_NOP }, /* INT ACK */

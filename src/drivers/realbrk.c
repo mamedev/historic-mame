@@ -372,9 +372,6 @@ Notes:
 Vertical Sync: 60Hz
   Horiz. Sync: 15.81kHz
 
-Developers:
-           More info reqd? Email me....
-           theguru@emuunlim.com
 
 ***************************************************************************/
 

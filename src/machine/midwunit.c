@@ -57,7 +57,7 @@ static UINT8	security_bits;
 
 /* prototype */
 static READ16_HANDLER( midwunit_sound_state_r );
-static void midxunit_dcs_notify(int state);
+static void midxunit_dcs_output_full(int state);
 
 
 
@@ -252,7 +252,7 @@ READ16_HANDLER( midxunit_status_r )
  *
  *************************************/
 
-void midxunit_dcs_notify(int state)
+void midxunit_dcs_output_full(int state)
 {
 	/* only signal if not in loopback state */
 	if (uart[1] != 0x66)
@@ -626,7 +626,7 @@ MACHINE_INIT( midwunit )
 MACHINE_INIT( midxunit )
 {
 	machine_init_midwunit();
-	dcs_set_notify(midxunit_dcs_notify);
+	dcs_set_io_callbacks(midxunit_dcs_output_full, NULL);
 }
 
 

@@ -102,9 +102,7 @@ int opNEGFS(void)
 	F2DecodeFirstOperand(ReadAM, 2);
 	F2DecodeSecondOperand(ReadAMAddress, 2);
 
-	F2LOADOPFLOAT(2);
-
-	appf = -appf;
+	appf = -u2f(f2Op1);
 
 	_OV=0;
 	_CY=(appf < 0.0f);
@@ -122,7 +120,7 @@ int opABSFS(void)
 	F2DecodeFirstOperand(ReadAM, 2);
 	F2DecodeSecondOperand(ReadAMAddress, 2);
 
-	F2LOADOPFLOAT(2);
+	appf = u2f(f2Op1);
 
 	if(appf < 0)
 		appf = -appf;
@@ -230,8 +228,8 @@ int opSCLFS(void)
 
 	F2LOADOPFLOAT(2);
 
-	if ((INT32)f2Op1 < 0)
-		appf /= 1 << -(INT32)f2Op1;
+	if ((INT16)f2Op1 < 0)
+		appf /= 1 << -(INT16)f2Op1;
 	else
 		appf *= 1 << f2Op1;
 

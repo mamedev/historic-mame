@@ -6,19 +6,19 @@
 
 static tAuditRecord *gAudits = NULL;
 
-static const struct GameDriver *hard_disk_gamedrv;
+static const struct GameDriver *chd_gamedrv;
 
 /*-------------------------------------------------
-	audit_hard_disk_open - interface for opening
+	audit_chd_open - interface for opening
 	a hard disk image
 -------------------------------------------------*/
 
-void *audit_hard_disk_open(const char *filename, const char *mode)
+struct chd_interface_file *audit_chd_open(const char *filename, const char *mode)
 {
 	const struct GameDriver *drv;
 
 	/* attempt reading up the chain through the parents */
-	for (drv = hard_disk_gamedrv; drv != NULL; drv = drv->clone_of)
+	for (drv = chd_gamedrv; drv != NULL; drv = drv->clone_of)
 	{
 		void* file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
 
@@ -32,11 +32,11 @@ void *audit_hard_disk_open(const char *filename, const char *mode)
 
 
 /*-------------------------------------------------
-	audit_hard_disk_close - interface for closing
+	audit_chd_close - interface for closing
 	a hard disk image
 -------------------------------------------------*/
 
-void audit_hard_disk_close(void *file)
+void audit_chd_close(struct chd_interface_file *file)
 {
 	mame_fclose((mame_file *)file);
 }
@@ -44,11 +44,11 @@ void audit_hard_disk_close(void *file)
 
 
 /*-------------------------------------------------
-	audit_hard_disk_read - interface for reading
+	audit_chd_read - interface for reading
 	from a hard disk image
 -------------------------------------------------*/
 
-UINT32 audit_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
+UINT32 audit_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fread((mame_file *)file, buffer, count);
@@ -57,23 +57,35 @@ UINT32 audit_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffe
 
 
 /*-------------------------------------------------
-	audit_hard_disk_write - interface for writing
+	audit_chd_write - interface for writing
 	to a hard disk image
 -------------------------------------------------*/
 
-UINT32 audit_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
+UINT32 audit_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	return 0;
 }
 
 
+/*-------------------------------------------------
+	audit_chd_length - interface for getting
+	the length a hard disk image
+-------------------------------------------------*/
 
-static struct hard_disk_interface audit_hard_disk_interface =
+UINT64 audit_chd_length(struct chd_interface_file *file)
 {
-	audit_hard_disk_open,
-	audit_hard_disk_close,
-	audit_hard_disk_read,
-	audit_hard_disk_write
+	return mame_fsize((mame_file *)file);
+}
+
+
+
+static struct chd_interface audit_chd_interface =
+{
+	audit_chd_open,
+	audit_chd_close,
+	audit_chd_read,
+	audit_chd_write,
+	audit_chd_length
 };
 
 
@@ -253,8 +265,9 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			}
 			else if (ROMREGION_ISDISKDATA(region))
 			{
+				const UINT8 nullhash[HASH_BUF_SIZE] = { 0 };
 				void *source;
-				struct hard_disk_header header;
+				struct chd_header header;
 
 				name = ROM_GETNAME(rom);
 				strcpy (aud->rom, name);
@@ -264,13 +277,13 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				hash_data_clear(aud->hash);
 				count++;
 
-				hard_disk_gamedrv = gamedrv;
-				hard_disk_set_interface(&audit_hard_disk_interface);
-				source = hard_disk_open( name, 0, NULL );
+				chd_gamedrv = gamedrv;
+				chd_set_interface(&audit_chd_interface);
+				source = chd_open( name, 0, NULL );
 				if( source == NULL )
 				{
-					err = hard_disk_get_last_error();
-					if( err == HDERR_OUT_OF_MEMORY )
+					err = chd_get_last_error();
+					if( err == CHDERR_OUT_OF_MEMORY )
 					{
 						aud->status = AUD_MEM_ERROR;
 					}
@@ -281,9 +294,12 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				}
 				else
 				{
-					header = *hard_disk_get_header(source);
+					header = *chd_get_header(source);
 
-					hash_data_insert_binary_checksum(aud->hash, HASH_MD5, header.md5);
+					if (memcmp(nullhash, header.md5, sizeof(header.md5)))
+						hash_data_insert_binary_checksum(aud->hash, HASH_MD5, header.md5);
+					if (memcmp(nullhash, header.sha1, sizeof(header.sha1)))
+						hash_data_insert_binary_checksum(aud->hash, HASH_SHA1, header.sha1);
 					
 					if (hash_data_is_equal(aud->exphash, aud->hash, 0))
 					{
@@ -294,7 +310,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 						aud->status = AUD_DISK_BAD_MD5;
 					}
 
-					hard_disk_close( source );
+					chd_close( source );
 				}
 
 				aud++;

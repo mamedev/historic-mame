@@ -40,58 +40,60 @@
  *
  *************************************/
 
-#define IDE_DISK_SECTOR_SIZE		512
+#define IDE_DISK_SECTOR_SIZE			512
 
-#define TIME_PER_SECTOR			(TIME_IN_USEC(100))
-#define TIME_PER_ROTATION		(TIME_IN_HZ(5400/60))
-#define TIME_SECURITY_ERROR		(TIME_IN_MSEC(1000))
+#define MINIMUM_COMMAND_TIME			(TIME_IN_USEC(10))
 
-#define TIME_SEEK_MULTISECTOR		(TIME_IN_MSEC(13))
-#define TIME_NO_SEEK_MULTISECTOR	(TIME_IN_USEC(16.3))
+#define TIME_PER_SECTOR					(TIME_IN_USEC(100))
+#define TIME_PER_ROTATION				(TIME_IN_HZ(5400/60))
+#define TIME_SECURITY_ERROR				(TIME_IN_MSEC(1000))
 
-#define IDE_STATUS_ERROR			0x01
-#define IDE_STATUS_HIT_INDEX		0x02
-#define IDE_STATUS_BUFFER_READY		0x08
-#define IDE_STATUS_SEEK_COMPLETE	0x10
-#define IDE_STATUS_DRIVE_READY		0x40
-#define IDE_STATUS_BUSY				0x80
+#define TIME_SEEK_MULTISECTOR			(TIME_IN_MSEC(13))
+#define TIME_NO_SEEK_MULTISECTOR		(TIME_IN_USEC(16.3))
 
-#define IDE_CONFIG_REGISTERS		0x10
+#define IDE_STATUS_ERROR				0x01
+#define IDE_STATUS_HIT_INDEX			0x02
+#define IDE_STATUS_BUFFER_READY			0x08
+#define IDE_STATUS_SEEK_COMPLETE		0x10
+#define IDE_STATUS_DRIVE_READY			0x40
+#define IDE_STATUS_BUSY					0x80
 
-#define IDE_ADDR_CONFIG_UNK			0x034
-#define IDE_ADDR_CONFIG_REGISTER	0x038
-#define IDE_ADDR_CONFIG_DATA		0x03c
+#define IDE_CONFIG_REGISTERS			0x10
 
-#define IDE_ADDR_DATA				0x1f0
-#define IDE_ADDR_ERROR				0x1f1
-#define IDE_ADDR_SECTOR_COUNT		0x1f2
-#define IDE_ADDR_SECTOR_NUMBER		0x1f3
-#define IDE_ADDR_CYLINDER_LSB		0x1f4
-#define IDE_ADDR_CYLINDER_MSB		0x1f5
-#define IDE_ADDR_HEAD_NUMBER		0x1f6
-#define IDE_ADDR_STATUS_COMMAND		0x1f7
+#define IDE_ADDR_CONFIG_UNK				0x034
+#define IDE_ADDR_CONFIG_REGISTER		0x038
+#define IDE_ADDR_CONFIG_DATA			0x03c
 
-#define IDE_ADDR_STATUS_CONTROL		0x3f6
+#define IDE_ADDR_DATA					0x1f0
+#define IDE_ADDR_ERROR					0x1f1
+#define IDE_ADDR_SECTOR_COUNT			0x1f2
+#define IDE_ADDR_SECTOR_NUMBER			0x1f3
+#define IDE_ADDR_CYLINDER_LSB			0x1f4
+#define IDE_ADDR_CYLINDER_MSB			0x1f5
+#define IDE_ADDR_HEAD_NUMBER			0x1f6
+#define IDE_ADDR_STATUS_COMMAND			0x1f7
 
-#define IDE_COMMAND_READ_MULTIPLE	0x20
+#define IDE_ADDR_STATUS_CONTROL			0x3f6
+
+#define IDE_COMMAND_READ_MULTIPLE		0x20
 #define IDE_COMMAND_READ_MULTIPLE_ONCE	0x21
-#define IDE_COMMAND_WRITE_MULTIPLE	0x30
-#define IDE_COMMAND_SET_CONFIG		0x91
+#define IDE_COMMAND_WRITE_MULTIPLE		0x30
+#define IDE_COMMAND_SET_CONFIG			0x91
 #define IDE_COMMAND_READ_MULTIPLE_BLOCK	0xc4
 #define IDE_COMMAND_WRITE_MULTIPLE_BLOCK 0xc5
 #define IDE_COMMAND_SET_BLOCK_COUNT		0xc6
 #define IDE_COMMAND_READ_DMA			0xc8
 #define IDE_COMMAND_WRITE_DMA			0xca
-#define IDE_COMMAND_GET_INFO		0xec
+#define IDE_COMMAND_GET_INFO			0xec
 #define IDE_COMMAND_SET_FEATURES		0xef
-#define IDE_COMMAND_SECURITY_UNLOCK	0xf2
-#define IDE_COMMAND_UNKNOWN_F9		0xf9
+#define IDE_COMMAND_SECURITY_UNLOCK		0xf2
+#define IDE_COMMAND_UNKNOWN_F9			0xf9
 
-#define IDE_ERROR_NONE				0x00
-#define IDE_ERROR_DEFAULT			0x01
-#define IDE_ERROR_UNKNOWN_COMMAND	0x04
-#define IDE_ERROR_BAD_LOCATION		0x10
-#define IDE_ERROR_BAD_SECTOR		0x80
+#define IDE_ERROR_NONE					0x00
+#define IDE_ERROR_DEFAULT				0x01
+#define IDE_ERROR_UNKNOWN_COMMAND		0x04
+#define IDE_ERROR_BAD_LOCATION			0x10
+#define IDE_ERROR_BAD_SECTOR			0x80
 
 #define IDE_BUSMASTER_STATUS_ACTIVE		0x01
 #define IDE_BUSMASTER_STATUS_ERROR		0x02
@@ -150,7 +152,7 @@ struct ide_state
 	UINT8	config_register_num;
 
 	struct ide_interface *intf;
-	void *	disk;
+	struct hard_disk_file *	disk;
 	void *	last_status_timer;
 	void *	reset_timer;
 
@@ -224,14 +226,52 @@ INLINE void clear_interrupt(struct ide_state *ide)
 
 /*************************************
  *
+ *	Delayed interrupt handling
+ *
+ *************************************/
+
+static void delayed_interrupt(int which)
+{
+	struct ide_state *ide = &idestate[which];
+	ide->status &= ~IDE_STATUS_BUSY;
+	signal_interrupt(ide);
+}
+
+
+static void delayed_interrupt_buffer_ready(int which)
+{
+	struct ide_state *ide = &idestate[which];
+	ide->status &= ~IDE_STATUS_BUSY;
+	ide->status |= IDE_STATUS_BUFFER_READY;
+	signal_interrupt(ide);
+}
+
+
+INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buffer_ready)
+{
+	/* clear buffer ready and set the busy flag */
+	ide->status &= ~IDE_STATUS_BUFFER_READY;
+	ide->status |= IDE_STATUS_BUSY;
+	
+	/* set a timer */
+	if (buffer_ready)
+		timer_set(time, ide - idestate, delayed_interrupt_buffer_ready);
+	else
+		timer_set(time, ide - idestate, delayed_interrupt);
+}
+
+
+
+/*************************************
+ *
  *	Initialization & reset
  *
  *************************************/
 
-int ide_controller_init_custom(int which, struct ide_interface *intf, void *diskhandle)
+int ide_controller_init_custom(int which, struct ide_interface *intf, struct chd_file *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
-	const struct hard_disk_header *header;
+	const struct hard_disk_info *hdinfo;
 
 	/* NULL interface is immediate failure */
 	if (!intf)
@@ -242,20 +282,20 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, void *disk
 	ide->intf = intf;
 
 	/* set MAME harddisk handle */
-	ide->disk = diskhandle;
+	ide->disk = hard_disk_open(diskhandle);
 
 	/* get and copy the geometry */
 	if (ide->disk)
 	{
-		header = hard_disk_get_header(ide->disk);
-		ide->num_cylinders = header->cylinders;
-		ide->num_sectors = header->sectors;
-		ide->num_heads = header->heads;
-		if (header->seclen != IDE_DISK_SECTOR_SIZE)
+		hdinfo = hard_disk_get_info(ide->disk);
+		ide->num_cylinders = hdinfo->cylinders;
+		ide->num_sectors = hdinfo->sectors;
+		ide->num_heads = hdinfo->heads;
+		if (hdinfo->sectorbytes != IDE_DISK_SECTOR_SIZE)
 			/* wrong sector len */
 			return 1;
 #if PRINTF_IDE_COMMANDS
-		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_sectors, ide->num_heads);
+		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_heads, ide->num_sectors);
 #endif
 	}
 
@@ -504,6 +544,7 @@ static void swap_strncpy(UINT8 *dst, const char *src, int field_size_in_words)
 static void ide_build_features(struct ide_state *ide)
 {
 	int total_sectors = ide->num_cylinders * ide->num_heads * ide->num_sectors;
+	int sectors_per_track = ide->num_heads * ide->num_sectors;
 
 	memset(ide->buffer, 0, IDE_DISK_SECTOR_SIZE);
 
@@ -544,7 +585,7 @@ static void ide_build_features(struct ide_state *ide)
 	ide->features[47*2+1] = 0x80;
 	ide->features[48*2+0] = 0;							/* 48: reserved */
 	ide->features[48*2+1] = 0;
-	ide->features[49*2+0] = 0x00;						/* 49: capabilities */
+	ide->features[49*2+0] = 0x03;						/* 49: capabilities */
 	ide->features[49*2+1] = 0x0f;
 	ide->features[50*2+0] = 0;							/* 50: reserved */
 	ide->features[50*2+1] = 0;
@@ -560,10 +601,10 @@ static void ide_build_features(struct ide_state *ide)
 	ide->features[55*2+1] = ide->num_heads >> 8;
 	ide->features[56*2+0] = ide->num_sectors & 0xff;	/* 56: number of current logical sectors per track */
 	ide->features[56*2+1] = ide->num_sectors >> 8;
-	ide->features[57*2+0] = total_sectors & 0xff;		/* 57-58: number of current logical sectors per track */
-	ide->features[57*2+1] = total_sectors >> 8;
-	ide->features[58*2+0] = total_sectors >> 16;
-	ide->features[58*2+1] = total_sectors >> 24;
+	ide->features[57*2+0] = sectors_per_track & 0xff;	/* 57-58: number of current logical sectors per track */
+	ide->features[57*2+1] = sectors_per_track >> 8;
+	ide->features[58*2+0] = sectors_per_track >> 16;
+	ide->features[58*2+1] = sectors_per_track >> 24;
 	ide->features[59*2+0] = 0;							/* 59: multiple sector timing */
 	ide->features[59*2+1] = 0;
 	ide->features[60*2+0] = total_sectors & 0xff;		/* 60-61: total user addressable sectors */
@@ -584,6 +625,78 @@ static void ide_build_features(struct ide_state *ide)
 	ide->features[67*2+1] = 0x01;
 	ide->features[68*2+0] = 0x78;						/* 68: minimum PIO transfer cycle time with IORDY */
 	ide->features[68*2+1] = 0x00;
+	ide->features[69*2+0] = 0x00;						/* 69-70: reserved */
+	ide->features[69*2+1] = 0x00;
+	ide->features[71*2+0] = 0x00;						/* 71: reserved for IDENTIFY PACKET command */
+	ide->features[71*2+1] = 0x00;
+	ide->features[72*2+0] = 0x00;						/* 72: reserved for IDENTIFY PACKET command */
+	ide->features[72*2+1] = 0x00;
+	ide->features[73*2+0] = 0x00;						/* 73: reserved for IDENTIFY PACKET command */
+	ide->features[73*2+1] = 0x00;
+	ide->features[74*2+0] = 0x00;						/* 74: reserved for IDENTIFY PACKET command */
+	ide->features[74*2+1] = 0x00;
+	ide->features[75*2+0] = 0x00;						/* 75: queue depth */
+	ide->features[75*2+1] = 0x00;
+	ide->features[76*2+0] = 0x00;						/* 76-79: reserved */
+	ide->features[76*2+1] = 0x00;
+	ide->features[80*2+0] = 0x00;						/* 80: major version number */
+	ide->features[80*2+1] = 0x00;
+	ide->features[81*2+0] = 0x00;						/* 81: minor version number */
+	ide->features[81*2+1] = 0x00;
+	ide->features[82*2+0] = 0x00;						/* 82: command set supported */
+	ide->features[82*2+1] = 0x00;
+	ide->features[83*2+0] = 0x00;						/* 83: command sets supported */
+	ide->features[83*2+1] = 0x00;
+	ide->features[84*2+0] = 0x00;						/* 84: command set/feature supported extension */
+	ide->features[84*2+1] = 0x00;
+	ide->features[85*2+0] = 0x00;						/* 85: command set/feature enabled */
+	ide->features[85*2+1] = 0x00;
+	ide->features[86*2+0] = 0x00;						/* 86: command set/feature enabled */
+	ide->features[86*2+1] = 0x00;
+	ide->features[87*2+0] = 0x00;						/* 87: command set/feature default */
+	ide->features[87*2+1] = 0x00;
+	ide->features[88*2+0] = 0x00;						/* 88: additional DMA modes */
+	ide->features[88*2+1] = 0x00;
+	ide->features[89*2+0] = 0x00;						/* 89: time required for security erase unit completion */
+	ide->features[89*2+1] = 0x00;
+	ide->features[90*2+0] = 0x00;						/* 90: time required for enhanced security erase unit completion */
+	ide->features[90*2+1] = 0x00;
+	ide->features[91*2+0] = 0x00;						/* 91: current advanced power management value */
+	ide->features[91*2+1] = 0x00;
+	ide->features[92*2+0] = 0x00;						/* 92: master password revision code */
+	ide->features[92*2+1] = 0x00;
+	ide->features[93*2+0] = 0x00;						/* 93: hardware reset result */
+	ide->features[93*2+1] = 0x00;
+	ide->features[94*2+0] = 0x00;						/* 94: acoustic management values */
+	ide->features[94*2+1] = 0x00;
+	ide->features[95*2+0] = 0x00;						/* 95-99: reserved */
+	ide->features[95*2+1] = 0x00;
+	ide->features[100*2+0] = total_sectors & 0xff;		/* 100-103: maximum 48-bit LBA */
+	ide->features[100*2+1] = total_sectors >> 8;
+	ide->features[101*2+0] = total_sectors >> 16;
+	ide->features[101*2+1] = total_sectors >> 24;
+	ide->features[102*2+0] = 0x00;
+	ide->features[102*2+1] = 0x00;
+	ide->features[103*2+0] = 0x00;
+	ide->features[103*2+1] = 0x00;
+	ide->features[104*2+0] = 0x00;						/* 104-126: reserved */
+	ide->features[104*2+1] = 0x00;
+	ide->features[127*2+0] = 0x00;						/* 127: removable media status notification */
+	ide->features[127*2+1] = 0x00;
+	ide->features[128*2+0] = 0x00;						/* 128: security status */
+	ide->features[128*2+1] = 0x00;
+	ide->features[129*2+0] = 0x00;						/* 129-159: vendor specific */
+	ide->features[129*2+1] = 0x00;
+	ide->features[160*2+0] = 0x00;						/* 160: CFA power mode 1 */
+	ide->features[160*2+1] = 0x00;
+	ide->features[161*2+0] = 0x00;						/* 161-175: reserved for CompactFlash */
+	ide->features[161*2+1] = 0x00;
+	ide->features[176*2+0] = 0x00;						/* 176-205: current media serial number */
+	ide->features[176*2+1] = 0x00;
+	ide->features[206*2+0] = 0x00;						/* 206-254: reserved */
+	ide->features[206*2+1] = 0x00;
+	ide->features[255*2+0] = 0x00;						/* 255: integrity word */
+	ide->features[255*2+1] = 0x00;
 }
 
 
@@ -720,8 +833,10 @@ static void read_sector_done(int which)
 	/* if we succeeded, advance to the next sector and set the nice bits */
 	if (count == 1)
 	{
-		/* advance the pointers */
-		next_sector(ide);
+		/* advance the pointers, unless this is the last sector */
+		/* Gauntlet: Dark Legacy checks to make sure we stop on the last sector */
+		if (ide->sector_count != 1)
+			next_sector(ide);
 
 		/* clear the error value */
 		ide->error = IDE_ERROR_NONE;
@@ -904,8 +1019,10 @@ static void write_sector_done(int which)
 	/* if we succeeded, advance to the next sector and set the nice bits */
 	if (count == 1)
 	{
-		/* advance the pointers */
-		next_sector(ide);
+		/* advance the pointers, unless this is the last sector */
+		/* Gauntlet: Dark Legacy checks to make sure we stop on the last sector */
+		if (ide->sector_count != 1)
+			next_sector(ide);
 
 		/* clear the error value */
 		ide->error = IDE_ERROR_NONE;
@@ -1082,7 +1199,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			ide->error = IDE_ERROR_NONE;
 
 			/* signal an interrupt */
-			signal_interrupt(ide);
+			signal_delayed_interrupt(ide, MINIMUM_COMMAND_TIME, 1);
 			break;
 
 		case IDE_COMMAND_SET_CONFIG:
@@ -1107,7 +1224,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			LOGPRINT(("IDE Set features (%02X %02X %02X %02X %02X)\n", ide->precomp_offset, ide->sector_count & 0xff, ide->cur_sector, ide->cur_cylinder & 0xff, ide->cur_cylinder >> 8));
 
 			/* signal an interrupt */
-			signal_interrupt(ide);
+			signal_delayed_interrupt(ide, MINIMUM_COMMAND_TIME, 0);
 			break;
 		
 		case IDE_COMMAND_SET_BLOCK_COUNT:
@@ -1401,6 +1518,10 @@ static UINT32 ide_bus_master_read(struct ide_state *ide, offs_t offset, int size
 	/* command register */
 	if (offset == 0)
 		return ide->bus_master_command | (ide->bus_master_status << 16);
+	
+	/* status register */
+	if (offset == 2)
+		return ide->bus_master_status;
 	
 	/* descriptor table register */
 	if (offset == 4)

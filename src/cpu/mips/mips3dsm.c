@@ -207,8 +207,8 @@ static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 				case 0x0e:	sprintf(buffer, "ceil.w.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x0f:	sprintf(buffer, "floor.w.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x11:	sprintf(buffer, "mov%c.%s  %s,%s,%d", ((op >> 16) & 1) ? 't' : 'f', fmt, cpreg[1][fd], cpreg[1][fs], (op >> 18) & 7);	break;
-				case 0x12:	sprintf(buffer, "movz.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
-				case 0x13:	sprintf(buffer, "movn.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
+				case 0x12:	sprintf(buffer, "movz.%s  %s,%s,%s", fmt, cpreg[1][fd], cpreg[1][fs], reg[rt]);		break;
+				case 0x13:	sprintf(buffer, "movn.%s  %s,%s,%s", fmt, cpreg[1][fd], cpreg[1][fs], reg[rt]);		break;
 				case 0x15:	sprintf(buffer, "recip.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x16:	sprintf(buffer, "rsqrt.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x20:	sprintf(buffer, "cvt.s.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;

@@ -75,7 +75,7 @@ Dumped by Uki
 #include "sndhrdw/seibu.h"
 
 extern data8_t *bg_vram,*md_vram,*tx_vram,*fg_vram;
-UINT8 mux_data;
+static UINT8 sengokumj_mux_data;
 
 READ_HANDLER( sengoku_bg_vram_r );
 READ_HANDLER( sengoku_fg_vram_r );
@@ -91,7 +91,7 @@ VIDEO_UPDATE( sengokmj );
 /*Multiplexer device for the mahjong panel*/
 READ_HANDLER( mahjong_panel_0_r )
 {
-	switch(mux_data)
+	switch(sengokumj_mux_data)
 	{
 		case 1:    return readinputport(3);
 		case 2:    return readinputport(4);
@@ -100,7 +100,7 @@ READ_HANDLER( mahjong_panel_0_r )
 		case 0x10: return readinputport(7);
 		case 0x20: return readinputport(8);
 	}
-//	usrintf_showmessage("Reading input port %02x at PC = %05x",mux_data,activecpu_get_pc());
+//	usrintf_showmessage("Reading input port %02x at PC = %05x",sengokumj_mux_data,activecpu_get_pc());
 	return readinputport(3);
 }
 
@@ -111,7 +111,7 @@ READ_HANDLER( mahjong_panel_1_r )
 
 WRITE_HANDLER( mahjong_panel_w )
 {
-	if(offset == 1)	{ mux_data = data; }
+	if(offset == 1)	{ sengokumj_mux_data = data; }
 }
 
 /***************************************************************************************/

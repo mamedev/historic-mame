@@ -32,14 +32,20 @@ f000-ffff MCU internal ROM
 #include "cpu/m6800/m6800.h"
 
 
-static unsigned char *sharedram1;
+static UINT8 *sharedram1;
 
-WRITE_HANDLER( pacland_scroll0_w );
-WRITE_HANDLER( pacland_scroll1_w );
-WRITE_HANDLER( pacland_bankswitch_w );
-PALETTE_INIT( pacland );
-VIDEO_START( pacland );
-VIDEO_UPDATE( pacland );
+extern UINT8 *pacland_videoram2;
+
+extern WRITE_HANDLER( pacland_videoram_w );
+extern WRITE_HANDLER( pacland_videoram2_w );
+extern WRITE_HANDLER( pacland_scroll0_w );
+extern WRITE_HANDLER( pacland_scroll1_w );
+extern WRITE_HANDLER( pacland_bankswitch_w );
+extern WRITE_HANDLER( pacland_flipscreen_w );
+
+extern PALETTE_INIT( pacland );
+extern VIDEO_START( pacland );
+extern VIDEO_UPDATE( pacland );
 
 
 static READ_HANDLER( sharedram1_r )
@@ -96,7 +102,7 @@ static WRITE_HANDLER( pacland_led_w )
 
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, videoram_r },
+	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x37ff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_BANK1 },
 	{ 0x6800, 0x68ff, namcos1_wavedata_r },		/* PSG device, shared RAM */
@@ -106,7 +112,8 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x0fff, pacland_videoram_w, &videoram },
+	{ 0x1000, 0x1fff, pacland_videoram2_w, &pacland_videoram2 },
 	{ 0x2000, 0x37ff, MWA_RAM },
 	{ 0x2700, 0x27ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2f00, 0x2fff, MWA_RAM, &spriteram_2 },
@@ -120,8 +127,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x7000, 0x7000, MWA_NOP },	/* ??? */
 	{ 0x7800, 0x7800, MWA_NOP },	/* ??? */
 	{ 0x8000, 0x8800, pacland_halt_mcu_w },
-	{ 0x9800, 0x9800, MWA_NOP },	/* ??? */
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x9000, 0x9800, pacland_flipscreen_w },
+	//{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( mcu_readmem )
@@ -191,33 +198,31 @@ INPUT_PORTS_START( pacland )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0x60, "5" )
-	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	//PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x01, 0x00, "Start Level Select" )
+	PORT_DIPNAME( 0x01, 0x00, "Trip Select" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Freeze" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Round Select", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "Round Select" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x00, "Medium" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x18, "Hardest" )
+	PORT_DIPSETTING(    0x00, "A" )
+	PORT_DIPSETTING(    0x08, "B" )
+	PORT_DIPSETTING(    0x10, "C" )
+	PORT_DIPSETTING(    0x18, "D" )
 	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "30K,80K,130K,300K,500K,1M" )
-	PORT_DIPSETTING(    0x20, "30K,100K,200K,400K,600K,1M" )
-	PORT_DIPSETTING(    0x40, "40K,100K,180K,300K,500K,1M" )
-	PORT_DIPSETTING(    0x60, "30K,80K,Every 100K" )
-	PORT_DIPSETTING(    0x80, "50K,150K,Every 200K" )
-	PORT_DIPSETTING(    0xa0, "30K,80K,150K" )
-	PORT_DIPSETTING(    0xc0, "40K,100K,200K" )
+	PORT_DIPSETTING(    0x00, "30K 80K 130K 300K 500K 1M" )
+	PORT_DIPSETTING(    0x20, "30K 100K 200K 400K 600K 1M" )
+	PORT_DIPSETTING(    0x40, "40K 100K 180K 300K 500K 1M" )
+	PORT_DIPSETTING(    0x60, "30K 80K 100K+" )
+	PORT_DIPSETTING(    0x80, "50K 150K 200K+" )
+	PORT_DIPSETTING(    0xa0, "30K 80K 150K" )
+	PORT_DIPSETTING(    0xc0, "40K 100K 200K" )
 	PORT_DIPSETTING(    0xe0, "40K" )
 
 	PORT_START	/* Memory Mapped Port */
@@ -485,7 +490,7 @@ ROM_END
 
 
 
-GAMEX( 1984, pacland,  0,       pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1984, pacland2, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1984, pacland3, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 3)", GAME_NO_COCKTAIL )
-GAMEX( 1984, paclandm, pacland, pacland, pacland, 0, ROT0, "[Namco] (Bally Midway license)", "Pac-Land (Midway)", GAME_NO_COCKTAIL )
+GAME( 1984, pacland,  0,       pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 1)" )
+GAME( 1984, pacland2, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 2)" )
+GAME( 1984, pacland3, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 3)" )
+GAME( 1984, paclandm, pacland, pacland, pacland, 0, ROT0, "[Namco] (Bally Midway license)", "Pac-Land (Midway)" )

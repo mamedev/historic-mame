@@ -1,11 +1,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *pacland_videoram2;
 
-static struct mame_bitmap *tmpbitmap2,*tmpbitmap3;
-static int scroll0,scroll1;
 static int palette_bank;
-static const unsigned char *pacland_color_prom;
+static const UINT8 *pacland_color_prom;
 
 static struct rectangle spritevisiblearea =
 {
@@ -13,6 +12,7 @@ static struct rectangle spritevisiblearea =
 	5*8, 29*8-1
 };
 
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -86,48 +86,43 @@ PALETTE_INIT( pacland )
 	}
 }
 
-
-
-VIDEO_START( pacland )
+WRITE_HANDLER( pacland_videoram_w )
 {
-	if ( ( dirtybuffer = auto_malloc( videoram_size ) ) == 0)
-		return 1;
-	memset (dirtybuffer, 1, videoram_size);
-
-	if ( ( tmpbitmap = auto_bitmap_alloc( 64*8, 32*8 ) ) == 0 )
-		return 1;
-
-	if ( ( tmpbitmap2 = auto_bitmap_alloc( 64*8, 32*8 ) ) == 0 )
-		return 1;
-
-	if ( ( tmpbitmap3 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 )
-		return 1;
-
-	palette_bank = -1;
-
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset / 2);
+	}
 }
 
-
-
+WRITE_HANDLER( pacland_videoram2_w )
+{
+	if (pacland_videoram2[offset] != data)
+	{
+		pacland_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
+}
 
 WRITE_HANDLER( pacland_scroll0_w )
 {
-	scroll0 = data + 256 * offset;
+	int row;
+
+	for (row = 5; row < 29; row++)
+	{
+		tilemap_set_scrollx(fg_tilemap, row, data + 256 * offset);
+	}
 }
 
 WRITE_HANDLER( pacland_scroll1_w )
 {
-	scroll1 = data + 256 * offset;
+	tilemap_set_scrollx(bg_tilemap, 0, data + 256 * offset);
 }
-
-
 
 WRITE_HANDLER( pacland_bankswitch_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + ((data & 0x07) << 13);
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -137,7 +132,7 @@ WRITE_HANDLER( pacland_bankswitch_w )
 	if (palette_bank != ((data & 0x18) >> 3))
 	{
 		int i;
-		const unsigned char *color_prom;
+		const UINT8 *color_prom;
 
 		palette_bank = (data & 0x18) >> 3;
 		color_prom = pacland_color_prom + 256 * palette_bank;
@@ -170,7 +165,58 @@ WRITE_HANDLER( pacland_bankswitch_w )
 	}
 }
 
+WRITE_HANDLER( pacland_flipscreen_w )
+{
+	flip_screen_set(~data & 0xa0);
+}
 
+static void get_bg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int attr = pacland_videoram2[offs + 1];
+	int code = pacland_videoram2[offs] + ((attr & 0x01) << 8);
+	int color = ((attr & 0x3e) >> 1) + ((code & 0x1c0) >> 1);
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int attr = videoram[offs + 1];
+	int code = videoram[offs] + ((attr & 0x01) << 8);
+	int color = ((attr & 0x1e) >> 1) + ((code & 0x1e0) >> 1);
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	tile_info.priority = (attr & 0x20) ? 1 : 0;
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( pacland )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 64, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_scrolldx(bg_tilemap, 0, -22*8);
+	tilemap_set_scrolldx(fg_tilemap, 0, -22*8);
+	tilemap_set_scroll_rows(fg_tilemap, 32);
+	tilemap_set_transparent_pen(fg_tilemap, 0xff);
+
+	palette_bank = -1;
+
+	return 0;
+}
 
 #define DRAW_SPRITE( code, sx, sy ) \
 		{ drawgfx( bitmap, Machine->gfx[ 2+gfx ], code, color, flipx, flipy, sx, sy, \
@@ -189,6 +235,13 @@ static void pacland_draw_sprites( struct mame_bitmap *bitmap,int priority)
 		int y = 256 - spriteram_2[offs] - 23;
 		int flipy = spriteram_3[offs] & 2;
 		int flipx = spriteram_3[offs] & 1;
+
+		if (flip_screen)
+		{
+			x += 8;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		switch ( spriteram_3[offs] & 0x0c )
 		{
@@ -249,137 +302,13 @@ static void pacland_draw_sprites( struct mame_bitmap *bitmap,int priority)
 	}
 }
 
-
-
 VIDEO_UPDATE( pacland )
 {
-	int offs;
-	int sx,sy, code, flipx, flipy, color;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for ( offs = videoram_size / 2; offs < videoram_size; offs += 2 )
-	{
-		if ( dirtybuffer[offs] || dirtybuffer[offs+1] )
-		{
-			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
-
-			sx = ( ( ( offs - ( videoram_size / 2 ) ) % 128 ) / 2 );
-			sy = ( ( ( offs - ( videoram_size / 2 ) ) / 128 ) );
-
-			flipx = videoram[offs+1] & 0x40;
-			flipy = videoram[offs+1] & 0x80;
-
-			code = videoram[offs] + ((videoram[offs+1] & 0x01) << 8);
-			color = ((videoram[offs+1] & 0x3e) >> 1) + ((code & 0x1c0) >> 1);
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					code,
-					color,
-					flipx,flipy,
-					sx*8,sy*8,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy scrolled contents */
-	{
-		int i,scroll[32];
-
-		/* x position is adjusted to make the end of level door border aligned */
-		for ( i = 0; i < 32; i++ )
-		{
-			if ( i < 5 || i > 28 )
-				scroll[i] = 2;
-			else
-				scroll[i] = -scroll1+2;
-		}
-
-		copyscrollbitmap( bitmap, tmpbitmap, 32, scroll, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0 );
-	}
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for ( offs = 0; offs < videoram_size / 2; offs += 2 )
-	{
-		if ( dirtybuffer[offs] || dirtybuffer[offs+1] )
-		{
-			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
-
-			sx = ( ( offs % 128 ) / 2 );
-			sy = ( ( offs / 128 ) );
-
-			flipx = videoram[offs+1] & 0x40;
-			flipy = videoram[offs+1] & 0x80;
-
-			code = videoram[offs] + ((videoram[offs+1] & 0x01) << 8);
-			color = ((videoram[offs+1] & 0x1e) >> 1) + ((code & 0x1e0) >> 1);
-
-			drawgfx(tmpbitmap2,Machine->gfx[0],
-					code,
-					color,
-					flipx,flipy,
-					sx*8,sy*8,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy scrolled contents */
-	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->visible_area);
-	{
-		int i,scroll[32];
-
-		for ( i = 0; i < 32; i++ )
-		{
-			if ( i < 5 || i > 28 )
-				scroll[i] = 0;
-			else
-				scroll[i] = -scroll0;
-		}
-
-		copyscrollbitmap( tmpbitmap3, tmpbitmap2, 32, scroll, 0, 0, &Machine->visible_area, TRANSPARENCY_COLOR, 0xff );
-	}
-	pacland_draw_sprites(tmpbitmap3,2);
-	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0x7f);
-
-	pacland_draw_sprites(bitmap,0);
-
-	/* redraw the tiles which have priority over the sprites */
-	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->visible_area);
-	for ( offs = 0; offs < videoram_size / 2; offs += 2 )
-	{
-		if (videoram[offs+1] & 0x20)
-		{
-			int scroll;
-
-
-			sx = ( ( offs % 128 ) / 2 );
-			sy = ( ( offs / 128 ) );
-
-			if ( sy < 5 || sy > 28 )
-				scroll = 0;
-			else
-				scroll = -scroll0;
-
-			if (sx*8 + scroll < -8) scroll += 512;
-
-			flipx = videoram[offs+1] & 0x40;
-			flipy = videoram[offs+1] & 0x80;
-
-			code = videoram[offs] + ((videoram[offs+1] & 0x01) << 8);
-			color = ((videoram[offs+1] & 0x1e) >> 1) + ((code & 0x1e0) >> 1);
-
-			drawgfx(tmpbitmap3,Machine->gfx[0],
-					code,
-					color,
-					flipx,flipy,
-					sx*8 + scroll,sy*8,
-					&Machine->visible_area,TRANSPARENCY_COLOR,0xff);
-		}
-	}
-	pacland_draw_sprites(tmpbitmap3,2);
-	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0x7f);
-
-	pacland_draw_sprites(bitmap,1);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	pacland_draw_sprites(bitmap, 2);
+	pacland_draw_sprites(bitmap, 0);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 1, 0);
+	pacland_draw_sprites(bitmap, 2);
+	pacland_draw_sprites(bitmap, 1);
 }

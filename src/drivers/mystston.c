@@ -4,11 +4,6 @@ Mysterious Stones
 
 driver by Nicola Salmoria
 
-
-Known problems:
-
-- Some dipswitches may not be mapped correctly.
-
 Notes:
 - The subtitle of the two sets is slightly different:
   "dr john s adventure" vs. "dr kick in adventure".
@@ -22,42 +17,21 @@ Notes:
 #include "vidhrdw/generic.h"
 
 
+extern UINT8 *mystston_videoram2;
 
-extern unsigned char *mystston_fgvideoram;
-extern unsigned char *mystston_bgvideoram;
-extern unsigned char *mystston_scroll;
+extern WRITE_HANDLER( mystston_videoram_w );
+extern WRITE_HANDLER( mystston_videoram2_w );
+extern WRITE_HANDLER( mystston_scroll_w );
+extern WRITE_HANDLER( mystston_control_w );
 
-WRITE_HANDLER( mystston_fgvideoram_w );
-WRITE_HANDLER( mystston_bgvideoram_w );
-WRITE_HANDLER( mystston_scroll_w );
-WRITE_HANDLER( mystston_2000_w );
-VIDEO_START( mystston );
-PALETTE_INIT( mystston );
-VIDEO_UPDATE( mystston );
+extern PALETTE_INIT( mystston );
+extern VIDEO_START( mystston );
+extern VIDEO_UPDATE( mystston );
 
 
-
-static INTERRUPT_GEN( mystston_interrupt )
-{
-	static int coin;
-
-
-	if ((readinputport(0) & 0xc0) != 0xc0)
-	{
-		if (coin == 0)
-		{
-			coin = 1;
-			nmi_line_pulse();
-			return;
-		}
-	}
-	else coin = 0;
-
-	cpu_set_irq_line(0, 0, HOLD_LINE);
-}
-
-
+static int VBLK = 0x80;
 static int soundlatch;
+
 
 static WRITE_HANDLER( mystston_soundlatch_w )
 {
@@ -67,7 +41,6 @@ static WRITE_HANDLER( mystston_soundlatch_w )
 static WRITE_HANDLER( mystston_soundcontrol_w )
 {
 	static int last;
-
 
 	/* bit 5 goes to 8910 #0 BDIR pin  */
 	if ((last & 0x20) == 0x20 && (data & 0x20) == 0x00)
@@ -91,6 +64,17 @@ static WRITE_HANDLER( mystston_soundcontrol_w )
 	last = data;
 }
 
+static READ_HANDLER( port3_r )
+{
+	int port = readinputport(3);
+
+	return port | VBLK;
+}
+
+static WRITE_HANDLER( mystston_irq_reset_w )
+{
+	cpu_set_irq_line(0, 0, CLEAR_LINE);
+}
 
 
 static MEMORY_READ_START( readmem )
@@ -100,19 +84,20 @@ static MEMORY_READ_START( readmem )
 	{ 0x2000, 0x2000, input_port_0_r },
 	{ 0x2010, 0x2010, input_port_1_r },
 	{ 0x2020, 0x2020, input_port_2_r },
-	{ 0x2030, 0x2030, input_port_3_r },
+	{ 0x2030, 0x2030, port3_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x077f, MWA_RAM },
 	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x07e0, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, MWA_RAM },	/* work RAM? */
-	{ 0x1000, 0x17ff, &mystston_fgvideoram_w, &mystston_fgvideoram },
-	{ 0x1800, 0x1bff, &mystston_bgvideoram_w, &mystston_bgvideoram },
+	{ 0x1000, 0x17ff, &mystston_videoram_w, &videoram },
+	{ 0x1800, 0x1bff, &mystston_videoram2_w, &mystston_videoram2 },
 	{ 0x1c00, 0x1fff, MWA_RAM },	/* work RAM? This gets copied to videoram */
-	{ 0x2000, 0x2000, mystston_2000_w },	/* text color, flip screen & coin counters */
-	{ 0x2010, 0x2010, watchdog_reset_w },	/* or IRQ acknowledge maybe? */
+	{ 0x2000, 0x2000, mystston_control_w },	/* text color, flip screen & coin counters */
+	{ 0x2010, 0x2010, mystston_irq_reset_w },
 	{ 0x2020, 0x2020, mystston_scroll_w },
 	{ 0x2030, 0x2030, mystston_soundlatch_w },
 	{ 0x2040, 0x2040, mystston_soundcontrol_w },
@@ -121,16 +106,14 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
-
-
 INPUT_PORTS_START( mystston )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 
@@ -139,8 +122,8 @@ INPUT_PORTS_START( mystston )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
@@ -154,21 +137,7 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPNAME(0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME(0x03, 0x03, DEF_STR( Coin_A ) )
@@ -181,18 +150,15 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(   0x04, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )	// flip screen according to manual? doesn't seem to work
-	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME(0x20, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x20, DEF_STR( On ) )
 	PORT_DIPNAME(0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(   0x40, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	// VBLANK
 INPUT_PORTS_END
-
 
 
 static struct GfxLayout charlayout =
@@ -228,11 +194,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
 static struct AY8910interface ay8910_interface =
 {
-	2,      /* 2 chips */
-	1500000,        /* 1.5 MHz ? */
+	2,				// 2 chips
+	12000000/8,		// 1.5 MHz
 	{ 30, 30 },
 	{ 0 },
 	{ 0 },
@@ -241,16 +206,47 @@ static struct AY8910interface ay8910_interface =
 };
 
 
+static INTERRUPT_GEN( mystston_interrupt )
+{
+	int scanline = 271 - cpu_getiloops();
+	static int coin;
+
+	/* Inserting a coin triggers an NMI */
+	if ((readinputport(0) & 0xc0) != 0xc0)
+	{
+		if (coin == 0)
+		{
+			coin = 1;
+			nmi_line_pulse();
+			return;
+		}
+	}
+	else coin = 0;
+
+	/* VBLK is lowered on scanline 8 */
+	if (scanline == 8)
+		VBLK = 0;
+
+	/* VBLK is raised on scanline 248 */
+	if (scanline == 248)
+		VBLK = 0x80;
+
+	/* IMS is triggered every time VLOC line 3 is raised,
+	   as VLOC counter starts at 16, effectively every 16 scanlines */
+	if ((scanline % 16) == 0)
+		cpu_set_irq_line(0, 0, HOLD_LINE);
+}
+
 
 static MACHINE_DRIVER_START( mystston )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz ???? */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(mystston_interrupt,16)	/* ? controls music tempo */
+	MDRV_CPU_ADD(M6502, 12000000/8)	// 1.5 MHz
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_VBLANK_INT(mystston_interrupt, 272)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
+	MDRV_VBLANK_DURATION(0)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -267,15 +263,6 @@ static MACHINE_DRIVER_START( mystston )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
-
-
-
-
-/***************************************************************************
-
-  Mysterious Stones driver
-
-***************************************************************************/
 
 ROM_START( mystston )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -336,6 +323,5 @@ ROM_START( myststno )
 ROM_END
 
 
-
-GAME( 1984, mystston, 0,        mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones (set 1)" )
-GAME( 1984, myststno, mystston, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones (set 2)" )
+GAME( 1984, mystston, 0,        mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones - Dr. John's Adventure" )
+GAME( 1984, myststno, mystston, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones - Dr. Kick in Adventure" )

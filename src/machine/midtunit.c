@@ -539,7 +539,7 @@ DRIVER_INIT( nbajamte )
 	INSTALL_SPEEDUP_1_16BIT(0x0106d480, 0xff84e480, 0x1000040, 0xd0, 0xb0);
 }
 
-DRIVER_INIT( jdredd )
+DRIVER_INIT( jdreddp )
 {
 	/* common init */
 	init_tunit_generic(SOUND_ADPCM_LARGE);

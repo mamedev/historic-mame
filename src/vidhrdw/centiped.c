@@ -44,14 +44,6 @@ static void milliped_get_tile_info(int tile_index)
 }
 
 
-static void qwakprot_get_tile_info(int tile_index)
-{
-	int data = videoram[tile_index];
-	SET_TILE_INFO(0, ((data << 1) & 0xfe) + ((data >> 7) & 0x01) + 0x100, 0, 0);
-}
-
-
-
 /*************************************
  *
  *	Video system start
@@ -84,17 +76,6 @@ VIDEO_START( warlords )
 VIDEO_START( milliped )
 {
 	tilemap = tilemap_create(milliped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!tilemap)
-		return 1;
-
-	centiped_flipscreen = 0;
-	return 0;
-}
-
-
-VIDEO_START( qwakprot )
-{
-	tilemap = tilemap_create(qwakprot_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
 	if (!tilemap)
 		return 1;
 
@@ -323,42 +304,6 @@ WRITE_HANDLER( milliped_paletteram_w )
 
 /*************************************
  *
- *	Palette writes: Qwak
- *
- *************************************/
-
-WRITE_HANDLER( qwakprot_paletteram_w )
-{
-	int bit0,bit1,bit2;
-	int r,g,b;
-
-	paletteram[offset] = data;
-
-	/* red component */
-	bit0 = (~data >> 2) & 0x01;
-	bit1 = (~data >> 3) & 0x01;
-	bit2 = (~data >> 4) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	/* green component */
-	bit0 = (~data >> 5) & 0x01;
-	bit1 = (~data >> 6) & 0x01;
-	bit2 = (~data >> 7) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	/* blue component */
-	bit0 = 0;
-	bit1 = (~data >> 0) & 0x01;
-	bit2 = (~data >> 1) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_set_color(offset, r, g, b);
-}
-
-
-
-/*************************************
- *
  *	Video update
  *
  *************************************/
@@ -431,28 +376,6 @@ VIDEO_UPDATE( warlords )
 		}
 
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
-				cliprect, TRANSPARENCY_PEN, 0);
-	}
-}
-
-
-VIDEO_UPDATE( qwakprot )
-{
-	int offs;
-
-	/* draw the background */
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
-
-	/* draw the sprites */
-	for (offs = 0; offs < 0x10; offs++)
-	{
-		int code = spriteram[offs] & 0x7f;
-		int color = spriteram[offs + 0x30];
-		int flipy = spriteram[offs] & 0x80;
-		int x = spriteram[offs + 0x20];
-		int y = 240 - spriteram[offs + 0x10];
-
-		drawgfx(bitmap, Machine->gfx[1], code, color & 0x3f, 0, flipy, x, y,
 				cliprect, TRANSPARENCY_PEN, 0);
 	}
 }

@@ -16,7 +16,7 @@ READ16_HANDLER( midtunit_input_r );
 
 DRIVER_INIT( mk );
 DRIVER_INIT( mkr4 );
-DRIVER_INIT( jdredd );
+DRIVER_INIT( jdreddp );
 DRIVER_INIT( nbajam );
 DRIVER_INIT( nbajam20 );
 DRIVER_INIT( nbajamte );

@@ -72,8 +72,8 @@ int resource_tracking_tag = 0;
 size_t generic_nvram_size;
 data8_t *generic_nvram;
 
-/* hard disks */
-static void *hard_disk_handle[4];
+/* disks */
+static struct chd_file *disk_handle[4];
 
 /* system BIOS */
 static int system_bios;
@@ -551,6 +551,9 @@ struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_aut
 		bitmapsize = (height + 2 * BITMAP_SAFETY) * rowlen;
 		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *);
 
+		/* align to 16 bytes */
+		linearraysize = (linearraysize + 15) & ~15;
+
 		/* allocate the bitmap data plus an array of line pointers */
 		bitmap->line = use_auto ? auto_malloc(linearraysize + bitmapsize) : malloc(linearraysize + bitmapsize);
 		if (bitmap->line == NULL)
@@ -653,6 +656,22 @@ void *auto_malloc(size_t size)
 	}
 	return result;
 }
+
+
+
+/*-------------------------------------------------
+	auto_strdup - allocate auto-freeing string
+-------------------------------------------------*/
+
+char *auto_strdup(const char *str)
+{
+	char *new_str = auto_malloc(strlen(str) + 1);
+	if (!new_str)
+		return NULL;
+	strcpy(new_str, str);
+	return new_str;
+}
+
 
 
 /*-------------------------------------------------
@@ -865,9 +884,9 @@ void save_screen_snapshot(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void *get_disk_handle(int diskindex)
+struct chd_file *get_disk_handle(int diskindex)
 {
-	return hard_disk_handle[diskindex];
+	return disk_handle[diskindex];
 }
 
 
@@ -1671,10 +1690,10 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 		/* handle files */
 		if (ROMENTRY_ISFILE(romp))
 		{
-			struct hard_disk_header header;
+			struct chd_file *source, *diff = NULL;
+			struct chd_header header;
 			char filename[1024], *c;
-			void *source, *diff;
-			UINT8 md5[16];
+			char acthash[HASH_BUF_SIZE];
 			int err;
 
 			/* make the filename of the source */
@@ -1687,100 +1706,85 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 
 			/* first open the source drive */
 			debugload("Opening disk image: %s\n", filename);
-			source = hard_disk_open(filename, 0, NULL);
+			source = chd_open(filename, 0, NULL);
 			if (!source)
 			{
-				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND\n", filename);
+				if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
+					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s UNSUPPORTED CHD VERSION\n", filename);
+				else
+					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND\n", filename);
 				romdata->errors++;
 				romp++;
 				continue;
 			}
 
-			/* get the header and extract the MD5 */
-			header = *hard_disk_get_header(source);
-			if (!hash_data_extract_binary_checksum(ROM_GETHASHDATA(romp), HASH_MD5, md5))
-			{
-				printf("%-12s INVALID MD5 IN SOURCE\n", filename);
-				goto fatalerror;
-			}
+			/* get the header and extract the MD5/SHA1 */
+			header = *chd_get_header(source);
+			hash_data_clear(acthash);
+			hash_data_insert_binary_checksum(acthash, HASH_MD5, header.md5);
+			hash_data_insert_binary_checksum(acthash, HASH_SHA1, header.sha1);
 
 			/* verify the MD5 */
-			if (memcmp(md5, header.md5, sizeof(md5)))
+			if (!hash_data_is_equal(ROM_GETHASHDATA(romp), acthash, 0))
 			{
-				char acthash[HASH_BUF_SIZE];
-
-				/* Prepare a hashdata to be able to call dump_wrong_and_correct_checksums() */
-				hash_data_clear(acthash);
-				hash_data_insert_binary_checksum(acthash, HASH_MD5, header.md5);
-
-				/* Emit the warning to the screen */
 				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CHECKSUMS:\n", filename);
 				dump_wrong_and_correct_checksums(romdata, ROM_GETHASHDATA(romp), acthash);
 				romdata->warnings++;
 			}
 
-			if (hash_data_used_functions(ROM_GETHASHDATA(romp)) != HASH_MD5)
+			/* if not read-only, make the diff file */
+			if (!DISK_ISREADONLY(romp))
 			{
-				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s IGNORED ADDITIONAL CHECKSUM INFORMATIONS (ONLY MD5 SUPPORTED)\n",
-					filename);
-			}
+				/* make the filename of the diff */
+				strcpy(filename, ROM_GETNAME(romp));
+				c = strrchr(filename, '.');
+				if (c)
+					strcpy(c, ".dif");
+				else
+					strcat(filename, ".dif");
 
-
-			/* make the filename of the diff */
-			strcpy(filename, ROM_GETNAME(romp));
-			c = strrchr(filename, '.');
-			if (c)
-				strcpy(c, ".dif");
-			else
-				strcat(filename, ".dif");
-
-			/* try to open the diff */
-			debugload("Opening differencing image: %s\n", filename);
-			diff = hard_disk_open(filename, 1, source);
-			if (!diff)
-			{
-				/* didn't work; try creating it instead */
-
-				/* first get the parent's header and modify that */
-				header.flags |= HDFLAGS_HAS_PARENT | HDFLAGS_IS_WRITEABLE;
-				header.compression = HDCOMPRESSION_NONE;
-				memcpy(header.parentmd5, header.md5, sizeof(header.parentmd5));
-				memset(header.md5, 0, sizeof(header.md5));
-
-				/* then do the create; if it fails, we're in trouble */
-				debugload("Creating differencing image: %s\n", filename);
-				err = hard_disk_create(filename, &header);
-				if (err != HDERR_NONE)
-				{
-					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T CREATE DIFF FILE\n", filename);
-					romdata->errors++;
-					romp++;
-					continue;
-				}
-
-				/* open the newly-created diff file */
+				/* try to open the diff */
 				debugload("Opening differencing image: %s\n", filename);
-				diff = hard_disk_open(filename, 1, source);
+				diff = chd_open(filename, 1, source);
 				if (!diff)
 				{
-					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T OPEN DIFF FILE\n", filename);
-					romdata->errors++;
-					romp++;
-					continue;
+					/* didn't work; try creating it instead */
+					debugload("Creating differencing image: %s\n", filename);
+					err = chd_create(filename, 0, 0, CHDCOMPRESSION_NONE, source);
+					if (err != CHDERR_NONE)
+					{
+						if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s UNSUPPORTED CHD VERSION\n", filename);
+						else
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T CREATE DIFF FILE\n", filename);
+						romdata->errors++;
+						romp++;
+						continue;
+					}
+
+					/* open the newly-created diff file */
+					debugload("Opening differencing image: %s\n", filename);
+					diff = chd_open(filename, 1, source);
+					if (!diff)
+					{
+						if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s UNSUPPORTED CHD VERSION\n", filename);
+						else
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T OPEN DIFF FILE\n", filename);
+						romdata->errors++;
+						romp++;
+						continue;
+					}
 				}
 			}
 
 			/* we're okay, set the handle */
 			debugload("Assigning to handle %d\n", DISK_GETINDEX(romp));
-			hard_disk_handle[DISK_GETINDEX(romp)] = diff;
+			disk_handle[DISK_GETINDEX(romp)] = DISK_ISREADONLY(romp) ? source : diff;
 			romp++;
 		}
 	}
 	return 1;
-
-	/* error case */
-fatalerror:
-	return 0;
 }
 
 
@@ -1805,7 +1809,7 @@ int rom_load(const struct RomModule *romp)
 	romdata.romstotal = count_roms(romp);
 
 	/* reset the disk list */
-	memset(hard_disk_handle, 0, sizeof(hard_disk_handle));
+	memset(disk_handle, 0, sizeof(disk_handle));
 
 	/* determine the correct biosset to load based on options.bios string */
 	system_bios = determine_bios_rom(Machine->gamedrv->bios);

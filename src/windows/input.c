@@ -86,6 +86,8 @@ static float				a2d_deadzone;
 static int					use_mouse;
 static int					use_joystick;
 static int					use_lightgun;
+static int					use_lightgun_dual;
+static int					use_lightgun_reload;
 static int					use_keyboard_leds;
 static int					steadykey;
 static const char*			ctrlrtype;
@@ -122,6 +124,8 @@ static LPDIRECTINPUTDEVICE2	mouse_device2[MAX_MICE];
 static DIDEVCAPS			mouse_caps[MAX_MICE];
 static DIMOUSESTATE			mouse_state[MAX_MICE];
 static int					lightgun_count;
+static POINT				lightgun_dual_player_pos[4];
+static int					lightgun_dual_player_state[4];
 
 // joystick states
 static int					joystick_count;
@@ -151,6 +155,8 @@ struct rc_option input_opts[] =
 	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "enable mouse input" },
 	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
 	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable lightgun input" },
+	{ "dual_lightgun", "dual", rc_bool, &use_lightgun_dual, "0", 0, 0, NULL, "enable dual lightgun input" },
+	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },				
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
@@ -435,6 +441,7 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 0), 	JOYCODE_MOUSE_1_BUTTON1 },
 	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 1), 	JOYCODE_MOUSE_1_BUTTON2 },
 	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 2), 	JOYCODE_MOUSE_1_BUTTON3 },
+	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 3), 	JOYCODE_MOUSE_1_BUTTON4 },
 };
 
 
@@ -674,6 +681,8 @@ int win_init_input(void)
 	// initialize mouse devices
 	lightgun_count = 0;
 	mouse_count = 0;
+	lightgun_dual_player_state[0]=lightgun_dual_player_state[1]=0;
+	lightgun_dual_player_state[2]=lightgun_dual_player_state[3]=0;
 	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
 	if (result != DI_OK)
 		goto cant_init_mouse;
@@ -1336,11 +1345,27 @@ int osd_is_joy_pressed(int joycode)
 	{
 		case JOYTYPE_MOUSEBUTTON:
 			/* ActLabs lightgun - remap button 2 (shot off-screen) as button 1 */
-			if (use_lightgun && joynum==0) {
-				if (joyindex==0 && (mouse_state[0].rgbButtons[1]&0x80))
-					return 1;
-				if (joyindex==1 && (mouse_state[0].rgbButtons[1]&0x80))
-					return 0;
+			if (use_lightgun_dual && joyindex<4) {
+				if (use_lightgun_reload && joynum==0) {
+					if (joyindex==0 && lightgun_dual_player_state[1])
+						return 1;
+					if (joyindex==1 && lightgun_dual_player_state[1])
+						return 0;
+					if (joyindex==2 && lightgun_dual_player_state[3])
+						return 1;
+					if (joyindex==2 && lightgun_dual_player_state[3])
+						return 0;
+				}
+				return lightgun_dual_player_state[joyindex];
+			}
+						
+			if (use_lightgun) {
+				if (use_lightgun_reload && joynum==0) {
+					if (joyindex==0 && (mouse_state[0].rgbButtons[1]&0x80))
+						return 1;
+					if (joyindex==1 && (mouse_state[0].rgbButtons[1]&0x80))
+						return 0;
+				}
 			}
 			return mouse_state[joynum].rgbButtons[joyindex] >> 7;
 
@@ -1451,6 +1476,26 @@ int osd_is_joystick_axis_code(int joycode)
 //	osd_lightgun_read
 //============================================================
 
+void input_mouse_button_down(int button, int x, int y)
+{
+	if (!use_lightgun_dual)
+		return;
+
+	lightgun_dual_player_state[button]=1;
+	lightgun_dual_player_pos[button].x=x;
+	lightgun_dual_player_pos[button].y=y;
+
+	//logerror("mouse %d at %d %d\n",button,x,y);
+}
+
+void input_mouse_button_up(int button)
+{
+	if (!use_lightgun_dual)
+		return;
+
+	lightgun_dual_player_state[button]=0;
+}
+
 void osd_lightgun_read(int player,int *deltax,int *deltay)
 {
 	POINT point;
@@ -1463,7 +1508,7 @@ void osd_lightgun_read(int player,int *deltax,int *deltay)
 	}
 
 	// if out of range, skip it
-	if (!use_lightgun || !win_physical_width || !win_physical_height || player >= lightgun_count)
+	if (!use_lightgun || !win_physical_width || !win_physical_height || player >= (lightgun_count + use_lightgun_dual))
 	{
 		*deltax = *deltay = 0;
 		return;
@@ -1474,25 +1519,71 @@ void osd_lightgun_read(int player,int *deltax,int *deltay)
 		usrintf_showmessage("Lightgun not supported in windowed mode");
 
 	// Hack - if button 2 is pressed on lightgun, then return 0,0 (off-screen) to simulate reload
-	if (mouse_state[0].rgbButtons[1]&0x80) {
-		*deltax = -128;
-		*deltay = -128;
-		return;
+	if (use_lightgun_reload)
+	{
+		int return_offscreen=0;
+
+		// In dualmode we need to use the buttons returned from Windows messages
+		if (use_lightgun_dual)
+		{
+			if (player==0 && lightgun_dual_player_state[1])
+				return_offscreen=1;
+
+			if (player==1 && lightgun_dual_player_state[3])
+				return_offscreen=1;
+		}
+		else
+		{
+			if (mouse_state[0].rgbButtons[1]&0x80)
+				return_offscreen=1;
+		}
+
+		if (return_offscreen)
+		{
+			*deltax = -128;
+			*deltay = -128;
+			return;
+		}
 	}
 
-	// I would much prefer to use DirectInput to read the gun values but there seem to be
-	// some problems...  DirectInput (8.0 tested) on Win98 returns garbage for both buffered
-	// and immediate, absolute and relative axis modes.  Win2k (DX 8.1) returns good data
-	// for buffered absolute reads, but WinXP (8.1) returns garbage on all modes.  DX9 betas
-	// seem to exhibit the same behaviour.  I have no idea of the cause of this, the only
-	// consistent way to read the location seems to be the Windows system call GetCursorPos
-	// which requires the application have non-exclusive access to the mouse device
-	//
-	GetCursorPos(&point);
+	// Act-Labs dual lightgun - _only_ works with Windows messages for input location
+	if (use_lightgun_dual)
+	{
+		if (player==0)
+		{
+			point.x=lightgun_dual_player_pos[0].x; // Button 0 is player 1
+			point.y=lightgun_dual_player_pos[0].y; // Button 0 is player 1
+		}
+		else if (player==1)
+		{
+			point.x=lightgun_dual_player_pos[2].x; // Button 2 is player 2
+			point.y=lightgun_dual_player_pos[2].y; // Button 2 is player 2
+		}
+		else
+		{
+			point.x=point.y=0;
+		}
 
-	// Map absolute pixel values into -128 -> 128 range
-	*deltax = (point.x * 256 + win_physical_width/2) / (win_physical_width-1) - 128;
-	*deltay = (point.y * 256 + win_physical_height/2) / (win_physical_height-1) - 128;
+		// Map absolute pixel values into -128 -> 128 range
+		*deltax = (point.x * 256 + win_physical_width/2) / (win_physical_width-1) - 128;
+		*deltay = (point.y * 256 + win_physical_height/2) / (win_physical_height-1) - 128;
+	}
+	else
+	{
+		// I would much prefer to use DirectInput to read the gun values but there seem to be
+		// some problems...  DirectInput (8.0 tested) on Win98 returns garbage for both buffered
+		// and immediate, absolute and relative axis modes.  Win2k (DX 8.1) returns good data
+		// for buffered absolute reads, but WinXP (8.1) returns garbage on all modes.  DX9 betas
+		// seem to exhibit the same behaviour.  I have no idea of the cause of this, the only
+		// consistent way to read the location seems to be the Windows system call GetCursorPos
+		// which requires the application have non-exclusive access to the mouse device
+		//
+		GetCursorPos(&point);
+
+		// Map absolute pixel values into -128 -> 128 range
+		*deltax = (point.x * 256 + win_physical_width/2) / (win_physical_width-1) - 128;
+		*deltay = (point.y * 256 + win_physical_height/2) / (win_physical_height-1) - 128;
+	}
 
 	if (*deltax < -128) *deltax = -128;
 	if (*deltax > 128) *deltax = 128;
@@ -1771,6 +1862,23 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 		}
 #endif /* MESS */
 
+		// Dual lightguns - remap default buttons to suit
+		if (use_lightgun && use_lightgun_dual) {
+			static InputSeq p1b2 = SEQ_DEF_3(KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
+			static InputSeq p1b3 = SEQ_DEF_3(KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
+			static InputSeq p2b1 = SEQ_DEF_5(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1, CODE_OR, JOYCODE_MOUSE_1_BUTTON3);
+			static InputSeq p2b2 = SEQ_DEF_3(KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
+
+			if (idef->type == (IPT_BUTTON2 | IPF_PLAYER1))
+				seq_copy(&idef->seq, &p1b2);
+			if (idef->type == (IPT_BUTTON3 | IPF_PLAYER1))
+				seq_copy(&idef->seq, &p1b3);
+			if (idef->type == (IPT_BUTTON1 | IPF_PLAYER2))
+				seq_copy(&idef->seq, &p2b1);
+			if (idef->type == (IPT_BUTTON2 | IPF_PLAYER2))
+				seq_copy(&idef->seq, &p2b2);
+		}
+
 		// find the next one
 		idef++;
 	}
@@ -2011,8 +2119,8 @@ void osd_set_leds(int state)
 
 		// mask states and set new states
 		key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 0) & 1);
-		key_states[VK_CAPITAL] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 1) & 1);
-		key_states[VK_SCROLL] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 2) & 1);
+		key_states[VK_CAPITAL] = (key_states[VK_CAPITAL] & ~1) | ((state >> 1) & 1);
+		key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | ((state >> 2) & 1);
 
 		SetKeyboardState(&key_states[0]);
 	}

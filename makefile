@@ -1,8 +1,6 @@
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
 # TARGET = mess
-# TARGET = neomame
-# TARGET = cpmame
 # TARGET = mmsnd
 # example for a tiny compile
 # TARGET = tiny
@@ -190,7 +188,7 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-hdcomp$(EXE): $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 

@@ -40,7 +40,16 @@ screen resolution size values.
 -VDP1 "general purpose" priority isn't taken into account yet,for now we fix the priority
 value to six...
 
--AFAIK Suikoenbu is the only ST-V game that uses Mode 2 as the Color RAM format.
+-AFAIK Suikoenbu & Winter Heat are the only ST-V game that use Mode 2 as the Color RAM
+format.
+
+-Bitmaps USES transparency pens,examples are:
+elandore's energy bars;
+mausuke's foreground(the one used on the playfield)(I guess that this is also
+alpha-blended);
+
+for now I've removed black pixels,it isn't 100% right so there MUST BE a better way
+for this...
 
 */
 
@@ -106,11 +115,12 @@ static void stv_vdp2_dynamic_res_change(void);
        | LSMD1    | LSMD0    | VRESO1   | VRESO0   |    --    | HRESO2   | HRESO1   | HRESO0   |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
-	#define STV_VDP2_TVMD ((stv_vdp2_regs[0x000/4] >> 16)&0x0000ffff)
+	#define STV_VDP2_TVMD 	((stv_vdp2_regs[0x000/4] >> 16)&0x0000ffff)
 
-	#define STV_VDP2_LSMD ((STV_VDP2_TVMD & 0x00c0) >> 6)
-	#define STV_VDP2_VRES ((STV_VDP2_TVMD & 0x0030) >> 4)
-	#define STV_VDP2_HRES ((STV_VDP2_TVMD & 0x0007) >> 0)
+	#define STV_VDP2_BDCLMD	((STV_VDP2_TVMD & 0x0100) >> 8)
+	#define STV_VDP2_LSMD 	((STV_VDP2_TVMD & 0x00c0) >> 6)
+	#define STV_VDP2_VRES 	((STV_VDP2_TVMD & 0x0030) >> 4)
+	#define STV_VDP2_HRES 	((STV_VDP2_TVMD & 0x0007) >> 0)
 
 /* 180002 - r/w - EXTEN - External Signal Enable Register
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -133,6 +143,10 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    | VER3     | VER2     | VER1     | VER0     |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_VRSIZE ((stv_vdp2_regs[0x004/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_VRAMSZ ((STV_VDP2_VRSIZE & 0x8000) >> 15)
+
 /* 180008 - r/o - HCNT - H-Counter
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    | HCT9     | HCT8     |
@@ -140,12 +154,16 @@ static void stv_vdp2_dynamic_res_change(void);
        | HCT7     | HCT6     | HCT5     | HCT4     | HCT3     | HCT2     | HCT1     | HCT0     |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_HCNT ((stv_vdp2_regs[0x008/4] >> 16)&0x000003ff)
+
 /* 18000A - r/o - VCNT - V-Counter
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    | VCT9     | VCT8     |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | VCT7     | VCT6     | VCT5     | VCT4     | VCT3     | VCT2     | VCT1     | VCT0     |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_VCNT ((stv_vdp2_regs[0x008/4] >> 0)&0x000003ff)
 
 /* 18000C - RESERVED
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -843,12 +861,20 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_ZMXIN0 ((stv_vdp2_regs[0x078/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_N0ZMXI ((STV_VDP2_ZMXIN0 & 0x0007) >> 0)
+
 /* 18007a - Coordinate Inc (NBG0, Horizontal Fractional Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_ZMXDN0 ((stv_vdp2_regs[0x078/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_N0ZMXD ((STV_VDP2_ZMXDN0 >> 8)& 0xff)
 
 /* 18007c - Coordinate Inc (NBG0, Vertical Integer Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -857,12 +883,20 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_ZMYIN0 ((stv_vdp2_regs[0x07c/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_N0ZMYI ((STV_VDP2_ZMYIN0 & 0x0007) >> 0)
+
 /* 18007e - Coordinate Inc (NBG0, Vertical Fractional Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_ZMYDN0 ((stv_vdp2_regs[0x07c/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_N0ZMYD ((STV_VDP2_ZMYDN0 >> 8)& 0xff)
 
 /* 180080 - SCXIN1 - Screen Scroll (NBG1, Horizontal Integer Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -903,12 +937,20 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_ZMXIN1 ((stv_vdp2_regs[0x088/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_N1ZMXI ((STV_VDP2_ZMXIN1 & 0x0007) >> 0)
+
 /* 18008a - Coordinate Inc (NBG1, Horizontal Fractional Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_ZMXDN1 ((stv_vdp2_regs[0x088/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_N1ZMXD ((STV_VDP2_ZMXDN1 >> 8)& 0xff)
 
 /* 18008c - Coordinate Inc (NBG1, Vertical Integer Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -917,12 +959,20 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_ZMYIN1 ((stv_vdp2_regs[0x08c/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_N1ZMYI ((STV_VDP2_ZMYIN1 & 0x0007) >> 0)
+
 /* 18008e - Coordinate Inc (NBG1, Vertical Fractional Part)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_ZMYDN1 ((stv_vdp2_regs[0x08c/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_N1ZMYD ((STV_VDP2_ZMYDN1 >> 8)& 0xff)
 
 /* 180090 - SCXN2 - Screen Scroll (NBG2, Horizontal)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1032,17 +1082,24 @@ static void stv_vdp2_dynamic_res_change(void);
 
 /* 1800ac - Back Screen Table Address
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |  BKCLMD  |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |    --    |    --    |    --    |    --    |    --    |  BKTA18  |  BKTA17  |  BKTA16  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
 /* 1800ae - Back Screen Table Address
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |  BKTA15  |  BKTA14  |  BKTA13  |  BKTA12  |  BKTA11  |  BKTA10  |  BKTA9   |  BKTA8   |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |  BKTA7   |  BKTA7   |  BKTA6   |  BKTA5   |  BKTA4   |  BKTA3   |  BKTA2   |  BKTA0   |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_BKTA_UL (stv_vdp2_regs[0x0ac/4])
+
+	#define STV_VDP2_BKCLMD ((STV_VDP2_BKTA_UL & 0x80000000) >> 31)
+	#define STV_VDP2_BKTA   ((STV_VDP2_BKTA_UL & 0x0003ffff) >> 0)
+	/*MSB of this register is used when the extra RAM cart is used,ignore it for now.*/
+	//	#define STV_VDP2_BKTA   ((STV_VDP2_BKTA_UL & 0x0007ffff) >> 0)
 
 /* 1800b0 - Rotation Parameter Mode
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1459,7 +1516,6 @@ static void stv_vdp2_dynamic_res_change(void);
 /* Not sure if to use this for the rotating tilemaps as well or just use different draw functions, might add too much bloat */
 static struct stv_vdp2_tilemap_capabilities
 {
-
 	UINT8  enabled;
 	UINT8  trans_enabled;
 	UINT8  colour_depth;
@@ -1467,6 +1523,7 @@ static struct stv_vdp2_tilemap_capabilities
 	UINT8  bitmap_enable;
 	UINT8  bitmap_size;
 	UINT8  bitmap_palette_number;
+	UINT8  bitmap_map;
 	UINT16 map_offset[16];
 
 	UINT8  pattern_data_size;
@@ -1478,6 +1535,8 @@ static struct stv_vdp2_tilemap_capabilities
 
 	INT16 scrollx;
 	INT16 scrolly;
+	UINT8 scalex_i,scaley_i;
+	UINT16 scalex_f,scaley_f;
 
 	UINT8  plane_size;
 	UINT8  colour_ram_address_offset;
@@ -1500,6 +1559,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	data8_t* gfxdata = memory_region(REGION_GFX1);
 	static UINT16 *destline;
 
+	if (!stv2_current_tilemap.enabled) return;
+
 	/* size for n0 / n1 */
 	switch (stv2_current_tilemap.bitmap_size)
 	{
@@ -1508,6 +1569,10 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		case 2: xsize=1024; ysize=256; break;
 		case 3: xsize=1024; ysize=512; break;
 	}
+
+	gfxdata+=(stv2_current_tilemap.bitmap_map * 0x20000);
+	stv2_current_tilemap.bitmap_palette_number+=stv2_current_tilemap.colour_ram_address_offset;
+	stv2_current_tilemap.bitmap_palette_number&=7;//safety check
 
 	switch(stv2_current_tilemap.colour_depth)
 	{
@@ -1518,8 +1583,10 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			{
 				for (xcnt = 0; xcnt <xsize;xcnt+=2)
 				{
-					plot_pixel(bitmap,xcnt  ,ycnt,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
-					plot_pixel(bitmap,xcnt+1,ycnt,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+					if(Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100)])
+						plot_pixel(bitmap,xcnt+1  ,ycnt,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+					if(Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100)])
+						plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
 
 					gfxdata++;
 				}
@@ -1532,8 +1599,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			{
 				for (xcnt = 0; xcnt <xsize;xcnt++)
 				{
-					/*elandore/shanhigw requires something else as banking,but what?*/
-					plot_pixel(bitmap,xcnt,ycnt,Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+					if(Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100)])
+						plot_pixel(bitmap,xcnt,ycnt,Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
 
 					gfxdata++;
 				}
@@ -1546,7 +1613,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			{
 				for (xcnt = 0; xcnt <xsize;xcnt++)
 				{
-					plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff)]);
+					if(Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff)])
+						plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff)]);
 
 					gfxdata+=2;
 				}
@@ -1574,7 +1642,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
 					r = ((gfxdata[1] & 0x1f));
 
-					destline[xcnt] = b | g << 5 | r << 10;
+					if(r||g||b)
+						destline[xcnt] = b | g << 5 | r << 10;
 
 					gfxdata+=2;
 				}
@@ -1601,7 +1670,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					g = ((gfxdata[2] & 0xff));
 					r = ((gfxdata[3] & 0xff));
 
-					destline[xcnt] = b | g << 5 | r << 10;
+					if(r||g||b)
+						destline[xcnt] = b | g << 5 | r << 10;
 
 					gfxdata+=4;
 				}
@@ -1701,6 +1771,8 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 	int i, x, y;
 	int base[4];
 
+	int scalex,scaley;
+
 	/* Calculate the Number of tiles for x / y directions of each page (actually these will be the same */
 	/* (2-stv2_current_tilemap.tile_size) << 5) */
 	pgtiles_x = ((2-stv2_current_tilemap.tile_size) << 5); // 64 (8x8 mode) or 32 (16x16 mode)
@@ -1727,7 +1799,7 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
    ---------------------------------------------------------------------------*/
 
 
-	/* Page Dimensions are always 0x200 pixles (512x512) */
+	/* Page Dimensions are always 0x200 pixes (512x512) */
 	pgpixels_x = 0x200;
 	pgpixels_y = 0x200;
 
@@ -1869,8 +1941,10 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 		int tilecode, flipyx, pal, gfx;
 
 		map = 0 ; page = 0 ;
-
-		drawypos = (stv2_current_tilemap.tile_size ? 16 : 8) * y;
+		if(stv2_current_tilemap.scaley_i != 1)
+			drawypos = ((stv2_current_tilemap.tile_size ? 16 : 8) * 2) * y;
+		else
+			drawypos = (stv2_current_tilemap.tile_size ? 16 : 8) * y;
 		drawypos -= stv2_current_tilemap.scrolly;
 
 		if (drawypos > Machine->visible_area.max_y) continue;
@@ -1883,7 +1957,10 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 		for (x = 0; x<mptiles_x; x++) {
 			int drawxpos, xpageoffs, xplaneoffs;
-			drawxpos = (stv2_current_tilemap.tile_size ? 16 : 8) * x;
+			if(stv2_current_tilemap.scalex_i != 1)
+				drawxpos = ((stv2_current_tilemap.tile_size ? 16 : 8) * 2) * x;
+			else
+				drawxpos = (stv2_current_tilemap.tile_size ? 16 : 8) * x;
 			drawxpos -= stv2_current_tilemap.scrollx;
 
 			if (drawxpos > Machine->visible_area.max_x) continue;
@@ -1982,53 +2059,111 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 /* TILES ARE NOW DECODED */
 
 /* DRAW! */
-
-			if (stv2_current_tilemap.tile_size==1)
+			if(stv2_current_tilemap.scalex_i != 1 || stv2_current_tilemap.scaley_i != 1)
 			{
-				/* normal */
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
 
-				/* this isn't very efficient .. we could probably improve it */
-				if (stv2_current_tilemap.scrollx) /* wraparound x */
-				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
-				}
-				if (stv2_current_tilemap.scrolly) /* wraparound y */
-				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-				}
-				if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
-				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-				}
+				if(stv2_current_tilemap.scalex_i == 0)
+					scalex = stv2_current_tilemap.scalex_f /** STV_VDP2_HCNT*/ * 0x2c0*2;
+				else
+					scalex = 0xffff;
 
+				if(stv2_current_tilemap.scaley_i == 0)
+					scaley = stv2_current_tilemap.scaley_f * STV_VDP2_VCNT * 0x100;
+				else
+					scaley = 0xffff;
 
+				usrintf_showmessage("%04x %04x",STV_VDP2_HCNT,stv2_current_tilemap.scalex_f);
+
+				if (stv2_current_tilemap.tile_size==1)
+				{
+					/* normal */
+					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+
+					/* this isn't very efficient .. we could probably improve it */
+					if (stv2_current_tilemap.scrollx) /* wraparound x */
+					{
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					}
+					if (stv2_current_tilemap.scrolly) /* wraparound y */
+					{
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					}
+					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
+					{
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					}
+
+				}
+				else
+				{
+					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					/* this isn't very efficient .. we could probably improve it */
+					if (stv2_current_tilemap.scrollx) /* wraparound x */
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					if (stv2_current_tilemap.scrolly) /* wraparound y */
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
+						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0,scalex,scaley);
+				}
 			}
 			else
 			{
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+				if (stv2_current_tilemap.tile_size==1)
+				{
+					/* normal */
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
 
-				/* this isn't very efficient .. we could probably improve it */
-				if (stv2_current_tilemap.scrollx) /* wraparound x */
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
-				if (stv2_current_tilemap.scrolly) /* wraparound y */
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
-				if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					/* this isn't very efficient .. we could probably improve it */
+					if (stv2_current_tilemap.scrollx) /* wraparound x */
+					{
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
+					}
+					if (stv2_current_tilemap.scrolly) /* wraparound y */
+					{
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					}
+					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
+					{
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					}
+				}
+				else
+				{
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+
+					/* this isn't very efficient .. we could probably improve it */
+					if (stv2_current_tilemap.scrollx) /* wraparound x */
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+					if (stv2_current_tilemap.scrolly) /* wraparound y */
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
+						drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+				}
 			}
-
 /* DRAWN?! */
 
 		}
@@ -2077,6 +2212,7 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_N0BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_N0BMSZ;
 	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_N0BMP;
+	stv2_current_tilemap.bitmap_map = STV_VDP2_N0MP_;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N0MPA | (STV_VDP2_N0MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N0MPB | (STV_VDP2_N0MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N0MPC | (STV_VDP2_N0MP_ << 6);
@@ -2091,6 +2227,10 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXIN0;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYIN0;
+	stv2_current_tilemap.scalex_i = STV_VDP2_N0ZMXI;
+	stv2_current_tilemap.scalex_f = STV_VDP2_N0ZMXD;
+	stv2_current_tilemap.scaley_i = STV_VDP2_N0ZMYI;
+	stv2_current_tilemap.scaley_f = STV_VDP2_N0ZMYD;
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N0PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N0CAOS;
@@ -2126,6 +2266,7 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_N1BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_N1BMSZ;
 	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_N1BMP;
+	stv2_current_tilemap.bitmap_map = STV_VDP2_N1MP_;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N1MPA | (STV_VDP2_N1MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N1MPB | (STV_VDP2_N1MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N1MPC | (STV_VDP2_N1MP_ << 6);
@@ -2140,6 +2281,10 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXIN1;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYIN1;
+	stv2_current_tilemap.scalex_i = STV_VDP2_N1ZMXI;
+	stv2_current_tilemap.scalex_f = STV_VDP2_N1ZMXD;
+	stv2_current_tilemap.scaley_i = STV_VDP2_N1ZMYI;
+	stv2_current_tilemap.scaley_f = STV_VDP2_N1ZMYD;
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N1PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N1CAOS;
@@ -2180,9 +2325,11 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N2TPON;
 	stv2_current_tilemap.colour_depth = STV_VDP2_N2CHCN;
 	stv2_current_tilemap.tile_size = STV_VDP2_N2CHSZ;
-	stv2_current_tilemap.bitmap_enable = 0; // this layer can't be a bitmap
-	stv2_current_tilemap.bitmap_size = 0; // this layer can't be a bitmap
-	stv2_current_tilemap.bitmap_palette_number = 0; //this layer can't be a bitmap
+	/* this layer can't be a bitmap,so ignore these registers*/
+	stv2_current_tilemap.bitmap_enable = 0;
+	stv2_current_tilemap.bitmap_size = 0;
+	stv2_current_tilemap.bitmap_palette_number = 0;
+	stv2_current_tilemap.bitmap_map = 0;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N2MPA | (STV_VDP2_N2MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N2MPB | (STV_VDP2_N2MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N2MPC | (STV_VDP2_N2MP_ << 6);
@@ -2197,6 +2344,11 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXN2;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYN2;
+	/*This layer can't be scaled*/
+	stv2_current_tilemap.scalex_i = 1;
+	stv2_current_tilemap.scalex_f = 0;
+	stv2_current_tilemap.scaley_i = 1;
+	stv2_current_tilemap.scaley_f = 0;
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N2CAOS;
 
@@ -2233,9 +2385,11 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N3TPON;
 	stv2_current_tilemap.colour_depth = STV_VDP2_N3CHCN;
 	stv2_current_tilemap.tile_size = STV_VDP2_N3CHSZ;
-	stv2_current_tilemap.bitmap_enable = 0; // this layer can't be a bitmap
-	stv2_current_tilemap.bitmap_size = 0; // this layer can't be a bitmap
-	stv2_current_tilemap.bitmap_palette_number = 0; //this layer can't be a bitmap
+	/* this layer can't be a bitmap,so ignore these registers*/
+	stv2_current_tilemap.bitmap_enable = 0;
+	stv2_current_tilemap.bitmap_size = 0;
+	stv2_current_tilemap.bitmap_palette_number = 0;
+	stv2_current_tilemap.bitmap_map = 0;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N3MPA | (STV_VDP2_N3MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N3MPB | (STV_VDP2_N3MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N3MPC | (STV_VDP2_N3MP_ << 6);
@@ -2250,6 +2404,11 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXN3;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYN3;
+	/*This layer can't be scaled*/
+	stv2_current_tilemap.scalex_i = 1;
+	stv2_current_tilemap.scalex_f = 0;
+	stv2_current_tilemap.scaley_i = 1;
+	stv2_current_tilemap.scaley_f = 0;
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N3CAOS;
 
@@ -2259,7 +2418,40 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
+static void stv_vdp2_draw_back(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	int xcnt,ycnt;
+	data8_t* gfxdata = memory_region(REGION_GFX1);
+	static UINT16 *destline;
 
+	if(!(STV_VDP2_BDCLMD & 1))
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+	else
+	{
+		#ifdef MAME_DEBUG
+		//usrintf_showmessage("Back screen enabled %08x",STV_VDP2_BKTA);
+		#endif
+		gfxdata+=(STV_VDP2_BKTA);
+
+		for (ycnt = 0; ycnt <1024;ycnt++)
+		{
+			destline = (UINT16 *)(bitmap->line[ycnt]);
+
+			for (xcnt = 0; xcnt <1024;xcnt++)
+			{
+				int r,g,b;
+
+				b = ((gfxdata[0] & 0x7c) >> 2);
+				g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
+				r = ((gfxdata[1] & 0x1f));
+
+				destline[xcnt] = b | g << 5 | r << 10;
+			}
+			if(STV_VDP2_BKCLMD)
+				gfxdata+=2;
+		}
+	}
+}
 
 
 WRITE32_HANDLER ( stv_vdp2_vram_w )
@@ -2358,12 +2550,6 @@ WRITE32_HANDLER ( stv_vdp2_regs_w )
 {
 	COMBINE_DATA(&stv_vdp2_regs[offset]);
 }
-/*
-READ32_HANDLER ( stv_vdp2_regs_r )
-{
-	return stv_vdp2_regs[offset];
-}
-*/
 
 extern int stv_vblank;
 READ32_HANDLER ( stv_vdp2_regs_r )
@@ -2372,18 +2558,16 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 
 	switch(offset)
 	{
-		case 1:
+		case 0x4/4:
 		/*Screen Status Register*/
-		/*VBLANK & HBLANK(bit 3 & 2 of high word),fake for now*/
-		/*VBLANK is always one when the DISP is 0*/
-		//	stv_vdp2_regs[offset] ^= 0x000c0000;
-		   stv_vdp2_regs[offset] = (stv_vblank<<19) | ((rand()&1)<<18) | (1 << 17 /* ODD */);
-
+								   /*VBLANK              HBLANK            ODD         PAL    */
+			stv_vdp2_regs[offset] = (stv_vblank<<19) | ((rand()&1)<<18) | (1 << 17) | (0 << 16);
 		break;
-		case 3:
-		/*(V)RAM Control Register*/
-		/*Color RAM Mode (bit 13 & 12) (CRMD1 & CRMD0) */
-//			CRMD = ((stv_vdp2_regs[offset] & 0x00003000) >> 12);
+		case 0x8/4:
+		/*H/V Counter Register*/
+								     /*H-Counter                               V-Counter                                         */
+			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
+			logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
 		break;
 	}
 	return stv_vdp2_regs[offset];
@@ -2450,13 +2634,18 @@ static void stv_vdp2_dynamic_res_change()
 
 	set_visible_area(0*8, horz-1,0*8, vert-1);
 }
+
 extern data32_t *stv_vdp1_vram;
 
 VIDEO_UPDATE( stv_vdp2 )
 {
 	static UINT8 pri;
 
-	fillbitmap(bitmap, get_black_pen(), NULL);
+//#ifndef MAME_DEBUG
+	stv_vdp2_dynamic_res_change();
+//#endif
+
+	stv_vdp2_draw_back(bitmap,cliprect);
 
 	/*If a plane has a priority value of zero it isn't shown at all.*/
 	for(pri=1;pri<8;pri++)
@@ -2468,11 +2657,16 @@ VIDEO_UPDATE( stv_vdp2 )
 		if (!(keyboard_pressed(KEYCODE_O))) {if(pri==6)               video_update_vdp1(bitmap,cliprect);}
 	}
 
-//#ifndef MAME_DEBUG
-	stv_vdp2_dynamic_res_change();
-//#endif
-
 #ifdef MAME_DEBUG
+	if(STV_VDP2_VRAMSZ)
+		usrintf_showmessage("Warning: VRAM Size = 8 MBit!");
+
+	/*usrintf_showmessage("N0 %02x %04x %02x %04x N1 %02x %04x %02x %04x"
+	,STV_VDP2_N0ZMXI,STV_VDP2_N0ZMXD
+	,STV_VDP2_N0ZMYI,STV_VDP2_N0ZMYD
+	,STV_VDP2_N1ZMXI,STV_VDP2_N1ZMXD
+	,STV_VDP2_N1ZMYI,STV_VDP2_N1ZMYD);*/
+
 	if ( keyboard_pressed_memory(KEYCODE_W) )
 	{
 		int tilecode;
@@ -2503,15 +2697,15 @@ VIDEO_UPDATE( stv_vdp2 )
 		{
 			decodechar(Machine->gfx[4], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[4].gfxlayout); ;
 		}
-			for (tilecode = 0;tilecode<0x2000;tilecode++)
+		for (tilecode = 0;tilecode<0x2000;tilecode++)
 		{
 			decodechar(Machine->gfx[5], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[5].gfxlayout); ;
 		}
-			for (tilecode = 0;tilecode<0x4000;tilecode++)
+		for (tilecode = 0;tilecode<0x4000;tilecode++)
 		{
 			decodechar(Machine->gfx[6], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[6].gfxlayout); ;
 		}
-			for (tilecode = 0;tilecode<0x1000;tilecode++)
+		for (tilecode = 0;tilecode<0x1000;tilecode++)
 		{
 			decodechar(Machine->gfx[7], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[7].gfxlayout); ;
 		}

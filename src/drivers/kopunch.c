@@ -1,108 +1,17 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *bsvideoram;
-size_t bsvideoram_size;
+extern UINT8 *kopunch_videoram2;
 
-static INT8 scroll[2];
-static int gfxbank,gfxflip;
+extern WRITE_HANDLER( kopunch_videoram_w );
+extern WRITE_HANDLER( kopunch_videoram2_w );
+extern WRITE_HANDLER( kopunch_scroll_x_w );
+extern WRITE_HANDLER( kopunch_scroll_y_w );
+extern WRITE_HANDLER( kopunch_gfxbank_w );
 
-
-PALETTE_INIT( kopunch )
-{
-	int i;
-
-
-	color_prom+=24;	/* first 24 colors are black */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,r,g,b;
-
-
-		/* red component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
-		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
-		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-		palette_set_color(i,r,g,b);
-		color_prom++;
-	}
-}
-
-
-WRITE_HANDLER( kopunch_scroll_w )
-{
-	scroll[offset] = data;
-}
-
-static WRITE_HANDLER( kopunch_gfxbank_w )
-{
-//	usrintf_showmessage("bank = %02x",data);
-
-	gfxbank = data & 0x07;
-	gfxflip = data & 0x08;
-}
-
-VIDEO_UPDATE( kopunch )
-{
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	for (offs = bsvideoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		sx = offs % 16;
-		sy = offs / 16;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				(bsvideoram[offs] & 0x7f) + 128 * gfxbank,
-				0,
-				0,gfxflip,
-				8*(sx+8)+scroll[0],8*(8+(gfxflip ? 15-sy : sy))+scroll[1],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-}
+extern PALETTE_INIT( kopunch );
+extern VIDEO_START( kopunch );
+extern VIDEO_UPDATE( kopunch );
 
 
 INTERRUPT_GEN( kopunch_interrupt )
@@ -160,9 +69,9 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x6000, 0x63ff, videoram_w, &videoram, &videoram_size },
-	{ 0x7000, 0x70ff, MWA_RAM, &bsvideoram, &bsvideoram_size },
-	{ 0x7100, 0x73ff, MWA_RAM },	/* more video ram? */
+	{ 0x6000, 0x63ff, kopunch_videoram_w, &videoram },
+	{ 0x7000, 0x70ff, kopunch_videoram2_w, &kopunch_videoram2 },
+	{ 0x7100, 0x7aff, MWA_RAM },	// ???
 MEMORY_END
 
 static READ_HANDLER( pip_r )
@@ -178,13 +87,19 @@ static PORT_READ_START( readport )
 PORT_END
 
 static PORT_WRITE_START( writeport )
+	{ 0x33, 0x33, IOWP_NOP },	// ???
 	{ 0x34, 0x34, kopunch_coin_w },
+	{ 0x35, 0x35, IOWP_NOP },	// ???
+	{ 0x36, 0x36, IOWP_NOP },	// ???
+	{ 0x37, 0x37, IOWP_NOP },	// ???
 	{ 0x38, 0x38, kopunch_lamp_w },
-	{ 0x3c, 0x3d, kopunch_scroll_w },
+	{ 0x39, 0x39, IOWP_NOP },	// ???
+	{ 0x3b, 0x3b, IOWP_NOP },	// ???
+	{ 0x3c, 0x3c, kopunch_scroll_x_w },
+	{ 0x3d, 0x3d, kopunch_scroll_y_w },
 	{ 0x3e, 0x3e, kopunch_gfxbank_w },
+	{ 0x3f, 0x3f, IOWP_NOP },	// ???
 PORT_END
-
-
 
 
 INPUT_PORTS_START( kopunch )
@@ -244,7 +159,6 @@ INPUT_PORTS_START( kopunch )
 INPUT_PORTS_END
 
 
-
 static struct GfxLayout charlayout =
 {
 	8,8,
@@ -262,7 +176,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX2, 0, &charlayout, 0, 1 },
 	{ -1 } /* end of array */
 };
-
 
 
 static MACHINE_DRIVER_START( kopunch )
@@ -284,12 +197,11 @@ static MACHINE_DRIVER_START( kopunch )
 	MDRV_PALETTE_LENGTH(8)
 
 	MDRV_PALETTE_INIT(kopunch)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(kopunch)
 	MDRV_VIDEO_UPDATE(kopunch)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
-
 
 
 /***************************************************************************
@@ -300,32 +212,32 @@ MACHINE_DRIVER_END
 
 ROM_START( kopunch )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, CRC(34ef5e79) )
-	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, CRC(25a5c68b) )
+	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, CRC(34ef5e79) SHA1(2827c68f4c902f447a304d3ab0258c7819a0e4ca) )
+	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, CRC(25a5c68b) SHA1(9761418c6f3903f8aaceece658739fe5bf5c0803) )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr1102",      0x0000, 0x0800, CRC(8a52de96) )
-	ROM_LOAD( "epr1103",      0x0800, 0x0800, CRC(bae5e054) )
-	ROM_LOAD( "epr1104",      0x1000, 0x0800, CRC(7b119a0e) )
+	ROM_LOAD( "epr1102",      0x0000, 0x0800, CRC(8a52de96) SHA1(5abdaa83c6bfea81395cb190f5364b72811927ba) )
+	ROM_LOAD( "epr1103",      0x0800, 0x0800, CRC(bae5e054) SHA1(95373123ab64543cdffb7ee9e02d0613c5c494bf) )
+	ROM_LOAD( "epr1104",      0x1000, 0x0800, CRC(7b119a0e) SHA1(454f01355fa9512a7442990cc92da7bc7a8d6b68) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr1107",      0x0000, 0x1000, CRC(ca00244d) )
-	ROM_LOAD( "epr1108",      0x1000, 0x1000, CRC(cc17c5ed) )
-	ROM_LOAD( "epr1110",      0x2000, 0x1000, CRC(ae0aff15) )
-	ROM_LOAD( "epr1109",      0x3000, 0x1000, CRC(625446ba) )
-	ROM_LOAD( "epr1112",      0x4000, 0x1000, CRC(ef6994df) )
-	ROM_LOAD( "epr1111",      0x5000, 0x1000, CRC(28530ec9) )
+	ROM_LOAD( "epr1107",      0x0000, 0x1000, CRC(ca00244d) SHA1(690931ea1bef9d80dcd7bd2ea2462b083c884a89) )
+	ROM_LOAD( "epr1108",      0x1000, 0x1000, CRC(cc17c5ed) SHA1(693df076e16cc3a3dd54f6680691e658da3942fe) )
+	ROM_LOAD( "epr1110",      0x2000, 0x1000, CRC(ae0aff15) SHA1(7f71c94bacdb444e5ed4f917c5a7de17012027a9) )
+	ROM_LOAD( "epr1109",      0x3000, 0x1000, CRC(625446ba) SHA1(e4acedc8ddaf7e825930260d12601085ed89dced) )
+	ROM_LOAD( "epr1112",      0x4000, 0x1000, CRC(ef6994df) SHA1(2d68650b6b875bcfdc9f977f96044c6867aa40a6) )
+	ROM_LOAD( "epr1111",      0x5000, 0x1000, CRC(28530ec9) SHA1(1a8782d37128cdb43133fc891cde93d2bdd5476b) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "epr1101",      0x0000, 0x0020, CRC(15600f5d) )	/* palette */
-	ROM_LOAD( "epr1099",      0x0020, 0x0020, CRC(fc58c456) )	/* unknown */
-	ROM_LOAD( "epr1100",      0x0040, 0x0020, CRC(bedb66b1) )	/* unknown */
+	ROM_LOAD( "epr1101",      0x0000, 0x0020, CRC(15600f5d) SHA1(130179f79761cb16316c544e3c689bc10431db30) )	/* palette */
+	ROM_LOAD( "epr1099",      0x0020, 0x0020, CRC(fc58c456) SHA1(f27c3ad669dfdc33bcd7e0481fa01bf34973e816) )	/* unknown */
+	ROM_LOAD( "epr1100",      0x0040, 0x0020, CRC(bedb66b1) SHA1(8e78bb205d900075b761e1baa5f5813174ff28ba) )	/* unknown */
 ROM_END
 
 
 static DRIVER_INIT( kopunch )
 {
-//	unsigned char *rom = memory_region(REGION_CPU1);
+//	UINT8 *rom = memory_region(REGION_CPU1);
 
 	/* It looks like there is a security chip, that changes instruction of the form:
 		0334: 3E 0C       ld   a,$0C
@@ -334,11 +246,11 @@ static DRIVER_INIT( kopunch )
 	   from the operand of the JR  NC instruction (in the example above, 0337).
 	   For now, I'm just patching the affected instructions. */
 
-//	rom[0x119] = 0;
-//	rom[0x336] = 0;
-//	rom[0x381] = 0;
-//	rom[0xf0b] = 0;
-//	rom[0xf33] = 0;
+/*	rom[0x119] = 0;
+	rom[0x336] = 0;
+	rom[0x381] = 0;
+	rom[0xf0b] = 0;
+	rom[0xf33] = 0;*/
 }
 
 

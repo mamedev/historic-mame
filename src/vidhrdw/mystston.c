@@ -16,14 +16,11 @@
 #include "vidhrdw/generic.h"
 
 
+UINT8 *mystston_videoram2;
 
-unsigned char *mystston_fgvideoram;
-unsigned char *mystston_bgvideoram;
+static int mystston_fgcolor, mystston_bgpage;
 
-static int textcolor;
 static struct tilemap *fg_tilemap, *bg_tilemap;
-
-
 
 /***************************************************************************
 
@@ -38,163 +35,135 @@ PALETTE_INIT( mystston )
 {
 	int i;
 
-	/* first 24 colors are RAM */
-
-	for (i = 0;i < 32;i++)
+	for (i = 0; i < 32; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
+		int bit0, bit1, bit2, r, g, b;
 
+		// red component
 
-		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
+
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
+
+		// green component
+
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
+
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
+
+		// blue component
+
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
+
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i+24,r,g,b);
+		palette_set_color(i + 24, r, g, b);	// first 24 colors are from RAM
+
 		color_prom++;
 	}
 }
 
-
-/***************************************************************************
-
-  Callbacks for the TileMap code
-
-***************************************************************************/
-
-UINT32 get_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+WRITE_HANDLER( mystston_videoram_w )
 {
-	return (num_cols - 1 - col) * num_rows + row;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset & 0x3ff);
+	}
 }
 
-static void get_fg_tile_info(int tile_index)
+WRITE_HANDLER( mystston_videoram2_w )
 {
-	int code;
+	if (videoram[offset] != data)
+	{
+		mystston_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset & 0x1ff);
+	}
+}
 
-	code = mystston_fgvideoram[tile_index] + ((mystston_fgvideoram[tile_index + 0x400] & 0x07) << 8);
-	SET_TILE_INFO(
-			0,
-			code,
-			textcolor,
-			0)
+WRITE_HANDLER( mystston_scroll_w )
+{
+	tilemap_set_scrolly(bg_tilemap, 0, data);
+}
+
+WRITE_HANDLER( mystston_control_w )
+{
+	// bits 0 and 1 are foreground text color
+	if (mystston_fgcolor != ((data & 0x01) << 1) + ((data & 0x02) >> 1))
+	{
+		mystston_fgcolor = ((data & 0x01) << 1) + ((data & 0x02) >> 1);
+		tilemap_mark_all_tiles_dirty(fg_tilemap);
+	}
+
+	// bit 2 is background page select
+	mystston_bgpage = (data & 0x04) ? 1:0;
+
+	// bits 4 and 5 are coin counters in flipped order
+	coin_counter_w(0, data & 0x20);
+	coin_counter_w(1, data & 0x10);
+
+	// bit 7 is screen flip
+	flip_screen_set((data & 0x80) ^ ((readinputport(3) & 0x20) ? 0x80:0));
 }
 
 static void get_bg_tile_info(int tile_index)
 {
-	int code;
+	int code = mystston_videoram2[tile_index] + ((mystston_videoram2[tile_index + 0x200] & 0x01) << 8);
+	int flags = (tile_index & 0x10) ? TILE_FLIPY : 0;
 
-	code = mystston_bgvideoram[tile_index] + ((mystston_bgvideoram[tile_index + 0x200] & 0x01) << 8);
-	SET_TILE_INFO(
-			1,
-			code,
-			0,
-			(tile_index & 0x10) ? TILE_FLIPY : 0)	/* the right (lower) side of the screen is flipped */
+	SET_TILE_INFO(1, code, 0, flags)
 }
 
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
+static void get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((videoram[tile_index + 0x400] & 0x07) << 8);
+	int color = mystston_fgcolor;
+	
+	SET_TILE_INFO(0, code, color, 0)
+}
 
 VIDEO_START( mystston )
 {
-	fg_tilemap = tilemap_create(get_fg_tile_info,get_memory_offset,TILEMAP_TRANSPARENT, 8, 8,32,32);
-	bg_tilemap = tilemap_create(get_bg_tile_info,get_memory_offset,TILEMAP_OPAQUE,     16,16,16,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_x, 
+		TILEMAP_OPAQUE, 16, 16, 16, 32);
 
-	if (!fg_tilemap || !bg_tilemap)
+	if ( !bg_tilemap )
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	return 0;
 }
 
-
-/***************************************************************************
-
-  Memory handlers
-
-***************************************************************************/
-
-WRITE_HANDLER( mystston_fgvideoram_w )
-{
-	mystston_fgvideoram[offset] = data;
-	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
-}
-
-WRITE_HANDLER( mystston_bgvideoram_w )
-{
-	mystston_bgvideoram[offset] = data;
-	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x1ff);
-}
-
-
-WRITE_HANDLER( mystston_scroll_w )
-{
-	tilemap_set_scrolly(bg_tilemap,0,data);
-}
-
-
-WRITE_HANDLER( mystston_2000_w )
-{
-	int new_textcolor;
-
-
-	/* bits 0 and 1 are text color */
-	new_textcolor = ((data & 0x01) << 1) | ((data & 0x02) >> 1);
-	if (textcolor != new_textcolor)
-	{
-		tilemap_mark_all_tiles_dirty(fg_tilemap);
-		textcolor = new_textcolor;
-	}
-
-	/* bits 4 and 5 are coin counters */
-	coin_counter_w(0,data & 0x10);
-	coin_counter_w(1,data & 0x20);
-
-	/* bit 7 is screen flip */
-	flip_screen_set(data & 0x80);
-
-	/* other bits unused? */
-	logerror("PC %04x: 2000 = %02x\n",activecpu_get_pc(),data);
-}
-
-
-/***************************************************************************
-
-  Display refresh
-
-***************************************************************************/
-
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 
-
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
-		if (spriteram[offs] & 0x01)
+		int attr = spriteram[offs];
+
+		if (attr & 0x01)
 		{
-			int sx,sy,flipx,flipy;
+			int code = spriteram[offs + 1] + ((attr & 0x10) << 4);
+			int color = (attr & 0x08) >> 3;
+			int flipx = attr & 0x04;
+			int flipy = attr & 0x02;
+			int sx = 240 - spriteram[offs + 3];
+			int sy = (240 - spriteram[offs + 2]) & 0xff;
 
-
-			sx = 240 - spriteram[offs+3];
-			sy = (240 - spriteram[offs+2]) & 0xff;
-			flipx = spriteram[offs] & 0x04;
-			flipy = spriteram[offs] & 0x02;
 			if (flip_screen)
 			{
 				sx = 240 - sx;
@@ -203,19 +172,15 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 				flipy = !flipy;
 			}
 
-			drawgfx(bitmap,Machine->gfx[2],
-					spriteram[offs+1] + ((spriteram[offs] & 0x10) << 4),
-					(spriteram[offs] & 0x08) >> 3,
-					flipx,flipy,
-					sx,sy,
-					cliprect,TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[2],	code, color, flipx, flipy,
+				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 		}
 	}
 }
 
 VIDEO_UPDATE( mystston )
 {
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
-	draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 }

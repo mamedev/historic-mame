@@ -15,6 +15,104 @@
 #include "machine/stvcd.h"
 #include <stdio.h>
 
+UINT8 	CD_cr_first;
+UINT8 	CD_cr_writing;
+UINT16	CR1;
+UINT16	CR2;
+UINT16	CR3;
+UINT16	CR4;
+UINT16	CD_hirq;
+UINT16 	CD_hirq_i;
+UINT16  CD_mask;
+UINT8	CD_status;
+UINT32	CD_fad;
+UINT8	CD_track;
+UINT8	CD_control;
+UINT8	CD_index;
+
+UINT32 fn;
+
+INT32	CD_com;				// last command being processed
+INT32	CD_com_play;			// last play command
+UINT8	CD_stat;				// drive status
+UINT8	CD_flag;				// 0x00 = CD-DA or <SEEK> or <SCAN> 0x80 = CD-ROM
+
+
+UINT32	CD_last_part;			// last buffer partition accessed
+filt_t	CD_filt[CDB_SEL_NUM];		// filters
+
+UINT32	CD_play_fad;			// play start address
+UINT32	CD_play_range;			// play range
+UINT32	CD_seek_target;			// seek target address
+UINT8	CD_scan_dir;			// scan direction
+UINT32	CD_search_pn;			// search result, partition number
+UINT32	CD_search_sp;			// search result, sector position
+UINT32	CD_search_fad;			// search result, fad
+UINT32	CD_file_scope_first;
+UINT32	CD_file_scope_last;
+
+
+UINT32	CD_data_pn;			// data transfer partition number
+UINT32	CD_data_sp;			// data transfer sector position
+UINT32	CD_data_sn;			// data transfer sector number
+UINT32	CD_data_count;			// data transfer current byte count
+UINT32	CD_data_delete;			// data must be deleted upon read
+UINT32	CD_data_size;			// data transfer size in bytes
+
+char * 	CD_info_ptr;			// info transfer buffer pointer
+UINT32	CD_info_count;			// info transfer byte count
+UINT32	CD_info_size;			// info transfer total byte count
+
+UINT32	CD_trans_type;			// 0 = DATA, 1 = INFO   //maybe signed int
+
+UINT32	CD_actual_size;			// used by "calcactualsize" and "getactualsize"
+
+////////////////////////////////////////////////////////////////
+
+sect_t	CD_sect[CDB_SECT_NUM];	// sector buffer
+part_t	CD_part[CDB_SEL_NUM];	// buffer partitions
+filt_t	CD_filt[CDB_SEL_NUM];	// filters
+UINT32	CD_free_space;		// free space in sector units
+
+UINT8	CD_filt_num;		// cdrom drive connector
+UINT8	CD_mpeg_filt_num;	// mpeg connector
+
+////////////////////////////////////////////////////////////////
+
+
+UINT32	CD_cur_fad;			// current pickup position info
+UINT32	CD_cur_track;			//
+UINT32	CD_cur_ctrl;			//
+UINT32	CD_cur_idx;			//
+UINT32	CD_cur_fid;			//
+
+
+
+char	cdb_sat_file_info[254 * 12];	// current file info
+char cdb_sat_subq[5 * 2];		// current subcode q
+char cdb_sat_subrw[12 * 2];		// current subcode r~w
+char CD_sat_subq[5 * 2];			// current subcode q
+char CD_sat_subrw[12 * 2];		// current subcode r~w
+toc_t	CD_toc;			// disc toc
+file_t	CD_file[CDB_FID_NUM];	// file table (directory table)
+UINT32	CD_file_num;		// total file infos stored
+char	CD_sat_toc[408];	// current cdrom toc
+
+
+UINT8	CD_init_flag;
+UINT8	CD_flag;			// 0x00 = CD-DA or <SEEK> or <SCAN> 0x80 = CD-ROM
+UINT32	CD_repeat;			// repeat frequency
+UINT32	CD_standby;			// standby wait
+UINT32	CD_repeat_max;			// max repeat frequency
+UINT8	CD_ecc;
+UINT32	CD_drive_speed;			// 0 = noop, 1 = 1x, 2 = 2x
+
+
+UINT8			cdda_buff[8192];		// CD-DA buffer for SCSP communication
+UINT32		cdda_pos;
+
+
+
 
 ////////////////////////////////////////////////////////////////
 
@@ -583,6 +681,7 @@ void cdb_build_toc(void){
 
 	UINT32 ctrl, idx, fad;
 	int i;
+	int oo=0;
 
 	memset(CD_sat_toc, 0xff, 0xcc*2);
 	memset(&CD_toc.track, 0xff, sizeof(track_t)*100);
@@ -668,7 +767,6 @@ void cdb_build_toc(void){
 	CD_toc.leadout.min, CD_toc.leadout.sec, CD_toc.leadout.fra, CD_toc.leadout.fad);
 
 	logerror("\n\nTOC DUMP\n\n");
-	int oo=0;
 	while (oo<408){
 	logerror("%2x %2x %2x %2x\n", CD_sat_toc[oo],CD_sat_toc[oo+1],CD_sat_toc[oo+2],CD_sat_toc[oo+3]);
 	oo+=4;

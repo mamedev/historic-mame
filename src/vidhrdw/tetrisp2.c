@@ -98,6 +98,14 @@ WRITE16_HANDLER( tetrisp2_priority_w )
 }
 
 
+WRITE16_HANDLER( rockn_priority_w )
+{
+	if (ACCESSING_MSB)
+	{
+		tetrisp2_priority[offset] = data;
+	}
+}
+
 
 /***************************************************************************
 
@@ -203,6 +211,28 @@ VIDEO_START( tetrisp2 )
 	return 0;
 }
 
+VIDEO_START( rockntread )
+{
+	tilemap_bg = tilemap_create(	get_tile_info_bg,tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16, 16, 256, 16);	// rockn ms(main),1,2,3,4
+
+	tilemap_fg = tilemap_create(	get_tile_info_fg,tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								8, 8, 64, 64);
+
+	tilemap_rot = tilemap_create(	get_tile_info_rot,tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16, 16, 128, 128);
+
+	if (!tilemap_bg || !tilemap_fg || !tilemap_rot)	return 1;
+
+	tilemap_set_transparent_pen(tilemap_bg, 0);
+	tilemap_set_transparent_pen(tilemap_fg, 0);
+	tilemap_set_transparent_pen(tilemap_rot, 0);
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -372,6 +402,90 @@ static void tetrisp2_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 ***************************************************************************/
 
 VIDEO_UPDATE( tetrisp2 )
+{
+	static int flipscreen_old = -1;
+	int flipscreen;
+	int asc_pri;
+	int scr_pri;
+	int rot_pri;
+	int rot_ofsx, rot_ofsy;
+
+	flipscreen = (tetrisp2_systemregs[0x00] & 0x02);
+
+	/* Black background color */
+	fillbitmap(bitmap, Machine->pens[0x0000], cliprect);
+	fillbitmap(priority_bitmap, 0, NULL);
+
+	/* Flip Screen */
+	if (flipscreen != flipscreen_old)
+	{
+		flipscreen_old = flipscreen;
+		tilemap_set_flip(ALL_TILEMAPS, flipscreen ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
+	}
+
+	/* Flip Screen */
+	if (flipscreen)
+	{
+		rot_ofsx = 0x053f;
+		rot_ofsy = 0x04df;
+	}
+	else
+	{
+		rot_ofsx = 0x400;
+		rot_ofsy = 0x400;
+	}
+
+	tilemap_set_scrollx(tilemap_bg, 0, (((tetrisp2_scroll_bg[ 0 ] + 0x0014) + tetrisp2_scroll_bg[ 2 ] ) & 0xffff));
+	tilemap_set_scrolly(tilemap_bg, 0, (((tetrisp2_scroll_bg[ 3 ] + 0x0000) + tetrisp2_scroll_bg[ 5 ] ) & 0xffff));
+
+	tilemap_set_scrollx(tilemap_fg, 0, tetrisp2_scroll_fg[ 2 ]);
+	tilemap_set_scrolly(tilemap_fg, 0, tetrisp2_scroll_fg[ 5 ]);
+
+	tilemap_set_scrollx(tilemap_rot, 0, (tetrisp2_rotregs[ 0 ] - rot_ofsx));
+	tilemap_set_scrolly(tilemap_rot, 0, (tetrisp2_rotregs[ 2 ] - rot_ofsy));
+
+	asc_pri = scr_pri = rot_pri = 0;
+
+	if((tetrisp2_priority[0x2b00 / 2] & 0x00ff) == 0x0034)
+		asc_pri++;
+	else
+		rot_pri++;
+
+	if((tetrisp2_priority[0x2e00 / 2] & 0x00ff) == 0x0034)
+		asc_pri++;
+	else
+		scr_pri++;
+
+	if((tetrisp2_priority[0x3a00 / 2] & 0x00ff) == 0x000c)
+		scr_pri++;
+	else
+		rot_pri++;
+
+	if (rot_pri == 0)
+		tilemap_draw(bitmap,cliprect, tilemap_rot, 0, 1 << 1);
+	else if (scr_pri == 0)
+		tilemap_draw(bitmap,cliprect, tilemap_bg,  0, 1 << 0);
+	else if (asc_pri == 0)
+		tilemap_draw(bitmap,cliprect, tilemap_fg,  0, 1 << 2);
+
+	if (rot_pri == 1)
+		tilemap_draw(bitmap,cliprect, tilemap_rot, 0, 1 << 1);
+	else if (scr_pri == 1)
+		tilemap_draw(bitmap,cliprect, tilemap_bg,  0, 1 << 0);
+	else if (asc_pri == 1)
+		tilemap_draw(bitmap,cliprect, tilemap_fg,  0, 1 << 2);
+
+	if (rot_pri == 2)
+		tilemap_draw(bitmap,cliprect, tilemap_rot, 0, 1 << 1);
+	else if (scr_pri == 2)
+		tilemap_draw(bitmap,cliprect, tilemap_bg,  0, 1 << 0);
+	else if (asc_pri == 2)
+		tilemap_draw(bitmap,cliprect, tilemap_fg,  0, 1 << 2);
+
+	tetrisp2_draw_sprites(bitmap,cliprect, spriteram16, spriteram_size, 0);
+}
+
+VIDEO_UPDATE( rockntread )
 {
 	static int flipscreen_old = -1;
 	int flipscreen;

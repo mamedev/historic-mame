@@ -119,7 +119,7 @@
 #if (HAS_CCPU)
 #include "cpu/ccpu/ccpu.h"
 #endif
-#if (HAS_ADSP2100 || HAS_ADSP2101 || HAS_ADSP2105 || HAS_ADSP2115)
+#if (HAS_ADSP2100 || HAS_ADSP2101 || HAS_ADSP2104 || HAS_ADSP2105 || HAS_ADSP2115)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_PSXCPU)
@@ -584,6 +584,9 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_ADSP2101)
 	CPU3(ADSP2101, adsp2101, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
+#endif
+#if (HAS_ADSP2104)
+	CPU3(ADSP2104, adsp2104, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
 #endif
 #if (HAS_ADSP2105)
 	CPU3(ADSP2105, adsp2105, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),

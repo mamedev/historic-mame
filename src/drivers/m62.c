@@ -1314,7 +1314,6 @@ static struct GfxLayout spritelayout =
 	32*8
 };
 
-
 static struct GfxDecodeInfo kungfum_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024,       0, 32 },	/* use colors   0-255 */
@@ -1942,6 +1941,42 @@ ROM_END
 
 ROM_START( ldrun3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "lr3a4eb.bin",  0x0000, 0x4000, CRC(09affc47) SHA1(1cd56b967e4c8ada6c6e1015aead5f7551034358) )
+	ROM_LOAD( "lr3a4db.bin",  0x4000, 0x4000, CRC(23a02178) SHA1(0560b92dfc9b57d01abb62a7b270beb27fa42040) )
+	ROM_LOAD( "lr3a4bb.bin",  0x8000, 0x4000, CRC(3d501a1a) SHA1(a92ff743eb21145154fa717ee9e6ede4da458aa9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "lr3-a-3d",     0x8000, 0x4000, CRC(28be68cd) SHA1(1e48cdf649bc861066fbef0293466091092045f3) )
+	ROM_LOAD( "lr3-a-3f",     0xc000, 0x4000, CRC(cb7186b7) SHA1(cc99821f3f1523523598e4b7d68b95eee6c84e69) )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "lr3-n-2a",     0x00000, 0x4000, CRC(f9b74dee) SHA1(f4407024aea05d0c698f8a7a6a20cbbcbd8baf44) )	/* characters */
+	ROM_LOAD( "lr3-n-2c",     0x04000, 0x4000, CRC(fef707ba) SHA1(ff6e64eeda6a9be672a1b8778a051886c38bd8f6) )
+	ROM_LOAD( "lr3-n-2b",     0x08000, 0x4000, CRC(af3d27b9) SHA1(2eda0bf7ffd7bcb7b7dcd2ffb1482f748ee2edfc) )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "lr3b4kb.bin",  0x00000, 0x4000, CRC(21ecd8c5) SHA1(786d7d9b690764cfc0c65c3e58369e78f7cc4475) )	/* sprites */
+	ROM_LOAD( "snxb4fb.bin",  0x04000, 0x4000, CRC(ed719d7b) SHA1(34c7d9fc762b3f113b6115910898fde9713ae24f) )
+	ROM_LOAD( "lr3b3nb.bin",  0x08000, 0x4000, CRC(da8cffab) SHA1(3e194b656fa0c4771e37e6a8b7405edc495808ad) )
+	ROM_LOAD( "snxb4nb.bin",  0x0c000, 0x4000, CRC(dc675003) SHA1(df9b6055b4a4c537504658e62e96f826d498b39c) )
+	ROM_LOAD( "snxb4cb.bin",  0x10000, 0x4000, CRC(585aa244) SHA1(d90cf29280e5f73b14dc5b33b1a82970e8e1a560) )
+	ROM_LOAD( "snxb4eb.bin",  0x14000, 0x4000, CRC(2d3b69dd) SHA1(472e1c06fd3184b91d9b718bb590d45702ed84cd) )
+
+	ROM_REGION( 0x0820, REGION_PROMS, 0 )
+	ROM_LOAD( "lr3-n-2l",     0x0000, 0x0100, CRC(e880b86b) SHA1(3934f37dc45b725af1c7d862086249256366d572) ) /* character palette red component */
+	ROM_LOAD( "lr3-b-1m",     0x0100, 0x0100, CRC(f02d7167) SHA1(385a9179143e3dcccd7052e70c7cc71473caaaca) ) /* sprite palette red component */
+	ROM_LOAD( "lr3-n-2k",     0x0200, 0x0100, CRC(047ee051) SHA1(7c18a223d37ccc5fea20f8f856fba20335c75ea4) ) /* character palette green component */
+	ROM_LOAD( "lr3-b-1n",     0x0300, 0x0100, CRC(9e37f181) SHA1(8e36eb8f4aefcc6d21dfbb2e86dcb4875bcf82cd) ) /* sprite palette green component */
+	ROM_LOAD( "lr3-n-2m",     0x0400, 0x0100, CRC(69ad8678) SHA1(96134aa530cb93a5e3b56fffa996aefa08a666a2) ) /* character palette blue component */
+	ROM_LOAD( "lr3-b-1l",     0x0500, 0x0100, CRC(5b11c41d) SHA1(186ca7bfa2894311fc573f3f5882da677e029f2a) ) /* sprite palette blue component */
+	ROM_LOAD( "lr3-b-5p",     0x0600, 0x0020, CRC(e01f69e2) SHA1(0d00ef348025ea4a9c274a7e3dbb006217d8449d) )	/* sprite height, one entry per 32 */
+	                                                        /* sprites. Used at run time! */
+	ROM_LOAD( "lr3-n-4f",     0x0620, 0x0100, CRC(df674be9) SHA1(4d8c5378234bc24fac62dc227d8cd72f1ab7a35c) )	/* unknown */
+	ROM_LOAD( "lr3-b-6f",     0x0720, 0x0100, CRC(34d88d3c) SHA1(727f4c5cfff33538886fa0a29fd119aa085d7008) )	/* video timing - common to the other games */
+ROM_END
+
+ROM_START( ldrun3jp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "lr3-a-4e",     0x0000, 0x4000, CRC(5b334e8e) SHA1(018ee450f88feaf5da025e01d2d839b29d5f1559) )
 	ROM_LOAD( "lr3-a-4d.a",   0x4000, 0x4000, CRC(a84bc931) SHA1(0348d238a85a059a6423794910adec4462e14f27) )
 	ROM_LOAD( "lr3-a-4b.a",   0x8000, 0x4000, CRC(be09031d) SHA1(c124163895d295969b66386fee91c89bbd8b8774) )
@@ -2447,7 +2482,8 @@ GAME( 1984, battroad, 0,        battroad, battroad, m62,      ROT90,  "Irem", "T
 GAME( 1984, ldrun,    0,        ldrun,    ldrun,    m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
 GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
 GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
-GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
+GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - The Golden Labyrinth" )
+GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
 GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
 GAME( 1985, lotlot,   0,        lotlot,   lotlot,   m62,      ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
 GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  m62,      ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )

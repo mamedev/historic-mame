@@ -4,6 +4,7 @@
  */
 
 #include "driver.h"
+#include "state.h"
 #include "namcoic.h"
 
 #ifdef MAME_DEBUG
@@ -28,7 +29,13 @@ static int sprite32;
 static int bg;
 
 static struct tilemap *tx_tilemap;
-static struct tilemap *bg_tilemap;
+
+static struct tilemap *bg1_tilemap;
+static struct tilemap *bg2_tilemap;
+
+static int bg1_scroll_x, bg1_scroll_y;
+static int bg2_scroll_x, bg2_scroll_y;
+
 static struct mame_bitmap *temp_bitmap;
 
 static int is_mask_spr[1024/16];
@@ -37,15 +44,15 @@ static int is_mask_spr[1024/16];
 
 PALETTE_INIT( tceptor )
 {
-	int i, j;
-	int totcolors,totlookup;
+	int totcolors, totlookup;
+	int i;
 
 	totcolors = Machine->drv->total_colors;
 	totlookup = Machine->drv->color_table_len;
 
-	for (i = 0;i < totcolors;i++)
+	for (i = 0; i < totcolors; i++)
 	{
-		int bit0,bit1,bit2,bit3,r,g,b;
+		int bit0, bit1, bit2, bit3, r, g, b;
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
@@ -63,28 +70,36 @@ PALETTE_INIT( tceptor )
 		bit3 = (color_prom[2*totcolors] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 		color_prom++;
 	}
 
-	color_prom += 2*totcolors;
+	color_prom += 2 * totcolors;
 	/* color_prom now points to the beginning of the lookup table */
 
-	/* tiles lookup table */
+	/*
+	  color lookup table:
+		0-    +1024 ( 4 * 256) colors: text   (use 0-   256 colors)
+		1024- +1024 (16 *  64) colors: sprite (use 768- 256 colors)
+		2048-  +512 ( 8 *  64) colors: bg     (use 0-   512 colors)
+		3840-  +256 ( 4 *  64) colors: road   (use 512- 256 colors)
+	*/
+
+	/* tiles lookup table (1024 colors) */
 	for (i = 0; i < 1024;i++)
 		colortable[i] = *color_prom++;
 
-	/* road lookup table */
-	for (i = 0; i < 256; i += 32)
-	{
-		for (j = 0; j < 32; j++)
-			colortable[0xf00 + i + j + 0] = *(color_prom++) + 512;
-		color_prom += 32;
-	}	
+	/* road lookup table (256 colors) */
+	for (i = 0; i < 256; i++)
+		colortable[i + 0xf00] = *(color_prom++) + 512;
 
-	/* sprites lookup table */
+	/* sprites lookup table (1024 colors) */
 	for (i = 0;i < 1024; i++)
 		colortable[i + 1024] = *(color_prom++) + 768;
+
+	/* background: lookup prom is not presented, use prom directly (512 colors) */
+	for (i = 0;i < 512; i++)
+		colortable[i + 2048] = i;
 
 	/* setup sprite mask color map */
 	/* tceptor2: only 0x23 */
@@ -92,11 +107,6 @@ PALETTE_INIT( tceptor )
 	for (i = 0; i < 1024; i++)
 		if (colortable[i + 1024] == SPR_MASK_COLOR)
 			is_mask_spr[i / 16] = 1;
-
-	/* background lookup table */
-	/* completely wrong. cult prom is not presented? */
-	for (i = 0;i < 256; i++)
-		colortable[i + 2048] = i + 256;
 }
 
 
@@ -185,18 +195,22 @@ WRITE_HANDLER( tceptor_tile_attr_w )
 
 /*******************************************************************/
 
-static void get_bg_tile_info(int tile_index)
+static void get_bg1_tile_info(int tile_index)
 {
-	if (tceptor_bg_ram)
-	{
-		int code = tceptor_bg_ram[tile_index];
+	UINT16 data = tceptor_bg_ram[tile_index * 2] | (tceptor_bg_ram[tile_index * 2 + 1] << 8);
+	int code = (data & 0x3ff) | 0x000;
+	int color = (data & 0xfc00) >> 10;
 
-		SET_TILE_INFO(bg, code, 0, 0);
-	}
-	else
-	{
-		SET_TILE_INFO(bg, tile_index, 0, 0);
-	}
+	SET_TILE_INFO(bg, code, color, 0);
+}
+
+static void get_bg2_tile_info(int tile_index)
+{
+	UINT16 data = tceptor_bg_ram[tile_index * 2 + 0x1000] | (tceptor_bg_ram[tile_index * 2 + 1 + 0x1000] << 8);
+	int code = (data & 0x3ff) | 0x400;
+	int color = (data & 0xfc00) >> 10;
+
+	SET_TILE_INFO(bg, code, color, 0);
 }
 
 READ_HANDLER( tceptor_bg_ram_r )
@@ -209,7 +223,42 @@ WRITE_HANDLER( tceptor_bg_ram_w )
 	if (tceptor_bg_ram[offset] != data)
 	{
 		tceptor_bg_ram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap, offset);
+
+		offset /= 2;
+		if (offset < 0x800)
+			tilemap_mark_tile_dirty(bg1_tilemap, offset);
+		else
+			tilemap_mark_tile_dirty(bg2_tilemap, offset - 0x800);
+	}
+}
+
+WRITE_HANDLER( tceptor_bg_scroll_w )
+{
+	switch (offset)
+	{
+	case 0:
+		bg1_scroll_x &= 0xff;
+		bg1_scroll_x |= data << 8;
+		break;
+	case 1:
+		bg1_scroll_x &= 0xff00;
+		bg1_scroll_x |= data;
+		break;
+	case 2:
+		bg1_scroll_y = data;
+		break;
+
+	case 4:
+		bg2_scroll_x &= 0xff;
+		bg2_scroll_x |= data << 8;
+		break;
+	case 5:
+		bg2_scroll_x &= 0xff00;
+		bg2_scroll_x |= data;
+		break;
+	case 6:
+		bg2_scroll_y = data;
+		break;
 	}
 }
 
@@ -220,15 +269,13 @@ static int decode_bg(int region)
 {
 	static struct GfxLayout bg_layout =
 	{
-		16, 16,
-		512,
+		8, 8,
+		2048,
 		3,
-		{ 4, 0x40000+4, 0 },
-		{ 0, 1, 2, 3, 8, 9, 10, 11,
-		  256, 257, 258, 259, 264, 265, 266, 267 },
-		{ 0, 16, 32, 48, 64, 80, 96, 112,
-		  128, 144, 160, 176, 192, 208, 224, 240},
-		512
+		{ 0x40000+4, 0, 4 },
+		{ 0, 1, 2, 3, 8, 9, 10, 11 },
+		{ 0, 16, 32, 48, 64, 80, 96, 112 },
+		128
 	};
 
 	int gfx_index = bg;
@@ -257,10 +304,7 @@ static int decode_bg(int region)
 
 	/* set the color information */
 	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[2048];
-	Machine->gfx[gfx_index]->total_colors = 512;
-/* I have no idea about color */
-Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[0x40*16];
-Machine->gfx[gfx_index]->total_colors = 1;
+	Machine->gfx[gfx_index]->total_colors = 64;
 
 	return 0;
 }
@@ -311,10 +355,18 @@ static int decode_sprite16(int region)
 	for (i = 0; i < len / (4*4*16); i++)
 		for (y = 0; y < 16; y++)
 		{
-			memcpy(&dst[(i*4 + 0) * (2*16*16/8) + y * (2*16/8)], &src[i * (2*32*32/8) + y * (2*32/8)],                         4);
-			memcpy(&dst[(i*4 + 1) * (2*16*16/8) + y * (2*16/8)], &src[i * (2*32*32/8) + y * (2*32/8) + (4*8/8)],               4);
-			memcpy(&dst[(i*4 + 2) * (2*16*16/8) + y * (2*16/8)], &src[i * (2*32*32/8) + y * (2*32/8) + (16*2*32/8)],           4);
-			memcpy(&dst[(i*4 + 3) * (2*16*16/8) + y * (2*16/8)], &src[i * (2*32*32/8) + y * (2*32/8) + (4*8/8) + (16*2*32/8)], 4);
+			memcpy(&dst[(i*4 + 0) * (2*16*16/8) + y * (2*16/8)],
+			       &src[i * (2*32*32/8) + y * (2*32/8)],
+			       4);
+			memcpy(&dst[(i*4 + 1) * (2*16*16/8) + y * (2*16/8)],
+			       &src[i * (2*32*32/8) + y * (2*32/8) + (4*8/8)],
+			       4);
+			memcpy(&dst[(i*4 + 2) * (2*16*16/8) + y * (2*16/8)],
+			       &src[i * (2*32*32/8) + y * (2*32/8) + (16*2*32/8)],
+			       4);
+			memcpy(&dst[(i*4 + 3) * (2*16*16/8) + y * (2*16/8)],
+			       &src[i * (2*32*32/8) + y * (2*32/8) + (4*8/8) + (16*2*32/8)],
+			       4);
 		}
 
 	if (decode_sprite(sprite16, &spr16_layout, dst))
@@ -381,6 +433,13 @@ static int decode_sprite32(int region)
 	return 0;
 }
 
+static void mark_all_tiles_dirty(void)
+{
+	tilemap_mark_all_tiles_dirty(tx_tilemap);
+	tilemap_mark_all_tiles_dirty(bg1_tilemap);
+	tilemap_mark_all_tiles_dirty(bg2_tilemap);
+}
+
 VIDEO_START( tceptor )
 {
 	int gfx_index;
@@ -409,7 +468,10 @@ VIDEO_START( tceptor )
 	if (!temp_bitmap)
 		return 1;
 
-	namco_road_init(gfx_index);
+	if (namco_road_init(gfx_index))
+		return 1;
+
+	namco_road_set_transparent_color(Machine->remapped_colortable[0xfff]);
 
 	tx_tilemap = tilemap_create(get_tx_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT_COLOR, 8, 8, 34, 28);
 	if (!tx_tilemap)
@@ -419,10 +481,20 @@ VIDEO_START( tceptor )
 	tilemap_set_scrolly(tx_tilemap, 0, 0);
 	tilemap_set_transparent_pen(tx_tilemap, 7);
 
-	/* not handled yet */
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 16, 8, 512/8);
-	if (!bg_tilemap)
+	bg1_tilemap = tilemap_create(get_bg1_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
+	bg2_tilemap = tilemap_create(get_bg2_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
+	if (!bg1_tilemap || !bg2_tilemap)
 		return 1;
+
+	tilemap_set_transparent_pen(bg1_tilemap, 0);
+	tilemap_set_transparent_pen(bg2_tilemap, 0);
+
+	state_save_register_int   ("tceptor", 0, "bg1_scroll_x",      &bg1_scroll_x);
+	state_save_register_int   ("tceptor", 0, "bg1_scroll_y",      &bg1_scroll_y);
+	state_save_register_int   ("tceptor", 0, "bg2_scroll_x",      &bg2_scroll_x);
+	state_save_register_int   ("tceptor", 0, "bg2_scroll_y",      &bg2_scroll_y);
+
+	state_save_register_func_postload(mark_all_tiles_dirty);
 
 	return 0;
 }
@@ -462,7 +534,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	{
 		int scalex = (mem1[1 + i] & 0xfc00) << 1;
 		int scaley = (mem1[0 + i] & 0xfc00) << 1;
-		int pri = 15 - ((mem1[1 + i] & 0x3c0) >> 6);
+		int pri = 7 - ((mem1[1 + i] & 0x3c0) >> 6);
 
 		if (pri == sprite_priority && scalex && scaley)
 		{
@@ -498,6 +570,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 				need_mask = 1;
 			}
 
+			// round off
 			scalex += 0x800;
 			scaley += 0x800;
 
@@ -537,13 +610,28 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE( tceptor )
 {
+	struct rectangle rect;
 	int pri;
+	int bg_center = 144 - ((((bg1_scroll_x + bg2_scroll_x ) & 0x1ff) - 288) / 2);
 
-	fillbitmap(bitmap, Machine->pens[0], cliprect);
+	// left background
+	rect = *cliprect;
+	rect.max_x = bg_center;
+	tilemap_set_scrollx(bg1_tilemap, 0, bg1_scroll_x + 12);
+	tilemap_set_scrolly(bg1_tilemap, 0, bg1_scroll_y + 20); //32?
+	tilemap_draw(bitmap, &rect, bg1_tilemap, 0, 0);
 
-	for (pri = 0; pri < 16; pri++)
+	// right background
+	rect.min_x = bg_center;
+	rect.max_x = cliprect->max_x;
+	tilemap_set_scrollx(bg2_tilemap, 0, bg2_scroll_x + 20);
+	tilemap_set_scrolly(bg2_tilemap, 0, bg2_scroll_y + 20); // 32?
+	tilemap_draw(bitmap, &rect, bg2_tilemap, 0, 0);
+
+	for (pri = 0; pri < 8; pri++)
 	{
-		namco_road_draw(bitmap, cliprect, pri);
+		namco_road_draw(bitmap, cliprect, pri * 2);
+		namco_road_draw(bitmap, cliprect, pri * 2 + 1);
 		draw_sprites(bitmap, cliprect, pri);
 	}
 

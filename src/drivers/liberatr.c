@@ -399,28 +399,28 @@ static struct POKEYinterface pokey_interface =
  *	Machine driver
  *
  *************************************/
- 
+
 static MACHINE_DRIVER_START( liberatr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1250000)
 	MDRV_CPU_MEMORY(liberatr_readmem,liberatr_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(atari_vg)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256,256)
 	MDRV_VISIBLE_AREA(8, 247, 13, 244)
 	MDRV_PALETTE_LENGTH(32)
-	
+
 	MDRV_VIDEO_START(liberatr)
 	MDRV_VIDEO_UPDATE(liberatr)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
 MACHINE_DRIVER_END
@@ -458,17 +458,27 @@ ROM_START( liberatr )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, CRC(8a616a63) SHA1(76794cc4e11048bb6f2628bd8b84c9a7e2e82551) )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, CRC(3f8e4cf6) SHA1(a9d0feb0892f343687e00b96f05adb423ee4d659) )
 	ROM_LOAD( "136012.109",   0x3000, 0x1000, CRC(dda0c0ef) SHA1(6e547c07c1abd17383a4389b0b4ced442ed65ce7) )
+
+	/* all PROM images were reconstructed from source code, a redump would be welcome */
+
+	ROM_REGION( 0x100, REGION_USER1, 0 )	/* latitude scaler */
+	ROM_LOAD_NIB_LOW ( "136012.123",   0x0000, 0x0100, BAD_DUMP CRC(f76449c7) SHA1(eac50b4e58a0d6313e0f5b1bc30029c56720893c) )
+	ROM_LOAD_NIB_HIGH( "136012.124",   0x0000, 0x0100, CRC(f9fb4cba) SHA1(4fc67d91d00894ffdd4b9cf79ce5a953b2a8e531) )
+
+	ROM_REGION( 0x100, REGION_USER2, 0 )	/* longitude scaler */
+	ROM_LOAD_NIB_LOW ( "136012.125",   0x0000, 0x0100, CRC(52ac8dd9) SHA1(125d54b562d079b974f2562e71ab7c7a0b97e709) )
+	ROM_LOAD_NIB_HIGH( "136012.126",   0x0000, 0x0100, CRC(2e670aa6) SHA1(a6bcc49d0948d2dfe497c5e3ad4a834fa78f779a) )
 ROM_END
 
 
 ROM_START( liberat2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code and data  */
-	ROM_LOAD( "l6.bin",       0x6000, 0x1000, CRC(78093d06) )
-	ROM_LOAD( "l5.bin",       0x7000, 0x1000, CRC(988db636) )
-	ROM_LOAD( "l4.bin",       0x8000, 0x1000, CRC(ec114540) )
-	ROM_LOAD( "l3.bin",       0x9000, 0x1000, CRC(184c751f) )
-	ROM_LOAD( "l2.bin",       0xa000, 0x1000, CRC(c3f61f88) )
-	ROM_LOAD( "l1.bin",       0xb000, 0x1000, CRC(ef6e9f9e) )
+	ROM_LOAD( "l6.bin",       0x6000, 0x1000, CRC(78093d06) SHA1(0f6ca01e27b32aae384a6ab67a6f14eedd3f1d9c) )
+	ROM_LOAD( "l5.bin",       0x7000, 0x1000, CRC(988db636) SHA1(8fdd07b397d4bef108aafb10c06c2fd53fc1f99a) )
+	ROM_LOAD( "l4.bin",       0x8000, 0x1000, CRC(ec114540) SHA1(eb35510b59f5e9624c3d94fb16dacb4968349030) )
+	ROM_LOAD( "l3.bin",       0x9000, 0x1000, CRC(184c751f) SHA1(e020d2943be89f244c1aeeb34a28b7aa7dbc1454) )
+	ROM_LOAD( "l2.bin",       0xa000, 0x1000, CRC(c3f61f88) SHA1(a56ce094fe7374d3ac341d5eb9e06df083e16b1f) )
+	ROM_LOAD( "l1.bin",       0xb000, 0x1000, CRC(ef6e9f9e) SHA1(b1f7cc9e0a2ea08ec89428ad31161ac81e7faaaf) )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
 	ROM_REGION( 0x4000, REGION_GFX1, 0 )	/* planet image, used at runtime */
@@ -476,6 +486,16 @@ ROM_START( liberat2 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, CRC(8a616a63) SHA1(76794cc4e11048bb6f2628bd8b84c9a7e2e82551) )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, CRC(3f8e4cf6) SHA1(a9d0feb0892f343687e00b96f05adb423ee4d659) )
 	ROM_LOAD( "136012.109",   0x3000, 0x1000, CRC(dda0c0ef) SHA1(6e547c07c1abd17383a4389b0b4ced442ed65ce7) )
+
+	/* all PROM images were reconstructed from source code, a redump would be welcome */
+
+	ROM_REGION( 0x100, REGION_USER1, 0 )	/* latitude scaler */
+	ROM_LOAD_NIB_LOW ( "136012.123",   0x0000, 0x0100, BAD_DUMP CRC(f76449c7) SHA1(eac50b4e58a0d6313e0f5b1bc30029c56720893c) )
+	ROM_LOAD_NIB_HIGH( "136012.124",   0x0000, 0x0100, CRC(f9fb4cba) SHA1(4fc67d91d00894ffdd4b9cf79ce5a953b2a8e531) )
+
+	ROM_REGION( 0x100, REGION_USER2, 0 )	/* longitude scaler */
+	ROM_LOAD_NIB_LOW ( "136012.125",   0x0000, 0x0100, CRC(52ac8dd9) SHA1(125d54b562d079b974f2562e71ab7c7a0b97e709) )
+	ROM_LOAD_NIB_HIGH( "136012.126",   0x0000, 0x0100, CRC(2e670aa6) SHA1(a6bcc49d0948d2dfe497c5e3ad4a834fa78f779a) )
 ROM_END
 
 

@@ -389,32 +389,6 @@ static WRITE16_HANDLER( irqctrl_w )
 	}
 }
 
-
-static READ16_HANDLER( accelerator_r )
-{
-	#define MAX_ACCEL 0x80
-	return (readinputport(4) & 1) ? MAX_ACCEL : 0;
-}
-
-/* This function allows the gear to be handled using two buttons
-   A macro is needed because wecleman sees the high gear when a
-   bit is on, hotchase when a bit is off */
-#define READ16_GEAR(_name_,_high_gear_) \
-READ16_HANDLER( _name_ ) \
-{ \
-	static int ret = (_high_gear_ ^ 1) << 5;	/* start with low gear */ \
-	switch ( (readinputport(4) >> 2) & 3 ) \
-	{ \
-		case 1 : ret = (_high_gear_ ^ 1) << 5; break;	/* low gear */ \
-		case 2 : ret = (_high_gear_    ) << 5; break;	/*  high gear */ \
-	} \
-	return (ret | readinputport(0));	/* previous value */ \
-}
-
-READ16_GEAR(wecleman_gear_r,1)
-READ16_GEAR(hotchase_gear_r,0)
-
-
 /* 140003.b (usually paired with a write to 140021.b)
 
 	Bit:
@@ -436,7 +410,7 @@ static READ16_HANDLER( selected_ip_r )
 {
 	switch ( (wecleman_selected_ip >> 5) & 3 )
 	{												// From WEC Le Mans Schems:
-		case 0:  return accelerator_r(offset,0);	// Accel - Schems: Accelevr
+		case 0:  return input_port_4_r(offset);		// Accel - Schems: Accelevr
 		case 1:  return ~0;							// ????? - Schems: Not Used
 		case 2:  return input_port_5_r(offset);		// Wheel - Schems: Handlevr
 		case 3:  return ~0;							// Table - Schems: Turnvr
@@ -444,7 +418,6 @@ static READ16_HANDLER( selected_ip_r )
 		default: return ~0;
 	}
 }
-
 
 /* Word Blitter - Copies data around (Work RAM, Sprite RAM etc.)
                   It's fed with a list of blits to do
@@ -571,7 +544,7 @@ static MEMORY_READ16_START( wecleman_readmem )
 	{ 0x124000, 0x127fff, sharedram_r           },	// Shared with sub CPU
 	{ 0x130000, 0x130fff, MRA16_RAM             },	// Sprites
 	// Input Ports:
-	{ 0x140010, 0x140011, wecleman_gear_r     },	// Coins + brake + gear
+	{ 0x140010, 0x140011, input_port_0_word_r },	// Coins + brake + gear
 	{ 0x140012, 0x140013, input_port_1_word_r },	// ??
 	{ 0x140014, 0x140015, input_port_2_word_r },	// DSW
 	{ 0x140016, 0x140017, input_port_3_word_r },	// DSW
@@ -645,7 +618,7 @@ static MEMORY_READ16_START( hotchase_readmem )
 	{ 0x130000, 0x130fff, MRA16_RAM                         },	// Sprites
 	// Input Ports:
 	{ 0x140006, 0x140007, MRA16_NOP                         },	// Watchdog reset
-	{ 0x140010, 0x140011, hotchase_gear_r                   },	// Coins + brake + gear
+	{ 0x140010, 0x140011, input_port_0_word_r               },	// Coins + brake + gear
 	{ 0x140012, 0x140013, input_port_1_word_r               },	// ?? bit 4 from sound cpu
 	{ 0x140014, 0x140015, input_port_2_word_r               },	// DSW 2
 	{ 0x140016, 0x140017, input_port_3_word_r               },	// DSW 1
@@ -888,48 +861,26 @@ MEMORY_END
 
 
 /***************************************************************************
-							Common Input Ports
-***************************************************************************/
-
-// Fake input port to read the status of the four buttons
-// Used to implement both the accelerator and the shift using 2 buttons
-#define BUTTONS_STATUS \
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-
-#define DRIVING_WHEEL \
- PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 50, 5, 0, 0xff)
-
-#define CONTROLS_AND_COINS(_default_) \
-	PORT_BIT(  0x0001, _default_, IPT_COIN1    ) \
-	PORT_BIT(  0x0002, _default_, IPT_COIN2    ) \
-	PORT_BITX( 0x0004, _default_, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) \
-	PORT_BIT(  0x0008, _default_, IPT_SERVICE1 ) \
-	PORT_BIT(  0x0010, _default_, IPT_START1   )	/* Start */ \
-/*	PORT_BIT(  0x0020, _default_, IPT_BUTTON3 | IPF_TOGGLE ) */	/* Shift (we handle this with 2 buttons) */ \
-	PORT_BIT(  0x0040, _default_, IPT_BUTTON2  )	/* Brake */ \
-	PORT_BIT(  0x0080, _default_, IPT_UNKNOWN  )	/* ? */
-
-/***************************************************************************
 						WEC Le Mans 24 Input Ports
 ***************************************************************************/
 
 INPUT_PORTS_START( wecleman )
-
 	PORT_START	/* IN0 - Controls and Coins - $140011.b */
-	CONTROLS_AND_COINS(IP_ACTIVE_HIGH)
-
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_TOGGLE, "Shift", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON2, "Brake", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	
 	PORT_START	/* IN1 - Motor? - $140013.b */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// ? right sw
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// ? left  sw
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )	// ? thermo
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// ? from sound cpu ?
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2 )	// right sw
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE3 )	// left sw
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE4 )	// thermo
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound cpu ?
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 - DSW A (Coinage) - $140015.b */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -965,17 +916,17 @@ INPUT_PORTS_START( wecleman )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Unknown ) )
 
 	PORT_START	/* IN3 - DSW B (options) - $140017.b */
 	PORT_DIPNAME( 0x01, 0x01, "Speed Unit" )
-	PORT_DIPSETTING(    0x01, "Km/h" )
+	PORT_DIPSETTING(    0x01, "km/h" )
 	PORT_DIPSETTING(    0x00, "mph" )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown B-1" )	// single
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Unknown B-2" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x18, "Easy" )		// 66 seconds at the start
 	PORT_DIPSETTING(    0x10, "Normal" )	// 64
@@ -991,12 +942,11 @@ INPUT_PORTS_START( wecleman )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* IN4 - Fake input port - Buttons status */
-	BUTTONS_STATUS
+	PORT_START	/* IN4 - Accelerator - $140021.b (0) */
+	PORT_ANALOG( 0xff, 0, IPT_PEDAL, 30, 10, 0, 0x80 )
 
-	PORT_START	/* IN5 - Driving Wheel - $140021.b (2) */
-	DRIVING_WHEEL
-
+	PORT_START	/* IN5 - Steering Wheel - $140021.b (2) */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 50, 5, 0, 0xff )
 INPUT_PORTS_END
 
 
@@ -1005,19 +955,22 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 INPUT_PORTS_START( hotchase )
-
 	PORT_START	/* IN0 - Controls and Coins - $140011.b */
-	CONTROLS_AND_COINS(IP_ACTIVE_LOW)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE, "Shift", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2, "Brake", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 - Motor? - $140013.b */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	// ? right sw
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	// ? left  sw
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	// ? thermo
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// ? from sound cpu ?
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2 )	// right sw
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE3 )	// left sw
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE4 )	// thermo
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound cpu ?
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 - DSW 2 (options) - $140015.b */
 	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0" )	// single
@@ -1079,14 +1032,12 @@ INPUT_PORTS_START( hotchase )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/99 Credits" )
-//	PORT_DIPSETTING(    0x40, "0C_0C" )	// Coin B insertion freezes the game!
 
-	PORT_START	/* IN4 - Fake input port - Buttons status */
-	BUTTONS_STATUS
+	PORT_START	/* IN4 - Accelerator - $140021.b (0) */
+	PORT_ANALOG( 0xff, 0, IPT_PEDAL, 30, 10, 0, 0x80 )
 
-	PORT_START	/* IN5 - Driving Wheel - $140021.b (2) */
-	DRIVING_WHEEL
-
+	PORT_START	/* IN5 - Steering Wheel - $140021.b (2) */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 50, 5, 0, 0xff )
 INPUT_PORTS_END
 
 

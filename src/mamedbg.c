@@ -4374,7 +4374,7 @@ static void cmd_search_memory(void)
 
 		start = (DBGMEM[which].base + DBGMEM[which].offset) & AMASK;
 
-		for( addr = start + 1; addr != start; addr = ++addr & AMASK )
+		for( addr = start + 1; addr != start; addr = (addr + 1) & AMASK )
 		{
 			if( (addr & (AMASK >> 8)) == 0 )
 			{

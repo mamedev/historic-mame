@@ -1056,17 +1056,17 @@ ROM_END
 
 ROM_START( pc_grdue )	/* Gradius (Early version) */
     BIOS_CPU
-    ROM_LOAD( "gr-u4",   0x0c000, 0x2000, CRC(27d76160) ) /* extra bios code for this game */
+    ROM_LOAD( "gr-u4",   0x0c000, 0x2000, CRC(27d76160) SHA1(605d58c57969c831778b95356fcf103a1d5f98a3) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "gr-u1e",  0x08000, 0x8000, CRC(9204a65d) )
+    ROM_LOAD( "gr-u1e",  0x08000, 0x8000, CRC(9204a65d) SHA1(500693f8f65b1e2f09b722c5fa28b32088e22a29) )
 
     ROM_REGION( 0x08000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "gr-u3",   0x00000, 0x8000, CRC(de963bec) )
+    ROM_LOAD( "gr-u3",   0x00000, 0x8000, CRC(de963bec) SHA1(ecb76b5897658ebac31a07516bb2a5820279474f) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(b8d5bf8a) )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(b8d5bf8a) SHA1(1c208fa5409b6e21aa576e1b9e086e830dc26a1a) )
 ROM_END
 
 
@@ -1600,18 +1600,18 @@ ROM_END
 /* H-Board Games */
 ROM_START( pc_pinbt )	/* PinBot */
     BIOS_CPU
-    ROM_LOAD( "io-u3",   0x0c000, 0x2000, CRC(15ba8a2e) ) /* extra bios code for this game */
+    ROM_LOAD( "io-u3",   0x0c000, 0x2000, CRC(15ba8a2e) SHA1(e64180b2f12189e3ac1e155f3544f28af8003f97) ) /* extra bios code for this game */
     BIOS_GFX
 
     ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
-    ROM_LOAD( "io-u5",   0x10000, 0x20000, CRC(9f75b83b) )	/* banked */
+    ROM_LOAD( "io-u5",   0x10000, 0x20000, CRC(9f75b83b) SHA1(703e41d4c1a4716b324dece6df2ce12a847f082c) )	/* banked */
     ROM_RELOAD(			  0x30000, 0x20000 )	/* banked */
 
     ROM_REGION( 0x010000, REGION_GFX2, 0 )	/* cart gfx */
-    ROM_LOAD( "io-u1",    0x00000, 0x10000, CRC(9089fc24) )
+    ROM_LOAD( "io-u1",    0x00000, 0x10000, CRC(9089fc24) SHA1(0bc92a0853c5ebc47c3adbc4e919ea41a55297d0) )
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
-    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(ac75f323) )
+    ROM_LOAD( "security.prm", 0x00000, 0x10, CRC(ac75f323) SHA1(4bffff024132d6f71d6aa55e24af400d2915aca4) )
 ROM_END
 
 /* i-Board Games */

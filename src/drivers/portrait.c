@@ -272,25 +272,25 @@ MACHINE_DRIVER_END
 
 ROM_START( portrait )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for the cpu */
-	ROM_LOAD( "prt-p0.bin",  0x0000, 0x2000, CRC(a21874fa) )
-	ROM_LOAD( "prt-p1.bin",  0x2000, 0x2000, CRC(4d4d7793) )
-	ROM_LOAD( "prt-p2.bin",  0x4000, 0x2000, CRC(83d88c9c) )
-	ROM_LOAD( "prt-p3.bin",  0x6000, 0x2000, CRC(bd32d007) )
+	ROM_LOAD( "prt-p0.bin",  0x0000, 0x2000, CRC(a21874fa) SHA1(3db863f465a35d7d14dd71b47aa7dfe7b39fccf0) )
+	ROM_LOAD( "prt-p1.bin",  0x2000, 0x2000, CRC(4d4d7793) SHA1(f828950ebbf285fc92c65f24421a20ceacef1cb9) )
+	ROM_LOAD( "prt-p2.bin",  0x4000, 0x2000, CRC(83d88c9c) SHA1(c876f72b66537a49620fa27a5cb8a4aecd378f0a) )
+	ROM_LOAD( "prt-p3.bin",  0x6000, 0x2000, CRC(bd32d007) SHA1(cdf814b00c22f9a4503fa54d43fb5781251b67a7) )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "prt-00.bin",    0x00000, 0x2000, CRC(eb3e1c12) )	/*bit plane 1*/
-	ROM_LOAD( "prt-10.bin",    0x02000, 0x2000, CRC(0f44e377) )	/*bit plane 1*/
-	ROM_LOAD( "prt-02.bin",    0x04000, 0x2000, CRC(bd93a3f9) )	/*bit plane 2*/
-	ROM_LOAD( "prt-12.bin",    0x06000, 0x2000, CRC(656b9f20) )	/*bit plane 2*/
-	ROM_LOAD( "prt-04.bin",    0x08000, 0x2000, CRC(2a99feb5) )	/*bit plane 3*/
-	ROM_LOAD( "prt-14.bin",    0x0a000, 0x2000, CRC(224b7a58) )	/*bit plane 3*/
+	ROM_LOAD( "prt-00.bin",    0x00000, 0x2000, CRC(eb3e1c12) SHA1(2d38b66f52546b40553244c8a5c961279559f5b6) )	/*bit plane 1*/
+	ROM_LOAD( "prt-10.bin",    0x02000, 0x2000, CRC(0f44e377) SHA1(1955f9f4deab2166f637f43c1f326bd65fc90f6a) )	/*bit plane 1*/
+	ROM_LOAD( "prt-02.bin",    0x04000, 0x2000, CRC(bd93a3f9) SHA1(9cb479b8840cafd6043ff0cb9d5ca031dcd332ba) )	/*bit plane 2*/
+	ROM_LOAD( "prt-12.bin",    0x06000, 0x2000, CRC(656b9f20) SHA1(c1907aba3d19be79d92cd73784b8e7ae94910da6) )	/*bit plane 2*/
+	ROM_LOAD( "prt-04.bin",    0x08000, 0x2000, CRC(2a99feb5) SHA1(b373d2a2bd28aad6dd7a15a2166e03a8b7a34d9b) )	/*bit plane 3*/
+	ROM_LOAD( "prt-14.bin",    0x0a000, 0x2000, CRC(224b7a58) SHA1(b84e70d22d1cab41e5773fc9daa2e4e55ec9d96e) )	/*bit plane 3*/
 
-	ROM_LOAD( "prt-01.bin",    0x10000, 0x2000, CRC(70d27508) )	/*bit plane 1*/
-	ROM_LOAD( "prt-11.bin",    0x12000, 0x2000, CRC(f498e395) )	/*bit plane 1*/
-	ROM_LOAD( "prt-03.bin",    0x14000, 0x2000, CRC(03d4153a) )	/*bit plane 2*/
-	ROM_LOAD( "prt-13.bin",    0x16000, 0x2000, CRC(10fa22b8) )	/*bit plane 2*/
-	ROM_LOAD( "prt-05.bin",    0x18000, 0x2000, CRC(43ea7951) )	/*bit plane 3*/
-	ROM_LOAD( "prt-15.bin",    0x1a000, 0x2000, CRC(ab20b438) )	/*bit plane 3*/
+	ROM_LOAD( "prt-01.bin",    0x10000, 0x2000, CRC(70d27508) SHA1(d011f85b31bb3aa6f386e8e0edb91df10f4c4eb6) )	/*bit plane 1*/
+	ROM_LOAD( "prt-11.bin",    0x12000, 0x2000, CRC(f498e395) SHA1(beb1d12433a350e5b773126de3f2803a9f5620c1) )	/*bit plane 1*/
+	ROM_LOAD( "prt-03.bin",    0x14000, 0x2000, CRC(03d4153a) SHA1(7ce69ce6a101870dbfca1a9787fb1e660024bc02) )	/*bit plane 2*/
+	ROM_LOAD( "prt-13.bin",    0x16000, 0x2000, CRC(10fa22b8) SHA1(e8f4c24fcdda0ce5e33bc600acd574a232a9bb21) )	/*bit plane 2*/
+	ROM_LOAD( "prt-05.bin",    0x18000, 0x2000, CRC(43ea7951) SHA1(df0ae7fa802365979514063e1d67cdd45ecada90) )	/*bit plane 3*/
+	ROM_LOAD( "prt-15.bin",    0x1a000, 0x2000, CRC(ab20b438) SHA1(ea5d60f6a9f06397bd0c6ee028b463c684090c01) )	/*bit plane 3*/
 
 	/* proms? */
 ROM_END

@@ -152,16 +152,16 @@ static DRIVER_INIT( chindrag )
 
 ROM_START( chindrag )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "v-021j",         0x00000, 0x80000, CRC(2f87f6e4) )
+	ROM_LOAD16_WORD_SWAP( "v-021j",         0x00000, 0x80000, CRC(2f87f6e4) SHA1(d43065b078fdd9605c121988ad3092dce6cf0bf1) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, 0 ) /* GFX? */
-	ROM_LOAD( "d0301",         0x00000, 0x400000, CRC(78ab45d9) )
+	ROM_LOAD( "d0301",         0x00000, 0x400000, CRC(78ab45d9) SHA1(c326ee9f150d766edd6886075c94dea3691b606d) )
 
 	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* GFX? */
-	ROM_LOAD( "cg",         0x00000, 0x20000, CRC(2dda0be3) )
+	ROM_LOAD( "cg",         0x00000, 0x20000, CRC(2dda0be3) SHA1(587b7cab747d4336515c98eb3365341bb6c7e5e4) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Samples? */
-	ROM_LOAD( "sp",         0x00000, 0x40000, CRC(fde63ce1) )
+	ROM_LOAD( "sp",         0x00000, 0x40000, CRC(fde63ce1) SHA1(cc32d2cace319fe4d5d0aa96d7addb2d1def62f2) )
 ROM_END
 
 GAMEX( 1994, chindrag, 0, chindrag, chindrag, chindrag, ROT0, "IGS", "China Dragon / Dragon World", GAME_NO_SOUND | GAME_NOT_WORKING )

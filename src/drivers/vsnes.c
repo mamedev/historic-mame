@@ -75,8 +75,8 @@ Needed roms:
 - Japanese version of Vs. Tennis			(1984)
 - Japanese version of Vs. Soccer			(1985)
 - Japanese version of Vs. Super Mario Bros. (1986)
-- Lionex ?									(title uncertain, prototype by Sunsoft, 1986)
-- Madoula no Tsubasa						(prototype by Sunsoft, 1985)
+- Lionex									(prototype by Sunsoft, 1987)
+- Madura no Tsubasa							(prototype by Sunsoft, 1987)
 - Predators									(prototype by Williams, 84)
 - Pro Yakyuu Family Stadium					(by Namco, 1986?)
 - Quest of Ki								(by Namco/Game Studio, 198?)
@@ -2395,14 +2395,14 @@ ROM_END
 
 ROM_START( smgolfb )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
-	ROM_LOAD( "gf4-2.1df",	0x8000, 0x2000, CRC(4a723087) )
-	ROM_LOAD( "gf4-2.1cf",  0xa000, 0x2000, CRC(2debda63) )
-	ROM_LOAD( "gf4-2.1bf",  0xc000, 0x2000, CRC(6783652f) )
-	ROM_LOAD( "gf4-2.1af",  0xe000, 0x2000, CRC(ce788209) )
+	ROM_LOAD( "gf4-2.1df",	0x8000, 0x2000, CRC(4a723087) SHA1(87dc063d295f55871598a1e1eb4e62ce298b2f0c) )
+	ROM_LOAD( "gf4-2.1cf",  0xa000, 0x2000, CRC(2debda63) SHA1(33b42eb5641ec947b2f2dcbc632ee6c81fa2ffe3) )
+	ROM_LOAD( "gf4-2.1bf",  0xc000, 0x2000, CRC(6783652f) SHA1(7165ee59d3787cb56eed4791351da07f4bcc68ed) )
+	ROM_LOAD( "gf4-2.1af",  0xe000, 0x2000, CRC(ce788209) SHA1(b62f1a6567cd94e5443afdbc5df33dd1b8ad039d) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "gf4-2.2bf",  0x0000, 0x2000, NO_DUMP )
-	ROM_LOAD( "gf4-2.2af",  0x2000, 0x2000, CRC(47e9b8c6) )
+	ROM_LOAD( "gf4-2.2af",  0x2000, 0x2000, CRC(47e9b8c6) SHA1(2eee6eaf7d15e215816363c7bb7142a2bdc2d530) )
 ROM_END
 
 ROM_START( vspinbal )
@@ -2507,6 +2507,14 @@ ROM_END
 ROM_START( rbibb )
 	ROM_REGION( 0x20000,REGION_CPU1,0 ) /* 6502 memory */
 	ROM_LOAD( "rbi-prg",  0x10000, 0x10000, CRC(135adf7c) SHA1(e090b0aec98463c565e300a910561499d8bd9676) )
+
+	ROM_REGION( 0x8000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "rbi-cha",  0x0000, 0x8000, CRC(a3c14889) SHA1(ef00f4fbf21cf34e946957b9b6825b8e2cb16536) )
+ROM_END
+
+ROM_START( rbibba )
+	ROM_REGION( 0x20000,REGION_CPU1,0 ) /* 6502 memory */
+	ROM_LOAD( "rbi-prga", 0x10000, 0x10000, CRC(a5939d0d) SHA1(476ac2a3974b69082bb8eebdfc0d15befaa2e165) )
 
 	ROM_REGION( 0x8000,REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "rbi-cha",  0x0000, 0x8000, CRC(a3c14889) SHA1(ef00f4fbf21cf34e946957b9b6825b8e2cb16536) )
@@ -2673,20 +2681,20 @@ ROM_END
 
 ROM_START( vsbbaljb )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
-	ROM_LOAD( "ba_1d_a3.bin",  0x08000, 0x02000, CRC(e234d609) )
-	ROM_LOAD( "ba_1c_a3.bin",  0x0a000, 0x02000, CRC(ca1a9591) )
-	ROM_LOAD( "ba_1b_a3.bin",  0x0c000, 0x02000, CRC(50e1f6cf) )
-	ROM_LOAD( "ba_1a_a3.bin",  0x0e000, 0x02000, BAD_DUMP CRC(4312aa6d) ) //FIXED BITS (xxxxxxx1)
+	ROM_LOAD( "ba_1d_a3.bin",  0x08000, 0x02000, CRC(e234d609) SHA1(a148d6b57fbc9d5f91737fa30c2df2c2b66df404) )
+	ROM_LOAD( "ba_1c_a3.bin",  0x0a000, 0x02000, CRC(ca1a9591) SHA1(3544f244c59d3dab40c2745e84775b7c1defaf54) )
+	ROM_LOAD( "ba_1b_a3.bin",  0x0c000, 0x02000, CRC(50e1f6cf) SHA1(8eb4ccb4817295084280ffd1ee5261eee02485c5) )
+	ROM_LOAD( "ba_1a_a3.bin",  0x0e000, 0x02000, BAD_DUMP CRC(4312aa6d) SHA1(dfadbbb6b03a3c1b5cc56c6c60f5005d4b572d8d) ) //FIXED BITS (xxxxxxx1)
 
 	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "ba_2b_a.bin",  0x0000, 0x2000, CRC(919147d0) SHA1(9fccdfccc2a3ec634e350880ded7053f36c377bc) )
 	ROM_LOAD( "ba_2a_a.bin",  0x2000, 0x2000, CRC(3f7edb00) SHA1(f59d24f15bdb8903187eabc1578dcb60443614ed) )
 
 	ROM_REGION( 0x10000,REGION_CPU2,0 ) /* 6502 memory */
-	ROM_LOAD( "ba_6d_a3.bin",  0x08000, 0x02000, CRC(6eb9e36e) )
-	ROM_LOAD( "ba_6c_a3.bin",  0x0a000, 0x02000, CRC(dca4dc75) )
-	ROM_LOAD( "ba_6b_a3.bin",  0x0c000, 0x02000, CRC(46cf6f84) )
-	ROM_LOAD( "ba_6a_a3.bin",  0x0e000, 0x02000, CRC(4cbc2cac) )
+	ROM_LOAD( "ba_6d_a3.bin",  0x08000, 0x02000, CRC(6eb9e36e) SHA1(3877dee54a1a11417296150f7e7a1ae2c2847484) )
+	ROM_LOAD( "ba_6c_a3.bin",  0x0a000, 0x02000, CRC(dca4dc75) SHA1(231819edb58caf96b4f5c56a44163fbb666dc67d) )
+	ROM_LOAD( "ba_6b_a3.bin",  0x0c000, 0x02000, CRC(46cf6f84) SHA1(125af20e1e9066e4b92174ba0a7f59271ef57557) )
+	ROM_LOAD( "ba_6a_a3.bin",  0x0e000, 0x02000, CRC(4cbc2cac) SHA1(90bed7694836075738d99aa8fe672dbffa7bbd6d) )
 
 	ROM_REGION( 0x4000,REGION_GFX2, 0 ) /* PPU memory */
 	ROM_LOAD( "ba_8b_a.bin",  0x0000, 0x2000, CRC(919147d0) SHA1(9fccdfccc2a3ec634e350880ded7053f36c377bc) )
@@ -2777,7 +2785,8 @@ GAME( 1984, iceclmbj, iceclimb, vsnes,   iceclmbj, suprmrio, ROT0, "Nintendo",  
 GAME( 1984, ladygolf, 0,        vsnes,   golf,     machridr, ROT0, "Nintendo",  "Vs. Stroke and Match Golf (Ladies Version)" )
 GAMEX(1985, machridr, 0,        vsnes,   machridr, machridr, ROT0, "Nintendo",  "Vs. Mach Rider (Endurance Course Version)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1985, machridj, machridr, vsnes,   machridj, vspinbal, ROT0, "Nintendo",  "Vs. Mach Rider (Japan, Fighting Course Version)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1986, rbibb,    0,        vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball" )
+GAME( 1986, rbibb,    0,        vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball (set 1)" )
+GAME( 1986, rbibba,	  rbibb,    vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball (set 2)" )
 GAME( 1986, suprmrio, 0,        vsnes,   suprmrio, suprmrio, ROT0, "Nintendo",  "Vs. Super Mario Bros." )
 GAME( 1985, vsskykid, 0,        vsnes,   vsskykid, MMC3,	 ROT0, "Namco",     "Vs. Super SkyKid"  )
 GAMEX(1987, tkoboxng, 0,        vsnes,   tkoboxng, tkoboxng, ROT0, "Namco LTD.","Vs. TKO Boxing", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )

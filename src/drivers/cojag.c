@@ -899,7 +899,7 @@ ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
 	ROM_LOAD32_BYTE( "3k", 0x00003, 0x80000, CRC(729eb1b7) SHA1(21864b4281b1ad17b2903e3aa294e4be74161e80) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51.chd", 0, MD5(130b330eff59403f8fc3433ff501852b) )
+	DISK_IMAGE( "area51.chd", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
 ROM_END
 
 
@@ -913,7 +913,7 @@ ROM_START( maxforce ) /* R3000 based, labeled as "Maximum Force 5-23-97 v1.05" *
 	ROM_LOAD32_BYTE( "maxf_105.ll", 0x00003, 0x80000, CRC(16d0768d) SHA1(665a6d7602a7f2f5b1f332b0220b1533143d56b1) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "maxforce.chd", 0, MD5(b0a214c7b3f8ba9d592396332fc974c9) )
+	DISK_IMAGE( "maxforce.chd", 0, MD5(b0a214c7b3f8ba9d592396332fc974c9) SHA1(59d77280afdb2d1f801ee81786aa7d3166ec2695) )
 ROM_END
 
 
@@ -927,7 +927,7 @@ ROM_START( maxf_102 ) /* R3000 based, labeled as "Maximum Force 2-27-97 v1.02" *
 	ROM_LOAD32_BYTE( "maxf_102.ll", 0x00003, 0x80000, CRC(e491be7f) SHA1(cbe281c099a4aa87067752d68cf2bb0ab3900531) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "maxforce.chd", 0, MD5(b0a214c7b3f8ba9d592396332fc974c9) )
+	DISK_IMAGE( "maxforce.chd", 0, MD5(b0a214c7b3f8ba9d592396332fc974c9) SHA1(59d77280afdb2d1f801ee81786aa7d3166ec2695) )
 ROM_END
 
 
@@ -941,7 +941,7 @@ ROM_START( area51mx )	/* 68020 based, Labeled as "68020 MAX/A51 KIT 2.0" Date: A
 	ROM_LOAD32_BYTE( "area51mx.3k", 0x00003, 0x80000, CRC(0e78f308) SHA1(adc4c8e441eb8fe525d0a6220eb3a2a8791a7289) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) )
+	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) SHA1(7e629045eb5baa8cd522273befffbf8520828938) )
 ROM_END
 
 
@@ -955,7 +955,7 @@ ROM_START( a51mxr3k ) /* R3000 based, Labeled as "R3K Max/A51 Kit Ver 1.0" */
 	ROM_LOAD32_BYTE( "a51mxr3k.ll", 0x00003, 0x80000, CRC(ece9e5ae) SHA1(7e44402726f5afa6d1670b27aa43ad13d21c4ad9) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) )
+	DISK_IMAGE( "area51mx.chd", 0, MD5(fce1a0954759fa22e50747959716823d) SHA1(7e629045eb5baa8cd522273befffbf8520828938) )
 ROM_END
 
 
@@ -969,7 +969,7 @@ ROM_START( vcircle )
 	ROM_LOAD32_BYTE( "ll", 0x00003, 0x80000, CRC(ba8753eb) SHA1(0322e0e37d814a38d08ba191b1a97fb1a55fe461) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "vcircle.chd", 0, MD5(fc316bd92363573d60083514223c6816) )
+	DISK_IMAGE( "vcircle.chd", 0, MD5(fc316bd92363573d60083514223c6816) SHA1(f1d3e3d081d10ec42d07cd695d52b44812264983) )
 ROM_END
 
 
@@ -1082,5 +1082,5 @@ GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Atari Game
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.05" )
 GAME( 1996, maxf_102, maxforce, r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.02" )
 GAME( 1998, area51mx, 0,        cojag68k,  area51,   area51mx, ROT0, "Atari Games", "Area 51 / Maximum Force Duo v2.0" )
-GAME( 1998, a51mxr3k, area51mx, r3knarrow, area51,   a51mxr3k, ROT0, "Atari Games", "Area 51 / Maximum Force Duo (R3000)" ) /* todo: speed hack */
+GAME( 1998, a51mxr3k, area51mx, r3knarrow, area51,   a51mxr3k, ROT0, "Atari Games", "Area 51 / Maximum Force Duo (R3000)" )
 GAME( 1996, vcircle,  0,        cojagr3k,  vcircle,  vcircle,  ROT0, "Atari Games", "Vicious Circle (prototype)" )

@@ -22,6 +22,7 @@ OSC:	50.0000MHz
 Ordered by Board		Year	Game									By
 -------------------------------------------------------------------------------------------
 P-FG01-1				1995	Guardians / Denjin Makai II				Banpresto
+PO-113A					1994	Mobile Suit Gundam EX Revue				Banpresto
 P0-123A					1996	Wakakusamonogatari Mahjong Yonshimai	Maboroshi Ware
 P0-125A ; KE (Namco)	1996	Kosodate Quiz My Angel					Namco
 P0-136A ; KL (Namco)	1997	Kosodate Quiz My Angel 2				Namco
@@ -62,6 +63,41 @@ grdians:
   not the frontmost frame. This latter should use color 7ff (the last one)
   and ignore the individual color codes in the tiles data. Zooming is also
   used briefly in pengbros.
+
+***************************************************************************/
+
+/***************************************************************************
+
+MS Gundam Ex Revue
+Banpresto, 1994
+
+This game runs on Seta/Allumer hardware
+
+PCB Layout
+----------
+
+PO-113A   BP949KA
+|----------------------------------|
+|  X1-010  6264  U28               |
+|                     581001   U19 |
+|     U3  U5  U2  U4  581001   U17 |
+|      62256   62256           U15 |
+|J                             U20 |
+|A    U77  68301               U18 |
+|M                     *       U16 |
+|M    93C46                    U23 |
+|A                             U22 |
+|                              U21 |
+|  DSW1            50MHz           |
+|  DSW2       PAL  32.5304MHz      |
+|       20MHz PAL                  |
+|----------------------------------|
+
+Notes:
+      *: unknown QFP208 (has large heatsink on it). Should be similar to other known
+         graphics chips used on Seta hardware of this era.
+      68301 clock: 16.000MHz
+      VSync: 60Hz
 
 ***************************************************************************/
 
@@ -175,7 +211,7 @@ static WRITE16_HANDLER( grdians_lockout_w )
 
 static MEMORY_READ16_START( grdians_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
 	{ 0x304000, 0x30ffff, MRA16_RAM					},	// ? seems tile data
 	{ 0x600000, 0x600001, input_port_0_word_r		},	// DSW 1
 	{ 0x600002, 0x600003, input_port_1_word_r		},	// DSW 2
@@ -193,6 +229,40 @@ static MEMORY_WRITE16_START( grdians_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM							},	// ROM
 	{ 0x200000, 0x20ffff, MWA16_RAM							},	// RAM
 	{ 0x304000, 0x30ffff, MWA16_RAM							},	// ? seems tile data
+	{ 0x800000, 0x800001, grdians_lockout_w					},
+	{ 0xb00000, 0xb03fff, seta_sound_word_w 				},	// Sound
+	{ 0xc00000, 0xc3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
+	{ 0xc40000, 0xc4ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0xc50000, 0xc5ffff, MWA16_RAM							},	// cleared
+	{ 0xc60000, 0xc6003f, seta2_vregs_w, &seta2_vregs		},	// Video Registers
+	{ 0xe00010, 0xe0001f, seta2_sound_bank_w				},	// Samples Banks
+	{ 0xfffc00, 0xffffff, tmp68301_regs_w, &tmp68301_regs	},	// TMP68301 Registers
+MEMORY_END
+
+/***************************************************************************
+						Mobile Suit Gundam EX Revue
+***************************************************************************/
+
+static MEMORY_READ16_START( gundamex_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
+	{ 0x400000, 0x5fffff, MRA16_ROM					},	// ROM
+	{ 0x600000, 0x600001, input_port_0_word_r		},	// DSW 1
+	{ 0x600002, 0x600003, input_port_1_word_r		},	// DSW 2
+	{ 0x700000, 0x700001, input_port_2_word_r		},	// P1
+	{ 0x700002, 0x700003, input_port_3_word_r		},	// P2
+	{ 0x700004, 0x700005, input_port_4_word_r		},	// Coins
+	{ 0x700008, 0x700009, input_port_5_word_r		},	// P1
+	{ 0x70000a, 0x70000b, input_port_6_word_r		},	// P2
+	{ 0xb00000, 0xb03fff, seta_sound_word_r 		},	// Sound
+	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
+MEMORY_END
+
+static MEMORY_WRITE16_START( gundamex_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM							},	// ROM
+	{ 0x200000, 0x20ffff, MWA16_RAM							},	// RAM
+	{ 0x400000, 0x5fffff, MWA16_ROM							},	// ROM
+	{ 0x70000c, 0x70000d, watchdog_reset16_w				},
 	{ 0x800000, 0x800001, grdians_lockout_w					},
 	{ 0xb00000, 0xb03fff, seta_sound_word_w 				},	// Sound
 	{ 0xc00000, 0xc3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
@@ -230,7 +300,7 @@ static WRITE16_HANDLER( mj4simai_keyboard_w )
 
 static MEMORY_READ16_START( mj4simai_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
 	{ 0x600000, 0x600001, mj4simai_p1_r				},	// P1
 	{ 0x600002, 0x600003, mj4simai_p1_r				},	// P2, but I'm using P1 again
 	{ 0x600006, 0x600007, watchdog_reset16_r		},	// Watchdog
@@ -263,7 +333,7 @@ MEMORY_END
 
 static MEMORY_READ16_START( myangel_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
 	{ 0x700000, 0x700001, input_port_2_word_r		},	// P1
 	{ 0x700002, 0x700003, input_port_3_word_r		},	// P2
 	{ 0x700004, 0x700005, input_port_4_word_r		},	// Coins
@@ -295,7 +365,7 @@ MEMORY_END
 
 static MEMORY_READ16_START( myangel2_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
 	{ 0x600000, 0x600001, input_port_2_word_r		},	// P1
 	{ 0x600002, 0x600003, input_port_3_word_r		},	// P2
 	{ 0x600004, 0x600005, input_port_4_word_r		},	// Coins
@@ -325,11 +395,12 @@ MEMORY_END
 								Puzzle De Bowling
 ***************************************************************************/
 
-/*	The game checks for a specific sequence of values read from here.
-	Patching out the check from ROM seems to work... */
+/*	The game checks for a specific value read from the ROM region.
+	The offset to use is stored in RAM at address 0x20BA16 */
 READ16_HANDLER( pzlbowl_protection_r )
 {
-	return 0;
+	UINT32 address = (cpu_readmem24bew_word(0x20ba16) << 16) | cpu_readmem24bew_word(0x20ba18);
+	return memory_region(REGION_CPU1)[address - 2];
 }
 
 READ16_HANDLER( pzlbowl_coins_r )
@@ -348,7 +419,7 @@ WRITE16_HANDLER( pzlbowl_coin_counter_w )
 
 static MEMORY_READ16_START( pzlbowl_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
 	{ 0x400300, 0x400301, input_port_0_word_r		},	// DSW 1
 	{ 0x400302, 0x400303, input_port_1_word_r		},	// DSW 2
 	{ 0x500000, 0x500001, input_port_2_word_r		},	// P1
@@ -381,8 +452,8 @@ MEMORY_END
 
 static MEMORY_READ16_START( penbros_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
-	{ 0x210000, 0x23ffff, MRA16_ROM					},	// RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// RAM
+	{ 0x210000, 0x23ffff, MRA16_RAM					},	// RAM
 	{ 0x300000, 0x30ffff, MRA16_RAM					},	// RAM
 	{ 0x500300, 0x500301, input_port_0_word_r		},	// DSW 1
 	{ 0x500302, 0x500303, input_port_1_word_r		},	// DSW 2
@@ -418,6 +489,119 @@ MEMORY_END
 								Input Ports
 
 ***************************************************************************/
+
+/***************************************************************************
+						Mobile Suit Gundam EX Revue
+***************************************************************************/
+
+INPUT_PORTS_START( gundamex )
+	PORT_START	// IN0 - $600000.w
+	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Freeze" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Show Targets" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT(     0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - $600002.w
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0000, "3 Coins/5 Credits" )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Debug Mode" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT(     0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - $700000.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN3 - $700002.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - $700004.w
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// IN5 - $700008.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW,  IPT_BUTTON4		 | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// IN6 - $70000a.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW,  IPT_BUTTON4		 | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+INPUT_PORTS_END
 
 /***************************************************************************
 								Guardians
@@ -1178,12 +1362,24 @@ static MACHINE_DRIVER_START( mj4simai )
 
 	MDRV_VIDEO_START(seta2)
 	MDRV_VIDEO_UPDATE(seta2)
+	MDRV_VIDEO_EOF(seta2)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(X1_010, x1_010_sound_intf_16MHz)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( gundamex )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mj4simai)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_REPLACE("main",M68000,16000000)
+	MDRV_CPU_MEMORY(gundamex_readmem,gundamex_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0x00, 0x180-1, 0x100, 0x1e0-1)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( grdians )
 
@@ -1253,6 +1449,31 @@ MACHINE_DRIVER_END
 								ROMs Loading
 
 ***************************************************************************/
+
+ROM_START( gundamex )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 )		/* TMP68301 Code */
+	ROM_LOAD16_BYTE(	  "ka002002.u2",  0x000000, 0x080000, CRC(e850f6d8) SHA1(026325e305676b1f8d3d9e7573920f8b70d7bccb) )
+	ROM_LOAD16_BYTE(	  "ka002004.u3",  0x000001, 0x080000, CRC(c0fb1208) SHA1(84b25e4c73cb8e023ee5dbf69f588be98700b43f) )
+	ROM_LOAD16_BYTE(	  "ka002001.u4",  0x100000, 0x080000, CRC(553ebe6b) SHA1(7fb8a159513d31a1d60520ff14e4c4d133fd3e19) )
+	ROM_LOAD16_BYTE(	  "ka002003.u5",  0x100001, 0x080000, CRC(946185aa) SHA1(524911c4c510d6c3e17a7ab42c7077c2fffbf06b) )
+	ROM_LOAD16_WORD_SWAP( "ka001005.u77", 0x400000, 0x200000, CRC(8c09405f) SHA1(4a45d9db48f559386f72ad339695d85d40707fb1) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE|ROMREGION_ERASE)	/* Sprites */
+	ROM_LOAD( "ka001009.u16",  0x0000000, 0x200000, CRC(997d8d93) SHA1(4cb4cdb7e8208af4b14483610d9d6aa5e13acd89) )
+	ROM_LOAD( "ka001010.u18",  0x0200000, 0x200000, CRC(811b67ca) SHA1(c8cfae6f54c76d63bd625ff011c872ffb75fd2e2) )
+	ROM_LOAD( "ka001011.u20",  0x0400000, 0x200000, CRC(08a72700) SHA1(fb8003aa02dd249c30a757cb43b516260b41c1bf) )
+	ROM_LOAD( "ka001012.u15",  0x0800000, 0x200000, CRC(b789e4a8) SHA1(400b773f24d677a9d47466fdbbe68cb6efc1ad37) )
+	ROM_LOAD( "ka001013.u17",  0x0a00000, 0x200000, CRC(d8a0201f) SHA1(fe8a2407c872adde8aec8e9340b00be4f00a2872) )
+	ROM_LOAD( "ka001014.u19",  0x0c00000, 0x200000, CRC(7635e026) SHA1(116a3daab14a17faca85c4a956b356aaf0fc2276) )
+	ROM_LOAD( "ka001006.u21",  0x1000000, 0x200000, CRC(6aac2f2f) SHA1(fac5478ca2941a93c57f670a058ff626e537bcde) )
+	ROM_LOAD( "ka001007.u22",  0x1200000, 0x200000, CRC(588f9d63) SHA1(ed5148d09d02e3bc12c50c39c5c86e6356b2dd7a) )
+	ROM_LOAD( "ka001008.u23",  0x1400000, 0x200000, CRC(db55a60a) SHA1(03d118c7284ca86219891c473e2a89489710ea27) )
+	ROM_FILL(                  0x1800000, 0x600000, 0 )	/* 6bpp instead of 8bpp */
+
+	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	/* Leave 1MB empty (addressable by the chip) */
+	ROM_LOAD( "ka001015.u28", 0x100000, 0x200000, CRC(ada2843b) SHA1(09d06026031bc7558da511c3c0e29187ea0a0099) )
+ROM_END
 
 ROM_START( grdians )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
@@ -1380,21 +1601,19 @@ ROM_START( penbros )
 	ROM_LOAD( "u18.bin", 0x100000, 0x200000, CRC(de4e65e2) SHA1(82d4e590c714b3e9bf0ffaf1500deb24fd315595) )
 ROM_END
 
-
-
-DRIVER_INIT( pzlbowl )
+DRIVER_INIT( gundamex )
 {
 	data16_t *ROM = (data16_t *)memory_region( REGION_CPU1 );
 
-	/* Patch out the protection check */
-	ROM[0x01d6/2] = 0x4e73;		// trap #0 routine becomes rte
+	/* ??? doesn't boot otherwise */
+	ROM[0x0f98/2] = 0x4e71;
 }
 
-
+GAME(  1994, gundamex, 0, gundamex, gundamex, gundamex, ROT0, "Banpresto",           "Mobile Suit Gundam EX Revue" )
 GAMEX( 1995, grdians,  0, grdians,  grdians,  0,  		ROT0, "Banpresto",           "Guardians / Denjin Makai II",                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )	// Displays (c) Winky Soft at game's end.
 GAMEX( 1996, mj4simai, 0, mj4simai, mj4simai, 0,        ROT0, "Maboroshi Ware",      "Wakakusamonogatari Mahjong Yonshimai (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, myangel2, 0, myangel2, myangel2, 0,        ROT0, "Namco",               "Kosodate Quiz My Angel 2 (Japan)",             GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  pzlbowl,  ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",                    GAME_NO_COCKTAIL )
+GAMEX( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  0,		ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",                    GAME_NO_COCKTAIL )
 GAMEX( 2000, penbros,  0, penbros,  penbros,  0,  		ROT0, "Subsino",             "Penguin Brothers (Japan)",                     GAME_NO_COCKTAIL )
 

@@ -1,12 +1,21 @@
-#ifndef ui_text_h
-#define ui_text_h
+/*********************************************************************
+
+  ui_text.h
+
+  Functions used to retrieve text used by MAME, to aid in
+  translation.
+
+*********************************************************************/
+
+#ifndef UI_TEXT_H
+#define UI_TEXT_H
+
+#include "driver.h"
 
 /* Important: this must match the default_text list in ui_text.c! */
 enum
 {
-	UI_first_entry = -1,
-
-	UI_mame,
+	UI_mame = 0,
 
 	/* copyright stuff */
 	UI_copyright1,
@@ -63,17 +72,6 @@ enum
 	UI_brokenprotection,
 	UI_workingclones,
 	UI_typeok,
-#ifdef MESS
-	UI_comp1,
-	UI_comp2,
-	UI_keyb1,
-	UI_keyb2,
-	UI_keyb3,
-	UI_keyb4,
-	UI_keyb5,
-	UI_keyb6,
-	UI_keyb7,
-#endif
 
 	/* main menu */
 	UI_inputgeneral,
@@ -86,39 +84,6 @@ enum
 	UI_history,
 	UI_resetgame,
 	UI_returntogame,
-#ifdef MESS
-	UI_imageinfo,
-	UI_filemanager,
-	UI_tapecontrol,
-	UI_recording,
-	UI_playing,
-	UI_recording_inhibited,
-	UI_playing_inhibited,
-	UI_stopped,
-	UI_pauseorstop,
-	UI_record,
-	UI_play,
-	UI_rewind,
-	UI_fastforward,
-	UI_mount,
-	UI_unmount,
-	UI_emptyslot,
-	UI_configuration,
-	UI_quitfileselector,
-	UI_filespecification,	/* IMPORTANT: be careful to ensure that the following */
-	UI_cartridge,		/* device list matches the order found in device.h    */
-	UI_floppydisk,		/* and is ALWAYS placed after UI_filespecification    */
-	UI_harddisk,
-	UI_cylinder,
-	UI_cassette,
-	UI_punchcard,
-	UI_punchtape,
-	UI_printer,
-	UI_serial,
-	UI_parallel,
-	UI_snapshot,
-	UI_quickload,
-#endif
 	UI_cheat,
 	UI_memorycard,
 
@@ -136,9 +101,6 @@ enum
 	UI_loadcard,
 	UI_ejectcard,
 	UI_createcard,
-#ifdef MESS
-	UI_resetcard,
-#endif
 	UI_loadfailed,
 	UI_loadok,
 	UI_cardejected,
@@ -208,8 +170,12 @@ enum
 	UI_search_all_values_saved,
 	UI_search_one_match_found_added,
 
-	UI_last_entry
+	UI_last_mame_entry
 };
+
+#ifdef MESS
+#include "mui_text.h"
+#endif
 
 struct lang_struct
 {
@@ -225,9 +191,8 @@ struct lang_struct
 extern struct lang_struct lang;
 
 int uistring_init (mame_file *language_file);
-void uistring_shutdown (void);
 
 const char * ui_getstring (int string_num);
 
-#endif
+#endif /* UI_TEXT_H */
 

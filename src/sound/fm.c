@@ -3483,7 +3483,7 @@ int YM2608Init(int num, int clock, int rate,
 
 		/*FM2608[i].deltaT.write_time = 20.0 / clock;*/	/* a single byte write takes 20 cycles of main clock */
 		/*FM2608[i].deltaT.read_time  = 18.0 / clock;*/	/* a single byte read takes 18 cycles of main clock */
-		
+
 		FM2608[i].deltaT.status_set_handler = YM2608_deltat_status_set;
 		FM2608[i].deltaT.status_reset_handler = YM2608_deltat_status_reset;
 		FM2608[i].deltaT.status_change_which_chip = i;
@@ -3534,7 +3534,7 @@ void YM2608ResetChip(int num)
 	FM_BUSY_CLEAR(&OPN->ST);
 
 	/* register 0x29 - default value after reset is:
-		enable only 3 FM channels and enable all the status flags */  
+		enable only 3 FM channels and enable all the status flags */
 	YM2608IRQMaskWrite(OPN, num, 0x1f );	/* default value for D4-D0 is 1 */
 
 	/* register 0x10, A1=1 - default value is 1 for D4, D3, D2, 0 for the rest */
@@ -4101,12 +4101,19 @@ static void YM2610_postload(void)
 			}
 		/* FM channels */
 		/*FM_channel_postload(F2610->CH,6);*/
+
 		/* rhythm(ADPCMA) */
-		FM_ADPCMAWrite(F2610,1,F2610->REGS[0x111]);
-		for( r=0x08 ; r<0x0c ; r++)
-			FM_ADPCMAWrite(F2610,r,F2610->REGS[r+0x110]);
+		FM_ADPCMAWrite(F2610,1,F2610->REGS[0x101]);
+		for( r=0 ; r<6 ; r++)
+		{
+			FM_ADPCMAWrite(F2610,r+0x08,F2610->REGS[r+0x108]);
+			FM_ADPCMAWrite(F2610,r+0x10,F2610->REGS[r+0x110]);
+			FM_ADPCMAWrite(F2610,r+0x18,F2610->REGS[r+0x118]);
+			FM_ADPCMAWrite(F2610,r+0x20,F2610->REGS[r+0x120]);
+			FM_ADPCMAWrite(F2610,r+0x28,F2610->REGS[r+0x128]);
+		}
 		/* Delta-T ADPCM unit */
-		YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x100] );
+		YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x010] );
 	}
 	cur_chip = NULL;
 }
@@ -4190,7 +4197,7 @@ int YM2610Init(int num, int clock, int rate,
 		/* DELTA-T */
 		F2610->deltaT.memory = (UINT8 *)(pcmromb[i]);
 		F2610->deltaT.memory_size = pcmsizeb[i];
-		
+
 		FM2610[i].deltaT.status_set_handler = YM2610_deltat_status_set;
 		FM2610[i].deltaT.status_reset_handler = YM2610_deltat_status_reset;
 		FM2610[i].deltaT.status_change_which_chip = i;
@@ -4362,7 +4369,7 @@ int YM2610Write(int n, int a, UINT8 v)
 					/* set arrived flag mask */
 					for(ch=0;ch<6;ch++)
 						F2610->adpcm[ch].flagMask = statusmask&(1<<ch);
-						
+
 					F2610->deltaT.status_change_EOS_bit = statusmask & 0x80;	/* status flag: set bit7 on End Of Sample */
 
 					/* clear arrived flag */

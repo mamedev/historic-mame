@@ -96,13 +96,6 @@
 
  Its rather interesting to see a game this old using 8bpp tiles
 
- --- To Do ---
-
- Improve sound, its probably done wrong at the moment, and theres no mention of any hardware
- to play sound samples in the readme either, and I don't believe the YM2203 is capable of
- doing this alone, probably related to the unknown port writes.
-
- See notes spread about file
 
  */
 
@@ -157,7 +150,6 @@ static MEMORY_WRITE_START( pass_sound_writemem )
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
-/* todo : verify this, handle unknown writes (sample playing..?) */
 static PORT_READ_START( pass_sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
 	{ 0x70, 0x70, YM2203_status_port_0_r },
@@ -167,8 +159,8 @@ MEMORY_END
 static PORT_WRITE_START( pass_sound_writeport )
 	{ 0x70, 0x70, YM2203_control_port_0_w },
 	{ 0x71, 0x71, YM2203_write_port_0_w },
-	{ 0x80, 0x80, MWA_NOP },
-	{ 0xc0, 0xc0, MWA_NOP },
+	{ 0x80, 0x80, OKIM6295_data_0_w },
+	{ 0xc0, 0xc0, soundlatch_clear_w },
 MEMORY_END
 
 
@@ -272,6 +264,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /* todo : is this correct? */
+
+
+
 static struct YM2203interface ym2203_interface =
 {
 	1,
@@ -283,14 +278,21 @@ static struct YM2203interface ym2203_interface =
 	{ 0 },
 };
 
-/* todo : theres probably something missing from the sound hardware */
+static struct OKIM6295interface okim6295_interface =
+{
+	1,
+	{ 6000 },	/* ? guess */
+	{ REGION_SOUND1 },
+	{ 60 }
+};
+
 static MACHINE_DRIVER_START( pass )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10MHz? */
+	MDRV_CPU_ADD(M68000, 14318180/2 )
 	MDRV_CPU_MEMORY(pass_readmem,pass_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* all the same */
 
-	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_ADD(Z80, 14318180/4 )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(pass_sound_readmem,pass_sound_writemem)
 	MDRV_CPU_PORTS(pass_sound_readport,pass_sound_writeport)
@@ -311,6 +313,9 @@ static MACHINE_DRIVER_START( pass )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+
+
 MACHINE_DRIVER_END
 
 
@@ -337,4 +342,4 @@ ROM_START( pass )
 ROM_END
 
 
-GAMEX( 1992, pass, 0, pass, pass, 0, ROT0, "Oksan", "Pass", GAME_IMPERFECT_SOUND )
+GAME( 1992, pass, 0, pass, pass, 0, ROT0, "Oksan", "Pass")

@@ -19,6 +19,10 @@
  * http://kstenerud.cjb.net
  */
 
+/*
+ * Modified For OpenVMS By:  Robert Alan Byer
+ *                           byer@mail.ourservers.net
+ */
 
 
 /* ======================================================================== */
@@ -1242,11 +1246,44 @@ int main(int argc, char **argv)
 
 		for(ptr = strchr(output_path, '\\'); ptr; ptr = strchr(ptr, '\\'))
 			*ptr = '/';
+
+#if !(defined(__DECC) && defined(VMS))
         if(output_path[strlen(output_path)-1] != '/')
 			strcat(output_path, "/");
+#endif
+
 		if(argc > 2)
 			strcpy(g_input_filename, argv[2]);
 	}
+
+
+#if defined(__DECC) && defined(VMS)
+
+	/* Open the files we need */
+	sprintf(filename, "%s%s", output_path, FILENAME_PROTOTYPE);
+	if((g_prototype_file = fopen(filename, "w")) == NULL)
+		perror_exit("Unable to create prototype file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_TABLE);
+	if((g_table_file = fopen(filename, "w")) == NULL)
+		perror_exit("Unable to create table file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_OPS_AC);
+	if((g_ops_ac_file = fopen(filename, "w")) == NULL)
+		perror_exit("Unable to create ops ac file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_OPS_DM);
+	if((g_ops_dm_file = fopen(filename, "w")) == NULL)
+		perror_exit("Unable to create ops dm file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_OPS_NZ);
+	if((g_ops_nz_file = fopen(filename, "w")) == NULL)
+		perror_exit("Unable to create ops nz file (%s)\n", filename);
+
+	if((g_input_file=fopen(g_input_filename, "r")) == NULL)
+		perror_exit("can't open %s for input", g_input_filename);
+
+#else
 
 
 	/* Open the files we need */
@@ -1273,6 +1310,7 @@ int main(int argc, char **argv)
 	if((g_input_file=fopen(g_input_filename, "rt")) == NULL)
 		perror_exit("can't open %s for input", g_input_filename);
 
+#endif
 
 	/* Get to the first section of the input file */
 	section_id[0] = 0;

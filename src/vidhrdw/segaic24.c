@@ -31,10 +31,6 @@ System 24      68000x2  315-5292   315-5293  315-5294  315-5242        ym2151 da
 
 #include <math.h>
 
-static int kc = -1;
-static int kk = 0;
-//static int kz = 0;
-
 static void set_color(int color, unsigned char r, unsigned char g, unsigned char b, int highlight)
 {
 	palette_set_color (color, r, g, b);
@@ -111,24 +107,28 @@ static struct GfxLayout sys24_char_layout = {
 static void sys24_tile_info_0s(int tile_index)
 {
 	UINT16 val = sys24_tile_ram[tile_index];
+	tile_info.priority = (val & 0x8000) != 0;
 	SET_TILE_INFO(sys24_char_gfx_index, val & sys24_tile_mask, (val >> 7) & 0xff, 0);
 }
 
 static void sys24_tile_info_0w(int tile_index)
 {
 	UINT16 val = sys24_tile_ram[tile_index|0x1000];
+	tile_info.priority = (val & 0x8000) != 0;
 	SET_TILE_INFO(sys24_char_gfx_index, val & sys24_tile_mask, (val >> 7) & 0xff, 0);
 }
 
 static void sys24_tile_info_1s(int tile_index)
 {
 	UINT16 val = sys24_tile_ram[tile_index|0x2000];
+	tile_info.priority = (val & 0x8000) != 0;
 	SET_TILE_INFO(sys24_char_gfx_index, val & sys24_tile_mask, (val >> 7) & 0xff, 0);
 }
 
 static void sys24_tile_info_1w(int tile_index)
 {
 	UINT16 val = sys24_tile_ram[tile_index|0x3000];
+	tile_info.priority = (val & 0x8000) != 0;
 	SET_TILE_INFO(sys24_char_gfx_index, val & sys24_tile_mask, (val >> 7) & 0xff, 0);
 }
 
@@ -179,6 +179,8 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 
 	tilemap_set_transparent_pen(sys24_tile_layer[0], 0);
 	tilemap_set_transparent_pen(sys24_tile_layer[1], 0);
+	tilemap_set_transparent_pen(sys24_tile_layer[2], 0);
+	tilemap_set_transparent_pen(sys24_tile_layer[3], 0);
 
 	memset(sys24_char_ram, 0, 0x80000);
 	memset(sys24_tile_ram, 0, 0x10000);
@@ -213,14 +215,8 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 
 void sys24_tile_update(void)
 {
-	int i;
-/* pretty much trusted now
-	if(keyboard_pressed(KEYCODE_L)) {
-		memset(sys24_char_dirtymap, 1, SYS24_TILES);
-		sys24_char_dirty = 1;
-	}
-*/
 	if(sys24_char_dirty) {
+		int i;
 		for(i=0; i<SYS24_TILES; i++) {
 			if(sys24_char_dirtymap[i]) {
 				sys24_char_dirtymap[i] = 0;
@@ -233,33 +229,21 @@ void sys24_tile_update(void)
 		tilemap_mark_all_tiles_dirty(sys24_tile_layer[3]);
 		sys24_char_dirty = 0;
 	}
-/* pretty much trusted now
-	if(keyboard_pressed(KEYCODE_K)) {
-		tilemap_mark_all_tiles_dirty(sys24_tile_layer[0]);
-		tilemap_mark_all_tiles_dirty(sys24_tile_layer[1]);
-		tilemap_mark_all_tiles_dirty(sys24_tile_layer[2]);
-		tilemap_mark_all_tiles_dirty(sys24_tile_layer[3]);
-	}
-*/
-	for(i=0; i<4; i++) {
-		UINT16 hscr = sys24_tile_ram[0x5000+i];
-		UINT16 vscr = sys24_tile_ram[0x5004+i];
-		if(vscr & 0x8000)
-			logerror("Layer %d disabled\n", i);
-		if(hscr & 0x8000)
-			logerror("Layer %d uses linescroll\n", i);
-	}
 }
 
 static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm, struct mame_bitmap *dm, const UINT16 *mask,
-								 int win, int sx, int sy, int xx1, int yy1, int xx2, int yy2)
+								 UINT16 tpri, UINT8 lpri, int win, int sx, int sy, int xx1, int yy1, int xx2, int yy2)
 {
 	int y;
-	const UINT16 *source = ((UINT16 *)bm->base) + sx + sy*bm->rowpixels;
-	const UINT8  *trans  = ((UINT8 *) tm->base) + sx + sy*tm->rowpixels;
-	UINT16       *dest   = dm->base;
+	const UINT16 *source  = ((UINT16 *)bm->base) + sx + sy*bm->rowpixels;
+	const UINT8  *trans = ((UINT8 *) tm->base) + sx + sy*tm->rowpixels;
+	UINT8        *prib = priority_bitmap->base;
+	UINT16       *dest = dm->base;
+
+	tpri |= TILE_FLAG_FG_OPAQUE;
 
 	dest += yy1*dm->rowpixels + xx1;
+	prib += yy1*priority_bitmap->rowpixels + xx1;
 	mask += yy1*4;
 	yy2 -= yy1;
 
@@ -270,10 +254,11 @@ static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm,
 	}
 
 	for(y=0; y<yy2; y++) {
-		const UINT16 *src = source + bm->rowpixels*y;
-		const UINT8  *srct = trans + tm->rowpixels*y;
-		UINT16 *dst = dest + dm->rowpixels*y;
-		const UINT16 *mask1 = mask+4*y;
+		const UINT16 *src   = source;
+		const UINT8  *srct  = trans;
+		UINT16 *dst         = dest;
+		UINT8 *pr           = prib;
+		const UINT16 *mask1 = mask;
 		int llx = xx2;
 		int cur_x = xx1;
 
@@ -290,17 +275,21 @@ static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm,
 					// 1- 128 pixels from this layer
 					int x;
 					for(x=0; x<128; x++) {
-						if(*srct++)
+						if(*srct++ == tpri) {
 							*dst = *src;
+							*pr |= lpri;
+						}
 						src++;
-						dst++;
+						dst++;	
+						pr++;
 					}
 
 				} else if(m == 0xffff) {
 					// 2- 128 pixels from the other layer
 					src += 128;
-					dst += 128;
 					srct += 128;
+					dst += 128;
+					pr += 128;
 
 				} else {
 					// 3- 128 pixels from both layers
@@ -309,12 +298,15 @@ static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm,
 						if(!(m & 0x8000)) {
 							int xx;
 							for(xx=0; xx<8; xx++)
-								if(srct[xx])
-									dst[xx] = src[xx];
+								if(srct[xx] == tpri) {
+								   dst[xx] = src[xx];
+								   pr[xx] |= lpri;
+								}
 						}
-						dst += 8;
 						src += 8;
 						srct += 8;
+						dst += 8;
+						pr += 8;
 						m <<= 1;
 					}
 				}
@@ -326,45 +318,63 @@ static void sys24_tile_draw_rect(struct mame_bitmap *bm, struct mame_bitmap *tm,
 					// 1- 128 pixels from this layer
 					int x;
 					for(x = cur_x; x<llx1; x++) {
-						if(*srct++)
-							*dst = *src;
+						if(*srct++ == tpri) {
+						   *dst = *src;
+						   *pr |= lpri;
+						}
 						src++;
 						dst++;
+						pr++;
 					}
 
 				} else if(m == 0xffff) {
 					// 2- 128 pixels from the other layer
 					src += 128 - cur_x;
-					dst += 128 - cur_x;
 					srct += 128 - cur_x;
+					dst += 128 - cur_x;
+					pr += 128 - cur_x;
 
 				} else {
 					// 3- 128 pixels from both layers
 					int x;
 					for(x=cur_x; x<llx1; x++) {
+						if(*srct++ == tpri && !(m & (0x8000 >> (x >> 3)))) {
+						   *dst = *src;
+						   *pr |= lpri;
+						}
 
-						if(*srct++ && !(m & (0x8000 >> (x >> 3))))
-							*dst = *src;
-
-						dst ++;
-						src ++;
+						src++;
+						dst++;
+						pr++;
 					}
 				}
 			}
 			llx -= 128;
 			cur_x = 0;
 		}
+		source += bm->rowpixels;
+		trans  += tm->rowpixels;
+		dest   += dm->rowpixels;
+		prib   += priority_bitmap->rowpixels;
+		mask   += 4;
 	}
 }
+
+
+// The rgb version is used by model 1 & 2 which do not need to care
+// about sprite priority hence the lack of support for the
+// priority_bitmap
 
 static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap *tm, struct mame_bitmap *dm, const UINT16 *mask,
-									 int win, int sx, int sy, int xx1, int yy1, int xx2, int yy2)
+									 UINT16 tpri, UINT8 lpri, int win, int sx, int sy, int xx1, int yy1, int xx2, int yy2)
 {
 	int y;
-	const UINT16 *source = ((UINT16 *)bm->base) + sx + sy*bm->rowpixels;
-	const UINT8  *trans  = ((UINT8 *) tm->base) + sx + sy*tm->rowpixels;
-	UINT16       *dest   = dm->base;
+	const UINT16 *source  = ((UINT16 *)bm->base) + sx + sy*bm->rowpixels;
+	const UINT8  *trans = ((UINT8 *) tm->base) + sx + sy*tm->rowpixels;
+	UINT16       *dest = dm->base;
 	pen_t        *pens   = Machine->pens;
+
+	tpri |= TILE_FLAG_FG_OPAQUE;
 
 	dest += yy1*dm->rowpixels + xx1;
 	mask += yy1*4;
@@ -377,10 +387,10 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 	}
 
 	for(y=0; y<yy2; y++) {
-		const UINT16 *src = source + bm->rowpixels*y;
-		const UINT8  *srct = trans + tm->rowpixels*y;
-		UINT16 *dst = dest + dm->rowpixels*y;
-		const UINT16 *mask1 = mask+4*y;
+		const UINT16 *src   = source;
+		const UINT8  *srct  = trans;
+		UINT16 *dst         = dest;
+		const UINT16 *mask1 = mask;
 		int llx = xx2;
 		int cur_x = xx1;
 
@@ -397,17 +407,17 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 					// 1- 128 pixels from this layer
 					int x;
 					for(x=0; x<128; x++) {
-						if(*srct++)
+						if(*srct++ == tpri)
 							*dst = pens[*src];
 						src++;
-						dst++;
+						dst++;	
 					}
 
 				} else if(m == 0xffff) {
 					// 2- 128 pixels from the other layer
 					src += 128;
-					dst += 128;
 					srct += 128;
+					dst += 128;
 
 				} else {
 					// 3- 128 pixels from both layers
@@ -416,12 +426,12 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 						if(!(m & 0x8000)) {
 							int xx;
 							for(xx=0; xx<8; xx++)
-								if(srct[xx])
-									dst[xx] = pens[src[xx]];
+								if(srct[xx] == tpri)
+								   dst[xx] = pens[src[xx]];
 						}
-						dst += 8;
 						src += 8;
 						srct += 8;
+						dst += 8;
 						m <<= 1;
 					}
 				}
@@ -433,8 +443,8 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 					// 1- 128 pixels from this layer
 					int x;
 					for(x = cur_x; x<llx1; x++) {
-						if(*srct++)
-							*dst = pens[*src];
+						if(*srct++ == tpri)
+						   *dst = pens[*src];
 						src++;
 						dst++;
 					}
@@ -442,44 +452,41 @@ static void sys24_tile_draw_rect_rgb(struct mame_bitmap *bm, struct mame_bitmap 
 				} else if(m == 0xffff) {
 					// 2- 128 pixels from the other layer
 					src += 128 - cur_x;
-					dst += 128 - cur_x;
 					srct += 128 - cur_x;
+					dst += 128 - cur_x;
 
 				} else {
 					// 3- 128 pixels from both layers
 					int x;
 					for(x=cur_x; x<llx1; x++) {
+						if(*srct++ == tpri && !(m & (0x8000 >> (x >> 3))))
+						   *dst = pens[*src];
 
-						if(*srct++ && !(m & (0x8000 >> (x >> 3))))
-							*dst = pens[*src];
-
-						dst ++;
-						src ++;
+						src++;
+						dst++;
 					}
 				}
 			}
 			llx -= 128;
 			cur_x = 0;
 		}
+		source += bm->rowpixels;
+		trans  += tm->rowpixels;
+		dest   += dm->rowpixels;
+		mask   += 4;
 	}
 }
 
-void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int flags)
+void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int lpri, int flags)
 {
-	UINT16 hscr = sys24_tile_ram[0x5000+layer];
-	UINT16 vscr = sys24_tile_ram[0x5004+layer];
-	UINT16 ctrl = sys24_tile_ram[0x5004+(layer & 2)];
-	UINT16 *mask = sys24_tile_ram + (layer & 2 ? 0x6800 : 0x6000);
+	UINT16 hscr = sys24_tile_ram[0x5000+(layer >> 1)];
+	UINT16 vscr = sys24_tile_ram[0x5004+(layer >> 1)];
+	UINT16 ctrl = sys24_tile_ram[0x5004+((layer >> 1) & 2)];
+	UINT16 *mask = sys24_tile_ram + (layer & 4 ? 0x6800 : 0x6000);
+	UINT16 tpri = layer & 1;
 
-#ifdef MAME_DEBUG
-	if(0 && !layer)
-		usrintf_showmessage("%04x %04x %04x %04x",
-							sys24_tile_ram[0x5004+0],
-							sys24_tile_ram[0x5004+1],
-							sys24_tile_ram[0x5004+2],
-							sys24_tile_ram[0x5004+3]);
-
-#endif
+	lpri = 1 << lpri;
+	layer >>= 1;
 
 	// Layer disable
 	if(vscr & 0x8000)
@@ -494,10 +501,10 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 		tilemap_set_scrolly(sys24_tile_layer[layer|1], 0, +(vscr & 0x1ff));
 
 		if(hscr & 0x8000) {
-#ifdef MAME_DEBUG
+			//#ifdef MAME_DEBUG
 			usrintf_showmessage("Linescroll with special mode %04x", ctrl);
 			//			return;
-#endif
+			//#endif
 		} else {
 			tilemap_set_scrollx(sys24_tile_layer[layer],   0, -(hscr & 0x1ff));
 			tilemap_set_scrollx(sys24_tile_layer[layer|1], 0, -(hscr & 0x1ff));
@@ -516,8 +523,8 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 			if(!((-vscr) & 0x200))
 				layer ^= 1;
 
-			tilemap_draw(bitmap, &c1, sys24_tile_layer[layer],   0, 0);
-			tilemap_draw(bitmap, &c2, sys24_tile_layer[layer^1], 0, 0);
+			tilemap_draw(bitmap, &c1, sys24_tile_layer[layer],   tpri, lpri);
+			tilemap_draw(bitmap, &c2, sys24_tile_layer[layer^1], tpri, lpri);
 			break;
 		}
 		case 2: {
@@ -532,20 +539,22 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 			if(!((+hscr) & 0x200))
 				layer ^= 1;
 
-			tilemap_draw(bitmap, &c1, sys24_tile_layer[layer],   0, 0);
-			tilemap_draw(bitmap, &c2, sys24_tile_layer[layer^1], 0, 0);
+			tilemap_draw(bitmap, &c1, sys24_tile_layer[layer],   tpri, lpri);
+			tilemap_draw(bitmap, &c2, sys24_tile_layer[layer^1], tpri, lpri);
 			break;
 		}
 		case 3:
-#ifdef MAME_DEBUG
+			//#ifdef MAME_DEBUG
 			usrintf_showmessage("Mode 3, please scream");
-#endif
+			//#endif
 			break;
 		};
 
 	} else {
 		struct mame_bitmap *bm, *tm;
-		void (*draw)(struct mame_bitmap *, struct mame_bitmap *, struct mame_bitmap *, const UINT16 *, int, int, int, int, int, int, int);
+		void (*draw)(struct mame_bitmap *, struct mame_bitmap *, struct mame_bitmap *, const UINT16 *,
+					 UINT16, UINT8, int, int, int, int, int, int, int);
+		int win = layer & 1;
 
 		if(Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
 			draw = sys24_tile_draw_rect_rgb;
@@ -565,11 +574,11 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 				hscr = (-hscrtb[vscr]) & 0x1ff;
 				if(hscr + 496 <= 512) {
 					// Horizontal split unnecessary
-					draw(bm, tm, bitmap, mask, layer & 1, hscr, vscr,        0,        y,      496,      y+1);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr, vscr,        0,        y,      496,      y+1);
 				} else {
 					// Horizontal split necessary
-					draw(bm, tm, bitmap, mask, layer & 1, hscr, vscr,        0,        y, 512-hscr,      y+1);
-					draw(bm, tm, bitmap, mask, layer & 1,    0, vscr, 512-hscr,        y,      496,      y+1);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr, vscr,        0,        y, 512-hscr,      y+1);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win,    0, vscr, 512-hscr,        y,      496,      y+1);
 				}
 				vscr = (vscr + 1) & 0x1ff;
 			}
@@ -581,25 +590,25 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 				// Horizontal split unnecessary
 				if(vscr + 384 <= 512) {
 					// Vertical split unnecessary
-					draw(bm, tm, bitmap, mask, layer & 1, hscr, vscr,        0,        0,      496,      384);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr, vscr,        0,        0,      496,      384);
 				} else {
 					// Vertical split necessary
-					draw(bm, tm, bitmap, mask, layer & 1, hscr, vscr,        0,        0,      496, 512-vscr);
-					draw(bm, tm, bitmap, mask, layer & 1, hscr,    0,        0, 512-vscr,      496,      384);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr, vscr,        0,        0,      496, 512-vscr);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr,    0,        0, 512-vscr,      496,      384);
 
 				}
 			} else {
 				// Horizontal split necessary
 				if(vscr + 384 <= 512) {
 					// Vertical split unnecessary
-					draw(bm, tm, bitmap, mask, layer & 1, hscr, vscr,        0,        0, 512-hscr,      384);
-					draw(bm, tm, bitmap, mask, layer & 1,    0, vscr, 512-hscr,        0,      496,      384);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr, vscr,        0,        0, 512-hscr,      384);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win,    0, vscr, 512-hscr,        0,      496,      384);
 				} else {
 					// Vertical split necessary
-					draw(bm, tm, bitmap, mask, layer & 1, hscr, vscr,        0,        0, 512-hscr, 512-vscr);
-					draw(bm, tm, bitmap, mask, layer & 1,    0, vscr, 512-hscr,        0,      496, 512-vscr);
-					draw(bm, tm, bitmap, mask, layer & 1, hscr,    0,        0, 512-vscr, 512-hscr,      384);
-					draw(bm, tm, bitmap, mask, layer & 1,    0,    0, 512-hscr, 512-vscr,      496,      384);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr, vscr,        0,        0, 512-hscr, 512-vscr);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win,    0, vscr, 512-hscr,        0,      496, 512-vscr);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win, hscr,    0,        0, 512-vscr, 512-hscr,      384);
+					draw(bm, tm, bitmap, mask, tpri, lpri, win,    0,    0, 512-hscr, 512-vscr,      496,      384);
 				}
 			}
 		}
@@ -645,7 +654,7 @@ int sys24_sprite_vh_start(void)
 		return 1;
 
 	state_save_register_UINT16("system24 sprite", 0, "ram", sys24_sprite_ram, 0x20000);
-	kc = 0;
+	//	kc = 0;
 	return 0;
 }
 
@@ -669,135 +678,21 @@ int sys24_sprite_vh_start(void)
     0   11------    --------
 */
 
-#define writepix								\
-	{											\
-		c = colors[c];							\
-		if(c) {									\
-			if(c==1)							\
-				*dst = (*dst) | 0x2000;			\
-			else								\
-				*dst = c;						\
-		}										\
-		dst++;									\
-	}
-
-static void sys24_sprite_draw8_g(UINT16 *src, UINT16 *dst, int pitch, UINT16 *colors)
-{
-	UINT16 y, c, val;
-	for(y=0; y<8; y++) {
-		val = *src++;
-		c =  val >> 12;
-		writepix;
-		c = (val >>  8) & 0xf;
-		writepix;
-		c = (val >>  4) & 0xf;
-		writepix;
-		c =  val        & 0xf;
-		writepix;
-
-		val = *src++;
-		c =  val >> 12;
-		writepix;
-		c = (val >>  8) & 0xf;
-		writepix;
-		c = (val >>  4) & 0xf;
-		writepix;
-		c =  val        & 0xf;
-		writepix;
-		dst += pitch;
-	}
-}
-
-static void sys24_sprite_draw8(UINT16 *src, UINT16 *dst, int pitch, UINT16 *colors)
-{
-	sys24_sprite_draw8_g(src, dst, pitch-8, colors);
-}
-
-static void sys24_sprite_draw8_y(UINT16 *src, UINT16 *dst, int pitch, UINT16 *colors)
-{
-	sys24_sprite_draw8_g(src, dst+7*pitch, -pitch-8, colors);
-}
-
-static void sys24_sprite_draw8_gx(UINT16 *src, UINT16 *dst, int pitch, UINT16 *colors)
-{
-	UINT16 y, c, val;
-
-	for(y=0; y<8; y++) {
-		val = src[1];
-		c =  val        & 0xf;
-		writepix;
-		c = (val >>  4) & 0xf;
-		writepix;
-		c = (val >>  8) & 0xf;
-		writepix;
-		c =  val >> 12;
-		writepix;
-
-		val = src[0];
-		c =  val        & 0xf;
-		writepix;
-		c = (val >>  4) & 0xf;
-		writepix;
-		c = (val >>  8) & 0xf;
-		writepix;
-		c =  val >> 12;
-		writepix;
-
-		src += 2;
-		dst += pitch;
-	}
-}
-
-static void sys24_sprite_draw8_x(UINT16 *src, UINT16 *dst, int pitch, UINT16 *colors)
-{
-	sys24_sprite_draw8_gx(src, dst, pitch-8, colors);
-}
-
-static void sys24_sprite_draw8_xy(UINT16 *src, UINT16 *dst, int pitch, UINT16 *colors)
-{
-	sys24_sprite_draw8_gx(src, dst+7*pitch, -pitch-8, colors);
-}
-
-#undef writepix
-
-void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const int *spri)
 {
 	UINT16 curspr = 0;
 	int countspr = 0;
-	int pitch = ((UINT16 *)bitmap->line[1]) - ((UINT16 *)bitmap->line[0]);
-	void (*sdraw)(UINT16 *src, UINT16 *dst, int p, UINT16 *colors);
-	if(++kk == 5) {
-		int kx;
-		kx = 0;
-		kk = 0;
-#ifdef MAME_DEBUG
-		if(keyboard_pressed(KEYCODE_Y)) {
-			kx = 1;
-			kc--;
-			if(kc<0)
-				kc = 100;
-		}
-		if(keyboard_pressed(KEYCODE_U)) {
-			kx = 1;
-			kc++;
-			if(kc==101)
-				kc = 0;
-		}
-		if(kx)
-			usrintf_showmessage("Sprite %x", kc);
-#endif
-	}
+	UINT8 pmt[4];
+	int i;
+	UINT16 *sprd[0x2000], *clip[0x2000];
+	UINT16 *cclip = 0;
+
+	for(i=0; i<4; i++)
+		pmt[i] = 0xff << (1+spri[3-i]);
 
 	for(;;) {
-		UINT16 *source, *pix;
-		UINT16 type, cbase;
-		int x, y, sx, sy;
-		int px, py, xx, yy;
-		UINT16 colors[16];
-		int flipx, flipy;
-		int zoomx, zoomy;
-
-		cbase = 0x1000;
+		UINT16 *source;
+		UINT16 type;
 
 		source = sys24_sprite_ram + (curspr << 3);
 
@@ -815,17 +710,66 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			continue;
 
 		if(type == 0x4000) {
-			// Clip
+			cclip = source;
 			continue;
 		}
 
+		sprd[countspr] = source;
+		clip[countspr] = cclip;
 
-		if(source[0] & 0x2000)
+		countspr++;
+		if(!curspr || countspr >= 0x2000)
+			break;
+	}
+
+	for(countspr--; countspr >= 0; countspr--) {
+		UINT16 *source, *pix;
+		int x, y, sx, sy;
+		int px, py;
+		UINT16 colors[16];
+		int flipx, flipy;
+		int zoomx, zoomy;
+		UINT8 pm[16];
+		//		int dump;
+		int xmod, ymod;
+		int min_x, min_y, max_x, max_y;
+
+		source = sprd[countspr];
+		cclip = clip[countspr];
+
+		if(cclip) {
+			min_y = (cclip[2] & 511);
+			min_x = (cclip[3] & 511) - 8;
+			max_y = (cclip[4] & 511);
+			max_x = (cclip[5] & 511) - 8;
+		} else {
+			min_x = 0;
+			max_x = 495;
+			min_y = 0;
+			max_y = 383;
+		}
+
+
+		if(min_x < cliprect->min_x)
+			min_x = cliprect->min_x;
+		if(min_y < cliprect->min_y)
+			min_y = cliprect->min_y;
+		if(max_x > cliprect->max_x)
+			max_x = cliprect->max_x;
+		if(max_y > cliprect->max_y)
+			max_y = cliprect->max_y;
+
+		if(!(source[0] & 0x2000))
 			zoomx = zoomy = source[1] & 0xff;
 		else {
 			zoomx = source[1] >> 8;
 			zoomy = source[1] & 0xff;
 		}
+		if(!zoomx)
+			zoomx = 0x3f;
+		if(!zoomy)
+			zoomy = 0x3f;
+
 		zoomx++;
 		zoomy++;
 
@@ -837,63 +781,90 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 
 		x -= 8;
 
-
 		y = source[4] & 0xfff;
 		if(y & 0x800)
 			y -= 0x1000;
 		flipy = source[4] & 0x8000;
 		sy = 1 << ((source[4] & 0x7000) >> 12);
 
-		cbase = 0x1000;
 		pix = sys24_sprite_ram + (source[3] & 0x7fff)* 0x8;
 		for(px=0; px<8; px++) {
 			int c;
-			c = pix[px] >> 8;
+			c              = pix[px] >> 8;
+			pm[px*2]       = pmt[c>>6];
 			if(c>1)
-				c |= cbase;
+				c |= 0x1000;
 			colors[px*2]   = c;
 
-			c = pix[px] & 0xff;
+			c              = pix[px] & 0xff;
+			pm[px*2+1]     = pmt[c>>6];
 			if(c>1)
-				c |= cbase;
+				c |= 0x1000;
 			colors[px*2+1] = c;
 		}
 
-		pix = sys24_sprite_ram + (source[2] & 0x3fff) * 0x10;
+		pix = sys24_sprite_ram + (source[2] & 0x7fff) * 0x10;
 
-
-		if(flipx)
-			if(flipy)
-				sdraw = sys24_sprite_draw8_xy;
-			else
-				sdraw = sys24_sprite_draw8_x;
-		else
-			if(flipy)
-				sdraw = sys24_sprite_draw8_y;
-			else
-				sdraw = sys24_sprite_draw8;
-
+		xmod = 0x20;
+		ymod = 0x20;
 		for(py=0; py<sy; py++) {
-			yy = y + 8*(flipy ? sy-py-1 : py);
-			if(yy >= 48*8)
-				break;
-			if(yy>-8)
-				for(px=0; px<sx; px++) {
-					xx = x + px*8;
-					if(xx >= 62*8)
-						break;
-					if(xx > -8) {
-						//						UINT16 *src = pix + 0x10*px;
-						sdraw(pix + 0x10*(flipx ? sx-px-1 : px), ((UINT16 *)bitmap->line[yy]) + xx, pitch, colors);
+			int xmod1 = xmod;
+			int xpos1 = x;
+			int ypos1 = y, ymod1 = ymod;
+			for(px=0; px<sx; px++) {
+				const UINT16 *pix1 = pix + 0x10*(flipx ? sx-px-1 : px) + 0x10*sx*(flipy ? sy-py-1 : py) + (flipy ? 7*2 : 0);
+				int xmod2 = xmod1, xpos2 = xpos1;
+				int zy;
+				ymod1 = ymod;
+				ypos1 = y;
+				for(zy=0; zy<8; zy++) {
+
+					ymod1 += zoomy;
+					while(ymod1 >= 0x40) {
+						if(ypos1 >= min_y && ypos1 <= max_y) {
+							int zx;
+							xmod2 = xmod1;
+							xpos2 = xpos1;
+
+							for(zx=0; zx<8; zx++) {
+								xmod2 += zoomx;
+								while(xmod2 >= 0x40) {
+									if(xpos2 >= min_x && xpos2 <= max_x) {
+										int zx1 = flipx ? 7-zx : zx;
+										int c = (pix1[zx1>>2] >> (((~zx1) & 3) << 2)) & 0xf;
+										UINT8 *pri = ((UINT8 *)priority_bitmap->line[ypos1]) + xpos2;
+										if(!(*pri & pm[c])) {
+											c = colors[c];
+											if(c) {
+												UINT16 *dst = ((UINT16 *)bitmap->line[ypos1]) + xpos2;
+												if(c==1)
+													*dst = (*dst) | 0x2000;
+												else
+													*dst = c;
+												*pri = 0xff;
+											}
+										}
+									}
+									xmod2 -= 0x40;
+									xpos2++;
+								}
+							}
+						}
+						ymod1 -= 0x40;
+						ypos1++;
 					}
+					if(flipy)
+						pix1 -= 2;
+					else
+						pix1 += 2;
 				}
-			pix += sx * 0x10;
+
+				xpos1 = xpos2;
+				xmod1 = xmod2;
+			}
+			y    = ypos1;
+			ymod = ymod1;
 		}
-
-
-		countspr++;
-		if(!curspr || countspr >= 0x2000)
-			break;
 	}
 }
 
@@ -916,24 +887,13 @@ static UINT16 sys24_mixer_reg[0x10];
 int sys24_mixer_vh_start(void)
 {
 	memset(sys24_mixer_reg, 0, sizeof(sys24_mixer_reg));
+	state_save_register_UINT16("system24 mixer", 0, "regs", sys24_mixer_reg, 0x10);
 	return 0;
 }
 
 WRITE16_HANDLER (sys24_mixer_w)
 {
-	UINT16 old = sys24_mixer_reg[offset];
 	COMBINE_DATA(sys24_mixer_reg + offset);
-	data = sys24_mixer_reg[offset];
-	if(old != data) {
-		int i;
-		char msg[5*16+1];
-		char *p = msg;
-		for(i=0; i<16; i++) {
-			//			p += sprintf(p, " %04x", sys24_mixer_reg[i]);
-			p += sprintf(p, " %d", sys24_mixer_reg[i] & 7);
-		}
-		logerror("S24Mix:%s\n", msg);
-	}
 }
 
 READ16_HANDLER (sys24_mixer_r)
@@ -941,4 +901,8 @@ READ16_HANDLER (sys24_mixer_r)
 	return sys24_mixer_reg[offset];
 }
 
+int sys24_mixer_get_reg(int reg)
+{
+	return sys24_mixer_reg[reg];
+}
 

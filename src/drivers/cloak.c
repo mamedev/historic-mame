@@ -5,15 +5,6 @@
 	Games supported:
 		* Cloak & Dagger
 
-	Known issues:
-		* Cocktail mode: Does this game even have one? None of the cocktail
-		  inputs are shown in service mode, neither does any DIP activate
-		  them for player 2. The cocktail DIP seems to be a flip screen DIP,
-		  but entering service mode triggers the flip screen mode?!
-	    * Game says "SLAVE COM BAD" at startup, also in service mode it says
-		  that MASTER/SLAVE ROMs are bad
-		* Sprite positioning may be wrong
-
 ****************************************************************************
 
 	Master processor
@@ -105,11 +96,22 @@
 
 ****************************************************************************/
 
+/*
+
+	TODO:
+
+	- slave com bad at startup
+	- is bitmap drawing in service mode correct?
+	- real cpu speeds
+	- custom write
+
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static UINT8 *enable_nvRAM;
 static UINT8 *cloak_sharedram;
+static int cloak_nvram_enabled;
 
 extern WRITE_HANDLER( cloak_videoram_w );
 extern WRITE_HANDLER( cloak_paletteram_w );
@@ -133,13 +135,10 @@ static READ_HANDLER( cloak_sharedram_r )
 	return cloak_sharedram[offset];
 }
 
-
 static WRITE_HANDLER( cloak_sharedram_w )
 {
 	cloak_sharedram[offset] = data;
 }
-
-
 
 /*************************************
  *
@@ -149,15 +148,32 @@ static WRITE_HANDLER( cloak_sharedram_w )
 
 static WRITE_HANDLER( cloak_led_w )
 {
-	set_led_status(1 - offset,~data & 0x80);
+	set_led_status(1 - offset, ~data & 0x80);
 }
 
 static WRITE_HANDLER( cloak_coin_counter_w )
 {
-	set_led_status(offset,data);
+	coin_counter_w(1 - offset, data & 0x80);
 }
 
+static WRITE_HANDLER( cloak_custom_w )
+{
+}
 
+static WRITE_HANDLER( cloak_irq_reset_0_w )
+{
+	cpu_set_irq_line(0, data, CLEAR_LINE);
+}
+
+static WRITE_HANDLER( cloak_irq_reset_1_w )
+{
+	cpu_set_irq_line(1, data, CLEAR_LINE);
+}
+
+static WRITE_HANDLER( cloak_nvram_enable_w )
+{
+	cloak_nvram_enabled = data & 0x01;
+}
 
 /*************************************
  *
@@ -170,15 +186,15 @@ static MEMORY_READ_START( readmem )
 	{ 0x0800, 0x0fff, cloak_sharedram_r },
 	{ 0x2800, 0x29ff, MRA_RAM },
 	{ 0x1000, 0x100f, pokey1_r },		/* DSW0 also */
+//	{ 0x1008, 0x1008, MRA_RAM },
 	{ 0x1800, 0x180f, pokey2_r },		/* DSW1 also */
 	{ 0x2000, 0x2000, input_port_0_r },	/* IN0 */
 	{ 0x2200, 0x2200, input_port_1_r },	/* IN1 */
 	{ 0x2400, 0x2400, input_port_2_r },	/* IN2 */
+	{ 0x2800, 0x29ff, MRA_RAM },
 	{ 0x3000, 0x30ff, MRA_RAM },
-	{ 0x3800, 0x3807, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
 MEMORY_END
-
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -186,18 +202,19 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0800, 0x0fff, cloak_sharedram_w, &cloak_sharedram },
 	{ 0x1000, 0x100f, pokey1_w },
 	{ 0x1800, 0x180f, pokey2_w },
+	{ 0x2600, 0x2600, cloak_custom_w },
 	{ 0x2800, 0x29ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3200, 0x327f, cloak_paletteram_w },
 	{ 0x3800, 0x3801, cloak_coin_counter_w },
 	{ 0x3803, 0x3803, cloak_flipscreen_w },
+	{ 0x3805, 0x3805, MWA_NOP },	// ???
 	{ 0x3806, 0x3807, cloak_led_w },
 	{ 0x3a00, 0x3a00, watchdog_reset_w },
-	{ 0x3e00, 0x3e00, MWA_RAM, &enable_nvRAM },
+	{ 0x3c00, 0x3c00, cloak_irq_reset_0_w },
+	{ 0x3e00, 0x3e00, cloak_nvram_enable_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
-
-
 
 /*************************************
  *
@@ -213,17 +230,16 @@ static MEMORY_READ_START( readmem2 )
 	{ 0x2000, 0xffff, MRA_ROM },
 MEMORY_END
 
-
 static MEMORY_WRITE_START( writemem2 )
 	{ 0x0000, 0x0007, MWA_RAM },
 	{ 0x0008, 0x000f, graph_processor_w },
 	{ 0x0010, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, cloak_sharedram_w },
+	{ 0x1000, 0x1000, cloak_irq_reset_1_w },
 	{ 0x1200, 0x1200, cloak_clearbmp_w },
+	{ 0x1400, 0x1400, cloak_custom_w },
 	{ 0x2000, 0xffff, MWA_ROM },
 MEMORY_END
-
-
 
 /*************************************
  *
@@ -243,57 +259,29 @@ INPUT_PORTS_START( cloak )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )		// player 2 controls, not used
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	/*PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )*/
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )		// cocktail mode switch, not used
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )		// player 2 button 1, not used
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x2f, IP_ACTIVE_LOW, IPT_UNUSED )		// not connected
+	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )	// pulled high
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
-	PORT_START      /* DSW1 */
+	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x02, "Credits" )
-	PORT_DIPSETTING(    0x02, "*1" )
-	PORT_DIPSETTING(    0x01, "*2" )
-	PORT_DIPSETTING(    0x03, "/2" )
+	PORT_DIPSETTING(    0x02, "1 Credit/1 Game" )
+	PORT_DIPSETTING(    0x01, "1 Credit/2 Games" )
+	PORT_DIPSETTING(    0x03, "2 Credits/1 Game" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -303,18 +291,12 @@ INPUT_PORTS_START( cloak )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Allow Freeze" )	/* when active, press button 1 to freeze */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Freeze Mode" )	// when active, press button 1 to freeze
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
-
-
 
 /*************************************
  *
@@ -324,7 +306,7 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8, 
+	8,8,
 	256,
 	4,
 	{ 0, 1, 2, 3 },
@@ -332,7 +314,6 @@ static struct GfxLayout charlayout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
 };
-
 
 static struct GfxLayout spritelayout =
 {
@@ -346,15 +327,12 @@ static struct GfxLayout spritelayout =
 	16*16
 };
 
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0,  1 },
 	{ REGION_GFX2, 0, &spritelayout,  32,  1 },
 	{ -1 }
 };
-
-
 
 /*************************************
  *
@@ -380,8 +358,6 @@ static struct POKEYinterface pokey_interface =
 	{ input_port_3_r, input_port_4_r }
 };
 
-
-
 /*************************************
  *
  *	Machine driver
@@ -402,7 +378,7 @@ static MACHINE_DRIVER_START( cloak )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(5)
-	
+
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -418,8 +394,6 @@ static MACHINE_DRIVER_START( cloak )
 	/* sound hardware */
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
 MACHINE_DRIVER_END
-
-
 
 /*************************************
  *
@@ -538,7 +512,7 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1983, cloak,   0,     cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (rev 5)", GAME_NO_COCKTAIL )
-GAMEX( 1983, cloaksp, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (Spanish)", GAME_NO_COCKTAIL )
-GAMEX( 1983, cloakfr, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (French)", GAME_NO_COCKTAIL )
-GAMEX( 1983, cloakgr, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (German)", GAME_NO_COCKTAIL )
+GAME( 1983, cloak,   0,     cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (rev 5)" )
+GAME( 1983, cloaksp, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (Spanish)" )
+GAME( 1983, cloakfr, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (French)" )
+GAME( 1983, cloakgr, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (German)" )

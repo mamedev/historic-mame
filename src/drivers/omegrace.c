@@ -6,6 +6,7 @@
 
 	Games supported:
 		* Omega Race
+		* Delta Race (Omega Race bootleg by Allied Leisure)
 
 	Known bugs:
 		* none at this time
@@ -248,12 +249,6 @@ static READ_HANDLER( omegrace_vg_go_r )
 }
 
 
-static READ_HANDLER( omegrace_watchdog_r )
-{
-	return 0;
-}
-
-
 static READ_HANDLER( omegrace_vg_status_r )
 {
 	return avgdvg_done() ? 0x00 : 0x80;
@@ -367,7 +362,7 @@ MEMORY_END
 
 static PORT_READ_START( readport )
 	{ 0x08, 0x08, omegrace_vg_go_r },
-	{ 0x09, 0x09, omegrace_watchdog_r },
+	{ 0x09, 0x09, watchdog_reset_r },
 	{ 0x0b, 0x0b, omegrace_vg_status_r }, /* vg_halt */
 	{ 0x10, 0x10, input_port_0_r }, /* DIP SW C4 */
 	{ 0x17, 0x17, input_port_1_r }, /* DIP SW C6 */
@@ -582,6 +577,18 @@ ROM_START( omegrace )
 	ROM_LOAD( "sound.k5",     0x0000, 0x0800, CRC(7d426017) SHA1(370f0fb5608819de873c845f6010cbde75a9818e) )
 ROM_END
 
+ROM_START( deltrace )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "omega.m7",     0x0000, 0x1000, CRC(0424d46e) SHA1(cc1ac6c06ba6f6e8466fa08286a0c70b5335af33) )
+	ROM_LOAD( "omega.l7",     0x1000, 0x1000, CRC(edcd7a7d) SHA1(5d142de2f48b01d563578a54fd5540e5d0ac8f4c) )
+	ROM_LOAD( "omega.k7",     0x2000, 0x1000, CRC(6d10f197) SHA1(9609a0cbeeef2efa10d49cde9f0afdca96e9c2f8) )
+	ROM_LOAD( "delta.j7",     0x3000, 0x1000, CRC(8ef9541e) SHA1(89e34f50a958ac60c5f223bcb6c1c14796b903c7) ) 
+	ROM_LOAD( "omega.e1",     0x9000, 0x0800, CRC(1d0fdf3a) SHA1(3333397a9745874cea1dd6a1bda783cc59393b55) )
+	ROM_LOAD( "omega.f1",     0x9800, 0x0800, CRC(d44c0814) SHA1(2f216ee6de88bbe09775619003aee2d5aa8c554d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for audio cpu */
+	ROM_LOAD( "sound.k5",     0x0000, 0x0800, CRC(7d426017) SHA1(370f0fb5608819de873c845f6010cbde75a9818e) )
+ROM_END
 
 
 /*************************************
@@ -603,5 +610,5 @@ static DRIVER_INIT( omegrace )
  *
  *************************************/
 
-GAMEX( 1981, omegrace, 0, omegrace, omegrace, omegrace, ROT0, "Midway", "Omega Race", GAME_NO_COCKTAIL )
-
+GAMEX( 1981, omegrace, 0,        omegrace, omegrace, omegrace, ROT0, "Midway",         "Omega Race", GAME_NO_COCKTAIL )
+GAMEX( 1981, deltrace, omegrace, omegrace, omegrace, omegrace, ROT0, "Allied Leisure", "Delta Race", GAME_NO_COCKTAIL )

@@ -239,6 +239,10 @@ enum
 
 
 /* ----- per-ROM constants ----- */
+#define DISK_READONLYMASK			0x00000400			/* is the disk read-only? */
+#define		DISK_READWRITE			0x00000000
+#define		DISK_READONLY			0x00000400
+
 #define ROM_OPTIONALMASK			0x00000800			/* optional - won't hurt if it's not there */
 #define		ROM_REQUIRED			0x00000000
 #define		ROM_OPTIONAL			0x00000800
@@ -295,6 +299,7 @@ enum
 
 /* ----- per-disk macros ----- */
 #define DISK_GETINDEX(r)			((r)->_offset)
+#define DISK_ISREADONLY(r)			((ROM_GETFLAGS(r) & DISK_READONLYMASK) == DISK_READONLY)
 
 
 
@@ -342,7 +347,8 @@ enum
 
 /* ----- disk loading macros ----- */
 #define DISK_REGION(type)							ROM_REGION(1, type, ROMREGION_DATATYPEDISK)
-#define DISK_IMAGE(name,idx,hash)                    ROMMD5_LOAD(name, idx, 0, hash, 0)
+#define DISK_IMAGE(name,idx,hash)                    ROMMD5_LOAD(name, idx, 0, hash, DISK_READWRITE)
+#define DISK_IMAGE_READONLY(name,idx,hash)           ROMMD5_LOAD(name, idx, 0, hash, DISK_READONLY)
 
 /* ----- hash macros ----- */
 #define CRC(x)                                       "c:" #x "#"
@@ -423,6 +429,7 @@ INLINE int get_resource_tag(void)
 
 /* automatically-freeing memory */
 void *auto_malloc(size_t size);
+char *auto_strdup(const char *str);
 struct mame_bitmap *auto_bitmap_alloc(int width,int height);
 struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 
@@ -437,8 +444,8 @@ struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap);
 void save_screen_snapshot(struct mame_bitmap *bitmap);
 
-/* hard disk handling */
-void *get_disk_handle(int diskindex);
+/* disk handling */
+struct chd_file *get_disk_handle(int diskindex);
 
 /* ROM processing */
 int rom_load(const struct RomModule *romp);

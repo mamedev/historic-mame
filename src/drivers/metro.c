@@ -30,6 +30,7 @@ Year + Game						PCB			Video Chip	Issues / Notes
 94	Dharma Doujou				?			?
 94	Toride II Adauchi Gaiden	MTR5260-A	14220
 94	Blazing Tornado				?			14220		Also has Konami 053936 gfx chip
+96  Grand Striker 2             HUM-003(A)  14220		Also has Konami 053936 gfx chip
 95	Daitoride					MTR5260-A	14220
 95	Pururun						MTR5260-A	14220
 95	Puzzli 						MTR5260-A	14220
@@ -109,6 +110,7 @@ VIDEO_START( metro_14100 );
 VIDEO_START( metro_14220 );
 VIDEO_START( metro_14300 );
 VIDEO_START( blzntrnd );
+VIDEO_START( gstrik2 );
 
 VIDEO_UPDATE( metro );
 
@@ -2252,6 +2254,140 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+							Grand Striker 2
+***************************************************************************/
+
+INPUT_PORTS_START( gstrik2 )
+	PORT_START
+	PORT_DIPNAME( 0x0003, 0x0003, "Player Vs Com" )	
+	PORT_DIPSETTING(      0x0003, "1:00" )
+	PORT_DIPSETTING(      0x0002, "1:30" )
+	PORT_DIPSETTING(      0x0001, "2:00" )
+	PORT_DIPSETTING(      0x0000, "2:30" )
+	PORT_DIPNAME( 0x000c, 0x000c, "1P Vs 2P" )
+	PORT_DIPSETTING(      0x000c, "0:45" )
+	PORT_DIPSETTING(      0x0008, "1:00" )
+	PORT_DIPSETTING(      0x0004, "1:30" )
+	PORT_DIPSETTING(      0x0000, "2:00" )
+	PORT_DIPNAME( 0x0030, 0x0030, "Extra Time" )
+	PORT_DIPSETTING(      0x0030, "0:30" )
+	PORT_DIPSETTING(      0x0020, "0:45" )
+	PORT_DIPSETTING(      0x0010, "1:00" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Extra Time" )
+	PORT_DIPSETTING(      0x0080, "Sudden Death" )
+	PORT_DIPSETTING(      0x0000, "Full" )
+	PORT_DIPNAME( 0x0700, 0x0400, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0700, "Very Easy" )
+	PORT_DIPSETTING(      0x0600, "Easier" )
+	PORT_DIPSETTING(      0x0500, "Easy" )
+	PORT_DIPSETTING(      0x0400, "Normal" )
+	PORT_DIPSETTING(      0x0300, "Medium" )
+	PORT_DIPSETTING(      0x0200, "Hard" )
+	PORT_DIPSETTING(      0x0100, "Hardest" )
+	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BITX(0x8000, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START
+	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coin_A ) )	
+	PORT_DIPSETTING(      0x001c, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x001d, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(      0x001e, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0019, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_4C ) )
+	PORT_DIPSETTING(      0x0015, DEF_STR( 3C_3C ) )
+	PORT_DIPSETTING(      0x001a, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(      0x001f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(      0x0011, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x0008, "4 Coins/6 Credits" )
+	PORT_DIPSETTING(      0x0016, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x000d, "3 Coins/5 Credits" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_7C ) )
+	PORT_DIPSETTING(      0x0000, "4 Coins/8 Credits" )
+	PORT_DIPSETTING(      0x0009, "3 Coins/6 Credits" )
+	PORT_DIPSETTING(      0x0012, DEF_STR( 2C_4C ) )
+	PORT_DIPSETTING(      0x001b, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, "3 Coins/7 Credits" )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x0001, "3 Coins/8 Credits" )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(      0x0017, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_8C ) )
+	PORT_DIPSETTING(      0x0013, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_8C ) )
+	PORT_DIPNAME( 0x00e0, 0x0000, DEF_STR( Coin_B ) )	
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x00e0, "Same as Coin A" )
+	PORT_DIPNAME( 0x0300, 0x0300, "Credits to Start" )
+	PORT_DIPSETTING(      0x0300, "1" )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0100, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Credits to Continue" )
+	PORT_DIPSETTING(      0x0c00, "1" )
+	PORT_DIPSETTING(      0x0800, "2" )
+	PORT_DIPSETTING(      0x0400, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x1000, 0x1000, "Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Playmode" )
+	PORT_DIPSETTING(      0x4000, "1 Credit for 1 Player" )
+	PORT_DIPSETTING(      0x0000, "1 Credit for 2 Players" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	JOY_LSB(1, BUTTON1, BUTTON2, BUTTON3, UNUSED)
+	JOY_MSB(2, BUTTON1, BUTTON2, BUTTON3, UNUSED)
+
+	PORT_START
+	/* Not Used */
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT_IMPULSE(  0x0004, IP_ACTIVE_LOW, IPT_COIN1, 2    )
+	PORT_BIT_IMPULSE(  0x0008, IP_ACTIVE_LOW, IPT_COIN2, 2    )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START4 )
+INPUT_PORTS_END
+
+/***************************************************************************
 								Dai Toride
 ***************************************************************************/
 
@@ -3325,6 +3461,22 @@ static struct GfxLayout layout_053936 =
 	8*8*8
 };
 
+static struct GfxLayout layout_053936_16 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	8*8*8+0*8, 8*8*8+1*8, 8*8*8+2*8, 8*8*8+3*8, 8*8*8+4*8, 8*8*8+5*8, 8*8*8+6*8, 8*8*8+7*8,
+	},
+
+	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8,
+	8*8*8*2+0*8*8,	8*8*8*2+1*8*8,	8*8*8*2+2*8*8,	8*8*8*2+3*8*8,	8*8*8*2+4*8*8,	8*8*8*2+5*8*8,	8*8*8*2+6*8*8,	8*8*8*2+7*8*8,
+	},
+	8*8*8*4
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo_14100[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
@@ -3343,6 +3495,14 @@ static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
 	{ REGION_GFX3, 0, &layout_053936,   0x0,  0x20 }, // [2] 053936 Tiles
+	{ -1 }
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo_gstrik2[] =
+{
+	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
+	{ REGION_GFX3, 0, &layout_053936_16,0x0,  0x20 }, // [2] 053936 Tiles
 	{ -1 }
 };
 
@@ -3912,7 +4072,7 @@ static MACHINE_DRIVER_START( blzntrnd )
 	MDRV_CPU_MEMORY(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
 	MDRV_CPU_PORTS(blzntrnd_sound_readport, blzntrnd_sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(metro)
@@ -3932,6 +4092,38 @@ static MACHINE_DRIVER_START( blzntrnd )
 	MDRV_SOUND_ADD(YM2610, blzntrnd_ym2610_interface)
 MACHINE_DRIVER_END
 
+/* like blzntrnd but new vidstart / gfxdecode for the different bg tilemap */
+static MACHINE_DRIVER_START( gstrik2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(blzntrnd_readmem,blzntrnd_writemem)
+	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
+	MDRV_CPU_PORTS(blzntrnd_sound_readport, blzntrnd_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(8, 320-8-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_gstrik2)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(gstrik2)
+	MDRV_VIDEO_UPDATE(metro)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, blzntrnd_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4167,6 +4359,89 @@ ROM_START( blzntrnd )
 	ROM_LOAD( "rom7.bin", 0x200000, 0x200000, CRC(0089a52b) SHA1(d643ac122d62557de27f06ba1413ef757a45a927) )
 ROM_END
 
+/*
+
+Grand Striker 2
+Human Entertainment, 1996
+
+PCB Layout
+----------
+
+HUM-003(A)
+|-----------------------------------------------------------------------|
+|           YM3016 ROM8.22  ROM342.88  ROM386.87  ROM331.86  ROM375.85  |
+|                                                                       |
+| 6264  YM2610         ROM142.80  ROM186.79  ROM131.78  ROM175.77       |
+|                                                                       |
+|                  ROM7.27  ROM442.92  ROM486.91  ROM431.90  ROM475.89  |
+|                                                                       |
+|          PAL         ROM242.84  ROM286.83  ROM231.82  ROM275.81       |
+|  SPRG.30                                                              |
+|  PAL     Z80     ROM6.23                                              |
+|                                                                       |
+|J                                                                      |
+|A                                                                      |
+|M                                               |--------|             |
+|M                   PRG2  PRG3                  |IMAGETEK|   6264      |
+|A                                               |14220   |             |
+|                    PRG0  PRG1                  |--------|             |
+|     16MHz  68000   62256  62256    26.666MHz                          |
+|                                                                       |
+|     DSW1                                                              |
+|     DSW2   EPM7032         |------|  62256  62256                     |
+|     DSW3            6116   |053936|  62256  62256                     |
+|     DSW4            6116   |PSAC2 |                   PAL             |
+|                            |------|                          ROM9.60  |
+|-----------------------------------------------------------------------|
+
+Notes:
+       68000 clock: 16.000MHz
+         Z80 clock: 8.000MHz
+      YM2610 clock: 8.000MHz
+             VSync: 58Hz
+             HSync: 15.11kHz
+
+*/
+
+ROM_START( gstrik2 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 68000 */
+	ROM_LOAD16_BYTE( "prg0.107", 0x000000, 0x80000, CRC(e60a8c19) SHA1(19be6cfcb60ede6fd4eb2e14914b174107c4b52d) )
+	ROM_LOAD16_BYTE( "prg1.108", 0x000001, 0x80000, CRC(853f6f7c) SHA1(8fb9d7cd0390f620560a1669bb13f2033eed7c81) )
+	ROM_LOAD16_BYTE( "prg2.109", 0x100000, 0x80000, CRC(ead86919) SHA1(eb9b68dff4e08d90ac90043c7f3021914caa007d) )
+	ROM_LOAD16_BYTE( "prg3.110", 0x100001, 0x80000, CRC(e0b026e3) SHA1(05f75c0432efda3dec0372199382e310bb268fba) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Z80 */
+	ROM_LOAD( "sprg.30", 0x0000, 0x20000, CRC(aeef6045) SHA1(61b8c89ca495d3aac79e53413a85dd203db816f3) )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "chr0.80", 0x0000000, 0x200000, CRC(f63a52a9) SHA1(1ad52bb3a051eaffe8fb6ba49d4fc1d0b6144156) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr1.79", 0x0000002, 0x200000, CRC(4110c184) SHA1(90ccb3d50eff7a655336cfa9c072f7213589e64c) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr2.78", 0x0000004, 0x200000, CRC(ddb4b9ee) SHA1(0e2c151c3690b9c3d298dda8842e283660d37386) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr3.77", 0x0000006, 0x200000, CRC(5ab367db) SHA1(adf8749451f4583f8e9e00ab61f3408d804a7265) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr4.84", 0x0800000, 0x200000, CRC(77d7ef99) SHA1(8f5cf72f5919fe9363e7549e0bb1b3ee633cec3b) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr5.83", 0x0800002, 0x200000, CRC(a4d49e95) SHA1(9789bacba7876100e0f0293f54c81def545ed068) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr6.82", 0x0800004, 0x200000, CRC(32eb33b0) SHA1(2ea06484ca326b44a35ee470343147a9d91d5626) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "chr7.81", 0x0800006, 0x200000, CRC(2d30a21e) SHA1(749e86b7935ef71556eaee4caf6f954634e9bcbf) , ROM_GROUPWORD | ROM_SKIP(6))
+	/* not populated */
+//	ROMX_LOAD( "chr8.88", 0x1000000, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr9.87", 0x1000002, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr10.86", 0x1000004, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr11.85", 0x1000006, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr12.92", 0x1800000, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr13.91", 0x1800002, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr14.90", 0x1800004, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//	ROMX_LOAD( "chr15.89", 0x1800006, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 053936 gfx data */
+	ROM_LOAD( "psacrom.60", 0x000000, 0x200000,  CRC(73f1f279) SHA1(1135b2b1eb4c52249bc12ee178340bbb202a94c8) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "sndpcm-b.22", 0x000000, 0x200000, CRC(a5d844d2) SHA1(18d644545f0844e66aa53775b67b0a29c7b7c31b) )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ? YRW801-M ? */
+	ROM_LOAD( "sndpcm-a.23", 0x000000, 0x200000, CRC(e6d32373) SHA1(8a79d4ea8b27d785fffd80e38d5ae73b7cea7304) )
+	/* ROM7.27 not populated?  */
+ROM_END
 
 /***************************************************************************
 
@@ -4978,3 +5253,4 @@ GAMEX( 1997, gakusai,  0,        gakusai,  gakusai,  gakusai,  ROT0,   "MakeSoft
 GAME ( 1998, gakusai2, 0,        gakusai2, gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai 2 (Japan)"                    )
 
 GAMEX( 1994, blzntrnd, 0,        blzntrnd, blzntrnd, blzntrnd, ROT0,   "Human Amusement",            "Blazing Tornado",                 GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, gstrik2,  0,        gstrik2,  gstrik2,  blzntrnd, ROT0,   "Human Amusement",            "Grand Striker 2 (Japan)",			GAME_IMPERFECT_GRAPHICS ) // priority between rounds

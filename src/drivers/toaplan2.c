@@ -14,34 +14,47 @@ Supported games:
 
 	Name		Board No	Maker			Game name
 	----------------------------------------------------------------------------
-	tekipaki	TP-020		 Toaplan		Teki Paki
-	ghox		TP-021		 Toaplan		Ghox
-	dogyuun		TP-022		 Toaplan		Dogyuun
-	kbash		TP-023		 Toaplan		Knuckle Bash
-	truxton2	TP-024		 Toaplan		Truxton 2 / Tatsujin 2
-	pipibibs	TP-025		 Toaplan		Pipi & Bibis
-	whoopee		TP-025		 Toaplan		Whoopee
-	pipibibi	bootleg?	 Toaplan		Pipi & Bibis
-	fixeight	TP-026		 Toaplan		FixEight
-	grindstm	TP-027		 Toaplan		Grind Stormer  (1992)
-	grindsta	TP-027		 Toaplan		Grind Stormer  (1992) (older)
-	vfive		TP-027		 Toaplan		V-V  (V-Five)  (1993 - Japan only)
-	batsugun	TP-030		 Toaplan		Batsugun
-	batugnsp	TP-030		 Toaplan		Batsugun  (Special Version)
-	snowbro2	??????		 Toaplan		Snow Bros. 2 - With New Elves
+	tekipaki	TP-020		Toaplan		Teki Paki
+	ghox		TP-021		Toaplan		Ghox
+	dogyuun		TP-022		Toaplan		Dogyuun
+	kbash		TP-023		Toaplan		Knuckle Bash
+	truxton2	TP-024		Toaplan		Truxton 2 / Tatsujin 2
+	pipibibs	TP-025		Toaplan		Pipi & Bibis
+	whoopee		TP-025		Toaplan		Whoopee
+	pipibibi	bootleg?	Toaplan		Pipi & Bibis
+	fixeight	TP-026		Toaplan		FixEight
+	grindstm	TP-027		Toaplan		Grind Stormer  (1992)
+	grindsta	TP-027		Toaplan		Grind Stormer  (1992) (older)
+	vfive		TP-027		Toaplan		V-V  (V-Five)  (1993 - Japan only)
+	batsugun	TP-030		Toaplan		Batsugun
+	batugnsp	TP-030		Toaplan		Batsugun  (Special Version)
+	snowbro2	??????		Toaplan		Snow Bros. 2 - With New Elves
 
-	mahoudai	RA-MA7893-01 Raizing		Mahou Daisakusen
-	shippumd	??????		 Raizing/8ing	Shippu Mahou Daisakusen
-	battleg		RA9503		 Raizing/8ing	Battle Garegga (Type 2)
-	battlega	RA9503		 Raizing/8ing	Battle Garegga
-	battlegb	RA9503		 Raizing/8ing	Battle Garegga (New Version?)
-	batrider	RA9704		 Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
-	batridra	RA9704		 Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
-	batridrk	RA9704		 Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
-	bbakraid	ET68-V99	 8ing			Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
-	bbakrada	ET68-V99	 8ing			Battle Bakraid (Japan - Wed Apr 7th, 1999)
+	sstriker	RA-MA7893-01	Raizing		Sorcer Striker
+	mahoudai	RA-MA7893-01	Raizing		Mahou Daisakusen
+	kingdmgp	RA-MA9402-03	Raizing/8ing	Kingdom Grandprix
+	shippumd	RA-MA9402-03	Raizing/8ing	Shippu Mahou Daisakusen
+	battleg		RA9503		Raizing/8ing	Battle Garegga (Type 2)
+	battlega	RA9503		Raizing/8ing	Battle Garegga
+	battlegb	RA9503		Raizing/8ing	Battle Garegga (New Version?)
+	batrider	RA9704		Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
+	batridra	RA9704		Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
+	batridrk	RA9704		Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
+	bbakraid	ET68-V99	8ing		Battle Bakraid (Japan - Wed Apr 7th, 1999)
+	bbkraidu	ET68-V99	8ing		Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
 
+	SET NOTES:
 
+	sstriker - might be a bootleg / hack, the region jumper is read with this set but even when set
+	           to Japan you get all english text etc which seems a little odd, but might be correct.
+	kingdmgp - might be a bootleg / hack, some of the tiles needed for the credits screen have been
+	           stripped out, doesn't seem very professional, since its rare and should probably only
+	           have a different graphics rom its nearly impossible for us to verify, a lot of boards
+	           being sold as 'Kingdom Grand Prix' are infact conversions using Neill Corlett's
+	           ghastly hack
+
+	           ** update the above two look like genuine korean release boards, raizing were probably
+	              just missed a few things
 
  ****************************************************************************
  * Battle Garegga and Armed Police Batrider have secret characters.			*
@@ -150,7 +163,7 @@ Sound Chips:
 Graphics Custom 208pin QFP:
  GP9001 L7A0498 TOA PLAN
 
-Toaplan / Riazing / 8ing games use different revisions of the custom
+Toaplan / Raizing / 8ing games use different revisions of the custom
 Toa Plan 208 pin QFP L7A0498 GP9001 series graphics processing chip:
 
 Fixeight				L7A0498 GP9001 TOA PLAN 9150
@@ -2900,6 +2913,61 @@ INPUT_PORTS_START( snowbro2 )
 	PORT_BIT( 0xc3ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sstriker )
+	PORT_START		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	TOAPLAN2_SYSTEM_INPUTS
+
+	PORT_START		/* (4) DSWA */
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	NONEUROPEAN_COINAGE_16
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (5) DSWB */
+	DIFFICULTY_16
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "200k and 500k" )
+	PORT_DIPSETTING(		0x0000, "Every 300k" )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x000c, "None" )
+	LIVES_16
+	PORT_BITX(	  0x0040,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (6) Territory Jumper block */
+	PORT_DIPNAME( 0x000e,	0x0004, "Territory" )
+	PORT_DIPSETTING(		0x0004, "Europe" )
+	PORT_DIPSETTING(		0x0002, "USA" )
+	PORT_DIPSETTING(		0x0000, "Japan" )
+	PORT_DIPSETTING(		0x0006, "South East Asia" )
+	PORT_DIPSETTING(		0x0008, "China" )
+	PORT_DIPSETTING(		0x000a, "Korea" )
+	PORT_DIPSETTING(		0x000c, "Hong Kong" )
+	PORT_DIPSETTING(		0x000e, "Taiwan" )
+
+	PORT_BIT( 0xfff1, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( mahoudai )
 	PORT_START		/* (0) VBlank */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
@@ -2939,9 +3007,69 @@ INPUT_PORTS_START( mahoudai )
 	PORT_DIPNAME( 0x0080,	0x0000, "Allow Continue" )
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* not used, it seems */
+	/* not used, it seems. This setting forces Japan for Territory */
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( kingdmgp )
+	PORT_START		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	TOAPLAN2_SYSTEM_INPUTS
+
+	PORT_START		/* (4) DSWA */
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	NONEUROPEAN_COINAGE_16
+	/*  When Territory is set to Europe, the Coin A and B have
+		different values */
+//	EUROPEAN_COINAGE_16
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (5) DSWB */
+	DIFFICULTY_16
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "200k and 500k" )
+	PORT_DIPSETTING(		0x0000, "Every 300k" )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x000c, "None" )
+	LIVES_16
+	PORT_BITX(	  0x0040,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (6) Territory Jumper block */
+	/* Title screen is wrong when set to Japan for Territory */
+	PORT_DIPNAME( 0x000e,	0x0004, "Territory" )
+	PORT_DIPSETTING(		0x0004, "Europe" )
+	PORT_DIPSETTING(		0x0002, "USA" )
+//	PORT_DIPSETTING(		0x0000, "Japan" )
+	PORT_DIPSETTING(		0x0006, "South East Asia" )
+	PORT_DIPSETTING(		0x0008, "China" )
+	PORT_DIPSETTING(		0x000a, "Korea" )
+	PORT_DIPSETTING(		0x000c, "Hong Kong" )
+	PORT_DIPSETTING(		0x000e, "Taiwan" )
+	PORT_BIT( 0xfff1, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( shippumd )
@@ -2989,18 +3117,8 @@ INPUT_PORTS_START( shippumd )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* (6) Territory Jumper block */
-	/* Title screen is wrong when set to other countries */
-	/* It suggests text ROM may be different for other territories */
-	PORT_DIPNAME( 0x000e,	0x0000, "Territory" )
-	PORT_DIPSETTING(		0x0004, "Europe" )
-	PORT_DIPSETTING(		0x0002, "USA" )
-	PORT_DIPSETTING(		0x0000, "Japan" )
-	PORT_DIPSETTING(		0x0006, "South East Asia" )
-	PORT_DIPSETTING(		0x0008, "China" )
-	PORT_DIPSETTING(		0x000a, "Korea" )
-	PORT_DIPSETTING(		0x000c, "Hong Kong" )
-	PORT_DIPSETTING(		0x000e, "Taiwan" )
-	PORT_BIT( 0xfff1, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	 /* Title screen is corrupt for anything but Japan setting so this forces it to Japan */
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( battleg )
@@ -4568,6 +4686,25 @@ ROM_START( snowbro2 )
 ROM_END
 
 /* -------------------------- Raizing games ------------------------- */
+
+ROM_START( sstriker )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_WORD_SWAP( "ra-ma-01.01", 0x000000, 0x080000, CRC(92259f84) SHA1(127e62e407d95efd360bfe2cac9577f326abf6ef) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound Z80 code */
+	ROM_LOAD( "ra_ma_01.02", 0x00000, 0x10000, CRC(eabfa46d) SHA1(402c99ebf88f9025f74f0a28ced22b7882a65eb3) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ra_ma_01.03",  0x000000, 0x100000, CRC(54e2bd95) SHA1(341359dd46152615675bb90e8a184216c8feebff) )
+	ROM_LOAD( "ra_ma_01.04",  0x100000, 0x100000, CRC(21cd378f) SHA1(e1695bccec949d18b1c03e9c42dca384554b0d7c) )
+
+	ROM_REGION( 0x008000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ra-ma-01.05",  0x000000, 0x008000, CRC(88b58841) SHA1(1d16b538c11a291bd1f46a510bfbd6259b45a0b5) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
+	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, CRC(6edb2ab8) SHA1(e3032e8eda2686f30df4b7a088c5a4d4d45782ed) )
+ROM_END
+
 ROM_START( mahoudai )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "ra_ma_01.01", 0x000000, 0x080000, CRC(970ccc5c) SHA1(c87cab83bde0284e631f02e50068407fee81d941) )
@@ -4584,6 +4721,25 @@ ROM_START( mahoudai )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, CRC(6edb2ab8) SHA1(e3032e8eda2686f30df4b7a088c5a4d4d45782ed) )
+ROM_END
+
+ROM_START( kingdmgp )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_BYTE( "ma02rom1.bin", 0x000000, 0x080000, CRC(a678b149) SHA1(8c1a631e023dbba0a3fa6cd1b7d10dec1663213a) )
+	ROM_LOAD16_BYTE( "ma02rom0.bin", 0x000001, 0x080000, CRC(f226a212) SHA1(526acf3d05fdc88054a772fbea3de2af532bf3d2) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound Z80 code */
+	ROM_LOAD( "ma02rom2.bin", 0x00000, 0x10000, CRC(dde8a57e) SHA1(f522a3f17e229c71512464349760a9e27778bf6a) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ma02rom3.bin",  0x000000, 0x200000, CRC(0e797142) SHA1(a480ccd151e49b886d3175a6deff56e1f2c26c3e) )
+	ROM_LOAD( "ma02rom4.bin",  0x200000, 0x200000, CRC(72a6fa53) SHA1(ce92e65205b84361cfb90305a61e9541b5c4dc2f) )
+
+	ROM_REGION( 0x008000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ma02rom5.eng",  0x000000, 0x008000, CRC(8c28460b) SHA1(0aed170762f6044896a7e608df60bbd37c583a71) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )			/* ADPCM Samples */
+	ROM_LOAD( "ma02rom6.bin", 0x00000, 0x80000, CRC(199e7cae) SHA1(0f5e13cc8ec42c80bb4bbff90aba29cdb15213d4) )
 ROM_END
 
 ROM_START( shippumd )
@@ -4745,6 +4901,29 @@ ROM_END
 
 ROM_START( bbakraid )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
+	ROM_LOAD16_BYTE( "prg0u022.bin", 0x000000, 0x080000, CRC(0dd59512) SHA1(c6a4e6aa49c6ac3b04ae62a0a4cc8084ae048381) )
+	ROM_LOAD16_BYTE( "prg1u023.bin", 0x000001, 0x080000, CRC(fecde223) SHA1(eb5ac0eda49b4b0f3d25d8a8bb356e77a453d3a7) )
+	ROM_LOAD16_BYTE( "prg2u021.bin", 0x100000, 0x080000, CRC(ffba8656) SHA1(6526bb65fad3384de3f301a7d1095cbf03757433) )
+	ROM_LOAD16_BYTE( "prg3u024.bin", 0x100001, 0x080000, CRC(834b8ad6) SHA1(0dd6223bb0749819ad29811eeb04fd08d937abb0) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )			/* Sound Z80 code */
+	ROM_LOAD( "sndu0720.bin", 0x00000, 0x08000, CRC(e62ab246) SHA1(00d23689dd423ecd4024c58b5903d16e890f1dff) )
+	ROM_CONTINUE(             0x10000, 0x18000 )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gfxu0510.bin", 0x000000, 0x400000, CRC(9cca3446) SHA1(1123f8b8bfbe59a2c572cdf61f1ad27ff37f0f0d) )
+	ROM_LOAD( "gfxu0512.bin", 0x400000, 0x400000, CRC(a2a281d5) SHA1(d9a6623f9433ad682223f9780c26cd1523ebc5c5) )
+	ROM_LOAD( "gfxu0511.bin", 0x800000, 0x400000, CRC(e16472c0) SHA1(6068d679a8b3b65e05acd58a7ce9ead90177049f) )
+	ROM_LOAD( "gfxu0513.bin", 0xc00000, 0x400000, CRC(8bb635a0) SHA1(9064f1a2d8bb88ddbca702fb8556d0dfe6a5cadc) )
+
+	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )	/* YMZ280B Samples */
+	ROM_LOAD( "rom6.829", 0x000000, 0x400000, CRC(8848b4a0) SHA1(e0dce136c5d5a4c1a92b863e57848cd5927d06f1) )
+	ROM_LOAD( "rom7.830", 0x400000, 0x400000, CRC(d6224267) SHA1(5c9b7b13effbef9f707811f84bfe50ca85e605e3) )
+	ROM_LOAD( "rom8.831", 0x800000, 0x400000, CRC(a101dfb0) SHA1(4b729b0d562e09df35438e9e6b457b8de2690a6e) )
+ROM_END
+
+ROM_START( bbakradu )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
 	ROM_LOAD16_BYTE( "prg0u022.new", 0x000000, 0x080000, CRC(fa8d38d3) SHA1(aba91d87a8a62d3fe1139b4437b16e2f844264ad) )
 	ROM_LOAD16_BYTE( "prg1u023.new", 0x000001, 0x080000, CRC(4ae9aa64) SHA1(45fdf72141c4c9f24a38d4218c65874799b9c868) )
 	ROM_LOAD16_BYTE( "prg2u021.bin", 0x100000, 0x080000, CRC(ffba8656) SHA1(6526bb65fad3384de3f301a7d1095cbf03757433) )
@@ -4766,28 +4945,6 @@ ROM_START( bbakraid )
 	ROM_LOAD( "rom8.831", 0x800000, 0x400000, CRC(a101dfb0) SHA1(4b729b0d562e09df35438e9e6b457b8de2690a6e) )
 ROM_END
 
-ROM_START( bbakrada )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
-	ROM_LOAD16_BYTE( "prg0u022.bin", 0x000000, 0x080000, CRC(0dd59512) SHA1(c6a4e6aa49c6ac3b04ae62a0a4cc8084ae048381) )
-	ROM_LOAD16_BYTE( "prg1u023.bin", 0x000001, 0x080000, CRC(fecde223) SHA1(eb5ac0eda49b4b0f3d25d8a8bb356e77a453d3a7) )
-	ROM_LOAD16_BYTE( "prg2u021.bin", 0x100000, 0x080000, CRC(ffba8656) SHA1(6526bb65fad3384de3f301a7d1095cbf03757433) )
-	ROM_LOAD16_BYTE( "prg3u024.bin", 0x100001, 0x080000, CRC(834b8ad6) SHA1(0dd6223bb0749819ad29811eeb04fd08d937abb0) )
-
-	ROM_REGION( 0x28000, REGION_CPU2, 0 )			/* Sound Z80 code */
-	ROM_LOAD( "sndu0720.bin", 0x00000, 0x08000, CRC(e62ab246) SHA1(00d23689dd423ecd4024c58b5903d16e890f1dff) )
-	ROM_CONTINUE(             0x10000, 0x18000 )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "gfxu0510.bin", 0x000000, 0x400000, CRC(9cca3446) SHA1(1123f8b8bfbe59a2c572cdf61f1ad27ff37f0f0d) )
-	ROM_LOAD( "gfxu0512.bin", 0x400000, 0x400000, CRC(a2a281d5) SHA1(d9a6623f9433ad682223f9780c26cd1523ebc5c5) )
-	ROM_LOAD( "gfxu0511.bin", 0x800000, 0x400000, CRC(e16472c0) SHA1(6068d679a8b3b65e05acd58a7ce9ead90177049f) )
-	ROM_LOAD( "gfxu0513.bin", 0xc00000, 0x400000, CRC(8bb635a0) SHA1(9064f1a2d8bb88ddbca702fb8556d0dfe6a5cadc) )
-
-	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )	/* YMZ280B Samples */
-	ROM_LOAD( "rom6.829", 0x000000, 0x400000, CRC(8848b4a0) SHA1(e0dce136c5d5a4c1a92b863e57848cd5927d06f1) )
-	ROM_LOAD( "rom7.830", 0x400000, 0x400000, CRC(d6224267) SHA1(5c9b7b13effbef9f707811f84bfe50ca85e605e3) )
-	ROM_LOAD( "rom8.831", 0x800000, 0x400000, CRC(a101dfb0) SHA1(4b729b0d562e09df35438e9e6b457b8de2690a6e) )
-ROM_END
 
 
 /* The following is in order of Toaplan Board/game numbers */
@@ -4812,12 +4969,14 @@ GAMEX( 1993, batsugun, 0,        batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan"
 GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves / Otenki Paradise" )
 GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
+GAME ( 1993, sstriker, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World)" ) // from korean board
 GAME ( 1994, shippumd, 0,        shippumd, shippumd, T2_Z80,   ROT270, "Raizing / Eighting", "Shippu Mahou Daisakusen (Japan)" )
+GAME ( 1994, kingdmgp, shippumd, shippumd, kingdmgp, T2_Z80,   ROT270, "Raizing / Eighting", "Kingdom Grandprix (World)" ) // from korean board, missing letters on credits screen but this is correct
 GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing / Eighting", "Battle Garegga - Type 2 (Denmark / China) (Tue Apr 2 1996)" )
 GAME ( 1996, battlega, battleg,  battleg,  battlega, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Europe / USA / Japan / Asia) (Sat Feb 3 1996)" )
 GAME ( 1996, battlegb, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Mar 2 1996)" ) // displays New Version when set to HK
 GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version B)" )
 GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version A)" )
 GAME ( 1998, batridrk, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Korea, version B)" )
-GAME ( 1999, bbakraid, 0,        bbakraid, bbakraid, bbakraid, ROT270, "Eighting", "Battle Bakraid - unlimited version (Japan) (Tue Jun 8 1999)")
-GAME ( 1999, bbakrada, bbakraid, bbakraid, bbakraid, bbakrada, ROT270, "Eighting", "Battle Bakraid (Japan) (Wed Apr 7 1999)")
+GAME ( 1999, bbakraid, 0,        bbakraid, bbakraid, bbakraid, ROT270, "Eighting", "Battle Bakraid (Japan) (Wed Apr 7 1999)")
+GAME ( 1999, bbakradu, bbakraid, bbakraid, bbakraid, bbakrada, ROT270, "Eighting", "Battle Bakraid - Unlimited version (Japan) (Tue Jun 8 1999)")

@@ -53,25 +53,27 @@ Preliminary Memory map:
 (Main issues)
 -complete the Master/Slave communication.
 -fix properly the IC13 issue,some games still fails their booting.
--NVRAM needs emulating.
--clock utility in main menu of the bios is (again) broken :(.
 -SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
  are really for.I suppose that they disable/enable the reset for the Slave and the
  sound CPU,but I'm not sure. -AS
 -Clean-ups and split the various chips(SCU,SMPC)into their respective files.
--CD block:complete it & add proper CD support into MAME.
+-CD block:complete it & add proper CD image support into MAME.
+-the Cart-Dev mode...why it hangs?
+-some games increments *intentionally* the credit counter by two at every start-up.
+ missing/wrong irq I guess,possibly HBLANK or a sound cpu issue.
+-finish the DSP core.
 
 (per-game issues)
 -groovef: hangs soon after loaded.
 -various: find idle skip if possible.
--some games increments *intentionally* the credit counter by two at every start-up.
- missing/wrong irq I guess,possibly HBLANK.
--vmahjong:locks up the emulation due to wrong DMA/irq issues.
+-vmahjong: locks up the emulation due to DMA/irq issues.
+-shanhigw: maps & priorities are wrong...
 -hanagumi: why do we get 2 credits on startup with sound enabled (game doesn't work
  with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
  on SMPC or controls fail
 -prikura: slave cpu wants MINIT to draw sprites, master CPU never gives it.
+-prikura: currently crashes the emulation.
 -shanhigw/shienryu: need to understand way vdp1 sprite colours work (vdp2 register related?)
 -mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
 -colmns97: corrupt background is lack of zooming, why is the top gem a bad colour tho?
@@ -79,14 +81,13 @@ Preliminary Memory map:
 -vfremix: game seems to start then waits for an address to change, another interrupt /
  stv timers issue?
 -most: static for sounds
--some games (rsgun,myfairld) are currently broken,they don't pass the master/slave
- communication test again...
--grdforce: missing backgrounds.
--ejihon: we need somebody who can read japanese & can play this game,I (AS)
- believe that the game works fine but I don't know how to play...
- * according to Yasu it is playable, just missing an alpha effect on the magifying glass
+-some games (rsgun,myfairld) don't pass the master/slave communication check if you
+ enter then exit from the BIOS test mode,it is a recent issue as before wasn't like this...
+-grdforce: missing backgrounds(map issue? -AS)
+-ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
+
 
 */
 
@@ -94,6 +95,7 @@ Preliminary Memory map:
 #include "machine/eeprom.h"
 #include "cpu/sh2/sh2.h"
 #include "machine/stvcd.h"
+#include "machine/scudsp.h"
 #include <time.h>
 
 extern data32_t* stv_vdp2_regs;
@@ -162,51 +164,9 @@ static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
 static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
 static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
 
-/*SCU DSP stuff*/
-static struct stv_scu_dsp_internal_registers {
-	   UINT8 pc; 							           /*Program Counter*/
-	   UINT8 top;							   		   /*Jump Command memory*/
-	   UINT16 lop;								       /*Counter Register*/	  /*12-bits*/
-	   UINT8  ct0,ct1,ct2,ct3;					       /*Index for RAM*/	  /*6-bits */
-	   UINT32 md0[0x40],md1[0x40],md2[0x40],md3[0x40]; /*RAM memory*/
-	   UINT8  ra;									   /*RAM selector*/
-	   UINT32 rx;									   /*X-Bus register*/
-	   UINT64 mul;                                     /*Multiplier register*//*48-bits*/
-	   UINT32 ry;									   /*Y-Bus register*/
-	   UINT64 alu;                                     /*ALU register*/       /*48-bits*/
-	   UINT16 ph;									   /*ALU high register*/
-	   UINT32 pl;									   /*ALU low register*/
-	   UINT16 ach;									   /*ALU external high register*/
-	   UINT32 acl;									   /*ALU external low register*/
-	   UINT32 ra0,wa0;								   /*DSP DMA registers*/
-	   UINT32 internal_prg[0x100];
-} dsp_reg;
-static void dsp_prg_ctrl(UINT32 data);
-static void	dsp_prg_data(UINT32 data);
-static void	dsp_ram_addr_ctrl(UINT32 data);
-static void dsp_ram_addr_w(UINT32 data);
-static void dsp_execute_program(void);
 
-/*DSP macros*/
-#define PRF ((stv_scu[32] & 0x04000000) >> 26)
-#define EPF ((stv_scu[32] & 0x02000000) >> 25)
-#define T0F ((stv_scu[32] & 0x00800000) >> 23)
-#define SF  ((stv_scu[32] & 0x00400000) >> 22)
-#define ZF  ((stv_scu[32] & 0x00200000) >> 21)
-#define CF  ((stv_scu[32] & 0x00100000) >> 20)
-#define VF  ((stv_scu[32] & 0x00080000) >> 19)
-#define EF  ((stv_scu[32] & 0x00040000) >> 18)
-#define ESF ((stv_scu[32] & 0x00020000) >> 17)
-#define EXF ((stv_scu[32] & 0x00010000) >> 16)
-#define LEF ((stv_scu[32] & 0x00008000) >> 15)
-#define SF_1 if(!(stv_scu[32] & 0x00400000)) stv_scu[32]^=0x00400000
-#define ZF_1 if(!(stv_scu[32] & 0x00200000)) stv_scu[32]^=0x00200000
-#define CF_1 if(!(stv_scu[32] & 0x00100000)) stv_scu[32]^=0x00100000
-#define VF_1 if(!(stv_scu[32] & 0x00080000)) stv_scu[32]^=0x00080000
-#define SF_0 if(stv_scu[32] & 0x00400000) stv_scu[32]^=0x00400000
-#define ZF_0 if(stv_scu[32] & 0x00200000) stv_scu[32]^=0x00200000
-#define CF_0 if(stv_scu[32] & 0x00100000) stv_scu[32]^=0x00100000
-#define VF_0 if(stv_scu[32] & 0x00080000) stv_scu[32]^=0x00080000
+int minit_boost,sinit_boost;
+
 
 static int scanline;
 
@@ -333,10 +293,10 @@ void cdb_reset(void){
 
 		// reset filter conditions
 		CD_filt[i].true		= i;
-		CD_filt[i].false		= 0xff;
+		CD_filt[i].false	= 0xff;
 		CD_filt[i].mode		= 0;
 		CD_filt[i].fad		= 0;
-		CD_filt[i].range		= 0;
+		CD_filt[i].range	= 0;
 		CD_filt[i].chan		= 0;
 		CD_filt[i].fid		= 0;
 		CD_filt[i].sub_val	= 0;
@@ -355,6 +315,15 @@ void cdb_reset(void){
 void do_cd_command(void){
 
 	UINT32 fid,pn, sp, sn;
+	UINT32 count;
+	UINT8 pm; /* play mode */
+	UINT32 rf;
+	int ii;
+	sect_t * s;
+	UINT32  fad;
+	UINT32 i, j, nearest = 0, fad2 = 0;
+	UINT32 size;
+	UINT32 off;
 	//based on sthief SSE source code
 	switch (CR1 >> 8){
 
@@ -524,8 +493,6 @@ void do_cd_command(void){
 				//end data transfer
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				UINT32 count;
-
 				switch(CD_trans_type){
 				case -1:	count = 0xffffff; break;			// no transfer
 				case 0:	count = (CD_data_count + 1) >> 1; break;	// data transfer
@@ -548,8 +515,6 @@ void do_cd_command(void){
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				// sthief: must be rewritten!
-
-				UINT8 pm; // play mode
 
 				pm = (CR3 >> 8);
 
@@ -1045,15 +1010,12 @@ void do_cd_command(void){
 				// b1,0	unused
 				//
 				// if reset flag is zero, all selectors are completely reset
-				UINT32 rf;
 
 				rf = CR1 & 0xff;
 
 				if(rf == 0){
 
 				// all partitions are reset
-
-				int i;
 
 				for(i = 0; i < CDB_SEL_NUM; i++){
 					if(rf & 0x80){ CD_filt[i].false = 0xff; }
@@ -1167,8 +1129,6 @@ void do_cd_command(void){
 				//calc actual size
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				int ii;
-
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
 				pn = (CR3 >> 8);
@@ -1214,8 +1174,6 @@ void do_cd_command(void){
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
-				sect_t * s;
-
 				pn = CR3 >> 8;
 				sn = CR2 & 0xff;
 
@@ -1235,9 +1193,6 @@ void do_cd_command(void){
 		case 0x55:
 				//execute fad search
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
-
-				UINT32  fad;
-				UINT32 i, j, nearest = 0, fad2 = 0;
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
@@ -1481,7 +1436,6 @@ void do_cd_command(void){
 				//get file info
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				UINT32 size;
 				// check if out of scope
 
 				fid = (CR3 << 16) | CR4;
@@ -1520,8 +1474,6 @@ void do_cd_command(void){
 		case 0x74:
 				//read file
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
-
-				UINT32 off;
 
 				CD_com_play = CD_com;
 
@@ -1625,8 +1577,9 @@ void do_cd_command(void){
 
 static READ32_HANDLER ( cdregister_r ){
 
-	offset=offset*4;
 	UINT16 d;
+
+	offset=offset*4;
 
 	//logerror("read from cd block offset=%08x\n", offset);
 	switch(offset){
@@ -1916,12 +1869,14 @@ static UINT8 stv_SMPC_r8 (int offset)
 
 static void stv_SMPC_w8 (int offset, UINT8 data)
 {
-//	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
-	smpc_ram[offset] = data;
 	time_t ltime;
 	struct tm *today;
 	time(&ltime);
 	today = localtime(&ltime);
+
+//	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
+	smpc_ram[offset] = data;
+
 	if(offset == 0x75)
 	{
 		EEPROM_set_clock_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
@@ -2278,7 +2233,7 @@ static UINT8 port_ad[] =
 	0xcc,0xb2,0x99,0x7f,0x66,0x4c,0x33,0x19
 };
 
-UINT8 port_sel,mux_data;
+static UINT8 port_sel,mux_data;
 
 #define HI_WORD_ACCESS (mem_mask & 0x00ff0000) == 0
 #define LO_WORD_ACCESS (mem_mask & 0x000000ff) == 0
@@ -2530,7 +2485,16 @@ READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
 	//usrintf_showmessage("%02x",DMA_STATUS);
-	return stv_scu[offset];
+	if ( offset == 35 )
+	{
+        logerror( "DSP mem read at %08X\n", stv_scu[34]);
+        return dsp_ram_addr_r();
+    }
+    else
+    {
+    	logerror("SCU reg read at %d = %08x\n",offset,stv_scu[offset]);
+    	return stv_scu[offset];
+   	}
 }
 
 WRITE32_HANDLER( stv_scu_w32 )
@@ -2676,6 +2640,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			logerror("Start factor chosen for lv 2 = %d\n",stv_scu[21] & 7);
 		break;
 		case 31: logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
+		/*DSP section*/
 		/*Use functions so it is easier to work out*/
 		case 32:
 		dsp_prg_ctrl(data);
@@ -2724,7 +2689,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		}
 		break;
 		case 41:
-		/*This is never triggered...*/
+		/*This is r/w by introdon...*/
 		logerror("IRQ status reg set:%08x\n",stv_scu[41]);
 		break;
 		case 42: /*A-Bus IRQ ACK*/ break;
@@ -3023,628 +2988,6 @@ static void dma_indirect_lv2()
 	SET_D2MV_FROM_1_TO_0;
 }
 
-/*SCU DSP functions*/
-/*V0.01*/
-/*
-DSP TODO:
-\-Jump commands:
- -How the jumps really works?7 or 8-bits?Are the jumps relative or absolute?
- -Add proper JMP T0/JMP NT0/LOP/BTM support.
-
-\-ALU commands:
- -Fix the flags.
-
-Notes:
--The DSP uses rvalue.
--The "DASM" code is preliminary and far from perfect,needs extra work.
-*/
-
-static void dsp_prg_ctrl(UINT32 data)
-{
-	if(LEF) dsp_reg.pc = (data & 0xff);
-	if(EXF) dsp_execute_program();
-	if(EF && (!(stv_scu[40] & 0x0020)))
-		cpu_set_irq_line_and_vector(0, 0xa, HOLD_LINE , 0x45);
-}
-
-static void dsp_prg_data(UINT32 data)
-{
-	dsp_reg.internal_prg[dsp_reg.pc] = data;
-	dsp_reg.pc++;
-}
-
-static void dsp_ram_addr_ctrl(UINT32 data)
-{
-	dsp_reg.ra = data & 0xff;
-
-	switch((dsp_reg.ra & 0xc0) >> 6)
-	{
-		case 0: dsp_reg.ct0 = (dsp_reg.ra & 0x3f); break;
-		case 1: dsp_reg.ct1 = (dsp_reg.ra & 0x3f); break;
-		case 2: dsp_reg.ct2 = (dsp_reg.ra & 0x3f); break;
-		case 3: dsp_reg.ct3 = (dsp_reg.ra & 0x3f); break;
-	}
-}
-
-static void dsp_ram_addr_w(UINT32 data)
-{
-	switch(((dsp_reg.ra & 0xc0) >> 6))
-	{
-		case 0:
-			dsp_reg.md0[dsp_reg.ct0] = data;
-			dsp_reg.ct0++;
-			/*guess*/
-			if(dsp_reg.ct0 >= 0x40) dsp_reg.ct0 = 0x00;
-			break;
-		case 1:
-			dsp_reg.md1[dsp_reg.ct1] = data;
-			dsp_reg.ct1++;
-			/*guess*/
-			if(dsp_reg.ct1 >= 0x40) dsp_reg.ct1 = 0x00;
-			break;
-		case 2:
-			dsp_reg.md2[dsp_reg.ct2] = data;
-			dsp_reg.ct2++;
-			/*guess*/
-			if(dsp_reg.ct2 >= 0x40) dsp_reg.ct2 = 0x00;
-			break;
-		case 3:
-			dsp_reg.md3[dsp_reg.ct3] = data;
-			dsp_reg.ct3++;
-			/*guess*/
-			if(dsp_reg.ct3 >= 0x40) dsp_reg.ct3 = 0x00;
-	}
-}
-
-#define JMP_CTRL   ((dsp_reg.internal_prg[dsp_reg.pc] & 0xf0000000) >> 28)
-#define JMP_OP     ((dsp_reg.internal_prg[dsp_reg.pc] & 0x03f80000) >> 19)
-
-#define OP_CTRL    ((dsp_reg.internal_prg[dsp_reg.pc] & 0xc0000000) >> 30)
-
-#define ALU_OP   ((dsp_reg.internal_prg[dsp_reg.pc] & 0x3c000000) >> 26)
-#define XBUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x03f00000) >> 20)
-#define YBUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x000fc000) >> 14)
-#define D1BUS_OP ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00003fff) >> 0)
-UINT8 dsp_debug = 1;
-static FILE *f;
-static UINT32 dsp_tmp;
-
-static void dsp_execute_program()
-{
-	int i = 0;
-
-	if(dsp_debug)
-	{
-		f = fopen("dsp_log.txt", "w");
-		fprintf(f, "DSP program start\n");
-	}
-	do{
-		dsp_reg.top = dsp_reg.pc + 1;
-		/*I guess that this mustn't happen...*/
-		if(dsp_reg.top >= 0x100) dsp_reg.top = 0;
-
-		if(1)
-		{
-			i++;
-			if(i >= 0x1000)
-			{
-				printf("DSP core got stuck at some point,emulation crashed due of that\n");
-				exit(1);/*Current DSP core can't do much,exit after some time with an errorcode...*/
-			}
-		}
-
-		switch(OP_CTRL)
-		{
-			/*Operation Commands*/
-			case 0: {
-			/*Jump commands*/
-			switch(JMP_CTRL)
-			{
-				case 0xd:
-				{
-					switch(JMP_OP)
-					{
-						/*JMP*/
-						case 0x00:
-							dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP %02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP Z*/
-						case 0x61:
-							if(ZF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP Z,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NZ*/
-						case 0x41:
-							if(!ZF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NZ,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP S*/
-						case 0x62:
-							if(SF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP S,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NS*/
-						case 0x42:
-							if(!SF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP C*/
-						case 0x64:
-							if(CF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP C,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NC*/
-						case 0x44:
-							if(!CF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NC,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP T0*/
-						case 0x68:
-
-							//...
-
-							if(dsp_debug) fprintf(f,"%02x: JMP T0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NT0*/
-						case 0x48:
-
-							//...
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NT0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP ZS*/
-						case 0x63:
-							if(ZF || SF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP ZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NZS*/
-						case 0x43:
-							if(!ZF && !SF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-					}
-				}
-				break;
-				case 0xe:
-				{
-					if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
-					{
-						/*LOP*/
-						if(dsp_debug) fprintf(f,"%02x: LOP\n",dsp_reg.pc);
-					}
-					else
-					{
-						/*BTM*/
-						if(dsp_debug) fprintf(f,"%02x: BTM\n",dsp_reg.pc);
-					}
-				}
-				break;
-				case 0xf:
-				{
-					if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
-					{
-						/*ENDI*/
-						if(!EF) stv_scu[32]^=0x00040000;
-						if(EXF) stv_scu[32]^=0x00100000;
-						if(dsp_debug) fprintf(f,"%02x: ENDI\n",dsp_reg.pc);
-					}
-					else
-					{
-						/*END*/
-					  	if(EXF) stv_scu[32]^=0x00100000;
-						if(dsp_debug) fprintf(f,"%02x: END\n",dsp_reg.pc);
-					}
-				}
-				break;
-			}
-
-			/*ALU commands*/
-			switch(ALU_OP)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: ALU NOP\n",dsp_reg.pc);
-					break;
-				/*AND*/
-				case 0x01:
-					dsp_reg.acl &= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: AND PL,ACL\n",dsp_reg.pc);
-					break;
-				/*OR*/
-				case 0x02:
-					dsp_reg.acl |= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: OR PL,ACL\n",dsp_reg.pc);
-					break;
-				/*XOR*/
-				case 0x03:
-					dsp_reg.acl ^= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: XOR PL,ACL\n",dsp_reg.pc);
-					break;
-				/*ADD*/
-				case 0x04:
-					dsp_reg.acl += dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: ADD PL,ACL\n",dsp_reg.pc);
-					break;
-				/*SUB*/
-				case 0x05:
-					dsp_reg.acl -= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: SUB PL,ACL\n",dsp_reg.pc);
-					break;
-				/*AD2*/
-				case 0x06:
-					dsp_reg.acl += dsp_reg.pl;
-					dsp_reg.ach += dsp_reg.ph;
-					if(dsp_reg.acl < dsp_reg.pl) dsp_reg.ach++;//carry
-
-					if(dsp_debug) fprintf(f,"%02x: AD2 P,AC\n",dsp_reg.pc);
-					break;
-				/*0x07 "SB2"?*/
-				/*SR*/
-				case 0x08:
-					if(dsp_reg.acl & 0x00000001) CF_1;
-					/*TODO:Is there a better way for doing this?*/
-					if(dsp_reg.acl & 0x80000000)
-					{
-						dsp_reg.acl>>=1;
-						dsp_reg.acl|=0x80000000;
-					}
-					else
-						dsp_reg.acl>>=1;
-
-					if(dsp_reg.acl & 0x80000000) SF_1;
-					//if(SF) dsp_reg.acl|=0x80000000;//unneeded
-					if(dsp_debug) fprintf(f,"%02x: SR \n",dsp_reg.pc);
-					break;
-				/*RR*/
-				case 0x09:
-					if(dsp_reg.acl & 0x00000001) { CF_1; } else { CF_0; }
-					dsp_reg.acl>>=1;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(CF) dsp_reg.acl|=0x80000000;
-					if(dsp_debug) fprintf(f,"%02x: RR \n",dsp_reg.pc);
-					break;
-				/*SL*/
-				case 0x0a:
-					if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
-					dsp_reg.acl<<=1;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(dsp_debug) fprintf(f,"%02x: SL \n",dsp_reg.pc);
-					break;
-				/*RL*/
-				case 0x0b:
-					if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
-					dsp_reg.acl<<=1;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(CF) dsp_reg.acl|=1;
-					if(dsp_debug) fprintf(f,"%02x: RL \n",dsp_reg.pc);
-					break;
-				/*RL8*/
-				case 0x0f:
-					if(dsp_reg.acl & 0x01000000) { CF_1; } else { CF_0; }
-					dsp_reg.acl>>=8;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(dsp_debug) fprintf(f,"%02x: RL8 \n",dsp_reg.pc);
-					break;
-				default:
-					if(dsp_debug) fprintf(f,"%02x: ALU invalid %02x \n",dsp_reg.pc,ALU_OP);
-			}
-
-			/*X-Bus commands*/
-			switch((XBUS_OP & 0x38) >> 3)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
-					break;
-				/*MOV [s],RX */
-				case 0x04:
-					switch(XBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],X (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
-					break;
-				/*MOV MUL,P */
-				case 0x02:
-					dsp_reg.ph = ((dsp_reg.mul & 0x0000ffff00000000) >> 32);
-					dsp_reg.pl = ((dsp_reg.mul & 0x00000000ffffffff) >> 0);
-					if(dsp_debug) fprintf(f,"%02x: MOV MUL,P\n",dsp_reg.pc);
-					break;
-				/*MOV [s],P*/
-				case 0x03:
-					/*TODO:
-					From the docs:
-					"PH: changed by sign extension"
-					but exactly WHAT is changed?*/
-					switch(XBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],P (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
-					break;
-				default:
-					if(dsp_debug) fprintf(f,"%02x: X-BUS invalid %02x \n",dsp_reg.pc,XBUS_OP);
-			}
-
-			/*Y-Bus commands*/
-			switch((YBUS_OP & 0x38) >> 3)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
-					break;
-				/*MOV [s],RY */
-				case 0x04:
-					switch(YBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],Y (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
-					break;
-				/*CLR A*/
-				case 0x01:
-					dsp_reg.ach = 0;
-					dsp_reg.acl = 0;
-					if(dsp_debug) fprintf(f,"%02x: CLR A\n",dsp_reg.pc);
-				/*MOV ALU,A*/
-				case 0x02:
-					dsp_reg.ach = ((dsp_reg.alu & 0x0000ffff00000000) >> 32);
-					dsp_reg.acl = ((dsp_reg.alu & 0x00000000ffffffff) >> 0);
-					if(dsp_debug) fprintf(f,"%02x: MOV ALU,A\n",dsp_reg.pc);
-					break;
-				/*MOV [s],A*/
-				case 0x03:
-					/*TODO:
-					From the docs:
-					"ACH: changed by sign extension"
-					but exactly WHAT is changed?*/
-					switch(YBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],A (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
-					break;
-				default:
-					if(dsp_debug) fprintf(f,"%02x: Y-BUS invalid %02x \n",dsp_reg.pc,YBUS_OP);
-			}
-
-			/*D1-Bus commands*/
-			switch((D1BUS_OP & 0x3000) >> 12)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: D1-BUS NOP \n",dsp_reg.pc);
-					break;
-				/*MOV SImm,[d]*/
-				/*TODO: implement 8 to 16/8 to 32 bit sign extensions.*/
-				case 0x01:
-					switch((D1BUS_OP & 0xf00) >> 8)
-					{
-						case 0x0:
-							dsp_reg.md0[dsp_reg.ct0] = D1BUS_OP & 0xff;
-							dsp_reg.ct0++;
-							break;
-						case 0x1:
-							dsp_reg.md1[dsp_reg.ct1] = D1BUS_OP & 0xff;
-							dsp_reg.ct1++;
-							break;
-						case 0x2:
-							dsp_reg.md2[dsp_reg.ct2] = D1BUS_OP & 0xff;
-							dsp_reg.ct2++;
-							break;
-						case 0x3:
-							dsp_reg.md3[dsp_reg.ct3] = D1BUS_OP & 0xff;
-							dsp_reg.ct3++;
-							break;
-						case 0x4: dsp_reg.rx = D1BUS_OP & 0xff; break;
-						case 0x5: dsp_reg.pl = D1BUS_OP & 0xff; break;
-						case 0x6: dsp_reg.ra0 = D1BUS_OP & 0xff; break;
-						case 0x7: dsp_reg.wa0 = D1BUS_OP & 0xff; break;
-						case 0x8: break;
-						case 0x9: break;
-						case 0xa: dsp_reg.lop = D1BUS_OP & 0xff; break;
-						/*TODO:like this it causes an unconditional jump,is it right?*/
-						case 0xb: dsp_reg.top = D1BUS_OP & 0xff; break;
-						case 0xc: dsp_reg.ct0 = D1BUS_OP & 0x3f; break;
-						case 0xd: dsp_reg.ct1 = D1BUS_OP & 0x3f; break;
-						case 0xe: dsp_reg.ct2 = D1BUS_OP & 0x3f; break;
-						case 0xf: dsp_reg.ct3 = D1BUS_OP & 0x3f; break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV SImm,[d] (data %02x type %01x)\n",dsp_reg.pc,D1BUS_OP & 0xff,(D1BUS_OP & 0xf00) >> 8);
-					break;
-				/*MOV [s],[d]*/
-				case 0x3:
-					switch((D1BUS_OP & 0xf00) >> 8)
-					{
-						case 0x0:
-							dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;// <- I suspect that this might be a doc typo...
-							break;
-						case 0x1:
-							dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct1++;
-							break;
-						case 0x2:
-							dsp_tmp = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 0x3:
-							dsp_tmp = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-						case 0x4: dsp_tmp = dsp_reg.rx; break;
-						case 0x5: dsp_tmp = dsp_reg.pl; break;
-						case 0x6: dsp_tmp = dsp_reg.ra0; break;
-						case 0x7: dsp_tmp = dsp_reg.wa0; break;
-						case 0x8: break;
-						case 0x9: break;
-						case 0xa: dsp_tmp = dsp_reg.lop; break;
-						case 0xb: dsp_tmp = dsp_reg.top; break;
-						case 0xc: dsp_tmp = dsp_reg.ct0; break;
-						case 0xd: dsp_tmp = dsp_reg.ct1; break;
-						case 0xe: dsp_tmp = dsp_reg.ct2; break;
-						case 0xf: dsp_tmp = dsp_reg.ct3; break;
-					}
-					switch(D1BUS_OP & 0xf)
-					{
-						case 0x0: dsp_reg.md0[dsp_reg.ct0] = dsp_tmp; break;
-						case 0x1: dsp_reg.md1[dsp_reg.ct1] = dsp_tmp; break;
-						case 0x2: dsp_reg.md2[dsp_reg.ct2] = dsp_tmp; break;
-						case 0x3: dsp_reg.md3[dsp_reg.ct3] = dsp_tmp; break;
-						case 0x4:
-							dsp_reg.md0[dsp_reg.ct0] = dsp_tmp;
-							dsp_reg.ct0++;
-							break;
-						case 0x5:
-							dsp_reg.md1[dsp_reg.ct1] = dsp_tmp;
-							dsp_reg.ct1++;
-							break;
-						case 0x6:
-							dsp_reg.md2[dsp_reg.ct2] = dsp_tmp;
-							dsp_reg.ct2++;
-							break;
-						case 0x7:
-							dsp_reg.md3[dsp_reg.ct3] = dsp_tmp;
-							dsp_reg.ct3++;
-							break;
-						case 0x8: break;
-						case 0x9: dsp_reg.alu = dsp_tmp; break;
-						case 0xa: dsp_reg.alu = dsp_tmp * 0x100000000; break;
-					}
-					dsp_tmp = 0; //free the temporary storage
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],[d] (s = %01x  d =%01x)\n",dsp_reg.pc,(D1BUS_OP & 0xf00) >> 8,D1BUS_OP & 0xf);
-					break;
-			}
-
-			}break;
-		}
-		dsp_reg.pc = dsp_reg.top;//I don't think that this is right though...
-	}while(EXF);
-	if(dsp_debug)
-	{
-		fprintf(f, "DSP program end\n");
-		fclose(f);
-	}
-}
-
 
 /**************************************************************************************/
 
@@ -3684,14 +3027,14 @@ static WRITE32_HANDLER( stv_scsp_regs_w32 )
 static WRITE32_HANDLER( minit_w )
 {
 	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
-	cpu_boost_interleave(0, TIME_IN_USEC(400));
+	cpu_boost_interleave(0, TIME_IN_USEC(minit_boost));
 	sh2_set_frt_input(1, PULSE_LINE);
 }
 
 static WRITE32_HANDLER( sinit_w )
 {
 	logerror("cpu #%d (PC=%08X) SINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
-	cpu_boost_interleave(0, TIME_IN_USEC(400));
+	cpu_boost_interleave(0, TIME_IN_USEC(sinit_boost));
 	sh2_set_frt_input(0, PULSE_LINE);
 }
 
@@ -4064,7 +3407,6 @@ INPUT_PORTS_START( stvmp )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P1 I",   	KEYCODE_I,        IP_JOY_NONE )
 
 	PORT_START/*8*/
-	/*This one *might* be reach,damn cheap programmers ;-)*/
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 RON",    KEYCODE_Z,        IP_JOY_NONE )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -4075,7 +3417,6 @@ INPUT_PORTS_START( stvmp )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P1 J",   	KEYCODE_J,        IP_JOY_NONE )
 
 	PORT_START/*9*/
-	/*Ditto from above(might be ron)*/
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 REACH",  KEYCODE_LSHIFT,   IP_JOY_NONE )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -4179,12 +3520,13 @@ WRITE32_HANDLER ( w60ffc48_write )
 
 DRIVER_INIT ( stv )
 {
+	unsigned char *ROM = memory_region(REGION_USER1);
+
 	time_t ltime;
 	struct tm *today;
 	time(&ltime);
 	today = localtime(&ltime);
 
-	unsigned char *ROM = memory_region(REGION_USER1);
 	cpu_setbank(1,&ROM[0x000000]);
 
 	/* we allocate the memory here so its easier to share between cpus */
@@ -4236,6 +3578,19 @@ MACHINE_INIT( stv )
 	timer_0 = 0;
 	en_68k = 0;
 	smpc_ram[0x21] = 0x80;
+
+	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
+	minit_boost = 400;
+	sinit_boost = 400;
+
+	/* puyosun doesn't seem to care */
+	if ((!strcmp(Machine->gamedrv->name,"puyosun")) ||
+	    (!strcmp(Machine->gamedrv->name,"mausuke")))
+	{
+		minit_boost = 0;
+		sinit_boost = 0;
+	}
+
 
 }
 
@@ -4353,11 +3708,9 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
 	MDRV_CPU_CONFIG(sh2_conf_master)
 
-	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
 	MDRV_CPU_MEMORY(stv_slave_readmem,stv_slave_writemem)
 	MDRV_CPU_CONFIG(sh2_conf_slave)
-
 
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
@@ -4450,7 +3803,6 @@ some of the rom names were using something else and have been renamed to match t
 0x2c00000 - 0x2ffffff IC12
 
 */
-
 
 
 
@@ -5033,11 +4385,11 @@ ROM_START( danchih )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
-	ROM_LOAD16_WORD_SWAP( "mpr21974.7",    0x0200000, 0x0200000, CRC(e7472793) )// good
-	ROM_LOAD16_WORD_SWAP( "mpr21970.2",    0x0400000, 0x0400000, CRC(34dd7f4d) )// good
-	ROM_LOAD16_WORD_SWAP( "mpr21971.3",    0x0800000, 0x0400000, CRC(8995158c) )// good
-	ROM_LOAD16_WORD_SWAP( "mpr21972.4",    0x0c00000, 0x0400000, CRC(68a39090) )// good
-	ROM_LOAD16_WORD_SWAP( "mpr21973.5",    0x1000000, 0x0400000, CRC(b0f23f14) )// good
+	ROM_LOAD16_WORD_SWAP( "mpr21974.7",    0x0200000, 0x0200000, CRC(e7472793) SHA1(11b7b11cf492eb9cf69b50e7cfac46a5b86849ac) )// good
+	ROM_LOAD16_WORD_SWAP( "mpr21970.2",    0x0400000, 0x0400000, CRC(34dd7f4d) SHA1(d5c45da94ec5b6584049caf09516f1ad4ba3adb5) )// good
+	ROM_LOAD16_WORD_SWAP( "mpr21971.3",    0x0800000, 0x0400000, CRC(8995158c) SHA1(fbbd171d67eebf43630d6054bc1b9132f6b38183) )// good
+	ROM_LOAD16_WORD_SWAP( "mpr21972.4",    0x0c00000, 0x0400000, CRC(68a39090) SHA1(cff1b909c4191660570012eb5e4cb6a7467bc79e) )// good
+	ROM_LOAD16_WORD_SWAP( "mpr21973.5",    0x1000000, 0x0400000, CRC(b0f23f14) SHA1(4e7076c29fd57bb3ef9af50a6104e39ecda94e06) )// good
 ROM_END
 
 ROM_START( mausuke )
@@ -5077,25 +4429,25 @@ ROM_START( batmanfr )
 	   000 - ?    ic13
 
 	   */
-	ROM_LOAD16_BYTE( "350-mpa1.u19",    0x0000000, 0x0100000, CRC(2a5a8c3a) )
-	ROM_LOAD16_BYTE( "350-mpa1.u16",    0x0000001, 0x0100000, CRC(735e23ab) )
-	ROM_LOAD16_WORD_SWAP( "gfx0.u1",    0x0400000, 0x0400000, CRC(a82d0b7e) )
-	ROM_LOAD16_WORD_SWAP( "gfx1.u3",    0x0c00000, 0x0400000, CRC(a41e55d9) )
-	ROM_LOAD16_WORD_SWAP( "gfx2.u5",    0x1800000, 0x0400000, CRC(4c1ebeb7) )
-	ROM_LOAD16_WORD_SWAP( "gfx3.u8",    0x1c00000, 0x0400000, CRC(f679a3e7) )
-	ROM_LOAD16_WORD_SWAP( "gfx4.u12",   0x0800000, 0x0400000, CRC(52d95242) )
-	ROM_LOAD16_WORD_SWAP( "gfx5.u15",   0x2000000, 0x0400000, CRC(e201f830) )
-	ROM_LOAD16_WORD_SWAP( "gfx6.u18",   0x2c00000, 0x0400000, CRC(c6b381a3) )
+	ROM_LOAD16_BYTE( "350-mpa1.u19",    0x0000000, 0x0100000, CRC(2a5a8c3a) SHA1(374ec55a39ea909cc672e4a629422681d1f2da05) )
+	ROM_LOAD16_BYTE( "350-mpa1.u16",    0x0000001, 0x0100000, CRC(735e23ab) SHA1(133e2284a07a611aed8ada2707248f392f4509aa) )
+	ROM_LOAD16_WORD_SWAP( "gfx0.u1",    0x0400000, 0x0400000, CRC(a82d0b7e) SHA1(37a7a177634d51620b1b43e58732987df166c7e6) )
+	ROM_LOAD16_WORD_SWAP( "gfx1.u3",    0x0c00000, 0x0400000, CRC(a41e55d9) SHA1(b896d3a6c36d325c3cece699da54f340a4512703) )
+	ROM_LOAD16_WORD_SWAP( "gfx2.u5",    0x1800000, 0x0400000, CRC(4c1ebeb7) SHA1(cdd139652d9484ae5837a39c2fd48d0a8d966d43) )
+	ROM_LOAD16_WORD_SWAP( "gfx3.u8",    0x1c00000, 0x0400000, CRC(f679a3e7) SHA1(db11b033b8bbdd80b81e3bc098bd40ad3a8784f2) )
+	ROM_LOAD16_WORD_SWAP( "gfx4.u12",   0x0800000, 0x0400000, CRC(52d95242) SHA1(b554a95933c2be4c72fb4226d3bc4775695da2c1) )
+	ROM_LOAD16_WORD_SWAP( "gfx5.u15",   0x2000000, 0x0400000, CRC(e201f830) SHA1(5aa22fcc8f2e153d1abc3aa4050c594b3942ee67) )
+	ROM_LOAD16_WORD_SWAP( "gfx6.u18",   0x2c00000, 0x0400000, CRC(c6b381a3) SHA1(46431f1e47c084a0bf85535d35af27471653b008) )
 
 	/* it also has an extra adsp sound board, i guess this isn't tested */
 	ROM_REGION( 0x080000, REGION_USER2, 0 ) /* ADSP code */
-	ROM_LOAD( "350snda1.u52",   0x000000, 0x080000, CRC(9027e7a0) )
+	ROM_LOAD( "350snda1.u52",   0x000000, 0x080000, CRC(9027e7a0) SHA1(678df530838b078964a044ce734776f391654e6c) )
 
 	ROM_REGION( 0x800000, REGION_USER3, 0 ) /* Sound */
-	ROM_LOAD( "snd0.u48",   0x000000, 0x200000, CRC(02b1927c) )
-	ROM_LOAD( "snd1.u49",   0x200000, 0x200000, CRC(58b18eda) )
-	ROM_LOAD( "snd2.u50",   0x400000, 0x200000, CRC(51d626d6) )
-	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) )
+	ROM_LOAD( "snd0.u48",   0x000000, 0x200000, CRC(02b1927c) SHA1(08b21d8b31b0f15c59fb5bb7eaf425e6fe04f7b5) )
+	ROM_LOAD( "snd1.u49",   0x200000, 0x200000, CRC(58b18eda) SHA1(7f3105fe04d9c0cdfd76e3323f623a4d0f7dad06) )
+	ROM_LOAD( "snd2.u50",   0x400000, 0x200000, CRC(51d626d6) SHA1(0e68b79dcb653dcba48121ca2d4f692f90afa85e) )
+	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) SHA1(2c9f4c078afec55964b5c2a4d00f5c43f2661a04) )
 ROM_END
 
 ROM_START( sfish2 )
@@ -5173,6 +4525,7 @@ FILE "SFISH2.BIN" BINARY
 ROM_END
 
 
+
 DRIVER_INIT( sfish2 )
 {
 	/* this is WRONG but works for some games */
@@ -5221,9 +4574,9 @@ GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Succes
 GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Doing Something.. but not enough yet */
-GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",      "Princess Clara Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",      "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",    "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )

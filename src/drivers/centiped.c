@@ -6,7 +6,6 @@
 		* Centipede (5 sets)
 		* Warlords
 		* Millipede
-		* Qwak (prototype)
 
 	Known bugs:
 		* are coins supposed to take over a second to register?
@@ -269,50 +268,6 @@
 	On	Off Off 						For every 4 coins, add 2 coins
 	Off On	On							For every 5 coins, add 1 coin
 	------------------------------------------
-
-****************************************************************************
-
-	Atari Qwak (prototype) hardware
-	driver by Mike Balfour
-
-	Known issues:
-		- fix colors
-		- coins seem to count twice instead of once?
-		- find DIP switches (should be at $4000, I would think)
-		- figure out what $1000, $2000, and $2001 are used for
-		- figure out exactly what the unknown bits in the $3000 area do
-
-****************************************************************************
-
-	This driver is based *extremely* loosely on the Centipede driver.
-
-	The following memory map is pure speculation:
-
-	0000-01FF     R/W		RAM
-	0200-025F     R/W		RAM?  ER2055 NOVRAM maybe?
-	0300-03FF     R/W		RAM
-	0400-07BF		R/W		Video RAM
-	07C0-07FF		R/W		Sprite RAM
-	1000			W		???
-	2000			W		???
-	2001			W		???
-	2003          W		Start LED 1
-	2004          W		Start LED 2
-	3000			R		$40 = !UP			$80 = unused?
-	3001			R		$40 = !DOWN			$80 = ???
-	3002			R		$40 = !LEFT			$80 = ???
-	3003			R		$40 = !RIGHT		$80 = unused?
-	3004			R		$40 = !START1		$80 = ???
-	3005			R		$40 = !START2		$80 = !COIN
-	3006			R		$40 = !BUTTON1		$80 = !COIN
-	3007			R		$40 = unused?		$80 = !COIN
-	4000          R		???
-	6000-600F		R/W		Pokey 1
-	7000-700F		R/W		Pokey 2
-	8000-BFFF		R		ROM
-
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -634,50 +589,6 @@ static MEMORY_WRITE_START( warlords_writemem )
 	{ 0x1c00, 0x1c02, coin_count_w },
 	{ 0x1c03, 0x1c06, led_w },
 	{ 0x4000, 0x4000, watchdog_reset_w },
-MEMORY_END
-
-
-
-/*************************************
- *
- *	Qwak CPU memory handlers
- *
- *************************************/
-
-static MEMORY_READ_START( qwakprot_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x0200, 0x025f, MRA_RAM },
-	{ 0x0300, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x3000, 0x3000, input_port_0_r },
-	{ 0x3001, 0x3001, input_port_1_r },
-	{ 0x3002, 0x3002, input_port_2_r },
-	{ 0x3003, 0x3003, input_port_3_r },
-	{ 0x3004, 0x3004, input_port_4_r },
-	{ 0x3005, 0x3005, input_port_5_r },
-	{ 0x3006, 0x3006, input_port_6_r },
-	{ 0x3007, 0x3007, input_port_7_r },
-	{ 0x4000, 0x4000, input_port_8_r },
-	{ 0x6000, 0x600f, pokey1_r },
-	{ 0x7000, 0x700f, pokey2_r },
-	{ 0x8000, 0xbfff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( qwakprot_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, MWA_RAM },
-	{ 0x0300, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07bf, centiped_videoram_w, &videoram },
-	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x1000, 0x1000, irq_ack_w },
-	{ 0x1c00, 0x1c0f, qwakprot_paletteram_w, &paletteram },
-//	{ 0x2000, 0x2001, coin_counter_w },
-	{ 0x2003, 0x2004, led_w },
-	{ 0x6000, 0x600f, pokey1_w },
-	{ 0x7000, 0x700f, pokey2_w },
-	{ 0x8000, 0xbfff, MWA_ROM },
 MEMORY_END
 
 
@@ -1150,68 +1061,6 @@ INPUT_PORTS_START( warlords )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( qwakprot )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )			/* ??? */
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )			/* ??? */
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )			/* ??? */
-
-	PORT_START      /* IN3 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )			/* ??? */
-
-	PORT_START      /* IN4 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )			/* ??? */
-
-	PORT_START      /* IN5 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* IN6 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START      /* IN7 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )			/* ??? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
-
-	PORT_START      /* IN8 */
-	PORT_DIPNAME( 0x01, 0x00, "DIP 1" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x02, 0x00, "DIP 2" )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x04, 0x00, "DIP 3" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x00, "DIP 4" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x10, 0x00, "DIP 5" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x20, 0x00, "DIP 6" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x40, 0x00, "DIP 7" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x80, 0x00, "DIP 8" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-INPUT_PORTS_END
-
-
-
 /*************************************
  *
  *	Graphics layouts: Centipede/Millipede
@@ -1278,44 +1127,6 @@ static struct GfxDecodeInfo warlords_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000, &warlords_charlayout, 0,   8 },
 	{ REGION_GFX1, 0x200, &warlords_charlayout, 8*4, 8*4 },
-	{ -1 }
-};
-
-
-
-/*************************************
- *
- *	Graphics layouts: Qwak
- *
- *************************************/
-
-static struct GfxLayout qwakprot_charlayout =
-{
-	8,8,
-	RGN_FRAC(1,4),
-	4,
-	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
-};
-
-static struct GfxLayout qwakprot_spritelayout =
-{
-	8,16,
-	RGN_FRAC(1,4),
-	4,
-	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	16*8
-};
-
-static struct GfxDecodeInfo qwakprot_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &qwakprot_charlayout,   0, 1 },
-	{ REGION_GFX1, 0, &qwakprot_spritelayout, 0, 1 },
 	{ -1 }
 };
 
@@ -1406,26 +1217,6 @@ static struct POKEYinterface warlords_pokey_interface =
 	/* The allpot handler */
 	{ 0 },
 };
-
-
-static struct POKEYinterface qwakprot_pokey_interface =
-{
-	2,
-	12096000/8,
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ 0, 0 },
-};
-
 
 
 /*************************************
@@ -1534,28 +1325,6 @@ static MACHINE_DRIVER_START( warlords )
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", POKEY, warlords_pokey_interface)
 MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( qwakprot )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(centiped)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(qwakprot_readmem,qwakprot_writemem)
-
-	/* video hardware */
-	MDRV_GFXDECODE(qwakprot_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(0)
-
-	MDRV_PALETTE_INIT(NULL)
-	MDRV_VIDEO_START(qwakprot)
-	MDRV_VIDEO_UPDATE(qwakprot)
-
-	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", POKEY, qwakprot_pokey_interface)
-MACHINE_DRIVER_END
-
 
 
 /*************************************
@@ -1692,23 +1461,6 @@ ROM_START( warlords )
 ROM_END
 
 
-ROM_START( qwakprot )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, CRC(4d002d8a) SHA1(8621e7ec1ab3cb8d003858227e858354cd79dbf1) )
-	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, CRC(e0c78fd7) SHA1(f5f397950971d12a7ae47fc64aa8f5751463b8a5) )
-	ROM_LOAD( "qwaka000.bin", 0xa000, 0x1000, CRC(e5770fc9) SHA1(c9556e9c2f7b6c37755ac9f10d95027118317b4a) )
-	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, CRC(90771cc0) SHA1(5715e5bfccb05c51d871b443e42b0950ec23e330) )
-	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-
-	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, CRC(bed2c067) SHA1(53d909b414042d54fe2e86ae0d6c7a4ded16b87e) )
-	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, CRC(73a31d28) SHA1(bbe076432866398bcd02962dd90eb178e3a38fb1) )
-	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, CRC(07fd9e80) SHA1(83d5f22b8316ac7e88d8ecdb238182a35a6f6362) )
-	ROM_LOAD( "qwakgfx3.bin", 0x3000, 0x1000, CRC(e8416f2b) SHA1(171f6539575f2c06b431ab5118e5cbaf740f557d) )
-ROM_END
-
-
-
 /*************************************
  *
  *	Driver initialization
@@ -1748,4 +1500,3 @@ GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg",
 GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari", "Millipede" )
 
 GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari", "Warlords" )
-GAMEX(1982, qwakprot, 0,        qwakprot, qwakprot, 0,        ROT270, "Atari", "Qwak (prototype)", GAME_NO_COCKTAIL )

@@ -649,7 +649,7 @@ MACHINE_INIT( unico )
 static struct YM3812interface unico_ym3812_intf =
 {
 	1,
-	4000000,		/* ? */
+	4000000,		/* ? */ //Would guess it as identical to zeropt2, any samples for confirmation?
 	{ 40 },
 	{ 0 },	/* IRQ Line */
 };
@@ -665,7 +665,7 @@ static struct OKIM6295interface unico_m6295_intf =
 static struct OKIM6295interface zeropnt2_m6295_intf =
 {
 	2,
-	{ 8000, 30000 },		/* ? */
+	{ 8000, 30000 },		/* Appears to be spot on for both interfaces. */
 	{ REGION_SOUND1, REGION_SOUND2 },
 	{ MIXER(40,MIXER_PAN_LEFT), MIXER(20,MIXER_PAN_RIGHT) }
 };
@@ -673,7 +673,7 @@ static struct OKIM6295interface zeropnt2_m6295_intf =
 static struct YM2151interface zeropnt2_ym2151_intf =
 {
 	1,
-	3000000,
+	3579545, /* measured on actual PCB*/
 	{ YM3012_VOL(70,MIXER_PAN_LEFT,70,MIXER_PAN_RIGHT) },
 	{ 0 }
 };

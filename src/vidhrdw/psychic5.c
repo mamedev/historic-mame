@@ -17,31 +17,26 @@
 #define	BG_PAL_INTENSITY_RG	0x1fe
 #define	BG_PAL_INTENSITY_BU	0x1ff
 
-static int 		 ps5_vram_page = 0x0;
-static int		 bg_clip_mode;
-
-static struct mame_bitmap *bitmap_bg;
-static unsigned char 	 *bg_dirtybuffer;
+static int ps5_vram_page;
+static int bg_clip_mode;
+static int title_screen;
 
 /* Paged RAM 0 */
-static unsigned char  	 *ps5_background_videoram;
-static unsigned char  	 *ps5_dummy_bg_ram;
+static UINT8 *psychic5_bg_videoram;
+static UINT8 *ps5_dummy_bg_ram;
 
 /* Paged RAM 1 */
-static unsigned char 	 *ps5_io_ram;
-static unsigned char 	 *ps5_palette_ram;
-static unsigned char 	 *ps5_foreground_videoram;
+static UINT8 *ps5_io_ram;
+static UINT8 *ps5_palette_ram;
+static UINT8 *psychic5_fg_videoram;
 
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
-int is_psychic5_title_mode(void)
-{
-	if (ps5_foreground_videoram[0x7C6]=='H') return 0;
-	return 1;
-}
 
 MACHINE_INIT( psychic5 )
 {
 	bg_clip_mode = -10;
+	flip_screen_set(0);
 }
 
 WRITE_HANDLER( psychic5_vram_page_select_w )
@@ -52,6 +47,11 @@ WRITE_HANDLER( psychic5_vram_page_select_w )
 READ_HANDLER( psychic5_vram_page_select_r )
 {
 	return ps5_vram_page;
+}
+
+WRITE_HANDLER( psychic5_title_screen_w )
+{
+	title_screen = data & 0x01;
 }
 
 void psychic5_paletteram_w(int color_offs, int offset, int data)
@@ -135,7 +135,7 @@ void set_background_palette_intensity(void)
 
 		if (ps5_io_ram[BG_SCREEN_MODE] & 2)
 		{
-			val = (unsigned char)(0.299*r + 0.587*g + 0.114*b);
+			val = (UINT8)(0.299*r + 0.587*g + 0.114*b);
 
  			if (ix==2)		/* purple background enable */
 			 palette_set_color(256+i,val*0.6,0,val*0.8);
@@ -147,7 +147,7 @@ void set_background_palette_intensity(void)
 
 			/* background intensity enable  TO DO BETTER !!! */
 
-			if (!is_psychic5_title_mode())
+			if (!title_screen)
 			{
 				r = (r>>4) * ir;
 	 		  	g = (g>>4) * ig;
@@ -159,12 +159,21 @@ void set_background_palette_intensity(void)
 }
 
 
-WRITE_HANDLER( psychic5_bgvideoram_w )
+WRITE_HANDLER( psychic5_bg_videoram_w )
 {
-	if (ps5_background_videoram[offset] != data)
+	if (psychic5_bg_videoram[offset] != data)
 	{
-		bg_dirtybuffer[offset >> 1] = 1;
-		ps5_background_videoram[offset] = data;
+		psychic5_bg_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
+}
+
+WRITE_HANDLER( psychic5_fg_videoram_w )
+{
+	if (psychic5_fg_videoram[offset] != data)
+	{
+		psychic5_fg_videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset / 2);
 	}
 }
 
@@ -174,13 +183,12 @@ READ_HANDLER( psychic5_paged_ram_r )
 
 	if (!ps5_vram_page)
 	{
-
 		if (offset < 0x1000)
-			return ps5_background_videoram[offset];
+			return psychic5_bg_videoram[offset];
 		else
 			return ps5_dummy_bg_ram[offset & 0xfff];
-
-	} else
+	}
+	else
 	{
 		if (offset < 0x400)
 		{
@@ -213,7 +221,7 @@ READ_HANDLER( psychic5_paged_ram_r )
 		}
 		else
 		{
-			return ps5_foreground_videoram[offset & 0xfff];
+			return psychic5_fg_videoram[offset & 0xfff];
 		}
 	}
 	return 0;
@@ -224,10 +232,11 @@ WRITE_HANDLER( psychic5_paged_ram_w )
 	if (!ps5_vram_page)
 	{
 		if (offset < 0x1000)
-			psychic5_bgvideoram_w(offset,data);
+			psychic5_bg_videoram_w(offset,data);
 		else
 			ps5_dummy_bg_ram[offset & 0xfff] = data;
-	} else
+	}
+	else
 	{
 		if (offset < 0x400)
 		{
@@ -255,15 +264,39 @@ WRITE_HANDLER( psychic5_paged_ram_w )
 		}
 		else
 		{
-			ps5_foreground_videoram[offset & 0xfff] = data;
+			psychic5_fg_videoram_w(offset & 0xfff, data);
 		}
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int attr = psychic5_bg_videoram[offs + 1];
+	int code = psychic5_bg_videoram[offs] + ((attr & 0xc0) << 2);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x10) ? TILE_FLIPX : 0) + ((attr & 0x20) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int attr = psychic5_fg_videoram[offs + 1];
+	int code = psychic5_fg_videoram[offs] + ((attr & 0xc0) << 2);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x10) ? TILE_FLIPX : 0) + ((attr & 0x20) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(2, code, color, flags)
+}
 
 VIDEO_START( psychic5 )
 {
-	if ((ps5_background_videoram = auto_malloc(0x1000)) == 0)
+	if ((psychic5_bg_videoram = auto_malloc(0x1000)) == 0)
+		return 1;
+
+	if ((psychic5_fg_videoram = auto_malloc(0x1000)) == 0)
 		return 1;
 
 	if ((ps5_dummy_bg_ram = auto_malloc(0x1000)) == 0)
@@ -275,277 +308,119 @@ VIDEO_START( psychic5 )
 	if ((ps5_palette_ram = auto_malloc(0xc00)) == 0)
 		return 1;
 
-	if ((ps5_foreground_videoram = auto_malloc(0x1000)) == 0)
-		return 1;
-
-    if ((bg_dirtybuffer = auto_malloc(32*64)) == 0)
-      	return 1;
-
-	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width*4,Machine->drv->screen_height*2)) == 0)
-		return 1;
-
-    memset(bg_dirtybuffer,1,32*64);
-	memset(ps5_background_videoram, 0,0x1000);
+	memset(psychic5_bg_videoram, 0,0x1000);
+	memset(psychic5_fg_videoram,0,0x1000);
 	memset(ps5_dummy_bg_ram,0,0x1000);
 	memset(ps5_io_ram,0,0x400);
 	memset(ps5_palette_ram,0,0xc00);
-	memset(ps5_foreground_videoram,0,0x1000);
+
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+		TILEMAP_OPAQUE, 16, 16, 64, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 15);
+
     return 0;
 }
 
-void psychic5_draw_background(struct mame_bitmap *bitmap)
+#define DRAW_SPRITE(code, sx, sy) drawgfx(bitmap, Machine->gfx[0], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 15);
+
+void psychic5_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int x,y,offs;
-	int sx,sy,tile,palette,flipx,flipy,lo,hi;
+	int offs;
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
+	if (title_screen)
+		return;
+	else
+		bg_clip_mode = -10;
 
-	for (x = 31; x >=0; x--)
+	for (offs = 11; offs < spriteram_size; offs += 16)
 	{
-		for (y = 0 ; y < 64; y++)
+		int tileofs0, tileofs1, tileofs2, tileofs3, temp1, temp2;
+		int attr = spriteram[offs + 2];
+		int code = spriteram[offs + 3] + ((attr & 0xc0) << 2);
+		int color = spriteram[offs + 4] & 0x0f;
+		int flipx = attr & 0x10;
+		int flipy = attr & 0x20;
+		int sx = spriteram[offs + 1];
+		int sy = spriteram[offs];
+		int size32 = attr & 0x08;
+
+		if (attr & 0x01) sx -= 256;
+		if (attr & 0x04) sy -= 256;
+
+		if (flip_screen)
 		{
-			offs = y*64+(x*2);
-			if (bg_dirtybuffer[offs >> 1])
-			{
-				sx = y << 4;
-				sy = x << 4;
-
-				bg_dirtybuffer[offs >> 1] = 0;
-
-				lo = ps5_background_videoram[offs];
-				hi = ps5_background_videoram[offs+1];
-				tile = ((hi & 0xc0) << 2) | lo;
-				flipx = hi & 0x10;
-				flipy = hi & 0x20;
-				palette = hi & 0x0f;
-				drawgfx(bitmap,Machine->gfx[1],
-						  tile,
-						  palette,
-						  flipx,flipy,
-						  sx,sy,
-						  0,TRANSPARENCY_NONE,0);
-			}
+			sx = 224 - sx;
+			sy = 224 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
-	}
-}
 
-void psychic5_draw_foreground(struct mame_bitmap *bitmap)
-{
-	int x,y,offs;
-	int sx,sy,tile,palette,flipx,flipy,lo,hi;
-
-	/* Draw the foreground text */
-
-	for (x = 31; x >=0; x--)
-	{
-		for (y = 0; y < 32; y++)
+		if (flipy)
 		{
-			offs = y*64+(x*2);
-			if (ps5_foreground_videoram[offs+1]!=0xFF)
-			{
-				sx = y << 3;
-				sy = x << 3;
-
-				lo = ps5_foreground_videoram[offs];
-				hi = ps5_foreground_videoram[offs+1];
-				tile = ((hi & 0xc0) << 2) | lo;
-				flipx = hi & 0x10;
-				flipy = hi & 0x20;
-				palette = hi & 0x0f;
-
-				drawgfx(bitmap,Machine->gfx[2],
-							tile,
-							palette,
-							flipx,flipy,
-							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN, 15);
-			}
+			tileofs0 = 1; tileofs1 = 0;	tileofs2 = 3; tileofs3 = 2;
 		}
-	}
-}
-
-void psychic5_draw_sprites(struct mame_bitmap *bitmap)
-{
-	int offs,sx,sy,tile,palette,flipx,flipy;
-	int size32,tileofs0,tileofs1,tileofs2,tileofs3,temp1,temp2;
-
-	/* Draw the sprites */
-
-	for (offs = 11 ;offs < spriteram_size; offs+=16)
-	{
-		if (!(spriteram[offs+4]==0 && spriteram[offs]==0xf0))
+		else
 		{
-			sx = spriteram[offs+1];
-			sy = spriteram[offs];
-			if (spriteram[offs+2] & 0x01) sx-=256;
-			if (spriteram[offs+2] & 0x04) sy-=256;
-			tile	 = spriteram[offs+3]+((spriteram[offs+2] & 0xc0)<<2);
-			size32	 = spriteram[offs+2] & 0x08;
-			flipx	 = spriteram[offs+2] & 0x20;
-			flipy	 = spriteram[offs+2] & 0x10;
-			palette	 = spriteram[offs+4] & 0x0f;
-			if (flipx)
-			{
-				tileofs0 = 1;
-				tileofs1 = 0;
-				tileofs2 = 3;
-				tileofs3 = 2;
-			} else
-			{
-				tileofs0 = 0;
-				tileofs1 = 1;
-				tileofs2 = 2;
-				tileofs3 = 3;
-			}
-			if (flipy)
-			{
-				temp1	 = tileofs0;
-				temp2	 = tileofs1;
-				tileofs0 = tileofs2;
-				tileofs1 = tileofs3;
-				tileofs2 = temp1;
-				tileofs3 = temp2;
-			}
-			if (size32)
-			{
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs0,
-							palette,
-							flipy,flipx,
-							sx,sy,
-							&Machine->visible_area,
-							TRANSPARENCY_PEN, 15);
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs1,
-							palette,
-							flipy,flipx,
-							sx,sy+16,
-							&Machine->visible_area,
-							TRANSPARENCY_PEN, 15);
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs2,
-							palette,
-							flipy,flipx,
-							sx+16,sy,
-							&Machine->visible_area,
-							TRANSPARENCY_PEN, 15);
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs3,
-							palette,
-							flipy,flipx,
-							sx+16,sy+16,
-							&Machine->visible_area,
-							TRANSPARENCY_PEN, 15);
-			}
+			tileofs0 = 0; tileofs1 = 1;	tileofs2 = 2; tileofs3 = 3;
+		}
+
+		if (flipx)
+		{
+			temp1 = tileofs0;
+			temp2 = tileofs1;
+			tileofs0 = tileofs2;
+			tileofs1 = tileofs3;
+			tileofs2 = temp1;
+			tileofs3 = temp2;
+		}
+
+		if (size32)
+		{
+			DRAW_SPRITE(code + tileofs0, sx, sy)
+			DRAW_SPRITE(code + tileofs1, sx, sy + 16)
+			DRAW_SPRITE(code + tileofs2, sx + 16, sy)
+			DRAW_SPRITE(code + tileofs3, sx + 16, sy + 16)
+		}
+		else
+		{
+			if (flip_screen)
+				DRAW_SPRITE(code, sx + 16, sy + 16)
 			else
-			{
-				drawgfx(bitmap,Machine->gfx[0],
-							tile,
-							palette,
-							flipy,flipx,
-							sx,sy,
-							&Machine->visible_area,
-							TRANSPARENCY_PEN, 15);
-			}
+				DRAW_SPRITE(code, sx, sy)
 		}
 	}
 }
 
-
-
-
-void psychic5_draw_sprites2(struct mame_bitmap *bitmap)
+static void psychic5_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int offs,sx,sy,tile,palette,flipx,flipy;
-	int size32,tileofs0,tileofs1,tileofs2,tileofs3;
+	int bg_scrollx = (ps5_io_ram[BG_SCROLLX_LSB] + ((ps5_io_ram[BG_SCROLLX_MSB] & 0x03) << 8)) & 0x3ff;
+	int bg_scrolly = (ps5_io_ram[BG_SCROLLY_LSB] + ((ps5_io_ram[BG_SCROLLY_MSB] & 0x01) << 8)) & 0x1ff;
 
-	for (offs = 11 ;offs < spriteram_size; offs+=16)
-	{
-		if (!(spriteram[offs+4]==0 && spriteram[offs]==0xf0))
-		{
-			sx = spriteram[offs+1];
-			sy = spriteram[offs];
-			if (spriteram[offs+2] & 0x01) sx-=256;
-			if (spriteram[offs+2] & 0x04) sy-=256;
-			tile	 = spriteram[offs+3]+((spriteram[offs+2] & 0xc0)<<2);
-			size32	 = spriteram[offs+2] & 0x08;
-			flipx	 = spriteram[offs+2] & 0x20;
-			flipy	 = spriteram[offs+2] & 0x10;
-			palette	 = spriteram[offs+4] & 0x0;
-			tileofs0 = 0;
-			tileofs1 = 1;
-			tileofs2 = 2;
-			tileofs3 = 3;
-			if (size32)
-			{
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs0,
-							palette,
-							flipy,flipx,
-							sx,sy,
-							&Machine->visible_area,
-							TRANSPARENCY_NONE, 0);
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs1,
-							palette,
-							flipy,flipx,
-							sx,sy+16,
-							&Machine->visible_area,
-							TRANSPARENCY_NONE, 0);
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs2,
-							palette,
-							flipy,flipx,
-							sx+16,sy,
-							&Machine->visible_area,
-							TRANSPARENCY_NONE, 0);
-				drawgfx(bitmap,Machine->gfx[0],
-							tile+tileofs3,
-							palette,
-							flipy,flipx,
-							sx+16,sy+16,
-							&Machine->visible_area,
-							TRANSPARENCY_NONE, 0);
-			}
-		}
-	}
-}
-
-
-
-
-
-VIDEO_UPDATE( psychic5 )
-{
-	int bg_scrollx,bg_scrolly;
-
-	bg_scrollx = ((ps5_io_ram[BG_SCROLLX_LSB]+((ps5_io_ram[BG_SCROLLX_MSB] & 3)*256)) & 0x3FF) >> 4;
-	bg_scrolly = ((ps5_io_ram[BG_SCROLLY_LSB]+((ps5_io_ram[BG_SCROLLY_MSB] & 1)*256)) & 0x1FF) >> 4;
+	tilemap_set_scrollx(bg_tilemap, 0, bg_scrollx);
+	tilemap_set_scrolly(bg_tilemap, 0, bg_scrolly);
 
 	set_background_palette_intensity();
 
-	bg_scrollx = -((ps5_io_ram[BG_SCROLLX_LSB]+((ps5_io_ram[BG_SCROLLX_MSB] & 3)*256)) & 0x3FF);
-	bg_scrolly = -((ps5_io_ram[BG_SCROLLY_LSB]+((ps5_io_ram[BG_SCROLLY_MSB] & 1)*256)) & 0x1FF);
-
-	if (ps5_io_ram[BG_SCREEN_MODE] & 1)  /* background enable */
+	if (ps5_io_ram[BG_SCREEN_MODE] & 0x01)  /* background enable */
 	{
-		psychic5_draw_background(bitmap_bg);
-
-		if (is_psychic5_title_mode())
+		if (title_screen)
 		{
-			struct rectangle clip;
-			int sx1,sy1,sy2,tile;
+			struct rectangle clip = *cliprect;
 
-			sx1  = spriteram[12];		/* sprite 0 */
-			sy1  = spriteram[11];
-			tile = spriteram[14];
-			sy2 = spriteram[11+128];	/* sprite 8 */
-
-			clip.min_x = Machine->visible_area.min_x;
-			clip.min_y = Machine->visible_area.min_y;
-			clip.max_x = Machine->visible_area.max_x;
-			clip.max_y = Machine->visible_area.max_y;
+			int sx1 = spriteram[12];		/* sprite 0 */
+			int sy1 = spriteram[11];
+			int tile = spriteram[14];
+			int sy2 = spriteram[11+128];	/* sprite 8 */
 
 			if (bg_clip_mode >=0 && bg_clip_mode < 3 && sy1==240) bg_clip_mode = 0;
 			if (bg_clip_mode > 2 && bg_clip_mode < 5 && sy2==240) bg_clip_mode = -10;
@@ -554,74 +429,78 @@ VIDEO_UPDATE( psychic5 )
 
 			if (sy1!=240 && sy1!=0 && bg_clip_mode<=0)
 			{
-				if (sy1>128)
-				 bg_clip_mode=1;
+				if (sy1 > 128)
+					bg_clip_mode = 1;
 				else
-				 bg_clip_mode=2;
+					bg_clip_mode = 2;
 			}
+
 			if (sy2!=240 && sy2!=0 && bg_clip_mode<=0)
 			{
-				if (sy2>128)
-				 bg_clip_mode=3;
+				if (sy2 > 128)
+					bg_clip_mode = 3;
 				else
-				 bg_clip_mode=4;
+					bg_clip_mode = 4;
 			}
+
 			if (sx1!=240 && sx1!=0 && bg_clip_mode<=0 && tile==0x3c)
 			{
-				if (sx1>128)
-				 bg_clip_mode=5;
+				if (sx1 > 128)
+					bg_clip_mode = 5;
 				else
-				 bg_clip_mode=6;
+					bg_clip_mode = 6;
 			}
+
 			if (sx1!=240 && sx1!=0 && bg_clip_mode<=0 && tile==0x1c)
 			{
-				if (sx1>128)
-				 bg_clip_mode=7;
+				if (sx1 > 128)
+					bg_clip_mode = 7;
 				else
-				 bg_clip_mode=8;
+					bg_clip_mode = 8;
 			}
+
 			if (bg_clip_mode)
 			{
-				if (bg_clip_mode==1)
-				 clip.min_y = sy1;
-				else if (bg_clip_mode==2)
- 				 clip.max_y = sy1;
-				else if (bg_clip_mode==3)
-				 clip.max_y = sy2;
-				else if (bg_clip_mode==4)
-				 clip.min_y = sy2;
-				else if (bg_clip_mode==5)
-				 clip.min_x = sx1;
-				else if (bg_clip_mode==6)
- 				 clip.max_x = sx1;
-				else if (bg_clip_mode==7)
-				 clip.max_x = sx1;
-				else if (bg_clip_mode==8)
-				 clip.min_x = sx1;
-				else if (bg_clip_mode==-10)
+				if (bg_clip_mode == 1)
+					clip.min_y = sy1;
+				else if (bg_clip_mode == 2)
+ 					clip.max_y = sy1;
+				else if (bg_clip_mode == 3)
+					clip.max_y = sy2;
+				else if (bg_clip_mode == 4)
+					clip.min_y = sy2;
+				else if (bg_clip_mode == 5)
+					clip.min_x = sx1;
+				else if (bg_clip_mode == 6)
+ 					clip.max_x = sx1;
+				else if (bg_clip_mode == 7)
+					clip.max_x = sx1;
+				else if (bg_clip_mode == 8)
+					clip.min_x = sx1;
+				else if (bg_clip_mode == -10)
 				{
 					clip.min_x = 0;
 					clip.min_y = 0;
 					clip.max_x = 0;
 					clip.max_y = 0;
 				}
-				fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&clip,TRANSPARENCY_NONE,0);
-			} else
-				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
-		} else
-			copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	} else
-	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-		memset(bg_dirtybuffer,1,64*32);
+				fillbitmap(bitmap, get_black_pen(), cliprect);
+				tilemap_draw(bitmap, &clip, bg_tilemap, 0, 0);
+			}
+			else
+				tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+		}
+		else
+			tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	}
+	else
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+}
 
-	if (!is_psychic5_title_mode())
-	{
-		psychic5_draw_sprites(bitmap);
-		bg_clip_mode=-10;
-	}
-	psychic5_draw_foreground(bitmap);
+VIDEO_UPDATE( psychic5 )
+{
+	psychic5_draw_background(bitmap, cliprect);
+	psychic5_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 }

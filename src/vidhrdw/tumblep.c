@@ -89,7 +89,7 @@ static void jumpkids_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 {
 	int offs;
 
-	for (offs = 0;offs < 0x400;offs += 4)
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 

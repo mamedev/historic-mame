@@ -9,228 +9,155 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct mame_bitmap *pf1_bitmap;
-data16_t *prehisle_video16;
-static data16_t vid_control16[7];
-static int dirty_back;
-static int dirty_front;
 
-/******************************************************************************/
+UINT16 *prehisle_bg_videoram16;
 
-VIDEO_UPDATE( prehisle )
+static int invert_controls;
+
+static struct tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
+
+
+WRITE16_HANDLER( prehisle_bg_videoram16_w )
 {
-	int offs, mx, my, color, tile;
-	int tile_base;
-	int scrollx, scrolly;
-	UINT8 *tilemap = memory_region(REGION_GFX5);
-	static int old_base = 0xfffff, old_front = 0xfffff;
-
-
-	/* Calculate tilebase for background, 32 words per column */
-	tile_base = ((vid_control16[3] >> 4) & 0x3ff) * 32;
-	if (old_base != tile_base)
-		dirty_back = 1; 	/* Redraw */
-	old_base = tile_base;
-
-	/* Back layer, taken from tilemap rom */
-	if (dirty_back)
+	UINT16 oldword = prehisle_bg_videoram16[offset];
+	COMBINE_DATA(&prehisle_bg_videoram16[offset]);
+	if (oldword != prehisle_bg_videoram16[offset])
 	{
-		tile_base &= 0x7fff; /* Safety */
-		dirty_back = 0;
-
-		for (mx = 0; mx < 17; mx++)
-		{
-			for (my = 0; my < 32; my++)
-			{
-				tile = tilemap[2*tile_base+1] + (tilemap[2*tile_base] << 8);
-				color = tile >> 12;
-				drawgfx(pf1_bitmap,Machine->gfx[1],
-							(tile & 0x7ff) | 0x800,
-							color,
-							tile & 0x800,0,
-							16*mx,16*my,
-							0,TRANSPARENCY_NONE,0);
-				if (++tile_base == 0x8000)
-					tile_base = 0;	/* Wraparound */
-			}
-		}
-	}
-
-	scrollx = -(vid_control16[3] & 15);
-	scrolly = -vid_control16[2];
-	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* Calculate tilebase for background, 32 words per column */
-	tile_base = ((vid_control16[1] >> 4) & 0xff) * 32;
-	if (old_front != tile_base)
-		dirty_front = 1;	/* Redraw */
-	old_front = tile_base;
-
-	/* Back layer, taken from tilemap rom */
-//	if (dirty_front)
-	{
-		tile_base &= 0x1fff; /* Safety */
-		dirty_front = 0;
-
-		for (mx = 0; mx < 17; mx++)
-		{
-			for (my = 0; my < 32; my++)
-			{
-				tile = prehisle_video16[tile_base];
-				color = tile >> 12;
-				drawgfx(bitmap,Machine->gfx[2],
-							tile & 0x7ff,
-							color,
-							0,tile&0x800,
-							16*mx-(vid_control16[1] & 15),(16*my-vid_control16[0]) & 0x1ff,
-							&Machine->visible_area,TRANSPARENCY_PEN,15);
-				if (++tile_base == 0x2000)
-					tile_base = 0; /* Wraparound */
-			}
-		}
-	}
-
-	/* Sprites */
-	for (offs = 0; offs < (0x800 >> 1); offs += 4)
-	{
-		int x,y,sprite,colour,fx,fy;
-
-		y = spriteram16[offs+0];
-		if (y>254)	/* Speedup */
-			continue;
-		x = spriteram16[offs+1];
-		if (x&0x200) x=-(0xff-(x&0xff));
-		if (x>256)	/* Speedup */
-			continue;
-
-		sprite = spriteram16[offs+2];
-		colour = spriteram16[offs+3] >> 12;
-
-		fy = sprite & 0x8000;
-		fx = sprite & 0x4000;
-
-		sprite = sprite & 0x1fff;
-
-		if (sprite > 0x13ff)
-			sprite = 0x13ff;
-
-		drawgfx(bitmap,Machine->gfx[3],
-				sprite,
-				colour,fx,fy,x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
-	}
-
-	/* Text layer */
-	mx = -1;
-	my = 0;
-	for (offs = 0x000; offs < (0x800 >> 1); offs++)
-	{
-		mx++;
-		if (mx == 32)
-		{
-			mx = 0;
-			my++;
-		}
-		tile = videoram16[offs];
-		if ((tile & 0xff) == 0x20)
-			continue;
-		color = tile >> 12;
-		drawgfx(bitmap,Machine->gfx[0],
-				tile & 0xfff,
-				color,
-				0,0,
-				8*mx,8*my,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
-/******************************************************************************/
-
-VIDEO_START( prehisle )
+WRITE16_HANDLER( prehisle_fg_videoram16_w )
 {
-	pf1_bitmap = auto_bitmap_alloc(256+16,512);
-
-	if (!pf1_bitmap)
-		return 1;
-
-	return 0;
+	UINT16 oldword = videoram16[offset];
+	COMBINE_DATA(&videoram16[offset]);
+	if (oldword != videoram16[offset])
+	{
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
-
-WRITE16_HANDLER( prehisle_video16_w )
-{
-	data16_t oldword = prehisle_video16[offset];
-	COMBINE_DATA(&prehisle_video16[offset]);
-
-	if (oldword != prehisle_video16[offset])
-		dirty_front = 1;	/* Redraw */
-}
-
-static int controls_invert;
 
 READ16_HANDLER( prehisle_control16_r )
 {
 	switch (offset)
 	{
-	case 0x08: /* Player 2 */
-		return readinputport(1);
-
-	case 0x10: /* Coins, tilt, service */
-		return readinputport(2);
-
-	case 0x20: /* Player 1 */
-		return readinputport(0) ^ controls_invert;
-
-	case 0x21: /* Dips */
-		return readinputport(3);
-
-	case 0x22: /* Dips + VBL */
-		return readinputport(4);
-
-	default:
-		logerror("%06x: read unknown control %02x\n",activecpu_get_pc(),offset);
-		return 0;
+	case 0x08: return readinputport(1);						// Player 2
+	case 0x10: return readinputport(2);						// Coins, Tilt, Service
+	case 0x20: return readinputport(0) ^ invert_controls;	// Player 1
+	case 0x21: return readinputport(3);						// DIPs
+	case 0x22: return readinputport(4);						// DIPs + VBLANK
+	default: return 0;
 	}
 }
 
 WRITE16_HANDLER( prehisle_control16_w )
 {
+	int scroll;
+
+	COMBINE_DATA(&scroll);
+
 	switch (offset)
 	{
-	case 0:
-		COMBINE_DATA(&vid_control16[0]);
-		break;
-
-	case 0x08:
-		COMBINE_DATA(&vid_control16[1]);
-		break;
-
-	case 0x10:
-		COMBINE_DATA(&vid_control16[2]);
-		break;
-
-	case 0x18:
-		COMBINE_DATA(&vid_control16[3]);
-		break;
-
-	case 0x23:
-		controls_invert = data ? 0xff : 0x00;
-		break;
-
-	case 0x28:
-		COMBINE_DATA(&vid_control16[4]);
-		break;
-
-	case 0x29:
-		COMBINE_DATA(&vid_control16[5]);
-		break;
-
-	case 0x30:
-		COMBINE_DATA(&vid_control16[6]);
-		break;
-
-	default:
-		logerror("%06x: write unknown control %02x\n",activecpu_get_pc(),offset);
-		break;
+	case 0x00: tilemap_set_scrolly(bg_tilemap, 0, scroll); break;
+	case 0x08: tilemap_set_scrollx(bg_tilemap, 0, scroll); break;
+	case 0x10: tilemap_set_scrolly(bg2_tilemap, 0, scroll); break;
+	case 0x18: tilemap_set_scrollx(bg2_tilemap, 0, scroll); break;
+	case 0x23: invert_controls = data ? 0xff : 0x00; break;
+	case 0x30: flip_screen_set(data & 0x01); break;
 	}
 }
 
+static void get_bg2_tile_info(int tile_index)
+{
+	UINT8 *tilerom = memory_region(REGION_GFX5);
+
+	int offs = tile_index * 2;
+	int attr = tilerom[offs + 1] + (tilerom[offs] << 8);
+	int code = (attr & 0x7ff) | 0x800;
+	int color = attr >> 12;
+	int flags = (attr & 0x800) ? TILE_FLIPX : 0;
+
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = prehisle_bg_videoram16[tile_index];
+	int code = attr & 0x7ff;
+	int color = attr >> 12;
+	int flags = (attr & 0x800) ? TILE_FLIPY : 0;
+
+	SET_TILE_INFO(2, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = videoram16[tile_index];
+	int code = attr & 0xfff;
+	int color = attr >> 12;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( prehisle )
+{
+	bg2_tilemap = tilemap_create(get_bg2_tile_info, tilemap_scan_cols, 
+		TILEMAP_OPAQUE, 16, 16, 1024, 32);
+
+	if ( !bg2_tilemap )
+		return 1;
+
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+		TILEMAP_TRANSPARENT, 16, 16, 256, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(bg_tilemap, 15);
+	tilemap_set_transparent_pen(fg_tilemap, 15);
+
+	return 0;
+}
+
+static void prehisle_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int offs;
+
+	for (offs = 0; offs < 1024; offs += 4)
+	{
+		int attr = spriteram16[offs + 2];
+		int code = attr & 0x1fff;
+		int color = spriteram16[offs + 3] >> 12;
+		int flipx = attr & 0x4000;
+		int flipy = attr & 0x8000;
+		int sx = spriteram16[offs + 1];
+		int sy = spriteram16[offs];
+
+		if (sx & 0x200) sx = -(0xff - (sx & 0xff));	// wraparound
+
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[3], code, color, flipx, flipy, sx, sy,
+			cliprect, TRANSPARENCY_PEN, 15);
+	}
+}
+
+VIDEO_UPDATE( prehisle )
+{
+	tilemap_draw(bitmap, cliprect, bg2_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	prehisle_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+}

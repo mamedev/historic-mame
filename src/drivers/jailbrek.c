@@ -6,6 +6,15 @@ Ernesto Corvi
 ernesto@imagina.com
 
 ***************************************************************************/
+
+/*
+
+	TODO:
+
+	- coin counters
+
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
@@ -13,14 +22,19 @@ ernesto@imagina.com
 
 void konami1_decode(void);
 
-/* from vidhrdw */
-extern unsigned char *jailbrek_scroll_x;
-extern unsigned char *jailbrek_scroll_dir;
-VIDEO_START( jailbrek );
-VIDEO_UPDATE( jailbrek );
-PALETTE_INIT( jailbrek );
+extern UINT8 *jailbrek_scroll_x;
+extern UINT8 *jailbrek_scroll_dir;
+
+extern WRITE_HANDLER( jailbrek_videoram_w );
+extern WRITE_HANDLER( jailbrek_colorram_w );
+
+extern PALETTE_INIT( jailbrek );
+extern VIDEO_START( jailbrek );
+extern VIDEO_UPDATE( jailbrek );
+
 
 static int irq_enable,nmi_enable;
+
 
 static WRITE_HANDLER( ctrl_w )
 {
@@ -53,8 +67,8 @@ static WRITE_HANDLER( jailbrek_speech_w ) {
 }
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x07ff, colorram_r },
-	{ 0x0800, 0x0fff, videoram_r },
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x0800, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x10bf, MRA_RAM }, /* sprites */
 	{ 0x10c0, 0x14ff, MRA_RAM }, /* ??? */
 	{ 0x1500, 0x1fff, MRA_RAM }, /* work ram */
@@ -71,12 +85,14 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x07ff, colorram_w, &colorram },
-    { 0x0800, 0x0fff, videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x07ff, jailbrek_colorram_w, &colorram },
+    { 0x0800, 0x0fff, jailbrek_videoram_w, &videoram },
     { 0x1000, 0x10bf, MWA_RAM, &spriteram, &spriteram_size }, /* sprites */
     { 0x10c0, 0x14ff, MWA_RAM }, /* ??? */
 	{ 0x1500, 0x1fff, MWA_RAM }, /* work ram */
     { 0x2000, 0x203f, MWA_RAM, &jailbrek_scroll_x }, /* scroll registers */
+    { 0x2040, 0x2040, MWA_NOP }, /* ??? */
+    { 0x2041, 0x2041, MWA_NOP }, /* ??? */
     { 0x2042, 0x2042, MWA_RAM, &jailbrek_scroll_dir }, /* bit 2 = scroll direction */
     { 0x2043, 0x2043, MWA_NOP }, /* ??? */
     { 0x2044, 0x2044, ctrl_w }, /* irq, nmi enable, screen flip */
@@ -98,29 +114,25 @@ INPUT_PORTS_START( jailbrek )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 - $3301 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	// shoot
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )	// select
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 - $3302 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW0  - $3303 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -156,7 +168,7 @@ INPUT_PORTS_START( jailbrek )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, "Invalid?" )
+	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW1  - $3100 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
@@ -168,16 +180,14 @@ INPUT_PORTS_START( jailbrek )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "30000 70000" )
-	PORT_DIPSETTING(    0x00, "40000 80000" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "30K 70K" )
+	PORT_DIPSETTING(    0x00, "40K 80K" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -189,15 +199,8 @@ INPUT_PORTS_START( jailbrek )
 	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
-
 
 
 static struct GfxLayout charlayout =

@@ -5,6 +5,9 @@ Taito X-system
 
 driver by Richard Bush, Howie Cohen and Yochizo
 
+25th Nov 2003
+vidhrdw merged with vidhrdw/seta.c
+
 
 Supported games:
 ----------------------------------------------------
@@ -15,6 +18,7 @@ Supported games:
   Daisenpu (Japan)        Taito Corp.           1988
   Balloon Brothers        East Technology Corp. 1990
   Gigandes                East Technology Corp. 1990
+  Last Striker            East Technology Corp. 1989
 
 Please tell me the games worked on this board.
 
@@ -173,6 +177,43 @@ East Technology 1992
                                                     0
 
 
+Kyuukyoku no Striker
+East Technology/Taito, 1989
+
+This game runs on Seta hardware and also using one Taito custom chip.
+
+
+PCB Layout
+----------
+
+PO-057A
+|------------------------------- |
+|  YM2610    IC.18D  6264        |
+|YM3016                          |
+|    Z80  TCO140SYT        68000 |
+| X1-004  X1-001A          PE.9A |
+|J         X1-002A  6264   62256 |
+|A                  6264         |
+|M           16MHz         PO.4A |
+|M X1-007           DSW1   62256 |
+|A X1-006           DSW2         |
+|              M-8-3             |
+|M-8-5  M-8-4  M-8-2             |
+|              M-8-1             |
+|              M-8-0             |
+|--------------------------------|
+
+Notes:
+        All M-8-x ROMs are held on a plug-in sub-board.
+        The sub-board has printed on it "East Technology" and has PCB Number PO-046A
+
+         68000 clock: 8.000MHz
+           Z80 clock: 4.000MHz
+        YM2610 clock: 8.000MHz
+               Vsync: 58Hz
+               HSync: 15.22kHz
+
+
 C-Chip notes
 ------------
 
@@ -186,16 +227,7 @@ its place. The East Technology games on this hardware follow Daisenpu.
 #include "state.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
-
-
-VIDEO_UPDATE( superman );
-VIDEO_START( superman );
-VIDEO_START( ballbros );
-
-extern size_t supes_videoram_size;
-extern size_t supes_attribram_size;
-extern data16_t *supes_videoram;
-extern data16_t *supes_attribram;
+#include "seta.h"
 
 MACHINE_INIT( cchip1 );
 READ16_HANDLER ( cchip1_word_r );
@@ -256,6 +288,23 @@ static WRITE16_HANDLER( daisenpu_input_w )
 }
 
 
+static WRITE16_HANDLER( kyustrkr_input_w )
+{
+	switch (offset)
+	{
+		case 0x04:	/* coin counters and lockout */
+			coin_counter_w(0,data & 0x01);
+			coin_counter_w(1,data & 0x02);
+			coin_lockout_w(0,data & 0x04);
+			coin_lockout_w(1,data & 0x08);
+//logerror("taitox coin control %04x to offset %04x\n",data,offset);
+			break;
+
+		default:
+			logerror("taitox unknown input write %04x to offset %04x\n",data,offset);
+	}
+}
+
 /**************************************************************************/
 
 static int banknum = -1;
@@ -295,8 +344,8 @@ static MEMORY_WRITE16_START( superman_writemem )
 	{ 0x800002, 0x800003, taitosound_comm16_lsb_w },
 	{ 0x900000, 0x900fff, cchip1_word_w },
 	{ 0xb00000, 0xb00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &supes_attribram, &supes_attribram_size },
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &supes_videoram, &supes_videoram_size },
+	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16	},	// Sprites Y
+	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
 	{ 0xf00000, 0xf03fff, MWA16_RAM },			/* Main RAM */
 MEMORY_END
 
@@ -320,8 +369,8 @@ static MEMORY_WRITE16_START( daisenpu_writemem )
 	{ 0x800002, 0x800003, taitosound_comm16_lsb_w },
 	{ 0x900000, 0x90000f, daisenpu_input_w },
 	{ 0xb00000, 0xb00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0xd00000, 0xd00fff, MWA16_RAM, &supes_attribram, &supes_attribram_size },
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &supes_videoram, &supes_videoram_size },
+	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16	},	// Sprites Y
+	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
 	{ 0xf00000, 0xf03fff, MWA16_RAM },			/* Main RAM */
 MEMORY_END
 
@@ -345,8 +394,8 @@ static MEMORY_WRITE16_START( gigandes_writemem )
 	{ 0x800002, 0x800003, taitosound_comm16_lsb_w },
 	{ 0x900000, 0x90000f, daisenpu_input_w },
 	{ 0xb00000, 0xb00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &supes_attribram, &supes_attribram_size },
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &supes_videoram, &supes_videoram_size },
+	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16	},	// Sprites Y
+	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
 	{ 0xf00000, 0xf03fff, MWA16_RAM },			/* Main RAM */
 MEMORY_END
 
@@ -370,8 +419,8 @@ static MEMORY_WRITE16_START( ballbros_writemem )
 	{ 0x800002, 0x800003, taitosound_comm16_lsb_w },
 	{ 0x900000, 0x90000f, daisenpu_input_w },
 	{ 0xb00000, 0xb00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &supes_attribram, &supes_attribram_size },
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &supes_videoram, &supes_videoram_size },
+	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16	},	// Sprites Y
+	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
 	{ 0xf00000, 0xf03fff, MWA16_RAM },			/* Main RAM */
 MEMORY_END
 
@@ -861,6 +910,71 @@ INPUT_PORTS_START( ballbros )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( kyustrkr )
+	PORT_START /* DSW A / DSW B */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ))
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ))
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	// Free play in test mode, does not work
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* DSW C / DSW D */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x40, "Japanese" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START      /* IN0 */
+	TAITO_X_PLAYERS_INPUT( IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* IN1 */
+	TAITO_X_PLAYERS_INPUT( IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* IN2 */
+	TAITO_X_SYSTEM_INPUT
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 /**************************************************************************/
 
@@ -975,12 +1089,12 @@ static MACHINE_DRIVER_START( superman )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(52*8, 32*8)
-	MDRV_VISIBLE_AREA(2*8, 50*8-1, 2*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(superman_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(superman)
-	MDRV_VIDEO_UPDATE(superman)
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1006,18 +1120,17 @@ static MACHINE_DRIVER_START( daisenpu )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(52*8, 32*8)
-	MDRV_VISIBLE_AREA(2*8, 50*8-1, 3*8, 31*8-1)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(superman_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(superman)
-	MDRV_VIDEO_UPDATE(superman)
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( gigandes )
 
@@ -1037,12 +1150,12 @@ static MACHINE_DRIVER_START( gigandes )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(52*8, 32*8)
-	MDRV_VISIBLE_AREA(2*8, 50*8-1, 2*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(superman_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(superman)
-	MDRV_VIDEO_UPDATE(superman)
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1068,13 +1181,13 @@ static MACHINE_DRIVER_START( ballbros )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(52*8, 32*8)
-	MDRV_VISIBLE_AREA(2*8, 50*8-1, 2*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
 
 	MDRV_GFXDECODE(ballbros_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(ballbros)
-	MDRV_VIDEO_UPDATE(superman)
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1207,16 +1320,44 @@ ROM_START( ballbros )
 ROM_END
 
 
+ROM_START( kyustrkr )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "pe.9a", 0x00000, 0x20000, CRC(082b5f96) SHA1(97c08b506b2a07d63f3323359b8564aa3621f483) )
+	ROM_LOAD16_BYTE( "po.4a", 0x00001, 0x20000, CRC(0100361e) SHA1(45791f697c86309c459d0d8c3d3e967a3ece3ede) )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "ic.18d", 0x00000, 0x4000, CRC(92cfb788) SHA1(41cd5433584df05652bd0ce8c5a35dc38262d6f2) )
+	ROM_CONTINUE(       0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "m-8-3.u3",     0x00000, 0x20000, CRC(1c4084e6) SHA1(addea2ba07bddb41fbe7f0fc859e744990bb9ff5) )
+	ROM_LOAD( "m-8-2.u4",     0x20000, 0x20000, CRC(ada21c4d) SHA1(a683c8d798370c50d9bd5e67e91d7ed0f1659c20) )
+	ROM_LOAD( "m-8-1.u5",     0x40000, 0x20000, CRC(9d95aad6) SHA1(3391b14196fea12223ab247d909791bc68fc8d56) )
+	ROM_LOAD( "m-8-0.u6",     0x60000, 0x20000, CRC(0dfb6ed3) SHA1(0937614c8f97040d0216363bfb2bc21161128a3c) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "m-8-5.u2",     0x00000, 0x20000, CRC(d9d90e0a) SHA1(1011548b4fb5f1a194c93ded512e74cda2c06ceb) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "m-8-4.u1",     0x00000, 0x20000, CRC(d3f6047a) SHA1(0db6d762bbe2d68cddf30e06125b904e1021b96d) )
+ROM_END
+
 DRIVER_INIT( taitox )
 {
 	state_save_register_int("taitof2", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);
 }
 
+DRIVER_INIT( kyustrkr )
+{
+	init_taitox();
+	install_mem_write16_handler (0, 0x900000, 0x90000f, kyustrkr_input_w);
+}
 
 GAME( 1988, superman, 0,        superman, superman, taitox,   ROT0,   "Taito Corporation", "Superman" )
 GAME( 1989, twinhawk, 0,        daisenpu, twinhawk, taitox,   ROT270, "Taito Corporation Japan", "Twin Hawk (World)" )
 GAME( 1989, twinhwku, twinhawk, daisenpu, twinhwku, taitox,   ROT270, "Taito America Corporation", "Twin Hawk (US)" )
 GAME( 1989, daisenpu, twinhawk, daisenpu, daisenpu, taitox,   ROT270, "Taito Corporation", "Daisenpu (Japan)" )
 GAME( 1989, gigandes, 0,        gigandes, gigandes, taitox,   ROT0,   "East Technology", "Gigandes" )
+GAME( 1989, kyustrkr, 0,        ballbros, kyustrkr, kyustrkr, ROT180, "East Technology", "Last Striker / Kyuukyoku no Striker" )
 GAME( 1992, ballbros, 0,        ballbros, ballbros, taitox,   ROT0,   "East Technology", "Balloon Brothers" )

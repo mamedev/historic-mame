@@ -27,17 +27,17 @@ static struct tilemap *bg_tilemap;
   Colors 32-47 Sprites
   Colors 48-63 not used
 
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output, I assumed the usual ones.
-  bit 8 -- inverter -- 220 ohm resistor  -- RED
-        -- inverter -- 470 ohm resistor  -- RED
-        -- inverter -- 1  kohm resistor  -- RED
-        -- inverter -- 220 ohm resistor  -- GREEN
-        -- inverter -- 470 ohm resistor  -- GREEN
-        -- inverter -- 1  kohm resistor  -- GREEN
-        -- inverter -- 220 ohm resistor  -- BLUE
-        -- inverter -- 470 ohm resistor  -- BLUE
-  bit 0 -- inverter -- 1  kohm resistor  -- BLUE
+  These are the exact resistor values from the schematics:
+
+  bit 8 -- diode |< -- pullup 1 kohm -- 2.2 kohm resistor -- pulldown 100 pf -- RED
+		-- diode |< -- pullup 1 kohm -- 4.7 kohm resistor -- pulldown 100 pf -- RED
+		-- diode |< -- pullup 1 kohm -- 10  kohm resistor -- pulldown 100 pf -- RED
+		-- diode |< -- pullup 1 kohm -- 2.2 kohm resistor -- pulldown 100 pf -- GREEN
+		-- diode |< -- pullup 1 kohm -- 4.7 kohm resistor -- pulldown 100 pf -- GREEN
+		-- diode |< -- pullup 1 kohm -- 10  kohm resistor -- pulldown 100 pf -- GREEN
+		-- diode |< -- pullup 1 kohm -- 2.2 kohm resistor -- pulldown 100 pf -- BLUE
+		-- diode |< -- pullup 1 kohm -- 4.7 kohm resistor -- pulldown 100 pf -- BLUE
+  bit 0 -- diode |< -- pullup 1 kohm -- 10  kohm resistor -- pulldown 100 pf -- BLUE
 
 ***************************************************************************/
 WRITE_HANDLER( cloak_paletteram_w )
@@ -51,6 +51,8 @@ WRITE_HANDLER( cloak_paletteram_w )
 	r = (~color & 0x1c0) >> 6;
 	g = (~color & 0x038) >> 3;
 	b = (~color & 0x007);
+
+	// the following is WRONG! fix it
 
 	bit0 = (r >> 0) & 0x01;
 	bit1 = (r >> 1) & 0x01;
@@ -68,11 +70,11 @@ WRITE_HANDLER( cloak_paletteram_w )
 	palette_set_color(offset & 0x3f,r,g,b);
 }
 
-
 WRITE_HANDLER( cloak_clearbmp_w )
 {
-	bmap = data & 1;
-	if (data & 2)	/* clear */
+	bmap = data & 0x01;
+
+	if (data & 0x02)	/* clear */
 	{
 		if (bmap)
 		{
@@ -87,20 +89,18 @@ WRITE_HANDLER( cloak_clearbmp_w )
 	}
 }
 
-
 static void adjust_xy(int offset)
 {
 	switch(offset)
 	{
-	case 0x00:  x--; y++; break;
-	case 0x01:       y--; break;
-	case 0x02:  x--;      break;
-	case 0x04:  x++; y++; break;
-	case 0x05:  	 y++; break;
-	case 0x06:  x++;      break;
+		case 0x00:  x--; y++; break;
+		case 0x01:       y--; break;
+		case 0x02:  x--;      break;
+		case 0x04:  x++; y++; break;
+		case 0x05:  	 y++; break;
+		case 0x06:  x++;      break;
 	}
 }
-
 
 READ_HANDLER( graph_processor_r )
 {
@@ -108,11 +108,11 @@ READ_HANDLER( graph_processor_r )
 
 	if (bmap)
 	{
-		ret = tmpvideoram2[y*256+x];
+		ret = tmpvideoram2[y * 256 + x];
 	}
-	else
+ 	else
 	{
-		ret = tmpvideoram[y*256+x];
+		ret = tmpvideoram[y * 256 + x];
 	}
 
 	adjust_xy(offset);
@@ -120,32 +120,31 @@ READ_HANDLER( graph_processor_r )
 	return ret;
 }
 
-
 WRITE_HANDLER( graph_processor_w )
 {
-	int col;
+	int color;
 
 	switch (offset)
 	{
-	case 0x03:  x=data; break;
-	case 0x07:  y=data; break;
-	default:
-		col = data & 0x07;
+		case 0x03: x = data; break;
+		case 0x07: y = data; break;
+		default:
+			color = data & 0x07;
 
-		if (bmap)
-		{
-			plot_pixel(tmpbitmap, (x-6)&0xff, y, Machine->pens[16 + col]);
-			tmpvideoram[y*256+x] = col;
-		}
-		else
-		{
-			plot_pixel(tmpbitmap2, (x-6)&0xff, y, Machine->pens[16 + col]);
-			tmpvideoram2[y*256+x] = col;
-		}
+			if (bmap)
+			{
+				plot_pixel(tmpbitmap, (x-6)&0xff, y, Machine->pens[16 + color]);
+				tmpvideoram[y*256+x] = color;
+			}
+			else
+			{
+				plot_pixel(tmpbitmap2, (x-6)&0xff, y, Machine->pens[16 + color]);
+				tmpvideoram2[y*256+x] = color;
+			}
 
-		adjust_xy(offset);
-		break;
-	}
+			adjust_xy(offset);
+			break;
+		}
 }
 
 WRITE_HANDLER( cloak_videoram_w )
@@ -159,11 +158,7 @@ WRITE_HANDLER( cloak_videoram_w )
 
 WRITE_HANDLER( cloak_flipscreen_w )
 {
-	if (flip_screen != (~data & 0x80))
-	{
-		flip_screen_set(~data & 0x80);
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-	}
+	flip_screen_set(data & 0x80);
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -212,16 +207,16 @@ static void refresh_bitmaps(void)
 }
 #endif
 
-static void cloak_draw_sprites( struct mame_bitmap *bitmap )
+static void cloak_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 
 	for (offs = (spriteram_size / 4) - 1; offs >= 0; offs--)
 	{
 		int code = spriteram[offs + 64] & 0x7f;
-		int flipx = (spriteram[offs + 64] & 0x80);
+		int flipx = spriteram[offs + 64] & 0x80;
 		int flipy = 0;
-		int sx = 256 - spriteram[offs + 192];
+		int sx = spriteram[offs + 192];
 		int sy = 240 - spriteram[offs];
 
 		if (flip_screen)
@@ -232,18 +227,14 @@ static void cloak_draw_sprites( struct mame_bitmap *bitmap )
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap, Machine->gfx[1],
-			code, 0,
-			flipx, flipy,
-			sx, sy,
-			&Machine->visible_area,
-			TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap, Machine->gfx[1], code, 0, flipx, flipy,
+			sx, sy,	cliprect, TRANSPARENCY_PEN, 0);
 	}
 }
 
 VIDEO_UPDATE( cloak )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,16);
-	cloak_draw_sprites(bitmap);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	copybitmap(bitmap, (bmap ? tmpbitmap2 : tmpbitmap),flip_screen,flip_screen,0,0,cliprect,TRANSPARENCY_COLOR,16);
+	cloak_draw_sprites(bitmap, cliprect);
 }

@@ -792,6 +792,17 @@ else
 CPUDEFS += -DHAS_ADSP2101=0
 endif
 
+CPU=$(strip $(findstring ADSP2104@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/adsp2100
+CPUDEFS += -DHAS_ADSP2104=1
+CPUOBJS += $(OBJ)/cpu/adsp2100/adsp2100.o
+DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
+$(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
+else
+CPUDEFS += -DHAS_ADSP2104=0
+endif
+
 CPU=$(strip $(findstring ADSP2105@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/adsp2100
@@ -1529,4 +1540,20 @@ SOUNDDEFS += -DHAS_SCSP=1
 SOUNDOBJS += $(OBJ)/sound/scsp.o
 else
 SOUNDDEFS += -DHAS_SCSP=0
+endif
+
+SOUND=$(strip $(findstring PSXSPU@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_PSXSPU=1
+SOUNDOBJS += $(OBJ)/sound/psx.o
+else
+SOUNDDEFS += -DHAS_PSXSPU=0
+endif
+
+SOUND=$(strip $(findstring YMF271@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_YMF271=1
+SOUNDOBJS += $(OBJ)/sound/ymf271.o
+else
+SOUNDDEFS += -DHAS_YMF271=0
 endif

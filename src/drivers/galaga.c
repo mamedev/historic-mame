@@ -701,9 +701,6 @@ LS259 pin 13 tied to Z80 pin 14
 LS259 pin 15 tied to Z80 pin 26
 LS259 pin 16 tied to Z80 pin 11
 
-Developers:
-           More info reqd? Email me...
-           theguru@emuunlim.com
 
 */
 

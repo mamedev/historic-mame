@@ -246,6 +246,182 @@ TC0380BSH
 c09-16.rom is located next to
 c09-05, which is located next to Taito TCO370MSO.
 
+SCI (Guru)
+Taito, 1989
+
+Controls for this game are one wheel, one switch for shift lever (used for high gear)
+and one switch each for accelerate, brake, gun and nitro.
+
+Note that the gear is low by default and is shifted to high gear by a lever which
+holds the switch closed. The lever is not self-centering or spring-loaded to go back to
+low. The lever must be physically shifted back to low when required.
+
+
+PCB Layout
+----------
+
+CPU PCB  K1100490A  J1100209A
+|----------------------------------------------------|
+| 24MHz  C09-14.42  TCO140SYT   C09-22.3   C09-21.2  |
+|        C09-13.43                    68000          |
+|        C09-12.44              C09-33.6   C09-32.5  |
+|        YM2610     C09-15.29   6264       6264      |
+| YM3016 TL074 TL074  Z80                            |
+|                   C09-34.31   6264       TCO150ROD |
+|D             VOL    6264      6264                 |
+|                                                    |
+|        MB3735                 C09-07.15  C09-23.14 |
+|          D633        16MHz                         |
+|   62064             6264      6264       TCO170ABT |
+|                    C09-28.37  6264                 |
+|G  62003            C09-36.38           C09-24.22   |
+|        TCO220IOC    6264     C09-26.26 C09-25.25   |
+|                    C09-30.40        68000          |
+|        DSWB DSWA   C09-31.41                       |
+|----------------------------------------------------|
+
+Notes:
+      Clocks:
+             68000 : 16.000MHz (both)
+             Z80   : 4.000MHz
+             YM2610: 8.000MHz
+
+      Vsync: 60Hz
+
+      Misc parts:
+                 MB3735: 15w Power AMP with dual output (used for stereo sounds ; CH1/CH2)
+                 TL074 : JFET Lo Noise Quad OP Amp
+                 6264  : 8k x8 SRAM
+               TD62064 : NPN 50V 1.5A Quad Darlinton Switch (for driving coin meters)
+               TD62003 : PNP 50V 0.5A Quad Darlinton Switch (for driving coin meters)
+                  D633 : Si NPN POWER transistor used in 68k reset circuit (TIP122 compatible)
+      ROMs:
+            C09-12 thru C09-14 - MB834100
+            C09-07             - HN62404
+            C09-32 thru C09-33 - AM27C512
+            C09-30 thru C09-31 - TC571000
+            C09-38 and C09-36  - TC571000
+            C09-23             - AM27S21
+            C09-22 and C09-26  - MMI PAL16L8B
+            C09-21 and
+            C09-24 thru C09-25 - MMI PAL20L8B
+
+PINOUT CONNECTOR D (Note: All pinouts typed from an original Taito document)
+------------------
+
+1  +24V
+2  +24V
+3  GND
+4  GND
+5  D OUT
+
+Question: +24V and D OUT are for?
+
+
+PINOUT CONNECTOR G (the meanings of some of these is a bit vague - PTL OUTx, DRV0, HANDLE CENTER SW etc)
+
+         PARTS     |    SOLDER
+    ---------------|---------------
+             GND  1|A GND
+             GND  2|B GND
+             +5V  3|C +5V
+             +5V  4|D +5V
+             -5V  5|E -5V
+            +12V  6|F +12V
+             KEY  7|H KEY
+       COUNTER A  8|J COUNTER B
+     C LOCKOUT A  9|K C LOCKOUT B
+        SPK CH1+ 10|L SPK CH2+
+        SPK CH1- 11|M SPK CH2-
+         VOLUME2 12|N VOLUME1
+         VOLUME3 13|P MUTE
+             GND 14|R SERVICE SW
+             GND 15|S BRAKE SW0
+          COIN A 16|T COIN B
+       BRAKE SW1 17|U BRAKE SW2
+        NITRO SW 18|V TILT
+HANDLE CENTER SW 19|W START SW
+        SHIFT SW 20|X ACCEL SW0
+       ACCEL SW1 21|Y ACCEL SW2
+        PTL OUT1 22|Z PTL OUT2
+            DRV0 23|a GUN SW
+         PADL X1 24|b PADL X2
+         PADL Y1 25|c PADL Y2
+       HANDLE Z1 26|d HANDLE Z2
+             GND 27|e GND
+             GND 28|f GND
+
+Question: What hardware is used for steering and where is it connected? It doesn't seem to use
+          a regular potentiometer for the steering??
+
+
+PCB Layout
+----------
+
+VIDEO PCB  K1100491A  J1100210A
+|-----------------------------------------------------|
+|          TCO370MSO  C09-17.24  43256                |
+|H                    C09-18.25  43256                |
+|          C09-05.16                                  |
+|          C09-16.17  26.686MHz  TCO100SCN  6264      |
+|   C1815                                             |
+|V  C1815                                   6264      |
+|   C1815  TCO260DAR             C09-06.37            |
+|6264                                                 |
+|                                                     |
+|                                TCO380BSH   C09-19.67|
+|TCO270MOD TCO300FLA                                  |
+|                                                     |
+|43256    43256   43256   43256   C09-04.52  C09-20.71|
+|43256    43256   43256   43256   C09-03.53           |
+|43256    43256   43256   43256   C09-02.54           |
+|43256    43256   43256   43256   C09-01.55           |
+|-----------------------------------------------------|
+
+Notes:
+      ROMs:
+            C09-01 thru C09-05 - 234000
+            C09-06             - HN62404
+            C09-17 thru C09-18 - MMI 63S441
+            C09-19             - MMI PAL16L8B
+            C09-20             - AM27S21
+
+      Misc parts:
+                6264: 8k x8 SRAM
+               43256: 32k x8 SRAM
+               C1815: transistor used for driving RGB
+
+PINOUT CONNECTOR H
+------------------
+
+1  GND
+2  GND
+3  GND
+4  GND
+5  +5V
+6  +5V
+7  +5V
+8  +5V
+9  -5V
+10 POST
+11 +12V
+12 NC
+
+
+PINOUT CONNECTOR V
+------------------
+
+1  GND
+2  RED
+3  GREEN
+4  BLUE
+5  SYNC
+6  NC
+7  NC
+
+
+
+
 
 BShark custom chips
 -------------------

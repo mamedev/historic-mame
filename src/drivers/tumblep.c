@@ -6,6 +6,7 @@
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 2)
   Jump Kids	            (c) 1993 Comad
   Fancy World           (c) 1995 Unico
+  Hatch Catch			(c) 1995 SemiCom
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
 
@@ -14,6 +15,9 @@
 
   One of the Jump Kids Sprite roms is bad, same with
   the Sound CPU code, there's one unknown ROM.
+
+  Sometimes a garbage sprite gets left after the SemiCom logo in Hatch
+  Catch
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
 
@@ -97,6 +101,42 @@ Stephh's notes (based on the games M68000 code and some tests) :
     games in the driver.
 
 
+
+Hatch Catch
+Semicom, 1995
+
+PCB Layout
+----------
+
+|---------------------------------------------|
+|       M6295  0.UC1  4.096MHz      PAL  6.OR1|
+|YM3016 YM2151 6116                      7.OR2|
+|uPC1241H  PAL 1.UA7                     8.OR3|
+|         Z80B        6116               9.OR4|
+|                     6116             6116   |
+|                    PAL               6116   |
+|J                   PAL               PAL    |
+|A  PAL                                       |
+|M  6116                                   PAL|
+|M  6116                                      |
+|A  PAL PAL                                   |
+|   PAL                        4.M5           |
+|DSW1                          5.M6           |
+|             15MHz                           |
+|DSW2           62256          6264           |
+|               62256          6264    ACTEL  |
+|        68000  2.B16          PAL     A1020B |
+|87C52          3.B17                 (PLCC84)|
+|---------------------------------------------|
+
+Notes:
+        68k clock: 15MHz
+        Z80 clock: 3.42719MHz  <-- strange clock, but verified correct.
+      M6295 clock: 1.024MHz, sample rate = /132
+      87C52 clock: 15MHz
+     YM2151 clock: 3.42719MHz
+            VSync: 60Hz
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -119,6 +159,7 @@ WRITE16_HANDLER( tumblep_pf2_data_w );
 WRITE16_HANDLER( fncywld_pf1_data_w );
 WRITE16_HANDLER( fncywld_pf2_data_w );
 WRITE16_HANDLER( tumblep_control_0_w );
+WRITE16_HANDLER( semicom_soundcmd_w );
 
 extern data16_t *tumblep_pf1_data,*tumblep_pf2_data;
 data16_t* tumblep_mainram;
@@ -184,7 +225,7 @@ static MEMORY_WRITE16_START( tumblepop_writemem )
 	{ 0x120000, 0x123fff, MWA16_RAM },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x18000c, 0x18000d, MWA16_NOP },
-	{ 0x1a0000, 0x1a07ff, MWA16_RAM, &spriteram16 },
+	{ 0x1a0000, 0x1a07ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
 	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
@@ -213,7 +254,7 @@ static MEMORY_WRITE16_START( tumblepopb_writemem )
 	{ 0x100000, 0x100001, tumblep_oki_w },
 	{ 0x120000, 0x123fff, MWA16_RAM, &tumblep_mainram },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 }, /* Bootleg sprite buffer */
+	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16, &spriteram_size }, /* Bootleg sprite buffer */
 	{ 0x18000c, 0x18000d, MWA16_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
@@ -249,7 +290,7 @@ static MEMORY_WRITE16_START( fncywld_writemem )
 	{ 0x100002, 0x100003, YM2151_data_port_0_lsb_w },
 	{ 0x100004, 0x100005, OKIM6295_data_0_lsb_w },
 	{ 0x140000, 0x140fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 }, /* sprites */
+	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16, &spriteram_size }, /* sprites */
 	{ 0x160800, 0x16080f, MWA16_RAM }, /* goes slightly past the end of spriteram? */
 	{ 0x18000c, 0x18000d, MWA16_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
@@ -261,6 +302,35 @@ static MEMORY_WRITE16_START( fncywld_writemem )
 	{ 0x342000, 0x3421ff, MWA16_NOP },
 	{ 0x342400, 0x34247f, MWA16_NOP },
 	{ 0xff0000, 0xffffff, MWA16_RAM }, // RAM
+MEMORY_END
+
+
+static MEMORY_READ16_START( htchctch_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x120000, 0x123fff, MRA16_RAM },
+	{ 0x140000, 0x1407ff, MRA16_RAM },
+	{ 0x160000, 0x160fff, MRA16_RAM },
+	{ 0x180000, 0x18000f, tumblepop_controls_r },
+	{ 0x1a0000, 0x1a0fff, MRA16_RAM },
+	{ 0x341000, 0x342fff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( htchctch_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x100001, semicom_soundcmd_w },
+	{ 0x120000, 0x123fff, MWA16_RAM, &tumblep_mainram },
+	{ 0x140000, 0x1407ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x160000, 0x160fff, MWA16_RAM, &spriteram16, &spriteram_size }, /* Bootleg sprite buffer */
+	{ 0x18000c, 0x18000d, MWA16_NOP },
+	{ 0x1a0000, 0x1a0fff, MWA16_RAM },
+	{ 0x300000, 0x30000f, tumblep_control_0_w },
+	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
+	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
+//	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
+	{ 0x341000, 0x342fff, MWA16_RAM }, // extra ram?
+//	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
+//	{ 0x342000, 0x3421ff, MWA16_NOP },
+//	{ 0x342400, 0x34247f, MWA16_NOP },
 MEMORY_END
 
 /******************************************************************************/
@@ -297,6 +367,27 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
+MEMORY_END
+
+WRITE16_HANDLER( semicom_soundcmd_w )
+{
+	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);
+}
+
+static MEMORY_READ_START( semicom_sound_readmem )
+	{ 0x0000, 0xcfff, MRA_ROM },
+	{ 0xd000, 0xd7ff, MRA_RAM },
+	{ 0xf001, 0xf001, YM2151_status_port_0_r },
+	{ 0xf008, 0xf008, soundlatch_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( semicom_sound_writemem )
+	{ 0x0000, 0xcfff, MWA_ROM },
+	{ 0xd000, 0xd7ff, MWA_RAM },
+	{ 0xf000, 0xf000, YM2151_register_port_0_w },
+	{ 0xf001, 0xf001, YM2151_data_port_0_w },
+	{ 0xf002, 0xf002, OKIM6295_data_0_w },
+//	{ 0xf006, 0xf006,  }, ???
 MEMORY_END
 
 /******************************************************************************/
@@ -479,6 +570,86 @@ INPUT_PORTS_START( fncywld )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( htchctch )
+	PORT_START	/* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* Credits */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Dip switch bank 1 (wrong) */
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "2 Coins to Start, 1 to Continue" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -678,6 +849,59 @@ static MACHINE_DRIVER_START( fncywld )
 	MDRV_SOUND_ADD(OKIM6295, fncy_okim6295_interface)
 MACHINE_DRIVER_END
 
+static void semicom_irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+static struct YM2151interface semicom_ym2151_interface =
+{
+	1,
+	3427190,	/* verified */
+	{ YM3012_VOL(10,MIXER_PAN_LEFT,10,MIXER_PAN_RIGHT) },
+	{ semicom_irqhandler }
+};
+
+static struct OKIM6295interface semicom_okim6295_interface =
+{
+	1,			/* 1 chip */
+	{ 1024000/132 },		/* verified */
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+
+
+static MACHINE_DRIVER_START( htchctch )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 15000000) /* verified */
+	MDRV_CPU_MEMORY(htchctch_readmem,htchctch_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD( Z80, 3427190) /* verified */
+
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(semicom_sound_readmem,semicom_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(tumblep)
+	MDRV_VIDEO_UPDATE(jumpkids)
+
+	/* sound hardware - same as hyperpac */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, semicom_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, semicom_okim6295_interface)
+MACHINE_DRIVER_END
+
 /******************************************************************************/
 
 ROM_START( tumblep )
@@ -812,24 +1036,79 @@ Lev 6 0x78 0012 0000 <- RAM shared with protection device (first 0x200 bytes?)
 
 ROM_START( htchctch )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "p03.b16",  0x00001, 0x20000, CRC(eff14c40) )
-	ROM_LOAD16_BYTE( "p04.b17",  0x00000, 0x20000, CRC(6991483a) )
+	ROM_LOAD16_BYTE( "p03.b16",  0x00001, 0x20000, CRC(eff14c40) SHA1(8fdda1fb859546c16f940e51f7e126768205154c) )
+	ROM_LOAD16_BYTE( "p04.b17",  0x00000, 0x20000, CRC(6991483a) SHA1(c8d868ef1f87655c37f0b1efdbb71cd26918f270) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "p02.b5", 0x00000, 0x10000 , CRC(c5a03186) )
+	ROM_LOAD( "p02.b5", 0x00000, 0x10000 , CRC(c5a03186) SHA1(42561ab36e6d7a43828d3094e64bd1229ab893ba) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(5b27adb6) SHA1(a0821093d8c73765ff15767bdfc0afa95aa1371d) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "p01.c1", 0x00000, 0x20000, CRC(18c06829) )
+	ROM_LOAD( "p01.c1", 0x00000, 0x20000, CRC(18c06829) SHA1(46b180319ed33abeaba70d2cc61f17639e59bfdb) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD16_BYTE( "p06srom5.bin", 0x00001, 0x40000, CRC(3d2cbb0d) )
-	ROM_LOAD16_BYTE( "p07srom6.bin", 0x00000, 0x40000, CRC(0207949c) )
+	ROM_LOAD16_BYTE( "p06srom5.bin", 0x00001, 0x40000, CRC(3d2cbb0d) SHA1(bc80be594a40989e3c23539fc2021de65a2444c5) )
+	ROM_LOAD16_BYTE( "p07srom6.bin", 0x00000, 0x40000, CRC(0207949c) SHA1(84b4dcd27fe89a5350b6642ef99719bb85514174) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD16_BYTE( "p08uor1.bin",  0x00000, 0x20000, CRC(6811e7b6) )
-	ROM_LOAD16_BYTE( "p09uor2.bin",  0x00001, 0x20000, CRC(1c6549cf) )
-	ROM_LOAD16_BYTE( "p10uor3.bin",  0x40000, 0x20000, CRC(6462e6e0) )
-	ROM_LOAD16_BYTE( "p11uor4.bin",  0x40001, 0x20000, CRC(9c511d98) )
+	ROM_LOAD16_BYTE( "p08uor1.bin",  0x00000, 0x20000, CRC(6811e7b6) SHA1(8157f92a3168ffbac86cd8c6294b9c0f3ee0835d) )
+	ROM_LOAD16_BYTE( "p09uor2.bin",  0x00001, 0x20000, CRC(1c6549cf) SHA1(c05aba9b744144db4537e472842b0d53325aa78f) )
+	ROM_LOAD16_BYTE( "p10uor3.bin",  0x40000, 0x20000, CRC(6462e6e0) SHA1(0d107214dfb257e15931701bad6b42c6aadd8a18) )
+	ROM_LOAD16_BYTE( "p11uor4.bin",  0x40001, 0x20000, CRC(9c511d98) SHA1(6615cbb125bd1e1b4da400ec4c4a0f4df8f6fa75) )
+
+ROM_END
+
+/* BC Story
+protected like hatch catch .. but different code .. we don't have it
+also might be bad dumps, rom data is in a strange order */
+
+ROM_START( bcstry )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "bcstry_u.35",  0x20001, 0x20000, BAD_DUMP CRC(d25b80a4) SHA1(6ea1c28cf508b856e93a06063e634a09291cb32c) )
+	ROM_CONTINUE ( 0x00001, 0x20000)
+	ROM_LOAD16_BYTE( "bcstry_u.62",  0x20000, 0x20000, BAD_DUMP CRC(7f7aa244) SHA1(ee9bb2bf22d16f06d7935168e2bd09296fba3abc) )
+	ROM_CONTINUE ( 0x00000, 0x20000)
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "bcstry_u.21", 0x04000, 0x4000 , BAD_DUMP CRC(3ba072d4) SHA1(8b64d3ab4c63132f2f77b2cf38a88eea1a8f11e0) )
+	ROM_CONTINUE( 0x0000, 0x4000 )
+	ROM_CONTINUE( 0xc000, 0x4000 )
+	ROM_CONTINUE( 0x8000, 0x4000 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	/* not got it.. */
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )
+
+	/* order / region of these not verified but each rom is probably 4 plane of 4bpp gfx .. */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD16_BYTE( "bcstry_u.109", 0x000001, 0x80000, CRC(eb04d37a) SHA1(818dc7aafac577920d94c65e47d965dc0474d92c) ) // c
+	ROM_LOAD16_BYTE( "bcstry_u.110", 0x000000, 0x80000, CRC(1bfe65c3) SHA1(27dec16b271866ff336d8b25d352977ca80c35bf) ) // c
+	ROM_LOAD16_BYTE( "bcstry_u.111", 0x100001, 0x80000, CRC(c8bf3a3c) SHA1(604fc57c4d3a581016aa2516236c568488d23c77) ) // c
+	ROM_LOAD16_BYTE( "bcstry_u.113", 0x100000, 0x80000, CRC(746ecdd7) SHA1(afb6dbc0fb94e7ce96a9b219f5f7cd3721d1c1c4) ) // c
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD16_BYTE( "bcstry_u.100", 0x000001, 0x80000, CRC(8c11cbed) SHA1(e04e53af4fe732bf9d20a9ae5c2a90b576ee0b83) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.104", 0x000000, 0x80000, CRC(377c0c71) SHA1(77efa9530b1c311d93c84dd8452701414f740269) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.106", 0x200001, 0x80000, CRC(5219bcbf) SHA1(4b88eab7ffc2dc1de451ae4ee52f1536e179ea13) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200000, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.99",  0x100001, 0x80000, CRC(cdb1af87) SHA1(df1fbda5c7ce4fbd64d6db9eb80946e06119f096) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.102", 0x100000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.105", 0x300001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300000, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
 
 ROM_END
 
@@ -908,14 +1187,29 @@ static DRIVER_INIT( fncywld )
 static DRIVER_INIT( htchctch )
 {
 
-	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
-
+//	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
 	/* simulate RAM initialization done by the protection MCU */
-	/* not verified on real hardware */
-	tumblep_mainram[0x000/2] = 0x4e73;
-	tumblep_mainram[0x1fe/2] = 0x4e73;
+	/* verified on real hardware */
+//	static data16_t htchctch_mcu68k[] =
+//	{
+//		/* moved to protdata.bin file .. */
+//	};
+
+
+//	for (i = 0;i < sizeof(htchctch_mcu68k)/sizeof(htchctch_mcu68k[0]);i++)
+//		tumblep_mainram[0x000/2 + i] = htchctch_mcu68k[i];
+
+	for (i = 0;i < 0x200/2;i++)
+		tumblep_mainram[0x000/2 + i] = PROTDATA[i];
+
+
+
 	tumblepb_gfx1_decrypt();
 
+/* trojan.. */
+#if 0
 	/* patch the irq 6 vector */
 	HCROM[0x00078/2] = 0x0001;
 	HCROM[0x0007a/2] = 0xe000;
@@ -992,7 +1286,8 @@ static DRIVER_INIT( htchctch )
 	/* put the address we to read to in A2 */
 	HCROM[0x1e10c/2] = 0x45f9;
 	HCROM[0x1e10e/2] = 0x0012;
-	HCROM[0x1e110/2] = 0x2000;
+//	HCROM[0x1e110/2] = 0x2000;
+	HCROM[0x1e110/2] = 0x2000+0x60+0x60+0x60+0x60+0x60;
 
 	/* put the number of rows into D3 */
 	HCROM[0x1e112/2] = 0x263c;
@@ -1139,6 +1434,7 @@ static DRIVER_INIT( htchctch )
 			fclose(fp);
 		}
 	}
+#endif
 
 }
 
@@ -1150,4 +1446,5 @@ GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "
 GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
 GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
 GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?
-GAMEX(1995, htchctch, 0,       tumblepb,  tumblep,  htchctch, ROT0, "SemiCom", "Hatch Catch", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" )
+GAMEX(1997, bcstry,   0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story", GAME_NOT_WORKING)

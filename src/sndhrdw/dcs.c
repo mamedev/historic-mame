@@ -36,6 +36,28 @@
 #define SET_INPUT_EMPTY()			(dcs.latch_control |= LCTRL_INPUT_EMPTY)
 #define SET_INPUT_FULL()			(dcs.latch_control &= ~LCTRL_INPUT_EMPTY)
 
+/* These are the some of the control register, we dont use them all */
+enum
+{
+	S1_AUTOBUF_REG = 15,
+	S1_RFSDIV_REG,
+	S1_SCLKDIV_REG,
+	S1_CONTROL_REG,
+	S0_AUTOBUF_REG,
+	S0_RFSDIV_REG,
+	S0_SCLKDIV_REG,
+	S0_CONTROL_REG,
+	S0_MCTXLO_REG,
+	S0_MCTXHI_REG,
+	S0_MCRXLO_REG,
+	S0_MCRXHI_REG,
+	TIMER_SCALE_REG,
+	TIMER_COUNT_REG,
+	TIMER_PERIOD_REG,
+	WAITSTATES_REG,
+	SYSCONTROL_REG
+};
+
 
 
 /***************************************************************************
@@ -75,8 +97,12 @@ struct dcs_state
 	UINT16	output_data;
 	UINT16	output_control;
 	UINT32	output_control_cycles;
+	
+	UINT8	last_output_full;
+	UINT8	last_input_empty;
 
-	void	(*notify)(int);
+	void	(*output_full_cb)(int);
+	void	(*input_empty_cb)(int);
 	UINT16	(*fifo_data_r)(void);
 	UINT16	(*fifo_status_r)(void);
 };
@@ -93,6 +119,7 @@ static struct dcs_state dcs;
 
 static data16_t *dcs_sram_bank0;
 static data16_t *dcs_sram_bank1;
+static data16_t *dcs_expanded_rom;
 
 static data16_t *dcs_polling_base;
 
@@ -193,13 +220,13 @@ MEMORY_END
 
 
 
-/* DCS RAM-based readmem/writemem structures */
+/* DCS2-based readmem/writemem structures */
 MEMORY_READ16_START( dcs2_readmem )
 	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x03ff), MRA16_BANK20 },			/* D/RAM */
 	{ ADSP_DATA_ADDR_RANGE(0x0400, 0x0400), input_latch_r },		/* input latch read */
 	{ ADSP_DATA_ADDR_RANGE(0x0402, 0x0402), output_control_r },		/* secondary soundlatch read */
 	{ ADSP_DATA_ADDR_RANGE(0x0403, 0x0403), latch_status_r },		/* latch status read */
-	{ ADSP_DATA_ADDR_RANGE(0x0407, 0x0407), fifo_input_r },			/* FIFO input read */
+	{ ADSP_DATA_ADDR_RANGE(0x0404, 0x0407), fifo_input_r },			/* FIFO input read */
 	{ ADSP_DATA_ADDR_RANGE(0x0480, 0x0480), dcs_sram_bank_r },		/* S/RAM bank */
 	{ ADSP_DATA_ADDR_RANGE(0x0481, 0x0481), MRA16_NOP },			/* LED in bit $2000 */
 	{ ADSP_DATA_ADDR_RANGE(0x0482, 0x0482), dcs_dram_bank_r },		/* D/RAM bank */
@@ -278,10 +305,35 @@ MACHINE_DRIVER_START( dcs2_audio )
 MACHINE_DRIVER_END
 
 
+MACHINE_DRIVER_START( dcs2_audio_2104 )
+	MDRV_IMPORT_FROM(dcs2_audio)
+	MDRV_CPU_REPLACE("dcs2", ADSP2104, 16000000)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 	INITIALIZATION
 ****************************************************************************/
+
+static void dcs_boot(void)
+{
+	data8_t *src = (data8_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE);
+	data32_t *dst = (data32_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_PGM_OFFSET);
+	switch (Machine->drv->cpu[dcs_cpunum].cpu_type)
+	{
+		case CPU_ADSP2104:
+			adsp2104_load_boot_data(src + 0x2000 * ((dcs.control_regs[SYSCONTROL_REG] >> 6) & 7), dst);
+			break;
+		case CPU_ADSP2105:
+			adsp2105_load_boot_data(src + (dcs.rombank & 0x7ff) * 0x1000, dst);
+			break;
+		case CPU_ADSP2115:
+			adsp2115_load_boot_data(src + (dcs.rombank & 0x7ff) * 0x1000, dst);
+			break;
+	}
+}
+
 
 static void dcs_reset(void)
 {
@@ -327,17 +379,15 @@ static void dcs_reset(void)
 	/* initialize the comm bits */
 	SET_INPUT_EMPTY();
 	SET_OUTPUT_EMPTY();
+	if (!dcs.last_input_empty && dcs.input_empty_cb)
+		(*dcs.input_empty_cb)(dcs.last_input_empty = 1);
+	if (dcs.last_output_full && dcs.output_full_cb)
+		(*dcs.output_full_cb)(dcs.last_output_full = 0);
 
-	/* disable notification by default */
-	dcs.notify = NULL;
-	
 	/* boot */
-	{
-		data8_t *src = (data8_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE);
-		data32_t *dst = (data32_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_PGM_OFFSET);
-		adsp2105_load_boot_data(src, dst);
-	}
-	
+	dcs.control_regs[SYSCONTROL_REG] = 0;
+	dcs_boot();
+
 	/* start the SPORT0 timer */
 	if (dcs.sport_timer)
 		timer_adjust(dcs.sport_timer, TIME_IN_HZ(1000), 0, TIME_IN_HZ(1000));
@@ -356,6 +406,10 @@ void dcs_init(void)
 	dcs.reg_timer = timer_alloc(dcs_irq);
 	dcs.sport_timer = NULL;
 	
+	/* disable notification by default */
+	dcs.output_full_cb = NULL;
+	dcs.input_empty_cb = NULL;
+	
 	/* non-RAM based automatically acks */
 	dcs.auto_ack = 1;
 
@@ -366,11 +420,21 @@ void dcs_init(void)
 
 void dcs2_init(offs_t polling_offset)
 {
+	UINT8 *romsrc;
+	int page, i;
+
 	/* find the DCS CPU */
 	dcs_cpunum = mame_find_cpu_index("dcs2");
 
 	/* borrow memory for the extra 8k */
-	dcs_sram_bank1 = (UINT16 *)(memory_region(REGION_CPU1 + dcs_cpunum) + 0x4000*2);
+	dcs_sram_bank1 = (UINT16 *)(memory_region(REGION_CPU1 + dcs_cpunum) + 0x8000);
+	
+	/* borrow memory also for the expanded ROM data and expand it */
+	romsrc = memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE;
+	dcs_expanded_rom = (UINT16 *)(memory_region(REGION_CPU1 + dcs_cpunum) + 0xc000);
+	for (page = 0; page < 8; page++)
+		for (i = 0; i < 0x400; i++)
+			dcs_expanded_rom[0x400 * page + i] = romsrc[BYTE_XOR_LE(0x1000 * page + i)];
 	
 	/* create the timer */
 	dcs.reg_timer = timer_alloc(dcs_irq);
@@ -378,6 +442,8 @@ void dcs2_init(offs_t polling_offset)
 
 	/* RAM based doesn't do auto-ack, but it has a FIFO */
 	dcs.auto_ack = 0;
+	dcs.output_full_cb = NULL;
+	dcs.input_empty_cb = NULL;
 	dcs.fifo_data_r = NULL;
 	dcs.fifo_status_r = NULL;
 	
@@ -387,6 +453,12 @@ void dcs2_init(offs_t polling_offset)
 
 	/* reset the system */
 	dcs_reset();
+}
+
+
+void dcs_set_auto_ack(int state)
+{
+	dcs.auto_ack = state;
 }
 
 
@@ -473,6 +545,10 @@ static WRITE16_HANDLER( dcs_sram_bank_w )
 {
 	COMBINE_DATA(&dcs.srambank);
 	cpu_setbank(21, (dcs.srambank & 0x1000) ? dcs_sram_bank1 : dcs_sram_bank0);
+
+	/* it appears that the Vegas games also access the boot ROM via this location */	
+	if (((dcs.srambank >> 7) & 7) == dcs.drambank)
+		cpu_setbank(20, dcs_expanded_rom + ((dcs.srambank >> 7) & 7) * 0x400);
 }
 
 
@@ -505,13 +581,14 @@ static READ16_HANDLER( dcs_dram_bank_r )
 	DCS COMMUNICATIONS
 ****************************************************************************/
 
-void dcs_set_notify(void (*callback)(int))
+void dcs_set_io_callbacks(void (*output_full_cb)(int), void (*input_empty_cb)(int))
 {
-	dcs.notify = callback;
+	dcs.input_empty_cb = input_empty_cb;
+	dcs.output_full_cb = output_full_cb;
 }
 
 
-void dcs_set_fifo(UINT16 (*fifo_data_r)(void), UINT16 (*fifo_status_r)(void))
+void dcs_set_fifo_callbacks(UINT16 (*fifo_data_r)(void), UINT16 (*fifo_status_r)(void))
 {
 	dcs.fifo_data_r = fifo_data_r;
 	dcs.fifo_status_r = fifo_status_r;
@@ -630,6 +707,8 @@ void dcs_data_w(int data)
 	cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, ASSERT_LINE);
 
+	if (dcs.last_input_empty && dcs.input_empty_cb)
+		(*dcs.input_empty_cb)(dcs.last_input_empty = 0);
 	SET_INPUT_FULL();
 	dcs.input_data = data;
 }
@@ -637,6 +716,8 @@ void dcs_data_w(int data)
 
 static WRITE16_HANDLER( input_latch_ack_w )
 {
+	if (!dcs.last_input_empty && dcs.input_empty_cb)
+		(*dcs.input_empty_cb)(dcs.last_input_empty = 1);
 	SET_INPUT_EMPTY();
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
 }
@@ -659,8 +740,8 @@ static READ16_HANDLER( input_latch_r )
 
 static void latch_delayed_w(int data)
 {
-	if (IS_OUTPUT_EMPTY() && dcs.notify)
-		(*dcs.notify)(1);
+	if (!dcs.last_output_full && dcs.output_full_cb)
+		(*dcs.output_full_cb)(dcs.last_output_full = 1);
 	SET_OUTPUT_FULL();
 	dcs.output_data = data;
 }
@@ -669,7 +750,7 @@ static void latch_delayed_w(int data)
 static WRITE16_HANDLER( output_latch_w )
 {
 	if (LOG_DCS_IO)
-		logerror("%08X:output_latch_w(%04X)\n", activecpu_get_pc(), data);
+		logerror("%08X:output_latch_w(%04X) (empty=%d)\n", activecpu_get_pc(), data, IS_OUTPUT_EMPTY());
 	timer_set(TIME_NOW, data, latch_delayed_w);
 }
 
@@ -689,8 +770,8 @@ void dcs_ack_w(void)
 int dcs_data_r(void)
 {
 	/* data is actually only 8 bit (read from d8-d15) */
-	if (IS_OUTPUT_FULL() && dcs.notify)
-		(*dcs.notify)(0);
+	if (dcs.last_output_full && dcs.output_full_cb)
+		(*dcs.output_full_cb)(dcs.last_output_full = 0);
 	if (dcs.auto_ack)
 		delayed_ack_w(0);
 
@@ -869,29 +950,6 @@ static void dcs2_dac_update(int num, INT16 **buffer, int length)
 	0x3c00-0x3fff = Memory Mapped control registers & reserved.
 */
 
-/* These are the some of the control register, we dont use them all */
-enum
-{
-	S1_AUTOBUF_REG = 15,
-	S1_RFSDIV_REG,
-	S1_SCLKDIV_REG,
-	S1_CONTROL_REG,
-	S0_AUTOBUF_REG,
-	S0_RFSDIV_REG,
-	S0_SCLKDIV_REG,
-	S0_CONTROL_REG,
-	S0_MCTXLO_REG,
-	S0_MCTXHI_REG,
-	S0_MCRXLO_REG,
-	S0_MCRXHI_REG,
-	TIMER_SCALE_REG,
-	TIMER_COUNT_REG,
-	TIMER_PERIOD_REG,
-	WAITSTATES_REG,
-	SYSCONTROL_REG
-};
-
-
 static WRITE16_HANDLER( dcs_control_w )
 {
 	dcs.control_regs[offset] = data;
@@ -902,11 +960,7 @@ static WRITE16_HANDLER( dcs_control_w )
 			{
 				/* boot force */
 				cpu_set_reset_line(dcs_cpunum, PULSE_LINE);
-				{
-					data8_t *src = (data8_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_SIZE + ((dcs.rombank & 0x7ff) << 12));
-					data32_t *dst = (data32_t *)(memory_region(REGION_CPU1 + dcs_cpunum) + ADSP2100_PGM_OFFSET);
-					adsp2105_load_boot_data(src, dst);
-				}
+				dcs_boot();
 				dcs.control_regs[SYSCONTROL_REG] &= ~0x0200;
 			}
 

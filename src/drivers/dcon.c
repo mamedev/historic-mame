@@ -406,6 +406,17 @@ ROM_START( sdgndmps )
 ROM_END
 
 /***************************************************************************/
+static DRIVER_INIT( sdgndmps )
+{
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	RAM[0x1356/2] = 0x4e71; /* beq -> nop */
+	RAM[0x1358/2] = 0x4e71;
+	
+	RAM[0x4de/2]  = 0x4245; /* ROM checksum */
+	RAM[0x4e0/2]  = 0x4e71;
+	RAM[0x4e2/2]  = 0x4e71;
+}
 
-GAMEX( 1991, sdgndmps, 0, sdgndmps, sdgndmps, 0, ROT0, "Banpresto / Bandai", "SD Gundam Psycho Salamander no Kyoui", GAME_NO_COCKTAIL | GAME_NO_SOUND )
+
+GAMEX( 1991, sdgndmps, 0, sdgndmps, sdgndmps, sdgndmps, ROT0, "Banpresto / Bandai", "SD Gundam Psycho Salamander no Kyoui", GAME_NO_COCKTAIL )
 GAMEX( 1992, dcon,     0, dcon,     dcon,     0, ROT0, "Success",            "D-Con", GAME_NO_COCKTAIL )
