@@ -298,7 +298,7 @@ static struct MachineDriver machine_driver_supbtime =
 	{
 	 	{
 			CPU_M68000,
-			12000000,
+			14000000,
 			supbtime_readmem,supbtime_writemem,0,0,
 			m68_level6_irq,1
 		},

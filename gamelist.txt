@@ -52,6 +52,7 @@ command to list them.
 | Armor Attack         |  Yes   |Overlay |  Yes(1)|   No   | armora   |
 | Armored Car          |  Yes   |  Yes?  |  Yes   |   No   | armorcar |
 | ASO                  |  Yes   |  Yes   |Partial |   No?  | aso      |
+| Assault              |  Yes   |  Yes   |  Yes   |  Yes   | assault  |
 | Asteroids            |  Yes   |  Yes   | Yes(1) |   No   | asteroid |
 | Asteroids Deluxe     |  Yes   |  Yes   |  Yes   |   No   | astdelux |
 | Astro Blaster        |  Yes   |  Yes   | Yes(1) |  Yes   | astrob   |
@@ -92,9 +93,11 @@ command to list them.
 | Black Widow          |  Yes   | Close  |  Yes   |   No   | bwidow   |
 | Blade Master         |  Yes   |  Yes   |   No   |   No   | bmaster  |
 | Blades of Steel      |   No   |   No   |  Yes   |  Yes   | bladestl |
+| Blast Off            |  Yes   |  Yes   |  Yes   |  Yes   | blastoff |
 | Blaster              |  Yes   |  Yes   |  Yes   |   No   | blaster  |
 | Blasteroids          |  Yes   |  Yes   |  Yes   |   No   | blstroid |
 | Blasto               |  Yes   |  b/w   |Partl(1)|   No   | blasto   |
+| Blazer               |  Yes   |  Yes   |  Yes   |  Yes   | blazer   |
 | Block Block          |  Yes   |  Yes   |Partial |   No   | block    |
 | Block Gal            |   No   |  Yes   |  Yes   |   No   | blockgal |
 | Block Hole           |  Yes   |  Yes   |  Yes   |  Yes   | blckhl   |
@@ -117,6 +120,7 @@ command to list them.
 | Bull Fight           |  Yes   |  Yes   |  Yes   |   No   | bullfgtj |
 | Burger Time          |  Yes   |  Yes   |  Yes   |  Yes   | btime    |
 | Burnin' Rubber       |  Yes   |  Yes   |  Yes   |  Yes   | brubber  |
+| Burning Force        |  Yes   |  Yes   |  Yes   |  Yes   | burnforc |
 | Cabal                |  Yes   |  Yes   | Wrong  |   No   | cabal    |
 | Calipso              |  Yes   |  Yes   |  Yes   |  Yes   | calipso  |
 | Canyon Bomber        |  Yes   |  b/w   |   No   |   No   | canyon   |
@@ -163,6 +167,7 @@ command to list them.
 | Cosmic Avenger       |  Yes   |  Yes?  |  Yes   |  Yes   | cavenger |
 | Cosmic Chasm         |  Yes   |  Yes?  |  Yes   |  n/a?  | cchasm   |
 | Cosmic Guerilla      |  Yes   |  Yes   | Yes(1) |   No   | cosmicg  |
+| Cosmo Gang the Video |  Yes   |  Yes   |  Yes   |  Yes   | cosmogng |
 | Cosmo Police Galivan |  Yes   |  Yes   |  Yes   |  Yes   | galivan  |
 | Crackshot            |  Yes   |  Yes   |  Yes   |  Yes   | cracksht |
 | Crash                |  Yes   |  Yes   |Partial |   No   | crash    |
@@ -181,6 +186,7 @@ command to list them.
 | D-Con                |  Yes   |  Yes   |  Yes   |   No   | dcon     |
 | D-Day                |  Yes   |   No   |  Yes   |  n/a   | dday     |
 | DakkoChan Jansoh     |   No   |  Yes   |  Yes   |   No   | dakkochn |
+| Dangerous Seed       |  Yes   |  Yes   |  Yes   |  Yes   | dangseed |
 | Dark Planet          |   No   |  Yes   |  Yes   |   No   | darkplnt |
 | Dark Seal            |  Yes   |  Yes   |  Yes   |   No   | darkseal |
 | Darwin 4078          |  Yes   |  Yes   |  Yes   |  Yes   | darwin   |
@@ -195,7 +201,7 @@ command to list them.
 | Devil Zone           |  Yes   |   No   |Partial |   No   | devzone  |
 | Diamond Run          |  Yes   |  Yes   |  Yes   |  Yes   | diamond  |
 | Dig Dug              |  Yes   |  Yes   |  Yes   |  Yes   | digdug   |
-| Dig Dug 2            |  Yes   |  Yes   |  Yes   |  Yes   | digdug2  |
+| Dig Dug II           |  Yes   |  Yes   |  Yes   |  Yes   | digdug2  |
 | Digger               |  Yes   |  Yes   |   No   |   No   | digger   |
 | Disco No. 1          |  Yes   |  Yes   |  Yes   |  Yes   | disco    |
 | Discs of Tron        |  Yes   |  Yes   |  Yes   |   No   | dotron   |
@@ -213,6 +219,8 @@ command to list them.
 | Dr. Toppel Tankentai |  Yes   |  Yes   |  Yes   |  Yes   | drtoppel |
 | Dragon Breed         |  Yes   |  Yes   |  Yes   |   No   | dbreed   |
 | Dragon Buster        |  Yes   |  Yes   |  Yes   |   No   | drgnbstr |
+| Dragon Saber         |  Yes   |  Yes   |  Yes   |  Yes   | dsaber   |
+| Dragon Spirit        |  Yes   |  Yes   |  Yes   |  Yes   | dspirit  |
 | Dream Soccer '94     |  Yes   |  Yes   |   No   |   No   | dsoccr94 |
 | Dyger                |  Yes   |  Yes   |  Yes   |   No   | dyger    |
 | Dynamite Duke        |  Yes   |  Yes?  |   No   |   No   | dynduke  |
@@ -245,6 +253,7 @@ command to list them.
 | Fax                  |  Yes   |  Yes   |   No   |   No   | fax      |
 | Final Fight          |  Yes   |  Yes   |  Yes   |   No   | ffight   |
 | Finalizer            |  Yes   |  Yes   |Partial |   No   | finalizr |
+| Finest Hour          |  Yes   |  Yes   |  Yes   |  Yes   | finehour |
 | Fire One             |Partial.|   No   |   No   |   No   | fireone  |
 | Fire Trap            |  Yes   |  Yes   |  Yes   |  Yes   | firetrap |
 | Flak Attack          |  Yes   |  Yes   |  Yes   |   No   | flkatck  |
@@ -265,6 +274,7 @@ command to list them.
 | Future Spy           |  Yes   |  Yes   |   No   |   No   | futspy   |
 | Galactic Warriors    |  Yes   |  Yes   |Partial |   No   | gwarrior |
 | Galaga               |  Yes   |  Yes   | Yes(1) |  Yes   | galaga   |
+| Galaga '88           |  Yes   |  Yes   |  Yes   |  Yes   | galaga88 |
 | Galaxian             |  Yes   |  Yes   |  Yes   |  Yes   | galaxian |
 | Gallop               |  Yes   |  Yes   |  Yes   |   No   | gallop   |
 | Gals Panic           |  Yes   |  Yes   |  Yes   |   No   | galpanic |
@@ -274,10 +284,10 @@ command to list them.
 | Gardia               |   No   |  Yes   |  Yes   |   No   | gardia   |
 | Garyo Retsuden       |  Yes   |  Yes   |  Yes   |   No   | garyoret |
 | Gauntlet             |  Yes   |  Yes   |  Yes   |   No   | gauntlet |
-| Gauntlet 2           |  Yes   |  Yes   |  Yes   |   No   | gaunt2   |
+| Gauntlet II          |  Yes   |  Yes   |  Yes   |   No   | gaunt2   |
 | Gemini Wing          |  Yes   |  Yes   |  Yes   |   No   | gemini   |
 | Genpei ToumaDen      |  Yes   |  Yes   |  Yes   |  Yes   | genpeitd |
-| Get Star             |  Yes   |   No   |  Yes   |   No   | getstar  |
+| Get Star             |  Yes   |  Yes   |  Yes   |   No   | getstar  |
 | Ghosts'n Goblins     |  Yes   |  Yes   |  Yes   |  Yes   | gng      |
 | Ghouls'n Ghosts      |  Yes   |  Yes   |  Yes   |   No   | ghouls   |
 | Ginga NinkyouDen     |  Yes   |  Yes   |Partial |   No   | ginganin |
@@ -358,7 +368,7 @@ command to list them.
 | Journey              |  Yes   |  Yes   |Partial |   No   | journey  |
 | Joust                |  Yes   |  Yes   |  Yes   |   No   | joust    |
 | Joust 2              |  Yes   |  Yes   |Partial |   No   | joust2   |
-| Jr. Pacman           |  Yes   |  Yes   |  Yes   |  Yes   | jrpacman |
+| Jr. Pac-Man          |  Yes   |  Yes   |  Yes   |  Yes   | jrpacman |
 | Jump Bug             |  Yes   |  Yes?  |  Yes   |   No   | jumpbug  |
 | Jump Coaster         |  Yes   |  Yes?  |  Yes   |  Yes   | jumpcoas |
 | Jump Shot            |   No   |  Yes   |  Yes   |  Yes   | jumpshot |
@@ -399,6 +409,7 @@ command to list them.
 | Legend of Hero Tonma |  Yes   |  Yes   |  Yes   |   No   | loht     |
 | Legend of Kage,The   |  Yes   |  Yes   |  Yes   |   No   | lkage    |
 | Legend of Makaj      |  Yes   |  Yes   |  Yes   |   No   | lomakaj  |
+| Legend of Valkyrie   |  Yes   |  Yes   |  Yes   |  Yes   | valkyrie |
 | Legendary Wings      |  Yes   |  Yes   |  Yes   |   No   | lwings   |
 | Leprechaun           |  Yes   |  Yes?? |  Yes   |  Yes   | leprechn |
 | Lethal Thunder       |  Yes   |  Yes   |   No   |   No   | lethalth |
@@ -436,10 +447,12 @@ command to list them.
 | Mania Challenge      |  Yes   |  Yes?  |  Yes   |   No   | maniach  |
 | Mappy                |  Yes   |  Yes   |  Yes   |  Yes   | mappy    |
 | Marble Madness       |  Yes   |  Yes   |  Yes   |   No   | marble   |
+| Marchen Maze         |  Yes   |  Yes   |  Yes   |  Yes   | mmaze    |
 | Marine Boy           |  Yes   |  Yes   |  Yes   |  Yes   | marineb  |
 | Mariner              |  Yes   |  Yes   |  Yes   |  Yes   | mariner  |
 | Mario Bros.          |  Yes   |  Yes   |Partl(1)|   No   | mario    |
 | Mars                 |  Yes   |  Yes   |  Yes   |   No   | mars     |
+| Marvel Land          |  Yes   |  Yes   |  Yes   |  Yes   | marvland |
 | Marvin's Maze        |  Yes   |  Yes   |Partial |   No   | marvins  |
 | Mat Mania            |  Yes   |  Yes?  |  Yes   |   No   | matmania |
 | Max RPM              |  Yes   |  Yes   |   No   |  n/a   | maxrpm   |
@@ -456,6 +469,7 @@ command to list them.
 | Millipede            |  Yes   |  Yes   |  Yes   |   No   | milliped |
 | Minefield            |  Yes   |  Yes   |  Yes   |  n/a   | minefld  |
 | Minky Monkey         |  Yes   |  Yes   |  Yes   |  Yes   | mmonkey  |
+| Mirai Ninja          |  Yes   |  Yes   |  Yes   |  Yes   | mirninja |
 | Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   | missile  |
 | Missing in Action    |  Yes   |  Yes   |  Yes   |  Yes   | mia      |
 | Mister Viking        |  Yes   |  Yes   |  Yes   |   No   | mrviking |
@@ -477,7 +491,7 @@ command to list them.
 | Mr. Do's Wild Ride   |  Yes   |  Yes   |  Yes   |  Yes   | dowild   |
 | Mr. Goemon           |  Yes   |   No   |  Yes   |  Yes   | mrgoemon |
 | Mr. TNT              |  Yes   |  Yes?  |  Yes   |  Yes   | mrtnt    |
-| Ms Pac Man           |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
+| Ms. Pac-Man          |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
 | Munch Mobile         |  Yes   |   No   | Wrong  |   No   | mnchmobl |
 | Mutant Night         |  Yes   |  Yes   |  Yes   |   No   | mnight   |
 | My Hero              |  Yes   |  Yes   |  Yes   |   No   | myhero   |
@@ -488,7 +502,7 @@ command to list them.
 | Naughty Boy          |  Yes   |  Yes   |  Yes   |   No   | naughtyb |
 | Nemesis              |  Yes   |  Yes   |Partial |   No   | nemesis  |
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   | nemo     |
-| New Rally X          |  Yes   |  Yes   | Yes(1) |  Yes   | nrallyx  |
+| New Rally-X          |  Yes   |  Yes   | Yes(1) |  Yes   | nrallyx  |
 | New Sinbad 7         |  Yes   |   No   |  Yes   |   No   | newsin7  |
 | New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   | tnzs     |
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   | nibbler  |
@@ -503,13 +517,16 @@ command to list them.
 | Off the Wall         |  Yes   |  Yes   |  Yes   |   No   | offtwall |
 | Omega Race           |  Yes   |  Yes   |  Yes   |   No   | omegrace |
 | Orbitron             |  Yes   |  Yes   |Partial |  Yes   | orbitron |
+| Ordyne               |  Yes   |  Yes   |  Yes   |  Yes   | ordyne   |
 | Out Run              |  Yes   |  Yes   |  Yes   |   No   | outrun   |
 | Out Zone             |  Yes   |  Yes   |  Yes   |   No   | outzone  |
 | P-47                 |  Yes   |  Yes   |  Yes   |   No   | p47      |
 | P.O.W.               |  Yes   |  Yes   |  Yes   |   No   | pow      |
 | Pac & Pal            |  Yes   |  Yes   |  Yes   |   No   | pacnpal  |
-| Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
 | Pac-Land             |  Yes   |  Yes   |Partial |   No   | pacland  |
+| Pac-Man              |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
+| Pac-Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
+| Pac-Mania            |  Yes   |  Yes   |  Yes   |  Yes   | pacmania |
 | Pandora's Palace     |  Yes   |  Yes   |  Yes   |   No   | pandoras |
 | Pang                 |  Yes   |  Yes   |Partial |  Yes   | pang     |
 | Paper Boy            |  Yes   |  Yes   |  Yes   |   No   | paperboy |
@@ -521,14 +538,17 @@ command to list them.
 | Percussor, The       |  Yes   |  Yes   |  Yes   |   No   | percuss  |
 | Perfect Soldiers     |  Yes   |  Yes   |   No   |   No   | psoldier |
 | Peter Packrat        |  Yes   |  Yes   |  Yes   |   No   | peterpak |
+| Phelios              |  Yes   |  Yes   |  Yes   |  Yes   | phelios  |
 | Phoenix              |  Yes   |  Yes   | Yes(1) |   No   | phoenix  |
 | Phozon               |  Yes   |  Yes   |  Yes   |   No   | phozon   |
 | Pickin'              |  Yes   |  Yes   |  Yes   |  Yes   | pickin   |
 | Pig Newton           |  Yes   |  Yes   |   No   |   No   | pignewt  |
 | Pinball Action       |  Yes   |  Yes   |  Yes   |  Yes   | pbaction |
+| Pinbo                |  Yes   |  Yes   |  Yes   |   No   | pinbo    |
 | Ping Pong            |  Yes   |  Yes   |  Yes   |   No   | pingpong |
 | Pioneer Balloon      |  Yes   |  Yes   |  Yes   |  Yes   | pballoon |
 | Pisces               |  Yes   |  Yes   |  Yes   |   No   | pisces   |
+| Pistol Daimyo no Bouk|  Yes   |  Yes   |  Yes   |  Yes   | pistoldm |
 | Pit,The              |  Yes   | Close  |  Yes   |  Yes   | thepit   |
 | Pitfall 2            |  Yes   |  Yes   |  Yes   |   No   | pitfall2 |
 | Pit Fighter          |  Yes   |  Yes   |  Yes   |   No   | pitfight |
@@ -553,7 +573,6 @@ command to list them.
 | Psychic 5            |  Yes   |  Yes   |  Yes   |   No   | psychic5 |
 | Psycho Soldier       |  Yes   |  Yes   |Partial |   No   | psychos  |
 | Psycho-Nics Oscar    |  Yes   |  Yes   |  Yes   |   No   | oscar    |
-| PuckMan              |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pulsar               |  Yes   |  Yes   | Yes(1) |   No   | pulsar   |
 | Punch Out            |  Yes   |  Yes   |Partial |  n/a   | punchout |
 | Punk Shot            |  Yes   |  Yes   |  Yes   |  Yes   | punkshot |
@@ -573,7 +592,7 @@ command to list them.
 | Raiden               |  Yes   |  Yes   |  Yes   |   No   | raiden   |
 | Rainbow Islands      |  Yes   |  Yes   |  Yes   |   No   | rainbow  |
 | Rally Bike           |  Yes   |  Yes   |  Yes   |   No   | rallybik |
-| Rally X              |  Yes   |  Yes   | Yes(1) |  Yes   | rallyx   |
+| Rally-X              |  Yes   |  Yes   | Yes(1) |  Yes   | rallyx   |
 | Rampage              |  Yes   |  Yes   |  Yes   |   No   | rampage  |
 | Rampart              |  Yes   |  Yes   |  Yes   |   No   | rampart  |
 | Rastan               |  Yes   | Close  |  Yes   |   No   | rastan   |
@@ -602,6 +621,8 @@ command to list them.
 | Rollergames          |  Yes   |  Yes   |  Yes   |  Yes   | rollerg  |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   | rollingc |
 | Rolling Thunder      |  Yes   |  Yes   |  Yes   |  Yes   | rthunder |
+| Rolling Thunder 2    |  Yes   |  Yes   |  Yes   |  Yes   | rthun2   |
+| Rompers              |  Yes   |  Yes   |  Yes   |  Yes   | rompers  |
 | Round-Up             |  Yes   | Close  |  Yes   |  Yes   | roundup  |
 | Route 16             |  Yes   |  Yes   |  Yes   |  Yes   | route16  |
 | Rygar                |  Yes   |  Yes   |  Yes   |   No   | rygar    |
@@ -629,6 +650,7 @@ command to list them.
 | Senjyo               |  Yes   |  Yes   |  Yes   |  Yes   | senjyo   |
 | Shackled             |  Yes   |  Yes   |  Yes   |   No   | shackled |
 | Shadow Dancer        |  Yes   |  Yes   |  Yes   |   No   | shdancer |
+| Shadow Land          |  Yes   |  Yes   |  Yes   |  Yes   | shadowld |
 | Shark Attack         |  Yes   |  Yes   |  Yes   |   No   | sharkatt |
 | Shinobi              |  Yes   |  Yes   |  Yes   |   No   | shinobi  |
 | Shoot Out            |  Yes   |  Yes   |  Yes   |   No   | shootout |
@@ -659,6 +681,7 @@ command to list them.
 | Solomon's Key        |  Yes   |  Yes   |  Yes   |  Yes   | solomon  |
 | Son Son              |  Yes   |  Yes   |  Yes   |  n/a   | sonson   |
 | Son of Phoenix       |  Yes   |  Yes   |  Yes   |  Yes   | sonofphx |
+| Souko Ban Deluxe     |  Yes   |  Yes   |  Yes   |  Yes   | soukobdx |
 | Space Attack         |  Yes   |   No   |   No   |   No   | sspaceat |
 | Space Chaser         |  Yes   |  Yes   |  Yes   |   No   | schaser  |
 | Space Duel           |  Yes   | Close  |  Yes   |   No   | spacduel |
@@ -667,6 +690,7 @@ command to list them.
 | Space Fury           |  Yes   | Close  | Yes(1) |   No   | spacfury |
 | Space Harrier        |  Yes   |  Yes   |Partial?|   No   | sharrier |
 | Space Invaders       |  Yes   |Overlay | Yes(1) |  Yes   | invaders |
+| Space Invaders Part 2|  Yes   |Overlay | Yes(1) |  Yes   | invadpt2 |
 | Space Odyssey        |  Yes   |  Yes   | Yes(1) |   No   | spaceod  |
 | Space Panic          |  Yes   |  Yes   | Yes(1) |   No   | panic    |
 | Space Seeker         |  Yes   |  Yes?? |  Yes   |  Yes   | spaceskr |
@@ -683,10 +707,12 @@ command to list them.
 | Spiders              |  Yes   |  Yes   |   No   |   No   | spiders  |
 | Splash               |  Yes   |  Yes   |  Yes   |   No   | splash   |
 | Splat                |  Yes   |  Yes   |  Yes   |   No   | splat    |
+| Splatter House       |  Yes   |  Yes   |  Yes   |  Yes   | splatter |
 | Springer             |  Yes   |  Yes   |  Yes   |  Yes   | springer |
 | Sprint 1             |  Yes   | Maybe  |   No   |  n/a   | sprint1  |
 | S.P.Y.               |   No   |  Yes   |  Yes   |  Yes   | spy      |
 | Spy Hunter           |  Yes   |  Yes   |  Yes   |   No   | spyhunt  |
+| Spy Hunter 2         |  Yes   |  Yes   |  Yes   |   No   | spyhunt2 |
 | S.R.D. Mission       |  Yes   |  Yes   |  Yes   |  Yes   | srdmissn |
 | Stadium Hero         |  Yes   |  Yes   |  Yes   |   No   | stadhero |
 | Star Castle          |  Yes   |Overlay |  Yes(1)|   No   | scastle  |
@@ -720,13 +746,15 @@ command to list them.
 | Super Locomotive     |  Yes   |  Yes   |  Yes   |  Yes   | suprloco |
 | Super Marukin-Ban    |  Yes   |  Yes   |Partial |  Yes   | marukin  |
 | Super Mouse          |  Yes   |   No   |  Yes   |  Yes   | suprmous |
-| Super Pac Man        |  Yes   |  Yes   |  Yes   |   No   | superpac |
+| Super Pac-Man        |  Yes   |  Yes   |  Yes   |   No   | superpac |
 | Super Pang           |  Yes   |  Yes   |Partial |  Yes   | spang    |
 | Super Punch Out      |  Yes   |  Yes   |Partial |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |   No   | superqix |
 | Super Real Darwin    |  Yes   |  Yes   |  Yes   |  Yes   | srdarwin |
 | Super Space Invaders |  Yes   |  Yes   |   No   |   No   | ssi      |
 | Super Sprint         |  Yes   |  Yes   |  Yes   |   No   | ssprint  |
+| Super World Stad. 92 |  Yes   |  Yes   |  Yes   |  Yes   | sws92    |
+| Super World Stad. 93 |  Yes   |  Yes   |  Yes   |  Yes   | sws93    |
 | Super Zaxxon         |  Yes   |  Yes   | Yes(1) |   No   | szaxxon  |
 | Superman             |  Yes   |  Yes   |  Yes   |   No   | superman |
 | Surprise Attack      |  Yes   |  Yes   |  Yes   |  Yes   | surpratk |
@@ -737,6 +765,7 @@ command to list them.
 | Tac/Scan             |  Yes   | Close  | Yes(1) |   No   | tacscan  |
 | Tag Team Wrestling   |  Yes   |  Yes   |  Yes   |   No   | tagteam  |
 | Tank Battalion       |  Yes   |  Yes?  | Yes(1) |  Yes   | tankbatt |
+| Tank Force           |  Yes   |  Yes   |  Yes   |  Yes   | tankfrce |
 | Tapper               |  Yes   |  Yes   |  Yes   |   No   | tapper   |
 | Targ                 |  Yes   |  Yes   | Yes(1) |   No   | targ     |
 | Tazz-Mania           |  Yes   |  Yes   |  Yes   |   No   | tazmania |
@@ -759,7 +788,7 @@ command to list them.
 | Tiger Road           |  Yes   |  Yes   |  Yes   |  Yes   | tigeroad |
 | Timber               |  Yes   |  Yes   |  Yes   |   No   | timber   |
 | Time Pilot           |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
-| Time Pilot 84        |  Yes   |  Yes   |  Yes   |   No   | tp84     |
+| Time Pilot '84       |  Yes   |  Yes   |  Yes   |   No   | tp84     |
 | Time Scanner         |   No   |  Yes   |  Yes   |   No   | timscanr |
 | Time Soldiers        |  Yes   |  Yes   |  Yes   |   No   | timesold |
 | Time Tunnel          |  Yes   |  Yes   |  Yes   |  Yes   | timetunl |
@@ -815,6 +844,7 @@ command to list them.
 | Vimana               |  Yes   |  Yes   |   No   |   No   | vimana   |
 | Vindicators          |  Yes   |   No   |  Yes   |   No   | vindictr |
 | Vindicators part II  |  Yes   |   No   |  Yes   |   No   | vindctr2 |
+| Vulcan Venture       |  Yes   |  Yes   |  Yes   |  Yes   | vulcan   |
 | Vulgus               |  Yes   |  Yes   |  Yes   |   No   | vulgus   |
 | Wacko                |  Yes   |  Yes   |  Yes   |   No   | wacko    |
 | Wanted               |  Yes   |  Yes   |  Yes   |  Yes   | wanted   |
@@ -834,7 +864,9 @@ command to list them.
 | Wonder Boy 3         |   No   |  Yes   |   No   |   No   | wb3bl    |
 | Wonder Boy in M.L.   |  Yes   |  Yes   |  Yes   |   No   | wbml     |
 | Wonder Momo          |  Yes   |  Yes   |  Yes   |  Yes   | wndrmomo |
+| World Court          |  Yes   |  Yes   |  Yes   |  Yes   | wldcourt |
 | World Cup 90         |  Yes   |  Yes   |  Yes   |   No   | wc90     |
+| World Stadium '90    |  Yes   |  Yes   |  Yes   |  Yes   | ws90     |
 | World Tennis         |  Yes   |  Yes?  |  Yes   |  Yes   | wtennis  |
 | Wrestle War          |   No   |  Yes   |   No   |   No   | wrestwar |
 | X Multiply           |  Yes   |  Yes   |  Yes   |   No   | xmultipl |
@@ -980,21 +1012,21 @@ buttons to keep people from getting confused.
 
 Astro Fighter ("astrof")
 ========================
-	Astro Fighter Sets:
+        Astro Fighter Sets:
 
     The differences are minor. From newest to oldest:
 
-	Main Set: 16Kbit ROMs
-	          Green/Hollow empty fuel bar.
-			  60 points for every bomb destroyed.
+        Main Set: 16Kbit ROMs
+                  Green/Hollow empty fuel bar.
+                          60 points for every bomb destroyed.
 
-	Set 2:    8Kbit ROMs
-			  Blue/Solid empty fuel bar.
-			  60 points for every bomb destroyed.
+        Set 2:    8Kbit ROMs
+                          Blue/Solid empty fuel bar.
+                          60 points for every bomb destroyed.
 
-	Set 3:    8Kbit ROMs
-			  Blue/Solid empty fuel bar.
-			  300 points for every seven bombs destroyed.
+        Set 3:    8Kbit ROMs
+                          Blue/Solid empty fuel bar.
+                          300 points for every seven bombs destroyed.
 
 Known issues:
 - The background is blue. It was black in all the original boards checked, but
@@ -1372,7 +1404,7 @@ Donkey Kong Jr. ("dkongjr")
 Clones supported:
   Japanese, maybe earlier version, with levels playing in the order 1-2-3-4
     instead of 1-4-1-3-4-1-2-3-4, a different title screen, 11 characters
-	high scores, and no copyright notice ("dkngjrjp")
+        high scores, and no copyright notice ("dkngjrjp")
   Another Japanese (?) version, with levels playing in the order 1-2-3-4
     ("dkjrjp")
   bootleg (?) version, with levels playing in the order 1-2-3-4 ("dkjrbl")
@@ -3078,7 +3110,7 @@ Clones supported:
   unencrypted version, different from the others - earlier? ("wboyu")
   Wonder Boy Deluxe - this seems to be a bootleg of wboy4, it is not encrypted
     but is almost identical apart from removed ROM checksums and the "Energy
-	Consumption" dip switch. ("wbdeluxe")
+        Consumption" dip switch. ("wbdeluxe")
 
 Known issues:
 - I haven't decoded wboy3 yet.

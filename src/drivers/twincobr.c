@@ -1,15 +1,26 @@
 /****************************************************************************
+
+		ToaPlan game hardware from 1987
+		-------------------------------
+		Driver by: Quench
+		Flying Shark details: Carl-Henrik Skårstedt  &  Magnus Danielsson
+		Flying Shark bootleg info: Ruben Panossian
+
+
 Supported games:
-	Twin Cobra (World)
-	Twin Cobra (USA license)
-	Kyukyoku Tiger (Japan license)
 
-	Flying Shark (World)
-	Sky Shark (USA license)
-	Hishou Zame (Flying Shark Japan license)
-	Flying Shark bootleg (USA license)
+	Toaplan Board Number:	TP-007
+	Taito game number:		B02
+		Flying Shark (World)
+		Sky Shark (USA Romstar license)
+		Hishou Zame (Flying Shark Japan license)
+		Flying Shark bootleg (USA Romstar license)
 
-driver by Quench
+	Toaplan Board Number:	TP-011
+	Taito game number:		B30
+		Twin Cobra (World)
+		Twin Cobra (USA license)
+		Kyukyoku Tiger (Japan license)
 
 Difference between Twin Cobra and Kyukyoko Tiger:
 	T.C. supports two simultaneous players.
@@ -31,6 +42,7 @@ Difference between Twin Cobra and Kyukyoko Tiger:
 	K.T. Due to this difference in continue sequence, Kyukyoko Tiger is MUCH
 		 harder, challenging, and nearly impossible to complete !
 
+**************************** Memory & I/O Maps *****************************
 68000: Main CPU
 
 00000-1ffff ROM for Flying Shark
@@ -139,7 +151,7 @@ Cobra Tiger
 00		00	 do nothing
 01		0C	 run self test, and report DSP ROM checksum		from 68K PC:23CA6
 02		07	 control all enemy shots						from 68K PC:23BFA
-04		0b	 start the enemy helicopters					from 68K PC:23C66
+04		0B	 start the enemy helicopters					from 68K PC:23C66
 05		08	 check for colision with enemy fire ???			from 68K PC:23C20
 06		09	 check for colision with enemy ???				from 68K PC:23C44
 07		01	 control enemy helicopter shots					from 68K PC:23AB2
@@ -175,6 +187,24 @@ Shark	Zame
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 
+/**************** Machine stuff ******************/
+void fsharkbt_reset_8741_mcu(void);
+int  fsharkbt_dsp_in(int offset);
+void fshark_coin_dsp_w(int offset,int data);
+int  twincobr_dsp_in(int offset);
+void twincobr_dsp_out(int fnction,int data);
+int  twincobr_68k_dsp_r(int offset);
+void twincobr_68k_dsp_w(int offset,int data);
+int  twincobr_7800c_r(int offset);
+void twincobr_7800c_w(int offset,int data);
+int  twincobr_sharedram_r(int offset);
+void twincobr_sharedram_w(int offset,int data);
+
+extern unsigned char *twincobr_68k_dsp_ram;
+extern unsigned char *twincobr_sharedram;
+extern int twincobr_intenable;
+
+
 /**************** Video stuff ******************/
 int  twincobr_crtc_r(int offset);
 void twincobr_crtc_w(int offset,int data);
@@ -197,51 +227,14 @@ void twincobr_fgram_w(int offset,int data);
 int  twincobr_vh_start(void);
 void twincobr_vh_stop(void);
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void twincobr_eof_callback(void);
 
 
 
-/**************** Machine stuff ******************/
-void fsharkbt_reset_8741_mcu(void);
-int  fsharkbt_dsp_in(int offset);
-void fshark_coin_dsp_w(int offset,int data);
-int  twincobr_dsp_in(int offset);
-void twincobr_dsp_out(int fnction,int data);
-int  twincobr_68k_dsp_r(int offset);
-void twincobr_68k_dsp_w(int offset,int data);
-int  twincobr_7800c_r(int offset);
-void twincobr_7800c_w(int offset,int data);
-int  twincobr_sharedram_r(int offset);
-void twincobr_sharedram_w(int offset,int data);
-
-extern unsigned char *twincobr_68k_dsp_ram;
-extern unsigned char *twincobr_sharedram;
-extern int intenable;
-
-
-int twincobr_input_r(int offset)
+static int twincobr_interrupt(void)
 {
-	return readinputport(1 + (offset / 2));
-}
-
-int fshark_DSW_input_r(int offset)
-{
-	return readinputport(4 + (offset / 2));
-}
-
-int vblank_fshark_input_r(int offset)
-{
-	/* VBlank for both Twin Cobra and Flying Shark. */
-	/* Also coin, start and system switches for Flying Shark */
-	int read_two_ports = 0;
-	read_two_ports = readinputport(0);
-	read_two_ports |= readinputport(3);
-	return read_two_ports;
-}
-
-int twincobr_interrupt(void)
-{
-	if (intenable) {
-		intenable = 0;
+	if (twincobr_intenable) {
+		twincobr_intenable = 0;
 		return MC68000_IRQ_4;
 	}
 	else return MC68000_INT_NONE;
@@ -253,14 +246,15 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x030000, 0x033fff, twincobr_68k_dsp_r },		/* 68K and DSP shared RAM */
 	{ 0x040000, 0x040fff, MRA_BANK1 },				/* sprite ram data */
 	{ 0x050000, 0x050dff, paletteram_word_r },
-	{ 0x078000, 0x078003, fshark_DSW_input_r },		/* Flying Shark - DSW1 & 2 */
-	{ 0x078004, 0x078007, twincobr_input_r },		/* Joystick inputs */
-	{ 0x078008, 0x078009, vblank_fshark_input_r },  /* vblank & FShark coin/start */
+	{ 0x078000, 0x078001, input_port_3_r },			/* Flying Shark - DSW A */
+	{ 0x078002, 0x078003, input_port_4_r },			/* Flying Shark - DSW B */
+	{ 0x078004, 0x078005, input_port_1_r },			/* Player 1 inputs */
+	{ 0x078006, 0x078007, input_port_2_r },			/* Player 2 inputs */
+	{ 0x078008, 0x078009, input_port_0_r },			/* V-Blank & FShark Coin/Start */
 	{ 0x07a000, 0x07abff, twincobr_sharedram_r },	/* 16-bit on 68000 side, 8-bit on Z80 side */
 	{ 0x07e000, 0x07e001, twincobr_txram_r },		/* data from text video RAM */
 	{ 0x07e002, 0x07e003, twincobr_bgram_r },		/* data from bg video RAM */
 	{ 0x07e004, 0x07e005, twincobr_fgram_r },		/* data from fg video RAM */
-	{ 0x080000, 0x0bffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -284,7 +278,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x07e000, 0x07e001, twincobr_txram_w },		/* data for text video RAM */
 	{ 0x07e002, 0x07e003, twincobr_bgram_w },		/* data for bg video RAM */
 	{ 0x07e004, 0x07e005, twincobr_fgram_w },		/* data for fg video RAM */
-	{ 0x080000, 0x0bffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -305,9 +298,9 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct IOReadPort sound_readport[] =
 {
 	{ 0x00, 0x00, YM3812_status_port_0_r },
-	{ 0x10, 0x10, input_port_3_r },
-	{ 0x40, 0x40, input_port_4_r },
-	{ 0x50, 0x50, input_port_5_r },
+	{ 0x10, 0x10, input_port_5_r },		/* Twin Cobra - Coin/Start */
+	{ 0x40, 0x40, input_port_3_r },		/* Twin Cobra - DSW A */
+	{ 0x50, 0x50, input_port_4_r },		/* Twin Cobra - DSW B */
 	{ -1 }	/* end of table */
 };
 
@@ -322,7 +315,7 @@ static struct IOWritePort sound_writeport[] =
 static struct MemoryReadAddress DSP_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811F, MRA_RAM },	/* The real DSP has this at address 0 */
+	{ 0x8000, 0x811f, MRA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }	/* end of table */
 };
@@ -330,7 +323,7 @@ static struct MemoryReadAddress DSP_readmem[] =
 static struct MemoryWriteAddress DSP_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811F, MWA_RAM },	/* The real DSP has this at address 0 */
+	{ 0x8000, 0x811f, MWA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }	/* end of table */
 };
@@ -349,43 +342,132 @@ static struct IOWritePort DSP_writeport[] =
 };
 
 
-INPUT_PORTS_START( twincobr )
-	PORT_START
+/*****************************************************************************
+	Input Port definitions
+*****************************************************************************/
+
+#define  TOAPLAN_PLAYER_INPUT( player )										 \
+	PORT_START 																 \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | player ) \
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | player)					 \
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | player)					 \
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )							 \
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+#define  TOAPLAN_JAPAN_DSW_A							\
+	PORT_START		/* DSW A */							\
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )		\
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )		\
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )	\
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )		\
+	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )		\
+	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )		\
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )		\
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )		\
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )		\
+	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )		\
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
+
+#define  TWINCOBR_VBLANK_INPUT						\
+	PORT_START										\
+	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNKNOWN )	\
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+#define  TWINCOBR_SYSTEM_INPUTS							\
+	PORT_START											\
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )			\
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )			\
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )			\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )			\
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )			\
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )		\
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )		\
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+#define TWINCOBR_DSW_B		/* not KTIGER */			\
+	PORT_START		/* DSW B */							\
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )	\
+	PORT_DIPSETTING(	0x01, "Easy" )					\
+	PORT_DIPSETTING(	0x00, "Normal" )				\
+	PORT_DIPSETTING(	0x02, "Hard" )					\
+	PORT_DIPSETTING(	0x03, "Hardest" )				\
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )	\
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )	\
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )	\
+	PORT_DIPSETTING(	0x08, "50000" )					\
+	PORT_DIPSETTING(	0x0c, "100000" )				\
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )		\
+	PORT_DIPSETTING(	0x30, "2" )						\
+	PORT_DIPSETTING(	0x00, "3" )						\
+	PORT_DIPSETTING(	0x20, "4" )						\
+	PORT_DIPSETTING(	0x10, "5" )						\
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )			\
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )			\
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+#define  FSHARK_SYSTEM_INPUTS		/* V-Blank is also here */				 \
+	PORT_START																 \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )								 \
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* tilt causes freeze */ \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )	/* reset button */		 \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )								 \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )								 \
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )							 \
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )							 \
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START		/* DSW1 */
+#define FSHARK_DSW_B									\
+	PORT_START		/* DSW B */							\
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )	\
+	PORT_DIPSETTING(	0x01, "Easy" )					\
+	PORT_DIPSETTING(	0x00, "Normal" )				\
+	PORT_DIPSETTING(	0x02, "Hard" )					\
+	PORT_DIPSETTING(	0x03, "Hardest" )				\
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )	\
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )	\
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )	\
+	PORT_DIPSETTING(	0x08, "50000" )					\
+	PORT_DIPSETTING(	0x0c, "100000" )				\
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )		\
+	PORT_DIPSETTING(	0x20, "1" )						\
+	PORT_DIPSETTING(	0x30, "2" )						\
+	PORT_DIPSETTING(	0x00, "3" )						\
+	PORT_DIPSETTING(	0x10, "5" )						\
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )			\
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )			\
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )			\
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+
+
+
+
+INPUT_PORTS_START( twincobr )
+	TWINCOBR_VBLANK_INPUT
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER1 )
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER2 )
+
+	PORT_START		/* DSW A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
@@ -409,67 +491,16 @@ INPUT_PORTS_START( twincobr )
 	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
-	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
-	PORT_DIPSETTING(	0x08, "50000" )
-	PORT_DIPSETTING(	0x0c, "100000" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "2" )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x20, "4" )
-	PORT_DIPSETTING(	0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	TWINCOBR_DSW_B
+	TWINCOBR_SYSTEM_INPUTS
 INPUT_PORTS_END
 
 INPUT_PORTS_START( twincobu )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	TWINCOBR_VBLANK_INPUT
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER1 )
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER2 )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
+	PORT_START		/* DSW A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
@@ -493,91 +524,17 @@ INPUT_PORTS_START( twincobu )
 	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
 
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
-	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
-	PORT_DIPSETTING(	0x08, "50000" )
-	PORT_DIPSETTING(	0x0c, "100000" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "2" )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x20, "4" )
-	PORT_DIPSETTING(	0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	TWINCOBR_DSW_B
+	TWINCOBR_SYSTEM_INPUTS
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ktiger )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	TWINCOBR_VBLANK_INPUT
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER1 )
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER2 )
+	TOAPLAN_JAPAN_DSW_A
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
-
-	PORT_START		/* DSW2 */
+	PORT_START		/* DSW B */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x01, "Easy" )
 	PORT_DIPSETTING(	0x00, "Normal" )
@@ -599,43 +556,16 @@ INPUT_PORTS_START( ktiger )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+
+	TWINCOBR_SYSTEM_INPUTS
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fshark )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	FSHARK_SYSTEM_INPUTS
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER1 )
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER2 )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* FS tilt causes freeze */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* FS reset button */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
+	PORT_START		/* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
@@ -659,65 +589,15 @@ INPUT_PORTS_START( fshark )
 	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
-	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
-	PORT_DIPSETTING(	0x08, "50000" )
-	PORT_DIPSETTING(	0x0c, "100000" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "2" )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x20, "1" )
-	PORT_DIPSETTING(	0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	FSHARK_DSW_B
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skyshark )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	FSHARK_SYSTEM_INPUTS
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER1 )
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER2 )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* FS tilt causes freeze */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* FS reset button */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
+	PORT_START		/* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
@@ -733,118 +613,23 @@ INPUT_PORTS_START( skyshark )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR( 1C_2C ) )
-//	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ) )
+/*	PORT_DIPSETTING(	0x30, DEF_STR( 1C_2C ) )	Same as previous */
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_2C ) )
-//	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
+/*	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_2C ) )	Same as previous */
 
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
-	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
-	PORT_DIPSETTING(	0x08, "50000" )
-	PORT_DIPSETTING(	0x0c, "100000" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "2" )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x20, "1" )
-	PORT_DIPSETTING(	0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	FSHARK_DSW_B
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hishouza )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* FS tilt causes freeze */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* FS reset button */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
-
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
-	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
-	PORT_DIPSETTING(	0x08, "50000" )
-	PORT_DIPSETTING(	0x0c, "100000" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "2" )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x20, "1" )
-	PORT_DIPSETTING(	0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	FSHARK_SYSTEM_INPUTS
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER1 )
+	TOAPLAN_PLAYER_INPUT( IPF_PLAYER2 )
+	TOAPLAN_JAPAN_DSW_A
+	FSHARK_DSW_B
 INPUT_PORTS_END
 
 
@@ -945,8 +730,8 @@ static struct MachineDriver machine_driver_twincobr =
 	1792, 1792,
 	0,	/* No color PROM decode */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	twincobr_eof_callback,
 	twincobr_vh_start,
 	twincobr_vh_stop,
 	twincobr_vh_screenrefresh,
@@ -982,7 +767,7 @@ ROM_START( twincobr )
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
 	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
-/*  The following are from a bootleg board.
+/******  The following are from a bootleg board. ******
 	A0 and A1 are swapped between the TMS320C10 and these BPROMs on the board.
 	ROM_LOAD_EVEN( "tc1b",		0x0000, 0x0800, 0x1757cc33 )
 	ROM_LOAD_ODD ( "tc2a",		0x0000, 0x0800, 0xd6d878c9 )
@@ -1390,3 +1175,4 @@ GAME( 1987, fshark,   0,        twincobr, fshark,   fshark, ROT270, "[Toaplan] T
 GAME( 1987, skyshark, fshark,   twincobr, skyshark, fshark, ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Sky Shark (US)" )
 GAME( 1987, hishouza, fshark,   twincobr, hishouza, fshark, ROT270, "[Toaplan] Taito Corporation", "Hishou Zame (Japan)" )
 GAME( 1987, fsharkbt, fshark,   twincobr, skyshark, fshark, ROT270, "bootleg", "Flying Shark (bootleg)" )
+

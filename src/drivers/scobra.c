@@ -543,7 +543,7 @@ INPUT_PORTS_START( moonwar2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN3 - dummy port for the dial */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( monwar2a )
@@ -584,7 +584,7 @@ INPUT_PORTS_START( monwar2a )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN3 - dummy port for the dial */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spdcoin )
@@ -629,7 +629,7 @@ INPUT_PORTS_START( spdcoin )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
     PORT_START      /* IN3 - dummy port for the dial */
-    PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0, 0 )
+    PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( darkplnt )

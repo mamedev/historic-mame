@@ -2,7 +2,7 @@
 
 Super Space invaders
 
-driver by Howie Cohen, Alex Pasadyn
+driver by Richard Bush, Howie Cohen, Alex Pasadyn
 
 ***************************************************************************/
 #include "driver.h"

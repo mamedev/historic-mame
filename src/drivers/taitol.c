@@ -1712,6 +1712,26 @@ ROM_START( champwr )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
 ROM_END
 
+ROM_START( champwru )
+	ROM_REGION( 0xf0000, REGION_CPU1 )
+	ROM_LOAD( "c01-13u.rom", 0x00000, 0x20000, 0x09f345b3 )
+	ROM_RELOAD(              0x10000, 0x20000 )
+	ROM_LOAD( "c01-04.rom",  0x30000, 0x20000, 0x358bd076 )
+	ROM_LOAD( "c01-05.rom",  0x50000, 0x20000, 0x22efad4a )
+
+	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
+	ROM_RELOAD(             0x10000, 0x20000 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
+	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
+	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
+ROM_END
+
 ROM_START( champwrj )
 	ROM_REGION( 0xf0000, REGION_CPU1 )
 	ROM_LOAD( "c01-06.bin", 0x00000, 0x20000, 0x90fa1409 )
@@ -1822,6 +1842,7 @@ static void init_plotting(void)
 GAMEX(1988, fhawk,    0,       fhawk,    fhawk,    0,        ROT270, "Taito Corporation", "Fighting Hawk (Japan)", GAME_NO_SOUND )
 GAMEX(1988, raimais,  0,       raimais,  raimais,  0,        ROT0,   "Taito Corporation", "Raimais (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX(1989, champwr,  0,       champwr,  champwr,  0,        ROT0,   "Taito Corporation Japan", "Champion Wrestler (World)", GAME_NO_SOUND )
+GAMEX(1989, champwru, champwr, champwr,  champwr,  0,        ROT0,   "Taito America Corporation", "Champion Wrestler (US)", GAME_NO_SOUND )
 GAMEX(1989, champwrj, champwr, champwr,  champwr,  0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)", GAME_NO_SOUND )
 GAME( 1989, puzznic,  0,       puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
 GAME( 1989, plotting, 0,       plotting, puzznic,  plotting, ROT0,   "Taito Corporation Japan", "Plotting (World)" )

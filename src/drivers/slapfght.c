@@ -1034,36 +1034,100 @@ ROM_START( alcon )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 ROM_END
 
-
 ROM_START( getstar )
 	ROM_REGION( 0x18000, REGION_CPU1 )		/* Region 0 - main cpu code */
-	ROM_LOAD( "gs_14.rom", 0x00000, 0x4000, 0x1a57a920 )
-	ROM_LOAD( "gs_13.rom", 0x04000, 0x4000, 0x805f8e77 )
-	ROM_LOAD( "gs_12.rom", 0x10000, 0x8000, 0x3567da17 )
+	ROM_LOAD( "rom0",      0x00000, 0x4000, 0x6a8bdc6c )
+	ROM_LOAD( "rom1",      0x04000, 0x4000, 0xebe8db3c )
+	ROM_LOAD( "rom2",      0x10000, 0x8000, 0x343e8415 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )		/* Region 3 - sound cpu code */
-	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
+	ROM_LOAD( "a68-03",    0x0000, 0x2000, 0x18daa44c)
+
+	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x00000000 )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
-	ROM_LOAD( "gs_07.rom", 0x00000, 0x2000, 0xe3d409e7 )  /* Chars */
-	ROM_LOAD( "gs_08.rom", 0x02000, 0x2000, 0x6e5ac9d4 )
+	ROM_LOAD( "a68_05-1",  0x00000, 0x2000, 0x06f60107 )  /* Chars */
+	ROM_LOAD( "a68_04-1",  0x02000, 0x2000, 0x1fc8f277 )
 
 	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
-	ROM_LOAD( "gs_06.rom", 0x00000, 0x8000, 0xa293cc2e )  /* Tiles */
-	ROM_LOAD( "gs_09.rom", 0x08000, 0x8000, 0x37662375 )
-	ROM_LOAD( "gs_10.rom", 0x10000, 0x8000, 0xcf1a964c )
-	ROM_LOAD( "gs_11.rom", 0x18000, 0x8000, 0x05f9eb9a )
+	ROM_LOAD( "a68_09",    0x00000, 0x8000, 0xa293cc2e )  /* Tiles */
+	ROM_LOAD( "a68_08",    0x08000, 0x8000, 0x37662375 )
+	ROM_LOAD( "a68_07",    0x10000, 0x8000, 0xcf1a964c )
+	ROM_LOAD( "a68_06",    0x18000, 0x8000, 0x05f9eb9a )
 
 	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
-	ROM_LOAD( "gs_01.rom", 0x00000, 0x8000, 0x83161ed0 )  /* Sprites */
-	ROM_LOAD( "gs_02.rom", 0x08000, 0x8000, 0x6da86aea )
-	ROM_LOAD( "gs_03.rom", 0x10000, 0x8000, 0xf24158cf )
-	ROM_LOAD( "gs_04.rom", 0x18000, 0x8000, 0x643fb282 )
+	ROM_LOAD( "a68-13",    0x00000, 0x8000, 0x643fb282 )  /* Sprites */
+	ROM_LOAD( "a68-12",    0x08000, 0x8000, 0x11f74e32 )
+	ROM_LOAD( "a68-11",    0x10000, 0x8000, 0xf24158cf )
+	ROM_LOAD( "a68-10",    0x18000, 0x8000, 0x83161ed0 )
 
 	ROM_REGION( 0x0300, REGION_PROMS )
-    ROM_LOAD( "prom_1.bin", 0x0000, 0x0100, 0x00000000 )
-    ROM_LOAD( "prom_2.bin", 0x0100, 0x0100, 0x00000000 )
-    ROM_LOAD( "prom_3.bin", 0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "rom21",     0x0000, 0x0100, 0xd6360b4d )
+	ROM_LOAD( "rom20",     0x0100, 0x0100, 0x4ca01887 )
+	ROM_LOAD( "rom19",     0x0200, 0x0100, 0x513224f0 )
+ROM_END
+
+ROM_START( getstarj )
+	ROM_REGION( 0x18000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_LOAD( "a68_00.bin", 0x00000, 0x4000, 0xad1a0143 )
+	ROM_LOAD( "a68_01.bin", 0x04000, 0x4000, 0x3426eb7c )
+	ROM_LOAD( "a68_02.bin", 0x10000, 0x8000, 0x3567da17 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* Region 3 - sound cpu code */
+	ROM_LOAD( "a68-03",    0x0000, 0x2000, 0x18daa44c)
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68_05.bin", 0x00000, 0x2000, 0xe3d409e7 )  /* Chars */
+	ROM_LOAD( "a68_04.bin", 0x02000, 0x2000, 0x6e5ac9d4 )
+
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68_09",    0x00000, 0x8000, 0xa293cc2e )  /* Tiles */
+	ROM_LOAD( "a68_08",    0x08000, 0x8000, 0x37662375 )
+	ROM_LOAD( "a68_07",    0x10000, 0x8000, 0xcf1a964c )
+	ROM_LOAD( "a68_06",    0x18000, 0x8000, 0x05f9eb9a )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68-13",    0x00000, 0x8000, 0x643fb282 )  /* Sprites */
+	ROM_LOAD( "a68-12",    0x08000, 0x8000, 0x11f74e32 )
+	ROM_LOAD( "a68-11",    0x10000, 0x8000, 0xf24158cf )
+	ROM_LOAD( "a68-10",    0x18000, 0x8000, 0x83161ed0 )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "rom21",     0x0000, 0x0100, 0xd6360b4d )
+	ROM_LOAD( "rom20",     0x0100, 0x0100, 0x4ca01887 )
+	ROM_LOAD( "rom19",     0x0200, 0x0100, 0x513224f0 )
+ROM_END
+
+ROM_START( getstarb )
+	ROM_REGION( 0x18000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_LOAD( "gs_14.rom",  0x00000, 0x4000, 0x1a57a920 )
+	ROM_LOAD( "gs_13.rom",  0x04000, 0x4000, 0x805f8e77 )
+	ROM_LOAD( "a68_02.bin", 0x10000, 0x8000, 0x3567da17 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* Region 3 - sound cpu code */
+	ROM_LOAD( "a68-03",    0x0000, 0x2000, 0x18daa44c)
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68_05.bin", 0x00000, 0x2000, 0xe3d409e7 )  /* Chars */
+	ROM_LOAD( "a68_04.bin", 0x02000, 0x2000, 0x6e5ac9d4 )
+
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68_09",    0x00000, 0x8000, 0xa293cc2e )  /* Tiles */
+	ROM_LOAD( "a68_08",    0x08000, 0x8000, 0x37662375 )
+	ROM_LOAD( "a68_07",    0x10000, 0x8000, 0xcf1a964c )
+	ROM_LOAD( "a68_06",    0x18000, 0x8000, 0x05f9eb9a )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68-13",    0x00000, 0x8000, 0x643fb282 )  /* Sprites */
+	ROM_LOAD( "a68-12",    0x08000, 0x8000, 0x11f74e32 )
+	ROM_LOAD( "a68-11",    0x10000, 0x8000, 0xf24158cf )
+	ROM_LOAD( "a68-10",    0x18000, 0x8000, 0x83161ed0 )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "rom21",     0x0000, 0x0100, 0xd6360b4d )
+	ROM_LOAD( "rom20",     0x0100, 0x0100, 0x4ca01887 )
+	ROM_LOAD( "rom19",     0x0200, 0x0100, 0x513224f0 )
 ROM_END
 
 
@@ -1076,4 +1140,6 @@ GAMEX(1986, slapfigh, 0,        slapfigh, slapfigh, 0, ROT270, "Taito", "Slap Fi
 GAME( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0, ROT270, "bootleg", "Slap Fight (Japan bootleg)" )
 GAME( 1986, slapbtuk, slapfigh, slapbtuk, slapfigh, 0, ROT270, "bootleg", "Slap Fight (English bootleg)" )
 GAMEX(1986, alcon,    slapfigh, slapfigh, slapfigh, 0, ROT270, "<unknown>", "Alcon", GAME_NOT_WORKING )
-GAMEX(1986, getstar,  0,        slapfigh, getstar,  0, ROT0,   "bootleg", "Get Star (bootleg)", GAME_WRONG_COLORS )
+GAMEX(1986, getstar,  0,        slapfigh, getstar,  0, ROT0,   "Taito", "Guardian", GAME_NOT_WORKING )
+GAMEX(1986, getstarj, getstar,  slapfigh, getstar,  0, ROT0,   "Taito", "Get Star (Japan)", GAME_NOT_WORKING )
+GAME( 1986, getstarb, getstar,  slapfigh, getstar,  0, ROT0,   "bootleg", "Get Star (bootleg)" )

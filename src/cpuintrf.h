@@ -75,6 +75,12 @@ enum {
 #ifndef HAS_M65C02
 #define HAS_M65C02		0
 #endif
+#ifndef HAS_M65SC02
+#define HAS_M65SC02		0
+#endif
+#ifndef HAS_M65CE02
+#define HAS_M65CE02		0
+#endif
 #ifndef HAS_M6510
 #define HAS_M6510		0
 #endif

@@ -371,7 +371,7 @@ static struct MachineDriver machine_driver_madmotor =
 			&ym2203_interface
 		},
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{

@@ -604,14 +604,14 @@ INPUT_PORTS_START( arkanoi2 )
 	PORT_START		/* empty */
 
 	PORT_START		/* spinner 1 - read at f000/1 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
 	PORT_START		/* spinner 2 - read at f002/3 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0 )
 	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -676,14 +676,14 @@ INPUT_PORTS_START( ark2us )
 	PORT_START		/* empty */
 
 	PORT_START		/* spinner 1 - read at f000/1 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
 	PORT_START		/* spinner 2 - read at f002/3 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0 )
 	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -766,10 +766,10 @@ INPUT_PORTS_START( plumppop )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* spinner 1 - read at f000/1 */
-	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
+	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL, 70, 15, 0, 0 )
 
 	PORT_START		/* spinner 2 - read at f002/3 */
-	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
+	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( drtoppel )
@@ -2021,9 +2021,9 @@ GAME( 1987, ark2jp,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito Cor
 GAME( 1987, plumppop, 0,        drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
 GAME( 1987, drtoppel, 0,        drtoppel, drtoppel, drtoppel, ROT90,  "Taito Corporation", "Dr. Toppel's Tankentai (Japan)" )
 GAME( 1988, chukatai, 0,        tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
-GAME( 1988, tnzs,     0,        tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The Newzealand Story (Japan)" )
-GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzs,     ROT0,   "bootleg", "The Newzealand Story (World, bootleg)" )
-GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The Newzealand Story 2 (World)" )
+GAME( 1988, tnzs,     0,        tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
+GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzs,     ROT0,   "bootleg", "The NewZealand Story (World, bootleg)" )
+GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story 2 (World)" )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )
 GAME( 1988, kageki,   0,        kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)" )
 GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (Japan)" )

@@ -10,16 +10,24 @@
 #define DRAWGFX_H
 
 #define MAX_GFX_PLANES 8
+#define MAX_GFX_SIZE 64
+
+#define RGN_FRAC(num,den) (0x80000000 | (((num) & 0x0f) << 27) | (((den) & 0x0f) << 23))
+#define IS_FRAC(offset) ((offset) & 0x80000000)
+#define FRAC_NUM(offset) (((offset) >> 27) & 0x0f)
+#define FRAC_DEN(offset) (((offset) >> 23) & 0x0f)
+#define FRAC_OFFSET(offset) ((offset) & 0x007fffff)
+
 
 struct GfxLayout
 {
-	unsigned short width,height; /* width and height (in pixels) of chars/sprites */
-	unsigned int total; /* total numer of chars/sprites in the rom */
-	unsigned short planes; /* number of bitplanes */
-	int planeoffset[MAX_GFX_PLANES]; /* start of every bitplane (in bits) */
-	int xoffset[64]; /* position of the bit corresponding to the pixel */
-	int yoffset[64]; /* of the given coordinates */
-	short charincrement; /* distance between two consecutive characters/sprites (in bits) */
+	UINT16 width,height; /* width and height (in pixels) of chars/sprites */
+	UINT32 total; /* total numer of chars/sprites in the rom */
+	UINT16 planes; /* number of bitplanes */
+	UINT32 planeoffset[MAX_GFX_PLANES]; /* start of every bitplane (in bits) */
+	UINT32 xoffset[MAX_GFX_SIZE]; /* position of the bit corresponding to the pixel */
+	UINT32 yoffset[MAX_GFX_SIZE]; /* of the given coordinates */
+	UINT16 charincrement; /* distance between two consecutive characters/sprites (in bits) */
 };
 
 struct GfxElement

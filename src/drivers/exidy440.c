@@ -717,10 +717,10 @@ INPUT_PORTS_START( crossbow )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -757,10 +757,10 @@ INPUT_PORTS_START( cheyenne )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -797,10 +797,10 @@ INPUT_PORTS_START( combat )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -837,10 +837,10 @@ INPUT_PORTS_START( cracksht )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -873,10 +873,10 @@ INPUT_PORTS_START( claypign )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -910,10 +910,10 @@ INPUT_PORTS_START( chiller )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -947,7 +947,7 @@ INPUT_PORTS_START( topsecex )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, -127, 127 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, -127, 127 )
 
 	PORT_START				/* fake analog Y */
 	PORT_BIT(  0xff, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -997,10 +997,10 @@ INPUT_PORTS_START( hitnmiss )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1034,10 +1034,10 @@ INPUT_PORTS_START( whodunit )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1071,10 +1071,10 @@ INPUT_PORTS_START( showdown )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
 

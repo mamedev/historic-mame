@@ -93,6 +93,7 @@
 #include <math.h>
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/i8039/i8039.h"
 
 /* in machine/8080bw.c */
 
@@ -115,6 +116,15 @@ int  gray6bit_controller0_r(int offset);
 int  gray6bit_controller1_r(int offset);
 int  seawolf_shift_data_r(int offset);
 int  seawolf_port_0_r(int offset);
+
+void init_machine_bandido(void);
+void bandido_sh_port4_w(int offset, int data);
+void bandido_sh_port5_w(int offset, int data);
+void bandido_sh_putp2(int offset, int data);
+int  bandido_sh_getp1(int offset);
+int  bandido_sh_getp2(int offset);
+int  bandido_sh_gett0(int offset);
+int  bandido_sh_gett1(int offset);
 
 /* in video/8080bw.c */
 
@@ -308,7 +318,6 @@ INPUT_PORTS_START( invaders )
 INPUT_PORTS_END
 
 
-
 static const char *invaders_sample_names[] =
 {
 	"*invaders",
@@ -399,6 +408,7 @@ static struct MachineDriver machine_driver_invaders =
 		}
 	}
 };
+
 
 /*******************************************************/
 /*                                                     */
@@ -1358,6 +1368,8 @@ static struct IOWritePort bandido_writeport[] =                 /* MJC */
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
 	{ 0x03, 0x03, invaders_shift_data_w },
+	{ 0x04, 0x04, bandido_sh_port4_w },
+	{ 0x05, 0x05, bandido_sh_port5_w },
 	{ -1 }  /* end of table */
 };
 
@@ -1369,6 +1381,21 @@ static struct MemoryReadAddress bandido_sound_readmem[] =
 static struct MemoryWriteAddress bandido_sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort bandido_sound_readport[] =
+{
+	{ I8039_p1, I8039_p1, bandido_sh_getp1 },
+	{ I8039_p2, I8039_p2, bandido_sh_getp2 },
+	{ I8039_t0, I8039_t0, bandido_sh_gett0 },
+	{ I8039_t1, I8039_t1, bandido_sh_gett1 },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort bandido_sound_writeport[] =
+{
+	{ I8039_p2, I8039_p2, bandido_sh_putp2 },
 	{ -1 }	/* end of table */
 };
 
@@ -1435,6 +1462,35 @@ INPUT_PORTS_START( bandido )                        /* MJC */
 	PORT_DIPSETTING(    0x00, "Cocktail (SEE NOTES)" )
 INPUT_PORTS_END
 
+static struct DACinterface bandido_dac_interface =
+{
+	1,
+	{ 25 }
+};
+
+static struct SN76477interface bandido_sn76477_interface =
+{
+	1,	/* 1 chip */
+	{ 25 },  /* mixing level   pin description		 */
+	{ RES_K( 36)   },		/*	4  noise_res		 */
+	{ RES_K(100)   },		/*	5  filter_res		 */
+	{ CAP_U(0.001) },		/*	6  filter_cap		 */
+	{ RES_K(620)   },		/*	7  decay_res		 */
+	{ CAP_U(1.0)   },		/*	8  attack_decay_cap  */
+	{ RES_K(20)    },		/* 10  attack_res		 */
+	{ RES_K(150)   },		/* 11  amplitude_res	 */
+	{ RES_K(47)    },		/* 12  feedback_res 	 */
+	{ 0            },		/* 16  vco_voltage		 */
+	{ CAP_U(0.001) },		/* 17  vco_cap			 */
+	{ RES_M(1.5)   },		/* 18  vco_res			 */
+	{ 0.0		   },		/* 19  pitch_voltage	 */
+	{ RES_M(1.5)   },		/* 20  slf_res			 */
+	{ CAP_U(0.047) },		/* 21  slf_cap			 */
+	{ CAP_U(0.047) },		/* 23  oneshot_cap		 */
+	{ RES_K(560)   }		/* 24  oneshot_res		 */
+};
+
+
 static struct MachineDriver machine_driver_bandido =
 {
 	/* basic machine hardware */
@@ -1448,13 +1504,14 @@ static struct MachineDriver machine_driver_bandido =
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
 			6000000/15,	/* ??? */
-			bandido_sound_readmem,bandido_sound_writemem,0,0,
+			bandido_sound_readmem,bandido_sound_writemem,
+			bandido_sound_readport,bandido_sound_writeport,
 			ignore_interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	1,      /* single CPU, no need for interleaving */
-	0,
+	init_machine_bandido,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
@@ -1469,7 +1526,17 @@ static struct MachineDriver machine_driver_bandido =
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
-	0, 0, 0, 0
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_DAC,
+			&bandido_dac_interface
+		},
+		{
+			SOUND_SN76477,
+			&bandido_sn76477_interface
+		}
+	}
 };
 
 /*******************************************************/
@@ -1539,10 +1606,10 @@ INPUT_PORTS_START( boothill )                                       /* MJC 31019
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START                                                                                          /* Player 2 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 50, 10, 1, 255, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START                                                                                          /* Player 1 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, KEYCODE_Z, KEYCODE_A, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE, 50, 10, 1, 255, KEYCODE_Z, KEYCODE_A, IP_JOY_NONE, IP_JOY_NONE )
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_boothill =
@@ -1686,12 +1753,12 @@ static struct IOReadPort spcenctr_readport[] =
 
 INPUT_PORTS_START( spcenctr )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 10, 0, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
+	PORT_ANALOG( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 10, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )    /* fire */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_Y, 25, 10, 0, 0x01, 0x3e) /* 6 bit vert encoder - Gray's binary? */
+	PORT_ANALOG( 0x3f, 0x1f, IPT_AD_STICK_Y, 25, 10, 0x01, 0x3e) /* 6 bit vert encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -1767,7 +1834,7 @@ static struct MachineDriver machine_driver_spcenctr =
  */
 INPUT_PORTS_START( clowns )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE, 100, 10, 0, 0x01, 0xfe)
+	PORT_ANALOG( 0xff, 0x7f, IPT_PADDLE, 100, 10, 0x01, 0xfe)
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1916,7 +1983,7 @@ static struct IOWritePort seawolf_writeport[] =
 
 INPUT_PORTS_START( seawolf )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x1f, 0x01, IPT_PADDLE, 100, 10, 0, 0x01, 0xfe)
+	PORT_ANALOG( 0x1f, 0x01, IPT_PADDLE, 100, 10, 0x01, 0xfe)
 //	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // x movement
 //	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) // x movement
 //	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) // x movement
@@ -2058,10 +2125,10 @@ INPUT_PORTS_START( gunfight )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
 	PORT_START                                                                                          /* Player 2 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 50, 10, 1, 255, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START                                                                                          /* Player 1 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, KEYCODE_Z, KEYCODE_A, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE, 50, 10, 1, 255, KEYCODE_Z, KEYCODE_A, IP_JOY_NONE, IP_JOY_NONE )
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_gunfight =
@@ -2129,7 +2196,7 @@ INPUT_PORTS_START( zzzap )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 
 	PORT_START      /* IN1 - Steering Wheel */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0, 0x01, 0xfe)
+	PORT_ANALOG( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0x01, 0xfe)
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -2512,7 +2579,7 @@ INPUT_PORTS_START( lagunar )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 
 	PORT_START      /* IN1 - Steering Wheel */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0, 0x01, 0xfe)
+	PORT_ANALOG( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0x01, 0xfe)
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -2749,13 +2816,13 @@ INPUT_PORTS_START( dogpatch )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_ANALOG ( 0x38, 0x1f, IPT_AD_STICK_X |IPF_PLAYER2, 25, 10, 0, 0x05, 0x48)
+	PORT_ANALOG( 0x38, 0x1f, IPT_AD_STICK_X |IPF_PLAYER2, 25, 10, 0x05, 0x48)
 	/* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 10, 0, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
+	PORT_ANALOG( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 10, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
@@ -2874,10 +2941,10 @@ INPUT_PORTS_START( midwbowl )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START      /* IN5 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 10, 3, 0, 0)
+	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 10, 0, 0)
 
 	PORT_START      /* IN6 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X, 10, 10, 3, 0, 0)
+	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X, 10, 10, 0, 0)
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_midwbowl =
@@ -2955,7 +3022,7 @@ INPUT_PORTS_START( blueshrk )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x7f, 0x45, IPT_PADDLE, 100, 10, 0, 0xf, 0x7f)
+	PORT_ANALOG( 0x7f, 0x45, IPT_PADDLE, 100, 10, 0xf, 0x7f)
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_blueshrk =
@@ -4718,7 +4785,7 @@ GAME( 1979, spaceph,  ozmawars, lrescue,  spaceph,  0, ROT270, "Zilec Games", "S
 GAME( 1980, ballbomb, 0,        ballbomb, ballbomb, 0, ROT270, "Taito", "Balloon Bomber" )
 GAME( 1979, yosakdon, 0,        lrescue,  lrescue,  0, ROT270, "bootleg", "Yosaku To Donbee (bootleg)" )
 
-GAME( 1980, bandido,  0,        bandido,  bandido,  0, ROT270, "Exidy", "Bandido" )
+GAMEX(1980, bandido,  0,        bandido,  bandido,  0, ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
 GAME( 1980, helifire, 0,        bandido,  helifire, 0, ROT270, "Nintendo", "HeliFire (revision B)" )
 GAME( 1980, helifira, helifire, bandido,  helifire, 0, ROT270, "Nintendo", "HeliFire (revision A)" )
 GAME( 1980, spacefev, 0,        bandido,  spacefev, 0, ROT270, "Nintendo", "Color Space Fever" )

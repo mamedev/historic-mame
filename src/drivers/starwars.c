@@ -393,10 +393,10 @@ INPUT_PORTS_START( starwars )
 /* 0xc0 and 0xe0 None */
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 30, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 30, 0, 255 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 30, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 30, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -470,10 +470,10 @@ INPUT_PORTS_START( esb )
 /* 0xc0 and 0x00 None */
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 30, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 30, 0, 255 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 30, 0, 0, 255 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 30, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -483,8 +483,6 @@ static struct POKEYinterface pokey_interface =
 	4,			/* 4 chips */
 	1500000,	/* 1.5 MHz? */
 	{ 20, 20, 20, 20 },	/* volume */
-	POKEY_DEFAULT_GAIN,
-	USE_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },

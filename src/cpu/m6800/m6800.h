@@ -15,6 +15,8 @@ enum {
 #define M6800_INT_IRQ	1			/* Standard IRQ interrupt */
 #define M6800_INT_NMI	2			/* NMI interrupt		  */
 #define M6800_WAI		8			/* set when WAI is waiting for an interrupt */
+#define M6800_SLP		0x10		/* HD63701 only */
+
 
 #define M6800_IRQ_LINE	0			/* IRQ line number */
 #define M6800_TIN_LINE	1			/* P20/Tin Input Capture line (eddge sense)     */
@@ -169,6 +171,20 @@ const char *m6803_info(void *context, int regnum);
 unsigned m6803_dasm(char *buffer, unsigned pc);
 #endif
 
+#if (HAS_M6803||HAS_HD63701)
+/* By default, on a port write port bits which are not set as output in the DDR */
+/* are set to 1. If you need to know the DDR for e.g. port 1, do */
+/* m6803_internal_registers_r(M6801_DDR1) */
+
+#define M6803_DDR1	0x00
+#define M6803_DDR2	0x01
+
+#define M6803_PORT1 0x100
+#define M6803_PORT2 0x101
+int m6803_internal_registers_r(int offset);
+void m6803_internal_registers_w(int offset,int data);
+#endif
+
 /****************************************************************************
  * For now make the 6808 using the m6800 variables and functions
  ****************************************************************************/
@@ -228,6 +244,7 @@ unsigned m6808_dasm(char *buffer, unsigned pc);
 #define HD63701_INT_IRQ 			 M6800_INT_IRQ
 #define HD63701_INT_NMI 			 M6800_INT_NMI
 #define HD63701_WAI 				 M6800_WAI
+#define HD63701_SLP 				 M6800_SLP
 #define HD63701_IRQ_LINE			 M6800_IRQ_LINE
 #define HD63701_TIN_LINE			 M6800_TIN_LINE
 
@@ -250,6 +267,18 @@ void hd63701_state_save(void *file);
 void hd63701_state_load(void *file);
 const char *hd63701_info(void *context, int regnum);
 unsigned hd63701_dasm(char *buffer, unsigned pc);
+
+void hd63701_trap_pc(void);
+
+#define HD63701_DDR1 M6803_DDR1
+#define HD63701_DDR2 M6803_DDR2
+
+#define HD63701_PORT1 M6803_PORT1
+#define HD63701_PORT2 M6803_PORT2
+
+int hd63701_internal_registers_r(int offset);
+void hd63701_internal_registers_w(int offset,int data);
+
 #endif
 
 /****************************************************************************
@@ -329,26 +358,5 @@ unsigned nsc8105_dasm(char *buffer, unsigned pc);
 #ifdef	MAME_DEBUG
 unsigned Dasm680x(int subtype, char *buf, unsigned pc);
 #endif
-
-
-/* By default, on a port write port bits which are not set as output in the DDR */
-/* are set to 1. If you need to know the DDR for e.g. port 1, do */
-/* m6803_internal_registers_r(M6801_DDR1) */
-#define M6803_DDR1	0x00
-#define M6803_DDR2	0x01
-
-#define M6803_PORT1 0x100
-#define M6803_PORT2 0x101
-
-#define HD63701_DDR1 M6803_DDR1
-#define HD63701_DDR2 M6803_DDR2
-
-#define HD63701_PORT1 M6803_PORT1
-#define HD63701_PORT2 M6803_PORT2
-
-int m6803_internal_registers_r(int offset);
-void m6803_internal_registers_w(int offset,int data);
-int hd63701_internal_registers_r(int offset);
-void hd63701_internal_registers_w(int offset,int data);
 
 #endif /* _M6800_H */

@@ -12,8 +12,8 @@
 
 #define MIN_SLICE 10    /* minimum update step */
 
-static unsigned int buffer_len;
-static unsigned int emulation_rate;
+#define BUFFER_LEN 8192
+
 static unsigned int sample_pos;
 
 static int channel;
@@ -27,18 +27,16 @@ int tia_sh_start(const struct MachineSound *msound)
 
 	intf = msound->sound_interface;
 
-	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
-	if (buffer_len == 0) return 0;
-	emulation_rate = buffer_len * Machine->drv->frames_per_second;
+	if (Machine->sample_rate == 0) return 0;
 	sample_pos = 0;
 
 	channel = mixer_allocate_channel(intf->volume);
 
-	if ((buffer = malloc(sizeof(INT16) * buffer_len)) == 0)
+	if ((buffer = malloc(sizeof(INT16) * BUFFER_LEN)) == 0)
 		return 1;
-	memset(buffer,0,sizeof(INT16) * buffer_len);
+	memset(buffer,0,sizeof(INT16) * BUFFER_LEN);
 
-	Tia_sound_init (intf->clock, emulation_rate);
+	Tia_sound_init (intf->clock, Machine->sample_rate);
 	return 0;
 }
 
@@ -50,11 +48,14 @@ void tia_sh_stop (void)
 
 void tia_sh_update (void)
 {
+	int buflen;
+
 	if (Machine->sample_rate == 0) return;
 
-	if (sample_pos < buffer_len)
-		Tia_process (buffer + sample_pos, buffer_len - sample_pos);
+	buflen = mixer_samples_this_frame();
+	if (sample_pos < buflen)
+		Tia_process (buffer + sample_pos, buflen - sample_pos);
 	sample_pos = 0;
 
-	mixer_play_streamed_sample_16(channel,buffer,2*buffer_len,emulation_rate);
+	mixer_play_streamed_sample_16(channel,buffer,2*buflen,Machine->sample_rate);
 }

@@ -199,11 +199,11 @@ INPUT_PORTS_START( shuuz )
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER1, 50, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER1, 50, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 50, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 50, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -234,11 +234,11 @@ INPUT_PORTS_START( shuuz2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 
 	PORT_START
-    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER1, 50, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER1, 50, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 50, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 50, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -292,8 +292,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
-	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ REGION_SOUND1 },	/* memory region */
+	{ ATARI_CLOCK_14MHz/16/132 },
+	{ REGION_SOUND1 },
 	{ 100 }
 };
 
@@ -311,7 +311,7 @@ static struct MachineDriver machine_driver_shuuz =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		}

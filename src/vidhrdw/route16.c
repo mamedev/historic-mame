@@ -73,53 +73,6 @@ void init_stratvox(void)
 
 /***************************************************************************
 
-  Handle Stratovox's extra sound effects.
-
-***************************************************************************/
-void stratvox_samples_w (int offset,int data)
-{
-    /* Stratovox sends the following sequence of commands to start the samples:
-
-       Explosion:   0x24  0x25  0x24
-       Bonus Ship:  0x64  0x65  0x64
-
-       I'm only looking for the middle value. */
-
-    switch (data)
-    {
-    case 0xff:
-        // Stop samples
-
-        // Route 16 also writes this, but it would be a waste to
-        // include the Sampleinterface just for that, so we'll just ignore it
-        if (!route16_hardware) sample_stop(0);
-        break;
-
-    case 0x24:
-    case 0x64:
-        // Ignore these
-        break;
-
-    case 0x25:
-        // Explosion
-        sample_start(0,0,0);
-        break;
-
-    case 0x65:
-        // Bonus Ship
-        sample_start(0,1,0);
-        break;
-
-    default:
-        // Shouldn't happen
-        if (errorlog) fprintf(errorlog, "SN76477 Write %X02 to %X04\n", data, cpu_get_pc());
-    }
-}
-
-
-
-/***************************************************************************
-
   Start the video hardware emulation.
 
 ***************************************************************************/
@@ -199,6 +152,30 @@ void route16_out1_w(int offset,int data)
 
 	video_remap_2 = 1;
 	last_write = data;
+}
+
+/***************************************************************************
+
+  Handle Stratovox's extra sound effects.
+
+***************************************************************************/
+void stratvox_sn76477_w (int offset,int data)
+{
+    /***************************************************************
+     * AY8910 output bits are connected to...
+     * 7    - direct: 5V * 30k/(100+30k) = 1.15V - via DAC??
+     * 6    - SN76477 mixer a
+     * 5    - SN76477 mixer b
+     * 4    - SN76477 mixer c
+     * 3    - SN76477 envelope 1
+	 * 2	- SN76477 envelope 2
+     * 1    - SN76477 vco
+     * 0    - SN76477 enable
+     ***************************************************************/
+    SN76477_mixer_w(0,(data >> 4) & 7);
+	SN76477_envelope_w(0,(data >> 2) & 3);
+    SN76477_vco_w(0,(data >> 1) & 1);
+    SN76477_enable_w(0,data & 1);
 }
 
 /***************************************************************************
@@ -307,7 +284,7 @@ static void common_videoram_w(int offset,int data,
 ***************************************************************************/
 void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (video_remap_1)
+    if (video_remap_1)
 	{
 		modify_pen(0, video_color_select_1 + 0);
 		modify_pen(1, video_color_select_1 + 1);

@@ -2,7 +2,7 @@
 
 Superman memory map
 
-driver by Howie Cohen
+driver by Richard Bush, Howie Cohen
 
 CPU 1 : 68000, uses irq 6
 

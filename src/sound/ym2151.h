@@ -1,33 +1,30 @@
 /*
 **
-** File: ym2151.h -- header file for software implementation of YM-2151
-**                                              FM Operator Type-M(OPM)
+** File: ym2151.h - header file for software implementation of YM2151
+**                                            FM Operator Type-M(OPM)
 **
-** (c) 1997,1998,1999 Jarek Burczynski (s0246@priv4.onet.pl)
-** Many of the optimizing ideas by Tatsuyuki Satoh
+** (c) 1997,1998,1999,2000 Jarek Burczynski (s0246@priv4.onet.pl)
+** Some of the optimizing ideas by Tatsuyuki Satoh
 **
-** Version 2.101 December, 5th 1999
+** Version 2.121 February, 25th 2000
 **
-**
-** CAUTION !!! CAUTION !!!     H E L P   W A N T E D !!!
-**
-** If you have some very technical information about YM2151 and you would
-** like to help:
-**                  - PLEASE CONTACT ME ASAP!!! -
 **
 ** I would like to thank the following people for making this project possible:
 **
-** Beauty Planets - for making a lot of real YM2151 samples and giving
-** additional informations about the chip. Also for the time spent making the
-** samples and the speed of replying to my endless requests.
+** Beauty Planets - for making a lot of real YM2151 samples and providing
+** additional informations about the chip. Also for the time spent making
+** the samples and the speed of replying to my endless requests.
 **
 ** Shigeharu Isoda - for general help, for taking time to scan his YM2151
 ** Japanese Manual first of all, and answering MANY of my questions.
 **
 ** Nao - for giving me some info about YM2151 and pointing me to Shigeharu.
+** Also for creating fmemu (which I stil use to test the emulator).
 **
 ** Aaron Giles and Chris Hardy - they made some samples of one of my favourite
 ** arcade games so I could compare it to my emulator.
+**
+** Bryan McPhail and Tim (powerjaw) - for making some samples.
 **
 ** Ishmair - for the datasheet and motivation.
 */
@@ -42,7 +39,7 @@
 	typedef INT16 SAMP;
 #endif
 #if (SAMPLE_BITS==8)
-	typedef signed char  SAMP;
+	typedef signed char SAMP;
 #endif
 
 /*
@@ -54,7 +51,7 @@
 */
 int YM2151Init(int num, int clock, int rate);
 
-/* shutdown the YM2151 emulators */
+/* shutdown the YM2151 emulators*/
 void YM2151Shutdown(void);
 
 /* reset all chip registers for YM2151 number 'num'*/
@@ -65,7 +62,7 @@ void YM2151ResetChip(int num);
 **
 ** 'num' is the number of virtual YM2151
 ** '**buffers' is table of pointers to the buffers: left and right
-** 'length' is the number of samples should be generated
+** 'length' is the number of samples that should be generated
 */
 void YM2151UpdateOne(int num, INT16 **buffers, int length);
 
@@ -78,7 +75,7 @@ int YM2151ReadStatus(int n);
 /* set interrupt handler on YM2151 chip number 'n'*/
 void YM2151SetIrqHandler(int n, void (*handler)(int irq));
 
-/* set port write handler on YM2151 chip number 'n' */
+/* set port write handler on YM2151 chip number 'n'*/
 void YM2151SetPortWriteHandler(int n, void (*handler)(int offset, int data));
 
 #endif /*_H_YM2151_*/

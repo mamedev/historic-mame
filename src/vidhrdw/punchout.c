@@ -101,40 +101,11 @@ static void convert_palette(unsigned char *palette,const unsigned char *color_pr
 	*(palette++) = 240;
 }
 
+
+/* these depend on jumpers on the board and change from game to game */
+static int gfx0inv,gfx1inv,gfx2inv,gfx3inv;
+
 void punchout_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
-
-
-	convert_palette(palette,color_prom);
-
-
-	/* top monitor chars - pen order is inverted */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i ^ 3) = i;
-
-	/* bottom monitor chars - color code order is inverted */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i ^ 0xfc) = i + 512;
-
-	/* big sprite #1 - pen and color code order is inverted */
-	for (i = 0;i < TOTAL_COLORS(2);i++)
-	{
-		if (i % 8 == 0) COLOR(2,i ^ 0xff) = 1024;	/* transparent */
-		else COLOR(2,i ^ 0xff) = i + 512;
-	}
-
-	/* big sprite #2 - color code order is inverted */
-	for (i = 0;i < TOTAL_COLORS(3);i++)
-	{
-		if (i % 4 == 0) COLOR(3,i ^ 0xfc) = 1024;	/* transparent */
-		else COLOR(3,i ^ 0xfc) = i + 512;
-	}
-}
-
-void spnchout_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -146,24 +117,24 @@ void spnchout_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 
 	/* top monitor chars */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+		COLOR(0,i ^ gfx0inv) = i;
 
-	/* bottom monitor chars - pen and color code order is inverted */
+	/* bottom monitor chars */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i ^ 0xff) = i + 512;
+		COLOR(1,i ^ gfx1inv) = i + 512;
 
-	/* big sprite #1 - pen and color code order is inverted */
+	/* big sprite #1 */
 	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		if (i % 8 == 0) COLOR(2,i ^ 0xff) = 1024;	/* transparent */
-		else COLOR(2,i ^ 0xff) = i + 512;
+		if (i % 8 == 0) COLOR(2,i ^ gfx2inv) = 1024;	/* transparent */
+		else COLOR(2,i ^ gfx2inv) = i + 512;
 	}
 
-	/* big sprite #2 - pen and color code order is inverted */
+	/* big sprite #2 */
 	for (i = 0;i < TOTAL_COLORS(3);i++)
 	{
-		if (i % 4 == 0) COLOR(3,i ^ 0xff) = 1024;	/* transparent */
-		else COLOR(3,i ^ 0xff) = i + 512;
+		if (i % 4 == 0) COLOR(3,i ^ gfx3inv) = 1024;	/* transparent */
+		else COLOR(3,i ^ gfx3inv) = i + 512;
 	}
 }
 
@@ -199,6 +170,55 @@ void armwrest_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 		else COLOR(3,i ^ 3) = i + 512;
 	}
 }
+
+
+
+static void gfx_fix(void)
+{
+	/* one graphics ROM (4v) doesn't */
+	/* exist but must be seen as a 0xff fill for colors to come out properly */
+	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
+}
+
+void init_punchout(void)
+{
+	gfx_fix();
+
+	gfx0inv = 0x03;
+	gfx1inv = 0xfc;
+	gfx2inv = 0xff;
+	gfx3inv = 0xfc;
+}
+
+void init_spnchout(void)
+{
+	gfx_fix();
+
+	gfx0inv = 0x00;
+	gfx1inv = 0xff;
+	gfx2inv = 0xff;
+	gfx3inv = 0xff;
+}
+
+void init_spnchotj(void)
+{
+	gfx_fix();
+
+	gfx0inv = 0xfc;
+	gfx1inv = 0xff;
+	gfx2inv = 0xff;
+	gfx3inv = 0xff;
+}
+
+void init_armwrest(void)
+{
+	gfx_fix();
+
+	/* also, ROM 2k is enabled only when its top half is accessed. The other half must */
+	/* be seen as a 0xff fill for colors to come out properly */
+	memset(memory_region(REGION_GFX2) + 0x08000,0xff,0x2000);
+}
+
 
 
 

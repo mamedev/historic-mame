@@ -307,8 +307,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
-	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ REGION_SOUND1 },	/* memory region */
+	{ ATARI_CLOCK_14MHz/4/3/165 },
+	{ REGION_SOUND1 },
 	{ 75 }
 };
 
@@ -316,9 +316,9 @@ static struct OKIM6295interface okim6295_interface =
 static struct YM2413interface ym2413_interface =
 {
 	1,					/* 1 chip */
-	7159160 / 2,		/* ~7MHz */
-	{ 75 },				/* Volume */
-	{ 0 }				/* IRQ handler */
+	ATARI_CLOCK_14MHz/4,
+	{ 75 },
+	{ 0 }
 };
 
 
@@ -334,7 +334,7 @@ static struct MachineDriver machine_driver_relief =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		}

@@ -185,7 +185,7 @@ INPUT_PORTS_START( kick )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 -- this is the Kick spinner input.  */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 10, 50, 5, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 3, 50, 0, 0 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )

@@ -92,6 +92,40 @@ extern unsigned m68010_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
+ * M68EC020 section
+ ****************************************************************************/
+#if HAS_M68EC020
+#define MC68EC020_INT_NONE				MC68000_INT_NONE
+#define MC68EC020_IRQ_1					MC68000_IRQ_1
+#define MC68EC020_IRQ_2					MC68000_IRQ_2
+#define MC68EC020_IRQ_3					MC68000_IRQ_3
+#define MC68EC020_IRQ_4					MC68000_IRQ_4
+#define MC68EC020_IRQ_5					MC68000_IRQ_5
+#define MC68EC020_IRQ_6					MC68000_IRQ_6
+#define MC68EC020_IRQ_7					MC68000_IRQ_7
+#define MC68EC020_INT_ACK_AUTOVECTOR	MC68000_INT_ACK_AUTOVECTOR
+#define MC68EC020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
+
+#define m68ec020_ICount                   m68000_ICount
+extern void m68ec020_reset(void *param);
+extern void m68ec020_exit(void);
+extern int	m68ec020_execute(int cycles);
+extern unsigned m68ec020_get_context(void *dst);
+extern void m68ec020_set_context(void *src);
+extern unsigned m68ec020_get_pc(void);
+extern void m68ec020_set_pc(unsigned val);
+extern unsigned m68ec020_get_sp(void);
+extern void m68ec020_set_sp(unsigned val);
+extern unsigned m68ec020_get_reg(int regnum);
+extern void m68ec020_set_reg(int regnum, unsigned val);
+extern void m68ec020_set_nmi_line(int state);
+extern void m68ec020_set_irq_line(int irqline, int state);
+extern void m68ec020_set_irq_callback(int (*callback)(int irqline));
+const char *m68ec020_info(void *context, int regnum);
+extern unsigned m68ec020_dasm(char *buffer, unsigned pc);
+#endif
+
+/****************************************************************************
  * M68020 section
  ****************************************************************************/
 #if HAS_M68020

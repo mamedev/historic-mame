@@ -4,7 +4,6 @@
 #include <conio.h>
 #include <sys/farptr.h>
 #include <go32.h>
-#include <time.h>
 #include "TwkUser.c"
 #include <math.h>
 #include "vgafreq.h"
@@ -12,6 +11,8 @@
 #include "dirty.h"
 /*extra functions for 15.75KHz modes */
 #include "gen15khz.h"
+#include "ticker.h"
+
 
 /* function to make scanline mode */
 Register *make_scanline_mode(Register *inreg,int entries);
@@ -25,6 +26,7 @@ extern int xpage_size;
 extern int no_xpages;
 void unchain_vga(Register *pReg);
 
+static int warming_up;
 
 /* tweak values for centering tweaked modes */
 int center_x;
@@ -308,6 +310,7 @@ int use_mmx;
 int mmxlfb;
 int use_tweaked;
 int use_vesa;
+int use_dirty;
 float osd_gamma_correction = 1.0;
 int brightness;
 float brightness_paused_adjust;
@@ -334,7 +337,6 @@ static int skiplinesmin;
 static int skipcolumnsmin;
 
 static int vector_game;
-static int use_dirty;
 
 static Register *reg = 0;       /* for VGA modes */
 static int reglen = 0;  /* for VGA modes */
@@ -350,7 +352,7 @@ int throttle = 1;       /* toggled by F10 */
 static int gone_to_gfx_mode;
 static int frameskip_counter;
 static int frames_displayed;
-static uclock_t start_time,end_time;    /* to calculate fps average on exit */
+static TICKER start_time,end_time;    /* to calculate fps average on exit */
 #define FRAMES_TO_SKIP 20       /* skip the first few frames from the FPS calculation */
 							/* to avoid counting the copyright and info screens */
 
@@ -1131,11 +1133,14 @@ struct osd_bitmap *osd_create_display(int width,int height,int depth,int attribu
 		vector_game = 0;
 
 
-	/* Is the game using a dirty system? */
-	if ((Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
-		use_dirty = 1;
-	else
-		use_dirty = 0;
+	if (use_dirty == -1)	/* dirty=auto in mame.cfg? */
+	{
+		/* Is the game using a dirty system? */
+		if ((Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
+			use_dirty = 1;
+		else
+			use_dirty = 0;
+	}
 
 	select_display_mode(depth);
 
@@ -1218,6 +1223,7 @@ int osd_set_display(int width,int height, int attributes)
 		printf("Please specify height AND width (e.g. -640x480)\n");
 		return 0;
 	}
+
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -1661,7 +1667,7 @@ int osd_set_display(int width,int height, int attributes)
 
 	if (video_sync)
 	{
-		uclock_t a,b;
+		TICKER a,b;
 		float rate;
 
 
@@ -1669,16 +1675,16 @@ int osd_set_display(int width,int height, int attributes)
 		for (i = 0;i < 60;i++)
 		{
 			vsync();
-			a = uclock();
+			a = ticker();
 		}
 
 		/* small delay for really really fast machines */
 		for (i = 0;i < 100000;i++) ;
 
 		vsync();
-		b = uclock();
+		b = ticker();
 
-		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
+		rate = ((float)TICKS_PER_SEC)/(b-a);
 
 		if (errorlog)
 			fprintf(errorlog,"target frame rate = %ffps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
@@ -1692,7 +1698,7 @@ int osd_set_display(int width,int height, int attributes)
 			osd_close_display();
 			if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
 						"video refresh frequency = %dHz, target frame rate = %ffps\n",
-						(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
+						(int)(TICKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
 		}
 
@@ -1706,6 +1712,8 @@ int osd_set_display(int width,int height, int attributes)
 				fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",Machine->sample_rate);
 		}
 	}
+
+	warming_up = 1;
 
 	return 1;
 }
@@ -1728,7 +1736,7 @@ void osd_close_display(void)
 		set_gfx_mode (GFX_TEXT,0,0,0,0);
 
 		if (frames_displayed > FRAMES_TO_SKIP)
-			printf("Average FPS: %f\n",(double)UCLOCKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
+			printf("Average FPS: %f\n",(double)TICKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
 	}
 
 	free(dirtycolor);
@@ -1968,35 +1976,44 @@ void update_screen_dummy(void)
 
 INLINE void pan_display(void)
 {
+	int pan_changed = 0;
+
 	/* horizontal panning */
 	if (input_ui_pressed_repeat(IPT_UI_PAN_LEFT,1))
 		if (skipcolumns < skipcolumnsmax)
 		{
 			skipcolumns++;
 			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			pan_changed = 1;
 		}
 	if (input_ui_pressed_repeat(IPT_UI_PAN_RIGHT,1))
 		if (skipcolumns > skipcolumnsmin)
 		{
 			skipcolumns--;
 			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			pan_changed = 1;
 		}
 	if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN,1))
 		if (skiplines < skiplinesmax)
 		{
 			skiplines++;
 			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			pan_changed = 1;
 		}
 	if (input_ui_pressed_repeat(IPT_UI_PAN_UP,1))
 		if (skiplines > skiplinesmin)
 		{
 			skiplines--;
 			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			pan_changed = 1;
 		}
 
-	if (use_dirty) init_dirty(1);
+	if (pan_changed)
+	{
+		if (use_dirty) init_dirty(1);
 
-	set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
+		set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
+	}
 }
 
 
@@ -2042,22 +2059,32 @@ void osd_update_video_and_audio(void)
 	};
 	int i;
 	static int showfps,showfpstemp;
-	uclock_t curr;
-	static uclock_t prev_frames[FRAMESKIP_LEVELS],prev;
+	TICKER curr;
+	static TICKER prev_measure,this_frame_base,prev;
 	static int speed = 100;
 	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
 	int already_synced;
 
 
+	if (warming_up)
+	{
+		/* first time through, initialize timer */
+		prev_measure = ticker() - FRAMESKIP_LEVELS * TICKS_PER_SEC/Machine->drv->frames_per_second;
+		warming_up = 0;
+	}
+
+	if (frameskip_counter == 0)
+		this_frame_base = prev_measure + FRAMESKIP_LEVELS * TICKS_PER_SEC/Machine->drv->frames_per_second;
+
 	if (throttle)
 	{
-		static uclock_t last;
+		static TICKER last;
 
 		/* if too much time has passed since last sound update, disable throttling */
 		/* temporarily - we wouldn't be able to keep synch anyway. */
-		curr = uclock();
-		if ((curr - last) > 2*UCLOCKS_PER_SEC / Machine->drv->frames_per_second)
+		curr = ticker();
+		if ((curr - last) > 2*TICKS_PER_SEC / Machine->drv->frames_per_second)
 			throttle = 0;
 		last = curr;
 
@@ -2071,10 +2098,10 @@ void osd_update_video_and_audio(void)
 
 	if (osd_skip_this_frame() == 0)
 	{
-		if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
+		if (showfpstemp)
 		{
 			showfpstemp--;
-			if ((showfps == 0) && (showfpstemp == 0))
+			if (showfps == 0 && showfpstemp == 0)
 			{
 				need_to_clear_bitmap = 1;
 			}
@@ -2105,48 +2132,40 @@ void osd_update_video_and_audio(void)
 			profiler_mark(PROFILER_IDLE);
 			if (video_sync)
 			{
-				static uclock_t last;
+				static TICKER last;
 
 
 				do
 				{
 					vsync();
-					curr = uclock();
-				} while (UCLOCKS_PER_SEC / (curr - last) > Machine->drv->frames_per_second * 11 /10);
+					curr = ticker();
+				} while (TICKS_PER_SEC / (curr - last) > Machine->drv->frames_per_second * 11 /10);
 
 				last = curr;
 			}
 			else
 			{
-				uclock_t target,target2;
+				TICKER target;
 
 
 				/* wait for video sync but use normal throttling */
 				if (wait_vsync)
 					vsync();
 
-				curr = uclock();
+				curr = ticker();
 
 				if (already_synced == 0)
 				{
 				/* wait only if the audio update hasn't synced us already */
 
-					/* wait until enough time has passed since last frame... */
-					target = prev +
-							waittable[frameskip][frameskip_counter] * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
-
-					/* ... OR since FRAMESKIP_LEVELS frames ago. This way, if a frame takes */
-					/* longer than the allotted time, we can compensate in the following frames. */
-					target2 = prev_frames[frameskip_counter] +
-							FRAMESKIP_LEVELS * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
-
-					if (target - target2 > 0) target = target2;
+					target = this_frame_base +
+							frameskip_counter * TICKS_PER_SEC/Machine->drv->frames_per_second;
 
 					if (curr - target < 0)
 					{
 						do
 						{
-							curr = uclock();
+							curr = ticker();
 						} while (curr - target < 0);
 					}
 				}
@@ -2154,7 +2173,7 @@ void osd_update_video_and_audio(void)
 			}
 			profiler_mark(PROFILER_END);
 		}
-		else curr = uclock();
+		else curr = ticker();
 
 
 		/* for the FPS average calculation */
@@ -2164,18 +2183,18 @@ void osd_update_video_and_audio(void)
 			end_time = curr;
 
 
-		if (frameskip_counter == 0 && prev_frames[0])
+		if (frameskip_counter == 0)
 		{
 			int divdr;
 
 
-			divdr = Machine->drv->frames_per_second * (curr - prev_frames[0]) / (100 * FRAMESKIP_LEVELS);
-			speed = (UCLOCKS_PER_SEC + divdr/2) / divdr;
+			divdr = Machine->drv->frames_per_second * (curr - prev_measure) / (100 * FRAMESKIP_LEVELS);
+			speed = (TICKS_PER_SEC + divdr/2) / divdr;
+
+			prev_measure = curr;
 		}
 
 		prev = curr;
-		for (i = 0;i < waittable[frameskip][frameskip_counter];i++)
-			prev_frames[(frameskip_counter + FRAMESKIP_LEVELS - i) % FRAMESKIP_LEVELS] = curr;
 
 		vfcount += waittable[frameskip][frameskip_counter];
 		if (vfcount >= Machine->drv->frames_per_second)

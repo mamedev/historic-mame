@@ -1,6 +1,5 @@
 /*
 	Interface routine for 68kem <-> Mame
-
 */
 
 #include "driver.h"
@@ -46,6 +45,7 @@ typedef struct
     int vbr;              /* Vector Base Register. (68010) */
 
     int BankID;			  /* Memory bank in use */
+    int CPUtype;		  /* CPU Type 0=68000,1=68010,2=68020 */
 
 } m68k_cpu_context;
 
@@ -418,8 +418,15 @@ unsigned m68000_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M68010 section
  ****************************************************************************/
+
 #if HAS_M68010
-void m68010_reset(void *param) { m68000_reset(param); }
+
+void m68010_reset(void *param)
+{
+	m68000_reset(param);
+    regs.CPUtype=1;
+}
+
 void m68010_exit(void) { m68000_exit(); }
 int  m68010_execute(int cycles) { return m68000_execute(cycles); }
 unsigned m68010_get_context(void *dst) { return m68000_get_context(dst); }
@@ -433,11 +440,12 @@ void m68010_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
 void m68010_set_nmi_line(int state) { m68000_set_nmi_line(state); }
 void m68010_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
 void m68010_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
+
 const char *m68010_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "MC68010";
+		case CPU_INFO_NAME: return "68010";
 	}
 	return m68000_info(context,regnum);
 }
@@ -453,11 +461,19 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
 #endif
 }
 #endif
+
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
+
 #if HAS_M68020
-void m68020_reset(void *param) { m68000_reset(param); }
+
+void m68020_reset(void *param)
+{
+	m68000_reset(param);
+    regs.CPUtype=2;
+}
+
 void m68020_exit(void) { m68000_exit(); }
 int  m68020_execute(int cycles) { return m68000_execute(cycles); }
 unsigned m68020_get_context(void *dst) { return m68000_get_context(dst); }
@@ -471,11 +487,12 @@ void m68020_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
 void m68020_set_nmi_line(int state) { m68000_set_nmi_line(state); }
 void m68020_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
 void m68020_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
+
 const char *m68020_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "MC68020";
+		case CPU_INFO_NAME: return "68020";
 	}
 	return m68000_info(context,regnum);
 }

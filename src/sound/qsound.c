@@ -169,8 +169,9 @@ int qsound_sh_start(const struct MachineSound *msound)
 #endif
 	{
         /* Allocate stream */
-		char buf[LR_PAN][40];
-		const char *name[LR_PAN];
+#define CHANNELS ( 2 )
+		char buf[CHANNELS][40];
+		const char *name[CHANNELS];
 		int  vol[2];
 		name[0] = buf[0];
 		name[1] = buf[1];
@@ -179,7 +180,7 @@ int qsound_sh_start(const struct MachineSound *msound)
         vol[0]=MIXER(intf->mixing_level[0], MIXER_PAN_LEFT);
         vol[1]=MIXER(intf->mixing_level[1], MIXER_PAN_RIGHT);
         qsound_stream = stream_init_multi(
-            LR_PAN,
+            CHANNELS,
             name,
             vol,
             Machine->sample_rate,

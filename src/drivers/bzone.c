@@ -199,6 +199,12 @@ All different denominations                         |Off |Off |    |    |
 void redbaron_sounds_w (int offset,int data);
 void bzone_pokey_w (int offset, int data);
 void bzone_sounds_w (int offset, int data);
+int bzone_sh_start(const struct MachineSound *msound);
+void bzone_sh_stop(void);
+void bzone_sh_update(void);
+int redbaron_sh_start(const struct MachineSound *msound);
+void redbaron_sh_stop(void);
+void redbaron_sh_update(void);
 
 int bzone_IN0_r(int offset)
 {
@@ -466,10 +472,10 @@ INPUT_PORTS_START( redbaron )
 	/* These 2 are fake - they are bank-switched from reads to IN3 */
 	/* Red Baron doesn't seem to use the full 0-255 range. */
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 0, 64, 192 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 64, 192 )
 
 	PORT_START	/* IN6 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 0, 64, 192 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 64, 192 )
 INPUT_PORTS_END
 
 
@@ -479,8 +485,6 @@ static struct POKEYinterface bzone_pokey_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
 	{ 100 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0 },
 	{ 0 },
@@ -494,23 +498,11 @@ static struct POKEYinterface bzone_pokey_interface =
 	{ bzone_IN3_r },
 };
 
-static const char *bzone_sample_names[] =
+static struct CustomSound_interface bzone_custom_interface =
 {
-	"*bzone",
-	"fire.wav",
-	"fire2.wav",
-	"engine1.wav",
-	"engine2.wav",
-	"explode1.wav",
-	"explode2.wav",
-    0	/* end of array */
-};
-
-static struct Samplesinterface bzone_samples_interface =
-{
-	2,	/* 2 channels */
-	25,	/* volume */
-	bzone_sample_names
+	bzone_sh_start,
+	bzone_sh_stop,
+	bzone_sh_update
 };
 
 
@@ -549,8 +541,8 @@ static struct MachineDriver machine_driver_bzone =
 			&bzone_pokey_interface
 		},
 		{
-			SOUND_SAMPLES,
-			&bzone_samples_interface
+			SOUND_CUSTOM,
+			&bzone_custom_interface
 		}
 	}
 
@@ -562,8 +554,6 @@ static struct POKEYinterface redbaron_pokey_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
 	{ 100 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0 },
 	{ 0 },
@@ -578,19 +568,11 @@ static struct POKEYinterface redbaron_pokey_interface =
 };
 
 
-static const char *redbaron_sample_names[] =
+static struct CustomSound_interface redbaron_custom_interface =
 {
-	"fire.wav",
-	"spin.wav",
-	"explode1.wav",
-    0	/* end of array */
-};
-
-static struct Samplesinterface redbaron_samples_interface =
-{
-	2,	/* 2 channels */
-	25,	/* volume */
-	redbaron_sample_names
+	redbaron_sh_start,
+	redbaron_sh_stop,
+	redbaron_sh_update
 };
 
 static struct MachineDriver machine_driver_redbaron =
@@ -628,8 +610,8 @@ static struct MachineDriver machine_driver_redbaron =
 			&redbaron_pokey_interface
 		},
 		{
-			SOUND_SAMPLES,
-			&redbaron_samples_interface
+			SOUND_CUSTOM,
+			&redbaron_custom_interface
 		}
 	},
 

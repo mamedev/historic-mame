@@ -10,9 +10,13 @@
 #include <math.h>
 
 
+#define BUFFER_LEN 8192
+
+#define SAMPLES_THIS_FRAME(channel) \
+	((mixer_samples_this_frame() * stream_sample_rate[(channel)] + Machine->sample_rate/2) / Machine->sample_rate)
+
 static int stream_joined_channels[MIXER_MAX_CHANNELS];
 static INT16 *stream_buffer[MIXER_MAX_CHANNELS];
-static int stream_buffer_len[MIXER_MAX_CHANNELS];
 static int stream_sample_rate[MIXER_MAX_CHANNELS];
 static int stream_buffer_pos[MIXER_MAX_CHANNELS];
 static int stream_sample_length[MIXER_MAX_CHANNELS];	/* in usec */
@@ -119,7 +123,7 @@ void streams_sh_update(void)
 			int buflen;
 
 
-			newpos = stream_buffer_len[channel];
+			newpos = SAMPLES_THIS_FRAME(channel);
 
 			buflen = newpos - stream_buffer_pos[channel];
 
@@ -140,7 +144,7 @@ void streams_sh_update(void)
 					stream_buffer_pos[channel+i] = 0;
 
 				for (i = 0;i < stream_joined_channels[channel];i++)
-					apply_RC_filter(channel+i,stream_buffer[channel+i],stream_buffer_len[channel+i],stream_sample_rate[channel+i]);
+					apply_RC_filter(channel+i,stream_buffer[channel+i],buflen,stream_sample_rate[channel+i]);
 			}
 			else
 			{
@@ -156,7 +160,7 @@ void streams_sh_update(void)
 
 				stream_buffer_pos[channel] = 0;
 
-				apply_RC_filter(channel,stream_buffer[channel],stream_buffer_len[channel],stream_sample_rate[channel]);
+				apply_RC_filter(channel,stream_buffer[channel],buflen,stream_sample_rate[channel]);
 			}
 		}
 	}
@@ -167,8 +171,8 @@ void streams_sh_update(void)
 		{
 			for (i = 0;i < stream_joined_channels[channel];i++)
 				mixer_play_streamed_sample_16(channel+i,
-						stream_buffer[channel+i],sizeof(INT16)*stream_buffer_len[channel+i],
-						stream_sample_rate[channel+i]);
+						stream_buffer[channel+i],sizeof(INT16)*SAMPLES_THIS_FRAME(channel),
+						stream_sample_rate[channel]);
 		}
 	}
 }
@@ -187,11 +191,7 @@ int stream_init(const char *name,int default_mixing_level,
 
 	mixer_set_name(channel,name);
 
-	stream_buffer_len[channel] = sample_rate / Machine->drv->frames_per_second;
-	/* adjust sample rate to make it a multiple of buffer_len */
-	sample_rate = stream_buffer_len[channel] * Machine->drv->frames_per_second;
-
-	if ((stream_buffer[channel] = malloc(sizeof(INT16)*stream_buffer_len[channel])) == 0)
+	if ((stream_buffer[channel] = malloc(sizeof(INT16)*BUFFER_LEN)) == 0)
 		return -1;
 
 	stream_sample_rate[channel] = sample_rate;
@@ -223,11 +223,7 @@ int stream_init_multi(int channels,const char **names,const int *default_mixing_
 	{
 		mixer_set_name(channel+i,names[i]);
 
-		stream_buffer_len[channel+i] = sample_rate / Machine->drv->frames_per_second;
-		/* adjust sample rate to make it a multiple of buffer_len */
-		sample_rate = stream_buffer_len[channel+i] * Machine->drv->frames_per_second;
-
-		if ((stream_buffer[channel+i] = malloc(sizeof(INT16)*stream_buffer_len[channel+i])) == 0)
+		if ((stream_buffer[channel+i] = malloc(sizeof(INT16)*BUFFER_LEN)) == 0)
 			return -1;
 
 		stream_sample_rate[channel+i] = sample_rate;
@@ -253,11 +249,11 @@ void stream_update(int channel,int min_interval)
 	int buflen;
 
 
-	if (stream_buffer[channel] == 0)
+	if (Machine->sample_rate == 0 || stream_buffer[channel] == 0)
 		return;
 
 	/* get current position based on the timer */
-	newpos = sound_scalebufferpos(stream_buffer_len[channel]);
+	newpos = sound_scalebufferpos(SAMPLES_THIS_FRAME(channel));
 
 	buflen = newpos - stream_buffer_pos[channel];
 
@@ -293,25 +289,4 @@ void stream_update(int channel,int min_interval)
 			stream_buffer_pos[channel] += buflen;
 		}
 	}
-}
-
-int stream_get_sample_rate(int channel)
-{
-	if (stream_buffer[channel])
-		return stream_sample_rate[channel];
-	else return 0;
-}
-
-void *stream_get_buffer(int channel)
-{
-	if (stream_buffer[channel])
-		return stream_buffer[channel];
-	else return 0;
-}
-
-int stream_get_buffer_len(int channel)
-{
-	if (stream_buffer[channel])
-		return stream_buffer_len[channel];
-	else return 0;
 }

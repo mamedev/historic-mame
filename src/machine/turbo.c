@@ -42,7 +42,8 @@ static void update_samples(void)
 	else if (bsel != 3 && !sample_playing(6))
 		sample_start(6, 7, 1);
 	if (sample_playing(6))
-		sample_set_freq(6, 44100 * (accel & 0x3f) / 7 + 44100);
+//		sample_set_freq(6, 44100 * (accel & 0x3f) / 7 + 44100);
+		sample_set_freq(6, 44100 * (accel & 0x3f) / 5.25 + 44100);
 }
 
 

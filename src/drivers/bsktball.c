@@ -159,16 +159,16 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( bsktball )
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_ANALOG( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0 ) /* Sensitivity, clip, min, max */
 
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xFF, 0x00, IPT_TRACKBALL_Y, 100, 10, 0, 0 )
 
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_ANALOG( 0xFF, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 ) /* Sensitivity, clip, min, max */
 
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xFF, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 10, 0, 0 )
 
 	PORT_START		/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )

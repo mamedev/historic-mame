@@ -53,7 +53,6 @@ write:
 #include "vidhrdw/generic.h"
 
 
-
 void crbaloon_spritectrl_w(int offset,int data);
 void crbaloon_flipscreen_w(int offset,int data);
 void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -62,11 +61,62 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int val06,val08,val0a;
 
+static void crbaloon_machine_init(void)
+{
+	/* MIXER B = 0, MIXER C = 1 */
+	SN76477_mixer_b_w(0, 0);
+	SN76477_mixer_c_w(0, 1);
+	/* ENVELOPE is constant: pin1 = hi, pin 28 = lo */
+	SN76477_envelope_w(0, 1);
+    /* fake: pulse the enable line to get rid of the constant noise */
+    SN76477_enable_w(0, 1);
+    SN76477_enable_w(0, 0);
+}
+
 void crbaloon_06_w(int offset,int data)
 {
 	val06 = data;
 
 	interrupt_enable_w(offset,data & 1);
+
+	/* SOUND STOP high? */
+    if( data & 0x02 )
+	{
+
+		if( data & 0x08 )
+		{
+			/* enable is connected to EXPLOSION */
+			SN76477_enable_w(0, 1);
+		}
+		else
+		{
+			SN76477_enable_w(0, 0);
+		}
+		if( data & 0x10 )
+		{
+			/* BREATH changes slf_res to 10k (middle of two 10k resistors) */
+			SN76477_set_slf_res(0, RES_K(10));
+			/* it also puts a tantal capacitor agains GND on the output,
+			   but this section of the schematics is not readable. */
+		}
+		else
+		{
+			SN76477_set_slf_res(0, RES_K(20));
+		}
+
+		if( data & 0x20 )
+		{
+			/* APPEAR is connected to MIXER A */
+			SN76477_mixer_a_w(0, 1);
+		}
+		else
+		{
+			SN76477_mixer_a_w(0, 4);
+		}
+
+		/* constant: pin1 = hi, pin 28 = lo */
+		SN76477_envelope_w(0, 1);
+	}
 }
 
 void crbaloon_08_w(int offset,int data)
@@ -283,6 +333,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+static struct SN76477interface sn76477_interface =
+{
+	1,	/* 1 chip */
+	{ 100 }, /* mixing level   pin description		 */
+	{ RES_K( 47)   },		/*	4  noise_res		 */
+	{ RES_K(330)   },		/*	5  filter_res		 */
+	{ CAP_P(470)   },		/*	6  filter_cap		 */
+	{ RES_K(220)   },		/*	7  decay_res		 */
+	{ CAP_U(1.0)   },		/*	8  attack_decay_cap  */
+	{ RES_K(4.7)   },		/* 10  attack_res		 */
+	{ RES_M(  1)   },		/* 11  amplitude_res	 */
+	{ RES_K(200)   },		/* 12  feedback_res 	 */
+	{ 5.0		   },		/* 16  vco_voltage		 */
+	{ CAP_P(470)   },		/* 17  vco_cap			 */
+	{ RES_K(330)   },		/* 18  vco_res			 */
+	{ 5.0		   },		/* 19  pitch_voltage	 */
+	{ RES_K( 20)   },		/* 20  slf_res			 */
+	{ CAP_P(420)   },		/* 21  slf_cap			 */
+	{ CAP_U(1.0)   },		/* 23  oneshot_cap		 */
+	{ RES_K( 47)   }		/* 24  oneshot_res		 */
+};
+
 
 static struct MachineDriver machine_driver_crbaloon =
 {
@@ -297,7 +369,7 @@ static struct MachineDriver machine_driver_crbaloon =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	crbaloon_machine_init,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 4*8, 32*8-1 },
@@ -313,6 +385,12 @@ static struct MachineDriver machine_driver_crbaloon =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{
+			SOUND_SN76477,
+			&sn76477_interface
+		}
+	}
 };
 
 
@@ -357,5 +435,5 @@ ROM_END
 
 
 
-GAME( 1980, crbaloon, 0,        crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)" )
+GAME( 1980, crbaloon, 0,		crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)" )
 GAME( 1980, crbalon2, crbaloon, crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)" )

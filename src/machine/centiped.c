@@ -28,30 +28,30 @@
  */
 int centiped_IN0_r(int offset)
 {
-	static int counter, sign;
-	int delta;
+	static int oldpos,sign;
+	int newpos;
 
-	delta = readinputport(6);
-	if (delta != 0)
+	newpos = readinputport(6);
+	if (newpos != oldpos)
 	{
-		counter = (counter + delta) & 0x0f;
-		sign = delta & 0x80;
+		sign = (newpos - oldpos) & 0x80;
+		oldpos = newpos;
 	}
 
-	return (readinputport(0) | counter | sign );
+	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
 }
 
 int centiped_IN2_r(int offset)
 {
-	static int counter, sign;
-	int delta;
+	static int oldpos,sign;
+	int newpos;
 
-	delta = readinputport(2);
-	if (delta != 0)
+	newpos = readinputport(2);
+	if (newpos != oldpos)
 	{
-		counter = (counter + delta) & 0x0f;
-		sign = delta & 0x80;
+		sign = (newpos - oldpos) & 0x80;
+		oldpos = newpos;
 	}
 
-	return (counter | sign );
+	return ((oldpos & 0x0f) | sign );
 }

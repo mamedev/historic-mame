@@ -129,10 +129,10 @@ INPUT_PORTS_START( quantum )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_ANALOG( 0x0f, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 10, 7, 0,0)
+	PORT_ANALOG( 0x0f, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 10, 0,0)
 
 	PORT_START      /* IN3 */
-	PORT_ANALOG( 0x0f, 0, IPT_TRACKBALL_X, 20, 10, 7, 0, 0 )
+	PORT_ANALOG( 0x0f, 0, IPT_TRACKBALL_X, 10, 10, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -142,8 +142,6 @@ static struct POKEYinterface pokey_interface =
 	2,	/* 2 chips */
 	600000,        /* .6 MHz? (hand tuned) */
 	{ 50, 50 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ quantum_input_1_r, quantum_input_2_r },
 	{ quantum_input_1_r, quantum_input_2_r },

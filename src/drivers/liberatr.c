@@ -306,10 +306,10 @@ INPUT_PORTS_START( liberatr )
 	PORT_DIPSETTING (   0xe0, "Freeze Mode" )
 
 	PORT_START	/* IN4 - FAKE - overlaps IN0 in the HW */
-	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_X, 100, 10, 7, 0, 0)
+	PORT_ANALOG( 0x0f, 0x0, IPT_TRACKBALL_X, 30, 10, 0, 0 )
 
 	PORT_START	/* IN5 - FAKE - overlaps IN0 in the HW */
-	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_Y, 100, 10, 7, 0, 0)
+	PORT_ANALOG( 0x0f, 0x0, IPT_TRACKBALL_Y, 30, 10, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -318,9 +318,7 @@ static struct POKEYinterface pokey_interface =
 {
 	2,				/* 2 chips */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
-	{ 100, 100 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
+	{ 50, 50 },
 	/* The 8 pot handlers */
 	{ 0, 0 },
 	{ 0, 0 },

@@ -5,21 +5,15 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/konamiic.h"
 #include "vidhrdw/generic.h"
 
 //static int spriteram_offset;
 static unsigned char *private_spriteram_2,*private_spriteram;
 
-unsigned char *contra_fg_vertical_scroll;
-unsigned char *contra_fg_horizontal_scroll;
-unsigned char *contra_bg_vertical_scroll;
-unsigned char *contra_bg_horizontal_scroll;
 unsigned char *contra_fg_vram,*contra_fg_cram;
 unsigned char *contra_text_vram,*contra_text_cram;
 unsigned char *contra_bg_vram,*contra_bg_cram;
-
-static int fg_palette_bank,bg_palette_bank;
-static int flipscreen;
 
 static struct tilemap *bg_tilemap, *fg_tilemap, *text_tilemap;
 
@@ -27,43 +21,34 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *text_tilemap;
 **
 **	Contra has palette RAM, but it also has four lookup table PROMs
 **
-**	0	sprites
-**	1	foreground
-**	2	sprites
-**	3	background
+**	0	sprites #0
+**	1	tiles   #0
+**	2	sprites #1
+**	3	tiles   #1
 **
 ***************************************************************************/
 
 void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,pal,clut = 0;
-	for( pal=0; pal<8; pal++ ){
-		switch( pal ){
-			/* sprite lookup tables */
-			case 0:
-			case 2:
-			clut = 0;
-			break;
+	int i,chip,pal,clut;
 
-			case 4:
-			case 6:
-			clut = 2;
-			break;
-
-			/* background lookup tables */
-			case 1:
-			case 3:
-			clut = 1;
-			break;
-
-			case 5:
-			case 7:
-			clut = 3;
-			break;
-		}
-
-		for( i=0; i<256; i++ ){
-			colortable[pal*256+i] = pal*16+color_prom[clut*256+i];
+	for (chip = 0;chip < 2;chip++)
+	{
+		for (pal = 0;pal < 8;pal++)
+		{
+			clut = (pal & 1) + 2 * chip;
+			for (i = 0;i < 256;i++)
+			{
+				if ((pal & 1) == 0)	/* sprites */
+				{
+					if (color_prom[256 * clut + i] == 0)
+						*(colortable++) = 0;
+					else
+						*(colortable++) = 16 * pal + color_prom[256 * clut + i];
+				}
+				else
+					*(colortable++) = 16 * pal + color_prom[256 * clut + i];
+			}
 		}
 	}
 }
@@ -74,28 +59,54 @@ void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 **
 ***************************************************************************/
 
-static void get_fg_tile_info( int col, int row ){
+static void get_fg_tile_info( int col, int row )
+{
 	int offs = row*32 + col;
 	int attr = contra_fg_cram[offs];
-	int bank = (attr & 0xf8) >> 3;
-	bank = ((bank & 0x0f) << 1) | ((bank & 0x10) >> 4);
-	SET_TILE_INFO(0, contra_fg_vram[offs]+bank*256, ((fg_palette_bank&0x30)*2+16)+(attr&7) )
+	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
+	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
+	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
+	int bit3 = (K007121_ctrlram[0][0x05] >> 6) & 0x03;
+	int bank = ((attr & 0x80) >> 7) |
+			((attr >> (bit0+2)) & 0x02) |
+			((attr >> (bit1+1)) & 0x04) |
+			((attr >> (bit2  )) & 0x08) |
+			((attr >> (bit3-1)) & 0x10);
+
+	SET_TILE_INFO(0, contra_fg_vram[offs]+bank*256, ((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7) )
 }
 
-static void get_bg_tile_info( int col, int row ){
+static void get_bg_tile_info( int col, int row )
+{
 	int offs = row*32 + col;
 	int attr = contra_bg_cram[offs];
-	int bank = (attr & 0xf8) >> 3;
-	bank = ((bank & 0x0f) << 1) | ((bank & 0x10) >> 4);
-	SET_TILE_INFO(1, contra_bg_vram[offs]+bank*256, ((bg_palette_bank&0x30)*2+16)+(attr&7) )
+	int bit0 = (K007121_ctrlram[1][0x05] >> 0) & 0x03;
+	int bit1 = (K007121_ctrlram[1][0x05] >> 2) & 0x03;
+	int bit2 = (K007121_ctrlram[1][0x05] >> 4) & 0x03;
+	int bit3 = (K007121_ctrlram[1][0x05] >> 6) & 0x03;
+	int bank = ((attr & 0x80) >> 7) |
+			((attr >> (bit0+2)) & 0x02) |
+			((attr >> (bit1+1)) & 0x04) |
+			((attr >> (bit2  )) & 0x08) |
+			((attr >> (bit3-1)) & 0x10);
+
+	SET_TILE_INFO(1, contra_bg_vram[offs]+bank*256, ((K007121_ctrlram[1][6]&0x30)*2+16)+(attr&7) )
 }
 
-static void get_text_tile_info( int col, int row ){
+static void get_text_tile_info( int col, int row )
+{
 	int offs = row*32 + col;
-	unsigned char attr = contra_text_cram[offs];
-	int bank = (attr & 0xf8) >> 3;
-	bank = ((bank & 0x0f) << 1) | ((bank & 0x10) >> 4);
-	SET_TILE_INFO(0,contra_text_vram[offs] + 256*bank, 1*16+(attr&7) )
+	int attr = contra_text_cram[offs];
+	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
+	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
+	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
+	int bit3 = (K007121_ctrlram[0][0x05] >> 6) & 0x03;
+	int bank = ((attr & 0x80) >> 7) |
+			((attr >> (bit0+2)) & 0x02) |
+			((attr >> (bit1+1)) & 0x04) |
+			((attr >> (bit2  )) & 0x08) |
+			((attr >> (bit3-1)) & 0x10);
+	SET_TILE_INFO(0,contra_text_vram[offs]+bank*256, ((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7) )
 }
 
 /***************************************************************************
@@ -150,40 +161,44 @@ void contra_text_cram_w(int offset,int data){
 	contra_text_cram[offset] = data;
 }
 
-void contra_0007_w(int offset,int data)
+void contra_K007121_ctrl_0_w( int offset, int data )
 {
-	flipscreen = data & 0x08;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-}
-
-void contra_fg_palette_bank_w(int offset,int data){
-	if (fg_palette_bank != data){
-		fg_palette_bank = data;
-		tilemap_mark_all_tiles_dirty( fg_tilemap );
+	if (offset == 3)
+	{
+		if ((data&0x8)==0)
+			memcpy(private_spriteram,spriteram+0x800,0x800);
+		else
+			memcpy(private_spriteram,spriteram,0x800);
 	}
-}
-
-void contra_bg_palette_bank_w(int offset,int data){
-	if (bg_palette_bank != data ){
-		bg_palette_bank = data;
-		tilemap_mark_all_tiles_dirty( bg_tilemap );
+	if (offset == 6)
+	{
+		if (K007121_ctrlram[0][6] != data)
+			tilemap_mark_all_tiles_dirty( fg_tilemap );
 	}
+	if (offset == 7)
+		tilemap_set_flip(fg_tilemap,(data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+	K007121_ctrl_0_w(offset,data);
 }
 
-void contra_sprite_buffer_1_w( int offset, int data )
+void contra_K007121_ctrl_1_w( int offset, int data )
 {
-	if ((data&0x8)==0)
-		memcpy(private_spriteram,spriteram+0x800,0x800);
-	else
-		memcpy(private_spriteram,spriteram,0x800);
-}
+	if (offset == 3)
+	{
+		if ((data&0x8)==0)
+			memcpy(private_spriteram_2,spriteram+0x2800,0x800);
+		else
+			memcpy(private_spriteram_2,spriteram+0x2000,0x800);
+	}
+	if (offset == 6)
+	{
+		if (K007121_ctrlram[1][6] != data )
+			tilemap_mark_all_tiles_dirty( bg_tilemap );
+	}
+	if (offset == 7)
+		tilemap_set_flip(bg_tilemap,(data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-void contra_sprite_buffer_2_w( int offset, int data )
-{
-	if ((data&0x8)==0)
-		memcpy(private_spriteram_2,spriteram+0x2800,0x800);
-	else
-		memcpy(private_spriteram_2,spriteram+0x2000,0x800);
+	K007121_ctrl_1_w(offset,data);
 }
 
 /***************************************************************************
@@ -243,86 +258,21 @@ void contra_vh_stop(void)
 
 static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
-	struct GfxElement *gfx = Machine->gfx[bank];
-
-//	unsigned char *RAM = memory_region(REGION_CPU1);
-//	int limit = (bank)? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
-
-//	const unsigned char *source = spriteram + bank*0x2000 + spriteram_offset;
-//	const unsigned char *finish = source+(40)*5;
-	const unsigned char *finish,*source;
-	int base_color = bank?2:4;
+	const unsigned char *source;
+	int base_color = bank ? (K007121_ctrlram[1][6]&0x30)*2 : (K007121_ctrlram[0][6]&0x30)*2;
 
 	if (bank==0) source=private_spriteram;
 	else source=private_spriteram_2;
-	finish = source+(40)*5;
 
-/*
-	spriteram[0]	tile_number
-	spriteram[1]	XXXX		color
-					    XX		bank (least significant bits of tile_number)
-					      XX	bank
-	spriteram[2]	ypos
-	spriteram[3]	xpos
-	spriteram[4]	XX			bank
-					  XX		flip
-					    XXX		size
-					       X	most significant bit of xpos
-*/
-
-	while( source<finish ){
-		int attributes = source[4];
-		int sx = source[3];
-		int sy = source[2];
-		int tile_number = source[0];
-		int color =  source[1];
-
-		int yflip		= 0x20 & attributes;
-		int xflip		= 0x10 & attributes;
-		int width = 0, height = 0;
-		if( attributes&0x01 ) sx -= 256;
-
-		tile_number += ((color&0x3)<<8) + ((attributes&0xc0)<<4);
-		tile_number = tile_number<<2;
-		tile_number += (color>>2)&3;
-
-		switch( attributes&0xe ){
-			case 0x00: width = height = 2; tile_number &= (~3); break;
-			case 0x08: width = height = 4; tile_number &= (~3); break;
-			case 0x06: width = height = 1; break;
-		}
-
-		{
-			static int x_offset[4] = {0x0,0x1,0x4,0x5};
-			static int y_offset[4] = {0x0,0x2,0x8,0xa};
-			int x,y, ex, ey;
-			int c = base_color*16+(color>>4);
-
-			for( y=0; y<height; y++ ){
-				for( x=0; x<width; x++ ){
-					ex = xflip?(width-1-x):x;
-					ey = yflip?(height-1-y):y;
-
-					drawgfx(bitmap,gfx,
-						tile_number+x_offset[ex]+y_offset[ey],
-						c,
-						xflip,yflip,
-						40+sx+x*8,sy+y*8,
-						clip,TRANSPARENCY_PEN,0);
-				}
-			}
-		}
-		source += 5;
-	}
+	K007121_sprites_draw(bank,bitmap,source,base_color,40,0);
 }
 
 void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_set_scrollx( fg_tilemap,0, *contra_fg_vertical_scroll - 40 );
-	tilemap_set_scrolly( fg_tilemap,0, *contra_fg_horizontal_scroll );
-	tilemap_set_scrollx( bg_tilemap,0, *contra_bg_vertical_scroll - 40 );
-	tilemap_set_scrolly( bg_tilemap,0, *contra_bg_horizontal_scroll );
+	tilemap_set_scrollx( fg_tilemap,0, K007121_ctrlram[0][0x00] - 40 );
+	tilemap_set_scrolly( fg_tilemap,0, K007121_ctrlram[0][0x02] );
+	tilemap_set_scrollx( bg_tilemap,0, K007121_ctrlram[1][0x00] - 40 );
+	tilemap_set_scrolly( bg_tilemap,0, K007121_ctrlram[1][0x02] );
 
 	tilemap_update( ALL_TILEMAPS );
 	if (palette_recalc())

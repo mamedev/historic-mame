@@ -646,13 +646,13 @@ static struct MachineDriver machine_driver_renegade =
 	{
 		{
  			CPU_M6502,
-			3000000,	/* 1.5 MHz? */
+			1500000,	/* 1.5 MHz? */
 			main_readmem,main_writemem,0,0,
 			renegade_interrupt,2
 		},
 		{
  			CPU_M6809 | CPU_AUDIO_CPU,
-			1200000,	/* ? */
+			1500000,	/* ? */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */

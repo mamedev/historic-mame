@@ -602,7 +602,7 @@ static struct MachineDriver machine_driver_ddragon3 =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -649,7 +649,7 @@ static struct MachineDriver machine_driver_ddrago3b =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -696,7 +696,7 @@ static struct MachineDriver machine_driver_ctribe =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{

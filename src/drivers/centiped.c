@@ -320,7 +320,7 @@ INPUT_PORTS_START( GAMENAME## )										\
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )									\
 																				\
 	PORT_START	/* IN2 */														\
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 10, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )  \
+	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )  \
 	/* The lower 4 bits are the input, and bit 7 is the direction. */			\
 	/* The state of bit 7 does not change if the trackball is not moved.*/		\
 																				\
@@ -380,7 +380,7 @@ INPUT_PORTS_START( GAMENAME## )										\
 	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )								\
 																				\
 	PORT_START	/* IN6, fake trackball input port. */							\
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 10, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
 INPUT_PORTS_END
 
 PORTS(centiped, "Spanish")
@@ -426,8 +426,6 @@ static struct POKEYinterface pokey_interface =
 	1,	/* 1 chip */
 	12096000/8,	/* 1.512 MHz */
 	{ 100 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0 },
 	{ 0 },

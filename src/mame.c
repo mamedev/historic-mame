@@ -98,6 +98,7 @@ static int validitychecks(void)
 				error = 1;
 			}
 			if (drivers[i]->rom && drivers[i]->rom == drivers[j]->rom
+					&& (drivers[i]->flags & NOT_A_DRIVER) == 0
 					&& (drivers[j]->flags & NOT_A_DRIVER) == 0)
 			{
 				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
@@ -210,21 +211,24 @@ static int validitychecks(void)
 					}
 */
 
-					start = 0;
-					for (k = 0;k < MAX_GFX_PLANES;k++)
+					if (!IS_FRAC(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->total))
 					{
-						if (drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k] > start)
-							start = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k];
-					}
-					start &= ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement-1);
-					len = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->total *
-							drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement;
-					avail = region_length[type]
-							- (drivers[i]->drv->gfxdecodeinfo[j].start & ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement/8-1));
-					if ((start + len) / 8 > avail)
-					{
-						printf("%s has gfx[%d] extending past allocated memory\n",drivers[i]->name,j);
-						error = 1;
+						start = 0;
+						for (k = 0;k < MAX_GFX_PLANES;k++)
+						{
+							if (drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k] > start)
+								start = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k];
+						}
+						start &= ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement-1);
+						len = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->total *
+								drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement;
+						avail = region_length[type]
+								- (drivers[i]->drv->gfxdecodeinfo[j].start & ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement/8-1));
+						if ((start + len) / 8 > avail)
+						{
+							printf("%s has gfx[%d] extending past allocated memory\n",drivers[i]->name,j);
+							error = 1;
+						}
 					}
 				}
 			}
@@ -283,6 +287,13 @@ static int validitychecks(void)
 						printf("%s has unsorted coinage %s > %s\n",drivers[i]->name,inp->name,(inp+1)->name);
 						error = 1;
 					}
+
+					if (inp->name == DEF_STR( Flip_Screen ) && (inp+1)->name != DEF_STR( Off ))
+					{
+						printf("%s has wrong Flip Screen option %s\n",drivers[i]->name,(inp+1)->name);
+						error = 1;
+					}
+
 				}
 
 				inp++;
@@ -577,9 +588,40 @@ static int vh_open(void)
 	{
 		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
 		{
+			int reglen = 8*memory_region_length(drv->gfxdecodeinfo[i].memory_region);
+			struct GfxLayout glcopy;
+			int j;
+
+
+			memcpy(&glcopy,drv->gfxdecodeinfo[i].gfxlayout,sizeof(glcopy));
+
+			if (IS_FRAC(glcopy.total))
+				glcopy.total = reglen / glcopy.charincrement * FRAC_NUM(glcopy.total) / FRAC_DEN(glcopy.total);
+			for (j = 0;j < MAX_GFX_PLANES;j++)
+			{
+				if (IS_FRAC(glcopy.planeoffset[j]))
+				{
+					glcopy.planeoffset[j] = FRAC_OFFSET(glcopy.planeoffset[j]) +
+							reglen * FRAC_NUM(glcopy.planeoffset[j]) / FRAC_DEN(glcopy.planeoffset[j]);
+				}
+			}
+			for (j = 0;j < MAX_GFX_SIZE;j++)
+			{
+				if (IS_FRAC(glcopy.xoffset[j]))
+				{
+					glcopy.xoffset[j] = FRAC_OFFSET(glcopy.xoffset[j]) +
+							reglen * FRAC_NUM(glcopy.xoffset[j]) / FRAC_DEN(glcopy.xoffset[j]);
+				}
+				if (IS_FRAC(glcopy.yoffset[j]))
+				{
+					glcopy.yoffset[j] = FRAC_OFFSET(glcopy.yoffset[j]) +
+							reglen * FRAC_NUM(glcopy.yoffset[j]) / FRAC_DEN(glcopy.yoffset[j]);
+				}
+			}
+
 			if ((Machine->gfx[i] = decodegfx(memory_region(drv->gfxdecodeinfo[i].memory_region)
 					+ drv->gfxdecodeinfo[i].start,
-					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
+					&glcopy)) == 0)
 			{
 				vh_close();
 				return 1;

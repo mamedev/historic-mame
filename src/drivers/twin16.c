@@ -777,6 +777,104 @@ INPUT_PORTS_START( gradius2 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( darkadv )
+	PORT_START      /* 0xa0001 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) /* "map" button (also advances through tests */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN4 ) /* SERVICE1 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 |IPF_PLAYER2 ) /* SERVICE2 */
+
+	PORT_START      /* 0xa0003 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* START1 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 ) /* SERVICE3 */
+
+	PORT_START      /* 0xa0005 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* START2 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0xa0007 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 ) /* START3 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	KONAMI_TWIN_COINAGE
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x08, 0x08, "Special" )//#players?
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW3 0xa0019 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, "Reserved" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+//	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( devilw )
 	PORT_START      /* 0xa0001 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1244,7 +1342,7 @@ ROM_START( majuu )
 	ROM_LOAD( "dw-ic7c.rom",	0x00000, 0x20000, 0xe5947501 )
 ROM_END
 
-ROM_START( darkadv ) /* this set is incomplete */
+ROM_START( darkadv )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "n03.10a",	0x00000,  0x8000, 0xa24c682f )
 
@@ -1257,7 +1355,7 @@ ROM_START( darkadv ) /* this set is incomplete */
 	ROM_REGION( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "n05.6n",	0x00000, 0x10000, 0xa9195b0b )
 	ROM_LOAD_ODD(  "n04.4n",	0x00000, 0x10000, 0x65b55105 )
-	ROM_LOAD_EVEN( "9.rom",		0x20000, 0x10000, 0 ) /* missing! */
+	ROM_LOAD_EVEN( "n09.6r",	0x20000, 0x10000, 0x1c6b594c )
 	ROM_LOAD_ODD(  "n08.4r",	0x20000, 0x10000, 0xa9603196 )
 
 	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
@@ -1274,10 +1372,10 @@ ROM_START( darkadv ) /* this set is incomplete */
 	ROM_LOAD_ODD(  "dw-m10.rom",	0x00000, 0x10000, 0x117c91ee ) /* tiles */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 ) /* samples */
-	ROM_LOAD( "dw-ic5a.rom",	0x00000, 0x20000, 0 )
+	ROM_LOAD( "dw-ic5a.rom",	0x00000, 0x20000, 0xd4992dfb )
 
 	ROM_REGION( 0x20000, REGION_SOUND2 ) /* samples */
-	ROM_LOAD( "dw-ic7c.rom",	0x00000, 0x20000, 0 )
+	ROM_LOAD( "dw-ic7c.rom",	0x00000, 0x20000, 0xe5947501 )
 ROM_END
 
 /******************************************************************************************/
@@ -1573,10 +1671,9 @@ static void init_fround(void)
 }
 
 
-
 GAME( 1987, devilw,   0,      heavysync, devilw,   twin16, ROT0, "Konami", "Devil World" )
 GAME( 1987, majuu,    devilw, heavysync, devilw,   twin16, ROT0, "Konami", "Majuu no Ohkoku" )
-GAME( 1987, darkadv,  devilw, heavysync, devilw,   twin16, ROT0, "Konami", "Dark Adventure" )
+GAME( 1987, darkadv,  devilw, heavysync, darkadv,  twin16, ROT0, "Konami", "Dark Adventure" )
 GAME( 1988, vulcan,   0,      twin16,    vulcan,   twin16, ROT0, "Konami", "Vulcan Venture" )
 GAME( 1988, gradius2, vulcan, twin16,    gradius2, twin16, ROT0, "Konami", "Gradius II - Gofer no Yabou (Japan set 1)" )
 GAME( 1988, grdius2a, vulcan, twin16,    gradius2, twin16, ROT0, "Konami", "Gradius II - Gofer no Yabou (Japan set 2)" )

@@ -2,6 +2,12 @@
 
 /***************************************************************************
 
+TODO:
+- implement shadows properly
+- understand global Y position for the 053247
+- understand how the 051316 positioning works
+
+
                       Emulated
                          |
                   board #|year    CPU      tiles        sprites  priority     other
@@ -27,20 +33,20 @@ Rock 'n Rage /      GX620*1986    6309 007342        007420               007327
 Mr Kabuki/Mr Goemon GX621*1986     Z80           005849
 Jackal              GX631*1986    6809?          005885(x2)
 Contra / Gryzor     GX633*1987    6809?          007121(x2)               007593 (palette)
-Flak Attack         GX669*1987    6309           007121(x2)               007327 (palette) 007452
+Flak Attack         GX669*1987    6309           007121                   007327 (palette) 007452
 Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452
 Kitten Kaboodle     GX712 1988
-Chequered Flag      GX717-1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
-Fast Lane           GX752*1987    6309           007121(x2)               051733 (protection) 007801
+Chequered Flag      GX717+1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
+Fast Lane           GX752*1987    6309           007121                   051733 (protection) 007801
 Hot Chase           GX763*1988 2x68000                                    051316(x3) (zoom/rotation) 007634 007635 007558 007557
 Rack 'Em Up /       GX765*1987    6309 007342        007420               007327 (palette) 007324
   The Hustler
 Haunted Castle      GX768*1988  052001           007121(x2)               007327 (palette)
 Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  051316 (zoom/rotation) 007327 (palette)
                                 052001
-Labyrinth Runner    GX771 1987    6309           007121                   051733 (protection)
+Labyrinth Runner    GX771*1987    6309           007121                   007593 (palette) 051733 (protection) 051550
 Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327 (palette)
 Battlantis          GX777*1987    6309 007342        007420               007327 (palette) 007324
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
@@ -64,6 +70,7 @@ Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM  007324
 Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
 Cue Brick           GX903*1989 2x68000           TWIN16
 Punk Shot           GX907*1990   68000 052109 051962 051960 051937 053251
+Ultraman            GX910*1991   68000 ------ ------ 051960 051937  PROM  051316(x3) (zoom/rotation) 051550
 Surprise Attack     GX911*1990  053248 052109 051962 053245 053244 053251
 Lightning Fighters /GX939*1990   68000 052109 051962 053245 053244 053251
   Trigon
@@ -106,10 +113,6 @@ Notes:
 the 051961 is an earlier version of the 052109, functionally equivalent
 
 
-TODO:
-- understand global Y position for the 053247
-- understand 051316 wraparound and positioning (rollergames)
-
 
 Status of the ROM tests in the emulated games:
 
@@ -149,6 +152,63 @@ Xexex               pass
 THE FOLLOWING INFORMATION IS PRELIMINARY AND INACCURATE. DON'T RELY ON IT.
 
 
+007121
+------
+control registers
+000: scroll x (low 8 bits)
+001: -------x scroll x (high bit)
+     ----x--- this probably selects an alternate screen layout used in combat
+              school where tilemap #2 is overlayed on front and doesn't scroll.
+              In the normal layout (used only by hcastle) the two tilemaps are
+              joined to form a single 64x32 scrolling tilemap.
+002: scroll y
+003: -------x bit 13 of the tile code
+     ------x- unknown (contra)
+     -----x-- might be sprite / tilemap priority (0 = sprites have priority)
+              (combat school, contra, haunted castle(0/1), labyrunr)
+     ----x--- selects sprite buffer (and makes a copy to a private buffer?)
+     ---x---- screen layout selector:
+              when this is set, 5 columns are added on the left of the screen
+              (that means 5 rows at the top for vertical games), and the
+              rightmost 2 columns are chopped away.
+              Tilemap #2 is used to display the 5 additional columns on the
+              left. The rest of tilemap #2 is not used and can be used as work
+              RAM by the program.
+              The visible area becomes 280x224.
+              Note that labyrunr changes this at runtime, setting it during
+              gameplay and resetting it on the title screen and crosshatch.
+     --x----- might be sprite / tilemap priority (0 = sprites have priority)
+              (combat school, contra, haunted castle(0/1), labyrunr)
+     -x------ enables an extra bank of 0x40 sprites (combasc, labyrunr)
+     x------- unknown (contra)
+004: ----xx-- in flak attack, bits 11-12 of the tile code for the background layer
+              fast lane uses only bit 3
+     -x------ unknown (combat school, flak attack)
+     x------- unknown (combat school, fast lane, labyrunr, flak attack)
+005: selects where in the attribute byte to pick bits 9-12 of the tile code,
+     output to pins R12-R15. The bit of the attribute byte to use is the
+     specified bit (0-3) + 3, that is one of bits 3-6. Bit 7 is hardcoded as
+     bit 8 of the code. Bits 0-2 are used for the color, however note that
+     some games (combat school, flak attack, maybe fast lane) use bit 3 as well,
+     and indeed there are 4 lines going to the color lookup PROM, so there has
+     to be a way to select this.
+     ------xx attribute bit to use for tile code bit  9
+     ----xx-- attribute bit to use for tile code bit 10
+     --xx---- attribute bit to use for tile code bit 11
+     xx------ attribute bit to use for tile code bit 12
+006: -------x unknown (combat school, fast lane, flak attack)
+     -----x-- This is set only in Flak Attack, so it seems to be the one that
+              selects a different layout for the sprite RAM. It might be a
+              "compatibility mode" with an older custom IC.
+     ----x--- unknown (combat school, haunted castle(0/1), labyrunr)
+     --xx---- palette bank (both tiles and sprites, see contra)
+007: -------x nmi enable
+     ------x- irq enable
+     -----x-- firq enable (probably)
+     ----x--- flip screen
+     ---x---- unknown (contra, labyrunr)
+
+
 
 007342
 ------
@@ -158,8 +218,8 @@ bytes of RAM, plus 0x0200 bytes for scrolling, and a variable amount of ROM.
 It cannot read the ROMs.
 
 control registers
-000: bit 1: INT control
-     bit 4: flip screen (TODO: doesn't work with thehustl)
+000: ------x- INT control
+     ---x---- flip screen (TODO: doesn't work with thehustl)
 001: Used for banking in Rock'n'Rage
 002: -------x MSB of x scroll 1
      ------x- MSB of x scroll 2
@@ -328,7 +388,7 @@ memory map:
 				   thndrx2 needs it to pulse for the startup checks to succeed
 000     W  bit 0 = irq enable/acknowledge?
            bit 3 = flip screen (applies to sprites only, not tilemaps)
-           bit 4 = unknown, used by Devastators, TMNT, aliens, maybe others
+           bit 4 = unknown, used by Devastators, TMNT, Aliens, Chequered Flag, maybe others
                    aliens sets it just after checking bit 0, and before copying
                    the sprite data
            bit 5 = enable gfx ROM reading
@@ -589,7 +649,7 @@ Memory map(preliminary):
 
 07	  R collision (0x80 = no, 0x00 = yes)
 
-Other addresses are unknown or unsed.
+Other addresses are unknown or unused.
 
 Fast Lane:
 ----------
@@ -613,18 +673,6 @@ Devastators:
 ------------
 $6ce8:
 reads from 0x0006, and only uses bit 1.
-
-$8948:
-writes to 0x0000-0x0003 (0x0002-0x0003 is always constant) and then reads
-from 0x0001 and from 0x0003. The data read from 0x0003 is then written to
-0x0000-0x0001, and then writes to 0x0002-0x0003 (always a constant), and
-reads the result from 0x0001.
-
-$8c61:
-writes to 0x0000-0x0003 (0x0000-0x0001 is always constant) and then reads
-from 0x0001 and from 0x0003. The data read from 0x0003 is then written to
-0x0000-0x0001, then writes to 0x0002-0x0003, and reads the result from
-0x0001.
 
 ***************************************************************************/
 
@@ -673,6 +721,254 @@ void konami_rom_deinterleave_4(int mem_region)
 	konami_rom_deinterleave_2(mem_region);
 }
 
+
+
+
+
+
+
+
+/*#define MAX_K007121 2*/
+
+/*static*/ unsigned char K007121_ctrlram[MAX_K007121][8];
+static int K007121_flipscreen[MAX_K007121];
+
+
+void K007121_ctrl_w(int chip,int offset,int data)
+{
+	switch (offset)
+	{
+		case 6:
+/* palette bank change */
+if ((K007121_ctrlram[chip][offset] & 0x30) != (data & 0x30))
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+			break;
+		case 7:
+			K007121_flipscreen[chip] = data & 0x08;
+			break;
+	}
+
+	K007121_ctrlram[chip][offset] = data;
+}
+
+void K007121_ctrl_0_w(int offset,int data)
+{
+	K007121_ctrl_w(0,offset,data);
+}
+
+void K007121_ctrl_1_w(int offset,int data)
+{
+	K007121_ctrl_w(1,offset,data);
+}
+
+
+/*
+ * Sprite Format
+ * ------------------
+ *
+ * There are 0x40 sprites, each one using 5 bytes. However the number of
+ * sprites can be increased to 0x80 with a control register (Combat School
+ * sets it on and off during the game).
+ *
+ * Byte | Bit(s)   | Use
+ * -----+-76543210-+----------------
+ *   0  | xxxxxxxx | sprite code
+ *   1  | xxxx---- | color
+ *   1  | ----xx-- | sprite code low 2 bits for 16x8/8x8 sprites
+ *   1  | ------xx | sprite code bank bits 1/0
+ *   2  | xxxxxxxx | y position
+ *   3  | xxxxxxxx | x position (low 8 bits)
+ *   4  | xx------ | sprite code bank bits 3/2
+ *   4  | --x----- | flip y
+ *   4  | ---x---- | flip x
+ *   4  | ----xxx- | sprite size 000=16x16 001=16x8 010=8x16 011=8x8 100=32x32
+ *   4  | -------x | x position (high bit)
+ *
+ * Flack Attack uses a different, "wider" layout with 32 bytes per sprites,
+ * mapped as follows, and the priority order is reversed. Maybe it is a
+ * compatibility mode with an older custom IC.
+ *
+ * 0 -> e
+ * 1 -> f
+ * 2 -> 6
+ * 3 -> 4
+ * 4 -> 8
+ *
+ */
+
+void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
+		const unsigned char *source,int base_color,int global_x_offset,int bank_base)
+{
+	const struct GfxElement *gfx = Machine->gfx[chip];
+	int flip_screen = K007121_flipscreen[chip];
+	int i,num,inc,offs[5],trans;
+
+#if 0
+usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
+	K007121_ctrlram[0][0x00],K007121_ctrlram[0][0x01],K007121_ctrlram[0][0x02],K007121_ctrlram[0][0x03],K007121_ctrlram[0][0x04],K007121_ctrlram[0][0x05],K007121_ctrlram[0][0x06],K007121_ctrlram[0][0x07],
+	K007121_ctrlram[1][0x00],K007121_ctrlram[1][0x01],K007121_ctrlram[1][0x02],K007121_ctrlram[1][0x03],K007121_ctrlram[1][0x04],K007121_ctrlram[1][0x05],K007121_ctrlram[1][0x06],K007121_ctrlram[1][0x07]);
+#endif
+#if 0
+if (keyboard_pressed(KEYCODE_D))
+{
+	FILE *fp;
+	fp=fopen(chip?"SPRITE1.DMP":"SPRITE0.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(source, 0x800, 1, fp);
+		usrintf_showmessage("saved");
+		fclose(fp);
+	}
+}
+#endif
+
+	if (K007121_ctrlram[chip][0x06] & 0x04)	/* Flak Attack */
+	{
+		num = 0x40;
+		inc = -0x20;
+		source += 0x3f*0x20;
+		offs[0] = 0x0e;
+		offs[1] = 0x0f;
+		offs[2] = 0x06;
+		offs[3] = 0x04;
+		offs[4] = 0x08;
+		/* Flak Attack doesn't use a lookup PROM, it maps the color code directly */
+		/* to a palette entry */
+		trans = TRANSPARENCY_PEN;
+	}
+	else	/* all others */
+	{
+		num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;
+		inc = 5;
+		offs[0] = 0x00;
+		offs[1] = 0x01;
+		offs[2] = 0x02;
+		offs[3] = 0x03;
+		offs[4] = 0x04;
+		trans = TRANSPARENCY_COLOR;
+	}
+
+	for (i = 0;i < num;i++)
+	{
+		int number = source[offs[0]];				/* sprite number */
+		int sprite_bank = source[offs[1]] & 0x0f;	/* sprite bank */
+		int sx = source[offs[3]];					/* vertical position */
+		int sy = source[offs[2]];					/* horizontal position */
+		int attr = source[offs[4]];				/* attributes */
+		int xflip = source[offs[4]] & 0x10;		/* flip x */
+		int yflip = source[offs[4]] & 0x20;		/* flip y */
+		int color = base_color + ((source[offs[1]] & 0xf0) >> 4);
+		int width,height;
+		static int x_offset[4] = {0x0,0x1,0x4,0x5};
+		static int y_offset[4] = {0x0,0x2,0x8,0xa};
+		int x,y, ex, ey;
+
+		if (attr & 0x01) sx -= 256;
+		if (sy >= 240) sy -= 256;
+
+		number += ((sprite_bank & 0x3) << 8) + ((attr & 0xc0) << 4);
+		number = number << 2;
+		number += (sprite_bank >> 2) & 3;
+
+		if (number || !(K007121_ctrlram[chip][0x06] & 0x04))	/* Flak Attack needs this */
+		{
+			number += bank_base;
+
+			switch( attr&0xe )
+			{
+				case 0x06: width = height = 1; break;
+				case 0x04: width = 1; height = 2; number &= (~2); break;
+				case 0x02: width = 2; height = 1; number &= (~1); break;
+				case 0x00: width = height = 2; number &= (~3); break;
+				case 0x08: width = height = 4; number &= (~3); break;
+				default: width = 1; height = 1;
+//					if (errorlog) fprintf(errorlog,"Unknown sprite size %02x\n",attr&0xe);
+//					usrintf_showmessage("Unknown sprite size %02x\n",attr&0xe);
+			}
+
+			for (y = 0;y < height;y++)
+			{
+				for (x = 0;x < width;x++)
+				{
+					ex = xflip ? (width-1-x) : x;
+					ey = yflip ? (height-1-y) : y;
+
+					if (flip_screen)
+						drawgfx(bitmap,gfx,
+							number + x_offset[ex] + y_offset[ey],
+							color,
+							!xflip,!yflip,
+							248-(sx+x*8),248-(sy+y*8),
+							&Machine->drv->visible_area,trans,0);
+					else
+						drawgfx(bitmap,gfx,
+							number + x_offset[ex] + y_offset[ey],
+							color,
+							xflip,yflip,
+							global_x_offset+sx+x*8,sy+y*8,
+							&Machine->drv->visible_area,trans,0);
+				}
+			}
+		}
+
+		source += inc;
+	}
+}
+
+void K007121_mark_sprites_colors(int chip,
+		const unsigned char *source,int base_color,int bank_base)
+{
+	int i,num,inc,offs[5];
+
+	unsigned short palette_map[512];
+
+	if (K007121_ctrlram[chip][0x06] & 0x04)	/* Flak Attack */
+	{
+		num = 0x40;
+		inc = -0x20;
+		source += 0x3f*0x20;
+		offs[0] = 0x0e;
+		offs[1] = 0x0f;
+		offs[2] = 0x06;
+		offs[3] = 0x04;
+		offs[4] = 0x08;
+	}
+	else	/* all others */
+	{
+		num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;
+		inc = 5;
+		offs[0] = 0x00;
+		offs[1] = 0x01;
+		offs[2] = 0x02;
+		offs[3] = 0x03;
+		offs[4] = 0x04;
+	}
+
+	memset (palette_map, 0, sizeof (palette_map));
+
+	/* sprites */
+	for (i = 0;i < num;i++)
+	{
+		int color;
+
+		color = base_color + ((source[offs[1]] & 0xf0) >> 4);
+		palette_map[color] |= 0xffff;
+
+		source += inc;
+	}
+
+	/* now build the final table */
+	for (i = 0; i < 512; i++)
+	{
+		int usage = palette_map[i], j;
+		if (usage)
+		{
+			for (j = 0; j < 16; j++)
+				if (usage & (1 << j))
+					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
+		}
+	}
+}
 
 
 
@@ -1874,12 +2170,7 @@ void K051937_word_w(int offset,int data)
  *
  * shadow enables transparent shadows. Note that it applies to pen 0x0f ONLY.
  * The rest of the sprite remains normal.
- * Since the shadow property should probably be handled internally to the chip
- * (to cast a shadow over other sprites; or isn't this supported?), but there
- * are games that use hte bit for other purposes (e.g. Aliens) it is possible
- * that there is a way to enable shadows globally. Or maybe this is all a red
- * herring, shadows are always enabled and the "shadow" bit does something
- * completely different.
+ * Note that Aliens also uses the shadow bit to select the second sprite bank.
  */
 
 void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority)
@@ -1974,12 +2265,26 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					drawgfx(bitmap,K051960_gfx,
-							c,
-							color,
-							flipx,flipy,
-							sx & 0x1ff,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					/* hack to simulate shadow */
+					if (K051960_ram[offs+3] & 0x80)
+					{
+						int o = K051960_gfx->colortable[16*color+15];
+						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
+						drawgfx(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+						K051960_gfx->colortable[16*color+15] = o;
+					}
+					else
+						drawgfx(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -2034,7 +2339,7 @@ void K051960_mark_sprites_colors(void)
 {
 	int offs,i;
 
-	unsigned short palette_map[128];
+	unsigned short palette_map[512];
 
 	memset (palette_map, 0, sizeof (palette_map));
 
@@ -2054,7 +2359,7 @@ void K051960_mark_sprites_colors(void)
 	}
 
 	/* now build the final table */
-	for (i = 0; i < 128; i++)
+	for (i = 0; i < 512; i++)
 	{
 		int usage = palette_map[i], j;
 		if (usage)
@@ -2286,9 +2591,12 @@ void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
  *   5  | xxxxxxxxxxxxxxxx | zoom x (0x40 = normal, <0x40 = enlarge, >0x40 = reduce)
  *   6  | ------x--------- | mirror y (top half is drawn as mirror image of the bottom)
  *   6  | -------x-------- | mirror x (right half is drawn as mirror image of the left)
- *   6  | --------x------- | shadow?
- *   6  | --------xxxxxxxx | "color", but depends on external connections
+ *   6  | --------x------- | shadow
+ *   6  | ---------xxxxxxx | "color", but depends on external connections
  *   7  | ---------------- |
+ *
+ * shadow enables transparent shadows. Note that it applies to pen 0x0f ONLY.
+ * The rest of the sprite remains normal.
  */
 
 void K053245_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority)
@@ -2356,13 +2664,6 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 
 		w = 1 << (size & 0x03);
 		h = 1 << ((size >> 2) & 0x03);
-
-/* shadow enables transparent shadows. Note that it applies to pen 0x0f ONLY. The rest */
-/* of the sprite remains normal. */
-//		shadow = READ_WORD(&K053245_ram[offs+0x0c]) & 0x0080;
-#if 0
-if (keyboard_pressed(KEYCODE_E) && (READ_WORD(&K053245_ram[offs+0x0c]) & 0x0080)) color = rand();
-#endif
 
 		/* zoom control:
 		   0x40 = normal scale
@@ -2472,12 +2773,28 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 				c = (c & 0x3f) | (code & ~0x3f);
 
 				if (zoomx == 0x10000 && zoomy == 0x10000)
-					drawgfx(bitmap,K053245_gfx,
-							c,
-							color,
-							fx,fy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				{
+					/* hack to simulate shadow */
+					if (READ_WORD(&K053245_ram[offs+0x0c]) & 0x0080)
+					{
+						int o = K053245_gfx->colortable[16*color+15];
+						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
+						drawgfx(bitmap,K053245_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+						K053245_gfx->colortable[16*color+15] = o;
+					}
+					else
+						drawgfx(bitmap,K053245_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
 				else
 					drawgfxzoom(bitmap,K053245_gfx,
 							c,
@@ -2509,7 +2826,7 @@ void K053245_mark_sprites_colors(void)
 {
 	int offs,i;
 
-	unsigned short palette_map[128];
+	unsigned short palette_map[512];
 
 	memset (palette_map, 0, sizeof (palette_map));
 
@@ -2531,7 +2848,7 @@ void K053245_mark_sprites_colors(void)
 	}
 
 	/* now build the final table */
-	for (i = 0; i < 128; i++)
+	for (i = 0; i < 512; i++)
 	{
 		int usage = palette_map[i], j;
 		if (usage)
@@ -2738,10 +3055,12 @@ void K053246_set_OBJCHA_line(int state)
  *   5  | xxxxxxxxxxxxxxxx | zoom x (0x40 = normal, <0x40 = enlarge, >0x40 = reduce)
  *   6  | x--------------- | mirror y (top half is drawn as mirror image of the bottom)
  *   6  | -x-------------- | mirror x (right half is drawn as mirror image of the left)
+ *   6  | -----x---------- | shadow
  *   6  | xxxxxxxxxxxxxxxx | "color", but depends on external connections
  *   7  | ---------------- |
  *
- * There doesn't seem to be a "shadow" bit - probably shadows are always enabled.
+ * shadow enables transparent shadows. Note that it applies to pen 0x0f ONLY.
+ * The rest of the sprite remains normal.
  */
 
 void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority)
@@ -2950,12 +3269,28 @@ switch (K053247_spriteoffsY)
 				}
 
 				if (zoomx == 0x10000 && zoomy == 0x10000)
-					drawgfx(bitmap,K053247_gfx,
-							c,
-							color,
-							fx,fy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				{
+					/* hack to simulate shadow */
+					if (READ_WORD(&K053247_ram[offs+0x0c]) & 0x0400)
+					{
+						int o = K053247_gfx->colortable[16*color+15];
+						K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
+						drawgfx(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+						K053247_gfx->colortable[16*color+15] = o;
+					}
+					else
+						drawgfx(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
 				else
 					drawgfxzoom(bitmap,K053247_gfx,
 							c,
@@ -2966,13 +3301,39 @@ switch (K053247_spriteoffsY)
 							(zw << 16) / 16,(zh << 16) / 16);
 
 				if (mirrory && h == 1)  /* Simpsons shadows */
-					drawgfxzoom(bitmap,K053247_gfx,
-							c,
-							color,
-							fx,!fy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16);
+				{
+					if (zoomx == 0x10000 && zoomy == 0x10000)
+					{
+						/* hack to simulate shadow */
+						if (READ_WORD(&K053247_ram[offs+0x0c]) & 0x0400)
+						{
+							int o = K053247_gfx->colortable[16*color+15];
+							K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
+							drawgfx(bitmap,K053247_gfx,
+									c,
+									color,
+									fx,!fy,
+									sx,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+							K053247_gfx->colortable[16*color+15] = o;
+						}
+						else
+							drawgfx(bitmap,K053247_gfx,
+									c,
+									color,
+									fx,!fy,
+									sx,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					}
+					else
+						drawgfxzoom(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,!fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16);
+				}
 			}
 		}
 	}
@@ -2996,7 +3357,7 @@ void K053247_mark_sprites_colors(void)
 {
 	int offs,i;
 
-	unsigned short palette_map[128];
+	unsigned short palette_map[512];
 
 	memset (palette_map, 0, sizeof (palette_map));
 
@@ -3016,16 +3377,14 @@ void K053247_mark_sprites_colors(void)
 	}
 
 	/* now build the final table */
-	for (i = 0; i < 128; i++)
+	for (i = 0; i < 512; i++)
 	{
 		int usage = palette_map[i], j;
 		if (usage)
 		{
-			for (j = 1; j < 15; j++)
+			for (j = 1; j < 16; j++)
 				if (usage & (1 << j))
 					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-			if (usage & (1 << 15))  /* pen 15 is always shadow */
-				palette_used_colors[i * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
 		}
 	}
 }
@@ -3040,6 +3399,8 @@ int K053247_is_IRQ_enabled(void)
 
 static int K051316_memory_region[MAX_K051316];
 static int K051316_gfxnum[MAX_K051316];
+static int K051316_wraparound[MAX_K051316];
+static int K051316_offset[MAX_K051316][2];
 static int K051316_bpp[MAX_K051316];
 static void (*K051316_callback[MAX_K051316])(int *code,int *color);
 static unsigned char *K051316_ram[MAX_K051316];
@@ -3158,6 +3519,9 @@ if (errorlog) fprintf(errorlog,"K051316_vh_start supports only 4 or 7 bpp\n");
 	}
 
 	tilemap_set_clip(K051316_tilemap[chip],0);
+
+	K051316_wraparound[chip] = 0;	/* default = no wraparound */
+	K051316_offset[chip][0] = K051316_offset[chip][1] = 0;
 
 	return 0;
 }
@@ -3308,6 +3672,16 @@ void K051316_ctrl_2_w(int offset,int data)
 	K051316_ctrl_w(2,offset,data);
 }
 
+void K051316_wraparound_enable(int chip, int status)
+{
+	K051316_wraparound[chip] = status;
+}
+
+void K051316_set_offset(int chip, int xoffs, int yoffs)
+{
+	K051316_offset[chip][0] = xoffs;
+	K051316_offset[chip][1] = yoffs;
+}
 
 void K051316_tilemap_update(int chip)
 {
@@ -3339,13 +3713,6 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 	int incxx,incxy,incyx,incyy;
 	int x,sx,sy,ex,ey;
 	struct osd_bitmap *srcbitmap = K051316_tilemap[chip]->pixmap;
-/* TODO: remove this kludge */
-#ifndef TINY_COMPILE
-extern struct GameDriver driver_rollerg;
-int is_rollergames = Machine->gamedrv == &driver_rollerg || Machine->gamedrv->clone_of == &driver_rollerg;
-#else
-int is_rollergames = 0;
-#endif
 
 	startx = 256 * ((INT16)(256 * K051316_ctrlram[chip][0x00] + K051316_ctrlram[chip][0x01]));
 	incxx  =        (INT16)(256 * K051316_ctrlram[chip][0x02] + K051316_ctrlram[chip][0x03]);
@@ -3354,22 +3721,11 @@ int is_rollergames = 0;
 	incxy  =        (INT16)(256 * K051316_ctrlram[chip][0x08] + K051316_ctrlram[chip][0x09]);
 	incyy  =        (INT16)(256 * K051316_ctrlram[chip][0x0a] + K051316_ctrlram[chip][0x0b]);
 
-	if (is_rollergames)
-	{
-		startx += (Machine->drv->visible_area.min_y - 17) * incyx;
-		starty += (Machine->drv->visible_area.min_y - 17) * incyy;
+	startx += (Machine->drv->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyx;
+	starty += (Machine->drv->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyy;
 
-		startx += (Machine->drv->visible_area.min_x - 111) * incxx;
-		starty += (Machine->drv->visible_area.min_x - 111) * incxy;
-	}
-	else
-	{
-		startx += (Machine->drv->visible_area.min_y - 16) * incyx;
-		starty += (Machine->drv->visible_area.min_y - 16) * incyy;
-
-		startx += (Machine->drv->visible_area.min_x - 89) * incxx;
-		starty += (Machine->drv->visible_area.min_x - 89) * incxy;
-	}
+	startx += (Machine->drv->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxx;
+	starty += (Machine->drv->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxy;
 
 	sx = Machine->drv->visible_area.min_x;
 	sy = Machine->drv->visible_area.min_y;
@@ -3413,7 +3769,7 @@ int is_rollergames = 0;
 	{
 		unsigned char *dest;
 
-		if (incxy == 0 && incyx == 0 && !is_rollergames)
+		if (incxy == 0 && incyx == 0 && !K051316_wraparound[chip])
 		{
 			/* optimized loop for the not rotated case */
 
@@ -3495,7 +3851,7 @@ int is_rollergames = 0;
 		}
 		else
 		{
-			if (is_rollergames)
+			if (K051316_wraparound[chip])
 			{
 				/* plot with wraparound */
 				while (sy <= ey)
@@ -3557,7 +3913,7 @@ int is_rollergames = 0;
 
 		unsigned short *dest;
 
-		if (incxy == 0 && incyx == 0 && !is_rollergames)
+		if (incxy == 0 && incyx == 0 && !K051316_wraparound[chip])
 		{
 			/* optimized loop for the not rotated case */
 
@@ -3639,7 +3995,7 @@ int is_rollergames = 0;
 		}
 		else
 		{
-			if (is_rollergames)
+			if (K051316_wraparound[chip])
 			{
 				/* plot with wraparound */
 				while (sy <= ey)

@@ -4,6 +4,18 @@ void konami_rom_deinterleave_2(int mem_region);
 void konami_rom_deinterleave_4(int mem_region);
 
 
+#define MAX_K007121 2
+extern unsigned char K007121_ctrlram[MAX_K007121][8];
+
+void K007121_ctrl_w(int chip,int offset,int data);
+void K007121_ctrl_0_w(int offset,int data);
+void K007121_ctrl_1_w(int offset,int data);
+void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
+		const unsigned char *source,int base_color,int global_x_offset,int bank_base);
+void K007121_mark_sprites_colors(int chip,
+		const unsigned char *source,int base_color,int bank_base);
+
+
 int K007342_vh_start(int gfx_index, void (*callback)(int layer,int bank,int *code,int *color));
 void K007342_vh_stop(void);
 int K007342_r(int offset);
@@ -140,8 +152,11 @@ int K051316_vh_start_0(int gfx_memory_region,int bpp,
 		void (*callback)(int *code,int *color));
 int K051316_vh_start_1(int gfx_memory_region,int bpp,
 		void (*callback)(int *code,int *color));
+int K051316_vh_start_2(int gfx_memory_region,int bpp,
+		void (*callback)(int *code,int *color));
 void K051316_vh_stop_0(void);
 void K051316_vh_stop_1(void);
+void K051316_vh_stop_2(void);
 int K051316_0_r(int offset);
 int K051316_1_r(int offset);
 int K051316_2_r(int offset);
@@ -160,6 +175,8 @@ void K051316_tilemap_update_2(void);
 void K051316_zoom_draw_0(struct osd_bitmap *bitmap);
 void K051316_zoom_draw_1(struct osd_bitmap *bitmap);
 void K051316_zoom_draw_2(struct osd_bitmap *bitmap);
+void K051316_wraparound_enable(int chip, int status);
+void K051316_set_offset(int chip, int xoffs, int yoffs);
 
 
 void K053251_w(int offset,int data);

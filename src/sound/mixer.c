@@ -59,6 +59,8 @@ struct mixer_channel_data
 
 /* channel data */
 static struct mixer_channel_data mixer_channel[MIXER_MAX_CHANNELS];
+static UINT8 config_mixing_level[MIXER_MAX_CHANNELS];
+static UINT8 config_default_mixing_level[MIXER_MAX_CHANNELS];
 static UINT8 first_free_channel = 0;
 static UINT8 config_invalid;
 static UINT8 is_stereo;
@@ -97,8 +99,8 @@ int mixer_sh_start(void)
 	{
 		channel->mixing_level 					= 0xff;
 		channel->default_mixing_level 			= 0xff;
-		channel->config_mixing_level 			= 0xff;
-		channel->config_default_mixing_level 	= 0xff;
+		channel->config_mixing_level 			= config_mixing_level[i];
+		channel->config_default_mixing_level 	= config_default_mixing_level[i];
 	}
 
 	/* determine if we're playing in stereo or not */
@@ -397,6 +399,17 @@ int mixer_get_mixing_level(int ch)
 
 
 /***************************************************************************
+	mixer_get_default_mixing_level
+***************************************************************************/
+
+int mixer_get_default_mixing_level(int ch)
+{
+	struct mixer_channel_data *channel = &mixer_channel[ch];
+	return channel->default_mixing_level;
+}
+
+
+/***************************************************************************
 	mixer_read_config
 ***************************************************************************/
 
@@ -412,8 +425,8 @@ void mixer_read_config(void *f)
 	osd_fread(f, mixing_levels, MIXER_MAX_CHANNELS);
 	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
 	{
-		mixer_channel[i].config_default_mixing_level = default_levels[i];
-		mixer_channel[i].config_mixing_level = mixing_levels[i];
+		config_default_mixing_level[i] = default_levels[i];
+		config_mixing_level[i] = mixing_levels[i];
 	}
 	config_invalid = 0;
 }
@@ -431,8 +444,8 @@ void mixer_write_config(void *f)
 
 	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
 	{
-		default_levels[i] = mixer_channel[i].config_default_mixing_level;
-		mixing_levels[i] = mixer_channel[i].config_mixing_level;
+		default_levels[i] = mixer_channel[i].default_mixing_level;
+		mixing_levels[i] = mixer_channel[i].mixing_level;
 	}
 	osd_fwrite(f, default_levels, MIXER_MAX_CHANNELS);
 	osd_fwrite(f, mixing_levels, MIXER_MAX_CHANNELS);
@@ -522,10 +535,20 @@ void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 
 
 /***************************************************************************
+	mixer_samples_this_frame
+***************************************************************************/
+
+int mixer_samples_this_frame(void)
+{
+	return samples_this_frame;
+}
+
+
+/***************************************************************************
 	mixer_play_sample
 ***************************************************************************/
 
-void mixer_play_sample(int ch, signed char *data, int len, int freq, int loop)
+void mixer_play_sample(int ch, INT8 *data, int len, int freq, int loop)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 

@@ -497,11 +497,15 @@ static void reset_decrementer(void);
 		TMS99XX_ICOUNT -= 2;
 		if (addr & 1)
 		{
+			extra_byte = cpu_readmem14(addr-1);
+
 			cpu_writemem14(addr-1, extra_byte);
 			cpu_writemem14(addr, data);
 		}
 		else
 		{
+			extra_byte = cpu_readmem14(addr+1);
+
 			cpu_writemem14(addr, data);
 			cpu_writemem14(addr+1, extra_byte);
 		}

@@ -321,10 +321,10 @@ INPUT_PORTS_START( jackal )
 
 	/* the rotary controls work in topgunbl only */
 	PORT_START	/* player 1 8-way rotary control - converted in rotary_0_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 8-way rotary control - converted in rotary_1_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 

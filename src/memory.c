@@ -554,11 +554,6 @@ int memory_init(void)
 			(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
 			portmask[cpu] = 0xff;
 #endif
-#if HAS_Z80_VM
-		if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80_VM &&
-			(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
-            portmask[cpu] = 0xff;
-#endif
     }
 
 	/* initialize grobal handler */
@@ -1062,6 +1057,10 @@ READBYTE(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29)
 READWORD(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
 READLONG(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
 
+READBYTE(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32)
+READWORD(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
+READLONG(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
+
 
 /***************************************************************************
 
@@ -1267,6 +1266,10 @@ WRITEBYTE(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29)
 WRITEWORD(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
 WRITELONG(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
 
+WRITEBYTE(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32)
+WRITEWORD(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
+WRITELONG(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
+
 
 /***************************************************************************
 
@@ -1275,10 +1278,12 @@ WRITELONG(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_B
 ***************************************************************************/
 
 /* generic opcode base changer */
-#define SETOPBASE(name,abits2,abitsmin)													\
+#define SETOPBASE(name,abits2,abitsmin,shift)											\
 void name(int pc)																		\
 {																						\
 	MHELE hw;																			\
+																						\
+	pc = (UINT32)pc >> shift;															\
 																						\
 	/* allow overrides */																\
 	if (OPbasefunc)																		\
@@ -1312,13 +1317,14 @@ void name(int pc)																		\
 
 
 /* the handlers we need to generate */
-SETOPBASE(cpu_setOPbase16,    ABITS2_16,    ABITS_MIN_16)
-SETOPBASE(cpu_setOPbase16bew, ABITS2_16BEW, ABITS_MIN_16BEW)
-SETOPBASE(cpu_setOPbase16lew, ABITS2_16LEW, ABITS_MIN_16LEW)
-SETOPBASE(cpu_setOPbase20,    ABITS2_20,    ABITS_MIN_20)
-SETOPBASE(cpu_setOPbase21,    ABITS2_21,    ABITS_MIN_21)
-SETOPBASE(cpu_setOPbase24,    ABITS2_24,    ABITS_MIN_24)
-SETOPBASE(cpu_setOPbase29,    ABITS2_29,    ABITS_MIN_29)
+SETOPBASE(cpu_setOPbase16,    ABITS2_16,    ABITS_MIN_16,    0)
+SETOPBASE(cpu_setOPbase16bew, ABITS2_16BEW, ABITS_MIN_16BEW, 0)
+SETOPBASE(cpu_setOPbase16lew, ABITS2_16LEW, ABITS_MIN_16LEW, 0)
+SETOPBASE(cpu_setOPbase20,    ABITS2_20,    ABITS_MIN_20,    0)
+SETOPBASE(cpu_setOPbase21,    ABITS2_21,    ABITS_MIN_21,    0)
+SETOPBASE(cpu_setOPbase24,    ABITS2_24,    ABITS_MIN_24,    0)
+SETOPBASE(cpu_setOPbase29,    ABITS2_29,    ABITS_MIN_29,    3)
+SETOPBASE(cpu_setOPbase32,    ABITS2_32,    ABITS_MIN_32,    0)
 
 
 /***************************************************************************

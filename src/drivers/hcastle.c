@@ -1,11 +1,9 @@
 /***************************************************************************
 
-	Haunted Castle
+Haunted Castle
 
-	Notes:
-		Graphics are wrong in the end of game animation
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
 
@@ -19,11 +17,11 @@ void hcastle_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 int hcastle_vh_start (void);
 void hcastle_vh_stop (void);
 
-extern unsigned char *hcastle_pf1_control,*hcastle_pf2_control;
 extern unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 
 void hcastle_pf1_video_w(int offset,int data);
 void hcastle_pf2_video_w(int offset,int data);
+int hcastle_gfxbank_r(int offset);
 void hcastle_gfxbank_w(int offset,int data);
 void hcastle_pf1_control_w(int offset,int data);
 void hcastle_pf2_control_w(int offset,int data);
@@ -77,6 +75,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0413, 0x0413, input_port_5_r }, /* Dip 3 */
 	{ 0x0414, 0x0414, input_port_4_r }, /* Dip 2 */
 	{ 0x0415, 0x0415, input_port_3_r }, /* Dip 1 */
+	{ 0x0418, 0x0418, hcastle_gfxbank_r },
 	{ 0x0600, 0x06ff, paletteram_r },
 	{ 0x18dc, 0x18dc, speedup_r },
 	{ 0x0700, 0x5fff, MRA_RAM },
@@ -87,9 +86,9 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0007, hcastle_pf1_control_w, &hcastle_pf1_control },
+	{ 0x0000, 0x0007, hcastle_pf1_control_w },
 	{ 0x0020, 0x003f, MWA_RAM },	/* rowscroll? */
-	{ 0x0200, 0x0207, hcastle_pf2_control_w, &hcastle_pf2_control },
+	{ 0x0200, 0x0207, hcastle_pf2_control_w },
 	{ 0x0220, 0x023f, MWA_RAM },	/* rowscroll? */
 	{ 0x0400, 0x0400, hcastle_bankswitch_w },
 	{ 0x0404, 0x0404, soundlatch_w },
@@ -265,8 +264,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout, 0, 8*4*16 },	/* 007121 #1 */
-	{ REGION_GFX2, 0, &charlayout, 0, 8*4*16 },	/* 007121 #2 */
+	{ REGION_GFX1, 0, &charlayout,       0, 8*16 },	/* 007121 #0 */
+	{ REGION_GFX2, 0, &charlayout, 8*16*16, 8*16 },	/* 007121 #1 */
 	{ -1 } /* end of array */
 };
 
@@ -330,8 +329,8 @@ static struct MachineDriver machine_driver_hcastle =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	gfxdecodeinfo,
-//	128, 8*4*16*16,	/* the palette only has 128 colors, but need to use 256 to */
-	256, 8*4*16*16,	/* use PALETTE_COLOR_TRANSPARENT from the dynamic palette. */
+//	128, 2*8*16*16,	/* the palette only has 128 colors, but need to use 256 to */
+	256, 2*8*16*16,	/* use PALETTE_COLOR_TRANSPARENT from the dynamic palette. */
 	hcastle_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -377,10 +376,10 @@ ROM_START( hcastle )
 	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGION( 0x0500, REGION_PROMS )
-	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
-	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #2 char lookup table (same) */
+	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table (same) */
+	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table (same) */
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for the samples */
@@ -404,10 +403,10 @@ ROM_START( hcastlea )
 	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGION( 0x0500, REGION_PROMS )
-	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
-	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #2 char lookup table (same) */
+	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table (same) */
+	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table (same) */
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for the samples */
@@ -431,10 +430,10 @@ ROM_START( hcastlej )
 	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGION( 0x0500, REGION_PROMS )
-	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
-	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #2 char lookup table (same) */
+	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table (same) */
+	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table (same) */
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for the samples */

@@ -99,7 +99,7 @@ INPUT_PORTS_START( circus )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* IN2 - paddle */
-	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 30, 10, 0, 64, 167 )
+	PORT_ANALOG( 0xff, 115, IPT_PADDLE, 30, 10, 64, 167 )
 INPUT_PORTS_END
 
 
@@ -187,7 +187,7 @@ INPUT_PORTS_START( ripcord )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* IN2 - paddle */
-	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 30, 10, 0, 64, 167 )
+	PORT_ANALOG( 0xff, 115, IPT_PADDLE, 30, 10, 64, 167 )
 INPUT_PORTS_END
 
 static unsigned char palette[] =

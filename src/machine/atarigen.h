@@ -11,6 +11,14 @@
 #ifndef __MACHINE_ATARIGEN__
 #define __MACHINE_ATARIGEN__
 
+
+#define ATARI_CLOCK_14MHz	14318180
+#define ATARI_CLOCK_20MHz	20000000
+#define ATARI_CLOCK_32MHz	32000000
+#define ATARI_CLOCK_50MHz	50000000
+
+
+
 /*--------------------------------------------------------------------------
 
 	Atari generic interrupt model (required)
@@ -413,14 +421,12 @@ void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const stru
 		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
 		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
 		atarigen_expanded_666_paletteram_w - byte version of above
-		atarigen_shade_render - Vindicators shading renderer
 
 --------------------------------------------------------------------------*/
 int atarigen_get_hblank(void);
 void atarigen_halt_until_hblank_0_w(int offset, int data);
 void atarigen_666_paletteram_w(int offset, int data);
 void atarigen_expanded_666_paletteram_w(int offset, int data);
-void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const UINT8 *shade_table);
 
 
 

@@ -17,7 +17,7 @@ extern int ignorecfg;
 /* from video.c */
 extern int frameskip,autoframeskip;
 extern int scanlines, use_tweaked, video_sync, wait_vsync, use_triplebuf;
-extern int stretch, use_mmx;
+extern int stretch, use_mmx, use_dirty;
 extern int vgafreq, always_synced, skiplines, skipcolumns;
 extern float osd_gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
@@ -54,7 +54,6 @@ extern unsigned char tw640x480arc_h, tw640x480arc_v;
 
 /* from sound.c */
 extern int soundcard, usestereo,attenuation;
-extern int use_emulated_ym3812;
 
 /* from input.c */
 extern int use_mouse, joystick, use_hotrod;
@@ -71,7 +70,8 @@ extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
 #ifdef MESS
-  extern char *crcdir;
+/* path to the CRC database files */
+char *crcdir;
 #endif
 
 /* from video.c, for centering tweaked modes */
@@ -361,6 +361,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	use_tweaked = get_bool   ("config", "tweak",		NULL,  0);
 	vesamode    = get_string ("config", "vesamode",	NULL,	"vesa3");
 	use_mmx		= get_bool   ("config", "mmx", 		NULL,	-1);
+	use_dirty	= get_bool	 ("config", "dirty",	NULL,	-1);
 	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	options.translucency = get_bool    ("config", "translucency", NULL, 1);
 

@@ -65,25 +65,25 @@ extern unsigned m6809_dasm(char *buffer, unsigned pc);
 #define M6309_IRQ_LINE					M6809_IRQ_LINE
 #define M6309_FIRQ_LINE 				M6809_FIRQ_LINE
 
-#define m6309_ICount                    m6809_ICount
-extern void m6309_reset(void *param);
-extern void m6309_exit(void);
-extern int m6309_execute(int cycles);  /* NS 970908 */
-extern unsigned m6309_get_context(void *dst);
-extern void m6309_set_context(void *src);
-extern unsigned m6309_get_pc(void);
-extern void m6309_set_pc(unsigned val);
-extern unsigned m6309_get_sp(void);
-extern void m6309_set_sp(unsigned val);
-extern unsigned m6309_get_reg(int regnum);
-extern void m6309_set_reg(int regnum, unsigned val);
-extern void m6309_set_nmi_line(int state);
-extern void m6309_set_irq_line(int irqline, int state);
-extern void m6309_set_irq_callback(int (*callback)(int irqline));
-extern void m6309_state_save(void *file);
-extern void m6309_state_load(void *file);
-extern const char *m6309_info(void *context,int regnum);
-extern unsigned m6309_dasm(char *buffer, unsigned pc);
+#define hd6309_ICount					 m6809_ICount
+extern void hd6309_reset(void *param);
+extern void hd6309_exit(void);
+extern int hd6309_execute(int cycles);	/* NS 970908 */
+extern unsigned hd6309_get_context(void *dst);
+extern void hd6309_set_context(void *src);
+extern unsigned hd6309_get_pc(void);
+extern void hd6309_set_pc(unsigned val);
+extern unsigned hd6309_get_sp(void);
+extern void hd6309_set_sp(unsigned val);
+extern unsigned hd6309_get_reg(int regnum);
+extern void hd6309_set_reg(int regnum, unsigned val);
+extern void hd6309_set_nmi_line(int state);
+extern void hd6309_set_irq_line(int irqline, int state);
+extern void hd6309_set_irq_callback(int (*callback)(int irqline));
+extern void hd6309_state_save(void *file);
+extern void hd6309_state_load(void *file);
+extern const char *hd6309_info(void *context,int regnum);
+extern unsigned hd6309_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************/

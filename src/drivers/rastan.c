@@ -434,8 +434,7 @@ static struct MachineDriver machine_driver_rastan =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
-//			SOUND_YM2151,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{

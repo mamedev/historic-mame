@@ -1,6 +1,7 @@
 /***************************************************************************
 
   Tumblepop (World)     (c) 1991 Data East Corporation
+  Tumblepop (Japan)     (c) 1991 Data East Corporation
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 1)
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 2)
 
@@ -210,15 +211,12 @@ INPUT_PORTS_START( tumblep )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
@@ -228,36 +226,39 @@ INPUT_PORTS_START( tumblep )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_6C ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x80, "1" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0xc0, "3" )
-	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
-  	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -346,7 +347,7 @@ static struct MachineDriver machine_driver_tumblepop =
 	{
 	 	{
 			CPU_M68000,
-			12000000,
+			14000000,
 			tumblepop_readmem,tumblepop_writemem,0,0,
 			m68_level6_irq,1
 		},
@@ -394,7 +395,7 @@ static struct MachineDriver machine_driver_tumblepb =
 	{
 	 	{
 			CPU_M68000,
-			12000000,
+			14000000,
 			tumblepopb_readmem,tumblepopb_writemem,0,0,
 			m68_level6_irq,1
 		},
@@ -436,11 +437,33 @@ ROM_START( tumblep )
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* Sound cpu */
 	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
 
- 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
- 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
+	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
+	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
+	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* Oki samples */
+	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
+ROM_END
+
+ROM_START( tumblepj )
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
+	ROM_LOAD_ODD ("hk01-1.f13", 0x00000, 0x40000, 0x56912a00 )
+	ROM_LOAD_EVEN("hk00-1.f12", 0x00000, 0x40000, 0x2d3e4d3d )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* Sound cpu */
+	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
+	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
@@ -455,11 +478,11 @@ ROM_START( tumblepb )
 	ROM_LOAD_EVEN ("thumbpop.12", 0x00000, 0x40000, 0x0c984703 )
 	ROM_LOAD_ODD ( "thumbpop.13", 0x00000, 0x40000, 0x864c4053 )
 
- 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
- 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
@@ -474,7 +497,7 @@ ROM_START( tumblep2 )
 	ROM_LOAD_EVEN ("thumbpop.2", 0x00000, 0x40000, 0x34b016e1 )
 	ROM_LOAD_ODD ( "thumbpop.3", 0x00000, 0x40000, 0x89501c71 )
 
- 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
@@ -515,5 +538,6 @@ static void init_tumblep(void)
 /******************************************************************************/
 
 GAME( 1991, tumblep,  0,       tumblepop, tumblep, tumblep, ROT0, "Data East Corporation", "Tumble Pop (World)" )
+GAME( 1991, tumblepj, tumblep, tumblepop, tumblep, tumblep, ROT0, "Data East Corporation", "Tumble Pop (Japan)" )
 GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep, tumblep, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
 GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep, tumblep, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )

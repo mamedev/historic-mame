@@ -13,9 +13,18 @@ HNZVC
 
 */
 
-INLINE void illegal( void )
+//INLINE void illegal( void )
+static void illegal( void )
 {
 	if(errorlog)fprintf(errorlog, "M6808: illegal opcode: address %04X, op %02X\n",PC,(int) M_RDOP_ARG(PC)&0xFF);
+}
+
+/* HD63701 only */
+//INLINE void trap( void )
+static void trap( void )
+{
+	if(errorlog)fprintf(errorlog, "M6808: illegal opcode: address %04X, op %02X\n",PC,(int) M_RDOP_ARG(PC)&0xFF);
+	TAKE_TRAP;
 }
 
 #if macintosh
@@ -55,7 +64,8 @@ INLINE void asld (void)
 INLINE void tap (void)
 {
 	CC=A;
-	CHECK_IRQ_LINES(1); /* HJB 990417 */
+	ONE_MORE_INSN();
+	CHECK_IRQ_LINES(); /* HJB 990417 */
 }
 
 /* $07 TPA inherent ----- */
@@ -106,14 +116,16 @@ INLINE void sec (void)
 INLINE void cli (void)
 {
 	CLI;
-	CHECK_IRQ_LINES(1); /* HJB 990417 */
+	ONE_MORE_INSN();
+	CHECK_IRQ_LINES(); /* HJB 990417 */
 }
 
 /* $0f SEI */
 INLINE void sei (void)
 {
 	SEI;
-	CHECK_IRQ_LINES(1); /* HJB 990417 */
+	ONE_MORE_INSN();
+	CHECK_IRQ_LINES(); /* HJB 990417 */
 }
 
 #if macintosh
@@ -191,7 +203,15 @@ INLINE void daa( void )
 	A = t;
 }
 
-/* $1a ILLEGAL */ /* SLEEP on the HD63701YO - no info available on the opcode! */
+/* $1a ILLEGAL */
+
+/* $1a SLP */ /* HD63701YO only */
+INLINE void slp (void)
+{
+	/* wait for next IRQ (same as waiting of wai) */
+	m6808.wai_state |= HD63701_SLP;
+	EAT_CYCLES;
+}
 
 /* $1b ABA inherent ***** */
 INLINE void aba (void)
@@ -218,7 +238,7 @@ INLINE void aba (void)
 INLINE void bra( void )
 {
 	UINT8 t;
-	IMMBYTE(t);PC+=SIGNED(t);change_pc(PC);
+	IMMBYTE(t);PC+=SIGNED(t);CHANGE_PC();
 	/* speed up busy loops */
 	if (t==0xfe) EAT_CYCLES;
 }
@@ -391,7 +411,7 @@ INLINE void pulx (void)
 INLINE void rts( void )
 {
 	PULLWORD(pPC);
-	change_pc(PC);
+	CHANGE_PC();
 }
 
 /* $3a ABX inherent ----- */
@@ -408,8 +428,8 @@ INLINE void rti( void )
 	PULLBYTE(A);
 	PULLWORD(pX);
 	PULLWORD(pPC);
-	change_pc(PC);
-	CHECK_IRQ_LINES(0); /* HJB 990417 */
+	CHANGE_PC();
+	CHECK_IRQ_LINES(); /* HJB 990417 */
 }
 
 /* $3c PSHX inherent ----- */
@@ -440,7 +460,7 @@ INLINE void wai( void )
 	PUSHBYTE(A);
 	PUSHBYTE(B);
 	PUSHBYTE(CC);
-	CHECK_IRQ_LINES(0);
+	CHECK_IRQ_LINES();
 	if (m6808.wai_state & M6808_WAI) EAT_CYCLES;
 }
 
@@ -453,8 +473,8 @@ INLINE void swi( void )
 	PUSHBYTE(B);
     PUSHBYTE(CC);
     SEI;
-	RM16(0xfffa,&m6808.pc);
-	change_pc(PC);
+	PCD = RM16(0xfffa);
+	CHANGE_PC();
 }
 
 #if macintosh
@@ -799,7 +819,7 @@ INLINE void tst_ix( void )
 /* $6e JMP indexed ----- */
 INLINE void jmp_ix( void )
 {
-	INDEXED; PC=EA; change_pc(PC);
+	INDEXED; PC=EA; CHANGE_PC();
 }
 
 /* $6f CLR indexed -0100 */
@@ -952,7 +972,7 @@ INLINE void tst_ex( void )
 /* $7e JMP extended ----- */
 INLINE void jmp_ex( void )
 {
-	EXTENDED; PC=EA; change_pc(PC); /* TS 971002 */
+	EXTENDED; PC=EA; CHANGE_PC(); /* TS 971002 */
 }
 
 /* $7f CLR extended -0100 */
@@ -1102,7 +1122,7 @@ INLINE void bsr( void )
 	IMMBYTE(t);
 	PUSHWORD(pPC);
 	PC += SIGNED(t);
-	change_pc(PC);	 /* TS 971002 */
+	CHANGE_PC();	 /* TS 971002 */
 }
 
 /* $8e LDS immediate -**0- */
@@ -1258,7 +1278,7 @@ INLINE void jsr_di( void )
 	DIRECT;
 	PUSHWORD(pPC);
     PC = EA;
-	change_pc(PC);
+	CHANGE_PC();
 }
 
 /* $9e LDS direct -**0- */
@@ -1415,7 +1435,7 @@ INLINE void jsr_ix( void )
 	INDEXED;
 	PUSHWORD(pPC);
     PC = EA;
-	change_pc(PC);
+	CHANGE_PC();
 }
 
 /* $ae LDS indexed -**0- */
@@ -1571,7 +1591,7 @@ INLINE void jsr_ex( void )
 	EXTENDED;
 	PUSHWORD(pPC);
     PC = EA;
-	change_pc(PC);
+	CHANGE_PC();
 }
 
 /* $be LDS extended -**0- */

@@ -95,7 +95,7 @@ static void scanline_update(int scanline)
 	klax_scanline_update(scanline);
 
 	/* generate 32V signals */
-	if (scanline % 64 == 0)
+	if (scanline % 64 == 0 && !(readinputport(0) & 0x800))
 		atarigen_scanline_int_gen();
 }
 
@@ -262,8 +262,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
-	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ REGION_SOUND1 },	/* memory region */
+	{ ATARI_CLOCK_14MHz/4/4/132 },
+	{ REGION_SOUND1 },
 	{ 100 }
 };
 
@@ -281,7 +281,7 @@ static struct MachineDriver machine_driver_klax =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}

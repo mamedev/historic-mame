@@ -40,11 +40,6 @@ driver by Ivan Mackintosh
 2780			earom write
 4000-7FFF       GAME CODE
 
-Known issues:
-
-* The dipswitches under $2000 aren't fully emulated. There must be some sort of
-trick to reading them properly.
-
 *************************************************************************/
 
 #include "driver.h"
@@ -55,8 +50,9 @@ trick to reading them properly.
 void milliped_paletteram_w(int offset,int data);
 void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int milliped_IN0_r(int offset);	/* JB 971220 */
-int milliped_IN1_r(int offset);	/* JB 971220 */
+int milliped_IN0_r(int offset);
+int milliped_IN1_r(int offset);
+void milliped_input_select_w(int offset,int data);
 
 void milliped_led_w (int offset, int data)
 {
@@ -69,8 +65,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0400, 0x040f, pokey1_r },
 	{ 0x0800, 0x080f, pokey2_r },
 	{ 0x1000, 0x13ff, MRA_RAM },
-	{ 0x2000, 0x2000, milliped_IN0_r },	/* JB 971220 */
-	{ 0x2001, 0x2001, milliped_IN1_r },	/* JB 971220 */
+	{ 0x2000, 0x2000, milliped_IN0_r },
+	{ 0x2001, 0x2001, milliped_IN1_r },
 	{ 0x2010, 0x2010, input_port_2_r },
 	{ 0x2011, 0x2011, input_port_3_r },
 	{ 0x2030, 0x2030, atari_vg_earom_r },
@@ -89,13 +85,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
 	{ 0x2480, 0x249f, milliped_paletteram_w, &paletteram },
-	{ 0x2680, 0x2680, watchdog_reset_w },
-	{ 0x2600, 0x2600, MWA_NOP }, /* IRQ ack */
 	{ 0x2500, 0x2502, coin_counter_w },
 	{ 0x2503, 0x2504, milliped_led_w },
-	{ 0x2780, 0x27bf, atari_vg_earom_w },
+	{ 0x2505, 0x2505, milliped_input_select_w },
+//	{ 0x2506, 0x2507, MWA_NOP }, /* ? */
+	{ 0x2600, 0x2600, MWA_NOP }, /* IRQ ack */
+	{ 0x2680, 0x2680, watchdog_reset_w },
 	{ 0x2700, 0x2700, atari_vg_earom_ctrl },
-	{ 0x2505, 0x2507, MWA_NOP }, /* coin door lights? */
+	{ 0x2780, 0x27bf, atari_vg_earom_w },
 	{ 0x4000, 0x73ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -104,32 +101,37 @@ static struct MemoryWriteAddress writemem[] =
 INPUT_PORTS_START( milliped )
 	PORT_START	/* IN0 $2000 */	/* see port 6 for x trackball */
 	PORT_DIPNAME(0x03, 0x00, "Language" )
-	PORT_DIPSETTING (   0x00, "English" )
-	PORT_DIPSETTING (   0x01, "German" )
-	PORT_DIPSETTING (   0x02, "French" )
-	PORT_DIPSETTING (   0x03, "Spanish" )
+	PORT_DIPSETTING(   0x00, "English" )
+	PORT_DIPSETTING(   0x01, "German" )
+	PORT_DIPSETTING(   0x02, "French" )
+	PORT_DIPSETTING(   0x03, "Spanish" )
 	PORT_DIPNAME(0x0c, 0x04, "Bonus" )
-	PORT_DIPSETTING (   0x00, "0" )
-	PORT_DIPSETTING (   0x04, "0 1x" )
-	PORT_DIPSETTING (   0x08, "0 1x 2x" )
-	PORT_DIPSETTING (   0x0c, "0 1x 2x 3x" )
+	PORT_DIPSETTING(   0x00, "0" )
+	PORT_DIPSETTING(   0x04, "0 1x" )
+	PORT_DIPSETTING(   0x08, "0 1x 2x" )
+	PORT_DIPSETTING(   0x0c, "0 1x 2x 3x" )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* trackball sign bit */
 
 	PORT_START	/* IN1 $2001 */	/* see port 7 for y trackball */
-	PORT_BIT ( 0x03, IP_ACTIVE_HIGH, IPT_UNKNOWN )				/* JB 971220 */
-	PORT_DIPNAME(0x04, 0x00, "Credit Minimum" )	/* JB 971220 */
-	PORT_DIPSETTING (   0x00, "1" )
-	PORT_DIPSETTING (   0x04, "2" )
-	PORT_DIPNAME(0x08, 0x00, "Coin Counters" )	/* JB 971220 */
-	PORT_DIPSETTING (   0x00, "1" )
-	PORT_DIPSETTING (   0x08, "2" )
+	PORT_DIPNAME(0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x01, DEF_STR( On ) )
+	PORT_DIPNAME(0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( On ) )
+	PORT_DIPNAME(0x04, 0x00, "Credit Minimum" )
+	PORT_DIPSETTING(   0x00, "1" )
+	PORT_DIPSETTING(   0x04, "2" )
+	PORT_DIPNAME(0x08, 0x00, "Coin Counters" )
+	PORT_DIPSETTING(   0x00, "1" )
+	PORT_DIPSETTING(   0x08, "2" )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* trackball sign bit */
 
 	PORT_START	/* IN2 $2010 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -153,57 +155,56 @@ INPUT_PORTS_START( milliped )
 
 	PORT_START	/* 4 */ /* DSW1 $0408 */
 	PORT_DIPNAME(0x01, 0x00, "Millipede Head" )
-	PORT_DIPSETTING (   0x00, "Easy" )
-	PORT_DIPSETTING (   0x01, "Hard" )
+	PORT_DIPSETTING(   0x00, "Easy" )
+	PORT_DIPSETTING(   0x01, "Hard" )
 	PORT_DIPNAME(0x02, 0x00, "Beetle" )
-	PORT_DIPSETTING (   0x00, "Easy" )
-	PORT_DIPSETTING (   0x02, "Hard" )
+	PORT_DIPSETTING(   0x00, "Easy" )
+	PORT_DIPSETTING(   0x02, "Hard" )
 	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING (   0x00, "2" )
-	PORT_DIPSETTING (   0x04, "3" )
-	PORT_DIPSETTING (   0x08, "4" )
-	PORT_DIPSETTING (   0x0c, "5" )
+	PORT_DIPSETTING(   0x00, "2" )
+	PORT_DIPSETTING(   0x04, "3" )
+	PORT_DIPSETTING(   0x08, "4" )
+	PORT_DIPSETTING(   0x0c, "5" )
 	PORT_DIPNAME(0x30, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING (   0x00, "12000" )
-	PORT_DIPSETTING (   0x10, "15000" )
-	PORT_DIPSETTING (   0x20, "20000" )
-	PORT_DIPSETTING (   0x30, "None" )
+	PORT_DIPSETTING(   0x00, "12000" )
+	PORT_DIPSETTING(   0x10, "15000" )
+	PORT_DIPSETTING(   0x20, "20000" )
+	PORT_DIPSETTING(   0x30, "None" )
 	PORT_DIPNAME(0x40, 0x00, "Spider" )
-	PORT_DIPSETTING (   0x00, "Easy" )
-	PORT_DIPSETTING (   0x40, "Hard" )
+	PORT_DIPSETTING(   0x00, "Easy" )
+	PORT_DIPSETTING(   0x40, "Hard" )
 	PORT_DIPNAME(0x80, 0x00, "Starting Score Select" )
-	PORT_DIPSETTING (   0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_START	/* 5 */ /* DSW2 $0808 */
 	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(   0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(   0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPSETTING(   0x00, "*1" )
+	PORT_DIPSETTING(   0x04, "*4" )
+	PORT_DIPSETTING(   0x08, "*5" )
+	PORT_DIPSETTING(   0x0c, "*6" )
 	PORT_DIPNAME(0x10, 0x00, "Left Coin" )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPSETTING(   0x00, "*1" )
+	PORT_DIPSETTING(   0x10, "*2" )
 	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
-	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
-	PORT_DIPSETTING (   0xc0, "Demo mode" )
+	PORT_DIPSETTING(   0x00, "None" )
+	PORT_DIPSETTING(   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING(   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING(   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING(   0x80, "6 credits/5 coins" )
+	PORT_DIPSETTING(   0xa0, "4 credits/3 coins" )
+	PORT_DIPSETTING(   0xc0, "Demo mode" )
 
-	/* JB 971220 */
 	PORT_START	/* IN6: FAKE - used for trackball-x at $2000 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START	/* IN7: FAKE - used for trackball-y at $2001 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -245,8 +246,6 @@ static struct POKEYinterface pokey_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
 	{ 50, 50 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
 	{ 0, 0 },

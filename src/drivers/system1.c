@@ -191,16 +191,6 @@ static struct MemoryWriteAddress wbml_writemem[] =
 	{ -1 } /* end of table */
 };
 
-static struct MemoryReadAddress chplft_readmem[] =
-{
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xefff, MRA_RAM },
-	{ 0xf020, 0xf03f, MRA_RAM },
-	{ 0xf800, 0xfbff, MRA_RAM },
-	{ -1 } /* end of table */
-};
-
 static struct MemoryWriteAddress chplft_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
@@ -1490,10 +1480,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( blockgal )
 	PORT_START  /* IN1 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 60, 15, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 60, 15, 0, 0)
 
 	PORT_START  /* IN2 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 60, 15, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 60, 15, 0, 0)
 
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1857,7 +1847,7 @@ static struct MachineDriver machine_driver_hvymetal =
 		{
 			CPU_Z80,
 			4000000,        	/* 4 MHz ? */
-			chplft_readmem,writemem,wbml_readport,hvymetal_writeport,
+			brain_readmem,writemem,wbml_readport,hvymetal_writeport,
 			interrupt,1
 		},
 		{
@@ -1902,7 +1892,7 @@ static struct MachineDriver machine_driver_chplft =
 		{
 			CPU_Z80,
 			4000000,        	/* 4 MHz ? */
-			chplft_readmem,chplft_writemem,wbml_readport,chplft_writeport,
+			brain_readmem,chplft_writemem,wbml_readport,chplft_writeport,
 			interrupt,1
 		},
 		{
@@ -2772,6 +2762,8 @@ ROM_START( brain )
 	ROM_REGION( 0x20000, REGION_CPU1 ) /* 128k for code */
 	ROM_LOAD( "brain.1",      0x00000, 0x8000, 0x2d2aec31 )
 	ROM_LOAD( "brain.2",      0x10000, 0x8000, 0x810a8ab5 )
+	ROM_RELOAD(               0x08000, 0x8000 )	/* there's code falling through from 7fff */
+												/* so I have to copy the ROM there */
 	ROM_LOAD( "brain.3",      0x18000, 0x8000, 0x9a225634 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound cpu */

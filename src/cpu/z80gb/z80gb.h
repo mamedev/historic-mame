@@ -4,6 +4,8 @@
 #include "osd_cpu.h"
 #include "mess/machine/gb.h"
 
+extern int z80gb_ICount;
+
 enum {
 	Z80GB_PC=1, Z80GB_SP, Z80GB_AF, Z80GB_BC, Z80GB_DE, Z80GB_HL,
 	Z80GB_IRQ_STATE

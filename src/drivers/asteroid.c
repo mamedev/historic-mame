@@ -151,7 +151,15 @@ void llander_led_w (int offset,int data);
 void asteroid_explode_w(int offset,int data);
 void asteroid_thump_w(int offset,int data);
 void asteroid_sounds_w(int offset,int data);
+int asteroid_sh_start(const struct MachineSound *msound);
+void asteroid_sh_stop(void);
+void asteroid_sh_update(void);
+
 void astdelux_sounds_w(int offset,int data);
+int astdelux_sh_start(const struct MachineSound *msound);
+void astdelux_sh_stop(void);
+void astdelux_sh_update(void);
+
 void llander_sounds_w(int offset,int data);
 void llander_snd_reset_w(int offset,int data);
 int llander_sh_start(const struct MachineSound *msound);
@@ -440,7 +448,7 @@ INPUT_PORTS_START( llander )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( llander1 )
@@ -485,7 +493,7 @@ INPUT_PORTS_START( llander1 )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
 
@@ -523,30 +531,10 @@ static void asteroid_hisave(void)
  *		osd_fwrite(f,&RAM[0x0023],3*10+3*11);
  */
 
-
-
-static const char *asteroid_sample_names[] =
-{
-	"*asteroid",
-	"explode1.wav",
-	"explode2.wav",
-	"explode3.wav",
-	"thrust.wav",
-	"thumphi.wav",
-	"thumplo.wav",
-	"fire.wav",
-	"lsaucer.wav",
-	"ssaucer.wav",
-	"sfire.wav",
-	"life.wav",
-    0	/* end of array */
-};
-
-static struct Samplesinterface asteroid_samples_interface =
-{
-	7,	/* 7 channels */
-	25,	/* volume */
-	asteroid_sample_names
+static struct CustomSound_interface asteroid_custom_interface = {
+	asteroid_sh_start,
+	asteroid_sh_stop,
+	asteroid_sh_update
 };
 
 static struct MachineDriver machine_driver_asteroid =
@@ -580,8 +568,8 @@ static struct MachineDriver machine_driver_asteroid =
 	0,0,0,0,
 	{
 		{
-			SOUND_SAMPLES,
-			&asteroid_samples_interface
+			SOUND_CUSTOM,
+			&asteroid_custom_interface
 		}
 	}
 };
@@ -593,8 +581,6 @@ static struct POKEYinterface pokey_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
 	{ 100 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0 },
 	{ 0 },
@@ -608,23 +594,11 @@ static struct POKEYinterface pokey_interface =
 	{ input_port_3_r }
 };
 
-static const char *astdelux_sample_names[] =
-{
-	"*astdelux",
-	"explode1.wav",
-	"explode2.wav",
-	"explode3.wav",
-	"thrust.wav",
-	0
+static struct CustomSound_interface astdelux_custom_interface = {
+	astdelux_sh_start,
+	astdelux_sh_stop,
+	astdelux_sh_update
 };
-
-static struct Samplesinterface astdelux_samples_interface =
-{
-	3,	/* 3 channels */
-	25,	/* volume */
-	astdelux_sample_names
-};
-
 
 static struct MachineDriver machine_driver_astdelux =
 {
@@ -661,8 +635,8 @@ static struct MachineDriver machine_driver_astdelux =
 			&pokey_interface
 		},
 		{
-			SOUND_SAMPLES,
-			&astdelux_samples_interface
+			SOUND_CUSTOM,
+			&astdelux_custom_interface
 		}
 	},
 

@@ -24,7 +24,7 @@
   ---- ---- ---- ---- yyyy yyyy ---- ---- = y
 
 
- Sprite RAM format
+ Sprite RAM format  (except Rally Bike)
 
   0         1         2         3
   ---- ---- ---- ---- -xxx xxxx xxxx xxxx = tile number (0 - $7fff)
@@ -45,6 +45,7 @@
 #include "driver.h"
 #include "palette.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m68000/m68000.h"
 
 #define VIDEORAM1_SIZE	0x1000		/* size in bytes - sprite ram */
 #define VIDEORAM2_SIZE	0x100		/* size in bytes - sprite size ram */
@@ -53,6 +54,8 @@
 unsigned char *toaplan1_videoram1;
 unsigned char *toaplan1_videoram2;
 unsigned char *toaplan1_videoram3;
+unsigned char *toaplan1_buffered_videoram1;
+unsigned char *toaplan1_buffered_videoram2;
 
 unsigned char *toaplan1_colorram1;
 unsigned char *toaplan1_colorram2;
@@ -60,36 +63,32 @@ unsigned char *toaplan1_colorram2;
 int colorram1_size;
 int colorram2_size;
 
-unsigned int scrollregs[8] ;
-unsigned int vblank ;
-unsigned int framedone  ;
-unsigned int num_tiles ;
+unsigned int scrollregs[8];
+unsigned int vblank;
+unsigned int num_tiles;
 
 unsigned int video_ofs;
 unsigned int video_ofs3;
 
 int toaplan1_flipscreen;
-int tiles_offsetx ;
-int tiles_offsety ;
-int layers_offset[4] ;
+int tiles_offsetx;
+int tiles_offsety;
+int layers_offset[4];
 
-unsigned int fdflag;
-
-extern int toaplan1_int_enable ;
 
 typedef struct
 	{
-	UINT16 tile_num ;
-	UINT16 color ;
-	char priority ;
-	int xpos ;
-	int ypos ;
-	} tile_struct ;
+	UINT16 tile_num;
+	UINT16 color;
+	char priority;
+	int xpos;
+	int ypos;
+	} tile_struct;
 
-tile_struct *bg_list[4] ;
+tile_struct *bg_list[4];
 
-tile_struct *tile_list[32] ;
-tile_struct *temp_list ;
+tile_struct *tile_list[32];
+tile_struct *temp_list;
 static int max_list_size[32];
 static int tile_count[32];
 
@@ -98,10 +97,86 @@ static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
 
 
-int toaplan1_vh_start(void)
+int rallybik_vh_start(void)
 {
 	int i;
 
+	if ((toaplan1_videoram3 = calloc(VIDEORAM3_SIZE * 4, 1)) == 0) /* 4 layers */
+	{
+		return 1;
+	}
+
+	if (errorlog) fprintf (errorlog, "colorram_size: %08x\n", colorram1_size + colorram2_size);
+	if ((paletteram = calloc(colorram1_size + colorram2_size, 1)) == 0)
+	{
+		free(toaplan1_videoram3);
+		return 1;
+	}
+
+	for (i=0; i<4; i++)
+	{
+		if ((bg_list[i]=(tile_struct *)malloc( 33 * 44 * sizeof(tile_struct))) == 0)
+		{
+			free(paletteram);
+			free(toaplan1_videoram3);
+			return 1;
+		}
+		memset(bg_list[i], 0, 33 * 44 * sizeof(tile_struct));
+	}
+
+	for (i=0; i<16; i++)
+	{
+		max_list_size[i] = 8192;
+		if ((tile_list[i]=(tile_struct *)malloc(max_list_size[i]*sizeof(tile_struct))) == 0)
+		{
+			for (i=3; i>=0; i--)
+				free(bg_list[i]);
+			free(paletteram);
+			free(toaplan1_videoram3);
+			return 1;
+		}
+		memset(tile_list[i],0,max_list_size[i]*sizeof(tile_struct));
+	}
+
+	max_list_size[16] = 65536;
+	if ((tile_list[16]=(tile_struct *)malloc(max_list_size[16]*sizeof(tile_struct))) == 0)
+	{
+		for (i=15; i>=0; i--)
+			free(tile_list[i]);
+		for (i=3; i>=0; i--)
+			free(bg_list[i]);
+		free(paletteram);
+		free(toaplan1_videoram3);
+		return 1;
+	}
+	memset(tile_list[16],0,max_list_size[16]*sizeof(tile_struct));
+
+	num_tiles = (Machine->drv->screen_width/8+1)*(Machine->drv->screen_height/8) ;
+
+	video_ofs = video_ofs3 = 0;
+
+	return 0;
+}
+
+void rallybik_vh_stop(void)
+{
+	int i ;
+
+	for (i=16; i>=0; i--)
+	{
+		free(tile_list[i]);
+		if (errorlog) fprintf (errorlog, "max_list_size[%d]=%08x\n",i,max_list_size[i]);
+	}
+
+	for (i=3; i>=0; i--)
+		free(bg_list[i]);
+
+	free (paletteram);
+	free(toaplan1_videoram3);
+}
+
+int toaplan1_vh_start(void)
+{
 	tmpbitmap1 = osd_new_bitmap(
 					Machine->drv->screen_width,
 					Machine->drv->screen_height,
@@ -117,81 +192,53 @@ int toaplan1_vh_start(void)
 					Machine->drv->screen_height,
 					Machine->scrbitmap->depth);
 
-	toaplan1_videoram1 = calloc (VIDEORAM1_SIZE, 1);
-	toaplan1_videoram2 = calloc (VIDEORAM2_SIZE, 1);
-	toaplan1_videoram3 = calloc (VIDEORAM3_SIZE * 4, 1); /* 4 layers */
 
-	if (errorlog) fprintf (errorlog, "colorram_size: %08x\n", colorram1_size + colorram2_size);
-	paletteram = calloc (colorram1_size + colorram2_size,1);
-
-	for ( i=0; i<4; i++ )
+	if ((toaplan1_videoram1 = calloc(VIDEORAM1_SIZE, 1)) == 0)
 	{
-		bg_list[i]=(tile_struct *)malloc( 33 * 44 * sizeof(tile_struct)) ;
-		memset(bg_list[i], 0, 33 * 44 * sizeof(tile_struct));
+		return 1;
+	}
+	if ((toaplan1_buffered_videoram1 = calloc(VIDEORAM1_SIZE, 1)) == 0)
+	{
+		free(toaplan1_videoram1);
+		return 1;
+	}
+	if ((toaplan1_videoram2 = calloc(VIDEORAM2_SIZE, 1)) == 0)
+	{
+		free(toaplan1_buffered_videoram1);
+		free(toaplan1_videoram1);
+		return 1;
+	}
+	if ((toaplan1_buffered_videoram2 = calloc(VIDEORAM2_SIZE, 1)) == 0)
+	{
+		free(toaplan1_videoram2);
+		free(toaplan1_buffered_videoram1);
+		free(toaplan1_videoram1);
+		return 1;
 	}
 
-	for ( i=0; i<16; i++ )
-	{
-		max_list_size[i] = 8192;
-		tile_list[i]=(tile_struct *)malloc(max_list_size[i]*sizeof(tile_struct)) ;
-		memset(tile_list[i],0,max_list_size[i]*sizeof(tile_struct));
-	}
-
-	max_list_size[16] = 65536;
-	tile_list[16]=(tile_struct *)malloc(max_list_size[16]*sizeof(tile_struct)) ;
-	memset(tile_list[16],0,max_list_size[16]*sizeof(tile_struct));
-
-	num_tiles = (Machine->drv->screen_width/8+1)*(Machine->drv->screen_height/8) ;
-
-	video_ofs = video_ofs3 = fdflag = 0;
-
-	return 0;
+	/* Also include all allocated stuff in Rally Bike startup */
+	return rallybik_vh_start();
 }
 
 void toaplan1_vh_stop(void)
 {
-	int i ;
+	rallybik_vh_stop();
 
-	osd_free_bitmap(tmpbitmap1);
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap3);
-
-	free(toaplan1_videoram1);
+	free(toaplan1_buffered_videoram2);
 	free(toaplan1_videoram2);
-	free(toaplan1_videoram3);
-
-	for (i=0;i<4;i++)
-	{
-		free( bg_list[i] );
-	}
-
-	for (i=0;i<17;i++)
-	{
-		free(tile_list[i]);
-		if (errorlog) fprintf (errorlog, "max_list_size[%d]=%08x\n",i,max_list_size[i]);
-	}
-
-	free (paletteram);
-
-
+	free(toaplan1_buffered_videoram1);
+	free(toaplan1_videoram1);
+	osd_free_bitmap(tmpbitmap3);
+	osd_free_bitmap(tmpbitmap2);
+	osd_free_bitmap(tmpbitmap1);
 }
+
+
+
 
 int toaplan1_vblank_r(int offset)
 {
 	return vblank ^= 1;
-}
-
-int toaplan1_framedone_r(int offset)
-{
-	framedone += 1 ;
-	if ( (!toaplan1_int_enable) && (fdflag==0) )
-		return 1;
-	return fdflag ;
-}
-
-void toaplan1_framedone_w(int offset, int data)
-{
-	fdflag = data ;
 }
 
 void toaplan1_flipscreen_w(int offset, int data)
@@ -321,16 +368,6 @@ void toaplan1_videoram3_w(int offset, int data)
 
 	WRITE_WORD (&toaplan1_videoram3[(video_ofs3 & (VIDEORAM3_SIZE-1))*4 + offset],newword);
 	if ( offset == 2 ) video_ofs3++;
-}
-
-int rallybik_videoram1_r(int offset)
-{
-	return READ_WORD(&toaplan1_videoram1[offset]);
-}
-
-void rallybik_videoram1_w(int offset, int data)
-{
-	WRITE_WORD(&toaplan1_videoram1[offset],data);
 }
 
 int scrollregs_r(int offset)
@@ -627,8 +664,8 @@ static void toaplan1_find_sprites (void)
 
 
 #if 0		// sp ram dump start
-	s_size = (toaplan1_videoram2);	/* sprite block size */
-	s_info = (toaplan1_videoram1) ;	/* start of sprite ram */
+	s_size = (toaplan1_buffered_videoram2);		/* sprite block size */
+	s_info = (toaplan1_buffered_videoram1);		/* start of sprite ram */
 	if( (toaplan_sp_ram_dump == 0)
 	 && (keyboard_pressed(KEYCODE_N)) )
 	{
@@ -644,8 +681,8 @@ static void toaplan1_find_sprites (void)
 	}
 #endif		// end
 
-	s_size = (toaplan1_videoram2);	/* sprite block size */
-	s_info = (toaplan1_videoram1) ;	/* start of sprite ram */
+	s_size = (toaplan1_buffered_videoram2);		/* sprite block size */
+	s_info = (toaplan1_buffered_videoram1);		/* start of sprite ram */
 
 	for ( sprite = 0 ; sprite < 256 ; sprite++ )
 	{
@@ -703,32 +740,29 @@ static void toaplan1_find_sprites (void)
 
 static void rallybik_find_sprites (void)
 {
-	int sprite;
-	unsigned char *s_info;
+	int offs;
 	int tattr;
 	int sx,sy,tchar;
 	int priority;
 	tile_struct *tinfo;
 
-	s_info = (toaplan1_videoram1) ;	/* start of sprite ram */
-
-	for ( sprite = 0 ; sprite < 512 ; sprite++ )
+	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		tattr = READ_WORD(&s_info[2]);
+		tattr = READ_WORD(&buffered_spriteram[offs+2]);
 		if ( tattr )	/* no need to render hidden sprites */
 		{
-			sx=READ_WORD(&s_info[4]);
+			sx=READ_WORD(&buffered_spriteram[offs+4]);
 			sx >>= 7 ;
 			sx &= 0x1ff ;
 			if ( sx > 416 ) sx -= 512 ;
 
-			sy=READ_WORD(&s_info[6]);
+			sy=READ_WORD(&buffered_spriteram[offs+6]);
 			sy >>= 7 ;
 			sy &= 0x1ff ;
 			if ( sy > 416 ) sy -= 512 ;
 
 			priority = (tattr>>8) & 0xc ;
-			tchar = READ_WORD(&s_info[0]);
+			tchar = READ_WORD(&buffered_spriteram[offs+0]);
 			tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
 			tinfo->tile_num = tchar & 0x7ff ;
 			tinfo->color = 0x80 | (tattr&0x3f) ;
@@ -749,7 +783,6 @@ static void rallybik_find_sprites (void)
 				tile_list[priority] = temp_list ;
 			}
 		}  // if tattr
-		s_info += 8 ;
 	} // for sprite
 }
 
@@ -1170,5 +1203,31 @@ void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	toaplan1_update_palette();
 	rallybik_render(bitmap);
+}
+
+
+
+/****************************************************************************
+	Spriteram is always 1 frame ahead, suggesting spriteram buffering.
+	There are no CPU output registers that control this so we
+	assume it happens automatically every frame, at the end of vblank
+****************************************************************************/
+
+void toaplan1_eof_callback(void)
+{
+	memcpy(toaplan1_buffered_videoram1,toaplan1_videoram1,VIDEORAM1_SIZE);
+	memcpy(toaplan1_buffered_videoram2,toaplan1_videoram2,VIDEORAM2_SIZE);
+}
+
+void rallybik_eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
+}
+
+void samesame_eof_callback(void)
+{
+	memcpy(toaplan1_buffered_videoram1,toaplan1_videoram1,VIDEORAM1_SIZE);
+	memcpy(toaplan1_buffered_videoram2,toaplan1_videoram2,VIDEORAM2_SIZE);
+	cpu_set_irq_line(0, MC68000_IRQ_2, HOLD_LINE);  /* Frame done */
 }
 

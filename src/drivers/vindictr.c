@@ -351,7 +351,7 @@ static struct MachineDriver machine_driver_vindictr =
 	{
 		{
 			CPU_M68010,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
@@ -364,7 +364,7 @@ static struct MachineDriver machine_driver_vindictr =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	2048+32, 2048+32,
+	2048, 2048,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,

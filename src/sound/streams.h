@@ -14,8 +14,5 @@ int stream_init_multi(int channels,const char **names,const int *default_mixing_
 		int sample_rate,
 		int param,void (*callback)(int param,INT16 **buffer,int length));
 void stream_update(int channel,int min_interval);	/* min_interval is in usec */
-int stream_get_sample_rate(int channel);
-void *stream_get_buffer(int channel);
-int stream_get_buffer_len(int channel);
 
 #endif

@@ -452,7 +452,7 @@ static struct MachineDriver machine_driver_maniach =
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1200000,	/* 1.2 Mhz ???? */
+			1500000,	/* 1.5 Mhz ???? */
 			maniach_sound_readmem,maniach_sound_writemem,0,0,
 			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */

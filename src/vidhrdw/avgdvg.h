@@ -24,7 +24,7 @@ int avgdvg_init(int vgType);
 
 /* Black and White vector colors for Asteroids, Lunar Lander, Omega Race */
 void avg_init_palette_white (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-/* Monochrome Aqua vector colors for Asteroids Deluxe and Red Baron */
+/* Monochrome Aqua vector colors for Red Baron */
 void avg_init_palette_aqua  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 /* Red and Green vector colors for Battlezone */
 void avg_init_palette_bzone (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -32,6 +32,8 @@ void avg_init_palette_bzone (unsigned char *palette, unsigned short *colortable,
 void avg_init_palette_multi (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 /* Special case for Star Wars and Empire strikes back */
 void avg_init_palette_swars (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+/* Monochrome Aqua vector colors for Asteroids Deluxe */
+void avg_init_palette_astdelux  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /* Some games use a colorram. This is not handled via the Mame core functions
  * right now, but in src/vidhrdw/avgdvg.c itself. */

@@ -16,7 +16,7 @@ static int channel;
 static INT8 *speech;
 /* macro to convert 4-bit unsigned samples to 8-bit signed samples */
 #define SAMPLE_CONV4(a) (0x11*((a&0x0f))-0x80)
-#define SAMPLE_SIZE 0x6000
+#define SAMPLE_SIZE 0x8000
 
 #define AMP(r)	(r*128/10100)
 static int volume_table[8] =

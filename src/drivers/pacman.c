@@ -140,11 +140,14 @@ int theglob_decrypt_rom(int offset);
 
 static void alibaba_sound_w(int offset, int data)
 {
-	/* since the sound region in Ali Baba is not contigous, translate the offset
-	   into the 0-0x1f range */
-	if (offset >= 0x20)  offset -= 0x10;
-
-	pengo_sound_w(offset, data);
+	/* since the sound region in Ali Baba is not contiguous, translate the
+	   offset into the 0-0x1f range */
+ 	if (offset < 0x10)
+		pengo_sound_w(offset, data);
+	else if (offset < 0x20)
+		spriteram_2[offset - 0x10] = data;
+	else
+		pengo_sound_w(offset - 0x10, data);
 }
 
 
@@ -218,8 +221,8 @@ static struct MemoryWriteAddress alibaba_writemem[] =
  	{ 0x5004, 0x5005, osd_led_w },
  	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
  	{ 0x5007, 0x5007, coin_counter_w },
-	{ 0x5050, 0x505f, MWA_RAM, &spriteram_2 },
 	{ 0x5040, 0x506f, alibaba_sound_w, &pengo_soundregs },  /* the sound region is not contiguous */
+	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 }, /* actually at 5050-505f, here to point to free RAM */
 	{ 0x50c0, 0x50c0, pengo_sound_enable_w },
 	{ 0x50c1, 0x50c1, pengo_flipscreen_w },
 	{ 0x50c2, 0x50c2, interrupt_enable_w },
@@ -244,6 +247,13 @@ static struct IOWritePort vanvan_writeport[] =
 {
 	{ 0x01, 0x01, SN76496_0_w },
 	{ 0x02, 0x02, SN76496_1_w },
+	{ -1 }
+};
+
+static struct IOWritePort dremshpr_writeport[] =
+{
+	{ 0x06, 0x06, AY8910_write_port_0_w },
+	{ 0x07, 0x07, AY8910_control_port_0_w },
 	{ -1 }
 };
 
@@ -796,6 +806,157 @@ INPUT_PORTS_START( vanvan )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( vanvans )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	/* The 2nd player controls are used even in upright mode */
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dremshpr )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "30000" )
+	PORT_DIPSETTING(    0x04, "50000" )
+	PORT_DIPSETTING(    0x00, "70000" )
+	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+
+	PORT_START	/* DSW 2 */
+  //PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+  //PORT_DIPSETTING(    0x00, DEF_STR( Off ) )		/* turning this on crashes puts the */
+  //PORT_DIPSETTING(    0x01, DEF_STR( On ) )       /* emulated machine in an infinite loop once in a while */
+//	PORT_DIPNAME( 0xff, 0x00, DEF_STR( Unused ) )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( alibaba )
@@ -902,6 +1063,16 @@ static struct SN76496interface sn76496_interface =
 	{ 75, 75 }
 };
 
+static struct AY8910interface dremshpr_ay8910_interface =
+{
+	1,	/* 1 chip */
+	14318000/8,	/* 1.78975 MHz ??? */
+	{ 50 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
 
 
 static struct MachineDriver machine_driver_pacman =
@@ -1011,6 +1182,43 @@ static struct MachineDriver machine_driver_vanvan =
 		{
 			SOUND_SN76496,
 			&sn76496_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_dremshpr =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			readmem,writemem,0,dremshpr_writeport,
+			nmi_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16, 4*32,
+	pacman_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	pacman_vh_start,
+	generic_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&dremshpr_ay8910_interface
 		}
 	}
 };
@@ -1744,39 +1952,60 @@ ROM_END
 ROM_START( vanvan )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
-	ROM_LOAD( "van2.bin",     0x1000, 0x1000, 0xdf58e1cb )
-	ROM_LOAD( "van3.bin",     0x2000, 0x1000, 0x15571e24 )
+	ROM_LOAD( "van-2.51",     0x1000, 0x1000, 0xdf58e1cb )
+	ROM_LOAD( "van-3.52",     0x2000, 0x1000, 0x15571e24 )
 	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
 	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
 
 	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
+	ROM_LOAD( "van-20.18",    0x0000, 0x1000, 0x60efbe66 )
 
 	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "van21.bin",    0x0000, 0x1000, 0x5dd53723 )
+	ROM_LOAD( "van-21.19",    0x0000, 0x1000, 0x5dd53723 )
 
 	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
 
-ROM_START( vanvanb )
+ROM_START( vanvans )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "vanvan.050",   0x0000, 0x1000, 0xcf1b2df0 )
-	ROM_LOAD( "vanvan.051",   0x1000, 0x1000, 0x80eca6a5 )
-	ROM_LOAD( "van3.bin",     0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "vanvan.053",   0x3000, 0x1000, 0xb1f04006 )
-	ROM_LOAD( "vanvan.039",   0x8000, 0x1000, 0xdb67414c )
+	ROM_LOAD( "van-1.50",     0x0000, 0x1000, 0xcf1b2df0 )
+	ROM_LOAD( "van-2.51",     0x1000, 0x1000, 0xdf58e1cb )
+	ROM_LOAD( "van-3.52",     0x2000, 0x1000, 0x15571e24 )
+	ROM_LOAD( "van-4.53",     0x3000, 0x1000, 0xb724cbe0 )
+	ROM_LOAD( "van-5.39",     0x8000, 0x1000, 0xdb67414c )
 
 	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
+	ROM_LOAD( "van-20.18",    0x0000, 0x1000, 0x60efbe66 )
 
 	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "van21.bin",    0x0000, 0x1000, 0x5dd53723 )
+	ROM_LOAD( "van-21.19",    0x0000, 0x1000, 0x5dd53723 )
 
 	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
+ROM_END
+
+ROM_START( dremshpr )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "red_1.50",	  0x0000, 0x1000, 0x830c6361 )
+	ROM_LOAD( "red_2.51",     0x1000, 0x1000, 0xd22551cc )
+	ROM_LOAD( "red_3.52",     0x2000, 0x1000, 0x0713a34a )
+	ROM_LOAD( "red_4.53",     0x3000, 0x1000, 0xf38bcaaa )
+	ROM_LOAD( "red_5.39",     0x8000, 0x1000, 0x6a382267 )
+	ROM_LOAD( "red_6.40",     0x9000, 0x1000, 0x4cf8b121 )
+	ROM_LOAD( "red_7.41",     0xa000, 0x1000, 0xbd4fc4ba )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "red-20.18",    0x0000, 0x1000, 0x2d6698dc )
+
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "red-21.19",    0x0000, 0x1000, 0x38c9ce9b )
+
+	ROM_REGION( 0x0120, REGION_PROMS )
+	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
+	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x39d6fb5c )
 ROM_END
 
 ROM_START( alibaba )
@@ -1801,7 +2030,7 @@ ROM_START( alibaba )
 	ROM_LOAD( "alibaba.4a",   0x0020, 0x0100, 0x00000000 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound PROMs */
-	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
@@ -1973,36 +2202,37 @@ static void init_pacplus(void)
 	pacplus_decode();
 }
 
-
-GAME( 1980, pacman,   0,        pacman,  pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
-GAME( 1980, pacmanjp, pacman,   pacman,  pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 2)" )
-GAME( 1980, pacmanm,  pacman,   pacman,  pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
-GAME( 1981, npacmod,  pacman,   pacman,  pacman,   0,        ROT90,  "Namco", "PuckMan (harder?)" )
-GAME( 1981, pacmod,   pacman,   pacman,  pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
-GAME( 1981, hangly,   pacman,   pacman,  pacman,   0,        ROT90,  "hack", "Hangly-Man (set 1)" )
-GAME( 1981, hangly2,  pacman,   pacman,  pacman,   0,        ROT90,  "hack", "Hangly-Man (set 2)" )
-GAME( 1980, puckman,  pacman,   pacman,  pacman,   0,        ROT90,  "hack", "New Puck-X" )
-GAME( 1981, pacheart, pacman,   pacman,  pacman,   0,        ROT90,  "hack", "Pac-Man (Hearts)" )
-GAME( 1981, piranha,  pacman,   pacman,  mspacman, 0,        ROT90,  "hack", "Piranha" )
-GAME( 1982, pacplus,  0,        pacman,  pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
-GAME( 1981, mspacman, 0,        pacman,  mspacman, 0,        ROT90,  "bootleg", "Ms. Pac-Man" )
-GAME( 1981, mspacatk, mspacman, pacman,  mspacman, 0,        ROT90,  "hack", "Ms. Pac-Man Plus" )
-GAME( 1981, pacgal,   mspacman, pacman,  mspacman, 0,        ROT90,  "hack", "Pac-Gal" )
-GAME( 1981, crush,    0,        pacman,  maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )
-GAME( 1981, crush2,   crush,    pacman,  maketrax, 0,        ROT90,  "Kural Esco Electric", "Crush Roller (Kural Esco - bootleg?)" )
-GAME( 1981, crush3,   crush,    pacman,  maketrax, eyes,     ROT90,  "Kural Electric", "Crush Roller (Kural - bootleg?)" )
-GAME( 1981, maketrax, crush,    pacman,  maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax" )
-GAME( 1981, mbrush,   crush,    pacman,  mbrush,   0,        ROT90,  "bootleg", "Magic Brush" )
-GAME( 1981, paintrlr, crush,    pacman,  paintrlr, 0,        ROT90,  "bootleg", "Paint Roller" )
-GAME( 1982, ponpoko,  0,        pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc.", "Ponpoko" )
-GAME( 1982, ponpokov, ponpoko,  pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc. (Venture Line license)", "Ponpoko (Venture Line)" )
-GAME( 1982, eyes,     0,        pacman,  eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
-GAME( 1982, eyes2,    eyes,     pacman,  eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
-GAME( 1983, mrtnt,    0,        pacman,  eyes,     eyes,     ROT90,  "Telko", "Mr. TNT" )
-GAME( 1985, lizwiz,   0,        pacman,  lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
-GAME( 1983, theglob,  0,        theglob, theglob,  0,        ROT90,  "Epos Corporation", "The Glob" )
-GAME( 1984, beastf,   theglob,  theglob, theglob,  0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
-GAMEX(????, jumpshot, 0,        pacman,  pacman,   0,        ROT90,  "<unknown>", "Jump Shot", GAME_NOT_WORKING )	/* not working, encrypted */
-GAME( 1983, vanvan,   0,        vanvan,  vanvan,   0,        ROT270, "Karateco", "Van Van Car" )
-GAME( 1983, vanvanb,  vanvan,   vanvan,  vanvan,   0,        ROT270, "bootleg", "Van Van Car (bootleg)" )
-GAME( 1982, alibaba,  0,        alibaba, alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves" )
+/*          rom       parent    machine   inp       init */
+GAME( 1980, pacman,   0,        pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
+GAME( 1980, pacmanjp, pacman,   pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 2)" )
+GAME( 1980, pacmanm,  pacman,   pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
+GAME( 1981, npacmod,  pacman,   pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (harder?)" )
+GAME( 1981, pacmod,   pacman,   pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
+GAME( 1981, hangly,   pacman,   pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 1)" )
+GAME( 1981, hangly2,  pacman,   pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 2)" )
+GAME( 1980, puckman,  pacman,   pacman,   pacman,   0,        ROT90,  "hack", "New Puck-X" )
+GAME( 1981, pacheart, pacman,   pacman,   pacman,   0,        ROT90,  "hack", "Pac-Man (Hearts)" )
+GAME( 1981, piranha,  pacman,   pacman,   mspacman, 0,        ROT90,  "hack", "Piranha" )
+GAME( 1982, pacplus,  0,        pacman,   pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
+GAME( 1981, mspacman, 0,        pacman,   mspacman, 0,        ROT90,  "bootleg", "Ms. Pac-Man" )
+GAME( 1981, mspacatk, mspacman, pacman,   mspacman, 0,        ROT90,  "hack", "Ms. Pac-Man Plus" )
+GAME( 1981, pacgal,   mspacman, pacman,   mspacman, 0,        ROT90,  "hack", "Pac-Gal" )
+GAME( 1981, crush,    0,        pacman,   maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )
+GAME( 1981, crush2,   crush,    pacman,   maketrax, 0,        ROT90,  "Kural Esco Electric", "Crush Roller (Kural Esco - bootleg?)" )
+GAME( 1981, crush3,   crush,    pacman,   maketrax, eyes,     ROT90,  "Kural Electric", "Crush Roller (Kural - bootleg?)" )
+GAME( 1981, maketrax, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax" )
+GAME( 1981, mbrush,   crush,    pacman,   mbrush,   0,        ROT90,  "bootleg", "Magic Brush" )
+GAME( 1981, paintrlr, crush,    pacman,   paintrlr, 0,        ROT90,  "bootleg", "Paint Roller" )
+GAME( 1982, ponpoko,  0,        pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc.", "Ponpoko" )
+GAME( 1982, ponpokov, ponpoko,  pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc. (Venture Line license)", "Ponpoko (Venture Line)" )
+GAME( 1982, eyes,     0,        pacman,   eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
+GAME( 1982, eyes2,    eyes,     pacman,   eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
+GAME( 1983, mrtnt,    0,        pacman,   eyes,     eyes,     ROT90,  "Telko", "Mr. TNT" )
+GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
+GAME( 1983, theglob,  0,        theglob,  theglob,  0,        ROT90,  "Epos Corporation", "The Glob" )
+GAME( 1984, beastf,   theglob,  theglob,  theglob,  0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
+GAMEX(????, jumpshot, 0,        pacman,   pacman,   0,        ROT90,  "<unknown>", "Jump Shot", GAME_NOT_WORKING )	/* not working, encrypted */
+GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
+GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Karateco", "Van Van Car" )
+GAME( 1983, vanvans,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Sanritsu", "Van Van Car (Sanritsu)" )
+GAME( 1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves" )

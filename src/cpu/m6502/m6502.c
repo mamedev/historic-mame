@@ -18,13 +18,14 @@
  *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
+/* 2.February 2000 PeT added 65sc02 subtype */
 
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
 #include "mamedbg.h"
 #include "m6502.h"
-#include "m6502ops.h"
+#include "ops02.h"
 
 extern FILE * errorlog;
 
@@ -81,18 +82,22 @@ static m6502_Regs m6502;
 /***************************************************************
  * include the opcode macros, functions and tables
  ***************************************************************/
-#include "tbl6502.c"
+#include "t6502.c"
 
 #if HAS_M65C02
-#include "tbl65c02.c"
+#include "t65c02.c"
+#endif
+
+#if HAS_M65SC02
+#include "t65sc02.c"
 #endif
 
 #if HAS_M6510
-#include "tbl6510.c"
+#include "t6510.c"
 #endif
 
 #if HAS_N2A03
-#include "tbln2a03.c"
+#include "tn2a03.c"
 #endif
 
 /*****************************************************************************
@@ -110,7 +115,8 @@ void m6502_reset(void *param)
 	/* read the reset vector into PC */
     PCL = RDMEM(M6502_RST_VEC);
     PCH = RDMEM(M6502_RST_VEC+1);
-	m6502.sp.d = 0x0100 | (m6502.sp.b.l);	/* stack pointer (always 100 - 1FF) */
+
+	m6502.sp.d = 0x01ff;	/* stack pointer starts at page 1 offset FF */
 	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
@@ -343,6 +349,11 @@ void m6502_state_load(void *file)
 			m6502.insn = insn65c02;
 			break;
 #endif
+#if HAS_M65SC02
+		case SUBTYPE_65SC02:
+			m6502.insn = insn65sc02;
+			break;
+#endif
 #if HAS_M6510
 		case SUBTYPE_6510:
 			m6502.insn = insn6510;
@@ -485,6 +496,76 @@ unsigned m65c02_dasm(char *buffer, unsigned pc)
 }
 
 #endif
+
+/****************************************************************************
+ * 65SC02 section
+ ****************************************************************************/
+#if HAS_M65SC02
+/* Layout of the registers in the debugger */
+static UINT8 m65sc02_reg_layout[] = {
+	M65SC02_A,M65SC02_X,M65SC02_Y,M65SC02_S,M65SC02_PC,M65SC02_P, -1,
+	M65SC02_EA,M65SC02_ZP,M65SC02_NMI_STATE,M65SC02_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 m65sc02_win_layout[] = {
+	25, 0,55, 2,	/* register window (top, right rows) */
+     0, 0,24,22,    /* disassembler window (left colums) */
+    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+
+void m65sc02_reset (void *param)
+{
+	m6502_reset(param);
+	m6502.subtype = SUBTYPE_65SC02;
+	m6502.insn = insn65sc02;
+}
+void m65sc02_exit  (void) { m6502_exit(); }
+int  m65sc02_execute(int cycles) { return m6502_execute(cycles); }
+unsigned m65sc02_get_context (void *dst) { return m6502_get_context(dst); }
+void m65sc02_set_context (void *src) { m6502_set_context(src); }
+unsigned m65sc02_get_pc (void) { return m6502_get_pc(); }
+void m65sc02_set_pc (unsigned val) { m6502_set_pc(val); }
+unsigned m65sc02_get_sp (void) { return m6502_get_sp(); }
+void m65sc02_set_sp (unsigned val) { m6502_set_sp(val); }
+unsigned m65sc02_get_reg (int regnum) { return m6502_get_reg(regnum); }
+void m65sc02_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
+void m65sc02_set_nmi_line(int state) { m6502_set_nmi_line(state); }
+void m65sc02_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
+void m65sc02_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
+void m65sc02_state_save(void *file) { m6502_state_save(file); }
+void m65sc02_state_load(void *file) { m6502_state_load(file); }
+const char *m65sc02_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "M65SC02";
+		case CPU_INFO_FAMILY: return "Metal Oxid Semiconductor MOS 6502";
+		case CPU_INFO_VERSION: return "1.0beta";
+		case CPU_INFO_CREDITS: 
+			return "Copyright (c) 1998 Juergen Buchmueller\n"
+				"Copyright (c) 2000 Peter Trauner\n"
+				"all rights reserved.";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m65sc02_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m65sc02_win_layout;
+    }
+	return m6502_info(context,regnum);
+}
+unsigned m65sc02_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+    return Dasm6502( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	return 1;
+#endif
+}
+
+#endif
+
 /****************************************************************************
  * 6510 section
  ****************************************************************************/

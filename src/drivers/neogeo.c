@@ -811,7 +811,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( irrmaze )
 	PORT_START      /* IN0 multiplexed */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_REVERSE, 10, 20, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_REVERSE, 10, 20, 0, 0 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -881,7 +881,7 @@ INPUT_PORTS_START( irrmaze )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* IN0 multiplexed */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -1357,38 +1357,23 @@ ROM_END
 
 ROM_START( mutnat )
 	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, 0x30cbd46b )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_LOAD_WIDE_SWAP( "mnat_p1.rom", 0x000000, 0x080000, 0x6f1699c8 )
 
-	NEO_SFIX_128K( "n054001a.378", 0x99419733 )
+	NEO_SFIX_128K( "mnat_s1.rom", 0x99419733 )
 
-	NEO_BIOS_SOUND_128K( "n054001a.4f8", 0x2db6862d )
+	NEO_BIOS_SOUND_128K( "mnat_m1.rom", 0xb6683092 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
-	ROM_LOAD( "n054001a.1f8", 0x000000, 0x080000, 0x8db2effe )
-	ROM_LOAD( "n054001a.1fc", 0x080000, 0x080000, 0xa49fe238 )
-	ROM_LOAD( "n054001b.1f8", 0x100000, 0x080000, 0x2ba17cb7 )
-	ROM_LOAD( "n054001b.1fc", 0x180000, 0x080000, 0x42419a29 )
+	ROM_LOAD( "mnat_v1.rom", 0x000000, 0x100000, 0x25419296 )
+	ROM_LOAD( "mnat_v2.rom", 0x100000, 0x100000, 0x0de53d5e )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x400000, REGION_GFX2 )
-	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, 0x83d59ccf ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
-	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, 0xb2f1409d ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
-	ROM_LOAD( "n054001b.538", 0x080000, 0x40000, 0xeaa2801a ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
-	ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, 0xc718b731 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
-	ROM_LOAD( "n054001a.638", 0x100000, 0x40000, 0x9e115a04 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
-	ROM_LOAD( "n054001a.63c", 0x140000, 0x40000, 0x1bb648c1 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
-	ROM_LOAD( "n054001b.638", 0x180000, 0x40000, 0x32bf4a2d ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
-	ROM_LOAD( "n054001b.63c", 0x1c0000, 0x40000, 0x7d120067 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_LOAD_GFX_EVEN( "mnat_c1.rom", 0x000000, 0x100000, 0x5e4381bf ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "mnat_c2.rom", 0x000000, 0x100000, 0x69ba4e18 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "mnat_c3.rom", 0x200000, 0x100000, 0x890327d5 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "mnat_c4.rom", 0x200000, 0x100000, 0xe4002651 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( kotm )
@@ -4445,7 +4430,7 @@ GAME( 1990, ridhero,  neogeo,   raster, neogeo,  mgd2,   ROT0_16BIT, "SNK", "Rid
 GAME( 1991, alpham2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Alpha Mission II / ASO II - Last Guardian" )
 GAME( 1990, cyberlip, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Cyber-Lip" )
 GAME( 1990, superspy, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "The Super Spy" )
-GAME( 1992, mutnat,   neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "Mutation Nation" )
+GAME( 1992, mutnat,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Mutation Nation" )
 GAME( 1991, kotm,     neogeo,   neogeo, neogeo,  mgd2,   ROT0_16BIT, "SNK", "King of the Monsters" )
 GAME( 1991, sengoku,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 1)" )
 GAME( 1991, sengokh,  sengoku,  neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 2)" )

@@ -564,7 +564,7 @@ static struct MemoryWriteAddress f1gpstar_sound_writemem[] =
 ***************************************************************************/
 
 #define DRIVING_WHEEL \
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 30, 30, 0, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 30, 30, 0, 0xff)
 
 /* Fake input port to read the status of five buttons: used to
    implement the shift using 2 buttons, and the accelerator in

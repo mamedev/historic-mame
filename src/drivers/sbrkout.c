@@ -155,7 +155,7 @@ INPUT_PORTS_START( sbrkout )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 
 	PORT_START		/* IN5 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PADDLE | IPF_REVERSE, 100, 10, 7, 0, 255 )
+	PORT_ANALOG( 0xff, 0x00, IPT_PADDLE | IPF_REVERSE, 50, 10, 0, 255 )
 
 	PORT_START		/* IN6 - fake port, used to set the game select dial */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Progressive", KEYCODE_E, IP_JOY_NONE )

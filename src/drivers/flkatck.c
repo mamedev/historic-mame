@@ -22,8 +22,7 @@ void flkatck_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 void flkatck_k007121_w(int offset,int data);
 void flkatck_k007121_regs_w(int offset,int data);
 
-extern unsigned char* k007121_ram;
-extern unsigned char* k007121_regs;
+extern unsigned char *k007121_ram;
 extern int flkatck_irq_enabled;
 
 /***************************************************************************/
@@ -101,7 +100,6 @@ static void flkatck_ls138_w(int offset,int data)
 
 static struct MemoryReadAddress flkatck_readmem[] =
 {
-	{ 0x0000, 0x005f, MRA_RAM },		/* 007121 registers */
 	{ 0x0400, 0x041f, flkatck_ls138_r },			/* inputs + DIPS */
 	{ 0x0800, 0x0bff, MRA_RAM },		/* palette */
 	{ 0x1000, 0x1fff, MRA_RAM },					/* RAM */
@@ -113,7 +111,7 @@ static struct MemoryReadAddress flkatck_readmem[] =
 
 static struct MemoryWriteAddress flkatck_writemem[] =
 {
-	{ 0x0000, 0x005f, flkatck_k007121_regs_w, &k007121_regs },		/* 007121 registers */
+	{ 0x0000, 0x0007, flkatck_k007121_regs_w },		/* 007121 registers */
 	{ 0x0400, 0x041f, flkatck_ls138_w },			/* bankswitch + counters + sound command */
 	{ 0x0800, 0x0bff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },/* palette */
 	{ 0x1000, 0x1fff, MWA_RAM },					/* RAM */
@@ -188,7 +186,7 @@ INPUT_PORTS_START( flkatck )
 	//PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x03, "1" )
 	PORT_DIPSETTING(	0x02, "2" )
 	PORT_DIPSETTING(	0x01, "3" )
@@ -315,7 +313,7 @@ static struct MachineDriver machine_driver_flkatck =
 	flkatck_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 30*8-1, 2*8, 30*8-1 },
+	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	512, 512,
 	0,

@@ -838,7 +838,15 @@ void hotchase_soundlatch_w(int offset, int data)
 	cpu_set_irq_line(2,M6809_IRQ_LINE, HOLD_LINE);
 }
 
-static struct K007232_interface hotchase_k007232_interface;
+static struct K007232_interface hotchase_k007232_interface =
+{
+	3,
+	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
+	{ K007232_VOL( 33,MIXER_PAN_CENTER, 33,MIXER_PAN_CENTER ),
+	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ),
+	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ) },
+	{ 0,0,0 }
+};
 
 void hotchase_sound_control_w(int offset, int data)
 {
@@ -962,7 +970,7 @@ static struct MemoryWriteAddress hotchase_sound_writemem[] =
 
 
 #define DRIVING_WHEEL \
- PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 50, 5, 0, 0, 0xff)
+ PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 50, 5, 0, 0xff)
 
 
 
@@ -1385,15 +1393,6 @@ static struct MachineDriver machine_driver_wecleman =
 								Hot Chase
 ***************************************************************************/
 
-static struct K007232_interface hotchase_k007232_interface =
-{
-	3,
-	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
-	{ K007232_VOL( 33,MIXER_PAN_CENTER, 33,MIXER_PAN_CENTER ),
-	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ),
-	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ) },
-	{ 0,0,0 }
-};
 
 
 void hotchase_init_machine(void)		{						}

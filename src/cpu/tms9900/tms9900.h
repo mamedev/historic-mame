@@ -199,7 +199,7 @@ typedef struct tms9995reset_param
 
 #define TMS99105A_NONE  -1
 
-extern	int tms99105A_ICount;
+extern	int tms99105a_ICount;
 
 extern void tms99105a_reset(void *param);
 extern int tms99105a_execute(int cycles);

@@ -113,10 +113,14 @@ int punchout_vh_start(void);
 int armwrest_vh_start(void);
 void punchout_vh_stop(void);
 void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void spnchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void armwrest_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void init_punchout(void);
+void init_spnchout(void);
+void init_spnchotj(void);
+void init_armwrest(void);
 
 int punchout_input_3_r(int offset);
 void punchout_speech_reset(int offset,int data);
@@ -814,7 +818,7 @@ static struct MachineDriver machine_driver_##NAME =									\
 	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },										\
 	GFX##_gfxdecodeinfo,															\
 	1024+1, COLORTABLE,																\
-	NAME##_vh_convert_color_prom,													\
+	GFX##_vh_convert_color_prom,													\
 																					\
 	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,											\
 	0,																				\
@@ -840,7 +844,6 @@ static struct MachineDriver machine_driver_##NAME =									\
 
 
 MACHINE_DRIVER( punchout, punchout, 128*4+128*4+64*8+128*4 )
-MACHINE_DRIVER( spnchout, punchout, 128*4+128*4+64*8+128*4 )
 MACHINE_DRIVER( armwrest, armwrest, 256*4+64*8+64*8+128*4 )
 
 
@@ -990,6 +993,80 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-c.6p",    0x0000, 0x4000, 0xad8b64b8 )
 ROM_END
 
+ROM_START( spnchotj )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "chs1c8la.bin", 0x0000, 0x2000, 0xdc2a592b )
+	ROM_LOAD( "chs1c8ka.bin", 0x2000, 0x2000, 0xce687182 )
+	ROM_LOAD( "chs1-c.8j",    0x4000, 0x2000, 0x1fa629e8 )
+	ROM_LOAD( "chs1-c.8h",    0x6000, 0x2000, 0x15a6c068 )
+	ROM_LOAD( "chs1c8fa.bin", 0x8000, 0x4000, 0xf745b5d5 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_4c_01a.bin", 0x00000, 0x2000, 0xb017e1e9 )	/* chars #1 */
+	ROM_LOAD( "b_4d_01a.bin", 0x02000, 0x2000, 0xe3de9d18 )
+
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-b.4a",    0x00000, 0x0800, 0xc075f831 )	/* chars #2 */
+	ROM_CONTINUE(             0x01000, 0x0800 )
+	ROM_CONTINUE(             0x00800, 0x0800 )
+	ROM_CONTINUE(             0x01800, 0x0800 )
+	ROM_LOAD( "chp1-b.4b",    0x02000, 0x0800, 0xc4cc2b5a )
+	ROM_CONTINUE(             0x03000, 0x0800 )
+	ROM_CONTINUE(             0x02800, 0x0800 )
+	ROM_CONTINUE(             0x03800, 0x0800 )
+
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chs1-v.2r",    0x00000, 0x4000, 0xff33405d )	/* chars #3 */
+	ROM_LOAD( "chs1-v.2t",    0x04000, 0x4000, 0xf507818b )
+	ROM_LOAD( "chs1-v.2u",    0x08000, 0x4000, 0x0995fc95 )
+	ROM_LOAD( "chs1-v.2v",    0x0c000, 0x2000, 0xf44d9878 )
+	/* 0e000-0ffff empty (space for 16k ROM) */
+	ROM_LOAD( "chs1-v.3r",    0x10000, 0x4000, 0x09570945 )
+	ROM_LOAD( "chs1-v.3t",    0x14000, 0x4000, 0x42c6861c )
+	ROM_LOAD( "chs1-v.3u",    0x18000, 0x4000, 0xbf5d02dd )
+	ROM_LOAD( "chs1-v.3v",    0x1c000, 0x2000, 0x5673f4fc )
+	/* 1e000-1ffff empty (space for 16k ROM) */
+	ROM_LOAD( "chs1-v.4r",    0x20000, 0x4000, 0x8e155758 )
+	ROM_LOAD( "chs1-v.4t",    0x24000, 0x4000, 0xb4e43448 )
+	ROM_LOAD( "chs1-v.4u",    0x28000, 0x4000, 0x74e0d956 )
+	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-v.6p",    0x00000, 0x0800, 0x75be7aae )	/* chars #4 */
+	ROM_CONTINUE(             0x01000, 0x0800 )
+	ROM_CONTINUE(             0x00800, 0x0800 )
+	ROM_CONTINUE(             0x01800, 0x0800 )
+	ROM_LOAD( "chp1-v.6n",    0x02000, 0x0800, 0xdaf74de0 )
+	ROM_CONTINUE(             0x03000, 0x0800 )
+	ROM_CONTINUE(             0x02800, 0x0800 )
+	ROM_CONTINUE(             0x03800, 0x0800 )
+	/* 04000-07fff empty (space for 6l and 6k) */
+	ROM_LOAD( "chp1-v.8p",    0x08000, 0x0800, 0x4cb7ea82 )
+	ROM_CONTINUE(             0x09000, 0x0800 )
+	ROM_CONTINUE(             0x08800, 0x0800 )
+	ROM_CONTINUE(             0x09800, 0x0800 )
+	ROM_LOAD( "chp1-v.8n",    0x0a000, 0x0800, 0x1c0d09aa )
+	ROM_CONTINUE(             0x0b000, 0x0800 )
+	ROM_CONTINUE(             0x0a800, 0x0800 )
+	ROM_CONTINUE(             0x0b800, 0x0800 )
+	/* 0c000-0ffff empty (space for 8l and 8k) */
+
+	ROM_REGION( 0x0d00, REGION_PROMS )
+	ROM_LOAD( "chs1b_6e.bpr", 0x0000, 0x0200, 0x8efd867f )	/* red component */
+	ROM_LOAD( "chs1-b.7e",    0x0200, 0x0200, 0x9e170f64 )	/* red component */
+	ROM_LOAD( "chs1b_6f.bpr", 0x0400, 0x0200, 0x279d6cbc )	/* green component */
+	ROM_LOAD( "chs1-b.8e",    0x0600, 0x0200, 0x3a2e333b )	/* green component */
+	ROM_LOAD( "chs1b_7f.bpr", 0x0800, 0x0200, 0xcad6b7ad )	/* blue component */
+	ROM_LOAD( "chs1-b.8f",    0x0a00, 0x0200, 0x1663eed7 )	/* blue component */
+	ROM_LOAD( "chs1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
+
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
+	ROM_LOAD( "chs1c6pa.bin", 0x0000, 0x4000, 0xd05fb730 )
+ROM_END
+
 ROM_START( armwrest )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chv1-c.8l",    0x0000, 0x2000, 0xb09764c1 )
@@ -1048,26 +1125,7 @@ ROM_END
 
 
 
-static void init_punchout(void)
-{
-	/* one graphics ROM (4v) doesn't */
-	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
-}
-
-static void init_armwrest(void)
-{
-	/* one graphics ROM (4v) doesn't */
-	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
-
-	/* also, ROM 2k is enabled only when its top half is accessed. The other half must */
-	/* be seen as a 0xff fill for colors to come out properly */
-	memset(memory_region(REGION_GFX2) + 0x08000,0xff,0x2000);
-}
-
-
-
-GAME( 1984, punchout, 0, punchout, punchout, punchout, ROT0, "Nintendo", "Punch-Out!!" )
-GAME( 1984, spnchout, 0, spnchout, spnchout, punchout, ROT0, "Nintendo", "Super Punch-Out!!" )
-GAME( 1985, armwrest, 0, armwrest, armwrest, armwrest, ROT0, "Nintendo", "Arm Wrestling" )
+GAME( 1984, punchout, 0,        punchout, punchout, punchout, ROT0, "Nintendo", "Punch-Out!!" )
+GAME( 1984, spnchout, 0,        punchout, spnchout, spnchout, ROT0, "Nintendo", "Super Punch-Out!!" )
+GAME( 1984, spnchotj, spnchout, punchout, spnchout, spnchotj, ROT0, "Nintendo", "Super Punch-Out!! (Japan)" )
+GAME( 1985, armwrest, 0,        armwrest, armwrest, armwrest, ROT0, "Nintendo", "Arm Wrestling" )

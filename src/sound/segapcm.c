@@ -69,7 +69,7 @@ int SEGAPCM_sh_start( const struct MachineSound *msound )
 {
 	struct SEGAPCMinterface *intf = msound->sound_interface;
 	if (Machine->sample_rate == 0) return 0;
-	if( SEGAPCMInit( msound, intf->bank&0x00ffffff, intf->mode, (unsigned char *)memory_region(intf->region)+0x10000, intf->volume ) )
+	if( SEGAPCMInit( msound, intf->bank&0x00ffffff, intf->mode, (unsigned char *)memory_region(intf->region), intf->volume ) )
 		return 1;
 	return 0;
 }

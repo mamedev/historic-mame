@@ -202,19 +202,19 @@ INPUT_PORTS_START( arcadecl )
 	PORT_BIT(  0xffc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 640020 */
-    PORT_ANALOGX ( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER2, 200, 0x7f, 0, 0, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN, 32 )
+    PORT_ANALOGX( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER2, 50, 32, 0, 0, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 640022 */
-    PORT_ANALOG ( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_PLAYER2, 200, 32, 0x7f, 0, 0 )
+	PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_PLAYER2, 50, 32, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 640024 */
-    PORT_ANALOG ( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER1, 200, 32, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER1, 50, 32, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 640026 */
-    PORT_ANALOG ( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_PLAYER1, 200, 32, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_PLAYER1, 50, 32, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -311,8 +311,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
-	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ REGION_SOUND1 },       		/* memory region 2 */
+	{ ATARI_CLOCK_14MHz/4/3/165 },	/* not verified -- assumed from Rampart */
+	{ REGION_SOUND1 },
 	{ 100 }
 };
 
@@ -330,7 +330,7 @@ static struct MachineDriver machine_driver_arcadecl =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}

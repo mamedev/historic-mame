@@ -106,7 +106,8 @@ INLINE void eorb_di(void);
 INLINE void eorb_ex(void);
 INLINE void eorb_im(void);
 INLINE void eorb_ix(void);
-INLINE void illegal(void);
+//INLINE void illegal(void);
+static void illegal(void);
 INLINE void inc_ex(void);
 INLINE void inc_ix(void);
 INLINE void inca(void);
@@ -187,6 +188,7 @@ INLINE void sbcb_ix(void);
 INLINE void sec(void);
 INLINE void sei(void);
 INLINE void sev(void);
+INLINE void slp(void);
 INLINE void sta_di(void);
 INLINE void sta_ex(void);
 INLINE void sta_im(void);
@@ -236,6 +238,13 @@ INLINE void undoc1(void);
 INLINE void undoc2(void);
 INLINE void wai(void);
 INLINE void xgdx(void);
+
+INLINE void cpx_di(void);
+INLINE void cpx_ex(void);
+INLINE void cpx_im(void);
+INLINE void cpx_ix(void);
+//INLINE void trap(void);
+static void trap(void);
 
 static void (*m6800_insn[0x100])(void) = {
 illegal,nop,	illegal,illegal,illegal,illegal,tap,	tpa,
@@ -290,13 +299,13 @@ asl_ix, rol_ix, dec_ix, illegal,inc_ix, tst_ix, jmp_ix, clr_ix,
 neg_ex, illegal,illegal,com_ex, lsr_ex, illegal,ror_ex, asr_ex,
 asl_ex, rol_ex, dec_ex, illegal,inc_ex, tst_ex, jmp_ex, clr_ex,
 suba_im,cmpa_im,sbca_im,subd_im,anda_im,bita_im,lda_im, sta_im,
-eora_im,adca_im,ora_im, adda_im,cmpx_im,bsr,	lds_im, sts_im,
+eora_im,adca_im,ora_im, adda_im,cpx_im ,bsr,	lds_im, sts_im,
 suba_di,cmpa_di,sbca_di,subd_di,anda_di,bita_di,lda_di, sta_di,
-eora_di,adca_di,ora_di, adda_di,cmpx_di,jsr_di, lds_di, sts_di,
+eora_di,adca_di,ora_di, adda_di,cpx_di ,jsr_di, lds_di, sts_di,
 suba_ix,cmpa_ix,sbca_ix,subd_ix,anda_ix,bita_ix,lda_ix, sta_ix,
-eora_ix,adca_ix,ora_ix, adda_ix,cmpx_ix,jsr_ix, lds_ix, sts_ix,
+eora_ix,adca_ix,ora_ix, adda_ix,cpx_ix ,jsr_ix, lds_ix, sts_ix,
 suba_ex,cmpa_ex,sbca_ex,subd_ex,anda_ex,bita_ex,lda_ex, sta_ex,
-eora_ex,adca_ex,ora_ex, adda_ex,cmpx_ex,jsr_ex, lds_ex, sts_ex,
+eora_ex,adca_ex,ora_ex, adda_ex,cpx_ex ,jsr_ex, lds_ex, sts_ex,
 subb_im,cmpb_im,sbcb_im,addd_im,andb_im,bitb_im,ldb_im, stb_im,
 eorb_im,adcb_im,orb_im, addb_im,ldd_im, std_im, ldx_im, stx_im,
 subb_di,cmpb_di,sbcb_di,addd_di,andb_di,bitb_di,ldb_di, stb_di,
@@ -308,30 +317,30 @@ eorb_ex,adcb_ex,orb_ex, addb_ex,ldd_ex, std_ex, ldx_ex, stx_ex
 };
 
 static void (*hd63701_insn[0x100])(void) = {
-illegal,nop,	illegal,illegal,lsrd,	asld,	tap,	tpa,
+trap	,nop,	trap	,trap	,lsrd,	asld,	tap,	tpa,
 inx,	dex,	clv,	sev,	clc,	sec,	cli,	sei,
-sba,	cba,	undoc1, undoc2, illegal,illegal,tab,	tba,
-xgdx,	daa,	illegal,aba,	illegal,illegal,illegal,illegal,
+sba,	cba,	undoc1, undoc2, trap	,trap	,tab,	tba,
+xgdx,	daa,	slp		,aba,	trap	,trap	,trap	,trap	,
 bra,	brn,	bhi,	bls,	bcc,	bcs,	bne,	beq,
 bvc,	bvs,	bpl,	bmi,	bge,	blt,	bgt,	ble,
 tsx,	ins,	pula,	pulb,	des,	txs,	psha,	pshb,
 pulx,	rts,	abx,	rti,	pshx,	mul,	wai,	swi,
-nega,	illegal,illegal,coma,	lsra,	illegal,rora,	asra,
-asla,	rola,	deca,	illegal,inca,	tsta,	illegal,clra,
-negb,	illegal,illegal,comb,	lsrb,	illegal,rorb,	asrb,
-aslb,	rolb,	decb,	illegal,incb,	tstb,	illegal,clrb,
+nega,	trap	,trap	,coma,	lsra,	trap	,rora,	asra,
+asla,	rola,	deca,	trap	,inca,	tsta,	trap	,clra,
+negb,	trap	,trap	,comb,	lsrb,	trap	,rorb,	asrb,
+aslb,	rolb,	decb,	trap	,incb,	tstb,	trap	,clrb,
 neg_ix, aim_ix, oim_ix, com_ix, lsr_ix, eim_ix, ror_ix, asr_ix,
 asl_ix, rol_ix, dec_ix, tim_ix, inc_ix, tst_ix, jmp_ix, clr_ix,
 neg_ex, aim_di, oim_di, com_ex, lsr_ex, eim_di, ror_ex, asr_ex,
 asl_ex, rol_ex, dec_ex, tim_di, inc_ex, tst_ex, jmp_ex, clr_ex,
 suba_im,cmpa_im,sbca_im,subd_im,anda_im,bita_im,lda_im, sta_im,
-eora_im,adca_im,ora_im, adda_im,cmpx_im,bsr,	lds_im, sts_im,
+eora_im,adca_im,ora_im, adda_im,cpx_im ,bsr,	lds_im, sts_im,
 suba_di,cmpa_di,sbca_di,subd_di,anda_di,bita_di,lda_di, sta_di,
-eora_di,adca_di,ora_di, adda_di,cmpx_di,jsr_di, lds_di, sts_di,
+eora_di,adca_di,ora_di, adda_di,cpx_di ,jsr_di, lds_di, sts_di,
 suba_ix,cmpa_ix,sbca_ix,subd_ix,anda_ix,bita_ix,lda_ix, sta_ix,
-eora_ix,adca_ix,ora_ix, adda_ix,cmpx_ix,jsr_ix, lds_ix, sts_ix,
+eora_ix,adca_ix,ora_ix, adda_ix,cpx_ix ,jsr_ix, lds_ix, sts_ix,
 suba_ex,cmpa_ex,sbca_ex,subd_ex,anda_ex,bita_ex,lda_ex, sta_ex,
-eora_ex,adca_ex,ora_ex, adda_ex,cmpx_ex,jsr_ex, lds_ex, sts_ex,
+eora_ex,adca_ex,ora_ex, adda_ex,cpx_ex ,jsr_ex, lds_ex, sts_ex,
 subb_im,cmpb_im,sbcb_im,addd_im,andb_im,bitb_im,ldb_im, stb_im,
 eorb_im,adcb_im,orb_im, addb_im,ldd_im, std_im, ldx_im, stx_im,
 subb_di,cmpb_di,sbcb_di,addd_di,andb_di,bitb_di,ldb_di, stb_di,

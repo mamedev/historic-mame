@@ -235,10 +235,10 @@ INPUT_PORTS_START( irobot )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_CENTER, 70, 50, 0, 95, 159 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_CENTER, 70, 50, 95, 159 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_REVERSE|IPF_CENTER, 50, 50, 0, 95, 159 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_CENTER, 50, 50, 95, 159 )
 
 INPUT_PORTS_END
 
@@ -265,8 +265,6 @@ static struct POKEYinterface pokey_interface =
 	4,	/* 4 chips */
 	1250000,	/* 1.25 MHz??? */
 	{ 25, 25, 25, 25 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },

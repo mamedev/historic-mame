@@ -851,7 +851,6 @@ int megasys1_layers_order[16];
 
 extern struct GameDriver driver_64street;
 extern struct GameDriver driver_astyanax;
-extern struct GameDriver driver_avspirit;
 extern struct GameDriver driver_bigstrik;
 extern struct GameDriver driver_chimerab;
 extern struct GameDriver driver_cybattlr;
@@ -859,8 +858,8 @@ extern struct GameDriver driver_edf;
 extern struct GameDriver driver_hachoo;
 extern struct GameDriver driver_iganinju;
 extern struct GameDriver driver_kickoff;
-extern struct GameDriver driver_rodland;
 extern struct GameDriver driver_soldamj;
+extern struct GameDriver driver_tshingen;
 
 /*
 	Layers order encoded as an int like: 0x01234, where
@@ -890,10 +889,6 @@ static struct priority priorities[] =
 	{	&driver_astyanax,
 		{ 0x04132,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&driver_avspirit,
-		{ 0x14032,0x04132,0x13042,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0x14302,0xfffff,0x14032,0xfffff }
 	},
 	{	&driver_bigstrik,	/* like 64street ? */
 		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
@@ -927,8 +922,8 @@ static struct priority priorities[] =
 		{ 0x04132,0xfffff,0xfffff,0x01423,0xfffff,0xfffff,0xfffff,0x20413,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&driver_rodland,
-		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
+	{	&driver_tshingen,
+		{ 0x04132,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	0	}	// end of list: use the prom's data
@@ -1027,14 +1022,17 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 					int opacity	=	i & enable_mask;	// only consider active layers
 					int layer	=	prom[pri_code * 0x20 + offset + opacity * 2];
 
-					if (opacity & top_mask)
+					if (opacity)
 					{
-						if (layer != top )	result |= 1; 	// error: opaque pens aren't always opaque!
-					}
-					else
-					{
-						if (layer == top)	result |= 2;	// transparent pen is opaque
-						else				result |= 4;	// transparent pen is transparent
+						if (opacity & top_mask)
+						{
+							if (layer != top )	result |= 1; 	// error: opaque pens aren't always opaque!
+						}
+						else
+						{
+							if (layer == top)	result |= 2;	// transparent pen is opaque
+							else				result |= 4;	// transparent pen is transparent
+						}
 					}
 				}
 

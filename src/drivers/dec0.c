@@ -542,10 +542,10 @@ INPUT_PORTS_START( hbarrel )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( baddudes )
@@ -822,10 +822,10 @@ INPUT_PORTS_START( midres )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bouldash )
@@ -887,9 +887,9 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 chars */
-	4096,
+	RGN_FRAC(1,4),
 	4,		/* 4 bits per pixel  */
-	{ 0x00000*8, 0x10000*8, 0x8000*8, 0x18000*8 },
+	{ RGN_FRAC(0,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -898,9 +898,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout tilelayout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,4),
 	4,
-	{ 0x20000*8, 0x60000*8, 0x00000*8, 0x40000*8 },
+	{ RGN_FRAC(1,4), RGN_FRAC(3,4), RGN_FRAC(0,4), RGN_FRAC(2,4) },
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -1431,11 +1431,11 @@ ROM_START( hbarrel )
 	ROM_LOAD( "hb24.bin",     0x60000, 0x10000, 0xae377361 )
 	ROM_LOAD( "hb23.bin",     0x70000, 0x10000, 0xbbdaf771 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "hb29.bin",     0x00000, 0x10000, 0x5514b296 )
-	ROM_LOAD( "hb30.bin",     0x20000, 0x10000, 0x5855e8ef )
-	ROM_LOAD( "hb27.bin",     0x40000, 0x10000, 0x99db7b9c )
-	ROM_LOAD( "hb28.bin",     0x60000, 0x10000, 0x33ce2b1a )
+	ROM_LOAD( "hb30.bin",     0x10000, 0x10000, 0x5855e8ef )
+	ROM_LOAD( "hb27.bin",     0x20000, 0x10000, 0x99db7b9c )
+	ROM_LOAD( "hb28.bin",     0x30000, 0x10000, 0x33ce2b1a )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "hb15.bin",     0x00000, 0x10000, 0x21816707 )
@@ -1477,11 +1477,11 @@ ROM_START( hbarrelw )
 	ROM_LOAD( "hb24.bin",     0x60000, 0x10000, 0xae377361 )
 	ROM_LOAD( "hb23.bin",     0x70000, 0x10000, 0xbbdaf771 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "hb29.bin",     0x00000, 0x10000, 0x5514b296 )
-	ROM_LOAD( "hb30.bin",     0x20000, 0x10000, 0x5855e8ef )
-	ROM_LOAD( "hb27.bin",     0x40000, 0x10000, 0x99db7b9c )
-	ROM_LOAD( "hb28.bin",     0x60000, 0x10000, 0x33ce2b1a )
+	ROM_LOAD( "hb30.bin",     0x10000, 0x10000, 0x5855e8ef )
+	ROM_LOAD( "hb27.bin",     0x20000, 0x10000, 0x99db7b9c )
+	ROM_LOAD( "hb28.bin",     0x30000, 0x10000, 0x33ce2b1a )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "hb15.bin",     0x00000, 0x10000, 0x21816707 )
@@ -1507,23 +1507,21 @@ ROM_START( baddudes )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "baddudes.7",   0x8000, 0x8000, 0x9fb1ef4b )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "baddudes.25",  0x00000, 0x04000, 0xbcf59a69 )
-	ROM_CONTINUE(             0x08000, 0x04000 )
-	ROM_LOAD( "baddudes.26",  0x10000, 0x04000, 0x9aff67b8 )
-	ROM_CONTINUE(             0x18000, 0x04000 )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_LOAD( "baddudes.25",  0x00000, 0x08000, 0xbcf59a69 )
+	ROM_LOAD( "baddudes.26",  0x08000, 0x08000, 0x9aff67b8 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "baddudes.18",  0x00000, 0x10000, 0x05cfc3e5 )
-	ROM_LOAD( "baddudes.20",  0x20000, 0x10000, 0xe11e988f )
-	ROM_LOAD( "baddudes.22",  0x40000, 0x10000, 0xb893d880 )
-	ROM_LOAD( "baddudes.24",  0x60000, 0x10000, 0x6f226dda )
+	ROM_LOAD( "baddudes.20",  0x10000, 0x10000, 0xe11e988f )
+	ROM_LOAD( "baddudes.22",  0x20000, 0x10000, 0xb893d880 )
+	ROM_LOAD( "baddudes.24",  0x30000, 0x10000, 0x6f226dda )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "baddudes.30",  0x20000, 0x08000, 0x982da0d1 )
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "baddudes.30",  0x08000, 0x08000, 0x982da0d1 )
 	ROM_CONTINUE(             0x00000, 0x08000 )	/* the two halves are swapped */
-	ROM_LOAD( "baddudes.28",  0x60000, 0x08000, 0xf01ebb3b )
-	ROM_CONTINUE(             0x40000, 0x08000 )
+	ROM_LOAD( "baddudes.28",  0x18000, 0x08000, 0xf01ebb3b )
+	ROM_CONTINUE(             0x10000, 0x08000 )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "baddudes.15",  0x00000, 0x10000, 0xa38a7d30 )
@@ -1549,23 +1547,21 @@ ROM_START( drgninja )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "drgninja.07",  0x8000, 0x8000, 0x001d2f51 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "drgninja.25",  0x00000, 0x04000, 0x6791bc20 )
-	ROM_CONTINUE(             0x08000, 0x04000 )
-	ROM_LOAD( "drgninja.26",  0x10000, 0x04000, 0x5d75fc8f )
-	ROM_CONTINUE(             0x18000, 0x04000 )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_LOAD( "drgninja.25",  0x00000, 0x08000, 0x6791bc20 )
+	ROM_LOAD( "drgninja.26",  0x08000, 0x08000, 0x5d75fc8f )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "baddudes.18",  0x00000, 0x10000, 0x05cfc3e5 )
-	ROM_LOAD( "baddudes.20",  0x20000, 0x10000, 0xe11e988f )
-	ROM_LOAD( "baddudes.22",  0x40000, 0x10000, 0xb893d880 )
-	ROM_LOAD( "baddudes.24",  0x60000, 0x10000, 0x6f226dda )
+	ROM_LOAD( "baddudes.20",  0x10000, 0x10000, 0xe11e988f )
+	ROM_LOAD( "baddudes.22",  0x20000, 0x10000, 0xb893d880 )
+	ROM_LOAD( "baddudes.24",  0x30000, 0x10000, 0x6f226dda )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "drgninja.30",  0x20000, 0x08000, 0x2438e67e )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "drgninja.30",  0x08000, 0x08000, 0x2438e67e )
 	ROM_CONTINUE(             0x00000, 0x08000 )	/* the two halves are swapped */
-	ROM_LOAD( "drgninja.28",  0x60000, 0x08000, 0x5c692ab3 )
-	ROM_CONTINUE(             0x40000, 0x08000 )
+	ROM_LOAD( "drgninja.28",  0x18000, 0x08000, 0x5c692ab3 )
+	ROM_CONTINUE(             0x10000, 0x08000 )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "drgninja.15",  0x00000, 0x10000, 0x5617d67f )
@@ -1593,9 +1589,9 @@ ROM_START( birdtry )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0x236549bc )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
 	ROM_LOAD( "ek-25.bin",     0x00000, 0x08000, 0x4df134ad )
-	ROM_LOAD( "ek-26.bin",     0x10000, 0x08000, 0xa00d3e8e )
+	ROM_LOAD( "ek-26.bin",     0x08000, 0x08000, 0xa00d3e8e )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ek-18.bin",     0x00000, 0x10000, 0x9886fb70 )
@@ -1607,7 +1603,7 @@ ROM_START( birdtry )
 	ROM_LOAD( "ek-24.bin",     0x60000, 0x10000, 0x2244cc75 )
 	ROM_LOAD( "ek-23.bin",     0x70000, 0x10000, 0xd0ed0116 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	/* This game doesn't seem to have the extra playfield chip, so no roms */
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
@@ -1641,17 +1637,17 @@ ROM_START( robocop )
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
 	ROM_LOAD( "ep22", 0x10000, 0x10000, 0x9fbd6903 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep20", 0x00000, 0x10000, 0x1d8d38b8 )
-	ROM_LOAD( "ep21", 0x20000, 0x10000, 0x187929b2 )
-	ROM_LOAD( "ep18", 0x40000, 0x10000, 0xb6580b5e )
-	ROM_LOAD( "ep19", 0x60000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep21", 0x10000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x20000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x30000, 0x10000, 0x9bad01c7 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep14", 0x00000, 0x08000, 0xca56ceda )
-	ROM_LOAD( "ep15", 0x20000, 0x08000, 0xa945269c )
-	ROM_LOAD( "ep16", 0x40000, 0x08000, 0xe7fa4d58 )
-	ROM_LOAD( "ep17", 0x60000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep15", 0x08000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x10000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x18000, 0x08000, 0x84aae89d )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ep07", 0x00000, 0x10000, 0x495d75cf )
@@ -1684,17 +1680,17 @@ ROM_START( robocopu )
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
 	ROM_LOAD( "ep22", 0x10000, 0x10000, 0x9fbd6903 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep20", 0x00000, 0x10000, 0x1d8d38b8 )
-	ROM_LOAD( "ep21", 0x20000, 0x10000, 0x187929b2 )
-	ROM_LOAD( "ep18", 0x40000, 0x10000, 0xb6580b5e )
-	ROM_LOAD( "ep19", 0x60000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep21", 0x10000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x20000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x30000, 0x10000, 0x9bad01c7 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep14", 0x00000, 0x08000, 0xca56ceda )
-	ROM_LOAD( "ep15", 0x20000, 0x08000, 0xa945269c )
-	ROM_LOAD( "ep16", 0x40000, 0x08000, 0xe7fa4d58 )
-	ROM_LOAD( "ep17", 0x60000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep15", 0x08000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x10000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x18000, 0x08000, 0x84aae89d )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ep07", 0x00000, 0x10000, 0x495d75cf )
@@ -1727,17 +1723,17 @@ ROM_START( robocpu0 )
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
 	ROM_LOAD( "ep22", 0x10000, 0x10000, 0x9fbd6903 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep20", 0x00000, 0x10000, 0x1d8d38b8 )
-	ROM_LOAD( "ep21", 0x20000, 0x10000, 0x187929b2 )
-	ROM_LOAD( "ep18", 0x40000, 0x10000, 0xb6580b5e )
-	ROM_LOAD( "ep19", 0x60000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep21", 0x10000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x20000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x30000, 0x10000, 0x9bad01c7 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep14", 0x00000, 0x08000, 0xca56ceda )
-	ROM_LOAD( "ep15", 0x20000, 0x08000, 0xa945269c )
-	ROM_LOAD( "ep16", 0x40000, 0x08000, 0xe7fa4d58 )
-	ROM_LOAD( "ep17", 0x60000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep15", 0x08000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x10000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x18000, 0x08000, 0x84aae89d )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ep07", 0x00000, 0x10000, 0x495d75cf )
@@ -1767,17 +1763,17 @@ ROM_START( robocopb )
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
 	ROM_LOAD( "ep22", 0x10000, 0x10000, 0x9fbd6903 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep20", 0x00000, 0x10000, 0x1d8d38b8 )
-	ROM_LOAD( "ep21", 0x20000, 0x10000, 0x187929b2 )
-	ROM_LOAD( "ep18", 0x40000, 0x10000, 0xb6580b5e )
-	ROM_LOAD( "ep19", 0x60000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep21", 0x10000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x20000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x30000, 0x10000, 0x9bad01c7 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ep14", 0x00000, 0x08000, 0xca56ceda )
-	ROM_LOAD( "ep15", 0x20000, 0x08000, 0xa945269c )
-	ROM_LOAD( "ep16", 0x40000, 0x08000, 0xe7fa4d58 )
-	ROM_LOAD( "ep17", 0x60000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep15", 0x08000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x10000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x18000, 0x08000, 0x84aae89d )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ep07", 0x00000, 0x10000, 0x495d75cf )
@@ -1810,17 +1806,17 @@ ROM_START( hippodrm )
 	ROM_LOAD( "ev14",         0x00000, 0x10000, 0x686f72c1 )
 	ROM_LOAD( "ev13",         0x10000, 0x10000, 0xb787dcc9 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ew19",         0x00000, 0x08000, 0x6b80d7a3 )
-	ROM_LOAD( "ew18",         0x20000, 0x08000, 0x78d3d764 )
-	ROM_LOAD( "ew20",         0x40000, 0x08000, 0xce9f5de3 )
-	ROM_LOAD( "ew21",         0x60000, 0x08000, 0x487a7ba2 )
+	ROM_LOAD( "ew18",         0x08000, 0x08000, 0x78d3d764 )
+	ROM_LOAD( "ew20",         0x10000, 0x08000, 0xce9f5de3 )
+	ROM_LOAD( "ew21",         0x18000, 0x08000, 0x487a7ba2 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ew24",         0x00000, 0x08000, 0x4e1bc2a4 )
-	ROM_LOAD( "ew25",         0x20000, 0x08000, 0x9eb47dfb )
-	ROM_LOAD( "ew23",         0x40000, 0x08000, 0x9ecf479e )
-	ROM_LOAD( "ew22",         0x60000, 0x08000, 0xe55669aa )
+	ROM_LOAD( "ew25",         0x08000, 0x08000, 0x9eb47dfb )
+	ROM_LOAD( "ew23",         0x10000, 0x08000, 0x9ecf479e )
+	ROM_LOAD( "ew22",         0x18000, 0x08000, 0xe55669aa )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ev15",         0x00000, 0x10000, 0x1d80f797 )
@@ -1850,20 +1846,20 @@ ROM_START( ffantasy )
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 
 	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "ev14",         0x00000, 0x10000, 0x686f72c1 )
-	ROM_LOAD( "ev13",         0x10000, 0x10000, 0xb787dcc9 )
+	ROM_LOAD( "ew14",         0x00000, 0x10000, 0x71ca593d )
+	ROM_LOAD( "ew13",         0x10000, 0x10000, 0x86be5fa7 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ew19",         0x00000, 0x08000, 0x6b80d7a3 )
-	ROM_LOAD( "ew18",         0x20000, 0x08000, 0x78d3d764 )
-	ROM_LOAD( "ew20",         0x40000, 0x08000, 0xce9f5de3 )
-	ROM_LOAD( "ew21",         0x60000, 0x08000, 0x487a7ba2 )
+	ROM_LOAD( "ew18",         0x08000, 0x08000, 0x78d3d764 )
+	ROM_LOAD( "ew20",         0x10000, 0x08000, 0xce9f5de3 )
+	ROM_LOAD( "ew21",         0x18000, 0x08000, 0x487a7ba2 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ew24",         0x00000, 0x08000, 0x4e1bc2a4 )
-	ROM_LOAD( "ew25",         0x20000, 0x08000, 0x9eb47dfb )
-	ROM_LOAD( "ew23",         0x40000, 0x08000, 0x9ecf479e )
-	ROM_LOAD( "ew22",         0x60000, 0x08000, 0xe55669aa )
+	ROM_LOAD( "ew25",         0x08000, 0x08000, 0x9eb47dfb )
+	ROM_LOAD( "ew23",         0x10000, 0x08000, 0x9ecf479e )
+	ROM_LOAD( "ew22",         0x18000, 0x08000, 0xe55669aa )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ev15",         0x00000, 0x10000, 0x1d80f797 )
@@ -1889,23 +1885,19 @@ ROM_START( slyspy )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "fa05.11a",     0x08000, 0x04000, 0x09802924 )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_LOAD( "fa05.11a",     0x04000, 0x04000, 0x09802924 )
 	ROM_CONTINUE(             0x00000, 0x04000 )	/* the two halves are swapped */
-	ROM_LOAD( "fa04.9a",      0x18000, 0x04000, 0xec25b895 )
-	ROM_CONTINUE(             0x10000, 0x04000 )
+	ROM_LOAD( "fa04.9a",      0x0c000, 0x04000, 0xec25b895 )
+	ROM_CONTINUE(             0x08000, 0x04000 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa07.17a",     0x00000, 0x08000, 0xe932268b )
-	ROM_CONTINUE(             0x20000, 0x08000 )
-	ROM_LOAD( "fa06.15a",     0x40000, 0x08000, 0xc4dd38c0 )
-	ROM_CONTINUE(             0x60000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa07.17a",     0x00000, 0x10000, 0xe932268b )
+	ROM_LOAD( "fa06.15a",     0x10000, 0x10000, 0xc4dd38c0 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa09.22a",     0x00000, 0x10000, 0x1395e9be )
-	ROM_CONTINUE(             0x20000, 0x10000 )
-	ROM_LOAD( "fa08.21a",     0x40000, 0x10000, 0x4d7464db )
-	ROM_CONTINUE(             0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa09.22a",     0x00000, 0x20000, 0x1395e9be )
+	ROM_LOAD( "fa08.21a",     0x20000, 0x20000, 0x4d7464db )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fa01.4a",      0x00000, 0x20000, 0x99b0cd92 )
@@ -1927,23 +1919,19 @@ ROM_START( slyspy2 )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "fa05.11a",     0x08000, 0x04000, 0x09802924 )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_LOAD( "fa05.11a",     0x04000, 0x04000, 0x09802924 )
 	ROM_CONTINUE(             0x00000, 0x04000 )	/* the two halves are swapped */
-	ROM_LOAD( "fa04.9a",      0x18000, 0x04000, 0xec25b895 )
-	ROM_CONTINUE(             0x10000, 0x04000 )
+	ROM_LOAD( "fa04.9a",      0x0c000, 0x04000, 0xec25b895 )
+	ROM_CONTINUE(             0x08000, 0x04000 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa07.17a",     0x00000, 0x08000, 0xe932268b )
-	ROM_CONTINUE(             0x20000, 0x08000 )
-	ROM_LOAD( "fa06.15a",     0x40000, 0x08000, 0xc4dd38c0 )
-	ROM_CONTINUE(             0x60000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa07.17a",     0x00000, 0x10000, 0xe932268b )
+	ROM_LOAD( "fa06.15a",     0x10000, 0x10000, 0xc4dd38c0 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa09.22a",     0x00000, 0x10000, 0x1395e9be )
-	ROM_CONTINUE(             0x20000, 0x10000 )
-	ROM_LOAD( "fa08.21a",     0x40000, 0x10000, 0x4d7464db )
-	ROM_CONTINUE(             0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa09.22a",     0x00000, 0x20000, 0x1395e9be )
+	ROM_LOAD( "fa08.21a",     0x20000, 0x20000, 0x4d7464db )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fa01.4a",      0x00000, 0x20000, 0x99b0cd92 )
@@ -1965,23 +1953,19 @@ ROM_START( secretag )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "fa05.11a",     0x08000, 0x04000, 0x09802924 )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_LOAD( "fa05.11a",     0x04000, 0x04000, 0x09802924 )
 	ROM_CONTINUE(             0x00000, 0x04000 )	/* the two halves are swapped */
-	ROM_LOAD( "fa04.9a",      0x18000, 0x04000, 0xec25b895 )
-	ROM_CONTINUE(             0x10000, 0x04000 )
+	ROM_LOAD( "fa04.9a",      0x0c000, 0x04000, 0xec25b895 )
+	ROM_CONTINUE(             0x08000, 0x04000 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa07.17a",     0x00000, 0x08000, 0xe932268b )
-	ROM_CONTINUE(             0x20000, 0x08000 )
-	ROM_LOAD( "fa06.15a",     0x40000, 0x08000, 0xc4dd38c0 )
-	ROM_CONTINUE(             0x60000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa07.17a",     0x00000, 0x10000, 0xe932268b )
+	ROM_LOAD( "fa06.15a",     0x10000, 0x10000, 0xc4dd38c0 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa09.22a",     0x00000, 0x10000, 0x1395e9be )
-	ROM_CONTINUE(             0x20000, 0x10000 )
-	ROM_LOAD( "fa08.21a",     0x40000, 0x10000, 0x4d7464db )
-	ROM_CONTINUE(             0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa09.22a",     0x00000, 0x20000, 0x1395e9be )
+	ROM_LOAD( "fa08.21a",     0x20000, 0x20000, 0x4d7464db )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fa01.4a",      0x00000, 0x20000, 0x99b0cd92 )
@@ -2003,23 +1987,19 @@ ROM_START( secretab )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "fa05.11a",     0x08000, 0x04000, 0x09802924 )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_LOAD( "fa05.11a",     0x04000, 0x04000, 0x09802924 )
 	ROM_CONTINUE(             0x00000, 0x04000 )	/* the two halves are swapped */
-	ROM_LOAD( "fa04.9a",      0x18000, 0x04000, 0xec25b895 )
-	ROM_CONTINUE(             0x10000, 0x04000 )
+	ROM_LOAD( "fa04.9a",      0x0c000, 0x04000, 0xec25b895 )
+	ROM_CONTINUE(             0x08000, 0x04000 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa07.17a",     0x00000, 0x08000, 0xe932268b )
-	ROM_CONTINUE(             0x20000, 0x08000 )
-	ROM_LOAD( "fa06.15a",     0x40000, 0x08000, 0xc4dd38c0 )
-	ROM_CONTINUE(             0x60000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa07.17a",     0x00000, 0x10000, 0xe932268b )
+	ROM_LOAD( "fa06.15a",     0x10000, 0x10000, 0xc4dd38c0 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fa09.22a",     0x00000, 0x10000, 0x1395e9be )
-	ROM_CONTINUE(             0x20000, 0x10000 )
-	ROM_LOAD( "fa08.21a",     0x40000, 0x10000, 0x4d7464db )
-	ROM_CONTINUE(             0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fa09.22a",     0x00000, 0x20000, 0x1395e9be )
+	ROM_LOAD( "fa08.21a",     0x20000, 0x20000, 0x4d7464db )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fa01.4a",      0x00000, 0x20000, 0x99b0cd92 )
@@ -2053,11 +2033,9 @@ ROM_START( midres )
 	ROM_LOAD( "fl07",              0x40000, 0x20000, 0x2068c45c )
 	ROM_LOAD( "fl06",              0x60000, 0x20000, 0xb7241ab9 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fl11",              0x00000, 0x10000, 0xb86b73b4 )
-	ROM_CONTINUE(                  0x20000, 0x10000 )
-	ROM_LOAD( "fl10",              0x40000, 0x10000, 0x92245b29 )
-	ROM_CONTINUE(                  0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fl11",              0x00000, 0x20000, 0xb86b73b4 )
+	ROM_LOAD( "fl10",              0x20000, 0x20000, 0x92245b29 )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fl01",              0x00000, 0x20000, 0x2c8b35a7 )
@@ -2091,11 +2069,9 @@ ROM_START( midresu )
 	ROM_LOAD( "fl07",              0x40000, 0x20000, 0x2068c45c )
 	ROM_LOAD( "fl06",              0x60000, 0x20000, 0xb7241ab9 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fl11",              0x00000, 0x10000, 0xb86b73b4 )
-	ROM_CONTINUE(                  0x20000, 0x10000 )
-	ROM_LOAD( "fl10",              0x40000, 0x10000, 0x92245b29 )
-	ROM_CONTINUE(                  0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fl11",              0x00000, 0x20000, 0xb86b73b4 )
+	ROM_LOAD( "fl10",              0x20000, 0x20000, 0x92245b29 )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fl01",              0x00000, 0x20000, 0x2c8b35a7 )
@@ -2129,11 +2105,9 @@ ROM_START( midresj )
 	ROM_LOAD( "fl07",              0x40000, 0x20000, 0x2068c45c )
 	ROM_LOAD( "fl06",              0x60000, 0x20000, 0xb7241ab9 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fl11",              0x00000, 0x10000, 0xb86b73b4 )
-	ROM_CONTINUE(                  0x20000, 0x10000 )
-	ROM_LOAD( "fl10",              0x40000, 0x10000, 0x92245b29 )
-	ROM_CONTINUE(                  0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fl11",              0x00000, 0x20000, 0xb86b73b4 )
+	ROM_LOAD( "fl10",              0x20000, 0x20000, 0x92245b29 )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fl01",              0x00000, 0x20000, 0x2c8b35a7 )
@@ -2163,23 +2137,19 @@ ROM_START( bouldash )
 	ROM_LOAD( "fn-05",        0x18000, 0x08000, 0x824f2168 )
 	ROM_CONTINUE(             0x10000, 0x08000 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fn-07",        0x00000, 0x08000, 0xeac6a3b3 )
-	ROM_CONTINUE(             0x20000, 0x08000 )
-	ROM_LOAD( "fn-06",        0x40000, 0x08000, 0x3feee292 )
-	ROM_CONTINUE(             0x60000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fn-07",        0x00000, 0x10000, 0xeac6a3b3 )
+	ROM_LOAD( "fn-06",        0x10000, 0x10000, 0x3feee292 )
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	ROM_LOAD( "fn-09",        0x00000, 0x10000, 0xc2b27bd2 )
-	ROM_CONTINUE(             0x20000, 0x10000 )
-	ROM_LOAD( "fn-08",        0x40000, 0x10000, 0x5ac97178 )
-	ROM_CONTINUE(             0x60000, 0x10000 )
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "fn-09",        0x00000, 0x20000, 0xc2b27bd2 )
+	ROM_LOAD( "fn-08",        0x20000, 0x20000, 0x5ac97178 )
 
-	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "fn-01",        0x00000, 0x10000, 0x9333121b )
-	ROM_LOAD( "fn-03",        0x20000, 0x10000, 0x254ba60f )
-	ROM_LOAD( "fn-00",        0x40000, 0x10000, 0xec18d098 )
-	ROM_LOAD( "fn-02",        0x60000, 0x10000, 0x4f060cba )
+	ROM_LOAD( "fn-03",        0x10000, 0x10000, 0x254ba60f )
+	ROM_LOAD( "fn-00",        0x20000, 0x10000, 0xec18d098 )
+	ROM_LOAD( "fn-02",        0x30000, 0x10000, 0x4f060cba )
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )

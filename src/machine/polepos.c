@@ -17,6 +17,11 @@ static UINT8 z80_irq_enabled = 0, z8002_1_nvi_enabled = 0, z8002_2_nvi_enabled =
 /* ADC states */
 static UINT8 adc_input = 0;
 
+/* protection states */
+static INT16 ic25_last_result;
+static UINT8 ic25_last_signed;
+static UINT8 ic25_last_unsigned;
+
 /* 4-bit MCU state */
 static struct polepos_mcu_def
 {
@@ -48,6 +53,11 @@ void polepos_init_machine(void)
 
 	/* reset the ADC state */
 	adc_input = 0;
+
+	/* reset the protection state */
+	ic25_last_result = 0;
+	ic25_last_signed = 0;
+	ic25_last_unsigned = 0;
 
 	/* Initialize the MCU */
 	polepos_mcu.enabled = 0; /* disabled */
@@ -160,6 +170,34 @@ int polepos_io_r(int offs)
 
 	return ret;
 }
+
+
+/*************************************************************************************/
+/* Pole Position II protection                                                       */
+/*************************************************************************************/
+
+int polepos2_ic25_r(int offset)
+{
+	int result;
+
+	offset = offset & 0x3ff;
+	if (offset < 0x200)
+	{
+		ic25_last_signed = (offset / 2) & 0xff;
+		result = ic25_last_result & 0xff;
+	}
+	else
+	{
+		ic25_last_unsigned = (offset / 2) & 0xff;
+		result = (ic25_last_result >> 8) & 0xff;
+		ic25_last_result = (INT8)ic25_last_signed * (UINT8)ic25_last_unsigned;
+	}
+
+	if (errorlog) fprintf(errorlog, "%04X: read IC25 @ %04X = %02X\n", cpu_get_pc(), offset, result);
+
+	return result | (result << 8);
+}
+
 
 
 /*************************************************************************************/

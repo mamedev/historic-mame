@@ -61,26 +61,25 @@ int atarifb_in0_r(int offset)
 	}
 	else
 	{
-		static int counter_x;
-		static int counter_y;
-		int delta_x, delta_y;
+		static int counter_x,counter_y;
+		int new_x,new_y;
 
 		/* Read player 1 trackball */
-		delta_x = readinputport(3);
-		if (delta_x != 0)
+		new_x = readinputport(3);
+		if (new_x != counter_x)
 		{
-			counter_x = (counter_x + delta_x) & 0x0f;
-			sign_x_1 = delta_x & 0x80;
+			sign_x_1 = (new_x - counter_x) & 0x80;
+			counter_x = new_x;
 		}
 
-		delta_y = readinputport(2);
-		if (delta_y != 0)
+		new_y = readinputport(2);
+		if (new_y != counter_y)
 		{
-			counter_y = (counter_y + delta_y) & 0x0f;
-			sign_y_1 = delta_y & 0x80;
+			sign_y_1 = (new_y - counter_y) & 0x80;
+			counter_y = new_y;
 		}
 
-		return ((counter_y << 4) | counter_x);
+		return (((counter_y & 0x0f) << 4) | (counter_x & 0x0f));
 	}
 }
 
@@ -93,26 +92,25 @@ int atarifb_in2_r(int offset)
 	}
 	else
 	{
-		static int counter_x;
-		static int counter_y;
-		int delta_x, delta_y;
+		static int counter_x,counter_y;
+		int new_x,new_y;
 
 		/* Read player 2 trackball */
-		delta_x = readinputport(5);
-		if (delta_x != 0)
+		new_x = readinputport(5);
+		if (new_x != counter_x)
 		{
-			counter_x = (counter_x + delta_x) & 0x0f;
-			sign_x_2 = delta_x & 0x80;
+			sign_x_2 = (new_x - counter_x) & 0x80;
+			counter_x = new_x;
 		}
 
-		delta_y = readinputport(4);
-		if (delta_y != 0)
+		new_y = readinputport(4);
+		if (new_y != counter_y)
 		{
-			counter_y = (counter_y + delta_y) & 0x0f;
-			sign_y_2 = delta_y & 0x80;
+			sign_y_2 = (new_y - counter_y) & 0x80;
+			counter_y = new_y;
 		}
 
-		return ((counter_y << 4) | counter_x);
+		return (((counter_y & 0x0f) << 4) | (counter_x & 0x0f));
 	}
 }
 
@@ -123,64 +121,61 @@ int atarifb4_in0_r(int offset)
 	{
 		int val;
 
-		/* TODO: double-check these, probably wrong */
-		val = (sign_y_2 >> 7) |
-			  (sign_x_2 >> 6) |
-			  (sign_y_1 >> 5) |
-			  (sign_x_1 >> 4) |
-			  (sign_y_4 >> 3) |
-			  (sign_x_4 >> 2) |
-			  (sign_y_3 >> 1) |
-			  (sign_x_3 >> 0);
+		val = (sign_x_4 >> 7) |
+			  (sign_y_4 >> 6) |
+			  (sign_x_2 >> 5) |
+			  (sign_y_2 >> 4) |
+			  (sign_x_3 >> 3) |
+			  (sign_y_3 >> 2) |
+			  (sign_x_1 >> 1) |
+			  (sign_y_1 >> 0);
 		return val;
 	}
 	else if ((CTRLD & 0x60) == 0x60)
-	/* LD1 and LD2 both high, return Team 1 left player (player 1) */
+	/* LD1 and LD2 both high, return Team 1 right player (player 1) */
 	{
-		static int counter_x;
-		static int counter_y;
-		int delta_x, delta_y;
+		static int counter_x,counter_y;
+		int new_x,new_y;
 
 		/* Read player 1 trackball */
-		delta_x = readinputport(4);
-		if (delta_x != 0)
+		new_x = readinputport(4);
+		if (new_x != counter_x)
 		{
-			counter_x = (counter_x + delta_x) & 0x0f;
-			sign_x_1 = delta_x & 0x80;
+			sign_x_1 = (new_x - counter_x) & 0x80;
+			counter_x = new_x;
 		}
 
-		delta_y = readinputport(3);
-		if (delta_y != 0)
+		new_y = readinputport(3);
+		if (new_y != counter_y)
 		{
-			counter_y = (counter_y + delta_y) & 0x0f;
-			sign_y_1 = delta_y & 0x80;
+			sign_y_1 = (new_y - counter_y) & 0x80;
+			counter_y = new_y;
 		}
 
-		return ((counter_y << 4) | counter_x);
+		return (((counter_y & 0x0f) << 4) | (counter_x & 0x0f));
 	}
-	else if ((CTRLD & 0x60) == 0x20)
-	/* LD1 high, LD2 low, return Team 1 right player (player 3) */
+	else if ((CTRLD & 0x60) == 0x40)
+	/* LD1 high, LD2 low, return Team 1 left player (player 2) */
 	{
-		static int counter_x;
-		static int counter_y;
-		int delta_x, delta_y;
+		static int counter_x,counter_y;
+		int new_x,new_y;
 
-		/* Read player 3 trackball */
-		delta_x = readinputport(8);
-		if (delta_x != 0)
+		/* Read player 2 trackball */
+		new_x = readinputport(6);
+		if (new_x != counter_x)
 		{
-			counter_x = (counter_x + delta_x) & 0x0f;
-			sign_x_3 = delta_x & 0x80;
+			sign_x_2 = (new_x - counter_x) & 0x80;
+			counter_x = new_x;
 		}
 
-		delta_y = readinputport(7);
-		if (delta_y != 0)
+		new_y = readinputport(5);
+		if (new_y != counter_y)
 		{
-			counter_y = (counter_y + delta_y) & 0x0f;
-			sign_y_3 = delta_y & 0x80;
+			sign_y_2 = (new_y - counter_y) & 0x80;
+			counter_y = new_y;
 		}
 
-		return ((counter_y << 4) | counter_x);
+		return (((counter_y & 0x0f) << 4) | (counter_x & 0x0f));
 	}
 
 	else return 0;
@@ -189,57 +184,55 @@ int atarifb4_in0_r(int offset)
 
 int atarifb4_in2_r(int offset)
 {
-	if ((CTRLD & 0x20)==0x00)
+	if ((CTRLD & 0x40)==0x00)
 	{
 		return input_port_2_r(offset);
 	}
 	else if ((CTRLD & 0x60) == 0x60)
-	/* LD1 and LD2 both high, return Team 2 left player (player 2) */
+	/* LD1 and LD2 both high, return Team 2 right player (player 3) */
 	{
-		static int counter_x;
-		static int counter_y;
-		int delta_x, delta_y;
+		static int counter_x,counter_y;
+		int new_x,new_y;
 
-		/* Read player 2 trackball */
-		delta_x = readinputport(6);
-		if (delta_x != 0)
+		/* Read player 3 trackball */
+		new_x = readinputport(8);
+		if (new_x != counter_x)
 		{
-			counter_x = (counter_x + delta_x) & 0x0f;
-			sign_x_2 = delta_x & 0x80;
+			sign_x_3 = (new_x - counter_x) & 0x80;
+			counter_x = new_x;
 		}
 
-		delta_y = readinputport(5);
-		if (delta_y != 0)
+		new_y = readinputport(7);
+		if (new_y != counter_y)
 		{
-			counter_y = (counter_y + delta_y) & 0x0f;
-			sign_y_2 = delta_y & 0x80;
+			sign_y_3 = (new_y - counter_y) & 0x80;
+			counter_y = new_y;
 		}
 
-		return ((counter_y << 4) | counter_x);
+		return (((counter_y & 0x0f) << 4) | (counter_x & 0x0f));
 	}
-	else if ((CTRLD & 0x60) == 0x20)
-	/* LD1 high, LD2 low, return Team 2 right player (player 4) */
+	else if ((CTRLD & 0x60) == 0x40)
+	/* LD1 high, LD2 low, return Team 2 left player (player 4) */
 	{
-		static int counter_x;
-		static int counter_y;
-		int delta_x, delta_y;
+		static int counter_x,counter_y;
+		int new_x,new_y;
 
 		/* Read player 4 trackball */
-		delta_x = readinputport(10);
-		if (delta_x != 0)
+		new_x = readinputport(10);
+		if (new_x != counter_x)
 		{
-			counter_x = (counter_x + delta_x) & 0x0f;
-			sign_x_4 = delta_x & 0x80;
+			sign_x_4 = (new_x - counter_x) & 0x80;
+			counter_x = new_x;
 		}
 
-		delta_y = readinputport(9);
-		if (delta_y != 0)
+		new_y = readinputport(9);
+		if (new_y != counter_y)
 		{
-			counter_y = (counter_y + delta_y) & 0x0f;
-			sign_y_4 = delta_y & 0x80;
+			sign_y_4 = (new_y - counter_y) & 0x80;
+			counter_y = new_y;
 		}
 
-		return ((counter_y << 4) | counter_x);
+		return (((counter_y & 0x0f) << 4) | (counter_x & 0x0f));
 	}
 
 	else return 0;

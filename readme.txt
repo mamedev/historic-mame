@@ -195,7 +195,11 @@ Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention.
 
 Thanks to Brian Deuel, Neil Bradley, and the Retrocade dev team for allowing us
-to use Retrocade's game history database. [John Butler]
+to use Retrocade's game history database.
+
+Thanks to Richard Bush for info on several games.
+
+and thanks to everyone else I forgot.
 
 
 Using the program

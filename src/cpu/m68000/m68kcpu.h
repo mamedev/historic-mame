@@ -281,6 +281,8 @@ INLINE int MAKE_INT_32(int value)
 #define CPU_VBR          m68k_cpu.vbr
 #define CPU_SFC          m68k_cpu.sfc
 #define CPU_DFC          m68k_cpu.dfc
+#define CPU_CACR         m68k_cpu.cacr
+#define CPU_CAAR         m68k_cpu.caar
 #define CPU_IR           m68k_cpu.ir
 #define CPU_T1           m68k_cpu.t1_flag
 #define CPU_T0           m68k_cpu.t0_flag
@@ -406,6 +408,7 @@ INLINE int MAKE_INT_32(int value)
  */
 #define m68ki_branch_byte(A) CPU_PC += MAKE_INT_8(A)
 #define m68ki_branch_word(A) CPU_PC += MAKE_INT_16(A)
+#define m68ki_branch_dword(A) CPU_PC += (A)
 #define m68ki_branch_long(A) m68ki_set_pc(A)
 
 
@@ -524,6 +527,8 @@ typedef struct
    uint vbr;         /* Vector Base Register (68010+) */
    uint sfc;         /* Source Function Code Register (m68010+) */
    uint dfc;         /* Destination Function Code Register (m68010+) */
+   uint cacr;        /* Cache Control Register (m68020+) */
+   uint caar;        /* Cacge Address Register (m68020+) */
    uint ir;          /* Instruction Register */
    uint t1_flag;     /* Trace 1 */
    uint t0_flag;     /* Trace 0 */

@@ -371,7 +371,12 @@ static int switch_6502_r(int offset)
 static void switch_6502_w(int offset, int data)
 {
 	(void)offset;
-	(void)data;
+
+	if (has_tms5220)
+	{
+		data = 12 | ((data >> 5) & 1);
+		tms5220_set_frequency(ATARI_CLOCK_20MHz/4 / (16 - data) / 2);
+	}
 }
 
 
@@ -619,10 +624,10 @@ INPUT_PORTS_START( paperboy )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* ADC0 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 
 	PORT_START	/* ADC1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -731,7 +736,7 @@ INPUT_PORTS_START( 720 )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* LETA0/1 */
-	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL | IPF_PLAYER1, 30, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL | IPF_PLAYER1, 30, 10, 0, 0 )
 
 	PORT_START	/* filler */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -816,25 +821,25 @@ INPUT_PORTS_START( ssprint )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* ADC0 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0, 0x00, 0x3f )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0x00, 0x3f )
 
 	PORT_START	/* ADC1 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 4, 0, 0x00, 0x3f )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 4, 0x00, 0x3f )
 
 	PORT_START	/* ADC2 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 100, 4, 0, 0x00, 0x3f )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 100, 4, 0x00, 0x3f )
 
 	PORT_START	/* ADC3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* LETA0 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_PLAYER1, 25, 10, 0, 0x00, 0x7f )
+	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_PLAYER1, 25, 10, 0x00, 0x7f )
 
 	PORT_START	/* LETA1 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0x00, 0x7f )
+	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_PLAYER2, 25, 10, 0x00, 0x7f )
 
 	PORT_START	/* LETA2 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_PLAYER3, 25, 10, 0, 0x00, 0x7f )
+	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_PLAYER3, 25, 10, 0x00, 0x7f )
 
 	PORT_START	/* LETA3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -915,10 +920,10 @@ INPUT_PORTS_START( csprint )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* ADC0 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0, 0x00, 0x3f )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0x00, 0x3f )
 
 	PORT_START	/* ADC1 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 4, 0, 0x00, 0x3f )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 4, 0x00, 0x3f )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -927,10 +932,10 @@ INPUT_PORTS_START( csprint )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* LETA0 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_PLAYER1, 25, 10, 0, 0x00, 0x7f )
+	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_PLAYER1, 25, 10, 0x00, 0x7f )
 
 	PORT_START	/* LETA1 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0x00, 0x7f )
+	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_PLAYER2, 25, 10, 0x00, 0x7f )
 
 	PORT_START	/* LETA2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1017,7 +1022,7 @@ INPUT_PORTS_START( apb )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* ADC1 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0, 0x00, 0x3f )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0x00, 0x3f )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1026,7 +1031,7 @@ INPUT_PORTS_START( apb )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* LETA0 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_PLAYER1, 25, 10, 0, 0x00, 0x7f )
+	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_PLAYER1, 25, 10, 0x00, 0x7f )
 
 	PORT_START	/* LETA1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1148,8 +1153,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	7159160/2,	/* 3.58 MHZ ? */
+	1,
+	ATARI_CLOCK_14MHz/4,
 	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
@@ -1157,11 +1162,9 @@ static struct YM2151interface ym2151_interface =
 
 static struct POKEYinterface pokey_interface =
 {
-	2,			/* 2 chips */
-	7159160/4,	/* ? */
+	2,
+	ATARI_CLOCK_14MHz/8,
 	{ MIXER(60,MIXER_PAN_LEFT), MIXER(60,MIXER_PAN_RIGHT) },
-	POKEY_DEFAULT_GAIN,
-	USE_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
 	{ 0, 0 },
@@ -1178,9 +1181,9 @@ static struct POKEYinterface pokey_interface =
 
 static struct TMS5220interface tms5220_interface =
 {
-	640000,     /* clock speed (80*samplerate) */
-	100,        /* volume */
-	0 			/* irq handler */
+	ATARI_CLOCK_20MHz/4/4/2,
+	100,
+	0
 };
 
 
@@ -1197,15 +1200,16 @@ static struct MachineDriver machine_driver_paperboy =
 	{
 		{
 			CPU_T11,
-			10000000,	/* 10 MHz */
+			ATARI_CLOCK_20MHz/2,
 			main_readmem,main_writemem,0,0,
 			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
-			7159160/4,
+			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
-			atarigen_6502_irq_gen,4
+			0,0,
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1251,15 +1255,16 @@ static struct MachineDriver machine_driver_a720 =
 	{
 		{
 			CPU_T11,
-			10000000,	/* 10 MHz */
+			ATARI_CLOCK_20MHz/2,
 			main_readmem,main_writemem,0,0,
 			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
-			2000000,	/* artifically high to prevent deadlock at startup 7159160/4,*/
+			2000000,	/* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
 			sound_readmem,sound_writemem,0,0,
-			atarigen_6502_irq_gen,4
+			0,0,
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1305,15 +1310,16 @@ static struct MachineDriver machine_driver_sprint =
 	{
 		{
 			CPU_T11,
-			10000000,	/* 10 MHz */
+			ATARI_CLOCK_20MHz/2,
 			main_readmem,main_writemem,0,0,
 			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
-			7159160/4,
+			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
-			atarigen_6502_irq_gen,4
+			0,0,
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1888,9 +1894,9 @@ ROM_START( apb )
 	ROM_CONTINUE(             0x040000, 0x08000 )
 	ROM_LOAD( "1114",         0x068000, 0x08000, 0xb9b27f3c )
 	ROM_CONTINUE(             0x048000, 0x08000 )
-	ROM_LOAD( "1115",         0x060000, 0x08000, 0xa7671dd8 )
+	ROM_LOAD( "1115",         0x070000, 0x08000, 0xa7671dd8 )
 	ROM_CONTINUE(             0x050000, 0x08000 )
-	ROM_LOAD( "1116",         0x068000, 0x08000, 0x879fc7de )
+	ROM_LOAD( "1116",         0x078000, 0x08000, 0x879fc7de )
 	ROM_CONTINUE(             0x058000, 0x08000 )
 	ROM_LOAD( "1101",         0x0a0000, 0x08000, 0x0ef13513 )	/* motion objects, planes 2/3 */
 	ROM_CONTINUE(             0x080000, 0x08000 )
@@ -1959,9 +1965,9 @@ ROM_START( apb2 )
 	ROM_CONTINUE(             0x040000, 0x08000 )
 	ROM_LOAD( "1114",         0x068000, 0x08000, 0xb9b27f3c )
 	ROM_CONTINUE(             0x048000, 0x08000 )
-	ROM_LOAD( "1115",         0x060000, 0x08000, 0xa7671dd8 )
+	ROM_LOAD( "1115",         0x070000, 0x08000, 0xa7671dd8 )
 	ROM_CONTINUE(             0x050000, 0x08000 )
-	ROM_LOAD( "1116",         0x068000, 0x08000, 0x879fc7de )
+	ROM_LOAD( "1116",         0x078000, 0x08000, 0x879fc7de )
 	ROM_CONTINUE(             0x058000, 0x08000 )
 	ROM_LOAD( "1101",         0x0a0000, 0x08000, 0x0ef13513 )	/* motion objects, planes 2/3 */
 	ROM_CONTINUE(             0x080000, 0x08000 )

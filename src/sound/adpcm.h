@@ -25,15 +25,15 @@ struct ADPCMinterface
 	int mixing_level[MAX_ADPCM];     /* master volume */
 };
 
-int ADPCM_sh_start (const struct MachineSound *msound);
-void ADPCM_sh_stop (void);
-void ADPCM_sh_update (void);
+int ADPCM_sh_start(const struct MachineSound *msound);
+void ADPCM_sh_stop(void);
+void ADPCM_sh_update(void);
 
-void ADPCM_trigger (int num, int which);
-void ADPCM_play (int num, int offset, int length);
-void ADPCM_setvol (int num, int vol);
-void ADPCM_stop (int num);
-int ADPCM_playing (int num);
+void ADPCM_trigger(int num, int which);
+void ADPCM_play(int num, int offset, int length);
+void ADPCM_setvol(int num, int vol);
+void ADPCM_stop(int num);
+int ADPCM_playing(int num);
 
 
 /* an interface for the OKIM6295 and similar chips */
@@ -50,15 +50,16 @@ struct OKIM6295interface
 	int mixing_level[MAX_OKIM6295];	/* master volume */
 };
 
-int OKIM6295_sh_start (const struct MachineSound *msound);
-void OKIM6295_sh_stop (void);
-void OKIM6295_sh_update (void);
-void OKIM6295_set_bank_base (int which, int voice, int base);	/* set voice to ALL_VOICES to set all banks at once */
+int OKIM6295_sh_start(const struct MachineSound *msound);
+void OKIM6295_sh_stop(void);
+void OKIM6295_sh_update(void);
+void OKIM6295_set_bank_base(int which, int voice, int base);	/* set voice to ALL_VOICES to set all banks at once */
+void OKIM6295_set_frequency(int which, int voice, int frequency);	/* set voice to ALL_VOICES to set all banks at once */
 
-int OKIM6295_status_0_r (int offset);
-int OKIM6295_status_1_r (int offset);
-void OKIM6295_data_0_w (int offset,int data);
-void OKIM6295_data_1_w (int offset,int data);
+int OKIM6295_status_0_r(int offset);
+int OKIM6295_status_1_r(int offset);
+void OKIM6295_data_0_w(int offset,int data);
+void OKIM6295_data_1_w(int offset,int data);
 
 
 #endif

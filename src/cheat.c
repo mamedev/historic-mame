@@ -66,7 +66,7 @@
 |*|	JRT3:	This modification clears the screen after using <F7> to
 |*|			enable and disable cheats on the fly.  This prevents the
 |*|			"CHEAT ON/OFF" message from hanging around on the vector
-|*|			games.  It causes a slight "blink", but does no more harm
+|*|			games.	It causes a slight "blink", but does no more harm
 |*|			than using "Pause" on the vector games.  It also prevents
 |*|			handling <F7> if no cheats are loaded.
 |*|
@@ -92,7 +92,7 @@
 |*|			have a better design, please...  IMPLEMENT IT!!! :)
 |*|
 |*|			Most of the changes are bracketed by "JRT5", but I KNOW
-|*|			that I missed a few...  Sorry.
+|*|			that I missed a few...	Sorry.
 |*|
 |*|	JRT6:	Slight modifications to change display and manipulation
 |*|			of Addresses so that the user cannot manipulate addresses
@@ -215,7 +215,7 @@
 |*|			CPU is added to the watches only if many CPUs
 |*|			Changed keys in the matches list :
 |*|			  - KEYCODE_F1 adds the selected match to the cheat list (old key was KEYCODE_ENTER)
-|*|			  - KEYCODE_F6 adds all the matches to the cheat list    (old key was KEYCODE_F2)
+|*|			  - KEYCODE_F6 adds all the matches to the cheat list	 (old key was KEYCODE_F2)
 |*|			Changed function SelectValue :
 |*|			  - int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 |*|						  int Mini, int Maxi, char *fmt, char *msg, int ClrScr, int yPos)
@@ -323,8 +323,8 @@
 |*|			Added new type of cheat : 999 (comment)
 |*|			Comment is marked # in function AddCheckToName
 |*|			Cheat structure for a comment :
-|*|			  - .Address 	= 0
-|*|			  - .Data 		= 0
+|*|			  - .Address	= 0
+|*|			  - .Data		= 0
 |*|			  - .Special	= COMMENTCHEAT
 |*|			  - other fields as usual
 |*|			New functions :
@@ -333,15 +333,15 @@
 |*|	JCK 981212:	Added More to struct cheat_struct (more description on a cheat)
 |*|			Fields Name and More of struct cheat_struct are only 40 chars long
 |*|			Possibility to get a cheat comment by pressing KEYCODE_PLUS_PAD
-|*|               KEYCODE_DEL initialises string in xedit function
-|*|               Special is saved on 3 digits (%03d)
+|*|		  KEYCODE_DEL initialises string in xedit function
+|*|		  Special is saved on 3 digits (%03d)
 |*|			Added linked cheats (types 100-144 same as types 0-44)
 |*|			Variable int fastsearch instead of #define FAST_SEARCH
 |*|			  (this variable can be modified via options or command-line)
 |*|			Renamed CheatTotal to ActiveCheatTotal (variable and struct)
 |*|			Possibility to add codes from another filename by pressing
-|*|                 (KEYCODE_LEFT_SHIFT or KEYCODE_RIGHT_SHIFT) + KEYCODE_F5
-|*|               15 matches instead of 10
+|*|		    (KEYCODE_LEFT_SHIFT or KEYCODE_RIGHT_SHIFT) + KEYCODE_F5
+|*|		  15 matches instead of 10
 |*|			New functions :
 |*|			  - int xedit(int x,int y,char *inputs,int maxlen)
 |*|			  - static char *FormatAddr(int cpu, int addtext)
@@ -390,7 +390,7 @@
 |*|			New functions :
 |*|			  - void set_cheat(struct cheat_struct *dest, struct cheat_struct *src)
 |*|			  - int build_cheat_list(int Index, struct DisplayText ext_dt[60],
-|*|			  						char ext_str2[MAX_DISPLAYCHEATS + 1][40])
+|*|									char ext_str2[MAX_DISPLAYCHEATS + 1][40])
 |*|			  - int SelectCheatHeader(void)
 |*|			  - int SaveCheat(int NoCheat)
 |*|			  - int FindFreeWatch(void)
@@ -465,7 +465,7 @@
 |*|			  - void AddCheckToMemArea(int NoMemArea,char *buffer)
 |*|			  - void InitMemoryAreas(void)
 |*|			  - int build_mem_list(int Index, struct DisplayText ext_dt[60],
-|*|			                       char ext_str2[MAX_DISPLAYMEM + 1][40])
+|*|					       char ext_str2[MAX_DISPLAYMEM + 1][40])
 |*|			  - int SelectMemoryHeader(void)
 |*|			  - void SelectMemoryAreas(void)
 |*|			Possibility to use KEYCODE_SPACE in the following functions :
@@ -480,15 +480,15 @@
 |*|			  - SEARCH_VALUE  1   (old Method_1)
 |*|			  - SEARCH_TIME   2   (old Method_2)
 |*|			  - SEARCH_ENERGY 3   (old Method_3)
-|*|			  - SEARCH_BIT    4   (old Method_4)
+|*|			  - SEARCH_BIT	  4   (old Method_4)
 |*|			  - SEARCH_BYTE   5   (old Method_5)
 |*|			Message displayed when KEYCODE_CHEAT_TOGGLE is pressed lasts for 0.5 seconds
 |*|			  (in fact, Machine->drv->frames_per_second / 2)
 |*|
 |*|	JCK 990221:	20 watches instead of 10
 |*|			Possibility to select a starting value for search methods 3, 4 and 5
-|*|               Possibility to restore the previous values of a search
-|*|               Possibility to add al matches to the watches by pressing KEYCODE_F8
+|*|		  Possibility to restore the previous values of a search
+|*|		  Possibility to add al matches to the watches by pressing KEYCODE_F8
 |*|			New functions :
 |*|			  - int SelectSearchValue(void)
 |*|			  - int SelectSearchValueHeader(void)
@@ -499,7 +499,7 @@
 |*|			  - #define RESTORE_NOINIT  0
 |*|			  - #define RESTORE_NOSAVE  1
 |*|			  - #define RESTORE_DONE    2
-|*|			  - #define RESTORE_OK      3
+|*|			  - #define RESTORE_OK	    3
 |*|			New functions :
 |*|			  - void RestoreSearch(void)
 |*|			Rewritten functions :
@@ -513,7 +513,7 @@
 |*|			  unused variables have been removed
 |*|			New #define :
 |*|			  - LAST_UPDATE (date of the last modifications to the cheat engine)
-|*|			  - LAST_CODER  (initials (3 letters max) of the coder who made the modifications)
+|*|			  - LAST_CODER	(initials (3 letters max) of the coder who made the modifications)
 |*|			  - CHEAT_VERSION (version of the cheat engine)
 |*|
 |*|	JCK 990305:	New functions :
@@ -556,7 +556,7 @@
 |*|			Fixed the info display in function SelectMemoryAreas
 |*|
 |*|	JCK 990318:	Possibility to edit the addresses by pressing KEYCODE_F3
-|*|               Changed function xedit : it has now int hexaonly as last parameter
+|*|		  Changed function xedit : it has now int hexaonly as last parameter
 |*|			Modified functions to edit the addresses
 |*|			  - void EditCheat(int CheatNo)
 |*|			  - void ChooseWatch(void)
@@ -565,7 +565,7 @@
 |*|			Modified variables :
 |*|			  - FontHeight = ( Machine -> uifontheight );
 |*|			  - FontWidth  = ( Machine -> uifontwidth );
-|*|               Changed function DisplayWatches : it has now int highlight, dx and dy as parameters
+|*|		  Changed function DisplayWatches : it has now int highlight, dx and dy as parameters
 |*|			  - highlights watch highlight or none if highlight = MAX_WATCHES)
 |*|			  - dx and dy are the variations since last display
 |*|			Rewritten functions :
@@ -581,8 +581,8 @@
 |*|			  - KEYCODE_DEL erases all the text
 |*|
 |*|	JCK 990404: Fixed function IsBCD
-|*|               Fixed display in function ContinueSearch
-|*|               Modified function LoadHelp : it now returns a int
+|*|		  Fixed display in function ContinueSearch
+|*|		  Modified function LoadHelp : it now returns a int
 |*|			In the edit cheat, on the data line :
 |*|			  - KEYCODE_HOME subs 0x80 to the value
 |*|			  - KEYCODE_END adds 0x80 to the value
@@ -761,9 +761,9 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 
 
 /* macros stolen from memory.c for our nefarious purposes: */
-#define MEMORY_READ(index,offset)       ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_read)(offset))
+#define MEMORY_READ(index,offset)	((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_read)(offset))
 #define MEMORY_WRITE(index,offset,data) ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_write)(offset,data))
-#define ADDRESS_BITS(index)             (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].address_bits)
+#define ADDRESS_BITS(index)		(cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].address_bits)
 
 #define MAX_ADDRESS(cpu)	(0xFFFFFFFF >> (32-ADDRESS_BITS(cpu)))
 
@@ -776,9 +776,9 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 #define MAX_MATCHES		(MachHeight / FontHeight - 13)
 #define MAX_DISPLAYCHEATS	(MachHeight / FontHeight - 12)
 
-#define MAX_DISPLAYMEM        (MachHeight / FontHeight - 10)
+#define MAX_DISPLAYMEM	      (MachHeight / FontHeight - 10)
 
-#define MAX_DT          	130
+#define MAX_DT			130
 
 #define OFFSET_LINK_CHEAT	500
 
@@ -786,23 +786,23 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 #define CHEAT_NAME_MAXLEN	29
 #define CHEAT_FILENAME_MAXLEN	255
 
-#define SEARCH_VALUE    1
-#define SEARCH_TIME     2
-#define SEARCH_ENERGY   3
-#define SEARCH_BIT      4
-#define SEARCH_BYTE     5
+#define SEARCH_VALUE	1
+#define SEARCH_TIME	2
+#define SEARCH_ENERGY	3
+#define SEARCH_BIT	4
+#define SEARCH_BYTE	5
 
-#define RESTORE_NOINIT  0
-#define RESTORE_NOSAVE  1
-#define RESTORE_DONE    2
-#define RESTORE_OK      3
+#define RESTORE_NOINIT	0
+#define RESTORE_NOSAVE	1
+#define RESTORE_DONE	2
+#define RESTORE_OK	3
 
-#define NOVALUE 			-0x0100		/* No value has been selected */
+#define NOVALUE 			-0x0100 	/* No value has been selected */
 
 #define FIRSTPOS			(FontHeight*3/2)	/* yPos of the 1st string displayed */
 
-#define COMMENTCHEAT		999               /* Type of cheat for comments */
-#define WATCHCHEAT		998               /* Type of cheat for "watch-only" */
+#define COMMENTCHEAT		999		  /* Type of cheat for comments */
+#define WATCHCHEAT		998		  /* Type of cheat for "watch-only" */
 
 /* VM 981213 BEGIN */
 /* Q: Would 0/NULL be better than -1? */
@@ -911,8 +911,8 @@ static int saveshowprofile;
 #endif
 
 static char CCheck[2]	= "\x8C";
-static char CNoCheck[2]	= " ";
-static char CComment[2]	= "#";
+static char CNoCheck[2] = " ";
+static char CComment[2] = "#";
 static char CMore[2]	= "+";
 static char CWatch[2]	= "?";
 
@@ -920,56 +920,54 @@ static char CWatch[2]	= "?";
 /* They should be moved somewhere else, so we could use them as extern :) */
 static char lefthilight[2]   = "\x1A";
 static char righthilight[2]  = "\x1B";
-static char uparrow[2]       = "\x18";
+static char uparrow[2]	     = "\x18";
 static char downarrow[2]     = "\x19";
 
 static unsigned char KEYCODE_chars[] =
 {
-/* 0    1    2    3    4    5    6    7    8    9 */
-   0 ,  0 , '1', '2', '3', '4', '5', '6', '7', '8',    /* 0 */
-  '9', '0', '-', '=',  0 ,  0,  'q', 'w', 'e', 'r',    /* 1 */
-  't', 'y', 'u', 'i', 'o', 'p', '[', ']',  0 ,  0 ,    /* 2 */
-  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',    /* 3 */
- '\'', '`',  0 ,  0 , 'z', 'x', 'c', 'v', 'b', 'n',    /* 4 */
-  'm', ',', '.', '/',  0 , '8',  0 , ' ',  0 ,  0 ,    /* 5 */
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,    /* 6 */
-   0 ,  0 ,  0 ,  0 , '-',  0 , '5',  0 , '+',  0 ,    /* 7 */
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,    /* 8 */
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,    /* 9 */
-   0 , '1', '2', '3', '4',  0 , '6', '7', '8', '9',    /* 10 */
-  '0',  0 , '=', '/', '*',  0
+/* 0	1    2	  3    4    5	 6    7    8	9 */
+   0 , 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',    /* 0 */
+  'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',    /* 1 */
+  't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2',    /* 2 */
+  '3', '4', '5', '6', '7', '8', '9',  0 ,  0 ,	0 ,    /* 3 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 4 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 5 */
+  '`', '-', '=',  0 ,  0 , '[', ']',  0 , ';', '\'',   /* 6 */
+ '\\',	0 , ',', '.', '/', ' ',  0 ,  0 ,  0 ,	0 ,    /* 7 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 , '/', '*', '-', '+',    /* 8 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 9 */
+   0 ,	0 ,  0 ,  0 ,  0			       /* 10 */
 };
 
 static unsigned char KEYCODE_caps[] =
 {
-/* 0    1    2    3    4    5    6    7    8    9 */
-   0 ,  0 , '!', '@', '#', '$', '%', '^', '&', '*',    /* 0 */
-  '(', ')', '_', '+',  0 ,  0 , 'Q', 'W', 'E', 'R',    /* 1 */
-  'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',  0 ,  0 ,    /* 2 */
-  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',    /* 3 */
-  '"', '~',  0 ,  0 , 'Z', 'X', 'C', 'V', 'B', 'N',    /* 4 */
-  'M', '<', '>', '?',  0 , '*',  0 , ' ',  0 ,  0 ,    /* 5 */
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,    /* 6 */
-   0 ,  0 ,  0 ,  0 , '-',  0 , '5',  0 , '+',  0 ,    /* 7 */
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,    /* 8 */
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,    /* 9 */
-   0 , '1', '2', '3', '4',  0 , '6', '7', '8', '9',    /* 10 */
-  '0',  0 , '=', '/', '*',  0
+/* 0	1    2	  3    4    5	 6    7    8	9 */
+   0 , 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',    /* 0 */
+  'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',    /* 1 */
+  'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ')', '!', '@',    /* 2 */
+  '#', '$', '%', '^', '&', '*', '(',  0 ,  0 ,	0 ,    /* 3 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 4 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 5 */
+  '~', '_', '+',  0 ,  0 , '{', '}',  0 , ':', '"',    /* 6 */
+  '|',	0 , '<', '>', '?', ' ',  0 ,  0 ,  0 ,	0 ,    /* 7 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 , '/', '*', '-', '+',    /* 8 */
+   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 9 */
+   0 ,	0 ,  0 ,  0 ,  0			       /* 10 */
 };
 
 void cheat_save_frameskips(void)
 {
-	saveframeskip     = frameskip;
+	saveframeskip	  = frameskip;
 	saveautoframeskip = autoframeskip;
 	#ifdef JCK
-	saveshowfps       = showfps;
+	saveshowfps	  = showfps;
 	saveshowprofile   = showprofile;
 	#endif
-	frameskip         = 0;
-	autoframeskip     = 0;
+	frameskip	  = 0;
+	autoframeskip	  = 0;
 	#ifdef JCK
-	showfps           = 0;
-	showprofile       = 0;
+	showfps 	  = 0;
+	showprofile	  = 0;
 	#endif
 }
 
@@ -986,7 +984,7 @@ void cheat_rest_frameskips(void)
 /* MSH 990217 - JCK 990224 */
 int cheat_readkey(void)
 {
-#ifdef WIN32    /* MSH 990310 */
+#ifdef WIN32	/* MSH 990310 */
     int key = keyboard_read_sync();
     while (keyboard_pressed(key));
     return key;
@@ -1171,31 +1169,37 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 	DisplayVersion();    /* Hack to update the video */
 
 	key = keyboard_read_sync();
-#ifdef WIN32    /* MSH 990310 */
+#ifdef WIN32	/* MSH 990310 */
 	if (!keyboard_pressed_memory_repeat(key,8))
 		key = 0;
 #endif
 	switch (key)
 	{
 		case KEYCODE_LEFT:
+		case KEYCODE_4_PAD:
 			if (CarPos)
 				CarPos--;
 			break;
 		case KEYCODE_RIGHT:
+		case KEYCODE_6_PAD:
 			if (CarPos < length)
 				CarPos++;
 			break;
 		case KEYCODE_HOME:
+		case KEYCODE_7_PAD:
 			CarPos = 0;
 			break;
 		case KEYCODE_END:
+		case KEYCODE_1_PAD:
 			CarPos = length;
 			break;
 		case KEYCODE_DEL:
+		case KEYCODE_DEL_PAD:
 			memset (buffer, '\0', sizeof(buffer));
 			CarPos = 0;
 			break;
 		case KEYCODE_INSERT:
+		case KEYCODE_0_PAD:
 			if ((length < maxlen) && (CarPos != length))
 			{
 				for (i = length; i > CarPos; i --)
@@ -1213,6 +1217,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 			break;
 
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			while (keyboard_pressed(key));
 			done = 1;
 			strcpy (inputs, buffer);
@@ -1266,7 +1271,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 				{
 					buffer[CarPos++] = c;
 				}
-#ifndef WIN32    /* MSH 990310 - Windows reports modifier keys as separate presses */
+#ifndef WIN32	 /* MSH 990310 - Windows reports modifier keys as separate presses */
 				else
 					while (keyboard_pressed(key)) ;
 #endif
@@ -1382,10 +1387,11 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 	displaytext(dt,0,1);
 
 	/* key = keyboard_read_sync(); */
-	key = cheat_readkey();    /* MSH 990217 */
+	key = cheat_readkey();	  /* MSH 990217 */
 	switch (key)
 	{
 		case KEYCODE_DOWN:
+		case KEYCODE_2_PAD:
 			if (*s < Maxi)
 				(*s)++;
 			else
@@ -1395,6 +1401,7 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 			*done = 3;
 			break;
 		case KEYCODE_UP:
+		case KEYCODE_8_PAD:
 			if (*s > Mini)
 				(*s)--;
 			else
@@ -1404,18 +1411,21 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 			*done = 3;
 			break;
 		case KEYCODE_HOME:
+		case KEYCODE_7_PAD:
 			if (!ArrowsOnly)
 				*s = Mini;
 			else
 				*done = 3;
 			break;
 		case KEYCODE_END:
+		case KEYCODE_1_PAD:
 			if (!ArrowsOnly)
 				*s = Maxi;
 			else
 				*done = 3;
 			break;
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			while (keyboard_pressed(key));
 			*done = 1;
 			break;
@@ -1463,9 +1473,9 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
   if (MiniIsZero == 1)
   {
 	Mini ++;
-	while ((IsBCD(Mini) == 0) && (BCDOnly == 1)) Mini++ ;    /* JCK 990701 */
+	while ((IsBCD(Mini) == 0) && (BCDOnly == 1)) Mini++ ;	 /* JCK 990701 */
 	Maxi ++;
-	while ((IsBCD(Maxi) == 0) && (BCDOnly == 1))  Maxi++ ;    /* JCK 990701 */
+	while ((IsBCD(Maxi) == 0) && (BCDOnly == 1))  Maxi++ ;	  /* JCK 990701 */
 	w = v + 1;
 	while ((IsBCD(w) == 0) && (BCDOnly == 1))  w++ ;    /* JCK 990701 */
   }
@@ -1513,17 +1523,19 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 			xprintf(0, 0, yPos, "%03X", w);
 	}
 
-#ifdef WIN32    /* MSH 990310 */
+#ifdef WIN32	/* MSH 990310 */
 	key = keyboard_read_sync();
       if (!keyboard_pressed_memory_repeat(key,8))
-        key = 0;
+	key = 0;
 #else
-	key = cheat_readkey();    /* MSH 990217 */
+	key = cheat_readkey();	  /* MSH 990217 */
 #endif
 	switch (key)
 	{
 		case KEYCODE_RIGHT:
+		case KEYCODE_6_PAD:
 		case KEYCODE_UP:
+		case KEYCODE_8_PAD:
 			if (w < Maxi)
 			{
 				w++;
@@ -1537,7 +1549,9 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 			}
 			break;
 		case KEYCODE_LEFT:
+		case KEYCODE_4_PAD:
 		case KEYCODE_DOWN:
+		case KEYCODE_2_PAD:
 			if (w > Mini)
 			{
 				w--;
@@ -1551,9 +1565,11 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 			}
 			break;
 		case KEYCODE_HOME:
+		case KEYCODE_7_PAD:
 			w = Mini;
 			break;
 		case KEYCODE_END:
+		case KEYCODE_1_PAD:
 			w = Maxi;
 			break;
 
@@ -1562,6 +1578,7 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 			break;
 
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			while (keyboard_pressed(key));
 			done = 1;
 			break;
@@ -1629,9 +1646,9 @@ static char *FormatAddr(int cpu, int addtext)
 	}
       if (addtext)
       {
-      	strcpy (buffer, "Addr:  ");
-            for (i = strlen(bufadr) + 1; i < 8; i ++)
-            	strcat (buffer, " ");
+	strcpy (buffer, "Addr:  ");
+	    for (i = strlen(bufadr) + 1; i < 8; i ++)
+		strcat (buffer, " ");
       }
       strcat (buffer,bufadr);
 	return buffer;
@@ -1690,14 +1707,14 @@ void AddCheckToName(int NoCheat,char *buffer)
 
 		if ((Special < 60) || (Special > 99))
 		{
-			if (	(ActiveCheatTable[i].Address 	== LoadedCheatTable[NoCheat].Address)	&&
+			if (	(ActiveCheatTable[i].Address	== LoadedCheatTable[NoCheat].Address)	&&
 				(ActiveCheatTable[i].Data	== LoadedCheatTable[NoCheat].Data	)	&&
 				(Special				== LoadedCheatTable[NoCheat].Special)	)
 				flag = 1;
 		}
 		else
 		{
-			if (	(ActiveCheatTable[i].Address 	== LoadedCheatTable[NoCheat].Address)	&&
+			if (	(ActiveCheatTable[i].Address	== LoadedCheatTable[NoCheat].Address)	&&
 				(Special				== LoadedCheatTable[NoCheat].Special)	)
 				flag = 1;
 		}
@@ -1828,7 +1845,7 @@ int SkipBank(int CpuToScan, int *BankToScanTable, void (*handler)(int,int))
 	{
 		switch ((FPTR)handler)
 		{
-        		case (FPTR)MWA_RAM:
+			case (FPTR)MWA_RAM:
 				res = !BankToScanTable[0];
 				break;
 			case (FPTR)MWA_BANK1:
@@ -1886,14 +1903,14 @@ static int build_tables (void)
 	int MemoryNeeded = 0;
 
 	/* Search speedup : (the games should be dasmed to confirm this) */
-      /* Games based on Exterminator driver should scan BANK1          */
-      /* Games based on SmashTV driver should scan BANK2               */
+      /* Games based on Exterminator driver should scan BANK1	       */
+      /* Games based on SmashTV driver should scan BANK2	       */
       /* NEOGEO games should only scan BANK1 (0x100000 -> 0x01FFFF)    */
 	int CpuToScan = -1;
-      int BankToScanTable[9];    /* 0 for RAM & 1-8 for Banks 1-8 */
+      int BankToScanTable[9];	 /* 0 for RAM & 1-8 for Banks 1-8 */
 
       for (i = 0; i < 9;i ++)
-      	BankToScanTable[i] = ( fastsearch != 2 );
+	BankToScanTable[i] = ( fastsearch != 2 );
 
 #if (HAS_TMS34010)
 	if ((Machine->drv->cpu[1].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010)
@@ -1922,8 +1939,8 @@ static int build_tables (void)
 
       /* No CPU so we scan RAM & BANKn */
       if ((CpuToScan == -1) && (fastsearch == 2))
-      	for (i = 0; i < 9;i ++)
-      		BankToScanTable[i] = 1;
+	for (i = 0; i < 9;i ++)
+		BankToScanTable[i] = 1;
 
 	/* free memory that was previously allocated if no error occured */
       /* it must also be there because mwa varies from one CPU to another */
@@ -2035,7 +2052,7 @@ static int build_tables (void)
 		reset_table (OldFlagTable);
 
 		cheat_clearbitmap();
-            yPos = (MachHeight - 10 * FontHeight) / 2;
+	    yPos = (MachHeight - 10 * FontHeight) / 2;
 		xprintf(0, 0, yPos, "Error while allocating memory !");
 		yPos += (2 * FontHeight);
 		xprintf(0, 0, yPos, "You need %d more bytes", MemoryNeeded);
@@ -2140,20 +2157,20 @@ int SaveCheat(int NoCheat)
 	{
 		for (i = 0; i < LoadedCheatTotal; i++)
 		{
-            	if ((NoCheat == i) || (NoCheat == -1))
-                  {
-	            	int addmore = (LoadedCheatTable[i].More[0]);
+		if ((NoCheat == i) || (NoCheat == -1))
+		  {
+			int addmore = (LoadedCheatTable[i].More[0]);
 
 				/* form fmt string, adjusting length of address field for cpu address range */
 				sprintf(fmt, "%%s:%%d:%s:%%02X:%%03d:%%s%s\n",
 						FormatAddr(LoadedCheatTable[i].CpuNo,0),
-	                              (addmore ? ":%s" : ""));
+				      (addmore ? ":%s" : ""));
 
 				#ifdef macintosh
 				if (uncompressed)
 					fprintf(f, "\r");     /* force DOS-style line enders */
 				else
-					gzprintf(gz, "\r");     /* force DOS-style line enders */
+					gzprintf(gz, "\r");	/* force DOS-style line enders */
 				#endif
 
 				/* JCK 990717 BEGIN */
@@ -2247,7 +2264,7 @@ void LoadCheat(int merge, char *filename)
 	for(;;)
 	{
 	      if (gzgets(f,str,90) == NULL)
-      		break;
+		break;
 
 		#ifdef macintosh  /* JB 971004 */
 		/* remove extraneous LF on Macs if it exists */
@@ -2274,7 +2291,7 @@ void LoadCheat(int merge, char *filename)
 				(strstr(str, "2up") != NULL) || (strstr(str, "pl2") != NULL)	||
 				(strstr(str, "3up") != NULL) || (strstr(str, "pl3") != NULL)	||
 				(strstr(str, "4up") != NULL) || (strstr(str, "pl4") != NULL)	)
-		          continue;
+			  continue;
 
 		/* Reset the counter */
 		LoadedCheatTable[LoadedCheatTotal].Count=0;
@@ -2390,7 +2407,7 @@ void LoadDatabases(int InCheat)
 		memset (filename, '\0', sizeof(filename));
 		strncpy(filename, &str[pos1], (pos2 - pos1));
 		LoadCheat(1, filename);
-            pos1 = pos2 + 1;
+	    pos1 = pos2 + 1;
 	}
   }
 
@@ -2421,7 +2438,7 @@ int LoadHelp(char *filename, struct TextLine *table)
 	for(;;)
 	{
 	      if (gzgets(f,str,32) == NULL)
-      		break;
+		break;
 
 		#ifdef macintosh  /* JB 971004 */
 		/* remove extraneous LF on Macs if it exists */
@@ -2434,10 +2451,10 @@ int LoadHelp(char *filename, struct TextLine *table)
 
 		str[strlen(str) - 1] = 0;
 
-     		size = sizeof(str);
+		size = sizeof(str);
 		txt->data = malloc (size + 1);
 		if (txt->data == NULL)
-      		break;
+		break;
 
 		memset (txt->data, '\0', size + 1);
 		memcpy (txt->data, str, size);
@@ -2463,12 +2480,12 @@ void InitMemoryAreas(void)
 	while (mwa->start != -1)
 	{
 		sprintf (buffer, FormatAddr(SearchCpuNo,0), mwa->start);
-            strcpy (MemToScanTable[MemoryAreasTotal].Name, buffer);
-            strcat (MemToScanTable[MemoryAreasTotal].Name," -> ");
+	    strcpy (MemToScanTable[MemoryAreasTotal].Name, buffer);
+	    strcat (MemToScanTable[MemoryAreasTotal].Name," -> ");
 		sprintf (buffer, FormatAddr(SearchCpuNo,0), mwa->end);
-            strcat (MemToScanTable[MemoryAreasTotal].Name, buffer);
-            MemToScanTable[MemoryAreasTotal].handler = mwa->handler;
-           	MemToScanTable[MemoryAreasTotal].Enabled = 0;
+	    strcat (MemToScanTable[MemoryAreasTotal].Name, buffer);
+	    MemToScanTable[MemoryAreasTotal].handler = mwa->handler;
+		MemToScanTable[MemoryAreasTotal].Enabled = 0;
 		MemoryAreasTotal++;
 		mwa++;
 	}
@@ -2485,10 +2502,10 @@ void InitCheat(void)
   WatchEnabled = 0;
 
   CurrentMethod = 0;
-  SaveMethod    = 0;
+  SaveMethod	= 0;
 
   SearchCpuNoOld	= -1;
-  MallocFailure	= -1;
+  MallocFailure = -1;
 
   MachHeight = ( Machine -> uiheight );
   MachWidth  = ( Machine -> uiwidth );
@@ -2605,11 +2622,11 @@ void DisplayWatches(int ClrScr, int *x,int *y,char *buffer,
 		{
 			if ( Watches[i] != MAX_ADDRESS(WatchesCpuNo[i]))
 			{
-                  	if (!FirstWatch)    /* If not 1st watch add a space */
-                  	{
-                  		strcat(buffer," ");
-                  		WatchGfxLen += (FontWidth / 2);
-                  	}
+			if (!FirstWatch)    /* If not 1st watch add a space */
+			{
+				strcat(buffer," ");
+				WatchGfxLen += (FontWidth / 2);
+			}
 				sprintf(bufadr,"%02X", RD_GAMERAM (WatchesCpuNo[i], Watches[i]));
 
 				if (highlight == i)
@@ -2618,16 +2635,16 @@ void DisplayWatches(int ClrScr, int *x,int *y,char *buffer,
 				if (highlight == i)
 					strcat(buffer,"-");
 
-                 		WatchGfxLen += (FontWidth * 2);
+				WatchGfxLen += (FontWidth * 2);
 				FirstWatch = 0;
 			}
 		}
 
-            /* Adjust x offset to fit the screen */
+	    /* Adjust x offset to fit the screen */
 		/* while (	(*x >= (MachWidth - (FontWidth * (int)strlen(buffer)))) && */
-		while (	(*x >= (MachWidth - WatchGfxLen)) &&
-            		(*x > Machine->uixmin)	)
-            	(*x)--;
+		while ( (*x >= (MachWidth - WatchGfxLen)) &&
+			(*x > Machine->uixmin)	)
+		(*x)--;
 
 		WatchGfxPos = 0;
 		for (i = 0;i < (int)strlen(buffer);i ++)
@@ -2671,23 +2688,23 @@ void set_cheat(struct cheat_struct *dest, struct cheat_struct *src)
 		0,				/* Backup */
 		0,				/* Minimum */
 		0xFF,				/* Maximum */
-		"---- New Cheat ----", 	/* Name */
+		"---- New Cheat ----",	/* Name */
 		""				/* More */
-        };
+	};
 
 	if (src == NEW_CHEAT)
 	{
 		src = &new_cheat;
 	}
 
-	dest->CpuNo 	= src->CpuNo;
-	dest->Address 	= src->Address;
-	dest->Data 		= src->Data;
-	dest->Special 	= src->Special;
-	dest->Count 	= src->Count;
-	dest->Backup 	= src->Backup;
-	dest->Minimum 	= src->Minimum;
-	dest->Maximum 	= src->Maximum;
+	dest->CpuNo	= src->CpuNo;
+	dest->Address	= src->Address;
+	dest->Data		= src->Data;
+	dest->Special	= src->Special;
+	dest->Count	= src->Count;
+	dest->Backup	= src->Backup;
+	dest->Minimum	= src->Minimum;
+	dest->Maximum	= src->Maximum;
 	strcpy(dest->Name, src->Name);
 	strcpy(dest->More, src->More);
 }
@@ -2765,24 +2782,34 @@ int EditCheatHeader(void)
 void EditCheat(int CheatNo)
 {
   char *CheatNameList[] = {
-	"Infinite Lives",
-	"Infinite Lives 1UP",
-	"Infinite Lives 2UP",
-	"Invincibility",
-	"Invincibility 1UP",
-	"Invincibility 2UP",
-	"Infinite Energy",
-	"Infinite Energy 1UP",
-	"Infinite Energy 2UP",
+	"Infinite Lives PL1",
+	"Infinite Lives PL2",
 	"Infinite Time",
-	"Infinite Time 1UP",
-	"Infinite Time 2UP",
+	"Infinite Time PL1",
+	"Infinite Time PL2",
+	"Invincibility",
+	"Invincibility PL1",
+	"Invincibility PL2",
+	"Infinite Energy",
+	"Infinite Energy PL1",
+	"Infinite Energy PL2",
+	"Select Next Level",
+	"Select Current level",
 	"Infinite Ammo",
-	"Infinite Ammo 1UP",
-	"Infinite Ammo 2UP",
+	"Infinite Ammo PL1",
+	"Infinite Ammo PL2",
 	"Infinite Bombs",
-	"Infinite Bombs 1UP",
-	"Infinite Bombs 2UP",
+	"Infinite Bombs PL1",
+	"Infinite Bombs PL2",
+	"Select Score PL1",
+	"Select Score PL2",
+	"Drain all Energy Now! PL1",
+	"Drain all Energy Now! PL2",
+	"Infinite",
+	"Always have",
+	"Get",
+	"Lose",
+	"[                           ]",
 	"---> <ENTER> To Edit <---",
 	"\0" };
 
@@ -2851,10 +2878,11 @@ void EditCheat(int CheatNo)
 	displaytext(dt,0,1);
 
 	/* key = keyboard_read_sync(); */
-	key = cheat_readkey();    /* MSH 990217 */
+	key = cheat_readkey();	  /* MSH 990217 */
 	switch (key)
 	{
-      	case KEYCODE_DOWN:
+		case KEYCODE_DOWN:
+		case KEYCODE_2_PAD:
 			if (s < total - 1)
 				s++;
 			else
@@ -2862,6 +2890,7 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_UP:
+		case KEYCODE_8_PAD:
 			if (s > 0)
 				s--;
 			else
@@ -2869,9 +2898,10 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_LEFT:
+		case KEYCODE_4_PAD:
 			switch (s)
 			{
-				case 0:	   /* Name */
+				case 0:    /* Name */
 
 					if (CurrentName < 0)
 						CurrentName = 0;
@@ -2884,7 +2914,7 @@ void EditCheat(int CheatNo)
 					sprintf (str2[0],"Name: %s", LoadedCheatTable[CheatNo].Name);
 					ClearTextLine(1, dt[0].y);
 					break;
-				case 1:	   /* CpuNo */
+				case 1:    /* CpuNo */
 					if (ManyCpus)
 					{
 						if (LoadedCheatTable[CheatNo].CpuNo == 0)
@@ -2894,7 +2924,7 @@ void EditCheat(int CheatNo)
 						sprintf (str2[1], "CPU:        %01X", LoadedCheatTable[CheatNo].CpuNo);
 					}
 					break;
-				case 2:	   /* Address */
+				case 2:    /* Address */
 					if (LoadedCheatTable[CheatNo].Address == 0)
 						LoadedCheatTable[CheatNo].Address = MAX_ADDRESS(LoadedCheatTable[CheatNo].CpuNo);
 					else
@@ -2902,7 +2932,7 @@ void EditCheat(int CheatNo)
 					sprintf(str2[2], FormatAddr(LoadedCheatTable[CheatNo].CpuNo,1),
 						LoadedCheatTable[CheatNo].Address);
 					break;
-				case 3:	   /* Data */
+				case 3:    /* Data */
 					if (LoadedCheatTable[CheatNo].Data == 0)
 						LoadedCheatTable[CheatNo].Data = 0xFF;
 					else
@@ -2910,11 +2940,11 @@ void EditCheat(int CheatNo)
 					sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data,
 						LoadedCheatTable[CheatNo].Data);
 					break;
-				case 4:	   /* Special */
+				case 4:    /* Special */
 					if (LoadedCheatTable[CheatNo].Special <= 0)
 						LoadedCheatTable[CheatNo].Special = TOTAL_CHEAT_TYPES + OFFSET_LINK_CHEAT;
 					else
-      					switch (LoadedCheatTable[CheatNo].Special)
+					switch (LoadedCheatTable[CheatNo].Special)
 						{
 							case 20:
 								LoadedCheatTable[CheatNo].Special = 11;
@@ -2954,9 +2984,10 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_RIGHT:
+		case KEYCODE_6_PAD:
 			switch (s)
 			{
-				case 0:	   /* Name */
+				case 0:    /* Name */
 					CurrentName ++;
 					if (CheatNameList[CurrentName][0] == 0)
 						CurrentName = 0;
@@ -2964,7 +2995,7 @@ void EditCheat(int CheatNo)
 					sprintf (str2[0], "Name: %s", LoadedCheatTable[CheatNo].Name);
 					ClearTextLine(1, dt[0].y);
 					break;
-				case 1:	   /* CpuNo */
+				case 1:    /* CpuNo */
 					if (ManyCpus)
 					{
 						LoadedCheatTable[CheatNo].CpuNo ++;
@@ -2973,14 +3004,14 @@ void EditCheat(int CheatNo)
 						sprintf(str2[1],"CPU:        %01X",LoadedCheatTable[CheatNo].CpuNo);
 					}
 					break;
-				case 2:	   /* Address */
+				case 2:    /* Address */
 					LoadedCheatTable[CheatNo].Address ++;
 					if (LoadedCheatTable[CheatNo].Address > MAX_ADDRESS(LoadedCheatTable[CheatNo].CpuNo))
 						LoadedCheatTable[CheatNo].Address = 0;
 					sprintf (str2[2], FormatAddr(LoadedCheatTable[CheatNo].CpuNo,1),
 						LoadedCheatTable[CheatNo].Address);
 					break;
-				case 3:	   /* Data */
+				case 3:    /* Data */
 					if(LoadedCheatTable[CheatNo].Data == 0xFF)
 						LoadedCheatTable[CheatNo].Data = 0;
 					else
@@ -2992,7 +3023,7 @@ void EditCheat(int CheatNo)
 					if (LoadedCheatTable[CheatNo].Special >= TOTAL_CHEAT_TYPES + OFFSET_LINK_CHEAT)
 						LoadedCheatTable[CheatNo].Special = 0;
 					else
-      					switch (LoadedCheatTable[CheatNo].Special)
+					switch (LoadedCheatTable[CheatNo].Special)
 						{
 							case 11:
 								LoadedCheatTable[CheatNo].Special = 20;
@@ -3032,15 +3063,16 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_HOME:
+		case KEYCODE_7_PAD:
 			switch (s)
 			{
-				case 3:	/* Data */
+				case 3: /* Data */
 					if (LoadedCheatTable[CheatNo].Data >= 0x80)
 						LoadedCheatTable[CheatNo].Data -= 0x80;
 					sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data,
 						LoadedCheatTable[CheatNo].Data);
 					break;
-				case 4:	/* Special */
+				case 4: /* Special */
 					if (LoadedCheatTable[CheatNo].Special >= OFFSET_LINK_CHEAT)
 						LoadedCheatTable[CheatNo].Special -= OFFSET_LINK_CHEAT;
 					sprintf(str2[4],"Type:     %03d",LoadedCheatTable[CheatNo].Special);
@@ -3049,15 +3081,16 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_END:
+		case KEYCODE_1_PAD:
 			switch (s)
 			{
-				case 3:	/* Data */
+				case 3: /* Data */
 					if (LoadedCheatTable[CheatNo].Data < 0x80)
 						LoadedCheatTable[CheatNo].Data += 0x80;
 					sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data,
 						LoadedCheatTable[CheatNo].Data);
 					break;
-				case 4:	/* Special */
+				case 4: /* Special */
 					if (LoadedCheatTable[CheatNo].Special < OFFSET_LINK_CHEAT)
 						LoadedCheatTable[CheatNo].Special += OFFSET_LINK_CHEAT;
 					sprintf(str2[4],"Type:     %03d",LoadedCheatTable[CheatNo].Special);
@@ -3108,17 +3141,17 @@ void EditCheat(int CheatNo)
 
 		case KEYCODE_F3:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 			switch (s)
 			{
-				case 2:	   /* Address */
+				case 2:    /* Address */
 					for (i = 0; i < total; i++)
 						dt[i].color = DT_COLOR_WHITE;
 					displaytext (dt, 0,1);
 					xprintf (0, 0, EditYPos-2*FontHeight, "Edit Cheat Address:");
 					sprintf(buffer, FormatAddr(LoadedCheatTable[CheatNo].CpuNo,0),
 						LoadedCheatTable[CheatNo].Address);
-                        	xedit(0, EditYPos, buffer, strlen(buffer), 1);
+				xedit(0, EditYPos, buffer, strlen(buffer), 1);
 					sscanf(buffer,"%X", &LoadedCheatTable[CheatNo].Address);
 					if (LoadedCheatTable[CheatNo].Address > MAX_ADDRESS(LoadedCheatTable[CheatNo].CpuNo))
 						LoadedCheatTable[CheatNo].Address = MAX_ADDRESS(LoadedCheatTable[CheatNo].CpuNo);
@@ -3126,46 +3159,47 @@ void EditCheat(int CheatNo)
 						LoadedCheatTable[CheatNo].Address);
 					cheat_clearbitmap();
 					y = EditCheatHeader();
-                              break;
+			      break;
 			}
 			break;
 
 		case KEYCODE_F10:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 			EditCheatHelp();
 			y = EditCheatHeader();
 			break;
 
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 			switch (s)
 			{
-				case 0:	   /* Name */
+				case 0:    /* Name */
 					for (i = 0; i < total; i++)
 						dt[i].color = DT_COLOR_WHITE;
 					displaytext (dt, 0,1);
 					xprintf (0, 0, EditYPos-2*FontHeight, "Edit Cheat Description:");
-                        	xedit(0, EditYPos, LoadedCheatTable[CheatNo].Name, CHEAT_NAME_MAXLEN, 0);
+				xedit(0, EditYPos, LoadedCheatTable[CheatNo].Name, CHEAT_NAME_MAXLEN, 0);
 					sprintf (str2[0], "Name: %s", LoadedCheatTable[CheatNo].Name);
 					if ((FontWidth * (int)strlen(str2[0])) > MachWidth - Machine->uixmin)
 						sprintf(str2[0],"%s",LoadedCheatTable[CheatNo].Name);
 					cheat_clearbitmap();
 					y = EditCheatHeader();
-                              break;
-				case 5:	   /* More */
+			      break;
+				case 5:    /* More */
 					for (i = 0; i < total; i++)
 						dt[i].color = DT_COLOR_WHITE;
 					displaytext (dt, 0,1);
 					xprintf (0, 0, EditYPos-2*FontHeight, "Edit Cheat More Description:");
-                        	xedit(0, EditYPos, LoadedCheatTable[CheatNo].More, CHEAT_NAME_MAXLEN, 0);
+				xedit(0, EditYPos, LoadedCheatTable[CheatNo].More, CHEAT_NAME_MAXLEN, 0);
 					sprintf (str2[5], "More: %s", LoadedCheatTable[CheatNo].More);
 					if ((FontWidth * (int)strlen(str2[5])) > MachWidth - Machine->uixmin)
 						sprintf(str2[5],"%s",LoadedCheatTable[CheatNo].More);
 					cheat_clearbitmap();
 					y = EditCheatHeader();
-                              break;
+			      break;
 			}
 			break;
 
@@ -3180,7 +3214,7 @@ void EditCheat(int CheatNo)
   while (keyboard_pressed(key));
 
   if (	(LoadedCheatTable[CheatNo].Special==62) || (LoadedCheatTable[CheatNo].Special==65)	||
-      	(LoadedCheatTable[CheatNo].Special==72) || (LoadedCheatTable[CheatNo].Special==75)	)
+	(LoadedCheatTable[CheatNo].Special==72) || (LoadedCheatTable[CheatNo].Special==75)	)
 	LoadedCheatTable[CheatNo].Minimum = 1;
   else
 	LoadedCheatTable[CheatNo].Minimum = 0;
@@ -3279,13 +3313,13 @@ void SelectCheat(void)
 
 	if (MachWidth < FontWidth * 35)
 	{
-        	x = 0;
+		x = 0;
 	}
 	else
 	{
-        	x = (MachWidth / 2) - (FontWidth * 16);
+		x = (MachWidth / 2) - (FontWidth * 16);
 	}
-     	y = SelectCheatHeader();
+	y = SelectCheatHeader();
 
 	/* Make the list */
 	for (i = 0; i < MAX_DISPLAYCHEATS; i++)
@@ -3319,11 +3353,12 @@ void SelectCheat(void)
 		displaytext(dt, 0, 1);
 
 		/* key = keyboard_read_sync(); */
-		key = cheat_readkey();    /* MSH 990217 */
+		key = cheat_readkey();	  /* MSH 990217 */
 		ClearTextLine(1, YFOOT_SELECT);
 		switch (key)
 		{
 			case KEYCODE_DOWN:
+			case KEYCODE_2_PAD:
 
 				if (highlighted < total - 1)
 				{
@@ -3353,6 +3388,7 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_UP:
+			case KEYCODE_8_PAD:
 				if (highlighted > 0)
 				{
 					highlighted--;
@@ -3384,18 +3420,21 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_HOME:
+			case KEYCODE_7_PAD:
 				Index = 0;
 				total = build_cheat_list(Index, dt, str2);
 				highlighted = 0;
 				break;
 
 			case KEYCODE_END:
+			case KEYCODE_1_PAD:
 				Index = ((LoadedCheatTotal - 1) / MAX_DISPLAYCHEATS) * MAX_DISPLAYCHEATS;
 				total = build_cheat_list(Index, dt, str2);
 				highlighted = total - 1;
 				break;
 
 			case KEYCODE_PGDN:
+			case KEYCODE_3_PAD:
 				if (highlighted + Index >= LoadedCheatTotal - MAX_DISPLAYCHEATS)
 				{
 					Index = ((LoadedCheatTotal - 1) / MAX_DISPLAYCHEATS) * MAX_DISPLAYCHEATS;
@@ -3411,6 +3450,7 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_PGUP:
+			case KEYCODE_9_PAD:
 				if (highlighted + Index <= MAX_DISPLAYCHEATS)
 				{
 					Index = 0;
@@ -3425,9 +3465,10 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_INSERT:    /* Add a new empty cheat */
+			case KEYCODE_INSERT:	/* Add a new empty cheat */
+			case KEYCODE_0_PAD:
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 
 				if (LoadedCheatTotal > MAX_LOADEDCHEATS -1)
 				{
@@ -3445,8 +3486,9 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_DEL:
+			case KEYCODE_DEL_PAD:
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3506,7 +3548,7 @@ void SelectCheat(void)
 
 			case KEYCODE_F1:    /* Save cheat to file */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3517,14 +3559,14 @@ void SelectCheat(void)
 					break;
 				}
 
-                        j = SaveCheat(highlighted + Index);
+			j = SaveCheat(highlighted + Index);
 				xprintf(0, 0, YFOOT_SELECT, "Cheat %sSaved to File %s", (j ? "" : "NOT "), database);
 
 				break;
 
 			case KEYCODE_F2:     /* Add to watch list */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3565,7 +3607,7 @@ void SelectCheat(void)
 
 			case KEYCODE_F3:    /* Edit current cheat */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3576,7 +3618,7 @@ void SelectCheat(void)
 					break;
 				}
 
-				if (	(LoadedCheatTable[highlighted + Index].Special == COMMENTCHEAT)	||
+				if (	(LoadedCheatTable[highlighted + Index].Special == COMMENTCHEAT) ||
 					(LoadedCheatTable[highlighted + Index].Special == WATCHCHEAT)	)
 					xedit(0, YFOOT_SELECT, LoadedCheatTable[highlighted + Index].Name,
 						CHEAT_NAME_MAXLEN, 0);
@@ -3585,13 +3627,13 @@ void SelectCheat(void)
 
 				total = build_cheat_list(Index, dt, str2);
 
-		      	SelectCheatHeader();
+			SelectCheatHeader();
 
 				break;
 
 			case KEYCODE_F4:    /* Copy the current cheat */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3620,7 +3662,7 @@ void SelectCheat(void)
 
 			case KEYCODE_F5:    /* Rename the cheatfile and reload the database */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 
 				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
@@ -3644,13 +3686,13 @@ void SelectCheat(void)
 					}
 				}
 
-		      	SelectCheatHeader();
+			SelectCheatHeader();
 
 				break;
 
 			case KEYCODE_F6:    /* Save all cheats to file */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3661,14 +3703,14 @@ void SelectCheat(void)
 					break;
 				}
 
-                        j = SaveCheat(-1);
+			j = SaveCheat(-1);
 				xprintf(0, 0, YFOOT_SELECT, "%d Cheats Saved to File %s", j, database);
 
 				break;
 
 			case KEYCODE_F7:    /* Remove all active cheats from the list */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3704,7 +3746,7 @@ void SelectCheat(void)
 
 			case KEYCODE_F8:    /* Reload the database */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 
 				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
@@ -3717,13 +3759,13 @@ void SelectCheat(void)
 				total = build_cheat_list(Index, dt, str2);
 				highlighted = 0;
 
-		      	SelectCheatHeader();
+			SelectCheatHeader();
 
 				break;
 
 			case KEYCODE_F9:    /* Rename the cheatfile */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 
 				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
@@ -3732,13 +3774,13 @@ void SelectCheat(void)
 
 				RenameCheatFile(-1, 1, database);
 
-		      	SelectCheatHeader();
+			SelectCheatHeader();
 
 				break;
 
 			case KEYCODE_F10:    /* Invoke help */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 
 				if (LoadedCheatTotal == 0)
 				{
@@ -3755,7 +3797,7 @@ void SelectCheat(void)
 
 			case KEYCODE_F11:    /* Toggle sologame ON/OFF then reload the database */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 
 				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
@@ -3769,13 +3811,13 @@ void SelectCheat(void)
 				total = build_cheat_list(Index, dt, str2);
 				highlighted = 0;
 
-		      	SelectCheatHeader();
+			SelectCheatHeader();
 
 				break;
 
 			case KEYCODE_F12:    /* Display info about a cheat */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
@@ -3814,9 +3856,10 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_ENTER:
+			case KEYCODE_ENTER_PAD:
 			case KEYCODE_SPACE:
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				if (total == 0)
 				{
 					break;
@@ -3861,8 +3904,8 @@ void SelectCheat(void)
 							((ActiveCheatTable[i].Special >=  20 + OFFSET_LINK_CHEAT) && (ActiveCheatTable[i].Special <= 24 + OFFSET_LINK_CHEAT))	||
 							((ActiveCheatTable[i].Special >=  40 + OFFSET_LINK_CHEAT) && (ActiveCheatTable[i].Special <= 44 + OFFSET_LINK_CHEAT))	)
 						{
-							if (	(ActiveCheatTable[i].Special 	!= LoadedCheatTable[highlighted + Index].Special)	||
-								(ActiveCheatTable[i].Data 	!= LoadedCheatTable[highlighted + Index].Data	)	)
+							if (	(ActiveCheatTable[i].Special	!= LoadedCheatTable[highlighted + Index].Special)	||
+								(ActiveCheatTable[i].Data	!= LoadedCheatTable[highlighted + Index].Data	)	)
 								continue;
 						}
 
@@ -3875,7 +3918,7 @@ void SelectCheat(void)
 						{
 							if ((ActiveCheatTable[i].Special < OFFSET_LINK_CHEAT) ||
 									(ActiveCheatTable[i].Special == COMMENTCHEAT) ||
-                                                                        (ActiveCheatTable[i].Special == WATCHCHEAT))
+									(ActiveCheatTable[i].Special == WATCHCHEAT))
 								break;
 							DeleteActiveCheatFromTable(i);
 						}
@@ -3936,7 +3979,7 @@ void SelectCheat(void)
 						{
 							if ((LoadedCheatTable[i].Special < OFFSET_LINK_CHEAT) ||
 									(LoadedCheatTable[i].Special == COMMENTCHEAT) ||
-                                                                        (LoadedCheatTable[i].Special == WATCHCHEAT))
+									(LoadedCheatTable[i].Special == WATCHCHEAT))
 								break;
 							set_cheat(&ActiveCheatTable[ActiveCheatTotal], &LoadedCheatTable[i]);
 							ActiveCheatTable[ActiveCheatTotal].Count = 0;
@@ -3947,7 +3990,7 @@ void SelectCheat(void)
 
 				cheat_clearbitmap();
 
-		      	SelectCheatHeader();
+			SelectCheatHeader();
 
 				total = build_cheat_list(Index, dt, str2);
 
@@ -4161,13 +4204,13 @@ void SelectMemoryAreas(void)
 
 	if (MachWidth < FontWidth * 35)
 	{
-        	x = 0;
+		x = 0;
 	}
 	else
 	{
-        	x = (MachWidth - (FontWidth * (2 * strlen(FormatAddr(SearchCpuNo,0)) + 7))) / 2;
+		x = (MachWidth - (FontWidth * (2 * strlen(FormatAddr(SearchCpuNo,0)) + 7))) / 2;
 	}
-     	y = SelectMemoryHeader();
+	y = SelectMemoryHeader();
 
 	/* Make the list */
 	for (i = 0; i < MAX_DISPLAYMEM; i++)
@@ -4198,11 +4241,12 @@ void SelectMemoryAreas(void)
 		displaytext(dt, 0, 1);
 
 		/* key = keyboard_read_sync(); */
-		key = cheat_readkey();    /* MSH 990217 */
+		key = cheat_readkey();	  /* MSH 990217 */
 		ClearTextLine(1, YFOOT_MEMORY);
 		switch (key)
 		{
 			case KEYCODE_DOWN:
+			case KEYCODE_2_PAD:
 				if (highlighted < total - 1)
 				{
 					highlighted++;
@@ -4229,6 +4273,7 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_UP:
+			case KEYCODE_8_PAD:
 				if (highlighted > 0)
 				{
 					highlighted--;
@@ -4259,18 +4304,21 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_HOME:
+			case KEYCODE_7_PAD:
 				Index = 0;
 				total = build_mem_list(Index, dt, str2);
 				highlighted = 0;
 				break;
 
 			case KEYCODE_END:
+			case KEYCODE_1_PAD:
 				Index = ((MemoryAreasTotal - 1) / MAX_DISPLAYMEM) * MAX_DISPLAYMEM;
 				total = build_mem_list(Index, dt, str2);
 				highlighted = total - 1;
 				break;
 
 			case KEYCODE_PGDN:
+			case KEYCODE_3_PAD:
 				if (highlighted + Index >= MemoryAreasTotal - MAX_DISPLAYMEM)
 				{
 					Index = ((MemoryAreasTotal - 1) / MAX_DISPLAYMEM) * MAX_DISPLAYMEM;
@@ -4284,6 +4332,7 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_PGUP:
+			case KEYCODE_9_PAD:
 				if (highlighted + Index <= MAX_DISPLAYMEM)
 				{
 					Index = 0;
@@ -4298,64 +4347,64 @@ void SelectMemoryAreas(void)
 
 			case KEYCODE_F6:
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				for (i = 0; i < MemoryAreasTotal; i++)
-	                        MemToScanTable[i].Enabled = 1;
+				MemToScanTable[i].Enabled = 1;
 				total = build_mem_list(Index, dt, str2);
 				break;
 
 			case KEYCODE_F7:
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
+			  oldkey = 0;
 				for (i = 0; i < MemoryAreasTotal; i++)
-	                        MemToScanTable[i].Enabled = 0;
+				MemToScanTable[i].Enabled = 0;
 				total = build_mem_list(Index, dt, str2);
 				break;
 
 			case KEYCODE_F12:    /* Display info about a cheat */
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
-                        strcpy (buffer,str2[Index + highlighted]);
-                        strcat (buffer," : ");
+			  oldkey = 0;
+			strcpy (buffer,str2[Index + highlighted]);
+			strcat (buffer," : ");
 				switch ((FPTR)MemToScanTable[Index + highlighted].handler)
 				{
-		        		case (FPTR)MWA_NOP:
+					case (FPTR)MWA_NOP:
 						strcat (buffer,"NOP");
 						break;
-		        		case (FPTR)MWA_RAM:
+					case (FPTR)MWA_RAM:
 						strcat (buffer,"RAM");
 						break;
-		        		case (FPTR)MWA_ROM:
+					case (FPTR)MWA_ROM:
 						strcat (buffer,"ROM");
 						break;
-		        		case (FPTR)MWA_RAMROM:
+					case (FPTR)MWA_RAMROM:
 						strcat (buffer,"RAMROM");
 						break;
-		        		case (FPTR)MWA_BANK1:
+					case (FPTR)MWA_BANK1:
 						strcat (buffer,"BANK1");
 						break;
-		        		case (FPTR)MWA_BANK2:
+					case (FPTR)MWA_BANK2:
 						strcat (buffer,"BANK2");
 						break;
-		        		case (FPTR)MWA_BANK3:
+					case (FPTR)MWA_BANK3:
 						strcat (buffer,"BANK3");
 						break;
-		        		case (FPTR)MWA_BANK4:
+					case (FPTR)MWA_BANK4:
 						strcat (buffer,"BANK4");
 						break;
-		        		case (FPTR)MWA_BANK5:
+					case (FPTR)MWA_BANK5:
 						strcat (buffer,"BANK5");
 						break;
-		        		case (FPTR)MWA_BANK6:
+					case (FPTR)MWA_BANK6:
 						strcat (buffer,"BANK6");
 						break;
-		        		case (FPTR)MWA_BANK7:
+					case (FPTR)MWA_BANK7:
 						strcat (buffer,"BANK7");
 						break;
-		        		case (FPTR)MWA_BANK8:
+					case (FPTR)MWA_BANK8:
 						strcat (buffer,"BANK8");
 						break;
-		        		default:
+					default:
 						strcat (buffer,"user-defined");
 						break;
 				}
@@ -4363,10 +4412,11 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_ENTER:
+			case KEYCODE_ENTER_PAD:
 			case KEYCODE_SPACE:
 				while (keyboard_pressed(key));
-	                  oldkey = 0;
-                        MemToScanTable[Index + highlighted].Enabled ^= 1;
+			  oldkey = 0;
+			MemToScanTable[Index + highlighted].Enabled ^= 1;
 				total = build_mem_list(Index, dt, str2);
 				break;
 
@@ -4462,12 +4512,13 @@ void SelectFastSearch(void)
 			break;
 
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			switch (s)
 			{
 				case 0:
 					if (fastsearch != 0)
 					{
-						SearchCpuNoOld = -1;    /* Force tables to be built */
+						SearchCpuNoOld = -1;	/* Force tables to be built */
 						InitMemoryAreas();
 					}
 					fastsearch = 0;
@@ -4477,7 +4528,7 @@ void SelectFastSearch(void)
 				case 1:
 					if (fastsearch != 1)
 					{
-						SearchCpuNoOld = -1;    /* Force tables to be built */
+						SearchCpuNoOld = -1;	/* Force tables to be built */
 						InitMemoryAreas();
 					}
 					fastsearch = 1;
@@ -4487,7 +4538,7 @@ void SelectFastSearch(void)
 				case 2:
 					if (fastsearch != 2)
 					{
-						SearchCpuNoOld = -1;    /* Force tables to be built */
+						SearchCpuNoOld = -1;	/* Force tables to be built */
 						InitMemoryAreas();
 					}
 					fastsearch = 2;
@@ -4496,7 +4547,7 @@ void SelectFastSearch(void)
 
 				case 3:
 					fastsearch = 3;
-                              SelectMemoryAreas();
+			      SelectMemoryAreas();
 					done = 1;
 					break;
 
@@ -4555,10 +4606,10 @@ int SelectSearchValue(void)
  * In all cases, backup the ram.
  *
  * Ask the user to select one of the following:
- *  1 - Lives or other number (byte) (exact)       ask a start value , ask new value
- *  2 - Timers (byte) (+ or - X)                   nothing at start, ask +-X
- *  3 - Energy (byte) (less, equal or greater)     nothing at start, ask less, equal or greater
- *  4 - Status (bit)  (true or false)              nothing at start, ask same or opposite
+ *  1 - Lives or other number (byte) (exact)	   ask a start value , ask new value
+ *  2 - Timers (byte) (+ or - X)		   nothing at start, ask +-X
+ *  3 - Energy (byte) (less, equal or greater)	   nothing at start, ask less, equal or greater
+ *  4 - Status (bit)  (true or false)		   nothing at start, ask same or opposite
  *  5 - Slow but sure (Same as start or different) nothing at start, ask same or different
  *
  * Another method is used in the Pro action Replay the Energy method
@@ -4614,69 +4665,70 @@ void StartSearch(void)
 			break;
 
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			switch (s)
 			{
 				case 0:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_VALUE;
-                              StartValueNeeded = 1;
+			      StartValueNeeded = 1;
 					done = 1;
 					break;
 
 				case 1:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_TIME;
-                              StartValueNeeded = SelectSearchValue();
-                              if (StartValueNeeded == 2)
-                              {
+			      StartValueNeeded = SelectSearchValue();
+			      if (StartValueNeeded == 2)
+			      {
 						done = 0;
-                              }
-                              else
-                              {
+			      }
+			      else
+			      {
 						done = 1;
-                              }
+			      }
 					break;
 
 				case 2:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_ENERGY;
-                              StartValueNeeded = SelectSearchValue();
-                              if (StartValueNeeded == 2)
-                              {
+			      StartValueNeeded = SelectSearchValue();
+			      if (StartValueNeeded == 2)
+			      {
 						done = 0;
-                              }
-                              else
-                              {
+			      }
+			      else
+			      {
 						done = 1;
-                              }
+			      }
 					break;
 
 				case 3:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_BIT;
-                              StartValueNeeded = SelectSearchValue();
-                              if (StartValueNeeded == 2)
-                              {
+			      StartValueNeeded = SelectSearchValue();
+			      if (StartValueNeeded == 2)
+			      {
 						done = 0;
-                              }
-                              else
-                              {
+			      }
+			      else
+			      {
 						done = 1;
-                              }
+			      }
 					break;
 
 				case 4:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_BYTE;
-                              StartValueNeeded = SelectSearchValue();
-                              if (StartValueNeeded == 2)
-                              {
+			      StartValueNeeded = SelectSearchValue();
+			      if (StartValueNeeded == 2)
+			      {
 						done = 0;
-                              }
-                              else
-                              {
+			      }
+			      else
+			      {
 						done = 1;
-                              }
+			      }
 					break;
 
 				case 6:
@@ -4687,7 +4739,7 @@ void StartSearch(void)
 
 				case 8:
 					done = 2;
-                              s = 0;
+			      s = 0;
 					break;
 			}
 			break;
@@ -4706,7 +4758,7 @@ void StartSearch(void)
   {
 	ValTmp = SelectValue(SearchCpuNo, 0, 1, 1, 0, 0, cpu_gettotalcpu()-1,
 					"%01X", "Enter CPU To Search In:", 1,
-                              FIRSTPOS + 3 * FontHeight);
+			      FIRSTPOS + 3 * FontHeight);
 
 	cheat_clearbitmap();
 
@@ -4752,7 +4804,7 @@ void StartSearch(void)
   if (RebuildTables)
   {
 	if (!build_tables())
-        	SearchCpuNoOld = SearchCpuNo;
+		SearchCpuNoOld = SearchCpuNo;
       else
 	{
 		CurrentMethod = 0;
@@ -4811,14 +4863,14 @@ void StartSearch(void)
 	{
 		for (i=0; i <= ext->end - ext->start; i++)
 			if (ext->data[i] != 0)
-                  {
-				if (	(RD_GAMERAM(SearchCpuNo, i+ext->start) != s) 			&&
+		  {
+				if (	(RD_GAMERAM(SearchCpuNo, i+ext->start) != s)			&&
 					(	(RD_GAMERAM(SearchCpuNo, i+ext->start) != s-1)		||
-						(CurrentMethod != SEARCH_VALUE)			)	)
+						(CurrentMethod != SEARCH_VALUE) 		)	)
 					ext->data[i] = 0;
-                        else
+			else
 					count ++;
-                  }
+		  }
 	}
 
 	SearchInProgress(0,y);
@@ -5031,6 +5083,7 @@ void ContinueSearch(int selected, int ViewLast)
 					break;
 
 				case KEYCODE_ENTER:
+				case KEYCODE_ENTER_PAD:
 					if (s == total-1)
 						done = 2;
 					break;
@@ -5039,7 +5092,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		cheat_clearbitmap();
 
-            SaveContinueSearch = s;
+	    SaveContinueSearch = s;
 
 		/* User select to return to the previous menu */
 		if (done == 2)
@@ -5092,13 +5145,14 @@ void ContinueSearch(int selected, int ViewLast)
 					break;
 
 				case KEYCODE_ENTER:
+				case KEYCODE_ENTER_PAD:
 					if (s == total-1)
 						done = 2;
 					break;
 			}
 		} while ((done != 1) && (done != 2));
 
-            SaveContinueSearch = s;
+	    SaveContinueSearch = s;
 
 		cheat_clearbitmap();
 
@@ -5153,6 +5207,7 @@ void ContinueSearch(int selected, int ViewLast)
 					break;
 
 				case KEYCODE_ENTER:
+				case KEYCODE_ENTER_PAD:
 					if (s == total-1)
 						done = 2;
 					break;
@@ -5161,7 +5216,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		cheat_clearbitmap();
 
-            SaveContinueSearch = s;
+	    SaveContinueSearch = s;
 
 		/* User select to return to the previous menu */
 		if (done == 2)
@@ -5195,59 +5250,59 @@ void ContinueSearch(int selected, int ViewLast)
 	      {
 			if (ext->data[i] != 0)
 			{
-	            	int ValRead = RD_GAMERAM(SearchCpuNo, i+ext->start);
+			int ValRead = RD_GAMERAM(SearchCpuNo, i+ext->start);
 				switch (CurrentMethod)
 				{
-					case SEARCH_VALUE:                         /* Value */
+					case SEARCH_VALUE:			   /* Value */
 						if ((ValRead != s) && (ValRead != s-1))
 							ext->data[i] = 0;
 						break;
-					case SEARCH_TIME:                          /* Timer */
+					case SEARCH_TIME:			   /* Timer */
 						if (ValRead != (ext_br->data[i] + s))
 							ext->data[i] = 0;
 						break;
-					case SEARCH_ENERGY:                        /* Energy */
-	                        	switch (s)
-	                        	{
-	                        		case 0:    /* Less */
+					case SEARCH_ENERGY:			   /* Energy */
+					switch (s)
+					{
+						case 0:    /* Less */
 								if (ValRead >= ext_br->data[i])
 									ext->data[i] = 0;
-	                                    	break;
-	                        		case 1:    /* Equal */
+						break;
+						case 1:    /* Equal */
 								if (ValRead != ext_br->data[i])
 									ext->data[i] = 0;
-	                                    	break;
-	                        		case 2:    /* Greater */
+						break;
+						case 2:    /* Greater */
 								if (ValRead <= ext_br->data[i])
 									ext->data[i] = 0;
-	                                    	break;
-	                        	}
 						break;
-					case SEARCH_BIT:                           /* Bit */
-	                        	switch (s)
-	                        	{
-	                        		case 0:    /* Same */
+					}
+						break;
+					case SEARCH_BIT:			   /* Bit */
+					switch (s)
+					{
+						case 0:    /* Same */
 								j = ValRead ^ (ext_sr->data[i] ^ 0xFF);
 								ext->data[i] = j & ext->data[i];
-	                                    	break;
-	                        		case 1:    /* Opposite */
+						break;
+						case 1:    /* Opposite */
 								j = ValRead ^ ext_sr->data[i];
 								ext->data[i] = j & ext->data[i];
-	                                    	break;
-	                        	}
 						break;
-					case SEARCH_BYTE:                          /* Byte */
-	                        	switch (s)
-	                        	{
-	                        		case 0:    /* Same */
+					}
+						break;
+					case SEARCH_BYTE:			   /* Byte */
+					switch (s)
+					{
+						case 0:    /* Same */
 								if (ValRead != ext_sr->data[i])
 									ext->data[i] = 0;
-	                                    	break;
-	                        		case 1:    /* Different */
+						break;
+						case 1:    /* Different */
 								if (ValRead == ext_sr->data[i])
 									ext->data[i] = 0;
-	                                    	break;
-	                        	}
+						break;
+					}
 						break;
 					default:
 						ext->data[i] = 0;
@@ -5255,7 +5310,7 @@ void ContinueSearch(int selected, int ViewLast)
 				}
 			}
 			if (ext->data[i] != 0)
-	            	count ++;
+			count ++;
 	      }
 	}
 	if ((CurrentMethod == SEARCH_TIME) || (CurrentMethod == SEARCH_ENERGY))
@@ -5352,6 +5407,7 @@ void ContinueSearch(int selected, int ViewLast)
 	switch (key)
 	{
 		case KEYCODE_HOME:
+		case KEYCODE_7_PAD:
 			if (count == 0)
 				break;
 			if (count <= MAX_MATCHES)
@@ -5396,6 +5452,7 @@ void ContinueSearch(int selected, int ViewLast)
 			break;
 
 		case KEYCODE_PGDN:
+		case KEYCODE_3_PAD:
 			if (count == 0)
 				break;
 			if (count <= Index+MAX_MATCHES)
@@ -5465,7 +5522,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		case KEYCODE_F1:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (count == 0)
 				break;
@@ -5481,7 +5538,7 @@ void ContinueSearch(int selected, int ViewLast)
 			ptr = strtok(NULL, "=");
 			sscanf(ptr,"%02X", &TrueData);
 
-                  AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[MAX_DT]);
+		  AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[MAX_DT]);
 
 			/* Add the selected address to the LoadedCheatTable */
 			if (LoadedCheatTotal < MAX_LOADEDCHEATS)
@@ -5501,14 +5558,14 @@ void ContinueSearch(int selected, int ViewLast)
 
 		case KEYCODE_F2:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
 
-                  j = FindFreeWatch();
+		  j = FindFreeWatch();
 			if (j)
 			{
 				strcpy(buf, dt[s].text);
@@ -5528,7 +5585,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		case KEYCODE_F6:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (count == 0)
 				break;
@@ -5553,7 +5610,7 @@ void ContinueSearch(int selected, int ViewLast)
 						TrueAddr = i+ext->start;
 						TrueData = ext_sr->data[i];
 
-                  			AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[MAX_DT]);
+					AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[MAX_DT]);
 
 						set_cheat(&LoadedCheatTable[LoadedCheatTotal], NEW_CHEAT);
 						LoadedCheatTable[LoadedCheatTotal].CpuNo   = SearchCpuNo;
@@ -5573,7 +5630,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		case KEYCODE_F8:
 			while (keyboard_pressed(key));
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
@@ -5586,7 +5643,7 @@ void ContinueSearch(int selected, int ViewLast)
 			{
 				for (i = 0; i <= ext->end - ext->start; i++)
 				{
-		                  j = FindFreeWatch();
+				  j = FindFreeWatch();
 					if (!j)
 						break;
 					if (ext->data[i] != 0)
@@ -5675,7 +5732,7 @@ int ChooseWatchHeader(void)
 {
   int i = 0;
   char *paDisplayText[] = {
- 		"<+>: +1 byte    <->: -1 byte",
+		"<+>: +1 byte    <->: -1 byte",
 		"<1> ... <8>: +1 digit",
 		"<9>: Prev CPU  <0>: Next CPU",
 		"<Delete>: disable a watch",
@@ -5783,7 +5840,7 @@ void ChooseWatch(void)
 	switch (key)
 	{
 		case KEYCODE_J:
-                  oldkey = 0;
+		  oldkey = 0;
 			if (WatchX > Machine->uixmin)
 			{
 				dx = 1;
@@ -5793,7 +5850,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_L:
-                  oldkey = 0;
+		  oldkey = 0;
 			/* if (WatchX <= ( MachWidth - ( FontWidth * (int)strlen( buf ) ) ) ) */
 			if (WatchX <= ( MachWidth -WatchGfxLen ) )
 			{
@@ -5804,7 +5861,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_K:
-                  oldkey = 0;
+		  oldkey = 0;
 			if (WatchY <= (MachHeight - FontHeight) - 1)
 			{
 				dx = 0;
@@ -5814,7 +5871,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_I:
-                  oldkey = 0;
+		  oldkey = 0;
 			if (WatchY > Machine->uiymin)
 			{
 				dx = 0;
@@ -5824,6 +5881,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_LEFT:
+		case KEYCODE_4_PAD:
 			/* JCK 990717 BEGIN */
 			dx = 0;
 			dy = 0;
@@ -5836,6 +5894,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_RIGHT:
+		case KEYCODE_6_PAD:
 			/* JCK 990717 BEGIN */
 			dx = 0;
 			dy = 0;
@@ -5848,6 +5907,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_PGDN:
+		case KEYCODE_3_PAD:
 			/* JCK 990717 BEGIN */
 			dx = 0;
 			dy = 0;
@@ -5860,6 +5920,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_PGUP:
+		case KEYCODE_9_PAD:
 			/* JCK 990717 BEGIN */
 			dx = 0;
 			dy = 0;
@@ -6015,6 +6076,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_DEL:
+		case KEYCODE_DEL_PAD:
 			while (keyboard_pressed(key)); /* wait for key release */
 			/* JCK 990717 BEGIN */
 			dx = 0;
@@ -6052,7 +6114,7 @@ void ChooseWatch(void)
 			dx = 0;
 			dy = 0;
 			/* JCK 990717 END */
-                  oldkey = 0;
+		  oldkey = 0;
 			if (Watches[s] == MAX_ADDRESS(WatchesCpuNo[s]))
 				break;
 
@@ -6062,7 +6124,7 @@ void ChooseWatch(void)
 			}
 
 			AddCpuToAddr(WatchesCpuNo[s], Watches[s],
-                  			RD_GAMERAM(WatchesCpuNo[s], Watches[s]), buf);
+					RD_GAMERAM(WatchesCpuNo[s], Watches[s]), buf);
 
 			if (LoadedCheatTotal < MAX_LOADEDCHEATS-1)
 			{
@@ -6084,7 +6146,7 @@ void ChooseWatch(void)
 			dx = 0;
 			dy = 0;
 			/* JCK 990717 END */
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
@@ -6095,20 +6157,20 @@ void ChooseWatch(void)
 				dt[i].color = DT_COLOR_WHITE;
 			displaytext (dt, 0,1);
 			sprintf(buffer, FormatAddr(WatchesCpuNo[s],0), Watches[s]);
-                 	xedit(0, YFOOT_WATCH, buffer, strlen(buffer), 1);
+			xedit(0, YFOOT_WATCH, buffer, strlen(buffer), 1);
 			sscanf(buffer,"%X", &Watches[s]);
 			if (Watches[s] > MAX_ADDRESS(WatchesCpuNo[s]))
 				Watches[s] = MAX_ADDRESS(WatchesCpuNo[s]);
 			AddCpuToWatch(s, str2[ s ]);
-                  break;
+		  break;
 
 		case KEYCODE_F4:
 			while (keyboard_pressed(key)); /* wait for key release */
 			/* JCK 990717 BEGIN */
-                        dx = 0;
-                        dy = 0;
+			dx = 0;
+			dy = 0;
 			/* JCK 990717 END */
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
@@ -6146,7 +6208,7 @@ void ChooseWatch(void)
 
 					break;
 				}
-          		}
+			}
 			break;
 
 		case KEYCODE_F6:
@@ -6155,7 +6217,7 @@ void ChooseWatch(void)
 			dx = 0;
 			dy = 0;
 			/* JCK 990717 END */
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
@@ -6171,7 +6233,7 @@ void ChooseWatch(void)
 					countAdded++;
 
 					AddCpuToAddr(WatchesCpuNo[i], Watches[i],
-		                  			RD_GAMERAM(WatchesCpuNo[i], Watches[i]), buf);
+							RD_GAMERAM(WatchesCpuNo[i], Watches[i]), buf);
 
 					set_cheat(&LoadedCheatTable[LoadedCheatTotal], NEW_CHEAT);
 					LoadedCheatTable[LoadedCheatTotal].CpuNo   = WatchesCpuNo[i];
@@ -6181,7 +6243,7 @@ void ChooseWatch(void)
 					LoadedCheatTotal++;
 				}
 
-          		}
+			}
 			xprintf(0, 0,YFOOT_WATCH,"%d Added",countAdded);
 
 			break;
@@ -6192,7 +6254,7 @@ void ChooseWatch(void)
 			dx = 0;
 			dy = 0;
 			/* JCK 990717 END */
-                  oldkey = 0;
+		  oldkey = 0;
 
 			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
@@ -6204,7 +6266,7 @@ void ChooseWatch(void)
 				WatchesCpuNo[ i ] = 0;
 				Watches[ i ] = MAX_ADDRESS(WatchesCpuNo[ i ]);
 				AddCpuToWatch(i, str2[ i ]);
-          		}
+			}
 			break;
 
 		case KEYCODE_F10:
@@ -6213,12 +6275,13 @@ void ChooseWatch(void)
 			dx = 0;
 			dy = 0;
 			/* JCK 990717 END */
-                  oldkey = 0;
+		  oldkey = 0;
 			ChooseWatchHelp();								/* Show Help */
 			y = ChooseWatchHeader();
 			break;
 
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			/* JCK 990717 BEGIN */
 			dx = 0;
 			dy = 0;
@@ -6312,6 +6375,7 @@ int cheat_menu(void)
 	switch (key)
 	{
 		case KEYCODE_ENTER:
+		case KEYCODE_ENTER_PAD:
 			switch (s)
 			{
 				case 0:
@@ -6358,7 +6422,7 @@ int cheat_menu(void)
 
 				case 9:
 					done = 1;
-                              s = 0;
+			      s = 0;
 					break;
 			}
 			break;
@@ -6406,8 +6470,8 @@ void DoCheat(void)
 			(ActiveCheatTable[i].Special == OFFSET_LINK_CHEAT)	)
 		{
 			WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                  		ActiveCheatTable[i].Address,
-                  		ActiveCheatTable[i].Data);
+				ActiveCheatTable[i].Address,
+				ActiveCheatTable[i].Data);
 		}
 		else
 		{
@@ -6419,28 +6483,28 @@ void DoCheat(void)
 					case 1:
 					case 1 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
-                                    DeleteActiveCheatFromTable(i);
+				    DeleteActiveCheatFromTable(i);
 						break;
 					case 2:
 					case 2 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 1*60;
 						break;
 					case 3:
 					case 3 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 2*60;
 						break;
 					case 4:
 					case 4 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 5*60;
 						break;
@@ -6450,8 +6514,8 @@ void DoCheat(void)
 					case 5:
 					case 5 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 1*60;
 							ActiveCheatTable[i].Special += 1000;
@@ -6460,8 +6524,8 @@ void DoCheat(void)
 					case 6:
 					case 6 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 2*60;
 							ActiveCheatTable[i].Special += 1000;
@@ -6470,8 +6534,8 @@ void DoCheat(void)
 					case 7:
 					case 7 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 5*60;
 							ActiveCheatTable[i].Special += 1000;
@@ -6485,142 +6549,142 @@ void DoCheat(void)
 					case 8:
 					case 8 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 1;
 							ActiveCheatTable[i].Special += 1000;
 							ActiveCheatTable[i].Backup =
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address);
+								ActiveCheatTable[i].Address);
 						}
 						break;
 					case 9:
 					case 9 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 1;
 							ActiveCheatTable[i].Special += 1000;
 							ActiveCheatTable[i].Backup =
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address);
+								ActiveCheatTable[i].Address);
 						}
 						break;
 					case 10:
 					case 10 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 1;
 							ActiveCheatTable[i].Special += 1000;
 							ActiveCheatTable[i].Backup =
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address);
+								ActiveCheatTable[i].Address);
 						}
 						break;
 					case 11:
 					case 11 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Data)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Data)
 						{
 							ActiveCheatTable[i].Count = 1;
 							ActiveCheatTable[i].Special += 1000;
 							ActiveCheatTable[i].Backup =
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address);
+								ActiveCheatTable[i].Address);
 						}
 						break;
 
 					case 20:
 					case 20 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) |
-                                                			ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) |
+									ActiveCheatTable[i].Data);
 						break;
 					case 21:
 					case 21 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) |
-		                                                	ActiveCheatTable[i].Data);
-                                    DeleteActiveCheatFromTable(i);
+								ActiveCheatTable[i].Address) |
+									ActiveCheatTable[i].Data);
+				    DeleteActiveCheatFromTable(i);
 						break;
 					case 22:
 					case 22 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-            	                                   		ActiveCheatTable[i].Address) |
-                  		                              	ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) |
+								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 1*60;
 						break;
 					case 23:
 					case 23 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) |
-                              		                  	ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) |
+								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 2*60;
 						break;
 					case 24:
 					case 24 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) |
-                                          		      	ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) |
+								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 5*60;
 						break;
 					case 40:
 					case 40 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) &
-                                                			~ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) &
+									~ActiveCheatTable[i].Data);
 						break;
 					case 41:
 					case 41 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) &
-		                                                	~ActiveCheatTable[i].Data);
-                                    DeleteActiveCheatFromTable(i);
+								ActiveCheatTable[i].Address) &
+									~ActiveCheatTable[i].Data);
+				    DeleteActiveCheatFromTable(i);
 						break;
 					case 42:
 					case 42 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) &
-            		                                    	~ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) &
+								~ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 1*60;
 						break;
 					case 43:
 					case 43 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) &
-                        		                        	~ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) &
+									~ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 2*60;
 						break;
 					case 44:
 					case 44 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                                		ActiveCheatTable[i].Address) &
-                                    		            	~ActiveCheatTable[i].Data);
+								ActiveCheatTable[i].Address) &
+								~ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 5*60;
 						break;
 
@@ -6634,7 +6698,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Special += 1000;
 						ActiveCheatTable[i].Backup =
 							RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                               		ActiveCheatTable[i].Address);
+							ActiveCheatTable[i].Address);
 						break;
 					case 70:
 					case 71:
@@ -6643,30 +6707,30 @@ void DoCheat(void)
 					case 74:
 					case 75:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
-                                    DeleteActiveCheatFromTable(i);
+				    DeleteActiveCheatFromTable(i);
 						break;
 
 						/*Special case, linked with 5,6,7 */
 					case 1005:
-					case 1005 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1005 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
 					case 1006:
-					case 1006 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1006 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
 					case 1007:
-					case 1007 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1007 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    		ActiveCheatTable[i].Address,
+						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
@@ -6674,42 +6738,42 @@ void DoCheat(void)
 					/*Special case, linked with 8,9,10,11 */
 					/* Change the memory only if the memory decreased by X */
 					case 1008:
-					case 1008 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1008 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-	                                   			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Backup-1)
+								ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Backup-1)
 							WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address,
+							ActiveCheatTable[i].Address,
 									ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
 					case 1009:
-					case 1009 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1009 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-	                                    	ActiveCheatTable[i].Backup-2)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Backup-2)
 							WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address,
+							ActiveCheatTable[i].Address,
 									ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
 					case 1010:
-					case 1010 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1010 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-	                                    	ActiveCheatTable[i].Backup-3)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Backup-3)
 							WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address,
+							ActiveCheatTable[i].Address,
 									ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
 					case 1011:
-					case 1011 + OFFSET_LINK_CHEAT:    /* Linked cheat */
+					case 1011 + OFFSET_LINK_CHEAT:	  /* Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Backup-4)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Backup-4)
 							WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address,
+							ActiveCheatTable[i].Address,
 									ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;
 						break;
@@ -6723,19 +6787,19 @@ void DoCheat(void)
 					case 1064:
 					case 1065:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address) !=
-                                    		ActiveCheatTable[i].Backup)
+							ActiveCheatTable[i].Address) !=
+						ActiveCheatTable[i].Backup)
 						{
 							WR_GAMERAM (ActiveCheatTable[i].CpuNo,
-                                    			ActiveCheatTable[i].Address,
+							ActiveCheatTable[i].Address,
 									ActiveCheatTable[i].Data);
-                                    	DeleteActiveCheatFromTable(i);
+					DeleteActiveCheatFromTable(i);
 						}
 						break;
 
-          		}	/* end switch */
-        	} /* end if (ActiveCheatTable[i].Count == 0) */
-        	else
+			}	/* end switch */
+		} /* end if (ActiveCheatTable[i].Count == 0) */
+		else
 		{
 			ActiveCheatTable[i].Count--;
 		}
@@ -6759,7 +6823,7 @@ void DoCheat(void)
       }
 	else
 	{
-		osd_clearbitmap( Machine -> scrbitmap );        /* Clear Screen */
+		osd_clearbitmap( Machine -> scrbitmap );	/* Clear Screen */
 		(Machine->drv->vh_update)(Machine->scrbitmap,1);  /* Make Game Redraw Screen */
 	      cheat_updatescreen = 0;
 	}
@@ -6864,10 +6928,11 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 		{
 			oldkey = 0;
 		}
-		key = cheat_readkey();    /* MSH 990217 */
+		key = cheat_readkey();	  /* MSH 990217 */
 		switch (key)
 		{
 			case KEYCODE_DOWN:
+			case KEYCODE_2_PAD:
 				if (LineNumber < LastHelpLine - LinePerPage)
 				{
 					LineNumber ++;
@@ -6879,6 +6944,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_UP:
+			case KEYCODE_8_PAD:
 				if (LineNumber > 0)
 				{
 					LineNumber --;
@@ -6890,6 +6956,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_HOME:
+			case KEYCODE_7_PAD:
 				if (LineNumber != 0)
 				{
 					LineNumber = 0;
@@ -6901,6 +6968,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_END:
+			case KEYCODE_1_PAD:
 				if (LineNumber != LastHelpLine - LinePerPage)
 				{
 					LineNumber = LastHelpLine - LinePerPage;
@@ -6912,6 +6980,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_PGDN:
+			case KEYCODE_3_PAD:
 				while (keyboard_pressed(key)); /* wait for key release */
 				if (LineNumber < LastHelpLine - LinePerPage)
 				{
@@ -6928,6 +6997,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_PGUP:
+			case KEYCODE_9_PAD:
 				while (keyboard_pressed(key)); /* wait for key release */
 				if (LineNumber > 0)
 				{
@@ -6945,6 +7015,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 			case KEYCODE_ESC:
 			case KEYCODE_TAB:
 			case KEYCODE_ENTER:
+			case KEYCODE_ENTER_PAD:
 				while (keyboard_pressed(key));
 				oldkey = 0;
 				done = 1;

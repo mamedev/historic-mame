@@ -88,7 +88,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 	gamedrv = drivers[game];
 	romp = gamedrv->rom;
 
-	if (!romp) return -1;	/* special case for pong */
+	if (!romp) return -1;
 
 	/* check for existence of romset */
 	if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))

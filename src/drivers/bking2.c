@@ -239,16 +239,16 @@ INPUT_PORTS_START( bking2 )
     PORT_DIPSETTING(    0x80, "2" )
 
     PORT_START  /* IN5 */
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 25, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
 
     PORT_START  /* IN6 */
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 25, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
 
     PORT_START  /* IN7 */
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 25, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
 
     PORT_START  /* IN8 */
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_COCKTAIL, 25, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_COCKTAIL, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
 INPUT_PORTS_END
 
 

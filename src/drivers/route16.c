@@ -69,7 +69,7 @@ int  route16_videoram2_r(int offset);
 void route16_sharedram_w(int offset,int data);
 int  route16_sharedram_r(int offset);
 void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void stratvox_samples_w(int offset,int data);
+void stratvox_sn76477_w (int offset,int data);
 
 static struct MemoryReadAddress cpu1_readmem[] =
 {
@@ -220,35 +220,41 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	10000000/8,     /* 10Mhz / 8 = 1.25Mhz */
-	{ 25 },
+	{ 50 },
 	{ 0 },
 	{ 0 },
-	{ stratvox_samples_w },  /* SN76477 commands (not used in Route 16?) */
+	{ stratvox_sn76477_w },  /* SN76477 commands (not used in Route 16?) */
 	{ 0 }
+};
+
+
+static struct SN76477interface sn76477_interface =
+{
+	1,	/* 1 chip */
+	{ 50 },  /* mixing level   pin description		 */
+	{ RES_K( 47)   },		/*	4  noise_res		 */
+	{ RES_K(150)   },		/*	5  filter_res		 */
+	{ CAP_U(0.001) },		/*	6  filter_cap		 */
+	{ RES_M(3.3)   },		/*	7  decay_res		 */
+	{ CAP_U(1.0)   },		/*	8  attack_decay_cap  */
+	{ RES_K(4.7)   },		/* 10  attack_res		 */
+	{ RES_K(200)   },		/* 11  amplitude_res	 */
+	{ RES_K( 55)   },		/* 12  feedback_res 	 */
+	{ 5.0*2/(2+10) },		/* 16  vco_voltage		 */
+	{ CAP_U(0.022) },		/* 17  vco_cap			 */
+	{ RES_K(100)   },		/* 18  vco_res			 */
+	{ 5.0		   },		/* 19  pitch_voltage	 */
+	{ RES_K( 75)   },		/* 20  slf_res			 */
+	{ CAP_U(1.0)   },		/* 21  slf_cap			 */
+	{ CAP_U(2.2)   },		/* 23  oneshot_cap		 */
+	{ RES_K(4.7)   }		/* 24  oneshot_res		 */
 };
 
 
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 25 }
-};
-
-
-static const char *stratvox_sample_names[] =
-{
-	"*stratvox",
-	"explode.wav", // Sample played when player's ship is exploding
-	"bonus.wav",   // Sample played when reached 5000 pts and bonus ship
-                   // is awarded
-    0   /* end of array */
-};
-
-static struct Samplesinterface samples_interface =
-{
-	1,	/* 1 channel */
-	25,	/* volume */
-	stratvox_sample_names
+	{ 50 }
 };
 
 
@@ -306,12 +312,12 @@ static struct MachineDriver machine_driver_##GAMENAME =		\
 			&ay8910_interface	 \
 		},						 \
 		{						 \
+			SOUND_SN76477,		 \
+			&sn76477_interface	 \
+        },                       \
+        {                        \
 			SOUND_DAC,			 \
 			&dac_interface		 \
-		},						 \
-		{						 \
-			SOUND_SAMPLES,		 \
-			&samples_interface	 \
 		}
 
 MACHINE_DRIVER(route16,  ROUTE16_AUDIO_INTERFACE )

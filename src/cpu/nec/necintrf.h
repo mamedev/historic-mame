@@ -17,24 +17,60 @@ enum {
 extern int nec_ICount;
 
 /* Public functions */
-extern void nec_reset(void *param);
-extern void nec_exit(void);
-extern int nec_execute(int cycles);
-extern unsigned nec_get_context(void *dst);
-extern void nec_set_context(void *src);
-extern unsigned nec_get_pc(void);
-extern void nec_set_pc(unsigned val);
-extern unsigned nec_get_sp(void);
-extern void nec_set_sp(unsigned val);
-extern unsigned nec_get_reg(int regnum);
-extern void nec_set_reg(int regnum, unsigned val);
-extern void nec_set_nmi_line(int state);
-extern void nec_set_irq_line(int irqline, int state);
-extern void nec_set_irq_callback(int (*callback)(int irqline));
-extern const char *nec_v20_info(void *context, int regnum);
-extern const char *nec_v30_info(void *context, int regnum);
-extern const char *nec_v33_info(void *context, int regnum);
-extern unsigned nec_dasm(char *buffer, unsigned pc);
+
+#define v20_ICount nec_ICount
+extern void v20_reset(void *param);
+extern void v20_exit(void);
+extern int v20_execute(int cycles);
+extern unsigned v20_get_context(void *dst);
+extern void v20_set_context(void *src);
+extern unsigned v20_get_pc(void);
+extern void v20_set_pc(unsigned val);
+extern unsigned v20_get_sp(void);
+extern void v20_set_sp(unsigned val);
+extern unsigned v20_get_reg(int regnum);
+extern void v20_set_reg(int regnum, unsigned val);
+extern void v20_set_nmi_line(int state);
+extern void v20_set_irq_line(int irqline, int state);
+extern void v20_set_irq_callback(int (*callback)(int irqline));
+extern const char *v20_info(void *context, int regnum);
+extern unsigned v20_dasm(char *buffer, unsigned pc);
+
+#define v30_ICount nec_ICount
+extern void v30_reset(void *param);
+extern void v30_exit(void);
+extern int v30_execute(int cycles);
+extern unsigned v30_get_context(void *dst);
+extern void v30_set_context(void *src);
+extern unsigned v30_get_pc(void);
+extern void v30_set_pc(unsigned val);
+extern unsigned v30_get_sp(void);
+extern void v30_set_sp(unsigned val);
+extern unsigned v30_get_reg(int regnum);
+extern void v30_set_reg(int regnum, unsigned val);
+extern void v30_set_nmi_line(int state);
+extern void v30_set_irq_line(int irqline, int state);
+extern void v30_set_irq_callback(int (*callback)(int irqline));
+extern const char *v30_info(void *context, int regnum);
+extern unsigned v30_dasm(char *buffer, unsigned pc);
+
+#define v33_ICount nec_ICount
+extern void v33_reset(void *param);
+extern void v33_exit(void);
+extern int v33_execute(int cycles);
+extern unsigned v33_get_context(void *dst);
+extern void v33_set_context(void *src);
+extern unsigned v33_get_pc(void);
+extern void v33_set_pc(unsigned val);
+extern unsigned v33_get_sp(void);
+extern void v33_set_sp(unsigned val);
+extern unsigned v33_get_reg(int regnum);
+extern void v33_set_reg(int regnum, unsigned val);
+extern void v33_set_nmi_line(int state);
+extern void v33_set_irq_line(int irqline, int state);
+extern void v33_set_irq_callback(int (*callback)(int irqline));
+extern const char *v33_info(void *context, int regnum);
+extern unsigned v33_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasmnec(char* buffer, unsigned pc);

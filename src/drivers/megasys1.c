@@ -11,11 +11,11 @@ To enter service mode in some games hit 5+F3.
 Game						Year	System	Dumped by			Supported ?
 ---------------------------------------------------------------------------
 64th Street  (World) /		1991	C		AraCORN 		*	Yes
- 64th Street (Japan)		1991	C		J-Rom	 		*	Yes
+64th Street  (Japan)		1991	C		J-Rom	 		*	Yes
 Astyanax          (World) /	1989	A		-				*	Yes (encrypted)
- The Lord of King (Japan)	1989	A	 	J-Rom			*	Yes (encrypted)
+The Lord of King  (Japan)	1989	A	 	J-Rom			*	Yes (encrypted)
 Avenging Spirit (World) /	1991	B		AraCORN 		*	Yes
- Phantasm       (Japan)		1990	A		J-Rom 			*	Yes (encrypted)
+Phantasm        (Japan)		1990	A		J-Rom 			*	Yes (encrypted)
 Big Striker					1992	C		ShinobiZ & COY	*	Yes
 Chimera Beast				1993	C		J-Rom	 		*	Yes
 Cybattler					1993	C		AraCORN			*	Yes
@@ -24,15 +24,16 @@ Hachoo!						1989	A		AraCORN 		*	Yes (encrypted)
 Iga Ninjyutsuden (Japan)	1988	A		J-Rom			*	Yes (encrypted)
 Kick Off (Japan)			1988	A		AraCORN			*	Yes
 Legend of Makai (World) /	1988	Z		AraCORN				Yes
- Makai Densetsu (Japan)		1988	Z		-					Yes
+Makai Densetsu  (Japan)		1988	Z		-					Yes
 P-47  (World) /				1988	A	 	-					Yes
- P-47 (Japan)				1988	A		J-rom				Yes
+P-47  (Japan)				1988	A		J-rom				Yes
 Peek-a-Boo!					1993	D		Bart				Yes
 Plus Alpha					1989	A		J-Rom 				Yes (encrypted)
 RodLand  (World) /			1990	A		AraCORN 		*	Yes (encrypted)
- RodLand (Japan)			1990	A		-				*	Yes
+RodLand  (Japan)			1990	A		-				*	Yes
 Saint Dragon				1989	A		J-Rom 				Yes (encrypted)
 Soldam (Japan)				1992	A		J-Rom			*	Yes (encrypted)
+Takeda Shingen (Japan)		1988	A		J-Rom			*	Yes (encrypted)
 ------------------------------------------------------------^--------------
 															|
 							The Priority Prom is missing for these games !
@@ -1004,6 +1005,9 @@ MEGASYS1_GAME(	soldamj, A,0x0f0000,0x0fffff,
 				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
 
+/* OSC:	? */
+MEGASYS1_GAME(	tshingen, A, 0x0f0000, 0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
 
 
@@ -1126,7 +1130,7 @@ INPUT_PORTS_START( 64street )
 	PORT_DIPSETTING(    0x18, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x60, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x60, "2" )
 	PORT_DIPSETTING(    0x20, "3" )
@@ -1264,8 +1268,8 @@ INPUT_PORTS_START( astyanax )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "30K 70K 110K then every 30K" )
-	PORT_DIPSETTING(    0x00, "50K 100K then every 40K" )
+	PORT_DIPSETTING(    0x04, "30k 70k 110k then every 30k" )
+	PORT_DIPSETTING(    0x00, "50k 100k then every 40k" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x18, "3" )
@@ -1396,7 +1400,7 @@ ROM_START( avspirit )
 	ROM_LOAD( "spirit13.rom",  0x000000, 0x040000, 0x05bc04d9 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "ph.bin",        0x0000, 0x0200, 0x8359650a )
 ROM_END
 
 
@@ -1436,7 +1440,7 @@ ROM_START( phantasm )
 	ROM_LOAD( "spirit13.rom", 0x000000, 0x040000, 0x05bc04d9 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "ph.bin",        0x0000, 0x0200, 0x8359650a )
 ROM_END
 
 //	fire	jump
@@ -1732,7 +1736,7 @@ INPUT_PORTS_START( chimerab )
 	PORT_DIPSETTING(    0x18, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x60, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x60, "2" )
 	PORT_DIPSETTING(    0x20, "3" )
@@ -2190,12 +2194,12 @@ INPUT_PORTS_START( iganinju )
 	PORT_START			/* IN5 - 0x80007.b */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "2" )
-	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Inifinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "50K" )
-	PORT_DIPSETTING(    0x00, "200K" )
+	PORT_DIPSETTING(    0x04, "50k" )
+	PORT_DIPSETTING(    0x00, "200k" )
 	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -2631,11 +2635,6 @@ INPUT_PORTS_END
 
 							[ Peek-a-Boo! ]
 
-Issues:	the paddle range during play should be restricted to $40-$c0
-		(or the player gets stuck at sides until the value is back
-		within this range). But in order to be able to select every
-		"model", it must be in the $08-$F8 range
-
 interrupts:
 	1] 		506>	rte
 	2] 		50a>	move.w  #$ffff, $1f0006.l
@@ -2764,7 +2763,7 @@ INPUT_PORTS_START( peekaboo )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define PEEKABOO_PADDLE(_FLAG_)	\
-	PORT_ANALOG( 0x00ff, 0x0080, IPT_PADDLE | _FLAG_, 100, 80, 1, 0x0008, 0x00f8 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_PADDLE | _FLAG_, 50, 10, 0x0018, 0x00e0 )
 
 	PORT_START      	/* IN1 - paddle p1 */
 	PEEKABOO_PADDLE(IPF_PLAYER1)
@@ -2918,13 +2917,13 @@ INPUT_PORTS_START( plusalph )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Inifinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x04, 0x04, "Bombs" )
-	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "70K and every 130K")
-	PORT_DIPSETTING(    0x00, "100K and every 200K")
+	PORT_DIPSETTING(    0x08, "70k and every 130k")
+	PORT_DIPSETTING(    0x00, "100k and every 200k")
 	PORT_DIPNAME( 0x30, 0x30, "?Difficulty?" )
 	PORT_DIPSETTING(    0x30, "3" )	// 1
 	PORT_DIPSETTING(    0x20, "2" )	// 3
@@ -3003,7 +3002,7 @@ ROM_START( rodland )
 	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "rl.bin",    0x0000, 0x0200, 0x8914e72d )
 ROM_END
 
 
@@ -3062,7 +3061,7 @@ ROM_START( rodlandj )
 	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
 
 	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "rl.bin",    0x0000, 0x0200, 0x8914e72d )
 ROM_END
 
 
@@ -3092,7 +3091,7 @@ INPUT_PORTS_START( rodland )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Inifinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x10, 0x10, "Default episode" )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -3375,6 +3374,100 @@ static void init_soldam(void)
 
 
 
+/***************************************************************************
+
+							[ Takeda Shingen ]
+
+***************************************************************************/
+
+ROM_START( tshingen )
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
+	ROM_LOAD_EVEN( "takeda2.bin", 0x000000, 0x020000, 0x6ddfc9f3 )
+	ROM_LOAD_ODD(  "takeda1.bin", 0x000000, 0x020000, 0x1afc6b7d )
+
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
+	ROM_LOAD_EVEN( "takeda5.bin", 0x000000, 0x010000, 0xfbdc51c0 )
+	ROM_LOAD_ODD(  "takeda6.bin", 0x000000, 0x010000, 0x8fa65b69 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "takeda11.bin", 0x000000, 0x020000, 0xbf0b40a6 )
+	ROM_LOAD( "takeda12.bin", 0x020000, 0x020000, 0x07987d89 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "takeda15.bin", 0x000000, 0x020000, 0x4c316b79 )
+	ROM_LOAD( "takeda16.bin", 0x020000, 0x020000, 0xceda9dd6 )
+	ROM_LOAD( "takeda17.bin", 0x040000, 0x020000, 0x3d4371dc )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "takeda19.bin", 0x000000, 0x010000, 0x2ca2420d )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "takeda20.bin", 0x000000, 0x020000, 0x1bfd636f )
+	ROM_LOAD( "takeda21.bin", 0x020000, 0x020000, 0x12fb006b )
+	ROM_LOAD( "takeda22.bin", 0x040000, 0x020000, 0xb165b6ae )
+	ROM_LOAD( "takeda23.bin", 0x060000, 0x020000, 0x37cb9214 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
+	ROM_LOAD( "takeda9.bin",  0x000000, 0x020000, 0xdb7f3f4f )
+	ROM_LOAD( "takeda10.bin", 0x020000, 0x020000, 0xc9959d71 )
+
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
+	ROM_LOAD( "takeda8.bin",  0x000000, 0x040000, 0xdde779d2 )
+
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
+	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+ROM_END
+
+INPUT_PORTS_START( tshingen )
+	COINS						/* IN0 0x80001.b */
+	// sword_left	sword_right		jump
+	JOY_3BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_3BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
+
+	PORT_START			/* IN4 0x80006.b */
+	COINAGE_6BITS
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On )  )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On )  )
+
+	PORT_START			/* IN5 0x80007.b */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Inifinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "20k" )
+	PORT_DIPSETTING(    0x04, "30k" )
+	PORT_DIPSETTING(    0x08, "40k" )
+	PORT_DIPSETTING(    0x00, "50k" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Difficulty ) ) // damage when hit
+	PORT_DIPSETTING(    0x30, "Easy"    ) // 0
+	PORT_DIPSETTING(    0x10, "Normal"  ) // 1
+	PORT_DIPSETTING(    0x20, "Hard"    ) // 2
+	PORT_DIPSETTING(    0x00, "Hardest" ) // 3
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On )  )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+
+INPUT_PORTS_END
+
+static void init_tshingen(void)
+{
+	phantasm_rom_decode(0);
+}
+
+
+
+
+
 
 
 /***************************************************************************
@@ -3407,3 +3500,4 @@ GAME( 1990, rodland,  0,        rodland,  rodland,  rodland,  ROT0,       "Jalec
 GAME( 1990, rodlandj, rodland,  rodland,  rodland,  rodlandj, ROT0,       "Jaleco", "RodLand (Japan)" )
 GAME( 1989, stdragon, 0,        stdragon, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
 GAME( 1992, soldamj,  0,        soldamj,  soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
+GAME( 1988, tshingen, 0,        tshingen, tshingen, tshingen, ROT0,       "Jaleco", "Takeda Shingen (Japan)" )

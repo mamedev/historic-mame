@@ -147,11 +147,34 @@ static void firqhandler(int irq)
 ***************************************************************************/
 static int capbowl_interrupt(void)
 {
-	if (readinputport(2) & 1)	/* get status of the F2 key */
+	if (readinputport(4) & 1)	/* get status of the F2 key */
 		return nmi_interrupt();	/* trigger self test */
 
 	return ignore_interrupt();
 }
+
+
+static int track[2];
+
+static int track_0_r(int offset)
+{
+	return (input_port_0_r(offset) & 0xf0) | ((input_port_2_r(offset) - track[0]) & 0x0f);
+}
+
+static int track_1_r(int offset)
+{
+	return (input_port_1_r(offset) & 0xf0) | ((input_port_3_r(offset) - track[1]) & 0x0f);
+}
+
+static void track_reset_w(int offset,int data)
+{
+	/* reset the trackball counters */
+	track[0] = input_port_2_r(offset);
+	track[1] = input_port_3_r(offset);
+
+	watchdog_reset_w(offset,data);
+}
+
 
 
 static struct MemoryReadAddress capbowl_readmem[] =
@@ -159,8 +182,8 @@ static struct MemoryReadAddress capbowl_readmem[] =
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x5000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5fff, TMS34061_r },
-	{ 0x7000, 0x7000, input_port_0_r },
-	{ 0x7800, 0x7800, input_port_1_r },
+	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
+	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -170,8 +193,8 @@ static struct MemoryReadAddress bowlrama_readmem[] =
 	{ 0x0000, 0x001f, bowlrama_turbo_r },
 	{ 0x5000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5fff, TMS34061_r },
-	{ 0x7000, 0x7000, input_port_0_r },
-	{ 0x7800, 0x7800, input_port_1_r },
+	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
+	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -184,7 +207,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5000, 0x57ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x5800, 0x5fff, TMS34061_w },
 	{ 0x6000, 0x6000, capbowl_sndcmd_w },
-	{ 0x6800, 0x6800, watchdog_reset_w },
+	{ 0x6800, 0x6800, track_reset_w },	/* + watchdog */
 	{ -1 }  /* end of table */
 };
 
@@ -213,7 +236,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( capbowl )
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_CENTER, 100, 10, 7, 0, 0 )
+	/* low 4 bits are for the trackball */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) ) /* This version of Bowl-O-Rama */
@@ -222,17 +245,24 @@ INPUT_PORTS_START( capbowl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
-	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 10, 7, 0, 0 )
+	/* low 4 bits are for the trackball */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* FAKE */
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 10, 0, 0 )
+
+	PORT_START	/* FAKE */
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 20, 10, 0, 0 )
+
+	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
+
 
 
 static struct YM2203interface ym2203_interface =

@@ -7,26 +7,25 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/konamiic.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tilemap0;
-static struct tilemap *tilemap1;
+static struct tilemap *tilemap[2];
 static struct tilemap *textlayer;
-static struct tilemap *foreground0;
-static struct tilemap *foreground1;
-static int changed;
+static unsigned char *private_spriteram[2];
+static int priority;
 
 unsigned char *combatsc_io_ram;
 static int combatsc_vreg;
-unsigned char combatsc_vflags;
 unsigned char* banked_area;
 
-extern int combatsc_video_circuit;
+static int combatsc_bank_select; /* 0x00..0x1f */
+static int combatsc_video_circuit; /* 0 or 1 */
+static unsigned char *combatsc_page[2];
+static unsigned char combatsc_scrollram0[0x20];
+static unsigned char combatsc_scrollram1[0x20];
+static unsigned char *combatsc_scrollram;
 
-extern unsigned char *combatsc_page0;
-extern unsigned char *combatsc_page1;
-extern unsigned char *combatsc_workram0;
-extern unsigned char *combatsc_workram1;
 
 void combatsc_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom )
 {
@@ -37,17 +36,17 @@ void combatsc_convert_color_prom(unsigned char *palette, unsigned short *colorta
 		{
 			case 0: /* other sprites */
 			case 2: /* other sprites(alt) */
-			clut = 2; /* ? */
+			clut = 1;	/* 0 is wrong for Firing Range III targets */
 			break;
 
 			case 4: /* player sprites */
 			case 6: /* player sprites(alt) */
-			clut = 1;
+			clut = 2;
 			break;
 
 			case 1: /* background */
 			case 3: /* background(alt) */
-			clut = 2;
+			clut = 1;
 			break;
 
 			case 5: /* foreground tiles */
@@ -56,8 +55,17 @@ void combatsc_convert_color_prom(unsigned char *palette, unsigned short *colorta
 			break;
 		}
 
-		for( i=0; i<256; i++ ){
-			colortable[pal*256+i] = pal*16+color_prom[clut*256+i];
+		for( i=0; i<256; i++ )
+		{
+			if ((pal & 1) == 0)	/* sprites */
+			{
+				if (color_prom[256 * clut + i] == 0)
+					*(colortable++) = 0;
+				else
+					*(colortable++) = 16 * pal + color_prom[256 * clut + i];
+			}
+			else
+				*(colortable++) = 16 * pal + color_prom[256 * clut + i];
 		}
 	}
 }
@@ -71,20 +79,20 @@ void combatsc_convert_color_prom(unsigned char *palette, unsigned short *colorta
 static void get_tile_info0( int col, int row )
 {
 	int tile_index = row*32 + col;
-	unsigned char attributes = combatsc_page0[tile_index];
+	unsigned char attributes = combatsc_page[0][tile_index];
 	int bank = 4*((combatsc_vreg & 0x0f) - 1);
 	int number, pal, color;
 
 	if (bank < 0) bank = 0;
 	if ((attributes & 0xf0) == 0) bank = 0;	/* text bank */
 
+	if (attributes & 0x80) bank += 1;
 	if (attributes & 0x10) bank += 2;
 	if (attributes & 0x20) bank += 4;
-	if (attributes & 0x80) bank += 1;
 
 	pal = (bank == 0 || bank >= 0x1c || (attributes & 0x40)) ? 1 : 3;
 	color = pal*16 + (attributes & 0x0f);
-	number = combatsc_page0[tile_index + 0x400] + 256*bank;
+	number = combatsc_page[0][tile_index + 0x400] + 256*bank;
 
 	SET_TILE_INFO(0, number, color)
 }
@@ -92,20 +100,20 @@ static void get_tile_info0( int col, int row )
 static void get_tile_info1( int col, int row )
 {
 	int tile_index = row*32 + col;
-	unsigned char attributes = combatsc_page1[tile_index];
+	unsigned char attributes = combatsc_page[1][tile_index];
 	int bank = 4*((combatsc_vreg >> 4) - 1);
 	int number, pal, color;
 
 	if (bank < 0) bank = 0;
 	if ((attributes & 0xf0) == 0) bank = 0;	/* text bank */
 
+	if (attributes & 0x80) bank += 1;
 	if (attributes & 0x10) bank += 2;
 	if (attributes & 0x20) bank += 4;
-	if (attributes & 0x80) bank += 1;
 
 	pal = (bank == 0 || bank >= 0x1c || (attributes & 0x40)) ? 5 : 7;
 	color = pal*16 + (attributes & 0x0f);
-	number = combatsc_page1[tile_index + 0x400] + 256*bank;
+	number = combatsc_page[1][tile_index + 0x400] + 256*bank;
 
 	SET_TILE_INFO(1, number, color)
 }
@@ -113,49 +121,9 @@ static void get_tile_info1( int col, int row )
 static void get_text_info( int col, int row )
 {
 	int tile_index = row*32 + col + 0x800;
-	unsigned char attributes = combatsc_page0[tile_index];
-	int number = combatsc_page0[tile_index + 0x400];
-	int color = attributes & 0x0f;
-
-	SET_TILE_INFO(1, number, color)
-}
-
-static void get_foreground_info0( int col, int row )
-{
-	int tile_index = row*32 + col;
-	unsigned char attributes = combatsc_page0[tile_index];
-	int bank = 4*(((combatsc_vreg & 0x0f) - 1) % 4);
-	int number, color;
-
-	if (attributes & 0x10) bank += 2;
-	if (attributes & 0x20) bank += 4;
-	if (attributes & 0x80) bank += 1;
-	if (attributes & 0x40)
-		number = combatsc_page0[tile_index + 0x400] + 256*bank;
-	else
-		number = 0;
-
-	color = 1*16 + (attributes & 0x0f);
-
-	SET_TILE_INFO(0, number, color)
-}
-
-static void get_foreground_info1( int col, int row )
-{
-	int tile_index = row*32 + col;
-	unsigned char attributes = combatsc_page1[tile_index];
-	int bank = 4*(((combatsc_vreg & 0x0f) - 1));
-	int number, color;
-
-	if (attributes & 0x10) bank += 2;
-	if (attributes & 0x20) bank += 4;
-	if (attributes & 0x80) bank += 1;
-	if (attributes & 0x40)
-		number = combatsc_page1[tile_index + 0x400] + 256*bank;
-	else
-		number = 0;
-
-	color = 5*16 + (attributes & 0x0f);
+	unsigned char attributes = combatsc_page[0][tile_index];
+	int number = combatsc_page[0][tile_index + 0x400];
+	int color = 16 + (attributes & 0x0f);	/* should be right */
 
 	SET_TILE_INFO(1, number, color)
 }
@@ -166,67 +134,38 @@ static void get_foreground_info1( int col, int row )
 
 ***************************************************************************/
 
-void combatsc_vh_stop( void )
-{
-}
-
-int combatsc_vh_start( void )
+int combatsc_vh_start(void)
 {
 	combatsc_vreg = -1;
 
-	tilemap0 = tilemap_create(
-		get_tile_info0,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-	tilemap_set_scroll_rows( tilemap0, 32 );
+	tilemap[0] =  tilemap_create(get_tile_info0,TILEMAP_TRANSPARENT,8,8,32,32);
+	tilemap[1] =  tilemap_create(get_tile_info1,TILEMAP_TRANSPARENT,8,8,32,32);
+	textlayer = tilemap_create(get_text_info, TILEMAP_TRANSPARENT,8,8,32,32);
 
-	tilemap1 = tilemap_create(
-		get_tile_info1,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-	tilemap_set_scroll_rows( tilemap1, 32 );
+	private_spriteram[0] = malloc(0x800);
+	private_spriteram[1] = malloc(0x800);
+	memset(private_spriteram[0],0,0x800);
+	memset(private_spriteram[1],0,0x800);
 
-	textlayer = tilemap_create(
-		get_text_info,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-
-	foreground0 = tilemap_create(
-		get_foreground_info0,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-	tilemap_set_scroll_rows( foreground0, 32 );
-
-	foreground1 = tilemap_create(
-		get_foreground_info1,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-	tilemap_set_scroll_rows( foreground1, 32 );
-
-	if( tilemap0 && tilemap1 && textlayer && foreground0 && foreground1 ){
-		tilemap0->transparent_pen = 0;
-		tilemap1->transparent_pen = 0;
+	if (tilemap[0] && tilemap[1] && textlayer)
+	{
+		tilemap[0]->transparent_pen = 0;
+		tilemap[1]->transparent_pen = 0;
 		textlayer->transparent_pen = 0;
-		foreground0->transparent_pen = 0;
-		foreground1->transparent_pen = 0;
 
-		tilemap_set_enable( foreground0, 0 );
-		tilemap_set_enable( foreground1, 0 );
+		tilemap_set_scroll_rows( tilemap[0], 32 );
+		tilemap_set_scroll_rows( tilemap[1], 32 );
 
 		return 0;
 	}
 
 	return 1;
+}
+
+void combatsc_vh_stop(void)
+{
+	free(private_spriteram[0]);
+	free(private_spriteram[1]);
 }
 
 /***************************************************************************
@@ -249,15 +188,9 @@ void combatsc_video_w( int offset, int data )
 		{
 			offset = offset&0x3ff;
 			if (combatsc_video_circuit)
-			{
-				tilemap_mark_tile_dirty( tilemap1, offset%32, offset/32 );
-				tilemap_mark_tile_dirty( foreground1, offset%32, offset/32 );
-			}
+				tilemap_mark_tile_dirty( tilemap[1], offset%32, offset/32 );
 			else
-			{
-				tilemap_mark_tile_dirty( tilemap0, offset%32, offset/32 );
-				tilemap_mark_tile_dirty( foreground0, offset%32, offset/32 );
-			}
+				tilemap_mark_tile_dirty( tilemap[0], offset%32, offset/32 );
 		}
 		else if( offset<0x1000 && combatsc_video_circuit==0 )
 		{
@@ -270,32 +203,15 @@ void combatsc_video_w( int offset, int data )
 
 void combatsc_vreg_w( int offset, int data )
 {
-	if(data != combatsc_vreg )
+	if (data != combatsc_vreg)
 	{
-		changed = 1;
 		tilemap_mark_all_tiles_dirty( textlayer );
 		if ((data & 0x0f) != (combatsc_vreg & 0x0f))
-			tilemap_mark_all_tiles_dirty( tilemap0 );
+			tilemap_mark_all_tiles_dirty( tilemap[0] );
 		if ((data >> 4) != (combatsc_vreg >> 4))
-			tilemap_mark_all_tiles_dirty( tilemap1 );
+			tilemap_mark_all_tiles_dirty( tilemap[1] );
 		combatsc_vreg = data;
-		/* enable foreground layers only when they are used to speed up emulation */
-		if (combatsc_vreg == 0x55 || combatsc_vreg == 0x44){
-			tilemap_set_enable( foreground0, 1 );
-			tilemap_set_enable( foreground1, 1 );
-			tilemap_mark_all_tiles_dirty( foreground0 );
-			tilemap_mark_all_tiles_dirty( foreground1 );
-		}
-		else{
-			tilemap_set_enable( foreground0, 0 );
-			tilemap_set_enable( foreground1, 0 );
-		}
 	}
-}
-
-void combatsc_vflag_w( int offset, int data )
-{
-	combatsc_vflags = data;
 }
 
 void combatsc_sh_irqtrigger_w(int offset, int data)
@@ -323,13 +239,200 @@ void combatsc_io_w( int offset, int data )
 {
 	switch (offset)
 	{
-		case 0x400: combatsc_vflag_w(0, data); break;
+		case 0x400: priority = data & 0x20; break;
 		case 0x800: combatsc_sh_irqtrigger_w(0, data); break;
 		case 0xc00:	combatsc_vreg_w(0, data); break;
 		default:
 			combatsc_io_ram[offset] = data;
 	}
 }
+
+void combatsc_bankselect_w( int offset, int data )
+{
+	unsigned char *page = memory_region(REGION_CPU1) + 0x10000;
+
+	if (data & 0x40)
+	{
+		combatsc_video_circuit = 1;
+		videoram = combatsc_page[1];
+		combatsc_scrollram = combatsc_scrollram1;
+	}
+	else
+	{
+		combatsc_video_circuit = 0;
+		videoram = combatsc_page[0];
+		combatsc_scrollram = combatsc_scrollram0;
+	}
+
+	priority = data & 0x20;
+
+	if (data & 0x10)
+	{
+		cpu_setbank(1,page + 0x4000 * ((data & 0x0e) >> 1));
+	}
+	else
+	{
+		cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+	}
+}
+
+void combascb_bankselect_w( int offset, int data )
+{
+	if (data & 0x40)
+	{
+		combatsc_video_circuit = 1;
+		videoram = combatsc_page[1];
+	}
+	else
+	{
+		combatsc_video_circuit = 0;
+		videoram = combatsc_page[0];
+	}
+
+	data = data & 0x1f;
+	if( data != combatsc_bank_select )
+	{
+		unsigned char *page = memory_region(REGION_CPU1) + 0x10000;
+		combatsc_bank_select = data;
+
+		if (data & 0x10)
+		{
+			cpu_setbank(1,page + 0x4000 * ((data & 0x0e) >> 1));
+		}
+		else
+		{
+			cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+		}
+
+		if (data == 0x1f)
+		{
+cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+			cpu_setbankhandler_r (1, combatsc_io_r);/* IO RAM & Video Registers */
+			cpu_setbankhandler_w (1, combatsc_io_w);
+		}
+		else
+		{
+			cpu_setbankhandler_r (1, MRA_BANK1);	/* banked ROM */
+			cpu_setbankhandler_w (1, MWA_ROM);
+		}
+	}
+}
+
+void combatsc_init_machine( void )
+{
+	unsigned char *MEM = memory_region(REGION_CPU1) + 0x38000;
+
+
+	combatsc_io_ram  = MEM + 0x0000;
+	combatsc_page[0] = MEM + 0x4000;
+	combatsc_page[1] = MEM + 0x6000;
+
+	memset( combatsc_io_ram,  0x00, 0x4000 );
+	memset( combatsc_page[0], 0x00, 0x2000 );
+	memset( combatsc_page[1], 0x00, 0x2000 );
+
+	combatsc_bank_select = -1;
+	combatsc_bankselect_w( 0,0 );
+}
+
+void combatsc_pf_control_w( int offset, int data )
+{
+	K007121_ctrl_w(combatsc_video_circuit,offset,data);
+
+	if (offset == 7)
+		tilemap_set_flip(tilemap[combatsc_video_circuit],(data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+	if (offset == 3)
+	{
+		if (data & 0x08)
+			memcpy(private_spriteram[combatsc_video_circuit],combatsc_page[combatsc_video_circuit]+0x1000,0x800);
+		else
+			memcpy(private_spriteram[combatsc_video_circuit],combatsc_page[combatsc_video_circuit]+0x1800,0x800);
+	}
+}
+
+int combatsc_scrollram_r( int offset )
+{
+	return combatsc_scrollram[offset];
+}
+
+void combatsc_scrollram_w( int offset, int data )
+{
+	combatsc_scrollram[offset] = data;
+}
+
+
+
+/***************************************************************************
+
+	Display Refresh
+
+***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap, const unsigned char *source, int circuit)
+{
+	K007121_sprites_draw(circuit,bitmap,source,(circuit*4)*16,0,0);
+}
+
+
+void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+{
+	int i;
+
+
+	if (!K007121_ctrlram[0][0x00] && K007121_ctrlram[0][0x01] != 8)
+		for( i=0; i<32; i++ )
+		{
+			tilemap_set_scrollx( tilemap[0],i, combatsc_scrollram0[i] );
+		}
+	else
+		for( i=0; i<32; i++ )
+		{
+			tilemap_set_scrollx( tilemap[0],i, K007121_ctrlram[0][0] );
+		}
+	if (!K007121_ctrlram[1][0x00] && K007121_ctrlram[1][0x01] != 8)
+		for( i=0; i<32; i++ )
+		{
+			tilemap_set_scrollx( tilemap[1],i, combatsc_scrollram1[i] );
+		}
+	else
+		for( i=0; i<32; i++ )
+		{
+			tilemap_set_scrollx( tilemap[1],i, K007121_ctrlram[1][0] );
+		}
+
+	tilemap_set_scrolly( tilemap[0],0, K007121_ctrlram[0][0x02] );
+	tilemap_set_scrolly( tilemap[1],0, K007121_ctrlram[1][0x02] );
+
+	tilemap_update( ALL_TILEMAPS );
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render( ALL_TILEMAPS );
+
+	if (priority == 0)
+	{
+		tilemap_draw( bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY );
+		draw_sprites( bitmap, private_spriteram[0], 0 );
+		tilemap_draw( bitmap,tilemap[0],0 );
+		draw_sprites( bitmap, private_spriteram[1], 1 );
+	}
+	else
+	{
+		tilemap_draw( bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY );
+		draw_sprites( bitmap, private_spriteram[0], 0 );
+		tilemap_draw( bitmap,tilemap[1],0 );
+		draw_sprites( bitmap, private_spriteram[1], 1 );
+	}
+
+	tilemap_draw( bitmap,textlayer,0 );
+}
+
+
+
+
+
+
+
 
 /***************************************************************************
 
@@ -352,7 +455,7 @@ byte #4:
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source, int circuit, int priority )
+static void bootleg_draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source, int circuit )
 {
 	const struct GfxElement *gfx = Machine->gfx[circuit+2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
@@ -399,219 +502,37 @@ static void draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source
 	}
 }
 
-/***************************************************************************
-
-	Konami Combat School sprites. Each sprite has 5 bytes:
-
-	0:	0xff	- Sprite number
-	1:	0xf0	- Color
-		0x08	- Fine control for 16x8/8x8 sprites (*may* have other use for 16x16 sprites)
-		0x04	- Fine control for 16x8/8x8 sprites
-		0x02	- Tile bank bit 1
-		0x01	- Tile bank bit 0
-	2:	0xff	- Y position
-	3:	0xff	- X position
-	4:	0x80	- Tile bank bit 3
-		0x40	- Tile bank bit 2
-		0x20	- Y flip
-		0x10	- X flip
-		0x08	- Size
-		0x04	- Size
-		0x02 	- Size
-		0x01	- X position high bit
-
-	Known sizes:
-		0x08	- 32 x 32 sprite (Combination of 4 16x16's)
-		0x06	- 8 x 8 sprite
-		0x04 	- 8 x 16 sprite
-		0x02 	- 16 x 8 sprite
-		0x00 	- 16 x 16 sprite
-
-If using 16x8 sprites then the tile number given needs to be multipled by 2!
-If using 8x8 sprites then the tile number given needs to be multipled by 4!
-
-The 'fine control' bits are then added to get the correct sprite within the group
-of two/four.
-
-***************************************************************************/
-
-static void draw_sprites_2(struct osd_bitmap *bitmap, const unsigned char *source, int circuit, int priority, int desp)
-{
-	const struct GfxElement *gfx = Machine->gfx[circuit];
-	const unsigned char *finish;
-
-	source = source + desp;
-	finish = source + 0x400;
-
-	while( source < finish )
-	{
-		int number = source[0];				/* sprite number */
-		int sprite_bank = source[1] & 0x0f;	/* sprite bank */
-		int sx = source[3];					/* vertical position */
-		int sy = source[2];					/* horizontal position */
-		int attr = source[4];				/* attributes */
-		int xflip = source[4] & 0x10;		/* flip x */
-		int yflip = source[4] & 0x20;		/* flip y */
-		int color = source[1] & 0xf0;		/* color */
-		int width,height;
-
-		if( attr&0x01 ) sx -= 256;
-
-		number += ((sprite_bank&0x3)<<8) + ((attr&0xc0)<<4);
-		number = number<<2;
-		number += (sprite_bank>>2)&3;
-		color = (circuit*4)*16 + (color >> 4);
-
-		switch( attr&0xe )
-		{
-			case 0x06: width = height = 1; break;
-			case 0x04: width = 1; height = 2; number &= (~2); break;
-			case 0x02: width = 2; height = 1; number &= (~1); break;
-			case 0x00: width = height = 2; number &= (~3); break;
-			case 0x08: width = height = 4; number &= (~3); break;
-			default: width = 1; height = 1;
-					if (errorlog) fprintf(errorlog,"Unknown sprite size %02x\n",attr&0xe);
-		}
-
-		{
-			static int x_offset[8] = {0x0,0x1,0x4,0x5,  0x0,0x1,0x4,0x5};
-			static int y_offset[8] = {0x0,0x2,0x8,0xa,  0x0,0x1,0x4,0x5};
-			int x,y, ex, ey;
-
-			for( y=0; y<height; y++ ){
-				for( x=0; x<width; x++ ){
-					ex = xflip?(width-1-x):x;
-					ey = yflip?(height-1-y):y;
-
-					drawgfx(bitmap,gfx,
-						number+x_offset[ex]+y_offset[ey],
-						color,
-						xflip,yflip,
-						sx+x*8,sy+y*8,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
-			}
-		}
-		source += 5;
-	}
-}
-
-/***************************************************************************
-
-	Display Refresh
-
-***************************************************************************/
-
 void cmbatscb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
 	int i;
 
-	if (!changed)
+	for( i=0; i<32; i++ )
 	{
-		for( i=0; i<32; i++ )
-		{
-			tilemap_set_scrollx( tilemap0,i, combatsc_io_ram[0x040+i]+5 );
-			tilemap_set_scrollx( tilemap1,i, combatsc_io_ram[0x060+i]+3 );
-			tilemap_set_scrollx( foreground0,i, combatsc_io_ram[0x040+i]+5 );
-			tilemap_set_scrollx( foreground1,i, combatsc_io_ram[0x060+i]+3 );
-		}
-		tilemap_set_scrolly( tilemap0,0, combatsc_io_ram[0x000] );
-		tilemap_set_scrolly( tilemap1,0, combatsc_io_ram[0x020] );
-		tilemap_set_scrolly( foreground0,0, combatsc_io_ram[0x000] );
-		tilemap_set_scrolly( foreground1,0, combatsc_io_ram[0x020] );
+		tilemap_set_scrollx( tilemap[0],i, combatsc_io_ram[0x040+i]+5 );
+		tilemap_set_scrollx( tilemap[1],i, combatsc_io_ram[0x060+i]+3 );
+	}
+	tilemap_set_scrolly( tilemap[0],0, combatsc_io_ram[0x000] );
+	tilemap_set_scrolly( tilemap[1],0, combatsc_io_ram[0x020] );
 
-		tilemap_update( ALL_TILEMAPS );
-		if (palette_recalc())
-			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-		tilemap_render( ALL_TILEMAPS );
+	tilemap_update( ALL_TILEMAPS );
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render( ALL_TILEMAPS );
 
-		if( (combatsc_vflags & 0x20) == 0 )
-		{
-			tilemap_draw( bitmap,tilemap1,TILEMAP_IGNORE_TRANSPARENCY );
-			draw_sprites( bitmap, combatsc_page1, 1, 0 );
-			tilemap_draw( bitmap,tilemap0,0 );
-			draw_sprites( bitmap, combatsc_page0, 0, 0 );
-		}
-		else
-		{
-			tilemap_draw( bitmap,tilemap0,TILEMAP_IGNORE_TRANSPARENCY );
-			draw_sprites( bitmap, combatsc_page1, 1, 0 );
-			tilemap_draw( bitmap,tilemap1,0 );
-			draw_sprites( bitmap, combatsc_page0, 0, 0 );
-		}
-		draw_sprites( bitmap, combatsc_page0, 0, 1 );
-		draw_sprites( bitmap, combatsc_page1, 1, 1 );
-
-		tilemap_draw( bitmap,foreground1,0 );
-		tilemap_draw( bitmap,foreground0,0 );
-		tilemap_draw( bitmap,textlayer,0 );
+	if (priority == 0)
+	{
+		tilemap_draw( bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY );
+		bootleg_draw_sprites( bitmap, combatsc_page[0], 0 );
+		tilemap_draw( bitmap,tilemap[0],0 );
+		bootleg_draw_sprites( bitmap, combatsc_page[1], 1 );
 	}
 	else
-		changed = 0;
-}
-
-void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
-{
-	int i;
-
-	if (!changed)
 	{
-		if (!combatsc_workram0[0x00] && combatsc_workram0[0x01] != 8)
-			for( i=0; i<32; i++ )
-			{
-				tilemap_set_scrollx( tilemap0,i, combatsc_workram0[0x20+i] );
-				tilemap_set_scrollx( foreground0,i, combatsc_workram0[0x20+i] );
-			}
-		else
-			for( i=0; i<32; i++ )
-			{
-				tilemap_set_scrollx( tilemap0,i, combatsc_workram0[0] );
-				tilemap_set_scrollx( foreground0,i, combatsc_workram0[0] );
-			}
-		if (!combatsc_workram1[0x00] && combatsc_workram1[0x01] != 8)
-			for( i=0; i<32; i++ )
-			{
-				tilemap_set_scrollx( tilemap1,i, combatsc_workram1[0x20+i] );
-				tilemap_set_scrollx( foreground1,i, combatsc_workram1[0x20+i] );
-			}
-		else
-			for( i=0; i<32; i++ )
-			{
-				tilemap_set_scrollx( tilemap1,i, combatsc_workram1[0] );
-				tilemap_set_scrollx( foreground1,i, combatsc_workram1[0] );
-			}
-
-		tilemap_set_scrolly( tilemap0,0, combatsc_workram0[0x02] );
-		tilemap_set_scrolly( tilemap1,0, combatsc_workram1[0x02] );
-		tilemap_set_scrolly( foreground0,0, combatsc_workram0[0x02] );
-		tilemap_set_scrolly( foreground1,0, combatsc_workram1[0x02] );
-
-		tilemap_update( ALL_TILEMAPS );
-		if (palette_recalc())
-			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-		tilemap_render( ALL_TILEMAPS );
-
-		if( (combatsc_vflags & 0x20) == 0 )
-		{
-			tilemap_draw( bitmap,tilemap1,TILEMAP_IGNORE_TRANSPARENCY );
-			draw_sprites_2( bitmap, combatsc_page1, 1, 0, 0x1800 );
-			tilemap_draw( bitmap,tilemap0,0 );
-			draw_sprites_2( bitmap, combatsc_page0, 0, 0, 0x1800 );
-		}
-		else
-		{
-			tilemap_draw( bitmap,tilemap0,TILEMAP_IGNORE_TRANSPARENCY );
-			draw_sprites_2( bitmap, combatsc_page1, 1, 0, 0x1800 );
-			tilemap_draw( bitmap,tilemap1,0 );
-			draw_sprites_2( bitmap, combatsc_page0, 0, 0, 0x1800);
-		}
-		draw_sprites_2( bitmap, combatsc_page0, 0, 1, 0x1800 );
-		draw_sprites_2( bitmap, combatsc_page1, 1, 1, 0x1800 );
-
-		tilemap_draw( bitmap,foreground1,0 );
-		tilemap_draw( bitmap,foreground0,0 );
-		tilemap_draw( bitmap,textlayer,0 );
+		tilemap_draw( bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY );
+		bootleg_draw_sprites( bitmap, combatsc_page[0], 0 );
+		tilemap_draw( bitmap,tilemap[1],0 );
+		bootleg_draw_sprites( bitmap, combatsc_page[1], 1 );
 	}
-	else
-		changed = 0;
+
+	tilemap_draw( bitmap,textlayer,0 );
 }

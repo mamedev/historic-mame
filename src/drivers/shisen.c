@@ -346,7 +346,7 @@ ROM_END
 
 ROM_START( sichuana )
 	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
-	ROM_LOAD( "sichuan.a6",      0x00000, 0x10000, 0xf8ac05ef )
+	ROM_LOAD( "sichuan.a6",   0x00000, 0x10000, 0xf8ac05ef )
 	ROM_RELOAD(               0x10000, 0x10000 )
 	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
 

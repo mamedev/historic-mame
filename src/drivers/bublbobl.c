@@ -905,6 +905,38 @@ ROM_START( bublbobr )
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 ROM_END
 
+ROM_START( bubbobr1 )
+	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
+	ROM_LOAD( "a78_06.bin",   0x00000, 0x8000, 0x32c8305b )
+	ROM_LOAD( "a78_21.bin",   0x08000, 0x4000, 0x2844033d )	/* banked at 8000-bfff. I must load */
+	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
+															/* it from 7fff, so bank switching wouldn't work */
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+	ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
+	ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
+	ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
+	ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
+	ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	/* 0x30000-0x3ffff empty */
+	ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+	ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
+	ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
+	ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
+	ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
+	ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	/* 0x70000-0x7ffff empty */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
+	ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+
+	ROM_REGION( 0x0800, REGION_CPU4 )	/* 2k for the microcontroller */
+	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
+ROM_END
+
 ROM_START( boblbobl )
 	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
 	ROM_LOAD( "bb3",          0x00000, 0x8000, 0x01f81936 )
@@ -1055,7 +1087,8 @@ void init_boblbobl(void)
 
 
 GAME( 1986, bublbobl, 0,        bublbobl, bublbobl, 0,        ROT0,  "Taito Corporation", "Bubble Bobble" )
-GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)" )
+GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 1)" )
+GAME( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 2)" )
 GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble" )
 GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, 0,        ROT0,  "bootleg", "Super Bobble Bobble" )
 GAMEX(1986, tokio,    0,        tokio,    tokio,    0,        ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )

@@ -18,15 +18,18 @@ extern struct MemoryReadAddress atarijsa2_readmem[];
 extern struct MemoryWriteAddress atarijsa2_writemem[];
 extern struct MemoryReadAddress atarijsa3_readmem[];
 extern struct MemoryWriteAddress atarijsa3_writemem[];
+extern struct MemoryReadAddress atarijsa3s_readmem[];
+extern struct MemoryWriteAddress atarijsa3s_writemem[];
 
 extern struct TMS5220interface atarijsa_tms5220_interface;
 extern struct YM2151interface atarijsa_ym2151_interface_mono;
 extern struct YM2151interface atarijsa_ym2151_interface_stereo;
 extern struct POKEYinterface atarijsa_pokey_interface;
 extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
+extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 
 
-/* Used by Xybots, Blasteroids, Badlands(?) */
+/* Used by Xybots, Blasteroids */
 #define JSA_I_STEREO										\
 	SOUND_SUPPORTS_STEREO,0,0,0,							\
 	{														\
@@ -51,12 +54,12 @@ extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 	}
 
 /* Used by Escape from the Planet of the Robot Monsters */
-#define JSA_I_STEREO_WITH_SPEECH							\
-	SOUND_SUPPORTS_STEREO,0,0,0,							\
+#define JSA_I_MONO_WITH_SPEECH								\
+	0,0,0,0,												\
 	{														\
 		{													\
 			SOUND_YM2151, 									\
-			&atarijsa_ym2151_interface_stereo				\
+			&atarijsa_ym2151_interface_mono					\
 		},													\
 		{													\
 			SOUND_TMS5220, 									\
@@ -64,7 +67,7 @@ extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 		}													\
 	}
 
-/* Used by Cyberball 2072, Skull & Crossbones, ThunderJaws, Hydra, Pit Fighter */
+/* Used by Cyberball 2072, STUN Runner, Skull & Crossbones, ThunderJaws, Hydra, Pit Fighter */
 #define JSA_II_MONO(x)										\
 	0,0,0,0,												\
 	{														\
@@ -78,7 +81,7 @@ extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 		}													\
 	}
 
-/* Used by Guardians of the 'Hood, Road Riot 4WD(?), Moto Frenzy */
+/* Used by Batman, Guardians of the 'Hood, Road Riot 4WD */
 #define JSA_III_MONO(x)										\
 	0,0,0,0,												\
 	{														\
@@ -92,7 +95,6 @@ extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 		}													\
 	}
 
-
 /* Used by Off the Wall */
 #define JSA_III_MONO_NO_SPEECH								\
 	0,0,0,0,												\
@@ -103,33 +105,56 @@ extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 		}													\
 	}
 
+/* Used by Space Lords, Moto Frenzy, Steel Talons, Road Riot's Revenge Rally */
+#define JSA_IIIS_STEREO(x)									\
+	SOUND_SUPPORTS_STEREO,0,0,0,							\
+	{														\
+		{													\
+			SOUND_YM2151, 									\
+			&atarijsa_ym2151_interface_stereo				\
+		},													\
+		{													\
+			SOUND_OKIM6295,									\
+			&atarijsa_okim6295s_interface_##x				\
+		}													\
+	}
+
 
 /* Common CPU definitions */
 #define JSA_I_CPU											\
 	{														\
 		CPU_M6502,											\
-		1789790,											\
+		ATARI_CLOCK_14MHz/8,								\
 		atarijsa1_readmem,atarijsa1_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,250							\
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 #define JSA_II_CPU											\
 	{														\
 		CPU_M6502,											\
-		1789790,											\
+		ATARI_CLOCK_14MHz/8,								\
 		atarijsa2_readmem,atarijsa2_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,250							\
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 #define JSA_III_CPU											\
 	{														\
 		CPU_M6502,											\
-		1789790,											\
+		ATARI_CLOCK_14MHz/8,								\
 		atarijsa3_readmem,atarijsa3_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,250							\
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+	}
+
+#define JSA_IIIS_CPU										\
+	{														\
+		CPU_M6502,											\
+		ATARI_CLOCK_14MHz/8,								\
+		atarijsa3s_readmem,atarijsa3s_writemem,0,0,			\
+		0,0,												\
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 

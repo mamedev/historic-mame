@@ -245,7 +245,7 @@ void cosmicg_output_w(int offset, int data)
 				 break;
 
 		case 9:  if (data) sample_start(3, 11, 0); break;	/* Got Ship */
-		case 11: watchdog_reset_w(0, 0); break;				/* Watchdog */
+//		case 11: watchdog_reset_w(0, 0); break;				/* Watchdog */
 		case 13: if (data) sample_start(8, 13-gun_die_select, 0); break;  /* Got Monster / Gunshot */
 		case 14: gun_die_select = data; break;
 		case 15: if (data) sample_start(5, 14, 0); break;	/* Coin Extend (extra base) */
@@ -1523,7 +1523,7 @@ ROM_END
 
 
 
-GAMEX(1979, cosmicg,  0,       cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla", GAME_NOT_WORKING )
+GAME( 1979, cosmicg,  0,       cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla" )
 GAME( 1980, cosmica,  0,       cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien" )
 GAME( 1980, panic,    0,       panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 1)" )
 GAME( 1980, panica,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 2)" )

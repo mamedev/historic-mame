@@ -89,6 +89,7 @@ void polepos_mcu_control_w(int offs, int data);
 int polepos_mcu_data_r(int offs);
 void polepos_mcu_data_w(int offs, int data);
 void polepos_start_w(int offs, int data);
+int polepos2_ic25_r(int offset);
 
 /* from sndhrdw */
 int polepos_sh_start(const struct MachineSound *msound);
@@ -296,13 +297,13 @@ INPUT_PORTS_START( polepos )
 	PORT_DIPSETTING(	0xe0, "H" )
 
 	PORT_START /* IN1 - Brake */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 50, 0, 0, 0xff, KEYCODE_LALT, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 50, 0, 0xff, KEYCODE_LALT, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START /* IN2 - Accel */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL, 100, 16, 0, 0, 0x90, KEYCODE_LCONTROL, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL, 100, 16, 0, 0x90, KEYCODE_LCONTROL, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START /* IN3 - Steering */
-	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL, 60, 1, 0, 0x00, 0xff )
+	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL, 60, 1, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -368,13 +369,13 @@ INPUT_PORTS_START( polepos2 )
 	PORT_DIPSETTING(	0x80, "120 secs." )
 
 	PORT_START /* IN1 - Brake */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 50, 0, 0, 0xff, KEYCODE_LALT, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 50, 0, 0xff, KEYCODE_LALT, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START /* IN2 - Accel */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL, 100, 16, 0, 0, 0x90, KEYCODE_LCONTROL, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PEDAL, 100, 16, 0, 0x90, KEYCODE_LCONTROL, IP_JOY_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START /* IN3 - Steering */
-	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL, 60, 1, 0, 0x00, 0xff )
+	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL, 60, 1, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -594,7 +595,7 @@ ROM_START( polepos )
 	ROM_LOAD	 ( "014-134.rom",	0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
 
 	/* sound (P)ROM data */
-	ROM_REGION( 0xb000, REGION_SOUND1 )
+	ROM_REGION( 0xd000, REGION_SOUND1 )
 	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
 	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
 	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
@@ -661,7 +662,7 @@ ROM_START( poleposa )
 	ROM_LOAD	 ( "014-134.rom",	0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
 
 	/* sound (P)ROM data */
-	ROM_REGION( 0xb000, REGION_SOUND1 )
+	ROM_REGION( 0xd000, REGION_SOUND1 )
 	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
 	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
 	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
@@ -726,7 +727,7 @@ ROM_START( polepos1 )
 	ROM_LOAD	 ( "014-134.rom",	0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
 
 	/* sound (P)ROM data */
-	ROM_REGION( 0xb000, REGION_SOUND1 )
+	ROM_REGION( 0xd000, REGION_SOUND1 )
 	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
 	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
 	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
@@ -791,7 +792,7 @@ ROM_START( topracer )
 	ROM_LOAD	 ( "014-134.rom",	0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
 
 	/* sound (P)ROM data */
-	ROM_REGION( 0xb000, REGION_SOUND1 )
+	ROM_REGION( 0xd000, REGION_SOUND1 )
 	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
 	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
 	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
@@ -804,6 +805,147 @@ ROM_END
 
 
 ROM_START( polepos2 )
+	/* Z80 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_LOAD	 ( "pp4_9.6h",		0x0000, 0x2000, 0xbcf87004 )
+	ROM_LOAD	 ( "183.7f",		0x2000, 0x1000, 0xa9d4c380 )
+
+	/* Z8002 #1 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD_ODD ( "pp4_1.8m",		0x0000, 0x2000, 0x3f6ac294 )
+	ROM_LOAD_EVEN( "pp4_2.8l",		0x0000, 0x2000, 0x51b9a669 )
+
+	/* Z8002 #2 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_LOAD_ODD ( "pp4_5.4m",		0x0000, 0x2000, 0xc3053cae )
+	ROM_LOAD_EVEN( "pp4_6.4l",		0x0000, 0x2000, 0x38d04e0f )
+	ROM_LOAD_ODD ( "pp4_7.3m",		0x4000, 0x1000, 0xad1c8994 )
+	ROM_LOAD_EVEN( "pp4_8.3l",		0x4000, 0x1000, 0xef25a2ee )
+
+	/* graphics data */
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )		/* 2bpp alpha layer */
+	ROM_LOAD	 ( "pp4_28.1f",		0x0000, 0x2000, 0x280dde7d )
+
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )		/* 2bpp view layer */
+	ROM_LOAD	 ( "173.6n",		0x0000, 0x2000, 0xec3ec6e6 )
+
+	ROM_REGION( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )		/* 4bpp 16x16 sprites */
+	ROM_LOAD	 ( "pp4_25.1n",		0x0000, 0x2000, 0xfd098e65 )	/* 4bpp sm sprites, planes 0+1 */
+	ROM_LOAD	 ( "pp4_26.1m",		0x2000, 0x2000, 0x35ac62b3 )	/* 4bpp sm sprites, planes 2+3 */
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )		/* 4bpp 32x32 sprites */
+	ROM_LOAD	 ( "119.13j",		0x0000, 0x2000, 0x2e134b46 )	/* 4bpp lg sprites, planes 0+1 */
+	ROM_LOAD	 ( "pp1_19.4n",		0x2000, 0x2000, 0x43ff83e1 )
+	ROM_LOAD	 ( "pp1_21.3n",		0x4000, 0x2000, 0x5f958eb4 )
+	ROM_LOAD	 ( "pp4_23.2n",		0x6000, 0x2000, 0x9e056fcd )
+	ROM_LOAD	 ( "120.12j",		0x8000, 0x2000, 0x6f9997d2 )	/* 4bpp lg sprites, planes 2+3 */
+	ROM_LOAD	 ( "pp1_20.4m",		0xa000, 0x2000, 0xec18075b )
+	ROM_LOAD	 ( "pp1_22.3m",		0xc000, 0x2000, 0x1d2f30b1 )
+	ROM_LOAD	 ( "pp4_24.2m",		0xe000, 0x2000, 0x795268cf )
+
+	/* graphics (P)ROM data */
+	ROM_REGION( 0x7000, REGION_PROMS )
+	ROM_LOAD	 ( "014-186.bpr",	0x0000, 0x0100, 0x16d69c31 )	/* red palette PROM */
+	ROM_LOAD	 ( "014-187.bpr",	0x0100, 0x0100, 0x07340311 )	/* green palette PROM */
+	ROM_LOAD	 ( "014-188.bpr",	0x0200, 0x0100, 0x1efc84d7 )	/* blue palette PROM */
+	ROM_LOAD	 ( "014-189.bpr",	0x0300, 0x0100, 0x064d51a0 )	/* alpha color PROM */
+	ROM_LOAD	 ( "014-190.bpr",	0x0400, 0x0100, 0x7880c5af )	/* view color PROM */
+	ROM_LOAD	 ( "014-142.bpr",	0x0500, 0x0100, 0x2d502464 )	/* vertical position low PROM */
+	ROM_LOAD	 ( "014-143.bpr",	0x0600, 0x0100, 0x027aa62c )	/* vertical position med PROM */
+	ROM_LOAD	 ( "014-144.bpr",	0x0700, 0x0100, 0x1f8d0df3 )	/* vertical position hi PROM */
+	ROM_LOAD	 ( "014-191.bpr",	0x0800, 0x0400, 0x8b270902 )	/* road color PROM */
+	ROM_LOAD	 ( "pp4-6.6m",		0x0c00, 0x0400, 0x647212b5 )	/* sprite color PROM */
+	ROM_LOAD	 ( "131.11n",		0x1000, 0x1000, 0x5921777f )	/* vertical scaling PROM */
+	ROM_LOAD	 ( "127.2l",		0x2000, 0x2000, 0xee6b3315 )	/* road control PROM */
+	ROM_LOAD	 ( "128.2m",		0x4000, 0x2000, 0x6d1e7042 )	/* road bits 1 PROM */
+	ROM_LOAD	 ( "134.2n",		0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
+
+	/* sound (P)ROM data */
+	ROM_REGION( 0xd000, REGION_SOUND1 )
+	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
+	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
+	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
+	ROM_LOAD	 ( "pp1_11.2e",		0x5000, 0x2000, 0x45b9bfeb )	/* voice PROM */
+	ROM_LOAD	 ( "pp1_12.2f",		0x7000, 0x2000, 0xa31b4be5 )	/* voice PROM */
+	ROM_LOAD	 ( "pp1_13.1e",		0x9000, 0x2000, 0xa4237466 )	/* voice PROM */
+	ROM_LOAD	 ( "pp1_14.1f",		0xb000, 0x2000, 0x944580f9 )	/* voice PROM */
+
+	/* unknown or unused (P)ROM data */
+	ROM_REGION( 0x0100, REGION_USER1 )
+	ROM_LOAD	 ( "014-117.bpr",	0x0000, 0x0100, 0x2401c817 )	/* sync chain */
+ROM_END
+
+
+ROM_START( poleps2a )
+	/* Z80 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_LOAD	 ( "180.7h",		0x0000, 0x2000, 0xf85212c4 )
+	ROM_LOAD	 ( "183.7f",		0x2000, 0x1000, 0xa9d4c380 )
+
+	/* Z8002 #1 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD_ODD ( "176.3l",		0x0000, 0x2000, 0x8aeaec98 )
+	ROM_LOAD_EVEN( "177.4l",		0x0000, 0x2000, 0x7051df35 )
+
+	/* Z8002 #2 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_LOAD_ODD ( "178.3e",		0x0000, 0x2000, 0xeac35cfa )
+	ROM_LOAD_EVEN( "179.4e",		0x0000, 0x2000, 0x613e917d )
+	ROM_LOAD_ODD ( "184.3d",		0x4000, 0x2000, 0xd893c4ed )
+	ROM_LOAD_EVEN( "185.4d",		0x4000, 0x2000, 0x899de75e )
+
+	/* graphics data */
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )		/* 2bpp alpha layer */
+	ROM_LOAD	 ( "172.7n",		0x0000, 0x2000, 0xfbe5e72f )
+
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )		/* 2bpp view layer */
+	ROM_LOAD	 ( "173.6n",		0x0000, 0x2000, 0xec3ec6e6 )
+
+	ROM_REGION( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )		/* 4bpp 16x16 sprites */
+	ROM_LOAD	 ( "170.13n",		0x0000, 0x2000, 0x455d79a0 )	/* 4bpp sm sprites, planes 0+1 */
+	ROM_LOAD	 ( "171.12n",		0x2000, 0x2000, 0x78372b81 )	/* 4bpp sm sprites, planes 2+3 */
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )		/* 4bpp 32x32 sprites */
+	ROM_LOAD	 ( "119.13j",		0x0000, 0x2000, 0x2e134b46 )	/* 4bpp lg sprites, planes 0+1 */
+	ROM_LOAD	 ( "166.13k",		0x2000, 0x2000, 0x2b0517bd )
+	ROM_LOAD	 ( "168.13l",		0x4000, 0x2000, 0x4d7916d9 )
+	ROM_LOAD	 ( "175.13m",		0x6000, 0x2000, 0xbd6df480 )
+	ROM_LOAD	 ( "120.12j",		0x8000, 0x2000, 0x6f9997d2 )	/* 4bpp lg sprites, planes 2+3 */
+	ROM_LOAD	 ( "167.12k",		0xa000, 0x2000, 0x411e21b5 )
+	ROM_LOAD	 ( "169.12l",		0xc000, 0x2000, 0x662ff24b )
+	ROM_LOAD	 ( "174.12m",		0xe000, 0x2000, 0xf0c571dc )
+
+	/* graphics (P)ROM data */
+	ROM_REGION( 0x7000, REGION_PROMS )
+	ROM_LOAD	 ( "014-186.bpr",	0x0000, 0x0100, 0x16d69c31 )	/* red palette PROM */
+	ROM_LOAD	 ( "014-187.bpr",	0x0100, 0x0100, 0x07340311 )	/* green palette PROM */
+	ROM_LOAD	 ( "014-188.bpr",	0x0200, 0x0100, 0x1efc84d7 )	/* blue palette PROM */
+	ROM_LOAD	 ( "014-189.bpr",	0x0300, 0x0100, 0x064d51a0 )	/* alpha color PROM */
+	ROM_LOAD	 ( "014-190.bpr",	0x0400, 0x0100, 0x7880c5af )	/* view color PROM */
+	ROM_LOAD	 ( "014-142.bpr",	0x0500, 0x0100, 0x2d502464 )	/* vertical position low PROM */
+	ROM_LOAD	 ( "014-143.bpr",	0x0600, 0x0100, 0x027aa62c )	/* vertical position med PROM */
+	ROM_LOAD	 ( "014-144.bpr",	0x0700, 0x0100, 0x1f8d0df3 )	/* vertical position hi PROM */
+	ROM_LOAD	 ( "014-191.bpr",	0x0800, 0x0400, 0x8b270902 )	/* road color PROM */
+	ROM_LOAD	 ( "014-192.bpr",	0x0c00, 0x0400, 0xcaddb0b0 )	/* sprite color PROM */
+	ROM_LOAD	 ( "131.11n",		0x1000, 0x1000, 0x5921777f )	/* vertical scaling PROM */
+	ROM_LOAD	 ( "127.2l",		0x2000, 0x2000, 0xee6b3315 )	/* road control PROM */
+	ROM_LOAD	 ( "128.2m",		0x4000, 0x2000, 0x6d1e7042 )	/* road bits 1 PROM */
+	ROM_LOAD	 ( "134.2n",		0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
+
+	/* sound (P)ROM data */
+	ROM_REGION( 0xd000, REGION_SOUND1 )
+	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
+	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
+	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
+	ROM_LOAD	 ( "014-106.rom",	0x5000, 0x2000, 0x5b4cf05e )	/* voice PROM */
+
+	/* unknown or unused (P)ROM data */
+	ROM_REGION( 0x0100, REGION_USER1 )
+	ROM_LOAD	 ( "014-117.bpr",	0x0000, 0x0100, 0x2401c817 )	/* sync chain */
+ROM_END
+
+
+ROM_START( poleps2b )
 	/* Z80 memory/ROM data */
 	ROM_REGION( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "180.7h",		0x0000, 0x2000, 0xf85212c4 )
@@ -861,7 +1003,7 @@ ROM_START( polepos2 )
 	ROM_LOAD	 ( "134.2n",		0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
 
 	/* sound (P)ROM data */
-	ROM_REGION( 0xb000, REGION_SOUND1 )
+	ROM_REGION( 0xd000, REGION_SOUND1 )
 	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
 	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
 	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
@@ -873,7 +1015,7 @@ ROM_START( polepos2 )
 ROM_END
 
 
-ROM_START( poleps2a )
+ROM_START( poleps2c )
 	/* Z80 memory/ROM data */
 	ROM_REGION( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "180.7h",		0x0000, 0x2000, 0xf85212c4 )
@@ -931,7 +1073,7 @@ ROM_START( poleps2a )
 	ROM_LOAD	 ( "134.2n",		0x6000, 0x1000, 0x4e97f101 )	/* read bits 2 PROM */
 
 	/* sound (P)ROM data */
-	ROM_REGION( 0xb000, REGION_SOUND1 )
+	ROM_REGION( 0xd000, REGION_SOUND1 )
 	ROM_LOAD	 ( "014-118.bpr",	0x0000, 0x0100, 0x8568decc )	/* Namco sound PROM */
 	ROM_LOAD	 ( "014-110.rom",	0x1000, 0x2000, 0xb5ad4d5f )	/* engine sound PROM */
 	ROM_LOAD	 ( "014-111.rom",	0x3000, 0x2000, 0x8fdd2f6f )	/* engine sound PROM */
@@ -944,12 +1086,25 @@ ROM_END
 
 
 /*********************************************************************
+ * Initialization routines
+ *********************************************************************/
+
+static void init_polepos2(void)
+{
+	/* note that the bootleg versions don't need this custom IC; they have a hacked ROM in its place */
+	install_mem_read_handler(1, 0x4000, 0x5fff, polepos2_ic25_r);
+}
+
+
+/*********************************************************************
  * Game drivers
  *********************************************************************/
 
-GAME( 1982, polepos,  0,        polepos, polepos,  0, ROT0, "Namco", "Pole Position" )
-GAME( 1982, poleposa, polepos,  polepos, polepos,  0, ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)" )
-GAME( 1982, polepos1, polepos,  polepos, polepos,  0, ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)" )
-GAME( 1982, topracer, polepos,  polepos, polepos,  0, ROT0, "bootleg", "Top Racer" )
-GAME( 1983, polepos2, 0,        polepos, polepos2, 0, ROT0, "Namco (Atari license)", "Pole Position II (Atari set 1)" )
-GAME( 1983, poleps2a, polepos2, polepos, polepos2, 0, ROT0, "Namco (Atari license)", "Pole Position II (Atari set 2)" )
+GAME( 1982, polepos,  0,        polepos, polepos,  0,        ROT0, "Namco", "Pole Position" )
+GAME( 1982, poleposa, polepos,  polepos, polepos,  0,        ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)" )
+GAME( 1982, polepos1, polepos,  polepos, polepos,  0,        ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)" )
+GAME( 1982, topracer, polepos,  polepos, polepos,  0,        ROT0, "bootleg", "Top Racer" )
+GAME( 1983, polepos2, 0,        polepos, polepos2, polepos2, ROT0, "Namco", "Pole Position II" )
+GAME( 1983, poleps2a, polepos2, polepos, polepos2, polepos2, ROT0, "Namco (Atari license)", "Pole Position II (Atari)" )
+GAME( 1983, poleps2b, polepos2, polepos, polepos2, 0,        ROT0, "Namco (Atari license)", "Pole Position II (Atari bootleg 1)" )
+GAME( 1983, poleps2c, polepos2, polepos, polepos2, 0,        ROT0, "Namco (Atari license)", "Pole Position II (Atari bootleg 2)" )

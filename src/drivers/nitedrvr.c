@@ -127,7 +127,7 @@ INPUT_PORTS_START( nitedrvr )
 		PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Alternating signal? */
 
 	PORT_START		/* fake port used for steering */
-		PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 10, 0, 0, 0 )
+		PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 100, 10, 0, 0 )
 
 INPUT_PORTS_END
 

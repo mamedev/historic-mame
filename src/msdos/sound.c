@@ -5,38 +5,48 @@
 #include "driver.h"
 #include <dos.h>
 #include <conio.h>
-#include <time.h>
+#include "ticker.h"
 #ifdef USE_SEAL
 #include <audio.h>
 #endif
 
-/* this is supposed to cut down Allegro size, but it actually gets *bigger*... */
-#if 0
+#ifdef USE_ALLEGRO
+
+/* cut down Allegro size */
 BEGIN_DIGI_DRIVER_LIST
+   DIGI_DRIVER_SOUNDSCAPE
+   DIGI_DRIVER_AUDIODRIVE
+   DIGI_DRIVER_WINSOUNDSYS
+   DIGI_DRIVER_SB
 END_DIGI_DRIVER_LIST
+
+
 BEGIN_MIDI_DRIVER_LIST
 END_MIDI_DRIVER_LIST
+
 #endif
 
-
-#define SOUND_CHANNELS 2	/* left and right */
 
 #ifdef USE_SEAL
 /* audio related stuff */
+#define SOUND_CHANNELS 2	/* left and right */
 HAC hVoice[SOUND_CHANNELS];
 LPAUDIOWAVE lpWave[SOUND_CHANNELS];
-
 AUDIOINFO info;
 AUDIOCAPS caps;
 #endif
+
 #ifdef USE_ALLEGRO
-AUDIOSTREAM *stream;
+SAMPLE *mysample;
+int myvoice;
 #endif
+
 
 static int num_used_opl;
 int nominal_sample_rate;
 int soundcard,usestereo;
 int attenuation = 0;
+static int master_volume = 256;
 
 
 static int stream_playing;
@@ -145,7 +155,7 @@ int msdos_init_sound(void)
 	if (errorlog) fprintf(errorlog,"set sample rate: %d\n",Machine->sample_rate);
 
 	{
-		uclock_t a,b;
+		TICKER a,b;
 		LONG start,end;
 
 
@@ -179,21 +189,21 @@ int msdos_init_sound(void)
 		ASetVoiceVolume(hVoice[0],0);
 		AStartVoice(hVoice[0]);
 
-		a = uclock();
+		a = ticker();
 		/* wait some time to let everything stabilize */
 		do
 		{
 			AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
-			b = uclock();
-		} while (b-a < UCLOCKS_PER_SEC/10);
+			b = ticker();
+		} while (b-a < TICKS_PER_SEC/10);
 
-		a = uclock();
+		a = ticker();
 		AGetVoicePosition(hVoice[0],&start);
 		do
 		{
 			AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
-			b = uclock();
-		} while (b-a < UCLOCKS_PER_SEC);
+			b = ticker();
+		} while (b-a < TICKS_PER_SEC);
 		AGetVoicePosition(hVoice[0],&end);
 
 		nominal_sample_rate = Machine->sample_rate;
@@ -234,7 +244,6 @@ int msdos_init_sound(void)
 #endif
 
 #ifdef USE_ALLEGRO
-	install_timer();
 	if (install_sound(DIGI_AUTODETECT,MIDI_NONE,0) != 0)
 	{
 		reserve_voices(1,0);
@@ -288,19 +297,11 @@ void msdos_shutdown_sound(void)
 
 
 
-#ifdef USE_SEAL
 #define NUM_BUFFERS 3	/* raising this number should improve performance with frameskip, */
 						/* but also increases the latency. */
-#endif
-#ifdef USE_ALLEGRO
-#define NUM_BUFFERS 1
-#endif
 
 static int voice_pos;
 static int audio_buffer_length;
-
-/* keep ahead by this many samples, to help prevent gaps */
-#define EXTRA_SAMPLES			0
 
 /* global sample tracking */
 static double samples_per_frame;
@@ -322,7 +323,7 @@ int osd_start_audio_stream(int stereo)
 
 	/* compute how many samples to generate this frame */
 	samples_left_over = samples_per_frame;
-	samples_this_frame = (UINT32)samples_left_over + EXTRA_SAMPLES;
+	samples_this_frame = (UINT32)samples_left_over;
 	samples_left_over -= (double)samples_this_frame;
 
 	audio_buffer_length = NUM_BUFFERS * samples_per_frame + 20;
@@ -381,8 +382,32 @@ int osd_start_audio_stream(int stereo)
 #endif
 
 #ifdef USE_ALLEGRO
-	stream = play_audio_stream(audio_buffer_length,16,stereo,nominal_sample_rate,255,128);
-	if (stream == 0) return 0;
+	mysample = create_sample(16,stereo,nominal_sample_rate,audio_buffer_length);
+	if (mysample == 0) return 0;
+	myvoice = allocate_voice(mysample);
+	voice_set_playmode(myvoice,PLAYMODE_LOOP);
+	if (stereo)
+	{
+		INT16 *buf = mysample->data;
+		int p = 0;
+		while (p != audio_buffer_length)
+		{
+			buf[2*p] = (INT16)0x8000;
+			buf[2*p+1] = (INT16)0x8000;
+			p++;
+		}
+	}
+	else
+	{
+		INT16 *buf = mysample->data;
+		int p = 0;
+		while (p != audio_buffer_length)
+		{
+			buf[p] = (INT16)0x8000;
+			p++;
+		}
+	}
+	voice_start(myvoice);
 #endif
 
 	stream_playing = 1;
@@ -415,8 +440,10 @@ void osd_stop_audio_stream(void)
 	}
 #endif
 #ifdef USE_ALLEGRO
-	stop_audio_stream(stream);
-	stream = 0;
+	voice_stop(myvoice);
+	deallocate_voice(myvoice);
+	destroy_sample(mysample);
+	mysample = 0;
 #endif
 
 	stream_playing = 0;
@@ -513,87 +540,47 @@ static void updateaudiostream(void)
 #endif
 #ifdef USE_ALLEGRO
 {
-	static INT16 buf[16384];
-	INT16 *b;
-	int p;
-
-	p = start;
-	if (start < end)
+	if (throttle)   /* sync with audio only when speed throttling is not turned off */
 	{
-		if (stereo)
+		profiler_mark(PROFILER_IDLE);
+		for (;;)
 		{
-			while (p != end)
+			int curpos;
+
+			curpos = voice_get_position(myvoice);
+			if (start < end)
 			{
-				buf[2*p] = *data++ ^ 0x8000;
-				buf[2*p+1] = *data++ ^ 0x8000;
-				p++;
+				if (curpos < start || curpos >= end) break;
+			}
+			else
+			{
+				if (curpos < start && curpos >= end) break;
 			}
 		}
-		else
+		profiler_mark(PROFILER_END);
+	}
+
+	if (stereo)
+	{
+		INT16 *buf = mysample->data;
+		int p = start;
+		while (p != end)
 		{
-			while (p != end)
-			{
-				buf[p] = *data++ ^ 0x8000;
-				p++;
-			}
+			if (p >= buflen) p -= buflen;
+			buf[2*p] = (*data++ * master_volume / 256) ^ 0x8000;
+			buf[2*p+1] = (*data++ * master_volume / 256) ^ 0x8000;
+			p++;
 		}
 	}
 	else
 	{
-		if (stereo)
+		INT16 *buf = mysample->data;
+		int p = start;
+		while (p != end)
 		{
-			while (p != buflen)
-			{
-				buf[2*p] = *data++ ^ 0x8000;
-				buf[2*p+1] = *data++ ^ 0x8000;
-				p++;
-			}
-		}
-		else
-		{
-			while (p != buflen)
-			{
-				buf[p] = *data++ ^ 0x8000;
-				p++;
-			}
-		}
-
-		if (throttle)   /* sync with audio only when speed throttling is not turned off */
-		{
-			do
-			{
-				b = get_audio_stream_buffer(stream);
-			} while (b == 0);
-		}
-		else
-			b = get_audio_stream_buffer(stream);
-
-		if (b)
-		{
-			if (stereo)
-				memcpy(b,buf,4*buflen);
-			else
-				memcpy(b,buf,2*buflen);
-			free_audio_stream_buffer(stream);
-		}
-
-		p = 0;
-		if (stereo)
-		{
-			while (p != end)
-			{
-				buf[2*p] = *data++ ^ 0x8000;
-				buf[2*p+1] = *data++ ^ 0x8000;
-				p++;
-			}
-		}
-		else
-		{
-			while (p != end)
-			{
-				buf[p] = *data++ ^ 0x8000;
-				p++;
-			}
+			if (p >= buflen) p -= buflen;
+			buf[p] = (*data++ * master_volume / 256) ^ 0x8000;
+			p++;
 		}
 	}
 }
@@ -610,7 +597,7 @@ int osd_update_audio_stream(INT16 *buffer)
 
 	/* compute how many samples to generate next frame */
 	samples_left_over += samples_per_frame;
-	samples_this_frame = (UINT32)samples_left_over + EXTRA_SAMPLES;
+	samples_this_frame = (UINT32)samples_left_over;
 	samples_left_over -= (double)samples_this_frame;
 
 	return samples_this_frame;
@@ -639,8 +626,6 @@ int msdos_update_audio(void)
 
 
 
-static int master_volume = 256;
-
 /* attenuation in dB */
 void osd_set_mastervolume(int _attenuation)
 {
@@ -652,12 +637,7 @@ void osd_set_mastervolume(int _attenuation)
 
 	attenuation = _attenuation;
 
-#ifdef USE_SEAL
  	volume = 256.0;	/* range is 0-256 */
-#endif
-#ifdef USE_ALLEGRO
- 	volume = 255.0;	/* range is 0-255 */
-#endif
 	while (_attenuation++ < 0)
 		volume /= 1.122018454;	/* = (10 ^ (1/20)) = 1dB */
 
@@ -665,9 +645,6 @@ void osd_set_mastervolume(int _attenuation)
 
 #ifdef USE_SEAL
 	ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,master_volume);
-#endif
-#ifdef USE_ALLEGRO
-	set_volume(master_volume,0);
 #endif
 }
 
@@ -686,7 +663,7 @@ void osd_sound_enable(int enable_it)
 #endif
 #ifdef USE_ALLEGRO
 	if (enable_it)
-		set_volume(master_volume,0);
+		set_volume(255,0);
 	else
 		set_volume(0,0);
 #endif

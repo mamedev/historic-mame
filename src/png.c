@@ -128,7 +128,7 @@ int png_inflate_image (struct png_info *p)
 {
 	unsigned long fbuff_size;
 
-    fbuff_size = p->height * (p->rowbytes + 1);
+	fbuff_size = p->height * (p->rowbytes + 1);
 
 	if((p->fimage = (UINT8 *)malloc (fbuff_size))==NULL)
 	{
@@ -138,7 +138,7 @@ int png_inflate_image (struct png_info *p)
 		return 0;
 	}
 
-    if (uncompress(p->fimage, &fbuff_size, p->zimage, p->zlength) != Z_OK)
+	if (uncompress(p->fimage, &fbuff_size, p->zimage, p->zlength) != Z_OK)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Error while inflating image\n");
@@ -292,7 +292,7 @@ int png_read_file(void *fp, struct png_info *p)
 			break;
 
 		case PNG_CN_gAMA:
-			p->source_gamma  = convert_from_network_order(chunk_data)/100000.0;
+			p->source_gamma	 = convert_from_network_order(chunk_data)/100000.0;
 			if (errorlog)
 				fprintf(errorlog, "Source gamma: %f\n",p->source_gamma);
 
@@ -361,7 +361,7 @@ int png_read_file(void *fp, struct png_info *p)
 	return 1;
 }
 
-/*  Expands a p->image from p->bit_depth to 8 bit */
+/*	Expands a p->image from p->bit_depth to 8 bit */
 int png_expand_buffer_8bit (struct png_info *p)
 {
 	int i,j, k;
@@ -508,7 +508,7 @@ static int png_write_file(void *fp, struct png_info *p)
 	*(ihdr+10) = p->compression_method;
 	*(ihdr+11) = p->filter_method;
 	*(ihdr+12) = p->interlace_method;
-    if (errorlog) fprintf (errorlog, "Type(%d) Color Depth(%d)\n", p->color_type,p->bit_depth);
+	if (errorlog) fprintf (errorlog, "Type(%d) Color Depth(%d)\n", p->color_type,p->bit_depth);
 	if (png_write_chunk(fp, PNG_CN_IHDR, ihdr, 13)==0)
 		return 0;
 
@@ -523,7 +523,11 @@ static int png_write_file(void *fp, struct png_info *p)
 
 	/* PNG_CN_tEXt */
 	sprintf (text, "Software");
+#ifdef MESS
+	sprintf (text+9, "MESS %s", build_version);
+#else
 	sprintf (text+9, "MAME %s", build_version);
+#endif
 	if (png_write_chunk(fp, PNG_CN_tEXt, (UINT8 *)text, 14+strlen(build_version))==0)
 		return 0;
 
@@ -561,7 +565,7 @@ static int png_filter(struct png_info *p)
 
 static int png_deflate_image(struct png_info *p)
 {
-    unsigned long zbuff_size;
+	unsigned long zbuff_size;
 
 	zbuff_size = (p->height*(p->rowbytes+1))*1.1+12;
 
@@ -572,7 +576,7 @@ static int png_deflate_image(struct png_info *p)
 		return 0;
 	}
 
-    if (compress(p->zimage, &zbuff_size, p->fimage, p->height*(p->rowbytes+1)) != Z_OK)
+	if (compress(p->zimage, &zbuff_size, p->fimage, p->height*(p->rowbytes+1)) != Z_OK)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Error while deflating image\n");
@@ -623,7 +627,7 @@ static int png_pack_buffer (struct png_info *p)
  *********************************************************************/
 int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 {
-	int i, j;
+	int i, j, c;
 	UINT8 *ip;
 	struct png_info p;
 
@@ -642,9 +646,13 @@ int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 				fprintf(errorlog,"Out of memory\n");
 			return 0;
 		}
+		memset (p.palette, 0, 3*256);
 		/* get palette */
-		for (i=0; i<256; i++)
-			osd_get_pen(i,&p.palette[3*i],&p.palette[3*i+1],&p.palette[3*i+2]);
+		for (i = 0; i < Machine->drv->total_colors; i++)
+		{
+			c = Machine->pens[i];
+			osd_get_pen(c,&p.palette[3*c],&p.palette[3*c+1],&p.palette[3*c+2]);
+		}
 
 		p.num_palette = 256;
 		if((p.image = (UINT8 *)malloc (p.height*p.width))==NULL)

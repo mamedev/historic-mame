@@ -253,7 +253,6 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				drawgfx(
 					bitmap,Machine->gfx[0],code,4*getcolor(sx,sy)+color,1,1,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-				osd_mark_dirty(sx,sy,sx+7,sy+7,0);
 			}
 		}
 	}
@@ -290,7 +289,6 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				drawgfx(
 					bitmap,Machine->gfx[0],code,4*getcolor(sx,sy)+color,0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-				osd_mark_dirty(sx,sy,sx+7,sy+7,0);
 			}
 		}
 	}

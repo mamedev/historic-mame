@@ -1,11 +1,25 @@
 /***************************************************************************
-				Wardners Forest  (Pyros in USA)
 
-driver by Quench
+		ToaPlan game hardware from 1987
+		--------------------------------
+		Driver by: Quench
 
+
+Supported games:
+
+	Toaplan Board Number:	TP-009
+	Taito Game Number:		B25
+		Wardners Forest (World)
+		Pyros			(USA)
+		Wardna no Mori	(Japan)
+
+Notes:
 		Basically the same video and machine hardware as Flying shark,
-		except for the Main CPU which is a Z80 here.
-		See Twin Cobra drivers to complete the hardware setup.
+		  except for the Main CPU which is a Z80 here.
+		See twincobr.c machine and video drivers to complete the
+		  hardware setup.
+		Also see Input Port definition header below, for instructions
+		  on how to enter test mode.
 
 **************************** Memory & I/O Maps *****************************
 Z80:(0)  Main CPU
@@ -17,8 +31,8 @@ a000-adff Pallette RAM
 c000-c7ff Sound RAM - shared with C000-C7FF in Z80(1) RAM
 
 in:
-50		DSW 1
-52		DSW 2
+50		DSW A
+52		DSW B
 54		Player 1 controls
 56		Player 2 controls
 58		VBlank (bit 7) and coin-in/start inputs
@@ -111,10 +125,23 @@ out:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 
+
+/******************** Machine stuff **********************/
+void wardner_reset(void);
+void wardner_mainram_w(int offset, int data);
+int  wardner_mainram_r(int offset);
+int  twincobr_dsp_in(int offset);
+void twincobr_dsp_out(int fnction,int data);
+void twincobr_7800c_w(int offset,int data);
+void fshark_coin_dsp_w(int offset,int data);
+
+static int wardner_membank = 0;
+extern int twincobr_intenable;
+
 extern unsigned char *wardner_mainram;
 
-void wardner_reset(void);
 
+/******************** Video stuff **********************/
 int  twincobr_crtc_r(int offset);
 void twincobr_crtc_w(int offset,int data);
 
@@ -127,72 +154,53 @@ void wardner_bgscroll_w(int offset, int data);
 void wardner_fgscroll_w(int offset, int data);
 void wardner_txscroll_w(int offset, int data);
 void twincobr_exscroll_w(int offset,int data);
-void wardner_mainram_w(int offset, int data);
-int  wardner_mainram_r(int offset);
-
-
 
 int  twincobr_vh_start(void);
 void twincobr_vh_stop(void);
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void twincobr_eof_callback(void);
+
+extern int twincobr_display_on;
+
 extern unsigned char *videoram;
 extern unsigned char *twincobr_fgvideoram;
 extern unsigned char *twincobr_bgvideoram;
-extern int twincobr_display_on;
-
-int  twincobr_dsp_in(int offset);
-void twincobr_dsp_out(int fnction,int data);
-void twincobr_7800c_w(int offset,int data);
-void fshark_coin_dsp_w(int offset,int data);
 
 
 
-extern int intenable;
-static int wardner_membank = 0;
-
-int wardner_interrupt(void)
+static int wardner_interrupt(void)
 {
-	if (intenable) {
-		intenable = 0;
+	if (twincobr_intenable) {
+		twincobr_intenable = 0;
 		return interrupt();
 	}
 	else return ignore_interrupt();
 }
 
 
-int vblank_wardner_input_r(int offset)
-{
-	/* VBlank and also coin, start and system switches */
-	int read_two_ports = 0;		/* hack coz cant read switches and vblank on same port ? */
-	read_two_ports = readinputport(0);
-	read_two_ports |= readinputport(3);
-	return read_two_ports;
-}
-
-
-void CRTC_add_w(int offset,int data)
+static void CRTC_add_w(int offset,int data)
 {
 	crtc6845_address_w(offset, data);
 }
 
-void CRTC_data_w(int offset, int data)
+static void CRTC_data_w(int offset, int data)
 {
 	crtc6845_register_w(0, data);
 	twincobr_display_on = 1;
 }
 
-int wardner_sprite_r(int offset)
+static int wardner_sprite_r(int offset)
 {
 	return spriteram[offset];
 }
 
-void wardner_sprite_w(int offset, int data)
+static void wardner_sprite_w(int offset, int data)
 {
 	spriteram[offset] = data;
 }
 
 
-void wardner_ramrom_banksw(int offset,int data)
+static void wardner_ramrom_banksw(int offset,int data)
 {
 	if (wardner_membank != data) {
 		int bankaddress = 0;
@@ -274,16 +282,16 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct MemoryReadAddress DSP_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811F, MRA_RAM },	/* The real DSP has this at address 0 */
+	{ 0x0000, 0x0bff, MRA_ROM },	/* 0x600 words */
+	{ 0x8000, 0x811f, MRA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }
 };
 
 static struct MemoryWriteAddress DSP_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811F, MWA_RAM },	/* The real DSP has this at address 0 */
+	{ 0x0000, 0x0bff, MWA_ROM },	/* 0x600 words */
+	{ 0x8000, 0x811f, MWA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }
 };
@@ -291,11 +299,11 @@ static struct MemoryWriteAddress DSP_writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x50, 0x50, input_port_4_r },
-	{ 0x52, 0x52, input_port_5_r },
-	{ 0x54, 0x54, input_port_1_r },
-	{ 0x56, 0x56, input_port_2_r },
-	{ 0x58, 0x58, vblank_wardner_input_r },
+	{ 0x50, 0x50, input_port_3_r },			/* DSW A */
+	{ 0x52, 0x52, input_port_4_r },			/* DSW B */
+	{ 0x54, 0x54, input_port_1_r },			/* Player 1 */
+	{ 0x56, 0x56, input_port_2_r },			/* Player 2 */
+	{ 0x58, 0x58, input_port_0_r },			/* V-Blank/Coin/Start */
 	{ 0x60, 0x65, wardner_videoram_r },		/* data from video layer RAM */
 	{ -1 }
 };
@@ -342,41 +350,94 @@ static struct IOWritePort DSP_writeport[] =
 };
 
 
+
+/*****************************************************************************
+	Input Port definitions
+
+	There is a test mode for button/switch tests. To enter Test mode,
+	set the Cross Hatch Pattern DSW to on, restart and then press
+	player 1 start button when in the cross-hatch screen.
+*****************************************************************************/
+
+#define  WARDNER_PLAYER_INPUT( player )										 \
+	PORT_START 				/* Player 1 button 3 skips video RAM tests */	 \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | player ) \
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | player)	/* Fire */		 \
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | player)	/* Jump */		 \
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | player)	/* Shot C */	 \
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 | player)	/* Shot D */
+
+#define  WARDNER_SYSTEM_INPUTS												\
+	PORT_START				/* test button doesnt seem to do anything ? */	\
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )		/* Service button */	\
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )								\
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )	/* Test button */		\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )								\
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )								\
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )							\
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )							\
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )	/* V-Blank */
+
+#define  PYROS_DSW_A									\
+	PORT_START		/* DSW A */							\
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )		\
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )		\
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )	\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )	\
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )		\
+	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )		\
+	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )		\
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )		\
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )		\
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )		\
+	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )		\
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
+
+#define  WARDNER_DSW_B									\
+	PORT_START		/* DSW B */							\
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )	\
+	PORT_DIPSETTING(	0x01, "Easy" )					\
+	PORT_DIPSETTING(	0x00, "Normal" )				\
+	PORT_DIPSETTING(	0x02, "Hard" )					\
+	PORT_DIPSETTING(	0x03, "Hardest" )				\
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )	\
+	PORT_DIPSETTING(	0x00, "30000 & 80000" )			\
+	PORT_DIPSETTING(	0x04, "50000 & 100000" )		\
+	PORT_DIPSETTING(	0x08, "30000" )					\
+	PORT_DIPSETTING(	0x0c, "50000" )					\
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )		\
+	PORT_DIPSETTING(	0x30, "1" )						\
+	PORT_DIPSETTING(	0x00, "3" )						\
+	PORT_DIPSETTING(	0x10, "4" )						\
+	PORT_DIPSETTING(	0x20, "5" )						\
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )			\
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )		\
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+
+
+
 INPUT_PORTS_START( wardner )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	WARDNER_SYSTEM_INPUTS
+	WARDNER_PLAYER_INPUT( IPF_PLAYER1 )
+	WARDNER_PLAYER_INPUT( IPF_PLAYER2 )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )	/* Skips video RAM tests */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
+	PORT_START		/* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
@@ -400,89 +461,16 @@ INPUT_PORTS_START( wardner )
 	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "30000 & 80000" )
-	PORT_DIPSETTING(	0x04, "50000 & 100000" )
-	PORT_DIPSETTING(	0x08, "30000" )
-	PORT_DIPSETTING(	0x0c, "50000" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "1" )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x10, "4" )
-	PORT_DIPSETTING(	0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	WARDNER_DSW_B
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pyros )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	WARDNER_SYSTEM_INPUTS
+	WARDNER_PLAYER_INPUT( IPF_PLAYER1 )
+	WARDNER_PLAYER_INPUT( IPF_PLAYER2 )
+	PYROS_DSW_A
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )	/* Skips video RAM tests */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
-
-	PORT_START		/* DSW2 */
+	PORT_START		/* DSW B */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x01, "Easy" )
 	PORT_DIPSETTING(	0x00, "Normal" )
@@ -507,85 +495,11 @@ INPUT_PORTS_START( pyros )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( wardnerj )
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )	/* Extra Player 1 button */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x30, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
-
-	PORT_START		/* DSW2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "30000 & 80000" )
-	PORT_DIPSETTING(	0x04, "50000 & 100000" )
-	PORT_DIPSETTING(	0x08, "30000" )
-	PORT_DIPSETTING(	0x0c, "50000" )
-	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "1" )
-	PORT_DIPSETTING(	0x00, "2" )
-	PORT_DIPSETTING(	0x20, "3" )
-	PORT_DIPSETTING(	0x10, "4" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	WARDNER_SYSTEM_INPUTS
+	WARDNER_PLAYER_INPUT( IPF_PLAYER1 )
+	WARDNER_PLAYER_INPUT( IPF_PLAYER2 )
+	PYROS_DSW_A
+	WARDNER_DSW_B
 INPUT_PORTS_END
 
 
@@ -687,8 +601,8 @@ static struct MachineDriver machine_driver_wardner =
 	1792, 1792,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	twincobr_eof_callback,
 	twincobr_vh_start,
 	twincobr_vh_stop,
 	twincobr_vh_screenrefresh,
@@ -839,10 +753,10 @@ ROM_END
 
 ROM_START( wardnerj )
 	ROM_REGION( 0x48000, REGION_CPU1 )	/* Banked Z80 code */
-	ROM_LOAD( "wardnerj.17", 0x00000, 0x08000, 0xc06804ec )	/* Main Z80 code */
+	ROM_LOAD( "b25-17.bin",  0x00000, 0x08000, 0x4164dca9 )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom",  0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom",  0x28000, 0x10000, 0x95b68813 )
-	ROM_LOAD( "wardner.20",  0x40000, 0x08000, 0x347f411b )
+	ROM_LOAD( "b25-20.bin",  0x40000, 0x08000, 0x1113ad38 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
@@ -869,9 +783,9 @@ ROM_START( wardnerj )
 #endif
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
-	ROM_LOAD( "wardnerj.07", 0x00000, 0x04000, 0x50e329e0 )
-	ROM_LOAD( "wardnerj.06", 0x04000, 0x04000, 0x3bfeb6ae )
-	ROM_LOAD( "wardnerj.05", 0x08000, 0x04000, 0xbe36a53e )
+	ROM_LOAD( "b25-07.bin", 0x00000, 0x04000, 0x50e329e0 )
+	ROM_LOAD( "b25-06.bin", 0x04000, 0x04000, 0x3bfeb6ae )
+	ROM_LOAD( "b25-05.bin", 0x08000, 0x04000, 0xbe36a53e )
 
 	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
@@ -926,4 +840,5 @@ static void init_wardner(void)
 
 GAME( 1987, wardner,  0,       wardner, wardner,  wardner, ROT0, "[Toaplan] Taito Corporation Japan", "Wardner (World)" )
 GAME( 1987, pyros,    wardner, wardner, pyros,    wardner, ROT0, "[Toaplan] Taito America Corporation", "Pyros (US)" )
-GAME( 1987, wardnerj, wardner, wardner, wardnerj, wardner, ROT0, "[Toaplan] Taito Corporation Japan", "Wardner no Mori (Japan)" )
+GAME( 1987, wardnerj, wardner, wardner, wardnerj, wardner, ROT0, "[Toaplan] Taito Corporation", "Wardna no Mori (Japan)" )
+

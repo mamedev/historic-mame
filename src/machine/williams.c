@@ -71,9 +71,6 @@ static void defender_io_w(int offset, int data);
 /* Stargate-specific code */
 int stargate_input_port_0_r(int offset);
 
-/* Lotto Fun-specific code */
-int lottofun_input_port_0_r(int offset);
-
 /* Turkey Shoot-specific code */
 static int tshoot_input_port_0_3(int offset);
 static void tshoot_lamp_w(int offset, int data);
@@ -160,14 +157,6 @@ struct pia6821_interface stargate_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ stargate_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
-	/*irqs   : A/B             */ 0, 0
-};
-
-/* Special PIA 0 for Lotto Fun, to handle the controls and ticket dispenser */
-struct pia6821_interface lottofun_pia_0_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ lottofun_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, ticket_dispenser_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
@@ -326,9 +315,6 @@ void williams_init_machine(void)
 {
 	/* reset the PIAs */
 	pia_reset();
-
-	/* reset the ticket dispenser (Lotto Fun) */
-	ticket_dispenser_init(70, TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH);
 
 	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
 	timer_set(cpu_getscanlinetime(0), 0, williams_va11_callback);
@@ -828,20 +814,6 @@ void blaster_bank_select_w(int offset, int data)
 	{
 		cpu_setbank(1, &RAM[blaster_bank_offset[blaster_bank]]);
 	}
-}
-
-
-
-/*************************************
- *
- *	Lotto Fun-specific routines
- *
- *************************************/
-
-int lottofun_input_port_0_r(int offset)
-{
-	/* merge in the ticket dispenser status */
-	return input_port_0_r(offset) | ticket_dispenser_r(offset);
 }
 
 

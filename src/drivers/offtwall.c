@@ -352,15 +352,15 @@ INPUT_PORTS_START( offtwall )
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260020 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL_V | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_DIAL_V | IPF_PLAYER1, 50, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260022 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER2, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_DIAL | IPF_PLAYER2, 50, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260024 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL_V | IPF_PLAYER3 | IPF_REVERSE, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG( 0xff, 0, IPT_DIAL_V | IPF_PLAYER3 | IPF_REVERSE, 50, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -404,7 +404,7 @@ static struct MachineDriver machine_driver_offtwall =
 	{
 		{
 			CPU_M68000,
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		},

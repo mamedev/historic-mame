@@ -45,6 +45,9 @@ struct MachineSound
 #if (HAS_YM2413)
 #include "sound/2413intf.h"
 #endif
+#if (HAS_SN76477)
+#include "sound/sn76477.h"
+#endif
 #if (HAS_SN76496)
 #include "sound/sn76496.h"
 #endif
@@ -108,6 +111,12 @@ struct MachineSound
 #if (HAS_QSOUND)
 #include "sound/qsound.h"
 #endif
+#if (HAS_SPEAKER)
+#include "sound/speaker.h"
+#endif
+#if (HAS_WAVE)
+#include "sound/wave.h"
+#endif
 
 
 enum
@@ -132,7 +141,7 @@ enum
 	SOUND_YM2151,
 #endif
 #if (HAS_YM2151_ALT)
-	SOUND_YM2151_ALT,
+	SOUND_YM2151,
 #endif
 #if (HAS_YM2608)
 	SOUND_YM2608,
@@ -160,6 +169,9 @@ enum
 #endif
 #if (HAS_Y8950)
 	SOUND_Y8950,	/* YM3526 compatible with delta-T ADPCM */
+#endif
+#if (HAS_SN76477)
+	SOUND_SN76477,
 #endif
 #if (HAS_SN76496)
 	SOUND_SN76496,
@@ -227,7 +239,13 @@ enum
 #if (HAS_QSOUND)
 	SOUND_QSOUND,
 #endif
-	SOUND_COUNT
+#if (HAS_SPEAKER)
+	SOUND_SPEAKER,
+#endif
+#if (HAS_WAVE)
+	SOUND_WAVE,
+#endif
+    SOUND_COUNT
 };
 
 

@@ -7,6 +7,9 @@
 #include "cpu/tms32010/tms32010.h"
 
 #define LOG_DSP_CALLS 0
+#define CLEAR 0
+#define ASSERT 1
+
 
 
 unsigned char *twincobr_68k_dsp_ram;
@@ -28,20 +31,34 @@ extern int wardner_sprite_hack;
 static int coin_count;	/* coin count increments on startup ? , so stop it */
 static int dsp_execute;
 static unsigned int dsp_addr_w, main_ram_seg;
-int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
+int toaplan_main_cpu;   /* Main CPU type.  0 = 68000, 1 = Z80 */
+#if LOG_DSP_CALLS
+static char *toaplan_cpu_type[2] = { "68K" , "Z80" };
+#endif
 
-int intenable;
+int twincobr_intenable;
 int fsharkbt_8741;
 
 
 void fsharkbt_reset_8741_mcu(void)
 {
+	/* clean out high score tables in these game hardware */
 	int twincobr_cnt;
+	int twinc_hisc_addr[12] =
+	{
+		0x15a4, 0x15a8, 0x170a, 0x170c, /* Twin Cobra */
+		0x1282, 0x1284, 0x13ea, 0x13ec, /* Kyukyo Tiger */
+		0x016c, 0x0170, 0x02d2, 0x02d4	/* Flying shark */
+	};
+	for (twincobr_cnt=0; twincobr_cnt < 12; twincobr_cnt++)
+	{
+		WRITE_WORD(&twincobr_68k_dsp_ram[(twinc_hisc_addr[twincobr_cnt])],0xffff);
+	}
 
 	toaplan_main_cpu = 0;		/* 68000 */
 	twincobr_display_on = 0;
 	fsharkbt_8741 = -1;
-	intenable = 0;
+	twincobr_intenable = 0;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
 
@@ -50,35 +67,10 @@ void fsharkbt_reset_8741_mcu(void)
 
 	/* blank out the screen */
 	osd_clearbitmap(Machine->scrbitmap);
-
-	/* clean out high score tables in these game hardware */
-	for (twincobr_cnt=0; twincobr_cnt < 12; twincobr_cnt++)
-	{
-		int twinc_hisc_addr[12] =
-		{
-			0x15a4, 0x15a8, 0x170a, 0x170c, /* Twin Cobra */
-			0x1282, 0x1284, 0x13ea, 0x13ec, /* Kyukyo Tiger */
-			0x016c, 0x0170, 0x02d2, 0x02d4	/* Flying shark */
-		};
-
-		WRITE_WORD(&twincobr_68k_dsp_ram[(twinc_hisc_addr[twincobr_cnt])],0xffff);
-	}
 }
 
 void wardner_reset(void)
 {
-	toaplan_main_cpu = 1;		/* Z80 */
-	intenable = 0;
-	twincobr_display_on = 1;
-	dsp_addr_w = dsp_execute = 0;
-	main_ram_seg = 0;
-
-	/* coin count increments on startup ? , so stop it */
-	coin_count = 0;
-
-	/* blank out the screen */
-	osd_clearbitmap(Machine->scrbitmap);
-
 	/* clean out high score tables in these game hardware */
 	wardner_mainram[0x0117] = 0xff;
 	wardner_mainram[0x0118] = 0xff;
@@ -88,7 +80,20 @@ void wardner_reset(void)
 	wardner_mainram[0x0170] = 0xff;
 	wardner_mainram[0x0171] = 0xff;
 	wardner_mainram[0x0172] = 0xff;
+
+	toaplan_main_cpu = 1;		/* Z80 */
+	twincobr_intenable = 0;
+	twincobr_display_on = 1;
+	dsp_addr_w = dsp_execute = 0;
+	main_ram_seg = 0;
+
+	/* coin count increments on startup ? , so stop it */
+	coin_count = 0;
+
+	/* blank out the screen */
+	osd_clearbitmap(Machine->scrbitmap);
 }
+
 
 int twincobr_dsp_in(int offset)
 {
@@ -186,25 +191,17 @@ void twincobr_dsp_out(int fnction,int data)
 		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x at port 3\n",cpu_getpreviouspc(),data);
 #endif
 		if (data & 0x8000) {
-#if NEW_INTERRUPT_SYSTEM
 			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, CLEAR_LINE);
-#else
-			cpu_cause_interrupt(2,TMS320C10_IGNORE_BIO);
-#endif
 		}
 		if (data == 0) {
 			if (dsp_execute) {
 #if LOG_DSP_CALLS
 				if (errorlog) fprintf(errorlog,"Turning %s on\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
-				cpu_set_halt_line(0,CLEAR_LINE);
+				timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
 				dsp_execute = 0;
 			}
-#if NEW_INTERRUPT_SYSTEM
 			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, ASSERT_LINE);
-#else
-			cpu_cause_interrupt(2,TMS320C10_ACTIVE_BIO);
-#endif
 		}
 	}
 }
@@ -250,8 +247,8 @@ void twincobr_7800c_w(int offset,int data)
 	}
 
 	switch (data) {
-		case 0x0004: intenable = 0; break;
-		case 0x0005: intenable = 1; break;
+		case 0x0004: twincobr_intenable = 0; break;
+		case 0x0005: twincobr_intenable = 1; break;
 		case 0x0006: twincobr_flip_screen = 0; twincobr_flip_x_base=0x037; twincobr_flip_y_base=0x01e; break;
 		case 0x0007: twincobr_flip_screen = 1; twincobr_flip_x_base=0x085; twincobr_flip_y_base=0x0f2; break;
 		case 0x0008: twincobr_bg_ram_bank = 0x0000; break;
@@ -265,25 +262,17 @@ void twincobr_7800c_w(int offset,int data)
 #if LOG_DSP_CALLS
 						if (errorlog) fprintf(errorlog,"Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
-						cpu_set_halt_line(2,CLEAR_LINE);
-#if NEW_INTERRUPT_SYSTEM
+						timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
-#else
-						cpu_cause_interrupt(2,TMS320C10_ACTIVE_INT);
-#endif
-						cpu_set_halt_line(0,ASSERT_LINE);
+						timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 					} break;
 		case 0x000d: if (twincobr_display_on) {
 						/* This means inhibit the INT line to the DSP */
 #if LOG_DSP_CALLS
 						if (errorlog) fprintf(errorlog,"Turning DSP off\n");
 #endif
-#if NEW_INTERRUPT_SYSTEM
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
-#else
-						cpu_clear_pending_interrupts(2)
-#endif
-						cpu_set_halt_line(2,ASSERT_LINE);
+						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 					} break;
 	}
 }
@@ -320,24 +309,16 @@ void fshark_coin_dsp_w(int offset,int data)
 #if LOG_DSP_CALLS
 					if (errorlog) fprintf(errorlog,"Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
-					cpu_set_halt_line(2,CLEAR_LINE);
-#if NEW_INTERRUPT_SYSTEM
+					timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
 					cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
-#else
-					cpu_cause_interrupt(2,TMS320C10_ACTIVE_INT);
-#endif
-					cpu_set_halt_line(0,ASSERT_LINE);
+					timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 					break;
 		case 0x01:	/* This means inhibit the INT line to the DSP */
 #if LOG_DSP_CALLS
 					if (errorlog) fprintf(errorlog,"Turning DSP off\n");
 #endif
-#if NEW_INTERRUPT_SYSTEM
 					cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
-#else
-					cpu_clear_pending_interrupts(2)
-#endif
-					cpu_set_halt_line(2,ASSERT_LINE);
+					timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 					break;
 	}
 }

@@ -203,7 +203,7 @@ int berlwall_mcu_ram_r(int offset)
 ***************************************************************************/
 
 struct GameDriver driver_gtmr;
-struct GameDriver driver_gtmralt;
+struct GameDriver driver_gtmre;
 
 /* The MCU has access to NVRAM */
 void gtmr_mcu_run(void)
@@ -250,19 +250,6 @@ void gtmr_mcu_run(void)
 		{
 			if (Machine->gamedrv == &driver_gtmr)
 			{
-				/* MCU writes the string "USMM0713-TB1994 " to shared ram */
-				WRITE_WORD(&mcu_ram[mcu_offset+0x00], 0x5553 );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x02], 0x4d4d );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x04], 0x3037 );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x06], 0x3133 );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x08], 0x2d54 );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x0a], 0x4231 );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x0c], 0x3939 );
-				WRITE_WORD(&mcu_ram[mcu_offset+0x0e], 0x3420 );
-			}
-
-			if (Machine->gamedrv == &driver_gtmralt)
-			{
 				/* MCU writes the string "MM0525-TOYBOX199" to shared ram */
 				WRITE_WORD(&mcu_ram[mcu_offset+0x00], 0x4d4d );
 				WRITE_WORD(&mcu_ram[mcu_offset+0x02], 0x3035 );
@@ -274,6 +261,18 @@ void gtmr_mcu_run(void)
 				WRITE_WORD(&mcu_ram[mcu_offset+0x0e], 0x3939 );
 			}
 
+			if (Machine->gamedrv == &driver_gtmre)
+			{
+				/* MCU writes the string "USMM0713-TB1994 " to shared ram */
+				WRITE_WORD(&mcu_ram[mcu_offset+0x00], 0x5553 );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x02], 0x4d4d );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x04], 0x3037 );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x06], 0x3133 );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x08], 0x2d54 );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x0a], 0x4231 );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x0c], 0x3939 );
+				WRITE_WORD(&mcu_ram[mcu_offset+0x0e], 0x3420 );
+			}
 		}
 		break;
 	}
@@ -691,7 +690,7 @@ static struct MemoryWriteAddress shogwarr_writemem[] =
 
 
 /***************************************************************************
-							[ The Berlin Wall ]
+						[ The Berlin Wall (set 1) ]
 ***************************************************************************/
 
 //	Input Ports:	[0] Joy 1			[1] Joy 2
@@ -768,19 +767,19 @@ INPUT_PORTS_START( berlwall )
 
 	PORT_START	// IN5 - DSW 2 - $200019.b <- $80001f.b
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy"      )
-	PORT_DIPSETTING(    0x03, "Normal"    )
-	PORT_DIPSETTING(    0x01, "Hard"      )
+	PORT_DIPSETTING(    0x02, "Easy"    )
+	PORT_DIPSETTING(    0x03, "Normal"  )
+	PORT_DIPSETTING(    0x01, "Hard"    )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )	// 1p lives at 202982.b
 	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPNAME( 0x30, 0x30, "Country"   )
-	PORT_DIPSETTING(    0x30, "England"  )
-	PORT_DIPSETTING(    0x20, "Italy"    )
-	PORT_DIPSETTING(    0x10, "Germany"  )
+	PORT_DIPSETTING(    0x30, "England" )
+	PORT_DIPSETTING(    0x20, "Italy"   )
+	PORT_DIPSETTING(    0x10, "Germany" )
 	PORT_DIPSETTING(    0x00, "Freeze Screen" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -789,6 +788,108 @@ INPUT_PORTS_START( berlwall )
 
 INPUT_PORTS_END
 
+
+
+/***************************************************************************
+						[ The Berlin Wall (set 2) ]
+***************************************************************************/
+
+//	Same as berlwall, but for a different lives setting
+//
+//	Input Ports:	[0] Joy 1			[1] Joy 2
+//					[2] Coins			[3] ?
+//					[4] DSW	1			[5] DSW 2
+
+INPUT_PORTS_START( berlwalt )
+
+	PORT_START	// IN0 - Player 1 - 680000.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2 - 680002.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - Coins - 680004.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_COIN1		)
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_COIN2		)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_SERVICE	)	// test
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_COIN3		)	// operator's facility
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+
+	PORT_START	// IN3 - ? - 680006.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - DSW 1 - $80001d.b
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Reserved" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+	PORT_START	// IN5 - DSW 2 - $80001f.b
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy"    )
+	PORT_DIPSETTING(    0x03, "Normal"  )
+	PORT_DIPSETTING(    0x01, "Hard"    )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPNAME( 0x30, 0x30, "Country"   )
+	PORT_DIPSETTING(    0x30, "England" )
+	PORT_DIPSETTING(    0x20, "Italy"   )
+	PORT_DIPSETTING(    0x10, "Germany" )
+	PORT_DIPSETTING(    0x00, "Freeze Screen" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+INPUT_PORTS_END
 
 
 
@@ -865,7 +966,7 @@ INPUT_PORTS_START( gtmr )
 	PORT_DIPSETTING(      0x0000, "None"        )
 
 	PORT_START	// IN5 - Wheel - 100015.b <- ffffe.b
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_CENTER, 30, 1, 0, 0x00, 0xff )
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_CENTER, 30, 1, 0x00, 0xff )
 
 INPUT_PORTS_END
 
@@ -1306,6 +1407,11 @@ void kaneko16_unscramble_tiles(int region)
 	}
 }
 
+void init_kaneko16(void)
+{
+	kaneko16_unscramble_tiles(REGION_GFX1);
+}
+
 
 /***************************************************************************
 
@@ -1341,8 +1447,6 @@ BW-001                      42101
 ROM_START( berlwall )
 
  	ROM_REGION( 0x040000, REGION_CPU1 )			/* 68000 Code */
-//	ROM_LOAD_EVEN( "u23_01.bin", 0x000000, 0x020000, 0x76b526ce )	// another version
-//	ROM_LOAD_ODD(  "u39_01.bin", 0x000000, 0x020000, 0x78fa7ef2 )
 	ROM_LOAD_EVEN( "bw100a", 0x000000, 0x020000, 0xe6bcb4eb )
 	ROM_LOAD_ODD(  "bw101a", 0x000000, 0x020000, 0x38056fb2 )
 
@@ -1373,13 +1477,39 @@ ROM_START( berlwall )
 ROM_END
 
 
-void init_berlwall(void)
-{
-	/* Code patches */
-//	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	kaneko16_unscramble_tiles(REGION_GFX1);
-}
+
+ROM_START( berlwalt )
+
+ 	ROM_REGION( 0x040000, REGION_CPU1 )			/* 68000 Code */
+	ROM_LOAD_EVEN( "u23_01.bin", 0x000000, 0x020000, 0x76b526ce )
+	ROM_LOAD_ODD(  "u39_01.bin", 0x000000, 0x020000, 0x78fa7ef2 )
+
+ 	ROM_REGION( 0x010000, REGION_CPU2 )			/* MCU Code */
+	ROM_LOAD( "mcu_code",  0x000000, 0x010000, 0x00000000 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "bw003",  0x000000, 0x080000, 0xfbb4b72d )
+
+	ROM_REGION( 0x120000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Sprites */
+	ROM_LOAD( "bw001",  0x000000, 0x080000, 0xbc927260 )
+	ROM_LOAD( "bw002",  0x080000, 0x080000, 0x223f5465 )
+	ROM_LOAD( "bw300",  0x100000, 0x020000, 0xb258737a )
+
+	ROM_REGION( 0x400000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* High Color Background */
+	ROM_LOAD_GFX_EVEN( "bw004",  0x000000, 0x080000, 0x5300c34d )
+	ROM_LOAD_GFX_ODD(  "bw008",  0x000000, 0x080000, 0x9aaf2f2f ) // FIXED BITS (xxxxxxx0)
+	ROM_LOAD_GFX_EVEN( "bw005",  0x100000, 0x080000, 0x16db6d43 )
+	ROM_LOAD_GFX_ODD(  "bw009",  0x100000, 0x080000, 0x1151a0b0 ) // FIXED BITS (xxxxxxx0)
+	ROM_LOAD_GFX_EVEN( "bw006",  0x200000, 0x080000, 0x73a35d1f )
+	ROM_LOAD_GFX_ODD(  "bw00a",  0x200000, 0x080000, 0xf447dfc2 ) // FIXED BITS (xxxxxxx0)
+	ROM_LOAD_GFX_EVEN( "bw007",  0x300000, 0x080000, 0x97f85c87 )
+	ROM_LOAD_GFX_ODD(  "bw00b",  0x300000, 0x080000, 0xb0a48225 ) // FIXED BITS (xxxxxxx0)
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )	/* Samples */
+	ROM_LOAD( "bw000",  0x000000, 0x040000, 0xd8fe869d )
+
+ROM_END
 
 
 
@@ -1474,45 +1604,9 @@ f1: 10F6
 /*	This version displays:
 
 	tb05mm-eu "1000 miglia"
-	master up= 94/09/06 14:49:19			*/
-
-ROM_START( gtmr )
-
- 	ROM_REGION( 0x100000, REGION_CPU1 )			/* 68000 Code */
-	ROM_LOAD_EVEN( "gmmu2.bin", 0x000000, 0x080000, 0x36dc4aa9 )
-	ROM_LOAD_ODD(  "gmmu1.bin", 0x000000, 0x080000, 0x8653c144 )
-
- 	ROM_REGION( 0x010000, REGION_CPU2 )			/* MCU Code */
-	ROM_LOAD( "mcu_code",  0x000000, 0x010000, 0x00000000 )
-
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, 0xb15f6b7f )
-
-	ROM_REGION( 0x900000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Sprites */
-	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, 0xc0ab3efc )
-	ROM_LOAD( "gmmu28.bin",  0x200000, 0x200000, 0xcf6b23dc )
-	ROM_LOAD( "gmmu29.bin",  0x400000, 0x200000, 0x8f27f5d3 )
-	ROM_LOAD( "gmmu30.bin",  0x600000, 0x080000, 0xe9747c8c )
-	/* codes 6800-6fff are explicitly skipped */
-	ROM_LOAD_GFX_EVEN( "gmmu64.bin",  0x700000, 0x100000, 0x57d77b33 )	// HALVES IDENTICAL
-	ROM_LOAD_GFX_ODD(  "gmmu65.bin",  0x700000, 0x100000, 0x05b8bdca )	// HALVES IDENTICAL
-
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* Samples */
-	ROM_LOAD( "gmmu23.bin",  0x000000, 0x100000, 0xb9cbfbee )	// 16 x $10000
-
-	ROM_REGION( 0x100000, REGION_SOUND2 )	/* Samples */
-	ROM_LOAD( "gmmu24.bin",  0x000000, 0x100000, 0x380cdc7c )	//  2 x $40000 - HALVES IDENTICAL
-
-ROM_END
-
-
-
-/*	This version displays:
-
-	tb05mm-eu "1000 miglia"
 	master up= 94/07/18 15:12:35			*/
 
-ROM_START( gtmralt )
+ROM_START( gtmr )
 
  	ROM_REGION( 0x100000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "u2.bin", 0x000000, 0x080000, 0x031799f7 )
@@ -1544,13 +1638,39 @@ ROM_START( gtmralt )
 ROM_END
 
 
-void init_gtmr(void)
-{
-	kaneko16_unscramble_tiles(REGION_GFX1);
-}
+/*	This version displays:
 
+	tb05mm-eu "1000 miglia"
+	master up= 94/09/06 14:49:19			*/
 
+ROM_START( gtmre )
 
+ 	ROM_REGION( 0x100000, REGION_CPU1 )			/* 68000 Code */
+	ROM_LOAD_EVEN( "gmmu2.bin", 0x000000, 0x080000, 0x36dc4aa9 )
+	ROM_LOAD_ODD(  "gmmu1.bin", 0x000000, 0x080000, 0x8653c144 )
+
+ 	ROM_REGION( 0x010000, REGION_CPU2 )			/* MCU Code */
+	ROM_LOAD( "mcu_code",  0x000000, 0x010000, 0x00000000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, 0xb15f6b7f )
+
+	ROM_REGION( 0x900000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Sprites */
+	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, 0xc0ab3efc )
+	ROM_LOAD( "gmmu28.bin",  0x200000, 0x200000, 0xcf6b23dc )
+	ROM_LOAD( "gmmu29.bin",  0x400000, 0x200000, 0x8f27f5d3 )
+	ROM_LOAD( "gmmu30.bin",  0x600000, 0x080000, 0xe9747c8c )
+	/* codes 6800-6fff are explicitly skipped */
+	ROM_LOAD_GFX_EVEN( "gmmu64.bin",  0x700000, 0x100000, 0x57d77b33 )	// HALVES IDENTICAL
+	ROM_LOAD_GFX_ODD(  "gmmu65.bin",  0x700000, 0x100000, 0x05b8bdca )	// HALVES IDENTICAL
+
+	ROM_REGION( 0x100000, REGION_SOUND1 )	/* Samples */
+	ROM_LOAD( "gmmu23.bin",  0x000000, 0x100000, 0xb9cbfbee )	// 16 x $10000
+
+	ROM_REGION( 0x100000, REGION_SOUND2 )	/* Samples */
+	ROM_LOAD( "gmmu24.bin",  0x000000, 0x100000, 0x380cdc7c )	//  2 x $40000 - HALVES IDENTICAL
+
+ROM_END
 
 
 /***************************************************************************
@@ -1595,10 +1715,6 @@ ROM_START( gtmr2 )
 ROM_END
 
 
-void init_gtmr2(void)
-{
-	kaneko16_unscramble_tiles(REGION_GFX1);
-}
 
 
 /***************************************************************************
@@ -1689,7 +1805,7 @@ void init_shogwarr(void)
 	WRITE_WORD(&RAM[0x223a8], 0x6000);	// rom test
 #endif
 
-	kaneko16_unscramble_tiles(REGION_GFX1);
+	init_kaneko16();
 
 /*
 	ROM test at 2237e:
@@ -1712,8 +1828,9 @@ void init_shogwarr(void)
 
 ***************************************************************************/
 
-GAMEX( 1991, berlwall, 0,    berlwall, berlwall, berlwall, ROT0_16BIT, "Kaneko", "The Berlin Wall", GAME_NO_SOUND | GAME_WRONG_COLORS )
-GAMEX( 1992, shogwarr, 0,    shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors", GAME_NOT_WORKING )
-GAME ( 1994, gtmr,     0,    gtmr,     gtmr,     gtmr,     ROT0_16BIT, "Kaneko", "Great 1000 Miles Rally (set 1)" )
-GAME ( 1994, gtmralt,  gtmr, gtmr,     gtmr,     gtmr,     ROT0_16BIT, "Kaneko", "Great 1000 Miles Rally (set 2)" )
-GAMEX( 1995, gtmr2,    0,    gtmr,     gtmr,     gtmr2,    ROT0,       "Kaneko", "Great 1000 Miles Rally 2", GAME_NOT_WORKING )
+GAMEX( 1991, berlwall, 0,        berlwall, berlwall, kaneko16, ROT0_16BIT, "Kaneko", "The Berlin Wall (set 1)", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1991, berlwalt, berlwall, berlwall, berlwalt, kaneko16, ROT0_16BIT, "Kaneko", "The Berlin Wall (set 2)", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors", GAME_NOT_WORKING )
+GAME ( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0_16BIT, "Kaneko", "Great 1000 Miles Rally" )
+GAME ( 1994, gtmre,    gtmr,     gtmr,     gtmr,     kaneko16, ROT0_16BIT, "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
+GAMEX( 1995, gtmr2,    0,        gtmr,     gtmr,     kaneko16, ROT0,       "Kaneko", "Great 1000 Miles Rally 2", GAME_NOT_WORKING )

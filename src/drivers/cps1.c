@@ -503,10 +503,10 @@ INPUT_PORTS_START( forgottn )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER1, 100, 20, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER1, 100, 20, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START
-	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 20, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 20, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ghouls )
@@ -1278,7 +1278,7 @@ INPUT_PORTS_START( mercs )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN4 ) /* Service Coin */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 ) /* Service Coin */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -2042,7 +2042,7 @@ INPUT_PORTS_START( kod )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service Coin, not player 3 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 ) /* Service Coin, not player 3 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -3735,6 +3735,41 @@ ROM_START( ghouls )
 	ROM_CONTINUE(              0x10000, 0x08000 )
 ROM_END
 
+ROM_START( ghoulsu )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )
+	ROM_LOAD_EVEN( "dmu29",        0x00000, 0x20000, 0x334d85b2 )
+	ROM_LOAD_ODD ( "dmu30",        0x00000, 0x20000, 0xcee8ceb5 )
+	ROM_LOAD_EVEN( "dmu27",        0x40000, 0x20000, 0x4a524140 )
+	ROM_LOAD_ODD ( "dmu28",        0x40000, 0x20000, 0x94aae205 )
+	ROM_LOAD_WIDE( "ghl17.bin",    0x80000, 0x80000, 0x3ea1b0f2 )
+
+	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD         ( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 )
+	ROM_LOAD_GFX_EVEN( "ghl11.bin",    0x080000, 0x10000, 0x37c9b6c6 )
+	ROM_LOAD_GFX_ODD ( "ghl20.bin",    0x080000, 0x10000, 0x2f1345b4 )
+	ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x0a0000, 0x10000, 0xda088d61 )
+	ROM_LOAD_GFX_ODD ( "ghl21.bin",    0x0a0000, 0x10000, 0x17e11df0 )
+	ROM_LOAD         ( "ghl5.bin",     0x100000, 0x80000, 0x0ba9c0b0 )
+	ROM_LOAD_GFX_EVEN( "ghl09.bin",    0x180000, 0x10000, 0xae24bb19 )
+	ROM_LOAD_GFX_ODD ( "ghl18.bin",    0x180000, 0x10000, 0xd34e271a )
+	ROM_LOAD_GFX_EVEN( "ghl10.bin",    0x1a0000, 0x10000, 0xbcc0f28c )
+	ROM_LOAD_GFX_ODD ( "ghl19.bin",    0x1a0000, 0x10000, 0x2a40166a )
+	ROM_LOAD         ( "ghl8.bin",     0x200000, 0x80000, 0x4bdee9de )
+	ROM_LOAD_GFX_EVEN( "ghl15.bin",    0x280000, 0x10000, 0x3c2a212a )
+	ROM_LOAD_GFX_ODD ( "ghl24.bin",    0x280000, 0x10000, 0x889aac05 )
+	ROM_LOAD_GFX_EVEN( "ghl16.bin",    0x2a0000, 0x10000, 0xf187ba1c )
+	ROM_LOAD_GFX_ODD ( "ghl25.bin",    0x2a0000, 0x10000, 0x29f79c78 )
+	ROM_LOAD         ( "ghl7.bin",     0x300000, 0x80000, 0x5d760ab9 )
+	ROM_LOAD_GFX_EVEN( "ghl13.bin",    0x380000, 0x10000, 0x3f70dd37 )
+	ROM_LOAD_GFX_ODD ( "ghl22.bin",    0x380000, 0x10000, 0x7e69e2e6 )
+	ROM_LOAD_GFX_EVEN( "ghl14.bin",    0x3a0000, 0x10000, 0x20f85c03 )
+	ROM_LOAD_GFX_ODD ( "ghl23.bin",    0x3a0000, 0x10000, 0x8426144b )
+
+	ROM_REGION( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "ghl26.bin",     0x00000, 0x08000, 0x3692f6e5 )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+ROM_END
+
 ROM_START( ghoulsj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )
 	ROM_LOAD_EVEN( "ghlj29.bin",   0x00000, 0x20000, 0x82fd1798 )
@@ -5157,6 +5192,29 @@ ROM_START( varth )
 	ROM_LOAD( "va_19.rom",    0x20000, 0x20000, 0x0610a4ac )
 ROM_END
 
+ROM_START( varthu )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "vau23a.bin",  0x00000, 0x80000, 0xfbe68726 )
+	ROM_LOAD_EVEN( "vae_28a.rom",  0x80000, 0x20000, 0x7a0e0d25 )
+	ROM_LOAD_ODD ( "vae_33a.rom",  0x80000, 0x20000, 0xf2365922 )
+	ROM_LOAD_EVEN( "vae_29a.rom",  0xc0000, 0x20000, 0x5e2cd2c3 )
+	ROM_LOAD_ODD ( "vae_34a.rom",  0xc0000, 0x20000, 0x3d9bdf83 )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "va_gfx1.rom",  0x000000, 0x80000, 0x0b1ace37 )
+	ROM_LOAD( "va_gfx5.rom",  0x080000, 0x80000, 0xb1fb726e )
+	ROM_LOAD( "va_gfx3.rom",  0x100000, 0x80000, 0x44dfe706 )
+	ROM_LOAD( "va_gfx7.rom",  0x180000, 0x80000, 0x4c6588cd )
+
+	ROM_REGION( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "va_09.rom",     0x00000, 0x08000, 0x7a99446e )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* Samples */
+	ROM_LOAD( "va_18.rom",    0x00000, 0x20000, 0xde30510e )
+	ROM_LOAD( "va_19.rom",    0x20000, 0x20000, 0x0610a4ac )
+ROM_END
+
 ROM_START( varthj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_EVEN( "vaj36b.bin",   0x00000, 0x20000, 0x1d798d6a )
@@ -5914,15 +5972,16 @@ static void init_pang3(void)
 
 GAME( 1988, forgottn, 0,        forgottn, forgottn, 0,        ROT0,       "Capcom", "Forgotten Worlds (US)" )
 GAME( 1988, lostwrld, forgottn, forgottn, forgottn, 0,        ROT0,       "Capcom", "Lost Worlds (Japan)" )
-GAME( 1988, ghouls,   0,        cps1,     ghouls,   0,        ROT0,       "Capcom", "Ghouls'n Ghosts (World?)" )
+GAME( 1988, ghouls,   0,        cps1,     ghouls,   0,        ROT0,       "Capcom", "Ghouls'n Ghosts (World)" )
+GAME( 1988, ghoulsu,  ghouls,   cps1,     ghouls,   0,        ROT0,       "Capcom", "Ghouls'n Ghosts (US)" )
 GAME( 1988, ghoulsj,  ghouls,   cps1,     ghouls,   0,        ROT0,       "Capcom", "Dai Makai-Mura (Japan)" )
 GAME( 1989, strider,  0,        cps1,     strider,  0,        ROT0,       "Capcom", "Strider (US)" )
 GAME( 1989, striderj, strider,  cps1,     strider,  0,        ROT0,       "Capcom", "Strider Hiryu (Japan set 1)" )
 GAME( 1989, stridrja, strider,  cps1,     strider,  0,        ROT0,       "Capcom", "Strider Hiryu (Japan set 2)" )
-GAME( 1989, dwj,      0,        cps1,     dwj,      0,        ROT0,       "Capcom", "Tenchi wo Kurau" )
+GAME( 1989, dwj,      0,        cps1,     dwj,      0,        ROT0,       "Capcom", "Tenchi wo Kurau (Japan)" )
 GAME( 1989, willow,   0,        cps1,     willow,   0,        ROT0,       "Capcom", "Willow (Japan, English)" )
 GAME( 1989, willowj,  willow,   cps1,     willow,   0,        ROT0,       "Capcom", "Willow (Japan, Japanese)" )
-GAME( 1989, unsquad,  0,        cps1,     unsquad,  0,        ROT0,       "Capcom", "UN Squadron (US)" )
+GAME( 1989, unsquad,  0,        cps1,     unsquad,  0,        ROT0,       "Capcom", "U.N. Squadron (US)" )
 GAME( 1989, area88,   unsquad,  cps1,     unsquad,  0,        ROT0,       "Capcom", "Area 88 (Japan)" )
 GAME( 1989, ffight,   0,        cps1,     ffight,   0,        ROT0,       "Capcom", "Final Fight (World)" )
 GAME( 1989, ffightu,  ffight,   cps1,     ffight,   0,        ROT0,       "Capcom", "Final Fight (US)" )
@@ -5934,8 +5993,8 @@ GAME( 1990, mercsu,   mercs,    cps1,     mercs,    0,        ROT270,     "Capco
 GAME( 1990, mercsj,   mercs,    cps1,     mercs,    0,        ROT270,     "Capcom", "Senjo no Ookami II (Japan)" )
 GAME( 1990, mtwins,   0,        cps1,     mtwins,   0,        ROT0,       "Capcom", "Mega Twins (World)" )
 GAME( 1990, chikij,   mtwins,   cps1,     mtwins,   0,        ROT0,       "Capcom", "Chiki Chiki Boys (Japan)" )
-GAME( 1990, msword,   0,        cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword (World)" )
-GAME( 1990, mswordu,  msword,   cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword (US)" )
+GAME( 1990, msword,   0,        cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword - Heroic Fantasy (World)" )
+GAME( 1990, mswordu,  msword,   cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword - Heroic Fantasy (US)" )
 GAME( 1990, mswordj,  msword,   cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword (Japan)" )
 GAME( 1990, cawing,   0,        cps1,     cawing,   0,        ROT0,       "Capcom", "Carrier Air Wing (World)" )
 GAME( 1990, cawingj,  cawing,   cps1,     cawing,   0,        ROT0,       "Capcom", "U.S. Navy (Japan)" )
@@ -5965,6 +6024,7 @@ GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      0,        ROT0,       "hack"
 GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
 GAME( 1992, sf2accp2, sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
 GAME( 1992, varth,    0,        cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (World)" )
+GAME( 1992, varthu,   varth,    cps1,     varth,    0,        ROT270,     "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US)" )
 GAME( 1992, varthj,   varth,    cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (Japan)" )
 GAME( 1992, cworld2j, 0,        cps1,     cworld2j, 0,        ROT0_16BIT, "Capcom", "Capcom World 2 (Japan)" )
 GAME( 1992, sf2t,     sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Hyper Fighting (US)" )
@@ -5985,9 +6045,9 @@ GAME( 1993, punisher, 0,        qsound,   punisher, punisher, ROT0,       "Capco
 GAME( 1993, punishru, punisher, qsound,   punisher, punisher, ROT0,       "Capcom", "The Punisher (US)" )
 GAME( 1993, punishrj, punisher, qsound,   punisher, punisher, ROT0,       "Capcom", "The Punisher (Japan)" )
 GAME( 1993, slammast, 0,        qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Saturday Night Slam Masters (World)" )
-GAME( 1993, mbomberj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber (Japan)" )
-GAME( 1993, mbombrd,  slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo (World)" )
-GAME( 1993, mbombrdj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo (Japan)" )
+GAME( 1993, mbomberj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber - The Body Explosion (Japan)" )
+GAME( 1993, mbombrd,  slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Ultimate Team Battle (World)" )
+GAME( 1993, mbombrdj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Heat Up Warriors (Japan)" )
 
 GAME( 1995, pang3,    0,        pang3,    pang3,    pang3,    ROT0_16BIT, "Mitchell", "Pang! 3 (Japan)" )
 

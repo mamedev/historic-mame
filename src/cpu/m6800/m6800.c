@@ -70,6 +70,7 @@ extern FILE *errorlog;
 #define LOG(x)
 #endif
 
+#if 0
 /* CPU subtypes, needed for extra insn after TAP/CLI/SEI */
 enum {
 	SUBTYPE_M6800,
@@ -80,25 +81,28 @@ enum {
 	SUBTYPE_HD63701,
 	SUBTYPE_NSC8105
 };
+#endif
 
 /* 6800 Registers */
 typedef struct
 {
-	int 	subtype;		/* CPU subtype */
+//	int 	subtype;		/* CPU subtype */
 	PAIR	ppc;			/* Previous program counter */
 	PAIR	pc; 			/* Program counter */
 	PAIR	s;				/* Stack pointer */
 	PAIR	x;				/* Index register */
 	PAIR	d;				/* Accumulators */
 	UINT8	cc; 			/* Condition codes */
-	UINT8	wai_state;		/* WAI opcode state */
+	UINT8	wai_state;		/* WAI opcode state ,(or sleep opcode state) */
 	UINT8	nmi_state;		/* NMI line state */
 	UINT8	irq_state[2];	/* IRQ line state [IRQ1,TIN] */
 	UINT8	ic_eddge;		/* InputCapture eddge , b.0=fall,b.1=raise */
 
-    int     (*irq_callback)(int irqline);
+	int		(*irq_callback)(int irqline);
 	int 	extra_cycles;	/* cycles used for interrupts */
-
+	void	(* const * insn)(void);	/* instruction table */
+	const UINT8 *cycles;			/* clock cycle of instruction table */
+	/* internal registers */
 	UINT8	port1_ddr;
 	UINT8	port2_ddr;
 	UINT8	port1_data;
@@ -106,12 +110,12 @@ typedef struct
 	UINT8	tcsr;			/* Timer Control and Status Register */
 	UINT8	pending_tcsr;	/* pending IRQ flag for clear IRQflag process */
 	UINT8	irq2;			/* IRQ2 flags */
-	UINT16	counter;		/* free running counter */
-	UINT16	output_compare;	/* output compare       */
-	int		oc_left;		/* left countor to output compare match */
-	UINT16	input_capture;	/* input capture        */
 	UINT8	ram_ctrl;
+	PAIR	counter;		/* free running counter */
+	PAIR	output_compare;	/* output compare       */
+	UINT16	input_capture;	/* input capture        */
 
+	PAIR	timer_over;
 }   m6800_Regs;
 
 /* 680x registers */
@@ -124,19 +128,30 @@ static m6800_Regs m6800;
 #define hd63701 m6800
 #define nsc8105 m6800
 
-#define	pPPC    m6800.ppc
+#define	pPPC	m6800.ppc
 #define pPC 	m6800.pc
 #define pS		m6800.s
 #define pX		m6800.x
 #define pD		m6800.d
 
 #define PC		m6800.pc.w.l
+#define PCD		m6800.pc.d
 #define S		m6800.s.w.l
+#define SD		m6800.s.d
 #define X		m6800.x.w.l
 #define D		m6800.d.w.l
 #define A		m6800.d.b.h
 #define B		m6800.d.b.l
 #define CC		m6800.cc
+
+#define CT		m6800.counter.w.l
+#define CTH		m6800.counter.w.h
+#define CTD		m6800.counter.d
+#define OC		m6800.output_compare.w.l
+#define OCH		m6800.output_compare.w.h
+#define OCD		m6800.output_compare.d
+#define TOH		m6800.timer_over.w.l
+#define TOD		m6800.timer_over.d
 
 static PAIR ea; 		/* effective address */
 #define EAD ea.d
@@ -145,6 +160,9 @@ static PAIR ea; 		/* effective address */
 /* public globals */
 int m6800_ICount=50000;
 
+/* point of next timer event */
+static UINT32 timer_next;
+
 /* DS -- THESE ARE RE-DEFINED IN m6800.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
 #define RM				M6800_RDMEM
 #define WM				M6800_WRMEM
@@ -152,119 +170,88 @@ int m6800_ICount=50000;
 #define M_RDOP_ARG		M6800_RDOP_ARG
 
 /* macros to access memory */
-#define IMMBYTE(b) {b = M_RDOP_ARG(PC++);}
-#define IMMWORD(w) {w.d = 0; w.b.h = M_RDOP_ARG(PC); w.b.l = M_RDOP_ARG(PC+1); PC+=2;}
+#define IMMBYTE(b)	b = M_RDOP_ARG(PCD); PC++
+#define IMMWORD(w)	w.d = (M_RDOP_ARG(PCD)<<8) | M_RDOP_ARG((PCD+1)&0xffff); PC+=2
 
-#define PUSHBYTE(b) wr_s_handler_b(&b)
-#define PUSHWORD(w) wr_s_handler_w(&w)
-#define PULLBYTE(b) rd_s_handler_b(&b)
-#define PULLWORD(w) rd_s_handler_w(&w)
+#define PUSHBYTE(b) WM(SD,b); --S
+#define PUSHWORD(w) WM(SD,w.b.l); --S; WM(SD,w.b.h); --S
+#define PULLBYTE(b) S++; b = RM(SD)
+#define PULLWORD(w) S++; w.d = RM(SD)<<8; S++; w.d |= RM(SD)
 
 #define MODIFIED_tcsr {	\
 	m6800.irq2 = (m6800.tcsr&(m6800.tcsr<<3))&(TCSR_ICF|TCSR_OCF|TCSR_TOF); \
 }
 
-#define MODIFIED_output_compare {								\
-	m6800.oc_left = (int)m6800.output_compare - m6800.counter;	\
-	if(m6800.oc_left<=0) m6800.oc_left += 0x10000;				\
+#define SET_TIMRE_EVENT {					\
+	timer_next = (OCD < TOD) ? OCD : TOD;	\
 }
 
-/* irq entry */
-#define ENTER_INTERRUPT(message,irq_vector) {			\
-	LOG((errorlog, message, cpu_getactivecpu()));		\
-	if( m6800.wai_state & M6800_WAI )					\
-	{													\
-		m6800.extra_cycles += 4;						\
-		m6800.wai_state &= ~M6800_WAI;					\
-	}													\
-	else												\
-	{													\
-		PUSHWORD(pPC);									\
-		PUSHWORD(pX);									\
-		PUSHBYTE(A);									\
-		PUSHBYTE(B);									\
-		PUSHBYTE(CC);									\
-		m6800.extra_cycles += 12;						\
-	}													\
-	SEI;												\
-	RM16( irq_vector, &pPC );							\
-	change_pc(PC);										\
+/* cleanup high-word of counters */
+#define CLEANUP_conters {						\
+	OCH -= CTH;									\
+	TOH -= CTH;									\
+	CTH = 0;									\
+	SET_TIMRE_EVENT;							\
+}
+
+/* when change freerunningcounter or outputcapture */
+#define MODIFIED_counters {						\
+	OCH = (OC >= CT) ? CTH : CTH+1;				\
+	SET_TIMRE_EVENT;							\
 }
 
 /* take interrupt */
 #define TAKE_ICI ENTER_INTERRUPT("M6800#%d take ICI\n",0xfff6)
 #define TAKE_OCI ENTER_INTERRUPT("M6800#%d take OCI\n",0xfff4)
 #define TAKE_TOI ENTER_INTERRUPT("M6800#%d take TOI\n",0xfff2)
+#define TAKE_SCI ENTER_INTERRUPT("M6800#%d take SCI\n",0xfff0)
+#define TAKE_TRAP ENTER_INTERRUPT("M6800#%d take TRAP\n",0xffee)
 
 /* check IRQ2 (internal irq) */
-#define CHECK_IRQ2 {													\
-	if(m6800.irq2&(TCSR_ICF|TCSR_OCF|TCSR_TOF))							\
-	{																	\
-		if(m6800.irq2&TCSR_ICF)											\
-		{																\
-			TAKE_ICI;													\
-			if( m6800.irq_callback )									\
-				(void)(*m6800.irq_callback)(M6800_TIN_LINE);			\
-		}																\
-		else if(m6800.irq2&TCSR_OCF)									\
-		{																\
-			TAKE_OCI;													\
-		}																\
-		else if(m6800.irq2&TCSR_TOF)									\
-		{																\
-			TAKE_TOI;													\
-		}																\
-	}																	\
+#define CHECK_IRQ2 {											\
+	if(m6800.irq2&(TCSR_ICF|TCSR_OCF|TCSR_TOF))					\
+	{															\
+		if(m6800.irq2&TCSR_ICF)									\
+		{														\
+			TAKE_ICI;											\
+			if( m6800.irq_callback )							\
+				(void)(*m6800.irq_callback)(M6800_TIN_LINE);	\
+		}														\
+		else if(m6800.irq2&TCSR_OCF)							\
+		{														\
+			TAKE_OCI;											\
+		}														\
+		else if(m6800.irq2&TCSR_TOF)							\
+		{														\
+			TAKE_TOI;											\
+		}														\
+	}															\
+}
+
+/* operate one instruction for */
+#define ONE_MORE_INSN() {		\
+	UINT8 ireg; 							\
+	pPPC = pPC; 							\
+	CALL_MAME_DEBUG;						\
+	ireg=M_RDOP(PCD);						\
+	PC++;									\
+	(*m6800.insn[ireg])();					\
+	INCREMENT_COUNTER(m6800.cycles[ireg]);	\
 }
 
 /* check the IRQ lines for pending interrupts */
-#define CHECK_IRQ_LINES(one_more_insn) {								\
-	if( one_more_insn ) 												\
-	{																	\
-		UINT8 ireg; 													\
-		pPPC = pPC; 													\
-		CALL_MAME_DEBUG;												\
-		ireg = M_RDOP(PC++);											\
-        switch( m6800.subtype )                                         \
-		{																\
-		case SUBTYPE_M6800: 											\
-		case SUBTYPE_M6802: 											\
-		case SUBTYPE_M6808: 											\
-			(*m6800_insn[ireg])();										\
-			INCREMENT_COUNTER(cycles_6800[ireg]);						\
-            m6800_ICount -= cycles_6800[ireg];                          \
-			break;														\
-		case SUBTYPE_M6801: 											\
-		case SUBTYPE_M6803: 											\
-			(*m6803_insn[ireg])();										\
-			INCREMENT_COUNTER(cycles_6803[ireg]);						\
-            m6800_ICount -= cycles_6803[ireg];                          \
-            break;                                                      \
-		case SUBTYPE_HD63701:											\
-			(*hd63701_insn[ireg])();									\
-			INCREMENT_COUNTER(cycles_63701[ireg]);						\
-            m6800_ICount -= cycles_63701[ireg];                         \
-			break;														\
-		case SUBTYPE_NSC8105: 											\
-			(*nsc8105_insn[ireg])();									\
-			INCREMENT_COUNTER(cycles_nsc8105[ireg]);					\
-            m6800_ICount -= cycles_nsc8105[ireg];                         \
-			break;														\
-		}																\
-	}																	\
-	if( !(CC & 0x10) )													\
-	{																	\
-		if( m6800.irq_state[M6800_IRQ_LINE] != CLEAR_LINE )				\
-		{	/* stanadrd IRQ */											\
-			ENTER_INTERRUPT("M6800#%d take IRQ1\n",0xfff8)				\
-			if( m6800.irq_callback )									\
-				(void)(*m6800.irq_callback)(M6800_IRQ_LINE);			\
-		}																\
-		else															\
-		{																\
-			CHECK_IRQ2;													\
-		}																\
-	}																	\
+#define CHECK_IRQ_LINES() {										\
+	if( !(CC & 0x10) )											\
+	{															\
+		if( m6800.irq_state[M6800_IRQ_LINE] != CLEAR_LINE )		\
+		{	/* stanadrd IRQ */									\
+			ENTER_INTERRUPT("M6800#%d take IRQ1\n",0xfff8);		\
+			if( m6800.irq_callback )							\
+				(void)(*m6800.irq_callback)(M6800_IRQ_LINE);	\
+		}														\
+		else													\
+			CHECK_IRQ2;											\
+	}															\
 }
 
 /* CC masks                       HI NZVC
@@ -290,7 +277,7 @@ int m6800_ICount=50000;
 #define SET_V8(a,b,r)	CC|=(((a^b^r^(r>>1))&0x80)>>6)
 #define SET_V16(a,b,r)	CC|=(((a^b^r^(r>>1))&0x8000)>>14)
 
-static UINT8 flags8i[256]=	 /* increment */
+static const UINT8 flags8i[256]=	 /* increment */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -309,7 +296,7 @@ static UINT8 flags8i[256]=	 /* increment */
 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08
 };
-static UINT8 flags8d[256]= /* decrement */
+static const UINT8 flags8d[256]= /* decrement */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -345,7 +332,7 @@ static UINT8 flags8d[256]= /* decrement */
 #define IMM8 EA=PC++
 #define IMM16 {EA=PC;PC+=2;}
 #define EXTENDED IMMWORD(ea)
-#define INDEXED {EA=X+(UINT8)M_RDOP_ARG(PC++);}
+#define INDEXED {EA=X+(UINT8)M_RDOP_ARG(PCD);PC++;}
 
 /* macros to set status flags */
 #define SEC CC|=0x01
@@ -361,8 +348,6 @@ static UINT8 flags8d[256]= /* decrement */
 #define SEI CC|=0x10
 #define CLI CC&=~0x10
 
-
-
 /* mnemonicos for the Timer Control and Status Register bits */
 #define TCSR_OLVL 0x01
 #define TCSR_IEDG 0x02
@@ -373,65 +358,41 @@ static UINT8 flags8d[256]= /* decrement */
 #define TCSR_OCF  0x40
 #define TCSR_ICF  0x80
 
-#define INCREMENT_COUNTER(amount)														\
-{																						\
-	UINT32 next_cnt = (UINT32)m6800.counter + amount;									\
-	if( (m6800.oc_left-=amount)<=0 )													\
-	{																					\
-		m6800.oc_left += 0x10000;														\
-		m6800.tcsr |= TCSR_OCF;															\
-		m6800.pending_tcsr |= TCSR_OCF;													\
-		MODIFIED_tcsr;																	\
-		if ( !(CC & 0x10) && (m6800.tcsr & TCSR_EOCI))									\
-			TAKE_OCI;																	\
-	}																					\
-	if (next_cnt >= 0xffff )															\
-	{																					\
-		m6800.tcsr |= TCSR_TOF;															\
-		m6800.pending_tcsr |= TCSR_TOF;													\
-		MODIFIED_tcsr;																	\
-		if ( !(CC & 0x10) && (m6800.tcsr & TCSR_ETOI))									\
-			TAKE_TOI;																	\
-	}																					\
-	m6800.counter = (UINT16)next_cnt;													\
+#define INCREMENT_COUNTER(amount)	\
+{									\
+	m6800_ICount -= amount;			\
+	CTD += amount;					\
+	if( CTD >= timer_next)			\
+		check_timer_event();		\
 }
 
-#define EAT_CYCLES																	\
-{																					\
-	int counter_left,cycles_to_eat;													\
-																					\
-	if (m6800.output_compare > m6800.counter)	/* OCI */							\
-		counter_left = m6800.output_compare - m6800.counter;						\
-	else if (m6800.counter == 0xffff)	/* OCI ofter TOI */							\
-		counter_left = m6800.output_compare + 1;									\
-	else	/* TOI */																\
-		counter_left = 0xffff - m6800.counter;										\
-																					\
-	cycles_to_eat = (counter_left < m6800_ICount) ? counter_left : m6800_ICount;	\
-																					\
-	if (cycles_to_eat > 0)															\
-	{																				\
-		m6800_ICount -= cycles_to_eat;												\
-		INCREMENT_COUNTER(cycles_to_eat);											\
-	}																				\
+#define EAT_CYCLES													\
+{																	\
+	int cycles_to_eat;												\
+																	\
+	cycles_to_eat = timer_next - CTD;								\
+	if( cycles_to_eat > m6800_ICount) cycles_to_eat = m6800_ICount;	\
+	if (cycles_to_eat > 0)											\
+	{																\
+		INCREMENT_COUNTER(cycles_to_eat);							\
+	}																\
 }
-
-
 
 /* macros for convenience */
 #define DIRBYTE(b) {DIRECT;b=RM(EAD);}
-#define DIRWORD(w) {DIRECT;RM16(EAD,&w);}
+#define DIRWORD(w) {DIRECT;w.d=RM16(EAD);}
 #define EXTBYTE(b) {EXTENDED;b=RM(EAD);}
-#define EXTWORD(w) {EXTENDED;RM16(EAD,&w);}
+#define EXTWORD(w) {EXTENDED;w.d=RM16(EAD);}
 
 #define IDXBYTE(b) {INDEXED;b=RM(EAD);}
-#define IDXWORD(w) {INDEXED;RM16(EAD,&w);}
+#define IDXWORD(w) {INDEXED;w.d=RM16(EAD);}
 
 /* Macros for branch instructions */
-#define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);change_pc(PC);}}
+#define CHANGE_PC() change_pc(PCD)
+#define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);CHANGE_PC();}}
 #define NXORV  ((CC&0x08)^((CC&0x02)<<2))
 
-static unsigned char cycles_6800[] =
+static const UINT8 cycles_6800[] =
 {
 		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	/*0*/  0, 2, 0, 0, 0, 0, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2,
@@ -452,7 +413,7 @@ static unsigned char cycles_6800[] =
 	/*F*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 0, 0, 5, 6
 };
 
-static unsigned char cycles_6803[] =
+static const UINT8 cycles_6803[] =
 {
 		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	/*0*/  0, 2, 0, 0, 3, 3, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2,
@@ -473,7 +434,7 @@ static unsigned char cycles_6803[] =
 	/*F*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
 };
 
-static unsigned char cycles_63701[] =
+static const UINT8 cycles_63701[] =
 {
 		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	/*0*/  0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -494,7 +455,7 @@ static unsigned char cycles_63701[] =
 	/*F*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
 };
 
-static unsigned char cycles_nsc8105[] =
+static const UINT8 cycles_nsc8105[] =
 {
 		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	/*0*/  0, 0, 2, 0, 0, 2, 0, 2, 4, 2, 4, 2, 2, 2, 2, 2,
@@ -515,52 +476,70 @@ static unsigned char cycles_nsc8105[] =
 	/*F*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 4, 5, 0, 6
 };
 
-
-/* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
-#define CLEAR_PAIR(p)   p->d = 0
-
-INLINE void rd_s_handler_b( UINT8 *b )
+INLINE UINT32 RM16( UINT32 Addr )
 {
-    m6800.s.w.l++;
-    *b = RM( m6800.s.d );
-}
-
-INLINE void rd_s_handler_w( PAIR *p )
-{
-	CLEAR_PAIR(p);
-    m6800.s.w.l++;
-    p->b.h = RM( m6800.s.d );
-    m6800.s.w.l++;
-    p->b.l = RM( m6800.s.d );
-}
-
-INLINE void wr_s_handler_b( UINT8 *b )
-{
-	WM( m6800.s.d, *b );
-    --m6800.s.w.l;
-}
-
-INLINE void wr_s_handler_w( PAIR *p )
-{
-    WM( m6800.s.d, p->b.l );
-    --m6800.s.w.l;
-    WM( m6800.s.d, p->b.h );
-    --m6800.s.w.l;
-}
-
-INLINE void RM16( UINT32 Addr, PAIR *p )
-{
-	CLEAR_PAIR(p);
-    p->b.h = RM(Addr);
-	if( ++Addr > 0xffff ) Addr = 0;
-	p->b.l = RM(Addr);
+	UINT32 result = RM(Addr) << 8;
+	return result | RM((Addr+1)&0xffff);
 }
 
 INLINE void WM16( UINT32 Addr, PAIR *p )
 {
 	WM( Addr, p->b.h );
-	if( ++Addr > 0xffff ) Addr = 0;
-	WM( Addr, p->b.l );
+	WM( (Addr+1)&0xffff, p->b.l );
+}
+
+/* IRQ enter */
+static void ENTER_INTERRUPT(char *message,UINT16 irq_vector)
+{
+	LOG((errorlog, message, cpu_getactivecpu()));
+	if( m6800.wai_state & (M6800_WAI|M6800_SLP) )
+	{
+		if( m6800.wai_state & M6800_WAI )
+			m6800.extra_cycles += 4;
+		m6800.wai_state &= ~(M6800_WAI|M6800_SLP);
+	}
+	else
+	{
+		PUSHWORD(pPC);
+		PUSHWORD(pX);
+		PUSHBYTE(A);
+		PUSHBYTE(B);
+		PUSHBYTE(CC);
+		m6800.extra_cycles += 12;
+	}
+	SEI;
+	PCD = RM16( irq_vector );
+	CHANGE_PC();
+}
+
+/* check OCI or TOI */
+static void check_timer_event(void)
+{
+	/* OCI */
+	if( CTD >= OCD)
+	{
+		OCH++;	// next IRQ point
+		m6800.tcsr |= TCSR_OCF;
+		m6800.pending_tcsr |= TCSR_OCF;
+		MODIFIED_tcsr;
+		if ( !(CC & 0x10) && (m6800.tcsr & TCSR_EOCI))
+			TAKE_OCI;
+	}
+	/* TOI */
+	if( CTD >= TOD)
+	{
+		TOH++;	// next IRQ point
+#if 0
+		CLEANUP_conters;
+#endif
+		m6800.tcsr |= TCSR_TOF;
+		m6800.pending_tcsr |= TCSR_TOF;
+		MODIFIED_tcsr;
+		if ( !(CC & 0x10) && (m6800.tcsr & TCSR_ETOI))
+			TAKE_TOI;
+	}
+	/* set next event */
+	SET_TIMRE_EVENT;
 }
 
 /* include the opcode prototypes and function pointer tables */
@@ -574,14 +553,16 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
  ****************************************************************************/
 void m6800_reset(void *param)
 {
-    SEI;            /* IRQ disabled */
-	RM16( 0xfffe, &m6800.pc );
-    change_pc(PC);
+	SEI;				/* IRQ disabled */
+	PCD = RM16( 0xfffe );
+	CHANGE_PC();
 
 	/* HJB 990417 set CPU subtype (other reset functions override this) */
-    m6800.subtype   = SUBTYPE_M6800;
+//	m6800.subtype   = SUBTYPE_M6800;
+	m6800.insn = m6800_insn;
+	m6800.cycles = cycles_6800;
 
-    m6800.wai_state = 0;
+	m6800.wai_state = 0;
 	m6800.nmi_state = 0;
 	m6800.irq_state[M6800_IRQ_LINE] = 0;
 	m6800.irq_state[M6800_TIN_LINE] = 0;
@@ -593,9 +574,9 @@ void m6800_reset(void *param)
 	m6800.tcsr = 0x00;
 	m6800.pending_tcsr = 0x00;
 	m6800.irq2 = 0;
-	m6800.counter = 0x0000;
-	m6800.output_compare = 0xffff;
-	m6800.oc_left = 0xffff;
+	CTD = 0x0000;
+	OCD = 0xffff;
+	TOD = 0xffff;
 	m6800.ram_ctrl |= 0x40;
 }
 
@@ -625,8 +606,8 @@ void m6800_set_context(void *src)
 {
 	if( src )
 		m6800 = *(m6800_Regs*)src;
-	change_pc(PC);
-	CHECK_IRQ_LINES(0); /* HJB 990417 */
+	CHANGE_PC();
+	CHECK_IRQ_LINES(); /* HJB 990417 */
 }
 
 
@@ -635,7 +616,7 @@ void m6800_set_context(void *src)
  ****************************************************************************/
 unsigned m6800_get_pc(void)
 {
-    return PC;
+	return PC;
 }
 
 
@@ -645,7 +626,7 @@ unsigned m6800_get_pc(void)
 void m6800_set_pc(unsigned val)
 {
 	PC = val;
-	change_pc(PC);
+	CHANGE_PC();
 }
 
 
@@ -720,7 +701,7 @@ void m6800_set_reg(int regnum, unsigned val)
 					WM( offset+1, val & 0xff );
 				}
 			}
-    }
+	}
 }
 
 
@@ -732,24 +713,7 @@ void m6800_set_nmi_line(int state)
 	if (state == CLEAR_LINE) return;
 
 	/* NMI */
-	LOG((errorlog, "M6800#%d take NMI\n", cpu_getactivecpu()));
-	if( m6800.wai_state & M6800_WAI )
-	{
-		m6800.extra_cycles += 4;
-		m6800.wai_state &= ~M6800_WAI;
-    }
-	else
-	{
-		PUSHWORD(m6800.pc);
-		PUSHWORD(m6800.x);
-		PUSHBYTE(m6800.d.b.h);
-		PUSHBYTE(m6800.d.b.l);
-		PUSHBYTE(m6800.cc);
-		m6800.extra_cycles += 12;
-	}
-	SEI;
-	RM16(0xfffc,&m6800.pc);
-	change_pc(PC);
+	ENTER_INTERRUPT("M6800#%d take NMI\n",0xfffc);
 }
 
 void m6800_set_irq_line(int irqline, int state)
@@ -772,12 +736,15 @@ void m6800_set_irq_line(int irqline, int state)
 		/* active eddge in */
 		m6800.tcsr |= TCSR_ICF;
 		m6800.pending_tcsr |= TCSR_ICF;
+		m6800.input_capture = CT;
 		MODIFIED_tcsr;
+		if( !(CC & 0x10) )
+			CHECK_IRQ2
 		break;
 	default:
 		return;
 	}
-	CHECK_IRQ_LINES(0); /* HJB 990417 */
+	CHECK_IRQ_LINES(); /* HJB 990417 */
 }
 
 void m6800_set_irq_callback(int (*callback)(int irqline))
@@ -824,11 +791,11 @@ int m6800_execute(int cycles)
 	UINT8 ireg;
 	m6800_ICount = cycles;
 
+	CLEANUP_conters;
 	INCREMENT_COUNTER(m6800.extra_cycles);
-	m6800_ICount -= m6800.extra_cycles;
 	m6800.extra_cycles = 0;
 
-    if( m6800.wai_state & M6800_WAI )
+	if( m6800.wai_state & M6800_WAI )
 	{
 		EAT_CYCLES;
 		goto getout;
@@ -838,7 +805,8 @@ int m6800_execute(int cycles)
 	{
 		pPPC = pPC;
 		CALL_MAME_DEBUG;
-        ireg=M_RDOP(PC++);
+		ireg=M_RDOP(PCD);
+		PC++;
 
 		switch( ireg )
 		{
@@ -1100,15 +1068,13 @@ int m6800_execute(int cycles)
 			case 0xff: stx_ex(); break;
 		}
 		INCREMENT_COUNTER(cycles_6800[ireg]);
-		m6800_ICount -= cycles_6800[ireg];
 	} while( m6800_ICount>0 );
 
 getout:
 	INCREMENT_COUNTER(m6800.extra_cycles);
-	m6800_ICount -= m6800.extra_cycles;
-    m6800.extra_cycles = 0;
+	m6800.extra_cycles = 0;
 
-    return cycles - m6800_ICount;
+	return cycles - m6800_ICount;
 }
 
 /****************************************************************************
@@ -1131,12 +1097,12 @@ const char *m6800_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    static char buffer[16][47+1];
+	static char buffer[16][47+1];
 	static int which = 0;
 	m6800_Regs *r = context;
 
 	which = ++which % 16;
-    buffer[which][0] = '\0';
+	buffer[which][0] = '\0';
 	if( !context )
 		r = &m6800;
 
@@ -1145,7 +1111,7 @@ const char *m6800_info(void *context, int regnum)
 		case CPU_INFO_REG+M6800_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
 		case CPU_INFO_REG+M6800_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
 		case CPU_INFO_REG+M6800_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-        case CPU_INFO_REG+M6800_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
+		case CPU_INFO_REG+M6800_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
 		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
 		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
@@ -1161,7 +1127,7 @@ const char *m6800_info(void *context, int regnum)
 				r->cc & 0x04 ? 'Z':'.',
 				r->cc & 0x02 ? 'V':'.',
 				r->cc & 0x01 ? 'C':'.');
-            break;
+			break;
 		case CPU_INFO_NAME: return "M6800";
 		case CPU_INFO_FAMILY: return "Motorola 6800";
 		case CPU_INFO_VERSION: return "1.1";
@@ -1176,7 +1142,7 @@ const char *m6800_info(void *context, int regnum)
 unsigned m6800_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm680x(6800,buffer,pc);
+	return Dasm680x(6800,buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -1190,7 +1156,9 @@ unsigned m6800_dasm(char *buffer, unsigned pc)
 void m6801_reset(void *param)
 {
 	m6800_reset(param);
-	m6800.subtype = SUBTYPE_M6801;
+//	m6800.subtype = SUBTYPE_M6801;
+	m6800.insn = m6803_insn;
+	m6800.cycles = cycles_6803;
 }
 void m6801_exit(void) { m6800_exit(); }
 int  m6801_execute(int cycles) { return m6803_execute(cycles); }
@@ -1224,18 +1192,18 @@ const char *m6801_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6801";
-        case CPU_INFO_REG_LAYOUT: return (const char*)m6801_reg_layout;
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6801_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6801_win_layout;
-    }
+	}
 	return m6800_info(context,regnum);
 }
 unsigned m6801_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm680x(6801,buffer,pc);
+	return Dasm680x(6801,buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
@@ -1251,7 +1219,7 @@ unsigned m6801_dasm(char *buffer, unsigned pc)
 void m6802_reset(void *param)
 {
 	m6800_reset(param);
-	m6800.subtype = SUBTYPE_M6802;
+//	m6800.subtype = SUBTYPE_M6802;
 }
 void m6802_exit(void) { m6800_exit(); }
 int  m6802_execute(int cycles) { return m6800_execute(cycles); }
@@ -1285,19 +1253,19 @@ const char *m6802_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6802";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m6802_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6802_win_layout;
-    }
+	}
 	return m6800_info(context,regnum);
 }
 
 unsigned m6802_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm680x(6802,buffer,pc);
+	return Dasm680x(6802,buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
@@ -1313,7 +1281,9 @@ unsigned m6802_dasm(char *buffer, unsigned pc)
 void m6803_reset(void *param)
 {
 	m6800_reset(param);
-	m6800.subtype = SUBTYPE_M6803;
+//	m6800.subtype = SUBTYPE_M6803;
+	m6800.insn = m6803_insn;
+	m6800.cycles = cycles_6803;
 }
 void m6803_exit(void) { m6800_exit(); }
 #endif
@@ -1323,295 +1293,294 @@ void m6803_exit(void) { m6800_exit(); }
 #if HAS_M6803||HAS_M6801
 int m6803_execute(int cycles)
 {
-    UINT8 ireg;
-    m6803_ICount = cycles;
+	UINT8 ireg;
+	m6803_ICount = cycles;
 
+	CLEANUP_conters;
 	INCREMENT_COUNTER(m6803.extra_cycles);
-	m6803_ICount -= m6803.extra_cycles;
 	m6803.extra_cycles = 0;
 
-    if( m6803.wai_state & M6800_WAI )
-    {
+	if( m6803.wai_state & M6800_WAI )
+	{
 		EAT_CYCLES;
-        goto getout;
-    }
+		goto getout;
+	}
 
-    do
-    {
+	do
+	{
 
 		pPPC = pPC;
 		CALL_MAME_DEBUG;
-		ireg=M_RDOP(PC++);
+		ireg=M_RDOP(PCD);
+		PC++;
 
-        switch( ireg )
-        {
-            case 0x00: illegal(); break;
-            case 0x01: nop(); break;
-            case 0x02: illegal(); break;
-            case 0x03: illegal(); break;
-            case 0x04: lsrd(); /* 6803 only */; break;
-            case 0x05: asld(); /* 6803 only */; break;
-            case 0x06: tap(); break;
-            case 0x07: tpa(); break;
-            case 0x08: inx(); break;
-            case 0x09: dex(); break;
-            case 0x0A: CLV; break;
-            case 0x0B: SEV; break;
-            case 0x0C: CLC; break;
-            case 0x0D: SEC; break;
+		switch( ireg )
+		{
+			case 0x00: illegal(); break;
+			case 0x01: nop(); break;
+			case 0x02: illegal(); break;
+			case 0x03: illegal(); break;
+			case 0x04: lsrd(); /* 6803 only */; break;
+			case 0x05: asld(); /* 6803 only */; break;
+			case 0x06: tap(); break;
+			case 0x07: tpa(); break;
+			case 0x08: inx(); break;
+			case 0x09: dex(); break;
+			case 0x0A: CLV; break;
+			case 0x0B: SEV; break;
+			case 0x0C: CLC; break;
+			case 0x0D: SEC; break;
 			case 0x0E: cli(); break;
-            case 0x0F: sei(); break;
-            case 0x10: sba(); break;
-            case 0x11: cba(); break;
-            case 0x12: illegal(); break;
-            case 0x13: illegal(); break;
-            case 0x14: illegal(); break;
-            case 0x15: illegal(); break;
-            case 0x16: tab(); break;
-            case 0x17: tba(); break;
-            case 0x18: illegal(); break;
-            case 0x19: daa(); break;
-            case 0x1a: illegal(); break;
-            case 0x1b: aba(); break;
-            case 0x1c: illegal(); break;
-            case 0x1d: illegal(); break;
-            case 0x1e: illegal(); break;
-            case 0x1f: illegal(); break;
-            case 0x20: bra(); break;
-            case 0x21: brn(); break;
-            case 0x22: bhi(); break;
-            case 0x23: bls(); break;
-            case 0x24: bcc(); break;
-            case 0x25: bcs(); break;
-            case 0x26: bne(); break;
-            case 0x27: beq(); break;
-            case 0x28: bvc(); break;
-            case 0x29: bvs(); break;
-            case 0x2a: bpl(); break;
-            case 0x2b: bmi(); break;
-            case 0x2c: bge(); break;
-            case 0x2d: blt(); break;
-            case 0x2e: bgt(); break;
-            case 0x2f: ble(); break;
-            case 0x30: tsx(); break;
-            case 0x31: ins(); break;
-            case 0x32: pula(); break;
-            case 0x33: pulb(); break;
-            case 0x34: des(); break;
-            case 0x35: txs(); break;
-            case 0x36: psha(); break;
-            case 0x37: pshb(); break;
-            case 0x38: pulx(); /* 6803 only */ break;
-            case 0x39: rts(); break;
-            case 0x3a: abx(); /* 6803 only */ break;
-            case 0x3b: rti(); break;
-            case 0x3c: pshx(); /* 6803 only */ break;
-            case 0x3d: mul(); /* 6803 only */ break;
-            case 0x3e: wai(); break;
-            case 0x3f: swi(); break;
-            case 0x40: nega(); break;
-            case 0x41: illegal(); break;
-            case 0x42: illegal(); break;
-            case 0x43: coma(); break;
-            case 0x44: lsra(); break;
-            case 0x45: illegal(); break;
-            case 0x46: rora(); break;
-            case 0x47: asra(); break;
-            case 0x48: asla(); break;
-            case 0x49: rola(); break;
-            case 0x4a: deca(); break;
-            case 0x4b: illegal(); break;
-            case 0x4c: inca(); break;
-            case 0x4d: tsta(); break;
-            case 0x4e: illegal(); break;
-            case 0x4f: clra(); break;
-            case 0x50: negb(); break;
-            case 0x51: illegal(); break;
-            case 0x52: illegal(); break;
-            case 0x53: comb(); break;
-            case 0x54: lsrb(); break;
-            case 0x55: illegal(); break;
-            case 0x56: rorb(); break;
-            case 0x57: asrb(); break;
-            case 0x58: aslb(); break;
-            case 0x59: rolb(); break;
-            case 0x5a: decb(); break;
-            case 0x5b: illegal(); break;
-            case 0x5c: incb(); break;
-            case 0x5d: tstb(); break;
-            case 0x5e: illegal(); break;
-            case 0x5f: clrb(); break;
-            case 0x60: neg_ix(); break;
-            case 0x61: illegal(); break;
-            case 0x62: illegal(); break;
-            case 0x63: com_ix(); break;
-            case 0x64: lsr_ix(); break;
-            case 0x65: illegal(); break;
-            case 0x66: ror_ix(); break;
-            case 0x67: asr_ix(); break;
-            case 0x68: asl_ix(); break;
-            case 0x69: rol_ix(); break;
-            case 0x6a: dec_ix(); break;
-            case 0x6b: illegal(); break;
-            case 0x6c: inc_ix(); break;
-            case 0x6d: tst_ix(); break;
-            case 0x6e: jmp_ix(); break;
-            case 0x6f: clr_ix(); break;
-            case 0x70: neg_ex(); break;
-            case 0x71: illegal(); break;
-            case 0x72: illegal(); break;
-            case 0x73: com_ex(); break;
-            case 0x74: lsr_ex(); break;
-            case 0x75: illegal(); break;
-            case 0x76: ror_ex(); break;
-            case 0x77: asr_ex(); break;
-            case 0x78: asl_ex(); break;
-            case 0x79: rol_ex(); break;
-            case 0x7a: dec_ex(); break;
-            case 0x7b: illegal(); break;
-            case 0x7c: inc_ex(); break;
-            case 0x7d: tst_ex(); break;
-            case 0x7e: jmp_ex(); break;
-            case 0x7f: clr_ex(); break;
-            case 0x80: suba_im(); break;
-            case 0x81: cmpa_im(); break;
-            case 0x82: sbca_im(); break;
-            case 0x83: subd_im(); /* 6803 only */ break;
-            case 0x84: anda_im(); break;
-            case 0x85: bita_im(); break;
-            case 0x86: lda_im(); break;
-            case 0x87: sta_im(); break;
-            case 0x88: eora_im(); break;
-            case 0x89: adca_im(); break;
-            case 0x8a: ora_im(); break;
-            case 0x8b: adda_im(); break;
-            case 0x8c: cpx_im(); /* 6803 difference */ break;
-            case 0x8d: bsr(); break;
-            case 0x8e: lds_im(); break;
-            case 0x8f: sts_im(); /* orthogonality */ break;
-            case 0x90: suba_di(); break;
-            case 0x91: cmpa_di(); break;
-            case 0x92: sbca_di(); break;
-            case 0x93: subd_di(); /* 6803 only */ break;
-            case 0x94: anda_di(); break;
-            case 0x95: bita_di(); break;
-            case 0x96: lda_di(); break;
-            case 0x97: sta_di(); break;
-            case 0x98: eora_di(); break;
-            case 0x99: adca_di(); break;
-            case 0x9a: ora_di(); break;
-            case 0x9b: adda_di(); break;
-            case 0x9c: cpx_di(); /* 6803 difference */ break;
-            case 0x9d: jsr_di(); break;
-            case 0x9e: lds_di(); break;
-            case 0x9f: sts_di(); break;
-            case 0xa0: suba_ix(); break;
-            case 0xa1: cmpa_ix(); break;
-            case 0xa2: sbca_ix(); break;
-            case 0xa3: subd_ix(); /* 6803 only */ break;
-            case 0xa4: anda_ix(); break;
-            case 0xa5: bita_ix(); break;
-            case 0xa6: lda_ix(); break;
-            case 0xa7: sta_ix(); break;
-            case 0xa8: eora_ix(); break;
-            case 0xa9: adca_ix(); break;
-            case 0xaa: ora_ix(); break;
-            case 0xab: adda_ix(); break;
-            case 0xac: cpx_ix(); /* 6803 difference */ break;
-            case 0xad: jsr_ix(); break;
-            case 0xae: lds_ix(); break;
-            case 0xaf: sts_ix(); break;
-            case 0xb0: suba_ex(); break;
-            case 0xb1: cmpa_ex(); break;
-            case 0xb2: sbca_ex(); break;
-            case 0xb3: subd_ex(); /* 6803 only */ break;
-            case 0xb4: anda_ex(); break;
-            case 0xb5: bita_ex(); break;
-            case 0xb6: lda_ex(); break;
-            case 0xb7: sta_ex(); break;
-            case 0xb8: eora_ex(); break;
-            case 0xb9: adca_ex(); break;
-            case 0xba: ora_ex(); break;
-            case 0xbb: adda_ex(); break;
-            case 0xbc: cpx_ex(); /* 6803 difference */ break;
-            case 0xbd: jsr_ex(); break;
-            case 0xbe: lds_ex(); break;
-            case 0xbf: sts_ex(); break;
-            case 0xc0: subb_im(); break;
-            case 0xc1: cmpb_im(); break;
-            case 0xc2: sbcb_im(); break;
-            case 0xc3: addd_im(); /* 6803 only */ break;
-            case 0xc4: andb_im(); break;
-            case 0xc5: bitb_im(); break;
-            case 0xc6: ldb_im(); break;
-            case 0xc7: stb_im(); break;
-            case 0xc8: eorb_im(); break;
-            case 0xc9: adcb_im(); break;
-            case 0xca: orb_im(); break;
-            case 0xcb: addb_im(); break;
-            case 0xcc: ldd_im(); /* 6803 only */ break;
-            case 0xcd: std_im(); /* 6803 only -- orthogonality */ break;
-            case 0xce: ldx_im(); break;
-            case 0xcf: stx_im(); break;
-            case 0xd0: subb_di(); break;
-            case 0xd1: cmpb_di(); break;
-            case 0xd2: sbcb_di(); break;
-            case 0xd3: addd_di(); /* 6803 only */ break;
-            case 0xd4: andb_di(); break;
-            case 0xd5: bitb_di(); break;
-            case 0xd6: ldb_di(); break;
-            case 0xd7: stb_di(); break;
-            case 0xd8: eorb_di(); break;
-            case 0xd9: adcb_di(); break;
-            case 0xda: orb_di(); break;
-            case 0xdb: addb_di(); break;
-            case 0xdc: ldd_di(); /* 6803 only */ break;
-            case 0xdd: std_di(); /* 6803 only */ break;
-            case 0xde: ldx_di(); break;
-            case 0xdf: stx_di(); break;
-            case 0xe0: subb_ix(); break;
-            case 0xe1: cmpb_ix(); break;
-            case 0xe2: sbcb_ix(); break;
-            case 0xe3: addd_ix(); /* 6803 only */ break;
-            case 0xe4: andb_ix(); break;
-            case 0xe5: bitb_ix(); break;
-            case 0xe6: ldb_ix(); break;
-            case 0xe7: stb_ix(); break;
-            case 0xe8: eorb_ix(); break;
-            case 0xe9: adcb_ix(); break;
-            case 0xea: orb_ix(); break;
-            case 0xeb: addb_ix(); break;
-            case 0xec: ldd_ix(); /* 6803 only */ break;
-            case 0xed: std_ix(); /* 6803 only */ break;
-            case 0xee: ldx_ix(); break;
-            case 0xef: stx_ix(); break;
-            case 0xf0: subb_ex(); break;
-            case 0xf1: cmpb_ex(); break;
-            case 0xf2: sbcb_ex(); break;
-            case 0xf3: addd_ex(); /* 6803 only */ break;
-            case 0xf4: andb_ex(); break;
-            case 0xf5: bitb_ex(); break;
-            case 0xf6: ldb_ex(); break;
-            case 0xf7: stb_ex(); break;
-            case 0xf8: eorb_ex(); break;
-            case 0xf9: adcb_ex(); break;
-            case 0xfa: orb_ex(); break;
-            case 0xfb: addb_ex(); break;
-            case 0xfc: ldd_ex(); /* 6803 only */ break;
-            case 0xfd: std_ex(); /* 6803 only */ break;
-            case 0xfe: ldx_ex(); break;
-            case 0xff: stx_ex(); break;
-        }
+			case 0x0F: sei(); break;
+			case 0x10: sba(); break;
+			case 0x11: cba(); break;
+			case 0x12: illegal(); break;
+			case 0x13: illegal(); break;
+			case 0x14: illegal(); break;
+			case 0x15: illegal(); break;
+			case 0x16: tab(); break;
+			case 0x17: tba(); break;
+			case 0x18: illegal(); break;
+			case 0x19: daa(); break;
+			case 0x1a: illegal(); break;
+			case 0x1b: aba(); break;
+			case 0x1c: illegal(); break;
+			case 0x1d: illegal(); break;
+			case 0x1e: illegal(); break;
+			case 0x1f: illegal(); break;
+			case 0x20: bra(); break;
+			case 0x21: brn(); break;
+			case 0x22: bhi(); break;
+			case 0x23: bls(); break;
+			case 0x24: bcc(); break;
+			case 0x25: bcs(); break;
+			case 0x26: bne(); break;
+			case 0x27: beq(); break;
+			case 0x28: bvc(); break;
+			case 0x29: bvs(); break;
+			case 0x2a: bpl(); break;
+			case 0x2b: bmi(); break;
+			case 0x2c: bge(); break;
+			case 0x2d: blt(); break;
+			case 0x2e: bgt(); break;
+			case 0x2f: ble(); break;
+			case 0x30: tsx(); break;
+			case 0x31: ins(); break;
+			case 0x32: pula(); break;
+			case 0x33: pulb(); break;
+			case 0x34: des(); break;
+			case 0x35: txs(); break;
+			case 0x36: psha(); break;
+			case 0x37: pshb(); break;
+			case 0x38: pulx(); /* 6803 only */ break;
+			case 0x39: rts(); break;
+			case 0x3a: abx(); /* 6803 only */ break;
+			case 0x3b: rti(); break;
+			case 0x3c: pshx(); /* 6803 only */ break;
+			case 0x3d: mul(); /* 6803 only */ break;
+			case 0x3e: wai(); break;
+			case 0x3f: swi(); break;
+			case 0x40: nega(); break;
+			case 0x41: illegal(); break;
+			case 0x42: illegal(); break;
+			case 0x43: coma(); break;
+			case 0x44: lsra(); break;
+			case 0x45: illegal(); break;
+			case 0x46: rora(); break;
+			case 0x47: asra(); break;
+			case 0x48: asla(); break;
+			case 0x49: rola(); break;
+			case 0x4a: deca(); break;
+			case 0x4b: illegal(); break;
+			case 0x4c: inca(); break;
+			case 0x4d: tsta(); break;
+			case 0x4e: illegal(); break;
+			case 0x4f: clra(); break;
+			case 0x50: negb(); break;
+			case 0x51: illegal(); break;
+			case 0x52: illegal(); break;
+			case 0x53: comb(); break;
+			case 0x54: lsrb(); break;
+			case 0x55: illegal(); break;
+			case 0x56: rorb(); break;
+			case 0x57: asrb(); break;
+			case 0x58: aslb(); break;
+			case 0x59: rolb(); break;
+			case 0x5a: decb(); break;
+			case 0x5b: illegal(); break;
+			case 0x5c: incb(); break;
+			case 0x5d: tstb(); break;
+			case 0x5e: illegal(); break;
+			case 0x5f: clrb(); break;
+			case 0x60: neg_ix(); break;
+			case 0x61: illegal(); break;
+			case 0x62: illegal(); break;
+			case 0x63: com_ix(); break;
+			case 0x64: lsr_ix(); break;
+			case 0x65: illegal(); break;
+			case 0x66: ror_ix(); break;
+			case 0x67: asr_ix(); break;
+			case 0x68: asl_ix(); break;
+			case 0x69: rol_ix(); break;
+			case 0x6a: dec_ix(); break;
+			case 0x6b: illegal(); break;
+			case 0x6c: inc_ix(); break;
+			case 0x6d: tst_ix(); break;
+			case 0x6e: jmp_ix(); break;
+			case 0x6f: clr_ix(); break;
+			case 0x70: neg_ex(); break;
+			case 0x71: illegal(); break;
+			case 0x72: illegal(); break;
+			case 0x73: com_ex(); break;
+			case 0x74: lsr_ex(); break;
+			case 0x75: illegal(); break;
+			case 0x76: ror_ex(); break;
+			case 0x77: asr_ex(); break;
+			case 0x78: asl_ex(); break;
+			case 0x79: rol_ex(); break;
+			case 0x7a: dec_ex(); break;
+			case 0x7b: illegal(); break;
+			case 0x7c: inc_ex(); break;
+			case 0x7d: tst_ex(); break;
+			case 0x7e: jmp_ex(); break;
+			case 0x7f: clr_ex(); break;
+			case 0x80: suba_im(); break;
+			case 0x81: cmpa_im(); break;
+			case 0x82: sbca_im(); break;
+			case 0x83: subd_im(); /* 6803 only */ break;
+			case 0x84: anda_im(); break;
+			case 0x85: bita_im(); break;
+			case 0x86: lda_im(); break;
+			case 0x87: sta_im(); break;
+			case 0x88: eora_im(); break;
+			case 0x89: adca_im(); break;
+			case 0x8a: ora_im(); break;
+			case 0x8b: adda_im(); break;
+			case 0x8c: cpx_im(); /* 6803 difference */ break;
+			case 0x8d: bsr(); break;
+			case 0x8e: lds_im(); break;
+			case 0x8f: sts_im(); /* orthogonality */ break;
+			case 0x90: suba_di(); break;
+			case 0x91: cmpa_di(); break;
+			case 0x92: sbca_di(); break;
+			case 0x93: subd_di(); /* 6803 only */ break;
+			case 0x94: anda_di(); break;
+			case 0x95: bita_di(); break;
+			case 0x96: lda_di(); break;
+			case 0x97: sta_di(); break;
+			case 0x98: eora_di(); break;
+			case 0x99: adca_di(); break;
+			case 0x9a: ora_di(); break;
+			case 0x9b: adda_di(); break;
+			case 0x9c: cpx_di(); /* 6803 difference */ break;
+			case 0x9d: jsr_di(); break;
+			case 0x9e: lds_di(); break;
+			case 0x9f: sts_di(); break;
+			case 0xa0: suba_ix(); break;
+			case 0xa1: cmpa_ix(); break;
+			case 0xa2: sbca_ix(); break;
+			case 0xa3: subd_ix(); /* 6803 only */ break;
+			case 0xa4: anda_ix(); break;
+			case 0xa5: bita_ix(); break;
+			case 0xa6: lda_ix(); break;
+			case 0xa7: sta_ix(); break;
+			case 0xa8: eora_ix(); break;
+			case 0xa9: adca_ix(); break;
+			case 0xaa: ora_ix(); break;
+			case 0xab: adda_ix(); break;
+			case 0xac: cpx_ix(); /* 6803 difference */ break;
+			case 0xad: jsr_ix(); break;
+			case 0xae: lds_ix(); break;
+			case 0xaf: sts_ix(); break;
+			case 0xb0: suba_ex(); break;
+			case 0xb1: cmpa_ex(); break;
+			case 0xb2: sbca_ex(); break;
+			case 0xb3: subd_ex(); /* 6803 only */ break;
+			case 0xb4: anda_ex(); break;
+			case 0xb5: bita_ex(); break;
+			case 0xb6: lda_ex(); break;
+			case 0xb7: sta_ex(); break;
+			case 0xb8: eora_ex(); break;
+			case 0xb9: adca_ex(); break;
+			case 0xba: ora_ex(); break;
+			case 0xbb: adda_ex(); break;
+			case 0xbc: cpx_ex(); /* 6803 difference */ break;
+			case 0xbd: jsr_ex(); break;
+			case 0xbe: lds_ex(); break;
+			case 0xbf: sts_ex(); break;
+			case 0xc0: subb_im(); break;
+			case 0xc1: cmpb_im(); break;
+			case 0xc2: sbcb_im(); break;
+			case 0xc3: addd_im(); /* 6803 only */ break;
+			case 0xc4: andb_im(); break;
+			case 0xc5: bitb_im(); break;
+			case 0xc6: ldb_im(); break;
+			case 0xc7: stb_im(); break;
+			case 0xc8: eorb_im(); break;
+			case 0xc9: adcb_im(); break;
+			case 0xca: orb_im(); break;
+			case 0xcb: addb_im(); break;
+			case 0xcc: ldd_im(); /* 6803 only */ break;
+			case 0xcd: std_im(); /* 6803 only -- orthogonality */ break;
+			case 0xce: ldx_im(); break;
+			case 0xcf: stx_im(); break;
+			case 0xd0: subb_di(); break;
+			case 0xd1: cmpb_di(); break;
+			case 0xd2: sbcb_di(); break;
+			case 0xd3: addd_di(); /* 6803 only */ break;
+			case 0xd4: andb_di(); break;
+			case 0xd5: bitb_di(); break;
+			case 0xd6: ldb_di(); break;
+			case 0xd7: stb_di(); break;
+			case 0xd8: eorb_di(); break;
+			case 0xd9: adcb_di(); break;
+			case 0xda: orb_di(); break;
+			case 0xdb: addb_di(); break;
+			case 0xdc: ldd_di(); /* 6803 only */ break;
+			case 0xdd: std_di(); /* 6803 only */ break;
+			case 0xde: ldx_di(); break;
+			case 0xdf: stx_di(); break;
+			case 0xe0: subb_ix(); break;
+			case 0xe1: cmpb_ix(); break;
+			case 0xe2: sbcb_ix(); break;
+			case 0xe3: addd_ix(); /* 6803 only */ break;
+			case 0xe4: andb_ix(); break;
+			case 0xe5: bitb_ix(); break;
+			case 0xe6: ldb_ix(); break;
+			case 0xe7: stb_ix(); break;
+			case 0xe8: eorb_ix(); break;
+			case 0xe9: adcb_ix(); break;
+			case 0xea: orb_ix(); break;
+			case 0xeb: addb_ix(); break;
+			case 0xec: ldd_ix(); /* 6803 only */ break;
+			case 0xed: std_ix(); /* 6803 only */ break;
+			case 0xee: ldx_ix(); break;
+			case 0xef: stx_ix(); break;
+			case 0xf0: subb_ex(); break;
+			case 0xf1: cmpb_ex(); break;
+			case 0xf2: sbcb_ex(); break;
+			case 0xf3: addd_ex(); /* 6803 only */ break;
+			case 0xf4: andb_ex(); break;
+			case 0xf5: bitb_ex(); break;
+			case 0xf6: ldb_ex(); break;
+			case 0xf7: stb_ex(); break;
+			case 0xf8: eorb_ex(); break;
+			case 0xf9: adcb_ex(); break;
+			case 0xfa: orb_ex(); break;
+			case 0xfb: addb_ex(); break;
+			case 0xfc: ldd_ex(); /* 6803 only */ break;
+			case 0xfd: std_ex(); /* 6803 only */ break;
+			case 0xfe: ldx_ex(); break;
+			case 0xff: stx_ex(); break;
+		}
 		INCREMENT_COUNTER(cycles_6803[ireg]);
-        m6803_ICount -= cycles_6803[ireg];
-    } while( m6803_ICount>0 );
+	} while( m6803_ICount>0 );
 
 getout:
 	INCREMENT_COUNTER(m6803.extra_cycles);
-	m6803_ICount -= m6803.extra_cycles;
-    m6803.extra_cycles = 0;
+	m6803.extra_cycles = 0;
 
-    return cycles - m6803_ICount;
+	return cycles - m6803_ICount;
 }
 #endif
 
@@ -1646,19 +1615,19 @@ const char *m6803_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6803";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m6803_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6803_win_layout;
-    }
+	}
 	return m6800_info(context,regnum);
 }
 
 unsigned m6803_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm680x(6803,buffer,pc);
+	return Dasm680x(6803,buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
@@ -1673,7 +1642,7 @@ unsigned m6803_dasm(char *buffer, unsigned pc)
 void m6808_reset(void *param)
 {
 	m6800_reset(param);
-	m6800.subtype = SUBTYPE_M6808;
+//	m6800.subtype = SUBTYPE_M6808;
 }
 void m6808_exit(void) { m6800_exit(); }
 int  m6808_execute(int cycles) { return m6800_execute(cycles); }
@@ -1707,12 +1676,12 @@ const char *m6808_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6808";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m6808_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6808_win_layout;
-    }
+	}
 	return m6800_info(context,regnum);
 }
 
@@ -1734,7 +1703,9 @@ unsigned m6808_dasm(char *buffer, unsigned pc)
 void hd63701_reset(void *param)
 {
 	m6800_reset(param);
-	m6800.subtype = SUBTYPE_HD63701;
+//	m6800.subtype = SUBTYPE_HD63701;
+	m6800.insn = hd63701_insn;
+	m6800.cycles = cycles_63701;
 }
 void hd63701_exit(void) { m6800_exit(); }
 /****************************************************************************
@@ -1742,294 +1713,293 @@ void hd63701_exit(void) { m6800_exit(); }
  ****************************************************************************/
 int hd63701_execute(int cycles)
 {
-    UINT8 ireg;
-    hd63701_ICount = cycles;
+	UINT8 ireg;
+	hd63701_ICount = cycles;
 
+	CLEANUP_conters;
 	INCREMENT_COUNTER(hd63701.extra_cycles);
-	hd63701_ICount -= hd63701.extra_cycles;
 	hd63701.extra_cycles = 0;
 
-    if( hd63701.wai_state & M6808_WAI )
-    {
+	if( hd63701.wai_state & (HD63701_WAI|HD63701_SLP) )
+	{
 		EAT_CYCLES;
-        goto getout;
-    }
+		goto getout;
+	}
 
-    do
-    {
+	do
+	{
 		pPPC = pPC;
 		CALL_MAME_DEBUG;
-        ireg=M_RDOP(PC++);
+		ireg=M_RDOP(PCD);
+		PC++;
 
-        switch( ireg )
-        {
-            case 0x00: illegal(); break;
-            case 0x01: nop(); break;
-            case 0x02: illegal(); break;
-            case 0x03: illegal(); break;
-            case 0x04: lsrd(); /* 6803 only */; break;
-            case 0x05: asld(); /* 6803 only */; break;
-            case 0x06: tap(); break;
-            case 0x07: tpa(); break;
-            case 0x08: inx(); break;
-            case 0x09: dex(); break;
-            case 0x0A: CLV; break;
-            case 0x0B: SEV; break;
-            case 0x0C: CLC; break;
-            case 0x0D: SEC; break;
+		switch( ireg )
+		{
+			case 0x00: trap(); break;
+			case 0x01: nop(); break;
+			case 0x02: trap(); break;
+			case 0x03: trap(); break;
+			case 0x04: lsrd(); /* 6803 only */; break;
+			case 0x05: asld(); /* 6803 only */; break;
+			case 0x06: tap(); break;
+			case 0x07: tpa(); break;
+			case 0x08: inx(); break;
+			case 0x09: dex(); break;
+			case 0x0A: CLV; break;
+			case 0x0B: SEV; break;
+			case 0x0C: CLC; break;
+			case 0x0D: SEC; break;
 			case 0x0E: cli(); break;
-            case 0x0F: sei(); break;
-            case 0x10: sba(); break;
-            case 0x11: cba(); break;
+			case 0x0F: sei(); break;
+			case 0x10: sba(); break;
+			case 0x11: cba(); break;
 			case 0x12: undoc1(); break;
 			case 0x13: undoc2(); break;
-            case 0x14: illegal(); break;
-            case 0x15: illegal(); break;
-            case 0x16: tab(); break;
-            case 0x17: tba(); break;
-            case 0x18: xgdx(); /* HD63701YO only */; break;
-            case 0x19: daa(); break;
-            case 0x1a: illegal(); break;
-            case 0x1b: aba(); break;
-            case 0x1c: illegal(); break;
-            case 0x1d: illegal(); break;
-            case 0x1e: illegal(); break;
-            case 0x1f: illegal(); break;
-            case 0x20: bra(); break;
-            case 0x21: brn(); break;
-            case 0x22: bhi(); break;
-            case 0x23: bls(); break;
-            case 0x24: bcc(); break;
-            case 0x25: bcs(); break;
-            case 0x26: bne(); break;
-            case 0x27: beq(); break;
-            case 0x28: bvc(); break;
-            case 0x29: bvs(); break;
-            case 0x2a: bpl(); break;
-            case 0x2b: bmi(); break;
-            case 0x2c: bge(); break;
-            case 0x2d: blt(); break;
-            case 0x2e: bgt(); break;
-            case 0x2f: ble(); break;
-            case 0x30: tsx(); break;
-            case 0x31: ins(); break;
-            case 0x32: pula(); break;
-            case 0x33: pulb(); break;
-            case 0x34: des(); break;
-            case 0x35: txs(); break;
-            case 0x36: psha(); break;
-            case 0x37: pshb(); break;
-            case 0x38: pulx(); /* 6803 only */ break;
-            case 0x39: rts(); break;
-            case 0x3a: abx(); /* 6803 only */ break;
-            case 0x3b: rti(); break;
-            case 0x3c: pshx(); /* 6803 only */ break;
-            case 0x3d: mul(); /* 6803 only */ break;
-            case 0x3e: wai(); break;
-            case 0x3f: swi(); break;
-            case 0x40: nega(); break;
-            case 0x41: illegal(); break;
-            case 0x42: illegal(); break;
-            case 0x43: coma(); break;
-            case 0x44: lsra(); break;
-            case 0x45: illegal(); break;
-            case 0x46: rora(); break;
-            case 0x47: asra(); break;
-            case 0x48: asla(); break;
-            case 0x49: rola(); break;
-            case 0x4a: deca(); break;
-            case 0x4b: illegal(); break;
-            case 0x4c: inca(); break;
-            case 0x4d: tsta(); break;
-            case 0x4e: illegal(); break;
-            case 0x4f: clra(); break;
-            case 0x50: negb(); break;
-            case 0x51: illegal(); break;
-            case 0x52: illegal(); break;
-            case 0x53: comb(); break;
-            case 0x54: lsrb(); break;
-            case 0x55: illegal(); break;
-            case 0x56: rorb(); break;
-            case 0x57: asrb(); break;
-            case 0x58: aslb(); break;
-            case 0x59: rolb(); break;
-            case 0x5a: decb(); break;
-            case 0x5b: illegal(); break;
-            case 0x5c: incb(); break;
-            case 0x5d: tstb(); break;
-            case 0x5e: illegal(); break;
-            case 0x5f: clrb(); break;
-            case 0x60: neg_ix(); break;
-            case 0x61: aim_ix(); /* HD63701YO only */; break;
-            case 0x62: oim_ix(); /* HD63701YO only */; break;
-            case 0x63: com_ix(); break;
-            case 0x64: lsr_ix(); break;
-            case 0x65: eim_ix(); /* HD63701YO only */; break;
-            case 0x66: ror_ix(); break;
-            case 0x67: asr_ix(); break;
-            case 0x68: asl_ix(); break;
-            case 0x69: rol_ix(); break;
-            case 0x6a: dec_ix(); break;
-            case 0x6b: tim_ix(); /* HD63701YO only */; break;
-            case 0x6c: inc_ix(); break;
-            case 0x6d: tst_ix(); break;
-            case 0x6e: jmp_ix(); break;
-            case 0x6f: clr_ix(); break;
-            case 0x70: neg_ex(); break;
-            case 0x71: aim_di(); /* HD63701YO only */; break;
-            case 0x72: oim_di(); /* HD63701YO only */; break;
-            case 0x73: com_ex(); break;
-            case 0x74: lsr_ex(); break;
-            case 0x75: eim_di(); /* HD63701YO only */; break;
-            case 0x76: ror_ex(); break;
-            case 0x77: asr_ex(); break;
-            case 0x78: asl_ex(); break;
-            case 0x79: rol_ex(); break;
-            case 0x7a: dec_ex(); break;
-            case 0x7b: tim_di(); /* HD63701YO only */; break;
-            case 0x7c: inc_ex(); break;
-            case 0x7d: tst_ex(); break;
-            case 0x7e: jmp_ex(); break;
-            case 0x7f: clr_ex(); break;
-            case 0x80: suba_im(); break;
-            case 0x81: cmpa_im(); break;
-            case 0x82: sbca_im(); break;
-            case 0x83: subd_im(); /* 6803 only */ break;
-            case 0x84: anda_im(); break;
-            case 0x85: bita_im(); break;
-            case 0x86: lda_im(); break;
-            case 0x87: sta_im(); break;
-            case 0x88: eora_im(); break;
-            case 0x89: adca_im(); break;
-            case 0x8a: ora_im(); break;
-            case 0x8b: adda_im(); break;
-            case 0x8c: cpx_im(); /* 6803 difference */ break;
-            case 0x8d: bsr(); break;
-            case 0x8e: lds_im(); break;
-            case 0x8f: sts_im(); /* orthogonality */ break;
-            case 0x90: suba_di(); break;
-            case 0x91: cmpa_di(); break;
-            case 0x92: sbca_di(); break;
-            case 0x93: subd_di(); /* 6803 only */ break;
-            case 0x94: anda_di(); break;
-            case 0x95: bita_di(); break;
-            case 0x96: lda_di(); break;
-            case 0x97: sta_di(); break;
-            case 0x98: eora_di(); break;
-            case 0x99: adca_di(); break;
-            case 0x9a: ora_di(); break;
-            case 0x9b: adda_di(); break;
-            case 0x9c: cpx_di(); /* 6803 difference */ break;
-            case 0x9d: jsr_di(); break;
-            case 0x9e: lds_di(); break;
-            case 0x9f: sts_di(); break;
-            case 0xa0: suba_ix(); break;
-            case 0xa1: cmpa_ix(); break;
-            case 0xa2: sbca_ix(); break;
-            case 0xa3: subd_ix(); /* 6803 only */ break;
-            case 0xa4: anda_ix(); break;
-            case 0xa5: bita_ix(); break;
-            case 0xa6: lda_ix(); break;
-            case 0xa7: sta_ix(); break;
-            case 0xa8: eora_ix(); break;
-            case 0xa9: adca_ix(); break;
-            case 0xaa: ora_ix(); break;
-            case 0xab: adda_ix(); break;
-            case 0xac: cpx_ix(); /* 6803 difference */ break;
-            case 0xad: jsr_ix(); break;
-            case 0xae: lds_ix(); break;
-            case 0xaf: sts_ix(); break;
-            case 0xb0: suba_ex(); break;
-            case 0xb1: cmpa_ex(); break;
-            case 0xb2: sbca_ex(); break;
-            case 0xb3: subd_ex(); /* 6803 only */ break;
-            case 0xb4: anda_ex(); break;
-            case 0xb5: bita_ex(); break;
-            case 0xb6: lda_ex(); break;
-            case 0xb7: sta_ex(); break;
-            case 0xb8: eora_ex(); break;
-            case 0xb9: adca_ex(); break;
-            case 0xba: ora_ex(); break;
-            case 0xbb: adda_ex(); break;
-            case 0xbc: cpx_ex(); /* 6803 difference */ break;
-            case 0xbd: jsr_ex(); break;
-            case 0xbe: lds_ex(); break;
-            case 0xbf: sts_ex(); break;
-            case 0xc0: subb_im(); break;
-            case 0xc1: cmpb_im(); break;
-            case 0xc2: sbcb_im(); break;
-            case 0xc3: addd_im(); /* 6803 only */ break;
-            case 0xc4: andb_im(); break;
-            case 0xc5: bitb_im(); break;
-            case 0xc6: ldb_im(); break;
-            case 0xc7: stb_im(); break;
-            case 0xc8: eorb_im(); break;
-            case 0xc9: adcb_im(); break;
-            case 0xca: orb_im(); break;
-            case 0xcb: addb_im(); break;
-            case 0xcc: ldd_im(); /* 6803 only */ break;
-            case 0xcd: std_im(); /* 6803 only -- orthogonality */ break;
-            case 0xce: ldx_im(); break;
-            case 0xcf: stx_im(); break;
-            case 0xd0: subb_di(); break;
-            case 0xd1: cmpb_di(); break;
-            case 0xd2: sbcb_di(); break;
-            case 0xd3: addd_di(); /* 6803 only */ break;
-            case 0xd4: andb_di(); break;
-            case 0xd5: bitb_di(); break;
-            case 0xd6: ldb_di(); break;
-            case 0xd7: stb_di(); break;
-            case 0xd8: eorb_di(); break;
-            case 0xd9: adcb_di(); break;
-            case 0xda: orb_di(); break;
-            case 0xdb: addb_di(); break;
-            case 0xdc: ldd_di(); /* 6803 only */ break;
-            case 0xdd: std_di(); /* 6803 only */ break;
-            case 0xde: ldx_di(); break;
-            case 0xdf: stx_di(); break;
-            case 0xe0: subb_ix(); break;
-            case 0xe1: cmpb_ix(); break;
-            case 0xe2: sbcb_ix(); break;
-            case 0xe3: addd_ix(); /* 6803 only */ break;
-            case 0xe4: andb_ix(); break;
-            case 0xe5: bitb_ix(); break;
-            case 0xe6: ldb_ix(); break;
-            case 0xe7: stb_ix(); break;
-            case 0xe8: eorb_ix(); break;
-            case 0xe9: adcb_ix(); break;
-            case 0xea: orb_ix(); break;
-            case 0xeb: addb_ix(); break;
-            case 0xec: ldd_ix(); /* 6803 only */ break;
-            case 0xed: std_ix(); /* 6803 only */ break;
-            case 0xee: ldx_ix(); break;
-            case 0xef: stx_ix(); break;
-            case 0xf0: subb_ex(); break;
-            case 0xf1: cmpb_ex(); break;
-            case 0xf2: sbcb_ex(); break;
-            case 0xf3: addd_ex(); /* 6803 only */ break;
-            case 0xf4: andb_ex(); break;
-            case 0xf5: bitb_ex(); break;
-            case 0xf6: ldb_ex(); break;
-            case 0xf7: stb_ex(); break;
-            case 0xf8: eorb_ex(); break;
-            case 0xf9: adcb_ex(); break;
-            case 0xfa: orb_ex(); break;
-            case 0xfb: addb_ex(); break;
-            case 0xfc: ldd_ex(); /* 6803 only */ break;
-            case 0xfd: std_ex(); /* 6803 only */ break;
-            case 0xfe: ldx_ex(); break;
-            case 0xff: stx_ex(); break;
-        }
+			case 0x14: trap(); break;
+			case 0x15: trap(); break;
+			case 0x16: tab(); break;
+			case 0x17: tba(); break;
+			case 0x18: xgdx(); /* HD63701YO only */; break;
+			case 0x19: daa(); break;
+			case 0x1a: slp(); break;
+			case 0x1b: aba(); break;
+			case 0x1c: trap(); break;
+			case 0x1d: trap(); break;
+			case 0x1e: trap(); break;
+			case 0x1f: trap(); break;
+			case 0x20: bra(); break;
+			case 0x21: brn(); break;
+			case 0x22: bhi(); break;
+			case 0x23: bls(); break;
+			case 0x24: bcc(); break;
+			case 0x25: bcs(); break;
+			case 0x26: bne(); break;
+			case 0x27: beq(); break;
+			case 0x28: bvc(); break;
+			case 0x29: bvs(); break;
+			case 0x2a: bpl(); break;
+			case 0x2b: bmi(); break;
+			case 0x2c: bge(); break;
+			case 0x2d: blt(); break;
+			case 0x2e: bgt(); break;
+			case 0x2f: ble(); break;
+			case 0x30: tsx(); break;
+			case 0x31: ins(); break;
+			case 0x32: pula(); break;
+			case 0x33: pulb(); break;
+			case 0x34: des(); break;
+			case 0x35: txs(); break;
+			case 0x36: psha(); break;
+			case 0x37: pshb(); break;
+			case 0x38: pulx(); /* 6803 only */ break;
+			case 0x39: rts(); break;
+			case 0x3a: abx(); /* 6803 only */ break;
+			case 0x3b: rti(); break;
+			case 0x3c: pshx(); /* 6803 only */ break;
+			case 0x3d: mul(); /* 6803 only */ break;
+			case 0x3e: wai(); break;
+			case 0x3f: swi(); break;
+			case 0x40: nega(); break;
+			case 0x41: trap(); break;
+			case 0x42: trap(); break;
+			case 0x43: coma(); break;
+			case 0x44: lsra(); break;
+			case 0x45: trap(); break;
+			case 0x46: rora(); break;
+			case 0x47: asra(); break;
+			case 0x48: asla(); break;
+			case 0x49: rola(); break;
+			case 0x4a: deca(); break;
+			case 0x4b: trap(); break;
+			case 0x4c: inca(); break;
+			case 0x4d: tsta(); break;
+			case 0x4e: trap(); break;
+			case 0x4f: clra(); break;
+			case 0x50: negb(); break;
+			case 0x51: trap(); break;
+			case 0x52: trap(); break;
+			case 0x53: comb(); break;
+			case 0x54: lsrb(); break;
+			case 0x55: trap(); break;
+			case 0x56: rorb(); break;
+			case 0x57: asrb(); break;
+			case 0x58: aslb(); break;
+			case 0x59: rolb(); break;
+			case 0x5a: decb(); break;
+			case 0x5b: trap(); break;
+			case 0x5c: incb(); break;
+			case 0x5d: tstb(); break;
+			case 0x5e: trap(); break;
+			case 0x5f: clrb(); break;
+			case 0x60: neg_ix(); break;
+			case 0x61: aim_ix(); /* HD63701YO only */; break;
+			case 0x62: oim_ix(); /* HD63701YO only */; break;
+			case 0x63: com_ix(); break;
+			case 0x64: lsr_ix(); break;
+			case 0x65: eim_ix(); /* HD63701YO only */; break;
+			case 0x66: ror_ix(); break;
+			case 0x67: asr_ix(); break;
+			case 0x68: asl_ix(); break;
+			case 0x69: rol_ix(); break;
+			case 0x6a: dec_ix(); break;
+			case 0x6b: tim_ix(); /* HD63701YO only */; break;
+			case 0x6c: inc_ix(); break;
+			case 0x6d: tst_ix(); break;
+			case 0x6e: jmp_ix(); break;
+			case 0x6f: clr_ix(); break;
+			case 0x70: neg_ex(); break;
+			case 0x71: aim_di(); /* HD63701YO only */; break;
+			case 0x72: oim_di(); /* HD63701YO only */; break;
+			case 0x73: com_ex(); break;
+			case 0x74: lsr_ex(); break;
+			case 0x75: eim_di(); /* HD63701YO only */; break;
+			case 0x76: ror_ex(); break;
+			case 0x77: asr_ex(); break;
+			case 0x78: asl_ex(); break;
+			case 0x79: rol_ex(); break;
+			case 0x7a: dec_ex(); break;
+			case 0x7b: tim_di(); /* HD63701YO only */; break;
+			case 0x7c: inc_ex(); break;
+			case 0x7d: tst_ex(); break;
+			case 0x7e: jmp_ex(); break;
+			case 0x7f: clr_ex(); break;
+			case 0x80: suba_im(); break;
+			case 0x81: cmpa_im(); break;
+			case 0x82: sbca_im(); break;
+			case 0x83: subd_im(); /* 6803 only */ break;
+			case 0x84: anda_im(); break;
+			case 0x85: bita_im(); break;
+			case 0x86: lda_im(); break;
+			case 0x87: sta_im(); break;
+			case 0x88: eora_im(); break;
+			case 0x89: adca_im(); break;
+			case 0x8a: ora_im(); break;
+			case 0x8b: adda_im(); break;
+			case 0x8c: cpx_im(); /* 6803 difference */ break;
+			case 0x8d: bsr(); break;
+			case 0x8e: lds_im(); break;
+			case 0x8f: sts_im(); /* orthogonality */ break;
+			case 0x90: suba_di(); break;
+			case 0x91: cmpa_di(); break;
+			case 0x92: sbca_di(); break;
+			case 0x93: subd_di(); /* 6803 only */ break;
+			case 0x94: anda_di(); break;
+			case 0x95: bita_di(); break;
+			case 0x96: lda_di(); break;
+			case 0x97: sta_di(); break;
+			case 0x98: eora_di(); break;
+			case 0x99: adca_di(); break;
+			case 0x9a: ora_di(); break;
+			case 0x9b: adda_di(); break;
+			case 0x9c: cpx_di(); /* 6803 difference */ break;
+			case 0x9d: jsr_di(); break;
+			case 0x9e: lds_di(); break;
+			case 0x9f: sts_di(); break;
+			case 0xa0: suba_ix(); break;
+			case 0xa1: cmpa_ix(); break;
+			case 0xa2: sbca_ix(); break;
+			case 0xa3: subd_ix(); /* 6803 only */ break;
+			case 0xa4: anda_ix(); break;
+			case 0xa5: bita_ix(); break;
+			case 0xa6: lda_ix(); break;
+			case 0xa7: sta_ix(); break;
+			case 0xa8: eora_ix(); break;
+			case 0xa9: adca_ix(); break;
+			case 0xaa: ora_ix(); break;
+			case 0xab: adda_ix(); break;
+			case 0xac: cpx_ix(); /* 6803 difference */ break;
+			case 0xad: jsr_ix(); break;
+			case 0xae: lds_ix(); break;
+			case 0xaf: sts_ix(); break;
+			case 0xb0: suba_ex(); break;
+			case 0xb1: cmpa_ex(); break;
+			case 0xb2: sbca_ex(); break;
+			case 0xb3: subd_ex(); /* 6803 only */ break;
+			case 0xb4: anda_ex(); break;
+			case 0xb5: bita_ex(); break;
+			case 0xb6: lda_ex(); break;
+			case 0xb7: sta_ex(); break;
+			case 0xb8: eora_ex(); break;
+			case 0xb9: adca_ex(); break;
+			case 0xba: ora_ex(); break;
+			case 0xbb: adda_ex(); break;
+			case 0xbc: cpx_ex(); /* 6803 difference */ break;
+			case 0xbd: jsr_ex(); break;
+			case 0xbe: lds_ex(); break;
+			case 0xbf: sts_ex(); break;
+			case 0xc0: subb_im(); break;
+			case 0xc1: cmpb_im(); break;
+			case 0xc2: sbcb_im(); break;
+			case 0xc3: addd_im(); /* 6803 only */ break;
+			case 0xc4: andb_im(); break;
+			case 0xc5: bitb_im(); break;
+			case 0xc6: ldb_im(); break;
+			case 0xc7: stb_im(); break;
+			case 0xc8: eorb_im(); break;
+			case 0xc9: adcb_im(); break;
+			case 0xca: orb_im(); break;
+			case 0xcb: addb_im(); break;
+			case 0xcc: ldd_im(); /* 6803 only */ break;
+			case 0xcd: std_im(); /* 6803 only -- orthogonality */ break;
+			case 0xce: ldx_im(); break;
+			case 0xcf: stx_im(); break;
+			case 0xd0: subb_di(); break;
+			case 0xd1: cmpb_di(); break;
+			case 0xd2: sbcb_di(); break;
+			case 0xd3: addd_di(); /* 6803 only */ break;
+			case 0xd4: andb_di(); break;
+			case 0xd5: bitb_di(); break;
+			case 0xd6: ldb_di(); break;
+			case 0xd7: stb_di(); break;
+			case 0xd8: eorb_di(); break;
+			case 0xd9: adcb_di(); break;
+			case 0xda: orb_di(); break;
+			case 0xdb: addb_di(); break;
+			case 0xdc: ldd_di(); /* 6803 only */ break;
+			case 0xdd: std_di(); /* 6803 only */ break;
+			case 0xde: ldx_di(); break;
+			case 0xdf: stx_di(); break;
+			case 0xe0: subb_ix(); break;
+			case 0xe1: cmpb_ix(); break;
+			case 0xe2: sbcb_ix(); break;
+			case 0xe3: addd_ix(); /* 6803 only */ break;
+			case 0xe4: andb_ix(); break;
+			case 0xe5: bitb_ix(); break;
+			case 0xe6: ldb_ix(); break;
+			case 0xe7: stb_ix(); break;
+			case 0xe8: eorb_ix(); break;
+			case 0xe9: adcb_ix(); break;
+			case 0xea: orb_ix(); break;
+			case 0xeb: addb_ix(); break;
+			case 0xec: ldd_ix(); /* 6803 only */ break;
+			case 0xed: std_ix(); /* 6803 only */ break;
+			case 0xee: ldx_ix(); break;
+			case 0xef: stx_ix(); break;
+			case 0xf0: subb_ex(); break;
+			case 0xf1: cmpb_ex(); break;
+			case 0xf2: sbcb_ex(); break;
+			case 0xf3: addd_ex(); /* 6803 only */ break;
+			case 0xf4: andb_ex(); break;
+			case 0xf5: bitb_ex(); break;
+			case 0xf6: ldb_ex(); break;
+			case 0xf7: stb_ex(); break;
+			case 0xf8: eorb_ex(); break;
+			case 0xf9: adcb_ex(); break;
+			case 0xfa: orb_ex(); break;
+			case 0xfb: addb_ex(); break;
+			case 0xfc: ldd_ex(); /* 6803 only */ break;
+			case 0xfd: std_ex(); /* 6803 only */ break;
+			case 0xfe: ldx_ex(); break;
+			case 0xff: stx_ex(); break;
+		}
 		INCREMENT_COUNTER(cycles_63701[ireg]);
-		hd63701_ICount -= cycles_63701[ireg];
-    } while( hd63701_ICount>0 );
+	} while( hd63701_ICount>0 );
 
 getout:
 	INCREMENT_COUNTER(hd63701.extra_cycles);
-	hd63701_ICount -= hd63701.extra_cycles;
-    hd63701.extra_cycles = 0;
+	hd63701.extra_cycles = 0;
 
-    return cycles - hd63701_ICount;
+	return cycles - hd63701_ICount;
 }
 
 unsigned hd63701_get_context(void *dst) { return m6800_get_context(dst); }
@@ -2062,13 +2032,35 @@ const char *hd63701_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "HD63701";
 		case CPU_INFO_REG_LAYOUT: return (const char*)hd63701_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)hd63701_win_layout;
-    }
+	}
 	return m6800_info(context,regnum);
+}
+
+/*
+	if change_pc() direccted these areas ,Call hd63701_trap_pc().
+	'mode' is selected by the sense of p2.0,p2.1,and p2.3 at reset timming.
+	mode 0,1,2,4,6 : $0000-$001f
+	mode 5         : $0000-$001f,$0200-$efff
+	mode 7         : $0000-$001f,$0100-$efff
+*/
+void hd63701_trap_pc(void)
+{
+	TAKE_TRAP;
+}
+
+int hd63701_internal_registers_r(int offset)
+{
+	return m6803_internal_registers_r(offset);
+}
+
+void hd63701_internal_registers_w(int offset,int data)
+{
+	m6803_internal_registers_w(offset,data);
 }
 
 unsigned hd63701_dasm(char *buffer, unsigned pc)
@@ -2090,7 +2082,9 @@ unsigned hd63701_dasm(char *buffer, unsigned pc)
 void nsc8105_reset(void *param)
 {
 	m6800_reset(param);
-	m6800.subtype = SUBTYPE_NSC8105;
+//	m6800.subtype = SUBTYPE_NSC8105;
+	m6800.insn = nsc8105_insn;
+	m6800.cycles = cycles_nsc8105;
 }
 void nsc8105_exit(void) { m6800_exit(); }
 /****************************************************************************
@@ -2101,11 +2095,11 @@ int nsc8105_execute(int cycles)
 	UINT8 ireg;
 	nsc8105_ICount = cycles;
 
+	CLEANUP_conters;
 	INCREMENT_COUNTER(nsc8105.extra_cycles);
-	nsc8105_ICount -= nsc8105.extra_cycles;
 	nsc8105.extra_cycles = 0;
 
-    if( nsc8105.wai_state & NSC8105_WAI )
+	if( nsc8105.wai_state & NSC8105_WAI )
 	{
 		EAT_CYCLES;
 		goto getout;
@@ -2115,7 +2109,8 @@ int nsc8105_execute(int cycles)
 	{
 		pPPC = pPC;
 		CALL_MAME_DEBUG;
-        ireg=M_RDOP(PC++);
+		ireg=M_RDOP(PCD);
+		PC++;
 
 		switch( ireg )
 		{
@@ -2377,15 +2372,13 @@ int nsc8105_execute(int cycles)
 			case 0xff: stx_ex(); break;
 		}
 		INCREMENT_COUNTER(cycles_nsc8105[ireg]);
-		nsc8105_ICount -= cycles_nsc8105[ireg];
 	} while( nsc8105_ICount>0 );
 
 getout:
 	INCREMENT_COUNTER(nsc8105.extra_cycles);
-	nsc8105_ICount -= nsc8105.extra_cycles;
-    nsc8105.extra_cycles = 0;
+	nsc8105.extra_cycles = 0;
 
-    return cycles - nsc8105_ICount;
+	return cycles - nsc8105_ICount;
 }
 
 unsigned nsc8105_get_context(void *dst) { return m6800_get_context(dst); }
@@ -2418,12 +2411,12 @@ const char *nsc8105_info(void *context, int regnum)
 		 0,23,80, 1,	/* command line window (bottom rows) */
 	};
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "NSC8105";
 		case CPU_INFO_REG_LAYOUT: return (const char*)nsc8105_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)nsc8105_win_layout;
-    }
+	}
 	return m6800_info(context,regnum);
 }
 
@@ -2439,6 +2432,7 @@ unsigned nsc8105_dasm(char *buffer, unsigned pc)
 #endif
 
 
+#if (HAS_M6803||HAS_HD63701)
 
 int m6803_internal_registers_r(int offset)
 {
@@ -2470,23 +2464,23 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from unsupported
 				m6800.tcsr &= ~TCSR_TOF;
 				MODIFIED_tcsr;
 			}
-			return (m6800.counter >> 8) & 0xff;
+			return m6800.counter.b.h;
 		case 0x0a:
-			return (m6800.counter >> 0) & 0xff;
+			return m6800.counter.b.l;
 		case 0x0b:
 			if(!(m6800.pending_tcsr&TCSR_OCF))
 			{
 				m6800.tcsr &= ~TCSR_OCF;
 				MODIFIED_tcsr;
 			}
-			return (m6800.output_compare >> 8) & 0xff;
+			return m6800.output_compare.b.h;
 		case 0x0c:
 			if(!(m6800.pending_tcsr&TCSR_OCF))
 			{
 				m6800.tcsr &= ~TCSR_OCF;
 				MODIFIED_tcsr;
 			}
-			return (m6800.output_compare >> 0) & 0xff;
+			return m6800.output_compare.b.l;
 		case 0x0d:
 			if(!(m6800.pending_tcsr&TCSR_ICF))
 			{
@@ -2566,24 +2560,34 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unsuppo
 			m6800.tcsr = data;
 			m6800.pending_tcsr &= m6800.tcsr;
 			MODIFIED_tcsr;
-			//if( !(CC & 0x10) )
-			//	CHECK_IRQ2;
+			if( !(CC & 0x10) )
+				CHECK_IRQ2;
 //if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: TCSR = %02x\n",cpu_getactivecpu(),cpu_get_pc(),data);
 			break;
 		case 0x09:
 			latch09 = data & 0xff;	/* 6301 only */
-			m6800.counter = 0xfff8;
+			CT  = 0xfff8;
+			TOH = CTH;
+			MODIFIED_counters;
 			break;
 		case 0x0a:	/* 6301 only */
-			m6800.counter = (latch09 << 8) | (data & 0xff);
+			CT = (latch09 << 8) | (data & 0xff);
+			TOH = CTH;
+			MODIFIED_counters;
 			break;
 		case 0x0b:
-			m6800.output_compare = (m6800.output_compare & 0x00ff) | ((data << 8) & 0xff00);
-			MODIFIED_output_compare;
+			if( m6800.output_compare.b.h != data)
+			{
+				m6800.output_compare.b.h = data;
+				MODIFIED_counters;
+			}
 			break;
 		case 0x0c:
-			m6800.output_compare = (m6800.output_compare & 0xff00) | ((data << 0) & 0x00ff);
-			MODIFIED_output_compare;
+			if( m6800.output_compare.b.l != data)
+			{
+				m6800.output_compare.b.l = data;
+				MODIFIED_counters;
+			}
 			break;
 		case 0x0d:
 		case 0x0e:
@@ -2616,14 +2620,5 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to reserve
 			break;
 	}
 }
+#endif
 
-
-int hd63701_internal_registers_r(int offset)
-{
-	return m6803_internal_registers_r(offset);
-}
-
-void hd63701_internal_registers_w(int offset,int data)
-{
-	m6803_internal_registers_w(offset,data);
-}

@@ -18,43 +18,47 @@
  *
  * The other reason it is necessary is that Millipede uses the same address to
  * read the dipswitches.
- * JB 971220, BW 980121
  */
+
+static int dsw_select;
+
+void milliped_input_select_w(int offset,int data)
+{
+	dsw_select = (data == 0);
+}
 
 int milliped_IN0_r (int offset)
 {
-	static int counter, sign;
-	int delta;
+	static int oldpos,sign;
+	int newpos;
 
-	/* Hack: return dipswitch when 3000 cycles remain before interrupt. */
-	if (cpu_geticount () < 3000)
-		return (readinputport (0) | sign);
+	if (dsw_select)
+		return (readinputport(0) | sign);
 
-	delta=readinputport(6);
-	if (delta !=0)
+	newpos = readinputport(6);
+	if (newpos != oldpos)
 	{
-		counter=(counter+delta) & 0x0f;
-		sign = delta & 0x80;
+		sign = (newpos - oldpos) & 0x80;
+		oldpos = newpos;
 	}
 
-	return ((readinputport(0) & 0x70) | counter | sign );
+	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
 }
 
 int milliped_IN1_r (int offset)
 {
-	static int counter, sign;
-	int delta;
+	static int oldpos,sign;
+	int newpos;
 
-	/* Hack: return dipswitch when 3000 cycles remain before interrupt. */
-	if (cpu_geticount () < 3000)
-		return (readinputport (1) | sign);
+	if (dsw_select)
+		return (readinputport(1) | sign);
 
-	delta=readinputport(7);
-	if (delta !=0)
+	newpos = readinputport(7);
+	if (newpos != oldpos)
 	{
-		counter=(counter+delta) & 0x0f;
-		sign = delta & 0x80;
+		sign = (newpos - oldpos) & 0x80;
+		oldpos = newpos;
 	}
 
-	return ((readinputport(1) & 0x70) | counter | sign );
+	return ((readinputport(1) & 0x70) | (oldpos & 0x0f) | sign );
 }

@@ -427,6 +427,11 @@ void pia_write(int which, int offset, int data)
 		/******************* port A control write *******************/
 		case PIA_CTLA:
 
+			/* Bit 7 and 6 read only - PD 16/01/00 */
+
+			data &= 0x3f;
+
+
 			if (pialog) fprintf(pialog, "PIA%d control A write = %02X\n", which, data);
 
 			/* CA2 is configured as output and in set/reset mode */
@@ -454,6 +459,10 @@ void pia_write(int which, int offset, int data)
 
 		/******************* port B control write *******************/
 		case PIA_CTLB:
+
+			/* Bit 7 and 6 read only - PD 16/01/00 */
+
+			data &= 0x3f;
 
 			if (pialog) fprintf(pialog, "PIA%d control B write = %02X\n", which, data);
 

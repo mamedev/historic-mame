@@ -182,7 +182,7 @@ void ajax_sharedram_w( int offset, int data )
 	---	-----------
 	7	unused
 	6	RMRD	Enable char ROM reading through the video RAM
-	5	RVO		(051316 colors related???)
+	5	RVO		enables 051316 wraparound
 	4	FIRQST	FIRQ control
 	3	SRB3	\
 	2	SRB2	 |
@@ -197,6 +197,9 @@ void ajax_bankswitch_w_2( int offset, int data )
 
 	/* enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bit 5 enables 051316 wraparound */
+	K051316_wraparound_enable(0, data & 0x20);
 
 	/* FIRQ control */
 	firq_enable = data & 0x10;

@@ -24,14 +24,14 @@ static int noise=0;			/* Output noise signal */
 
 int avalnche_input_r(int offset)
 {
-		switch (offset & 0x03)
-		{
-				case 0x00:	 return input_port_0_r(offset);
-				case 0x01:	 return input_port_1_r(offset);
-				case 0x02:	 return input_port_2_r(offset);
-				case 0x03:	 return 0; /* Spare */
-		}
-		return 0;
+	switch (offset & 0x03)
+	{
+		case 0x00:	 return input_port_0_r(offset);
+		case 0x01:	 return input_port_1_r(offset);
+		case 0x02:	 return input_port_2_r(offset);
+		case 0x03:	 return 0; /* Spare */
+	}
+	return 0;
 }
 
 /***************************************************************************

@@ -46,7 +46,7 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_JOYSTICKRIGHT_UP, IPT_JOYSTICKRIGHT_DOWN, IPT_JOYSTICKRIGHT_LEFT, IPT_JOYSTICKRIGHT_RIGHT,
 	IPT_JOYSTICKLEFT_UP, IPT_JOYSTICKLEFT_DOWN, IPT_JOYSTICKLEFT_LEFT, IPT_JOYSTICKLEFT_RIGHT,
 	IPT_BUTTON1, IPT_BUTTON2, IPT_BUTTON3, IPT_BUTTON4,	/* action buttons */
-	IPT_BUTTON5, IPT_BUTTON6, IPT_BUTTON7, IPT_BUTTON8,
+	IPT_BUTTON5, IPT_BUTTON6, IPT_BUTTON7, IPT_BUTTON8, IPT_BUTTON9,
 
 	/* analog inputs */
 	/* the "arg" field contains the default sensitivity expressed as a percentage */
@@ -59,8 +59,9 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_PEDAL,
 	IPT_ANALOG_END,
 
-	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
 	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
+	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
+	IPT_SERVICE1, IPT_SERVICE2, IPT_SERVICE3, IPT_SERVICE4,	/* service coin */
 	IPT_SERVICE, IPT_TILT,
 	IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING,
 /* Many games poll an input bit to check for vertical blanks instead of using */
@@ -148,14 +149,12 @@ enum { IPT_END=1,IPT_PORT,
 /* The "arg" field contains 4 bytes fields */
 #define IPF_SENSITIVITY(percent)	((percent & 0xff) << 8)
 #define IPF_DELTA(val)				((val & 0xff) << 16)
-#define IPF_CLIP(clip)				((clip & 0xff) << 24)
 
 #define IP_GET_IMPULSE(port) (((port)->type >> 8) & 0xff)
 #define IP_GET_SENSITIVITY(port) ((((port)+1)->type >> 8) & 0xff)
 #define IP_SET_SENSITIVITY(port,val) ((port)+1)->type = ((port+1)->type & 0xffff00ff)|((val&0xff)<<8)
 #define IP_GET_DELTA(port) ((((port)+1)->type >> 16) & 0xff)
 #define IP_SET_DELTA(port,val) ((port)+1)->type = ((port+1)->type & 0xff00ffff)|((val&0xff)<<16)
-#define IP_GET_CLIP(port) ((((port)+1)->type >> 24) & 0xff)
 #define IP_GET_MIN(port) (((port)+1)->mask)
 #define IP_GET_MAX(port) (((port)+1)->default_value)
 #define IP_GET_CODE_OR1(port) ((port)->mask)
@@ -201,13 +200,13 @@ enum { IPT_END=1,IPT_PORT,
 	PORT_CODE(key,joy)
 
 /* analog input */
-#define PORT_ANALOG(mask,default,type,sensitivity,delta,clip,min,max) \
+#define PORT_ANALOG(mask,default,type,sensitivity,delta,min,max) \
 	{ mask, default, type, IP_NAME_DEFAULT }, \
-	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), IP_NAME_DEFAULT },
+	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta), IP_NAME_DEFAULT },
 
-#define PORT_ANALOGX(mask,default,type,sensitivity,delta,clip,min,max,keydec,keyinc,joydec,joyinc) \
+#define PORT_ANALOGX(mask,default,type,sensitivity,delta,min,max,keydec,keyinc,joydec,joyinc) \
 	{ mask, default, type, IP_NAME_DEFAULT  }, \
-	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), IP_NAME_DEFAULT }, \
+	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta), IP_NAME_DEFAULT }, \
 	PORT_CODE(keydec,joydec) \
 	PORT_CODE(keyinc,joyinc)
 

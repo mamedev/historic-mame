@@ -181,11 +181,11 @@ static struct MemoryWriteAddress main_writemem[] =
 
 INPUT_PORTS_START( blstroid )
 	PORT_START      /* ff9800 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 60, 10, 0xff, 0, 0 )
+	PORT_ANALOG( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 60, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* ff9804 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 60, 10, 0xff, 0, 0 )
+	PORT_ANALOG( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 60, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* ff9c00 */
@@ -263,7 +263,7 @@ static struct MachineDriver machine_driver_blstroid =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},

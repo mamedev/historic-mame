@@ -155,15 +155,19 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_PAN_DOWN,          "Pan Down",          SEQ_DEF_3(KEYCODE_PGDN, CODE_NOT, KEYCODE_LSHIFT) },
 	{ IPT_UI_PAN_LEFT,          "Pan Left",          SEQ_DEF_2(KEYCODE_PGUP, KEYCODE_LSHIFT) },
 	{ IPT_UI_PAN_RIGHT,         "Pan Right",         SEQ_DEF_2(KEYCODE_PGDN, KEYCODE_LSHIFT) },
-	{ IPT_COIN1,  "Coin A",          SEQ_DEF_1(KEYCODE_3) },
-	{ IPT_COIN2,  "Coin B",          SEQ_DEF_1(KEYCODE_4) },
-	{ IPT_COIN3,  "Coin C",          SEQ_DEF_1(KEYCODE_5) },
-	{ IPT_COIN4,  "Coin D",          SEQ_DEF_1(KEYCODE_6) },
-	{ IPT_TILT,   "Tilt",            SEQ_DEF_1(KEYCODE_T) },
 	{ IPT_START1, "1 Player Start",  SEQ_DEF_1(KEYCODE_1) },
 	{ IPT_START2, "2 Players Start", SEQ_DEF_1(KEYCODE_2) },
-	{ IPT_START3, "3 Players Start", SEQ_DEF_1(KEYCODE_7) },
-	{ IPT_START4, "4 Players Start", SEQ_DEF_1(KEYCODE_8) },
+	{ IPT_START3, "3 Players Start", SEQ_DEF_1(KEYCODE_3) },
+	{ IPT_START4, "4 Players Start", SEQ_DEF_1(KEYCODE_4) },
+	{ IPT_COIN1,  "Coin 1",          SEQ_DEF_1(KEYCODE_5) },
+	{ IPT_COIN2,  "Coin 2",          SEQ_DEF_1(KEYCODE_6) },
+	{ IPT_COIN3,  "Coin 3",          SEQ_DEF_1(KEYCODE_7) },
+	{ IPT_COIN4,  "Coin 4",          SEQ_DEF_1(KEYCODE_8) },
+	{ IPT_SERVICE1, "Service 1",     SEQ_DEF_1(KEYCODE_9) },
+	{ IPT_SERVICE2, "Service 2",     SEQ_DEF_1(KEYCODE_0) },
+	{ IPT_SERVICE3, "Service 3",     SEQ_DEF_1(KEYCODE_MINUS) },
+	{ IPT_SERVICE4, "Service 4",     SEQ_DEF_1(KEYCODE_EQUALS) },
+	{ IPT_TILT,   "Tilt",            SEQ_DEF_1(KEYCODE_T) },
 
 	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP)    },
 	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN)  },
@@ -177,6 +181,7 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    SEQ_DEF_3(KEYCODE_X, CODE_OR, JOYCODE_1_BUTTON6) },
 	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    SEQ_DEF_1(KEYCODE_C) },
 	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    SEQ_DEF_1(KEYCODE_V) },
+	{ IPT_BUTTON9             | IPF_PLAYER1, "P1 Button 9",    SEQ_DEF_1(KEYCODE_B) },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_1_BUTTON2) },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_1_BUTTON3) },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  SEQ_DEF_3(KEYCODE_J, CODE_OR, JOYCODE_1_BUTTON1) },
@@ -198,6 +203,7 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    SEQ_DEF_1(JOYCODE_2_BUTTON6) },
 	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    SEQ_DEF_0 },
 	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    SEQ_DEF_0 },
+	{ IPT_BUTTON9             | IPF_PLAYER2, "P2 Button 9",    SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  SEQ_DEF_0 },
@@ -1047,7 +1053,7 @@ InputSeq* input_port_seq(const struct InputPort *in)
 void update_analog_port(int port)
 {
 	struct InputPort *in;
-	int current, delta, type, sensitivity, clip, min, max, default_value;
+	int current, delta, type, sensitivity, min, max, default_value;
 	int axis, is_stick, check_bounds;
 	InputSeq* incseq;
 	InputSeq* decseq;
@@ -1095,7 +1101,6 @@ void update_analog_port(int port)
 
 
 	sensitivity = IP_GET_SENSITIVITY(in);
-	clip = IP_GET_CLIP(in);
 	min = IP_GET_MIN(in);
 	max = IP_GET_MAX(in);
 	default_value = in->default_value * 100 / sensitivity;
@@ -1109,12 +1114,10 @@ void update_analog_port(int port)
 
 	input_analog_previous_value[port] = input_analog_current_value[port];
 
-	/* if IPF_CENTER go back to the default position, but without */
-	/* throwing away sub-precision movements which might have been done. */
+	/* if IPF_CENTER go back to the default position */
 	/* sticks are handled later... */
 	if ((in->type & IPF_CENTER) && (!is_stick))
-		input_analog_current_value[port] -=
-				(input_analog_current_value[port] * sensitivity / 100 - in->default_value) * 100 / sensitivity;
+		input_analog_current_value[port] = in->default_value * 100 / sensitivity;
 
 	current = input_analog_current_value[port];
 
@@ -1144,14 +1147,6 @@ void update_analog_port(int port)
 		/* is this cheesy or what? */
 		if (!delta && seq_get_1(incseq) == KEYCODE_Y) delta += keydelta;
 		delta = -delta;
-	}
-
-	if (clip != 0)
-	{
-		if (delta*sensitivity/100 < -clip)
-			delta = -clip*100/sensitivity;
-		else if (delta*sensitivity/100 > clip)
-			delta = clip*100/sensitivity;
 	}
 
 	if (in->type & IPF_REVERSE) delta = -delta;

@@ -13,7 +13,6 @@
 		* Bubbles
 		* Splat
 		* Sinistar
-		* Lotto Fun
 
 		* Blaster
 
@@ -499,7 +498,6 @@ extern struct pia6821_interface williams_snd_pia_intf;
 /* Game-specific old-Williams PIA interfaces */
 extern struct pia6821_interface defender_pia_0_intf;
 extern struct pia6821_interface stargate_pia_0_intf;
-extern struct pia6821_interface lottofun_pia_0_intf;
 extern struct pia6821_interface sinistar_snd_pia_intf;
 
 /* Generic later-Williams PIA interfaces */
@@ -1079,34 +1077,10 @@ INPUT_PORTS_START( sinistar )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0, 0x00, 0x6f )
+	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0x00, 0x6f )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0, 0x00, 0x6f )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( lottofun )
-	PORT_START		/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Used by ticket dispenser */
-
-	PORT_START		/* IN1 */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPF_TOGGLE, "Memory Protect", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // COIN1.5? :)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Sound board handshake
+	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0x00, 0x6f )
 INPUT_PORTS_END
 
 
@@ -1133,10 +1107,10 @@ INPUT_PORTS_START( blaster )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0, 0x00, 0x6f )
+	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0x00, 0x6f )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0, 0x00, 0x6f )
+	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0x00, 0x6f )
 INPUT_PORTS_END
 
 
@@ -1168,7 +1142,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( tshoot )
 	PORT_START	/* IN0 (muxed with IN3)*/
-	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_Y, 25, 10, 0, 0, 0x3F)
+	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_Y, 25, 10, 0, 0x3F)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON1 )
 
@@ -1190,7 +1164,7 @@ INPUT_PORTS_START( tshoot )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN3 (muxed with IN0) */
-   	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_X, 25, 10, 0, 0, 0x3F)
+   	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_X, 25, 10, 0, 0x3F)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 INPUT_PORTS_END
@@ -1799,19 +1773,6 @@ static void init_sinistar(void)
 }
 
 
-static void init_lottofun(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(4, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(lottofun_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
 static void init_blaster(void)
 {
 	/* CMOS configuration */
@@ -1950,6 +1911,26 @@ ROM_START( defendg )
 	ROM_LOAD( "defeng06.bin", 0x13000, 0x0800, 0x3af34c05 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
+	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
+ROM_END
+
+
+ROM_START( defendw )
+	ROM_REGION( 0x14000, REGION_CPU1 )
+	ROM_LOAD( "wb01.bin",     0x0d000, 0x1000, 0x0ee1019d )
+	ROM_LOAD( "defeng02.bin", 0x0e000, 0x1000, 0xd184ab6b )
+	ROM_LOAD( "wb03.bin",     0x0f000, 0x1000, 0xa732d649 )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "defeng09.bin", 0x10000, 0x0800, 0xf57caa62 )
+	ROM_LOAD( "defeng12.bin", 0x10800, 0x0800, 0x33db686f )
+	ROM_LOAD( "defeng08.bin", 0x11000, 0x0800, 0x9a9eb3d2 )
+	ROM_LOAD( "defeng11.bin", 0x11800, 0x0800, 0x5ca4e860 )
+	ROM_LOAD( "defeng07.bin", 0x12000, 0x0800, 0x545c3326 )
+	ROM_LOAD( "defeng10.bin", 0x12800, 0x0800, 0x941cf34e )
+	ROM_RELOAD(               0x13800, 0x0800 )
+	ROM_LOAD( "defeng06.bin", 0x13000, 0x0800, 0x3af34c05 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
 ROM_END
 
@@ -2346,26 +2327,6 @@ ROM_START( sinista2 )
 ROM_END
 
 
-ROM_START( lottofun )
-	ROM_REGION( 0x10000, REGION_CPU1 ) 	/* 64k for code */
-	ROM_LOAD( "vl4e.dat",     0x0000, 0x1000, 0x5e9af236 )
-	ROM_LOAD( "vl4c.dat",     0x1000, 0x1000, 0x4b134ae2 )
-	ROM_LOAD( "vl4a.dat",     0x2000, 0x1000, 0xb2f1f95a )
-	ROM_LOAD( "vl5e.dat",     0x3000, 0x1000, 0xc8681c55 )
-	ROM_LOAD( "vl5c.dat",     0x4000, 0x1000, 0xeb9351e0 )
-	ROM_LOAD( "vl5a.dat",     0x5000, 0x1000, 0x534f2fa1 )
-	ROM_LOAD( "vl6e.dat",     0x6000, 0x1000, 0xbefac592 )
-	ROM_LOAD( "vl6c.dat",     0x7000, 0x1000, 0xa73d7f13 )
-	ROM_LOAD( "vl6a.dat",     0x8000, 0x1000, 0x5730a43d )
-	ROM_LOAD( "vl7a.dat",     0xd000, 0x1000, 0xfb2aec2c )
-	ROM_LOAD( "vl7c.dat",     0xe000, 0x1000, 0x9a496519 )
-	ROM_LOAD( "vl7e.dat",     0xf000, 0x1000, 0x032cab4b )
-
-	ROM_REGION( 0x10000, REGION_CPU2 ) 	/* 64k for the sound CPU */
-	ROM_LOAD( "vl2532.snd",   0xf000, 0x1000, 0x214b8a04 )
-ROM_END
-
-
 ROM_START( blaster )
 	ROM_REGION( 0x3c000, REGION_CPU1 )
 	ROM_LOAD( "blaster.11",   0x04000, 0x2000, 0x6371e62f )
@@ -2547,6 +2508,7 @@ ROM_END
 
 GAME( 1980, defender, 0,        defender, defender, defender, ROT0,   "Williams", "Defender (Red label)" )
 GAME( 1980, defendg,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (Green label)" )
+GAME( 1980, defendw,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (White label)" )
 GAMEX(1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender ? (bootleg)", GAME_NOT_WORKING )
 GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)" )
 GAMEX(1980, defcomnd, defender, defender, defender, defender, ROT0,   "<unknown>", "Defense Command (set 2)", GAME_NOT_WORKING )
@@ -2582,5 +2544,3 @@ GAME( 1983, mysticm,  0,        williams2,mysticm,  mysticm,  ROT0,   "Williams"
 GAME( 1984, tshoot,   0,        williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot" )
 GAME( 1984, inferno,  0,        williams2,inferno,  inferno,  ROT0,   "Williams", "Inferno" )
 GAME( 1986, joust2,   0,        joust2,   joust2,   joust2,   ROT270, "Williams", "Joust 2 - Survival of the Fittest (set 1)" )
-
-GAME( 1987, lottofun, 0,        williams, lottofun, lottofun, ROT0,   "H.A.R. Management", "Lotto Fun" )

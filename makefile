@@ -24,8 +24,8 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_gradius3
-TINY_OBJS = obj/drivers/gradius3.o obj/vidhrdw/tmnt.o obj/vidhrdw/konamiic.o
+TINY_NAME = driver_labyrunr
+TINY_OBJS = obj/drivers/labyrunr.o obj/vidhrdw/labyrunr.o obj/vidhrdw/konamiic.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -44,14 +44,14 @@ CPUS+=M68000@
 SOUNDS+=YM2610@
 else
 # uncomment the following lines to include a CPU core
-CPUS+=GENSYNC@
 CPUS+=Z80@
-#CPUS+=Z80_VM@
 #CPUS+=Z80GB@
 CPUS+=8080@
 CPUS+=8085A@
 CPUS+=M6502@
 CPUS+=M65C02@
+#CPUS+=M65SC02@
+#CPUS+=M65CE02@
 CPUS+=M6510@
 CPUS+=N2A03@
 CPUS+=H6280@
@@ -102,7 +102,8 @@ SOUNDS+=SAMPLES@
 SOUNDS+=DAC@
 SOUNDS+=AY8910@
 SOUNDS+=YM2203@
-SOUNDS+=YM2151@
+# enable only one of the following two
+#SOUNDS+=YM2151@
 SOUNDS+=YM2151_ALT@
 SOUNDS+=YM2608@
 SOUNDS+=YM2610@
@@ -113,6 +114,7 @@ SOUNDS+=YM2413@
 SOUNDS+=YM3812@
 SOUNDS+=YM3526@
 SOUNDS+=Y8950@
+SOUNDS+=SN76477@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
 #SOUNDS+=TIA@
@@ -135,6 +137,8 @@ SOUNDS+=RF5C68@
 SOUNDS+=CEM3394@
 SOUNDS+=C140@
 SOUNDS+=QSOUND@
+#SOUNDS+=SPEAKER@
+#SOUNDS+=WAVE@
 endif
 
 
@@ -165,24 +169,10 @@ CPUOBJS =
 DBGOBJS =
 ASMDEFS =
 
-CPU=$(strip $(findstring GENSYNC@,$(CPUS)))
-ifneq ($(CPU),)
-CPUDEFS += -DHAS_GENSYNC=1
-CPUOBJS += obj/cpu/gensync/gensync.o
-DBGOBJS += obj/cpu/gensync/gensyncd.o
-endif
-
 CPU=$(strip $(findstring Z80@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z80=1
 CPUOBJS += obj/cpu/z80/z80.o
-DBGOBJS += obj/cpu/z80/z80dasm.o
-endif
-
-CPU=$(strip $(findstring Z80_VM@,$(CPUS)))
-ifneq ($(CPU),)
-CPUDEFS += -DHAS_Z80_VM=1
-CPUOBJS += obj/cpu/z80/z80_vm.o
 DBGOBJS += obj/cpu/z80/z80dasm.o
 endif
 
@@ -218,6 +208,20 @@ CPU=$(strip $(findstring M65C02@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M65C02=1
 CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M65SC02@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M65SC02=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M65CE02@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M65CE02=1
+CPUOBJS += obj/cpu/m6502/m65ce02.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
@@ -640,6 +644,12 @@ SOUNDDEFS += -DHAS_Y8950=1
 SOUNDOBJS += obj/sound/3812intf.o obj/sound/fmopl.o obj/sound/ymdeltat.o
 endif
 
+SOUND=$(strip $(findstring SN76477@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SN76477=1
+SOUNDOBJS += obj/sound/sn76477.o
+endif
+
 SOUND=$(strip $(findstring SN76496@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_SN76496=1
@@ -772,6 +782,18 @@ SOUNDDEFS += -DHAS_QSOUND=1
 SOUNDOBJS += obj/sound/qsound.o
 endif
 
+SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SPEAKER=1
+SOUNDOBJS += obj/sound/speaker.o
+endif
+
+SOUND=$(strip $(findstring WAVE@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_WAVE=1
+SOUNDOBJS += obj/sound/wave.o
+endif
+
 
 
 ifdef DEBUG
@@ -821,7 +843,7 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o \
          obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
          obj/audit.o obj/info.o obj/png.o obj/artwork.o \
          obj/tilemap.o obj/sprite.o obj/gfxobj.o \
-         obj/state.o obj/datafile.o \
+         obj/state.o obj/datafile.o obj/hiscore.o \
          $(sort $(CPUOBJS)) \
          obj/sndintrf.o \
          obj/sound/streams.o obj/sound/mixer.o \
@@ -855,7 +877,7 @@ NEOLIBS = obj/neogeo.a \
 MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/asmblit.o \
          obj/msdos/vector.o obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
          obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o \
-         obj/msdos/config.o obj/msdos/fronthlp.o \
+         obj/msdos/ticker.o obj/msdos/config.o obj/msdos/fronthlp.o \
 
 ifdef TINY_COMPILE
 	OBJS = $(TINY_OBJS)
@@ -981,7 +1003,8 @@ obj/nintendo.a: \
          obj/vidhrdw/punchout.o obj/sndhrdw/punchout.o obj/drivers/punchout.o \
 
 obj/midw8080.a: \
-         obj/machine/8080bw.o obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
+         obj/machine/8080bw.o obj/machine/74123.o \
+         obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
          obj/vidhrdw/m79amb.o obj/drivers/m79amb.o \
 
 obj/midwz80.a: \
@@ -1049,6 +1072,7 @@ obj/toaplan.a: \
          obj/drivers/twincobr.o obj/drivers/wardner.o \
          obj/machine/toaplan1.o obj/vidhrdw/toaplan1.o obj/drivers/toaplan1.o \
          obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
+         obj/vidhrdw/toaplan2.o obj/drivers/toaplan2.o \
 
 obj/kyugo.a: \
          obj/drivers/kyugo.o obj/vidhrdw/kyugo.o \
@@ -1078,6 +1102,7 @@ obj/capcom.a: \
          obj/vidhrdw/mitchell.o obj/drivers/mitchell.o \
          obj/vidhrdw/cbasebal.o obj/drivers/cbasebal.o \
          obj/vidhrdw/cps1.o obj/drivers/cps1.o \
+         obj/drivers/zn.o \
 
 obj/capbowl.a: \
          obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/vidhrdw/tms34061.o obj/drivers/capbowl.o \
@@ -1134,7 +1159,6 @@ obj/tehkan.a: \
          obj/sndhrdw/senjyo.o obj/vidhrdw/senjyo.o obj/drivers/senjyo.o \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
          obj/vidhrdw/pbaction.o obj/drivers/pbaction.o \
-         obj/vidhrdw/pontoon.o obj/drivers/pontoon.o \
          obj/vidhrdw/tehkanwc.o obj/drivers/tehkanwc.o \
          obj/vidhrdw/solomon.o obj/drivers/solomon.o \
          obj/vidhrdw/tecmo.o obj/drivers/tecmo.o \
@@ -1173,13 +1197,14 @@ obj/konami.a: \
          obj/machine/jackal.o obj/vidhrdw/jackal.o obj/drivers/jackal.o \
          obj/machine/ddrible.o obj/vidhrdw/ddrible.o obj/drivers/ddrible.o \
          obj/vidhrdw/contra.o obj/drivers/contra.o \
-         obj/machine/combatsc.o obj/vidhrdw/combatsc.o obj/drivers/combatsc.o \
+         obj/vidhrdw/combatsc.o obj/drivers/combatsc.o \
          obj/vidhrdw/hcastle.o obj/drivers/hcastle.o \
          obj/vidhrdw/nemesis.o obj/drivers/nemesis.o \
          obj/vidhrdw/konamiic.o \
          obj/vidhrdw/rockrage.o obj/drivers/rockrage.o \
          obj/vidhrdw/flkatck.o obj/drivers/flkatck.o \
          obj/vidhrdw/fastlane.o obj/drivers/fastlane.o \
+         obj/vidhrdw/labyrunr.o obj/drivers/labyrunr.o \
          obj/vidhrdw/battlnts.o obj/drivers/battlnts.o \
          obj/vidhrdw/bladestl.o obj/drivers/bladestl.o \
          obj/machine/ajax.o obj/vidhrdw/ajax.o obj/drivers/ajax.o \
@@ -1203,6 +1228,7 @@ obj/konami.a: \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
          obj/vidhrdw/xmen.o obj/drivers/xmen.o \
          obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
+         obj/vidhrdw/ultraman.o obj/drivers/ultraman.o \
 
 obj/exidy.a: \
          obj/machine/exidy.o obj/vidhrdw/exidy.o obj/sndhrdw/exidy.o obj/drivers/exidy.o \
@@ -1214,7 +1240,7 @@ obj/exidy.a: \
 obj/atari.a: \
          obj/machine/atari_vg.o \
          obj/machine/asteroid.o obj/sndhrdw/asteroid.o \
-         obj/vidhrdw/llander.o obj/drivers/asteroid.o \
+         obj/vidhrdw/llander.o obj/sndhrdw/llander.o obj/drivers/asteroid.o \
          obj/drivers/bwidow.o \
          obj/sndhrdw/bzone.o  obj/drivers/bzone.o \
          obj/sndhrdw/redbaron.o \
@@ -1380,7 +1406,6 @@ obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
 
 obj/other.a: \
-         obj/vidhrdw/pong.o obj/sndhrdw/pong.o obj/drivers/pong.o \
          obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
@@ -1403,11 +1428,10 @@ obj/other.a: \
          obj/drivers/shanghai.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \
          obj/drivers/dlair.o \
-         obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
-         obj/vidhrdw/csk.o obj/drivers/csk.o \
          obj/vidhrdw/meteor.o obj/drivers/meteor.o \
          obj/vidhrdw/bjtwin.o obj/drivers/bjtwin.o \
          obj/vidhrdw/aztarac.o obj/sndhrdw/aztarac.o obj/drivers/aztarac.o \
+         obj/vidhrdw/mole.o obj/drivers/mole.o \
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
@@ -1418,7 +1442,8 @@ obj/cpu/i8039/i8039.o: i8039.c i8039.h
 obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 obj/cpu/i86/i86.o: i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
 obj/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
-obj/cpu/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
+obj/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c tn2a03.c
+obj/cpu/m65ce02/m65ce02.o: m65ce02.c m65ce02.h opsce02.h t6ce502.c
 obj/cpu/m6800/m6800.o: m6800.c m6800.h 6800ops.c 6800tbl.c
 obj/cpu/m6805/m6805.o: m6805.c m6805.h 6805ops.c
 obj/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
@@ -1426,11 +1451,9 @@ obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
 obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 obj/cpu/tms9900/tms9900.o: tms9900.c tms9900.h 9900stat.h
 obj/cpu/t11/t11.o: t11.c t11.h t11ops.c t11table.c
-obj/cpu/m68000/m68kcpu.o: m68kops.c m68kmake.c m68k_in.c
+obj/cpu/m68000/m68kcpu.o: obj/cpu/m68000/m68kops.c m68kmake.c m68k_in.c
 obj/cpu/ccpu/ccpu.o: ccpu.c ccpu.h ccputabl.c
 obj/cpu/konami/konami.o: konami.c konami.h konamops.c konamtbl.c
-obj/cpu/gensync/gensync.o: gensync.c gensync.h
-
 
 makedir:
 	@echo make makedir is no longer necessary, just type make
@@ -1438,7 +1461,6 @@ makedir:
 maketree:
 	md obj
 	md obj\cpu
-	md obj\cpu\gensync
 	md obj\cpu\z80
 	md obj\cpu\z80gb
 	md obj\cpu\m6502
@@ -1475,7 +1497,6 @@ clean:
 
 cleandebug:
 	del obj\*.o
-	del obj\cpu\gensync\*.o
 	del obj\cpu\z80\*.o
 	del obj\cpu\z80\*.oa
 	del obj\cpu\z80\*.asm
@@ -1516,3 +1537,5 @@ cleantiny:
 	del obj\usrintrf.o
 	del obj\cheat.o
 	del obj\vidhrdw\konamiic.o
+	del obj\msdos\input.o
+

@@ -128,7 +128,6 @@ int     i;
                                 0,0, x,y,
                                 &Machine->drv->visible_area,
                                 TRANSPARENCY_NONE,0);
-                        osd_mark_dirty(x,y,x+HORZ_CHR-1,y+VERT_CHR-1,1);
                 }
         }
 		{

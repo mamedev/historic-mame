@@ -1394,11 +1394,11 @@ void m68020_bhi_32(void)
 		if (CONDITION_HI)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1440,11 +1440,11 @@ void m68020_bls_32(void)
 		if (CONDITION_LS)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1486,11 +1486,11 @@ void m68020_bcc_32(void)
 		if (CONDITION_CC)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1532,11 +1532,11 @@ void m68020_bcs_32(void)
 		if (CONDITION_CS)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1578,11 +1578,11 @@ void m68020_bne_32(void)
 		if (CONDITION_NE)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1624,11 +1624,11 @@ void m68020_beq_32(void)
 		if (CONDITION_EQ)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1670,11 +1670,11 @@ void m68020_bvc_32(void)
 		if (CONDITION_VC)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1716,11 +1716,11 @@ void m68020_bvs_32(void)
 		if (CONDITION_VS)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1762,11 +1762,11 @@ void m68020_bpl_32(void)
 		if (CONDITION_PL)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1808,11 +1808,11 @@ void m68020_bmi_32(void)
 		if (CONDITION_MI)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1854,11 +1854,11 @@ void m68020_bge_32(void)
 		if (CONDITION_GE)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1900,11 +1900,11 @@ void m68020_blt_32(void)
 		if (CONDITION_LT)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1946,11 +1946,11 @@ void m68020_bgt_32(void)
 		if (CONDITION_GT)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -1992,11 +1992,11 @@ void m68020_ble_32(void)
 		if (CONDITION_LE)
 		{
 			m68ki_add_trace();		   /* auto-disable (see m68kcpu.h) */
-			m68ki_branch_word(m68ki_read_32(CPU_PC));
+			m68ki_branch_dword(m68ki_read_32(CPU_PC));
 			USE_CLKS(6);
 			return;
 		}
-		CPU_PC += 2;
+		CPU_PC += 4;
 		USE_CLKS(6);
 		return;
 	}
@@ -2414,7 +2414,7 @@ void m68020_bra_32(void)
 	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
-		m68ki_branch_word(m68ki_read_32(CPU_PC));
+		m68ki_branch_dword(m68ki_read_32(CPU_PC));
 		USE_CLKS(6);
 		return;
 	}
@@ -2491,8 +2491,8 @@ void m68020_bsr_32(void)
 	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
-		m68ki_push_32(CPU_PC + 2);
-		m68ki_branch_word(m68ki_read_16(CPU_PC));
+		m68ki_push_32(CPU_PC + 4);
+		m68ki_branch_dword(m68ki_read_32(CPU_PC));
 		USE_CLKS(7);
 		return;
 	}
@@ -4047,8 +4047,16 @@ void m68020_divl_d_32(void)
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			CPU_D[word2 & 7] = MAKE_INT_32(dividend_lo) % MAKE_INT_32(divisor);
-			CPU_D[(word2 >> 12) & 7] = MAKE_INT_32(dividend_lo) / MAKE_INT_32(divisor);
+			if (BIT_B(word2))	   /* signed */
+			{
+				CPU_D[word2 & 7] = MAKE_INT_32(dividend_lo) % MAKE_INT_32(divisor);
+				CPU_D[(word2 >> 12) & 7] = MAKE_INT_32(dividend_lo) / MAKE_INT_32(divisor);
+			}
+			else
+			{
+				CPU_D[word2 & 7] = MASK_OUT_ABOVE_32(dividend_lo) % MASK_OUT_ABOVE_32(divisor);
+				CPU_D[(word2 >> 12) & 7] = MASK_OUT_ABOVE_32(dividend_lo) / MASK_OUT_ABOVE_32(divisor);
+			}
 
 			CPU_N = GET_MSB_32(quotient);
 			CPU_NOT_Z = quotient;
@@ -4146,8 +4154,16 @@ void m68020_divl_32(void)
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			CPU_D[word2 & 7] = MAKE_INT_32(dividend_lo) % MAKE_INT_32(divisor);
-			CPU_D[(word2 >> 12) & 7] = MAKE_INT_32(dividend_lo) / MAKE_INT_32(divisor);
+			if (BIT_B(word2))	   /* signed */
+			{
+				CPU_D[word2 & 7] = MAKE_INT_32(dividend_lo) % MAKE_INT_32(divisor);
+				CPU_D[(word2 >> 12) & 7] = MAKE_INT_32(dividend_lo) / MAKE_INT_32(divisor);
+			}
+			else
+			{
+				CPU_D[word2 & 7] = MASK_OUT_ABOVE_32(dividend_lo) % MASK_OUT_ABOVE_32(divisor);
+				CPU_D[(word2 >> 12) & 7] = MASK_OUT_ABOVE_32(dividend_lo) / MASK_OUT_ABOVE_32(divisor);
+			}
 
 			CPU_N = GET_MSB_32(quotient);
 			CPU_NOT_Z = quotient;
@@ -5973,11 +5989,42 @@ void m68010_movec_cr(void)
 			case 0x001:			   /* DFC */
 				m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_DFC;
 				return;
+			case 0x002:			   /* CACR */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_CACR;
+					return;
+				}
+				return;
 			case 0x800:			   /* USP */
 				m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_USP;
 				return;
 			case 0x801:			   /* VBR */
 				m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_VBR;
+				return;
+			case 0x802:			   /* CAAR */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_CAAR;
+					return;
+				}
+				m68000_illegal();
+				break;
+			case 0x803:			   /* MSP */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_MSP;
+					return;
+				}
+				m68000_illegal();
+				return;
+			case 0x804:			   /* ISP */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] = CPU_ISP;
+					return;
+				}
+				m68000_illegal();
 				return;
 			default:
 #ifdef M68K_LOG
@@ -6012,11 +6059,43 @@ void m68010_movec_rc(void)
 			case 0x001:			   /* DFC */
 				CPU_DFC = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] & 7;
 				return;
+			case 0x002:			   /* CACR */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					CPU_CACR = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] & 7;
+					return;
+				}
+				m68000_illegal();
+				return;
 			case 0x800:			   /* USP */
 				CPU_USP = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7];
 				return;
 			case 0x801:			   /* VBR */
 				CPU_VBR = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7];
+				return;
+			case 0x802:			   /* CAAR */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					CPU_CAAR = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] & 7;
+					return;
+				}
+				m68000_illegal();
+				return;
+			case 0x803:			   /* MSP */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					CPU_MSP = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] & 7;
+					return;
+				}
+				m68000_illegal();
+				return;
+			case 0x804:			   /* ISP */
+				if (CPU_MODE & CPU_MODE_EC020_PLUS)
+				{
+					CPU_ISP = m68k_cpu_dar[next_word >> 15][(next_word >> 12) & 7] & 7;
+					return;
+				}
+				m68000_illegal();
 				return;
 			default:
 #ifdef M68K_LOG
@@ -7756,26 +7835,29 @@ void m68000_rte(void)
 
 	if (CPU_S)
 	{
-		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
+		m68ki_add_trace(); /* auto-disable (see m68kcpu.h) */
 		new_sr = m68ki_pull_16();
 		new_pc = m68ki_pull_32();
 		m68ki_branch_long(new_pc);
-		m68ki_set_sr(new_sr);
 		if (!(CPU_MODE & CPU_MODE_010_PLUS))
 		{
+			m68ki_set_sr(new_sr);
 			USE_CLKS(20);
 			return;
 		}
 		format_word = (m68ki_pull_16() >> 12) & 0xf;
+		m68ki_set_sr(new_sr);
 		/* I'm ignoring code 8 (bus error and address error) */
-        if (format_word != 0)
-			/* Generate a new program counter from the format error vector */
+		if (format_word != 0)
+		/* Generate a new program counter from the format error vector */
 			m68ki_set_pc(m68ki_read_32((EXCEPTION_FORMAT_ERROR<<2)+CPU_VBR));
 		USE_CLKS(20);
 		return;
 	}
 	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
 }
+
+
 
 
 void m68020_rtm(void)

@@ -94,11 +94,11 @@ void mnight_background_enable_w(int offset,int data)
 
 void mnight_sprite_overdraw_w(int offset,int data)
 {
-	if (sp_overdraw!=data)
+	if (sp_overdraw != (data&1))
 	{
 		mnight_spoverdraw_ram[offset] = data;
 		fillbitmap(bitmap_sp,15,&Machine->drv->visible_area);
-		sp_overdraw = data;
+		sp_overdraw = data & 1;
 	}
 }
 
@@ -226,9 +226,9 @@ void mnight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (sp_overdraw)	/* overdraw sprite mode */
 	{
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		mnight_draw_sprites(bitmap_sp);
 		mnight_draw_foreground(bitmap_sp);
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN, 15);
 	}
 	else			/* normal sprite mode */

@@ -138,6 +138,7 @@ static UINT32 last_speed_check;
 
 static UINT8 speech_val;
 static UINT8 last_speech_write;
+static UINT8 speech_squeak;
 
 static UINT16 last_sound_reset;
 
@@ -165,16 +166,32 @@ static void update_interrupts(void)
 }
 
 
+static void scanline_update(int scanline)
+{
+	gauntlet_scanline_update(scanline);
+
+	/* sound IRQ is on 32V */
+	if (scanline % 32 == 0)
+	{
+		if (scanline & 32)
+			atarigen_6502_irq_gen();
+		else
+			atarigen_6502_irq_ack_r(0);
+	}
+}
+
+
 static void init_machine(void)
 {
 	last_speed_check = 0;
 	last_speech_write = 0x80;
 	last_sound_reset = 1;
+	speech_squeak = 0;
 
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(gauntlet_scanline_update, 8);
+	atarigen_scanline_timer_reset(scanline_update, 8);
 	atarigen_sound_io_reset(1);
 }
 
@@ -356,9 +373,13 @@ static void sound_ctl_w(int offset, int data)
 			break;
 
 		case 2:	/* speech reset, bit D7, active low */
+			if (((data ^ last_speech_write) & 0x80) && (data & 0x80))
+				tms5220_reset();
 			break;
 
-		case 3:	/* speech squeak, bit D7, low = 650kHz clock */
+		case 3:	/* speech squeak, bit D7 */
+			data = 5 | ((data >> 6) & 2);
+			tms5220_set_frequency(ATARI_CLOCK_14MHz/2 / (16 - data));
 			break;
 	}
 }
@@ -675,7 +696,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	7159160/2,
+	ATARI_CLOCK_14MHz/4,
 	{ YM3012_VOL(48,MIXER_PAN_LEFT,48,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
@@ -684,18 +705,16 @@ static struct YM2151interface ym2151_interface =
 static struct POKEYinterface pokey_interface =
 {
 	1,			/* 1 chip */
-	7159160/4,
+	ATARI_CLOCK_14MHz/8,
 	{ 32 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP
 };
 
 
 static struct TMS5220interface tms5220_interface =
 {
-	640000,     /* clock speed (80*samplerate) */
-	80,         /* volume */
-	0           /* irq handler */
+	ATARI_CLOCK_14MHz/2/11,	/* potentially ATARI_CLOCK_14MHz/2/9 as well */
+	80,
+	0
 };
 
 
@@ -712,16 +731,15 @@ static struct MachineDriver machine_driver_gauntlet =
 	{
 		{
 			CPU_M68010,		/* verified */
-			7159160,
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M6502,
-			7159160/4,
+			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
-			0,0,
-			atarigen_6502_irq_gen,250
+			0,0
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -731,7 +749,7 @@ static struct MachineDriver machine_driver_gauntlet =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024+32,1024+32,
+	1024,1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -1144,4 +1162,4 @@ GAME( 1985, gauntir1, gauntlet, gauntlet, gauntlet, gauntlet,  ROT0, "Atari Game
 GAME( 1985, gauntir2, gauntlet, gauntlet, gauntlet, gauntlet,  ROT0, "Atari Games", "Gauntlet (Intermediate Release 2)" )
 GAME( 1985, gaunt2p,  gauntlet, gauntlet, gauntlet, gaunt2p,   ROT0, "Atari Games", "Gauntlet (2 Players)" )
 GAME( 1986, gaunt2,   0,        gauntlet, gauntlet, gauntlet2, ROT0, "Atari Games", "Gauntlet II" )
-GAMEX(1988, vindctr2, 0,        gauntlet, vindctr2, vindctr2,  ROT0, "Atari Games", "Vindicators Part II", GAME_IMPERFECT_COLORS )
+GAME( 1988, vindctr2, 0,        gauntlet, vindctr2, vindctr2,  ROT0, "Atari Games", "Vindicators Part II" )

@@ -60,6 +60,8 @@ int rollerg_vh_start(void)
 		K053245_vh_stop();
 		return 1;
 	}
+
+	K051316_set_offset(0, 22, 1);
 	return 0;
 }
 

@@ -1,9 +1,9 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V2.5
+ *	 Portable Z80 emulator V2.7
  *
- *   Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -17,7 +17,14 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 2.5:
+ *	 Changes in 2.7:
+ *	  - removed z80_vm specific code, it's not needed (and never was).
+ *   Changes in 2.6:
+ *	  - BUSY_LOOP_HACKS needed to call change_pc16() earlier, before
+ *		checking the opcodes at the new address, because otherwise they
+ *		might access the old (wrong or even NULL) banked memory region.
+ *		Thanks to Sean Young for finding this nasty bug.
+ *   Changes in 2.5:
  *	  - Burning cycles always adjusts the ICount by a multiple of 4.
  *	  - In REPEAT_AT_ONCE cases the R register wasn't incremented twice
  *		per repetition as it should have been. Those repeated opcodes
@@ -50,11 +57,7 @@
 #include "cpuintrf.h"
 #include "state.h"
 #include "mamedbg.h"
-#if Z80_VM
-#include "z80_vm.h"
-#else
 #include "z80.h"
-#endif
 
 #define VERBOSE 0
 
@@ -90,29 +93,6 @@
 #define BIG_FLAGS_ARRAY 	0
 #endif
 
-#if Z80_VM
-static UINT8 z80_reg_layout[] = {
-    Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
-    Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
-    Z80_R,  Z80_I,  Z80_IM, Z80_IFF1,Z80_IFF2, -1,
-	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, -1,
-	Z80_BANK0, Z80_BANK1, Z80_BANK2, Z80_BANK3, -1,
-	Z80_BANK4, Z80_BANK5, Z80_BANK6, Z80_BANK7, 0
-};
-
-
-static UINT8 z80_win_layout[] = {
-	27, 0,53, 6,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 7,53, 6,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-#define BURN	z80_vm_burn
-
-#else
-
 static UINT8 z80_reg_layout[] = {
     Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
     Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
@@ -127,10 +107,6 @@ static UINT8 z80_win_layout[] = {
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
-
-#define BURN	z80_burn
-
-#endif
 
 /****************************************************************************/
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
@@ -149,9 +125,6 @@ typedef struct {
 /* 44 */    Z80_DaisyChain irq[Z80_MAXDAISY];
 /* 84 */    int     (*irq_callback)(int irqline);
 /* 88 */    int     extra_cycles;       /* extra cycles for interrupts */
-#if Z80_VM
-/* 8C */	UINT32	bank[8];			/* bank memory address (24 bit) */
-#endif
 }   Z80_Regs;
 
 #define CF  0x01
@@ -583,7 +556,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
     _PC--;                                                      \
     _HALT = 1;                                                  \
 	if( !after_EI ) 											\
-		BURN( z80_ICount ); 									\
+		z80_burn( z80_ICount ); 								\
 }
 
 /***************************************************************
@@ -610,15 +583,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * Read a byte from given memory location
  ***************************************************************/
-#if Z80_VM
-INLINE UINT8 RM( UINT32 addr )
-{
-	unsigned vm = Z80.bank[addr >> 13] + (addr & 0x1fff);
-	return cpu_readmem16(vm);
-}
-#else
 #define RM(addr) (UINT8)cpu_readmem16(addr)
-#endif
 
 /***************************************************************
  * Read a word from given memory location
@@ -632,15 +597,7 @@ INLINE void RM16( UINT32 addr, PAIR *r )
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#if Z80_VM
-INLINE void WM( UINT32 addr, UINT8 value )
-{
-	unsigned vm = Z80.bank[addr >> 13] + (addr & 0x1fff);
-	cpu_writemem16( vm, value );
-}
-#else
 #define WM(addr,value) cpu_writemem16(addr,value)
-#endif
 
 /***************************************************************
  * Write a word to given memory location
@@ -656,21 +613,12 @@ INLINE void WM16( UINT32 addr, PAIR *r )
  * reading opcodes. In case of system with memory mapped I/O,
  * this function can be used to greatly speed up emulation
  ***************************************************************/
-#if Z80_VM
-INLINE UINT8 ROP(void)
-{
-	unsigned pc = Z80.bank[_PCD >> 13] + (_PCD & 0x1fff);
-	_PC++;
-	return cpu_readop(pc);
-}
-#else
 INLINE UINT8 ROP(void)
 {
 	unsigned pc = _PCD;
 	_PC++;
 	return cpu_readop(pc);
 }
-#endif
 
 /****************************************************************
  * ARG() is identical to ROP() except it is used
@@ -678,37 +626,19 @@ INLINE UINT8 ROP(void)
  * support systems that use different encoding mechanisms for
  * opcodes and opcode arguments
  ***************************************************************/
-#if Z80_VM
-INLINE UINT8 ARG(void)
-{
-	unsigned pc = Z80.bank[_PCD >> 13] + (_PCD & 0x1fff);
-	_PC++;
-	return cpu_readop_arg(pc);
-}
-#else
 INLINE UINT8 ARG(void)
 {
 	unsigned pc = _PCD;
     _PC++;
 	return cpu_readop_arg(pc);
 }
-#endif
 
-#if Z80_VM
-INLINE UINT32 ARG16(void)
-{
-	UINT32 result = ARG();
-	result |= ARG() << 8;
-	return result;
-}
-#else
 INLINE UINT32 ARG16(void)
 {
 	unsigned pc = _PCD;
     _PC += 2;
 	return cpu_readop_arg(pc) | (cpu_readop_arg((pc+1)&0xffff) << 8);
 }
-#endif
 
 /***************************************************************
  * Calculate the effective address EA of an opcode using
@@ -734,7 +664,8 @@ INLINE UINT32 ARG16(void)
 #define JP {													\
 	unsigned oldpc = _PCD-1;									\
 	_PCD = ARG16(); 											\
-	/* speed up busy loop */									\
+	change_pc16(_PCD);											\
+    /* speed up busy loop */                                    \
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
@@ -760,7 +691,6 @@ INLINE UINT32 ARG16(void)
 				BURNODD( z80_ICount-10, 2, 10+10 ); 			\
 		}														\
 	}															\
-	change_pc16(_PCD);											\
 }
 #else
 #define JP {													\
@@ -792,7 +722,8 @@ INLINE UINT32 ARG16(void)
 	unsigned oldpc = _PCD-1;									\
 	INT8 arg = (INT8)ARG(); /* ARG() also increments _PC */ 	\
 	_PC += arg; 			/* so don't do _PC += ARG() */      \
-	/* speed up busy loop */									\
+	change_pc16(_PCD);											\
+    /* speed up busy loop */                                    \
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
@@ -818,7 +749,6 @@ INLINE UINT32 ARG16(void)
 				BURNODD( z80_ICount-12, 2, 10+12 ); 			\
 		}														\
     }                                                           \
-    change_pc16(_PCD);                                          \
 }
 
 /***************************************************************
@@ -4127,11 +4057,7 @@ static void take_interrupt(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_reset(void *param)
-#else
 void z80_reset(void *param)
-#endif
 {
 	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	int i, p;
@@ -4239,18 +4165,6 @@ void z80_reset(void *param)
     Z80.nmi_state = CLEAR_LINE;
 	Z80.irq_state = CLEAR_LINE;
 
-#if Z80_VM
-	/* reset the virtual memory offsets */
-	Z80.bank[0] = 0x0000;
-	Z80.bank[1] = 0x2000;
-	Z80.bank[2] = 0x4000;
-	Z80.bank[3] = 0x6000;
-	Z80.bank[4] = 0x8000;
-	Z80.bank[5] = 0xa000;
-	Z80.bank[6] = 0xc000;
-	Z80.bank[7] = 0xe000;
-#endif
-
     if( daisy_chain )
 	{
 		while( daisy_chain->irq_param != -1 && Z80.irq_max < Z80_MAXDAISY )
@@ -4268,11 +4182,7 @@ void z80_reset(void *param)
     change_pc(_PCD);
 }
 
-#if Z80_VM
-void z80_vm_exit(void)
-#else
 void z80_exit(void)
-#endif
 {
 #if BIG_FLAGS_ARRAY
 	if (SZHVC_add) free(SZHVC_add);
@@ -4285,15 +4195,9 @@ void z80_exit(void)
 /****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
-#if Z80_VM
-int z80_vm_execute(int cycles)
-#else
 int z80_execute(int cycles)
-#endif
 {
-    z80_ICount = cycles;
-
-	BURN( Z80.extra_cycles );
+	z80_ICount = cycles - Z80.extra_cycles;
 	Z80.extra_cycles = 0;
 
     do
@@ -4304,7 +4208,7 @@ int z80_execute(int cycles)
         EXEC_INLINE(op,ROP());
 	} while( z80_ICount > 0 );
 
-	BURN( Z80.extra_cycles );
+	z80_ICount -= Z80.extra_cycles;
     Z80.extra_cycles = 0;
 
     return cycles - z80_ICount;
@@ -4313,11 +4217,7 @@ int z80_execute(int cycles)
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_burn(int cycles)
-#else
 void z80_burn(int cycles)
-#endif
 {
 	if( cycles > 0 )
 	{
@@ -4331,11 +4231,7 @@ void z80_burn(int cycles)
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-#if Z80_VM
-unsigned z80_vm_get_context (void *dst)
-#else
 unsigned z80_get_context (void *dst)
-#endif
 {
 	if( dst )
 	    *(Z80_Regs*)dst = Z80;
@@ -4345,11 +4241,7 @@ unsigned z80_get_context (void *dst)
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_context (void *src)
-#else
 void z80_set_context (void *src)
-#endif
 {
 	if( src )
 		Z80 = *(Z80_Regs*)src;
@@ -4359,11 +4251,7 @@ void z80_set_context (void *src)
 /****************************************************************************
  * Return program counter
  ****************************************************************************/
-#if Z80_VM
-unsigned z80_vm_get_pc (void)
-#else
 unsigned z80_get_pc (void)
-#endif
 {
     return _PCD;
 }
@@ -4371,11 +4259,7 @@ unsigned z80_get_pc (void)
 /****************************************************************************
  * Set program counter
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_pc (unsigned val)
-#else
 void z80_set_pc (unsigned val)
-#endif
 {
 	_PC = val;
 	change_pc(_PCD);
@@ -4384,11 +4268,7 @@ void z80_set_pc (unsigned val)
 /****************************************************************************
  * Return stack pointer
  ****************************************************************************/
-#if Z80_VM
-unsigned z80_vm_get_sp (void)
-#else
 unsigned z80_get_sp (void)
-#endif
 {
 	return _SPD;
 }
@@ -4396,11 +4276,7 @@ unsigned z80_get_sp (void)
 /****************************************************************************
  * Set stack pointer
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_sp (unsigned val)
-#else
 void z80_set_sp (unsigned val)
-#endif
 {
 	_SP = val;
 }
@@ -4408,11 +4284,7 @@ void z80_set_sp (unsigned val)
 /****************************************************************************
  * Return a specific register
  ****************************************************************************/
-#if Z80_VM
-unsigned z80_vm_get_reg (int regnum)
-#else
 unsigned z80_get_reg (int regnum)
-#endif
 {
 	switch( regnum )
 	{
@@ -4440,16 +4312,6 @@ unsigned z80_get_reg (int regnum)
 		case Z80_DC1: return Z80.int_state[1];
 		case Z80_DC2: return Z80.int_state[2];
 		case Z80_DC3: return Z80.int_state[3];
-#if Z80_VM
-		case Z80_BANK0: return Z80.bank[0];
-		case Z80_BANK1: return Z80.bank[1];
-		case Z80_BANK2: return Z80.bank[2];
-		case Z80_BANK3: return Z80.bank[3];
-		case Z80_BANK4: return Z80.bank[4];
-		case Z80_BANK5: return Z80.bank[5];
-		case Z80_BANK6: return Z80.bank[6];
-		case Z80_BANK7: return Z80.bank[7];
-#endif
         case REG_PREVIOUSPC: return Z80.PREPC.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -4465,11 +4327,7 @@ unsigned z80_get_reg (int regnum)
 /****************************************************************************
  * Set a specific register
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_reg (int regnum, unsigned val)
-#else
 void z80_set_reg (int regnum, unsigned val)
-#endif
 {
 	switch( regnum )
 	{
@@ -4497,16 +4355,6 @@ void z80_set_reg (int regnum, unsigned val)
 		case Z80_DC1: Z80.int_state[1] = val; break;
 		case Z80_DC2: Z80.int_state[2] = val; break;
 		case Z80_DC3: Z80.int_state[3] = val; break;
-#if Z80_VM
-		case Z80_BANK0: Z80.bank[0] = val; break;
-		case Z80_BANK1: Z80.bank[1] = val; break;
-		case Z80_BANK2: Z80.bank[2] = val; break;
-		case Z80_BANK3: Z80.bank[3] = val; break;
-		case Z80_BANK4: Z80.bank[4] = val; break;
-		case Z80_BANK5: Z80.bank[5] = val; break;
-		case Z80_BANK6: Z80.bank[6] = val; break;
-		case Z80_BANK7: Z80.bank[7] = val; break;
-#endif
         default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
@@ -4523,11 +4371,7 @@ void z80_set_reg (int regnum, unsigned val)
 /****************************************************************************
  * Set NMI line state
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_nmi_line(int state)
-#else
 void z80_set_nmi_line(int state)
-#endif
 {
 	if( Z80.nmi_state == state ) return;
 
@@ -4548,11 +4392,7 @@ void z80_set_nmi_line(int state)
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_irq_line(int irqline, int state)
-#else
 void z80_set_irq_line(int irqline, int state)
-#endif
 {
 	LOG((errorlog, "Z80#%d set_irq_line %d\n",cpu_getactivecpu() , state));
     Z80.irq_state = state;
@@ -4602,11 +4442,7 @@ void z80_set_irq_line(int irqline, int state)
 /****************************************************************************
  * Set IRQ vector callback
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_set_irq_callback(int (*callback)(int))
-#else
 void z80_set_irq_callback(int (*callback)(int))
-#endif
 {
 	LOG((errorlog, "Z80#%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
     Z80.irq_callback = callback;
@@ -4615,11 +4451,7 @@ void z80_set_irq_callback(int (*callback)(int))
 /****************************************************************************
  * Save CPU state
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_state_save(void *file)
-#else
 void z80_state_save(void *file)
-#endif
 {
 	int cpu = cpu_getactivecpu();
 	state_save_UINT16(file, "z80", cpu, "AF", &Z80.AF.w.l, 1);
@@ -4653,11 +4485,7 @@ void z80_state_save(void *file)
 /****************************************************************************
  * Load CPU state
  ****************************************************************************/
-#if Z80_VM
-void z80_vm_state_load(void *file)
-#else
 void z80_state_load(void *file)
-#endif
 {
 	int cpu = cpu_getactivecpu();
 	state_load_UINT16(file, "z80", cpu, "AF", &Z80.AF.w.l, 1);
@@ -4691,11 +4519,7 @@ void z80_state_load(void *file)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
-#if Z80_VM
-const char *z80_vm_info(void *context, int regnum)
-#else
 const char *z80_info(void *context, int regnum)
-#endif
 {
 	static char buffer[32][47+1];
 	static int which = 0;
@@ -4732,16 +4556,6 @@ const char *z80_info(void *context, int regnum)
 		case CPU_INFO_REG+Z80_DC1: if(Z80.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
 		case CPU_INFO_REG+Z80_DC2: if(Z80.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
 		case CPU_INFO_REG+Z80_DC3: if(Z80.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
-#if Z80_VM
-		case CPU_INFO_REG+Z80_BANK0: sprintf(buffer[which], "0:%06X", r->bank[0]); break;
-		case CPU_INFO_REG+Z80_BANK1: sprintf(buffer[which], "1:%06X", r->bank[1]); break;
-		case CPU_INFO_REG+Z80_BANK2: sprintf(buffer[which], "2:%06X", r->bank[2]); break;
-		case CPU_INFO_REG+Z80_BANK3: sprintf(buffer[which], "3:%06X", r->bank[3]); break;
-		case CPU_INFO_REG+Z80_BANK4: sprintf(buffer[which], "4:%06X", r->bank[4]); break;
-		case CPU_INFO_REG+Z80_BANK5: sprintf(buffer[which], "5:%06X", r->bank[5]); break;
-		case CPU_INFO_REG+Z80_BANK6: sprintf(buffer[which], "6:%06X", r->bank[6]); break;
-		case CPU_INFO_REG+Z80_BANK7: sprintf(buffer[which], "7:%06X", r->bank[7]); break;
-#endif
         case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->AF.b.l & 0x80 ? 'S':'.',
@@ -4753,13 +4567,9 @@ const char *z80_info(void *context, int regnum)
 				r->AF.b.l & 0x02 ? 'N':'.',
 				r->AF.b.l & 0x01 ? 'C':'.');
 			break;
-#if Z80_VM
-		case CPU_INFO_NAME: return "Z80 VM";
-#else
 		case CPU_INFO_NAME: return "Z80";
-#endif
         case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "2.5";
+		case CPU_INFO_VERSION: return "2.7";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
@@ -4768,11 +4578,7 @@ const char *z80_info(void *context, int regnum)
 	return buffer[which];
 }
 
-#if Z80_VM
-unsigned z80_vm_dasm( char *buffer, unsigned pc )
-#else
 unsigned z80_dasm( char *buffer, unsigned pc )
-#endif
 {
 #ifdef MAME_DEBUG
     return DasmZ80( buffer, pc );

@@ -35,6 +35,9 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 0010\n",cpu_get_pc(),data);
 	/* bit 2 enables 051316 ROM reading */
 	readzoomroms = data & 0x04;
 
+	/* bit 5 enables 051316 wraparound */
+	K051316_wraparound_enable(0, data & 0x20);
+
 	/* other bits unknown */
 }
 

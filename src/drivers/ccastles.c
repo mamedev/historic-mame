@@ -202,10 +202,10 @@ INPUT_PORTS_START( ccastles )
 	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 30, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 30, 0, 0 )
 
 	PORT_START	/* IN3 */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 10, 30, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 10, 30, 0, 0 )
 INPUT_PORTS_END
 
 static struct GfxLayout ccastles_spritelayout =
@@ -235,8 +235,6 @@ static struct POKEYinterface pokey_interface =
 	2,	/* 2 chips */
 	1250000,	/* 1.25 MHz??? */
 	{ 50, 50 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
 	{ 0, 0 },

@@ -214,10 +214,10 @@ INPUT_PORTS_START( jedi )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
     PORT_START  /* IN2 */
-    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 100, 10, 0, 0, 255 )
+    PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 100, 10, 0, 255 )
 
     PORT_START  /* IN3 */
-    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 0, 255 )
+    PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -275,8 +275,6 @@ static struct POKEYinterface pokey_interface =
 	4,  /* 4 chips */
 	1500000,	/* 1.5 MHz? */
 	{ 30, 30, MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 ,0 ,0},
 	{ 0, 0 ,0 ,0},

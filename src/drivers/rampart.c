@@ -243,7 +243,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x140000, 0x147fff, slapstic_bank_r },
 	{ 0x200000, 0x21fffe, MRA_BANK1 },
 	{ 0x3c0000, 0x3c07ff, MRA_BANK2 },
-	{ 0x3e0000, 0x3e3fff, MRA_BANK3 },
+	{ 0x3e0000, 0x3effff, MRA_BANK3 },
 	{ 0x460000, 0x460001, adpcm_r },
 	{ 0x480000, 0x480001, ym2413_r },
 	{ 0x500000, 0x500fff, atarigen_eeprom_r },
@@ -267,7 +267,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x220000, 0x3bffff, MWA_NOP },	/* the code blasts right through this when initializing */
 	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram },
 	{ 0x3c0800, 0x3dffff, MWA_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3e0000, 0x3e3fff, MWA_BANK3, &atarigen_spriteram },
+	{ 0x3e0000, 0x3effff, MWA_BANK3, &atarigen_spriteram },
 	{ 0x460000, 0x460001, adpcm_w },
 	{ 0x480000, 0x480003, ym2413_w },
 	{ 0x500000, 0x500fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
@@ -285,6 +285,9 @@ static struct MemoryWriteAddress writemem[] =
  *	Port definitions
  *
  *************************************/
+
+//coin1: was 640013,0; rampart 640003,2
+//coin2: was 640013,1; rampart 640003,1
 
 INPUT_PORTS_START( rampart )
 	PORT_START
@@ -313,27 +316,27 @@ INPUT_PORTS_START( rampart )
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 200, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER2, 200, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER2, 100, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 200, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 100, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER1, 200, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER1, 100, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER3, 200, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER3, 100, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER3, 200, 30, 0x7f, 0, 0 )
+    PORT_ANALOG( 0x00ff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER3, 100, 30, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -432,8 +435,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
-	{ 7159160 / 1024} ,	/* ~7000 Hz */
-	{ REGION_SOUND1 },       		/* memory region 2 */
+	{ ATARI_CLOCK_14MHz/4/3/165 },
+	{ REGION_SOUND1 },
 	{ 100 }
 };
 
@@ -441,9 +444,9 @@ static struct OKIM6295interface okim6295_interface =
 static struct YM2413interface ym2413_interface =
 {
 	1,					/* 1 chip */
-	7159160 / 2,		/* ~7MHz */
-	{ 75 },				/* Volume */
-	{ 0 }				/* IRQ handler */
+	ATARI_CLOCK_14MHz/4,
+	{ 75 },
+	{ 0 }
 };
 
 
@@ -460,7 +463,7 @@ static struct MachineDriver machine_driver_rampart =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -555,6 +558,39 @@ ROM_START( ramprt2p )
 ROM_END
 
 
+ROM_START( rampartj )
+	ROM_REGION( 0x148000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "3451.bin",  0x00000, 0x20000, 0xc6596d32 )
+	ROM_LOAD_ODD ( "3450.bin",  0x00000, 0x20000, 0x563b33cc )
+	ROM_LOAD_EVEN( "1463.bin",  0x40000, 0x20000, 0x65fe3491 )
+	ROM_LOAD_ODD ( "1462.bin",  0x40000, 0x20000, 0xba731652 )
+	ROM_LOAD_EVEN( "1465.bin",  0x80000, 0x20000, 0x9cb87d1b )
+	ROM_LOAD_ODD ( "1464.bin",  0x80000, 0x20000, 0x2ff75c40 )
+	ROM_LOAD_EVEN( "1467.bin",  0xc0000, 0x20000, 0xe0cfcda5 )
+	ROM_LOAD_ODD ( "1466.bin",  0xc0000, 0x20000, 0xa7a5a951 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2419.bin",   0x000000, 0x20000, 0x456a8aae )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* ADPCM data */
+	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
+	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
+ROM_END
+
+
+ROM_START( arcadecr )
+	ROM_REGION( 0x148000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "pgm0",  0x00000, 0x80000, 0xb5b93623 )
+	ROM_LOAD_ODD ( "prog1", 0x00000, 0x80000, 0xe7efef85 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "atcl_mob",   0x00000, 0x80000, 0x0e9b3930 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* ADPCM data */
+	ROM_LOAD( "adpcm",      0x00000, 0x80000, 0x03ca7f03 )
+ROM_END
+
+
 
 /*************************************
  *
@@ -602,6 +638,66 @@ static void init_rampart(void)
 }
 
 
+static void init_arcadecr(void)
+{
+	UINT32 length = 0x80000 * 2;
+	UINT16 *data = (UINT16 *)memory_region(REGION_CPU1);
+	UINT8 *temp1 = malloc(length / 2), *temp2 = malloc(length / 2);
+	FILE *f;
+	int i;
+
+	atarigen_eeprom_default = NULL;
+
+/*
+	Issues:
+
+	* Rampart has 16k of RAM (2 x 8K chips); Classics has 64k
+	* Rampart has 128k of MOBs; Classics has 512k (see schematics for resistor combinations)
+	* Rampart has 256k of ADPCM; Classics has 512k (see schematics again)
+	* latch is at same address for both, but Rampart only has on/off for ADPCM
+	  while classics has 0-31
+	* moved watchdog from 647000 to 720000
+		33C0 0064 7000      -> 33C0 0072 0000
+	* moved interrupt ack from 646000 to 7e0000
+		33FC 0000 0064 6000 -> 33FC 0000 007e 0000
+		33C0 0064 6000      -> 33C0 007e 0000
+	* moved ADPCM from 642000 to 460000
+		2D7C 0064 2000      -> 2D7C 0046 0000
+	* changed btst #7,$640011 to btst #3,$640000
+		0839 0007 0064 0011 -> 0839 0003 0064 0000
+	* changed btst #6,$640011 to btst #0,$640003
+		0839 0006 0064 0011 -> 0839 0000 0064 0003
+*/
+	for (i = 0; i < length - 8; i += 2, data++)
+	{
+		if (data[0] == 0x33c0 && data[1] == 0x0064 && data[2] == 0x7000)
+			data[1] = 0x0072, data[2] = 0x0000;
+		else if (data[0] == 0x33fc && data[1] == 0x0000 && data[2] == 0x0064 && data[3] == 0x6000)
+			data[2] = 0x007e, data[3] = 0x0000;
+		else if (data[0] == 0x33c0 && data[1] == 0x0064 && data[2] == 0x6000)
+			data[1] = 0x007e, data[2] = 0x0000;
+		else if (data[0] == 0x2d7c && data[1] == 0x0064 && data[2] == 0x2000)
+			data[1] = 0x0046, data[2] = 0x0000;
+		else if (data[0] == 0x0839 && data[1] == 0x0007 && data[2] == 0x0064 && data[3] == 0x0011)
+			data[1] = 0x0003, data[3] = 0x0000;
+		else if (data[0] == 0x0839 && data[1] == 0x0006 && data[2] == 0x0064 && data[3] == 0x0011)
+			data[1] = 0x0000, data[3] = 0x0003;
+		temp1[i / 2] = data[0] >> 8;
+		temp2[i / 2] = data[0];
+	}
+
+	f = fopen("pgm0.bin", "wb");
+	fwrite(temp1, 1, length / 2, f);
+	fclose(f);
+	f = fopen("pgm1.bin", "wb");
+	fwrite(temp2, 1, length / 2, f);
+	fclose(f);
+
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
+}
+
+
 
 /*************************************
  *
@@ -611,3 +707,6 @@ static void init_rampart(void)
 
 GAME( 1990, rampart,  0,       rampart, rampart,  rampart, ROT0, "Atari Games", "Rampart (3-player Trackball)" )
 GAME( 1990, ramprt2p, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (2-player Joystick)" )
+GAME( 1990, rampartj, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (Japan, 2-player Joystick)" )
+
+GAME( 1990, arcadecr, rampart, rampart, rampart,  arcadecr,ROT0, "Atari Games", "Arcade Classics (Rampart PCB)" )

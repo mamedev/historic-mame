@@ -36,7 +36,7 @@ static int buffer_low;
 static int buffer_empty;
 static int irq_pin;
 
-static void (*irq_func)(void);
+static void (*irq_func)(int state);
 
 
 /* these contain data describing the current and previous voice frames */
@@ -69,11 +69,11 @@ static int randbit = 0;
 
 
 /* Static function prototypes */
-static void process_command (void);
-static int extract_bits (int count);
-static int parse_frame (int removeit);
-static void check_buffer_low (void);
-static void cause_interrupt (void);
+static void process_command(void);
+static int extract_bits(int count);
+static int parse_frame(int removeit);
+static void check_buffer_low(void);
+static void set_interrupt_state(int state);
 
 
 /*#define DEBUG_5220*/
@@ -88,10 +88,10 @@ static void cause_interrupt (void);
 
 ***********************************************************************************************/
 
-void tms5220_reset (void)
+void tms5220_reset(void)
 {
     /* initialize the FIFO */
-    memset (fifo, 0, sizeof (fifo));
+    memset(fifo, 0, sizeof(fifo));
     fifo_head = fifo_tail = fifo_count = bits_taken = 0;
 
     /* initialize the chip state */
@@ -101,19 +101,19 @@ void tms5220_reset (void)
     /* initialize the energy/pitch/k states */
     old_energy = new_energy = current_energy = target_energy = 0;
     old_pitch = new_pitch = current_pitch = target_pitch = 0;
-    memset (old_k, 0, sizeof (old_k));
-    memset (new_k, 0, sizeof (new_k));
-    memset (current_k, 0, sizeof (current_k));
-    memset (target_k, 0, sizeof (target_k));
+    memset(old_k, 0, sizeof(old_k));
+    memset(new_k, 0, sizeof(new_k));
+    memset(current_k, 0, sizeof(current_k));
+    memset(target_k, 0, sizeof(target_k));
 
     /* initialize the sample generators */
     interp_count = sample_count = pitch_count = 0;
     randbit = 0;
-    memset (u, 0, sizeof (u));
-    memset (x, 0, sizeof (x));
+    memset(u, 0, sizeof(u));
+    memset(x, 0, sizeof(x));
 
     #ifdef DEBUG_5220
-        f = fopen ("tms.log", "w");
+        f = fopen("tms.log", "w");
     #endif
 }
 
@@ -125,7 +125,7 @@ void tms5220_reset (void)
 
 ***********************************************************************************************/
 
-void tms5220_set_irq (void (*func)(void))
+void tms5220_set_irq(void (*func)(int))
 {
     irq_func = func;
 }
@@ -137,7 +137,7 @@ void tms5220_set_irq (void (*func)(void))
 
 ***********************************************************************************************/
 
-void tms5220_data_write (int data)
+void tms5220_data_write(int data)
 {
     /* add this byte to the FIFO */
     if (fifo_count < FIFO_SIZE)
@@ -147,18 +147,18 @@ void tms5220_data_write (int data)
         fifo_count++;
 
         #ifdef DEBUG_5220
-            if (f) fprintf (f, "Added byte to FIFO (size=%2d)\n", fifo_count);
+            if (f) fprintf(f, "Added byte to FIFO (size=%2d)\n", fifo_count);
         #endif
     }
     else
     {
         #ifdef DEBUG_5220
-            if (f) fprintf (f, "Ran out of room in the FIFO!\n");
+            if (f) fprintf(f, "Ran out of room in the FIFO!\n");
         #endif
     }
 
     /* update the buffer low state */
-    check_buffer_low ();
+    check_buffer_low();
 }
 
 
@@ -185,13 +185,13 @@ void tms5220_data_write (int data)
 
 ***********************************************************************************************/
 
-int tms5220_status_read (void)
+int tms5220_status_read(void)
 {
     /* clear the interrupt pin */
-    irq_pin = 0;
+    set_interrupt_state(0);
 
     #ifdef DEBUG_5220
-        if (f) fprintf (f, "Status read: TS=%d BL=%d BE=%d\n", talk_status, buffer_low, buffer_empty);
+        if (f) fprintf(f, "Status read: TS=%d BL=%d BE=%d\n", talk_status, buffer_low, buffer_empty);
     #endif
 
     return (talk_status << 7) | (buffer_low << 6) | (buffer_empty << 5);
@@ -205,7 +205,7 @@ int tms5220_status_read (void)
 
 ***********************************************************************************************/
 
-int tms5220_ready_read (void)
+int tms5220_ready_read(void)
 {
     return (fifo_count < FIFO_SIZE-1);
 }
@@ -218,7 +218,7 @@ int tms5220_ready_read (void)
 
 ***********************************************************************************************/
 
-int tms5220_int_read (void)
+int tms5220_int_read(void)
 {
     return irq_pin;
 }
@@ -240,7 +240,7 @@ tryagain:
 
     /* if we're not speaking, parse commands */
     while (!speak_external && fifo_count > 0)
-        process_command ();
+        process_command();
 
     /* if there's nothing to do, bail */
     if (!size)
@@ -257,7 +257,7 @@ tryagain:
            goto empty;
 
         /* parse but don't remove the first frame, and set the status to 1 */
-        parse_frame (0);
+        parse_frame(0);
         talk_status = 1;
         buffer_empty = 0;
     }
@@ -271,7 +271,7 @@ tryagain:
         if ((interp_count == 0) && (sample_count == 0))
         {
             /* Parse a new frame */
-            if (!parse_frame (1))
+            if (!parse_frame(1))
                 break;
 
             /* Set old target as new start of frame */
@@ -300,7 +300,7 @@ tryagain:
                 interp_count = sample_count = pitch_count = 0;
 
                 /* generate an interrupt if necessary */
-                cause_interrupt ();
+                set_interrupt_state(1);
 
                 /* try to fetch commands again */
                 goto tryagain;
@@ -365,13 +365,13 @@ tryagain:
         else if (old_pitch == 0)
         {
             /* generate unvoiced samples here */
-            randbit = (rand () % 2) * 2 - 1;
+            randbit = (rand() % 2) * 2 - 1;
             current_val = (randbit * current_energy) / 4;
         }
         else
         {
             /* generate voiced samples here */
-            if (pitch_count < sizeof (chirptable))
+            if (pitch_count < sizeof(chirptable))
                 current_val = (chirptable[pitch_count] * current_energy) / 256;
             else
                 current_val = 0x00;
@@ -433,7 +433,7 @@ empty:
 
 ***********************************************************************************************/
 
-static void process_command (void)
+static void process_command(void)
 {
     unsigned char cmd;
 
@@ -461,13 +461,13 @@ static void process_command (void)
             if (!buffer_empty)
             {
                 buffer_empty = 1;
-                cause_interrupt ();
+                set_interrupt_state(1);
             }
         }
     }
 
     /* update the buffer low state */
-    check_buffer_low ();
+    check_buffer_low();
 }
 
 
@@ -478,7 +478,7 @@ static void process_command (void)
 
 ***********************************************************************************************/
 
-static int extract_bits (int count)
+static int extract_bits(int count)
 {
     int val = 0;
 
@@ -504,7 +504,7 @@ static int extract_bits (int count)
 
 ***********************************************************************************************/
 
-static int parse_frame (int removeit)
+static int parse_frame(int removeit)
 {
     int old_head, old_taken, old_count;
     int bits, indx, i, rep_flag;
@@ -537,14 +537,14 @@ static int parse_frame (int removeit)
     bits -= 4;
     if (bits < 0)
         goto ranout;
-    indx = extract_bits (4);
+    indx = extract_bits(4);
     new_energy = energytable[indx] >> 6;
 
 	/* if the index is 0 or 15, we're done */
 	if (indx == 0 || indx == 15)
 	{
 		#ifdef DEBUG_5220
-			if (f) fprintf (f, "  (4-bit energy=%d frame)\n",new_energy);
+			if (f) fprintf(f, "  (4-bit energy=%d frame)\n",new_energy);
 		#endif
 
 		/* clear fifo if stop frame encountered */
@@ -560,13 +560,13 @@ static int parse_frame (int removeit)
     bits -= 1;
     if (bits < 0)
         goto ranout;
-    rep_flag = extract_bits (1);
+    rep_flag = extract_bits(1);
 
     /* attempt to extract the pitch */
     bits -= 6;
     if (bits < 0)
         goto ranout;
-    indx = extract_bits (6);
+    indx = extract_bits(6);
     new_pitch = pitchtable[indx] / 256;
 
     /* if this is a repeat frame, just copy the k's */
@@ -576,7 +576,7 @@ static int parse_frame (int removeit)
             new_k[i] = old_k[i];
 
         #ifdef DEBUG_5220
-            if (f) fprintf (f, "  (11-bit energy=%d pitch=%d rep=%d frame)\n", new_energy, new_pitch, rep_flag);
+            if (f) fprintf(f, "  (11-bit energy=%d pitch=%d rep=%d frame)\n", new_energy, new_pitch, rep_flag);
         #endif
         goto done;
     }
@@ -588,13 +588,13 @@ static int parse_frame (int removeit)
         bits -= 18;
         if (bits < 0)
             goto ranout;
-        new_k[0] = k1table[extract_bits (5)];
-        new_k[1] = k2table[extract_bits (5)];
-        new_k[2] = k3table[extract_bits (4)];
-        new_k[3] = k4table[extract_bits (4)];
+        new_k[0] = k1table[extract_bits(5)];
+        new_k[1] = k2table[extract_bits(5)];
+        new_k[2] = k3table[extract_bits(4)];
+        new_k[3] = k4table[extract_bits(4)];
 
         #ifdef DEBUG_5220
-            if (f) fprintf (f, "  (29-bit energy=%d pitch=%d rep=%d 4K frame)\n", new_energy, new_pitch, rep_flag);
+            if (f) fprintf(f, "  (29-bit energy=%d pitch=%d rep=%d 4K frame)\n", new_energy, new_pitch, rep_flag);
         #endif
         goto done;
     }
@@ -603,25 +603,25 @@ static int parse_frame (int removeit)
     bits -= 39;
     if (bits < 0)
         goto ranout;
-    new_k[0] = k1table[extract_bits (5)];
-    new_k[1] = k2table[extract_bits (5)];
-    new_k[2] = k3table[extract_bits (4)];
-    new_k[3] = k4table[extract_bits (4)];
-    new_k[4] = k5table[extract_bits (4)];
-    new_k[5] = k6table[extract_bits (4)];
-    new_k[6] = k7table[extract_bits (4)];
-    new_k[7] = k8table[extract_bits (3)];
-    new_k[8] = k9table[extract_bits (3)];
-    new_k[9] = k10table[extract_bits (3)];
+    new_k[0] = k1table[extract_bits(5)];
+    new_k[1] = k2table[extract_bits(5)];
+    new_k[2] = k3table[extract_bits(4)];
+    new_k[3] = k4table[extract_bits(4)];
+    new_k[4] = k5table[extract_bits(4)];
+    new_k[5] = k6table[extract_bits(4)];
+    new_k[6] = k7table[extract_bits(4)];
+    new_k[7] = k8table[extract_bits(3)];
+    new_k[8] = k9table[extract_bits(3)];
+    new_k[9] = k10table[extract_bits(3)];
 
     #ifdef DEBUG_5220
-        if (f) fprintf (f, "  (50-bit energy=%d pitch=%d rep=%d 10K frame)\n", new_energy, new_pitch, rep_flag);
+        if (f) fprintf(f, "  (50-bit energy=%d pitch=%d rep=%d 10K frame)\n", new_energy, new_pitch, rep_flag);
     #endif
 
 done:
 
     #ifdef DEBUG_5220
-        if (f) fprintf (f, "Parsed a frame successfully - %d bits remaining\n", bits);
+        if (f) fprintf(f, "Parsed a frame successfully - %d bits remaining\n", bits);
     #endif
 
     /* if we're not to remove this one, restore the FIFO */
@@ -633,13 +633,13 @@ done:
     }
 
     /* update the buffer_low status */
-    check_buffer_low ();
+    check_buffer_low();
     return 1;
 
 ranout:
 
     #ifdef DEBUG_5220
-        if (f) fprintf (f, "Ran out of bits on a parse!\n");
+        if (f) fprintf(f, "Ran out of bits on a parse!\n");
     #endif
 
     /* this is an error condition; mark the buffer empty and turn off speaking */
@@ -648,7 +648,7 @@ ranout:
     fifo_count = fifo_head = fifo_tail = 0;
 
     /* generate an interrupt if necessary */
-    cause_interrupt ();
+    set_interrupt_state(1);
     return 0;
 }
 
@@ -660,18 +660,18 @@ ranout:
 
 ***********************************************************************************************/
 
-static void check_buffer_low (void)
+static void check_buffer_low(void)
 {
     /* did we just become low? */
     if (fifo_count < 8)
     {
         /* generate an interrupt if necessary */
         if (!buffer_low)
-            cause_interrupt ();
+            set_interrupt_state(1);
         buffer_low = 1;
 
         #ifdef DEBUG_5220
-            if (f) fprintf (f, "Buffer low set\n");
+            if (f) fprintf(f, "Buffer low set\n");
         #endif
     }
 
@@ -681,7 +681,7 @@ static void check_buffer_low (void)
         buffer_low = 0;
 
         #ifdef DEBUG_5220
-            if (f) fprintf (f, "Buffer low cleared\n");
+            if (f) fprintf(f, "Buffer low cleared\n");
         #endif
     }
 }
@@ -690,12 +690,13 @@ static void check_buffer_low (void)
 
 /**********************************************************************************************
 
-     cause_interrupt -- generate an interrupt
+     set_interrupt_state -- generate an interrupt
 
 ***********************************************************************************************/
 
-static void cause_interrupt (void)
+static void set_interrupt_state(int state)
 {
-    irq_pin = 1;
-    if (irq_func) irq_func ();
+    if (irq_func && state != irq_pin)
+    	irq_func(state);
+    irq_pin = state;
 }

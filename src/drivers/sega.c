@@ -424,7 +424,7 @@ INPUT_PORTS_START( zektor )
 	COINAGE
 
 	PORT_START      /* IN8 - FAKE port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 10, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -485,7 +485,7 @@ INPUT_PORTS_START( startrek )
 	COINAGE
 
 	PORT_START      /* IN8 - dummy port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 10, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -544,7 +544,7 @@ INPUT_PORTS_START( tacscan )
 	COINAGE
 
 	PORT_START      /* IN8 - FAKE port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 10, 0, 0 )
 INPUT_PORTS_END
 
 

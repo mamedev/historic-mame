@@ -1843,80 +1843,50 @@ INPUT_PORTS_END
 
 
 
-#define TILELAYOUT(NUM) static struct GfxLayout tilelayout_##NUM =  \
-{                                                                   \
-	8,8,	/* 8*8 characters */                                    \
-	NUM,	/* NUM characters */                                    \
-	4,	/* 4 bits per pixel */                                      \
-	{ 3*NUM*8*8, 2*NUM*8*8, NUM*8*8, 0 },                           \
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },                                     \
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },                     \
-	8*8	/* every char takes 8 consecutive bytes */                  \
-}
-
-TILELAYOUT(4096);
-TILELAYOUT(16384);
-TILELAYOUT(32768);
-
-#define SPRITELAYOUT(NUM) static struct GfxLayout spritelayout_##NUM =         \
-{                                                                              \
-	16,16,	/* 16*16 sprites */                                                \
-	NUM,	/* NUM sprites */                                                  \
-	4,	/* 4 bits per pixel */                                                 \
-	{ 3*NUM*32*8, 2*NUM*32*8, NUM*32*8, 0 },                                   \
-	{ 0, 1, 2, 3, 4, 5, 6, 7,                                                  \
-			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },  \
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,                                  \
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },                    \
-	32*8	/* every sprite takes 32 consecutive bytes */                      \
-}
-
-SPRITELAYOUT(4096);
-SPRITELAYOUT(8192);
-
-static struct GfxDecodeInfo rtype_gfxdecodeinfo[] =
+static struct GfxLayout tilelayout =
 {
-	{ REGION_GFX1, 0, &spritelayout_4096,    0, 16 },
-	{ REGION_GFX2, 0, &tilelayout_4096,    512, 16 },
-	{ REGION_GFX3, 0, &tilelayout_4096,    512, 16 },
-	{ -1 } /* end of array */
+	8,8,	/* 8*8 characters */
+	RGN_FRAC(1,4),	/* NUM characters */
+	4,	/* 4 bits per pixel */
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo bchopper_gfxdecodeinfo[] =
+static struct GfxLayout spritelayout =
 {
-	{ REGION_GFX1, 0, &spritelayout_4096,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout_16384,    512, 16 },
-	{ REGION_GFX3, 0, &tilelayout_16384,    512, 16 },
-	{ -1 } /* end of array */
+	16,16,	/* 16*16 sprites */
+	RGN_FRAC(1,4),	/* NUM characters */
+	4,	/* 4 bits per pixel */
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo xmultipl_gfxdecodeinfo[] =
+static struct GfxDecodeInfo m72_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &spritelayout_8192,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout_16384,    512, 16 },
-	{ REGION_GFX3, 0, &tilelayout_16384,    512, 16 },
+	{ REGION_GFX1, 0, &spritelayout,    0, 16 },
+	{ REGION_GFX2, 0, &tilelayout,    512, 16 },
+	{ REGION_GFX3, 0, &tilelayout,    512, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo rtype2_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &spritelayout_4096,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout_32768,    512, 16 },
+	{ REGION_GFX1, 0, &spritelayout,     0, 16 },
+	{ REGION_GFX2, 0, &tilelayout,     512, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo majtitle_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &spritelayout_8192,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout_16384,    512, 16 },
-	{ REGION_GFX3, 0, &spritelayout_4096,     0, 16 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo hharry_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &spritelayout_4096,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout_16384,    512, 16 },
+	{ REGION_GFX1, 0, &spritelayout,     0, 16 },
+	{ REGION_GFX2, 0, &tilelayout,     512, 16 },
+	{ REGION_GFX3, 0, &spritelayout,     0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -1926,7 +1896,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* ??? */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ m72_ym2151_irq_handler },
 	{ 0 }
 };
@@ -1963,7 +1933,7 @@ static struct MachineDriver machine_driver_rtype =
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
-	rtype_gfxdecodeinfo,
+	m72_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
@@ -2007,7 +1977,7 @@ static struct MachineDriver machine_driver_m72 =
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
-	bchopper_gfxdecodeinfo,
+	m72_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
@@ -2055,7 +2025,7 @@ static struct MachineDriver machine_driver_xmultipl =
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
-	xmultipl_gfxdecodeinfo,
+	m72_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
@@ -2103,7 +2073,7 @@ static struct MachineDriver machine_driver_dbreed =
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
-	bchopper_gfxdecodeinfo,
+	m72_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
@@ -2247,7 +2217,7 @@ static struct MachineDriver machine_driver_hharry =
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
-	hharry_gfxdecodeinfo,
+	rtype2_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
@@ -2295,7 +2265,7 @@ static struct MachineDriver machine_driver_hharryu =
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
-	hharry_gfxdecodeinfo,
+	rtype2_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
@@ -2504,17 +2474,17 @@ ROM_START( bchopper )
 	ROM_LOAD( "c-30-a.rom",   0x060000, 0x10000, 0x11f6c56b )
 	ROM_LOAD( "c-31-b.rom",   0x070000, 0x10000, 0x23134ec5 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b-a0-b.rom",   0x000000, 0x10000, 0xe46ed7bf )	/* tiles #1 */
-	ROM_LOAD( "b-a1-b.rom",   0x020000, 0x10000, 0x590605ff )
-	ROM_LOAD( "b-a2-b.rom",   0x040000, 0x10000, 0xf8158226 )
-	ROM_LOAD( "b-a3-b.rom",   0x060000, 0x10000, 0x0f07b9b7 )
+	ROM_LOAD( "b-a1-b.rom",   0x010000, 0x10000, 0x590605ff )
+	ROM_LOAD( "b-a2-b.rom",   0x020000, 0x10000, 0xf8158226 )
+	ROM_LOAD( "b-a3-b.rom",   0x030000, 0x10000, 0x0f07b9b7 )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b-b0-.rom",    0x000000, 0x10000, 0xb5b95776 )	/* tiles #2 */
-	ROM_LOAD( "b-b1-.rom",    0x020000, 0x10000, 0x74ca16ee )
-	ROM_LOAD( "b-b2-.rom",    0x040000, 0x10000, 0xb82cca04 )
-	ROM_LOAD( "b-b3-.rom",    0x060000, 0x10000, 0xa7afc920 )
+	ROM_LOAD( "b-b1-.rom",    0x010000, 0x10000, 0x74ca16ee )
+	ROM_LOAD( "b-b2-.rom",    0x020000, 0x10000, 0xb82cca04 )
+	ROM_LOAD( "b-b3-.rom",    0x030000, 0x10000, 0xa7afc920 )
 
 	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "c-v0-b.rom",   0x00000, 0x10000, 0xd0c27e58 )
@@ -2540,17 +2510,17 @@ ROM_START( mrheli )
 	ROM_LOAD( "mh-c-20.bin",  0x040000, 0x20000, 0xeae0de74 )
 	ROM_LOAD( "mh-c-30.bin",  0x060000, 0x20000, 0x01d5052f )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mh-b-a0.bin",  0x000000, 0x10000, 0x6a0db256 )	/* tiles #1 */
-	ROM_LOAD( "mh-b-a1.bin",  0x020000, 0x10000, 0x14ec9795 )
-	ROM_LOAD( "mh-b-a2.bin",  0x040000, 0x10000, 0xdfcb510e )
-	ROM_LOAD( "mh-b-a3.bin",  0x060000, 0x10000, 0x957e329b )
+	ROM_LOAD( "mh-b-a1.bin",  0x010000, 0x10000, 0x14ec9795 )
+	ROM_LOAD( "mh-b-a2.bin",  0x020000, 0x10000, 0xdfcb510e )
+	ROM_LOAD( "mh-b-a3.bin",  0x030000, 0x10000, 0x957e329b )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b-b0-.rom",    0x000000, 0x10000, 0xb5b95776 )	/* tiles #2 */
-	ROM_LOAD( "b-b1-.rom",    0x020000, 0x10000, 0x74ca16ee )
-	ROM_LOAD( "b-b2-.rom",    0x040000, 0x10000, 0xb82cca04 )
-	ROM_LOAD( "b-b3-.rom",    0x060000, 0x10000, 0xa7afc920 )
+	ROM_LOAD( "b-b1-.rom",    0x010000, 0x10000, 0x74ca16ee )
+	ROM_LOAD( "b-b2-.rom",    0x020000, 0x10000, 0xb82cca04 )
+	ROM_LOAD( "b-b3-.rom",    0x030000, 0x10000, 0xa7afc920 )
 
 	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "c-v0-b.rom",   0x00000, 0x10000, 0xd0c27e58 )
@@ -2578,17 +2548,17 @@ ROM_START( nspirit )
 	ROM_LOAD( "nin-r20.rom",  0x040000, 0x20000, 0xef3617d3 )
 	ROM_LOAD( "nin-r30.rom",  0x060000, 0x20000, 0x175d2a24 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nin-b-a0.rom", 0x000000, 0x10000, 0x63f8f658 )	/* tiles #1 */
-	ROM_LOAD( "nin-b-a1.rom", 0x020000, 0x10000, 0x75eb8306 )
-	ROM_LOAD( "nin-b-a2.rom", 0x040000, 0x10000, 0xdf532172 )
-	ROM_LOAD( "nin-b-a3.rom", 0x060000, 0x10000, 0x4dedd64c )
+	ROM_LOAD( "nin-b-a1.rom", 0x010000, 0x10000, 0x75eb8306 )
+	ROM_LOAD( "nin-b-a2.rom", 0x020000, 0x10000, 0xdf532172 )
+	ROM_LOAD( "nin-b-a3.rom", 0x030000, 0x10000, 0x4dedd64c )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nin-b0.rom",   0x000000, 0x10000, 0x1b0e08a6 )	/* tiles #2 */
-	ROM_LOAD( "nin-b1.rom",   0x020000, 0x10000, 0x728727f0 )
-	ROM_LOAD( "nin-b2.rom",   0x040000, 0x10000, 0xf87efd75 )
-	ROM_LOAD( "nin-b3.rom",   0x060000, 0x10000, 0x98856cb4 )
+	ROM_LOAD( "nin-b1.rom",   0x010000, 0x10000, 0x728727f0 )
+	ROM_LOAD( "nin-b2.rom",   0x020000, 0x10000, 0xf87efd75 )
+	ROM_LOAD( "nin-b3.rom",   0x030000, 0x10000, 0x98856cb4 )
 
 	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "nin-v0.rom",      0x00000, 0x10000, 0xa32e8caf )
@@ -2616,17 +2586,17 @@ ROM_START( nspiritj )
 	ROM_LOAD( "nin-r20.rom",  0x040000, 0x20000, 0xef3617d3 )
 	ROM_LOAD( "nin-r30.rom",  0x060000, 0x20000, 0x175d2a24 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nin-b-a0.rom", 0x000000, 0x10000, 0x63f8f658 )	/* tiles #1 */
-	ROM_LOAD( "nin-b-a1.rom", 0x020000, 0x10000, 0x75eb8306 )
-	ROM_LOAD( "nin-b-a2.rom", 0x040000, 0x10000, 0xdf532172 )
-	ROM_LOAD( "nin-b-a3.rom", 0x060000, 0x10000, 0x4dedd64c )
+	ROM_LOAD( "nin-b-a1.rom", 0x010000, 0x10000, 0x75eb8306 )
+	ROM_LOAD( "nin-b-a2.rom", 0x020000, 0x10000, 0xdf532172 )
+	ROM_LOAD( "nin-b-a3.rom", 0x030000, 0x10000, 0x4dedd64c )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nin-b0.rom",   0x000000, 0x10000, 0x1b0e08a6 )	/* tiles #2 */
-	ROM_LOAD( "nin-b1.rom",   0x020000, 0x10000, 0x728727f0 )
-	ROM_LOAD( "nin-b2.rom",   0x040000, 0x10000, 0xf87efd75 )
-	ROM_LOAD( "nin-b3.rom",   0x060000, 0x10000, 0x98856cb4 )
+	ROM_LOAD( "nin-b1.rom",   0x010000, 0x10000, 0x728727f0 )
+	ROM_LOAD( "nin-b2.rom",   0x020000, 0x10000, 0xf87efd75 )
+	ROM_LOAD( "nin-b3.rom",   0x030000, 0x10000, 0x98856cb4 )
 
 	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "nin-v0.rom",      0x00000, 0x10000, 0xa32e8caf )
@@ -2650,17 +2620,17 @@ ROM_START( imgfight )
 	ROM_LOAD( "if-c-20.bin",  0x040000, 0x20000, 0xaef33cba )
 	ROM_LOAD( "if-c-30.bin",  0x060000, 0x20000, 0x1f98e695 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "if-a-a0.bin",  0x000000, 0x10000, 0x34ee2d77 )	/* tiles #1 */
-	ROM_LOAD( "if-a-a1.bin",  0x020000, 0x10000, 0x6bd2845b )
-	ROM_LOAD( "if-a-a2.bin",  0x040000, 0x10000, 0x090d50e5 )
-	ROM_LOAD( "if-a-a3.bin",  0x060000, 0x10000, 0x3a8e3083 )
+	ROM_LOAD( "if-a-a1.bin",  0x010000, 0x10000, 0x6bd2845b )
+	ROM_LOAD( "if-a-a2.bin",  0x020000, 0x10000, 0x090d50e5 )
+	ROM_LOAD( "if-a-a3.bin",  0x030000, 0x10000, 0x3a8e3083 )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "if-a-b0.bin",  0x000000, 0x10000, 0xb425c829 )	/* tiles #2 */
-	ROM_LOAD( "if-a-b1.bin",  0x020000, 0x10000, 0xe9bfe23e )
-	ROM_LOAD( "if-a-b2.bin",  0x040000, 0x10000, 0x256e50f2 )
-	ROM_LOAD( "if-a-b3.bin",  0x060000, 0x10000, 0x4c682785 )
+	ROM_LOAD( "if-a-b1.bin",  0x010000, 0x10000, 0xe9bfe23e )
+	ROM_LOAD( "if-a-b2.bin",  0x020000, 0x10000, 0x256e50f2 )
+	ROM_LOAD( "if-a-b3.bin",  0x030000, 0x10000, 0x4c682785 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "if-c-v0.bin",  0x00000, 0x10000, 0xcb64a194 )
@@ -2685,17 +2655,17 @@ ROM_START( loht )
 	ROM_LOAD( "tom_m49.rom",  0x040000, 0x20000, 0xa41d3bfd )
 	ROM_LOAD( "tom_m47.rom",  0x060000, 0x20000, 0x9d81a25b )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tom_m21.rom",  0x000000, 0x10000, 0x3ca3e771 )	/* tiles #1 */
-	ROM_LOAD( "tom_m22.rom",  0x020000, 0x10000, 0x7a05ee2f )
-	ROM_LOAD( "tom_m20.rom",  0x040000, 0x10000, 0x79aa2335 )
-	ROM_LOAD( "tom_m23.rom",  0x060000, 0x10000, 0x789e8b24 )
+	ROM_LOAD( "tom_m22.rom",  0x010000, 0x10000, 0x7a05ee2f )
+	ROM_LOAD( "tom_m20.rom",  0x020000, 0x10000, 0x79aa2335 )
+	ROM_LOAD( "tom_m23.rom",  0x030000, 0x10000, 0x789e8b24 )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tom_m26.rom",  0x000000, 0x10000, 0x44626bf6 )	/* tiles #2 */
-	ROM_LOAD( "tom_m27.rom",  0x020000, 0x10000, 0x464952cf )
-	ROM_LOAD( "tom_m25.rom",  0x040000, 0x10000, 0x3db9b2c7 )
-	ROM_LOAD( "tom_m24.rom",  0x060000, 0x10000, 0xf01fe899 )
+	ROM_LOAD( "tom_m27.rom",  0x010000, 0x10000, 0x464952cf )
+	ROM_LOAD( "tom_m25.rom",  0x020000, 0x10000, 0x3db9b2c7 )
+	ROM_LOAD( "tom_m24.rom",  0x030000, 0x10000, 0xf01fe899 )
 
 	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tom_m44.rom",  0x00000, 0x10000, 0x3ed51d1f )
@@ -2999,17 +2969,17 @@ ROM_START( gallop )
 	ROM_LOAD( "cc-c-20.bin",  0x040000, 0x20000, 0x9421489e )
 	ROM_LOAD( "cc-c-30.bin",  0x060000, 0x20000, 0x920ec735 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc-b-a0.bin",  0x000000, 0x10000, 0xa33472bd )	/* tiles #1 */
-	ROM_LOAD( "cc-b-a1.bin",  0x020000, 0x10000, 0x118b1f2d )
-	ROM_LOAD( "cc-b-a2.bin",  0x040000, 0x10000, 0x83cebf48 )
-	ROM_LOAD( "cc-b-a3.bin",  0x060000, 0x10000, 0x572903fc )
+	ROM_LOAD( "cc-b-a1.bin",  0x010000, 0x10000, 0x118b1f2d )
+	ROM_LOAD( "cc-b-a2.bin",  0x020000, 0x10000, 0x83cebf48 )
+	ROM_LOAD( "cc-b-a3.bin",  0x030000, 0x10000, 0x572903fc )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc-b-b0.bin",  0x000000, 0x10000, 0x0df5b439 )	/* tiles #2 */
-	ROM_LOAD( "cc-b-b1.bin",  0x020000, 0x10000, 0x010b778f )
-	ROM_LOAD( "cc-b-b2.bin",  0x040000, 0x10000, 0xbda9f6fb )
-	ROM_LOAD( "cc-b-b3.bin",  0x060000, 0x10000, 0xd361ba3f )
+	ROM_LOAD( "cc-b-b1.bin",  0x010000, 0x10000, 0x010b778f )
+	ROM_LOAD( "cc-b-b2.bin",  0x020000, 0x10000, 0xbda9f6fb )
+	ROM_LOAD( "cc-b-b3.bin",  0x030000, 0x10000, 0xd361ba3f )
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc-c-v0.bin",  0x00000, 0x20000, 0x6247bade )

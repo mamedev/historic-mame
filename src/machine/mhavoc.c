@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  majhavoc.c (machine)
+  mhavoc.c (machine)
 
   Functions to emulate general aspects of the machine
   (RAM, ROM, interrupts, I/O ports)
@@ -10,16 +10,20 @@
 #include "vidhrdw/avgdvg.h"
 #include "cpu/m6502/m6502.h"
 
-int gamma_data;
-int alpha_data;
-int alpha_rcvd;
-int alpha_xmtd;
-int gamma_rcvd;
-int gamma_xmtd;
+static int gamma_data;
+static int alpha_data;
+static int alpha_rcvd;
+static int alpha_xmtd;
+static int gamma_rcvd;
+static int gamma_xmtd;
 
-int bank_select;
-int player_1;
-int bank1;
+static int bank_select;
+static int player_1;
+
+#define LS161_CLOCK 2*5000
+
+static void *gamma_timer = NULL;
+static void mhavoc_gamma_irq(int param);
 
 void mhavoc_ram_banksel_w (int offset,int data)
 {
@@ -56,13 +60,16 @@ void mhavoc_init_machine (void)
 	gamma_rcvd=0;
 	gamma_xmtd=0;
 	player_1 = 0;
+	if (gamma_timer)
+			timer_remove(gamma_timer);
+	gamma_timer = timer_pulse(TIME_IN_HZ(LS161_CLOCK/16), 0, mhavoc_gamma_irq);
 }
 
 /* Read from the gamma processor */
 int mhavoc_gamma_r (int offset)
 {
 	if (errorlog)
-		fprintf (errorlog, "  reading from gamma processor: %02x\n", gamma_data);
+		fprintf (errorlog, "  reading from gamma processor: %02x (%d %d)\n", gamma_data, alpha_rcvd, gamma_xmtd);
 	alpha_rcvd=1;
 	gamma_xmtd=0;
 	return gamma_data;
@@ -72,7 +79,7 @@ int mhavoc_gamma_r (int offset)
 int mhavoc_alpha_r (int offset)
 {
 	if (errorlog)
-		fprintf (errorlog, "\t\t\t\t\treading from alpha processor: %02x\n", alpha_data);
+		fprintf (errorlog, "\t\t\t\t\treading from alpha processor: %02x (%d %d)\n", alpha_data, gamma_rcvd, alpha_xmtd);
 	gamma_rcvd=1;
 	alpha_xmtd=0;
 	return alpha_data;
@@ -82,13 +89,13 @@ int mhavoc_alpha_r (int offset)
 void mhavoc_gamma_w (int offset, int data)
 {
 	if (errorlog)
-		fprintf (errorlog, "  writing to gamma processor: %02x\n", data);
+		fprintf (errorlog, "  writing to gamma processor: %02x (%d %d)\n", data, gamma_rcvd, alpha_xmtd);
 	gamma_rcvd=0;
 	alpha_xmtd=1;
 	alpha_data = data;
 	cpu_cause_interrupt (1, M6502_INT_NMI);
 
-	/* the sound CPU needs to reply in 250ms (according to Neil Bradley) */
+	/* the sound CPU needs to reply in 250microseconds (according to Neil Bradley) */
 	timer_set (TIME_IN_USEC(250), 0, 0);
 }
 
@@ -96,7 +103,7 @@ void mhavoc_gamma_w (int offset, int data)
 void mhavoc_alpha_w (int offset, int data)
 {
 	if (errorlog)
-		fprintf (errorlog, "\t\t\t\t\twriting to alpha processor: %02x\n", data);
+		fprintf (errorlog, "\t\t\t\t\twriting to alpha processor: %02x %d %d\n", data, alpha_rcvd, gamma_xmtd);
 	alpha_rcvd=0;
 	gamma_xmtd=1;
 	gamma_data = data;
@@ -175,4 +182,15 @@ void mhavoc_out_1_w (int offset, int data)
 {
 	osd_led_w (1, data & 0x01);
 	osd_led_w (0, (data & 0x02)>>1);
+}
+
+static void mhavoc_gamma_irq(int param)
+{
+	cpu_set_irq_line(1,0,HOLD_LINE);
+}
+
+void mhavoc_irqack_w (int offset, int data)
+{
+	timer_reset( gamma_timer, TIME_IN_HZ(LS161_CLOCK/16));
+	cpu_set_irq_line(1,0,CLEAR_LINE);
 }

@@ -14,9 +14,14 @@
 #include <signal.h>
 #include <time.h>
 #include <ctype.h>
+#include "ticker.h"
 
 #ifdef MESS
 #include "mess/msdos.h"
+/* from msdos/config.c */
+extern char *crcdir;
+static char crcfilename[256] = "";
+const char *crcfile = crcfilename;
 #endif
 
 
@@ -153,13 +158,6 @@ int main (int argc, char **argv)
     set_config_file ("mame.cfg");
 	#endif
 
-	/* Initialize the audio library */
-	if (msdos_init_seal())
-	{
-		printf ("Unable to initialize SEAL\n");
-		return (1);
-	}
-
 	/* check for frontend options */
 	res = frontend_help (argc, argv);
 
@@ -167,8 +165,17 @@ int main (int argc, char **argv)
 	if (res != 1234)
 		exit (res);
 
+	/* Initialize the audio library */
+	if (msdos_init_seal())
+	{
+		printf ("Unable to initialize SEAL\n");
+		return (1);
+	}
+
+	init_ticker();	/* after Allegro init because we use cpu_cpuid */
+
     /* handle playback which is not available in mame.cfg */
-    init_inpdir(); /* Init input directory for opening .inp for playback */
+	init_inpdir(); /* Init input directory for opening .inp for playback */
 
     if (playbackname != NULL)
         options.playback = osd_fopen(playbackname,0,OSD_FILETYPE_INPUTLOG,0);
@@ -328,7 +335,12 @@ int main (int argc, char **argv)
         osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
     }
 
-	/* go for it */
+	#ifdef MESS
+	/* Build the CRC database filename */
+	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+    #endif
+
+    /* go for it */
 	res = run_game (game_index);
 
 	/* close open files */

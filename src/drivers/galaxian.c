@@ -1682,9 +1682,9 @@ INPUT_PORTS_END
 static struct GfxLayout galaxian_charlayout =
 {
 	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
+	RGN_FRAC(1,2),
 	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -1692,58 +1692,34 @@ static struct GfxLayout galaxian_charlayout =
 static struct GfxLayout galaxian_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
+	RGN_FRAC(1,2),	/* 64 sprites */
+	2,	/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+
+static struct GfxLayout pacmanbl_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	256,	/* 256 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout pacmanbl_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 64*16*16 },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-/* twice as many characters and sprites */
-static struct GfxLayout pisces_charlayout =
-{
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout pisces_spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 128*16*16 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxLayout jumpbug_charlayout =
-{
-	8,8,	/* 8*8 characters */
-	768,	/* 768 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 768*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout jumpbug_spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	192,	/* 192 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 192*16*16 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-	  8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
@@ -1792,23 +1768,7 @@ static struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
 	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
-static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x0000, &pisces_charlayout,      0, 8 },
-	{ REGION_GFX1, 0x0000, &pisces_spritelayout,    0, 8 },
-	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
-	{ -1 } /* end of array */
-};
-/* seperate character and sprite ROMs */
-static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x0000, &galaxian_charlayout,    0, 8 },
-	{ REGION_GFX1, 0x1000, &galaxian_spritelayout,  0, 8 },
-	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
-	{ -1 } /* end of array */
-};
+
 static struct GfxDecodeInfo scramble_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &galaxian_charlayout,    0, 8 },
@@ -1818,10 +1778,12 @@ static struct GfxDecodeInfo scramble_gfxdecodeinfo[] =
 	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
-static struct GfxDecodeInfo jumpbug_gfxdecodeinfo[] =
+
+/* separate character and sprite ROMs */
+static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &jumpbug_charlayout,     0, 8 },
-	{ REGION_GFX1, 0x0000, &jumpbug_spritelayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &pacmanbl_charlayout,    0, 8 },
+	{ REGION_GFX1, 0x1000, &pacmanbl_spritelayout,  0, 8 },
 	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
 	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
@@ -1907,14 +1869,14 @@ static struct MachineDriver machine_driver_##NAME =								\
 MACHINE_DRIVER(galaxian, galaxian, galaxian,  machine_init_galaxian, galaxian,  galaxian)
 MACHINE_DRIVER(warofbug, galaxian, galaxian,  0,                     galaxian,  galaxian)
 MACHINE_DRIVER(galapx,   galaxian, galaxian,  machine_init_galapx,   galaxian,  galaxian)
-MACHINE_DRIVER(pisces,   galaxian, galaxian,  0,                     pisces,    pisces)
-MACHINE_DRIVER(mooncrgx, galaxian, galaxian,  0,                     pisces,    mooncrgx)
+MACHINE_DRIVER(pisces,   galaxian, galaxian,  0,                     galaxian,  pisces)
+MACHINE_DRIVER(mooncrgx, galaxian, galaxian,  0,                     galaxian,  mooncrgx)
 MACHINE_DRIVER(pacmanbl, galaxian, galaxian,  0,                     pacmanbl,  galaxian)
 MACHINE_DRIVER(devilfsg, galaxian, devilfsg,  0,                     pacmanbl,  galaxian)
 MACHINE_DRIVER(azurian,  galaxian, galaxian,  0,                     scramble,  galaxian)
 MACHINE_DRIVER(scramblb, scramblb, scramble,  0,                     scramble,  scramble)
-MACHINE_DRIVER(mooncrst, mooncrst, galaxian,  0,                     pisces,  	mooncrst)
-MACHINE_DRIVER(moonqsr,  mooncrst, galaxian,  0,                     pisces,  	moonqsr)
+MACHINE_DRIVER(mooncrst, mooncrst, galaxian,  0,                     galaxian, 	mooncrst)
+MACHINE_DRIVER(moonqsr,  mooncrst, galaxian,  0,                     galaxian, 	moonqsr)
 
 
 static struct MachineDriver machine_driver_zigzag =
@@ -1971,7 +1933,7 @@ static struct MachineDriver machine_driver_jumpbug =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	jumpbug_gfxdecodeinfo,
+	galaxian_gfxdecodeinfo,
 	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
@@ -2015,7 +1977,7 @@ static struct MachineDriver machine_driver_checkman =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pisces_gfxdecodeinfo,
+	galaxian_gfxdecodeinfo,
 	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
@@ -2107,7 +2069,7 @@ static struct MachineDriver machine_driver_kingball =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pisces_gfxdecodeinfo,
+	galaxian_gfxdecodeinfo,
 	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 

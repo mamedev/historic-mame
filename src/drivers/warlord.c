@@ -184,16 +184,16 @@ INPUT_PORTS_START( warlord )
 
     /* IN4-7 fake to control player paddles */
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER1, 50, 10, 32, 0x1d, 0xcb )
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER1, 50, 10, 0x1d, 0xcb )
 
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER2, 50, 10, 32, 0x1d, 0xcb )
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER2, 50, 10, 0x1d, 0xcb )
 
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER3, 50, 10, 32, 0x1d, 0xcb )
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER3, 50, 10, 0x1d, 0xcb )
 
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER4, 50, 10, 32, 0x1d, 0xcb )
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER4, 50, 10, 0x1d, 0xcb )
 INPUT_PORTS_END
 
 
@@ -224,8 +224,6 @@ static struct POKEYinterface pokey_interface =
 	1,	/* 1 chip */
 	12096000/8,	/* 1.512 MHz */
 	{ 100 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ input_port_4_r },
 	{ input_port_5_r },

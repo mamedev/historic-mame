@@ -488,6 +488,13 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 }
 
 
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+extern int no_of_tiles;
+extern struct GameDriver driver_neogeo;
+#endif
+#endif
+
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
 	if (use_hotrod)
@@ -497,20 +504,62 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 			int j;
 			for(j=0;j<SEQ_MAX;++j)
 			{
-				if (defaults->seq[j] == KEYCODE_UP) defaults->seq[j] = KEY_8_PAD;
-				if (defaults->seq[j] == KEYCODE_DOWN) defaults->seq[j] = KEY_2_PAD;
-				if (defaults->seq[j] == KEYCODE_LEFT) defaults->seq[j] = KEY_4_PAD;
-				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEY_6_PAD;
+				if (defaults->seq[j] == KEYCODE_UP) defaults->seq[j] = KEYCODE_8_PAD;
+				if (defaults->seq[j] == KEYCODE_DOWN) defaults->seq[j] = KEYCODE_2_PAD;
+				if (defaults->seq[j] == KEYCODE_LEFT) defaults->seq[j] = KEYCODE_4_PAD;
+				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
 			}
-			if (defaults->type == IPT_UI_SELECT) seq_set_1(&defaults->seq, KEY_LCONTROL);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_R);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_F);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_D);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_G);
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_8_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_2_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_4_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEY_6_PAD);
+			if (defaults->type == IPT_UI_SELECT) seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
+			if (defaults->type == IPT_START1) seq_set_1(&defaults->seq, KEYCODE_1);
+			if (defaults->type == IPT_START2) seq_set_1(&defaults->seq, KEYCODE_2);
+			if (defaults->type == IPT_COIN1)  seq_set_1(&defaults->seq, KEYCODE_3);
+			if (defaults->type == IPT_COIN2)  seq_set_1(&defaults->seq, KEYCODE_4);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_R);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_F);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_D);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_G);
+			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_8_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_2_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_4_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_6_PAD);
+			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LCONTROL);
+			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LALT);
+			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_SPACE);
+			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);
+			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_Z);
+			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_X);
+			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_A);
+			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_S);
+			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_Q);
+			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_W);
+			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_E);
+			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_OPENBRACE);
+
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+			if (Machine->gamedrv->clone_of == &driver_neogeo ||
+					(Machine->gamedrv->clone_of &&
+						Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
+			{
+				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_C);
+				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);
+				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_Z);
+				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_X);
+				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_CLOSEBRACE);
+				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_W);
+				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_E);
+				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_OPENBRACE);
+				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+			}
+#endif
+#endif
 
 			defaults++;
 		}

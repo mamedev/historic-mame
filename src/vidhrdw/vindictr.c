@@ -64,20 +64,6 @@
 
 /*************************************
  *
- *	Structures
- *
- *************************************/
-
-struct mo_data
-{
-	struct osd_bitmap *bitmap;
-	UINT8 shade_table[256];
-};
-
-
-
-/*************************************
- *
  *	Statics
  *
  *************************************/
@@ -92,7 +78,7 @@ static struct atarigen_pf_state pf_state;
  *
  *************************************/
 
-static const UINT8 *update_palette(UINT8 *shade_table);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
@@ -130,14 +116,8 @@ int vindictr_vh_start(void)
 		64, 64				/* number of tiles in each direction */
 	};
 
-	int i;
-
 	/* reset statics */
 	memset(&pf_state, 0, sizeof(pf_state));
-
-	/* initialize the shading colors */
-	for (i = 0; i < 32; i++)
-		palette_change_color(i + 2048, i * 128 / 31, i * 128 / 31, i * 128 / 31);
 
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
@@ -272,14 +252,12 @@ void vindictr_scanline_update(int scanline)
 
 void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	struct mo_data modata;
-
 #if DEBUG_VIDEO
 	int xorval = debug();
 #endif
 
 	/* update the palette, and mark things dirty */
-	if (update_palette(modata.shade_table))
+	if (update_palette())
 		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
 
 	/* draw the playfield */
@@ -287,8 +265,7 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
 
 	/* draw the motion objects */
-	modata.bitmap = bitmap;
-	atarigen_mo_process(mo_render_callback, &modata);
+	atarigen_mo_process(mo_render_callback, bitmap);
 
 	/* draw the alphanumerics */
 	{
@@ -322,10 +299,9 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-static const UINT8 *update_palette(UINT8 *shade_table)
+static const UINT8 *update_palette(void)
 {
 	UINT16 pf_map[16], al_map[64], mo_map[16];
-	const UINT8 *result;
 	int i, j;
 
 	/* reset color tracking */
@@ -333,9 +309,6 @@ static const UINT8 *update_palette(UINT8 *shade_table)
 	memset(pf_map, 0, sizeof(pf_map));
 	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
-
-	/* always count the shading colors */
-	memset(&palette_used_colors[2048], PALETTE_COLOR_USED, 32);
 
 	/* update color usage for the playfield */
 	atarigen_pf_process(pf_color_callback, pf_map, &Machine->drv->visible_area);
@@ -375,7 +348,8 @@ static const UINT8 *update_palette(UINT8 *shade_table)
 		if (used)
 		{
 			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
-			for (j = 1; j < 16; j++)
+			palette_used_colors[0x100 + i * 16 + 1] = PALETTE_COLOR_TRANSPARENT;
+			for (j = 2; j < 16; j++)
 				if (used & (1 << j))
 					palette_used_colors[0x100 + i * 16 + j] = PALETTE_COLOR_USED;
 		}
@@ -392,19 +366,7 @@ static const UINT8 *update_palette(UINT8 *shade_table)
 	}
 
 	/* recalc */
-	result = palette_recalc();
-
-	/* build the shading lookup table */
-	for (i = 0; i < 256; i++)
-	{
-		UINT8 r, g, b;
-		int y;
-		osd_get_pen(i, &r, &g, &b);
-		y = (r * 10 + g * 18 + b * 4) >> 8;
-		shade_table[i] = Machine->pens[2048 + y];
-	}
-
-	return result;
+	return palette_recalc();
 }
 
 
@@ -428,7 +390,8 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int code = data & 0xfff;
 			int color = (data >> 11) & 14;
-			colormap[color + 0] |= usage[code];
+			colormap[color] |= usage[code];
+			colormap[color ^ 1] |= usage[code];
 
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
@@ -482,6 +445,42 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
+ *	Playfield overrendering
+ *
+ *************************************/
+
+static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = param;
+	int bank = state->param[0];
+	int x, y;
+
+	/* first update any tiles whose color is out of date */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+	{
+		int sy = (8 * y - state->vscroll) & 0x1ff;
+		if (sy >= YDIM) sy -= 0x200;
+
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
+		{
+			int offs = x * 64 + y;
+			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
+			int color = (16 + ((data >> 11) & 14)) ^ 1;
+			int code = bank * 0x1000 + (data & 0xfff);
+			int hflip = data & 0x8000;
+			int sx = (8 * x - state->hscroll) & 0x1ff;
+			if (sx >= XDIM) sx -= 0x200;
+
+			drawgfx(bitmap, gfx, code, color, hflip, 0, sx, sy, 0, TRANSPARENCY_THROUGH, palette_transparent_pen);
+		}
+	}
+}
+
+
+
+/*************************************
+ *
  *	Motion object palette
  *
  *************************************/
@@ -515,8 +514,9 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	const unsigned int *usage = gfx->pen_usage;
-	const struct mo_data *modata = param;
-	struct osd_bitmap *bitmap = modata->bitmap;
+	struct osd_bitmap *bitmap = param;
+	unsigned int total_usage = 0;
+	struct rectangle pf_clip;
 	int x, y, sx, sy;
 
 	/* extract data from the various words */
@@ -537,6 +537,9 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 	ypos &= 0x1ff;
 	if (xpos >= XDIM) xpos -= 0x200;
 	if (ypos >= YDIM) ypos -= 0x200;
+
+	/* determine the bounding box */
+	atarigen_mo_compute_clip_8x8(pf_clip, xpos, ypos, hsize, vsize, clip);
 
 	/* adjust for h flip */
 	if (hflip)
@@ -564,11 +567,14 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 				continue;
 
 			/* draw the sprite */
-			drawgfx(bitmap, gfx, code, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PENS, 0x0003);
-			if (usage[code] & 0x0002)
-				atarigen_shade_render(bitmap, gfx, code, hflip, sx, sy, clip, modata->shade_table);
+			drawgfx(bitmap, gfx, code, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PEN, 0);
+			total_usage |= usage[code];
 		}
 	}
+
+	/* overrender the playfield */
+	if (total_usage & 0x0002)
+		atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
 }
 
 
@@ -581,7 +587,7 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 #if DEBUG_VIDEO
 
-static void mo_print(struct osd_bitmap *bitmap, struct rectangle *clip, UINT16 *data, void *param)
+static void mo_print(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	int code = data[0] & 0x7fff;
 	int hsize = ((data[2] >> 3) & 7) + 1;

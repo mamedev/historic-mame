@@ -20,6 +20,9 @@ static int FMMode;
 #define CHIP_YM2151_DAC 4	/* use Tatsuyuki's FM.C */
 #define CHIP_YM2151_ALT 5	/* use Jarek's YM2151.C */
 
+
+#if (HAS_YM2151)
+
 #define YM2151_NUMBUF 2
 
 static void *Timer[MAX_2151][2];
@@ -61,11 +64,17 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	}
 }
 
+#endif
+
+#if (HAS_YM2151_ALT)
+
 /* update request from fm.c */
 void YM2151UpdateRequest(int chip)
 {
 	stream_update(stream[chip],0);
 }
+
+#endif
 
 static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 {
@@ -84,6 +93,7 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:	/* Tatsuyuki's */
 		/* stream system initialize */
 		for (i = 0;i < intf->num;i++)
@@ -112,6 +122,8 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 		}
 		/* error */
 		return 1;
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:	/* Jarek's */
 		/* stream system initialize */
 		for (i = 0;i < intf->num;i++)
@@ -138,30 +150,38 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 			return 0;
 		}
 		return 1;
+#endif
 	}
 	return 1;
 }
 
+#if (HAS_YM2151)
 int YM2151_sh_start(const struct MachineSound *msound)
 {
 	return my_YM2151_sh_start(msound,0);
 }
-
+#endif
+#if (HAS_YM2151_ALT)
 int YM2151_ALT_sh_start(const struct MachineSound *msound)
 {
 	return my_YM2151_sh_start(msound,1);
 }
+#endif
 
 void YM2151_sh_stop(void)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		OPMShutdown();
 		break;
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		YM2151Shutdown();
 		break;
+#endif
 	}
 }
 
@@ -172,12 +192,16 @@ void YM2151_sh_reset(void)
 	for (i = 0;i < intf->num;i++)
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		OPMResetChip(i);
 		break;
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		YM2151ResetChip(i);
 		break;
+#endif
 	}
 
 }
@@ -188,10 +212,14 @@ int YM2151_status_port_0_r(int offset)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		return YM2151Read(0,1);
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		return YM2151ReadStatus(0);
+#endif
 	}
 	return 0;
 }
@@ -200,10 +228,14 @@ int YM2151_status_port_1_r(int offset)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		return YM2151Read(1,1);
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		return YM2151ReadStatus(1);
+#endif
 	}
 	return 0;
 }
@@ -212,10 +244,14 @@ int YM2151_status_port_2_r(int offset)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		return YM2151Read(2,1);
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		return YM2151ReadStatus(2);
+#endif
 	}
 	return 0;
 }
@@ -237,14 +273,18 @@ void YM2151_data_port_0_w(int offset,int data)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		YM2151Write(0,0,lastreg0);
 		YM2151Write(0,1,data);
 		break;
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		YM2151UpdateRequest(0);
 		YM2151WriteReg(0,lastreg0,data);
 		break;
+#endif
 	}
 }
 
@@ -252,14 +292,18 @@ void YM2151_data_port_1_w(int offset,int data)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		YM2151Write(1,0,lastreg1);
 		YM2151Write(1,1,data);
 		break;
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		YM2151UpdateRequest(1);
 		YM2151WriteReg(1,lastreg1,data);
 		break;
+#endif
 	}
 }
 
@@ -267,13 +311,17 @@ void YM2151_data_port_2_w(int offset,int data)
 {
 	switch(FMMode)
 	{
+#if (HAS_YM2151)
 	case CHIP_YM2151_DAC:
 		YM2151Write(2,0,lastreg2);
 		YM2151Write(2,1,data);
 		break;
+#endif
+#if (HAS_YM2151_ALT)
 	case CHIP_YM2151_ALT:
 		YM2151UpdateRequest(2);
 		YM2151WriteReg(2,lastreg2,data);
 		break;
+#endif
 	}
 }

@@ -239,12 +239,15 @@ int VLM5030_clock(const struct MachineSound *msound) { return ((struct VLM5030in
 #if (HAS_TMS5220)
 int TMS5220_clock(const struct MachineSound *msound) { return ((struct TMS5220interface*)msound->sound_interface)->baseclock; }
 #endif
-#if (HAS_YM2151)
+#if (HAS_YM2151 || HAS_YM2151_ALT)
 int YM2151_clock(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->baseclock; }
 int YM2151_num(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_NES)
 int NES_num(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_SN76477)
+int SN76477_num(const struct MachineSound *msound) { return ((struct SN76477interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_SN76496)
 int SN76496_clock(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->baseclock[0]; }
@@ -268,6 +271,12 @@ int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_i
 #endif
 #if (HAS_QSOUND)
 int qsound_clock(const struct MachineSound *msound) { return ((struct QSound_interface*)msound->sound_interface)->clock; }
+#endif
+#if (HAS_SPEAKER)
+int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_WAVE)
+int wave_num(const struct MachineSound *msound) { return ((struct Wave_interface*)msound->sound_interface)->num; }
 #endif
 
 struct snd_interface sndintf[] =
@@ -356,8 +365,8 @@ struct snd_interface sndintf[] =
 #endif
 #if (HAS_YM2151_ALT)
     {
-		SOUND_YM2151_ALT,
-		"YM-2151a",
+		SOUND_YM2151,
+		"YM-2151",
 		YM2151_num,
 		YM2151_clock,
 		YM2151_ALT_sh_start,
@@ -474,6 +483,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_SN76477)
+    {
+		SOUND_SN76477,
+		"SN76477",
+		SN76477_num,
+		0,
+		SN76477_sh_start,
+		SN76477_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_SN76496)
     {
 		SOUND_SN76496,
@@ -481,8 +502,7 @@ struct snd_interface sndintf[] =
 		SN76496_num,
 		SN76496_clock,
 		SN76496_sh_start,
-		0,
-		0,
+        0,
 		0
 	},
 #endif
@@ -738,6 +758,30 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_SPEAKER)
+	{
+		SOUND_SPEAKER,
+		"Speaker",
+		speaker_num,
+		0,
+		speaker_sh_start,
+		speaker_sh_stop,
+		speaker_sh_update,
+		0
+	},
+#endif
+#if (HAS_WAVE)
+	{
+		SOUND_WAVE,
+		"Cassette",
+		wave_num,
+		0,
+		wave_sh_start,
+		wave_sh_stop,
+		wave_sh_update,
+		0
+	},
+#endif
 };
 
 
@@ -761,6 +805,10 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 	/* samples will be read later if needed */
 	Machine->samples = 0;
 
+	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
+	refresh_period_inv = 1.0 / refresh_period;
+	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
+
 	if (mixer_sh_start() != 0)
 		return 1;
 
@@ -774,10 +822,6 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 
 		totalsound++;
 	}
-
-	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
-	refresh_period_inv = 1.0 / refresh_period;
-	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
 
 	return 0;
 

@@ -311,13 +311,13 @@ static struct MachineDriver machine_driver_thunderj =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},

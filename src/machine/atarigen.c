@@ -1566,6 +1566,7 @@ struct atarigen_rle_descriptor *atarigen_rle_info;
 
 /* statics */
 static UINT8 rle_region;
+static UINT8 rle_bpp[8];
 static UINT16 *rle_table[8];
 static UINT16 *rle_colortable;
 
@@ -1720,6 +1721,11 @@ static int build_rle_tables(void)
 	rle_table[2] = rle_table[3] = &base[0x200];
 	rle_table[4] = rle_table[6] = &base[0x300];
 	rle_table[5] = rle_table[7] = &base[0x400];
+	
+	/* set the bpps */
+	rle_bpp[0] = 4;
+	rle_bpp[1] = rle_bpp[2] = rle_bpp[3] = 5;
+	rle_bpp[4] = rle_bpp[5] = rle_bpp[6] = rle_bpp[7] = 6;
 
 	/* build the 4bpp table */
 	for (i = 0; i < 256; i++)
@@ -1776,7 +1782,7 @@ static void prescan_rle(int which)
 
 	/* determine the depth and table */
 	flags = base[2];
-	rle_data->bpp = (flags & 0x0200) ? 5 : (flags & 0x0400) ? 6 : 4;
+	rle_data->bpp = rle_bpp[(flags >> 8) & 7];
 	table = rle_data->table = rle_table[(flags >> 8) & 7];
 
 	/* determine the starting offset */
@@ -3014,7 +3020,6 @@ static int compute_mask(int count)
 		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
 		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
 		atarigen_expanded_666_paletteram_w - byte version of above
-		atarigen_shade_render - Vindicators shading renderer
 
 --------------------------------------------------------------------------*/
 
@@ -3120,58 +3125,6 @@ void atarigen_expanded_666_paletteram_w(int offset, int data)
 	}
 }
 
-
-/*
- *	Vindicators shading renderer
- *
- *	Special shading renderer that runs any pixels under pen 1 through a lookup table.
- *
- */
-
-void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const UINT8 *shade_table)
-{
-	UINT8 *base = gfx->gfxdata + code * gfx->char_modulo;
-	int width = gfx->width;
-	int height = gfx->height;
-	int i, j, diff, xoff = 0;
-
-	/* apply X clipping */
-	diff = clip->min_x - x;
-	if (diff > 0)
-		xoff += diff, x += diff, width -= diff;
-	diff = x + width - clip->max_x;
-	if (diff > 0)
-		width -= diff;
-
-	/* apply Y clipping */
-	diff = clip->min_y - y;
-	if (diff > 0)
-		base += gfx->line_modulo * diff, y += diff, height -= diff;
-	diff = y + height - clip->max_y;
-	if (diff > 0)
-		height -= diff;
-
-	/* loop over the data */
-	for (i = 0; i < height; i++, y++, base += gfx->line_modulo)
-	{
-		const UINT8 *src = &base[xoff];
-		UINT8 *dst = &bitmap->line[y][x + xoff];
-
-		if (hflip)
-		{
-			src += width;
-			for (j = 0; j < width; j++, dst++)
-				if (*--src == 1)
-					*dst = shade_table[*dst];
-		}
-		else
-		{
-			for (j = 0; j < width; j++, dst++)
-				if (*src++ == 1)
-					*dst = shade_table[*dst];
-		}
-	}
-}
 
 /*
  *	CPU unhalter

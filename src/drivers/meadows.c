@@ -344,7 +344,7 @@ INPUT_PORTS_START( meadows )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* IN1 control 1 */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0x10, 0xf0 )
 
 	PORT_START		/* IN2 dip switch */
 	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Lives ) )

@@ -234,7 +234,7 @@ static struct MachineDriver machine_driver_xybots =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},

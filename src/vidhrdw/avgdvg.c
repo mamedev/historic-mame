@@ -910,6 +910,7 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 #define VEC_PAL_BZONE	3
 #define VEC_PAL_MULTI	4
 #define VEC_PAL_SWARS	5
+#define VEC_PAL_ASTDELUX	6
 
 /* Helper function to construct the color palette for the Atari vector
  * games. DO NOT reference this function from the Gamedriver or
@@ -945,7 +946,7 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 			break;
 
 		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
-		case  VEC_PAL_AQUA:
+		case  VEC_PAL_ASTDELUX:
 			/* Use backdrop if present MLR OCT0598 */
 			if ((backdrop=artwork_load("astdelux.png", 32, Machine->drv->total_colors-32))!=NULL)
 			{
@@ -960,6 +961,10 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 			else
 				shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
 			colorram[1] =  3; /* for Asteroids */
+			break;
+
+		case  VEC_PAL_AQUA:
+			shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
 			colorram[0] =  3; /* for Red Baron */
 			break;
 
@@ -1016,11 +1021,12 @@ void avg_init_palette_##name## (unsigned char *palette, unsigned short *colortab
 { avg_init_palette (##paltype##, palette, colortable, color_prom); }
 
 /* The functions referenced from gamedriver */
-VEC_PAL_INIT(white, VEC_PAL_WHITE)
-VEC_PAL_INIT(aqua , VEC_PAL_AQUA )
-VEC_PAL_INIT(bzone, VEC_PAL_BZONE)
-VEC_PAL_INIT(multi, VEC_PAL_MULTI)
-VEC_PAL_INIT(swars, VEC_PAL_SWARS)
+VEC_PAL_INIT(white,    VEC_PAL_WHITE)
+VEC_PAL_INIT(aqua ,    VEC_PAL_AQUA )
+VEC_PAL_INIT(bzone,    VEC_PAL_BZONE)
+VEC_PAL_INIT(multi,    VEC_PAL_MULTI)
+VEC_PAL_INIT(swars,    VEC_PAL_SWARS)
+VEC_PAL_INIT(astdelux, VEC_PAL_ASTDELUX )
 
 
 /* If you want to use the next two functions, please make sure that you have

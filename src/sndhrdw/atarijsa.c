@@ -231,8 +231,12 @@ static void jsa1_io_w(int offset, int data)
 			/* handle TMS5220 I/O */
 			if (has_tms5220)
 			{
+				int count;
+
 				if (((data ^ last_ctl) & 0x02) && (data & 0x02))
 					tms5220_data_w(0, speech_data);
+				count = 5 | ((data >> 2) & 2);
+				tms5220_set_frequency(ATARI_CLOCK_14MHz/2 / (16 - count));
 			}
 
 			/* update the bank */
@@ -352,6 +356,9 @@ static void jsa2_io_w(int offset, int data)
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
+
+			/* update the OKI frequency */
+			OKIM6295_set_frequency(0, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -363,7 +370,7 @@ static void jsa2_io_w(int offset, int data)
 				0x01 = OKI6295 volume (0-1)
 			*/
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
-			oki6295_volume = (data & 1) * 100;
+			oki6295_volume = 50 + (data & 1) * 50;
 			update_all_volumes();
 			break;
 	}
@@ -470,6 +477,9 @@ static void jsa3_io_w(int offset, int data)
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
+
+			/* update the OKI frequency */
+			OKIM6295_set_frequency(0, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -487,7 +497,146 @@ static void jsa3_io_w(int offset, int data)
 
 			/* update the volumes */
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
-			oki6295_volume = (data & 1) * 100;
+			oki6295_volume = 50 + (data & 1) * 50;
+			update_all_volumes();
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	JSA IIIS I/O handlers
+ *
+ *************************************/
+
+static int jsa3s_io_r(int offset)
+{
+	int result = 0xff;
+
+	switch (offset & 0x206)
+	{
+		case 0x000:		/* /RDV */
+			if (has_oki6295)
+			{
+				if (offset & 1)
+					result = OKIM6295_status_1_r(offset);
+				else
+					result = OKIM6295_status_0_r(offset);
+			}
+			break;
+
+		case 0x002:		/* /RDP */
+			result = atarigen_6502_sound_r(offset);
+			break;
+
+		case 0x004:		/* /RDIO */
+			/*
+				0x80 = self test (active high)
+				0x40 = NMI line state (active high)
+				0x20 = sound output full (active high)
+				0x10 = self test (active high)
+				0x08 = service (active high)
+				0x04 = tilt (active high)
+				0x02 = coin L (active high)
+				0x01 = coin R (active high)
+			*/
+			result = readinputport(input_port);
+			if (!(readinputport(test_port) & test_mask)) result ^= 0x90;
+			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
+			if (atarigen_sound_to_cpu_ready) result ^= 0x20;
+			break;
+
+		case 0x006:		/* /IRQACK */
+			atarigen_6502_irq_ack_r(0);
+			break;
+
+		case 0x200:		/* /WRV */
+		case 0x202:		/* /WRP */
+		case 0x204:		/* /WRIO */
+		case 0x206:		/* /MIX */
+			if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+			break;
+	}
+
+	return result;
+}
+
+
+static void jsa3s_io_w(int offset, int data)
+{
+	switch (offset & 0x206)
+	{
+		case 0x000:		/* /RDV */
+			overall_volume = data * 100 / 127;
+			update_all_volumes();
+			break;
+
+		case 0x002:		/* /RDP */
+		case 0x004:		/* /RDIO */
+			if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			break;
+
+		case 0x006:		/* /IRQACK */
+			atarigen_6502_irq_ack_r(0);
+			break;
+
+		case 0x200:		/* /WRV */
+			if (has_oki6295)
+			{
+				if (offset & 1)
+					OKIM6295_data_1_w(offset, data);
+				else
+					OKIM6295_data_0_w(offset, data);
+			}
+			break;
+
+		case 0x202:		/* /WRP */
+			atarigen_6502_sound_w(offset, data);
+			break;
+
+		case 0x204:		/* /WRIO */
+			/*
+				0xc0 = bank address
+				0x20 = coin counter 2
+				0x10 = coin counter 1
+				0x08 = voice frequency (tweaks the OKI6295 frequency)
+				0x04 = OKI6295 reset (active low)
+				0x02 = left OKI6295 bank bit 0
+				0x01 = YM2151 reset (active low)
+			*/
+
+			/* update the OKI bank */
+			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
+			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
+
+			/* update the bank */
+			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
+			last_ctl = data;
+
+			/* update the OKI frequency */
+			OKIM6295_set_frequency(0, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_frequency(1, ALL_VOICES, ATARI_CLOCK_14MHz/4/3 / ((data & 8) ? 132 : 165));
+			break;
+
+		case 0x206:		/* /MIX */
+			/*
+				0xc0 = right OKI6295 bank bits 0-1
+				0x20 = low-pass filter enable
+				0x10 = left OKI6295 bank bit 1
+				0x0e = YM2151 volume (0-7)
+				0x01 = OKI6295 volume (0-1)
+			*/
+
+			/* update the OKI bank */
+			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
+			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
+			OKIM6295_set_bank_base(1, ALL_VOICES, 0x40000 * (data >> 6));
+
+			/* update the volumes */
+			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
+			oki6295_volume = 50 + (data & 1) * 50;
 			update_all_volumes();
 			break;
 	}
@@ -580,6 +729,27 @@ struct MemoryWriteAddress atarijsa3_writemem[] =
 };
 
 
+struct MemoryReadAddress atarijsa3s_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2001, YM2151_status_port_0_r },
+	{ 0x2800, 0x2bff, jsa3s_io_r },
+	{ 0x3000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryWriteAddress atarijsa3s_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x2800, 0x2bff, jsa3s_io_w },
+	{ 0x3000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
 
 /*************************************
  *
@@ -589,26 +759,24 @@ struct MemoryWriteAddress atarijsa3_writemem[] =
 
 struct TMS5220interface atarijsa_tms5220_interface =
 {
-	640000,     /* clock speed (80*samplerate) */
-	100,        /* volume */
-	0 			/* irq handler */
+	ATARI_CLOCK_14MHz/2/11,	/* potentially ATARI_CLOCK_14MHz/2/9 as well */
+	100,
+	0
 };
 
 
 struct POKEYinterface atarijsa_pokey_interface =
 {
 	1,			/* 1 chip */
-	1789790,
+	ATARI_CLOCK_14MHz/8,
 	{ 40 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP
 };
 
 
 struct YM2151interface atarijsa_ym2151_interface_mono =
 {
 	1,			/* 1 chip */
-	3579580,
+	ATARI_CLOCK_14MHz/4,
 	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
 	{ atarigen_ym2151_irq_gen }
 };
@@ -617,7 +785,7 @@ struct YM2151interface atarijsa_ym2151_interface_mono =
 struct YM2151interface atarijsa_ym2151_interface_stereo =
 {
 	1,			/* 1 chip */
-	3579580,
+	ATARI_CLOCK_14MHz/4,
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ atarigen_ym2151_irq_gen }
 };
@@ -626,7 +794,16 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 {
 	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ REGION_SOUND1 },	/* memory region */
+	{ ATARI_CLOCK_14MHz/4/3/132 },
+	{ REGION_SOUND1 },
 	{ 75 }
+};
+
+
+struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1 =
+{
+	2, 				/* 2 chips */
+	{ ATARI_CLOCK_14MHz/4/3/132, ATARI_CLOCK_14MHz/4/3/132 },
+	{ REGION_SOUND1, REGION_SOUND1 },
+	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) }
 };

@@ -30,7 +30,7 @@ INLINE unsigned int osd_cycles(void)
 {
 	int result;
 
-	__asm__ (
+	__asm__ __volatile__ (
 		"rdtsc                 \n"	/* load clock cycle counter in eax and edx */
 		:  "=&a" (result)			/* the result has to go in eax */
 		:							/* no inputs */

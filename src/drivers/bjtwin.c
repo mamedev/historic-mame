@@ -2,7 +2,7 @@
 
 Bombjack Twin
 
-driver by Mirko Buffoni
+driver by Mirko Buffoni, Richard Bush
 
 
 Memory layout:

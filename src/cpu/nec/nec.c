@@ -4540,6 +4540,9 @@ unsigned nec_get_reg(int regnum)
 	return 0;
 }
 
+void nec_set_nmi_line(int state);
+void nec_set_irq_line(int irqline, int state);
+
 void nec_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
@@ -4889,195 +4892,6 @@ printf("[%04x:%04x]=%02x\tAW=%04x\tBW=%04x\tCW=%04x\tDW=%04x\n",sregs[CS],I.ip,G
 	return cycles - nec_ICount;
 }
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *nec_v20_info(void *context, int regnum)
-{
-	static char buffer[32][63+1];
-	static int which = 0;
-	nec_Regs *r = context;
-
-	which = ++which % 32;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &I;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
-		case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
-		case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
-		case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
-		case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
-		case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
-		case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
-		case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
-		case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
-		case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
-        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
-        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
-        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
-        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
-		case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
-		case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_FLAGS:
-			r->flags = CompressFlags();
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->flags & 0x8000 ? 'M':'.',
-				r->flags & 0x4000 ? '?':'.',
-				r->flags & 0x2000 ? '?':'.',
-				r->flags & 0x1000 ? '?':'.',
-				r->flags & 0x0800 ? 'O':'.',
-				r->flags & 0x0400 ? 'D':'.',
-				r->flags & 0x0200 ? 'I':'.',
-				r->flags & 0x0100 ? 'T':'.',
-				r->flags & 0x0080 ? 'S':'.',
-				r->flags & 0x0040 ? 'Z':'.',
-				r->flags & 0x0020 ? '?':'.',
-				r->flags & 0x0010 ? 'A':'.',
-				r->flags & 0x0008 ? '?':'.',
-				r->flags & 0x0004 ? 'P':'.',
-				r->flags & 0x0002 ? 'N':'.',
-				r->flags & 0x0001 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "V20";
-		case CPU_INFO_FAMILY: return "NEC V-Series";
-		case CPU_INFO_VERSION: return "1.6";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
-		case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
-	}
-	return buffer[which];
-}
-
-const char *nec_v30_info(void *context, int regnum)
-{
-	static char buffer[32][63+1];
-	static int which = 0;
-	nec_Regs *r = context;
-
-	which = ++which % 32;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &I;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
-		case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
-		case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
-		case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
-		case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
-		case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
-		case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
-		case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
-		case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
-		case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
-        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
-        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
-        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
-        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
-		case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
-		case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_FLAGS:
-			r->flags = CompressFlags();
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->flags & 0x8000 ? 'M':'.',
-				r->flags & 0x4000 ? '?':'.',
-				r->flags & 0x2000 ? '?':'.',
-				r->flags & 0x1000 ? '?':'.',
-				r->flags & 0x0800 ? 'O':'.',
-				r->flags & 0x0400 ? 'D':'.',
-				r->flags & 0x0200 ? 'I':'.',
-				r->flags & 0x0100 ? 'T':'.',
-				r->flags & 0x0080 ? 'S':'.',
-				r->flags & 0x0040 ? 'Z':'.',
-				r->flags & 0x0020 ? '?':'.',
-				r->flags & 0x0010 ? 'A':'.',
-				r->flags & 0x0008 ? '?':'.',
-				r->flags & 0x0004 ? 'P':'.',
-				r->flags & 0x0002 ? 'N':'.',
-				r->flags & 0x0001 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "V30";
-		case CPU_INFO_FAMILY: return "NEC V-Series";
-		case CPU_INFO_VERSION: return "1.6";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
-		case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
-	}
-	return buffer[which];
-}
-
-const char *nec_v33_info(void *context, int regnum)
-{
-	static char buffer[32][63+1];
-	static int which = 0;
-	nec_Regs *r = context;
-
-	which = ++which % 32;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &I;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
-		case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
-		case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
-		case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
-		case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
-		case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
-		case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
-		case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
-		case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
-		case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
-        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
-        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
-        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
-        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
-		case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
-		case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_FLAGS:
-			r->flags = CompressFlags();
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->flags & 0x8000 ? 'M':'.',
-				r->flags & 0x4000 ? '?':'.',
-				r->flags & 0x2000 ? '?':'.',
-				r->flags & 0x1000 ? '?':'.',
-				r->flags & 0x0800 ? 'O':'.',
-				r->flags & 0x0400 ? 'D':'.',
-				r->flags & 0x0200 ? 'I':'.',
-				r->flags & 0x0100 ? 'T':'.',
-				r->flags & 0x0080 ? 'S':'.',
-				r->flags & 0x0040 ? 'Z':'.',
-				r->flags & 0x0020 ? '?':'.',
-				r->flags & 0x0010 ? 'A':'.',
-				r->flags & 0x0008 ? '?':'.',
-				r->flags & 0x0004 ? 'P':'.',
-				r->flags & 0x0002 ? 'N':'.',
-				r->flags & 0x0001 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "V33";
-		case CPU_INFO_FAMILY: return "NEC V-Series";
-		case CPU_INFO_VERSION: return "1.6";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
-		case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
-	}
-	return buffer[which];
-}
-
 
 unsigned nec_dasm(char *buffer, unsigned pc)
 {
@@ -5088,3 +4902,237 @@ unsigned nec_dasm(char *buffer, unsigned pc)
 	return 1;
 #endif
 }
+
+/* Wrappers for the different CPU types */
+void v20_reset(void *param) { nec_reset(param); }
+void v20_exit(void) { nec_exit(); }
+int v20_execute(int cycles) { return nec_execute(cycles); }
+unsigned v20_get_context(void *dst) { return nec_get_context(dst); }
+void v20_set_context(void *src) { nec_set_context(src); }
+unsigned v20_get_pc(void) { return nec_get_pc(); }
+void v20_set_pc(unsigned val) { nec_set_pc(val); }
+unsigned v20_get_sp(void) { return nec_get_sp(); }
+void v20_set_sp(unsigned val) { nec_set_sp(val); }
+unsigned v20_get_reg(int regnum) { return nec_get_reg(regnum); }
+void v20_set_reg(int regnum, unsigned val)	{ nec_set_reg(regnum,val); }
+void v20_set_nmi_line(int state) { nec_set_nmi_line(state); }
+void v20_set_irq_line(int irqline, int state) { nec_set_irq_line(irqline,state); }
+void v20_set_irq_callback(int (*callback)(int irqline)) { nec_set_irq_callback(callback); }
+const char *v20_info(void *context, int regnum)
+{
+    static char buffer[32][63+1];
+    static int which = 0;
+    nec_Regs *r = context;
+
+    which = ++which % 32;
+    buffer[which][0] = '\0';
+    if( !context )
+        r = &I;
+
+    switch( regnum )
+    {
+        case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
+        case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
+        case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
+        case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
+        case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
+        case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
+        case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
+        case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
+        case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
+        case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
+        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
+        case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
+        case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+        case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+        case CPU_INFO_FLAGS:
+            r->flags = CompressFlags();
+            sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+                r->flags & 0x8000 ? 'M':'.',
+                r->flags & 0x4000 ? '?':'.',
+                r->flags & 0x2000 ? '?':'.',
+                r->flags & 0x1000 ? '?':'.',
+                r->flags & 0x0800 ? 'O':'.',
+                r->flags & 0x0400 ? 'D':'.',
+                r->flags & 0x0200 ? 'I':'.',
+                r->flags & 0x0100 ? 'T':'.',
+                r->flags & 0x0080 ? 'S':'.',
+                r->flags & 0x0040 ? 'Z':'.',
+                r->flags & 0x0020 ? '?':'.',
+                r->flags & 0x0010 ? 'A':'.',
+                r->flags & 0x0008 ? '?':'.',
+                r->flags & 0x0004 ? 'P':'.',
+                r->flags & 0x0002 ? 'N':'.',
+                r->flags & 0x0001 ? 'C':'.');
+            break;
+        case CPU_INFO_NAME: return "V20";
+        case CPU_INFO_FAMILY: return "NEC V-Series";
+        case CPU_INFO_VERSION: return "1.6";
+        case CPU_INFO_FILE: return __FILE__;
+        case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
+        case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
+    }
+    return buffer[which];
+}
+unsigned v20_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
+
+void v30_reset(void *param) { nec_reset(param); }
+void v30_exit(void) { nec_exit(); }
+int v30_execute(int cycles) { return nec_execute(cycles); }
+unsigned v30_get_context(void *dst) { return nec_get_context(dst); }
+void v30_set_context(void *src) { nec_set_context(src); }
+unsigned v30_get_pc(void) { return nec_get_pc(); }
+void v30_set_pc(unsigned val) { nec_set_pc(val); }
+unsigned v30_get_sp(void) { return nec_get_sp(); }
+void v30_set_sp(unsigned val) { nec_set_sp(val); }
+unsigned v30_get_reg(int regnum) { return nec_get_reg(regnum); }
+void v30_set_reg(int regnum, unsigned val)	{ nec_set_reg(regnum,val); }
+void v30_set_nmi_line(int state) { nec_set_nmi_line(state); }
+void v30_set_irq_line(int irqline, int state) { nec_set_irq_line(irqline,state); }
+void v30_set_irq_callback(int (*callback)(int irqline)) { nec_set_irq_callback(callback); }
+const char *v30_info(void *context, int regnum)
+{
+    static char buffer[32][63+1];
+    static int which = 0;
+    nec_Regs *r = context;
+
+    which = ++which % 32;
+    buffer[which][0] = '\0';
+    if( !context )
+        r = &I;
+
+    switch( regnum )
+    {
+        case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
+        case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
+        case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
+        case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
+        case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
+        case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
+        case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
+        case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
+        case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
+        case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
+        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
+        case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
+        case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+        case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+        case CPU_INFO_FLAGS:
+            r->flags = CompressFlags();
+            sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+                r->flags & 0x8000 ? 'M':'.',
+                r->flags & 0x4000 ? '?':'.',
+                r->flags & 0x2000 ? '?':'.',
+                r->flags & 0x1000 ? '?':'.',
+                r->flags & 0x0800 ? 'O':'.',
+                r->flags & 0x0400 ? 'D':'.',
+                r->flags & 0x0200 ? 'I':'.',
+                r->flags & 0x0100 ? 'T':'.',
+                r->flags & 0x0080 ? 'S':'.',
+                r->flags & 0x0040 ? 'Z':'.',
+                r->flags & 0x0020 ? '?':'.',
+                r->flags & 0x0010 ? 'A':'.',
+                r->flags & 0x0008 ? '?':'.',
+                r->flags & 0x0004 ? 'P':'.',
+                r->flags & 0x0002 ? 'N':'.',
+                r->flags & 0x0001 ? 'C':'.');
+            break;
+        case CPU_INFO_NAME: return "V30";
+        case CPU_INFO_FAMILY: return "NEC V-Series";
+        case CPU_INFO_VERSION: return "1.6";
+        case CPU_INFO_FILE: return __FILE__;
+        case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
+        case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
+    }
+    return buffer[which];
+}
+unsigned v30_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
+
+void v33_reset(void *param) { nec_reset(param); }
+void v33_exit(void) { nec_exit(); }
+int v33_execute(int cycles) { return nec_execute(cycles); }
+unsigned v33_get_context(void *dst) { return nec_get_context(dst); }
+void v33_set_context(void *src) { nec_set_context(src); }
+unsigned v33_get_pc(void) { return nec_get_pc(); }
+void v33_set_pc(unsigned val) { nec_set_pc(val); }
+unsigned v33_get_sp(void) { return nec_get_sp(); }
+void v33_set_sp(unsigned val) { nec_set_sp(val); }
+unsigned v33_get_reg(int regnum) { return nec_get_reg(regnum); }
+void v33_set_reg(int regnum, unsigned val)	{ nec_set_reg(regnum,val); }
+void v33_set_nmi_line(int state) { nec_set_nmi_line(state); }
+void v33_set_irq_line(int irqline, int state) { nec_set_irq_line(irqline,state); }
+void v33_set_irq_callback(int (*callback)(int irqline)) { nec_set_irq_callback(callback); }
+const char *v33_info(void *context, int regnum)
+{
+    static char buffer[32][63+1];
+    static int which = 0;
+    nec_Regs *r = context;
+
+    which = ++which % 32;
+    buffer[which][0] = '\0';
+    if( !context )
+        r = &I;
+
+    switch( regnum )
+    {
+        case CPU_INFO_REG+NEC_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
+        case CPU_INFO_REG+NEC_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
+        case CPU_INFO_REG+NEC_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
+        case CPU_INFO_REG+NEC_AW: sprintf(buffer[which], "AW:%04X", r->regs.w[AW]); break;
+        case CPU_INFO_REG+NEC_CW: sprintf(buffer[which], "CW:%04X", r->regs.w[CW]); break;
+        case CPU_INFO_REG+NEC_DW: sprintf(buffer[which], "DW:%04X", r->regs.w[DW]); break;
+        case CPU_INFO_REG+NEC_BW: sprintf(buffer[which], "BW:%04X", r->regs.w[BW]); break;
+        case CPU_INFO_REG+NEC_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
+        case CPU_INFO_REG+NEC_IX: sprintf(buffer[which], "IX:%04X", r->regs.w[IX]); break;
+        case CPU_INFO_REG+NEC_IY: sprintf(buffer[which], "IY:%04X", r->regs.w[IY]); break;
+        case CPU_INFO_REG+NEC_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+        case CPU_INFO_REG+NEC_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+        case CPU_INFO_REG+NEC_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+        case CPU_INFO_REG+NEC_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+        case CPU_INFO_REG+NEC_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
+        case CPU_INFO_REG+NEC_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
+        case CPU_INFO_REG+NEC_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+        case CPU_INFO_REG+NEC_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+        case CPU_INFO_FLAGS:
+            r->flags = CompressFlags();
+            sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+                r->flags & 0x8000 ? 'M':'.',
+                r->flags & 0x4000 ? '?':'.',
+                r->flags & 0x2000 ? '?':'.',
+                r->flags & 0x1000 ? '?':'.',
+                r->flags & 0x0800 ? 'O':'.',
+                r->flags & 0x0400 ? 'D':'.',
+                r->flags & 0x0200 ? 'I':'.',
+                r->flags & 0x0100 ? 'T':'.',
+                r->flags & 0x0080 ? 'S':'.',
+                r->flags & 0x0040 ? 'Z':'.',
+                r->flags & 0x0020 ? '?':'.',
+                r->flags & 0x0010 ? 'A':'.',
+                r->flags & 0x0008 ? '?':'.',
+                r->flags & 0x0004 ? 'P':'.',
+                r->flags & 0x0002 ? 'N':'.',
+                r->flags & 0x0001 ? 'C':'.');
+            break;
+        case CPU_INFO_NAME: return "V33";
+        case CPU_INFO_FAMILY: return "NEC V-Series";
+        case CPU_INFO_VERSION: return "1.6";
+        case CPU_INFO_FILE: return __FILE__;
+        case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
+        case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)nec_win_layout;
+    }
+    return buffer[which];
+}
+unsigned v33_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
+
+

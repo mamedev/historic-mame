@@ -181,6 +181,10 @@ constants for each address space type we support.
 #define ABITS1_29		19
 #define ABITS2_29		8
 #define ABITS_MIN_29	2			/* minimum memory block is 4 bytes */
+/* 32 bits address (dword access) */
+#define ABITS1_32		23
+#define ABITS2_32		8
+#define ABITS_MIN_32	1			/* minimum memory block is 2 bytes */
 /* mask bits */
 #define MHMASK(abits)    (0xffffffff >> (32 - abits))
 
@@ -222,19 +226,20 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 #define cpu_readop_arg16(A)	READ_WORD(&OP_RAM[A])
 
 /* ----- bank switching for CPU cores ----- */
-#define change_pc_generic(pc,abits2,abitsmin,setop)		\
-{														\
-	if (cur_mrhard[(pc)>>(abits2+abitsmin)] != ophw)	\
-		setop(pc);										\
+#define change_pc_generic(pc,abits2,abitsmin,shift,setop)	\
+{															\
+	if (cur_mrhard[(pc)>>(abits2+abitsmin+shift)] != ophw)	\
+		setop(pc);											\
 }
-#define change_pc(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, cpu_setOPbase16)
-#define change_pc16(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, cpu_setOPbase16)
-#define change_pc16bew(pc)	change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, cpu_setOPbase16bew)
-#define change_pc16lew(pc)	change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, cpu_setOPbase16lew)
-#define change_pc20(pc)		change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, cpu_setOPbase20)
-#define change_pc21(pc)		change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, cpu_setOPbase21)
-#define change_pc24(pc)		change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, cpu_setOPbase24)
-#define change_pc29(pc)		change_pc_generic(((UINT32)pc >> 3), ABITS2_29, ABITS_MIN_29, cpu_setOPbase29)
+#define change_pc(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16bew(pc)	change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, 0, cpu_setOPbase16bew)
+#define change_pc16lew(pc)	change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, 0, cpu_setOPbase16lew)
+#define change_pc20(pc)		change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
+#define change_pc21(pc)		change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
+#define change_pc24(pc)		change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
+#define change_pc29(pc)		change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
+#define change_pc32(pc)		change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
 
 /* ----- for use OPbaseOverride driver, request override callback to next cpu_setOPbase ----- */
 #define catch_nextBranch() 	(ophw = 0xff)
@@ -279,6 +284,9 @@ READ_HANDLER(cpu_readmem24_dword);
 READ_HANDLER(cpu_readmem29);
 READ_HANDLER(cpu_readmem29_word);
 READ_HANDLER(cpu_readmem29_dword);
+READ_HANDLER(cpu_readmem32);
+READ_HANDLER(cpu_readmem32_word);
+READ_HANDLER(cpu_readmem32_dword);
 
 /* ----- memory write functions ----- */
 WRITE_HANDLER(cpu_writemem16);
@@ -294,6 +302,9 @@ WRITE_HANDLER(cpu_writemem24_dword);
 WRITE_HANDLER(cpu_writemem29);
 WRITE_HANDLER(cpu_writemem29_word);
 WRITE_HANDLER(cpu_writemem29_dword);
+WRITE_HANDLER(cpu_writemem32);
+WRITE_HANDLER(cpu_writemem32_word);
+WRITE_HANDLER(cpu_writemem32_dword);
 
 /* ----- port I/O functions ----- */
 int cpu_readport(int port);
@@ -317,6 +328,7 @@ void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
 void cpu_setOPbase29(int pc);
+void cpu_setOPbase32(int pc);
 void cpu_setOPbaseoverride(int cpu, opbase_handler function);
 
 /* ----- harder-to-explain functions ---- */

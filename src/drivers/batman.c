@@ -85,9 +85,9 @@ static void latch_w(int offset, int data)
 
 	/* bit 4 is connected to the /RESET pin on the 6502 */
 	if (newword & 0x0010)
-		cpu_set_reset_line(1,CLEAR_LINE);
+		cpu_set_reset_line(1, CLEAR_LINE);
 	else
-		cpu_set_reset_line(1,ASSERT_LINE);
+		cpu_set_reset_line(1, ASSERT_LINE);
 
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ newword) & 0x7000)
@@ -227,8 +227,8 @@ static struct MachineDriver machine_driver_batman =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,		/* verified */
-			14318320,		/* 14.318 Mhz */
+			CPU_M68000,
+			ATARI_CLOCK_14MHz,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},

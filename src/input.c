@@ -299,7 +299,12 @@ static void internal_code_update(void)
 /* Convert one key osdepend code to one standard code */
 InputCode keyoscode_to_code(unsigned oscode)
 {
-	InputCode code = code_find_os(oscode,CODE_TYPE_KEYBOARD_OS);
+	InputCode code;
+
+	if (oscode == OSD_KEY_NONE)
+		return CODE_NONE;
+
+	code = code_find_os(oscode,CODE_TYPE_KEYBOARD_OS);
 
 	/* insert if missing */
 	if (code == CODE_NONE)

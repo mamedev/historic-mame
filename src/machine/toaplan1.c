@@ -6,6 +6,8 @@
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
 
+#define CLEAR 0
+#define ASSERT 1
 
 
 int  video_ofs3_r(int offset);
@@ -80,8 +82,8 @@ void demonwld_dsp_out(int fnction,int data)
 		}
 		if (data == 0) {
 			if (dsp_execute) {
-				if (errorlog) fprintf(errorlog,"Turning Main 68000 on\n");
-				cpu_set_halt_line(0,CLEAR_LINE);
+				if (errorlog) fprintf(errorlog,"Turning 68000 on\n");
+				timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
 				dsp_execute = 0;
 			}
 			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, ASSERT_LINE);
@@ -98,14 +100,14 @@ void demonwld_dsp_w(int offset,int data)
 	switch (data) {
 		case 0x0000: 	/* This means assert the INT line to the DSP */
 						if (errorlog) fprintf(errorlog,"Turning DSP on and 68000 off\n");
-						cpu_set_halt_line(2,CLEAR_LINE);
+						timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
-						cpu_set_halt_line(0,ASSERT_LINE);
+						timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 						break;
 		case 0x0001: 	/* This means inhibit the INT line to the DSP */
 						if (errorlog) fprintf(errorlog,"Turning DSP off\n");
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
-						cpu_set_halt_line(2,ASSERT_LINE);
+						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 						break;
 		default:		if (errorlog)
 							fprintf(errorlog,"68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
@@ -117,7 +119,9 @@ void demonwld_dsp_w(int offset,int data)
 int toaplan1_interrupt(void)
 {
 	if (toaplan1_int_enable)
+	{
 		return MC68000_IRQ_4;
+	}
 	return MC68000_INT_NONE;
 }
 
@@ -131,11 +135,19 @@ int toaplan1_unk_r(int offset)
 	return unk ^= 1;
 }
 
-int vimana_input_port_4_r(int offset)
+int samesame_port_6_r(int offset)
+{
+	/* Bit 0x80 is secondary CPU (HD647180) ready signal */
+	if (errorlog)
+		fprintf(errorlog,"PC:%04x Warning !!! IO reading from $14000a\n",cpu_getpreviouspc());
+	return (0x80 | input_port_6_r(0));
+}
+
+int vimana_input_port_5_r(int offset)
 {
 	int data, p;
 
-	p = input_port_4_r(0);
+	p = input_port_5_r(0);
 
 	latch ^= p;
 	data = (latch & p );

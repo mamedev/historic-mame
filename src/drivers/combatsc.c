@@ -1,5 +1,13 @@
 /***************************************************************************
 
+TODO:
+- wrong sprite/char priority (see cpu head at beginning of arm wrestling,
+  and heads in intermission after firing range III)
+- wrong chars in original versions
+- hook up sound in bootleg (the current sound is a hack, making use of the Konami ROMset)
+- use the real PROOMs in the bootleg version
+
+
 "Combat School" (also known as "Boot Camp") - (Konami GX611)
 
 Credits:
@@ -42,9 +50,6 @@ a000		soundlatch?
 a800		OKIM5205?
 fffc-ffff	???
 
-To Do:
-	fix colors of frontmost layer
-	hook up sound in bootleg (the current sound is a hack, making use of the Konami ROMset)
 
 		Notes about the sound systsem of the bootleg:
         ---------------------------------------------
@@ -85,9 +90,6 @@ c000		uPD7759
 d000		soundlatch_r
 e000-e001	YM2203
 
-To Do:
-	fix objects
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -96,23 +98,37 @@ To Do:
 extern unsigned char* banked_area;
 
 /* from machine/combatsc.c */
-extern void combatsc_bankselect_w( int offset, int data );
-extern void combatsc_init_machine( void );
-extern int combatsc_workram_r( int offset );
-extern void combatsc_workram_w( int offset, int data );
-extern void combatsc_coin_counter_w( int offset, int data );
+void combascb_bankselect_w( int offset, int data );
+void combatsc_bankselect_w( int offset, int data );
+void combatsc_init_machine( void );
+void combatsc_pf_control_w( int offset, int data );
+int combatsc_scrollram_r( int offset );
+void combatsc_scrollram_w( int offset, int data );
 
 /* from vidhrdw/combatsc.c */
-extern void combatsc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
-extern int combatsc_video_r( int offset );
-extern void combatsc_video_w( int offset, int data );
-extern int combatsc_vh_start( void );
-extern void combatsc_vh_stop( void );
-extern void cmbatscb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern void combatsc_io_w( int offset, int data );
+void combatsc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
+int combatsc_video_r( int offset );
+void combatsc_video_w( int offset, int data );
+int combatsc_vh_start( void );
+void combatsc_vh_stop( void );
+void cmbatscb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void combatsc_io_w( int offset, int data );
 void combatsc_vreg_w(int offset, int data);
 void combatsc_sh_irqtrigger_w(int offset, int data);
+
+
+
+
+static void combatsc_coin_counter_w(int offset,int data)
+{
+	/* b7-b3: unused? */
+	/* b1: coin counter 2 */
+	/* b0: coin counter 1 */
+
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
+}
 
 /****************************************************************************/
 
@@ -134,7 +150,50 @@ void combatsc_portA_w(int offset,int data)
 
 /****************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress combatsc_readmem[] =
+{
+	{ 0x0020, 0x003f, combatsc_scrollram_r },
+	{ 0x0040, 0x005f, MRA_RAM },					/* ??? */
+	{ 0x0200, 0x0201, MRA_RAM },					/* ??? */
+	{ 0x0400, 0x0400, input_port_0_r },
+	{ 0x0401, 0x0401, input_port_1_r },			/* DSW #3 */
+	{ 0x0402, 0x0402, input_port_2_r },			/* DSW #1 */
+	{ 0x0403, 0x0403, input_port_3_r },			/* DSW #2 */
+	{ 0x0404, 0x0404, input_port_4_r },			/* 1P & 2P controls / 1P trackball V */
+	{ 0x0405, 0x0405, input_port_5_r },			/* 1P trackball H */
+	{ 0x0406, 0x0406, input_port_6_r },			/* 2P trackball V */
+	{ 0x0407, 0x0407, input_port_7_r },			/* 2P trackball H */
+	{ 0x0600, 0x06ff, MRA_RAM },				/* palette */
+	{ 0x0800, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x3fff, combatsc_video_r },
+	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM area */
+	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
+	{ -1 }
+};
+
+static struct MemoryWriteAddress combatsc_writemem[] =
+{
+	{ 0x0000, 0x0007, combatsc_pf_control_w },
+	{ 0x0020, 0x003f, combatsc_scrollram_w },
+	{ 0x0040, 0x005f, MWA_RAM },					/* ??? */
+//	{ 0x0060, 0x00ff, MWA_RAM },					/* RAM */
+	{ 0x0200, 0x0201, MWA_RAM },					/* ??? */
+	{ 0x0206, 0x0206, MWA_RAM },					/* ??? */
+	{ 0x0408, 0x0408, combatsc_coin_counter_w },	/* coin counters */
+	{ 0x040c, 0x040c, combatsc_vreg_w },
+	{ 0x0410, 0x0410, combatsc_bankselect_w },
+	{ 0x0414, 0x0414, combatsc_sh_irqtrigger_w },
+	{ 0x0418, 0x0418, MWA_NOP },					/* ??? */
+	{ 0x041c, 0x041c, watchdog_reset_w },			/* watchdog reset? */
+	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
+	{ 0x0800, 0x1fff, MWA_RAM },					/* RAM */
+	{ 0x2000, 0x3fff, combatsc_video_w },
+	{ 0x4000, 0x7fff, MWA_ROM },					/* banked ROM area */
+	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
+	{ -1 }
+};
+
+static struct MemoryReadAddress combascb_readmem[] =
 {
 	{ 0x0000, 0x04ff, MRA_RAM },
 	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
@@ -145,10 +204,10 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress combascb_writemem[] =
 {
 	{ 0x0000, 0x04ff, MWA_RAM },
-	{ 0x0500, 0x0500, combatsc_bankselect_w },
+	{ 0x0500, 0x0500, combascb_bankselect_w },
 	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_w },
@@ -208,45 +267,6 @@ static struct MemoryWriteAddress combatsc_writemem_sound[] =
 	{ -1 }
 };
 
-static struct MemoryReadAddress combatsc_readmem[] =
-{
-	{ 0x0000, 0x005f, combatsc_workram_r },
-	{ 0x0060, 0x03ff, MRA_RAM },				/* RAM? */
-	{ 0x0400, 0x0400, input_port_0_r },
-	{ 0x0401, 0x0401, input_port_1_r },			/* DSW #3 */
-	{ 0x0402, 0x0402, input_port_2_r },			/* DSW #1 */
-	{ 0x0403, 0x0403, input_port_3_r },			/* DSW #2 */
-	{ 0x0404, 0x0404, input_port_4_r },			/* 1P & 2P controls / 1P trackball V */
-	{ 0x0405, 0x0405, input_port_5_r },			/* 1P trackball H */
-	{ 0x0406, 0x0406, input_port_6_r },			/* 2P trackball V */
-	{ 0x0407, 0x0407, input_port_7_r },			/* 2P trackball H */
-	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
-	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, combatsc_video_r },
-	{ 0x4000, 0x7fff, MRA_BANK1 },/* banked ROM area */
-	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }
-};
-
-static struct MemoryWriteAddress combatsc_writemem[] =
-{
-	{ 0x0000, 0x005f, combatsc_workram_w },
-	{ 0x0060, 0x00ff, MWA_RAM },					/* RAM */
-	{ 0x0200, 0x0201, MWA_RAM },					/* ??? */
-	{ 0x0206, 0x0206, MWA_RAM },					/* ??? */
-	{ 0x0408, 0x0408, combatsc_coin_counter_w },	/* coin counters */
-	{ 0x040c, 0x040c, combatsc_vreg_w },
-	{ 0x0410, 0x0410, combatsc_bankselect_w },
-	{ 0x0414, 0x0414, combatsc_sh_irqtrigger_w },
-	{ 0x0418, 0x0418, MWA_NOP },					/* ??? */
-	{ 0x041c, 0x041c, watchdog_reset_w },			/* watchdog reset? */
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
-	{ 0x0800, 0x1fff, MWA_RAM },					/* RAM */
-	{ 0x2000, 0x3fff, combatsc_video_w },
-	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },					/* banked ROM area */
-	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }
-};
 
 #define COMBATSC_COINAGE \
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) ) \
@@ -283,6 +303,150 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) ) \
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) ) \
 	PORT_DIPSETTING(    0x00, "coin 2 invalidity" )
+
+INPUT_PORTS_START( combatsc )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW #3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On )  )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW # 1 */
+	COMBATSC_COINAGE
+
+	PORT_START	/* DSW #2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING( 0x60, "Easy" )
+	PORT_DIPSETTING( 0x40, "Normal" )
+	PORT_DIPSETTING( 0x20, "Difficult" )
+	PORT_DIPSETTING( 0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+
+	PORT_START	/* only used in trackball version */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* only used in trackball version */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* only used in trackball version */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( combatsct )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW #3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On )  )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW # 1 */
+	COMBATSC_COINAGE
+
+	PORT_START	/* DSW #2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING( 0x60, "Easy" )
+	PORT_DIPSETTING( 0x40, "Normal" )
+	PORT_DIPSETTING( 0x20, "Difficult" )
+	PORT_DIPSETTING( 0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+
+	/* trackball 1P */
+	PORT_START
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER, 25, 10, 0, 0 )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE, 25, 10, 0, 0 )
+
+	/* trackball 2P (not implemented yet) */
+	PORT_START
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 25, 10, 0, 0 )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0 )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( cmbatscb )
 	PORT_START
@@ -322,7 +486,7 @@ INPUT_PORTS_START( cmbatscb )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPNAME( 0x10, 0x00, "Allow Continue" )
 	PORT_DIPSETTING( 0x10, DEF_STR( No ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
@@ -333,174 +497,6 @@ INPUT_PORTS_START( cmbatscb )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( combatsc )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW #3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Yes )  )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Mode" )
-	PORT_DIPSETTING(	0x40, "Game Mode" )
-	PORT_DIPSETTING(	0x00, "Test Mode" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-
-	PORT_START	/* DSW # 1 */
-	COMBATSC_COINAGE
-
-	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING( 0x60, "Easy" )
-	PORT_DIPSETTING( 0x40, "Normal" )
-	PORT_DIPSETTING( 0x20, "Difficult" )
-	PORT_DIPSETTING( 0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-
-	PORT_START	/* only used in trackball version */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* only used in trackball version */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* only used in trackball version */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-INPUT_PORTS_END
-
-INPUT_PORTS_START( combatsct )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-
-	PORT_START	/* DSW #3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Yes )  )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Mode" )
-	PORT_DIPSETTING(	0x40, "Game Mode" )
-	PORT_DIPSETTING(	0x00, "Test Mode" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-
-	PORT_START	/* DSW # 1 */
-	COMBATSC_COINAGE
-
-	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING( 0x60, "Easy" )
-	PORT_DIPSETTING( 0x40, "Normal" )
-	PORT_DIPSETTING( 0x20, "Difficult" )
-	PORT_DIPSETTING( 0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
-
-	/* trackball 1P */
-	PORT_START
-	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
-
-	PORT_START
-	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
-
-	/* trackball 2P (not implemented yet) */
-	PORT_START
-	//PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
-
-	PORT_START
-	//PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
 INPUT_PORTS_END
 
 
@@ -581,50 +577,7 @@ static struct UPD7759_interface upd7759_interface =
 	{0}
 };
 
-/* combat school (bootleg on different hardware) */
-static struct MachineDriver machine_driver_cmbatscb =
-{
-	{
-		{
-			CPU_HD6309,
-			5000000,	/* 5 MHz? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,
-			combatsc_readmem_sound,combatsc_writemem_sound,0,0, /* FAKE */
-			ignore_interrupt,0 	/* IRQs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10, /* CPU slices */
-	combatsc_init_machine,
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	combascb_gfxdecodeinfo,
-	128,128*16,combatsc_convert_color_prom,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	combatsc_vh_start,
-	combatsc_vh_stop,
-	cmbatscb_vh_screenrefresh,
-
-	/* We are using the original sound subsystem */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
 
 /* combat school (original) */
 static struct MachineDriver machine_driver_combatsc =
@@ -671,155 +624,205 @@ static struct MachineDriver machine_driver_combatsc =
 	}
 };
 
+/* combat school (bootleg on different hardware) */
+static struct MachineDriver machine_driver_cmbatscb =
+{
+	{
+		{
+			CPU_HD6309,
+			5000000,	/* 5 MHz? */
+			combascb_readmem,combascb_writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			1500000,
+			combatsc_readmem_sound,combatsc_writemem_sound,0,0, /* FAKE */
+			ignore_interrupt,0 	/* IRQs are caused by the main CPU */
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10, /* CPU slices */
+	combatsc_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	combascb_gfxdecodeinfo,
+	128,128*16,combatsc_convert_color_prom,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	combatsc_vh_start,
+	combatsc_vh_stop,
+	cmbatscb_vh_screenrefresh,
+
+	/* We are using the original sound subsystem */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_UPD7759,
+			&upd7759_interface
+		}
+	}
+};
+
 
 
 ROM_START( combasc )
-	ROM_REGION( 0x48000, REGION_CPU1 ) /* 6309 code */
-	ROM_LOAD( "611g01.rom",	0x10000, 0x10000, 0x857ffffe )
-	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "611g01.rom", 0x30000, 0x08000, 0x857ffffe )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+	ROM_LOAD( "611g02.rom", 0x10000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_REGION( 0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",	0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",  0x0100, 0x0100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g10.h6",   0x0200, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g09.h7",   0x0300, 0x0100, 0x207a7b07 ) /* chars lookup table */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+	ROM_LOAD( "611g04.rom",  0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
 ROM_START( combasct )
-	ROM_REGION( 0x48000, REGION_CPU1 ) /* 6309 code */
-	ROM_LOAD( "g01.rom",	0x10000, 0x10000, 0x489c132f )
-	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "g01.rom",     0x30000, 0x08000, 0x489c132f )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "611g02.rom",  0x10000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_REGION( 0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",	0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",  0x0100, 0x0100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g10.h6",   0x0200, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g09.h7",   0x0300, 0x0100, 0x207a7b07 ) /* chars lookup table */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+	ROM_LOAD( "611g04.rom",  0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
 ROM_START( combascj )
-	ROM_REGION( 0x48000, REGION_CPU1 ) /* 6309 code */
-	ROM_LOAD( "611p01.a14",	0x10000, 0x10000, 0xd748268e )
-	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "611p01.a14",  0x30000, 0x08000, 0xd748268e )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "611g02.rom",  0x10000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_REGION( 0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",	0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",  0x0100, 0x0100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g10.h6",   0x0200, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g09.h7",   0x0300, 0x0100, 0x207a7b07 ) /* chars lookup table */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+	ROM_LOAD( "611g04.rom",  0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
 ROM_START( bootcamp )
-	ROM_REGION( 0x48000, REGION_CPU1 ) /* 6309 code */
-	ROM_LOAD( "xxx-v01.12a", 0x10000, 0x10000, 0xc10dca64 )
-	ROM_LOAD( "611g02.rom",  0x20000, 0x20000, 0x9ba05327 )
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "xxx-v01.12a", 0x30000, 0x08000, 0xc10dca64 )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "611g02.rom",  0x10000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_REGION( 0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",	0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",  0x0100, 0x0100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g10.h6",   0x0200, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g09.h7",   0x0300, 0x0100, 0x207a7b07 ) /* chars lookup table */
 
     ROM_REGION( 0x20000, REGION_SOUND1 )	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+	ROM_LOAD( "611g04.rom",  0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
 ROM_START( combascb )
-	ROM_REGION( 0x48000, REGION_CPU1 ) /* 6809 code */
-	ROM_LOAD( "combat.002",	0x10000, 0x10000, 0x0996755d )
-	ROM_LOAD( "combat.003",	0x20000, 0x10000, 0x229c93b2 )
-	ROM_LOAD( "combat.004",	0x30000, 0x10000, 0xa069cb84 )
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 6809 code */
+	ROM_LOAD( "combat.002",	 0x30000, 0x08000, 0x0996755d )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "combat.003",	 0x10000, 0x10000, 0x229c93b2 )
+	ROM_LOAD( "combat.004",	 0x20000, 0x10000, 0xa069cb84 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* sound CPU */
-	ROM_LOAD( "combat.001", 0x00000, 0x10000, 0x61456b3b )
-	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 ) /* FAKE - from Konami set! */
+	ROM_REGION( 0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD( "combat.001",  0x00000, 0x10000, 0x61456b3b )
+	ROM_LOAD( "611g03.rom",  0x00000, 0x08000, 0x2a544db5 ) /* FAKE - from Konami set! */
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "combat.006",	0x00000, 0x10000, 0x8dc29a1f ) /* tiles, bank 0 */
-	ROM_LOAD( "combat.008",	0x10000, 0x10000, 0x61599f46 )
-	ROM_LOAD( "combat.010",	0x20000, 0x10000, 0xd5cda7cd )
-	ROM_LOAD( "combat.012",	0x30000, 0x10000, 0xca0a9f57 )
-	ROM_LOAD( "combat.005",	0x40000, 0x10000, 0x0803a223 ) /* tiles, bank 1 */
-	ROM_LOAD( "combat.007",	0x50000, 0x10000, 0x23caad0c )
-	ROM_LOAD( "combat.009",	0x60000, 0x10000, 0x5ac80383 )
-	ROM_LOAD( "combat.011",	0x70000, 0x10000, 0xcda83114 )
+	ROM_LOAD( "combat.006",  0x00000, 0x10000, 0x8dc29a1f ) /* tiles, bank 0 */
+	ROM_LOAD( "combat.008",  0x10000, 0x10000, 0x61599f46 )
+	ROM_LOAD( "combat.010",  0x20000, 0x10000, 0xd5cda7cd )
+	ROM_LOAD( "combat.012",  0x30000, 0x10000, 0xca0a9f57 )
+	ROM_LOAD( "combat.005",  0x40000, 0x10000, 0x0803a223 ) /* tiles, bank 1 */
+	ROM_LOAD( "combat.007",  0x50000, 0x10000, 0x23caad0c )
+	ROM_LOAD( "combat.009",  0x60000, 0x10000, 0x5ac80383 )
+	ROM_LOAD( "combat.011",  0x70000, 0x10000, 0xcda83114 )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "combat.013",	0x00000, 0x10000, 0x4bed2293 ) /* sprites, bank 0 */
-	ROM_LOAD( "combat.015",	0x10000, 0x10000, 0x26c41f31 )
-	ROM_LOAD( "combat.017",	0x20000, 0x10000, 0x6071e6da )
-	ROM_LOAD( "combat.019",	0x30000, 0x10000, 0x3b1cf1b8 )
-	ROM_LOAD( "combat.014",	0x40000, 0x10000, 0x82ea9555 ) /* sprites, bank 1 */
-	ROM_LOAD( "combat.016",	0x50000, 0x10000, 0x2e39bb70 )
-	ROM_LOAD( "combat.018",	0x60000, 0x10000, 0x575db729 )
-	ROM_LOAD( "combat.020",	0x70000, 0x10000, 0x8d748a1a )
+	ROM_LOAD( "combat.013",  0x00000, 0x10000, 0x4bed2293 ) /* sprites, bank 0 */
+	ROM_LOAD( "combat.015",  0x10000, 0x10000, 0x26c41f31 )
+	ROM_LOAD( "combat.017",  0x20000, 0x10000, 0x6071e6da )
+	ROM_LOAD( "combat.019",  0x30000, 0x10000, 0x3b1cf1b8 )
+	ROM_LOAD( "combat.014",  0x40000, 0x10000, 0x82ea9555 ) /* sprites, bank 1 */
+	ROM_LOAD( "combat.016",  0x50000, 0x10000, 0x2e39bb70 )
+	ROM_LOAD( "combat.018",  0x60000, 0x10000, 0x575db729 )
+	ROM_LOAD( "combat.020",  0x70000, 0x10000, 0x8d748a1a )
 
 	ROM_REGION( 0x0400, REGION_PROMS )	/* TODO: WRONG, the bootleg uses different PROMs */
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",  0x0100, 0x0100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g10.h6",   0x0200, 0x0100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g09.h7",   0x0300, 0x0100, 0x207a7b07 ) /* chars lookup table */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )	/* FAKE - from Konami set! */
+	ROM_LOAD( "611g04.rom",  0x00000, 0x20000, 0x2987e158 )	/* FAKE - from Konami set! */
 ROM_END
 
 
@@ -828,15 +831,14 @@ static void init_combascb( void )
 {
 	unsigned char *gfx = memory_region(REGION_GFX1);
 	int i;
-	for( i=0; i<0x80000; i++ ){
+	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
 		gfx[i] = ~gfx[i];
-	}
 }
 
 
 
-GAMEX( 1988, combasc,  0,       combatsc, combatsc,  0,        ROT0, "Konami", "Combat School (joystick)", GAME_NOT_WORKING )
-GAMEX( 1987, combasct, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (trackball)", GAME_NOT_WORKING )
-GAMEX( 1987, combascj, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (Japan trackball)", GAME_NOT_WORKING )
-GAMEX( 1987, bootcamp, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Boot Camp", GAME_NOT_WORKING )
-GAMEX( 1988, combascb, combasc, cmbatscb, cmbatscb,  combascb, ROT0, "bootleg", "Combat School (bootleg)", GAME_IMPERFECT_COLORS )
+GAMEX(1988, combasc,  0,       combatsc, combatsc,  0,        ROT0, "Konami", "Combat School (joystick)", GAME_NOT_WORKING )
+GAMEX(1987, combasct, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (trackball)", GAME_NOT_WORKING )
+GAMEX(1987, combascj, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (Japan trackball)", GAME_NOT_WORKING )
+GAMEX(1987, bootcamp, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Boot Camp", GAME_NOT_WORKING )
+GAME( 1988, combascb, combasc, cmbatscb, cmbatscb,  combascb, ROT0, "bootleg", "Combat School (bootleg)" )

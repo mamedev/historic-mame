@@ -17,33 +17,24 @@ Credits:
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
-extern unsigned char *contra_fg_horizontal_scroll;
-extern unsigned char *contra_fg_vertical_scroll;
-extern unsigned char *contra_bg_horizontal_scroll;
-extern unsigned char *contra_bg_vertical_scroll;
-
 extern unsigned char *contra_fg_vram,*contra_fg_cram;
 extern unsigned char *contra_bg_vram,*contra_bg_cram;
 extern unsigned char *contra_text_vram,*contra_text_cram;
 
-extern void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void contra_paletteram_w(int offset,int data);
+void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-extern void contra_fg_vram_w(int offset,int data);
-extern void contra_fg_cram_w(int offset,int data);
-extern void contra_bg_vram_w(int offset,int data);
-extern void contra_bg_cram_w(int offset,int data);
-extern void contra_text_vram_w(int offset,int data);
-extern void contra_text_cram_w(int offset,int data);
+void contra_fg_vram_w(int offset,int data);
+void contra_fg_cram_w(int offset,int data);
+void contra_bg_vram_w(int offset,int data);
+void contra_bg_cram_w(int offset,int data);
+void contra_text_vram_w(int offset,int data);
+void contra_text_cram_w(int offset,int data);
 
-extern void contra_sprite_buffer_1_w( int offset, int data );
-extern void contra_sprite_buffer_2_w( int offset, int data );
-extern void contra_0007_w(int offset,int data);
-extern void contra_fg_palette_bank_w(int offset,int data);
-extern void contra_bg_palette_bank_w(int offset,int data);
-extern void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern int contra_vh_start(void);
-extern void contra_vh_stop(void);
+void contra_K007121_ctrl_0_w( int offset, int data );
+void contra_K007121_ctrl_1_w( int offset, int data );
+void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int contra_vh_start(void);
+void contra_vh_stop(void);
 
 
 void contra_bankswitch_w(int offset,int data)
@@ -94,19 +85,12 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0000, MWA_RAM, &contra_fg_vertical_scroll },
-	{ 0x0002, 0x0002, MWA_RAM, &contra_fg_horizontal_scroll },
-	{ 0x0003, 0x0003, contra_sprite_buffer_1_w },
-	{ 0x0006, 0x0006, contra_fg_palette_bank_w },
-	{ 0x0007, 0x0007, contra_0007_w },
+	{ 0x0000, 0x0007, contra_K007121_ctrl_0_w },
 	{ 0x0018, 0x0018, contra_coin_counter_w },
 	{ 0x001a, 0x001a, contra_sh_irqtrigger_w },
 	{ 0x001c, 0x001c, cpu_sound_command_w },
 	{ 0x001e, 0x001e, MWA_NOP },	/* ? */
-	{ 0x0060, 0x0060, MWA_RAM, &contra_bg_vertical_scroll },
-	{ 0x0062, 0x0062, MWA_RAM, &contra_bg_horizontal_scroll },
-	{ 0x0063, 0x0063, contra_sprite_buffer_2_w },
-	{ 0x0066, 0x0066, contra_bg_palette_bank_w },
+	{ 0x0060, 0x0067, contra_K007121_ctrl_1_w },
 	{ 0x0c00, 0x0cff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x1000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x23ff, contra_fg_cram_w, &contra_fg_cram },
@@ -263,8 +247,8 @@ static struct GfxLayout gfx_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &gfx_layout, 0, 8*16 },
-	{ REGION_GFX2, 0, &gfx_layout, 0, 8*16 },
+	{ REGION_GFX1, 0, &gfx_layout,       0, 8*16 },
+	{ REGION_GFX2, 0, &gfx_layout, 8*16*16, 8*16 },
 	{ -1 }
 };
 
@@ -304,7 +288,7 @@ static struct MachineDriver machine_driver_contra =
 
 	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	128, 8*16*16,
+	128, 2*8*16*16,
 	contra_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -363,10 +347,10 @@ ROM_START( contra )
 	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
-	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 ROM_END
 
 ROM_START( contrab )
@@ -387,10 +371,10 @@ ROM_START( contrab )
 	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
-	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 ROM_END
 
 ROM_START( contraj )
@@ -411,10 +395,10 @@ ROM_START( contraj )
 	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
-	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 ROM_END
 
 ROM_START( contrajb )
@@ -435,10 +419,10 @@ ROM_START( contrajb )
 	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
-	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 ROM_END
 
 ROM_START( gryzor )
@@ -459,10 +443,10 @@ ROM_START( gryzor )
 	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
-	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
-	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
-	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
-	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 ROM_END
 
 

@@ -149,10 +149,10 @@ INPUT_PORTS_START( cloud9 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* IN2 */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 30, 30, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 30, 30, 0, 0 )
 
 	PORT_START      /* IN3 */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 30, 30, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 30, 30, 0, 0 )
 
 	PORT_START	/* IN4 */ /* DSW1 */
 	PORT_BIT ( 0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -218,8 +218,6 @@ static struct POKEYinterface pokey_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
 	{ 50, 50 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
 	{ 0, 0 },

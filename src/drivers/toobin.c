@@ -297,7 +297,7 @@ static struct MachineDriver machine_driver_toobin =
 	{
 		{
 			CPU_M68010,		/* verified */
-			7159160,
+			ATARI_CLOCK_32MHz/4,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},

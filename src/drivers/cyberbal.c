@@ -1036,7 +1036,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_interleaved[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579580,
+	ATARI_CLOCK_14MHz/4,
 #if USE_MONO_SOUND
 	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
 #else
@@ -1073,27 +1073,27 @@ static struct MachineDriver machine_driver_cyberbal =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6502,
-			7159160/4,
+			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
-			atarigen_6502_irq_gen,250
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14))
 		},
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			extra_readmem,extra_writemem,0,0,
 			atarigen_video_int_gen,1
 		}
 #ifdef EMULATE_SOUND_68000
 		,{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			sound_68k_readmem,sound_68k_writemem,0,0,
 			0,0,
 			sound_68k_irq_gen,10000
@@ -1147,7 +1147,7 @@ static struct MachineDriver machine_driver_cyberb2p =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			cyberb2p_readmem,cyberb2p_writemem,0,0,
 			atarigen_video_int_gen,1
 		},

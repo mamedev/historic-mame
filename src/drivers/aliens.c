@@ -5,9 +5,6 @@ Aliens (c) 1990 Konami Co. Ltd
 Preliminary driver by:
 	Manuel Abadia <manu@teleline.es>
 
-TODO:
-- is sound right? For example, shots can't be heard most of the time
-
 ***************************************************************************/
 
 #include "driver.h"

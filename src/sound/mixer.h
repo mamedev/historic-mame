@@ -61,17 +61,19 @@ const char *mixer_get_name(int channel);
 */
 void mixer_set_volume(int channel,int volume);
 
-void mixer_play_sample(int channel,signed char *data,int len,int freq,int loop);
+void mixer_play_sample(int channel,INT8 *data,int len,int freq,int loop);
 void mixer_play_sample_16(int channel,INT16 *data,int len,int freq,int loop);
 void mixer_stop_sample(int channel);
 int mixer_is_sample_playing(int channel);
 void mixer_set_sample_frequency(int channel,int freq);
 
 void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq);
+int mixer_samples_this_frame(void);
 
 /* private functions for user interface only - don't call them from drivers! */
 void mixer_set_mixing_level(int channel,int level);
 int mixer_get_mixing_level(int level);
+int mixer_get_default_mixing_level(int level);
 
 void mixer_read_config(void *f);
 void mixer_write_config(void *f);

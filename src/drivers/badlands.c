@@ -9,7 +9,6 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
 
@@ -24,6 +23,9 @@ void badlands_scanline_update(int scanline);
 
 
 static UINT8 pedal_value[2];
+
+static UINT8 *bank_base;
+static UINT8 *bank_source_data;
 
 
 
@@ -49,14 +51,31 @@ static void update_interrupts(void)
 }
 
 
+static void scanline_update(int scanline)
+{
+	badlands_scanline_update(scanline);
+
+	/* sound IRQ is on 32V */
+	if (scanline % 32 == 0)
+	{
+		if (scanline & 32)
+			atarigen_6502_irq_ack_r(0);
+		else if (!(readinputport(0) & 0x40))
+			atarigen_6502_irq_gen();
+	}
+}
+
+
 static void init_machine(void)
 {
 	pedal_value[0] = pedal_value[1] = 0x80;
 
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(badlands_scanline_update, 8);
-	atarijsa_reset();
+	atarigen_scanline_timer_reset(scanline_update, 8);
+
+	atarigen_sound_io_reset(1);
+	memcpy(bank_base, &bank_source_data[0x0000], 0x1000);
 }
 
 
@@ -118,6 +137,101 @@ static int pedal_1_r(int offset)
 
 /*************************************
  *
+ *	Audio I/O handlers
+ *
+ *************************************/
+
+static int audio_io_r(int offset)
+{
+	int result = 0xff;
+
+	switch (offset & 0x206)
+	{
+		case 0x000:		/* n/c */
+			if (errorlog) fprintf(errorlog, "audio_io_r: Unknown read at %04X\n", offset & 0x206);
+			break;
+
+		case 0x002:		/* /RDP */
+			result = atarigen_6502_sound_r(offset);
+			break;
+
+		case 0x004:		/* /RDIO */
+			/*
+				0x80 = self test
+				0x40 = NMI line state (active low)
+				0x20 = sound output full
+				0x10 = self test
+				0x08 = +5V
+				0x04 = +5V
+				0x02 = coin 2
+				0x01 = coin 1
+			*/
+			result = readinputport(3);
+			if (!(readinputport(0) & 0x0080)) result ^= 0x90;
+			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
+			if (atarigen_sound_to_cpu_ready) result ^= 0x20;
+			result ^= 0x10;
+			break;
+
+		case 0x006:		/* /IRQACK */
+			atarigen_6502_irq_ack_r(0);
+			break;
+
+		case 0x200:		/* /VOICE */
+		case 0x202:		/* /WRP */
+		case 0x204:		/* /WRIO */
+		case 0x206:		/* /MIX */
+			if (errorlog) fprintf(errorlog, "audio_io_r: Unknown read at %04X\n", offset & 0x206);
+			break;
+	}
+
+	return result;
+}
+
+
+static void audio_io_w(int offset, int data)
+{
+	switch (offset & 0x206)
+	{
+		case 0x000:		/* n/c */
+		case 0x002:		/* /RDP */
+		case 0x004:		/* /RDIO */
+			if (errorlog) fprintf(errorlog, "audio_io_w: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			break;
+
+		case 0x006:		/* /IRQACK */
+			atarigen_6502_irq_ack_r(0);
+			break;
+
+		case 0x200:		/* n/c */
+		case 0x206:		/* n/c */
+			break;
+
+		case 0x202:		/* /WRP */
+			atarigen_6502_sound_w(offset, data);
+			break;
+
+		case 0x204:		/* WRIO */
+			/*
+				0xc0 = bank address
+				0x20 = coin counter 2
+				0x10 = coin counter 1
+				0x08 = n/c
+				0x04 = n/c
+				0x02 = n/c
+				0x01 = YM2151 reset (active low)
+			*/
+
+			/* update the bank */
+			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -160,6 +274,33 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
+
+static struct MemoryReadAddress audio_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2001, YM2151_status_port_0_r },
+	{ 0x2800, 0x2bff, audio_io_r },
+	{ 0x3000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryWriteAddress audio_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x2800, 0x2bff, audio_io_w },
+	{ 0x3000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/*************************************
+ *
  *	Port definitions
  *
  *************************************/
@@ -176,14 +317,22 @@ INPUT_PORTS_START( badlands )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* fe6000 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 100, 10, 0xff, 0, 0 )
+	PORT_ANALOG( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 50, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* fe6002 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 100, 10, 0xff, 0, 0 )
+	PORT_ANALOG( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 50, 10, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	JSA_I_PORT		/* audio board port */
+	PORT_START		/* audio port */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )	/* output buffer full */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )		/* input buffer full */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )	/* self test */
 
 	PORT_START      /* fake for pedals */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -234,6 +383,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
+ *	Sound definitions
+ *
+ *************************************/
+
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	ATARI_CLOCK_14MHz/4,
+	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
+	{ 0 }
+};
+
+
+
+/*************************************
+ *
  *	Machine driver
  *
  *************************************/
@@ -244,11 +409,16 @@ static struct MachineDriver machine_driver_badlands =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			vblank_int,1
 		},
-		JSA_I_CPU
+		{
+			CPU_M6502,
+			ATARI_CLOCK_14MHz/8,
+			audio_readmem,audio_writemem,0,0,
+			ignore_interrupt,1
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -268,7 +438,13 @@ static struct MachineDriver machine_driver_badlands =
 	badlands_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO,
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		}
+	},
 
 	atarigen_nvram_handler
 };
@@ -335,7 +511,10 @@ ROM_END
 static void init_badlands(void)
 {
 	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 3, 0, 0x0080);
+
+	/* initialize the audio system */
+	bank_base = &memory_region(REGION_CPU2)[0x03000];
+	bank_source_data = &memory_region(REGION_CPU2)[0x10000];
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4155, 0x416d);

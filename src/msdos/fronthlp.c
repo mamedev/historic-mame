@@ -302,12 +302,12 @@ void romident(const char* name,int enter_dirs) {
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
-		LIST_SOURCEFILE };
+		LIST_LISTROMSIZE, LIST_LISTCPU, LIST_SOURCEFILE };
 #else
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
-		LIST_SOURCEFILE, LIST_MESSINFO };
+		LIST_LISTROMSIZE, LIST_LISTCPU, LIST_SOURCEFILE, LIST_MESSINFO };
 #endif
 
 
@@ -366,6 +366,8 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-listcrc")) list = LIST_LISTCRC;
 		if (!stricmp(argv[i],"-listdupcrc")) list = LIST_LISTDUPCRC;
 		if (!stricmp(argv[i],"-listwrongmerge")) list = LIST_WRONGMERGE;
+		if (!stricmp(argv[i],"-listromsize")) list = LIST_LISTROMSIZE;
+		if (!stricmp(argv[i],"-listcpu")) list = LIST_LISTCPU;
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
@@ -407,7 +409,7 @@ int frontend_help (int argc, char **argv)
 	{
 		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-99 by Nicola Salmoria and the MAME Team\n\n",build_version);
+				"Copyright (C) 1997-2000 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list      for a brief list of supported games\n"
@@ -968,6 +970,74 @@ int frontend_help (int argc, char **argv)
 
 				i++;
 			}
+			return 0;
+			break;
+
+		case LIST_LISTROMSIZE: /* I used this for statistical analysis */
+			i = 0;
+			while (drivers[i])
+			{
+				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+				{
+					const struct RomModule *romp;
+					j = 0;
+
+					romp = drivers[i]->rom;
+
+					while (romp && (romp->name || romp->offset || romp->length))
+					{
+						j += romp->length & ~ROMFLAG_MASK;
+
+						romp++;
+					}
+					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,j);
+				}
+
+				i++;
+			}
+			return 0;
+			break;
+
+		case LIST_LISTCPU: /* I used this for statistical analysis */
+			{
+				int year;
+
+				for (j = 1;j < CPU_COUNT;j++)
+					printf("\t%s",cputype_name(j));
+				printf("\n");
+
+				for (year = 1980;year <= 1995;year++)
+				{
+					int count[CPU_COUNT];
+
+					for (j = 0;j < CPU_COUNT;j++)
+						count[j] = 0;
+
+					i = 0;
+					while (drivers[i])
+					{
+						if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+						{
+							const struct MachineDriver *x_driver = drivers[i]->drv;
+							const struct MachineCPU *x_cpu = x_driver->cpu;
+
+							if (atoi(drivers[i]->year) == year)
+							{
+								for (j = 0;j < MAX_CPU;j++)
+									count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
+							}
+						}
+
+						i++;
+					}
+
+					printf("%d",year);
+					for (j = 1;j < CPU_COUNT;j++)
+						printf("\t%d",count[j]);
+					printf("\n");
+				}
+			}
+
 			return 0;
 			break;
 

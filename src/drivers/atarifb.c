@@ -79,12 +79,6 @@ Changes:
 	LBO - lots of cleanup, now it's playable.
 
 TODO:
-	* The code comments and variables are named such that player 1 is
-	  drawn on the right side of the screen, yet the player 1 trackball
-	  controls the left-side player, who also is on offense when the game
-	  starts. The naming convention is according to the schematics.
-	  Will the real player 1 please stand up?
-
 	* The down marker sprite is multiplexed so that it will be drawn at the
 	  top and bottom of the screen. We fake this feature. Additionally, we
 	  draw it at a different location which seems to make more sense.
@@ -100,8 +94,8 @@ TODO:
 	* I'm not good at reading the schematics, so I'm unsure about the
 	  exact vblank duration. I'm pretty sure it is one of two values though.
 
-	* The 4-player variation is slightly broken. I'm unsure of the sign bits
-	  for the trackballs as well as the LED multiplexing.
+	* The 4-player variation is slightly broken. I'm unsure of the
+	  LED multiplexing.
 
 ***************************************************************************/
 
@@ -344,21 +338,20 @@ INPUT_PORTS_START( atarifb )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN2 - Player 1 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN3 - Player 1 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN4 - Player 2 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN5 - Player 2 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
-
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atarifb4 )
@@ -391,37 +384,36 @@ INPUT_PORTS_START( atarifb4 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN3 - Player 1 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN4 - Player 1 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN5 - Player 2 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN6 - Player 2 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN7 - Player 3 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER3, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER3, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN8 - Player 3 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER3, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER3, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN9 - Player 4 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER4, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER4, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN10 - Player 4 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER4, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER4, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
-
 INPUT_PORTS_END
 
 INPUT_PORTS_START( abaseb )
@@ -450,21 +442,20 @@ INPUT_PORTS_START( abaseb )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN2 - Player 1 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN3 - Player 1 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN4 - Player 2 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN5 - Player 2 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
-
 INPUT_PORTS_END
 
 INPUT_PORTS_START( soccer )
@@ -493,41 +484,41 @@ INPUT_PORTS_START( soccer )
 	PORT_DIPSETTING(	0x04, "German" )
 	PORT_DIPSETTING(	0x08, "French" )
 	PORT_DIPSETTING(	0x0c, "Spanish" )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 ) /* verify */
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 ) /* verify */
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* verify */
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START	/* IN3 - Player 1 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN4 - Player 1 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN5 - Player 2 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN6 - Player 2 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER2, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN7 - Player 3 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER3, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER3, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN8 - Player 3 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER3, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER3, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN9 - Player 4 trackball, y */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER4, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER4, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START	/* IN10 - Player 4 trackball, x */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_PLAYER4, 100, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER4, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 
 	PORT_START		/* IN11 */
@@ -552,7 +543,6 @@ INPUT_PORTS_START( soccer )
 	PORT_DIPSETTING(	0x00, "1 Coin Minimum" )
 	PORT_DIPSETTING(	0x40, "2 Coin Minimum" )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused on schematics */
-
 INPUT_PORTS_END
 
 

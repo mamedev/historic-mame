@@ -261,7 +261,7 @@ INPUT_PORTS_START( tempest )
 
 	PORT_START	/* IN1/DSW0 */
 	/* This is the Tempest spinner input. It only uses 4 bits. */
-	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 25, 20, 0, 0, 0)
+	PORT_ANALOG( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 25, 20, 0, 0)
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
@@ -344,8 +344,6 @@ static struct POKEYinterface pokey_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
 	{ 50, 50 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
 	{ 0, 0 },

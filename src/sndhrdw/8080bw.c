@@ -29,6 +29,8 @@
  */
 
 #include "driver.h"
+#include "cpu/i8039/i8039.h"
+#include "machine/74123.h"
 
 void invaders_vh_flipscreen(int data);
 
@@ -300,3 +302,119 @@ void ballbomb_sh_port3_w(int offset, int data)
 }
 
 
+/*******************************************************/
+/*                                                     */
+/* Exidy "Bandido"                              	   */
+/*                                                     */
+/*******************************************************/
+
+static void bandido_74123_0_output_changed_cb(void)
+{
+	SN76477_vco_w    (0,  TTL74123_output_r(0));
+	SN76477_mixer_a_w(0, !TTL74123_output_r(0));
+
+	SN76477_enable_w(0, TTL74123_output_comp_r(0) && TTL74123_output_comp_r(1));
+}
+
+static void bandido_74123_1_output_changed_cb(void)
+{
+	SN76477_set_vco_voltage(0, !TTL74123_output_comp_r(1) ? 5.0 : 0.0);
+
+	SN76477_enable_w(0, TTL74123_output_comp_r(0) && TTL74123_output_comp_r(1));
+}
+
+static struct TTL74123_interface bandido_74123_0_intf =
+{
+	RES_K(33),
+	CAP_U(33),
+	bandido_74123_0_output_changed_cb
+};
+
+static struct TTL74123_interface bandido_74123_1_intf =
+{
+	RES_K(33),
+	CAP_U(33),
+	bandido_74123_1_output_changed_cb
+};
+
+
+void init_machine_bandido(void)
+{
+	TTL74123_config(0, &bandido_74123_0_intf);
+	TTL74123_config(1, &bandido_74123_1_intf);
+
+	/* set up the fixed connections */
+	TTL74123_reset_comp_w  (0, 1);
+	TTL74123_trigger_comp_w(0, 0);
+
+	TTL74123_trigger_comp_w(1, 0);
+
+	SN76477_envelope_1_w(0, 1);
+	SN76477_envelope_2_w(0, 0);
+	SN76477_noise_clock_w(0, 0);
+	SN76477_mixer_b_w(0, 0);
+	SN76477_mixer_c_w(0, 0);
+}
+
+
+static int bandido_t0,bandido_t1,bandido_p1,bandido_p2;
+
+
+void bandido_sh_port4_w(int offset, int data)
+{
+	bandido_t0 = data & 1;
+
+	bandido_p1 = (bandido_p1 & 0x4f) |
+				 ((data & 0x02) << 3) |		/* P1.4 */
+				 ((data & 0x08) << 2) |		/* P1.5 */
+				 ((data & 0x20) << 2);		/* P1.7 */
+
+	cpu_set_irq_line(1, I8035_EXT_INT, ((bandido_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
+
+
+	TTL74123_trigger_w   (0, data & 0x04);
+
+	TTL74123_trigger_w   (1, data & 0x10);
+	TTL74123_reset_comp_w(1, data & 0x04);
+}
+
+void bandido_sh_port5_w(int offset, int data)
+{
+	bandido_t1 = (data >> 5) & 1;
+
+	bandido_p1 = (bandido_p1 & 0xb0) |
+				 ((data & 0x01) << 3) |		/* P1.3 */
+				 ((data & 0x02) << 1) |		/* P1.2 */
+				 ((data & 0x04) >> 1) |		/* P1.1 */
+				 ((data & 0x08) >> 3) |		/* P1.0 */
+				 ((data & 0x10) << 2);		/* P1.6 */
+
+	cpu_set_irq_line(1, I8035_EXT_INT, ((bandido_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+int  bandido_sh_gett0(int offset)
+{
+	return bandido_t0;
+}
+
+int  bandido_sh_gett1(int offset)
+{
+	return bandido_t1;
+}
+
+int  bandido_sh_getp1(int offset)
+{
+	return bandido_p1;
+}
+
+int  bandido_sh_getp2(int offset)
+{
+	return bandido_p2;
+}
+
+void bandido_sh_putp2(int offset, int data)
+{
+	bandido_p2 = data;
+
+	DAC_data_w(0, bandido_p2 & 0x80 ? 0xff : 0x00);
+}

@@ -169,15 +169,15 @@ INPUT_PORTS_START( hydra )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START		/* ADC 0 @ fc8000 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_X, 50, 10, 0, 255 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* ADC 1 @ fc8000 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_Y, 70, 10, 0, 255 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* ADC 2 @ fc8000 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL, 100, 16, 0, 0x00, 0xff )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 100, 16, 0x00, 0xff )
 
 	JSA_II_PORT		/* audio board port */
 INPUT_PORTS_END
@@ -289,7 +289,7 @@ static struct MachineDriver machine_driver_hydra =
 	{
 		{
 			CPU_M68000,		/* verified */
-			7159160*2,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},

@@ -1,6 +1,9 @@
 /***************************************************************************
 
-MAJOR HAVOC (Driver) - Started 7 OCT 97 - Mike Appolo
+MAJOR HAVOC (Driver)
+
+started 7 OCT 97 - Mike Appolo
+completed by the MAME vector team
 
 Notes:
 
@@ -181,6 +184,7 @@ int mhavoc_port_0_r(int offset);
 int mhavoc_port_1_r(int offset);
 void mhavoc_out_0_w(int offset, int data);
 void mhavoc_out_1_w(int offset, int data);
+void mhavoc_irqack_w(int offset, int data);
 void tempest_colorram_w(int offset, int data);
 
 
@@ -277,7 +281,7 @@ static struct MemoryWriteAddress gamma_writemem[] =
 	{ 0x0000, 0x07ff, MWA_RAM },			/* Program RAM (2K)	*/
 	{ 0x0800, 0x1fff, mhavoc_gammaram_w, &gammaram },	/* wraps to 0x000-0x7ff */
 	{ 0x2000, 0x203f, quad_pokey_w },		/* Quad Pokey write	*/
-	{ 0x4000, 0x4000, MWA_NOP },			/* IRQ Acknowledge	*/
+	{ 0x4000, 0x4000, mhavoc_irqack_w },	/* IRQ Acknowledge	*/
 	{ 0x4800, 0x4800, mhavoc_out_1_w },		/* Coin Counters 	*/
 	{ 0x5000, 0x5000, mhavoc_alpha_w },		/* Alpha Comm. Write Port */
 	{ 0x6000, 0x61ff, MWA_RAM, &nvram, &nvram_size },	/* EEROM		*/
@@ -301,7 +305,7 @@ INPUT_PORTS_START( mhavoc )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN2 - gamma */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 40, 0, 0 )
 
 	PORT_START /* DIP Switch at position 13/14S */
 	PORT_DIPNAME( 0x01, 0x00, "Adaptive Difficulty" )
@@ -372,7 +376,7 @@ INPUT_PORTS_START( mhavocp )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN2 - gamma */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 40, 0, 0 )
 
 	PORT_START /* DIP Switch at position 13/14S */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -432,8 +436,6 @@ static struct POKEYinterface pokey_interface =
 	4,	/* 4 chips */
 	1250000,	/* 1.25 MHz??? */
 	{ 25, 25, 25, 25 },
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
@@ -457,14 +459,16 @@ static struct MachineDriver machine_driver_mhavoc =
 			CPU_M6502,
 			2500000,	/* 2.5 Mhz */
 			readmem,writemem,0,0,
-			interrupt,8 /* 2.4576 ms period */
+			interrupt,8 /* 2.4576 milliseconds period */
 		},
 		{
 			CPU_M6502,
 			1250000,	/* 1.25 Mhz */
 			gamma_readmem,gamma_writemem,0,0,
 			0, 0, /* no vblank interrupt */
-			interrupt, 305 /* 3.2768 ms period */
+#if 0		/* HJB has it's own timer in machine/mhavoc now */
+			interrupt, 305 /* 3.2768 milliseconds period? */
+#endif
 		}
 	},
 	50, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

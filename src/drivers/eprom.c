@@ -349,19 +349,19 @@ INPUT_PORTS_START( eprom )
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 @ 0x260020 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC1 @ 0x260022 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 @ 0x260024 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC1 @ 0x260026 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0, 0x10, 0xf0 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	JSA_I_PORT	/* audio board port */
@@ -420,13 +420,13 @@ static struct MachineDriver machine_driver_eprom =
 	{
 		{
 			CPU_M68000,
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M68000,
-			7159160,		/* 7.159 Mhz */
+			ATARI_CLOCK_14MHz/2,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},
@@ -449,7 +449,7 @@ static struct MachineDriver machine_driver_eprom =
 	eprom_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO_WITH_SPEECH,
+	JSA_I_MONO_WITH_SPEECH,
 
 	atarigen_nvram_handler
 };

@@ -2125,7 +2125,7 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 				else
 				{
 					tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
-					tilemap_set_scrollx( background2 , (i+offset)&0x3f, TILE_LINE_DISABLED );
+					tilemap_set_scrollx( background2 , (i+offset2)&0x3f, TILE_LINE_DISABLED );
 				}
 			}
 		}
@@ -2163,7 +2163,7 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 				else
 				{
 					tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
-					tilemap_set_scrollx( foreground2 , (i+offset)&0x3f, TILE_LINE_DISABLED );
+					tilemap_set_scrollx( foreground2 , (i+offset2)&0x3f, TILE_LINE_DISABLED );
 				}
 			}
 		}
