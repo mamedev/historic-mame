@@ -447,7 +447,7 @@ static void VLM5030_update(void)
 		/* sampling mode (check  busy flag) */
 		if( pin_ST == 0 && pin_BSY == 1 )
 		{
-			if( osd_get_sample_status(schannel) )
+			if( !mixer_is_sample_playing(schannel) )
 				pin_BSY = 0;
 		}
 	}
@@ -492,7 +492,7 @@ void VLM5030_RST (int pin )
 			if( pin_BSY )
 			{
 				if( sampling_mode )
-					osd_stop_sample( schannel );
+					mixer_stop_sample( schannel );
 				phase = PH_RESET;
 				pin_BSY = 0;
 			}

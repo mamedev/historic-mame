@@ -2,6 +2,8 @@
 
 Tutankham :  memory map (preliminary)
 
+driver by Mirko Buffoni
+
 I include here the document based on Rob Jarrett's research because it's
 really exaustive.
 
@@ -333,7 +335,7 @@ INPUT_PORTS_END
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_tutankhm =
 {
 	/* basic machine hardware */
 	{
@@ -378,7 +380,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( tutankhm )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_REGION( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
 	ROM_LOAD( "h3.bin",       0x0c000, 0x1000, 0xea03a1ab )
@@ -396,14 +398,14 @@ ROM_START( tutankhm )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
 ROM_START( tutankst )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_REGION( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
 	ROM_LOAD( "ra1_3h.cpu",   0x0c000, 0x1000, 0x2d62d7b1 )
@@ -421,59 +423,12 @@ ROM_START( tutankst )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
 
-struct GameDriver driver_tutankhm =
-{
-	__FILE__,
-	0,
-	"tutankhm",
-	"Tutankham",
-	"1982",
-	"Konami",
-	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tutankhm,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_tutankhm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_tutankst =
-{
-	__FILE__,
-	&driver_tutankhm,
-	"tutankst",
-	"Tutankham (Stern)",
-	"1982",
-	"[Konami] (Stern license)",
-	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tutankst,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_tutankhm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0,0
-};
+GAME( 1982, tutankhm, 0,        tutankhm, tutankhm, 0, ROT90, "Konami", "Tutankham" )
+GAME( 1982, tutankst, tutankhm, tutankhm, tutankhm, 0, ROT90, "[Konami] (Stern license)", "Tutankham (Stern)" )

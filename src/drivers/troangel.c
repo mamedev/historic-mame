@@ -1,3 +1,10 @@
+/****************************************************************************
+
+Tropical Angel
+
+driver by Phil Stroffolino
+
+****************************************************************************/
 #include "driver.h"
 #include "sndhrdw/irem.h"
 #include "vidhrdw/generic.h"
@@ -154,11 +161,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo troangel_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 32 },
-	{ 1, 0x6000, &spritelayout, 32*8, 32 },
-	{ 1, 0x7000, &spritelayout, 32*8, 32 },
-	{ 1, 0x8000, &spritelayout, 32*8, 32 },
-	{ 1, 0x9000, &spritelayout, 32*8, 32 },
+	{ REGION_GFX1, 0x0000, &charlayout,      0, 32 },
+	{ REGION_GFX2, 0x0000, &spritelayout, 32*8, 32 },
+	{ REGION_GFX2, 0x1000, &spritelayout, 32*8, 32 },
+	{ REGION_GFX2, 0x2000, &spritelayout, 32*8, 32 },
+	{ REGION_GFX2, 0x3000, &spritelayout, 32*8, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -207,57 +214,35 @@ static struct MachineDriver machine_driver_troangel =
 
 
 ROM_START( troangel )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "ta-a-3k",	0x0000, 0x2000, 0xf21f8196 )
 	ROM_LOAD( "ta-a-3m",	0x2000, 0x2000, 0x58801e55 )
 	ROM_LOAD( "ta-a-3n",	0x4000, 0x2000, 0xde3dea44 )
 	ROM_LOAD( "ta-a-3q",	0x6000, 0x2000, 0xfff0fc2a )
 
-	ROM_REGION_DISPOSE( 0x12000 ) /* tiles */
+	ROM_REGION(  0x10000 , REGION_CPU2 )	/* sound CPU */
+	ROM_LOAD( "ta-s-1a",	0xe000, 0x2000, 0x15a83210 )
+
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta-a-3c",	0x00000, 0x2000, 0x7ff5482f )	/* characters */
 	ROM_LOAD( "ta-a-3d",	0x02000, 0x2000, 0x06eef241 )
 	ROM_LOAD( "ta-a-3e",	0x04000, 0x2000, 0xe49f7ad8 )
-	ROM_LOAD( "ta-b-5j",	0x06000, 0x2000, 0x86895c0c )	/* sprites */
-	ROM_LOAD( "ta-b-5h",	0x08000, 0x2000, 0xf8cff29d )
-	ROM_LOAD( "ta-b-5e",	0x0a000, 0x2000, 0x8b21ee9a )
-	ROM_LOAD( "ta-b-5d",	0x0c000, 0x2000, 0xcd473d47 )
-	ROM_LOAD( "ta-b-5c",	0x0e000, 0x2000, 0xc19134c9 )
-	ROM_LOAD( "ta-b-5a",	0x10000, 0x2000, 0x0012792a )
 
-	ROM_REGIONX( 0x0320, REGION_PROMS )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ta-b-5j",	0x00000, 0x2000, 0x86895c0c )	/* sprites */
+	ROM_LOAD( "ta-b-5h",	0x02000, 0x2000, 0xf8cff29d )
+	ROM_LOAD( "ta-b-5e",	0x04000, 0x2000, 0x8b21ee9a )
+	ROM_LOAD( "ta-b-5d",	0x06000, 0x2000, 0xcd473d47 )
+	ROM_LOAD( "ta-b-5c",	0x08000, 0x2000, 0xc19134c9 )
+	ROM_LOAD( "ta-b-5a",	0x0a000, 0x2000, 0x0012792a )
+
+	ROM_REGION( 0x0320, REGION_PROMS )
 	ROM_LOAD( "ta-a-5a",	0x0000,	0x0100, 0x01de1167 ) /* chars palette low 4 bits */
 	ROM_LOAD( "ta-a-5b",	0x0100,	0x0100, 0xefd11d4b ) /* chars palette high 4 bits */
 	ROM_LOAD( "ta-b-1b",	0x0200, 0x0020, 0xf94911ea ) /* sprites palette */
 	ROM_LOAD( "ta-b-3d",	0x0220,	0x0100, 0xed3e2aa4 ) /* sprites lookup table */
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
-	ROM_LOAD( "ta-s-1a",	0xe000, 0x2000, 0x15a83210 )
 ROM_END
 
 
 
-struct GameDriver driver_troangel =
-{
-	__FILE__,
-	0,
-	"troangel",
-	"Tropical Angel",
-	"1983",
-	"Irem",
-	"Phil Stroffolino",
-	0,
-	&machine_driver_troangel,
-	0,
-
-	rom_troangel,
-	0, 0,
-	0,
-	0,
-
-	input_ports_troangel,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1983, troangel, 0, troangel, troangel, 0, ROT0, "Irem", "Tropical Angel" )

@@ -314,42 +314,42 @@ static struct MachineDriver machine_driver_rollerg =
 ***************************************************************************/
 
 ROM_START( rollerg )
-	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "999m02.g7",  0x10000, 0x18000, 0x3df8db93 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "999m01.e11", 0x0000, 0x8000, 0x1fcfb22f )
 
-	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x200000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "999h06.k2",  0x000000, 0x100000, 0xeda05130 ) /* sprites */
 	ROM_LOAD( "999h05.k8",  0x100000, 0x100000, 0x5f321c7d )
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "999h03.d23", 0x000000, 0x040000, 0xea1edbd2 ) /* zoom */
 	ROM_LOAD( "999h04.f23", 0x040000, 0x040000, 0xc1a35355 )
 
-	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* samples for 053260 */
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* samples for 053260 */
 	ROM_LOAD( "999h09.c5",  0x000000, 0x080000, 0xc5188783 )
 ROM_END
 
 ROM_START( rollergj )
-	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "999v02.bin", 0x10000, 0x18000, 0x0dd8c3ac )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "999m01.e11", 0x0000, 0x8000, 0x1fcfb22f )
 
-	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x200000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "999h06.k2",  0x000000, 0x100000, 0xeda05130 ) /* sprites */
 	ROM_LOAD( "999h05.k8",  0x100000, 0x100000, 0x5f321c7d )
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "999h03.d23", 0x000000, 0x040000, 0xea1edbd2 ) /* zoom */
 	ROM_LOAD( "999h04.f23", 0x040000, 0x040000, 0xc1a35355 )
 
-	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* samples for 053260 */
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* samples for 053260 */
 	ROM_LOAD( "999h09.c5",  0x000000, 0x080000, 0xc5188783 )
 ROM_END
 

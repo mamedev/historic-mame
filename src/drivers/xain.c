@@ -305,10 +305,10 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 8 },	/* 8x8 text */
-	{ 1, 0x08000, &tilelayout, 256, 8 },	/* 16x16 Background */
-	{ 1, 0x48000, &tilelayout, 384, 8 },	/* 16x16 Background */
-	{ 1, 0x88000, &tilelayout, 128, 8 },	/* Sprites */
+	{ REGION_GFX1, 0, &charlayout,   0, 8 },	/* 8x8 text */
+	{ REGION_GFX2, 0, &tilelayout, 256, 8 },	/* 16x16 Background */
+	{ REGION_GFX3, 0, &tilelayout, 384, 8 },	/* 16x16 Background */
+	{ REGION_GFX4, 0, &tilelayout, 128, 8 },	/* Sprites */
 	{ -1 } /* end of array */
 };
 
@@ -334,7 +334,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_xsleena =
 {
 	{
 		{
@@ -397,143 +397,161 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( xsleena )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "s-10.7d",      0x08000, 0x8000, 0x370164be )
 	ROM_LOAD( "s-11.7c",      0x04000, 0x4000, 0xd22bf859 )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGION_DISPOSE(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, 0x83c00dd8 ) /* chars */
-	ROM_LOAD( "s-21.16i",     0x08000, 0x8000, 0x11eb4247 ) /* tiles */
-	ROM_LOAD( "s-22.15i",     0x10000, 0x8000, 0x422b536e )
-	ROM_LOAD( "s-23.14i",     0x18000, 0x8000, 0x828c1b0c )
-	ROM_LOAD( "s-24.13i",     0x20000, 0x8000, 0xd37939e0 )
-	ROM_LOAD( "s-13.16g",     0x28000, 0x8000, 0x8f0aa1a7 )
-	ROM_LOAD( "s-14.15g",     0x30000, 0x8000, 0x45681910 )
-	ROM_LOAD( "s-15.14g",     0x38000, 0x8000, 0xa8eeabc8 )
-	ROM_LOAD( "s-16.13g",     0x40000, 0x8000, 0xe59a2f27 )
-	ROM_LOAD( "s-6.4h",       0x48000, 0x8000, 0x5c6c453c ) /* tiles */
-	ROM_LOAD( "s-5.4l",       0x50000, 0x8000, 0x59d87a9a )
-	ROM_LOAD( "s-4.4m",       0x58000, 0x8000, 0x84884a2e )
-	/* 0x60000-0x67fff empty */
-	ROM_LOAD( "s-7.4f",       0x68000, 0x8000, 0x8d637639 )
-	ROM_LOAD( "s-8.4d",       0x70000, 0x8000, 0x71eec4e6 )
-	ROM_LOAD( "s-9.4c",       0x78000, 0x8000, 0x7fc9704f )
-	/* 0x80000-0x87fff empty */
-	ROM_LOAD( "s-25.10i",     0x88000, 0x8000, 0x252976ae ) /* sprites */
-	ROM_LOAD( "s-26.9i",      0x90000, 0x8000, 0xe6f1e8d5 )
-	ROM_LOAD( "s-27.8i",      0x98000, 0x8000, 0x785381ed )
-	ROM_LOAD( "s-28.7i",      0xa0000, 0x8000, 0x59754e3d )
-	ROM_LOAD( "s-17.10g",     0xa8000, 0x8000, 0x4d977f33 )
-	ROM_LOAD( "s-18.9g",      0xb0000, 0x8000, 0x3f3b62a0 )
-	ROM_LOAD( "s-19.8g",      0xb8000, 0x8000, 0x76641ee3 )
-	ROM_LOAD( "s-20.7g",      0xc0000, 0x8000, 0x37671f36 )
-
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "s-2.3b",       0x08000, 0x8000, 0xa1a860e2 )
 	ROM_LOAD( "s-1.2b",       0x04000, 0x4000, 0x948b9757 )
-	ROM_CONTINUE(       0x10000, 0x4000 )
+	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, 0xa5318cb8 )
 
-	ROM_REGION(0x0100)	/* PROM */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, 0x83c00dd8 ) /* chars */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-21.16i",     0x00000, 0x8000, 0x11eb4247 ) /* tiles */
+	ROM_LOAD( "s-22.15i",     0x08000, 0x8000, 0x422b536e )
+	ROM_LOAD( "s-23.14i",     0x10000, 0x8000, 0x828c1b0c )
+	ROM_LOAD( "s-24.13i",     0x18000, 0x8000, 0xd37939e0 )
+	ROM_LOAD( "s-13.16g",     0x20000, 0x8000, 0x8f0aa1a7 )
+	ROM_LOAD( "s-14.15g",     0x28000, 0x8000, 0x45681910 )
+	ROM_LOAD( "s-15.14g",     0x30000, 0x8000, 0xa8eeabc8 )
+	ROM_LOAD( "s-16.13g",     0x38000, 0x8000, 0xe59a2f27 )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-6.4h",       0x00000, 0x8000, 0x5c6c453c ) /* tiles */
+	ROM_LOAD( "s-5.4l",       0x08000, 0x8000, 0x59d87a9a )
+	ROM_LOAD( "s-4.4m",       0x10000, 0x8000, 0x84884a2e )
+	/* 0x60000-0x67fff empty */
+	ROM_LOAD( "s-7.4f",       0x20000, 0x8000, 0x8d637639 )
+	ROM_LOAD( "s-8.4d",       0x28000, 0x8000, 0x71eec4e6 )
+	ROM_LOAD( "s-9.4c",       0x30000, 0x8000, 0x7fc9704f )
+	/* 0x80000-0x87fff empty */
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-25.10i",     0x00000, 0x8000, 0x252976ae ) /* sprites */
+	ROM_LOAD( "s-26.9i",      0x08000, 0x8000, 0xe6f1e8d5 )
+	ROM_LOAD( "s-27.8i",      0x10000, 0x8000, 0x785381ed )
+	ROM_LOAD( "s-28.7i",      0x18000, 0x8000, 0x59754e3d )
+	ROM_LOAD( "s-17.10g",     0x20000, 0x8000, 0x4d977f33 )
+	ROM_LOAD( "s-18.9g",      0x28000, 0x8000, 0x3f3b62a0 )
+	ROM_LOAD( "s-19.8g",      0x30000, 0x8000, 0x76641ee3 )
+	ROM_LOAD( "s-20.7g",      0x38000, 0x8000, 0x37671f36 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, 0xfed32888 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( xsleenab )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.rom",        0x08000, 0x8000, 0x79f515a7 )
 	ROM_LOAD( "s-11.7c",      0x04000, 0x4000, 0xd22bf859 )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGION_DISPOSE(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, 0x83c00dd8 ) /* chars */
-	ROM_LOAD( "s-21.16i",     0x08000, 0x8000, 0x11eb4247 ) /* tiles */
-	ROM_LOAD( "s-22.15i",     0x10000, 0x8000, 0x422b536e )
-	ROM_LOAD( "s-23.14i",     0x18000, 0x8000, 0x828c1b0c )
-	ROM_LOAD( "s-24.13i",     0x20000, 0x8000, 0xd37939e0 )
-	ROM_LOAD( "s-13.16g",     0x28000, 0x8000, 0x8f0aa1a7 )
-	ROM_LOAD( "s-14.15g",     0x30000, 0x8000, 0x45681910 )
-	ROM_LOAD( "s-15.14g",     0x38000, 0x8000, 0xa8eeabc8 )
-	ROM_LOAD( "s-16.13g",     0x40000, 0x8000, 0xe59a2f27 )
-	ROM_LOAD( "s-6.4h",       0x48000, 0x8000, 0x5c6c453c ) /* tiles */
-	ROM_LOAD( "s-5.4l",       0x50000, 0x8000, 0x59d87a9a )
-	ROM_LOAD( "s-4.4m",       0x58000, 0x8000, 0x84884a2e )
-	/* 0x60000-0x67fff empty */
-	ROM_LOAD( "s-7.4f",       0x68000, 0x8000, 0x8d637639 )
-	ROM_LOAD( "s-8.4d",       0x70000, 0x8000, 0x71eec4e6 )
-	ROM_LOAD( "s-9.4c",       0x78000, 0x8000, 0x7fc9704f )
-	/* 0x80000-0x87fff empty */
-	ROM_LOAD( "s-25.10i",     0x88000, 0x8000, 0x252976ae ) /* sprites */
-	ROM_LOAD( "s-26.9i",      0x90000, 0x8000, 0xe6f1e8d5 )
-	ROM_LOAD( "s-27.8i",      0x98000, 0x8000, 0x785381ed )
-	ROM_LOAD( "s-28.7i",      0xa0000, 0x8000, 0x59754e3d )
-	ROM_LOAD( "s-17.10g",     0xa8000, 0x8000, 0x4d977f33 )
-	ROM_LOAD( "s-18.9g",      0xb0000, 0x8000, 0x3f3b62a0 )
-	ROM_LOAD( "s-19.8g",      0xb8000, 0x8000, 0x76641ee3 )
-	ROM_LOAD( "s-20.7g",      0xc0000, 0x8000, 0x37671f36 )
-
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "s-2.3b",       0x08000, 0x8000, 0xa1a860e2 )
 	ROM_LOAD( "s-1.2b",       0x04000, 0x4000, 0x948b9757 )
-	ROM_CONTINUE(       0x10000, 0x4000 )
+	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, 0xa5318cb8 )
 
-	ROM_REGION(0x0100)	/* PROM */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, 0x83c00dd8 ) /* chars */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-21.16i",     0x00000, 0x8000, 0x11eb4247 ) /* tiles */
+	ROM_LOAD( "s-22.15i",     0x08000, 0x8000, 0x422b536e )
+	ROM_LOAD( "s-23.14i",     0x10000, 0x8000, 0x828c1b0c )
+	ROM_LOAD( "s-24.13i",     0x18000, 0x8000, 0xd37939e0 )
+	ROM_LOAD( "s-13.16g",     0x20000, 0x8000, 0x8f0aa1a7 )
+	ROM_LOAD( "s-14.15g",     0x28000, 0x8000, 0x45681910 )
+	ROM_LOAD( "s-15.14g",     0x30000, 0x8000, 0xa8eeabc8 )
+	ROM_LOAD( "s-16.13g",     0x38000, 0x8000, 0xe59a2f27 )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-6.4h",       0x00000, 0x8000, 0x5c6c453c ) /* tiles */
+	ROM_LOAD( "s-5.4l",       0x08000, 0x8000, 0x59d87a9a )
+	ROM_LOAD( "s-4.4m",       0x10000, 0x8000, 0x84884a2e )
+	/* 0x60000-0x67fff empty */
+	ROM_LOAD( "s-7.4f",       0x20000, 0x8000, 0x8d637639 )
+	ROM_LOAD( "s-8.4d",       0x28000, 0x8000, 0x71eec4e6 )
+	ROM_LOAD( "s-9.4c",       0x30000, 0x8000, 0x7fc9704f )
+	/* 0x80000-0x87fff empty */
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-25.10i",     0x00000, 0x8000, 0x252976ae ) /* sprites */
+	ROM_LOAD( "s-26.9i",      0x08000, 0x8000, 0xe6f1e8d5 )
+	ROM_LOAD( "s-27.8i",      0x10000, 0x8000, 0x785381ed )
+	ROM_LOAD( "s-28.7i",      0x18000, 0x8000, 0x59754e3d )
+	ROM_LOAD( "s-17.10g",     0x20000, 0x8000, 0x4d977f33 )
+	ROM_LOAD( "s-18.9g",      0x28000, 0x8000, 0x3f3b62a0 )
+	ROM_LOAD( "s-19.8g",      0x30000, 0x8000, 0x76641ee3 )
+	ROM_LOAD( "s-20.7g",      0x38000, 0x8000, 0x37671f36 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, 0xfed32888 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( solarwar )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "p9-0.bin",     0x08000, 0x8000, 0x8ff372a8 )
 	ROM_LOAD( "pa-0.bin",     0x04000, 0x4000, 0x154f946f )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGION_DISPOSE(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, 0x83c00dd8 ) /* chars */
-	ROM_LOAD( "s-21.16i",     0x08000, 0x8000, 0x11eb4247 ) /* tiles */
-	ROM_LOAD( "s-22.15i",     0x10000, 0x8000, 0x422b536e )
-	ROM_LOAD( "s-23.14i",     0x18000, 0x8000, 0x828c1b0c )
-	ROM_LOAD( "pn-0.bin",     0x20000, 0x8000, 0xd2ed6f94 )
-	ROM_LOAD( "s-13.16g",     0x28000, 0x8000, 0x8f0aa1a7 )
-	ROM_LOAD( "s-14.15g",     0x30000, 0x8000, 0x45681910 )
-	ROM_LOAD( "s-15.14g",     0x38000, 0x8000, 0xa8eeabc8 )
-	ROM_LOAD( "pf-0.bin",     0x40000, 0x8000, 0x6e627a77 )
-	ROM_LOAD( "s-6.4h",       0x48000, 0x8000, 0x5c6c453c ) /* tiles */
-	ROM_LOAD( "s-5.4l",       0x50000, 0x8000, 0x59d87a9a )
-	ROM_LOAD( "s-4.4m",       0x58000, 0x8000, 0x84884a2e )
-	/* 0x60000-0x67fff empty */
-	ROM_LOAD( "s-7.4f",       0x68000, 0x8000, 0x8d637639 )
-	ROM_LOAD( "s-8.4d",       0x70000, 0x8000, 0x71eec4e6 )
-	ROM_LOAD( "s-9.4c",       0x78000, 0x8000, 0x7fc9704f )
-	/* 0x80000-0x87fff empty */
-	ROM_LOAD( "s-25.10i",     0x88000, 0x8000, 0x252976ae )	/* sprites */
-	ROM_LOAD( "s-26.9i",      0x90000, 0x8000, 0xe6f1e8d5 )
-	ROM_LOAD( "s-27.8i",      0x98000, 0x8000, 0x785381ed )
-	ROM_LOAD( "s-28.7i",      0xa0000, 0x8000, 0x59754e3d )
-	ROM_LOAD( "s-17.10g",     0xa8000, 0x8000, 0x4d977f33 )
-	ROM_LOAD( "s-18.9g",      0xb0000, 0x8000, 0x3f3b62a0 )
-	ROM_LOAD( "s-19.8g",      0xb8000, 0x8000, 0x76641ee3 )
-	ROM_LOAD( "s-20.7g",      0xc0000, 0x8000, 0x37671f36 )
-
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "p1-0.bin",     0x08000, 0x8000, 0xf5f235a3 )
 	ROM_LOAD( "p0-0.bin",     0x04000, 0x4000, 0x51ae95ae )
-	ROM_CONTINUE(         0x10000, 0x4000 )
+	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, 0xa5318cb8 )
 
-	ROM_REGION(0x0100)	/* PROM */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, 0x83c00dd8 ) /* chars */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-21.16i",     0x00000, 0x8000, 0x11eb4247 ) /* tiles */
+	ROM_LOAD( "s-22.15i",     0x08000, 0x8000, 0x422b536e )
+	ROM_LOAD( "s-23.14i",     0x10000, 0x8000, 0x828c1b0c )
+	ROM_LOAD( "pn-0.bin",     0x18000, 0x8000, 0xd2ed6f94 )
+	ROM_LOAD( "s-13.16g",     0x20000, 0x8000, 0x8f0aa1a7 )
+	ROM_LOAD( "s-14.15g",     0x28000, 0x8000, 0x45681910 )
+	ROM_LOAD( "s-15.14g",     0x30000, 0x8000, 0xa8eeabc8 )
+	ROM_LOAD( "pf-0.bin",     0x38000, 0x8000, 0x6e627a77 )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-6.4h",       0x00000, 0x8000, 0x5c6c453c ) /* tiles */
+	ROM_LOAD( "s-5.4l",       0x08000, 0x8000, 0x59d87a9a )
+	ROM_LOAD( "s-4.4m",       0x10000, 0x8000, 0x84884a2e )
+	/* 0x60000-0x67fff empty */
+	ROM_LOAD( "s-7.4f",       0x20000, 0x8000, 0x8d637639 )
+	ROM_LOAD( "s-8.4d",       0x28000, 0x8000, 0x71eec4e6 )
+	ROM_LOAD( "s-9.4c",       0x30000, 0x8000, 0x7fc9704f )
+	/* 0x80000-0x87fff empty */
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s-25.10i",     0x00000, 0x8000, 0x252976ae )	/* sprites */
+	ROM_LOAD( "s-26.9i",      0x08000, 0x8000, 0xe6f1e8d5 )
+	ROM_LOAD( "s-27.8i",      0x10000, 0x8000, 0x785381ed )
+	ROM_LOAD( "s-28.7i",      0x18000, 0x8000, 0x59754e3d )
+	ROM_LOAD( "s-17.10g",     0x20000, 0x8000, 0x4d977f33 )
+	ROM_LOAD( "s-18.9g",      0x28000, 0x8000, 0x3f3b62a0 )
+	ROM_LOAD( "s-19.8g",      0x30000, 0x8000, 0x76641ee3 )
+	ROM_LOAD( "s-20.7g",      0x38000, 0x8000, 0x37671f36 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, 0xfed32888 )	/* timing? (not used) */
 ROM_END
 
 
 
-void xsleena_patch(void)
+void init_xsleena(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -546,7 +564,7 @@ void xsleena_patch(void)
 	RAM[0xd48d] = 0x12;
 }
 
-void solarwar_patch(void)
+void init_solarwar(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -561,77 +579,6 @@ void solarwar_patch(void)
 
 
 
-struct GameDriver driver_xsleena =
-{
-	__FILE__,
-	0,
-	"xsleena",
-	"Xain'd Sleena",
-	"1986",
-	"Technos",
-	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
-	0,
-	&machine_driver,
-	xsleena_patch,
-
-	rom_xsleena,
-	0, 0,
-	0,
-	0,
-
-	input_ports_xsleena,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_xsleenab =
-{
-	__FILE__,
-	&driver_xsleena,
-	"xsleenab",
-	"Xain'd Sleena (bootleg)",
-	"1986",
-	"bootleg",
-	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
-	0,
-	&machine_driver,
-	0,
-
-	rom_xsleenab,
-	0, 0,
-	0,
-	0,
-
-	input_ports_xsleena,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_solarwar =
-{
-	__FILE__,
-	&driver_xsleena,
-	"solarwar",
-	"Solar Warrior",
-	"1986",
-	"[Technos] Taito (Memetron license)",
-	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
-	0,
-	&machine_driver,
-	solarwar_patch,
-
-	rom_solarwar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_xsleena,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, xsleena,  0,       xsleena, xsleena, xsleena,  ROT0, "Technos", "Xain'd Sleena" )
+GAME( 1986, xsleenab, xsleena, xsleena, xsleena, 0,        ROT0, "bootleg", "Xain'd Sleena (bootleg)" )
+GAME( 1986, solarwar, xsleena, xsleena, xsleena, solarwar, ROT0, "[Technos] Taito (Memetron license)", "Solar Warrior" )

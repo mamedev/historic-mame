@@ -258,8 +258,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   16, 1 },
-	{ 1, 0x4000, &spritelayout,  0, 1 },
+	{ REGION_GFX1, 0, &charlayout,   16, 1 },
+	{ REGION_GFX2, 0, &spritelayout,  0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -276,14 +276,14 @@ struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock  */
 	100,        /* volume        */
-	3,  		/* memory region  */
+	REGION_SOUND1,	/* memory region  */
 	0,          /* memory size of speech rom */
 	0			/* VCU            */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_yiear =
 {
 	/* basic machine hardware */
 	{
@@ -333,94 +333,50 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( yiear )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "i08.10d",      0x08000, 0x4000, 0xe2d7458b )
 	ROM_LOAD( "i07.8d",       0x0c000, 0x4000, 0x7db7442e )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g16_1.bin",    0x00000, 0x2000, 0xb68fd91d )
 	ROM_LOAD( "g15_2.bin",    0x02000, 0x2000, 0xd9b167c6 )
-	ROM_LOAD( "g04_5.bin",    0x04000, 0x4000, 0x45109b29 )
-	ROM_LOAD( "g03_6.bin",    0x08000, 0x4000, 0x1d650790 )
-	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
-	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g04_5.bin",    0x00000, 0x4000, 0x45109b29 )
+	ROM_LOAD( "g03_6.bin",    0x04000, 0x4000, 0x1d650790 )
+	ROM_LOAD( "g06_3.bin",    0x08000, 0x4000, 0xe6aa945b )
+	ROM_LOAD( "g05_4.bin",    0x0c000, 0x4000, 0xcc187c22 )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
-	ROM_REGION( 0x2000 )	/* 8k for the VLM5030 data */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* 8k for the VLM5030 data */
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
 ROM_START( yiear2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d12_8.bin",    0x08000, 0x4000, 0x49ecd9dd )
 	ROM_LOAD( "d14_7.bin",    0x0c000, 0x4000, 0xbc2e1208 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g16_1.bin",    0x00000, 0x2000, 0xb68fd91d )
 	ROM_LOAD( "g15_2.bin",    0x02000, 0x2000, 0xd9b167c6 )
-	ROM_LOAD( "g04_5.bin",    0x04000, 0x4000, 0x45109b29 )
-	ROM_LOAD( "g03_6.bin",    0x08000, 0x4000, 0x1d650790 )
-	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
-	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g04_5.bin",    0x00000, 0x4000, 0x45109b29 )
+	ROM_LOAD( "g03_6.bin",    0x04000, 0x4000, 0x1d650790 )
+	ROM_LOAD( "g06_3.bin",    0x08000, 0x4000, 0xe6aa945b )
+	ROM_LOAD( "g05_4.bin",    0x0c000, 0x4000, 0xcc187c22 )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
-	ROM_REGION( 0x2000 )	/* 8k for the VLM5030 data */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* 8k for the VLM5030 data */
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
 
 
-struct GameDriver driver_yiear =
-{
-	__FILE__,
-	0,
-	"yiear",
-	"Yie Ar Kung-Fu (set 1)",
-	"1985",
-	"Konami",
-	"Enrique Sanchez\nPhilip Stroffolino\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_yiear,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,
-	0,
-
-	input_ports_yiear,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_yiear2 =
-{
-	__FILE__,
-	&driver_yiear,
-	"yiear2",
-	"Yie Ar Kung-Fu (set 2)",
-	"1985",
-	"Konami",
-	"Enrique Sanchez\nPhilip Stroffolino\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_yiear2,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,
-	0,
-
-	input_ports_yiear,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1985, yiear,  0,     yiear, yiear, 0, ROT0, "Konami", "Yie Ar Kung-Fu (set 1)" )
+GAME( 1985, yiear2, yiear, yiear, yiear, 0, ROT0, "Konami", "Yie Ar Kung-Fu (set 2)" )

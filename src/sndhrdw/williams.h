@@ -13,13 +13,14 @@ extern struct MemoryWriteAddress williams_narc_master_writemem[];
 extern struct MemoryReadAddress williams_narc_slave_readmem[];
 extern struct MemoryWriteAddress williams_narc_slave_writemem[];
 
+extern struct CustomSound_interface williams_custom_interface;
 extern struct YM2151interface williams_cvsd_ym2151_interface;
 extern struct YM2151interface williams_adpcm_ym2151_interface;
 extern struct DACinterface williams_cvsd_dac_interface;
 extern struct DACinterface williams_adpcm_dac_interface;
 extern struct DACinterface williams_narc_dac_interface;
 extern struct hc55516_interface williams_cvsd_interface;
-extern struct OKIM6295interface williams_adpcm_6295_interface_3;
+extern struct OKIM6295interface williams_adpcm_6295_interface_REGION_SOUND1;
 
 void williams_cvsd_init(int cpunum, int pianum);
 void williams_cvsd_data_w(int offset, int data);
@@ -44,6 +45,10 @@ void williams_narc_reset_w(int state);
 
 #define SOUND_WILLIAMS_CVSD									\
 	{														\
+		SOUND_CUSTOM,										\
+		&williams_custom_interface							\
+	},														\
+	{														\
 		SOUND_YM2151,										\
 		&williams_cvsd_ym2151_interface						\
 	},														\
@@ -66,6 +71,10 @@ void williams_narc_reset_w(int state);
 	}
 
 #define SOUND_WILLIAMS_ADPCM(rgn)							\
+	{														\
+		SOUND_CUSTOM,										\
+		&williams_custom_interface							\
+	},														\
 	{														\
 		SOUND_YM2151,										\
 		&williams_adpcm_ym2151_interface					\
@@ -95,6 +104,10 @@ void williams_narc_reset_w(int state);
 	}
 
 #define SOUND_WILLIAMS_NARC									\
+	{														\
+		SOUND_CUSTOM,										\
+		&williams_custom_interface							\
+	},														\
 	{														\
 		SOUND_YM2151,										\
 		&williams_adpcm_ym2151_interface					\

@@ -5,6 +5,12 @@ World Cup 90 ( Tecmo ) driver
 Ernesto Corvi
 (ernesto@imagina.com)
 
+TODO:
+- ROM ic82_06.bin (ADPCM) is not used
+- The second YM2203 starts outputting static after a few seconds.
+- Dip switches mapping is not complete. ( Anyone has the manual handy? )
+
+
 CPU #1 : Handles background & foreground tiles, controllers, dipswitches.
 CPU #2 : Handles sprites and palette
 CPU #3 : Audio.
@@ -38,10 +44,6 @@ CPU #3
 0000-0xc000 ROM
 ???????????
 
-Notes:
------
-Dip switches mapping is not complete. ( Anyone has the manual handy? )
-Other than that, everything else seems to be complete.
 */
 
 #include "driver.h"
@@ -310,7 +312,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout tilelayout =
 {
 	16,16,	/* 16*16 sprites */
-	256,	/* 1024 sprites */
+	2048,	/* 2048 tiles */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -335,28 +337,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,      	1*16*16, 16*16 },
-
-	{ 1, 0x10000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x18000, &tilelayout,			2*16*16, 16*16 },
-
-	{ 1, 0x20000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x28000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x30000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x38000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x40000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x48000, &tilelayout,			2*16*16, 16*16 },
-
-	{ 1, 0x50000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x58000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x60000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x68000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x70000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x78000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x80000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x88000, &tilelayout,			3*16*16, 16*16 },
-
-	{ 1, 0x90000, &spritelayout,		0*16*16, 16*16 }, // sprites
+	{ REGION_GFX1, 0x00000, &charlayout,      	1*16*16, 16*16 },
+	{ REGION_GFX2, 0x00000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX3, 0x00000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX4, 0x00000, &spritelayout,		0*16*16, 16*16 }, // sprites
 	{ -1 } /* end of array */
 };
 
@@ -434,53 +418,37 @@ static struct MachineDriver machine_driver_wc90 =
 
 
 ROM_START( wc90 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "ic87_01.bin",  0x00000, 0x08000, 0x4a1affbc )	/* c000-ffff is not used */
 	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0x110000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
-	ROM_LOAD( "ic86_08v.bin", 0x10000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
-	ROM_LOAD( "ic90_09v.bin", 0x30000, 0x20000, 0x99f8841c )	/* tiles #2 */
-	ROM_LOAD( "ic87_10v.bin", 0x50000, 0x20000, 0x8232093d )	/* tiles #3 */
-	ROM_LOAD( "ic91_11v.bin", 0x70000, 0x20000, 0x188d3789 )	/* tiles #4 */
-	ROM_LOAD( "ic50_12v.bin", 0x90000, 0x20000, 0xda1fe922 )	/* sprites  */
-	ROM_LOAD( "ic54_13v.bin", 0xb0000, 0x20000, 0x9ad03c2c )	/* sprites  */
-	ROM_LOAD( "ic60_14v.bin", 0xd0000, 0x20000, 0x499dfb1b )	/* sprites  */
-	ROM_LOAD( "ic65_15v.bin", 0xf0000, 0x20000, 0xd8ea5c81 )	/* sprites  */
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 96k for code */  /* Second CPU */
+	ROM_REGION( 0x20000, REGION_CPU2 )	/* 96k for code */  /* Second CPU */
 	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
 	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, 0x1ac02b3b )	/* banked at f000-f7ff */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
 
-	ROM_REGION(0x20000)	/* 64k for ADPCM samples */
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, 0x99f8841c )	/* tiles #2 */
+
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, 0x8232093d )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, 0x188d3789 )	/* tiles #4 */
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, 0xda1fe922 )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, 0x9ad03c2c )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, 0x499dfb1b )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, 0xd8ea5c81 )	/* sprites  */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 64k for ADPCM samples */
 	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
 ROM_END
 
-struct GameDriver driver_wc90 =
-{
-	__FILE__,
-	0,
-	"wc90",
-	"World Cup 90",
-	"1989",
-	"Tecmo",
-	"Ernesto Corvi",
-	0,
-	&machine_driver_wc90,
-	0,
 
-	rom_wc90,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wc90,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAMEX( 1989, wc90, 0, wc90, wc90, 0, ROT0, "Tecmo", "World Cup 90", GAME_IMPERFECT_SOUND )

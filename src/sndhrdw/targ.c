@@ -55,7 +55,7 @@ void targ_tone_generator(int data)
     }
     else
 	{
-		osd_set_sample_freq(tone_channel,maxfreq/(0xFF-sound_a_freq));
+		mixer_set_sample_frequency(tone_channel,maxfreq/(0xFF-sound_a_freq));
 		mixer_set_volume(tone_channel,tone_active*100);
 	}
 }
@@ -75,7 +75,7 @@ int targ_sh_start(const struct MachineSound *msound)
 
 void targ_sh_stop(void)
 {
-    osd_stop_sample(tone_channel);
+    mixer_stop_sample(tone_channel);
 }
 
 void targ_sh_w(int offset,int data)
@@ -149,7 +149,7 @@ void targ_sh_w(int offset,int data)
            }
            else
 		   {
-             osd_set_sample_freq(tone_channel,maxfreq/(0xFF-sound_a_freq));
+             mixer_set_sample_frequency(tone_channel,maxfreq/(0xFF-sound_a_freq));
              mixer_set_volume(tone_channel,0);
 		   }
         }

@@ -633,34 +633,34 @@ static struct MachineDriver machine_driver_gsword =
 ***************************************************************************/
 
 ROM_START( gsword )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64K for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64K for main CPU */
 	ROM_LOAD( "gs1",          0x0000, 0x2000, 0x565c4d9e )
 	ROM_LOAD( "gs2",          0x2000, 0x2000, 0xd772accf )
 	ROM_LOAD( "gs3",          0x4000, 0x2000, 0x2cee1871 )
 	ROM_LOAD( "gs4",          0x6000, 0x2000, 0xca9d206d )
 	ROM_LOAD( "gs5",          0x8000, 0x1000, 0x2a892326 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for 2nd CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64K for 2nd CPU */
 	ROM_LOAD( "gs15",         0x0000, 0x2000, 0x1aa4690e )
 	ROM_LOAD( "gs16",         0x2000, 0x2000, 0x10accc10 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for 3nd z80 */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64K for 3nd z80 */
 	ROM_LOAD( "gs12",         0x0000, 0x2000, 0xa6589068 )
 	ROM_LOAD( "gs13",         0x2000, 0x2000, 0x4ee79796 )
 	ROM_LOAD( "gs14",         0x4000, 0x2000, 0x455364b6 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gs10",         0x0000, 0x2000, 0x517c571b )	/* tiles */
 	ROM_LOAD( "gs11",         0x2000, 0x2000, 0x7a1d8a3a )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gs6",          0x0000, 0x2000, 0x1b0a3cb7 )	/* sprites */
 
-	ROM_REGIONX( 0x4000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gs7",          0x0000, 0x2000, 0xef5f28c6 )
 	ROM_LOAD( "gs8",          0x2000, 0x2000, 0x46824b30 )
 
-	ROM_REGIONX( 0x0360, REGION_PROMS )
+	ROM_REGION( 0x0360, REGION_PROMS )
 	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette low bits */
 	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette high bits */
 	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */

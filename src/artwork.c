@@ -64,7 +64,7 @@ static unsigned char find_pen(unsigned char r,unsigned char g,unsigned char b)
 	return(bi);
 }
 
-static void create_merged_table (struct artwork *a)
+void backdrop_refresh_tables (struct artwork *a)
 {
 	int i,j, k, total_colors;
 	unsigned char rgb1[3], rgb2[3], c[3];
@@ -137,10 +137,6 @@ void backdrop_refresh(struct artwork *a)
 			for (i=0; i<width; i++)
 				((unsigned short *)back->line[j])[i] = Machine->pens[((unsigned short *)orig->line[j])[i]+offset];
 	}
-	/* If the game is a vectorgame, (re)create the table
-	   with merged vector/backdrop colors */
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		create_merged_table (a);
 }
 
 /*********************************************************************
@@ -1048,6 +1044,23 @@ static struct artwork *allocate_artwork_mem (int width, int height)
 		return NULL;
 	}
 
+	if ((a->pTable = (unsigned char*)malloc(256*256))==0)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Not enough memory.\n");
+		artwork_free(a);
+		return NULL;
+	}
+
+	if ((a->brightness = (unsigned char*)malloc(256*256))==0)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Not enough memory.\n");
+		artwork_free(a);
+		return NULL;
+	}
+	memset (a->brightness, 0, 256*256);
+
 	/* Create bitmap for the vector screen */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
@@ -1058,23 +1071,6 @@ static struct artwork *allocate_artwork_mem (int width, int height)
 			return NULL;
 		}
 		fillbitmap(a->vector_bitmap,0,0);
-
-		if ((a->pTable = (unsigned char*)malloc(256*256))==0)
-		{
-			if (errorlog)
-				fprintf(errorlog,"Not enough memory.\n");
-			artwork_free(a);
-			return NULL;
-		}
-
-		if ((a->brightness = (unsigned char*)malloc(256*256))==0)
-		{
-			if (errorlog)
-				fprintf(errorlog,"Not enough memory.\n");
-			artwork_free(a);
-			return NULL;
-		}
-		memset (a->brightness, 0, 256*256);
 	}
 
 	return a;

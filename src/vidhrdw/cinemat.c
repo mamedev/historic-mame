@@ -247,7 +247,13 @@ void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,co
 int cinemat_vh_start (void)
 {
 	vector_set_shift (VEC_SHIFT);
-	if (backdrop) backdrop_refresh (backdrop);
+
+	if (backdrop)
+	{
+		backdrop_refresh (backdrop);
+		backdrop_refresh_tables (backdrop);
+	}
+
 	if (overlay) overlay_remap (overlay);
 	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
 	return vector_vh_start();

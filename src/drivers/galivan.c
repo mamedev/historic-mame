@@ -921,33 +921,33 @@ static struct MachineDriver machine_driver_ninjemak =
 ***************************************************************************/
 
 ROM_START( galivan )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* main cpu code */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* main cpu code */
 	ROM_LOAD( "gv1.1b",       0x00000, 0x8000, 0x5e480bfc )
 	ROM_LOAD( "gv2.3b",       0x08000, 0x4000, 0x0d1b3538 )
 	ROM_LOAD( "gv3.4b",       0x10000, 0x4000, 0x82f0c5e6 ) /* 2 banks at c000 */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* sound cpu code */
 	ROM_LOAD( "gv11.14b",     0x0000, 0x4000, 0x05f1a0e3 )
 	ROM_LOAD( "gv12.15b",     0x4000, 0x8000, 0x5b7a0d6d )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gv4.13d",      0x00000, 0x4000, 0x162490b4 ) /* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gv7.14f",      0x00000, 0x8000, 0xeaa1a0db ) /* tiles */
 	ROM_LOAD( "gv8.15f",      0x08000, 0x8000, 0xf174a41e )
 	ROM_LOAD( "gv9.17f",      0x10000, 0x8000, 0xedc60f5d )
 	ROM_LOAD( "gv10.19f",     0x18000, 0x8000, 0x41f27fca )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gv14.4f",      0x00000, 0x8000, 0x03e2229f ) /* sprites */
 	ROM_LOAD( "gv13.1f",      0x08000, 0x8000, 0xbca9e66b )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "gv6.19d",      0x0000, 0x4000, 0xda38168b )
 	ROM_LOAD( "gv5.17d",      0x4000, 0x4000, 0x22492d2a )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "mb7114e.9f",   0x0000, 0x0100, 0xde782b3e )	/* red */
 	ROM_LOAD( "mb7114e.10f",  0x0100, 0x0100, 0x0ae2a857 )	/* green */
 	ROM_LOAD( "mb7114e.11f",  0x0200, 0x0100, 0x7ba8b9d1 )	/* blue */
@@ -956,33 +956,33 @@ ROM_START( galivan )
 ROM_END
 
 ROM_START( galivan2 )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* main cpu code */
+	ROM_REGION( 0x14000, REGION_CPU1 )		/* main cpu code */
 	ROM_LOAD( "e-1",          0x00000, 0x8000, 0xd8cc72b8 )
 	ROM_LOAD( "e-2",          0x08000, 0x4000, 0x9e5b3157 )
 	ROM_LOAD( "gv3.4b",       0x10000, 0x4000, 0x82f0c5e6 ) /* 2 banks at c000 */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* sound cpu code */
 	ROM_LOAD( "gv11.14b",     0x0000, 0x4000, 0x05f1a0e3 )
 	ROM_LOAD( "gv12.15b",     0x4000, 0x8000, 0x5b7a0d6d )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gv4.13d",      0x00000, 0x4000, 0x162490b4 ) /* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gv7.14f",      0x00000, 0x8000, 0xeaa1a0db ) /* tiles */
 	ROM_LOAD( "gv8.15f",      0x08000, 0x8000, 0xf174a41e )
 	ROM_LOAD( "gv9.17f",      0x10000, 0x8000, 0xedc60f5d )
 	ROM_LOAD( "gv10.19f",     0x18000, 0x8000, 0x41f27fca )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gv14.4f",      0x00000, 0x8000, 0x03e2229f ) /* sprites */
 	ROM_LOAD( "gv13.1f",      0x08000, 0x8000, 0xbca9e66b )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "gv6.19d",      0x0000, 0x4000, 0xda38168b )
 	ROM_LOAD( "gv5.17d",      0x4000, 0x4000, 0x22492d2a )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "mb7114e.9f",   0x0000, 0x0100, 0xde782b3e )	/* red */
 	ROM_LOAD( "mb7114e.10f",  0x0100, 0x0100, 0x0ae2a857 )	/* green */
 	ROM_LOAD( "mb7114e.11f",  0x0200, 0x0100, 0x7ba8b9d1 )	/* blue */
@@ -991,33 +991,33 @@ ROM_START( galivan2 )
 ROM_END
 
 ROM_START( dangar )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* main cpu code */
+	ROM_REGION( 0x14000, REGION_CPU1 )		/* main cpu code */
 	ROM_LOAD( "dangar08.1b",  0x00000, 0x8000, 0xe52638f2 )
 	ROM_LOAD( "dangar09.3b",  0x08000, 0x4000, 0x809d280f )
 	ROM_LOAD( "dangar10.5b",  0x10000, 0x4000, 0x99a3591b )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangar05.13d", 0x00000, 0x4000, 0x40cb378a )	/* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangar01.14f", 0x00000, 0x8000, 0xd59ed1f1 )  /* tiles */
 	ROM_LOAD( "dangar02.15f", 0x08000, 0x8000, 0xdfdb931c )
 	ROM_LOAD( "dangar03.17f", 0x10000, 0x8000, 0x6954e8c3 )
 	ROM_LOAD( "dangar04.19f", 0x18000, 0x8000, 0x4af6a8bf )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangarxx.f4",  0x00000, 0x8000, 0x55711884 )  /* sprites */
 	ROM_LOAD( "dangarxx.f1",  0x08000, 0x8000, 0x8cf11419 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "82s129.9f",    0x0000, 0x0100, 0xb29f6a07 )	/* red */
 	ROM_LOAD( "82s129.10f",   0x0100, 0x0100, 0xc6de5ecb )	/* green */
 	ROM_LOAD( "82s129.11f",   0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
@@ -1026,33 +1026,33 @@ ROM_START( dangar )
 ROM_END
 
 ROM_START( dangar2 )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* main cpu code */
+	ROM_REGION( 0x14000, REGION_CPU1 )		/* main cpu code */
 	ROM_LOAD( "dangar2.016",  0x00000, 0x8000, 0x743fa2d4 )
 	ROM_LOAD( "dangar2.017",  0x08000, 0x4000, 0x1cdc60a5 )
 	ROM_LOAD( "dangar2.018",  0x10000, 0x4000, 0xdb7f6613 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangar2.011",  0x00000, 0x4000, 0xe804ffe1 )	/* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangar01.14f", 0x00000, 0x8000, 0xd59ed1f1 )  /* tiles */
 	ROM_LOAD( "dangar02.15f", 0x08000, 0x8000, 0xdfdb931c )
 	ROM_LOAD( "dangar03.17f", 0x10000, 0x8000, 0x6954e8c3 )
 	ROM_LOAD( "dangar04.19f", 0x18000, 0x8000, 0x4af6a8bf )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangarxx.f4",  0x00000, 0x8000, 0x55711884 )  /* sprites */
 	ROM_LOAD( "dangarxx.f1",  0x08000, 0x8000, 0x8cf11419 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "82s129.9f",    0x0000, 0x0100, 0xb29f6a07 )	/* red */
 	ROM_LOAD( "82s129.10f",   0x0100, 0x0100, 0xc6de5ecb )	/* green */
 	ROM_LOAD( "82s129.11f",   0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
@@ -1061,33 +1061,33 @@ ROM_START( dangar2 )
 ROM_END
 
 ROM_START( dangarb )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* main cpu code */
+	ROM_REGION( 0x14000, REGION_CPU1 )		/* main cpu code */
 	ROM_LOAD( "8",            0x00000, 0x8000, 0x8136fd10 )
 	ROM_LOAD( "9",            0x08000, 0x4000, 0x3ce5ec11 )
 	ROM_LOAD( "dangar2.018",  0x10000, 0x4000, 0xdb7f6613 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangar2.011",  0x00000, 0x4000, 0xe804ffe1 )	/* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangar01.14f", 0x00000, 0x8000, 0xd59ed1f1 )  /* tiles */
 	ROM_LOAD( "dangar02.15f", 0x08000, 0x8000, 0xdfdb931c )
 	ROM_LOAD( "dangar03.17f", 0x10000, 0x8000, 0x6954e8c3 )
 	ROM_LOAD( "dangar04.19f", 0x18000, 0x8000, 0x4af6a8bf )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dangarxx.f4",  0x00000, 0x8000, 0x55711884 )  /* sprites */
 	ROM_LOAD( "dangarxx.f1",  0x08000, 0x8000, 0x8cf11419 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "82s129.9f",    0x0000, 0x0100, 0xb29f6a07 )	/* red */
 	ROM_LOAD( "82s129.10f",   0x0100, 0x0100, 0xc6de5ecb )	/* green */
 	ROM_LOAD( "82s129.11f",   0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
@@ -1096,38 +1096,38 @@ ROM_START( dangarb )
 ROM_END
 
 ROM_START( ninjemak )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* main cpu code */
+	ROM_REGION( 0x18000, REGION_CPU1 )	/* main cpu code */
 	ROM_LOAD( "ninjemak.1",   0x00000, 0x8000, 0x12b0a619 )
 	ROM_LOAD( "ninjemak.2",   0x08000, 0x4000, 0xd5b505d1 )
 	ROM_LOAD( "ninjemak.3",   0x10000, 0x8000, 0x68c92bf6 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound cpu code */
 	ROM_LOAD( "ninjemak.12",  0x0000, 0x4000, 0x3d1cd329 )
 	ROM_LOAD( "ninjemak.13",  0x4000, 0x8000, 0xac3a0b81 )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ninjemak.4",   0x00000, 0x8000, 0x83702c37 )	/* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ninjemak.8",   0x00000, 0x8000, 0x655f0a58 ) /* tiles */
 	ROM_LOAD( "ninjemak.9",   0x08000, 0x8000, 0x934e1703 )
 	ROM_LOAD( "ninjemak.10",  0x10000, 0x8000, 0x955b5c45 )
 	ROM_LOAD( "ninjemak.11",  0x18000, 0x8000, 0xbbd2e51c )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ninjemak.16",  0x00000, 0x8000, 0x8df93fed )  /* sprites */
 	ROM_LOAD( "ninjemak.17",  0x08000, 0x8000, 0xa3efd0fc )
 	ROM_LOAD( "ninjemak.14",  0x10000, 0x8000, 0xbff332d3 )
 	ROM_LOAD( "ninjemak.15",  0x18000, 0x8000, 0x56430ed4 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "ninjemak.7",   0x0000, 0x4000, 0x80c20d36 )
 	ROM_LOAD( "ninjemak.6",   0x4000, 0x4000, 0x1da7a651 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
+	ROM_REGION( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
 	ROM_LOAD( "ninjemak.5",   0x0000, 0x4000, 0x5f91dd30 )	/* text layer data */
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )	/* Region 3 - color data */
+	ROM_REGION( 0x0500, REGION_PROMS )	/* Region 3 - color data */
 	ROM_LOAD( "ninjemak.pr1", 0x0000, 0x0100, 0x8a62d4e4 )	/* red */
 	ROM_LOAD( "ninjemak.pr2", 0x0100, 0x0100, 0x2ccf976f )	/* green */
 	ROM_LOAD( "ninjemak.pr3", 0x0200, 0x0100, 0x16b2a7a4 )	/* blue */
@@ -1136,38 +1136,38 @@ ROM_START( ninjemak )
 ROM_END
 
 ROM_START( youma )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* main cpu code */
+	ROM_REGION( 0x18000, REGION_CPU1 )	/* main cpu code */
 	ROM_LOAD( "ync-1.bin",    0x00000, 0x8000, 0x0552adab )
 	ROM_LOAD( "ync-2.bin",    0x08000, 0x4000, 0xf961e5e6 )
 	ROM_LOAD( "ync-3.bin",    0x10000, 0x8000, 0x9ad50a5e )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound cpu code */
 	ROM_LOAD( "ninjemak.12",  0x0000, 0x4000, 0x3d1cd329 )
 	ROM_LOAD( "ninjemak.13",  0x4000, 0x8000, 0xac3a0b81 )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ync-4.bin",    0x00000, 0x8000, 0xa1954f44 )	/* chars */
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ninjemak.8",   0x00000, 0x8000, 0x655f0a58 ) /* tiles */
 	ROM_LOAD( "ninjemak.9",   0x08000, 0x8000, 0x934e1703 )
 	ROM_LOAD( "ninjemak.10",  0x10000, 0x8000, 0x955b5c45 )
 	ROM_LOAD( "ninjemak.11",  0x18000, 0x8000, 0xbbd2e51c )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ninjemak.16",  0x00000, 0x8000, 0x8df93fed )  /* sprites */
 	ROM_LOAD( "ninjemak.17",  0x08000, 0x8000, 0xa3efd0fc )
 	ROM_LOAD( "ninjemak.14",  0x10000, 0x8000, 0xbff332d3 )
 	ROM_LOAD( "ninjemak.15",  0x18000, 0x8000, 0x56430ed4 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "ninjemak.7",   0x0000, 0x4000, 0x80c20d36 )
 	ROM_LOAD( "ninjemak.6",   0x4000, 0x4000, 0x1da7a651 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
+	ROM_REGION( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
 	ROM_LOAD( "ync-5.bin",    0x0000, 0x4000, 0x993e4ab2 )	/* text layer data */
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )	/* Region 3 - color data */
+	ROM_REGION( 0x0500, REGION_PROMS )	/* Region 3 - color data */
 	ROM_LOAD( "yncp-6e.bin",  0x0000, 0x0100, 0xea47b91a )	/* red */
 	ROM_LOAD( "yncp-7e.bin",  0x0100, 0x0100, 0xe94c0fed )	/* green */
 	ROM_LOAD( "yncp-8e.bin",  0x0200, 0x0100, 0xffb4b287 )	/* blue */

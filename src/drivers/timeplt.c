@@ -2,6 +2,8 @@
 
 Time Pilot memory map (preliminary)
 
+driver by Nicola Salmoria
+
 Main processor memory map.
 0000-5fff ROM
 a000-a3ff Color RAM
@@ -44,8 +46,8 @@ same as Pooyan
 
 extern unsigned char *timeplt_videoram,*timeplt_colorram;
 
-void timeplt_init(void);
-void psurge_init(void);
+void init_timeplt(void);
+void init_psurge(void);
 int timeplt_scanline_r(int offset);
 void timeplt_videoram_w(int offset,int data);
 void timeplt_colorram_w(int offset,int data);
@@ -307,14 +309,14 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,        0, 32 },
-	{ 1, 0x2000, &spritelayout,   32*4, 64 },
+	{ REGION_GFX1, 0, &charlayout,        0, 32 },
+	{ REGION_GFX2, 0, &spritelayout,   32*4, 64 },
 	{ -1 } /* end of array */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_timeplt =
 {
 	/* basic machine hardware */
 	{
@@ -366,189 +368,101 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( timeplt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tm1",          0x0000, 0x2000, 0x1551f1b9 )
 	ROM_LOAD( "tm2",          0x2000, 0x2000, 0x58636cb5 )
 	ROM_LOAD( "tm3",          0x4000, 0x2000, 0xff4e0d83 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
-	ROM_LOAD( "tm4",          0x2000, 0x2000, 0x7e437c3e )
-	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 
-	ROM_REGIONX( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
+
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tm4",          0x0000, 0x2000, 0x7e437c3e )
+	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
+
+	ROM_REGION( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
 ROM_START( timepltc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cd1y",         0x0000, 0x2000, 0x83ec72c2 )
 	ROM_LOAD( "cd2y",         0x2000, 0x2000, 0x0dcf5287 )
 	ROM_LOAD( "cd3y",         0x4000, 0x2000, 0xc789b912 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
-	ROM_LOAD( "tm4",          0x2000, 0x2000, 0x7e437c3e )
-	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 
-	ROM_REGIONX( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
+
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tm4",          0x0000, 0x2000, 0x7e437c3e )
+	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
+
+	ROM_REGION( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
 ROM_START( spaceplt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sp1",          0x0000, 0x2000, 0xac8ca3ae )
 	ROM_LOAD( "sp2",          0x2000, 0x2000, 0x1f0308ef )
 	ROM_LOAD( "sp3",          0x4000, 0x2000, 0x90aeca50 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sp6",          0x0000, 0x2000, 0x76caa8af )
-	ROM_LOAD( "sp4",          0x2000, 0x2000, 0x3781ce7a )
-	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 
-	ROM_REGIONX( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sp6",          0x0000, 0x2000, 0x76caa8af )
+
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sp4",          0x0000, 0x2000, 0x3781ce7a )
+	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
+
+	ROM_REGION( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
 ROM_START( psurge )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "p1",           0x0000, 0x2000, 0x05f9ba12 )
 	ROM_LOAD( "p2",           0x2000, 0x2000, 0x3ff41576 )
 	ROM_LOAD( "p3",           0x4000, 0x2000, 0xe8fe120a )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "p4",           0x0000, 0x2000, 0x26fd7f81 )
-	ROM_LOAD( "p5",           0x2000, 0x2000, 0x6066ec8e )
-	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "p6",           0x0000, 0x1000, 0xb52d01fa )
+	ROM_LOAD( "p7",           0x1000, 0x1000, 0x9db5c0ce )
 
-	ROM_REGIONX( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p4",           0x0000, 0x2000, 0x26fd7f81 )
+
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p5",           0x0000, 0x2000, 0x6066ec8e )
+	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
+
+	ROM_REGION( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x00000000 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x00000000 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x00000000 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0x00000000 ) /* char lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "p6",           0x0000, 0x1000, 0xb52d01fa )
-	ROM_LOAD( "p7",           0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
 
-struct GameDriver driver_timeplt =
-{
-	__FILE__,
-	0,
-	"timeplt",
-	"Time Pilot",
-	"1982",
-	"Konami",
-	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	timeplt_init,
-
-	rom_timeplt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timeplt,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_timepltc =
-{
-	__FILE__,
-	&driver_timeplt,
-	"timepltc",
-	"Time Pilot (Centuri)",
-	"1982",
-	"Konami (Centuri license)",
-	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	timeplt_init,
-
-	rom_timepltc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timeplt,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_spaceplt =
-{
-	__FILE__,
-	&driver_timeplt,
-	"spaceplt",
-	"Space Pilot",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	timeplt_init,
-
-	rom_spaceplt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timeplt,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_psurge =
-{
-	__FILE__,
-	0,
-	"psurge",
-	"Power Surge",
-	"1988",
-	"<unknown>",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	psurge_init,
-
-	rom_psurge,
-	0, 0,
-	0,
-	0,
-
-	input_ports_psurge,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
+GAME( 1982, timeplt,  0,       timeplt, timeplt, timeplt, ROT270, "Konami", "Time Pilot" )
+GAME( 1982, timepltc, timeplt, timeplt, timeplt, timeplt, ROT270, "Konami (Centuri license)", "Time Pilot (Centuri)" )
+GAME( 1982, spaceplt, timeplt, timeplt, timeplt, timeplt, ROT270, "bootleg", "Space Pilot" )
+GAME( 1988, psurge,   0,       timeplt, psurge,  psurge,  ROT90,  "<unknown>", "Power Surge" )

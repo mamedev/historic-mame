@@ -775,9 +775,9 @@ static struct GfxLayout aerofgtb_spritelayout2 =
 
 static struct GfxDecodeInfo aerofgtb_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &aerofgtb_charlayout,      0, 32 },	/* I could split this one, first half is bg1 second half bg2 */
-	{ 1, 0x100000, &aerofgtb_spritelayout1, 512, 16 },
-	{ 1, 0x200000, &aerofgtb_spritelayout2, 768, 16 },
+	{ REGION_GFX1, 0, &aerofgtb_charlayout,      0, 32 },	/* I could split this one, first half is bg1 second half bg2 */
+	{ REGION_GFX2, 0, &aerofgtb_spritelayout1, 512, 16 },
+	{ REGION_GFX3, 0, &aerofgtb_spritelayout2, 768, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -1130,166 +1130,166 @@ static struct MachineDriver machine_driver_unkvsys =
 ***************************************************************************/
 
 ROM_START( pspikes )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0xc0000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "20",           0x00000, 0x40000, 0x75cdcee2 )
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "19",           0x00000, 0x20000, 0x7e8ed6e5 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g7h",          0x000000, 0x80000, 0x74c23c3d )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g7j",          0x000000, 0x80000, 0x0b9e4739 )
 	ROM_LOAD( "g7l",          0x080000, 0x80000, 0x943139ff )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "a47",          0x00000, 0x40000, 0xc6779dfa )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
 	ROM_LOAD( "o5b",          0x000000, 0x100000, 0x07d6cbac )
 ROM_END
 
 ROM_START( svolly91 )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0xc0000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "u11.jpn",      0x00000, 0x40000, 0xea2e4c82 )
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "19",           0x00000, 0x20000, 0x7e8ed6e5 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g7h",          0x000000, 0x80000, 0x74c23c3d )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g7j",          0x000000, 0x80000, 0x0b9e4739 )
 	ROM_LOAD( "g7l",          0x080000, 0x80000, 0x943139ff )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "a47",          0x00000, 0x40000, 0xc6779dfa )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
 	ROM_LOAD( "o5b",          0x000000, 0x100000, 0x07d6cbac )
 ROM_END
 
 ROM_START( turbofrc )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0xc0000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tfrc2.bin",    0x00000, 0x40000, 0x721300ee )
 	ROM_LOAD_WIDE_SWAP( "tfrc1.bin",    0x40000, 0x40000, 0x6cd5312b )
 	ROM_LOAD_WIDE_SWAP( "tfrc3.bin",    0x80000, 0x40000, 0x63f50557 )
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "tfrcu166.bin", 0x00000, 0x20000, 0x2ca14a65 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x140000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x140000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tfrcu94.bin",  0x000000, 0x080000, 0xbaa53978 )
 	ROM_LOAD( "tfrcu95.bin",  0x080000, 0x020000, 0x71a6c573 )
 	ROM_LOAD( "tfrcu105.bin", 0x0a0000, 0x080000, 0x00000000 )
 	ROM_LOAD( "tfrcu106.bin", 0x120000, 0x020000, 0xc6479eb5 )
 
-	ROM_REGIONX( 0x180000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x180000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tfrcu116.bin", 0x000000, 0x080000, 0xdf210f3b )
 	ROM_LOAD( "tfrcu118.bin", 0x080000, 0x040000, 0xf61d1d79 )
 	ROM_LOAD( "tfrcu117.bin", 0x0c0000, 0x080000, 0xf70812fd )
 	ROM_LOAD( "tfrcu119.bin", 0x140000, 0x040000, 0x474ea716 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tfrcu134.bin", 0x000000, 0x080000, 0x487330a2 )
 	ROM_LOAD( "tfrcu135.bin", 0x080000, 0x080000, 0x3a7e5b6d )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "tfrcu180.bin",   0x00000, 0x20000, 0x39c7c7d5 )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
 	ROM_LOAD( "tfrcu179.bin", 0x000000, 0x100000, 0x60ca0333 )
 ROM_END
 
 ROM_START( aerofgt )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "1.u4",         0x00000, 0x80000, 0x6fdff0a2 )
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "2.153",        0x00000, 0x20000, 0xa1ef64ec )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "538a54.124",   0x000000, 0x080000, 0x4d2c4df2 )
 	ROM_LOAD( "1538a54.124",  0x080000, 0x080000, 0x286d109e )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "538a53.u9",    0x000000, 0x100000, 0x630d8e0b )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "534g8f.u18",   0x000000, 0x080000, 0x76ce0926 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
 	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
 ROM_START( aerofgtb )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "v2",                0x00000, 0x40000, 0x5c9de9f0 )
 	ROM_LOAD_ODD ( "v1",                0x00000, 0x40000, 0x89c1dcf4 )
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v3",           0x00000, 0x20000, 0xcbb18cf4 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
 	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "it-19-04",     0x000000, 0x080000, 0x3b329c1f )
 	ROM_LOAD( "it-19-05",     0x080000, 0x080000, 0x02b525af )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g27",          0x000000, 0x040000, 0x4d89cbc8 )
 	ROM_LOAD( "g26",          0x040000, 0x040000, 0x8072c1d2 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
 	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
 ROM_START( aerofgtc )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "v2.149",            0x00000, 0x40000, 0xf187aec6 )
 	ROM_LOAD_ODD ( "v1.111",            0x00000, 0x40000, 0x9e684b19 )
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "2.153",        0x00000, 0x20000, 0xa1ef64ec )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
 	/* gfx ROMs were missing in this set, I'm using the aerofgtb ones */
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
 	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "it-19-04",     0x000000, 0x080000, 0x3b329c1f )
 	ROM_LOAD( "it-19-05",     0x080000, 0x080000, 0x02b525af )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g27",          0x000000, 0x040000, 0x4d89cbc8 )
 	ROM_LOAD( "g26",          0x040000, 0x040000, 0x8072c1d2 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
 	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
 ROM_START( unkvsys )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
 	ROM_LOAD_ODD ( "v7",           0x00000, 0x10000, 0x0fb70066 )
 	ROM_LOAD_EVEN( "v5",           0x20000, 0x10000, 0xa9fe15a1 )	/* not sure */
@@ -1297,24 +1297,24 @@ ROM_START( unkvsys )
 	ROM_LOAD_EVEN( "v3",           0x40000, 0x10000, 0xe2e0abad )	/* not sure */
 	ROM_LOAD_ODD ( "v6",           0x40000, 0x10000, 0x069817a7 )	/* not sure */
 
-	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v2",                0x00000, 0x08000, 0x920d8920 )
 	ROM_LOAD( "v1",                0x10000, 0x10000, 0xbf35c1a4 )	/* not sure */
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a24",               0x000000, 0x80000, 0xb1e9de43 )
 
-	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "o1s",               0x000000, 0x40000, 0x00000000 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "oj1",               0x000000, 0x40000, 0x39c36b35 )
 	ROM_LOAD( "oj2",               0x040000, 0x40000, 0x77ccaea2 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a23",               0x000000, 0x80000, 0xd851cf04 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "osb",               0x00000, 0x20000, 0xd49ab2f5 )
 ROM_END
 

@@ -524,58 +524,58 @@ static struct MachineDriver machine_driver_metrocrs =
 };
 
 ROM_START( baraduke )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 6809 code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, 0xea2ea790 )
 	ROM_LOAD( "prg2.9a",	0x8000, 0x04000, 0x9a0a9a87 )
 	ROM_LOAD( "prg3.9b",	0xc000, 0x04000, 0x383e5458 )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "prg4.3b",	0x8000,  0x4000, 0xabda0fe7 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, 0x706b7fee )	/* characters */
 
-	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, 0xb0bb0710 )	/* tiles */
 	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, 0x0d7ebec9 )
 	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, 0xe5da0896 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, 0x87a29acc )	/* sprites */
 	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, 0x72b6d20c )
 	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, 0x3076af9c )
 	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, 0x8b4c09a3 )
 
-	ROM_REGIONX( 0x1000, REGION_PROMS )
+	ROM_REGION( 0x1000, REGION_PROMS )
 	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, 0x0d78ebc6 )	/* Blue + Green palette */
 	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
 ROM_END
 
 ROM_START( metrocrs )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 6809 code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "mc1-3.9c",	0x6000, 0x02000, 0x3390b33c )
 	ROM_LOAD( "mc1-1.9a",	0x8000, 0x04000, 0x10b0977e )
 	ROM_LOAD( "mc1-2.9b",	0xc000, 0x04000, 0x5c846f35 )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, 0x9b5ea33a )	/* characters */
 
-	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, 0xc9dfa003 )	/* tiles */
 	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, 0x9686dc3c )
 	/* empty space to decode the roms as 3bpp */
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, 0x265b31fa )	/* sprites */
 	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, 0x541ec029 )
 	/* 8000-ffff empty */
 
-	ROM_REGIONX( 0x1000, REGION_PROMS )
+	ROM_REGION( 0x1000, REGION_PROMS )
 	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, 0x32a78a8b )	/* Blue + Green palette */
 	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
 ROM_END

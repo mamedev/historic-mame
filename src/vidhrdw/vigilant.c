@@ -87,7 +87,7 @@ static void update_background( void )
 			for( col=0; col<512; col+=32 )
 			{
 				drawgfx(bg_bitmap,
-						Machine->gfx[2+page],
+						Machine->gfx[2],
 						charcode,
 						row < 128 ? 0 : 1,
 						0,0,

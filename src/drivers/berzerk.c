@@ -493,7 +493,7 @@ DRIVER(frenzy,0)
 ***************************************************************************/
 
 ROM_START( berzerk )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
 	ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
 	ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
@@ -503,7 +503,7 @@ ROM_START( berzerk )
 ROM_END
 
 ROM_START( berzerk1 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
 	ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
 	ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
@@ -513,7 +513,7 @@ ROM_START( berzerk1 )
 ROM_END
 
 ROM_START( frenzy )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
 	ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
 	ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )

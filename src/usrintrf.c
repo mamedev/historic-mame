@@ -426,9 +426,9 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 }
 
 /* Writes messages on the screen. */
-void ui_text(char *buf,int x,int y)
+static void ui_text_ex(const char* buf_begin, const char* buf_end, int x, int y, int color)
 {
-	int trueorientation,l,i;
+	int trueorientation;
 
 
 	/* hack: force the display into standard orientation to avoid */
@@ -436,15 +436,22 @@ void ui_text(char *buf,int x,int y)
 	trueorientation = Machine->orientation;
 	Machine->orientation = Machine->ui_orientation;
 
-	l = strlen(buf);
-	for (i = 0;i < l;i++)
-		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
-				x + i*Machine->uifontwidth + Machine->uixmin,
+	for (;buf_begin != buf_end; ++buf_begin)
+	{
+		drawgfx(Machine->scrbitmap,Machine->uifont,*buf_begin,color,0,0,
+				x + Machine->uixmin,
 				y + Machine->uiymin, 0,TRANSPARENCY_NONE,0);
+		x += Machine->uifontwidth;
+	}
 
 	Machine->orientation = trueorientation;
 }
 
+/* Writes messages on the screen. */
+void ui_text(const char *buf,int x,int y)
+{
+	ui_text_ex(buf, buf + strlen(buf), x, y, DT_COLOR_WHITE);
+}
 
 INLINE void drawpixel(int x, int y, unsigned short color)
 {
@@ -609,8 +616,95 @@ static void drawbar(int leftx,int topy,int width,int height,int percentage)
 	}
 }
 
+/* Extract one line from a multiline buffer */
+/* Return the characters number of the line, pbegin point to the start of the next line */
+static unsigned multiline_extract(const char** pbegin, const char* end, unsigned max)
+{
+	unsigned mac = 0;
+	const char* begin = *pbegin;
+	while (begin != end && mac < max)
+	{
+		if (*begin == '\n')
+		{
+			*pbegin = begin + 1; /* strip final space */
+			return mac;
+		}
+		else if (*begin == ' ')
+		{
+			const char* word_end = begin + 1;
+			while (word_end != end && *word_end != ' ' && *word_end != '\n')
+				++word_end;
+			if (mac + word_end - begin > max)
+			{
+				if (mac)
+				{
+					*pbegin = begin + 1;
+					return mac; /* strip final space */
+				} else {
+					*pbegin = begin + max;
+					return max;
+				}
+			}
+			mac += word_end - begin;
+			begin = word_end;
+		} else {
+			++mac;
+			++begin;
+		}
+	}
+	if (begin != end && (*begin == '\n' || *begin == ' '))
+		++begin;
+	*pbegin = begin;
+	return mac;
+}
 
-void displaymenu(const char **items,const char **subitems,char *flag,int selected,int arrowize_subitem)
+/* Compute the output size of a multiline string */
+static void multiline_size(int* dx, int* dy, const char* begin, const char* end, unsigned max)
+{
+	unsigned rows = 0;
+	unsigned cols = 0;
+	while (begin != end)
+	{
+		unsigned len;
+		len = multiline_extract(&begin,end,max);
+		if (len > cols)
+			cols = len;
+		++rows;
+	}
+	*dx = cols * Machine->uifontwidth;
+	*dy = (rows-1) * 3*Machine->uifontheight/2 + Machine->uifontheight;
+}
+
+/* Compute the output size of a multiline string with box */
+static void multilinebox_size(int* dx, int* dy, const char* begin, const char* end, unsigned max)
+{
+	multiline_size(dx,dy,begin,end,max);
+	*dx += Machine->uifontwidth;
+	*dy += Machine->uifontheight;
+}
+
+/* Display a multiline string */
+static void ui_multitext_ex(const char* begin, const char* end, unsigned max, int x, int y, int color)
+{
+	while (begin != end)
+	{
+		const char* line_begin = begin;
+		unsigned len = multiline_extract(&begin,end,max);
+		ui_text_ex(line_begin, line_begin + len,x,y,color);
+		y += 3*Machine->uifontheight/2;
+	}
+}
+
+/* Display a multiline string with box */
+static void ui_multitextbox_ex(const char* begin, const char* end, unsigned max, int x, int y, int dx, int dy, int color)
+{
+	drawbox(x,y,dx,dy);
+	x += Machine->uifontwidth/2;
+	y += Machine->uifontheight/2;
+	ui_multitext_ex(begin,end,max,x,y,color);
+}
+
+static void displaymenu(const char **items,const char **subitems,char *flag,int selected,int arrowize_subitem)
 {
 	struct DisplayText dt[256];
 	int curr_dt;
@@ -620,27 +714,24 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 	char downarrow[2] = "\x19";
 	char leftarrow[2] = "\x11";
 	char rightarrow[2] = "\x10";
-	int i,count,len,maxlen;
+	int i,count,len,maxlen,highlen;
 	int leftoffs,topoffs,visible,topitem;
+	int selected_long;
 
 
 	i = 0;
 	maxlen = 0;
+	highlen = Machine->uiwidth / Machine->uifontwidth;
 	while (items[i])
 	{
-		len = strlen(items[i]);
+		len = 3 + strlen(items[i]);
 		if (subitems && subitems[i])
-		{
-			len += 1 + strlen(subitems[i]);
-		}
-		if (len > maxlen) maxlen = len;
+			len += 2 + strlen(subitems[i]);
+		if (len > maxlen && len <= highlen)
+			maxlen = len;
 		i++;
 	}
 	count = i;
-
-	maxlen += 3;
-	if (maxlen * Machine->uifontwidth > Machine->uiwidth)
-		maxlen = Machine->uiwidth / Machine->uifontwidth;
 
 	visible = Machine->uiheight / (3 * Machine->uifontheight / 2) - 1;
 	topitem = 0;
@@ -658,6 +749,7 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 	/* black background */
 	drawbox(leftoffs,topoffs,maxlen * Machine->uifontwidth,(3 * visible + 1) * Machine->uifontheight / 2);
 
+	selected_long = 0;
 	curr_dt = 0;
 	for (i = 0;i < visible;i++)
 	{
@@ -683,18 +775,29 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 		{
 			if (subitems && subitems[item])
 			{
+				int sublen;
+				len = strlen(items[item]);
 				dt[curr_dt].text = items[item];
 				dt[curr_dt].color = DT_COLOR_WHITE;
 				dt[curr_dt].x = leftoffs + 3*Machine->uifontwidth/2;
 				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 				curr_dt++;
-				dt[curr_dt].text = subitems[item];
+				sublen = strlen(subitems[item]);
+				if (sublen > maxlen-5-len)
+				{
+					dt[curr_dt].text = "...";
+					sublen = strlen(dt[curr_dt].text);
+					if (item == selected)
+						selected_long = 1;
+				} else {
+					dt[curr_dt].text = subitems[item];
+				}
 				/* If this item is flagged, draw it in inverse print */
 				if (flag && flag[item])
 					dt[curr_dt].color = DT_COLOR_YELLOW;
 				else
 					dt[curr_dt].color = DT_COLOR_WHITE;
-				dt[curr_dt].x = leftoffs + Machine->uifontwidth * (maxlen-1 - strlen(dt[curr_dt].text)) - Machine->uifontwidth/2;
+				dt[curr_dt].x = leftoffs + Machine->uifontwidth * (maxlen-1-sublen) - Machine->uifontwidth/2;
 				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 				curr_dt++;
 			}
@@ -746,6 +849,27 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 	dt[curr_dt].text = 0;	/* terminate array */
 
 	displaytext(dt,0,0);
+
+	if (selected_long)
+	{
+		int long_dx;
+		int long_dy;
+		int long_x;
+		int long_y;
+		unsigned long_max;
+
+		long_max = (Machine->uiwidth / Machine->uifontwidth) - 2;
+		multilinebox_size(&long_dx,&long_dy,subitems[selected],subitems[selected] + strlen(subitems[selected]), long_max);
+
+		long_x = Machine->uiwidth - long_dx;
+		long_y = topoffs + (i+1) * 3*Machine->uifontheight/2;
+
+		/* if too low display up */
+		if (long_y + long_dy > Machine->uiheight)
+			long_y = topoffs + i * 3*Machine->uifontheight/2 - long_dy;
+
+		ui_multitextbox_ex(subitems[selected],subitems[selected] + strlen(subitems[selected]), long_max, long_x,long_y,long_dx,long_dy, DT_COLOR_WHITE);
+	}
 }
 
 
@@ -1096,11 +1220,11 @@ static void showcharset(void)
 //		osd_skip_this_frame();
 		osd_update_video_and_audio();
 
-		if (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
+		if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
 		{
 			skip_chars = cpx;
 		}
-		if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 		{
 			skip_chars = 1;
 		}
@@ -1126,7 +1250,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_pressed_memory_repeat(KEYCODE_PGDN,4))
+		if (code_pressed_memory_repeat(KEYCODE_PGDN,4))
 		{
 			if (bank >= 0)
 			{
@@ -1146,7 +1270,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_pressed_memory_repeat(KEYCODE_PGUP,4))
+		if (code_pressed_memory_repeat(KEYCODE_PGUP,4))
 		{
 			if (bank >= 0)
 			{
@@ -1444,10 +1568,10 @@ static int setdipswitches(int selected)
 /* it's used byt setdefkeysettings, setdefjoysettings, setkeysettings, setjoysettings */
 static int record_first_insert = 1;
 
-static int setdefkeysettings(int selected)
+static int setdefcodesettings(int selected)
 {
 	const char *menu_item[400];
-	char menu_subitem_buffer[400][64];
+	char menu_subitem_buffer[400][96];
 	const char *menu_subitem[400];
 	struct ipd *entry[400];
 	char flag[400];
@@ -1489,7 +1613,7 @@ static int setdefkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			keyboard_name_multi(&entry[i]->keyboard,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			seq_name(&entry[i]->seq,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 		} else
 			menu_subitem[i] = 0;	/* no subitem */
@@ -1503,11 +1627,17 @@ static int setdefkeysettings(int selected)
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		ret = keyboard_record(&entry[sel & 0xff]->keyboard,record_first_insert);
+		ret = seq_read_async(&entry[sel & 0xff]->seq,record_first_insert);
 
 		if (ret >= 0)
 		{
 			sel &= 0xff;
+
+			if (ret > 0 || seq_get_1(&entry[sel]->seq) == CODE_NONE)
+			{
+				seq_set_1(&entry[sel]->seq,CODE_NONE);
+				ret = 1;
+			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1541,7 +1671,7 @@ static int setdefkeysettings(int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
-			record_start();
+			seq_read_async_start();
 
 			sel |= 0x100;	/* we'll ask for a key */
 
@@ -1569,135 +1699,10 @@ static int setdefkeysettings(int selected)
 
 
 
-static int setdefjoysettings(int selected)
+static int setcodesettings(int selected)
 {
 	const char *menu_item[400];
-	char menu_subitem_buffer[400][64];
-	const char *menu_subitem[400];
-	struct ipd *entry[400];
-	char flag[400];
-	int i,sel;
-	struct ipd *in;
-	int total;
-	extern struct ipd inputport_defaults[];
-
-
-	sel = selected - 1;
-
-
-	if (Machine->input_ports == 0)
-		return 0;
-
-	in = inputport_defaults;
-
-	total = 0;
-	while (in->type != IPT_END)
-	{
-		if (in->name != 0  && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & IPF_UNUSED) == 0
-			&& !(!options.cheat && (in->type & IPF_CHEAT)))
-		{
-			entry[total] = in;
-			menu_item[total] = in->name;
-
-			total++;
-		}
-
-		in++;
-	}
-
-	if (total == 0) return 0;
-
-	menu_item[total] = "Return to Main Menu";
-	menu_item[total + 1] = 0;	/* terminate array */
-	total++;
-
-	for (i = 0;i < total;i++)
-	{
-		if (i < total - 1)
-		{
-			joystick_name_multi(&entry[i]->joystick,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
-			menu_subitem[i] = menu_subitem_buffer[i];
-		} else
-			menu_subitem[i] = 0;	/* no subitem */
-		flag[i] = 0;
-	}
-
-	if (sel > 255)	/* are we waiting for a new key? */
-	{
-		int ret;
-
-		menu_subitem[sel & 0xff] = "    ";
-		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-
-		ret = joystick_record(&entry[sel & 0xff]->joystick,record_first_insert);
-
-		if (ret >= 0)
-		{
-			sel &= 0xff;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-
-			record_first_insert = ret != 0;
-		}
-
-		return sel + 1;
-	}
-
-
-	displaymenu(menu_item,menu_subitem,flag,sel,0);
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-	{
-		if (sel < total - 1) sel++;
-		else sel = 0;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-	{
-		if (sel > 0) sel--;
-		else sel = total - 1;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		if (sel == total - 1) sel = -1;
-		else
-		{
-			record_start();
-
-			sel |= 0x100;	/* we'll ask for a joy */
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
-
-		record_first_insert = 1;
-	}
-
-	return sel + 1;
-}
-
-
-
-static int setkeysettings(int selected)
-{
-	const char *menu_item[400];
-	char menu_subitem_buffer[400][64];
+	char menu_subitem_buffer[400][96];
 	const char *menu_subitem[400];
 	struct InputPort *entry[400];
 	char flag[400];
@@ -1717,7 +1722,7 @@ static int setkeysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && input_key_seq_get_1(&in->keyboard) != IP_KEY_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN)
+		if (input_port_name(in) != 0 && seq_get_1(&in->seq) != CODE_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -1738,11 +1743,11 @@ static int setkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			keyboard_name_multi(input_port_key_multi(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			seq_name(input_port_seq(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 
 			/* If the key isn't the default, flag it */
-			if (input_key_seq_get_1(&entry[i]->keyboard) != IP_KEY_DEFAULT)
+			if (seq_get_1(&entry[i]->seq) != CODE_DEFAULT)
 				flag[i] = 1;
 			else
 				flag[i] = 0;
@@ -1758,15 +1763,17 @@ static int setkeysettings(int selected)
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		ret = keyboard_record(&entry[sel & 0xff]->keyboard,record_first_insert);
+		ret = seq_read_async(&entry[sel & 0xff]->seq,record_first_insert);
 
 		if (ret >= 0)
 		{
 			sel &= 0xff;
 
-			/* if abort or sequence clear */
-			if (ret > 0 || input_key_seq_get_1(&entry[sel & 0xff]->keyboard) == IP_KEY_NONE)
-				input_key_seq_set_1(&entry[sel]->keyboard,IP_KEY_DEFAULT);
+			if (ret > 0 || seq_get_1(&entry[sel]->seq) == CODE_NONE)
+			{
+				seq_set_1(&entry[sel]->seq, CODE_DEFAULT);
+				ret = 1;
+			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1799,140 +1806,9 @@ static int setkeysettings(int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
-			record_start();
+			seq_read_async_start();
 
 			sel |= 0x100;	/* we'll ask for a key */
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
-
-		record_first_insert = 1;
-	}
-
-	return sel + 1;
-}
-
-
-
-static int setjoysettings(int selected)
-{
-	const char *menu_item[40];
-	char menu_subitem_buffer[40][64];
-	const char *menu_subitem[40];
-	struct InputPort *entry[40];
-	char flag[40];
-	int i,sel;
-	struct InputPort *in;
-	int total;
-
-
-	sel = selected - 1;
-
-
-	if (Machine->input_ports == 0)
-		return 0;
-
-	in = Machine->input_ports;
-
-	total = 0;
-	while (in->type != IPT_END)
-	{
-		if (input_port_name(in) != 0 && input_joy_seq_get_1(&in->joystick) != IP_JOY_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN)
-		{
-			entry[total] = in;
-			menu_item[total] = input_port_name(in);
-
-			total++;
-		}
-
-		in++;
-	}
-
-	if (total == 0) return 0;
-
-	menu_item[total] = "Return to Main Menu";
-	menu_item[total + 1] = 0;	/* terminate array */
-	total++;
-
-	for (i = 0;i < total;i++)
-	{
-		if (i < total - 1)
-		{
-			joystick_name_multi(input_port_joy_multi(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
-			menu_subitem[i] = menu_subitem_buffer[i];
-
-			if (input_joy_seq_get_1(&entry[i]->joystick) != IP_JOY_DEFAULT)
-				flag[i] = 1;
-			else
-				flag[i] = 0;
-		} else
-			menu_subitem[i] = 0;	/* no subitem */
-	}
-
-	if (sel > 255)	/* are we waiting for a new joy direction? */
-	{
-		int ret;
-
-		menu_subitem[sel & 0xff] = "    ";
-		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-
-		ret = joystick_record(&entry[sel & 0xff]->joystick,record_first_insert);
-
-		if (ret >= 0)
-		{
-			sel &= 0xff;
-
-			/* if abort or sequence clear */
-			if (ret > 0 || input_joy_seq_get_1(&entry[sel & 0xff]->joystick) == IP_JOY_NONE)
-				input_joy_seq_set_1(&entry[sel]->joystick,IP_JOY_DEFAULT);
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-
-			record_first_insert = ret != 0;
-		}
-
-		return sel + 1;
-	}
-
-
-	displaymenu(menu_item,menu_subitem,flag,sel,0);
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-	{
-		if (sel < total - 1) sel++;
-		else sel = 0;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-	{
-		if (sel > 0) sel--;
-		else sel = total - 1;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		if (sel == total - 1) sel = -1;
-		else
-		{
-			record_start();
-
-			sel |= 0x100;	/* we'll ask for a joy */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -2441,8 +2317,7 @@ static int displaygameinfo(int selected)
 		displaymessagewindow(buf);
 
 		sel = 0;
-		if (keyboard_read_async() != KEYCODE_NONE ||
-				joystick_read_async() != JOYCODE_NONE)
+		if (code_read_async() != CODE_NONE)
 			sel = -1;
 	}
 	else
@@ -2624,10 +2499,10 @@ int showgamewarnings(void)
 			osd_poll_joysticks();
 			if (input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
-			if (keyboard_pressed_memory(KEYCODE_O) ||
+			if (code_pressed_memory(KEYCODE_O) ||
 					input_ui_pressed(IPT_UI_LEFT))
 				done = 1;
-			if (done == 1 && (keyboard_pressed_memory(KEYCODE_K) ||
+			if (done == 1 && (code_pressed_memory(KEYCODE_K) ||
 					input_ui_pressed(IPT_UI_RIGHT)))
 				done = 2;
 		} while (done < 2);
@@ -2636,9 +2511,8 @@ int showgamewarnings(void)
 
 	osd_clearbitmap(Machine->scrbitmap);
 
-   /* clear the input memory */
-   while (keyboard_read_async() != KEYCODE_NONE ||
-		  joystick_read_async() != JOYCODE_NONE);
+	/* clear the input memory */
+	while (code_read_async() != CODE_NONE);
 
 	while (displaygameinfo(0) == 1)
 	{
@@ -3030,11 +2904,11 @@ int	memcard_menu(int selection)
 
 
 #ifndef MESS
-enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
+enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_GAMEINFO, UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 #else
-enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
+enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_GAMEINFO, UI_IMAGEINFO, UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 #endif
@@ -3050,14 +2924,11 @@ static void setup_menu_init(void)
 {
 	menu_total = 0;
 
-	menu_item[menu_total] = "Keys (general)"; menu_action[menu_total++] = UI_DEFKEY;
-	menu_item[menu_total] = "Joystick (general)"; menu_action[menu_total++] = UI_DEFJOY;
+	menu_item[menu_total] = "Input (general)"; menu_action[menu_total++] = UI_DEFCODE;
 	#ifndef MESS
-	menu_item[menu_total] = "Keys (this game)"; menu_action[menu_total++] = UI_KEY;
-	menu_item[menu_total] = "Joystick (this game)"; menu_action[menu_total++] = UI_JOY;
+	menu_item[menu_total] = "Input (this game)"; menu_action[menu_total++] = UI_CODE;
 	#else
-	menu_item[menu_total] = "Keys (this machine)"; menu_action[menu_total++] = UI_KEY;
-	menu_item[menu_total] = "Joystick (this machine)"; menu_action[menu_total++] = UI_JOY;
+	menu_item[menu_total] = "Input (this machine)"; menu_action[menu_total++] = UI_CODE;
 	#endif
 	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
 
@@ -3151,8 +3022,8 @@ static int setup_menu(int selected)
 					sel = (sel & 0xff) | (res << 8);
 				break;
 
-			case UI_DEFKEY:
-				res = setdefkeysettings(sel >> 8);
+			case UI_DEFCODE:
+				res = setdefcodesettings(sel >> 8);
 				if (res == -1)
 				{
 					menu_lastselected = sel;
@@ -3162,30 +3033,8 @@ static int setup_menu(int selected)
 					sel = (sel & 0xff) | (res << 8);
 				break;
 
-			case UI_DEFJOY:
-				res = setdefjoysettings(sel >> 8);
-				if (res == -1)
-				{
-					menu_lastselected = sel;
-					sel = -1;
-				}
-				else
-					sel = (sel & 0xff) | (res << 8);
-				break;
-
-			case UI_KEY:
-				res = setkeysettings(sel >> 8);
-				if (res == -1)
-				{
-					menu_lastselected = sel;
-					sel = -1;
-				}
-				else
-					sel = (sel & 0xff) | (res << 8);
-				break;
-
-			case UI_JOY:
-				res = setjoysettings(sel >> 8);
+			case UI_CODE:
+				res = setcodesettings(sel >> 8);
 				if (res == -1)
 				{
 					menu_lastselected = sel;
@@ -3266,7 +3115,7 @@ static int setup_menu(int selected)
 
 			case UI_CHEAT:
 osd_sound_enable(0);
-while (keyboard_pressed_multi(input_port_type_key_multi(IPT_UI_SELECT)))
+while (seq_pressed(input_port_type_seq(IPT_UI_SELECT)))
 	osd_update_video_and_audio();     /* give time to the sound hardware to apply the volume change */
 				cheat_menu();
 osd_sound_enable(1);
@@ -3306,10 +3155,8 @@ sel = sel & 0xff;
 		switch (menu_action[sel])
 		{
 			case UI_SWITCH:
-			case UI_DEFKEY:
-			case UI_DEFJOY:
-			case UI_KEY:
-			case UI_JOY:
+			case UI_DEFCODE:
+			case UI_CODE:
 			case UI_ANALOG:
 			case UI_CALIBRATE:
 			case UI_STATS:
@@ -3421,11 +3268,11 @@ static void onscrd_mixervol(int increment,int arg)
 	int proportional = 0;
 
 
-	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 		doallchannels = 1;
-	if (!keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL))
+	if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
 		increment *= 5;
-	if (keyboard_pressed(KEYCODE_LALT) || keyboard_pressed(KEYCODE_RALT))
+	if (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_RALT))
 		proportional = 1;
 
 	if (increment)
@@ -3520,38 +3367,41 @@ static void onscrd_gamma(int increment,int arg)
 	char buf[20];
 	float gamma_correction;
 
-	/* MLR 990316 different gamma handling for vector games */
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	if (increment)
 	{
-		if (increment)
-		{
-			gamma_correction = vector_get_gamma();
-
-			gamma_correction += 0.05 * increment;
-			if (gamma_correction < 0.5) gamma_correction = 0.5;
-			if (gamma_correction > 2.0) gamma_correction = 2.0;
-
-			vector_set_gamma(gamma_correction);
-		}
 		gamma_correction = vector_get_gamma();
-	}
-	else
-	{
-		if (increment)
-		{
-			gamma_correction = osd_get_gamma();
 
-			gamma_correction += 0.05 * increment;
-			if (gamma_correction < 0.5) gamma_correction = 0.5;
-			if (gamma_correction > 2.0) gamma_correction = 2.0;
+		gamma_correction += 0.05 * increment;
+		if (gamma_correction < 0.5) gamma_correction = 0.5;
+		if (gamma_correction > 2.0) gamma_correction = 2.0;
 
-			osd_set_gamma(gamma_correction);
-		}
-		gamma_correction = osd_get_gamma();
+		vector_set_gamma(gamma_correction);
 	}
+	gamma_correction = vector_get_gamma();
 
 	sprintf(buf,"Gamma %1.2f",gamma_correction);
 	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5));
+}
+
+static void onscrd_vector_intensity(int increment,int arg)
+{
+	char buf[30];
+	float intensity_correction;
+
+	if (increment)
+	{
+		intensity_correction = vector_get_intensity();
+
+		intensity_correction += 0.05 * increment;
+		if (intensity_correction < 0.5) intensity_correction = 0.5;
+		if (intensity_correction > 3.0) intensity_correction = 3.0;
+
+		vector_set_intensity(intensity_correction);
+	}
+	intensity_correction = vector_get_intensity();
+
+	sprintf(buf,"Vector intensity %1.2f",intensity_correction);
+	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5));
 }
 
 
@@ -3561,9 +3411,9 @@ static void onscrd_overclock(int increment,int arg)
 	double overclock;
 	int cpu, doallcpus = 0, oc;
 
-	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 		doallcpus = 1;
-	if (!keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL))
+	if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
 		increment *= 5;
 	if( increment )
 	{
@@ -3630,6 +3480,13 @@ static void onscrd_init(void)
 	onscrd_fnc[item] = onscrd_gamma;
 	onscrd_arg[item] = 0;
 	item++;
+
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	{
+		onscrd_fnc[item] = onscrd_vector_intensity;
+		onscrd_arg[item] = 0;
+		item++;
+	}
 
     onscrd_total_items = item;
 }
@@ -3947,7 +3804,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			osd_poll_joysticks();
 		}
 
-		if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 			single_step = 1;
 		else
 		{

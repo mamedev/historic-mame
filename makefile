@@ -836,8 +836,8 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o \
          obj/profiler.o \
          $(sort $(DBGOBJS)) \
 
-DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
-         obj/cclimber.a obj/nichibut.a \
+DRVLIBS = obj/pacman.a \
+         obj/nichibut.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
          obj/midw8080.a obj/midwz80.a obj/meadows.a obj/midway.a \
          obj/irem.a obj/gottlieb.a obj/taito.a obj/toaplan.a \
@@ -852,10 +852,10 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
 
 NEOLIBS = obj/neogeo.a \
 
-MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/vector.o \
-         obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o \
-         obj/msdos/fronthlp.o \
-         obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
+MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/asmblit.o \
+         obj/msdos/vector.o obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
+         obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o \
+         obj/msdos/config.o obj/msdos/fronthlp.o \
 
 ifdef TINY_COMPILE
 	OBJS = $(TINY_OBJS)
@@ -910,12 +910,16 @@ obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
+# video blitting functions
+obj/msdos/asmblit.o: src/msdos/asmblit.asm
+	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
+
 obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
 	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
 
 obj/%.a:
-	 $(AR) cr $@ $^
+	$(AR) cr $@ $^
 
 obj/pacman.a: \
          obj/machine/pacman.o obj/drivers/pacman.o \
@@ -924,22 +928,9 @@ obj/pacman.a: \
          obj/machine/jrpacman.o obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
          obj/vidhrdw/pengo.o obj/drivers/pengo.o \
 
-obj/galaxian.a: \
-         obj/vidhrdw/galaxian.o obj/drivers/galaxian.o \
-         obj/sndhrdw/mooncrst.o obj/drivers/mooncrst.o \
-
-obj/scramble.a: \
-         obj/machine/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
-         obj/vidhrdw/frogger.o obj/sndhrdw/frogger.o obj/drivers/frogger.o \
-         obj/drivers/scobra.o \
-         obj/vidhrdw/amidar.o obj/drivers/amidar.o \
-         obj/vidhrdw/fastfred.o obj/drivers/fastfred.o \
-
-obj/cclimber.a: \
+obj/nichibut.a: \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/drivers/yamato.o \
-
-obj/nichibut.a: \
          obj/vidhrdw/seicross.o obj/sndhrdw/wiping.o obj/drivers/seicross.o \
          obj/vidhrdw/wiping.o obj/drivers/wiping.o \
          obj/vidhrdw/cop01.o obj/drivers/cop01.o \
@@ -954,7 +945,9 @@ obj/phoenix.a: \
 
 obj/namco.a: \
          obj/machine/geebee.o obj/vidhrdw/geebee.o obj/sndhrdw/geebee.o obj/drivers/geebee.o \
-         obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
+         obj/vidhrdw/warpwarp.o obj/sndhrdw/warpwarp.o obj/drivers/warpwarp.o \
+         obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
+         obj/vidhrdw/galaxian.o obj/sndhrdw/galaxian.o obj/drivers/galaxian.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/drivers/locomotn.o \
          obj/machine/bosco.o obj/sndhrdw/bosco.o obj/vidhrdw/bosco.o obj/drivers/bosco.o \
@@ -1150,6 +1143,11 @@ obj/tehkan.a: \
          obj/vidhrdw/wc90b.o obj/drivers/wc90b.o \
 
 obj/konami.a: \
+         obj/machine/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
+         obj/vidhrdw/frogger.o obj/sndhrdw/frogger.o obj/drivers/frogger.o \
+         obj/drivers/scobra.o \
+         obj/vidhrdw/amidar.o obj/drivers/amidar.o \
+         obj/vidhrdw/fastfred.o obj/drivers/fastfred.o \
          obj/sndhrdw/timeplt.o \
          obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
          obj/drivers/junofrst.o \
@@ -1386,7 +1384,6 @@ obj/other.a: \
          obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
-         obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
          obj/vidhrdw/gundealr.o obj/drivers/gundealr.o \
          obj/machine/leprechn.o obj/vidhrdw/leprechn.o obj/drivers/leprechn.o \

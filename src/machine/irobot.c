@@ -215,7 +215,7 @@ static void scanline_callback(int scanline)
 
 void irobot_init_machine(void)
 {
-	UINT8 *MB = memory_region(2);
+	UINT8 *MB = memory_region(REGION_CPU2);
 
 	/* initialize the memory regions */
 	mbROM 		= MB + 0x00000;
@@ -396,7 +396,7 @@ void irmb_dout(const irmb_ops *curop, UINT32 d)
 /* Convert microcode roms to a more usable form */
 void load_oproms(void)
 {
-	UINT8 *MB = memory_region(2);
+	UINT8 *MB = memory_region(REGION_CPU2);
 	int i;
 
 	/* allocate RAM */

@@ -281,27 +281,27 @@ static struct MachineDriver machine_driver_jailbrek =
 ***************************************************************************/
 
 ROM_START( jailbrek )
-    ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+    ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "jailb11d.bin", 0x8000, 0x4000, 0xa0b88dfd )
 	ROM_LOAD( "jailb9d.bin",  0xc000, 0x4000, 0x444b7d8e )
 
-    ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jailb4f.bin",  0x00000, 0x4000, 0xe3b7a226 )	/* characters */
     ROM_LOAD( "jailb5f.bin",  0x04000, 0x4000, 0x504f0912 )
 
-    ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "jailb3e.bin",  0x00000, 0x4000, 0x0d269524 )	/* sprites */
     ROM_LOAD( "jailb4e.bin",  0x04000, 0x4000, 0x27d4f6f4 )
     ROM_LOAD( "jailb5e.bin",  0x08000, 0x4000, 0x717485cb )
     ROM_LOAD( "jailb3f.bin",  0x0c000, 0x4000, 0xe933086f )
 
-	ROM_REGIONX( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS )
 	ROM_LOAD( "jailbbl.cl2",  0x0000, 0x0020, 0xf1909605 ) /* red & green */
 	ROM_LOAD( "jailbbl.cl1",  0x0020, 0x0020, 0xf70bb122 ) /* blue */
 	ROM_LOAD( "jailbbl.bp2",  0x0040, 0x0100, 0xd4fe5c97 ) /* char lookup */
 	ROM_LOAD( "jailbbl.bp1",  0x0140, 0x0100, 0x0266c7db ) /* sprites lookup */
 
-	ROM_REGIONX( 0x4000, REGION_SOUND1 ) /* speech rom */
+	ROM_REGION( 0x4000, REGION_SOUND1 ) /* speech rom */
 	ROM_LOAD( "jailb8c.bin",  0x0000, 0x2000, 0xd91d15e3 )
 ROM_END
 

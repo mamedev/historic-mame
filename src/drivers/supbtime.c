@@ -343,21 +343,21 @@ static struct MachineDriver machine_driver_supbtime =
 /******************************************************************************/
 
 ROM_START( supbtime )
-	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
 	ROM_LOAD_ODD ( "gc04.bin", 0x00000, 0x20000, 0x551b2a0c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gc06.bin",    0x00000, 0x10000, 0xe0e6c0f4 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, 0xa715cca0 ) /* chars */
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
   	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, 0x30043094 ) /* sprites */
 	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
   	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, 0x2f2246ff )
 ROM_END
 

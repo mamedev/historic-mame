@@ -212,7 +212,7 @@ static struct MachineDriver machine_driver_scregg =
 
 
 ROM_START( scregg )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
 	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, 0xeb143880 )
 	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, 0x4455f262 )
@@ -220,7 +220,7 @@ ROM_START( scregg )
 	ROM_LOAD( "scregg.a14",   0x7000, 0x1000, 0xb5a0814a )
 	ROM_RELOAD(               0xf000, 0x1000 )        /* for reset/interrupt vectors */
 
-	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "scregg.j12",   0x0000, 0x1000, 0xa485c10c )
 	ROM_LOAD( "scregg.j10",   0x1000, 0x1000, 0x1fd4e539 )
 	ROM_LOAD( "scregg.h12",   0x2000, 0x1000, 0x8454f4b2 )
@@ -228,13 +228,13 @@ ROM_START( scregg )
 	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, 0xff3c2894 )
 	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, 0x9c20214a )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )	/* palette */
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
 
 ROM_START( eggs )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
 	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
 	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
@@ -242,7 +242,7 @@ ROM_START( eggs )
 	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
 	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
 
-	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "j12.bin",      0x0000, 0x1000, 0xce4a2e46 )
 	ROM_LOAD( "j10.bin",      0x1000, 0x1000, 0xa1bcaffc )
 	ROM_LOAD( "h12.bin",      0x2000, 0x1000, 0x9562836d )
@@ -250,7 +250,7 @@ ROM_START( eggs )
 	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
 	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, 0xe8408c81 )	/* palette */
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END

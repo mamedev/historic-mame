@@ -834,6 +834,7 @@ void sound_update(void)
 	}
 
 	streams_sh_update();
+	mixer_sh_update();
 
 	timer_reset(sound_update_timer,TIME_NEVER);
 

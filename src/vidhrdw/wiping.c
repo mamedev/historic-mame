@@ -148,8 +148,8 @@ void wiping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[1+otherbank],
-			spriteram[offs] & 0x3f,
+		drawgfx(bitmap,Machine->gfx[1],
+			(spriteram[offs] & 0x3f) + 64 * otherbank,
 			spriteram[offs+1] & 0x3f,
 			flipx,flipy,
 			sx,sy,

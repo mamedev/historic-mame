@@ -89,7 +89,7 @@ void rockola_sh_update(void)
 	{
  		if (memory_region(REGION_SOUND1)[Sound0Base+Sound0Offset]!=0xff)
 		{
- 			osd_set_sample_freq(tonechannels+0,(32000 / (256-memory_region(REGION_SOUND1)[Sound0Base+Sound0Offset])) * 16);
+ 			mixer_set_sample_frequency(tonechannels+0,(32000 / (256-memory_region(REGION_SOUND1)[Sound0Base+Sound0Offset])) * 16);
  			mixer_set_volume(tonechannels+0,100);
 		}
 		else
@@ -105,7 +105,7 @@ void rockola_sh_update(void)
 	{
 		if (memory_region(REGION_SOUND1)[Sound1Base+Sound1Offset]!=0xff)
 		{
-			osd_set_sample_freq(tonechannels+1,(32000 / (256-memory_region(REGION_SOUND1)[Sound1Base+Sound1Offset])) * 16);
+			mixer_set_sample_frequency(tonechannels+1,(32000 / (256-memory_region(REGION_SOUND1)[Sound1Base+Sound1Offset])) * 16);
 			mixer_set_volume(tonechannels+1,100);
 		}
 		else
@@ -119,7 +119,7 @@ void rockola_sh_update(void)
 	{
 		if (memory_region(REGION_SOUND1)[Sound2Base+Sound2Offset]!=0xff)
 		{
-			osd_set_sample_freq(tonechannels+2,(32000 / (256-memory_region(REGION_SOUND1)[Sound2Base+Sound2Offset])) * 16);
+			mixer_set_sample_frequency(tonechannels+2,(32000 / (256-memory_region(REGION_SOUND1)[Sound2Base+Sound2Offset])) * 16);
 			mixer_set_volume(tonechannels+2,100);
 		}
 		else
@@ -204,7 +204,7 @@ void vanguard_sound0_w(int offset,int data)
 			                  Machine->samples->sample[1]->smpfreq,
 			                  0);
 		else if (!(data & 0x20) && LastPort1 & 0x20)
-			osd_stop_sample(samplechannels+2);
+			mixer_stop_sample(samplechannels+2);
 
 		if (data & 0x40 && !(LastPort1 & 0x40))
 			mixer_play_sample(samplechannels+0,Machine->samples->sample[1]->data,
@@ -212,7 +212,7 @@ void vanguard_sound0_w(int offset,int data)
 			                  Machine->samples->sample[1]->smpfreq,
 			                  0);
 		else if (!(data & 0x20) && LastPort1 & 0x20)
-			osd_stop_sample(samplechannels+0);
+			mixer_stop_sample(samplechannels+0);
 
 		if (data & 0x80 && !(LastPort1 & 0x80))
 		{

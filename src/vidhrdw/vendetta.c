@@ -5,9 +5,6 @@
 
 static int layer_colorbase[3],bg_colorbase,sprite_colorbase;
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-
 
 /***************************************************************************
 
@@ -46,9 +43,9 @@ static void sprite_callback(int *code,int *color,int *priority)
 
 int vendetta_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
-	if (K053247_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K053247_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;

@@ -432,7 +432,7 @@ void monsterb_audio_8255_w( int offset, int data )
 				TMS3617_pitch_w(0, ((data & 0x0F)+1) % 16);
 
 				/* Top four data lines address an 82S123 ROM that enables/disables voices */
-                enable_val = memory_region(5)[(data & 0xF0) >> 4];
+                enable_val = memory_region(REGION_SOUND2)[(data & 0xF0) >> 4];
 
 				for (i=2; i<8; i++)
 				{
@@ -478,7 +478,7 @@ int monsterb_audio_8255_r( int offset )
 /* read from BUS */
 int monsterb_sh_rom_r(int offset)
 {
-	unsigned char *sound_rom = memory_region(4);
+	unsigned char *sound_rom = memory_region(REGION_SOUND1);
 
 	return sound_rom[rom_offset];
 }

@@ -301,23 +301,23 @@ static struct MachineDriver machine_driver_blstroid =
  *************************************/
 
 ROM_START( blstroid )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "057-4123",  0x00000, 0x10000, 0xd14badc4 )
 	ROM_LOAD_ODD ( "057-4121",  0x00000, 0x10000, 0xae3e93e8 )
 	ROM_LOAD_EVEN( "057-4124",  0x20000, 0x10000, 0xfd2365df )
 	ROM_LOAD_ODD ( "057-4122",  0x20000, 0x10000, 0xc364706e )
 
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
 	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
 	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
 	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
 	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
 	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
@@ -338,23 +338,23 @@ ROM_END
 
 
 ROM_START( blstroi2 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "blstroid.6c",  0x00000, 0x10000, 0x5a092513 )
 	ROM_LOAD_ODD ( "blstroid.6b",  0x00000, 0x10000, 0x486aac51 )
 	ROM_LOAD_EVEN( "blstroid.4c",  0x20000, 0x10000, 0xd0fa38fe )
 	ROM_LOAD_ODD ( "blstroid.4b",  0x20000, 0x10000, 0x744bf921 )
 
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
 	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
 	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
 	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
 	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
 	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */

@@ -361,7 +361,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_tempest =
 {
 	/* basic machine hardware */
 	{
@@ -416,7 +416,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( tempest ) /* rev 3 */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -434,7 +434,7 @@ ROM_START( tempest ) /* rev 3 */
 ROM_END
 
 ROM_START( tempest1 ) /* rev 1 */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -452,7 +452,7 @@ ROM_START( tempest1 ) /* rev 1 */
 ROM_END
 
 ROM_START( tempest2 ) /* rev 2 */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -470,7 +470,7 @@ ROM_START( tempest2 ) /* rev 2 */
 ROM_END
 
 ROM_START( temptube )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -489,7 +489,7 @@ ROM_END
 
 #if 0 /* identical to rom_tempest, only different rom sizes */
 ROM_START( tempest3 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tempest.x",    0x9000, 0x1000, 0x0 )
 	ROM_LOAD( "tempest.1",    0xa000, 0x1000, 0x0 )
 	ROM_LOAD( "tempest.3",    0xb000, 0x1000, 0x0 )
@@ -503,102 +503,7 @@ ROM_END
 
 
 
-struct GameDriver driver_tempest =
-{
-	__FILE__,
-	0,
-	"tempest",
-	"Tempest (rev 3)",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tempest,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tempest,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_tempest1 =
-{
-	__FILE__,
-	&driver_tempest,
-	"tempest1",
-	"Tempest (rev 1)",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tempest1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tempest,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_tempest2 =
-{
-	__FILE__,
-	&driver_tempest,
-	"tempest2",
-	"Tempest (rev 2)",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tempest2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tempest,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_temptube =
-{
-	__FILE__,
-	&driver_tempest,
-	"temptube",
-	"Tempest Tubes",
-	"1980",
-	"hack",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_temptube,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tempest,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1980, tempest,  0,       tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 3)" )
+GAME( 1980, tempest1, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 1)" )
+GAME( 1980, tempest2, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 2)" )
+GAME( 1980, temptube, tempest, tempest, tempest, 0, ROT0, "hack", "Tempest Tubes" )

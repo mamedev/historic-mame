@@ -808,7 +808,7 @@ int sys18_vh_start( void ){
 static void get_sprite_info( void ){
 //	const struct rectangle *clip = &Machine->drv->visible_area;
 	const unsigned short *base_pal = Machine->gfx[0]->colortable + 1024;
-	const unsigned char *base_gfx = memory_region(2);
+	const unsigned char *base_gfx = memory_region(REGION_GFX2);
 
 	UINT16 *source = (UINT16 *)sys16_spriteram;
 	struct sprite *sprite = sprite_list->sprite;
@@ -864,7 +864,7 @@ static void get_sprite_info( void ){
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
-				if( zoomy==0 ) zoomy = zoomx; /* if zoomy is 0, use zoomx instead */
+				if( zoomy==0 || source[6]==0xffff ) zoomy = zoomx; /* if zoomy is 0, use zoomx instead */
 
 				sprite->x = source[1] + sys16_sprxoffset;
 				sprite->y = top;
@@ -2248,7 +2248,7 @@ static void gr_colors(void)
 static void render_gr(struct osd_bitmap *bitmap,int priority)
 {
 	int i,j;
-	UINT8 *data = memory_region(5);
+	UINT8 *data = memory_region(REGION_GFX3);
 	UINT8 *source;
 	UINT8 *line;
 	UINT16 *line16;
@@ -2636,7 +2636,7 @@ static void grv2_colors(void)
 static void render_grv2(struct osd_bitmap *bitmap,int priority)
 {
 	int i,j;
-	UINT8 *data = memory_region(5);
+	UINT8 *data = memory_region(REGION_GFX3);
 	UINT8 *source,*source2,*temp;
 	UINT8 *line;
 	UINT16 *line16;

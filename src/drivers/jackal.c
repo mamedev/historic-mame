@@ -527,75 +527,75 @@ static struct MachineDriver machine_driver_topgunbl =
 ***************************************************************************/
 
 ROM_START( jackal )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
 	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
 	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
 	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_REGION( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
 	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 ROM_START( topgunr )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xf7e28426 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tgnr7h.bin",   0x00000, 0x20000, 0x50122a12 )
 	ROM_LOAD( "tgnr12h.bin",  0x20000, 0x20000, 0x37dbbdb0 )
 	ROM_LOAD( "tgnr8h.bin",   0x40000, 0x20000, 0x6943b1a4 )
 	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_REGION( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
 	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 ROM_START( jackalj )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "631t02.bin",   0x04000, 0x8000, 0x14db6b1a )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "631t03.bin",   0x0c000, 0x4000, 0xfd5f9624 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
 	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
 	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
 	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_REGION( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
 	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 ROM_START( topgunbl )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "t-3.c5",       0x04000, 0x8000, 0x7826ad38 )
 	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )
 	ROM_LOAD( "t-2.c6",       0x0c000, 0x4000, 0xd53172e5 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "t-17.n12",     0x00000, 0x08000, 0xe8875110 )
 	ROM_LOAD( "t-18.n13",     0x08000, 0x08000, 0xcf14471d )
 	ROM_LOAD( "t-19.n14",     0x10000, 0x08000, 0x46ee5dd2 )
@@ -613,7 +613,7 @@ ROM_START( topgunbl )
 	ROM_LOAD( "t-11.n6",      0x70000, 0x08000, 0x7895c22d )
 	ROM_LOAD( "t-12.n7",      0x78000, 0x08000, 0x15606dfc )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_REGION( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
 	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END

@@ -267,7 +267,7 @@ static struct MachineDriver machine_driver_foodf =
 ***************************************************************************/
 
 ROM_START( foodf )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for 68000 code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for 68000 code */
 	ROM_LOAD_EVEN( "foodf.9c",     0x00000, 0x02000, 0xef92dc5c )
 	ROM_LOAD_ODD ( "foodf.8c",     0x00000, 0x02000, 0xdfc3d5a8 )
 	ROM_LOAD_EVEN( "foodf.9d",     0x04000, 0x02000, 0xea596480 )
@@ -277,10 +277,10 @@ ROM_START( foodf )
 	ROM_LOAD_EVEN( "foodf.9f",     0x0c000, 0x02000, 0x608690c9 )
 	ROM_LOAD_ODD ( "foodf.8f",     0x0c000, 0x02000, 0x17828dbb )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "foodf.6lm",    0x0000, 0x2000, 0xc13c90eb )
 
-	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "foodf.4d",     0x0000, 0x2000, 0x8870e3d6 )
 	ROM_LOAD( "foodf.4e",     0x2000, 0x2000, 0x84372edf )
 ROM_END

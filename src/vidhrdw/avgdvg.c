@@ -1120,7 +1120,10 @@ void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 int dvg_start(void)
 {
 	if (backdrop)
+	{
 		backdrop_refresh(backdrop);
+		backdrop_refresh_tables (backdrop);
+	}
 
 	return avgdvg_init (USE_DVG);
 }
@@ -1148,7 +1151,10 @@ int avg_start_mhavoc(void)
 int avg_start_bzone(void)
 {
 	if (backdrop)
+	{
 		backdrop_refresh(backdrop);
+		backdrop_refresh_tables (backdrop);
+	}
 
 	return avgdvg_init (USE_AVG_BZONE);
 }

@@ -464,56 +464,56 @@ static struct MachineDriver machine_driver_exctsccb =
 ***************************************************************************/
 
 ROM_START( exctsccr )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
 	ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
 	ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "0_h6.bin",     0x0000, 0x2000, 0x3babbd6b )
 	ROM_LOAD( "9_f6.bin",     0x2000, 0x2000, 0x639998f5 )
 	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
 	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
 	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
 	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
 	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2_k5.bin",     0x0000, 0x1000, 0x7f9cace2 )
 	ROM_LOAD( "3_l5.bin",     0x1000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 ROM_END
 
 ROM_START( exctscca )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
 	ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
 	ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "exctsccc.000", 0x0000, 0x2000, 0x642fc42f )
 	ROM_LOAD( "exctsccc.009", 0x2000, 0x2000, 0xd88b3236 )
 	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
 	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
 	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
 	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
 	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2_k5.bin",     0x0000, 0x1000, 0x7f9cace2 )
 	ROM_LOAD( "3_l5.bin",     0x1000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
@@ -521,55 +521,55 @@ ROM_END
 
 /* Bootleg */
 ROM_START( exctsccb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "es-1.e2",      0x0000, 0x2000, 0x997c6a82 )
 	ROM_LOAD( "es-2.g2",      0x2000, 0x2000, 0x5c66e792 )
 	ROM_LOAD( "es-3.h2",      0x4000, 0x2000, 0xe0d504c0 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "es-a.k2",      0x0000, 0x2000, 0x99e87b78 )
 	ROM_LOAD( "es-b.l2",      0x2000, 0x2000, 0x8b3db794 )
 	ROM_LOAD( "es-c.m2",      0x4000, 0x2000, 0x7bed2f81 )
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* I'm using the ROMs from exctscc2, national flags would be wrong otherwise */
 	ROM_LOAD( "vr.5a",        0x0000, 0x2000, BADCRC( 0x4ff1783d ) )
 	ROM_LOAD( "vr.5b",        0x2000, 0x2000, BADCRC( 0x5605b60b ) )
 	ROM_LOAD( "vr.5c",        0x4000, 0x2000, BADCRC( 0x1fb84ee6 ) )
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vr.5k",        0x0000, 0x1000, BADCRC( 0x1d37edfa ) )
 	ROM_LOAD( "vr.5l",        0x1000, 0x1000, BADCRC( 0xb97f396c ) )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 ROM_END
 
 ROM_START( exctscc2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vr.3j",        0x0000, 0x2000, 0xc6115362 )
 	ROM_LOAD( "vr.3k",        0x2000, 0x2000, 0xde36ba00 )
 	ROM_LOAD( "vr.3l",        0x4000, 0x2000, 0x1ddfdf65 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "vr.7d",        0x0000, 0x2000, 0x2c675a43 )
 	ROM_LOAD( "vr.7e",        0x2000, 0x2000, 0xe571873d )
 	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )	/* vr.7f */
 	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )	/* vr.7h */
 	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )	/* vr.7k */
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vr.5a",        0x0000, 0x2000, 0x4ff1783d )
 	ROM_LOAD( "vr.5b",        0x2000, 0x2000, 0x5605b60b )
 	ROM_LOAD( "vr.5c",        0x4000, 0x2000, 0x1fb84ee6 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vr.5k",        0x0000, 0x1000, 0x1d37edfa )
 	ROM_LOAD( "vr.5l",        0x1000, 0x1000, 0xb97f396c )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */

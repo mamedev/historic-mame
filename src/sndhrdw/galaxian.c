@@ -6,13 +6,15 @@
 #define NEW_LFO 0
 #define NEW_SHOOT 1
 
-#define SOUND_CLOCK (18432000/6/2)			/* 1.536 Mhz */
+#define XTAL		18432000
+
+#define SOUND_CLOCK (XTAL/6/2)			/* 1.536 Mhz */
 
 #define SAMPLES 1
 
-#define RNG_RATE	(18432000/3)			/* RNG clock is XTAL/3 */
-#define NOISE_RATE	(18432000/3/192/2/2)	/* 2V = 8kHz */
-#define NOISE_LENGTH (NOISE_RATE*4) 		/* four seconds of noise */
+#define RNG_RATE	(XTAL/3)			/* RNG clock is XTAL/3 */
+#define NOISE_RATE	(XTAL/3/192/2/2)	/* 2V = 8kHz */
+#define NOISE_LENGTH (NOISE_RATE*4) 	/* four seconds of noise */
 
 #define SHOOT_RATE 2672
 #define SHOOT_LENGTH 13000
@@ -26,7 +28,7 @@
 #define NOISE_AMPLITUDE 70*256
 #define TOOTHSAW_AMPLITUDE 64
 
-/* see comments in mooncrst_sh_update() */
+/* see comments in galaxian_sh_update() */
 #define MINFREQ (139-139/3)
 #define MAXFREQ (139+139/3)
 
@@ -36,12 +38,12 @@
 #define LOG(x)
 #endif
 
-static void *lfotimer = NULL;
+static void *lfotimer = 0;
 static int freq = MAXFREQ;
 
 #define STEP 1
 
-static void *noisetimer = NULL;
+static void *noisetimer = 0;
 static int noisevolume;
 static INT16 *noisewave;
 static INT16 *shootwave;
@@ -53,10 +55,9 @@ static int shoot_rate;
 #if SAMPLES
 static int shootsampleloaded = 0;
 static int deathsampleloaded = 0;
-static int LastPort1=0;
+static int last_port1=0;
 #endif
-static int LastPort2=0;
-static int lfo_active[3];
+static int last_port2=0;
 
 static INT8 tonewave[4][TOOTHSAW_LENGTH];
 static int pitch,vol;
@@ -106,14 +107,14 @@ static void tone_update(int ch, INT16 *buffer, int length)
 	}
 }
 
-void mooncrst_pitch_w(int offset,int data)
+void galaxian_pitch_w(int offset,int data)
 {
 	stream_update(tone_stream,0);
 
 	pitch = data;
 }
 
-void mooncrst_vol_w(int offset,int data)
+void galaxian_vol_w(int offset,int data)
 {
 	stream_update(tone_stream,0);
 
@@ -131,40 +132,45 @@ static void noise_timer_cb(int param)
 	}
 }
 
-void mooncrst_noise_w(int offset,int data)
+void galaxian_noise_enable_w(int offset,int data)
 {
 #if SAMPLES
 	if (deathsampleloaded)
 	{
-		if (data & 1 && !(LastPort1 & 1))
+		if (data & 1 && !(last_port1 & 1))
 			mixer_play_sample(channelnoise,Machine->samples->sample[1]->data,
 					Machine->samples->sample[1]->length,
 					Machine->samples->sample[1]->smpfreq,
 					0);
-		LastPort1=data;
+		last_port1=data;
 	}
 	else
 #endif
 	{
-		if( noisetimer )
-			timer_remove(noisetimer);
-		noisetimer = NULL;
 		if( data & 1 )
 		{
+			if( noisetimer )
+			{
+				timer_remove(noisetimer);
+				noisetimer = 0;
+			}
 			noisevolume = 100;
 			mixer_set_volume(channelnoise,noisevolume);
 		}
 		else
 		{
 			/* discharge C21, 22uF via 150k+22k R35/R36 */
-			noisetimer = timer_pulse(TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, noise_timer_cb);
+			if (noisevolume == 100)
+			{
+				noisetimer = timer_pulse(TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, noise_timer_cb);
+			}
 		}
 	}
 }
 
-void mooncrst_shoot_w(int offset,int data)
+void galaxian_shoot_enable_w(int offset,int data)
 {
-	if( data & 1 && !(LastPort2 & 1) )
+	if( data & 1 && !(last_port2 & 1) )
 	{
 #if SAMPLES
 		if( shootsampleloaded )
@@ -178,19 +184,19 @@ void mooncrst_shoot_w(int offset,int data)
 #endif
 		{
 #if NEW_SHOOT
-			mixer_play_sample_16(channelshoot, shootwave, shoot_length,shoot_rate, 0);
+			mixer_play_sample_16(channelshoot, shootwave, shoot_length, shoot_rate, 0);
 #else
 			mixer_play_sample_16(channelshoot, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
 #endif
 			mixer_set_volume(channelshoot,SHOOT_VOLUME);
 		}
 	}
-	LastPort2=data;
+	last_port2=data;
 }
 
 
 #if SAMPLES
-static const char *mooncrst_sample_names[] =
+static const char *galaxian_sample_names[] =
 {
 	"*galaxian",
 	"shot.wav",
@@ -199,13 +205,13 @@ static const char *mooncrst_sample_names[] =
 };
 #endif
 
-int mooncrst_sh_start(const struct MachineSound *msound)
+int galaxian_sh_start(const struct MachineSound *msound)
 {
 	int i, j, sweep, charge, countdown, generator, bit1, bit2;
 	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
 
 #if SAMPLES
-	Machine->samples = readsamples(mooncrst_sample_names,Machine->gamedrv->name);
+	Machine->samples = readsamples(galaxian_sample_names,Machine->gamedrv->name);
 #endif
 
 	channelnoise = mixer_allocate_channel(NOISE_VOLUME);
@@ -290,13 +296,13 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 #define NOISE_L 0.2   /* 7474 L level */
 #define NOISE_H 4.5   /* 7474 H level */
 /*
-	key on/off time is programable
+	key on/off time is programmable
 	Therefore,  it is necessary to make separate sample with key on/off.
 	And,  calculate the playback point according to the voltage of c28.
 */
 #define SHOOT_KEYON_TIME 0.1  /* second */
 /*
-	NE555-FM input calcration is wrong.
+	NE555-FM input calculation is wrong.
 	The frequency is not proportional to the voltage of FM input.
 	And,  duty will be changed,too.
 */
@@ -307,7 +313,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 		/* -- SHOOT KEY port -- */
 		double IC8L3 = IC8L3_L; /* key on */
 		int IC8Lcnt = SHOOT_KEYON_TIME * shoot_rate; /* count for key off */
-		/* C28 : KEY port capaciry */
+		/* C28 : KEY port capacity */
 		/*       connection : 8L-3 - R47(2.2K) - C28(47u) - R48(2.2K) - C29 */
 		double c28v = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*R47__;
 		double c28K = (shoot_rate) ? exp(-1 / (22000 * 0.000047 ) / shoot_rate) : 0;
@@ -321,7 +327,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 		double ne555cnt = 0;
 		double ne555step = (shoot_rate) ? ((1.44/((R44__+R45__*2)*C27__)) / shoot_rate) : 0;
 		double ne555duty = (double)(R44__+R45__)/(R44__+R45__*2); /* t1 duty */
-		double ne555sr;		/* threshhold (FM) rate */
+		double ne555sr;		/* threshold (FM) rate */
 		/* NOISE source */
 		double ncnt  = 0.0;
 		double nstep = (shoot_rate) ? ((double)NOISE_RATE / shoot_rate) : 0;
@@ -332,7 +338,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 			/* noise port */
 			noise_sh2 = noisewave[(int)ncnt % NOISE_LENGTH] == NOISE_AMPLITUDE ? NOISE_H : NOISE_L;
 			ncnt+=nstep;
-			/* calcrate NE555 threshhold level by FM input */
+			/* calculate NE555 threshold level by FM input */
 			ne555sr = c29v*NE555_FM_ADJUST_RATE / (5.0*2/3);
 			/* calc output */
 			ne555cnt += ne555step;
@@ -347,7 +353,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 			}
 			else
 				shootwave[i] = 0;
-			/* C28 charde/discharge */
+			/* C28 charge/discharge */
 			c28v += (IC8L3-c28v) - (IC8L3-c28v)*c28K;	/* from R47 */
 			c28v += (c29v-c28v) - (c29v-c28v)*c28K;		/* from R48 */
 			/* C29 charge/discharge */
@@ -367,8 +373,8 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	 * I use an array of 10 values to define some points
 	 * of the charge/discharge curve. The wave is modulated
 	 * using the charge/discharge timing of C28, a 47uF capacitor,
-	 * over a 2k2 resitor. This will change the frequency from
-	 * approx. Favg-Favg/3 upto Favg+Favg/3 downto Favg-Favg/3 again.
+	 * over a 2k2 resistor. This will change the frequency from
+	 * approx. Favg-Favg/3 up to Favg+Favg/3 down to Favg-Favg/3 again.
 	 */
 	sweep = 100;
 	charge = +2;
@@ -461,7 +467,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 		else
 			r1b += 1.0/10000;
 		tonewave[3][i] = V(1.0/r0b, 1.0/r1b);
-		LOG((errorlog, "tone[%2d]: $%02x $%02x $%02x $%02x\n", i, tonewave[0][i]&0xff, tonewave[1][i]&0xff, tonewave[2][i]&0xff, tonewave[3][i]&0xff));
+		LOG((errorlog, "tone[%2d]: $%02x $%02x $%02x $%02x\n", i, tonewave[0][i], tonewave[1][i], tonewave[2][i], tonewave[3][i]));
 	}
 
 	pitch = 0;
@@ -496,33 +502,30 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 
 
 
-void mooncrst_sh_stop(void)
+void galaxian_sh_stop(void)
 {
 	if( lfotimer )
 	{
 		timer_remove( lfotimer );
-		lfotimer = NULL;
+		lfotimer = 0;
 	}
 	if( noisetimer )
 	{
 		timer_remove(noisetimer);
-		noisetimer = NULL;
+		noisetimer = 0;
 	}
 	free(noisewave);
-	noisewave = NULL;
-	osd_stop_sample(channelnoise);
-	osd_stop_sample(channelshoot);
-	osd_stop_sample(channellfo+0);
-	osd_stop_sample(channellfo+1);
-	osd_stop_sample(channellfo+2);
+	noisewave = 0;
+	mixer_stop_sample(channelnoise);
+	mixer_stop_sample(channelshoot);
+	mixer_stop_sample(channellfo+0);
+	mixer_stop_sample(channellfo+1);
+	mixer_stop_sample(channellfo+2);
 }
 
-void mooncrst_background_w(int offset,int data)
+void galaxian_background_enable_w(int offset,int data)
 {
-	lfo_active[offset] = data & 1;
-
-	if (lfo_active[offset]) mixer_set_volume(channellfo+offset,100);
-	else mixer_set_volume(channellfo+offset,0);
+	mixer_set_volume(channellfo+offset,(data & 1) ? 100 : 0);
 }
 
 static void lfo_timer_cb(int param)
@@ -533,7 +536,7 @@ static void lfo_timer_cb(int param)
 		freq = MAXFREQ;
 }
 
-void mooncrst_lfo_freq_w(int offset,int data)
+void galaxian_lfo_freq_w(int offset,int data)
 {
 #if NEW_LFO
 	static int lfobit[4];
@@ -568,7 +571,7 @@ void mooncrst_lfo_freq_w(int offset,int data)
 	//r1 = 15000;
 	/* R21 100K */
 	Re = 100000;
-	/* regsiter calcration */
+	/* register calculation */
 	for(i=0;i<4;i++)
 	{
 		if(lfobit[i])
@@ -580,7 +583,7 @@ void mooncrst_lfo_freq_w(int offset,int data)
 	if( lfotimer )
 	{
 		timer_remove( lfotimer );
-		lfotimer = NULL;
+		lfotimer = 0;
 	}
 
 #define Vcc 5.0
@@ -645,7 +648,7 @@ void mooncrst_lfo_freq_w(int offset,int data)
 	if( lfotimer )
 	{
 		timer_remove( lfotimer );
-		lfotimer = NULL;
+		lfotimer = 0;
 	}
 
 	r0 = 1.0/r0;
@@ -659,7 +662,7 @@ void mooncrst_lfo_freq_w(int offset,int data)
 #endif
 }
 
-void mooncrst_sh_update(void)
+void galaxian_sh_update(void)
 {
 	/*
 	 * NE555 8R, 8S and 8T are used as pulse position modulators
@@ -671,7 +674,7 @@ void mooncrst_sh_update(void)
 	 *	-> 0.693 * 540k * 0.01uF -> 3742.2us = 267Hz
 	 */
 
-	osd_set_sample_freq(channellfo+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
-	osd_set_sample_freq(channellfo+1, sizeof(backgroundwave)*freq*(100+2*300)/(100+2*470) );
-	osd_set_sample_freq(channellfo+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
+	mixer_set_sample_frequency(channellfo+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
+	mixer_set_sample_frequency(channellfo+1, sizeof(backgroundwave)*freq*(100+2*300)/(100+2*470) );
+	mixer_set_sample_frequency(channellfo+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
 }

@@ -821,7 +821,7 @@ command to list them.
 | War of the Bugs      |  Yes   |  Yes   |  Yes   |   No   | warofbug |
 | Wardners Forest      |  Yes   |  Yes   |  Yes   |  Yes   | wardner  |
 | Warlords             |  Yes   |  Yes   |  Yes   |  Yes   | warlord  |
-| Warp Warp            |  Yes   |  Yes   |   No   |   No   | warpwarp |
+| Warp Warp            |  Yes   |  Yes   |  Yes   |   No   | warpwarp |
 | Water Ski            |  Yes   |  Yes   |  Yes   |  Yes   | waterski |
 | WEC Le Mans 24       |  Yes   |   No   |  Yes   |   No   | wecleman |
 | Who Dunit            |  Yes   |  Yes   |  Yes   |  Yes   | whodunit |
@@ -3082,18 +3082,6 @@ Clones supported:
 
 Known issues:
 - I haven't decoded wboy3 yet.
-
-
-
-World Cup 90 ("wc90")
-=====================
-Clones supported:
-  bootleg version ("wc90b")
-
-Known issues:
-- No ADPCM samples.
-- The second YM2203 starts outputting static after a few seconds. This is in
-  the original version, the bootleg doesn't have a second YM2203.
 
 
 

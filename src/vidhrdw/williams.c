@@ -572,7 +572,7 @@ int blaster_vh_start(void)
 	if (blaster_remap_lookup)
 		for (i = 0; i < 256; i++)
 		{
-			const UINT8 *table = memory_region(2) + (i & 0x7f) * 16;
+			const UINT8 *table = memory_region(REGION_PROMS) + (i & 0x7f) * 16;
 			for (j = 0; j < 256; j++)
 				blaster_remap_lookup[i * 256 + j] = (table[j >> 4] << 4) | table[j & 0x0f];
 		}

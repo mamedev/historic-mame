@@ -722,7 +722,7 @@ static struct MachineDriver machine_driver_llander =
 ***************************************************************************/
 
 ROM_START( asteroi1 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "035145.01",    0x6800, 0x0800, 0xe9bfda64 )
 	ROM_LOAD( "035144.01",    0x7000, 0x0800, 0xe53c28a9 )
 	ROM_LOAD( "035143.01",    0x7800, 0x0800, 0x7d4e3d05 )
@@ -732,7 +732,7 @@ ROM_START( asteroi1 )
 ROM_END
 
 ROM_START( asteroid )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "035145.02",    0x6800, 0x0800, 0x0cc75459 )
 	ROM_LOAD( "035144.02",    0x7000, 0x0800, 0x096ed35c )
 	ROM_LOAD( "035143.02",    0x7800, 0x0800, 0x312caa02 )
@@ -742,7 +742,7 @@ ROM_START( asteroid )
 ROM_END
 
 ROM_START( astdelux )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036430.02",    0x6000, 0x0800, 0xa4d7a525 )
 	ROM_LOAD( "036431.02",    0x6800, 0x0800, 0xd4004aae )
 	ROM_LOAD( "036432.02",    0x7000, 0x0800, 0x6d720c41 )
@@ -754,7 +754,7 @@ ROM_START( astdelux )
 ROM_END
 
 ROM_START( astdelu1 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
 	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x157a8516 )
 	ROM_LOAD( "036432.01",    0x7000, 0x0800, 0xfdea913c )
@@ -766,7 +766,7 @@ ROM_START( astdelu1 )
 ROM_END
 
 ROM_START( llander )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "034572.02",    0x6000, 0x0800, 0xb8763eea )
 	ROM_LOAD( "034571.02",    0x6800, 0x0800, 0x77da4b2f )
 	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )
@@ -781,7 +781,7 @@ ROM_START( llander )
 ROM_END
 
 ROM_START( llander1 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "034572.01",    0x6000, 0x0800, 0x2aff3140 )
 	ROM_LOAD( "034571.01",    0x6800, 0x0800, 0x493e24b7 )
 	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )

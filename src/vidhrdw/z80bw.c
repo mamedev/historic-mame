@@ -95,9 +95,9 @@ void astinvad_videoram_w (int offset,int data)
 		if (data & 0x01)
 		{
 			if (flipscreen)
-				col = memory_region(1)[((y+32)/8)*32+(x/8)] >> 4;
+				col = memory_region(REGION_PROMS)[((y+32)/8)*32+(x/8)] >> 4;
 			else
-				col = memory_region(1)[(31-y/8)*32+(31-x/8)] & 0x0f;
+				col = memory_region(REGION_PROMS)[(31-y/8)*32+(31-x/8)] & 0x0f;
 		}
 
 		z80bw_plot_pixel(x, y, col);
@@ -123,7 +123,7 @@ void spaceint_videoram_w (int offset,int data) /* LT 23-12-1998 */ /*--WIP--*/
 		if (data & 0x01)
 		{
 			/* this is wrong */
-			col = memory_region(1)[(y/16)+16*((x+16)/32)];
+			col = memory_region(REGION_PROMS)[(y/16)+16*((x+16)/32)];
 		}
 
 		z80bw_plot_pixel(x, y, col);

@@ -324,10 +324,20 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 	/* This appears to be correct priority */
-	draw_sprites_V(bitmap,0,0x0f80,0x1000,0,0x8000,0x7fff);
-	draw_sprites_V(bitmap,1,0x0000,0x1000,0,0x8000,0x7fff);
-	draw_sprites_V(bitmap,2,0x0000,0x1000,0,0x8000,0x7fff);
-	draw_sprites_V(bitmap,0,0x0000,0x0f80,0,0x8000,0x7fff);
+	if (!strcmp(Machine->gamedrv->name,"skyadvnt"))
+	{
+		draw_sprites_V(bitmap,0,0x0f80,0x1000,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,1,0x0000,0x1000,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,2,0x0000,0x1000,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,0,0x0000,0x0f80,0,0x8000,0x7fff);
+	}
+	else	/* gangwars */
+	{
+		draw_sprites_V(bitmap,0,0x0f80,0x1000,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,1,0x0000,0x1000,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,2,0x0000,0x1000,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,0,0x0000,0x0f80,0x8000,0,0x7fff);
+	}
 
 	/* Text layer */
 	my = -1;

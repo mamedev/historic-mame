@@ -2,6 +2,8 @@
 
 Vastar memory map (preliminary)
 
+driver by Allard Van Der Bas
+
 CPU #1:
 
 0000-7fff ROM
@@ -304,11 +306,11 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 64 },
-	{ 1, 0x2000, &spritelayout, 0, 64 },
-	{ 1, 0x2000, &spritelayoutdw, 0, 64 },
-	{ 1, 0x6000, &tilelayout,   0, 64 },
-	{ 1, 0x8000, &tilelayout,   0, 64 },
+	{ REGION_GFX1, 0, &charlayout,     0, 64 },
+	{ REGION_GFX2, 0, &spritelayout,   0, 64 },
+	{ REGION_GFX2, 0, &spritelayoutdw, 0, 64 },
+	{ REGION_GFX3, 0, &tilelayout,     0, 64 },
+	{ REGION_GFX4, 0, &tilelayout,     0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -327,7 +329,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_vastar =
 {
 	/* basic machine hardware */
 	{
@@ -380,7 +382,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vastar )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e_f4.rom",     0x0000, 0x1000, 0x45fa5075 )
 	ROM_LOAD( "e_k4.rom",     0x1000, 0x1000, 0x84531982 )
 	ROM_LOAD( "e_h4.rom",     0x2000, 0x1000, 0x94a4f778 )
@@ -390,26 +392,32 @@ ROM_START( vastar )
 	ROM_LOAD( "e_n7.rom",     0x6000, 0x1000, 0x31b6be39 )
 	ROM_LOAD( "e_n5.rom",     0x7000, 0x1000, 0xf63f0e78 )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c_c9.rom",     0x0000, 0x2000, 0x34f067b6 )
-	ROM_LOAD( "c_f7.rom",     0x2000, 0x2000, 0xedbf3b13 )
-	ROM_LOAD( "c_f9.rom",     0x4000, 0x2000, 0x8f309e22 )
-	ROM_LOAD( "c_n4.rom",     0x6000, 0x2000, 0xb5f9c866 )
-	ROM_LOAD( "c_s4.rom",     0x8000, 0x2000, 0xc9fbbfc9 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "e_f2.rom",     0x0000, 0x1000, 0x713478d8 )
+	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_c9.rom",     0x0000, 0x2000, 0x34f067b6 )
+
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_f7.rom",     0x0000, 0x2000, 0xedbf3b13 )
+	ROM_LOAD( "c_f9.rom",     0x2000, 0x2000, 0x8f309e22 )
+
+	ROM_REGION( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_n4.rom",     0x0000, 0x2000, 0xb5f9c866 )
+
+	ROM_REGION( 0x2000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_s4.rom",     0x0000, 0x2000, 0xc9fbbfc9 )
+
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "tbp24s10.6p",  0x0000, 0x0100, 0xa712d73a )	/* red component */
 	ROM_LOAD( "tbp24s10.6s",  0x0100, 0x0100, 0x0a7d48ec )	/* green component */
 	ROM_LOAD( "tbp24s10.6m",  0x0200, 0x0100, 0x4c3db907 )	/* blue component */
 	ROM_LOAD( "tbp24s10.8n",  0x0300, 0x0100, 0xb5297a3b )	/* ???? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "e_f2.rom",     0x0000, 0x1000, 0x713478d8 )
-	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 ROM_END
 
 ROM_START( vastar2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "3.4f",         0x0000, 0x1000, 0x6741ff9c )
 	ROM_LOAD( "6.4k",         0x1000, 0x1000, 0x5027619b )
 	ROM_LOAD( "4.4h",         0x2000, 0x1000, 0xfdaa44e6 )
@@ -419,72 +427,31 @@ ROM_START( vastar2 )
 	ROM_LOAD( "10.6n",        0x6000, 0x1000, 0x80df74ba )
 	ROM_LOAD( "9.5n",         0x7000, 0x1000, 0x239ec84e )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c_c9.rom",     0x0000, 0x2000, 0x34f067b6 )
-	ROM_LOAD( "c_f7.rom",     0x2000, 0x2000, 0xedbf3b13 )
-	ROM_LOAD( "c_f9.rom",     0x4000, 0x2000, 0x8f309e22 )
-	ROM_LOAD( "c_n4.rom",     0x6000, 0x2000, 0xb5f9c866 )
-	ROM_LOAD( "c_s4.rom",     0x8000, 0x2000, 0xc9fbbfc9 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "e_f2.rom",     0x0000, 0x1000, 0x713478d8 )
+	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_c9.rom",     0x0000, 0x2000, 0x34f067b6 )
+
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_f7.rom",     0x0000, 0x2000, 0xedbf3b13 )
+	ROM_LOAD( "c_f9.rom",     0x2000, 0x2000, 0x8f309e22 )
+
+	ROM_REGION( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_n4.rom",     0x0000, 0x2000, 0xb5f9c866 )
+
+	ROM_REGION( 0x2000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c_s4.rom",     0x0000, 0x2000, 0xc9fbbfc9 )
+
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "tbp24s10.6p",  0x0000, 0x0100, 0xa712d73a )	/* red component */
 	ROM_LOAD( "tbp24s10.6s",  0x0100, 0x0100, 0x0a7d48ec )	/* green component */
 	ROM_LOAD( "tbp24s10.6m",  0x0200, 0x0100, 0x4c3db907 )	/* blue component */
 	ROM_LOAD( "tbp24s10.8n",  0x0300, 0x0100, 0xb5297a3b )	/* ???? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "e_f2.rom",     0x0000, 0x1000, 0x713478d8 )
-	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 ROM_END
 
 
 
-struct GameDriver driver_vastar =
-{
-	__FILE__,
-	0,
-	"vastar",
-	"Vastar (set 1)",
-	"1983",
-	"Sesame Japan",
-	"Allard van der Bas\nNicola Salmoria\nMirko Buffoni (additional code)\nRoberto Ventura (hardware info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_vastar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vastar,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_vastar2 =
-{
-	__FILE__,
-	&driver_vastar,
-	"vastar2",
-	"Vastar (set 2)",
-	"1983",
-	"Sesame Japan",
-	"Allard van der Bas\nNicola Salmoria\nMirko Buffoni (additional code)\nRoberto Ventura (hardware info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_vastar2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vastar,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1983, vastar,  0,      vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 1)" )
+GAME( 1983, vastar2, vastar, vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 2)" )

@@ -104,7 +104,7 @@ int namcos2_68k_eeprom_r( int offset )
 
 int namcos2_68k_data_rom_r(int offset)
 {
-	unsigned char *ROM=memory_region(REGION_DATA);
+	unsigned char *ROM=memory_region(REGION_USER1);
 	return READ_WORD(&ROM[offset]);
 }
 
@@ -746,7 +746,7 @@ int namcos2_sound_interrupt(void)
 
 void namcos2_sound_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM=memory_region(REGION_CPU_SOUND);
+	unsigned char *RAM=memory_region(REGION_CPU3);
 	int bank = ( data >> 4 ) & 0x0f;	/* 991104.CAB */
 	cpu_setbank( CPU3_ROM1, &RAM[ 0x10000 + ( 0x4000 * bank ) ] );
 }

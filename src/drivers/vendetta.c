@@ -160,7 +160,7 @@ static int speedup_r( int offs )
 
 	int data = ( RAM[0x28d2] << 8 ) | RAM[0x28d3];
 
-	if ( data < memory_region_length(0) )
+	if ( data < memory_region_length(REGION_CPU1) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -334,7 +334,7 @@ static struct YM2151interface ym2151_interface =
 static struct K053260_interface k053260_interface =
 {
 	3579545,
-	4, /* memory region */
+	REGION_SOUND1, /* memory region */
 	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
 	0
 };
@@ -347,7 +347,7 @@ static int vendetta_irq( void )
 		return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_vendetta =
 {
 	/* basic machine hardware */
 	{
@@ -403,68 +403,68 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vendetta )
-	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
+
+	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
 	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
 
-	ROM_REGION( 0x400000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
 	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
-
-	ROM_REGION( 0x100000 ) /* 053260 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
 ROM_START( vendett2 )
-	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
+
+	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
 	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
 
-	ROM_REGION( 0x400000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
 	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
-
-	ROM_REGION( 0x100000 ) /* 053260 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
 ROM_START( vendettj )
-	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081p01", 0x10000, 0x38000, 0x5fe30242 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
+
+	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
 	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
 
-	ROM_REGION( 0x400000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
 	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
-
-	ROM_REGION( 0x100000 ) /* 053260 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
@@ -500,85 +500,14 @@ static void vendetta_init_machine( void )
 	vendetta_video_banking( 0 );
 }
 
-static void gfx_untangle(void)
+static void init_vendetta(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_4(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_4(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_vendetta =
-{
-	__FILE__,
-	0,
-	"vendetta",
-	"Vendetta (Asia set 1)",
-	"1991",
-	"Konami",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_vendetta,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vendetta,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_vendett2 =
-{
-	__FILE__,
-	&driver_vendetta,
-	"vendett2",
-	"Vendetta (Asia set 2)",
-	"1991",
-	"Konami",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_vendett2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vendetta,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_vendettj =
-{
-	__FILE__,
-	&driver_vendetta,
-	"vendettj",
-	"Crime Fighters 2 (Japan)",
-	"1991",
-	"Konami",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_vendettj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vendetta,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1991, vendetta, 0,        vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia set 1)" )
+GAME( 1991, vendett2, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia set 2)" )
+GAME( 1991, vendettj, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Crime Fighters 2 (Japan)" )

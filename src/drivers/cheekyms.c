@@ -193,21 +193,21 @@ static struct MachineDriver machine_driver_cheekyms =
 ***************************************************************************/
 
 ROM_START( cheekyms )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cm03.c5",       0x0000, 0x0800, 0x1ad0cb40 )
 	ROM_LOAD( "cm04.c6",       0x0800, 0x0800, 0x2238f607 )
 	ROM_LOAD( "cm05.c7",       0x1000, 0x0800, 0x4169eba8 )
 	ROM_LOAD( "cm06.c8",       0x1800, 0x0800, 0x7031660c )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cm01.c1",       0x0000, 0x0800, 0x26f73bd7 )
 	ROM_LOAD( "cm02.c2",       0x0800, 0x0800, 0x885887c3 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cm07.n5",       0x0000, 0x0800, 0x2738c88d )
 	ROM_LOAD( "cm08.n6",       0x0800, 0x0800, 0xb3fbd4ac )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cm.m8",         0x0000, 0x0020, 0x2386bc68 )	 /* Character colors \ Selected by Bit 6 of Port 0x80 */
 	ROM_LOAD( "cm.m9",         0x0020, 0x0020, 0xdb9c59a5 )	 /* Character colors /                                */
 	ROM_LOAD( "cm.p3",         0x0040, 0x0020, 0x6ac41516 )  /* Sprite colors */

@@ -617,7 +617,7 @@ static struct MachineDriver machine_driver_medlanes =
 ***************************************************************************/
 
 ROM_START( lazercmd )
-	ROM_REGIONX( 0x8000, REGION_CPU1 )			   /* 32K cpu, 4K for ROM/RAM */
+	ROM_REGION( 0x8000, REGION_CPU1 )			   /* 32K cpu, 4K for ROM/RAM */
 	ROM_LOAD( "lc.e5",        0x0000, 0x0400, 0x56dc7a40 )
 	ROM_LOAD( "lc.e6",        0x0400, 0x0400, 0xb1ef0aa2 )
 	ROM_LOAD( "lc.e7",        0x0800, 0x0400, 0x8e6ffc97 )
@@ -625,12 +625,12 @@ ROM_START( lazercmd )
 	ROM_LOAD( "lc.f6",        0x1400, 0x0400, 0x26eaee21 )
 	ROM_LOAD( "lc.f7",        0x1800, 0x0400, 0x9ec3534d )
 
-	ROM_REGIONX( 0x0c00, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c00, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "lc.b8",        0x0a00, 0x0200, 0x6d708edd )
 ROM_END
 
 ROM_START( medlanes )
-	ROM_REGIONX( 0x8000, REGION_CPU1 )			   /* 32K cpu, 4K for ROM/RAM */
+	ROM_REGION( 0x8000, REGION_CPU1 )			   /* 32K cpu, 4K for ROM/RAM */
 	ROM_LOAD( "medlanes.2a", 0x0000, 0x0400, 0x9c77566a )
 	ROM_LOAD( "medlanes.2b", 0x0400, 0x0400, 0x7841b1a9 )
 	ROM_LOAD( "medlanes.2c", 0x0800, 0x0400, 0xa359b5b8 )
@@ -642,7 +642,7 @@ ROM_START( medlanes )
 	ROM_LOAD( "medlanes.4a", 0x5000, 0x0400, 0x30d495e9 )
 	ROM_LOAD( "medlanes.4b", 0x5400, 0x0400, 0xa4abb5db )
 
-	ROM_REGIONX( 0x0c00, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c00, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "medlanes.8b", 0x0a00, 0x0200, 0x44e5de8f )
 ROM_END
 

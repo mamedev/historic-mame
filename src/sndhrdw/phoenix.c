@@ -104,7 +104,7 @@ void phoenix_sound_control_a_w(int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_set_sample_freq(channel0,MAXFREQ_A/(16-sound_a_freq));
+		mixer_set_sample_frequency(channel0,MAXFREQ_A/(16-sound_a_freq));
 		mixer_set_volume(channel0,100*(3-vol)/3);
 		sound_a_play = 1;
 	}
@@ -124,7 +124,7 @@ void phoenix_sound_control_a_w(int offset,int data)
 
 		if (noise)
 		{
-			osd_set_sample_freq(channel2,noise_freq);
+			mixer_set_sample_frequency(channel2,noise_freq);
 			mixer_set_volume(channel2,noise_vol*100/255);
 		}
 		else
@@ -166,7 +166,7 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_set_sample_freq(channel1,MAXFREQ_B/(16-sound_b_freq));
+		mixer_set_sample_frequency(channel1,MAXFREQ_B/(16-sound_b_freq));
 		mixer_set_volume(channel1,100*(3-vol)/3);
 		sound_b_play = 1;
 	}
@@ -188,7 +188,7 @@ void phoenix_sound_control_b_w(int offset,int data)
 			/* it sounds wrong). */
 
 			/* This case seems to prevent the melody from repeating rather than stopping it outright */
-			/*osd_stop_sample(channel3);
+			/*mixer_stop_sample(channel3);
 			if (song_playing != 0)
 				M_PLAY_SAMPLE(channel3,song_playing,0);*/
 			song_playing = 0;
@@ -296,8 +296,8 @@ void phoenix_sh_update(void)
 		x=3*PHX_PI/2;
 
 
-	osd_set_sample_freq(channel0,pitch_a);
-	osd_set_sample_freq(channel1,pitch_b);
+	mixer_set_sample_frequency(channel0,pitch_a);
+	mixer_set_sample_frequency(channel1,pitch_b);
 
 	if ((noise_vol) && (noisemulate))
 	{

@@ -692,18 +692,18 @@ static struct MachineDriver machine_driver_renegade =
 
 
 ROM_START( renegade )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-5.bin",     0x08000, 0x8000, 0xba683ddf )
 	ROM_LOAD( "na-5.bin",     0x04000, 0x4000, 0xde7e7df4 )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nc-5.bin",     0x00000, 0x8000, 0x9adfaa5d )	/* characters */
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n1-5.bin",     0x00000, 0x8000, 0x4a9f47f3 )	/* tiles */
 	ROM_LOAD( "n6-5.bin",     0x08000, 0x8000, 0xd62a0aa8 )
 	ROM_LOAD( "n7-5.bin",     0x10000, 0x8000, 0x7ca5a532 )
@@ -711,7 +711,7 @@ ROM_START( renegade )
 	ROM_LOAD( "n8-5.bin",     0x20000, 0x8000, 0x0dba31d3 )
 	ROM_LOAD( "n9-5.bin",     0x28000, 0x8000, 0x5b621b6a )
 
-	ROM_REGIONX( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nh-5.bin",     0x00000, 0x8000, 0xdcd7857c )	/* sprites */
 	ROM_LOAD( "nd-5.bin",     0x08000, 0x8000, 0x2de1717c )
 	ROM_LOAD( "nj-5.bin",     0x10000, 0x8000, 0x0f96a18e )
@@ -725,25 +725,25 @@ ROM_START( renegade )
 	ROM_LOAD( "ng-5.bin",     0x50000, 0x8000, 0xa8ee3720 )
 	ROM_LOAD( "nm-5.bin",     0x58000, 0x8000, 0xc100258e )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* adpcm */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* adpcm */
 	ROM_LOAD( "n5-5.bin",     0x00000, 0x8000, 0x7ee43a3c )
 	ROM_LOAD( "n4-5.bin",     0x10000, 0x8000, 0x6557564c )
 	ROM_LOAD( "n3-5.bin",     0x18000, 0x8000, 0x78fd6190 )
 ROM_END
 
 ROM_START( kuniokun )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-01.bin",	  0x08000, 0x8000, 0x93fcfdf5 ) // original
 	ROM_LOAD( "ta18-11.bin",  0x04000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-25.bin",  0x00000, 0x8000, 0x9bd2bea3 )	/* characters */
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 )	/* tiles */
 	ROM_LOAD( "ta18-06.bin",  0x08000, 0x8000, 0x1f59a248 )
 	ROM_LOAD( "n7-5.bin",     0x10000, 0x8000, 0x7ca5a532 )
@@ -751,7 +751,7 @@ ROM_START( kuniokun )
 	ROM_LOAD( "ta18-04.bin",  0x20000, 0x8000, 0x55b9e8aa )
 	ROM_LOAD( "ta18-03.bin",  0x28000, 0x8000, 0x0475c99a )
 
-	ROM_REGIONX( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-20.bin",  0x00000, 0x8000, 0xc7d54139 )	/* sprites */
 	ROM_LOAD( "ta18-24.bin",  0x08000, 0x8000, 0x84677d45 )
 	ROM_LOAD( "ta18-18.bin",  0x10000, 0x8000, 0x1c770853 )
@@ -765,25 +765,25 @@ ROM_START( kuniokun )
 	ROM_LOAD( "ta18-21.bin",  0x50000, 0x8000, 0xc95e009b )
 	ROM_LOAD( "ta18-15.bin",  0x58000, 0x8000, 0xa5d61d01 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* adpcm */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* adpcm */
 	ROM_LOAD( "ta18-07.bin",  0x00000, 0x8000, 0x02e3f3ed )
 	ROM_LOAD( "ta18-08.bin",  0x10000, 0x8000, 0xc9312613 )
 	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )
 ROM_END
 
 ROM_START( kuniokub )
-	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
+	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "ta18-10.bin",  0x08000, 0x8000, 0xa90cf44a ) // bootleg
 	ROM_LOAD( "ta18-11.bin",  0x04000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-25.bin",  0x00000, 0x8000, 0x9bd2bea3 )	/* characters */
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 )	/* tiles */
 	ROM_LOAD( "ta18-06.bin",  0x08000, 0x8000, 0x1f59a248 )
 	ROM_LOAD( "n7-5.bin",     0x10000, 0x8000, 0x7ca5a532 )
@@ -791,7 +791,7 @@ ROM_START( kuniokub )
 	ROM_LOAD( "ta18-04.bin",  0x20000, 0x8000, 0x55b9e8aa )
 	ROM_LOAD( "ta18-03.bin",  0x28000, 0x8000, 0x0475c99a )
 
-	ROM_REGIONX( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-20.bin",  0x00000, 0x8000, 0xc7d54139 )	/* sprites */
 	ROM_LOAD( "ta18-24.bin",  0x08000, 0x8000, 0x84677d45 )
 	ROM_LOAD( "ta18-18.bin",  0x10000, 0x8000, 0x1c770853 )
@@ -805,7 +805,7 @@ ROM_START( kuniokub )
 	ROM_LOAD( "ta18-21.bin",  0x50000, 0x8000, 0xc95e009b )
 	ROM_LOAD( "ta18-15.bin",  0x58000, 0x8000, 0xa5d61d01 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* adpcm */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* adpcm */
 	ROM_LOAD( "ta18-07.bin",  0x00000, 0x8000, 0x02e3f3ed )
 	ROM_LOAD( "ta18-08.bin",  0x10000, 0x8000, 0xc9312613 )
 	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )

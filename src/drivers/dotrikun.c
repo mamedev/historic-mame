@@ -112,12 +112,12 @@ static struct MachineDriver machine_driver_dotrikun =
 ***************************************************************************/
 
 ROM_START( dotrikun )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "14479a.mpr",	0x0000, 0x4000, 0xb77a50db )
 ROM_END
 
 ROM_START( dotriku2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "14479.mpr",	0x0000, 0x4000, 0xa6aa7fa5 )
 ROM_END
 

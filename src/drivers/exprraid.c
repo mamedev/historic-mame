@@ -376,17 +376,17 @@ static struct MachineDriver machine_driver_exprraid =
 ***************************************************************************/
 
 ROM_START( exprraid )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cz01",    0x4000, 0x4000, 0xdc8f9fba )
     ROM_LOAD( "cz00",    0x8000, 0x8000, 0xa81290bc )
 
-    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
+    ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 
-    ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
 
-    ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
 	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
 	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
@@ -394,16 +394,16 @@ ROM_START( exprraid )
 	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
 	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
 
-    ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cz04",    0x00000, 0x8000, 0x643a1bd3 )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
 	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
 	ROM_LOAD( "cz06",    0x18000, 0x8000, 0xb9bb448b )	/* tiles */
 
-    ROM_REGIONX( 0x8000, REGION_GFX4 )     /* background tilemaps */
+    ROM_REGION( 0x8000, REGION_GFX4 )     /* background tilemaps */
 	ROM_LOAD( "cz03",    0x0000, 0x8000, 0x6ce11971 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
@@ -411,17 +411,17 @@ ROM_START( exprraid )
 ROM_END
 
 ROM_START( wexpress )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
     ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
 
-    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
+    ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 
-    ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
 
-    ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
 	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
 	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
@@ -429,16 +429,16 @@ ROM_START( wexpress )
 	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
 	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
 
-    ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
 	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
 	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
 
-    ROM_REGIONX( 0x8000, REGION_GFX4 )     /* background tilemaps */
+    ROM_REGION( 0x8000, REGION_GFX4 )     /* background tilemaps */
 	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
@@ -446,17 +446,17 @@ ROM_START( wexpress )
 ROM_END
 
 ROM_START( wexpresb )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
     ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )
 
-    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
+    ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 
-    ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
 
-    ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
 	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
 	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
@@ -464,16 +464,16 @@ ROM_START( wexpresb )
 	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
 	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
 
-    ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
 	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
 	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
 	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
 
-    ROM_REGIONX( 0x8000, REGION_GFX4 )     /* background tilemaps */
+    ROM_REGION( 0x8000, REGION_GFX4 )     /* background tilemaps */
 	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */

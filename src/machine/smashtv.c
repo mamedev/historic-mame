@@ -1555,16 +1555,16 @@ static int mk_speedup_r(int offset)
 {
 	if (offset)
 	{
-		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f050)]);
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x53370)]);
 	}
 	else
 	{
-		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f040)]);
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x53360)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_get_pc() == 0xffce1ec0 && !value1)
+		if (cpu_get_pc() == 0xffce2100 && !value1)
 		{
-			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
+			DO_SPEEDUP_LOOP_3(0x104f9d0, 0x104fa10, 0x104fa30);
 		}
 		return value1;
 	}
@@ -1599,6 +1599,42 @@ static int mkla2_speedup_r(int offset)
 
 		/* Suspend cpu if it's waiting for an interrupt */
 		if (cpu_get_pc() == 0xffcde000 && !value1)
+		{
+			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
+		}
+		return value1;
+	}
+}
+static int mkla3_speedup_r(int offset)
+{
+	if (offset)
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f050)]);
+	}
+	else
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f040)]);
+
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_get_pc() == 0xffce1ec0 && !value1)
+		{
+			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
+		}
+		return value1;
+	}
+}
+static int mkla4_speedup_r(int offset)
+{
+	if (!offset)
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f040)]);
+	}
+	else
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f050)]);
+
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_get_pc() == 0xffce21d0 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
 		}
@@ -1903,7 +1939,7 @@ static void load_gfx_roms_4bit(void)
 	UINT8 d1,d2,d3,d4;
 	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = memory_region(1);
+	mem_rom = memory_region(REGION_GFX1);
 	/* load the graphics ROMs -- quadruples 2 bits each */
 	for (i=0;i<wms_gfx_rom_size;i+=2)
 	{
@@ -1913,8 +1949,7 @@ static void load_gfx_roms_4bit(void)
 		d4 = ((mem_rom[wms_gfx_rom_size/4+(i+1)/4])>>(2*((i+1)%4)))&0x03;
 		WRITE_WORD(&GFX_ROM[i],d1|(d2<<2)|(d1<<4)|(d2<<6)|(d3<<8)|(d4<<10)|(d3<<12)|(d4<<14));
 	}
-	free(Machine->memory_region[1]);
-	Machine->memory_region[1] = 0;
+	free_memory_region(REGION_GFX1);
 }
 static void load_gfx_roms_6bit(void)
 {
@@ -1922,7 +1957,7 @@ static void load_gfx_roms_6bit(void)
 	UINT8 d1,d2,d3,d4,d5,d6;
 	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = memory_region(1);
+	mem_rom = memory_region(REGION_GFX1);
 	/* load the graphics ROMs -- quadruples 2 bits each */
 	for (i=0;i<wms_gfx_rom_size;i+=2)
 	{
@@ -1934,8 +1969,7 @@ static void load_gfx_roms_6bit(void)
 		d6 = ((mem_rom[2*wms_gfx_rom_size/4+(i+1)/4])>>(2*((i+1)%4)))&0x03;
 		WRITE_WORD(&GFX_ROM[i],d1|(d2<<2)|(d3<<4)|(d4<<8)|(d5<<10)|(d6<<12));
 	}
-	free(Machine->memory_region[1]);
-	Machine->memory_region[1] = 0;
+	free_memory_region(REGION_GFX1);
 }
 static void load_gfx_roms_8bit(void)
 {
@@ -1943,7 +1977,7 @@ static void load_gfx_roms_8bit(void)
 	UINT8 d1,d2;
 	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = memory_region(1);
+	mem_rom = memory_region(REGION_GFX1);
 	/* load the graphics ROMs -- quadruples */
 	for (i=0;i<wms_gfx_rom_size;i+=4)
 	{
@@ -1954,13 +1988,12 @@ static void load_gfx_roms_8bit(void)
 		d2 = mem_rom[3*wms_gfx_rom_size/4+i/4];
 		WRITE_WORD(&GFX_ROM[i+2],(UINT32)((UINT32)(d1) | ((UINT32)(d2)<<8)));
 	}
-	free(Machine->memory_region[1]);
-	Machine->memory_region[1] = 0;
+	free_memory_region(REGION_GFX1);
 }
 
 static void load_adpcm_roms_512k(void)
 {
-	UINT8 *base = memory_region(3);
+	UINT8 *base = memory_region(REGION_SOUND1);
 
 	memcpy(base + 0xa0000, base + 0x20000, 0x20000);
 	memcpy(base + 0x80000, base + 0x60000, 0x20000);
@@ -2129,9 +2162,9 @@ void init_trog(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
-	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
-	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x20000], &memory_region(REGION_CPU2)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x40000], &memory_region(REGION_CPU2)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU2)[0x50000], 0x10000);
 
 	/* This just causes the init_machine to copy the images again */
 	wms_rom_loaded = 0;
@@ -2147,9 +2180,9 @@ void init_trog3(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
-	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
-	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x20000], &memory_region(REGION_CPU2)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x40000], &memory_region(REGION_CPU2)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU2)[0x50000], 0x10000);
 
 	/* This just causes the init_machine to copy the images again */
 	wms_rom_loaded = 0;
@@ -2163,9 +2196,9 @@ void init_trogp(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
-	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
-	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x20000], &memory_region(REGION_CPU2)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x40000], &memory_region(REGION_CPU2)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU2)[0x50000], 0x10000);
 
 	/* This just causes the init_machine to copy the images again */
 	wms_rom_loaded = 0;
@@ -2179,9 +2212,9 @@ void init_smashtv(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
-	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
-	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x20000], &memory_region(REGION_CPU2)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x40000], &memory_region(REGION_CPU2)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU2)[0x50000], 0x10000);
 
 	/* This just causes the init_machine to copy the images again */
 	wms_rom_loaded = 0;
@@ -2195,9 +2228,9 @@ void init_smashtv4(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
-	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
-	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x20000], &memory_region(REGION_CPU2)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x40000], &memory_region(REGION_CPU2)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU2)[0x50000], 0x10000);
 
 	/* This just causes the init_machine to copy the images again */
 	wms_rom_loaded = 0;
@@ -2239,9 +2272,9 @@ void init_strkforc(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
-	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
-	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x20000], &memory_region(REGION_CPU2)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x40000], &memory_region(REGION_CPU2)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU2)[0x50000], 0x10000);
 
 	/* This just causes the init_machine to copy the images again */
 	wms_rom_loaded = 0;
@@ -2249,9 +2282,7 @@ void init_strkforc(void)
 void init_mk(void)
 {
 	/* set up speedup loops */
-	install_mem_read_handler(0, TOBYTE(0x0104f040), TOBYTE(0x0104f05f), mk_speedup_r);
-	wms_protect_s = 0xffc98930;
-	wms_protect_d = 0xffc987f0;
+	install_mem_read_handler(0, TOBYTE(0x01053360), TOBYTE(0x0105337f), mk_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
@@ -2278,6 +2309,32 @@ void init_mkla2(void)
 	install_mem_read_handler(0, TOBYTE(0x0104f020), TOBYTE(0x0104f03f), mkla2_speedup_r);
 	wms_protect_s = 0xffc96d00;
 	wms_protect_d = 0xffc96bc0;
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
+}
+void init_mkla3(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x0104f040), TOBYTE(0x0104f05f), mkla3_speedup_r);
+	wms_protect_s = 0xffc98930;
+	wms_protect_d = 0xffc987f0;
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
+}
+void init_mkla4(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x0104f040), TOBYTE(0x0104f05f), mkla4_speedup_r);
+	wms_protect_s = 0xffc989d0;
+	wms_protect_d = 0xffc98890;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
@@ -2555,21 +2612,21 @@ void nbajam_init_machine(void)
 	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), adpcm_sound_w);
 }
 
-void cvsd_sound_w(int offset, int data)
+static void cvsd_sound_w(int offset, int data)
 {
 	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 	williams_cvsd_data_w(0, (data & 0xff) | ((data & 0x200) >> 1));
 }
 
-void adpcm_sound_w(int offset, int data)
+static void adpcm_sound_w(int offset, int data)
 {
 //	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 //	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 	williams_adpcm_data_w(0, data);
 }
 
-void narc_sound_w(int offset, int data)
+static void narc_sound_w(int offset, int data)
 {
 //	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 //	if (errorlog) fprintf(errorlog, "sound write %x\n", data);

@@ -379,36 +379,36 @@ static struct MachineDriver machine_driver_ssi =
 ***************************************************************************/
 
 ROM_START( ssi )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
 	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x470a483a )
 
-	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 2610 samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 2610 samples */
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 
 ROM_START( majest12 )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "c64-07.bin", 0x00000, 0x20000, 0xf29ed5c9 )
 	ROM_LOAD_EVEN( "c64-06.bin", 0x40000, 0x20000, 0x18dc71ac )
 	ROM_LOAD_ODD ( "c64-08.bin", 0x00000, 0x20000, 0xddfd33d5 )
 	ROM_LOAD_ODD ( "c64-05.bin", 0x40000, 0x20000, 0xb61866c0 )
 
-	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 2610 samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 2610 samples */
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 

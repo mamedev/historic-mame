@@ -271,46 +271,46 @@ static struct MachineDriver machine_driver_champbas =
 ***************************************************************************/
 
 ROM_START( champbas )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "champbb.1",    0x0000, 0x2000, 0x218de21e )
 	ROM_LOAD( "champbb.2",    0x2000, 0x2000, 0x5ddd872e )
 	ROM_LOAD( "champbb.3",    0x4000, 0x2000, 0xf39a7046 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
 	ROM_LOAD( "champbb.6",    0x0000, 0x2000, 0x26ab3e16 )
 	ROM_LOAD( "champbb.7",    0x2000, 0x2000, 0x7c01715f )
 	ROM_LOAD( "champbb.8",    0x4000, 0x2000, 0x3c911786 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "champbb.4",    0x0000, 0x2000, 0x1930fb52 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "champbb.5",    0x0000, 0x2000, 0xa4cef5a1 )
 
-	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
 	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
 ROM_END
 
 ROM_START( champbb2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr5932",      0x0000, 0x2000, 0x528e3c78 )
 	ROM_LOAD( "epr5929",      0x2000, 0x2000, 0x17b6057e )
 	ROM_LOAD( "epr5930",      0x4000, 0x2000, 0xb6570a90 )
 	ROM_LOAD( "epr5931",      0x7800, 0x0800, 0x0592434d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
 	ROM_LOAD( "epr5933",      0x0000, 0x2000, 0x26ab3e16 )
 	ROM_LOAD( "epr5934",      0x2000, 0x2000, 0x7c01715f )
 	ROM_LOAD( "epr5935",      0x4000, 0x2000, 0x3c911786 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr5936",      0x0000, 0x2000, 0xc4a4df75 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr5937",      0x0000, 0x2000, 0x5c80ec42 )
 
-	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "pr5957",       0x0000, 0x020, 0xf5ce825e ) /* palette */
 	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x872dd450 ) /* look-up table */
 ROM_END

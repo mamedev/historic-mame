@@ -102,5 +102,5 @@ void senjyo_sh_update(void)
 	if( period != 0 ) single_rate = (int)(1.0 / period );
 	else single_rate = 0;
 
-	osd_set_sample_freq(channel,single_rate);
+	mixer_set_sample_frequency(channel,single_rate);
 }

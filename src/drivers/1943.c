@@ -310,18 +310,18 @@ static struct MachineDriver machine_driver_1943 =
 ***************************************************************************/
 
 ROM_START( 1943 )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943.01",      0x00000, 0x08000, 0xc686cc5c )
 	ROM_LOAD( "1943.02",      0x10000, 0x10000, 0xd8880a41 )
 	ROM_LOAD( "1943.03",      0x20000, 0x10000, 0x3f0ee26c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1943.05",      0x00000, 0x8000, 0xee2bd2d7 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.04",      0x00000, 0x8000, 0x46cb9d3d )	/* characters */
 
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.15",      0x00000, 0x8000, 0x6b1a0443 )	/* bg tiles */
 	ROM_LOAD( "1943.16",      0x08000, 0x8000, 0x23c908c2 )
 	ROM_LOAD( "1943.17",      0x10000, 0x8000, 0x46bcdd07 )
@@ -331,11 +331,11 @@ ROM_START( 1943 )
 	ROM_LOAD( "1943.21",      0x30000, 0x8000, 0x9bfb0d89 )
 	ROM_LOAD( "1943.22",      0x38000, 0x8000, 0x04f3c274 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.24",      0x00000, 0x8000, 0x11134036 )	/* fg tiles */
 	ROM_LOAD( "1943.25",      0x08000, 0x8000, 0x092cf9c1 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.06",      0x00000, 0x8000, 0x97acc8af )	/* sprites */
 	ROM_LOAD( "1943.07",      0x08000, 0x8000, 0xd78f7197 )
 	ROM_LOAD( "1943.08",      0x10000, 0x8000, 0x1a626608 )
@@ -345,11 +345,11 @@ ROM_START( 1943 )
 	ROM_LOAD( "1943.12",      0x30000, 0x8000, 0x5e7efdb7 )
 	ROM_LOAD( "1943.13",      0x38000, 0x8000, 0x1143829a )
 
-	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* tilemaps */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* tilemaps */
 	ROM_LOAD( "1943.14",      0x0000, 0x8000, 0x4d3c6401 )	/* front background */
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 
-	ROM_REGIONX( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
 	ROM_LOAD( "bmprom.02",    0x0100, 0x0100, 0xac27541f )	/* green component */
 	ROM_LOAD( "bmprom.03",    0x0200, 0x0100, 0x251fb6ff )	/* blue component */
@@ -363,18 +363,18 @@ ROM_START( 1943 )
 ROM_END
 
 ROM_START( 1943j )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943jap.001",  0x00000, 0x08000, 0xf6935937 )
 	ROM_LOAD( "1943jap.002",  0x10000, 0x10000, 0xaf971575 )
 	ROM_LOAD( "1943jap.003",  0x20000, 0x10000, 0x300ec713 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1943.05",      0x00000, 0x8000, 0xee2bd2d7 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.04",      0x00000, 0x8000, 0x46cb9d3d )	/* characters */
 
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.15",      0x00000, 0x8000, 0x6b1a0443 )	/* bg tiles */
 	ROM_LOAD( "1943.16",      0x08000, 0x8000, 0x23c908c2 )
 	ROM_LOAD( "1943.17",      0x10000, 0x8000, 0x46bcdd07 )
@@ -384,11 +384,11 @@ ROM_START( 1943j )
 	ROM_LOAD( "1943.21",      0x30000, 0x8000, 0x9bfb0d89 )
 	ROM_LOAD( "1943.22",      0x38000, 0x8000, 0x04f3c274 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.24",      0x00000, 0x8000, 0x11134036 )	/* fg tiles */
 	ROM_LOAD( "1943.25",      0x08000, 0x8000, 0x092cf9c1 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943.06",      0x00000, 0x8000, 0x97acc8af )	/* sprites */
 	ROM_LOAD( "1943.07",      0x08000, 0x8000, 0xd78f7197 )
 	ROM_LOAD( "1943.08",      0x10000, 0x8000, 0x1a626608 )
@@ -398,11 +398,11 @@ ROM_START( 1943j )
 	ROM_LOAD( "1943.12",      0x30000, 0x8000, 0x5e7efdb7 )
 	ROM_LOAD( "1943.13",      0x38000, 0x8000, 0x1143829a )
 
-	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* tilemaps */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* tilemaps */
 	ROM_LOAD( "1943.14",      0x0000, 0x8000, 0x4d3c6401 )	/* front background */
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 
-	ROM_REGIONX( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
 	ROM_LOAD( "bmprom.02",    0x0100, 0x0100, 0xac27541f )	/* green component */
 	ROM_LOAD( "bmprom.03",    0x0200, 0x0100, 0x251fb6ff )	/* blue component */
@@ -416,18 +416,18 @@ ROM_START( 1943j )
 ROM_END
 
 ROM_START( 1943kai )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943kai.01",   0x00000, 0x08000, 0x7d2211db )
 	ROM_LOAD( "1943kai.02",   0x10000, 0x10000, 0x2ebbc8c5 )
 	ROM_LOAD( "1943kai.03",   0x20000, 0x10000, 0x475a6ac5 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1943kai.05",   0x00000, 0x8000, 0x25f37957 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943kai.04",   0x00000, 0x8000, 0x884a8692 )	/* characters */
 
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943kai.15",   0x00000, 0x8000, 0x6b1a0443 )	/* bg tiles */
 	ROM_LOAD( "1943kai.16",   0x08000, 0x8000, 0x9416fe0d )
 	ROM_LOAD( "1943kai.17",   0x10000, 0x8000, 0x3d5acab9 )
@@ -437,11 +437,11 @@ ROM_START( 1943kai )
 	ROM_LOAD( "1943kai.21",   0x30000, 0x8000, 0x8c7fe74a )
 	ROM_LOAD( "1943kai.22",   0x38000, 0x8000, 0xd5ef8a0e )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943kai.24",   0x00000, 0x8000, 0xbf186ef2 )	/* fg tiles */
 	ROM_LOAD( "1943kai.25",   0x08000, 0x8000, 0xa755faf1 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1943kai.06",   0x00000, 0x8000, 0x5f7e38b3 )	/* sprites */
 	ROM_LOAD( "1943kai.07",   0x08000, 0x8000, 0xff3751fd )
 	ROM_LOAD( "1943kai.08",   0x10000, 0x8000, 0x159d51bd )
@@ -451,11 +451,11 @@ ROM_START( 1943kai )
 	ROM_LOAD( "1943kai.12",   0x30000, 0x8000, 0x0f50c001 )
 	ROM_LOAD( "1943kai.13",   0x38000, 0x8000, 0xfd1acf8e )
 
-	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* tilemaps */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* tilemaps */
 	ROM_LOAD( "1943kai.14",   0x0000, 0x8000, 0xcf0f5a53 )	/* front background */
 	ROM_LOAD( "1943kai.23",   0x8000, 0x8000, 0x17f77ef9 )	/* back background */
 
-	ROM_REGIONX( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "bmk01.bin",    0x0000, 0x0100, 0xe001ea33 )	/* red component */
 	ROM_LOAD( "bmk02.bin",    0x0100, 0x0100, 0xaf34d91a )	/* green component */
 	ROM_LOAD( "bmk03.bin",    0x0200, 0x0100, 0x43e9f6ef )	/* blue component */

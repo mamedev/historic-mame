@@ -8,19 +8,6 @@
 
 // #define NAMCOS2_DEBUG_MODE
 
-/* memory decode regions */
-
-#define REGION_CPU_MASTER	REGION_CPU1
-#define REGION_CPU_SLAVE	REGION_CPU2
-#define REGION_CPU_SOUND	REGION_CPU3
-#define REGION_CPU_MCU		REGION_CPU4
-#define REGION_GFX_OBJ		REGION_GFX1
-#define REGION_GFX_CHR		REGION_GFX2
-#define REGION_GFX_ROZ		REGION_GFX3
-#define REGION_GFX_MASK		REGION_GFX4
-#define REGION_DATA			8
-#define REGION_VOICE		9
-
 
 /* CPU reference numbers */
 

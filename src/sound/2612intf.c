@@ -20,8 +20,6 @@
 
 /* use FM.C with stream system */
 
-extern unsigned char No_FM;
-
 static int stream[MAX_2612];
 
 /* Global Interface holder */

@@ -342,32 +342,32 @@ static struct MachineDriver machine_driver_flkatck =
 
 
 ROM_START( mx5000 )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* 6309 code */
+	ROM_REGION( 0x18000, REGION_CPU1 )		/* 6309 code */
 	ROM_LOAD( "r01",          0x010000, 0x006000, 0x79b226fc )/* banked ROM */
 	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
 	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
 
-    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
 
-	ROM_REGIONX( 0x040000, REGION_SOUND1 )	/* 007232 data (chip 1) */
+	ROM_REGION( 0x040000, REGION_SOUND1 )	/* 007232 data (chip 1) */
 	ROM_LOAD( "mask2m.bin",		0x000000, 0x040000, 0x6d1ea61c )
 ROM_END
 
 ROM_START( flkatck )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* 6309 code */
+	ROM_REGION( 0x18000, REGION_CPU1 )		/* 6309 code */
 	ROM_LOAD( "gx669_p1.16c", 0x010000, 0x006000, 0xc5cd2807 )/* banked ROM */
 	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
 	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
 
-    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
 
-	ROM_REGIONX( 0x040000, REGION_SOUND1 )	/* 007232 data (chip 1) */
+	ROM_REGION( 0x040000, REGION_SOUND1 )	/* 007232 data (chip 1) */
 	ROM_LOAD( "mask2m.bin",		0x000000, 0x040000, 0x6d1ea61c )
 ROM_END
 

@@ -302,10 +302,10 @@ static struct GfxLayout tlayout3 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x100000, &tcharlayout,  256, 16 },	/* Characters 8x8 */
-	{ 1, 0x100000, &tlayout3,     512, 16 }, 	/* Tiles 16x16 */
-	{ 1, 0x100000, &tlayout3,     256, 16 },	/* Tiles 16x16 */
-	{ 1, 0x000000, &tlayout,    	0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &tcharlayout,  256, 16 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tlayout3,     512, 16 }, 	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &tlayout3,     256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tlayout,    	0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -323,7 +323,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
 	{ 7757 },	/* Frequency */
-	{ 3 },      /* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 50 }
 };
 
@@ -428,66 +428,69 @@ static struct MachineDriver machine_driver_tumblepb =
 
 /******************************************************************************/
 
-ROM_START( tumblepop )
-	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
+ROM_START( tumblep )
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_ODD ("hl01-1.f13", 0x00000, 0x40000, 0xd5a62a3f )
 	ROM_LOAD_EVEN("hl00-1.f12", 0x00000, 0x40000, 0xfd697c1b )
 
- 	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* Sound cpu */
+	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
+
+ 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
+	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+
+ 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_LOAD( "thumbpop.19",  0x100000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x140000, 0x40000, 0xad58df43 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound cpu */
-	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
-
-	ROM_REGION(0x20000) /* Oki samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
 ROM_END
 
 ROM_START( tumblepb )
-	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN ("thumbpop.12", 0x00000, 0x40000, 0x0c984703 )
 	ROM_LOAD_ODD ( "thumbpop.13", 0x00000, 0x40000, 0x864c4053 )
 
- 	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
+ 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
+	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+
+ 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_LOAD( "thumbpop.19",  0x100000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x140000, 0x40000, 0xad58df43 )
-
-	ROM_REGION(0x80000) /* Oki samples */
+	ROM_REGION( 0x80000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
 ROM_END
 
-ROM_START( tumblepop2 )
-	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
+ROM_START( tumblep2 )
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN ("thumbpop.2", 0x00000, 0x40000, 0x34b016e1 )
 	ROM_LOAD_ODD ( "thumbpop.3", 0x00000, 0x40000, 0x89501c71 )
 
-	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
+ 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
+	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+
+ 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thumbpop.5",   0x00000,  0x40000, 0xdda8932e )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_LOAD( "thumbpop.19",  0x100000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x140000, 0x40000, 0xad58df43 )
-
-	ROM_REGION(0x80000) /* Oki samples */
+	ROM_REGION( 0x80000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
 ROM_END
 
 /******************************************************************************/
 
-static void t_patch(void)
+static void init_tumblep(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i,x,a;
@@ -495,93 +498,22 @@ static void t_patch(void)
 
 	/* Hmm, characters are stored in wrong word endian-ness for sequential graphics
 		decode!  Very bad...  */
-	RAM = memory_region(1);
+	RAM = memory_region(REGION_GFX1);
 
 	for (a=0; a<4; a++) {
 		for (i=32; i<0x2000; i+=32) {
             for (x=0; x<16; x++)
-            	z[x]=RAM[i + x + 0x100000+(a*0x20000)];
+            	z[x]=RAM[i + x + (a*0x20000)];
             for (x=0; x<16; x++)
-                RAM[i + x + 0x100000+(a*0x20000)]=RAM[i+x+16+0x100000+(a*0x20000)];
+                RAM[i + x + (a*0x20000)]=RAM[i + x + 16 + (a*0x20000)];
             for (x=0; x<16; x++)
-				RAM[i+x+16+0x100000+(a*0x20000)]=z[x];
+				RAM[i + x + 16 + (a*0x20000)]=z[x];
     	}
     }
 }
 
 /******************************************************************************/
 
-struct GameDriver driver_tumblep =
-{
-	__FILE__,
-	0,
-	"tumblep",
-	"Tumble Pop (World)",
-	"1991",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_tumblepop,
-	t_patch,
-
-	rom_tumblepop,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tumblep,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_tumblepb =
-{
-	__FILE__,
-	&driver_tumblep,
-	"tumblepb",
-	"Tumble Pop (bootleg set 1)",
-	"1991",
-	"bootleg",
-	"Bryan McPhail",
-	0,
-	&machine_driver_tumblepb,
-	t_patch,
-
-	rom_tumblepb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tumblep,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_IMPERFECT_SOUND,
-	0, 0
-};
-
-struct GameDriver driver_tumblep2 =
-{
-	__FILE__,
-	&driver_tumblep,
-	"tumblep2",
-	"Tumble Pop (bootleg set 2)",
-	"1991",
-	"bootleg",
-	"Bryan McPhail",
-	0,
-	&machine_driver_tumblepb,
-	t_patch,
-
-	rom_tumblepop2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tumblep,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_IMPERFECT_SOUND,
-	0, 0
-};
+GAME( 1991, tumblep,  0,       tumblepop, tumblep, tumblep, ROT0, "Data East Corporation", "Tumble Pop (World)" )
+GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep, tumblep, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep, tumblep, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )

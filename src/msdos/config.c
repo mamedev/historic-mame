@@ -17,7 +17,7 @@ extern int ignorecfg;
 /* from video.c */
 extern int frameskip,autoframeskip;
 extern int scanlines, use_tweaked, video_sync, wait_vsync, use_triplebuf;
-extern int stretch;
+extern int stretch, use_mmx;
 extern int vgafreq, always_synced, skiplines, skipcolumns;
 extern float osd_gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
@@ -352,14 +352,15 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	/* read graphic configuration */
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
-	stretch     = get_bool   ("config", "stretch",    NULL,  1);
-	options.use_artwork = get_bool   ("config", "artwork",      NULL,  1);
-	options.use_samples = get_bool   ("config", "samples",      NULL,  1);
+	stretch     = get_bool   ("config", "stretch",		NULL,  1);
+	options.use_artwork = get_bool   ("config", "artwork",	NULL,  1);
+	options.use_samples = get_bool   ("config", "samples",	NULL,  1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
-	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
-	use_tweaked    = get_bool   ("config", "tweak",         NULL,  0);
-	vesamode        = get_string ("config", "vesamode",             NULL,  "vesa3");
+	use_triplebuf = get_bool ("config", "triplebuffer",	NULL,  0);
+	use_tweaked = get_bool   ("config", "tweak",		NULL,  0);
+	vesamode    = get_string ("config", "vesamode",	NULL,	"vesa3");
+	use_mmx		= get_bool   ("config", "mmx", 		NULL,	-1);
 	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	options.translucency = get_bool    ("config", "translucency", NULL, 1);
 
@@ -405,8 +406,6 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	if (options.samplerate < 5000) options.samplerate = 5000;
 	if (options.samplerate > 50000) options.samplerate = 50000;
-	options.samplebits = get_int  ("config", "samplebits", "sb", 8);
-	if (options.samplebits != 16) options.samplebits = 8;
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
 	attenuation         = get_int  ("config", "volume",  NULL,  0);
 	if (attenuation < -32) attenuation = -32;

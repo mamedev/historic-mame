@@ -13,6 +13,10 @@
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
+	To Do:
+
+	- Fix Ikari III intro.  Priority issue.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -26,8 +30,6 @@ int  pow_vh_start(void);
 void pow_video_w(int offset,int data);
 void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-static unsigned char *pow_ram;
-
 /******************************************************************************/
 
 static int sound_cpu_r(int offset)
@@ -39,6 +41,21 @@ static int pow_video_r(int offset)
 {
 	return READ_WORD(&videoram[offset]);
 }
+
+static void pow_spriteram_w(int offset, int data)
+{
+	/* DWORD aligned bytes should be $ff */
+	if (offset & 0x02)
+		WRITE_WORD(&spriteram[offset], data);
+	else
+		WRITE_WORD(&spriteram[offset], data | 0xff00);
+}
+
+static int pow_spriteram_r(int offset)
+{
+	return READ_WORD(&spriteram[offset]);
+}
+
 static int control_1_r(int offset)
 {
 	return (readinputport(0) + (readinputport(1) << 8));
@@ -110,7 +127,7 @@ static struct MemoryReadAddress pow_readmem[] =
 	{ 0x0f0000, 0x0f0001, dip_1_r },
 	{ 0x0f0008, 0x0f0009, dip_2_r },
 	{ 0x100000, 0x100fff, pow_video_r },
-	{ 0x200000, 0x207fff, MRA_BANK3 },
+	{ 0x200000, 0x207fff, pow_spriteram_r },
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ -1 }  /* end of table */
 };
@@ -118,12 +135,12 @@ static struct MemoryReadAddress pow_readmem[] =
 static struct MemoryWriteAddress pow_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x043fff, MWA_BANK1, &pow_ram },
+	{ 0x040000, 0x043fff, MWA_BANK1 },
 	{ 0x080000, 0x080001, sound_w },
 	{ 0x0c0000, 0x0c0001, pow_flipscreen_w },
 	{ 0x0f0008, 0x0f0009, MWA_NOP },
 	{ 0x100000, 0x100fff, pow_video_w, &videoram },
-	{ 0x200000, 0x207fff, MWA_BANK3, &spriteram },
+	{ 0x200000, 0x207fff, pow_spriteram_w, &spriteram },
 	{ 0x400000, 0x400fff, pow_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
@@ -142,7 +159,7 @@ static struct MemoryReadAddress searchar_readmem[] =
 	{ 0x0f0000, 0x0f0001, dip_1_r },
 	{ 0x0f0008, 0x0f0009, dip_2_r },
 	{ 0x0f8000, 0x0f8001, sound_cpu_r },
-	{ 0x100000, 0x107fff, MRA_BANK3 },
+	{ 0x100000, 0x107fff, pow_spriteram_r },
 	{ 0x200000, 0x200fff, pow_video_r },
 	{ 0x300000, 0x33ffff, MRA_BANK8 }, /* Extra code bank */
 	{ 0x400000, 0x400fff, paletteram_word_r },
@@ -152,12 +169,12 @@ static struct MemoryReadAddress searchar_readmem[] =
 static struct MemoryWriteAddress searchar_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x043fff, MWA_BANK1, &pow_ram },
+	{ 0x040000, 0x043fff, MWA_BANK1 },
 	{ 0x080000, 0x080001, sound_w },
 	{ 0x080006, 0x080007, protection_w }, /* top byte unknown, bottom is protection in ikari3 and streetsm */
 	{ 0x0c0000, 0x0c0001, pow_flipscreen_w },
 	{ 0x0f0000, 0x0f0001, MWA_NOP },
-	{ 0x100000, 0x107fff, MWA_BANK3, &spriteram },
+	{ 0x100000, 0x107fff, pow_spriteram_w, &spriteram },
 	{ 0x200000, 0x200fff, pow_video_w, &videoram },
 	{ 0x201000, 0x201fff, pow_video_w }, /* Mirror used by Ikari 3 */
 	{ 0x400000, 0x400fff, pow_paletteram_w, &paletteram },
@@ -712,7 +729,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout pow_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096*4,
@@ -725,7 +742,7 @@ static struct GfxLayout spritelayout =
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout2 =
+static struct GfxLayout searchar_spritelayout =
 {
 	16,16,
 	0x6000,
@@ -740,7 +757,7 @@ static struct GfxLayout spritelayout2 =
 	64*8
 };
 
-static struct GfxLayout spritelayout3 =
+static struct GfxLayout ikari3_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096*5,
@@ -753,24 +770,24 @@ static struct GfxLayout spritelayout3 =
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo pow_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,   0, 128 },
-	{ 1, 0x010000, &spritelayout, 0, 128 },
+	{ REGION_GFX1, 0, &charlayout,       0, 128 },
+	{ REGION_GFX2, 0, &pow_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo searchar_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,   0,  16 },
-	{ 1, 0x010000, &spritelayout2,0, 128 },
+	{ REGION_GFX1, 0, &charlayout,            0,  16 },
+	{ REGION_GFX2, 0, &searchar_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo ikari3_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,   0,  16 },
-	{ 1, 0x010000, &spritelayout3,0, 128 },
+	{ REGION_GFX1, 0, &charlayout,          0,  16 },
+	{ REGION_GFX2, 0, &ikari3_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -794,7 +811,7 @@ static struct UPD7759_interface upd7759_interface =
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 50 }, /* volume */
-	{ 3 },		/* memory region */
+	{ REGION_SOUND1 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
@@ -875,7 +892,7 @@ static struct MachineDriver machine_driver_pow =
 	/* video hardware */
  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
-	gfxdecodeinfo,
+	pow_gfxdecodeinfo,
 	2048, 2048,
 	0,
 
@@ -948,7 +965,7 @@ static struct MachineDriver machine_driver_searchar =
 	}
 };
 
-static struct MachineDriver machine_driver_streets2 =
+static struct MachineDriver machine_driver_streetsm =
 {
 	/* basic machine hardware */
 	{
@@ -1000,298 +1017,248 @@ static struct MachineDriver machine_driver_streets2 =
 /******************************************************************************/
 
 ROM_START( pow )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "dg1",   0x000000, 0x20000, 0x8e71a8af )
 	ROM_LOAD_ODD ( "dg2",   0x000000, 0x20000, 0x4287affc )
 
-	ROM_REGION_DISPOSE(0x210000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dg9",        0x000000, 0x08000, 0xdf864a08 )
-	ROM_LOAD( "dg10",       0x008000, 0x08000, 0x9e470d53 )
-	ROM_LOAD( "snk880.11a", 0x010000, 0x20000, 0xe70fd906 )
-	ROM_LOAD( "snk880.12a", 0x030000, 0x20000, 0x628b1aed )
-	ROM_LOAD( "snk880.13a", 0x050000, 0x20000, 0x19dc8868 )
-	ROM_LOAD( "snk880.14a", 0x070000, 0x20000, 0x47cd498b )
-	ROM_LOAD( "snk880.15a", 0x090000, 0x20000, 0x7a90e957 )
-	ROM_LOAD( "snk880.16a", 0x0b0000, 0x20000, 0xe40a6c13 )
-	ROM_LOAD( "snk880.17a", 0x0d0000, 0x20000, 0xc7931cc2 )
-	ROM_LOAD( "snk880.18a", 0x0f0000, 0x20000, 0xeed72232 )
-	ROM_LOAD( "snk880.19a", 0x110000, 0x20000, 0x1775b8dd )
-	ROM_LOAD( "snk880.20a", 0x130000, 0x20000, 0xf8e752ec )
-	ROM_LOAD( "snk880.21a", 0x150000, 0x20000, 0x27e9fffe )
-	ROM_LOAD( "snk880.22a", 0x170000, 0x20000, 0xaa9c00d8 )
-	ROM_LOAD( "snk880.23a", 0x190000, 0x20000, 0xadb6ad68 )
-	ROM_LOAD( "snk880.24a", 0x1b0000, 0x20000, 0xdd41865a )
-	ROM_LOAD( "snk880.25a", 0x1d0000, 0x20000, 0x055759ad )
-	ROM_LOAD( "snk880.26a", 0x1f0000, 0x20000, 0x9bc261c5 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "dg8",        0x000000, 0x10000, 0xd1d61da3 )
 
-	ROM_REGION(0x10000)	/* UPD7759 samples */
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "dg9",        0x000000, 0x08000, 0xdf864a08 )
+	ROM_LOAD( "dg10",       0x008000, 0x08000, 0x9e470d53 )
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "snk880.11a", 0x000000, 0x20000, 0xe70fd906 )
+	ROM_LOAD( "snk880.12a", 0x020000, 0x20000, 0x628b1aed )
+	ROM_LOAD( "snk880.13a", 0x040000, 0x20000, 0x19dc8868 )
+	ROM_LOAD( "snk880.14a", 0x060000, 0x20000, 0x47cd498b )
+	ROM_LOAD( "snk880.15a", 0x080000, 0x20000, 0x7a90e957 )
+	ROM_LOAD( "snk880.16a", 0x0a0000, 0x20000, 0xe40a6c13 )
+	ROM_LOAD( "snk880.17a", 0x0c0000, 0x20000, 0xc7931cc2 )
+	ROM_LOAD( "snk880.18a", 0x0e0000, 0x20000, 0xeed72232 )
+	ROM_LOAD( "snk880.19a", 0x100000, 0x20000, 0x1775b8dd )
+	ROM_LOAD( "snk880.20a", 0x120000, 0x20000, 0xf8e752ec )
+	ROM_LOAD( "snk880.21a", 0x140000, 0x20000, 0x27e9fffe )
+	ROM_LOAD( "snk880.22a", 0x160000, 0x20000, 0xaa9c00d8 )
+	ROM_LOAD( "snk880.23a", 0x180000, 0x20000, 0xadb6ad68 )
+	ROM_LOAD( "snk880.24a", 0x1a0000, 0x20000, 0xdd41865a )
+	ROM_LOAD( "snk880.25a", 0x1c0000, 0x20000, 0x055759ad )
+	ROM_LOAD( "snk880.26a", 0x1e0000, 0x20000, 0x9bc261c5 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
 ROM_START( powj )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "1-2",   0x000000, 0x20000, 0x2f17bfb0 )
 	ROM_LOAD_ODD ( "2-2",   0x000000, 0x20000, 0xbaa32354 )
 
-	ROM_REGION_DISPOSE(0x210000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dg9",        0x000000, 0x08000, 0xdf864a08 )
-	ROM_LOAD( "dg10",       0x008000, 0x08000, 0x9e470d53 )
-	ROM_LOAD( "snk880.11a", 0x010000, 0x20000, 0xe70fd906 )
-	ROM_LOAD( "snk880.12a", 0x030000, 0x20000, 0x628b1aed )
-	ROM_LOAD( "snk880.13a", 0x050000, 0x20000, 0x19dc8868 )
-	ROM_LOAD( "snk880.14a", 0x070000, 0x20000, 0x47cd498b )
-	ROM_LOAD( "snk880.15a", 0x090000, 0x20000, 0x7a90e957 )
-	ROM_LOAD( "snk880.16a", 0x0b0000, 0x20000, 0xe40a6c13 )
-	ROM_LOAD( "snk880.17a", 0x0d0000, 0x20000, 0xc7931cc2 )
-	ROM_LOAD( "snk880.18a", 0x0f0000, 0x20000, 0xeed72232 )
-	ROM_LOAD( "snk880.19a", 0x110000, 0x20000, 0x1775b8dd )
-	ROM_LOAD( "snk880.20a", 0x130000, 0x20000, 0xf8e752ec )
-	ROM_LOAD( "snk880.21a", 0x150000, 0x20000, 0x27e9fffe )
-	ROM_LOAD( "snk880.22a", 0x170000, 0x20000, 0xaa9c00d8 )
-	ROM_LOAD( "snk880.23a", 0x190000, 0x20000, 0xadb6ad68 )
-	ROM_LOAD( "snk880.24a", 0x1b0000, 0x20000, 0xdd41865a )
-	ROM_LOAD( "snk880.25a", 0x1d0000, 0x20000, 0x055759ad )
-	ROM_LOAD( "snk880.26a", 0x1f0000, 0x20000, 0x9bc261c5 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "dg8",        0x000000, 0x10000, 0xd1d61da3 )
 
-	ROM_REGION(0x10000)	/* UPD7759 samples */
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "dg9",        0x000000, 0x08000, 0xdf864a08 )
+	ROM_LOAD( "dg10",       0x008000, 0x08000, 0x9e470d53 )
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "snk880.11a", 0x000000, 0x20000, 0xe70fd906 )
+	ROM_LOAD( "snk880.12a", 0x020000, 0x20000, 0x628b1aed )
+	ROM_LOAD( "snk880.13a", 0x040000, 0x20000, 0x19dc8868 )
+	ROM_LOAD( "snk880.14a", 0x060000, 0x20000, 0x47cd498b )
+	ROM_LOAD( "snk880.15a", 0x080000, 0x20000, 0x7a90e957 )
+	ROM_LOAD( "snk880.16a", 0x0a0000, 0x20000, 0xe40a6c13 )
+	ROM_LOAD( "snk880.17a", 0x0c0000, 0x20000, 0xc7931cc2 )
+	ROM_LOAD( "snk880.18a", 0x0e0000, 0x20000, 0xeed72232 )
+	ROM_LOAD( "snk880.19a", 0x100000, 0x20000, 0x1775b8dd )
+	ROM_LOAD( "snk880.20a", 0x120000, 0x20000, 0xf8e752ec )
+	ROM_LOAD( "snk880.21a", 0x140000, 0x20000, 0x27e9fffe )
+	ROM_LOAD( "snk880.22a", 0x160000, 0x20000, 0xaa9c00d8 )
+	ROM_LOAD( "snk880.23a", 0x180000, 0x20000, 0xadb6ad68 )
+	ROM_LOAD( "snk880.24a", 0x1a0000, 0x20000, 0xdd41865a )
+	ROM_LOAD( "snk880.25a", 0x1c0000, 0x20000, 0x055759ad )
+	ROM_LOAD( "snk880.26a", 0x1e0000, 0x20000, 0x9bc261c5 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
 ROM_START( searchar )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bhw.2", 0x000000, 0x20000, 0xe1430138 )
 	ROM_LOAD_ODD ( "bhw.3", 0x000000, 0x20000, 0xee1f9374 )
 
-	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
 	ROM_LOAD( "bh.7",       0x000000, 0x08000, 0xb0f1b049 )
 	ROM_LOAD( "bh.8",       0x008000, 0x08000, 0x174ddba7 )
 
-	ROM_LOAD( "bh.c1",      0x010000, 0x80000, 0x1fb8f0ae )
-	ROM_LOAD( "bh.c3",      0x090000, 0x80000, 0xfd8bc407 )
-	ROM_LOAD( "bh.c5",      0x110000, 0x80000, 0x1d30acc3 )
-	ROM_LOAD( "bh.c2",      0x190000, 0x80000, 0x7c803767 )
-	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
-	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
+	ROM_REGION( 0x300000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "bh.c1",      0x000000, 0x80000, 0x1fb8f0ae )
+	ROM_LOAD( "bh.c3",      0x080000, 0x80000, 0xfd8bc407 )
+	ROM_LOAD( "bh.c5",      0x100000, 0x80000, 0x1d30acc3 )
+	ROM_LOAD( "bh.c2",      0x180000, 0x80000, 0x7c803767 )
+	ROM_LOAD( "bh.c4",      0x200000, 0x80000, 0xeede7c43 )
+	ROM_LOAD( "bh.c6",      0x280000, 0x80000, 0x9f785cd9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "bh.v1",      0x000000, 0x20000, 0x07a6114b )
 
-	ROM_REGION(0x40000) /* Extra code bank */
+	ROM_REGION( 0x40000, REGION_USER1 ) /* Extra code bank */
 	ROM_LOAD_EVEN( "bhw.1", 0x000000, 0x20000, 0x62b60066 )
 	ROM_LOAD_ODD ( "bhw.4", 0x000000, 0x20000, 0x16d8525c )
 ROM_END
 
 ROM_START( sercharu )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
 	ROM_LOAD_ODD ( "bh.3",  0x000000, 0x20000, 0xbc04a4a1 )
 
-	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
 	ROM_LOAD( "bh.7",       0x000000, 0x08000, 0xb0f1b049 )
 	ROM_LOAD( "bh.8",       0x008000, 0x08000, 0x174ddba7 )
 
-	ROM_LOAD( "bh.c1",      0x010000, 0x80000, 0x1fb8f0ae )
-	ROM_LOAD( "bh.c3",      0x090000, 0x80000, 0xfd8bc407 )
-	ROM_LOAD( "bh.c5",      0x110000, 0x80000, 0x1d30acc3 )
-	ROM_LOAD( "bh.c2",      0x190000, 0x80000, 0x7c803767 )
-	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
-	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
+	ROM_REGION( 0x300000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "bh.c1",      0x000000, 0x80000, 0x1fb8f0ae )
+	ROM_LOAD( "bh.c3",      0x080000, 0x80000, 0xfd8bc407 )
+	ROM_LOAD( "bh.c5",      0x100000, 0x80000, 0x1d30acc3 )
+	ROM_LOAD( "bh.c2",      0x180000, 0x80000, 0x7c803767 )
+	ROM_LOAD( "bh.c4",      0x200000, 0x80000, 0xeede7c43 )
+	ROM_LOAD( "bh.c6",      0x280000, 0x80000, 0x9f785cd9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "bh.v1",      0x000000, 0x20000, 0x07a6114b )
 
-	ROM_REGION(0x40000) /* Extra code bank */
+	ROM_REGION( 0x40000, REGION_USER1 ) /* Extra code bank */
 	ROM_LOAD_EVEN( "bh.1",  0x000000, 0x20000, 0xba9ca70b )
 	ROM_LOAD_ODD ( "bh.4",  0x000000, 0x20000, 0xeabc5ddf )
 ROM_END
 
 ROM_START( streetsm )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
-	ROM_LOAD_ODD ( "s2-2ver1.10c", 0x00000, 0x20000, 0xe448b68b )
-
-	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s2-7.15l",    0x000000, 0x08000, 0x22bedfe5 )
-	ROM_LOAD( "s2-8.15m",    0x008000, 0x08000, 0x6a1c70ab )
-
-	ROM_LOAD( "stsmart.900", 0x010000, 0x80000, 0xa8279a7e )
-	ROM_LOAD( "stsmart.902", 0x090000, 0x80000, 0x2f021aa1 )
-	ROM_LOAD( "stsmart.904", 0x110000, 0x80000, 0x167346f7 )
-	ROM_LOAD( "stsmart.901", 0x190000, 0x80000, 0xc305af12 )
-	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
-	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
-ROM_END
-
-ROM_START( streets2 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2-1ver2.14h", 0x00000, 0x20000, 0x655f4773 )
 	ROM_LOAD_ODD ( "s2-2ver2.14k", 0x00000, 0x20000, 0xefae4823 )
 
-	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
 	ROM_LOAD( "s2-9.25l",    0x000000, 0x08000, 0x09b6ac67 )
 	ROM_LOAD( "s2-10.25m",   0x008000, 0x08000, 0x89e4ee6f )
 
-	ROM_LOAD( "stsmart.900", 0x010000, 0x80000, 0xa8279a7e )
-	ROM_LOAD( "stsmart.902", 0x090000, 0x80000, 0x2f021aa1 )
-	ROM_LOAD( "stsmart.904", 0x110000, 0x80000, 0x167346f7 )
-	ROM_LOAD( "stsmart.901", 0x190000, 0x80000, 0xc305af12 )
-	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
-	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
+	ROM_REGION( 0x300000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "stsmart.900", 0x000000, 0x80000, 0xa8279a7e )
+	ROM_LOAD( "stsmart.902", 0x080000, 0x80000, 0x2f021aa1 )
+	ROM_LOAD( "stsmart.904", 0x100000, 0x80000, 0x167346f7 )
+	ROM_LOAD( "stsmart.901", 0x180000, 0x80000, 0xc305af12 )
+	ROM_LOAD( "stsmart.903", 0x200000, 0x80000, 0x73c16d35 )
+	ROM_LOAD( "stsmart.905", 0x280000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* UPD7759 samples */
+	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
+ROM_END
+
+ROM_START( streets1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
+	ROM_LOAD_ODD ( "s2-2ver1.10c", 0x00000, 0x20000, 0xe448b68b )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "s2-7.15l",    0x000000, 0x08000, 0x22bedfe5 )
+	ROM_LOAD( "s2-8.15m",    0x008000, 0x08000, 0x6a1c70ab )
+
+	ROM_REGION( 0x300000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "stsmart.900", 0x000000, 0x80000, 0xa8279a7e )
+	ROM_LOAD( "stsmart.902", 0x080000, 0x80000, 0x2f021aa1 )
+	ROM_LOAD( "stsmart.904", 0x100000, 0x80000, 0x167346f7 )
+	ROM_LOAD( "stsmart.901", 0x180000, 0x80000, 0xc305af12 )
+	ROM_LOAD( "stsmart.903", 0x200000, 0x80000, 0x73c16d35 )
+	ROM_LOAD( "stsmart.905", 0x280000, 0x80000, 0xa5beb4e2 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
 ROM_START( streetsj )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
 	ROM_LOAD_ODD ( "s2v1j_02.bin", 0x00000, 0x20000, 0xe403a40b )
 
-	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
 	ROM_LOAD( "s2-7.15l",    0x000000, 0x08000, 0x22bedfe5 )
 	ROM_LOAD( "s2-8.15m",    0x008000, 0x08000, 0x6a1c70ab )
 
-	ROM_LOAD( "stsmart.900", 0x010000, 0x80000, 0xa8279a7e )
-	ROM_LOAD( "stsmart.902", 0x090000, 0x80000, 0x2f021aa1 )
-	ROM_LOAD( "stsmart.904", 0x110000, 0x80000, 0x167346f7 )
-	ROM_LOAD( "stsmart.901", 0x190000, 0x80000, 0xc305af12 )
-	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
-	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
+	ROM_REGION( 0x300000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "stsmart.900", 0x000000, 0x80000, 0xa8279a7e )
+	ROM_LOAD( "stsmart.902", 0x080000, 0x80000, 0x2f021aa1 )
+	ROM_LOAD( "stsmart.904", 0x100000, 0x80000, 0x167346f7 )
+	ROM_LOAD( "stsmart.901", 0x180000, 0x80000, 0xc305af12 )
+	ROM_LOAD( "stsmart.903", 0x200000, 0x80000, 0x73c16d35 )
+	ROM_LOAD( "stsmart.905", 0x280000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
 ROM_START( ikari3 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "ik3-2.bin", 0x000000, 0x20000, 0xa7b34dcd )
 	ROM_LOAD_ODD ( "ik3-3.bin", 0x000000, 0x20000, 0x50f2b83d )
 
-	ROM_REGION_DISPOSE(0x290000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "ik3-5.bin",  0x000000, 0x10000, 0xce6706fc )
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
 	ROM_LOAD( "ik3-7.bin",  0x000000, 0x08000, 0x0b4804df )
 	ROM_LOAD( "ik3-8.bin",  0x008000, 0x08000, 0x10ab4e50 )
 
-	ROM_LOAD( "ik3-13.bin", 0x010000, 0x20000, 0x9a56bd32 )
-	ROM_LOAD( "ik3-12.bin", 0x030000, 0x20000, 0x0ce6a10a )
-	ROM_LOAD( "ik3-11.bin", 0x050000, 0x20000, 0xe4e2be43 )
-	ROM_LOAD( "ik3-10.bin", 0x070000, 0x20000, 0xac222372 )
-	ROM_LOAD( "ik3-9.bin",  0x090000, 0x20000, 0xc33971c2 )
+	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "ik3-13.bin", 0x000000, 0x20000, 0x9a56bd32 )
+	ROM_LOAD( "ik3-12.bin", 0x020000, 0x20000, 0x0ce6a10a )
+	ROM_LOAD( "ik3-11.bin", 0x040000, 0x20000, 0xe4e2be43 )
+	ROM_LOAD( "ik3-10.bin", 0x060000, 0x20000, 0xac222372 )
+	ROM_LOAD( "ik3-9.bin",  0x080000, 0x20000, 0xc33971c2 )
+	ROM_LOAD( "ik3-14.bin", 0x0a0000, 0x20000, 0x453bea77 )
+	ROM_LOAD( "ik3-15.bin", 0x0c0000, 0x20000, 0x781a81fc )
+	ROM_LOAD( "ik3-16.bin", 0x0e0000, 0x20000, 0x80ba400b )
+	ROM_LOAD( "ik3-17.bin", 0x100000, 0x20000, 0x0cc3ce4a )
+	ROM_LOAD( "ik3-18.bin", 0x120000, 0x20000, 0xba106245 )
+	ROM_LOAD( "ik3-23.bin", 0x140000, 0x20000, 0xd0fd5c77 )
+	ROM_LOAD( "ik3-22.bin", 0x160000, 0x20000, 0x4878d883 )
+	ROM_LOAD( "ik3-21.bin", 0x180000, 0x20000, 0x50d0fbf0 )
+	ROM_LOAD( "ik3-20.bin", 0x1a0000, 0x20000, 0x9a851efc )
+	ROM_LOAD( "ik3-19.bin", 0x1c0000, 0x20000, 0x4ebdba89 )
+	ROM_LOAD( "ik3-24.bin", 0x1e0000, 0x20000, 0xe9b26d68 )
+	ROM_LOAD( "ik3-25.bin", 0x200000, 0x20000, 0x073b03f1 )
+	ROM_LOAD( "ik3-26.bin", 0x220000, 0x20000, 0x9c613561 )
+	ROM_LOAD( "ik3-27.bin", 0x240000, 0x20000, 0x16dd227e )
+	ROM_LOAD( "ik3-28.bin", 0x260000, 0x20000, 0x711715ae )
 
-	ROM_LOAD( "ik3-14.bin", 0x0b0000, 0x20000, 0x453bea77 )
-	ROM_LOAD( "ik3-15.bin", 0x0d0000, 0x20000, 0x781a81fc )
-	ROM_LOAD( "ik3-16.bin", 0x0f0000, 0x20000, 0x80ba400b )
-	ROM_LOAD( "ik3-17.bin", 0x110000, 0x20000, 0x0cc3ce4a )
-	ROM_LOAD( "ik3-18.bin", 0x130000, 0x20000, 0xba106245 )
-
-	ROM_LOAD( "ik3-23.bin", 0x150000, 0x20000, 0xd0fd5c77 )
-	ROM_LOAD( "ik3-22.bin", 0x170000, 0x20000, 0x4878d883 )
-	ROM_LOAD( "ik3-21.bin", 0x190000, 0x20000, 0x50d0fbf0 )
-	ROM_LOAD( "ik3-20.bin", 0x1b0000, 0x20000, 0x9a851efc )
-	ROM_LOAD( "ik3-19.bin", 0x1d0000, 0x20000, 0x4ebdba89 )
-
-	ROM_LOAD( "ik3-24.bin", 0x1f0000, 0x20000, 0xe9b26d68 )
-	ROM_LOAD( "ik3-25.bin", 0x210000, 0x20000, 0x073b03f1 )
-	ROM_LOAD( "ik3-26.bin", 0x230000, 0x20000, 0x9c613561 )
-	ROM_LOAD( "ik3-27.bin", 0x250000, 0x20000, 0x16dd227e )
-	ROM_LOAD( "ik3-28.bin", 0x270000, 0x20000, 0x711715ae )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "ik3-5.bin",  0x000000, 0x10000, 0xce6706fc )
-
-	ROM_REGION(0x20000)	/* UPD7759 samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* UPD7759 samples */
 	ROM_LOAD( "ik3-6.bin",  0x000000, 0x20000, 0x59d256a4 )
 
-	ROM_REGION(0x40000) /* Extra code bank */
+	ROM_REGION( 0x40000, REGION_USER1 ) /* Extra code bank */
 	ROM_LOAD_EVEN( "ik3-1.bin",  0x000000, 0x10000, 0x47e4d256 )
 	ROM_LOAD_ODD ( "ik3-4.bin",  0x000000, 0x10000, 0xa43af6b5 )
 ROM_END
 
 /******************************************************************************/
 
-#if 0
-static int pow_cycle_r(int offset)
-{
-	int c=READ_WORD(&pow_ram[0x3e7c]);
-	if (cpu_get_pc()==0x628 && (c&0xff)!=0xf) { cpu_spinuntil_int(); return 0xf; }
-	return c;
-}
-
-static int ikari3_cycle_r(int offset)
-{
-	int c=READ_WORD(&pow_ram[0x0]);
-	if (cpu_get_pc()==0x107a && (c&0xff00)==0) { cpu_spinuntil_int(); return 0xf; }
-	return c;
-}
-
-static int sar_cycle_r(int offset)
-{
-	int c=READ_WORD(&pow_ram[0x2]);
-	int p=cpu_get_pc();
-	if ((p==0x427c || p==0x4294 || p==0x42a6 || p==0xc9e) && c==0x800a) { cpu_spinuntil_int(); return 0xa; }
-	return c;
-}
-
-static int streetsm_cycle_r(int offset)
-{
-	int c=READ_WORD(&pow_ram[0x3e02]);
-	if (cpu_get_pc()==0x1240 && (c&0xff)!=0xf) { cpu_spinuntil_int(); return 0xf; }
-	return c;
-}
-
-static void custom_memory(void)
-{
-	if (!strcmp(Machine->gamedrv->name,"pow")) install_mem_read_handler(0, 0x43e7c, 0x43e7d, pow_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"powj")) install_mem_read_handler(0, 0x43e7c, 0x43e7d, pow_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"searchar")) install_mem_read_handler(0, 0x40002, 0x40003, sar_cycle_r);
-//	if (!strcmp(Machine->gamedrv->name,"streetsm")) install_mem_read_handler(0, 0x43e02, 0x43e03, streetsm_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"ikari3")) install_mem_read_handler(0, 0x40000, 0x40001, ikari3_cycle_r);
-}
-#endif
-
 static void init_searchar(void)
 {
-	cpu_setbank(8, memory_region(4));
-//	custom_memory();
-}
-
-static void init_streetsm(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-//	custom_memory();
-	WRITE_WORD (&RAM[0x107d0],0x4245); /* Clear D5 (Sprite ram error!?) */
-}
-
-static void init_streetsj(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-//	custom_memory();
-	WRITE_WORD (&RAM[0x10710],0x4245); /* Clear D5 (Sprite ram error!?) */
+	cpu_setbank(8, memory_region(REGION_USER1));
 }
 
 /******************************************************************************/
@@ -1300,7 +1267,7 @@ GAME( 1988, pow,      0,        pow,      pow,      0,        ROT0,  "SNK", "P.O
 GAME( 1988, powj,     pow,      pow,      powj,     0,        ROT0,  "SNK", "Datsugoku - Prisoners of War (Japan)" )
 GAME( 1989, searchar, 0,        searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (World)" )
 GAME( 1989, sercharu, searchar, searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (US)" )
-GAME( 1989, streetsm, 0,        searchar, streetsm, streetsm, ROT0,  "SNK", "Street Smart (US version 1)" )
-GAME( 1989, streets2, streetsm, streets2, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 2)" )
-GAME( 1989, streetsj, streetsm, searchar, streetsj, streetsj, ROT0,  "SNK", "Street Smart (Japan version 1)" )
+GAME( 1989, streetsm, 0,        streetsm, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 2)" )
+GAME( 1989, streets1, streetsm, searchar, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 1)" )
+GAME( 1989, streetsj, streetsm, searchar, streetsj, 0,        ROT0,  "SNK", "Street Smart (Japan version 1)" )
 GAME( 1989, ikari3,   0,        ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue" )

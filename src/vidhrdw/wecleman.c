@@ -639,8 +639,8 @@ void wecleman_mark_road_colors(void)
 
 void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
 {
-struct rectangle rect = Machine->drv->visible_area;
-int curr_code, sx,sy;
+	struct rectangle rect = Machine->drv->visible_area;
+	int curr_code, sx,sy;
 
 /* Referred to what's in the ROMs */
 #define XSIZE 512
@@ -856,16 +856,16 @@ The factors are in the range 0 (no shrinking) - 3F (half size).
 
 static void get_sprite_info(void)
 {
-const unsigned short *base_pal	= Machine->gfx[0]->colortable + 0;
-const unsigned char  *base_gfx	= memory_region(2);
+	const unsigned short *base_pal	= Machine->gfx[0]->colortable + 0;
+	const unsigned char  *base_gfx	= memory_region(REGION_GFX1);
 
-const int gfx_max = memory_region_length(2);
+	const int gfx_max = memory_region_length(REGION_GFX1);
 
-unsigned char *source		=	spriteram;
-struct sprite *sprite		=	sprite_list->sprite;
-const struct sprite *finish	=	sprite + NUM_SPRITES;
+	unsigned char *source		=	spriteram;
+	struct sprite *sprite		=	sprite_list->sprite;
+	const struct sprite *finish	=	sprite + NUM_SPRITES;
 
-int visibility = SPRITE_VISIBLE;
+	int visibility = SPRITE_VISIBLE;
 
 
 #define SHRINK_FACTOR(x) \
@@ -929,6 +929,8 @@ int visibility = SPRITE_VISIBLE;
 ***************************************************************************/
 
 /*
+	Browse the sprites
+
 	Use:
 	* LEFT, RIGHT, UP, DOWN and PGUP/PGDN to move around
 	* SHIFT + PGUP/PGDN to move around faster
@@ -938,16 +940,16 @@ int visibility = SPRITE_VISIBLE;
 */
 void browser(struct osd_bitmap *bitmap)
 {
-const unsigned short *base_pal	= Machine->gfx[0]->colortable + 0;
-const unsigned char  *base_gfx	= memory_region(2);
+	const unsigned short *base_pal	=	Machine->gfx[0]->colortable + 0;
+	const unsigned char  *base_gfx	=	memory_region(REGION_GFX1);
 
-const int gfx_max				= memory_region_length(2);
+	const int gfx_max				=	memory_region_length(REGION_GFX1);
 
-struct sprite *sprite		=	sprite_list->sprite;
-const struct sprite *finish	=	sprite + NUM_SPRITES;
+	struct sprite *sprite			=	sprite_list->sprite;
+	const struct sprite *finish		=	sprite + NUM_SPRITES;
 
-static int w = 32, gfx;
-char buf[80];
+	static int w = 32, gfx;
+	char buf[80];
 
 	for ( ; sprite < finish ; sprite++)	sprite->flags = 0;
 
@@ -1177,18 +1179,17 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Draw the road */
 	if (layers_ctrl & 16)
 	{
-	struct rectangle clip = {0, 512-1, 0, 256-1};
+		struct rectangle clip = {0, 512-1, 0, 256-1};
 
-		fillbitmap(temp_bitmap2,Machine->pens[0],0);
-
+		fillbitmap(temp_bitmap2,palette_transparent_pen,0);
 		hotchase_draw_road(temp_bitmap2,0,&clip);
 
 		copybitmapzoom(	bitmap, temp_bitmap2,
-						0, 0,							// flip
-						-(64+32)*4+32, 0,				// pos
-						&Machine->drv->visible_area,	// clip
-						TRANSPARENCY_PEN,0,				// transparency
-						(2<<16),(1<<16)					// scale: 16.16 fixed
+						0, 0,										// flip
+						-(64+32)*4+32, 0,							// pos
+						&Machine->drv->visible_area,				// clip
+						TRANSPARENCY_PEN,palette_transparent_pen,	// transparency
+						(2<<16),(1<<16)								// scale: 16.16 fixed
 						);
 	}
 

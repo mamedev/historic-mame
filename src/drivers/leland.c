@@ -992,7 +992,7 @@ static struct IOWritePort slave_writeport[] =
 static struct GfxLayout bklayout =
 {
 	8,8,    /* 8*8 characters */
-	4096, /* ??? characters */
+	4096, /* 4096 characters */
 	3,      /* 3 bits per pixel */
 	{ 0*0x08000*8,1*0x08000*8,2*0x08000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -1002,8 +1002,7 @@ static struct GfxLayout bklayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x000000, &bklayout,          0, 32 },    /* 32 */
+	{ REGION_GFX1, 0, &bklayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -2386,7 +2385,7 @@ MACHINE_DRIVER(aafbu, aafbu_readport, aafbu_writeport,
 
 
 ROM_START( strkzone )
-	ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )   /* 64k for code + banked ROMs images */
+	ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )   /* 64k for code + banked ROMs images */
 	ROM_LOAD("strkzone.101",   0x00000, 0x04000, 0x8d83a611 ) /* 0x0000 */
 
 	ROM_LOAD("strkzone.102",   0x10000, 0x04000, 0x3859e67d ) /* 0x2000 (2 pages) */
@@ -2401,12 +2400,7 @@ ROM_START( strkzone )
     ROM_LOAD("strkzone.u4t",   0x2c000, 0x04000, 0x9b1e72e9 ) /* 6000-7fff (2 pages) */
 	/* Remember to leave 0xc000 bytes here for paging */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("strkzone.u93", 0x00000, 0x04000, 0x8ccb1404 )
-    ROM_LOAD("strkzone.u94", 0x08000, 0x04000, 0x9941a55b )
-    ROM_LOAD("strkzone.u95", 0x10000, 0x04000, 0xb68baf47 )
-
-	ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("strkzone.u3",  0x00000, 0x02000, 0x40258fbe ) /* 0000-1fff */
     ROM_LOAD("strkzone.u4",  0x10000, 0x04000, 0xdf7f2604 ) /* 2000-3fff */
     ROM_LOAD("strkzone.u5",  0x14000, 0x04000, 0x37885206 ) /* 4000-3fff */
@@ -2415,9 +2409,12 @@ ROM_START( strkzone )
     ROM_LOAD("strkzone.u8",  0x20000, 0x04000, 0x4b6d3725 ) /* a000-3fff */
     ROM_LOAD("strkzone.u9",  0x24000, 0x04000, 0xab3aac49 ) /* c000-3fff */
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("strkzone.u93", 0x00000, 0x04000, 0x8ccb1404 )
+    ROM_LOAD("strkzone.u94", 0x08000, 0x04000, 0x9941a55b )
+    ROM_LOAD("strkzone.u95", 0x10000, 0x04000, 0xb68baf47 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* U70 = Empty */
     ROM_LOAD( "strkzone.u92",  0x04000, 0x4000, 0x2508a9ad )
@@ -2430,7 +2427,7 @@ ROM_START( strkzone )
 ROM_END
 
 ROM_START( dblplay )
-	ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("15018-01.101",   0x00000, 0x02000, 0x17b6af29 )
 	ROM_LOAD("15019-01.102",   0x10000, 0x04000, 0x9fc8205e ) /* 0x2000 */
 	ROM_LOAD("15020-01.103",   0x14000, 0x04000, 0x4edcc091 ) /* 0x4000 */
@@ -2444,12 +2441,7 @@ ROM_START( dblplay )
     ROM_LOAD("15027-01.u4t",   0x2c000, 0x04000, 0x9b1e72e9 ) /* 6000-7fff (2 pages) */
 	/* Remember to leave 0xc000 bytes here for paging */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("15015-01.u93", 0x00000, 0x04000, 0x8ccb1404 )
-    ROM_LOAD("15016-01.u94", 0x08000, 0x04000, 0x9941a55b )
-    ROM_LOAD("15017-01.u95", 0x10000, 0x04000, 0xb68baf47 )
-
-	ROM_REGIONX( 0x26000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x26000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("15000-01.u03",  0x00000, 0x02000, 0x208a920a )
     ROM_LOAD("15001-01.u04",  0x10000, 0x04000, 0x751c40d6 )
     ROM_LOAD("14402-01.u05",  0x14000, 0x04000, 0x5ffaec36 )
@@ -2458,9 +2450,12 @@ ROM_START( dblplay )
     ROM_LOAD("15005-01.u08",  0x20000, 0x04000, 0x69d487c9 )
     ROM_LOAD("15006-01.u09",  0x22000, 0x04000, 0xab3aac49 )
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("15015-01.u93", 0x00000, 0x04000, 0x8ccb1404 )
+    ROM_LOAD("15016-01.u94", 0x08000, 0x04000, 0x9941a55b )
+    ROM_LOAD("15017-01.u95", 0x10000, 0x04000, 0xb68baf47 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* U70 = Empty */
     ROM_LOAD( "15014-01.u92",  0x04000, 0x4000, 0x2508a9ad )
@@ -2473,7 +2468,7 @@ ROM_START( dblplay )
 ROM_END
 
 ROM_START( wseries )
-	ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("13409-01.101",   0x00000, 0x02000, 0xb5eccf5c )
 	ROM_LOAD("13410-01.102",   0x10000, 0x04000, 0xdd1ec091 ) /* 0x2000 */
 	ROM_LOAD("13411-01.103",   0x14000, 0x04000, 0xec867a0e ) /* 0x4000 */
@@ -2482,12 +2477,7 @@ ROM_START( wseries )
 	ROM_LOAD("13414-01.106",   0x20000, 0x04000, 0xb178632d ) /* 0xA000 */
 	ROM_LOAD("13415-01.107",   0x24000, 0x04000, 0x20b92eff ) /* 0xC000 */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("13401-00.u93", 0x00000, 0x04000, 0x4ea3e641 )
-    ROM_LOAD("13402-00.u94", 0x08000, 0x04000, 0x71a8a56c )
-    ROM_LOAD("13403-00.u95", 0x10000, 0x04000, 0x8077ae25 )
-
-	ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("13416-00.u3",  0x00000, 0x02000, 0x37c960cf )
     ROM_LOAD("13417-00.u4",  0x10000, 0x04000, 0x97f044b5 )
     ROM_LOAD("13418-00.u5",  0x14000, 0x04000, 0x0931cfc0 )
@@ -2496,9 +2486,12 @@ ROM_START( wseries )
     ROM_LOAD("13421-00.u8",  0x20000, 0x04000, 0x86f57c80 )
     ROM_LOAD("13422-00.u9",  0x24000, 0x04000, 0x222e8405 )
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("13401-00.u93", 0x00000, 0x04000, 0x4ea3e641 )
+    ROM_LOAD("13402-00.u94", 0x08000, 0x04000, 0x71a8a56c )
+    ROM_LOAD("13403-00.u95", 0x10000, 0x04000, 0x8077ae25 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* U70 = Empty */
     ROM_LOAD( "13404-00.u92",  0x04000, 0x4000, 0x22da40aa )
@@ -2516,7 +2509,7 @@ ROM_START( wseries )
 ROM_END
 
 ROM_START( basebal2 )
-	ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("14115-00.101",   0x00000, 0x02000, 0x05231fee )
 	ROM_LOAD("14116-00.102",   0x10000, 0x04000, 0xe1482ea3 ) /* 0x2000 */
 	ROM_LOAD("14117-01.103",   0x14000, 0x04000, 0x677181dd ) /* 0x4000 */
@@ -2531,12 +2524,7 @@ ROM_START( basebal2 )
 							/* 6000-7fff (2 pages) - EMPTY */
 	/* Remember to leave 0xc000 bytes here for paging */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("14112-00.u93", 0x00000, 0x04000, 0x8ccb1404 )
-    ROM_LOAD("14113-00.u94", 0x08000, 0x04000, 0x9941a55b )
-    ROM_LOAD("14114-00.u95", 0x10000, 0x04000, 0xb68baf47 )
-
-	ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("14100-01.u3",  0x00000, 0x02000, 0x1dffbdaf )
     ROM_LOAD("14101-01.u4",  0x10000, 0x04000, 0xc585529c )
     ROM_LOAD("14102-01.u5",  0x14000, 0x04000, 0xace3f918 )
@@ -2545,9 +2533,12 @@ ROM_START( basebal2 )
     ROM_LOAD("14105-01.u8",  0x20000, 0x04000, 0xec596b43 )
     ROM_LOAD("14106-01.u9",  0x24000, 0x04000, 0xb9656baa )
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("14112-00.u93", 0x00000, 0x04000, 0x8ccb1404 )
+    ROM_LOAD("14113-00.u94", 0x08000, 0x04000, 0x9941a55b )
+    ROM_LOAD("14114-00.u95", 0x10000, 0x04000, 0xb68baf47 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* U70 = Empty */
     ROM_LOAD( "14111-01.u92",  0x04000, 0x4000, 0x2508a9ad )
@@ -2560,7 +2551,7 @@ ROM_START( basebal2 )
 ROM_END
 
 ROM_START( alleymas )
-	ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("101",   0x00000, 0x02000, 0x4273e260 )
 	ROM_LOAD("102",   0x10000, 0x04000, 0xeb6575aa ) /* 0x2000 */
 	ROM_LOAD("103",   0x14000, 0x04000, 0xcc9d778c ) /* 0x4000 */
@@ -2569,12 +2560,7 @@ ROM_START( alleymas )
 	ROM_LOAD("106",   0x20000, 0x04000, 0xb396c254 ) /* 0xA000 */
 	ROM_LOAD("107",   0x24000, 0x04000, 0x3ca13e8c ) /* 0xb000 */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("093", 0x00000, 0x02000, 0x54456e6f )
-	ROM_LOAD("094", 0x08000, 0x02000, 0xedc240da )
-	ROM_LOAD("095", 0x10000, 0x02000, 0x19793ed0 )
-
-	ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
 	ROM_LOAD("003",  0x00000, 0x02000, 0x3fee63ae )
 	ROM_LOAD("004",  0x10000, 0x04000, 0xd302b5d1 )
 	ROM_LOAD("005",  0x14000, 0x04000, 0x79bdb24d )
@@ -2583,9 +2569,12 @@ ROM_START( alleymas )
 	ROM_LOAD("008",  0x20000, 0x04000, 0xa4357b5a )
 	ROM_LOAD("009",  0x24000, 0x04000, 0x6d74274e )
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+	ROM_LOAD("093", 0x00000, 0x02000, 0x54456e6f )
+	ROM_LOAD("094", 0x08000, 0x02000, 0xedc240da )
+	ROM_LOAD("095", 0x10000, 0x02000, 0x19793ed0 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/*
 	This is a bit strange, the self test claims that the
 	game uses U70, U92, U69, U91
@@ -2603,7 +2592,7 @@ ROM_START( alleymas )
 ROM_END
 
 ROM_START( mayhem )
-	ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("13208.101",   0x00000, 0x04000, 0x04306973 )
 	ROM_LOAD("13215.102",   0x10000, 0x04000, 0x06e689ae ) /* 0x2000 */
 	ROM_LOAD("13216.103",   0x14000, 0x04000, 0x6452a82c ) /* 0x4000 */
@@ -2611,12 +2600,7 @@ ROM_START( mayhem )
 	ROM_LOAD("13218.105",   0x1c000, 0x04000, 0x162f5eb1 ) /* 0x8000 */
 	ROM_LOAD("13219.106",   0x20000, 0x04000, 0xc0a74d6f ) /* 0xA000 */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("13204.93", 0x00000, 0x04000, 0xde183518 )
-	ROM_LOAD("13205.94", 0x08000, 0x04000, 0xc61f63ac )
-	ROM_LOAD("13206.95", 0x10000, 0x04000, 0x8e7bd2fd )
-
-	ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
 	ROM_LOAD("13207.3",  0x00000, 0x04000, 0xbe1df6aa ) /* DO NOT TRIM THIS ROM */
 	ROM_LOAD("13209.4",  0x10000, 0x04000, 0x39fcd7c6 ) /* 0x2000 */
 	ROM_LOAD("13210.5",  0x14000, 0x04000, 0x630ed136 ) /* 0x4000 */
@@ -2625,9 +2609,12 @@ ROM_START( mayhem )
 	ROM_LOAD("13213.8",  0x20000, 0x04000, 0xf3b2ea05 ) /* 0xa000 */
 	ROM_LOAD("13214.9",  0x24000, 0x04000, 0x96f3e8d9 ) /* 0xc000 */
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+	ROM_LOAD("13204.93", 0x00000, 0x04000, 0xde183518 )
+	ROM_LOAD("13205.94", 0x08000, 0x04000, 0xc61f63ac )
+	ROM_LOAD("13206.95", 0x10000, 0x04000, 0x8e7bd2fd )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* U70 = Empty */
@@ -2641,7 +2628,7 @@ ROM_START( mayhem )
 ROM_END
 
 ROM_START( cerberus )
-    ROM_REGIONX( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+    ROM_REGION( STRKZONE_CODE_SIZE, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 
     ROM_LOAD("3-23u101", 0x00000, 0x02000, 0xd78210df ) /*  */
     ROM_LOAD("3-23u102", 0x10000, 0x02000, 0xeed121ef ) /*  */
@@ -2650,13 +2637,8 @@ ROM_START( cerberus )
     ROM_LOAD("3-23u105", 0x1c000, 0x02000, 0xa12c2c79 ) /*  */
     ROM_LOAD("3-23u106", 0x20000, 0x02000, 0xd64110d2 ) /*  */
     ROM_LOAD("3-23u107", 0x24000, 0x02000, 0x24e41c34 ) /*  */
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("3-23u93", 0x00000, 0x02000, 0x14a1a4b0 )
-    ROM_LOAD("3-23u94", 0x08000, 0x02000, 0x207a1709 )
-    ROM_LOAD("3-23u95", 0x10000, 0x02000, 0xe9c86267 )
 
-
-    ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+    ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("3-23u3",  0x00000, 0x02000, 0xb0579138 )
     ROM_LOAD("3-23u4",  0x10000, 0x02000, 0xba0dc990 ) /* 0x2000 */
     ROM_LOAD("3-23u5",  0x14000, 0x02000, 0xf8d6cc5d ) /* 0x4000 */
@@ -2665,10 +2647,12 @@ ROM_START( cerberus )
     ROM_LOAD("3-23u8",  0x20000, 0x02000, 0xdbabdbde ) /* 0xa000 */
     ROM_LOAD("3-23u9",  0x24000, 0x02000, 0xeb992385 ) /* 0xc000 */
 
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("3-23u93", 0x00000, 0x02000, 0x14a1a4b0 )
+    ROM_LOAD("3-23u94", 0x08000, 0x02000, 0x207a1709 )
+    ROM_LOAD("3-23u95", 0x10000, 0x02000, 0xe9c86267 )
 
-	ROM_REGION(0x1)     /* 80186 CPU */
-
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "3-23u70",  0x00000, 0x2000, 0x96499983 )
     ROM_LOAD( "3-23_u92", 0x04000, 0x2000, 0x497bb717 )
@@ -2681,17 +2665,12 @@ ROM_START( cerberus )
 ROM_END
 
 ROM_START( pigout )
-	ROM_REGIONX( 0x040000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x040000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("poutu58t.bin",  0x00000, 0x10000, 0x8fe4b683 ) /* CODE */
 	ROM_LOAD("poutu59t.bin",  0x10000, 0x10000, 0xab907762 ) /* Banked code */
 	ROM_LOAD("poutu57t.bin",  0x20000, 0x10000, 0xc22be0ff ) /* Banked code */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("poutu93.bin", 0x000000, 0x08000, 0xf102a04d ) /* Plane 3 */
-	ROM_LOAD("poutu94.bin", 0x008000, 0x08000, 0xec63c015 ) /* Plane 2 */
-	ROM_LOAD("poutu95.bin", 0x010000, 0x08000, 0xba6e797e ) /* Plane 1 */
-
-	ROM_REGIONX( 0x080000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x080000, REGION_CPU2 )     /* Z80 slave CPU */
 	ROM_LOAD("poutu3.bin",   0x00000, 0x02000, 0xaf213cb7 ) /* Resident */
 	ROM_LOAD("poutu2t.bin",  0x10000, 0x10000, 0xb23164c6 ) /* U2=0 & 1 */
 	ROM_LOAD("poutu3t.bin",  0x20000, 0x10000, 0xd93f105f ) /* U3=2 & 3 */
@@ -2701,8 +2680,7 @@ ROM_START( pigout )
 	ROM_LOAD("poutu7t.bin",  0x60000, 0x10000, 0x393bd990 ) /* U7=a & b */
 	ROM_LOAD("poutu8t.bin",  0x70000, 0x10000, 0xcb9ffaad ) /* U8=c & d */
 															/* U9=e & f */
-
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
 	ROM_LOAD_EVEN("poutu25t.bin", 0x040000, 0x10000, 0x92cd2617 )
 	ROM_LOAD_ODD ("poutu13t.bin", 0x040000, 0x10000, 0x9448c389 )
 	ROM_LOAD_EVEN("poutu26t.bin", 0x060000, 0x10000, 0xab57de8f )
@@ -2710,7 +2688,12 @@ ROM_START( pigout )
 	ROM_LOAD_EVEN("poutu27t.bin", 0x0e0000, 0x10000, 0x37a8156e )
 	ROM_LOAD_ODD ("poutu15t.bin", 0x0e0000, 0x10000, 0x1c60d58b )
 
-	ROM_REGION(0x40000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+	ROM_LOAD("poutu93.bin", 0x000000, 0x08000, 0xf102a04d ) /* Plane 3 */
+	ROM_LOAD("poutu94.bin", 0x008000, 0x08000, 0xec63c015 ) /* Plane 2 */
+	ROM_LOAD("poutu95.bin", 0x010000, 0x08000, 0xba6e797e ) /* Plane 1 */
+
+	ROM_REGION( 0x40000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	ROM_LOAD( "poutu70.bin",  0x00000, 0x4000, 0x7db4eaa1 )
 	ROM_LOAD( "poutu92.bin",  0x04000, 0x4000, 0x20fa57bb )
@@ -2723,17 +2706,12 @@ ROM_START( pigout )
 ROM_END
 
 ROM_START( pigoutj )
-	ROM_REGIONX( 0x040000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x040000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "03-29020.01", 0x00000, 0x10000, 0x6c815982 ) /* CODE */
 	ROM_LOAD( "03-29021.01", 0x10000, 0x10000, 0x9de7a763 ) /* Banked code */
 	ROM_LOAD("poutu57t.bin", 0x20000, 0x10000, 0xc22be0ff ) /* Banked code */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("poutu95.bin", 0x000000, 0x08000, 0xba6e797e )
-	ROM_LOAD("poutu94.bin", 0x008000, 0x08000, 0xec63c015 )
-	ROM_LOAD("poutu93.bin", 0x010000, 0x08000, 0xf102a04d )
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
 	ROM_LOAD("poutu3.bin",   0x00000, 0x02000, 0xaf213cb7 )
 	ROM_LOAD("poutu2t.bin",  0x10000, 0x10000, 0xb23164c6 ) /* U2=0 & 1 */
 	ROM_LOAD("poutu3t.bin",  0x20000, 0x10000, 0xd93f105f ) /* U3=2 & 3 */
@@ -2743,7 +2721,7 @@ ROM_START( pigoutj )
 	ROM_LOAD("poutu7t.bin",  0x60000, 0x10000, 0x393bd990 ) /* U7=a & b */
 	ROM_LOAD("poutu8t.bin",  0x70000, 0x10000, 0xcb9ffaad ) /* U8=c & d */
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
 	ROM_LOAD_EVEN("poutu25t.bin", 0x040000, 0x10000, 0x92cd2617 )
 	ROM_LOAD_ODD ("poutu13t.bin", 0x040000, 0x10000, 0x9448c389 )
 	ROM_LOAD_EVEN("poutu26t.bin", 0x060000, 0x10000, 0xab57de8f )
@@ -2751,7 +2729,12 @@ ROM_START( pigoutj )
 	ROM_LOAD_EVEN("poutu27t.bin", 0x0e0000, 0x10000, 0x37a8156e )
 	ROM_LOAD_ODD ("poutu15t.bin", 0x0e0000, 0x10000, 0x1c60d58b )
 
-	ROM_REGION(0x40000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+	ROM_LOAD("poutu95.bin", 0x000000, 0x08000, 0xba6e797e )
+	ROM_LOAD("poutu94.bin", 0x008000, 0x08000, 0xec63c015 )
+	ROM_LOAD("poutu93.bin", 0x010000, 0x08000, 0xf102a04d )
+
+	ROM_REGION( 0x40000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	ROM_LOAD( "poutu70.bin",  0x00000, 0x4000, 0x7db4eaa1 ) /* 00 */
 	ROM_LOAD( "poutu92.bin",  0x04000, 0x4000, 0x20fa57bb )
@@ -2764,18 +2747,13 @@ ROM_START( pigoutj )
 ROM_END
 
 ROM_START( offroad )
-	ROM_REGIONX( 0x040000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x040000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
     ROM_LOAD("22121-04.u58",   0x00000, 0x10000, 0xc5790988 )
     ROM_LOAD("22122-03.u59",   0x10000, 0x10000, 0xae862fdc )
     ROM_LOAD("22120-01.u57",   0x20000, 0x10000, 0xe9f0f175 )
     ROM_LOAD("22119-02.u56",   0x30000, 0x10000, 0x38642f22 )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("22105-01.u93", 0x00000, 0x08000, 0x4426e367 )
-    ROM_LOAD("22106-02.u94", 0x08000, 0x08000, 0x687dc1fc )
-    ROM_LOAD("22107-02.u95", 0x10000, 0x08000, 0xcee6ee5f )
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("22100-01.u2",  0x00000, 0x02000, 0x08c96a4b )
 	/* Strange, but two of these aren't accessed in the self test */
 															/* U2=0 & 1 */
@@ -2786,7 +2764,7 @@ ROM_START( offroad )
     ROM_LOAD("22111-01.u7",  0x60000, 0x10000, 0xf79157a1 ) /* U7=a & b ???NOT USED??? */
     ROM_LOAD("22112-01.u8",  0x70000, 0x10000, 0x3eef38d3 ) /* U8=c & d */
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
     ROM_LOAD_EVEN("22116-03.u25", 0x040000, 0x10000, 0x95bb31d3 )
     ROM_LOAD_ODD ("22113-03.u13", 0x040000, 0x10000, 0x71b28df6 )
     ROM_LOAD_EVEN("22117-03.u26", 0x060000, 0x10000, 0x703d81ce )
@@ -2794,7 +2772,12 @@ ROM_START( offroad )
     ROM_LOAD_EVEN("22118-03.u27", 0x0e0000, 0x10000, 0x806ccf8b )
     ROM_LOAD_ODD ("22115-03.u15", 0x0e0000, 0x10000, 0xc8439a7a )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("22105-01.u93", 0x00000, 0x08000, 0x4426e367 )
+    ROM_LOAD("22106-02.u94", 0x08000, 0x08000, 0x687dc1fc )
+    ROM_LOAD("22107-02.u95", 0x10000, 0x08000, 0xcee6ee5f )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* 70 = empty */
     ROM_LOAD( "22104-01.u92",  0x04000, 0x4000, 0x03e0497d )
@@ -2807,18 +2790,13 @@ ROM_START( offroad )
 ROM_END
 
 ROM_START( offroadt )
-	ROM_REGIONX( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("ortpu58.bin",   0x00000, 0x10000, 0xadbc6211 )
 	ROM_LOAD("ortpu59.bin",   0x10000, 0x10000, 0x296dd3b6 )
 	ROM_LOAD("ortpu57.bin",   0x20000, 0x10000, 0xe9f0f175 )  /* Identical to offroad */
 	ROM_LOAD("ortpu56.bin",   0x30000, 0x10000, 0x2c1a22b3 )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("ortpu93b.bin", 0x00000, 0x08000, 0xf0c1d8b0 )
-    ROM_LOAD("ortpu94b.bin", 0x08000, 0x08000, 0x7460d8c0 )
-    ROM_LOAD("ortpu95b.bin", 0x10000, 0x08000, 0x081ee7a8 )
-
-	ROM_REGIONX( 0x90000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x90000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("ortpu3b.bin", 0x00000, 0x02000, 0x95abb9f1 )
 	ROM_LOAD("ortpu2.bin",  0x10000, 0x10000, 0xc46c1627 )
 	ROM_LOAD("ortpu3.bin",  0x20000, 0x10000, 0x2276546f )
@@ -2828,7 +2806,7 @@ ROM_START( offroadt )
 	ROM_LOAD("ortpu7.bin",  0x60000, 0x10000, 0xa5af5b4f )
 	ROM_LOAD("ortpu8.bin",  0x70000, 0x10000, 0x0f735078 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
 	ROM_LOAD_EVEN("ortpu25.bin", 0x040000, 0x10000, 0xf952f800 )
 	ROM_LOAD_ODD ("ortpu13.bin", 0x040000, 0x10000, 0x7beec9fc )
 	ROM_LOAD_EVEN("ortpu26.bin", 0x060000, 0x10000, 0x6227ea94 )
@@ -2836,7 +2814,12 @@ ROM_START( offroadt )
 	ROM_LOAD_EVEN("ortpu27.bin", 0x0e0000, 0x10000, 0xb80c5f99 )
 	ROM_LOAD_ODD ("ortpu15.bin", 0x0e0000, 0x10000, 0x2a1a1c3c )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("ortpu93b.bin", 0x00000, 0x08000, 0xf0c1d8b0 )
+    ROM_LOAD("ortpu94b.bin", 0x08000, 0x08000, 0x7460d8c0 )
+    ROM_LOAD("ortpu95b.bin", 0x10000, 0x08000, 0x081ee7a8 )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	/* 70 = empty */
     ROM_LOAD( "ortpu92b.bin",  0x04000, 0x4000, 0xf9988e28 )
@@ -2849,18 +2832,13 @@ ROM_START( offroadt )
 ROM_END
 
 ROM_START( teamqb )
-	ROM_REGIONX( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("15618-03.58t",   0x00000, 0x10000, 0xb32568dc )
 	/* One of these is suspect (or the banking is wrong) */
 	ROM_LOAD("15619-02.59t",   0x10000, 0x10000, 0x6d533714 )
 	ROM_LOAD("15619-03.59t",   0x20000, 0x10000, 0x40b3319f )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("15615-01.u93", 0x00000, 0x04000, 0xa7ea6a87 )
-    ROM_LOAD("15616-01.u94", 0x08000, 0x04000, 0x4a9b3900 )
-    ROM_LOAD("15617-01.u95", 0x10000, 0x04000, 0x2cd95edb )
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("15600-01.u3",   0x00000, 0x02000, 0x46615844 )
     ROM_LOAD("15601-01.u2t",  0x10000, 0x10000, 0x8e523c58 )
     ROM_LOAD("15602-01.u3t",  0x20000, 0x10000, 0x545b27a1 )
@@ -2870,7 +2848,7 @@ ROM_START( teamqb )
     ROM_LOAD("15606-01.u7t",  0x60000, 0x10000, 0x8eeb007c )
     ROM_LOAD("15607-01.u8t",  0x70000, 0x10000, 0x57cb6d2d )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
 	ROM_LOAD_EVEN("15623-01.25t", 0x040000, 0x10000, 0x710bdc76 )
 	ROM_LOAD_ODD ("15620-01.13t", 0x040000, 0x10000, 0x7e5cb8ad )
 	ROM_LOAD_EVEN("15624-01.26t", 0x060000, 0x10000, 0xdd090d33 )
@@ -2878,7 +2856,12 @@ ROM_START( teamqb )
 	ROM_LOAD_EVEN("15625-01.27t", 0x0e0000, 0x10000, 0xac442523 )
 	ROM_LOAD_ODD ("15622-01.15t", 0x0e0000, 0x10000, 0x9e84509a )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("15615-01.u93", 0x00000, 0x04000, 0xa7ea6a87 )
+    ROM_LOAD("15616-01.u94", 0x08000, 0x04000, 0x4a9b3900 )
+    ROM_LOAD("15617-01.u95", 0x10000, 0x04000, 0x2cd95edb )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "15611-01.u70",  0x00000, 0x4000, 0xbf2695fb )
     ROM_LOAD( "15614-01.u92",  0x04000, 0x4000, 0xc93fd870 )
@@ -2891,16 +2874,11 @@ ROM_START( teamqb )
 ROM_END
 
 ROM_START( redlin2p )
-	ROM_REGIONX( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("13932-01.23t", 0x00000, 0x10000, 0xecdf0fbe )
 	ROM_LOAD("13931-01.22t", 0x10000, 0x10000, 0x16d01978 )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("13930-01.u93", 0x00000, 0x04000, 0x0721f42e )
-    ROM_LOAD("13929-01.u94", 0x08000, 0x04000, 0x1522e7b2 )
-    ROM_LOAD("13928-01.u95", 0x10000, 0x04000, 0xc321b5d1 )
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("13907-01.u3",  0x00000, 0x04000, 0xb760d63e )
     ROM_LOAD("13908-01.u4",  0x10000, 0x04000, 0xa30739d3 )
     ROM_LOAD("13909-01.u5",  0x10000, 0x04000, 0xaaf16ad7 )
@@ -2909,11 +2887,16 @@ ROM_START( redlin2p )
     ROM_LOAD("13912-01.u8",  0x10000, 0x04000, 0xe5b57eac )
     ROM_LOAD("13913-01.u9",  0x10000, 0x04000, 0x02886071 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
 	ROM_LOAD_EVEN("28t",    0x0e0000, 0x10000, 0x7aa21b2c )
 	ROM_LOAD_ODD ("17t",    0x0e0000, 0x10000, 0x8d26f221 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("13930-01.u93", 0x00000, 0x04000, 0x0721f42e )
+    ROM_LOAD("13929-01.u94", 0x08000, 0x04000, 0x1522e7b2 )
+    ROM_LOAD("13928-01.u95", 0x10000, 0x04000, 0xc321b5d1 )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "13920-01.u70",  0x00000, 0x4000, 0xf343d34a )
     ROM_LOAD( "13921-01.u92",  0x04000, 0x4000, 0xc9ba8d41 )
@@ -2926,16 +2909,11 @@ ROM_START( redlin2p )
 ROM_END
 
 ROM_START( dangerz )
-	ROM_REGIONX( 0x020000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x020000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("13823.12t",   0x00000, 0x10000, 0x31604634 )
 	ROM_LOAD("13824.13t",   0x10000, 0x10000, 0x381026c6 )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("13801.93", 0x00000, 0x04000, 0xf9ff55ec )
-	ROM_LOAD("13802.94", 0x08000, 0x04000, 0xd4adbcbb )
-	ROM_LOAD("13803.95", 0x10000, 0x04000, 0x9178ed76 )
-
-	ROM_REGIONX( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x28000, REGION_CPU2 )     /* Z80 slave CPU */
 	ROM_LOAD("13818.3",   0x00000, 0x04000, 0x71863c5b )
 	ROM_LOAD("13817.4",   0x10000, 0x04000, 0x924bead3 )
 	ROM_LOAD("13818.5",   0x14000, 0x04000, 0x403bdfea )
@@ -2943,9 +2921,12 @@ ROM_START( dangerz )
 	ROM_LOAD("13820.7",   0x1c000, 0x04000, 0x42657a1e )
 	ROM_LOAD("13821.8",   0x20000, 0x04000, 0x92f3e006 )
 
-	ROM_REGION(0x1)     /* 80186 CPU */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+	ROM_LOAD("13801.93", 0x00000, 0x04000, 0xf9ff55ec )
+	ROM_LOAD("13802.94", 0x08000, 0x04000, 0xd4adbcbb )
+	ROM_LOAD("13803.95", 0x10000, 0x04000, 0x9178ed76 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
 	ROM_LOAD( "13809.70",  0x00000, 0x4000, 0xe44eb9f5 )
 	ROM_LOAD( "13804.92",  0x04000, 0x4000, 0x6c23f1a5 )
@@ -2958,22 +2939,17 @@ ROM_START( dangerz )
 ROM_END
 
 ROM_START( viper )
-	ROM_REGIONX( 0x050000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x050000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("15617-03.49t",   0x00000, 0x10000, 0x7e4688a6 )
 	ROM_LOAD("15616-03.48t",   0x10000, 0x10000, 0x3fe2f0bf )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("15609-01.u93", 0x00000, 0x04000, 0x08ad92e9 )
-    ROM_LOAD("15610-01.u94", 0x08000, 0x04000, 0xd4e56dfb )
-    ROM_LOAD("15611-01.u95", 0x10000, 0x04000, 0x3a2c46fb )
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("15600-02.u3", 0x00000, 0x02000, 0x0f57f68a )
     ROM_LOAD("viper.u2t",   0x10000, 0x10000, 0x4043d4ee )
     ROM_LOAD("viper.u3t",   0x20000, 0x10000, 0x213bc02b )
     ROM_LOAD("viper.u4t",   0x30000, 0x10000, 0xce0b95b4 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
 	ROM_LOAD_EVEN( "15620-02.45t", 0x040000, 0x10000, 0x7380ece1 )
 	ROM_LOAD_ODD ( "15623-02.62t", 0x040000, 0x10000, 0x2921d8f9 )
 	ROM_LOAD_EVEN( "15619-02.44t", 0x060000, 0x10000, 0xc8507cc2 )
@@ -2981,7 +2957,12 @@ ROM_START( viper )
 	ROM_LOAD_EVEN( "15618-02.43t", 0x0e0000, 0x10000, 0x5562e0c3 )
 	ROM_LOAD_ODD ( "15621-02.60t", 0x0e0000, 0x10000, 0xcb468f2b )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("15609-01.u93", 0x00000, 0x04000, 0x08ad92e9 )
+    ROM_LOAD("15610-01.u94", 0x08000, 0x04000, 0xd4e56dfb )
+    ROM_LOAD("15611-01.u95", 0x10000, 0x04000, 0x3a2c46fb )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "15604-01.u70",  0x00000, 0x4000, 0x7e3b0cce )
     ROM_LOAD( "15608-01.u92",  0x04000, 0x4000, 0xa9bde0ef )
@@ -2994,16 +2975,11 @@ ROM_START( viper )
 ROM_END
 
 ROM_START( aafb )
-	ROM_REGIONX( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
     ROM_LOAD("24014-02.u58",   0x00000, 0x10000, 0x5db4a3d0 ) /* SUSPECT */
     ROM_LOAD("24015-02.u59",   0x10000, 0x10000, 0x00000000 ) /* SUSPECT */
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("24011-02.u93", 0x00000, 0x08000, 0x011c0235 )  /* SUSPECT */
-    ROM_LOAD("24012-02.u94", 0x08000, 0x08000, 0x376199a2 )  /* SUSPECT */
-    ROM_LOAD("24013-02.u95", 0x10000, 0x08000, 0x0a604e0d )  /* SUSPECT */
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("24000-02.u3",   0x00000, 0x02000, 0x52df0354 ) /* SUSPECT */
     ROM_LOAD("24001-02.u2t",  0x10000, 0x10000, 0x9b20697d ) /* SUSPECT */
     ROM_LOAD("24002-02.u3t",  0x20000, 0x10000, 0xbbb92184 )
@@ -3013,7 +2989,7 @@ ROM_START( aafb )
     ROM_LOAD("15606-01.u7t",  0x60000, 0x10000, 0x8eeb007c )
     ROM_LOAD("24002-02.u8t",  0x70000, 0x10000, 0x3d9747c9 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
     ROM_LOAD_EVEN("24019-01.u25", 0x040000, 0x10000, 0x9e344768 )
     ROM_LOAD_ODD ("24016-01.u13", 0x040000, 0x10000, 0x6997025f )
     ROM_LOAD_EVEN("24020-01.u26", 0x060000, 0x10000, 0x0788f2a5 )
@@ -3021,7 +2997,12 @@ ROM_START( aafb )
     ROM_LOAD_EVEN("24021-01.u27", 0x0e0000, 0x10000, 0x94081899 )
     ROM_LOAD_ODD ("24018-01.u15", 0x0e0000, 0x10000, 0x76eb6077 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("24011-02.u93", 0x00000, 0x08000, 0x011c0235 )  /* SUSPECT */
+    ROM_LOAD("24012-02.u94", 0x08000, 0x08000, 0x376199a2 )  /* SUSPECT */
+    ROM_LOAD("24013-02.u95", 0x10000, 0x08000, 0x0a604e0d )  /* SUSPECT */
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "24007-01.u70",  0x00000, 0x4000, 0x40e46aa4 )
     ROM_LOAD( "24010-01.u92",  0x04000, 0x4000, 0x78705f42 )
@@ -3034,16 +3015,11 @@ ROM_START( aafb )
 ROM_END
 
 ROM_START( aafb2p )
-	ROM_REGIONX( 0x020000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x020000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("26014-01.58t", 0x00000, 0x10000, 0x79fd14cd )
 	ROM_LOAD("26015-01.59t", 0x10000, 0x10000, 0x3b0382f0 )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("24011-02.u93", 0x00000, 0x08000, 0x00000000 )
-    ROM_LOAD("24012-02.u94", 0x08000, 0x08000, 0x00000000 )
-    ROM_LOAD("24013-02.u95", 0x10000, 0x08000, 0x00000000 )
-
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("26000-01.u3",   0x00000, 0x02000, 0x98c06c63 )
     ROM_LOAD("26001-01.2t",   0x10000, 0x10000, 0xf118b9b4 )
     ROM_LOAD("24002-02.u3t",  0x20000, 0x10000, 0xbbb92184 )
@@ -3053,7 +3029,7 @@ ROM_START( aafb2p )
     ROM_LOAD("15606-01.u7t",  0x60000, 0x10000, 0x8eeb007c )
     ROM_LOAD("24002-02.u8t",  0x70000, 0x10000, 0x3d9747c9 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
     ROM_LOAD_EVEN("24019-01.u25", 0x040000, 0x10000, 0x9e344768 )
     ROM_LOAD_ODD ("24016-01.u13", 0x040000, 0x10000, 0x6997025f )
     ROM_LOAD_EVEN("24020-01.u26", 0x060000, 0x10000, 0x0788f2a5 )
@@ -3061,7 +3037,12 @@ ROM_START( aafb2p )
     ROM_LOAD_EVEN("24021-01.u27", 0x0e0000, 0x10000, 0x94081899 )
     ROM_LOAD_ODD ("24018-01.u15", 0x0e0000, 0x10000, 0x76eb6077 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+    ROM_LOAD("24011-02.u93", 0x00000, 0x08000, 0x00000000 )
+    ROM_LOAD("24012-02.u94", 0x08000, 0x08000, 0x00000000 )
+    ROM_LOAD("24013-02.u95", 0x10000, 0x08000, 0x00000000 )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "24007-01.u70",  0x00000, 0x4000, 0x40e46aa4 )
     ROM_LOAD( "24010-01.u92",  0x04000, 0x4000, 0x78705f42 )
@@ -3074,17 +3055,12 @@ ROM_START( aafb2p )
 ROM_END
 
 ROM_START( aafbu )
-	ROM_REGIONX( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_REGION( 0x048000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD("aafbu58t.bin",   0x00000, 0x10000, 0xfa75a4a0 )
 	ROM_LOAD("aafbu59t.bin",   0x10000, 0x10000, 0xab6a606f )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("aafbu93.bin",   0x00000, 0x08000, 0x00000000 )
-	ROM_LOAD("aafbu94.bin",   0x08000, 0x08000, 0x00000000 )
-	ROM_LOAD("aafbu95.bin",   0x10000, 0x08000, 0x00000000 )
-
 	/* Everything from here down may be from the wrong version */
-	ROM_REGIONX( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
+	ROM_REGION( 0x80000, REGION_CPU2 )     /* Z80 slave CPU */
     ROM_LOAD("24000-02.u3",   0x00000, 0x02000, 0x52df0354 )
     ROM_LOAD("24001-02.u2t",  0x10000, 0x10000, 0x9b20697d )
     ROM_LOAD("24002-02.u3t",  0x20000, 0x10000, 0xbbb92184 )
@@ -3094,7 +3070,7 @@ ROM_START( aafbu )
     ROM_LOAD("15606-01.u7t",  0x60000, 0x10000, 0x8eeb007c )
     ROM_LOAD("24002-02.u8t",  0x70000, 0x10000, 0x3d9747c9 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 )     /* 80186 CPU */
+	ROM_REGION( 0x100000, REGION_CPU3 )     /* 80186 CPU */
     ROM_LOAD_EVEN("24019-01.u25", 0x040000, 0x10000, 0x9e344768 )
     ROM_LOAD_ODD ("24016-01.u13", 0x040000, 0x10000, 0x6997025f )
     ROM_LOAD_EVEN("24020-01.u26", 0x060000, 0x10000, 0x0788f2a5 )
@@ -3102,7 +3078,12 @@ ROM_START( aafbu )
     ROM_LOAD_EVEN("24021-01.u27", 0x0e0000, 0x10000, 0x94081899 )
     ROM_LOAD_ODD ("24018-01.u15", 0x0e0000, 0x10000, 0x76eb6077 )
 
-	ROM_REGION(0x20000)     /* Background PROMS */
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )     /* background chars */
+	ROM_LOAD("aafbu93.bin",   0x00000, 0x08000, 0x00000000 )
+	ROM_LOAD("aafbu94.bin",   0x08000, 0x08000, 0x00000000 )
+	ROM_LOAD("aafbu95.bin",   0x10000, 0x08000, 0x00000000 )
+
+	ROM_REGION( 0x20000, REGION_USER1 )     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
     ROM_LOAD( "24007-01.u70",  0x00000, 0x4000, 0x40e46aa4 )
     ROM_LOAD( "24010-01.u92",  0x04000, 0x4000, 0x78705f42 )

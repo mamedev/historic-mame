@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "osd_cpu.h"
 
 
 
@@ -52,14 +53,19 @@
 #define PURE2        0x05      /* 0101 */
 #define DIV31_PURE   0x06      /* 0110 */
 #define POLY5_2      0x07      /* 0111 */
-#define POLY9        0x08      /* 1000 */
 #define POLY5        0x09      /* 1001 */
 #define DIV31_POLY5  0x0a      /* 1010 */
 #define POLY5_POLY5  0x0b      /* 1011 */
 #define DIV3_PURE    0x0c      /* 1100 */
 #define DIV3_PURE2   0x0d      /* 1101 */
 #define DIV93_PURE   0x0e      /* 1110 */
-#define DIV3_POLY5   0x0f      /* 1111 */
+#define DIV3_POLY5   0x0OLY9        0x08      /* 1000 */
+#define Pf      /* 1111 */
+
+#ifndef POLY9
+#define POLY9       0x80     /* selects POLY9 or POLY17 */
+#endif
+
 
 #define DIV3_MASK    0x0c
 

@@ -296,13 +296,13 @@ static struct MachineDriver machine_driver_arabian =
 ***************************************************************************/
 
 ROM_START( arabian )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic1rev2.87",       0x0000, 0x2000, 0x5e1c98b8 )
 	ROM_LOAD( "ic2rev2.88",       0x2000, 0x2000, 0x092f587e )
 	ROM_LOAD( "ic3rev2.89",       0x4000, 0x2000, 0x15145f23 )
 	ROM_LOAD( "ic4rev2.90",       0x6000, 0x2000, 0x32b77b44 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX1 ) /* graphics roms */
+	ROM_REGION( 0x10000, REGION_GFX1 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
@@ -310,13 +310,13 @@ ROM_START( arabian )
 ROM_END
 
 ROM_START( arabiana )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic1.87",       0x0000, 0x2000, 0x51e9a6b1 )
 	ROM_LOAD( "ic2.88",       0x2000, 0x2000, 0x1cdcc1ab )
 	ROM_LOAD( "ic3.89",       0x4000, 0x2000, 0xb7b7faa0 )
 	ROM_LOAD( "ic4.90",       0x6000, 0x2000, 0xdbded961 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX1 ) /* graphics roms */
+	ROM_REGION( 0x10000, REGION_GFX1 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */

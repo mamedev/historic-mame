@@ -45,9 +45,9 @@ int pong_sh_start(const struct MachineSound *msound)
 /************************************/
 void pong_sh_stop(void)
 {
-	osd_stop_sample(channel);
-    osd_stop_sample(channel+1);
-	osd_stop_sample(channel+2);
+	mixer_stop_sample(channel);
+    mixer_stop_sample(channel+1);
+	mixer_stop_sample(channel+2);
 }
 
 /************************************/

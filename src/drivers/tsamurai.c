@@ -1,4 +1,5 @@
-/*
+/****************************************************************************
+
 	Preliminary driver for Samurai, Nunchackun, Yuke Yuke Yamaguchi-kun
 	(c) Taito 1985
 
@@ -6,12 +7,14 @@
 	- some color problems (need screenshots)
 	- Nunchackun has wrong colors; sprites look better if you subtract sprite color from 0x2d
 	- Yuke Yuke Yamaguchi-kun isn't playable (sprite problem only?)
-*/
+
+driver by Phil Stroffolino
+
+****************************************************************************/
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#define CREDITS "Phil Stroffolino"
 
 void tsamurai_bgcolor_w( int offset, int data );
 void tsamurai_flipscreen_w( int offset, int data );
@@ -76,17 +79,20 @@ int unknown_d938_r(int offset)
 }
 
 
-static void sound_command1_w( int offset, int data ){
+static void sound_command1_w( int offset, int data )
+{
 	sound_command1 = data;
 	cpu_cause_interrupt( 1, Z80_IRQ_INT );
 }
 
-static void sound_command2_w( int offset, int data ){
+static void sound_command2_w( int offset, int data )
+{
 	sound_command2 = data;
 	cpu_cause_interrupt( 2, Z80_IRQ_INT );
 }
 
-static struct MemoryReadAddress readmem[] = {
+static struct MemoryReadAddress readmem[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 
@@ -109,7 +115,8 @@ static struct MemoryReadAddress readmem[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem[] = {
+static struct MemoryWriteAddress writemem[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 
@@ -135,33 +142,41 @@ static struct MemoryWriteAddress writemem[] = {
 	{ -1 }
 };
 
-static struct IOReadPort z80_readport[] = {
+static struct IOReadPort z80_readport[] =
+{
 	{ -1 }
 };
 
-static struct IOWritePort z80_writeport[] = {
+static struct IOWritePort z80_writeport[] =
+{
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ -1 }
 };
 
+
 /*******************************************************************************/
-static int sound_command1_r( int offset ){
+
+static int sound_command1_r( int offset )
+{
 	return sound_command1;
 }
 
-static void sound_out1_w( int offset, int data ){
+static void sound_out1_w( int offset, int data )
+{
 	DAC_data_w(0,data);
 }
 
-static struct MemoryReadAddress readmem_sound1[] = {
+static struct MemoryReadAddress readmem_sound1[] =
+{
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6000, 0x6000, sound_command1_r },
 	{ 0x7f00, 0x7fff, MRA_RAM },
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem_sound1[] = {
+static struct MemoryWriteAddress writemem_sound1[] =
+{
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6001, 0x6001, MWA_NOP }, /* ? */
 	{ 0x6002, 0x6002, sound_out1_w },
@@ -177,244 +192,24 @@ static void sound_out2_w( int offset, int data ){
 	DAC_data_w(1,data);
 }
 
-static struct MemoryReadAddress readmem_sound2[] = {
+static struct MemoryReadAddress readmem_sound2[] =
+{
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6000, 0x6000, sound_command2_r },
 	{ 0x7f00, 0x7fff, MRA_RAM },
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem_sound2[] = {
+static struct MemoryWriteAddress writemem_sound2[] =
+{
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6001, 0x6001, MWA_NOP }, /* ? */
 	{ 0x6002, 0x6002, sound_out2_w },
 	{ 0x7f00, 0x7fff, MWA_RAM },
 	{ -1 }
 };
+
 /*******************************************************************************/
-
-static struct GfxLayout char_layout = {
-	8,8,
-	0x200,
-	3,
-	{ 2*0x1000*8, 1*0x1000*8, 0*0x1000*8 },
-	{ 0,1,2,3, 4,5,6,7 },
-	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
-	8*8
-};
-
-static struct GfxLayout sprite_layout = {
-	32,32,
-	0x80,
-	3,
-	{ 2*0x4000*8, 1*0x4000*8, 0*0x4000*8 },
-	{
-		0,1,2,3,4,5,6,7,
-		64+0,64+1,64+2,64+3,64+4,64+5,64+6,64+7,
-		128+0,128+1,128+2,128+3,128+4,128+5,128+6,128+7,
-		64*3+0,64*3+1,64*3+2,64*3+3,64*3+4,64*3+5,64*3+6,64*3+7
-	},
-	{
-		0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-		1*256+0*8,1*256+1*8,1*256+2*8,1*256+3*8,1*256+4*8,1*256+5*8,1*256+6*8,1*256+7*8,
-		2*256+0*8,2*256+1*8,2*256+2*8,2*256+3*8,2*256+4*8,2*256+5*8,2*256+6*8,2*256+7*8,
-		3*256+0*8,3*256+1*8,3*256+2*8,3*256+3*8,3*256+4*8,3*256+5*8,3*256+6*8,3*256+7*8
-	},
-	4*256
-};
-
-static struct GfxLayout tile_layout = {
-	8,8,
-	0x400,
-	3,
-	{ 2*0x2000*8, 1*0x2000*8, 0*0x2000*8 },
-	{ 0,1,2,3,4,5,6,7 },
-	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
-	8*8
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 3, 0x00000, &tile_layout,		0x00, 32 },
-	{ 3, 0x12000, &char_layout,		0x00, 32 },
-	{ 3, 0x06000, &sprite_layout,	0x00, 32 },
-	{ -1 }
-};
-
-static struct MachineDriver machine_driver =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,
-			readmem,writemem,z80_readport, z80_writeport,
-			samurai_interrupt,1,
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound1,writemem_sound1,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound2,writemem_sound2,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
-
-	/* video hardware */
-	32*8, 32*8, { 0, 255, 8, 255-8 },
-	gfxdecodeinfo,
-	256,256,
-	tsamurai_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	tsamurai_vh_start,
-	0,
-	tsamurai_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
-
-
-
-ROM_START( tsamurai )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
-	ROM_LOAD( "01.3r",      0x0000, 0x4000, 0xd09c8609 )
-	ROM_LOAD( "02.3t",      0x4000, 0x4000, 0xd0f2221c )
-	ROM_LOAD( "03.3v",      0x8000, 0x4000, 0xeee8b0c9 )
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player#1 */
-	ROM_LOAD( "14.4e",      0x0000, 0x2000, 0x220e9c04 )
-	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player#2 */
-	ROM_LOAD( "13.4j",      0x0000, 0x2000, 0x73feb0e2 )
-
-	ROM_REGION_DISPOSE( 0x15000 )
-	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_LOAD( "a35-05.10b", 0x02000, 0x2000, 0x55a17b08 )
-	ROM_LOAD( "a35-06.10d", 0x04000, 0x2000, 0xf5ee6f8f )
-	ROM_LOAD( "a35-07.12h", 0x06000, 0x4000, 0x38fc349f ) // sprites
-	ROM_LOAD( "a35-08.12j", 0x0a000, 0x4000, 0xa07d6dc3 )
-	ROM_LOAD( "a35-09.12k", 0x0e000, 0x4000, 0xc0784a0e )
-	ROM_LOAD( "a35-10.11n", 0x12000, 0x1000, 0x0b5a0c45 ) // characters
-	ROM_LOAD( "a35-11.11q", 0x13000, 0x1000, 0x93346d75 )
-	ROM_LOAD( "a35-12.11r", 0x14000, 0x1000, 0xf4c69d8a )
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
-	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
-	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
-ROM_END
-
-ROM_START( tsamura2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
-	ROM_LOAD( "a35-01.3r",  0x0000, 0x4000, 0x282d96ad )
-	ROM_LOAD( "a35-02.3t",  0x4000, 0x4000, 0xe3fa0cfa )
-	ROM_LOAD( "a35-03.3v",  0x8000, 0x4000, 0x2fff1e0a )
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player#1 */
-	ROM_LOAD( "a35-14.4e",  0x0000, 0x2000, 0xf10aee3b )
-	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player#2 */
-	ROM_LOAD( "a35-13.4j",  0x0000, 0x2000, 0x3828f4d2 )
-
-	ROM_REGION_DISPOSE( 0x15000 )
-	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_LOAD( "a35-05.10b", 0x02000, 0x2000, 0x55a17b08 )
-	ROM_LOAD( "a35-06.10d", 0x04000, 0x2000, 0xf5ee6f8f )
-	ROM_LOAD( "a35-07.12h", 0x06000, 0x4000, 0x38fc349f ) // sprites
-	ROM_LOAD( "a35-08.12j", 0x0a000, 0x4000, 0xa07d6dc3 )
-	ROM_LOAD( "a35-09.12k", 0x0e000, 0x4000, 0xc0784a0e )
-	ROM_LOAD( "a35-10.11n", 0x12000, 0x1000, 0x0b5a0c45 ) // characters
-	ROM_LOAD( "a35-11.11q", 0x13000, 0x1000, 0x93346d75 )
-	ROM_LOAD( "a35-12.11r", 0x14000, 0x1000, 0xf4c69d8a )
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
-	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
-	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
-ROM_END
-
-ROM_START( nunchaku )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
-	ROM_LOAD( "nunchack.p1",	0x0000, 0x4000, 0x4385aca6 )
-	ROM_LOAD( "nunchack.p2",	0x4000, 0x4000, 0xf9beb72c )
-	ROM_LOAD( "nunchack.p3",	0x8000, 0x4000, 0xcde5d674 )
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player */
-	ROM_LOAD( "nunchack.m3",	0x0000, 0x2000, 0x9036c945 )
-	ROM_LOAD( "nunchack.m4",	0x2000, 0x2000, 0xe7206724 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player */
-	ROM_LOAD( "nunchack.m1",	0x0000, 0x2000, 0xb53d73f6 )
-	ROM_LOAD( "nunchack.m2",	0x2000, 0x2000, 0xf37d7c49 )
-
-	ROM_REGION_DISPOSE( 0x15000 )
-	ROM_LOAD( "nunchack.b1",	0x00000, 0x2000, 0x48c88fea ) // tiles
-	ROM_LOAD( "nunchack.b2",	0x02000, 0x2000, 0xeec818e4 )
-	ROM_LOAD( "nunchack.b3",	0x04000, 0x2000, 0x5f16473f )
-	ROM_LOAD( "nunchack.c1",	0x06000, 0x4000, 0x797cbc8a ) // sprites
-	ROM_LOAD( "nunchack.c2",	0x0a000, 0x4000, 0x701a0cc3 )
-	ROM_LOAD( "nunchack.c3",	0x0e000, 0x4000, 0xffb841fc )
-	ROM_LOAD( "nunchack.v1",	0x12000, 0x1000, 0x358a3714 ) // characters
-	ROM_LOAD( "nunchack.v2",	0x13000, 0x1000, 0x54c18d8e )
-	ROM_LOAD( "nunchack.v3",	0x14000, 0x1000, 0xf7ac203a )
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "nunchack.016", 0x000, 0x100, 0xa7b077d4 )
-	ROM_LOAD( "nunchack.017", 0x100, 0x100, 0x1c04c087 )
-	ROM_LOAD( "nunchack.018", 0x200, 0x100, 0xf5ce3c45 )
-ROM_END
-
-ROM_START( yamagchi )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
-	ROM_LOAD( "a38-01.3s",	0x0000, 0x4000, 0x1a6c8498 )
-	ROM_LOAD( "a38-02.3t",	0x4000, 0x4000, 0xfa66b396 )
-	ROM_LOAD( "a38-03.3v",	0x8000, 0x4000, 0x6a4239cf )
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player */
-	ROM_LOAD( "a38-14.4e",	0x0000, 0x2000, 0x5a758992 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player */
-	ROM_LOAD( "a38-13.4j",	0x0000, 0x2000, 0xa26445bb )
-
-	ROM_REGION_DISPOSE( 0x15000 )
-	ROM_LOAD( "a38-04.10a",	0x00000, 0x2000, 0x6bc69d4d ) // tiles
-	ROM_LOAD( "a38-05.10b",	0x02000, 0x2000, 0x047fb315 )
-	ROM_LOAD( "a38-06.10d",	0x04000, 0x2000, 0xa636afb2 )
-	ROM_LOAD( "a38-07.12h",	0x06000, 0x4000, 0xa3a521b6 ) // sprites
-	ROM_LOAD( "a38-08.12j",	0x0a000, 0x4000, 0x553afc66 )
-	ROM_LOAD( "a38-09.12l",	0x0e000, 0x4000, 0x574156ae )
-	ROM_LOAD( "a38-10.11n",	0x12000, 0x1000, 0x51ab4671 ) // characters
-	ROM_LOAD( "a38-11.11p",	0x13000, 0x1000, 0x27890169 )
-	ROM_LOAD( "a38-12.11r",	0x14000, 0x1000, 0xc98d5cf2 )
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "mb7114e.2k", 0x000, 0x100, 0xe7648110 )
-	ROM_LOAD( "mb7114e.2l", 0x100, 0x100, 0x7b874ee6 )
-	ROM_LOAD( "mb7114e.2m", 0x200, 0x100, 0x938d0fce )
-ROM_END
-
 
 INPUT_PORTS_START( tsamurai )
 	PORT_START
@@ -663,102 +458,250 @@ INPUT_PORTS_END
 
 
 
-struct GameDriver driver_tsamurai =  {
-	__FILE__,
-	0,
-	"tsamurai",
-	"Samurai Nihon-ichi (set 1)",
-	"1985",
-	"Taito",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_tsamurai,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_tsamurai,
-
-	0, 0, 0,
-	ROT90,
-	0,0
+static struct GfxLayout char_layout =
+{
+	8,8,
+	0x200,
+	3,
+	{ 2*0x1000*8, 1*0x1000*8, 0*0x1000*8 },
+	{ 0,1,2,3, 4,5,6,7 },
+	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
+	8*8
 };
 
-struct GameDriver driver_tsamura2 =  {
-	__FILE__,
-	&driver_tsamurai,
-	"tsamura2",
-	"Samurai Nihon-ichi (set 2)",
-	"1985",
-	"Taito",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_tsamura2,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_tsamurai,
-
-	0, 0, 0,
-	ROT90,
-	0,0
+static struct GfxLayout sprite_layout =
+{
+	32,32,
+	0x80,
+	3,
+	{ 2*0x4000*8, 1*0x4000*8, 0*0x4000*8 },
+	{
+		0,1,2,3,4,5,6,7,
+		64+0,64+1,64+2,64+3,64+4,64+5,64+6,64+7,
+		128+0,128+1,128+2,128+3,128+4,128+5,128+6,128+7,
+		64*3+0,64*3+1,64*3+2,64*3+3,64*3+4,64*3+5,64*3+6,64*3+7
+	},
+	{
+		0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
+		1*256+0*8,1*256+1*8,1*256+2*8,1*256+3*8,1*256+4*8,1*256+5*8,1*256+6*8,1*256+7*8,
+		2*256+0*8,2*256+1*8,2*256+2*8,2*256+3*8,2*256+4*8,2*256+5*8,2*256+6*8,2*256+7*8,
+		3*256+0*8,3*256+1*8,3*256+2*8,3*256+3*8,3*256+4*8,3*256+5*8,3*256+6*8,3*256+7*8
+	},
+	4*256
 };
 
-struct GameDriver driver_nunchaku =  {
-	__FILE__,
-	0,
-	"nunchaku",
-	"Nunchackun",
-	"1985",
-	"Taito",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_nunchaku,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nunchaku,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-	0,0
+static struct GfxLayout tile_layout =
+{
+	8,8,
+	0x400,
+	3,
+	{ 2*0x2000*8, 1*0x2000*8, 0*0x2000*8 },
+	{ 0,1,2,3,4,5,6,7 },
+	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
+	8*8
 };
 
-struct GameDriver driver_yamagchi =  {
-	__FILE__,
-	0,
-	"yamagchi",
-	"Go Go Mr. Yamaguchi / Yuke Yuke Yamaguchi-kun",
-	"1985",
-	"Taito",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_yamagchi,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_yamagchi,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tile_layout,   0, 32 },
+	{ REGION_GFX2, 0, &char_layout,   0, 32 },
+	{ REGION_GFX3, 0, &sprite_layout, 0, 32 },
+	{ -1 }
 };
 
+static struct MachineDriver machine_driver_tsamurai =
+{
+	{
+		{
+			CPU_Z80,
+			4000000,
+			readmem,writemem,z80_readport, z80_writeport,
+			samurai_interrupt,1,
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2000000,
+			readmem_sound1,writemem_sound1,0,0,
+			ignore_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2000000,
+			readmem_sound2,writemem_sound2,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1, /* CPU slices */
+	0, /* init machine */
+
+	/* video hardware */
+	32*8, 32*8, { 0, 255, 8, 255-8 },
+	gfxdecodeinfo,
+	256,256,
+	tsamurai_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	tsamurai_vh_start,
+	0,
+	tsamurai_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+
+
+ROM_START( tsamurai )
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "01.3r",      0x0000, 0x4000, 0xd09c8609 )
+	ROM_LOAD( "02.3t",      0x4000, 0x4000, 0xd0f2221c )
+	ROM_LOAD( "03.3v",      0x8000, 0x4000, 0xeee8b0c9 )
+
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player#1 */
+	ROM_LOAD( "14.4e",      0x0000, 0x2000, 0x220e9c04 )
+	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* Z80 code - sample player#2 */
+	ROM_LOAD( "13.4j",      0x0000, 0x2000, 0x73feb0e2 )
+
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
+	ROM_LOAD( "a35-05.10b", 0x02000, 0x2000, 0x55a17b08 )
+	ROM_LOAD( "a35-06.10d", 0x04000, 0x2000, 0xf5ee6f8f )
+
+	ROM_REGION( 0x03000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a35-10.11n", 0x00000, 0x1000, 0x0b5a0c45 ) // characters
+	ROM_LOAD( "a35-11.11q", 0x01000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "a35-12.11r", 0x02000, 0x1000, 0xf4c69d8a )
+
+	ROM_REGION( 0x0c000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a35-07.12h", 0x00000, 0x4000, 0x38fc349f ) // sprites
+	ROM_LOAD( "a35-08.12j", 0x04000, 0x4000, 0xa07d6dc3 )
+	ROM_LOAD( "a35-09.12k", 0x08000, 0x4000, 0xc0784a0e )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
+	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
+	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
+ROM_END
+
+ROM_START( tsamura2 )
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "a35-01.3r",  0x0000, 0x4000, 0x282d96ad )
+	ROM_LOAD( "a35-02.3t",  0x4000, 0x4000, 0xe3fa0cfa )
+	ROM_LOAD( "a35-03.3v",  0x8000, 0x4000, 0x2fff1e0a )
+
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player#1 */
+	ROM_LOAD( "a35-14.4e",  0x0000, 0x2000, 0xf10aee3b )
+	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* Z80 code - sample player#2 */
+	ROM_LOAD( "a35-13.4j",  0x0000, 0x2000, 0x3828f4d2 )
+
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
+	ROM_LOAD( "a35-05.10b", 0x02000, 0x2000, 0x55a17b08 )
+	ROM_LOAD( "a35-06.10d", 0x04000, 0x2000, 0xf5ee6f8f )
+
+	ROM_REGION( 0x03000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a35-10.11n", 0x00000, 0x1000, 0x0b5a0c45 ) // characters
+	ROM_LOAD( "a35-11.11q", 0x01000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "a35-12.11r", 0x02000, 0x1000, 0xf4c69d8a )
+
+	ROM_REGION( 0x0c000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a35-07.12h", 0x00000, 0x4000, 0x38fc349f ) // sprites
+	ROM_LOAD( "a35-08.12j", 0x04000, 0x4000, 0xa07d6dc3 )
+	ROM_LOAD( "a35-09.12k", 0x08000, 0x4000, 0xc0784a0e )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
+	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
+	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
+ROM_END
+
+ROM_START( nunchaku )
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "nunchack.p1", 0x0000, 0x4000, 0x4385aca6 )
+	ROM_LOAD( "nunchack.p2", 0x4000, 0x4000, 0xf9beb72c )
+	ROM_LOAD( "nunchack.p3", 0x8000, 0x4000, 0xcde5d674 )
+
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player */
+	ROM_LOAD( "nunchack.m3", 0x0000, 0x2000, 0x9036c945 )
+	ROM_LOAD( "nunchack.m4", 0x2000, 0x2000, 0xe7206724 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* Z80 code - sample player */
+	ROM_LOAD( "nunchack.m1", 0x0000, 0x2000, 0xb53d73f6 )
+	ROM_LOAD( "nunchack.m2", 0x2000, 0x2000, 0xf37d7c49 )
+
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "nunchack.b1", 0x00000, 0x2000, 0x48c88fea ) // tiles
+	ROM_LOAD( "nunchack.b2", 0x02000, 0x2000, 0xeec818e4 )
+	ROM_LOAD( "nunchack.b3", 0x04000, 0x2000, 0x5f16473f )
+
+	ROM_REGION( 0x03000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "nunchack.v1", 0x00000, 0x1000, 0x358a3714 ) // characters
+	ROM_LOAD( "nunchack.v2", 0x01000, 0x1000, 0x54c18d8e )
+	ROM_LOAD( "nunchack.v3", 0x02000, 0x1000, 0xf7ac203a )
+
+	ROM_REGION( 0x0c000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "nunchack.c1", 0x00000, 0x4000, 0x797cbc8a ) // sprites
+	ROM_LOAD( "nunchack.c2", 0x04000, 0x4000, 0x701a0cc3 )
+	ROM_LOAD( "nunchack.c3", 0x08000, 0x4000, 0xffb841fc )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "nunchack.016", 0x000, 0x100, 0xa7b077d4 )
+	ROM_LOAD( "nunchack.017", 0x100, 0x100, 0x1c04c087 )
+	ROM_LOAD( "nunchack.018", 0x200, 0x100, 0xf5ce3c45 )
+ROM_END
+
+ROM_START( yamagchi )
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "a38-01.3s", 0x0000, 0x4000, 0x1a6c8498 )
+	ROM_LOAD( "a38-02.3t", 0x4000, 0x4000, 0xfa66b396 )
+	ROM_LOAD( "a38-03.3v", 0x8000, 0x4000, 0x6a4239cf )
+
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player */
+	ROM_LOAD( "a38-14.4e", 0x0000, 0x2000, 0x5a758992 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* Z80 code - sample player */
+	ROM_LOAD( "a38-13.4j", 0x0000, 0x2000, 0xa26445bb )
+
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a38-04.10a", 0x00000, 0x2000, 0x6bc69d4d ) // tiles
+	ROM_LOAD( "a38-05.10b", 0x02000, 0x2000, 0x047fb315 )
+	ROM_LOAD( "a38-06.10d", 0x04000, 0x2000, 0xa636afb2 )
+
+	ROM_REGION( 0x03000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a38-10.11n", 0x00000, 0x1000, 0x51ab4671 ) // characters
+	ROM_LOAD( "a38-11.11p", 0x01000, 0x1000, 0x27890169 )
+	ROM_LOAD( "a38-12.11r", 0x02000, 0x1000, 0xc98d5cf2 )
+
+	ROM_REGION( 0x0c000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a38-07.12h", 0x00000, 0x4000, 0xa3a521b6 ) // sprites
+	ROM_LOAD( "a38-08.12j", 0x04000, 0x4000, 0x553afc66 )
+	ROM_LOAD( "a38-09.12l", 0x08000, 0x4000, 0x574156ae )
+
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "mb7114e.2k", 0x000, 0x100, 0xe7648110 )
+	ROM_LOAD( "mb7114e.2l", 0x100, 0x100, 0x7b874ee6 )
+	ROM_LOAD( "mb7114e.2m", 0x200, 0x100, 0x938d0fce )
+ROM_END
+
+
+
+GAME( 1985, tsamurai, 0,        tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 1)" )
+GAME( 1985, tsamura2, tsamurai, tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 2)" )
+GAMEX(1985, nunchaku, 0,        tsamurai, nunchaku, 0, ROT90, "Taito", "Nunchackun", GAME_WRONG_COLORS )
+GAMEX(1985, yamagchi, 0,        tsamurai, yamagchi, 0, ROT90, "Taito", "Go Go Mr. Yamaguchi / Yuke Yuke Yamaguchi-kun", GAME_IMPERFECT_COLORS )

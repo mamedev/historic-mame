@@ -1,3 +1,10 @@
+/***************************************************************************
+
+Toki
+
+driver by Jarek Parchanski
+
+***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
@@ -274,10 +281,10 @@ static struct GfxLayout toki_spritelayout =
 
 static struct GfxDecodeInfo toki_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &toki_charlayout,  16*16, 16 },
-	{ 1, 0x020000, &toki_spritelayout, 0*16, 16 },
-	{ 1, 0x120000, &toki_tilelayout,  32*16, 16 },
-	{ 1, 0x1a0000, &toki_tilelayout,  48*16, 16 },
+	{ REGION_GFX1, 0, &toki_charlayout,  16*16, 16 },
+	{ REGION_GFX2, 0, &toki_spritelayout, 0*16, 16 },
+	{ REGION_GFX3, 0, &toki_tilelayout,  32*16, 16 },
+	{ REGION_GFX4, 0, &toki_tilelayout,  48*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -322,10 +329,10 @@ static struct GfxLayout tokib_spriteslayout =
 
 static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tokib_charlayout,    16*16, 16 },
-	{ 1, 0x020000, &tokib_spriteslayout,  0*16, 16 },
-	{ 1, 0x120000, &tokib_tilelayout,	 32*16, 16 },
-	{ 1, 0x1a0000, &tokib_tilelayout,	 48*16, 16 },
+	{ REGION_GFX1, 0, &tokib_charlayout,    16*16, 16 },
+	{ REGION_GFX2, 0, &tokib_spriteslayout,  0*16, 16 },
+	{ REGION_GFX3, 0, &tokib_tilelayout,    32*16, 16 },
+	{ REGION_GFX4, 0, &tokib_tilelayout,    48*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -456,168 +463,210 @@ static struct MachineDriver machine_driver_tokib =
 ***************************************************************************/
 
 ROM_START( toki )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD_ODD ( "tokijp.004",   0x00000, 0x20000, 0x54a45e12 )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION_DISPOSE(0x220000)
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
-	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
-	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
-	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
-	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
-	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
-	ROM_REGION(0x20000)	/* samples */
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION(0x10000)	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
 ROM_START( toki2 )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD_ODD ( "4c.10k",       0x00000, 0x20000, 0xb2c345c5 )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION_DISPOSE(0x220000)
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
-	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
-	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
-	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
-	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
-	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
-	ROM_REGION(0x20000)	/* samples */
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION(0x10000)	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
 ROM_START( toki3 )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "l10_6.bin",    0x00000, 0x20000, 0x94015d91 )
 	ROM_LOAD_ODD ( "k10_4e.bin",   0x00000, 0x20000, 0x531bd3ef )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION_DISPOSE(0x220000)
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
-	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
-	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
-	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
-	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
-	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
-	ROM_REGION(0x20000)	/* samples */
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION(0x10000)	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
 ROM_START( tokiu )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "6b.10m",       0x00000, 0x20000, 0x3674d9fe )
 	ROM_LOAD_ODD ( "14.10k",       0x00000, 0x20000, 0xbfdd48af )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION_DISPOSE(0x220000)
-	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
-	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
-	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
-	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
-	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
-	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
-	ROM_REGION(0x20000)	/* samples */
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.ob1",     0x000000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x080000, 0x80000, 0xfa687718 )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk1",     0x000000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
 
-	ROM_REGION(0x10000)	/* unknown */
+	ROM_REGION( 0x10000, REGION_USER1 )	/* unknown */
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
 ROM_START( tokib )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "toki.e3",      0x00000, 0x20000, 0xae9b3da4 )
 	ROM_LOAD_ODD ( "toki.e5",      0x00000, 0x20000, 0x66a5a1d6 )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION_DISPOSE(0x220000)
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for code + 32k for banked data */
+	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
+	ROM_CONTINUE(             0x10000, 0x8000 )	/* banked at 8000-bfff */
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )	/* chars */
 	ROM_LOAD( "toki.e13",     0x008000, 0x08000, 0x052ad275 )
 	ROM_LOAD( "toki.e22",     0x010000, 0x08000, 0x04dcdc21 )
 	ROM_LOAD( "toki.e7",      0x018000, 0x08000, 0x70729106 )
-	ROM_LOAD( "toki.e26",     0x020000, 0x20000, 0xa8ba71fc )	/* sprites */
-	ROM_LOAD( "toki.e28",     0x040000, 0x20000, 0x29784948 )
-	ROM_LOAD( "toki.e34",     0x060000, 0x20000, 0xe5f6e19b )
-	ROM_LOAD( "toki.e36",     0x080000, 0x20000, 0x96e8db8b )
-	ROM_LOAD( "toki.e30",     0x0a0000, 0x20000, 0x770d2b1b )
-	ROM_LOAD( "toki.e32",     0x0c0000, 0x20000, 0xc289d246 )
-	ROM_LOAD( "toki.e38",     0x0e0000, 0x20000, 0x87f4e7fb )
-	ROM_LOAD( "toki.e40",     0x100000, 0x20000, 0x96e87350 )
-	ROM_LOAD( "toki.e23",     0x120000, 0x10000, 0xfeb13d35 )	/* tiles 1 */
-	ROM_LOAD( "toki.e24",     0x130000, 0x10000, 0x5b365637 )
-	ROM_LOAD( "toki.e15",     0x140000, 0x10000, 0x617c32e6 )
-	ROM_LOAD( "toki.e16",     0x150000, 0x10000, 0x2a11c0f0 )
-	ROM_LOAD( "toki.e17",     0x160000, 0x10000, 0xfbc3d456 )
-	ROM_LOAD( "toki.e18",     0x170000, 0x10000, 0x4c2a72e1 )
-	ROM_LOAD( "toki.e8",      0x180000, 0x10000, 0x46a1b821 )
-	ROM_LOAD( "toki.e9",      0x190000, 0x10000, 0x82ce27f6 )
-	ROM_LOAD( "toki.e25",     0x1a0000, 0x10000, 0x63026cad )	/* tiles 2 */
-	ROM_LOAD( "toki.e20",     0x1b0000, 0x10000, 0xa7f2ce26 )
-	ROM_LOAD( "toki.e11",     0x1c0000, 0x10000, 0x48989aa0 )
-	ROM_LOAD( "toki.e12",     0x1d0000, 0x10000, 0xc2ad9342 )
-	ROM_LOAD( "toki.e19",     0x1e0000, 0x10000, 0x6cd22b18 )
-	ROM_LOAD( "toki.e14",     0x1f0000, 0x10000, 0x859e313a )
-	ROM_LOAD( "toki.e10",     0x200000, 0x10000, 0xe15c1d0f )
-	ROM_LOAD( "toki.e6",      0x210000, 0x10000, 0x6f4b878a )
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for code + 32k for banked data */
-	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
-	ROM_CONTINUE(             0x10000, 0x8000 )	/* banked at 8000-bfff */
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.e26",     0x000000, 0x20000, 0xa8ba71fc )	/* sprites */
+	ROM_LOAD( "toki.e28",     0x020000, 0x20000, 0x29784948 )
+	ROM_LOAD( "toki.e34",     0x040000, 0x20000, 0xe5f6e19b )
+	ROM_LOAD( "toki.e36",     0x060000, 0x20000, 0x96e8db8b )
+	ROM_LOAD( "toki.e30",     0x080000, 0x20000, 0x770d2b1b )
+	ROM_LOAD( "toki.e32",     0x0a0000, 0x20000, 0xc289d246 )
+	ROM_LOAD( "toki.e38",     0x0c0000, 0x20000, 0x87f4e7fb )
+	ROM_LOAD( "toki.e40",     0x0e0000, 0x20000, 0x96e87350 )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.e23",     0x000000, 0x10000, 0xfeb13d35 )	/* tiles 1 */
+	ROM_LOAD( "toki.e24",     0x010000, 0x10000, 0x5b365637 )
+	ROM_LOAD( "toki.e15",     0x020000, 0x10000, 0x617c32e6 )
+	ROM_LOAD( "toki.e16",     0x030000, 0x10000, 0x2a11c0f0 )
+	ROM_LOAD( "toki.e17",     0x040000, 0x10000, 0xfbc3d456 )
+	ROM_LOAD( "toki.e18",     0x050000, 0x10000, 0x4c2a72e1 )
+	ROM_LOAD( "toki.e8",      0x060000, 0x10000, 0x46a1b821 )
+	ROM_LOAD( "toki.e9",      0x070000, 0x10000, 0x82ce27f6 )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "toki.e25",     0x000000, 0x10000, 0x63026cad )	/* tiles 2 */
+	ROM_LOAD( "toki.e20",     0x010000, 0x10000, 0xa7f2ce26 )
+	ROM_LOAD( "toki.e11",     0x020000, 0x10000, 0x48989aa0 )
+	ROM_LOAD( "toki.e12",     0x030000, 0x10000, 0xc2ad9342 )
+	ROM_LOAD( "toki.e19",     0x040000, 0x10000, 0x6cd22b18 )
+	ROM_LOAD( "toki.e14",     0x050000, 0x10000, 0x859e313a )
+	ROM_LOAD( "toki.e10",     0x060000, 0x10000, 0xe15c1d0f )
+	ROM_LOAD( "toki.e6",      0x070000, 0x10000, 0x6f4b878a )
 ROM_END
 
 
 
-void tokib_rom_decode (void)
+void init_tokib(void)
 {
 	unsigned char *temp = malloc (65536 * 2);
 	int i, offs;
 
 	/* invert the sprite data in the ROMs */
-	for (i = 0x020000; i < 0x120000; i++)
-		memory_region(1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 
 	/* merge background tile graphics together */
 	if (temp)
 	{
-		for (offs = 0x120000; offs < 0x220000; offs += 0x20000)
+		for (offs = 0; offs < memory_region_length(REGION_GFX3); offs += 0x20000)
 		{
-			unsigned char *base = &memory_region(1)[offs];
+			unsigned char *base = &memory_region(REGION_GFX3)[offs];
+			memcpy (temp, base, 65536 * 2);
+			for (i = 0; i < 16; i++)
+			{
+				memcpy (&base[0x00000 + i * 0x800], &temp[0x0000 + i * 0x2000], 0x800);
+				memcpy (&base[0x10000 + i * 0x800], &temp[0x0800 + i * 0x2000], 0x800);
+				memcpy (&base[0x08000 + i * 0x800], &temp[0x1000 + i * 0x2000], 0x800);
+				memcpy (&base[0x18000 + i * 0x800], &temp[0x1800 + i * 0x2000], 0x800);
+			}
+		}
+		for (offs = 0; offs < memory_region_length(REGION_GFX4); offs += 0x20000)
+		{
+			unsigned char *base = &memory_region(REGION_GFX4)[offs];
 			memcpy (temp, base, 65536 * 2);
 			for (i = 0; i < 16; i++)
 			{
@@ -634,117 +683,8 @@ void tokib_rom_decode (void)
 
 
 
-struct GameDriver driver_toki =
-{
-	__FILE__,
-	0,
-	"toki",
-	"Toki (set 1)",
-	"1989",
-	"Tad",
-	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	0,
-	&machine_driver_toki,
-	0,
-
-	rom_toki,
-	0, 0,
-	0,
-	0,
-	input_ports_toki,
-	0, 0, 0, 	  	/* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_toki2 =
-{
-	__FILE__,
-	&driver_toki,
-	"toki2",
-	"Toki (set 2)",
-	"1989",
-	"Tad",
-	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	0,
-	&machine_driver_toki,
-	0,
-
-	rom_toki2,
-	0, 0,
-	0,
-	0,
-	input_ports_toki,
-	0, 0, 0, 	  	/* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_toki3 =
-{
-	__FILE__,
-	&driver_toki,
-	"toki3",
-	"Toki (set 3)",
-	"1989",
-	"Tad",
-	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	0,
-	&machine_driver_toki,
-	0,
-
-	rom_toki3,
-	0, 0,
-	0,
-	0,
-	input_ports_toki,
-	0, 0, 0, 	  	/* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_tokiu =
-{
-	__FILE__,
-	&driver_toki,
-	"tokiu",
-	"Toki (US)",
-	"1989",
-	"Tad (Fabtek license)",
-	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	0,
-	&machine_driver_toki,
-	0,
-
-	rom_tokiu,
-	0, 0,
-	0,
-	0,
-	input_ports_toki,
-	0, 0, 0, 	  	/* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_tokib =
-{
-	__FILE__,
-	&driver_toki,
-	"tokib",
-	"Toki (bootleg)",
-	"1989",
-	"bootleg",
-	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	0,
-	&machine_driver_tokib,
-	tokib_rom_decode,
-
-	rom_tokib,
-	0, 0,
-	0,
-	0,
-	input_ports_toki,
-	0, 0, 0, 	  	/* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAMEX(1989, toki,  0,    toki,  toki, 0,     ROT0, "Tad", "Toki (set 1)", GAME_NOT_WORKING )
+GAMEX(1989, toki2, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 2)", GAME_NOT_WORKING )
+GAMEX(1989, toki3, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 3)", GAME_NOT_WORKING )
+GAMEX(1989, tokiu, toki, toki,  toki, 0,     ROT0, "Tad (Fabtek license)", "Toki (US)", GAME_NOT_WORKING )
+GAME( 1989, tokib, toki, tokib, toki, tokib, ROT0, "bootleg", "Toki (bootleg)" )

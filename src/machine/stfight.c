@@ -200,7 +200,7 @@ static int adpcm_data_end;
 void stfight_adpcm_int( int data )
 {
 	static int toggle;
-	unsigned char *SAMPLES = memory_region(2);
+	unsigned char *SAMPLES = memory_region(REGION_SOUND1);
 	int adpcm_data = SAMPLES[adpcm_data_offs & 0x7fff];
 
     // finished playing sample?

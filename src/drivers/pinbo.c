@@ -425,44 +425,44 @@ static struct MachineDriver machine_driver_pinbo =
 ***************************************************************************/
 
 ROM_START( pinbo )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "rom2.b7",     0x2000, 0x2000, 0x9a185338 )
 	ROM_LOAD( "rom3.e7",     0x6000, 0x2000, 0x1cd1b3bd )
 	ROM_LOAD( "rom4.h7",     0x8000, 0x2000, 0xba043fa7 )
 	ROM_LOAD( "rom5.j7",     0xa000, 0x2000, 0xe71046c4 )
 	ROM_RELOAD(              0xe000, 0x2000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64K for sound */
+	ROM_REGION( 0x10000, REGION_CPU2 )  /* 64K for sound */
 	ROM_LOAD( "rom1.s8",     0x0000, 0x2000, 0xca45a1be )
 
-	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom6.a1",     0x0000, 0x4000, 0x74fe8e98 )
 	ROM_LOAD( "rom8.c1",     0x4000, 0x4000, 0x5a800fe7 )
 	ROM_LOAD( "rom7.d1",     0x8000, 0x4000, 0x327a3c21 )
 
-	ROM_REGIONX( 0x00300, REGION_PROMS ) /* Color PROMs */
+	ROM_REGION( 0x00300, REGION_PROMS ) /* Color PROMs */
 	ROM_LOAD( "red.l10",     0x0000, 0x0100, 0xe6c9ba52 )
 	ROM_LOAD( "green.k10",   0x0100, 0x0100, 0x1bf2d335 )
 	ROM_LOAD( "blue.n10",    0x0200, 0x0100, 0xe41250ad )
 ROM_END
 
 ROM_START( pinbos )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b4.bin",     0x2000, 0x2000, 0xd9452d4f )
 	ROM_LOAD( "b5.bin",     0x6000, 0x2000, 0xf80b204c )
 	ROM_LOAD( "b6.bin",     0x8000, 0x2000, 0xae967d83 )
 	ROM_LOAD( "b7.bin",     0xa000, 0x2000, 0x7a584b4e )
 	ROM_RELOAD(             0xe000, 0x2000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64K for sound */
+	ROM_REGION( 0x10000, REGION_CPU2 )  /* 64K for sound */
 	ROM_LOAD( "b8.bin",     0x0000, 0x2000, 0x32d1df14 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom6.a1",     0x0000, 0x4000, 0x74fe8e98 )
 	ROM_LOAD( "rom8.c1",     0x4000, 0x4000, 0x5a800fe7 )
 	ROM_LOAD( "rom7.d1",     0x8000, 0x4000, 0x327a3c21 )
 
-	ROM_REGIONX( 0x00300, REGION_PROMS ) /* Color PROMs */
+	ROM_REGION( 0x00300, REGION_PROMS ) /* Color PROMs */
 	ROM_LOAD( "red.l10",     0x0000, 0x0100, 0xe6c9ba52 )
 	ROM_LOAD( "green.k10",   0x0100, 0x0100, 0x1bf2d335 )
 	ROM_LOAD( "blue.n10",    0x0200, 0x0100, 0xe41250ad )

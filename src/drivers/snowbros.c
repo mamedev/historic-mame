@@ -308,14 +308,14 @@ static struct MachineDriver machine_driver_snowbros =
 ***************************************************************************/
 
 ROM_START( snowbros )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "sn6.bin",  0x00000, 0x20000, 0x4899ddcf )
 	ROM_LOAD_ODD ( "sn5.bin",  0x00000, 0x20000, 0xad310d3f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
@@ -323,14 +323,14 @@ ROM_START( snowbros )
 ROM_END
 
 ROM_START( snowbroa )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3a",  0x00000, 0x20000, 0x10cb37e1 )
 	ROM_LOAD_ODD ( "snowbros.2a",  0x00000, 0x20000, 0xab91cc1e )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
@@ -338,14 +338,14 @@ ROM_START( snowbroa )
 ROM_END
 
 ROM_START( snowbrob )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "sbros3-a",     0x00000, 0x20000, 0x301627d6 )
 	ROM_LOAD_ODD ( "sbros2-a",     0x00000, 0x20000, 0xf6689f41 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
@@ -353,14 +353,14 @@ ROM_START( snowbrob )
 ROM_END
 
 ROM_START( snowbroj )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3",   0x00000, 0x20000, 0x3f504f9e )
 	ROM_LOAD_ODD ( "snowbros.2",   0x00000, 0x20000, 0x854b02bc )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* The gfx ROM (snowbros.1) was bad, I'm using the ones from the other sets. */
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )

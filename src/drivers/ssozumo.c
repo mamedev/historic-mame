@@ -303,7 +303,7 @@ static struct MachineDriver machine_driver_ssozumo =
 
 
 ROM_START( ssozumo )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1 )
 	/* Main Program ROMs */
 	ROM_LOAD( "ic61.g01",	0x06000, 0x2000, 0x86968f46 )	// m1
 	ROM_LOAD( "ic60.g11",	0x08000, 0x2000, 0x1a5143dd )	// m2
@@ -311,7 +311,7 @@ ROM_START( ssozumo )
 	ROM_LOAD( "ic58.g31",	0x0c000, 0x2000, 0x0ee43a78 )	// m4
 	ROM_LOAD( "ic57.g41",	0x0e000, 0x2000, 0xac77aa4c )	// m5
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2 )
 	/* Sound Program & Voice Sample ROMs*/
 	ROM_LOAD( "ic47.g50",	0x04000, 0x2000, 0xb64ec829 )	// a1
 	ROM_LOAD( "ic46.g60",	0x06000, 0x2000, 0x630d7380 )	// a2
@@ -320,19 +320,19 @@ ROM_START( ssozumo )
 	ROM_LOAD( "ic43.g90",	0x0c000, 0x2000, 0x20262064 )	// a5
 	ROM_LOAD( "ic42.ga0",	0x0e000, 0x2000, 0x98d7e998 )	// a6
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* Character ROMs */
 	ROM_LOAD( "ic22.gq0",	0x00000, 0x2000, 0xb4c7e612 )	// c1
 	ROM_LOAD( "ic23.gr0",	0x02000, 0x2000, 0x90bb9fda )	// c2
 	ROM_LOAD( "ic21.gs0",	0x04000, 0x2000, 0xd8cd5c78 )	// c3
 
-	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* tile set ROMs */
 	ROM_LOAD( "ic69.gt0",	0x00000, 0x2000, 0x771116ca )	// t1
 	ROM_LOAD( "ic59.gu0",	0x02000, 0x2000, 0x68035bfd )	// t2
 	ROM_LOAD( "ic81.gv0",	0x04000, 0x2000, 0xcdda1f9f )	// t3
 
-	ROM_REGIONX( 0x1e000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1e000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	/* sprites ROMs */
 	ROM_LOAD( "ic06.gg0",	0x00000, 0x2000, 0xd2342c50 )	// s1a
 	ROM_LOAD( "ic05.gh0",	0x02000, 0x2000, 0x14a3cb10 )	// s1b
@@ -350,7 +350,7 @@ ROM_START( ssozumo )
 	ROM_LOAD( "ic41.ge0",	0x1a000, 0x2000, 0x935578d0 )	// s3d
 	ROM_LOAD( "ic40.gf0",	0x1c000, 0x2000, 0x5a3bf1ba )	// s3e
 
-	ROM_REGIONX( 0x0080, REGION_PROMS )
+	ROM_REGION( 0x0080, REGION_PROMS )
 	ROM_LOAD( "ic33.gz0",	0x00000, 0x0020, 0x523d29ad )	/* char palette red and green components */
 	ROM_LOAD( "ic30.gz2",	0x00020, 0x0020, 0x0de202e1 )	/* tile palette red and green components */
 	ROM_LOAD( "ic32.gz1",	0x00040, 0x0020, 0x6fbff4d2 )	/* char palette blue component */

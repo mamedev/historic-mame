@@ -1,3 +1,8 @@
+/***************************************************************************
+
+Xexex
+
+***************************************************************************/
 
 #include "driver.h"
 #include "cpuintrf.h"
@@ -54,11 +59,11 @@ static void nvram_handler(void *file,int read_or_write)
 
 static void gfx_init(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_4(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_4(REGION_GFX2);
 }
 
-static void machine_init(void)
+static void init_xexex(void)
 {
 	cur_rombank = 0;
 
@@ -162,7 +167,7 @@ static int sound_status_r(int offset)
 
 static void sound_bankswitch_w(int offset, int data)
 {
-	cpu_setbank(3, memory_region(2) + 0x10000 + (data&7)*0x2000);
+	cpu_setbank(3, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x2000);
 }
 
 static int back_ctrla_r(int offset)
@@ -199,7 +204,7 @@ static int backrom_r(int offset)
 {
 	if(errorlog && !(cur_back_ctrla & 1))
 		fprintf(errorlog, "Back: Reading rom memory with enable=0\n");
-	return *(memory_region(3) + 2048*cur_back_select + (offset>>2));
+	return *(memory_region(REGION_GFX3) + 2048*cur_back_select + (offset>>2));
 }
 
 
@@ -319,11 +324,11 @@ static struct GfxLayout char_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &char_layout, 0, 128 },
+	{ REGION_GFX1, 0x000000, &char_layout, 0, 128 },
 	{ -1 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_xexex =
 {
 	{
 		{
@@ -369,50 +374,30 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( xexex )
-	ROM_REGIONX( 0x180000, REGION_CPU1 )
-	ROM_LOAD_EVEN("xex_a01.rom", 0x000000,  0x40000, 0x3ebcb066 )
-	ROM_LOAD_ODD ("xex_a02.rom", 0x000000,  0x40000, 0x36ea7a48 )
-	ROM_LOAD_EVEN("xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
-	ROM_LOAD_ODD ("xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
+	ROM_REGION( 0x180000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "xex_a01.rom", 0x000000,  0x40000, 0x3ebcb066 )
+	ROM_LOAD_ODD ( "xex_a02.rom", 0x000000,  0x40000, 0x36ea7a48 )
+	ROM_LOAD_EVEN( "xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
+	ROM_LOAD_ODD ( "xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
 
-	ROM_REGION( 0x200000 )
-	ROM_LOAD     ("xex_b14.rom", 0x000000, 0x100000, 0x02a44bfa )
-	ROM_LOAD     ("xex_b13.rom", 0x100000, 0x100000, 0x633c8eb5 )
+	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_LOAD( "xex_a05.rom", 0x000000, 0x020000, 0x0e33d6ec )
+	ROM_RELOAD(              0x010000, 0x020000 )
 
-	ROM_REGION(0x400000)
-	ROM_LOAD     ("xex_b12.rom", 0x000000, 0x100000, 0x08d611b0 )
-	ROM_LOAD     ("xex_b11.rom", 0x100000, 0x100000, 0xa26f7507 )
-	ROM_LOAD     ("xex_b10.rom", 0x200000, 0x100000, 0xee31db8d )
-	ROM_LOAD     ("xex_b09.rom", 0x300000, 0x100000, 0x88f072ef )
+	ROM_REGION( 0x200000, REGION_GFX1 )
+	ROM_LOAD( "xex_b14.rom", 0x000000, 0x100000, 0x02a44bfa )
+	ROM_LOAD( "xex_b13.rom", 0x100000, 0x100000, 0x633c8eb5 )
 
-	ROM_REGION(0x80000)
-	ROM_LOAD     ("xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
+	ROM_REGION( 0x400000, REGION_GFX2 )
+	ROM_LOAD( "xex_b12.rom", 0x000000, 0x100000, 0x08d611b0 )
+	ROM_LOAD( "xex_b11.rom", 0x100000, 0x100000, 0xa26f7507 )
+	ROM_LOAD( "xex_b10.rom", 0x200000, 0x100000, 0xee31db8d )
+	ROM_LOAD( "xex_b09.rom", 0x300000, 0x100000, 0x88f072ef )
 
-	ROM_REGION(0x30000)
-	ROM_LOAD     ("xex_a05.rom", 0x000000, 0x020000, 0x0e33d6ec )
-	ROM_RELOAD   (               0x010000, 0x020000 )
-
+	ROM_REGION( 0x80000, REGION_GFX3 )
+	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
 ROM_END
 
-struct GameDriver driver_xexex =
-{
-	__FILE__,
-	0,
-	"xexex",
-	"Xexex",
-	"1991",
-	"Konami",
-	"",
-	0,
-	&machine_driver,
-	machine_init,
 
-	rom_xexex,
-	0,0,0,0,
 
-	input_ports_xexex,
-
-	0,0,0,
-	ORIENTATION_FLIP_Y,
-	0,0
-};
+GAME( 1991, xexex, 0, xexex, xexex, xexex, ORIENTATION_FLIP_Y, "Konami", "Xexex" )

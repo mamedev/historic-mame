@@ -549,7 +549,7 @@ static struct MachineDriver machine_driver_gypsyjug =
 ***************************************************************************/
 
 ROM_START( deadeye )
-	ROM_REGIONX( 0x08000, REGION_CPU1 ) 	/* 32K for code */
+	ROM_REGION( 0x08000, REGION_CPU1 ) 	/* 32K for code */
 	ROM_LOAD( "de1.8h",       0x0000, 0x0400, 0xbd09e4dc )
 	ROM_LOAD( "de2.9h",       0x0400, 0x0400, 0xb89edec3 )
 	ROM_LOAD( "de3.10h",      0x0800, 0x0400, 0xacf24438 )
@@ -557,48 +557,48 @@ ROM_START( deadeye )
 	ROM_LOAD( "de5.12h",      0x1400, 0x0400, 0x7bdb535c )
 	ROM_LOAD( "de6.13h",      0x1800, 0x0400, 0x847f9467 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "de_char.15e",  0x0000, 0x0400, 0xb032bd8d )
 
-	ROM_REGIONX( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "de_mov1.5a",   0x0000, 0x0400, 0xc046b4c6 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "de_mov2.13a",  0x0000, 0x0400, 0xb89c5df9 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	/* empty */
-	ROM_REGIONX( 0x0400, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX5 | REGIONFLAG_DISPOSE )
 	/* empty */
 
-	ROM_REGIONX( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
+	ROM_REGION( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "de_snd",       0x0000, 0x0400, 0xc10a1b1a )
 ROM_END
 
 ROM_START( gypsyjug )
-	ROM_REGIONX( 0x08000, REGION_CPU1 ) 	/* 32K for code */
+	ROM_REGION( 0x08000, REGION_CPU1 ) 	/* 32K for code */
 	ROM_LOAD( "gj.1b",        0x0000, 0x0400, 0xf6a71d9f )
 	ROM_LOAD( "gj.2b",        0x0400, 0x0400, 0x94c14455 )
 	ROM_LOAD( "gj.3b",        0x0800, 0x0400, 0x87ee0490 )
 	ROM_LOAD( "gj.4b",        0x1000, 0x0400, 0xdca519c8 )
 	ROM_LOAD( "gj.5b",        0x1400, 0x0400, 0x7d83f9d0 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gj.e15",       0x0000, 0x0400, 0xadb25e13 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gj.a",         0x0000, 0x0400, 0xd3725193 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	/* empty (copied from 2) */
 
-	ROM_REGIONX( 0x0400, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	/* empty (filled with fake data) */
 
-	ROM_REGIONX( 0x0400, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX5 | REGIONFLAG_DISPOSE )
 	/* empty (filled with fake data) */
 
-	ROM_REGIONX( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
+	ROM_REGION( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "gj.a4s",       0x0000, 0x0400, 0x17a116bc )
 	ROM_LOAD( "gj.a5s",       0x0400, 0x0400, 0xfc23ae09 )
 	ROM_LOAD( "gj.a6s",       0x0800, 0x0400, 0x9e7bd71e )

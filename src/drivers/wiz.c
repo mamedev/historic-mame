@@ -513,20 +513,20 @@ MACHINE_DRIVER(stinger);
 ***************************************************************************/
 
 ROM_START( wiz )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ic07_01.bin",  0x0000, 0x4000, 0xc05f2c78 )
 	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
 	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "ic12_04.bin",  0x0000, 0x2000, 0x8969acdd )
 	ROM_LOAD( "ic13_05.bin",  0x2000, 0x2000, 0x2868e6a5 )
 	ROM_LOAD( "ic14_06.bin",  0x4000, 0x2000, 0xb398e142 )
 
-	ROM_REGIONX( 0xc000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0xc000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "ic03_07.bin",  0x0000, 0x2000, 0x297c02fc )
 	ROM_CONTINUE(		      0x6000, 0x2000  )
 	ROM_LOAD( "ic02_08.bin",  0x2000, 0x2000, 0xede77d37 )
@@ -534,27 +534,27 @@ ROM_START( wiz )
 	ROM_LOAD( "ic01_09.bin",  0x4000, 0x2000, 0x4d86b041 )
 	ROM_CONTINUE(		      0xa000, 0x2000  )
 
-	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS )
 	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0100, 0x2dd52fb2 ) /* palette red component */
 	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
 	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
 ROM_END
 
 ROM_START( wizt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "wiz1.bin",  	  0x0000, 0x4000, 0x5a6d3c60 )
 	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
 	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "wiz4.bin",     0x0000, 0x2000, 0xe6c636b3 )
 	ROM_LOAD( "wiz5.bin",     0x2000, 0x2000, 0x77986058 )
 	ROM_LOAD( "wiz6.bin",     0x4000, 0x2000, 0xf6970b23 )
 
-	ROM_REGIONX( 0xc000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0xc000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "wiz7.bin",     0x0000, 0x2000, 0x601f2f3f )
 	ROM_CONTINUE(		      0x6000, 0x2000  )
 	ROM_LOAD( "wiz8.bin",     0x2000, 0x2000, 0xf5ab982d )
@@ -562,88 +562,88 @@ ROM_START( wizt )
 	ROM_LOAD( "wiz9.bin",     0x4000, 0x2000, 0xf6c662e2 )
 	ROM_CONTINUE(		      0xa000, 0x2000  )
 
-	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS )
 	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0100, 0x2dd52fb2 ) /* palette red component */
 	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
 	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
 ROM_END
 
 ROM_START( stinger )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )	/* encrypted */
 	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )	/* encrypted */
 	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )	/* encrypted */
 	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )	/* encrypted */
 	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )	/* encrypted */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "7.bin",        0x0000, 0x2000, 0x775489be )
 	ROM_LOAD( "8.bin",        0x2000, 0x2000, 0x43c61b3f )
 	ROM_LOAD( "9.bin",        0x4000, 0x2000, 0xc9ed8fc7 )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "10.bin",       0x0000, 0x2000, 0xf6721930 )
 	ROM_LOAD( "11.bin",       0x2000, 0x2000, 0xa4404e63 )
 	ROM_LOAD( "12.bin",       0x4000, 0x2000, 0xb60fa88c )
 
-	ROM_REGIONX( 0x0300,  REGION_PROMS )
+	ROM_REGION( 0x0300,  REGION_PROMS )
 	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x52c06fc2 )	/* red component */
 	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0x9985e575 )	/* green component */
 	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
 ROM_END
 
 ROM_START( scion )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1",          0x0000, 0x2000, 0x8dcad575 )
 	ROM_LOAD( "sc2",          0x2000, 0x2000, 0xf608e0ba )
 	ROM_LOAD( "sc3",          0x4000, 0x2000, 0x915289b9 )
 	ROM_LOAD( "4.9j",         0x6000, 0x2000, 0x0f40d002 )
 	ROM_LOAD( "5.10j",        0x8000, 0x2000, 0xdc4923b7 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "7.10e",        0x0000, 0x2000, 0x223e0d2a )
 	ROM_LOAD( "8.12e",        0x2000, 0x2000, 0xd3e39b48 )
 	ROM_LOAD( "9.15e",        0x4000, 0x2000, 0x630861b5 )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "10.10h",       0x0000, 0x2000, 0x0d2a0d1e )
 	ROM_LOAD( "11.12h",       0x2000, 0x2000, 0xdc6ef8ab )
 	ROM_LOAD( "12.15h",       0x4000, 0x2000, 0xc82c28bf )
 
-	ROM_REGIONX( 0x0300,  REGION_PROMS )
+	ROM_REGION( 0x0300,  REGION_PROMS )
 	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 ROM_END
 
 ROM_START( scionc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.5j",         0x0000, 0x2000, 0x5aaf571e )
 	ROM_LOAD( "2.6j",         0x2000, 0x2000, 0xd5a66ac9 )
 	ROM_LOAD( "3.8j",         0x4000, 0x2000, 0x6e616f28 )
 	ROM_LOAD( "4.9j",         0x6000, 0x2000, 0x0f40d002 )
 	ROM_LOAD( "5.10j",        0x8000, 0x2000, 0xdc4923b7 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "7.10e",        0x0000, 0x2000, 0x223e0d2a )
 	ROM_LOAD( "8.12e",        0x2000, 0x2000, 0xd3e39b48 )
 	ROM_LOAD( "9.15e",        0x4000, 0x2000, 0x630861b5 )
 
-	ROM_REGIONX( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_REGION( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "10.10h",       0x0000, 0x2000, 0x0d2a0d1e )
 	ROM_LOAD( "11.12h",       0x2000, 0x2000, 0xdc6ef8ab )
 	ROM_LOAD( "12.15h",       0x4000, 0x2000, 0xc82c28bf )
 
-	ROM_REGIONX( 0x0300,  REGION_PROMS )
+	ROM_REGION( 0x0300,  REGION_PROMS )
 	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */

@@ -339,31 +339,24 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,      	1*16*16, 16*16 },
-
-	{ 1, 0x10000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x12000, &tilelayout,			2*16*16, 16*16 },
-
-	{ 1, 0x14000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x16000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x18000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x1A000, &tilelayout,			2*16*16, 16*16 },
-
-	{ 1, 0x1C000, &tilelayout,			2*16*16, 16*16 },
-	{ 1, 0x1E000, &tilelayout,			2*16*16, 16*16 },
-
-	{ 1, 0x20000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x22000, &tilelayout,			3*16*16, 16*16 },
-
-	{ 1, 0x24000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x26000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x28000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x2A000, &tilelayout,			3*16*16, 16*16 },
-
-	{ 1, 0x2C000, &tilelayout,			3*16*16, 16*16 },
-	{ 1, 0x2E000, &tilelayout,			3*16*16, 16*16 },
-
-	{ 1, 0x90000, &spritelayout,		0*16*16, 16*16 }, // sprites
+	{ REGION_GFX1, 0x00000, &charlayout,      	1*16*16, 16*16 },
+	{ REGION_GFX2, 0x00000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x02000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x04000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x06000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x08000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x0a000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x0c000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x0e000, &tilelayout,			2*16*16, 16*16 },
+	{ REGION_GFX2, 0x10000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x12000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x14000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x16000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x18000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x1a000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x1c000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x1e000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX3, 0x00000, &spritelayout,		0*16*16, 16*16 }, // sprites
 	{ -1 } /* end of array */
 };
 
@@ -439,71 +432,49 @@ static struct MachineDriver machine_driver_wc90b =
 };
 
 ROM_START( wc90b )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "a02.bin",      0x00000, 0x10000, 0x192a03dd )	/* c000-ffff is not used */
 	ROM_LOAD( "a03.bin",      0x10000, 0x10000, 0xf54ff17a )	/* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0x110000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a06.bin",      0x000000, 0x04000, 0x3b5387b7 )
-	ROM_LOAD( "a08.bin",      0x004000, 0x04000, 0xc622a5a3 )
-	ROM_LOAD( "a10.bin",      0x008000, 0x04000, 0x0923d9f6 )
-	ROM_LOAD( "a20.bin",      0x00C000, 0x04000, 0xb8dec83e )
-
-	ROM_LOAD( "a07.bin",      0x010000, 0x20000, 0x38c31817 )
-	ROM_LOAD( "a09.bin",      0x030000, 0x20000, 0x32e39e29 )
-	ROM_LOAD( "a11.bin",      0x050000, 0x20000, 0x5ccec796 )
-	ROM_LOAD( "a21.bin",      0x070000, 0x20000, 0x0c54a091 )
-
-	ROM_LOAD( "146_a12.bin",  0x090000, 0x10000, 0xd5a60096 )
-	ROM_LOAD( "147_a13.bin",  0x0a0000, 0x10000, 0x36bbf467 )
-	ROM_LOAD( "148_a14.bin",  0x0b0000, 0x10000, 0x26371c18 )
-	ROM_LOAD( "149_a15.bin",  0x0c0000, 0x10000, 0x75aa9b86 )
-	ROM_LOAD( "150_a16.bin",  0x0d0000, 0x10000, 0x0da825f9 )
-	ROM_LOAD( "151_a17.bin",  0x0e0000, 0x10000, 0x228429d8 )
-	ROM_LOAD( "152_a18.bin",  0x0f0000, 0x10000, 0x516b6c09 )
-	ROM_LOAD( "153_a19.bin",  0x100000, 0x10000, 0xf36390a9 )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 96k for code */  /* Second CPU */
+	ROM_REGION( 0x20000, REGION_CPU2 )	/* 96k for code */  /* Second CPU */
 	ROM_LOAD( "a04.bin",      0x00000, 0x10000, 0x3d535e2f )	/* c000-ffff is not used */
 	ROM_LOAD( "a05.bin",      0x10000, 0x10000, 0x9e421c4b )	/* banked at f000-f7ff */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 192k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 192k for the audio CPU */
 	ROM_LOAD( "a01.bin",      0x00000, 0x10000, 0x3d317622 )
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a06.bin",      0x000000, 0x04000, 0x3b5387b7 )
+	ROM_LOAD( "a08.bin",      0x004000, 0x04000, 0xc622a5a3 )
+	ROM_LOAD( "a10.bin",      0x008000, 0x04000, 0x0923d9f6 )
+	ROM_LOAD( "a20.bin",      0x00c000, 0x04000, 0xb8dec83e )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a07.bin",      0x000000, 0x20000, 0x38c31817 )
+	ROM_LOAD( "a09.bin",      0x020000, 0x20000, 0x32e39e29 )
+	ROM_LOAD( "a11.bin",      0x040000, 0x20000, 0x5ccec796 )
+	ROM_LOAD( "a21.bin",      0x060000, 0x20000, 0x0c54a091 )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "146_a12.bin",  0x000000, 0x10000, 0xd5a60096 )
+	ROM_LOAD( "147_a13.bin",  0x010000, 0x10000, 0x36bbf467 )
+	ROM_LOAD( "148_a14.bin",  0x020000, 0x10000, 0x26371c18 )
+	ROM_LOAD( "149_a15.bin",  0x030000, 0x10000, 0x75aa9b86 )
+	ROM_LOAD( "150_a16.bin",  0x040000, 0x10000, 0x0da825f9 )
+	ROM_LOAD( "151_a17.bin",  0x050000, 0x10000, 0x228429d8 )
+	ROM_LOAD( "152_a18.bin",  0x060000, 0x10000, 0x516b6c09 )
+	ROM_LOAD( "153_a19.bin",  0x070000, 0x10000, 0xf36390a9 )
 ROM_END
 
-void wc90b_decode (void)
+
+void init_wc90b(void)
 {
 	int i;
 
 	/* sprite graphics are inverted */
-	for (i = 0x90000; i < 0x110000; i++)
-		memory_region(1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX3); i++)
+		memory_region(REGION_GFX3)[i] ^= 0xff;
 }
 
 
-extern struct GameDriver driver_wc90;
-struct GameDriver driver_wc90b =
-{
-	__FILE__,
-	&driver_wc90,
-	"wc90b",
-	"Euro League",
-	"1989",
-	"bootleg",
-    "Ernesto Corvi",
-	0,
-	&machine_driver_wc90b,
-	wc90b_decode,
-
-	rom_wc90b,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wc90b,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1989, wc90b, wc90, wc90b, wc90b, wc90b, ROT0, "bootleg", "Euro League" )

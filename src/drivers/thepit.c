@@ -2,6 +2,7 @@
 
 The Pit/Round Up/Intrepid/Super Mouse memory map (preliminary)
 
+Driver by Zsolt Vasvari
 
 Main CPU:
 
@@ -88,6 +89,7 @@ static struct MemoryReadAddress thepit_readmem[] =
 
 static struct MemoryWriteAddress thepit_writemem[] =
 {
+	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
 	{ 0x8c00, 0x8fff, colorram_w },
@@ -99,7 +101,7 @@ static struct MemoryWriteAddress thepit_writemem[] =
 	{ 0xa000, 0xa000, MWA_NOP }, // Not hooked up according to the schematics
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb001, 0xb001, MWA_NOP }, // Unused, but initialized
-	{ 0xb002, 0xb002, MWA_NOP }, // See memory map
+	{ 0xb002, 0xb002, MWA_NOP }, // coin_lockout_w
 	{ 0xb003, 0xb003, thepit_sound_enable_w },
 	{ 0xb004, 0xb005, MWA_NOP }, // Unused, but initialized
 	{ 0xb006, 0xb006, thepit_flipx_w, &flip_screen_x },
@@ -123,6 +125,7 @@ static struct MemoryReadAddress intrepid_readmem[] =
 
 static struct MemoryWriteAddress intrepid_writemem[] =
 {
+	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
@@ -131,7 +134,7 @@ static struct MemoryWriteAddress intrepid_writemem[] =
 	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb001, 0xb001, MWA_NOP }, // Unused, but initialized
-	{ 0xb002, 0xb002, MWA_NOP }, // See memory map
+	{ 0xb002, 0xb002, MWA_NOP }, // coin_lockout_w
 	{ 0xb003, 0xb003, thepit_sound_enable_w },
 	{ 0xb004, 0xb004, MWA_NOP }, // Unused, but initialized
 	{ 0xb005, 0xb005, intrepid_graphics_bank_select_w },
@@ -328,7 +331,7 @@ INPUT_PORTS_START( fitter )
 	PORT_DIPNAME( 0x40, 0x40, "Gly Boys Wake Up" )
 	PORT_DIPSETTING(    0x40, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -579,24 +582,24 @@ static struct GfxLayout suprmous_spritelayout =
 
 static struct GfxDecodeInfo thepit_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo intrepid_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 1, 0x0800, &charlayout,     0, 8 },
-	{ 1, 0x0800, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0x0000, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0x0800, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0x0800, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo suprmous_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &suprmous_charlayout,   0, 8 },
-	{ 1, 0x0800, &suprmous_spritelayout, 0, 8 },
+	{ REGION_GFX1, 0x0000, &suprmous_charlayout,   0, 8 },
+	{ REGION_GFX1, 0x0800, &suprmous_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -673,414 +676,195 @@ MACHINE_DRIVER(suprmous, 8*8)
 ***************************************************************************/
 
 ROM_START( thepit )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "p38b",         0x0000, 0x1000, 0x7315e1bc )
 	ROM_LOAD( "p39b",         0x1000, 0x1000, 0xc9cc30fe )
 	ROM_LOAD( "p40b",         0x2000, 0x1000, 0x986738b5 )
 	ROM_LOAD( "p41b",         0x3000, 0x1000, 0x31ceb0a1 )
 	ROM_LOAD( "p33b",         0x4000, 0x1000, 0x614ec454 )
 
-	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "p30",          0x0000, 0x0800, 0x1b79dfb6 )
+
+	ROM_REGION( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "p9",           0x0000, 0x0800, 0x69502afc )
 	ROM_LOAD( "p8",           0x1000, 0x0800, 0x2ddd5045 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pitclr.ic4",   0x0000, 0x0020, 0xa758b567 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "p30",          0x0000, 0x0800, 0x1b79dfb6 )
 ROM_END
 
 ROM_START( roundup )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "roundup.u38",  0x0000, 0x1000, 0xd62c3b7a )
 	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
 	ROM_LOAD( "roundup.u40",  0x2000, 0x1000, 0x5109d0c5 )
 	ROM_LOAD( "roundup.u41",  0x3000, 0x1000, 0x1c5ed660 )
 	ROM_LOAD( "roundup.u33",  0x4000, 0x1000, 0x2fa711f3 )
 
-	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "roundup.u30",  0x0000, 0x0800, 0x1b18faee )
+	ROM_LOAD( "roundup.u31",  0x0800, 0x0800, 0x76cf4394 )
+
+	ROM_REGION( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "roundup.u9",   0x0000, 0x0800, 0x394676a2 )
 	ROM_LOAD( "roundup.u10",  0x1000, 0x0800, 0xa38d708d )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "roundup.clr",  0x0000, 0x0020, 0xa758b567 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "roundup.u30",  0x0000, 0x0800, 0x1b18faee )
-	ROM_LOAD( "roundup.u31",  0x0800, 0x0800, 0x76cf4394 )
 ROM_END
 
 ROM_START( fitter )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "ic38.bin",     0x0000, 0x1000, 0x6bf6cca4 )
 	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
 	ROM_LOAD( "ic40.bin",     0x2000, 0x1000, 0x572e2157 )
 	ROM_LOAD( "roundup.u41",  0x3000, 0x1000, 0x1c5ed660 )
 	ROM_LOAD( "ic33.bin",     0x4000, 0x1000, 0xab47c6c2 )
 
-	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "ic30.bin",     0x0000, 0x0800, 0x4055b5ca )
+	ROM_LOAD( "ic31.bin",     0x0800, 0x0800, 0xc9d8c1cc )
+
+	ROM_REGION( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "ic9.bin",      0x0000, 0x0800, 0xa6799a37 )
 	ROM_LOAD( "ic8.bin",      0x1000, 0x0800, 0xa8256dfe )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "roundup.clr",  0x0000, 0x0020, 0xa758b567 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "ic30.bin",     0x0000, 0x0800, 0x4055b5ca )
-	ROM_LOAD( "ic31.bin",     0x0800, 0x0800, 0xc9d8c1cc )
 ROM_END
 
 ROM_START( intrepid )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "ic19.1",       0x0000, 0x1000, 0x7d927b23 )
 	ROM_LOAD( "ic18.2",       0x1000, 0x1000, 0xdcc22542 )
 	ROM_LOAD( "ic17.3",       0x2000, 0x1000, 0xfd11081e )
 	ROM_LOAD( "ic16.4",       0x3000, 0x1000, 0x74a51841 )
 	ROM_LOAD( "ic15.5",       0x4000, 0x1000, 0x4fef643d )
 
-	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "ic22.7",       0x0000, 0x0800, 0x1a7cc392 )
+	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x91ca7097 )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "ic9.9",        0x0000, 0x1000, 0x8c70d18d )
 	ROM_LOAD( "ic8.8",        0x1000, 0x1000, 0x04d067d3 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "ic22.7",       0x0000, 0x0800, 0x1a7cc392 )
-	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x91ca7097 )
 ROM_END
 
 ROM_START( intrepi2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "intrepid.001", 0x0000, 0x1000, 0x9505df1e )
 	ROM_LOAD( "intrepid.002", 0x1000, 0x1000, 0x27e9f53f )
 	ROM_LOAD( "intrepid.003", 0x2000, 0x1000, 0xda082ed7 )
 	ROM_LOAD( "intrepid.004", 0x3000, 0x1000, 0x60acecd9 )
 	ROM_LOAD( "intrepid.005", 0x4000, 0x1000, 0x7c868725 )
 
-	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "intrepid.007", 0x0000, 0x0800, 0xf85ead07 )
+	ROM_LOAD( "intrepid.006", 0x0800, 0x0800, 0x9eb6c61b )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "ic9.9",        0x0000, 0x1000, 0x8c70d18d )
 	ROM_LOAD( "ic8.8",        0x1000, 0x1000, 0x04d067d3 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "intrepid.007", 0x0000, 0x0800, 0xf85ead07 )
-	ROM_LOAD( "intrepid.006", 0x0800, 0x0800, 0x9eb6c61b )
 ROM_END
 
 ROM_START( portman )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "pe1",          0x0000, 0x1000, 0xa5cf6083 )
 	ROM_LOAD( "pe2",          0x1000, 0x1000, 0x0b53d48a )
 	ROM_LOAD( "pe3",          0x2000, 0x1000, 0x1c923057 )
 	ROM_LOAD( "pe4",          0x3000, 0x1000, 0x555c71ef )
 	ROM_LOAD( "pe5",          0x4000, 0x1000, 0xf749e2d4 )
 
-	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "pe7",          0x0000, 0x0800, 0xd2094e4a )
+	ROM_LOAD( "pe6",          0x0800, 0x0800, 0x1cf447f4 )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "pe8",          0x0000, 0x1000, 0x4d8c2974 )
 	ROM_LOAD( "pe9",          0x1000, 0x1000, 0x4e4ea162 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic3",          0x0000, 0x0020, 0x6440dc61 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "pe7",          0x0000, 0x0800, 0xd2094e4a )
-	ROM_LOAD( "pe6",          0x0800, 0x0800, 0x1cf447f4 )
 ROM_END
 
 ROM_START( suprmous )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
 	ROM_LOAD( "sm.1",         0x0000, 0x1000, 0x9db2b786 )
 	ROM_LOAD( "sm.2",         0x1000, 0x1000, 0x0a3d91d3 )
 	ROM_LOAD( "sm.3",         0x2000, 0x1000, 0x32af6285 )
 	ROM_LOAD( "sm.4",         0x3000, 0x1000, 0x46091524 )
 	ROM_LOAD( "sm.5",         0x4000, 0x1000, 0xf15fd5d2 )
 
-	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
+	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
+
+	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "sm.7",         0x0000, 0x1000, 0x1d476696 )
 	ROM_LOAD( "sm.8",         0x1000, 0x1000, 0x2f81ab5f )
 	ROM_LOAD( "sm.9",         0x2000, 0x1000, 0x8463af89 )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
 	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
-	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
 ROM_START( suprmou2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
 	ROM_LOAD( "suprmous.x1",  0x0000, 0x1000, 0xad72b467 )
 	ROM_LOAD( "suprmous.x2",  0x1000, 0x1000, 0x53f5be5e )
 	ROM_LOAD( "suprmous.x3",  0x2000, 0x1000, 0xb5b8d34d )
 	ROM_LOAD( "suprmous.x4",  0x3000, 0x1000, 0x603333df )
 	ROM_LOAD( "suprmous.x5",  0x4000, 0x1000, 0x2ef9cbf1 )
 
-	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
+	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
+
+	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "suprmous.x7",  0x0000, 0x1000, 0xe9295071 )
 	ROM_LOAD( "suprmous.x8",  0x1000, 0x1000, 0xdbef9db8 )
 	ROM_LOAD( "suprmous.x9",  0x2000, 0x1000, 0x700d996e )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
 	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
-	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
 ROM_START( machomou )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
 	ROM_LOAD( "mm1.2g",       0x0000, 0x1000, 0x91f116be )
 	ROM_LOAD( "mm2.2h",       0x1000, 0x1000, 0x3aa88c9b )
 	ROM_LOAD( "mm3.2i",       0x2000, 0x1000, 0x3b66b519 )
 	ROM_LOAD( "mm4.2j",       0x3000, 0x1000, 0xd4f99896 )
 	ROM_LOAD( "mm5.3f",       0x4000, 0x1000, 0x5bfc3874 )
 
-	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
+	ROM_LOAD( "mm6.e6",       0x0000, 0x1000, 0x20816913 )
+
+	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars and sprites */
 	ROM_LOAD( "mm7.3d",       0x0000, 0x1000, 0xa6f60ed2 )
 	ROM_LOAD( "mm8.3c",       0x1000, 0x1000, 0x062e77cb )
 	ROM_LOAD( "mm9.3a",       0x2000, 0x1000, 0xa2f0cfb3 )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "mmouse2.clr",  0x0000, 0x0020, 0x00000000 )
 	ROM_LOAD( "mmouse1.clr",  0x0020, 0x0020, 0x00000000 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
-	ROM_LOAD( "mm6.e6",       0x0000, 0x1000, 0x20816913 )
 ROM_END
 
 
 
-struct GameDriver driver_thepit =
-{
-	__FILE__,
-	0,
-	"thepit",
-	"The Pit",
-	"1982",
-	"Centuri",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_thepit,
-	0,
-
-	rom_thepit,
-	0, 0,
-	0,
-	0,
-
-	input_ports_thepit,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-
-struct GameDriver driver_roundup =
-{
-	__FILE__,
-	0,
-	"roundup",
-	"Round-Up",
-	"1981",
-	"Amenip/Centuri",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_thepit,
-	0,
-
-	rom_roundup,
-	0, 0,
-	0,
-	0,
-
-	input_ports_roundup,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_fitter =
-{
-	__FILE__,
-	&driver_roundup,
-	"fitter",
-	"Fitter",
-	"1981",
-	"Taito",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_thepit,
-	0,
-
-	rom_fitter,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fitter,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-
-struct GameDriver driver_intrepid =
-{
-	__FILE__,
-	0,
-	"intrepid",
-	"Intrepid (set 1)",
-	"1983",
-	"Nova Games Ltd.",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_intrepid,
-	0,
-
-	rom_intrepid,
-	0, 0,
-	0,
-	0,
-
-	input_ports_intrepid,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_intrepi2 =
-{
-	__FILE__,
-	&driver_intrepid,
-	"intrepi2",
-	"Intrepid (set 2)",
-	"1983",
-	"Nova Games Ltd.",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_intrepid,
-	0,
-
-	rom_intrepi2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_intrepid,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_portman =
-{
-	__FILE__,
-	0,
-	"portman",
-	"Port Man",
-	"1982",
-	"Nova Games Ltd.",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_intrepid,
-	0,
-
-	rom_portman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_portman,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_suprmous =
-{
-	__FILE__,
-	0,
-	"suprmous",
-	"Super Mouse",
-	"1982",
-	"Taito",
-	"Brad Oliver",
-	0,
-	&machine_driver_suprmous,
-	0,
-
-	rom_suprmous,
-	0, 0,
-	0,
-	0,
-
-	input_ports_suprmous,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-	0,0
-};
-
-struct GameDriver driver_suprmou2 =
-{
-	__FILE__,
-	&driver_suprmous,
-	"suprmou2",
-	"Funny Mouse (bootleg?)",
-	"1982",
-	"Chu Co. Ltd",
-	"Brad Oliver",
-	0,
-	&machine_driver_suprmous,
-	0,
-
-	rom_suprmou2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_suprmous,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-	0,0
-};
-
-struct GameDriver driver_machomou =
-{
-	__FILE__,
-	0,
-	"machomou",
-	"Macho Mouse",
-	"1982",
-	"Techstar",
-	"Brad Oliver",
-	0,
-	&machine_driver_suprmous,
-	0,
-
-	rom_machomou,
-	0, 0,
-	0,
-	0,
-
-	input_ports_suprmous,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-
-	0, 0
-};
+GAME( 1981, roundup,  0,        thepit,   roundup,  0, ROT90, "Amenip/Centuri", "Round-Up" )
+GAME( 1981, fitter,   roundup,  thepit,   fitter,   0, ROT90, "Taito", "Fitter" )
+GAME( 1982, thepit,   0,        thepit,   thepit,   0, ROT90, "Centuri", "The Pit" )
+GAME( 1982, portman,  0,        intrepid, portman,  0, ROT90, "Nova Games Ltd.", "Port Man" )
+GAMEX(1982, suprmous, 0,        suprmous, suprmous, 0, ROT90, "Taito", "Super Mouse", GAME_WRONG_COLORS )
+GAMEX(1982, suprmou2, suprmous, suprmous, suprmous, 0, ROT90, "Chu Co. Ltd", "Funny Mouse (bootleg?)", GAME_WRONG_COLORS )
+GAMEX(1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse", GAME_WRONG_COLORS )
+GAME( 1983, intrepid, 0,        intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )
+GAME( 1983, intrepi2, intrepid, intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 2)" )

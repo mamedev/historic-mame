@@ -118,7 +118,7 @@ int exidy440_vh_start(void)
 	}
 
 	/* start the scanline timer */
-	timer_set(cpu_getscanlinetime(0), 0, scanline_callback);
+	timer_set(TIME_NOW, 0, scanline_callback);
 
 	return 0;
 }

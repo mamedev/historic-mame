@@ -6,6 +6,7 @@
 /* for VGA triple buffer - we need the register structure */
 #include "gen15khz.h"
 
+
 /* from video.c (required for 15.75KHz Arcade Monitor Modes) */
 extern int half_yres;
 extern int unchained;
@@ -24,6 +25,7 @@ extern int skiplines;
 extern int skipcolumns;
 extern int use_triplebuf;
 extern int triplebuf_pos,triplebuf_page_width;
+extern int mmxlfb;
 
 unsigned int doublepixel[256];
 unsigned int quadpixel[256]; /* for quadring pixels */
@@ -537,8 +539,6 @@ void unchain_vga(Register *pReg)
 	unchained = 1;
 }
 
-
-
 INLINE void copyline_1x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
 {
 	short src_seg;
@@ -822,7 +822,7 @@ INLINE void copyline_4x_16bpp_palettized(unsigned char *src,short seg,unsigned l
 
 
 
-#define DIRTY1(BPP) \
+#define DIRTY1(MX,MY,SL,BPP,PALETTIZED) \
 	short dest_seg; \
 	int x,y,vesa_line,line_offs,xoffs; \
 	unsigned char *lb; \
@@ -832,8 +832,6 @@ INLINE void copyline_4x_16bpp_palettized(unsigned char *src,short seg,unsigned l
 	line_offs = scrbitmap->line[1] - scrbitmap->line[0]; \
 	xoffs = (BPP/8)*gfx_xoffset; \
 	lb = scrbitmap->line[skiplines] + (BPP/8)*skipcolumns; \
-
-#define DIRTY1_NXNS(MX,MY,BPP,PALETTIZED) \
 	for (y = 0;y < gfx_display_lines;y += 16) \
 	{ \
 		for (x = 0;x < gfx_display_columns; /* */) \
@@ -851,6 +849,14 @@ INLINE void copyline_4x_16bpp_palettized(unsigned char *src,short seg,unsigned l
                 { \
 					address = bmp_write_line(screen,vesa_line0) + xoffs + MX*(BPP/8)*x; \
 					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
+				    if ((MY > 2) || ((MY == 2) && (SL == 0))) { \
+						address = bmp_write_line(screen,vesa_line0+1) + xoffs + MX*(BPP/8)*x; \
+						copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
+					} \
+					if ((MY > 3) || ((MY == 3) && (SL == 0))) { \
+						address = bmp_write_line(screen,vesa_line0+2) + xoffs + MX*(BPP/8)*x; \
+						copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
+					} \
 					vesa_line0 += MY; \
 					src += line_offs; \
 				} \
@@ -861,206 +867,133 @@ INLINE void copyline_4x_16bpp_palettized(unsigned char *src,short seg,unsigned l
 		lb += 16 * line_offs; \
 	}
 
-#define DIRTY1_NX2(MX,BPP,PALETTIZED) \
-	for (y = 0;y < gfx_display_lines;y += 16) \
-	{ \
-		for (x = 0;x < gfx_display_columns; /* */) \
-		{ \
-			int w = 16; \
-			if (ISDIRTY(x,y)) \
-            { \
-				unsigned char *src = lb + (BPP/8)*x; \
-                int vesa_line0 = vesa_line, h; \
-				while (x + w < gfx_display_columns && ISDIRTY(x+w,y)) \
-                    w += 16; \
-				if (x + w > gfx_display_columns) \
-					w = gfx_display_columns - x; \
-				for (h = 0; h < 16 && y + h < gfx_display_lines; h++) \
-                { \
-					address = bmp_write_line(screen,vesa_line0) + xoffs + MX*(BPP/8)*x; \
-					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					address = bmp_write_line(screen,vesa_line0+1) + xoffs + MX*(BPP/8)*x; \
-					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					vesa_line0 += 2; \
-					src += line_offs; \
-				} \
-			} \
-			x += w; \
-		} \
-		vesa_line += 16 * 2; \
-		lb += 16 * line_offs; \
-	}
-
-#define DIRTY1_NX3(MX,BPP,PALETTIZED) \
-	for (y = 0;y < gfx_display_lines;y += 16) \
-	{ \
-		for (x = 0;x < gfx_display_columns; /* */) \
-		{ \
-			int w = 16; \
-			if (ISDIRTY(x,y)) \
-            { \
-				unsigned char *src = lb + (BPP/8)*x; \
-                int vesa_line0 = vesa_line, h; \
-				while (x + w < gfx_display_columns && ISDIRTY(x+w,y)) \
-                    w += 16; \
-				if (x + w > gfx_display_columns) \
-					w = gfx_display_columns - x; \
-				for (h = 0; h < 16 && y + h < gfx_display_lines; h++) \
-                { \
-					address = bmp_write_line(screen,vesa_line0) + xoffs + MX*(BPP/8)*x; \
-					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					address = bmp_write_line(screen,vesa_line0+1) + xoffs + MX*(BPP/8)*x; \
-					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					address = bmp_write_line(screen,vesa_line0+2) + xoffs + MX*(BPP/8)*x; \
-					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					vesa_line0 += 3; \
-					src += line_offs; \
-				} \
-			} \
-			x += w; \
-		} \
-		vesa_line += 16 * 3; \
-		lb += 16 * line_offs; \
-	}
-
-
-#define DIRTY0(BPP) \
+#define DIRTY0(MX,MY,SL,BPP,PALETTIZED) \
 	short dest_seg; \
 	int y,vesa_line,line_offs,xoffs,width; \
 	unsigned char *src; \
-	unsigned long address; \
+	unsigned long address, address_offset; \
 	dest_seg = screen->seg; \
 	vesa_line = gfx_yoffset; \
 	line_offs = (scrbitmap->line[1] - scrbitmap->line[0]); \
 	xoffs = (BPP/8)*(gfx_xoffset + triplebuf_pos); \
 	width = gfx_display_columns/(4/(BPP/8)); \
 	src = scrbitmap->line[skiplines] + (BPP/8)*skipcolumns;	\
-
-#define TRIPLEBUF_FLIP \
+	if (mmxlfb) { \
+		address = bmp_write_line(screen, vesa_line); \
+		_farsetsel (screen->seg); \
+		address_offset = bmp_write_line(screen, vesa_line+1) - address; \
+		address += xoffs; \
+		{ \
+		extern void asmblit_##MX##x_##MY##y_##SL##sl_##BPP##bpp##PALETTIZED \
+			(int, int, unsigned char *, int, unsigned long, unsigned long); \
+		asmblit_##MX##x_##MY##y_##SL##sl_##BPP##bpp##PALETTIZED \
+			(width, gfx_display_lines, src, line_offs, address, address_offset); \
+		} \
+	} \
+	else { \
+		for (y = 0;y < gfx_display_lines;y++) \
+		{ \
+			address = bmp_write_line(screen,vesa_line) + xoffs; \
+			copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
+		    if ((MY > 2) || ((MY == 2) && (SL == 0))) { \
+				address = bmp_write_line(screen,vesa_line+1) + xoffs; \
+				copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
+			} \
+			if ((MY > 3) || ((MY == 3) && (SL == 0))) { \
+				address = bmp_write_line(screen,vesa_line+2) + xoffs; \
+				copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
+			} \
+			vesa_line += MY; \
+			src += line_offs; \
+		} \
+	} \
 	if (use_triplebuf) \
 	{ \
 		vesa_scroll_async(triplebuf_pos,0); \
 		triplebuf_pos = (triplebuf_pos + triplebuf_page_width) % (3*triplebuf_page_width); \
 	}
 
-#define DIRTY0_NXNS(MX,MY,BPP,PALETTIZED) \
-	for (y = 0;y < gfx_display_lines;y++) \
-	{ \
-		address = bmp_write_line(screen,vesa_line) + xoffs; \
-		copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		vesa_line += MY; \
-		src += line_offs; \
-	} \
-	TRIPLEBUF_FLIP
 
-#define DIRTY0_NX2(MX,BPP,PALETTIZED) \
-	for (y = 0;y < gfx_display_lines;y++) \
-	{ \
-		address = bmp_write_line(screen,vesa_line) + xoffs; \
-		copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		address = bmp_write_line(screen,vesa_line+1) + xoffs; \
-		copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		vesa_line += 2; \
-		src += line_offs; \
-	} \
-	TRIPLEBUF_FLIP
+void blitscreen_dirty1_vesa_1x_1x_8bpp(void)   { DIRTY1(1,1,0,8,)  }
+void blitscreen_dirty1_vesa_1x_2x_8bpp(void)   { DIRTY1(1,2,0,8,)  }
+void blitscreen_dirty1_vesa_1x_2xs_8bpp(void)  { DIRTY1(1,2,1,8,)  }
+void blitscreen_dirty1_vesa_2x_1x_8bpp(void)   { DIRTY1(2,1,0,8,)  }
+void blitscreen_dirty1_vesa_3x_1x_8bpp(void)   { DIRTY1(3,1,0,8,)  }
+void blitscreen_dirty1_vesa_2x_2x_8bpp(void)   { DIRTY1(2,2,0,8,)  }
+void blitscreen_dirty1_vesa_2x_2xs_8bpp(void)  { DIRTY1(2,2,1,8,)  }
+void blitscreen_dirty1_vesa_2x_3x_8bpp(void)   { DIRTY1(2,3,0,8,)  }
+void blitscreen_dirty1_vesa_2x_3xs_8bpp(void)  { DIRTY1(2,3,1,8,)  }
+void blitscreen_dirty1_vesa_3x_2x_8bpp(void)   { DIRTY1(3,2,0,8,)  }
+void blitscreen_dirty1_vesa_3x_2xs_8bpp(void)  { DIRTY1(3,2,1,8,)  }
+void blitscreen_dirty1_vesa_3x_3x_8bpp(void)   { DIRTY1(3,3,0,8,)  }
+void blitscreen_dirty1_vesa_3x_3xs_8bpp(void)  { DIRTY1(3,3,1,8,)  }
+void blitscreen_dirty1_vesa_4x_2x_8bpp(void)   { DIRTY1(4,2,0,8,)  }
+void blitscreen_dirty1_vesa_4x_2xs_8bpp(void)  { DIRTY1(4,2,1,8,)  }
+void blitscreen_dirty1_vesa_4x_3x_8bpp(void)   { DIRTY1(4,3,0,8,)  }
+void blitscreen_dirty1_vesa_4x_3xs_8bpp(void)  { DIRTY1(4,3,1,8,)  }
 
-#define DIRTY0_NX3(MX,BPP,PALETTIZED) \
-	for (y = 0;y < gfx_display_lines;y++) \
-	{ \
-		address = bmp_write_line(screen,vesa_line) + xoffs; \
-		copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		address = bmp_write_line(screen,vesa_line+1) + xoffs; \
-		copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		address = bmp_write_line(screen,vesa_line+2) + xoffs; \
-		copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		vesa_line += 3; \
-		src += line_offs; \
-	} \
-	TRIPLEBUF_FLIP
+void blitscreen_dirty1_vesa_1x_1x_16bpp(void)  { DIRTY1(1,1,0,16,) }
+void blitscreen_dirty1_vesa_1x_2x_16bpp(void)  { DIRTY1(1,2,0,16,) }
+void blitscreen_dirty1_vesa_1x_2xs_16bpp(void) { DIRTY1(1,2,1,16,) }
+void blitscreen_dirty1_vesa_2x_1x_16bpp(void)  { DIRTY1(2,1,0,16,) }
+void blitscreen_dirty1_vesa_2x_2x_16bpp(void)  { DIRTY1(2,2,0,16,) }
+void blitscreen_dirty1_vesa_2x_2xs_16bpp(void) { DIRTY1(2,2,1,16,) }
+void blitscreen_dirty1_vesa_3x_1x_16bpp(void)  { DIRTY1(3,1,0,16,) }
+void blitscreen_dirty1_vesa_3x_2x_16bpp(void)  { DIRTY1(3,2,0,16,) }
+void blitscreen_dirty1_vesa_3x_2xs_16bpp(void) { DIRTY1(3,2,1,16,) }
+void blitscreen_dirty1_vesa_4x_2x_16bpp(void)  { DIRTY1(4,2,0,16,) }
+void blitscreen_dirty1_vesa_4x_2xs_16bpp(void) { DIRTY1(4,2,1,16,) }
 
+void blitscreen_dirty1_vesa_1x_1x_16bpp_palettized(void)  { DIRTY1(1,1,0,16,_palettized) }
+void blitscreen_dirty1_vesa_1x_2x_16bpp_palettized(void)  { DIRTY1(1,2,0,16,_palettized) }
+void blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized(void) { DIRTY1(1,2,1,16,_palettized) }
+void blitscreen_dirty1_vesa_2x_1x_16bpp_palettized(void)  { DIRTY1(2,1,0,16,_palettized) }
+void blitscreen_dirty1_vesa_2x_2x_16bpp_palettized(void)  { DIRTY1(2,2,0,16,_palettized) }
+void blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized(void) { DIRTY1(2,2,1,16,_palettized) }
+void blitscreen_dirty1_vesa_3x_1x_16bpp_palettized(void)  { DIRTY1(3,1,0,16,_palettized) }
+void blitscreen_dirty1_vesa_3x_2x_16bpp_palettized(void)  { DIRTY1(3,2,0,16,_palettized)  }
+void blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized(void) { DIRTY1(3,2,1,16,_palettized) }
+void blitscreen_dirty1_vesa_4x_2x_16bpp_palettized(void)  { DIRTY1(4,2,0,16,_palettized) }
+void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(void) { DIRTY1(4,2,1,16,_palettized) }
 
+void blitscreen_dirty0_vesa_1x_1x_8bpp(void)   { DIRTY0(1,1,0,8,)  }
+void blitscreen_dirty0_vesa_1x_2x_8bpp(void)   { DIRTY0(1,2,0,8,)  }
+void blitscreen_dirty0_vesa_1x_2xs_8bpp(void)  { DIRTY0(1,2,1,8,)  }
+void blitscreen_dirty0_vesa_2x_1x_8bpp(void)   { DIRTY0(2,1,0,8,)  }
+void blitscreen_dirty0_vesa_3x_1x_8bpp(void)   { DIRTY0(3,1,0,8,)  }
+void blitscreen_dirty0_vesa_2x_2x_8bpp(void)   { DIRTY0(2,2,0,8,)  }
+void blitscreen_dirty0_vesa_2x_2xs_8bpp(void)  { DIRTY0(2,2,1,8,)  }
+void blitscreen_dirty0_vesa_2x_3x_8bpp(void)   { DIRTY0(2,3,0,8,)  }
+void blitscreen_dirty0_vesa_2x_3xs_8bpp(void)  { DIRTY0(2,3,1,8,)  }
+void blitscreen_dirty0_vesa_3x_2x_8bpp(void)   { DIRTY0(3,2,0,8,)  }
+void blitscreen_dirty0_vesa_3x_2xs_8bpp(void)  { DIRTY0(3,2,1,8,)  }
+void blitscreen_dirty0_vesa_3x_3x_8bpp(void)   { DIRTY0(3,3,0,8,)  }
+void blitscreen_dirty0_vesa_3x_3xs_8bpp(void)  { DIRTY0(3,3,1,8,)  }
+void blitscreen_dirty0_vesa_4x_2x_8bpp(void)   { DIRTY0(4,2,0,8,)  }
+void blitscreen_dirty0_vesa_4x_2xs_8bpp(void)  { DIRTY0(4,2,1,8,)  }
+void blitscreen_dirty0_vesa_4x_3x_8bpp(void)   { DIRTY0(4,3,0,8,)  }
+void blitscreen_dirty0_vesa_4x_3xs_8bpp(void)  { DIRTY0(4,3,1,8,)  }
 
-void blitscreen_dirty1_vesa_1x_1x_8bpp(void)   { DIRTY1(8)  DIRTY1_NXNS(1,1,8,)  }
-void blitscreen_dirty1_vesa_1x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (1,8,)  }
-void blitscreen_dirty1_vesa_1x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(1,2,8,)  }
-void blitscreen_dirty1_vesa_2x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(2,1,8,)  }
-void blitscreen_dirty1_vesa_3x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(3,1,8,)  }
-void blitscreen_dirty1_vesa_2x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (2,8,)  }
-void blitscreen_dirty1_vesa_2x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(2,2,8,)  }
-void blitscreen_dirty1_vesa_2x_3x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX3 (2,8,)  }
-void blitscreen_dirty1_vesa_2x_3xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(2,3,8,)  }
-void blitscreen_dirty1_vesa_3x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (3,8,)  }
-void blitscreen_dirty1_vesa_3x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(3,2,8,)  }
-void blitscreen_dirty1_vesa_3x_3x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX3 (3,8,)  }
-void blitscreen_dirty1_vesa_3x_3xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(3,3,8,)  }
-void blitscreen_dirty1_vesa_4x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (4,8,)  }
-void blitscreen_dirty1_vesa_4x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(4,2,8,)  }
-void blitscreen_dirty1_vesa_4x_3x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX3 (4,8,)  }
-void blitscreen_dirty1_vesa_4x_3xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(4,3,8,)  }
+void blitscreen_dirty0_vesa_1x_1x_16bpp(void)  { DIRTY0(1,1,0,16,) }
+void blitscreen_dirty0_vesa_1x_2x_16bpp(void)  { DIRTY0(1,2,0,16,) }
+void blitscreen_dirty0_vesa_1x_2xs_16bpp(void) { DIRTY0(1,2,1,16,) }
+void blitscreen_dirty0_vesa_2x_1x_16bpp(void)  { DIRTY0(2,1,0,16,) }
+void blitscreen_dirty0_vesa_2x_2x_16bpp(void)  { DIRTY0(2,2,0,16,) }
+void blitscreen_dirty0_vesa_2x_2xs_16bpp(void) { DIRTY0(2,2,1,16,) }
+void blitscreen_dirty0_vesa_3x_1x_16bpp(void)  { DIRTY0(3,1,0,16,) }
+void blitscreen_dirty0_vesa_3x_2x_16bpp(void)  { DIRTY0(3,2,0,16,) }
+void blitscreen_dirty0_vesa_3x_2xs_16bpp(void) { DIRTY0(3,2,1,16,) }
+void blitscreen_dirty0_vesa_4x_2x_16bpp(void)  { DIRTY0(4,2,0,16,) }
+void blitscreen_dirty0_vesa_4x_2xs_16bpp(void) { DIRTY0(4,2,1,16,) }
 
-void blitscreen_dirty1_vesa_1x_1x_16bpp(void)  { DIRTY1(16) DIRTY1_NXNS(1,1,16,) }
-void blitscreen_dirty1_vesa_1x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (1,16,) }
-void blitscreen_dirty1_vesa_1x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(1,2,16,) }
-void blitscreen_dirty1_vesa_2x_1x_16bpp(void)  { DIRTY1(16) DIRTY1_NXNS(2,1,16,) }
-void blitscreen_dirty1_vesa_2x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (2,16,) }
-void blitscreen_dirty1_vesa_2x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(2,2,16,) }
-void blitscreen_dirty1_vesa_3x_1x_16bpp(void)  { DIRTY1(16) DIRTY1_NXNS(3,1,16,) }
-void blitscreen_dirty1_vesa_3x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (3,16,)  }
-void blitscreen_dirty1_vesa_3x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(3,2,16,) }
-void blitscreen_dirty1_vesa_4x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (4,16,) }
-void blitscreen_dirty1_vesa_4x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(4,2,16,) }
-
-void blitscreen_dirty1_vesa_1x_1x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NXNS(1,1,16,_palettized) }
-void blitscreen_dirty1_vesa_1x_2x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NX2 (1,16,_palettized) }
-void blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized(void) { DIRTY1(16) DIRTY1_NXNS(1,2,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_1x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NXNS(2,1,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_2x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NX2 (2,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized(void) { DIRTY1(16) DIRTY1_NXNS(2,2,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_1x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NXNS(3,1,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_2x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NX2 (3,16,_palettized)  }
-void blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized(void) { DIRTY1(16) DIRTY1_NXNS(3,2,16,_palettized) }
-void blitscreen_dirty1_vesa_4x_2x_16bpp_palettized(void)  { DIRTY1(16) DIRTY1_NX2 (4,16,_palettized) }
-void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(void) { DIRTY1(16) DIRTY1_NXNS(4,2,16,_palettized) }
-
-void blitscreen_dirty0_vesa_1x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(1,1,8,)  }
-void blitscreen_dirty0_vesa_1x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (1,8,)  }
-void blitscreen_dirty0_vesa_1x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(1,2,8,)  }
-void blitscreen_dirty0_vesa_2x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(2,1,8,)  }
-void blitscreen_dirty0_vesa_3x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(3,1,8,)  }
-void blitscreen_dirty0_vesa_2x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (2,8,)  }
-void blitscreen_dirty0_vesa_2x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(2,2,8,)  }
-void blitscreen_dirty0_vesa_2x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (2,8,)  }
-void blitscreen_dirty0_vesa_2x_3xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(2,3,8,)  }
-void blitscreen_dirty0_vesa_3x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (3,8,)  }
-void blitscreen_dirty0_vesa_3x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(3,2,8,)	}
-void blitscreen_dirty0_vesa_3x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (3,8,)  }
-void blitscreen_dirty0_vesa_3x_3xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(3,3,8,)  }
-void blitscreen_dirty0_vesa_4x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (4,8,)  }
-void blitscreen_dirty0_vesa_4x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(4,2,8,)	}
-void blitscreen_dirty0_vesa_4x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (4,8,)  }
-void blitscreen_dirty0_vesa_4x_3xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(4,3,8,)  }
-
-void blitscreen_dirty0_vesa_1x_1x_16bpp(void)  { DIRTY0(16) DIRTY0_NXNS(1,1,16,) }
-void blitscreen_dirty0_vesa_1x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (1,16,) }
-void blitscreen_dirty0_vesa_1x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(1,2,16,) }
-void blitscreen_dirty0_vesa_2x_1x_16bpp(void)  { DIRTY0(16) DIRTY0_NXNS(2,1,16,) }
-void blitscreen_dirty0_vesa_2x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (2,16,) }
-void blitscreen_dirty0_vesa_2x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(2,2,16,) }
-void blitscreen_dirty0_vesa_3x_1x_16bpp(void)  { DIRTY0(16) DIRTY0_NXNS(3,1,16,) }
-void blitscreen_dirty0_vesa_3x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (3,16,)  }
-void blitscreen_dirty0_vesa_3x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(3,2,16,) }
-void blitscreen_dirty0_vesa_4x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (4,16,) }
-void blitscreen_dirty0_vesa_4x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(4,2,16,) }
-
-void blitscreen_dirty0_vesa_1x_1x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NXNS(1,1,16,_palettized) }
-void blitscreen_dirty0_vesa_1x_2x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NX2 (1,16,_palettized) }
-void blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized(void) { DIRTY0(16) DIRTY0_NXNS(1,2,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_1x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NXNS(2,1,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_2x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NX2 (2,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized(void) { DIRTY0(16) DIRTY0_NXNS(2,2,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_1x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NXNS(3,1,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_2x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NX2 (3,16,_palettized)  }
-void blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized(void) { DIRTY0(16) DIRTY0_NXNS(3,2,16,_palettized) }
-void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(void)  { DIRTY0(16) DIRTY0_NX2 (4,16,_palettized) }
-void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(void) { DIRTY0(16) DIRTY0_NXNS(4,2,16,_palettized) }
+void blitscreen_dirty0_vesa_1x_1x_16bpp_palettized(void)  { DIRTY0(1,1,0,16,_palettized) }
+void blitscreen_dirty0_vesa_1x_2x_16bpp_palettized(void)  { DIRTY0(1,2,0,16,_palettized) }
+void blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized(void) { DIRTY0(1,2,1,16,_palettized) }
+void blitscreen_dirty0_vesa_2x_1x_16bpp_palettized(void)  { DIRTY0(2,1,0,16,_palettized) }
+void blitscreen_dirty0_vesa_2x_2x_16bpp_palettized(void)  { DIRTY0(2,2,0,16,_palettized) }
+void blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized(void) { DIRTY0(2,2,1,16,_palettized) }
+void blitscreen_dirty0_vesa_3x_1x_16bpp_palettized(void)  { DIRTY0(3,1,0,16,_palettized) }
+void blitscreen_dirty0_vesa_3x_2x_16bpp_palettized(void)  { DIRTY0(3,2,0,16,_palettized) }
+void blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized(void) { DIRTY0(3,2,1,16,_palettized) }
+void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(void)  { DIRTY0(4,2,0,16,_palettized) }
+void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(void) { DIRTY0(4,2,1,16,_palettized) }

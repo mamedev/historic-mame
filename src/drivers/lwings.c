@@ -22,6 +22,7 @@ void lwings_bankswitch_w(int offset,int data);
 int lwings_bankedrom_r(int offset);
 int lwings_interrupt(void);
 int avengers_protection_r(int offset);
+void avengers_protection_w(int offset, int data);
 
 extern unsigned char *lwings_backgroundram;
 extern unsigned char *lwings_backgroundattribram;
@@ -122,8 +123,7 @@ static struct MemoryWriteAddress trojan_writemem[] =
 	{ 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
 	{ 0xf804, 0xf804, MWA_RAM, &trojan_bk_scrollx },
 	{ 0xf805, 0xf805, MWA_RAM, &trojan_bk_scrolly },
-	{ 0xf808, 0xf809, MWA_RAM, &lwings_scrolly},
-	{ 0xf80a, 0xf80b, MWA_RAM, &lwings_scrollx},
+	{ 0xf809, 0xf809, avengers_protection_w },
 	{ 0xf80c, 0xf80c, trojan_sound_cmd_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
@@ -537,18 +537,18 @@ static struct GfxLayout bktilelayout_trojan =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   512, 16 }, /* colors 512-575 */
-	{ 1, 0x10000, &tilelayout,     0,  8 }, /* colors   0-127 */
-	{ 1, 0x50000, &spritelayout, 384,  8 }, /* colors 384-511 */
+	{ REGION_GFX1, 0, &charlayout,   512, 16 }, /* colors 512-575 */
+	{ REGION_GFX2, 0, &tilelayout,     0,  8 }, /* colors   0-127 */
+	{ REGION_GFX3, 0, &spritelayout, 384,  8 }, /* colors 384-511 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
 {
-	{ 1, 0x00000, &charlayout,          768, 16 },  /* colors 768-831 */
-	{ 1, 0x10000, &tilelayout,          256,  8 },  /* colors 256-383 */
-	{ 1, 0x50000, &spritelayout_trojan, 640,  8 },  /* colors 640-767 */
-	{ 1, 0x90000, &bktilelayout_trojan,   0,  8 },  /* colors   0-127 */
+	{ REGION_GFX1, 0, &charlayout,          768, 16 },  /* colors 768-831 */
+	{ REGION_GFX2, 0, &tilelayout,          256,  8 },  /* colors 256-383 */
+	{ REGION_GFX3, 0, &spritelayout_trojan, 640,  8 },  /* colors 640-767 */
+	{ REGION_GFX4, 0, &bktilelayout_trojan,   0,  8 },  /* colors   0-127 */
 	{ -1 } /* end of array */
 };
 
@@ -618,78 +618,90 @@ static struct MachineDriver machine_driver_lwings =
 ***************************************************************************/
 
 ROM_START( lwings )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_lw01.bin",  0x00000, 0x8000, 0xb55a7f60 )
 	ROM_LOAD( "7c_lw02.bin",  0x10000, 0x8000, 0xa5efbb1b )
 	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
 
-	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c )  /* characters */
-	ROM_LOAD( "3e_lw14.bin",  0x10000, 0x8000, 0x5436392c )  /* tiles */
-	ROM_LOAD( "1e_lw08.bin",  0x18000, 0x8000, 0xb491bbbb )
-	ROM_LOAD( "3d_lw13.bin",  0x20000, 0x8000, 0xfdd1908a )
-	ROM_LOAD( "1d_lw07.bin",  0x28000, 0x8000, 0x5c73d406 )
-	ROM_LOAD( "3b_lw12.bin",  0x30000, 0x8000, 0x32e17b3c )
-	ROM_LOAD( "1b_lw06.bin",  0x38000, 0x8000, 0x52e533c1 )
-	ROM_LOAD( "3f_lw15.bin",  0x40000, 0x8000, 0x99e134ba )
-	ROM_LOAD( "1f_lw09.bin",  0x48000, 0x8000, 0xc8f28777 )
-	ROM_LOAD( "3j_lw17.bin",  0x50000, 0x8000, 0x5ed1bc9b )  /* sprites */
-	ROM_LOAD( "1j_lw11.bin",  0x58000, 0x8000, 0x2a0790d6 )
-	ROM_LOAD( "3h_lw16.bin",  0x60000, 0x8000, 0xe8834006 )
-	ROM_LOAD( "1h_lw10.bin",  0x68000, 0x8000, 0xb693f5a5 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c ) /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3e_lw14.bin",  0x00000, 0x8000, 0x5436392c ) /* tiles */
+	ROM_LOAD( "1e_lw08.bin",  0x08000, 0x8000, 0xb491bbbb )
+	ROM_LOAD( "3d_lw13.bin",  0x10000, 0x8000, 0xfdd1908a )
+	ROM_LOAD( "1d_lw07.bin",  0x18000, 0x8000, 0x5c73d406 )
+	ROM_LOAD( "3b_lw12.bin",  0x20000, 0x8000, 0x32e17b3c )
+	ROM_LOAD( "1b_lw06.bin",  0x28000, 0x8000, 0x52e533c1 )
+	ROM_LOAD( "3f_lw15.bin",  0x30000, 0x8000, 0x99e134ba )
+	ROM_LOAD( "1f_lw09.bin",  0x38000, 0x8000, 0xc8f28777 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3j_lw17.bin",  0x00000, 0x8000, 0x5ed1bc9b )  /* sprites */
+	ROM_LOAD( "1j_lw11.bin",  0x08000, 0x8000, 0x2a0790d6 )
+	ROM_LOAD( "3h_lw16.bin",  0x10000, 0x8000, 0xe8834006 )
+	ROM_LOAD( "1h_lw10.bin",  0x18000, 0x8000, 0xb693f5a5 )
 ROM_END
 
 ROM_START( lwings2 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "u13-l",        0x00000, 0x8000, 0x3069c01c )
 	ROM_LOAD( "u14-k",        0x10000, 0x8000, 0x5d91c828 )
 	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
 
-	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c )  /* characters */
-	ROM_LOAD( "b_03e.rom",    0x10000, 0x8000, 0x176e3027 )  /* tiles */
-	ROM_LOAD( "b_01e.rom",    0x18000, 0x8000, 0xf5d25623 )
-	ROM_LOAD( "b_03d.rom",    0x20000, 0x8000, 0x001caa35 )
-	ROM_LOAD( "b_01d.rom",    0x28000, 0x8000, 0x0ba008c3 )
-	ROM_LOAD( "b_03b.rom",    0x30000, 0x8000, 0x4f8182e9 )
-	ROM_LOAD( "b_01b.rom",    0x38000, 0x8000, 0xf1617374 )
-	ROM_LOAD( "b_03f.rom",    0x40000, 0x8000, 0x9b374dcc )
-	ROM_LOAD( "b_01f.rom",    0x48000, 0x8000, 0x23654e0a )
-	ROM_LOAD( "b_03j.rom",    0x50000, 0x8000, 0x8f3c763a )  /* sprites */
-	ROM_LOAD( "b_01j.rom",    0x58000, 0x8000, 0x7cc90a1d )
-	ROM_LOAD( "b_03h.rom",    0x60000, 0x8000, 0x7d58f532 )
-	ROM_LOAD( "b_01h.rom",    0x68000, 0x8000, 0x3e396eda )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_03e.rom",    0x00000, 0x8000, 0x176e3027 )  /* tiles */
+	ROM_LOAD( "b_01e.rom",    0x08000, 0x8000, 0xf5d25623 )
+	ROM_LOAD( "b_03d.rom",    0x10000, 0x8000, 0x001caa35 )
+	ROM_LOAD( "b_01d.rom",    0x18000, 0x8000, 0x0ba008c3 )
+	ROM_LOAD( "b_03b.rom",    0x20000, 0x8000, 0x4f8182e9 )
+	ROM_LOAD( "b_01b.rom",    0x28000, 0x8000, 0xf1617374 )
+	ROM_LOAD( "b_03f.rom",    0x30000, 0x8000, 0x9b374dcc )
+	ROM_LOAD( "b_01f.rom",    0x38000, 0x8000, 0x23654e0a )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_03j.rom",    0x00000, 0x8000, 0x8f3c763a )  /* sprites */
+	ROM_LOAD( "b_01j.rom",    0x08000, 0x8000, 0x7cc90a1d )
+	ROM_LOAD( "b_03h.rom",    0x10000, 0x8000, 0x7d58f532 )
+	ROM_LOAD( "b_01h.rom",    0x18000, 0x8000, 0x3e396eda )
 ROM_END
 
 ROM_START( lwingsjp )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "a_06c.rom",    0x00000, 0x8000, 0x2068a738 )
 	ROM_LOAD( "a_07c.rom",    0x10000, 0x8000, 0xd6a2edc4 )
 	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
 
-	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c )  /* characters */
-	ROM_LOAD( "b_03e.rom",    0x10000, 0x8000, 0x176e3027 )  /* tiles */
-	ROM_LOAD( "b_01e.rom",    0x18000, 0x8000, 0xf5d25623 )
-	ROM_LOAD( "b_03d.rom",    0x20000, 0x8000, 0x001caa35 )
-	ROM_LOAD( "b_01d.rom",    0x28000, 0x8000, 0x0ba008c3 )
-	ROM_LOAD( "b_03b.rom",    0x30000, 0x8000, 0x4f8182e9 )
-	ROM_LOAD( "b_01b.rom",    0x38000, 0x8000, 0xf1617374 )
-	ROM_LOAD( "b_03f.rom",    0x40000, 0x8000, 0x9b374dcc )
-	ROM_LOAD( "b_01f.rom",    0x48000, 0x8000, 0x23654e0a )
-	ROM_LOAD( "b_03j.rom",    0x50000, 0x8000, 0x8f3c763a )  /* sprites */
-	ROM_LOAD( "b_01j.rom",    0x58000, 0x8000, 0x7cc90a1d )
-	ROM_LOAD( "b_03h.rom",    0x60000, 0x8000, 0x7d58f532 )
-	ROM_LOAD( "b_01h.rom",    0x68000, 0x8000, 0x3e396eda )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_03e.rom",    0x00000, 0x8000, 0x176e3027 )  /* tiles */
+	ROM_LOAD( "b_01e.rom",    0x08000, 0x8000, 0xf5d25623 )
+	ROM_LOAD( "b_03d.rom",    0x10000, 0x8000, 0x001caa35 )
+	ROM_LOAD( "b_01d.rom",    0x18000, 0x8000, 0x0ba008c3 )
+	ROM_LOAD( "b_03b.rom",    0x20000, 0x8000, 0x4f8182e9 )
+	ROM_LOAD( "b_01b.rom",    0x28000, 0x8000, 0xf1617374 )
+	ROM_LOAD( "b_03f.rom",    0x30000, 0x8000, 0x9b374dcc )
+	ROM_LOAD( "b_01f.rom",    0x38000, 0x8000, 0x23654e0a )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_03j.rom",    0x00000, 0x8000, 0x8f3c763a )  /* sprites */
+	ROM_LOAD( "b_01j.rom",    0x08000, 0x8000, 0x7cc90a1d )
+	ROM_LOAD( "b_03h.rom",    0x10000, 0x8000, 0x7d58f532 )
+	ROM_LOAD( "b_01h.rom",    0x18000, 0x8000, 0x3e396eda )
 ROM_END
 
 
@@ -706,53 +718,61 @@ ROM_END
 
 
 ROM_START( sectionz )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_sz01.bin",  0x00000, 0x8000, 0x69585125 )
 	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
 	ROM_LOAD( "9c_sz03.bin",  0x18000, 0x8000, 0x4c7111ed )
 
-	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_sz05.bin",  0x00000, 0x4000, 0x3173ba2e )  /* characters */
-	ROM_LOAD( "3e_sz14.bin",  0x10000, 0x8000, 0x63782e30 )  /* tiles */
-	ROM_LOAD( "1e_sz08.bin",  0x18000, 0x8000, 0xd57d9f13 )
-	ROM_LOAD( "3d_sz13.bin",  0x20000, 0x8000, 0x1b3d4d7f )
-	ROM_LOAD( "1d_sz07.bin",  0x28000, 0x8000, 0xf5b3a29f )
-	ROM_LOAD( "3b_sz12.bin",  0x30000, 0x8000, 0x11d47dfd )
-	ROM_LOAD( "1b_sz06.bin",  0x38000, 0x8000, 0xdf703b68 )
-	ROM_LOAD( "3f_sz15.bin",  0x40000, 0x8000, 0x36bb9bf7 )
-	ROM_LOAD( "1f_sz09.bin",  0x48000, 0x8000, 0xda8f06c9 )
-	ROM_LOAD( "3j_sz17.bin",  0x50000, 0x8000, 0x8df7b24a )  /* sprites */
-	ROM_LOAD( "1j_sz11.bin",  0x58000, 0x8000, 0x685d4c54 )
-	ROM_LOAD( "3h_sz16.bin",  0x60000, 0x8000, 0x500ff2bb )
-	ROM_LOAD( "1h_sz10.bin",  0x68000, 0x8000, 0x00b3d244 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9h_sz05.bin",  0x00000, 0x4000, 0x3173ba2e )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3e_sz14.bin",  0x00000, 0x8000, 0x63782e30 )  /* tiles */
+	ROM_LOAD( "1e_sz08.bin",  0x08000, 0x8000, 0xd57d9f13 )
+	ROM_LOAD( "3d_sz13.bin",  0x10000, 0x8000, 0x1b3d4d7f )
+	ROM_LOAD( "1d_sz07.bin",  0x18000, 0x8000, 0xf5b3a29f )
+	ROM_LOAD( "3b_sz12.bin",  0x20000, 0x8000, 0x11d47dfd )
+	ROM_LOAD( "1b_sz06.bin",  0x28000, 0x8000, 0xdf703b68 )
+	ROM_LOAD( "3f_sz15.bin",  0x30000, 0x8000, 0x36bb9bf7 )
+	ROM_LOAD( "1f_sz09.bin",  0x38000, 0x8000, 0xda8f06c9 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3j_sz17.bin",  0x00000, 0x8000, 0x8df7b24a )  /* sprites */
+	ROM_LOAD( "1j_sz11.bin",  0x08000, 0x8000, 0x685d4c54 )
+	ROM_LOAD( "3h_sz16.bin",  0x10000, 0x8000, 0x500ff2bb )
+	ROM_LOAD( "1h_sz10.bin",  0x18000, 0x8000, 0x00b3d244 )
 ROM_END
 
 ROM_START( sctionza )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "sz-01a.bin",   0x00000, 0x8000, 0x98df49fd )
 	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
 	ROM_LOAD( "sz-03j.bin",   0x18000, 0x8000, 0x94547abf )
 
-	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_sz05.bin",  0x00000, 0x4000, 0x3173ba2e )  /* characters */
-	ROM_LOAD( "3e_sz14.bin",  0x10000, 0x8000, 0x63782e30 )  /* tiles */
-	ROM_LOAD( "1e_sz08.bin",  0x18000, 0x8000, 0xd57d9f13 )
-	ROM_LOAD( "3d_sz13.bin",  0x20000, 0x8000, 0x1b3d4d7f )
-	ROM_LOAD( "1d_sz07.bin",  0x28000, 0x8000, 0xf5b3a29f )
-	ROM_LOAD( "3b_sz12.bin",  0x30000, 0x8000, 0x11d47dfd )
-	ROM_LOAD( "1b_sz06.bin",  0x38000, 0x8000, 0xdf703b68 )
-	ROM_LOAD( "3f_sz15.bin",  0x40000, 0x8000, 0x36bb9bf7 )
-	ROM_LOAD( "1f_sz09.bin",  0x48000, 0x8000, 0xda8f06c9 )
-	ROM_LOAD( "3j_sz17.bin",  0x50000, 0x8000, 0x8df7b24a )  /* sprites */
-	ROM_LOAD( "1j_sz11.bin",  0x58000, 0x8000, 0x685d4c54 )
-	ROM_LOAD( "3h_sz16.bin",  0x60000, 0x8000, 0x500ff2bb )
-	ROM_LOAD( "1h_sz10.bin",  0x68000, 0x8000, 0x00b3d244 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9h_sz05.bin",  0x00000, 0x4000, 0x3173ba2e )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3e_sz14.bin",  0x00000, 0x8000, 0x63782e30 )  /* tiles */
+	ROM_LOAD( "1e_sz08.bin",  0x08000, 0x8000, 0xd57d9f13 )
+	ROM_LOAD( "3d_sz13.bin",  0x10000, 0x8000, 0x1b3d4d7f )
+	ROM_LOAD( "1d_sz07.bin",  0x18000, 0x8000, 0xf5b3a29f )
+	ROM_LOAD( "3b_sz12.bin",  0x20000, 0x8000, 0x11d47dfd )
+	ROM_LOAD( "1b_sz06.bin",  0x28000, 0x8000, 0xdf703b68 )
+	ROM_LOAD( "3f_sz15.bin",  0x30000, 0x8000, 0x36bb9bf7 )
+	ROM_LOAD( "1f_sz09.bin",  0x38000, 0x8000, 0xda8f06c9 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3j_sz17.bin",  0x00000, 0x8000, 0x8df7b24a )  /* sprites */
+	ROM_LOAD( "1j_sz11.bin",  0x08000, 0x8000, 0x685d4c54 )
+	ROM_LOAD( "3h_sz16.bin",  0x10000, 0x8000, 0x500ff2bb )
+	ROM_LOAD( "1h_sz10.bin",  0x18000, 0x8000, 0x00b3d244 )
 ROM_END
 
 
@@ -799,12 +819,10 @@ static struct ADPCMinterface trojan_adpcm_interface =
 {
 	1,                      /* 1 channel */
 	4000,                   /* 4000Hz playback */
-	3,                      /* memory region 3 */
+	REGION_CPU3,            /* memory region */
 	trojan_adpcm_init,		/* init function */
 	{ 255 }
 };
-
-
 
 static struct MachineDriver machine_driver_trojan =
 {
@@ -854,150 +872,153 @@ static struct MachineDriver machine_driver_trojan =
 	}
 };
 
-
-
 ROM_START( trojan )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "t4",           0x00000, 0x8000, 0xc1bbeb4e )
 	ROM_LOAD( "t6",           0x10000, 0x8000, 0xd49592ef )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
 
-	ROM_REGION_DISPOSE(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
-	ROM_LOAD( "tb13.bin",     0x10000, 0x8000, 0x285a052b )     /* tiles */
-	ROM_LOAD( "tb09.bin",     0x18000, 0x8000, 0xaeb693f7 )
-	ROM_LOAD( "tb12.bin",     0x20000, 0x8000, 0xdfb0fe5c )
-	ROM_LOAD( "tb08.bin",     0x28000, 0x8000, 0xd3a4c9d1 )
-	ROM_LOAD( "tb11.bin",     0x30000, 0x8000, 0x00f0f4fd )
-	ROM_LOAD( "tb07.bin",     0x38000, 0x8000, 0xdff2ee02 )
-	ROM_LOAD( "tb14.bin",     0x40000, 0x8000, 0x14bfac18 )
-	ROM_LOAD( "tb10.bin",     0x48000, 0x8000, 0x71ba8a6d )
-	ROM_LOAD( "tb18.bin",     0x50000, 0x8000, 0x862c4713 )     /* sprites */
-	ROM_LOAD( "tb16.bin",     0x58000, 0x8000, 0xd86f8cbd )
-	ROM_LOAD( "tb17.bin",     0x60000, 0x8000, 0x12a73b3f )
-	ROM_LOAD( "tb15.bin",     0x68000, 0x8000, 0xbb1a2769 )
-	ROM_LOAD( "tb22.bin",     0x70000, 0x8000, 0x39daafd4 )
-	ROM_LOAD( "tb20.bin",     0x78000, 0x8000, 0x94615d2a )
-	ROM_LOAD( "tb21.bin",     0x80000, 0x8000, 0x66c642bd )
-	ROM_LOAD( "tb19.bin",     0x88000, 0x8000, 0x81d5ab36 )
-	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
-	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
 
-	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
+	ROM_REGION( 0x10000, REGION_CPU3 )     /* 64k for ADPCM CPU (CPU not emulated) */
 	ROM_LOAD( "tb01.bin",     0x0000, 0x4000, 0x1c0f91b2 )
 
-	ROM_REGION(0x08000)
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb13.bin",     0x00000, 0x8000, 0x285a052b )     /* tiles */
+	ROM_LOAD( "tb09.bin",     0x08000, 0x8000, 0xaeb693f7 )
+	ROM_LOAD( "tb12.bin",     0x10000, 0x8000, 0xdfb0fe5c )
+	ROM_LOAD( "tb08.bin",     0x18000, 0x8000, 0xd3a4c9d1 )
+	ROM_LOAD( "tb11.bin",     0x20000, 0x8000, 0x00f0f4fd )
+	ROM_LOAD( "tb07.bin",     0x28000, 0x8000, 0xdff2ee02 )
+	ROM_LOAD( "tb14.bin",     0x30000, 0x8000, 0x14bfac18 )
+	ROM_LOAD( "tb10.bin",     0x38000, 0x8000, 0x71ba8a6d )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb18.bin",     0x00000, 0x8000, 0x862c4713 )     /* sprites */
+	ROM_LOAD( "tb16.bin",     0x08000, 0x8000, 0xd86f8cbd )
+	ROM_LOAD( "tb17.bin",     0x10000, 0x8000, 0x12a73b3f )
+	ROM_LOAD( "tb15.bin",     0x18000, 0x8000, 0xbb1a2769 )
+	ROM_LOAD( "tb22.bin",     0x20000, 0x8000, 0x39daafd4 )
+	ROM_LOAD( "tb20.bin",     0x28000, 0x8000, 0x94615d2a )
+	ROM_LOAD( "tb21.bin",     0x30000, 0x8000, 0x66c642bd )
+	ROM_LOAD( "tb19.bin",     0x38000, 0x8000, 0x81d5ab36 )
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb25.bin",     0x00000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
+	ROM_LOAD( "tb24.bin",     0x08000, 0x8000, 0x14fc6cf2 )
+
+	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
 ROM_END
 
 ROM_START( trojanr )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "tb04.bin",     0x00000, 0x8000, 0x92670f27 )
 	ROM_LOAD( "tb06.bin",     0x10000, 0x8000, 0xa4951173 )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
 
-	ROM_REGION_DISPOSE(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
-	ROM_LOAD( "tb13.bin",     0x10000, 0x8000, 0x285a052b )     /* tiles */
-	ROM_LOAD( "tb09.bin",     0x18000, 0x8000, 0xaeb693f7 )
-	ROM_LOAD( "tb12.bin",     0x20000, 0x8000, 0xdfb0fe5c )
-	ROM_LOAD( "tb08.bin",     0x28000, 0x8000, 0xd3a4c9d1 )
-	ROM_LOAD( "tb11.bin",     0x30000, 0x8000, 0x00f0f4fd )
-	ROM_LOAD( "tb07.bin",     0x38000, 0x8000, 0xdff2ee02 )
-	ROM_LOAD( "tb14.bin",     0x40000, 0x8000, 0x14bfac18 )
-	ROM_LOAD( "tb10.bin",     0x48000, 0x8000, 0x71ba8a6d )
-	ROM_LOAD( "tb18.bin",     0x50000, 0x8000, 0x862c4713 )     /* sprites */
-	ROM_LOAD( "tb16.bin",     0x58000, 0x8000, 0xd86f8cbd )
-	ROM_LOAD( "tb17.bin",     0x60000, 0x8000, 0x12a73b3f )
-	ROM_LOAD( "tb15.bin",     0x68000, 0x8000, 0xbb1a2769 )
-	ROM_LOAD( "tb22.bin",     0x70000, 0x8000, 0x39daafd4 )
-	ROM_LOAD( "tb20.bin",     0x78000, 0x8000, 0x94615d2a )
-	ROM_LOAD( "tb21.bin",     0x80000, 0x8000, 0x66c642bd )
-	ROM_LOAD( "tb19.bin",     0x88000, 0x8000, 0x81d5ab36 )
-	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
-	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
 
-	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for ADPCM CPU (CPU not emulated) */
 	ROM_LOAD( "tb01.bin",     0x0000, 0x4000, 0x1c0f91b2 )
 
-	ROM_REGION(0x08000)
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb13.bin",     0x00000, 0x8000, 0x285a052b )     /* tiles */
+	ROM_LOAD( "tb09.bin",     0x08000, 0x8000, 0xaeb693f7 )
+	ROM_LOAD( "tb12.bin",     0x10000, 0x8000, 0xdfb0fe5c )
+	ROM_LOAD( "tb08.bin",     0x18000, 0x8000, 0xd3a4c9d1 )
+	ROM_LOAD( "tb11.bin",     0x20000, 0x8000, 0x00f0f4fd )
+	ROM_LOAD( "tb07.bin",     0x28000, 0x8000, 0xdff2ee02 )
+	ROM_LOAD( "tb14.bin",     0x30000, 0x8000, 0x14bfac18 )
+	ROM_LOAD( "tb10.bin",     0x38000, 0x8000, 0x71ba8a6d )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb18.bin",     0x00000, 0x8000, 0x862c4713 )     /* sprites */
+	ROM_LOAD( "tb16.bin",     0x08000, 0x8000, 0xd86f8cbd )
+	ROM_LOAD( "tb17.bin",     0x10000, 0x8000, 0x12a73b3f )
+	ROM_LOAD( "tb15.bin",     0x18000, 0x8000, 0xbb1a2769 )
+	ROM_LOAD( "tb22.bin",     0x20000, 0x8000, 0x39daafd4 )
+	ROM_LOAD( "tb20.bin",     0x28000, 0x8000, 0x94615d2a )
+	ROM_LOAD( "tb21.bin",     0x30000, 0x8000, 0x66c642bd )
+	ROM_LOAD( "tb19.bin",     0x38000, 0x8000, 0x81d5ab36 )
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb25.bin",     0x00000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
+	ROM_LOAD( "tb24.bin",     0x08000, 0x8000, 0x14fc6cf2 )
+
+	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
 ROM_END
 
 ROM_START( trojanj )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "troj-04.rom",  0x00000, 0x8000, 0x0b5a7f49 )
 	ROM_LOAD( "troj-06.rom",  0x10000, 0x8000, 0xdee6ed92 )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
 
-	ROM_REGION_DISPOSE(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
-	ROM_LOAD( "tb13.bin",     0x10000, 0x8000, 0x285a052b )     /* tiles */
-	ROM_LOAD( "tb09.bin",     0x18000, 0x8000, 0xaeb693f7 )
-	ROM_LOAD( "tb12.bin",     0x20000, 0x8000, 0xdfb0fe5c )
-	ROM_LOAD( "tb08.bin",     0x28000, 0x8000, 0xd3a4c9d1 )
-	ROM_LOAD( "tb11.bin",     0x30000, 0x8000, 0x00f0f4fd )
-	ROM_LOAD( "tb07.bin",     0x38000, 0x8000, 0xdff2ee02 )
-	ROM_LOAD( "tb14.bin",     0x40000, 0x8000, 0x14bfac18 )
-	ROM_LOAD( "tb10.bin",     0x48000, 0x8000, 0x71ba8a6d )
-	ROM_LOAD( "tb18.bin",     0x50000, 0x8000, 0x862c4713 )     /* sprites */
-	ROM_LOAD( "tb16.bin",     0x58000, 0x8000, 0xd86f8cbd )
-	ROM_LOAD( "tb17.bin",     0x60000, 0x8000, 0x12a73b3f )
-	ROM_LOAD( "tb15.bin",     0x68000, 0x8000, 0xbb1a2769 )
-	ROM_LOAD( "tb22.bin",     0x70000, 0x8000, 0x39daafd4 )
-	ROM_LOAD( "tb20.bin",     0x78000, 0x8000, 0x94615d2a )
-	ROM_LOAD( "tb21.bin",     0x80000, 0x8000, 0x66c642bd )
-	ROM_LOAD( "tb19.bin",     0x88000, 0x8000, 0x81d5ab36 )
-	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
-	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
 
-	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
+	ROM_REGION( 0x10000, REGION_CPU3 )     /* 64k for ADPCM CPU (CPU not emulated) */
 	ROM_LOAD( "tb01.bin",     0x0000, 0x4000, 0x1c0f91b2 )
 
-	ROM_REGION(0x08000)
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb13.bin",     0x00000, 0x8000, 0x285a052b )     /* tiles */
+	ROM_LOAD( "tb09.bin",     0x08000, 0x8000, 0xaeb693f7 )
+	ROM_LOAD( "tb12.bin",     0x10000, 0x8000, 0xdfb0fe5c )
+	ROM_LOAD( "tb08.bin",     0x18000, 0x8000, 0xd3a4c9d1 )
+	ROM_LOAD( "tb11.bin",     0x20000, 0x8000, 0x00f0f4fd )
+	ROM_LOAD( "tb07.bin",     0x28000, 0x8000, 0xdff2ee02 )
+	ROM_LOAD( "tb14.bin",     0x30000, 0x8000, 0x14bfac18 )
+	ROM_LOAD( "tb10.bin",     0x38000, 0x8000, 0x71ba8a6d )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb18.bin",     0x00000, 0x8000, 0x862c4713 )     /* sprites */
+	ROM_LOAD( "tb16.bin",     0x08000, 0x8000, 0xd86f8cbd )
+	ROM_LOAD( "tb17.bin",     0x10000, 0x8000, 0x12a73b3f )
+	ROM_LOAD( "tb15.bin",     0x18000, 0x8000, 0xbb1a2769 )
+	ROM_LOAD( "tb22.bin",     0x20000, 0x8000, 0x39daafd4 )
+	ROM_LOAD( "tb20.bin",     0x28000, 0x8000, 0x94615d2a )
+	ROM_LOAD( "tb21.bin",     0x30000, 0x8000, 0x66c642bd )
+	ROM_LOAD( "tb19.bin",     0x38000, 0x8000, 0x81d5ab36 )
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tb25.bin",     0x00000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
+	ROM_LOAD( "tb24.bin",     0x08000, 0x8000, 0x14fc6cf2 )
+
+	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
 ROM_END
 
-
-
-
 /***************************************************************************
- Avengers - Doesn't work due to copy protection
 
- Function at 0x2ec1 writes to an output port (0xf809 = scroll y),
- peforms a short delay then reads 0xf80d.
-
- There are also two interrupts (0x10 and NMI)
+ Avengers - Doesn't work properly due to copy protection
 
  ***************************************************************************/
 
 extern int avengers_interrupt(void);
 
-int avengers_protection_r(int offset)
-{
-	int value;
-	value=lwings_scrolly[1];
-	if (errorlog)
-	{
-		fprintf(errorlog, "Protection read: %02x PC=%04x\n",
-			value, cpu_get_pc());
-	}
-
-	/*
-	I have no idea what the protection chip does with this value.
-	*/
-
-	return value;
+void avengers_protection_w(int offset, int data){
 }
+
+int avengers_protection_r(int offset){
+	/* the protection reads are used for background palette among other things */
+	static int hack;
+	hack = hack&0xf;
+	return hack++;
+}
+
 
 /*
 E2 00 E4 03 E6 0C E8 10 EA 19 EC 25 EE 38 F0 3B F2 3E F4 49 F4 s
@@ -1024,7 +1045,7 @@ static struct ADPCMinterface avengers_adpcm_interface =
 {
 	1,                      /* 1 channel */
 	4000,                   /* 4000Hz playback */
-	3,                      /* memory region 3 */
+	REGION_CPU3,            /* memory region */
 	avengers_adpcm_init,	/* init function */
 	{ 255 }
 };
@@ -1162,91 +1183,90 @@ INPUT_PORTS_START( avengers )
 INPUT_PORTS_END
 
 ROM_START( avengers )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "04.10n",       0x00000, 0x8000, 0xa94aadcc )
 	ROM_LOAD( "06.13n",       0x10000, 0x8000, 0x39cd80bd )
 	ROM_LOAD( "05.12n",       0x18000, 0x8000, 0x06b1cec9 )
 
-	ROM_REGION_DISPOSE(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
-	/* tiles */
-	ROM_LOAD( "13.6b",        0x10000, 0x8000, 0x9b5ff305 ) /* plane 1 */
-	ROM_LOAD( "09.6a",        0x18000, 0x8000, 0x08323355 )
-	ROM_LOAD( "12.4b",        0x20000, 0x8000, 0x6d5261ba ) /* plane 2 */
-	ROM_LOAD( "08.4a",        0x28000, 0x8000, 0xa13d9f54 )
-	ROM_LOAD( "11.3b",        0x30000, 0x8000, 0xa2911d8b ) /* plane 3 */
-	ROM_LOAD( "07.3a",        0x38000, 0x8000, 0xcde78d32 )
-	ROM_LOAD( "14.8b",        0x40000, 0x8000, 0x44ac2671 ) /* plane 4 */
-	ROM_LOAD( "10.8a",        0x48000, 0x8000, 0xb1a717cb )
-
-	/* sprites */
-	ROM_LOAD( "18.7l",        0x50000, 0x8000, 0x3c876a17 ) /* planes 0,1 */
-	ROM_LOAD( "16.3l",        0x58000, 0x8000, 0x4b1ff3ac )
-	ROM_LOAD( "17.5l",        0x60000, 0x8000, 0x4eb543ef )
-	ROM_LOAD( "15.2l",        0x68000, 0x8000, 0x8041de7f )
-
-	ROM_LOAD( "22.7n",        0x70000, 0x8000, 0xbdaa8b22 ) /* planes 2,3 */
-	ROM_LOAD( "20.3n",        0x78000, 0x8000, 0x566e3059 )
-	ROM_LOAD( "21.5n",        0x80000, 0x8000, 0x301059aa )
-	ROM_LOAD( "19.2n",        0x88000, 0x8000, 0xa00485ec )
-
-	/* ROMs 24 and 25 contains tiles in same format as sprites, used for title screen */
-	ROM_LOAD( "25.15n",       0x90000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
-	ROM_LOAD( "24.13n",       0x98000, 0x8000, 0xa6354024 ) /* planes 2,3 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "02.15h",       0x0000, 0x8000, 0x107a2e17 ) /* ?? */
 
-	ROM_REGION(0x10000)     /* ADPCM CPU (not emulated) */
+	ROM_REGION( 0x10000, REGION_CPU3 )     /* ADPCM CPU (not emulated) */
 	ROM_LOAD( "01.6d",        0x0000, 0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
 
-	ROM_REGION(0x08000)
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "13.6b",        0x00000, 0x8000, 0x9b5ff305 ) /* plane 1 */
+	ROM_LOAD( "09.6a",        0x08000, 0x8000, 0x08323355 )
+	ROM_LOAD( "12.4b",        0x10000, 0x8000, 0x6d5261ba ) /* plane 2 */
+	ROM_LOAD( "08.4a",        0x18000, 0x8000, 0xa13d9f54 )
+	ROM_LOAD( "11.3b",        0x20000, 0x8000, 0xa2911d8b ) /* plane 3 */
+	ROM_LOAD( "07.3a",        0x28000, 0x8000, 0xcde78d32 )
+	ROM_LOAD( "14.8b",        0x30000, 0x8000, 0x44ac2671 ) /* plane 4 */
+	ROM_LOAD( "10.8a",        0x38000, 0x8000, 0xb1a717cb )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* sprites */
+	ROM_LOAD( "18.7l",        0x00000, 0x8000, 0x3c876a17 ) /* planes 0,1 */
+	ROM_LOAD( "16.3l",        0x08000, 0x8000, 0x4b1ff3ac )
+	ROM_LOAD( "17.5l",        0x10000, 0x8000, 0x4eb543ef )
+	ROM_LOAD( "15.2l",        0x18000, 0x8000, 0x8041de7f )
+	ROM_LOAD( "22.7n",        0x20000, 0x8000, 0xbdaa8b22 ) /* planes 2,3 */
+	ROM_LOAD( "20.3n",        0x28000, 0x8000, 0x566e3059 )
+	ROM_LOAD( "21.5n",        0x30000, 0x8000, 0x301059aa )
+	ROM_LOAD( "19.2n",        0x38000, 0x8000, 0xa00485ec )
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* bg tiles */
+	ROM_LOAD( "25.15n",       0x00000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
+	ROM_LOAD( "24.13n",       0x08000, 0x8000, 0xa6354024 ) /* planes 2,3 */
+
+	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
 ROM_END
 
 ROM_START( avenger2 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "avg4.bin",     0x00000, 0x8000, 0x0fea7ac5 )
 	ROM_LOAD( "avg6.bin",     0x10000, 0x8000, 0x491a712c )
 	ROM_LOAD( "avg5.bin",     0x18000, 0x8000, 0x9a214b42 )
 
-	ROM_REGION_DISPOSE(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
-	/* tiles */
-	ROM_LOAD( "13.6b",        0x10000, 0x8000, 0x9b5ff305 ) /* plane 1 */
-	ROM_LOAD( "09.6a",        0x18000, 0x8000, 0x08323355 )
-	ROM_LOAD( "12.4b",        0x20000, 0x8000, 0x6d5261ba ) /* plane 2 */
-	ROM_LOAD( "08.4a",        0x28000, 0x8000, 0xa13d9f54 )
-	ROM_LOAD( "11.3b",        0x30000, 0x8000, 0xa2911d8b ) /* plane 3 */
-	ROM_LOAD( "07.3a",        0x38000, 0x8000, 0xcde78d32 )
-	ROM_LOAD( "14.8b",        0x40000, 0x8000, 0x44ac2671 ) /* plane 4 */
-	ROM_LOAD( "10.8a",        0x48000, 0x8000, 0xb1a717cb )
-
-	/* sprites */
-	ROM_LOAD( "18.7l",        0x50000, 0x8000, 0x3c876a17 ) /* planes 0,1 */
-	ROM_LOAD( "16.3l",        0x58000, 0x8000, 0x4b1ff3ac )
-	ROM_LOAD( "17.5l",        0x60000, 0x8000, 0x4eb543ef )
-	ROM_LOAD( "15.2l",        0x68000, 0x8000, 0x8041de7f )
-
-	ROM_LOAD( "22.7n",        0x70000, 0x8000, 0xbdaa8b22 ) /* planes 2,3 */
-	ROM_LOAD( "20.3n",        0x78000, 0x8000, 0x566e3059 )
-	ROM_LOAD( "21.5n",        0x80000, 0x8000, 0x301059aa )
-	ROM_LOAD( "19.2n",        0x88000, 0x8000, 0xa00485ec )
-
-	/* ROMs 24 and 25 contains tiles in same format as sprites, used for title screen */
-	ROM_LOAD( "25.15n",       0x90000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
-	ROM_LOAD( "24.13n",       0x98000, 0x8000, 0xa6354024 ) /* planes 2,3 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "02.15h",       0x0000, 0x8000, 0x107a2e17 ) /* MISSING from this set */
 
-	ROM_REGION(0x10000)     /* ADPCM CPU (not emulated) */
+	ROM_REGION( 0x10000, REGION_CPU3 )     /* ADPCM CPU (not emulated) */
 	ROM_LOAD( "01.6d",        0x0000, 0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
 
-	ROM_REGION(0x08000)
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_LOAD( "13.6b",        0x00000, 0x8000, 0x9b5ff305 ) /* plane 1 */
+	ROM_LOAD( "09.6a",        0x08000, 0x8000, 0x08323355 )
+	ROM_LOAD( "12.4b",        0x10000, 0x8000, 0x6d5261ba ) /* plane 2 */
+	ROM_LOAD( "08.4a",        0x18000, 0x8000, 0xa13d9f54 )
+	ROM_LOAD( "11.3b",        0x20000, 0x8000, 0xa2911d8b ) /* plane 3 */
+	ROM_LOAD( "07.3a",        0x28000, 0x8000, 0xcde78d32 )
+	ROM_LOAD( "14.8b",        0x30000, 0x8000, 0x44ac2671 ) /* plane 4 */
+	ROM_LOAD( "10.8a",        0x38000, 0x8000, 0xb1a717cb )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* sprites */
+	ROM_LOAD( "18.7l",        0x00000, 0x8000, 0x3c876a17 ) /* planes 0,1 */
+	ROM_LOAD( "16.3l",        0x08000, 0x8000, 0x4b1ff3ac )
+	ROM_LOAD( "17.5l",        0x10000, 0x8000, 0x4eb543ef )
+	ROM_LOAD( "15.2l",        0x18000, 0x8000, 0x8041de7f )
+	ROM_LOAD( "22.7n",        0x20000, 0x8000, 0xbdaa8b22 ) /* planes 2,3 */
+	ROM_LOAD( "20.3n",        0x28000, 0x8000, 0x566e3059 )
+	ROM_LOAD( "21.5n",        0x30000, 0x8000, 0x301059aa )
+	ROM_LOAD( "19.2n",        0x38000, 0x8000, 0xa00485ec )
+
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "25.15n",       0x00000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
+	ROM_LOAD( "24.13n",       0x08000, 0x8000, 0xa6354024 ) /* planes 2,3 */
+
+	ROM_REGION( 0x08000, REGION_GFX5 )
 	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
 ROM_END
-
 
 
 GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 1)" )

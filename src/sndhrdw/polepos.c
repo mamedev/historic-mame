@@ -49,7 +49,7 @@ static void engine_sound_update(int num, INT16 *buffer, int length)
 	/* determine the volume */
 	slot = (sample_msb >> 3) & 7;
 	volume = volume_table[slot];
-	base = &memory_region(5)[0x1000 + slot * 0x800];
+	base = &memory_region(REGION_SOUND1)[0x1000 + slot * 0x800];
 
 	/* fill in the sample */
 	while (length--)
@@ -78,7 +78,7 @@ int polepos_sh_start(const struct MachineSound *msound)
 	/* decode the rom samples, interpolating to make it sound a little better */
 	for (i = 0;i < SAMPLE_SIZE;i++)
 	{
-		bits = memory_region(5)[0x5000+i] & 0x0f;
+		bits = memory_region(REGION_SOUND1)[0x5000+i] & 0x0f;
 		bits = SAMPLE_CONV4(bits);
 		speech[16*i+0] = (7 * last + 1 * bits) / 8;
 		speech[16*i+1] = (6 * last + 2 * bits) / 8;
@@ -90,7 +90,7 @@ int polepos_sh_start(const struct MachineSound *msound)
 		speech[16*i+7] = bits;
 		last = bits;
 
-		bits = (memory_region(5)[0x5000+i] & 0xf0) >> 4;
+		bits = (memory_region(REGION_SOUND1)[0x5000+i] & 0xf0) >> 4;
 		bits = SAMPLE_CONV4(bits);
 		speech[16*i+8] = (7 * last + 1 * bits) / 8;
 		speech[16*i+9] = (6 * last + 2 * bits) / 8;
@@ -104,7 +104,7 @@ int polepos_sh_start(const struct MachineSound *msound)
 	}
 
 	/* Japanese or US PROM? */
-	if (memory_region(5)[0x5000] == 0)
+	if (memory_region(REGION_SOUND1)[0x5000] == 0)
 	{
 		/* US */
 		sample_offsets[0] = 0x0020;

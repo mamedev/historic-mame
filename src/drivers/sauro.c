@@ -322,28 +322,28 @@ static struct MachineDriver machine_driver_sauro =
 
 ***************************************************************************/
 ROM_START( sauro )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )          /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )          /* 64k for code */
 	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, 0x19f8de25 )
 	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, 0x0f8b876f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )          /* 64k for sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )          /* 64k for sound CPU */
 	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
 
-	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sauro-4.bin",     0x00000, 0x8000, 0x9b617cda )
 	ROM_LOAD( "sauro-5.bin",     0x08000, 0x8000, 0xa6e2640d )
 
-	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sauro-6.bin",     0x00000, 0x8000, 0x4b77cb0f )
 	ROM_LOAD( "sauro-7.bin",     0x08000, 0x8000, 0x187da060 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sauro-8.bin",     0x00000, 0x8000, 0xe08b5d5e )
 	ROM_LOAD( "sauro-9.bin",     0x08000, 0x8000, 0x7c707195 )
 	ROM_LOAD( "sauro-10.bin",    0x10000, 0x8000, 0xc93380d1 )
 	ROM_LOAD( "sauro-11.bin",    0x18000, 0x8000, 0xf47982a8 )
 
-	ROM_REGIONX( 0x0c00, REGION_PROMS )
+	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "82s137-3.bin",    0x0000, 0x0400, 0xd52c4cd0 )  /* Red component */
 	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, 0xc3e96d5d )  /* Green component */
 	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, 0xbdfcf00c )  /* Blue component */

@@ -560,29 +560,29 @@ static struct MachineDriver machine_driver_gaiden =
 ***************************************************************************/
 
 ROM_START( gaiden )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "gaiden.1",     0x00000, 0x20000, 0xe037ff7c )
 	ROM_LOAD_ODD ( "gaiden.2",     0x00000, 0x20000, 0x454f7314 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
 
-	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "14.bin",       0x000000, 0x20000, 0x1ecfddaa )
 	ROM_LOAD( "15.bin",       0x020000, 0x20000, 0x1291a696 )
 	ROM_LOAD( "16.bin",       0x040000, 0x20000, 0x140b47ca )
 	ROM_LOAD( "17.bin",       0x060000, 0x20000, 0x7638cccb )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "18.bin",       0x000000, 0x20000, 0x3fadafd6 )
 	ROM_LOAD( "19.bin",       0x020000, 0x20000, 0xddae9d5b )
 	ROM_LOAD( "20.bin",       0x040000, 0x20000, 0x08cf7a93 )
 	ROM_LOAD( "21.bin",       0x060000, 0x20000, 0x1ac892f5 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gaiden.6",     0x000000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
 	ROM_LOAD( "gaiden.8",     0x020000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
 	ROM_LOAD( "gaiden.10",    0x040000, 0x20000, 0xa6451dec )	/* sprites C1 */
@@ -592,34 +592,34 @@ ROM_START( gaiden )
 	ROM_LOAD( "gaiden.11",    0x0c0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
 	ROM_LOAD( "gaiden.13",    0x0e0000, 0x20000, 0x7d9f5c5e )	/* sprites D2 */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
 ROM_START( shadoww )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "shadoww.1",    0x00000, 0x20000, 0xfefba387 )
 	ROM_LOAD_ODD ( "shadoww.2",    0x00000, 0x20000, 0x9b9d6b18 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
 
-	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "14.bin",       0x000000, 0x20000, 0x1ecfddaa )
 	ROM_LOAD( "15.bin",       0x020000, 0x20000, 0x1291a696 )
 	ROM_LOAD( "16.bin",       0x040000, 0x20000, 0x140b47ca )
 	ROM_LOAD( "17.bin",       0x060000, 0x20000, 0x7638cccb )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "18.bin",       0x000000, 0x20000, 0x3fadafd6 )
 	ROM_LOAD( "19.bin",       0x020000, 0x20000, 0xddae9d5b )
 	ROM_LOAD( "20.bin",       0x040000, 0x20000, 0x08cf7a93 )
 	ROM_LOAD( "21.bin",       0x060000, 0x20000, 0x1ac892f5 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gaiden.6",     0x000000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
 	ROM_LOAD( "gaiden.8",     0x020000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
 	ROM_LOAD( "gaiden.10",    0x040000, 0x20000, 0xa6451dec )	/* sprites C1 */
@@ -631,60 +631,60 @@ ROM_START( shadoww )
 	ROM_LOAD( "shadoww.13a",  0x0e0000, 0x10000, 0x996d2fa5 )	/* sprites D2 */
 	ROM_LOAD( "shadoww.13b",  0x0f0000, 0x10000, 0xb8df8a34 )	/* sprites D2 */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
 ROM_START( tknight )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "tkni1.bin",    0x00000, 0x20000, 0x9121daa8 )
 	ROM_LOAD_ODD ( "tkni2.bin",    0x00000, 0x20000, 0x6669cd87 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tkni3.bin",    0x0000, 0x10000, 0x15623ec7 )   /* Audio CPU is a Z80  */
 
-	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni5.bin",    0x000000, 0x10000, 0x5ed15896 )	/* 8x8 tiles */
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni7.bin",    0x000000, 0x80000, 0x4b4d4286 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni6.bin",    0x000000, 0x80000, 0xf68fafb1 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni9.bin",    0x000000, 0x80000, 0xd22f4239 )	/* sprites */
 	ROM_LOAD( "tkni8.bin",    0x080000, 0x80000, 0x4931b184 )	/* sprites */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 
 ROM_START( wildfang )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "1.3st",    0x00000, 0x20000, 0xab876c9b )
 	ROM_LOAD_ODD ( "2.5st",    0x00000, 0x20000, 0x1dc74b3b )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tkni3.bin",    0x0000, 0x10000, 0x15623ec7 )   /* Audio CPU is a Z80  */
 
-	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni5.bin",    0x000000, 0x10000, 0x5ed15896 )	/* 8x8 tiles */
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "14.3a",        0x000000, 0x20000, 0x0d20c10c )
 	ROM_LOAD( "15.3b",        0x020000, 0x20000, 0x3f40a6b4 )
 	ROM_LOAD( "16.1a",        0x040000, 0x20000, 0x0f31639e )
 	ROM_LOAD( "17.1b",        0x060000, 0x20000, 0xf32c158e )
 
-	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni6.bin",    0x000000, 0x80000, 0xf68fafb1 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tkni9.bin",    0x000000, 0x80000, 0xd22f4239 )	/* sprites */
 	ROM_LOAD( "tkni8.bin",    0x080000, 0x80000, 0x4931b184 )	/* sprites */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 

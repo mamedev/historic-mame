@@ -265,7 +265,7 @@ MACHINE_DRIVER(tomahawk, 32)
 ***************************************************************************/
 
 ROM_START( astrof )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "afii.6",       0xd000, 0x0800, 0xd6cd13a4 )
 	ROM_LOAD( "afii.5",       0xd800, 0x0800, 0x6fd3c4df )
 	ROM_LOAD( "afii.4",       0xe000, 0x0800, 0x9612dae3 )
@@ -273,12 +273,12 @@ ROM_START( astrof )
 	ROM_LOAD( "afii.2",       0xf000, 0x0800, 0x69f8a4fc )
 	ROM_LOAD( "afii.1",       0xf800, 0x0800, 0x322c09d2 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
 ROM_START( astrof2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
 	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
@@ -292,12 +292,12 @@ ROM_START( astrof2 )
 	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
 	ROM_LOAD( "af583.00",     0xfc00, 0x0400, 0xf699dda3 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
 ROM_START( astrof3 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
 	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
@@ -311,12 +311,12 @@ ROM_START( astrof3 )
 	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
 	ROM_LOAD( "kei",          0xfc00, 0x0400, 0xfce4718d )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
 ROM_START( tomahawk )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "l8-1",         0xdc00, 0x0400, 0x7c911661 )
 	ROM_LOAD( "l7-1",         0xe000, 0x0400, 0xadeffb69 )
 	ROM_LOAD( "l6-1",         0xe400, 0x0400, 0x9116e59d )
@@ -327,12 +327,12 @@ ROM_START( tomahawk )
 	ROM_LOAD( "l1-1",         0xf800, 0x0400, 0xf2096ba9 )
 	ROM_LOAD( "l0-1",         0xfc00, 0x0400, 0x42edbc28 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
 ROM_START( tomahaw5 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "thawk.l8",     0xdc00, 0x0400, 0xb01dab4b )
 	ROM_LOAD( "thawk.l7",     0xe000, 0x0400, 0x3a6549e8 )
 	ROM_LOAD( "thawk.l6",     0xe400, 0x0400, 0x863e47f7 )
@@ -343,7 +343,7 @@ ROM_START( tomahaw5 )
 	ROM_LOAD( "thawk.l1",     0xf800, 0x0400, 0x1d9dab9c )
 	ROM_LOAD( "thawk.l0",     0xfc00, 0x0400, 0xd21a1eba )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 

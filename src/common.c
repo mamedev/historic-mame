@@ -664,7 +664,7 @@ int new_memory_region(int num, int length)
     {
         for (i = 0;i < MAX_MEMORY_REGIONS;i++)
         {
-            if( Machine->memory_region[i] == NULL )
+            if (Machine->memory_region[i] == NULL)
             {
                 Machine->memory_region_length[i] = length;
                 Machine->memory_region_type[i] = num;
@@ -676,6 +676,28 @@ int new_memory_region(int num, int length)
 	return 1;
 }
 
+void free_memory_region(int num)
+{
+	int i;
+
+	if (num < MAX_MEMORY_REGIONS)
+	{
+		free(Machine->memory_region[num]);
+		Machine->memory_region[num] = 0;
+	}
+	else
+	{
+		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+		{
+			if ((Machine->memory_region_type[i] & ~REGIONFLAG_MASK) == num)
+			{
+				free(Machine->memory_region[i]);
+				Machine->memory_region[i] = 0;
+				return;
+			}
+		}
+	}
+}
 
 
 /* LBO 042898 - added coin counters */

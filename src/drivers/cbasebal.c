@@ -329,29 +329,29 @@ static struct MachineDriver machine_driver_cbasebal =
 
 
 ROM_START( cbasebal )
-	ROM_REGIONX( 2*0x90000, REGION_CPU1 )	/* 576k for code + 576k for decrypted opcodes */
+	ROM_REGION( 2*0x90000, REGION_CPU1 )	/* 576k for code + 576k for decrypted opcodes */
 	ROM_LOAD( "cbj10.11j",    0x00000, 0x08000, 0xbbff0acc )
 	ROM_LOAD( "cbj07.16f",    0x10000, 0x20000, 0x8111d13f )
 	ROM_LOAD( "cbj06.14f",    0x30000, 0x20000, 0x9aaa0e37 )
 	ROM_LOAD( "cbj05.13f",    0x50000, 0x20000, 0xd0089f37 )
 	/* 0x70000-0x8ffff empty (space for 04) */
 
-	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cbj13.16m",    0x00000, 0x10000, 0x2359fa0a )	/* text */
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cbj02.1f",     0x00000, 0x20000, 0xd6740535 )	/* tiles */
 	ROM_LOAD( "cbj03.2f",     0x20000, 0x20000, 0x88098dcd )
 	ROM_LOAD( "cbj08.1j",     0x40000, 0x20000, 0x5f3344bf )
 	ROM_LOAD( "cbj09.2j",     0x60000, 0x20000, 0xaafffdae )
 
-	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cbj11.1m",     0x00000, 0x20000, 0xbdc1507d )	/* sprites */
 	ROM_LOAD( "cbj12.2m",     0x20000, 0x20000, 0x973f3efe )
 	ROM_LOAD( "cbj14.1n",     0x40000, 0x20000, 0x765dabaa )
 	ROM_LOAD( "cbj15.2n",     0x60000, 0x20000, 0x74756de5 )
 
-	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "cbj01.1e",     0x00000, 0x20000, 0x1d8968bd )
 ROM_END
 

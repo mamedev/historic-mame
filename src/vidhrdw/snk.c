@@ -1,9 +1,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int bg_tilemap_baseaddr;
+int snk_bg_tilemap_baseaddr, gwar_sprite_placement;
+
 #define MAX_VRAM_SIZE (64*64*2)
-static int gwar_sprite_placement;
+
 //static int k = 0; /*for debugging use */
 
 static int shadows_visible = 0; /* toggles rapidly to fake translucency in ikari warriors */
@@ -80,16 +81,6 @@ int snk_vh_start( void ){
 		tmpbitmap = osd_new_bitmap( 512, 512, Machine->scrbitmap->depth );
 		if( tmpbitmap ){
 			memset( dirtybuffer, 0xff, MAX_VRAM_SIZE  );
-
-			gwar_sprite_placement = (strcmp(Machine->gamedrv->name,"gwar")==0);
-
-			if( strcmp(Machine->gamedrv->name, "ikarijp")==0 ||
-				strcmp(Machine->gamedrv->name, "ikarijpb")==0 ){
-				bg_tilemap_baseaddr = 0xd000; /* special case */
-			}
-			else {
-				bg_tilemap_baseaddr = 0xd800;
-			}
 			shadows_visible = 1;
 			return 0;
 		}
@@ -188,9 +179,20 @@ void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char *sourc
 }
 
 void tnk3_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
+	static int n = 50;
 	const unsigned char *source = spriteram;
-	const unsigned char *finish = source+60*4;
+	const unsigned char *finish = source+n*4;
 	struct rectangle clip = Machine->drv->visible_area;
+/*
+if( keyboard_pressed( KEYCODE_J ) ){
+	while( keyboard_pressed( KEYCODE_J ) ){}
+	n--;
+}
+if( keyboard_pressed( KEYCODE_K ) ){
+	while( keyboard_pressed( KEYCODE_K ) ){}
+	n++;
+}
+*/
 
 	while( source<finish ){
 		int attributes = source[3]; /* YBBX.CCCC */
@@ -198,9 +200,6 @@ void tnk3_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 		int sy = source[0] + ((attributes&0x10)?256:0) - yscroll;
 		int sx = source[2] + ((attributes&0x80)?256:0) - xscroll;
 		int color = attributes&0xf;
-
-		/* ( attributes&0x10 ) is set as Athena falls through the "dark" tunnel in the intro
-		It's probably selects the alternate palette */
 
 		if( attributes&0x40 ) tile_number += 256;
 		if( attributes&0x20 ) tile_number += 512;
@@ -257,7 +256,7 @@ void tnk3_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 
 static void ikari_draw_background( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
-	const unsigned char *source = &memory_region(REGION_CPU1)[bg_tilemap_baseaddr];
+	const unsigned char *source = &memory_region(REGION_CPU1)[snk_bg_tilemap_baseaddr];
 
 	int offs;
 	for( offs=0; offs<32*32*2; offs+=2 ){
@@ -350,7 +349,7 @@ static void ikari_draw_status( struct osd_bitmap *bitmap ){
 static void ikari_draw_sprites_16x16( struct osd_bitmap *bitmap, int start, int quantity, int xscroll, int yscroll )
 {
 	int transp_mode  = shadows_visible ? TRANSPARENCY_PEN : TRANSPARENCY_PENS;
-	int transp_param = shadows_visible ? 7 : (1<<7) | (1<<6);
+	int transp_param = shadows_visible ? 7 : ((1<<7) | (1<<6));
 
 	int which;
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe800];
@@ -378,7 +377,7 @@ static void ikari_draw_sprites_16x16( struct osd_bitmap *bitmap, int start, int 
 static void ikari_draw_sprites_32x32( struct osd_bitmap *bitmap, int start, int quantity, int xscroll, int yscroll )
 {
 	int transp_mode  = shadows_visible ? TRANSPARENCY_PEN : TRANSPARENCY_PENS;
-	int transp_param = shadows_visible ? 7 : (1<<7) | (1<<6);
+	int transp_param = shadows_visible ? 7 : ((1<<7) | (1<<6));
 
 	int which;
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe000];
@@ -439,7 +438,7 @@ static void tdfever_draw_background( struct osd_bitmap *bitmap,
 		int xscroll, int yscroll )
 {
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
-	const unsigned char *source = &memory_region(REGION_CPU1)[0xd000];
+	const unsigned char *source = &memory_region(REGION_CPU1)[0xd000]; //d000
 
 	int offs;
 	for( offs=0; offs<32*32*2; offs+=2 ){
@@ -478,6 +477,9 @@ static void tdfever_draw_background( struct osd_bitmap *bitmap,
 }
 
 static void tdfever_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
+	int transp_mode  = shadows_visible ? TRANSPARENCY_PEN : TRANSPARENCY_PENS;
+	int transp_param = shadows_visible ? 15 : ((1<<15) | (1<<14));
+
 	const struct GfxElement *gfx = Machine->gfx[GFX_SPRITES];
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe000];
 
@@ -502,18 +504,18 @@ static void tdfever_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int ys
 			(attributes&0xf), /* color */
 			0,0, /* no flip */
 			sx,sy,
-			&clip,TRANSPARENCY_PEN,15);
+			&clip,transp_mode,transp_param);
 	}
 }
 
-static void tdfever_draw_text( struct osd_bitmap *bitmap, int attributes, int dx, int dy ){
+static void tdfever_draw_text( struct osd_bitmap *bitmap, int attributes, int dx, int dy, int base ){
 	int bank = attributes>>4;
 	int color = attributes&0xf;
 
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 
-	const unsigned char *source = &memory_region(REGION_CPU1)[0xf800];
+	const unsigned char *source = &memory_region(REGION_CPU1)[base];
 
 	int offs;
 
@@ -537,6 +539,7 @@ static void tdfever_draw_text( struct osd_bitmap *bitmap, int attributes, int dx
 
 void tdfever_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
 	const unsigned char *ram = memory_region(REGION_CPU1);
+	shadows_visible = !shadows_visible;
 
 	{
 		unsigned char bg_attributes = ram[0xc880];
@@ -554,7 +557,30 @@ void tdfever_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
 
 	{
 		unsigned char text_attributes = ram[0xc8c0];
-		tdfever_draw_text( bitmap, text_attributes, 0,0 );
+		tdfever_draw_text( bitmap, text_attributes, 0,0, 0xf800 );
+	}
+}
+
+void ftsoccer_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
+	const unsigned char *ram = memory_region(REGION_CPU1);
+	shadows_visible = !shadows_visible;
+	{
+		unsigned char bg_attributes = ram[0xc880];
+		int bg_scroll_y = - ram[0xc800] - ((bg_attributes&0x01)?256:0);
+		int bg_scroll_x = 16 - ram[0xc840] - ((bg_attributes&0x02)?256:0);
+		tdfever_draw_background( bitmap, bg_scroll_x, bg_scroll_y );
+	}
+
+	{
+		unsigned char sprite_attributes = ram[0xc900];
+		int sprite_scroll_y =  31 + ram[0xc980] + ((sprite_attributes&0x80)?256:0);
+		int sprite_scroll_x = -40 + ram[0xc9c0] + ((sprite_attributes&0x40)?256:0);
+		tdfever_draw_sprites( bitmap, sprite_scroll_x, sprite_scroll_y );
+	}
+
+	{
+		unsigned char text_attributes = ram[0xc8c0];
+		tdfever_draw_text( bitmap, text_attributes, 0,0, 0xf800 );
 	}
 }
 
@@ -623,12 +649,22 @@ void gwar_draw_sprites_32x32( struct osd_bitmap *bitmap, int xscroll, int yscrol
 
 void gwar_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	const unsigned char *ram = memory_region(REGION_CPU1);
-	unsigned char bg_attributes = ram[0xc880];
-	unsigned char sp_attributes = ram[0xcac0];
+	unsigned char bg_attributes, sp_attributes;
 
 	{
-		int bg_scroll_y = - ram[0xc800] - ((bg_attributes&0x01)?256:0);
-		int bg_scroll_x = 16 - ram[0xc840] - ((bg_attributes&0x02)?256:0);
+		int bg_scroll_y, bg_scroll_x;
+
+		if( gwar_sprite_placement==2 ) { /* Gwar alternate */
+			bg_attributes = ram[0xf880];
+			sp_attributes = ram[0xfa80];
+			bg_scroll_y = - ram[0xf800] - ((bg_attributes&0x01)?256:0);
+			bg_scroll_x  = 16 - ram[0xf840] - ((bg_attributes&0x02)?256:0);
+		} else {
+			bg_attributes = ram[0xc880];
+			sp_attributes = ram[0xcac0];
+			bg_scroll_y = - ram[0xc800] - ((bg_attributes&0x01)?256:0);
+			bg_scroll_x  = 16 - ram[0xc840] - ((bg_attributes&0x02)?256:0);
+		}
 		tdfever_draw_background( bitmap, bg_scroll_x, bg_scroll_y );
 	}
 
@@ -664,8 +700,14 @@ void gwar_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	}
 
 	{
-		unsigned char text_attributes = ram[0xc8c0];
-		tdfever_draw_text( bitmap, text_attributes,0,0 );
+		if( gwar_sprite_placement==2) { /* Gwar alternate */
+			unsigned char text_attributes = ram[0xf8c0];
+			tdfever_draw_text( bitmap, text_attributes,0,0, 0xc800 );
+		}
+		else {
+			unsigned char text_attributes = ram[0xc8c0];
+			tdfever_draw_text( bitmap, text_attributes,0,0, 0xf800 );
+		}
 	}
 }
 

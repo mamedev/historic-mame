@@ -270,17 +270,17 @@ static struct MachineDriver machine_driver_sbrkout =
 ***************************************************************************/
 
 ROM_START( sbrkout )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "033453.c1",    0x2800, 0x0800, 0xa35d00e3 )
 	ROM_LOAD( "033454.d1",    0x3000, 0x0800, 0xd42ea79a )
 	ROM_LOAD( "033455.e1",    0x3800, 0x0800, 0xe0a6871c )
 	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "033280.p4",    0x0000, 0x0200, 0x5a69ce85 )
 	ROM_LOAD( "033281.r4",    0x0200, 0x0200, 0x066bd624 )
 
-	ROM_REGIONX( 0x0020, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0020, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "033282.k6",    0x0000, 0x0020, 0x6228736b )
 ROM_END
 

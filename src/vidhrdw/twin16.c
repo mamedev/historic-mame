@@ -108,26 +108,63 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 	if( ypos>=256 ) ypos -= 512;
 
 	if( xpos+width>=0 && xpos<320 && ypos+height>16 && ypos<256-16 )
-
-	for( y=0; y<height; y++ ){
-		int sy = (flipy)?(ypos+height-1-y):(ypos+y);
-		if( sy>=16 && sy<256-16 ){
-			UINT8 *dest = (UINT8 *)bitmap->line[sy];
-			for( x=0; x<width; x++ ){
-				int sx = (flipx)?(xpos+width-1-x):(xpos+x);
-				if( sx>=0 && sx<320 ){
-					UINT16 pen = pen_data[x/4];
-					switch( x%4 ){
-						case 0: pen = pen>>12; break;
-						case 1: pen = (pen>>8)&0xf; break;
-						case 2: pen = (pen>>4)&0xf; break;
-						case 3: pen = pen&0xf; break;
+	{
+		if (bitmap->depth == 16)
+		{
+			for( y=0; y<height; y++ )
+			{
+				int sy = (flipy)?(ypos+height-1-y):(ypos+y);
+				if( sy>=16 && sy<256-16 )
+				{
+					UINT16 *dest = (UINT16 *)bitmap->line[sy];
+					for( x=0; x<width; x++ )
+					{
+						int sx = (flipx)?(xpos+width-1-x):(xpos+x);
+						if( sx>=0 && sx<320 )
+						{
+							UINT16 pen = pen_data[x/4];
+							switch( x%4 )
+							{
+							case 0: pen = pen>>12; break;
+							case 1: pen = (pen>>8)&0xf; break;
+							case 2: pen = (pen>>4)&0xf; break;
+							case 3: pen = pen&0xf; break;
+							}
+							if( pen ) dest[sx] = pal_data[pen];
+						}
 					}
-					if( pen ) dest[sx] = pal_data[pen];
 				}
+				pen_data += width/4;
 			}
 		}
-		pen_data += width/4;
+		else
+		{
+			for( y=0; y<height; y++ )
+			{
+				int sy = (flipy)?(ypos+height-1-y):(ypos+y);
+				if( sy>=16 && sy<256-16 )
+				{
+					UINT8 *dest = (UINT8 *)bitmap->line[sy];
+					for( x=0; x<width; x++ )
+					{
+						int sx = (flipx)?(xpos+width-1-x):(xpos+x);
+						if( sx>=0 && sx<320 )
+						{
+							UINT16 pen = pen_data[x/4];
+							switch( x%4 )
+							{
+							case 0: pen = pen>>12; break;
+							case 1: pen = (pen>>8)&0xf; break;
+							case 2: pen = (pen>>4)&0xf; break;
+							case 3: pen = pen&0xf; break;
+							}
+							if( pen ) dest[sx] = pal_data[pen];
+						}
+					}
+				}
+				pen_data += width/4;
+			}
+		}
 	}
 }
 
@@ -343,71 +380,181 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 				UINT16 data;
 				int pen;
 
-				if( tile_flipx ){
+				if( tile_flipx )
+				{
 					if( opaque )
-					for( y=y1; y!=y2; y+=yd ){
-						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-						data = *gfx_data++;
-						dest[7] = pal_data[(data>>4*3)&0xf];
-						dest[6] = pal_data[(data>>4*2)&0xf];
-						dest[5] = pal_data[(data>>4*1)&0xf];
-						dest[4] = pal_data[(data>>4*0)&0xf];
-						data = *gfx_data++;
-						dest[3] = pal_data[(data>>4*3)&0xf];
-						dest[2] = pal_data[(data>>4*2)&0xf];
-						dest[1] = pal_data[(data>>4*1)&0xf];
-						dest[0] = pal_data[(data>>4*0)&0xf];
+					{
+						if (bitmap->depth == 16)
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								dest[7] = pal_data[(data>>4*3)&0xf];
+								dest[6] = pal_data[(data>>4*2)&0xf];
+								dest[5] = pal_data[(data>>4*1)&0xf];
+								dest[4] = pal_data[(data>>4*0)&0xf];
+								data = *gfx_data++;
+								dest[3] = pal_data[(data>>4*3)&0xf];
+								dest[2] = pal_data[(data>>4*2)&0xf];
+								dest[1] = pal_data[(data>>4*1)&0xf];
+								dest[0] = pal_data[(data>>4*0)&0xf];
+							}
+						}
+						else
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								dest[7] = pal_data[(data>>4*3)&0xf];
+								dest[6] = pal_data[(data>>4*2)&0xf];
+								dest[5] = pal_data[(data>>4*1)&0xf];
+								dest[4] = pal_data[(data>>4*0)&0xf];
+								data = *gfx_data++;
+								dest[3] = pal_data[(data>>4*3)&0xf];
+								dest[2] = pal_data[(data>>4*2)&0xf];
+								dest[1] = pal_data[(data>>4*1)&0xf];
+								dest[0] = pal_data[(data>>4*0)&0xf];
+							}
+						}
 					}
 					else
-					for( y=y1; y!=y2; y+=yd ){
-						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-						data = *gfx_data++;
-						if( data ){
-							pen = (data>>4*3)&0xf; if( pen ) dest[7] = pal_data[pen];
-							pen = (data>>4*2)&0xf; if( pen ) dest[6] = pal_data[pen];
-							pen = (data>>4*1)&0xf; if( pen ) dest[5] = pal_data[pen];
-							pen = (data>>4*0)&0xf; if( pen ) dest[4] = pal_data[pen];
+					{
+						if (bitmap->depth == 16)
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[7] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[6] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[5] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[4] = pal_data[pen];
+								}
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[3] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[2] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[1] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[0] = pal_data[pen];
+								}
+							}
 						}
-						data = *gfx_data++;
-						if( data ){
-							pen = (data>>4*3)&0xf; if( pen ) dest[3] = pal_data[pen];
-							pen = (data>>4*2)&0xf; if( pen ) dest[2] = pal_data[pen];
-							pen = (data>>4*1)&0xf; if( pen ) dest[1] = pal_data[pen];
-							pen = (data>>4*0)&0xf; if( pen ) dest[0] = pal_data[pen];
+						else
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[7] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[6] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[5] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[4] = pal_data[pen];
+								}
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[3] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[2] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[1] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[0] = pal_data[pen];
+								}
+							}
 						}
 					}
 				}
-				else {
+				else
+				{
 					if( opaque )
-					for( y=y1; y!=y2; y+=yd ){
-						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-						data = *gfx_data++;
-						*dest++ = pal_data[(data>>4*3)&0xf];
-						*dest++ = pal_data[(data>>4*2)&0xf];
-						*dest++ = pal_data[(data>>4*1)&0xf];
-						*dest++ = pal_data[(data>>4*0)&0xf];
-						data = *gfx_data++;
-						*dest++ = pal_data[(data>>4*3)&0xf];
-						*dest++ = pal_data[(data>>4*2)&0xf];
-						*dest++ = pal_data[(data>>4*1)&0xf];
-						*dest++ = pal_data[(data>>4*0)&0xf];
+					{
+						if (bitmap->depth == 16)
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								*dest++ = pal_data[(data>>4*3)&0xf];
+								*dest++ = pal_data[(data>>4*2)&0xf];
+								*dest++ = pal_data[(data>>4*1)&0xf];
+								*dest++ = pal_data[(data>>4*0)&0xf];
+								data = *gfx_data++;
+								*dest++ = pal_data[(data>>4*3)&0xf];
+								*dest++ = pal_data[(data>>4*2)&0xf];
+								*dest++ = pal_data[(data>>4*1)&0xf];
+								*dest++ = pal_data[(data>>4*0)&0xf];
+							}
+						}
+						else
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								*dest++ = pal_data[(data>>4*3)&0xf];
+								*dest++ = pal_data[(data>>4*2)&0xf];
+								*dest++ = pal_data[(data>>4*1)&0xf];
+								*dest++ = pal_data[(data>>4*0)&0xf];
+								data = *gfx_data++;
+								*dest++ = pal_data[(data>>4*3)&0xf];
+								*dest++ = pal_data[(data>>4*2)&0xf];
+								*dest++ = pal_data[(data>>4*1)&0xf];
+								*dest++ = pal_data[(data>>4*0)&0xf];
+							}
+						}
 					}
 					else
-					for( y=y1; y!=y2; y+=yd ){
-						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-						data = *gfx_data++;
-						if( data ){
-							pen = (data>>4*3)&0xf; if( pen ) dest[0] = pal_data[pen];
-							pen = (data>>4*2)&0xf; if( pen ) dest[1] = pal_data[pen];
-							pen = (data>>4*1)&0xf; if( pen ) dest[2] = pal_data[pen];
-							pen = (data>>4*0)&0xf; if( pen ) dest[3] = pal_data[pen];
+					{
+						if (bitmap->depth == 16)
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[0] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[1] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[2] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[3] = pal_data[pen];
+								}
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[4] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[5] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[6] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[7] = pal_data[pen];
+								}
+							}
 						}
-						data = *gfx_data++;
-						if( data ){
-							pen = (data>>4*3)&0xf; if( pen ) dest[4] = pal_data[pen];
-							pen = (data>>4*2)&0xf; if( pen ) dest[5] = pal_data[pen];
-							pen = (data>>4*1)&0xf; if( pen ) dest[6] = pal_data[pen];
-							pen = (data>>4*0)&0xf; if( pen ) dest[7] = pal_data[pen];
+						else
+						{
+							for( y=y1; y!=y2; y+=yd )
+							{
+								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[0] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[1] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[2] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[3] = pal_data[pen];
+								}
+								data = *gfx_data++;
+								if( data )
+								{
+									pen = (data>>4*3)&0xf; if( pen ) dest[4] = pal_data[pen];
+									pen = (data>>4*2)&0xf; if( pen ) dest[5] = pal_data[pen];
+									pen = (data>>4*1)&0xf; if( pen ) dest[6] = pal_data[pen];
+									pen = (data>>4*0)&0xf; if( pen ) dest[7] = pal_data[pen];
+								}
+							}
 						}
 					}
 				}

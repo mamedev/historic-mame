@@ -91,17 +91,27 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
   we have to fake their data.
 
 - Making the M6295 status register return 0 fixes the music tempo in
-  avspirit and 64street but makes most of the effects in hachoo disappear!
+  avspirit, 64street, astyanax etc. but makes most of the effects in
+  hachoo disappear! Define SOUND_HACK to 0 to turn this hack off
+
+- Iganinju doesn't work properly: I have to patch lev3 irq and it severely
+  slows down at times (and it gets worse if I increase the clock)
 
 - Sprite / Sprite and Sprite / Layers priorities must be made orthogonal
   (Hachoo! player passes over the portal at the end of level 2 otherwise)
 
-- VERY bad sprite lag in iganinju and plusalph
+- VERY bad sprite lag in iganinju and plusalph and generally others.
+  Is this a sprites buffer issue ?
 
 - Understand an handful of unknown bits in video regs
 
 
 ***************************************************************************/
+
+// This will fix tempo and samples in at least avsprit, 64street, astyanax
+// but will break at least one game: hachoo
+
+#define SOUND_HACK 1
 
 #include "driver.h"
 #include "drivers/megasys1.h"
@@ -124,6 +134,10 @@ void megasys1_vregs_D_w(int offset, int data);
 void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data);
 void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data);
 
+
+
+int  protection_peekaboo_r(int offset);
+void protection_peekaboo_w(int offset,int data);
 
 void megasys1_init_machine(void)
 {
@@ -494,8 +508,13 @@ static struct MemoryReadAddress sound_readmem_A[] =
 	{ 0x000000, 0x01ffff, MRA_ROM					},
 	{ 0x040000, 0x040001, soundlatch_r				},
 	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
+#if SOUND_HACK
+	{ 0x0a0000, 0x0a0001, MRA_NOP					},
+	{ 0x0c0000, 0x0c0001, MRA_NOP					},
+#else
 	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
 	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
+#endif
 	{ 0x0e0000, 0x0fffff, MRA_BANK8					},
 	{ -1 }
 };
@@ -528,8 +547,13 @@ static struct MemoryReadAddress sound_readmem_B[] =
 	{ 0x040000, 0x040001, soundlatch_r				},	/* from main cpu */
 	{ 0x060000, 0x060001, soundlatch_r				},	/* from main cpu */
 	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
+#if SOUND_HACK
+	{ 0x0a0000, 0x0a0001, MRA_NOP					},
+	{ 0x0c0000, 0x0c0001, MRA_NOP					},
+#else
 	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
 	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
+#endif
 	{ 0x0e0000, 0x0effff, MRA_BANK8					},
 	{ -1 }
 };
@@ -604,30 +628,30 @@ static struct IOWritePort sound_writeport[] =
 */
 
 /* Tiles are 8x8 */
-MEGASYS1_LAYOUT_8x8( tilelayout_1, 0x010000 )
-MEGASYS1_LAYOUT_8x8( tilelayout_2, 0x020000 )
-MEGASYS1_LAYOUT_8x8( tilelayout_8, 0x080000 )
+MEGASYS1_LAYOUT_8x8( tilelayout_01, 0x010000 )
+MEGASYS1_LAYOUT_8x8( tilelayout_02, 0x020000 )
+MEGASYS1_LAYOUT_8x8( tilelayout_08, 0x080000 )
 
 /* Sprites are 16x16 - formed by four 8x8 tiles */
-MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_Z, 0x020000 )
-MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_A, 0x080000 )
-MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_C, 0x100000 )
+MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_02, 0x020000 )	// MS1 Z
+MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_08, 0x080000 )	// MS1 A & B
+MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_10, 0x100000 )	// MS1 C
 
 
 static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
 {
-	{ 1, 0x000000, &tilelayout_2,	256*0, 16 },	// [0] scroll 0
-	{ 1, 0x020000, &tilelayout_1,	256*2, 16 },	// [1] scroll 1
-	{ 1, 0x030000, &spritelayout_Z,	256*1, 16 },	// [2] sprites
+	{ REGION_GFX1, 0, &tilelayout_02,	256*0, 16 },	// [0] Scroll 0
+	{ REGION_GFX2, 0, &tilelayout_01,	256*2, 16 },	// [1] Scroll 1
+	{ REGION_GFX3, 0, &spritelayout_02,	256*1, 16 },	// [2] Sprites
 	{ -1 }
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_A[] =
 {
-	{ 1, 0x000000, &tilelayout_8,	256*0, 16 },	// [0] scroll 0
-	{ 1, 0x080000, &tilelayout_8,	256*1, 16 },	// [1] scroll 1
-	{ 1, 0x100000, &tilelayout_2,	256*2, 16 },	// [2] scroll 2
-	{ 1, 0x120000, &spritelayout_A,	256*3, 16 },	// [3] sprites
+	{ REGION_GFX1, 0, &tilelayout_08,	256*0, 16 },	// [0] Scroll 0
+	{ REGION_GFX2, 0, &tilelayout_08,	256*1, 16 },	// [1] Scroll 1
+	{ REGION_GFX3, 0, &tilelayout_02,	256*2, 16 },	// [2] Scroll 2
+	{ REGION_GFX4, 0, &spritelayout_08,	256*3, 16 },	// [3] Sprites
 	{ -1 }
 };
 
@@ -635,19 +659,19 @@ static struct GfxDecodeInfo gfxdecodeinfo_A[] =
 
 static struct GfxDecodeInfo gfxdecodeinfo_C[] =
 {
-	{ 1, 0x000000, &tilelayout_8,	256*0, 16 },	// [0] scroll 0
-	{ 1, 0x080000, &tilelayout_8,	256*1, 16 },	// [1] scroll 1
-	{ 1, 0x100000, &tilelayout_2,	256*2, 16 },	// [2] scroll 2
-	{ 1, 0x120000, &spritelayout_C,	256*3, 16 },	// [3] sprites
+	{ REGION_GFX1, 0, &tilelayout_08,	256*0, 16 },	// [0] Scroll 0
+	{ REGION_GFX2, 0, &tilelayout_08,	256*1, 16 },	// [1] Scroll 1
+	{ REGION_GFX3, 0, &tilelayout_02,	256*2, 16 },	// [2] Scroll 2
+	{ REGION_GFX4, 0, &spritelayout_10,	256*3, 16 },	// [3] Sprites
 	{ -1 }
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_D[] =
 {
-	{ 1, 0x000000, &tilelayout_8,		256*0, 16 },	// [0] scroll 0
-	{ 1, 0x080000, &tilelayout_8,		256*1, 16 },	// [1] scroll 1
-	{ 1, 0x000000, &tilelayout_1,		256*1, 16 },	// [2] UNUSED
-	{ 1, 0x100000, &spritelayout_A,		256*3, 16 },	// [3] sprites
+	{ REGION_GFX1, 0, &tilelayout_08,	256*0, 16 },	// [0] scroll 0
+	{ REGION_GFX2, 0, &tilelayout_08,	256*1, 16 },	// [1] scroll 1
+	{ REGION_GFX3, 0, &tilelayout_01,	256*1, 16 },	// [2] UNUSED
+	{ REGION_GFX4, 0, &spritelayout_08,	256*3, 16 },	// [3] sprites
 	{ -1 }
 };
 
@@ -657,10 +681,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_D[] =
 							Machine Driver Macros
 
 ***************************************************************************/
-
-
-#define MEGASYS1_CREDITS "Luca Elia\n"
-
 
 /***************************************************************************
 
@@ -685,7 +705,7 @@ static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 { \
 	2, \
 	{_oki1_clock_, _oki2_clock_},\
-	{3,4}, \
+	{ REGION_SOUND1, REGION_SOUND2 }, \
 	{ 50, 50 } \
 }; \
  \
@@ -753,7 +773,7 @@ static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 { \
 	1, \
 	{_oki1_clock_},\
-	{  2 }, \
+	{ REGION_SOUND1 }, \
 	{ 100 } \
 }; \
  \
@@ -795,9 +815,9 @@ static struct MachineDriver machine_driver_##_shortname_ = \
 
 /***************************************************************************
 
-						[  Mega System 1 Z ]
+							[  Mega System 1 Z ]
 
-						 68000+Z80 1xYM2203
+							 68000+Z80 1xYM2203
 
 ***************************************************************************/
 
@@ -872,6 +892,13 @@ static struct MachineDriver machine_driver_##_shortname_ = \
 
 ***************************************************************************/
 
+
+
+/* Provided by Jim Hernandez: 3.5MHz for FM, 30KHz (!) for ADPCM */
+#define STD_FM_CLOCK	3500000
+#define STD_OKI_CLOCK	  30000
+
+
 /*
 
  This is a general purpose macro to define a game.
@@ -882,80 +909,99 @@ static struct MachineDriver machine_driver_##_shortname_ = \
  parent's driver as a parameter
 
 */
-#define MEGASYS1_GAME(_shortname_,_parent_driver_,_fullname_,_year_, \
-					  _flags_, \
+#define MEGASYS1_GAME(_shortname_, \
 					  _type_,_ram_start_, _ram_end_, \
 					  _main_clock_,_sound_clock_, \
-					  _fm_clock_,_oki1_clock_,_oki2_clock_, \
-					  _rom_decode_) \
+					  _fm_clock_,_oki1_clock_,_oki2_clock_) \
  \
 	MEMORYMAP_##_type_(_shortname_,_ram_start_,_ram_end_) \
  \
 	MEGASYS1_MACHINE_##_type_(	_type_, \
 								_shortname_,_main_clock_,_sound_clock_, \
-								_fm_clock_,_oki1_clock_,_oki2_clock_) \
- \
-struct GameDriver driver_##_shortname_ = \
-{ \
-	__FILE__, \
-	_parent_driver_, \
-	#_shortname_, \
-	#_fullname_, \
-	#_year_, \
-	"Jaleco", \
-	MEGASYS1_CREDITS, \
-	0, \
-	&machine_driver_##_shortname_, \
-	_rom_decode_, \
-	rom_##_shortname_, \
-	0, 0, \
-	0, \
-	0, \
-	input_ports_##_shortname_, \
-	0, 0, 0, \
-	_flags_, \
-	0,0 \
-};
+								_fm_clock_,_oki1_clock_,_oki2_clock_)
 
 
+/* OSC:	? (Main 12, Sound 10 MHz according to KLOV) */
+MEGASYS1_GAME(	64street, C,0xff0000,0xffffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
+/* OSC:	? */
+MEGASYS1_GAME(	astyanax, A,0xff0000,0xffffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	8,12,7 MHz */
+MEGASYS1_GAME(	avspirit, B,0x070000,0x07ffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* This is a clone of Avenging Spirit but runs on different hardware */
+/* OSC: same as avspirit(8,12,7 MHz)? (Music tempo driven by timers of the 2151) */
+MEGASYS1_GAME(	phantasm, A,0xff0000,0xffffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC: 7.000 MHz + 24.000 MHz */
+MEGASYS1_GAME(	bigstrik, C,0xff0000,0xffffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	? */
+MEGASYS1_GAME(	chimerab, C,0xff0000,0xffffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	? */
+MEGASYS1_GAME(	cybattlr, C,0x1f0000,0x01fffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	8,12,7 MHz */
+MEGASYS1_GAME(	edf, B,0x060000,0x07ffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	4,7,12 MHz */
+MEGASYS1_GAME(	hachoo, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	? */
+MEGASYS1_GAME(	iganinju, A,0x0f0000,0x0fffff,
+				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+// This game doesn't work properly: it severely slows down (and gets worse bumping the clock)
+
+/* OSC:	4, 7, 12 MHz */
+MEGASYS1_GAME(	kickoff, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	5,12 MHz */
+MEGASYS1_GAME(	lomakai, Z,0x0f0000,0x0fffff,
+				6000000,3000000,	1200000,0,0 )	// no oki chips
 
 /*
-	General purpose macro to define a clone game.
+ OSC:	? (YM2151 timers drive the music tempo)
 
-	It is for clones that run on the same hardware (average situation) so
-	input ports and machine driver will point to those of the parent game
+ KLOV: This game is based on a standard Jaleco platform (using twin 68K CPU's) that is
+ used on a few other games (e.g. Astyanax). It is coded MB8842 with an MB8843 ROM
+ daughter card. Changing the ROM card changes the game.
 */
+MEGASYS1_GAME(	p47, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
-#define MEGASYS1_GAME_CLONE(_shortname_,_parentname_,_fullname_,_year_, \
-							_flags_, _rom_decode_) \
-\
-struct GameDriver driver_##_shortname_ = \
-{ \
-	__FILE__, \
-	&driver_##_parentname_, \
-	#_shortname_, \
-	#_fullname_, \
-	#_year_, \
-	"Jaleco", \
-	MEGASYS1_CREDITS, \
-	0, \
-	&machine_driver_##_parentname_, \
-	_rom_decode_, \
-	rom_##_shortname_, \
-	0, 0, \
-	0, \
-	0, \
-	input_ports_##_parentname_, \
-	0, 0, 0, \
-	_flags_, \
-	0,0 \
-};
+/* OSC:	? */
+/* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
+MEGASYS1_GAME(	peekaboo, D,0x1f0000,0x1fffff,
+				10000000,0,	0,12000,0 )	// 1 cpu, no fm, 1 oki
+
+/* OSC:	? */
+MEGASYS1_GAME(	plusalph, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	4,12,7 MHz */
+MEGASYS1_GAME(	rodland, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
+
+/* OSC:	? */
+MEGASYS1_GAME(	stdragon, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
 
-/* Provided by Jim Hernandez: 3.5MHz for FM, 30KHz (!) for ADPCM */
-#define STD_FM_CLOCK	3500000
-#define STD_OKI_CLOCK	  30000
+/* OSC:	? */
+MEGASYS1_GAME(	soldamj, A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
 
 
@@ -963,9 +1009,10 @@ struct GameDriver driver_##_shortname_ = \
 
 /***************************************************************************
 
-  Game driver(s)
+								ROMs Loading
 
 ***************************************************************************/
+
 
 
 /***************************************************************************
@@ -1004,42 +1051,52 @@ ff9df8.w	*** level ***
 ***************************************************************************/
 
 #define ROM_LOAD_64STREET \
-	ROM_REGION(0x220000)	/* Region 1 - temporary for gfx roms */ \
-	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 ) \
-	ROM_LOAD( "64th_06.rom", 0x080000, 0x080000, 0x2bfcdc75 ) \
-	ROM_LOAD( "64th_09.rom", 0x100000, 0x020000, 0xa4a97db4 ) /* Text */ \
-	ROM_LOAD( "64th_05.rom", 0x120000, 0x080000, 0xa89a7020 ) /* similar */ \
-	ROM_LOAD( "64th_04.rom", 0x1a0000, 0x080000, 0x98f83ef6 ) /* train/boat boss*/ \
-\
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */ \
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */ \
 	ROM_LOAD_EVEN( "64th_08.rom", 0x000000, 0x010000, 0x632be0c1 ) \
 	ROM_LOAD_ODD(  "64th_07.rom", 0x000000, 0x010000, 0x13595d01 ) \
 \
-	ROM_REGION(0x20000)		/* Region 3 - ADPCM sound samples */ \
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */ \
+	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 ) \
+\
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */ \
+	ROM_LOAD( "64th_06.rom", 0x000000, 0x080000, 0x2bfcdc75 ) \
+\
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */ \
+	ROM_LOAD( "64th_09.rom", 0x000000, 0x020000, 0xa4a97db4 ) \
+\
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */ \
+	ROM_LOAD( "64th_05.rom", 0x000000, 0x080000, 0xa89a7020 ) \
+	ROM_LOAD( "64th_04.rom", 0x080000, 0x080000, 0x98f83ef6 ) \
+\
+	ROM_REGION( 0x40000, REGION_SOUND1 )		/* Samples */ \
 	ROM_LOAD( "64th_11.rom", 0x000000, 0x020000, 0xb0b8a65c ) \
 \
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */ \
+	ROM_REGION( 0x40000, REGION_SOUND2 )		/* Samples */ \
 	ROM_LOAD( "64th_10.rom", 0x000000, 0x040000, 0xa3390561 ) \
 \
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */ \
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */ \
 	ROM_LOAD( "prom",        0x0000, 0x0200, 0x00000000 )
 
 
 ROM_START( 64street )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
+
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "64th_03.rom", 0x000000, 0x040000, 0xed6c6942 )
 	ROM_LOAD_ODD(  "64th_02.rom", 0x000000, 0x040000, 0x0621ed1d )
 
 	ROM_LOAD_64STREET
+
 ROM_END
 
 
 ROM_START( 64streej )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
+
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "91105-3.bin", 0x000000, 0x040000, 0xa211a83b )
 	ROM_LOAD_ODD(  "91105-2.bin", 0x000000, 0x040000, 0x27c1f436 )
 
 	ROM_LOAD_64STREET
+
 ROM_END
 
 
@@ -1078,7 +1135,7 @@ INPUT_PORTS_START( 64street )
 
 INPUT_PORTS_END
 
-void init_64street(void)
+static void init_64street(void)
 {
 //	unsigned char *RAM = memory_region(REGION_CPU1);
 //	WRITE_WORD (&RAM[0x006b8],0x6004);		// d8001 test
@@ -1091,17 +1148,6 @@ void init_64street(void)
 	ip_select_values[4] = 0x56;
 }
 
-/* OSC:	? (Main 12, Sound 10 MHz according to KLOV) */
-MEGASYS1_GAME(	64street, 0, 64th. Street - A Detective Story (World),1991,
-				ROT0,C,0xff0000,0xffffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				init_64street )
-
-
-MEGASYS1_GAME_CLONE( 64streej, 64street, 64th. Street - A Detective Story (Japan), 1991, ROT0, init_64street )
-
-
-
 
 /***************************************************************************
 
@@ -1113,56 +1159,67 @@ interrupts:	1] 1aa	2] 1b4
 
 
 #define ASTYANAX_ROM_LOAD \
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */ \
-	ROM_LOAD( "astyan11.bin", 0x000000, 0x020000, 0x5593fec9 ) /* scroll 0 */ \
-	ROM_LOAD( "astyan12.bin", 0x020000, 0x020000, 0xe8b313ec ) \
-	ROM_LOAD( "astyan13.bin", 0x040000, 0x020000, 0x5f3496c6 ) \
-	ROM_LOAD( "astyan14.bin", 0x060000, 0x020000, 0x29a09ec2 ) \
-	ROM_LOAD( "astyan15.bin", 0x080000, 0x020000, 0x0d316615 ) /* scroll 1 */ \
-	ROM_LOAD( "astyan16.bin", 0x0a0000, 0x020000, 0xba96e8d9 ) \
-	ROM_LOAD( "astyan17.bin", 0x0c0000, 0x020000, 0xbe60ba06 ) \
-	ROM_LOAD( "astyan18.bin", 0x0e0000, 0x020000, 0x3668da3d ) \
-	ROM_LOAD( "astyan19.bin", 0x100000, 0x020000, 0x98158623 ) /* scroll 2 */ \
-	ROM_LOAD( "astyan20.bin", 0x120000, 0x020000, 0xc1ad9aa0 ) /* sprites  */ \
-	ROM_LOAD( "astyan21.bin", 0x140000, 0x020000, 0x0bf498ee ) \
-	ROM_LOAD( "astyan22.bin", 0x160000, 0x020000, 0x5f04d9b1 ) \
-	ROM_LOAD( "astyan23.bin", 0x180000, 0x020000, 0x7bd4d1e7 ) \
 \
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */ \
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */ \
 	ROM_LOAD_EVEN( "astyan5.bin",  0x000000, 0x010000, 0x11c74045 ) \
 	ROM_LOAD_ODD(  "astyan6.bin",  0x000000, 0x010000, 0xeecd4b16 ) \
 \
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */ \
-	ROM_LOAD( "astyan9.bin",  0x000000, 0x020000, 0xa10b3f17 ) \
-	ROM_LOAD( "astyan10.bin", 0x000000, 0x020000, 0x4f704e7a ) \
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */ \
+	ROM_LOAD( "astyan11.bin", 0x000000, 0x020000, 0x5593fec9 ) \
+	ROM_LOAD( "astyan12.bin", 0x020000, 0x020000, 0xe8b313ec ) \
+	ROM_LOAD( "astyan13.bin", 0x040000, 0x020000, 0x5f3496c6 ) \
+	ROM_LOAD( "astyan14.bin", 0x060000, 0x020000, 0x29a09ec2 ) \
 \
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */ \
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */ \
+	ROM_LOAD( "astyan15.bin", 0x000000, 0x020000, 0x0d316615 ) \
+	ROM_LOAD( "astyan16.bin", 0x020000, 0x020000, 0xba96e8d9 ) \
+	ROM_LOAD( "astyan17.bin", 0x040000, 0x020000, 0xbe60ba06 ) \
+	ROM_LOAD( "astyan18.bin", 0x060000, 0x020000, 0x3668da3d ) \
+\
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */ \
+	ROM_LOAD( "astyan19.bin", 0x000000, 0x020000, 0x98158623 ) \
+\
+	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */ \
+	ROM_LOAD( "astyan20.bin", 0x000000, 0x020000, 0xc1ad9aa0 ) \
+	ROM_LOAD( "astyan21.bin", 0x020000, 0x020000, 0x0bf498ee ) \
+	ROM_LOAD( "astyan22.bin", 0x040000, 0x020000, 0x5f04d9b1 ) \
+	ROM_LOAD( "astyan23.bin", 0x060000, 0x020000, 0x7bd4d1e7 ) \
+\
+	ROM_REGION( 0x40000, REGION_SOUND1 )		/* Samples */ \
+	ROM_LOAD( "astyan9.bin",  0x000000, 0x020000, 0xa10b3f17 ) \
+	ROM_LOAD( "astyan10.bin", 0x020000, 0x020000, 0x4f704e7a ) \
+\
+	ROM_REGION( 0x40000, REGION_SOUND2 )		/* Samples */ \
 	ROM_LOAD( "astyan7.bin",  0x000000, 0x020000, 0x319418cc ) \
 	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 ) \
 \
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */ \
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */ \
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 
 
-
 ROM_START( astyanax )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "astyan2.bin", 0x00000, 0x20000, 0x1b598dcc )
 	ROM_LOAD_ODD(  "astyan1.bin", 0x00000, 0x20000, 0x1a1ad3cf )
 	ROM_LOAD_EVEN( "astyan3.bin", 0x40000, 0x10000, 0x097b53a6 )
 	ROM_LOAD_ODD(  "astyan4.bin", 0x40000, 0x10000, 0x1e1cbdb2 )
 
 	ASTYANAX_ROM_LOAD
+
 ROM_END
 
+
 ROM_START( lordofk )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
+
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "lokj02.bin", 0x00000, 0x20000, 0x0d7f9b4a )
 	ROM_LOAD_ODD(  "lokj01.bin", 0x00000, 0x20000, 0xbed3cb93 )
 	ROM_LOAD_EVEN( "lokj03.bin", 0x40000, 0x20000, 0xd8702c91 )
 	ROM_LOAD_ODD(  "lokj04.bin", 0x40000, 0x20000, 0xeccbf8c9 )
 
 	ASTYANAX_ROM_LOAD
+
 ROM_END
 
 
@@ -1229,16 +1286,13 @@ INPUT_PORTS_END
 
 void astyanax_rom_decode(int cpu)
 {
-unsigned char *RAM;
-int i,size;
-
-	RAM  = memory_region(REGION_CPU1+cpu);
-	size = memory_region_length(REGION_CPU1+cpu);
+	unsigned char	*RAM	=	memory_region(REGION_CPU1+cpu);
+	int i,			size	=	memory_region_length(REGION_CPU1+cpu);
 	if (size > 0x40000)	size = 0x40000;
 
 	for (i = 0 ; i < size ; i+=2)
 	{
-	int x,y;
+		int x,y;
 
 		x = READ_WORD(&RAM[i]);
 
@@ -1265,7 +1319,7 @@ int i,size;
 }
 
 
-void astyanax_init(void)
+static void init_astyanax(void)
 {
 	unsigned char *RAM;
 
@@ -1274,16 +1328,6 @@ void astyanax_init(void)
 	RAM  = memory_region(REGION_CPU1);
 	WRITE_WORD(&RAM[0x0004e6],0x6040);	// protection
 }
-
-
-/* OSC:	? */
-MEGASYS1_GAME(	astyanax, 0, The Astyanax,1989,ROT0 | GAME_REQUIRES_16BIT,
-				A,0xff0000,0xffffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				astyanax_init )
-
-MEGASYS1_GAME_CLONE( lordofk, astyanax, The Lord of King (Japan),1989,ROT0 | GAME_REQUIRES_16BIT,astyanax_init )
-
 
 
 /***************************************************************************
@@ -1323,63 +1367,75 @@ phntsm04.bin                                    NO MATCH
 ***************************************************************************/
 
 ROM_START( avspirit )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )		/* Region 0 - main cpu code - 00000-3ffff & 80000-bffff */
+	ROM_REGION( 0xc0000, REGION_CPU1 )		/* Main CPU Code: 00000-3ffff & 80000-bffff */
 	ROM_LOAD_EVEN( "spirit05.rom",  0x000000, 0x020000, 0xb26a341a )
 	ROM_CONTINUE (                  0x080000 & ~1, 0x020000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD(  "spirit06.rom",  0x000000, 0x020000, 0x609f71fe )
 	ROM_CONTINUE (                  0x080000 | 1, 0x020000 | ROMFLAG_ALTERNATE )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, 0x728335d4 )
-	ROM_LOAD( "spirit11.rom",  0x080000, 0x080000, 0x7896f6b0 )
-	ROM_LOAD( "spirit09.rom",  0x100000, 0x020000, 0x0c37edf7 )
-	ROM_LOAD( "spirit10.rom",  0x120000, 0x080000, 0x2b1180b3 )
-
-	ROM_REGIONX( 0x40000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x40000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "spirit01.rom",  0x000000, 0x020000, 0xd02ec045 )
 	ROM_LOAD_ODD(  "spirit02.rom",  0x000000, 0x020000, 0x30213390 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, 0x728335d4 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "spirit11.rom",  0x000000, 0x080000, 0x7896f6b0 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "spirit09.rom",  0x000000, 0x020000, 0x0c37edf7 )
+
+	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "spirit10.rom",  0x000000, 0x080000, 0x2b1180b3 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "spirit14.rom",  0x000000, 0x040000, 0x13be9979 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "spirit13.rom",  0x000000, 0x040000, 0x05bc04d9 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 
 ROM_START( phantasm )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "phntsm02.bin", 0x000000, 0x020000, 0xd96a3584 )
 	ROM_LOAD_ODD(  "phntsm01.bin", 0x000000, 0x020000, 0xa54b4b87 )
 	ROM_LOAD_EVEN( "phntsm03.bin", 0x040000, 0x010000, 0x1d96ce20 )
 	ROM_LOAD_ODD(  "phntsm04.bin", 0x040000, 0x010000, 0xdc0c4994 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-//	ROM_LOAD( "phntsm14.bin",  0x000000, 0x080000, 0x728335d4 )
-//	ROM_LOAD( "phntsm18.bin",  0x080000, 0x080000, 0x7896f6b0 )
-//	ROM_LOAD( "phntsm19.bin",  0x100000, 0x020000, 0x0c37edf7 )
-//	ROM_LOAD( "phntsm23.bin",  0x120000, 0x080000, 0x2b1180b3 )
-	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, 0x728335d4 )
-	ROM_LOAD( "spirit11.rom",  0x080000, 0x080000, 0x7896f6b0 )
-	ROM_LOAD( "spirit09.rom",  0x100000, 0x020000, 0x0c37edf7 )
-	ROM_LOAD( "spirit10.rom",  0x120000, 0x080000, 0x2b1180b3 )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "phntsm05.bin", 0x000000, 0x010000, 0x3b169b4a )
 	ROM_LOAD_ODD(  "phntsm06.bin", 0x000000, 0x010000, 0xdf2dfb2e )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+//	ROM_LOAD( "phntsm14.bin",  0x000000, 0x080000, 0x728335d4 )
+	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, 0x728335d4 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+//	ROM_LOAD( "phntsm18.bin",  0x000000, 0x080000, 0x7896f6b0 )
+	ROM_LOAD( "spirit11.rom",  0x000000, 0x080000, 0x7896f6b0 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+//	ROM_LOAD( "phntsm19.bin",  0x000000, 0x020000, 0x0c37edf7 )
+	ROM_LOAD( "spirit09.rom",  0x000000, 0x020000, 0x0c37edf7 )
+
+	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+//	ROM_LOAD( "phntsm23.bin",  0x000000, 0x080000, 0x2b1180b3 )
+	ROM_LOAD( "spirit10.rom",  0x000000, 0x080000, 0x2b1180b3 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )		/* Samples */
 //	ROM_LOAD( "phntsm10.bin", 0x000000, 0x040000, 0x13be9979 )
 	ROM_LOAD( "spirit14.rom", 0x000000, 0x040000, 0x13be9979 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND2 )		/* Samples */
 //	ROM_LOAD( "phntsm08.bin", 0x000000, 0x040000, 0x05bc04d9 )
 	ROM_LOAD( "spirit13.rom", 0x000000, 0x040000, 0x05bc04d9 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1425,7 +1481,7 @@ INPUT_PORTS_START( phantasm )
 	INPUT_PORTS_AVSPIRIT
 INPUT_PORTS_END
 
-void avspirit_init(void)
+static void init_avspirit(void)
 {
 	ip_select_values[0] = 0x37;
 	ip_select_values[1] = 0x35;
@@ -1438,16 +1494,13 @@ void avspirit_init(void)
 
 void phantasm_rom_decode(int cpu)
 {
-unsigned char *RAM;
-int i,size;
-
-	RAM  = memory_region(REGION_CPU1+cpu);
-	size = memory_region_length(REGION_CPU1+cpu);
+	unsigned char	*RAM	=	memory_region(REGION_CPU1+cpu);
+	int i,			size	=	memory_region_length(REGION_CPU1+cpu);
 	if (size > 0x40000)	size = 0x40000;
 
 	for (i = 0 ; i < size ; i+=2)
 	{
-	int x,y;
+		int x,y;
 
 		x = READ_WORD(&RAM[i]);
 
@@ -1474,24 +1527,10 @@ int i,size;
 }
 
 
-void phantasm_init(void)
+static void init_phantasm(void)
 {
 	phantasm_rom_decode(0);
 }
-
-/* OSC:	8,12,7 MHz */
-MEGASYS1_GAME(	avspirit, 0, Avenging Spirit,1991,ROT0,
-				B,0x070000,0x07ffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				avspirit_init )
-
-/* This is a clone of Avenging Spirit but runs on different hardware */
-/* OSC: same as avspirit(8,12,7 MHz)? (Music tempo driven by timers of the 2151) */
-MEGASYS1_GAME(	phantasm, &driver_avspirit, Phantasm (Japan), 1990, ROT0,
-				A,0xff0000,0xffffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				phantasm_init )
-
 
 
 /***************************************************************************
@@ -1511,27 +1550,33 @@ $885c/e.w	*** time (BCD) ***
 ***************************************************************************/
 
 ROM_START( bigstrik )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "91105v11.3", 0x000000, 0x020000, 0x5d6e08ec )
 	ROM_LOAD_ODD(  "91105v11.2", 0x000000, 0x020000, 0x2120f05b )
 
-	ROM_REGION_DISPOSE(0x220000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "91021.01",   0x000000, 0x080000, 0xf1945858 )	// scroll 0
-	ROM_LOAD( "91021.03",   0x080000, 0x080000, 0xe88821e5 )	// scroll 1
-	ROM_LOAD( "91105v11.9", 0x100000, 0x020000, 0x7be1c50c )	// scroll 2
-	ROM_LOAD( "91021.02",   0x120000, 0x080000, 0x199819ca )	// sprites
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "91105v10.8", 0x000000, 0x010000, 0x7dd69ece )
 	ROM_LOAD_ODD(  "91105v10.7", 0x000000, 0x010000, 0xbc2c1508 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
-	ROM_LOAD( "91105v10.11", 0x000000, 0x040000, BADCRC(0xa1f13dd5) )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "91021.01",   0x000000, 0x080000, 0xf1945858 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
-	ROM_LOAD( "91105v10.10", 0x000000, 0x040000, BADCRC(0xe4f8fc8d) )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "91021.03",   0x000000, 0x080000, 0xe88821e5 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "91105v11.9", 0x000000, 0x020000, 0x7be1c50c )
+
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "91021.02",   0x000000, 0x080000, 0x199819ca )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )		/* Samples */
+	ROM_LOAD( "91105v10.11", 0x000000, 0x040000, BADCRC(0xa1f13dd5) )	// 1xxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x40000, REGION_SOUND2 )		/* Samples */
+	ROM_LOAD( "91105v10.10", 0x000000, 0x040000, BADCRC(0xe4f8fc8d) )	// 1xxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1608,7 +1653,7 @@ void bigstrik_spriteram_w(int offset, int data)
 	COMBINE_WORD_MEM(&spriteram[offset],data);
 }
 
-void bigstrik_init(void)
+static void init_bigstrik(void)
 {
 	ip_select_values[0] = 0x58;
 	ip_select_values[1] = 0x54;
@@ -1618,14 +1663,6 @@ void bigstrik_init(void)
 
 	install_mem_write_handler(0, 0x1f8000, 0x1f87ff, bigstrik_spriteram_w);
 }
-
-/* OSC: 7.000 MHz + 24.000 MHz */
-MEGASYS1_GAME(	bigstrik, 0, Big Striker,1992,ROT0,
-				C,0xff0000,0xffffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				bigstrik_init )
-
-
 
 
 /***************************************************************************
@@ -1641,28 +1678,34 @@ Note: This game was a prototype
 ***************************************************************************/
 
 ROM_START( chimerab )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "prg3.bin", 0x000000, 0x040000, 0x70f1448f )
 	ROM_LOAD_ODD(  "prg2.bin", 0x000000, 0x040000, 0x821dbb85 )
 
-	ROM_REGION_DISPOSE( 0x220000 )	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "s1.bin",   0x000000, 0x080000, 0xe4c2ac77 )	// scroll 0
-	ROM_LOAD( "s2.bin",   0x080000, 0x080000, 0xfafb37a5 )	// scroll 1
-	ROM_LOAD( "scr3.bin", 0x100000, 0x020000, 0x5fe38a83 )	// scroll 2
-	ROM_LOAD( "b2.bin",   0x120000, 0x080000, 0x6e7f1778 )	// sprites
-	ROM_LOAD( "b1.bin",   0x1a0000, 0x080000, 0x29c0385e )	//
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "prg8.bin", 0x000000, 0x010000, 0xa682b1ca )
 	ROM_LOAD_ODD(  "prg7.bin", 0x000000, 0x010000, 0x83b9982d )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "s1.bin",   0x000000, 0x080000, 0xe4c2ac77 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "s2.bin",   0x000000, 0x080000, 0xfafb37a5 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "scr3.bin", 0x000000, 0x020000, 0x5fe38a83 )
+
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "b2.bin",   0x000000, 0x080000, 0x6e7f1778 )
+	ROM_LOAD( "b1.bin",   0x080000, 0x080000, 0x29c0385e )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "voi11.bin", 0x000000, 0x040000, 0x14b3afe6 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "voi10.bin", 0x000000, 0x040000, 0x67498914 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1701,7 +1744,7 @@ INPUT_PORTS_START( chimerab )
 
 INPUT_PORTS_END
 
-void chimerab_init(void)
+static void init_chimerab(void)
 {
 	/* same as cybattlr */
 	ip_select_values[0] = 0x56;
@@ -1710,13 +1753,6 @@ void chimerab_init(void)
 	ip_select_values[3] = 0x54;
 	ip_select_values[4] = 0x55;
 }
-
-
-/* OSC:	? */
-MEGASYS1_GAME(	chimerab, 0, Chimera Beast,1993,ROT0,
-				C,0xff0000,0xffffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				chimerab_init )
 
 
 /***************************************************************************
@@ -1750,28 +1786,34 @@ c2104 <- 1fd060 (scroll 2 ctrl)	c2100 <- 1fd228 (scroll 2 x)	c2102 <- 1fd22a (sc
 ***************************************************************************/
 
 ROM_START( cybattlr )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "cb_03.rom", 0x000000, 0x040000, 0xbee20587 )
 	ROM_LOAD_ODD(  "cb_02.rom", 0x000000, 0x040000, 0x2ed14c50 )
 
-	ROM_REGION_DISPOSE( 0x220000 )	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "cb_m01.rom", 0x000000, 0x080000, 0x1109337f )
-	ROM_LOAD( "cb_m04.rom", 0x080000, 0x080000, 0x0c91798e )
-	ROM_LOAD( "cb_09.rom",  0x100000, 0x020000, 0x37b1f195 ) // charset
-	ROM_LOAD( "cb_m03.rom", 0x120000, 0x080000, 0x4cd49f58 )
-	ROM_LOAD( "cb_m02.rom", 0x1a0000, 0x080000, 0x882825db )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "cb_08.rom", 0x000000, 0x010000, 0xbf7b3558 )
 	ROM_LOAD_ODD(  "cb_07.rom", 0x000000, 0x010000, 0x85d219d7 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "cb_m01.rom", 0x000000, 0x080000, 0x1109337f )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "cb_m04.rom", 0x000000, 0x080000, 0x0c91798e )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "cb_09.rom",  0x000000, 0x020000, 0x37b1f195 )
+
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "cb_m03.rom", 0x000000, 0x080000, 0x4cd49f58 )
+	ROM_LOAD( "cb_m02.rom", 0x080000, 0x080000, 0x882825db )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "cb_11.rom", 0x000000, 0x040000, 0x59d62d1f )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "cb_10.rom", 0x000000, 0x040000, 0x8af95eed )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1838,7 +1880,7 @@ INPUT_PORTS_END
 
 
 
-void cybattlr_init(void)
+static void init_cybattlr(void)
 {
 	ip_select_values[0] = 0x56;
 	ip_select_values[1] = 0x52;
@@ -1846,13 +1888,6 @@ void cybattlr_init(void)
 	ip_select_values[3] = 0x54;
 	ip_select_values[4] = 0x55;
 }
-
-
-/* OSC:	? */
-MEGASYS1_GAME(	cybattlr, 0, Cybattler,1993,ROT90,
-				C,0x1f0000,0x01fffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				cybattlr_init )
 
 
 
@@ -1874,29 +1909,35 @@ fc0			(a7)+ -> 58000 (string)
 ***************************************************************************/
 
 ROM_START( edf )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )		/* Region 0 - main cpu code - 00000-3ffff & 80000-bffff */
+	ROM_REGION( 0xc0000, REGION_CPU1 )		/* Main CPU Code: 00000-3ffff & 80000-bffff */
 	ROM_LOAD_EVEN( "edf_05.rom",  0x000000, 0x020000, 0x105094d1 )
 	ROM_CONTINUE (                0x080000 & ~1, 0x020000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD(  "edf_06.rom",  0x000000, 0x020000, 0x94da2f0c )
 	ROM_CONTINUE (                0x080000 | 1, 0x020000 | ROMFLAG_ALTERNATE )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "edf_m04.rom",  0x000000, 0x080000, 0x6744f406 )
-	ROM_LOAD( "edf_m05.rom",  0x080000, 0x080000, 0x6f47e456 )
-	ROM_LOAD( "edf_09.rom",   0x100000, 0x020000, 0x96e38983 )
-	ROM_LOAD( "edf_m03.rom",  0x120000, 0x080000, 0xef469449 )
-
-	ROM_REGIONX( 0x40000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x40000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "edf_01.rom",  0x000000, 0x020000, 0x2290ea19 )
 	ROM_LOAD_ODD(  "edf_02.rom",  0x000000, 0x020000, 0xce93643e )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "edf_m04.rom",  0x000000, 0x080000, 0x6744f406 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "edf_m05.rom",  0x000000, 0x080000, 0x6f47e456 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "edf_09.rom",   0x000000, 0x020000, 0x96e38983 )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "edf_m03.rom",  0x000000, 0x080000, 0xef469449 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "edf_m02.rom",  0x000000, 0x040000, 0xfc4281d2 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "edf_m01.rom",  0x000000, 0x040000, 0x9149286b )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1909,9 +1950,9 @@ INPUT_PORTS_START( edf )
 
 	PORT_START			/* IN4 */
 	COINAGE_6BITS
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START			/* IN5 0x66007.b */
@@ -1941,7 +1982,7 @@ INPUT_PORTS_START( edf )
 
 INPUT_PORTS_END
 
-void edf_init(void)
+static void init_edf(void)
 {
 	ip_select_values[0] = 0x20;
 	ip_select_values[1] = 0x21;
@@ -1950,12 +1991,6 @@ void edf_init(void)
 	ip_select_values[4] = 0x24;
 }
 
-
-/* OSC:	8,12,7 MHz */
-MEGASYS1_GAME(	edf, 0, Earth Defense Force,1991,ROT0,
-				B,0x060000,0x07ffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				edf_init )
 
 
 /***************************************************************************
@@ -1966,40 +2001,49 @@ MEGASYS1_GAME(	edf, 0, Earth Defense Force,1991,ROT0,
 
 
 #define HACHOO_ROM_LOAD \
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */ \
-	ROM_LOAD( "hacho14.rom", 0x000000, 0x080000, 0x10188483 ) /* scroll 0 */ \
-	ROM_LOAD( "hacho15.rom", 0x080000, 0x020000, 0xe559347e ) /* scroll 1 */ \
-	ROM_LOAD( "hacho16.rom", 0x0a0000, 0x020000, 0x105fd8b5 ) \
-	ROM_LOAD( "hacho17.rom", 0x0c0000, 0x020000, 0x77f46174 ) \
-	ROM_LOAD( "hacho18.rom", 0x0e0000, 0x020000, 0x0be21111 ) \
-	ROM_LOAD( "hacho19.rom", 0x100000, 0x020000, 0x33bc9de3 ) /* scroll 2 */ \
-	ROM_LOAD( "hacho20.rom", 0x120000, 0x020000, 0x2ae2011e ) /* sprites */ \
-	ROM_LOAD( "hacho21.rom", 0x140000, 0x020000, 0x6dcfb8d5 ) \
-	ROM_LOAD( "hacho22.rom", 0x160000, 0x020000, 0xccabf0e0 ) \
-	ROM_LOAD( "hacho23.rom", 0x180000, 0x020000, 0xff5f77aa ) \
 \
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */ \
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */ \
 	ROM_LOAD_EVEN( "hacho05.rom", 0x000000, 0x010000, 0x6271f74f ) \
 	ROM_LOAD_ODD(  "hacho06.rom", 0x000000, 0x010000, 0xdb9e743c ) \
 \
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */ \
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */ \
+	ROM_LOAD( "hacho14.rom", 0x000000, 0x080000, 0x10188483 ) \
+\
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */ \
+	ROM_LOAD( "hacho15.rom", 0x000000, 0x020000, 0xe559347e ) \
+	ROM_LOAD( "hacho16.rom", 0x020000, 0x020000, 0x105fd8b5 ) \
+	ROM_LOAD( "hacho17.rom", 0x040000, 0x020000, 0x77f46174 ) \
+	ROM_LOAD( "hacho18.rom", 0x060000, 0x020000, 0x0be21111 ) \
+\
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */ \
+	ROM_LOAD( "hacho19.rom", 0x000000, 0x020000, 0x33bc9de3 ) \
+\
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */ \
+	ROM_LOAD( "hacho20.rom", 0x000000, 0x020000, 0x2ae2011e ) \
+	ROM_LOAD( "hacho21.rom", 0x020000, 0x020000, 0x6dcfb8d5 ) \
+	ROM_LOAD( "hacho22.rom", 0x040000, 0x020000, 0xccabf0e0 ) \
+	ROM_LOAD( "hacho23.rom", 0x060000, 0x020000, 0xff5f77aa ) \
+\
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */ \
 	ROM_LOAD( "hacho09.rom", 0x000000, 0x020000, 0xe9f35c90 ) \
 	ROM_LOAD( "hacho10.rom", 0x020000, 0x020000, 0x1aeaa188 ) \
 \
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */ \
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */ \
 	ROM_LOAD( "hacho07.rom", 0x000000, 0x020000, 0x06e6ca7f ) \
 	ROM_LOAD( "hacho08.rom", 0x020000, 0x020000, 0x888a6df1 ) \
 \
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */ \
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */ \
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 
 
 ROM_START( hachoo )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "hacho02.rom", 0x000000, 0x020000, 0x49489c27 )
 	ROM_LOAD_ODD(  "hacho01.rom", 0x000000, 0x020000, 0x97fc9515 )
 
 	HACHOO_ROM_LOAD
+
 ROM_END
 
 
@@ -2046,7 +2090,7 @@ INPUT_PORTS_START( hachoo )
 
 INPUT_PORTS_END
 
-void hachoo_init(void)
+static void init_hachoo(void)
 {
 	unsigned char *RAM;
 
@@ -2056,28 +2100,23 @@ void hachoo_init(void)
 	WRITE_WORD(&RAM[0x0006da],0x6000);	// protection
 }
 
-/* OSC:	4,7,12 MHz */
-MEGASYS1_GAME(	hachoo, 0, Hachoo!,1989,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				hachoo_init )
-
 
 
 /* There's another revision, but it's a bad dump (top half of the code is FF) */
 /* There's the priority PROM 82s131.14m in there, all FFs though :( */
 #if 0
 ROM_START( hachoo1 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 		ROM_LOAD_EVEN( "hacho02.rom", 0x000000, 0x020000, 0x49489c27 )
 		ROM_LOAD_ODD(  "hacho01.rom", 0x000000, 0x020000, 0x97fc9515 )
 		ROM_LOAD_EVEN( "rom-2", 0x000000, 0x010000, 0x3f56efb8 )
 		ROM_LOAD_ODD(  "rom-1", 0x000000, 0x010000, 0xc44bd605 )
 
 	HACHOO_ROM_LOAD
+
 ROM_END
 
-MEGASYS1_GAME_CLONE( hachoo1, hachoo, Hachoo! 1, 1989, ROT0, hachoo_init )
 #endif
 
 
@@ -2098,29 +2137,35 @@ f010c.w		credits
 
 
 ROM_START( iganinju )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "iga_02.bin", 0x000000, 0x020000, 0xbd00c280 )
 	ROM_LOAD_ODD(  "iga_01.bin", 0x000000, 0x020000, 0xfa416a9e )
 	ROM_LOAD_EVEN( "iga_03.bin", 0x040000, 0x010000, 0xde5937ad )
 	ROM_LOAD_ODD(  "iga_04.bin", 0x040000, 0x010000, 0xafaf0480 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "iga_14.bin", 0x000000, 0x040000, 0xc707d513 )	// scroll 0
-	ROM_LOAD( "iga_18.bin", 0x080000, 0x080000, 0x6c727519 )	// scroll 1
-	ROM_LOAD( "iga_19.bin", 0x100000, 0x020000, 0x98a7e998 )	// scroll 2
-	ROM_LOAD( "iga_23.bin", 0x120000, 0x080000, 0xfb58c5f4 )	// sprites
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "iga_05.bin", 0x000000, 0x010000, 0x13580868 )
 	ROM_LOAD_ODD(  "iga_06.bin", 0x000000, 0x010000, 0x7904d5dd )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "iga_14.bin", 0x000000, 0x040000, 0xc707d513 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "iga_18.bin", 0x000000, 0x080000, 0x6c727519 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "iga_19.bin", 0x000000, 0x020000, 0x98a7e998 )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "iga_23.bin", 0x000000, 0x080000, 0xfb58c5f4 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "iga_10.bin", 0x000000, 0x040000, 0x67a89e0d )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "iga_08.bin", 0x000000, 0x040000, 0x857dbf60 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -2168,7 +2213,7 @@ INPUT_PORTS_START( iganinju )
 
 INPUT_PORTS_END
 
-static void iganinju_init(void)
+static void init_iganinju(void)
 {
 	unsigned char *RAM;
 
@@ -2181,17 +2226,13 @@ static void iganinju_init(void)
 										// not like lev 3 interrupts
 }
 
-/* OSC:	? */
-MEGASYS1_GAME(	iganinju, 0, Iga Ninjyutsuden (Japan),1988,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				iganinju_init )
-
 
 
 /***************************************************************************
 
 							[ Kick Off ]
+
+WARNING: The sound CPU writes and read in the 9000-ffff area
 
 interrupts:	1-2]	rte
 			3]		timer
@@ -2212,36 +2253,42 @@ Notes:
 ***************************************************************************/
 
 ROM_START( kickoff )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x20000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "kioff03.rom", 0x000000, 0x010000, 0x3b01be65 )
 	ROM_LOAD_ODD(  "kioff01.rom", 0x000000, 0x010000, 0xae6e68a1 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "kioff05.rom", 0x000000, 0x020000, 0xe7232103 )	// sroll 0
-	ROM_LOAD( "kioff06.rom", 0x020000, 0x020000, 0xa0b3cb75 )
-	ROM_LOAD( "kioff07.rom", 0x060000, 0x020000, 0xed649919 )
-	ROM_LOAD( "kioff10.rom", 0x080000, 0x020000, 0xfd739fec )
-	// scroll 1 is unused
-	ROM_LOAD( "kioff16.rom", 0x100000, 0x020000, 0x22c46314 )	// scroll 2
-	ROM_LOAD( "kioff27.rom", 0x120000, 0x020000, 0xca221ae2 )	// sprites
-	ROM_LOAD( "kioff18.rom", 0x140000, 0x020000, 0xd7909ada )
-	ROM_LOAD( "kioff17.rom", 0x160000, 0x020000, 0xf171559e )
-	ROM_LOAD( "kioff26.rom", 0x180000, 0x020000, 0x2a90df1b )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "kioff09.rom", 0x000000, 0x010000, 0x1770e980 )
 	ROM_LOAD_ODD(  "kioff19.rom", 0x000000, 0x010000, 0x1b03bbe4 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "kioff05.rom", 0x000000, 0x020000, 0xe7232103 )
+	ROM_LOAD( "kioff06.rom", 0x020000, 0x020000, 0xa0b3cb75 )
+	ROM_LOAD( "kioff07.rom", 0x040000, 0x020000, 0xed649919 )
+	ROM_LOAD( "kioff10.rom", 0x060000, 0x020000, 0xfd739fec )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	// scroll 1 is unused
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "kioff16.rom", 0x000000, 0x020000, 0x22c46314 )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "kioff27.rom", 0x000000, 0x020000, 0xca221ae2 )
+	ROM_LOAD( "kioff18.rom", 0x020000, 0x020000, 0xd7909ada )
+	ROM_LOAD( "kioff17.rom", 0x040000, 0x020000, 0xf171559e )
+	ROM_LOAD( "kioff26.rom", 0x060000, 0x020000, 0x2a90df1b )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "kioff20.rom", 0x000000, 0x020000, 0x5c28bd2d )
 	ROM_LOAD( "kioff21.rom", 0x020000, 0x020000, 0x195940cf )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	// same rom for 2 oki chips ?? Unlikely
 	ROM_LOAD( "kioff20.rom", 0x000000, 0x020000, 0x5c28bd2d )
 	ROM_LOAD( "kioff21.rom", 0x020000, 0x020000, 0x195940cf )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -2305,14 +2352,6 @@ INPUT_PORTS_START( kickoff )
 INPUT_PORTS_END
 
 
-/* OSC:	4, 7, 12 MHz */
-MEGASYS1_GAME(	kickoff, 0, Kick Off (Japan),1988,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				0 )
-
-
-
 /***************************************************************************
 
 							[ Legend of Makai ]
@@ -2320,37 +2359,45 @@ MEGASYS1_GAME(	kickoff, 0, Kick Off (Japan),1988,ROT0,
 ***************************************************************************/
 
 ROM_START( lomakai )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "lom_30.rom", 0x000000, 0x020000, 0xba6d65b8 )
 	ROM_LOAD_ODD(  "lom_20.rom", 0x000000, 0x020000, 0x56a00dc2 )
 
-	ROM_REGION_DISPOSE(0x50000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "lom_05.rom", 0x000000, 0x020000, 0xd04fc713 )
-	ROM_LOAD( "lom_08.rom", 0x020000, 0x010000, 0xbdb15e67 )
-	ROM_LOAD( "lom_06.rom", 0x030000, 0x020000, 0xf33b6eed )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* Sound CPU Code (Z80) */
 	ROM_LOAD( "lom_01.rom",  0x0000, 0x10000, 0x46e85e90 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* unknown proms */
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "lom_05.rom", 0x000000, 0x020000, 0xd04fc713 )
+
+	ROM_REGION( 0x010000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "lom_08.rom", 0x000000, 0x010000, 0xbdb15e67 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "lom_06.rom", 0x000000, 0x020000, 0xf33b6eed )
+
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Unknown PROMs */
 	ROM_LOAD( "makaiden.9",  0x0000, 0x0100, 0x3567065d )
 	ROM_LOAD( "makaiden.10", 0x0100, 0x0100, 0xe6709c51 )
 ROM_END
 
 ROM_START( makaiden )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "makaiden.3a", 0x000000, 0x020000, 0x87cf81d1 )
 	ROM_LOAD_ODD(  "makaiden.2a", 0x000000, 0x020000, 0xd40e0fea )
 
-	ROM_REGION_DISPOSE(0x50000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "lom_05.rom", 0x000000, 0x020000, 0xd04fc713 )
-	ROM_LOAD( "makaiden.8", 0x020000, 0x010000, 0xa7f623f9 )
-	ROM_LOAD( "lom_06.rom", 0x030000, 0x020000, 0xf33b6eed )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* Sound CPU Code (Z80) */
 	ROM_LOAD( "lom_01.rom",  0x0000, 0x10000, 0x46e85e90 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* unknown proms */
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "lom_05.rom", 0x000000, 0x020000, 0xd04fc713 )
+
+	ROM_REGION( 0x010000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "makaiden.8", 0x000000, 0x010000, 0xa7f623f9 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "lom_06.rom", 0x000000, 0x020000, 0xf33b6eed )
+
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Unknown PROMs */
 	ROM_LOAD( "makaiden.9",  0x0000, 0x0100, 0x3567065d )
 	ROM_LOAD( "makaiden.10", 0x0100, 0x0100, 0xe6709c51 )
 ROM_END
@@ -2396,15 +2443,6 @@ INPUT_PORTS_START( lomakai )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 INPUT_PORTS_END
-
-
-/* OSC:	5,12 MHz */
-MEGASYS1_GAME(	lomakai, 0, Legend of Makai (World),1988,ROT0,
-				Z,0x0f0000,0x0fffff,
-				6000000,3000000,	1200000,0,0,	// no oki chips
-				0 )
-
-MEGASYS1_GAME_CLONE( makaiden,lomakai,Makai Densetsu (Japan),1988,ROT0, 0 )
 
 
 /***************************************************************************
@@ -2463,71 +2501,83 @@ f0018.w		*** level ***
 ***************************************************************************/
 
 ROM_START( p47 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "p47us3.bin", 0x000000, 0x020000, 0x022e58b8 )
 	ROM_LOAD_ODD(  "p47us1.bin", 0x000000, 0x020000, 0xed926bd8 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "p47j_5.bin",  0x000000, 0x020000, 0xfe65b65c ) /* Tiles (scroll 0) */
-	ROM_LOAD( "p47j_6.bin",  0x020000, 0x020000, 0xe191d2d2 )
-	ROM_LOAD( "p47j_7.bin",  0x040000, 0x020000, 0xf77723b7 )
-	ROM_LOAD( "p47j_23.bin", 0x080000, 0x020000, 0x6e9bc864 ) /* Tiles (scroll 1) */
-	ROM_RELOAD(              0x0a0000, 0x020000 )	/* why? */
-	ROM_LOAD( "p47j_12.bin", 0x0c0000, 0x020000, 0x5268395f )
-	ROM_LOAD( "p47us16.bin", 0x100000, 0x010000, 0x5a682c8f ) /* Text  (scroll 2) */
-	ROM_LOAD( "p47j_27.bin", 0x120000, 0x020000, 0x9e2bde8e ) /* Sprites 16x16 */
-	ROM_LOAD( "p47j_18.bin", 0x140000, 0x020000, 0x29d8f676 )
-	ROM_LOAD( "p47j_26.bin", 0x160000, 0x020000, 0x4d07581a )
-	ROM_RELOAD(              0x180000, 0x020000 )	/* why? */
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "p47j_9.bin",  0x000000, 0x010000, 0xffcf318e )
 	ROM_LOAD_ODD(  "p47j_19.bin", 0x000000, 0x010000, 0xadb8c12e )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "p47j_5.bin",  0x000000, 0x020000, 0xfe65b65c )
+	ROM_LOAD( "p47j_6.bin",  0x020000, 0x020000, 0xe191d2d2 )
+	ROM_LOAD( "p47j_7.bin",  0x040000, 0x020000, 0xf77723b7 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "p47j_23.bin", 0x000000, 0x020000, 0x6e9bc864 )
+	ROM_RELOAD(              0x020000, 0x020000 )	/* why? */
+	ROM_LOAD( "p47j_12.bin", 0x040000, 0x020000, 0x5268395f )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "p47us16.bin", 0x000000, 0x010000, 0x5a682c8f )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "p47j_27.bin", 0x000000, 0x020000, 0x9e2bde8e )
+	ROM_LOAD( "p47j_18.bin", 0x020000, 0x020000, 0x29d8f676 )
+	ROM_LOAD( "p47j_26.bin", 0x040000, 0x020000, 0x4d07581a )
+	ROM_RELOAD(              0x060000, 0x020000 )	/* why? */
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "p47j_20.bin", 0x000000, 0x020000, 0x2ed53624 )
 	ROM_LOAD( "p47j_21.bin", 0x020000, 0x020000, 0x6f56b56d )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "p47j_10.bin", 0x000000, 0x020000, 0xb9d79c1e )
 	ROM_LOAD( "p47j_11.bin", 0x020000, 0x020000, 0xfa0d1887 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
 
 ROM_START( p47j )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "p47j_3.bin", 0x000000, 0x020000, 0x11c655e5 )
 	ROM_LOAD_ODD(  "p47j_1.bin", 0x000000, 0x020000, 0x0a5998de )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "p47j_5.bin",  0x000000, 0x020000, 0xfe65b65c ) /* Tiles (scroll 0) */
-	ROM_LOAD( "p47j_6.bin",  0x020000, 0x020000, 0xe191d2d2 )
-	ROM_LOAD( "p47j_7.bin",  0x040000, 0x020000, 0xf77723b7 )
-	ROM_LOAD( "p47j_23.bin", 0x080000, 0x020000, 0x6e9bc864 ) /* Tiles (scroll 1) */
-	ROM_RELOAD(              0x0a0000, 0x020000 )	/* why? */
-	ROM_LOAD( "p47j_12.bin", 0x0c0000, 0x020000, 0x5268395f )
-	ROM_LOAD( "p47j_16.bin", 0x100000, 0x010000, 0x30e44375 ) /* Text  (scroll 2) */
-	ROM_LOAD( "p47j_27.bin", 0x120000, 0x020000, 0x9e2bde8e ) /* Sprites 16x16 */
-	ROM_LOAD( "p47j_18.bin", 0x140000, 0x020000, 0x29d8f676 )
-	ROM_LOAD( "p47j_26.bin", 0x160000, 0x020000, 0x4d07581a )
-	ROM_RELOAD(              0x180000, 0x020000 )	/* why? */
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "p47j_9.bin",  0x000000, 0x010000, 0xffcf318e )
 	ROM_LOAD_ODD(  "p47j_19.bin", 0x000000, 0x010000, 0xadb8c12e )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "p47j_5.bin",  0x000000, 0x020000, 0xfe65b65c )
+	ROM_LOAD( "p47j_6.bin",  0x020000, 0x020000, 0xe191d2d2 )
+	ROM_LOAD( "p47j_7.bin",  0x040000, 0x020000, 0xf77723b7 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "p47j_23.bin", 0x000000, 0x020000, 0x6e9bc864 )
+	ROM_RELOAD(              0x020000, 0x020000 )	/* why? */
+	ROM_LOAD( "p47j_12.bin", 0x040000, 0x020000, 0x5268395f )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "p47j_16.bin", 0x000000, 0x010000, 0x30e44375 )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "p47j_27.bin", 0x000000, 0x020000, 0x9e2bde8e )
+	ROM_LOAD( "p47j_18.bin", 0x020000, 0x020000, 0x29d8f676 )
+	ROM_LOAD( "p47j_26.bin", 0x040000, 0x020000, 0x4d07581a )
+	ROM_RELOAD(              0x060000, 0x020000 )	/* why? */
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "p47j_20.bin", 0x000000, 0x020000, 0x2ed53624 )
 	ROM_LOAD( "p47j_21.bin", 0x020000, 0x020000, 0x6f56b56d )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "p47j_10.bin", 0x000000, 0x020000, 0xb9d79c1e )
 	ROM_LOAD( "p47j_11.bin", 0x020000, 0x020000, 0xfa0d1887 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -2574,21 +2624,6 @@ INPUT_PORTS_START( p47 )
 
 INPUT_PORTS_END
 
-
-/*
- OSC:	? (YM2151 timers drive the music tempo)
-
- KLOV: This game is based on a standard Jaleco platform (using twin 68K CPU's) that is
- used on a few other games (e.g. Astyanax). It is coded MB8842 with an MB8843 ROM
- daughter card. Changing the ROM card changes the game.
-*/
-
-MEGASYS1_GAME(	p47, 0, P-47 - The Phantom Fighter (World),1988,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				0 )
-
-MEGASYS1_GAME_CLONE( p47j, p47, P-47 - The Freedom Fighter (Japan), 1988, ROT0, 0 )
 
 
 
@@ -2683,20 +2718,27 @@ c2200<-0
 
 ROM_START( peekaboo )
 
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* 68000 CPU Code */
 	ROM_LOAD_EVEN( "j3", 0x000000, 0x020000, 0xf5f4cf33 )
 	ROM_LOAD_ODD(  "j2", 0x000000, 0x020000, 0x7b3d430d )
 
-	ROM_REGION_DISPOSE(0x180000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "5",       0x000000, 0x080000, 0x34fa07bb )	// Background
-	ROM_LOAD( "4",       0x080000, 0x020000, 0xf037794b )	// Text
-	ROM_LOAD( "1",       0x100000, 0x080000, 0x5a444ecf )	// Sprites
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "5",       0x000000, 0x080000, 0x34fa07bb )
 
-	ROM_REGION( 0x120000 )	/* Region 2 - samples */
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "4",       0x000000, 0x020000, 0xf037794b )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	// Unused
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "1",       0x000000, 0x080000, 0x5a444ecf )
+
+	ROM_REGION( 0x120000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "peeksamp.124", 0x000000, 0x020000, 0xe1206fa8 )
 	ROM_CONTINUE(             0x040000, 0x0e0000             )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "priority.69",    0x000000, 0x200, 0xb40bff56 )
 
 ROM_END
@@ -2766,17 +2808,6 @@ INPUT_PORTS_END
 
 
 
-int  protection_peekaboo_r(int offset);
-void protection_peekaboo_w(int offset,int data);
-
-
-/* OSC:	? */
-/* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
-MEGASYS1_GAME(	peekaboo, 0, Peek-a-Boo!,1993,ROT0,
-				D,0x1f0000,0x1fffff,
-				10000000,0,		0,12000,0,	// 1 cpu, no fm, 1 oki
-				0 )
-
 static int protection_val;
 
 /* Read the input ports, through a protection device */
@@ -2823,40 +2854,46 @@ f30a4.l		*** score (BCD) ***
 ***************************************************************************/
 
 ROM_START( plusalph )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "pa-rom2.bin", 0x000000, 0x020000, 0x33244799 )
 	ROM_LOAD_ODD(  "pa-rom1.bin", 0x000000, 0x020000, 0xa32fdcae )
 	ROM_LOAD_EVEN( "pa-rom3.bin", 0x040000, 0x010000, 0x1b739835 )
 	ROM_LOAD_ODD(  "pa-rom4.bin", 0x040000, 0x010000, 0xff760e80 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "pa-rom11.bin", 0x000000, 0x020000, 0xeb709ae7 )	// scroll 0
-	ROM_LOAD( "pa-rom12.bin", 0x020000, 0x020000, 0xcacbc350 )
-	ROM_LOAD( "pa-rom13.bin", 0x040000, 0x020000, 0xfad093dd )
-	ROM_LOAD( "pa-rom14.bin", 0x060000, 0x020000, 0xd3676cd1 )
-	ROM_LOAD( "pa-rom15.bin", 0x080000, 0x020000, 0x8787735b )	// scroll 1
-	ROM_LOAD( "pa-rom16.bin", 0x0a0000, 0x020000, 0xa06b813b )
-	ROM_LOAD( "pa-rom17.bin", 0x0c0000, 0x020000, 0xc6b38a4b )
-	/* empty place */
-	ROM_LOAD( "pa-rom19.bin", 0x100000, 0x010000, 0x39ef193c )	// scroll 2
-	ROM_LOAD( "pa-rom20.bin", 0x120000, 0x020000, 0x86c557a8 )	// sprites
-	ROM_LOAD( "pa-rom21.bin", 0x140000, 0x020000, 0x81140a88 )
-	ROM_LOAD( "pa-rom22.bin", 0x160000, 0x020000, 0x97e39886 )
-	ROM_LOAD( "pa-rom23.bin", 0x180000, 0x020000, 0x0383fb65 )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "pa-rom5.bin", 0x000000, 0x010000, 0xddc2739b )
 	ROM_LOAD_ODD(  "pa-rom6.bin", 0x000000, 0x010000, 0xf6f8a167 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "pa-rom11.bin", 0x000000, 0x020000, 0xeb709ae7 )
+	ROM_LOAD( "pa-rom12.bin", 0x020000, 0x020000, 0xcacbc350 )
+	ROM_LOAD( "pa-rom13.bin", 0x040000, 0x020000, 0xfad093dd )
+	ROM_LOAD( "pa-rom14.bin", 0x060000, 0x020000, 0xd3676cd1 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "pa-rom15.bin", 0x000000, 0x020000, 0x8787735b )
+	ROM_LOAD( "pa-rom16.bin", 0x020000, 0x020000, 0xa06b813b )
+	ROM_LOAD( "pa-rom17.bin", 0x040000, 0x020000, 0xc6b38a4b )
+	/* empty place */
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "pa-rom19.bin", 0x000000, 0x010000, 0x39ef193c )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "pa-rom20.bin", 0x000000, 0x020000, 0x86c557a8 )
+	ROM_LOAD( "pa-rom21.bin", 0x020000, 0x020000, 0x81140a88 )
+	ROM_LOAD( "pa-rom22.bin", 0x040000, 0x020000, 0x97e39886 )
+	ROM_LOAD( "pa-rom23.bin", 0x060000, 0x020000, 0x0383fb65 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "pa-rom9.bin",  0x000000, 0x020000, 0x065364bd )
 	ROM_LOAD( "pa-rom10.bin", 0x020000, 0x020000, 0x395df3b2 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "pa-rom7.bin",  0x000000, 0x020000, 0x9f5d800e )
 	ROM_LOAD( "pa-rom8.bin",  0x020000, 0x020000, 0xae007750 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom.14m",     0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -2902,7 +2939,7 @@ INPUT_PORTS_START( plusalph )
 
 INPUT_PORTS_END
 
-void plusalph_init(void)
+static void init_plusalph(void)
 {
 	unsigned char *RAM;
 
@@ -2911,13 +2948,6 @@ void plusalph_init(void)
 	RAM  = memory_region(REGION_CPU1);
 	WRITE_WORD(&RAM[0x0012b6],0x0000);	// protection
 }
-
-/* OSC:	? */
-MEGASYS1_GAME(	plusalph, 0, Plus Alpha,1989,ROT270,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				plusalph_init )
-
 
 
 /***************************************************************************
@@ -2939,40 +2969,46 @@ f0012->84204	f0014->8420c	f0016->8400c
 ***************************************************************************/
 
 ROM_START( rodland )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "rl_02.rom", 0x000000, 0x020000, 0xc7e00593 )
 	ROM_LOAD_ODD(  "rl_01.rom", 0x000000, 0x020000, 0x2e748ca1 )
 	ROM_LOAD_EVEN( "rl_03.rom", 0x040000, 0x010000, 0x62fdf6d7 )
 	ROM_LOAD_ODD(  "rl_04.rom", 0x040000, 0x010000, 0x44163c86 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 )	// scroll 0
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
+	ROM_LOAD_EVEN( "rl_05.rom", 0x000000, 0x010000, 0xc1617c28 )
+	ROM_LOAD_ODD(  "rl_06.rom", 0x000000, 0x010000, 0x663392b2 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 )
 	ROM_CONTINUE(          0x030000, 0x010000             )
 	ROM_CONTINUE(          0x050000, 0x010000             )
 	ROM_CONTINUE(          0x020000, 0x010000             )
 	ROM_CONTINUE(          0x040000, 0x010000             )
 	ROM_CONTINUE(          0x060000, 0x020000             )
-	ROM_LOAD( "rl_18.rom", 0x080000, 0x080000, 0xf3b30ca6 )	// scroll 1
-	ROM_LOAD( "rl_19.rom", 0x100000, 0x020000, 0x1b718e2a )	// scroll 2
-	ROM_LOAD( "rl_14.rom", 0x120000, 0x080000, 0x08d01bf4 )	// sprites
 
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
-	ROM_LOAD_EVEN( "rl_05.rom", 0x000000, 0x010000, 0xc1617c28 )
-	ROM_LOAD_ODD(  "rl_06.rom", 0x000000, 0x010000, 0x663392b2 )
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "rl_18.rom", 0x000000, 0x080000, 0xf3b30ca6 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
-	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "rl_19.rom", 0x000000, 0x020000, 0x1b718e2a )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "rl_14.rom", 0x000000, 0x080000, 0x08d01bf4 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "rl_10.rom", 0x000000, 0x040000, 0xe1d1cd99 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
+	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
+
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 
 ROM_START( rodlandj )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "rl19.bin", 0x000000, 0x010000, 0x028de21f )
 	ROM_LOAD_ODD(  "rl17.bin", 0x000000, 0x010000, 0x9c720046 )
 	ROM_LOAD_EVEN( "rl20.bin", 0x020000, 0x010000, 0x3f536d07 )
@@ -2980,9 +3016,13 @@ ROM_START( rodlandj )
 	ROM_LOAD_EVEN( "rl12.bin", 0x040000, 0x010000, 0xc5b1075f )	// ~ rl_03.rom
 	ROM_LOAD_ODD(  "rl11.bin", 0x040000, 0x010000, 0x9ec61048 )	// ~ rl_04.rom
 
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
+	ROM_LOAD_EVEN( "rl02.bin", 0x000000, 0x010000, 0xd26eae8f )
+	ROM_LOAD_ODD(  "rl01.bin", 0x000000, 0x010000, 0x04cf24bc )
+
 	// bg RL_23 = 27, 28, 29b, 29a, 31a?, 30?, ?, 31b?
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "rl27.bin",  0x000000, 0x010000, 0x673a5986 )	// bg
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "rl27.bin",  0x000000, 0x010000, 0x673a5986 )
 	ROM_LOAD( "rl28.bin",  0x010000, 0x010000, 0x523a731d )
 	ROM_LOAD( "rl26.bin",  0x020000, 0x010000, 0x4d0a5c97 )
 	ROM_LOAD( "rl29a.bin", 0x030000, 0x010000, 0x9fd628f1 )
@@ -2990,36 +3030,38 @@ ROM_START( rodlandj )
 	ROM_LOAD( "rl30.bin",  0x050000, 0x010000, 0xb155f39e )
 	ROM_LOAD( "rl31a.bin", 0x060000, 0x010000, 0xa9bc5b84 )
 	ROM_LOAD( "rl31b.bin", 0x070000, 0x010000, 0xfb2faa69 )
-	ROM_LOAD( "rl21.bin",  0x080000, 0x010000, 0x32fc0bc6 )	// fg = RL_18
-	ROM_LOAD( "rl22.bin",  0x090000, 0x010000, 0x0969daa9 )
-	ROM_LOAD( "rl13.bin",  0x0a0000, 0x010000, 0x1203cdf6 )
-	ROM_LOAD( "rl14.bin",  0x0b0000, 0x010000, 0xd53e094b )
-	ROM_LOAD( "rl24.bin",  0x0c0000, 0x010000, 0xb04343e6 )
-	ROM_LOAD( "rl23.bin",  0x0d0000, 0x010000, 0x70aa7e2c )
-	ROM_LOAD( "rl15.bin",  0x0e0000, 0x010000, 0x38ac846e )
-	ROM_LOAD( "rl16.bin",  0x0f0000, 0x010000, 0x5e31f0b2 )
-	ROM_LOAD( "rl25.bin",  0x100000, 0x010000, 0x4ca57cb6 )	// txt = RL_19
-	// Filled with color 15 at startup
-	ROM_LOAD( "rl04.bin",  0x120000, 0x010000, 0xcfcf9f97 )	// sprites = RL_14
-	ROM_LOAD( "rl05.bin",  0x130000, 0x010000, 0x38c05d15 )
-	ROM_LOAD( "rl07.bin",  0x140000, 0x010000, 0xe117cb72 )
-	ROM_LOAD( "rl08.bin",  0x150000, 0x010000, 0x2f9b40c3 )
-	ROM_LOAD( "rl03.bin",  0x160000, 0x010000, 0xf6a88efd )
-	ROM_LOAD( "rl06.bin",  0x170000, 0x010000, 0x90a78af1 )
-	ROM_LOAD( "rl09.bin",  0x180000, 0x010000, 0x427a0908 )
-	ROM_LOAD( "rl10.bin",  0x190000, 0x010000, 0x53cc2c11 )
 
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
-	ROM_LOAD_EVEN( "rl02.bin", 0x000000, 0x010000, 0xd26eae8f )
-	ROM_LOAD_ODD(  "rl01.bin", 0x000000, 0x010000, 0x04cf24bc )
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "rl21.bin",  0x000000, 0x010000, 0x32fc0bc6 )	// bg = RL_18
+	ROM_LOAD( "rl22.bin",  0x010000, 0x010000, 0x0969daa9 )
+	ROM_LOAD( "rl13.bin",  0x020000, 0x010000, 0x1203cdf6 )
+	ROM_LOAD( "rl14.bin",  0x030000, 0x010000, 0xd53e094b )
+	ROM_LOAD( "rl24.bin",  0x040000, 0x010000, 0xb04343e6 )
+	ROM_LOAD( "rl23.bin",  0x050000, 0x010000, 0x70aa7e2c )
+	ROM_LOAD( "rl15.bin",  0x060000, 0x010000, 0x38ac846e )
+	ROM_LOAD( "rl16.bin",  0x070000, 0x010000, 0x5e31f0b2 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
-	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "rl25.bin",  0x000000, 0x010000, 0x4ca57cb6 )	// txt = RL_19
+	// Filled with pen 15 at startup
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "rl04.bin",  0x000000, 0x010000, 0xcfcf9f97 )	// sprites = RL_14
+	ROM_LOAD( "rl05.bin",  0x010000, 0x010000, 0x38c05d15 )
+	ROM_LOAD( "rl07.bin",  0x020000, 0x010000, 0xe117cb72 )
+	ROM_LOAD( "rl08.bin",  0x030000, 0x010000, 0x2f9b40c3 )
+	ROM_LOAD( "rl03.bin",  0x040000, 0x010000, 0xf6a88efd )
+	ROM_LOAD( "rl06.bin",  0x050000, 0x010000, 0x90a78af1 )
+	ROM_LOAD( "rl09.bin",  0x060000, 0x010000, 0x427a0908 )
+	ROM_LOAD( "rl10.bin",  0x070000, 0x010000, 0x53cc2c11 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "rl_10.rom", 0x000000, 0x040000, 0xe1d1cd99 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
+	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
+
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -3068,16 +3110,13 @@ INPUT_PORTS_END
 
 void rodland_rom_decode(int cpu)
 {
-unsigned char *RAM;
-int i,size;
-
-	RAM  = memory_region(REGION_CPU1+cpu);
-	size = memory_region_length(REGION_CPU1+cpu);
+	unsigned char	*RAM	=	memory_region(REGION_CPU1+cpu);
+	int i,			size	=	memory_region_length(REGION_CPU1+cpu);
 	if (size > 0x40000)	size = 0x40000;
 
 	for (i = 0 ; i < size ; i+=2)
 	{
-	int x,y;
+		int x,y;
 
 		x = READ_WORD(&RAM[i]);
 
@@ -3104,37 +3143,25 @@ int i,size;
 }
 
 
-static void rodland_init(void)
+static void init_rodland(void)
 {
-	unsigned char *RAM = memory_region(1);
+	unsigned char *RAM = memory_region(REGION_GFX3);	// scroll 2
 
 	/* Second half of the text gfx should be all FF's, not 0's
 	   (is this right ? Otherwise the subtitle is wrong) */
-	memset( &RAM[0x110000], 0xFF , 0x10000);
+	memset( &RAM[0x10000], 0xFF , 0x10000);
 
 	rodland_rom_decode(0);
 }
 
-
-void rodlandj_init(void)
+static void init_rodlandj(void)
 {
-	unsigned char *RAM = memory_region(1);
+	unsigned char *RAM = memory_region(REGION_GFX3);	// scroll 2
 
-/* Second half of the text gfx should be all FF's, not 0's
-   (is this right ? Otherwise the subtitle is wrong) */
-	memset( &RAM[0x110000], 0xFF , 0x10000);
+	/* Second half of the text gfx should be all FF's, not 0's
+	   (is this right ? Otherwise the subtitle is wrong) */
+	memset( &RAM[0x10000], 0xFF , 0x10000);
 }
-
-
-/* OSC:	4,12,7 MHz */
-MEGASYS1_GAME(	rodland, 0, RodLand (World),1990,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				rodland_init )
-
-MEGASYS1_GAME_CLONE( rodlandj, rodland, RodLand (Japan), 1990, ROT0, rodlandj_init )
-
-
 
 
 /***************************************************************************
@@ -3148,38 +3175,44 @@ interrupts:	1] rte	2] 620	3] 5e6
 ***************************************************************************/
 
 ROM_START( stdragon )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "jsd-02.bin", 0x000000, 0x020000, 0xcc29ab19 )
 	ROM_LOAD_ODD(  "jsd-01.bin", 0x000000, 0x020000, 0x67429a57 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "jsd-11.bin", 0x000000, 0x020000, 0x2783b7b1 )	// scroll 0
-	ROM_LOAD( "jsd-12.bin", 0x020000, 0x020000, 0x89466ab7 )
-	ROM_LOAD( "jsd-13.bin", 0x040000, 0x020000, 0x9896ae82 )
-	ROM_LOAD( "jsd-14.bin", 0x060000, 0x020000, 0x7e8da371 )
-	ROM_LOAD( "jsd-15.bin", 0x080000, 0x020000, 0xe296bf59 )	// scroll 1
-	ROM_LOAD( "jsd-16.bin", 0x0a0000, 0x020000, 0xd8919c06 )
-	ROM_LOAD( "jsd-17.bin", 0x0c0000, 0x020000, 0x4f7ad563 )
-	ROM_LOAD( "jsd-18.bin", 0x0e0000, 0x020000, 0x1f4da822 )
-	ROM_LOAD( "jsd-19.bin", 0x100000, 0x010000, 0x25ce807d )	// scroll 2
-	ROM_LOAD( "jsd-20.bin", 0x120000, 0x020000, 0x2c6e93bb )	// sprites
-	ROM_LOAD( "jsd-21.bin", 0x140000, 0x020000, 0x864bcc61 )
-	ROM_LOAD( "jsd-22.bin", 0x160000, 0x020000, 0x44fe2547 )
-	ROM_LOAD( "jsd-23.bin", 0x180000, 0x020000, 0x6b010e1a )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "jsd-05.bin", 0x000000, 0x010000, 0x8c04feaa )
 	ROM_LOAD_ODD(  "jsd-06.bin", 0x000000, 0x010000, 0x0bb62f3a )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "jsd-11.bin", 0x000000, 0x020000, 0x2783b7b1 )
+	ROM_LOAD( "jsd-12.bin", 0x020000, 0x020000, 0x89466ab7 )
+	ROM_LOAD( "jsd-13.bin", 0x040000, 0x020000, 0x9896ae82 )
+	ROM_LOAD( "jsd-14.bin", 0x060000, 0x020000, 0x7e8da371 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "jsd-15.bin", 0x000000, 0x020000, 0xe296bf59 )
+	ROM_LOAD( "jsd-16.bin", 0x020000, 0x020000, 0xd8919c06 )
+	ROM_LOAD( "jsd-17.bin", 0x040000, 0x020000, 0x4f7ad563 )
+	ROM_LOAD( "jsd-18.bin", 0x060000, 0x020000, 0x1f4da822 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "jsd-19.bin", 0x000000, 0x010000, 0x25ce807d )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "jsd-20.bin", 0x000000, 0x020000, 0x2c6e93bb )
+	ROM_LOAD( "jsd-21.bin", 0x020000, 0x020000, 0x864bcc61 )
+	ROM_LOAD( "jsd-22.bin", 0x040000, 0x020000, 0x44fe2547 )
+	ROM_LOAD( "jsd-23.bin", 0x060000, 0x020000, 0x6b010e1a )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "jsd-09.bin", 0x000000, 0x020000, 0xe366bc5a )
 	ROM_LOAD( "jsd-10.bin", 0x020000, 0x020000, 0x4a8f4fe6 )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "jsd-07.bin", 0x000000, 0x020000, 0x6a48e979 )
 	ROM_LOAD( "jsd-08.bin", 0x020000, 0x020000, 0x40704962 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -3225,7 +3258,7 @@ INPUT_PORTS_START( stdragon )
 
 INPUT_PORTS_END
 
-void stdragon_init(void)
+static void init_stdragon(void)
 {
 	unsigned char *RAM;
 
@@ -3234,14 +3267,6 @@ void stdragon_init(void)
 	RAM  = memory_region(REGION_CPU1);
 	WRITE_WORD(&RAM[0x00045e],0x0098);	// protection
 }
-
-/* OSC:	? */
-MEGASYS1_GAME(	stdragon, 0, Saint Dragon,1989,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				stdragon_init )
-
-
 
 
 /***************************************************************************
@@ -3258,29 +3283,35 @@ text in english.
 ***************************************************************************/
 
 ROM_START( soldamj )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_REGION( 0x60000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "soldam2.bin", 0x000000, 0x020000, 0xc73d29e4 )
 	ROM_LOAD_ODD(  "soldam1.bin", 0x000000, 0x020000, 0xe7cb0c20 )
 	ROM_LOAD_EVEN( "soldam3.bin", 0x040000, 0x010000, 0xc5382a07 )
 	ROM_LOAD_ODD(  "soldam4.bin", 0x040000, 0x010000, 0x1df7816f )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "soldam14.bin", 0x000000, 0x080000, 0x26cea54a )	// scroll 0
-	ROM_LOAD( "soldam18.bin", 0x080000, 0x080000, 0x7d8e4712 )	// scroll 1
-	ROM_LOAD( "soldam19.bin", 0x100000, 0x020000, 0x38465da1 )	// scroll 2
-	ROM_LOAD( "soldam23.bin", 0x120000, 0x080000, 0x0ca09432 )	// sprites
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2 )		/* Sound CPU Code */
 	ROM_LOAD_EVEN( "soldam5.bin", 0x000000, 0x010000, 0xd1019a67 )
 	ROM_LOAD_ODD(  "soldam6.bin", 0x000000, 0x010000, 0x3ed219b4 )
 
-	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "soldam14.bin", 0x000000, 0x080000, 0x26cea54a )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "soldam18.bin", 0x000000, 0x080000, 0x7d8e4712 )
+
+	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "soldam19.bin", 0x000000, 0x020000, 0x38465da1 )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "soldam23.bin", 0x000000, 0x080000, 0x0ca09432 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "soldam10.bin", 0x000000, 0x040000, 0x8d5613bf )
 
-	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_REGION( 0x040000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "soldam8.bin",  0x000000, 0x040000, 0xfcd36019 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
 	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -3333,7 +3364,7 @@ void soldamj_spriteram_w(int offset, int data)
 	if (offset < 0x800)	COMBINE_WORD_MEM(&spriteram[offset],data);
 }
 
-void soldam_init(void)
+static void init_soldam(void)
 {
 	astyanax_rom_decode(0);
 
@@ -3343,8 +3374,36 @@ void soldam_init(void)
 }
 
 
-/* OSC:	? */
-MEGASYS1_GAME(	soldamj, 0, Soldam (Japan),1992,ROT0,
-				A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				soldam_init )
+
+
+
+/***************************************************************************
+
+								Game drivers
+
+***************************************************************************/
+
+
+GAME( 1991, 64street, 0,        64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
+GAME( 1991, 64streej, 64street, 64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
+GAME( 1989, astyanax, 0,        astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
+GAME( 1989, lordofk,  astyanax, astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
+GAME( 1991, avspirit, 0,        avspirit, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
+GAME( 1990, phantasm, avspirit, phantasm, phantasm, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
+GAME( 1992, bigstrik, 0,        bigstrik, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
+GAME( 1993, chimerab, 0,        chimerab, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
+GAME( 1993, cybattlr, 0,        cybattlr, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
+GAME( 1991, edf,      0,        edf,      edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
+GAME( 1989, hachoo,   0,        hachoo,   hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!" )
+GAME( 1988, iganinju, 0,        iganinju, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
+GAME( 1988, kickoff,  0,        kickoff,  kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
+GAME( 1988, lomakai,  0,        lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
+GAME( 1988, makaiden, lomakai,  lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
+GAME( 1988, p47,      0,        p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
+GAME( 1988, p47j,     p47,      p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
+GAME( 1993, peekaboo, 0,        peekaboo, peekaboo, 0,        ROT0,       "Jaleco", "Peek-a-Boo!" )
+GAME( 1989, plusalph, 0,        plusalph, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
+GAME( 1990, rodland,  0,        rodland,  rodland,  rodland,  ROT0,       "Jaleco", "RodLand (World)" )
+GAME( 1990, rodlandj, rodland,  rodland,  rodland,  rodlandj, ROT0,       "Jaleco", "RodLand (Japan)" )
+GAME( 1989, stdragon, 0,        stdragon, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
+GAME( 1992, soldamj,  0,        soldamj,  soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )

@@ -210,10 +210,9 @@ Self Test:
 							  [WEC Le Mans 24]
 ---------------------------------------------------------------------------
 
-- wrong colours (only the text layer is ok at the moment. Note that the top
+- Wrong colours (only the text layer is ok at the moment. Note that the top
   half of colours is written by the blitter, 16 colours a time, the bottom
   half by the cpu, 8 colours a time)
-- stray lines on sprites
 - The parallactic scrolling is sometimes wrong
 
 ---------------------------------------------------------------------------
@@ -222,19 +221,22 @@ Self Test:
 ---------------------------------------------------------------------------
 
 - Samples pitch is too low
-- Zoom and rotation
+- No zoom and rotation of the layers
 
 ---------------------------------------------------------------------------
 							   Common Issues
 ---------------------------------------------------------------------------
-- One 32k ROM unused
+
+- One ROM unused (32K in hotchase, 16K in wecleman)
 - Incomplete DSWs
 - No shadow sprites
-- Sprite ram is not cleared by the game and no sprite list
-  end-marker is written. We cope with that with an hack in the Blitter but
-  there must be a register to do the trick
+- Sprite ram is not cleared by the game and no sprite list end-marker
+  is written. We cope with that with an hack in the Blitter but there
+  must be a register to do the trick
+
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
@@ -575,42 +577,41 @@ static void wecleman_soundlatch_w(int offset, int data);
 
 static struct MemoryReadAddress wecleman_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x043fff, MRA_BANK1 },
-	{ 0x060000, 0x060007, MRA_BANK2 },	// only 60006.w is read
-	{ 0x080000, 0x080011, blitter_r },	// for debug
-	{ 0x100000, 0x103fff, wecleman_pageram_r },
-	{ 0x108000, 0x108fff, wecleman_txtram_r },
-	{ 0x110000, 0x110fff, paletteram_word_r },
-	{ 0x124000, 0x127fff, sharedram_r },
-	{ 0x130000, 0x130fff, spriteram_word_r },
-
-	{ 0x140010, 0x140011, wecleman_read_gear },	// Coins + brake + gear
-	{ 0x140012, 0x140013, input_port_1_r },	// ??
-	{ 0x140014, 0x140015, input_port_2_r },	// DSW
-	{ 0x140016, 0x140017, input_port_3_r },	// DSW
-	{ 0x140020, 0x140021, selected_ip_r },	// Accelerator or Wheel or ..
+	{ 0x000000, 0x03ffff, MRA_ROM				},	// ROM
+	{ 0x040000, 0x043fff, MRA_BANK1				},	// RAM
+	{ 0x060000, 0x060007, MRA_BANK2				},	// Video Registers? (only 60006.w is read)
+	{ 0x080000, 0x080011, blitter_r				},	// Blitter (reading is for debug)
+	{ 0x100000, 0x103fff, wecleman_pageram_r	},	// Background Layers
+	{ 0x108000, 0x108fff, wecleman_txtram_r		},	// Text Layer
+	{ 0x110000, 0x110fff, paletteram_word_r		},	// Palette
+	{ 0x124000, 0x127fff, sharedram_r			},	// Shared with sub CPU
+	{ 0x130000, 0x130fff, spriteram_word_r		},	// Sprites
+	// Input Ports:
+	{ 0x140010, 0x140011, wecleman_read_gear	},	// Coins + brake + gear
+	{ 0x140012, 0x140013, input_port_1_r		},	// ??
+	{ 0x140014, 0x140015, input_port_2_r		},	// DSW
+	{ 0x140016, 0x140017, input_port_3_r		},	// DSW
+	{ 0x140020, 0x140021, selected_ip_r			},	// Accelerator or Wheel or ..
 	{ -1 }
 };
 
 static struct MemoryWriteAddress wecleman_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM }, // 03c000-03ffff used as RAM sometimes!
-	{ 0x040000, 0x043fff, MWA_BANK1 },
-	{ 0x060000, 0x060007, MWA_BANK2, &wecleman_unknown },
-	{ 0x080000, 0x080011, blitter_w, &blitter_regs },
-	{ 0x100000, 0x103fff, wecleman_pageram_w, &wecleman_pageram },
-	{ 0x108000, 0x108fff, wecleman_txtram_w, &wecleman_txtram },
-	{ 0x110000, 0x110fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0x124000, 0x127fff, sharedram_w, &sharedram },
-	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size },
-
-	{ 0x140000, 0x140001, wecleman_soundlatch_w },	// Soundlatch_w
-	{ 0x140002, 0x140003, selected_ip_w },	// Selects accelerator / wheel / ..
-	{ 0x140004, 0x140005, irqctrl_w },	// Main CPU controls the other CPUs
-	{ 0x140006, 0x140007, MWA_NOP },	// Watchdog reset
-	{ 0x140020, 0x140021, MWA_NOP },	// Paired with writes to $140003
-	{ 0x140030, 0x140031, MWA_BANK3 },	// ??
+	{ 0x000000, 0x03ffff, MWA_ROM											},	// ROM (03c000-03ffff used as RAM sometimes!)
+	{ 0x040000, 0x043fff, MWA_BANK1											},	// RAM
+	{ 0x060000, 0x060007, MWA_BANK2, &wecleman_unknown						},	// Video Registers?
+	{ 0x080000, 0x080011, blitter_w, &blitter_regs							},	// Blitter
+	{ 0x100000, 0x103fff, wecleman_pageram_w, &wecleman_pageram				},	// Background Layers
+	{ 0x108000, 0x108fff, wecleman_txtram_w, &wecleman_txtram				},	// Text Layer
+	{ 0x110000, 0x110fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram	},	// Palette
+	{ 0x124000, 0x127fff, sharedram_w, &sharedram							},	// Shared with main CPU
+	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size		},	// Sprites
+	{ 0x140000, 0x140001, wecleman_soundlatch_w						},	// To sound CPU
+	{ 0x140002, 0x140003, selected_ip_w								},	// Selects accelerator / wheel / ..
+	{ 0x140004, 0x140005, irqctrl_w									},	// Main CPU controls the other CPUs
+	{ 0x140006, 0x140007, MWA_NOP									},	// Watchdog reset
+	{ 0x140020, 0x140021, MWA_NOP									},	// Paired with writes to $140003
+	{ 0x140030, 0x140031, MWA_BANK3									},	// ??
 	{ -1 }
 };
 
@@ -631,45 +632,45 @@ void hotchase_soundlatch_w(int offset, int data);
 
 static struct MemoryReadAddress hotchase_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x063fff, MRA_BANK1 },
-	{ 0x080000, 0x080011, MRA_BANK2 },
-	{ 0x100000, 0x100fff, MRA_BANK3 },
-	{ 0x101000, 0x10101f, MRA_BANK4 },
-	{ 0x102000, 0x102fff, MRA_BANK5 },
-	{ 0x103000, 0x10301f, MRA_BANK6 },
-	{ 0x110000, 0x111fff, paletteram_word_r },	// only the first 2048 colors used
-	{ 0x120000, 0x123fff, sharedram_r },
-	{ 0x130000, 0x130fff, spriteram_word_r },
-
-	{ 0x140006, 0x140007, MRA_NOP },	// Watchdog_reset_r
-	{ 0x140010, 0x140011, hotchase_read_gear },	// Coins + brake + gear
-	{ 0x140012, 0x140013, input_port_1_r },	// ?? bit 4 from sound cpu
-	{ 0x140014, 0x140015, input_port_2_r },	// DSW 2
-	{ 0x140016, 0x140017, input_port_3_r },	// DSW 1
-	{ 0x140020, 0x140021, selected_ip_r },	// Accelerator or Wheel or ..
-//	{ 0x140022, 0x140023, MRA_NOP },	// ??
+	{ 0x000000, 0x03ffff, MRA_ROM				},	// ROM
+	{ 0x040000, 0x063fff, MRA_BANK1				},	// RAM (weird size!?)
+	{ 0x080000, 0x080011, MRA_BANK2				},	// Blitter
+	{ 0x100000, 0x100fff, MRA_BANK3				},	// Background
+	{ 0x101000, 0x10101f, MRA_BANK4				},	// Background Ctrl
+	{ 0x102000, 0x102fff, MRA_BANK5				},	// Foreground
+	{ 0x103000, 0x10301f, MRA_BANK6				},	// Foreground Ctrl
+	{ 0x110000, 0x111fff, paletteram_word_r		},	// Palette (only the first 2048 colors used)
+	{ 0x120000, 0x123fff, sharedram_r			},	// Shared with sub CPU
+	{ 0x130000, 0x130fff, spriteram_word_r		},	// Sprites
+	// Input Ports:
+	{ 0x140006, 0x140007, MRA_NOP				},	// Watchdog reset
+	{ 0x140010, 0x140011, hotchase_read_gear	},	// Coins + brake + gear
+	{ 0x140012, 0x140013, input_port_1_r		},	// ?? bit 4 from sound cpu
+	{ 0x140014, 0x140015, input_port_2_r		},	// DSW 2
+	{ 0x140016, 0x140017, input_port_3_r		},	// DSW 1
+	{ 0x140020, 0x140021, selected_ip_r			},	// Accelerator or Wheel or ..
+//	{ 0x140022, 0x140023, MRA_NOP				},	// ??
 	{ -1 }
 };
 
 static struct MemoryWriteAddress hotchase_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x063fff, MWA_BANK1 },
-	{ 0x080000, 0x080011, blitter_w, &blitter_regs },
-	{ 0x100000, 0x100fff, hotchase_bgram_w, &hotchase_bgram },
-	{ 0x101000, 0x10101f, hotchase_bgreg_w, &hotchase_bgreg },
-	{ 0x102000, 0x102fff, hotchase_fgram_w,	&hotchase_fgram },
-	{ 0x103000, 0x10301f, hotchase_fgreg_w,	&hotchase_fgreg },
-	{ 0x110000, 0x111fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0x120000, 0x123fff, sharedram_w, &sharedram },
-	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size },
-
-	{ 0x140000, 0x140001, hotchase_soundlatch_w },	// Soundlatch_w
-	{ 0x140002, 0x140003, selected_ip_w },	// Selects accelerator / wheel / ..
-	{ 0x140004, 0x140005, irqctrl_w },	// Main CPU controls the other CPUs
-	{ 0x140020, 0x140021, MWA_NOP },	// Paired with writes to $140003
-//	{ 0x140030, 0x140031, MWA_NOP },	// ??
+	{ 0x000000, 0x03ffff, MWA_ROM								},	// ROM
+	{ 0x040000, 0x063fff, MWA_BANK1								},	// RAM (weird size!?)
+	{ 0x080000, 0x080011, blitter_w, &blitter_regs				},	// Blitter
+	{ 0x100000, 0x100fff, hotchase_bgram_w, &hotchase_bgram		},	// Background
+	{ 0x101000, 0x10101f, hotchase_bgreg_w, &hotchase_bgreg		},	// Background Ctrl
+	{ 0x102000, 0x102fff, hotchase_fgram_w,	&hotchase_fgram		},	// Foreground
+	{ 0x103000, 0x10301f, hotchase_fgreg_w,	&hotchase_fgreg		},	// Foreground Ctrl
+	{ 0x110000, 0x111fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram	},	// Palette
+	{ 0x120000, 0x123fff, sharedram_w, &sharedram							},	// Shared with sub CPU
+	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size		},	// Sprites
+	// Input Ports:
+	{ 0x140000, 0x140001, hotchase_soundlatch_w					},	// To sound CPU
+	{ 0x140002, 0x140003, selected_ip_w							},	// Selects accelerator / wheel / ..
+	{ 0x140004, 0x140005, irqctrl_w								},	// Main CPU controls the other CPUs
+	{ 0x140020, 0x140021, MWA_NOP								},	// Paired with writes to $140003
+//	{ 0x140030, 0x140031, MWA_NOP								},	// ??
 	{ -1 }
 };
 
@@ -691,17 +692,17 @@ static struct MemoryWriteAddress hotchase_writemem[] =
 
 static struct MemoryReadAddress wecleman_sub_readmem[] =
 {
-	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x060000, 0x060fff, MRA_BANK8 },
-	{ 0x070000, 0x073fff, &sharedram_r },
+	{ 0x000000, 0x00ffff, MRA_ROM		},	// ROM
+	{ 0x060000, 0x060fff, MRA_BANK8		},	// Road
+	{ 0x070000, 0x073fff, &sharedram_r	},	// RAM (Shared with main CPU)
 	{ -1 }
 };
 
 static struct MemoryWriteAddress wecleman_sub_writemem[] =
 {
-	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x060000, 0x060fff, MWA_BANK8, &wecleman_roadram, &wecleman_roadram_size },
-	{ 0x070000, 0x073fff, sharedram_w },
+	{ 0x000000, 0x00ffff, MWA_ROM		},	// ROM
+	{ 0x060000, 0x060fff, MWA_BANK8, &wecleman_roadram, &wecleman_roadram_size },	// Road
+	{ 0x070000, 0x073fff, sharedram_w	},	// RAM (Shared with main CPU)
 	{ -1 }
 };
 
@@ -723,19 +724,19 @@ static struct MemoryWriteAddress wecleman_sub_writemem[] =
 
 static struct MemoryReadAddress hotchase_sub_readmem[] =
 {
-	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x020000, 0x020fff, MRA_BANK7 },
-	{ 0x060000, 0x060fff, MRA_BANK8 },
-	{ 0x040000, 0x043fff, &sharedram_r },
+	{ 0x000000, 0x01ffff, MRA_ROM		},	// ROM
+	{ 0x020000, 0x020fff, MRA_BANK7		},	// Road
+	{ 0x060000, 0x060fff, MRA_BANK8		},	// RAM
+	{ 0x040000, 0x043fff, &sharedram_r	},	// Shared with main CPU
 	{ -1 }
 };
 
 static struct MemoryWriteAddress hotchase_sub_writemem[] =
 {
-	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0x020000, 0x020fff, MWA_BANK7, &wecleman_roadram, &wecleman_roadram_size },
-	{ 0x060000, 0x060fff, MWA_BANK8 },
-	{ 0x040000, 0x043fff, sharedram_w },
+	{ 0x000000, 0x01ffff, MWA_ROM		},	// ROM
+	{ 0x020000, 0x020fff, MWA_BANK7, &wecleman_roadram, &wecleman_roadram_size },	// Road
+	{ 0x060000, 0x060fff, MWA_BANK8		},	// RAM
+	{ 0x040000, 0x043fff, sharedram_w	},	// Shared with main CPU
 	{ -1 }
 };
 
@@ -794,28 +795,34 @@ void multiply_w(int offset, int data)
 
 ** sample playing ends when a byte with bit 7 set is reached **/
 
+void wecleman_K007232_bank_w(int offset, int data)
+{
+	K007232_bankswitch(0, memory_region(REGION_SOUND1),
+						  memory_region((data & 1) ? REGION_SOUND1 : REGION_SOUND2) );
+}
 
 static struct MemoryReadAddress wecleman_sound_readmem[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x9000, 0x9000, multiply_r },	// Protection
-	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xb000, 0xb00d, K007232_read_port_0_r },	// Reading offset 5/b triggers the sample
-	{ 0xc001, 0xc001, YM2151_status_port_0_r },
+	{ 0x0000, 0x7fff, MRA_ROM					},	// ROM
+	{ 0x8000, 0x83ff, MRA_RAM					},	// RAM
+	{ 0x9000, 0x9000, multiply_r				},	// Protection
+	{ 0xa000, 0xa000, soundlatch_r				},	// From main CPU
+	{ 0xb000, 0xb00d, K007232_read_port_0_r		},	// K007232 (Reading offset 5/b triggers the sample)
+	{ 0xc001, 0xc001, YM2151_status_port_0_r	},	// YM2151
 	{ -1 }
 };
 
 static struct MemoryWriteAddress wecleman_sound_writemem[] =
 {
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x9000, 0x9001, multiply_w },	// Protection
-	{ 0x9006, 0x9006, MWA_NOP },
-	{ 0xb000, 0xb00d, K007232_write_port_0_w },
-	{ 0xc000, 0xc000, YM2151_register_port_0_w },
-	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-//	{ 0xf000, 0xf000, MWA_NOP },	// ?
+	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
+	{ 0x8000, 0x83ff, MWA_RAM					},	// RAM
+//	{ 0x8500, 0x8500, MWA_NOP					},	// incresed with speed (global volume)?
+	{ 0x9000, 0x9001, multiply_w				},	// Protection
+//	{ 0x9006, 0x9006, MWA_NOP					},	// ?
+	{ 0xb000, 0xb00d, K007232_write_port_0_w	},	// K007232
+	{ 0xc000, 0xc000, YM2151_register_port_0_w	},	// YM2151
+	{ 0xc001, 0xc001, YM2151_data_port_0_w		},
+	{ 0xf000, 0xf000, wecleman_K007232_bank_w	},	// Samples banking
 	{ -1 }
 };
 
@@ -824,23 +831,14 @@ static struct MemoryWriteAddress wecleman_sound_writemem[] =
 								Hot Chase
 ***************************************************************************/
 
-static struct K007232_interface hotchase_k007232_interface =
-{
-	3,
-	{5,6,7},
-	{K007232_VOL(33,MIXER_PAN_CENTER,33,MIXER_PAN_CENTER),
-	 K007232_VOL(33,MIXER_PAN_LEFT,33,MIXER_PAN_RIGHT),
-	 K007232_VOL(33,MIXER_PAN_LEFT,33,MIXER_PAN_RIGHT) },
-	{0,0,0}
-};
-
-
 /* 140001.b */
 void hotchase_soundlatch_w(int offset, int data)
 {
 	soundlatch_w(0,data & 0xFF);
 	cpu_set_irq_line(2,M6809_IRQ_LINE, HOLD_LINE);
 }
+
+static struct K007232_interface hotchase_k007232_interface;
 
 void hotchase_sound_control_w(int offset, int data)
 {
@@ -919,25 +917,25 @@ HOTCHASE_K007232_RW(2)
 
 static struct MemoryReadAddress hotchase_sound_readmem[] =
 {
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x100d, hotchase_K007232_0_r },
-	{ 0x2000, 0x200d, hotchase_K007232_1_r },
-	{ 0x3000, 0x300d, hotchase_K007232_2_r },
-	{ 0x6000, 0x6000, soundlatch_r },	// Read on IRQ
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x0000, 0x07ff, MRA_RAM					},	// RAM
+	{ 0x1000, 0x100d, hotchase_K007232_0_r		},	// 3 x  K007232
+	{ 0x2000, 0x200d, hotchase_K007232_1_r		},
+	{ 0x3000, 0x300d, hotchase_K007232_2_r		},
+	{ 0x6000, 0x6000, soundlatch_r				},	// From main CPU (Read on IRQ)
+	{ 0x8000, 0xffff, MRA_ROM					},	// ROM
 	{ -1 }
 };
 
 static struct MemoryWriteAddress hotchase_sound_writemem[] =
 {
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x1000, 0x100d, hotchase_K007232_0_w },
-	{ 0x2000, 0x200d, hotchase_K007232_1_w },
-	{ 0x3000, 0x300d, hotchase_K007232_2_w },
-	{ 0x4000, 0x4007, hotchase_sound_control_w },	// Sound volume, banking, etc.
-	{ 0x5000, 0x5000, MWA_NOP },	// written with 0 on IRQ, 1 on FIRQ
-	{ 0x7000, 0x7000, MWA_NOP },	// command acknowledge?
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x0000, 0x07ff, MWA_RAM					},	// RAM
+	{ 0x1000, 0x100d, hotchase_K007232_0_w		},	// 3 x K007232
+	{ 0x2000, 0x200d, hotchase_K007232_1_w		},
+	{ 0x3000, 0x300d, hotchase_K007232_2_w		},
+	{ 0x4000, 0x4007, hotchase_sound_control_w	},	// Sound volume, banking, etc.
+	{ 0x5000, 0x5000, MWA_NOP					},	// ? (written with 0 on IRQ, 1 on FIRQ)
+	{ 0x7000, 0x7000, MWA_NOP					},	// Command acknowledge ?
+	{ 0x8000, 0xffff, MWA_ROM					},	// ROM
 	{ -1 }
 };
 
@@ -970,11 +968,11 @@ static struct MemoryWriteAddress hotchase_sound_writemem[] =
 
 
 #define CONTROLS_AND_COINS(_default_) \
-	PORT_BIT(  0x01, _default_, IPT_COIN1  ) \
-	PORT_BIT(  0x02, _default_, IPT_COIN2  ) \
+	PORT_BIT(  0x01, _default_, IPT_COIN1   ) \
+	PORT_BIT(  0x02, _default_, IPT_COIN2   ) \
 	PORT_BITX( 0x04, _default_, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) \
-	PORT_BIT(  0x08, _default_, IPT_COIN3  )					/* Called "service" */ \
-	PORT_BIT(  0x10, _default_, IPT_START1 )					/* Start */ \
+	PORT_BIT(  0x08, _default_, IPT_COIN3   )					/* Called "service" */ \
+	PORT_BIT(  0x10, _default_, IPT_START1  )					/* Start */ \
 /*	PORT_BIT(  0x20, _default_, IPT_BUTTON3 | IPF_TOGGLE ) */	/* Shift (we handle this with 2 buttons) */ \
 	PORT_BIT(  0x40, _default_, IPT_BUTTON2 )					/* Brake */ \
 	PORT_BIT(  0x80, _default_, IPT_UNKNOWN )					/* ? */
@@ -1049,7 +1047,7 @@ INPUT_PORTS_START( wecleman )
 	PORT_DIPSETTING(    0x10, "Normal" )		// 64
 	PORT_DIPSETTING(    0x08, "Hard" )			// 62
 	PORT_DIPSETTING(    0x00, "Hardest" )		// 60
-	PORT_DIPNAME( 0x20, 0x20, "Unknown B-5" )	// single
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown B-6" )
@@ -1221,8 +1219,9 @@ static struct GfxLayout wecleman_road_layout =
 
 static struct GfxDecodeInfo wecleman_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &wecleman_bg_layout,   0, 2048/8 }, // [0] bg + fg + txt
-	{ 1, 0x18000, &wecleman_road_layout, 0, 2048/8 }, // [1] road
+//	  REGION_GFX1 holds sprite, which are not decoded here
+	{ REGION_GFX2, 0, &wecleman_bg_layout,   0, 2048/8 }, // [0] bg + fg + txt
+	{ REGION_GFX3, 0, &wecleman_road_layout, 0, 2048/8 }, // [1] road
 	{ -1 }
 };
 
@@ -1273,9 +1272,10 @@ static struct GfxLayout hotchase_road_layout =
 
 static struct GfxDecodeInfo hotchase_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &hotchase_bg_layout,   0,        2048/16	},	// [0] bg
-	{ 1, 0x020000, &hotchase_fg_layout,   0,        2048/16	},	// [1] fg
-	{ 1, 0x030000, &hotchase_road_layout, 0x70*16,  16		},	// [2] road
+//	  REGION_GFX1 holds sprite, which are not decoded here
+	{ REGION_GFX2, 0, &hotchase_bg_layout,   0,        2048/16	},	// [0] bg
+	{ REGION_GFX3, 0, &hotchase_fg_layout,   0,        2048/16	},	// [1] fg
+	{ REGION_GFX4, 0, &hotchase_road_layout, 0x70*16,  16		},	// [2] road
 	{ -1 }
 };
 
@@ -1300,8 +1300,8 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3579545,	/* same as sound cpu */
-	{ 60 },
-	{ 0 }
+	{ 80 },
+	{ 0  }
 };
 
 
@@ -1309,8 +1309,8 @@ static struct YM2151interface ym2151_interface =
 static struct K007232_interface wecleman_k007232_interface =
 {
 	1,
-	{5},	/* but the 2 channels use different ROMs */
-	{K007232_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT)},
+	{ REGION_SOUND1 },	/* but the 2 channels use different ROMs !*/
+	{ K007232_VOL( 20,MIXER_PAN_LEFT, 20,MIXER_PAN_RIGHT ) },
 	{0}
 };
 
@@ -1318,8 +1318,8 @@ static struct K007232_interface wecleman_k007232_interface =
 
 void wecleman_init_machine(void)
 {
-	unsigned char *RAM = memory_region(wecleman_k007232_interface.bank[0]);
-	K007232_bankswitch(0,&RAM[0],&RAM[0x20000]); /* the 2 channels use different ROMs */
+	K007232_bankswitch(0,	memory_region(REGION_SOUND1), /* the 2 channels use different ROMs */
+							memory_region(REGION_SOUND2) );
 }
 
 
@@ -1328,17 +1328,15 @@ static struct MachineDriver machine_driver_wecleman =
 	{
 		{
 			CPU_M68000,
-			4000000,				/* Schems show 10MHz */
+			10000000,		/* Schems show 10MHz */
 			wecleman_readmem,wecleman_writemem,0,0,
 			wecleman_interrupt, 5 + 1,	/* in order to read the inputs once per frame */
-			0,0
 		},
 		{
 			CPU_M68000,
-			4000000,				/* Schems show 10MHz */
+			10000000,		/* Schems show 10MHz */
 			wecleman_sub_readmem,wecleman_sub_writemem,0,0,
 			ignore_interrupt,1,		/* lev 4 irq generated by main CPU */
-			0,0
 		},
 		{
 /* Schems: can be reset, no nmi, soundlatch, 3.58MHz */
@@ -1346,7 +1344,6 @@ static struct MachineDriver machine_driver_wecleman =
 			3579545,
 			wecleman_sound_readmem,wecleman_sound_writemem,0,0,
 			ignore_interrupt,1, /* irq caused by main cpu */
-			0,0
 		},
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
@@ -1388,6 +1385,16 @@ static struct MachineDriver machine_driver_wecleman =
 								Hot Chase
 ***************************************************************************/
 
+static struct K007232_interface hotchase_k007232_interface =
+{
+	3,
+	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
+	{ K007232_VOL( 33,MIXER_PAN_CENTER, 33,MIXER_PAN_CENTER ),
+	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ),
+	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ) },
+	{ 0,0,0 }
+};
+
 
 void hotchase_init_machine(void)		{						}
 int  hotchase_interrupt( void )			{return 4;				}
@@ -1401,14 +1408,12 @@ static struct MachineDriver machine_driver_hotchase =
 			10000000,		/* 10 MHz - PCB is drawn in one set's readme */
 			hotchase_readmem,hotchase_writemem,0,0,
 			hotchase_interrupt,1,
-			0,0
 		},
 		{
 			CPU_M68000,
 			10000000,		/* 10 MHz - PCB is drawn in one set's readme */
 			hotchase_sub_readmem,hotchase_sub_writemem,0,0,
 			ignore_interrupt,1,		/* lev 4 irq generated by main CPU */
-			0,0
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
@@ -1416,7 +1421,6 @@ static struct MachineDriver machine_driver_hotchase =
 			hotchase_sound_readmem,hotchase_sound_writemem,0,0,
 			hotchase_sound_interrupt,8, /* FIRQ, while IRQ is caused by main cpu */
 										/* Amuse: every 2 ms */
-			0,0
 		},
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
@@ -1450,7 +1454,7 @@ static struct MachineDriver machine_driver_hotchase =
 
 /***************************************************************************
 
-								Game driver(s)
+								ROMs Loading
 
 ***************************************************************************/
 
@@ -1462,22 +1466,21 @@ static struct MachineDriver machine_driver_hotchase =
 
 ROM_START( wecleman )
 
-	ROM_REGIONX( 0x40000, REGION_CPU1 )				/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* Main CPU Code */
 	ROM_LOAD_EVEN( "602f08.17h", 0x00000, 0x10000, 0x493b79d3 )
 	ROM_LOAD_ODD ( "602f11.23h", 0x00000, 0x10000, 0x6bb4f1fa )
 	ROM_LOAD_EVEN( "602a09.18h", 0x20000, 0x10000, 0x8a9d756f )
 	ROM_LOAD_ODD ( "602a10.22h", 0x20000, 0x10000, 0x569f5001 )
 
-	ROM_REGION_DISPOSE(0x024000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "602a31.26g", 0x000000, 0x08000, 0x01fa40dd )	// bg & fg & txt
-	ROM_LOAD( "602a30.24g", 0x008000, 0x08000, 0xbe5c4138 )
-	ROM_LOAD( "602a29.23g", 0x010000, 0x08000, 0xf1a8d33e )
-	ROM_LOAD( "602a04.11e", 0x018000, 0x08000, 0xade9f359 ) // road
-	ROM_LOAD( "602a05.13e", 0x020000, 0x04000, 0xf22b7f2b )
-//	ROM_LOAD( "602a12.1a",  0x004000, 0x00000, 0x77b9383d )	// ?
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* Sub CPU Code */
+	ROM_LOAD_EVEN( "602a06.18a", 0x00000, 0x08000, 0xe12c0d11 )
+	ROM_LOAD_ODD(  "602a07.20a", 0x00000, 0x08000, 0x47968e51 )
 
-	ROM_REGION( 0x200000 * 2 )		/* Region 2 - sprites */
-	ROM_LOAD( "602a25.12e", 0x000000, 0x20000, 0x0eacf1f9 )
+	ROM_REGION( 0x10000, REGION_CPU3 )		/* Sound CPU Code */
+	ROM_LOAD( "602a01.6d",  0x00000, 0x08000, 0xdeafe5f1 )
+
+	ROM_REGION( 0x200000 * 2, REGION_GFX1 )	/* x2, do not dispose */
+	ROM_LOAD( "602a25.12e", 0x000000, 0x20000, 0x0eacf1f9 )	// zooming sprites
 	ROM_LOAD( "602a26.14e", 0x020000, 0x20000, 0x2182edaf )
 	ROM_LOAD( "602a27.15e", 0x040000, 0x20000, 0xb22f08e9 )
 	ROM_LOAD( "602a28.17e", 0x060000, 0x20000, 0x5f6741fa )
@@ -1494,16 +1497,23 @@ ROM_START( wecleman )
 	ROM_LOAD( "602a15.9c",  0x1c0000, 0x20000, 0x0d493c9f )
 	ROM_LOAD( "602a16.10c", 0x1e0000, 0x20000, 0xb08770b3 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 3 - sub cpu code */
-	ROM_LOAD_EVEN( "602a06.18a", 0x00000, 0x08000, 0xe12c0d11 )
-	ROM_LOAD_ODD(  "602a07.20a", 0x00000, 0x08000, 0x47968e51 )
+	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "602a31.26g", 0x000000, 0x08000, 0x01fa40dd )	// layers
+	ROM_LOAD( "602a30.24g", 0x008000, 0x08000, 0xbe5c4138 )
+	ROM_LOAD( "602a29.23g", 0x010000, 0x08000, 0xf1a8d33e )
 
-	ROM_REGIONX( 0x1c000, REGION_CPU3 )		/* Region 4 - sound cpu code */
-	ROM_LOAD( "602a01.6d",  0x00000, 0x08000, 0xdeafe5f1 )
+	ROM_REGION( 0x0c000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "602a04.11e", 0x000000, 0x08000, 0xade9f359 ) // road
+	ROM_LOAD( "602a05.13e", 0x008000, 0x04000, 0xf22b7f2b )
 
-	ROM_REGION(0x40000)		/* Region 5 - sound samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* Samples (Channel A) */
 	ROM_LOAD( "602a03.10a", 0x00000, 0x20000, 0x31392b01 )
-	ROM_LOAD( "602a02.8a",  0x20000, 0x20000, 0xe2be10ae )
+
+	ROM_REGION( 0x20000, REGION_SOUND2 )	/* Samples (Channel B) */
+	ROM_LOAD( "602a02.8a",  0x00000, 0x20000, 0xe2be10ae )
+
+	ROM_REGION( 0x04000, REGION_USER1 )
+	ROM_LOAD( "602a12.1a",  0x000000, 0x04000, 0x77b9383d )	// ??
 
 ROM_END
 
@@ -1511,16 +1521,17 @@ ROM_END
 
 void wecleman_unpack_sprites(void)
 {
-	const unsigned int len = memory_region_length(2);
-	unsigned char *src = memory_region(2) + len / 2 - 1;
-	unsigned char *dst = memory_region(2) + len - 1;
+	const int region		=	REGION_GFX1;	// sprites
+
+	const unsigned int len	=	memory_region_length(region);
+	unsigned char *src		=	memory_region(region) + len / 2 - 1;
+	unsigned char *dst		=	memory_region(region) + len - 1;
 
 	while(dst > src)
 	{
 		unsigned char data = *src--;
 		if( (data&0xf0) == 0xf0 ) data &= 0x0f;
 		if( (data&0x0f) == 0x0f ) data &= 0xf0;
-		/* Note: stray lines are pens 7 & 8 */
 		*dst-- = data & 0xF;	*dst-- = data >> 4;
 	}
 }
@@ -1528,11 +1539,10 @@ void wecleman_unpack_sprites(void)
 
 
 /* Unpack sprites data and do some patching */
-void wecleman_rom_decode(void)
+void init_wecleman(void)
 {
 	unsigned char *RAM;
 	int i;
-
 
 /* Optional code patches */
 
@@ -1549,72 +1559,40 @@ void wecleman_rom_decode(void)
 
 /* Decode GFX Roms - Compensate for the address lines scrambling */
 
-	/* Bg & Fg & Txt */
-	BITSWAP(memory_region(1) + 0x00000, 3*0x8000, \
-			20,19,18,17,16,15,12,7,14,4,2,5,6,13,8,9,11,3,10,1,0);
-
-
-
-	/* Road */
-//	for (i = 0; i < 0x4000*3 ; i++)	RAM[0x218000 + i] ^= 0xFF;
-	BITSWAP(memory_region(1) + 0x18000, 3*0x4000, \
-			20,19,18,17,16,15,14,7,12,4,2,5,6,13,8,9,11,3,10,1,0);
-
-
-
 	/*	Sprites - decrypting the sprites nearly KILLED ME!
 		It's been the main cause of the delay of this driver ...
 		I hope you'll appreciate this effort!	*/
 
 	/* let's swap even and odd *pixels* of the sprites */
-	RAM = memory_region(2);
-	for (i = 0; i < 0x200000; i += 1)
+	RAM = memory_region(REGION_GFX1);
+	for (i = 0; i < memory_region_length(REGION_GFX1); i ++)
 	{
 		int x = RAM[i];
-		/* TODO: could be wrong, colors have to be fixed */
-		/* the only certain thing is that 87 must convert to f0 */
+		/* TODO: could be wrong, colors have to be fixed.       */
+		/* The only certain thing is that 87 must convert to f0 */
+		/* otherwise stray lines appear, made of pens 7 & 8     */
 		x = ((x & 0x07) << 5) | ((x & 0xf8) >> 3);
 		RAM[i] = x;
 	}
 
-	BITSWAP(memory_region(2), 0x200000, \
+	BITSWAP(memory_region(REGION_GFX1), memory_region_length(REGION_GFX1),
 			0,1,20,19,18,17,14,9,16,6,4,7,8,15,10,11,13,5,12,3,2)
-
-
 
 	/* Now we can unpack each nibble of the sprites into a pixel (one byte) */
 	wecleman_unpack_sprites();
+
+
+
+	/* Bg & Fg & Txt */
+	BITSWAP(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2),
+			20,19,18,17,16,15,12,7,14,4,2,5,6,13,8,9,11,3,10,1,0);
+
+
+
+	/* Road */
+	BITSWAP(memory_region(REGION_GFX3), memory_region_length(REGION_GFX3),
+			20,19,18,17,16,15,14,7,12,4,2,5,6,13,8,9,11,3,10,1,0);
 }
-
-
-
-
-struct GameDriver driver_wecleman =
-{
-	__FILE__,
-	0,
-	"wecleman",
-	"WEC Le Mans 24",
-	"1986",
-	"Konami",
-	"Luca Elia\n",
-	0,
-	&machine_driver_wecleman,
-	wecleman_rom_decode,
-
-	rom_wecleman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wecleman,
-
-	0, 0, 0,
-	ROT0 | GAME_WRONG_COLORS,
-
-	0,0
-};
-
 
 
 
@@ -1627,42 +1605,48 @@ struct GameDriver driver_wecleman =
 
 ROM_START( hotchase )
 
-	ROM_REGIONX( 0x40000, REGION_CPU1 )			/* Region 0 - main cpu code */
+	ROM_REGION( 0x40000, REGION_CPU1 )			/* Main Code */
 	ROM_LOAD_EVEN( "763k05", 0x000000, 0x010000, 0xf34fef0b )
 	ROM_LOAD_ODD ( "763k04", 0x000000, 0x010000, 0x60f73178 )
 	ROM_LOAD_EVEN( "763k03", 0x020000, 0x010000, 0x28e3a444 )
 	ROM_LOAD_ODD ( "763k02", 0x020000, 0x010000, 0x9510f961 )
 
-	ROM_REGION_DISPOSE(0x58000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "763e14", 0x000000, 0x020000, 0x60392aa1 )	// bg
-	ROM_LOAD( "763a13", 0x020000, 0x010000, 0x8bed8e0d )	// fg (patched)
-	ROM_LOAD( "763e15", 0x030000, 0x020000, 0x7110aa43 )	// road
-//	ROM_LOAD( "763a12", 0x050000, 0x008000, 0x05f1e553 )	// ??
+	ROM_REGION( 0x20000, REGION_CPU2 )			/* Sub Code */
+	ROM_LOAD_EVEN( "763k07", 0x000000, 0x010000, 0xae12fa90 )
+	ROM_LOAD_ODD ( "763k06", 0x000000, 0x010000, 0xb77e0c07 )
 
-	ROM_REGION( 0x300000 * 2 )	/* Region 2 - sprites */
-	ROM_LOAD( "763e17", 0x000000, 0x080000, 0x8db4e0aa )
+	ROM_REGION( 0x10000, REGION_CPU3 )			/* Sound Code */
+	ROM_LOAD( "763f01", 0x8000, 0x8000, 0x4fddd061 )
+
+	ROM_REGION( 0x300000 * 2, REGION_GFX1 )	/* x2, do not dispose */
+	ROM_LOAD( "763e17", 0x000000, 0x080000, 0x8db4e0aa )	// zooming sprites
 	ROM_LOAD( "763e20", 0x080000, 0x080000, 0xa22c6fce )
 	ROM_LOAD( "763e18", 0x100000, 0x080000, 0x50920d01 )
 	ROM_LOAD( "763e21", 0x180000, 0x080000, 0x77e0e93e )
 	ROM_LOAD( "763e19", 0x200000, 0x080000, 0xa2622e56 )
 	ROM_LOAD( "763e22", 0x280000, 0x080000, 0x967c49d1 )
 
-	ROM_REGIONX( 0x20000, REGION_CPU2 )			/* Region 3 - sub cpu code */
-	ROM_LOAD_EVEN( "763k07", 0x000000, 0x010000, 0xae12fa90 )
-	ROM_LOAD_ODD ( "763k06", 0x000000, 0x010000, 0xb77e0c07 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "763e14", 0x000000, 0x020000, 0x60392aa1 )	// bg
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )			/* Region 4 - sound cpu code */
-	ROM_LOAD( "763f01", 0x8000, 0x8000, 0x4fddd061 )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "763a13", 0x000000, 0x010000, 0x8bed8e0d )	// fg (patched)
 
-	ROM_REGION(0x40000)			/* Region 5 - sound samples */
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "763e15", 0x000000, 0x020000, 0x7110aa43 )	// road
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )		/* Samples */
 	ROM_LOAD( "763e11", 0x000000, 0x040000, 0x9d99a5a7 )	// 2 banks
 
-	ROM_REGION(0x40000)			/* Region 6 - sound samples */
+	ROM_REGION( 0x40000, REGION_SOUND2 )		/* Samples */
 	ROM_LOAD( "763e10", 0x000000, 0x040000, 0xca409210 )	// 2 banks
 
-	ROM_REGION(0x100000)		/* Region 7 - sound samples */
+	ROM_REGION( 0x100000, REGION_SOUND3 )		/* Samples */
 	ROM_LOAD( "763e08", 0x000000, 0x080000, 0x054a9a63 )	// 4 banks
 	ROM_LOAD( "763e09", 0x080000, 0x080000, 0xc39857db )	// 4 banks
+
+	ROM_REGION( 0x08000, REGION_USER1 )
+	ROM_LOAD( "763a12", 0x000000, 0x008000, 0x05f1e553 )	// ??
 
 ROM_END
 
@@ -1678,8 +1662,7 @@ void hotchase_sprite_decode( int num_banks, int bank_size )
 	unsigned char *base, *temp;
 	int i;
 
-
-	base = memory_region(2);
+	base = memory_region(REGION_GFX1);	// sprites
 	temp = malloc( bank_size );
 	if( !temp ) return;
 
@@ -1726,10 +1709,10 @@ void hotchase_sprite_decode( int num_banks, int bank_size )
 
 
 /* Unpack sprites data and do some patching */
-void hotchase_rom_decode(void)
+void init_hotchase(void)
 {
-unsigned char *RAM;
-int i;
+	unsigned char *RAM;
+	int i;
 
 /* Optional code patches */
 
@@ -1746,14 +1729,9 @@ int i;
 
 /* Decode GFX Roms */
 
-	/* Let's copy the second half of the fg layer gfx (charset) over the first */
-	RAM = memory_region(1) + 0x020000;
-	memcpy(&RAM[0], &RAM[0x10000/2], 0x10000/2);
-
-
 	/* Let's swap even and odd bytes of the sprites gfx roms */
-	RAM = memory_region(2);
-	for (i = 0; i < 0x80000*6; i += 2)
+	RAM = memory_region(REGION_GFX1);
+	for (i = 0; i < memory_region_length(REGION_GFX1); i += 2)
 	{
 		int x = RAM[i];
 		RAM[i] = RAM[i+1];
@@ -1761,33 +1739,22 @@ int i;
 	}
 
 	/* Now we can unpack each nibble of the sprites into a pixel (one byte) */
-	hotchase_sprite_decode(3,0x80000*2);
+	hotchase_sprite_decode(3,0x80000*2);	// num banks, bank len
+
+
+	/* Let's copy the second half of the fg layer gfx (charset) over the first */
+	RAM = memory_region(REGION_GFX3);
+	memcpy(&RAM[0], &RAM[0x10000/2], 0x10000/2);
+
 }
 
 
 
-struct GameDriver driver_hotchase =
-{
-	__FILE__,
-	0,
-	"hotchase",
-	"Hot Chase",
-	"1988",
-	"Konami",
-	"Luca Elia\n",
-	0,
-	&machine_driver_hotchase,
-	hotchase_rom_decode,
+/***************************************************************************
 
-	rom_hotchase,
-	0, 0,
-	0,
-	0,
+								Game driver(s)
 
-	input_ports_hotchase,
+***************************************************************************/
 
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
+GAME( 1986, wecleman, 0, wecleman, wecleman, wecleman, ROT0 | GAME_WRONG_COLORS, "Konami", "WEC Le Mans 24" )
+GAME( 1988, hotchase, 0, hotchase, hotchase, hotchase, ROT0, "Konami", "Hot Chase" )

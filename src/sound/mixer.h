@@ -38,6 +38,7 @@
 
 int mixer_sh_start(void);
 void mixer_sh_stop(void);
+void mixer_sh_update(void);
 int mixer_allocate_channel(int default_mixing_level);
 int mixer_allocate_channels(int channels,const int *default_mixing_levels);
 void mixer_set_name(int channel,const char *name);
@@ -62,6 +63,10 @@ void mixer_set_volume(int channel,int volume);
 
 void mixer_play_sample(int channel,signed char *data,int len,int freq,int loop);
 void mixer_play_sample_16(int channel,INT16 *data,int len,int freq,int loop);
+void mixer_stop_sample(int channel);
+int mixer_is_sample_playing(int channel);
+void mixer_set_sample_frequency(int channel,int freq);
+
 void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq);
 
 /* private functions for user interface only - don't call them from drivers! */

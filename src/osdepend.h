@@ -71,6 +71,15 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
+/*
+osd_skip_this_frame() must return 0 if the current frame will be displayed. This
+can be used by drivers to skip cpu intensive processing for skipped frames, so the
+function must return a consistent result throughout the current frame. The function
+MUST NOT check timers and dynamically determine whether to display the frame: such
+calculations must be done in osd_update_video_and_audio(), and they must affect the
+FOLLOWING frames, not the current one. At the end of osd_update_video_and_audio(),
+the code must already now exactly whether the next frame will be skipped or not.
+*/
 int osd_skip_this_frame(void);
 void osd_update_video_and_audio(void);
 void osd_set_gamma(float _gamma);
@@ -86,19 +95,37 @@ void osd_save_snapshot(void);
 
 ******************************************************************************/
 
-void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
-void osd_play_sample_16(int channel,INT16 *data,int len,int freq,int volume,int loop);
-void osd_play_streamed_sample_16(int channel,INT16 *data,int len,int freq,int volume,int pan);
-void osd_set_sample_freq(int channel,int freq);
-void osd_set_sample_volume(int channel,int volume);
-void osd_stop_sample(int channel);
-void osd_restart_sample(int channel);
-int osd_get_sample_status(int channel);
-void osd_opl_control(int chip,int reg);
-void osd_opl_write(int chip,int data);
+/*
+  osd_start_audio_stream() is called at the start of the emulation to initialize
+  the output stream, the osd_update_audio_stream() is called every frame to
+  feed new data. osd_stop_audio_stream() is called when the emulation is stopped.
+
+  The sample rate is fixed at Machine->sample_rate. Samples are 16-bit, signed.
+
+  When the stream is stereo, left and right samples are alternated in the
+  stream.
+
+  osd_start_audio_stream() and osd_stop_audio_stream() must return the number of
+  samples (or couples of samples, when using stereo) required for next frame.
+  This will be around Machine->sample_rate / Machine->drv->frames_per_second,
+  the code may adjust it at will to keep timing accurate and to maintain audio
+  and video in sync when using vsync.
+ */
+int osd_start_audio_stream(int stereo);
+int osd_update_audio_stream(INT16 *buffer);
+void osd_stop_audio_stream(void);
+
+/*
+  control master volume, attenuation is the attenuation in dB (a negative
+  number).
+ */
 void osd_set_mastervolume(int attenuation);
 int osd_get_mastervolume(void);
 void osd_sound_enable(int enable);
+
+/* direct access to the Sound Blaster OPL chip */
+void osd_opl_control(int chip,int reg);
+void osd_opl_write(int chip,int data);
 
 
 /******************************************************************************
@@ -267,12 +294,6 @@ void osd_pause(int paused);
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);
 
-/* config */
-void osd_set_config(int def_samplerate, int def_samplebits);
-void osd_save_config(int frameskip, int samplerate, int samplebits);
-int osd_get_config_samplerate(int def_samplerate);
-int osd_get_config_samplebits(int def_samplebits);
-int osd_get_config_frameskip(int def_frameskip);
 
 
 #ifdef MAME_NET

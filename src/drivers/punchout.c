@@ -852,25 +852,25 @@ MACHINE_DRIVER( armwrest, armwrest, 256*4+64*8+64*8+128*4 )
 ***************************************************************************/
 
 ROM_START( punchout )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chp1-c.8l",    0x0000, 0x2000, 0xa4003adc )
 	ROM_LOAD( "chp1-c.8k",    0x2000, 0x2000, 0x745ecf40 )
 	ROM_LOAD( "chp1-c.8j",    0x4000, 0x2000, 0x7a7f870e )
 	ROM_LOAD( "chp1-c.8h",    0x6000, 0x2000, 0x5d8123d7 )
 	ROM_LOAD( "chp1-c.8f",    0x8000, 0x4000, 0xc8a55ddb )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-b.4c",    0x00000, 0x2000, 0xe26dc8b3 )	/* chars #1 */
 	ROM_LOAD( "chp1-b.4d",    0x02000, 0x2000, 0xdd1310ca )
 
-	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-b.4a",    0x00000, 0x2000, 0x20fb4829 )	/* chars #2 */
 	ROM_LOAD( "chp1-b.4b",    0x02000, 0x2000, 0xedc34594 )
 
-	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-v.2r",    0x00000, 0x4000, 0xbd1d4b2e )	/* chars #3 */
 	ROM_LOAD( "chp1-v.2t",    0x04000, 0x4000, 0xdd9a688a )
 	ROM_LOAD( "chp1-v.2u",    0x08000, 0x2000, 0xda6a3c4b )
@@ -889,7 +889,7 @@ ROM_START( punchout )
 	/* 2a000-2bfff empty (space for 16k ROM) */
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGIONX( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-v.6p",    0x00000, 0x2000, 0x16588f7a )	/* chars #4 */
 	ROM_LOAD( "chp1-v.6n",    0x02000, 0x2000, 0xdc743674 )
 	/* 04000-07fff empty (space for 6l and 6k) */
@@ -897,7 +897,7 @@ ROM_START( punchout )
 	ROM_LOAD( "chp1-v.8n",    0x0a000, 0x2000, 0xe6af390e )
 	/* 0c000-0ffff empty (space for 8l and 8k) */
 
-	ROM_REGIONX( 0x0d00, REGION_PROMS )
+	ROM_REGION( 0x0d00, REGION_PROMS )
 	ROM_LOAD( "chp1-b.6e",    0x0000, 0x0200, 0xe9ca3ac6 )	/* red component */
 	ROM_LOAD( "chp1-b.7e",    0x0200, 0x0200, 0x47adf7a2 )	/* red component */
 	ROM_LOAD( "chp1-b.6f",    0x0400, 0x0200, 0x02be56ab )	/* green component */
@@ -906,22 +906,22 @@ ROM_START( punchout )
 	ROM_LOAD( "chp1-b.8f",    0x0a00, 0x0200, 0x1ffd894a )	/* blue component */
 	ROM_LOAD( "chp1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGIONX( 0x4000, REGION_SOUND1 )	/* 16k for the VLM5030 data */
+	ROM_REGION( 0x4000, REGION_SOUND1 )	/* 16k for the VLM5030 data */
 	ROM_LOAD( "chp1-c.6p",    0x0000, 0x4000, 0xea0bbb31 )
 ROM_END
 
 ROM_START( spnchout )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chs1-c.8l",    0x0000, 0x2000, 0x703b9780 )
 	ROM_LOAD( "chs1-c.8k",    0x2000, 0x2000, 0xe13719f6 )
 	ROM_LOAD( "chs1-c.8j",    0x4000, 0x2000, 0x1fa629e8 )
 	ROM_LOAD( "chs1-c.8h",    0x6000, 0x2000, 0x15a6c068 )
 	ROM_LOAD( "chs1-c.8f",    0x8000, 0x4000, 0x4ff3cdd9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chs1-b.4c",    0x00000, 0x0800, 0x9f2ede2d )	/* chars #1 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -931,7 +931,7 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x02800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-b.4a",    0x00000, 0x0800, 0xc075f831 )	/* chars #2 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -941,7 +941,7 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x02800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
 
-	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chs1-v.2r",    0x00000, 0x4000, 0xff33405d )	/* chars #3 */
 	ROM_LOAD( "chs1-v.2t",    0x04000, 0x4000, 0xf507818b )
 	ROM_LOAD( "chs1-v.2u",    0x08000, 0x4000, 0x0995fc95 )
@@ -957,7 +957,7 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-v.4u",    0x28000, 0x4000, 0x74e0d956 )
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGIONX( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-v.6p",    0x00000, 0x0800, 0x75be7aae )	/* chars #4 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -977,7 +977,7 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x0b800, 0x0800 )
 	/* 0c000-0ffff empty (space for 8l and 8k) */
 
-	ROM_REGIONX( 0x0d00, REGION_PROMS )
+	ROM_REGION( 0x0d00, REGION_PROMS )
 	ROM_LOAD( "chs1-b.6e",    0x0000, 0x0200, 0x0ad4d727 )	/* red component */
 	ROM_LOAD( "chs1-b.7e",    0x0200, 0x0200, 0x9e170f64 )	/* red component */
 	ROM_LOAD( "chs1-b.6f",    0x0400, 0x0200, 0x86f5cfdb )	/* green component */
@@ -986,31 +986,31 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-b.8f",    0x0a00, 0x0200, 0x1663eed7 )	/* blue component */
 	ROM_LOAD( "chs1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
 	ROM_LOAD( "chs1-c.6p",    0x0000, 0x4000, 0xad8b64b8 )
 ROM_END
 
 ROM_START( armwrest )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chv1-c.8l",    0x0000, 0x2000, 0xb09764c1 )
 	ROM_LOAD( "chv1-c.8k",    0x2000, 0x2000, 0x0e147ff7 )
 	ROM_LOAD( "chv1-c.8j",    0x4000, 0x2000, 0xe7365289 )
 	ROM_LOAD( "chv1-c.8h",    0x6000, 0x2000, 0xa2118eec )
 	ROM_LOAD( "chpv-c.8f",    0x8000, 0x4000, 0x664a07c4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )	/* same as Punch Out */
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chpv-b.2e",    0x00000, 0x4000, 0x8b45f365 )	/* chars #1 */
 	ROM_LOAD( "chpv-b.2d",    0x04000, 0x4000, 0xb1a2850c )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chpv-b.2m",    0x00000, 0x4000, 0x19245b37 )	/* chars #2 */
 	ROM_LOAD( "chpv-b.2l",    0x04000, 0x4000, 0x46797941 )
 	ROM_LOAD( "chpv-b.2k",    0x08000, 0x4000, 0x24c4c26d )
 
-	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chv1-v.2r",    0x00000, 0x4000, 0xd86056d9 )	/* chars #3 */
 	ROM_LOAD( "chv1-v.2t",    0x04000, 0x4000, 0x5ad77059 )
 	/* 08000-0bfff empty */
@@ -1024,7 +1024,7 @@ ROM_START( armwrest )
 	/* 28000-2bfff empty */
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGIONX( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chv1-v.6p",    0x00000, 0x2000, 0xd834e142 )	/* chars #4 */
 	/* 02000-03fff empty (space for 16k ROM) */
 	/* 04000-07fff empty (space for 6l and 6k) */
@@ -1032,7 +1032,7 @@ ROM_START( armwrest )
 	/* 0a000-0bfff empty (space for 16k ROM) */
 	/* 0c000-0ffff empty (space for 8l and 8k) */
 
-	ROM_REGIONX( 0x0e00, REGION_PROMS )
+	ROM_REGION( 0x0e00, REGION_PROMS )
 	ROM_LOAD( "chpv-b.7b",    0x0000, 0x0200, 0xdf6fdeb3 )	/* red component */
 	ROM_LOAD( "chpv-b.4b",    0x0200, 0x0200, 0x9d51416e )	/* red component */
 	ROM_LOAD( "chpv-b.7c",    0x0400, 0x0200, 0xb1da5f42 )	/* green component */
@@ -1042,7 +1042,7 @@ ROM_START( armwrest )
 	ROM_LOAD( "chv1-b.3c",    0x0c00, 0x0100, 0xc3f92ea2 )	/* priority encoder - not used */
 	ROM_LOAD( "chpv-v.2d",    0x0d00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
 	ROM_LOAD( "chv1-c.6p",    0x0000, 0x4000, 0x31b52896 )
 ROM_END
 

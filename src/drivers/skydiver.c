@@ -370,17 +370,17 @@ static struct MachineDriver machine_driver_skydiver =
 ***************************************************************************/
 
 ROM_START( skydiver )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "33167-02.f1", 0x2800, 0x0800, 0x25a5c976 )
 	ROM_LOAD( "33164-02.e1", 0x3000, 0x0800, 0xa348ac39 )
 	ROM_LOAD( "33165-02.d1", 0x3800, 0x0800, 0xa1fc5504 )
 	ROM_LOAD( "33166-02.c1", 0x7800, 0x0800, 0x3d26da2b )
 	ROM_RELOAD(              0xF800, 0x0800 )
 
-	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "33163-01.h5", 0x0000, 0x0400, 0x5b9bb7c2 )
 
-	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "33176-01.l5", 0x0000, 0x0400, 0x6b082a01 )
 	ROM_LOAD( "33177-01.k5", 0x0400, 0x0400, 0xf5541af0 )
 ROM_END

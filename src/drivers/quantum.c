@@ -207,7 +207,7 @@ static struct MachineDriver machine_driver_quantum =
 ***************************************************************************/
 
 ROM_START( quantum )
-	ROM_REGIONX( 0x014000, REGION_CPU1 )
+	ROM_REGION( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "136016.201",   0x000000, 0x002000, 0x7e7be63a )
     ROM_LOAD_ODD ( "136016.206",   0x000000, 0x002000, 0x2d8f5759 )
     ROM_LOAD_EVEN( "136016.102",   0x004000, 0x002000, 0x408d34f4 )
@@ -221,7 +221,7 @@ ROM_START( quantum )
 ROM_END
 
 ROM_START( quantum1 )
-	ROM_REGIONX( 0x014000, REGION_CPU1 )
+	ROM_REGION( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "136016.101",   0x000000, 0x002000, 0x5af0bd5b )
     ROM_LOAD_ODD ( "136016.106",   0x000000, 0x002000, 0xf9724666 )
     ROM_LOAD_EVEN( "136016.102",   0x004000, 0x002000, 0x408d34f4 )
@@ -235,7 +235,7 @@ ROM_START( quantum1 )
 ROM_END
 
 ROM_START( quantump )
-	ROM_REGIONX( 0x014000, REGION_CPU1 )
+	ROM_REGION( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "quantump.2e",  0x000000, 0x002000, 0x176d73d3 )
     ROM_LOAD_ODD ( "quantump.3e",  0x000000, 0x002000, 0x12fc631f )
     ROM_LOAD_EVEN( "quantump.2f",  0x004000, 0x002000, 0xb64fab48 )

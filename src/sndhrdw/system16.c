@@ -51,7 +51,7 @@ int sys16_7751_audio_8255_r( int offset )
 /* read from BUS */
 int sys16_7751_sh_rom_r(int offset)
 {
-	unsigned char *sound_rom = memory_region(5);
+	unsigned char *sound_rom = memory_region(REGION_SOUND1);
 
 	return sound_rom[rom_offset+rom_base];
 }

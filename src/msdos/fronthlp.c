@@ -10,6 +10,9 @@
 #include <dirent.h>
 #include <unzip.h>
 
+#ifdef MESS
+#include "mess/msdos.h"
+#endif
 
 int silentident,knownstatus;
 
@@ -422,15 +425,28 @@ int frontend_help (int argc, char **argv)
         #ifdef MESS
 		case LIST_MESSINFO: /* all mess specific calls here */
 		{
-			/* send argv and argc to mess.c */
-			list_mess_info(argc,  argv);
+			for (i=1;i<argc;i++)
+			{
+				/* list all mess info options here */
+				if (
+					!stricmp(argv[i],"-listextensions")
+				   )
+			 	{
+					/* send the gamename and arg to mess.c */
+					list_mess_info(gamename, argv[i]);
+				}
+			}
 			return 0;
 			break;
 		}
 		#endif
 
 		case LIST_LIST: /* simple games list */
+			#ifndef MESS
 			printf("\nMAME currently supports the following games:\n\n");
+			#else
+			printf("\nMESS currently supports the following systems:\n\n");
+			#endif
 			i = 0; j = 0;
 			while (drivers[i])
 			{
@@ -448,8 +464,12 @@ int frontend_help (int argc, char **argv)
 			if (j % 8) printf("\n");
 			printf("\n");
 			if (j != i) printf("Total ROM sets displayed: %4d - ", j);
+			#ifndef MESS
 			printf("Total ROM sets supported: %4d\n", i);
-			return 0;
+			#else
+			printf("Total Systems supported: %4d\n", i);
+			#endif
+            return 0;
 			break;
 
 		case LIST_LISTFULL: /* games list with descriptions */

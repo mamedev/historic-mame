@@ -1,8 +1,8 @@
 /***************************************************************************
 
-TODO:
-- player 2 button 2 doesn't work
-- scroll offsets in cocktail mode are wrong
+Xevious
+
+driver by Mirko Buffoni
 
 
 general map
@@ -612,11 +612,11 @@ static struct GfxLayout spritelayout3 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 128*4+64*8,  64 },
-	{ 1, 0x1000, &bgcharlayout,        0, 128 },
-	{ 1, 0x3000, &spritelayout1,   128*4,  64 },
-	{ 1, 0x5000, &spritelayout2,   128*4,  64 },
-	{ 1, 0x9000, &spritelayout3,   128*4,  64 },
+	{ REGION_GFX1, 0x0000, &charlayout, 128*4+64*8,  64 },
+	{ REGION_GFX2, 0x0000, &bgcharlayout,        0, 128 },
+	{ REGION_GFX3, 0x0000, &spritelayout1,   128*4,  64 },
+	{ REGION_GFX3, 0x2000, &spritelayout2,   128*4,  64 },
+	{ REGION_GFX3, 0x6000, &spritelayout3,   128*4,  64 },
 	{ -1 } /* end of array */
 };
 
@@ -647,7 +647,7 @@ struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_xevious =
 {
 	/* basic machine hardware */
 	{
@@ -710,23 +710,39 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( xevious )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "xvi_1.3p",     0x0000, 0x1000, 0x09964dda )
 	ROM_LOAD( "xvi_2.3m",     0x1000, 0x1000, 0x60ecce84 )
 	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
 	ROM_LOAD( "xvi_4.2l",     0x3000, 0x1000, 0xc7d4bbf0 )
 
-	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
+	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xvi_18.4r",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_13.3c",    0x0000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x1000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x2000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGIONX( 0x0b00, REGION_PROMS )
+	ROM_REGION( 0x4000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
+
+	ROM_REGION( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -735,39 +751,42 @@ ROM_START( xevious )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
-	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
-
-	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
-	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
-
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( xeviousa )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "xea-1m-a.bin", 0x0000, 0x2000, 0x8c2b50ec )
 	ROM_LOAD( "xea-1l-a.bin", 0x2000, 0x2000, 0x0821642b )
 
-	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x14d8fa03 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xvi_18.4r",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_13.3c",    0x0000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x1000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x2000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGIONX( 0x0b00, REGION_PROMS )
+	ROM_REGION( 0x4000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
+
+	ROM_REGION( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -776,40 +795,45 @@ ROM_START( xeviousa )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x14d8fa03 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
-
-	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
-	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
-
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( xevios )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "4.7h",         0x0000, 0x1000, 0x1f8ca4c0 )
 	ROM_LOAD( "5.6h",         0x1000, 0x1000, 0x2e47ce8f )
 	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
 	ROM_LOAD( "7.4h",         0x3000, 0x1000, 0x7033f2e3 )
 
-	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
+	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "16.8d",        0x5000, 0x2000, 0x44262c04 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_13.3c",    0x0000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x1000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "16.8d",        0x2000, 0x2000, 0x44262c04 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGIONX( 0x0b00, REGION_PROMS )
+	ROM_REGION( 0x4000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "10.1d",        0x0000, 0x1000, 0x10baeebb )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "12.3d",        0x3000, 0x1000, 0x51a4e83b )
+
+	ROM_REGION( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -818,23 +842,11 @@ ROM_START( xevios )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
-	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
-
-	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "10.1d",        0x0000, 0x1000, 0x10baeebb )
-	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "12.3d",        0x3000, 0x1000, 0x51a4e83b )
-
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
-	ROM_REGION(0x3000)
+	ROM_REGION( 0x3000, REGION_USER1 )
 	/* extra ROMs (function unknown, could be emulation of the custom I/O */
 	/* chip with a Z80): */
 	ROM_LOAD( "1.16j",        0x0000, 0x1000, 0x2618f0ce )
@@ -842,23 +854,39 @@ ROM_START( xevios )
 ROM_END
 
 ROM_START( sxevious )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "cpu_3p.rom",   0x0000, 0x1000, 0x1c8d27d5 )
 	ROM_LOAD( "cpu_3m.rom",   0x1000, 0x1000, 0xfd04e615 )
 	ROM_LOAD( "cpu_2m.rom",   0x2000, 0x1000, 0x294d5404 )
 	ROM_LOAD( "cpu_2l.rom",   0x3000, 0x1000, 0x6a44bf92 )
 
-	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "cpu_3f.rom",   0x0000, 0x1000, 0xd4bd3d81 )
+	ROM_LOAD( "cpu_3j.rom",   0x1000, 0x1000, 0xaf06be5f )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xvi_18.4r",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_13.3c",    0x0000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x1000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x2000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGIONX( 0x0b00, REGION_PROMS )
+	ROM_REGION( 0x4000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
+
+	ROM_REGION( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -867,35 +895,23 @@ ROM_START( sxevious )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "cpu_3f.rom",   0x0000, 0x1000, 0xd4bd3d81 )
-	ROM_LOAD( "cpu_3j.rom",   0x1000, 0x1000, 0xaf06be5f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
-
-	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
-	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
-
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
 
-static void xevios_decode(void)
+static void init_xevios(void)
 {
 	int A,i;
 
 
 	/* convert one of the sprite ROMs to the format used by Xevious */
-	for (A = 0x5000;A < 0x7000;A++)
+	for (A = 0x2000;A < 0x4000;A++)
 	{
 		int bit[8];
-		unsigned char *RAM = memory_region(1);
+		unsigned char *RAM = memory_region(REGION_GFX3);
 
 		/* 76543210 -> 13570246 bit rotation */
 		for (i = 0;i < 8;i++)
@@ -916,7 +932,7 @@ static void xevios_decode(void)
 	for (A = 0x0000;A < 0x1000;A++)
 	{
 		int bit[8];
-		unsigned char *RAM = memory_region(5);
+		unsigned char *RAM = memory_region(REGION_GFX4);
 
 		/* 76543210 -> 37512640 bit rotation */
 		for (i = 0;i < 8;i++)
@@ -936,102 +952,7 @@ static void xevios_decode(void)
 
 
 
-struct GameDriver driver_xevious =
-{
-	__FILE__,
-	0,
-	"xevious",
-	"Xevious (Namco)",
-	"1982",
-	"Namco",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_xevious,
-	0, 0,
-	0,
-	0,
-
-	input_ports_xevious,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_xeviousa =
-{
-	__FILE__,
-	&driver_xevious,
-	"xeviousa",
-	"Xevious (Atari)",
-	"1982",
-	"Namco (Atari license)",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_xeviousa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_xeviousa,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_xevios =
-{
-	__FILE__,
-	&driver_xevious,
-	"xevios",
-	"Xevios",
-	"1983",
-	"bootleg",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
-	0,
-	&machine_driver,
-	xevios_decode,
-
-	rom_xevios,
-	0, 0,
-	0,
-	0,
-
-	input_ports_xevious,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_sxevious =
-{
-	__FILE__,
-	&driver_xevious,
-	"sxevious",
-	"Super Xevious",
-	"1984",
-	"Namco",
-	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sxevious,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sxevious,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1982, xevious,  0,       xevious, xevious,  0,      ROT90, "Namco", "Xevious (Namco)" )
+GAME( 1982, xeviousa, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari)" )
+GAME( 1983, xevios,   xevious, xevious, xevious,  xevios, ROT90, "bootleg", "Xevios" )
+GAME( 1984, sxevious, xevious, xevious, sxevious, 0,      ROT90, "Namco", "Super Xevious" )

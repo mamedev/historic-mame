@@ -279,7 +279,7 @@ int pow_vh_start(void)
 	/* Tilemaps are different between games */
 	if (!strcmp(Machine->gamedrv->name,"pow")
 		 || !strcmp(Machine->gamedrv->name,"powj")
-		 || !strcmp(Machine->gamedrv->name,"streets2"))
+		 || !strcmp(Machine->gamedrv->name,"streetsm"))
 		fix_tilemap=tilemap_create(
 			get_pow_tile_info,
 			TILEMAP_TRANSPARENT,

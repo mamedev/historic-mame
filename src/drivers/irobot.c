@@ -120,17 +120,17 @@ static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x07ff, MRA_RAM },
     { 0x0800, 0x0fff, MRA_BANK2 },
-    { 0x1200, 0x12FF, MRA_RAM },
-    { 0x1300, 0x13FF, irobot_control_r },
-    { 0x1400, 0x143f, quad_pokey_r },       /* Quad Pokey read  */
-    { 0x1C00, 0x1fff, MRA_RAM },
-    { 0x1000, 0x103f, input_port_0_r }, /* INRD1 */
-    { 0x1040, 0x1040, input_port_1_r }, /* INRD2 */
-    { 0x1080, 0x1080, irobot_status_r }, /* STATRD */
-    { 0x10C0, 0x10c0, input_port_3_r }, /* INRD3 */
+    { 0x1000, 0x103f, input_port_0_r },
+    { 0x1040, 0x1040, input_port_1_r },
+    { 0x1080, 0x1080, irobot_status_r },
+    { 0x10c0, 0x10c0, input_port_3_r },
+    { 0x1200, 0x12ff, MRA_RAM },
+    { 0x1300, 0x13ff, irobot_control_r },
+    { 0x1400, 0x143f, quad_pokey_r },
+    { 0x1c00, 0x1fff, MRA_RAM },
     { 0x2000, 0x3fff, irobot_sharedmem_r },
-    { 0x4000, 0x5FFF, MRA_BANK1 },
-    { 0x6000, 0xFFFF, MRA_ROM },
+    { 0x4000, 0x5fff, MRA_BANK1 },
+    { 0x6000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -141,14 +141,14 @@ static struct MemoryWriteAddress writemem[] =
     { 0x1100, 0x1100, irobot_clearirq },
     { 0x1140, 0x1140, irobot_statwr_w },
     { 0x1180, 0x1180, irobot_out0_w },
-    { 0x11C0, 0x11C0, irobot_rom_banksel },
-    { 0x1200, 0x12FF, irobot_nvram_w, &nvram, &nvram_size },
-    { 0x1400, 0x143f, quad_pokey_w },       /* Quad Pokey write  */
-    { 0x1800, 0x18FF, irobot_paletteram_w },
-    { 0x1900, 0x19FF, MWA_RAM },            /* Watchdog reset */
-    { 0x1A00, 0x1A00, irobot_clearfirq },
-    { 0x1B00, 0x1BFF, irobot_control_w },
-    { 0x1C00, 0x1FFF, MWA_RAM, &videoram, &videoram_size },
+    { 0x11c0, 0x11c0, irobot_rom_banksel },
+    { 0x1200, 0x12ff, irobot_nvram_w, &nvram, &nvram_size },
+    { 0x1400, 0x143f, quad_pokey_w },
+    { 0x1800, 0x18ff, irobot_paletteram_w },
+    { 0x1900, 0x19ff, MWA_RAM },            /* Watchdog reset */
+    { 0x1a00, 0x1a00, irobot_clearfirq },
+    { 0x1b00, 0x1bff, irobot_control_w },
+    { 0x1c00, 0x1fff, MWA_RAM, &videoram, &videoram_size },
     { 0x2000, 0x3fff, irobot_sharedmem_w},
     { 0x4000, 0xffff, MWA_ROM },
     { -1 }  /* end of table */
@@ -256,16 +256,9 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { REGION_GFX1, 0x0000, &charlayout,     64, 16 },
+    { REGION_GFX1, 0, &charlayout, 64, 16 },
 	{ -1 }
 };
-/*
-unsigned char irobot_color_prom[] =
-{
-	0x00, 0x00, 0x00, 0x00, 0xF3, 0x33, 0x0F, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0xF3, 0x33, 0x0F, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-*/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -336,40 +329,40 @@ static struct MachineDriver machine_driver_irobot =
 ***************************************************************************/
 
 ROM_START( irobot )
-	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* 64k for code + 48K Banked ROM*/
-	ROM_LOAD( "136029.208",   0x6000, 0x2000, 0xb4d0be59 )
-	ROM_LOAD( "136029.209",   0x8000, 0x4000, 0xf6be3cd0 )
-	ROM_LOAD( "136029.210",   0xC000, 0x4000, 0xc0eb2133 )
-	ROM_LOAD( "136029.405",   0x10000, 0x4000, 0x9163efe4 )
-	ROM_LOAD( "136029.206",   0x14000, 0x4000, 0xe114a526 )
-	ROM_LOAD( "136029.207",   0x18000, 0x4000, 0xb4556cb0 )
+	ROM_REGION( 0x20000, REGION_CPU1 ) /* 64k for code + 48K Banked ROM*/
+	ROM_LOAD( "136029.208",     0x06000, 0x2000, 0xb4d0be59 )
+	ROM_LOAD( "136029.209",     0x08000, 0x4000, 0xf6be3cd0 )
+	ROM_LOAD( "136029.210",     0x0c000, 0x4000, 0xc0eb2133 )
+	ROM_LOAD( "136029.405",     0x10000, 0x4000, 0x9163efe4 )
+	ROM_LOAD( "136029.206",     0x14000, 0x4000, 0xe114a526 )
+	ROM_LOAD( "136029.207",     0x18000, 0x4000, 0xb4556cb0 )
 
-	ROM_REGIONX( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE)
-	ROM_LOAD( "136029.124",   0x0000, 0x800, 0x848948b6 )
+	ROM_REGION( 0x14000, REGION_CPU2 )  /* mathbox region */
+	ROM_LOAD_ODD ( "ir103.bin", 0x0000,  0x2000, 0x0c83296d )	/* ROM data from 0000-bfff */
+	ROM_LOAD_EVEN( "ir104.bin", 0x0000,  0x2000, 0x0a6cdcca )
+	ROM_LOAD_ODD ( "ir101.bin", 0x4000,  0x4000, 0x62a38c08 )
+	ROM_LOAD_EVEN( "ir102.bin", 0x4000,  0x4000, 0x9d588f22 )
+	ROM_LOAD( "ir111.bin",      0xc000,  0x0400, 0x9fbc9bf3 )	/* program ROMs from c000-f3ff */
+	ROM_LOAD( "ir112.bin",      0xc400,  0x0400, 0xb2713214 )
+	ROM_LOAD( "ir113.bin",      0xc800,  0x0400, 0x7875930a )
+	ROM_LOAD( "ir114.bin",      0xcc00,  0x0400, 0x51d29666 )
+	ROM_LOAD( "ir115.bin",      0xd000,  0x0400, 0x00f9b304 )
+	ROM_LOAD( "ir116.bin",      0xd400,  0x0400, 0x326aba54 )
+	ROM_LOAD( "ir117.bin",      0xd800,  0x0400, 0x98efe8d0 )
+	ROM_LOAD( "ir118.bin",      0xdc00,  0x0400, 0x4a6aa7f9 )
+	ROM_LOAD( "ir119.bin",      0xe000,  0x0400, 0xa5a13ad8 )
+	ROM_LOAD( "ir120.bin",      0xe400,  0x0400, 0x2a083465 )
+	ROM_LOAD( "ir121.bin",      0xe800,  0x0400, 0xadebcb99 )
+	ROM_LOAD( "ir122.bin",      0xec00,  0x0400, 0xda7b6f79 )
+	ROM_LOAD( "ir123.bin",      0xf000,  0x0400, 0x39fff18f )
+	/* RAM data from 10000-11fff */
+	/* COMRAM from   12000-13fff */
 
-	ROM_REGION( 0x14000 )  /* mathbox region */
-	ROM_LOAD_ODD ( "ir103.bin",    0x0000, 0x2000, 0x0c83296d )	/* ROM data from 0000-BFFF */
-	ROM_LOAD_EVEN( "ir104.bin",    0x0000, 0x2000, 0x0a6cdcca )
-	ROM_LOAD_ODD ( "ir101.bin",    0x4000, 0x4000, 0x62a38c08 )
-	ROM_LOAD_EVEN( "ir102.bin",    0x4000, 0x4000, 0x9d588f22 )
-	ROM_LOAD( "ir111.bin",    0xC000, 0x400, 0x9fbc9bf3 )		/* program ROMs from C000-F3FF */
-	ROM_LOAD( "ir112.bin",    0xC400, 0x400, 0xb2713214 )
-	ROM_LOAD( "ir113.bin",    0xC800, 0x400, 0x7875930a )
-	ROM_LOAD( "ir114.bin",    0xCC00, 0x400, 0x51d29666 )
-	ROM_LOAD( "ir115.bin",    0xD000, 0x400, 0x00f9b304 )
-	ROM_LOAD( "ir116.bin",    0xD400, 0x400, 0x326aba54 )
-	ROM_LOAD( "ir117.bin",    0xD800, 0x400, 0x98efe8d0 )
-	ROM_LOAD( "ir118.bin",    0xDC00, 0x400, 0x4a6aa7f9 )
-	ROM_LOAD( "ir119.bin",    0xE000, 0x400, 0xa5a13ad8 )
-	ROM_LOAD( "ir120.bin",    0xE400, 0x400, 0x2a083465 )
-	ROM_LOAD( "ir121.bin",    0xE800, 0x400, 0xadebcb99 )
-	ROM_LOAD( "ir122.bin",    0xEC00, 0x400, 0xda7b6f79 )
-	ROM_LOAD( "ir123.bin",    0xF000, 0x400, 0x39fff18f )
-	/* RAM data from 10000-11FFF */
-	/* COMRAM from   12000-13FFF */
+	ROM_REGION( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE)
+	ROM_LOAD( "136029.124",     0x0000,  0x0800, 0x848948b6 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
-	ROM_LOAD( "ir125.bin",    0x0000, 0x0020, 0x446335ba )
+	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_LOAD( "ir125.bin",      0x0000,  0x0020, 0x446335ba )
 ROM_END
 
 	/*  Colorprom from John's driver. ? */

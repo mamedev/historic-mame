@@ -353,67 +353,67 @@ static struct MachineDriver machine_driver_rallyx =
 ***************************************************************************/
 
 ROM_START( rallyx )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "rallyxn.1e",   0x1000, 0x1000, 0xed1eba2b )
 	ROM_LOAD( "rallyxn.1h",   0x2000, 0x1000, 0x4f98dd1c )
 	ROM_LOAD( "rallyxn.1k",   0x3000, 0x1000, 0x9aacccf0 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 
-	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )	/* dots */
 
-	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound proms */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( rallyxm )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "1e",           0x1000, 0x1000, 0x786585ec )
 	ROM_LOAD( "1h",           0x2000, 0x1000, 0x110d7dcd )
 	ROM_LOAD( "1k",           0x3000, 0x1000, 0x473ab447 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 
-	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )	/* dots */
 
-	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound proms */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( nrallyx )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "nrallyx.1b",   0x0000, 0x1000, 0x9404c8d6 )
 	ROM_LOAD( "nrallyx.1e",   0x1000, 0x1000, 0xac01bf3f )
 	ROM_LOAD( "nrallyx.1h",   0x2000, 0x1000, 0xaeba29b5 )
 	ROM_LOAD( "nrallyx.1k",   0x3000, 0x1000, 0x78f17da7 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, 0xca7a174a )
 
-	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, BADCRC( 0x3c16f62c ) )	/* dots */
 
-	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_REGION( 0x0120, REGION_PROMS )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
 	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
 
-	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound proms */
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound proms */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
 	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END

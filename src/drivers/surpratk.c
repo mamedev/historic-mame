@@ -286,16 +286,16 @@ static struct MachineDriver machine_driver_surpratk =
 ***************************************************************************/
 
 ROM_START( surpratk )
-	ROM_REGIONX( 0x51000, REGION_CPU1 ) /* code + banked roms + palette RAM */
+	ROM_REGION( 0x51000, REGION_CPU1 ) /* code + banked roms + palette RAM */
 	ROM_LOAD( "911m01.bin", 0x10000, 0x20000, 0xee5b2cc8 )
 	ROM_LOAD( "911m02.bin", 0x30000, 0x18000, 0x5d4148a8 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "911d05.bin", 0x000000, 0x040000, 0x308d2319 ) /* characters */
 	ROM_LOAD( "911d06.bin", 0x040000, 0x040000, 0x91cc9b32 ) /* characters */
 
-	ROM_REGIONX( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "911d03.bin", 0x000000, 0x040000, 0xe34ff182 )	/* sprites */
 	ROM_LOAD( "911d04.bin", 0x040000, 0x040000, 0x20700bd2 )	/* sprites */
 ROM_END

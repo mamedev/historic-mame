@@ -24,6 +24,8 @@ static struct osd_bitmap *scroll_panel_bitmap;
 
 #define SCROLL_PANEL_WIDTH  (14*4)
 
+#define RADAR_PALETTE_BASE (256+16)
+
 static struct rectangle panelvisiblearea =
 {
 	26*8, 32*8-1,
@@ -88,11 +90,10 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		COLOR(0,i) = i;
 		color_prom++;
 	}
 
-	color_prom += TOTAL_COLORS(0);
+	color_prom += 256;
 	/* color_prom now points to the beginning of the sprite palette */
 
 
@@ -132,7 +133,7 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	/* color_prom now points to the beginning of the radar palette */
 
 
-	/* radar palette and lookup table */
+	/* radar palette */
 	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2;
@@ -154,7 +155,6 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		COLOR(2,i) = 256 + 16 + i;
 		color_prom++;
 	}
 }
@@ -238,7 +238,7 @@ void yard_scroll_panel_w(int offset,int data)
 		col = (data >> i) & 0x11;
 		col = ((col >> 3) | col) & 3;
 
-		plot_pixel(scroll_panel_bitmap, sx + i, sy, Machine->gfx[2]->colortable[(sy & 0xfc) + col]);
+		plot_pixel(scroll_panel_bitmap, sx + i, sy, Machine->pens[RADAR_PALETTE_BASE + (sy & 0xfc) + col]);
 	}
 }
 

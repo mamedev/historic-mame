@@ -304,24 +304,24 @@ static struct MachineDriver machine_driver_sonson =
 ***************************************************************************/
 
 ROM_START( sonson )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "ss.01e",       0x4000, 0x4000, 0xcd40cc54 )
 	ROM_LOAD( "ss.02e",       0x8000, 0x4000, 0xc3476527 )
 	ROM_LOAD( "ss.03e",       0xc000, 0x4000, 0x1fd0e729 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ss5.v12",      0x00000, 0x2000, 0x990890b1 )	/* characters */
 	ROM_LOAD( "ss6.v12",      0x02000, 0x2000, 0x9388ff82 )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ss7.v12",      0x00000, 0x4000, 0x32b14b8e )	/* sprites */
 	ROM_LOAD( "ss8.v12",      0x04000, 0x4000, 0x9f59014e )
 	ROM_LOAD( "ss9.v12",      0x08000, 0x4000, 0xe240345a )
 
-	ROM_REGIONX( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS )
 	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
 	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
 	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */

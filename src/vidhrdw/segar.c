@@ -432,7 +432,7 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int sprite_transparency;
 	int vert_scene;
 
-	unsigned char *back_charmap = memory_region(2);
+	unsigned char *back_charmap = memory_region(REGION_USER1);
 
 	if (palette_recalc() || full_refresh)
 		sv.refresh = 1;
@@ -593,7 +593,7 @@ void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int charcode;
 	int sprite_transparency;
 
-	unsigned char *back_charmap = memory_region(2);
+	unsigned char *back_charmap = memory_region(REGION_USER1);
 
 	if (palette_recalc() || full_refresh)
 		sv.refresh = 1;
@@ -769,7 +769,7 @@ void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned long backoffs;
 	unsigned long back_scene;
 
-	unsigned char *back_charmap = memory_region(2);
+	unsigned char *back_charmap = memory_region(REGION_USER1);
 
 	if (palette_recalc() || full_refresh)
 		sv.refresh = 1;

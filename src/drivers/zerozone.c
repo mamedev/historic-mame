@@ -2,6 +2,8 @@
 
 Zero Zone memory map
 
+driver by Brad Oliver
+
 CPU 1 : 68000, uses irq 1
 
 0x000000 - 0x01ffff : ROM
@@ -190,7 +192,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout, 0, 256 },         /* sprites & playfield */
+	{ REGION_GFX1, 0, &charlayout, 0, 256 },         /* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -199,11 +201,11 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	{ 8000 },           /* 8000Hz ??? TODO: find out the real frequency */
-	{ 3 },              /* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region 3 */
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_zerozone =
 {
 	{
 		{
@@ -255,44 +257,21 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( zerozone )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 128k for 68000 code */
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 128k for 68000 code */
 	ROM_LOAD_EVEN( "zz-4.rom", 0x0000, 0x10000, 0x83718b9b )
 	ROM_LOAD_ODD ( "zz-5.rom", 0x0000, 0x10000, 0x18557f41 )
 
-	ROM_REGION_DISPOSE(0x080000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zz-6.rom", 0x00000, 0x80000, 0xc8b906b9 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "zz-1.rom", 0x00000, 0x08000, 0x223ccce5 )
 
-	ROM_REGION(0x40000)      /* ADPCM samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zz-6.rom", 0x00000, 0x80000, 0xc8b906b9 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )      /* ADPCM samples */
 	ROM_LOAD( "zz-2.rom", 0x00000, 0x20000, 0xc7551e81 )
 	ROM_LOAD( "zz-3.rom", 0x20000, 0x20000, 0xe348ff5e )
 ROM_END
 
 
 
-struct GameDriver driver_zerozone =
-{
-	__FILE__,
-	0,
-	"zerozone",
-	"Zero Zone",
-	"1993",
-	"Comad",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_zerozone,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zerozone,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1993, zerozone, 0, zerozone, zerozone, 0, ROT0, "Comad", "Zero Zone" )

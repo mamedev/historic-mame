@@ -229,17 +229,17 @@ static struct MachineDriver machine_driver_pingpong =
 ***************************************************************************/
 
 ROM_START( pingpong )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, 0x18552f8f )
 	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, 0xae5f01e8 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pp_e01.rom",   0x0000, 0x2000, 0xd1d6f090 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pp_e02.rom",   0x0000, 0x2000, 0x33c687e0 )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pingpong.3j",  0x0000, 0x0020, 0x3e04f06e ) /* palette (this might be bad) */
 	ROM_LOAD( "pingpong.11j", 0x0020, 0x0100, 0x09d96b08 ) /* sprites */
 	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, 0x8456046a ) /* characters */

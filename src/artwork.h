@@ -57,6 +57,7 @@ void artwork_free(struct artwork *a);
   functions that are backdrop-specific
 *********************************************************************/
 void backdrop_refresh(struct artwork *a);
+void backdrop_refresh_tables (struct artwork *a);
 void backdrop_set_palette(struct artwork *a, unsigned char *palette);
 int backdrop_black_recalc(void);
 void draw_backdrop(struct osd_bitmap *dest,const struct osd_bitmap *src,int sx,int sy,

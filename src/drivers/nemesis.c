@@ -314,9 +314,9 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe003, 0xe003, k005289_keylatch_A_w },
 	{ 0xe004, 0xe004, k005289_keylatch_B_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
-	{ 0xe405, 0xe405, AY8910_write_port_1_w },
 	{ 0xe006, 0xe006, AY8910_control_port_0_w },
 	{ 0xe106, 0xe106, AY8910_write_port_0_w },
+	{ 0xe405, 0xe405, AY8910_write_port_1_w },
 	{ -1 }  /* end of table */
 };
 
@@ -498,14 +498,14 @@ static struct MemoryWriteAddress gx400_sound_writemem[] =
 	{ 0x4000, 0x87ff, MWA_RAM, &gx400_shared_ram },
 	{ 0xa000, 0xafff, k005289_pitch_A_w },
 	{ 0xc000, 0xcfff, k005289_pitch_B_w },
+	{ 0xe000, 0xe000, VLM5030_data_w },
 	{ 0xe003, 0xe003, k005289_keylatch_A_w },
 	{ 0xe004, 0xe004, k005289_keylatch_B_w },
-	{ 0xe006, 0xe006, AY8910_control_port_0_w },
-	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
-	{ 0xe405, 0xe405, AY8910_write_port_1_w },
-	{ 0xe000, 0xe000, VLM5030_data_w },
+	{ 0xe006, 0xe006, AY8910_control_port_0_w },
 	{ 0xe030, 0xe030, gx400_speech_start },
+	{ 0xe106, 0xe106, AY8910_write_port_0_w },
+	{ 0xe405, 0xe405, AY8910_write_port_1_w },
 	{ -1 }  /* end of table */
 };
 
@@ -1476,7 +1476,7 @@ static struct k005289_interface k005289_interface =
 {
 	3579545/2,		/* clock speed */
 	22,				/* playback volume */
-	3				/* prom memory region */
+	REGION_SOUND1	/* prom memory region */
 };
 
 static void sound_irq(int state)
@@ -1495,20 +1495,20 @@ static struct YM2151interface ym2151_interface =
 
 static struct VLM5030interface vlm5030_interface =
 {
-    3579545,    /* master clock  */
-    70,        /* volume        */
-    3,         /* memory region  */
-    0,         /* memory length */
-    0,         /* VCU            */
+    3579545,       /* master clock  */
+    70,            /* volume        */
+    REGION_SOUND1, /* memory region  */
+    0,             /* memory length */
+    0,             /* VCU            */
 };
 
 static struct VLM5030interface gx400_vlm5030_interface =
 {
-    3579545,    /* master clock  */
-    100,       /* volume        */
-    2,         /* memory region  */
-    0,         /* memory length */
-    0,         /* VCU            */
+    3579545,       /* master clock  */
+    100,           /* volume        */
+    0,             /* memory region (RAM based) */
+    0x0800,        /* memory length (not sure if correct) */
+    0,             /* VCU            */
 };
 
 static void volume_callback(int v)
@@ -1520,7 +1520,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 4 },	/* memory regions */
+	{ REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(15,MIXER_PAN_CENTER,15,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
@@ -1842,211 +1842,171 @@ static struct MachineDriver machine_driver_rf2_gx400 =
 ***************************************************************************/
 
 ROM_START( nemesis )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.bin",   0x00000, 0x8000, 0x35ff1aaa )
-	ROM_LOAD_ODD  ( "12c_05.bin",   0x00000, 0x8000, 0x23155faa )
-	ROM_LOAD_EVEN ( "13a_02.bin",   0x10000, 0x8000, 0xac0cf163 )
-	ROM_LOAD_ODD  ( "13c_06.bin",   0x10000, 0x8000, 0x023f22a9 )
-	ROM_LOAD_EVEN ( "14a_03.bin",   0x20000, 0x8000, 0x8cefb25f )
-	ROM_LOAD_ODD  ( "14c_07.bin",   0x20000, 0x8000, 0xd50b82cb )
-	ROM_LOAD_EVEN ( "15a_04.bin",   0x30000, 0x8000, 0x9ca75592 )
-	ROM_LOAD_ODD  ( "15c_08.bin",   0x30000, 0x8000, 0x03c0b7f5 )
+	ROM_REGION( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
+	ROM_LOAD_EVEN( "12a_01.bin",   0x00000, 0x8000, 0x35ff1aaa )
+	ROM_LOAD_ODD ( "12c_05.bin",   0x00000, 0x8000, 0x23155faa )
+	ROM_LOAD_EVEN( "13a_02.bin",   0x10000, 0x8000, 0xac0cf163 )
+	ROM_LOAD_ODD ( "13c_06.bin",   0x10000, 0x8000, 0x023f22a9 )
+	ROM_LOAD_EVEN( "14a_03.bin",   0x20000, 0x8000, 0x8cefb25f )
+	ROM_LOAD_ODD ( "14c_07.bin",   0x20000, 0x8000, 0xd50b82cb )
+	ROM_LOAD_EVEN( "15a_04.bin",   0x30000, 0x8000, 0x9ca75592 )
+	ROM_LOAD_ODD ( "15c_08.bin",   0x30000, 0x8000, 0x03c0b7f5 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "09c_snd.bin",  0x00000, 0x4000, 0x26bf9636 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "09c_snd.bin",  0x0000, 0x4000, 0x26bf9636 )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( nemesuk )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.uk",    0x00000, 0x8000, 0xe1993f91 )
-	ROM_LOAD_ODD  ( "12c_05.uk",    0x00000, 0x8000, 0xc9761c78 )
-	ROM_LOAD_EVEN ( "13a_02.uk",    0x10000, 0x8000, 0xf6169c4b )
-	ROM_LOAD_ODD  ( "13c_06.uk",    0x10000, 0x8000, 0xaf58c548 )
-	ROM_LOAD_EVEN ( "14a_03.bin",   0x20000, 0x8000, 0x8cefb25f )
-	ROM_LOAD_ODD  ( "14c_07.bin",   0x20000, 0x8000, 0xd50b82cb )
-	ROM_LOAD_EVEN ( "15a_04.uk",    0x30000, 0x8000, 0x322423d0 )
-	ROM_LOAD_ODD  ( "15c_08.uk",    0x30000, 0x8000, 0xeb656266 )
+	ROM_REGION( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
+	ROM_LOAD_EVEN( "12a_01.uk",    0x00000, 0x8000, 0xe1993f91 )
+	ROM_LOAD_ODD ( "12c_05.uk",    0x00000, 0x8000, 0xc9761c78 )
+	ROM_LOAD_EVEN( "13a_02.uk",    0x10000, 0x8000, 0xf6169c4b )
+	ROM_LOAD_ODD ( "13c_06.uk",    0x10000, 0x8000, 0xaf58c548 )
+	ROM_LOAD_EVEN( "14a_03.bin",   0x20000, 0x8000, 0x8cefb25f )
+	ROM_LOAD_ODD ( "14c_07.bin",   0x20000, 0x8000, 0xd50b82cb )
+	ROM_LOAD_EVEN( "15a_04.uk",    0x30000, 0x8000, 0x322423d0 )
+	ROM_LOAD_ODD ( "15c_08.uk",    0x30000, 0x8000, 0xeb656266 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "09c_snd.bin",  0x00000, 0x4000, 0x26bf9636 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "09c_snd.bin",  0x0000, 0x4000, 0x26bf9636 )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( konamigt )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "c01.rom",      0x00000, 0x8000, 0x56245bfd )
-	ROM_LOAD_ODD  ( "c05.rom",      0x00000, 0x8000, 0x8d651f44 )
-	ROM_LOAD_EVEN ( "c02.rom",      0x10000, 0x8000, 0x3407b7cb )
-	ROM_LOAD_ODD  ( "c06.rom",      0x10000, 0x8000, 0x209942d4 )
-	ROM_LOAD_EVEN ( "b03.rom",      0x20000, 0x8000, 0xaef7df48 )
-	ROM_LOAD_ODD  ( "b07.rom",      0x20000, 0x8000, 0xe9bd6250 )
-	ROM_LOAD_EVEN ( "b04.rom",      0x30000, 0x8000, 0x94bd4bd7 )
-	ROM_LOAD_ODD  ( "b08.rom",      0x30000, 0x8000, 0xb7236567 )
+	ROM_REGION( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
+	ROM_LOAD_EVEN( "c01.rom",      0x00000, 0x8000, 0x56245bfd )
+	ROM_LOAD_ODD ( "c05.rom",      0x00000, 0x8000, 0x8d651f44 )
+	ROM_LOAD_EVEN( "c02.rom",      0x10000, 0x8000, 0x3407b7cb )
+	ROM_LOAD_ODD ( "c06.rom",      0x10000, 0x8000, 0x209942d4 )
+	ROM_LOAD_EVEN( "b03.rom",      0x20000, 0x8000, 0xaef7df48 )
+	ROM_LOAD_ODD ( "b07.rom",      0x20000, 0x8000, 0xe9bd6250 )
+	ROM_LOAD_EVEN( "b04.rom",      0x30000, 0x8000, 0x94bd4bd7 )
+	ROM_LOAD_ODD ( "b08.rom",      0x30000, 0x8000, 0xb7236567 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(       "b09.rom",      0x00000, 0x4000, 0x539d0c49 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "b09.rom",      0x00000, 0x4000, 0x539d0c49 )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( rf2 )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
-	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
-	ROM_LOAD_EVEN ( "561-a07.17l",  0x80000, 0x20000, 0xed6e7098 )
-	ROM_LOAD_ODD  ( "561-a05.12l",  0x80000, 0x20000, 0xdfe04425 )
+	ROM_REGION( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN( "561-a07.17l",  0x80000, 0x20000, 0xed6e7098 )
+	ROM_LOAD_ODD ( "561-a05.12l",  0x80000, 0x20000, 0xdfe04425 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "400-e03.5l",   0x00000, 0x02000, 0xa5a8e57d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( twinbee )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
-	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
-	ROM_LOAD_EVEN ( "412-a07.17l",  0x80000, 0x20000, 0xd93c5499 )
-	ROM_LOAD_ODD  ( "412-a05.12l",  0x80000, 0x20000, 0x2b357069 )
+	ROM_REGION( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN( "412-a07.17l",  0x80000, 0x20000, 0xd93c5499 )
+	ROM_LOAD_ODD ( "412-a05.12l",  0x80000, 0x20000, 0x2b357069 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "400-e03.5l",   0x00000, 0x02000, 0xa5a8e57d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( gradius )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
-	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
-	ROM_LOAD_EVEN ( "456-a07.17l",  0x80000, 0x20000, 0x92df792c )
-	ROM_LOAD_ODD  ( "456-a05.12l",  0x80000, 0x20000, 0x5cafb263 )
+	ROM_REGION( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN( "456-a07.17l",  0x80000, 0x20000, 0x92df792c )
+	ROM_LOAD_ODD ( "456-a05.12l",  0x80000, 0x20000, 0x5cafb263 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "400-e03.5l",   0x00000, 0x2000, 0xa5a8e57d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( gwarrior )
-	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
-	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
-	ROM_LOAD_EVEN ( "578-a07.17l",  0x80000, 0x20000, 0x0aedacb5 )
-	ROM_LOAD_ODD  ( "578-a05.12l",  0x80000, 0x20000, 0x76240e2e )
+	ROM_REGION( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
+	ROM_LOAD_EVEN( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
+	ROM_LOAD_ODD ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
+	ROM_LOAD_EVEN( "578-a07.17l",  0x80000, 0x20000, 0x0aedacb5 )
+	ROM_LOAD_ODD ( "578-a05.12l",  0x80000, 0x20000, 0x76240e2e )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "400-e03.5l",   0x00000, 0x02000, 0xa5a8e57d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
-
-	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
-	ROM_LOAD  ( "400-a01.fse",  0x0000, 0x0100, 0x5827b1e8 )
-	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
+	ROM_REGION( 0x0200,  REGION_SOUND1 )      /* 2x 256 byte for 0005289 wavetable data */
+	ROM_LOAD(      "400-a01.fse",  0x00000, 0x0100, 0x5827b1e8 )
+	ROM_LOAD(      "400-a02.fse",  0x00100, 0x0100, 0x2f44f970 )
 ROM_END
 
 ROM_START( salamand )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )    /* 64k for code */
-	ROM_LOAD_EVEN ( "18b.bin",  0x00000, 0x10000, 0xa42297f9 )
-	ROM_LOAD_ODD  ( "18c.bin",  0x00000, 0x10000, 0xf9130b0a )
-	ROM_LOAD_EVEN ( "17b.bin",  0x40000, 0x20000, 0xe5caf6e6 )
-	ROM_LOAD_ODD  ( "17c.bin",  0x40000, 0x20000, 0xc2f567ea )
+	ROM_REGION( 0x80000, REGION_CPU1 )    /* 64k for code */
+	ROM_LOAD_EVEN( "18b.bin",      0x00000, 0x10000, 0xa42297f9 )
+	ROM_LOAD_ODD ( "18c.bin",      0x00000, 0x10000, 0xf9130b0a )
+	ROM_LOAD_EVEN( "17b.bin",      0x40000, 0x20000, 0xe5caf6e6 )
+	ROM_LOAD_ODD ( "17c.bin",      0x40000, 0x20000, 0xc2f567ea )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "11j.bin",      0x00000, 0x08000, 0x5020972c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "11j.bin", 0x00000, 0x8000, 0x5020972c )
+	ROM_REGION( 0x04000, REGION_SOUND1 )    /* VLM5030 data? */
+	ROM_LOAD(      "8g.bin",       0x00000, 0x04000, 0xf9ac6b82 )
 
-        ROM_REGION(0x4000)    /* VLM5030 data? */
-	ROM_LOAD  ( "8g.bin",  0x00000, 0x4000, 0xf9ac6b82 )
-
-        ROM_REGION(0x20000)    /* 007232 data */
-	ROM_LOAD  ( "10a.bin", 0x00000, 0x20000, 0x09fe0632 )
+	ROM_REGION( 0x20000, REGION_SOUND2 )    /* 007232 data */
+	ROM_LOAD(      "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
 ROM_START( lifefrce )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )    /* 64k for code */
-	ROM_LOAD_EVEN ( "587-k02.bin",  0x00000, 0x10000, 0x4a44da18 )
-	ROM_LOAD_ODD  ( "587-k05.bin",  0x00000, 0x10000, 0x2f8c1cbd )
-	ROM_LOAD_EVEN ( "17b.bin",      0x40000, 0x20000, 0xe5caf6e6 )
-	ROM_LOAD_ODD  ( "17c.bin",      0x40000, 0x20000, 0xc2f567ea )
+	ROM_REGION( 0x80000, REGION_CPU1 )    /* 64k for code */
+	ROM_LOAD_EVEN( "587-k02.bin",  0x00000, 0x10000, 0x4a44da18 )
+	ROM_LOAD_ODD ( "587-k05.bin",  0x00000, 0x10000, 0x2f8c1cbd )
+	ROM_LOAD_EVEN( "17b.bin",      0x40000, 0x20000, 0xe5caf6e6 )
+	ROM_LOAD_ODD ( "17c.bin",      0x40000, 0x20000, 0xc2f567ea )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "587-k09.bin",  0x00000, 0x08000, 0x2255fe8c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "587-k09.bin",      0x00000, 0x8000, 0x2255fe8c )
+	ROM_REGION( 0x04000, REGION_SOUND1 )    /* VLM5030 data? */
+	ROM_LOAD(      "587-k08.bin",  0x00000, 0x04000, 0x7f0e9b41 )
 
-	ROM_REGION(0x4000)    /* VLM5030 data? */
-	ROM_LOAD  ( "587-k08.bin",      0x00000, 0x4000, 0x7f0e9b41 )
-
-	ROM_REGION(0x20000)    /* 007232 data */
-	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
+	ROM_REGION( 0x20000, REGION_SOUND2 )    /* 007232 data */
+	ROM_LOAD(      "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
 ROM_START( lifefrcj )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )    /* 64k for code */
-	ROM_LOAD_EVEN ( "587-n02.bin",  0x00000, 0x10000, 0x235dba71 )
-	ROM_LOAD_ODD  ( "587-n05.bin",  0x00000, 0x10000, 0x054e569f )
-	ROM_LOAD_EVEN ( "587-n03.bin",  0x40000, 0x20000, 0x9041f850 )
-	ROM_LOAD_ODD  ( "587-n06.bin",  0x40000, 0x20000, 0xfba8b6aa )
+	ROM_REGION( 0x80000, REGION_CPU1 )    /* 64k for code */
+	ROM_LOAD_EVEN( "587-n02.bin",  0x00000, 0x10000, 0x235dba71 )
+	ROM_LOAD_ODD ( "587-n05.bin",  0x00000, 0x10000, 0x054e569f )
+	ROM_LOAD_EVEN( "587-n03.bin",  0x40000, 0x20000, 0x9041f850 )
+	ROM_LOAD_ODD ( "587-n06.bin",  0x40000, 0x20000, 0xfba8b6aa )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_REGION( 0x10000, REGION_CPU2 )    /* 64k for sound */
+	ROM_LOAD(      "587-n09.bin",  0x00000, 0x08000, 0xe8496150 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
-	ROM_LOAD  ( "587-n09.bin",      0x00000, 0x8000, 0xe8496150 )
+	ROM_REGION( 0x04000, REGION_SOUND1 )    /* VLM5030 data? */
+	ROM_LOAD(      "587-k08.bin",  0x00000, 0x04000, 0x7f0e9b41 )
 
-	ROM_REGION(0x4000)    /* VLM5030 data? */
-	ROM_LOAD  ( "587-k08.bin",      0x00000, 0x4000, 0x7f0e9b41 )
-
-	ROM_REGION(0x20000)    /* 007232 data */
-	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
+	ROM_REGION( 0x20000, REGION_SOUND2 )    /* 007232 data */
+	ROM_LOAD(      "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
 

@@ -3,10 +3,6 @@
 #include "vidhrdw/konamiic.h"
 
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-
-
 static int sprite_colorbase;
 
 
@@ -216,8 +212,8 @@ void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 int xexex_vh_start(void)
 {
-	K053157_vh_start(2, 6, TILEROM_MEM_REGION);
-	if (K053247_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	K053157_vh_start(2, 6, REGION_GFX1);
+	if (K053247_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 //		K053157_vh_stop();
 		return 1;

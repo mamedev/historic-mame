@@ -310,30 +310,30 @@ static struct MachineDriver machine_driver_sbasketb =
 ***************************************************************************/
 
 ROM_START( sbasketb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sbb_j13.bin",  0x6000, 0x2000, 0x263ec36b )
 	ROM_LOAD( "sbb_j11.bin",  0x8000, 0x4000, 0x0a4d7a82 )
 	ROM_LOAD( "sbb_j09.bin",  0xc000, 0x4000, 0x4f9dd9a0 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "sbb_e13.bin",  0x0000, 0x2000, 0x1ec7458b )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sbb_e12.bin",  0x0000, 0x4000, 0xe02c54da )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sbb_h06.bin",  0x0000, 0x4000, 0xcfbbff07 )
 	ROM_LOAD( "sbb_h08.bin",  0x4000, 0x4000, 0xc75901b6 )
 	ROM_LOAD( "sbb_h10.bin",  0x8000, 0x4000, 0x95bc5942 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "405e17",       0x0000, 0x0100, 0xb4c36d57 ) /* palette red component */
 	ROM_LOAD( "405e16",       0x0100, 0x0100, 0x0b7b03b8 ) /* palette green component */
 	ROM_LOAD( "405e18",       0x0200, 0x0100, 0x9e533bad ) /* palette blue component */
 	ROM_LOAD( "405e20",       0x0300, 0x0100, 0x8ca6de2f ) /* character lookup table */
 	ROM_LOAD( "405e19",       0x0400, 0x0100, 0xe0bc782f ) /* sprite lookup table */
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )     /* 64k for speech rom */
+	ROM_REGION( 0x10000, REGION_SOUND1 )     /* 64k for speech rom */
 	ROM_LOAD( "sbb_e15.bin",  0x0000, 0x2000, 0x01bb5ce9 )
 ROM_END
 

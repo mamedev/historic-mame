@@ -25,26 +25,11 @@ static void mem_dump( void );
 #if LSB_FIRST
 	#define BYTE_XOR_BE(a) ((a) ^ 1)
 	#define BYTE_XOR_LE(a) (a)
-	#define BIG_DWORD_BE(x) (((UINT32)(x) >> 16) + ((x) << 16))
-	#define BIG_DWORD_LE(x) (x)
- 	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
-	#define SHIFT0 16
-	#define SHIFT1 24
-	#define SHIFT2 0
-	#define SHIFT3 8
 #else
 	#define BYTE_XOR_BE(a) (a)
 	#define BYTE_XOR_LE(a) ((a) ^ 1)
-	#define BIG_DWORD_BE(x) (x)
-	#define BIG_DWORD_LE(x) (((UINT32)(x) >> 16) + ((x) << 16))
-	/* GSL 980224 Shift values for bytes within a word, used by the  misaligned word load/store code */
-	#define SHIFT0 24
-	#define SHIFT1 16
-	#define SHIFT2 8
-	#define SHIFT3 0
 #endif
 
-static unsigned char *RAM;
 unsigned char *OP_RAM;
 unsigned char *OP_ROM;
 
@@ -95,12 +80,20 @@ MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
 #define HT_BANK6  6		/* bank memory #6    */
 #define HT_BANK7  7		/* bank memory #7    */
 #define HT_BANK8  8		/* bank memory #8    */
-#define HT_NON    9		/* non mapped memory */
-#define HT_NOP    10	/* NOP memory        */
-#define HT_RAMROM 11	/* RAM ROM memory    */
-#define HT_ROM    12	/* ROM memory        */
+#define HT_BANK9  9		/* bank memory #9    */
+#define HT_BANK10 10	/* bank memory #10   */
+#define HT_BANK11 11	/* bank memory #11   */
+#define HT_BANK12 12	/* bank memory #12   */
+#define HT_BANK13 13	/* bank memory #13   */
+#define HT_BANK14 14	/* bank memory #14   */
+#define HT_BANK15 15	/* bank memory #15   */
+#define HT_BANK16 16	/* bank memory #16   */
+#define HT_NON    17	/* non mapped memory */
+#define HT_NOP    18	/* NOP memory        */
+#define HT_RAMROM 19	/* RAM ROM memory    */
+#define HT_ROM    20	/* ROM memory        */
 
-#define HT_USER   13	/* user functions    */
+#define HT_USER   21	/* user functions    */
 /* [MH_HARDMAX]-0xff	  link to sub memory element  */
 /*                        (value-MH_HARDMAX)<<MH_SBITS -> element bank */
 
@@ -108,19 +101,19 @@ MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
 
 /* memory hardware handler */
 /* HJB 990210: removed 'static' for access by assembly CPU core memory handlers */
-int (*memoryreadhandler[MH_HARDMAX])(int address);
+mem_read_handler memoryreadhandler[MH_HARDMAX];
 int memoryreadoffset[MH_HARDMAX];
-void (*memorywritehandler[MH_HARDMAX])(int address,int data);
+mem_write_handler memorywritehandler[MH_HARDMAX];
 int memorywriteoffset[MH_HARDMAX];
 
-/* bank ram base address */
-unsigned char *cpu_bankbase[HT_BANKMAX+1];
-static int bankreadoffset[HT_BANKMAX+1];
-static int bankwriteoffset[HT_BANKMAX+1];
+/* bank ram base address; RAM is bank 0 */
+unsigned char *cpu_bankbase[HT_BANKMAX + 1];
+static int bankreadoffset[HT_BANKMAX + 1];
+static int bankwriteoffset[HT_BANKMAX + 1];
 
 /* override OP base handler */
-static int (*setOPbasefunc[MAX_CPU])(int);
-static int (*OPbasefunc)(int);
+static opbase_handler setOPbasefunc[MAX_CPU];
+static opbase_handler OPbasefunc;
 
 /* current cpu current hardware element map point */
 MHELE *cur_mrhard;
@@ -137,82 +130,130 @@ static struct IOWritePort empty_writeport[] =
 	{ -1 }
 };
 
-static void *install_port_read_handler_common(int cpu, int start, int end, int (*handler)(int), int install_at_beginning);
-static void *install_port_write_handler_common(int cpu, int start, int end, void (*handler)(int, int), int install_at_beginning);
+static void *install_port_read_handler_common(int cpu, int start, int end, mem_read_handler handler, int install_at_beginning);
+static void *install_port_write_handler_common(int cpu, int start, int end, mem_write_handler handler, int install_at_beginning);
+
 
 /***************************************************************************
 
-  Memory handling
+  Memory read handling
 
 ***************************************************************************/
 
-int mrh_ram(int address){return RAM[address];}
-int mrh_bank1(int address){return cpu_bankbase[1][address];}
-int mrh_bank2(int address){return cpu_bankbase[2][address];}
-int mrh_bank3(int address){return cpu_bankbase[3][address];}
-int mrh_bank4(int address){return cpu_bankbase[4][address];}
-int mrh_bank5(int address){return cpu_bankbase[5][address];}
-int mrh_bank6(int address){return cpu_bankbase[6][address];}
-int mrh_bank7(int address){return cpu_bankbase[7][address];}
-int mrh_bank8(int address){return cpu_bankbase[8][address];}
+READ_HANDLER(mrh_ram)		{ return cpu_bankbase[0][offset]; }
+READ_HANDLER(mrh_bank1)		{ return cpu_bankbase[1][offset]; }
+READ_HANDLER(mrh_bank2)		{ return cpu_bankbase[2][offset]; }
+READ_HANDLER(mrh_bank3)		{ return cpu_bankbase[3][offset]; }
+READ_HANDLER(mrh_bank4)		{ return cpu_bankbase[4][offset]; }
+READ_HANDLER(mrh_bank5)		{ return cpu_bankbase[5][offset]; }
+READ_HANDLER(mrh_bank6)		{ return cpu_bankbase[6][offset]; }
+READ_HANDLER(mrh_bank7)		{ return cpu_bankbase[7][offset]; }
+READ_HANDLER(mrh_bank8)		{ return cpu_bankbase[8][offset]; }
+READ_HANDLER(mrh_bank9)		{ return cpu_bankbase[9][offset]; }
+READ_HANDLER(mrh_bank10)	{ return cpu_bankbase[10][offset]; }
+READ_HANDLER(mrh_bank11)	{ return cpu_bankbase[11][offset]; }
+READ_HANDLER(mrh_bank12)	{ return cpu_bankbase[12][offset]; }
+READ_HANDLER(mrh_bank13)	{ return cpu_bankbase[13][offset]; }
+READ_HANDLER(mrh_bank14)	{ return cpu_bankbase[14][offset]; }
+READ_HANDLER(mrh_bank15)	{ return cpu_bankbase[15][offset]; }
+READ_HANDLER(mrh_bank16)	{ return cpu_bankbase[16][offset]; }
+static mem_read_handler bank_read_handler[] =
+{
+	mrh_ram,   mrh_bank1,  mrh_bank2,  mrh_bank3,  mrh_bank4,  mrh_bank5,  mrh_bank6,  mrh_bank7,
+	mrh_bank8, mrh_bank9,  mrh_bank10, mrh_bank11, mrh_bank12, mrh_bank13, mrh_bank14, mrh_bank15,
+	mrh_bank16
+};
 
-int mrh_error(int address)
+READ_HANDLER(mrh_error)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read %02x from unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),RAM[address],address);
-	return RAM[address];
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read %02x from unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),cpu_bankbase[0][offset],offset);
+	return cpu_bankbase[0][offset];
 }
-/* 24-bit address spaces are sparse, so we can't just return RAM[address] */
-int mrh_error_sparse(int address)
+
+READ_HANDLER(mrh_error_sparse)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 	return 0;
 }
-int mrh_error_sparse_bit(int address)
+
+READ_HANDLER(mrh_error_sparse_bit)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_get_pc(),address<<3, address);
-	return 0;
-}
-int mrh_nop(int address)
-{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_get_pc(),offset<<3, offset);
 	return 0;
 }
 
-void mwh_ram(int address,int data){RAM[address] = data;}
-void mwh_bank1(int address,int data){cpu_bankbase[1][address] = data;}
-void mwh_bank2(int address,int data){cpu_bankbase[2][address] = data;}
-void mwh_bank3(int address,int data){cpu_bankbase[3][address] = data;}
-void mwh_bank4(int address,int data){cpu_bankbase[4][address] = data;}
-void mwh_bank5(int address,int data){cpu_bankbase[5][address] = data;}
-void mwh_bank6(int address,int data){cpu_bankbase[6][address] = data;}
-void mwh_bank7(int address,int data){cpu_bankbase[7][address] = data;}
-void mwh_bank8(int address,int data){cpu_bankbase[8][address] = data;}
-
-void mwh_error(int address,int data)
+READ_HANDLER(mrh_nop)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,address);
-	RAM[address] = data;
-}
-/* 24-bit address spaces are sparse, so we can't just write to RAM[address] */
-void mwh_error_sparse(int address,int data)
-{
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,address);
-}
-void mwh_error_sparse_bit(int address,int data)
-{
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,address<<3);
-}
-void mwh_rom(int address,int data)
-{
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,address);
-}
-void mwh_ramrom(int address,int data)
-{
-	RAM[address] = RAM[address + (OP_ROM - OP_RAM)] = data;
-}
-void mwh_nop(int address,int data)
-{
+	return 0;
 }
 
+
+/***************************************************************************
+
+  Memory write handling
+
+***************************************************************************/
+
+WRITE_HANDLER(mwh_ram)		{ cpu_bankbase[0][offset] = data;}
+WRITE_HANDLER(mwh_bank1)	{ cpu_bankbase[1][offset] = data; }
+WRITE_HANDLER(mwh_bank2)	{ cpu_bankbase[2][offset] = data; }
+WRITE_HANDLER(mwh_bank3)	{ cpu_bankbase[3][offset] = data; }
+WRITE_HANDLER(mwh_bank4)	{ cpu_bankbase[4][offset] = data; }
+WRITE_HANDLER(mwh_bank5)	{ cpu_bankbase[5][offset] = data; }
+WRITE_HANDLER(mwh_bank6)	{ cpu_bankbase[6][offset] = data; }
+WRITE_HANDLER(mwh_bank7)	{ cpu_bankbase[7][offset] = data; }
+WRITE_HANDLER(mwh_bank8)	{ cpu_bankbase[8][offset] = data; }
+WRITE_HANDLER(mwh_bank9)	{ cpu_bankbase[9][offset] = data; }
+WRITE_HANDLER(mwh_bank10)	{ cpu_bankbase[10][offset] = data; }
+WRITE_HANDLER(mwh_bank11)	{ cpu_bankbase[11][offset] = data; }
+WRITE_HANDLER(mwh_bank12)	{ cpu_bankbase[12][offset] = data; }
+WRITE_HANDLER(mwh_bank13)	{ cpu_bankbase[13][offset] = data; }
+WRITE_HANDLER(mwh_bank14)	{ cpu_bankbase[14][offset] = data; }
+WRITE_HANDLER(mwh_bank15)	{ cpu_bankbase[15][offset] = data; }
+WRITE_HANDLER(mwh_bank16)	{ cpu_bankbase[16][offset] = data; }
+static mem_write_handler bank_write_handler[] =
+{
+	mwh_ram,   mwh_bank1,  mwh_bank2,  mwh_bank3,  mwh_bank4,  mwh_bank5,  mwh_bank6,  mwh_bank7,
+	mwh_bank8, mwh_bank9,  mwh_bank10, mwh_bank11, mwh_bank12, mwh_bank13, mwh_bank14, mwh_bank15,
+	mwh_bank16
+};
+
+WRITE_HANDLER(mwh_error)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	cpu_bankbase[0][offset] = data;
+}
+
+WRITE_HANDLER(mwh_error_sparse)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+}
+
+WRITE_HANDLER(mwh_error_sparse_bit)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset<<3);
+}
+
+WRITE_HANDLER(mwh_rom)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+}
+
+WRITE_HANDLER(mwh_ramrom)
+{
+	cpu_bankbase[0][offset] = cpu_bankbase[0][offset + (OP_ROM - OP_RAM)] = data;
+}
+
+WRITE_HANDLER(mwh_nop)
+{
+}
+
+
+/***************************************************************************
+
+  Memory structure building
+
+***************************************************************************/
 
 /* return element offset */
 static MHELE *get_element( MHELE *element , int ad , int elemask ,
@@ -525,30 +566,12 @@ int memory_init(void)
 		memoryreadoffset[i] = 0;
 		memorywriteoffset[i] = 0;
 	}
-	/* bank1 memory */
-	memoryreadhandler[HT_BANK1] = mrh_bank1;
-	memorywritehandler[HT_BANK1] = mwh_bank1;
-	/* bank2 memory */
-	memoryreadhandler[HT_BANK2] = mrh_bank2;
-	memorywritehandler[HT_BANK2] = mwh_bank2;
-	/* bank3 memory */
-	memoryreadhandler[HT_BANK3] = mrh_bank3;
-	memorywritehandler[HT_BANK3] = mwh_bank3;
-	/* bank4 memory */
-	memoryreadhandler[HT_BANK4] = mrh_bank4;
-	memorywritehandler[HT_BANK4] = mwh_bank4;
-	/* bank5 memory */
-	memoryreadhandler[HT_BANK5] = mrh_bank5;
-	memorywritehandler[HT_BANK5] = mwh_bank5;
-	/* bank6 memory */
-	memoryreadhandler[HT_BANK6] = mrh_bank6;
-	memorywritehandler[HT_BANK6] = mwh_bank6;
-	/* bank7 memory */
-	memoryreadhandler[HT_BANK7] = mrh_bank7;
-	memorywritehandler[HT_BANK7] = mwh_bank7;
-	/* bank8 memory */
-	memoryreadhandler[HT_BANK8] = mrh_bank8;
-	memorywritehandler[HT_BANK8] = mwh_bank8;
+	/* bank memory */
+	for (i = 1; i <= MAX_BANKS; i++)
+	{
+		memoryreadhandler[i] = bank_read_handler[i];
+		memorywritehandler[i] = bank_write_handler[i];
+	}
 	/* non map memory */
 	memoryreadhandler[HT_NON] = mrh_error;
 	memorywritehandler[HT_NON] = mwh_error;
@@ -622,7 +645,7 @@ int memory_init(void)
 
 			while (mra >= memoryread)
 			{
-				int (*handler)(int) = mra->handler;
+				mem_read_handler handler = mra->handler;
 
 /* work around a compiler bug */
 #ifdef SGI_FIX_MWA_NOP
@@ -637,45 +660,27 @@ int memory_init(void)
 					hardware = HT_RAM;	/* sprcial case ram read */
 					break;
 				case (FPTR)MRA_BANK1:
-					hardware = HT_BANK1;
-					memoryreadoffset[1] = bankreadoffset[1] = mra->start;
-					cpu_bankbase[1] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK2:
-					hardware = HT_BANK2;
-					memoryreadoffset[2] = bankreadoffset[2] = mra->start;
-					cpu_bankbase[2] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK3:
-					hardware = HT_BANK3;
-					memoryreadoffset[3] = bankreadoffset[3] = mra->start;
-					cpu_bankbase[3] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK4:
-					hardware = HT_BANK4;
-					memoryreadoffset[4] = bankreadoffset[4] = mra->start;
-					cpu_bankbase[4] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK5:
-					hardware = HT_BANK5;
-					memoryreadoffset[5] = bankreadoffset[5] = mra->start;
-					cpu_bankbase[5] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK6:
-					hardware = HT_BANK6;
-					memoryreadoffset[6] = bankreadoffset[6] = mra->start;
-					cpu_bankbase[6] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK7:
-					hardware = HT_BANK7;
-					memoryreadoffset[7] = bankreadoffset[7] = mra->start;
-					cpu_bankbase[7] = memory_find_base (cpu, mra->start);
-					break;
 				case (FPTR)MRA_BANK8:
-					hardware = HT_BANK8;
-					memoryreadoffset[8] = bankreadoffset[8] = mra->start;
-					cpu_bankbase[8] = memory_find_base (cpu, mra->start);
+				case (FPTR)MRA_BANK9:
+				case (FPTR)MRA_BANK10:
+				case (FPTR)MRA_BANK11:
+				case (FPTR)MRA_BANK12:
+				case (FPTR)MRA_BANK13:
+				case (FPTR)MRA_BANK14:
+				case (FPTR)MRA_BANK15:
+				case (FPTR)MRA_BANK16:
+				{
+					hardware = (int)MRA_BANK1 - (int)handler + 1;
+					memoryreadoffset[hardware] = bankreadoffset[hardware] = mra->start;
+					cpu_bankbase[hardware] = memory_find_base(cpu, mra->start);
 					break;
+				}
 				case (FPTR)MRA_NOP:
 					hardware = HT_NOP;
 					break;
@@ -717,7 +722,7 @@ int memory_init(void)
 
 			while (mwa >= memorywrite)
 			{
-				void (*handler)(int,int) = mwa->handler;
+				mem_write_handler handler = mwa->handler;
 #ifdef SGI_FIX_MWA_NOP
 				if ((FPTR)handler == (FPTR)MWA_NOP) {
 					hardware = HT_NOP;
@@ -729,45 +734,27 @@ int memory_init(void)
 					hardware = HT_RAM;	/* sprcial case ram write */
 					break;
 				case (FPTR)MWA_BANK1:
-					hardware = HT_BANK1;
-					memorywriteoffset[1] = bankwriteoffset[1] = mwa->start;
-					cpu_bankbase[1] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK2:
-					hardware = HT_BANK2;
-					memorywriteoffset[2] = bankwriteoffset[2] = mwa->start;
-					cpu_bankbase[2] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK3:
-					hardware = HT_BANK3;
-					memorywriteoffset[3] = bankwriteoffset[3] = mwa->start;
-					cpu_bankbase[3] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK4:
-					hardware = HT_BANK4;
-					memorywriteoffset[4] = bankwriteoffset[4] = mwa->start;
-					cpu_bankbase[4] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK5:
-					hardware = HT_BANK5;
-					memorywriteoffset[5] = bankwriteoffset[5] = mwa->start;
-					cpu_bankbase[5] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK6:
-					hardware = HT_BANK6;
-					memorywriteoffset[6] = bankwriteoffset[6] = mwa->start;
-					cpu_bankbase[6] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK7:
-					hardware = HT_BANK7;
-					memorywriteoffset[7] = bankwriteoffset[7] = mwa->start;
-					cpu_bankbase[7] = memory_find_base (cpu, mwa->start);
-					break;
 				case (FPTR)MWA_BANK8:
-					hardware = HT_BANK8;
-					memorywriteoffset[8] = bankwriteoffset[8] = mwa->start;
-					cpu_bankbase[8] = memory_find_base (cpu, mwa->start);
+				case (FPTR)MWA_BANK9:
+				case (FPTR)MWA_BANK10:
+				case (FPTR)MWA_BANK11:
+				case (FPTR)MWA_BANK12:
+				case (FPTR)MWA_BANK13:
+				case (FPTR)MWA_BANK14:
+				case (FPTR)MWA_BANK15:
+				case (FPTR)MWA_BANK16:
+				{
+					hardware = (int)MWA_BANK1 - (int)handler + 1;
+					memorywriteoffset[hardware] = bankwriteoffset[hardware] = mwa->start;
+					cpu_bankbase[hardware] = memory_find_base(cpu, mwa->start);
 					break;
+				}
 				case (FPTR)MWA_NOP:
 					hardware = HT_NOP;
 					break;
@@ -824,7 +811,7 @@ void memory_set_opcode_base(int cpu,unsigned char *base)
 
 void memorycontextswap(int activecpu)
 {
-	RAM = cpu_bankbase[0] = ramptr[activecpu];
+	cpu_bankbase[0] = ramptr[activecpu];
 
 	cur_mrhard = cur_mr_element[activecpu];
 	cur_mwhard = cur_mw_element[activecpu];
@@ -838,7 +825,7 @@ void memorycontextswap(int activecpu)
 
 	/* op code memory pointer */
 	ophw = HT_RAM;
-	OP_RAM = RAM;
+	OP_RAM = cpu_bankbase[0];
 	OP_ROM = romptr[activecpu];
 }
 
@@ -887,392 +874,194 @@ void memory_shutdown(void)
 
 ***************************************************************************/
 
-int cpu_readmem16 (int address)
-{
-	MHELE hw;
+/* use these constants to define which type of memory handler to build */
+#define TYPE_8BIT					0		/* 8-bit aligned */
+#define TYPE_16BIT_BE				1		/* 16-bit aligned, big-endian */
+#define TYPE_16BIT_LE				2		/* 16-bit aligned, little-endian */
 
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_16 + ABITS_MIN_16)];
-	if (!hw) return RAM[address];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
-		if (!hw) return RAM[address];
-	}
+#define CAN_BE_MISALIGNED			0		/* word/dwords can be read on non-16-bit boundaries */
+#define ALWAYS_ALIGNED				1		/* word/dwords are always read on 16-bit boundaries */
 
-	/* fallback to handler */
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
+/* generic byte-sized read handler */
+#define READBYTE(name,type,abits2,abitsmin)												\
+int name(int address)																	\
+{																						\
+	MHELE hw;																			\
+																						\
+	/* first-level lookup */															\
+	hw = cur_mrhard[(UINT32)address >> (abits2 + abitsmin)];							\
+																						\
+	/* for compatibility with setbankhandler, 8-bit systems must call handlers */		\
+	/* for banked memory reads/writes */												\
+	if (type == TYPE_8BIT && hw == HT_RAM)												\
+		return cpu_bankbase[HT_RAM][address];											\
+	else if (type != TYPE_8BIT && hw <= HT_BANKMAX)										\
+	{																					\
+		if (type == TYPE_16BIT_BE)														\
+			return cpu_bankbase[hw][BYTE_XOR_BE(address) - memoryreadoffset[hw]];		\
+		else if (type == TYPE_16BIT_LE)													\
+			return cpu_bankbase[hw][BYTE_XOR_LE(address) - memoryreadoffset[hw]];		\
+	}																					\
+																						\
+	/* second-level lookup */															\
+	if (hw >= MH_HARDMAX)																\
+	{																					\
+		hw -= MH_HARDMAX;																\
+		hw = readhardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+																						\
+		/* for compatibility with setbankhandler, 8-bit systems must call handlers */	\
+		/* for banked memory reads/writes */											\
+		if (type == TYPE_8BIT && hw == HT_RAM)											\
+			return cpu_bankbase[HT_RAM][address];										\
+		else if (type != TYPE_8BIT && hw <= HT_BANKMAX)									\
+		{																				\
+			if (type == TYPE_16BIT_BE)													\
+				return cpu_bankbase[hw][BYTE_XOR_BE(address) - memoryreadoffset[hw]];	\
+			else if (type == TYPE_16BIT_LE)												\
+				return cpu_bankbase[hw][BYTE_XOR_LE(address) - memoryreadoffset[hw]];	\
+		}																				\
+	}																					\
+																						\
+	/* fall back to handler */															\
+	if (type == TYPE_8BIT)																\
+		return (*memoryreadhandler[hw])(address - memoryreadoffset[hw]);				\
+	else																				\
+	{																					\
+		int shift = (address & 1) << 3;													\
+		int data = (*memoryreadhandler[hw])((address & ~1) - memoryreadoffset[hw]);		\
+		if (type == TYPE_16BIT_BE)														\
+			return (data >> (shift ^ 8)) & 0xff;										\
+		else if (type == TYPE_16BIT_LE)													\
+			return (data >> shift) & 0xff;												\
+	}																					\
+}
+
+/* generic word-sized read handler (16-bit aligned only!) */
+#define READWORD(name,type,abits2,abitsmin,align)										\
+int name##_word(int address)															\
+{																						\
+	MHELE hw;																			\
+																						\
+	/* only supports 16-bit memory systems */											\
+	if (type == TYPE_8BIT)																\
+		printf("Unsupported type for READWORD macro!\n");								\
+																						\
+	/* handle aligned case first */														\
+	if (align == ALWAYS_ALIGNED || !(address & 1))										\
+	{																					\
+		/* first-level lookup */														\
+		hw = cur_mrhard[(UINT32)address >> (abits2 + abitsmin)];						\
+		if (hw <= HT_BANKMAX)															\
+			return READ_WORD(&cpu_bankbase[hw][address - memoryreadoffset[hw]]);		\
+																						\
+		/* second-level lookup */														\
+		if (hw >= MH_HARDMAX)															\
+		{																				\
+			hw -= MH_HARDMAX;															\
+			hw = readhardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+			if (hw <= HT_BANKMAX)														\
+				return READ_WORD(&cpu_bankbase[hw][address - memoryreadoffset[hw]]);	\
+		}																				\
+																						\
+		/* fall back to handler */														\
+		return (*memoryreadhandler[hw])(address - memoryreadoffset[hw]);				\
+	}																					\
+																						\
+	/* unaligned case */																\
+	else if (type == TYPE_16BIT_BE)														\
+	{																					\
+		int data = name(address) << 8;													\
+		return data | (name(address + 1) & 0xff);										\
+	}																					\
+	else if (type == TYPE_16BIT_LE)														\
+	{																					\
+		int data = name(address) & 0xff;												\
+		return data | (name(address + 1) << 8);											\
+	}																					\
+}
+
+/* generic dword-sized read handler (16-bit aligned only!) */
+#define READLONG(name,type,abits2,abitsmin,align)										\
+int name##_dword(int address)															\
+{																						\
+	UINT16 word1, word2;																\
+	MHELE hw1, hw2;																		\
+																						\
+	/* only supports 16-bit memory systems */											\
+	if (type == TYPE_8BIT)																\
+		printf("Unsupported type for READWORD macro!\n");								\
+																						\
+	/* handle aligned case first */														\
+	if (align == ALWAYS_ALIGNED || !(address & 1))										\
+	{																					\
+		/* first-level lookup */														\
+		hw1 = cur_mrhard[(UINT32)address >> (abits2 + abitsmin)];						\
+		hw2 = cur_mrhard[(UINT32)(address + 2) >> (abits2 + abitsmin)];					\
+																						\
+		/* second-level lookup */														\
+		if (hw1 >= MH_HARDMAX)															\
+		{																				\
+			hw1 -= MH_HARDMAX;															\
+			hw1 = readhardware[(hw1 << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+		}																				\
+		if (hw2 >= MH_HARDMAX)															\
+		{																				\
+			hw2 -= MH_HARDMAX;															\
+			hw2 = readhardware[(hw2 << MH_SBITS) + (((UINT32)(address + 2) >> abitsmin) & MHMASK(abits2))];	\
+		}																				\
+																						\
+		/* process each word */															\
+		if (hw1 <= HT_BANKMAX)															\
+			word1 = READ_WORD(&cpu_bankbase[hw1][address - memoryreadoffset[hw1]]);		\
+		else																			\
+			word1 = (*memoryreadhandler[hw1])(address - memoryreadoffset[hw1]);			\
+		if (hw2 <= HT_BANKMAX)															\
+			word2 = READ_WORD(&cpu_bankbase[hw2][address + 2 - memoryreadoffset[hw2]]);	\
+		else																			\
+			word2 = (*memoryreadhandler[hw2])(address + 2 - memoryreadoffset[hw2]);		\
+																						\
+		/* fall back to handler */														\
+		if (type == TYPE_16BIT_BE)														\
+			return (word1 << 16) | (word2 & 0xffff);									\
+		else if (type == TYPE_16BIT_LE)													\
+			return (word1 & 0xffff) | (word2 << 16);									\
+	}																					\
+																						\
+	/* unaligned case */																\
+	else if (type == TYPE_16BIT_BE)														\
+	{																					\
+		int data = name(address) << 24;													\
+		data |= name##_word(address + 1) << 8;											\
+		return data | (name(address + 3) & 0xff);										\
+	}																					\
+	else if (type == TYPE_16BIT_LE)														\
+	{																					\
+		int data = name(address) & 0xff;												\
+		data |= name##_word(address + 1) << 8;											\
+		return data | (name(address + 3) << 24);										\
+	}																					\
 }
 
 
-int cpu_readmem16bew (int address)
-{
-	int shift, data;
-	MHELE hw;
+/* the handlers we need to generate */
+READBYTE(cpu_readmem16,    TYPE_8BIT,     ABITS2_16,    ABITS_MIN_16)
+READBYTE(cpu_readmem20,    TYPE_8BIT,     ABITS2_20,    ABITS_MIN_20)
+READBYTE(cpu_readmem21,    TYPE_8BIT,     ABITS2_21,    ABITS_MIN_21)
 
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
-	}
+READBYTE(cpu_readmem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW)
+READWORD(cpu_readmem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW, ALWAYS_ALIGNED)
 
-	/* fallback to handler */
-	shift = 8 - ((address & 1) << 3);
-	address &= ~1;
-	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
-	return (data >> shift) & 0xff;
-}
+READBYTE(cpu_readmem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW)
+READWORD(cpu_readmem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW, ALWAYS_ALIGNED)
 
+READBYTE(cpu_readmem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24)
+READWORD(cpu_readmem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
+READLONG(cpu_readmem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
 
-int cpu_readmem16bew_word (int address)
-{
-	MHELE hw;
+READBYTE(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29)
+READWORD(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
+READLONG(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
 
-	/* reads across word boundaries must be broken up */
-	/* disabled because only one processor uses this (TMS9900), and it always uses aligned operands */
-	/*if (address & 1)
-		return (cpu_readmem16bew (address) << 8) + cpu_readmem16bew (address + 1);*/
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
-	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
-		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	}
-
-	/* fallback to handler */
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
-}
-
-
-int cpu_readmem16lew (int address)
-{
-	int shift, data;
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
-	}
-
-	/* fallback to handler */
-	shift = (address & 1) << 3;
-	address &= ~1;
-	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
-	return (data >> shift) & 0xff;
-}
-
-
-int cpu_readmem16lew_word (int address)
-{
-	MHELE hw;
-
-	/* reads across word boundaries must be broken up */
-	if (address & 1)
-		return cpu_readmem16lew (address) + (cpu_readmem16lew (address + 1) << 8);
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
-	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
-		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	}
-
-	/* fallback to handler */
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
-}
-
-
-int cpu_readmem20 (int address)
-{
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_20 + ABITS_MIN_20)];
-	if (!hw) return RAM[address];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_20) & MHMASK(ABITS2_20))];
-		if (!hw) return RAM[address];
-	}
-
-	/* fallback to handler */
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
-}
-
-
-int cpu_readmem21 (int address)
-{
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_21 + ABITS_MIN_21)];
-
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][(address - memoryreadoffset[hw])];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_21) & MHMASK(ABITS2_21))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][(address - memoryreadoffset[hw])];
-	}
-
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
-}
-
-
-int cpu_readmem24 (int address)
-{
-	int shift, data;
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
-	}
-
-	/* fallback to handler */
-	shift = ((address ^ 1) & 1) << 3;
-	address &= ~1;
-	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
-	return (data >> shift) & 0xff;
-}
-
-
-int cpu_readmem24_word (int address)
-{
-	/* should only be called on even byte addresses */
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	}
-
-	/* fallback to handler */
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
-}
-
-
-int cpu_readmem24_dword (int address)
-{
-	/* should only be called on even byte addresses */
-	unsigned int val;
-	MHELE hw;
-
-	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
-	{
-		/* 1st element link */
-		hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-        if (hw != cur_mrhard[(address + 2) >> (ABITS2_24 + ABITS_MIN_24)])
-			return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
-        if (hw <= HT_BANKMAX)
-		{
-		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword load case */
-			if (address & 3)
-			{
-				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
-			}
-			else
-			{
-				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return BIG_DWORD_BE(val);
-			}
-
-			#else
-
-			val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-			return BIG_DWORD_BE(val);
-			#endif
-
-		}
-		if (hw >= MH_HARDMAX)
-		{
-			MHELE hw2;
-			/* 2nd element link */
-			hw -= MH_HARDMAX;
-			hw2 = readhardware[(hw << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-			if (hw2 != readhardware[(hw << MH_SBITS) + (((address + 2) >> ABITS_MIN_24) & MHMASK(ABITS2_24))])
-				return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
-			hw = hw2;
-			if (hw < HT_BANKMAX)
-			{
-			  	#ifdef ALIGN_INTS
-				if (address & 3)
-				{
-					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-					return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
-				}
-				else
-				{
-					val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-					return BIG_DWORD_BE(val);
-				}
-
-				#else
-
-				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return BIG_DWORD_BE(val);
-				#endif
-
-			}
-		}
-
-		/* fallback to handler */
-        address -= memoryreadoffset[hw];
-		return (memoryreadhandler[hw](address) << 16) + (memoryreadhandler[hw](address + 2) & 0xffff);
-    }
-	else
-	{
-		return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
-	}
-}
-
-/*
- *
- * This is for the TMS34010
- * When writing a dword 0x12345678, the bytes get written as
- * 0x78, 0x56, 0x34, 0x12
- *
- * So, a read from an even byte gives the low 8 bits of a word
- */
-int cpu_readmem29 (int address)  /* AJP 980803 */
-{
-	unsigned int shift, data;
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
-	}
-
-	/* fallback to handler */
-	shift = (((unsigned int) address) & 1) << 3;
-	address &= ~1;
-	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
-	return (data >> shift) & 0xff;
-}
-
-
-int cpu_readmem29_word (int address)  /* AJP 980803 */
-{
-	/* should only be called on even byte addresses */
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
-	}
-
-	/* fallback to handler */
-	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
-}
-
-
-int cpu_readmem29_dword (int address)  /* AJP 980803 */
-{
-	/* should only be called on even byte addresses */
-	unsigned int val;
-	MHELE hw;
-
-	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
-	{
-		/* 1st element link */
-		hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-		if (hw <= HT_BANKMAX)
-		{
-		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword load case */
-			if (address & 3)
-			{
-				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
-			}
-			else
-			{
-				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return BIG_DWORD_LE(val);
-			}
-
-			#else
-
-			val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-			return BIG_DWORD_LE(val);
-			#endif
-
-		}
-		if (hw >= MH_HARDMAX)
-		{
-			/* 2nd element link */
-			hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-			if (hw <= HT_BANKMAX)
-			{
-			  	#ifdef ALIGN_INTS
-				if (address & 3)
-				{
-					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-					return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
-				}
-				else
-				{
-					val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-					return BIG_DWORD_LE(val);
-				}
-
-				#else
-
-				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return BIG_DWORD_LE(val);
-				#endif
-
-			}
-		}
-
-		/* fallback to handler */
-		address -= memoryreadoffset[hw];
-		return (memoryreadhandler[hw]((unsigned int) address) & 0xffff) + (memoryreadhandler[hw]((unsigned int) address + 2) <<16);
-	}
-	else
-	{
-		return (((cpu_readmem29_word(address)) & 0xffff) + ((cpu_readmem29_word((address + 2)&0x1fffffff)) <<16));
-	}
-}
 
 /***************************************************************************
 
@@ -1280,538 +1069,257 @@ int cpu_readmem29_dword (int address)  /* AJP 980803 */
 
 ***************************************************************************/
 
-void cpu_writemem16 (int address, int data)
-{
-	MHELE hw;
+/* generic byte-sized write handler */
+#define WRITEBYTE(name,type,abits2,abitsmin)											\
+void name(int address, int data)														\
+{																						\
+	MHELE hw;																			\
+																						\
+	/* first-level lookup */															\
+	hw = cur_mwhard[(UINT32)address >> (abits2 + abitsmin)];							\
+																						\
+	/* for compatibility with setbankhandler, 8-bit systems must call handlers */		\
+	/* for banked memory reads/writes */												\
+	if (type == TYPE_8BIT && hw == HT_RAM)												\
+	{																					\
+		cpu_bankbase[HT_RAM][address] = data;											\
+		return;																			\
+	}																					\
+	else if (type != TYPE_8BIT && hw <= HT_BANKMAX)										\
+	{																					\
+		if (type == TYPE_16BIT_BE)														\
+			cpu_bankbase[hw][BYTE_XOR_BE(address) - memorywriteoffset[hw]] = data;		\
+		else if (type == TYPE_16BIT_LE)													\
+			cpu_bankbase[hw][BYTE_XOR_LE(address) - memorywriteoffset[hw]] = data;		\
+		return;																			\
+	}																					\
+																						\
+	/* second-level lookup */															\
+	if (hw >= MH_HARDMAX)																\
+	{																					\
+		hw -= MH_HARDMAX;																\
+		hw = writehardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+																						\
+		/* for compatibility with setbankhandler, 8-bit systems must call handlers */	\
+		/* for banked memory reads/writes */											\
+		if (type == TYPE_8BIT && hw == HT_RAM)											\
+		{																				\
+			cpu_bankbase[HT_RAM][address] = data;										\
+			return;																		\
+		}																				\
+		else if (type != TYPE_8BIT && hw <= HT_BANKMAX)									\
+		{																				\
+			if (type == TYPE_16BIT_BE)													\
+				cpu_bankbase[hw][BYTE_XOR_BE(address) - memorywriteoffset[hw]] = data;	\
+			else if (type == TYPE_16BIT_LE)												\
+				cpu_bankbase[hw][BYTE_XOR_LE(address) - memorywriteoffset[hw]] = data;	\
+			return;																		\
+		}																				\
+	}																					\
+																						\
+	/* fall back to handler */															\
+	if (type != TYPE_8BIT)																\
+	{																					\
+		int shift = (address & 1) << 3;													\
+		if (type == TYPE_16BIT_BE)														\
+			shift ^= 8;																	\
+		data = (0xff000000 >> shift) | ((data & 0xff) << shift);						\
+		address &= ~1;																	\
+	}																					\
+	(*memorywritehandler[hw])(address - memorywriteoffset[hw], data);					\
+}
 
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_16 + ABITS_MIN_16)];
-	if (!hw)
-	{
-		RAM[address] = data;
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
-		if (!hw)
-		{
-			RAM[address] = data;
-			return;
-		}
-	}
+/* generic word-sized write handler (16-bit aligned only!) */
+#define WRITEWORD(name,type,abits2,abitsmin,align)										\
+void name##_word(int address, int data)													\
+{																						\
+	MHELE hw;																			\
+																						\
+	/* only supports 16-bit memory systems */											\
+	if (type == TYPE_8BIT)																\
+		printf("Unsupported type for WRITEWORD macro!\n");								\
+																						\
+	/* handle aligned case first */														\
+	if (align == ALWAYS_ALIGNED || !(address & 1))										\
+	{																					\
+		/* first-level lookup */														\
+		hw = cur_mwhard[(UINT32)address >> (abits2 + abitsmin)];						\
+		if (hw <= HT_BANKMAX)															\
+		{																				\
+			WRITE_WORD(&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);		\
+			return;																		\
+		}																				\
+																						\
+		/* second-level lookup */														\
+		if (hw >= MH_HARDMAX)															\
+		{																				\
+			hw -= MH_HARDMAX;															\
+			hw = writehardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+			if (hw <= HT_BANKMAX)														\
+			{																			\
+				WRITE_WORD(&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);	\
+				return;																	\
+			}																			\
+		}																				\
+																						\
+		/* fall back to handler */														\
+		(*memorywritehandler[hw])(address - memorywriteoffset[hw], data & 0xffff);		\
+	}																					\
+																						\
+	/* unaligned case */																\
+	else if (type == TYPE_16BIT_BE)														\
+	{																					\
+		name(address, data >> 8);														\
+		name(address + 1, data & 0xff);													\
+	}																					\
+	else if (type == TYPE_16BIT_LE)														\
+	{																					\
+		name(address, data & 0xff);														\
+		name(address + 1, data >> 8);													\
+	}																					\
+}
 
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw], data);
+/* generic dword-sized write handler (16-bit aligned only!) */
+#define WRITELONG(name,type,abits2,abitsmin,align)										\
+void name##_dword(int address, int data)												\
+{																						\
+	UINT16 word1, word2;																\
+	MHELE hw1, hw2;																		\
+																						\
+	/* only supports 16-bit memory systems */											\
+	if (type == TYPE_8BIT)																\
+		printf("Unsupported type for WRITEWORD macro!\n");								\
+																						\
+	/* handle aligned case first */														\
+	if (align == ALWAYS_ALIGNED || !(address & 1))										\
+	{																					\
+		/* first-level lookup */														\
+		hw1 = cur_mwhard[(UINT32)address >> (abits2 + abitsmin)];						\
+		hw2 = cur_mwhard[(UINT32)(address + 2) >> (abits2 + abitsmin)];					\
+																						\
+		/* second-level lookup */														\
+		if (hw1 >= MH_HARDMAX)															\
+		{																				\
+			hw1 -= MH_HARDMAX;															\
+			hw1 = writehardware[(hw1 << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+		}																				\
+		if (hw2 >= MH_HARDMAX)															\
+		{																				\
+			hw2 -= MH_HARDMAX;															\
+			hw2 = writehardware[(hw2 << MH_SBITS) + (((UINT32)(address + 2) >> abitsmin) & MHMASK(abits2))];	\
+		}																				\
+																						\
+		/* extract words */																\
+		if (type == TYPE_16BIT_BE)														\
+		{																				\
+			word1 = data >> 16;															\
+			word2 = data & 0xffff;														\
+		}																				\
+		else if (type == TYPE_16BIT_LE)													\
+		{																				\
+			word1 = data & 0xffff;														\
+			word2 = data >> 16;															\
+		}																				\
+																						\
+		/* process each word */															\
+		if (hw1 <= HT_BANKMAX)															\
+			WRITE_WORD(&cpu_bankbase[hw1][address - memorywriteoffset[hw1]], word1);	\
+		else																			\
+			(*memorywritehandler[hw1])(address - memorywriteoffset[hw1], word1);		\
+		if (hw2 <= HT_BANKMAX)															\
+			WRITE_WORD(&cpu_bankbase[hw2][address + 2 - memorywriteoffset[hw2]], word2);\
+		else																			\
+			(*memorywritehandler[hw2])(address + 2 - memorywriteoffset[hw2], word2);	\
+	}																					\
+																						\
+	/* unaligned case */																\
+	else if (type == TYPE_16BIT_BE)														\
+	{																					\
+		name(address, data >> 24);														\
+		name##_word(address + 1, (data >> 8) & 0xffff);									\
+		name(address + 3, data & 0xff);													\
+	}																					\
+	else if (type == TYPE_16BIT_LE)														\
+	{																					\
+		name(address, data & 0xff);														\
+		name##_word(address + 1, (data >> 8) & 0xffff);									\
+		name(address + 3, data >> 24);													\
+	}																					\
 }
 
 
-void cpu_writemem16bew (int address, int data)
-{
-	int shift;
-	MHELE hw;
+/* the handlers we need to generate */
+WRITEBYTE(cpu_writemem16,    TYPE_8BIT,     ABITS2_16,    ABITS_MIN_16)
+WRITEBYTE(cpu_writemem20,    TYPE_8BIT,     ABITS2_20,    ABITS_MIN_20)
+WRITEBYTE(cpu_writemem21,    TYPE_8BIT,     ABITS2_21,    ABITS_MIN_21)
 
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
-	if (hw <= HT_BANKMAX)
-	{
-		cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
-		if (hw <= HT_BANKMAX)
-		{
-			cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
-			return;
-		}
-	}
+WRITEBYTE(cpu_writemem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW)
+WRITEWORD(cpu_writemem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW, ALWAYS_ALIGNED)
 
-	/* fallback to handler */
-	shift = 8 - ((address & 1) << 3);
-	address &= ~1;
-	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
+WRITEBYTE(cpu_writemem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW)
+WRITEWORD(cpu_writemem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW, ALWAYS_ALIGNED)
+
+WRITEBYTE(cpu_writemem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24)
+WRITEWORD(cpu_writemem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
+WRITELONG(cpu_writemem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
+
+WRITEBYTE(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29)
+WRITEWORD(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
+WRITELONG(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
+
+
+/***************************************************************************
+
+  Opcode base changers. This function is called by the CPU emulation.
+
+***************************************************************************/
+
+/* generic opcode base changer */
+#define SETOPBASE(name,abits2,abitsmin)													\
+void name(int pc)																		\
+{																						\
+	MHELE hw;																			\
+																						\
+	/* allow overrides */																\
+	if (OPbasefunc)																		\
+	{																					\
+		pc = OPbasefunc(pc);															\
+		if (pc == -1)																	\
+			return;																		\
+	}																					\
+																						\
+	/* perform the lookup */															\
+	hw = cur_mrhard[(UINT32)pc >> (abits2 + abitsmin)];									\
+	if (hw >= MH_HARDMAX)																\
+	{																					\
+		hw -= MH_HARDMAX;																\
+		hw = readhardware[(hw << MH_SBITS) + (((UINT32)pc >> abitsmin) & MHMASK(abits2))];	\
+	}																					\
+	ophw = hw;																			\
+																						\
+	/* RAM or banked memory */															\
+	if (hw <= HT_BANKMAX)																\
+	{																					\
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])							\
+		return;																			\
+	}																					\
+																						\
+	/* do not support on callback memory region */										\
+	if (errorlog)																		\
+		fprintf(errorlog, "CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",	\
+					cpu_getactivecpu(),cpu_get_pc());									\
 }
 
 
-void cpu_writemem16bew_word (int address, int data)
-{
-	MHELE hw;
+/* the handlers we need to generate */
+SETOPBASE(cpu_setOPbase16,    ABITS2_16,    ABITS_MIN_16)
+SETOPBASE(cpu_setOPbase16bew, ABITS2_16BEW, ABITS_MIN_16BEW)
+SETOPBASE(cpu_setOPbase16lew, ABITS2_16LEW, ABITS_MIN_16LEW)
+SETOPBASE(cpu_setOPbase20,    ABITS2_20,    ABITS_MIN_20)
+SETOPBASE(cpu_setOPbase21,    ABITS2_21,    ABITS_MIN_21)
+SETOPBASE(cpu_setOPbase24,    ABITS2_24,    ABITS_MIN_24)
+SETOPBASE(cpu_setOPbase29,    ABITS2_29,    ABITS_MIN_29)
 
-	/* writes across word boundaries must be broken up */
-	/* disabled because only one processor uses this (TMS9900), and it always uses aligned operands */
-	/*if (address & 1)
-	{
-		cpu_writemem16bew (address, data >> 8);
-		cpu_writemem16bew (address + 1, data & 0xff);
-		return;
-	}*/
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
-	if (hw <= HT_BANKMAX)
-	{
-		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
-		if (hw <= HT_BANKMAX)
-		{
-			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
-}
-
-
-void cpu_writemem16lew (int address, int data)
-{
-	int shift;
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
-	if (hw <= HT_BANKMAX)
-	{
-		cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
-		if (hw <= HT_BANKMAX)
-		{
-			cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	shift = (address & 1) << 3;
-	address &= ~1;
-	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
-}
-
-
-void cpu_writemem16lew_word (int address, int data)
-{
-	MHELE hw;
-
-	/* writes across word boundaries must be broken up */
-	if (address & 1)
-	{
-		cpu_writemem16lew (address, data & 0xff);
-		cpu_writemem16lew (address + 1, data >> 8);
-		return;
-	}
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
-	if (hw <= HT_BANKMAX)
-	{
-		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
-		if (hw <= HT_BANKMAX)
-		{
-			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
-}
-
-
-void cpu_writemem20 (int address, int data)
-{
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_20 + ABITS_MIN_20)];
-	if (!hw)
-	{
-		RAM[address] = data;
-		return;
-	}
-	if ( hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_20) & MHMASK(ABITS2_20))];
-		if (!hw)
-		{
-			RAM[address] = data;
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw],data);
-}
-
-
-void cpu_writemem21 (int address, int data)
-{
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_21 + ABITS_MIN_21)];
-
-	if (hw <= HT_BANKMAX)
-	{
-		cpu_bankbase[hw][(address - memorywriteoffset[hw])] = data;
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_21) & MHMASK(ABITS2_21))];
-		if (hw <= HT_BANKMAX)
-		{
-			cpu_bankbase[hw][(address - memorywriteoffset[hw])] = data;
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw],data);
-}
-
-
-void cpu_writemem24 (int address, int data)
-{
-	int shift;
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX)
-	{
-		cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-		if (hw <= HT_BANKMAX)
-		{
-			cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	shift = ((address ^ 1) & 1) << 3;
-	address &= ~1;
-	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
-}
-
-
-void cpu_writemem24_word (int address, int data)
-{
-	/* should only be called on even byte addresses */
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX)
-	{
-		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-		if (hw <= HT_BANKMAX)
-		{
-			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
-}
-
-
-void cpu_writemem24_dword (int address, int data)
-{
-	/* should only be called on even byte addresses */
-	MHELE hw;
-
-	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
-	{
-		/* 1st element link */
-		hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-        if (hw != cur_mwhard[(address + 2) >> (ABITS2_24 + ABITS_MIN_24)])
-		{
-			cpu_writemem24_word(address, (data >> 16) & 0xffff);
-			cpu_writemem24_word(address + 2, data & 0xffff);
-			return;
-		}
-        if (hw <= HT_BANKMAX)
-		{
-		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword store case */
-			if (address & 3)
-			{
-				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
-				*addressbase = data >> SHIFT0;
-				*(addressbase+1) = data >> SHIFT1;
-				*(addressbase+2) = data >> SHIFT2;
-				*(addressbase+3) = data >> SHIFT3;
-				return;
-			}
-			else
-			{
-				data = BIG_DWORD_BE ((unsigned int)data);
-				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-				return;
-			}
-
-			#else
-
-			data = BIG_DWORD_BE ((unsigned int)data);
-			*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-			return;
-			#endif
-
-		}
-		if (hw >= MH_HARDMAX)
-		{
-			MHELE hw2;
-			/* 2nd element link */
-			hw -= MH_HARDMAX;
-			hw2 = writehardware[(hw << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-			if (hw2 != writehardware[(hw << MH_SBITS) + (((address + 2) >> ABITS_MIN_24) & MHMASK(ABITS2_24))])
-			{
-				cpu_writemem24_word(address, (data >> 16) &0xffff);
-				cpu_writemem24_word(address + 2, data & 0xffff);
-				return;
-			}
-            hw = hw2;
-			if (hw <= HT_BANKMAX)
-			{
-			  	#ifdef ALIGN_INTS
-				if (address & 3)
-				{
-					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
-					*addressbase = data >> SHIFT0;
-					*(addressbase+1) = data >> SHIFT1;
-					*(addressbase+2) = data >> SHIFT2;
-					*(addressbase+3) = data >> SHIFT3;
-					return;
-				}
-				else
-				{
-					data = BIG_DWORD_BE ((unsigned int)data);
-					*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-					return;
-				}
-
-				#else
-
-				data = BIG_DWORD_BE ((unsigned int)data);
-				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-				return;
-				#endif
-
-			}
-		}
-
-		/* fallback to handler */
-		address -= memorywriteoffset[hw];
-        memorywritehandler[hw](address, (data >> 16) & 0xffff);
-		memorywritehandler[hw](address + 2, data & 0xffff);
-    }
-	else
-	{
-		cpu_writemem24_word(address, (data >> 16) &0xffff);
-		cpu_writemem24_word(address + 2, data & 0xffff);
-	}
-}
-
-void cpu_writemem29 (int address, int data)  /* AJP 980803 */
-{
-	unsigned int shift;
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-	if (hw <= HT_BANKMAX)
-	{
-		cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-		if (hw <= HT_BANKMAX)
-		{
-			cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	shift = (((unsigned int) address) & 1) << 3;
-	address &= ~1;
-	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
-}
-
-
-void cpu_writemem29_word (int address, int data)  /* AJP 980803 */
-{
-	/* should only be called on even byte addresses */
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-	if (hw <= HT_BANKMAX)
-	{
-		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-		if (hw <= HT_BANKMAX)
-		{
-			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
-}
-
-void cpu_writemem29_word_masked (int address, int data)  /* AJP 980803 */
-{
-	/* should only be called on even byte addresses */
-	/* data is (mask<<16) + data_word */
-	MHELE hw;
-
-	/* 1st element link */
-	hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-	if (hw <= HT_BANKMAX)
-	{
-		COMBINE_WORD_MEM (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-		return;
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-		if (hw <= HT_BANKMAX)
-		{
-			COMBINE_WORD_MEM (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
-			return;
-		}
-	}
-
-	/* fallback to handler */
-	memorywritehandler[hw](address - memorywriteoffset[hw], data);
-}
-
-void cpu_writemem29_dword (int address, int data)  /* AJP 980803 */
-{
-	/* should only be called on even byte addresses */
-	MHELE hw;
-
-	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
-	{
-		/* 1st element link */
-		hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
-		if (hw <= HT_BANKMAX)
-		{
-		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword store case */
-			if (address & 3)
-			{
-				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
-				*addressbase = data >> SHIFT0;
-				*(addressbase+1) = data >> SHIFT1;
-				*(addressbase+2) = data >> SHIFT2;
-				*(addressbase+3) = data >> SHIFT3;
-				return;
-			}
-			else
-			{
-				data = BIG_DWORD_LE ((unsigned int)data);
-				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-				return;
-			}
-
-			#else
-
-			data = BIG_DWORD_LE ((unsigned int)data);
-			*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-			return;
-			#endif
-
-		}
-		if (hw >= MH_HARDMAX)
-		{
-			/* 2nd element link */
-			hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-			if (hw <= HT_BANKMAX)
-			{
-			  	#ifdef ALIGN_INTS  /* this may be wrong */
-				if (address & 3)
-				{
-					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
-					*addressbase = data >> SHIFT0;
-					*(addressbase+1) = data >> SHIFT1;
-					*(addressbase+2) = data >> SHIFT2;
-					*(addressbase+3) = data >> SHIFT3;
-					return;
-				}
-				else
-				{
-					data = BIG_DWORD_LE ((unsigned int)data);
-					*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-					return;
-				}
-
-				#else
-
-				data = BIG_DWORD_LE ((unsigned int)data);
-				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-				return;
-				#endif
-
-			}
-		}
-
-		/* fallback to handler */
-		address -= memorywriteoffset[hw];
-		memorywritehandler[hw](address, data & 0xffff);
-		memorywritehandler[hw](address + 2, (data >> 16) & 0xffff);
-	}
-	else
-	{
-		cpu_writemem29_word(address, data & 0xffff);
-		cpu_writemem29_word((address + 2)&0x1fffffff, (data >> 16) &0xffff);
-	}
-}
 
 /***************************************************************************
 
@@ -1831,7 +1339,7 @@ int cpu_readport(int port)
 	{
 		if (port >= iorp->start && port <= iorp->end)
 		{
-			int (*handler)(int) = iorp->handler;
+			mem_read_handler handler = iorp->handler;
 
 
 			if (handler == IORP_NOP) return 0;
@@ -1864,7 +1372,7 @@ void cpu_writeport(int port, int value)
 	{
 		if (port >= iowp->start && port <= iowp->end)
 		{
-			void (*handler)(int,int) = iowp->handler;
+			mem_write_handler handler = iowp->handler;
 
 
 			if (handler == IOWP_NOP) return;
@@ -1881,9 +1389,10 @@ void cpu_writeport(int port, int value)
 
 
 /* set readmemory handler for bank memory  */
-void cpu_setbankhandler_r(int bank,int (*handler)(int) )
+void cpu_setbankhandler_r(int bank, mem_read_handler handler)
 {
 	int offset = 0;
+	MHELE hardware;
 
 	switch( (FPTR)handler )
 	{
@@ -1892,36 +1401,24 @@ void cpu_setbankhandler_r(int bank,int (*handler)(int) )
 		handler = mrh_ram;
 		break;
 	case (FPTR)MRA_BANK1:
-		handler = mrh_bank1;
-		offset = bankreadoffset[1];
-		break;
 	case (FPTR)MRA_BANK2:
-		handler = mrh_bank2;
-		offset = bankreadoffset[2];
-		break;
 	case (FPTR)MRA_BANK3:
-		handler = mrh_bank3;
-		offset = bankreadoffset[3];
-		break;
 	case (FPTR)MRA_BANK4:
-		handler = mrh_bank4;
-		offset = bankreadoffset[4];
-		break;
 	case (FPTR)MRA_BANK5:
-		handler = mrh_bank5;
-		offset = bankreadoffset[5];
-		break;
 	case (FPTR)MRA_BANK6:
-		handler = mrh_bank6;
-		offset = bankreadoffset[6];
-		break;
 	case (FPTR)MRA_BANK7:
-		handler = mrh_bank7;
-		offset = bankreadoffset[7];
-		break;
 	case (FPTR)MRA_BANK8:
-		handler = mrh_bank8;
-		offset = bankreadoffset[8];
+	case (FPTR)MRA_BANK9:
+	case (FPTR)MRA_BANK10:
+	case (FPTR)MRA_BANK11:
+	case (FPTR)MRA_BANK12:
+	case (FPTR)MRA_BANK13:
+	case (FPTR)MRA_BANK14:
+	case (FPTR)MRA_BANK15:
+	case (FPTR)MRA_BANK16:
+		hardware = (int)MWA_BANK1 - (int)handler + 1;
+		handler = bank_read_handler[hardware];
+		offset = bankreadoffset[hardware];
 		break;
 	case (FPTR)MRA_NOP:
 		handler = mrh_nop;
@@ -1935,9 +1432,10 @@ void cpu_setbankhandler_r(int bank,int (*handler)(int) )
 }
 
 /* set writememory handler for bank memory  */
-void cpu_setbankhandler_w(int bank,void (*handler)(int,int) )
+void cpu_setbankhandler_w(int bank, mem_write_handler handler)
 {
 	int offset = 0;
+	MHELE hardware;
 
 	switch( (FPTR)handler )
 	{
@@ -1945,36 +1443,24 @@ void cpu_setbankhandler_w(int bank,void (*handler)(int,int) )
 		handler = mwh_ram;
 		break;
 	case (FPTR)MWA_BANK1:
-		handler = mwh_bank1;
-		offset = bankwriteoffset[1];
-		break;
 	case (FPTR)MWA_BANK2:
-		handler = mwh_bank2;
-		offset = bankwriteoffset[2];
-		break;
 	case (FPTR)MWA_BANK3:
-		handler = mwh_bank3;
-		offset = bankwriteoffset[3];
-		break;
 	case (FPTR)MWA_BANK4:
-		handler = mwh_bank4;
-		offset = bankwriteoffset[4];
-		break;
 	case (FPTR)MWA_BANK5:
-		handler = mwh_bank5;
-		offset = bankwriteoffset[5];
-		break;
 	case (FPTR)MWA_BANK6:
-		handler = mwh_bank6;
-		offset = bankwriteoffset[6];
-		break;
 	case (FPTR)MWA_BANK7:
-		handler = mwh_bank7;
-		offset = bankwriteoffset[7];
-		break;
 	case (FPTR)MWA_BANK8:
-		handler = mwh_bank8;
-		offset = bankwriteoffset[8];
+	case (FPTR)MWA_BANK9:
+	case (FPTR)MWA_BANK10:
+	case (FPTR)MWA_BANK11:
+	case (FPTR)MWA_BANK12:
+	case (FPTR)MWA_BANK13:
+	case (FPTR)MWA_BANK14:
+	case (FPTR)MWA_BANK15:
+	case (FPTR)MWA_BANK16:
+		hardware = (int)MWA_BANK1 - (int)handler + 1;
+		handler = bank_write_handler[hardware];
+		offset = bankwriteoffset[hardware];
 		break;
 	case (FPTR)MWA_NOP:
 		handler = mwh_nop;
@@ -1994,262 +1480,15 @@ void cpu_setbankhandler_w(int bank,void (*handler)(int,int) )
 }
 
 /* cpu change op-code memory base */
-void cpu_setOPbaseoverride (int cpu,int (*function)(int))
+void cpu_setOPbaseoverride (int cpu,opbase_handler function)
 {
 	setOPbasefunc[cpu] = function;
+	if (cpu == cpu_getactivecpu())
+		OPbasefunc = function;
 }
 
 
-/* Need to called after CPU or PC changed (JP,JR,BRA,CALL,RET) */
-void cpu_setOPbase16 (int pc)
-{
-	MHELE hw;
-
-	/* ASG 970206 -- allow overrides */
-	if (OPbasefunc)
-	{
-		pc = OPbasefunc (pc);
-		if (pc == -1)
-			return;
-	}
-
-	/* 1st element link */
-	hw = cur_mrhard[pc >> (ABITS2_16 + ABITS_MIN_16)];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
-	}
-	ophw = hw;
-
-	if (!hw)
-	{
-	 /* memory direct */
-		SET_OP_RAMROM(RAM)
-		return;
-	}
-
-	if (hw <= HT_BANKMAX)
-	{
-		/* banked memory select */
-		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
-		return;
-	}
-
-	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
-}
-
-
-void cpu_setOPbase16bew (int pc)
-{
-	MHELE hw;
-
-	/* ASG 970206 -- allow overrides */
-	if (OPbasefunc)
-	{
-		pc = OPbasefunc (pc);
-		if (pc == -1)
-			return;
-	}
-
-	/* 1st element link */
-	hw = cur_mrhard[pc >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
-	}
-	ophw = hw;
-
-	if (!hw)
-	{
-	 /* memory direct */
-		SET_OP_RAMROM(RAM)
-		return;
-	}
-
-	if (hw <= HT_BANKMAX)
-	{
-		/* banked memory select */
-		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
-		return;
-	}
-
-	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
-}
-
-
-void cpu_setOPbase16lew (int pc)
-{
-	MHELE hw;
-
-	/* ASG 970206 -- allow overrides */
-	if (OPbasefunc)
-	{
-		pc = OPbasefunc (pc);
-		if (pc == -1)
-			return;
-	}
-
-	/* 1st element link */
-	hw = cur_mrhard[pc >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
-	}
-	ophw = hw;
-
-	if (!hw)
-	{
-	 /* memory direct */
-		SET_OP_RAMROM(RAM)
-		return;
-	}
-
-	if (hw <= HT_BANKMAX)
-	{
-		/* banked memory select */
-		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
-		return;
-	}
-
-	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
-}
-
-
-void cpu_setOPbase20 (int pc)
-{
-	MHELE hw;
-
-	/* ASG 970206 -- allow overrides */
-	if (OPbasefunc)
-	{
-		pc = OPbasefunc (pc);
-		if (pc == -1)
-			return;
-	}
-
-	/* 1st element link */
-	hw = cur_mrhard[pc >> (ABITS2_20 + ABITS_MIN_20)];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_20) & MHMASK (ABITS2_20))];
-	}
-	ophw = hw;
-
-	if (!hw)
-	{
-		/* memory direct */
-		SET_OP_RAMROM(RAM)
-		return;
-	}
-
-	if (hw <= HT_BANKMAX)
-	{
-		/* banked memory select */
-		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
-		return;
-	}
-
-	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
-}
-
-
-/* Opcode execution is _always_ within the 16 bit range */
-void cpu_setOPbase21 (int pc)
-{
-	SET_OP_RAMROM(RAM)
-}
-
-
-void cpu_setOPbase24 (int pc)
-{
-	MHELE hw;
-
-	/* ASG 970206 -- allow overrides */
-	if (OPbasefunc)
-	{
-		pc = OPbasefunc (pc);
-		if (pc == -1)
-			return;
-	}
-
-	/* 1st element link */
-	hw = cur_mrhard[pc >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-	}
-	ophw = hw;
-
-	if (!hw)
-	{
-		/* memory direct */
-		SET_OP_RAMROM(RAM)
-		return;
-	}
-
-	if (hw <= HT_BANKMAX)
-	{
-		/* banked memory select */
-		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
-		return;
-	}
-
-	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
-}
-
-
-void cpu_setOPbase29 (int pc)    /* AJP 980803 */
-{
-	MHELE hw;
-
-	pc = ((unsigned int) pc)>>3;
-
-	/* ASG 970206 -- allow overrides */
-	if (OPbasefunc)
-	{
-		pc = OPbasefunc (pc);
-		if (pc == -1)
-			return;
-	}
-
-	/* 1st element link */
-	hw = cur_mrhard[((unsigned int) pc) >> (ABITS2_29 + ABITS_MIN_29)];
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((((unsigned int) pc) >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
-	}
-	ophw = hw;
-
-	if (!hw)
-	{
-		/* memory direct */
-		SET_OP_RAMROM(RAM)
-		return;
-	}
-
-	if (hw <= HT_BANKMAX)
-	{
-		/* banked memory select */
-		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
-		return;
-	}
-
-	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
-}
-
-void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
+void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler handler)
 {
 	MHELE hardware = 0;
 	int abitsmin;
@@ -2286,37 +1525,26 @@ void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 			hw_set = 1;
 			break;
 		case (FPTR)MRA_BANK1:
-			hardware = HT_BANK1;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK2:
-			hardware = HT_BANK2;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK3:
-			hardware = HT_BANK3;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK4:
-			hardware = HT_BANK4;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK5:
-			hardware = HT_BANK5;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK6:
-			hardware = HT_BANK6;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK7:
-			hardware = HT_BANK7;
-			hw_set = 1;
-			break;
 		case (FPTR)MRA_BANK8:
-			hardware = HT_BANK8;
+		case (FPTR)MRA_BANK9:
+		case (FPTR)MRA_BANK10:
+		case (FPTR)MRA_BANK11:
+		case (FPTR)MRA_BANK12:
+		case (FPTR)MRA_BANK13:
+		case (FPTR)MRA_BANK14:
+		case (FPTR)MRA_BANK15:
+		case (FPTR)MRA_BANK16:
+		{
+			hardware = (int)MRA_BANK1 - (int)handler + 1;
 			hw_set = 1;
 			break;
+		}
 		case (FPTR)MRA_NOP:
 			hardware = HT_NOP;
 			hw_set = 1;
@@ -2352,7 +1580,7 @@ void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 	return memory_find_base(cpu, start);
 }
 
-void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler handler)
 {
 	MHELE hardware = 0;
 	int abitsmin;
@@ -2389,37 +1617,26 @@ void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int
 			hw_set = 1;
 			break;
 		case (FPTR)MWA_BANK1:
-			hardware = HT_BANK1;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK2:
-			hardware = HT_BANK2;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK3:
-			hardware = HT_BANK3;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK4:
-			hardware = HT_BANK4;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK5:
-			hardware = HT_BANK5;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK6:
-			hardware = HT_BANK6;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK7:
-			hardware = HT_BANK7;
-			hw_set = 1;
-			break;
 		case (FPTR)MWA_BANK8:
-			hardware = HT_BANK8;
+		case (FPTR)MWA_BANK9:
+		case (FPTR)MWA_BANK10:
+		case (FPTR)MWA_BANK11:
+		case (FPTR)MWA_BANK12:
+		case (FPTR)MWA_BANK13:
+		case (FPTR)MWA_BANK14:
+		case (FPTR)MWA_BANK15:
+		case (FPTR)MWA_BANK16:
+		{
+			hardware = (int)MWA_BANK1 - (int)handler + 1;
 			hw_set = 1;
 			break;
+		}
 		case (FPTR)MWA_NOP:
 			hardware = HT_NOP;
 			hw_set = 1;
@@ -2464,18 +1681,18 @@ void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int
 	return memory_find_base(cpu, start);
 }
 
-void *install_port_read_handler(int cpu, int start, int end, int (*handler)(int))
+void *install_port_read_handler(int cpu, int start, int end, mem_read_handler handler)
 {
 	return install_port_read_handler_common(cpu, start, end, handler, 1);
 }
 
-void *install_port_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+void *install_port_write_handler(int cpu, int start, int end, mem_write_handler handler)
 {
 	return install_port_write_handler_common(cpu, start, end, handler, 1);
 }
 
 static void *install_port_read_handler_common(int cpu, int start, int end,
-											  int (*handler)(int), int install_at_beginning)
+											  mem_read_handler handler, int install_at_beginning)
 {
 	int i, oldsize;
 
@@ -2520,7 +1737,7 @@ static void *install_port_read_handler_common(int cpu, int start, int end,
 }
 
 static void *install_port_write_handler_common(int cpu, int start, int end,
-											   void (*handler)(int, int), int install_at_beginning)
+											   mem_write_handler handler, int install_at_beginning)
 {
 	int i, oldsize;
 

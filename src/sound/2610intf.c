@@ -19,8 +19,6 @@
 
 /* use FM.C with stream system */
 
-extern unsigned char No_FM;
-
 static int stream[MAX_2610];
 
 /* Global Interface holder */
@@ -98,12 +96,6 @@ int YM2610_sh_start(const struct MachineSound *msound)
 
 	if (AY8910_sh_start(msound)) return 1;
 
-	/* FM init */
-#if 0
-	if( No_FM ) FMMode = CHIP_YM2610_DAC;
-	else        FMMode = CHIP_YM2610_OPL;
-#endif
-
 	/* Timer Handler set */
 	FMTimerInit();
 
@@ -153,12 +145,6 @@ int YM2610B_sh_start(const struct MachineSound *msound)
 	if( intf->num > MAX_2610 ) return 1;
 
 	if (AY8910_sh_start(msound)) return 1;
-
-	/* FM init */
-#if 0
-	if( No_FM ) FMMode = CHIP_YM2610_DAC;
-	else        FMMode = CHIP_YM2610_OPL;
-#endif
 
 	/* Timer Handler set */
 	FMTimerInit();

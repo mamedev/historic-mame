@@ -376,11 +376,6 @@ Options:
               Higher values (e.g. 44100) cause higher audio quality but slower
               emulation speed.
 
--sb n         Sets the audio sample bits, either 8 or 16. The default is 8.
-              16 will increase quality with certain games, but decrease speed.
-              This is a software setting, not hardware. The sound card will
-              always be used in 16-bit mode, if possible.
-
 -stereo/-nostereo (default: -stereo)
               Selects stereo or mono output for games supporting stereo sound.
 

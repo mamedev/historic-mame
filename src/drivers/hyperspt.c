@@ -598,7 +598,7 @@ static struct MachineDriver machine_driver_roadf =
 ***************************************************************************/
 
 ROM_START( hyperspt )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
@@ -606,17 +606,17 @@ ROM_START( hyperspt )
 	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
 	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
 	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
 	ROM_LOAD( "c24",          0x02000, 0x2000, 0x5fb230c0 )
 	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
 	ROM_LOAD( "c20",          0x06000, 0x2000, 0x183f4324 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c14",          0x00000, 0x2000, 0xc72d63be )
 	ROM_LOAD( "c13",          0x02000, 0x2000, 0x76565608 )
 	ROM_LOAD( "c12",          0x04000, 0x2000, 0x74d2cc69 )
@@ -626,17 +626,17 @@ ROM_START( hyperspt )
 	ROM_LOAD( "c16",          0x0c000, 0x2000, 0xd7ff9f2b )
 	ROM_LOAD( "c15",          0x0e000, 0x2000, 0xf3d454e6 )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/*  64k for speech rom    */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/*  64k for speech rom    */
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
 ROM_START( hpolym84 )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
@@ -644,17 +644,17 @@ ROM_START( hpolym84 )
 	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
 	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
 	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
 
-	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
 	ROM_LOAD( "330e24.bin",   0x02000, 0x2000, 0xf9bbfe1d )
 	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
 	ROM_LOAD( "330e20.bin",   0x06000, 0x2000, 0x29969b92 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c14",          0x00000, 0x2000, 0xc72d63be )
 	ROM_LOAD( "c13",          0x02000, 0x2000, 0x76565608 )
 	ROM_LOAD( "c12",          0x04000, 0x2000, 0x74d2cc69 )
@@ -664,17 +664,17 @@ ROM_START( hpolym84 )
 	ROM_LOAD( "c16",          0x0c000, 0x2000, 0xd7ff9f2b )
 	ROM_LOAD( "c15",          0x0e000, 0x2000, 0xf3d454e6 )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/*  64k for speech rom    */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/*  64k for speech rom    */
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
 ROM_START( roadf )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "g05_g01.bin",  0x4000, 0x2000, 0xe2492a06 )
 	ROM_LOAD( "g07_f02.bin",  0x6000, 0x2000, 0x0bf75165 )
 	ROM_LOAD( "g09_g03.bin",  0x8000, 0x2000, 0xdde401f8 )
@@ -682,27 +682,27 @@ ROM_START( roadf )
 	ROM_LOAD( "g13_f05.bin",  0xC000, 0x2000, 0x0ad4d796 )
 	ROM_LOAD( "g15_f06.bin",  0xE000, 0x2000, 0xfa42e0ed )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a14_e26.bin",  0x00000, 0x4000, 0xf5c738e2 )
 	ROM_LOAD( "a12_d24.bin",  0x04000, 0x2000, 0x2d82c930 )
 	ROM_LOAD( "c14_e22.bin",  0x06000, 0x4000, 0xfbcfbeb9 )
 	ROM_LOAD( "c12_d20.bin",  0x0a000, 0x2000, 0x5e0cf994 )
 
-	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "j19_e14.bin",  0x00000, 0x4000, 0x16d2bcff )
 	ROM_LOAD( "g19_e18.bin",  0x04000, 0x4000, 0x490685ff )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
 ROM_END
 
 ROM_START( roadf2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "5g",           0x4000, 0x2000, 0xd8070d30 )
 	ROM_LOAD( "6g",           0x6000, 0x2000, 0x8b661672 )
 	ROM_LOAD( "8g",           0x8000, 0x2000, 0x714929e8 )
@@ -710,20 +710,20 @@ ROM_START( roadf2 )
 	ROM_LOAD( "g13_f05.bin",  0xC000, 0x2000, 0x0ad4d796 )
 	ROM_LOAD( "g15_f06.bin",  0xE000, 0x2000, 0xfa42e0ed )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a14_e26.bin",  0x00000, 0x4000, 0xf5c738e2 )
 	ROM_LOAD( "a12_d24.bin",  0x04000, 0x2000, 0x2d82c930 )
 	ROM_LOAD( "c14_e22.bin",  0x06000, 0x4000, 0xfbcfbeb9 )
 	ROM_LOAD( "c12_d20.bin",  0x0a000, 0x2000, 0x5e0cf994 )
 
-	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "j19_e14.bin",  0x00000, 0x4000, 0x16d2bcff )
 	ROM_LOAD( "g19_e18.bin",  0x04000, 0x4000, 0x490685ff )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )

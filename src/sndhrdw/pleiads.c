@@ -77,7 +77,7 @@ void pleiads_sound_control_a_w (int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_set_sample_freq(channel0,MAXFREQ_A/2/(16-freq));
+		mixer_set_sample_frequency(channel0,MAXFREQ_A/2/(16-freq));
 		mixer_set_volume(channel0,VOLUME_A);
 	}
 	else
@@ -95,7 +95,7 @@ void pleiads_sound_control_a_w (int offset,int data)
 
 		if (noise)
 		{
-			osd_set_sample_freq(channel1,noise_freq);
+			mixer_set_sample_frequency(channel1,noise_freq);
 			mixer_set_volume(channel1,noise_vol*100/255);
 		}
 		else
@@ -171,7 +171,7 @@ void pleiads_sound_control_b_w (int offset,int data)
 	/* freq == 0x0d and 0x0e do nothing, 0x0f does something different (SAST BIAS?) */
 	if (freq <= 0x0c)
 	{
-		osd_set_sample_freq(channel23+portBstatus, (1<<pitch) * TMS3615_freq[freq]);
+		mixer_set_sample_frequency(channel23+portBstatus, (1<<pitch) * TMS3615_freq[freq]);
 		mixer_set_volume(channel23+portBstatus,VOLUME_B);
 	}
 	else

@@ -1,5 +1,8 @@
 /***************************************************************************
 
+Super Contra / Thunder Cross
+
+driver by Bryan McPhail, Manuel Abadia
 
 ***************************************************************************/
 
@@ -216,7 +219,7 @@ static void thunderx_sh_irqtrigger_w(int offset, int data)
 
 static void scontra_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(4);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 	/* b3-b2: bank for chanel B */
 	/* b1-b0: bank for chanel A */
 
@@ -570,7 +573,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 4 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
@@ -673,12 +676,15 @@ static struct MachineDriver machine_driver_thunderx =
 ***************************************************************************/
 
 ROM_START( scontra )
-	ROM_REGIONX( 0x30800, REGION_CPU1 )	/* ROMs + banked RAM */
+	ROM_REGION( 0x30800, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "e02.k11",     0x10000, 0x08000, 0xa61c0ead )	/* banked ROM */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* fixed ROM */
 	ROM_LOAD( "e03.k13",     0x20000, 0x10000, 0x00b02622 )	/* banked ROM */
 
-	ROM_REGION( 0x100000 ) /* tiles */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
+	ROM_LOAD( "775-c01.bin", 0x00000, 0x08000, 0x0ced785a )
+
+	ROM_REGION( 0x100000, REGION_GFX1 ) /* tiles */
 	ROM_LOAD_GFX_EVEN( "775-a07a.bin", 0x00000, 0x20000, 0xe716bdf3 )	/* tiles */
 	ROM_LOAD_GFX_ODD(  "775-a07e.bin", 0x00000, 0x20000, 0x0986e3a5 )
 	ROM_LOAD_GFX_EVEN( "775-f07c.bin", 0x40000, 0x10000, 0xb0b30915 )
@@ -692,7 +698,7 @@ ROM_START( scontra )
 	ROM_LOAD_GFX_EVEN( "775-f08d.bin", 0xe0000, 0x10000, 0x102dcace )
 	ROM_LOAD_GFX_ODD(  "775-f08h.bin", 0xe0000, 0x10000, 0xad9d7016 )
 
-	ROM_REGION( 0x100000 ) /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* sprites */
 	ROM_LOAD_GFX_EVEN( "775-a05a.bin", 0x00000, 0x10000, 0xa0767045 )	/* sprites */
 	ROM_LOAD_GFX_ODD(  "775-a05e.bin", 0x00000, 0x10000, 0x2f656f08 )
 	ROM_LOAD_GFX_EVEN( "775-a05b.bin", 0x20000, 0x10000, 0xab8ad4fd )
@@ -710,10 +716,7 @@ ROM_START( scontra )
 	ROM_LOAD_GFX_EVEN( "775-f06d.bin", 0xe0000, 0x10000, 0xc8b764fa )
 	ROM_LOAD_GFX_ODD(  "775-f06h.bin", 0xe0000, 0x10000, 0xd6595f59 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
-	ROM_LOAD( "775-c01.bin", 0x00000, 0x08000, 0x0ced785a )
-
-	ROM_REGION( 0x80000 )	/* k007232 data */
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* k007232 data */
 	ROM_LOAD( "775-a04a.bin", 0x00000, 0x10000, 0x7efb2e0f )
 	ROM_LOAD( "775-a04b.bin", 0x10000, 0x10000, 0xf41a2b33 )
 	ROM_LOAD( "775-a04c.bin", 0x20000, 0x10000, 0xe4e58f14 )
@@ -723,17 +726,20 @@ ROM_START( scontra )
 	ROM_LOAD( "775-f04g.bin", 0x60000, 0x10000, 0xee107bbb )
 	ROM_LOAD( "775-f04h.bin", 0x70000, 0x10000, 0xfb0fab46 )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( scontraj )
-	ROM_REGIONX( 0x30800, REGION_CPU1 )	/* ROMs + banked RAM */
+	ROM_REGION( 0x30800, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "775-f02.bin", 0x10000, 0x08000, 0x8d5933a7 )	/* banked ROM */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* fixed ROM */
 	ROM_LOAD( "775-f03.bin", 0x20000, 0x10000, 0x1ef63d80 )	/* banked ROM */
 
-	ROM_REGION( 0x100000 ) /* tiles */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
+	ROM_LOAD( "775-c01.bin", 0x00000, 0x08000, 0x0ced785a )
+
+	ROM_REGION( 0x100000, REGION_GFX1 ) /* tiles */
 	ROM_LOAD_GFX_EVEN( "775-a07a.bin", 0x00000, 0x20000, 0xe716bdf3 )	/* tiles */
 	ROM_LOAD_GFX_ODD(  "775-a07e.bin", 0x00000, 0x20000, 0x0986e3a5 )
 	ROM_LOAD_GFX_EVEN( "775-f07c.bin", 0x40000, 0x10000, 0xb0b30915 )
@@ -747,7 +753,7 @@ ROM_START( scontraj )
 	ROM_LOAD_GFX_EVEN( "775-f08d.bin", 0xe0000, 0x10000, 0x102dcace )
 	ROM_LOAD_GFX_ODD(  "775-f08h.bin", 0xe0000, 0x10000, 0xad9d7016 )
 
-	ROM_REGION( 0x100000 ) /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* sprites */
 	ROM_LOAD_GFX_EVEN( "775-a05a.bin", 0x00000, 0x10000, 0xa0767045 )	/* sprites */
 	ROM_LOAD_GFX_ODD(  "775-a05e.bin", 0x00000, 0x10000, 0x2f656f08 )
 	ROM_LOAD_GFX_EVEN( "775-a05b.bin", 0x20000, 0x10000, 0xab8ad4fd )
@@ -765,10 +771,7 @@ ROM_START( scontraj )
 	ROM_LOAD_GFX_EVEN( "775-f06d.bin", 0xe0000, 0x10000, 0xc8b764fa )
 	ROM_LOAD_GFX_ODD(  "775-f06h.bin", 0xe0000, 0x10000, 0xd6595f59 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
-	ROM_LOAD( "775-c01.bin", 0x00000, 0x08000, 0x0ced785a )
-
-	ROM_REGION( 0x80000 )	/* k007232 data */
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* k007232 data */
 	ROM_LOAD( "775-a04a.bin", 0x00000, 0x10000, 0x7efb2e0f )
 	ROM_LOAD( "775-a04b.bin", 0x10000, 0x10000, 0xf41a2b33 )
 	ROM_LOAD( "775-a04c.bin", 0x20000, 0x10000, 0xe4e58f14 )
@@ -778,17 +781,20 @@ ROM_START( scontraj )
 	ROM_LOAD( "775-f04g.bin", 0x60000, 0x10000, 0xee107bbb )
 	ROM_LOAD( "775-f04h.bin", 0x70000, 0x10000, 0xfb0fab46 )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( thunderx )
-	ROM_REGIONX( 0x29000, REGION_CPU1 )	/* ROMs + banked RAM */
+	ROM_REGION( 0x29000, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "873k03.k15", 0x10000, 0x10000, 0x276817ad )
 	ROM_LOAD( "873k02.k13", 0x20000, 0x08000, 0x80cc1c45 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x80000 )	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "873h01.f8",    0x0000, 0x8000, 0x990b7a7c )
+
+	ROM_REGION( 0x80000, REGION_GFX1 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD_GFX_EVEN( "873c06a.f6",   0x00000, 0x10000, 0x0e340b67 ) /* Chars */
 	ROM_LOAD_GFX_ODD ( "873c06c.f5",   0x00000, 0x10000, 0xef0e72cd )
 	ROM_LOAD_GFX_EVEN( "873c06b.e6",   0x20000, 0x10000, 0x97ad202e )
@@ -798,7 +804,7 @@ ROM_START( thunderx )
 	ROM_LOAD_GFX_EVEN( "873c07b.e4",   0x60000, 0x10000, 0x12a2b8ba )
 	ROM_LOAD_GFX_ODD ( "873c07d.e3",   0x60000, 0x10000, 0xfae9f965 )
 
-	ROM_REGION(0x80000)
+	ROM_REGION( 0x80000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "873c04a.f11",  0x00000, 0x10000, 0xf7740bf3 ) /* Sprites */
 	ROM_LOAD_GFX_ODD ( "873c04c.f10",  0x00000, 0x10000, 0x5dacbd2b )
 	ROM_LOAD_GFX_EVEN( "873c04b.e11",  0x20000, 0x10000, 0x9ac581da )
@@ -808,20 +814,20 @@ ROM_START( thunderx )
 	ROM_LOAD_GFX_EVEN( "873c05b.e9",   0x60000, 0x10000, 0x81059b99 )
 	ROM_LOAD_GFX_ODD ( "873c05d.e8",   0x60000, 0x10000, 0x7fa3d7df )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "873h01.f8",    0x0000, 0x8000, 0x990b7a7c )
-
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( thnderxj )
-	ROM_REGIONX( 0x29000, REGION_CPU1 )	/* ROMs + banked RAM */
+	ROM_REGION( 0x29000, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "873-n03.k15", 0x10000, 0x10000, 0xa01e2e3e )
 	ROM_LOAD( "873-n02.k13", 0x20000, 0x08000, 0x55afa2cc )
 	ROM_CONTINUE(            0x08000, 0x08000 )
 
-	ROM_REGION( 0x80000 )	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "873-f01.f8",   0x0000, 0x8000, 0xea35ffa3 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD_GFX_EVEN( "873c06a.f6",   0x00000, 0x10000, 0x0e340b67 ) /* Chars */
 	ROM_LOAD_GFX_ODD ( "873c06c.f5",   0x00000, 0x10000, 0xef0e72cd )
 	ROM_LOAD_GFX_EVEN( "873c06b.e6",   0x20000, 0x10000, 0x97ad202e )
@@ -831,7 +837,7 @@ ROM_START( thnderxj )
 	ROM_LOAD_GFX_EVEN( "873c07b.e4",   0x60000, 0x10000, 0x12a2b8ba )
 	ROM_LOAD_GFX_ODD ( "873c07d.e3",   0x60000, 0x10000, 0xfae9f965 )
 
-	ROM_REGION(0x80000)
+	ROM_REGION( 0x80000, REGION_GFX2 )
 	ROM_LOAD_GFX_EVEN( "873c04a.f11",  0x00000, 0x10000, 0xf7740bf3 ) /* Sprites */
 	ROM_LOAD_GFX_ODD ( "873c04c.f10",  0x00000, 0x10000, 0x5dacbd2b )
 	ROM_LOAD_GFX_EVEN( "873c04b.e11",  0x20000, 0x10000, 0x9ac581da )
@@ -841,10 +847,7 @@ ROM_START( thnderxj )
 	ROM_LOAD_GFX_EVEN( "873c05b.e9",   0x60000, 0x10000, 0x81059b99 )
 	ROM_LOAD_GFX_ODD ( "873c05d.e8",   0x60000, 0x10000, 0x7fa3d7df )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "873-f01.f8",   0x0000, 0x8000, 0xea35ffa3 )
-
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
@@ -881,109 +884,15 @@ static void thunderx_init_machine( void )
 	unknownram = &RAM[0x28800];
 }
 
-static void gfx_untangle(void)
+static void init_scontra(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
-struct GameDriver driver_scontra =
-{
-	__FILE__,
-	0,
-	"scontra",
-	"Super Contra",
-	"1988",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver_scontra,
-	gfx_untangle,
 
-	rom_scontra,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scontra,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_scontraj =
-{
-	__FILE__,
-	&driver_scontra,
-	"scontraj",
-	"Super Contra (Japan)",
-	"1988",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver_scontra,
-	gfx_untangle,
-
-	rom_scontraj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scontra,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_thunderx =
-{
-	__FILE__,
-	0,
-	"thunderx",
-	"Thunder Cross",
-	"1988",
-	"Konami",
-	"mish",
-	0,
-	&machine_driver_thunderx,
-	gfx_untangle,
-
-	rom_thunderx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_thunderx,
-
-	0, 0, 0,
-    ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_thnderxj =
-{
-	__FILE__,
-	&driver_thunderx,
-	"thnderxj",
-	"Thunder Cross (Japan)",
-	"1988",
-	"Konami",
-	"mish",
-	0,
-	&machine_driver_thunderx,
-	gfx_untangle,
-
-	rom_thnderxj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_thunderx,
-
-	0, 0, 0,
-    ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
+GAME( 1988, scontra,  0,        scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra" )
+GAME( 1988, scontraj, scontra,  scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra (Japan)" )
+GAMEX(1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross", GAME_NOT_WORKING )
+GAMEX(1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Japan)", GAME_NOT_WORKING )

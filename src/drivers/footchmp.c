@@ -389,25 +389,25 @@ static struct MachineDriver machine_driver_footchmp =
 ***************************************************************************/
 
 ROM_START( footchmp )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "efc6.bin", 0x00000, 0x20000, 0xf78630fb )
 	ROM_LOAD_ODD ( "efc4.bin", 0x00000, 0x20000, 0x32c109cb )
 	ROM_LOAD_EVEN( "efc7.bin", 0x40000, 0x20000, 0x80d46fef )
 	ROM_LOAD_ODD ( "efc5.bin", 0x40000, 0x20000, 0x40ac4828 )
 
-	ROM_REGIONX( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
+	ROM_REGION( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "efc70.bin", 0x00000, 0x04000, 0x05aa7fd7 )
 	ROM_CONTINUE(		   0x10000, 0x0c000 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "efc1.bin",	0x000000, 0x080000, 0x9a17fe8c )
 	ROM_LOAD( "efc2.bin",	0x080000, 0x080000, 0xacde7071 )
 
-	ROM_REGIONX( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "efc9.bin",	0x000000, 0x100000, 0xf43782e6 )
 	ROM_LOAD( "efc10.bin",	0x100000, 0x100000, 0x060a8b61 )
 
-	ROM_REGIONX( 0x100000, REGION_SOUND1 )     /* YM2610 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1 )     /* YM2610 samples */
 	ROM_LOAD( "efc57.bin", 0x00000, 0x100000, 0x609938d5 )
 ROM_END
 

@@ -450,30 +450,30 @@ static struct MachineDriver machine_driver_ddribble =
 
 
 ROM_START( ddribble )
-	ROM_REGIONX( 0x1a000, REGION_CPU1 ) /* 64K CPU #0 + 40K for Banked ROMS */
+	ROM_REGION( 0x1a000, REGION_CPU1 ) /* 64K CPU #0 + 40K for Banked ROMS */
 	ROM_LOAD( "690c03.bin",	0x10000, 0x0a000, 0x07975a58 )
 	ROM_CONTINUE(			0x0a000, 0x06000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64 for the CPU #1 */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64 for the CPU #1 */
 	ROM_LOAD( "690c02.bin", 0x08000, 0x08000, 0xf07c030a )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "690b01.bin", 0x08000, 0x08000, 0x806b8453 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "690a05.bin",	0x00000, 0x20000, 0x6a816d0d )	/* characters (set 1) & obtects (set 1) */
 	ROM_LOAD( "690a06.bin",	0x20000, 0x20000, 0x46300cd0 )	/* characters (set 1) & objects (set 1) */
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "690a10.bin", 0x00000, 0x20000, 0x61efa222 )	/* characters (set 2) */
 	ROM_LOAD( "690a09.bin", 0x20000, 0x20000, 0xab682186 )	/* characters (set 2) */
 	ROM_LOAD( "690a08.bin",	0x40000, 0x20000, 0x9a889944 )	/* objects (set 2) */
 	ROM_LOAD( "690a07.bin",	0x60000, 0x20000, 0xfaf81b3f )	/* objects (set 2) */
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for the VLM5030 data */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for the VLM5030 data */
 	ROM_LOAD( "690a04.bin", 0x00000, 0x20000, 0x1bfeb763 )
 ROM_END
 

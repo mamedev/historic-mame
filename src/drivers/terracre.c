@@ -3,6 +3,8 @@ Terra Cresta (preliminary)
 Nichibutsu 1985
 68000 + Z80
 
+driver by Carlos A. Lozano
+
 TODO: I'm playing samples with a DAC, but they could be ADPCM
 
 Carlos A. Lozano (calb@gsyc.inf.uc3m.es)
@@ -290,9 +292,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,            0,   1 },
-	{ 1, 0x02000, &backlayout,         1*16,  16 },
-	{ 1, 0x12000, &spritelayout, 1*16+16*16, 256 },
+	{ REGION_GFX1, 0, &charlayout,            0,   1 },
+	{ REGION_GFX2, 0, &backlayout,         1*16,  16 },
+	{ REGION_GFX3, 0, &spritelayout, 1*16+16*16, 256 },
 	{ -1 } /* end of array */
 };
 
@@ -323,11 +325,6 @@ static struct DACinterface dac_interface =
 	{ 50, 50 }
 };
 
-int terracre_interrupt(void)
-{
-	return (1);
-}
-
 
 static struct MachineDriver machine_driver_ym3526 =
 {
@@ -336,7 +333,7 @@ static struct MachineDriver machine_driver_ym3526 =
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
 			readmem,writemem,0,0,
-			terracre_interrupt,1
+			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -382,7 +379,7 @@ static struct MachineDriver machine_driver_ym2203 =
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
 			readmem,writemem,0,0,
-			terracre_interrupt,1
+			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -424,7 +421,7 @@ static struct MachineDriver machine_driver_ym2203 =
 
 
 ROM_START( terracre )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -434,26 +431,30 @@ ROM_START( terracre )
 	ROM_LOAD_ODD ( "1a_9b.rom",    0x18000, 0x4000, 0x69227b56 )
 	ROM_LOAD_EVEN( "1a_9d.rom",    0x18000, 0x4000, 0x5a672942 )
 
-	ROM_REGION_DISPOSE(0x28000)
-	ROM_LOAD( "2a_16b.rom",   0x00000, 0x2000, 0x591a3804 ) /* tiles */
-	ROM_LOAD( "1a_15f.rom",   0x02000, 0x8000, 0x984a597f ) /* Background */
-	ROM_LOAD( "1a_17f.rom",   0x0a000, 0x8000, 0x30e297ff )
-	ROM_LOAD( "2a_6e.rom",    0x12000, 0x4000, 0xbcf7740b ) /* Sprites */
-	ROM_LOAD( "2a_7e.rom",    0x16000, 0x4000, 0xa70b565c )
-	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
-	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
+	ROM_LOAD( "2a_17b.rom",   0x4000, 0x4000, 0xaffc898d )
+	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2a_16b.rom",   0x00000, 0x2000, 0x591a3804 ) /* tiles */
+
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1a_15f.rom",   0x00000, 0x8000, 0x984a597f ) /* Background */
+	ROM_LOAD( "1a_17f.rom",   0x08000, 0x8000, 0x30e297ff )
+
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2a_6e.rom",    0x00000, 0x4000, 0xbcf7740b ) /* Sprites */
+	ROM_LOAD( "2a_7e.rom",    0x04000, 0x4000, 0xa70b565c )
+	ROM_LOAD( "2a_6g.rom",    0x08000, 0x4000, 0x4a9ec3e6 )
+	ROM_LOAD( "2a_7g.rom",    0x0c000, 0x4000, 0x450749fc )
+
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
-	ROM_LOAD( "2a_17b.rom",   0x4000, 0x4000, 0xaffc898d )
-	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
 ROM_END
 
 /**********************************************************/
@@ -461,7 +462,7 @@ ROM_END
 /**********************************************************/
 
 ROM_START( terracrb )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -471,26 +472,30 @@ ROM_START( terracrb )
 	ROM_LOAD_ODD ( "1a_9b.rom",    0x18000, 0x4000, 0x69227b56 )
 	ROM_LOAD_EVEN( "1a_9d.rom",    0x18000, 0x4000, 0x5a672942 )
 
-	ROM_REGION_DISPOSE(0x28000)
-	ROM_LOAD( "2a_16b.rom",   0x00000, 0x2000, 0x591a3804 ) /* tiles */
-	ROM_LOAD( "1a_15f.rom",   0x02000, 0x8000, 0x984a597f ) /* Background */
-	ROM_LOAD( "1a_17f.rom",   0x0a000, 0x8000, 0x30e297ff )
-	ROM_LOAD( "2a_6e.rom",    0x12000, 0x4000, 0xbcf7740b ) /* Sprites */
-	ROM_LOAD( "2a_7e.rom",    0x16000, 0x4000, 0xa70b565c )
-	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
-	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
+	ROM_LOAD( "dg.12",        0x4000, 0x4000, 0x9e9b3808 )
+	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2a_16b.rom",   0x00000, 0x2000, 0x591a3804 ) /* tiles */
+
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1a_15f.rom",   0x00000, 0x8000, 0x984a597f ) /* Background */
+	ROM_LOAD( "1a_17f.rom",   0x08000, 0x8000, 0x30e297ff )
+
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2a_6e.rom",    0x00000, 0x4000, 0xbcf7740b ) /* Sprites */
+	ROM_LOAD( "2a_7e.rom",    0x04000, 0x4000, 0xa70b565c )
+	ROM_LOAD( "2a_6g.rom",    0x08000, 0x4000, 0x4a9ec3e6 )
+	ROM_LOAD( "2a_7g.rom",    0x0c000, 0x4000, 0x450749fc )
+
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
-	ROM_LOAD( "dg.12",        0x4000, 0x4000, 0x9e9b3808 )
-	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
 ROM_END
 
 /**********************************************************/
@@ -498,7 +503,7 @@ ROM_END
 /**********************************************************/
 
 ROM_START( terracra )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -508,104 +513,33 @@ ROM_START( terracra )
 	ROM_LOAD_ODD ( "1a_9b.rom",    0x18000, 0x4000, 0x69227b56 )
 	ROM_LOAD_EVEN( "1a_9d.rom",    0x18000, 0x4000, 0x5a672942 )
 
-	ROM_REGION_DISPOSE(0x28000)
-	ROM_LOAD( "2a_16b.rom",   0x00000, 0x2000, 0x591a3804 ) /* tiles */
-	ROM_LOAD( "1a_15f.rom",   0x02000, 0x8000, 0x984a597f ) /* Background */
-	ROM_LOAD( "1a_17f.rom",   0x0a000, 0x8000, 0x30e297ff )
-	ROM_LOAD( "2a_6e.rom",    0x12000, 0x4000, 0xbcf7740b ) /* Sprites */
-	ROM_LOAD( "2a_7e.rom",    0x16000, 0x4000, 0xa70b565c )
-	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
-	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k to sound cpu */
+	ROM_LOAD( "tc2a_15b.bin", 0x0000, 0x4000, 0x790ddfa9 )
+	ROM_LOAD( "tc2a_17b.bin", 0x4000, 0x4000, 0xd4531113 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2a_16b.rom",   0x00000, 0x2000, 0x591a3804 ) /* tiles */
+
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1a_15f.rom",   0x00000, 0x8000, 0x984a597f ) /* Background */
+	ROM_LOAD( "1a_17f.rom",   0x08000, 0x8000, 0x30e297ff )
+
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2a_6e.rom",    0x00000, 0x4000, 0xbcf7740b ) /* Sprites */
+	ROM_LOAD( "2a_7e.rom",    0x04000, 0x4000, 0xa70b565c )
+	ROM_LOAD( "2a_6g.rom",    0x08000, 0x4000, 0x4a9ec3e6 )
+	ROM_LOAD( "2a_7g.rom",    0x0c000, 0x4000, 0x450749fc )
+
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k to sound cpu */
-	ROM_LOAD( "tc2a_15b.bin", 0x0000, 0x4000, 0x790ddfa9 )
-	ROM_LOAD( "tc2a_17b.bin", 0x4000, 0x4000, 0xd4531113 )
 ROM_END
 
 
 
-struct GameDriver driver_terracre =
-{
-	__FILE__,
-	0,
-	"terracre",
-	"Terra Cresta (YM3526 set 1)",
-	"1985",
-	"Nichibutsu",
-	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_ym3526,
-	0,
-
-	rom_terracre,
-	0, 0,
-	0,
-	0,
-
-	input_ports_terracre,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_terracrb =
-{
-	__FILE__,
-	&driver_terracre,
-	"terracrb",
-	"Terra Cresta (YM3526 set 2)",
-	"1985",
-	"Nichibutsu",
-	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_ym3526,
-	0,
-
-	rom_terracrb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_terracre,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-/**********************************************************/
-/* Notes: All the roms are the same except the SOUND ROMs */
-/**********************************************************/
-
-struct GameDriver driver_terracra =
-{
-	__FILE__,
-	&driver_terracre,
-	"terracra",
-	"Terra Cresta (YM2203)",
-	"1985",
-	"Nichibutsu",
-	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_ym2203,
-	0,
-
-	rom_terracra,
-	0, 0,
-	0,
-	0,
-
-	input_ports_terracre,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1985, terracre, 0,        ym3526, terracre, 0, ROT270, "Nichibutsu", "Terra Cresta (YM3526 set 1)" )
+GAME( 1985, terracrb, terracre, ym3526, terracre, 0, ROT270, "Nichibutsu", "Terra Cresta (YM3526 set 2)" )
+GAME( 1985, terracra, terracre, ym2203, terracre, 0, ROT270, "Nichibutsu", "Terra Cresta (YM2203)" )

@@ -1,10 +1,6 @@
 /***************************************************************************
 
-  Video Hardware for Armed Formation and Terra Force
-
-Crazy Climber 2
-(c)1988 Nichibutsu
-"cclimbr2" Driver Added by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
+  Video Hardware for Armed Formation and Terra Force and Kodure Ookami
 
 ***************************************************************************/
 
@@ -112,7 +108,7 @@ static void terraf_get_text_tile_info( int col, int row ){
 
 static void get_fg_tile_info( int col, int row ){
 	UINT16 data = ((UINT16 *)armedf_fg_videoram)[col*32+row];
-	SET_TILE_INFO( 1, data&0x3ff, data>>11 );
+	SET_TILE_INFO( 1, data&0x7ff, data>>11 );
 }
 
 void armedf_fg_videoram_w(int offset,int data){
@@ -218,6 +214,39 @@ int armedf_vh_start(void){
 	return 1;
 }
 
+int kodure_vh_start(void){
+	scroll_type = 2;
+
+	text_layer = tilemap_create(
+		terraf_get_text_tile_info,
+		TILEMAP_TRANSPARENT,
+		8,8,	/* tile width, tile height */
+		38,32	/* number of columns, number of rows */
+	);
+
+	background = tilemap_create(
+		get_bg_tile_info,
+		0,
+		16,16,	/* tile width, tile height */
+		64,32	/* number of columns, number of rows */
+	);
+
+	foreground = tilemap_create(
+		get_fg_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,	/* tile width, tile height */
+		64,32	/* number of columns, number of rows */
+	);
+
+	if( background && foreground && text_layer ){
+		foreground->transparent_pen = 0xf;
+		text_layer->transparent_pen = 0xf;
+
+		return 0;
+	}
+	return 1;
+}
+
 void armedf_vh_stop(void){
 }
 
@@ -284,19 +313,29 @@ void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_set_scrollx( background, 0, armedf_bg_scrollx+96 );
 	tilemap_set_scrolly( background, 0, armedf_bg_scrolly );
 
-	if( scroll_type ){/* armed formation */
-		tilemap_set_scrollx( foreground, 0, armedf_fg_scrollx+96 );
-		tilemap_set_scrolly( foreground, 0, armedf_fg_scrolly );
+	switch (scroll_type)
+	{
+		case	0:		/* terra force */
+			tilemap_set_scrollx( foreground, 0, (armedf_fg_scrolly>>8) + ((terraf_scroll_msb>>12)&3)*256 - 160-256*3);
+			tilemap_set_scrolly( foreground, 0, (armedf_fg_scrollx>>8) + ((terraf_scroll_msb>>8)&3)*256 );
+			break;
+		case	1:		/* armed formation */
+		case	2:		/* kodure ookami */
+			tilemap_set_scrollx( foreground, 0, armedf_fg_scrollx+96 );
+			tilemap_set_scrolly( foreground, 0, armedf_fg_scrolly );
 	}
-	else { /* terra force */
-		tilemap_set_scrollx( foreground, 0, (armedf_fg_scrolly>>8) + ((terraf_scroll_msb>>12)&3)*256 - 160-256*3);
-		tilemap_set_scrolly( foreground, 0, (armedf_fg_scrollx>>8) + ((terraf_scroll_msb>>8)&3)*256 );
+
+	if (scroll_type == 2)		/* kodure ookami */
+	{
+		tilemap_set_scrollx( text_layer, 0, -8 );
+		tilemap_set_scrolly( text_layer, 0, 0 );
 	}
 
 	tilemap_update(  ALL_TILEMAPS  );
 
 	palette_init_used_colors();
 	mark_sprite_colors();
+	palette_used_colors[0] = PALETTE_COLOR_USED;	/* background */
 
 	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
 
@@ -365,6 +404,7 @@ void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	mark_sprite_colors();
+	palette_used_colors[0] = PALETTE_COLOR_USED;	/* background */
 
 	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
 

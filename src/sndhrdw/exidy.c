@@ -125,9 +125,9 @@ int exidy_sh_start(const struct MachineSound *msound)
 
 void exidy_sh_stop(void)
 {
-	osd_stop_sample(exidy_sample_channels[0]);
-	osd_stop_sample(exidy_sample_channels[1]);
-	osd_stop_sample(exidy_sample_channels[2]);
+	mixer_stop_sample(exidy_sample_channels[0]);
+	mixer_stop_sample(exidy_sample_channels[1]);
+	mixer_stop_sample(exidy_sample_channels[2]);
 }
 
 /*
@@ -259,11 +259,11 @@ void exidy_sh8253_w(int offset,int data)
             f = 1;
 
 		if ((data & 0x0E) == 0) {
-            osd_set_sample_freq(exidy_sample_channels[c],f);
+            mixer_set_sample_frequency(exidy_sample_channels[c],f);
             mixer_set_volume(exidy_sample_channels[c],0);
 		}
 		else {
-            osd_set_sample_freq(exidy_sample_channels[c],f);
+            mixer_set_sample_frequency(exidy_sample_channels[c],f);
             mixer_set_volume(exidy_sample_channels[c],VOLUME);
 		}
 	}
@@ -285,7 +285,7 @@ void exidy_sh8253_w(int offset,int data)
                 f = 1;
             else
                 f = BASE_FREQ / exidy_sh8253_count[i];
-            osd_set_sample_freq(exidy_sample_channels[i],f);
+            mixer_set_sample_frequency(exidy_sample_channels[i],f);
 		}
 	}
 
@@ -334,7 +334,7 @@ void exidy_sh6840_w(int offset,int data) {
 			sh6840_timer[0] = (sh6840_MSB << 8) | (data & 0xFF);
             if (sh6840_timer[0] != 0 && !(exidy_sfxctrl & 0x02))
             {
-                osd_set_sample_freq(exidy_sample_channels[3],SH6840_FREQ/sh6840_timer[0]);
+                mixer_set_sample_frequency(exidy_sample_channels[3],SH6840_FREQ/sh6840_timer[0]);
                 mixer_set_volume(exidy_sample_channels[3],exidy_sfxvol[0]*VOLUME/7);
             }
             else
@@ -344,7 +344,7 @@ void exidy_sh6840_w(int offset,int data) {
 			sh6840_timer[1] = (sh6840_MSB << 8) | (data & 0xFF);
             if (sh6840_timer[1] != 0)
             {
-                osd_set_sample_freq(exidy_sample_channels[4],SH6840_FREQ/sh6840_timer[1]);
+                mixer_set_sample_frequency(exidy_sample_channels[4],SH6840_FREQ/sh6840_timer[1]);
                 mixer_set_volume(exidy_sample_channels[4],exidy_sfxvol[1]*VOLUME/7);
             }
             else
@@ -354,7 +354,7 @@ void exidy_sh6840_w(int offset,int data) {
 			sh6840_timer[2] = (sh6840_MSB << 8) | (data & 0xFF);
             if (sh6840_timer[2] != 0)
             {
-                osd_set_sample_freq(exidy_sample_channels[5],SH6840_FREQ/sh6840_timer[2]);
+                mixer_set_sample_frequency(exidy_sample_channels[5],SH6840_FREQ/sh6840_timer[2]);
                 mixer_set_volume(exidy_sample_channels[5],exidy_sfxvol[2]*VOLUME/7);
             }
             else

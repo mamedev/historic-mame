@@ -597,22 +597,22 @@ static struct MachineDriver machine_driver_psychic5 =
 ***************************************************************************/
 
 ROM_START( psychic5 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 ) 				/* 2*64K for main CPU, Z80 */
+	ROM_REGION( 0x20000, REGION_CPU1 ) 				/* 2*64K for main CPU, Z80 */
 	ROM_LOAD( "p5d",          0x00000, 0x08000, 0x90259249 )
 	ROM_LOAD( "p5e",          0x10000, 0x10000, 0x72298f34 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) 				/*64K for 2nd z80 CPU*/
+	ROM_REGION( 0x10000, REGION_CPU2 ) 				/*64K for 2nd z80 CPU*/
 	ROM_LOAD( "p5a",          0x00000, 0x08000, 0x50060ecd )
 
-	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "p5b",          0x00000, 0x10000, 0x7e3f87d4 )	/* sprite tiles */
 	ROM_LOAD( "p5c",          0x10000, 0x10000, 0x8710fedb )
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "p5g",          0x00000, 0x10000, 0xf9262f32 )	/* background tiles */
 	ROM_LOAD( "p5h",          0x10000, 0x10000, 0xc411171a )
 
-	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "p5f",          0x00000, 0x08000, 0x04d7e21c )	/* foreground tiles */
 ROM_END
 

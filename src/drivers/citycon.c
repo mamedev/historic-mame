@@ -254,81 +254,81 @@ static struct MachineDriver machine_driver_citycon =
 ***************************************************************************/
 
 ROM_START( citycon )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11",          0x8000, 0x8000, 0x139eb1aa )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
 
-	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c12",          0x00000, 0x2000, 0x08eaaccd )	/* Sprites    */
 	ROM_LOAD( "c13",          0x02000, 0x2000, 0x1819aafb )
 
-	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c9",           0x00000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
 	ROM_LOAD( "c8",           0x08000, 0x4000, 0x0d7a1eeb )
 	ROM_LOAD( "c6",           0x0c000, 0x8000, 0x2246fe9d )
 	ROM_LOAD( "c7",           0x14000, 0x4000, 0xe8b97de9 )
 
-	ROM_REGIONX( 0xe000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0xe000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
 ROM_END
 
 ROM_START( citycona )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11b",         0x8000, 0x8000, 0xd64af468 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
 
-	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c12",          0x00000, 0x2000, 0x08eaaccd )	/* Sprites    */
 	ROM_LOAD( "c13",          0x02000, 0x2000, 0x1819aafb )
 
-	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c9",           0x00000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
 	ROM_LOAD( "c8",           0x08000, 0x4000, 0x0d7a1eeb )
 	ROM_LOAD( "c6",           0x0c000, 0x8000, 0x2246fe9d )
 	ROM_LOAD( "c7",           0x14000, 0x4000, 0xe8b97de9 )
 
-	ROM_REGIONX( 0xe000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0xe000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
 ROM_END
 
 ROM_START( cruisin )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cr10",         0x4000, 0x4000, 0xcc7c52f3 )
 	ROM_LOAD( "cr11",         0x8000, 0x8000, 0x5422f276 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cr4",          0x00000, 0x2000, 0x8cd0308e )	/* Characters */
 
-	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c12",          0x00000, 0x2000, 0x08eaaccd )	/* Sprites    */
 	ROM_LOAD( "c13",          0x02000, 0x2000, 0x1819aafb )
 
-	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c9",           0x00000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
 	ROM_LOAD( "c8",           0x08000, 0x4000, 0x0d7a1eeb )
 	ROM_LOAD( "c6",           0x0c000, 0x8000, 0x2246fe9d )
 	ROM_LOAD( "c7",           0x14000, 0x4000, 0xe8b97de9 )
 
-	ROM_REGIONX( 0xe000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGION( 0xe000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */

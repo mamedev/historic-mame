@@ -3,6 +3,8 @@
 Xybots Memory Map
 -----------------------------------
 
+driver by Aaron Giles
+
 XYBOTS 68000 MEMORY MAP
 
 Function                           Address        R/W  DATA
@@ -212,9 +214,9 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &pflayout,      512, 16 },		/* playfield */
-	{ 2, 0x40000, &molayout,      256, 48 },		/* sprites */
-	{ 2, 0xc0000, &anlayout,        0, 64 },		/* characters 8x8 */
+	{ REGION_GFX1, 0, &pflayout,      512, 16 },		/* playfield */
+	{ REGION_GFX2, 0, &molayout,      256, 48 },		/* sprites */
+	{ REGION_GFX3, 0, &anlayout,        0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -226,7 +228,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_xybots =
 {
 	/* basic machine hardware */
 	{
@@ -269,29 +271,33 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( xybots )
-	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 8*64k for 68000 code */
+	ROM_REGION( 0x90000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "2112.c17",     0x00000, 0x10000, 0x16d64748 )
 	ROM_LOAD_ODD ( "2113.c19",     0x00000, 0x10000, 0x2677d44a )
 	ROM_LOAD_EVEN( "2114.b17",     0x20000, 0x08000, 0xd31890cb )
 	ROM_LOAD_ODD ( "2115.b19",     0x20000, 0x08000, 0x750ab1b0 )
 
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "xybots.snd",   0x10000, 0x4000, 0x3b9f155d )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0xc2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2102.l13",     0x00000, 0x08000, 0xc1309674 )
 	ROM_RELOAD(               0x08000, 0x08000 )
 	ROM_LOAD( "2103.l11",     0x10000, 0x10000, 0x907c024d )
 	ROM_LOAD( "2117.l7",      0x30000, 0x10000, 0x0cc9b42d )
-	ROM_LOAD( "1105.de1",     0x40000, 0x10000, 0x315a4274 )
-	ROM_LOAD( "1106.e1",      0x50000, 0x10000, 0x3d8c1dd2 )
-	ROM_LOAD( "1107.f1",      0x60000, 0x10000, 0xb7217da5 )
-	ROM_LOAD( "1108.fj1",     0x70000, 0x10000, 0x77ac65e1 )
-	ROM_LOAD( "1109.j1",      0x80000, 0x10000, 0x1b482c53 )
-	ROM_LOAD( "1110.k1",      0x90000, 0x10000, 0x99665ff4 )
-	ROM_LOAD( "1111.kl1",     0xa0000, 0x10000, 0x416107ee )
-	ROM_LOAD( "1101.c4",      0xc0000, 0x02000, 0x59c028a2 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1105.de1",     0x00000, 0x10000, 0x315a4274 )
+	ROM_LOAD( "1106.e1",      0x10000, 0x10000, 0x3d8c1dd2 )
+	ROM_LOAD( "1107.f1",      0x20000, 0x10000, 0xb7217da5 )
+	ROM_LOAD( "1108.fj1",     0x30000, 0x10000, 0x77ac65e1 )
+	ROM_LOAD( "1109.j1",      0x40000, 0x10000, 0x1b482c53 )
+	ROM_LOAD( "1110.k1",      0x50000, 0x10000, 0x99665ff4 )
+	ROM_LOAD( "1111.kl1",     0x60000, 0x10000, 0x416107ee )
+
+	ROM_REGION( 0x02000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1101.c4",      0x00000, 0x02000, 0x59c028a2 )
 ROM_END
 
 
@@ -302,7 +308,7 @@ ROM_END
  *
  *************************************/
 
-static void xybots_init(void)
+static void init_xybots(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x008000, 107);
@@ -319,34 +325,4 @@ static void xybots_init(void)
 
 
 
-/*************************************
- *
- *	Game driver(s)
- *
- *************************************/
-
-struct GameDriver driver_xybots =
-{
-	__FILE__,
-	0,
-	"xybots",
-	"Xybots",
-	"1987",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nAlan J. McCormick (hardware info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	xybots_init,
-
-	rom_xybots,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_xybots,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1987, xybots, 0, xybots, xybots, xybots, ROT0, "Atari Games", "Xybots" )

@@ -1,7 +1,21 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#define MAX_BANKS 8
+#define MAX_BANKS		16
+
+
+/***************************************************************************
+	Core memory read/write/opbase handler types.
+***************************************************************************/
+
+typedef int (*mem_read_handler)(int offset);
+typedef void (*mem_write_handler)(int offset, int data);
+typedef int (*opbase_handler)(int address);
+
+#define READ_HANDLER(name)		int name(int offset)
+#define WRITE_HANDLER(name)		void name(int offset, int data)
+#define OPBASE_HANDLER(name)	int name(int address)
+
 
 /***************************************************************************
 
@@ -15,51 +29,66 @@ assigned to the handler. You may also provided a pointer to "size": it
 will be set to the length of the memory area processed by the handler.
 
 ***************************************************************************/
+
 struct MemoryReadAddress
 {
-	int start,end;
-	int (*handler)(int offset);   /* see special values below */
-//	unsigned char **base;         /* optional (see explanation above) */
-//	int *size;                    /* optional (see explanation above) */
+	int start, end;
+	mem_read_handler handler;				/* see special values below */
 };
 
-#define MRA_NOP   0	              /* don't care, return 0 */
-#define MRA_RAM   ((int(*)(int))-1)	  /* plain RAM location (return its contents) */
-#define MRA_ROM   ((int(*)(int))-2)	  /* plain ROM location (return its contents) */
-#define MRA_BANK1 ((int(*)(int))-10)  /* bank memory */
-#define MRA_BANK2 ((int(*)(int))-11)  /* bank memory */
-#define MRA_BANK3 ((int(*)(int))-12)  /* bank memory */
-#define MRA_BANK4 ((int(*)(int))-13)  /* bank memory */
-#define MRA_BANK5 ((int(*)(int))-14)  /* bank memory */
-#define MRA_BANK6 ((int(*)(int))-15)  /* bank memory */
-#define MRA_BANK7 ((int(*)(int))-16)  /* bank memory */
-#define MRA_BANK8 ((int(*)(int))-17)  /* bank memory */
+#define MRA_NOP   0							/* don't care, return 0 */
+#define MRA_RAM   ((mem_read_handler)-1)	/* plain RAM location (return its contents) */
+#define MRA_ROM   ((mem_read_handler)-2)	/* plain ROM location (return its contents) */
+#define MRA_BANK1 ((mem_read_handler)-10)	/* bank memory */
+#define MRA_BANK2 ((mem_read_handler)-11)	/* bank memory */
+#define MRA_BANK3 ((mem_read_handler)-12)	/* bank memory */
+#define MRA_BANK4 ((mem_read_handler)-13)	/* bank memory */
+#define MRA_BANK5 ((mem_read_handler)-14)	/* bank memory */
+#define MRA_BANK6 ((mem_read_handler)-15)	/* bank memory */
+#define MRA_BANK7 ((mem_read_handler)-16)	/* bank memory */
+#define MRA_BANK8 ((mem_read_handler)-17)	/* bank memory */
+#define MRA_BANK9 ((mem_read_handler)-18)	/* bank memory */
+#define MRA_BANK10 ((mem_read_handler)-19)	/* bank memory */
+#define MRA_BANK11 ((mem_read_handler)-20)	/* bank memory */
+#define MRA_BANK12 ((mem_read_handler)-21)	/* bank memory */
+#define MRA_BANK13 ((mem_read_handler)-22)	/* bank memory */
+#define MRA_BANK14 ((mem_read_handler)-23)	/* bank memory */
+#define MRA_BANK15 ((mem_read_handler)-24)	/* bank memory */
+#define MRA_BANK16 ((mem_read_handler)-25)	/* bank memory */
 
 struct MemoryWriteAddress
 {
-	int start,end;
-	void (*handler)(int offset,int data);	/* see special values below */
-	unsigned char **base;	/* optional (see explanation above) */
-	int *size;	/* optional (see explanation above) */
+	int start, end;
+	mem_write_handler handler;				/* see special values below */
+	unsigned char **base;					/* optional (see explanation above) */
+	int *size;								/* optional (see explanation above) */
 };
 
-#define MWA_NOP 0	                  /* do nothing */
-#define MWA_RAM ((void(*)(int,int))-1)	   /* plain RAM location (store the value) */
-#define MWA_ROM ((void(*)(int,int))-2)	   /* plain ROM location (do nothing) */
+#define MWA_NOP 0							/* do nothing */
+#define MWA_RAM ((mem_write_handler)-1)		/* plain RAM location (store the value) */
+#define MWA_ROM ((mem_write_handler)-2)		/* plain ROM location (do nothing) */
 /*
    If the CPU opcodes are encrypted, they are fetched from a different memory space.
    In such a case, if the program dynamically creates code in RAM and executes it,
    it won't work unless you use MWA_RAMROM to affect both memory spaces.
  */
-#define MWA_RAMROM ((void(*)(int,int))-3)
-#define MWA_BANK1 ((void(*)(int,int))-10)  /* bank memory */
-#define MWA_BANK2 ((void(*)(int,int))-11)  /* bank memory */
-#define MWA_BANK3 ((void(*)(int,int))-12)  /* bank memory */
-#define MWA_BANK4 ((void(*)(int,int))-13)  /* bank memory */
-#define MWA_BANK5 ((void(*)(int,int))-14)  /* bank memory */
-#define MWA_BANK6 ((void(*)(int,int))-15)  /* bank memory */
-#define MWA_BANK7 ((void(*)(int,int))-16)  /* bank memory */
-#define MWA_BANK8 ((void(*)(int,int))-17)  /* bank memory */
+#define MWA_RAMROM ((mem_write_handler)-3)
+#define MWA_BANK1 ((mem_write_handler)-10)	/* bank memory */
+#define MWA_BANK2 ((mem_write_handler)-11)	/* bank memory */
+#define MWA_BANK3 ((mem_write_handler)-12)	/* bank memory */
+#define MWA_BANK4 ((mem_write_handler)-13)	/* bank memory */
+#define MWA_BANK5 ((mem_write_handler)-14)	/* bank memory */
+#define MWA_BANK6 ((mem_write_handler)-15)	/* bank memory */
+#define MWA_BANK7 ((mem_write_handler)-16)	/* bank memory */
+#define MWA_BANK8 ((mem_write_handler)-17)	/* bank memory */
+#define MWA_BANK9 ((mem_write_handler)-18)	/* bank memory */
+#define MWA_BANK10 ((mem_write_handler)-19)	/* bank memory */
+#define MWA_BANK11 ((mem_write_handler)-20)	/* bank memory */
+#define MWA_BANK12 ((mem_write_handler)-21)	/* bank memory */
+#define MWA_BANK13 ((mem_write_handler)-22)	/* bank memory */
+#define MWA_BANK14 ((mem_write_handler)-23)	/* bank memory */
+#define MWA_BANK15 ((mem_write_handler)-24)	/* bank memory */
+#define MWA_BANK16 ((mem_write_handler)-25)	/* bank memory */
 
 
 
@@ -70,10 +99,11 @@ same so you can interchange them. Of course there is no 'base' pointer for
 IO ports.
 
 ***************************************************************************/
+
 struct IOReadPort
 {
 	int start,end;
-	int (*handler)(int offset);	/* see special values below */
+	mem_read_handler handler;				/* see special values below */
 };
 
 #define IORP_NOP 0	/* don't care, return 0 */
@@ -82,7 +112,7 @@ struct IOReadPort
 struct IOWritePort
 {
 	int start,end;
-	void (*handler)(int offset,int data);	/* see special values below */
+	mem_write_handler handler;				/* see special values below */
 };
 
 #define IOWP_NOP 0	/* do nothing */
@@ -108,165 +138,199 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 
 
 
+/***************************************************************************
+
+For a given number of address bits, we need to determine how many elements
+there are in the first and second-order lookup tables. We also need to know
+how many low-order bits to ignore. The ABITS* values represent these
+constants for each address space type we support.
+
+***************************************************************************/
+
 /* memory element block size */
-#define MH_SBITS    8			/* sub element bank size */
-#define MH_PBITS    8			/* port current element size */
-#define MH_ELEMAX  64			/* sub elements limit */
-#define MH_HARDMAX 64			/* hardware functions limit */
+#define MH_SBITS		8			/* sub element bank size */
+#define MH_PBITS		8			/* port current element size */
+#define MH_ELEMAX		64			/* sub elements limit */
+#define MH_HARDMAX		64			/* hardware functions limit */
 
-
-/* 29 bits address (dword access)     AJP 980803 */
-#define ABITS1_29    19
-#define ABITS2_29     8
-#define ABITS3_29     0
-#define ABITS_MIN_29  2      /* minimum memory block is 4 bytes */
-/* 24 bits address (word access) */
-#define ABITS1_24    15
-#define ABITS2_24     8
-#define ABITS3_24     0
-#define ABITS_MIN_24  1      /* minimum memory block is 2 bytes */
- /* 21 bits address */
-#define ABITS1_21    13
-#define ABITS2_21     8
-#define ABITS3_21     0
-#define ABITS_MIN_21  0      /* minimum memory block is 1 byte */
-/* 20 bits address */
-#define ABITS1_20    12
-#define ABITS2_20     8
-#define ABITS3_20     0
-#define ABITS_MIN_20  0      /* minimum memory block is 1 byte */
 /* 16 bits address */
-#define ABITS1_16    12
-#define ABITS2_16     4
-#define ABITS3_16     0
-#define ABITS_MIN_16  0      /* minimum memory block is 1 byte */
+#define ABITS1_16		12
+#define ABITS2_16		4
+#define ABITS_MIN_16	0			/* minimum memory block is 1 byte */
 /* 16 bits address (little endian word access) */
-#define ABITS1_16LEW   12
-#define ABITS2_16LEW    3
-#define ABITS3_16LEW    0
-#define ABITS_MIN_16LEW 1      /* minimum memory block is 2 bytes */
+#define ABITS1_16LEW	12
+#define ABITS2_16LEW	3
+#define ABITS_MIN_16LEW	1			/* minimum memory block is 2 bytes */
 /* 16 bits address (big endian word access) */
-#define ABITS1_16BEW   12
-#define ABITS2_16BEW    3
-#define ABITS3_16BEW    0
-#define ABITS_MIN_16BEW 1      /* minimum memory block is 2 bytes */
+#define ABITS1_16BEW	12
+#define ABITS2_16BEW	3
+#define ABITS_MIN_16BEW	1			/* minimum memory block is 2 bytes */
+/* 20 bits address */
+#define ABITS1_20		12
+#define ABITS2_20		8
+#define ABITS_MIN_20	0			/* minimum memory block is 1 byte */
+/* 21 bits address */
+#define ABITS1_21		13
+#define ABITS2_21		8
+#define ABITS_MIN_21	0			/* minimum memory block is 1 byte */
+/* 24 bits address (word access) */
+#define ABITS1_24		15
+#define ABITS2_24		8
+#define ABITS_MIN_24	1			/* minimum memory block is 2 bytes */
+/* 29 bits address (dword access) */
+#define ABITS1_29		19
+#define ABITS2_29		8
+#define ABITS_MIN_29	2			/* minimum memory block is 4 bytes */
 /* mask bits */
-#define MHMASK(abits)    (0xffffffff>>(32-abits))
+#define MHMASK(abits)    (0xffffffff >> (32 - abits))
+
+
+/***************************************************************************
+
+	Global variables
+
+***************************************************************************/
 
 typedef unsigned char MHELE;
 
-extern int cpu_mshift1;
-extern MHELE *cur_mrhard;
-extern MHELE *cur_mwhard;
-extern MHELE curhw;
+extern MHELE ophw;						/* opcode handler */
+extern MHELE *cur_mrhard;				/* current set of read handlers */
+extern MHELE *cur_mwhard;				/* current set of write handlers */
 
-extern unsigned char *OP_RAM;	/* op_code used */
-extern unsigned char *OP_ROM;	/* op_code used */
+extern unsigned char *OP_RAM;			/* opcode RAM base */
+extern unsigned char *OP_ROM;			/* opcode ROM base */
+extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 
-/* ----- memory setting subroutine ---- */
+
+
+/***************************************************************************
+
+	Macros
+
+***************************************************************************/
+
+/* ----- 16-bit memory accessing ----- */
+#define READ_WORD(a)          (*(UINT16 *)(a))
+#define WRITE_WORD(a,d)       (*(UINT16 *)(a) = (d))
+#define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
+#define COMBINE_WORD_MEM(a,d) (WRITE_WORD((a), (READ_WORD(a) & ((d) >> 16)) | (d)))
+
+/* ----- opcode reading ----- */
+#define cpu_readop(A) 		(OP_ROM[A])
+#define cpu_readop16(A)		READ_WORD(&OP_ROM[A])
+#define cpu_readop_arg(A)	(OP_RAM[A])
+#define cpu_readop_arg16(A)	READ_WORD(&OP_RAM[A])
+
+/* ----- bank switching for CPU cores ----- */
+#define change_pc_generic(pc,abits2,abitsmin,setop)		\
+{														\
+	if (cur_mrhard[(pc)>>(abits2+abitsmin)] != ophw)	\
+		setop(pc);										\
+}
+#define change_pc(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, cpu_setOPbase16)
+#define change_pc16(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, cpu_setOPbase16)
+#define change_pc16bew(pc)	change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, cpu_setOPbase16bew)
+#define change_pc16lew(pc)	change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, cpu_setOPbase16lew)
+#define change_pc20(pc)		change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, cpu_setOPbase20)
+#define change_pc21(pc)		change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, cpu_setOPbase21)
+#define change_pc24(pc)		change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, cpu_setOPbase24)
+#define change_pc29(pc)		change_pc_generic(((UINT32)pc >> 3), ABITS2_29, ABITS_MIN_29, cpu_setOPbase29)
+
+/* ----- for use OPbaseOverride driver, request override callback to next cpu_setOPbase ----- */
+#define catch_nextBranch() 	(ophw = 0xff)
+
+/* -----  bank switching macro ----- */
+#define cpu_setbank(bank, base)							\
+{														\
+	if (bank >= 1 && bank <= MAX_BANKS)					\
+	{													\
+		cpu_bankbase[bank] = (UINT8 *)(base);			\
+		if (ophw == bank)								\
+		{												\
+			ophw = 0xff;								\
+			cpu_setOPbase16(cpu_get_pc());				\
+		}												\
+	}													\
+}
+
+
+/***************************************************************************
+
+	Function prototypes
+
+***************************************************************************/
+
+/* ----- memory setup function ----- */
+int memory_init(void);
+void memory_shutdown(void);
+void memorycontextswap(int activecpu);
+
+/* ----- memory read functions ----- */
+READ_HANDLER(cpu_readmem16);
+READ_HANDLER(cpu_readmem16bew);
+READ_HANDLER(cpu_readmem16bew_word);
+READ_HANDLER(cpu_readmem16lew);
+READ_HANDLER(cpu_readmem16lew_word);
+READ_HANDLER(cpu_readmem20);
+READ_HANDLER(cpu_readmem21);
+READ_HANDLER(cpu_readmem24);
+READ_HANDLER(cpu_readmem24_word);
+READ_HANDLER(cpu_readmem24_dword);
+READ_HANDLER(cpu_readmem29);
+READ_HANDLER(cpu_readmem29_word);
+READ_HANDLER(cpu_readmem29_dword);
+
+/* ----- memory write functions ----- */
+WRITE_HANDLER(cpu_writemem16);
+WRITE_HANDLER(cpu_writemem16bew);
+WRITE_HANDLER(cpu_writemem16bew_word);
+WRITE_HANDLER(cpu_writemem16lew);
+WRITE_HANDLER(cpu_writemem16lew_word);
+WRITE_HANDLER(cpu_writemem20);
+WRITE_HANDLER(cpu_writemem21);
+WRITE_HANDLER(cpu_writemem24);
+WRITE_HANDLER(cpu_writemem24_word);
+WRITE_HANDLER(cpu_writemem24_dword);
+WRITE_HANDLER(cpu_writemem29);
+WRITE_HANDLER(cpu_writemem29_word);
+WRITE_HANDLER(cpu_writemem29_dword);
+
+/* ----- port I/O functions ----- */
+int cpu_readport(int port);
+void cpu_writeport(int port, int value);
+
+/* ----- dynamic memory/port mapping ----- */
+void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler handler);
+void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler handler);
+void *install_port_read_handler(int cpu, int start, int end, mem_read_handler handler);
+void *install_port_write_handler(int cpu, int start, int end, mem_write_handler handler);
+
+/* ----- dynamic bank handlers ----- */
+void cpu_setbankhandler_r(int bank, mem_read_handler handler);
+void cpu_setbankhandler_w(int bank, mem_write_handler handler);
+
+/* ----- opcode base control ---- */
 void cpu_setOPbase16(int pc);
 void cpu_setOPbase16bew(int pc);
 void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
-void cpu_setOPbase29(int pc);  /* AJP 980803 */
-void cpu_setOPbaseoverride(int cpu,int (*function)(int));
+void cpu_setOPbase29(int pc);
+void cpu_setOPbaseoverride(int cpu, opbase_handler function);
 
-/* ----- memory setup function ----- */
-int memory_init(void);
-void memory_shutdown(void);
+/* ----- harder-to-explain functions ---- */
 
 /* use this to set the a different opcode base address when using a CPU with
    opcodes and data encrypted separately */
-void memory_set_opcode_base(int cpu,unsigned char *base);
+void memory_set_opcode_base(int cpu, unsigned char *base);
 
-void memorycontextswap(int activecpu);
-
-/*
-look up a chunk of memory and get its start/end addresses, and its base.
+/* look up a chunk of memory and get its start/end addresses, and its base.
 Pass in the cpu number and the offset. It will find the chunk containing
 that offset and return the start and end addresses, along with a pointer to
 the base of the memory.
 This can be used (carefully!) by drivers that wish to access memory directly
-without going through the readmem/writemem accessors (e.g., blitters).
-*/
+without going through the readmem/writemem accessors (e.g., blitters). */
 unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend);
-
-void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
-void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int));
-void *install_port_read_handler(int cpu, int start, int end, int (*handler)(int));
-void *install_port_write_handler(int cpu, int start, int end, void (*handler)(int, int));
-
-/* ----- memory read /write function ----- */
-int cpu_readmem16(int address);
-int cpu_readmem16bew(int address);
-int cpu_readmem16bew_word(int address);
-int cpu_readmem16lew(int address);
-int cpu_readmem16lew_word(int address);
-int cpu_readmem20(int address);
-int cpu_readmem21(int address);
-int cpu_readmem24(int address);
-int cpu_readmem24_word(int address);
-int cpu_readmem24_dword(int address);
-int cpu_readmem29(int address);        /* AJP 980803 */
-int cpu_readmem29_word(int address);   /* AJP 980803 */
-int cpu_readmem29_dword(int address);  /* AJP 980803 */
-void cpu_writemem16(int address,int data);
-void cpu_writemem16bew(int address, int data);
-void cpu_writemem16bew_word(int address, int data);
-void cpu_writemem16lew(int address,int data);
-void cpu_writemem16lew_word(int address,int data);
-void cpu_writemem20(int address,int data);
-void cpu_writemem21(int address,int data);
-void cpu_writemem24(int address,int data);
-void cpu_writemem24_word(int address,int data);
-void cpu_writemem24_dword(int address,int data);
-void cpu_writemem29(int address,int data);        /* AJP 980803 */
-void cpu_writemem29_word(int address,int data);   /* AJP 980803 */
-void cpu_writemem29_word_masked(int address,int data);   /* AJP 980816 */
-void cpu_writemem29_dword(int address,int data);  /* AJP 980803 */
-
-/* ----- 16-bit memory access macros ----- */
-
-#define READ_WORD(a)          (*(unsigned short *)(a))
-#define WRITE_WORD(a,d)       (*(unsigned short *)(a) = (d))
-
-#define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
-#define COMBINE_WORD_MEM(a,d) (WRITE_WORD ((a), (READ_WORD (a) & ((d) >> 16)) | (d)))
-
-/* ----- port read / write function ----- */
-int cpu_readport(int Port);
-void cpu_writeport(int Port,int Value);
-
-/* -----  bank memory function ----- */
-#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A);if(ophw==B){ophw=0xff;cpu_setOPbase16(cpu_get_pc());}}
-
-/* ------ bank memory handler ------ */
-extern void cpu_setbankhandler_r(int bank,int (*handler)(int) );
-extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
-
-/* ----- op-code region set function ----- */
-#define change_pc16(pc) {if(cur_mrhard[(pc)>>(ABITS2_16+ABITS_MIN_16)]!=ophw)cpu_setOPbase16(pc);}
-#define change_pc16bew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16BEW+ABITS_MIN_16BEW)]!=ophw)cpu_setOPbase16bew(pc);}
-#define change_pc16lew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16LEW+ABITS_MIN_16LEW)]!=ophw)cpu_setOPbase16lew(pc);}
-#define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
-#define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
-#define change_pc29(pc) {if(cur_mrhard[((unsigned int)pc)>>(ABITS2_29+ABITS_MIN_29+3)]!=ophw)cpu_setOPbase29(pc);}
-
-/* for use OPbaseOverride driver , request override callback to next cpu_setOPbase16 */
-#define catch_nextBranch() (ophw=0xff)
-
-#define change_pc change_pc16
-
-
-/* bank memory functions */
-extern MHELE ophw;
-extern unsigned char *cpu_bankbase[];
-
-#define cpu_readop(A) 		(OP_ROM[A])
-#define cpu_readop16(A)		READ_WORD(&OP_ROM[A])
-#define cpu_readop_arg(A)	(OP_RAM[A])
-#define cpu_readop_arg16(A)	READ_WORD(&OP_RAM[A])
 
 #endif

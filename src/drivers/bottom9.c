@@ -359,15 +359,15 @@ static struct MachineDriver machine_driver_bottom9 =
 ***************************************************************************/
 
 ROM_START( bottom9 )
-	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891-t02.k15",  0x20000, 0x08000, 0x2c10ced2 )
     ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e10c", 0x00000, 0x10000, 0x209b0431 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "891e10a", 0x00000, 0x10000, 0x8020a9e8 )
 	ROM_LOAD_GFX_EVEN( "891e10d", 0x20000, 0x10000, 0x16d5fd7a )
@@ -377,7 +377,7 @@ ROM_START( bottom9 )
 	ROM_LOAD_GFX_EVEN( "891e09d", 0x60000, 0x10000, 0x4e1335e6 )
 	ROM_LOAD_GFX_ODD ( "891e09b", 0x60000, 0x10000, 0xb6f914fb )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e06e", 0x00000, 0x10000, 0x0b04db1c )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "891e06a", 0x00000, 0x10000, 0x5ee37327 )
 	ROM_LOAD_GFX_EVEN( "891e06f", 0x20000, 0x10000, 0xf9ada524 )
@@ -395,20 +395,20 @@ ROM_START( bottom9 )
 	ROM_LOAD_GFX_EVEN( "891e05h", 0xe0000, 0x10000, 0xb0aba53b )
 	ROM_LOAD_GFX_ODD ( "891e05d", 0xe0000, 0x10000, 0xf6d3f886 )
 
-	ROM_REGIONX( 0x020000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x020000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "891e07a",      0x00000, 0x10000, 0xb8d8b939 )	/* zoom/rotate */
 	ROM_LOAD( "891e07b",      0x10000, 0x10000, 0x83b2f92d )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
 	ROM_LOAD( "891e08a",      0x00000, 0x10000, 0xcef667bf )
 	ROM_LOAD( "891e08b",      0x10000, 0x10000, 0xf7c14a7a )
 	ROM_LOAD( "891e08c",      0x20000, 0x10000, 0x756b7f3c )
 	ROM_LOAD( "891e08d",      0x30000, 0x10000, 0xcd0d7305 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
+	ROM_REGION( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
 	ROM_LOAD( "891e04a",      0x00000, 0x10000, 0xdaebbc74 )
 	ROM_LOAD( "891e04b",      0x10000, 0x10000, 0x5ffb9ad1 )
 	ROM_LOAD( "891e04c",      0x20000, 0x10000, 0x2dbbf16b )
@@ -416,15 +416,15 @@ ROM_START( bottom9 )
 ROM_END
 
 ROM_START( bottom9n )
-	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891n02.k15",   0x20000, 0x08000, 0xd44d9ed4 )
     ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e10c", 0x00000, 0x10000, 0x209b0431 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "891e10a", 0x00000, 0x10000, 0x8020a9e8 )
 	ROM_LOAD_GFX_EVEN( "891e10d", 0x20000, 0x10000, 0x16d5fd7a )
@@ -434,7 +434,7 @@ ROM_START( bottom9n )
 	ROM_LOAD_GFX_EVEN( "891e09d", 0x60000, 0x10000, 0x4e1335e6 )
 	ROM_LOAD_GFX_ODD ( "891e09b", 0x60000, 0x10000, 0xb6f914fb )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e06e", 0x00000, 0x10000, 0x0b04db1c )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "891e06a", 0x00000, 0x10000, 0x5ee37327 )
 	ROM_LOAD_GFX_EVEN( "891e06f", 0x20000, 0x10000, 0xf9ada524 )
@@ -452,20 +452,20 @@ ROM_START( bottom9n )
 	ROM_LOAD_GFX_EVEN( "891e05h", 0xe0000, 0x10000, 0xb0aba53b )
 	ROM_LOAD_GFX_ODD ( "891e05d", 0xe0000, 0x10000, 0xf6d3f886 )
 
-	ROM_REGIONX( 0x020000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x020000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "891e07a",      0x00000, 0x10000, 0xb8d8b939 )	/* zoom/rotate */
 	ROM_LOAD( "891e07b",      0x10000, 0x10000, 0x83b2f92d )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
 	ROM_LOAD( "891e08a",      0x00000, 0x10000, 0xcef667bf )
 	ROM_LOAD( "891e08b",      0x10000, 0x10000, 0xf7c14a7a )
 	ROM_LOAD( "891e08c",      0x20000, 0x10000, 0x756b7f3c )
 	ROM_LOAD( "891e08d",      0x30000, 0x10000, 0xcd0d7305 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
+	ROM_REGION( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
 	ROM_LOAD( "891e04a",      0x00000, 0x10000, 0xdaebbc74 )
 	ROM_LOAD( "891e04b",      0x10000, 0x10000, 0x5ffb9ad1 )
 	ROM_LOAD( "891e04c",      0x20000, 0x10000, 0x2dbbf16b )

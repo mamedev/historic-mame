@@ -386,7 +386,7 @@ static struct GfxLayout sprite_layout =
 static struct GfxLayout back_layout =
 {
 	32,1, /* tile size */
-	512*8, /* number of tiles */
+	3*512*8, /* number of tiles */
 	4, /* bits per pixel */
 	{0,2,4,6}, /* plane offsets */
 	{ 0*8+1, 0*8,  1*8+1, 1*8, 2*8+1, 2*8, 3*8+1, 3*8, 4*8+1, 4*8, 5*8+1, 5*8,
@@ -398,18 +398,18 @@ static struct GfxLayout back_layout =
 
 static struct GfxDecodeInfo vigilant_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &text_layout,   256, 16 },	/* colors 256-511 */
-	{ 1, 0x20000, &sprite_layout,   0, 16 },	/* colors   0-255 */
-	{ 1, 0xA0000, &back_layout,   512,  2 },	/* actually the background uses colors */
-	{ 1, 0xB0000, &back_layout,   512,  2 },	/* 256-511, but giving it exclusive */
-	{ 1, 0xC0000, &back_layout,   512,  2 },	/* pens we can handle it more easily. */
+	{ REGION_GFX1, 0, &text_layout,   256, 16 },	/* colors 256-511 */
+	{ REGION_GFX2, 0, &sprite_layout,   0, 16 },	/* colors   0-255 */
+	{ REGION_GFX3, 0, &back_layout,   512,  2 },	/* actually the background uses colors */
+													/* 256-511, but giving it exclusive */
+													/* pens we can handle it more easily. */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo kikcubic_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &text_layout,   0, 16 },
-	{ 1, 0x20000, &sprite_layout, 0, 16 },
+	{ REGION_GFX1, 0, &text_layout,   0, 16 },
+	{ REGION_GFX2, 0, &sprite_layout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -537,206 +537,125 @@ static struct MachineDriver machine_driver_kikcubic =
 ***************************************************************************/
 
 ROM_START( vigilant )
-	ROM_REGIONX( 0x30000, REGION_CPU1 ) /* region#0: 64k for code + 128k for bankswitching */
+	ROM_REGION( 0x30000, REGION_CPU1 ) /* 64k for code + 128k for bankswitching */
 	ROM_LOAD( "g07_c03.bin",  0x00000, 0x08000, 0x9dcca081 )
 	ROM_LOAD( "j07_c04.bin",  0x10000, 0x10000, 0xe0159105 )
 	/* 0x20000-0x2ffff empty */
 
-	ROM_REGION_DISPOSE(0xd0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
-	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
-	ROM_LOAD( "n07_c12.bin",  0x20000, 0x10000, 0x10af8eb2 )
-	ROM_LOAD( "k07_c10.bin",  0x30000, 0x10000, 0x9576f304 )
-	ROM_LOAD( "o07_c13.bin",  0x40000, 0x10000, 0xb1d9d4dc )
-	ROM_LOAD( "l07_c11.bin",  0x50000, 0x10000, 0x4598be4a )
-	ROM_LOAD( "t07_c16.bin",  0x60000, 0x10000, 0xf5425e42 )
-	ROM_LOAD( "p07_c14.bin",  0x70000, 0x10000, 0xcb50a17c )
-	ROM_LOAD( "v07_c17.bin",  0x80000, 0x10000, 0x959ba3c7 )
-	ROM_LOAD( "s07_c15.bin",  0x90000, 0x10000, 0x7f2e91c5 )
-	ROM_LOAD( "d01_c05.bin",  0xa0000, 0x10000, 0x81b1ee5c )
-	ROM_LOAD( "e01_c06.bin",  0xb0000, 0x10000, 0xd0d33673 )
-	ROM_LOAD( "f01_c07.bin",  0xc0000, 0x10000, 0xaae81695 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "n07_c12.bin",  0x00000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "k07_c10.bin",  0x10000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "o07_c13.bin",  0x20000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "l07_c11.bin",  0x30000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "t07_c16.bin",  0x40000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "p07_c14.bin",  0x50000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "v07_c17.bin",  0x60000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "s07_c15.bin",  0x70000, 0x10000, 0x7f2e91c5 )
+
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d01_c05.bin",  0x00000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0x10000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0x20000, 0x10000, 0xaae81695 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
 ROM_START( vigilntu )
-	ROM_REGIONX( 0x30000, REGION_CPU1 ) /* region#0: 64k for code + 128k for bankswitching */
+	ROM_REGION( 0x30000, REGION_CPU1 ) /* 64k for code + 128k for bankswitching */
 	ROM_LOAD( "a-8h",  0x00000, 0x08000, 0x8d15109e )
 	ROM_LOAD( "a-8l",  0x10000, 0x10000, 0x7f95799b )
 	/* 0x20000-0x2ffff empty */
 
-	ROM_REGION_DISPOSE(0xd0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
-	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
-	ROM_LOAD( "n07_c12.bin",  0x20000, 0x10000, 0x10af8eb2 )
-	ROM_LOAD( "k07_c10.bin",  0x30000, 0x10000, 0x9576f304 )
-	ROM_LOAD( "o07_c13.bin",  0x40000, 0x10000, 0xb1d9d4dc )
-	ROM_LOAD( "l07_c11.bin",  0x50000, 0x10000, 0x4598be4a )
-	ROM_LOAD( "t07_c16.bin",  0x60000, 0x10000, 0xf5425e42 )
-	ROM_LOAD( "p07_c14.bin",  0x70000, 0x10000, 0xcb50a17c )
-	ROM_LOAD( "v07_c17.bin",  0x80000, 0x10000, 0x959ba3c7 )
-	ROM_LOAD( "s07_c15.bin",  0x90000, 0x10000, 0x7f2e91c5 )
-	ROM_LOAD( "d01_c05.bin",  0xa0000, 0x10000, 0x81b1ee5c )
-	ROM_LOAD( "e01_c06.bin",  0xb0000, 0x10000, 0xd0d33673 )
-	ROM_LOAD( "f01_c07.bin",  0xc0000, 0x10000, 0xaae81695 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "n07_c12.bin",  0x00000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "k07_c10.bin",  0x10000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "o07_c13.bin",  0x20000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "l07_c11.bin",  0x30000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "t07_c16.bin",  0x40000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "p07_c14.bin",  0x50000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "v07_c17.bin",  0x60000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "s07_c15.bin",  0x70000, 0x10000, 0x7f2e91c5 )
+
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d01_c05.bin",  0x00000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0x10000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0x20000, 0x10000, 0xaae81695 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
 ROM_START( vigilntj )
-	ROM_REGIONX( 0x30000, REGION_CPU1 ) /* region#0: 64k for code + 128k for bankswitching */
+	ROM_REGION( 0x30000, REGION_CPU1 ) /* 64k for code + 128k for bankswitching */
 	ROM_LOAD( "vg_a-8h.rom",  0x00000, 0x08000, 0xba848713 )
 	ROM_LOAD( "vg_a-8l.rom",  0x10000, 0x10000, 0x3b12b1d8 )
 	/* 0x20000-0x2ffff empty */
 
-	ROM_REGION_DISPOSE(0xd0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
-	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
-	ROM_LOAD( "n07_c12.bin",  0x20000, 0x10000, 0x10af8eb2 )
-	ROM_LOAD( "k07_c10.bin",  0x30000, 0x10000, 0x9576f304 )
-	ROM_LOAD( "o07_c13.bin",  0x40000, 0x10000, 0xb1d9d4dc )
-	ROM_LOAD( "l07_c11.bin",  0x50000, 0x10000, 0x4598be4a )
-	ROM_LOAD( "t07_c16.bin",  0x60000, 0x10000, 0xf5425e42 )
-	ROM_LOAD( "p07_c14.bin",  0x70000, 0x10000, 0xcb50a17c )
-	ROM_LOAD( "v07_c17.bin",  0x80000, 0x10000, 0x959ba3c7 )
-	ROM_LOAD( "s07_c15.bin",  0x90000, 0x10000, 0x7f2e91c5 )
-	ROM_LOAD( "d01_c05.bin",  0xa0000, 0x10000, 0x81b1ee5c )
-	ROM_LOAD( "e01_c06.bin",  0xb0000, 0x10000, 0xd0d33673 )
-	ROM_LOAD( "f01_c07.bin",  0xc0000, 0x10000, 0xaae81695 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "n07_c12.bin",  0x00000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "k07_c10.bin",  0x10000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "o07_c13.bin",  0x20000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "l07_c11.bin",  0x30000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "t07_c16.bin",  0x40000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "p07_c14.bin",  0x50000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "v07_c17.bin",  0x60000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "s07_c15.bin",  0x70000, 0x10000, 0x7f2e91c5 )
+
+	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d01_c05.bin",  0x00000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0x10000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0x20000, 0x10000, 0xaae81695 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
 ROM_START( kikcubic )
-	ROM_REGIONX( 0x30000, REGION_CPU1 ) /* region#0: 64k for code + 128k for bankswitching */
+	ROM_REGION( 0x30000, REGION_CPU1 ) /* 64k for code + 128k for bankswitching */
 	ROM_LOAD( "mqj-p0",       0x00000, 0x08000, 0x9cef394a )
 	ROM_LOAD( "mqj-b0",       0x10000, 0x10000, 0xd9bcf4cd )
 	ROM_LOAD( "mqj-b1",       0x20000, 0x10000, 0x54a0abe1 )
 
-	ROM_REGION_DISPOSE(0xa0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "mqj-c0",       0x00000, 0x10000, 0x975585c5 )
-	ROM_LOAD( "mqj-c1",       0x10000, 0x10000, 0x49d9936d )
-	ROM_LOAD( "mqj-00",       0x20000, 0x40000, 0x7fb0c58f )
-	ROM_LOAD( "mqj-10",       0x60000, 0x40000, 0x3a189205 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound */
 	ROM_LOAD( "mqj-sp",       0x00000, 0x10000, 0xbbcf3582 )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mqj-c0",       0x00000, 0x10000, 0x975585c5 )
+	ROM_LOAD( "mqj-c1",       0x10000, 0x10000, 0x49d9936d )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mqj-00",       0x00000, 0x40000, 0x7fb0c58f )
+	ROM_LOAD( "mqj-10",       0x40000, 0x40000, 0x3a189205 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "mqj-v0",       0x00000, 0x10000, 0x54762956 )
 ROM_END
 
 
 
-struct GameDriver driver_vigilant =
-{
-	__FILE__,
-	0,
-	"vigilant",
-	"Vigilante (World)",
-	"1988",
-	"Irem",
-	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver_vigilant,
-	0,
-
-	rom_vigilant,
-	0,0,
-	0,
-	0,
-
-	input_ports_vigilant,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_vigilntu =
-{
-	__FILE__,
-	&driver_vigilant,
-	"vigilntu",
-	"Vigilante (US)",
-	"1988",
-	"Irem (Data East USA license)",
-	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver_vigilant,
-	0,
-
-	rom_vigilntu,
-	0,0,
-	0,
-	0,
-
-	input_ports_vigilant,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_vigilntj =
-{
-	__FILE__,
-	&driver_vigilant,
-	"vigilntj",
-	"Vigilante (Japan)",
-	"1988",
-	"Irem",
-	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver_vigilant,
-	0,
-
-	rom_vigilntj,
-	0,0,
-	0,
-	0,
-
-	input_ports_vigilant,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_kikcubic =
-{
-	__FILE__,
-	0,
-	"kikcubic",
-	"Meikyu Jima (Japan)",	/* English title is Kickle Cubicle */
-	"1988",
-	"Irem",
-	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver_kikcubic,
-	0,
-
-	rom_kikcubic,
-	0,0,
-	0,
-	0,
-
-	input_ports_kikcubic,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1988, vigilant, 0,        vigilant, vigilant, 0, ROT0, "Irem", "Vigilante (World)" )
+GAME( 1988, vigilntu, vigilant, vigilant, vigilant, 0, ROT0, "Irem (Data East USA license)", "Vigilante (US)" )
+GAME( 1988, vigilntj, vigilant, vigilant, vigilant, 0, ROT0, "Irem", "Vigilante (Japan)" )
+GAME( 1988, kikcubic, 0,        kikcubic, kikcubic, 0, ROT0, "Irem", "Meikyu Jima (Japan)" )	/* English title is Kickle Cubicle */

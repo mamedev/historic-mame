@@ -1,18 +1,25 @@
-#ifndef KEYBOARD_H
-#define KEYBOARD_H
+#ifndef INPUT_H
+#define INPUT_H
 
+typedef unsigned InputCode;
 
 struct KeyboardInfo
 {
-	char *name;				/* OS dependant name; 0 terminates the list */
-	UINT16 code;			/* OS dependant code (must be < KEYCODE_START) */
-	UINT16 standardcode;	/* KEYCODE_xxx equivalent from list below, or KEYCODE_OTHER if n/a */
+	char *name; /* OS dependant name; 0 terminates the list */
+	unsigned code; /* OS dependant code */
+	InputCode standardcode;	/* CODE_xxx equivalent from list below, or CODE_OTHER if n/a */
+};
+
+struct JoystickInfo
+{
+	char *name; /* OS dependant name; 0 terminates the list */
+	unsigned code; /* OS dependant code */
+	InputCode standardcode;	/* CODE_xxx equivalent from list below, or CODE_OTHER if n/a */
 };
 
 enum
 {
-	KEYCODE_START = 0xff00,	/* marker - not a real key */
-
+	/* key */
 	KEYCODE_A, KEYCODE_B, KEYCODE_C, KEYCODE_D, KEYCODE_E, KEYCODE_F,
 	KEYCODE_G, KEYCODE_H, KEYCODE_I, KEYCODE_J, KEYCODE_K, KEYCODE_L,
 	KEYCODE_M, KEYCODE_N, KEYCODE_O, KEYCODE_P, KEYCODE_Q, KEYCODE_R,
@@ -34,34 +41,11 @@ enum
 	KEYCODE_DEL_PAD, KEYCODE_ENTER_PAD, KEYCODE_PRTSCR, KEYCODE_PAUSE,
 	KEYCODE_LSHIFT, KEYCODE_RSHIFT, KEYCODE_LCONTROL, KEYCODE_RCONTROL,
 	KEYCODE_LALT, KEYCODE_RALT, KEYCODE_SCRLOCK, KEYCODE_NUMLOCK, KEYCODE_CAPSLOCK,
-    KEYCODE_OTHER,  /* anything else */
+	KEYCODE_LWIN, KEYCODE_RWIN, KEYCODE_MENU,
+#define __code_key_first KEYCODE_A
+#define __code_key_last KEYCODE_MENU
 
-	KEYCODE_NONE	/* no key pressed */
-};
-
-const char *keyboard_name(int keycode);
-int keyboard_pressed(int keycode);
-int keyboard_pressed_memory(int keycode);
-int keyboard_pressed_memory_repeat(int keycode,int speed);
-int keyboard_read_async(void);
-int keyboard_read_sync(void);
-
-void keyboard_name_multi(InputKeySeq* keycode, char* buffer, unsigned max);
-int keyboard_pressed_multi(InputKeySeq* keycode);
-
-
-struct JoystickInfo
-{
-	char *name;				/* OS dependant name; 0 terminates the list */
-	UINT16 code;			/* OS dependant code (must be < JOYCODE_START) */
-	UINT16 standardcode;	/* JOYCODE_xxx equivalent from list below, or JOYCODE_OTHER if n/a */
-};
-
-
-enum
-{
-	JOYCODE_START = 0xff00,	/* marker - not a real joy */
-
+	/* joy */
 	JOYCODE_1_LEFT,JOYCODE_1_RIGHT,JOYCODE_1_UP,JOYCODE_1_DOWN,
 	JOYCODE_1_BUTTON1,JOYCODE_1_BUTTON2,JOYCODE_1_BUTTON3,
 	JOYCODE_1_BUTTON4,JOYCODE_1_BUTTON5,JOYCODE_1_BUTTON6,
@@ -74,25 +58,111 @@ enum
 	JOYCODE_4_LEFT,JOYCODE_4_RIGHT,JOYCODE_4_UP,JOYCODE_4_DOWN,
 	JOYCODE_4_BUTTON1,JOYCODE_4_BUTTON2,JOYCODE_4_BUTTON3,
 	JOYCODE_4_BUTTON4,JOYCODE_4_BUTTON5,JOYCODE_4_BUTTON6,
+#define __code_joy_first JOYCODE_1_LEFT
+#define __code_joy_last JOYCODE_4_BUTTON6
 
-	JOYCODE_OTHER,	/* anything else */
+	__code_max, /* Temination of standard code */
 
-	JOYCODE_NONE	/* no key pressed */
+	/* special */
+	CODE_NONE = 0x8000, /* no code, also marker of sequence end */
+	CODE_OTHER, /* OS code not mapped to any other code */
+	CODE_DEFAULT, /* special for input port definitions */
+        CODE_PREVIOUS, /* special for input port definitions */
+	CODE_NOT, /* operators for sequences */
+	CODE_OR /* operators for sequences */
 };
 
-const char *joystick_name(int joycode);
-int joystick_read_async(void);
+/* Wrapper for compatibility */
+#define KEYCODE_OTHER CODE_OTHER
+#define JOYCODE_OTHER CODE_OTHER
+#define KEYCODE_NONE CODE_NONE
+#define JOYCODE_NONE CODE_NONE
 
-void joystick_name_multi(InputJoySeq* joycode, char* buffer, unsigned max);
-int joystick_pressed_multi(InputJoySeq* joycode);
+/***************************************************************************/
+/* Single code functions */
 
-/* key/joy recording */
-void record_start(void);
-int keyboard_record(InputKeySeq* keycode, int first);
-int joystick_record(InputJoySeq* joycode, int first);
+int code_init(void);
+void code_close(void);
 
-/* the following read both key and joy */
+InputCode keyoscode_to_code(unsigned oscode);
+InputCode joyoscode_to_code(unsigned oscode);
+InputCode savecode_to_code(unsigned savecode);
+unsigned code_to_savecode(InputCode code);
+
+const char *code_name(InputCode code);
+int code_pressed(InputCode code);
+int code_pressed_memory(InputCode code);
+int code_pressed_memory_repeat(InputCode code, int speed);
+InputCode code_read_async(void);
+InputCode code_read_sync(void);
+
+INLINE const char* keyboard_name(int code)
+{
+	return code_name(code);
+}
+
+/* Wrapper for compatibility */
+INLINE int keyboard_pressed(int code)
+{
+	return code_pressed(code);
+}
+
+INLINE int keyboard_pressed_memory(int code)
+{
+	return code_pressed_memory(code);
+}
+
+INLINE int keyboard_pressed_memory_repeat(int code, int speed)
+{
+	return code_pressed_memory_repeat(code,speed);
+}
+
+INLINE int keyboard_read_async(void)
+{
+	return code_read_async();
+}
+
+INLINE int keyboard_read_sync(void)
+{
+	return code_read_sync();
+}
+
+/***************************************************************************/
+/* Sequence code funtions */
+
+/* NOTE: If you modify this value you need also to modify the SEQ_DEF declarations */
+#define SEQ_MAX 16
+
+typedef InputCode InputSeq[SEQ_MAX];
+
+INLINE InputCode seq_get_1(InputSeq* a) {
+	return (*a)[0];
+}
+
+void seq_set_0(InputSeq* seq);
+void seq_set_1(InputSeq* seq, InputCode code);
+void seq_set_2(InputSeq* seq, InputCode code1, InputCode code2);
+void seq_set_3(InputSeq* seq, InputCode code1, InputCode code2, InputCode code3);
+void seq_copy(InputSeq* seqdst, InputSeq* seqsrc);
+int seq_cmp(InputSeq* seq1, InputSeq* seq2);
+void seq_name(InputSeq* seq, char* buffer, unsigned max);
+int seq_pressed(InputSeq* seq);
+void seq_read_async_start(void);
+int seq_read_async(InputSeq* code, int first);
+
+/* NOTE: It's very important that this sequence is EXACLY long SEQ_MAX */
+#define SEQ_DEF_6(a,b,c,d,e,f) { a, b, c, d, e, f, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE }
+#define SEQ_DEF_5(a,b,c,d,e) SEQ_DEF_6(a,b,c,d,e,CODE_NONE)
+#define SEQ_DEF_4(a,b,c,d) SEQ_DEF_5(a,b,c,d,CODE_NONE)
+#define SEQ_DEF_3(a,b,c) SEQ_DEF_4(a,b,c,CODE_NONE)
+#define SEQ_DEF_2(a,b) SEQ_DEF_3(a,b,CODE_NONE)
+#define SEQ_DEF_1(a) SEQ_DEF_2(a,CODE_NONE)
+#define SEQ_DEF_0 SEQ_DEF_1(CODE_NONE)
+
+/***************************************************************************/
+/* input_ui */
+
 int input_ui_pressed(int code);
-int input_ui_pressed_repeat(int code,int speed);
+int input_ui_pressed_repeat(int code, int speed);
 
 #endif

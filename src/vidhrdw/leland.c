@@ -606,7 +606,7 @@ void leland_screenrefresh(struct osd_bitmap *bitmap,int full_refresh, int bkchar
     int bkprombank;
     int ypos;
     int sx;
-    unsigned char *BKGND = memory_region(4);
+    unsigned char *BKGND = memory_region(REGION_USER1);
 
     /* PROM high bank */
     bkprombank=((leland_gfx_control>>3)&0x01)*0x2000;

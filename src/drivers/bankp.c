@@ -231,17 +231,17 @@ static struct MachineDriver machine_driver_bankp =
 ***************************************************************************/
 
 ROM_START( bankp )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6175.bin",  0x0000, 0x4000, 0x044552b8 )
 	ROM_LOAD( "epr6174.bin",  0x4000, 0x4000, 0xd29b1598 )
 	ROM_LOAD( "epr6173.bin",  0x8000, 0x4000, 0xb8405d38 )
 	ROM_LOAD( "epr6176.bin",  0xc000, 0x2000, 0xc98ac200 )
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr6165.bin",  0x0000, 0x2000, 0xaef34a93 )	/* playfield #1 chars */
 	ROM_LOAD( "epr6166.bin",  0x2000, 0x2000, 0xca13cb11 )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr6172.bin",  0x0000, 0x2000, 0xc4c4878b )	/* playfield #2 chars */
 	ROM_LOAD( "epr6171.bin",  0x2000, 0x2000, 0xa18165a1 )
 	ROM_LOAD( "epr6170.bin",  0x4000, 0x2000, 0xb58aa8fa )
@@ -249,7 +249,7 @@ ROM_START( bankp )
 	ROM_LOAD( "epr6168.bin",  0x8000, 0x2000, 0x05f3a867 )
 	ROM_LOAD( "epr6167.bin",  0xa000, 0x2000, 0x3fa337e1 )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pr6177.clr",   0x0000, 0x020, 0xeb70c5ae ) 	/* palette */
 	ROM_LOAD( "pr6178.clr",   0x0020, 0x100, 0x0acca001 ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr6179.clr",   0x0120, 0x100, 0xe53bafdb ) 	/* charset #2 lookup table */

@@ -564,43 +564,43 @@ static struct MachineDriver machine_driver_stfight =
 ***************************************************************************/
 
 ROM_START( empcity )
-	ROM_REGIONX( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
+	ROM_REGION( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "ec_01.rom",  0x00000, 0x8000, 0xfe01d9b1 )
 	ROM_LOAD( "ec_02.rom",  0x10000, 0x8000, 0xb3cf1ef7 )	/* bank switched */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "ec_04.rom",  0x0000,  0x8000, 0xaa3e7d1e )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* character data */
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* character data */
 	ROM_LOAD( "sf17.bin",   0x0000, 0x2000, 0x1b3706b5 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* foreground tile pixel data */
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* foreground tile pixel data */
 	ROM_LOAD( "sf07.bin",   0x10000, 0x8000, 0x2c6caa5f )
 	ROM_LOAD( "sf08.bin",   0x18000, 0x8000, 0xe11ded31 )
 	ROM_LOAD( "sf05.bin",   0x00000, 0x8000, 0x0c099a31 )
 	ROM_LOAD( "sf06.bin",   0x08000, 0x8000, 0x3cc77c31 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* background tile pixel data */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* background tile pixel data */
 	ROM_LOAD( "sf13.bin",   0x10000, 0x8000, 0x0ae48dd3 )
 	ROM_LOAD( "sf14.bin",   0x18000, 0x8000, 0xdebf5d76 )
 	ROM_LOAD( "sf11.bin",   0x00000, 0x8000, 0x8261ecfe )
 	ROM_LOAD( "sf12.bin",   0x08000, 0x8000, 0x71137301 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprite data */
 	ROM_LOAD( "sf20.bin",   0x10000, 0x8000, 0x8299f247 )
 	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, 0xb57dc037 )
 	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
 	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* foreground map data */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* foreground map data */
 	ROM_LOAD( "sf09.bin",   0x00000, 0x8000, 0x8ceaf4fe )
 	ROM_LOAD( "sf10.bin",   0x08000, 0x8000, 0x5a1a227a )
 
-	ROM_REGIONX( 0x10000, REGION_GFX6 )	/* background map data */
+	ROM_REGION( 0x10000, REGION_GFX6 )	/* background map data */
 	ROM_LOAD( "sf15.bin",   0x00000, 0x8000, 0x27a310bc )
 	ROM_LOAD( "sf16.bin",   0x08000, 0x8000, 0x3d19ce18 )
 
-	ROM_REGIONX( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS )
 	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
 	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
 	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
@@ -610,48 +610,99 @@ ROM_START( empcity )
 	ROM_LOAD( "82s129.066", 0x0600, 0x0100, 0x51e8832f )
 	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
 
-	ROM_REGIONX( 0x08000, REGION_SOUND1 )	/* adpcm voice data */
+	ROM_REGION( 0x08000, REGION_SOUND1 )	/* adpcm voice data */
+	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, 0x1b8d0c07 )
+ROM_END
+
+ROM_START( empcityj )
+	ROM_REGION( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
+	ROM_LOAD( "1.bin",      0x00000, 0x8000, 0x8162331c )
+	ROM_LOAD( "2.bin",      0x10000, 0x8000, 0x960edea6 )	/* bank switched */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "ec_04.rom",  0x0000,  0x8000, 0xaa3e7d1e )
+
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* character data */
+	ROM_LOAD( "sf17.bin",   0x0000, 0x2000, 0x1b3706b5 )
+
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* foreground tile pixel data */
+	ROM_LOAD( "sf07.bin",   0x10000, 0x8000, 0x2c6caa5f )
+	ROM_LOAD( "sf08.bin",   0x18000, 0x8000, 0xe11ded31 )
+	ROM_LOAD( "sf05.bin",   0x00000, 0x8000, 0x0c099a31 )
+	ROM_LOAD( "sf06.bin",   0x08000, 0x8000, 0x3cc77c31 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* background tile pixel data */
+	ROM_LOAD( "sf13.bin",   0x10000, 0x8000, 0x0ae48dd3 )
+	ROM_LOAD( "sf14.bin",   0x18000, 0x8000, 0xdebf5d76 )
+	ROM_LOAD( "sf11.bin",   0x00000, 0x8000, 0x8261ecfe )
+	ROM_LOAD( "sf12.bin",   0x08000, 0x8000, 0x71137301 )
+
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprite data */
+	ROM_LOAD( "sf20.bin",   0x10000, 0x8000, 0x8299f247 )
+	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, 0xb57dc037 )
+	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
+	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
+
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* foreground map data */
+	ROM_LOAD( "sf09.bin",   0x00000, 0x8000, 0x8ceaf4fe )
+	ROM_LOAD( "sf10.bin",   0x08000, 0x8000, 0x5a1a227a )
+
+	ROM_REGION( 0x10000, REGION_GFX6 )	/* background map data */
+	ROM_LOAD( "sf15.bin",   0x00000, 0x8000, 0x27a310bc )
+	ROM_LOAD( "sf16.bin",   0x08000, 0x8000, 0x3d19ce18 )
+
+	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
+	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
+	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
+	ROM_LOAD( "82s129.004", 0x0300, 0x0100, 0x1831ce7c )	/* bg lookup table */
+	ROM_LOAD( "82s129.005", 0x0400, 0x0100, 0x96cb6293 )
+	ROM_LOAD( "82s129.052", 0x0500, 0x0100, 0x3d915ffc )	/* sprite lookup table */
+	ROM_LOAD( "82s129.066", 0x0600, 0x0100, 0x51e8832f )
+	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
+
+	ROM_REGION( 0x08000, REGION_SOUND1 )	/* adpcm voice data */
 	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, 0x1b8d0c07 )
 ROM_END
 
 ROM_START( stfight )
-	ROM_REGIONX( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
+	ROM_REGION( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
 	ROM_LOAD( "sf02.bin",   0x10000, 0x8000, 0xe626ce9e )	/* bank switched */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "sf03.bin",   0x0000,  0x8000, 0x6a8cb7a6 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* character data */
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* character data */
 	ROM_LOAD( "sf17.bin",   0x0000, 0x2000, 0x1b3706b5 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* foreground tile pixel data */
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* foreground tile pixel data */
 	ROM_LOAD( "sf07.bin",   0x10000, 0x8000, 0x2c6caa5f )
 	ROM_LOAD( "sf08.bin",   0x18000, 0x8000, 0xe11ded31 )
 	ROM_LOAD( "sf05.bin",   0x00000, 0x8000, 0x0c099a31 )
 	ROM_LOAD( "sf06.bin",   0x08000, 0x8000, 0x3cc77c31 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* background tile pixel data */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* background tile pixel data */
 	ROM_LOAD( "sf13.bin",   0x10000, 0x8000, 0x0ae48dd3 )
 	ROM_LOAD( "sf14.bin",   0x18000, 0x8000, 0xdebf5d76 )
 	ROM_LOAD( "sf11.bin",   0x00000, 0x8000, 0x8261ecfe )
 	ROM_LOAD( "sf12.bin",   0x08000, 0x8000, 0x71137301 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprite data */
 	ROM_LOAD( "sf20.bin",   0x10000, 0x8000, 0x8299f247 )
 	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, 0xb57dc037 )
 	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
 	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* foreground map data */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* foreground map data */
 	ROM_LOAD( "sf09.bin",   0x00000, 0x8000, 0x8ceaf4fe )
 	ROM_LOAD( "sf10.bin",   0x08000, 0x8000, 0x5a1a227a )
 
-	ROM_REGIONX( 0x10000, REGION_GFX6 )	/* background map data */
+	ROM_REGION( 0x10000, REGION_GFX6 )	/* background map data */
 	ROM_LOAD( "sf15.bin",   0x00000, 0x8000, 0x27a310bc )
 	ROM_LOAD( "sf16.bin",   0x08000, 0x8000, 0x3d19ce18 )
 
-	ROM_REGIONX( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS )
 	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
 	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
 	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
@@ -661,11 +712,12 @@ ROM_START( stfight )
 	ROM_LOAD( "82s129.066", 0x0600, 0x0100, 0x51e8832f )
 	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
 
-	ROM_REGIONX( 0x08000, REGION_SOUND1 )	/* adpcm voice data */
+	ROM_REGION( 0x08000, REGION_SOUND1 )	/* adpcm voice data */
 	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, 0x1b8d0c07 )
 ROM_END
 
 
 
-GAME( 1986, empcity, 0,       stfight, stfight, empcity, ROT0, "Seibu Kaihatsu", "Empire City: 1931" )
-GAME( 1986, stfight, empcity, stfight, stfight, stfight, ROT0, "Seibu Kaihatsu", "Street Fight (Germany)" )
+GAME( 1986, empcity,  0,       stfight, stfight, empcity, ROT0, "Seibu Kaihatsu", "Empire City: 1931 (bootleg?)" )
+GAME( 1986, empcityj, empcity, stfight, stfight, stfight, ROT0, "[Seibu Kaihatsu] (Taito license)", "Empire City: 1931 (Japan)" )
+GAME( 1986, stfight,  empcity, stfight, stfight, stfight, ROT0, "Seibu Kaihatsu", "Street Fight (Germany)" )

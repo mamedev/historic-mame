@@ -153,23 +153,24 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* compute palette usage */
 	{
 		unsigned short palette_map[4 * 16];
-		int tile, gfx, cram;
+		int tile, cram;
 
 		memset (palette_map, 0, sizeof (palette_map));
 
-		for ( offs = wc90_tile_videoram_size2 - 1; offs >= 0; offs-- ) {
-			tile = wc90_tile_videoram2[offs];
+		for ( offs = wc90_tile_videoram_size2 - 1; offs >= 0; offs-- )
+		{
 			cram = wc90_tile_colorram2[offs];
-			gfx = 9 + ( cram & 3 ) + ( ( cram >> 1 ) & 4 );
-			palette_map[3*16 + (cram >> 4)] |= Machine->gfx[gfx]->pen_usage[tile];
+			tile = wc90_tile_videoram2[offs] + 256 * (( cram & 3 ) + ( ( cram >> 1 ) & 4 ));
+			palette_map[3*16 + (cram >> 4)] |= Machine->gfx[2]->pen_usage[tile];
 		}
-		for ( offs = wc90_tile_videoram_size - 1; offs >= 0; offs-- ) {
-			tile = wc90_tile_videoram[offs];
+		for ( offs = wc90_tile_videoram_size - 1; offs >= 0; offs-- )
+		{
 			cram = wc90_tile_colorram[offs];
-			gfx = 1 + ( cram & 3 ) + ( ( cram >> 1 ) & 4 );
-			palette_map[2*16 + (cram >> 4)] |= Machine->gfx[gfx]->pen_usage[tile];
+			tile = wc90_tile_videoram[offs] + 256 * (( cram & 3 ) + ( ( cram >> 1 ) & 4 ));
+			palette_map[2*16 + (cram >> 4)] |= Machine->gfx[1]->pen_usage[tile];
 		}
-		for ( offs = videoram_size - 1; offs >= 0; offs-- ) {
+		for ( offs = videoram_size - 1; offs >= 0; offs-- )
+		{
 			cram = colorram[offs];
 			tile = videoram[offs] + ( ( cram & 0x07 ) << 8 );
 			palette_map[1*16 + (cram >> 4)] |= Machine->gfx[0]->pen_usage[tile];
@@ -217,7 +218,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 */
 
 	for ( offs = last_tile2; offs >= 0; offs-- ) {
-		int sx, sy, tile, gfx;
+		int sx, sy, tile;
 
 		if ( dirtybuffer2[offs] ) {
 
@@ -226,10 +227,10 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = ( offs % 64 );
 			sy = ( offs / 64 );
 
-			tile = wc90_tile_videoram2[offs];
-			gfx = 9 + ( wc90_tile_colorram2[offs] & 3 ) + ( ( wc90_tile_colorram2[offs] >> 1 ) & 4 );
+			tile = wc90_tile_videoram2[offs] +
+					256 * (( wc90_tile_colorram2[offs] & 3 ) + ( ( wc90_tile_colorram2[offs] >> 1 ) & 4 ));
 
-			drawgfx(tmpbitmap2,Machine->gfx[ gfx ],
+			drawgfx(tmpbitmap2,Machine->gfx[2],
 					tile,
 					wc90_tile_colorram2[offs] >> 4,
 					0,0,
@@ -248,7 +249,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	wc90_draw_sprites( bitmap, 2 );
 
 	for ( offs = last_tile1; offs >= 0; offs-- ) {
-		int sx, sy, tile, gfx;
+		int sx, sy, tile;
 
 		if ( dirtybuffer1[offs] ) {
 
@@ -257,10 +258,10 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = ( offs % 64 );
 			sy = ( offs / 64 );
 
-			tile = wc90_tile_videoram[offs];
-			gfx = 1 + ( wc90_tile_colorram[offs] & 3 ) + ( ( wc90_tile_colorram[offs] >> 1 ) & 4 );
+			tile = wc90_tile_videoram[offs] +
+					256 * (( wc90_tile_colorram[offs] & 3 ) + ( ( wc90_tile_colorram[offs] >> 1 ) & 4 ));
 
-			drawgfx(tmpbitmap1,Machine->gfx[ gfx ],
+			drawgfx(tmpbitmap1,Machine->gfx[1],
 					tile,
 					wc90_tile_colorram[offs] >> 4,
 					0,0,
@@ -305,7 +306,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 #define WC90_DRAW_SPRITE( code, sx, sy ) \
-					drawgfx( bitmap, Machine->gfx[17], code, flags >> 4, \
+					drawgfx( bitmap, Machine->gfx[3], code, flags >> 4, \
 					bank&1, bank&2, sx, sy, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0 )
 
 static char pos32x32[] = { 0, 1, 2, 3 };

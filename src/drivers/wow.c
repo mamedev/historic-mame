@@ -2,6 +2,8 @@
 
    Bally Astrocade style games
 
+driver by Nicola Salmoria, Mike Coates, Frank Palazzolo
+
    02.02.98 - New IO port definitions				MJC
               Dirty Rectangle handling
               Sparkle Circuit for Gorf
@@ -393,18 +395,6 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
  * Wizard of Wor
  ****************************************************************************/
 
-ROM_START( wow )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0xc1295786 )
-	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0x9be93215 )
-	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0x75e5a22e )
-	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xef28eb84 )
-	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0x16912c2b )
-	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x35797f82 )
-	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0xce404305 )
-/*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
-ROM_END
-
 INPUT_PORTS_START( wow )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -555,48 +545,9 @@ static struct MachineDriver machine_driver_wow =
 
 
 
-struct GameDriver driver_wow =
-{
-	__FILE__,
-	0,
-	"wow",
-	"Wizard of Wor",
-	"1980",
-	"Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nKevin Estep (samples)\nAlex Judd (sound programming)\nFrank Palazzolo",
-	0,
-	&machine_driver_wow,
-	0,
-
-	rom_wow,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wow,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
 /****************************************************************************
  * Robby Roto
  ****************************************************************************/
-
-ROM_START( robby )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0xa431b85a )
-	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0x33cdda83 )
-	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0xdbf97491 )
-	ROM_LOAD( "rotox4.bin",  0x3000, 0x1000, 0xa3b90ac8 )
-	ROM_LOAD( "rotox5.bin",  0x8000, 0x1000, 0x46ae8a94 )
-	ROM_LOAD( "rotox6.bin",  0x9000, 0x1000, 0x7916b730 )
-	ROM_LOAD( "rotox7.bin",  0xa000, 0x1000, 0x276dc4a5 )
-	ROM_LOAD( "rotox8.bin",  0xb000, 0x1000, 0x1ef13457 )
-  	ROM_LOAD( "rotox9.bin",  0xc000, 0x1000, 0x370352bf )
-	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0xe762cbda )
-ROM_END
 
 static struct MemoryReadAddress robby_readmem[] =
 {
@@ -712,58 +663,10 @@ static struct MachineDriver machine_driver_robby =
 };
 
 
-struct GameDriver driver_robby =
-{
-	__FILE__,
-	0,
-	"robby",
-	"Robby Roto",
-	"1981",
-	"Bally Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nFrank Palazzolo",
-	0,
-	&machine_driver_robby,
-	0,
-
-	rom_robby,
-	0, 0,
-	0,
-	0,
-
-	input_ports_robby,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
 /****************************************************************************
  * Gorf
  ****************************************************************************/
 
-ROM_START( gorf )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x5b348321 )
-	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0x62d6de77 )
-	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0x1d3bc9c9 )
-	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0x70046e56 )
-	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x2d456eb5 )
-	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7e4e155 )
-	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x4e2bd9b9 )
-	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0xfe7b863d )
-ROM_END
-
-ROM_START( gorfpgm1 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "873a", 0x0000, 0x1000, 0x97cb4a6a )
-	ROM_LOAD( "873b", 0x1000, 0x1000, 0x257236f8 )
-	ROM_LOAD( "873c", 0x2000, 0x1000, 0x16b0638b )
-	ROM_LOAD( "873d", 0x3000, 0x1000, 0xb5e821dc )
-	ROM_LOAD( "873e", 0x8000, 0x1000, 0x8e82804b )
-	ROM_LOAD( "873f", 0x9000, 0x1000, 0x715fb4d9 )
-	ROM_LOAD( "873g", 0xa000, 0x1000, 0x8a066456 )
-	ROM_LOAD( "873h", 0xb000, 0x1000, 0x56d40c7c )
-ROM_END
 
 INPUT_PORTS_START( gorf )
 	PORT_START /* IN0 */
@@ -885,68 +788,9 @@ static struct MachineDriver machine_driver_gorf =
 };
 
 
-struct GameDriver driver_gorf =
-{
-	__FILE__,
-	0,
-	"gorf",
-    "Gorf",
-	"1981",
-	"Midway",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
-	0,
-	&machine_driver_gorf,
-	0,
-
-	rom_gorf,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gorf,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_gorfpgm1 =
-{
-	__FILE__,
-	&driver_gorf,
-	"gorfpgm1",
-    "Gorf (Program 1)",
-	"1981",
-	"Midway",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
-	0,
-	&machine_driver_gorf,
-	0,
-
-	rom_gorfpgm1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gorf,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
 /****************************************************************************
  * Space Zap
  ****************************************************************************/
-
-ROM_START( spacezap )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xa92de312 )
-	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x4836ebf1 )
-	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0xd8193a80 )
-	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0x3784228d )
-ROM_END
-
 
 INPUT_PORTS_START( spacezap )
 	PORT_START /* IN0 */
@@ -1035,42 +879,9 @@ static struct MachineDriver machine_driver_spacezap =
 };
 
 
-struct GameDriver driver_spacezap =
-{
-	__FILE__,
-	0,
-	"spacezap",
-	"Space Zap",
-	"1980",
-	"Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
-	0,
-	&machine_driver_spacezap,
-	0,
-
-	rom_spacezap,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacezap,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
 /****************************************************************************
  * Seawolf II
  ****************************************************************************/
-
-ROM_START( seawolf2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0xad0103f6 )
-	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0xe0430f0a )
-	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x05ad1619 )
-	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0x1a1a14a2 )
-ROM_END
 
 static struct MemoryReadAddress seawolf2_readmem[] =
 {
@@ -1194,43 +1005,9 @@ static struct MachineDriver machine_driver_seawolf =
 };
 
 
-struct GameDriver driver_seawolf2 =
-{
-	__FILE__,
-	0,
-	"seawolf2",
-	"Sea Wolf II",
-	"1978",
-	"Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)",
-	0,
-	&machine_driver_seawolf,
-	0,
-
-	rom_seawolf2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_seawolf2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
 /****************************************************************************
  * Extra Bases (Bally/Midway)
  ****************************************************************************/
-
-ROM_START( ebases )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x34422147 )
-	ROM_LOAD( "m761b", 0x1000, 0x1000, 0x4f28dfd6 )
-	ROM_LOAD( "m761c", 0x2000, 0x1000, 0xbff6c97e )
-	ROM_LOAD( "m761d", 0x3000, 0x1000, 0x5173781a )
-ROM_END
-
 
 INPUT_PORTS_START( ebases )
 	PORT_START /* IN0 */
@@ -1345,32 +1122,6 @@ static struct MachineDriver machine_driver_ebases =
 			&astrocade_1chip_interface
 		}
 	}
-};
-
-struct GameDriver driver_ebases =
-{
-	__FILE__,
-	0,
-	"ebases",
-	"Extra Bases",
-	"1980",
-	"Midway",
-	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
-	0,
-	&machine_driver_ebases,
-	0,
-
-	rom_ebases,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ebases,
-
-	0, 0, 0,
-	ROT0 | GAME_WRONG_COLORS,
-
-	0, 0
 };
 
 /***************************************************************************
@@ -1497,4 +1248,91 @@ IN
 	    bit 7   = Test
 
 ***************************************************************************/
+
+
+
+
+ROM_START( wow )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0xc1295786 )
+	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0x9be93215 )
+	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0x75e5a22e )
+	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xef28eb84 )
+	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0x16912c2b )
+	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x35797f82 )
+	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0xce404305 )
+/*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
+ROM_END
+
+ROM_START( robby )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0xa431b85a )
+	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0x33cdda83 )
+	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0xdbf97491 )
+	ROM_LOAD( "rotox4.bin",  0x3000, 0x1000, 0xa3b90ac8 )
+	ROM_LOAD( "rotox5.bin",  0x8000, 0x1000, 0x46ae8a94 )
+	ROM_LOAD( "rotox6.bin",  0x9000, 0x1000, 0x7916b730 )
+	ROM_LOAD( "rotox7.bin",  0xa000, 0x1000, 0x276dc4a5 )
+	ROM_LOAD( "rotox8.bin",  0xb000, 0x1000, 0x1ef13457 )
+  	ROM_LOAD( "rotox9.bin",  0xc000, 0x1000, 0x370352bf )
+	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0xe762cbda )
+ROM_END
+
+ROM_START( gorf )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x5b348321 )
+	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0x62d6de77 )
+	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0x1d3bc9c9 )
+	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0x70046e56 )
+	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x2d456eb5 )
+	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7e4e155 )
+	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x4e2bd9b9 )
+	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0xfe7b863d )
+ROM_END
+
+ROM_START( gorfpgm1 )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "873a", 0x0000, 0x1000, 0x97cb4a6a )
+	ROM_LOAD( "873b", 0x1000, 0x1000, 0x257236f8 )
+	ROM_LOAD( "873c", 0x2000, 0x1000, 0x16b0638b )
+	ROM_LOAD( "873d", 0x3000, 0x1000, 0xb5e821dc )
+	ROM_LOAD( "873e", 0x8000, 0x1000, 0x8e82804b )
+	ROM_LOAD( "873f", 0x9000, 0x1000, 0x715fb4d9 )
+	ROM_LOAD( "873g", 0xa000, 0x1000, 0x8a066456 )
+	ROM_LOAD( "873h", 0xb000, 0x1000, 0x56d40c7c )
+ROM_END
+
+ROM_START( spacezap )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xa92de312 )
+	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x4836ebf1 )
+	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0xd8193a80 )
+	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0x3784228d )
+ROM_END
+
+ROM_START( seawolf2 )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0xad0103f6 )
+	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0xe0430f0a )
+	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x05ad1619 )
+	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0x1a1a14a2 )
+ROM_END
+
+ROM_START( ebases )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x34422147 )
+	ROM_LOAD( "m761b", 0x1000, 0x1000, 0x4f28dfd6 )
+	ROM_LOAD( "m761c", 0x2000, 0x1000, 0xbff6c97e )
+	ROM_LOAD( "m761d", 0x3000, 0x1000, 0x5173781a )
+ROM_END
+
+
+
+GAME( 1980, wow,      0,    wow,      wow,      0, ROT0,   "Midway", "Wizard of Wor" )
+GAME( 1981, robby,    0,    robby,    robby,    0, ROT0,   "Bally Midway", "Robby Roto" )
+GAME( 1981, gorf,     0,    gorf,     gorf,     0, ROT270, "Midway", "Gorf" )
+GAME( 1981, gorfpgm1, gorf, gorf,     gorf,     0, ROT270, "Midway", "Gorf (Program 1)" )
+GAME( 1980, spacezap, 0,    spacezap, spacezap, 0, ROT0,   "Midway", "Space Zap" )
+GAME( 1978, seawolf2, 0,    seawolf,  seawolf2, 0, ROT0,   "Midway", "Sea Wolf II" )
+GAMEX(1980, ebases,   0,    ebases,   ebases,   0, ROT0,   "Midway", "Extra Bases", GAME_WRONG_COLORS )
 

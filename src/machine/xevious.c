@@ -44,9 +44,9 @@ unsigned char namco_key[16] =
 
 void xevious_init_machine(void)
 {
-	rom2a = memory_region(5);
-	rom2b = memory_region(5)+0x1000;
-	rom2c = memory_region(5)+0x3000;
+	rom2a = memory_region(REGION_GFX4);
+	rom2b = memory_region(REGION_GFX4)+0x1000;
+	rom2c = memory_region(REGION_GFX4)+0x3000;
 
 	nmi_timer = 0;
 

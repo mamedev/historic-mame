@@ -391,9 +391,9 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* recompute */
 		if (palette_recalc ())
 		{
-			memset (frg_dirtybuffer, 1, toki_foreground_videoram_size);
-			memset (bg1_dirtybuffer, 1, toki_background1_videoram_size);
-			memset (bg2_dirtybuffer, 1, toki_background2_videoram_size);
+			memset (frg_dirtybuffer, 1, toki_foreground_videoram_size / 2);
+			memset (bg1_dirtybuffer, 1, toki_background1_videoram_size / 2);
+			memset (bg2_dirtybuffer, 1, toki_background2_videoram_size / 2);
 		}
 	}
 

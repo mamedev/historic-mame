@@ -291,35 +291,35 @@ static struct MachineDriver machine_driver_funkybee =
 ***************************************************************************/
 
 ROM_START( funkybee )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "funkybee.1",    0x0000, 0x1000, 0x3372cb33 )
 	ROM_LOAD( "funkybee.3",    0x1000, 0x1000, 0x7bf7c62f )
 	ROM_LOAD( "funkybee.2",    0x2000, 0x1000, 0x8cc0fe8e )
 	ROM_LOAD( "funkybee.4",    0x3000, 0x1000, 0x1e1aac26 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "funkybee.5",    0x0000, 0x2000, 0x86126655 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "funkybee.6",    0x0000, 0x2000, 0x5fffd323 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "funkybee.clr",  0x0000, 0x0020, 0xe2cf5fe2 )
 ROM_END
 
 ROM_START( skylancr )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.5a",          0x0000, 0x2000, 0x82d55824 )
 	ROM_LOAD( "2.5c",          0x2000, 0x2000, 0xdff3a682 )
 	ROM_LOAD( "3.5d",          0x4000, 0x1000, 0x7c006ee6 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4.6a",          0x0000, 0x2000, 0x0f8ede07 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5.6b",          0x0000, 0x2000, 0x24cec070 )
 
-	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS )
 	ROM_LOAD( "18s030.1a",     0x0000, 0x0020, 0xe645bacb )
 ROM_END
 

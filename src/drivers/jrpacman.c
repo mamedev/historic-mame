@@ -304,25 +304,25 @@ static struct MachineDriver machine_driver_jrpacman =
 ***************************************************************************/
 
 ROM_START( jrpacman )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jrp8d.bin",    0x0000, 0x2000, 0xe3fa972e )
 	ROM_LOAD( "jrp8e.bin",    0x2000, 0x2000, 0xec889e94 )
 	ROM_LOAD( "jrp8h.bin",    0x8000, 0x2000, 0x35f1fc6e )
 	ROM_LOAD( "jrp8j.bin",    0xa000, 0x2000, 0x9737099e )
 	ROM_LOAD( "jrp8k.bin",    0xc000, 0x2000, 0x5252dd97 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, 0x0527ff9b )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jrp2e.bin",    0x0000, 0x2000, 0x73477193 )
 
-	ROM_REGIONX( 0x0140, REGION_PROMS )
+	ROM_REGION( 0x0140, REGION_PROMS )
 	ROM_LOAD( "jrpacman.9e",  0x0000, 0x0020, 0x90012b3f ) /* palette low bits */
 	ROM_LOAD( "jrpacman.9f",  0x0020, 0x0020, 0x8300178e ) /* palette high bits */
 	ROM_LOAD( "jrpacman.9p",  0x0040, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
 
-	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound prom */
 	/* I don't know if this is correct. I'm using the Pac Man one. */
 	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, BADCRC( 0xa9cc86bf ) )
 ROM_END

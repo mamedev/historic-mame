@@ -270,19 +270,19 @@ static struct MachineDriver machine_driver_shootout =
 
 
 ROM_START( shootout )
-	ROM_REGIONX( 2*0x20000, REGION_CPU1 )	/* 128k for code + 128k for decrypted opcodes */
+	ROM_REGION( 2*0x20000, REGION_CPU1 )	/* 128k for code + 128k for decrypted opcodes */
 	ROM_LOAD( "cu00.b1",        0x08000, 0x8000, 0x090edeb6 ) /* opcodes encrypted */
 	/* banked at 0x4000-0x8000 */
 	ROM_LOAD( "cu02.c3",        0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
 	ROM_LOAD( "cu01.c1",        0x18000, 0x4000, 0x8843c3ae ) /* opcodes encrypted */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "cu09.j1",        0x0c000, 0x4000, 0xc4cbd558 ) /* Sound CPU */
 
-	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 )	/* sprites */
 	ROM_LOAD( "cu03.c5",        0x08000, 0x8000, 0xb786bb3e )
 	ROM_LOAD( "cu06.c10",       0x10000, 0x8000, 0x2ec1d17f )
@@ -290,13 +290,13 @@ ROM_START( shootout )
 	ROM_LOAD( "cu08.c13",       0x20000, 0x8000, 0x91290933 )
 	ROM_LOAD( "cu07.c12",       0x28000, 0x8000, 0x19b6b94f )
 
-	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
 	ROM_CONTINUE(               0x04000, 0x2000 )
 	ROM_CONTINUE(               0x02000, 0x2000 )
 	ROM_CONTINUE(               0x06000, 0x2000 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
 ROM_END

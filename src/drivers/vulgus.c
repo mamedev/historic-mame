@@ -2,6 +2,8 @@
 
 Vulgus memory map (preliminary)
 
+driver by Mirko Buffoni
+
 MAIN CPU
 0000-9fff ROM
 cc00-cc7f Sprites
@@ -249,9 +251,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,           0, 64 },
-	{ 1, 0x02000, &tilelayout,  64*4+16*16, 32*4 },
-	{ 1, 0x0e000, &spritelayout,      64*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,           0, 64 },
+	{ REGION_GFX2, 0, &tilelayout,  64*4+16*16, 32*4 },
+	{ REGION_GFX3, 0, &spritelayout,      64*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -270,7 +272,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_vulgus =
 {
 	/* basic machine hardware */
 	{
@@ -322,177 +324,118 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vulgus )
-	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
 	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
 	ROM_LOAD( "v4",           0x4000, 0x2000, 0x5b26355c )
 	ROM_LOAD( "v5",           0x6000, 0x2000, 0x4ca7f10e )
 	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
-	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
-	ROM_LOAD( "2-2a.bin",     0x02000, 0x2000, 0xe10aaca1 )	/* tiles */
-	ROM_LOAD( "2-3a.bin",     0x04000, 0x2000, 0x8da520da )
-	ROM_LOAD( "2-4a.bin",     0x06000, 0x2000, 0x206a13f1 )
-	ROM_LOAD( "2-5a.bin",     0x08000, 0x2000, 0xb6d81984 )
-	ROM_LOAD( "2-6a.bin",     0x0a000, 0x2000, 0x5a26b38f )
-	ROM_LOAD( "2-7a.bin",     0x0c000, 0x2000, 0x1e1ca773 )
-	ROM_LOAD( "2-2n.bin",     0x0e000, 0x2000, 0x6db1b10d )	/* sprites */
-	ROM_LOAD( "2-3n.bin",     0x10000, 0x2000, 0x5d8c34ec )
-	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
-	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 
-	ROM_REGIONX( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
+
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-2a.bin",     0x00000, 0x2000, 0xe10aaca1 )	/* tiles */
+	ROM_LOAD( "2-3a.bin",     0x02000, 0x2000, 0x8da520da )
+	ROM_LOAD( "2-4a.bin",     0x04000, 0x2000, 0x206a13f1 )
+	ROM_LOAD( "2-5a.bin",     0x06000, 0x2000, 0xb6d81984 )
+	ROM_LOAD( "2-6a.bin",     0x08000, 0x2000, 0x5a26b38f )
+	ROM_LOAD( "2-7a.bin",     0x0a000, 0x2000, 0x1e1ca773 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-2n.bin",     0x00000, 0x2000, 0x6db1b10d )	/* sprites */
+	ROM_LOAD( "2-3n.bin",     0x02000, 0x2000, 0x5d8c34ec )
+	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
+	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
+
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
 ROM_START( vulgus2 )
-	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vulgus.002",   0x0000, 0x2000, 0xe49d6c5d )
 	ROM_LOAD( "vulgus.003",   0x2000, 0x2000, 0x51acef76 )
 	ROM_LOAD( "vulgus.004",   0x4000, 0x2000, 0x489e7f60 )
 	ROM_LOAD( "vulgus.005",   0x6000, 0x2000, 0xde3a24a8 )
 	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
-	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
-	ROM_LOAD( "2-2a.bin",     0x02000, 0x2000, 0xe10aaca1 )	/* tiles */
-	ROM_LOAD( "2-3a.bin",     0x04000, 0x2000, 0x8da520da )
-	ROM_LOAD( "2-4a.bin",     0x06000, 0x2000, 0x206a13f1 )
-	ROM_LOAD( "2-5a.bin",     0x08000, 0x2000, 0xb6d81984 )
-	ROM_LOAD( "2-6a.bin",     0x0a000, 0x2000, 0x5a26b38f )
-	ROM_LOAD( "2-7a.bin",     0x0c000, 0x2000, 0x1e1ca773 )
-	ROM_LOAD( "2-2n.bin",     0x0e000, 0x2000, 0x6db1b10d )	/* sprites */
-	ROM_LOAD( "2-3n.bin",     0x10000, 0x2000, 0x5d8c34ec )
-	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
-	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 
-	ROM_REGIONX( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
+
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-2a.bin",     0x00000, 0x2000, 0xe10aaca1 )	/* tiles */
+	ROM_LOAD( "2-3a.bin",     0x02000, 0x2000, 0x8da520da )
+	ROM_LOAD( "2-4a.bin",     0x04000, 0x2000, 0x206a13f1 )
+	ROM_LOAD( "2-5a.bin",     0x06000, 0x2000, 0xb6d81984 )
+	ROM_LOAD( "2-6a.bin",     0x08000, 0x2000, 0x5a26b38f )
+	ROM_LOAD( "2-7a.bin",     0x0a000, 0x2000, 0x1e1ca773 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-2n.bin",     0x00000, 0x2000, 0x6db1b10d )	/* sprites */
+	ROM_LOAD( "2-3n.bin",     0x02000, 0x2000, 0x5d8c34ec )
+	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
+	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
+
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
 ROM_START( vulgusj )
-	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1-4n.bin",     0x0000, 0x2000, 0xfe5a5ca5 )
 	ROM_LOAD( "1-5n.bin",     0x2000, 0x2000, 0x847e437f )
 	ROM_LOAD( "1-6n.bin",     0x4000, 0x2000, 0x4666c436 )
 	ROM_LOAD( "1-7n.bin",     0x6000, 0x2000, 0xff2097f9 )
 	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
-	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
-	ROM_LOAD( "2-2a.bin",     0x02000, 0x2000, 0xe10aaca1 )	/* tiles */
-	ROM_LOAD( "2-3a.bin",     0x04000, 0x2000, 0x8da520da )
-	ROM_LOAD( "2-4a.bin",     0x06000, 0x2000, 0x206a13f1 )
-	ROM_LOAD( "2-5a.bin",     0x08000, 0x2000, 0xb6d81984 )
-	ROM_LOAD( "2-6a.bin",     0x0a000, 0x2000, 0x5a26b38f )
-	ROM_LOAD( "2-7a.bin",     0x0c000, 0x2000, 0x1e1ca773 )
-	ROM_LOAD( "2-2n.bin",     0x0e000, 0x2000, 0x6db1b10d )	/* sprites */
-	ROM_LOAD( "2-3n.bin",     0x10000, 0x2000, 0x5d8c34ec )
-	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
-	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 
-	ROM_REGIONX( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
+
+	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-2a.bin",     0x00000, 0x2000, 0xe10aaca1 )	/* tiles */
+	ROM_LOAD( "2-3a.bin",     0x02000, 0x2000, 0x8da520da )
+	ROM_LOAD( "2-4a.bin",     0x04000, 0x2000, 0x206a13f1 )
+	ROM_LOAD( "2-5a.bin",     0x06000, 0x2000, 0xb6d81984 )
+	ROM_LOAD( "2-6a.bin",     0x08000, 0x2000, 0x5a26b38f )
+	ROM_LOAD( "2-7a.bin",     0x0a000, 0x2000, 0x1e1ca773 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-2n.bin",     0x00000, 0x2000, 0x6db1b10d )	/* sprites */
+	ROM_LOAD( "2-3n.bin",     0x02000, 0x2000, 0x5d8c34ec )
+	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
+	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
+
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
 
 
-struct GameDriver driver_vulgus =
-{
-	__FILE__,
-	0,
-	"vulgus",
-	"Vulgus (set 1)",
-	"1984",
-	"Capcom",
-	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_vulgus,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vulgus,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_vulgus2 =
-{
-	__FILE__,
-	&driver_vulgus,
-	"vulgus2",
-	"Vulgus (set 2)",
-	"1984",
-	"Capcom",
-	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_vulgus2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vulgus,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_vulgusj =
-{
-	__FILE__,
-	&driver_vulgus,
-	"vulgusj",
-	"Vulgus (Japan?)",
-	"1984",
-	"Capcom",
-	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_vulgusj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vulgus,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1984, vulgus,  0,      vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 1)" )
+GAME( 1984, vulgus2, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 2)" )
+GAME( 1984, vulgusj, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (Japan?)" )

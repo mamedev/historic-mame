@@ -1,9 +1,14 @@
+#define USE_SEAL
+//#define USE_ALLEGRO
+
 #include "mamalleg.h"
 #include "driver.h"
 #include <dos.h>
 #include <conio.h>
 #include <time.h>
+#ifdef USE_SEAL
 #include <audio.h>
+#endif
 
 /* this is supposed to cut down Allegro size, but it actually gets *bigger*... */
 #if 0
@@ -14,35 +19,47 @@ END_MIDI_DRIVER_LIST
 #endif
 
 
+#define SOUND_CHANNELS 2	/* left and right */
+
+#ifdef USE_SEAL
 /* audio related stuff */
-HAC hVoice[MIXER_MAX_CHANNELS];
-LPAUDIOWAVE lpWave[MIXER_MAX_CHANNELS];
+HAC hVoice[SOUND_CHANNELS];
+LPAUDIOWAVE lpWave[SOUND_CHANNELS];
+
+AUDIOINFO info;
+AUDIOCAPS caps;
+#endif
+#ifdef USE_ALLEGRO
+AUDIOSTREAM *stream;
+#endif
+
 static int num_used_opl;
 int nominal_sample_rate;
 int soundcard,usestereo;
 int attenuation = 0;
 
-AUDIOINFO info;
-AUDIOCAPS caps;
 
-static int stream_playing[MIXER_MAX_CHANNELS];
-static void *stream_cache_data[MIXER_MAX_CHANNELS];
-static int stream_cache_len[MIXER_MAX_CHANNELS];
-static int stream_cache_freq[MIXER_MAX_CHANNELS];
-static int stream_cache_volume[MIXER_MAX_CHANNELS];
-static int stream_cache_pan[MIXER_MAX_CHANNELS];
+static int stream_playing;
+static INT16 *stream_cache_data;
+static int stream_cache_len;
+static int stream_cache_stereo;
 
 
 int msdos_init_seal (void)
 {
+#ifdef USE_SEAL
 	if (AInitialize() == AUDIO_ERROR_NONE)
 		return 0;
 	else
 		return 1;
+#else
+	return 0;
+#endif
 }
 
 int msdos_init_sound(void)
 {
+#ifdef USE_SEAL
 	int i;
 
 	/* Ask the user if no soundcard was chosen */
@@ -106,31 +123,21 @@ int msdos_init_sound(void)
 			info.nSampleRate);
 
 	/* open and allocate voices, allocate waveforms */
-	if (AOpenVoices(MIXER_MAX_CHANNELS) != AUDIO_ERROR_NONE)
+	if (AOpenVoices(SOUND_CHANNELS) != AUDIO_ERROR_NONE)
 	{
 		printf("voices initialization failed\n");
 		return 1;
 	}
 
-	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
+	for (i = 0; i < SOUND_CHANNELS; i++)
 	{
-		if (ACreateAudioVoice(&hVoice[i]) != AUDIO_ERROR_NONE)
-		{
-			printf("voice #%d creation failed\n",i);
-			return 1;
-		}
-
-		ASetVoicePanning(hVoice[i],128);
-
 		lpWave[i] = 0;
-
-		stream_playing[i] = 0;
-		stream_cache_data[0] = 0;
-		stream_cache_len[0] = 0;
-		stream_cache_freq[0] = 0;
-		stream_cache_volume[0] = 0;
-		stream_cache_pan[0] = 0;
 	}
+
+	stream_playing = 0;
+	stream_cache_data = 0;
+	stream_cache_len = 0;
+	stream_cache_stereo = 0;
 
 	/* update the Machine structure to reflect the actual sample rate */
 	Machine->sample_rate = info.nSampleRate;
@@ -142,8 +149,14 @@ int msdos_init_sound(void)
 		LONG start,end;
 
 
-		if ((lpWave[0] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
+		if (ACreateAudioVoice(&hVoice[0]) != AUDIO_ERROR_NONE)
 			return 1;
+
+		if ((lpWave[0] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
+		{
+			ADestroyAudioVoice(hVoice[0]);
+			return 1;
+		}
 
 		lpWave[0]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
 		lpWave[0]->nSampleRate = Machine->sample_rate;
@@ -191,6 +204,7 @@ int msdos_init_sound(void)
 		ADestroyAudioData(lpWave[0]);
 		free(lpWave[0]);
 		lpWave[0] = 0;
+		ADestroyAudioVoice(hVoice[0]);
 	}
 
 
@@ -216,6 +230,21 @@ int msdos_init_sound(void)
 		}
 	}
 #endif
+
+#endif
+
+#ifdef USE_ALLEGRO
+	install_timer();
+	if (install_sound(DIGI_AUTODETECT,MIDI_NONE,0) != 0)
+	{
+		reserve_voices(1,0);
+		if (errorlog) fprintf(errorlog,"Allegro install_sound error: %s\n",allegro_error);
+		return 1;
+	}
+
+	nominal_sample_rate = Machine->sample_rate;
+#endif
+
 	num_used_opl = 0;
 
 	osd_set_mastervolume(attenuation);	/* set the startup volume */
@@ -249,278 +278,361 @@ void msdos_shutdown_sound(void)
 			}
 		}
 
-		/* stop and release voices */
-		for (n = 0; n < MIXER_MAX_CHANNELS; n++)
-		{
-			AStopVoice(hVoice[n]);
-			ADestroyAudioVoice(hVoice[n]);
-			if (lpWave[n])
-			{
-				ADestroyAudioData(lpWave[n]);
-				free(lpWave[n]);
-				lpWave[n] = 0;
-			}
-		}
+#ifdef USE_SEAL
 		ACloseVoices();
 		ACloseAudio();
+#endif
 	}
 }
 
 
 
-static void playsample(int channel,signed char *data,int len,int freq,int volume,int loop,int bits)
-{
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
 
-	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 25 / 255;
-
-	if (lpWave[channel] && lpWave[channel]->dwLength != len)
-	{
-		AStopVoice(hVoice[channel]);
-		ADestroyAudioData(lpWave[channel]);
-		free(lpWave[channel]);
-		lpWave[channel] = 0;
-	}
-
-	if (lpWave[channel] == 0)
-	{
-		if ((lpWave[channel] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
-			return;
-
-		if (loop) lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
-				| AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
-		else lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
-				| AUDIO_FORMAT_MONO;
-		lpWave[channel]->nSampleRate = nominal_sample_rate;
-		lpWave[channel]->dwLength = len;
-		lpWave[channel]->dwLoopStart = 0;
-		lpWave[channel]->dwLoopEnd = len;
-		if (ACreateAudioData(lpWave[channel]) != AUDIO_ERROR_NONE)
-		{
-			free(lpWave[channel]);
-			lpWave[channel] = 0;
-
-			return;
-		}
-	}
-	else
-	{
-		if (loop) lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
-				| AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
-		else lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
-				| AUDIO_FORMAT_MONO;
-	}
-
-	memcpy(lpWave[channel]->lpData,data,len);
-	/* upload the data to the audio DRAM local memory */
-	AWriteAudioData(lpWave[channel],0,len);
-	APrimeVoice(hVoice[channel],lpWave[channel]);
-	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
-	ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
-	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
-	AStartVoice(hVoice[channel]);
-}
-
-void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop)
-{
-	playsample(channel,data,len,freq,volume,loop,8);
-}
-
-void osd_play_sample_16(int channel,INT16 *data,int len,int freq,int volume,int loop)
-{
-	playsample(channel,(signed char *)data,len,freq,volume,loop,16);
-}
-
-
+#ifdef USE_SEAL
 #define NUM_BUFFERS 3	/* raising this number should improve performance with frameskip, */
 						/* but also increases the latency. */
-static int streams_are_playing;
+#endif
+#ifdef USE_ALLEGRO
+#define NUM_BUFFERS 1
+#endif
 
-static int playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan)
+static int voice_pos;
+static int audio_buffer_length;
+
+/* keep ahead by this many samples, to help prevent gaps */
+#define EXTRA_SAMPLES			0
+
+/* global sample tracking */
+static double samples_per_frame;
+static double samples_left_over;
+static UINT32 samples_this_frame;
+
+int osd_start_audio_stream(int stereo)
 {
-	static int c[MIXER_MAX_CHANNELS];
+#ifdef USE_SEAL
+	int channel;
+#endif
+
+	if (stereo) stereo = 1;	/* make sure it's either 0 or 1 */
+
+	stream_cache_stereo = stereo;
+
+	/* determine the number of samples per frame */
+	samples_per_frame = (double)Machine->sample_rate / (double)Machine->drv->frames_per_second;
+
+	/* compute how many samples to generate this frame */
+	samples_left_over = samples_per_frame;
+	samples_this_frame = (UINT32)samples_left_over + EXTRA_SAMPLES;
+	samples_left_over -= (double)samples_this_frame;
+
+	audio_buffer_length = NUM_BUFFERS * samples_per_frame + 20;
 
 
-	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 25 / 255;
+	if (Machine->sample_rate == 0) return 0;
 
-	/* SEAL doubles volume for panned channels, so we have to compensate */
-	if (pan != MIXER_PAN_CENTER) volume /= 2;
-
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return 1;
-
-	if (!stream_playing[channel])
+#ifdef USE_SEAL
+	for (channel = 0;channel <= stereo;channel++)
 	{
-		if (lpWave[channel])
-		{
-			AStopVoice(hVoice[channel]);
-			ADestroyAudioData(lpWave[channel]);
-			free(lpWave[channel]);
-			lpWave[channel] = 0;
-		}
+		if (ACreateAudioVoice(&hVoice[channel]) != AUDIO_ERROR_NONE)
+			return 0;
 
 		if ((lpWave[channel] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
-			return 1;
+		{
+			ADestroyAudioVoice(hVoice[channel]);
+			return 0;
+		}
 
 		lpWave[channel]->wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
 		lpWave[channel]->nSampleRate = nominal_sample_rate;
-		lpWave[channel]->dwLength = NUM_BUFFERS*len;
+		lpWave[channel]->dwLength = 2*audio_buffer_length;
 		lpWave[channel]->dwLoopStart = 0;
-		lpWave[channel]->dwLoopEnd = NUM_BUFFERS*len;
+		lpWave[channel]->dwLoopEnd = lpWave[channel]->dwLength;
 		if (ACreateAudioData(lpWave[channel]) != AUDIO_ERROR_NONE)
 		{
 			free(lpWave[channel]);
 			lpWave[channel] = 0;
 
-			return 1;
+			return 0;
 		}
 
-		memset(lpWave[channel]->lpData,0,NUM_BUFFERS*len);
-		memcpy(lpWave[channel]->lpData,data,len);
-		/* upload the data to the audio DRAM local memory */
-		AWriteAudioData(lpWave[channel],0,NUM_BUFFERS*len);
+		memset(lpWave[channel]->lpData,0,lpWave[channel]->dwLength);
 		APrimeVoice(hVoice[channel],lpWave[channel]);
-	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
-		ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
-		AStartVoice(hVoice[channel]);
-		stream_playing[channel] = 1;
-		c[channel] = 1;
+		ASetVoiceFrequency(hVoice[channel],nominal_sample_rate);
+	}
 
-		streams_are_playing = 1;
+	if (stereo)
+	{
+		/* SEAL doubles volume for panned channels, so we have to compensate */
+		ASetVoiceVolume(hVoice[0],32);
+		ASetVoiceVolume(hVoice[1],32);
+
+		ASetVoicePanning(hVoice[0],0);
+		ASetVoicePanning(hVoice[1],255);
+
+		AStartVoice(hVoice[0]);
+		AStartVoice(hVoice[1]);
 	}
 	else
 	{
-		LONG pos;
-		extern int throttle;
+		ASetVoiceVolume(hVoice[0],64);
+		ASetVoicePanning(hVoice[0],128);
+		AStartVoice(hVoice[0]);
+	}
+#endif
 
+#ifdef USE_ALLEGRO
+	stream = play_audio_stream(audio_buffer_length,16,stereo,nominal_sample_rate,255,128);
+	if (stream == 0) return 0;
+#endif
+
+	stream_playing = 1;
+	voice_pos = 0;
+
+	return samples_this_frame;
+}
+
+void osd_stop_audio_stream(void)
+{
+#ifdef USE_SEAL
+	int i;
+#endif
+
+
+	if (Machine->sample_rate == 0) return;
+
+#ifdef USE_SEAL
+	/* stop and release voices */
+	for (i = 0;i < SOUND_CHANNELS;i++)
+	{
+		if (lpWave[i])
+		{
+			AStopVoice(hVoice[i]);
+			ADestroyAudioData(lpWave[i]);
+			free(lpWave[i]);
+			lpWave[i] = 0;
+			ADestroyAudioVoice(hVoice[i]);
+		}
+	}
+#endif
+#ifdef USE_ALLEGRO
+	stop_audio_stream(stream);
+	stream = 0;
+#endif
+
+	stream_playing = 0;
+}
+
+static void updateaudiostream(void)
+{
+	extern int throttle;
+	INT16 *data = stream_cache_data;
+	int stereo = stream_cache_stereo;
+	int len = stream_cache_len;
+	int buflen;
+	int start,end;
+
+	if (!stream_playing) return;	/* error */
+
+	buflen = audio_buffer_length;
+	start = voice_pos;
+	end = voice_pos + len;
+	if (end > buflen) end -= buflen;
+
+#ifdef USE_SEAL
+	if (throttle)   /* sync with audio only when speed throttling is not turned off */
+	{
+		profiler_mark(PROFILER_IDLE);
+		for (;;)
+		{
+			LONG curpos;
+
+			AGetVoicePosition(hVoice[0],&curpos);
+			if (start < end)
+			{
+				if (curpos < start || curpos >= end) break;
+			}
+			else
+			{
+				if (curpos < start && curpos >= end) break;
+			}
+			AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
+		}
+		profiler_mark(PROFILER_END);
+	}
+
+	if (stereo)
+	{
+		INT16 *bufL,*bufR;
+		int p;
+
+
+		bufL = (INT16 *)lpWave[0]->lpData;
+		bufR = (INT16 *)lpWave[1]->lpData;
+		p = start;
+		while (p != end)
+		{
+			if (p >= buflen) p -= buflen;
+			bufL[p] = *data++;
+			bufR[p] = *data++;
+			p++;
+		}
+	}
+	else
+	{
+		INT16 *buf;
+		int p;
+
+
+		buf = (INT16 *)lpWave[0]->lpData;
+		p = start;
+		while (p != end)
+		{
+			if (p >= buflen) p -= buflen;
+			buf[p] = *data++;
+			p++;
+		}
+	}
+
+	if (start < end)
+	{
+		AWriteAudioData(lpWave[0],2*start,2*len);
+		if (stereo)
+			AWriteAudioData(lpWave[1],2*start,2*len);
+	}
+	else
+	{
+		int remain = buflen-start;
+		AWriteAudioData(lpWave[0],2*start,2*remain);
+		AWriteAudioData(lpWave[0],0,2*(len-remain));
+		if (stereo)
+		{
+			AWriteAudioData(lpWave[1],2*start,2*remain);
+			AWriteAudioData(lpWave[1],0,2*(len-remain));
+		}
+	}
+#endif
+#ifdef USE_ALLEGRO
+{
+	static INT16 buf[16384];
+	INT16 *b;
+	int p;
+
+	p = start;
+	if (start < end)
+	{
+		if (stereo)
+		{
+			while (p != end)
+			{
+				buf[2*p] = *data++ ^ 0x8000;
+				buf[2*p+1] = *data++ ^ 0x8000;
+				p++;
+			}
+		}
+		else
+		{
+			while (p != end)
+			{
+				buf[p] = *data++ ^ 0x8000;
+				p++;
+			}
+		}
+	}
+	else
+	{
+		if (stereo)
+		{
+			while (p != buflen)
+			{
+				buf[2*p] = *data++ ^ 0x8000;
+				buf[2*p+1] = *data++ ^ 0x8000;
+				p++;
+			}
+		}
+		else
+		{
+			while (p != buflen)
+			{
+				buf[p] = *data++ ^ 0x8000;
+				p++;
+			}
+		}
 
 		if (throttle)   /* sync with audio only when speed throttling is not turned off */
 		{
-			AGetVoicePosition(hVoice[channel],&pos);
-			pos *= 2;	/* 16-bit adjust */
-			if (pos >= c[channel] * len && pos < (c[channel]+1)*len) return 0;
+			do
+			{
+				b = get_audio_stream_buffer(stream);
+			} while (b == 0);
 		}
+		else
+			b = get_audio_stream_buffer(stream);
 
-		memcpy(&lpWave[channel]->lpData[len * c[channel]],data,len);
-		AWriteAudioData(lpWave[channel],len*c[channel],len);
-		c[channel] = (c[channel]+1) % NUM_BUFFERS;
-
-		streams_are_playing = 1;
-	}
-
-
-	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
-	if (pan == MIXER_PAN_CENTER)
-		ASetVoicePanning(hVoice[channel],128);
-	else if (pan == MIXER_PAN_LEFT)
-		ASetVoicePanning(hVoice[channel],0);
-	else if (pan == MIXER_PAN_RIGHT)
-		ASetVoicePanning(hVoice[channel],255);
-
-	return 1;
-}
-
-void osd_play_streamed_sample_16(int channel,INT16 *data,int len,int freq,int volume,int pan)
-{
-	stream_cache_data[channel] = data;
-	stream_cache_len[channel] = len;
-	stream_cache_freq[channel] = freq;
-	stream_cache_volume[channel] = volume;
-	stream_cache_pan[channel] = pan;
-}
-
-
-
-void osd_set_sample_freq(int channel,int freq)
-{
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
-
-	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
-	ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
-}
-
-void osd_set_sample_volume(int channel,int volume)
-{
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
-
-	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 25 / 255;
-
-	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
-}
-
-
-
-void osd_stop_sample(int channel)
-{
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
-
-	AStopVoice(hVoice[channel]);
-}
-
-
-void osd_restart_sample(int channel)
-{
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
-
-	AStartVoice(hVoice[channel]);
-}
-
-
-int osd_get_sample_status(int channel)
-{
-	int stopped=0;
-	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return -1;
-
-	AGetVoiceStatus(hVoice[channel], &stopped);
-	return stopped;
-}
-
-
-
-static int update_streams(void)
-{
-	int channel;
-	int res = 1;
-
-
-	streams_are_playing = 0;
-
-	for (channel = 0;channel < MIXER_MAX_CHANNELS;channel++)
-	{
-		if (stream_cache_data[channel])
+		if (b)
 		{
-			if (playstreamedsample(
-					channel,
-					stream_cache_data[channel],
-					stream_cache_len[channel],
-					stream_cache_freq[channel],
-					stream_cache_volume[channel],
-					stream_cache_pan[channel]))
-				stream_cache_data[channel] = 0;
+			if (stereo)
+				memcpy(b,buf,4*buflen);
 			else
-				res = 0;
+				memcpy(b,buf,2*buflen);
+			free_audio_stream_buffer(stream);
+		}
+
+		p = 0;
+		if (stereo)
+		{
+			while (p != end)
+			{
+				buf[2*p] = *data++ ^ 0x8000;
+				buf[2*p+1] = *data++ ^ 0x8000;
+				p++;
+			}
+		}
+		else
+		{
+			while (p != end)
+			{
+				buf[p] = *data++ ^ 0x8000;
+				p++;
+			}
 		}
 	}
-
-	return res;
 }
+#endif
+
+	voice_pos = end;
+	if (voice_pos == buflen) voice_pos = 0;
+}
+
+int osd_update_audio_stream(INT16 *buffer)
+{
+	stream_cache_data = buffer;
+	stream_cache_len = samples_this_frame;
+
+	/* compute how many samples to generate next frame */
+	samples_left_over += samples_per_frame;
+	samples_this_frame = (UINT32)samples_left_over + EXTRA_SAMPLES;
+	samples_left_over -= (double)samples_this_frame;
+
+	return samples_this_frame;
+}
+
+
 
 int msdos_update_audio(void)
 {
-	if (Machine->sample_rate == 0) return 0;
+	if (Machine->sample_rate == 0 || stream_cache_data == 0) return 0;
 
-	profiler_mark(PROFILER_SOUND);
+	profiler_mark(PROFILER_MIXER);
+
+#ifdef USE_SEAL
 	AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
+#endif
+
+	updateaudiostream();
+
 	profiler_mark(PROFILER_END);
 
-	profiler_mark(PROFILER_IDLE);
-	while (update_streams() == 0)
-		AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
-	profiler_mark(PROFILER_END);
-
-	return streams_are_playing;
+	return 1;
 }
 
 
@@ -540,13 +652,23 @@ void osd_set_mastervolume(int _attenuation)
 
 	attenuation = _attenuation;
 
+#ifdef USE_SEAL
  	volume = 256.0;	/* range is 0-256 */
+#endif
+#ifdef USE_ALLEGRO
+ 	volume = 255.0;	/* range is 0-255 */
+#endif
 	while (_attenuation++ < 0)
 		volume /= 1.122018454;	/* = (10 ^ (1/20)) = 1dB */
 
 	master_volume = volume;
 
+#ifdef USE_SEAL
 	ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,master_volume);
+#endif
+#ifdef USE_ALLEGRO
+	set_volume(master_volume,0);
+#endif
 }
 
 int osd_get_mastervolume(void)
@@ -556,14 +678,18 @@ int osd_get_mastervolume(void)
 
 void osd_sound_enable(int enable_it)
 {
+#ifdef USE_SEAL
 	if (enable_it)
-	{
 		ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,master_volume);
-	}
 	else
-	{
 		ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,0);
-	}
+#endif
+#ifdef USE_ALLEGRO
+	if (enable_it)
+		set_volume(master_volume,0);
+	else
+		set_volume(0,0);
+#endif
 }
 
 

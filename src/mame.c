@@ -14,7 +14,6 @@ FILE *errorlog;
 void *record;   /* for -record */
 void *playback; /* for -playback */
 int mame_debug; /* !0 when -debug option is specified */
-int No_FM;
 
 int bailing;	/* set to 1 if the startup is aborted to prevent multiple error messages */
 
@@ -98,7 +97,8 @@ static int validitychecks(void)
 				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
-			if (drivers[i]->rom == drivers[j]->rom && drivers[i]->rom!=NULL)
+			if (drivers[i]->rom && drivers[i]->rom == drivers[j]->rom
+					&& (drivers[j]->flags & NOT_A_DRIVER) == 0)
 			{
 				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
 				error = 1;
@@ -110,9 +110,15 @@ static int validitychecks(void)
 		if (romp)
 		{
 			int region_type_used[REGION_MAX];
+			int region_length[REGION_MAX];
+			const char *last_name = 0;
+			int count = -1;
 
 			for (j = 0;j < REGION_MAX;j++)
+			{
 				region_type_used[j] = 0;
+				region_length[j] = 0;
+			}
 
 			while (romp->name || romp->offset || romp->length)
 			{
@@ -122,6 +128,8 @@ static int validitychecks(void)
 				{
 					int type = romp->crc & ~REGIONFLAG_MASK;
 
+
+					count++;
 					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
 					{
 						printf("%s has invalid ROM_REGION type %x\n",drivers[i]->name,type);
@@ -129,21 +137,50 @@ static int validitychecks(void)
 					}
 
 					region_type_used[type]++;
+					region_length[type] = region_length[count] = romp->offset;
 				}
 				if (romp->name && romp->name != (char *)-1)
 				{
-					c = romp->name;
+					int pre,post;
+
+					last_name = c = romp->name;
 					while (*c)
 					{
 						if (tolower(*c) != *c)
 						{
-							printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+							printf("%s has upper case ROM name %s\n",drivers[i]->name,romp->name);
 							error = 1;
 						}
 						c++;
 					}
-				}
 
+					c = romp->name;
+					pre = 0;
+					post = 0;
+					while (*c && *c != '.')
+					{
+						pre++;
+						c++;
+					}
+					while (*c)
+					{
+						post++;
+						c++;
+					}
+					if (pre > 8 || post > 4)
+					{
+						printf("%s has >8.3 ROM name %s\n",drivers[i]->name,romp->name);
+						error = 1;
+					}
+				}
+				if (romp->length != 0)						/* ROM_LOAD_XXX() */
+				{
+					if (romp->offset + (romp->length & ~ROMFLAG_MASK) > region_length[count])
+					{
+						printf("%s has ROM %s extending past the defined memory region\n",drivers[i]->name,last_name);
+						error = 1;
+					}
+				}
 				romp++;
 			}
 
@@ -153,6 +190,42 @@ static int validitychecks(void)
 				{
 					printf("%s has duplicated ROM_REGION type %x\n",drivers[i]->name,j);
 					error = 1;
+				}
+			}
+
+
+			if (drivers[i]->drv->gfxdecodeinfo)
+			{
+				for (j = 0;j < MAX_GFX_ELEMENTS && drivers[i]->drv->gfxdecodeinfo[j].memory_region != -1;j++)
+				{
+					int len,avail,k,start;
+					int type = drivers[i]->drv->gfxdecodeinfo[j].memory_region;
+
+
+/*
+					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
+					{
+						printf("%s has invalid memory region for gfx[%d]\n",drivers[i]->name,j);
+						error = 1;
+					}
+*/
+
+					start = 0;
+					for (k = 0;k < MAX_GFX_PLANES;k++)
+					{
+						if (drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k] > start)
+							start = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k];
+					}
+					start &= ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement-1);
+					len = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->total *
+							drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement;
+					avail = region_length[type]
+							- (drivers[i]->drv->gfxdecodeinfo[j].start & ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement/8-1));
+					if ((start + len) / 8 > avail)
+					{
+						printf("%s has gfx[%d] extending past allocated memory\n",drivers[i]->name,j);
+						error = 1;
+					}
 				}
 			}
 		}
@@ -240,7 +313,6 @@ int run_game(int game)
 	record     = options.record;
 	playback   = options.playback;
 	mame_debug = options.mame_debug;
-	No_FM      = options.no_fm;
 
 	Machine->gamedrv = gamedrv = drivers[game];
 	Machine->drv = drv = gamedrv->drv;
@@ -252,7 +324,6 @@ int run_game(int game)
 	else
 		Machine->color_depth = 8;
 	Machine->sample_rate = options.samplerate;
-	Machine->sample_bits = options.samplebits;
 
 	/* get orientation right */
 	Machine->orientation = gamedrv->flags & ORIENTATION_MASK;
@@ -356,6 +427,9 @@ int init_machine(void)
 {
 	int i;
 
+	if (code_init() != 0)
+		goto out;
+
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 	{
 		Machine->memory_region[i] = 0;
@@ -367,13 +441,13 @@ int init_machine(void)
 	{
 		Machine->input_ports = input_port_allocate(gamedrv->input_ports);
 		if (!Machine->input_ports)
-			goto out;
+			goto out_code;
 		Machine->input_ports_default = input_port_allocate(gamedrv->input_ports);
 		if (!Machine->input_ports_default)
 		{
 			input_port_free(Machine->input_ports);
 			Machine->input_ports = 0;
-			goto out;
+			goto out_code;
 		}
 	}
 
@@ -416,6 +490,8 @@ out_free:
 	Machine->input_ports = 0;
 	input_port_free(Machine->input_ports_default);
 	Machine->input_ports_default = 0;
+out_code:
+	code_close();
 out:
 	return 1;
 }
@@ -448,6 +524,8 @@ void shutdown_machine(void)
 	Machine->input_ports = 0;
 	input_port_free(Machine->input_ports_default);
 	Machine->input_ports_default = 0;
+
+	code_close();
 }
 
 
@@ -499,27 +577,6 @@ static int vh_open(void)
 	{
 		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
 		{
-			int len,avail,j,start;
-
-			start = 0;
-			for (j = 0;j < MAX_GFX_PLANES;j++)
-			{
-				if (drv->gfxdecodeinfo[i].gfxlayout->planeoffset[j] > start)
-					start = drv->gfxdecodeinfo[i].gfxlayout->planeoffset[j];
-			}
-			start &= ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement-1);
-			len = drv->gfxdecodeinfo[i].gfxlayout->total *
-					drv->gfxdecodeinfo[i].gfxlayout->charincrement;
-			avail = memory_region_length(drv->gfxdecodeinfo[i].memory_region)
-					- (drv->gfxdecodeinfo[i].start & ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement/8-1));
-			if ((start + len) / 8 > avail)
-			{
-				bailing = 1;
-				printf ("Error: gfx[%d] extends past allocated memory\n",i);
-				vh_close();
-				return 1;
-			}
-
 			if ((Machine->gfx[i] = decodegfx(memory_region(drv->gfxdecodeinfo[i].memory_region)
 					+ drv->gfxdecodeinfo[i].start,
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
@@ -645,7 +702,7 @@ int run_machine(void)
 			{
 				int	region;
 
-				/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
+				/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
 				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
 				{
 					if (Machine->memory_region_type[region] & REGIONFLAG_DISPOSE)

@@ -38,7 +38,7 @@ struct RunningMachine
 						/* This is set to a default value, or a value specified by */
 						/* the user; osd_init() is allowed to change it to the actual */
 						/* sample rate supported by the audio card. */
-	int sample_bits;	/* 8 or 16 */
+	int obsolete;	// was sample_bits;	/* 8 or 16 */
 	struct GameSamples *samples;	/* samples loaded from disk */
 	struct InputPort *input_ports;	/* the input ports definition from the driver */
 								/* is copied here and modified (load settings from disk, */
@@ -75,8 +75,6 @@ struct GameOptions {
 	int gui_host;
 
 	int samplerate;
-	int samplebits;
-	int no_fm;
 	int use_samples;
 	int use_emulated_ym3812;
 

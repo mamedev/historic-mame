@@ -213,7 +213,7 @@ static struct MachineDriver machine_driver_cchasm =
 ***************************************************************************/
 
 ROM_START( cchasm )
-	ROM_REGIONX( 0x010000, REGION_CPU1 )
+	ROM_REGION( 0x010000, REGION_CPU1 )
     ROM_LOAD_EVEN( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
     ROM_LOAD_ODD ( "chasm.u12", 0x000000, 0x001000, 0x5d702c7d )
     ROM_LOAD_EVEN( "chasm.u8",  0x002000, 0x001000, 0x56a7ce8a )
@@ -231,12 +231,12 @@ ROM_START( cchasm )
     ROM_LOAD_EVEN( "chasm.u5",  0x00e000, 0x001000, 0xe4a58b7d )
     ROM_LOAD_ODD ( "chasm.u13", 0x00e000, 0x001000, 0x877e849c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
 
 ROM_START( cchasm1 )
-	ROM_REGIONX( 0x010000, REGION_CPU1 )
+	ROM_REGION( 0x010000, REGION_CPU1 )
     ROM_LOAD_EVEN( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
     ROM_LOAD_ODD ( "chasm.u12", 0x000000, 0x001000, 0x5d702c7d )
     ROM_LOAD_EVEN( "chasm.u8",  0x002000, 0x001000, 0x56a7ce8a )
@@ -254,7 +254,7 @@ ROM_START( cchasm1 )
     ROM_LOAD_EVEN( "chasm.u5",  0x00e000, 0x001000, 0xe4a58b7d )
     ROM_LOAD_ODD ( "chasm.u13", 0x00e000, 0x001000, 0x877e849c )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* 4k for the audio CPU */
+	ROM_REGION( 0x1000, REGION_CPU2 )	/* 4k for the audio CPU */
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
 

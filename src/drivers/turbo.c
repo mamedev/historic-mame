@@ -2,6 +2,9 @@
 
 	Turbo - Sega - 1981
 
+driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Aaron Giles, Ernesto Corvi
+
+
 	Memory Map:  ( * not complete * )
 
 	Address Range:	R/W:	 Function:
@@ -345,7 +348,7 @@ static struct Samplesinterface samples_interface =
  * Machine driver
  *********************************************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_turbo =
 {
 	/* basic machine hardware */
 	{
@@ -388,25 +391,12 @@ static struct MachineDriver machine_driver =
  *********************************************************************/
 
 ROM_START( turbo )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "epr1513.bin",  0x0000, 0x2000, 0x0326adfc )
 	ROM_LOAD( "epr1514.bin",  0x2000, 0x2000, 0x25af63b0 )
 	ROM_LOAD( "epr1515.bin",  0x4000, 0x2000, 0x059c1c36 )
 
-	ROM_REGIONX( 0x1000, REGION_PROMS ) /* various PROMs */
-	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
-	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
-	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
-	ROM_LOAD( "pr-1118.bin", 0x0a00, 0x0100, 0x07324cfd )	/* background color table */
-	ROM_LOAD( "pr1114.bin",	 0x0b00, 0x0020, 0x78aded46 )	/* road red/green color table */
-	ROM_LOAD( "pr1117.bin",	 0x0b20, 0x0020, 0xf06d9907 )	/* road green/blue color table */
-	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, 0x5394092c )	/* road collision/enable */
-	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, 0x3956767d )	/* collision detection */
-	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, 0xb369a6ae )
-	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, 0x628d3f1d )	/* timing - not used */
-	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
-
-	ROM_REGIONX( 0x20000, REGION_GFX1 ) /* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX1 ) /* sprite data */
 	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )
@@ -424,7 +414,7 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGIONX( 0x4800, REGION_GFX2 ) /* road data */
+	ROM_REGION( 0x4800, REGION_GFX2 ) /* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -435,33 +425,34 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX3 )	/* background data */
+	ROM_REGION( 0x1000, REGION_GFX3 )	/* background data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGIONX( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+	ROM_REGION( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+
+
+	ROM_REGION( 0x1000, REGION_PROMS ) /* various PROMs */
+	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
+	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
+	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
+	ROM_LOAD( "pr-1118.bin", 0x0a00, 0x0100, 0x07324cfd )	/* background color table */
+	ROM_LOAD( "pr1114.bin",	 0x0b00, 0x0020, 0x78aded46 )	/* road red/green color table */
+	ROM_LOAD( "pr1117.bin",	 0x0b20, 0x0020, 0xf06d9907 )	/* road green/blue color table */
+	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, 0x5394092c )	/* road collision/enable */
+	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, 0x3956767d )	/* collision detection */
+	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, 0xb369a6ae )
+	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, 0x628d3f1d )	/* timing - not used */
+	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
 ROM_END
 
 ROM_START( turboa )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "epr1262.rom",  0x0000, 0x2000, 0x1951b83a )
 	ROM_LOAD( "epr1263.rom",  0x2000, 0x2000, 0x45e01608 )
 	ROM_LOAD( "epr1264.rom",  0x4000, 0x2000, 0x1802f6c7 )
 
-	ROM_REGIONX( 0x1000, REGION_PROMS ) /* various PROMs */
-	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
-	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
-	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
-	ROM_LOAD( "pr-1118.bin", 0x0a00, 0x0100, 0x07324cfd )	/* background color table */
-	ROM_LOAD( "pr1114.bin",	 0x0b00, 0x0020, 0x78aded46 )	/* road red/green color table */
-	ROM_LOAD( "pr1117.bin",	 0x0b20, 0x0020, 0xf06d9907 )	/* road green/blue color table */
-	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, 0x5394092c )	/* road collision/enable */
-	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, 0x3956767d )	/* collision detection */
-	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, 0xb369a6ae )
-	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, 0x628d3f1d )	/* timing - not used */
-	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
-
-	ROM_REGIONX( 0x20000, REGION_GFX1 ) /* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX1 ) /* sprite data */
 	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )
@@ -479,7 +470,7 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGIONX( 0x4800, REGION_GFX2 ) /* road data */
+	ROM_REGION( 0x4800, REGION_GFX2 ) /* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -490,20 +481,14 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX3 )	/* background data */
+	ROM_REGION( 0x1000, REGION_GFX3 )	/* background data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGIONX( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
-ROM_END
+	ROM_REGION( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
 
-ROM_START( turbob )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-	ROM_LOAD( "epr-1363.cpu",  0x0000, 0x2000, 0x5c110fb6 )
-	ROM_LOAD( "epr-1364.cpu",  0x2000, 0x2000, 0x6a341693 )
-	ROM_LOAD( "epr-1365.cpu",  0x4000, 0x2000, 0x3b6b0dc8 )
 
-	ROM_REGIONX( 0x1000, REGION_PROMS ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS ) /* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
@@ -515,8 +500,15 @@ ROM_START( turbob )
 	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, 0xb369a6ae )
 	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, 0x628d3f1d )	/* timing - not used */
 	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
+ROM_END
 
-	ROM_REGIONX( 0x20000, REGION_GFX1 ) /* sprite data */
+ROM_START( turbob )
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "epr-1363.cpu",  0x0000, 0x2000, 0x5c110fb6 )
+	ROM_LOAD( "epr-1364.cpu",  0x2000, 0x2000, 0x6a341693 )
+	ROM_LOAD( "epr-1365.cpu",  0x4000, 0x2000, 0x3b6b0dc8 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 ) /* sprite data */
 	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "mpr1290.rom", 0x04000, 0x2000, 0x95182020 )	/* is this good? */
@@ -534,7 +526,7 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGIONX( 0x4800, REGION_GFX2 ) /* road data */
+	ROM_REGION( 0x4800, REGION_GFX2 ) /* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -545,11 +537,25 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX3 )	/* background data */
+	ROM_REGION( 0x1000, REGION_GFX3 )	/* background data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGIONX( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+	ROM_REGION( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+
+
+	ROM_REGION( 0x1000, REGION_PROMS ) /* various PROMs */
+	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
+	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
+	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
+	ROM_LOAD( "pr-1118.bin", 0x0a00, 0x0100, 0x07324cfd )	/* background color table */
+	ROM_LOAD( "pr1114.bin",	 0x0b00, 0x0020, 0x78aded46 )	/* road red/green color table */
+	ROM_LOAD( "pr1117.bin",	 0x0b20, 0x0020, 0xf06d9907 )	/* road green/blue color table */
+	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, 0x5394092c )	/* road collision/enable */
+	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, 0x3956767d )	/* collision detection */
+	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, 0xb369a6ae )
+	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, 0x628d3f1d )	/* timing - not used */
+	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
 ROM_END
 
 
@@ -700,80 +706,6 @@ static void init_decode_turbo(void)
  * Game drivers
  *********************************************************************/
 
-struct GameDriver driver_turbo =
-{
-	__FILE__,
-	0,
-	"turbo",
-	"Turbo",
-	"1981",
-	"Sega",
-	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo\nAaron Giles\nErnesto Corvi",
-	0,
-	&machine_driver,
-	init_turbo,
-
-	rom_turbo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_turbo,
-
-	0, 0, 0,
-	ROT270,
-
-	0,0
-};
-
-struct GameDriver driver_turboa =
-{
-	__FILE__,
-	&driver_turbo,
-	"turboa",
-	"Turbo (encrypted set 1)",
-	"1981",
-	"Sega",
-	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo\nAaron Giles\nErnesto Corvi",
-	0,
-	&machine_driver,
-	init_decode_turbo,
-
-	rom_turboa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_turbo,
-
-	0, 0, 0,
-	ROT270,
-
-	0,0
-};
-
-struct GameDriver driver_turbob =
-{
-	__FILE__,
-	&driver_turbo,
-	"turbob",
-	"Turbo (encrypted set 2)",
-	"1981",
-	"Sega",
-	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo\nAaron Giles\nErnesto Corvi",
-	0,
-	&machine_driver,
-	init_decode_turbo,
-
-	rom_turbob,
-	0, 0,
-	0,
-	0,
-
-	input_ports_turbo,
-
-	0, 0, 0,
-	ROT270,
-
-	0,0
-};
+GAME( 1981, turbo,  0,     turbo, turbo, turbo,        ROT270, "Sega", "Turbo" )
+GAME( 1981, turboa, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 1)" )
+GAME( 1981, turbob, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 2)" )

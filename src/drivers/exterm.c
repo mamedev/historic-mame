@@ -386,7 +386,7 @@ static struct MachineDriver machine_driver_exterm =
 ***************************************************************************/
 
 ROM_START( exterm )
-	ROM_REGIONX( 0x200000, REGION_CPU1 )     /* 2MB for 34010 code */
+	ROM_REGION( 0x200000, REGION_CPU1 )     /* 2MB for 34010 code */
 	ROM_LOAD_ODD(  "v101bg0",  0x000000, 0x10000, 0x8c8e72cf )
 	ROM_LOAD_EVEN( "v101bg1",  0x000000, 0x10000, 0xcc2da0d8 )
 	ROM_LOAD_ODD(  "v101bg2",  0x020000, 0x10000, 0x2dcb3653 )
@@ -408,12 +408,12 @@ ROM_START( exterm )
 	ROM_LOAD_ODD(  "v101p0",   0x1e0000, 0x10000, 0x6c8ee79a )
 	ROM_LOAD_EVEN( "v101p1",   0x1e0000, 0x10000, 0x557bfc84 )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	 /* Slave CPU memory space. There are no ROMs mapped here */
+	ROM_REGION( 0x1000, REGION_CPU2 )	 /* Slave CPU memory space. There are no ROMs mapped here */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	 /* 64k for DAC code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	 /* 64k for DAC code */
 	ROM_LOAD( "v101d1", 0x08000, 0x08000, 0x83268b7d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU4 )	 /* 64k for YM2151 code */
+	ROM_REGION( 0x10000, REGION_CPU4 )	 /* 64k for YM2151 code */
 	ROM_LOAD( "v101y1", 0x08000, 0x08000, 0xcbeaa837 )
 ROM_END
 

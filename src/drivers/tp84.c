@@ -1,11 +1,13 @@
 /***************************************************************************
 
-to do:
+Time Pilot 84 Memory Map (preliminary)
+
+driver by Marc Lafontaine
+
+TODO:
 - the slave CPU multiplexes sprites. We are cheating now, and reading them
   from somewhere else.
 
-
-Time Pilot 84 Memory Map (preliminary)
 
 The schematics are available on the net.
 
@@ -356,8 +358,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,        0, 64*8 },
-	{ 1, 0x4000, &spritelayout, 64*4*8, 16*8 },
+	{ REGION_GFX1, 0, &charlayout,        0, 64*8 },
+	{ REGION_GFX2, 0, &spritelayout, 64*4*8, 16*8 },
 	{ -1 } /* end of array */
 };
 
@@ -372,7 +374,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_tp84 =
 {
 	/* basic machine hardware  */
 	{
@@ -431,111 +433,68 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( tp84 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "tp84_8j.bin",  0xa000, 0x2000, 0x4b4629a4 )
 	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
 	ROM_LOAD( "tp84_10j.bin", 0xe000, 0x2000, 0xa45237c4 )
 
-	ROM_REGION_DISPOSE(0xc000)	/* Temporary */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
+	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
+
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tp84_2j.bin",  0x0000, 0x2000, 0x05c7508f ) /* chars */
 	ROM_LOAD( "tp84_1j.bin",  0x2000, 0x2000, 0x498d90b7 )
-	ROM_LOAD( "tp84_12a.bin", 0x4000, 0x2000, 0xcd682f30 ) /* sprites */
-	ROM_LOAD( "tp84_13a.bin", 0x6000, 0x2000, 0x888d4bd6 )
-	ROM_LOAD( "tp84_14a.bin", 0x8000, 0x2000, 0x9a220b39 )
-	ROM_LOAD( "tp84_15a.bin", 0xa000, 0x2000, 0xfac98397 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tp84_12a.bin", 0x0000, 0x2000, 0xcd682f30 ) /* sprites */
+	ROM_LOAD( "tp84_13a.bin", 0x2000, 0x2000, 0x888d4bd6 )
+	ROM_LOAD( "tp84_14a.bin", 0x4000, 0x2000, 0x9a220b39 )
+	ROM_LOAD( "tp84_15a.bin", 0x6000, 0x2000, 0xfac98397 )
+
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
 	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
 	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */
 	ROM_LOAD( "tp84_1f.bin",  0x0300, 0x0100, 0x61d2d398 ) /* char lookup table */
 	ROM_LOAD( "tp84_16c.bin", 0x0400, 0x0100, 0x13c4e198 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
-	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 ROM_END
 
 ROM_START( tp84a )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "f05",          0xa000, 0x2000, 0xe97d5093 )
 	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
 	ROM_LOAD( "f07",          0xe000, 0x2000, 0x8fbdb4ef )
 
-	ROM_REGION_DISPOSE(0xc000)	/* Temporary */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
+	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
+
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tp84_2j.bin",  0x0000, 0x2000, 0x05c7508f ) /* chars */
 	ROM_LOAD( "tp84_1j.bin",  0x2000, 0x2000, 0x498d90b7 )
-	ROM_LOAD( "tp84_12a.bin", 0x4000, 0x2000, 0xcd682f30 ) /* sprites */
-	ROM_LOAD( "tp84_13a.bin", 0x6000, 0x2000, 0x888d4bd6 )
-	ROM_LOAD( "tp84_14a.bin", 0x8000, 0x2000, 0x9a220b39 )
-	ROM_LOAD( "tp84_15a.bin", 0xa000, 0x2000, 0xfac98397 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tp84_12a.bin", 0x0000, 0x2000, 0xcd682f30 ) /* sprites */
+	ROM_LOAD( "tp84_13a.bin", 0x2000, 0x2000, 0x888d4bd6 )
+	ROM_LOAD( "tp84_14a.bin", 0x4000, 0x2000, 0x9a220b39 )
+	ROM_LOAD( "tp84_15a.bin", 0x6000, 0x2000, 0xfac98397 )
+
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
 	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
 	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */
 	ROM_LOAD( "tp84_1f.bin",  0x0300, 0x0100, 0x61d2d398 ) /* char lookup table */
 	ROM_LOAD( "tp84_16c.bin", 0x0400, 0x0100, 0x13c4e198 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
-	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 ROM_END
 
 
 
-struct GameDriver driver_tp84 =
-{
-	__FILE__,
-	0,
-	"tp84",
-	"Time Pilot '84 (set 1)",
-	"1984",
-	"Konami",
-	"Marc Lafontaine (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,	/* MachineDriver */
-	0,
-
-	rom_tp84,			/* RomModule */
-	0, 0,				/* ROM decrypt routines */
-	0,					/* samplenames */
-	0,
-
-	input_ports_tp84,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_tp84a =
-{
-	__FILE__,
-	&driver_tp84,
-	"tp84a",
-	"Time Pilot '84 (set 2)",
-	"1984",
-	"Konami",
-	"Marc Lafontaine (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,	/* MachineDriver */
-	0,
-
-	rom_tp84a,			/* RomModule */
-	0, 0,				/* ROM decrypt routines */
-	0,					/* samplenames */
-	0,
-
-	input_ports_tp84,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1984, tp84,  0,    tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)" )
+GAME( 1984, tp84a, tp84, tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 2)" )

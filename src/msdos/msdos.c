@@ -15,6 +15,10 @@
 #include <time.h>
 #include <ctype.h>
 
+#ifdef MESS
+#include "mess/msdos.h"
+#endif
+
 
 int  msdos_init_seal (void);
 int  msdos_init_sound(void);

@@ -744,7 +744,7 @@ static struct MachineDriver machine_driver_spacduel =
 ***************************************************************************/
 
 ROM_START( bwidow )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136017.107",   0x2800, 0x0800, 0x97f6000c )
 	ROM_LOAD( "136017.108",   0x3000, 0x1000, 0x3da354ed )
@@ -761,7 +761,7 @@ ROM_START( bwidow )
 ROM_END
 
 ROM_START( gravitar )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
@@ -778,7 +778,7 @@ ROM_START( gravitar )
 ROM_END
 
 ROM_START( gravitr2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
@@ -795,7 +795,7 @@ ROM_START( gravitr2 )
 ROM_END
 
 ROM_START( spacduel )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136006.106",   0x2800, 0x0800, 0x691122fe )
 	ROM_LOAD( "136006.107",   0x3000, 0x1000, 0xd8dd0461 )

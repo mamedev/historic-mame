@@ -276,7 +276,7 @@ static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(v
 
 struct osd_bitmap *scrbitmap;
 static int modifiable_palette;
-static int total_colors;
+static int screen_colors;
 static unsigned char *current_palette;
 static unsigned int *dirtycolor;
 static int dirtypalette;
@@ -304,6 +304,8 @@ int skiplines;
 int skipcolumns;
 int scanlines;
 int stretch;
+int use_mmx;
+int mmxlfb;
 int use_tweaked;
 int use_vesa;
 float osd_gamma_correction = 1.0;
@@ -1239,7 +1241,7 @@ int osd_set_display(int width,int height, int attributes)
 	}
 	if (dirtycolor)
 	{
-		for (i = 0;i < total_colors;i++)
+		for (i = 0;i < screen_colors;i++)
 			dirtycolor[i] = 1;
 		dirtypalette = 1;
 	}
@@ -1424,6 +1426,8 @@ int osd_set_display(int width,int height, int attributes)
 			if (err == 0)
 			{
 				found = 1;
+				/* replace gfx_mode with found mode */
+				gfx_mode = mode;
 				continue;
 			}
 			else if (errorlog)
@@ -1747,21 +1751,21 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 	int i;
 
 	modifiable_palette = modifiable;
-	total_colors = totalcolors;
+	screen_colors = totalcolors;
 	if (scrbitmap->depth != 8)
-		total_colors += 2;
-	else total_colors = 256;
+		screen_colors += 2;
+	else screen_colors = 256;
 
-	dirtycolor = malloc(total_colors * sizeof(int));
-	current_palette = malloc(3 * total_colors * sizeof(unsigned char));
-	palette_16bit_lookup = malloc(total_colors * sizeof(UINT32));
+	dirtycolor = malloc(screen_colors * sizeof(int));
+	current_palette = malloc(3 * screen_colors * sizeof(unsigned char));
+	palette_16bit_lookup = malloc(screen_colors * sizeof(UINT32));
 	if (dirtycolor == 0 || current_palette == 0 || palette_16bit_lookup == 0)
 		return 1;
 
-	for (i = 0;i < total_colors;i++)
+	for (i = 0;i < screen_colors;i++)
 		dirtycolor[i] = 1;
 	dirtypalette = 1;
-	for (i = 0;i < total_colors;i++)
+	for (i = 0;i < screen_colors;i++)
 		current_palette[3*i+0] = current_palette[3*i+1] = current_palette[3*i+2] = 0;
 
 	if (scrbitmap->depth != 8 && modifiable == 0)
@@ -1838,7 +1842,7 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 			/* fill the palette starting from the end, so we mess up badly written */
 			/* drivers which don't go through Machine->pens[] */
 			for (i = 0;i < totalcolors;i++)
-				pens[i] = (total_colors-1)-i;
+				pens[i] = (screen_colors-1)-i;
 		}
 
 		for (i = 0;i < totalcolors;i++)
@@ -1881,6 +1885,22 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 	}
 	else
 	{
+		if (use_mmx == -1) /* mmx=auto: can new mmx blitters be applied? */
+		{
+			/* impossible cases follow */
+			if (!cpu_mmx)
+				mmxlfb = 0;
+			else if ((gfx_mode != GFX_VESA2L) && (gfx_mode != GFX_VESA3))
+				mmxlfb = 0;
+			/* not yet implemented cases follow */
+			else if ((xmultiply > 2) || (ymultiply > 2))
+				mmxlfb = 0;
+			else
+				mmxlfb = 1;
+		}
+		else /* use forced mmx= setting from mame.cfg at own risk!!! */
+			mmxlfb = use_mmx;
+
 		if (scrbitmap->depth == 16)
 		{
 			if (modifiable_palette)
@@ -2177,7 +2197,7 @@ void osd_update_video_and_audio(void)
 
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
-			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,(int)Machine->drv->frames_per_second);
+			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,(int)(Machine->drv->frames_per_second+0.5));
 			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{
@@ -2200,7 +2220,7 @@ void osd_update_video_and_audio(void)
 			if (dirtypalette)
 			{
 				dirtypalette = 0;
-				for (i = 0;i < total_colors;i++)
+				for (i = 0;i < screen_colors;i++)
 				{
 					if (dirtycolor[i])
 					{
@@ -2242,7 +2262,7 @@ void osd_update_video_and_audio(void)
 			if (dirtypalette)
 			{
 				dirtypalette = 0;
-				for (i = 0;i < total_colors;i++)
+				for (i = 0;i < screen_colors;i++)
 				{
 					if (dirtycolor[i])
 					{
@@ -2399,7 +2419,7 @@ void osd_set_gamma(float _gamma)
 
 	osd_gamma_correction = _gamma;
 
-	for (i = 0;i < total_colors;i++)
+	for (i = 0;i < screen_colors;i++)
 		dirtycolor[i] = 1;
 	dirtypalette = 1;
 	dirty_bright = 1;
@@ -2417,7 +2437,7 @@ void osd_set_brightness(int _brightness)
 
 	brightness = _brightness;
 
-	for (i = 0;i < total_colors;i++)
+	for (i = 0;i < screen_colors;i++)
 		dirtycolor[i] = 1;
 	dirtypalette = 1;
 	dirty_bright = 1;
@@ -2441,7 +2461,7 @@ void osd_pause(int paused)
 	if (paused) brightness_paused_adjust = 0.65;
 	else brightness_paused_adjust = 1.0;
 
-	for (i = 0;i < total_colors;i++)
+	for (i = 0;i < screen_colors;i++)
 		dirtycolor[i] = 1;
 	dirtypalette = 1;
 	dirty_bright = 1;

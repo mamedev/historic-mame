@@ -524,7 +524,7 @@ static struct MachineDriver machine_driver_omegrace =
 ***************************************************************************/
 
 ROM_START( omegrace )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "omega.m7",     0x0000, 0x1000, 0x0424d46e )
 	ROM_LOAD( "omega.l7",     0x1000, 0x1000, 0xedcd7a7d )
 	ROM_LOAD( "omega.k7",     0x2000, 0x1000, 0x6d10f197 )
@@ -532,7 +532,7 @@ ROM_START( omegrace )
 	ROM_LOAD( "omega.e1",     0x9000, 0x0800, 0x1d0fdf3a )
 	ROM_LOAD( "omega.f1",     0x9800, 0x0800, 0xd44c0814 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for audio cpu */
 	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
 ROM_END
 

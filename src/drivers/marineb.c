@@ -558,159 +558,159 @@ DRIVER(hopprobo, marineb,  marineb, nmi_interrupt);
 ***************************************************************************/
 
 ROM_START( marineb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "marineb.1",     0x0000, 0x1000, 0x661d6540 )
 	ROM_LOAD( "marineb.2",     0x1000, 0x1000, 0x922da17f )
 	ROM_LOAD( "marineb.3",     0x2000, 0x1000, 0x820a235b )
 	ROM_LOAD( "marineb.4",     0x3000, 0x1000, 0xa157a283 )
 	ROM_LOAD( "marineb.5",     0x4000, 0x1000, 0x9ffff9c0 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "marineb.6",     0x0000, 0x2000, 0xee53ec2e )
 
-	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "marineb.8",     0x0000, 0x2000, 0xdc8bc46c )
 	ROM_LOAD( "marineb.7",     0x2000, 0x2000, 0x9d2e19ab )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "marineb.1b",    0x0000, 0x0100, 0xf32d9472 ) /* palette low 4 bits */
 	ROM_LOAD( "marineb.1c",    0x0100, 0x0100, 0x93c69d3e ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( changes )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
 	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
 	ROM_LOAD( "changes.3",     0x2000, 0x1000, 0xff8291e9 )
 	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
 	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "changes.7",     0x0000, 0x2000, 0x2204194e )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "changes.6",     0x0000, 0x2000, 0x985c9db4 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
 	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( looper )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
 	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
 	ROM_LOAD( "changes.3",     0x2000, 0x1000, 0xff8291e9 )
 	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
 	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "looper_7.bin",  0x0000, 0x2000, 0x71a89975 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "looper_6.bin",  0x0000, 0x2000, 0x1f3f70c2 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
 	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( springer )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "springer.1",    0x0000, 0x1000, 0x0794103a )
 	ROM_LOAD( "springer.2",    0x1000, 0x1000, 0xf4aecd9a )
 	ROM_LOAD( "springer.3",    0x2000, 0x1000, 0x2f452371 )
 	ROM_LOAD( "springer.4",    0x3000, 0x1000, 0x859d1bf5 )
 	ROM_LOAD( "springer.5",    0x4000, 0x1000, 0x72adbbe3 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "springer.6",    0x0000, 0x1000, 0x6a961833 )
 	ROM_LOAD( "springer.7",    0x1000, 0x1000, 0x95ab8fc0 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "springer.8",    0x0000, 0x1000, 0xa54bafdc )
 							/* 0x1000-0x1fff empty for my convinience */
 	ROM_LOAD( "springer.9",    0x2000, 0x1000, 0xfa302775 )
 							/* 0x3000-0x3fff empty for my convinience */
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "1b.vid",        0x0000, 0x0100, 0xa2f935aa ) /* palette low 4 bits */
 	ROM_LOAD( "1c.vid",        0x0100, 0x0100, 0xb95421f4 ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( hoccer )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hr1.cpu",       0x0000, 0x2000, 0x12e96635 )
 	ROM_LOAD( "hr2.cpu",       0x2000, 0x2000, 0xcf1fc328 )
 	ROM_LOAD( "hr3.cpu",       0x4000, 0x2000, 0x048a0659 )
 	ROM_LOAD( "hr4.cpu",       0x6000, 0x2000, 0x9a788a2c )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hr.c",          0x0000, 0x2000, 0x02808294 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( hoccer2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hr.1",          0x0000, 0x2000, 0x122d159f )
 	ROM_LOAD( "hr.2",          0x2000, 0x2000, 0x48e1efc0 )
 	ROM_LOAD( "hr.3",          0x4000, 0x2000, 0x4e67b0be )
 	ROM_LOAD( "hr.4",          0x6000, 0x2000, 0xd2b44f58 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
 
-	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hr.c",          0x0000, 0x2000, 0x02808294 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( wanted )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "prg-1",		   0x0000, 0x2000, 0x2dd90aed )
 	ROM_LOAD( "prg-2",		   0x2000, 0x2000, 0x67ac0210 )
 	ROM_LOAD( "prg-3",		   0x4000, 0x2000, 0x373c7d82 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vram-1",		   0x0000, 0x2000, 0xc4226e54 )
 	ROM_LOAD( "vram-2",		   0x2000, 0x2000, 0x2a9b1e36 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "obj-a",		   0x0000, 0x2000, 0x90b60771 )
 	ROM_LOAD( "obj-b",		   0x2000, 0x2000, 0xe14ee689 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "wanted.k7",	   0x0000, 0x0100, 0x2ba90a00 )	/* palette low 4 bits */
 	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, 0xa93d87cc )	/* palette high 4 bits */
 ROM_END
 
 ROM_START( hopprobo )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, 0xfd7935c0 )
 	ROM_LOAD( "hopper02.3l",   0x1000, 0x1000, 0xdf1a479a )
 	ROM_LOAD( "hopper03.3n",   0x2000, 0x1000, 0x097ac2a7 )
 	ROM_LOAD( "hopper04.3p",   0x3000, 0x1000, 0x0f4f3ca8 )
 	ROM_LOAD( "hopper05.3r",   0x4000, 0x1000, 0x9d77a37b )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hopper06.5c",   0x0000, 0x2000, 0x68f79bc8 )
 	ROM_LOAD( "hopper07.5d",   0x2000, 0x1000, 0x33d82411 )
 	ROM_RELOAD(				   0x3000, 0x1000 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hopper08.6f",   0x0000, 0x2000, 0x06d37e64 )
 	ROM_LOAD( "hopper09.6k",   0x2000, 0x2000, 0x047921c7 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7052hop.1b",    0x0000, 0x0100, 0x94450775 ) /* palette low 4 bits */
 	ROM_LOAD( "7052hop.1c",    0x0100, 0x0100, 0xa76bbd51 ) /* palette high 4 bits */
 ROM_END

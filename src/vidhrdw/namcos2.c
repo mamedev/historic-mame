@@ -42,7 +42,7 @@ static void namcos2_tilemap0_get_info(int col,int row)
 	if(namcos2_tilemap0_flip&TILEMAP_FLIPY) row=63-row;
 	tile=READ_WORD(&videoram[0x0000+(((row<<6)+col)<<1)])&0xffff;
 	/* The tile mask DOESNT use the mangled tile number */
-	tile_info.mask_data = memory_region(REGION_GFX_MASK)+(0x08*tile);
+	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 	colour=namcos2_68k_vram_ctrl_r(0x30)&0x0007;
@@ -57,7 +57,7 @@ static void namcos2_tilemap1_get_info(int col,int row)
 	if(namcos2_tilemap1_flip&TILEMAP_FLIPY) row=63-row;
 	tile=READ_WORD(&videoram[0x2000+(((row<<6)+col)<<1)])&0xffff;
 	/* The tile mask DOESNT use the mangled tile number */
-	tile_info.mask_data = memory_region(REGION_GFX_MASK)+(0x08*tile);
+	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 	colour=namcos2_68k_vram_ctrl_r(0x32)&0x0007;
@@ -72,7 +72,7 @@ static void namcos2_tilemap2_get_info(int col,int row)
 	if(namcos2_tilemap2_flip&TILEMAP_FLIPY) row=63-row;
 	tile=READ_WORD(&videoram[0x4000+(((row<<6)+col)<<1)])&0xffff;
 	/* The tile mask DOESNT use the mangled tile number */
-	tile_info.mask_data = memory_region(REGION_GFX_MASK)+(0x08*tile);
+	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 	colour=namcos2_68k_vram_ctrl_r(0x34)&0x0007;
@@ -87,7 +87,7 @@ static void namcos2_tilemap3_get_info(int col,int row)
 	if(namcos2_tilemap3_flip&TILEMAP_FLIPY) row=63-row;
 	tile=READ_WORD(&videoram[0x6000+(((row<<6)+col)<<1)])&0xffff;
 	/* The tile mask DOESNT use the mangled tile number */
-	tile_info.mask_data = memory_region(REGION_GFX_MASK)+(0x08*tile);
+	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 	colour=namcos2_68k_vram_ctrl_r(0x36)&0x0007;
@@ -102,7 +102,7 @@ static void namcos2_tilemap4_get_info(int col,int row)
 	if(namcos2_tilemap4_flip&TILEMAP_FLIPY) row=27-row;
 	tile=READ_WORD(&videoram[0x8010+(((row*36)+col)<<1)])&0xffff;
 	/* The tile mask DOESNT use the mangled tile number */
-	tile_info.mask_data = memory_region(REGION_GFX_MASK)+(0x08*tile);
+	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 	colour=namcos2_68k_vram_ctrl_r(0x38)&0x0007;
@@ -117,7 +117,7 @@ static void namcos2_tilemap5_get_info(int col,int row)
 	if(namcos2_tilemap5_flip&TILEMAP_FLIPY) row=27-row;
 	tile=READ_WORD(&videoram[0x8810+(((row*36)+col)<<1)])&0xffff;
 	/* The tile mask DOESNT use the mangled tile number */
-	tile_info.mask_data = memory_region(REGION_GFX_MASK)+(0x08*tile);
+	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
 	colour=namcos2_68k_vram_ctrl_r(0x3a)&0x0007;
@@ -373,7 +373,7 @@ int namcos2_vh_start(void)
 //		unsigned char tilecache[8],*tiledata;
 //		for(tilenum=0;tilenum<0x10000;tilenum++)
 //		{
-//			tiledata=memory_region(REGION_GFX_MASK)+(tilenum*0x08);
+//			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
 //			/* Cache tile data */
 //			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
 //			/* Flip in Y - write back in reverse */
@@ -387,7 +387,7 @@ int namcos2_vh_start(void)
 //		unsigned char tilecache[8],*tiledata;
 //		for(tilenum=0;tilenum<0x10000;tilenum++)
 //		{
-//			tiledata=memory_region(REGION_GFX_MASK)+(tilenum*0x08);
+//			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
 //			/* Cache tile data */
 //			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
 //			/* Wipe source data */
@@ -410,7 +410,7 @@ int namcos2_vh_start(void)
 
 		for(tilenum=0;tilenum<0x10000;tilenum++)
 		{
-			tiledata=memory_region(REGION_GFX_MASK)+(tilenum*0x08);
+			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
 			/* Cache tile data */
 			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
 			/* Wipe source data */
@@ -430,7 +430,7 @@ int namcos2_vh_start(void)
 
 		for(tilenum=0;tilenum<0x10000;tilenum++)
 		{
-			tiledata=memory_region(REGION_GFX_MASK)+(tilenum*0x08);
+			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
 			/* Cache tile data */
 			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
 			/* Flip in Y - write back in reverse */
@@ -439,7 +439,7 @@ int namcos2_vh_start(void)
 
 		for(tilenum=0;tilenum<0x10000;tilenum++)
 		{
-			tiledata=memory_region(REGION_GFX_MASK)+(tilenum*0x08);
+			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
 			/* Cache tile data */
 			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
 			/* Wipe source data */

@@ -135,7 +135,7 @@ int simpsons_speedup1_r( int offs )
 	{
 		int data2 = ( RAM[0x4942] << 8 ) | RAM[0x4943];
 
-		if ( data2 < memory_region_length(0) )
+		if ( data2 < memory_region_length(REGION_CPU1) )
 		{
 			data2 = ( RAM[data2] << 8 ) | RAM[data2 + 1];
 

@@ -227,17 +227,17 @@ static struct MachineDriver machine_driver_ambush =
 ***************************************************************************/
 
 ROM_START( ambush )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "ambush.h7",    0x0000, 0x2000, 0xce306563 )
 	ROM_LOAD( "ambush.g7",    0x2000, 0x2000, 0x90291409 )
 	ROM_LOAD( "ambush.f7",    0x4000, 0x2000, 0xd023ca29 )
 	ROM_LOAD( "ambush.e7",    0x6000, 0x2000, 0x6cc2d3ee )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ambush.n4",    0x0000, 0x2000, 0xecc0dc85 )
 	ROM_LOAD( "ambush.m4",    0x2000, 0x2000, 0xe86ca98a )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "a.bpr",        0x0000, 0x0100, 0x5f27f511 )  /* color PROMs */
 	ROM_LOAD( "b.bpr",        0x0100, 0x0100, 0x1b03fd3b )	/* How is this selected, */
 															/* or is it even a color PROM? */

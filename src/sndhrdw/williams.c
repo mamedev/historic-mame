@@ -132,7 +132,8 @@ static struct ym2151_state ym2151;
 static struct cvsd_state cvsd;
 static struct dac_state dac;
 
-static int sound_stream;
+static int dac_stream;
+static int cvsd_stream;
 
 
 
@@ -142,6 +143,10 @@ static int sound_stream;
 
 static void init_audio_state(int first_time);
 static void locate_audio_hotspot(UINT8 *base, UINT16 start);
+
+static int williams_custom_start(const struct MachineSound *msound);
+static void williams_custom_stop(void);
+static void williams_custom_update(void);
 
 static void williams_cvsd_ym2151_irq(int state);
 static void williams_adpcm_ym2151_irq(int state);
@@ -178,7 +183,8 @@ static void cvsd_state_w(int offset, int data);
 static void dac_state_bank_w(int offset, int data);
 
 static void update_counter(void);
-static void dac_cvsd_update(int num, INT16 *buffer, int length);
+static void cvsd_update(int num, INT16 *buffer, int length);
+static void dac_update(int num, INT16 *buffer, int length);
 
 static INT16 get_next_cvsd_sample(int bit);
 
@@ -298,6 +304,14 @@ static struct pia6821_interface williams_cvsd_pia_intf =
 	AUDIO STRUCTURES
 ****************************************************************************/
 
+/* Custom structure (all variants) */
+struct CustomSound_interface williams_custom_interface =
+{
+	williams_custom_start,
+	williams_custom_stop,
+	williams_custom_update
+};
+
 /* YM2151 structure (CVSD variant) */
 struct YM2151interface williams_cvsd_ym2151_interface =
 {
@@ -345,11 +359,11 @@ struct hc55516_interface williams_cvsd_interface =
 };
 
 /* OKIM6295 structure(s) */
-struct OKIM6295interface williams_adpcm_6295_interface_3 =
+struct OKIM6295interface williams_adpcm_6295_interface_REGION_SOUND1 =
 {
 	1,          	/* 1 chip */
 	{ 8000 },       /* 8000 Hz frequency */
-	{ 3 },          /* memory region 3 */
+	{ REGION_SOUND1 },  /* memory */
 	{ 50 }
 };
 
@@ -696,10 +710,6 @@ static void init_audio_state(int first_time)
 		cpu_set_irq_line(williams_cpunum + 1, M6809_IRQ_LINE, CLEAR_LINE);
 		cpu_set_nmi_line(williams_cpunum + 1, CLEAR_LINE);
 	}
-
-	/* allocate a stream */
-	if (first_time)
-		sound_stream = stream_init("Combined DAC/CVSD", 50, Machine->sample_rate, 0, dac_cvsd_update);
 }
 
 static void locate_audio_hotspot(UINT8 *base, UINT16 start)
@@ -723,6 +733,32 @@ static void locate_audio_hotspot(UINT8 *base, UINT16 start)
 		}
 	}
 	if (errorlog) fprintf(errorlog, "Found no hotspot!");
+}
+
+
+/***************************************************************************
+	CUSTOM SOUND INTERFACES
+****************************************************************************/
+
+static int williams_custom_start(const struct MachineSound *msound)
+{
+	(void)msound;
+
+	/* allocate a DAC stream */
+	dac_stream = stream_init("Accelerated DAC", 50, Machine->sample_rate, 0, dac_update);
+
+	/* allocate a CVSD stream */
+	cvsd_stream = stream_init("Accelerated CVSD", 50, Machine->sample_rate, 0, cvsd_update);
+
+	return 0;
+}
+
+static void williams_custom_stop(void)
+{
+}
+
+static void williams_custom_update(void)
+{
 }
 
 
@@ -1171,7 +1207,7 @@ static void cvsd_start(int param)
 static void cvsd_state_w(int offset, int data)
 {
 	/* if we write a value here with a non-zero high bit, prepare to start playing */
-	stream_update(sound_stream, 0);
+	stream_update(cvsd_stream, 0);
 	if (offset == 0 && !(data & 0x80) && ym2151.active_timer != 2)
 	{
 		cvsd.invalid = 1;
@@ -1211,7 +1247,7 @@ static void dac_start(int param)
 static void dac_state_bank_w(int offset, int data)
 {
 	/* if we write a value here with a non-zero high bit, prepare to start playing */
-	stream_update(sound_stream, 0);
+	stream_update(dac_stream, 0);
 	if (!(data & 0x80) && ym2151.active_timer != 2)
 	{
 		dac.invalid = 1;
@@ -1226,58 +1262,11 @@ static void dac_state_bank_w(int offset, int data)
 	SOUND GENERATION
 ****************************************************************************/
 
-static void dac_cvsd_update(int num, INT16 *buffer, int length)
+static void cvsd_update(int num, INT16 *buffer, int length)
 {
 	UINT8 *bank_base, *source, *end;
 	UINT32 current;
-	INT16 *output;
 	int i;
-
-	/* clear the buffer */
-	memset(buffer, 0, length*sizeof(INT16));
-
-	/* DAC generation */
-	if (dac.state_bank && !(dac.state_bank[0] & 0x80))
-	{
-		UINT8 volume = dac.volume[0] / 4;
-
-		/* determine start and end points */
-		if (williams_audio_type == WILLIAMS_CVSD)
-			bank_base = get_cvsd_bank_base(dac.state_bank[0]) - 0x8000;
-		else if (williams_audio_type == WILLIAMS_ADPCM)
-			bank_base = get_adpcm_bank_base(dac.state_bank[0]) - 0x4000;
-		else
-			bank_base = get_narc_master_bank_base(dac.state_bank[0]) - 0x4000;
-		source = bank_base + get_dac_address();
-		end = bank_base + dac.end[0] * 256 + dac.end[1];
-
-		output = buffer;
-		current = dac.sample_position;
-
-		/* fill in with samples until we hit the end or run out */
-		for (i = 0; i < length; i++)
-		{
-			/* if we overflow to the next sample, process it */
-			while (current > 0xffff)
-			{
-				if (source >= end)
-				{
-					dac.state_bank[0] |= 0x80;
-					dac.sample_position = 0x10000;
-					break;
-				}
-				dac.current_sample = *source++ * volume;
-				current -= 0x10000;
-			}
-
-			*output++ = dac.current_sample;
-			current += dac.sample_step;
-		}
-
-		/* update the final values */
-		set_dac_address(source - bank_base);
-		dac.sample_position = current;
-	}
 
 	/* CVSD generation */
 	if (cvsd.state && !(cvsd.state[0] & 0x80))
@@ -1290,7 +1279,6 @@ static void dac_cvsd_update(int num, INT16 *buffer, int length)
 		source = bank_base + get_cvsd_address();
 		end = bank_base + cvsd.end[0] * 256 + cvsd.end[1];
 
-		output = buffer;
 		current = cvsd.sample_position;
 
 		/* fill in with samples until we hit the end or run out */
@@ -1308,7 +1296,8 @@ static void dac_cvsd_update(int num, INT16 *buffer, int length)
 						cvsd.integrator = 0;
 						cvsd.filter = FILTER_MIN;
 						cvsd.shiftreg = 0xaa;
-						break;
+						memset(buffer, 0, (length - i) * sizeof(INT16));
+						goto finished;
 					}
 					current_byte = *source++;
 					bits_left = 7;
@@ -1317,16 +1306,73 @@ static void dac_cvsd_update(int num, INT16 *buffer, int length)
 				current -= 0x10000;
 			}
 
-			*output++ += cvsd.current_sample;
+			*buffer++ = cvsd.current_sample;
 			current += cvsd.sample_step;
 		}
 
 		/* update the final values */
+	finished:
 		set_cvsd_address(source - bank_base);
 		cvsd.sample_position = current;
 		cvsd.state[0] = bits_left;
 		cvsd.state[1] = current_byte;
 	}
+	else
+		memset(buffer, 0, length * sizeof(INT16));
+}
+
+
+static void dac_update(int num, INT16 *buffer, int length)
+{
+	UINT8 *bank_base, *source, *end;
+	UINT32 current;
+	int i;
+
+	/* DAC generation */
+	if (dac.state_bank && !(dac.state_bank[0] & 0x80))
+	{
+		UINT8 volume = dac.volume[0] / 4;
+
+		/* determine start and end points */
+		if (williams_audio_type == WILLIAMS_CVSD)
+			bank_base = get_cvsd_bank_base(dac.state_bank[0]) - 0x8000;
+		else if (williams_audio_type == WILLIAMS_ADPCM)
+			bank_base = get_adpcm_bank_base(dac.state_bank[0]) - 0x4000;
+		else
+			bank_base = get_narc_master_bank_base(dac.state_bank[0]) - 0x4000;
+		source = bank_base + get_dac_address();
+		end = bank_base + dac.end[0] * 256 + dac.end[1];
+
+		current = dac.sample_position;
+
+		/* fill in with samples until we hit the end or run out */
+		for (i = 0; i < length; i++)
+		{
+			/* if we overflow to the next sample, process it */
+			while (current > 0xffff)
+			{
+				if (source >= end)
+				{
+					dac.state_bank[0] |= 0x80;
+					dac.sample_position = 0x10000;
+					memset(buffer, 0, (length - i) * sizeof(INT16));
+					goto finished;
+				}
+				dac.current_sample = *source++ * volume;
+				current -= 0x10000;
+			}
+
+			*buffer++ = dac.current_sample;
+			current += dac.sample_step;
+		}
+
+		/* update the final values */
+	finished:
+		set_dac_address(source - bank_base);
+		dac.sample_position = current;
+	}
+	else
+		memset(buffer, 0, length * sizeof(INT16));
 }
 
 

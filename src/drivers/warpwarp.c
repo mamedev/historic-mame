@@ -53,12 +53,13 @@ extern unsigned char *warpwarp_bulletsram;
 void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int warpwarp_input_c000_7_r(int offset);
-int warpwarp_input_c020_27_r(int offset);
-int warpwarp_input_controller_r(int offset);
-int warpwarp_interrupt(void);
-
-
+/* from sndhrdw/warpwarp.c */
+extern void warpwarp_sound_w(int offs, int data);
+extern void warpwarp_music1_w(int offs, int data);
+extern void warpwarp_music2_w(int offs, int data);
+extern int warpwarp_sh_start(const struct MachineSound *msound);
+extern void warpwarp_sh_stop(void);
+extern void warpwarp_sh_update(void);
 
 int warpwarp_input_c000_7_r(int offset)
 {
@@ -85,7 +86,36 @@ int warpwarp_input_controller_r(int offset)
 
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress bombbee_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x23ff, MRA_RAM },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x4800, 0x4fff, MRA_ROM },
+	{ 0x6000, 0x6007, warpwarp_input_c000_7_r },
+	{ 0x6010, 0x6010, input_port_2_r },
+	{ 0x6020, 0x6027, warpwarp_input_c020_27_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress bombbee_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4800, 0x4fff, MWA_ROM },
+	{ 0x6000, 0x6001, MWA_RAM, &warpwarp_bulletsram },
+	{ 0x6002, 0x6002, warpwarp_sound_w },
+	{ 0x6003, 0x6003, watchdog_reset_w },
+	{ 0x6010, 0x6010, warpwarp_music1_w },
+	{ 0x6020, 0x6020, warpwarp_music2_w },
+    { 0x6030, 0x6032, osd_led_w },
+	{ 0x6035, 0x6035, coin_counter_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress warpwarp_readmem[] =
 {
 	{ 0x0000, 0x37ff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
@@ -97,20 +127,106 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress warpwarp_writemem[] =
 {
 	{ 0x0000, 0x37ff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
 	{ 0x4800, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0xC000, 0xC001, MWA_RAM, &warpwarp_bulletsram },
-	{ 0xC003, 0xC003, watchdog_reset_w },
-	{ 0xc030, 0xc032, osd_led_w },
+	{ 0xc000, 0xc001, MWA_RAM, &warpwarp_bulletsram },
+	{ 0xc002, 0xc002, warpwarp_sound_w },
+    { 0xc003, 0xc003, watchdog_reset_w },
+	{ 0xc010, 0xc010, warpwarp_music1_w },
+	{ 0xc020, 0xc020, warpwarp_music2_w },
+    { 0xc030, 0xc032, osd_led_w },
 	{ 0xc035, 0xc035, coin_counter_w },
 	{ -1 }	/* end of table */
 };
 
+
+
+INPUT_PORTS_START( bombbee )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+//	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPSETTING(    0x20, "60000" )
+	PORT_DIPSETTING(    0x40, "70000" )
+	PORT_DIPSETTING(    0x60, "80000" )
+	PORT_DIPSETTING(    0x80, "100000" )
+	PORT_DIPSETTING(    0xa0, "120000" )
+	PORT_DIPSETTING(    0xc0, "150000" )
+	PORT_DIPSETTING(    0xe0, "None" )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_REVERSE, 30, 10, 0, 0x14, 0xac )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cutieq )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+//	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPSETTING(    0x20, "60000" )
+	PORT_DIPSETTING(    0x40, "80000" )
+	PORT_DIPSETTING(    0x60, "100000" )
+	PORT_DIPSETTING(    0x80, "120000" )
+	PORT_DIPSETTING(    0xa0, "150000" )
+	PORT_DIPSETTING(    0xc0, "200000" )
+	PORT_DIPSETTING(    0xe0, "None" )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_REVERSE, 30, 10, 0, 0x14, 0xac )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( warpwarp )
 	PORT_START      /* IN0 */
@@ -233,48 +349,59 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x4800, &charlayout,   0, 256 },
-	{ 0, 0x4800, &spritelayout, 0, 256 },
+	{ REGION_CPU1, 0x4800, &charlayout,   0, 256 },
+	{ REGION_CPU1, 0x4800, &spritelayout, 0, 256 },
 	{ -1 } /* end of array */
 };
 
-
-
-static struct MachineDriver machine_driver =
+static struct CustomSound_interface custom_interface =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			2048000,	/* 3 Mhz? */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-  	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-
-	256, 2*256,
-	warpwarp_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	warpwarp_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	warpwarp_sh_start,
+	warpwarp_sh_stop,
+	warpwarp_sh_update
 };
 
+
+#define MACHINE(NAME) 								\
+static struct MachineDriver machine_driver_##NAME = \
+{ 			 										\
+	{ 												\
+		{ 											\
+			CPU_8080, 								\
+			2048000,	/* 3 Mhz? */ 				\
+			NAME##_readmem,NAME##_writemem,0,0, 	\
+			interrupt,1 							\
+		} 											\
+	}, 												\
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* single CPU, no need for interleaving */ 	\
+	0, 												\
+ 													\
+	/* video hardware */ 							\
+  	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 }, 		\
+	gfxdecodeinfo, 									\
+	256, 2*256, 									\
+	warpwarp_vh_convert_color_prom, 				\
+ 													\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY, 		\
+	0, 												\
+	generic_vh_start, 								\
+	generic_vh_stop, 								\
+	warpwarp_vh_screenrefresh, 						\
+ 													\
+	/* sound hardware */ 							\
+	0,0,0,0,										\
+	{												\
+		{											\
+			SOUND_CUSTOM,							\
+			&custom_interface						\
+		}											\
+	}												\
+};
+
+
+MACHINE( bombbee )
+MACHINE( warpwarp )
 
 
 /***************************************************************************
@@ -283,8 +410,20 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
+ROM_START( bombbee )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "bombbee.1k",   0x0000, 0x2000, 0x9f8cd7af )
+	ROM_LOAD( "bombbee.4c",   0x4800, 0x0800, 0x5f37d569 )
+ROM_END
+
+ROM_START( cutieq )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "cutieq.1k",    0x0000, 0x2000, 0x6486cdca )
+	ROM_LOAD( "cutieq.4c",    0x4800, 0x0800, 0x0e1618c9 )
+ROM_END
+
 ROM_START( warpwarp )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-n9601n.2r",  0x0000, 0x1000, 0xf5262f38 )
 	ROM_LOAD( "g-09602n.2m",  0x1000, 0x1000, 0xde8355dd )
 	ROM_LOAD( "g-09603n.1p",  0x2000, 0x1000, 0xbdd1dec5 )
@@ -293,7 +432,7 @@ ROM_START( warpwarp )
 ROM_END
 
 ROM_START( warpwarr )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
 	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
@@ -302,7 +441,7 @@ ROM_START( warpwarr )
 ROM_END
 
 ROM_START( warpwar2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
 	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
@@ -312,77 +451,8 @@ ROM_END
 
 
 
-struct GameDriver driver_warpwarp =
-{
-	__FILE__,
-	0,
-	"warpwarp",
-	"Warp & Warp",
-	"1981",
-	"Namco",
-	"Chris Hardy (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_warpwarp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_warpwarp,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_warpwarr =
-{
-	__FILE__,
-	&driver_warpwarp,
-	"warpwarr",
-	"Warp Warp (Rock-ola set 1)",
-	"1981",
-	"[Namco] (Rock-ola license)",
-	"Chris Hardy (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_warpwarr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_warpwarr,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_warpwar2 =
-{
-	__FILE__,
-	&driver_warpwarp,
-	"warpwar2",
-	"Warp Warp (Rock-ola set 2)",
-	"1981",
-	"[Namco] (Rock-ola license)",
-	"Chris Hardy (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_warpwar2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_warpwarr,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1979, bombbee,  0,        bombbee,  bombbee,  0, ROT90, "Namco", "Bomb Bee" )
+GAME( 1979, cutieq,   0,        bombbee,  cutieq,   0, ROT90, "Namco", "Cutie Q" )
+GAME( 1981, warpwarp, 0,        warpwarp, warpwarp, 0, ROT90, "Namco", "Warp & Warp" )
+GAME( 1981, warpwarr, warpwarp, warpwarp, warpwarr, 0, ROT90, "[Namco] (Rock-ola license)", "Warp Warp (Rock-ola set 1)" )
+GAME( 1981, warpwar2, warpwarp, warpwarp, warpwarr, 0, ROT90, "[Namco] (Rock-ola license)", "Warp Warp (Rock-ola set 2)" )

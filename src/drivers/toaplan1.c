@@ -2,6 +2,8 @@
 
 					ToaPlan  (1988-1991 hardware)
 
+driver by Darren Olafson
+
 Summary of games supported:
 
 	ROM set		Toaplan
@@ -1481,7 +1483,7 @@ static struct MachineDriver machine_driver_truxton =
 	}
 };
 
-static struct MachineDriver machine_driver_hf =
+static struct MachineDriver machine_driver_hellfire =
 {
 	/* basic machine hardware */
 	{
@@ -1524,7 +1526,7 @@ static struct MachineDriver machine_driver_hf =
 	}
 };
 
-static struct MachineDriver machine_driver_zw =
+static struct MachineDriver machine_driver_zerowing =
 {
 	/* basic machine hardware */
 	{
@@ -1659,7 +1661,7 @@ static struct MachineDriver machine_driver_outzone =
 	}
 };
 
-static struct MachineDriver machine_driver_vm =
+static struct MachineDriver machine_driver_vimana =
 {
 	/* basic machine hardware */
 	{
@@ -1706,28 +1708,28 @@ static struct MachineDriver machine_driver_vm =
 ***************************************************************************/
 
 ROM_START( rallybik )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "b45-02.rom",  0x00000, 0x08000, 0x383386d7 )
 	ROM_LOAD_ODD ( "b45-01.rom",  0x00000, 0x08000, 0x7602f6a7 )
 	ROM_LOAD_EVEN( "b45-04.rom",  0x40000, 0x20000, 0xe9b005b1 )
 	ROM_LOAD_ODD ( "b45-03.rom",  0x40000, 0x20000, 0x555344ce )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "b45-05.rom",  0x00000, 0x04000, 0x10814601 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b45-09.bin",  0x00000, 0x20000, 0x1dc7b010 )
 	ROM_LOAD( "b45-08.bin",  0x20000, 0x20000, 0xfab661ba )
 	ROM_LOAD( "b45-07.bin",  0x40000, 0x20000, 0xcd3748b4 )
 	ROM_LOAD( "b45-06.bin",  0x60000, 0x20000, 0x144b085c )
 
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b45-11.rom",  0x00000, 0x10000, 0x0d56e8bb )
 	ROM_LOAD( "b45-10.rom",  0x10000, 0x10000, 0xdbb7c57e )
 	ROM_LOAD( "b45-12.rom",  0x20000, 0x10000, 0xcf5aae4e )
 	ROM_LOAD( "b45-13.rom",  0x30000, 0x10000, 0x1683b07c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "b45-05.rom",  0x00000, 0x04000, 0x10814601 )
-
-	ROM_REGIONX( 0x240, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x240, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "b45-15.bpr",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "b45-16.bpr",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "b45-14.bpr",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -1735,124 +1737,127 @@ ROM_START( rallybik )
 ROM_END
 
 ROM_START( truxton )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "b65_11.bin",  0x00000, 0x20000, 0x1a62379a )
 	ROM_LOAD_ODD ( "b65_10.bin",  0x00000, 0x20000, 0xaff5195d )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "b65_09.bin",  0x0000, 0x8000, 0xf1c0f410 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b65_08.bin",  0x00000, 0x20000, 0xd2315b37 )
 	ROM_LOAD( "b65_07.bin",  0x20000, 0x20000, 0xfb83252a )
 	ROM_LOAD( "b65_06.bin",  0x40000, 0x20000, 0x36cedcbe )
 	ROM_LOAD( "b65_05.bin",  0x60000, 0x20000, 0x81cd95f1 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b65_04.bin",  0x00000, 0x20000, 0x8c6ff461 )
 	ROM_LOAD( "b65_03.bin",  0x20000, 0x20000, 0x58b1350b )
 	ROM_LOAD( "b65_02.bin",  0x40000, 0x20000, 0x1dd55161 )
 	ROM_LOAD( "b65_01.bin",  0x60000, 0x20000, 0xe974937f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "b65_09.bin",  0x0000, 0x8000, 0xf1c0f410 )
 ROM_END
 
 ROM_START( hellfire )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "b90-14.bin",  0x00000, 0x20000, 0x101df9f5 )
 	ROM_LOAD_ODD ( "b90-15.bin",  0x00000, 0x20000, 0xe67fd452 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "b90-03.bin",  0x0000, 0x8000, 0x4058fa67 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b90-04.bin",  0x00000, 0x20000, 0xea6150fc )
 	ROM_LOAD( "b90-05.bin",  0x20000, 0x20000, 0xbb52c507 )
 	ROM_LOAD( "b90-06.bin",  0x40000, 0x20000, 0xcf5b0252 )
 	ROM_LOAD( "b90-07.bin",  0x60000, 0x20000, 0xb98af263 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b90-11.bin",  0x00000, 0x20000, 0xc33e543c )
 	ROM_LOAD( "b90-10.bin",  0x20000, 0x20000, 0x35fd1092 )
 	ROM_LOAD( "b90-09.bin",  0x40000, 0x20000, 0xcf01009e )
 	ROM_LOAD( "b90-08.bin",  0x60000, 0x20000, 0x3404a5e3 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "b90-03.bin",  0x0000, 0x8000, 0x4058fa67 )
 ROM_END
 
 ROM_START( zerowing )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "o15-11.rom",  0x00000, 0x08000, 0x6ff2b9a0 )
 	ROM_LOAD_ODD ( "o15-12.rom",  0x00000, 0x08000, 0x9773e60b )
 	ROM_LOAD_EVEN( "o15-09.rom",  0x40000, 0x20000, 0x13764e95 )
 	ROM_LOAD_ODD ( "o15-10.rom",  0x40000, 0x20000, 0x351ba71a )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "o15-13.rom",  0x0000, 0x8000, 0xe7b72383 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "o15-05.rom",  0x00000, 0x20000, 0x4e5dd246 )
 	ROM_LOAD( "o15-06.rom",  0x20000, 0x20000, 0xc8c6d428 )
 	ROM_LOAD( "o15-07.rom",  0x40000, 0x20000, 0xefc40e99 )
 	ROM_LOAD( "o15-08.rom",  0x60000, 0x20000, 0x1b019eab )
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "o15-03.rom",  0x00000, 0x20000, 0x7f245fd3 )
 	ROM_LOAD( "o15-04.rom",  0x20000, 0x20000, 0x0b1a1289 )
 	ROM_LOAD( "o15-01.rom",  0x40000, 0x20000, 0x70570e43 )
 	ROM_LOAD( "o15-02.rom",  0x60000, 0x20000, 0x724b487f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "o15-13.rom",  0x0000, 0x8000, 0xe7b72383 )
 ROM_END
 
 ROM_START( demonwld )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "rom10",  0x00000, 0x20000, 0x036ee46c )
 	ROM_LOAD_ODD ( "rom09",  0x00000, 0x20000, 0xbed746e3 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "rom11",  0x00000, 0x08000, 0x397eca1b )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom05",  0x00000, 0x20000, 0x6506c982 )
 	ROM_LOAD( "rom07",  0x20000, 0x20000, 0xa3a0d993 )
 	ROM_LOAD( "rom06",  0x40000, 0x20000, 0x4fc5e5f3 )
 	ROM_LOAD( "rom08",  0x60000, 0x20000, 0xeb53ab09 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom01",  0x00000, 0x20000, 0x1b3724e9 )
 	ROM_LOAD( "rom02",  0x20000, 0x20000, 0x7b20a44d )
 	ROM_LOAD( "rom03",  0x40000, 0x20000, 0x2cacdcd0 )
 	ROM_LOAD( "rom04",  0x60000, 0x20000, 0x76fd3201 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "rom11",  0x00000, 0x08000, 0x397eca1b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
-
-	ROM_REGIONX( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "prom12.bpr",  0x000, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "prom13.bpr",  0x020, 0x020, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( outzone )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "rom7.bin",  0x00000, 0x20000, 0x936e25d8 )
 	ROM_LOAD_ODD ( "rom8.bin",  0x00000, 0x20000, 0xd19b3ecf )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, 0xc64ec7b6 )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, 0x64b6c5ac )
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom2.bin",  0x00000, 0x20000, 0x6bb72d16 )
 	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, 0x0934782d )
 	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, 0xec903c07 )
 	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, 0x50cbf1a8 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
 ROM_END
 
 ROM_START( outzonep )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "18.bin",  0x00000, 0x20000, 0x31a171bb )
 	ROM_LOAD_ODD ( "19.bin",  0x00000, 0x20000, 0x804ecfd1 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, 0xc64ec7b6 )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, 0x64b6c5ac )
 /* same data, different layout
@@ -1873,85 +1878,81 @@ ROM_START( outzonep )
 	ROM_LOAD_GFX_EVEN( "16.bin",  0x0e0000, 0x10000, 0xcffcb99b )
 	ROM_LOAD_GFX_ODD ( "12.bin",  0x0e0000, 0x10000, 0x90d37ded )
 */
-
-	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom2.bin",  0x00000, 0x20000, 0x6bb72d16 )
 	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, 0x0934782d )
 	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, 0xec903c07 )
 	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, 0x50cbf1a8 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
 ROM_END
 
 ROM_START( vimana )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "vim07.bin",  0x00000, 0x20000, 0x1efaea84 )
 	ROM_LOAD_ODD ( "vim08.bin",  0x00000, 0x20000, 0xe45b7def )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound 647180 code */
+	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
+	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vim6.bin",  0x00000, 0x20000, 0x2886878d )
 	ROM_LOAD( "vim5.bin",  0x20000, 0x20000, 0x61a63d7a )
 	ROM_LOAD( "vim4.bin",  0x40000, 0x20000, 0xb0515768 )
 	ROM_LOAD( "vim3.bin",  0x60000, 0x20000, 0x0b539131 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vim1.bin",  0x00000, 0x80000, 0xcdde26cd )
 	ROM_LOAD( "vim2.bin",  0x80000, 0x80000, 0x1dbfc118 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound 647180 code */
-	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
-	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
-
-	ROM_REGIONX( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "tp019-09.bpr",  0x000, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp019-10.bpr",  0x020, 0x020, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( vimana2 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "vimana07.bin",  0x00000, 0x20000, 0x5a4bf73e )
 	ROM_LOAD_ODD ( "vimana08.bin",  0x00000, 0x20000, 0x03ba27e8 )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound 647180 code */
+	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
+	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vim6.bin",  0x00000, 0x20000, 0x2886878d )
 	ROM_LOAD( "vim5.bin",  0x20000, 0x20000, 0x61a63d7a )
 	ROM_LOAD( "vim4.bin",  0x40000, 0x20000, 0xb0515768 )
 	ROM_LOAD( "vim3.bin",  0x60000, 0x20000, 0x0b539131 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vim1.bin",  0x00000, 0x80000, 0xcdde26cd )
 	ROM_LOAD( "vim2.bin",  0x80000, 0x80000, 0x1dbfc118 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound 647180 code */
-	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
-	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
-
-	ROM_REGIONX( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "tp019-09.bpr",  0x000, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp019-10.bpr",  0x020, 0x020, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( vimanan )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "tp019-07.rom",  0x00000, 0x20000, 0x78888ff2 )
 	ROM_LOAD_ODD ( "tp019-08.rom",  0x00000, 0x20000, 0x6cd2dc3c )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound 647180 code */
+	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
+	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vim6.bin",  0x00000, 0x20000, 0x2886878d )
 	ROM_LOAD( "vim5.bin",  0x20000, 0x20000, 0x61a63d7a )
 	ROM_LOAD( "vim4.bin",  0x40000, 0x20000, 0xb0515768 )
 	ROM_LOAD( "vim3.bin",  0x60000, 0x20000, 0x0b539131 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vim1.bin",  0x00000, 0x80000, 0xcdde26cd )
 	ROM_LOAD( "vim2.bin",  0x80000, 0x80000, 0x1dbfc118 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound 647180 code */
-	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
-	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
-
-	ROM_REGIONX( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x040, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "tp019-09.bpr",  0x000, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp019-10.bpr",  0x020, 0x020, 0xa1e17492 )	/* ??? */
 ROM_END
@@ -1960,252 +1961,13 @@ ROM_END
 
 /****************************************************************************/
 
-struct GameDriver driver_rallybik =
-{
-	__FILE__,
-	0,
-	"rallybik",
-	"Rally Bike / Dash Yarou",
-	"1988",
-	"[Toaplan] Taito Corporation",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_rallybik,
-	0,
-
-	rom_rallybik,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rallybik,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_truxton =
-{
-	__FILE__,
-	0,
-	"truxton",
-	"Truxton / Tatsujin",
-	"1988",
-	"[Toaplan] Taito Corporation",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_truxton,
-	0,
-
-	rom_truxton,
-	0, 0,
-	0,
-	0,
-
-	input_ports_truxton,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_hellfire =
-{
-	__FILE__,
-	0,
-	"hellfire",
-	"Hellfire",
-	"1989",
-	"Toaplan (Taito license)",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_hf,
-	0,
-
-	rom_hellfire,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hellfire,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_zerowing =
-{
-	__FILE__,
-	0,
-	"zerowing",
-	"Zero Wing",
-	"1989",
-	"Toaplan",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_zw,
-	0,
-
-	rom_zerowing,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zerowing,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_demonwld =
-{
-	__FILE__,
-	0,
-	"demonwld",
-	"Demon's World / Horror Story",
-	"1989",
-	"Toaplan (Taito license)",
-	"Darren Olafson (Mame Driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_demonwld,
-	0,
-	rom_demonwld,
-	0, 0,
-	0,
-	0,
-
-	input_ports_demonwld,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_outzone =
-{
-	__FILE__,
-	0,
-	"outzone",
-	"Out Zone",
-	"1990",
-	"Toaplan",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_outzone,
-	0,
-
-	rom_outzone,
-	0, 0,
-	0,
-	0,
-
-	input_ports_outzone,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_outzonep =
-{
-	__FILE__,
-	&driver_outzone,
-	"outzonep",
-	"Out Zone (bootleg)",
-	"1990",
-	"bootleg",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_outzone,
-	0,
-
-	rom_outzonep,
-	0, 0,
-	0,
-	0,
-
-	input_ports_outzone,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_vimana =
-{
-	__FILE__,
-	0,
-	"vimana",
-	"Vimana (set 1)",
-	"1991",
-	"Toaplan",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_vm,
-	0,
-
-	rom_vimana,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vimana,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270 | GAME_NO_SOUND,
-	0,0
-};
-
-struct GameDriver driver_vimana2 =
-{
-	__FILE__,
-	&driver_vimana,
-	"vimana2",
-	"Vimana (set 2)",
-	"1991",
-	"Toaplan",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_vm,
-	0,
-
-	rom_vimana2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vimana,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270 | GAME_NO_SOUND,
-	0,0
-};
-
-struct GameDriver driver_vimanan =
-{
-	__FILE__,
-	&driver_vimana,
-	"vimanan",
-	"Vimana (Nova Apparate GMBH & Co)",
-	"1991",
-	"Toaplan (Nova Apparate GMBH & Co license)",
-	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
-	0,
-	&machine_driver_vm,
-	0,
-
-	rom_vimanan,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vimanan,
-
-	0, 0, 0,	/* colors, palette, colortable */
-	ROT270 | GAME_NO_SOUND,
-	0,0
-};
-
+GAME( 1988, rallybik, 0,       rallybik, rallybik, 0, ROT270, "[Toaplan] Taito Corporation", "Rally Bike / Dash Yarou" )
+GAME( 1988, truxton,  0,       truxton,  truxton,  0, ROT270, "[Toaplan] Taito Corporation", "Truxton / Tatsujin" )
+GAME( 1989, hellfire, 0,       hellfire, hellfire, 0, ROT0,   "Toaplan (Taito license)", "Hellfire" )
+GAME( 1989, zerowing, 0,       zerowing, zerowing, 0, ROT0,   "Toaplan", "Zero Wing" )
+GAME( 1989, demonwld, 0,       demonwld, demonwld, 0, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story" )
+GAME( 1990, outzone,  0,       outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone" )
+GAME( 1990, outzonep, outzone, outzone,  outzone,  0, ROT270, "bootleg", "Out Zone (bootleg)" )
+GAMEX(1991, vimana,   0,       vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (set 1)", GAME_NO_SOUND )
+GAMEX(1991, vimana2,  vimana,  vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (set 2)", GAME_NO_SOUND )
+GAMEX(1991, vimanan,  vimana,  vimana,   vimanan,  0, ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )

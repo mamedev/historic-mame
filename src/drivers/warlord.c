@@ -212,8 +212,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0,   8 },
-	{ 1, 0x0200, &charlayout,   8*4, 8 },
+	{ REGION_GFX1, 0x0000, &charlayout,   0,   8 },
+	{ REGION_GFX1, 0x0200, &charlayout,   8*4, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -241,7 +241,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_warlord =
 {
 	/* basic machine hardware */
 	{
@@ -287,7 +287,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( warlord )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "037154.1m",    0x5000, 0x0800, 0x18006c87 )
 	ROM_LOAD( "037153.1k",    0x5800, 0x0800, 0x67758f4c )
 	ROM_LOAD( "037158.1j",    0x6000, 0x0800, 0x1f043a86 )
@@ -296,10 +296,10 @@ ROM_START( warlord )
 	ROM_LOAD( "037155.1d",    0x7800, 0x0800, 0x23b94210 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "037159.6e",    0x0000, 0x0800, 0xff979a08 )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
 	/* Bytes 0x00-0x3f are used fore the color cocktail version. */
 	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
@@ -309,27 +309,4 @@ ROM_END
 
 
 
-struct GameDriver driver_warlord =
-{
-	__FILE__,
-	0,
-	"warlord",
-	"Warlords",
-	"1980",
-	"Atari",
-	"Lee Taylor\nJohn Clegg\nBrad Oliver (additional code)\nZsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	rom_warlord,
-	0, 0,
-	0,
-	0,
-
-	input_ports_warlord,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1980, warlord, 0, warlord, warlord, 0, ROT0, "Atari", "Warlords" )

@@ -44,7 +44,7 @@
 /* Space Laser  "GPI Intruder"           (intruder)                         */
 /* Galaxy Wars                           (galxwars)                         */
 /* Lunar Rescue                          (lrescue)                          */
-/* Galaxy Rescue (bootleg?)				 (grescue)							*/
+/* Galaxy Rescue (bootleg?)              (grescue)                          */
 /* Lupin III                             (lupin3)                           */
 /* Ozma Wars                             (ozmawars)                         */
 /* Space Chaser                          (schaser)                          */
@@ -74,18 +74,18 @@
 /*                                                                          */
 /*                                                                          */
 /* Notes:                                                                   */
-/* 	Space Chaser writes to $c400-$df9f. Color?                              */
+/* Space Chaser writes to $c400-$df9f. Color?                               */
 /*                                                                          */
 /*                                                                          */
 /* Known problems:                                                          */
 /* --------------                                                           */
-/* 	Space Encounter, Sea Wolf need their movement controls fixed.           */
-/* 	The accelerator in 280 Zzzap could be handled better.                   */
+/* Space Encounter, Sea Wolf need their movement controls fixed.            */
+/* The accelerator in 280 Zzzap could be handled better.                    */
 /*                                                                          */
 /* List of Changes                                                          */
 /* ---------------                                                          */
-/* 	MJC - 22.01.98 - Boot hill controls/memory mappings                     */
-/* 	LBO - 5 May 98 - Cleaned up the code, added Al's extra drivers,         */
+/* MJC - 22.01.98 - Boot hill controls/memory mappings                      */
+/* LBO - 5 May 98 - Cleaned up the code, added Al's extra drivers,          */
 /*                   rotation support                                       */
 /*                                                                          */
 /****************************************************************************/
@@ -1538,10 +1538,10 @@ INPUT_PORTS_START( boothill )                                       /* MJC 31019
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-    PORT_START                                                                                          /* Player 2 Gun */
+	PORT_START                                                                                          /* Player 2 Gun */
 	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
 
-    PORT_START                                                                                          /* Player 1 Gun */
+	PORT_START                                                                                          /* Player 1 Gun */
 	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, KEYCODE_Z, KEYCODE_A, 0, 0 )
 INPUT_PORTS_END
 
@@ -1570,7 +1570,7 @@ static struct MachineDriver machine_driver_boothill =
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
-    invaders_vh_screenrefresh,
+	invaders_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -1607,7 +1607,7 @@ static struct MachineDriver machine_driver_gmissile =
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
-    invaders_vh_screenrefresh,
+	invaders_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -1697,10 +1697,10 @@ INPUT_PORTS_START( spcenctr )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "2000, 4000, 8000" )
-	PORT_DIPSETTING(    0x01, "3000, 6000, 12000" )
-	PORT_DIPSETTING(    0x02, "4000, 8000, 16000" )
-	PORT_DIPSETTING(    0x03, "5000, 10000, 20000" )
+	PORT_DIPSETTING(    0x00, "2000 4000 8000" )
+	PORT_DIPSETTING(    0x01, "3000 6000 12000" )
+	PORT_DIPSETTING(    0x02, "4000 8000 16000" )
+	PORT_DIPSETTING(    0x03, "5000 10000 20000" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -1715,7 +1715,7 @@ INPUT_PORTS_START( spcenctr )
 	PORT_DIPSETTING(    0x00, "45 Sec" )
 	PORT_DIPSETTING(    0x40, "60 Sec" )
 	PORT_DIPSETTING(    0x80, "75 Sec" )
-	PORT_DIPSETTING(    0xC0, "90 Sec" )
+	PORT_DIPSETTING(    0xc0, "90 Sec" )
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_spcenctr =
@@ -2057,10 +2057,10 @@ INPUT_PORTS_START( gunfight )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
-    PORT_START                                                                                          /* Player 2 Gun */
+	PORT_START                                                                                          /* Player 2 Gun */
 	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
 
-    PORT_START                                                                                          /* Player 1 Gun */
+	PORT_START                                                                                          /* Player 1 Gun */
 	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, KEYCODE_Z, KEYCODE_A, 0, 0 )
 INPUT_PORTS_END
 
@@ -2287,53 +2287,53 @@ static struct MachineDriver machine_driver_lupin3 =
 /*******************************************************/
 
 INPUT_PORTS_START( helifire )
-        PORT_START      /* 00 Main Controls */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START      /* 00 Main Controls */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-        PORT_START      /* 01 Player 2 Controls */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START      /* 01 Player 2 Controls */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-        PORT_START      /* Start and Coin Buttons */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Marked for   */
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Expansion    */
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED ) /* on Schematic */
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_START      /* Start and Coin Buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Marked for   */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Expansion    */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED ) /* on Schematic */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
-        PORT_START      /* DSW */
-        PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-        PORT_DIPSETTING(    0x00, "3" )
-        PORT_DIPSETTING(    0x01, "4" )
-        PORT_DIPSETTING(    0x02, "5" )
-        PORT_DIPSETTING(    0x03, "6" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-        PORT_DIPSETTING(    0x0c, "5000" )
-        PORT_DIPSETTING(    0x04, "6000" )
-        PORT_DIPSETTING(    0x08, "8000" )
-        PORT_DIPSETTING(    0x00, "10000" )
-        PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
-        PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-        PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_START      /* DSW */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "5000" )
+	PORT_DIPSETTING(    0x04, "6000" )
+	PORT_DIPSETTING(    0x08, "8000" )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -3272,7 +3272,7 @@ INPUT_PORTS_START( checkmat )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-    PORT_START       /* IN3  */
+	PORT_START       /* IN3  */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START3 )
@@ -3807,9 +3807,9 @@ INPUT_PORTS_START( jspecter )
 	/* Note: There must have been a toggle switch on the outside of the unit.
 	   The difficulty can be set by the player */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "A (Hard)" )
-    PORT_DIPSETTING(    0x80, "B (Easy)" )
-	PORT_START      /* DSW0 */
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+		PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
@@ -3988,13 +3988,62 @@ INPUT_PORTS_START( spacewr3 )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( spceking )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* N ? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Preset Mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
 
 
 
 
 
 ROM_START( invaders )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0x734f5ad8 )
 	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x6bfaca4a )
 	ROM_LOAD( "invaders.f",   0x1000, 0x0800, 0x0ccead96 )
@@ -4002,7 +4051,7 @@ ROM_START( invaders )
 ROM_END
 
 ROM_START( earthinv )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "earthinv.h",   0x0000, 0x0800, 0x58a750c8 )
 	ROM_LOAD( "earthinv.g",   0x0800, 0x0800, 0xb91742f1 )
 	ROM_LOAD( "earthinv.f",   0x1000, 0x0800, 0x4acbbc60 )
@@ -4010,7 +4059,7 @@ ROM_START( earthinv )
 ROM_END
 
 ROM_START( spaceatt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "spaceatt.h",   0x0000, 0x0800, 0xa31d0756 )
 	ROM_LOAD( "spaceatt.g",   0x0800, 0x0800, 0xf41241f7 )
 	ROM_LOAD( "spaceatt.f",   0x1000, 0x0800, 0x4c060223 )
@@ -4018,87 +4067,108 @@ ROM_START( spaceatt )
 ROM_END
 
 ROM_START( sinvemag )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
-	ROM_LOAD( "emag_si.b",  0x0400, 0x0400, 0xfebe6d1a )
-	ROM_LOAD( "emag_si.c",  0x0800, 0x0400, 0xaafb24f7 )
-	ROM_LOAD( "emag_si.d",  0x1400, 0x0400, 0x68c4b9da )
-	ROM_LOAD( "emag_si.e",  0x1800, 0x0400, 0xc4e80586 )
-	ROM_LOAD( "emag_si.f",  0x1c00, 0x0400, 0x077f5ef2 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "sv0h.bin",     0x0000, 0x0400, 0x86bb8cb6 )
+	ROM_LOAD( "emag_si.b",    0x0400, 0x0400, 0xfebe6d1a )
+	ROM_LOAD( "emag_si.c",    0x0800, 0x0400, 0xaafb24f7 )
+	ROM_LOAD( "emag_si.d",    0x1400, 0x0400, 0x68c4b9da )
+	ROM_LOAD( "emag_si.e",    0x1800, 0x0400, 0xc4e80586 )
+	ROM_LOAD( "emag_si.f",    0x1c00, 0x0400, 0x077f5ef2 )
 ROM_END
 
 ROM_START( alieninv )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "1h.bin",   0x0000, 0x0800, 0xc46df7f4 )
-	ROM_LOAD( "1g.bin",   0x0800, 0x0800, 0x4b1112d6 )
-	ROM_LOAD( "1f.bin",   0x1000, 0x0800, 0Xadca18a5 )
-	ROM_LOAD( "1e.bin",   0x1800, 0x0800, 0x0449CB52 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "1h.bin",       0x0000, 0x0800, 0xc46df7f4 )
+	ROM_LOAD( "1g.bin",       0x0800, 0x0800, 0x4b1112d6 )
+	ROM_LOAD( "1f.bin",       0x1000, 0x0800, 0Xadca18a5 )
+	ROM_LOAD( "1e.bin",       0x1800, 0x0800, 0x0449CB52 )
 ROM_END
 
 ROM_START( si_tv )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "tv0h.s1",   0x0000, 0x0800, 0xfef18aad )
-	ROM_LOAD( "tv04.m1",   0x1800, 0x0800, 0xcd2c67f6 )
-	ROM_LOAD( "tv03.n1",   0x1000, 0x0800, 0x0ad3657f )
-	ROM_LOAD( "tv02.rp1",  0x0800, 0x0800, 0x3c759a90 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "tv0h.s1",      0x0000, 0x0800, 0xfef18aad )
+	ROM_LOAD( "tv04.m1",      0x1800, 0x0800, 0xcd2c67f6 )
+	ROM_LOAD( "tv03.n1",      0x1000, 0x0800, 0x0ad3657f )
+	ROM_LOAD( "tv02.rp1",     0x0800, 0x0800, 0x3c759a90 )
 ROM_END
 
 ROM_START( si_cv )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "cv17.bin",   0x0000, 0x0800, 0x3dfbe9e6 )
-	ROM_LOAD( "cv18.bin",   0x0800, 0x0800, 0xbc3c82bf )
-	ROM_LOAD( "cv19.bin",   0x1000, 0x0800, 0xd202b41c )
-	ROM_LOAD( "cv20.bin",   0x1800, 0x0800, 0xc74ee7b6 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "cv17.bin",     0x0000, 0x0800, 0x3dfbe9e6 )
+	ROM_LOAD( "cv18.bin",     0x0800, 0x0800, 0xbc3c82bf )
+	ROM_LOAD( "cv19.bin",     0x1000, 0x0800, 0xd202b41c )
+	ROM_LOAD( "cv20.bin",     0x1800, 0x0800, 0xc74ee7b6 )
 ROM_END
 
 ROM_START( si_sv )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
-	ROM_LOAD( "sv10.bin",   0x0800, 0x0400, 0x483e651e )
-	ROM_LOAD( "sv04.bin",   0x1400, 0x0400, 0x1293b826 )
-	ROM_LOAD( "sv09.bin",   0x1800, 0x0400, 0xcd80b13f )
-	ROM_LOAD( "sv06.bin",   0x1c00, 0x0400, 0x2c68e0b4 )
-	ROM_LOAD( "sv02.bin",   0x0400, 0x0400, 0x0e159534 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "sv0h.bin",     0x0000, 0x0400, 0x86bb8cb6 )
+	ROM_LOAD( "sv10.bin",     0x0800, 0x0400, 0x483e651e )
+	ROM_LOAD( "sv04.bin",     0x1400, 0x0400, 0x1293b826 )
+	ROM_LOAD( "sv09.bin",     0x1800, 0x0400, 0xcd80b13f )
+	ROM_LOAD( "sv06.bin",     0x1c00, 0x0400, 0x2c68e0b4 )
+	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x0e159534 )
+ROM_END
+
+ROM_START( spceking )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0x734f5ad8 )
+	ROM_LOAD( "spcekng2",     0x0800, 0x0800, 0x96dcdd42 )
+	ROM_LOAD( "spcekng3",     0x1000, 0x0800, 0x95fc96ad )
+	ROM_LOAD( "spcekng4",     0x1800, 0x0800, 0x54170ada )
+ROM_END
+
+ROM_START( spcewars )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "sanritsu.1",   0x0000, 0x0400, 0xca331679 )
+	ROM_LOAD( "sanritsu.2",   0x0400, 0x0400, 0x48dc791c )
+	ROM_LOAD( "sanritsu.3",   0x0800, 0x0400, 0xc34842cb )
+	ROM_LOAD( "sanritsu.4",   0x0C00, 0x0400, 0xa7fdfd0e )
+	ROM_LOAD( "sanritsu.5",   0x1000, 0x0400, 0x77475431 )
+	ROM_LOAD( "sanritsu.6",   0x1400, 0x0400, 0x392ef82c )
+	ROM_LOAD( "sanritsu.7",   0x1800, 0x0400, 0xb3a93df8 )
+	ROM_LOAD( "sanritsu.8",   0x1c00, 0x0400, 0x64fdc3e1 )
+	ROM_LOAD( "sanritsu.9",   0x4000, 0x0400, 0xb2f29601 )
 ROM_END
 
 ROM_START( spacewr3 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "ic36.bin",   0x0000, 0x0800, 0x9e30f88a )
-	ROM_LOAD( "ic35.bin",   0x0800, 0x0800, 0x40c2d55b )
-	ROM_LOAD( "ic34.bin",   0x1000, 0x0800, 0xb435f021 )
-	ROM_LOAD( "ic33.bin",   0x1800, 0x0800, 0xcbdc6fe8 )
-	ROM_LOAD( "ic32.bin",   0x4000, 0x0800, 0x1e5a753c )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "ic36.bin",     0x0000, 0x0800, 0x9e30f88a )
+	ROM_LOAD( "ic35.bin",     0x0800, 0x0800, 0x40c2d55b )
+	ROM_LOAD( "ic34.bin",     0x1000, 0x0800, 0xb435f021 )
+	ROM_LOAD( "ic33.bin",     0x1800, 0x0800, 0xcbdc6fe8 )
+	ROM_LOAD( "ic32.bin",     0x4000, 0x0800, 0x1e5a753c )
 ROM_END
 
 ROM_START( logitec )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "c01",        0x0000, 0x0400, 0x499f253a )
-	ROM_LOAD( "c02",        0x0400, 0x0400, 0x2d0b2e1f )
-	ROM_LOAD( "c03",        0x0800, 0x0400, 0x03033dc2 )
-	ROM_LOAD( "c04",        0x1400, 0x0400, 0x455b1fa7 )
-	ROM_LOAD( "c05",        0x1800, 0x0400, 0x40cbef75 )
-	ROM_LOAD( "sv06.bin",   0x1c00, 0x0400, 0x2c68e0b4 )
-	ROM_LOAD( "c07",        0x1000, 0x0400, 0x5a7bbf1f )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "c01",          0x0000, 0x0400, 0x499f253a )
+	ROM_LOAD( "c02",          0x0400, 0x0400, 0x2d0b2e1f )
+	ROM_LOAD( "c03",          0x0800, 0x0400, 0x03033dc2 )
+	ROM_LOAD( "c04",          0x1400, 0x0400, 0x455b1fa7 )
+	ROM_LOAD( "c05",          0x1800, 0x0400, 0x40cbef75 )
+	ROM_LOAD( "sv06.bin",     0x1c00, 0x0400, 0x2c68e0b4 )
+	ROM_LOAD( "c07",          0x1000, 0x0400, 0x5a7bbf1f )
 ROM_END
 
 ROM_START( sisv2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "sv0h.bin",    0x0000, 0x0400, 0x86bb8cb6 )
-	ROM_LOAD( "emag_si.b",   0x0400, 0x0400, 0xfebe6d1a )
-	ROM_LOAD( "sv12",        0x0800, 0x0400, 0xa08e7202 )
-	ROM_LOAD( "sv04.bin",    0x1400, 0x0400, 0x1293b826 )
-	ROM_LOAD( "sv13",        0x1800, 0x0400, 0xa9011634 )
-	ROM_LOAD( "sv14",        0x1c00, 0x0400, 0x58730370 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "sv0h.bin",     0x0000, 0x0400, 0x86bb8cb6 )
+	ROM_LOAD( "emag_si.b",    0x0400, 0x0400, 0xfebe6d1a )
+	ROM_LOAD( "sv12",         0x0800, 0x0400, 0xa08e7202 )
+	ROM_LOAD( "sv04.bin",     0x1400, 0x0400, 0x1293b826 )
+	ROM_LOAD( "sv13",         0x1800, 0x0400, 0xa9011634 )
+	ROM_LOAD( "sv14",         0x1c00, 0x0400, 0x58730370 )
 ROM_END
 
 ROM_START( jspecter )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "3305.u6",      0x0000, 0x1000, 0xab211a4f )
 	ROM_LOAD( "3306.u7",      0x1400, 0x1000, 0x0df142a7 )
 ROM_END
 
 ROM_START( invadpt2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "pv.01",        0x0000, 0x0800, 0x7288a511 )
 	ROM_LOAD( "pv.02",        0x0800, 0x0800, 0x097dd8d5 )
 	ROM_LOAD( "pv.03",        0x1000, 0x0800, 0x1766337e )
@@ -4107,7 +4177,7 @@ ROM_START( invadpt2 )
 ROM_END
 
 ROM_START( invdpt2m )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invdelux.h",   0x0000, 0x0800, 0xe690818f )
 	ROM_LOAD( "invdelux.g",   0x0800, 0x0800, 0x4268c12d )
 	ROM_LOAD( "invdelux.f",   0x1000, 0x0800, 0xf4aa1880 )
@@ -4116,7 +4186,7 @@ ROM_START( invdpt2m )
 ROM_END
 
 ROM_START( invad2ct )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
     ROM_LOAD( "invad2ct.h",   0x0000, 0x0800, 0x51d02a71 )
     ROM_LOAD( "invad2ct.g",   0x0800, 0x0800, 0x533ac770 )
     ROM_LOAD( "invad2ct.f",   0x1000, 0x0800, 0xd1799f39 )
@@ -4126,7 +4196,7 @@ ROM_START( invad2ct )
 ROM_END
 
 ROM_START( invrvnge )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invrvnge.h",   0x0000, 0x0800, 0xaca41bbb )
 	ROM_LOAD( "invrvnge.g",   0x0800, 0x0800, 0xcfe89dad )
 	ROM_LOAD( "invrvnge.f",   0x1000, 0x0800, 0xe350de2c )
@@ -4134,15 +4204,15 @@ ROM_START( invrvnge )
 ROM_END
 
 ROM_START( invrvnga )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "5m.bin",   0x0000, 0x0800, 0xb145cb71 )
-	ROM_LOAD( "5n.bin",   0x0800, 0x0800, 0x660e8af3 )
-	ROM_LOAD( "5p.bin",   0x1000, 0x0800, 0x6ec5a9ad )
-	ROM_LOAD( "5r.bin",   0x1800, 0x0800, 0x74516811 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "5m.bin",       0x0000, 0x0800, 0xb145cb71 )
+	ROM_LOAD( "5n.bin",       0x0800, 0x0800, 0x660e8af3 )
+	ROM_LOAD( "5p.bin",       0x1000, 0x0800, 0x6ec5a9ad )
+	ROM_LOAD( "5r.bin",       0x1800, 0x0800, 0x74516811 )
 ROM_END
 
 ROM_START( astlaser )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1.u36",        0x0000, 0x0800, 0xb44e2c41 )
 	ROM_LOAD( "2.u35",        0x0800, 0x0800, 0x9876f331 )
 	ROM_LOAD( "3.u34",        0x1000, 0x0800, 0xed79000b )
@@ -4150,15 +4220,24 @@ ROM_START( astlaser )
 ROM_END
 
 ROM_START( intruder )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "la01",         0x0000, 0x0800, 0xbedc0078 )
-	ROM_LOAD( "la02",         0x0800, 0x0800, 0x43bc65c5 )
+	ROM_LOAD( "spcewarl.2",   0x0800, 0x0800, 0x43bc65c5 )
 	ROM_LOAD( "la03",         0x1000, 0x0800, 0x1083e9cc )
 	ROM_LOAD( "la04",         0x1800, 0x0800, 0x5116b234 )
 ROM_END
 
+ROM_START( spcewarl )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "spcewarl.1",   0x0000, 0x0800, 0x1fcd34d2 )
+	ROM_LOAD( "spcewarl.2",   0x0800, 0x0800, 0x43bc65c5 )
+	ROM_LOAD( "spcewarl.3",   0x1000, 0x0800, 0x7820df3a )
+	ROM_LOAD( "spcewarl.4",   0x1800, 0x0800, 0xadc05b8d )
+	ROM_LOAD( "spcewarl.5",   0x4000, 0x0800, 0x3f55d17f )
+ROM_END
+
 ROM_START( galxwars )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "galxwars.0",   0x0000, 0x0400, 0x608bfe7f )
 	ROM_LOAD( "galxwars.1",   0x0400, 0x0400, 0xa810b258 )
 	ROM_LOAD( "galxwars.2",   0x0800, 0x0400, 0x74f31781 )
@@ -4168,17 +4247,17 @@ ROM_START( galxwars )
 ROM_END
 
 ROM_START( starw )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "roma",   0x0000, 0x0400, 0x60e8993c )
-	ROM_LOAD( "romb",   0x0400, 0x0400, 0xb8060773 )
-	ROM_LOAD( "romc",   0x0800, 0x0400, 0x307ce6b8 )
-	ROM_LOAD( "romd",   0x1400, 0x0400, 0x2b0d0a88 )
-	ROM_LOAD( "rome",   0x1800, 0x0400, 0x5b1c3ad0 )
-	ROM_LOAD( "romf",   0x1c00, 0x0400, 0xc8e42d3d )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "roma",         0x0000, 0x0400, 0x60e8993c )
+	ROM_LOAD( "romb",         0x0400, 0x0400, 0xb8060773 )
+	ROM_LOAD( "romc",         0x0800, 0x0400, 0x307ce6b8 )
+	ROM_LOAD( "romd",         0x1400, 0x0400, 0x2b0d0a88 )
+	ROM_LOAD( "rome",         0x1800, 0x0400, 0x5b1c3ad0 )
+	ROM_LOAD( "romf",         0x1c00, 0x0400, 0xc8e42d3d )
 ROM_END
 
 ROM_START( lrescue )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
 	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
 	ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
@@ -4188,7 +4267,7 @@ ROM_START( lrescue )
 ROM_END
 
 ROM_START( grescue )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
 	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
 	ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
@@ -4198,7 +4277,7 @@ ROM_START( grescue )
 ROM_END
 
 ROM_START( desterth )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "36_h.bin",     0x0000, 0x0800, 0xf86923e5 )
 	ROM_LOAD( "35_g.bin",     0x0800, 0x0800, 0x797f440d )
 	ROM_LOAD( "34_f.bin",     0x1000, 0x0800, 0x993d0846 )
@@ -4209,7 +4288,7 @@ ROM_START( desterth )
 ROM_END
 
 ROM_START( cosmicmo )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cosmicmo.1",   0x0000, 0x0400, 0xd6e4e5da )
 	ROM_LOAD( "cosmicmo.2",   0x0400, 0x0400, 0x8f7988e6 )
 	ROM_LOAD( "cosmicmo.3",   0x0800, 0x0400, 0x2d2e9dc8 )
@@ -4220,7 +4299,7 @@ ROM_START( cosmicmo )
 ROM_END
 
 ROM_START( rollingc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rc01.bin",     0x0000, 0x0400, 0x66fa50bf )
 	ROM_LOAD( "rc02.bin",     0x0400, 0x0400, 0x61c06ae4 )
 	ROM_LOAD( "rc03.bin",     0x0800, 0x0400, 0x77e39fa0 )
@@ -4236,7 +4315,7 @@ ROM_START( rollingc )
 ROM_END
 
 ROM_START( boothill )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "romh.cpu",     0x0000, 0x0800, 0x1615d077 )
 	ROM_LOAD( "romg.cpu",     0x0800, 0x0800, 0x65a90420 )
 	ROM_LOAD( "romf.cpu",     0x1000, 0x0800, 0x3fdafd79 )
@@ -4244,7 +4323,7 @@ ROM_START( boothill )
 ROM_END
 
 ROM_START( schaser )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rt13.bin",     0x0000, 0x0400, 0x0dfbde68 )
 	ROM_LOAD( "rt14.bin",     0x0400, 0x0400, 0x5a508a25 )
 	ROM_LOAD( "rt15.bin",     0x0800, 0x0400, 0x2ac43a93 )
@@ -4258,7 +4337,7 @@ ROM_START( schaser )
 ROM_END
 
 ROM_START( spcenctr )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "4m33.cpu",     0x0000, 0x0800, 0x7458b2db )
 	ROM_LOAD( "4m32.cpu",     0x0800, 0x0800, 0x1b873788 )
 	ROM_LOAD( "4m31.cpu",     0x1000, 0x0800, 0xd4319c91 )
@@ -4270,7 +4349,7 @@ ROM_START( spcenctr )
 ROM_END
 
 ROM_START( clowns )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "h2.cpu",       0x0000, 0x0400, 0xff4432eb )
 	ROM_LOAD( "g2.cpu",       0x0400, 0x0400, 0x676c934b )
 	ROM_LOAD( "f2.cpu",       0x0800, 0x0400, 0x00757962 )
@@ -4280,7 +4359,7 @@ ROM_START( clowns )
 ROM_END
 
 ROM_START( gmissile )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "gm_623.h",     0x0000, 0x0800, 0xa3ebb792 )
 	ROM_LOAD( "gm_623.g",     0x0800, 0x0800, 0xa5e740bb )
 	ROM_LOAD( "gm_623.f",     0x1000, 0x0800, 0xda381025 )
@@ -4288,7 +4367,7 @@ ROM_START( gmissile )
 ROM_END
 
 ROM_START( seawolf )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sw0041.h",     0x0000, 0x0400, 0x8f597323 )
 	ROM_LOAD( "sw0042.g",     0x0400, 0x0400, 0xdb980974 )
 	ROM_LOAD( "sw0043.f",     0x0800, 0x0400, 0xe6ffa008 )
@@ -4296,7 +4375,7 @@ ROM_START( seawolf )
 ROM_END
 
 ROM_START( gunfight )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "7609h.bin",    0x0000, 0x0400, 0x0b117d73 )
 	ROM_LOAD( "7609g.bin",    0x0400, 0x0400, 0x57bc3159 )
 	ROM_LOAD( "7609f.bin",    0x0800, 0x0400, 0x8049a6bd )
@@ -4304,7 +4383,7 @@ ROM_START( gunfight )
 ROM_END
 
 ROM_START( 280zzzap )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "zzzaph",       0x0000, 0x0400, 0x1fa86e1c )
 	ROM_LOAD( "zzzapg",       0x0400, 0x0400, 0x9639bc6b )
 	ROM_LOAD( "zzzapf",       0x0800, 0x0400, 0xadc6ede1 )
@@ -4314,7 +4393,7 @@ ROM_START( 280zzzap )
 ROM_END
 
 ROM_START( lupin3 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lp12.bin",     0x0000, 0x0800, 0x68a7f47a )
 	ROM_LOAD( "lp13.bin",     0x0800, 0x0800, 0xcae9a17b )
 	ROM_LOAD( "lp14.bin",     0x1000, 0x0800, 0x3553b9e4 )
@@ -4325,7 +4404,7 @@ ROM_START( lupin3 )
 ROM_END
 
 ROM_START( polaris )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ps-01",        0x0000, 0x0800, 0xc04ce5a9 )
 	ROM_LOAD( "ps-09",        0x0800, 0x0800, 0x9a5c8cb2 )
 	ROM_LOAD( "ps-08",        0x1000, 0x0800, 0x8680d7ea )
@@ -4335,20 +4414,20 @@ ROM_START( polaris )
 ROM_END
 
 ROM_START( polarisa )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "ps01-1",      0x0000, 0x0800, 0x7d41007c )
-	ROM_LOAD( "ps-09",       0x0800, 0x0800, 0x9a5c8cb2 )
-	ROM_LOAD( "ps03-1",      0x1000, 0x0800, 0x21f32415 )
-	ROM_LOAD( "ps-04",       0x1800, 0x0800, 0x65694948 )
-	ROM_LOAD( "ps-05",       0x4000, 0x0800, 0x772e31f3 )
-	ROM_LOAD( "ps-10",       0x4800, 0x0800, 0x3df77bac )
-	ROM_LOAD( "ps26",        0x5000, 0x0800, 0x9d5c3d50 )
-//	ROM_LOAD( "ps07",        0x5800, 0x0400, 0x164aa05d )
-//	ROM_LOAD( "ps08",        0x5c00, 0x0100, 0x2953253b )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "ps01-1",       0x0000, 0x0800, 0x7d41007c )
+	ROM_LOAD( "ps-09",        0x0800, 0x0800, 0x9a5c8cb2 )
+	ROM_LOAD( "ps03-1",       0x1000, 0x0800, 0x21f32415 )
+	ROM_LOAD( "ps-04",        0x1800, 0x0800, 0x65694948 )
+	ROM_LOAD( "ps-05",        0x4000, 0x0800, 0x772e31f3 )
+	ROM_LOAD( "ps-10",        0x4800, 0x0800, 0x3df77bac )
+	ROM_LOAD( "ps26",         0x5000, 0x0800, 0x9d5c3d50 )
+//	ROM_LOAD( "ps07",         0x5800, 0x0400, 0x164aa05d )
+//	ROM_LOAD( "ps08",         0x5c00, 0x0100, 0x2953253b )
 ROM_END
 
 ROM_START( lagunar )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lagunar.h",    0x0000, 0x0800, 0x0cd5a280 )
 	ROM_LOAD( "lagunar.g",    0x0800, 0x0800, 0x824cd6f5 )
 	ROM_LOAD( "lagunar.f",    0x1000, 0x0800, 0x62692ca7 )
@@ -4356,7 +4435,7 @@ ROM_START( lagunar )
 ROM_END
 
 ROM_START( m4 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "m4.h",         0x0000, 0x0800, 0x9ee2a0b5 )
 	ROM_LOAD( "m4.g",         0x0800, 0x0800, 0x0e84b9cb )
 	ROM_LOAD( "m4.f",         0x1000, 0x0800, 0x9ded9956 )
@@ -4364,7 +4443,7 @@ ROM_START( m4 )
 ROM_END
 
 ROM_START( phantom2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "phantom2.h",   0x0000, 0x0800, 0x0e3c2439 )
 	ROM_LOAD( "phantom2.g",   0x0800, 0x0800, 0xe8df3e52 )
 	ROM_LOAD( "phantom2.f",   0x1000, 0x0800, 0x30e83c6d )
@@ -4372,7 +4451,7 @@ ROM_START( phantom2 )
 ROM_END
 
 ROM_START( dogpatch )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "dogpatch.h",   0x0000, 0x0800, 0x74ebdf4d )
 	ROM_LOAD( "dogpatch.g",   0x0800, 0x0800, 0xac246f70 )
 	ROM_LOAD( "dogpatch.f",   0x1000, 0x0800, 0xa975b011 )
@@ -4380,7 +4459,7 @@ ROM_START( dogpatch )
 ROM_END
 
 ROM_START( bowler )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "h.cpu",        0x0000, 0x0800, 0x74c29b93 )
 	ROM_LOAD( "g.cpu",        0x0800, 0x0800, 0xca26d8b4 )
 	ROM_LOAD( "f.cpu",        0x1000, 0x0800, 0xba8a0bfa )
@@ -4389,14 +4468,14 @@ ROM_START( bowler )
 ROM_END
 
 ROM_START( blueshrk )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "blueshrk.h",   0x0000, 0x0800, 0x4ff94187 )
 	ROM_LOAD( "blueshrk.g",   0x0800, 0x0800, 0xe49368fd )
 	ROM_LOAD( "blueshrk.f",   0x1000, 0x0800, 0x86cca79d )
 ROM_END
 
 ROM_START( einnings )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ei.h",         0x0000, 0x0800, 0xeff9c7af )
 	ROM_LOAD( "ei.g",         0x0800, 0x0800, 0x5d1e66cb )
 	ROM_LOAD( "ei.f",         0x1000, 0x0800, 0xed96785d )
@@ -4405,7 +4484,7 @@ ROM_START( einnings )
 ROM_END
 
 ROM_START( dplay )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "dplay619.h",   0x0000, 0x0800, 0x6680669b )
 	ROM_LOAD( "dplay619.g",   0x0800, 0x0800, 0x0eec7e01 )
 	ROM_LOAD( "dplay619.f",   0x1000, 0x0800, 0x3af4b719 )
@@ -4413,48 +4492,48 @@ ROM_START( dplay )
 ROM_END
 
 ROM_START( maze )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0xf2860cff )
 	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x65fad839 )
 ROM_END
 
 ROM_START( tornbase )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "tb.h",         0x0000, 0x0800, 0x653f4797 )
 	ROM_LOAD( "tb.g",         0x0800, 0x0800, 0x33468006 )
 	ROM_LOAD( "tb.f",         0x1000, 0x0800, 0x215e070c )
 ROM_END
 
 ROM_START( checkmat )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "checkmat.h", 0x0000, 0x0400, 0x3481a6d1 )
-	ROM_LOAD( "checkmat.g", 0x0400, 0x0400, 0xdf5fa551 )
-	ROM_LOAD( "checkmat.f", 0x0800, 0x0400, 0x25586406 )
-	ROM_LOAD( "checkmat.e", 0x0c00, 0x0400, 0x59330d84 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "checkmat.h",   0x0000, 0x0400, 0x3481a6d1 )
+	ROM_LOAD( "checkmat.g",   0x0400, 0x0400, 0xdf5fa551 )
+	ROM_LOAD( "checkmat.f",   0x0800, 0x0400, 0x25586406 )
+	ROM_LOAD( "checkmat.e",   0x0c00, 0x0400, 0x59330d84 )
 ROM_END
 
 ROM_START( ozmawars )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "mw01", 0x0000, 0x0800, 0x31f4397d )
-	ROM_LOAD( "mw02", 0x0800, 0x0800, 0xd8e77c62 )
-	ROM_LOAD( "mw03", 0x1000, 0x0800, 0x3bfa418f )
-	ROM_LOAD( "mw04", 0x1800, 0x0800, 0xe190ce6c )
-	ROM_LOAD( "mw05", 0x4000, 0x0800, 0x3bc7d4c7 )
-	ROM_LOAD( "mw06", 0x4800, 0x0800, 0x99ca2eae )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "mw01",         0x0000, 0x0800, 0x31f4397d )
+	ROM_LOAD( "mw02",         0x0800, 0x0800, 0xd8e77c62 )
+	ROM_LOAD( "mw03",         0x1000, 0x0800, 0x3bfa418f )
+	ROM_LOAD( "mw04",         0x1800, 0x0800, 0xe190ce6c )
+	ROM_LOAD( "mw05",         0x4000, 0x0800, 0x3bc7d4c7 )
+	ROM_LOAD( "mw06",         0x4800, 0x0800, 0x99ca2eae )
 ROM_END
 
 ROM_START( solfight )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "solfight.m", 0x0000, 0x0800, 0xa4f2814e )
-	ROM_LOAD( "solfight.n", 0x0800, 0x0800, 0x5657ec07 )
-	ROM_LOAD( "solfight.p", 0x1000, 0x0800, 0xef9ce96d )
-	ROM_LOAD( "solfight.r", 0x1800, 0x0800, 0x4f1ef540 )
-	ROM_LOAD( "mw05",       0x4000, 0x0800, 0x3bc7d4c7 )
-	ROM_LOAD( "solfight.t", 0x4800, 0x0800, 0x3b6fb206 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "solfight.m",   0x0000, 0x0800, 0xa4f2814e )
+	ROM_LOAD( "solfight.n",   0x0800, 0x0800, 0x5657ec07 )
+	ROM_LOAD( "solfight.p",   0x1000, 0x0800, 0xef9ce96d )
+	ROM_LOAD( "solfight.r",   0x1800, 0x0800, 0x4f1ef540 )
+	ROM_LOAD( "mw05",         0x4000, 0x0800, 0x3bc7d4c7 )
+	ROM_LOAD( "solfight.t",   0x4800, 0x0800, 0x3b6fb206 )
 ROM_END
 
 ROM_START( spaceph )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sv01.bin",     0x0000, 0x0400, 0xde84771d )
 	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x957fc661 )
 	ROM_LOAD( "sv03.bin",     0x0800, 0x0400, 0xdbda38b9 )
@@ -4470,24 +4549,36 @@ ROM_START( spaceph )
 ROM_END
 
 ROM_START( ballbomb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "tn01",   0x0000, 0x0800, 0x551585b5 )
-	ROM_LOAD( "tn02",   0x0800, 0x0800, 0x7e1f734f )
-	ROM_LOAD( "tn03",   0x1000, 0x0800, 0xd93e20bc )
-	ROM_LOAD( "tn04",   0x1800, 0x0800, 0xd0689a22 )
-	ROM_LOAD( "tn05-1", 0x4000, 0x0800, 0x5d5e94f1 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "tn01",         0x0000, 0x0800, 0x551585b5 )
+	ROM_LOAD( "tn02",         0x0800, 0x0800, 0x7e1f734f )
+	ROM_LOAD( "tn03",         0x1000, 0x0800, 0xd93e20bc )
+	ROM_LOAD( "tn04",         0x1800, 0x0800, 0xd0689a22 )
+	ROM_LOAD( "tn05-1",       0x4000, 0x0800, 0x5d5e94f1 )
 
     /* The only difference between the 2 colourmaps is the colour */
     /* of the ships - each player has there own colour!           */
 
-	ROM_REGIONX( 0x800, REGION_PROMS )		/* Colour Maps */
-	ROM_LOAD( "tn06",   0x0000, 0x0400, 0x7ec554c4 )
-	ROM_LOAD( "tn07",   0x0400, 0x0400, 0xdeb0ac82 )
+	ROM_REGION( 0x800, REGION_PROMS )		/* Colour Maps */
+	ROM_LOAD( "tn06",         0x0000, 0x0400, 0x7ec554c4 )
+	ROM_LOAD( "tn07",         0x0400, 0x0400, 0xdeb0ac82 )
+ROM_END
+
+ROM_START( yosakdon )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "yd1.bin", 0x0000, 0x0400, 0x607899c9 )
+	ROM_LOAD( "yd2.bin", 0x0400, 0x0400, 0x78336df4 )
+	ROM_LOAD( "yd3.bin", 0x0800, 0x0400, 0xc5af6d52 )
+	ROM_LOAD( "yd4.bin", 0x0c00, 0x0400, 0xdca8064f )
+	ROM_LOAD( "yd5.bin", 0x1400, 0x0400, 0x38804ff1 )
+	ROM_LOAD( "yd6.bin", 0x1800, 0x0400, 0x988d2362 )
+	ROM_LOAD( "yd7.bin", 0x1c00, 0x0400, 0x2744e68b )
 ROM_END
 
 
+
 ROM_START( bandido )                                                                                /* MJC */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "baf1-3",       0x0000, 0x0400, 0xaec94829 )
 	ROM_LOAD( "baf2-1",       0x0400, 0x0400, 0xda67721a )
 	ROM_LOAD( "bag1-1",       0x0800, 0x0400, 0x3fb7888e )
@@ -4499,12 +4590,12 @@ ROM_START( bandido )                                                            
 	ROM_LOAD( "baj1-1",       0x2000, 0x0400, 0x0aa8b79a )
 	ROM_LOAD( "baj2-2",       0x2400, 0x0400, 0xa10b848a )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_REGION( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x75731745 )
 ROM_END
 
 ROM_START( helifire )                                                                                /* MJC */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "tub.f1b",      0x0000, 0x0400, 0x032f89ca )
 	ROM_LOAD( "tub.f2b",      0x0400, 0x0400, 0x2774e70f )
 	ROM_LOAD( "tub.g1b",      0x0800, 0x0400, 0xb5ad6e8a )
@@ -4516,12 +4607,12 @@ ROM_START( helifire )                                                           
 	ROM_LOAD( "tub.j1b",      0x2000, 0x0400, 0x98ef24db )
 	ROM_LOAD( "tub.j2b",      0x2400, 0x0400, 0x5e2b5877 )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_REGION( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tub.snd",      0x0000, 0x0400, 0x9d77a31f )
 ROM_END
 
 ROM_START( helifira )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "f1a.bin",      0x0000, 0x0400, 0x92c9d6c1 )
 	ROM_LOAD( "f2a.bin",      0x0400, 0x0400, 0xa264dde8 )
 	ROM_LOAD( "tub.g1b",      0x0800, 0x0400, 0xb5ad6e8a )
@@ -4533,12 +4624,12 @@ ROM_START( helifira )
 	ROM_LOAD( "tub.j1b",      0x2000, 0x0400, 0x98ef24db )
 	ROM_LOAD( "tub.j2b",      0x2400, 0x0400, 0x5e2b5877 )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_REGION( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tub.snd",      0x0000, 0x0400, 0x9d77a31f )
 ROM_END
 
 ROM_START( spacefev )                                                                                /* MJC */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
 	ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
 	ROM_LOAD( "tsf.g1",       0x0800, 0x0400, 0xf3d851cb )
@@ -4547,12 +4638,12 @@ ROM_START( spacefev )                                                           
 	ROM_LOAD( "tsf.h2",       0x1400, 0x0400, 0xa36c61c9 )
 	ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_REGION( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x75731745 )
 ROM_END
 
 ROM_START( sfeverbw )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "spacefev.f1", 0x0000, 0x0400, 0xb8887351 )
 	ROM_LOAD( "spacefev.f2", 0x0400, 0x0400, 0xcda933a7 )
 	ROM_LOAD( "spacefev.g1", 0x0800, 0x0400, 0xde17578a )
@@ -4562,11 +4653,9 @@ ROM_START( sfeverbw )
 	ROM_LOAD( "spacefev.i1", 0x1800, 0x0400, 0x41e18df9 )
 	ROM_LOAD( "spacefev.i2", 0x1c00, 0x0400, 0xeff9f82d )
 
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_REGION( 0x1000, REGION_CPU2 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x75731745 )
 ROM_END
-
-
 
 
 
@@ -4578,10 +4667,12 @@ GAME( ????, alieninv, invaders, invaders, alieninv, 0, ROT270, "bootleg", "Alien
 GAME( 1978, si_tv,    invaders, sitv,     sitv,     0, ROT270, "Taito", "Space Invaders (TV Version)" )
 GAME( 1979, si_cv,    invaders, sicv,     sicv,     0, ROT270, "Taito", "Space Invaders Colour (CV Version)" )
 GAME( 1978, si_sv,    invaders, invaders, sicv,     0, ROT270, "Taito", "Space Invaders (SV Version)" )
+GAME( 1978, spceking, invaders, invadpt2, spceking, 0, ROT270, "Leijac (Konami)","Space King" )
+GAME( 1978, spcewars, invaders, invadpt2, invadpt2, 0, ROT270, "Sanritsu",       "Space War (Sanritsu)" )
 GAME( 1978, spacewr3, invaders, invaders, spacewr3, 0, ROT270, "bootleg", "Space War Part 3" )
 GAME( 1978, logitec,  invaders, invaders, invaders, 0, ROT270, "bootleg", "Space Invaders (Logitec)" )
 GAME( 1978, sisv2,    invaders, invaders, invaders, 0, ROT270, "Taito", "Space Invaders (SV Version 2)" )
-GAME( ????, jspecter, invaders, invaders, jspecter, 0, ROT270, "Taito?", "Jatre Specter" )
+GAME( 1979, jspecter, invaders, invaders, jspecter, 0, ROT270, "Jatre", "Jatre Specter" )
 GAME( 1980, invadpt2, 0,        invadpt2, invadpt2, 0, ROT270, "Taito", "Space Invaders Part II (Taito)" )
 GAME( 1980, invdpt2m, invadpt2, invdpt2m, invdpt2m, 0, ROT270, "Midway", "Space Invaders Part II (Midway)" )
 GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, 0, ROT90,  "Midway", "Space Invaders II Cocktail (Midway)" )
@@ -4589,6 +4680,7 @@ GAME( ????, invrvnge, 0,        invrvnge, invrvnge, 0, ROT270, "Zenitone Microse
 GAME( ????, invrvnga, invrvnge, invrvnge, invrvnge, 0, ROT270, "Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)" )
 GAME( 1980, astlaser, 0,        invdpt2m, astlaser, 0, ROT270, "<unknown>", "Astro Laser" )
 GAME( 1980, intruder, astlaser, invdpt2m, intruder, 0, ROT270, "Game Plan, Inc. (Taito)", "Intruder" )
+GAME( 1979, spcewarl, astlaser, invdpt2m, astlaser, 0, ROT270, "Leijac (Konami)","Space War (Leijac)" )
 GAME( 1979, galxwars, 0,        invaders, galxwars, 0, ROT270, "Taito", "Galaxy Wars" )
 GAME( 1979, starw,    galxwars, invaders, galxwars, 0, ROT270, "bootleg", "Star Wars" )
 GAME( 1979, lrescue,  0,        lrescue,  lrescue,  0, ROT270, "Taito", "Lunar Rescue" )
@@ -4624,6 +4716,7 @@ GAME( 1979, ozmawars, 0,        invadpt2, ozmawars, 0, ROT270, "SNK", "Ozma Wars
 GAME( 1979, solfight, ozmawars, invadpt2, solfight, 0, ROT270, "bootleg", "Solar Fight" )
 GAME( 1979, spaceph,  ozmawars, lrescue,  spaceph,  0, ROT270, "Zilec Games", "Space Phantoms" )
 GAME( 1980, ballbomb, 0,        ballbomb, ballbomb, 0, ROT270, "Taito", "Balloon Bomber" )
+GAME( 1979, yosakdon, 0,        lrescue,  lrescue,  0, ROT270, "bootleg", "Yosaku To Donbee (bootleg)" )
 
 GAME( 1980, bandido,  0,        bandido,  bandido,  0, ROT270, "Exidy", "Bandido" )
 GAME( 1980, helifire, 0,        bandido,  helifire, 0, ROT270, "Nintendo", "HeliFire (revision B)" )

@@ -359,7 +359,7 @@ static struct MachineDriver machine_driver_pacland =
 ***************************************************************************/
 
 ROM_START( pacland )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl5_01b.bin",  0x08000, 0x4000, 0xb0ea7631 )
 	ROM_LOAD( "pl5_02.bin",   0x0C000, 0x4000, 0xd903e84e )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -368,25 +368,25 @@ ROM_START( pacland )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl3_06.bin",   0x1c000, 0x4000, 0x2ffe3319 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl2_12.bin",   0x00000, 0x2000, 0xa63c8726 )	/* chars */
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl4_13.bin",   0x00000, 0x2000, 0x3ae582fd )
 
-	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-9",        0x00000, 0x4000, 0xf5d5962b )	/* sprites */
 	ROM_LOAD( "pl1-10",       0x04000, 0x4000, 0xc7cf1904 )
 
-	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-8",        0x00000, 0x4000, 0xa2ebfa4a )
 	ROM_LOAD( "pl1-11",       0x04000, 0x4000, 0x6621361a )
 
-	ROM_REGIONX( 0x1400, REGION_PROMS )
+	ROM_REGION( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
@@ -395,7 +395,7 @@ ROM_START( pacland )
 ROM_END
 
 ROM_START( pacland2 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl6_01.bin",   0x08000, 0x4000, 0x4c96e11c )
 	ROM_LOAD( "pl6_02.bin",   0x0C000, 0x4000, 0x8cf5bd8d )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -404,25 +404,25 @@ ROM_START( pacland2 )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl0_12.bin",   0x00000, 0x2000, 0xc8cb61ab )	/* chars */
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-13",       0x00000, 0x2000, 0x6c5ed9ae )
 
-	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1_09b.bin",  0x00000, 0x4000, 0x80768a87 )	/* sprites */
 	ROM_LOAD( "pl1_10b.bin",  0x04000, 0x4000, 0xffd9d66e )
 
-	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1_08.bin",   0x00000, 0x4000, 0x2b20e46d )
 	ROM_LOAD( "pl1_11.bin",   0x04000, 0x4000, 0xc59775d8 )
 
-	ROM_REGIONX( 0x1400, REGION_PROMS )
+	ROM_REGION( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
@@ -431,7 +431,7 @@ ROM_START( pacland2 )
 ROM_END
 
 ROM_START( pacland3 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pln1-1",       0x08000, 0x4000, 0xf729fb94 )
 	ROM_LOAD( "pln1-2",       0x0C000, 0x4000, 0x5c66eb6f )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -440,25 +440,25 @@ ROM_START( pacland3 )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-12",       0x00000, 0x2000, 0xc159fbce )	/* chars */
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-13",       0x00000, 0x2000, 0x6c5ed9ae )
 
-	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1_09b.bin",  0x00000, 0x4000, 0x80768a87 )	/* sprites */
 	ROM_LOAD( "pl1_10b.bin",  0x04000, 0x4000, 0xffd9d66e )
 
-	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1_08.bin",   0x00000, 0x4000, 0x2b20e46d )
 	ROM_LOAD( "pl1_11.bin",   0x04000, 0x4000, 0xc59775d8 )
 
-	ROM_REGIONX( 0x1400, REGION_PROMS )
+	ROM_REGION( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
@@ -467,7 +467,7 @@ ROM_START( pacland3 )
 ROM_END
 
 ROM_START( paclandm )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl1-1",        0x08000, 0x4000, 0xa938ae99 )
 	ROM_LOAD( "pl1-2",        0x0C000, 0x4000, 0x3fe43bb5 )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -476,25 +476,25 @@ ROM_START( paclandm )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-12",       0x00000, 0x2000, 0xc159fbce )	/* chars */
 
-	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-13",       0x00000, 0x2000, 0x6c5ed9ae )
 
-	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-9",        0x00000, 0x4000, 0xf5d5962b )	/* sprites */
 	ROM_LOAD( "pl1-10",       0x04000, 0x4000, 0xc7cf1904 )
 
-	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-8",        0x00000, 0x4000, 0xa2ebfa4a )
 	ROM_LOAD( "pl1-11",       0x04000, 0x4000, 0x6621361a )
 
-	ROM_REGIONX( 0x1400, REGION_PROMS )
+	ROM_REGION( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */

@@ -1,50 +1,14 @@
 #ifndef INPTPORT_H
 #define INPTPORT_H
 
+#include "input.h"
+
 /* input ports handling */
 
 /* Don't confuse this with the I/O ports in memory.h. This is used to handle game */
 /* inputs (joystick, coin slots, etc). Typically, you will read them using */
 /* input_port_[n]_r(), which you will associate to the appropriate memory */
 /* address or I/O port. */
-
-/**************************************************************************/
-/* Key/Joy sequences */
-
-#define INPUT_KEY_SEQ_MAX 8
-#define INPUT_JOY_SEQ_MAX 8
-
-typedef UINT16 InputCode;
-typedef InputCode InputKeySeq[INPUT_KEY_SEQ_MAX];
-typedef InputCode InputJoySeq[INPUT_JOY_SEQ_MAX];
-
-INLINE InputCode input_key_seq_get_1(InputKeySeq* a) {
-	return (*a)[0];
-}
-
-INLINE InputCode input_joy_seq_get_1(InputJoySeq* a) {
-	return (*a)[0];
-}
-
-void input_key_seq_set_1(InputKeySeq* a, InputCode code);
-void input_joy_seq_set_1(InputJoySeq* a, InputCode code);
-void input_key_seq_copy(InputKeySeq* a, InputKeySeq* b);
-void input_joy_seq_copy(InputJoySeq* a, InputJoySeq* b);
-int input_key_seq_cmp(InputKeySeq* a, InputKeySeq* b);
-int input_joy_seq_cmp(InputJoySeq* a, InputJoySeq* b);
-
-#define INPUT_KEY_SEQ_DEF_0 { IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE }
-#define INPUT_JOY_SEQ_DEF_0 { IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE }
-#define INPUT_KEY_SEQ_DEF_1(a) { a, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE }
-#define INPUT_JOY_SEQ_DEF_1(a) { a, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE }
-#define INPUT_KEY_SEQ_DEF_2(a,b) { a, b, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE }
-#define INPUT_JOY_SEQ_DEF_2(a,b) { a, b, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE }
-#define INPUT_KEY_SEQ_DEF_3(a,b,c) { a, b, c, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE }
-#define INPUT_JOY_SEQ_DEF_3(a,b,c) { a, b, c, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE }
-#define INPUT_KEY_SEQ_DEF_4(a,b,c,d) { a, b, c, d, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE }
-#define INPUT_JOY_SEQ_DEF_4(a,b,c,d) { a, b, c, d, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE, IP_JOY_NONE }
-#define INPUT_KEY_SEQ_DEF_5(a,b,c,d,e) { a, b, c, d, e, IP_KEY_NONE, IP_KEY_NONE, IP_KEY_NONE }
-#define INPUT_KEY_SEQ_DEF_6(a,b,c,d,e,f) { a, b, c, d, e, f, IP_KEY_NONE, IP_KEY_NONE }
 
 /***************************************************************************/
 
@@ -64,8 +28,7 @@ struct InputPort
 							/* you can also use one of the IP_ACTIVE defines below */
 	UINT32 type;			/* see defines below */
 	const char *name;		/* name to display */
-	InputKeySeq keyboard;	/* key affecting the input bits */
-	InputJoySeq joystick;	/* joystick command affecting the input bits */
+	InputSeq seq;                  	/* input sequence affecting the input bits */
 #ifdef MESS
 	UINT32 arg;				/* extra argument needed in some cases */
 	UINT16 min, max;		/* for analog controls */
@@ -129,7 +92,8 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_UI_PAN_UP, IPT_UI_PAN_DOWN, IPT_UI_PAN_LEFT, IPT_UI_PAN_RIGHT,
 	IPT_UI_SHOW_PROFILER,
 	IPT_UI_SHOW_COLORS,
-	IPT_UI_TOGGLE_UI
+	IPT_UI_TOGGLE_UI,
+	__ipt_max
 };
 
 #define IPT_UNUSED     IPF_UNUSED
@@ -194,21 +158,18 @@ enum { IPT_END=1,IPT_PORT,
 #define IP_GET_CLIP(port) ((((port)+1)->type >> 24) & 0xff)
 #define IP_GET_MIN(port) (((port)+1)->mask)
 #define IP_GET_MAX(port) (((port)+1)->default_value)
-#define IP_GET_KEY(port) ((port)->mask)
-#define IP_GET_JOY(port) ((port)->default_value)
+#define IP_GET_CODE_OR1(port) ((port)->mask)
+#define IP_GET_CODE_OR2(port) ((port)->default_value)
 
 #define IP_NAME_DEFAULT ((const char *)-1)
 
-#define IP_KEY_DEFAULT	0xffff
-#define IP_KEY_NONE		0xfffe
-#define IP_KEY_PREVIOUS	0xfffd	/* use the same key as the previous input bit */
-
-#define IP_JOY_DEFAULT	0xffff
-#define IP_JOY_NONE		0xfffe
-#define IP_JOY_PREVIOUS	0xfffd	/* use the same joy as the previous input bit */
-
-#define IP_CODE_NOT 0xfffc /* prefix NOT operator */
-#define IP_CODE_OR 0xfffb /* infix OR operator */
+/* Wrapper for compatibility */
+#define IP_KEY_DEFAULT CODE_DEFAULT
+#define IP_JOY_DEFAULT CODE_DEFAULT
+#define IP_KEY_PREVIOUS CODE_PREVIOUS
+#define IP_JOY_PREVIOUS CODE_PREVIOUS
+#define IP_KEY_NONE CODE_NONE
+#define IP_JOY_NONE CODE_NONE
 
 /* start of table */
 #define INPUT_PORTS_START(name) \
@@ -332,10 +293,8 @@ int load_input_port_settings(void);
 void save_input_port_settings(void);
 
 const char *input_port_name(const struct InputPort *in);
-InputKeySeq* input_port_type_key_multi(int type);
-InputJoySeq* input_port_type_joy_multi(int type);
-InputKeySeq* input_port_key_multi(const struct InputPort *in);
-InputJoySeq* input_port_joy_multi(const struct InputPort *in);
+InputSeq* input_port_type_seq(int type);
+InputSeq* input_port_seq(const struct InputPort *in);
 
 struct InputPort* input_port_allocate(const struct InputPortTiny *src);
 void input_port_free(struct InputPort* dst);
@@ -370,8 +329,7 @@ struct ipd
 {
 	UINT32 type;
 	const char *name;
-	InputKeySeq keyboard;
-	InputJoySeq joystick;
+	InputSeq seq;
 };
 
 #endif

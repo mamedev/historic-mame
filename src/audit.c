@@ -94,7 +94,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 	if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))
 	{
 		/* if the game is a clone, check for parent */
-		if (gamedrv->clone_of == 0 ||
+		if (gamedrv->clone_of == 0 || (gamedrv->clone_of->flags & NOT_A_DRIVER) ||
 				!osd_faccess(gamedrv->clone_of->name,OSD_FILETYPE_ROM))
 			return 0;
 	}

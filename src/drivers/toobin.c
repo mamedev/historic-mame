@@ -3,6 +3,8 @@
 Toobin Memory Map (preliminary)
 -------------------------------
 
+driver by Aaron Giles
+
 TOOBIN' 68010 MEMORY MAP
 
 Function                           Address        R/W  DATA
@@ -275,9 +277,9 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x000000, &pflayout,     0, 16 },
-	{ 2, 0x080000, &molayout,   256, 16 },
-	{ 2, 0x280000, &anlayout,   512, 64 },
+	{ REGION_GFX1, 0, &pflayout,     0, 16 },
+	{ REGION_GFX2, 0, &molayout,   256, 16 },
+	{ REGION_GFX3, 0, &anlayout,   512, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -289,7 +291,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_toobin =
 {
 	/* basic machine hardware */
 	{
@@ -332,7 +334,7 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( toobin )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "061-3133.bin", 0x00000, 0x10000, 0x79a92d02 )
 	ROM_LOAD_ODD ( "061-3137.bin", 0x00000, 0x10000, 0xe389ef60 )
 	ROM_LOAD_EVEN( "061-3134.bin", 0x20000, 0x10000, 0x3dbe9a48 )
@@ -342,11 +344,11 @@ ROM_START( toobin )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
 	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
 	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
@@ -355,36 +357,40 @@ ROM_START( toobin )
 	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
 	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
 	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
-	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
-	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
-	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
-	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
-	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
-	ROM_RELOAD(               0x140000, 0x10000 )
-	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
-	ROM_RELOAD(               0x150000, 0x10000 )
-	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
-	ROM_RELOAD(               0x160000, 0x10000 )
-	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
-	ROM_RELOAD(               0x170000, 0x10000 )
-	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
-	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
-	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
-	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
-	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
-	ROM_RELOAD(               0x240000, 0x10000 )
-	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
-	ROM_RELOAD(               0x250000, 0x10000 )
-	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
-	ROM_RELOAD(               0x260000, 0x10000 )
-	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
-	ROM_RELOAD(               0x270000, 0x10000 )
-	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "061-1143.bin", 0x000000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x020000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x040000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x060000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x080000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x0c0000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x090000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x0d0000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x0a0000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x0e0000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x0b0000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x0f0000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x100000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x120000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x140000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x160000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x180000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x1c0000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x190000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x1d0000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x1a0000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x1e0000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x1b0000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x1f0000, 0x10000 )
+
+	ROM_REGION( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "061-1142.bin", 0x000000, 0x04000, 0xa6ab551f )  /* alpha font */
 ROM_END
 
 
 ROM_START( toobin2 )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "061-2133.1j",  0x00000, 0x10000, 0x2c3382e4 )
 	ROM_LOAD_ODD ( "061-2137.1f",  0x00000, 0x10000, 0x891c74b1 )
 	ROM_LOAD_EVEN( "061-2134.2j",  0x20000, 0x10000, 0x2b8164c8 )
@@ -394,11 +400,11 @@ ROM_START( toobin2 )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
 	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
 	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
@@ -407,36 +413,40 @@ ROM_START( toobin2 )
 	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
 	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
 	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
-	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
-	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
-	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
-	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
-	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
-	ROM_RELOAD(               0x140000, 0x10000 )
-	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
-	ROM_RELOAD(               0x150000, 0x10000 )
-	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
-	ROM_RELOAD(               0x160000, 0x10000 )
-	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
-	ROM_RELOAD(               0x170000, 0x10000 )
-	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
-	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
-	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
-	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
-	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
-	ROM_RELOAD(               0x240000, 0x10000 )
-	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
-	ROM_RELOAD(               0x250000, 0x10000 )
-	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
-	ROM_RELOAD(               0x260000, 0x10000 )
-	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
-	ROM_RELOAD(               0x270000, 0x10000 )
-	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "061-1143.bin", 0x000000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x020000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x040000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x060000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x080000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x0c0000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x090000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x0d0000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x0a0000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x0e0000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x0b0000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x0f0000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x100000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x120000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x140000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x160000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x180000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x1c0000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x190000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x1d0000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x1a0000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x1e0000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x1b0000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x1f0000, 0x10000 )
+
+	ROM_REGION( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "061-1142.bin", 0x000000, 0x04000, 0xa6ab551f )  /* alpha font */
 ROM_END
 
 
 ROM_START( toobinp )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "pg-0-up.1j",   0x00000, 0x10000, 0xcaeb5d1b )
 	ROM_LOAD_ODD ( "pg-0-lo.1f",   0x00000, 0x10000, 0x9713d9d3 )
 	ROM_LOAD_EVEN( "pg-20-up.2j",  0x20000, 0x10000, 0x119f5d7b )
@@ -446,11 +456,11 @@ ROM_START( toobinp )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
-	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
 	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
 	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
@@ -459,31 +469,35 @@ ROM_START( toobinp )
 	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
 	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
 	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
-	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
-	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
-	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
-	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
-	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
-	ROM_RELOAD(               0x140000, 0x10000 )
-	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
-	ROM_RELOAD(               0x150000, 0x10000 )
-	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
-	ROM_RELOAD(               0x160000, 0x10000 )
-	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
-	ROM_RELOAD(               0x170000, 0x10000 )
-	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
-	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
-	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
-	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
-	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
-	ROM_RELOAD(               0x240000, 0x10000 )
-	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
-	ROM_RELOAD(               0x250000, 0x10000 )
-	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
-	ROM_RELOAD(               0x260000, 0x10000 )
-	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
-	ROM_RELOAD(               0x270000, 0x10000 )
-	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "061-1143.bin", 0x000000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x020000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x040000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x060000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x080000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x0c0000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x090000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x0d0000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x0a0000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x0e0000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x0b0000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x0f0000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x100000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x120000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x140000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x160000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x180000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x1c0000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x190000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x1d0000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x1a0000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x1e0000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x1b0000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x1f0000, 0x10000 )
+
+	ROM_REGION( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "061-1142.bin", 0x000000, 0x04000, 0xa6ab551f )  /* alpha font */
 ROM_END
 
 
@@ -494,7 +508,7 @@ ROM_END
  *
  *************************************/
 
-static void toobin_init(void)
+static void init_toobin(void)
 {
 	atarigen_eeprom_default = NULL;
 
@@ -509,88 +523,6 @@ static void toobin_init(void)
 
 
 
-/*************************************
- *
- *	Game driver(s)
- *
- *************************************/
-
-struct GameDriver driver_toobin =
-{
-	__FILE__,
-	0,
-	"toobin",
-	"Toobin' (version 3)",
-	"1988",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
-	0,
-	&machine_driver,
-	toobin_init,
-
-	rom_toobin,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_toobin,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-
-struct GameDriver driver_toobin2 =
-{
-	__FILE__,
-	&driver_toobin,
-	"toobin2",
-	"Toobin' (version 2)",
-	"1988",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
-	0,
-	&machine_driver,
-	toobin_init,
-
-	rom_toobin2,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_toobin,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-
-struct GameDriver driver_toobinp =
-{
-	__FILE__,
-	&driver_toobin,
-	"toobinp",
-	"Toobin' (Prototype)",
-	"1988",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
-	0,
-	&machine_driver,
-	toobin_init,
-
-	rom_toobinp,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_toobin,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0,0
-};
+GAME( 1988, toobin,  0,      toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (version 3)" )
+GAME( 1988, toobin2, toobin, toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (version 2)" )
+GAME( 1988, toobinp, toobin, toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (Prototype)" )

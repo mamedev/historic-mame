@@ -109,6 +109,8 @@ static void  jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int
   The blue background in Scramble and other games goes through a 390 ohm
   resistor.
 
+  The RGB outputs have a 470 ohm pull-down each.
+
 ***************************************************************************/
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -135,10 +137,9 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		bit2 = (*color_prom >> 5) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (*color_prom >> 6) & 0x01;
+		bit1 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x4f * bit0 + 0xa8 * bit1;
 
 		color_prom++;
 	}

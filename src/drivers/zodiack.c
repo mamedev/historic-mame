@@ -2,6 +2,7 @@
 
 Zodiack/Dogfight Memory Map (preliminary)
 
+sriver by Zsolt Vasvari
 
 Memory Mapped:
 
@@ -408,10 +409,10 @@ static struct GfxLayout bulletlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   8*4    , 8 },
-	{ 1, 0x0800, &spritelayout, 0      , 8 },
-	{ 1, 0x0000, &bulletlayout, 8*4+8*2, 1 },
-	{ 1, 0x1000, &charlayout_2, 0      , 8 },
+	{ REGION_GFX1, 0x0000, &charlayout,   8*4    , 8 },
+	{ REGION_GFX1, 0x0800, &spritelayout, 0      , 8 },
+	{ REGION_GFX1, 0x0000, &bulletlayout, 8*4+8*2, 1 },
+	{ REGION_GFX1, 0x1000, &charlayout_2, 0      , 8 },
 	{ -1 } /* end of array */
 };
 
@@ -481,188 +482,88 @@ MACHINE_DRIVER(percuss)
 
 ***************************************************************************/
 ROM_START( zodiack )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "ovg30c.2",     0x0000, 0x2000, 0xa2125e99 )
 	ROM_LOAD( "ovg30c.3",     0x2000, 0x2000, 0xaee2b77f )
 	ROM_LOAD( "ovg30c.6",     0x4000, 0x0800, 0x1debb278 )
 
-	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ovg20c.1",     0x0000, 0x1000, 0x2d3c3baf )
+
+	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ovg40c.7",     0x0000, 0x0800, 0xed9d3be7 )
 	ROM_LOAD( "orca40c.8",    0x0800, 0x1000, 0x88269c94 )
 	ROM_LOAD( "orca40c.9",    0x1800, 0x1000, 0xa3bd40c9 )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "ovg40c.2a",    0x0000, 0x0020, 0x703821b8 )
 	ROM_LOAD( "ovg40c.2b",    0x0020, 0x0020, 0x21f77ec7 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ovg20c.1",     0x0000, 0x1000, 0x2d3c3baf )
 ROM_END
 
 ROM_START( dogfight )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "df-2",         0x0000, 0x2000, 0xad24b28b )
 	ROM_LOAD( "df-3",         0x2000, 0x2000, 0xcd172707 )
 	ROM_LOAD( "df-5",         0x4000, 0x1000, 0x874dc6bf )
 	ROM_LOAD( "df-4",         0xc000, 0x1000, 0xd8aa3d6d )
 
-	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "df-1",         0x0000, 0x1000, 0xdcbb1c5b )
+
+	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "df-6",         0x0000, 0x0800, 0x3059b515 )
 	ROM_LOAD( "df-7",         0x0800, 0x1000, 0xffe05fee )
 	ROM_LOAD( "df-8",         0x1800, 0x1000, 0x2cb51793 )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0x69a35aa5 )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x596ae457 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "df-1",         0x0000, 0x1000, 0xdcbb1c5b )
 ROM_END
 
 ROM_START( moguchan )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "2.5r",         0x0000, 0x1000, 0x85d0cb7e )
 	ROM_LOAD( "4.5m",         0x1000, 0x1000, 0x359ef951 )
 	ROM_LOAD( "3.5np",        0x2000, 0x1000, 0xc8776f77 )
 
-	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1.7hj",        0x0000, 0x1000, 0x1a88d35f )
+
+	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5.4r",         0x0000, 0x0800, 0x1b7febd8 )
 	ROM_LOAD( "6.7p",         0x0800, 0x1000, 0xc8060ffe )
 	ROM_LOAD( "7.7m",         0x1800, 0x1000, 0xbfca00f4 )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "moguchan.2a",  0x0000, 0x0020, 0xe83daab3 )
 	ROM_LOAD( "moguchan.2b",  0x0020, 0x0020, 0x9abfdf40 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1.7hj",        0x0000, 0x1000, 0x1a88d35f )
 ROM_END
 
 ROM_START( percuss )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "percuss.1",    0x0000, 0x1000, 0xff0364f7 )
 	ROM_LOAD( "percuss.3",    0x1000, 0x1000, 0x7f646c59 )
 	ROM_LOAD( "percuss.2",    0x2000, 0x1000, 0x6bf72dd2 )
 	ROM_LOAD( "percuss.4",    0x3000, 0x1000, 0xfb1b15ba )
 	ROM_LOAD( "percuss.5",    0x4000, 0x1000, 0x8e5a9692 )
 
-	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "percuss.8",    0x0000, 0x0800, 0xd63f56f3 )
+	ROM_LOAD( "percuss.9",    0x0800, 0x0800, 0xe08fef2f )
+
+	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "percuss.10",   0x0000, 0x0800, 0x797598aa )
 	ROM_LOAD( "percuss.6",    0x0800, 0x1000, 0x5285a580 )
 	ROM_LOAD( "percuss.7",    0x1800, 0x1000, 0x8fc4175d )
 
-	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS )
 	ROM_LOAD( "percus2a.prm", 0x0000, 0x0020, 0xe2ee9637 )
 	ROM_LOAD( "percus2b.prm", 0x0020, 0x0020, 0xe561b029 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "percuss.8",    0x0000, 0x0800, 0xd63f56f3 )
-	ROM_LOAD( "percuss.9",    0x0800, 0x0800, 0xe08fef2f )
 ROM_END
 
 
 
-struct GameDriver driver_zodiack =
-{
-	__FILE__,
-	0,
-	"zodiack",
-	"Zodiack",
-	"1983",
-	"Orca (Esco Trading Co, Inc)",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_zodiack,
-	0,
-
-	rom_zodiack,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_zodiac,
-
-	0, 0, 0,
-	ROT270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
-	0,0
-};
-
-struct GameDriver driver_dogfight =
-{
-	__FILE__,
-	0,
-	"dogfight",
-	"Dog Fight",
-	"1983",
-	"[Orca] Thunderbolt",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_zodiack,
-	0,
-
-	rom_dogfight,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_dogfight,
-
-	0, 0, 0,
-	ROT270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
-	0,0
-};
-
-struct GameDriver driver_moguchan =
-{
-	__FILE__,
-	0,
-	"moguchan",
-	"Moguchan",
-	"1982",
-	"Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_zodiack,
-	0,
-
-	rom_moguchan,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_moguchan,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_percuss =
-{
-	__FILE__,
-	0,
-	"percuss",
-	"The Percussor",
-	"1981",
-	"Orca",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_percuss,
-	0,
-
-	rom_percuss,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_percuss,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
+GAMEX(1983, zodiack,  0, zodiack, zodiac,   0, ROT270, "Orca (Esco Trading Co, Inc)", "Zodiack", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
+GAMEX(1983, dogfight, 0, zodiack, dogfight, 0, ROT270, "[Orca] Thunderbolt", "Dog Fight", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
+GAME( 1982, moguchan, 0, zodiack, moguchan, 0, ROT270, "Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */ "Moguchan" )
+GAME( 1981, percuss,  0, percuss, percuss,  0, ROT270, "Orca", "The Percussor" )

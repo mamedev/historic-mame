@@ -54,7 +54,7 @@ void sample_set_freq(int channel,int freq)
 		return;
 	}
 
-	osd_set_sample_freq(channel + firstchannel,freq);
+	mixer_set_sample_frequency(channel + firstchannel,freq);
 }
 
 void sample_set_volume(int channel,int volume)
@@ -79,7 +79,7 @@ void sample_stop(int channel)
 		return;
 	}
 
-	osd_stop_sample(channel + firstchannel);
+	mixer_stop_sample(channel + firstchannel);
 }
 
 int sample_playing(int channel)
@@ -91,7 +91,7 @@ int sample_playing(int channel)
 		return 0;
 	}
 
-	return !osd_get_sample_status(channel + firstchannel);
+	return mixer_is_sample_playing(channel + firstchannel);
 }
 
 

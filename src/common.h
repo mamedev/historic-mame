@@ -34,10 +34,7 @@ struct RomModule
 /* start of table */
 #define ROM_START(name) static struct RomModule rom_##name[] = {
 /* start of memory region */
-#define ROM_REGION(length) { 0, length, 0, 0 },
-#define ROM_REGIONX(length,type) { 0, length, 0, type },
-/* start of disposable memory region */
-#define ROM_REGION_DISPOSE(length) { 0, length, 0, REGIONFLAG_DISPOSE },
+#define ROM_REGION(length,type) { 0, length, 0, type },
 
 enum {
 	REGION_INVALID = 0x80,
@@ -76,12 +73,11 @@ enum {
 	REGION_USER8,
 	REGION_MAX
 };
+
 #define REGIONFLAG_MASK			0xf0000000
 #define REGIONFLAG_DISPOSE		0x80000000           /* Dispose of this region when done */
 #define REGIONFLAG_SOUNDONLY	0x40000000           /* load only if sound emulation is turned on */
 
-/* Optional */
-#define ROM_REGION_OPTIONAL(length) { 0, length, 0, REGIONFLAG_SOUNDONLY },
 
 #define BADCRC( crc ) (~(crc))
 
@@ -179,6 +175,7 @@ int memory_region_length(int num);
 /* allocate a new memory region - num can be either an absolute */
 /* number, or one of the REGION_XXX identifiers defined above */
 int new_memory_region(int num, int length);
+void free_memory_region(int num);
 
 void save_screen_snapshot(void);
 

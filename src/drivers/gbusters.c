@@ -376,34 +376,53 @@ static struct MachineDriver machine_driver_gbusters =
 ***************************************************************************/
 
 ROM_START( gbusters )
-	ROM_REGIONX( 0x30800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
+	ROM_REGION( 0x30800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
 	ROM_LOAD( "878n02.rom", 0x10000, 0x08000, 0x51697aaa )	/* ROM K13 */
 	ROM_CONTINUE(           0x08000, 0x08000 )
 	ROM_LOAD( "878j03.rom", 0x20000, 0x10000, 0x3943a065 )	/* ROM K15 */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "878h01.rom", 0x00000, 0x08000, 0x96feafaa )
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 ) /* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x80000, REGION_GFX1 ) /* graphics (addressable by the main CPU) */
 	ROM_LOAD( "878c07.rom", 0x00000, 0x40000, 0xeeed912c )	/* tiles */
 	ROM_LOAD( "878c08.rom", 0x40000, 0x40000, 0x4d14626d )	/* tiles */
 
-	ROM_REGIONX( 0x80000, REGION_GFX2 ) /* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x80000, REGION_GFX2 ) /* graphics (addressable by the main CPU) */
 	ROM_LOAD( "878c05.rom", 0x00000, 0x40000, 0x01f4aea5 )	/* sprites */
 	ROM_LOAD( "878c06.rom", 0x40000, 0x40000, 0xedfaaaaf )	/* sprites */
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "878a09.rom",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
 	ROM_LOAD( "878c04.rom",  0x00000, 0x40000, 0x9e982d1c )
 ROM_END
 
-/***************************************************************************
+ROM_START( crazycop )
+	ROM_REGION( 0x30800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
+	ROM_LOAD( "878m02.bin", 0x10000, 0x08000, 0x9c1c9f52 )	/* ROM K13 */
+	ROM_CONTINUE(           0x08000, 0x08000 )
+	ROM_LOAD( "878j03.rom", 0x20000, 0x10000, 0x3943a065 )	/* ROM K15 */
 
-  Game driver(s)
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "878h01.rom", 0x00000, 0x08000, 0x96feafaa )
 
-***************************************************************************/
+	ROM_REGION( 0x80000, REGION_GFX1 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD( "878c07.rom", 0x00000, 0x40000, 0xeeed912c )	/* tiles */
+	ROM_LOAD( "878c08.rom", 0x40000, 0x40000, 0x4d14626d )	/* tiles */
+
+	ROM_REGION( 0x80000, REGION_GFX2 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD( "878c05.rom", 0x00000, 0x40000, 0x01f4aea5 )	/* sprites */
+	ROM_LOAD( "878c06.rom", 0x40000, 0x40000, 0xedfaaaaf )	/* sprites */
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "878a09.rom",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_LOAD( "878c04.rom",  0x00000, 0x40000, 0x9e982d1c )
+ROM_END
+
 
 static void gbusters_banking( int lines )
 {
@@ -445,4 +464,5 @@ static void init_gbusters(void)
 
 
 
-GAME( 1988, gbusters, 0, gbusters, gbusters, gbusters, ROT90, "Konami", "Gang Busters" )
+GAME( 1988, gbusters, 0,        gbusters, gbusters, gbusters, ROT90, "Konami", "Gang Busters" )
+GAME( 1988, crazycop, gbusters, gbusters, gbusters, gbusters, ROT90, "Konami", "Crazy Cop (Japan)" )

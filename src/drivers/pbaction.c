@@ -331,26 +331,26 @@ static struct MachineDriver machine_driver_pbaction =
 ***************************************************************************/
 
 ROM_START( pbaction )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
 	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
 	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
 	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
 	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, 0x21efe866 )
 	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, 0x7f984c80 )
 	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, 0xdf69e51b )
 	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, 0x0094cb8b )
 
-	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, 0xd1795ef5 )
 	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, 0xf28df203 )
 	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, 0xaf6e9817 )
@@ -358,29 +358,29 @@ ROM_END
 
 
 ROM_START( pbactio2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, 0x4a239ebd )
 	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )
 	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, 0xc0a98c8a )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for a third Z80 (not emulated) */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for a third Z80 (not emulated) */
 	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, 0x2734ae60 )
 
-	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
 	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
 	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, 0x21efe866 )
 	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, 0x7f984c80 )
 	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, 0xdf69e51b )
 	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, 0x0094cb8b )
 
-	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, 0xd1795ef5 )
 	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, 0xf28df203 )
 	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, 0xaf6e9817 )

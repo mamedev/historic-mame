@@ -1723,100 +1723,100 @@ static struct MachineDriver machine_driver_kageki =
 ***************************************************************************/
 
 ROM_START( extrmatn )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
+	ROM_REGION( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "b06-20.bin", 0x00000, 0x08000, 0x04e3fc1f )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b06-21.bin", 0x20000, 0x10000, 0x1614d6a2 )	/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_REGION( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "b06-06.bin", 0x00000, 0x08000, 0x744f2c84 )
 	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b06-01.bin", 0x00000, 0x20000, 0xd2afbf7e )
 	ROM_LOAD( "b06-02.bin", 0x20000, 0x20000, 0xe0c2757a )
 	ROM_LOAD( "b06-03.bin", 0x40000, 0x20000, 0xee80ab9d )
 	ROM_LOAD( "b06-04.bin", 0x60000, 0x20000, 0x3697ace4 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b06-09.bin", 0x00000, 0x200, 0xf388b361 )	/* hi bytes */
 	ROM_LOAD( "b06-08.bin", 0x00200, 0x200, 0x10c9aac3 )	/* lo bytes */
 ROM_END
 
 ROM_START( arkanoi2 )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
+	ROM_REGION( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_REGION( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "a2-13.rom",  0x00000, 0x08000, 0xe8035ef1 )
 	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
 	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
 ROM_START( ark2us )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
+	ROM_REGION( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "b08-11.bin", 0x00000, 0x08000, 0x99555231 )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_REGION( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "b08-12.bin", 0x00000, 0x08000, 0xdc84e27d )
 	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
 	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
 ROM_START( ark2jp )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
+	ROM_REGION( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_REGION( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "b08-06",     0x00000, 0x08000, 0xadfcd40c )
 	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
 	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
 ROM_START( plumppop )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "a98-09.bin", 0x00000, 0x08000, 0x107f9e06 )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "a98-10.bin", 0x20000, 0x10000, 0xdf6e6af2 )	/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "a98-11.bin", 0x00000, 0x08000, 0xbc56775c )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a98-01.bin", 0x00000, 0x10000, 0xf3033dca )
 	ROM_RELOAD(             0x10000, 0x10000 )
 	ROM_LOAD( "a98-02.bin", 0x20000, 0x10000, 0xf2d17b0c )
@@ -1834,22 +1834,22 @@ ROM_START( plumppop )
 	ROM_LOAD( "a98-08.bin", 0xe0000, 0x10000, 0xbfa7609a )
 	ROM_RELOAD(             0xf0000, 0x10000 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )		/* color proms */
+	ROM_REGION( 0x0400, REGION_PROMS )		/* color proms */
 	ROM_LOAD( "a98-13.bpr", 0x0000, 0x200, 0x7cde2da5 )	/* hi bytes */
 	ROM_LOAD( "a98-12.bpr", 0x0200, 0x200, 0x90dc9da7 )	/* lo bytes */
 ROM_END
 
 ROM_START( drtoppel )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b19-09.bin", 0x00000, 0x08000, 0x3e654f82 )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b19-10.bin", 0x20000, 0x10000, 0x7e72fd25 )	/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "b19-11.bin", 0x00000, 0x08000, 0x524dc249 )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b19-01.bin", 0x00000, 0x20000, 0xa7e8a0c1 )
 	ROM_LOAD( "b19-02.bin", 0x20000, 0x20000, 0x790ae654 )
 	ROM_LOAD( "b19-03.bin", 0x40000, 0x20000, 0x495c4c5a )
@@ -1859,22 +1859,22 @@ ROM_START( drtoppel )
 	ROM_LOAD( "b19-07.bin", 0xc0000, 0x20000, 0x8bb06f41 )
 	ROM_LOAD( "b19-08.bin", 0xe0000, 0x20000, 0x3584b491 )
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )		/* color proms */
+	ROM_REGION( 0x0400, REGION_PROMS )		/* color proms */
 	ROM_LOAD( "b19-13.bin", 0x0000, 0x200, 0x6a547980 )	/* hi bytes */
 	ROM_LOAD( "b19-12.bin", 0x0200, 0x200, 0x5754e9d8 )	/* lo bytes */
 ROM_END
 
 ROM_START( chukatai )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b44.10", 0x00000, 0x08000, 0x8c69e008 )
 	ROM_CONTINUE(       0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b44.11", 0x20000, 0x10000, 0x32484094 )  /* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "b44.12", 0x00000, 0x08000, 0x0600ace6 )
 	ROM_CONTINUE(       0x10000, 0x08000 )	/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b44-01.a13", 0x00000, 0x20000, 0xaae7b3d5 )
 	ROM_LOAD( "b44-02.a12", 0x20000, 0x20000, 0x7f0b9568 )
 	ROM_LOAD( "b44-03.a10", 0x40000, 0x20000, 0x5a54a3b9 )
@@ -1886,15 +1886,15 @@ ROM_START( chukatai )
 ROM_END
 
 ROM_START( tnzs )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0xa73745c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "nzsb5311.bin", 0x00000, 0x08000, 0x9784d443 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* ROMs taken from another set (the ones from this set were read incorrectly) */
 	ROM_LOAD( "nzsb5316.bin", 0x00000, 0x20000, 0xc3519c2a )
 	ROM_LOAD( "nzsb5317.bin", 0x20000, 0x20000, 0x2bf199e8 )
@@ -1907,18 +1907,18 @@ ROM_START( tnzs )
 ROM_END
 
 ROM_START( tnzsb )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "nzsb5324.bin", 0x00000, 0x08000, 0xd66824c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, 0xd6ac4e71 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
 	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, 0xcfd5649c )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* ROMs taken from another set (the ones from this set were read incorrectly) */
 	ROM_LOAD( "nzsb5316.bin", 0x00000, 0x20000, 0xc3519c2a )
 	ROM_LOAD( "nzsb5317.bin", 0x20000, 0x20000, 0x2bf199e8 )
@@ -1931,15 +1931,15 @@ ROM_START( tnzsb )
 ROM_END
 
 ROM_START( tnzs2 )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "ns_c-11.rom",  0x00000, 0x08000, 0x3c1dae7b )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "ns_e-3.rom",   0x00000, 0x08000, 0xc7662e96 )
 	ROM_CONTINUE(             0x10000, 0x08000 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ns_a13.rom",   0x00000, 0x20000, 0x7e0bd5bb )
 	ROM_LOAD( "ns_a12.rom",   0x20000, 0x20000, 0x95880726 )
 	ROM_LOAD( "ns_a10.rom",   0x40000, 0x20000, 0x2bc4c053 )
@@ -1951,30 +1951,30 @@ ROM_START( tnzs2 )
 ROM_END
 
 ROM_START( insectx )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "insector.u32", 0x00000, 0x08000, 0x18eef387 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "insector.u38", 0x00000, 0x08000, 0x324b28c9 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "insector.r15", 0x00000, 0x80000, 0xd00294b1 )
 	ROM_LOAD( "insector.r16", 0x80000, 0x80000, 0xdb5a7434 )
 ROM_END
 
 ROM_START( kageki )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "b35-16.11c",  0x00000, 0x08000, 0xa4e6fd58 )	/* US ver */
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
 	ROM_CONTINUE(            0x10000, 0x08000 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
 	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
 	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
@@ -1984,21 +1984,21 @@ ROM_START( kageki )
 	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
 	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "b35-15.98g",  0x00000, 0x10000, 0xe6212a0f )	/* US ver */
 ROM_END
 
 ROM_START( kagekij )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "b35-09j.11c", 0x00000, 0x08000, 0x829637d5 )	/* JP ver */
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
 	ROM_CONTINUE(            0x10000, 0x08000 )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
 	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
 	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
@@ -2008,7 +2008,7 @@ ROM_START( kagekij )
 	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
 	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, 0x184409f1 )	/* JP ver */
 ROM_END
 

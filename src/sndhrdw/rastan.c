@@ -60,7 +60,7 @@ void r_wr_d000(int offset, int data)
 	if (Machine->samples == 0) return;
 #if 0
 	if (data==0)
-		osd_stop_sample(channel);
+		mixer_stop_sample(channel);
 #endif
 }
 

@@ -361,23 +361,23 @@ static struct MachineDriver machine_driver_stadhero =
 /******************************************************************************/
 
 ROM_START( stadhero )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ef15.bin",  0x00000, 0x10000, 0xbbba364e )
 	ROM_LOAD_ODD ( "ef13.bin",  0x00000, 0x10000, 0x97c6717a )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ef18.bin",  0x8000, 0x8000, 0x20fd9668 )
 
-	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ef08.bin",     0x000000, 0x10000, 0xe84752fe )	/* chars */
 	ROM_LOAD( "ef09.bin",     0x010000, 0x08000, 0x2ade874d )
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ef10.bin",     0x000000, 0x10000, 0xdca3d599 )	/* tiles */
 	ROM_LOAD( "ef11.bin",     0x010000, 0x10000, 0xaf563e96 )
 	ROM_LOAD( "ef12.bin",     0x020000, 0x10000, 0x9a1bf51c )
 
-	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ef00.bin",     0x000000, 0x10000, 0x94ed257c )	/* sprites */
 	ROM_LOAD( "ef01.bin",     0x010000, 0x10000, 0x6eb9a721 )
 	ROM_LOAD( "ef02.bin",     0x020000, 0x10000, 0x850cb771 )
@@ -387,7 +387,7 @@ ROM_START( stadhero )
 	ROM_LOAD( "ef06.bin",     0x060000, 0x10000, 0x9f47848f )
 	ROM_LOAD( "ef07.bin",     0x070000, 0x10000, 0x8859f655 )
 
-	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ef17.bin",  0x0000, 0x10000, 0x07c78358 )
 ROM_END
 

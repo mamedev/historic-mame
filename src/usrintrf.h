@@ -25,7 +25,7 @@ struct DisplayText
 struct GfxElement *builduifont(void);
 void pick_uifont_colors(void);
 void displaytext(const struct DisplayText *dt,int erase,int update_screen);
-void ui_text(char *buf,int x,int y);
+void ui_text(const char *buf,int x,int y);
 int showcopyright(void);
 int showgamewarnings(void);
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax);

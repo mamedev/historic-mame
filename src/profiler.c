@@ -102,6 +102,7 @@ void profiler_show(void)
 		"Video",
 		"Blit ",
 		"Sound",
+		"Mixer",
 		"Cllbk",
 		"Hiscr",
 		"Input",

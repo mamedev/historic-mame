@@ -351,23 +351,23 @@ static struct MachineDriver machine_driver_superman =
 ***************************************************************************/
 
 ROM_START( superman )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "a10_09.bin", 0x00000, 0x20000, 0x640f1d58 )
 	ROM_LOAD_ODD ( "a05_07.bin", 0x00000, 0x20000, 0xfddb9953 )
 	ROM_LOAD_EVEN( "a08_08.bin", 0x40000, 0x20000, 0x79fc028e )
 	ROM_LOAD_ODD ( "a03_13.bin", 0x40000, 0x20000, 0x9f446a44 )
 
-	ROM_REGIONX( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
+	ROM_REGION( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "d18_10.bin", 0x00000, 0x4000, 0x6efe79e8 )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
-	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "f01_14.bin", 0x000000, 0x80000, 0x89368c3e ) /* Plane 0, 1 */
 	ROM_LOAD( "h01_15.bin", 0x080000, 0x80000, 0x910cc4f9 )
 	ROM_LOAD( "j01_16.bin", 0x100000, 0x80000, 0x3622ed2f ) /* Plane 2, 3 */
 	ROM_LOAD( "k01_17.bin", 0x180000, 0x80000, 0xc34f27e0 )
 
-	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* adpcm samples */
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* adpcm samples */
 	ROM_LOAD( "e18_01.bin", 0x00000, 0x80000, 0x3cf99786 )
 ROM_END
 

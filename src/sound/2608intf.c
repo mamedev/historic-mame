@@ -22,8 +22,6 @@
 
 /* use FM.C with stream system */
 
-extern unsigned char No_FM;
-
 static int stream[MAX_2608];
 
 static signed short *rhythm_buf;
@@ -118,12 +116,6 @@ int YM2608_sh_start(const struct MachineSound *msound)
 	if( intf->num > MAX_2608 ) return 1;
 
 	if (AY8910_sh_start(msound)) return 1;
-
-	/* FM init */
-#if 0
-	if( No_FM ) FMMode = CHIP_YM2608_DAC;
-	else        FMMode = CHIP_YM2608_OPL;
-#endif
 
 	/* Timer Handler set */
 	FMTimerInit();

@@ -330,23 +330,23 @@ static struct MachineDriver machine_driver_cop01 =
 
 
 ROM_START( cop01 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cop01.2b",     0x0000, 0x4000, 0x5c2734ab )
 	ROM_LOAD( "cop02.4b",     0x4000, 0x4000, 0x9c7336ef )
 	ROM_LOAD( "cop03.5b",     0x8000, 0x4000, 0x2566c8bf )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "cop15.17b",    0x0000, 0x4000, 0x6a5f08fa )
 	ROM_LOAD( "cop16.18b",    0x4000, 0x4000, 0x56bf6946 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop14.15g",    0x00000, 0x2000, 0x066d1c55 )	/* chars */
 
-	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop04.15c",    0x00000, 0x4000, 0x622d32e6 )	/* tiles */
 	ROM_LOAD( "cop05.16c",    0x04000, 0x4000, 0xc6ac5a35 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop10.3e",     0x00000, 0x2000, 0x444cb19d )	/* sprites */
 	ROM_LOAD( "cop11.5e",     0x02000, 0x2000, 0x9078bc04 )
 	ROM_LOAD( "cop12.6e",     0x04000, 0x2000, 0x257a6706 )
@@ -356,7 +356,7 @@ ROM_START( cop01 )
 	ROM_LOAD( "cop08.6g",     0x0c000, 0x2000, 0xa63ddda6 )
 	ROM_LOAD( "cop09.8g",     0x0e000, 0x2000, 0x855a2ec3 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
 	ROM_LOAD( "coppromb.14d", 0x0100, 0x0100, 0x39a40b4c )	/* green */
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
@@ -365,23 +365,23 @@ ROM_START( cop01 )
 ROM_END
 
 ROM_START( cop01a )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cop01alt.001", 0x0000, 0x4000, 0xa13ee0d3 )
 	ROM_LOAD( "cop01alt.002", 0x4000, 0x4000, 0x20bad28e )
 	ROM_LOAD( "cop01alt.003", 0x8000, 0x4000, 0xa7e10b79 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "cop01alt.015", 0x0000, 0x4000, 0x95be9270 )
 	ROM_LOAD( "cop01alt.016", 0x4000, 0x4000, 0xc20bf649 )
 
-	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop01alt.014", 0x00000, 0x2000, 0xedd8a474 )	/* chars */
 
-	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop04.15c",    0x00000, 0x4000, 0x622d32e6 )	/* tiles */
 	ROM_LOAD( "cop05.16c",    0x04000, 0x4000, 0xc6ac5a35 )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop01alt.010", 0x00000, 0x2000, 0x94aee9d6 )	/* sprites */
 	ROM_LOAD( "cop11.5e",     0x02000, 0x2000, 0x9078bc04 )
 	ROM_LOAD( "cop12.6e",     0x04000, 0x2000, 0x257a6706 )
@@ -391,7 +391,7 @@ ROM_START( cop01a )
 	ROM_LOAD( "cop08.6g",     0x0c000, 0x2000, 0xa63ddda6 )
 	ROM_LOAD( "cop09.8g",     0x0e000, 0x2000, 0x855a2ec3 )
 
-	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
 	ROM_LOAD( "coppromb.14d", 0x0100, 0x0100, 0x39a40b4c )	/* green */
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */

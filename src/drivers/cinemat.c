@@ -1558,25 +1558,25 @@ CINEMA_MACHINEX (boxingb, 0, 0, 1024, 768)
 
 
 ROM_START( spacewar )
-	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
+	ROM_REGION( 0x1000, REGION_CPU1 )	/* 4k for code */
 	ROM_LOAD_GFX_EVEN( "spacewar.1l", 0x0000, 0x0800, 0xedf0fd53 )
 	ROM_LOAD_GFX_ODD ( "spacewar.2r", 0x0000, 0x0800, 0x4f21328b )
 ROM_END
 
 ROM_START( barrier )
-	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
+	ROM_REGION( 0x1000, REGION_CPU1 )	/* 4k for code */
 	ROM_LOAD_GFX_EVEN( "barrier.t7", 0x0000, 0x0800, 0x7c3d68c8 )
 	ROM_LOAD_GFX_ODD ( "barrier.p7", 0x0000, 0x0800, 0xaec142b5 )
 ROM_END
 
 ROM_START( starhawk )
-	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
+	ROM_REGION( 0x1000, REGION_CPU1 )	/* 4k for code */
 	ROM_LOAD_GFX_EVEN( "u7", 0x0000, 0x0800, 0x376e6c5c )
 	ROM_LOAD_GFX_ODD ( "r7", 0x0000, 0x0800, 0xbb71144f )
 ROM_END
 
 ROM_START( starcas )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "starcas3.t7", 0x0000, 0x0800, 0xb5838b5d )
 	ROM_LOAD_GFX_ODD ( "starcas3.p7", 0x0000, 0x0800, 0xf6bc2f4d )
 	ROM_LOAD_GFX_EVEN( "starcas3.u7", 0x1000, 0x0800, 0x188cd97c )
@@ -1584,7 +1584,7 @@ ROM_START( starcas )
 ROM_END
 
 ROM_START( starcas1 )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "starcast.t7", 0x0000, 0x0800, 0x65d0a225 )
 	ROM_LOAD_GFX_ODD ( "starcast.p7", 0x0000, 0x0800, 0xd8f58d9a )
 	ROM_LOAD_GFX_EVEN( "starcast.u7", 0x1000, 0x0800, 0xd4f35b82 )
@@ -1592,7 +1592,7 @@ ROM_START( starcas1 )
 ROM_END
 
 ROM_START( tailg )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "tgunner.t70", 0x0000, 0x0800, 0x21ec9a04 )
 	ROM_LOAD_GFX_ODD ( "tgunner.p70", 0x0000, 0x0800, 0x8d7410b3 )
 	ROM_LOAD_GFX_EVEN( "tgunner.t71", 0x1000, 0x0800, 0x2c954ab6 )
@@ -1600,7 +1600,7 @@ ROM_START( tailg )
 ROM_END
 
 ROM_START( ripoff )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "ripoff.t7", 0x0000, 0x0800, 0x40c2c5b8 )
 	ROM_LOAD_GFX_ODD ( "ripoff.p7", 0x0000, 0x0800, 0xa9208afb )
 	ROM_LOAD_GFX_EVEN( "ripoff.u7", 0x1000, 0x0800, 0x29c13701 )
@@ -1608,7 +1608,7 @@ ROM_START( ripoff )
 ROM_END
 
 ROM_START( speedfrk )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "speedfrk.t7", 0x0000, 0x0800, 0x3552c03f )
 	ROM_LOAD_GFX_ODD ( "speedfrk.p7", 0x0000, 0x0800, 0x4b90cdec )
 	ROM_LOAD_GFX_EVEN( "speedfrk.u7", 0x1000, 0x0800, 0x616c7cf9 )
@@ -1616,7 +1616,7 @@ ROM_START( speedfrk )
 ROM_END
 
 ROM_START( sundance )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "sundance.t7", 0x0000, 0x0800, 0xd5b9cb19 )
 	ROM_LOAD_GFX_ODD ( "sundance.p7", 0x0000, 0x0800, 0x445c4f20 )
 	ROM_LOAD_GFX_EVEN( "sundance.u7", 0x1000, 0x0800, 0x67887d48 )
@@ -1624,7 +1624,7 @@ ROM_START( sundance )
 ROM_END
 
 ROM_START( warrior )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_REGION( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD_GFX_EVEN( "warrior.t7", 0x0000, 0x0800, 0xac3646f9 )
 	ROM_LOAD_GFX_ODD ( "warrior.p7", 0x0000, 0x0800, 0x517d3021 )
 	ROM_LOAD_GFX_EVEN( "warrior.u7", 0x1000, 0x0800, 0x2e39340f )
@@ -1632,7 +1632,7 @@ ROM_START( warrior )
 ROM_END
 
 ROM_START( armora )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_REGION( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD_GFX_EVEN( "ar414le.t6", 0x0000, 0x1000, 0xd7e71f84 )
 	ROM_LOAD_GFX_ODD ( "ar414lo.p6", 0x0000, 0x1000, 0xdf1c2370 )
 	ROM_LOAD_GFX_EVEN( "ar414ue.u6", 0x2000, 0x1000, 0xb0276118 )
@@ -1640,7 +1640,7 @@ ROM_START( armora )
 ROM_END
 
 ROM_START( solarq )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_REGION( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD_GFX_EVEN( "solar.6t", 0x0000, 0x1000, 0x1f3c5333 )
 	ROM_LOAD_GFX_ODD ( "solar.6p", 0x0000, 0x1000, 0xd6c16bcc )
 	ROM_LOAD_GFX_EVEN( "solar.6u", 0x2000, 0x1000, 0xa5970e5c )
@@ -1648,7 +1648,7 @@ ROM_START( solarq )
 ROM_END
 
 ROM_START( demon )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_REGION( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD_GFX_EVEN( "demon.7t", 0x0000, 0x1000, 0x866596c1 )
 	ROM_LOAD_GFX_ODD ( "demon.7p", 0x0000, 0x1000, 0x1109e2f1 )
 	ROM_LOAD_GFX_EVEN( "demon.7u", 0x2000, 0x1000, 0xd447a3c3 )
@@ -1656,7 +1656,7 @@ ROM_START( demon )
 ROM_END
 
 ROM_START( wotw )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_REGION( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD_GFX_EVEN( "wow_le.t7", 0x0000, 0x1000, 0xb16440f9 )
 	ROM_LOAD_GFX_ODD ( "wow_lo.p7", 0x0000, 0x1000, 0xbfdf4a5a )
 	ROM_LOAD_GFX_EVEN( "wow_ue.u7", 0x2000, 0x1000, 0x9b5cea48 )
@@ -1664,7 +1664,7 @@ ROM_START( wotw )
 ROM_END
 
 ROM_START( boxingb )
-	ROM_REGIONX( 0x8000, REGION_CPU1 )	/* 32k for code */
+	ROM_REGION( 0x8000, REGION_CPU1 )	/* 32k for code */
 	ROM_LOAD_GFX_EVEN( "u1a", 0x0000, 0x1000, 0xd3115b0f )
 	ROM_LOAD_GFX_ODD ( "u1b", 0x0000, 0x1000, 0x3a44268d )
 	ROM_LOAD_GFX_EVEN( "u2a", 0x2000, 0x1000, 0xc97a9cbb )

@@ -853,10 +853,10 @@ ATAXX_MACHINE_DRIVER(ataxx,ataxx_readport, ataxx_writeport,
 	ataxx_vh_screenrefresh, ataxx_slave_readmem, ataxx_slave_writemem);
 
 ROM_START( ataxx )
-    ROM_REGIONX( 0x80000, REGION_CPU1 )
+    ROM_REGION( 0x80000, REGION_CPU1 )
 	ROM_LOAD( "ataxx.038",   0x00000, 0x20000, 0x0e1cf6236)
 
-	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "ataxx.098",  0x00000, 0x20000, 0x059d0f2ae )
 	ROM_LOAD( "ataxx.099",  0x20000, 0x20000, 0x06ab7db25 )
 	ROM_LOAD( "ataxx.100",  0x40000, 0x20000, 0x02352849e )
@@ -864,26 +864,26 @@ ROM_START( ataxx )
 	ROM_LOAD( "ataxx.102",  0x80000, 0x20000, 0x0a951228c )
 	ROM_LOAD( "ataxx.103",  0xa0000, 0x20000, 0x0ed326164 )
 
-    ROM_REGIONX( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
+    ROM_REGION( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
     ROM_LOAD( "ataxx.111",  0x00000, 0x20000, 0x09a3297cc )
     ROM_LOAD( "ataxx.112",  0x20000, 0x20000, 0x07e7c3e2f )
     ROM_LOAD( "ataxx.113",  0x40000, 0x20000, 0x08cf3e101 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
+	ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
     ROM_LOAD_EVEN( "ataxx.015",  0x80000, 0x20000, 0x08bb3233b )
     ROM_LOAD_ODD ( "ataxx.001",  0x80000, 0x20000, 0x0728d75f2 )
     ROM_LOAD_EVEN( "ataxx.016",  0xC0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
     ROM_LOAD_ODD ( "ataxx.002",  0xC0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
 
-    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
+    ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 ROM_END
 
 ROM_START( ataxxa )
-    ROM_REGIONX( 0x80000, REGION_CPU1 )
+    ROM_REGION( 0x80000, REGION_CPU1 )
     ROM_LOAD( "u38",   0x00000, 0x20000, 0x3378937d)
 
-	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "ataxx.098",  0x00000, 0x20000, 0x059d0f2ae )
 	ROM_LOAD( "ataxx.099",  0x20000, 0x20000, 0x06ab7db25 )
 	ROM_LOAD( "ataxx.100",  0x40000, 0x20000, 0x02352849e )
@@ -891,18 +891,18 @@ ROM_START( ataxxa )
 	ROM_LOAD( "ataxx.102",  0x80000, 0x20000, 0x0a951228c )
 	ROM_LOAD( "ataxx.103",  0xa0000, 0x20000, 0x0ed326164 )
 
-    ROM_REGIONX( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
+    ROM_REGION( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
     ROM_LOAD( "ataxx.111",  0x00000, 0x20000, 0x09a3297cc )
     ROM_LOAD( "ataxx.112",  0x20000, 0x20000, 0x07e7c3e2f )
     ROM_LOAD( "ataxx.113",  0x40000, 0x20000, 0x08cf3e101 )
 
-	ROM_REGIONX( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
+	ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
     ROM_LOAD_EVEN( "ataxx.015",  0x80000, 0x20000, 0x08bb3233b )
     ROM_LOAD_ODD ( "ataxx.001",  0x80000, 0x20000, 0x0728d75f2 )
     ROM_LOAD_EVEN( "ataxx.016",  0xc0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
     ROM_LOAD_ODD ( "ataxx.002",  0xc0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
 
-    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
+    ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 ROM_END
 
@@ -950,13 +950,13 @@ INPUT_PORTS_START( indyheat )
 INPUT_PORTS_END
 
 ROM_START( indyheat )
-    ROM_REGIONX( 0x80000, REGION_CPU1 )
+    ROM_REGION( 0x80000, REGION_CPU1 )
     ROM_LOAD( "u64_27c.010",   0x00000, 0x20000, 0x00000000)  /* 0,1,2,3 - SUSPECT */
     ROM_LOAD( "u65_27c.010",   0x20000, 0x20000, 0x71301d74)  /* 4,5,6,7 */
     ROM_LOAD( "u66_27c.010",   0x40000, 0x20000, 0xc9612072)  /* 8,9,a,b */
     ROM_LOAD( "u67_27c.010",   0x60000, 0x20000, 0x4c4b25e0)  /* c,d,e,f */
 
-	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "u145_27c.010",  0x00000, 0x20000, 0x612d4bf8 )
     ROM_LOAD( "u146_27c.010",  0x20000, 0x20000, 0x77a725f6 )
     ROM_LOAD( "u147_27c.010",  0x40000, 0x20000, 0xd6aac372 )
@@ -964,7 +964,7 @@ ROM_START( indyheat )
     ROM_LOAD( "u149_27c.010",  0x80000, 0x20000, 0x29056791 )
     ROM_LOAD( "u150_27c.010",  0xa0000, 0x20000, 0xcb73dd6a )
 
-    ROM_REGIONX( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
+    ROM_REGION( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
     ROM_LOAD( "u151_27c.010",  0x00000, 0x20000, 0x2622dfa4 )
     ROM_LOAD( "u152_27c.010",  0x20000, 0x20000, 0x00000000 ) /* BAD in self-test */
     ROM_LOAD( "u153_27c.010",  0x40000, 0x20000, 0x00000000 ) /* BAD in self-test */
@@ -974,7 +974,7 @@ ROM_START( indyheat )
     ROM_LOAD( "u157_27c.010",  0xc0000, 0x20000, 0xa6462adc )
     ROM_LOAD( "u158_27c.010",  0xe0000, 0x20000, 0xd6ef27a3 )
 
-    ROM_REGIONX( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
+    ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
     ROM_LOAD_EVEN( "u6_27c.010",  0x20000, 0x20000, 0x15a89962 )  /* BAD in self-test */
     ROM_LOAD_ODD ( "u3_27c.010",  0x20000, 0x20000, 0x97413818 )  /* BAD in self-test */
     ROM_LOAD_WIDE( "u8_27c.010",  0x40000, 0x20000, 0x9f16e5b6 )  /* BAD in self-test */
@@ -983,7 +983,7 @@ ROM_START( indyheat )
     ROM_LOAD_EVEN( "u4_27c.010",  0xc0000, 0x20000, 0xfa7bfa04 )  /* BAD in self-test */
     ROM_LOAD_ODD ( "u5_27c.010",  0xc0000, 0x20000, 0x198285d4 )  /* BAD in self-test */
 
-    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
+    ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     ROM_LOAD( "u68_27c.010",   0x00000, 0x20000, 0x9e88efb3)
     ROM_LOAD( "u69_27c.010",   0x20000, 0x20000, 0xaa39fcb3)
 ROM_END
@@ -1051,11 +1051,11 @@ INPUT_PORTS_START( wsf )
 INPUT_PORTS_END
 
 ROM_START( wsf )
-    ROM_REGIONX( 0x80000, REGION_CPU1 )
+    ROM_REGION( 0x80000, REGION_CPU1 )
     ROM_LOAD( "30022-03.u64",  0x00000, 0x20000, 0x2e7faa96)
     ROM_LOAD( "30023-03.u65",  0x20000, 0x20000, 0x7146328f)
 
-	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "30011-02.145",  0x00000, 0x10000, 0x6153569b )
     ROM_LOAD( "30012-02.146",  0x20000, 0x10000, 0x52d65e21 )
     ROM_LOAD( "30013-02.147",  0x40000, 0x10000, 0xb3afda12 )
@@ -1063,7 +1063,7 @@ ROM_START( wsf )
     ROM_LOAD( "30015-01.149",  0x80000, 0x10000, 0x5d9064f2 )
     ROM_LOAD( "30016-01.150",  0xa0000, 0x10000, 0xd76389cd )
 
-    ROM_REGIONX( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
+    ROM_REGION( 0x100000, REGION_CPU2 ) /* 1M for secondary cpu */
     ROM_LOAD( "30001-01.151",  0x00000, 0x20000, 0x31c63af5 )
     ROM_LOAD( "30002-01.152",  0x20000, 0x20000, 0xa53e88a6 )
     ROM_LOAD( "30003-01.153",  0x40000, 0x20000, 0x12afad1d )
@@ -1073,7 +1073,7 @@ ROM_START( wsf )
     ROM_LOAD( "30007-01.157",  0xc0000, 0x20000, 0x451321ae )
     ROM_LOAD( "30008-01.158",  0xe0000, 0x20000, 0x4d23836f )
 
-    ROM_REGIONX( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
+    ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
     ROM_LOAD_EVEN( "30020-01.u6",  0x20000, 0x20000, 0x031a06d7 )
     ROM_LOAD_ODD ( "30017-01.u3",  0x20000, 0x20000, 0x39ec13c1 )
     ROM_LOAD_WIDE( "30021-01.u8",  0x40000, 0x20000, 0xbb91dc10 )
@@ -1081,7 +1081,7 @@ ROM_START( wsf )
     ROM_LOAD_EVEN( "30018-01.u4",  0xc0000, 0x20000, 0x1ec16735 )
     ROM_LOAD_ODD ( "30019-01.u5",  0xc0000, 0x20000, 0x2881f73b )
 
-    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
+    ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     ROM_LOAD( "30009-01.u68",   0x00000, 0x10000, 0xf2fbfc15)
     ROM_LOAD( "30010-01.u69",   0x20000, 0x10000, 0xb4ed2d3b)
 ROM_END

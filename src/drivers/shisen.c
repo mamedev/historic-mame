@@ -311,15 +311,15 @@ static struct MachineDriver machine_driver_shisen =
 ***************************************************************************/
 
 ROM_START( sichuan2 )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
 	ROM_LOAD( "ic06.06",      0x00000, 0x10000, 0x98a2459b )
 	ROM_RELOAD(               0x10000, 0x10000 )
 	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
 	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
 	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
@@ -337,7 +337,7 @@ ROM_START( sichuan2 )
 	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
 	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
 	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
 	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
@@ -345,15 +345,15 @@ ROM_START( sichuan2 )
 ROM_END
 
 ROM_START( sichuana )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
 	ROM_LOAD( "sichuan.a6",      0x00000, 0x10000, 0xf8ac05ef )
 	ROM_RELOAD(               0x10000, 0x10000 )
 	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
 	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
 	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
@@ -371,7 +371,7 @@ ROM_START( sichuana )
 	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
 	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
 	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
 	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
@@ -379,14 +379,14 @@ ROM_START( sichuana )
 ROM_END
 
 ROM_START( shisen )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
 	ROM_LOAD( "a-27-a.rom",   0x00000, 0x20000, 0xde2ecf05 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
 	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
 	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
@@ -404,7 +404,7 @@ ROM_START( shisen )
 	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
 	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
 	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
 	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )

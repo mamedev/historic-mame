@@ -310,14 +310,14 @@ static struct MachineDriver machine_driver_milliped =
 ***************************************************************************/
 
 ROM_START( milliped )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0x40711675 )
 	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0xfb01baf2 )
 	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x62e137e0 )
 	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x46752c7d )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "milliped.106", 0x0000, 0x0800, 0xf4468045 )
 	ROM_LOAD( "milliped.107", 0x0800, 0x0800, 0x68c3437a )
 ROM_END

@@ -371,14 +371,14 @@ static struct MachineDriver machine_driver_88games =
 ***************************************************************************/
 
 ROM_START( 88games )
-	ROM_REGIONX( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
+	ROM_REGION( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
     ROM_LOAD( "861m01.k18", 0x08000, 0x08000, 0x4a4e2959 )
 	ROM_LOAD( "861m02.k16", 0x10000, 0x10000, 0xe19f15f6 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
 
-	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
 	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
@@ -388,7 +388,7 @@ ROM_START( 88games )
 	ROM_LOAD_GFX_EVEN( "861a09.b", 0x060000, 0x10000, 0x4917158d )
 	ROM_LOAD_GFX_ODD ( "861a09.d", 0x060000, 0x10000, 0x2bb3282c )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a05.a", 0x000000, 0x10000, 0xcedc19d0 )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "861a05.e", 0x000000, 0x10000, 0x725af3fc )
 	ROM_LOAD_GFX_EVEN( "861a05.b", 0x020000, 0x10000, 0xdb2a8808 )
@@ -406,33 +406,33 @@ ROM_START( 88games )
 	ROM_LOAD_GFX_EVEN( "861a06.d", 0x0e0000, 0x10000, 0xbc70ab39 )
 	ROM_LOAD_GFX_ODD ( "861a06.h", 0x0e0000, 0x10000, 0xd906b79b )
 
-	ROM_REGIONX( 0x040000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x040000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "861a04.a", 0x000000, 0x10000, 0x092a8b15 )	/* zoom/rotate */
 	ROM_LOAD( "861a04.b", 0x010000, 0x10000, 0x75744b56 )
 	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
 	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* samples for UPD7759 #0 */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* samples for UPD7759 #0 */
 	ROM_LOAD( "861a07.a", 0x000000, 0x10000, 0x5d035d69 )
 	ROM_LOAD( "861a07.b", 0x010000, 0x10000, 0x6337dd91 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND2 ) /* samples for UPD7759 #1 */
+	ROM_REGION( 0x20000, REGION_SOUND2 ) /* samples for UPD7759 #1 */
 	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
 	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
 ROM_END
 
 ROM_START( konami88 )
-	ROM_REGIONX( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
+	ROM_REGION( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "861.e03", 0x08000, 0x08000, 0x55979bd9 )
 	ROM_LOAD( "861.e02", 0x10000, 0x10000, 0x5b7e98a6 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
 
-	ROM_REGIONX(  0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION(  0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
 	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
@@ -442,7 +442,7 @@ ROM_START( konami88 )
 	ROM_LOAD_GFX_EVEN( "861a09.b", 0x060000, 0x10000, 0x4917158d )
 	ROM_LOAD_GFX_ODD ( "861a09.d", 0x060000, 0x10000, 0x2bb3282c )
 
-	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a05.a", 0x000000, 0x10000, 0xcedc19d0 )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "861a05.e", 0x000000, 0x10000, 0x725af3fc )
 	ROM_LOAD_GFX_EVEN( "861a05.b", 0x020000, 0x10000, 0xdb2a8808 )
@@ -460,20 +460,20 @@ ROM_START( konami88 )
 	ROM_LOAD_GFX_EVEN( "861a06.d", 0x0e0000, 0x10000, 0xbc70ab39 )
 	ROM_LOAD_GFX_ODD ( "861a06.h", 0x0e0000, 0x10000, 0xd906b79b )
 
-	ROM_REGIONX( 0x040000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x040000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "861a04.a", 0x000000, 0x10000, 0x092a8b15 )	/* zoom/rotate */
 	ROM_LOAD( "861a04.b", 0x010000, 0x10000, 0x75744b56 )
 	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
 	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* samples for UPD7759 #0 */
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* samples for UPD7759 #0 */
 	ROM_LOAD( "861a07.a", 0x000000, 0x10000, 0x5d035d69 )
 	ROM_LOAD( "861a07.b", 0x010000, 0x10000, 0x6337dd91 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND2 ) /* samples for UPD7759 #1 */
+	ROM_REGION( 0x20000, REGION_SOUND2 ) /* samples for UPD7759 #1 */
 	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
 	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
 ROM_END

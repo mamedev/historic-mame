@@ -308,9 +308,11 @@ static void update_sprite_info(void)
 		int value = turbo_sprite_position[i];
 		if (value)
 		{
-			int which = (i & 0x100) >> 5;
-			while (!(value & 1)) which++, value >>= 1;
-			sprite_params[which].xoffs = i & 0xff;
+			int base = (i & 0x100) >> 5;
+			int which;
+			for (which = 0; which < 8; which++)
+				if (value & (1 << which))
+					sprite_params[base + which].xoffs = i & 0xff;
 		}
 	}
 }

@@ -85,7 +85,7 @@ int xbit, ybit, size;
 		{
 			if (x+xbit < 0 || x+xbit >= HORZ_RES * HORZ_CHR)
 				continue;
-				plot_pixel(tmpbitmap, x+xbit, y+ybit, Machine->remapped_colortable[x_y_color(x+xbit,y+ybit)+12]);
+				plot_pixel(tmpbitmap, x+xbit, y+ybit, Machine->pens[x_y_color(x+xbit,y+ybit)+12]);
 		}
 	}
 }
@@ -124,7 +124,7 @@ int     i;
                         drawgfx(tmpbitmap,
                                 Machine->gfx[0],
 								videoram[i],
-								Machine->remapped_colortable[x_y_color(x,y)],
+								x_y_color(x,y),
                                 0,0, x,y,
                                 &Machine->drv->visible_area,
                                 TRANSPARENCY_NONE,0);

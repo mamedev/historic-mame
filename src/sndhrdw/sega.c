@@ -413,7 +413,7 @@ void elim1_sh_w (int offset,int data)
 	if (data & 0x20)
    	{
 		if (sample_playing(2))
-			osd_stop_sample (2);
+			sample_stop (2);
 		sample_start (2, 1, 0);
 	}
 
@@ -421,7 +421,7 @@ void elim1_sh_w (int offset,int data)
 	if (data & 0xc0)
    	{
 		if (sample_playing(3))
-			osd_stop_sample (3);
+			sample_stop (3);
 		sample_start (3, 5, 0);
 	}
 }
@@ -472,7 +472,7 @@ void zektor1_sh_w (int offset,int data)
 	if (data & 0x20)
    	{
                 if (sample_playing(2))
-                        osd_stop_sample (2);
+                        sample_stop (2);
                 sample_start (2, 20, 0);
 	}
 
@@ -480,7 +480,7 @@ void zektor1_sh_w (int offset,int data)
 	if (data & 0xc0)
    	{
 		if (sample_playing(3))
-			osd_stop_sample (3);
+			sample_stop (3);
                 sample_start (3, 24, 0);
 	}
 }
@@ -618,7 +618,7 @@ void spacfury1_sh_w (int offset,int data)
 			sample_start (2, 0x16, 1);
 	}
 	else
-		osd_stop_sample (2);
+		sample_stop (2);
 
 	/* Thrust */
 	if (data & 0x04)
@@ -627,7 +627,7 @@ void spacfury1_sh_w (int offset,int data)
 			sample_start (3, 0x19, 1);
 	}
 	else
-		osd_stop_sample (3);
+		sample_stop (3);
 
 	/* star spin */
 	if (data & 0x40)
@@ -653,7 +653,7 @@ void spacfury2_sh_w (int offset,int data)
 	if (data & 0x02)
    	{
 		if (sample_playing(6))
-			osd_stop_sample(6);
+			sample_stop(6);
 		sample_start(6, 0x18, 0);
 
         }

@@ -242,7 +242,7 @@ static struct MachineDriver machine_driver_galpanic =
 ***************************************************************************/
 
 ROM_START( galpanic )
-	ROM_REGIONX( 0x400000, REGION_CPU1 )	/* 68000 code */
+	ROM_REGION( 0x400000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "pm110.4m2",    0x000000, 0x080000, 0xae6b17a8 )
 	ROM_LOAD_ODD ( "pm109.4m1",    0x000000, 0x080000, 0xb85d792d )
 	/* The above two ROMs contain valid 68000 code, but the game doesn't */
@@ -257,10 +257,10 @@ ROM_START( galpanic )
 	ROM_LOAD_ODD ( "pm002e.17",    0x300000, 0x080000, 0x713ee898 )
 	ROM_LOAD_EVEN( "pm003e.16",    0x300000, 0x080000, 0x6bb060fd )
 
-	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pm006e.67",    0x000000, 0x100000, 0x57aec037 )
 
-	ROM_REGIONX( 0x140000, REGION_SOUND1 )	/* 1024k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x140000, REGION_SOUND1 )	/* 1024k for ADPCM samples - sound chip is OKIM6295 */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "pm008e.l",     0x00000, 0x80000, 0xd9379ba8 )
 	ROM_RELOAD(               0x40000, 0x80000 )

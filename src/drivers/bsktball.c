@@ -403,14 +403,14 @@ static struct MachineDriver machine_driver_bsktball =
 ***************************************************************************/
 
 ROM_START( bsktball )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
 	ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
 	ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
 	ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
 	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
 	ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
 ROM_END

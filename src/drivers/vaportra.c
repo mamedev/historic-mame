@@ -291,11 +291,11 @@ static struct GfxLayout seallayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
-	{ 1, 0x080000, &seallayout,  768, 16 },	/* Tiles 16x16 */
-	{ 1, 0x000000, &seallayout3, 512, 16 },	/* Tiles 16x16 */
-	{ 1, 0x0c0000, &seallayout, 1024, 16 },	/* Tiles 16x16 */
-	{ 1, 0x180000, &seallayout2, 256, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0x000000, &seallayout,  768, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX1, 0x000000, &seallayout3, 512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0x040000, &seallayout, 1024, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0x000000, &seallayout2, 256, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -305,7 +305,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
 	{ 7757, 15514 },/* Frequency */
-	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
@@ -388,50 +388,58 @@ static struct MachineDriver machine_driver_vaportra =
 /******************************************************************************/
 
 ROM_START( vaportra )
-	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fj02",   0x00000, 0x20000, 0xa2affb73 )
   	ROM_LOAD_ODD ( "fj00",   0x00000, 0x20000, 0xef05e07b )
 	ROM_LOAD_EVEN( "fj03",   0x40000, 0x20000, 0x44893379 )
  	ROM_LOAD_ODD ( "fj01",   0x40000, 0x20000, 0x97fbc107 )
 
-	ROM_REGION_DISPOSE(0x280000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
-  	ROM_LOAD( "vtmaa01.bin",   0x080000, 0x80000, 0xc217a31b ) /* tiles 2 */
-	ROM_LOAD( "vtmaa02.bin",   0x100000, 0x80000, 0x091ff98e ) /* tiles 3 */
-  	ROM_LOAD( "vtmaa03.bin",   0x180000, 0x80000, 0x1a30bf81 ) /* sprites */
-  	ROM_LOAD( "vtmaa04.bin",   0x200000, 0x80000, 0xb713e9cc )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, 0xc217a31b ) /* tiles 2 */
+	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, 0x091ff98e ) /* tiles 3 */
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, 0x1a30bf81 ) /* sprites */
+  	ROM_LOAD( "vtmaa04.bin",   0x080000, 0x80000, 0xb713e9cc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 
 ROM_START( kuhga )
-	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fp02-3.bin", 0x00000, 0x20000, 0xd0705ef4 )
   	ROM_LOAD_ODD ( "fp00-3.bin", 0x00000, 0x20000, 0x1da92e48 )
 	ROM_LOAD_EVEN( "fp03.bin",   0x40000, 0x20000, 0xea0da0f1 )
  	ROM_LOAD_ODD ( "fp01.bin",   0x40000, 0x20000, 0xe3ecbe86 )
 
-	ROM_REGION_DISPOSE(0x280000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
-  	ROM_LOAD( "vtmaa01.bin",   0x080000, 0x80000, 0xc217a31b ) /* tiles 2 */
-	ROM_LOAD( "vtmaa02.bin",   0x100000, 0x80000, 0x091ff98e ) /* tiles 3 */
-  	ROM_LOAD( "vtmaa03.bin",   0x180000, 0x80000, 0x1a30bf81 ) /* sprites */
-  	ROM_LOAD( "vtmaa04.bin",   0x200000, 0x80000, 0xb713e9cc )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, 0xc217a31b ) /* tiles 2 */
+	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, 0x091ff98e ) /* tiles 3 */
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, 0x1a30bf81 ) /* sprites */
+  	ROM_LOAD( "vtmaa04.bin",   0x080000, 0x80000, 0xb713e9cc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 
@@ -458,7 +466,7 @@ static int cycle_r(int offset)
 	return ret;
 }
 
-static void custom_memory(void)
+static void init_vaportra(void)
 {
 	install_mem_read_handler(0, 0xffc006, 0xffc007, cycle_r);
 	vaportra_decrypt();
@@ -466,52 +474,5 @@ static void custom_memory(void)
 
 /******************************************************************************/
 
-struct GameDriver driver_vaportra =
-{
-	__FILE__,
-	0,
-	"vaportra",
-	"Vapor Trail - Hyper Offence Formation (US)",
-	"1989",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_vaportra,
-	custom_memory,
-
-	rom_vaportra,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vaportra,
-
-	0, 0, 0,
-	ROT270,
-	0 , 0
-};
-
-struct GameDriver driver_kuhga =
-{
-	__FILE__,
-	&driver_vaportra,
-	"kuhga",
-	"Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_vaportra,
-	custom_memory,
-
-	rom_kuhga,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vaportra,
-
-	0, 0, 0,
-	ROT270,
-	0 , 0
-};
+GAME( 1989, vaportra, 0,        vaportra, vaportra, vaportra, ROT270, "Data East USA", "Vapor Trail - Hyper Offence Formation (US)" )
+GAME( 1989, kuhga,    vaportra, vaportra, vaportra, vaportra, ROT270, "Data East Corporation", "Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)" )

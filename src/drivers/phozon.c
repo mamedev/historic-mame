@@ -316,28 +316,28 @@ static struct MachineDriver machine_driver_phozon =
 
 
 ROM_START( phozon )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the MAIN CPU  */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code for the MAIN CPU  */
 	ROM_LOAD( "6e.rom", 0x8000, 0x2000, 0xa6686af1 )
 	ROM_LOAD( "6h.rom", 0xa000, 0x2000, 0x72a65ba0 )
 	ROM_LOAD( "6c.rom", 0xc000, 0x2000, 0xf1fda22e )
 	ROM_LOAD( "6d.rom", 0xe000, 0x2000, 0xf40e6df0 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the SUB CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the SUB CPU */
 	ROM_LOAD( "9r.rom", 0xe000, 0x2000, 0x5d9f0a28 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU3 )     /* 64k for the SOUND CPU */
 	ROM_LOAD( "3b.rom", 0xe000, 0x2000, 0x5a4b3a79 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "7j.rom", 0x0000, 0x1000, 0x27f9db5b ) /* characters (set 1) */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "8j.rom", 0x0000, 0x1000, 0x15b12ef8 ) /* characters (set 2) */
 
-	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5t.rom", 0x0000, 0x2000, 0xd50f08f8 ) /* sprites */
 
-	ROM_REGIONX( 0x0520, REGION_PROMS )
+	ROM_REGION( 0x0520, REGION_PROMS )
 	ROM_LOAD( "red.prm",     0x0000, 0x0100, 0xa2880667 ) /* red palette ROM (4 bits) */
 	ROM_LOAD( "green.prm",   0x0100, 0x0100, 0xd6e08bef ) /* green palette ROM (4 bits) */
 	ROM_LOAD( "blue.prm",    0x0200, 0x0100, 0xb2d69c72 ) /* blue palette ROM (4 bits) */
@@ -345,7 +345,7 @@ ROM_START( phozon )
 	ROM_LOAD( "sprite.prm",  0x0400, 0x0100, 0x9061db07 ) /* sprites */
 	ROM_LOAD( "palette.prm", 0x0500, 0x0020, 0x60e856ed ) /* palette (unused?) */
 
-	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound PROMs */
+	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "sound.prm", 0x0000, 0x0100, 0xad43688f )
 ROM_END
 

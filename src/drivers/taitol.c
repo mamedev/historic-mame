@@ -1512,17 +1512,17 @@ static struct GfxLayout char_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo1[] =
 {
-	{ 1, 0x000000, &bg1_layout, 0, 16 },
-	{ 1, 0x000000, &sp1_layout, 0, 16 },
-	{ 0, 0x000000, &char_layout,  0, 16 },  // Ram-based
+	{ REGION_GFX1, 0, &bg1_layout, 0, 16 },
+	{ REGION_GFX1, 0, &sp1_layout, 0, 16 },
+	{ 0,           0, &char_layout,  0, 16 },  // Ram-based
 	{ -1 }
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo2[] =
 {
-	{ 1, 0x000000, &bg2_layout, 0, 16 },
-	{ 1, 0x000000, &sp2_layout, 0, 16 },
-	{ 0, 0x000000, &char_layout,  0, 16 },  // Ram-based
+	{ REGION_GFX1, 0, &bg2_layout, 0, 16 },
+	{ REGION_GFX1, 0, &sp2_layout, 0, 16 },
+	{ 0,           0, &char_layout,  0, 16 },  // Ram-based
 	{ -1 }
 };
 
@@ -1658,100 +1658,120 @@ MCH_SINGLE(cachat)
 
 
 ROM_START( fhawk )
-	ROM_REGIONX( 0xb0000, REGION_CPU1 )
+	ROM_REGION( 0xb0000, REGION_CPU1 )
 	ROM_LOAD( "b70-07.bin", 0x00000, 0x20000, 0x939114af )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "b70-03.bin", 0x30000, 0x80000, 0x42d5a9b8 )
 
-	ROM_REGION_DISPOSE(0x180000)
-	ROM_LOAD( "b70-01.bin", 0x00000, 0x80000, 0xfcdf67e2 )
-	ROM_LOAD( "b70-02.bin", 0x80000, 0x80000, 0x35f7172e )
-
-	ROM_REGIONX( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "b70-08.bin", 0x00000, 0x20000, 0x4d795f48 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "b70-09.bin", 0x00000, 0x10000, 0x85cccaa2 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b70-01.bin", 0x00000, 0x80000, 0xfcdf67e2 )
+	ROM_LOAD( "b70-02.bin", 0x80000, 0x80000, 0x35f7172e )
 ROM_END
 
 ROM_START( raimais )
-	ROM_REGIONX( 0xb0000, REGION_CPU1 )
+	ROM_REGION( 0xb0000, REGION_CPU1 )
 	ROM_LOAD( "b36-08-1.bin", 0x00000, 0x20000, 0x6cc8f79f )
 	ROM_RELOAD(               0x10000, 0x20000 )
 	ROM_LOAD( "b36-03.bin",   0x30000, 0x80000, 0x96166516 )
 
-	ROM_REGION_DISPOSE(0x180000)
-	ROM_LOAD( "b36-01.bin",   0x00000, 0x80000, 0x89355cb2 )
-	ROM_LOAD( "b36-02.bin",   0x80000, 0x80000, 0xe71da5db )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "b36-07.bin",   0x00000, 0x10000, 0x4f3737e6 )
 
-	ROM_REGIONX(0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "b36-06.bin",   0x00000, 0x10000, 0x29bbc4f8 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b36-01.bin",   0x00000, 0x80000, 0x89355cb2 )
+	ROM_LOAD( "b36-02.bin",   0x80000, 0x80000, 0xe71da5db )
 ROM_END
 
 ROM_START( champwr )
-	ROM_REGIONX( 0xf0000, REGION_CPU1 )
+	ROM_REGION( 0xf0000, REGION_CPU1 )
 	ROM_LOAD( "c01-13.rom", 0x00000, 0x20000, 0x7ef47525 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
 	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
-	ROM_REGION_DISPOSE(0x180000)
-	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
-	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
-	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
-
-	ROM_REGIONX( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
 	ROM_RELOAD(             0x10000, 0x20000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
+	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
+	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
+ROM_END
+
+ROM_START( champwrj )
+	ROM_REGION( 0xf0000, REGION_CPU1 )
+	ROM_LOAD( "c01-06.bin", 0x00000, 0x20000, 0x90fa1409 )
+	ROM_RELOAD(             0x10000, 0x20000 )
+	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
+	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
+
+	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
+	ROM_RELOAD(             0x10000, 0x20000 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
+	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
+	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
 ROM_END
 
 
 ROM_START( puzznic )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "u11.rom",  0x00000, 0x20000, 0xa4150b6c )
 	ROM_RELOAD(           0x10000, 0x20000 )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGION( 0x0800, REGION_CPU2 )	/* 2k for the microcontroller */
+	ROM_LOAD( "mc68705p", 0x0000, 0x0800, 0x00000000 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "u10.rom",  0x00000, 0x20000, 0x4264056c )
 	ROM_LOAD( "u09.rom",  0x40000, 0x20000, 0x3c115f8b )
-
-	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 2k for the microcontroller */
-	ROM_LOAD( "mc68705p", 0x0000, 0x0800, 0x00000000 )
 ROM_END
 
 ROM_START( plotting )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )
+	ROM_REGION( 0x20000, REGION_CPU1 )
 	ROM_LOAD( "plot01.bin", 0x00000, 0x10000, 0x5b30bc25 )
 	ROM_RELOAD(             0x10000, 0x10000 )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "plot07.bin", 0x00000, 0x10000, 0x6e0bad2a )
 	ROM_LOAD( "plot08.bin", 0x40000, 0x10000, 0xfb5f3ca4 )
 ROM_END
 
 ROM_START( palamed )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c63.02", 0x00000, 0x20000, 0x55a82bb2 )
 	ROM_RELOAD(         0x10000, 0x20000 )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c64.04", 0x00000, 0x20000, 0xc7bbe460 )
 	ROM_LOAD( "c63.03", 0x40000, 0x20000, 0xfcd86e44 )
 ROM_END
 
 ROM_START( horshoes )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c47.03", 0x00000, 0x20000, 0x37e15b20 )
 	ROM_RELOAD(         0x10000, 0x20000 )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c47.02", 0x00000, 0x10000, 0x35f96526 )
 	ROM_CONTINUE (      0x20000, 0x10000 )
 	ROM_LOAD( "c47.04", 0x40000, 0x10000, 0xaeac7121 )
@@ -1763,11 +1783,11 @@ ROM_START( horshoes )
 ROM_END
 
 ROM_START( cachat )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "cac6",  0x00000, 0x20000, 0x8105cf5f )
 	ROM_RELOAD(        0x10000, 0x20000 )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cac9",  0x00000, 0x20000, 0xbc462914 )
 	ROM_LOAD( "cac10", 0x20000, 0x20000, 0xecc64b31 )
 	ROM_LOAD( "cac7",  0x40000, 0x20000, 0x7fb71578 )
@@ -1777,7 +1797,7 @@ ROM_END
 
 
 // bits 7..0 => bits 0..7
-static void plotting_decode(void)
+static void init_plotting(void)
 {
 	unsigned char tab[256];
 	unsigned char *p;
@@ -1799,188 +1819,12 @@ static void plotting_decode(void)
 
 
 
-struct GameDriver driver_fhawk =
-{
-	__FILE__,
-	0,
-	"fhawk",
-	"Fighting Hawk (Japan)",
-	"1988",
-	"Taito Corporation",
-	"",
-	0,
-	&machine_driver_fhawk,
-	0,
-
-	rom_fhawk,
-	0,0, 0, 0,
-
-	input_ports_fhawk,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_raimais =
-{
-	__FILE__,
-	0,
-	"raimais",
-	"Raimais (Japan)",
-	"1988",
-	"Taito Corporation",
-	"",
-	0,
-	&machine_driver_raimais,
-	0,
-
-	rom_raimais,
-	0,0, 0, 0,
-
-	input_ports_raimais,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_champwr =
-{
-	__FILE__,
-	0,
-	"champwr",
-	"Champion Wrestler (World)",
-	"1989",
-	"Taito Corporation Japan",
-	"",
-	0,
-	&machine_driver_champwr,
-	0,
-
-	rom_champwr,
-	0,0, 0, 0,
-
-	input_ports_champwr,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_puzznic =
-{
-	__FILE__,
-	0,
-	"puzznic",
-	"Puzznic (Japan)",
-	"1989",
-	"Taito Corporation",
-	"",
-	0,
-	&machine_driver_puzznic,
-	0,
-
-	rom_puzznic,
-	0, 0, 0, 0,
-
-	input_ports_puzznic,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_plotting =
-{
-	__FILE__,
-	0,
-	"plotting",
-	"Plotting (World)",
-	"1989",
-	"Taito Corporation Japan",
-	"",
-	0,
-	&machine_driver_plotting,
-	plotting_decode,
-
-	rom_plotting,
-	0,
-	0, 0, 0,
-
-	input_ports_puzznic,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_palamed =
-{
-	__FILE__,
-	0,
-	"palamed",
-	"Palamedes (Japan)",
-	"1990",
-	"Taito Corporation",
-	"",
-	0,
-	&machine_driver_palamed,
-	0,
-
-	rom_palamed,
-	0,0, 0, 0,
-
-	input_ports_palamed,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_horshoes =
-{
-	__FILE__,
-	0,
-	"horshoes",
-	"American Horseshoes (US)",
-	"1990",
-	"Taito America Corporation",
-	"",
-	0,
-	&machine_driver_horshoes,
-	0,
-
-	rom_horshoes,
-	0,0, 0, 0,
-
-	input_ports_horshoes,
-
-	0, 0, 0,
-	ROT270 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_cachat =
-{
-	__FILE__,
-	0,
-	"cachat",
-	"Cachat (Japan)",
-	"1993",
-	"Taito Corporation",
-	"",
-	0,
-	&machine_driver_cachat,
-	0,
-
-	rom_cachat,
-	0,0, 0, 0,
-
-	input_ports_palamed,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAMEX(1988, fhawk,    0,       fhawk,    fhawk,    0,        ROT270, "Taito Corporation", "Fighting Hawk (Japan)", GAME_NO_SOUND )
+GAMEX(1988, raimais,  0,       raimais,  raimais,  0,        ROT0,   "Taito Corporation", "Raimais (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX(1989, champwr,  0,       champwr,  champwr,  0,        ROT0,   "Taito Corporation Japan", "Champion Wrestler (World)", GAME_NO_SOUND )
+GAMEX(1989, champwrj, champwr, champwr,  champwr,  0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)", GAME_NO_SOUND )
+GAME( 1989, puzznic,  0,       puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
+GAME( 1989, plotting, 0,       plotting, puzznic,  plotting, ROT0,   "Taito Corporation Japan", "Plotting (World)" )
+GAME( 1990, palamed,  0,       palamed,  palamed,  0,        ROT0,   "Taito Corporation", "Palamedes (Japan)" )
+GAMEX(1990, horshoes, 0,       horshoes, horshoes, 0,        ROT270, "Taito America Corporation", "American Horseshoes (US)", GAME_NOT_WORKING )
+GAME( 1993, cachat,   0,       cachat,   palamed,  0,        ROT0,   "Taito Corporation", "Cachat (Japan)" )

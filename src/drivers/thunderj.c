@@ -2,6 +2,8 @@
 
 	Thunderjaws
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -280,7 +282,7 @@ static struct GfxLayout pfmolayout =
 	8,8,	/* 8*8 sprites */
 	32768,	/* 32768 of them */
 	4,		/* 4 bits per pixel */
-	{ 3*8*0x80000, 2*8*0x80000, 1*8*0x80000, 0*8*0x80000 },
+	{ 3*8*0x40000, 2*8*0x40000, 1*8*0x40000, 0*8*0x40000 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every sprite takes 8 consecutive bytes */
@@ -289,9 +291,9 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 4, 0x000000, &pfmolayout,  512,  96 },	/* sprites & playfield */
-	{ 4, 0x040000, &pfmolayout,  256, 112 },	/* sprites & playfield */
-	{ 4, 0x200000, &anlayout,      0, 512 },	/* characters 8x8 */
+	{ REGION_GFX1, 0, &pfmolayout,  512,  96 },	/* sprites & playfield */
+	{ REGION_GFX2, 0, &pfmolayout,  256, 112 },	/* sprites & playfield */
+	{ REGION_GFX3, 0, &anlayout,      0, 512 },	/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -303,7 +305,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_thunderj =
 {
 	/* basic machine hardware */
 	{
@@ -356,8 +358,10 @@ static void rom_decode(void)
 	int i;
 
 	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < 0x200000; i++)
-		memory_region(4)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 
 	/* copy the shared ROM from region 0 to region 1 */
 	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
@@ -371,7 +375,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-static void thunderj_init(void)
+static void init_thunderj(void)
 {
 	atarigen_eeprom_default = NULL;
 
@@ -399,7 +403,7 @@ static void thunderj_init(void)
  *************************************/
 
 ROM_START( thunderj )
-	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
+	ROM_REGION( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "2001.14e",   0x00000, 0x10000, 0xf6a71532 )
 	ROM_LOAD_ODD ( "2002.14c",   0x00000, 0x10000, 0x173ec10d )
 	ROM_LOAD_EVEN( "2003.15e",   0x20000, 0x10000, 0x6e155469 )
@@ -411,89 +415,60 @@ ROM_START( thunderj )
 	ROM_LOAD_EVEN( "1007.17e",   0x80000, 0x10000, 0x9c2a8aba )
 	ROM_LOAD_ODD ( "1008.17c",   0x80000, 0x10000, 0x22109d16 )
 
-	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
+	ROM_REGION( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1011.17l",   0x00000, 0x10000, 0xbbbbca45 )
 	ROM_LOAD_ODD ( "1012.17n",   0x00000, 0x10000, 0x53e5e638 )
 
-	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "tjw65snd.bin",  0x10000, 0x4000, 0xd8feb7fb )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM */
-	ROM_LOAD( "tj1016.bin",  0x00000, 0x10000, 0xc10bdf73 )
-	ROM_LOAD( "tj1017.bin",  0x10000, 0x10000, 0x4e5e25e8 )
-	ROM_LOAD( "tj1018.bin",  0x20000, 0x10000, 0xec81895d )
-	ROM_LOAD( "tj1019.bin",  0x30000, 0x10000, 0xa4009037 )
-
-	ROM_REGION_DISPOSE(0x210000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1021.5s",   0x000000, 0x10000, 0xd8432766 )	/* graphics, plane 0 */
 	ROM_LOAD( "1025.5r",   0x010000, 0x10000, 0x839feed5 )
 	ROM_LOAD( "1029.3p",   0x020000, 0x10000, 0xfa887662 )
 	ROM_LOAD( "1033.6p",   0x030000, 0x10000, 0x2addda79 )
-	ROM_LOAD( "1037.2s",   0x040000, 0x10000, 0x07addba6 )
-	ROM_LOAD( "1041.2r",   0x050000, 0x10000, 0x1e9c29e4 )
-	ROM_LOAD( "1045.34s",  0x060000, 0x10000, 0xe7235876 )
-	ROM_LOAD( "1049.34r",  0x070000, 0x10000, 0xa6eb8265 )
+	ROM_LOAD( "1022.9s",   0x040000, 0x10000, 0xdcf50371 )	/* graphics, plane 1 */
+	ROM_LOAD( "1026.9r",   0x050000, 0x10000, 0x216e72c8 )
+	ROM_LOAD( "1030.10s",  0x060000, 0x10000, 0xdc51f606 )
+	ROM_LOAD( "1034.10r",  0x070000, 0x10000, 0xf8e35516 )
+	ROM_LOAD( "1023.13s",  0x080000, 0x10000, 0xb6dc3f13 )	/* graphics, plane 2 */
+	ROM_LOAD( "1027.13r",  0x090000, 0x10000, 0x621cc2ce )
+	ROM_LOAD( "1031.14s",  0x0a0000, 0x10000, 0x4682ceb5 )
+	ROM_LOAD( "1035.14r",  0x0b0000, 0x10000, 0x7a0e1b9e )
+	ROM_LOAD( "1024.17s",  0x0c0000, 0x10000, 0xd84452b5 )	/* graphics, plane 3 */
+	ROM_LOAD( "1028.17r",  0x0d0000, 0x10000, 0x0cc20245 )
+	ROM_LOAD( "1032.14p",  0x0e0000, 0x10000, 0xf639161a )
+	ROM_LOAD( "1036.16p",  0x0f0000, 0x10000, 0xb342443d )
 
-	ROM_LOAD( "1022.9s",   0x080000, 0x10000, 0xdcf50371 )	/* graphics, plane 1 */
-	ROM_LOAD( "1026.9r",   0x090000, 0x10000, 0x216e72c8 )
-	ROM_LOAD( "1030.10s",  0x0a0000, 0x10000, 0xdc51f606 )
-	ROM_LOAD( "1034.10r",  0x0b0000, 0x10000, 0xf8e35516 )
-	ROM_LOAD( "1038.6s",   0x0c0000, 0x10000, 0x2ea543f9 )
-	ROM_LOAD( "1042.6r",   0x0d0000, 0x10000, 0xefabdc2b )
-	ROM_LOAD( "1046.7s",   0x0e0000, 0x10000, 0x6692151f )
-	ROM_LOAD( "1050.7r",   0x0f0000, 0x10000, 0xad7bb5f3 )
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1037.2s",   0x000000, 0x10000, 0x07addba6 )
+	ROM_LOAD( "1041.2r",   0x010000, 0x10000, 0x1e9c29e4 )
+	ROM_LOAD( "1045.34s",  0x020000, 0x10000, 0xe7235876 )
+	ROM_LOAD( "1049.34r",  0x030000, 0x10000, 0xa6eb8265 )
+	ROM_LOAD( "1038.6s",   0x040000, 0x10000, 0x2ea543f9 )
+	ROM_LOAD( "1042.6r",   0x050000, 0x10000, 0xefabdc2b )
+	ROM_LOAD( "1046.7s",   0x060000, 0x10000, 0x6692151f )
+	ROM_LOAD( "1050.7r",   0x070000, 0x10000, 0xad7bb5f3 )
+	ROM_LOAD( "1039.11s",  0x080000, 0x10000, 0xcb563a40 )
+	ROM_LOAD( "1043.11r",  0x090000, 0x10000, 0xb7565eee )
+	ROM_LOAD( "1047.12s",  0x0a0000, 0x10000, 0x60877136 )
+	ROM_LOAD( "1051.12r",  0x0b0000, 0x10000, 0xd4715ff0 )
+	ROM_LOAD( "1040.15s",  0x0c0000, 0x10000, 0x6e910fc2 )
+	ROM_LOAD( "1044.15r",  0x0d0000, 0x10000, 0xff67a17a )
+	ROM_LOAD( "1048.16s",  0x0e0000, 0x10000, 0x200d45b3 )
+	ROM_LOAD( "1052.16r",  0x0f0000, 0x10000, 0x74711ef1 )
 
-	ROM_LOAD( "1023.13s",  0x100000, 0x10000, 0xb6dc3f13 )	/* graphics, plane 2 */
-	ROM_LOAD( "1027.13r",  0x110000, 0x10000, 0x621cc2ce )
-	ROM_LOAD( "1031.14s",  0x120000, 0x10000, 0x4682ceb5 )
-	ROM_LOAD( "1035.14r",  0x130000, 0x10000, 0x7a0e1b9e )
-	ROM_LOAD( "1039.11s",  0x140000, 0x10000, 0xcb563a40 )
-	ROM_LOAD( "1043.11r",  0x150000, 0x10000, 0xb7565eee )
-	ROM_LOAD( "1047.12s",  0x160000, 0x10000, 0x60877136 )
-	ROM_LOAD( "1051.12r",  0x170000, 0x10000, 0xd4715ff0 )
+	ROM_REGION( 0x010000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1020.4m",   0x000000, 0x10000, 0x65470354 )	/* alphanumerics */
 
-	ROM_LOAD( "1024.17s",  0x180000, 0x10000, 0xd84452b5 )	/* graphics, plane 3 */
-	ROM_LOAD( "1028.17r",  0x190000, 0x10000, 0x0cc20245 )
-	ROM_LOAD( "1032.14p",  0x1a0000, 0x10000, 0xf639161a )
-	ROM_LOAD( "1036.16p",  0x1b0000, 0x10000, 0xb342443d )
-	ROM_LOAD( "1040.15s",  0x1c0000, 0x10000, 0x6e910fc2 )
-	ROM_LOAD( "1044.15r",  0x1d0000, 0x10000, 0xff67a17a )
-	ROM_LOAD( "1048.16s",  0x1e0000, 0x10000, 0x200d45b3 )
-	ROM_LOAD( "1052.16r",  0x1f0000, 0x10000, 0x74711ef1 )
-
-	ROM_LOAD( "1020.4m",   0x200000, 0x10000, 0x65470354 )	/* alphanumerics */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM */
+	ROM_LOAD( "tj1016.bin",  0x00000, 0x10000, 0xc10bdf73 )
+	ROM_LOAD( "tj1017.bin",  0x10000, 0x10000, 0x4e5e25e8 )
+	ROM_LOAD( "tj1018.bin",  0x20000, 0x10000, 0xec81895d )
+	ROM_LOAD( "tj1019.bin",  0x30000, 0x10000, 0xa4009037 )
 ROM_END
 
 
 
-/*************************************
- *
- *	Game driver(s)
- *
- *************************************/
-
-struct GameDriver driver_thunderj =
-{
-	__FILE__,
-	0,
-	"thunderj",
-	"ThunderJaws",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	thunderj_init,
-
-	rom_thunderj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_thunderj,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1990, thunderj, 0, thunderj, thunderj, thunderj, ROT0, "Atari Games", "ThunderJaws" )

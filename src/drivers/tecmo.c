@@ -4,6 +4,8 @@ tecmo.c
 
 M68000 based Tecmo games (Final Starforce) may fit in here as well
 
+driver by Nicola Salmoria
+
 
 Silkworm memory map (preliminary)
 
@@ -625,23 +627,23 @@ static struct GfxLayout rygar_spritelayout8x8 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tecmo_charlayout,        256, 16 },	/* colors 256 - 511 */
-	{ 1, 0x08000, &silkworm_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
-	{ 1, 0x08000, &silkworm_spritelayout,     0, 16 },	/* 16x16 sprites */
-	{ 1, 0x08000, &silkworm_spritelayout2x,   0, 16 },	/* double size hack */
-	{ 1, 0x48000, &silkworm_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
-	{ 1, 0x88000, &silkworm_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
+	{ REGION_GFX1, 0, &tecmo_charlayout,        256, 16 },	/* colors 256 - 511 */
+	{ REGION_GFX2, 0, &silkworm_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
+	{ REGION_GFX2, 0, &silkworm_spritelayout,     0, 16 },	/* 16x16 sprites */
+	{ REGION_GFX2, 0, &silkworm_spritelayout2x,   0, 16 },	/* double size hack */
+	{ REGION_GFX3, 0, &silkworm_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
+	{ REGION_GFX4, 0, &silkworm_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tecmo_charlayout,     256, 16 },	/* colors 256 - 511 */
-	{ 1, 0x08000, &rygar_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
-	{ 1, 0x08000, &rygar_spritelayout,     0, 16 },	/* 16x16 sprites */
-	{ 1, 0x08000, &rygar_spritelayout2x,   0, 16 },	/* double size hack */
-	{ 1, 0x28000, &rygar_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
-	{ 1, 0x48000, &rygar_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
+	{ REGION_GFX1, 0, &tecmo_charlayout,     256, 16 },	/* colors 256 - 511 */
+	{ REGION_GFX2, 0, &rygar_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
+	{ REGION_GFX2, 0, &rygar_spritelayout,     0, 16 },	/* 16x16 sprites */
+	{ REGION_GFX2, 0, &rygar_spritelayout2x,   0, 16 },	/* double size hack */
+	{ REGION_GFX3, 0, &rygar_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
+	{ REGION_GFX4, 0, &rygar_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
 	{ -1 } /* end of array */
 };
 
@@ -666,7 +668,7 @@ static struct ADPCMinterface adpcm_interface =
 {
 	1,			/* 1 channel */
 	8333,       /* 8000Hz playback */
-	3,			/* memory region 3 */
+	REGION_SOUND1,	/* memory region 3 */
 	0,			/* init function */
 	{ 255 }
 };
@@ -826,328 +828,212 @@ static struct MachineDriver machine_driver_gemini =
 ***************************************************************************/
 
 ROM_START( rygar )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5.5p",         0x00000, 0x08000, 0x062cd55d ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
-
-	ROM_LOAD( "vid_6k.bin",   0x08000, 0x08000, 0xaba6db9e )	/* sprites */
-	ROM_LOAD( "vid_6j.bin",   0x10000, 0x08000, 0xae1f2ed6 )	/* sprites */
-	ROM_LOAD( "vid_6h.bin",   0x18000, 0x08000, 0x46d9e7df )	/* sprites */
-	ROM_LOAD( "vid_6g.bin",   0x20000, 0x08000, 0x45839c9a )	/* sprites */
-
-	ROM_LOAD( "vid_6p.bin",   0x28000, 0x08000, 0x9eae5f8e )
-	ROM_LOAD( "vid_6o.bin",   0x30000, 0x08000, 0x5a10a396 )
-	ROM_LOAD( "vid_6n.bin",   0x38000, 0x08000, 0x7b12cf3f )
-	ROM_LOAD( "vid_6l.bin",   0x40000, 0x08000, 0x3cea7eaa )
-
-	ROM_LOAD( "vid_6f.bin",   0x48000, 0x08000, 0x9840edd8 )
-	ROM_LOAD( "vid_6e.bin",   0x50000, 0x08000, 0xff65e074 )
-	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
-	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
-	ROM_REGION(0x4000)	/* ADPCM samples */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
+
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6k.bin",   0x00000, 0x08000, 0xaba6db9e )	/* sprites */
+	ROM_LOAD( "vid_6j.bin",   0x08000, 0x08000, 0xae1f2ed6 )	/* sprites */
+	ROM_LOAD( "vid_6h.bin",   0x10000, 0x08000, 0x46d9e7df )	/* sprites */
+	ROM_LOAD( "vid_6g.bin",   0x18000, 0x08000, 0x45839c9a )	/* sprites */
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6p.bin",   0x00000, 0x08000, 0x9eae5f8e )
+	ROM_LOAD( "vid_6o.bin",   0x08000, 0x08000, 0x5a10a396 )
+	ROM_LOAD( "vid_6n.bin",   0x10000, 0x08000, 0x7b12cf3f )
+	ROM_LOAD( "vid_6l.bin",   0x18000, 0x08000, 0x3cea7eaa )
+
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6f.bin",   0x00000, 0x08000, 0x9840edd8 )
+	ROM_LOAD( "vid_6e.bin",   0x08000, 0x08000, 0xff65e074 )
+	ROM_LOAD( "vid_6c.bin",   0x10000, 0x08000, 0x89868c85 )
+	ROM_LOAD( "vid_6b.bin",   0x18000, 0x08000, 0x35389a7b )
+
+	ROM_REGION( 0x4000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
 ROM_START( rygar2 )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu_5p.bin",   0x00000, 0x08000, 0xe79c054a ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
-
-	ROM_LOAD( "vid_6k.bin",   0x08000, 0x08000, 0xaba6db9e )	/* sprites */
-	ROM_LOAD( "vid_6j.bin",   0x10000, 0x08000, 0xae1f2ed6 )	/* sprites */
-	ROM_LOAD( "vid_6h.bin",   0x18000, 0x08000, 0x46d9e7df )	/* sprites */
-	ROM_LOAD( "vid_6g.bin",   0x20000, 0x08000, 0x45839c9a )	/* sprites */
-
-	ROM_LOAD( "vid_6p.bin",   0x28000, 0x08000, 0x9eae5f8e )
-	ROM_LOAD( "vid_6o.bin",   0x30000, 0x08000, 0x5a10a396 )
-	ROM_LOAD( "vid_6n.bin",   0x38000, 0x08000, 0x7b12cf3f )
-	ROM_LOAD( "vid_6l.bin",   0x40000, 0x08000, 0x3cea7eaa )
-
-	ROM_LOAD( "vid_6f.bin",   0x48000, 0x08000, 0x9840edd8 )
-	ROM_LOAD( "vid_6e.bin",   0x50000, 0x08000, 0xff65e074 )
-	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
-	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
-	ROM_REGION(0x4000)	/* ADPCM samples */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
+
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6k.bin",   0x00000, 0x08000, 0xaba6db9e )	/* sprites */
+	ROM_LOAD( "vid_6j.bin",   0x08000, 0x08000, 0xae1f2ed6 )	/* sprites */
+	ROM_LOAD( "vid_6h.bin",   0x10000, 0x08000, 0x46d9e7df )	/* sprites */
+	ROM_LOAD( "vid_6g.bin",   0x18000, 0x08000, 0x45839c9a )	/* sprites */
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6p.bin",   0x00000, 0x08000, 0x9eae5f8e )
+	ROM_LOAD( "vid_6o.bin",   0x08000, 0x08000, 0x5a10a396 )
+	ROM_LOAD( "vid_6n.bin",   0x10000, 0x08000, 0x7b12cf3f )
+	ROM_LOAD( "vid_6l.bin",   0x18000, 0x08000, 0x3cea7eaa )
+
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6f.bin",   0x00000, 0x08000, 0x9840edd8 )
+	ROM_LOAD( "vid_6e.bin",   0x08000, 0x08000, 0xff65e074 )
+	ROM_LOAD( "vid_6c.bin",   0x10000, 0x08000, 0x89868c85 )
+	ROM_LOAD( "vid_6b.bin",   0x18000, 0x08000, 0x35389a7b )
+
+	ROM_REGION( 0x4000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
 ROM_START( rygarj )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code */
 
 	ROM_LOAD( "cpuj_5p.bin",  0x00000, 0x08000, 0xb39698ba ) /* code */
 	ROM_LOAD( "cpuj_5m.bin",  0x08000, 0x04000, 0x3f180979 ) /* code */
 	ROM_LOAD( "cpuj_5j.bin",  0x10000, 0x08000, 0x69e44e8f ) /* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpuj_8k.bin",  0x00000, 0x08000, 0x45047707 )	/* characters */
-
-	ROM_LOAD( "vid_6k.bin",   0x08000, 0x08000, 0xaba6db9e )	/* sprites */
-	ROM_LOAD( "vid_6j.bin",   0x10000, 0x08000, 0xae1f2ed6 )	/* sprites */
-	ROM_LOAD( "vid_6h.bin",   0x18000, 0x08000, 0x46d9e7df )	/* sprites */
-	ROM_LOAD( "vid_6g.bin",   0x20000, 0x08000, 0x45839c9a )	/* sprites */
-
-	ROM_LOAD( "vid_6p.bin",   0x28000, 0x08000, 0x9eae5f8e )
-	ROM_LOAD( "vid_6o.bin",   0x30000, 0x08000, 0x5a10a396 )
-	ROM_LOAD( "vid_6n.bin",   0x38000, 0x08000, 0x7b12cf3f )
-	ROM_LOAD( "vid_6l.bin",   0x40000, 0x08000, 0x3cea7eaa )
-
-	ROM_LOAD( "vid_6f.bin",   0x48000, 0x08000, 0x9840edd8 )
-	ROM_LOAD( "vid_6e.bin",   0x50000, 0x08000, 0xff65e074 )
-	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
-	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
-	ROM_REGION(0x4000)	/* ADPCM samples */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cpuj_8k.bin",  0x00000, 0x08000, 0x45047707 )	/* characters */
+
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6k.bin",   0x00000, 0x08000, 0xaba6db9e )	/* sprites */
+	ROM_LOAD( "vid_6j.bin",   0x08000, 0x08000, 0xae1f2ed6 )	/* sprites */
+	ROM_LOAD( "vid_6h.bin",   0x10000, 0x08000, 0x46d9e7df )	/* sprites */
+	ROM_LOAD( "vid_6g.bin",   0x18000, 0x08000, 0x45839c9a )	/* sprites */
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6p.bin",   0x00000, 0x08000, 0x9eae5f8e )
+	ROM_LOAD( "vid_6o.bin",   0x08000, 0x08000, 0x5a10a396 )
+	ROM_LOAD( "vid_6n.bin",   0x10000, 0x08000, 0x7b12cf3f )
+	ROM_LOAD( "vid_6l.bin",   0x18000, 0x08000, 0x3cea7eaa )
+
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_6f.bin",   0x00000, 0x08000, 0x9840edd8 )
+	ROM_LOAD( "vid_6e.bin",   0x08000, 0x08000, 0xff65e074 )
+	ROM_LOAD( "vid_6c.bin",   0x10000, 0x08000, 0x89868c85 )
+	ROM_LOAD( "vid_6b.bin",   0x18000, 0x08000, 0x35389a7b )
+
+	ROM_REGION( 0x4000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
 ROM_START( silkworm )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "silkworm.4",   0x00000, 0x10000, 0xa5277cce )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "silkworm.2",   0x00000, 0x08000, 0xe80a1cd9 )	/* characters */
-	ROM_LOAD( "silkworm.6",   0x08000, 0x10000, 0x1138d159 )	/* sprites */
-	ROM_LOAD( "silkworm.7",   0x18000, 0x10000, 0xd96214f7 )	/* sprites */
-	ROM_LOAD( "silkworm.8",   0x28000, 0x10000, 0x0494b38e )	/* sprites */
-	ROM_LOAD( "silkworm.9",   0x38000, 0x10000, 0x8ce3cdf5 )	/* sprites */
-	ROM_LOAD( "silkworm.10",  0x48000, 0x10000, 0x8c7138bb )	/* tiles #1 */
-	ROM_LOAD( "silkworm.11",  0x58000, 0x10000, 0x6c03c476 )	/* tiles #1 */
-	ROM_LOAD( "silkworm.12",  0x68000, 0x10000, 0xbb0f568f )	/* tiles #1 */
-	ROM_LOAD( "silkworm.13",  0x78000, 0x10000, 0x773ad0a4 )	/* tiles #1 */
-	ROM_LOAD( "silkworm.14",  0x88000, 0x10000, 0x409df64b )	/* tiles #2 */
-	ROM_LOAD( "silkworm.15",  0x98000, 0x10000, 0x6e4052c9 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.16",  0xa8000, 0x10000, 0x9292ed63 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.17",  0xb8000, 0x10000, 0x3fa4563d )	/* tiles #2 */
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "silkworm.3",   0x0000, 0x8000, 0xb589f587 )
 
-	ROM_REGION(0x8000)	/* ADPCM samples */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.2",   0x00000, 0x08000, 0xe80a1cd9 )	/* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.6",   0x00000, 0x10000, 0x1138d159 )	/* sprites */
+	ROM_LOAD( "silkworm.7",   0x10000, 0x10000, 0xd96214f7 )	/* sprites */
+	ROM_LOAD( "silkworm.8",   0x20000, 0x10000, 0x0494b38e )	/* sprites */
+	ROM_LOAD( "silkworm.9",   0x30000, 0x10000, 0x8ce3cdf5 )	/* sprites */
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.10",  0x00000, 0x10000, 0x8c7138bb )	/* tiles #1 */
+	ROM_LOAD( "silkworm.11",  0x10000, 0x10000, 0x6c03c476 )	/* tiles #1 */
+	ROM_LOAD( "silkworm.12",  0x20000, 0x10000, 0xbb0f568f )	/* tiles #1 */
+	ROM_LOAD( "silkworm.13",  0x30000, 0x10000, 0x773ad0a4 )	/* tiles #1 */
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.14",  0x00000, 0x10000, 0x409df64b )	/* tiles #2 */
+	ROM_LOAD( "silkworm.15",  0x10000, 0x10000, 0x6e4052c9 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.16",  0x20000, 0x10000, 0x9292ed63 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.17",  0x30000, 0x10000, 0x3fa4563d )	/* tiles #2 */
+
+	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "silkworm.1",   0x0000, 0x8000, 0x5b553644 )
 ROM_END
 
 ROM_START( silkwrm2 )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "r4",           0x00000, 0x10000, 0x6df3df22 )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "silkworm.2",   0x00000, 0x08000, 0xe80a1cd9 )	/* characters */
-	ROM_LOAD( "silkworm.6",   0x08000, 0x10000, 0x1138d159 )	/* sprites */
-	ROM_LOAD( "silkworm.7",   0x18000, 0x10000, 0xd96214f7 )	/* sprites */
-	ROM_LOAD( "silkworm.8",   0x28000, 0x10000, 0x0494b38e )	/* sprites */
-	ROM_LOAD( "silkworm.9",   0x38000, 0x10000, 0x8ce3cdf5 )	/* sprites */
-	ROM_LOAD( "silkworm.10",  0x48000, 0x10000, 0x8c7138bb )	/* tiles #1 */
-	ROM_LOAD( "silkworm.11",  0x58000, 0x10000, 0x6c03c476 )	/* tiles #1 */
-	ROM_LOAD( "silkworm.12",  0x68000, 0x10000, 0xbb0f568f )	/* tiles #1 */
-	ROM_LOAD( "silkworm.13",  0x78000, 0x10000, 0x773ad0a4 )	/* tiles #1 */
-	ROM_LOAD( "silkworm.14",  0x88000, 0x10000, 0x409df64b )	/* tiles #2 */
-	ROM_LOAD( "silkworm.15",  0x98000, 0x10000, 0x6e4052c9 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.16",  0xa8000, 0x10000, 0x9292ed63 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.17",  0xb8000, 0x10000, 0x3fa4563d )	/* tiles #2 */
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r3",           0x0000, 0x8000, 0xb79848d0 )
 
-	ROM_REGION(0x8000)	/* ADPCM samples */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.2",   0x00000, 0x08000, 0xe80a1cd9 )	/* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.6",   0x00000, 0x10000, 0x1138d159 )	/* sprites */
+	ROM_LOAD( "silkworm.7",   0x10000, 0x10000, 0xd96214f7 )	/* sprites */
+	ROM_LOAD( "silkworm.8",   0x20000, 0x10000, 0x0494b38e )	/* sprites */
+	ROM_LOAD( "silkworm.9",   0x30000, 0x10000, 0x8ce3cdf5 )	/* sprites */
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.10",  0x00000, 0x10000, 0x8c7138bb )	/* tiles #1 */
+	ROM_LOAD( "silkworm.11",  0x10000, 0x10000, 0x6c03c476 )	/* tiles #1 */
+	ROM_LOAD( "silkworm.12",  0x20000, 0x10000, 0xbb0f568f )	/* tiles #1 */
+	ROM_LOAD( "silkworm.13",  0x30000, 0x10000, 0x773ad0a4 )	/* tiles #1 */
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "silkworm.14",  0x00000, 0x10000, 0x409df64b )	/* tiles #2 */
+	ROM_LOAD( "silkworm.15",  0x10000, 0x10000, 0x6e4052c9 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.16",  0x20000, 0x10000, 0x9292ed63 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.17",  0x30000, 0x10000, 0x3fa4563d )	/* tiles #2 */
+
+	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "silkworm.1",   0x0000, 0x8000, 0x5b553644 )
 ROM_END
 
 ROM_START( gemini )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gw04-5s.rom",  0x00000, 0x10000, 0xff9de855 )	/* c000-ffff is not used */
 	ROM_LOAD( "gw05-6s.rom",  0x10000, 0x10000, 0x5a6947a9 )	/* banked at f000-f7ff */
 
-	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gw02-3h.rom",  0x00000, 0x08000, 0x7acc8d35 )	/* characters */
-	ROM_LOAD( "gw06-1c.rom",  0x08000, 0x10000, 0x4ea51631 )	/* sprites */
-	ROM_LOAD( "gw07-1d.rom",  0x18000, 0x10000, 0xda42637e )	/* sprites */
-	ROM_LOAD( "gw08-1f.rom",  0x28000, 0x10000, 0x0b4e8d70 )	/* sprites */
-	ROM_LOAD( "gw09-1h.rom",  0x38000, 0x10000, 0xb65c5e4c )	/* sprites */
-	ROM_LOAD( "gw10-1n.rom",  0x48000, 0x10000, 0x5e84cd4f )	/* tiles #1 */
-	ROM_LOAD( "gw11-2na.rom", 0x58000, 0x10000, 0x08b458e1 )	/* tiles #1 */
-	ROM_LOAD( "gw12-2nb.rom", 0x68000, 0x10000, 0x229c9714 )	/* tiles #1 */
-	ROM_LOAD( "gw13-3n.rom",  0x78000, 0x10000, 0xc5dfaf47 )	/* tiles #1 */
-	ROM_LOAD( "gw14-1r.rom",  0x88000, 0x10000, 0x9c10e5b5 )	/* tiles #2 */
-	ROM_LOAD( "gw15-2ra.rom", 0x98000, 0x10000, 0x4cd18cfa )	/* tiles #2 */
-	ROM_LOAD( "gw16-2rb.rom", 0xa8000, 0x10000, 0xf911c7be )	/* tiles #2 */
-	ROM_LOAD( "gw17-3r.rom",  0xb8000, 0x10000, 0x79a9ce25 )	/* tiles #2 */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gw03-5h.rom",  0x0000, 0x8000, 0x9bc79596 )
 
-	ROM_REGION(0x8000)	/* ADPCM samples */
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gw02-3h.rom",  0x00000, 0x08000, 0x7acc8d35 )	/* characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gw06-1c.rom",  0x00000, 0x10000, 0x4ea51631 )	/* sprites */
+	ROM_LOAD( "gw07-1d.rom",  0x10000, 0x10000, 0xda42637e )	/* sprites */
+	ROM_LOAD( "gw08-1f.rom",  0x20000, 0x10000, 0x0b4e8d70 )	/* sprites */
+	ROM_LOAD( "gw09-1h.rom",  0x30000, 0x10000, 0xb65c5e4c )	/* sprites */
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gw10-1n.rom",  0x00000, 0x10000, 0x5e84cd4f )	/* tiles #1 */
+	ROM_LOAD( "gw11-2na.rom", 0x10000, 0x10000, 0x08b458e1 )	/* tiles #1 */
+	ROM_LOAD( "gw12-2nb.rom", 0x20000, 0x10000, 0x229c9714 )	/* tiles #1 */
+	ROM_LOAD( "gw13-3n.rom",  0x30000, 0x10000, 0xc5dfaf47 )	/* tiles #1 */
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gw14-1r.rom",  0x00000, 0x10000, 0x9c10e5b5 )	/* tiles #2 */
+	ROM_LOAD( "gw15-2ra.rom", 0x10000, 0x10000, 0x4cd18cfa )	/* tiles #2 */
+	ROM_LOAD( "gw16-2rb.rom", 0x20000, 0x10000, 0xf911c7be )	/* tiles #2 */
+	ROM_LOAD( "gw17-3r.rom",  0x30000, 0x10000, 0x79a9ce25 )	/* tiles #2 */
+
+	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "gw01-6a.rom",  0x0000, 0x8000, 0xd78afa05 )
 ROM_END
 
 
 
-struct GameDriver driver_rygar =
-{
-	__FILE__,
-	0,
-	"rygar",
-	"Rygar (US set 1)",
-	"1986",
-	"Tecmo",
-	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
-	0,
-	&machine_driver_rygar,
-	0,
-
-	rom_rygar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rygar,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rygar2 =
-{
-	__FILE__,
-	&driver_rygar,
-	"rygar2",
-	"Rygar (US set 2)",
-	"1986",
-	"Tecmo",
-	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
-	0,
-	&machine_driver_rygar,
-	0,
-
-	rom_rygar2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rygar,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rygarj =
-{
-	__FILE__,
-	&driver_rygar,
-	"rygarj",
-	"Argus no Senshi (Japan)",
-	"1986",
-	"Tecmo",
-	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
-	0,
-	&machine_driver_rygar,
-	0,
-
-	rom_rygarj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rygar,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_gemini =
-{
-	__FILE__,
-	0,
-	"gemini",
-	"Gemini Wing",
-	"1987",
-	"Tecmo",
-    "Nicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nMartin Binder (dip switches)",
-	0,
-	&machine_driver_gemini,
-	0,
-
-	rom_gemini,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gemini,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_silkworm =
-{
-	__FILE__,
-	0,
-	"silkworm",
-	"Silkworm (set 1)",
-	"1988",
-	"Tecmo",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_silkworm,
-	0,
-
-	rom_silkworm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_silkworm,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_silkwrm2 =
-{
-	__FILE__,
-	&driver_silkworm,
-	"silkwrm2",
-	"Silkworm (set 2)",
-	"1988",
-	"Tecmo",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_silkworm,
-	0,
-
-	rom_silkwrm2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_silkworm,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, rygar,    0,        rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 1)" )
+GAME( 1986, rygar2,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 2)" )
+GAME( 1986, rygarj,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Argus no Senshi (Japan)" )
+GAME( 1987, gemini,   0,        gemini,   gemini,   0, ROT90, "Tecmo", "Gemini Wing" )
+GAME( 1988, silkworm, 0,        silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 1)" )
+GAME( 1988, silkwrm2, silkworm, silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 2)" )

@@ -64,7 +64,7 @@ void votrax_w(int data)
   	if(errorlog) fprintf(errorlog,"Speech : %s at intonation %d\n",VotraxTable[Phoneme],Intonation);
 
     if(Phoneme==63)
-   		osd_stop_sample(VotraxChannel);
+   		mixer_stop_sample(VotraxChannel);
 
     if(VotraxSamples->sample[Phoneme])
 	{
@@ -78,6 +78,6 @@ void votrax_w(int data)
 
 int votrax_status_r(void)
 {
-    return osd_get_sample_status(VotraxChannel);
+    return mixer_is_sample_playing(VotraxChannel);
 }
 

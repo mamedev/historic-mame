@@ -17,12 +17,12 @@ static int flipscreen;
 static int sprite_multiplex_hack;
 
 
-void timeplt_init(void)
+void init_timeplt(void)
 {
 	sprite_multiplex_hack = 1;
 }
 
-void psurge_init(void)
+void init_psurge(void)
 {
 	sprite_multiplex_hack = 0;
 }

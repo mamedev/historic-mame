@@ -147,7 +147,7 @@ int hyprolyb_speech_r(int offset)
 void hyprolyb_ADPCM_data_w(int offset,int data)
 {
     int cmd,start,end;
-    unsigned char *RAM = memory_region(4);
+    unsigned char *RAM = memory_region(REGION_CPU3);
 
 
     /* simulate the operation of the 6802 */

@@ -520,46 +520,46 @@ DRIVER(centipb2, SOUND_AY8910, &centipb2_ay8910_interface)
 ***************************************************************************/
 
 ROM_START( centiped )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "centiped.307", 0x2000, 0x0800, 0x5ab0d9de )
 	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x4c07fd3e )
 	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0xff69b424 )
 	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0x44e40fa4 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
 ROM_START( centipd2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0xb2909e2f )
 	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0x110e04ff )
 	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xcc2edb26 )
 	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0x93999153 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
 ROM_START( centipdb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, 0x8a744e57 )
 	ROM_LOAD( "olympia.c29",  0x2800, 0x0800, 0xbb897b10 )
 	ROM_LOAD( "olympia.c30",  0x3000, 0x0800, 0x2297c2ac )
 	ROM_LOAD( "olympia.c31",  0x3800, 0x0800, 0xcc529d6b )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, 0xd91b9724 )
 	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, 0x1a6acd02 )
 ROM_END
 
 ROM_START( centipb2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d1",  		  0x2000, 0x0800, 0xb17b8e0b )
 	ROM_LOAD( "e1",  		  0x2800, 0x0800, 0x7684398e )
 	ROM_LOAD( "h1",  		  0x3000, 0x0800, 0x74580fe4 )
@@ -567,7 +567,7 @@ ROM_START( centipb2 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "k1",  		  0x6000, 0x0800, 0xf1aa329b )
 
-	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END

@@ -315,7 +315,7 @@ static struct MachineDriver machine_driver_leprechn =
 ***************************************************************************/
 
 ROM_START( leprechn )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
 	ROM_LOAD( "lep1",         0x8000, 0x1000, 0x2c4a46ca )
 	ROM_LOAD( "lep2",         0x9000, 0x1000, 0x6ed26b3e )
 	ROM_LOAD( "lep3",         0xa000, 0x1000, 0xa2eaa016 )
@@ -325,12 +325,12 @@ ROM_START( leprechn )
 	ROM_LOAD( "lep7",         0xe000, 0x1000, 0x7e06d56d )
 	ROM_LOAD( "lep8",         0xf000, 0x1000, 0x097ede60 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
 	ROM_LOAD( "lepsound",     0xf000, 0x1000, 0x6651e294 )
 ROM_END
 
 ROM_START( potogold )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
 	ROM_LOAD( "pog.pg1",      0x8000, 0x1000, 0x9f1dbda6 )
 	ROM_LOAD( "pog.pg2",      0x9000, 0x1000, 0xa70e3811 )
 	ROM_LOAD( "pog.pg3",      0xa000, 0x1000, 0x81cfb516 )
@@ -340,7 +340,7 @@ ROM_START( potogold )
 	ROM_LOAD( "pog.pg7",      0xe000, 0x1000, 0x84399f54 )
 	ROM_LOAD( "pog.pg8",      0xf000, 0x1000, 0x9e995a1a )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
 	ROM_LOAD( "pog.snd",      0xf000, 0x1000, 0xec61f0a4 )
 ROM_END
 

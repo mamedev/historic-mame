@@ -2,6 +2,8 @@
 
 Tank Battalion memory map (preliminary)
 
+driver by Brad Oliver
+
 $0000-$000f : bullet ram, first entry is player's bullet
 $0010-$01ff : zero page & stack
 $0200-$07ff : RAM
@@ -244,8 +246,8 @@ static struct GfxLayout bulletlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 64 },
-	{ 1, 0x0000, &bulletlayout, 0, 64 },
+	{ REGION_GFX1, 0, &charlayout,   0, 64 },
+	{ REGION_GFX1, 0, &bulletlayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -270,7 +272,7 @@ static struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_tankbatt =
 {
 	/* basic machine hardware */
 	{
@@ -316,43 +318,20 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( tankbatt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tb1-1.bin",    0x6000, 0x0800, 0x278a0b8c )
 	ROM_LOAD( "tb1-2.bin",    0x6800, 0x0800, 0xe0923370 )
 	ROM_LOAD( "tb1-3.bin",    0x7000, 0x0800, 0x85005ea4 )
 	ROM_LOAD( "tb1-4.bin",    0x7800, 0x0800, 0x3dfb5bcf )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tb1-5.bin",    0x0000, 0x0800, 0xaabd4fb1 )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "tankbatt.clr", 0x0000, 0x0100, 0x1150d613 )
 ROM_END
 
 
 
-struct GameDriver driver_tankbatt =
-{
-	__FILE__,
-	0,
-	"tankbatt",
-	"Tank Battalion",
-	"1980",
-	"Namco",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tankbatt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tankbatt,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1980, tankbatt, 0, tankbatt, tankbatt, 0, ROT90, "Namco", "Tank Battalion" )

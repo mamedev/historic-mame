@@ -159,7 +159,7 @@ static struct MachineDriver machine_driver_skychut =
 ***************************************************************************/
 
 ROM_START( skychut )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1d", 0x1000, 0x0400, 0x30b5ded1 )
 	ROM_LOAD( "sc2d", 0x1400, 0x0400, 0xfd1f4b9e )
 	ROM_LOAD( "sc3d", 0x1800, 0x0400, 0x67ed201e )
@@ -170,7 +170,7 @@ ROM_START( skychut )
 	ROM_LOAD( "sc7",  0x2800, 0x0400, 0xdd4c8e1a )
 	ROM_LOAD( "sc8d", 0x2c00, 0x0400, 0xaca8b798 )
 
-	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sc9d",  0x0000, 0x0400, 0x2101029e )
 	ROM_LOAD( "sc10d", 0x0400, 0x0400, 0x2f81c70c )
 ROM_END

@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define NEW_TIMER 0    /* CPU slice optimize with new timer system */
+#define NEW_TIMER 0	/* CPU slice optimize with new timer system */
 
 #define NAMCOS1_MAX_BANK 0x400
 
@@ -23,11 +23,11 @@ static unsigned char *s1ram;
 static int namcos1_cpu1_banklatch;
 static int namcos1_reset = 0;
 
-/**************************************************************************************
-*											  *
-*	Key emulation (CUS136) Rev1 (Pacmania & Galaga 88)				  *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Key emulation (CUS136) Rev1 (Pacmania & Galaga 88)		       *
+*									       *
+*******************************************************************************/
 
 static int key_id;
 static int key_id_query;
@@ -102,11 +102,11 @@ static void rev1_key_w( int offset, int data ) {
 	}
 }
 
-/**************************************************************************************
-*											  *
-*	Key emulation (CUS136) Rev2 (Dragon , Blazer , woeldcourt)			 *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Key emulation (CUS136) Rev2 (Dragon Spirit, Blazer, World Court)       *
+*									       *
+*******************************************************************************/
 
 static int rev2_key_r( int offset )
 {
@@ -186,11 +186,11 @@ static void rev2_key_w( int offset, int data )
 	}
 }
 
-/**************************************************************************************
-*											  *
-*	Key emulation (CUS136) for Dangerous Seed						  *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Key emulation (CUS136) for Dangerous Seed			       *
+*									       *
+*******************************************************************************/
 
 static int dangseed_key_r( int offset ) {
 //	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
@@ -228,11 +228,11 @@ static void dangseed_key_w( int offset, int data ) {
 	}
 }
 
-/**************************************************************************************
-*											  *
-*	Key emulation (CUS136) for Dragon Spirit							      *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Key emulation (CUS136) for Dragon Spirit			       *
+*									       *
+*******************************************************************************/
 
 static int dspirit_key_r( int offset )
 {
@@ -328,11 +328,11 @@ static void dspirit_key_w( int offset, int data )
 	}
 }
 
-/**************************************************************************************
-*											  *
-*	Key emulation (CUS136) for Blazer									      *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Key emulation (CUS136) for Blazer				       *
+*									       *
+*******************************************************************************/
 
 static int blazer_key_r( int offset )
 {
@@ -409,13 +409,12 @@ static void blazer_key_w( int offset, int data )
 	}
 }
 
-/**************************************************************************************
-*											  *
-*	Banking emulation (CUS117)							  *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Banking emulation (CUS117)					       *
+*									       *
+*******************************************************************************/
 
-#if 1
 static int soundram_r( int offset)
 {
 	if(offset<0x100)
@@ -423,10 +422,9 @@ static int soundram_r( int offset)
 	if(offset<0x140)
 		return namcos1_sound_r(offset-0x100);
 
-	/* sahred ram */
+	/* shared ram */
 	return namco_wavedata[offset];
 }
-#endif
 
 static void soundram_w( int offset, int data )
 {
@@ -440,7 +438,7 @@ static void soundram_w( int offset, int data )
 		namcos1_sound_w(offset-0x100,data);
 		return;
 	}
-	/* sahred ram */
+	/* shared ram */
 	namco_wavedata[offset] = data;
 
 	//if(offset>=0x1000 && errorlog)
@@ -473,7 +471,7 @@ typedef void (*handler_w)(int offset, int data);
 typedef struct {
 	handler_r	bank_handler_r;
 	handler_w	bank_handler_w;
-	int			bank_offset;
+	int		bank_offset;
 	unsigned char *bank_pointer;
 } bankhandler;
 
@@ -481,7 +479,7 @@ static bankhandler namcos1_bank_element[NAMCOS1_MAX_BANK];
 
 /* This is where we store our handlers */
 /* 2 cpus with 8 banks of 8k each      */
-static bankhandler		namcos1_banks[2][8];
+static bankhandler namcos1_banks[2][8];
 
 /* Main bankswitching routine */
 void namcos1_bankswitch_w( int offset, int data ) {
@@ -580,11 +578,11 @@ MW_HANDLER(1,5)
 MW_HANDLER(1,6)
 #undef MW_HANDLER
 
-/**************************************************************************************
-*											  *
-*	63701 MCU emulation (CUS64)							  *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	63701 MCU emulation (CUS64)					       *
+*									       *
+*******************************************************************************/
 
 static int mcu_patch_data;
 
@@ -610,11 +608,11 @@ void namcos1_cpu_control_w( int offset, int data )
 	}
 }
 
-/**************************************************************************************
-*											  *
-*	Sound banking emulation (CUS121)						  *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Sound banking emulation (CUS121)				       *
+*									       *
+*******************************************************************************/
 
 void namcos1_sound_bankswitch_w( int offset, int data )
 {
@@ -624,11 +622,11 @@ void namcos1_sound_bankswitch_w( int offset, int data )
 	cpu_setbank( 1, &RAM[ 0x0c000 + ( 0x4000 * bank ) ] );
 }
 
-/**************************************************************************************
-*											  *
-*	CPU idling spinlock routine
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	CPU idling spinlock routine					       *
+*									       *
+*******************************************************************************/
 static unsigned char *sound_spinlock_ram;
 static int sound_spinlock_pc;
 
@@ -640,11 +638,11 @@ static int namcos1_sound_spinlock_r(int offset)
 	return *sound_spinlock_ram;
 }
 
-/**************************************************************************************
-*											  *
-*	MCU banking emulation and patch
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	MCU banking emulation and patch 				       *
+*									       *
+*******************************************************************************/
 
 /* mcu banked rom area select */
 void namcos1_mcu_bankswitch_w(int offset,int data)
@@ -654,11 +652,11 @@ void namcos1_mcu_bankswitch_w(int offset,int data)
 	switch(data&0xfc)
 	{
 	case 0xf8: addr = 0x10000; break; /* bit 2 : ROM 0 */
-	case 0xf4: addr = 0x30000; break; /* bit 3 : ROM 0 */
-	case 0xec: addr = 0x50000; break; /* bit 4 : ROM 1 */
-	case 0xdc: addr = 0x70000; break; /* bit 5 : ROM 2 */
-	case 0xbc: addr = 0x90000; break; /* bit 6 : ROM 3 */
-	case 0x7c: addr = 0xa0000; break; /* bit 7 : ROM 4 */
+	case 0xf4: addr = 0x30000; break; /* bit 3 : ROM 1 */
+	case 0xec: addr = 0x50000; break; /* bit 4 : ROM 2 */
+	case 0xdc: addr = 0x70000; break; /* bit 5 : ROM 3 */
+	case 0xbc: addr = 0x90000; break; /* bit 6 : ROM 4 */
+	case 0x7c: addr = 0xb0000; break; /* bit 7 : ROM 5 */
 	default:   addr = 0x100000; /* illegal */
 	}
 	/* bit 0-1 : address line A15-A16 */
@@ -672,8 +670,8 @@ void namcos1_mcu_bankswitch_w(int offset,int data)
 	cpu_setbank( 4, memory_region(REGION_CPU4)+addr );
 }
 
-/* This pont This is very obscure, but i havent found any better way yet. */
-/* Works with all games so far. 								*/
+/* This point is very obscure, but i havent found any better way yet. */
+/* Works with all games so far. 				      */
 
 /* patch points of memory address */
 /* CPU0/1 bank[17f][1000] */
@@ -695,34 +693,28 @@ extern void mwh_bank3(int _address,int _data);
 	mwh_bank3( offset, data );
 }
 
-/**************************************************************************************
-*											  *
-*	Initialization									  *
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	Initialization							       *
+*									       *
+*******************************************************************************/
 
 static int namcos1_setopbase_0 (int pc)
 {
 	int bank = (pc>>13)&7;
 	OP_RAM = OP_ROM = (namcos1_banks[0][bank].bank_pointer) - (bank<<13);
-#if 0 /* EHC 11/08/99 - No longer needed due to correct key emulation */
-	/* hack for escape DragonSpirit lockup after game over */
-	/* b4e0:JSR $0002				       */
-	if(pc==0x02)
-		cpu_writemem16(0x0002,0x39); /* RTS */
-#endif
-	/* memory.c output warning - op-code execute on mapped i/o */
-	/* but,It is neesarry to continue cpu_setOPbase16 function */
-	/* for update current operationhardware(ophw) code	   */
+	/* memory.c output warning - op-code execute on mapped i/o  */
+	/* but it is necessary to continue cpu_setOPbase16 function */
+	/* for update current operationhardware(ophw) code	    */
 	return pc;
 }
 
 static int namcos1_setopbase_1 (int pc) {
 	int bank = (pc>>13)&7;
 	OP_RAM = OP_ROM = (namcos1_banks[1][bank].bank_pointer) - (bank<<13);
-	/* memory.c output warning - op-code execute on mapped i/o */
-	/* but,It is neesarry to continue cpu_setOPbase16 function */
-	/* for update current operationhardware(ophw) code	   */
+	/* memory.c output warning - op-code execute on mapped i/o  */
+	/* but it is necessary to continue cpu_setOPbase16 function */
+	/* for update current operationhardware(ophw) code	    */
 	return pc;
 }
 
@@ -752,8 +744,7 @@ static void namcos1_install_rom_bank(int start,int end,int size,int offset)
 	}
 }
 
-static void namcos1_build_banks(/* int *romsize_maps,*/
-			   handler_r key_r,handler_w key_w)
+static void namcos1_build_banks(handler_r key_r,handler_w key_w)
 {
 	int i;
 
@@ -772,12 +763,10 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	namcos1_install_bank(0x178,0x17b,namcos1_videoram_r,namcos1_videoram_w,0,0);
 	/* key chip bank (rev1_key_w / rev2_key_w ) */
 	namcos1_install_bank(0x17c,0x17c,key_r,key_w,0,0);
-	/* namcos1_install_bank(0x17c,0x17c,0,key_w,0,key); */
 	/* RAM 1 banks display controll , playfields , sprite */
 	namcos1_install_bank(0x17e,0x17e,0,namcos1_videocontroll_w,0,&s1ram[0x8000]);
 	/* RAM 1 shared ram , PSG device */
 	namcos1_install_bank(0x17f,0x17f,soundram_r,soundram_w,0x0000,namco_wavedata);
-	//namcos1_install_bank(0x17f,0x17f,0,soundram_w,0x0000,namco_wavedata);
 	/* RAM3 */
 	namcos1_install_bank(0x180,0x183,0,0,0,&s1ram[0xc000]);
 	/* PRG0 */
@@ -816,12 +805,12 @@ void init_namcos1( void ) {
 	cpu_setactivecpu( 0 );
 	namcos1_bankswitch_w( 0x0e00, 0x03 ); /* bank7 = 0x3ff(PRG7) */
 	namcos1_bankswitch_w( 0x0e01, 0xff );
-#if 1
+
 	/* Prepare code for Cpu 1 */
 	cpu_setactivecpu( 1 );
 	namcos1_bankswitch_w( 0x0e00, 0x03);
 	namcos1_bankswitch_w( 0x0e01, 0xff);
-#endif
+
 	namcos1_cpu1_banklatch = 0x03ff;
 
 	/* reset starting Cpu */
@@ -843,17 +832,17 @@ void init_namcos1( void ) {
 	/* mcu patch data clear */
 	mcu_patch_data = 0;
 }
-/**************************************************************************************
-*											  *
-*	driver specific initialize routine
-*											  *
-**************************************************************************************/
+/*******************************************************************************
+*									       *
+*	driver specific initialize routine				       *
+*									       *
+*******************************************************************************/
 struct namcos1_slice_timer
 {
 	int sync_cpu;	/* synchronus cpu attribute */
 	int sliceHz;	/* slice cycle		    */
 	int delayHz;	/* delay>=0 : delay cycle   */
-					/* delay<0  : slide cycle   */
+			/* delay<0  : slide cycle   */
 };
 
 struct namcos1_specific
@@ -864,10 +853,8 @@ struct namcos1_specific
 	handler_w key_w;
 	/* cpu slice timer */
 	const struct namcos1_slice_timer *slice_timer;
-	/* optimiaze flag , use tilemap for playfield */
+	/* optimize flag , use tilemap for playfield */
 	int tilemap_use;
-	/* start bank number */
-//	int cpu0_start_bank , cpu1_start_bank;
 };
 
 static void namcos1_driver_init(const struct namcos1_specific *specific )
@@ -886,7 +873,7 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	cpu_setOPbaseoverride( 0,namcos1_setopbase_0 );
 	cpu_setOPbaseoverride( 1,namcos1_setopbase_1 );
 
-	/* sound cpu speedup optimize (auto ditect) */
+	/* sound cpu speedup optimize (auto detect) */
 	{
 		unsigned char *RAM = memory_region(REGION_CPU3); /* sound cpu */
 		int addr,flag_ptr;
@@ -930,7 +917,7 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 
 #if NEW_TIMER
 /* normaly CPU slice optimize */
-/* slice oeder is 0:2:1:x:0:3:1:x */
+/* slice order is 0:2:1:x:0:3:1:x */
 static const struct namcos1_slice_timer normal_slice[]={
 	{ SYNC_2CPU(0,1),60*20,-60*20*2 },	/* CPU 0,1 20/vblank , slide slice */
 	{ SYNC_2CPU(2,3),60*5,-(60*5*2+60*20*4) },	/* CPU 2,3 10/vblank */
@@ -940,65 +927,61 @@ static const struct namcos1_slice_timer normal_slice[]={
 static const struct namcos1_slice_timer normal_slice[]={{0}};
 #endif
 
-/**************************************************************************************
-*	Shadowland / Youkai Douchuuki specific						  *
-**************************************************************************************/
+/***********************************************************************
+*	Shadowland / Youkai Douchuuki specific			       *
+***********************************************************************/
 
 void init_shadowld( void )
 {
 	const struct namcos1_specific shadowld_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&shadowld_specific);
 }
 
-/**************************************************************************************
-*	Dragon Spirit specific								 *
-**************************************************************************************/
+/***********************************************************************
+*	Dragon Spirit specific					       *
+***********************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
 void init_dspirit( void )
 {
-	/* sometime sound stopped */
 	const struct namcos1_specific dspirit_specific=
 	{
-		0x00,0x36,							/* key query , key id */
-		dspirit_key_r,dspirit_key_w,		/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x36,			/* key query , key id */
+		dspirit_key_r,dspirit_key_w,	/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&dspirit_specific);
 }
 
 #if 0
-/**************************************************************************************
-*	Quester specific							   *
-**************************************************************************************/
+/*******************************************************************************
+*	Quester specific						       *
+*******************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
 void init_quester( void )
 {
 	const struct namcos1_specific quester_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&quester_specific);
 }
 #endif
 
-/**************************************************************************************
-*	Blazer specific 									  *
-**************************************************************************************/
+/*******************************************************************************
+*	Blazer specific 						       *
+*******************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
 
@@ -1006,132 +989,124 @@ void init_blazer( void )
 {
 	const struct namcos1_specific blazer_specific=
 	{
-		0x00,0x13,							/* key query , key id */
-		blazer_key_r,blazer_key_w,			/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x13,			/* key query , key id */
+		blazer_key_r,blazer_key_w,	/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&blazer_specific);
 }
 
-/**************************************************************************************
-*	Pacmania / Pacmania (japan) specific								     *
-**************************************************************************************/
+/*******************************************************************************
+*	Pacmania / Pacmania (Japan) specific				       *
+*******************************************************************************/
 void init_pacmania( void )
 {
 	const struct namcos1_specific pacmania_specific=
 	{
-		0x4b,0x12,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x4b,0x12,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&pacmania_specific);
 }
 
-/**************************************************************************************
-*	Galaga 88 / Galaga 88 (japan) specific								       *
-**************************************************************************************/
+/*******************************************************************************
+*	Galaga 88 / Galaga 88 (Japan) specific				       *
+*******************************************************************************/
 void init_galaga88( void )
 {
 	const struct namcos1_specific galaga88_specific=
 	{
-		0x2d,0x31,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x2d,0x31,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&galaga88_specific);
 }
 
 #if 0
-/**************************************************************************************
-*	World Stadium specific								       *
-**************************************************************************************/
+/*******************************************************************************
+*	World Stadium specific						       *
+*******************************************************************************/
 void init_wstadium( void )
 {
-	const struct namcos1_specifi wstadium_specific=
+	const struct namcos1_specific wstadium_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&wstadium_specific);
 }
 #endif
 
-/**************************************************************************************
-*	Berabohman specific								    *
-**************************************************************************************/
+/*******************************************************************************
+*	Berabohman specific						       *
+*******************************************************************************/
 void init_berabohm( void )
 {
 	const struct namcos1_specific berabohm_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&berabohm_specific);
 }
 
-/**************************************************************************************
-*	Alice in Wonderland / Merhen Maze specific					  *
-**************************************************************************************/
+/*******************************************************************************
+*	Alice in Wonderland / Marchen Maze specific			       *
+*******************************************************************************/
 void init_alice( void )
 {
 	const struct namcos1_specific alice_specific=
 	{
-		0x5b,0x25,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03ef						/* start bank	*/
+		0x5b,0x25,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&alice_specific);
 }
 
-/**************************************************************************************
-*	Bakutotsu Kijuutei specific								    *
-**************************************************************************************/
+/*******************************************************************************
+*	Bakutotsu Kijuutei specific					       *
+*******************************************************************************/
 void init_bakutotu( void )
 {
 	const struct namcos1_specific bakutotu_specific=
 	{
-		0x03,0x22,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fe						/* start bank	*/
+		0x03,0x22,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&bakutotu_specific);
 }
 
-/**************************************************************************************
-*	World Court specific								     *
-**************************************************************************************/
+/*******************************************************************************
+*	World Court specific						       *
+*******************************************************************************/
 void init_wldcourt( void )
 {
 	const struct namcos1_specific worldcourt_specific=
 	{
-		0x00,0x35,							/* key query , key id */
-		rev2_key_r,rev2_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03f8						/* start bank	*/
+		0x00,0x35,			/* key query , key id */
+		rev2_key_r,rev2_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&worldcourt_specific);
 }
 
-/**************************************************************************************
-*	Splatter House specific 							  *
-**************************************************************************************/
+/*******************************************************************************
+*	Splatter House specific 					       *
+*******************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
 
@@ -1139,115 +1114,108 @@ void init_splatter( void )
 {
 	const struct namcos1_specific splatter_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev2_key_r,rev2_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x037f						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev2_key_r,rev2_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&splatter_specific);
 }
 
 #if 0
-/**************************************************************************************
-*	Face Off specific							    *
-**************************************************************************************/
+/*******************************************************************************
+*	Face Off specific						       *
+*******************************************************************************/
 void init_faceoff( void )
 {
 	const struct namcos1_specific faceoff_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&faceoff_specific);
 }
 #endif
 
-/**************************************************************************************
-*	Rompers specific							   *
-**************************************************************************************/
+/*******************************************************************************
+*	Rompers specific						       *
+*******************************************************************************/
 void init_rompers( void )
 {
 	const struct namcos1_specific rompers_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fd						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&rompers_specific);
 	key[0x70] = 0xb6;
 }
 
-/**************************************************************************************
-*	Blast Off specific							     *
-**************************************************************************************/
+/*******************************************************************************
+*	Blast Off specific						       *
+*******************************************************************************/
 void init_blastoff( void )
 {
 	const struct namcos1_specific blastoff_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03f7						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&blastoff_specific);
 	key[0] = 0xb7;
 }
 
 #if 0
-/**************************************************************************************
-*	World Stadium 89 specific							*
-**************************************************************************************/
+/*******************************************************************************
+*	World Stadium 89 specific					       *
+*******************************************************************************/
 void init_ws89( void )
 {
 	const struct namcos1_specific ws89_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&ws89_specific);
 }
 #endif
 
-/**************************************************************************************
-*	Dangerous Seed specific 							  *
-**************************************************************************************/
+/*******************************************************************************
+*	Dangerous Seed specific 					       *
+*******************************************************************************/
 void init_dangseed( void )
 {
 	const struct namcos1_specific dangseed_specific=
 	{
-		0x00,0x34,							/* key query , key id */
-		dangseed_key_r,dangseed_key_w,		/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x34,			/* key query , key id */
+		dangseed_key_r,dangseed_key_w,	/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&dangseed_specific);
 }
 
-/**************************************************************************************
-*	World Stadium 90 specific							  *
-**************************************************************************************/
+/*******************************************************************************
+*	World Stadium 90 specific					       *
+*******************************************************************************/
 /* Theres is an id check followed by some key nightmare */
 
 void init_ws90( void )
 {
 	const struct namcos1_specific ws90_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&ws90_specific);
 
@@ -1255,18 +1223,17 @@ void init_ws90( void )
 	key[0x40] = 0x36;
 }
 
-/**************************************************************************************
-*	Pistol Daimyo no Bouken specific							 *
-**************************************************************************************/
+/*******************************************************************************
+*	Pistol Daimyo no Bouken specific				       *
+*******************************************************************************/
 void init_pistoldm( void )
 {
 	const struct namcos1_specific pistoldm_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03f1						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&pistoldm_specific);
 	//key[0x17] = ;
@@ -1274,18 +1241,17 @@ void init_pistoldm( void )
 	key[0x43] = 0x35;
 }
 
-/**************************************************************************************
-*	PSouko Ban DX specific							       *
-**************************************************************************************/
+/*******************************************************************************
+*	Souko Ban DX specific						       *
+*******************************************************************************/
 void init_soukobdx( void )
 {
 	const struct namcos1_specific soukobdx_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&soukobdx_specific);
 	//key[0x27] = ;
@@ -1293,18 +1259,17 @@ void init_soukobdx( void )
 	key[0x43] = 0x37;
 }
 
-/**************************************************************************************
-*	Tank Force specific							    *
-**************************************************************************************/
+/*******************************************************************************
+*	Tank Force specific						       *
+*******************************************************************************/
 void init_tankfrce( void )
 {
 	const struct namcos1_specific tankfrce_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,						/* CPU slice normal */
-		1									/* use tilemap flag : speedup optimize */
-//		0x03ff,0x03fb						/* start bank	*/
+		0x00,0x00,			/* key query , key id */
+		rev1_key_r,rev1_key_w,		/* key handler */
+		normal_slice,			/* CPU slice normal */
+		1				/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&tankfrce_specific);
 	//key[0x57] = ;

@@ -266,17 +266,17 @@ static struct MachineDriver machine_driver_pontoon =
 ***************************************************************************/
 
 ROM_START( pontoon )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )         /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )         /* 64k for code */
 	ROM_LOAD( "ponttekh.001",   0x0000, 0x4000, 0x1f8c1b38 )
 	ROM_LOAD( "ponttekh.002",   0x4000, 0x2000, 0xbefb4f48 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ponttekh.003",   0x0000, 0x2000, 0xa6a91b3d )
 	ROM_LOAD( "ponttekh.004",   0x2000, 0x2000, 0x976ed924 )
 	ROM_LOAD( "ponttekh.005",   0x4000, 0x2000, 0x2b8e8ca7 )
 	ROM_LOAD( "ponttekh.006",   0x6000, 0x2000, 0x6bc23965 )
 
-	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pon24s10.003",   0x0000, 0x0100, 0x4623b7f3 )  /* red component */
 	ROM_LOAD( "pon24s10.002",   0x0100, 0x0100, 0x117e1b67 )  /* green component */
 	ROM_LOAD( "pon24s10.001",   0x0200, 0x0100, 0xc64ecee8 )  /* blue component */

@@ -1265,7 +1265,7 @@ static struct MachineDriver machine_driver_startrek =
 
 
 ROM_START( spacfury ) /* Revision C */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
         ROM_LOAD( "969c.u25",     0x0000, 0x0800, 0x411207f2 )
         ROM_LOAD( "960c.u1",      0x0800, 0x0800, 0xd071ab7e )
         ROM_LOAD( "961c.u2",      0x1000, 0x0800, 0xaebc7b97 )
@@ -1279,7 +1279,7 @@ ROM_START( spacfury ) /* Revision C */
 ROM_END
 
 ROM_START( spacfura ) /* Revision A */
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
         ROM_LOAD( "969a.u25",     0x0000, 0x0800, 0x896a615c )
         ROM_LOAD( "960a.u1",      0x0800, 0x0800, 0xe1ea7964 )
         ROM_LOAD( "961a.u2",      0x1000, 0x0800, 0xcdb04233 )
@@ -1293,7 +1293,7 @@ ROM_START( spacfura ) /* Revision A */
 ROM_END
 
 ROM_START( zektor )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1611.cpu",     0x0000, 0x0800, 0x6245aa23 )
 	ROM_LOAD( "1586.rom",     0x0800, 0x0800, 0xefeb4fb5 )
 	ROM_LOAD( "1587.rom",     0x1000, 0x0800, 0xdaa6c25c )
@@ -1319,7 +1319,7 @@ ROM_START( zektor )
 ROM_END
 
 ROM_START( tacscan )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1711a",        0x0000, 0x0800, 0x0da13158 )
 	ROM_LOAD( "1670c",        0x0800, 0x0800, 0x98de6fd5 )
 	ROM_LOAD( "1671a",        0x1000, 0x0800, 0xdc400074 )
@@ -1345,7 +1345,7 @@ ROM_START( tacscan )
 ROM_END
 
 ROM_START( elim2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu_u25.969",  0x0000, 0x0800, 0x411207f2 )
 	ROM_LOAD( "1333",         0x0800, 0x0800, 0xfd2a2916 )
 	ROM_LOAD( "1334",         0x1000, 0x0800, 0x79eb5548 )
@@ -1363,7 +1363,7 @@ ROM_START( elim2 )
 ROM_END
 
 ROM_START( elim2a )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu_u25.969",  0x0000, 0x0800, 0x411207f2 )
 	ROM_LOAD( "1158",         0x0800, 0x0800, 0xa40ac3a5 )
 	ROM_LOAD( "1159",         0x1000, 0x0800, 0xff100604 )
@@ -1381,7 +1381,7 @@ ROM_START( elim2a )
 ROM_END
 
 ROM_START( elim4 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1390_cpu.u25", 0x0000, 0x0800, 0x97010c3e )
 	ROM_LOAD( "1347",         0x0800, 0x0800, 0x657d7320 )
 	ROM_LOAD( "1348",         0x1000, 0x0800, 0xb15fe578 )
@@ -1400,7 +1400,7 @@ ROM_START( elim4 )
 ROM_END
 
 ROM_START( startrek )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu1873",      0x0000, 0x0800, 0xbe46f5d9 )
 	ROM_LOAD( "1848",         0x0800, 0x0800, 0x65e3baf3 )
 	ROM_LOAD( "1849",         0x1000, 0x0800, 0x8169fd3d )

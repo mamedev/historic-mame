@@ -279,32 +279,32 @@ static struct MachineDriver machine_driver_blockout =
 ***************************************************************************/
 
 ROM_START( blockout )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
 	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x5984d5a2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
 ROM_START( blckout2 )
-	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "29a0",         0x00000, 0x20000, 0x605f931e )
 	ROM_LOAD_ODD ( "29a1",         0x00000, 0x20000, 0x38f07000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
-	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 

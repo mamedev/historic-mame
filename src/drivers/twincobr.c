@@ -9,6 +9,8 @@ Supported games:
 	Hishou Zame (Flying Shark Japan license)
 	Flying Shark bootleg (USA license)
 
+driver by Quench
+
 Difference between Twin Cobra and Kyukyoko Tiger:
 	T.C. supports two simultaneous players.
 	K.T. supports two players, but only one at a time.
@@ -214,13 +216,6 @@ void twincobr_sharedram_w(int offset,int data);
 extern unsigned char *twincobr_68k_dsp_ram;
 extern unsigned char *twincobr_sharedram;
 extern int intenable;
-
-/**************** High Score stuff ***************/
-static int twinc_scores;
-static int twinc_names;
-static int twinc_levels;
-static int twinc_end;
-static int twinc_vid_test;
 
 
 int twincobr_input_r(int offset)
@@ -917,7 +912,7 @@ static struct YM3812interface ym3812_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_twincobr =
 {
 	/* basic machine hardware */
 	{
@@ -975,39 +970,16 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( twincobr )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "tc16",		0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",		0x00000, 0x10000, 0x41be6978 )
 	ROM_LOAD_EVEN( "tc15",		0x20000, 0x08000, 0x3a646618 )
 	ROM_LOAD_ODD ( "tc13",		0x20000, 0x08000, 0xd7d1e317 )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
-	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
-	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
-	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
-	ROM_LOAD( "tc01",			0x00000, 0x10000, 0x15b3991d )
-	ROM_LOAD( "tc02",			0x10000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc06",			0x20000, 0x10000, 0x13daeac8 )
-	ROM_LOAD( "tc05",			0x30000, 0x10000, 0x8cc79357 )
-
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
-	ROM_LOAD( "tc07",			0x00000, 0x08000, 0xb5d48389 )
-	ROM_LOAD( "tc08",			0x08000, 0x08000, 0x97f20fdc )
-	ROM_LOAD( "tc09",			0x10000, 0x08000, 0x170c01db )
-	ROM_LOAD( "tc10",			0x18000, 0x08000, 0x44f5accd )
-
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
-	ROM_LOAD( "tc20",			0x00000, 0x10000, 0xcb4092b8 )
-	ROM_LOAD( "tc19",			0x10000, 0x10000, 0x9cb8675e )
-	ROM_LOAD( "tc18",			0x20000, 0x10000, 0x806fb374 )
-	ROM_LOAD( "tc17",			0x30000, 0x10000, 0x4264bff8 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "tc12",			0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
 	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
 /*  The following are from a bootleg board.
@@ -1016,7 +988,30 @@ ROM_START( twincobr )
 	ROM_LOAD_ODD ( "tc2a",		0x0000, 0x0800, 0xd6d878c9 )
 */
 
-	ROM_REGIONX( 0x260, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
+	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_LOAD( "tc01",			0x00000, 0x10000, 0x15b3991d )
+	ROM_LOAD( "tc02",			0x10000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc06",			0x20000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",			0x30000, 0x10000, 0x8cc79357 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_LOAD( "tc07",			0x00000, 0x08000, 0xb5d48389 )
+	ROM_LOAD( "tc08",			0x08000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",			0x10000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",			0x18000, 0x08000, 0x44f5accd )
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "tc20",			0x00000, 0x10000, 0xcb4092b8 )
+	ROM_LOAD( "tc19",			0x10000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",			0x20000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",			0x30000, 0x10000, 0x4264bff8 )
+
+	ROM_REGION( 0x260, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "82s129.d3",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "82s129.d4",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "82s123.d2",	0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -1025,43 +1020,43 @@ ROM_START( twincobr )
 ROM_END
 
 ROM_START( twincobu )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "tc16",			0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",			0x00000, 0x10000, 0x41be6978 )
 	ROM_LOAD_EVEN( "tcbra26.bin",	0x20000, 0x08000, 0xbdd00ba4 )
 	ROM_LOAD_ODD ( "tcbra27.bin",	0x20000, 0x08000, 0xed600907 )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "b30-05",				0x00000, 0x08000, 0x1a8f1e10 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
+
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
 	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
 	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "tc01",			0x00000, 0x10000, 0x15b3991d )
 	ROM_LOAD( "tc02",			0x10000, 0x10000, 0xd9e2e55d )
 	ROM_LOAD( "tc06",			0x20000, 0x10000, 0x13daeac8 )
 	ROM_LOAD( "tc05",			0x30000, 0x10000, 0x8cc79357 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "tc07",			0x00000, 0x08000, 0xb5d48389 )
 	ROM_LOAD( "tc08",			0x08000, 0x08000, 0x97f20fdc )
 	ROM_LOAD( "tc09",			0x10000, 0x08000, 0x170c01db )
 	ROM_LOAD( "tc10",			0x18000, 0x08000, 0x44f5accd )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
 	ROM_LOAD( "tc20",			0x00000, 0x10000, 0xcb4092b8 )
 	ROM_LOAD( "tc19",			0x10000, 0x10000, 0x9cb8675e )
 	ROM_LOAD( "tc18",			0x20000, 0x10000, 0x806fb374 )
 	ROM_LOAD( "tc17",			0x30000, 0x10000, 0x4264bff8 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "b30-05",				0x00000, 0x08000, 0x1a8f1e10 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
-
-	ROM_REGIONX( 0x260, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x260, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "82s129.d3",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "82s129.d4",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "82s123.d2",	0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -1070,43 +1065,43 @@ ROM_START( twincobu )
 ROM_END
 
 ROM_START( ktiger )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x30000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "tc16",		0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",		0x00000, 0x10000, 0x41be6978 )
 	ROM_LOAD_EVEN( "b30-02",	0x20000, 0x08000, 0x1d63e9c4 )
 	ROM_LOAD_ODD ( "b30-04",	0x20000, 0x08000, 0x03957a30 )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_LOAD( "b30-05",			0x00000, 0x08000, 0x1a8f1e10 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD_EVEN( "dsp-22",	0x0000, 0x0800, BADCRC( 0x8a1d48d9 ) )
+	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, BADCRC( 0x33d99bc2 ) )
+
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
 	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
 	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "tc01",			0x00000, 0x10000, 0x15b3991d )
 	ROM_LOAD( "tc02",			0x10000, 0x10000, 0xd9e2e55d )
 	ROM_LOAD( "tc06",			0x20000, 0x10000, 0x13daeac8 )
 	ROM_LOAD( "tc05",			0x30000, 0x10000, 0x8cc79357 )
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "tc07",			0x00000, 0x08000, 0xb5d48389 )
 	ROM_LOAD( "tc08",			0x08000, 0x08000, 0x97f20fdc )
 	ROM_LOAD( "tc09",			0x10000, 0x08000, 0x170c01db )
 	ROM_LOAD( "tc10",			0x18000, 0x08000, 0x44f5accd )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
 	ROM_LOAD( "tc20",			0x00000, 0x10000, 0xcb4092b8 )
 	ROM_LOAD( "tc19",			0x10000, 0x10000, 0x9cb8675e )
 	ROM_LOAD( "tc18",			0x20000, 0x10000, 0x806fb374 )
 	ROM_LOAD( "tc17",			0x30000, 0x10000, 0x4264bff8 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
-	ROM_LOAD( "b30-05",			0x00000, 0x08000, 0x1a8f1e10 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp-22",	0x0000, 0x0800, BADCRC( 0x8a1d48d9 ) )
-	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, BADCRC( 0x33d99bc2 ) )
-
-	ROM_REGIONX( 0x260, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x260, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "82s129.d3",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "82s129.d4",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "82s123.d2",	0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -1115,41 +1110,14 @@ ROM_START( ktiger )
 ROM_END
 
 ROM_START( fshark )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "b02_18-1.rom",	0x00000, 0x10000, 0x04739e02 )
 	ROM_LOAD_ODD ( "b02_17-1.rom",	0x00000, 0x10000, 0xfd6ef7a8 )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
-	ROM_LOAD( "b02_07-1.rom",	0x00000, 0x04000, 0xe669f80e )
-	ROM_LOAD( "b02_06-1.rom",	0x04000, 0x04000, 0x5e53ae47 )
-	ROM_LOAD( "b02_05-1.rom",	0x08000, 0x04000, 0xa8b05bd0 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
-	ROM_LOAD( "b02_12.rom",		0x00000, 0x08000, 0x733b9997 )
-		/* 08000-0ffff not used */
-	ROM_LOAD( "b02_15.rom",		0x10000, 0x08000, 0x8b70ef32 )
-		/* 18000-1ffff not used */
-	ROM_LOAD( "b02_14.rom",		0x20000, 0x08000, 0xf711ba7d )
-		/* 28000-2ffff not used */
-	ROM_LOAD( "b02_13.rom",		0x30000, 0x08000, 0x62532cd3 )
-		/* 38000-3ffff not used */
-
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
-	ROM_LOAD( "b02_08.rom",		0x00000, 0x08000, 0xef0cf49c )
-	ROM_LOAD( "b02_11.rom",		0x08000, 0x08000, 0xf5799422 )
-	ROM_LOAD( "b02_10.rom",		0x10000, 0x08000, 0x4bd099ff )
-	ROM_LOAD( "b02_09.rom",		0x18000, 0x08000, 0x230f1582 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
-	ROM_LOAD( "b02_01.512",		0x00000, 0x10000, 0x2234b424 )
-	ROM_LOAD( "b02_02.512",		0x10000, 0x10000, 0x30d4c9a8 )
-	ROM_LOAD( "b02_03.512",		0x20000, 0x10000, 0x64f3d88f )
-	ROM_LOAD( "b02_04.512",		0x30000, 0x10000, 0x3b23a9fc )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
 	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
 	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x1000, 0x0400, 0x6edb2de8 )
@@ -1170,48 +1138,48 @@ ROM_START( fshark )
 	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x1c00, 0x0400, 0x8246a05c )
 #endif
 
-	ROM_REGIONX( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "b02_07-1.rom",	0x00000, 0x04000, 0xe669f80e )
+	ROM_LOAD( "b02_06-1.rom",	0x04000, 0x04000, 0x5e53ae47 )
+	ROM_LOAD( "b02_05-1.rom",	0x08000, 0x04000, 0xa8b05bd0 )
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_LOAD( "b02_12.rom",		0x00000, 0x08000, 0x733b9997 )
+		/* 08000-0ffff not used */
+	ROM_LOAD( "b02_15.rom",		0x10000, 0x08000, 0x8b70ef32 )
+		/* 18000-1ffff not used */
+	ROM_LOAD( "b02_14.rom",		0x20000, 0x08000, 0xf711ba7d )
+		/* 28000-2ffff not used */
+	ROM_LOAD( "b02_13.rom",		0x30000, 0x08000, 0x62532cd3 )
+		/* 38000-3ffff not used */
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_LOAD( "b02_08.rom",		0x00000, 0x08000, 0xef0cf49c )
+	ROM_LOAD( "b02_11.rom",		0x08000, 0x08000, 0xf5799422 )
+	ROM_LOAD( "b02_10.rom",		0x10000, 0x08000, 0x4bd099ff )
+	ROM_LOAD( "b02_09.rom",		0x18000, 0x08000, 0x230f1582 )
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "b02_01.512",		0x00000, 0x10000, 0x2234b424 )
+	ROM_LOAD( "b02_02.512",		0x10000, 0x10000, 0x30d4c9a8 )
+	ROM_LOAD( "b02_03.512",		0x20000, 0x10000, 0x64f3d88f )
+	ROM_LOAD( "b02_04.512",		0x30000, 0x10000, 0x3b23a9fc )
+
+	ROM_REGION( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "clr2.bpr",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "clr1.bpr",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "clr3.bpr",	0x200, 0x100, 0x016fe2f7 )	/* ?? */
 ROM_END
 
 ROM_START( skyshark )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Main 68K code */
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Main 68K code */
 	ROM_LOAD_EVEN( "18-2",		0x00000, 0x10000, 0x888e90f3 )
 	ROM_LOAD_ODD ( "17-2",		0x00000, 0x10000, 0x066d67be )
 
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
-	ROM_LOAD( "7-2",			0x00000, 0x04000, 0xaf48c4e6 )
-	ROM_LOAD( "6-2",			0x04000, 0x04000, 0x9a29a862 )
-	ROM_LOAD( "5-2",			0x08000, 0x04000, 0xfb7cad55 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
-	ROM_LOAD( "b02_12.rom",		0x00000, 0x08000, 0x733b9997 )
-		/* 08000-0ffff not used */
-	ROM_LOAD( "b02_15.rom",		0x10000, 0x08000, 0x8b70ef32 )
-		/* 18000-1ffff not used */
-	ROM_LOAD( "b02_14.rom",		0x20000, 0x08000, 0xf711ba7d )
-		/* 28000-2ffff not used */
-	ROM_LOAD( "b02_13.rom",		0x30000, 0x08000, 0x62532cd3 )
-		/* 38000-3ffff not used */
-
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
-	ROM_LOAD( "b02_08.rom",		0x00000, 0x08000, 0xef0cf49c )
-	ROM_LOAD( "b02_11.rom",		0x08000, 0x08000, 0xf5799422 )
-	ROM_LOAD( "b02_10.rom",		0x10000, 0x08000, 0x4bd099ff )
-	ROM_LOAD( "b02_09.rom",		0x18000, 0x08000, 0x230f1582 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
-	ROM_LOAD( "b02_01.512",		0x00000, 0x10000, 0x2234b424 )
-	ROM_LOAD( "b02_02.512",		0x10000, 0x10000, 0x30d4c9a8 )
-	ROM_LOAD( "b02_03.512",		0x20000, 0x10000, 0x64f3d88f )
-	ROM_LOAD( "b02_04.512",		0x30000, 0x10000, 0x3b23a9fc )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
 	ROM_LOAD_NIB_HIGH( "82s137-3.mcu",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
 	ROM_LOAD_NIB_LOW ( "82s137-4.mcu",  0x1000, 0x0400, 0x6edb2de8 )
@@ -1232,23 +1200,12 @@ ROM_START( skyshark )
 	ROM_LOAD_NIB_LOW ( "82s137-8.mcu",  0x1c00, 0x0400, 0x8246a05c )
 #endif
 
-	ROM_REGIONX( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
-	ROM_LOAD( "clr2.bpr",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
-	ROM_LOAD( "clr1.bpr",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
-	ROM_LOAD( "clr3.bpr",	0x200, 0x100, 0x016fe2f7 )	/* ?? */
-ROM_END
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "7-2",			0x00000, 0x04000, 0xaf48c4e6 )
+	ROM_LOAD( "6-2",			0x04000, 0x04000, 0x9a29a862 )
+	ROM_LOAD( "5-2",			0x08000, 0x04000, 0xfb7cad55 )
 
-ROM_START( hishouza )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "b02-18.rom",	0x00000, 0x10000, 0x4444bb94 )
-	ROM_LOAD_ODD ( "b02-17.rom",	0x00000, 0x10000, 0xcdac7228 )
-
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
-	ROM_LOAD( "b02-07.rom",		0x00000, 0x04000, 0xc13a775e )
-	ROM_LOAD( "b02-06.rom",		0x04000, 0x04000, 0xad5f1371 )
-	ROM_LOAD( "b02-05.rom",		0x08000, 0x04000, 0x85a7bff6 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "b02_12.rom",		0x00000, 0x08000, 0x733b9997 )
 		/* 08000-0ffff not used */
 	ROM_LOAD( "b02_15.rom",		0x10000, 0x08000, 0x8b70ef32 )
@@ -1258,22 +1215,33 @@ ROM_START( hishouza )
 	ROM_LOAD( "b02_13.rom",		0x30000, 0x08000, 0x62532cd3 )
 		/* 38000-3ffff not used */
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "b02_08.rom",		0x00000, 0x08000, 0xef0cf49c )
 	ROM_LOAD( "b02_11.rom",		0x08000, 0x08000, 0xf5799422 )
 	ROM_LOAD( "b02_10.rom",		0x10000, 0x08000, 0x4bd099ff )
 	ROM_LOAD( "b02_09.rom",		0x18000, 0x08000, 0x230f1582 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
 	ROM_LOAD( "b02_01.512",		0x00000, 0x10000, 0x2234b424 )
 	ROM_LOAD( "b02_02.512",		0x10000, 0x10000, 0x30d4c9a8 )
 	ROM_LOAD( "b02_03.512",		0x20000, 0x10000, 0x64f3d88f )
 	ROM_LOAD( "b02_04.512",		0x30000, 0x10000, 0x3b23a9fc )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "clr2.bpr",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
+	ROM_LOAD( "clr1.bpr",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
+	ROM_LOAD( "clr3.bpr",	0x200, 0x100, 0x016fe2f7 )	/* ?? */
+ROM_END
+
+ROM_START( hishouza )
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Main 68K code */
+	ROM_LOAD_EVEN( "b02-18.rom",	0x00000, 0x10000, 0x4444bb94 )
+	ROM_LOAD_ODD ( "b02-17.rom",	0x00000, 0x10000, 0xcdac7228 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
 	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x1000, 0x0400, 0xdf88e79b ) /* lsb */
 	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x1000, 0x0400, 0xa2094a7f )
@@ -1294,23 +1262,12 @@ ROM_START( hishouza )
 	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x1c00, 0x0400, 0xd3c16c5c )
 #endif
 
-	ROM_REGIONX( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
-	ROM_LOAD( "clr2.bpr",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
-	ROM_LOAD( "clr1.bpr",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
-	ROM_LOAD( "clr3.bpr",	0x200, 0x100, 0x016fe2f7 )	/* ?? */
-ROM_END
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "b02-07.rom",		0x00000, 0x04000, 0xc13a775e )
+	ROM_LOAD( "b02-06.rom",		0x04000, 0x04000, 0xad5f1371 )
+	ROM_LOAD( "b02-05.rom",		0x08000, 0x04000, 0x85a7bff6 )
 
-ROM_START( fsharkbt )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "r18",		0x00000, 0x10000, 0xef30f563 )
-	ROM_LOAD_ODD ( "r17",		0x00000, 0x10000, 0x0e18d25f )
-
-	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
-	ROM_LOAD( "b02_07-1.rom",	0x00000, 0x04000, 0xe669f80e )
-	ROM_LOAD( "b02_06-1.rom",	0x04000, 0x04000, 0x5e53ae47 )
-	ROM_LOAD( "b02_05-1.rom",	0x08000, 0x04000, 0xa8b05bd0 )
-
-	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "b02_12.rom",		0x00000, 0x08000, 0x733b9997 )
 		/* 08000-0ffff not used */
 	ROM_LOAD( "b02_15.rom",		0x10000, 0x08000, 0x8b70ef32 )
@@ -1320,22 +1277,33 @@ ROM_START( fsharkbt )
 	ROM_LOAD( "b02_13.rom",		0x30000, 0x08000, 0x62532cd3 )
 		/* 38000-3ffff not used */
 
-	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "b02_08.rom",		0x00000, 0x08000, 0xef0cf49c )
 	ROM_LOAD( "b02_11.rom",		0x08000, 0x08000, 0xf5799422 )
 	ROM_LOAD( "b02_10.rom",		0x10000, 0x08000, 0x4bd099ff )
 	ROM_LOAD( "b02_09.rom",		0x18000, 0x08000, 0x230f1582 )
 
-	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
 	ROM_LOAD( "b02_01.512",		0x00000, 0x10000, 0x2234b424 )
 	ROM_LOAD( "b02_02.512",		0x10000, 0x10000, 0x30d4c9a8 )
 	ROM_LOAD( "b02_03.512",		0x20000, 0x10000, 0x64f3d88f )
 	ROM_LOAD( "b02_04.512",		0x30000, 0x10000, 0x3b23a9fc )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "clr2.bpr",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
+	ROM_LOAD( "clr1.bpr",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
+	ROM_LOAD( "clr3.bpr",	0x200, 0x100, 0x016fe2f7 )	/* ?? */
+ROM_END
+
+ROM_START( fsharkbt )
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* Main 68K code */
+	ROM_LOAD_EVEN( "r18",		0x00000, 0x10000, 0xef30f563 )
+	ROM_LOAD_ODD ( "r17",		0x00000, 0x10000, 0x0e18d25f )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
 #ifndef LSB_FIRST
 	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x1000, 0x0400, 0xdf88e79b ) /* lsb */
 	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x1000, 0x0400, 0xa2094a7f )
@@ -1356,7 +1324,34 @@ ROM_START( fsharkbt )
 	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x1c00, 0x0400, 0x3379bbff )
 #endif
 
-	ROM_REGIONX( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "b02_07-1.rom",	0x00000, 0x04000, 0xe669f80e )
+	ROM_LOAD( "b02_06-1.rom",	0x04000, 0x04000, 0x5e53ae47 )
+	ROM_LOAD( "b02_05-1.rom",	0x08000, 0x04000, 0xa8b05bd0 )
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_LOAD( "b02_12.rom",		0x00000, 0x08000, 0x733b9997 )
+		/* 08000-0ffff not used */
+	ROM_LOAD( "b02_15.rom",		0x10000, 0x08000, 0x8b70ef32 )
+		/* 18000-1ffff not used */
+	ROM_LOAD( "b02_14.rom",		0x20000, 0x08000, 0xf711ba7d )
+		/* 28000-2ffff not used */
+	ROM_LOAD( "b02_13.rom",		0x30000, 0x08000, 0x62532cd3 )
+		/* 38000-3ffff not used */
+
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_LOAD( "b02_08.rom",		0x00000, 0x08000, 0xef0cf49c )
+	ROM_LOAD( "b02_11.rom",		0x08000, 0x08000, 0xf5799422 )
+	ROM_LOAD( "b02_10.rom",		0x10000, 0x08000, 0x4bd099ff )
+	ROM_LOAD( "b02_09.rom",		0x18000, 0x08000, 0x230f1582 )
+
+	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "b02_01.512",		0x00000, 0x10000, 0x2234b424 )
+	ROM_LOAD( "b02_02.512",		0x10000, 0x10000, 0x30d4c9a8 )
+	ROM_LOAD( "b02_03.512",		0x20000, 0x10000, 0x64f3d88f )
+	ROM_LOAD( "b02_04.512",		0x30000, 0x10000, 0x3b23a9fc )
+
+	ROM_REGION( 0x300, REGION_PROMS )	/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "clr2.bpr",	0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "clr1.bpr",	0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "clr3.bpr",	0x200, 0x100, 0x016fe2f7 )	/* ?? */
@@ -1364,7 +1359,7 @@ ROM_END
 
 
 
-static void fsharkbt_decode(void)
+static void init_fshark(void)
 {
 	int A;
 	unsigned char datamsb;
@@ -1386,195 +1381,12 @@ static void fsharkbt_decode(void)
 	}
 }
 
-void twincobr_hiscore_init_tests(void)
-{
-	/* Initialise hi score variables. Tables are contiguous */
-	/* Memory is cleared out in the machine driver before hi score is tested */
-
-	twinc_scores = 0x15a2;  	/* 54 * first four bytes are the top of screen */
-								/*		screen hi score. The hi score table */
-								/*		then starts after that */
-	twinc_names  = 0x15f6;		/* f0 * start of names table */
-	twinc_levels = 0x16e6;		/* 28 * start of level acheived table */
-	twinc_end    = 0x170e;		/* 		end of table */
-	twinc_vid_test = 0x5803;	/* green digit 3 in 30000 from screen memory to test */
-}
-void ktiger_hiscore_init_tests(void)
-{
-	twinc_scores = 0x1280;
-	twinc_names  = 0x12d4;
-	twinc_levels = 0x13c4;
-	twinc_end    = 0x13ec;
-	twinc_vid_test = 0x3803;	/* red 3 */
-}
-void fshark_hiscore_init_tests(void)
-{
-	twinc_scores = 0x016a;
-	twinc_names  = 0x01be;
-	twinc_levels = 0x02ae;
-	twinc_end    = 0x02d6;
-	twinc_vid_test = 0x0003;	/* white 3 */
-
-	fsharkbt_decode();
-}
 
 
-
-struct GameDriver driver_twincobr =
-{
-	__FILE__,
-	0,
-	"twincobr",
-	"Twin Cobra (World)",
-	"1987",
-	"[Toaplan] Taito Corporation",
-	"Quench\nNicola Salmoria",
-	0,
-	&machine_driver,
-	twincobr_hiscore_init_tests,
-	rom_twincobr,
-	0, 0,
-	0,
-	0,
-	input_ports_twincobr,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_twincobu =
-{
-	__FILE__,
-	&driver_twincobr,
-	"twincobu",
-	"Twin Cobra (US)",
-	"1987",
-	"[Toaplan] Taito America Corporation (Romstar license)",
-	"Quench\nNicola Salmoria",
-	0,
-	&machine_driver,
-	twincobr_hiscore_init_tests,
-	rom_twincobu,
-	0, 0,
-	0,
-	0,
-	input_ports_twincobu,
-	0, 0, 0,
-	ROT270,
-	0, 0
-};
-
-struct GameDriver driver_ktiger =
-{
-	__FILE__,
-	&driver_twincobr,
-	"ktiger",
-	"Kyukyoku Tiger (Japan)",
-	"1987",
-	"[Toaplan] Taito Corporation",
-	"Quench\nNicola Salmoria\nCarl-Henrik (HW Advice)",
-	0,
-	&machine_driver,
-	ktiger_hiscore_init_tests,
-	rom_ktiger,
-	0, 0,
-	0,
-	0,
-	input_ports_ktiger,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_fshark =
-{
-	__FILE__,
-	0,
-	"fshark",
-	"Flying Shark (World)",
-	"1987",
-	"[Toaplan] Taito Corporation",
-	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
-	0,
-	&machine_driver,
-	fshark_hiscore_init_tests,
-
-	rom_fshark,
-	0, 0,
-	0,
-	0,
-	input_ports_fshark,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_skyshark =
-{
-	__FILE__,
-	&driver_fshark,
-	"skyshark",
-	"Sky Shark (US)",
-	"1987",
-	"[Toaplan] Taito America Corporation (Romstar license)",
-	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
-	0,
-	&machine_driver,
-	fshark_hiscore_init_tests,
-
-	rom_skyshark,
-	0, 0,
-	0,
-	0,
-	input_ports_skyshark,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_hishouza =
-{
-	__FILE__,
-	&driver_fshark,
-	"hishouza",
-	"Hishou Zame (Japan)",
-	"1987",
-	"[Toaplan] Taito Corporation",
-	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
-	0,
-	&machine_driver,
-	fshark_hiscore_init_tests,
-
-	rom_hishouza,
-	0, 0,
-	0,
-	0,
-	input_ports_hishouza,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_fsharkbt =
-{
-	__FILE__,
-	&driver_fshark,
-	"fsharkbt",
-	"Flying Shark (bootleg)",
-	"1987",
-	"bootleg",
-	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
-	0,
-	&machine_driver,
-	fshark_hiscore_init_tests,
-
-	rom_fsharkbt,
-	0, 0,
-	0,
-	0,
-	input_ports_skyshark,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
+GAME( 1987, twincobr, 0,        twincobr, twincobr, 0,      ROT270, "[Toaplan] Taito Corporation", "Twin Cobra (World)" )
+GAME( 1987, twincobu, twincobr, twincobr, twincobu, 0,      ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Twin Cobra (US)" )
+GAME( 1987, ktiger,   twincobr, twincobr, ktiger,   0,      ROT270, "[Toaplan] Taito Corporation", "Kyukyoku Tiger (Japan)" )
+GAME( 1987, fshark,   0,        twincobr, fshark,   fshark, ROT270, "[Toaplan] Taito Corporation", "Flying Shark (World)" )
+GAME( 1987, skyshark, fshark,   twincobr, skyshark, fshark, ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Sky Shark (US)" )
+GAME( 1987, hishouza, fshark,   twincobr, hishouza, fshark, ROT270, "[Toaplan] Taito Corporation", "Hishou Zame (Japan)" )
+GAME( 1987, fsharkbt, fshark,   twincobr, skyshark, fshark, ROT270, "bootleg", "Flying Shark (bootleg)" )

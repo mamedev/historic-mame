@@ -485,14 +485,14 @@ static struct MachineDriver machine_driver_cclimber =
 ***************************************************************************/
 
 ROM_START( cclimber )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "cc11",         0x0000, 0x1000, 0x217ec4ff )
 	ROM_LOAD( "cc10",         0x1000, 0x1000, 0xb3c26cef )
 	ROM_LOAD( "cc09",         0x2000, 0x1000, 0x6db0879c )
 	ROM_LOAD( "cc08",         0x3000, 0x1000, 0xf48c5fe3 )
 	ROM_LOAD( "cc07",         0x4000, 0x1000, 0x3e873baf )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
@@ -502,16 +502,16 @@ ROM_START( cclimber )
 	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
 	/* empty hole - Crazy Kong has an additional ROM here */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc02",         0x0000, 0x0800, 0x14f3ecc9 )
 	ROM_LOAD( "cc01",         0x0800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13",         0x0000, 0x1000, 0xe0042f75 )
 	ROM_LOAD( "cc12",         0x1000, 0x1000, 0x5da13aaa )
 ROM_END
@@ -594,14 +594,14 @@ static void init_cclimber(void)
 }
 
 ROM_START( cclimbrj )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "cc11j.bin",    0x0000, 0x1000, 0x89783959 )
 	ROM_LOAD( "cc10j.bin",    0x1000, 0x1000, 0x14eda506 )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "cc08j.bin",    0x3000, 0x1000, 0xb33c96f8 )
 	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
@@ -611,29 +611,29 @@ ROM_START( cclimbrj )
 	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
 	/* empty hole - Crazy Kong has an additional ROM here */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc02",         0x0000, 0x0800, 0x14f3ecc9 )
 	ROM_LOAD( "cc01",         0x0800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ccboot )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "m11.bin",      0x0000, 0x1000, 0x5efbe180 )
 	ROM_LOAD( "m10.bin",      0x1000, 0x1000, 0xbe2748c7 )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "m08.bin",      0x3000, 0x1000, 0xe3c542d6 )
 	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "m04.bin",      0x1000, 0x0800, 0x6fb80538 )
@@ -643,29 +643,29 @@ ROM_START( ccboot )
 	ROM_LOAD( "m03.bin",      0x3000, 0x0800, 0x67127253 )
 	/* empty hole - Crazy Kong has an additional ROM here */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "m02.bin",      0x0000, 0x0800, 0x7f4877de )
 	ROM_LOAD( "m01.bin",      0x0800, 0x0800, 0x49fab908 )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ccboot2 )
-	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "11.4k",        0x0000, 0x1000, 0xb2b17e24 )
 	ROM_LOAD( "10.4j",        0x1000, 0x1000, 0x8382bc0f )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "m08.bin",      0x3000, 0x1000, 0xe3c542d6 )
 	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
@@ -675,16 +675,16 @@ ROM_START( ccboot2 )
 	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
 	/* empty hole - Crazy Kong has an additional ROM here */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc02",         0x0000, 0x0800, 0x14f3ecc9 )
 	ROM_LOAD( "cc01",         0x0800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
@@ -766,7 +766,7 @@ static void init_cclimbrj(void)
 }
 
 ROM_START( ckong )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -774,28 +774,28 @@ ROM_START( ckong )
 	ROM_LOAD( "l05-11.bin",   0x4000, 0x1000, 0xae159192 )
 	ROM_LOAD( "n05-12.bin",   0x5000, 0x1000, 0x966bc9ab )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, 0x2dcedd12 )
 	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, 0x3375b3bd )
 	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, 0xfa7cbd91 )
 	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, 0x5655cc11 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckonga )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -803,28 +803,28 @@ ROM_START( ckonga )
 	ROM_LOAD( "l05-11.bin",   0x4000, 0x1000, 0xae159192 )
 	ROM_LOAD( "n05-12.bin",   0x5000, 0x1000, 0x966bc9ab )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, 0x2dcedd12 )
 	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, 0x3375b3bd )
 	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, 0xfa7cbd91 )
 	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, 0x5655cc11 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongjeu )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -832,28 +832,28 @@ ROM_START( ckongjeu )
 	ROM_LOAD( "l05-11.bin",   0x4000, 0x1000, 0xae159192 )
 	ROM_LOAD( "ckjeu12.dat",  0x5000, 0x1000, 0x0532f270 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, 0x2dcedd12 )
 	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, 0x3375b3bd )
 	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, 0xfa7cbd91 )
 	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, 0x5655cc11 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongo )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "o55a-1",       0x0000, 0x1000, 0x8bfb4623 )
 	ROM_LOAD( "o55a-2",       0x1000, 0x1000, 0x9ae8089b )
 	ROM_LOAD( "o55a-3",       0x2000, 0x1000, 0xe82b33c8 )
@@ -861,7 +861,7 @@ ROM_START( ckongo )
 	ROM_LOAD( "o55a-5",       0x4000, 0x1000, 0x5182db06 )
 	/* no ROM at 5000 */
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* same as ckong but with halves switched */
 	ROM_LOAD( "o50b-1",       0x0000, 0x0800, 0xcae9e2bf )
 	ROM_CONTINUE(             0x2000, 0x0800 )
@@ -872,22 +872,22 @@ ROM_START( ckongo )
 	ROM_LOAD( "o50b-4",       0x1800, 0x0800, 0xb7008b57 )
 	ROM_CONTINUE(             0x3800, 0x0800 )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongalc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
 	ROM_LOAD( "ck9.bin",      0x2000, 0x1000, 0xcff2af47 )
@@ -895,28 +895,28 @@ ROM_START( ckongalc )
 	ROM_LOAD( "ck11.bin",     0x4000, 0x1000, 0x327dcadf )
 	/* no ROM at 5000 */
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ck6.bin",      0x0000, 0x1000, 0xa8916dc8 )
 	ROM_LOAD( "ck4.bin",      0x1000, 0x1000, 0xb62a0367 )
 	ROM_LOAD( "ck5.bin",      0x2000, 0x1000, 0xcd3b5dde )
 	ROM_LOAD( "ck3.bin",      0x3000, 0x1000, 0x61122c5e )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ck2.bin",      0x0000, 0x0800, 0xf67c80f1 )
 	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0xb4e827a5 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
 ROM_START( monkeyd )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
 	ROM_LOAD( "ck9.bin",      0x2000, 0x1000, 0xcff2af47 )
@@ -924,28 +924,28 @@ ROM_START( monkeyd )
 	ROM_LOAD( "md5l.bin",     0x4000, 0x1000, 0xd1db1bb0 )
 	/* no ROM at 5000 */
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ck6.bin",      0x0000, 0x1000, 0xa8916dc8 )
 	ROM_LOAD( "ck4.bin",      0x1000, 0x1000, 0xb62a0367 )
 	ROM_LOAD( "ck5.bin",      0x2000, 0x1000, 0xcd3b5dde )
 	ROM_LOAD( "ck3.bin",      0x3000, 0x1000, 0x61122c5e )
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ck2.bin",      0x0000, 0x0800, 0xf67c80f1 )
 	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x00000000 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0x00000000 )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0x00000000 )
 
-	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
 ROM_START( rpatrolb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rp1.4l",       0x0000, 0x1000, 0xbfd7ae7a )
 	ROM_LOAD( "rp2.4j",       0x1000, 0x1000, 0x03f53340 )
 	ROM_LOAD( "rp3.4f",       0x2000, 0x1000, 0x8fa300df )
@@ -953,7 +953,7 @@ ROM_START( rpatrolb )
 	ROM_LOAD( "rp5.4c",       0x4000, 0x1000, 0xd7ef6c87 )
 	/* no ROM at 5000 */
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rp6.6n",       0x0000, 0x0800, 0x19f18e9e )
 	/* 0800-0fff empty */
 	ROM_LOAD( "rp8.6k",       0x1000, 0x0800, 0x008738c7 )
@@ -963,11 +963,11 @@ ROM_START( rpatrolb )
 	ROM_LOAD( "rp9.6h",       0x3000, 0x0800, 0xea5aafca )
 	/* 3800-3fff empty */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rp11.6c",      0x0000, 0x0800, 0x065651a5 )
 	ROM_LOAD( "rp10.6a",      0x0800, 0x0800, 0x59747c31 )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "bprom1.9n",    0x0000, 0x0020, 0xf9a2383b )
 	ROM_LOAD( "bprom2.9p",    0x0020, 0x0020, 0x1743bd26 )
 	ROM_LOAD( "bprom3.9c",    0x0040, 0x0020, 0xee03bc96 )
@@ -976,7 +976,7 @@ ROM_START( rpatrolb )
 ROM_END
 
 ROM_START( silvland )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "7.2r",         0x0000, 0x1000, 0x57e6be62 )
 	ROM_LOAD( "8.1n",         0x1000, 0x1000, 0xbbb2b287 )
 	ROM_LOAD( "rp3.4f",       0x2000, 0x1000, 0x8fa300df )
@@ -984,7 +984,7 @@ ROM_START( silvland )
 	ROM_LOAD( "11.1r",        0x4000, 0x1000, 0x6f23f66f )
 	ROM_LOAD( "12.2k",        0x5000, 0x1000, 0x26f1537c )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6.6n",         0x0000, 0x0800, 0xaffb804f )
 	/* 0800-0fff empty */
 	ROM_LOAD( "4.6k",         0x1000, 0x0800, 0xe487579d )
@@ -994,11 +994,11 @@ ROM_START( silvland )
 	ROM_LOAD( "3.6h",         0x3000, 0x0800, 0x59125a1a )
 	/* 3800-3fff empty */
 
-	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2.6c",         0x0000, 0x0800, 0xc8d32b8e )
 	ROM_LOAD( "1.6a",         0x0800, 0x0800, 0xee333daf )
 
-	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "mb7051.1v",    0x0000, 0x0020, 0x1d2343b1 )
 	ROM_LOAD( "mb7051.1u",    0x0020, 0x0020, 0xc174753c )
 	ROM_LOAD( "mb7051.1t",    0x0040, 0x0020, 0x04a1be01 )
@@ -1328,7 +1328,7 @@ static struct MachineDriver machine_driver_swimmer =
 
 
 ROM_START( swimmer )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sw1",          0x0000, 0x1000, 0xf12481e7 )
 	ROM_LOAD( "sw2",          0x1000, 0x1000, 0xa0b6fdd2 )
 	ROM_LOAD( "sw3",          0x2000, 0x1000, 0xec93d7de )
@@ -1338,15 +1338,15 @@ ROM_START( swimmer )
 	ROM_LOAD( "sw7",          0x6000, 0x1000, 0x37efb64e )
 	ROM_LOAD( "sw8",          0x7000, 0x1000, 0x33d6001e )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 
-	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sw15",         0x0000, 0x1000, 0x4f3608cb )  /* chars */
 	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
 	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
 
-	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sw23",         0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
 	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
 	ROM_LOAD( "sw22",         0x1000, 0x0800, 0x02c10992 )
@@ -1354,14 +1354,14 @@ ROM_START( swimmer )
 	ROM_LOAD( "sw21",         0x2000, 0x0800, 0x7f4993c1 )
 	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
 ROM_END
 
 ROM_START( swimmera )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "swa1",         0x0000, 0x1000, 0x42c2b6c5 )
 	ROM_LOAD( "swa2",         0x1000, 0x1000, 0x49bac195 )
 	ROM_LOAD( "swa3",         0x2000, 0x1000, 0xa6d8cb01 )
@@ -1371,15 +1371,15 @@ ROM_START( swimmera )
 	ROM_LOAD( "swa7",         0x6000, 0x1000, 0x7090e5ee )
 	ROM_LOAD( "swa8",         0x7000, 0x1000, 0xab86efa9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 
-	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sw15",         0x0000, 0x1000, 0x4f3608cb )  /* chars */
 	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
 	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
 
-	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sw23",         0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
 	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
 	ROM_LOAD( "sw22",         0x1000, 0x0800, 0x02c10992 )
@@ -1387,34 +1387,34 @@ ROM_START( swimmera )
 	ROM_LOAD( "sw21",         0x2000, 0x0800, 0x7f4993c1 )
 	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
 ROM_END
 
 ROM_START( guzzler )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "guzz-01.bin",  0x0000, 0x2000, 0x58aaa1e9 )
 	ROM_LOAD( "guzz-02.bin",  0x2000, 0x2000, 0xf80ceb17 )
 	ROM_LOAD( "guzz-03.bin",  0x4000, 0x2000, 0xe63c65a2 )
 	ROM_LOAD( "guzz-04.bin",  0x6000, 0x2000, 0x45be42f5 )
 	ROM_LOAD( "guzz-16.bin",  0xe000, 0x2000, 0x61ee00b7 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "guzz-12.bin",  0x0000, 0x1000, 0xf3754d9e )
 
-	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "guzz-13.bin",  0x0000, 0x1000, 0xafc464e2 )   /* chars */
 	ROM_LOAD( "guzz-14.bin",  0x1000, 0x1000, 0xacbdfe1f )
 	ROM_LOAD( "guzz-15.bin",  0x2000, 0x1000, 0x66978c05 )
 
-	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "guzz-11.bin",  0x0000, 0x1000, 0xec2e9d86 )   /* big sprite */
 	ROM_LOAD( "guzz-10.bin",  0x1000, 0x1000, 0xbd3f0bf7 )
 	ROM_LOAD( "guzz-09.bin",  0x2000, 0x1000, 0x18927579 )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "guzzler.003",  0x0000, 0x100, 0xf86930c1 )
 	ROM_LOAD( "guzzler.002",  0x0100, 0x100, 0xb566ea9e )
 	ROM_LOAD( "guzzler.001",  0x0200, 0x020, 0x69089495 )

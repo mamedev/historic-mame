@@ -491,31 +491,31 @@ static struct MachineDriver machine_driver_pandoras =
 ***************************************************************************/
 
 ROM_START( pandoras )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64K for the CPU A */
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64K for the CPU A */
 	ROM_LOAD( "pand_j13.cpu",	0x08000, 0x02000, 0x7a0fe9c5 )
 	ROM_LOAD( "pand_j12.cpu",	0x0a000, 0x02000, 0x7dc4bfe1 )
 	ROM_LOAD( "pand_j10.cpu",	0x0c000, 0x02000, 0xbe3af3b7 )
 	ROM_LOAD( "pand_j9.cpu",	0x0e000, 0x02000, 0xe674a17a )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64K for the CPU B */
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64K for the CPU B */
 	ROM_LOAD( "pand_j5.cpu",	0x0e000, 0x02000, 0x4aab190b )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64K for the Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64K for the Sound CPU */
 	ROM_LOAD( "pand_6c.snd",	0x00000, 0x02000, 0x0c1f109d )
 
-	ROM_REGIONX( 0x1000, REGION_CPU4 ) /* 4K for the Sound CPU 2 */
+	ROM_REGION( 0x1000, REGION_CPU4 ) /* 4K for the Sound CPU 2 */
 	ROM_LOAD( "pand_7e.snd",	0x00000, 0x01000, 0x18b0f9d0 )
 
-	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pand_a18.cpu",	0x00000, 0x02000, 0x23706d4a )	/* tiles */
 	ROM_LOAD( "pand_a19.cpu",	0x02000, 0x02000, 0xa463b3f9 )
 
-	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pand_j18.cpu",	0x00000, 0x02000, 0x99a696c5 )	/* sprites */
 	ROM_LOAD( "pand_j17.cpu",	0x02000, 0x02000, 0x38a03c21 )
 	ROM_LOAD( "pand_j16.cpu",	0x04000, 0x02000, 0xe0708a78 )
 
-	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pandora.2a",		0x0000, 0x020, 0x4d56f939 ) /* palette */
 	ROM_LOAD( "pandora.17g",	0x0020, 0x100, 0xc1a90cfc ) /* sprite lookup table */
 	ROM_LOAD( "pandora.16b",	0x0120, 0x100, 0xc89af0c3 ) /* character lookup table */

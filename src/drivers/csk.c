@@ -679,39 +679,39 @@ static struct MachineDriver machine_driver_csk234it =
  */
 
 ROM_START( csk227it )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v227i.bin",   0x0000, 0x10000, 0xdf1ebf49 )
 
-	ROM_REGIONX( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6.227",  0x00000, 0x20000, 0xe9aad93b )
 	ROM_LOAD( "5.227",  0x20000, 0x20000, 0xe4c4c8da )
 	ROM_LOAD( "4.227",  0x40000, 0x20000, 0xafb365dd )
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "3.bin",  0x00000, 0x10000, 0xfcb115ac )	/* extension charset, used for ability game */
 	ROM_LOAD( "2.bin",  0x10000, 0x10000, 0x848343a3 )
 	ROM_LOAD( "1.bin",  0x20000, 0x10000, 0x921ad5de )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 )	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGION( 0x10000, REGION_GFX3 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.227",   0x0000, 0x10000, 0xa10786ad )
 ROM_END
 
 
 ROM_START( csk234it )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v234it.bin",   0x0000, 0x10000, 0x344b7059 )
 
-	ROM_REGIONX( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6.234",  0x00000, 0x20000, 0x23b855a4 )
 	ROM_LOAD( "5.234",  0x20000, 0x20000, 0x189039d7 )
 	ROM_LOAD( "4.234",  0x40000, 0x20000, 0xc82b0ffc )
 
-	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "3.bin",  0x00000, 0x10000, 0xfcb115ac )	/* extension charset, used for ability game */
 	ROM_LOAD( "2.bin",  0x10000, 0x10000, 0x848343a3 )
 	ROM_LOAD( "1.bin",  0x20000, 0x10000, 0x921ad5de )
 
-	ROM_REGIONX( 0x10000, REGION_GFX3 )	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGION( 0x10000, REGION_GFX3 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.234",   0x0000, 0x10000, 0xae6dd4ad )
 ROM_END
 

@@ -217,8 +217,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo tagteam_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 4 }, /* chars */
-	{ 1, 0x0000, &spritelayout, 0, 4 }, /* sprites */
+	{ REGION_GFX1, 0, &charlayout,   0, 4 }, /* chars */
+	{ REGION_GFX1, 0, &spritelayout, 0, 4 }, /* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -241,7 +241,7 @@ static struct DACinterface dac_interface =
 	{ 255 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_tagteam =
 {
 	/* basic machine hardware */
 	{
@@ -288,62 +288,71 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
+
+ROM_START( bigprowr )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "bf00-1.20",    0x08000, 0x2000, 0x8aba32c9 )
+	ROM_LOAD( "bf01.33",      0x0a000, 0x2000, 0x0a41f3ae )
+	ROM_LOAD( "bf02.34",      0x0c000, 0x2000, 0xa28b0a0e )
+	ROM_LOAD( "bf03.46",      0x0e000, 0x2000, 0xd4cf7ec7 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for audio code */
+	ROM_LOAD( "bf4.8",        0x04000, 0x2000, 0x0558e1d8 )
+	ROM_LOAD( "bf5.7",        0x06000, 0x2000, 0xc1073f24 )
+	ROM_LOAD( "bf6.6",        0x08000, 0x2000, 0x208cd081 )
+	ROM_LOAD( "bf7.3",        0x0a000, 0x2000, 0x34a033dc )
+	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, 0xeafe8056 )
+	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, 0xd589ce1b )
+
+	ROM_REGION( 0x12000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bf10.89",      0x00000, 0x2000, 0xb1868746 )
+	ROM_LOAD( "bf11.94",      0x02000, 0x2000, 0xc3fe99c1 )
+	ROM_LOAD( "bf12.103",     0x04000, 0x2000, 0xc8717a46 )
+	ROM_LOAD( "bf13.91",      0x06000, 0x2000, 0x23ee34d3 )
+	ROM_LOAD( "bf14.95",      0x08000, 0x2000, 0xa6721142 )
+	ROM_LOAD( "bf15.105",     0x0a000, 0x2000, 0x60ae1078 )
+	ROM_LOAD( "bf16.93",      0x0c000, 0x2000, 0xd33dc245 )
+	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, 0xccf42380 )
+	ROM_LOAD( "bf18.107",     0x10000, 0x2000, 0xfd6f006d )
+
+	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_LOAD( "fko.8",        0x0000, 0x0020, 0xb6ee1483 )
+	ROM_LOAD( "fjo.25",       0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
+ROM_END
+
 ROM_START( tagteam )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, 0x6ec3afae )
 	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, 0xb8fdd176 )
 	ROM_LOAD( "prowbf2.bin",  0x0c000, 0x2000, 0x3d33a923 )
 	ROM_LOAD( "prowbf3.bin",  0x0e000, 0x2000, 0x518475d2 )
 
-	ROM_REGION_DISPOSE(0x12000) /* temporary space for graphics (disposed after conversion) */
-	/* Character ROMs - 1024 chars in 3 banks, 3 bpp */
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for audio code */
+	ROM_LOAD( "bf4.8",        0x04000, 0x2000, 0x0558e1d8 )
+	ROM_LOAD( "bf5.7",        0x06000, 0x2000, 0xc1073f24 )
+	ROM_LOAD( "bf6.6",        0x08000, 0x2000, 0x208cd081 )
+	ROM_LOAD( "bf7.3",        0x0a000, 0x2000, 0x34a033dc )
+	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, 0xeafe8056 )
+	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, 0xd589ce1b )
+
+	ROM_REGION( 0x12000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "prowbf10.bin", 0x00000, 0x2000, 0x48165902 )
-	ROM_LOAD( "prowbf11.bin", 0x02000, 0x2000, 0xc3fe99c1 )
+	ROM_LOAD( "bf11.94",      0x02000, 0x2000, 0xc3fe99c1 )
 	ROM_LOAD( "prowbf12.bin", 0x04000, 0x2000, 0x69de1ea2 )
 	ROM_LOAD( "prowbf13.bin", 0x06000, 0x2000, 0xecfa581d )
-	ROM_LOAD( "prowbf14.bin", 0x08000, 0x2000, 0xa6721142 )
+	ROM_LOAD( "bf14.95",      0x08000, 0x2000, 0xa6721142 )
 	ROM_LOAD( "prowbf15.bin", 0x0a000, 0x2000, 0xd0de7e03 )
 	ROM_LOAD( "prowbf16.bin", 0x0c000, 0x2000, 0x75ee5705 )
-	ROM_LOAD( "prowbf17.bin", 0x0e000, 0x2000, 0xccf42380 )
+	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, 0xccf42380 )
 	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, 0xe73a4bba )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
-	ROM_LOAD( "prowbf4.bin",  0x04000, 0x2000, 0x0558e1d8 )
-	ROM_LOAD( "prowbf5.bin",  0x06000, 0x2000, 0xc1073f24 )
-	ROM_LOAD( "prowbf6.bin",  0x08000, 0x2000, 0x208cd081 )
-	ROM_LOAD( "prowbf7.bin",  0x0a000, 0x2000, 0x34a033dc )
-	ROM_LOAD( "prowbf8.bin",  0x0c000, 0x2000, 0xeafe8056 )
-	ROM_LOAD( "prowbf9.bin",  0x0e000, 0x2000, 0xd589ce1b )
-
-	ROM_REGIONX( 0x0040, REGION_PROMS )
-	ROM_LOAD( "fko-76.bin",   0x0000, 0x0020, 0xb6ee1483 )
-	ROM_LOAD( "fjo-25.bin",   0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
+	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_LOAD( "fko.8",        0x0000, 0x0020, 0xb6ee1483 )
+	ROM_LOAD( "fjo.25",       0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
 ROM_END
 
 
 
-struct GameDriver driver_tagteam =
-{
-	__FILE__,
-	0,
-	"tagteam",
-	"Tag Team Wrestling",
-	"1983",
-	"Technos (Data East license)",
-	"Steve Ellenoff\nBrad Oliver\nCamilty (hardware info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tagteam,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tagteam,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
+GAME( 1983, bigprowr, 0,        tagteam, tagteam, 0, ROT270, "Technos", "The Big Pro Wrestling!" )
+GAME( 1983, tagteam,  bigprowr, tagteam, tagteam, 0, ROT270, "Technos (Data East license)", "Tag Team Wrestling" )

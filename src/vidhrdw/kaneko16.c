@@ -13,6 +13,9 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 		Keys can be used togheter!
 
+							[ 1 High Color Layer ]
+
+	[Background 0]	(Optional)
 
 							[ 4 Scrolling Layers ]
 
@@ -35,25 +38,29 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 
 
-
 							[ 1024 Sprites ]
 
 	Sprites are 16x16x4 in the older games 16x16x8 in gtmr&gtmr2
 
 Offset:			Format:						Value:
 
-0000.w			Attribute (type 0, older games: shogwarr, berlwall?)
+0000.w			Attribute (type 0, older games: shogwarr, berlwall)
 
-					fed- ---- ---- ----		Multisprite
+					f--- ---- ---- ----		Multisprite: Use Latched Code + 1
+					-e-- ---- ---- ----		Multisprite: Use Latched Color (And Flip?)
+					--d- ---- ---- ----		Multisprite: Use Latched X,Y As Offsets
 					---c ba-- ---- ----
 					---- --98 ---- ----		Priority?
 					---- ---- 7654 32--		Color
 					---- ---- ---- --1-		X Flip
 					---- ---- ---- ---0		Y Flip
 
+
 				Attribute (type 1: gtmr, gtmr2)
 
-					fed- ---- ---- ----		Multisprite
+					f--- ---- ---- ----		Multisprite: Use Latched Code + 1
+					-e-- ---- ---- ----		Multisprite: Use Latched Color (And Flip?)
+					--d- ---- ---- ----		Multisprite: Use Latched X,Y As Offsets
 					---c ba-- ---- ----		unused?
 					---- --9- ---- ----		X Flip
 					---- ---8 ---- ----		Y Flip
@@ -64,13 +71,19 @@ Offset:			Format:						Value:
 0004.w										X Position << 6
 0006.w										Y Position << 6
 
+Note:
+	type 2 sprites (berlwall) are like type 0 but the data is held
+	in the last 8 bytes of every 16.
+
 
 **************************************************************************/
+
 #include "vidhrdw/generic.h"
 
 /* Variables only used here: */
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
+static struct osd_bitmap *kaneko16_bg15_bitmap;
 static int flipsprites;
 
 #ifdef MAME_DEBUG
@@ -81,6 +94,7 @@ static int debugsprites;	// for debug
 
 unsigned char *kaneko16_bgram, *kaneko16_fgram;
 unsigned char *kaneko16_layers1_regs, *kaneko16_layers2_regs, *kaneko16_screen_regs;
+unsigned char *kaneko16_bg15_select, *kaneko16_bg15_reg;
 int kaneko16_spritetype;
 
 /* Variables defined in drivers: */
@@ -195,6 +209,27 @@ void kaneko16_layers2_regs_w(int offset,int data)
 }
 
 
+/* Select the high color background image (out of 32 in the ROMs) */
+int kaneko16_bg15_select_r(int offset)
+{
+	return READ_WORD(&kaneko16_bg15_select[0]);
+}
+void kaneko16_bg15_select_w(int offset,int data)
+{
+	COMBINE_WORD_MEM(&kaneko16_bg15_select[0],data);
+}
+
+/* ? */
+int kaneko16_bg15_reg_r(int offset)
+{
+	return READ_WORD(&kaneko16_bg15_reg[0]);
+}
+void kaneko16_bg15_reg_w(int offset,int data)
+{
+	COMBINE_WORD_MEM(&kaneko16_bg15_reg[0],data);
+}
+
+
 
 /***************************************************************************
 
@@ -217,7 +252,7 @@ Offset:
 
 /* Background */
 
-#define BG_GFX (1)
+#define BG_GFX (0)
 #define BG_NX  (0x20)
 #define BG_NY  (0x20)
 
@@ -248,7 +283,7 @@ int old_data, new_data;
 
 /* Foreground */
 
-#define FG_GFX (1)
+#define FG_GFX (0)
 #define FG_NX  (0x20)
 #define FG_NY  (0x20)
 
@@ -299,7 +334,7 @@ void kaneko16_layers1_w(int offset, int data)
 int kaneko16_vh_start(void)
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,
-								TILEMAP_OPAQUE,
+								TILEMAP_TRANSPARENT, /* to handle the optional hi-color bg */
 								16,16,
 								BG_NX,BG_NY );
 
@@ -321,19 +356,29 @@ gtmr background:
 		W = 320+$33+$33 = $1a6 = 422
 
 berlwall background:
-6940 off	1a5
-5680 on		15a
+6940 off	1a5 << 6
+5680 on		15a << 6
 */
 		int xdim = Machine->drv->screen_width;
 		int ydim = Machine->drv->screen_height;
-		int dx   = (422 - xdim) / 2;
+		int dx, dy;
 
-		tilemap_set_scrolldx( bg_tilemap, -dx,     xdim + dx       );
-		tilemap_set_scrolldx( fg_tilemap, -(dx+2), xdim + (dx + 2) );
+//		dx   = (422 - xdim) / 2;
+		switch (xdim)
+		{
+			case 320:	dx = 0x33;	dy = 0;		break;
+			case 256:	dx = 0x5b;	dy = -8;	break;
 
-		tilemap_set_scrolldy( bg_tilemap, 0x00, ydim-0x00 );
-		tilemap_set_scrolldy( fg_tilemap, 0x00, ydim-0x00 );
+			default:	dx = dy = 0;
+		}
 
+		tilemap_set_scrolldx( bg_tilemap, -dx,		xdim + dx -1        );
+		tilemap_set_scrolldx( fg_tilemap, -(dx+2),	xdim + (dx + 2) - 1 );
+
+		tilemap_set_scrolldy( bg_tilemap, -dy,		ydim + dy -1 );
+		tilemap_set_scrolldy( fg_tilemap, -dy,		ydim + dy -1);
+
+		bg_tilemap->transparent_pen = 0;
 		fg_tilemap->transparent_pen = 0;
 		return 0;
 	}
@@ -344,8 +389,68 @@ berlwall background:
 
 
 
+/* Berlwall has an additional hi-color background */
 
+void berlwall_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
 
+	palette += 2048 * 3;	/* first 2048 colors are dynamic */
+
+	/* initialize 555 RGB lookup */
+	for (i = 0; i < 32768; i++)
+	{
+		int r,g,b;
+
+		r = (i >>  5) & 0x1f;
+		g = (i >> 10) & 0x1f;
+		b = (i >>  0) & 0x1f;
+
+		(*palette++) = (r << 3) | (r >> 2);
+		(*palette++) = (g << 3) | (g >> 2);
+		(*palette++) = (b << 3) | (b >> 2);
+	}
+}
+
+int berlwall_vh_start(void)
+{
+	int sx, x,y;
+	unsigned char *RAM	=	memory_region(REGION_GFX3);
+
+	/* Render the hi-color static backgrounds held in the ROMs */
+
+	if ((kaneko16_bg15_bitmap = osd_new_bitmap(256 * 32, 256 * 1, 16)) == 0)
+		return 1;
+
+/*
+	8aba is used as background color
+	8aba/2 = 455d = 10001 01010 11101 = $11 $0a $1d
+*/
+
+	for (sx = 0 ; sx < 32 ; sx++)	// horizontal screens
+	 for (x = 0 ; x < 256 ; x++)	// horizontal pixels
+	  for (y = 0 ; y < 256 ; y++)	// vertical pixels
+	  {
+			int addr  = sx * (256 * 256) + x + y * 256;
+
+			int color = ( RAM[addr * 2 + 0] * 256 + RAM[addr * 2 + 1] ) >> 1;
+//				color ^= (0x8aba/2);
+
+			plot_pixel( kaneko16_bg15_bitmap,
+						sx * 256 + x, y,
+						Machine->pens[2048 + color] );
+	  }
+
+	return kaneko16_vh_start();
+}
+
+void berlwall_vh_stop(void)
+{
+	if (kaneko16_bg15_bitmap)
+		osd_free_bitmap(kaneko16_bg15_bitmap);
+
+	kaneko16_bg15_bitmap = 0;	// multisession safety
+}
 
 
 /***************************************************************************
@@ -354,9 +459,11 @@ berlwall background:
 
 Offset:			Format:						Value:
 
-0000.w			Attribute (type 0, older games: shogwarr, berlwall?)
+0000.w			Attribute (type 0, older games: shogwarr, berlwall)
 
-					fed- ---- ---- ----		Multisprite
+					f--- ---- ---- ----		Multisprite: Use Latched Code + 1
+					-e-- ---- ---- ----		Multisprite: Use Latched Color (And Flip?)
+					--d- ---- ---- ----		Multisprite: Use Latched X,Y As Offsets
 					---c ba-- ---- ----
 					---- --98 ---- ----		Priority?
 					---- ---- 7654 32--		Color
@@ -365,7 +472,9 @@ Offset:			Format:						Value:
 
 				Attribute (type 1: gtmr, gtmr2)
 
-					fed- ---- ---- ----		Multisprite
+					f--- ---- ---- ----		Multisprite: Use Latched Code + 1
+					-e-- ---- ---- ----		Multisprite: Use Latched Color (And Flip?)
+					--d- ---- ---- ----		Multisprite: Use Latched X,Y As Offsets
 					---c ba-- ---- ----		unused?
 					---- --9- ---- ----		X Flip
 					---- ---8 ---- ----		Y Flip
@@ -376,13 +485,18 @@ Offset:			Format:						Value:
 0004.w										X Position << 6
 0006.w										Y Position << 6
 
+Note:
+	type 2 sprites (berlwall) are like type 0 but the data is held
+	in the last 8 bytes of every 16.
+
+
 ***************************************************************************/
 
 
 /* Map the attribute word to that of the type 1 sprite hardware */
 
 #define MAP_TO_TYPE1(attr) \
-	if (kaneko16_spritetype == 0)	/* shogwarr, berlwall? */ \
+	if (kaneko16_spritetype != 1)	/* shogwarr, berlwall */ \
 	{ \
 		attr =	((attr & 0xfc00)     ) | \
 				((attr & 0x03fc) >> 2) | \
@@ -394,7 +508,7 @@ Offset:			Format:						Value:
 
 void kaneko16_mark_sprites_colors(void)
 {
-	int offs;
+	int offs,inc;
 
 	int xmin = Machine->drv->visible_area.min_x - (16 - 1);
 	int xmax = Machine->drv->visible_area.max_x;
@@ -411,7 +525,13 @@ void kaneko16_mark_sprites_colors(void)
 	int scode = 0;
 	int scolor = 0;
 
-	for (offs = 0 ; offs < spriteram_size ; offs += 8)
+	switch (kaneko16_spritetype)
+	{
+		case 2:		offs = 8; inc = 16;	break;
+		default:	offs = 0; inc = 8;	break;
+	}
+
+	for ( ;  offs < spriteram_size ; offs += inc)
 	{
 		int	attr	=	READ_WORD(&spriteram[offs + 0]);
 		int	code	=	READ_WORD(&spriteram[offs + 2]) % nmax;
@@ -426,10 +546,13 @@ void kaneko16_mark_sprites_colors(void)
 
 		x /= 0x40;		y /= 0x40;
 
-		if ((attr|0xe000) == attr)
-		{ sx += x;	sy += y;	scode++; }
-		else
-		{ sx  = x;	sy  = y; 	scode = code; 	scolor = attr % total_color_codes;}
+		if (attr & 0x8000)		scode++;
+		else					scode = code;
+
+		if (!(attr & 0x4000))	scolor = attr % total_color_codes;
+
+		if (attr & 0x2000)		{ sx += x;	sy += y; }
+		else					{ sx  = x;	sy  = y; }
 
 		/* Visibility check. No need to account for sprites flipping */
 		if ((sx < xmin) || (sx > xmax))	continue;
@@ -446,10 +569,10 @@ void kaneko16_mark_sprites_colors(void)
 
 void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
-	int offs;
+	int offs,inc;
 
-	int max_x = Machine->drv->visible_area.max_x - 16;
-	int max_y = Machine->drv->visible_area.max_y - 16;
+	int max_x	=	Machine->drv->screen_width  - 16;
+	int max_y	=	Machine->drv->screen_height - 16;
 
 	int sx = 0;
 	int sy = 0;
@@ -460,7 +583,13 @@ void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 	priority = ( priority & 3 ) << 6;
 
-	for ( offs = 0 ; offs < spriteram_size ; offs += 8 )
+	switch (kaneko16_spritetype)
+	{
+		case 2:		offs = 8; inc = 16;	break;
+		default:	offs = 0; inc = 8;	break;
+	}
+
+	for ( ;  offs < spriteram_size ; offs += inc)
 	{
 		int	attr	=	READ_WORD(&spriteram[offs + 0]);
 		int	code	=	READ_WORD(&spriteram[offs + 2]);
@@ -475,17 +604,17 @@ void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 		x /= 0x40;		y /= 0x40;
 
-		if ((attr|0xe000) == attr)
+		if (attr & 0x8000)		scode++;
+		else					scode = code;
+
+		if (!(attr & 0x4000))
 		{
-			sx += x;	sy += y;
-			scode++;
-		}
-		else
-		{
-			sx  = x;				sy  = y;
-			scode  = code;			sattr  = attr;
+			sattr  = attr;
 			sflipx = attr & 0x200;	sflipy = attr & 0x100;
 		}
+
+		if (attr & 0x2000)		{ sx += x;	sy += y; }
+		else					{ sx  = x;	sy  = y; }
 
 		if ((sattr & 0xc0) != priority)	continue;
 
@@ -496,7 +625,7 @@ void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 		if (flipsprites & 2) { sx = max_x - sx;		sflipx = !sflipx; }
 		if (flipsprites & 1) { sy = max_y - sy;		sflipy = !sflipy; }
 
-		drawgfx(bitmap,Machine->gfx[0],
+		drawgfx(bitmap,Machine->gfx[1],
 				scode,
 				sattr,
 				sflipx, sflipy,
@@ -523,6 +652,7 @@ void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 void kaneko16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int flag;
 	int layers_ctrl = -1;
 	int layers_flip = READ_WORD(&kaneko16_layers1_regs[0x08]);
 
@@ -569,7 +699,42 @@ int msk = 0;
 
 	tilemap_render(ALL_TILEMAPS);
 
-	if (layers_ctrl & 0x01)	tilemap_draw(bitmap, bg_tilemap, 0);
+	flag = TILEMAP_IGNORE_TRANSPARENCY;
+	if (kaneko16_bg15_bitmap)
+	{
+/*
+	firstscreen	?				(hw: b8,00/06/7/8/9(c8). 202872 = 0880)
+	press start	?				(hw: 80-d0,0a. 202872 = 0880)
+	teaching	?				(hw: e0,1f. 202872 = 0880 )
+	hiscores	!rom5,scr1($9)	(hw: b0,1f. 202872 = )
+	lev1-1		rom6,scr2($12)	(hw: cc,0e. 202872 = 0880)
+	lev2-1		?				(hw: a7,01. 202872 = 0880)
+	lev2-2		rom6,scr1($11)	(hw: b0,0f. 202872 = 0880)
+	lev2-4		rom6,scr0($10)	(hw: b2,10. 202872 = 0880)
+	lev2-6?		rom5,scr7($f)	(hw: c0,11. 202872 = 0880)
+	lev4-2		rom5,scr6($e)	(hw: d3,12. 202872 = 0880)
+	redcross	?				(hw: d0,0a. 202872 = )
+*/
+		int select	=	READ_WORD(&kaneko16_bg15_select[0]);
+//		int reg		=	READ_WORD(&kaneko16_bg15_reg[0]);
+		int flip	=	select & 0x20;
+		int sx, sy;
+
+		if (flip)	select ^= 0x1f;
+
+		sx		=	(select & 0x1f) * 256;
+		sy		=	0;
+
+		copybitmap(
+			bitmap, kaneko16_bg15_bitmap,
+			flip, flip,
+			-sx, -sy,
+			&Machine->drv->visible_area, TRANSPARENCY_NONE,0 );
+
+		flag = 0;
+	}
+
+	if (layers_ctrl & 0x01)	tilemap_draw(bitmap, bg_tilemap, flag);
 	else					osd_clearbitmap(Machine->scrbitmap);
 
 	if (layers_ctrl & 0x02)	tilemap_draw(bitmap, fg_tilemap, 0);

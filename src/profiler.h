@@ -15,6 +15,7 @@ enum {
 	PROFILER_VIDEO,
 	PROFILER_BLIT,
 	PROFILER_SOUND,
+	PROFILER_MIXER,
 	PROFILER_TIMER_CALLBACK,
 	PROFILER_HISCORE,	/* high score load can slow things down if incorrectly written */
 	PROFILER_INPUT,		/* input.c and inptport.c */
