@@ -121,20 +121,55 @@ static void cps1_coinctrl_w(int offset,int data)
 
 void cpsq_coinctrl2_w(int offset, int data)
 {
-    if (!offset)
-    {
-        coin_lockout_w(2,~data & 0x0200);
-        coin_lockout_w(3,~data & 0x0800);
-       /*
-      {
+	if ((data & 0xff000000) == 0)
+	{
+		coin_lockout_w(2,~data & 0x0002);
+		coin_lockout_w(3,~data & 0x0008);
+		coin_counter_w(2,data & 0x0001);
+		coin_counter_w(3,data & 0x0004);
+/*
+  	{
        char baf[40];
        sprintf(baf,"0xf1c004=%04x", data);
        usrintf_showmessage(baf);
        }
-       */
+*/
     }
 }
 
+int cps1_protection_ram_r(int offset)
+{
+	/*
+	   Protection (slammasters):
+
+	   The code does a checksum on an area of memory. I have no idea what
+	   this memory is. I have no idea whether it is RAM based or hard-wired.
+
+	   The code adds the low bytes of 0x415 words starting at 0xf0e000
+
+	   The result is ANDed with 0xffffff00 and then multiplied by 2. This
+	   value is stored and used throughout the game to calculate the
+	   base offset of the source scroll ROM data.
+
+	   The sum of the low bytes of the first 0x415 words starting at
+	   address 0xf0e000 should be 0x1df00
+
+	   In the absence of any real data, a rough calculation will do the
+	   job.
+	*/
+
+	if (offset < (0x411*2))
+	{
+		/*
+			0x411 * 0x76 = 0x1dfd6  (which is close enough)
+		*/
+		return 0x76;
+	}
+	else
+	{
+		return 0;
+	}
+}
 
 static int cps1_interrupt(void)
 {
@@ -153,9 +188,9 @@ static int cps1_interrupt(void)
 
 static struct QSound_interface qsound_interface =
 {
-    QSOUND_CLOCK,
-    3,
-    { 100,100 }
+	QSOUND_CLOCK,
+	3,
+	{ 100,100 }
 };
 
 static unsigned char *qsound_sharedram;
@@ -281,10 +316,10 @@ static void cps1_eeprom_save(void)
 
 static struct MemoryReadAddress cps1_readmem[] =
 {
-    { 0x000000, 0x1fffff, MRA_ROM }, /* 68000 ROM */
+	{ 0x000000, 0x1fffff, MRA_ROM }, /* 68000 ROM */
 	{ 0x800000, 0x800003, cps1_player_input_r }, /* Player input ports */
 	{ 0x800010, 0x800013, cps1_player_input_r }, /* ?? */
-    { 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
+	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
 	{ 0x800020, 0x800021, MRA_NOP }, /* ? Used by Rockman ? */
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
@@ -292,9 +327,10 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x8001fc, 0x8001fc, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
+	{ 0xf0e000, 0xf0efff, cps1_protection_ram_r }, /* Slammasters protection */
 	{ 0xf18000, 0xf19fff, qsound_sharedram_r },       /* Q RAM */
-    { 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
-    { 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
+	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
+	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
 	{ 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
 	{ -1 }  /* end of table */
@@ -311,7 +347,7 @@ static struct MemoryWriteAddress cps1_writemem[] =
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
 	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
 	{ 0xf18000, 0xf19fff, qsound_sharedram_w }, /* Q RAM */
-    { 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
+	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
 	{ 0xff0000, 0xffffff, MWA_BANK2 },        /* RAM */
 	{ -1 }  /* end of table */
@@ -2704,7 +2740,7 @@ INPUT_PORTS_START( slammast )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -2730,8 +2766,8 @@ INPUT_PORTS_START( slammast )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2740,94 +2776,28 @@ INPUT_PORTS_START( slammast )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
 
-    PORT_START     /* Player 3 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START     /* Player 3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
 
-    PORT_START     /* Player 4 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( mbombrd )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* DSWA (not used, EEPROM) */
-    PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* DSWB (not used, EEPROM) */
-    PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-    PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-    PORT_START     /* Player 3 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-    PORT_START     /* Player 4 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
-
+	PORT_START     /* Player 4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pnickj )
@@ -3659,7 +3629,7 @@ static struct MachineDriver machine_driver_##CPS1_DRVNAME =            \
 									 \
 	/* sound hardware */                                             \
 	SOUND_SUPPORTS_STEREO,0,0,0,   \
-    { { SOUND_QSOUND, &qsound_interface } } \
+	{ { SOUND_QSOUND, &qsound_interface } } \
 };
 
 
@@ -4844,14 +4814,14 @@ ROM_START( kodb )
 	ROM_LOAD_ODD ( "kod.18",    0x00000, 0x080000, 0x3e4b7295 )
 
 	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD_GFX_EVEN( "kod.di",   0x000000, 0x80000, 0xab031763 )
-	ROM_LOAD_GFX_ODD ( "kod.ci",   0x000000, 0x80000, 0x22228bc5 )
-	ROM_LOAD_GFX_EVEN( "kod.dp",   0x100000, 0x80000, 0x3eec9580 )
-	ROM_LOAD_GFX_ODD ( "kod.cp",   0x100000, 0x80000, 0xe3b8589e )
-	ROM_LOAD_GFX_EVEN( "kod.bi",   0x200000, 0x80000, 0x4a1b43fe )
-	ROM_LOAD_GFX_ODD ( "kod.ai",   0x200000, 0x80000, 0xcffbf4be )
-	ROM_LOAD_GFX_EVEN( "kod.bp",   0x300000, 0x80000, 0x4e1c52b7 )
-	ROM_LOAD_GFX_ODD ( "kod.ap",   0x300000, 0x80000, 0xfdf5f163 )
+	ROM_LOAD_GFX_EVEN( "kod.ci",   0x000000, 0x80000, 0x22228bc5 )
+	ROM_LOAD_GFX_ODD ( "kod.di",   0x000000, 0x80000, 0xab031763 )
+	ROM_LOAD_GFX_EVEN( "kod.cp",   0x100000, 0x80000, 0xe3b8589e )
+	ROM_LOAD_GFX_ODD ( "kod.dp",   0x100000, 0x80000, 0x3eec9580 )
+	ROM_LOAD_GFX_EVEN( "kod.ai",   0x200000, 0x80000, 0xcffbf4be )
+	ROM_LOAD_GFX_ODD ( "kod.bi",   0x200000, 0x80000, 0x4a1b43fe )
+	ROM_LOAD_GFX_EVEN( "kod.ap",   0x300000, 0x80000, 0xfdf5f163 )
+	ROM_LOAD_GFX_ODD ( "kod.bp",   0x300000, 0x80000, 0x4e1c52b7 )
 
 	ROM_REGIONX( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "kod.15",        0x00000, 0x08000, 0x01cae60c )
@@ -6219,7 +6189,7 @@ struct GameDriver driver_mbombrd =
 	0,
 	0,
 
-	input_ports_mbombrd,
+	input_ports_slammast,
 	0, 0, 0,
 
     ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
@@ -6244,7 +6214,7 @@ struct GameDriver driver_mbombrdj =
 	0,
 	0,
 
-	input_ports_mbombrd,
+	input_ports_slammast,
 	0, 0, 0,
 
 	ORIENTATION_DEFAULT | GAME_NOT_WORKING,

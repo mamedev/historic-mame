@@ -2,10 +2,7 @@
 
 Rock'n'Rage(GX620) (c) 1986 Konami
 
-Preliminary driver by:
-	Manuel Abadia <manu@teleline.es>
-
-TODO: Use the color lookup tables
+Driver by Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
@@ -21,6 +18,7 @@ int rockrage_vh_start(void);
 void rockrage_vh_stop(void);
 void rockrage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void rockrage_vreg_w(int offset, int data);
+void rockrage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 static int rockrage_interrupt( void )
 {
@@ -32,8 +30,8 @@ static int rockrage_interrupt( void )
 
 static void rockrage_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* bits 4-6 = bank number */
 	bankaddress = 0x10000 + ((data & 0x70) >> 4) * 0x2000;
@@ -66,8 +64,8 @@ static struct MemoryReadAddress rockrage_readmem[] =
 {
 	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
-	{ 0x2200, 0x23ff, MRA_RAM },			/* ??? */
-	{ 0x2400, 0x247f, MRA_RAM },			/* Palette */
+	{ 0x2200, 0x23ff, K007342_scroll_r },	/* Scroll RAM */
+	{ 0x2400, 0x247f, paletteram_r },		/* Palette */
 	{ 0x2e01, 0x2e01, input_port_3_r },		/* 1P controls */
 	{ 0x2e02, 0x2e02, input_port_4_r },		/* 2P controls */
 	{ 0x2e03, 0x2e03, input_port_1_r },		/* DISPW #2 */
@@ -83,7 +81,7 @@ static struct MemoryWriteAddress rockrage_writemem[] =
 {
 	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
-	{ 0x2200, 0x23ff, MWA_RAM },				/* ??? */
+	{ 0x2200, 0x23ff, K007342_scroll_w },		/* Scroll RAM */
 	{ 0x2400, 0x247f, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },/* palette */
 	{ 0x2600, 0x2607, K007342_vreg_w },			/* Video Registers */
 	{ 0x2e80, 0x2e80, rockrage_sh_irqtrigger_w },/* cause interrupt on audio CPU */
@@ -245,8 +243,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,		0,			1 },	/* colors 00..31 */
-	{ 1, 0x040000, &spritelayout,	2*16,		1 },	/* colors 32..63 */
+	{ 1, 0x000000, &charlayout,		64,		32 },	/* colors 00..31, but using 2 lookup tables */
+	{ 1, 0x040000, &spritelayout,	32,		1 },	/* colors 32..63 */
 	{ -1 } /* end of array */
 };
 
@@ -286,7 +284,7 @@ static struct MachineDriver machine_driver =
         },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,		/* ? */
+			2000000,		/* 24MHz/12 (?) */
 			rockrage_readmem_sound, rockrage_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -298,8 +296,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	64, 64,
-	0,
+	64, 64 + 2*16*16,
+	rockrage_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -346,9 +344,10 @@ ROM_START( rockrage )
 	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, 0x8be969f3 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "620k08.12g", 0x00000, 0x00100, 0xb499800c )
-	ROM_LOAD( "620k09.11g", 0x00100, 0x00100, 0x9f0e0608 )
-	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )
+	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, 0x9f0e0608 )	/* layer 0 lookup table */
+	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, 0xb499800c )	/* layer 1 lookup table */
+	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )	/* sprite lookup table, but its not used */
+															/* because it's always 0 1 2 ... f */
 ROM_END
 
 ROM_START( rockragj )
@@ -369,9 +368,10 @@ ROM_START( rockragj )
 	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, 0x8be969f3 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "620k08.12g", 0x00000, 0x00100, 0xb499800c )
-	ROM_LOAD( "620k09.11g", 0x00100, 0x00100, 0x9f0e0608 )
-	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )
+	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, 0x9f0e0608 )	/* layer 0 lookup table */
+	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, 0xb499800c )	/* layer 1 lookup table */
+	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )	/* sprite lookup table, but its not used */
+															/* because it's always 0 1 2 ... f */
 ROM_END
 
 /***************************************************************************
@@ -401,7 +401,7 @@ struct GameDriver driver_rockrage =
 	input_ports_rockrage,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
+    ORIENTATION_DEFAULT,
 	0, 0
 };
 
@@ -426,6 +426,6 @@ struct GameDriver driver_rockragj =
 	input_ports_rockrage,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
+    ORIENTATION_DEFAULT,
 	0, 0
 };

@@ -27,6 +27,28 @@ void gunsmoke_vh_stop(void);
 
 
 
+static int gunsmoke_unknown_r(int offset)
+{
+    static int gunsmoke_fixed_data[]={ 0xff, 0x00, 0x00 };
+    /*
+    The routine at 0x0e69 tries to read data starting at 0xc4c9.
+    If this value is zero, it interprets the next two bytes as a
+    jump address.
+
+    This was resulting in a reboot which happens at the end of level 3
+    if you go too far to the right of the screen when fighting the level boss.
+
+    A non-zero for the first byte seems to be harmless  (although it may not be
+    the correct behaviour).
+
+    This could be some devious protection or it could be a bug in the
+    arcade game.  It's hard to tell without pulling the code apart.
+    */
+    return gunsmoke_fixed_data[offset];
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -36,6 +58,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
+    { 0xc4c9, 0xc4cb, gunsmoke_unknown_r },
+    { 0xd000, 0xd3ff, videoram_r },
+    { 0xd400, 0xd7ff, colorram_r },
 	{ 0xe000, 0xffff, MRA_RAM }, /* Work + sprite RAM */
 	{ -1 }	/* end of table */
 };
@@ -537,6 +562,11 @@ struct GameDriver driver_gunsmrom =
 	hiload, hisave
 };
 
+/*
+  All the sets are almost identical apart from this one which is quite
+  different: the levels are in a different order, and the "Demonstration" dip
+  switch has no effect.
+ */
 struct GameDriver driver_gunsmoka =
 {
 	__FILE__,

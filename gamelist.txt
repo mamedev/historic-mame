@@ -80,6 +80,7 @@ command to list them.
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
 | Battle of Atlantis   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | atlantis |
 | Battle-Road,The      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | battroad |
+| Bells & Whistles     |  Yes   |  Yes   |  Yes   |   No   |  Yes   | blswhstl |
 | Bermuda Triangle     |  Yes   |   No   |Partial |  Yes   |  n/a?  | bermudat |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
 | Big Striker          |  Yes   |  Yes   |  Yes   |   No   |   No   | bigstrik |
@@ -95,9 +96,10 @@ command to list them.
 | Blasto               |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | blasto   |
 | Block Block          |  Yes   |  Yes   |Partial |  Yes   |   No   | block    |
 | Block Gal            |   No   |  Yes   |  Yes   |   No   |   No   | blockgal |
+| Block Hole           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | blckhl   |
 | Block Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blockout |
 | Blockade             |  Yes   |  b/w   |Partl(1)|  n/a   |   No   | blockade |
-| Blood Bros.          |  Yes   |  Yes   |   No   |   No   |   No   | bloodbro |
+| Blood Bros.          |  Yes   |  Yes   |  Yes   |   No   |   No   | bloodbro |
 | Blue Print           |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | blueprnt |
 | Bogey Manor          |  Yes   |   No   |  Yes   |   No   |   No   | bobeyman |
 | Bomb Jack            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
@@ -187,8 +189,7 @@ command to list them.
 | Demon's World        |  Yes   |  Yes   |  Yes   |   No   |   No   | demonwld |
 | Demolition Derby     |  Yes   |  Yes   |  Yes   |   No   |   No   | destderb |
 | Depth Charge         |  Yes   |  b/w   |   No   |   No   |   No   | depthch  |
-| Detana!! Twin Bee    |  Yes   |  Yes   |  Yes   |   No   |  Yes   | detatwin |
-| Devastators          |   No   |  Yes   |  Yes   |   No   |  Yes   | devstors |
+| Devastators          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | devstors |
 | Devil Fish           |  Yes   |  Yes   |  Yes   |   No   |   No   | devilfsh |
 | Devil Zone           |  Yes   |   No   |Partial |   No   |   No   | devzone  |
 | Diamond Run          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | diamond  |
@@ -289,6 +290,7 @@ command to list them.
 | Golden Star          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | goldstar |
 | Gondomania           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gondo    |
 | Gorf                 |  Yes   |   No   | Yes(1) |  Yes   |  Yes   | gorf     |
+| Gradius III          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | gradius3 |
 | Gravitar             |  Yes   | Close  |  Yes   |  Yes   |   No   | gravitar |
 | Great Swordsman      |  Yes   |   No   |  Yes   |  Yes   |   No   | gsword   |
 | Green Beret          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
@@ -488,6 +490,7 @@ command to list them.
 | New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tnzs     |
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 | Night Driver         |  Yes   |  b/w   |   No   |   No   |   No   | nitedrvr |
+| Ninja Emaki          |  Yes   | Close  |  Yes   |   No   |  Yes   | ninjemak |
 | Ninja Gai Den        |  Yes   |  Yes   |  Yes   |   No   |  n/a   | gaiden   |
 | Ninja Kid 2          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ninjakd2 |
 | Ninja Spirit         |  Yes   |  Yes   |  Yes   |   No   |   No   | nspirit  |
@@ -555,7 +558,6 @@ command to list them.
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
 | Quantum              |  Yes   |   No   |  Yes   |  Yes   |   No   | quantum  |
 | Quartet II           |   No   |  Yes   |   No   |   No   |   No   | quartet2 |
-| Quarth               |  Yes   |  Yes   |  Yes   |   No   |  Yes   | quarth   |
 | Quiz Sangokushi      |  Yes   |  Yes   |Partial |  Yes   |  Yes   | qsangoku |
 | Quiz Tonosama no Yabou  Yes   |  Yes   |Partial |  Yes   |  Yes   | qtono1   |
 | Qwak                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qwakprot |
@@ -591,7 +593,7 @@ command to list them.
 | Robot Bowl           |  Yes   |  Yes   |   No   |   No   |   No   | robotbwl |
 | Robotron             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | robotron |
 | Roc'n Rope           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rocnrope |
-| Rock'n Rage          |  Yes   | Close  |Partial |   No   |  Yes   | rockrage |
+| Rock'n Rage          |  Yes   |  Yes   |Partial |   No   |  Yes   | rockrage |
 | RodLand              |  Yes   |  Yes   |  Yes   |   No   |   No   | rodland  |
 | Rollergames          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | rollerg  |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   |   No   | rollingc |
@@ -674,6 +676,7 @@ command to list them.
 | Spelunker            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | spelunkr |
 | Spelunker II         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | spelunk2 |
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
+| Splash               |  Yes   |  Yes   |  Yes   |   No   |   No   | splash   |
 | Splat                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | splat    |
 | Springer             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | springer |
 | Sprint 1             |  Yes   | Maybe  |   No   |  n/a   |  n/a   | sprint1  |
@@ -743,7 +746,8 @@ command to list them.
 | Tetris (Sega)        |  Yes   |  Yes   |  Yes   |   No   |   No   | tetrisbl |
 | Three Stooges        |  Yes   |  Yes   |Partial |  Yes   |   No   | 3stooges |
 | Three Wonders        |  Yes   |  Yes   |  Yes   |   No   |   No   | 3wonders |
-| Thunder Cross        |   No   |  Yes   |  Yes   |   No   |  Yes   | thunderx |
+| Thunder Cross        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | thunderx |
+| Thunder Cross II     |  Yes   |  Yes   |  Yes   |   No   |  Yes   | thndrx2  |
 | ThunderJaws          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | thunderj |
 | Tiger Heli           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigerh   |
 | Tiger Road           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigeroad |
@@ -1622,27 +1626,6 @@ Gun Dealer ("gundealr")
 =======================
 Clones supported:
   alternate version with different graphics ("gundeala")
-
-
-
-Gunsmoke ("gunsmoke")
-====================
-Capcom copyright
-
-Clones supported:
-  Romstar license ("gunsmrom")
-  Japanese version ("gunsmokj")
-  another Romstar license, later (1986 instead of 1985) ("gunsmoka")
-
-  All the sets are almost identical apart from gunsmoka which is quite
-  different: the levels are in a different order, amd the "Demonstration" dip
-  switch has no effect.
-
-Known issues:
-- At the end of level 3 (Ninja Stars), if you go to the extreme right of the
-  screen, the game resets. The game doesn't reset if you stay away from the
-  right of the screen. This is probably a bug of the original, since the
-  "gunsmoka" set doesn't seem to have it.
 
 
 

@@ -888,8 +888,8 @@ static struct YM2610interface ym2610_interface =
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
-	{ 3 },
 	{ 4 },
+	{ 3 },
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 

@@ -90,9 +90,9 @@
         if ( h6280.irq_state[2] != CLEAR_LINE &&                \
 			 !(h6280.irq_mask & 0x4) )							\
 		{														\
-			DO_INTERRUPT(H6280_TIMER_VEC);						\
-			(*h6280.irq_callback)(2);							\
-        }                                                       \
+			h6280.irq_state[2] = CLEAR_LINE;					\
+ 			DO_INTERRUPT(H6280_TIMER_VEC);						\
+       }                                                       	\
     }
 
 /***************************************************************
@@ -456,12 +456,11 @@
  *	set I flag, reset D flag and jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
+	if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc());	\
 	PCW++;														\
-if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 	PUSH(PCH);													\
 	PUSH(PCL);													\
-	COMPOSE_P(_fB,0);											\
-	PUSH(P);													\
+	PUSH(P | _fB);												\
 	P = (P & ~_fD) | _fI;										\
 	PCL = RDMEM(H6280_IRQ2_VEC); 								\
 	PCH = RDMEM(H6280_IRQ2_VEC+1)

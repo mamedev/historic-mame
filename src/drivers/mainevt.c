@@ -8,7 +8,6 @@ Emulation by Bryan McPhail, mish@tendril.force9.net
 Notes:
 * Schematics show a palette/work RAM bank selector, but this doesn't seem
   to be used?
-* Devastators not playable...  Protected (custom CPU 051733)
 * Sprite priorities are not correct (ropes appear behind fighters).
   Sprite/sprite priorities have to be orthogonal to sprite/tile priorities
   for this to work correctly.
@@ -107,6 +106,11 @@ void mainevt_sh_irqcontrol_w(int offset,int data)
 	interrupt_enable_w(0,data & 4);
 }
 
+void devstor_sh_irqcontrol_w(int offset,int data)
+{
+interrupt_enable_w(0,data & 4);
+}
+
 void mainevt_sh_bankswitch_w(int offset,int data)
 {
 	unsigned char *src,*dest;
@@ -173,6 +177,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+
 static struct MemoryReadAddress dv_readmem[] =
 {
 	{ 0x1f94, 0x1f94, input_port_0_r }, /* Coins */
@@ -181,6 +186,7 @@ static struct MemoryReadAddress dv_readmem[] =
 	{ 0x1f97, 0x1f97, input_port_5_r }, /* Dip 1 */
 	{ 0x1f98, 0x1f98, input_port_7_r }, /* Dip 3 */
 	{ 0x1f9b, 0x1f9b, input_port_6_r }, /* Dip 2 */
+	{ 0x1fa0, 0x1fbf, K051733_r },
 
 	{ 0x0000, 0x3fff, K052109_051960_r },
 	{ 0x4000, 0x5fff, MRA_RAM },
@@ -196,6 +202,7 @@ static struct MemoryWriteAddress dv_writemem[] =
 	{ 0x1f88, 0x1f88, mainevt_sh_irqtrigger_w },	/* probably */
 	{ 0x1f90, 0x1f90, mainevt_coin_w },	/* coin counters + lamps */
 	{ 0x1fb2, 0x1fb2, dv_nmienable_w },
+	{ 0x1fa0, 0x1fbf, K051733_w },
 
 	{ 0x0000, 0x3fff, K052109_051960_w },
 	{ 0x4000, 0x5dff, MWA_RAM },
@@ -243,7 +250,7 @@ static struct MemoryWriteAddress dv_sound_writemem[] =
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
+	{ 0xe000, 0xe000, devstor_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, dv_sh_bankswitch_w },
 	{ -1 }	/* end of table */
 };
@@ -566,10 +573,10 @@ INPUT_PORTS_START( dv )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "150000 and every 200000" )
-	PORT_DIPSETTING(    0x10, "150000 and every 250000" )
-	PORT_DIPSETTING(    0x08, "150000" )
-	PORT_DIPSETTING(    0x00, "200000" )
+	PORT_DIPSETTING(    0x18, "150 and every 200" )
+	PORT_DIPSETTING(    0x10, "150 and every 250" )
+	PORT_DIPSETTING(    0x08, "150" )
+	PORT_DIPSETTING(    0x00, "200" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
@@ -866,6 +873,31 @@ ROM_START( devstor2 )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
+ROM_START( devstor3 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_LOAD( "890k02.k11",   0x10000, 0x08000, 0x52f4ccdd )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+    ROM_REGION(0x40000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
+	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
+	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
+
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
+ 	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
+ROM_END
+
 ROM_START( garuka )
 	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "890w02.bin",   0x10000, 0x08000, 0xb2f6f538 )
@@ -1036,7 +1068,7 @@ struct GameDriver driver_devstors =
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ORIENTATION_ROTATE_90,
 
 	0,0
 };
@@ -1062,10 +1094,37 @@ struct GameDriver driver_devstor2 =
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ORIENTATION_ROTATE_90,
 
 	0,0
 };
+
+struct GameDriver driver_devstor3 =
+{
+	__FILE__,
+	&driver_devstors,
+ 	"devstor3",
+	"Devastators (version V)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	0,
+	&dv_machine_driver,
+	0,
+
+	rom_devstor3,
+	gfx_untangle, 0,
+	0,
+	0,
+
+	input_ports_dv,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};
+
 
 struct GameDriver driver_garuka =
 {
@@ -1088,7 +1147,7 @@ struct GameDriver driver_garuka =
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ORIENTATION_ROTATE_90,
 
 	0,0
 };

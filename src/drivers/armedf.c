@@ -724,6 +724,12 @@ ROM_START( terraf )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
+
+	ROM_REGION(0x4000)	/* unknown */
+	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
 ROM_END
 
 ROM_START( terrafu )
@@ -746,6 +752,12 @@ ROM_START( terrafu )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
+
+	ROM_REGION(0x4000)	/* unknown */
+	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
 ROM_END
 
 ROM_START( armedf )

@@ -1,5 +1,3 @@
-#define NEW_OPLEMU 1
-
 /*$DEADSERIOUSCLAN$*********************************************************************
 * FILE
 *	Yamaha 3812 emulator interface - MAME VERSION
@@ -18,9 +16,12 @@
 #include "driver.h"
 #include "3812intf.h"
 #include "fm.h"
-#include "ym3812.h"
 
 #define OPL3CONVERTFREQUENCY
+
+/* This frequency is from Yamaha 3812 and 2413 documentation */
+#define ym3812_StdClock 3579545
+
 
 /* Emulated YM3812 variables and defines */
 static int stream[MAX_3812];
@@ -244,8 +245,6 @@ static int nonemu_YM3812_read_port_r( int chip ) {
 	End of non-emulated YM3812 interface block
  **********************************************************************************************/
 
-#if NEW_OPLEMU
-
 #include "sound/fmopl.h"
 
 typedef void (*STREAM_HANDLER)(int param,void *buffer,int length);
@@ -259,12 +258,24 @@ static void IRQHandler(int n,int irq)
 	if (intf->handler[n]) (intf->handler[n])(irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-#if 0
-static void UpdateHandler(int n, void *buf, int length)
-{
-	YM3812UpdateOne(F3812[n],buf,length);
-}
-#endif
+/* update handler */
+static void YM3812UpdateHandler(int n, void *buf, int length)
+{	YM3812UpdateOne(F3812[n],buf,length); }
+
+static void Y8950UpdateHandler(int n, void *buf, int length)
+{	Y8950UpdateOne(F3812[n],buf,length); }
+
+static unsigned char Y8950PortHandler_r(int chip)
+{	return intf->portread[chip](chip); }
+
+static void Y8950PortHandler_w(int chip,unsigned char data)
+{	intf->portwrite[chip](chip,data); }
+
+static unsigned char Y8950KeyboardHandler_r(int chip)
+{	return intf->keyboardread[chip](chip); }
+
+static void Y8950KeyboardHandler_w(int chip,unsigned char data)
+{	intf->keyboardwrite[chip](chip,data); }
 
 /* Timer overflow callback from timer.c */
 static void timer_callback_3812(int param)
@@ -323,16 +334,14 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		{
 			F3812[i]->deltat->memory = (unsigned char *)(memory_region(intf->rom_region[i]));
 			F3812[i]->deltat->memory_size = memory_region_length(intf->rom_region[i]);
-			//F3812[i].porthandler_r = intf->portread[i];
-			//F3812[i].porthandler_w = intf->portwrite[i];
-			//F3812[i].keyboardhandler_r = intf-keyboardread[i];
-			//F3812[i].keyboardhandler_w = intf-keyboardwrite[i];
-			stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,(int)F3812[i],(STREAM_HANDLER)Y8950UpdateOne);
+			stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,Y8950UpdateHandler);
+			/* port and keyboard handler */
+			OPLSetPortHandler(F3812[i],Y8950PortHandler_w,Y8950PortHandler_r,i);
+			OPLSetKeyboardHandler(F3812[i],Y8950KeyboardHandler_w,Y8950KeyboardHandler_r,i);
 		}
 		else
 #endif
-		//stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,UpdateHandler);
-		stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,(int)F3812[i],(STREAM_HANDLER)YM3812UpdateOne);
+		stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,YM3812UpdateHandler);
 		/* YM3812 setup */
 		OPLSetTimerHandler(F3812[i],TimerHandler,i*2);
 		OPLSetIRQHandler(F3812[i]  ,IRQHandler,i);
@@ -381,134 +390,6 @@ static int emu_YM3812_read_port_r(int chip)
 	return OPLRead(F3812[chip],1);
 }
 
-#else /* NEW_OPLEMU */
-/**********************************************************************************************
-	Begin of emulated YM3812 interface block
- **********************************************************************************************/
-
-/* Emulated YM3812 variables and defines */
-static ym3812* V3812[MAX_3812];
-static int sample_bits;
-
-static void timer_callback( int param )
-{
-	int chip = param/2;
-	int timer_sel = (param&1)+1;
-
-	if ( ym3812_TimerEvent( V3812[chip], timer_sel ) )
-	{ /* update sr */
-		if (intf->handler[chip]) (intf->handler[chip])(PULSE_LINE);
-	}
-}
-
-static void timer_handler(int num, double period, ym3812 *pOPL, int Tremove )
-{
-	if ( Tremove )
-	{
-		if ( Timer[num] )
-		{
-			timer_remove( Timer[num] );
-			Timer[num] = 0;
-		}
-	}
-	else Timer[num] = timer_pulse( period, num, timer_callback );
-}
-
-static void timer_handler_0( int timer_sel, double period, ym3812 *pOPL, int Tremove )
-{
-	timer_handler(0*2+(timer_sel-1),period,pOPL,Tremove);
-}
-
-static void timer_handler_1( int timer_sel, double period, ym3812 *pOPL, int Tremove )
-{
-	timer_handler(1*2+(timer_sel-1),period,pOPL,Tremove);
-}
-
-static void emu_ym3812_fixed_pointer_problem_update( int chip, void *pBuffer, int nLength )
-{
-	// The ym3812 supports several ym chips, update the interface if you want to use this feature!!!
-	ym3812_Update( V3812[chip], pBuffer, nLength );
-}
-
-static int emu_YM3812_sh_start(const struct MachineSound *msound)
-{
-	int rate = Machine->sample_rate;
-	int i;
-
-	if ( intf )		/* duplicate entry */
-		return 1;
-	intf = msound->sound_interface;
-
-	sample_bits = Machine->sample_bits;
-
-	for(i=0;i < intf->num;i++)
-	{
-		char name[40];
-		V3812[i] = ym3812_Init( rate, intf->baseclock, ( sample_bits == 16 ) );
-		if ( V3812[i] == NULL )
-		{
-			for(;i>=0;i--)
-			{
-				ym3812_DeInit( V3812[i] );
-				V3812[i]=0;
-			}
-			return -1;
-		}
-		Timer[i*2] = Timer[i*2+1] = 0;
-		V3812[i]->SetTimer = i ? timer_handler_1 : timer_handler_0;
-
-		/* stream setup */
-		sprintf(name,"%s #%d",sound_name(msound),i);
-		stream[i] = stream_init(name,intf->mixing_level[i],rate,sample_bits,
-			i,emu_ym3812_fixed_pointer_problem_update);
-	}
-	return 0;
-}
-
-static void emu_YM3812_sh_stop( void )
-{
-	int i;
-
-	for(i=0;i < intf->num*2;i++)
-	{
-		if ( Timer[i] )
-			timer_remove( Timer[i] );
-	}
-	for(i=0;i < intf->num;i++)
-	{
-		ym3812_DeInit(V3812[i] );
-		V3812[i] = 0;
-	}
-}
-
-static void emu_YM3812_sh_reset( void ) {
-}
-
-static int emu_YM3812_status_port_r(int chip)
-{
-	return ym3812_ReadStatus( V3812[chip] );
-}
-
-static void emu_YM3812_control_port_w( int chip, int data )
-{
-	ym3812_SetReg( V3812[chip], data );
-}
-
-static void emu_YM3812_write_port_w( int chip, int data ) {
-	stream_update( stream[chip], 0 );	// Update the buffer before writing new regs
-	ym3812_WriteReg( V3812[chip], data );
-}
-
-static int emu_YM3812_read_port_r( int chip )
-{
-	return ym3812_ReadReg( V3812[chip] );
-}
-
-/**********************************************************************************************
-	End of emulated YM3812 interface block
- **********************************************************************************************/
-#endif /* NEW_OPLEMU */
-
 /**********************************************************************************************
 	Begin of YM3812 interface stubs block
  **********************************************************************************************/
@@ -534,9 +415,7 @@ static int OPL_sh_start(const struct MachineSound *msound)
 
 int YM3812_sh_start(const struct MachineSound *msound)
 {
-#if NEW_OPLEMU
 	chiptype = OPL_TYPE_YM3812;
-#endif
 	return OPL_sh_start(msound);
 }
 
@@ -599,9 +478,7 @@ int YM3812_read_port_1_r( int offset ) {
  **********************************************************************************************/
 int YM3526_sh_start(const struct MachineSound *msound)
 {
-#if NEW_OPLEMU
 	chiptype = OPL_TYPE_YM3526;
-#endif
 	return OPL_sh_start(msound);
 }
 
@@ -614,9 +491,7 @@ int YM3526_sh_start(const struct MachineSound *msound)
  **********************************************************************************************/
 int Y8950_sh_start(const struct MachineSound *msound)
 {
-#if NEW_OPLEMU
 	chiptype = OPL_TYPE_Y8950;
-#endif
 	if( OPL_sh_start(msound) ) return 1;
 	/* !!!!! port handler set !!!!! */
 	/* !!!!! delta-t memory address set !!!!! */

@@ -107,7 +107,7 @@ static void print_statement_string(FILE* out, const char* s) {
 }
 
 static void print_game_switch(FILE* out, const struct GameDriver* game) {
-	const struct InputPort* input = game->input_ports;
+	const struct InputPortTiny* input = game->input_ports;
 
 	while ((input->type & ~IPF_MASK) != IPT_END) {
 		if ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_NAME) {
@@ -144,7 +144,7 @@ static void print_game_switch(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_input(FILE* out, const struct GameDriver* game) {
-	const struct InputPort* input = game->input_ports;
+	const struct InputPortTiny* input = game->input_ports;
 	int nplayer = 0;
 	const char* control = 0;
 	int nbutton = 0;

@@ -1574,7 +1574,6 @@ GAME_DRIVER (blazer,           1987,"Blazer (Japan)",                 "Namco",bl
 //GAME_DRIVER (quester,        1987,"Quester",                        "Namco",quester, ORIENTATION_DEFAULT | GAME_NOT_WORKING)
 GAME_DRIVER (pacmania,         1987,"Pac-Mania",                      "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 CLONE_DRIVER(pacmanij,pacmania,1987,"Pac-Mania (Japan)",              "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-/* galaga88 use shadow sprite , and could fit in 256 colors stage 21 */
 GAME_DRIVER (galaga88,         1987,"Galaga '88",                     "Namco",galaga88,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 CLONE_DRIVER(galag88j,galaga88,1987,"Galaga '88 (Japan)",             "Namco",galaga88,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 //GAME_DRIVER (wstadium,       1988,"World Stadium",                  "Namco",wstadium,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
@@ -1589,10 +1588,8 @@ GAME_DRIVER (splatter,         1988,"Splatter House (Japan)",         "Namco",sp
 GAME_DRIVER (rompers,          1989,"Rompers (Japan)",                "Namco",rompers, ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 GAME_DRIVER (blastoff,         1989,"Blast Off (Japan)",              "Namco",blastoff,ORIENTATION_ROTATE_270)
 //GAME_DRIVER (ws89,           1989,"World Stadium 89",               "Namco",ws89,    ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-/* dangseed overflows palette in a few places, it might be improveable */
 GAME_DRIVER (dangseed,         1989,"Dangerous Seed (Japan)",         "Namco",dangseed,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 GAME_DRIVER (ws90,             1990,"World Stadium 90 (Japan)",       "Namco",ws90,    ORIENTATION_DEFAULT)
 GAME_DRIVER (pistoldm,         1990,"Pistol Daimyo no Bouken (Japan)","Namco",pistoldm,ORIENTATION_DEFAULT)
-/* soukobdx need 16-bit only for highlight */
 GAME_DRIVER (soukobdx,         1990,"Souko Ban Deluxe (Japan)",       "Namco",soukobdx,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
 GAME_DRIVER (tankfrce,         1991,"Tank Force (Japan)",             "Namco",tankfrce,ORIENTATION_DEFAULT | GAME_NOT_WORKING)

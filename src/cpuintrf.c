@@ -65,7 +65,8 @@
 #if (HAS_TMS34010)
 #include "cpu/tms34010/tms34010.h"
 #endif
-#if (HAS_TMS9900)
+#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
+	|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
 #include "cpu/tms9900/tms9900.h"
 #endif
 #if (HAS_Z8000)
@@ -206,6 +207,7 @@ UINT8 default_win_layout[] = {
 static void Dummy_reset(void *param);
 static void Dummy_exit(void);
 static int Dummy_execute(int cycles);
+static void Dummy_burn(int cycles);
 static unsigned Dummy_get_context(void *regs);
 static void Dummy_set_context(void *regs);
 static unsigned Dummy_get_pc(void);
@@ -260,6 +262,7 @@ struct cpu_interface cpuintf[] =
 		Dummy_reset,						/* Reset CPU */
 		Dummy_exit, 						/* Shut down the CPU */
 		Dummy_execute,						/* Execute a number of cycles */
+		Dummy_burn, 						/* Burn a specific amount of cycles */
         Dummy_get_context,                  /* Get the contents of the registers */
 		Dummy_set_context,					/* Set the contents of the registers */
 		Dummy_get_pc,						/* Return the current program counter */
@@ -294,7 +297,8 @@ struct cpu_interface cpuintf[] =
 		gensync_reset,
 		gensync_exit,
 		gensync_execute,
-		gensync_get_context,
+		NULL,
+        gensync_get_context,
 		gensync_set_context,
 		gensync_get_pc,
 		gensync_set_pc,
@@ -329,7 +333,8 @@ struct cpu_interface cpuintf[] =
         z80_reset,                          /* Reset CPU */
 		z80_exit,							/* Shut down the CPU */
 		z80_execute,						/* Execute a number of cycles */
-		z80_get_context,					/* Get the contents of the registers */
+		z80_burn,							/* Burn a specific amount of cycles */
+        z80_get_context,                    /* Get the contents of the registers */
 		z80_set_context,					/* Set the contents of the registers */
 		z80_get_pc,							/* Return the current program counter */
 		z80_set_pc,							/* Set the current program counter */
@@ -364,7 +369,8 @@ struct cpu_interface cpuintf[] =
 		z80_vm_reset,						/* Reset CPU */
 		z80_vm_exit,						/* Shut down the CPU */
 		z80_vm_execute, 					/* Execute a number of cycles */
-		z80_vm_get_context, 				/* Get the contents of the registers */
+		z80_vm_burn,						/* Burn a specific amount of cycles */
+        z80_vm_get_context,                 /* Get the contents of the registers */
 		z80_vm_set_context, 				/* Set the contents of the registers */
 		z80_vm_get_pc,						/* Return the current program counter */
 		z80_vm_set_pc,						/* Set the current program counter */
@@ -399,7 +405,8 @@ struct cpu_interface cpuintf[] =
         i8080_reset,                        /* Reset CPU */
 		i8080_exit, 						/* Shut down the CPU */
 		i8080_execute,						/* Execute a number of cycles */
-		i8080_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        i8080_get_context,                  /* Get the contents of the registers */
 		i8080_set_context,					/* Set the contents of the registers */
 		i8080_get_pc,						/* Return the current program counter */
 		i8080_set_pc,						/* Set the current program counter */
@@ -434,7 +441,8 @@ struct cpu_interface cpuintf[] =
         i8085_reset,                        /* Reset CPU */
 		i8085_exit, 						/* Shut down the CPU */
 		i8085_execute,						/* Execute a number of cycles */
-		i8085_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        i8085_get_context,                  /* Get the contents of the registers */
 		i8085_set_context,					/* Set the contents of the registers */
 		i8085_get_pc,						/* Return the current program counter */
 		i8085_set_pc,						/* Set the current program counter */
@@ -469,7 +477,8 @@ struct cpu_interface cpuintf[] =
         m6502_reset,                        /* Reset CPU */
 		m6502_exit, 						/* Shut down the CPU */
 		m6502_execute,						/* Execute a number of cycles */
-		m6502_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6502_get_context,                  /* Get the contents of the registers */
 		m6502_set_context,					/* Set the contents of the registers */
 		m6502_get_pc,						/* Return the current program counter */
 		m6502_set_pc,						/* Set the current program counter */
@@ -504,7 +513,8 @@ struct cpu_interface cpuintf[] =
         m65c02_reset,                       /* Reset CPU */
 		m65c02_exit,						/* Shut down the CPU */
 		m65c02_execute, 					/* Execute a number of cycles */
-		m65c02_get_context, 				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m65c02_get_context,                 /* Get the contents of the registers */
 		m65c02_set_context, 				/* Set the contents of the registers */
 		m65c02_get_pc,						/* Return the current program counter */
 		m65c02_set_pc,						/* Set the current program counter */
@@ -539,7 +549,8 @@ struct cpu_interface cpuintf[] =
         m6510_reset,                        /* Reset CPU */
 		m6510_exit, 						/* Shut down the CPU */
 		m6510_execute,						/* Execute a number of cycles */
-		m6510_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6510_get_context,                  /* Get the contents of the registers */
 		m6510_set_context,					/* Set the contents of the registers */
 		m6510_get_pc,						/* Return the current program counter */
 		m6510_set_pc,						/* Set the current program counter */
@@ -574,7 +585,8 @@ struct cpu_interface cpuintf[] =
         n2a03_reset,                        /* Reset CPU */
 		n2a03_exit, 						/* Shut down the CPU */
 		n2a03_execute,						/* Execute a number of cycles */
-		n2a03_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        n2a03_get_context,                  /* Get the contents of the registers */
 		n2a03_set_context,					/* Set the contents of the registers */
 		n2a03_get_pc,						/* Return the current program counter */
 		n2a03_set_pc,						/* Set the current program counter */
@@ -609,7 +621,8 @@ struct cpu_interface cpuintf[] =
         h6280_reset,                        /* Reset CPU */
 		h6280_exit, 						/* Shut down the CPU */
 		h6280_execute,						/* Execute a number of cycles */
-		h6280_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        h6280_get_context,                  /* Get the contents of the registers */
 		h6280_set_context,					/* Set the contents of the registers */
 		h6280_get_pc,						/* Return the current program counter */
 		h6280_set_pc,						/* Set the current program counter */
@@ -644,7 +657,8 @@ struct cpu_interface cpuintf[] =
         i86_reset,                          /* Reset CPU */
 		i86_exit,							/* Shut down the CPU */
 		i86_execute,						/* Execute a number of cycles */
-		i86_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        i86_get_context,                    /* Get the contents of the registers */
 		i86_set_context,					/* Set the contents of the registers */
 		i86_get_pc,							/* Return the current program counter */
 		i86_set_pc,							/* Set the current program counter */
@@ -679,7 +693,8 @@ struct cpu_interface cpuintf[] =
 		nec_reset,							/* Reset CPU */
 		nec_exit,							/* Shut down the CPU */
 		nec_execute,						/* Execute a number of cycles */
-		nec_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        nec_get_context,                    /* Get the contents of the registers */
 		nec_set_context,					/* Set the contents of the registers */
 		nec_get_pc,							/* Return the current program counter */
 		nec_set_pc,							/* Set the current program counter */
@@ -714,7 +729,8 @@ struct cpu_interface cpuintf[] =
 		nec_reset,							/* Reset CPU */
 		nec_exit,							/* Shut down the CPU */
 		nec_execute,						/* Execute a number of cycles */
-		nec_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        nec_get_context,                    /* Get the contents of the registers */
 		nec_set_context,					/* Set the contents of the registers */
 		nec_get_pc,							/* Return the current program counter */
 		nec_set_pc,							/* Set the current program counter */
@@ -749,7 +765,8 @@ struct cpu_interface cpuintf[] =
 		nec_reset,							/* Reset CPU */
 		nec_exit,							/* Shut down the CPU */
 		nec_execute,						/* Execute a number of cycles */
-		nec_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        nec_get_context,                    /* Get the contents of the registers */
 		nec_set_context,					/* Set the contents of the registers */
 		nec_get_pc,							/* Return the current program counter */
 		nec_set_pc,							/* Set the current program counter */
@@ -784,7 +801,8 @@ struct cpu_interface cpuintf[] =
         i8035_reset,                        /* Reset CPU */
 		i8035_exit, 						/* Shut down the CPU */
 		i8035_execute,						/* Execute a number of cycles */
-		i8035_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        i8035_get_context,                  /* Get the contents of the registers */
 		i8035_set_context,					/* Set the contents of the registers */
 		i8035_get_pc,						/* Return the current program counter */
 		i8035_set_pc,						/* Set the current program counter */
@@ -819,7 +837,8 @@ struct cpu_interface cpuintf[] =
         i8039_reset,                        /* Reset CPU */
 		i8039_exit, 						/* Shut down the CPU */
 		i8039_execute,						/* Execute a number of cycles */
-		i8039_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        i8039_get_context,                  /* Get the contents of the registers */
 		i8039_set_context,					/* Set the contents of the registers */
 		i8039_get_pc,						/* Return the current program counter */
 		i8039_set_pc,						/* Set the current program counter */
@@ -854,7 +873,8 @@ struct cpu_interface cpuintf[] =
         i8048_reset,                        /* Reset CPU */
 		i8048_exit, 						/* Shut down the CPU */
 		i8048_execute,						/* Execute a number of cycles */
-		i8048_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        i8048_get_context,                  /* Get the contents of the registers */
 		i8048_set_context,					/* Set the contents of the registers */
 		i8048_get_pc,						/* Return the current program counter */
 		i8048_set_pc,						/* Set the current program counter */
@@ -889,7 +909,8 @@ struct cpu_interface cpuintf[] =
         n7751_reset,                        /* Reset CPU */
 		n7751_exit, 						/* Shut down the CPU */
 		n7751_execute,						/* Execute a number of cycles */
-		n7751_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        n7751_get_context,                  /* Get the contents of the registers */
 		n7751_set_context,					/* Set the contents of the registers */
 		n7751_get_pc,						/* Return the current program counter */
 		n7751_set_pc,						/* Set the current program counter */
@@ -924,7 +945,8 @@ struct cpu_interface cpuintf[] =
         m6800_reset,                        /* Reset CPU */
 		m6800_exit, 						/* Shut down the CPU */
 		m6800_execute,						/* Execute a number of cycles */
-		m6800_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6800_get_context,                  /* Get the contents of the registers */
 		m6800_set_context,					/* Set the contents of the registers */
 		m6800_get_pc,						/* Return the current program counter */
 		m6800_set_pc,						/* Set the current program counter */
@@ -959,7 +981,8 @@ struct cpu_interface cpuintf[] =
         m6801_reset,                        /* Reset CPU */
 		m6801_exit, 						/* Shut down the CPU */
 		m6801_execute,						/* Execute a number of cycles */
-		m6801_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6801_get_context,                  /* Get the contents of the registers */
 		m6801_set_context,					/* Set the contents of the registers */
 		m6801_get_pc,						/* Return the current program counter */
 		m6801_set_pc,						/* Set the current program counter */
@@ -994,7 +1017,8 @@ struct cpu_interface cpuintf[] =
         m6802_reset,                        /* Reset CPU */
 		m6802_exit, 						/* Shut down the CPU */
 		m6802_execute,						/* Execute a number of cycles */
-		m6802_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6802_get_context,                  /* Get the contents of the registers */
 		m6802_set_context,					/* Set the contents of the registers */
 		m6802_get_pc,						/* Return the current program counter */
 		m6802_set_pc,						/* Set the current program counter */
@@ -1029,7 +1053,8 @@ struct cpu_interface cpuintf[] =
         m6803_reset,                        /* Reset CPU */
 		m6803_exit, 						/* Shut down the CPU */
 		m6803_execute,						/* Execute a number of cycles */
-		m6803_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6803_get_context,                  /* Get the contents of the registers */
 		m6803_set_context,					/* Set the contents of the registers */
 		m6803_get_pc,						/* Return the current program counter */
 		m6803_set_pc,						/* Set the current program counter */
@@ -1064,7 +1089,8 @@ struct cpu_interface cpuintf[] =
         m6808_reset,                        /* Reset CPU */
 		m6808_exit, 						/* Shut down the CPU */
         m6808_execute,                      /* Execute a number of cycles */
-		m6808_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6808_get_context,                  /* Get the contents of the registers */
 		m6808_set_context,					/* Set the contents of the registers */
 		m6808_get_pc,						/* Return the current program counter */
 		m6808_set_pc,						/* Set the current program counter */
@@ -1099,7 +1125,8 @@ struct cpu_interface cpuintf[] =
         hd63701_reset,                      /* Reset CPU */
 		hd63701_exit,						/* Shut down the CPU */
 		hd63701_execute,					/* Execute a number of cycles */
-		hd63701_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        hd63701_get_context,                /* Get the contents of the registers */
 		hd63701_set_context,				/* Set the contents of the registers */
 		hd63701_get_pc,						/* Return the current program counter */
 		hd63701_set_pc,						/* Set the current program counter */
@@ -1134,7 +1161,8 @@ struct cpu_interface cpuintf[] =
         nsc8105_reset,                      /* Reset CPU */
 		nsc8105_exit,						/* Shut down the CPU */
 		nsc8105_execute,					/* Execute a number of cycles */
-		nsc8105_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        nsc8105_get_context,                /* Get the contents of the registers */
 		nsc8105_set_context,				/* Set the contents of the registers */
 		nsc8105_get_pc,						/* Return the current program counter */
 		nsc8105_set_pc,						/* Set the current program counter */
@@ -1169,7 +1197,8 @@ struct cpu_interface cpuintf[] =
         m6805_reset,                        /* Reset CPU */
 		m6805_exit, 						/* Shut down the CPU */
         m6805_execute,                      /* Execute a number of cycles */
-		m6805_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6805_get_context,                  /* Get the contents of the registers */
 		m6805_set_context,					/* Set the contents of the registers */
 		m6805_get_pc,						/* Return the current program counter */
 		m6805_set_pc,						/* Set the current program counter */
@@ -1204,7 +1233,8 @@ struct cpu_interface cpuintf[] =
         m68705_reset,                       /* Reset CPU */
 		m68705_exit,						/* Shut down the CPU */
 		m68705_execute, 					/* Execute a number of cycles */
-		m68705_get_context, 				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m68705_get_context,                 /* Get the contents of the registers */
 		m68705_set_context, 				/* Set the contents of the registers */
 		m68705_get_pc,						/* Return the current program counter */
 		m68705_set_pc,						/* Set the current program counter */
@@ -1239,7 +1269,8 @@ struct cpu_interface cpuintf[] =
 		hd63705_reset,						/* Reset CPU */
 		hd63705_exit,						/* Shut down the CPU */
 		hd63705_execute,					/* Execute a number of cycles */
-		hd63705_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        hd63705_get_context,                /* Get the contents of the registers */
 		hd63705_set_context,				/* Set the contents of the registers */
 		hd63705_get_pc, 					/* Return the current program counter */
 		hd63705_set_pc, 					/* Set the current program counter */
@@ -1274,7 +1305,8 @@ struct cpu_interface cpuintf[] =
         m6309_reset,                        /* Reset CPU */
 		m6309_exit, 						/* Shut down the CPU */
 		m6309_execute,						/* Execute a number of cycles */
-		m6309_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6309_get_context,                  /* Get the contents of the registers */
 		m6309_set_context,					/* Set the contents of the registers */
 		m6309_get_pc,						/* Return the current program counter */
 		m6309_set_pc,						/* Set the current program counter */
@@ -1309,7 +1341,8 @@ struct cpu_interface cpuintf[] =
         m6809_reset,                        /* Reset CPU */
 		m6809_exit, 						/* Shut down the CPU */
         m6809_execute,                      /* Execute a number of cycles */
-		m6809_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m6809_get_context,                  /* Get the contents of the registers */
 		m6809_set_context,					/* Set the contents of the registers */
 		m6809_get_pc,						/* Return the current program counter */
 		m6809_set_pc,						/* Set the current program counter */
@@ -1344,7 +1377,8 @@ struct cpu_interface cpuintf[] =
         konami_reset,                       /* Reset CPU */
 		konami_exit, 						/* Shut down the CPU */
         konami_execute,                     /* Execute a number of cycles */
-		konami_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        konami_get_context,                 /* Get the contents of the registers */
 		konami_set_context,					/* Set the contents of the registers */
 		konami_get_pc,						/* Return the current program counter */
 		konami_set_pc,						/* Set the current program counter */
@@ -1379,7 +1413,8 @@ struct cpu_interface cpuintf[] =
         m68000_reset,                       /* Reset CPU */
 		m68000_exit,						/* Shut down the CPU */
 		m68000_execute, 					/* Execute a number of cycles */
-		m68000_get_context, 				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m68000_get_context,                 /* Get the contents of the registers */
 		m68000_set_context, 				/* Set the contents of the registers */
 		m68000_get_pc,						/* Return the current program counter */
 		m68000_set_pc,						/* Set the current program counter */
@@ -1414,7 +1449,8 @@ struct cpu_interface cpuintf[] =
         m68010_reset,                       /* Reset CPU */
 		m68010_exit,						/* Shut down the CPU */
 		m68010_execute, 					/* Execute a number of cycles */
-		m68010_get_context, 				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m68010_get_context,                 /* Get the contents of the registers */
 		m68010_set_context, 				/* Set the contents of the registers */
 		m68010_get_pc,						/* Return the current program counter */
 		m68010_set_pc,						/* Set the current program counter */
@@ -1449,7 +1485,8 @@ struct cpu_interface cpuintf[] =
         m68020_reset,                       /* Reset CPU */
 		m68020_exit,						/* Shut down the CPU */
 		m68020_execute, 					/* Execute a number of cycles */
-		m68020_get_context, 				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        m68020_get_context,                 /* Get the contents of the registers */
 		m68020_set_context, 				/* Set the contents of the registers */
 		m68020_get_pc,						/* Return the current program counter */
 		m68020_set_pc,						/* Set the current program counter */
@@ -1484,7 +1521,8 @@ struct cpu_interface cpuintf[] =
         t11_reset,                          /* Reset CPU */
 		t11_exit,							/* Shut down the CPU */
         t11_execute,                        /* Execute a number of cycles */
-		t11_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        t11_get_context,                    /* Get the contents of the registers */
 		t11_set_context,					/* Set the contents of the registers */
 		t11_get_pc,							/* Return the current program counter */
 		t11_set_pc,							/* Set the current program counter */
@@ -1519,7 +1557,8 @@ struct cpu_interface cpuintf[] =
         s2650_reset,                        /* Reset CPU */
 		s2650_exit, 						/* Shut down the CPU */
 		s2650_execute,						/* Execute a number of cycles */
-		s2650_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        s2650_get_context,                  /* Get the contents of the registers */
 		s2650_set_context,					/* Set the contents of the registers */
 		s2650_get_pc,						/* Return the current program counter */
 		s2650_set_pc,						/* Set the current program counter */
@@ -1554,7 +1593,8 @@ struct cpu_interface cpuintf[] =
         tms34010_reset,                     /* Reset CPU */
 		tms34010_exit,						/* Shut down the CPU */
 		tms34010_execute,					/* Execute a number of cycles */
-		tms34010_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        tms34010_get_context,               /* Get the contents of the registers */
 		tms34010_set_context,				/* Set the contents of the registers */
 		tms34010_get_pc, 					/* Return the current program counter */
 		tms34010_set_pc, 					/* Set the current program counter */
@@ -1589,7 +1629,8 @@ struct cpu_interface cpuintf[] =
         tms9900_reset,                      /* Reset CPU */
 		tms9900_exit,						/* Shut down the CPU */
 		tms9900_execute,					/* Execute a number of cycles */
-		tms9900_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        tms9900_get_context,                /* Get the contents of the registers */
 		tms9900_set_context,				/* Set the contents of the registers */
 		tms9900_get_pc,						/* Return the current program counter */
 		tms9900_set_pc,						/* Set the current program counter */
@@ -1618,13 +1659,267 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16BEW,ABITS2_16BEW,ABITS_MIN_16BEW    /* Address bits, for the memory system */
 	},
 #endif
+#if (HAS_TMS9940)
+    {
+    #warning "I don't know for sure whether tms9940 is 16-bit or 8-bit"
+		CPU_TMS9940,						/* CPU number and family cores sharing resources */
+		tms9940_reset,                      /* Reset CPU */
+		tms9940_exit,						/* Shut down the CPU */
+		tms9940_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms9940_get_context,				/* Get the contents of the registers */
+		tms9940_set_context,				/* Set the contents of the registers */
+		tms9940_get_pc,						/* Return the current program counter */
+		tms9940_set_pc,						/* Set the current program counter */
+		tms9940_get_sp,						/* Return the current stack pointer */
+		tms9940_set_sp,						/* Set the current stack pointer */
+		tms9940_get_reg, 					/* Get a specific register value */
+		tms9940_set_reg, 					/* Set a specific register value */
+		tms9940_set_nmi_line,				/* Set state of the NMI line */
+		tms9940_set_irq_line,				/* Set state of the IRQ line */
+		tms9940_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms9940_info,						/* Get formatted string for a specific register */
+		tms9940_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms9940_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS9940_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16bew,						/* Memory read */
+		cpu_writemem16bew, 					/* Memory write */
+		cpu_setOPbase16bew,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16BEW,ABITS2_16BEW,ABITS_MIN_16BEW    /* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_TMS9980)
+    {
+		CPU_TMS9980,						/* CPU number and family cores sharing resources */
+		tms9980a_reset,                      /* Reset CPU */
+		tms9980a_exit,						/* Shut down the CPU */
+		tms9980a_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms9980a_get_context,				/* Get the contents of the registers */
+		tms9980a_set_context,				/* Set the contents of the registers */
+		tms9980a_get_pc,						/* Return the current program counter */
+		tms9980a_set_pc,						/* Set the current program counter */
+		tms9980a_get_sp,						/* Return the current stack pointer */
+		tms9980a_set_sp,						/* Set the current stack pointer */
+		tms9980a_get_reg, 					/* Get a specific register value */
+		tms9980a_set_reg, 					/* Set a specific register value */
+		tms9980a_set_nmi_line,				/* Set state of the NMI line */
+		tms9980a_set_irq_line,				/* Set state of the IRQ line */
+		tms9980a_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms9980a_info,						/* Get formatted string for a specific register */
+		tms9980a_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms9980a_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS9980A_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		/*cpu_readmem14*/cpu_readmem16,						/* Memory read */
+		/*cpu_writemem14*/cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_TMS9985)
+    {
+		CPU_TMS9985,						/* CPU number and family cores sharing resources */
+		tms9985_reset,                      /* Reset CPU */
+		tms9985_exit,						/* Shut down the CPU */
+		tms9985_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms9985_get_context,				/* Get the contents of the registers */
+		tms9985_set_context,				/* Set the contents of the registers */
+		tms9985_get_pc,						/* Return the current program counter */
+		tms9985_set_pc,						/* Set the current program counter */
+		tms9985_get_sp,						/* Return the current stack pointer */
+		tms9985_set_sp,						/* Set the current stack pointer */
+		tms9985_get_reg, 					/* Get a specific register value */
+		tms9985_set_reg, 					/* Set a specific register value */
+		tms9985_set_nmi_line,				/* Set state of the NMI line */
+		tms9985_set_irq_line,				/* Set state of the IRQ line */
+		tms9985_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms9985_info,						/* Get formatted string for a specific register */
+		tms9985_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms9985_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS9985_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_TMS9989)
+    {
+		CPU_TMS9989,						/* CPU number and family cores sharing resources */
+		tms9989_reset,                      /* Reset CPU */
+		tms9989_exit,						/* Shut down the CPU */
+		tms9989_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms9989_get_context,				/* Get the contents of the registers */
+		tms9989_set_context,				/* Set the contents of the registers */
+		tms9989_get_pc,						/* Return the current program counter */
+		tms9989_set_pc,						/* Set the current program counter */
+		tms9989_get_sp,						/* Return the current stack pointer */
+		tms9989_set_sp,						/* Set the current stack pointer */
+		tms9989_get_reg, 					/* Get a specific register value */
+		tms9989_set_reg, 					/* Set a specific register value */
+		tms9989_set_nmi_line,				/* Set state of the NMI line */
+		tms9989_set_irq_line,				/* Set state of the IRQ line */
+		tms9989_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms9989_info,						/* Get formatted string for a specific register */
+		tms9989_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms9989_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS9989_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_TMS9995)
+    {
+		CPU_TMS9995,						/* CPU number and family cores sharing resources */
+		tms9995_reset,                      /* Reset CPU */
+		tms9995_exit,						/* Shut down the CPU */
+		tms9995_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms9995_get_context,				/* Get the contents of the registers */
+		tms9995_set_context,				/* Set the contents of the registers */
+		tms9995_get_pc,						/* Return the current program counter */
+		tms9995_set_pc,						/* Set the current program counter */
+		tms9995_get_sp,						/* Return the current stack pointer */
+		tms9995_set_sp,						/* Set the current stack pointer */
+		tms9995_get_reg, 					/* Get a specific register value */
+		tms9995_set_reg, 					/* Set a specific register value */
+		tms9995_set_nmi_line,				/* Set state of the NMI line */
+		tms9995_set_irq_line,				/* Set state of the IRQ line */
+		tms9995_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms9995_info,						/* Get formatted string for a specific register */
+		tms9995_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms9995_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS9995_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_TMS99105A)
+    {
+		CPU_TMS99105A,						/* CPU number and family cores sharing resources */
+		tms99105a_reset,                      /* Reset CPU */
+		tms99105a_exit,						/* Shut down the CPU */
+		tms99105a_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms99105a_get_context,				/* Get the contents of the registers */
+		tms99105a_set_context,				/* Set the contents of the registers */
+		tms99105a_get_pc,						/* Return the current program counter */
+		tms99105a_set_pc,						/* Set the current program counter */
+		tms99105a_get_sp,						/* Return the current stack pointer */
+		tms99105a_set_sp,						/* Set the current stack pointer */
+		tms99105a_get_reg, 					/* Get a specific register value */
+		tms99105a_set_reg, 					/* Set a specific register value */
+		tms99105a_set_nmi_line,				/* Set state of the NMI line */
+		tms99105a_set_irq_line,				/* Set state of the IRQ line */
+		tms99105a_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms99105a_info,						/* Get formatted string for a specific register */
+		tms99105a_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms99105a_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS99105A_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16bew,						/* Memory read */
+		cpu_writemem16bew, 					/* Memory write */
+		cpu_setOPbase16bew,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16BEW,ABITS2_16BEW,ABITS_MIN_16BEW    /* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_TMS99110A)
+    {
+		CPU_TMS99110A,						/* CPU number and family cores sharing resources */
+		tms99110a_reset,                      /* Reset CPU */
+		tms99110a_exit,						/* Shut down the CPU */
+		tms99110a_execute,					/* Execute a number of cycles */
+		NULL,								/* Burn a specific amount of cycles */
+		tms99110a_get_context,				/* Get the contents of the registers */
+		tms99110a_set_context,				/* Set the contents of the registers */
+		tms99110a_get_pc,						/* Return the current program counter */
+		tms99110a_set_pc,						/* Set the current program counter */
+		tms99110a_get_sp,						/* Return the current stack pointer */
+		tms99110a_set_sp,						/* Set the current stack pointer */
+		tms99110a_get_reg, 					/* Get a specific register value */
+		tms99110a_set_reg, 					/* Set a specific register value */
+		tms99110a_set_nmi_line,				/* Set state of the NMI line */
+		tms99110a_set_irq_line,				/* Set state of the IRQ line */
+		tms99110a_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		tms99110a_info,						/* Get formatted string for a specific register */
+		tms99110a_dasm,						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&tms99110a_ICount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+		TMS99110A_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16bew,						/* Memory read */
+		cpu_writemem16bew, 					/* Memory write */
+		cpu_setOPbase16bew,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16BEW,ABITS2_16BEW,ABITS_MIN_16BEW    /* Address bits, for the memory system */
+	},
+#endif
 #if (HAS_Z8000)
 	{
 		CPU_Z8000,							/* CPU number and family cores sharing resources */
         z8000_reset,                        /* Reset CPU */
 		z8000_exit, 						/* Shut down the CPU */
 		z8000_execute,						/* Execute a number of cycles */
-		z8000_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        z8000_get_context,                  /* Get the contents of the registers */
 		z8000_set_context,					/* Set the contents of the registers */
 		z8000_get_pc,						/* Return the current program counter */
 		z8000_set_pc,						/* Set the current program counter */
@@ -1659,7 +1954,8 @@ struct cpu_interface cpuintf[] =
         tms320c10_reset,                    /* Reset CPU */
 		tms320c10_exit, 					/* Shut down the CPU */
 		tms320c10_execute,					/* Execute a number of cycles */
-		tms320c10_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        tms320c10_get_context,              /* Get the contents of the registers */
 		tms320c10_set_context,				/* Set the contents of the registers */
 		tms320c10_get_pc,					/* Return the current program counter */
 		tms320c10_set_pc,					/* Set the current program counter */
@@ -1694,7 +1990,8 @@ struct cpu_interface cpuintf[] =
         ccpu_reset,                         /* Reset CPU  */
 		ccpu_exit,							/* Shut down CPU  */
 		ccpu_execute,						/* Execute a number of cycles  */
-		ccpu_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        ccpu_get_context,                   /* Get the contents of the registers */
 		ccpu_set_context,					/* Set the contents of the registers */
 		ccpu_get_pc, 						/* Return the current program counter */
 		ccpu_set_pc, 						/* Set the current program counter */
@@ -1729,7 +2026,8 @@ struct cpu_interface cpuintf[] =
         pdp1_reset,                         /* Reset CPU  */
 		pdp1_exit,							/* Shut down CPU  */
 		pdp1_execute,						/* Execute a number of cycles  */
-		pdp1_get_context,					/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        pdp1_get_context,                   /* Get the contents of the registers */
 		pdp1_set_context,					/* Set the contents of the registers */
 		pdp1_get_pc, 						/* Return the current program counter */
 		pdp1_set_pc, 						/* Set the current program counter */
@@ -1764,7 +2062,8 @@ struct cpu_interface cpuintf[] =
         adsp2100_reset,						/* Reset CPU */
 		adsp2100_exit, 						/* Shut down the CPU */
 		adsp2100_execute,					/* Execute a number of cycles */
-		adsp2100_get_context,				/* Get the contents of the registers */
+		NULL,								/* Burn a specific amount of cycles */
+        adsp2100_get_context,               /* Get the contents of the registers */
 		adsp2100_set_context,				/* Set the contents of the registers */
 		adsp2100_get_pc,					/* Return the current program counter */
 		adsp2100_set_pc,					/* Set the current program counter */
@@ -1804,7 +2103,7 @@ void cpu_init(void)
 	{
 		if( cpuintf[i].cpu_num != i )
 		{
-			fprintf( stderr, "CPU #%d [%s] wrong ID %d: check enum CPU_... in src/driver.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
+if (errorlog) fprintf( errorlog, "CPU #%d [%s] wrong ID %d: check enum CPU_... in src/driver.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
 			exit(1);
 		}
 	}
@@ -1844,7 +2143,7 @@ void cpu_run(void)
         if( size == 0 )
         {
             /* That can't really be true */
-			fprintf( stderr, "CPU #%d claims to need no context buffer!\n", i);
+if (errorlog) fprintf( errorlog, "CPU #%d claims to need no context buffer!\n", i);
             raise( SIGABRT );
         }
 
@@ -1852,7 +2151,7 @@ void cpu_run(void)
         if( cpu[i].context == NULL )
         {
             /* That's really bad :( */
-			fprintf( stderr, "CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
+if (errorlog) fprintf( errorlog, "CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
             raise( SIGABRT );
         }
 
@@ -3099,8 +3398,38 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
             	}
                 break;
 #endif
-#if HAS_TMS9900
+/*#if HAS_TMS9900
 			case CPU_TMS9900:	irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
+#endif*/
+#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
+    || (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
+	#if (HAS_TMS9900)
+			case CPU_TMS9900:
+	#endif
+	#if (HAS_TMS9940)
+			case CPU_TMS9940:
+	#endif
+	#if (HAS_TMS9980)
+			case CPU_TMS9980:
+	#endif
+	#if (HAS_TMS9985)
+			case CPU_TMS9985:
+	#endif
+	#if (HAS_TMS9989)
+			case CPU_TMS9989:
+	#endif
+	#if (HAS_TMS9995)
+			case CPU_TMS9995:
+	#endif
+	#if (HAS_TMS99105A)
+			case CPU_TMS99105A:
+	#endif
+	#if (HAS_TMS99110A)
+			case CPU_TMS99110A:
+	#endif
+				LOG((errorlog,"Please use the new interrupt scheme for your new developments !\n"));
+				irq_line = 0;
+				break;
 #endif
 #if HAS_Z8000
             case CPU_Z8000:
@@ -3780,12 +4109,13 @@ const char *cpu_dump_state(void)
 	static char buffer[1024+1];
 	unsigned addr_width = (cpu_address_bits() + 3) / 4;
 	char *dst = buffer;
-	const char *src, *regs;
+	const char *src;
+	const INT8 *regs;
 	int width;
 
 	dst += sprintf(dst, "CPU #%d [%s]\n", activecpu, cputype_name(CPU_TYPE(activecpu)));
 	width = 0;
-	regs = cpu_reg_layout();
+	regs = (INT8 *)cpu_reg_layout();
 	while( *regs )
 	{
 		if( *regs == -1 )
@@ -4241,7 +4571,7 @@ const char *cpunum_dump_state(int cpunum)
 }
 
 /***************************************************************************
-  Dump all CPU's state to stderr
+  Dump all CPU's state to stdout
 ***************************************************************************/
 void cpu_dump_states(void)
 {
@@ -4249,9 +4579,9 @@ void cpu_dump_states(void)
 
 	for( i = 0; i < totalcpu; i++ )
 	{
-		fputs( cpunum_dump_state(i), stderr );
+		puts( cpunum_dump_state(i) );
 	}
-	fflush(stderr);
+	fflush(stdout);
 }
 
 /***************************************************************************
@@ -4262,6 +4592,7 @@ void cpu_dump_states(void)
 static void Dummy_reset(void *param) { }
 static void Dummy_exit(void) { }
 static int Dummy_execute(int cycles) { return cycles; }
+static void Dummy_burn(int cycles) { }
 static unsigned Dummy_get_context(void *regs) { return 0; }
 static void Dummy_set_context(void *regs) { }
 static unsigned Dummy_get_pc(void) { return 0; }

@@ -24,8 +24,8 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = finalizr_driver
-TINY_OBJS = obj/drivers/finalizr.o obj/vidhrdw/finalizr.o obj/machine/konami.o
+TINY_NAME = driver_gradius3
+TINY_OBJS = obj/drivers/gradius3.o obj/vidhrdw/tmnt.o obj/vidhrdw/konamiic.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -81,7 +81,14 @@ CPUS+=M68020@
 CPUS+=T11@
 CPUS+=S2650@
 CPUS+=TMS34010@
-CPUS+=TMS9900@
+#CPUS+=TMS9900@
+#CPUS+=TMS9940@
+CPUS+=TMS9980@
+#CPUS+=TMS9985@
+#CPUS+=TMS9989@
+#CPUS+=TMS9995@
+#CPUS+=TMS99105A@
+#CPUS+=TMS99110A@
 CPUS+=Z8000@
 CPUS+=TMS320C10@
 CPUS+=CCPU@
@@ -444,6 +451,55 @@ CPUOBJS += obj/cpu/tms9900/tms9900.o
 DBGOBJS += obj/cpu/tms9900/9900dasm.o
 endif
 
+CPU=$(strip $(findstring TMS9940@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS9940=1
+CPUOBJS += obj/cpu/tms9900/tms9900.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS9980@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS9980=1
+CPUOBJS += obj/cpu/tms9900/tms9980a.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS9985@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS9985=1
+CPUOBJS += obj/cpu/tms9900/tms9980a.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS9989@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS9989=1
+CPUOBJS += obj/cpu/tms9900/tms9980a.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS9995@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS9995=1
+CPUOBJS += obj/cpu/tms9900/tms9995.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS99105A@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS99105A=1
+CPUOBJS += obj/cpu/tms9900/tms9995.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS99105A@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS99105A=1
+CPUOBJS += obj/cpu/tms9900/tms9995.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
 CPU=$(strip $(findstring Z8000@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z8000=1
@@ -555,19 +611,19 @@ endif
 SOUND=$(strip $(findstring YM2413@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2413=1
-SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym2413.o obj/sound/ym3812.o obj/sound/fmopl.o
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym2413.o obj/sound/fmopl.o
 endif
 
 SOUND=$(strip $(findstring YM3812@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3812=1
-SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o obj/sound/fmopl.o
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/fmopl.o
 endif
 
 SOUND=$(strip $(findstring YM3526@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3526=1
-SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o obj/sound/fmopl.o
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/fmopl.o
 endif
 
 SOUND=$(strip $(findstring Y8950@,$(SOUNDS)))
@@ -597,7 +653,7 @@ endif
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
-SOUNDOBJS += obj/sound/nes.o obj/sound/nesintf.o
+SOUNDOBJS += obj/sound/nes_apu.o
 endif
 
 SOUND=$(strip $(findstring ASTROCADE@,$(SOUNDS)))
@@ -784,7 +840,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/tad.a obj/jaleco.a obj/visco.a \
-         obj/orca.a obj/other.a \
+         obj/orca.a obj/gaelco.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -975,9 +1031,10 @@ obj/taito.a: \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
-         obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
          obj/vidhrdw/footchmp.o obj/drivers/footchmp.o \
+         obj/vidhrdw/minivadr.o obj/drivers/minivadr.o \
+         obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/drivers/lkage.o obj/vidhrdw/lkage.o \
          obj/vidhrdw/taitol.o obj/drivers/taitol.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
@@ -1042,6 +1099,7 @@ obj/sega.a: \
          obj/vidhrdw/champbas.o obj/drivers/champbas.o \
          obj/vidhrdw/appoooh.o obj/drivers/appoooh.o \
          obj/vidhrdw/bankp.o obj/drivers/bankp.o \
+         obj/vidhrdw/dotrikun.o obj/drivers/dotrikun.o \
          obj/vidhrdw/system1.o obj/drivers/system1.o \
          obj/machine/system16.o obj/vidhrdw/system16.o obj/sndhrdw/system16.o obj/drivers/system16.o \
 
@@ -1113,6 +1171,7 @@ obj/konami.a: \
          obj/vidhrdw/konamiic.o \
          obj/vidhrdw/rockrage.o obj/drivers/rockrage.o \
          obj/vidhrdw/flkatck.o obj/drivers/flkatck.o \
+         obj/vidhrdw/fastlane.o obj/drivers/fastlane.o \
          obj/vidhrdw/battlnts.o obj/drivers/battlnts.o \
          obj/vidhrdw/bladestl.o obj/drivers/bladestl.o \
          obj/machine/ajax.o obj/vidhrdw/ajax.o obj/drivers/ajax.o \
@@ -1131,6 +1190,7 @@ obj/konami.a: \
          obj/machine/simpsons.o obj/vidhrdw/simpsons.o obj/drivers/simpsons.o \
          obj/vidhrdw/vendetta.o obj/drivers/vendetta.o \
          obj/vidhrdw/twin16.o obj/drivers/twin16.o \
+         obj/vidhrdw/gradius3.o obj/drivers/gradius3.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
          obj/vidhrdw/xmen.o obj/drivers/xmen.o \
          obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
@@ -1301,6 +1361,9 @@ obj/orca.a: \
          obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
          obj/machine/vastar.o obj/vidhrdw/vastar.o obj/drivers/vastar.o \
 
+obj/gaelco.a: \
+         obj/vidhrdw/gaelco.o obj/drivers/gaelco.o \
+
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
 
@@ -1444,3 +1507,4 @@ cleantiny:
 	del obj\usrintrf.o
 	del obj\cheat.o
 	del obj\msdos\fronthlp.o
+	del obj\vidhrdw\konamiic.o

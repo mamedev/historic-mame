@@ -17,6 +17,7 @@
 extern void z80_vm_reset (void *param);
 extern void z80_vm_exit (void);
 extern int z80_vm_execute(int cycles);
+extern void z80_vm_burn(int cycles);
 extern unsigned z80_vm_get_context (void *dst);
 extern void z80_vm_set_context (void *src);
 extern unsigned z80_vm_get_pc (void);

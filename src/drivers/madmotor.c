@@ -4,8 +4,9 @@
 
   But it's really a Data East game..  Bad Dudes era graphics hardware with
   Dark Seal era sound hardware.  Maybe a license for a specific territory?
-This game is developed by
-Mitchell, but they entrusted PCB design and some routines to Data East.
+
+  "This game is developed by Mitchell, but they entrusted PCB design and some
+  routines to Data East."
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -286,16 +287,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	{ 8055, 16110 },/* Frequency, not confirmed */
+	{ 7757, 15514 },/* ?? Frequency */
 	{ 3, 4 },       /* memory regions 3 & 4 */
-	{ 50, 22 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	21470000/8,	/* Audio section crystal is 21.470 MHz */
-	{ YM2203_VOL(24,40) },
+	21470000/6,	/* ?? Audio section crystal is 21.470 MHz */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -311,8 +312,8 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	21470000/8, /* Audio section crystal is 21.470 MHz */
-	{ YM3012_VOL(37,MIXER_PAN_LEFT,37,MIXER_PAN_RIGHT) },
+	21470000/6, /* ?? Audio section crystal is 21.470 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -333,7 +334,7 @@ static struct MachineDriver madmotor_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

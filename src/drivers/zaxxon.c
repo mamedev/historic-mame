@@ -1,5 +1,12 @@
 /***************************************************************************
 
+Notes:
+
+- the duck season in razmataz is controlled by ff3c, maybe a timer. When it's
+  0, it ends. We are currently returning 0xff so it never ends unitl you shoot
+  stop.
+
+
 Zaxxon memory map (preliminary)
 
 0000-1fff ROM 3
@@ -91,9 +98,14 @@ void futspy_init_machine(void)
 	zaxxon_vid_type = 2;
 }
 
-static int razmataz_unknown_r(int offset)
+static int razmataz_unknown1_r(int offset)
 {
 	return rand() & 0xff;
+}
+
+static int razmataz_unknown2_r(int offset)
+{
+	return 0xff;
 }
 
 static int razmataz_dial_r(int num)
@@ -192,8 +204,8 @@ static struct MemoryReadAddress razmataz_readmem[] =
 	{ 0xc008, 0xc008, razmataz_dial_1_r },	/* dial pl 2 */
 	{ 0xc00c, 0xc00c, input_port_7_r },	/* fire/start pl 2 */
 	{ 0xc100, 0xc100, input_port_2_r },	/* coin */
-	{ 0xc80a, 0xc80a, razmataz_unknown_r },	/* needed, otherwise the game hangs */
-//	{ 0xff3c, 0xff3c,  }, sound?
+	{ 0xc80a, 0xc80a, razmataz_unknown1_r },	/* needed, otherwise the game hangs */
+	{ 0xff3c, 0xff3c, razmataz_unknown2_r },	/* timer? if 0, "duck season" ends */
 	{ -1 }  /* end of table */
 };
 

@@ -295,10 +295,18 @@ void romident(const char* name,int enter_dirs) {
 }
 
 
+#ifndef MESS
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
 		LIST_SOURCEFILE };
+#else
+enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
+		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
+		LIST_SOURCEFILE, LIST_EXTENSIONS };
+#endif
+
 
 #define VERIFY_ROMS		0x00000001
 #define VERIFY_SAMPLES	0x00000002
@@ -313,8 +321,8 @@ void CLIB_DECL terse_printf(char *fmt,...)
 
 int frontend_help (int argc, char **argv)
 {
-	int i, j, k;
-	int list = 0;
+	int i, j;
+    int list = 0;
 	int listclones = 1;
 	int verify = 0;
 	int ident = 0;
@@ -367,6 +375,10 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
 		if (!stricmp(argv[i],"-wrongfps")) list = LIST_WRONGFPS;
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
+		#ifdef MESS
+				if (!stricmp(argv[i],"-listextensions")) list = LIST_EXTENSIONS;
+		#endif
+
 
 		/* these options REQUIRES gamename field to work */
 		if (strlen(gamename) > 0)
@@ -411,6 +423,41 @@ int frontend_help (int argc, char **argv)
 
 	switch (list)  /* front-end utilities ;) */
 	{
+
+		#ifdef MESS
+		case LIST_EXTENSIONS: /* simple games list */
+					i = 0; j = 0;
+					printf("\nSYSTEM    IMAGE FILE EXTENSIONS SUPPORTED\n");
+					printf("--------  -------------------------------\n");
+					while (drivers[i])
+					{
+						if ((listclones || drivers[i]->clone_of == 0
+		#ifndef NEOFREE
+		#ifndef TINY_COMPILE
+								|| drivers[i]->clone_of == &neogeo_bios
+		#endif
+		#endif
+								) && !strwildcmp(gamename, drivers[i]->name))
+						{
+							printf("%-10s",drivers[i]->name);
+							j=0;
+							while(drivers[i]->file_extension[j]!=0)
+							{
+								if (drivers[i]->file_extension != 0 && drivers[i]->file_extension[0] != 0)
+								{
+									printf(".%-5s",drivers[i]->file_extension[j]);
+
+								}
+							j++;
+							}
+							printf("\n");
+						}
+						i++;
+					}
+					return 0;
+					break;
+		#endif
+
 		case LIST_LIST: /* simple games list */
 			printf("\nMAME currently supports the following games:\n\n");
 			i = 0; j = 0;
@@ -532,6 +579,7 @@ int frontend_help (int argc, char **argv)
 			else
 			{
 #if (HAS_SAMPLES)
+				int k;
 				for( k = 0; gamedrv->drv->sound[k].sound_type && k < MAX_SOUND; k++ )
 				{
 					const char **samplenames;

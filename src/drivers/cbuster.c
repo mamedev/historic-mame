@@ -202,7 +202,6 @@ static void YM2203_w(int offset, int data)
 	}
 }
 
-/* Physical memory map (21 bits) */
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
@@ -220,8 +219,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w }, /* Effects  */
-	{ 0x130000, 0x130001, OKIM6295_data_1_w }, /* Music samples */
+	{ 0x120000, 0x120001, OKIM6295_data_0_w },
+	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
@@ -366,17 +365,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	2,              	/* 2 chips */
-	{ 8055, 16110 },	/* Chips are different frequencies */
-	{ 3, 4 },			/* memory regions 3 & 4 */
-	{ 37, 17 }
+	2,              /* 2 chips */
+	{ 7757, 15514 },/* Frequency */
+	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	32220000/8,	/* Accurate */
-	{ YM2203_VOL(27,26) },
+	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
+	{ YM2203_VOL(40,40) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -385,15 +385,14 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state);
+	cpu_set_irq_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3700000, /* This sounds much better than the value below, but I don't understand where the value comes from */
-//	32220000/8, /* Accurate? */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -414,7 +413,7 @@ static struct MachineDriver twocrude_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

@@ -5,6 +5,19 @@
 static int layer_colorbase[2];
 static int rockrage_vreg;
 
+void rockrage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	/* build the lookup table for sprites. Palette is dynamic. */
+	for (i = 0;i < TOTAL_COLORS(0)/2; i++){
+		COLOR(0,i) = 0x00 + (color_prom[i] & 0x0f);
+		COLOR(0,(TOTAL_COLORS(0)/2)+i) = 0x10 + (color_prom[0x100+i] & 0x0f);
+	}
+}
+
 /***************************************************************************
 
   Callback for the K007342
@@ -17,7 +30,7 @@ static void tile_callback(int layer, int bank, int *code, int *color)
 		*code |= ((*color & 0x40) << 2) | ((bank & 0x01) << 9);
 	else
 		*code |= ((*color & 0x40) << 2) | ((bank & 0x03) << 10) | ((rockrage_vreg & 0x04) << 7) | ((rockrage_vreg & 0x08) << 9);
-	*color = layer_colorbase[layer];
+	*color = layer_colorbase[layer] + (*color & 0x0f);
 }
 
 /***************************************************************************
@@ -54,8 +67,8 @@ void rockrage_vreg_w(int offset, int data){
 
 int rockrage_vh_start(void)
 {
-	layer_colorbase[0] = 0;
-	layer_colorbase[1] = 1;
+	layer_colorbase[0] = 0x00;
+	layer_colorbase[1] = 0x10;
 
 	if (K007342_vh_start(0,tile_callback))
 	{

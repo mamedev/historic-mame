@@ -8,10 +8,10 @@
 	Juergen Buchmueller.  It is released as part of the Mame emulator project.
 	Let me know if you intend to use this code in any other project.
 
- 
+
 	NOTICE:
-     
-	This code is around 95% complete!  Several things are unimplemented,
+
+	This code is around 98% complete!  Several things are unimplemented,
 	some due to lack of time, some due to lack of documentation, mainly
 	due to lack of programs using these features.
 
@@ -20,11 +20,9 @@
 
 	I am unsure if instructions like SBC take an extra cycle when used in
 	decimal mode.  I am unsure if flag B is set upon execution of rti.
-  
+
 	Cycle counts should be quite accurate, illegal instructions are assumed
 	to take two cycles.
-
-	Internal timer (TIQ) not properly implemented.
 
 
 	Changelog, version 1.02:
@@ -40,8 +38,16 @@
 	Changelog, version 1.04, 28/9/99-22/10/99:
 		Adjusted RTI (thanks Karl)
  		TST opcodes fixed in disassembler (missing break statements in a case!).
-		TST behaviour fixed.  
+		TST behaviour fixed.
 		SMB/RMB/BBS/BBR fixed in disassembler.
+
+	Changelog, version 1.05, 8/12/99-16/12/99:
+		Added CAB's timer implementation (note: irq ack & timer reload are changed).
+		Fixed STA IDX.
+		Fixed B flag setting on BRK.
+		Assumed CSH & CSL to take 2 cycles each.
+
+		Todo:  Performance could be improved by precalculating timer fire position.
 
 ******************************************************************************/
 
@@ -95,8 +101,9 @@ typedef struct
     UINT8 mmr[8];       /* Hu6280 memory mapper registers */
     UINT8 irq_mask;     /* interrupt enable/disable */
     UINT8 timer_status; /* timer status */
+	UINT8 timer_ack;	/* timer acknowledge */
     int timer_value;    /* timer interrupt */
-    UINT8 timer_load;   /* reload value */
+    int timer_load;		/* reload value */
 	int extra_cycles;	/* cycles used taking an interrupt */
     int nmi_state;
     int irq_state[3];
@@ -139,6 +146,10 @@ void h6280_reset(void *param)
 	PCL = RDMEM(H6280_RESET_VEC);
 	PCH = RDMEM((H6280_RESET_VEC+1));
 
+	/* timer off by default */
+	h6280.timer_status=0;
+	h6280.timer_ack=1;
+
     /* clear pending interrupts */
 	for (i = 0; i < 3; i++)
 		h6280.irq_state[i] = CLEAR_LINE;
@@ -151,12 +162,13 @@ void h6280_exit(void)
 
 int h6280_execute(int cycles)
 {
-	int in;
+	int in,lastcycle,deltacycle;
 	h6280_ICount = cycles;
 
     /* Subtract cycles used for taking an interrupt */
     h6280_ICount -= h6280.extra_cycles;
 	h6280.extra_cycles = 0;
+	lastcycle = h6280_ICount;
 
 	/* Execute instructions */
 	do
@@ -181,6 +193,19 @@ int h6280_execute(int cycles)
 		in=RDOP();
 		PCW++;
 		insnh6280[in]();
+
+		/* Check internal timer */
+		if(h6280.timer_status)
+		{
+			deltacycle = lastcycle - h6280_ICount;
+			h6280.timer_value -= deltacycle;
+			if(h6280.timer_value<=0 && h6280.timer_ack==1)
+			{
+				h6280.timer_ack=0;
+				h6280_set_irq_line(2,ASSERT_LINE);
+			}
+		}
+		lastcycle = h6280_ICount;
 
 		/* If PC has not changed we are stuck in a tight loop, may as well finish */
 		if( h6280.pc.d == h6280.ppc.d )
@@ -384,9 +409,9 @@ const char *h6280_info(void *context, int regnum)
 				r->p & 0x02 ? 'Z':'.',
 				r->p & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_NAME: return "H6280";
+		case CPU_INFO_NAME: return "HuC6280";
 		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
-		case CPU_INFO_VERSION: return "1.04";
+		case CPU_INFO_VERSION: return "1.05";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
 		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;
@@ -415,14 +440,12 @@ int H6280_irq_status_r(int offset)
 	{
 		case 0: /* Read irq mask */
 			return h6280.irq_mask;
- 
+
 		case 1: /* Read irq status */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read irq status\n",cpu_get_pc());
 			status=0;
-			/* Almost certainly wrong... */
-//			if (h6280.pending_irq1) status^=2;
-//			if (h6280.pending_irq2) status^=1;
-//			if (h6280.pending_timer) status^=4;
+			if(h6280.irq_state[1]!=CLEAR_LINE) status|=1; /* IRQ 2 */
+			if(h6280.irq_state[0]!=CLEAR_LINE) status|=2; /* IRQ 1 */
+			if(h6280.irq_state[2]!=CLEAR_LINE) status|=4; /* TIMER */
 			return status;
 	}
 
@@ -438,9 +461,9 @@ void H6280_irq_status_w(int offset, int data)
 			CHECK_IRQ_LINES;
 			break;
 
-		case 1: /* Reset timer irq */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer irq reset!\n",cpu_get_pc());
-			h6280.timer_value = h6280.timer_load; /* hmm */
+		case 1: /* Timer irq ack - timer is reloaded here */
+			h6280.timer_value = h6280.timer_load;
+			h6280.timer_ack=1; /* Timer can't refire until ack'd */
 			break;
 	}
 }
@@ -449,11 +472,9 @@ int H6280_timer_r(int offset)
 {
 	switch (offset) {
 		case 0: /* Counter value */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read counter value\n",cpu_get_pc());
-			return h6280.timer_value;
+			return (h6280.timer_value/1024)&127;
 
 		case 1: /* Read counter status */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read counter status\n",cpu_get_pc());
 			return h6280.timer_status;
 	}
 
@@ -464,14 +485,15 @@ void H6280_timer_w(int offset, int data)
 {
 	switch (offset) {
 		case 0: /* Counter preload */
-//if (errorlog) fprintf(errorlog,"Hu6280: %04x: Wrote counter preload %02x\n",cpu_get_pc(),data);
-			h6280.timer_load=h6280.timer_value=data;
+			h6280.timer_load=h6280.timer_value=((data&127)+1)*1024;
 			return;
 
 		case 1: /* Counter enable */
+			if(data&1)
+			{	/* stop -> start causes reload */
+				if(h6280.timer_status==0) h6280.timer_value=h6280.timer_load;
+			}
 			h6280.timer_status=data&1;
-//			if (data&1) h6280_set_irq_line(2,1);
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer status %02x\n",cpu_get_pc(),data);
 			return;
 	}
 }

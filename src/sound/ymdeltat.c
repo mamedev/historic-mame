@@ -8,13 +8,13 @@
 ** Base program is YM2610 emulator by Hiromitsu Shioya.
 ** Written by Tatsuyuki Satoh
 **
-** Version 0.36a
+** Version 0.36b
 **
 ** sound chips who has this unit
 **
 ** YM2608   OPNA
 ** YM2610/B OPNB
-** Y8950    MSX AUDI,OPL base
+** Y8950    MSX AUDIO
 **
 **
 */
@@ -24,17 +24,17 @@
 #include "driver.h"
 #include "ymdeltat.h"
 
-unsigned char *ym_deltat_memory;      /* memory pointer */
+UINT8 *ym_deltat_memory;      /* memory pointer */
 
 /* Forecast to next Forecast (rate = *8) */
 /* 1/8 , 3/8 , 5/8 , 7/8 , 9/8 , 11/8 , 13/8 , 15/8 */
-const int ym_deltat_decode_tableB1[16] = {
+const INT32 ym_deltat_decode_tableB1[16] = {
   1,   3,   5,   7,   9,  11,  13,  15,
   -1,  -3,  -5,  -7,  -9, -11, -13, -15,
 };
 /* delta to next delta (rate= *64) */
 /* 0.9 , 0.9 , 0.9 , 0.9 , 1.2 , 1.6 , 2.0 , 2.4 */
-const int ym_deltat_decode_tableB2[16] = {
+const INT32 ym_deltat_decode_tableB2[16] = {
   57,  57,  57,  57, 77, 102, 128, 153,
   57,  57,  57,  57, 77, 102, 128, 153
 };
@@ -115,12 +115,12 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 	case 0x09:	/* DELTA-N L (ADPCM Playback Prescaler) */
 	case 0x0a:	/* DELTA-N H */
 		DELTAT->delta  = (DELTAT->reg[0xa]*0x0100 | DELTAT->reg[0x9]);
-		DELTAT->step     = (unsigned int)((double)(DELTAT->delta*(1<<(YM_DELTAT_SHIFT-16)))*(DELTAT->freqbase));
+		DELTAT->step     = (UINT32)((double)(DELTAT->delta*(1<<(YM_DELTAT_SHIFT-16)))*(DELTAT->freqbase));
 		DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 		break;
 	case 0x0b:	/* Level control (volume , voltage flat) */
 		{
-			int oldvol = DELTAT->volume;
+			INT32 oldvol = DELTAT->volume;
 			DELTAT->volume = (v&0xff)*(DELTAT->output_range/256) / YM_DELTAT_DECODE_RANGE;
 			if( oldvol != 0 )
 			{
@@ -169,27 +169,23 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 #define YM_DELTAT_DECODE_MIN (-(YM_DELTAT_DECODE_RANGE))
 #define YM_DELTAT_DECODE_MAX ((YM_DELTAT_DECODE_RANGE)-1)
 
-INLINE int YM_DELTAT_Limit( int val, int max, int min ) {
-	if ( val > max )
-		val = max;
-	else if ( val < min )
-		val = min;
+extern const INT32 ym_deltat_decode_tableB1[];
+extern const INT32 ym_deltat_decode_tableB2[];
 
-	return val;
+#define YM_DELTAT_Limit(val,max,min)	\
+{										\
+	if ( val > max ) val = max;			\
+	else if ( val < min ) val = min;	\
 }
-
-extern const int ym_deltat_decode_tableB1[];
-extern const int ym_deltat_decode_tableB2[];
 
 /**** ADPCM B (Delta-T control type) ****/
 INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 {
-	unsigned int step;
+	UINT32 step;
 	int data;
-
-	int old_m;
-	int now_leveling;
-	int delta_next;
+	INT32 old_m;
+	INT32 now_leveling;
+	INT32 delta_next;
 
 	DELTAT->now_step += DELTAT->step;
 	if ( DELTAT->now_step >= (1<<YM_DELTAT_SHIFT) )
@@ -224,9 +220,11 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 			old_m      = DELTAT->adpcmx/*adpcmm*/;
 			/* ch->adpcmm = YM_DELTAT_Limit( ch->adpcmx + (decode_tableB3[data] * ch->adpcmd / 8) ,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN ); */
 			/* Forecast to next Forecast */
-			DELTAT->adpcmx = YM_DELTAT_Limit( DELTAT->adpcmx+(ym_deltat_decode_tableB1[data] * DELTAT->adpcmd / 8) ,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN );
+			DELTAT->adpcmx += (ym_deltat_decode_tableB1[data] * DELTAT->adpcmd / 8);
+			YM_DELTAT_Limit(DELTAT->adpcmx,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
 			/* delta to next delta */
-			DELTAT->adpcmd = YM_DELTAT_Limit( ( DELTAT->adpcmd * ym_deltat_decode_tableB2[data] ) / 64, YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN );
+			DELTAT->adpcmd = (DELTAT->adpcmd * ym_deltat_decode_tableB2[data] ) / 64;
+			YM_DELTAT_Limit(DELTAT->adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN );
 			/* shift leveling value */
 			delta_next        = DELTAT->adpcmx/*adpcmm*/ - old_m;
 			now_leveling      = DELTAT->next_leveling;

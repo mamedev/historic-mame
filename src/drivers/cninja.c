@@ -85,7 +85,7 @@ static void cninja_loopback_w(int offset, int data)
 {
 //	WRITE_WORD(&loopback[offset],data);
 	COMBINE_WORD_MEM(&loopback[offset],data);
-#if 1
+#if 0
 	if (errorlog && (offset>0x22 || offset<0x8) && (offset>0x94 || offset<0x80)
 && offset!=0x36 && offset!=0x9e && offset!=0x76 && offset!=0x58 && offset!=0x56
 && offset!=0x2c && offset!=0x34
@@ -420,7 +420,6 @@ static void YM2203_w(int offset, int data)
 	}
 }
 
-/* Physical memory map (21 bits) */
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
@@ -438,8 +437,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w }, /* Effects  */
-	{ 0x130000, 0x130001, OKIM6295_data_1_w }, /* Music samples */
+	{ 0x120000, 0x120001, OKIM6295_data_0_w },
+	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
@@ -683,8 +682,8 @@ static struct GfxDecodeInfo gfxdecodeinfo2[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	32220000/8,	/* Accurate */
-	{ YM2203_VOL(15,30) },
+	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -711,9 +710,8 @@ static void sound_bankswitch_w(int offset,int data)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3700000,
-//	32220000/8, /* Accurate?  Seems too high */
-	{ YM3012_VOL(45,MIXER_PAN_CENTER,45,MIXER_PAN_CENTER) },
+	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq },
 	{ sound_bankswitch_w }
 };
@@ -722,7 +720,6 @@ static struct YM2151interface ym2151_interface2 =
 {
 	1,
 	3579545,	/* 3.579545 Mhz (?) */
-//	32220000/8, /* Bootleg frequency - who knows.. */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ sound_irq2 }
 };
@@ -730,9 +727,9 @@ static struct YM2151interface ym2151_interface2 =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	{ 8055, 16110 },/* Chips are different frequencies */
-	{ 3,4 },        /* memory regions 3 & 4 */
-	{ 40,25 }
+	{ 7757, 15514 },/* Frequency */
+	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 /**********************************************************************************/
@@ -754,7 +751,7 @@ static struct MachineDriver cninja_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -801,12 +798,12 @@ static struct MachineDriver stoneage_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
+			3579545,
 			stoneage_s_readmem,stoneage_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -854,7 +851,7 @@ static struct MachineDriver edrandy_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

@@ -165,6 +165,27 @@ enum {
 #ifndef HAS_TMS9900
 #define HAS_TMS9900 	0
 #endif
+#ifndef HAS_TMS9940
+#define HAS_TMS9940 	0
+#endif
+#ifndef HAS_TMS9980
+#define HAS_TMS9980 	0
+#endif
+#ifndef HAS_TMS9985
+#define HAS_TMS9985 	0
+#endif
+#ifndef HAS_TMS9989
+#define HAS_TMS9989 	0
+#endif
+#ifndef HAS_TMS9995
+#define HAS_TMS9995 	0
+#endif
+#ifndef HAS_TMS99105A
+#define HAS_TMS99105A 	0
+#endif
+#ifndef HAS_TMS99110A
+#define HAS_TMS99110A 	0
+#endif
 #ifndef HAS_Z8000
 #define HAS_Z8000		0
 #endif
@@ -188,6 +209,7 @@ struct cpu_interface
     void (*reset)(void *param);
     void (*exit)(void);
     int (*execute)(int cycles);
+    void (*burn)(int cycles);
     unsigned (*get_context)(void *reg);
     void (*set_context)(void *reg);
     unsigned (*get_pc)(void);

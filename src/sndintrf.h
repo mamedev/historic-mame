@@ -55,7 +55,7 @@ struct MachineSound
 #include "sound/tiaintf.h"
 #endif
 #if (HAS_NES)
-#include "sound/nesintf.h"
+#include "sound/nes_apu.h"
 #endif
 #if (HAS_ASTROCADE)
 #include "sound/astrocde.h"

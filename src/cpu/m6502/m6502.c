@@ -600,6 +600,15 @@ const char *n2a03_info(void *context, int regnum)
 	return m6502_info(context,regnum);
 }
 
+/* The N2A03 is integrally tied to its PSG (they're on the same die).
+   Bit 7 of address $4011 (the PSG's DPCM control register), when set,
+   causes an IRQ to be generated.  This function allows the IRQ to be called
+   from the PSG core when such an occasion arises. */
+void n2a03_irq(void)
+{
+  take_irq();
+}
+
 unsigned n2a03_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
@@ -610,5 +619,3 @@ unsigned n2a03_dasm(char *buffer, unsigned pc)
 #endif
 }
 #endif
-
-

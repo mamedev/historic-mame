@@ -2,6 +2,19 @@
 
 Block Hole (GX973) (c) 1989 Konami
 
+Notes:
+Quarth works, but Block Hole crashes when it reaches the title screen. An
+interrupt happens, and after rti the ROM bank is not the same as before so
+it jumps to garbage code.
+If you want to see this happen, place a breakpoint at 0x8612, and trace
+after that.
+The code is almost identical in the two versions, it looks like Quarth is
+working just because luckily the interrupt doesn't happen at that point.
+It seems that the interrupt handler trashes the selected ROM bank and forces
+it to 0. To prevent crashes, I only generate interrupts when the ROM bank is
+already 0. There might be another interrupt enable register, but I haven't
+found it.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -20,10 +33,11 @@ void blockhl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int palette_selected;
 static unsigned char *ram;
+static int rombank;
 
 static int blockhl_interrupt( void )
 {
-	if (K052109_is_IRQ_enabled())
+	if (K052109_is_IRQ_enabled() && rombank == 0)	/* kludge to prevent crashes */
 		return KONAMI_INT_IRQ;
 	else
 		return ignore_interrupt();
@@ -270,6 +284,30 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
+ROM_START( blockhl )
+	ROM_REGIONX( 0x18800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
+	ROM_LOAD( "973l02.e21", 0x10000, 0x08000, 0xe14f849a )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x20000 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "973f07.k15", 0x00000, 0x08000, 0x1a8cd9b4 )	/* tiles */
+	ROM_LOAD_GFX_ODD ( "973f08.k18", 0x00000, 0x08000, 0x952b51a6 )
+	ROM_LOAD_GFX_EVEN( "973f09.k20", 0x10000, 0x08000, 0x77841594 )
+	ROM_LOAD_GFX_ODD ( "973f10.k23", 0x10000, 0x08000, 0x09039fab )
+
+	ROM_REGION( 0x20000 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "973f06.k12", 0x00000, 0x08000, 0x51acfdb6 )	/* sprites */
+	ROM_LOAD_GFX_ODD ( "973f05.k9",  0x00000, 0x08000, 0x4cfea298 )
+	ROM_LOAD_GFX_EVEN( "973f04.k7",  0x10000, 0x08000, 0x69ca41bd )
+	ROM_LOAD_GFX_ODD ( "973f03.k4",  0x10000, 0x08000, 0x21e98472 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "973d01.g6",  0x0000, 0x8000, 0xeeee9d92 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* PROMs */
+	ROM_LOAD( "973a11.h10", 0x0000, 0x0100, 0x46d28fe9 )	/* priority encoder (not used) */
+ROM_END
+
 ROM_START( quarth )
 	ROM_REGIONX( 0x18800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
 	ROM_LOAD( "973j02.e21", 0x10000, 0x08000, 0x27a90118 )
@@ -294,6 +332,7 @@ ROM_START( quarth )
 	ROM_LOAD( "973a11.h10", 0x0000, 0x0100, 0x46d28fe9 )	/* priority encoder (not used) */
 ROM_END
 
+
 /***************************************************************************
 
   Game driver(s)
@@ -306,6 +345,7 @@ static void blockhl_banking( int lines )
 	int offs;
 
 	/* bits 0-1 = ROM bank */
+	rombank = lines & 0x03;
 	offs = 0x10000 + (lines & 0x03) * 0x2000;
 	cpu_setbank(1,&RAM[offs]);
 
@@ -344,10 +384,35 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver driver_quarth =
+struct GameDriver driver_blockhl =
 {
 	__FILE__,
 	0,
+	"blockhl",
+	"Block Hole",
+	"1989",
+	"Konami",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	rom_blockhl,
+	gfx_untangle, 0,
+	0,
+	0,
+
+	input_ports_blockhl,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver driver_quarth =
+{
+	__FILE__,
+	&driver_blockhl,
 	"quarth",
 	"Quarth (Japan)",
 	"1989",

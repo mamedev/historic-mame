@@ -11,7 +11,7 @@
 
 
 static int flipscreen;
-static int gfx_bank,palette_bank;
+static int gfx_bank,palette_bank,grid_on;
 static const unsigned char *color_codes;
 
 
@@ -43,20 +43,20 @@ void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2;
 
 
 		/* red component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
+		bit0 = (color_prom[256] >> 1) & 1;
+		bit1 = (color_prom[256] >> 2) & 1;
+		bit2 = (color_prom[256] >> 3) & 1;
 		*(palette++) = 255 - (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 		/* green component */
 		bit0 = (color_prom[0] >> 2) & 1;
 		bit1 = (color_prom[0] >> 3) & 1;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
+		bit2 = (color_prom[256] >> 0) & 1;
 		*(palette++) = 255 - (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 		/* blue component */
 		bit0 = (color_prom[0] >> 0) & 1;
@@ -66,13 +66,9 @@ void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 		color_prom++;
 	}
 
-	color_prom += Machine->drv->total_colors;
+	color_prom += 256;
 	/* color_prom now points to the beginning of the character color codes */
 	color_codes = color_prom;	/* we'll need it later */
-
-	/* sprites use the same palette as characters */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 }
 
 /***************************************************************************
@@ -112,7 +108,7 @@ void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
@@ -130,22 +126,18 @@ void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		bit3 = (color_prom[0] >> 3) & 0x01;
 		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 		/* blue component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		bit0 = (color_prom[256] >> 0) & 0x01;
+		bit1 = (color_prom[256] >> 1) & 0x01;
+		bit2 = (color_prom[256] >> 2) & 0x01;
+		bit3 = (color_prom[256] >> 3) & 0x01;
 		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 
 		color_prom++;
 	}
 
-	color_prom += Machine->drv->total_colors;
+	color_prom += 256;
 	/* color_prom now points to the beginning of the character color codes */
 	color_codes = color_prom;	/* we'll need it later */
-
-	/* sprites use the same palette as characters */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 }
 
 
@@ -198,6 +190,21 @@ void dkong_palettebank_w(int offset,int data)
 	}
 }
 
+void radarscp_grid_enable_w(int offset,int data)
+{
+	grid_on = data & 1;
+}
+
+void radarscp_grid_color_w(int offset,int data)
+{
+	int r,g,b;
+
+	r = ((~data >> 0) & 0x01) * 0xff;
+	g = ((~data >> 1) & 0x01) * 0xff;
+	b = ((~data >> 2) & 0x01) * 0xff;
+	palette_change_color(257,r,g,b);
+}
+
 void dkong_flipscreen_w(int offset,int data)
 {
 	if (flipscreen != (~data & 1))
@@ -214,7 +221,8 @@ void dkong_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_tiles(struct osd_bitmap *bitmap)
 {
 	int offs;
 
@@ -254,7 +262,11 @@ void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
 
+static void draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -295,4 +307,56 @@ void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
+}
+
+static void draw_grid(struct osd_bitmap *bitmap)
+{
+	const unsigned char *table = memory_region(REGION_GFX3);
+	int x,y,counter;
+
+	counter = flipscreen ? 0x000 : 0x400;
+
+	x = Machine->drv->visible_area.min_x;
+	y = Machine->drv->visible_area.min_y;
+	while (y <= Machine->drv->visible_area.max_y)
+	{
+		x = 4 * (table[counter] & 0x7f);
+		if (y >= Machine->drv->visible_area.min_y &&
+				x <= Machine->drv->visible_area.max_y)
+		{
+			if (table[counter] & 0x80)	/* star */
+			{
+				if (rand() & 1)	/* noise coming from sound board */
+					plot_pixel(bitmap,x,y,Machine->pens[256]);
+			}
+			else if (grid_on)			/* radar */
+				plot_pixel(bitmap,x,y,Machine->pens[257]);
+		}
+
+		counter++;
+
+		if (x >= 4 * (table[counter] & 0x7f))
+		{
+			x = Machine->drv->visible_area.min_x;
+			y++;
+		}
+	}
+}
+
+void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	palette_change_color(256,0xff,0xff,0xff);	/* stars - likely wrong */
+
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
+	draw_tiles(bitmap);
+	draw_grid(bitmap);
+	draw_sprites(bitmap);
+}
+
+void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	draw_tiles(bitmap);
+	draw_sprites(bitmap);
 }

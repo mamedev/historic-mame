@@ -528,6 +528,28 @@ ROM_START( pacnpal )
 	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
 ROM_END
 
+ROM_START( pacnchmp )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pap3.1d",      0xa000, 0x2000, 0x20a07d3d )
+	ROM_LOAD( "pap3.1c",      0xc000, 0x2000, 0x505bae56 )
+	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pap2.3c",      0x0000, 0x1000, 0x93d15c30 )
+	ROM_LOAD( "pap2.3f",      0x1000, 0x2000, 0x39f44aa4 )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, BADCRC( 0x52634b41 ) ) /* palette */
+	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, BADCRC( 0xac46203c ) ) /* chars */
+	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, BADCRC( 0x686bde84 ) ) /* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
+ROM_END
+
 
 /* load the high score table */
 static int superpac_hiload(void)
@@ -715,6 +737,32 @@ struct GameDriver driver_pacnpal =
 	0,
 
 	rom_pacnpal,              /* RomModule */
+	0, 0,                     /* ROM decrypt routines */
+	0,                        /* samplenames */
+	0,
+
+	input_ports_pacnpal,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacnpal_hiload, pacnpal_hisave /* hi score save/load */
+};
+
+struct GameDriver driver_pacnchmp =
+{
+	__FILE__,
+	&driver_pacnpal,
+	"pacnchmp",
+	"Pac-Man & Chomp Chomp",
+	"1983",
+	"Namco",
+	"Aaron Giles\nKevin Brisley\nLawnmower Man",
+	0,
+	&pacnpal_machine_driver,  /* MachineDriver */
+	0,
+
+	rom_pacnchmp,              /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
 	0,

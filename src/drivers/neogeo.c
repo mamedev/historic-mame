@@ -940,8 +940,8 @@ struct YM2610interface neogeo_ym2610_interface =
 	{ 0 },
 	{ 0 },
 	{ neogeo_sound_irq },
-	{ MEM_SAMPLE0 },
 	{ MEM_SAMPLE1 },
+	{ MEM_SAMPLE0 },
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 

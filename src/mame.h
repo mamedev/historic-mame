@@ -43,6 +43,7 @@ struct RunningMachine
 	struct InputPort *input_ports;	/* the input ports definition from the driver */
 								/* is copied here and modified (load settings from disk, */
 								/* remove cheat commands, and so on) */
+	struct InputPort *input_ports_default; /* original input_ports without modifications */
 	int orientation;	/* see #defines in driver.h */
 	struct GfxElement *uifont;	/* font used by DisplayText() */
 	int uifontwidth,uifontheight;

@@ -223,6 +223,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( dangar )	/* (c) 1986 */
 	DRIVER( dangar2 )	/* (c) 1986 */
 	DRIVER( dangarb )	/* bootleg */
+	DRIVER( ninjemak )	/* (c) 1986 (US?) */
+	DRIVER( youma )		/* (c) 1986 (Japan) */
 	DRIVER( terraf )	/* (c) 1987 */
 	DRIVER( terrafu )	/* (c) 1987 Nichibutsu USA */
 	DRIVER( armedf )	/* (c) 1988 */
@@ -261,7 +263,7 @@ const struct GameDriver *drivers[] =
 	/* the following ones all have a custom I/O chip */
 	DRIVER( bosco )		/* (c) 1981 */
 	DRIVER( boscomd )	/* (c) 1981 Midway */
-	DRIVER( boscomd2 )	/* (c) 1981 Midway */
+	DRIVER( boscomdo )	/* (c) 1981 Midway */
 	DRIVER( galaga )	/* (c) 1981 */
 	DRIVER( galagamw )	/* (c) 1981 Midway */
 	DRIVER( galagads )	/* hack */
@@ -280,6 +282,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( superpac )	/* (c) 1982 */
 	DRIVER( superpcm )	/* (c) 1982 Midway */
 	DRIVER( pacnpal )	/* (c) 1983 */
+	DRIVER( pacnchmp )	/* (c) 1983 */
 	DRIVER( phozon )	/* (c) 1983 */
 	DRIVER( mappy )		/* (c) 1983 */
 	DRIVER( mappyjp )	/* (c) 1983 */
@@ -434,6 +437,7 @@ TESTDRIVER( finalap3 )	/* 92.9  Final Lap 3 */
 	DRIVER( radarscp )	/* (c) 1980 Nintendo */
 	DRIVER( dkong )		/* (c) 1981 Nintendo of America */
 	DRIVER( dkongjp )	/* (c) 1981 Nintendo */
+	DRIVER( dkongjpo )	/* (c) 1981 Nintendo */
 	DRIVER( dkongjr )	/* (c) 1982 Nintendo of America */
 	DRIVER( dkngjrjp )	/* no copyright notice */
 	DRIVER( dkjrjp )	/* (c) 1982 Nintendo */
@@ -797,6 +801,11 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( arkangc )	/* bootleg */
 	DRIVER( superqix )	/* 1987 */
 	DRIVER( sqixbl )	/* bootleg? but (c) 1987 */
+	DRIVER( superman )	/* (c) 1988 Taito Corporation */
+TESTDRIVER( footchmp )	/* (c) 1990 Taito Corporation Japan (World) */
+	DRIVER( minivadr )	/* cabinet test board */
+
+	/* Taito "tnzs" hardware */
 	DRIVER( extrmatn )	/* (c) 1987 World Games */
 	DRIVER( arkanoi2 )	/* (c) 1987 Taito Corporation Japan (World) */
 	DRIVER( ark2us )	/* (c) 1987 Taito America Corporation + Romstar license (US) */
@@ -809,8 +818,6 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( insectx )	/* (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( kageki )	/* (c) 1988 Taito America Corporation + Romstar license (US) */
 	DRIVER( kagekij )	/* (c) 1988 Taito Corporation (Japan) */
-	DRIVER( superman )	/* (c) 1988 Taito Corporation */
-TESTDRIVER( footchmp )	/* (c) 1990 Taito Corporation Japan (World) */
 
 	/* Taito L-System games */
 	DRIVER( fhawk )		/* (c) 1988 Taito Corporation (Japan) */
@@ -920,7 +927,8 @@ V-V                           TP-027
 	DRIVER( gyrodine )	/* (c) 1984 Taito Corporation */
 	DRIVER( sonofphx )	/* (c) 1985 Associated Overseas MFR */
 	DRIVER( repulse )	/* (c) 1985 Sega */
-	DRIVER( 99lstwar )	/* (c) 1985 Proma (bootleg?) */
+	DRIVER( 99lstwar )	/* (c) 1985 Proma */
+	DRIVER( 99lstwra )	/* (c) 1985 Proma */
 	DRIVER( flashgal )	/* (c) 1985 Sega */
 	DRIVER( srdmissn )	/* (c) 1986 Taito Corporation */
 	DRIVER( airwolf )	/* (c) 1987 Kyugo */
@@ -1323,6 +1331,7 @@ TESTDRIVER( ataxxa )
 	DRIVER( regulusu )	/* 834-5328 (c) 1983 (S1) */
 	DRIVER( upndown )	/* (c) 1983 (S1) */
 	DRIVER( mrviking )	/* 834-5383 (c) 1984 (S1) */
+	DRIVER( mrvikinj )	/* 834-5383 (c) 1984 (S1) */
 	DRIVER( swat )		/* 834-5388 (c) 1984 Coreland / Sega (S1) */
 	DRIVER( flicky )	/* (c) 1984 (S1) */
 	DRIVER( flicky2 )	/* (c) 1984 (S1) */
@@ -1346,7 +1355,7 @@ TESTDRIVER( ataxxa )
 	DRIVER( chplft )	/* 834-5795 (c) 1985, (c) 1982 Dan Gorlin (S2) */
 	DRIVER( chplftb )	/* 834-5795 (c) 1985, (c) 1982 Dan Gorlin (S2) */
 	DRIVER( chplftbl )	/* bootleg (S2) */
-	DRIVER( fdwarrio )	/* 834-5918 (c) 1985 Coreland / Sega (S1) */
+	DRIVER( 4dwarrio )	/* 834-5918 (c) 1985 Coreland / Sega (S1) */
 	DRIVER( brain )		/* (c) 1986 Coreland / Sega (S2?) */
 	DRIVER( wboy )		/* 834-5984 (c) 1986 + Escape license (S1) */
 	DRIVER( wboy2 )		/* 834-5984 (c) 1986 + Escape license (S1) */
@@ -1395,6 +1404,8 @@ TESTDRIVER( kopunch )	/* 834-0103 (c) 1981 Sega */
 	DRIVER( champbb2 )
 	DRIVER( appoooh )	/* (c) 1984 Sega */
 	DRIVER( bankp )		/* (c) 1984 Sega */
+	DRIVER( dotrikun )	/* cabinet test board */
+	DRIVER( dotriku2 )	/* cabinet test board */
 
 	/* Sega System 16 games */
 	// Not working
@@ -1585,6 +1596,7 @@ TESTDRIVER( birdtry )	/* (c) 1988 Data East Corporation (Japan) */
 	DRIVER( twocrude )	/* MAB (c) 1990 Data East USA (US) */
 	DRIVER( darkseal )	/* MAC (c) 1990 Data East Corporation (World) */
 	DRIVER( darksea1 )	/* MAC (c) 1990 Data East Corporation (World) */
+	DRIVER( darkseaj )	/* MAC (c) 1990 Data East Corporation (Japan) */
 	DRIVER( gatedoom )	/* MAC (c) 1990 Data East Corporation (US) */
 	DRIVER( gatedom1 )	/* MAC (c) 1990 Data East Corporation (US) */
 TESTDRIVER( edrandy )	/* MAD (c) 1990 Data East Corporation (World) */
@@ -1715,6 +1727,7 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( rockragj )	/* GX620 (c) 1986 (Japan) */
 	DRIVER( mx5000 )	/* GX669 (c) 1987 */
 	DRIVER( flkatck )	/* GX669 (c) 1987 (Japan) */
+	DRIVER( fastlane )	/* GX752 (c) 1987 */
 	DRIVER( thehustl )	/* GX765 (c) 1987 (Japan) */
 	DRIVER( thehustj )	/* GX765 (c) 1987 (Japan) */
 	DRIVER( battlnts )	/* GX777 (c) 1987 */
@@ -1735,6 +1748,7 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( ringohja )	/* GX799 (c) 1988 (Japan) */
 	DRIVER( devstors )	/* GX890 (c) 1988 */
 	DRIVER( devstor2 )	/* GX890 (c) 1988 */
+	DRIVER( devstor3 )	/* GX890 (c) 1988 */
 	DRIVER( garuka )	/* GX890 (c) 1988 (Japan) */
 	DRIVER( 88games )	/* GX861 (c) 1988 */
 	DRIVER( konami88 )	/* GX861 (c) 1988 */
@@ -1743,9 +1757,11 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( crimfgtj )	/* GX821 (c) 1989 (Japan) */
 	DRIVER( bottom9 )	/* GX891 (c) 1989 */
 	DRIVER( bottom9n )	/* GX891 (c) 1989 */
-	DRIVER( quarth )	/* GX973 (c) 1989 */
-	DRIVER( aliens )	/* GX875 (c) 1990 */
-	DRIVER( aliens2 )	/* GX875 (c) 1990 */
+	DRIVER( blockhl )	/* GX973 (c) 1989 */
+	DRIVER( quarth )	/* GX973 (c) 1989 (Japan) */
+	DRIVER( aliens )	/* GX875 (c) 1990 (World) */
+	DRIVER( aliens2 )	/* GX875 (c) 1990 (World) */
+	DRIVER( aliensu )	/* GX875 (c) 1990 (US) */
 	DRIVER( aliensj )	/* GX875 (c) 1990 (Japan) */
 	DRIVER( surpratk )	/* GX911 (c) 1990 (Japan) */
 	DRIVER( parodius )	/* GX955 (c) 1990 (Japan) */
@@ -1787,6 +1803,10 @@ TESTDRIVER( xexex )		/* GX067 (c) 1991 */
 	DRIVER( hpuncher )	/* GX870 (c) 1988 (Japan) */
 	DRIVER( miaj )		/* GX808 (c) 1989 (Japan) */
 
+	/* Konami Gradius III board */
+	DRIVER( gradius3 )	/* GX945 (c) 1989 (Japan) */
+	DRIVER( grdius3a )	/* GX945 (c) 1989 (Asia) */
+
 	/* (some) Konami 68000 games */
 	DRIVER( mia )		/* GX808 (c) 1989 */
 	DRIVER( mia2 )		/* GX808 (c) 1989 */
@@ -1799,6 +1819,7 @@ TESTDRIVER( xexex )		/* GX067 (c) 1991 */
 	DRIVER( punksht2 )	/* GX907 (c) 1990 (US) */
 	DRIVER( lgtnfght )	/* GX939 (c) 1990 (US) */
 	DRIVER( trigon )	/* GX939 (c) 1990 (Japan) */
+	DRIVER( blswhstl )	/* GX060 (c) 1991 */
 	DRIVER( detatwin )	/* GX060 (c) 1991 (Japan) */
 TESTDRIVER( glfgreat )	/* GX061 (c) 1991 */
 	DRIVER( tmnt2 )		/* GX063 (c) 1991 (US) */
@@ -1815,7 +1836,7 @@ TESTDRIVER( glfgreat )	/* GX061 (c) 1991 */
 	DRIVER( xmen )		/* GX065 (c) 1992 (US) */
 	DRIVER( xmen6p )	/* GX065 (c) 1992 */
 	DRIVER( xmen2pj )	/* GX065 (c) 1992 (Japan) */
-TESTDRIVER( thndrx2 )	/* GX073 (c) 1991 (Japan) */
+	DRIVER( thndrx2 )	/* GX073 (c) 1991 (Japan) */
 
 /*
 Konami System GX game list
@@ -2152,7 +2173,8 @@ TESTDRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	DRIVER( jackrabs )	/* (c) 1984 */
 
 	/* UPL games */
-	DRIVER( nova2001 )	/* UPL-83005 (c) [1984?] + Universal license */
+	DRIVER( nova2001 )	/* UPL-83005 (c) 1983 */
+	DRIVER( nov2001u )	/* UPL-83005 (c) [1983] + Universal license */
 	DRIVER( pkunwar )	/* [1985?] */
 	DRIVER( pkunwarj )	/* [1985?] */
 	DRIVER( ninjakd2 )	/* (c) 1987 */
@@ -2380,6 +2402,26 @@ TESTDRIVER( unkvsys )
    82 The Bounty                           Ded 2P
    83 Net Wars                                 2P
    83 Super Crush                          Kit 2P           Action
+*/
+
+	/* Gaelco games */
+	DRIVER( splash )	/* (c) 1992 Gaelco */
+/*
+Gaelco Game list:
+=================
+
+1987:	Master Boy
+1991:	Big Karnak, Master Boy 2
+1992:	Splash, Thunder Hoop, Squash
+1993:	World Rally, Glass
+1994:	Strike Back, Target Hits, Thunder Hoop 2
+1995:	Alligator Hunt, Toy, World Rally 2, Salter, Touch & Go
+1996:	Maniac Square, Snow Board, Speed Up
+1997:	Surf Planet
+1998:	Radikal Bikers
+1999:	Rolling Extreme
+
+All games newer than Splash are heavily protected.
 */
 
 	DRIVER( pong )

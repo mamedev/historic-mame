@@ -119,35 +119,6 @@ static int cpuA_latch = 0, cpuB_latch = 0;
 static int snk_soundcommand=0;
 static unsigned char *shared_ram, *io_ram, *shared_auxram;
 
-
-static unsigned char snk_adpcm_control_index;
-static unsigned char snk_adpcm_register[256];
-static int snk_adpcm_status_r( int offset )
-{
-	return 0xff;
-}
-static void snk_adpcm_control_w( int offset, int data )
-{
-	snk_adpcm_control_index = data;
-}
-static void snk_adpcm_write_w( int offset, int data )
-{
-	if( errorlog ) fprintf( errorlog, "sound write:(%02x)%02x\n",
-        	snk_adpcm_control_index,data );
-
-	snk_adpcm_register[snk_adpcm_control_index] = data;
-
-	if( snk_adpcm_control_index==0x0c )
-	{
-		int chan = snk_adpcm_register[0x08];
-		int start = snk_adpcm_register[0x09] + snk_adpcm_register[0x0a]*256;
-		int finish = snk_adpcm_register[0x0b] + snk_adpcm_register[0x0c]*256;
-		int len = finish-start;
-		if( start>=0 && finish<=0x40000 && len>0 )
-			ADPCM_play( chan&3, start*0x20, len*0x40 );
-	}
-}
-
 static int snk_read_joy( int which )
 {
 	int result = readinputport(which+1);
@@ -352,20 +323,35 @@ static void cpuB_io_w( int offset, int data )
 
 /*********************************************************************/
 
-static struct ADPCMinterface adpcm_interface =
+/* Regular YM-3526/3812 interface used in most of these games */
+static struct YM3812interface ym3812_interface =
 {
-	4,		/* 4 channels? */
-	8000,		/* 8000Hz playback */
-	MEM_SAMPLES,	/* memory region */
-	0,		/* init function */
-	{ 50,50,50,50 }	/* volume */
+        1,              /* 1 chip usually coupled with a different chip */
+        4000000,        /* 4 MHz? (hand tuned) */
+        { 63 }          /* (not supported) */
+};
+#define ym3526_interface ym3812_interface
+
+/* Dual YM-3526 interface used in Ikari Warriors. */
+static struct YM3526interface dual_ym3526_interface =
+{
+        2,              /* 2 YM-3526 chips */
+        4000000,        /* 4 MHz? (hand tuned) */
+        { 63 }          /* (not supported) */
 };
 
-static struct YM3526interface ym3526_interface =
+/* Y8950 interface used in ADPCM games.  Coupled with the YM3526/3812. */
+static struct Y8950interface y8950_interface =
 {
-	1,		/* needs 2, but only 1 supported */
-	4000000,	/* 4 MHz? (hand tuned) */
-	{ 50 }		/* (not supported) */
+	1,
+        4000000,        /* 4MHz */
+        { 63 },
+	{ 0 },
+        { MEM_SAMPLES },  // ROM region
+	{ 0 },  /* keyboarc read  */
+	{ 0 },  /* keyboard write */
+	{ 0 },  /* I/O read  */
+	{ 0 }   /* I/O write */
 };
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
@@ -476,9 +462,9 @@ static struct MemoryReadAddress readmem_sound[] =
 	{ 0xe000, 0xe000, snk_soundcommand_r },
 #if 1
 	{ 0xe800, 0xe800, YM3526_status_port_0_r },
-	{ 0xf000, 0xf000, snk_adpcm_status_r }, /* YM3526 #2 status port */
+        { 0xf000, 0xf000, Y8950_status_port_0_r }, /* YM3526 #2 status port */
 #else
-	{ 0xe800, 0xf000, snk_adpcm_status_r }, /* YM3526 #2 status port */
+        { 0xe800, 0xf000, Y8950_status_port_0_r }, /* YM3526 #2 status port */
 	{ 0xf000, 0xe800, YM3526_status_port_0_r },
 #endif
 	{ 0xf800, 0xf800, MRA_RAM }, /* IRQ CTRL FOR YM8950  NOT EMULATED */
@@ -492,11 +478,11 @@ static struct MemoryWriteAddress writemem_sound[] =
 #if 1
 	{ 0xe800, 0xe800, YM3526_control_port_0_w },
 	{ 0xec00, 0xec00, YM3526_write_port_0_w },
-	{ 0xf000, 0xf000, snk_adpcm_control_w }, /* YM3526 #2 control port */
-	{ 0xf400, 0xf400, snk_adpcm_write_w }, /* YM3526 #2 write port   */
+        { 0xf000, 0xf000, Y8950_control_port_0_w }, /* YM3526 #2 control port */
+        { 0xf400, 0xf400, Y8950_write_port_0_w }, /* YM3526 #2 write port   */
 #else
-	{ 0xe800, 0xe800, snk_adpcm_control_w }, /* YM3526 #2 control port */
-	{ 0xec00, 0xec00, snk_adpcm_write_w }, /* YM3526 #2 write port   */
+        { 0xe800, 0xe800, Y8950_control_port_0_w }, /* YM3526 #2 control port */
+        { 0xec00, 0xec00, Y8950_write_port_0_w }, /* YM3526 #2 write port   */
 	{ 0xf000, 0xf000, YM3526_control_port_0_w },
 	{ 0xf400, 0xf400, YM3526_write_port_0_w },
 #endif
@@ -1655,6 +1641,7 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 
 /**********************************************************************/
 
+/* TNK III - Single YM3526 */
 static struct MachineDriver tnk3_machine_driver =
 {
 	{
@@ -1702,14 +1689,11 @@ static struct MachineDriver tnk3_machine_driver =
 		{
 			SOUND_YM3526,
 			&ym3526_interface
-	    },
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
 		}
 	}
 };
 
+/* Athena - Unknown.  Suspect Dual YM3526 */
 static struct MachineDriver athena_machine_driver =
 {
 	{
@@ -1756,15 +1740,12 @@ static struct MachineDriver athena_machine_driver =
 	{
 		{
 			SOUND_YM3526,
-			&ym3526_interface
-	    },
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			&dual_ym3526_interface
 		}
 	}
 };
 
+/* Ikari Warriors - Dual YM3526 */
 static struct MachineDriver ikari_machine_driver =
 {
 	{
@@ -1809,15 +1790,12 @@ static struct MachineDriver ikari_machine_driver =
 	{
 		{
 			SOUND_YM3526,
-			&ym3526_interface
-	    },
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			&dual_ym3526_interface
 		}
 	}
 };
 
+/* Guerilla War - YM3526/Y8950 combination */
 static struct MachineDriver gwar_machine_driver =
 {
 	{
@@ -1864,12 +1842,13 @@ static struct MachineDriver gwar_machine_driver =
 			&ym3526_interface
 	    },
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_Y8950,
+			&y8950_interface
 		}
 	}
 };
 
+/* Bermuda Triangle - YM3812/Y8950 combination */
 static struct MachineDriver bermudat_machine_driver =
 {
 	{
@@ -1912,16 +1891,17 @@ static struct MachineDriver bermudat_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM3526,
-			&ym3526_interface
+			SOUND_YM3812,
+			&ym3812_interface
 	    },
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_Y8950,
+			&y8950_interface
 		}
 	}
 };
 
+/* Psycho Soldier - YM3812/Y8950 combination */
 static struct MachineDriver psychos_machine_driver =
 {
 	{
@@ -1964,16 +1944,17 @@ static struct MachineDriver psychos_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM3526,
-			&ym3526_interface
+			SOUND_YM3812,
+			&ym3812_interface
 	    },
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_Y8950,
+			&y8950_interface
 		}
 	}
 };
 
+/* Touchdown Fever - YM3812/Y8950 combination */
 static struct MachineDriver tdfever_machine_driver =
 {
 	{
@@ -2017,12 +1998,12 @@ static struct MachineDriver tdfever_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM3526,
-			&ym3526_interface
+			SOUND_YM3812,
+			&ym3812_interface
 	    },
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_Y8950,
+			&y8950_interface
 		}
 	}
 };

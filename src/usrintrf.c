@@ -26,6 +26,7 @@ extern int bitmap_dirty;	/* set by osd_clearbitmap() */
 extern char build_version[];
 extern unsigned int dispensed_tickets;
 extern unsigned int coins[COIN_COUNTERS];
+extern unsigned int coinlockedout[COIN_COUNTERS];
 
 /* MARTINEZ.F 990207 Memory Card */
 #ifndef NEOFREE
@@ -1431,6 +1432,11 @@ static int setdipswitches(int selected)
 	return sel + 1;
 }
 
+/* This flag is used for record OR sequence of key/joy */
+/* when is !=0 the first sequence is record, otherwise the first free */
+/* it's used byt setdefkeysettings, setdefjoysettings, setkeysettings, setjoysettings */
+static int record_first_insert = 1;
+
 static int setdefkeysettings(int selected)
 {
 	const char *menu_item[400];
@@ -1443,7 +1449,6 @@ static int setdefkeysettings(int selected)
 	int total;
 	extern struct ipd inputport_defaults[];
 
-
 	sel = selected - 1;
 
 
@@ -1455,7 +1460,7 @@ static int setdefkeysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0 && in->keyboard_code[0] != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
+		if (in->name != 0  && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & IPF_UNUSED) == 0
 			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
@@ -1477,7 +1482,7 @@ static int setdefkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			keyboard_name_multi(entry[i]->keyboard_code,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			keyboard_name_multi(&entry[i]->keyboard,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 		} else
 			menu_subitem[i] = 0;	/* no subitem */
@@ -1491,13 +1496,16 @@ static int setdefkeysettings(int selected)
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		ret = keyboard_record(entry[sel & 0xff]->keyboard_code);
+		ret = keyboard_record(&entry[sel & 0xff]->keyboard,record_first_insert);
 
-		if (ret >= 0) {
+		if (ret >= 0)
+		{
 			sel &= 0xff;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
+
+			record_first_insert = ret != 0;
 		}
 
 
@@ -1511,12 +1519,14 @@ static int setdefkeysettings(int selected)
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed(IPT_UI_SELECT))
@@ -1543,6 +1553,8 @@ static int setdefkeysettings(int selected)
 	{
 		/* tell updatescreen() to clean after us */
 		need_to_clear_bitmap = 1;
+
+		record_first_insert = 1;
 	}
 
 	return sel + 1;
@@ -1574,7 +1586,7 @@ static int setdefjoysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0 && in->joystick_code[0] != IP_JOY_NONE && (in->type & IPF_UNUSED) == 0
+		if (in->name != 0  && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & IPF_UNUSED) == 0
 			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
@@ -1596,7 +1608,7 @@ static int setdefjoysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			joystick_name_multi(entry[i]->joystick_code,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			joystick_name_multi(&entry[i]->joystick,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 		} else
 			menu_subitem[i] = 0;	/* no subitem */
@@ -1610,7 +1622,7 @@ static int setdefjoysettings(int selected)
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		ret = joystick_record(entry[sel & 0xff]->joystick_code);
+		ret = joystick_record(&entry[sel & 0xff]->joystick,record_first_insert);
 
 		if (ret >= 0)
 		{
@@ -1618,6 +1630,8 @@ static int setdefjoysettings(int selected)
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
+
+			record_first_insert = ret != 0;
 		}
 
 		return sel + 1;
@@ -1630,12 +1644,14 @@ static int setdefjoysettings(int selected)
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed(IPT_UI_SELECT))
@@ -1662,6 +1678,8 @@ static int setdefjoysettings(int selected)
 	{
 		/* tell updatescreen() to clean after us */
 		need_to_clear_bitmap = 1;
+
+		record_first_insert = 1;
 	}
 
 	return sel + 1;
@@ -1692,7 +1710,7 @@ static int setkeysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && input_port_key_multi(in)[0] != IP_KEY_NONE)
+		if (input_port_name(in) != 0 && input_key_seq_get_1(&in->keyboard) != IP_KEY_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -1717,7 +1735,7 @@ static int setkeysettings(int selected)
 			menu_subitem[i] = menu_subitem_buffer[i];
 
 			/* If the key isn't the default, flag it */
-			if (entry[i]->keyboard_code[0] != IP_KEY_DEFAULT)
+			if (input_key_seq_get_1(&entry[i]->keyboard) != IP_KEY_DEFAULT)
 				flag[i] = 1;
 			else
 				flag[i] = 0;
@@ -1733,18 +1751,20 @@ static int setkeysettings(int selected)
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		ret = keyboard_record(entry[sel & 0xff]->keyboard_code);
+		ret = keyboard_record(&entry[sel & 0xff]->keyboard,record_first_insert);
 
 		if (ret >= 0)
 		{
 			sel &= 0xff;
 
-			if (ret > 0) {
-				INPUT_KEY_CODE_SET_1(entry[sel]->keyboard_code,IP_KEY_DEFAULT);
-			}
+			/* if abort or sequence clear */
+			if (ret > 0 || input_key_seq_get_1(&entry[sel & 0xff]->keyboard) == IP_KEY_NONE)
+				input_key_seq_set_1(&entry[sel]->keyboard,IP_KEY_DEFAULT);
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
+
+			record_first_insert = ret != 0;
 		}
 
 		return sel + 1;
@@ -1757,12 +1777,14 @@ static int setkeysettings(int selected)
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed(IPT_UI_SELECT))
@@ -1789,6 +1811,8 @@ static int setkeysettings(int selected)
 	{
 		/* tell updatescreen() to clean after us */
 		need_to_clear_bitmap = 1;
+
+		record_first_insert = 1;
 	}
 
 	return sel + 1;
@@ -1819,7 +1843,7 @@ static int setjoysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && input_port_joy_multi(in)[0] != IP_JOY_NONE)
+		if (input_port_name(in) != 0 && input_joy_seq_get_1(&in->joystick) != IP_JOY_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -1843,7 +1867,7 @@ static int setjoysettings(int selected)
 			joystick_name_multi(input_port_joy_multi(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 
-			if (entry[i]->joystick_code[0] != IP_JOY_DEFAULT)
+			if (input_joy_seq_get_1(&entry[i]->joystick) != IP_JOY_DEFAULT)
 				flag[i] = 1;
 			else
 				flag[i] = 0;
@@ -1858,18 +1882,20 @@ static int setjoysettings(int selected)
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		ret = joystick_record(entry[sel & 0xff]->joystick_code);
+		ret = joystick_record(&entry[sel & 0xff]->joystick,record_first_insert);
 
 		if (ret >= 0)
 		{
 			sel &= 0xff;
 
-			if (ret > 0) {
-				INPUT_JOY_CODE_SET_1(entry[sel]->joystick_code,IP_JOY_DEFAULT);
-			}
+			/* if abort or sequence clear */
+			if (ret > 0 || input_joy_seq_get_1(&entry[sel & 0xff]->joystick) == IP_JOY_NONE)
+				input_joy_seq_set_1(&entry[sel]->joystick,IP_JOY_DEFAULT);
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
+
+			record_first_insert = ret != 0;
 		}
 
 		return sel + 1;
@@ -1882,12 +1908,14 @@ static int setjoysettings(int selected)
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
+		record_first_insert = 1;
 	}
 
 	if (input_ui_pressed(IPT_UI_SELECT))
@@ -1914,6 +1942,8 @@ static int setjoysettings(int selected)
 	{
 		/* tell updatescreen() to clean after us */
 		need_to_clear_bitmap = 1;
+
+		record_first_insert = 1;
 	}
 
 	return sel + 1;
@@ -2175,7 +2205,7 @@ static int mame_stats(int selected)
 {
 	char temp[10];
 	char buf[2048];
-	int sel;
+	int sel, i;
 
 
 	sel = selected - 1;
@@ -2189,31 +2219,25 @@ static int mame_stats(int selected)
 		strcat (buf, temp);
 	}
 
-	strcat (buf, "Coin A: ");
-	if (!coins[0])
-		strcat (buf, "NA\n");
-	else
+	for (i=0;  i<COIN_COUNTERS; i++)
 	{
-		sprintf (temp, "%d\n", coins[0]);
-		strcat (buf, temp);
-	}
-
-	strcat (buf, "Coin B: ");
-	if (!coins[1])
-		strcat (buf, "NA\n");
-	else
-	{
-		sprintf (temp, "%d\n", coins[1]);
-		strcat (buf, temp);
-	}
-
-	strcat (buf, "Coin C: ");
-	if (!coins[2])
-		strcat (buf, "NA\n");
-	else
-	{
-		sprintf (temp, "%d\n", coins[2]);
-		strcat (buf, temp);
+		sprintf(temp, "Coin %c: ", i+'A');
+		strcat(buf, temp);
+		if (!coins[i])
+			strcat (buf, "NA");
+		else
+		{
+			sprintf (temp, "%d", coins[i]);
+			strcat (buf, temp);
+		}
+		if (coinlockedout[i])
+		{
+			strcat(buf, " (locked)\n");
+		}
+		else
+		{
+			strcat(buf, "\n");
+		}
 	}
 
 	{
@@ -2614,6 +2638,10 @@ int showgamewarnings(void)
 
 
 	osd_clearbitmap(Machine->scrbitmap);
+
+   /* clear the input memory */
+   while (keyboard_read_async() != KEYCODE_NONE ||
+		  joystick_read_async() != JOYCODE_NONE);
 
 	while (displaygameinfo(0) == 1)
 	{
@@ -3584,11 +3612,14 @@ static void onscrd_init(void)
 		}
 	}
 
-	for (ch = 0;ch < cpu_gettotalcpu();ch++)
+	if (options.cheat)
 	{
-		onscrd_fnc[item] = onscrd_overclock;
-		onscrd_arg[item] = ch;
-		item++;
+		for (ch = 0;ch < cpu_gettotalcpu();ch++)
+		{
+			onscrd_fnc[item] = onscrd_overclock;
+			onscrd_arg[item] = ch;
+			item++;
+		}
 	}
 
 	onscrd_fnc[item] = onscrd_brightness;
@@ -3942,31 +3973,25 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	}
 
 
-	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+	if (input_ui_pressed(IPT_UI_SHOW_PROFILER))
 	{
-		if (input_ui_pressed(IPT_UI_SHOW_FPS))
+		show_profiler ^= 1;
+		if (show_profiler)
+			profiler_start();
+		else
 		{
-			show_profiler ^= 1;
-			if (show_profiler)
-				profiler_start();
-			else
-			{
-				profiler_stop();
-				/* tell updatescreen() to clean after us */
-				need_to_clear_bitmap = 1;
-			}
+			profiler_stop();
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
 		}
 	}
 #ifdef MAME_DEBUG
-	else if (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
+	if (input_ui_pressed(IPT_UI_SHOW_COLORS))
 	{
-		if (input_ui_pressed(IPT_UI_SHOW_FPS))
-		{
-			show_total_colors ^= 1;
-			if (show_total_colors == 0)
-				/* tell updatescreen() to clean after us */
-				need_to_clear_bitmap = 1;
-		}
+		show_total_colors ^= 1;
+		if (show_total_colors == 0)
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
 	}
 	if (show_total_colors) showtotalcolors();
 #endif

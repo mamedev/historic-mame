@@ -1,16 +1,17 @@
 /***************************************************************************
 
-  Dark Seal (Rev 3)    (c) 1990 Data East Corporation (Japanese version)
-  Dark Seal (Rev 1)    (c) 1990 Data East Corporation (Japanese version)
-  Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
-  Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
+	Dark Seal (Rev 3)    (c) 1990 Data East Corporation (World version)
+	Dark Seal (Rev 1)    (c) 1990 Data East Corporation (World version)
+	Dark Seal            (c) 1990 Data East Corporation (Japanese version)
+	Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
+	Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
 
 
-  Sound works correctly only with YM2151_ALT, not with YM2151. You will hear
-  the difference on the music that plays as the game starts, the lead
-  instrument is missing.
+	Sound works correctly only with YM2151_ALT, not with YM2151. You will hear
+	the difference on the music that plays as the game starts, the lead
+	instrument is missing.
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
 
@@ -96,7 +97,7 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b, &paletteram_2 },
 	{ 0x180000, 0x18000f, darkseal_control_w },
  	{ 0x200000, 0x200fff, darkseal_pf3b_data_w }, /* 2nd half of pf3, only used on last level */
-	{ 0x202000, 0x202fff, darkseal_pf3_data_w },
+	{ 0x202000, 0x203fff, darkseal_pf3_data_w },
 	{ 0x220000, 0x220fff, MWA_BANK3, &darkseal_pf12_row },
 	{ 0x222000, 0x222fff, MWA_BANK4, &darkseal_pf34_row },
 	{ 0x240000, 0x24000f, darkseal_control_0_w },
@@ -132,7 +133,6 @@ static void YM2203_w(int offset, int data)
 	}
 }
 
-/* Physical memory map (21 bits) */
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
@@ -150,8 +150,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w }, /* Rom 8, samples */
-	{ 0x130000, 0x130001, OKIM6295_data_1_w }, /* Rom 7, music */
+	{ 0x120000, 0x120001, OKIM6295_data_0_w },
+	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
@@ -294,16 +294,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	{ 8055, 16110 },/* Frequency */
+	{ 7757, 15514 },/* Frequency */
 	{ 3, 4 },       /* memory regions 3 & 4 */
-	{ 50, 22 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	32220000/8,	/* Audio section crystal is 32.220 MHz */
-	{ YM2203_VOL(24,40) },
+	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -319,9 +319,8 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3700000, /* Very close to the board frequency */
-//	32220000/8, /* Audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(37,MIXER_PAN_LEFT,37,MIXER_PAN_RIGHT) },
+	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -342,7 +341,7 @@ static struct MachineDriver darkseal_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration inaccurate */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -350,7 +349,7 @@ static struct MachineDriver darkseal_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1280, 1280, /* Space for 2048, but video hardware only uses 1280 */
+	2048, 2048,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
@@ -431,6 +430,32 @@ ROM_START( darksea1 )
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
+ROM_START( darkseaj )
+	ROM_REGIONX(0x80000, REGION_CPU1 ) /* 68000 code */
+	ROM_LOAD_EVEN( "fz-04.bin",    0x00000, 0x20000, 0x817faa2c )
+	ROM_LOAD_ODD ( "fz-01.bin",    0x00000, 0x20000, 0x373caeee )
+	ROM_LOAD_EVEN( "fz-00.bin",    0x40000, 0x20000, 0x1ab99aa7 )
+	ROM_LOAD_ODD ( "fz-05.bin",    0x40000, 0x20000, 0x3374ef8c )
+
+	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+
+	ROM_REGIONX(0x10000, REGION_CPU2)	/* Sound CPU */
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
+ROM_END
+
 ROM_START( gatedoom )
 	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gb04-4",       0x00000, 0x20000, 0x8e3a0bfd )
@@ -485,7 +510,6 @@ ROM_START( gatedom1 )
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
-
 /******************************************************************************/
 
 static void darkseal_decrypt(void)
@@ -495,6 +519,30 @@ static void darkseal_decrypt(void)
 
 	for (i=0x00000; i<0x80000; i++)
 		RAM[i]=(RAM[i] & 0xbd) | ((RAM[i] & 0x02) << 5) | ((RAM[i] & 0x40) >> 5);
+}
+
+static int darkseal_cycle_r(int offset)
+{
+	int b=READ_WORD(&darkseal_ram[0x6]);
+	int a=READ_WORD(&darkseal_ram[0x2e7e]);
+	int d=cpu_geticount();
+
+	/* If possible skip this cpu segment - idle loop */
+	if (d>99 && d<0xf0000000) {
+		if (cpu_getpreviouspc()==0x160a && b==0xffff) {
+			cpu_spinuntil_int();
+			/* Update internal counter based on cycles left to run */
+			a=((a+d/54)-1)&0xffff; /* 54 cycles per loop increment */
+			WRITE_WORD(&darkseal_ram[0x2e7e],a);
+		}
+	}
+
+	return b;
+}
+
+static void memory_patch(void)
+{
+	install_mem_read_handler(0, 0x100006, 0x100007, darkseal_cycle_r);
 }
 
 /******************************************************************************/
@@ -542,7 +590,7 @@ struct GameDriver driver_darkseal =
 	"Bryan McPhail",
 	0,
 	&darkseal_machine_driver,
-	0,
+	memory_patch,
 
 	rom_darkseal,
 	darkseal_decrypt, 0,
@@ -567,9 +615,34 @@ struct GameDriver driver_darksea1 =
 	"Bryan McPhail",
 	0,
 	&darkseal_machine_driver,
-	0,
+	memory_patch,
 
 	rom_darksea1,
+	darkseal_decrypt, 0,
+	0,
+	0,
+
+	input_ports_darkseal,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	hiload , hisave  /* hsc 12/02/98 */
+};
+
+struct GameDriver driver_darkseaj =
+{
+	__FILE__,
+	&driver_darkseal,
+	"darkseaj",
+	"Dark Seal (Japan)",
+	"1990",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&darkseal_machine_driver,
+	memory_patch,
+
+	rom_darkseaj,
 	darkseal_decrypt, 0,
 	0,
 	0,
@@ -592,7 +665,7 @@ struct GameDriver driver_gatedoom =
 	"Bryan McPhail",
 	0,
 	&darkseal_machine_driver,
-	0,
+	memory_patch,
 
 	rom_gatedoom,
 	darkseal_decrypt, 0,
@@ -617,7 +690,7 @@ struct GameDriver driver_gatedom1 =
 	"Bryan McPhail",
 	0,
 	&darkseal_machine_driver,
-	0,
+	memory_patch,
 
 	rom_gatedom1,
 	darkseal_decrypt, 0,

@@ -8,6 +8,8 @@ int K007342_vh_start(int gfx_index, void (*callback)(int layer,int bank,int *cod
 void K007342_vh_stop(void);
 int K007342_r(int offset);
 void K007342_w(int offset,int data);
+int K007342_scroll_r(int offset);
+void K007342_scroll_w(int offset,int data);
 void K007342_tilemap_update(void);
 void K007342_vreg_w(int offset,int data);
 void K007342_tilemap_set_enable(int layer, int enable);
@@ -167,3 +169,7 @@ int K053251_get_palette_index(int ci);
 
 void K054000_w(int offset,int data);
 int K054000_r(int offset);
+
+void K051733_w(int offset,int data);
+int K051733_r(int offset);
+

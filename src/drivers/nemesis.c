@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Nemesis (Hacked?)		GX400
-	Nemesis (UK)			GX400
+	Nemesis (World?)		GX400
 	Twin Bee				GX412
 	Gradius					GX456
 	Galactic Warriors		GX578
@@ -2305,7 +2305,7 @@ struct GameDriver driver_nemesuk =
 	__FILE__,
 	&driver_nemesis,
 	"nemesuk",
-	"Nemesis (UK)",
+	"Nemesis (World?)",
 	"1985",
 	"Konami",
 	"Allard van der Bas",

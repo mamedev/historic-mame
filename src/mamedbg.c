@@ -76,7 +76,8 @@
 #if (HAS_TMS34010)
 #include "cpu/tms34010/tms34010.h"
 #endif
-#if (HAS_TMS9900)
+#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
+		|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
 #include "cpu/tms9900/tms9900.h"
 #endif
 #if (HAS_Z8000)

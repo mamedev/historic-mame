@@ -244,7 +244,6 @@ int YM2151_clock(const struct MachineSound *msound) { return ((struct YM2151inte
 int YM2151_num(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_NES)
-int NES_clock(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->baseclock; }
 int NES_num(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_SN76496)
@@ -514,9 +513,9 @@ struct snd_interface sndintf[] =
 #if (HAS_NES)
     {
 		SOUND_NES,
-		"NES",
+		"Nintendo",
 		NES_num,
-		NES_clock,
+		0,
 		NESPSG_sh_start,
 		NESPSG_sh_stop,
 		NESPSG_sh_update,

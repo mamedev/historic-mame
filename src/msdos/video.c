@@ -1949,44 +1949,30 @@ void update_screen_dummy(void)
 INLINE void pan_display(void)
 {
 	/* horizontal panning */
-	if (keyboard_pressed(KEYCODE_LSHIFT))
-	{
-		if (keyboard_pressed(KEYCODE_PGUP))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_LEFT,1))
+		if (skipcolumns < skipcolumnsmax)
 		{
-			if (skipcolumns < skipcolumnsmax)
-			{
-				skipcolumns++;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skipcolumns++;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-		if (keyboard_pressed(KEYCODE_PGDN))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_RIGHT,1))
+		if (skipcolumns > skipcolumnsmin)
 		{
-			if (skipcolumns > skipcolumnsmin)
-			{
-				skipcolumns--;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skipcolumns--;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-	}
-	else /*  vertical panning */
-	{
-		if (keyboard_pressed(KEYCODE_PGDN))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN,1))
+		if (skiplines < skiplinesmax)
 		{
-			if (skiplines < skiplinesmax)
-			{
-				skiplines++;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skiplines++;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-		if (keyboard_pressed(KEYCODE_PGUP))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_UP,1))
+		if (skiplines > skiplinesmin)
 		{
-			if (skiplines > skiplinesmin)
-			{
-				skiplines--;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skiplines--;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-	}
 
 	if (use_dirty) init_dirty(1);
 
@@ -2074,9 +2060,8 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
-		if (!keyboard_pressed(KEYCODE_LSHIFT) && !keyboard_pressed(KEYCODE_RSHIFT)
-				&& !keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL)
-				&& input_ui_pressed(IPT_UI_SHOW_FPS))
+
+		if (input_ui_pressed(IPT_UI_SHOW_FPS))
 		{
 			if (showfpstemp)
 			{
@@ -2221,6 +2206,8 @@ void osd_update_video_and_audio(void)
 					{
 						RGB adjusted_palette;
 
+						dirtycolor[i] = 0;
+
 						adjusted_palette.r = current_palette[3*i+0];
 						adjusted_palette.g = current_palette[3*i+1];
 						adjusted_palette.b = current_palette[3*i+2];
@@ -2254,6 +2241,8 @@ void osd_update_video_and_audio(void)
 					if (dirtycolor[i])
 					{
 						int r,g,b;
+
+						dirtycolor[i] = 0;
 
 						r = current_palette[3*i+0];
 						g = current_palette[3*i+1];
@@ -2332,8 +2321,7 @@ void osd_update_video_and_audio(void)
 	}
 
 	/* Check for PGUP, PGDN and pan screen */
-	if (keyboard_pressed(KEYCODE_PGDN) || keyboard_pressed(KEYCODE_PGUP))
-		pan_display();
+	pan_display();
 
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{

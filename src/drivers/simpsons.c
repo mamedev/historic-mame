@@ -261,7 +261,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(30,MIXER_PAN_CENTER,0,MIXER_PAN_CENTER) },	/* only left channel is connected */
+	{ YM3012_VOL(70,MIXER_PAN_CENTER,0,MIXER_PAN_CENTER) },	/* only left channel is connected */
 	{ 0 }
 };
 

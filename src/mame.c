@@ -285,32 +285,17 @@ int init_machine(void)
 
 	if (gamedrv->input_ports)
 	{
-		int total;
-		const struct InputPort *from;
-		struct InputPort *to;
-
-		from = gamedrv->input_ports;
-
-		total = 0;
-		do
+		Machine->input_ports = input_port_allocate(gamedrv->input_ports);
+		if (!Machine->input_ports)
+			goto out;
+		Machine->input_ports_default = input_port_allocate(gamedrv->input_ports);
+		if (!Machine->input_ports_default)
 		{
-			total++;
-		} while ((from++)->type != IPT_END);
-
-		if ((Machine->input_ports = malloc(total * sizeof(struct InputPort))) == 0)
-			return 1;
-
-		from = gamedrv->input_ports;
-		to = Machine->input_ports;
-
-		do
-		{
-			memcpy(to,from,sizeof(struct InputPort));
-
-			to++;
-		} while ((from++)->type != IPT_END);
+			input_port_free(Machine->input_ports);
+			Machine->input_ports = 0;
+			goto out;
+		}
 	}
-
 
 	#ifdef MESS
    	if (!gamedrv->rom)
@@ -318,15 +303,10 @@ int init_machine(void)
       	  if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
           goto load_next;
         }
-   #endif
+	#endif
 
 	if (readroms() != 0)
-	{
-		free(Machine->input_ports);
-		Machine->input_ports = 0;
-		return 1;
-	}
-
+		goto out_free;
 
 	{
 		extern unsigned char *RAM;
@@ -350,10 +330,8 @@ int init_machine(void)
 		/* allocate a ROM array of the same length of cpu #0 memory region */
 		if ((ROM = malloc(memory_region_length(REGION_CPU1))) == 0)
 		{
-			free(Machine->input_ports);
-			Machine->input_ports = 0;
 			/* TODO: should also free the allocated memory regions */
-			return 1;
+			goto out_free;
 		}
 
 		Machine->memory_region[j] = ROM;
@@ -363,15 +341,14 @@ int init_machine(void)
 		(*gamedrv->opcode_decode)();
 	}
 
-   #ifdef MESS
+	#ifdef MESS
 	load_next:
 	/* The ROM loading routine should allocate the ROM and RAM space and */
 	/* assign them to the appropriate Machine->memory_region blocks. */
         if (gamedrv->rom_load && (*gamedrv->rom_load)() != 0)
 	{
-		free(Machine->input_ports);
 		printf("Image load failed.\n");
-		return 1;
+		goto out_free;
 	}
 	#endif
 
@@ -387,15 +364,18 @@ int init_machine(void)
 
 	/* ASG 971007 move from mame.c */
 	if( !initmemoryhandlers() )
-	{
-		free(Machine->input_ports);
-		Machine->input_ports = 0;
-		return 1;
-	}
+		goto out_free;
 
 	if (gamedrv->driver_init) (*gamedrv->driver_init)();
 
 	return 0;
+out_free:
+	input_port_free(Machine->input_ports);
+	Machine->input_ports = 0;
+	input_port_free(Machine->input_ports_default);
+	Machine->input_ports_default = 0;
+out:
+    	return 1;
 }
 
 
@@ -418,8 +398,10 @@ void shutdown_machine(void)
 	}
 
 	/* free the memory allocated for input ports definition */
-	free(Machine->input_ports);
+	input_port_free(Machine->input_ports);
 	Machine->input_ports = 0;
+	input_port_free(Machine->input_ports_default);
+	Machine->input_ports_default = 0;
 }
 
 

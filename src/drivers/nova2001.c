@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-     Nova 2001 - by Universal - Licensed by UPL - 1984
+     Nova 2001 - by UPL - 1983
 
      Memory Map:
 
@@ -186,10 +186,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x4000, &charlayout,   16*16, 16 },
-	{ 1, 0x1000, &spritelayout,     0, 16 },
-	{ 1, 0x5000, &spritelayout,     0, 16 },
+	{ REGION_GFX1, 0x0000, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0x0000, &charlayout,   16*16, 16 },
+	{ REGION_GFX1, 0x1000, &spritelayout,     0, 16 },
+	{ REGION_GFX2, 0x1000, &spritelayout,     0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -243,19 +243,43 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
+
 ROM_START( nova2001 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_LOAD( "1.6c",         0x0000, 0x2000, 0x368cffc0 )
+	ROM_LOAD( "2.6d",         0x2000, 0x2000, 0xbc4e442b )
+	ROM_LOAD( "3.6f",         0x4000, 0x2000, 0xb2849038 )
+	ROM_LOAD( "4.6g",         0x6000, 0x1000, 0x6b5bb12d )
+	ROM_RELOAD(               0x7000, 0x1000 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5.12s",        0x0000, 0x2000, 0x54198941 )
+	ROM_LOAD( "6.12p",        0x2000, 0x2000, 0xcbd90dca )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7.12n",        0x0000, 0x2000, 0x9ebd8806 )
+	ROM_LOAD( "8.12l",        0x2000, 0x2000, 0xd1b18389 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
+ROM_END
+
+ROM_START( nov2001u )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "nova2001.1",   0x0000, 0x2000, 0xb79461bd )
 	ROM_LOAD( "nova2001.2",   0x2000, 0x2000, 0xfab87144 )
-	ROM_LOAD( "nova2001.3",   0x4000, 0x2000, 0xb2849038 )
-	ROM_LOAD( "nova2001.4",   0x6000, 0x1000, 0x6b5bb12d )
-	ROM_RELOAD(             0x7000, 0x1000 )
+	ROM_LOAD( "3.6f",         0x4000, 0x2000, 0xb2849038 )
+	ROM_LOAD( "4.6g",         0x6000, 0x1000, 0x6b5bb12d )
+	ROM_RELOAD(               0x7000, 0x1000 )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nova2001.5",   0x0000, 0x2000, 0x8ea576e8 )
 	ROM_LOAD( "nova2001.6",   0x2000, 0x2000, 0x0c61656c )
-	ROM_LOAD( "nova2001.7",   0x4000, 0x2000, 0x9ebd8806 )
-	ROM_LOAD( "nova2001.8",   0x6000, 0x2000, 0xd1b18389 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7.12n",        0x0000, 0x2000, 0x9ebd8806 )
+	ROM_LOAD( "8.12l",        0x2000, 0x2000, 0xd1b18389 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
@@ -307,15 +331,41 @@ struct GameDriver driver_nova2001 =
 	__FILE__,
 	0,
 	"nova2001",
-	"Nova 2001",
-	"1984?",
-	"UPL (Universal license)",
+	"Nova 2001 (Japan)",
+	"1983",
+	"UPL",
 	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
 	0,
 	&machine_driver,
 	0,
 
 	rom_nova2001,
+	0,0,
+	0,
+	0, /* sound prom */
+
+	input_ports_nova2001,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
+
+struct GameDriver driver_nov2001u =
+{
+	__FILE__,
+	&driver_nova2001,
+	"nov2001u",
+	"Nova 2001 (US)",
+	"1983",
+	"UPL (Universal license)",
+	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
+	0,
+	&machine_driver,
+	0,
+
+	rom_nov2001u,
 	0,0,
 	0,
 	0, /* sound prom */

@@ -159,6 +159,27 @@ enum
 #if (HAS_TMS9900)
 	CPU_TMS9900,
 #endif
+#if (HAS_TMS9940)
+	CPU_TMS9940,
+#endif
+#if (HAS_TMS9980)
+	CPU_TMS9980,
+#endif
+#if (HAS_TMS9985)
+	CPU_TMS9985,
+#endif
+#if (HAS_TMS9989)
+	CPU_TMS9989,
+#endif
+#if (HAS_TMS9995)
+	CPU_TMS9995,
+#endif
+#if (HAS_TMS99105A)
+	CPU_TMS99105A,
+#endif
+#if (HAS_TMS99110A)
+	CPU_TMS99110A,
+#endif
 #if (HAS_Z8000)
 	CPU_Z8000,
 #endif
@@ -323,6 +344,7 @@ struct GameDriver
 #ifdef MESS
 	int (*rom_load)(void); /* used to load the ROM and set up memory regions */
 	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
+	const char **file_extension;    /* default file extensions for the system. */
 	int num_of_rom_slots;
 	int num_of_floppy_drives;
 	int num_of_hard_drives;
@@ -335,7 +357,7 @@ struct GameDriver
 	struct obsolete *obsolete3;
 	struct obsolete *obsolete4;
 
-	struct InputPort *input_ports;
+	struct InputPortTiny *input_ports;
 
 	struct obsolete *obsolete5;
 	struct obsolete *obsolete6;

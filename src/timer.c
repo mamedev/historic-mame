@@ -23,6 +23,11 @@
   Changes 12/17/99 (HJB):
 	- added overclocking factor and functions to set/get it at runtime.
 
+  Changes 12/23/99 (HJB):
+	- added burn() function pointer to tell CPU cores when we want to
+	  burn cycles, because the cores might need to adjust internal
+	  counters or timers.
+
 ***************************************************************************/
 
 #include "cpuintrf.h"
@@ -55,6 +60,7 @@ typedef struct timer_entry
 typedef struct
 {
 	int *icount;
+	void (*burn)(int cycles);
     int index;
 	int suspended;
 	int trigger;
@@ -127,7 +133,10 @@ INLINE void timer_adjust(timer_entry *timer, double time, double period)
 	if (diff > 0)
 	{
 		activecpu->lost += diff;
-		*activecpu->icount = newicount;
+		if (activecpu->burn)
+			(*activecpu->burn)(diff);  /* let the CPU burn the cycles */
+		else
+			*activecpu->icount = newicount;  /* CPU doesn't care */
 	}
 }
 
@@ -240,6 +249,7 @@ void timer_init(void)
 	{
 		/* make a pointer to this CPU's interface functions */
 		cpu->icount = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].icount;
+		cpu->burn = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].burn;
 
 		/* get the CPU's overclocking factor */
 		cpu->overclock = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].overclock;
@@ -624,8 +634,11 @@ void timer_suspendcpu(int cpunum, int suspend, int reason)
 		cpu->lost = 0;
 
 		/* no more instructions */
-		*cpu->icount = 0;
-	}
+		if (cpu->burn)
+			(*cpu->burn)(*cpu->icount); /* let the CPU burn the cycles */
+		else
+			*cpu->icount = 0;	/* CPU doesn't care */
+    }
 
 	/* else if we're unsuspending a CPU, reset its time */
 	else if (old && !cpu->suspended && !nocount)
@@ -738,7 +751,10 @@ void timer_trigger(int trigger)
 		if (left > 0)
 		{
 			activecpu->lost += left;
-			*activecpu->icount = 0;
+			if (activecpu->burn)
+				(*activecpu->burn)(left); /* let the CPU burn the cycles */
+			else
+				*activecpu->icount = 0; /* CPU doesn't care */
 		}
 	}
 

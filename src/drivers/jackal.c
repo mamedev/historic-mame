@@ -5,8 +5,9 @@
   Written by Kenneth Lin (kenneth_lin@ai.vancouver.bc.ca)
 
 Notes:
-- The high score table colors are wrong, proms are missing.
-- Sprites are not in sync with the scroll.
+- The high score table colors are wrong, are there proms missing?
+- The sprite drawing code could use a rewrite
+- Sprite lag
 - After game over, the first main logo screen is one line out of sync after
   the scrolling is completed.
 - One of the bootleg Top Gunner gfx ROMs seems to be bad.
@@ -127,6 +128,7 @@ void jackal_commonram1_w(int offset,int data);
 void jackal_voram_w(int offset,int data);
 void jackal_spriteram_w(int offset,int data);
 
+void jackal_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -399,21 +401,21 @@ static struct GfxLayout topgunbl_spritelayout8 =
 
 static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   256, 1 },	/* colors 256-511 */
-	{ 1, 0x10000, &spritelayout,   0, 1 },	/* colors  16- 31 */
-	{ 1, 0x30000, &spritelayout,  16, 1 },	/* colors   0- 15 */
-	{ 1, 0x10000, &spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
-	{ 1, 0x30000, &spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
+	{ 1, 0x00000, &charlayout,          256,  1 },	/* colors 256-511 */
+	{ 1, 0x10000, &spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
+	{ 1, 0x30000, &spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
+	{ 1, 0x10000, &spritelayout8,       512, 16 },  /* to handle 8x8 sprites */
+	{ 1, 0x30000, &spritelayout8, 512+16*16, 16 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo topgunbl_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &topgunbl_charlayout,   256, 1 },	/* colors 256-511 */
-	{ 1, 0x40000, &topgunbl_spritelayout,   0, 1 },	/* colors  16- 31 */
-	{ 1, 0x60000, &topgunbl_spritelayout,  16, 1 },	/* colors   0- 15 */
-	{ 1, 0x40000, &topgunbl_spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
-	{ 1, 0x60000, &topgunbl_spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
+	{ 1, 0x00000, &topgunbl_charlayout,          256,  1 },	/* colors 256-511 */
+	{ 1, 0x40000, &topgunbl_spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
+	{ 1, 0x60000, &topgunbl_spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
+	{ 1, 0x40000, &topgunbl_spritelayout8,       512, 16 },	/* to handle 8x8 sprites */
+	{ 1, 0x60000, &topgunbl_spritelayout8, 512+16*16, 16 },	/* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -452,8 +454,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	jackal_gfxdecodeinfo,
-	512, 512,
-	0,
+	512, 512+16*16+16*16,
+	jackal_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -497,7 +499,7 @@ static struct MachineDriver topgunbl_machine_driver =
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	topgunbl_gfxdecodeinfo,
 	512, 512,
-	0,
+	jackal_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -594,11 +596,9 @@ ROM_START( jackal )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 ROM_START( topgunr )
@@ -616,11 +616,9 @@ ROM_START( topgunr )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 ROM_START( jackalj )
@@ -638,11 +636,9 @@ ROM_START( jackalj )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 ROM_START( topgunbl )
@@ -672,11 +668,9 @@ ROM_START( topgunbl )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 
@@ -702,7 +696,7 @@ struct GameDriver driver_jackal =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };
@@ -728,7 +722,7 @@ struct GameDriver driver_topgunr =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };
@@ -754,7 +748,7 @@ struct GameDriver driver_jackalj =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };
@@ -780,7 +774,7 @@ struct GameDriver driver_topgunbl =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };

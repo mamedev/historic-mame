@@ -46,10 +46,8 @@ int keyboard_pressed_memory_repeat(int keycode,int speed);
 int keyboard_read_async(void);
 int keyboard_read_sync(void);
 
-void keyboard_name_multi(UINT16* keycode, char* buffer, unsigned max);
-int keyboard_pressed_multi(UINT16* keycode);
-int keyboard_pressed_memory_multi(UINT16* keycode);
-int keyboard_pressed_memory_repeat_multi(UINT16* keycode,int speed);
+void keyboard_name_multi(InputKeySeq* keycode, char* buffer, unsigned max);
+int keyboard_pressed_multi(InputKeySeq* keycode);
 
 
 struct JoystickInfo
@@ -82,19 +80,16 @@ enum
 	JOYCODE_NONE	/* no key pressed */
 };
 
-
-/* const char *joystick_name(int joycode); */
+const char *joystick_name(int joycode);
 int joystick_read_async(void);
 
-void joystick_name_multi(UINT16* joycode, char* buffer, unsigned max);
-int joystick_pressed_multi(UINT16* joycode);
-int joystick_pressed_memory_multi(UINT16* joycode);
-int joystick_pressed_memory_repeat_multi(UINT16* joycode,int speed);
+void joystick_name_multi(InputJoySeq* joycode, char* buffer, unsigned max);
+int joystick_pressed_multi(InputJoySeq* joycode);
 
 /* key/joy recording */
 void record_start(void);
-int keyboard_record(UINT16* keycode);
-int joystick_record(UINT16* joycode);
+int keyboard_record(InputKeySeq* keycode, int first);
+int joystick_record(InputJoySeq* joycode, int first);
 
 /* the following read both key and joy */
 int input_ui_pressed(int code);

@@ -16,11 +16,11 @@ static int cps2_width;
 int cps2_gfx_start(void)
 {
 	UINT32 dwval;
-	int size=memory_region_length(cps1_gfx_region);
-	unsigned char *data = memory_region(cps1_gfx_region);
+    int size=memory_region_length(cps1_gfx_region);
+    unsigned char *data = memory_region(cps1_gfx_region);
 	int i,j,nchar,penusage,gfxsize;
 
-	gfxsize=size/4;
+    gfxsize=size/4;
 
 	/* Set up maximum values */
     cps1_max_char  =(gfxsize/2)/8;
@@ -68,6 +68,7 @@ int cps2_gfx_start(void)
 				if (*(data+size/2+size/4+1)&mask)  n|=8;
 				dwval|=n<<(28-j*4);
 				penusage=1<<n;
+                penusage=0xffff;
 				cps1_char_pen_usage[nchar]|=penusage;
 				cps1_tile16_pen_usage[nchar/2]|=penusage;
 				cps1_tile32_pen_usage[nchar/8]|=penusage;
@@ -135,7 +136,8 @@ int cps2_gfx_start(void)
 		}
 
 	}
-	return 0;
+
+    return 0;
 }
 
 
@@ -168,7 +170,7 @@ void cps1_debug_tiles_f(struct osd_bitmap *bitmap, int layer, int width)
 	int n=cps2_start;
 
 	/* Blank screen */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+    fillbitmap(bitmap, palette_transparent_pen, NULL);
 
     for (y=0; y<maxy; y++)
     {
@@ -241,7 +243,33 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     static int qcode;
     int stop=0;
     int oldq=qcode;
-    cps1_vh_screenrefresh(bitmap, full_refresh);
+    int i,offset;
+
+    if (cps1_palette)
+    {
+        for (i=0; i<cps1_palette_size; i+=2)
+        {
+            int color=0x0fff+((i&0x0f)<<(8+4));
+            WRITE_WORD(&cps1_palette[i],color);
+        }
+    }
+
+	/* Get video memory base registers */
+	cps1_get_video_base();
+
+    cps1_build_palette();
+   	for (i = offset = 0; i < cps1_palette_entries; i++)
+	{
+        int j;
+        for (j = 0; j < 15; j++)
+        {
+           palette_used_colors[offset++] = PALETTE_COLOR_USED;
+        }
+        palette_used_colors[offset++] = PALETTE_COLOR_TRANSPARENT;
+	}
+
+    palette_recalc ();
+
     cps1_debug_tiles(bitmap);
     if (keyboard_pressed_memory(KEYCODE_UP))
         qcode++;

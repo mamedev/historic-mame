@@ -855,7 +855,7 @@ struct GameDriver driver_cosmica =
 /* R Nabet : One weird thing is that the memory map allows the use of a cheaper tms9980.
 Did the original hardware really use the high-end tms9900 ? */
 /* Set the flag below to compile with a tms9980. */
-#define COSMIC_GUERILLA_USES_TMS9980 0
+#define COSMIC_GUERILLA_USES_TMS9980 1
 
 void cosmicguerilla_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void cosmicguerilla_output_w(int offset, int data);
@@ -1249,7 +1249,7 @@ static struct MachineDriver cosmicguerilla_machine_driver =
 	{
 		{
 #if COSMIC_GUERILLA_USES_TMS9980
-			CPU_TMS9980A,
+			CPU_TMS9980,
 #else
 			CPU_TMS9900,
 #endif

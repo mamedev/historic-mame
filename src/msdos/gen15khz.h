@@ -64,3 +64,4 @@ void setinterlaceflag(int interlaced);
 void interlace_sync(void);
 int sup_15Khz_res(int width,int height);
 
+void vsync(void);

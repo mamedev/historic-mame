@@ -5,39 +5,40 @@
 
 /* adpcm type A and type B struct */
 typedef struct deltat_adpcm_state {
-	unsigned char *memory;
+	UINT8 *memory;
 	int memory_size;
 	double freqbase;
-	int *output_pointer;
+	INT32 *output_pointer; /* pointer of output pointers */
 	int output_range;
 
-	unsigned char reg[16];
-	int portstate, portcontrol, portshift;
+	UINT8 reg[16];
+	UINT8 portstate,portcontrol;
+	int portshift;
 
-	unsigned char flag;          /* port state        */
-	unsigned char flagMask;      /* arrived flag mask */
-	unsigned char now_data;
-	unsigned int now_addr;
-	unsigned int now_step;
-	unsigned int step;
-	unsigned int start;
-	unsigned int end;
-	unsigned int delta;
-	int volume;
-	int *pan;     /* &output_pointer[pan] */
-	int /*adpcmm,*/ adpcmx, adpcmd;
-	int adpcml;			/* hiro-shi!! */
+	UINT8 flag;          /* port state        */
+	UINT8 flagMask;      /* arrived flag mask */
+	UINT8 now_data;
+	UINT32 now_addr;
+	UINT32 now_step;
+	UINT32 step;
+	UINT32 start;
+	UINT32 end;
+	UINT32 delta;
+	INT32 volume;
+	INT32 *pan;        /* &output_pointer[pan] */
+	INT32 /*adpcmm,*/ adpcmx, adpcmd;
+	INT32 adpcml;			/* hiro-shi!! */
 
 	/* leveling and re-sampling state for DELTA-T */
-	int volume_w_step;   /* volume with step rate */
-	int next_leveling;   /* leveling value        */
-	int sample_step;     /* step of re-sampling   */
+	INT32 volume_w_step;   /* volume with step rate */
+	INT32 next_leveling;   /* leveling value        */
+	INT32 sample_step;     /* step of re-sampling   */
 
-	int arrivedFlag;    /* flag of arrived end address */
+	UINT8 arrivedFlag;    /* flag of arrived end address */
 }YM_DELTAT;
 
 /* static state */
-extern unsigned char *ym_deltat_memory;       /* memory pointer */
+extern UINT8 *ym_deltat_memory;       /* memory pointer */
 
 /* before YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT); */
 #define YM_DELTAT_DECODE_PRESET(DELTAT) {ym_deltat_memory = DELTAT->memory;}

@@ -36,6 +36,8 @@ char **__crt0_glob_function(void)
 
 static void signal_handler(int num)
 {
+	if (errorlog) fflush(errorlog);
+
 	osd_exit();
 	allegro_exit();
 	ScreenClear();

@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:	POKEY Chip Simulator Includes, V3.1 							 */
+/* Module:	POKEY Chip Simulator Includes, V3.3 							 */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /* Date:    August 8, 1997                                                   */
@@ -101,14 +101,9 @@
 
 #define CLIP			/* required to force clipping */
 
-#define USE_SAMP_N_MAX	0	/* limit max. frequency to playback rate */
-			/* MUST BE LEFT TO 0! Setting it to 1 improves speed */
-			/* but causes some effects to be lost (e.g. "whoosh" when */
-			/* you fall in a puddle in Marble Madness */
-
-
-#define NO_CLIP   0
-#define USE_CLIP  1
+#define NO_CLIP 	0
+#define USE_CLIP	1
+#define USE_CLIP_FREQ	2
 
 #define POKEY_DEFAULT_GAIN 6
 

@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:	POKEY Chip Emulator, V3.2										 */
+/* Module:	POKEY Chip Emulator, V3.3										 */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /*                                                                           */
@@ -24,8 +24,18 @@
 /* 11/19/98 - Juergen	- support for MAMEs streams interface.				 */
 /* 12/15/99 - Juergen	- avoid rounding errors in RNG calculation. 		 */
 /* 12/16/99 - Juergen	- improved POTGO/ALLPOT emulation.					 */
+/* 12/21/99 - Juergen	- fixed rand17_timer with sound disabled			 */
 /*                                                                           */
-/* V3.2 Detailed Changes													 */
+/* V3.3 Detailed Changes													 */
+/* ---------------------                                                     */
+/*                                                                           */
+/* Fixed the rand17_timer which was not initialized if sound was turned 	 */
+/* off. In that case it is now readjusted on every RANDOM_C port read.		 */
+/* Removed the SAMP_N_MAX global switch. High frequency clipping can be 	 */
+/* requested on a per driver base using an additional flag USE_CLIP_FREQ	 */
+/* or'ed with the interface->clip field instead.                             */
+/*                                                                           */
+/* V3.2 Detailed Changes                                                     */
 /* ---------------------                                                     */
 /*																			 */
 /* The random number generator offsets are adjusted each time a chunk of	 */
@@ -185,7 +195,7 @@
 #define REGISTER register
 #endif
 
-#define VERBOSE 		1
+#define VERBOSE 		0
 #define VERBOSE_SOUND	0
 #define VERBOSE_TIMER	0
 #define VERBOSE_POLY	0
@@ -554,7 +564,7 @@ static int Pokey_sound_init (const struct MachineSound *msound,int freq17, int p
 	{
         AUDCTL[chip] = 0;
         Base_mult[chip] = DIV_64;
-		snd_timer[chip][TIMER1] = NULL;
+        snd_timer[chip][TIMER1] = NULL;
 		snd_timer[chip][TIMER2] = NULL;
 		snd_timer[chip][TIMER4] = NULL;
 		pot_timer[chip][0] = NULL;
@@ -573,7 +583,7 @@ static int Pokey_sound_init (const struct MachineSound *msound,int freq17, int p
         IRQEN[chip] = 0;
         SKSTAT[chip] = 0;
         SKCTL[chip] = SK_RESET;             /* let the RNG run after reset */
-		rand17_timer[chip] = NULL;
+        rand17_timer[chip] = timer_set(TIME_NEVER, chip, NULL);
 		rand17_offset[chip] = 0;
     }
 
@@ -1312,11 +1322,8 @@ static void Update_pokey_sound (int addr, int val, int chip, int gain)
 			/* or the channel is off (volume == 0) */
 			/* or the channel freq is greater than the playback freq */
 			if( (AUDC[chan + chip_offs] & VOL_ONLY) ||
-			   !(AUDC[chan + chip_offs] & VOLUME_MASK)
-#if USE_SAMP_N_MAX
-				|| (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8))
-#endif
-               )
+			   !(AUDC[chan + chip_offs] & VOLUME_MASK) ||
+				((clip & USE_CLIP_FREQ) && Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)) )
 			{
                 /* indicate the channel is 'on' */
 				Outbit[chan + chip_offs] = 1;
@@ -1324,11 +1331,8 @@ static void Update_pokey_sound (int addr, int val, int chip, int gain)
 				if( (chan == CHAN3 && !(AUDCTL[chip] & CH1_FILTER)) ||
 					(chan == CHAN4 && !(AUDCTL[chip] & CH2_FILTER)) ||
 					(chan == CHAN1) ||
-					(chan == CHAN2)
-#if USE_SAMP_N_MAX
-					|| (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8))
-#endif
-                   )
+					(chan == CHAN2) ||
+					((clip & USE_CLIP_FREQ) && Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)) )
 				{
 					/* and set channel freq to max to reduce processing */
 					Div_n_max[chan + chip_offs] = 0x7fffffffL;
@@ -1368,6 +1372,7 @@ static void Pokey_process (int chip, void *buffer, int n)
 #else
     REGISTER INT8 cur_val;      /* otherwise we'll simplify as 8-bit */
 #endif
+    UINT32 timer_offset;
 
 /* GSL 980313 B'zarre defines to handle optimised non-dword-aligned load/stores on ARM etc processors */
 /* HDG 980501 Removed and replaced by cleaner solution without ifdef's,
@@ -1381,15 +1386,12 @@ static void Pokey_process (int chip, void *buffer, int n)
 
 	/*
 	 * adjust base offset of the random number generator and
-	 * (re-)start a timer to allow calculating the number
+	 * restart a timer to allow calculating the number
 	 * of cycles gone when RANDOM_C is read
 	 */
-	if( rand17_timer[chip] )
-	{
-		UINT32 timer_offset = (UINT32)(timer_timeelapsed(rand17_timer[chip]) * intf->baseclock);
-		rand17_offset[chip] = (rand17_offset[chip] + timer_offset) % POLY17_SIZE;
-        timer_remove( rand17_timer[chip] );
-	}
+	timer_offset = (UINT32)(timer_timeelapsed(rand17_timer[chip]) * intf->baseclock);
+	rand17_offset[chip] = (rand17_offset[chip] + timer_offset) % POLY17_SIZE;
+	timer_remove( rand17_timer[chip] );
 	rand17_timer[chip] = timer_set(TIME_NEVER, chip, NULL);
 
     chip_offs = chip << 2;
@@ -1796,6 +1798,13 @@ static int Read_pokey_regs (int addr, int chip)
 				UINT32 offset = (rand17_offset[chip] + timer_offset) % POLY17_SIZE;
 				/* and get the random value */
 				RANDOM[chip] = rand17[offset];
+				/* sound turned off? */
+				if( Machine->sample_rate == 0 )
+				{
+					rand17_offset[chip] = offset;
+					timer_remove(rand17_timer[chip]);
+					rand17_timer[chip] = timer_set(TIME_NEVER, chip, NULL);
+				}
 				LOG_RAND((errorlog, "POKEY #%d rand17[$%05x+$%05x = $%05x]: $%02x\n", chip, rand17_offset[chip], timer_offset, offset, RANDOM[chip]));
 			}
 			else

@@ -614,66 +614,98 @@ ROM_END
 
 ROM_START( repulse )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-	ROM_LOAD( "repulse.b5", 0x0000, 0x2000, 0xfb2b7c9d )
-	ROM_LOAD( "repulse.b6", 0x2000, 0x2000, 0x99129918 )
-	ROM_LOAD( "7.j4",       0x4000, 0x2000, 0x57a8e900 )
+	ROM_LOAD( "repulse.b5",   0x0000, 0x2000, 0xfb2b7c9d )
+	ROM_LOAD( "repulse.b6",   0x2000, 0x2000, 0x99129918 )
+	ROM_LOAD( "7.j4",         0x4000, 0x2000, 0x57a8e900 )
 
 	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "repulse.a11",  0x00000, 0x1000, 0x8e1de90a ) /* chars */
-	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
-	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
-	ROM_LOAD( "10.8a",  0x09000, 0x4000, 0xe717baf4 ) /* sprites - plane 1 */
-	ROM_LOAD( "11.9a",  0x0d000, 0x4000, 0x04b2250b ) /* sprites - plane 1 */
-	ROM_LOAD( "12.10a", 0x11000, 0x4000, 0xd110e140 ) /* sprites - plane 2 */
-	ROM_LOAD( "13.11a", 0x15000, 0x4000, 0x8fdc713c ) /* sprites - plane 2 */
-	ROM_LOAD( "15.9h",  0x19000, 0x2000, 0xc9213469 ) /* tiles - plane 0 */
-	ROM_LOAD( "16.10h", 0x1b000, 0x2000, 0x7de5d39e ) /* tiles - plane 1 */
-	ROM_LOAD( "17.11h", 0x1d000, 0x2000, 0x0ba5f72c ) /* tiles - plane 2 */
+	ROM_LOAD( "8.6a",         0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
+	ROM_LOAD( "9.7a",         0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
+	ROM_LOAD( "10.8a",        0x09000, 0x4000, 0xe717baf4 ) /* sprites - plane 1 */
+	ROM_LOAD( "11.9a",        0x0d000, 0x4000, 0x04b2250b ) /* sprites - plane 1 */
+	ROM_LOAD( "12.10a",       0x11000, 0x4000, 0xd110e140 ) /* sprites - plane 2 */
+	ROM_LOAD( "13.11a",       0x15000, 0x4000, 0x8fdc713c ) /* sprites - plane 2 */
+	ROM_LOAD( "15.9h",        0x19000, 0x2000, 0xc9213469 ) /* tiles - plane 0 */
+	ROM_LOAD( "16.10h",       0x1b000, 0x2000, 0x7de5d39e ) /* tiles - plane 1 */
+	ROM_LOAD( "17.11h",       0x1d000, 0x2000, 0x0ba5f72c ) /* tiles - plane 2 */
 
 	ROM_REGIONX( 0x0340, REGION_PROMS )
-	ROM_LOAD( "r.1f",   0x0200, 0x0100, 0xb7f48b41 ) /* red */
-	ROM_LOAD( "g.1h",   0x0100, 0x0100, 0xacd7a69e ) /* green */
-	ROM_LOAD( "b.1j",   0x0000, 0x0100, 0x3ea35431 ) /* blue */
+	ROM_LOAD( "r.1f",         0x0200, 0x0100, 0xb7f48b41 ) /* red */
+	ROM_LOAD( "g.1h",         0x0100, 0x0100, 0xacd7a69e ) /* green */
+	ROM_LOAD( "b.1j",         0x0000, 0x0100, 0x3ea35431 ) /* blue */
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
-	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
+	ROM_LOAD( "2c",           0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
 	ROM_REGIONX( 0x10000, REGION_CPU2  ) /* 64k for code */
-	ROM_LOAD( "1.f2",       0x0000, 0x2000, 0xc485c621 )
-	ROM_LOAD( "2.h2",       0x2000, 0x2000, 0xb3c6a886 )
-	ROM_LOAD( "3.j2",       0x4000, 0x2000, 0x197e314c )
-	ROM_LOAD( "repulse.b4", 0x6000, 0x2000, 0x86b267f3 )
+	ROM_LOAD( "1.f2",         0x0000, 0x2000, 0xc485c621 )
+	ROM_LOAD( "2.h2",         0x2000, 0x2000, 0xb3c6a886 )
+	ROM_LOAD( "3.j2",         0x4000, 0x2000, 0x197e314c )
+	ROM_LOAD( "repulse.b4",   0x6000, 0x2000, 0x86b267f3 )
 ROM_END
 
 ROM_START( 99lstwar )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-	ROM_LOAD( "99.4f",   0x0000, 0x2000, 0xe3cfc09f )
-	ROM_LOAD( "99.4h",   0x2000, 0x2000, 0xfd58c6e1 )
-	ROM_LOAD( "7.j4",    0x4000, 0x2000, 0x57a8e900 )
+	ROM_LOAD( "1999.4f",      0x0000, 0x2000, 0xe3cfc09f )
+	ROM_LOAD( "1999.4h",      0x2000, 0x2000, 0xfd58c6e1 )
+	ROM_LOAD( "7.j4",         0x4000, 0x2000, 0x57a8e900 )
 
 	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
-	ROM_LOAD( "99.4a",  0x00000, 0x1000, 0x49a2383e ) /* chars */
-	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
-	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
-	ROM_LOAD( "10.8a",  0x09000, 0x4000, 0xe717baf4 ) /* sprites - plane 1 */
-	ROM_LOAD( "11.9a",  0x0d000, 0x4000, 0x04b2250b ) /* sprites - plane 1 */
-	ROM_LOAD( "12.10a", 0x11000, 0x4000, 0xd110e140 ) /* sprites - plane 2 */
-	ROM_LOAD( "13.11a", 0x15000, 0x4000, 0x8fdc713c ) /* sprites - plane 2 */
-	ROM_LOAD( "15.9h",  0x19000, 0x2000, 0xc9213469 ) /* tiles - plane 0 */
-	ROM_LOAD( "16.10h", 0x1b000, 0x2000, 0x7de5d39e ) /* tiles - plane 1 */
-	ROM_LOAD( "17.11h", 0x1d000, 0x2000, 0x0ba5f72c ) /* tiles - plane 2 */
+	ROM_LOAD( "1999.4a",      0x00000, 0x1000, 0x49a2383e ) /* chars */
+	ROM_LOAD( "8.6a",         0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
+	ROM_LOAD( "9.7a",         0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
+	ROM_LOAD( "10.8a",        0x09000, 0x4000, 0xe717baf4 ) /* sprites - plane 1 */
+	ROM_LOAD( "11.9a",        0x0d000, 0x4000, 0x04b2250b ) /* sprites - plane 1 */
+	ROM_LOAD( "12.10a",       0x11000, 0x4000, 0xd110e140 ) /* sprites - plane 2 */
+	ROM_LOAD( "13.11a",       0x15000, 0x4000, 0x8fdc713c ) /* sprites - plane 2 */
+	ROM_LOAD( "15.9h",        0x19000, 0x2000, 0xc9213469 ) /* tiles - plane 0 */
+	ROM_LOAD( "16.10h",       0x1b000, 0x2000, 0x7de5d39e ) /* tiles - plane 1 */
+	ROM_LOAD( "17.11h",       0x1d000, 0x2000, 0x0ba5f72c ) /* tiles - plane 2 */
 
 	ROM_REGIONX( 0x0340, REGION_PROMS )
-	ROM_LOAD( "r.1f",   0x0200, 0x0100, 0xb7f48b41 ) /* red */
-	ROM_LOAD( "g.1h",   0x0100, 0x0100, 0xacd7a69e ) /* green */
-	ROM_LOAD( "b.1j",   0x0000, 0x0100, 0x3ea35431 ) /* blue */
+	ROM_LOAD( "r.1f",         0x0200, 0x0100, 0xb7f48b41 ) /* red */
+	ROM_LOAD( "g.1h",         0x0100, 0x0100, 0xacd7a69e ) /* green */
+	ROM_LOAD( "b.1j",         0x0000, 0x0100, 0x3ea35431 ) /* blue */
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
-	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
+	ROM_LOAD( "2c",           0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
-	ROM_LOAD( "1.f2",       0x0000, 0x2000, 0xc485c621 )
-	ROM_LOAD( "2.h2",       0x2000, 0x2000, 0xb3c6a886 )
-	ROM_LOAD( "3.j2",       0x4000, 0x2000, 0x197e314c )
-	ROM_LOAD( "repulse.b4", 0x6000, 0x2000, 0x86b267f3 )
+	ROM_LOAD( "1.f2",         0x0000, 0x2000, 0xc485c621 )
+	ROM_LOAD( "2.h2",         0x2000, 0x2000, 0xb3c6a886 )
+	ROM_LOAD( "3.j2",         0x4000, 0x2000, 0x197e314c )
+	ROM_LOAD( "repulse.b4",   0x6000, 0x2000, 0x86b267f3 )
+ROM_END
+
+ROM_START( 99lstwra )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "4f.bin",       0x0000, 0x2000, 0xefe2908d )
+	ROM_LOAD( "4h.bin",       0x2000, 0x2000, 0x5b79c342 )
+	ROM_LOAD( "4j.bin",       0x4000, 0x2000, 0xd2a62c1b )
+
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "1999.4a",      0x00000, 0x1000, 0x49a2383e ) /* chars */
+	ROM_LOAD( "6a.bin",       0x01000, 0x4000, 0x98d44410 ) /* sprites - plane 0 */
+	ROM_LOAD( "7a.bin",       0x05000, 0x4000, 0x4c54d281 ) /* sprites - plane 0 */
+	ROM_LOAD( "8a.bin",       0x09000, 0x4000, 0x81018101 ) /* sprites - plane 1 */
+	ROM_LOAD( "9a.bin",       0x0d000, 0x4000, 0x347b91fd ) /* sprites - plane 1 */
+	ROM_LOAD( "10a.bin",      0x11000, 0x4000, 0xf07de4fa ) /* sprites - plane 2 */
+	ROM_LOAD( "11a.bin",      0x15000, 0x4000, 0x34a04f48 ) /* sprites - plane 2 */
+	ROM_LOAD( "9h.bin",       0x19000, 0x2000, 0x59993c27 ) /* tiles - plane 0 */
+	ROM_LOAD( "10h.bin",      0x1b000, 0x2000, 0xdfbf0280 ) /* tiles - plane 1 */
+	ROM_LOAD( "11h.bin",      0x1d000, 0x2000, 0xe4f29fc0 ) /* tiles - plane 2 */
+
+	ROM_REGIONX( 0x0340, REGION_PROMS )
+	ROM_LOAD( "r.1f",         0x0200, 0x0100, 0xb7f48b41 ) /* red */
+	ROM_LOAD( "g.1h",         0x0100, 0x0100, 0xacd7a69e ) /* green */
+	ROM_LOAD( "b.1j",         0x0000, 0x0100, 0x3ea35431 ) /* blue */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "2c",           0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
+	ROM_LOAD( "2f.bin",       0x0000, 0x2000, 0xcb9d8291 )
+	ROM_LOAD( "2h.bin",       0x2000, 0x2000, 0x24dbddc3 )
+	ROM_LOAD( "2j.bin",       0x4000, 0x2000, 0x16879c4c )
+	ROM_LOAD( "repulse.b4",   0x6000, 0x2000, 0x86b267f3 )
 ROM_END
 
 ROM_START( flashgal )
@@ -924,6 +956,31 @@ struct GameDriver driver_99lstwar =
 	0,
 
 	rom_99lstwar,
+	0, 0,
+	0,
+	0,
+
+	input_ports_sonofphx,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+	0, 0
+};
+
+struct GameDriver driver_99lstwra =
+{
+	__FILE__,
+	&driver_sonofphx,
+	"99lstwra",
+	"'99 The Last War (alternate)",
+	"1985",
+	"Proma",
+	"Ernesto Corvi",
+	0,
+	&sonofphx_machine_driver,
+	0,
+
+	rom_99lstwra,
 	0, 0,
 	0,
 	0,

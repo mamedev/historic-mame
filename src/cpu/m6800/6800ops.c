@@ -13,7 +13,7 @@ HNZVC
 
 */
 
-static void illegal( void )
+INLINE void illegal( void )
 {
 	if(errorlog)fprintf(errorlog, "M6808: illegal opcode: address %04X, op %02X\n",PC,(int) M_RDOP_ARG(PC)&0xFF);
 }

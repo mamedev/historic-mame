@@ -32,7 +32,7 @@ background:	0x4000 bytes of ROM:	76543210	tile code low bits
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned char galivan_scrollx[2], galivan_scrolly[2];
+static unsigned char scrollx[2], scrolly[2];
 
 /* Layers has only bits 5-6 active.
    6 selects background off/on
@@ -45,30 +45,8 @@ static int flipscreen, layers;
 static struct tilemap *bg_tilemap, *char_tilemap;
 
 static const unsigned char *spritepalettebank;
+static int ninjemak_dispdisable;
 
-/***************************************************************************
-
-  Rom banking routines.
-
-***************************************************************************/
-
-
-/* Sets the ROM bank READ at c000-dfff. bank must be 0 or 1 */
-void galivan_setrombank(int bank)
-{
-unsigned char *RAM = memory_region(REGION_CPU1);
-
-	cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
-}
-
-
-
-
-void galivan_init_machine(void)
-{
-	galivan_setrombank(0);
-	layers = 0x60;
-}
 
 
 /***************************************************************************
@@ -157,22 +135,39 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-static void get_bg_tile_info( int col, int row )
+static void get_bg_tile_info(int col,int row)
 {
-	unsigned char *RAM = memory_region(2);
-	int addr = row*128+col;
-	int attr = RAM[addr+0x4000];
-	int code = RAM[addr]+((attr & 0x03) << 8);
-	SET_TILE_INFO (1, code, (attr & 0x78) >> 3 /* Seems correct */);
+	unsigned char *BGROM = memory_region(2);
+	int addr = 128 * row + col;
+	int attr = BGROM[addr + 0x4000];
+	int code = BGROM[addr] | ((attr & 0x03) << 8);
+	SET_TILE_INFO(1,code,(attr & 0x78) >> 3);	/* seems correct */
 }
 
-static void get_char_tile_info( int col, int row )
+static void get_char_tile_info(int col,int row)
 {
-	int addr = col*32 + row;
+	int addr = 32 * col + row;
 	int attr = colorram[addr];
-	int code = videoram[addr]|((attr & 1) << 8);
-	SET_TILE_INFO (0, code, (attr & 0xe0) >> 5 /* not sure */ );
+	int code = videoram[addr] | ((attr & 0x01) << 8);
+	SET_TILE_INFO(0,code,(attr & 0xe0) >> 5);	/* not sure */
 	tile_info.priority = attr & 8 ? 0 : 1;	/* wrong */
+}
+
+static void ninjemak_get_bg_tile_info(int col,int row)
+{
+	unsigned char *BGROM = memory_region(2);
+	int addr = 32 * col + row;
+	int attr = BGROM[addr + 0x4000];
+	int code = BGROM[addr] | ((attr & 0x03) << 8);
+	SET_TILE_INFO(1,code,((attr & 0x60) >> 3) | ((attr & 0x0c) >> 2));	/* seems correct */
+}
+
+static void ninjemak_get_char_tile_info(int col,int row)
+{
+	int addr = 32 * col + row;
+	int attr = colorram[addr];
+	int code = videoram[addr] | ((attr & 0x03) << 8);
+	SET_TILE_INFO(0,code,(attr & 0x1c) >> 2);	/* seems correct ? */
 }
 
 
@@ -185,15 +180,34 @@ static void get_char_tile_info( int col, int row )
 
 int galivan_vh_start(void)
 {
+	bg_tilemap = tilemap_create(get_bg_tile_info,
+			TILEMAP_OPAQUE,
+			16,16,
+			128,128);
+	char_tilemap = tilemap_create(get_char_tile_info,
+			TILEMAP_TRANSPARENT,
+			8,8,
+			32,32);
 
-	bg_tilemap = tilemap_create (get_bg_tile_info,
-								 TILEMAP_OPAQUE,
-								 16, 16,
-								 128, 128);
-	char_tilemap = tilemap_create (get_char_tile_info,
-								   TILEMAP_TRANSPARENT,
-								   8, 8,
-								   32, 32);
+	if (!bg_tilemap || !char_tilemap)
+		return 1;
+
+	char_tilemap->transparent_pen = 15;
+
+	return 0;
+}
+
+int ninjemak_vh_start(void)
+{
+	bg_tilemap = tilemap_create(ninjemak_get_bg_tile_info,
+			TILEMAP_OPAQUE,
+			16,16,
+			512,32);
+	char_tilemap = tilemap_create(ninjemak_get_char_tile_info,
+			TILEMAP_TRANSPARENT,
+			8,8,
+			32,32);
+
 	if (!bg_tilemap || !char_tilemap)
 		return 1;
 
@@ -212,17 +226,19 @@ int galivan_vh_start(void)
 
 void galivan_videoram_w(int offset,int data)
 {
-	if (data != videoram[offset]) {
+	if (videoram[offset] != data)
+	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty (char_tilemap, offset/32, offset%32);
+		tilemap_mark_tile_dirty(char_tilemap,offset/32,offset%32);
 	}
 }
 
 void galivan_colorram_w(int offset,int data)
 {
-	if (data != colorram[offset]) {
+	if (colorram[offset] != data)
+	{
 		colorram[offset] = data;
-		tilemap_mark_tile_dirty (char_tilemap, offset/32, offset%32);
+		tilemap_mark_tile_dirty(char_tilemap,offset/32,offset%32);
 	}
 }
 
@@ -234,18 +250,78 @@ void galivan_gfxbank_w(int offset,int data)
 	coin_counter_w(1,data & 2);
 
 	/* bit 2 flip screen */
-	if (flipscreen != (data & 0x04))
-	{
-		flipscreen = data & 0x04;
-		tilemap_set_flip (bg_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
-		tilemap_set_flip (char_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
-	}
+	flipscreen = data & 0x04;
+	tilemap_set_flip (bg_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
+	tilemap_set_flip (char_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
 
 	/* bit 7 selects one of two ROM banks for c000-dfff */
-	galivan_setrombank((data>>7)&1);
+	{
+		int bank = (data & 0x80) >> 7;
+		unsigned char *RAM = memory_region(REGION_CPU1);
+
+		cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
+	}
 
 /*	if (errorlog) fprintf(errorlog,"Address: %04X - port 40 = %02x\n",cpu_get_pc(),data); */
 }
+
+void ninjemak_gfxbank_w(int offset, int data)
+{
+	/* bits 0 and 1 coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
+
+	/* bit 2 flip screen */
+	flipscreen = data & 0x04;
+	tilemap_set_flip (bg_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
+	tilemap_set_flip (char_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
+
+	/* bit 3 text bank flag ??? */
+	if (data & 0x08)
+	{
+		/* This is a temporary condition specification. */
+
+		int offs;
+
+if (errorlog) fprintf(errorlog,"%04x: write %02x to port 80\n",cpu_get_pc(),data);
+
+		for (offs = 0; offs < videoram_size; offs++)
+		{
+			galivan_videoram_w(offs, 0x20);
+		}
+		for (offs = 0; offs < videoram_size; offs++)
+		{
+			galivan_colorram_w(offs, 0x03);
+		}
+	}
+
+	/* bit 4 background disable flag */
+	ninjemak_dispdisable = data & 0x10;
+
+	/* bit 5 sprite flag ??? */
+
+	/* bit 6, 7 ROM bank select */
+	{
+		int bank = (data & 0xc0) >> 6;
+		unsigned char *RAM = memory_region(REGION_CPU1);
+
+		cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
+	}
+
+#if 0
+	{
+		char mess[80];
+		int btz[8];
+		int offs;
+
+		for (offs = 0; offs < 8; offs++) btz[offs] = (((data >> offs) & 0x01) ? 1 : 0);
+
+		sprintf(mess, "BK:%01X%01X S:%01X B:%01X T:%01X FF:%01X C2:%01X C1:%01X", btz[7], btz[6], btz[5], btz[4], btz[3], btz[2], btz[1], btz[0]);
+		usrintf_showmessage(mess);
+	}
+#endif
+}
+
 
 
 /* Written through port 41-42 */
@@ -260,15 +336,25 @@ void galivan_scrollx_w(int offset,int data)
 			up = 0;
 		}
 	}
-	galivan_scrollx[offset] = data;
+	scrollx[offset] = data;
 }
 
 /* Written through port 43-44 */
 void galivan_scrolly_w(int offset,int data)
 {
-	galivan_scrolly[offset] = data;
+	scrolly[offset] = data;
 }
 
+
+void ninjemak_scrollx_w(int offset, int data)
+{
+	scrollx[offset] = data;
+}
+
+void ninjemak_scrolly_w(int offset, int data)
+{
+	scrolly[offset] = data;
+}
 
 
 
@@ -302,7 +388,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			flipy = !flipy;
 		}
 
-		code = spriteram[offs+1] + ((attr & 0x02) << 7);
+//		code = spriteram[offs+1] + ((attr & 0x02) << 7);
+		code = spriteram[offs+1] + ((attr & 0x06) << 7);	// for ninjemak, not sure ?
 
 		drawgfx(bitmap,Machine->gfx[2],
 				code,
@@ -316,21 +403,39 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if ( (layers&0x40)==0 ) {
-		tilemap_set_scrollx (bg_tilemap, 0, galivan_scrollx[0] + 256 * (galivan_scrollx[1]&0x7));
-		tilemap_set_scrolly (bg_tilemap, 0, galivan_scrolly[0] + 256 * (galivan_scrolly[1]&0x7));
-	}
+	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x07));
+	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0x07));
 
 	tilemap_update (ALL_TILEMAPS);
 	tilemap_render (ALL_TILEMAPS);
-	if ( (layers&0x40)==0 )
-		tilemap_draw (bitmap, bg_tilemap, TILEMAP_BACK);
-	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
-	tilemap_draw (bitmap, char_tilemap, 0);
+	if (layers & 0x40)
+		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	else
+		tilemap_draw(bitmap,bg_tilemap,0);
+
+	tilemap_draw (bitmap,char_tilemap,0);
 
 	draw_sprites(bitmap);
 
-	tilemap_draw (bitmap, char_tilemap, 1);
+	tilemap_draw (bitmap,char_tilemap,1);
+}
+
+void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	/* (scrollx[1] & 0x40) does something */
+	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x1f));
+	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0xff));
+
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
+
+	if (ninjemak_dispdisable)
+		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	else
+		tilemap_draw(bitmap,bg_tilemap,0);
+
+	draw_sprites(bitmap);
+
+	tilemap_draw(bitmap,char_tilemap,0);
 }

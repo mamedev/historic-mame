@@ -969,7 +969,7 @@ static struct YM3812interface ym3812b_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
+	{ 7757 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 80 }
 };
@@ -993,7 +993,7 @@ static struct MachineDriver hbarrel_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1045,7 +1045,7 @@ static struct MachineDriver baddudes_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1097,7 +1097,7 @@ static struct MachineDriver birdtry_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1155,7 +1155,7 @@ static struct MachineDriver robocop_machine_driver =
 			ignore_interrupt,0
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1207,7 +1207,7 @@ static struct MachineDriver robocopb_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1265,7 +1265,7 @@ static struct MachineDriver hippodrm_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	5,	/* Interleave between H6280 & 68000 */
 	0,
 
@@ -1317,7 +1317,7 @@ static struct MachineDriver slyspy_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1369,7 +1369,7 @@ static struct MachineDriver midres_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

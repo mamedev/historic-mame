@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V2.2
+ *	 Portable Z80 emulator V2.4
  *
  *   Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.
  *
@@ -17,15 +17,24 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 2.2:
+ *	 Changes in 2.4:
+ *	  - z80_reset zaps the entire context, sets IX and IY to 0xffff(!) and
+ *		sets the Z flag. With these changes the Tehkan World Cup driver
+ *		_seems_ to work again.
+ *   Changes in 2.3:
+ *	  - External termination of the execution loop calls z80_burn() and
+ *		z80_vm_burn() to burn an amount of cycles (R adjustment)
+ *	  - Shortcuts which burn CPU cycles (BUSY_LOOP_HACKS and TIME_LOOP_HACKS)
+ *		now also adjust the R register depending on the skipped opcodes.
+ *   Changes in 2.2:
  *	  - Fixed bugs in CPL, SCF and CCF instructions flag handling.
  *	  - Changed variable EA and ARG16() function to UINT32; this
  *		produces slightly more efficient code.
  *	  - The DD/FD XY CB opcodes where XY is 40-7F and Y is not 6/E
  *		are changed to calls to the X6/XE opcodes to reduce object size.
  *		They're hardly ever used so this should not yield a speed penalty.
- *   New in 2.0:
- *	  - Optional more exact Z80 emulation (#define Z80_EXACT 1) according
+ *	 New in 2.0:
+ *    - Optional more exact Z80 emulation (#define Z80_EXACT 1) according
  *		to a detailed description by Sean Young which can be found at:
  *		http://www.msxnet.org/tech/Z80/z80undoc.txt
  *****************************************************************************/
@@ -93,6 +102,8 @@ static UINT8 z80_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+#define BURN	z80_vm_burn
+
 #else
 
 static UINT8 z80_reg_layout[] = {
@@ -109,6 +120,9 @@ static UINT8 z80_win_layout[] = {
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
+
+#define BURN	z80_burn
+
 #endif
 
 /****************************************************************************/
@@ -444,6 +458,19 @@ PROTOTYPES(Z80ed,ed);
 PROTOTYPES(Z80fd,fd);
 PROTOTYPES(Z80xxcb,xxcb);
 
+/****************************************************************************/
+/* Burn an odd amount of cycles, that is instructions taking something      */
+/* different from 4 T-states per opcode (and R increment)                   */
+/****************************************************************************/
+INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
+{
+    if( cycles > 0 )
+    {
+		_R += (cycles / cyclesum) * opcodes;
+		z80_ICount -= (cycles / cyclesum) * cyclesum;
+    }
+}
+
 /***************************************************************
  * define an opcode function
  ***************************************************************/
@@ -553,7 +580,8 @@ PROTOTYPES(Z80xxcb,xxcb);
 #define ENTER_HALT {											\
     _PC--;                                                      \
     _HALT = 1;                                                  \
-	if( after_EI == 0 && z80_ICount > 0 ) z80_ICount=0; 		\
+	if( after_EI == 0 ) 										\
+		BURN( z80_ICount ); 									\
 }
 
 /***************************************************************
@@ -707,8 +735,8 @@ INLINE UINT32 ARG16(void)
 	/* speed up busy loop */									\
 	if( _PCD == oldpc ) 										\
 	{															\
-		if( after_EI == 0 && z80_ICount > 0 )					\
-			z80_ICount = 0; 									\
+		if( after_EI == 0 ) 									\
+			BURNODD( z80_ICount, 1, 10 );						\
 	}															\
 	else														\
 	{															\
@@ -718,16 +746,16 @@ INLINE UINT32 ARG16(void)
 			/* NOP - JP $-1 or EI - JP $-1 */					\
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
-				if (after_EI == 0 && z80_ICount > 4)			\
-					z80_ICount = 4; 							\
+				if (after_EI == 0 ) 							\
+					BURNODD( z80_ICount-4, 2, 4+10 );			\
 			}													\
 		}														\
 		else													\
 		/* LD SP,#xxxx - JP $-3 (Galaga) */ 					\
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
-			if( after_EI == 0 && z80_ICount > 10 )				\
-				z80_ICount = 10;								\
+			if( after_EI == 0 ) 								\
+				BURNODD( z80_ICount-10, 2, 10+10 ); 			\
 		}														\
 	}															\
 	change_pc16(_PCD);											\
@@ -765,8 +793,8 @@ INLINE UINT32 ARG16(void)
 	/* speed up busy loop */									\
 	if( _PCD == oldpc ) 										\
 	{															\
-		if( after_EI == 0 && z80_ICount > 0 )					\
-			z80_ICount = 0; 									\
+		if( after_EI == 0 ) 									\
+			BURNODD( z80_ICount, 1, 12 );						\
 	}															\
 	else														\
 	{															\
@@ -776,16 +804,16 @@ INLINE UINT32 ARG16(void)
 			/* NOP - JR $-1 or EI - JR $-1 */					\
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
-				if( after_EI == 0 && z80_ICount > 4 )			\
-					z80_ICount = 4; 							\
+				if( after_EI == 0 ) 							\
+					BURNODD( z80_ICount-4, 2, 4+12 );			\
 			}													\
 		}														\
 		else													\
 		/* LD SP,#xxxx - JR $-3 */								\
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
-			if( after_EI == 0 && z80_ICount > 10 )				\
-				z80_ICount = 10;								\
+			if( after_EI == 0 ) 								\
+				BURNODD( z80_ICount-12, 2, 10+12 ); 			\
 		}														\
     }                                                           \
     change_pc16(_PCD);                                          \
@@ -1889,7 +1917,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define LDIR LDI; if( _BC ) { _PC -= 2; CY(5); }
@@ -1915,7 +1943,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define CPIR CPI; if( _BC && !(_F & ZF) ) { _PC -= 2; CY(5); }
@@ -1941,7 +1969,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define INIR INI; if( _B ) { _PC -= 2; CY(5); }
@@ -1967,7 +1995,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define OTIR OUTI; if( _B ) { _PC -= 2; CY(5); }
@@ -1993,7 +2021,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define LDDR LDD; if( _BC ) { _PC -= 2; CY(5); }
@@ -2019,7 +2047,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define CPDR CPD; if( _BC && !(_F & ZF) ) { _PC -= 2; CY(5); }
@@ -2045,7 +2073,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define INDR IND; if( _B ) { _PC -= 2; CY(5); }
@@ -2071,7 +2099,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
             _PC += 2;                                           \
             break;                                              \
 		}														\
-	} while (z80_ICount > 0);									\
+	} while( z80_ICount > 0 );									\
 }
 #else
 #define OTDR OUTD; if( _B ) { _PC -= 2; CY(5); }
@@ -3588,7 +3616,7 @@ if( _BC > 1 ) { 													\
 	{																\
 		while( _BC > 0 && z80_ICount > 4+4+12+6 )					\
 		{															\
-			z80_ICount -= 4+4+12+6; 								\
+			BURNODD( 4+4+12+6, 4, 4+4+12+6 );						\
 			_BC--;													\
 		}															\
 	}																\
@@ -3605,7 +3633,7 @@ if( _BC > 1 ) { 													\
 		{															\
 			while( _BC > 0 && z80_ICount > 4+4+10+6 )				\
 			{														\
-				z80_ICount -= 4+4+10+6; 							\
+				BURNODD( 4+4+10+6, 4, 4+4+10+6 );					\
 				_BC--;												\
 			}														\
         }                                                           \
@@ -4091,14 +4119,9 @@ void z80_reset(void *param)
 		if( (i & 0x0f) == 0x0f ) SZHV_dec[i] |= HF;
 	}
 
-	_I = 0; 			/* clear interrupt vector register */
-	_R = _R2 = 0;		/* clear refres counter(s) */
-	_IM = 0;			/* clear interrupt mode register */
-
-    _PCD = 0;
-	_IFF1 = _IFF2 = 0;
-
-	Z80.irq_max = 0;	/* clear daisy chain device count */
+	memset(&Z80, 0, sizeof(Z80));
+	_IX = _IY = 0xffff; /* IX and IY are FFFF after a reset! */
+	_F = ZF;			/* Zero flag is set */
 	Z80.request_irq = -1;
 	Z80.service_irq = -1;
     Z80.nmi_state = CLEAR_LINE;
@@ -4148,7 +4171,7 @@ void z80_exit(void)
 }
 
 /****************************************************************************
- * Execute IPeriod T-states. Return number of T-states really executed
+ * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
 #if Z80_VM
 int z80_vm_execute(int cycles)
@@ -4158,20 +4181,38 @@ int z80_execute(int cycles)
 {
     z80_ICount = cycles;
 
-    z80_ICount -= Z80.extra_cycles;
-    Z80.extra_cycles = 0;
+	BURN( Z80.extra_cycles );
+	Z80.extra_cycles = 0;
 
-    do {
+    do
+	{
         _PPC = _PCD;
         CALL_MAME_DEBUG;
         R_INC;
         EXEC_INLINE(op,ROP());
-    } while (z80_ICount > 0);
+	} while( z80_ICount > 0 );
 
-    z80_ICount -= Z80.extra_cycles;
+	BURN( Z80.extra_cycles );
     Z80.extra_cycles = 0;
 
     return cycles - z80_ICount;
+}
+
+/****************************************************************************
+ * Burn 'cycles' T-states. Adjust R register for the lost time
+ ****************************************************************************/
+#if Z80_VM
+void z80_vm_burn(int cycles)
+#else
+void z80_burn(int cycles)
+#endif
+{
+	if( cycles > 0 )
+	{
+		/* (wrong) assumption: 4 cycles per average opcode */
+		_R += (cycles + 3) / 4;
+		z80_ICount -= cycles;
+	}
 }
 
 /****************************************************************************

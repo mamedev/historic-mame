@@ -42,7 +42,7 @@ OP(001) { int tmp; h6280_ICount -= 7; RD_IDX; ORA;		   } // 7 ORA  IDX
 OP(021) { int tmp; h6280_ICount -= 7; RD_IDX; AND;		   } // 7 AND  IDX
 OP(041) { int tmp; h6280_ICount -= 7; RD_IDX; EOR;		   } // 7 EOR  IDX
 OP(061) { int tmp; h6280_ICount -= 7; RD_IDX; ADC;		   } // 7 ADC  IDX
-OP(081) { int tmp; h6280_ICount -= 7; RD_IDX; STA;		   } // 7 STA  IDX
+OP(081) { int tmp; h6280_ICount -= 7;         STA; WR_IDX; } // 7 STA  IDX
 OP(0a1) { int tmp; h6280_ICount -= 7; RD_IDX; LDA;		   } // 7 LDA  IDX
 OP(0c1) { int tmp; h6280_ICount -= 7; RD_IDX; CMP;		   } // 7 CMP  IDX
 OP(0e1) { int tmp; h6280_ICount -= 7; RD_IDX; SBC;		   } // 7 SBC  IDX
@@ -103,11 +103,11 @@ OP(0e4) { int tmp; h6280_ICount -= 4; RD_ZPG; CPX;		   } // 4 CPX  ZPG
 
 OP(014) { int tmp; h6280_ICount -= 6; RD_ZPG; TRB; WB_EAZ; } // 6 TRB  ZPG
 OP(034) { int tmp; h6280_ICount -= 4; RD_ZPX; BIT;		   } // 4 BIT  ZPX
-OP(054) {												   } // 2 CSL
+OP(054) {		   h6280_ICount -= 2;					   } // 2 CSL
 OP(074) { int tmp; h6280_ICount -= 4;		  STZ; WR_ZPX; } // 4 STZ  ZPX
 OP(094) { int tmp; h6280_ICount -= 4;		  STY; WR_ZPX; } // 4 STY  ZPX
 OP(0b4) { int tmp; h6280_ICount -= 4; RD_ZPX; LDY;		   } // 4 LDY  ZPX
-OP(0d4) {												   } // 2 CSH
+OP(0d4) {		   h6280_ICount -= 2;					   } // 2 CSH
 OP(0f4) {		   h6280_ICount -= 2;		  SET;		   } // 2 SET
 
 OP(005) { int tmp; h6280_ICount -= 4; RD_ZPG; ORA;		   } // 4 ORA  ZPG

@@ -2209,7 +2209,7 @@ static struct MachineDriver bandido_machine_driver =                    /* MJC *
 	{
 		{
 			CPU_8080,
-			2000000,        /* 2 Mhz? */
+			20160000/8,        /* 2.52 MHz */
 			bandido_readmem, bandido_writemem, bandido_readport, bandido_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}

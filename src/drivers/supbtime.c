@@ -274,7 +274,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
-	{ 8055 },	/* Frequency */
+	{ 7757 },	/* Frequency */
 	{ 3 },      /* memory region 3 */
 	{ 50 }
 };
@@ -287,8 +287,7 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3700000, /*  */
-//	32220000/8, /* May not be correct, there is another crystal near the ym2151 */
+	32220000/9, /* May not be correct, there is another crystal near the ym2151 */
 	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
@@ -310,7 +309,7 @@ static struct MachineDriver supbtime_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	0,
 

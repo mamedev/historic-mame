@@ -12,13 +12,8 @@ void bladestl_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 	/* build the lookup table for sprites. Palette is dynamic. */
-#if 0
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = (*(color_prom++) & 0x0f);
-#else
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i % 0x10;
-#endif
+		COLOR(1,i) = 0x20 + (*(color_prom++) & 0x0f);
 }
 
 /***************************************************************************
@@ -43,7 +38,7 @@ static void sprite_callback(int *code,int *color)
 {
 	*code |= ((*color & 0xc0) << 2) + bladestl_spritebank;
 	*code = (*code << 2) | ((*color & 0x30) >> 4);
-	*color = 0;
+	*color = 0 + (*color & 0x0f);
 }
 
 

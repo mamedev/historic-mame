@@ -392,6 +392,38 @@ ROM_START( aliens2 )
 	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
+ROM_START( aliensu )
+	ROM_REGIONX( 0x38000, REGION_CPU1 ) /* code + banked roms */
+	ROM_LOAD( "e24_n02.bin", 0x10000, 0x08000, 0x24dd612e )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "c24_n01.bin", 0x18000, 0x20000, 0x106cf59c )
+
+	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_LOAD( "k13_b11.bin", 0x000000, 0x80000, 0x89c5c885 )	/* characters (set 1) */
+	ROM_LOAD( "j13_b07.bin", 0x080000, 0x40000, 0xe9c56d66 )	/* characters (set 2) */
+	/* second half empty */
+	ROM_LOAD( "k19_b12.bin", 0x100000, 0x80000, 0xea6bdc17 )	/* characters (set 1) */
+	ROM_LOAD( "j19_b08.bin", 0x180000, 0x40000, 0xf9387966 )	/* characters (set 2) */
+	/* second half empty */
+
+	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_LOAD( "k08_b10.bin", 0x000000, 0x80000, 0x0b1035b1 )	/* sprites (set 1) */
+	ROM_LOAD( "j08_b06.bin", 0x080000, 0x40000, 0x081a0566 )	/* sprites (set 2) */
+	/* second half empty */
+	ROM_LOAD( "k02_b09.bin", 0x100000, 0x80000, 0xe76b3c19 )	/* sprites (set 1) */
+	ROM_LOAD( "j02_b05.bin", 0x180000, 0x40000, 0x19a261f2 )	/* sprites (set 2) */
+	/* second half empty */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "g04_b03.bin", 0x00000, 0x08000, 0x1ac4d283 )
+
+	ROM_REGION( 0x40000 ) /* samples for 007232 */
+	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+ROM_END
+
 ROM_START( aliensj )
 	ROM_REGIONX( 0x38000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "875m02.e24",  0x10000, 0x08000, 0x54a774e5 )
@@ -468,7 +500,7 @@ struct GameDriver driver_aliens =
 	__FILE__,
 	0,
 	"aliens",
-	"Aliens (set 1)",
+	"Aliens (World set 1)",
 	"1990",
 	"Konami",
 	"Manuel Abadia",
@@ -493,7 +525,7 @@ struct GameDriver driver_aliens2 =
 	__FILE__,
 	&driver_aliens,
 	"aliens2",
-	"Aliens (set 2)",
+	"Aliens (World set 2)",
 	"1990",
 	"Konami",
 	"Manuel Abadia",
@@ -502,6 +534,31 @@ struct GameDriver driver_aliens2 =
 	0,
 
 	rom_aliens2,
+	gfx_untangle, 0,
+	0,
+	0,
+
+	input_ports_aliens,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver driver_aliensu =
+{
+	__FILE__,
+	&driver_aliens,
+	"aliensu",
+	"Aliens (US)",
+	"1990",
+	"Konami",
+	"Manuel Abadia",
+	0,
+	&machine_driver,
+	0,
+
+	rom_aliensu,
 	gfx_untangle, 0,
 	0,
 	0,

@@ -52,8 +52,8 @@ static struct MemoryReadAddress battlnts_readmem[] =
 {
 	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
-	{ 0x2200, 0x23ff, MRA_RAM },			/* ??? */
-	{ 0x2400, 0x24ff, MRA_RAM },			/* Palette */
+	{ 0x2200, 0x23ff, K007342_scroll_r },	/* Scroll RAM */
+	{ 0x2400, 0x24ff, paletteram_r },		/* Palette */
 	{ 0x2e00, 0x2e00, input_port_0_r },		/* DIPSW #1 */
 	{ 0x2e01, 0x2e01, input_port_4_r },		/* 2P controls */
 	{ 0x2e02, 0x2e02, input_port_3_r },		/* 1P controls */
@@ -68,7 +68,7 @@ static struct MemoryWriteAddress battlnts_writemem[] =
 {
 	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
 	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
-	{ 0x2200, 0x23ff, MWA_RAM },				/* ??? */
+	{ 0x2200, 0x23ff, K007342_scroll_w },		/* Scroll RAM */
 	{ 0x2400, 0x24ff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* palette */
 	{ 0x2600, 0x2607, K007342_vreg_w },			/* Video Registers */
 	{ 0x2e08, 0x2e08, battlnts_bankswitch_w },	/* bankswitch control */

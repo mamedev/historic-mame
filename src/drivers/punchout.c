@@ -89,6 +89,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m6502/m6502.h"
 
 
 extern unsigned char *punchout_videoram2;
@@ -118,11 +119,6 @@ int punchout_input_3_r(int offset);
 void punchout_speech_reset(int offset,int data);
 void punchout_speech_st(int offset,int data);
 void punchout_speech_vcu(int offset,int data);
-
-void punchout_dac_w(int offset,int data)
-{
-	DAC_data_w(0,data);
-}
 
 void punchout_2a03_reset_w(int offset,int data)
 {
@@ -450,7 +446,6 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x4011, 0x4011, punchout_dac_w },
 	{ 0x4000, 0x4017, NESPSG_0_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -741,14 +736,8 @@ static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 static struct NESinterface nes_interface =
 {
 	1,
-	21477270 ,	/* 21.47727 MHz */
-	{ 255 },
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 255, 255 }
+	{ REGION_CPU2 },
+	{ 50 },
 };
 
 /* filename for speech sample files */
@@ -766,7 +755,7 @@ static const char *punchout_sample_names[] =
 static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock */
-	255,        /* volume       */
+	50,        /* volume       */
 	4,          /* memory region of speech rom */
 	0,          /* memory size of speech rom */
 	0,           /* VCU pin level (default)     */
@@ -787,8 +776,7 @@ static struct MachineDriver punchout_machine_driver =
 		},
 		{
 			CPU_N2A03 | CPU_AUDIO_CPU,
-			21477270/16,	/* ??? the external clock is right, I assume it is */
-							/* demultiplied internally by the CPU */
+			N2A03_DEFAULTCLOCK,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -817,10 +805,6 @@ static struct MachineDriver punchout_machine_driver =
 			&nes_interface
 		},
 		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
 			SOUND_VLM5030,
 			&vlm5030_interface
 		}
@@ -840,8 +824,7 @@ static struct MachineDriver spnchout_machine_driver =
 		},
 		{
 			CPU_N2A03 | CPU_AUDIO_CPU,
-			21477270/16,	/* ??? the external clock is right, I assume it is */
-							/* demultiplied internally by the CPU */
+			N2A03_DEFAULTCLOCK,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -870,10 +853,6 @@ static struct MachineDriver spnchout_machine_driver =
 			&nes_interface
 		},
 		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
 			SOUND_VLM5030,
 			&vlm5030_interface
 		}
@@ -892,8 +871,7 @@ static struct MachineDriver armwrest_machine_driver =
 		},
 		{
 			CPU_N2A03 | CPU_AUDIO_CPU,
-			21477270/16,	/* ??? the external clock is right, I assume it is */
-							/* demultiplied internally by the CPU */
+			N2A03_DEFAULTCLOCK,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -920,10 +898,6 @@ static struct MachineDriver armwrest_machine_driver =
 		{
 			SOUND_NES,
 			&nes_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
 		},
 		{
 			SOUND_VLM5030,

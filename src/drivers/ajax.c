@@ -144,7 +144,7 @@ INPUT_PORTS_START( ajax )
 	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalidity" )
+//	PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalidity" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )

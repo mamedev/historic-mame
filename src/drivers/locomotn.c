@@ -453,7 +453,7 @@ ROM_START( locomotn )
 	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
-	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots - from the bootleg, wrong */
+	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
@@ -476,7 +476,7 @@ ROM_START( gutangtn )
 	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "5m_c2.bin",    0x1000, 0x1000, 0x51c542fd )
-	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots - from the bootleg, wrong */
+	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */

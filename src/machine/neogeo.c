@@ -97,12 +97,12 @@ void neogeo_onetime_init_machine(void)
 	if (memory_region_length(MEM_SAMPLE1) > 1)
 	{
 		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE1);
-		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE1;
+		neogeo_ym2610_interface.pcmromb[0] = MEM_SAMPLE1;
 	}
 	else
 	{
 		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE0);
-		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE0;
+		neogeo_ym2610_interface.pcmromb[0] = MEM_SAMPLE0;
 	}
 
     /* Allocate ram banks */

@@ -53,13 +53,6 @@ static void detatwin_tile_callback(int layer,int bank,int *code,int *color)
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
 }
 
-static void thndrx2_tile_callback(int layer,int bank,int *code,int *color)
-{
-	*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) | ((*color & 0x0c) << 9)
-			| (bank << 13);
-	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
-}
-
 
 
 /***************************************************************************
@@ -88,7 +81,7 @@ static void punkshot_sprite_callback(int *code,int *color,int *priority)
 
 static void thndrx2_sprite_callback(int *code,int *color,int *priority)
 {
-//	*priority = 0x20 | ((*color & 0x60) >> 2);
+	*priority = 0x20 | ((*color & 0x60) >> 2);
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
@@ -206,7 +199,7 @@ int glfgreat_vh_start(void)
 
 int thndrx2_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,thndrx2_tile_callback))
+	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
 	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,thndrx2_sprite_callback))
 	{
@@ -247,6 +240,12 @@ void thndrx2_vh_stop(void)
 }
 
 
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
 
 void tmnt_paletteram_w(int offset,int data)
 {
@@ -641,7 +640,9 @@ void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	sortlayers(layer,pri);
 
-	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->drv->visible_area);
+	K051960_sprites_draw(bitmap,pri[0]+1,0x3f);
+	K052109_tilemap_draw(bitmap,layer[0],0);
 	K051960_sprites_draw(bitmap,pri[1]+1,pri[0]);
 	K052109_tilemap_draw(bitmap,layer[1],0);
 	K051960_sprites_draw(bitmap,pri[2]+1,pri[1]);

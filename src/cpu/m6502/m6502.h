@@ -206,6 +206,15 @@ extern void n2a03_state_save(void *file);
 extern void n2a03_state_load(void *file);
 extern const char *n2a03_info(void *context, int regnum);
 extern unsigned n2a03_dasm(char *buffer, unsigned pc);
+
+
+#define N2A03_DEFAULTCLOCK (21477272.724 / 12)
+
+/* The N2A03 is integrally tied to its PSG (they're on the same die).
+   Bit 7 of address $4011 (the PSG's DPCM control register), when set,
+   causes an IRQ to be generated.  This function allows the IRQ to be called
+   from the PSG core when such an occasion arises. */
+extern void n2a03_irq(void);
 #endif
 
 #ifdef MAME_DEBUG

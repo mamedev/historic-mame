@@ -299,7 +299,7 @@ static struct YM3812interface ym3812_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
+	{ 7757 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 80 }
 };
@@ -323,7 +323,7 @@ static struct MachineDriver stadhero_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -334,7 +334,7 @@ static struct MachineDriver stadhero_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	stadhero_vh_start,
 	stadhero_vh_stop,

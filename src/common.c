@@ -281,11 +281,13 @@ int readroms(void)
 				if (expchecksum != osd_fcrc (f))
 				{
 					warning = 1;
-					if (expchecksum && expchecksum != BADCRC(osd_fcrc(f)))
+					if (expchecksum == 0)
+						sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP KNOWN\n",name);
+					else if (expchecksum == BADCRC(osd_fcrc(f)))
+						sprintf(&buf[strlen(buf)],"%-12s ROM NEEDS REDUMP\n",name);
+					else
 						sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
 								name,expchecksum,osd_fcrc(f));
-					else
-						sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP KNOWN\n",name);
 				}
 
 				osd_fclose(f);

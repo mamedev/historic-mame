@@ -174,12 +174,11 @@ Al Kossow.
 TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,
   Michael Cuddy, Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
-YM-2203 and YM-2151 emulation by Tatsuyuki Satoh.
+YM-2203, YM-2151, YM3812 emulation by Tatsuyuki Satoh.
 POKEY emulator by Ron Fries (rfries@aol.com).
 Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
    on the Pokey random number generator.
 NES sound hardware info by Jeremy Chadwick and Hedley Rainne.
-YM3812 and YM3526 emulation by Carl-Henrik Skårstedt.
 YM2610 emulation by Hiromitsu Shioya.
 
 Background art by Peter Hirschberg (PeterH@cronuscom.com).
