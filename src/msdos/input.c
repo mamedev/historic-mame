@@ -95,12 +95,18 @@ static int pseudo_to_key_code(int keycode)
 			return OSD_KEY_F10;
 
 		case OSD_KEY_SHOW_FPS:
-            if (!key[OSD_KEY_LSHIFT] && !key[OSD_KEY_RSHIFT])
+			if (!key[KEY_LSHIFT] && !key[KEY_RSHIFT]
+					&& !key[KEY_LCONTROL] && !key[KEY_RCONTROL])
 				return OSD_KEY_F11;
 			else return OSD_KEY_NONE;
 
 		case OSD_KEY_SHOW_PROFILE:
-            if (key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT])
+			if (key[KEY_LSHIFT] || key[KEY_RSHIFT])
+				return OSD_KEY_F11;
+			else return OSD_KEY_NONE;
+
+		case OSD_KEY_SHOW_TOTAL_COLORS:
+			if (key[KEY_LCONTROL] || key[KEY_RCONTROL])
 				return OSD_KEY_F11;
 			else return OSD_KEY_NONE;
 

@@ -70,7 +70,7 @@ char *codebuf = mybuffer;
 #define cpu_readmem24_dword(addr) 	(0x123456)	/* Only used for Addresses */
 
 #define MEMORY_H	/* so memory.h will not be included... */
-#include "d68000.c"
+#include "d68k.c"
 
 #undef cpu_readmem24
 #undef cpu_readmem24_word

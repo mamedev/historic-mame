@@ -888,8 +888,8 @@ static struct GfxLayout charlayout =
 	1024,   /* 1024 characters */
 	3,      /* 3 bits per pixel */
 	{ 0, 1024*8*8, 2*1024*8*8 },    /* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
@@ -899,10 +899,10 @@ static struct GfxLayout spritelayout =
 	256,    /* 256 sprites */
 	3,      /* 3 bits per pixel */
 	{ 0, 256*16*16, 2*256*16*16 },  /* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+	  0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-	  16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
@@ -912,10 +912,10 @@ static struct GfxLayout zoar_spritelayout =
 	128,    /* 256 sprites */
 	3,      /* 3 bits per pixel */
 	{ 0, 128*16*16, 2*128*16*16 },  /* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+	  0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-	  16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
@@ -925,10 +925,10 @@ static struct GfxLayout btime_tilelayout =
 	64,    /* 64 characters */
 	3,      /* 3 bits per pixel */
 	{ 0, 64*16*16, 64*2*16*16 },    /* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+	  0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-	  16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8    /* every tile takes 32 consecutive bytes */
 };
 
@@ -938,8 +938,8 @@ static struct GfxLayout cookrace_tilelayout =
 	256,    /* 256 characters */
 	3,      /* 3 bits per pixel */
 	{ 0, 256*8*8, 2*256*8*8 },    /* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8    /* every tile takes 8 consecutive bytes */
 };
 
@@ -949,10 +949,10 @@ static struct GfxLayout bnj_tilelayout =
 	64, /* 64 characters */
 	3,  /* 3 bits per pixel */
 	{ 2*64*16*16+4, 0, 4 },
+	{ 3*16*8+0, 3*16*8+1, 3*16*8+2, 3*16*8+3, 2*16*8+0, 2*16*8+1, 2*16*8+2, 2*16*8+3,
+	  16*8+0, 16*8+1, 16*8+2, 16*8+3, 0, 1, 2, 3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 3, 2, 1, 0, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
-	  2*16*8+3, 2*16*8+2, 2*16*8+1, 2*16*8+0, 3*16*8+3, 3*16*8+2, 3*16*8+1, 3*16*8+0 },
 	64*8    /* every tile takes 64 consecutive bytes */
 };
 
@@ -1064,7 +1064,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	GAMENAME##_init_machine,		                               	\
 																	\
 	/* video hardware */                                        	\
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },                   	\
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },                   	\
 	GFX,                                                        	\
 	COLOR,COLOR,                                                	\
 	GAMENAME##_vh_convert_color_prom,                           	\
@@ -1104,7 +1104,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	0,						                                    	\
 																	\
 	/* video hardware */                                        	\
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },                   	\
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },                   	\
 	GFX,                                                        	\
 	COLOR,COLOR,                                                	\
 	GAMENAME##_vh_convert_color_prom,                           	\
@@ -1736,7 +1736,7 @@ struct GameDriver btime_driver =
 	btime_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	btime_hiload, btime_hisave
 };
@@ -1762,7 +1762,7 @@ struct GameDriver btimed_driver =
 	btime_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	btime_hiload, btime_hisave
 };
@@ -1788,7 +1788,7 @@ struct GameDriver btimed2_driver =
 	btime_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	btime_hiload, btime_hisave
 };
@@ -1814,7 +1814,7 @@ struct GameDriver cookrace_driver =
 	cookrace_input_ports,
 
     PROM_MEMORY_REGION(3), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
@@ -1840,7 +1840,7 @@ struct GameDriver eggs_driver =
 	eggs_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	eggs_hiload, eggs_hisave
 };
@@ -1866,7 +1866,7 @@ struct GameDriver scregg_driver =
 	eggs_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	eggs_hiload, eggs_hisave
 };
@@ -1892,7 +1892,7 @@ struct GameDriver lnc_driver =
 	lnc_input_ports,
 
     PROM_MEMORY_REGION(3), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	lnc_hiload, lnc_hisave
 };
@@ -1918,7 +1918,7 @@ struct GameDriver bnj_driver =
 	bnj_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	bnj_hiload, bnj_hisave
 };
@@ -1944,7 +1944,7 @@ struct GameDriver brubber_driver =
 	bnj_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	bnj_hiload, bnj_hisave
 };
@@ -1970,7 +1970,7 @@ struct GameDriver caractn_driver =
 	bnj_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	bnj_hiload, bnj_hisave
 };
@@ -1996,7 +1996,7 @@ struct GameDriver zoar_driver =
 	zoar_input_ports,
 
     PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	zoar_hiload, zoar_hisave
 };
@@ -2263,7 +2263,7 @@ struct GameDriver decocass_driver =
 	decocass_input_ports,
 
     0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };

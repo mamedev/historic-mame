@@ -76,11 +76,36 @@ static const char *PhonemeTable[65] =
  0
 };
 
+
 void gottlieb_speech_w(int offset, int data)
 {
+	static int queue[100],pos;
+
 	data ^= 255;
 
 if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,PhonemeTable[data & 0x3f]);
+
+	queue[pos++] = data & 0x3f;
+
+	if ((data & 0x3f) == 0x3f)
+	{
+		if (pos > 1)
+		{
+			int i;
+			char buf[200];
+
+			buf[0] = 0;
+			for (i = 0;i < pos-1;i++)
+			{
+				if (queue[i] == 0x03 || queue[i] == 0x3e) strcat(buf," ");
+				else strcat(buf,PhonemeTable[queue[i]]);
+			}
+
+			usrintf_showmessage(buf);
+		}
+
+		pos = 0;
+	}
 
 	/* generate a NMI after a while to make the CPU continue to send data */
 	timer_set(TIME_IN_USEC(50),0,gottlieb_nmi_generate);

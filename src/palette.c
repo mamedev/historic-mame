@@ -1108,6 +1108,10 @@ int paletteram_word_r(int offset)
 	return READ_WORD(&paletteram[offset]);
 }
 
+int paletteram_2_word_r(int offset)
+{
+	return READ_WORD(&paletteram_2[offset]);
+}
 
 void paletteram_RRRGGGBB_w(int offset,int data)
 {

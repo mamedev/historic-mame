@@ -1034,8 +1034,8 @@ ROM_START( galaxian_rom )
 	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
 	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galmidw_rom )
@@ -1050,8 +1050,8 @@ ROM_START( galmidw_rom )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galnamco_rom )
@@ -1063,11 +1063,11 @@ ROM_START( galnamco_rom )
 	ROM_LOAD( "galnamco.z",   0x2000, 0x0800, 0xf4bc7262 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galnamco.1h",  0x0000, 0x0800, 0x39fb43a4 )
-	ROM_LOAD( "galnamco.1k",  0x0800, 0x0800, 0x7e3f56a2 )
+	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
+	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( superg_rom )
@@ -1079,11 +1079,27 @@ ROM_START( superg_rom )
 	ROM_LOAD( "superg.z",     0x2000, 0x0800, 0xe6312e35 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "superg.1h",    0x0000, 0x0800, 0x84decf98 )
-	ROM_LOAD( "superg.1k",    0x0800, 0x0800, 0xc31ada9e )
+	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
+	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+ROM_END
+
+ROM_START( galaxb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
+	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
+	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
+	ROM_LOAD( "cp4",          0x1800, 0x0800, 0x097d92a2 )
+	ROM_LOAD( "cp5",          0x2000, 0x0800, 0x5341d75a )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cp7e",         0x0000, 0x0800, 0xd0ba22c9 )   /* logo was removed */
+	ROM_LOAD( "cp6e",         0x0800, 0x0800, 0x977e37cf )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galapx_rom )
@@ -1098,8 +1114,8 @@ ROM_START( galapx_rom )
 	ROM_LOAD( "galx.1h",      0x0000, 0x0800, 0xe8810654 )
 	ROM_LOAD( "galx.1k",      0x0800, 0x0800, 0xcbe84a76 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galap1_rom )
@@ -1107,11 +1123,11 @@ ROM_START( galap1_rom )
 	ROM_LOAD( "galx_1.rom",   0x0000, 0x2800, 0xb22ee816 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galx_1c1.rom", 0x0000, 0x0800, 0x84decf98 )
-	ROM_LOAD( "galx_1c2.rom", 0x0800, 0x0800, 0xc31ada9e )
+	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
+	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galap4_rom )
@@ -1122,15 +1138,15 @@ ROM_START( galap4_rom )
 	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800, 0xd5e88ab4 )
 	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800, 0xa57b83e4 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galturbo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galturbo.u",   0x0000, 0x0800, 0xe8f3aa67 )
-	ROM_LOAD( "galturbo.v",   0x0800, 0x0800, 0xbc16064e )
-	ROM_LOAD( "galturbo.w",   0x1000, 0x0800, 0xddeabdae )
+	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
+	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
+	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
 	ROM_LOAD( "galturbo.y",   0x1800, 0x0800, 0xa44f450f )
 	ROM_LOAD( "galturbo.z",   0x2000, 0x0800, 0x3247f3d4 )
 
@@ -1138,8 +1154,8 @@ ROM_START( galturbo_rom )
 	ROM_LOAD( "galturbo.1h",  0x0000, 0x0800, 0xa713fd1a )
 	ROM_LOAD( "galturbo.1k",  0x0800, 0x0800, 0x28511790 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0xc3ac9467 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( pisces_rom )
@@ -1155,8 +1171,8 @@ ROM_START( pisces_rom )
 	ROM_LOAD( "pisces.1j",    0x0000, 0x1000, 0x2dba9e0e )
 	ROM_LOAD( "pisces.1k",    0x1000, 0x1000, 0xcdc5aa26 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "pis_l6.bin",   0x0000, 0x020, 0x24652bc4 ) /* very close to Galaxian */
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "pis_l6.bin",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
 ROM_START( japirem_rom )
@@ -1176,8 +1192,8 @@ ROM_START( japirem_rom )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "l06_prom.bin", 0x0000, 0x020, 0x6a0c7d87 )	/* same as Moon Cresta */
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( uniwars_rom )
@@ -1197,8 +1213,8 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "u9",           0x1000, 0x0800, 0xfc8b58fd )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "uniwars.clr",  0x0000, 0x020, 0x25c79518 )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "uniwars.clr",  0x0000, 0x0020, 0x25c79518 )
 ROM_END
 
 ROM_START( spacbatt_rom )
@@ -1218,8 +1234,8 @@ ROM_START( spacbatt_rom )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "l06_prom.bin", 0x0000, 0x020, 0x6a0c7d87 )	/* same as Moon Cresta */
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( warofbug_rom )
@@ -1234,8 +1250,8 @@ ROM_START( warofbug_rom )
 	ROM_LOAD( "warofbug.1k",  0x0000, 0x0800, 0x8100fa85 )
 	ROM_LOAD( "warofbug.1j",  0x0800, 0x0800, 0xd1220ae9 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "warofbug.clr", 0x0000, 0x020, 0x8688e64b )
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "warofbug.clr", 0x0000, 0x0020, 0x8688e64b )
 ROM_END
 
 ROM_START( redufo_rom )
@@ -1251,8 +1267,8 @@ ROM_START( redufo_rom )
 	ROM_LOAD( "ruhja",        0x0000, 0x0800, 0x8a422b0d )
 	ROM_LOAD( "rukla",        0x0800, 0x0800, 0x1eb84cb1 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "rucp",         0x0000, 0x0020, 0xc3ac9467 ) /* same as galaxian */
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( pacmanbl_rom )
@@ -1271,8 +1287,8 @@ ROM_START( pacmanbl_rom )
 	ROM_LOAD( "blpac11b",     0x1000, 0x0800, 0xab88b2c4 )
 	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "blpaccp",      0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "pis_16.bin",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
 ROM_END
 
 ROM_START( devilfsh_rom )
@@ -1292,7 +1308,7 @@ ROM_START( devilfsh_rom )
 	ROM_LOAD( "dfish6.1k",    0x1800, 0x0800, 0xd7a6c4c4 )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 
-	ROM_REGION(0x20)
+	ROM_REGION(0x0020)
 	/* missing! */
 ROM_END
 
@@ -1307,7 +1323,7 @@ ROM_START( zigzag_rom )
 	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x1000, 0x780c162a )
 	ROM_LOAD( "zz_5.bin",     0x1000, 0x1000, 0xf3cdfec5 )
 
-	ROM_REGION(0x20)	/* color prom */
+	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
@@ -1322,7 +1338,7 @@ ROM_START( zigzag2_rom )
 	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x1000, 0x780c162a )
 	ROM_LOAD( "zz_5.bin",     0x1000, 0x1000, 0xf3cdfec5 )
 
-	ROM_REGION(0x20)	/* color prom */
+	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
@@ -1343,7 +1359,7 @@ ROM_START( mooncrgx_rom )
 	ROM_LOAD( "9.chr",        0x1000, 0x0800, 0x70df525c )
 	ROM_LOAD( "11.chr",       0x1800, 0x0800, 0xe0edccbd )
 
-	ROM_REGION(0x20)	/* color prom */
+	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1743,6 +1759,32 @@ struct GameDriver superg_driver =
 	0,
 
 	superg_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	galnamco_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	galaxian_hiload, galaxian_hisave
+};
+
+struct GameDriver galaxb_driver =
+{
+	__FILE__,
+	&galaxian_driver,
+	"galaxb",
+	"Galaxians (bootleg)",
+	"1979",
+	"bootleg",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
+	&galaxian_machine_driver,
+	0,
+
+	galaxb_rom,
 	0, 0,
 	mooncrst_sample_names,
 	0,	/* sound_prom */

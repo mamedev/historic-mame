@@ -63,14 +63,14 @@ int ColourRomLookup(int ScreenX,int ScreenY)
 
         case 1 :
         case 3 :
-        {
-		    /* 8 x 16 colouring */
+            {
+		        /* 8 x 16 colouring */
 
-		    ColourByte = colourrom[ColourMap + (15 - ((ScreenY) / 16)) * 32 + (ScreenX / 8)];
+		        ColourByte = colourrom[ColourMap + (15 - (ScreenY / 16)) * 32 + (ScreenX / 8)];
 
-	        if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
-	        else return Machine->pens[ColourByte & 0x0F];
-        }
+  	            if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
+  	            else return Machine->pens[ColourByte & 0x0F];
+            }
     }
 
     return 0; /* Should NEVER get here */
@@ -85,16 +85,16 @@ void ColourBankSwitch(void)
 
     if (!(Machine->orientation & ORIENTATION_SWAP_XY))
     {
-        for(x=0;x<193;x++)
+        for(x=0;x<192;x++)
 		{
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-				ex = 192 - x;
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+				ex = 191 - x;
             else
                 ex = x;
 
-            for(y=0;y<256;y++)
+            for(y=0;y<255;y++)
             {
-				if (!(Machine->orientation & ORIENTATION_FLIP_Y))
+				if (Machine->orientation & ORIENTATION_FLIP_Y)
                     ey = y;
                 else
                     ey = 255 - y;
@@ -105,12 +105,12 @@ void ColourBankSwitch(void)
                 }
             }
         }
+
+ 		osd_mark_dirty(0,0,255,192,0);	/* ASG 971015 */
     }
     else
     {
         /* Normal */
-
-    	if (errorlog) fprintf(errorlog,"here\n");
 
         for(x=0;x<193;x++)
 		{
@@ -121,10 +121,10 @@ void ColourBankSwitch(void)
 
             for(y=0;y<256;y++)
             {
-				if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-                    ey = 255 - y;
-                else
+				if (Machine->orientation & ORIENTATION_FLIP_Y)
                     ey = y;
+                else
+                    ey = 255 - y;
 
                 if(tmpbitmap->line[ey][ex] != Machine->pens[0])
                 {
@@ -132,9 +132,9 @@ void ColourBankSwitch(void)
                 }
             }
         }
-    }
 
-	osd_mark_dirty(0,0,192,255,0);	/* ASG 971015 */
+		osd_mark_dirty(0,0,192,255,0);	/* ASG 971015 */
+    }
 }
 
 
@@ -172,7 +172,7 @@ void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-    colourrom  = color_prom + 0x24;
+    colourrom = color_prom + 0x24;
 	MachineID = 3;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -201,15 +201,13 @@ void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 void panic_colourmap_select(int offset,int data)
 {
-	if (ColourRegisters[offset] != data)
+	if (ColourRegisters[offset] != (data & 0x80))
     {
-    	ColourRegisters[offset] = data;
+    	ColourRegisters[offset] = data & 0x80;
     	ColourMap = (ColourRegisters[0] << 2) + (ColourRegisters[2] << 3);
 		ColourBankSwitch();
     }
 }
-
-
 
 /**************************************************/
 /* Cosmic Guerilla specific routines              */
@@ -259,8 +257,6 @@ void cosmicguerilla_colourmap_select(int offset,int data)
 
 		ColourBankSwitch();
     }
-
-    if (errorlog) fprintf(errorlog,"screen %d\n",ColourMap >> 8);
 }
 
 /**************************************************/
@@ -392,10 +388,10 @@ void cosmic_videoram_w(int offset,int data)
 
         if (!(Machine->orientation & ORIENTATION_SWAP_XY))
         {
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-				x = 192 - x;
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+				x = 191 - x;
 
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
             {
 				osd_mark_dirty(y,x,y+7,x,0);
 
@@ -428,9 +424,9 @@ void cosmic_videoram_w(int offset,int data)
             /* Normal */
 
 			if (Machine->orientation & ORIENTATION_FLIP_X)
-				x = 192 - x;
+				x = 191 - x;
 
-			if ( (Machine->orientation & ORIENTATION_FLIP_Y))
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
             {
 				osd_mark_dirty(x,y,x,y+7,0);
 

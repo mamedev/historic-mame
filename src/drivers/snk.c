@@ -1894,7 +1894,7 @@ ROM_START( dogosoke_rom ) /* Victory Road Japan */
 	ROM_LOAD( "up03_p4.rom",  0x0000, 0x10000,  0x37867ad2 )
 
 	ROM_REGION(0x10000)	/* CPU B code */
-	ROM_LOAD( "up03_p8.rom",  0x00000, 0x10000, 0x907fac83 )
+	ROM_LOAD( "p2",  0x00000, 0x10000, 0x907fac83 )
 
 	ROM_REGION(0x10000)	/* sound code */
 	ROM_LOAD( "up03_k7.rom",  0x00000, 0x10000, 0x173fa571 )

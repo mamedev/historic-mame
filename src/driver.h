@@ -178,30 +178,31 @@ struct MachineCPU
 								/* greater precision you can give the period in nanoseconds */
 };
 
-#define CPU_Z80       1
-#define CPU_8085A     2
-#define CPU_8080     CPU_8085A
-#define CPU_M6502     3
-#define CPU_I86       4
-#define CPU_I8039     5
-#define CPU_I8035    CPU_I8039
-#define CPU_I8048    CPU_I8039
-#define CPU_N7751    CPU_I8048
-#define CPU_M6803     6
-#define CPU_M6802    CPU_M6803
-#define CPU_M6808    CPU_M6803
-#define CPU_HD63701  CPU_M6803	/* 6808 with some additional opcodes */
-#define CPU_M6805     7
-#define CPU_M68705   CPU_M6805
-#define CPU_M6809     8
-#define CPU_M6309    CPU_M6809	/* actually it's not 100% compatible */
-#define CPU_M68000    9
-#define CPU_T11      10
-#define CPU_S2650    11
-#define CPU_TMS34010 12
-#define CPU_TMS9900  13
-#define CPU_Z8000    14
-#define CPU_TMS320C10 15
+#define CPU_Z80        1
+#define CPU_8085A      2
+#define CPU_8080      CPU_8085A
+#define CPU_M6502      3
+#define CPU_H6280      4
+#define CPU_I86        5
+#define CPU_I8039      6
+#define CPU_I8035     CPU_I8039
+#define CPU_I8048     CPU_I8039
+#define CPU_N7751     CPU_I8048
+#define CPU_M6803      7
+#define CPU_M6802     CPU_M6803
+#define CPU_M6808     CPU_M6803
+#define CPU_HD63701   CPU_M6803	/* 6808 with some additional opcodes */
+#define CPU_M6805      8
+#define CPU_M68705    CPU_M6805
+#define CPU_M6809      9
+#define CPU_M6309     CPU_M6809	/* actually it's not 100% compatible */
+#define CPU_M68000    10
+#define CPU_T11       11
+#define CPU_S2650     12
+#define CPU_TMS34010  13
+#define CPU_TMS9900   14
+#define CPU_Z8000     15
+#define CPU_TMS320C10 16
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -240,15 +241,14 @@ struct MachineSound
 #define SOUND_NES       14
 #define SOUND_ASTROCADE 15	/* Custom I/O chip from Bally/Midway */
 #define SOUND_NAMCO     16
-#define SOUND_NAMCOS1   17
-#define SOUND_TMS5220   18
-#define SOUND_VLM5030   19
-#define SOUND_ADPCM     20
-#define SOUND_OKIM6295  21	/* ROM-based ADPCM system */
-#define SOUND_MSM5205   22	/* CPU-based ADPCM system */
-#define SOUND_UPD7759	23	/* ROM-based ADPCM system */
-#define SOUND_HC55516   24	/* Harris family of CVSD CODECs */
-#define SOUND_K007232   25	/* Konami 007232 */
+#define SOUND_TMS5220   17
+#define SOUND_VLM5030   18
+#define SOUND_ADPCM     19
+#define SOUND_OKIM6295  20	/* ROM-based ADPCM system */
+#define SOUND_MSM5205   21	/* CPU-based ADPCM system */
+#define SOUND_UPD7759	22	/* ROM-based ADPCM system */
+#define SOUND_HC55516   23	/* Harris family of CVSD CODECs */
+#define SOUND_K007232   24	/* Konami 007232 */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
@@ -341,12 +341,10 @@ struct MachineDriver
 #define	VIDEO_UPDATE_BEFORE_VBLANK	0x0010
 
 /* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
-/* different proportions, e.g. 1:2 for Blasteroids, 3:2 for Moon Patrol, 4:3 for Liberator */
-#define VIDEO_PIXEL_ASPECT_RATIO_MASK 0x0060
+/* different proportions, e.g. 1:2 for Blasteroids */
+#define VIDEO_PIXEL_ASPECT_RATIO_MASK 0x0020
 #define VIDEO_PIXEL_ASPECT_RATIO_1_1 0x0000
 #define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
-#define VIDEO_PIXEL_ASPECT_RATIO_3_2 0x0040
-#define VIDEO_PIXEL_ASPECT_RATIO_4_3 0x0060
 
 
 /* flags for sound_attributes */

@@ -316,7 +316,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579645,	/* 3.579645 MHz */
-	{ 60 },
+	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) },
 	{ vigilant_irq_handler }
 };
 

@@ -338,7 +338,7 @@ void K007232_WriteReg( int r, int v )
 	else if (r == 0x0c)
 	{
 		/* volume */
-		/* colume is externally controlled so it could be anything, but I guess */
+		/* volume is externally controlled so it could be anything, but I guess */
 		/* this is a standard setup. It's the one used in TMNT. */
 		/* the pin is marked BLEV so it could be intended to control only channel B */
 

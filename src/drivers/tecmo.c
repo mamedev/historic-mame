@@ -649,7 +649,7 @@ static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
 static struct YM3526interface rygar_ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	4000000,	/* 4 MHz ? (hand tuned) */
+	3600000,	/* 3.6 MHz ? (hand tuned) */
 	{ 255 }		/* (not supported) */
 };
 

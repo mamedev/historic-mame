@@ -271,8 +271,8 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 256*8*8, 0 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -281,10 +281,10 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 64*16*16, 0 },	/* the two bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
@@ -336,7 +336,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	32,64,
 	frogger_vh_convert_color_prom,
@@ -381,7 +381,7 @@ static struct MachineDriver frogger2_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	32,64,
 	frogger_vh_convert_color_prom,
@@ -562,7 +562,7 @@ struct GameDriver frogger_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -588,7 +588,7 @@ struct GameDriver frogsega_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -615,7 +615,7 @@ struct GameDriver frogger2_driver =
 	frogger2_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

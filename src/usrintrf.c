@@ -893,6 +893,56 @@ static void showcharset(void)
 }
 
 
+#ifdef MAME_DEBUG
+static void showtotalcolors(void)
+{
+	char used[0x10000];
+	int i,l,x,y,total;
+	char buf[40];
+	int trueorientation;
+
+
+	for (i = 0;i < 0x10000;i++)
+		used[i] = 0;
+
+	if (Machine->scrbitmap->depth == 16)
+	{
+		for (y = 0;y < Machine->scrbitmap->height;y++)
+		{
+			for (x = 0;x < Machine->scrbitmap->width;x++)
+			{
+				used[((unsigned short *)Machine->scrbitmap->line[y])[x]] = 1;
+			}
+		}
+	}
+	else
+	{
+		for (y = 0;y < Machine->scrbitmap->height;y++)
+		{
+			for (x = 0;x < Machine->scrbitmap->width;x++)
+			{
+				used[Machine->scrbitmap->line[y][x]] = 1;
+			}
+		}
+	}
+
+	total = 0;
+	for (i = 0;i < 0x10000;i++)
+		if (used[i]) total++;
+
+	/* hack: force the display into standard orientation to avoid */
+	/* rotating the text */
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
+
+	sprintf(buf,"%5d colors",total);
+	l = strlen(buf);
+	for (i = 0;i < l;i++)
+		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],total>256?DT_COLOR_YELLOW:DT_COLOR_WHITE,0,0,Machine->uixmin+i*Machine->uifont->width,Machine->uiymin,0,TRANSPARENCY_NONE,0);
+
+	Machine->orientation = trueorientation;
+}
+#endif
 
 
 static int setdipswitches(int selected)
@@ -2778,6 +2828,9 @@ static int jukebox_selected;
 
 int handle_user_interface(void)
 {
+	static int show_total_colors;
+
+
 	/* if the user pressed F12, save the screen to a file */
 	if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
 		osd_save_snapshot();
@@ -2957,6 +3010,22 @@ bitmap_dirty = 0;
 	}
 
 
+#ifdef MAME_DEBUG
+	if (osd_key_pressed_memory(OSD_KEY_SHOW_TOTAL_COLORS))
+	{
+		show_total_colors ^= 1;
+		if (show_total_colors == 0)
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
+	}
+
+	if (show_total_colors)
+	{
+		showtotalcolors();
+	}
+#endif
+
+
 	/* if the user pressed F4, show the character set */
 	if (osd_key_pressed_memory(OSD_KEY_SHOW_GFX))
 	{
@@ -2980,4 +3049,14 @@ void init_user_interface(void)
 	osd_selected = 0;
 
 	jukebox_selected = -1;
+}
+
+int onscrd_active(void)
+{
+    return osd_selected;
+}
+
+int setup_active(void)
+{
+    return setup_selected;
 }

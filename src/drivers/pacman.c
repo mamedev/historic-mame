@@ -364,7 +364,7 @@ INPUT_PORTS_START( maketrax_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, "First Pattern", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, "Teleport holes", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Teleport Holes", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
  	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
@@ -809,8 +809,8 @@ ROM_START( namcopac_rom )
 	ROM_LOAD( "namcopac.6j",  0x3000, 0x1000, 0x7a36fe55 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "namcopac.5e",  0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "namcopac.5f",  0x1000, 0x1000, 0x958fedf9 )
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -850,13 +850,13 @@ ROM_END
 ROM_START( pacmod_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pacmanh.6e",   0x0000, 0x1000, 0x3b2ec270 )
-	ROM_LOAD( "pacmanh.6f",   0x1000, 0x1000, 0x1a6fb2d4 )
+	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "pacmanh.6h",   0x2000, 0x1000, 0x18811780 )
 	ROM_LOAD( "pacmanh.6j",   0x3000, 0x1000, 0x5c96a733 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "pacmanh.5e",   0x0000, 0x1000, 0x299fb17a )
-	ROM_LOAD( "pacmanh.5f",   0x1000, 0x1000, 0x958fedf9 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -875,8 +875,8 @@ ROM_START( hangly_rom )
 	ROM_LOAD( "hangly.6j",    0x3000, 0x1000, 0x7f4147e6 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hangly.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "hangly.5f",    0x1000, 0x1000, 0x958fedf9 )
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -890,13 +890,13 @@ ROM_END
 ROM_START( puckman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "puckman.6e",   0x0000, 0x1000, 0xa8ae23c5 )
-	ROM_LOAD( "puckman.6f",   0x1000, 0x1000, 0x1a6fb2d4 )
+	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "puckman.6h",   0x2000, 0x1000, 0x197443f8 )
 	ROM_LOAD( "puckman.6j",   0x3000, 0x1000, 0x2e64a3ba )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "puckman.5e",   0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "puckman.5f",   0x1000, 0x1000, 0x958fedf9 )
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -911,7 +911,7 @@ ROM_START( pacheart_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "pacheart.pg1", 0x0000, 0x0800, 0xd844b679 )
 	ROM_LOAD( "pacheart.pg2", 0x0800, 0x0800, 0xb9152a38 )
-	ROM_LOAD( "pacheart.pg3", 0x1000, 0x0800, 0x7d177853 )
+	ROM_LOAD( "prg3",         0x1000, 0x0800, 0x7d177853 )
 	ROM_LOAD( "pacheart.pg4", 0x1800, 0x0800, 0x842d6574 )
 	ROM_LOAD( "pacheart.pg5", 0x2000, 0x0800, 0x9045a44c )
 	ROM_LOAD( "pacheart.pg6", 0x2800, 0x0800, 0x888f3c3e )
@@ -920,9 +920,9 @@ ROM_START( pacheart_rom )
 
 	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "pacheart.ch1", 0x0000, 0x0800, 0xc62bbabf )
-	ROM_LOAD( "pacheart.ch2", 0x0800, 0x0800, 0x3591b89d )
+	ROM_LOAD( "chg2",         0x0800, 0x0800, 0x3591b89d )
 	ROM_LOAD( "pacheart.ch3", 0x1000, 0x0800, 0xca8c184c )
-	ROM_LOAD( "pacheart.ch4", 0x1800, 0x0800, 0x1b1d9096 )
+	ROM_LOAD( "chg4",         0x1800, 0x0800, 0x1b1d9096 )
 
 	ROM_REGION(0x0120)      /* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -936,7 +936,7 @@ ROM_END
 ROM_START( piranha_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pr1.cpu",      0x0000, 0x1000, 0xbc5ad024 )
-	ROM_LOAD( "pr2.cpu",      0x1000, 0x1000, 0x1a6fb2d4 )
+	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "pr3.cpu",      0x2000, 0x1000, 0x473c379d )
 	ROM_LOAD( "pr4.cpu",      0x3000, 0x1000, 0x63fbf895 )
 
@@ -1031,12 +1031,12 @@ ROM_START( maketrax_rom )
 	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "crush.1m",     0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "crush.3m",     0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( crush_rom )
@@ -1057,12 +1057,38 @@ ROM_START( crush_rom )
 	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "crush.1m",     0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "crush.3m",     0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( crush2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "unkmol.4e",    0x0000, 0x0800, 0x49150ddf )
+	ROM_LOAD( "unkmol.6e",    0x0800, 0x0800, 0x21f47e17 )
+	ROM_LOAD( "unkmol.4f",    0x1000, 0x0800, 0x9b6dd592 )
+	ROM_LOAD( "unkmol.6f",    0x1800, 0x0800, 0x755c1452 )
+	ROM_LOAD( "unkmol.4h",    0x2000, 0x0800, 0xed30a312 )
+	ROM_LOAD( "unkmol.6h",    0x2800, 0x0800, 0xfe4bb0eb )
+	ROM_LOAD( "unkmol.4j",    0x3000, 0x0800, 0x072b91c9 )
+	ROM_LOAD( "unkmol.6j",    0x3800, 0x0800, 0x66fba07d )
+
+	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "unkmol.5e",    0x0000, 0x0800, 0x338880a0 )
+	ROM_LOAD( "unkmol.5h",    0x0800, 0x0800, 0x4ce9c81f )
+	ROM_LOAD( "unkmol.5f",    0x1000, 0x0800, 0x752e3780 )
+	ROM_LOAD( "unkmol.5j",    0x1800, 0x0800, 0x6e00d2ac )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mbrush_rom )
@@ -1079,12 +1105,12 @@ ROM_START( mbrush_rom )
 	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "crush.1m",     0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "crush.3m",     0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( ponpoko_rom )
@@ -1123,12 +1149,12 @@ ROM_START( eyes_rom )
 	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "82s123.8h",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "82s129.1k",    0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "82s129.3k",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mrtnt_rom )
@@ -1143,12 +1169,12 @@ ROM_START( mrtnt_rom )
 	ROM_LOAD( "tnt.6",        0x1000, 0x1000, 0x97634d8b )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x2fc650bd )	/* wrong! from Pac Man */
-	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x3eb3a8e4 )	/* wrong! from Pac Man */
+	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac Man */
+	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac Man */
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "mrtnt01.bin",  0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "mrtnt03.bin",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( lizwiz_rom )
@@ -1169,7 +1195,7 @@ ROM_START( lizwiz_rom )
 	ROM_LOAD( "4a.cpu",       0x0020, 0x0100, 0x5fdca536 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
 ROM_START( theglob_rom )
@@ -1186,7 +1212,7 @@ ROM_START( theglob_rom )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
 ROM_START( beastf_rom )
@@ -1203,7 +1229,7 @@ ROM_START( beastf_rom )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
 ROM_START( jumpshot_rom )
@@ -1222,8 +1248,8 @@ ROM_START( jumpshot_rom )
 	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
 
 	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "prom.1m",      0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "prom.3m",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
@@ -2096,6 +2122,32 @@ struct GameDriver crush_driver =
 	crush_hiload, crush_hisave
 };
 
+struct GameDriver crush2_driver =
+{
+	__FILE__,
+	&maketrax_driver,
+	"crush2",
+	"Crush Roller (set 2)",
+	"1981",
+	"bootleg",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	crush2_rom,
+	eyes_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	maketrax_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	crush_hiload, crush_hisave
+};
+
 struct GameDriver mbrush_driver =
 {
 	__FILE__,
@@ -2168,7 +2220,7 @@ struct GameDriver eyes_driver =
 
 	eyes_input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,	/* wrong!! */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	eyes_hiload, eyes_hisave

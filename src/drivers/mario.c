@@ -159,6 +159,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e83, 0x7e83, mario_palettebank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
+	{ 0x7f00, 0x7f00, mario_sh_w },	/* death */
 	{ 0x7f01, 0x7f01, mario_sh_getcoin },
 	{ 0x7f03, 0x7f03, mario_sh_crab },
 	{ 0x7f04, 0x7f04, mario_sh_turtle },
@@ -450,8 +451,7 @@ static struct MachineDriver masao_machine_driver =
 
 static const char *sample_names[] =
 {
-	/* 7f00 - 7f07 sounds */
-	"death.sam",  /* 0x00 death */
+	/* 7f01 - 7f07 sounds */
 	"ice.sam",    /* 0x02 ice appears (formerly effect0.sam) */
 	"coin.sam",   /* 0x06 coin appears (formerly effect1.sam) */
 	"skid.sam",   /* 0x07 skid */

@@ -3189,7 +3189,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,  /* 1 chip */
 	3579580,    /* 3.579580 MHz ? */
-	{ 40 },
+	{ YM3012_VOL(40,OSD_PAN_LEFT,40,OSD_PAN_RIGHT) },
 	{ cps1_irq_handler_mus }
 };
 
@@ -4909,8 +4909,8 @@ ROM_START( slammast_rom )
 	ROM_LOAD_ODD ( "mbe_28b.rom",       0x080000, 0x20000, 0xb1c7cbcb )
 	ROM_LOAD_EVEN( "mbe_25b.rom",       0x0c0000, 0x20000, 0xa50d3fd4 )
 	ROM_LOAD_ODD ( "mbe_29b.rom",       0x0c0000, 0x20000, 0x08e32e56 )
-	ROM_LOAD_WIDE_SWAP( "mbe_20a.rom",  0x100000, 0x80000, 0xaeb557b0 )
-	ROM_LOAD_WIDE_SWAP( "mbe_21a.rom",  0x180000, 0x80000, 0xd5007b05 )
+	ROM_LOAD_WIDE_SWAP( "mbe_21a.rom",  0x100000, 0x80000, 0xd5007b05 )
+	ROM_LOAD_WIDE_SWAP( "mbe_20a.rom",  0x180000, 0x80000, 0xaeb557b0 )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mb_gfx02.rom",   0x000000, 0x80000, 0x2ffbfea8 )
@@ -4950,8 +4950,8 @@ ROM_START( mbomber_rom )
 	ROM_LOAD_ODD ( "mbde_28.rom",       0x080000, 0x20000, 0x2618d5e1 )
 	ROM_LOAD_EVEN( "mbde_25.rom",       0x0c0000, 0x20000, 0x9bdb6b11 )
 	ROM_LOAD_ODD ( "mbde_29.rom",       0x0c0000, 0x20000, 0x3f52d5e5 )
-	ROM_LOAD_WIDE_SWAP( "mbde_20.rom",  0x100000, 0x80000, 0xb8b2139b )
-	ROM_LOAD_WIDE_SWAP( "mbde_21.rom",  0x180000, 0x80000, 0x690c026a )
+	ROM_LOAD_WIDE_SWAP( "mbde_21.rom",  0x100000, 0x80000, 0x690c026a )
+	ROM_LOAD_WIDE_SWAP( "mbde_20.rom",  0x180000, 0x80000, 0xb8b2139b )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mb_gfx02.rom",   0x000000, 0x80000, 0x2ffbfea8 )
@@ -4991,8 +4991,8 @@ ROM_START( mbomberj_rom )
 	ROM_LOAD_ODD ( "mbde_28.rom",       0x080000, 0x20000, 0x2618d5e1 )
 	ROM_LOAD_EVEN( "mbde_25.rom",       0x0c0000, 0x20000, 0x9bdb6b11 )
 	ROM_LOAD_ODD ( "mbde_29.rom",       0x0c0000, 0x20000, 0x3f52d5e5 )
-	ROM_LOAD_WIDE_SWAP( "mbde_20.rom",  0x100000, 0x80000, 0xb8b2139b )
-	ROM_LOAD_WIDE_SWAP( "mbde_21.rom",  0x180000, 0x80000, 0x690c026a )
+	ROM_LOAD_WIDE_SWAP( "mbde_21.rom",  0x100000, 0x80000, 0x690c026a )
+	ROM_LOAD_WIDE_SWAP( "mbde_20.rom",  0x180000, 0x80000, 0xb8b2139b )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mb_gfx02.rom",   0x000000, 0x80000, 0x2ffbfea8 )

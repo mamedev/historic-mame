@@ -11,6 +11,116 @@
 #include <string.h>
 #include <stdio.h>
 
+
+enum addr_mode {
+	_imp=0, 	/* implicit */
+	_btr,		/* bit test and relative */
+	_bit,		/* bit set/clear */
+	_rel,		/* relative */
+	_imm,		/* immediate */
+	_dir,		/* direct address */
+	_ext,		/* extended address */
+	_idx,		/* indexed */
+	_ix1,		/* indexed + byte offset */
+	_ix2		/* indexed + word offset */
+};
+
+enum op_names {
+	adca=0, adda,	anda,	asl,	asla,	aslx,	asr,	asra,
+	asrx,	bcc,	bclr,	bcs,	beq,	bhcc,	bhcs,	bhi,
+	bih,	bil,	bita,	bls,	bmc,	bmi,	bms,	bne,
+	bpl,	bra,	brclr,	brn,	brset,	bset,	bsr,	clc,
+	cli,	clr,	clra,	clrx,	cmpa,	com,	coma,	comx,
+	cpx,	dec,	deca,	decx,	eora,	illegal,inc,	inca,
+	incx,	jmp,	jsr,	lda,	ldx,	lsr,	lsra,	lsrx,
+	neg,	nega,	negx,	nop,	ora,	rol,	rola,	rolx,
+	ror,	rora,	rorx,	rsp,	rti,	rts,	sbca,	sec,
+	sei,	sta,	stx,	suba,	swi,	tax,	tst,	tsta,
+	tstx,	txa
+};
+
+static const char *op_name_str[] = {
+	"adca", "adda", "anda", "asl",  "asla", "aslx", "asr",  "asra",
+	"asrx", "bcc",  "bclr", "bcs",  "beq",  "bhcc", "bhcs", "bhi",
+	"bih",  "bil",  "bita", "bls",  "bmc",  "bmi",  "bms",  "bne",
+	"bpl",  "bra",  "brclr","brn",  "brset","bset", "bsr",  "clc",
+	"cli",  "clr",  "clra", "clrx", "cmpa", "com",  "coma", "comx",
+	"cpx",  "dec",  "deca", "decx", "eora", "*ill", "inc",  "inca",
+	"incx", "jmp",  "jsr",  "lda",  "ldx",  "lsr",  "lsra", "lsrx",
+	"neg",  "nega", "negx", "nop",  "ora",  "rol",  "rola", "rolx",
+	"ror",  "rora", "rorx", "rsp",  "rti",  "rts",  "sbca", "sec",
+	"sei",  "sta",  "stx",  "suba", "swi",  "tax",  "tst",  "tsta",
+	"tstx", "txa"
+};
+
+const unsigned char disasm[0x100][2] = {
+	{brset,  _btr}, {brclr,  _btr}, {brset,  _btr}, {brclr,  _btr}, /* 00 */
+	{brset,  _btr}, {brclr,  _btr}, {brset,  _btr}, {brclr,  _btr},
+	{brset,  _btr}, {brclr,  _btr}, {brset,  _btr}, {brclr,  _btr},
+	{brset,  _btr}, {brclr,  _btr}, {brset,  _btr}, {brclr,  _btr},
+	{bset,	 _bit}, {bclr,	 _bit}, {bset,	 _bit}, {bclr,	 _bit}, /* 10 */
+	{bset,	 _bit}, {bclr,	 _bit}, {bset,	 _bit}, {bclr,	 _bit},
+	{bset,	 _bit}, {bclr,	 _bit}, {bset,	 _bit}, {bclr,	 _bit},
+	{bset,	 _bit}, {bclr,	 _bit}, {bset,	 _bit}, {bclr,	 _bit},
+	{bra,	 _rel}, {brn,	 _rel}, {bhi,	 _rel}, {bls,	 _rel}, /* 20 */
+	{bcc,	 _rel}, {bcs,	 _rel}, {bne,	 _rel}, {beq,	 _rel},
+	{bhcc,	 _rel}, {bhcs,	 _rel}, {bpl,	 _rel}, {bmi,	 _rel},
+	{bmc,	 _rel}, {bms,	 _rel}, {bil,	 _rel}, {bih,	 _rel},
+	{neg,	 _dir}, {illegal,_imp}, {illegal,_imp}, {com,	 _dir}, /* 30 */
+	{lsr,	 _dir}, {illegal,_imp}, {ror,	 _dir}, {asr,	 _dir},
+	{asl,	 _dir}, {rol,	 _dir}, {dec,	 _dir}, {illegal,_imp},
+	{inc,	 _dir}, {tst,	 _dir}, {illegal,_imp}, {clr,	 _dir},
+	{nega,	 _imp}, {illegal,_imp}, {illegal,_imp}, {coma,	 _imp}, /* 40 */
+	{lsra,	 _imp}, {illegal,_imp}, {rora,	 _imp}, {asra,	 _imp},
+	{asla,	 _imp}, {rola,	 _imp}, {deca,	 _imp}, {illegal,_imp},
+	{inca,	 _imp}, {tsta,	 _imp}, {illegal,_imp}, {clra,	 _imp},
+	{negx,	 _imp}, {illegal,_imp}, {illegal,_imp}, {comx,	 _imp}, /* 50 */
+	{lsrx,	 _imp}, {illegal,_imp}, {rorx,	 _imp}, {asrx,	 _imp},
+	{aslx,	 _imp}, {rolx,	 _imp}, {decx,	 _imp}, {illegal,_imp},
+	{incx,	 _imp}, {tstx,	 _imp}, {illegal,_imp}, {clrx,	 _imp},
+	{neg,	 _ix1}, {illegal,_imp}, {illegal,_imp}, {com,	 _ix1}, /* 60 */
+	{lsr,	 _ix1}, {illegal,_imp}, {ror,	 _ix1}, {asr,	 _ix1},
+	{asl,	 _ix1}, {rol,	 _ix1}, {dec,	 _ix1}, {illegal,_imp},
+	{inc,	 _ix1}, {tst,	 _ix1}, {jmp,	 _ix1}, {clr,	 _ix1},
+	{neg,	 _idx}, {illegal,_imp}, {illegal,_imp}, {com,	 _idx}, /* 70 */
+	{lsr,	 _idx}, {illegal,_imp}, {ror,	 _idx}, {asr,	 _idx},
+	{asl,	 _idx}, {rol,	 _idx}, {dec,	 _idx}, {illegal,_imp},
+	{inc,	 _idx}, {tst,	 _idx}, {jmp,	 _idx}, {clr,	 _idx},
+	{rti,	 _imp}, {rts,	 _imp}, {illegal,_imp}, {swi,	 _imp}, /* 80 */
+	{illegal,_imp}, {illegal,_imp}, {illegal,_imp}, {illegal,_imp},
+	{illegal,_imp}, {illegal,_imp}, {illegal,_imp}, {illegal,_imp},
+	{illegal,_imp}, {illegal,_imp}, {illegal,_imp}, {illegal,_imp},
+	{illegal,_imp}, {illegal,_imp}, {illegal,_imp}, {illegal,_imp}, /* 90 */
+	{illegal,_imp}, {illegal,_imp}, {illegal,_imp}, {tax,	 _imp},
+	{clc,	 _imp}, {sec,	 _imp}, {cli,	 _imp}, {sei,	 _imp},
+	{rsp,	 _imp}, {nop,	 _imp}, {illegal,_imp}, {txa,	 _imp},
+	{suba,	 _imm}, {cmpa,	 _imm}, {sbca,	 _imm}, {cpx,	 _imm}, /* a0 */
+	{anda,	 _imm}, {bita,	 _imm}, {lda,	 _imm}, {illegal,_imp},
+	{eora,	 _imm}, {adca,	 _imm}, {ora,	 _imm}, {adda,	 _imm},
+	{illegal,_imp}, {bsr,	 _rel}, {ldx,	 _imm}, {illegal,_imp},
+	{suba,	 _dir}, {cmpa,	 _dir}, {sbca,	 _dir}, {cpx,	 _dir}, /* b0 */
+	{anda,	 _dir}, {bita,	 _dir}, {lda,	 _dir}, {sta,	 _dir},
+	{eora,	 _dir}, {adca,	 _dir}, {ora,	 _dir}, {adda,	 _dir},
+	{jmp,	 _dir}, {jsr,	 _dir}, {ldx,	 _dir}, {stx,	 _dir},
+	{suba,	 _ext}, {cmpa,	 _ext}, {sbca,	 _ext}, {cpx,	 _ext}, /* c0 */
+	{anda,	 _ext}, {bita,	 _ext}, {lda,	 _ext}, {sta,	 _ext},
+	{eora,	 _ext}, {adca,	 _ext}, {ora,	 _ext}, {adda,	 _ext},
+	{jmp,	 _ext}, {jsr,	 _ext}, {ldx,	 _ext}, {stx,	 _ext},
+	{suba,	 _ix2}, {cmpa,	 _ix2}, {sbca,	 _ix2}, {cpx,	 _ix2}, /* d0 */
+	{anda,	 _ix2}, {bita,	 _ix2}, {lda,	 _ix2}, {sta,	 _ix2},
+	{eora,	 _ix2}, {adca,	 _ix2}, {ora,	 _ix2}, {adda,	 _ix2},
+	{jmp,	 _ix2}, {jsr,	 _ix2}, {ldx,	 _ix2}, {stx,	 _ix2},
+	{suba,	 _ix1}, {cmpa,	 _ix1}, {sbca,	 _ix1}, {cpx,	 _ix1}, /* e0 */
+	{anda,	 _ix1}, {bita,	 _ix1}, {lda,	 _ix1}, {sta,	 _ix1},
+	{eora,	 _ix1}, {adca,	 _ix1}, {ora,	 _ix1}, {adda,	 _ix1},
+	{jmp,	 _ix1}, {jsr,	 _ix1}, {ldx,	 _ix1}, {stx,	 _ix1},
+	{suba,	 _idx}, {cmpa,	 _idx}, {sbca,	 _idx}, {cpx,	 _idx}, /* f0 */
+	{anda,	 _idx}, {bita,	 _idx}, {lda,	 _idx}, {sta,	 _idx},
+	{eora,	 _idx}, {adca,	 _idx}, {ora,	 _idx}, {adda,	 _idx},
+	{jmp,	 _idx}, {jsr,	 _idx}, {ldx,	 _idx}, {stx,	 _idx}
+};
+
+#if 0
 static char *opcode_strings[0x0100] =
 {
 	"brset0", 	"brclr0", 	"brset1", 	"brclr1", 	"brset2", 	"brclr2",	"brset3",	"brclr3",		/*00*/
@@ -19,7 +129,7 @@ static char *opcode_strings[0x0100] =
 	"bset4", 	"bclr4",	"bset5", 	"bclr5",	"bset6", 	"bclr6", 	"bset7", 	"bclr7",
 	"bra",		"brn",		"bhi",		"bls",		"bcc",		"bcs",		"bne",		"beq",			/*20*/
 	"bhcc",		"bhcs",		"bpl",		"bmi",		"bmc",		"bms",		"bil",		"bih",
-	"neg_di",	"illegal", 	"illegal", 	"com_di",	"lsr_di",	"illegal", 	"ror_di",	"asr_di",		/*40*/
+	"neg_di",   "illegal",  "illegal",  "com_di",   "lsr_di",   "illegal",  "ror_di",   "asr_di",       /*30*/
 	"asl_di",	"rol_di",	"dec_di",	"illegal", 	"inc_di",	"tst_di",	"illegal", 	"clr_di",
 	"nega",		"illegal", 	"illegal", 	"coma",		"lsra",		"illegal", 	"rora",		"asra",			/*40*/
 	"asla",		"rola",		"deca",		"illegal", 	"inca",		"tsta",		"illegal", 	"clra",
@@ -46,81 +156,43 @@ static char *opcode_strings[0x0100] =
 	"suba_ix",	"cmpa_ix",	"sbca_ix",	"cpx_ix", 	"anda_ix",	"bita_ix",	"lda_ix",	"sta_ix",		/*F0*/
 	"eora_ix",	"adca_ix",	"ora_ix",	"adda_ix",	"jmp_ix",	"jsr_ix",	"ldx_ix",	"stx_ix"
 };
-
+#endif
 
 int Dasm6805 (unsigned char *base, char *buf, int pc)
 {
 	int code = *base++;
-	char *opptr = opcode_strings[code];
-	char opstr[20];
-	char *p, *s;
+	const char *opstr = op_name_str[disasm[code][0]];
 
-	strcpy (opstr, opptr);
-	p = opstr + 3;
-	if (*p != '_')
-	{
-		if (*++p != '_')
-		{
-			if (code < 0x10)
-			{
-				sprintf (buf, "%-7s$%02x,$%04x", opstr, *base, (pc + 3 + *(signed char *)&base[1]) & 0xffff);
-				return 3;
-			}
-			if (code < 0x20)
-			{
-				sprintf (buf, "%-7s$%02x", opstr, *base);
-				return 2;
-			}
-			if ((code < 0x30) || code == 0xad)
-			{
-				sprintf (buf, "%-7s$%04x", opstr, (pc + 2 + *(signed char *)base) & 0xffff);
-				return 2;
-			}
-			else
-			{
-				strcpy (buf, opstr);
-				return 1;
-			}
-		}
-	}
-
-	s = p - 1;
-	*p++ = 0;
-	if (*p == 'i')
-	{
-		if (*++p == 'x')
-		{
-			++p;
-			if (*p == '1')
-			{
-				sprintf (buf, "%-7s(x+$%02x)", opstr, *base);
-				return 2;
-			}
-			else if (*p == '2')
-			{
-				sprintf (buf, "%-7s(x+$%04x)", opstr, (base[0] << 8) + base[1]);
-				return 3;
-			}
-			else
-			{
-				sprintf (buf, "%-7s(x)", opstr);
-				return 1;
-			}
-		}
-		else
-		{
-			sprintf (buf, "%-7s#$%02x", opstr, *base);
-			return 2;
-		}
-	}
-	else if (*p == 'd')
-	{
+	switch( disasm[code][1] ) {
+	case _btr:	/* bit test and relative branch */
+		sprintf (buf, "%-7s%d,$%02x,$%04x", opstr, (code>>1)&7, *base, (pc + 3 + *(signed char *)&base[1]) & 0xffff);
+		return 3;
+	case _bit:	/* bit test */
+		sprintf (buf, "%-7s%d,$%02x", opstr, (code>>1)&7, *base);
+		return 2;
+	case _rel:	/* relative */
+		sprintf (buf, "%-7s$%04x", opstr, (pc + 2 + *(signed char *)base) & 0xffff);
+		return 2;
+	case _imm:	/* immediate */
+		sprintf (buf, "%-7s#$%02x", opstr, *base);
+		return 2;
+	case _dir:	/* direct (zero page address) */
 		sprintf (buf, "%-7s$%02x", opstr, *base);
 		return 2;
-	}
-	else
-	{
+	case _ext:	/* extended (16 bit address) */
 		sprintf (buf, "%-7s$%04x", opstr, (base[0] << 8) + base[1]);
 		return 3;
-	}
+	case _idx:	/* indexed */
+		sprintf (buf, "%-7s(x)", opstr);
+		return 1;
+	case _ix1:	/* indexed + byte (zero page) */
+		sprintf (buf, "%-7s(x+$%02x)", opstr, *base);
+		return 2;
+	case _ix2:	/* indexed + word (16 bit address) */
+		sprintf (buf, "%-7s(x+$%04x)", opstr, (base[0]<<8) + base[1]);
+		return 3;
+	default:	/* implicit */
+		strcpy (buf, opstr);
+		return 1;
+    }
 }

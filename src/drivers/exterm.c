@@ -262,7 +262,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz */
-	{ 50 },
+	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
 	{ 0 }
 };
 

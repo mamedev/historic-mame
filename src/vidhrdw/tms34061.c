@@ -121,7 +121,7 @@ INLINE void TMS34061_register_w(int offset, int data)
 static void TMS34061_intcallback(int param)
 {
 	// Reset timer for next frame
-	timer_reset(timer, cpu_getscanlinetime(regs[REG_VERINT]));
+//	timer_reset(timer, cpu_getscanlinetime(regs[REG_VERINT]));
 
 	// Get out if vertical interrupts are disabled
     if (!(regs[REG_CONTROL1] & 0x400)) return;

@@ -642,7 +642,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 40 },
+	{ YM3012_VOL(40,OSD_PAN_LEFT,40,OSD_PAN_RIGHT) },
 	{ atarisys1_sound_interrupt }
 };
 

@@ -8,57 +8,47 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char* magicram;
+extern unsigned char* berzerk_magicram;
 
 void berzerk_init_machine(void);
 
 int  berzerk_interrupt(void);
-void berzerk_interrupt_enable_w(int offset,int data);
-void berzerk_enable_nmi_w(int offset,int data);
-void berzerk_disable_nmi_w(int offset,int data);
-int  berzerk_enable_nmi_r(int offset);
-int  berzerk_disable_nmi_r(int offset);
-int berzerk_led_on_w(int offset);
-int berzerk_led_off_w(int offset);
-int berzerk_debug_read(int offset);
-int berzerk_voiceboard_read(int offset);
+void berzerk_irq_enable_w(int offset,int data);
+void berzerk_nmi_enable_w(int offset,int data);
+void berzerk_nmi_disable_w(int offset,int data);
+int  berzerk_nmi_enable_r(int offset);
+int  berzerk_nmi_disable_r(int offset);
+int  berzerk_led_on_r(int offset);
+int  berzerk_led_off_r(int offset);
+int  berzerk_voiceboard_read(int offset);
 void berzerk_videoram_w(int offset,int data);
-
-void berzerk_videoram_w(int offset,int data);
-
 void berzerk_colorram_w(int offset,int data);
 
-int  frenzy_mirror_r(int offset);
-void frenzy_mirror_w(int offset,int data);
-
 void berzerk_magicram_w(int offset,int data);
-int  berzerk_magicram_r(int offset);
 void berzerk_magicram_control_w(int offset,int data);
 int  berzerk_collision_r(int offset);
 
 void berzerk_sound_control_a_w(int offset, int data);
-void berzerk_sound_control_b_w(int offset, int data);
-int berzerk_sh_start(void);
+int  berzerk_sh_start(void);
 void berzerk_sh_update(void);
 
-void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress berzerk_readmem[] =
 {
         { 0x0000, 0x07ff, MRA_ROM},
         { 0x0800, 0x09ff, MRA_RAM},
         { 0x1000, 0x3fff, MRA_ROM},
-        { 0x4000, 0x5fff, videoram_r},
-        { 0x6000, 0x7fff, berzerk_magicram_r},
+        { 0x4000, 0x5fff, MRA_RAM},
+        { 0x6000, 0x7fff, MRA_RAM, &berzerk_magicram},
         { 0x8000, 0x87ff, colorram_r},
         { -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress berzerk_writemem[] =
 {
         { 0x0800, 0x09ff, MWA_RAM},
         { 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
-        { 0x6000, 0x7fff, berzerk_magicram_w, &magicram},
+        { 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
         { 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
         { -1 }  /* end of table */
 };
@@ -67,49 +57,40 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress frenzy_readmem[] =
 {
         { 0x0000, 0x3fff, MRA_ROM },
-        { 0x4000, 0x5fff, videoram_r },
-        { 0x6000, 0x7fff, berzerk_magicram_r },
+        { 0x4000, 0x5fff, MRA_RAM },
+        { 0x6000, 0x7fff, MRA_RAM, &berzerk_magicram },
         { 0x8000, 0x87ff, colorram_r },
         { 0xc000, 0xcfff, MRA_ROM },
-        { 0xf800, 0xffff, frenzy_mirror_r },
+        { 0xf800, 0xf9ff, MRA_RAM },
         { -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress frenzy_writemem[] =
 {
         { 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
-        { 0x6000, 0x7fff, berzerk_magicram_w, &magicram},
+        { 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
         { 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
-        { 0xf800, 0xffff, frenzy_mirror_w },
+        { 0xf800, 0xf9ff, MWA_RAM },
         { -1 }  /* end of table */
 };
 
-
-int  frenzy_io62_r(int offset)
-{
-        return 1;
-}
-
 static struct IOReadPort readport[] =
 {
-        { 0x40, 0x43, IORP_NOP}, /* Sound stuff */
         { 0x44, 0x44, berzerk_voiceboard_read}, /* Sound stuff */
-        { 0x45, 0x47, IORP_NOP}, /* Sound stuff */
         { 0x48, 0x48, input_port_0_r},
         { 0x49, 0x49, input_port_1_r},
-        { 0x4a, 0x4a, input_port_7_r}, /* Same as 48 for Player 2 */
-        { 0x4c, 0x4c, berzerk_enable_nmi_r},
-        { 0x4d, 0x4d, berzerk_disable_nmi_r},
+        { 0x4a, 0x4a, input_port_2_r},
+        { 0x4c, 0x4c, berzerk_nmi_enable_r},
+        { 0x4d, 0x4d, berzerk_nmi_disable_r},
         { 0x4e, 0x4e, berzerk_collision_r},
-        { 0x50, 0x57, IORP_NOP}, /* Sound stuff */
-        { 0x60, 0x60, input_port_2_r},
-        { 0x61, 0x61, input_port_3_r},
-        { 0x62, 0x62, frenzy_io62_r},   /* I really need 1 more I/O port here */
-        { 0x63, 0x63, input_port_4_r},
-        { 0x64, 0x64, input_port_5_r},
-        { 0x65, 0x65, input_port_6_r},
-        { 0x66, 0x66, berzerk_led_off_w},
-        { 0x67, 0x67, berzerk_led_on_w},
+        { 0x60, 0x60, input_port_3_r},
+        { 0x61, 0x61, input_port_4_r},
+        { 0x62, 0x62, input_port_5_r},
+        { 0x63, 0x63, input_port_6_r},
+        { 0x64, 0x64, input_port_7_r},
+        { 0x65, 0x65, input_port_8_r},
+        { 0x66, 0x66, berzerk_led_off_r},
+        { 0x67, 0x67, berzerk_led_on_r},
         { -1 }  /* end of table */
 };
 
@@ -119,15 +100,36 @@ static struct IOWritePort writeport[] =
         { 0x40, 0x46, berzerk_sound_control_a_w}, /* First sound board */
         { 0x47, 0x47, IOWP_NOP}, /* not used sound stuff */
         { 0x4b, 0x4b, berzerk_magicram_control_w},
-        { 0x4c, 0x4c, berzerk_enable_nmi_w},
-        { 0x4d, 0x4d, berzerk_disable_nmi_w},
-        { 0x4f, 0x4f, berzerk_interrupt_enable_w},
+        { 0x4c, 0x4c, berzerk_nmi_enable_w},
+        { 0x4d, 0x4d, berzerk_nmi_disable_w},
+        { 0x4f, 0x4f, berzerk_irq_enable_w},
         { 0x50, 0x57, IOWP_NOP}, /* Second sound board but not used */
         { -1 }  /* end of table */
 };
 
 
-INPUT_PORTS_START( input_ports )
+#define COINAGE(CHUTE)											\
+        PORT_DIPNAME( 0x0f, 0x00, "Coin "#CHUTE, IP_KEY_NONE )	\
+        PORT_DIPSETTING(    0x09, "1 Credit/2 Coins" )			\
+        PORT_DIPSETTING(    0x0d, "3 Credits/4 Coins" )			\
+        PORT_DIPSETTING(    0x00, "1 Credit/1 Coin" )			\
+        PORT_DIPSETTING(    0x0e, "5 Credits/4 Coins" )			\
+        PORT_DIPSETTING(    0x0a, "3 Credits/2 Coins" )			\
+        PORT_DIPSETTING(    0x0f, "7 Credits/4 Coins" )			\
+        PORT_DIPSETTING(    0x01, "2 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x0b, "5 Credits/2 Coins" )			\
+        PORT_DIPSETTING(    0x02, "3 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x0c, "7 Credits/2 Coins" )			\
+        PORT_DIPSETTING(    0x03, "4 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x04, "5 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x05, "6 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x06, "7 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x07, "10 Credits/1 Coin" )			\
+        PORT_DIPSETTING(    0x08, "14 Credits/1 Coin" )			\
+        PORT_BIT( 0xf0, IP_ACTIVE_LOW,  IPT_UNUSED )
+
+
+INPUT_PORTS_START( berzerk_input_ports )
         PORT_START      /* IN0 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -139,61 +141,12 @@ INPUT_PORTS_START( input_ports )
         PORT_START      /* IN1 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
+        PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
         PORT_START      /* IN2 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* Has to do with */
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* test modes */
-        PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_DIPNAME( 0xC0, 0x00, "Language", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "English" )
-        PORT_DIPSETTING(    0x40, "German" )
-        PORT_DIPSETTING(    0x80, "French" )
-        PORT_DIPSETTING(    0xc0, "Spanish" )
-
-        PORT_START      /* IN3 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* Has to do with */
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* test modes */
-        PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_DIPNAME( 0x40, 0x40, "Extra Man at  5,000 Pts", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x40, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Extra Man at 10,000 Pts", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x80, "On" )
-
-        PORT_START      /* IN4 - Coin Chute 2*/
-        PORT_BIT( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-        PORT_START      /* IN5 */
-        PORT_DIPNAME( 0x0f, 0x00, "Credits/Coins", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, " 1/1" )
-        PORT_DIPSETTING(    0x01, " 2/1" )
-        PORT_DIPSETTING(    0x02, " 3/1" )
-        PORT_DIPSETTING(    0x03, " 4/1" )
-        PORT_DIPSETTING(    0x04, " 5/1" )
-        PORT_DIPSETTING(    0x05, " 6/1" )
-        PORT_DIPSETTING(    0x06, " 7/1" )
-        PORT_DIPSETTING(    0x07, "10/1" )
-        PORT_DIPSETTING(    0x08, "14/1" )
-        PORT_DIPSETTING(    0x09, " 1/2" )
-        PORT_DIPSETTING(    0x0a, " 3/2" )
-        PORT_DIPSETTING(    0x0b, " 5/2" )
-        PORT_DIPSETTING(    0x0c, " 7/2" )
-        PORT_DIPSETTING(    0x0d, " 3/4" )
-        PORT_DIPSETTING(    0x0e, " 5/4" )
-        PORT_DIPSETTING(    0x0f, " 7/4" )
-        PORT_BIT( 0xf0, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-        PORT_START      /* IN6 */
-        PORT_DIPNAME( 0x01, 0x00, "Free Play", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x01, "On" )
-        PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
-
-        PORT_START      /* IN7 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -203,6 +156,48 @@ INPUT_PORTS_START( input_ports )
         PORT_DIPNAME( 0x80, 0x80, "Cocktail Mode", IP_KEY_NONE )
         PORT_DIPSETTING(    0x80, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
+
+        PORT_START      /* IN3 */
+		PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+		PORT_DIPSETTING(    0x00, "Off" )
+		PORT_DIPSETTING(    0x01, "On" )
+		PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Crosshair Pattern", OSD_KEY_F4, IP_JOY_NONE, 0 )
+		PORT_DIPSETTING(    0x00, "Off" )
+		PORT_DIPSETTING(    0x02, "On" )
+        PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
+        PORT_DIPNAME( 0xc0, 0x00, "Language", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "English" )
+        PORT_DIPSETTING(    0x40, "German" )
+        PORT_DIPSETTING(    0x80, "French" )
+        PORT_DIPSETTING(    0xc0, "Spanish" )
+
+        PORT_START      /* IN4 */
+		PORT_BITX(    0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Color Test", OSD_KEY_F5, IP_JOY_NONE, 0 )
+		PORT_DIPSETTING(    0x00, "Off" )
+		PORT_DIPSETTING(    0x03, "On" )
+        PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
+        PORT_DIPNAME( 0x40, 0x40, "Extra Life at  5000 Pts", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPSETTING(    0x40, "On" )
+        PORT_DIPNAME( 0x80, 0x80, "Extra Life at 10000 Pts", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPSETTING(    0x80, "On" )
+
+        PORT_START      /* IN5 */
+		COINAGE(C)
+
+        PORT_START      /* IN6 */
+		COINAGE(B)
+
+        PORT_START      /* IN7 */
+		COINAGE(A)
+
+        PORT_START      /* IN8 */
+        PORT_DIPNAME( 0x01, 0x00, "Free Play", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPSETTING(    0x01, "On" )
+        PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
+        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( frenzy_input_ports )
@@ -217,64 +212,11 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_START      /* IN1 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
+        PORT_BIT( 0x3c, IP_ACTIVE_LOW, IPT_UNUSED )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
         PORT_START      /* IN2 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Has to do with */
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* test modes */
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* test modes */
-        PORT_BIT( 0x38, IP_ACTIVE_HIGH,  IPT_UNUSED )
-        PORT_DIPNAME( 0xC0, 0x00, "Language", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "English" )
-        PORT_DIPSETTING(    0x40, "German" )
-        PORT_DIPSETTING(    0x80, "French" )
-        PORT_DIPSETTING(    0xc0, "Spanish" )
-
-        PORT_START      /* IN3 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* If low, do a self-test? */
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* ?? */
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* If low, do dipswitch test */
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* If low, do grid test */
-        PORT_BIT( 0x30, IP_ACTIVE_HIGH,  IPT_UNUSED )
-        PORT_DIPNAME( 0x40, 0x40, "Extra Man at  5,000 Pts", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x40, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Extra Man at 10,000 Pts", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x80, "On" )
-
-        PORT_START      /* IN4 - Coin Chute 2 */
-        PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_COIN2 )
-
-        PORT_START      /* IN5 - 0x01 */
-        PORT_DIPNAME( 0x0f, 0x01, "Credits/Coins", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, " 1/1" )
-        PORT_DIPSETTING(    0x01, " 2/1" )
-        PORT_DIPSETTING(    0x02, " 3/1" )
-        PORT_DIPSETTING(    0x03, " 4/1" )
-        PORT_DIPSETTING(    0x04, " 5/1" )
-        PORT_DIPSETTING(    0x05, " 6/1" )
-        PORT_DIPSETTING(    0x06, " 7/1" )
-        PORT_DIPSETTING(    0x07, "10/1" )
-        PORT_DIPSETTING(    0x08, "14/1" )
-        PORT_DIPSETTING(    0x09, " 1/2" )
-        PORT_DIPSETTING(    0x0a, " 3/2" )
-        PORT_DIPSETTING(    0x0b, " 5/2" )
-        PORT_DIPSETTING(    0x0c, " 7/2" )
-        PORT_DIPSETTING(    0x0d, " 3/4" )
-        PORT_DIPSETTING(    0x0e, " 5/4" )
-        PORT_DIPSETTING(    0x0f, " 7/4" )
-        PORT_BIT( 0xf0, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-        PORT_START      /* IN6 */
-        PORT_DIPNAME( 0x01, 0x00, "Free Play", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x01, "On" )
-        PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
-
-        PORT_START      /* IN7 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -284,7 +226,110 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_DIPNAME( 0x80, 0x80, "Cocktail Mode", IP_KEY_NONE )
         PORT_DIPSETTING(    0x80, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
+
+        PORT_START      /* IN3 */
+        PORT_DIPNAME( 0x0f, 0x03, "Bonus Life", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "Never" )
+        PORT_DIPSETTING(    0x01, "1000" )
+        PORT_DIPSETTING(    0x02, "2000" )
+        PORT_DIPSETTING(    0x03, "3000" )
+        PORT_DIPSETTING(    0x04, "4000" )
+        PORT_DIPSETTING(    0x05, "5000" )
+        PORT_DIPSETTING(    0x06, "6000" )
+        PORT_DIPSETTING(    0x07, "7000" )
+        PORT_DIPSETTING(    0x08, "8000" )
+        PORT_DIPSETTING(    0x09, "9000" )
+        PORT_DIPSETTING(    0x0a, "10000" )
+        PORT_DIPSETTING(    0x0b, "11000" )
+        PORT_DIPSETTING(    0x0c, "12000" )
+        PORT_DIPSETTING(    0x0d, "13000" )
+        PORT_DIPSETTING(    0x0e, "14000" )
+        PORT_DIPSETTING(    0x0f, "15000" )
+        PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
+        PORT_DIPNAME( 0xc0, 0x00, "Language", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "English" )
+        PORT_DIPSETTING(    0x40, "German" )
+        PORT_DIPSETTING(    0x80, "French" )
+        PORT_DIPSETTING(    0xc0, "Spanish" )
+
+        PORT_START      /* IN4 */
+        PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Bit 0 does some more hardware tests */
+		PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+		PORT_DIPSETTING(    0x00, "Off" )
+		PORT_DIPSETTING(    0x04, "On" )
+		PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Crosshair Pattern", OSD_KEY_F4, IP_JOY_NONE, 0 )
+		PORT_DIPSETTING(    0x00, "Off" )
+		PORT_DIPSETTING(    0x08, "On" )
+        PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+		/* The following 3 ports use all 8 bits, but I didn't feel like adding
+		   all 256 values :-) */
+        PORT_START      /* IN5 */
+        PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit B", IP_KEY_NONE )
+      /*PORT_DIPSETTING(    0x00, "0" )    Can't insert coins  */
+        PORT_DIPSETTING(    0x01, "1" )
+        PORT_DIPSETTING(    0x02, "2" )
+        PORT_DIPSETTING(    0x03, "3" )
+        PORT_DIPSETTING(    0x04, "4" )
+        PORT_DIPSETTING(    0x05, "5" )
+        PORT_DIPSETTING(    0x06, "6" )
+        PORT_DIPSETTING(    0x07, "7" )
+        PORT_DIPSETTING(    0x08, "8" )
+        PORT_DIPSETTING(    0x09, "9" )
+        PORT_DIPSETTING(    0x0a, "10" )
+        PORT_DIPSETTING(    0x0b, "11" )
+        PORT_DIPSETTING(    0x0c, "12" )
+        PORT_DIPSETTING(    0x0d, "13" )
+        PORT_DIPSETTING(    0x0e, "14" )
+        PORT_DIPSETTING(    0x0f, "15" )
+        PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
+
+        PORT_START      /* IN6 */
+        PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit A", IP_KEY_NONE )
+      /*PORT_DIPSETTING(    0x00, "0" )    Can't insert coins  */
+        PORT_DIPSETTING(    0x01, "1" )
+        PORT_DIPSETTING(    0x02, "2" )
+        PORT_DIPSETTING(    0x03, "3" )
+        PORT_DIPSETTING(    0x04, "4" )
+        PORT_DIPSETTING(    0x05, "5" )
+        PORT_DIPSETTING(    0x06, "6" )
+        PORT_DIPSETTING(    0x07, "7" )
+        PORT_DIPSETTING(    0x08, "8" )
+        PORT_DIPSETTING(    0x09, "9" )
+        PORT_DIPSETTING(    0x0a, "10" )
+        PORT_DIPSETTING(    0x0b, "11" )
+        PORT_DIPSETTING(    0x0c, "12" )
+        PORT_DIPSETTING(    0x0d, "13" )
+        PORT_DIPSETTING(    0x0e, "14" )
+        PORT_DIPSETTING(    0x0f, "15" )
+        PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
+
+        PORT_START      /* IN7 */
+        PORT_DIPNAME( 0x0f, 0x01, "Coin Multiplier", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "Free Play" )
+        PORT_DIPSETTING(    0x01, "1" )
+        PORT_DIPSETTING(    0x02, "2" )
+        PORT_DIPSETTING(    0x03, "3" )
+        PORT_DIPSETTING(    0x04, "4" )
+        PORT_DIPSETTING(    0x05, "5" )
+        PORT_DIPSETTING(    0x06, "6" )
+        PORT_DIPSETTING(    0x07, "7" )
+        PORT_DIPSETTING(    0x08, "8" )
+        PORT_DIPSETTING(    0x09, "9" )
+        PORT_DIPSETTING(    0x0a, "10" )
+        PORT_DIPSETTING(    0x0b, "11" )
+        PORT_DIPSETTING(    0x0c, "12" )
+        PORT_DIPSETTING(    0x0d, "13" )
+        PORT_DIPSETTING(    0x0e, "14" )
+        PORT_DIPSETTING(    0x0f, "15" )
+        PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
+
+        PORT_START      /* IN8 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED )	/* Some kind of freeze screen? */
+        PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
+        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
 INPUT_PORTS_END
+
 
 
 
@@ -314,88 +359,55 @@ static struct Samplesinterface berzerk_samples_interface =
 	8	/* 8 channels */
 };
 
-static struct MachineDriver berzerk_machine_driver =
-{
-	/* basic machine hardware */
-	{
-			{
-					CPU_Z80,
-					2500000,        /* 2.5 MHz */
-					0,
-					readmem,writemem,readport,writeport,
-					berzerk_interrupt,8
-			},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	berzerk_init_machine,
 
-	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	0,
-	sizeof(berzerk_palette)/3, 0,
-	0,
+#define  frenzy_init_machine  0
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	berzerk_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	berzerk_sh_start,
-	0,
-	berzerk_sh_update,
-	{
-		{
-			SOUND_SAMPLES,
-			&berzerk_samples_interface
-		}
-	}
+#define DRIVER(GAMENAME)												\
+																		\
+static struct MachineDriver GAMENAME##_machine_driver =					\
+{																		\
+	/* basic machine hardware */										\
+	{																	\
+		{																\
+			CPU_Z80,													\
+			2500000,        /* 2.5 MHz */								\
+			0,															\
+			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
+			berzerk_interrupt,8											\
+		},																\
+	},																	\
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* single CPU, no need for interleaving */						\
+	GAMENAME##_init_machine,											\
+																		\
+	/* video hardware */												\
+	256, 256, { 0, 256-1, 32, 256-1 },									\
+	0,																	\
+	sizeof(berzerk_palette)/3, 0,										\
+	0,																	\
+																		\
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
+	0,																	\
+	generic_bitmapped_vh_start,											\
+	generic_bitmapped_vh_stop,											\
+	generic_bitmapped_vh_screenrefresh,									\
+																		\
+	/* sound hardware */												\
+	0,																	\
+	berzerk_sh_start,													\
+	0,																	\
+	berzerk_sh_update,													\
+	{																	\
+		{																\
+			SOUND_SAMPLES,												\
+			&berzerk_samples_interface									\
+		}																\
+	}																	\
 };
 
 
-static struct MachineDriver frenzy_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2500000,        /* 2.5 MHz */
-			0,
-			frenzy_readmem,frenzy_writemem,readport,writeport,
-			berzerk_interrupt,8
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	0,
-	sizeof(berzerk_palette)/3, 0,
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	berzerk_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	berzerk_sh_start,
-	0,
-	berzerk_sh_update,
-	{
-		{
-			SOUND_SAMPLES,
-			&berzerk_samples_interface
-		}
-	}
-};
+DRIVER(berzerk)
+DRIVER(frenzy)
 
 
 
@@ -404,16 +416,6 @@ static struct MachineDriver frenzy_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-
-ROM_START( berzerk1_rom )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
-        ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
-        ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
-        ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
-        ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
-        ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
-ROM_END
 
 ROM_START( berzerk_rom )
         ROM_REGION(0x10000)
@@ -425,6 +427,16 @@ ROM_START( berzerk_rom )
         ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
 ROM_END
 
+ROM_START( berzerk1_rom )
+        ROM_REGION(0x10000)
+        ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
+        ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
+        ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
+        ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
+        ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
+        ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
+ROM_END
+
 ROM_START( frenzy_rom )
         ROM_REGION(0x10000)
         ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
@@ -433,12 +445,6 @@ ROM_START( frenzy_rom )
         ROM_LOAD( "5d-3",         0x3000, 0x1000, 0xe1d3133c )
         ROM_LOAD( "6d-4",         0xc000, 0x1000, 0x5581a7b1 )
         /* 1c & 2c are the voice ROMs */
-ROM_END
-
-ROM_START( frenzy1_rom )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "frenzy01.bin", 0x0000, 0x4000, 0xeb70f964 )
-        ROM_LOAD( "frenzy02.bin", 0xc000, 0x1000, 0x5581a7b1 )
 ROM_END
 
 static const char *berzerk_sample_names[] =
@@ -527,9 +533,9 @@ static int frenzy_hiload(void)
 		firsttime = 1;
 	}
 
-	if (memcmp(&RAM[0x406F],"\x00\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x40A7],"\x00\x00\x00",3) == 0 &&
-			memcmp (&RAM[0x5c81],"\x04\x10\x80",3)==0 )
+	if (memcmp(&RAM[0x406f],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x40a7],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x5c81],"\x04\x10\x80",3)==0 )
 	{
 		void *f;
 
@@ -566,10 +572,10 @@ struct GameDriver berzerk_driver =
 	__FILE__,
 	0,
 	"berzerk",
-	"Berzerk",
+	"Berzerk (set 1)",
 	"1980",
 	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (sound)",
 	0,
 	&berzerk_machine_driver,
 	0,
@@ -579,7 +585,7 @@ struct GameDriver berzerk_driver =
 	berzerk_sample_names,
 	0,	/* sound_prom */
 
-	input_ports,
+	berzerk_input_ports,
 
 	0, berzerk_palette, 0,
 
@@ -594,10 +600,10 @@ struct GameDriver berzerk1_driver =
 	__FILE__,
 	&berzerk_driver,
 	"berzerk1",
-	"Berzerk (version 1)",
+	"Berzerk (set 2)",
 	"1980",
 	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (sound)",
 	0,
 	&berzerk_machine_driver,
 	0,
@@ -607,7 +613,7 @@ struct GameDriver berzerk1_driver =
 	berzerk_sample_names,
 	0,	/* sound_prom */
 
-	input_ports,
+	berzerk_input_ports,
 
 	0, berzerk_palette, 0,
 
@@ -625,39 +631,12 @@ struct GameDriver frenzy_driver =
 	"Frenzy",
 	"1982",
 	"Stern",
-	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nKeith Gerdes\nMike Cuddy\nBrad Oliver",
 	0,
 	&frenzy_machine_driver,
 	0,
 
 	frenzy_rom,
-	0, 0,
-	berzerk_sample_names,
-	0,	/* sound_prom */
-
-	frenzy_input_ports,
-
-	0, berzerk_palette, 0,
-
-	ORIENTATION_DEFAULT,
-
-	frenzy_hiload, frenzy_hisave
-};
-
-struct GameDriver frenzy1_driver =
-{
-	__FILE__,
-	&frenzy_driver,
-	"frenzy1",
-	"Frenzy (version 1)",
-	"1982",
-	"Stern",
-	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
-	0,
-	&frenzy_machine_driver,
-	0,
-
-	frenzy1_rom,
 	0, 0,
 	berzerk_sample_names,
 	0,	/* sound_prom */

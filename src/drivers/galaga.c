@@ -358,8 +358,8 @@ static struct GfxLayout charlayout =
 	128,           /* 128 characters */
 	2,             /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },   /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },   /* characters are rotated 90 degrees */
 	16*8           /* every char takes 16 bytes */
 };
 
@@ -369,10 +369,10 @@ static struct GfxLayout spritelayout =
 	128,            /* 128 sprites */
 	2,              /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8    /* every sprite takes 64 bytes */
 };
 
@@ -434,7 +434,7 @@ static struct MachineDriver machine_driver =
 	galaga_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	32+64,64*4,     /* 32 for the characters, 64 for the stars */
 	galaga_vh_convert_color_prom,
@@ -690,7 +690,7 @@ struct GameDriver galaga_driver =
 	galaganm_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -716,7 +716,7 @@ struct GameDriver galagamw_driver =
 	galaga_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -742,7 +742,7 @@ struct GameDriver galagads_driver =
 	galaga_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -768,7 +768,7 @@ struct GameDriver gallag_driver =
 	galaganm_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -794,7 +794,7 @@ struct GameDriver galagab2_driver =
 	galaganm_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

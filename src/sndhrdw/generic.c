@@ -238,10 +238,6 @@ int sound_start(void)
 				if (namco_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
-			case SOUND_NAMCOS1:
-				if (namcos1_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
-					goto getout;
-				break;
 			case SOUND_NES:
 				if (NESPSG_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
@@ -362,9 +358,6 @@ void sound_stop(void)
 			case SOUND_NAMCO:
 				namco_sh_stop();
 				break;
-			case SOUND_NAMCOS1:
-				namcos1_sh_stop();
-				break;
 			case SOUND_NES:
 				NESPSG_sh_stop();
 				break;
@@ -467,9 +460,6 @@ void sound_update(void)
 				break;
 			case SOUND_NAMCO:
 				namco_sh_update();
-				break;
-			case SOUND_NAMCOS1:
-				namcos1_sh_update();
 				break;
 			case SOUND_NES:
 				NESPSG_sh_update();

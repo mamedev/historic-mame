@@ -1487,12 +1487,12 @@ ROM_END
 
 ROM_START( grescue_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
-        ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
-        ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
-        ROM_LOAD( "grescue.4",    0x1800, 0x0800, 0xca412991 )
-        ROM_LOAD( "grescue.5",    0x4000, 0x0800, 0xa419a4d6 )
-        ROM_LOAD( "lrescue.6",    0x4800, 0x0800, 0xbfb0f65d )
+	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
+	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
+	ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
+	ROM_LOAD( "grescue.4",    0x1800, 0x0800, 0xca412991 )
+	ROM_LOAD( "grescue.5",    0x4000, 0x0800, 0xa419a4d6 )
+	ROM_LOAD( "lrescue.6",    0x4800, 0x0800, 0xbfb0f65d )
 ROM_END
 
 

@@ -158,11 +158,11 @@ INLINE void sync( void )
 	/* SYNC stops processing instructions until an interrupt request happens. */
 	/* This doesn't require the corresponding interrupt to be enabled: if it */
 	/* is disabled, execution continues with the next instruction. */
-	pending_interrupts |= M6809_SYNC;	/* NS 980101 */
-	CHECK_IRQ_LINES();
-	/* if M6809_SYNC has not been cleared by CHECK_IRQ_LINES(),
+	int_state |= M6809_SYNC;   /* HJB 990227 */
+	CHECK_IRQ_LINES;
+	/* if M6809_SYNC has not been cleared by CHECK_IRQ_LINES,
 	 * stop execution until the interrupt lines change. */
-    if (pending_interrupts & M6809_SYNC)
+	if (int_state & M6809_SYNC)
 		if (m6809_ICount > 0) m6809_ICount = 0;
 }
 
@@ -228,7 +228,7 @@ INLINE void orcc( void )
 {
 	UINT8 t;
 	IMMBYTE(t); cc|=t;
-	CHECK_IRQ_LINES();	/* HJB 990116 */
+	CHECK_IRQ_LINES;	/* HJB 990116 */
 }
 
 /* $1B ILLEGAL */
@@ -238,7 +238,7 @@ INLINE void andcc( void )
 {
 	UINT8 t;
 	IMMBYTE(t); cc&=t;
-	CHECK_IRQ_LINES();	/* HJB 990116 */
+	CHECK_IRQ_LINES;	/* HJB 990116 */
 }
 
 /* $1D SEX inherent -**0- */
@@ -565,7 +565,7 @@ INLINE void puls( void )
 	if(t&0x80) { PULLWORD(pcreg); change_pc(pcreg); } /* TS 971002 */
 
 	/* HJB 990225: moved check after all PULLs */
-	if (t&0x01) CHECK_IRQ_LINES();
+	if (t&0x01) CHECK_IRQ_LINES;
 }
 
 /* $36 PSHU inherent ----- */
@@ -598,7 +598,7 @@ INLINE void pulu( void )
 	if(t&0x80) { PULUWORD(pcreg); change_pc(pcreg); }	 /* TS 971002 */
 
 	/* HJB 990225: moved check after all PULLs */
-    if(t&0x01) CHECK_IRQ_LINES();
+	if(t&0x01) CHECK_IRQ_LINES;
 }
 
 /* $38 ILLEGAL */
@@ -634,7 +634,7 @@ INLINE void rti( void )
 	}
 	PULLWORD(pcreg);
     change_pc(pcreg);   /* TS 971002 */
-	CHECK_IRQ_LINES();	/* HJB 990116 */
+	CHECK_IRQ_LINES;	/* HJB 990116 */
 }
 
 /* $3C CWAI inherent ----1 */
@@ -643,33 +643,23 @@ INLINE void cwai( void )
 	UINT8 t;
 	IMMBYTE(t);
 	cc&=t;
-	CHECK_IRQ_LINES();	/* HJB 990116 */
-	if( (pending_interrupts & M6809_INT_FIRQ) && !(cc & CC_IF) ) return;
-	if( (pending_interrupts & M6809_INT_IRQ) && !(cc & CC_II) ) return;
 	/*
-	 * CWAI stacks the entire machine state on the hardware stack,
-	 * then waits for an interrupt; when the interrupt is taken
-	 * later, the state is *not* saved again after CWAI.
-	 */
-	cc |= CC_E; 		/* HJB 990225: save entire state */
-	PUSHWORD(pcreg);
-	PUSHWORD(ureg);
-	PUSHWORD(yreg);
-	PUSHWORD(xreg);
-	PUSHBYTE(dpreg);
-	PUSHBYTE(breg);
-	PUSHBYTE(areg);
-	PUSHBYTE(cc);
-	/*
-	 * HJB 990225: I'm in doubt about the following, but I think the
-	 * 19 cycles for the state save have to be counted at the very
-	 * last cycles (or the edge) of an execution loop!?
-	 */
-    if (m6809_ICount > 0)
-		m6809_ICount = 0;
-	else
-		m6809_ICount -= 19;
-    pending_interrupts |= M6809_CWAI;   /* NS 980101 */
+     * CWAI stacks the entire machine state on the hardware stack,
+     * then waits for an interrupt; when the interrupt is taken
+     * later, the state is *not* saved again after CWAI.
+     */
+    cc |= CC_E;         /* HJB 990225: save entire state */
+    PUSHWORD(pcreg);
+    PUSHWORD(ureg);
+    PUSHWORD(yreg);
+    PUSHWORD(xreg);
+    PUSHBYTE(dpreg);
+    PUSHBYTE(breg);
+    PUSHBYTE(areg);
+    PUSHBYTE(cc);
+	int_state |= M6809_CWAI;   /* HJB 990228 */
+    CHECK_IRQ_LINES;    /* HJB 990116 */
+	if (m6809_ICount > 0) m6809_ICount = 0;
 }
 
 /* $3D MUL inherent --*-@ */

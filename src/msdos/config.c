@@ -267,6 +267,12 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 	decompose_rom_sample_path (rompath, samplepath);
 }
 
+/* for playback of .inp files */
+void init_inpdir(void)
+{
+    inpdir = get_string ("directory", "inp",     NULL, "INP");
+}
+
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
 {
 	static float f_beam, f_flicker;
@@ -341,7 +347,6 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
 	pcxdir     = get_string ("directory", "pcx",     NULL, "PCX");
-	inpdir     = get_string ("directory", "inp",     NULL, "INP");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
 

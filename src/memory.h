@@ -119,12 +119,16 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 #define ABITS2_29     8
 #define ABITS3_29     0
 #define ABITS_MIN_29  2      /* minimum memory block is 4 bytes */
-
 /* 24 bits address (word access) */
 #define ABITS1_24    15
 #define ABITS2_24     8
 #define ABITS3_24     0
 #define ABITS_MIN_24  1      /* minimum memory block is 2 bytes */
+ /* 21 bits address */
+#define ABITS1_21    13
+#define ABITS2_21     8
+#define ABITS3_21     0
+#define ABITS_MIN_21  0      /* minimum memory block is 1 byte */
 /* 20 bits address */
 #define ABITS1_20    12
 #define ABITS2_20     8
@@ -159,6 +163,7 @@ extern unsigned char *OP_ROM;	/* op_code used */
 void cpu_setOPbase16(int pc);
 void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
+void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
 void cpu_setOPbase29(int pc);  /* AJP 980803 */
 void cpu_setOPbaseoverride (int (*f)(int));
@@ -179,6 +184,7 @@ int cpu_readmem16_word(int address);	/* HJB 990226 */
 int cpu_readmem16lew(int address);
 int cpu_readmem16lew_word(int address);
 int cpu_readmem20(int address);
+int cpu_readmem21(int address);
 int cpu_readmem24(int address);
 int cpu_readmem24_word(int address);
 int cpu_readmem24_dword(int address);
@@ -190,6 +196,7 @@ void cpu_writemem16_word(int address,int data); /* HJB 990226 */
 void cpu_writemem16lew(int address,int data);
 void cpu_writemem16lew_word(int address,int data);
 void cpu_writemem20(int address,int data);
+void cpu_writemem21(int address,int data);
 void cpu_writemem24(int address,int data);
 void cpu_writemem24_word(int address,int data);
 void cpu_writemem24_dword(int address,int data);

@@ -165,6 +165,7 @@ extern unsigned char *paletteram_2;	/* use when palette RAM is split in two part
 int paletteram_r(int offset);
 int paletteram_2_r(int offset);
 int paletteram_word_r(int offset);	/* for 16 bit CPU */
+int paletteram_2_word_r(int offset);	/* for 16 bit CPU */
 
 void paletteram_BBGGGRRR_w(int offset,int data);
 void paletteram_RRRGGGBB_w(int offset,int data);

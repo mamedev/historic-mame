@@ -16,6 +16,8 @@
 
 /* stereo mixing / separate */
 //#define FM_STEREO_MIX
+/* output bit size 8 or 16 */
+#define FM_OUTPUT_BIT 16
 
 #define YM2203_NUMBUF 1
 
@@ -31,9 +33,17 @@
   #define YM2610_NUMBUF  2
 #endif
 
+#if (FM_OUTPUT_BIT==16)
+typedef unsigned short FMSAMPLE;
+typedef unsigned long FMSAMPLE_MIX;
+#endif
+#if (FM_OUTPUT_BIT==8)
+typedef unsigned char  FMSAMPLE;
+typedef unsigned short FMSAMPLE_MIX;
+#endif
+
 /* For YM2151/YM2608/YM2612 option */
 
-typedef void FMSAMPLE;
 typedef void (*FM_TIMERHANDLER)(int n,int c,int cnt,double stepTime);
 typedef void (*FM_IRQHANDLER)(int n,int irq);
 /* FM_TIMERHANDLER : Stop or Start timer         */
@@ -70,11 +80,9 @@ unsigned char OPNReadStatus(int n);
 **
 ** 'num'     is the number of virtual YM2203's to allocate
 ** 'rate'    is sampling rate
-** 'bitsize' is sampling bits (8 or 16)
-** 'bufsiz' is the size of the buffer
 ** return    0 = success
 */
-int YM2203Init(int num, int baseclock, int rate,  int bitsize ,
+int YM2203Init(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 
 /*
@@ -88,7 +96,7 @@ void YM2203Shutdown(void);
 */
 void YM2203ResetChip(int num);
 
-void YM2203UpdateOne(int num, FMSAMPLE *buffer, int length);
+void YM2203UpdateOne(int num, void *buffer, int length);
 
 /*
 ** return : InterruptLevel
@@ -108,11 +116,11 @@ int YM2203TimerOver(int n, int c);
 #ifdef BUILD_YM2608
 /* -------------------- YM2608(OPNA) Interface -------------------- */
 
-int YM2608Init(int num, int baseclock, int rate, int bitsize,
+int YM2608Init(int num, int baseclock, int rate,int *pcmroma, int *pcmromb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2608Shutdown(void);
 void YM2608ResetChip(int num);
-void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length);
+void YM2608UpdateOne(int num, void **buffer, int length);
 
 int YM2608Write(int n, int a,int v);
 unsigned char YM2608Read(int n,int a);
@@ -125,11 +133,11 @@ int YM2608TimerOver(int n, int c );
 
 #define   MAX_2610    (2)
 
-int YM2610Init(int num, int baseclock, int rate,  int bitsize, int *pcmroma, int *pcmromb,
+int YM2610Init(int num, int baseclock, int rate, int *pcmroma, int *pcmromb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2610Shutdown(void);
 void YM2610ResetChip(int num);
-void YM2610UpdateOne(int num, FMSAMPLE **buffer, int length);
+void YM2610UpdateOne(int num, void **buffer, int length);
 
 int YM2610Write(int n, int a,int v);
 unsigned char YM2610Read(int n,int a);
@@ -142,11 +150,11 @@ void Set_YM2610_ADPCM_Buffers(int num, UBYTE *bufa, UBYTE *bufb, ULONG sizea, UL
 #endif /* BUILD_YM2610 */
 
 #ifdef BUILD_YM2612
-int YM2612Init(int num, int baseclock, int rate, int bitsize,
+int YM2612Init(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2612Shutdown(void);
 void YM2612ResetChip(int num);
-void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length);
+void YM2612UpdateOne(int num, void **buffer, int length);
 int YM2612Write(int n, int a,int v);
 unsigned char YM2612Read(int n,int a);
 int YM2612TimerOver(int n, int c );
@@ -165,12 +173,12 @@ FMSAMPLE *YM2612Buffer(int n);
 ** 'bitsize' is sampling bits (8 or 16)
 ** 'bufsiz' is the size of the buffer
 */
-int OPMInit(int num, int baseclock, int rate, int bitsize,
+int OPMInit(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void OPMShutdown(void);
 void OPMResetChip(int num);
 
-void OPMUpdateOne(int num, FMSAMPLE **buffer, int length );
+void OPMUpdateOne(int num, void **buffer, int length );
 void OPMWriteReg(int n, int r, int v);
 unsigned char OPMReadStatus(int n );
 /* ----- get pointer sound buffer ----- */

@@ -15,7 +15,14 @@
 #include <dos.h>
 #include <signal.h>
 #include <time.h>
+#include <ctype.h>
 
+/* inp header - should be moved to osdepend.h */
+typedef struct {
+    char name[9];      /* 8 bytes for game->name + NULL */
+    char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
+    char reserved[20]; /* for future use, possible store game options? */
+} INP_HEADER;
 
 int  msdos_init_seal (void);
 int  msdos_init_sound(void);
@@ -24,6 +31,7 @@ void msdos_shutdown_sound(void);
 void msdos_shutdown_input(void);
 int  frontend_help (int argc, char **argv);
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game);
+void init_inpdir(void);
 
 /* platform independent options go here */
 struct GameOptions options;
@@ -100,24 +108,31 @@ int fuzzycmp (const char *s, const char *l)
 	return gaps;
 }
 
-
-
 int main (int argc, char **argv)
 {
 	int res, i, j, game_index;
+    char *playbackname = NULL;
 
 	/* these two are not available in mame.cfg */
 	ignorecfg = 0;
 	errorlog = options.errorlog = 0;
+
+	game_index = -1;
 
 	for (i = 1;i < argc;i++) /* V.V_121997 */
 	{
 		if (stricmp(argv[i],"-ignorecfg") == 0) ignorecfg = 1;
 		if (stricmp(argv[i],"-log") == 0)
 			errorlog = options.errorlog = fopen("error.log","wa");
+        if (stricmp(argv[i],"-playback") == 0)
+		{
+			i++;
+			if (i < argc)  /* point to inp file name */
+				playbackname = argv[i];
+        }
 	}
 
-	allegro_init();
+    allegro_init();
 
 	/* Allegro changed the signal handlers... change them again to ours, to */
 	/* avoid the "Shutting down Allegro" message which confuses users into */
@@ -130,7 +145,6 @@ int main (int argc, char **argv)
 	signal(SIGINT,  signal_handler);
 	signal(SIGKILL, signal_handler);
 	signal(SIGQUIT, signal_handler);
-
 
 	set_config_file ("mame.cfg");
 
@@ -148,84 +162,118 @@ int main (int argc, char **argv)
 	if (res != 1234)
 		exit (res);
 
-	/* take the first commandline argument without "-" as the game name */
-	for (j = 1; j < argc; j++)
-		if (argv[j][0] != '-') break;
+    /* handle playback which is not available in mame.cfg */
+    init_inpdir(); /* Init input directory for opening .inp for playback */
 
-	game_index = -1;
+    if (playbackname != NULL)
+        options.playback = osd_fopen(playbackname,0,OSD_FILETYPE_INPUTLOG,0);
 
-	/* do we have a driver for this? */
+    /* check for game name embedded in .inp header */
+    if (options.playback)
+    {
+        INP_HEADER inp_header;
+
+        /* read playback header */
+        osd_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+
+        if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
+            osd_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
+        else
+        {
+            for (i = 0; (drivers[i] != 0); i++) /* find game and play it */
+			{
+                if (strcmp(drivers[i]->name, inp_header.name) == 0)
+                {
+                    game_index = i;
+                    printf("Playing back previously recorded game %s (%s) [press return]\n",
+                        drivers[game_index]->name,drivers[game_index]->description);
+                    getchar();
+                    break;
+                }
+            }
+        }
+    }
+
+	/* If not playing back a new .inp file */
+    if (game_index == -1)
+    {
+        /* take the first commandline argument without "-" as the game name */
+        for (j = 1; j < argc; j++)
+        {
+            if (argv[j][0] != '-') break;
+        }
+            /* do we have a driver for this? */
 #ifdef MAME_DEBUG
-	/* pick a random game */
-	if (stricmp(argv[j],"random") == 0)
-	{
-		struct timeval t;
+        /* pick a random game */
+        if (stricmp(argv[j],"random") == 0)
+        {
+            struct timeval t;
 
-		i = 0;
-		while (drivers[i]) i++;	/* count available drivers */
+            i = 0;
+            while (drivers[i]) i++;	/* count available drivers */
 
-		gettimeofday(&t,0);
-		srand(t.tv_sec);
-		game_index = rand() % i;
+            gettimeofday(&t,0);
+            srand(t.tv_sec);
+            game_index = rand() % i;
 
-		printf("Running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
-		getchar();
-	}
-	else
+            printf("Running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
+            getchar();
+        }
+        else
 #endif
-	{
-		for (i = 0; drivers[i] && (game_index == -1); i++)
-		{
-			if (stricmp(argv[j],drivers[i]->name) == 0)
-			{
-				game_index = i;
-				break;
-			}
-		}
+        {
+            for (i = 0; drivers[i] && (game_index == -1); i++)
+            {
+                if (stricmp(argv[j],drivers[i]->name) == 0)
+                {
+                    game_index = i;
+                    break;
+                }
+            }
 
+            /* educated guess on what the user wants to play */
+            if (game_index == -1)
+            {
+                int fuzz = 9999; /* best fuzz factor so far */
 
-		/* educated guess on what the user wants to play */
-		if (game_index == -1)
-		{
-			int fuzz = 9999; /* best fuzz factor so far */
+                for (i = 0; (drivers[i] != 0); i++)
+                {
+                    int tmp;
+                    tmp = fuzzycmp(argv[j], drivers[i]->description);
+                    /* continue if the fuzz index is worse */
+                    if (tmp > fuzz)
+                        continue;
 
-			for (i = 0; (drivers[i] != 0); i++)
-			{
-				int tmp;
-				tmp = fuzzycmp(argv[j], drivers[i]->description);
-				/* continue if the fuzz index is worse */
-				if (tmp > fuzz)
-					continue;
+                    /* on equal fuzz index, we prefer working, original games */
+                    if (tmp == fuzz)
+                    {
+                        if (drivers[i]->clone_of != 0) /* game is a clone */
+                        {
+                            /* if the game we already found works, why bother. */
+                            /* and broken clones aren't very helpful either */
+                            if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
+                                (drivers[i]->flags & GAME_NOT_WORKING))
+                                continue;
+                        }
+                        else continue;
+                    }
 
-				/* on equal fuzz index, we prefer working, original games */
-				if (tmp == fuzz)
-				{
-					if (drivers[i]->clone_of != 0) /* game is a clone */
-					{
-						/* if the game we already found works, why bother. */
-						/* and broken clones aren't very helpful either */
-						if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
-							(drivers[i]->flags & GAME_NOT_WORKING))
-							continue;
-					}
-					else continue;
-				}
+                    /* we found a better match */
+                    game_index = i;
+                    fuzz = tmp;
+                }
 
-				/* we found a better match */
-				game_index = i;
-				fuzz = tmp;
-			}
+                if (game_index != -1)
+                    printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
+            }
+        }
 
-			if (game_index != -1)
-				printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
-		}
-	}
-
-	if (game_index == -1)
-	{
-		printf("Game \"%s\" not supported\n", argv[j]);
-		return 1;
-	}
+        if (game_index == -1)
+        {
+            printf("Game \"%s\" not supported\n", argv[j]);
+            return 1;
+        }
+    }
 
 	/* parse generic (os-independent) options */
 	parse_cmdline (argc, argv, &options, game_index);
@@ -239,22 +287,34 @@ int main (int argc, char **argv)
 	}
 }
 
-	/* handle record and playback. These are not available in mame.cfg */
+	/* handle record which is not available in mame.cfg */
 	for (i = 1; i < argc; i++)
 	{
 		if (stricmp(argv[i],"-record") == 0)
 		{
-			i++;
+            i++;
 			if (i < argc)
 				options.record = osd_fopen(argv[i],0,OSD_FILETYPE_INPUTLOG,1);
 		}
-		if (stricmp(argv[i],"-playback") == 0)
-		{
-			i++;
-			if (i < argc)
-				options.playback = osd_fopen(argv[i],0,OSD_FILETYPE_INPUTLOG,0);
-		}
 	}
+
+    if (options.record)
+    {
+        INP_HEADER inp_header;
+
+        memset(&inp_header, '\0', sizeof(INP_HEADER));
+        strcpy(inp_header.name, drivers[game_index]->name);
+        /* MAME32 stores the MAME version numbers at bytes 9 - 11
+         * MAME DOS keeps this information in a string, the
+         * Windows code defines them in the Makefile.
+         */
+        /*
+        inp_header.version[0] = 0;
+        inp_header.version[1] = VERSION;
+        inp_header.version[2] = BETA_VERSION;
+        */
+        osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+    }
 
 	/* go for it */
 	res = run_game (game_index , &options);

@@ -8,36 +8,26 @@
     * Heavy Barrel                            (Japanese set)
 	* Bad Dudes vs Dragonninja                (USA set)
     * Dragonninja                             (Japanese version of above)
+	* Birdy Try                               (Japanese set?)
     * Robocop                                 (Japanese pirate rom set)
     * Hippodrome                              (USA set)
     * Fighting Fantasy                        (Japanese version of above)
     * Sly Spy                                 (USA set)
 	* Midnight Resistance                     (USA set)
     * Midnight Resistance                     (Japanese set)
+	* Boulderdash                             (Japanese set?)
 
 To do:
-Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg).
-Birdie Try runs on this hardware, roms are needed.
+Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg),
+Birdy Try
 
 Figure out weapon placement in Heavy Barrel.
 
 The truck tires in level 2 of Bad Dudes are misplaced (they are sprites).
 
-Sprite and background scrolling is not syncronized in Sly Spy (check the posters
-on the walls)
+Missing scroll field in Hippodrome
 
-
-Notes:
-	Missing scroll field in Hippodrome
-	Hippodrome can crash if you fight 'Serpent' enemy
-
-	Weapon placement in Heavy Barrel is still wrong.
-
-	No sound in Sly Spy or MidRes, they use a custom Deco processor.  It is a
-surface mounted 80-pin chip and appears to be HU6820 compatible.
-This chip is used for the backgrounds in Hippodrome, the main cpu in Bloody
-Wolf/Battle Ranger, and for sound in Caveman Ninja, Captain America, Dark Seal etc.
-
+Dips in Boulderdash (and some others)
 
   Thanks to Gouky & Richard Bush for information along the way, especially
   Gouky's patch for Bad Dudes & YM3812 information!
@@ -57,14 +47,13 @@ Mid res: bpx at c02 for level check, can go straight to credits.
          bpx 10a6 - so you can choose level at start of game.
          Put PC to 0xa1e in game to trigger continue screen
 
-
-SEE 0xdede in slyspy - scroll register from start of level 3
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "cpu/h6280/h6280.h"
+
 
 /* Video emulation definitions */
 int  dec0_vh_start(void);
@@ -110,14 +99,21 @@ extern int dec0_controls_read(int offset);
 extern int dec0_rotary_read(int offset);
 extern int midres_controls_read(int offset);
 extern int slyspy_controls_read(int offset);
+extern int slyspy_protection_r(int offset);
+extern void slyspy_state_w(int offset,int data);
+extern int slyspy_state_r(int offset);
+extern void slyspy_240000_w(int offset,int data);
+extern void slyspy_242000_w(int offset,int data);
+extern void slyspy_246000_w(int offset,int data);
+extern void slyspy_248000_w(int offset,int data);
+extern void slyspy_24c000_w(int offset,int data);
+extern void slyspy_24e000_w(int offset,int data);
 
 extern void dec0_i8751_write(int data);
 extern void dec0_i8751_reset(void);
-
-#if 0
-extern int hippo_6510_intf_r(int offset);
-extern void hippo_6510_intf_w(int offset,int data);
-#endif
+extern int hippodrm_test_r(int offset);
+extern int hippodrm_shared_r(int offset);
+extern void hippodrm_shared_w(int offset,int data);
 
 unsigned char *dec0_ram;
 
@@ -131,7 +127,7 @@ static void dec0_control_w(int offset,int data)
 			dec0_priority_w(0,data);
 			break;
 
-		case 2: /* An ack or DMA flag */
+		case 2: /* DMA flag? */
 			break;
 
 		case 4: /* 6502 sound cpu */
@@ -139,11 +135,11 @@ static void dec0_control_w(int offset,int data)
 			cpu_cause_interrupt(1,M6502_INT_NMI);
 			break;
 
-		case 6: /* Intel 8751 microcontroller - Bad Dudes & Heavy Barrel only */
+		case 6: /* Intel 8751 microcontroller - Bad Dudes, Heavy Barrel, Birdy Try only */
 			dec0_i8751_write(data);
 			break;
 
-		case 8: /* Interrupt ack (VBL - IRQ 6) (or could be DMA flag to graphics chips */
+		case 8: /* Interrupt ack (VBL - IRQ 6) */
 			break;
 
 		case 0xa: /* ? */
@@ -163,12 +159,10 @@ static void dec0_control_w(int offset,int data)
 
 static void slyspy_control_w(int offset, int data)
 {
-	int sound=data&0xff;
-
     switch (offset) {
     	case 0:
-			if (sound>0x2d) ADPCM_trigger(0,sound);
-			//soundlatch_w(0,data & 0xff);
+			soundlatch_w(0,data & 0xff);
+			cpu_cause_interrupt(1,H6280_INT_NMI);
 			break;
 		case 2:
 			dec0_priority_w(0,data);
@@ -178,11 +172,8 @@ static void slyspy_control_w(int offset, int data)
 
 static void midres_sound_w(int offset, int data)
 {
-    int sound=data&0xff;
-
-//soundlatch_w(0,data & 0xff);
-    if (sound>0x44)
-		ADPCM_trigger(0,sound);
+	soundlatch_w(0,data & 0xff);
+	cpu_cause_interrupt(1,H6280_INT_NMI);
 }
 
 /******************************************************************************/
@@ -190,12 +181,15 @@ static void midres_sound_w(int offset, int data)
 static struct MemoryReadAddress dec0_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
+	{ 0x242800, 0x243fff, MRA_BANK3 }, /* Robocop only */
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_r },
 	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_r },
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_r },
 	{ 0x300000, 0x30001f, dec0_rotary_read },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
+	{ 0x310000, 0x3107ff, paletteram_word_r },
+	{ 0x314000, 0x3147ff, paletteram_2_word_r },
 	{ 0xff8000, 0xffbfff, MRA_BANK1 }, /* Main ram */
 	{ 0xffc000, 0xffc7ff, MRA_BANK2 }, /* Sprites */
 	{ -1 }  /* end of table */
@@ -209,6 +203,7 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
  	{ 0x242000, 0x24207f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
 	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
+	{ 0x242800, 0x243fff, MWA_BANK3 }, /* Robocop only */
 	{ 0x244000, 0x245fff, dec0_pf1_data_w, &dec0_pf1_data },
 
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
@@ -231,52 +226,76 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryReadAddress hippodrm_sub_readmem[] =
+{
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x180000, 0x1800ff, hippodrm_shared_r },
+//1a0000 - control 0 1
+//1a1000 - data
+
+	{ 0x1d0000, 0x1d00ff, hippodrm_test_r },
+	{ 0x1f0000, 0x1f1fff, MRA_BANK8 }, /* Main ram */
+	{ 0x1ff402, 0x1ff403, H6280_irq_status_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress hippodrm_sub_writemem[] =
+{
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x180000, 0x1800ff, hippodrm_shared_w },
+	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
+	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
+	{ -1 }  /* end of table */
+};
+
 static struct MemoryReadAddress slyspy_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x244000, 0x244003, MRA_NOP }, /* ?? watchdog ?? */
+	{ 0x000000, 0x05ffff, MRA_ROM },
+	{ 0x244000, 0x244001, slyspy_state_r }, /* protection */
 	{ 0x304000, 0x307fff, MRA_BANK1 }, /* Sly spy main ram */
 	{ 0x308000, 0x3087ff, MRA_BANK2 }, /* Sprites */
+	{ 0x310000, 0x3107ff, paletteram_word_r },
 	{ 0x314008, 0x31400f, slyspy_controls_read },
-	{ 0x31c00c, 0x31c00f, MRA_NOP },	/* sound CPU read? */
+	{ 0x31c000, 0x31c00f, slyspy_protection_r },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress slyspy_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	/* All 0x23xxxx are moved from 0x24xxxx via patches to avoid conflicts */
-	{ 0x230000, 0x230007, dec0_pf2_control_0_w },
-	{ 0x230010, 0x230017, dec0_pf2_control_1_w },
-	{ 0x232000, 0x23207f, dec0_pf2_colscroll_w, &dec0_pf2_colscroll },
-	{ 0x232400, 0x2327ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
-	{ 0x238000, 0x238007, dec0_pf1_control_0_w },
-	{ 0x238010, 0x238017, dec0_pf1_control_1_w },
-	{ 0x23c000, 0x23c07f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
-	{ 0x23c400, 0x23c7ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
-	{ 0x238000, 0x239fff, dec0_pf1_data_w }, /* Used only by end sequence */
+	{ 0x000000, 0x05ffff, MWA_ROM },
 
-	/* PRIORITY WORD - still not found, perhaps mixed in with other playfields */
+	/* These locations aren't real!  They are just there so memory is allocated */
+	{ 0x232000, 0x23207f, MWA_NOP, &dec0_pf2_colscroll },
+	{ 0x232400, 0x2327ff, MWA_NOP, &dec0_pf2_rowscroll },
+	{ 0x23c000, 0x23c07f, MWA_NOP, &dec0_pf1_colscroll },
+	{ 0x23c400, 0x23c7ff, MWA_NOP, &dec0_pf1_rowscroll },
+	{ 0x200000, 0x2007ff, MWA_NOP, &dec0_pf2_data },
+	{ 0x202000, 0x203fff, MWA_NOP, &dec0_pf1_data },
 
-	{ 0x240000, 0x2407ff, dec0_pf2_data_w, &dec0_pf2_data },
-	{ 0x242000, 0x243fff, dec0_pf1_data_w, &dec0_pf1_data },
-	{ 0x244000, 0x244003, MWA_NOP }, /* ?? watchdog ?? */
-	{ 0x246000, 0x2467ff, dec0_pf2_data_w },
-	{ 0x248000, 0x2487ff, dec0_pf2_data_w },
-	{ 0x24a000, 0x24a003, MWA_NOP }, /* ?? watchdog ?? */
-	{ 0x24c000, 0x24c7ff, dec0_pf2_data_w },
-	{ 0x24e000, 0x24ffff, dec0_pf1_data_w },
+	{ 0x244000, 0x244001, MWA_NOP }, /* Extra protection? */
 
-// 248000 is really dec0_pf2_control_0_w
+	/* The location of p1 & pf2 can change between these according to protection */
+	{ 0x240000, 0x241fff, slyspy_240000_w },
+	{ 0x242000, 0x243fff, slyspy_242000_w },
+	{ 0x246000, 0x247fff, slyspy_246000_w },
+	{ 0x248000, 0x249fff, slyspy_248000_w },
+	{ 0x24c000, 0x24dfff, slyspy_24c000_w },
+	{ 0x24e000, 0x24ffff, slyspy_24e000_w },
 
+	{ 0x24a000, 0x24a001, slyspy_state_w }, /* Protection */
+
+	/* Pf3 is unaffected by protection */
 	{ 0x300000, 0x300007, dec0_pf3_control_0_w },
 	{ 0x300010, 0x300017, dec0_pf3_control_1_w },
 	{ 0x300800, 0x30087f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
+	{ 0x300c00, 0x300fff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
 	{ 0x301000, 0x3017ff, dec0_pf3_data_w, &dec0_pf3_data },
+
 	{ 0x304000, 0x307fff, MWA_BANK1, &dec0_ram }, /* Sly spy main ram */
 	{ 0x308000, 0x3087ff, MWA_BANK2, &spriteram },
 	{ 0x310000, 0x3107ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x314000, 0x314003, slyspy_control_w },
+	{ 0x31c000, 0x31c00f, MWA_NOP },
 	{ -1 }  /* end of table */
 };
 
@@ -321,26 +340,31 @@ static struct MemoryWriteAddress midres_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-#if 0
-static struct MemoryReadAddress hippo_sub_readmem[] =
-{
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x6000, 0x60ff, hippo_6510_intf_r },
-	{ 0xc000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress hippo_sub_writemem[] =
-{
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x6000, 0x60ff, hippo_6510_intf_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-#endif
-
 /******************************************************************************/
+
+static void YM3812_w(int offset, int data)
+{
+	switch (offset) {
+	case 0:
+		YM3812_control_port_0_w(0,data);
+		break;
+	case 1:
+		YM3812_write_port_0_w(0,data);
+		break;
+	}
+}
+
+static void YM2203_w(int offset, int data)
+{
+	switch (offset) {
+	case 0:
+		YM2203_control_port_0_w(0,data);
+		break;
+	case 1:
+		YM2203_write_port_0_w(0,data);
+		break;
+	}
+}
 
 static struct MemoryReadAddress dec0_s_readmem[] =
 {
@@ -354,12 +378,52 @@ static struct MemoryReadAddress dec0_s_readmem[] =
 static struct MemoryWriteAddress dec0_s_writemem[] =
 {
 	{ 0x0000, 0x05ff, MWA_RAM },
-	{ 0x0800, 0x0800, YM2203_control_port_0_w },
-	{ 0x0801, 0x0801, YM2203_write_port_0_w },
-	{ 0x1000, 0x1000, YM3812_control_port_0_w },
-	{ 0x1001, 0x1001, YM3812_write_port_0_w },
+	{ 0x0800, 0x0801, YM2203_w },
+	{ 0x1000, 0x1001, YM3812_w },
 	{ 0x3800, 0x3800, OKIM6295_data_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+/* Physical memory map (21 bits) */
+static struct MemoryReadAddress slyspy_s_readmem[] =
+{
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x0a0000, 0x0a0001, MRA_NOP }, /* Protection counter */
+	{ 0x0e0000, 0x0e0001, OKIM6295_status_0_r },
+	{ 0x0f0000, 0x0f0001, soundlatch_r },
+	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress slyspy_s_writemem[] =
+{
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x090000, 0x090001, YM3812_w },
+	{ 0x0b0000, 0x0b0001, YM2203_w},
+	{ 0x0e0000, 0x0e0001, OKIM6295_data_0_w },
+	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
+	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress midres_s_readmem[] =
+{
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x130000, 0x130001, OKIM6295_status_0_r },
+	{ 0x138000, 0x138001, soundlatch_r },
+	{ 0x1f0000, 0x1f1fff, MRA_BANK8 },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress midres_s_writemem[] =
+{
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x108000, 0x108001, YM3812_w },
+	{ 0x118000, 0x118001, YM2203_w },
+	{ 0x130000, 0x130001, OKIM6295_data_0_w },
+	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
+	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
 	{ -1 }  /* end of table */
 };
 
@@ -396,7 +460,7 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )										\
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )										\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service */						\
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 #define DEC0_COIN_SETTING \
 	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )	\
@@ -666,7 +730,7 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -714,6 +778,60 @@ INPUT_PORTS_START( midres_input_ports )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0, 8 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bouldash_input_ports )
+	DEC1_PLAYER1_CONTROL
+	DEC1_PLAYER2_CONTROL
+
+	PORT_START	/* Credits, start buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Dip switch bank 1 */
+	DEC0_COIN_SETTING
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x03, 0x03, "Energy", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Low" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x02, "High" )
+	PORT_DIPSETTING(    0x00, "Very High" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x10, "Yes" )
+	PORT_DIPNAME( 0x20, 0x20, "Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Part 2" )
+	PORT_DIPSETTING(    0x20, "Part 1" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x80, "Yes" )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -767,11 +885,16 @@ static void sound_irq(void)
 	cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
+static void sound_irq2(void)
+{
+	cpu_cause_interrupt(1,H6280_INT_IRQ2);
+}
+
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* 1.50 MHz */
-	{ YM2203_VOL(140,255) },
+	{ YM2203_VOL(40,95) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -786,21 +909,20 @@ static struct YM3812interface ym3812_interface =
 	sound_irq,
 };
 
+static struct YM3812interface ym3812b_interface =
+{
+	1,			/* 1 chip (no more supported) */
+	3000000,
+	{ 60 },
+	sound_irq2,
+};
+
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
-	{ 255 }
-};
-
-static struct ADPCMinterface adpcm_interface =
-{
-	1,			/* 1 chip */
-	8000,   /* 8000Hz playback */
-	3,			/* memory region 3 */
-	0,			/* init function */
-	{ 255 }
+	{ 41 }
 };
 
 /******************************************************************************/
@@ -835,7 +957,7 @@ static struct MachineDriver hbarrel_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -889,7 +1011,7 @@ static struct MachineDriver baddudes_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -984,13 +1106,14 @@ static struct MachineDriver hippodrm_machine_driver =
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
-		},
+		}
 #if 0
+,
 		{
-			CPU_M6502,
-			1000000,
+			CPU_H6280,
+			2000000,
 			4,
-			hippo_sub_readmem,hippo_sub_writemem,0,0,
+			hippodrm_sub_readmem,hippodrm_sub_writemem,0,0,
 			ignore_interrupt,0
 		}
 #endif
@@ -1006,7 +1129,7 @@ static struct MachineDriver hippodrm_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1030,78 +1153,24 @@ static struct MachineDriver hippodrm_machine_driver =
 	}
 };
 
-static struct MachineDriver midres_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			0,
-			midres_readmem,midres_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-#if 0
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,
-			2,
-			dec1_s_readmem,dec1_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-#endif
-	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-
-	midres_gfxdecodeinfo,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	midres_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
-
 static struct MachineDriver slyspy_machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
-			10000000,
+			12000000,
 			0,
 			slyspy_readmem,slyspy_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
-#if 0
 		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,
+			CPU_H6280 | CPU_AUDIO_CPU,
+			4000000,
 			2,
-			dec1_s_readmem,dec1_s_writemem,0,0,
-			interrupt,1
+			slyspy_s_readmem,slyspy_s_writemem,0,0,
+			ignore_interrupt,0
 		}
-#endif
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1114,7 +1183,7 @@ static struct MachineDriver slyspy_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1124,12 +1193,70 @@ static struct MachineDriver slyspy_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_YM2203,
+			&ym2203_interface
 		},
 		{
 			SOUND_YM3812,
-			&ym3812_interface
+			&ym3812b_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static struct MachineDriver midres_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,
+			0,
+			midres_readmem,midres_writemem,0,0,
+			m68_level6_irq,1 /* VBL */
+		},
+		{
+			CPU_H6280 | CPU_AUDIO_CPU,
+			4000000,
+			2,
+			midres_s_readmem,midres_s_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+
+	midres_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	dec0_vh_start,
+	dec0_vh_stop,
+	midres_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812b_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
 		}
 	}
 };
@@ -1408,8 +1535,7 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
 	ROM_REGION(0x10000) /* Encrypted code bank */
-	ROM_LOAD( "ew08",         0x0e000, 0x2000, 0x53010534 )
-	ROM_CONTINUE(0x0000,0xe000)
+	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
 ROM_START( ffantasy_rom )
@@ -1454,12 +1580,11 @@ ROM_START( ffantasy_rom )
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
 	ROM_REGION(0x10000) /* Encrypted code bank */
-	ROM_LOAD( "ew08",         0x0e000, 0x2000, 0x53010534 )
-	ROM_CONTINUE(0x0000,0xe000)
+	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
 ROM_START( slyspy_rom )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-3.17l",   0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
@@ -1467,44 +1592,32 @@ ROM_START( slyspy_rom )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fa05.11a",     0x008000, 0x04000, 0x09802924 )	/* chars */
-	/* 0c000-0ffff empty */
 	ROM_CONTINUE(             0x000000, 0x04000 )	/* the two halves are swapped */
-	/* 04000-07fff empty */
 	ROM_LOAD( "fa04.9a",      0x018000, 0x04000, 0xec25b895 )
-	/* 1c000-1ffff empty */
 	ROM_CONTINUE(             0x010000, 0x04000 )
-	/* 14000-17fff empty */
 	ROM_LOAD( "fa07.17a",     0x020000, 0x08000, 0xe932268b )	/* tiles */
-	/* 28000-3ffff empty */
 	ROM_CONTINUE(             0x040000, 0x08000 )
-	/* 48000-5ffff empty */
 	ROM_LOAD( "fa06.15a",     0x060000, 0x08000, 0xc4dd38c0 )
-	/* 68000-7ffff empty */
 	ROM_CONTINUE(             0x080000, 0x08000 )
-	/* 88000-9ffff empty */
 	ROM_LOAD( "fa09.22a",     0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
-	/* b0000-bffff empty */
 	ROM_CONTINUE(             0x0c0000, 0x10000 )
-	/* d0000-dffff empty */
 	ROM_LOAD( "fa08.21a",     0x0e0000, 0x10000, 0x4d7464db )
-	/* f0000-fffff empty */
 	ROM_CONTINUE(             0x100000, 0x10000 )
-	/* 110000-11ffff empty */
+
 	ROM_LOAD( "fa01.4a",      0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
 	ROM_LOAD( "fa03.7a",      0x140000, 0x20000, 0x0e7ea74d )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Custom sound CPU */
-	ROM_LOAD( "fa10.5h",      0x0e000, 0x02000, 0xdfd2ff25 )
-	ROM_CONTINUE(0x0000,0xe000)
+	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
 	ROM_REGION (0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 ROM_START( slyspy2_rom )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
@@ -1540,9 +1653,41 @@ ROM_START( slyspy2_rom )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Custom sound CPU */
-	ROM_LOAD( "fa10.5h",      0x0e000, 0x02000, 0xdfd2ff25 )
-	ROM_CONTINUE(0x0000,0xe000)
+	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
+
+	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
+ROM_END
+
+ROM_START( secretab_rom )
+	ROM_REGION(0x60000) /* 68000 code */
+	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x54353a84 )
+	ROM_LOAD_ODD ( "sa_03.bin",    0x00000, 0x10000, 0x1b534294 )
+	ROM_LOAD_EVEN( "sa_06.bin",    0x20000, 0x10000, 0x04a79266 )
+	ROM_LOAD_ODD ( "sa_04.bin",    0x20000, 0x10000, 0x641cc4b3 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fa05.11a",     0x008000, 0x04000, 0x09802924 )	/* chars */
+	ROM_CONTINUE(             0x000000, 0x04000 )	/* the two halves are swapped */
+	ROM_LOAD( "fa04.9a",      0x018000, 0x04000, 0xec25b895 )
+	ROM_CONTINUE(             0x010000, 0x04000 )
+	ROM_LOAD( "fa07.17a",     0x020000, 0x08000, 0xe932268b )	/* tiles */
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	ROM_LOAD( "fa06.15a",     0x060000, 0x08000, 0xc4dd38c0 )
+	ROM_CONTINUE(             0x080000, 0x08000 )
+	ROM_LOAD( "fa09.22a",     0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
+	ROM_CONTINUE(             0x0c0000, 0x10000 )
+	ROM_LOAD( "fa08.21a",     0x0e0000, 0x10000, 0x4d7464db )
+	ROM_CONTINUE(             0x100000, 0x10000 )
+
+	ROM_LOAD( "fa01.4a",      0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
+	ROM_LOAD( "fa03.7a",      0x140000, 0x20000, 0x0e7ea74d )
+	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
+	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
+
+	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
 	ROM_REGION (0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
@@ -1577,9 +1722,8 @@ ROM_START( midres_rom )
 	ROM_LOAD( "fl00",         0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",         0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Custom sound CPU */
-	ROM_LOAD( "fl16",         0x0e000, 0x2000, 0x66360bdf )
-	ROM_CONTINUE(0x0000,0xe000)
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
@@ -1614,175 +1758,130 @@ ROM_START( midresj_rom )
 	ROM_LOAD( "fl00", 0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02", 0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Unknown or corrupt sound CPU */
-	ROM_LOAD( "fl16", 0x00000, 0x10000, 0x66360bdf )
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fl17", 0x00000, 0x20000, 0x9029965d )
 ROM_END
 
+ROM_START( bouldash_rom )
+	ROM_REGION(0x60000) /* 68000 code */
+	ROM_LOAD_EVEN( "fn-15",   0x00000, 0x10000, 0xca19a967 )
+	ROM_LOAD_ODD ( "fn-12",   0x00000, 0x10000, 0x242bdc2a )
+	ROM_LOAD_EVEN( "fn-16",   0x20000, 0x10000, 0xb7217265 )
+	ROM_LOAD_ODD ( "fn-13",   0x20000, 0x10000, 0x19209ef4 )
+	ROM_LOAD_EVEN( "fn-17",   0x40000, 0x10000, 0x78a632a1 )
+	ROM_LOAD_ODD ( "fn-14",   0x40000, 0x10000, 0x69b6112d )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fn-04",      0x008000, 0x08000, 0x40f5a760 )	/* chars */
+	ROM_CONTINUE(           0x000000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fn-05",      0x018000, 0x08000, 0x824f2168 )
+	ROM_CONTINUE(           0x010000, 0x08000 )
+	ROM_LOAD( "fn-07",      0x020000, 0x08000, 0xeac6a3b3 )	/* tiles */
+	ROM_CONTINUE(           0x040000, 0x08000 )
+	ROM_LOAD( "fn-06",      0x060000, 0x08000, 0x3feee292 )
+	ROM_CONTINUE(           0x080000, 0x08000 )
+	ROM_LOAD( "fn-09",      0x0a0000, 0x10000, 0xc2b27bd2 )	/* tiles */
+	ROM_CONTINUE(           0x0c0000, 0x10000 )
+	ROM_LOAD( "fn-08",      0x0e0000, 0x10000, 0x5ac97178 )
+	ROM_CONTINUE(           0x100000, 0x10000 )
+	ROM_LOAD( "fn-01",      0x120000, 0x10000, 0x9333121b )	/* sprites */
+	ROM_LOAD( "fn-03",      0x140000, 0x10000, 0x254ba60f )
+	ROM_LOAD( "fn-00",      0x160000, 0x10000, 0xec18d098 )
+	ROM_LOAD( "fn-02",      0x180000, 0x10000, 0x4f060cba )
+
+	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_LOAD( "fn-10",      0x00000, 0x10000, 0xc74106e7 )
+
+	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
+ROM_END
+
+
+
+
+//MOVE THIS
+ROM_START( birdtry_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "ek-04.bin",     0x00000, 0x10000, 0x4877b09e )
+	ROM_LOAD_ODD ( "ek-01.bin",     0x00000, 0x10000, 0x8b41c219 )
+	ROM_LOAD_EVEN( "ek-05.bin",     0x20000, 0x10000, 0x2087d570 )
+	ROM_LOAD_ODD ( "ek-02.bin",     0x20000, 0x10000, 0x815536ae )
+	ROM_LOAD_EVEN( "ek-06.bin",     0x40000, 0x10000, 0xda4e3fbc )
+	ROM_LOAD_ODD ( "ek-03.bin",     0x40000, 0x10000, 0x7fed7c46 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ek-25.bin",     0x000000, 0x08000, 0x8649762c )	/* chars */
+	ROM_LOAD( "ek-26.bin",     0x010000, 0x08000, 0xf8189bbd )
+
+	ROM_LOAD( "ek-18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
+	ROM_LOAD( "ek-17.bin",     0x030000, 0x10000, 0xa4f186ac )
+	ROM_LOAD( "ek-20.bin",     0x040000, 0x10000, 0x2fc13be0 )
+	ROM_LOAD( "ek-19.bin",     0x050000, 0x10000, 0xd6b47869 )
+	ROM_LOAD( "ek-22.bin",     0x060000, 0x10000, 0x50d6a1ad )
+	ROM_LOAD( "ek-21.bin",     0x070000, 0x10000, 0xf01d75c5 )
+	ROM_LOAD( "ek-24.bin",     0x080000, 0x10000, 0xae377361 )
+	ROM_LOAD( "ek-23.bin",     0x090000, 0x10000, 0xbbdaf771 )
+
+
+
+ROM_LOAD( "ek-17.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
+	/* b0000-bfff empty */
+ROM_LOAD( "ek-19.bin",     0x0c0000, 0x10000, 0x5855e8ef )
+	/* d0000-dfff empty */
+ROM_LOAD( "ek-21.bin",     0x0e0000, 0x10000, 0x99db7b9c )
+	/* f0000-ffff empty */
+ROM_LOAD( "ek-23.bin",     0x100000, 0x10000, 0x33ce2b1a )
+	/* 110000-11fff empty */
+
+//REMEMBER altered memory.c
+
+
+	ROM_LOAD( "ek-15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
+	//ROM_LOAD( "ek-16.bin",     0xa0000, 0x10000, 0xa5684574 )
+
+	ROM_LOAD( "ek-11.bin",     0x140000, 0x10000, 0x5c768315 )
+	//ROM_LOAD( "ek-12.bin",     0xc0000, 0x10000, 0x8b64d7a4 )
+
+	ROM_LOAD( "ek-13.bin",     0x160000, 0x10000, 0x56e3ed65 )
+
+	//ROM_LOAD( "ek-14.bin",     0xe0000, 0x10000, 0xbedfe7f3 )
+
+	ROM_LOAD( "ek-09.bin",     0x180000, 0x10000, 0x26240ea0 )
+
+	//ROM_LOAD( "ek-10.bin",     0x100000, 0x10000, 0x47d95447 )
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0xa127f0f7 )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "ek-08.bin",     0x0000, 0x10000, 0x645c5b68 )
+ROM_END
+
 /******************************************************************************/
 
-/* Sly Spy has many areas all mixed in with one another, they need to be
-	seperated via patches unless we find some byte written somewhere that
-  is used to enable each area on it's own */
-static void slyspy_patch(void)
+static void h6280_decrypt(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* Move pf2 registers so they don't conflict */
-	WRITE_WORD (&RAM[0x132E],0x0023);
-	WRITE_WORD (&RAM[0x133A],0x0023);
-	WRITE_WORD (&RAM[0x1346],0x0023);
-	WRITE_WORD (&RAM[0x1352],0x0023);
-	WRITE_WORD (&RAM[0x135E],0x0023);
-	WRITE_WORD (&RAM[0x136A],0x0023);
-	WRITE_WORD (&RAM[0x1376],0x0023);
-	WRITE_WORD (&RAM[0x1382],0x0023);
-
-	WRITE_WORD (&RAM[0xD292],0x0023);
-
-	/* Move pf1 registers so they don't conflict */
-	WRITE_WORD (&RAM[0x12BC],0x0023);
-	WRITE_WORD (&RAM[0x12C8],0x0023);
-	WRITE_WORD (&RAM[0x12D4],0x0023);
-	WRITE_WORD (&RAM[0x12E0],0x0023);
-	WRITE_WORD (&RAM[0x12EC],0x0023);
-	WRITE_WORD (&RAM[0x12F8],0x0023);
-	WRITE_WORD (&RAM[0x1304],0x0023);
-	WRITE_WORD (&RAM[0x1310],0x0023);
-
-	/* Move row scroll */
-	WRITE_WORD (&RAM[0xE3D8],0x0023);
-	WRITE_WORD (&RAM[0xE3DE],0x0023);
-	WRITE_WORD (&RAM[0xE3E4],0x0023);
-	WRITE_WORD (&RAM[0xE3EA],0x0023);
-	WRITE_WORD (&RAM[0xE3F0],0x0023);
-
-	/* Playfield 2(?) rowscroll area & 0x80 byte colscroll area */
-	WRITE_WORD (&RAM[0x1162],0x0023);
-	WRITE_WORD (&RAM[0x1176],0x0023);
-
-	/* Playfield 3(?) rowscroll area & 0x80 byte colscroll area */
-	WRITE_WORD (&RAM[0x10EE],0x0023);
-	WRITE_WORD (&RAM[0x1102],0x0023);
-
-	/* Text areas used by end sequence, conflicts with pf2 */
-	WRITE_WORD (&RAM[0x4542],0x0023);
-	WRITE_WORD (&RAM[0x48D2],0x0023);
-	WRITE_WORD (&RAM[0x4900],0x0023);
-	WRITE_WORD (&RAM[0x4946],0x0023);
-	WRITE_WORD (&RAM[0x49D0],0x0023);
-	WRITE_WORD (&RAM[0x49FC],0x0023);
-	WRITE_WORD (&RAM[0x4A40],0x0023);
-	WRITE_WORD (&RAM[0x4A70],0x0023);
-
-	/* Uncomment this to make end sequence appear at end of first level *
-	WRITE_WORD (&RAM[0x5e0],0x4E71);
-	WRITE_WORD (&RAM[0x5e2],0x4E71);	 */
-}
-
-/******************************************************************************/
-
-/* Mish - Decryption of code bank rom 8 */
-static void hippo_decode(void)
-{
-	unsigned char *MYRAM = Machine->memory_region[4];
 	int i;
+	unsigned char *RAM = Machine->memory_region[2];
 
 	/* Read each byte, decrypt it */
-	for (i=0x00000; i<0x10000; i++) {
-	  	int swap1=MYRAM[i]&0x80;
-	    int swap2=MYRAM[i]&0x1;
-
-	    MYRAM[i]=(MYRAM[i]&0x7e);
-	    if (swap1) MYRAM[i]+=0x1;
-	    if (swap2) MYRAM[i]+=0x80;
-	}
+	for (i=0x00000; i<0x10000; i++)
+		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x1) << 7) | ((RAM[i] & 0x80) >> 7);
 }
 
-/******************************************************************************/
+static void slyspy_patch(void)
+{
+	unsigned char *RAM = Machine->memory_region[2];
 
-/* OKI sample tables for Sly Spy & Mid Res as their sound CPU is not yet emulated */
-ADPCM_SAMPLES_START(slyspy_samples)
-ADPCM_SAMPLE(0x2e,0x0120,0x0480*2)
-ADPCM_SAMPLE(0x2f,0x05a0,0x0440*2)
-ADPCM_SAMPLE(0x30,0x09e0,0x0c40*2)
-ADPCM_SAMPLE(0x31,0x1620,0x0a00*2)
-ADPCM_SAMPLE(0x32,0x2020,0x1400*2)
-ADPCM_SAMPLE(0x33,0x3420,0x06c0*2)
-ADPCM_SAMPLE(0x34,0x3ae0,0x0c40*2)
-ADPCM_SAMPLE(0x35,0x4720,0x0240*2)
-ADPCM_SAMPLE(0x36,0x4960,0x0440*2)
-ADPCM_SAMPLE(0x37,0x4da0,0x0980*2)
-ADPCM_SAMPLE(0x38,0x5720,0x09c0*2)
-ADPCM_SAMPLE(0x39,0x60e0,0x0600*2)
-ADPCM_SAMPLE(0x3a,0x66e0,0x0280*2)
-ADPCM_SAMPLE(0x3b,0x6960,0x0240*2)
-ADPCM_SAMPLE(0x3c,0x6ba0,0x0780*2)
-ADPCM_SAMPLE(0x3d,0x7320,0x0480*2)
-ADPCM_SAMPLE(0x3e,0x77a0,0x1000*2)
-ADPCM_SAMPLE(0x3f,0x87a0,0x0a80*2)
-ADPCM_SAMPLE(0x40,0xa020,0x0c40*2)
-ADPCM_SAMPLE(0x41,0x9220,0x0e00*2)
-ADPCM_SAMPLE(0x42,0xac60,0x0400*2)
-ADPCM_SAMPLE(0x43,0xb060,0x0a00*2)
-ADPCM_SAMPLE(0x44,0xba60,0x1d00*2)
-ADPCM_SAMPLE(0x45,0xd760,0x0c40*2)
-ADPCM_SAMPLE(0x46,0xe3a0,0x1500*2)
-ADPCM_SAMPLE(0x47,0xf8a0,0x1340*2)
-ADPCM_SAMPLE(0x48,0x10be0,0x1040*2)
-ADPCM_SAMPLE(0x49,0x11c20,0x0b80*2)
-ADPCM_SAMPLE(0x4a,0x127a0,0x0680*2)
-ADPCM_SAMPLE(0x4b,0x12e20,0x0ac0*2)
-ADPCM_SAMPLE(0x4c,0x138e0,0x3e00*2)
-ADPCM_SAMPLE(0x4d,0x176e0,0x1400*2)
-ADPCM_SAMPLE(0x4e,0x194e0,0x0600*2)
-ADPCM_SAMPLE(0x4f,0x19ae0,0x1c00*2)
-ADPCM_SAMPLE(0x50,0x18ae0,0x0a00*2)
-ADPCM_SAMPLE(0x51,0x1b6e0,0x1a00*2)
-ADPCM_SAMPLES_END
+	h6280_decrypt();
 
-ADPCM_SAMPLES_START(midres_samples)
-ADPCM_SAMPLE(0x45,0x0130,0x00c0*2)
-ADPCM_SAMPLE(0x46,0x01f0,0x03c0*2)
-ADPCM_SAMPLE(0x47,0x05b0,0x0600*2)
-ADPCM_SAMPLE(0x48,0x0bb0,0x0540*2)
-ADPCM_SAMPLE(0x49,0x10f0,0x0600*2)
-ADPCM_SAMPLE(0x4a,0x16f0,0x0740*2)
-ADPCM_SAMPLE(0x4b,0x1e30,0x0300*2)
-ADPCM_SAMPLE(0x4c,0x2130,0x0c00*2)
-ADPCM_SAMPLE(0x4d,0x2d30,0x08c0*2)
-ADPCM_SAMPLE(0x4e,0x35f0,0x0680*2)
-ADPCM_SAMPLE(0x4f,0x3c70,0x0a40*2)
-ADPCM_SAMPLE(0x50,0x46b0,0x0b40*2)
-ADPCM_SAMPLE(0x51,0x51f0,0x0940*2)
-ADPCM_SAMPLE(0x52,0x5b30,0x07c0*2)
-ADPCM_SAMPLE(0x53,0x62f0,0x0980*2)
-ADPCM_SAMPLE(0x54,0x6c70,0x0a00*2)
-ADPCM_SAMPLE(0x55,0x7670,0x1200*2)
-ADPCM_SAMPLE(0x56,0x8870,0x0ac0*2)
-ADPCM_SAMPLE(0x57,0x9330,0x0800*2)
-ADPCM_SAMPLE(0x58,0x9b30,0x0600*2)
-ADPCM_SAMPLE(0x59,0xa130,0x0280*2)
-ADPCM_SAMPLE(0x5a,0xa3b0,0x1140*2)
-ADPCM_SAMPLE(0x5b,0xb4f0,0x1200*2)
-ADPCM_SAMPLE(0x5c,0xc6f0,0x1200*2)
-ADPCM_SAMPLE(0x5d,0xd8f0,0x0900*2)
-ADPCM_SAMPLE(0x5e,0xe1f0,0x1000*2)
-ADPCM_SAMPLE(0x5f,0xf1f0,0x0680*2)
-ADPCM_SAMPLE(0x60,0x10000,0x2480*2)
-ADPCM_SAMPLE(0x61,0x12480,0x0b80*2)
-ADPCM_SAMPLE(0x62,0x13000,0x1600*2)
-ADPCM_SAMPLE(0x63,0x14600,0x0e00*2)
-ADPCM_SAMPLE(0x64,0x15400,0x0a00*2)
-ADPCM_SAMPLE(0x65,0x15e00,0x1500*2)
-ADPCM_SAMPLE(0x66,0x17300,0x0c80*2)
-ADPCM_SAMPLE(0x67,0x17f80,0x1140*2)
-ADPCM_SAMPLE(0x68,0x190c0,0x1c40*2)
-ADPCM_SAMPLE(0x69,0x1ad00,0x2400*2)
-ADPCM_SAMPLE(0x6a,0x1d100,0x1400*2)
-ADPCM_SAMPLES_END
+	/* Slyspy sound cpu has some protection */
+	RAM[0xf2d]=0xea;
+	RAM[0xf2e]=0xea;
+}
 
 /******************************************************************************/
 
@@ -2152,6 +2251,31 @@ struct GameDriver drgninja_driver =
 	drgninja_hiload, drgninja_hisave
 };
 
+struct GameDriver birdtry_driver =
+{
+	__FILE__,
+	0,
+	"birdtry",
+	"Heavy Barrel",
+	"1987",
+	"Data East USA",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&hbarrel_machine_driver,
+	dec0_custom_memory,
+
+	birdtry_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hbarrel_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
 struct GameDriver robocopp_driver =
 {
 	__FILE__,
@@ -2191,7 +2315,7 @@ struct GameDriver hippodrm_driver =
 	dec0_custom_memory,
 
 	hippodrm_rom,
-	hippo_decode, 0,
+	h6280_decrypt, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2216,7 +2340,7 @@ struct GameDriver ffantasy_driver =
 	dec0_custom_memory,
 
 	ffantasy_rom,
-	hippo_decode, 0,
+	h6280_decrypt, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2241,9 +2365,9 @@ struct GameDriver slyspy_driver =
 	dec0_custom_memory,
 
 	slyspy_rom,
-	slyspy_patch, 0,
+	slyspy_patch,0,
 	0,
-	(void *)slyspy_samples,
+	0,
 
 	slyspy_input_ports,
 
@@ -2266,9 +2390,34 @@ struct GameDriver slyspy2_driver =
 	dec0_custom_memory,
 
 	slyspy2_rom,
-	slyspy_patch, 0,
+	slyspy_patch,0,
 	0,
-	(void *)slyspy_samples,
+	0,
+
+	slyspy_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	slyspy_hiload,slyspy_hisave
+};
+
+struct GameDriver secretab_driver =
+{
+	__FILE__,
+	&slyspy_driver,
+	"secretab",
+	"Sly Spy (revision 2)",
+	"1989",
+	"Data East USA",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&slyspy_machine_driver,
+	dec0_custom_memory,
+
+	secretab_rom,
+	0,0,
+	0,
+	0,
 
 	slyspy_input_ports,
 
@@ -2293,7 +2442,7 @@ struct GameDriver midres_driver =
 	midres_rom,
 	0, 0,
 	0,
-	(void *)midres_samples,
+	0,
 
 	midres_input_ports,
 
@@ -2318,11 +2467,36 @@ struct GameDriver midresj_driver =
 	midresj_rom,
 	0, 0,
 	0,
-	(void *)midres_samples,
+	0,
 
 	midres_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	midres_hiload, midres_hisave
+};
+
+struct GameDriver bouldash_driver =
+{
+	__FILE__,
+	0,
+	"bouldash",
+	"Boulderdash / Boulderdash Part 2",
+	"1990",
+	"Data East Corporation",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&slyspy_machine_driver,
+	dec0_custom_memory,
+
+	bouldash_rom,
+	slyspy_patch, 0,
+	0,
+	0,
+
+	bouldash_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0,0
 };

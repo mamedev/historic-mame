@@ -6,12 +6,12 @@
 
 #include "osdepend.h"
 #include "cpu/z80/z80.h"
-#include "cpu/m68000/d68000.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z8000/z8000.h"
 
 int DasmZ80(char *dest,int PC);
 int Dasm6502(char *buf,int pc);
+int Dasm6280(char *buf,int pc);
 
 #define LOOP_CHECK 32
 #define MAX_CPU 10
@@ -266,7 +266,7 @@ void asg_T11Trace(unsigned char *RAM, int PC)
 
 void asg_68000Trace(unsigned char *RAM, int PC)
 {
-	extern int m68000_disassemble(char *buffer, int pc);
+	extern int m68k_disassemble(char *buffer, int pc);
 
 	if (traceon && traceFile[current])
 	{
@@ -284,7 +284,7 @@ void asg_68000Trace(unsigned char *RAM, int PC)
 			if (loops[current])
 				fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
 			loops[current]=0;
-			m68000_disassemble(temp,PC);
+			m68k_disassemble(temp,PC);
 			fprintf(traceFile[current],"%06X: %s\n",PC,temp);
 			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
 			lastPC[current][LOOP_CHECK-1]=PC;
@@ -526,6 +526,34 @@ void asg_32010Trace(unsigned char *RAM, int PC)
                                 fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
 			loops[current]=0;
                         Dasm32010(temp,RAM+(PC<<1));
+			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
+void asg_6280Trace(unsigned char *RAM, int PC)
+{
+	extern int DAsm(char *S,unsigned short A);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+				fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+			Dasm6280(temp,PC);
 			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
 			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
 			lastPC[current][LOOP_CHECK-1]=PC;

@@ -147,24 +147,24 @@ static void plot_8_pixel (int x, int y, int * col)
 
 void astinvad_videoram_w (int offset,int data)
 {
-        if (astinvad_videoram[offset] != data)
+	if (astinvad_videoram[offset] != data)
 	{
-                int i,x,y,colors[8];
+		int i,x,y,colors[8];
 
-                astinvad_videoram[offset] = data;
+		astinvad_videoram[offset] = data;
 
-		y = offset / 30;
-		x = 8 * (offset % 30);
+		y = offset / 32;
+		x = 8 * (offset % 32);
 
-                for (i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		{
 			if (!(data & 0x01))
-                                colors[i] = Machine->pens[BLACK];
+				colors[i] = Machine->pens[BLACK];
 			else
-                                colors[i] = Machine->pens[astinvad_lookup[31-y/8][31-x/8]];
+				colors[i] = Machine->pens[astinvad_lookup[31-y/8][31-x/8]];
 			data >>= 1;
 		}
-                plot_8_pixel(x, y, colors);
+		plot_8_pixel(x, y, colors);
 	}
 }
 
@@ -189,7 +189,6 @@ static void plot_pixel_8080 (int x, int y, int col)
 	/* TODO: we should mark 8 bits dirty at a time */
 	osd_mark_dirty (x,y,x,y,0);
 }
-
 void spaceint_videoram_w (int offset,int data) /* LT 23-12-1998 */ /*--WIP--*/
  {
    unsigned char *RAM = Machine->memory_region[2];
@@ -214,7 +213,6 @@ void spaceint_videoram_w (int offset,int data) /* LT 23-12-1998 */ /*--WIP--*/
 		}
 	}
 }
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.

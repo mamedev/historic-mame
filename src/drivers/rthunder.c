@@ -28,6 +28,12 @@ dumped?. The game uses more than 1 wave for sure.
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6808/m6808.h"
 
+/* This is the clock speed in Hz divided by 64 that is connected to the E pin on the MCU */
+/* Each pulse on the E pin increments timer A, wich is used for music tempo. */
+/* I've made the decision to downgrade the timer accuracy to allow better speed. */
+/* Looking at the code tho, its more than accurate for its purpose. */
+#define MCU_E_CLK (1500000/64) /* Hz */
+
 extern unsigned char *videoram, *spriteram, *dirtybuffer;
 
 /*******************************************************************/
@@ -189,16 +195,27 @@ static void int_enable_w( int offs, int data ) {
 static void *rt_timer = 0;
 static unsigned char *hd_regs;
 
+
 static void rt_timer_proc( int param )
 {
-	rt_timer = 0;
+	int current_time, total_time, old_time;
 
-	/* update current time with compare time */
-	hd_regs[0x09] = hd_regs[0x0b];
-	hd_regs[0x0a] = hd_regs[0x0c];
+	current_time = ( hd_regs[0x09] << 8 ) | hd_regs[0x0a];
+	total_time = ( hd_regs[0x0b] << 8 ) | hd_regs[0x0c];
 
-	if ( hd_regs[0x08] & 8 )
-		cpu_cause_interrupt( 2, M6808_INT_OCI );
+	old_time = current_time;
+
+	/* increment timer A */
+	current_time += 64;
+
+	/* update time */
+	hd_regs[0x09] = ( current_time >> 8 ) & 0xff;
+	hd_regs[0x0a] = current_time & 0xff;
+
+	if ( total_time >= old_time && total_time <= current_time ) {
+		if ( hd_regs[0x08] & 8 )
+			cpu_cause_interrupt( 2, M6808_INT_OCI );
+	}
 }
 
 void rt_stop_mcu_timer( void ) {
@@ -206,24 +223,6 @@ void rt_stop_mcu_timer( void ) {
 		timer_remove( rt_timer );
 		rt_timer = 0;
 	}
-}
-
-static void rt_start_mcu_timer( void )
-{
-	int total_time, current_time;
-
-	current_time = ( hd_regs[0x09] << 8 ) | hd_regs[0x0a];
-	total_time = ( hd_regs[0x0b] << 8 ) | hd_regs[0x0c];
-
-	total_time = ( total_time - current_time );
-
-	total_time &= 0xffff;
-
-	if ( rt_timer )
-		timer_remove( rt_timer );
-
-	/* the 0.65 adjustement is a kludge to get the music tempo right */
-	rt_timer = timer_set( TIME_IN_USEC( total_time ) * 0.65, 0,rt_timer_proc );
 }
 
 static int hd_regs_r( int offset )
@@ -236,9 +235,6 @@ static int hd_regs_r( int offset )
 static void hd_regs_w( int offset, int data )
 {
 	hd_regs[offset] = data;
-
-	if ( offset == 0x0c || offset == 0x0a )	// Timer A
-		rt_start_mcu_timer();
 }
 
 /*******************************************************************/
@@ -317,7 +313,7 @@ static struct MemoryReadAddress mcu_readmem[] =
 {
 	{ 0x0000, 0x0027, hd_regs_r },
 	{ 0x0028, 0x013f, MRA_RAM },
-	{ 0x12c8, 0x1307, namcos1_sound_r }, /* PSG device */
+	{ 0x1100, 0x113f, MRA_RAM, &namco_soundregs }, /* PSG device */
 	{ 0x1000, 0x13ff, shared_r },
 	{ 0x1400, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
@@ -334,7 +330,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x0027, hd_regs_w, &hd_regs },
 	{ 0x0028, 0x013f, MWA_RAM },
-	{ 0x12c8, 0x1307, namcos1_sound_w }, /* PSG device */
+	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device */
 	{ 0x1000, 0x13ff, shared_w },
 	{ 0x1400, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
@@ -468,22 +464,37 @@ static struct YM2151interface ym2151_interface =
 {
 	1,                      /* 1 chip */
 	3579580,                /* 3.579580 MHz ? */
-	{ 30 },
+	{ YM3012_VOL(0,OSD_PAN_CENTER,30,OSD_PAN_CENTER) },	/* only right channel is connected */
 	{ 0 },
 	{ 0 }
 };
 
-static struct namcos1_interface ns1_interface =
+static struct namco_interface namco_interface =
 {
-	12000,	/* Hz */
-	70,	/* volume */
-	-1
+	23920/2,/* sample rate (approximate value) */
+	8,		/* number of voices */
+	16,		/* gain adjustment */
+	255,	/* playback volume */
+	-1,		/* memory region */
+	0		/* stereo */
 };
+
 
 static void rt_init_machine( void ) {
 	int_enabled[0] = int_enabled[1] = 1;
+
+	/* stop timer if running */
 	rt_stop_mcu_timer();
+
+	/* make sure we dont trigger interrupts */
 	hd_regs[0x08] = 0;
+
+	/* Init timer A */
+	hd_regs[0x09] = 0;
+	hd_regs[0x0a] = 0;
+
+	/* start up Timer A */
+	rt_timer = timer_pulse( TIME_IN_HZ( MCU_E_CLK ), 0,rt_timer_proc );
 }
 
 static int rt_interrupt( void ) {
@@ -539,15 +550,15 @@ static struct MachineDriver machine_driver =
 	rthunder_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
-			SOUND_NAMCOS1,
-			&ns1_interface
+			SOUND_NAMCO,
+			&namco_interface
 		}
 	}
 };

@@ -10,7 +10,26 @@ Data East machine functions - Bryan McPhail, mish@tendril.force9.net
 #include "cpu/m6502/m6502.h"
 
 extern unsigned char *dec0_ram;
-static int GAME,i8751_return;
+static int GAME,i8751_return,slyspy_state;
+
+void dec0_pf1_control_0_w(int offset,int data);
+void dec0_pf1_control_1_w(int offset,int data);
+void dec0_pf1_rowscroll_w(int offset,int data);
+void dec0_pf1_colscroll_w(int offset,int data);
+void dec0_pf1_data_w(int offset,int data);
+int dec0_pf1_data_r(int offset);
+void dec0_pf2_control_0_w(int offset,int data);
+void dec0_pf2_control_1_w(int offset,int data);
+void dec0_pf2_rowscroll_w(int offset,int data);
+void dec0_pf2_colscroll_w(int offset,int data);
+void dec0_pf2_data_w(int offset,int data);
+int dec0_pf2_data_r(int offset);
+void dec0_pf3_control_1_w(int offset,int data);
+void dec0_pf3_control_0_w(int offset,int data);
+void dec0_pf3_data_w(int offset,int data);
+
+//dont need this??
+void dec0_priority_w(int offset,int data);
 
 /******************************************************************************/
 
@@ -28,6 +47,10 @@ int dec0_controls_read(int offset)
 			return (readinputport(3) + (readinputport(4) << 8));
 
 		case 8: /* Intel 8751 mc, Bad Dudes & Heavy Barrel only */
+
+	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x30c000+offset);
+
+
 			return i8751_return;
 	}
 
@@ -103,14 +126,189 @@ int slyspy_controls_read(int offset)
 	return 0xffff;
 }
 
+int slyspy_protection_r(int offset)
+{
+	/* These values are for Boulderdash, I have no idea what they do in Slyspy */
+	switch (offset) {
+		case 0: 	return 0;
+		case 2: 	return 0x13;
+		case 4:		return 0;
+		case 6:		return 0x2;
+	}
+
+	if (errorlog) fprintf(errorlog,"%04x, Unknown protection read at 30c000 %d\n",cpu_getpc(),offset);
+	return 0;
+}
+
+/*
+	The memory map in Sly Spy can change between 4 states according to the protection!
+
+	Default state (called by Traps 1, 3, 4, 7, C)
+
+	240000 - 24001f = control   (Playfield 2 area)
+	242000 - 24207f = colscroll
+	242400 - 2425ff = rowscroll
+	246000 - 2467ff = data
+
+	248000 - 24801f = control  (Playfield 1 area)
+	24c000 - 24c07f = colscroll
+	24c400 - 24c4ff = rowscroll
+	24e000 - 24e7ff = data
+
+	State 1 (Called by Trap 9) uses this memory map:
+
+	248000 = pf1 data
+	24c000 = pf2 data
+
+	State 2 (Called by Trap A) uses this memory map:
+
+	240000 = pf2 data
+	242000 = pf1 data
+	24e000 = pf1 data
+
+	State 3 (Called by Trap B) uses this memory map:
+
+	240000 = pf1 data
+	248000 = pf2 data
+
+*/
+
+void slyspy_state_w(int offset,int data)
+{
+	slyspy_state=0;
+}
+
+int slyspy_state_r(int offset)
+{
+	slyspy_state++;
+	slyspy_state=slyspy_state%4;
+	return 0; /* Value doesn't mater */
+}
+
+void slyspy_240000_w(int offset,int data)
+{
+	switch (slyspy_state) {
+		case 0x3:
+			dec0_pf1_data_w(offset,data);
+			return;
+		case 0x2:
+			dec0_pf2_data_w(offset,data);
+			return;
+		case 0x0:
+			if (offset<0x10) dec0_pf2_control_0_w(offset,data);
+			else if (offset<0x20) dec0_pf2_control_1_w(offset-0x10,data);
+			return;
+	}
+	if (errorlog) fprintf(errorlog,"Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+}
+
+void slyspy_242000_w(int offset,int data)
+{
+	switch (slyspy_state) {
+		case 0x2: /* Trap A */
+			dec0_pf1_data_w(offset,data);
+			return;
+		case 0x0: /* Trap C */
+			if (offset<0x80) dec0_pf2_colscroll_w(offset,data);
+			else if (offset<0x600) dec0_pf2_rowscroll_w(offset-0x400,data);
+			return;
+	}
+	if (errorlog) fprintf(errorlog,"Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+}
+
+void slyspy_246000_w(int offset,int data)
+{
+	switch (slyspy_state) {
+		case 0x0:
+			dec0_pf2_data_w(offset,data);
+			return;
+	}
+	if (errorlog) fprintf(errorlog,"Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+}
+
+void slyspy_248000_w(int offset,int data)
+{
+	switch (slyspy_state) {
+		case 0x1:
+			dec0_pf1_data_w(offset,data);
+			return;
+		case 0x3:
+			dec0_pf2_data_w(offset,data);
+			return;
+		case 0x0:
+			if (offset<0x10) dec0_pf1_control_0_w(offset,data);
+			else if (offset<0x20) dec0_pf1_control_1_w(offset-0x10,data);
+			return;
+	}
+	if (errorlog) fprintf(errorlog,"Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+}
+
+void slyspy_24c000_w(int offset,int data)
+{
+	switch (slyspy_state) {
+		case 0x1: /* Trap 9 */
+			dec0_pf2_data_w(offset,data);
+			return;
+		case 0x0: /* Trap C */
+			if (offset<0x80) dec0_pf1_colscroll_w(offset,data);
+			else if (offset<0x600) dec0_pf1_rowscroll_w(offset-0x400,data);
+			return;
+	}
+	if (errorlog) fprintf(errorlog,"Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+}
+
+void slyspy_24e000_w(int offset,int data)
+{
+	switch (slyspy_state) {
+		case 0x2:
+		case 0x0:
+			dec0_pf1_data_w(offset,data);
+			return;
+	}
+	if (errorlog) fprintf(errorlog,"Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+}
+
 /******************************************************************************/
 
-#if 0
-static int share[10];
+static int share[0x20];
 
-int hippo_6510_intf_r(int offset)
+
+int hippodrm_test_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"6510 PC %06x - Read %06x\n",cpu_getpc(),offset);
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x1d0000);
+
+	return 0x4e;
+}
+
+
+/*
+
+
+	Values from 6000 (c0):  (e0c6)
+
+	And 3c then shift >> 1
+
+values:
+	0: rts
+
+
+RETURN 0XF TO GO TO E266
+		TAKES VALUE FROM 6001 (MASK 7)
+
+RETURN   TO GO TO E2B0 (MASK 3F FROM 6001 - BACKROUNDS?)
+
+RETURN   TO GO TO E2BA (MAST C0... BACKS?)
+
+
+
+
+	e2ba - real backgrounds?
+
+*/
+
+int hippodrm_shared_r(int offset)
+{
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x180000);
 
 	return share[offset];
 
@@ -129,13 +327,16 @@ return 0;
 }
 
 
-void hippo_6510_intf_w(int offset,int data)
+void hippodrm_shared_w(int offset,int data)
 {
 	share[offset]=data;
 
-if (errorlog) fprintf(errorlog,"6510 PC %06x - write %06x %04x\n",cpu_getpc(),offset,data);
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - write %06x %04x\n",cpu_getpc(),offset,data);
 }
-#endif
+
+
+
+
 
 static int hippodrm_protection(int offset)
 {
@@ -149,12 +350,6 @@ static int hippodrm_protection(int offset)
   return 0; /* Keep zero */
 }
 
-extern void dec0_pf3_control_1_w(int offset,int data);
-extern void dec0_pf3_control_0_w(int offset,int data);
-
-extern void dec0_pf3_data_w(int offset,int data);
-extern void dec0_pf2_data_w(int offset,int data);
-extern void dec0_priority_w(int offset,int data);
 /*
 void hippodrm_prot_w(int offset,int data)
 {
@@ -169,6 +364,8 @@ void hippodrm_prot_w(int offset,int data)
 void hippodrm_prot_w(int offset,int data)
 {
 	static int scroll,position,posdata;
+
+		share[offset]=data&0xff;
 
 	switch (offset) {
 
@@ -271,7 +468,7 @@ static void hbarrel_i8751_write(int data)
 		/* We have to use a state as the microcontroller remembers previous commands */
 	}
 
-//if (errorlog && data!=0x600) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_getpc(),data);
 }
 
 static void baddudes_i8751_write(int data)
@@ -300,6 +497,42 @@ static void baddudes_i8751_write(int data)
 	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_getpc(),data);
 }
 
+static void birdtry_i8751_write(int data)
+{
+	i8751_return=0;
+
+	if (errorlog) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_getpc(),data);
+
+if ((data&0xff00)==0x200) i8751_return=0x300;
+if ((data&0xff00)==0x300) i8751_return=0x200;
+
+
+//i8751_return=0x200;
+	return;
+/*
+	switch (data&0xffff) {
+		case 0x714: i8751_return=0x700; break;
+		case 0x73b: i8751_return=0x701; break;
+		case 0x72c: i8751_return=0x702; break;
+		case 0x73f: i8751_return=0x703; break;
+		case 0x755: i8751_return=0x704; break;
+		case 0x722: i8751_return=0x705; break;
+		case 0x72b: i8751_return=0x706; break;
+		case 0x724: i8751_return=0x707; break;
+		case 0x728: i8751_return=0x708; break;
+		case 0x735: i8751_return=0x709; break;
+		case 0x71d: i8751_return=0x70a; break;
+		case 0x721: i8751_return=0x70b; break;
+		case 0x73e: i8751_return=0x70c; break;
+		case 0x761: i8751_return=0x70d; break;
+		case 0x753: i8751_return=0x70e; break;
+		case 0x75b: i8751_return=0x70f; break;
+	}
+
+	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_getpc(),data);
+*/
+}
+
 static void *i8751_timer;
 
 static void i8751_callback(int param)
@@ -320,6 +553,7 @@ void dec0_i8751_write(int data)
 	/* Writes to this address cause an IRQ to the i8751 microcontroller */
 	if (GAME==1) hbarrel_i8751_write(data);
 	if (GAME==2) baddudes_i8751_write(data);
+	if (GAME==3) birdtry_i8751_write(data);
 
 	cpu_cause_interrupt(0,5);
 
@@ -338,6 +572,9 @@ of a TST.W + BMI.S (ie, not very much at all).
 See the code about 0xb60 (USA version)
 
 */
+
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_getpc(),data);
+
 
 }
 
@@ -423,11 +660,16 @@ static void baddudes_custom_memory(void)
 	GAME=2;
 }
 
+static void birdtry_custom_memory(void)
+{
+	GAME=3;
+}
+
 static void robocop_custom_memory(void)
 {
 //	install_mem_read_handler(0, 0xff8004, 0xff8005, robocop_skip);
-	install_mem_read_handler (0, 0x242800, 0x243fff, MRA_BANK3); /* Extra ram bank */
-	install_mem_write_handler(0, 0x242800, 0x243fff, MWA_BANK3);
+//	install_mem_read_handler (0, 0x242800, 0x243fff, MRA_BANK3); /* Extra ram bank */
+//	install_mem_write_handler(0, 0x242800, 0x243fff, MWA_BANK3);
 }
 
 static void hippodrm_custom_memory(void)
@@ -457,6 +699,7 @@ void dec0_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"hbarrelj")) hbarrelj_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"baddudes")) baddudes_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"drgninja")) baddudes_custom_memory();
+	if (!strcmp(Machine->gamedrv->name,"birdtry")) birdtry_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"robocopp")) robocop_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"hippodrm")) hippodrm_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"ffantasy")) hippodrm_custom_memory();

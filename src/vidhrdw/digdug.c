@@ -203,28 +203,29 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* don't map to a screen position. We don't check that here, however: range */
 			/* checking is performed by drawgfx(). */
 
-			mx = offs / 32;
-			my = offs % 32;
+			mx = offs % 32;
+			my = offs / 32;
 
-			if (mx <= 1)
+			if (my <= 1)
 			{
-				sx = 29 - my;
-				sy = mx + 34;
+				sx = my + 34;
+				sy = mx - 2;
 			}
-			else if (mx >= 30)
+			else if (my >= 30)
 			{
-				sx = 29 - my;
-				sy = mx - 30;
+				sx = my - 30;
+				sy = mx - 2;
 			}
 			else
 			{
-				sx = 29 - mx;
-				sy = my + 2;
+				sx = mx + 2;
+				sy = my - 2;
 			}
+
 			if (flipscreen)
 			{
-				sx = 27 - sx;
-				sy = 35 - sy;
+				sx = 35 - sx;
+				sy = 27 - sy;
 			}
 
 			vrval = videoram[offs];
@@ -272,10 +273,10 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			int sprite = spriteram[offs];
 			int color = spriteram[offs+1];
-			int x = spriteram_2[offs]-16;
-			int y = spriteram_2[offs+1]-40;
-			int flipx = spriteram_3[offs] & 2;
-			int flipy = spriteram_3[offs] & 1;
+			int x = spriteram_2[offs+1]-40;
+			int y = 28*8-spriteram_2[offs];
+			int flipx = spriteram_3[offs] & 1;
+			int flipy = spriteram_3[offs] & 2;
 
 			if (flipscreen)
 			{
@@ -283,42 +284,43 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				flipy = !flipy;
 			}
 
-			if (y < 8) y += 256;
+			if (x < 8) x += 256;
 
 			/* normal size? */
 			if (sprite < 0x80)
 				digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+
 			/* double size? */
 			else
 			{
 				sprite = (sprite & 0xc0) | ((sprite & ~0xc0) << 2);
-				if (!flipy && !flipx)
+				if (!flipx && !flipy)
 				{
 					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
-					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y);
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y-16);
 				}
-				else if (flipy && flipx)
+				else if (flipx && flipy)
 				{
 					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
-					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y-16);
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y-16);
 				}
-				else if (flipx)
+				else if (flipy)
 				{
 					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
+					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y-16);
 				}
-				else /* flipy */
+				else /* flipx */
 				{
 					digdug_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
-					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
-					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
+					digdug_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y);
+					digdug_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y-16);
+					digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y-16);
 				}
 			}
 		}

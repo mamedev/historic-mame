@@ -799,7 +799,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ 35 },
+	{ YM3012_VOL(35,OSD_PAN_LEFT,35,OSD_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -1174,7 +1174,7 @@ struct GameDriver tmnt_driver =
 	__FILE__,
 	0,
 	"tmnt",
-	"TMNT (4 Players USA)",
+	"TMNT (4 Players US)",
 	"1989",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
@@ -1200,7 +1200,7 @@ struct GameDriver tmntj_driver =
 	__FILE__,
 	&tmnt_driver,
 	"tmntj",
-	"TMNT (4 Players Japanese)",
+	"TMNT (4 Players Japan)",
 	"1989",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
@@ -1252,7 +1252,7 @@ struct GameDriver tmnt2pj_driver =
 	__FILE__,
 	&tmnt_driver,
 	"tmnt2pj",
-	"TMNT (2 Players Japanese)",
+	"TMNT (2 Players Japan)",
 	"1990",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",

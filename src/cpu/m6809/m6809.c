@@ -19,6 +19,15 @@
 							machine must be twos complement
 
 	History:
+990228 HJB:
+	Changed the interrupt handling again. Now interrupts are taken
+	either right at the moment the lines are asserted or whenever
+	an interrupt is enabled and the corresponding line is still
+	asserted. That way the pending_interrupts checks are not
+	needed anymore. However, the CWAI and SYNC flags still need
+	some flags, so I changed the name to 'int_state'.
+	This core also has the code for the old interrupt system removed.
+
 990225 HJB:
 	Cleaned up the code here and there, added some comments.
 	Slightly changed the SAR opcodes (similiar to other CPU cores).
@@ -73,50 +82,67 @@ static UINT16 xreg,yreg,ureg,sreg,pcreg;
 
 static UINT16 eaddr; /* effective address */
 
-static int pending_interrupts;	/* NS 970908 */
+static int int_state;		/* HJB 990227 */
+
 #define M6809_CWAI      8   /* set when CWAI is waiting for an interrupt */ /* NS 980101 */
-#define M6809_STATE     16  /* set when CWAI is cleared (state pushed) */ /* HJB 990225 */
-#define M6809_SYNC      32  /* set when SYNC is waiting for an interrupt */
+#define M6809_SYNC		16	/* set when SYNC is waiting for an interrupt */
 
-#if NEW_INTERRUPT_SYSTEM
-
-static int nmi_state;
-static int irq_state[2];	/* IRQ and FIRQ lines */
+static INT8 nmi_state;
+static INT8 irq_state[2];	 /* IRQ and FIRQ lines */
 static int (*irq_callback)(int irqline);
 
-#define CHECK_IRQ_LINES() { 											\
-    if (irq_state[M6809_IRQ_LINE] != CLEAR_LINE) {                      \
-		pending_interrupts &= ~M6809_SYNC;			/* clear SYNC	  */\
-		if (!(cc & CC_II)) {						/* not inhibited? */\
-			pending_interrupts |= M6809_INT_IRQ;	/* pending IRQ	  */\
-			if (pending_interrupts & M6809_CWAI) {	/* pending CWAI ? */\
-				pending_interrupts &= ~M6809_CWAI;	/* clear CWAI	  */\
-				pending_interrupts |= M6809_STATE;	/* set state flag */\
-			}															\
-		}																\
-	}																	\
-	if (irq_state[M6809_FIRQ_LINE] != CLEAR_LINE) { 					\
-        pending_interrupts &= ~M6809_SYNC;          /* clear SYNC     */\
-        if (!(cc & CC_IF)) {                        /* not inhibited? */\
-            pending_interrupts |= M6809_INT_FIRQ;   /* pending FIRQ   */\
-			if (pending_interrupts & M6809_CWAI) {	/* pending CWAI ? */\
-                pending_interrupts &= ~M6809_CWAI;  /* clear CWAI     */\
-                pending_interrupts |= M6809_STATE;  /* set state flag */\
+#define CHECK_IRQ_LINES 												\
+	if( irq_state[M6809_IRQ_LINE] != CLEAR_LINE ) { 					\
+		int_state &= ~M6809_SYNC;			/* clear SYNC flag */		\
+		if( !(cc & CC_II) ) {				/* IRQ not inhibited? */	\
+			/* standard IRQ */											\
+            /* HJB 990225: state already saved by CWAI? */              \
+			if( int_state & M6809_CWAI ) {								\
+				int_state &= ~M6809_CWAI;  /* clear CWAI flag */		\
+            } else {                                                    \
+                cc |= CC_E;                 /* save entire state */     \
+                PUSHWORD(pcreg);                                        \
+                PUSHWORD(ureg);                                         \
+                PUSHWORD(yreg);                                         \
+                PUSHWORD(xreg);                                         \
+                PUSHBYTE(dpreg);                                        \
+                PUSHBYTE(breg);                                         \
+                PUSHBYTE(areg);                                         \
+                PUSHBYTE(cc);                                           \
+				m6809_IExtra += 9;			/* subtract +9 cycles */	\
             }                                                           \
+            cc |= CC_II;                    /* inhibit IRQ */           \
+            pcreg = M_RDMEM_WORD(0xfff8);                               \
+            change_pc(pcreg);               /* TS 971002 */             \
+			m6809_IExtra += 10; 			/* subtract +10 cycles */	\
+            (void)(*irq_callback)(0);                                   \
         }                                                               \
-    }                                                                   \
-}
-
-#else
-
-#define CHECK_IRQ_LINES()
-
-#endif
+	}																	\
+	if( irq_state[M6809_FIRQ_LINE] != CLEAR_LINE ) {					\
+		int_state &= ~M6809_SYNC;			/* clear SYNC flag */		\
+		if( !(cc & CC_IF) ) {				/* FIRQ not inhibited? */	\
+			/* fast IRQ */												\
+            /* HJB 990225: state already saved by CWAI? */              \
+			if( int_state & M6809_CWAI ) {								\
+				int_state &= ~M6809_CWAI;  /* clear CWAI */ 			\
+            } else {                                                    \
+                cc &= ~CC_E;                /* save 'short' state */    \
+                PUSHWORD(pcreg);                                        \
+                PUSHBYTE(cc);                                           \
+            }                                                           \
+            cc |= CC_IF | CC_II;            /* inhibit FIRQ and IRQ */  \
+            pcreg = M_RDMEM_WORD(0xfff6);                               \
+            change_pc(pcreg);               /* TS 971002 */             \
+			m6809_IExtra += 10; 			/* subtract +10 cycles */	\
+            (void)(*irq_callback)(1);                                   \
+        }                                                               \
+	}
 
 /* public globals */
-int	m6809_ICount=50000;
+int m6809_ICount=50000;
 int m6809_Flags;	/* flags for speed optimization */
 int m6809_slapstic;
+int m6809_IExtra=0; /* HJB 990226 */
 
 /* flag, handlers for speed optimization */
 static int (*rd_u_handler)(int);
@@ -279,7 +305,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	case 8: areg = val; 	break;	\
 	case 9: breg = val; 	break;	\
 	case 10: cc = val;				\
-		CHECK_IRQ_LINES();			\
+		CHECK_IRQ_LINES;			\
 		break;	/* HJB 990116 */	\
 	case 11: dpreg = val;	break;	\
 }
@@ -413,14 +439,12 @@ void m6809_SetRegs(m6809_Regs *Regs)
 	breg = Regs->b;
 	cc = Regs->cc;
 
-	pending_interrupts = Regs->pending_interrupts;	/* NS 970908 */
-#if NEW_INTERRUPT_SYSTEM
+	int_state = Regs->int_state;	/* HJB 990227 */
 	nmi_state = Regs->nmi_state;
 	irq_state[0] = Regs->irq_state[0];
 	irq_state[1] = Regs->irq_state[1];
 	irq_callback = Regs->irq_callback;
-	CHECK_IRQ_LINES();
-#endif
+	CHECK_IRQ_LINES;
 }
 
 /****************************************************************************/
@@ -438,13 +462,11 @@ void m6809_GetRegs(m6809_Regs *Regs)
 	Regs->b = breg;
 	Regs->cc = cc;
 
-	Regs->pending_interrupts = pending_interrupts;	/* NS 970908 */
-#if NEW_INTERRUPT_SYSTEM
+	Regs->int_state = int_state;	/* HJB 990227 */
 	Regs->nmi_state = nmi_state;
 	Regs->irq_state[0] = irq_state[0];
 	Regs->irq_state[1] = irq_state[1];
 	Regs->irq_callback = irq_callback;
-#endif
 }
 
 /****************************************************************************/
@@ -457,78 +479,6 @@ unsigned m6809_GetPC(void)
 
 
 /* Generate interrupts */
-static void Interrupt(void)	/* NS 970909 */
-{
-	if( pending_interrupts & M6809_INT_NMI ) {
-		/* NMI */
-		/* HJB 990225: state not yet saved by CWAI? */
-		if( !(pending_interrupts & M6809_STATE) ) {
-			cc |= CC_E; 				/* save entire state */
-			PUSHWORD(pcreg);
-			PUSHWORD(ureg);
-			PUSHWORD(yreg);
-			PUSHWORD(xreg);
-			PUSHBYTE(dpreg);
-			PUSHBYTE(breg);
-			PUSHBYTE(areg);
-			PUSHBYTE(cc);
-			m6809_ICount -= 9;
-		}
-		cc |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
-		pcreg = M_RDMEM_WORD(0xfffc);
-		change_pc(pcreg);				/* TS 971002 */
-		m6809_ICount -= 10;
-        pending_interrupts &= ~M6809_INT_NMI;
-	} else
-	if( (pending_interrupts & M6809_INT_FIRQ) && !(cc & CC_IF) ) {
-        /* fast IRQ */
-		/* HJB 990225: state not yet saved by CWAI? */
-        if( !(pending_interrupts & M6809_STATE) ) {
-			cc &= ~CC_E;					/* save 'short' state */
-			PUSHWORD(pcreg);
-			PUSHBYTE(cc);
-		}
-		cc |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
-		pcreg = M_RDMEM_WORD(0xfff6);
-		change_pc(pcreg);				/* TS 971002 */
-		m6809_ICount -= 10;
-#if NEW_INTERRUPT_SYSTEM
-        (void)(*irq_callback)(1);
-#else
-        pending_interrupts &= ~M6809_INT_FIRQ;
-#endif
-	} else
-	if ((pending_interrupts & M6809_INT_IRQ) && !(cc & CC_II)) {
-        /* standard IRQ */
-		/* HJB 990225: state not yet saved by CWAI? */
-		if( !(pending_interrupts & M6809_STATE) ) {
-			cc |= CC_E; 				/* save entire state */
-            PUSHWORD(pcreg);
-            PUSHWORD(ureg);
-            PUSHWORD(yreg);
-            PUSHWORD(xreg);
-            PUSHBYTE(dpreg);
-            PUSHBYTE(breg);
-            PUSHBYTE(areg);
-			PUSHBYTE(cc);
-			m6809_ICount -= 9;
-        }
-		cc |= CC_II;					/* inhibit IRQ */
-		pcreg = M_RDMEM_WORD(0xfff8);
-		change_pc(pcreg);				/* TS 971002 */
-		m6809_ICount -= 10;
-#if NEW_INTERRUPT_SYSTEM
-        (void)(*irq_callback)(0);
-#else
-        pending_interrupts &= ~M6809_INT_IRQ;
-#endif
-	}
-	/* HJB 990225: remove 'state saved by CWAI' flag */
-    pending_interrupts &= ~M6809_STATE;
-}
-
-
-
 void m6809_reset(void)
 {
 	pcreg = M_RDMEM_WORD(0xfffe);change_pc(pcreg);	/* TS 971002 */
@@ -539,14 +489,10 @@ void m6809_reset(void)
 	cc |= CC_IF;		/* FIRQ disabled */
 	areg = 0x00;		/* clear accumulator a */
 	breg = 0x00;		/* clear accumulator b */
-#if NEW_INTERRUPT_SYSTEM
 	m6809_set_nmi_line(CLEAR_LINE);
 	m6809_set_irq_line(0,CLEAR_LINE);
 	m6809_set_irq_line(1,CLEAR_LINE);
-	pending_interrupts = 0;
-#else
-    m6809_Clear_Pending_Interrupts();   /* NS 970908 */
-#endif
+	int_state = 0;
 
 	/* default to unoptimized memory access */
 	rd_u_handler = rd_slow;
@@ -571,20 +517,32 @@ void m6809_reset(void)
 	}
 }
 
-#if NEW_INTERRUPT_SYSTEM
-
 void m6809_set_nmi_line(int state)
 {
 	if (nmi_state == state) return;
 	nmi_state = state;
 	LOG((errorlog, "M6809#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
 	if (state != CLEAR_LINE) {
-        pending_interrupts &= ~M6809_SYNC;
-		pending_interrupts |= M6809_INT_NMI;
-		if (pending_interrupts & M6809_CWAI) {
-			pending_interrupts &= ~M6809_CWAI;
-			pending_interrupts |= M6809_STATE;
+		int_state &= ~M6809_SYNC;
+		/* HJB 990225: state already saved by CWAI? */
+		if( int_state & M6809_CWAI ) {
+			int_state &= ~M6809_CWAI;
+		} else {
+			cc |= CC_E; 				/* save entire state */
+			PUSHWORD(pcreg);
+			PUSHWORD(ureg);
+			PUSHWORD(yreg);
+			PUSHWORD(xreg);
+			PUSHBYTE(dpreg);
+			PUSHBYTE(breg);
+			PUSHBYTE(areg);
+			PUSHBYTE(cc);
+			m6809_ICount += 9;			/* subtract +9 cycles next time */
 		}
+		cc |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
+		pcreg = M_RDMEM_WORD(0xfffc);
+		change_pc(pcreg);				/* TS 971002 */
+		m6809_IExtra += 10; 			/* subtract +10 cycles next time */
 	}
 }
 
@@ -592,50 +550,14 @@ void m6809_set_irq_line(int irqline, int state)
 {
     LOG((errorlog, "M6809#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
     irq_state[irqline] = state;
-    if (state == CLEAR_LINE) {
-		switch (irqline) {
-			case 0:
-				if (cc & CC_II) pending_interrupts &= ~M6809_INT_IRQ;
-				break;
-			case 1:
-				if (cc & CC_IF) pending_interrupts &= ~M6809_INT_FIRQ;
-				break;
-		}
-	} else {
-		CHECK_IRQ_LINES();
-    }
+	if (state == CLEAR_LINE) return;
+	CHECK_IRQ_LINES;
 }
 
 void m6809_set_irq_callback(int (*callback)(int irqline))
 {
 	irq_callback = callback;
 }
-
-#else
-
-void m6809_Cause_Interrupt(int type)    /* NS 970908 */
-{
-	pending_interrupts |= type;
-	/* handle SYNC and CWAI bits */
-	if( type & (M6809_INT_NMI | M6809_INT_IRQ | M6809_INT_FIRQ) ) {
-        pending_interrupts &= ~M6809_SYNC;
-        if( pending_interrupts & M6809_CWAI ) {
-            if( (pending_interrupts & M6809_INT_NMI) ||
-                ((pending_interrupts & M6809_INT_FIRQ) && !(cc & CC_IF)) ||
-                ((pending_interrupts & M6809_INT_IRQ) && !(cc & CC_II)) ) {
-                pending_interrupts &= ~M6809_CWAI;
-				pending_interrupts |= M6809_STATE;
-            }
-        }
-    }
-}
-
-void m6809_Clear_Pending_Interrupts(void)   /* NS 970908 */
-{
-	pending_interrupts &= ~(M6809_INT_IRQ | M6809_INT_FIRQ | M6809_INT_NMI);
-}
-
-#endif
 
 #include "6809ops.c"
 
@@ -646,7 +568,11 @@ int m6809_execute(int cycles)	/* NS 970908 */
 	UINT8 ireg;
 	m6809_ICount = cycles;	/* NS 970908 */
 
-    if (pending_interrupts & (M6809_CWAI | M6809_SYNC))
+	/* HJB 990226: subtract additional cycles for interrupts */
+    m6809_ICount -= m6809_IExtra;
+	m6809_IExtra = 0;
+
+	if (int_state & (M6809_CWAI | M6809_SYNC))
 	{
 		m6809_ICount = 0;
 		goto getout;
@@ -658,14 +584,11 @@ int m6809_execute(int cycles)	/* NS 970908 */
 
 		previouspc = pcreg;
 
-		if (pending_interrupts != 0)
-			Interrupt();	/* NS 970908 */
-
 #ifdef	MAME_DEBUG
-{
-  extern int mame_debug;
-  if (mame_debug) MAME_Debug();
-}
+		{
+			extern int mame_debug;
+			if (mame_debug) MAME_Debug();
+		}
 #endif
 		ireg=M_RDOP(pcreg++);
 
@@ -674,329 +597,329 @@ int m6809_execute(int cycles)	/* NS 970908 */
 
 			switch( ireg )
 			{
-				case 0x00: neg_di(); break;
-				case 0x01: illegal(); break;
-				case 0x02: illegal(); break;
-				case 0x03: com_di(); break;
-				case 0x04: lsr_di(); break;
-				case 0x05: illegal(); break;
-				case 0x06: ror_di(); break;
-				case 0x07: asr_di(); break;
-				case 0x08: asl_di(); break;
-				case 0x09: rol_di(); break;
-				case 0x0a: dec_di(); break;
-				case 0x0b: illegal(); break;
-				case 0x0c: inc_di(); break;
-				case 0x0d: tst_di(); break;
-				case 0x0e: jmp_di(); break;
-				case 0x0f: clr_di(); break;
-				case 0x10: illegal(); break;
-				case 0x11: illegal(); break;
-				case 0x12: nop(); break;
-				case 0x13: sync(); break;
-				case 0x14: illegal(); break;
-				case 0x15: illegal(); break;
-				case 0x16: lbra(); break;
-				case 0x17: lbsr(); break;
-				case 0x18: illegal(); break;
-				case 0x19: daa(); break;
-				case 0x1a: orcc(); break;
-				case 0x1b: illegal(); break;
-				case 0x1c: andcc(); break;
-				case 0x1d: sex(); break;
-				case 0x1e: exg(); break;
-				case 0x1f: tfr(); break;
-				case 0x20: bra(); break;
-				case 0x21: brn(); break;
-				case 0x22: bhi(); break;
-				case 0x23: bls(); break;
-				case 0x24: bcc(); break;
-				case 0x25: bcs(); break;
-				case 0x26: bne(); break;
-				case 0x27: beq(); break;
-				case 0x28: bvc(); break;
-				case 0x29: bvs(); break;
-				case 0x2a: bpl(); break;
-				case 0x2b: bmi(); break;
-				case 0x2c: bge(); break;
-				case 0x2d: blt(); break;
-				case 0x2e: bgt(); break;
-				case 0x2f: ble(); break;
-				case 0x30: leax(); break;
-				case 0x31: leay(); break;
-				case 0x32: leas(); break;
-				case 0x33: leau(); break;
-				case 0x34: pshs(); break;
-				case 0x35: puls(); break;
-				case 0x36: pshu(); break;
-				case 0x37: pulu(); break;
-				case 0x38: illegal(); break;
-				case 0x39: rts(); break;
-				case 0x3a: abx(); break;
-				case 0x3b: rti(); break;
-				case 0x3c: cwai(); break;
-				case 0x3d: mul(); break;
-				case 0x3e: illegal(); break;
-				case 0x3f: swi(); break;
-				case 0x40: nega(); break;
-				case 0x41: illegal(); break;
-				case 0x42: illegal(); break;
-				case 0x43: coma(); break;
-				case 0x44: lsra(); break;
-				case 0x45: illegal(); break;
-				case 0x46: rora(); break;
-				case 0x47: asra(); break;
-				case 0x48: asla(); break;
-				case 0x49: rola(); break;
-				case 0x4a: deca(); break;
-				case 0x4b: illegal(); break;
-				case 0x4c: inca(); break;
-				case 0x4d: tsta(); break;
-				case 0x4e: illegal(); break;
-				case 0x4f: clra(); break;
-				case 0x50: negb(); break;
-				case 0x51: illegal(); break;
-				case 0x52: illegal(); break;
-				case 0x53: comb(); break;
-				case 0x54: lsrb(); break;
-				case 0x55: illegal(); break;
-				case 0x56: rorb(); break;
-				case 0x57: asrb(); break;
-				case 0x58: aslb(); break;
-				case 0x59: rolb(); break;
-				case 0x5a: decb(); break;
-				case 0x5b: illegal(); break;
-				case 0x5c: incb(); break;
-				case 0x5d: tstb(); break;
-				case 0x5e: illegal(); break;
-				case 0x5f: clrb(); break;
-				case 0x60: neg_ix(); break;
-				case 0x61: illegal(); break;
-				case 0x62: illegal(); break;
-				case 0x63: com_ix(); break;
-				case 0x64: lsr_ix(); break;
-				case 0x65: illegal(); break;
-				case 0x66: ror_ix(); break;
-				case 0x67: asr_ix(); break;
-				case 0x68: asl_ix(); break;
-				case 0x69: rol_ix(); break;
-				case 0x6a: dec_ix(); break;
-				case 0x6b: illegal(); break;
-				case 0x6c: inc_ix(); break;
-				case 0x6d: tst_ix(); break;
-				case 0x6e: jmp_ix(); break;
-				case 0x6f: clr_ix(); break;
-				case 0x70: neg_ex(); break;
-				case 0x71: illegal(); break;
-				case 0x72: illegal(); break;
-				case 0x73: com_ex(); break;
-				case 0x74: lsr_ex(); break;
-				case 0x75: illegal(); break;
-				case 0x76: ror_ex(); break;
-				case 0x77: asr_ex(); break;
-				case 0x78: asl_ex(); break;
-				case 0x79: rol_ex(); break;
-				case 0x7a: dec_ex(); break;
-				case 0x7b: illegal(); break;
-				case 0x7c: inc_ex(); break;
-				case 0x7d: tst_ex(); break;
-				case 0x7e: jmp_ex(); break;
-				case 0x7f: clr_ex(); break;
-				case 0x80: suba_im(); break;
-				case 0x81: cmpa_im(); break;
-				case 0x82: sbca_im(); break;
-				case 0x83: subd_im(); break;
-				case 0x84: anda_im(); break;
-				case 0x85: bita_im(); break;
-				case 0x86: lda_im(); break;
-				case 0x87: sta_im(); break; /* ILLEGAL? */
-				case 0x88: eora_im(); break;
-				case 0x89: adca_im(); break;
-				case 0x8a: ora_im(); break;
-				case 0x8b: adda_im(); break;
-				case 0x8c: cmpx_im(); break;
-				case 0x8d: bsr(); break;
-				case 0x8e: ldx_im(); break;
-				case 0x8f: stx_im(); break; /* ILLEGAL? */
-				case 0x90: suba_di(); break;
-				case 0x91: cmpa_di(); break;
-				case 0x92: sbca_di(); break;
-				case 0x93: subd_di(); break;
-				case 0x94: anda_di(); break;
-				case 0x95: bita_di(); break;
-				case 0x96: lda_di(); break;
-				case 0x97: sta_di(); break;
-				case 0x98: eora_di(); break;
-				case 0x99: adca_di(); break;
-				case 0x9a: ora_di(); break;
-				case 0x9b: adda_di(); break;
-				case 0x9c: cmpx_di(); break;
-				case 0x9d: jsr_di(); break;
-				case 0x9e: ldx_di(); break;
-				case 0x9f: stx_di(); break;
-				case 0xa0: suba_ix(); break;
-				case 0xa1: cmpa_ix(); break;
-				case 0xa2: sbca_ix(); break;
-				case 0xa3: subd_ix(); break;
-				case 0xa4: anda_ix(); break;
-				case 0xa5: bita_ix(); break;
-				case 0xa6: lda_ix(); break;
-				case 0xa7: sta_ix(); break;
-				case 0xa8: eora_ix(); break;
-				case 0xa9: adca_ix(); break;
-				case 0xaa: ora_ix(); break;
-				case 0xab: adda_ix(); break;
-				case 0xac: cmpx_ix(); break;
-				case 0xad: jsr_ix(); break;
-				case 0xae: ldx_ix(); break;
-				case 0xaf: stx_ix(); break;
-				case 0xb0: suba_ex(); break;
-				case 0xb1: cmpa_ex(); break;
-				case 0xb2: sbca_ex(); break;
-				case 0xb3: subd_ex(); break;
-				case 0xb4: anda_ex(); break;
-				case 0xb5: bita_ex(); break;
-				case 0xb6: lda_ex(); break;
-				case 0xb7: sta_ex(); break;
-				case 0xb8: eora_ex(); break;
-				case 0xb9: adca_ex(); break;
-				case 0xba: ora_ex(); break;
-				case 0xbb: adda_ex(); break;
-				case 0xbc: cmpx_ex(); break;
-				case 0xbd: jsr_ex(); break;
-				case 0xbe: ldx_ex(); break;
-				case 0xbf: stx_ex(); break;
-				case 0xc0: subb_im(); break;
-				case 0xc1: cmpb_im(); break;
-				case 0xc2: sbcb_im(); break;
-				case 0xc3: addd_im(); break;
-				case 0xc4: andb_im(); break;
-				case 0xc5: bitb_im(); break;
-				case 0xc6: ldb_im(); break;
-				case 0xc7: stb_im(); break; /* ILLEGAL? */
-				case 0xc8: eorb_im(); break;
-				case 0xc9: adcb_im(); break;
-				case 0xca: orb_im(); break;
-				case 0xcb: addb_im(); break;
-				case 0xcc: ldd_im(); break;
-				case 0xcd: std_im(); break; /* ILLEGAL? */
-				case 0xce: ldu_im(); break;
-				case 0xcf: stu_im(); break; /* ILLEGAL? */
-				case 0xd0: subb_di(); break;
-				case 0xd1: cmpb_di(); break;
-				case 0xd2: sbcb_di(); break;
-				case 0xd3: addd_di(); break;
-				case 0xd4: andb_di(); break;
-				case 0xd5: bitb_di(); break;
-				case 0xd6: ldb_di(); break;
-				case 0xd7: stb_di(); break;
-				case 0xd8: eorb_di(); break;
-				case 0xd9: adcb_di(); break;
-				case 0xda: orb_di(); break;
-				case 0xdb: addb_di(); break;
-				case 0xdc: ldd_di(); break;
-				case 0xdd: std_di(); break;
-				case 0xde: ldu_di(); break;
-				case 0xdf: stu_di(); break;
-				case 0xe0: subb_ix(); break;
-				case 0xe1: cmpb_ix(); break;
-				case 0xe2: sbcb_ix(); break;
-				case 0xe3: addd_ix(); break;
-				case 0xe4: andb_ix(); break;
-				case 0xe5: bitb_ix(); break;
-				case 0xe6: ldb_ix(); break;
-				case 0xe7: stb_ix(); break;
-				case 0xe8: eorb_ix(); break;
-				case 0xe9: adcb_ix(); break;
-				case 0xea: orb_ix(); break;
-				case 0xeb: addb_ix(); break;
-				case 0xec: ldd_ix(); break;
-				case 0xed: std_ix(); break;
-				case 0xee: ldu_ix(); break;
-				case 0xef: stu_ix(); break;
-				case 0xf0: subb_ex(); break;
-				case 0xf1: cmpb_ex(); break;
-				case 0xf2: sbcb_ex(); break;
-				case 0xf3: addd_ex(); break;
-				case 0xf4: andb_ex(); break;
-				case 0xf5: bitb_ex(); break;
-				case 0xf6: ldb_ex(); break;
-				case 0xf7: stb_ex(); break;
-				case 0xf8: eorb_ex(); break;
-				case 0xf9: adcb_ex(); break;
-				case 0xfa: orb_ex(); break;
-				case 0xfb: addb_ex(); break;
-				case 0xfc: ldd_ex(); break;
-				case 0xfd: std_ex(); break;
-				case 0xfe: ldu_ex(); break;
-				case 0xff: stu_ex(); break;
+				case 0x00: neg_di();	break;
+				case 0x01: illegal();	break;
+				case 0x02: illegal();	break;
+				case 0x03: com_di();	break;
+				case 0x04: lsr_di();	break;
+				case 0x05: illegal();	break;
+				case 0x06: ror_di();	break;
+				case 0x07: asr_di();	break;
+				case 0x08: asl_di();	break;
+				case 0x09: rol_di();	break;
+				case 0x0a: dec_di();	break;
+				case 0x0b: illegal();	break;
+				case 0x0c: inc_di();	break;
+				case 0x0d: tst_di();	break;
+				case 0x0e: jmp_di();	break;
+				case 0x0f: clr_di();	break;
+				case 0x10: illegal();	break;
+				case 0x11: illegal();	break;
+				case 0x12: nop();		break;
+				case 0x13: sync();		break;
+				case 0x14: illegal();	break;
+				case 0x15: illegal();	break;
+				case 0x16: lbra();		break;
+				case 0x17: lbsr();		break;
+				case 0x18: illegal();	break;
+				case 0x19: daa();		break;
+				case 0x1a: orcc();		break;
+				case 0x1b: illegal();	break;
+				case 0x1c: andcc(); 	break;
+				case 0x1d: sex();		break;
+				case 0x1e: exg();		break;
+				case 0x1f: tfr();		break;
+				case 0x20: bra();		break;
+				case 0x21: brn();		break;
+				case 0x22: bhi();		break;
+				case 0x23: bls();		break;
+				case 0x24: bcc();		break;
+				case 0x25: bcs();		break;
+				case 0x26: bne();		break;
+				case 0x27: beq();		break;
+				case 0x28: bvc();		break;
+				case 0x29: bvs();		break;
+				case 0x2a: bpl();		break;
+				case 0x2b: bmi();		break;
+				case 0x2c: bge();		break;
+				case 0x2d: blt();		break;
+				case 0x2e: bgt();		break;
+				case 0x2f: ble();		break;
+				case 0x30: leax();		break;
+				case 0x31: leay();		break;
+				case 0x32: leas();		break;
+				case 0x33: leau();		break;
+				case 0x34: pshs();		break;
+				case 0x35: puls();		break;
+				case 0x36: pshu();		break;
+				case 0x37: pulu();		break;
+				case 0x38: illegal();	break;
+				case 0x39: rts();		break;
+				case 0x3a: abx();		break;
+				case 0x3b: rti();		break;
+				case 0x3c: cwai();		break;
+				case 0x3d: mul();		break;
+				case 0x3e: illegal();	break;
+				case 0x3f: swi();		break;
+				case 0x40: nega();		break;
+				case 0x41: illegal();	break;
+				case 0x42: illegal();	break;
+				case 0x43: coma();		break;
+				case 0x44: lsra();		break;
+				case 0x45: illegal();	break;
+				case 0x46: rora();		break;
+				case 0x47: asra();		break;
+				case 0x48: asla();		break;
+				case 0x49: rola();		break;
+				case 0x4a: deca();		break;
+				case 0x4b: illegal();	break;
+				case 0x4c: inca();		break;
+				case 0x4d: tsta();		break;
+				case 0x4e: illegal();	break;
+				case 0x4f: clra();		break;
+				case 0x50: negb();		break;
+				case 0x51: illegal();	break;
+				case 0x52: illegal();	break;
+				case 0x53: comb();		break;
+				case 0x54: lsrb();		break;
+				case 0x55: illegal();	break;
+				case 0x56: rorb();		break;
+				case 0x57: asrb();		break;
+				case 0x58: aslb();		break;
+				case 0x59: rolb();		break;
+				case 0x5a: decb();		break;
+				case 0x5b: illegal();	break;
+				case 0x5c: incb();		break;
+				case 0x5d: tstb();		break;
+				case 0x5e: illegal();	break;
+				case 0x5f: clrb();		break;
+				case 0x60: neg_ix();	break;
+				case 0x61: illegal();	break;
+				case 0x62: illegal();	break;
+				case 0x63: com_ix();	break;
+				case 0x64: lsr_ix();	break;
+				case 0x65: illegal();	break;
+				case 0x66: ror_ix();	break;
+				case 0x67: asr_ix();	break;
+				case 0x68: asl_ix();	break;
+				case 0x69: rol_ix();	break;
+				case 0x6a: dec_ix();	break;
+				case 0x6b: illegal();	break;
+				case 0x6c: inc_ix();	break;
+				case 0x6d: tst_ix();	break;
+				case 0x6e: jmp_ix();	break;
+				case 0x6f: clr_ix();	break;
+				case 0x70: neg_ex();	break;
+				case 0x71: illegal();	break;
+				case 0x72: illegal();	break;
+				case 0x73: com_ex();	break;
+				case 0x74: lsr_ex();	break;
+				case 0x75: illegal();	break;
+				case 0x76: ror_ex();	break;
+				case 0x77: asr_ex();	break;
+				case 0x78: asl_ex();	break;
+				case 0x79: rol_ex();	break;
+				case 0x7a: dec_ex();	break;
+				case 0x7b: illegal();	break;
+				case 0x7c: inc_ex();	break;
+				case 0x7d: tst_ex();	break;
+				case 0x7e: jmp_ex();	break;
+				case 0x7f: clr_ex();	break;
+				case 0x80: suba_im();	break;
+				case 0x81: cmpa_im();	break;
+				case 0x82: sbca_im();	break;
+				case 0x83: subd_im();	break;
+				case 0x84: anda_im();	break;
+				case 0x85: bita_im();	break;
+				case 0x86: lda_im();	break;
+				case 0x87: sta_im();	break; /* ILLEGAL? */
+				case 0x88: eora_im();	break;
+				case 0x89: adca_im();	break;
+				case 0x8a: ora_im();	break;
+				case 0x8b: adda_im();	break;
+				case 0x8c: cmpx_im();	break;
+				case 0x8d: bsr();		break;
+				case 0x8e: ldx_im();	break;
+				case 0x8f: stx_im();	break; /* ILLEGAL? */
+				case 0x90: suba_di();	break;
+				case 0x91: cmpa_di();	break;
+				case 0x92: sbca_di();	break;
+				case 0x93: subd_di();	break;
+				case 0x94: anda_di();	break;
+				case 0x95: bita_di();	break;
+				case 0x96: lda_di();	break;
+				case 0x97: sta_di();	break;
+				case 0x98: eora_di();	break;
+				case 0x99: adca_di();	break;
+				case 0x9a: ora_di();	break;
+				case 0x9b: adda_di();	break;
+				case 0x9c: cmpx_di();	break;
+				case 0x9d: jsr_di();	break;
+				case 0x9e: ldx_di();	break;
+				case 0x9f: stx_di();	break;
+				case 0xa0: suba_ix();	break;
+				case 0xa1: cmpa_ix();	break;
+				case 0xa2: sbca_ix();	break;
+				case 0xa3: subd_ix();	break;
+				case 0xa4: anda_ix();	break;
+				case 0xa5: bita_ix();	break;
+				case 0xa6: lda_ix();	break;
+				case 0xa7: sta_ix();	break;
+				case 0xa8: eora_ix();	break;
+				case 0xa9: adca_ix();	break;
+				case 0xaa: ora_ix();	break;
+				case 0xab: adda_ix();	break;
+				case 0xac: cmpx_ix();	break;
+				case 0xad: jsr_ix();	break;
+				case 0xae: ldx_ix();	break;
+				case 0xaf: stx_ix();	break;
+				case 0xb0: suba_ex();	break;
+				case 0xb1: cmpa_ex();	break;
+				case 0xb2: sbca_ex();	break;
+				case 0xb3: subd_ex();	break;
+				case 0xb4: anda_ex();	break;
+				case 0xb5: bita_ex();	break;
+				case 0xb6: lda_ex();	break;
+				case 0xb7: sta_ex();	break;
+				case 0xb8: eora_ex();	break;
+				case 0xb9: adca_ex();	break;
+				case 0xba: ora_ex();	break;
+				case 0xbb: adda_ex();	break;
+				case 0xbc: cmpx_ex();	break;
+				case 0xbd: jsr_ex();	break;
+				case 0xbe: ldx_ex();	break;
+				case 0xbf: stx_ex();	break;
+				case 0xc0: subb_im();	break;
+				case 0xc1: cmpb_im();	break;
+				case 0xc2: sbcb_im();	break;
+				case 0xc3: addd_im();	break;
+				case 0xc4: andb_im();	break;
+				case 0xc5: bitb_im();	break;
+				case 0xc6: ldb_im();	break;
+				case 0xc7: stb_im();	break; /* ILLEGAL? */
+				case 0xc8: eorb_im();	break;
+				case 0xc9: adcb_im();	break;
+				case 0xca: orb_im();	break;
+				case 0xcb: addb_im();	break;
+				case 0xcc: ldd_im();	break;
+				case 0xcd: std_im();	break; /* ILLEGAL? */
+				case 0xce: ldu_im();	break;
+				case 0xcf: stu_im();	break; /* ILLEGAL? */
+				case 0xd0: subb_di();	break;
+				case 0xd1: cmpb_di();	break;
+				case 0xd2: sbcb_di();	break;
+				case 0xd3: addd_di();	break;
+				case 0xd4: andb_di();	break;
+				case 0xd5: bitb_di();	break;
+				case 0xd6: ldb_di();	break;
+				case 0xd7: stb_di();	break;
+				case 0xd8: eorb_di();	break;
+				case 0xd9: adcb_di();	break;
+				case 0xda: orb_di();	break;
+				case 0xdb: addb_di();	break;
+				case 0xdc: ldd_di();	break;
+				case 0xdd: std_di();	break;
+				case 0xde: ldu_di();	break;
+				case 0xdf: stu_di();	break;
+				case 0xe0: subb_ix();	break;
+				case 0xe1: cmpb_ix();	break;
+				case 0xe2: sbcb_ix();	break;
+				case 0xe3: addd_ix();	break;
+				case 0xe4: andb_ix();	break;
+				case 0xe5: bitb_ix();	break;
+				case 0xe6: ldb_ix();	break;
+				case 0xe7: stb_ix();	break;
+				case 0xe8: eorb_ix();	break;
+				case 0xe9: adcb_ix();	break;
+				case 0xea: orb_ix();	break;
+				case 0xeb: addb_ix();	break;
+				case 0xec: ldd_ix();	break;
+				case 0xed: std_ix();	break;
+				case 0xee: ldu_ix();	break;
+				case 0xef: stu_ix();	break;
+				case 0xf0: subb_ex();	break;
+				case 0xf1: cmpb_ex();	break;
+				case 0xf2: sbcb_ex();	break;
+				case 0xf3: addd_ex();	break;
+				case 0xf4: andb_ex();	break;
+				case 0xf5: bitb_ex();	break;
+				case 0xf6: ldb_ex();	break;
+				case 0xf7: stb_ex();	break;
+				case 0xf8: eorb_ex();	break;
+				case 0xf9: adcb_ex();	break;
+				case 0xfa: orb_ex();	break;
+				case 0xfb: addb_ex();	break;
+				case 0xfc: ldd_ex();	break;
+				case 0xfd: std_ex();	break;
+				case 0xfe: ldu_ex();	break;
+				case 0xff: stu_ex();	break;
 			}
 		}
 		else
 		{
 			UINT8 ireg2;
-			ireg2=M_RDOP(pcreg++);
+			ireg2 = M_RDOP(pcreg++);
 
 			if( (op_count=cycles2[ireg2]) &0x80 ) fetch_effective_address();
 
 			if( ireg == 0x10 ){
 				switch( ireg2 )	/* 10xx */
 				{
-				case 0x21: lbrn(); break;
-				case 0x22: lbhi(); break;
-				case 0x23: lbls(); break;
-				case 0x24: lbcc(); break;
-				case 0x25: lbcs(); break;
-				case 0x26: lbne(); break;
-				case 0x27: lbeq(); break;
-				case 0x28: lbvc(); break;
-				case 0x29: lbvs(); break;
-				case 0x2a: lbpl(); break;
-				case 0x2b: lbmi(); break;
-				case 0x2c: lbge(); break;
-				case 0x2d: lblt(); break;
-				case 0x2e: lbgt(); break;
-				case 0x2f: lble(); break;
-				case 0x3f: swi2(); break;
-				case 0x83: cmpd_im(); break;
-				case 0x8c: cmpy_im(); break;
-				case 0x8e: ldy_im(); break;
-				case 0x8f: sty_im(); break; /* ILLEGAL? */
-				case 0x93: cmpd_di(); break;
-				case 0x9c: cmpy_di(); break;
-				case 0x9e: ldy_di(); break;
-				case 0x9f: sty_di(); break;
-				case 0xa3: cmpd_ix(); break;
-				case 0xac: cmpy_ix(); break;
-				case 0xae: ldy_ix(); break;
-				case 0xaf: sty_ix(); break;
-				case 0xb3: cmpd_ex(); break;
-				case 0xbc: cmpy_ex(); break;
-				case 0xbe: ldy_ex(); break;
-				case 0xbf: sty_ex(); break;
-				case 0xce: lds_im(); break;
-				case 0xcf: sts_im(); break; /* ILLEGAL? */
-				case 0xde: lds_di(); break;
-				case 0xdf: sts_di(); break;
-				case 0xee: lds_ix(); break;
-				case 0xef: sts_ix(); break;
-				case 0xfe: lds_ex(); break;
-				case 0xff: sts_ex(); break;
-				default: illegal(); break;
+				case 0x21: lbrn();		break;
+				case 0x22: lbhi();		break;
+				case 0x23: lbls();		break;
+				case 0x24: lbcc();		break;
+				case 0x25: lbcs();		break;
+				case 0x26: lbne();		break;
+				case 0x27: lbeq();		break;
+				case 0x28: lbvc();		break;
+				case 0x29: lbvs();		break;
+				case 0x2a: lbpl();		break;
+				case 0x2b: lbmi();		break;
+				case 0x2c: lbge();		break;
+				case 0x2d: lblt();		break;
+				case 0x2e: lbgt();		break;
+				case 0x2f: lble();		break;
+				case 0x3f: swi2();		break;
+				case 0x83: cmpd_im();	break;
+				case 0x8c: cmpy_im();	break;
+				case 0x8e: ldy_im();	break;
+				case 0x8f: sty_im();	break; /* ILLEGAL? */
+				case 0x93: cmpd_di();	break;
+				case 0x9c: cmpy_di();	break;
+				case 0x9e: ldy_di();	break;
+				case 0x9f: sty_di();	break;
+				case 0xa3: cmpd_ix();	break;
+				case 0xac: cmpy_ix();	break;
+				case 0xae: ldy_ix();	break;
+				case 0xaf: sty_ix();	break;
+				case 0xb3: cmpd_ex();	break;
+				case 0xbc: cmpy_ex();	break;
+				case 0xbe: ldy_ex();	break;
+				case 0xbf: sty_ex();	break;
+				case 0xce: lds_im();	break;
+				case 0xcf: sts_im();	break; /* ILLEGAL? */
+				case 0xde: lds_di();	break;
+				case 0xdf: sts_di();	break;
+				case 0xee: lds_ix();	break;
+				case 0xef: sts_ix();	break;
+				case 0xfe: lds_ex();	break;
+				case 0xff: sts_ex();	break;
+				default: illegal(); 	break;
 				}
 			}else{
 				switch( ireg2 )	/* 11xx */
 				{
 				case 0x3f: swi3(); break;
-				case 0x83: cmpu_im(); break;
-				case 0x8c: cmps_im(); break;
-				case 0x93: cmpu_di(); break;
-				case 0x9c: cmps_di(); break;
-				case 0xa3: cmpu_ix(); break;
-				case 0xac: cmps_ix(); break;
-				case 0xb3: cmpu_ex(); break;
-				case 0xbc: cmps_ex(); break;
-				default: illegal(); break;
+				case 0x83: cmpu_im();	break;
+				case 0x8c: cmps_im();	break;
+				case 0x93: cmpu_di();	break;
+				case 0x9c: cmps_di();	break;
+				case 0xa3: cmpu_ix();	break;
+				case 0xac: cmps_ix();	break;
+				case 0xb3: cmpu_ex();	break;
+				case 0xbc: cmps_ex();	break;
+				default: illegal(); 	break;
 				}
 			}
 		}
@@ -1005,7 +928,11 @@ int m6809_execute(int cycles)	/* NS 970908 */
 	} while( m6809_ICount>0 );
 
 getout:
-	return cycles - m6809_ICount;	/* NS 970908 */
+	/* HJB 990226: subtract additional cycles for interrupts */
+    m6809_ICount -= m6809_IExtra;
+    m6809_IExtra = 0;
+
+    return cycles - m6809_ICount;   /* NS 970908 */
 }
 
 INLINE UINT8 fetch_effective_address( void )

@@ -65,9 +65,6 @@ extern   int I8039_ICount;      /* T-state count                          */
 #define I8039_EXT_INT		1	/* Execute a normal extern interrupt	*/
 #define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
 #define I8039_COUNT_INT 	4	/* Execute a Counter interrupt			*/
-#if NEW_INTERRUPT_SYSTEM
-#define I8039_PENDING		0x80000000
-#endif
 
 unsigned I8039_GetPC  (void);			/* Get program counter			*/
 void I8039_GetRegs(I8039_Regs *Regs);	/* Get registers				*/

@@ -17,7 +17,10 @@ extern unsigned char *dirtybuffer;
 extern struct osd_bitmap *tmpbitmap;
 
 int generic_vh_start(void);
+int generic_bitmapped_vh_start(void);
 void generic_vh_stop(void);
+void generic_bitmapped_vh_stop(void);
+void generic_bitmapped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int videoram_r(int offset);
 int colorram_r(int offset);
 void videoram_w(int offset,int data);

@@ -255,7 +255,7 @@ static void djnz_r4(void)	 { UINT8 i=M_RDMEM_OPCODE(); R4--; if (R4 != 0) { R.PC
 static void djnz_r5(void)	 { UINT8 i=M_RDMEM_OPCODE(); R5--; if (R5 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void djnz_r6(void)	 { UINT8 i=M_RDMEM_OPCODE(); R6--; if (R6 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void djnz_r7(void)	 { UINT8 i=M_RDMEM_OPCODE(); R7--; if (R7 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void en_i(void)       { R.xirq_en = 1; }
+static void en_i(void)       { R.xirq_en = 1; if (R.irq_state != CLEAR_LINE) R.pending_irq |= I8039_EXT_INT; }
 static void en_tcnti(void)   { R.tirq_en = 1; }
 static void ento_clk(void)   { M_UNDEFINED(); }
 static void in_a_p1(void)    { R.A = port_r(1); }
@@ -308,7 +308,7 @@ static void jf0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_F0y) { R.PC.W = (R.PC.
 static void jf_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.f1)	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jnc(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_Cn)	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jc(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_Cy)	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jni(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.pending_irq == I8039_EXT_INT) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
+static void jni(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.irq_state != CLEAR_LINE) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jnt_0(void) 	 { UINT8 i=M_RDMEM_OPCODE(); if (!test_r(0)) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jt_0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (test_r(0))  { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jnt_1(void) 	 { UINT8 i=M_RDMEM_OPCODE(); if (!test_r(1)) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
@@ -596,12 +596,6 @@ int I8039_Execute(int cycles)
 	I8039_ICount=cycles;
 
 	do {
-#if NEW_INTERRUPT_SYSTEM
-        if (R.pending_irq & I8039_PENDING) {
-			int type = (*R.irq_callback)(0);
-			R.pending_irq |= type;
-		}
-#endif
         switch (R.pending_irq)
 		{
 			case I8039_COUNT_INT:
@@ -613,6 +607,7 @@ int I8039_Execute(int cycles)
 				R.t_flag = 1;
 				break;
 			case I8039_EXT_INT:
+				if (R.irq_callback) (*R.irq_callback)(0);
 				count = Ext_IRQ();
 				I8039_ICount -= count;
 				if (R.timerON)	/* NS990113 */
@@ -685,9 +680,9 @@ void I8039_set_irq_line(int irqline, int state)
 {
 	R.irq_state = state;
 	if (state == CLEAR_LINE)
-		R.pending_irq &= ~I8039_PENDING;
+		R.pending_irq &= ~I8039_EXT_INT;
 	else
-		R.pending_irq |= I8039_PENDING;
+		R.pending_irq |= I8039_EXT_INT;
 }
 
 void I8039_set_irq_callback(int (*callback)(int irqline))

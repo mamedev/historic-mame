@@ -33,6 +33,9 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax);
 void init_user_interface(void);
 int handle_user_interface(void);
 
+int onscrd_active(void);
+int setup_active(void);
+
 void usrintf_showmessage(const char *text);
 
 #endif

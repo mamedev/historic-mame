@@ -13,6 +13,8 @@
 #define CONVENTION
 #endif
 
+m68k_cpu_context regs;
+
 extern void CONVENTION M68KRUN(void);
 extern void CONVENTION M68KRESET(void);
 

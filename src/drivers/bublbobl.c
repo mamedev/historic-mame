@@ -25,6 +25,10 @@ ff03      IN1
 
 Service mode works only if the language switch is set to Japanese.
 
+- The protection feature which randomizes the EXTEND letters in the original
+  version is not emulated properly.
+
+
 ***************************************************************************/
 /***************************************************************************
 
@@ -220,7 +224,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x9001, 0x9001, YM2203_read_port_0_r },
 	{ 0xa000, 0xa000, YM3526_status_port_0_r },
 	{ 0xb000, 0xb000, soundlatch_r },
-	{ 0xb001, 0xb001, MRA_NOP },	/* sound chip? */
+	{ 0xb001, 0xb001, MRA_NOP },	/* ??? */
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
 	{ -1 }	/* end of table */
 };
@@ -694,8 +698,7 @@ static struct MachineDriver bublbobl_machine_driver =
 		},
 		{
 			CPU_M68705,
-			3000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
-			/* If I set it to 4MHz sound stops working... */
+			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
 			4,
 			m68705_readmem,m68705_writemem,0,0,
 			bublbobl_m68705_interrupt,2	/* ??? should come from the same */
@@ -922,7 +925,7 @@ ROM_END
 ROM_START( sboblbob_rom )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
     ROM_LOAD( "bbb-3.rom",    0x00000, 0x8000, 0xf304152a )
-    ROM_LOAD( "bbb-5.rom",    0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
+    ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(             0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
 															/* it from 7fff, so bank switching wouldn't work */
     ROM_LOAD( "bbb-4.rom",    0x14000, 0x8000, 0x94c75591 )	/* banked at 8000-bfff */

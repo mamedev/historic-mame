@@ -1717,10 +1717,10 @@ ROM_START( rbtapper_rom )
 	ROM_LOAD( "rbtfg0.bin",   0x24000, 0x4000, 0xe99f6018 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rbtsnda7.bin", 0x0000, 0x1000, 0x5c1d0982 )
-	ROM_LOAD( "rbtsnda8.bin", 0x1000, 0x1000, 0x09e74ed8 )
-	ROM_LOAD( "rbtsnda9.bin", 0x2000, 0x1000, 0xc3e98284 )
-	ROM_LOAD( "rbtsda10.bin", 0x3000, 0x1000, 0xced2fd47 )
+	ROM_LOAD( "5788",         0x0000, 0x1000, 0x5c1d0982 )
+	ROM_LOAD( "5787",         0x1000, 0x1000, 0x09e74ed8 )
+	ROM_LOAD( "5786",         0x2000, 0x1000, 0xc3e98284 )
+	ROM_LOAD( "5785",         0x3000, 0x1000, 0xced2fd47 )
 ROM_END
 
 struct GameDriver tapper_driver =
@@ -2023,8 +2023,8 @@ struct GameDriver timber_driver =
 
 ROM_START( rampage_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pro-0.rv3",    0x0000, 0x8000, 0x2f7ca03c )
-	ROM_LOAD( "pro-1.rv3",    0x8000, 0x8000, 0xd89bd9a4 )
+	ROM_LOAD( "pro0rev3.3b",  0x0000, 0x8000, 0x2f7ca03c )
+	ROM_LOAD( "pro1rev3.5b",  0x8000, 0x8000, 0xd89bd9a4 )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
@@ -2035,7 +2035,27 @@ ROM_START( rampage_rom )
 	ROM_LOAD( "fg-0",         0x38000, 0x10000, 0x0974be5d )
 
 	ROM_REGION(0x20000)  /* 128k for the Sounds Good board */
-	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )
+	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )	/* these are Revision 2 sound ROMs */
+	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
+	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
+	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
+ROM_END
+
+ROM_START( rampage2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pro0rev2.3b",  0x0000, 0x8000, 0x3f1d0293 )
+	ROM_LOAD( "pro1rev2.5b",  0x8000, 0x8000, 0x58523d75 )
+
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
+	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
+	ROM_LOAD( "fg-3",         0x08000, 0x10000, 0x81e1de40 )
+	ROM_LOAD( "fg-2",         0x18000, 0x10000, 0x9489f714 )
+	ROM_LOAD( "fg-1",         0x28000, 0x10000, 0x8728532b )
+	ROM_LOAD( "fg-0",         0x38000, 0x10000, 0x0974be5d )
+
+	ROM_REGION(0x20000)  /* 128k for the Sounds Good board */
+	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )    /* these are Revision 2 sound ROMs */
 	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
 	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
 	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
@@ -2055,7 +2075,7 @@ struct GameDriver rampage_driver =
 	__FILE__,
 	0,
 	"rampage",
-	"Rampage",
+	"Rampage (revision 3)",
 	"1986",
 	"Bally Midway",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
@@ -2064,6 +2084,32 @@ struct GameDriver rampage_driver =
 	0,
 
 	rampage_rom,
+	rampage_rom_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	rampage_input_ports,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	rampage_hiload, rampage_hisave
+};
+
+struct GameDriver rampage2_driver =
+{
+	__FILE__,
+	&rampage_driver,
+	"rampage2",
+	"Rampage (revision 2)",
+	"1986",
+	"Bally Midway",
+	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
+	0,
+	&rampage_machine_driver,
+	0,
+
+	rampage2_rom,
 	rampage_rom_decode, 0,
 	0,
 	0,	/* sound_prom */

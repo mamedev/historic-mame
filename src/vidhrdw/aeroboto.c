@@ -15,18 +15,8 @@
 
 unsigned char *aeroboto_videoram;
 unsigned char *aeroboto_fgscroll,*aeroboto_bgscroll;
-unsigned char *aeroboto_charlookup;
 
-static int charbank;
-
-
-void aeroboto_gfxctrl_w(int ofset,int data)
-{
-	/* not sure about this, could be bit 2 */
-	charbank = (data & 0x02) >> 1;
-
-	/* there's probably a flip screen here as well */
-}
+int aeroboto_charbank;
 
 
 
@@ -51,13 +41,13 @@ void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sy = offs / 32;
 
 		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs] + 256 * charbank,
+				videoram[offs] + 256 * aeroboto_charbank,
 				0,
 				0,0,
 				8*sx - aeroboto_bgscroll[sy],8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs] + 256 * charbank,
+				videoram[offs] + 256 * aeroboto_charbank,
 				0,
 				0,0,
 				8*sx - aeroboto_bgscroll[sy] + 256,8*sy,
@@ -72,13 +62,13 @@ void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sy = offs / 32;
 
 		drawgfx(bitmap,Machine->gfx[0],
-				aeroboto_videoram[offs] + 256 * charbank,
+				aeroboto_videoram[offs] + 256 * aeroboto_charbank,
 				0,
 				0,0,
 				8*sx - aeroboto_fgscroll[sy],8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		drawgfx(bitmap,Machine->gfx[0],
-				aeroboto_videoram[offs] + 256 * charbank,
+				aeroboto_videoram[offs] + 256 * aeroboto_charbank,
 				0,
 				0,0,
 				8*sx - aeroboto_fgscroll[sy] + 256,8*sy,

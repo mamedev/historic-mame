@@ -97,6 +97,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
 	{ 0xc820, 0xc87f, MWA_RAM, &spriteram, &spriteram_size },
@@ -412,7 +413,7 @@ static struct MachineDriver machine_driver =
 	128+32+32,64*4+16*4+3*4,
 	mpatrol_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_3_2,
+	VIDEO_TYPE_RASTER,
 	0,
 	mpatrol_vh_start,
 	mpatrol_vh_stop,

@@ -24,6 +24,7 @@
 #include "cpu/tms9900/tms9900.h"
 #include "cpu/z8000/z8000.h"
 #include "cpu/tms32010/tms32010.h"
+#include "cpu/h6280/h6280.h"
 #include "timer.h"
 
 
@@ -289,7 +290,32 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-    /* #define CPU_I86    4 */
+	/* #define CPU_H6280 4 */
+	{
+ 		H6280_Reset,					   /* Reset CPU */
+ 		H6280_Execute,					   /* Execute a number of cycles */
+ 		(void (*)(void *))H6280_SetRegs,   /* Set the contents of the registers */
+ 		(void (*)(void *))H6280_GetRegs,   /* Get the contents of the registers */
+ 		H6280_GetPC,					   /* Return the current PC */
+#if NEW_INTERRUPT_SYSTEM
+		H6280_set_nmi_line, 			    /* Set state of the NMI line */
+		H6280_set_irq_line, 			    /* Set state of the IRQ line */
+		H6280_set_irq_callback, 		    /* Set IRQ enable/vector callback */
+		0,									/* Cause internal interrupt */
+		3,									/* Number of IRQ lines */
+#else
+ 		H6280_Cause_Interrupt,			   /* Generate an interrupt */
+ 		H6280_Clear_Pending_Interrupts,    /* Clear pending interrupts */
+#endif
+ 		&H6280_ICount,					   /* Pointer to the instruction count */
+ 		0,-1,H6280_INT_NMI,                /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem21,                     /* Memory read */
+		cpu_writemem21,                    /* Memory write */
+		cpu_setOPbase21,                   /* Update CPU opcode base */
+		21,                                /* CPU address bits */
+		ABITS1_21,ABITS2_21,ABITS_MIN_21   /* Address bits, for the memory system */
+	},
+    /* #define CPU_I86    5 */
 	{
 		i86_Reset,							/* Reset CPU */
 		i86_Execute,						/* Execute a number of cycles */
@@ -314,7 +340,7 @@ struct cpu_interface cpuintf[] =
 		20, 								/* CPU address bits */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
 	},
-	/* #define CPU_I8039  5 */
+	/* #define CPU_I8039  6 */
 	{
 		I8039_Reset,						/* Reset CPU */
 		I8039_Execute,						/* Execute a number of cycles */
@@ -339,7 +365,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_M6808  6 */
+	/* #define CPU_M6808  7 */
 	{
 		m6808_reset,						/* Reset CPU */
 		m6808_execute,						/* Execute a number of cycles */
@@ -364,7 +390,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_M6805  7 */
+	/* #define CPU_M6805  8 */
 	{
 		m6805_reset,						/* Reset CPU */
 		m6805_execute,						/* Execute a number of cycles */
@@ -389,7 +415,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_M6809  8 */
+	/* #define CPU_M6809  9 */
 	{
 		m6809_reset,						/* Reset CPU */
 		m6809_execute,						/* Execute a number of cycles */
@@ -414,7 +440,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_M68000 9 */
+	/* #define CPU_M68000 10 */
 	{
 		MC68000_Reset,						/* Reset CPU */
 		MC68000_Execute,					/* Execute a number of cycles */
@@ -439,7 +465,7 @@ struct cpu_interface cpuintf[] =
 		24, 								/* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
         },
-    /* #define CPU_T11  10 */
+    /* #define CPU_T11  11 */
 	{
 		t11_reset,							/* Reset CPU */
 		t11_execute,						/* Execute a number of cycles */
@@ -464,7 +490,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW /* Address bits, for the memory system */
 	},
-	/* #define CPU_S2650 11 */
+	/* #define CPU_S2650 12 */
 	{
 		S2650_Reset,						/* Reset CPU */
 		S2650_Execute,						/* Execute a number of cycles */
@@ -489,7 +515,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_TMS34010 12 */
+	/* #define CPU_TMS34010 13 */
 	{
 		TMS34010_Reset,                     /* Reset CPU */
 		TMS34010_Execute,                   /* Execute a number of cycles */
@@ -514,7 +540,7 @@ struct cpu_interface cpuintf[] =
 		29, 								/* CPU address bits */
 		ABITS1_29,ABITS2_29,ABITS_MIN_29	/* Address bits, for the memory system */
 	},
-	/* #define CPU_TMS9900 13 */
+	/* #define CPU_TMS9900 14 */
 	{
 		TMS9900_Reset,						/* Reset CPU */
 		TMS9900_Execute,					/* Execute a number of cycles */
@@ -540,7 +566,7 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
         /* Were all ...LEW */
 	},
-	/* #define CPU_Z8000 14 */
+	/* #define CPU_Z8000 15 */
 	{
 		Z8000_Reset,						/* Reset CPU */
 		Z8000_Execute,						/* Execute a number of cycles */
@@ -565,7 +591,7 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* #define CPU_TMS320C10 15 */
+	/* #define CPU_TMS320C10 16 */
 	{
 		TMS320C10_Reset,					/* Reset CPU */
 		TMS320C10_Execute,					/* Execute a number of cycles */
@@ -1034,10 +1060,17 @@ int cpu_getscanline(void)
 
 double cpu_getscanlinetime(int scanline)
 {
+	double ret;
 	double scantime = timer_starttime (refresh_timer) + (double)scanline * scanline_period;
 	double time = timer_get_time ();
-	if (time >= scantime) scantime += TIME_IN_HZ (Machine->drv->frames_per_second);
-	return scantime - time;
+	if (time >= scantime) scantime += TIME_IN_HZ(Machine->drv->frames_per_second);
+	ret = scantime - time;
+	if (ret < TIME_IN_NSEC(1))
+	{
+		ret = TIME_IN_HZ (Machine->drv->frames_per_second);
+	}
+
+	return ret;
 }
 
 
@@ -1085,7 +1118,6 @@ int cpu_gethorzbeampos(void)
     return (int)(time_since_scanline * scanline_period_inv *
                          (double)Machine->drv->screen_width);
 }
-
 
 
 /***************************************************************************
@@ -1593,90 +1625,88 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 			cpu_manualnmicallback (cpunum | (PULSE_LINE << 3) );
 
         } else {
+			int irq_line;
 
 			switch (CPU_TYPE(cpunum)) {
 
-            case CPU_Z80:
-				LOG((errorlog,"Z80 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+			case CPU_Z80: LOG((errorlog,"Z80 IRQ\n"));
+				irq_line = 0;
 				break;
 
             case CPU_8085A:
 				switch (num) {
-					case I8085_INTR:
-						LOG((errorlog,"I8085_INTR\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
-					case I8085_RST55:
-						LOG((errorlog,"I8085_RST55\n"));
-						cpu_irq_line_vector_w(cpunum, 1, num);
-						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
-					case I8085_RST65:
-						LOG((errorlog,"I8085_RST65\n"));
-						cpu_irq_line_vector_w(cpunum, 2, num);
-						cpu_manualirqcallback (2 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
-					case I8085_RST75:
-						LOG((errorlog,"I8085_RST75\n"));
-						cpu_irq_line_vector_w(cpunum, 3, num);
-						cpu_manualirqcallback (3 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
-					default:
-						LOG((errorlog,"I8085 unknown\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				case I8085_INTR:
+					LOG((errorlog,"I8085 INTR\n"));
+					irq_line = 0;
+					break;
+				case I8085_RST55:
+					LOG((errorlog,"I8085 RST55\n"));
+					irq_line = 1;
+					break;
+				case I8085_RST65:
+					LOG((errorlog,"I8085 RST65\n"));
+					irq_line = 2;
+					break;
+				case I8085_RST75:
+					LOG((errorlog,"I8085 RST75\n"));
+					irq_line = 3;
+					break;
+				default:
+					LOG((errorlog,"I8085 unknown\n"));
+					irq_line = 0;
 				}
 				break;
 
             case CPU_M6502:
 				LOG((errorlog,"M6502 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				irq_line = 0;
 				break;
 
             case CPU_I86:
 				LOG((errorlog,"I86 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				irq_line = 0;
 				break;
 
             case CPU_I8039:
 				LOG((errorlog,"I8039 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				irq_line = 0;
 				break;
 
-            case CPU_M6803:
-				LOG((errorlog,"M6803 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+			case CPU_M6808:
+				switch (num) {
+				case M6808_INT_IRQ:
+					LOG((errorlog,"M6808 IRQ\n"));
+					irq_line = 0;
+					break;
+				case M6808_INT_OCI:
+					LOG((errorlog,"M6808 OCI\n"));
+					irq_line = 1;
+					break;
+				default:
+					LOG((errorlog,"M6808 unknown\n"));
+					irq_line = 0;
+                    break;
+                }
 				break;
 
             case CPU_M6805:
 				LOG((errorlog,"M6805 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				irq_line = 0;
 				break;
 
             case CPU_M6809:
 				switch (num) {
-					case M6809_INT_IRQ:
-						LOG((errorlog,"M6809 IRQ\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
-					case M6809_INT_FIRQ:
-						LOG((errorlog,"M6809 FIRQ\n"));
-						cpu_irq_line_vector_w(cpunum, 1, num);
-						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
-					default:
-						LOG((errorlog,"M6809 unknown\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				case M6809_INT_IRQ:
+					LOG((errorlog,"M6809 IRQ\n"));
+					irq_line = 0;
+					break;
+				case M6809_INT_FIRQ:
+					LOG((errorlog,"M6809 FIRQ\n"));
+					irq_line = 1;
+					break;
+				default:
+					LOG((errorlog,"M6809 unknown\n"));
+					irq_line = 0;
 				}
 				break;
 
@@ -1684,164 +1714,171 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				switch (num) {
 					case MC68000_IRQ_1:
 						LOG((errorlog,"M68000 IRQ1\n"));
-						cpu_irq_line_vector_w(cpunum, 1, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						irq_line = 1;
 						break;
 					case MC68000_IRQ_2:
 						LOG((errorlog,"M68000 IRQ2\n"));
-						cpu_irq_line_vector_w(cpunum, 2, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (2 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 2;
+                        break;
 					case MC68000_IRQ_3:
 						LOG((errorlog,"M68000 IRQ3\n"));
-						cpu_irq_line_vector_w(cpunum, 3, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (3 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 3;
+                        break;
 					case MC68000_IRQ_4:
 						LOG((errorlog,"M68000 IRQ4\n"));
-						cpu_irq_line_vector_w(cpunum, 4, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (4 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 4;
+                        break;
 					case MC68000_IRQ_5:
 						LOG((errorlog,"M68000 IRQ5\n"));
-						cpu_irq_line_vector_w(cpunum, 5, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (5 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 5;
+                        break;
 					case MC68000_IRQ_6:
 						LOG((errorlog,"M68000 IRQ6\n"));
-						cpu_irq_line_vector_w(cpunum, 6, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (6 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 6;
+                        break;
 					case MC68000_IRQ_7:
 						LOG((errorlog,"M68000 IRQ7\n"));
-						cpu_irq_line_vector_w(cpunum, 7, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (7 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 7;
+                        break;
 					default:
 						LOG((errorlog,"M68000 unknown\n"));
-						cpu_irq_line_vector_w(cpunum, 0, MC68000_INT_ACK_AUTOVECTOR);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-				}
+						irq_line = 0;
+                }
+				/* until now only auto vector interrupts supported */
+                num = MC68000_INT_ACK_AUTOVECTOR;
 				break;
 
             case CPU_T11:
 				switch (num) {
 					case T11_IRQ0:
 						LOG((errorlog,"T11 IRQ0\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						irq_line = 0;
 						break;
 					case T11_IRQ1:
 						LOG((errorlog,"T11 IRQ1\n"));
-						cpu_irq_line_vector_w(cpunum, 1, num);
-						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 1;
+                        break;
 					case T11_IRQ2:
 						LOG((errorlog,"T11 IRQ2\n"));
-						cpu_irq_line_vector_w(cpunum, 2, num);
-						cpu_manualirqcallback (2 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 2;
+                        break;
 					case T11_IRQ3:
 						LOG((errorlog,"T11 IRQ3\n"));
-						cpu_irq_line_vector_w(cpunum, 3, num);
-						cpu_manualirqcallback (3 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 3;
+                        break;
 					default:
 						LOG((errorlog,"T11 unknown\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-				}
+						irq_line = 0;
+                }
                 break;
 
             case CPU_S2650:
 				LOG((errorlog,"S2650 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				irq_line = 0;
                 break;
 
             case CPU_TMS34010:
 				switch (num) {
 					case TMS34010_INT1:
 						LOG((errorlog,"TMS34010 INT1\n"));
-						cpu_irq_line_vector_w( cpunum, 0, num );
-						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						irq_line = 0;
                         break;
 					case TMS34010_INT2:
 						LOG((errorlog,"TMS34010 INT2\n"));
-						cpu_irq_line_vector_w( cpunum, 1, num );
-						cpu_manualirqcallback( 1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						irq_line = 1;
                         break;
                     default:
 						LOG((errorlog,"TMS34010 unknown\n"));
-						cpu_irq_line_vector_w( cpunum, 0, num );
-						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
-				}
+						irq_line = 0;
+                }
                 break;
 
             case CPU_TMS9900:
 				LOG((errorlog,"TMS9900 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				irq_line = 0;
                 break;
 
             case CPU_Z8000:
 				switch (num) {
 					case Z8000_NVI:
 						LOG((errorlog,"Z8000 NVI\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 0;
+                        break;
 					case Z8000_VI:
 						LOG((errorlog,"Z8000 VI\n"));
-						cpu_irq_line_vector_w(cpunum, 1, num);
-						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
-						break;
+						irq_line = 1;
+                        break;
 					default:
 						LOG((errorlog,"Z8000 unknown\n"));
-						cpu_irq_line_vector_w(cpunum, 0, num);
-						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-				}
+						irq_line = 0;
+                }
                 break;
 
             case CPU_TMS320C10:
 				switch (num) {
 					case TMS320C10_ACTIVE_INT:
 						LOG((errorlog,"TMS32010 INT\n"));
-						cpu_irq_line_vector_w( cpunum, 0, num );
-						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						irq_line = 0;
                         break;
 					case TMS320C10_ACTIVE_BIO:
 						LOG((errorlog,"TMS32010 BIO\n"));
-						cpu_irq_line_vector_w( cpunum, 1, num );
-						cpu_manualirqcallback( 1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						irq_line = 1;
                         break;
                     default:
 						LOG((errorlog,"TMS32010 unknown\n"));
-						cpu_irq_line_vector_w( cpunum, 0, num );
-						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
-				}
+						irq_line = 0;
+                }
+                break;
+
+            case CPU_H6280:
+				switch (num) {
+					case H6280_INT_IRQ1:
+						LOG((errorlog,"H6280 INT 1\n"));
+						irq_line = 0;
+                        break;
+					case H6280_INT_IRQ2:
+						LOG((errorlog,"H6280 INT 2\n"));
+						irq_line = 1;
+                        break;
+					case H6280_INT_TIMER:
+						LOG((errorlog,"H6280 TIMER INT\n"));
+						irq_line = 2;
+                        break;
+                    default:
+						LOG((errorlog,"H6280 unknown\n"));
+						irq_line = 0;
+                }
                 break;
 
             default:
 				/* else it should be an IRQ type; assume line 0 and store vector */
 				LOG((errorlog,"unknown IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
-			}
-		}
+				irq_line = 0;
+            }
+			cpu_irq_line_vector_w(cpunum, irq_line, num);
+			cpu_manualirqcallback (irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
+        }
 	}
-#else
-	CAUSE_INTERRUPT (cpunum, num);
-#endif
 
-	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap (activecpu);
+    /* update the CPU's context */
+    if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+    activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+	/* trigger already generated by cpu_manualirqcallback or cpu_manualnmicallback */
+#else
+
+    CAUSE_INTERRUPT (cpunum, num);
+
+    /* update the CPU's context */
+    if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+    activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
 
 	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
-	if (num != INT_TYPE_NONE (cpunum))
-		timer_trigger (TRIGGER_INT + cpunum);
+    if (num != INT_TYPE_NONE (cpunum))
+        timer_trigger (TRIGGER_INT + cpunum);
+#endif
 }
 
 static void cpu_clear_interrupts (int cpunum)

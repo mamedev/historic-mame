@@ -1175,14 +1175,14 @@ static struct YM2151interface ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579545,    /* 3.579545 MHz */
-	{ 30 },
+	{ YM3012_VOL(30,OSD_PAN_LEFT,30,OSD_PAN_RIGHT) },
 	{ smashtv_ym2151_int }
 };
 static struct YM2151interface narc_ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579545,    /* 3.579545 MHz */
-	{ 30 },
+	{ YM3012_VOL(30,OSD_PAN_LEFT,30,OSD_PAN_RIGHT) },
 	{ narc_ym2151_int }
 };
 static struct OKIM6295interface okim6295_interface =
@@ -1683,12 +1683,12 @@ ROM_START( narc_rom )
 
 	ROM_REGION(0x30000)     /* sound CPU */
 	ROM_LOAD ( "u5-snd", 0x00000, 0x10000, 0xe551e5e3 )
-	ROM_LOAD ( "u5-snd", 0x10000, 0x10000, 0xe551e5e3 )
+	ROM_RELOAD (         0x10000, 0x10000 )
 	ROM_LOAD ( "u4-snd", 0x20000, 0x10000, 0x450a591a )
 
 	ROM_REGION(0x50000)     /* slave sound CPU */
 	ROM_LOAD ( "u38-snd", 0x00000, 0x10000, 0x09b03b80 )
-	ROM_LOAD ( "u38-snd", 0x10000, 0x10000, 0x09b03b80 )
+	ROM_RELOAD (          0x10000, 0x10000 )
 	ROM_LOAD ( "u37-snd", 0x20000, 0x10000, 0x29dbeffd )
 	ROM_LOAD ( "u36-snd", 0x30000, 0x10000, 0x16cdbb13 )
 	ROM_LOAD ( "u35-snd", 0x40000, 0x10000, 0x81295892 )
@@ -2853,7 +2853,7 @@ struct GameDriver mk2_driver =
 	__FILE__,
 	0,
 	"mk2",
-	"MK 2 (rev L3.1)",
+	"Mortal Kombat II (rev L3.1)",
 	"1993",
 	"Midway",
 	BASE_CREDITS,
@@ -2878,7 +2878,7 @@ struct GameDriver mk2r32_driver =
 	__FILE__,
 	&mk2_driver,
 	"mk2r32",
-	"MK 2 (rev L3.2 (European))",
+	"Mortal Kombat II (rev L3.2 (European))",
 	"1993",
 	"Midway",
 	BASE_CREDITS,
@@ -2903,7 +2903,7 @@ struct GameDriver mk2r14_driver =
 	__FILE__,
 	&mk2_driver,
 	"mk2r14",
-	"MK 2 (rev L1.4)",
+	"Mortal Kombat II (rev L1.4)",
 	"1993",
 	"Midway",
 	BASE_CREDITS,

@@ -283,14 +283,15 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
-	{ YM2203_VOL(60,30) },
+	{ 30 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
 	{ 4 }, /* Does not have Delta T adpcm, so this can point to a non-existing region */
-	{ 3 }
+	{ 3 },
+	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) }
 };
 
 

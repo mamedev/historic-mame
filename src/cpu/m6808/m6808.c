@@ -18,6 +18,12 @@
 							arrays up to 65536 bytes must be supported
 							machine must be twos complement
 
+History
+99/03/01	HJB
+	Modified the interrupt handling. No more pending interrupt checks.
+	WAI opcode saves state, when an interrupt is taken (IRQ or OCI),
+	the state is only saved if not already done by WAI.
+
 *****************************************************************************/
 
 
@@ -32,7 +38,7 @@ extern FILE *errorlog;
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) { fprintf x; fclose(errorlog); errorlog = fopen("error.log", "a"); }
+#define LOG(x)	if( errorlog ) fprintf x
 #else
 #define LOG(x)
 #endif
@@ -42,9 +48,9 @@ static UINT8 cc,areg,breg;
 static UINT16 xreg,sreg,pcreg;
 
 static UINT16 eaddr; /* effective address */
-static int pending_interrupts;
-static int nmi_state;
-static int irq_state;
+static UINT8 wai_state;
+static INT8 nmi_state;
+static INT8 irq_state[2];
 static int (*irq_callback)(int irqline);
 
 /* public globals */
@@ -72,7 +78,43 @@ static void (*wr_s_handler_wd)(int,int);
 #define PULLBYTE(b) {sreg++;b=(*rd_s_handler)(sreg);}
 #define PULLWORD(w) {sreg++;w=(*rd_s_handler_wd)(sreg);sreg++;}
 
-/* CC masks						  HI NZVC
+/* check the IRQ lines for pending interrupts */
+#define CHECK_IRQ_LINES {                                               \
+    if (irq_state[0] != CLEAR_LINE && !( cc & 0x10 ) ) {                \
+        /* standard IRQ */                                              \
+        LOG((errorlog, "M6808#%d take IRQ\n", cpu_getactivecpu()));     \
+		if( !(wai_state & M6808_WAI) ) {								\
+            PUSHWORD(pcreg);                                            \
+            PUSHWORD(xreg);                                             \
+            PUSHBYTE(areg);                                             \
+            PUSHBYTE(breg);                                             \
+            PUSHBYTE(cc);                                               \
+        }                                                               \
+        SEI;                                                            \
+        pcreg=M_RDMEM_WORD(0xfff8);                                     \
+        change_pc(pcreg);                                               \
+        m6808_ICount -= 15;                                             \
+        if (irq_callback) (void)(*irq_callback)(0);                     \
+    } else                                                              \
+    if (irq_state[1] != CLEAR_LINE) {                                   \
+        /* OCI */                                                       \
+        LOG((errorlog, "M6808#%d take OCI\n", cpu_getactivecpu()));     \
+		if( !(wai_state & M6808_WAI) ) {								\
+            PUSHWORD(pcreg);                                            \
+            PUSHWORD(xreg);                                             \
+            PUSHBYTE(areg);                                             \
+            PUSHBYTE(breg);                                             \
+            PUSHBYTE(cc);                                               \
+        }                                                               \
+        SEI;                                                            \
+        pcreg=M_RDMEM_WORD(0xfff4);                                     \
+        change_pc(pcreg);                                               \
+        m6808_ICount -= 15;                                             \
+		if (irq_callback) (void)(*irq_callback)(1); 					\
+    }                                                                   \
+}
+
+/* CC masks                       HI NZVC
 								7654 3210	*/
 #define CLR_HNZVC	cc&=0xd0
 #define CLR_NZV		cc&=0xf1
@@ -167,7 +209,7 @@ static UINT8 flags8d[256]= /* decrement */
 #define SEH cc|=0x20
 #define CLH cc&=0xdf
 #define SEI cc|=0x10
-#define CLI cc&=~0x10; CHECK_IRQ_LINE(cc)
+#define CLI cc&=~0x10
 
 /* macros for convenience */
 #define DIRBYTE(b) {DIRECT;b=M_RDMEM(eaddr);}
@@ -283,14 +325,12 @@ void m6808_SetRegs(m6808_Regs *Regs)
 	areg = Regs->a;
 	breg = Regs->b;
 	cc = Regs->cc;
-
-	pending_interrupts = Regs->pending_interrupts;
-#if NEW_INTERRUPT_SYSTEM
-	nmi_state = Regs->nmi_state;
-    irq_state = Regs->irq_state;
+	wai_state = Regs->wai_state;
+    nmi_state = Regs->nmi_state;
+	irq_state[0] = Regs->irq_state[0];
+	irq_state[1] = Regs->irq_state[1];
 	irq_callback = Regs->irq_callback;
-#endif
-	CHECK_IRQ_LINE(cc); /* HJB 980124 */
+	CHECK_IRQ_LINES;	/* HJB 990301 */
 }
 
 
@@ -305,13 +345,11 @@ void m6808_GetRegs(m6808_Regs *Regs)
 	Regs->a = areg;
 	Regs->b = breg;
 	Regs->cc = cc;
-
-	Regs->pending_interrupts = pending_interrupts;
-#if NEW_INTERRUPT_SYSTEM
-	Regs->nmi_state = nmi_state;
-    Regs->irq_state = irq_state;
+	Regs->wai_state = wai_state;
+    Regs->nmi_state = nmi_state;
+	Regs->irq_state[0] = irq_state[0];
+	Regs->irq_state[1] = irq_state[1];
 	Regs->irq_callback = irq_callback;
-#endif
 }
 
 
@@ -323,66 +361,6 @@ unsigned m6808_GetPC(void)
 	return pcreg;
 }
 
-
-/* Generate interrupts */
-static void Interrupt(void)
-{
-	if (pending_interrupts & M6808_INT_NMI) {
-        /* NMI */
-		LOG((errorlog, "M6808#%d take NMI\n", cpu_getactivecpu()));
-        PUSHWORD(pcreg);
-		PUSHWORD(xreg);
-		PUSHBYTE(areg);
-		PUSHBYTE(breg);
-		PUSHBYTE(cc);
-		SEI;
-		pcreg=M_RDMEM_WORD(0xfffc);
-		change_pc(pcreg);
-		m6808_ICount -= 15;
-
-        pending_interrupts &= ~M6808_INT_NMI;
-	} else {
-		if  ( ( cc & 0x10 ) == 0 ) {
-			if (pending_interrupts & M6808_INT_IRQ) {
-				/* standard IRQ */
-				LOG((errorlog, "M6808#%d take IRQ\n", cpu_getactivecpu()));
-                PUSHWORD(pcreg)
-				PUSHWORD(xreg)
-				PUSHBYTE(areg)
-				PUSHBYTE(breg)
-				PUSHBYTE(cc)
-				SEI;
-				pcreg=M_RDMEM_WORD(0xfff8);
-				change_pc(pcreg);
-				m6808_ICount -= 15;
-
-#if NEW_INTERRUPT_SYSTEM
-				(void)(*irq_callback)(0);
-#else
-                pending_interrupts &= ~M6808_INT_IRQ;
-#endif
-			}
-			else
-			if (pending_interrupts & M6808_INT_OCI) {
-				/* standard IRQ */
-				LOG((errorlog, "M6808#%d take OCI\n", cpu_getactivecpu()));
-                PUSHWORD(pcreg)
-				PUSHWORD(xreg)
-				PUSHBYTE(areg)
-				PUSHBYTE(breg)
-				PUSHBYTE(cc)
-				SEI;
-				pcreg=M_RDMEM_WORD(0xfff4);
-				change_pc(pcreg);
-				m6808_ICount -= 15;
-
-                pending_interrupts &= ~M6808_INT_OCI;
-			}
-		}
-	}
-}
-
-
 void m6808_reset(void)
 {
 	pcreg = M_RDMEM_WORD(0xfffe);
@@ -392,13 +370,10 @@ void m6808_reset(void)
 	SEI;			/* IRQ disabled */
 	areg = 0x00;	/* clear accumulator a */
 	breg = 0x00;	/* clear accumulator b */
-#if NEW_INTERRUPT_SYSTEM
+	wai_state = 0;
 	nmi_state = CLEAR_LINE;
-	irq_state = CLEAR_LINE;
-	pending_interrupts = 0;
-#else
-    m6808_Clear_Pending_Interrupts();
-#endif
+	irq_state[0] = CLEAR_LINE;
+	irq_state[1] = CLEAR_LINE;
 
 	/* default to unoptimized memory access */
 	rd_s_handler = rd_slow;
@@ -415,36 +390,34 @@ void m6808_reset(void)
 }
 
 
-#if NEW_INTERRUPT_SYSTEM
-
 void m6808_set_nmi_line(int state)
 {
 	if (nmi_state == state) return;
 	LOG((errorlog, "M6808#%d set_nmi_line %d ", cpu_getactivecpu(), state));
     nmi_state = state;
-	if (state != CLEAR_LINE)
-		pending_interrupts = (pending_interrupts & ~M6808_WAI) | M6808_INT_NMI;
+	if (state == CLEAR_LINE) return;
+
+	/* NMI */
+	LOG((errorlog, "M6808#%d take NMI\n", cpu_getactivecpu()));
+	PUSHWORD(pcreg);
+	PUSHWORD(xreg);
+	PUSHBYTE(areg);
+	PUSHBYTE(breg);
+	PUSHBYTE(cc);
+	SEI;
+	pcreg=M_RDMEM_WORD(0xfffc);
+	change_pc(pcreg);
+	m6808_ICount -= 15;
 }
 
 void m6808_set_irq_line(int irqline, int state)
 {
-	irq_state = state;
+	if (irq_state[irqline] == state) return;
 	LOG((errorlog, "M6808#%d set_irq_line %d,%d ", cpu_getactivecpu(), irqline, state));
-    if (state == CLEAR_LINE) {
-		if( (cc & 0x10) != 0 ) {
-			LOG((errorlog, "INT_IRQ cleared\n"));
-            pending_interrupts &= ~M6808_INT_IRQ;
-		} else {
-			LOG((errorlog, "no change\n"));
-        }
-	} else {
-		if( (cc & 0x10) == 0 ) {
-            pending_interrupts = (pending_interrupts & ~M6808_WAI) | M6808_INT_IRQ;
-			LOG((errorlog, "INT_IRQ set\n"));
-        } else {
-			LOG((errorlog, "no change\n"));
-        }
-	}
+	irq_state[irqline] = state;
+	if (state == CLEAR_LINE) return;
+
+    CHECK_IRQ_LINES;
 }
 
 void m6808_set_irq_callback(int (*callback)(int irqline))
@@ -452,30 +425,7 @@ void m6808_set_irq_callback(int (*callback)(int irqline))
 	irq_callback = callback;
 }
 
-#else
-
-void m6808_Cause_Interrupt(int type)
-{
-	pending_interrupts |= type;
-	if (pending_interrupts & M6808_WAI)
-	{
-		if ((pending_interrupts & M6808_INT_NMI) != 0)
-			pending_interrupts &= ~M6808_WAI;
-		else if ( (cc & 0x10) == 0 )
-				pending_interrupts &= ~M6808_WAI;
-	}
-}
-
-
-void m6808_Clear_Pending_Interrupts(void)
-{
-	pending_interrupts &= ~( M6808_INT_IRQ | M6808_INT_NMI | M6808_INT_OCI );
-}
-
-#endif
-
 #include "6808ops.c"
-
 
 /* execute instructions on this CPU until icount expires */
 int m6808_execute(int cycles)
@@ -483,21 +433,17 @@ int m6808_execute(int cycles)
 	UINT8 ireg;
 	m6808_ICount = cycles;
 
-	if ((pending_interrupts & M6808_WAI) != 0)
-	{
+	if( wai_state & M6808_WAI ) {
 		m6808_ICount = 0;
 		goto getout;
 	}
 
-	do
-	{
-		if (pending_interrupts != 0)
-			Interrupt();
+	do {
 
 #if ASGARD680X_DEBUG
 {
 extern void Asgard63701MiniTrace(unsigned long sx, unsigned long pcab, unsigned long flags, int icount);
-	Asgard63701MiniTrace ((sreg<<16)+xreg, (pcreg<<16)+(areg<<8)+breg, (pending_interrupts<<16)+cc, m6808_ICount);
+	Asgard63701MiniTrace ((sreg<<16)+xreg, (pcreg<<16)+(areg<<8)+breg, (wai_state<<16)+cc, m6808_ICount);
 }
 #endif
 
@@ -529,12 +475,12 @@ extern void Asgard63701MiniTrace(unsigned long sx, unsigned long pcab, unsigned 
 			case 0x0B: SEV; break;
 			case 0x0C: CLC; break;
 			case 0x0D: SEC; break;
-			case 0x0E: CLI; break;
+			case 0x0E: CLI; CHECK_IRQ_LINES; break;
 			case 0x0F: SEI; break;
 			case 0x10: sba(); break;
 			case 0x11: cba(); break;
-			case 0x12: illegal(); break;
-			case 0x13: illegal(); break;
+			case 0x12: undoc1(); /* HD63701YO only */; break;
+			case 0x13: undoc2(); /* HD63701YO only */; break;
 			case 0x14: illegal(); break;
 			case 0x15: illegal(); break;
 			case 0x16: tab(); break;

@@ -111,7 +111,6 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -123,14 +122,14 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer[offs] = 0;
 
-			sx = (31 - offs / 32);
-			sy = (offs % 32);
-			col = frogger_attributesram[2 * sy + 1] & 7;
+			sx = offs % 32;
+			sy = offs / 32;
+			col = frogger_attributesram[2 * sx + 1] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-					col + (sy <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
+					col + (sx <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -141,14 +140,13 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scroll[32],s;
 
-
 		for (i = 0;i < 32;i++)
 		{
 			s = frogger_attributesram[2 * i];
-			scroll[i] = ((s << 4) & 0xf0) | ((s >> 4) & 0x0f);
+			scroll[i] = -(((s << 4) & 0xf0) | ((s >> 4) & 0x0f));
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -158,19 +156,18 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (spriteram[offs + 3] != 0)
 		{
-			int x,col;
+			int y,col;
 
-
-			x = spriteram[offs];
-			x = ((x << 4) & 0xf0) | ((x >> 4) & 0x0f);
+			y = spriteram[offs];
+			y = ((y << 4) & 0xf0) | ((y >> 4) & 0x0f);
 			col = spriteram[offs + 2] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 1] & 0x3f,
 					col,
-					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-					x,spriteram[offs + 3],
+					spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
+					spriteram[offs + 3],30*8 - y,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
@@ -183,7 +180,6 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -192,17 +188,16 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			int sx,sy,col;
 
-
 			dirtybuffer[offs] = 0;
 
-			sx = (31 - offs / 32);
-			sy = (offs % 32);
-			col = frogger_attributesram[2 * sy + 1] & 7;
+			sx = offs % 32;
+			sy = offs / 32;
+			col = frogger_attributesram[2 * sx + 1] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-					col + (sy <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
+					col + (sx <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -213,11 +208,10 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scroll[32];
 
-
 		for (i = 0;i < 32;i++)
-			scroll[i] = frogger_attributesram[2 * i];
+			scroll[i] = -frogger_attributesram[2 * i];
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -229,15 +223,14 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			int col;
 
-
 			col = spriteram[offs + 2] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 1] & 0x3f,
 					col,
-					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-					spriteram[offs],spriteram[offs + 3],
+					spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
+					spriteram[offs + 3],30*8 - spriteram[offs],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

@@ -1,7 +1,8 @@
 #include "driver.h"
 #include "tilemap.h"
 
-#define USE_FATMASKS 1
+/* use bitmasks */
+#define USE_FATMASKS 0
 
 /*
 	Usage Notes:
@@ -33,6 +34,21 @@ static int *pen_refcount;
 
 #define SWAP(X,Y) {int temp=X; X=Y; Y=temp; }
 
+void tilemap_set_attributes( struct tilemap *tilemap, int attributes ){
+	if( tilemap->attributes!=attributes ){
+		orientation = Machine->orientation;
+		if( attributes&TILEMAP_FLIPY ) orientation ^= ORIENTATION_FLIP_Y;
+		if( attributes&TILEMAP_FLIPX ) orientation ^= ORIENTATION_FLIP_X;
+
+		tilemap_mark_all_tiles_dirty( tilemap );
+		tilemap->attributes = attributes;
+	}
+}
+
+static struct osd_bitmap *create_tmpbitmap( int width, int height ){
+	if( orientation&ORIENTATION_SWAP_XY ) SWAP(width,height);
+	return osd_create_bitmap( width,height );
+}
 
 void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	int left = clip->min_x;
@@ -61,6 +77,7 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	tilemap->clip_right = right;
 	tilemap->clip_top = top;
 	tilemap->clip_bottom = bottom;
+	if( errorlog ) fprintf( errorlog, "clip: %d,%d,%d,%d\n", left,top,right,bottom );
 }
 
 static void use_color( int base_pen, unsigned int pen_usage ){
@@ -299,7 +316,7 @@ static int create_pixmap( struct tilemap *tilemap ){
 	}
 
 	if( error ==0 ){
-		tilemap->pixmap = osd_create_bitmap( tilemap->width, tilemap->height );
+		tilemap->pixmap = create_tmpbitmap( tilemap->width, tilemap->height );
 		if( tilemap->pixmap ){
 			tilemap->pixmap_line_offset = tilemap->pixmap->line[1] - tilemap->pixmap->line[0];
 			return 1; /* done */
@@ -332,7 +349,7 @@ static int create_fg_mask( struct tilemap *tilemap ){
 	if( tilemap->fg_mask_data ){
 		tilemap->fg_mask_data_row = new_mask_data_table( tilemap->fg_mask_data, tilemap->num_cols, tilemap->num_rows );
 		if( tilemap->fg_mask_data_row ){
-			tilemap->fg_mask = osd_create_bitmap( MASKROWBYTES(tilemap->width), tilemap->height );
+			tilemap->fg_mask = create_tmpbitmap( MASKROWBYTES(tilemap->width), tilemap->height );
 			if( tilemap->fg_mask ){
 				tilemap->fg_mask_line_offset = tilemap->fg_mask->line[1] - tilemap->fg_mask->line[0];
 				return 1; /* done */
@@ -351,7 +368,7 @@ static int create_bg_mask( struct tilemap *tilemap ){
 	if( tilemap->bg_mask_data ){
 		tilemap->bg_mask_data_row = new_mask_data_table( tilemap->bg_mask_data, tilemap->num_cols, tilemap->num_rows );
 		if( tilemap->bg_mask_data_row ){
-			tilemap->bg_mask = osd_create_bitmap( MASKROWBYTES(tilemap->width), tilemap->height );
+			tilemap->bg_mask = create_tmpbitmap( MASKROWBYTES(tilemap->width), tilemap->height );
 			if( tilemap->bg_mask ){
 				tilemap->bg_mask_line_offset = tilemap->bg_mask->line[1] - tilemap->bg_mask->line[0];
 				return 1; /* done */
@@ -389,10 +406,18 @@ struct tilemap *tilemap_create(
 
 	struct tilemap *tilemap = (struct tilemap *)malloc( sizeof( struct tilemap ) );
 	if( tilemap ){
+		tilemap->attributes = 0;
+
 		if( orientation & ORIENTATION_SWAP_XY ){
 			SWAP( tile_width, tile_height )
 			SWAP( num_cols,num_rows )
 			SWAP( scroll_rows, scroll_cols )
+		}
+
+		if( errorlog ){
+			fprintf( errorlog, "tilewidth,tileheight:%d,%d\n",tile_width,tile_height );
+			fprintf( errorlog, "cols,rows:%d,%d\n",num_cols,num_rows );
+			fprintf( errorlog, "scroll_rows,scroll_cols:%d,%d\n",scroll_rows,scroll_cols );
 		}
 
 		memset( tilemap, 0, sizeof( struct tilemap ) );
@@ -475,7 +500,6 @@ static void draw_tile(
 {
 	int x, sx = tile_width*col;
 	int sy,y1,y2,dy;
-
 	if( flags&TILE_FLIPY ){
 		y1 = tile_height*row+tile_height-1;
 		y2 = y1-tile_height;
@@ -574,7 +598,12 @@ void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row ){
 	if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
 	if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
 
+//	tilemap->dirty_vram_row[row][col] = 1;
 	tilemap->dirty_vram[row*tilemap->num_cols + col] = 1;
+}
+
+void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap ){
+	memset( tilemap->dirty_vram, 1, tilemap->num_tiles );
 }
 
 void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
@@ -1110,6 +1139,10 @@ void tilemap_update( struct tilemap *tilemap ){
 		unsigned short **paldata = tilemap->paldata;
 		unsigned int *pen_usage = tilemap->pen_usage;
 
+		int tile_flip = 0;
+		if( tilemap->attributes&TILEMAP_FLIPX ) tile_flip |= TILE_FLIPX;
+		if( tilemap->attributes&TILEMAP_FLIPY ) tile_flip |= TILE_FLIPY;
+
 		tile_info.flags = 0;
 		tile_info.priority = 0;
 
@@ -1117,6 +1150,7 @@ void tilemap_update( struct tilemap *tilemap ){
 			if( visible[tile_index] && dirty_vram[tile_index] ){
 				int row = tile_index/tilemap->num_cols;
 				int col = tile_index%tilemap->num_cols;
+
 				if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
 				if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
 				if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
@@ -1125,6 +1159,7 @@ void tilemap_update( struct tilemap *tilemap ){
 
 				tilemap->tile_get_info( col, row );
 
+				tile_info.flags ^= tile_flip;
 				if( orientation & ORIENTATION_SWAP_XY ){
 					tile_info.flags =
 						(tile_info.flags&0xfc) |

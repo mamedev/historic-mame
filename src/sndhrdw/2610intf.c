@@ -101,6 +101,7 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 	int rate = Machine->sample_rate;
 	char buf[YM2610_NUMBUF][40];
 	const char *name[YM2610_NUMBUF];
+	int mixed_vol,vol[YM2610_NUMBUF],pan[YM2610_NUMBUF];
 
 	intf = interface;
 	if( intf->num > MAX_2610 ) return 1;
@@ -124,28 +125,35 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 	/* stream system initialize */
 	for (i = 0;i < intf->num;i++)
 	{
-		int vol;
+		/* stream setup */
+		mixed_vol = intf->volumeFM[i];
 		/* stream setup */
 		for (j = 0 ; j < YM2610_NUMBUF ; j++)
 		{
-			name[j] = buf[j];
-			sprintf(buf[j],"YM2610(%s) #%d %s",j < 2 ? "FM" : "ADPCM",i,(j&1)?"Rt":"Lt");
+			char *chname;
+			name[j]=buf[j];
+			vol[j] = mixed_vol & 0xff;
+			pan[j] = (mixed_vol>>8) & 0xff;
+			mixed_vol>>=16;
+			switch( pan[j] ){
+			case OSD_PAN_CENTER:chname="Ct";break;
+			case OSD_PAN_LEFT:  chname="Lt";break;
+			case OSD_PAN_RIGHT: chname="Rt";break;
+			default:            chname="??";break;
+			}
+			sprintf(buf[j],"YM2610 #%d Ch%d(%s)",i,j+1,chname);
 		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,
-			name,rate,Machine->sample_bits,
-			i,YM2610UpdateOne);
+		stream[i] = stream_init_multi(YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610UpdateOne);
 		/* volume setup */
-		vol = intf->volume[i]>>16; /* high 16 bit */
-		if( vol > 255 ) vol = 255;
-		for( j=0 ; j < YM2610_NUMBUF ; j++ )
+		for (j = 0 ; j < YM2610_NUMBUF ; j++)
 		{
-			stream_set_volume(stream[i]+j,vol);
-			stream_set_pan(stream[i]+j,(j&1)?OSD_PAN_RIGHT:OSD_PAN_LEFT);
+			stream_set_volume(stream[i]+j,vol[j]);
+			stream_set_pan(stream[i]+j,pan[j]);
 		}
 	}
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate,Machine->sample_bits, intf->pcmroma, intf->pcmromb,TimerHandler,0) == 0)
+	if (YM2610Init(intf->num,intf->baseclock,rate, intf->pcmroma, intf->pcmromb,TimerHandler,0) == 0)
 		return 0;
 
 	/* error */

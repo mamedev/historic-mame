@@ -796,6 +796,29 @@ ROM_START( shollow_rom )
 	ROM_LOAD( "sh-snd.03",    0x2000, 0x1000, 0xb1f4a6a8 )
 ROM_END
 
+ROM_START( shollow2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
+	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
+	ROM_LOAD( "sh-pro.02",    0x4000, 0x2000, 0x1202c7b2 )
+	ROM_LOAD( "sh-pro.03",    0x6000, 0x2000, 0x0a64afb9 )
+	ROM_LOAD( "sh-pro.04",    0x8000, 0x2000, 0x22fa9175 )
+	ROM_LOAD( "sh-pro.05",    0xa000, 0x2000, 0x1716e2bb )
+
+	ROM_REGION_DISPOSE(0x0c000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sh-bg.00",     0x00000, 0x2000, 0x3e2b333c )
+	ROM_LOAD( "sh-bg.01",     0x02000, 0x2000, 0xd1d70cc4 )
+	ROM_LOAD( "sh-fg.03",     0x04000, 0x2000, 0x37ea9d07 )
+	ROM_LOAD( "sh-fg.02",     0x06000, 0x2000, 0x6b57f6da )
+	ROM_LOAD( "sh-fg.01",     0x08000, 0x2000, 0xba1a38b4 )
+	ROM_LOAD( "sh-fg.00",     0x0a000, 0x2000, 0x33f4554e )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "snd-0.a7",     0x0000, 0x1000, 0x9d815bb3 )
+	ROM_LOAD( "snd-1.a8",     0x1000, 0x1000, 0x9f253412 )
+	ROM_LOAD( "snd-2.a9",     0x2000, 0x1000, 0x7783d6c6 )
+ROM_END
+
 ROM_START( tron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "scpu_pga.bin", 0x0000, 0x2000, 0x5151770b )
@@ -935,7 +958,7 @@ struct GameDriver shollow_driver =
 	__FILE__,
 	0,
 	"shollow",
-	"Satan's Hollow",
+	"Satan's Hollow (set 1)",
 	"1981",
 	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
@@ -944,6 +967,32 @@ struct GameDriver shollow_driver =
 	0,
 
 	shollow_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	shollow_input_ports,
+
+	0, 0,0,
+	ORIENTATION_ROTATE_90,
+
+	shollow_hiload,shollow_hisave
+};
+
+struct GameDriver shollow2_driver =
+{
+	__FILE__,
+	&shollow_driver,
+	"shollow2",
+	"Satan's Hollow (set 2)",
+	"1981",
+	"Bally Midway",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
+	&mcr2_machine_driver,
+	0,
+
+	shollow2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -1,4 +1,3 @@
-//#define FM_OUTPUT_PROC
 #define YM2610B_WARNING
 
 /*
@@ -7,7 +6,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.35c
+** Version 0.35d
 **
 */
 
@@ -131,19 +130,16 @@
 
 /* final output shift , limit minimum and maximum */
 #define OPN_OUTSB   (TL_BITS+2-16)		/* OPN output final shift 16bit */
-#define OPN_OUTSB_8 (OPN_OUTSB+8)		/* OPN output final shift  8bit */
 #define OPN_MAXOUT (0x7fff<<OPN_OUTSB)
 #define OPN_MINOUT (-0x8000<<OPN_OUTSB)
 
 #define OPM_OUTSB   (TL_BITS+2-16) 		/* OPM output final shift 16bit */
-#define OPM_OUTSB_8 (OPM_OUTSB+8) 		/* OPM output final shift  8bit */
 #define OPM_MAXOUT (0x7fff<<OPM_OUTSB)
 #define OPM_MINOUT (-0x8000<<OPM_OUTSB)
 
 #define OPNB_OUTSB   (TL_BITS+2-16)		/* OPN output final shift 16bit */
-#define OPNB_OUTSB_8 (OPN_OUTSB+8)		/* OPN output final shift  8bit */
-#define OPNB_MAXOUT (0x7fff<<OPN_OUTSB)
-#define OPNB_MINOUT (-0x8000<<OPN_OUTSB)
+#define OPNB_MAXOUT (0x7fff<<OPNB_OUTSB)
+#define OPNB_MINOUT (-0x8000<<OPNB_OUTSB)
 
 /* -------------------- quality selection --------------------- */
 
@@ -321,7 +317,7 @@ typedef struct adpcm_state {
   int IL;
   int volume;
   int *pan;     /* &outd[OPN_xxxx] */
-  int adpcmm, adpcmx, adpcmd;
+  int /*adpcmm,*/ adpcmx, adpcmd;
   int adpcml;			/* hiro-shi!! */
 
   /* leveling and re-sampling state for DELTA-T */
@@ -553,8 +549,6 @@ static int RATE_0[32]=
 
 static int FMNumChips;		/* total # of FM emulated */
 
-static unsigned char sample_16bit;/* output bits    */
-
 /* work table */
 static void *cur_chip = 0;	/* current chip point */
 
@@ -568,10 +562,6 @@ static signed int outd[4];
 static int feedback2;		/* connect for operator 2 */
 static int feedback3;		/* connect for operator 3 */
 static int feedback4;		/* connect for operator 4 */
-
-#ifdef FM_OUTPUT_PROC
-static void (* outputproc)( void **buf, int data );
-#endif
 
 /* --------------- Customize External interface port (SSG,Timer,etc) ---------------*/
 #include "fmext.c"
@@ -1397,27 +1387,14 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 /*******************************************************************************/
 static YM2203 *FM2203=NULL;	/* array of YM2203's */
 
-#ifdef FM_OUTPUT_PROC
-void bufout16( unsigned short **buf, int data ){
-  *(*buf)++ = data >> OPN_OUTSB;
-}
-void bufout8( unsigned char **buf, int data ){
-  *(*buf)++ = data >> OPN_OUTSB_8;
-}
-#endif
-
 /* ---------- update one of chip ----------- */
-void YM2203UpdateOne(int num, FMSAMPLE *buffer, int length)
+void YM2203UpdateOne(int num, void *buffer, int length)
 {
 	YM2203 *F2203 = &(FM2203[num]);
 	FM_OPN *OPN =   &(FM2203[num].OPN);
     int i,ch;
 	int data;
-#ifndef FM_OUTPUT_PROC
-	FMSAMPLE *buf = buffer;
-#else
-	unsigned char *buf = (unsigned char *)buffer;
-#endif
+	FMSAMPLE *buf = (FMSAMPLE *)buffer;
 
 	State = &F2203->OPN.ST;
 	cch[0]   = &F2203->CH[0];
@@ -1449,13 +1426,7 @@ void YM2203UpdateOne(int num, FMSAMPLE *buffer, int length)
 		/* limit check */
 		data = Limit( outd[OPN_CENTER] , OPN_MAXOUT, OPN_MINOUT );
 		/* store to sound buffer */
-#ifndef FM_OUTPUT_PROC
-		if( sample_16bit ) ((unsigned short *)buf)[i] = data >> OPN_OUTSB;
-		else           ((unsigned char  *)buf)[i]     = data >> OPN_OUTSB_8;
-#else
-		outputproc( (void **)&buf, data );
-#endif
-
+		buf[i] = data >> OPN_OUTSB;
 #ifdef INTERNAL_TIMER
 		/* timer controll */
 		CALC_TIMER_A( num, State , cch[2] );
@@ -1505,7 +1476,7 @@ int YM2203SetBuffer(int n, FMSAMPLE *buf)
 /* 'num' is the number of virtual YM2203's to allocate     */
 /* 'rate' is sampling rate and 'bufsiz' is the size of the */
 /* buffer that should be updated at each interval          */
-int YM2203Init(int num, int clock, int rate,  int bitsize ,
+int YM2203Init(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
 	int i;
@@ -1514,8 +1485,6 @@ int YM2203Init(int num, int clock, int rate,  int bitsize ,
 	cur_chip = NULL;	/* hiro-shi!! */
 
 	FMNumChips = num;
-	if( bitsize == 16 ) sample_16bit = 1;
-	else                sample_16bit = 0;
 
 	/* allocate ym2203 state space */
 	if( (FM2203 = (YM2203 *)malloc(sizeof(YM2203) * FMNumChips))==NULL)
@@ -1540,13 +1509,6 @@ int YM2203Init(int num, int clock, int rate,  int bitsize ,
 		FM2203[i].OPN.ST.IRQ_Handler   = IRQHandler;
 		YM2203ResetChip(i);
 	}
-#ifdef FM_OUTPUT_PROC
-	if( sample_16bit ){
-	  outputproc = (void (*)( void **, int ))bufout16;
-	} else{
-	  outputproc = (void (*)( void **, int ))bufout8;
-	}
-#endif
 	return(0);
 }
 
@@ -1853,7 +1815,7 @@ INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
 }
 
 /* ---------- update one of chip ----------- */
-void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length)
+void YM2608UpdateOne(int num, void **buffer, int length)
 {
 	YM2608 *F2608 = &(FM2608[num]);
 	FM_OPN *OPN   = &(FM2608[num].OPN);
@@ -1861,8 +1823,8 @@ void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length)
 	int i,ch;
 
 	/* set bufer */
-	bufL = buffer[0];
-	bufR = buffer[1];
+	bufL = (FMSAMPLE *)buffer[0];
+	bufR = (FMSAMPLE *)buffer[1];
 
 	if( (void *)F2608 != cur_chip ){
 		cur_chip = (void *)F2608;
@@ -1902,26 +1864,13 @@ void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length)
 		dataL = Limit( outd[OPN_CENTER] + outd[OPN_LEFT], OPN_MAXOUT, OPN_MINOUT );
 		dataR = Limit( outd[OPN_CENTER] + outd[OPN_RIGHT], OPN_MAXOUT, OPN_MINOUT );
 		/* buffering */
-		if( sample_16bit )
-		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
-			/* stereo mix */
-			((unsigned long *)bufL)[i] = ((dataL>>OPN_OUTSB)<<16)|(dataR>>OPN_OUTSB);
+		/* stereo mix */
+		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPN_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPN_OUTSB);
 #else
-			/* stereo separate */
-			((unsigned short *)bufL)[i] = dataL>>OPN_OUTSB;
-			((unsigned short *)bufR)[i] = dataR>>OPN_OUTSB;
-#endif
-		}
-		else
-		{
-#ifdef FM_STEREO_MIX		/* stereo mixing */
-			/* stereo mix */
-			((unsigned shart *)bufL)[i] = ((dataL>>OPN_OUTSB_8)<<8)|(dataR>>OPN_OUTSB_8);
-#else
-			/* stereo separate */
-			((unsigned char *)bufL)[i] = dataL>>OPN_OUTSB_8;
-			((unsigned char *)bufR)[i] = dataR>>OPN_OUTSB_8;
+		/* stereo separate */
+		bufL[i] = dataL>>OPN_OUTSB;
+		bufR[i] = dataR>>OPN_OUTSB;
 #endif
 		}
 
@@ -1939,7 +1888,7 @@ void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length)
 }
 
 /* -------------------------- YM2608(OPNA) ---------------------------------- */
-int YM2608Init(int num, int clock, int rate,  int bitsize,
+int YM2608Init(int num, int clock, int rate, int *pcmroma, int *pcmromb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 
 {
@@ -1949,8 +1898,6 @@ int YM2608Init(int num, int clock, int rate,  int bitsize,
     cur_chip = NULL;	/* hiro-shi!! */
 
 	FMNumChips = num;
-	if( bitsize == 16 ) sample_16bit = 1;
-	else                sample_16bit = 0;
 
 	/* allocate extend state space */
 	if( (FM2608 = (YM2608 *)malloc(sizeof(YM2608) * FMNumChips))==NULL)
@@ -2342,7 +2289,7 @@ INLINE void OPNB_ADPCM_CALC_CHB( YM2610 *F2610, ADPCM_CH *ch )
 				if( F2610->port0state&0x10 ){
 					/**** repeat start ****/
 					ch->now_addr = ch->start<<1;
-					ch->adpcmm   = 0;
+					/*ch->adpcmm   = 0;*/
 					ch->adpcmx   = 0;
 					/* ch->adpcml   = 0; */
 					ch->adpcmd   = ADPCMB_DELTA_DEF;
@@ -2371,21 +2318,21 @@ INLINE void OPNB_ADPCM_CALC_CHB( YM2610 *F2610, ADPCM_CH *ch )
 			}
 			ch->now_addr++;
 			/* shift Measurement value */
-			old_m      = ch->adpcmm;
-			ch->adpcmm = Limit( ch->adpcmx + (decode_tableB3[data] * ch->adpcmd / 8) ,ADPCMB_DECODE_MAX, ADPCMB_DECODE_MIN );
+			old_m      = ch->adpcmx/*adpcmm*/;
+			/* ch->adpcmm = Limit( ch->adpcmx + (decode_tableB3[data] * ch->adpcmd / 8) ,ADPCMB_DECODE_MAX, ADPCMB_DECODE_MIN ); */
 			/* Forecast to next Forecast */
 			ch->adpcmx = Limit( ch->adpcmx+(decode_tableB1[data] * ch->adpcmd / 8) ,ADPCMB_DECODE_MAX, ADPCMB_DECODE_MIN );
 			/* delta to next delta */
 			ch->adpcmd = Limit( ( ch->adpcmd * decode_tableB2[data] ) / 64, ADPCMB_DELTA_MAX, ADPCMB_DELTA_MIN );
 			/* shift leveling value */
-			delta_next        = ch->adpcmm - old_m;
+			delta_next        = ch->adpcmx/*adpcmm*/ - old_m;
 			now_leveling      = ch->next_leveling;
 			ch->next_leveling = old_m + (delta_next / 2);
 		}while(--step);
 //#define CUT_RE_SAMPLING
 #ifdef CUT_RE_SAMPLING
 		ch->adpcml  = ch->next_leveling * ch->volume;
-		ch->adpcml  = ch->adpcmm * ch->volume;
+		ch->adpcml  = ch->adpcmx/*adpcmm*/ * ch->volume;
 	}
 #else
 		/* delta step of re-sampling */
@@ -2403,26 +2350,19 @@ INLINE void OPNB_ADPCM_CALC_CHB( YM2610 *F2610, ADPCM_CH *ch )
 }
 
 /* ---------- update one of chip (YM2610B FM6: ADPCM-A6: ADPCM-B:1) ----------- */
-void YM2610UpdateOne(int num, FMSAMPLE **buffer, int length)
+void YM2610UpdateOne(int num, void **buffer, int length)
 {
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
-#ifndef FM_OUTPUT_PROC
 	static FMSAMPLE  *buf[YM2610_NUMBUF];
-#else
-	static unsigned char  *buf[YM2610_NUMBUF];
-#endif
 	int dataR,dataL;
 	int dataRA,dataLA;
 	int dataRB,dataLB;
 	int i,j;
 
 	/* buffer setup */
-#ifndef FM_OUTPUT_PROC
-	for( i = 0; i < YM2610_NUMBUF; i++ )  buf[i] = buffer[i];
-#else
-	for( i = 0; i < YM2610_NUMBUF; i++ )  buf[i] = (unsigned char *)buffer[i];
-#endif
+	bufL = (FMSAMPLE *)buffer[0];
+	bufR = (FMSAMPLE *)buffer[1];
 
 	if( (void *)F2610 != cur_chip ){
 		cur_chip = (void *)F2610;
@@ -2492,20 +2432,13 @@ void YM2610UpdateOne(int num, FMSAMPLE **buffer, int length)
 		dataL = Limit( outd[OPN_CENTER] + outd[OPN_LEFT], OPNB_MAXOUT, OPNB_MINOUT );
 		dataR = Limit( outd[OPN_CENTER] + outd[OPN_RIGHT], OPNB_MAXOUT, OPNB_MINOUT );
 		/* buffering */
-#ifndef FM_OUTPUT_PROC
-	if( sample_16bit ){
-		/* stereo separate */
-		((unsigned short *)buf[0])[i] = dataL>>OPNB_OUTSB;
-		((unsigned short *)buf[1])[i] = dataR>>OPNB_OUTSB;
-    } else{
-		/* stereo separate */
-		/* FM */
-		((unsigned char *)buf[0])[i] = dataL>>OPNB_OUTSB_8;
-		((unsigned char *)buf[1])[i] = dataR>>OPNB_OUTSB_8;
-    }
+#ifdef FM_STEREO_MIX		/* stereo mixing */
+		/* stereo mix */
+		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPNB_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPNB_OUTSB);
 #else
-	outputproc( (void **)&buf[0], dataL );
-	outputproc( (void **)&buf[1], dataR );
+		/* stereo separate */
+		bufL[i] = dataL>>OPNB_OUTSB;
+		bufR[i] = dataR>>OPNB_OUTSB;
 #endif
 
 #ifdef LFO_SUPPORT
@@ -2522,26 +2455,19 @@ void YM2610UpdateOne(int num, FMSAMPLE **buffer, int length)
 }
 
 /* ---------- update one of chip (YM2610B FM6: ADPCM-A6: ADPCM-B:1) ----------- */
-void YM2610BUpdateOne(int num, FMSAMPLE **buffer, int length)
+void YM2610BUpdateOne(int num, void **buffer, int length)
 {
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
-#ifndef FM_OUTPUT_PROC
 	static FMSAMPLE  *buf[YM2610_NUMBUF];
-#else
-	static unsigned char  *buf[YM2610_NUMBUF];
-#endif
 	int dataR,dataL;
 	int dataRA,dataLA;
 	int dataRB,dataLB;
 	int i,j;
 
 	/* buffer setup */
-#ifndef FM_OUTPUT_PROC
-	for( i = 0; i < YM2610_NUMBUF; i++ )  buf[i] = buffer[i];
-#else
-	for( i = 0; i < YM2610_NUMBUF; i++ )  buf[i] = (unsigned char *)buffer[i];
-#endif
+	bufL = (FMSAMPLE *)buffer[0];
+	bufR = (FMSAMPLE *)buffer[1];
 
 	if( (void *)F2610 != cur_chip ){
 		cur_chip = (void *)F2610;
@@ -2601,20 +2527,14 @@ void YM2610BUpdateOne(int num, FMSAMPLE **buffer, int length)
 		dataL = Limit( outd[OPN_CENTER] + outd[OPN_LEFT], OPNB_MAXOUT, OPNB_MINOUT );
 		dataR = Limit( outd[OPN_CENTER] + outd[OPN_RIGHT], OPNB_MAXOUT, OPNB_MINOUT );
 		/* buffering */
-#ifndef FM_OUTPUT_PROC
-	if( sample_16bit ){
 		/* stereo separate */
-		((unsigned short *)buf[0])[i] = dataL>>OPNB_OUTSB;
-		((unsigned short *)buf[1])[i] = dataR>>OPNB_OUTSB;
-    } else{
-		/* stereo separate */
-		/* FM */
-		((unsigned char *)buf[0])[i] = dataL>>OPNB_OUTSB_8;
-		((unsigned char *)buf[1])[i] = dataR>>OPNB_OUTSB_8;
-    }
+#ifdef FM_STEREO_MIX		/* stereo mixing */
+		/* stereo mix */
+		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPNB_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPNB_OUTSB);
 #else
-	outputproc( (void **)&buf[0], dataL );
-	outputproc( (void **)&buf[1], dataR );
+		/* stereo separate */
+		bufL[i] = dataL>>OPNB_OUTSB;
+		bufR[i] = dataR>>OPNB_OUTSB;
 #endif
 
 #ifdef LFO_SUPPORT
@@ -2630,7 +2550,7 @@ void YM2610BUpdateOne(int num, FMSAMPLE **buffer, int length)
 #endif
 }
 
-int YM2610Init(int num, int clock, int rate,  int bitsize, int *pcmroma, int *pcmromb,
+int YM2610Init(int num, int clock, int rate, int *pcmroma, int *pcmromb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 
 {
@@ -2640,8 +2560,6 @@ int YM2610Init(int num, int clock, int rate,  int bitsize, int *pcmroma, int *pc
     cur_chip = NULL;	/* hiro-shi!! */
 
 	FMNumChips = num;
-	if( bitsize == 16 ) sample_16bit = 1;
-	else                sample_16bit = 0;
 
 	/* allocate extend state space */
 	if( (FM2610 = (YM2610 *)malloc(sizeof(YM2610) * FMNumChips))==NULL)
@@ -2681,13 +2599,6 @@ int YM2610Init(int num, int clock, int rate,  int bitsize, int *pcmroma, int *pc
 		YM2610ResetChip(i);
 	}
 	InitOPNB_ADPCMATable();
-#ifdef FM_OUTPUT_PROC
-	if( sample_16bit ){
-	  outputproc = (void (*)( void **, int ))bufout16;
-	} else{
-	  outputproc = (void (*)( void **, int ))bufout8;
-	}
-#endif
 	return 0;
 }
 
@@ -2754,7 +2665,7 @@ void YM2610ResetChip(int num)
 		F2610->adpcm[i].adpcmd    = 127;
 		F2610->adpcm[i].adpcml    = 0;
 		/* DELTA-T */
-		F2610->adpcm[i].adpcmm    = 0;
+		/*F2610->adpcm[i].adpcmm    = 0;*/
 		F2610->adpcm[i].volume_w_step = 0;
 	    F2610->adpcm[i].next_leveling=0;
 	}
@@ -2784,7 +2695,7 @@ void YM2610ADPCMWrite1(int n,int r,int v)
 		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
 		adpcm->now_addr = (adpcm->start)<<1;
 		adpcm->now_step = (1<<ADPCM_SHIFT)-adpcm->step;
-		adpcm->adpcmm   = 0;
+		/*adpcm->adpcmm   = 0;*/
 		adpcm->adpcmx   = 0;
 		adpcm->adpcml   = 0;
 		adpcm->adpcmd   = ADPCMB_DELTA_DEF;
@@ -2889,7 +2800,7 @@ void YM2610ADPCMWrite2(int n,int r,int v)
 		adpcm[c].step     = (unsigned int)(((float)(adpcm[c].delta<<(ADPCM_SHIFT)) / (float)F2610->OPN.ST.rate) * (18500.0 / 22050.0));
 		adpcm[c].now_addr = adpcm[c].start<<1;
 		adpcm[c].now_step = (1<<ADPCM_SHIFT)-adpcm[c].step;
-		adpcm[c].adpcmm   = 0;
+		/*adpcm[c].adpcmm   = 0;*/
 		adpcm[c].adpcmx   = 0;
 		adpcm[c].adpcmd   = 0;
 		adpcm[c].adpcml   = 0;
@@ -3103,7 +3014,7 @@ int YM2610SetBuffer(int n, FMSAMPLE **buf )
 static YM2612 *FM2612=NULL;	/* array of YM2612's */
 
 /* ---------- update one of chip ----------- */
-void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length)
+void YM2612UpdateOne(int num, void **buffer, int length)
 {
 	YM2612 *F2612 = &(FM2612[num]);
 	FM_OPN *OPN   = &(FM2612[num].OPN);
@@ -3113,8 +3024,8 @@ void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length)
 	int dacout  = F2612->dacout;
 
 	/* set bufer */
-	bufL = buffer[0];
-	bufR = buffer[1];
+	bufL = (FMSAMPLE *)buffer[0];
+	bufR = (FMSAMPLE *)buffer[1];
 
 	if( (void *)F2612 != cur_chip ){
 		cur_chip = (void *)F2612;
@@ -3156,26 +3067,13 @@ void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length)
 		dataL = Limit( outd[OPN_CENTER] + outd[OPN_LEFT], OPN_MAXOUT, OPN_MINOUT );
 		dataR = Limit( outd[OPN_CENTER] + outd[OPN_RIGHT], OPN_MAXOUT, OPN_MINOUT );
 		/* buffering */
-		if( sample_16bit )
-		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
-			/* stereo mix */
-			((unsigned long *)bufL)[i] = ((dataL>>OPN_OUTSB)<<16)|(dataR>>OPN_OUTSB);
+		/* stereo mix */
+		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPN_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPN_OUTSB);
 #else
-			/* stereo separate */
-			((unsigned short *)bufL)[i] = dataL>>OPN_OUTSB;
-			((unsigned short *)bufR)[i] = dataR>>OPN_OUTSB;
-#endif
-		}
-		else
-		{
-#ifdef FM_STEREO_MIX		/* stereo mixing */
-			/* stereo mix */
-			((unsigned shart *)bufL)[i] = ((dataL>>OPN_OUTSB_8)<<8)|(dataR>>OPN_OUTSB_8);
-#else
-			/* stereo separate */
-			((unsigned char *)bufL)[i] = dataL>>OPN_OUTSB_8;
-			((unsigned char *)bufR)[i] = dataR>>OPN_OUTSB_8;
+		/* stereo separate */
+		bufL[i] = dataL>>OPN_OUTSB;
+		bufR[i] = dataR>>OPN_OUTSB;
 #endif
 		}
 
@@ -3193,7 +3091,7 @@ void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length)
 }
 
 /* -------------------------- YM2612 ---------------------------------- */
-int YM2612Init(int num, int clock, int rate,  int bitsize,
+int YM2612Init(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
 	int i,j;
@@ -3202,8 +3100,6 @@ int YM2612Init(int num, int clock, int rate,  int bitsize,
     cur_chip = NULL;	/* hiro-shi!! */
 
 	FMNumChips = num;
-	if( bitsize == 16 ) sample_16bit = 1;
-	else                sample_16bit = 0;
 
 	/* allocate extend state space */
 	if( (FM2612 = (YM2612 *)malloc(sizeof(YM2612) * FMNumChips))==NULL)
@@ -3429,7 +3325,7 @@ void OPMResetChip(int num)
 /* 'num' is the number of virtual YM2151's to allocate     */
 /* 'rate' is sampling rate and 'bufsiz' is the size of the */
 /* buffer that should be updated at each interval          */
-int OPMInit(int num, int clock, int rate, int bitsize,
+int OPMInit(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
     int i,j;
@@ -3438,8 +3334,6 @@ int OPMInit(int num, int clock, int rate, int bitsize,
     cur_chip = NULL;	/* hiro-shi!! */
 
     FMNumChips = num;
-    if( bitsize == 16 ) sample_16bit = 1;
-    else                sample_16bit = 0;
 
 	/* allocate ym2151 state space */
 	if( (FMOPM = (YM2151 *)malloc(sizeof(YM2151) * FMNumChips))==NULL)
@@ -3639,15 +3533,15 @@ unsigned char YM2151Read(int n,int a)
 }
 
 /* ---------- make digital sound data ---------- */
-void OPMUpdateOne(int num, FMSAMPLE **buffer, int length)
+void OPMUpdateOne(int num, void **buffer, int length)
 {
 	YM2151 *OPM = &(FMOPM[num]);
 	int i,ch;
 	int dataR,dataL;
 
 	/* set bufer */
-	bufL = buffer[0];
-	bufR = buffer[1];
+	bufL = (FMSAMPLE *)buffer[0];
+	bufR = (FMSAMPLE *)buffer[1];
 
 	if( (void *)OPM != cur_chip ){
 		cur_chip = (void *)OPM;
@@ -3683,28 +3577,14 @@ void OPMUpdateOne(int num, FMSAMPLE **buffer, int length)
 		dataL = Limit( outd[OPM_CENTER] + outd[OPM_LEFT], OPM_MAXOUT, OPM_MINOUT );
 		dataR = Limit( outd[OPM_CENTER] + outd[OPM_RIGHT], OPM_MAXOUT, OPM_MINOUT );
 
-		if( sample_16bit )
-		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
-			/* stereo mix */
-			((unsigned long *)bufL)[i] = ((dataL>>OPM_OUTSB)<<16)|(dataR>>OPM_OUTSB);
+		/* stereo mix */
+		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPM_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPM_OUTSB);
 #else
-			/* stereo separate */
-			((unsigned short *)bufL)[i] = dataL>>OPM_OUTSB;
-			((unsigned short *)bufR)[i] = dataR>>OPM_OUTSB;
+		/* stereo separate */
+		bufL[i] = dataL>>OPM_OUTSB;
+		bufR[i] = dataR>>OPM_OUTSB;
 #endif
-		}
-		else
-		{
-#ifdef FM_STEREO_MIX		/* stereo mixing */
-			/* stereo mix */
-			((unsigned shart *)bufL)[i] = ((dataL>>OPM_OUTSB_8)<<8)|(dataR>>OPM_OUTSB_8);
-#else
-			/* stereo separate */
-			((unsigned char *)bufL)[i] = dataL>>OPM_OUTSB_8;
-			((unsigned char *)bufR)[i] = dataR>>OPM_OUTSB_8;
-#endif
-		}
 #ifdef LFO_SUPPORT
 		CALC_LOPM_LFO;
 #endif

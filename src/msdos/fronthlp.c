@@ -532,7 +532,31 @@ int frontend_help (int argc, char **argv)
 #endif
 #endif
 						) && !strwildcmp(gamename, drivers[i]->description))
-					printf("%-5s%-36s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
+				{
+					char name[80];
+
+					printf("%-5s%-36s ",drivers[i]->year,drivers[i]->manufacturer);
+
+					strcpy(name,drivers[i]->description);
+
+					/* Move leading "The" to the end */
+					if (strstr(name," (")) *strstr(name," (") = 0;
+					if (strncmp(name,"The ",4) == 0)
+					{
+						printf("%s",name+4);
+						printf(", The");
+					}
+					else
+						printf("%s",name);
+
+					/* print the additional description only if we are listing clones */
+					if (listclones)
+					{
+						if (strchr(drivers[i]->description,'('))
+							printf(" %s",strchr(drivers[i]->description,'('));
+					}
+					printf("\n");
+				}
 				i++;
 			}
 			return 0;

@@ -15,13 +15,10 @@ typedef struct
 	UINT8	dp; 	/* Direct Page register */
 	UINT8	a, b;	/* Accumulator */
 	UINT8	cc;
-
-	int pending_interrupts;	/* NS 970908 */
-#if NEW_INTERRUPT_SYSTEM
-	int nmi_state;
-	int irq_state[2];
+	INT8	int_state;	/* SYNC and CWAI flags */
+    INT8    nmi_state;
+    INT8    irq_state[2];
 	int (*irq_callback)(int irqline);
-#endif
 } m6809_Regs;
 
 #ifndef INLINE
@@ -43,6 +40,7 @@ typedef struct
 #define M6809_INT_IRQ	1	/* Standard IRQ interrupt */
 #define M6809_INT_FIRQ	2	/* Fast IRQ */
 #define M6809_INT_NMI	4	/* NMI */	/* NS 970909 */
+
 /* PUBLIC FUNCTIONS */
 extern void m6809_SetRegs(m6809_Regs *Regs);
 extern void m6809_GetRegs(m6809_Regs *Regs);
@@ -50,21 +48,12 @@ extern unsigned m6809_GetPC(void);
 extern void m6809_reset(void);
 extern int m6809_execute(int cycles);  /* NS 970908 */
 
-#if NEW_INTERRUPT_SYSTEM
-
 #define M6809_IRQ_LINE	0	/* IRQ line number */
 #define M6809_FIRQ_LINE 1   /* FIRQ line number */
 
 extern void m6809_set_nmi_line(int state);
 extern void m6809_set_irq_line(int irqline, int state);
 extern void m6809_set_irq_callback(int (*callback)(int irqline));
-
-#else
-
-extern void m6809_Cause_Interrupt(int type);   /* NS 970908 */
-extern void m6809_Clear_Pending_Interrupts(void);  /* NS 970908 */
-
-#endif
 
 /* PUBLIC GLOBALS */
 extern int	m6809_ICount;

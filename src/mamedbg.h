@@ -40,7 +40,6 @@
 #include "cpu/m6808/m6808.h"
 #include "cpu/m6805/m6805.h"
 #include "cpu/m6809/m6809.h"
-#include "cpu/m68000/d68000.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/s2650/s2650.h"
@@ -48,6 +47,8 @@
 #include "cpu/tms9900/tms9900.h"
 #include "cpu/z8000/z8000.h"
 #include "cpu/tms32010/tms32010.h"
+#include "cpu/h6280/h6280.h"
+
 
 int DasmZ80(char *dest,int PC);
 int Dasm6502 (char *buf, int pc);
@@ -60,6 +61,7 @@ int Dasm34010 (unsigned char *pBase, char *buffer, int pc);
 int DasmI86 (unsigned char *pBase, char *buffer, int pc); /* AM 980925 */
 int Dasm9900 (char *buffer, int pc);
 int DasmZ8000 (char *buffer, int pc);
+int Dasm6280 (char *buf, int pc);
 
 /* JB 980214 */
 void asg_2650Trace(unsigned char *RAM, int PC);
@@ -80,6 +82,7 @@ void asg_I86Trace(unsigned char *RAM, int PC); /* AM 980925 */
 void asg_9900Trace(unsigned char *RAM, int PC);
 void asg_Z8000Trace(unsigned char *RAM, int PC);
 void asg_32010Trace(unsigned char *RAM, int PC);
+void asg_6280Trace(unsigned char *RAM, int PC);
 
 
 extern int traceon;
@@ -153,6 +156,7 @@ void TempI86Trace (int PC) { asg_I86Trace (ROM, PC); }  /* AM 980925 */
 void Temp9900Trace (int PC) { asg_9900Trace (ROM, PC); }
 void TempZ8000Trace (int PC) { asg_Z8000Trace (ROM, PC); }  /* HJB 981115 */
 void Temp32010Trace (int PC) { asg_32010Trace (ROM, (PC<<1)); }
+void Temp6280Trace (int PC) { asg_6280Trace (ROM, PC); }
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -215,7 +219,7 @@ typedef struct
 	int		MemWindowDataX;
 	int		MemWindowDataXEnd;
 	int		MemWindowNumBytes;
-        int             MemWindowDataSpace; /* 1 + data character space - ie, 3 for byte, 5 for word, 9 for dword */
+	int		MemWindowDataSpace; /* 1 + data character space - ie, 3 for byte, 5 for word, 9 for dword */
 	int		MaxInstLen;
 	int		AlignUnit;			/* CM 980428 */
 	int		*SPReg;
@@ -309,7 +313,26 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
     },
-    /* #define CPU_I86    4 */
+	/* #define CPU_H6280  4 */
+	{
+		{
+			{ "A", (int *)&((H6280_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((H6280_Regs *)bckrgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((H6280_Regs *)bckrgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((H6280_Regs *)bckrgs)->SP.D, 1, 17, 1 },
+			{ "PC", (int *)&((H6280_Regs *)bckrgs)->PC.W.l, 2, 22, 1 },
+			{ "M1", (int *)&((H6280_Regs *)rgs)->mmr[0], 1, 30, 1 },
+			{ "M2", (int *)&((H6280_Regs *)rgs)->mmr[1], 1, 36, 1 },
+			{ "M3", (int *)&((H6280_Regs *)rgs)->mmr[2], 1, 42, 1 },
+			{ "M4", (int *)&((H6280_Regs *)rgs)->mmr[3], 1, 48, 1 },
+			{ "M5", (int *)&((H6280_Regs *)rgs)->mmr[4], 1, 54, 1 },
+			{ "M6", (int *)&((H6280_Regs *)rgs)->mmr[5], 1, 60, 1 },
+			{ "M7", (int *)&((H6280_Regs *)rgs)->mmr[6], 1, 66, 1 },
+			{ "M8", (int *)&((H6280_Regs *)rgs)->mmr[7], 1, 72, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+    /* #define CPU_I86    5 */
 	{
 		{
 			{ "IP", (int *)&((i86_Regs *)bckrgs)->ip, 4, 2, 1 },
@@ -328,7 +351,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I8039  5 */
+	/* #define CPU_I8039  6 */
 	{
 		{
 			{ "PC", (int *)&((I8039_Regs *)bckrgs)->PC, 2, 2, 1 },
@@ -337,7 +360,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6803  6 */ /* CPU_6802, CPU_6808 */
+	/* #define CPU_M6803  7 */ /* CPU_6802, CPU_6808 */
 	{
 		{
 			{ "A", (int *)&((m6808_Regs *)bckrgs)->a, 1, 2, 1 },
@@ -348,17 +371,17 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_6805 7 */	/* JB 980214 */
+	/* #define CPU_6805 8 */	/* JB 980214 */
 	{
 		{
 			{ "A", (int *)&((m6805_Regs *)bckrgs)->a, 1, 2, 1 },
 			{ "PC", (int *)&((m6805_Regs *)bckrgs)->pc, 2, 7, 1 },
 			{ "S", (int *)&((m6805_Regs *)bckrgs)->s, 2, 15, 1 },
-			{ "X", (int *)&((m6805_Regs *)bckrgs)->x, 2, 22, 1 },
+			{ "X", (int *)&((m6805_Regs *)bckrgs)->x, 1, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6809  8 */
+	/* #define CPU_M6809  9 */
 	{
 		{
 			{ "A", (int *)&((m6809_Regs *)bckrgs)->a, 1, 2, 1 },
@@ -372,7 +395,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M68000 9 */
+	/* #define CPU_M68000 10 */
 	{
 		{
 			{ "PC", (int *)&((MC68000_Regs *)bckrgs)->regs.pc, 4, 2, 1 },
@@ -381,7 +404,6 @@ static tBackupReg BackupRegisters[] =
 			{ "USP", (int *)&((MC68000_Regs *)bckrgs)->regs.usp, 4, 40, 1 },
 			{ "SFC", (int *)&((MC68000_Regs *)bckrgs)->regs.sfc, 4, 53, 1 },
 			{ "DFC", (int *)&((MC68000_Regs *)bckrgs)->regs.dfc, 4, 66, 1 },
-#ifdef A68KEM
 			{ "D0", (int *)&((MC68000_Regs *)bckrgs)->regs.d[0], 4, 67, 3 },
 			{ "D1", (int *)&((MC68000_Regs *)bckrgs)->regs.d[1], 4, 67, 4 },
 			{ "D2", (int *)&((MC68000_Regs *)bckrgs)->regs.d[2], 4, 67, 5 },
@@ -398,28 +420,10 @@ static tBackupReg BackupRegisters[] =
 			{ "A5", (int *)&((MC68000_Regs *)bckrgs)->regs.a[5], 4, 67, 17 },
 			{ "A6", (int *)&((MC68000_Regs *)bckrgs)->regs.a[6], 4, 67, 18 },
 			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.a[7], 4, 67, 19 },
-#else
-			{ "D0", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[0], 4, 67, 3 },
-			{ "D1", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[1], 4, 67, 4 },
-			{ "D2", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[2], 4, 67, 5 },
-			{ "D3", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[3], 4, 67, 6 },
-			{ "D4", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[4], 4, 67, 7 },
-			{ "D5", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[5], 4, 67, 8 },
-			{ "D6", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[6], 4, 67, 9 },
-			{ "D7", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[7], 4, 67, 10 },
-			{ "A0", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[0], 4, 67, 12 },
-			{ "A1", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[1], 4, 67, 13 },
-			{ "A2", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[2], 4, 67, 14 },
-			{ "A3", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[3], 4, 67, 15 },
-			{ "A4", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[4], 4, 67, 16 },
-			{ "A5", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[5], 4, 67, 17 },
-			{ "A6", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[6], 4, 67, 18 },
-			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[7], 4, 67, 19 },
-#endif
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_T11    10 */
+	/* #define CPU_T11    11 */
 	{
 		{
 			{ "R0", (int *)&((t11_Regs *)bckrgs)->reg[0], 2, 2, 1 },
@@ -434,7 +438,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_2650   11 */
+	/* #define CPU_2650   12 */
 	{
 		{
 			{ "R0", (int *)&((S2650_Regs *)bckrgs)->reg[0], 1, 2, 1 },
@@ -452,7 +456,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS34010 12 */
+	/* #define CPU_TMS34010 13 */
 	{
 		{
 			{ "PC", (int *)&((TMS34010_Regs *)bckrgs)->pc, 4, 2, 3 },
@@ -490,7 +494,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS9900   13 */
+	/* #define CPU_TMS9900   14 */
 	{
 		{
 			{ "PC", (int *)&((TMS9900_Regs *)bckrgs)->PC, 2, 2, 1 },
@@ -516,7 +520,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_Z8000 14 */
+	/* #define CPU_Z8000 15 */
 	{
 		{
 			{ "PC", (int *)&((Z8000_Regs *)bckrgs)->pc, 2, 2, 1 },
@@ -565,21 +569,20 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-        /* #define CPU_TMS320C10  15 */
+    /* #define CPU_TMS320C10  16 */
 	{
 		{
-                        { "PC", (int *)&((TMS320C10_Regs *)bckrgs)->PC, 2, 2, 1 },
-                        { "ACC", (int *)&((TMS320C10_Regs *)bckrgs)->ACC, 4, 10, 1 },
-                        { "P", (int *)&((TMS320C10_Regs *)bckrgs)->Preg, 4, 23, 1 },
-                        { "T", (int *)&((TMS320C10_Regs *)bckrgs)->Treg, 2, 34, 1 },
-                        { "AR0", (int *)&((TMS320C10_Regs *)bckrgs)->AR[0], 2, 41, 1 },
-                        { "AR1", (int *)&((TMS320C10_Regs *)bckrgs)->AR[1], 2, 50, 1 },
-                        { "STR", (int *)&((TMS320C10_Regs *)bckrgs)->STR, 2, 59, 1 },
-                        { "STAK3", (int *)&((TMS320C10_Regs *)bckrgs)->STACK[3], 2, 68, 1 },
+			{ "PC", (int *)&((TMS320C10_Regs *)bckrgs)->PC, 2, 2, 1 },
+			{ "ACC", (int *)&((TMS320C10_Regs *)bckrgs)->ACC, 4, 10, 1 },
+			{ "P", (int *)&((TMS320C10_Regs *)bckrgs)->Preg, 4, 23, 1 },
+			{ "T", (int *)&((TMS320C10_Regs *)bckrgs)->Treg, 2, 34, 1 },
+			{ "AR0", (int *)&((TMS320C10_Regs *)bckrgs)->AR[0], 2, 41, 1 },
+			{ "AR1", (int *)&((TMS320C10_Regs *)bckrgs)->AR[1], 2, 50, 1 },
+			{ "STR", (int *)&((TMS320C10_Regs *)bckrgs)->STR, 2, 59, 1 },
+			{ "STAK3", (int *)&((TMS320C10_Regs *)bckrgs)->STACK[3], 2, 68, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
-	},
-
+	}
 };
 
 
@@ -663,7 +666,34 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-    /* #define CPU_I86    4 */
+	/* #define CPU_H6280  4 */
+	{
+		"6280", 14,
+		DrawDebugScreen8,
+		Dasm6280, Temp6280Trace, 15, 8,
+		"NVRBDIZC", (int *)&((H6280_Regs *)rgs)->p, 8,
+		"%04X:", 0x1fffff,
+		25, 31, 77, 16, 3,
+		3, 1,
+		(int *)&((H6280_Regs *)rgs)->SP.B.l, 1,
+		{
+			{ "A", (int *)&((H6280_Regs *)rgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((H6280_Regs *)rgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((H6280_Regs *)rgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((H6280_Regs *)rgs)->SP.B.l, 1, 17, 1 },
+			{ "PC", (int *)&((H6280_Regs *)rgs)->PC.W.l, 2, 22, 1 },
+			{ "M1", (int *)&((H6280_Regs *)rgs)->mmr[0], 1, 30, 1 },
+			{ "M2", (int *)&((H6280_Regs *)rgs)->mmr[1], 1, 36, 1 },
+			{ "M3", (int *)&((H6280_Regs *)rgs)->mmr[2], 1, 42, 1 },
+			{ "M4", (int *)&((H6280_Regs *)rgs)->mmr[3], 1, 48, 1 },
+			{ "M5", (int *)&((H6280_Regs *)rgs)->mmr[4], 1, 54, 1 },
+			{ "M6", (int *)&((H6280_Regs *)rgs)->mmr[5], 1, 60, 1 },
+			{ "M7", (int *)&((H6280_Regs *)rgs)->mmr[6], 1, 66, 1 },
+			{ "M8", (int *)&((H6280_Regs *)rgs)->mmr[7], 1, 72, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+    /* #define CPU_I86    5 */
 	{
 		"I86", 21,
 		DrawDebugScreen16,
@@ -690,7 +720,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I8039  5 */
+	/* #define CPU_I8039  6 */
 	{
 		"I8039", 14,
 		DrawDebugScreen8,
@@ -707,7 +737,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6803  6 */ /* CPU_6802, CPU_6808 */
+	/* #define CPU_M6803  7 */ /* CPU_6802, CPU_6808 */
 	{
 		"6808", 14,
 		DrawDebugScreen8,
@@ -726,7 +756,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_6805 7 */	/* JB 980214 */
+	/* #define CPU_6805 8 */	/* JB 980214 */
 	{
 		"6805", 14,
 		DrawDebugScreen8,
@@ -740,11 +770,11 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "A", (int *)&((m6805_Regs *)rgs)->a, 1, 2, 1 },
 			{ "PC", (int *)&((m6805_Regs *)rgs)->pc, 2, 7, 1 },
 			{ "S", (int *)&((m6805_Regs *)rgs)->s, 2, 15, 1 },
-			{ "X", (int *)&((m6805_Regs *)rgs)->x, 2, 22, 1 },
+			{ "X", (int *)&((m6805_Regs *)rgs)->x, 1, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6809  8 */
+	/* #define CPU_M6809  9 */
 	{
 		"6809", 14,
 		DrawDebugScreen8,
@@ -766,7 +796,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M68000 9 */
+	/* #define CPU_M68000 10 */
 	{
 		"68K", 21,
 		DrawDebugScreen16,
@@ -784,7 +814,6 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "USP", (int *)&((MC68000_Regs *)rgs)->regs.usp, 4, 40, 1 },
 			{ "SFC", (int *)&((MC68000_Regs *)rgs)->regs.sfc, 4, 53, 1 },
 			{ "DFC", (int *)&((MC68000_Regs *)rgs)->regs.dfc, 4, 66, 1 },
-#ifdef A68KEM
 			{ "D0", (int *)&((MC68000_Regs *)rgs)->regs.d[0], 4, 67, 3 },
 			{ "D1", (int *)&((MC68000_Regs *)rgs)->regs.d[1], 4, 67, 4 },
 			{ "D2", (int *)&((MC68000_Regs *)rgs)->regs.d[2], 4, 67, 5 },
@@ -801,28 +830,10 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.a[5], 4, 67, 17 },
 			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.a[6], 4, 67, 18 },
 			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.a[7], 4, 67, 19 },
-#else
-			{ "D0", (int *)&((MC68000_Regs *)rgs)->regs.dr[0], 4, 67, 3 },
-			{ "D1", (int *)&((MC68000_Regs *)rgs)->regs.dr[1], 4, 67, 4 },
-			{ "D2", (int *)&((MC68000_Regs *)rgs)->regs.dr[2], 4, 67, 5 },
-			{ "D3", (int *)&((MC68000_Regs *)rgs)->regs.dr[3], 4, 67, 6 },
-			{ "D4", (int *)&((MC68000_Regs *)rgs)->regs.dr[4], 4, 67, 7 },
-			{ "D5", (int *)&((MC68000_Regs *)rgs)->regs.dr[5], 4, 67, 8 },
-			{ "D6", (int *)&((MC68000_Regs *)rgs)->regs.dr[6], 4, 67, 9 },
-			{ "D7", (int *)&((MC68000_Regs *)rgs)->regs.dr[7], 4, 67, 10 },
-			{ "A0", (int *)&((MC68000_Regs *)rgs)->regs.ar[0], 4, 67, 12 },
-			{ "A1", (int *)&((MC68000_Regs *)rgs)->regs.ar[1], 4, 67, 13 },
-			{ "A2", (int *)&((MC68000_Regs *)rgs)->regs.ar[2], 4, 67, 14 },
-			{ "A3", (int *)&((MC68000_Regs *)rgs)->regs.ar[3], 4, 67, 15 },
-			{ "A4", (int *)&((MC68000_Regs *)rgs)->regs.ar[4], 4, 67, 16 },
-			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.ar[5], 4, 67, 17 },
-			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.ar[6], 4, 67, 18 },
-			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.ar[7], 4, 67, 19 },
-#endif
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_T11    10 */
+	/* #define CPU_T11    11 */
 	{
 		"T11", 14,
 		DrawDebugScreen8,
@@ -844,7 +855,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_2660   11 */
+	/* #define CPU_2660   12 */
 	{
 		"2650", 14,
 		DrawDebugScreen8,
@@ -870,7 +881,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS34010 12 */
+	/* #define CPU_TMS34010 13 */
 	{
 		"34010", 21,
 		DrawDebugScreen32,
@@ -917,7 +928,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS9900   13 */
+	/* #define CPU_TMS9900   14 */
 	{
 		"9900", 21,
 		DrawDebugScreen16,
@@ -951,7 +962,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_Z8000 14 */
+	/* #define CPU_Z8000 15 */
 	{
 		"Z8000", 21,
 		DrawDebugScreen16,
@@ -1009,7 +1020,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-        /* #define CPU_TMS320C10  15 */
+        /* #define CPU_TMS320C10  16 */
 	{
                 "32010", 21,
                 DrawDebugScreen16word,
@@ -1031,7 +1042,6 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-
 };
 
 

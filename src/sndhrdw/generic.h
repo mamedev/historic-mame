@@ -10,7 +10,6 @@
 #include "sn76496.h"
 #include "pokey.h"
 #include "namco.h"
-#include "namcos1.h"
 #include "nesintf.h"
 #include "5220intf.h"
 #include "vlm5030.h"

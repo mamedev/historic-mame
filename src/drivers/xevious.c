@@ -592,8 +592,8 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 /* background tiles */
@@ -603,8 +603,8 @@ static struct GfxLayout bgcharlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 512*8*8 },
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 /* sprite set #1 */
@@ -614,10 +614,10 @@ static struct GfxLayout spritelayout1 =
 	128,	/* 128 sprites */
 	3,	/* 3 bits per pixel */
 	{ 128*64*8+4, 0, 4 },
-	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-		7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8	/* every sprite takes 128 consecutive bytes */
 };
 /* sprite set #2 */
@@ -627,10 +627,10 @@ static struct GfxLayout spritelayout2 =
 	128,	/* 128 sprites */
 	3,	/* 3 bits per pixel */
 	{ 0, 128*64*8, 128*64*8+4 },
-	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-		7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8	/* every sprite takes 128 consecutive bytes */
 };
 /* sprite set #3 */
@@ -640,10 +640,10 @@ static struct GfxLayout spritelayout3 =
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel (one is always 0) */
 	{ 64*64*8, 0, 4 },
-	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-		7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -709,7 +709,7 @@ static struct MachineDriver machine_driver =
 	xevious_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	128+1,128*4+64*8+64*2,
 	xevious_vh_convert_color_prom,
@@ -1033,7 +1033,7 @@ struct GameDriver xevious_driver =
 	xevious_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -1059,7 +1059,7 @@ struct GameDriver xeviousa_driver =
 	xeviousa_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -1085,7 +1085,7 @@ struct GameDriver xevios_driver =
 	xevious_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -1111,7 +1111,7 @@ struct GameDriver sxevious_driver =
 	sxevious_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

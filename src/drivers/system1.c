@@ -507,9 +507,9 @@ INPUT_PORTS_START( regulus_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( upndown_input_ports )

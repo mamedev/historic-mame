@@ -69,6 +69,7 @@ to list them.
 | Bomb Jack            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
 | Boot Hill            |  Yes   |  b/w   | Yes(1) |  n/a   |   No   | boothill |
 | Bosconian            |  Yes   |  Yes   |  Yes   |   No   |   No   | bosco    |
+| Boulder Dash         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bouldash |
 | Bowl-O-Rama          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | bowlrama |
 | Brain                |  Yes   |   No   |  Yes   |  Yes   |   No   | brain    |
 | Break Thru           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | brkthru  |
@@ -81,7 +82,7 @@ to list them.
 | Canyon Bomber        |  Yes   |  b/w   |   No   |  Yes   |   No   | canyon   |
 | Capcom Bowling       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | capbowl  |
 | Captain Commando     |  Yes   |  Yes   |  Yes   |   No   |   No   | captcomm |
-| Captain Silver       |  Yes   |  Yes   |  Yes   |   No   |   No   | csilver  |
+| Captain Silver       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csilver  |
 | Carnival             |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | carnival |
 | Carrier Air Wing     |   No   |  Yes   |  Yes   |   No   |   No   | cawing   |
 | Centipede            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | centiped |
@@ -112,6 +113,7 @@ to list them.
 | Cosmic Alien         |  Yes   |   No   |   No   |  Yes   |   No   | cosmica  |
 | Cosmic Avenger       |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | cavenger |
 | Cosmic Guerilla      |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | cosmicg  |
+| Crackshot            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cracksht |
 | Crash                |  Yes   |  Yes   |Partial |  Yes   |   No   | crash    |
 | Crater Raider        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | crater   |
 | Crazy Balloon        |  Yes   |  Yes   |   No   |  Yes   |  Yes   | crbaloon |
@@ -123,7 +125,7 @@ to list them.
 | D-Day                |  Yes   |   No   |  Yes   |  Yes   |  n/a   | dday     |
 | DakkoChan Jansoh     |   No   |  Yes   |  Yes   |   No   |   No   | dakkochn |
 | Dark Planet          |   No   |  Yes   |  Yes   |   No   |   No   | darkplnt |
-| Dark Seal            |  Yes   |  Yes   |Partial |  Yes   |   No   | darkseal |
+| Dark Seal            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | darkseal |
 | Darwin 4078          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | darwin   |
 | Dead Eye             |  Yes   |Overlay |  Yes   |  Yes   |  Yes   | deadeye  |
 | Defend the Terra Atta|  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | redufo   |
@@ -195,7 +197,7 @@ to list them.
 | Gladiator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gladiatr |
 | Golden Axe           |  Yes   |  Yes   |  Yes   |   No   |   No   | goldnaxe |
 | Golden Star          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | goldstar |
-| Gondomania           |  Yes   |  Yes   |  Yes   |   No   |   No   | gondo    |
+| Gondomania           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gondo    |
 | Gorf                 |  Yes   |   No   | Yes(1) |  Yes   |  Yes   | gorf     |
 | Gravitar             |  Yes   | Close  |  Yes   |  Yes   |   No   | gravitar |
 | Great Swordsman      |  Yes   |   No   |   No   |  Yes   |   No   | gsword   |
@@ -214,7 +216,7 @@ to list them.
 | Heavy Metal          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hvymetal |
 | Heavyweight Champ    |   No   |  Yes   |   No   |   No   |   No   | hwchamp  |
 | Heiankyo Alien       |  Yes   |  Yes   |   No   |   No   |  Yes   | heiankyo |
-| Hell Fire            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hellfire |
+| Hell Fire            |  Yes   |  Yes   |  Yes   |   No   |   No   | hellfire |
 | Hexa                 |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | hexa     |
 | Hi Impact Football   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hiimpact |
 | HigeMaru             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | higemaru |
@@ -266,6 +268,7 @@ to list them.
 | Kung Fu Master       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kungfum  |
 | Lady Bug             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
 | Last Duel            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lastduel |
+| Last Mission         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lastmiss |
 | Lazer Command        |  Yes   |Overlay |  Yes   |   No   |   No   | lazercmd |
 | Legend of Makaj      |  Yes   |  Yes   |  Yes   |   No   |   No   | lomakaj  |
 | Legendary Wings      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lwings   |
@@ -305,7 +308,7 @@ to list them.
 | Mega Twins           |  Yes   |  Yes   |  Yes   |   No   |   No   | mtwins   |
 | MegaTack             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | megatack |
 | Mercs                |  Yes   |  Yes   |  Yes   |   No   |   No   | mercs    |
-| Midnight Resistance  |  Yes   |  Yes   |Partial |  Yes   |   No   | midres   |
+| Midnight Resistance  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | midres   |
 | Mikie                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mikie    |
 | Millipede            |  Yes   |  Yes   |   No   |  Yes   |   No   | milliped |
 | Minefield            |  Yes   |  Yes   |  Yes   |   No   |  n/a   | minefld  |
@@ -347,7 +350,7 @@ to list them.
 | Pac & Pal            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pacnpal  |
 | Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
-| Pac-Land             |  Yes   |  Yes   |   No   |  Yes   |   No   | pacland  |
+| Pac-Land             |  Yes   |  Yes   |Partial |  Yes   |   No   | pacland  |
 | Pang                 |  Yes   |  Yes   |Partial |   No   |   No   | pang     |
 | Paper Boy            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | paperboy |
 | Passing Shot         |  Yes   |  Yes   |  Yes   |   No   |   No   | passshtb |
@@ -426,7 +429,7 @@ to list them.
 | Section Z            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sectionz |
 | Sega Ninja           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | seganinj |
 | Seicross             |Partial.|  Yes   |  Yes   |  Yes   |   No   | seicross |
-| Shackled             |  Yes   |  Yes   |  Yes   |   No   |   No   | shackled |
+| Shackled             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shackled |
 | Shark Attack         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sharkatt |
 | Shinobi              |  Yes   |  Yes   |  Yes   |   No   |   No   | shinobi  |
 | Shoot Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shootout |
@@ -438,7 +441,7 @@ to list them.
 | Sinistar             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sinistar |
 | Sky Diver            |  Yes   |  b/w   |   No   |   No   |   No   | skydiver |
 | Slap Fight           |  Yes   |  Yes   |  Yes   |   No   |   No   | slapfigh |
-| Sly Spy              |  Yes   |  Yes   |Partial |  Yes   |   No   | slyspy   |
+| Sly Spy              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | slyspy   |
 | Smash Tv             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | smashtv  |
 | Snap Jack            |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | snapjack |
 | Snow Bros            |  Yes   |  Yes?  |  Yes   |   No   |  n/a   | snowbros |
@@ -492,7 +495,7 @@ to list them.
 | Super Pang           |  Yes   |  Yes   |Partial |  Yes   |   No   | spang    |
 | Super Punch Out      |  Yes   |  Yes   |Partial |  Yes   |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superqix |
-| Super Real Darwin    |  Yes   | Close  |  Yes   |   No   |   No   | srdarwin |
+| Super Real Darwin    |  Yes   | Close  |  Yes   |  Yes   |   No   | srdarwin |
 | Super Space Invaders |  Yes   |  Yes   |   No   |   No   |   No   | ssi      |
 | Super Sprint         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ssprint  |
 | Super Zaxxon         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | szaxxon  |
@@ -572,6 +575,7 @@ to list them.
 | Victory Road         |  Yes   |  Yes   |Partial |  Yes   |   No   | victroad |
 | Video Hustler        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hustler  |
 | Vigilante            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vigilant |
+| Vimana               |  Yes   |  Yes   |   No   |   No   |   No   | vimana   |
 | Vindicators          |  Yes   |   No   |  Yes   |  Yes   |   No   | vindictr |
 | Vulgus               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vulgus   |
 | Wacko                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wacko    |
@@ -596,7 +600,7 @@ to list them.
 | Yie Ar Kung Fu       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | yiear    |
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
 | Zektor               |  Yes   | Close  |Partl(1)|  Yes   |   No   | zektor   |
-| Zero Wing            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerowing |
+| Zero Wing            |  Yes   |  Yes   |  Yes   |   No   |   No   | zerowing |
 | Zero Zone            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerozone |
 | Zig Zag              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zigzag   |
 | Zoar                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zoar     |
@@ -883,8 +887,7 @@ Known issues:
 - The original version is the only one where wizards throw stones.
 - The protection feature which randomizes the EXTEND letters in the original
   version is not emulated properly.
-- In boblbobl, service mode works only if Language is set to Japanese. This is
-  probably a "feature" of the bootleg.
+- Service mode works only if Language is set to Japanese.
 
 
 
@@ -1053,6 +1056,13 @@ Contra ("contra")
 Clones supported:
   bootleg version ("contrab")
   a Japanese bootleg ("gryzorb")
+
+
+
+Crackshot ("cracksht")
+======================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
 
 
 

@@ -55,7 +55,7 @@ INLINE void asld (void)
 INLINE void tap (void)
 {
 	cc=areg;
-	CHECK_IRQ_LINE(cc); /* HJB 980124 */
+	CHECK_IRQ_LINES;	/* HJB 990301 */
 }
 
 /* $07 TPA inherent ----- */
@@ -112,9 +112,17 @@ INLINE void cba (void)
 	CLR_NZVC; SET_FLAGS8(areg,breg,t);
 }
 
-/* $12 ILLEGAL */
+/* $12 UNDOCUMENTED! */ /* HD63701YO only */
+INLINE void undoc1 (void)
+{
+    xreg += M_RDMEM( sreg + 1 );
+}
 
-/* $13 ILLEGAL */
+/* $13 UNDOCUMENTED! */ /* HD63701YO only */
+INLINE void undoc2 (void)
+{
+    xreg += M_RDMEM( sreg + 1 );
+}
 
 /* $14 ILLEGAL */
 
@@ -373,7 +381,7 @@ INLINE void rti( void )
 	PULLBYTE(areg);
 	PULLWORD(xreg);
 	PULLWORD(pcreg);change_pc(pcreg);
-	CHECK_IRQ_LINE(cc); /* HJB 980124 */
+	CHECK_IRQ_LINES;	/* HJB 990301 */
 }
 
 /* $3c PSHX inherent ----- */
@@ -394,10 +402,18 @@ INLINE void mul( void )
 /* $3e WAI inherent ----- */
 INLINE void wai( void )
 {
-	/* WAI should stack the entire machine state on the hardware stack,
-		then wait for an interrupt. We just wait for an IRQ. */
+	/*
+	 * WAI stacks the entire machine state on the
+	 * hardware stack, then waits for an interrupt.
+	 */
 	m6808_ICount = 0;
-	pending_interrupts |= M6808_WAI;
+	wai_state |= M6808_WAI;
+	PUSHWORD(pcreg);
+	PUSHWORD(xreg);
+	PUSHBYTE(areg);
+	PUSHBYTE(breg);
+	PUSHBYTE(cc);
+	CHECK_IRQ_LINES;
 }
 
 /* $3f SWI absolute indirect ----- */
@@ -409,7 +425,8 @@ INLINE void swi( void )
 	PUSHBYTE(breg);
 	PUSHBYTE(cc);
 	SEI;
-	pcreg = M_RDMEM_WORD(0xfffa);change_pc(pcreg);
+	pcreg = M_RDMEM_WORD(0xfffa);
+	change_pc(pcreg);
 }
 
 #if macintosh

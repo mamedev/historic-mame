@@ -28,6 +28,7 @@ extern struct GameDriver mspacman_driver;
 extern struct GameDriver mspacatk_driver;
 extern struct GameDriver maketrax_driver;
 extern struct GameDriver crush_driver;
+extern struct GameDriver crush2_driver;
 extern struct GameDriver mbrush_driver;
 extern struct GameDriver eyes_driver;
 extern struct GameDriver mrtnt_driver;
@@ -47,6 +48,7 @@ extern struct GameDriver galaxian_driver;
 extern struct GameDriver galmidw_driver;
 extern struct GameDriver galnamco_driver;
 extern struct GameDriver superg_driver;
+extern struct GameDriver galaxb_driver;
 extern struct GameDriver galapx_driver;
 extern struct GameDriver galap1_driver;
 extern struct GameDriver galap4_driver;
@@ -159,6 +161,7 @@ extern struct GameDriver junglers_driver;
 extern struct GameDriver locomotn_driver;
 extern struct GameDriver commsega_driver;
 extern struct GameDriver bosco_driver;
+extern struct GameDriver bosco2_driver;
 extern struct GameDriver bosconm_driver;
 extern struct GameDriver galaga_driver;
 extern struct GameDriver galagamw_driver;
@@ -185,6 +188,14 @@ extern struct GameDriver pacland2_driver;
 extern struct GameDriver pacland3_driver;
 extern struct GameDriver paclandm_driver;
 extern struct GameDriver rthunder_driver;
+
+/* Namco System 1 games */
+extern struct GameDriver blazer_driver;
+extern struct GameDriver ws90_driver;
+extern struct GameDriver dspirits_driver;
+extern struct GameDriver splatter_driver;
+extern struct GameDriver galaga88_driver;
+extern struct GameDriver pacmania_driver;
 
 /* Universal games */
 extern struct GameDriver cosmicg_driver;
@@ -313,6 +324,7 @@ extern struct GameDriver solarfox_driver;
 extern struct GameDriver kick_driver;
 extern struct GameDriver kicka_driver;
 extern struct GameDriver shollow_driver;
+extern struct GameDriver shollow2_driver;
 extern struct GameDriver tron_driver;
 extern struct GameDriver tron2_driver;
 extern struct GameDriver kroozr_driver;
@@ -331,7 +343,8 @@ extern struct GameDriver spyhunt_driver;
 extern struct GameDriver crater_driver;
 extern struct GameDriver sarge_driver;
 extern struct GameDriver rampage_driver;
-//extern struct GameDriver powerdrv_driver;
+extern struct GameDriver rampage2_driver;
+extern struct GameDriver powerdrv_driver;
 extern struct GameDriver maxrpm_driver;
 extern struct GameDriver xenophob_driver;
 
@@ -444,6 +457,7 @@ extern struct GameDriver slapbtjp_driver;
 extern struct GameDriver slapbtuk_driver;
 extern struct GameDriver getstar_driver;
 extern struct GameDriver superman_driver;
+extern struct GameDriver lkage_driver;
 
 /* Taito F2 games */
 extern struct GameDriver ssi_driver;
@@ -790,6 +804,7 @@ extern struct GameDriver slyspy_driver;
 extern struct GameDriver slyspy2_driver;
 extern struct GameDriver midres_driver;
 extern struct GameDriver midresj_driver;
+extern struct GameDriver bouldash_driver;
 extern struct GameDriver darkseal_driver;
 extern struct GameDriver gatedoom_driver;
 extern struct GameDriver gatedoma_driver;
@@ -905,6 +920,7 @@ extern struct GameDriver fireone_driver;
 extern struct GameDriver crossbow_driver;
 extern struct GameDriver cheyenne_driver;
 extern struct GameDriver combat_driver;
+extern struct GameDriver cracksht_driver;
 extern struct GameDriver claypign_driver;
 extern struct GameDriver chiller_driver;
 extern struct GameDriver topsecex_driver;
@@ -1056,7 +1072,6 @@ extern struct GameDriver blockout_driver;
 extern struct GameDriver berzerk_driver;
 extern struct GameDriver berzerk1_driver;
 extern struct GameDriver frenzy_driver;
-extern struct GameDriver frenzy1_driver;
 
 /* GamePlan games */
 extern struct GameDriver megatack_driver;
@@ -1171,6 +1186,14 @@ extern struct GameDriver pspikes_driver;
 extern struct GameDriver turbofrc_driver;
 extern struct GameDriver aerofgt_driver;
 
+/* Toaplan games */
+extern struct GameDriver zerowing_driver;
+extern struct GameDriver hellfire_driver;
+extern struct GameDriver vimana_driver;
+extern struct GameDriver vimana2_driver;
+extern struct GameDriver snowbros_driver;
+extern struct GameDriver snowbroa_driver;
+
 extern struct GameDriver spacefb_driver;
 extern struct GameDriver spacefbg_driver;
 extern struct GameDriver spacebrd_driver;
@@ -1197,10 +1220,6 @@ extern struct GameDriver tankbatt_driver;
 extern struct GameDriver liberatr_driver;
 extern struct GameDriver dday_driver;
 extern struct GameDriver toki_driver;
-extern struct GameDriver zerowing_driver;
-extern struct GameDriver hellfire_driver;
-extern struct GameDriver snowbros_driver;
-extern struct GameDriver snowbroa_driver;
 extern struct GameDriver gundealr_driver;
 extern struct GameDriver gundeala_driver;
 extern struct GameDriver leprechn_driver;
@@ -1368,6 +1387,7 @@ const struct GameDriver *drivers[] =
 	&mspacatk_driver,	/* hack */
 	&maketrax_driver,	/* (c) 1981 Williams */
 	&crush_driver,		/* 1981 bootleg */
+	&crush2_driver,		/* 1981 bootleg */
 	&mbrush_driver,		/* 1981 bootleg */
 	&eyes_driver,		/* (c) 1982 Digitrex Techstar + "Rockola presents" */
 	&mrtnt_driver,		/* (c) 1983 Telko */
@@ -1387,6 +1407,7 @@ const struct GameDriver *drivers[] =
 	&galmidw_driver,	/* (c) Midway */
 	&galnamco_driver,	/* hack */
 	&superg_driver,		/* hack */
+	&galaxb_driver,		/* bootleg */
 	&galapx_driver,		/* hack */
 	&galap1_driver,		/* hack */
 	&galap4_driver,		/* hack */
@@ -1502,6 +1523,7 @@ const struct GameDriver *drivers[] =
 	&commsega_driver,	/* (c) 1983 Sega */
 	/* the following ones all have a custom I/O chip */
 	&bosco_driver,		/* (c) 1981 Midway */
+	&bosco2_driver,		/* (c) 1981 Midway */
 	&bosconm_driver,	/* (c) 1981 */
 	&galaga_driver,		/* (c) 1981 */
 	&galagamw_driver,	/* (c) 1981 Midway */
@@ -1529,6 +1551,14 @@ const struct GameDriver *drivers[] =
 	&pacland3_driver,	/* (c) 1984 */
 	&paclandm_driver,	/* (c) 1984 Midway */
 	&rthunder_driver,	/* (c) 1986 */
+
+	/* Namco System 1 games */
+//	&blazer_driver,
+//	&ws90_driver,
+//	&dspirits_driver,
+//	&splatter_driver,
+//	&galaga88_driver,
+//	&pacmania_driver,
 
 	/* Universal games */
 	&cosmicg_driver,	/* (c) 1979 */
@@ -1664,6 +1694,7 @@ const struct GameDriver *drivers[] =
 	&kicka_driver,		/* bootleg? */
 	/* MCR2 */
 	&shollow_driver,	/* (c) 1981 */
+	&shollow2_driver,	/* (c) 1981 */
 	&tron_driver,		/* (c) 1982 */
 	&tron2_driver,		/* (c) 1982 */
 	&kroozr_driver,		/* (c) 1982 */
@@ -1684,6 +1715,7 @@ const struct GameDriver *drivers[] =
 	&crater_driver,		/* (c) 1984 */
 	&sarge_driver,		/* (c) 1985 */
 	&rampage_driver,	/* (c) 1986 */
+	&rampage2_driver,	/* (c) 1986 */
 //	&powerdrv_driver,
 	&maxrpm_driver,		/* (c) 1986 */
 	/* MCR 68000 */
@@ -1806,6 +1838,7 @@ Six Flags (?)
 	&slapbtuk_driver,	/* bootleg */
 	&getstar_driver,	/* (c) 1986 Taito, but bootleg */
 	&superman_driver,	/* (c) 1988 */
+//	&lkage_driver,		/* (c) 1984 */
 
 	/* Taito F2 games */
 	&ssi_driver,		/* (c) 1990 */
@@ -2242,6 +2275,7 @@ DokiDoki Penguin Land *not confirmed
 	&slyspy2_driver,	/* (c) 1989 Data East USA */
 	&midres_driver,		/* (c) 1989 Data East USA */
 	&midresj_driver,	/* (c) 1989 Data East Corporation */
+	&bouldash_driver,	/* (c) 1990 Data East Corporation */
 	/* evolution of the hardware */
 	&darkseal_driver,	/* (c) 1990 */
 	&gatedoom_driver,	/* (c) 1990 */
@@ -2358,6 +2392,7 @@ DokiDoki Penguin Land *not confirmed
 	&crossbow_driver,	/* (c) 1983 */
 	&cheyenne_driver,	/* (c) 1984 */
 	&combat_driver,		/* (c) 1985 */
+	&cracksht_driver,	/* (c) 1985 */
 	&claypign_driver,	/* (c) 1986 */
 	&chiller_driver,	/* (c) 1986 */
 	&topsecex_driver,	/* (c) 1986 */
@@ -2515,7 +2550,6 @@ DokiDoki Penguin Land *not confirmed
 	&berzerk_driver,	/* (c) 1980 */
 	&berzerk1_driver,	/* (c) 1980 */
 	&frenzy_driver,		/* (c) 1982 */
-	&frenzy1_driver,	/* (c) 1982 */
 
 	/* GamePlan games */
 	&megatack_driver,	/* (c) 1980 Centuri */
@@ -2641,6 +2675,14 @@ Rad Action
 	&turbofrc_driver,	/* (c) 1991 */
 	&aerofgt_driver,	/* (c) 1992 */
 
+	/* Toaplan games */
+	&zerowing_driver,	/* (c) 1989 Toaplan */
+	&hellfire_driver,	/* (c) 1989 Toaplan + Taito license */
+	&vimana_driver,		/* (c) 1991 Toaplan (+ Tecmo license when set to Japan) */
+	&vimana2_driver,	/* (c) 1991 Toaplan (+ Tecmo license when set to Japan)  */
+	&snowbros_driver,	/* (c) 1990 Toaplan + Romstar license */
+	&snowbroa_driver,	/* (c) 1990 Toaplan + Romstar license */
+
 	&spacefb_driver,	/* (c) [1980?] Nintendo */
 	&spacefbg_driver,	/* 834-0031 (c) 1980 Gremlin */
 	&spacebrd_driver,	/* bootleg */
@@ -2667,10 +2709,6 @@ Rad Action
 	&liberatr_driver,	/* (c) 1982 Atari */
 	&dday_driver,		/* (c) 1982 Centuri */
 	&toki_driver,		/* (c) 1990 Datsu (bootleg) */
-	&zerowing_driver,	/* (c) 1989 Toaplan */
-	&hellfire_driver,	/* (c) 1989 Toaplan + Taito license */
-	&snowbros_driver,	/* (c) 1990 Toaplan + Romstar license */
-	&snowbroa_driver,	/* (c) 1990 Toaplan + Romstar license */
 	&gundealr_driver,	/* (c) 1990 Dooyong */
 	&gundeala_driver,	/* (c) Dooyong */
 	&leprechn_driver,	/* (c) 1982 Tong Electronic */

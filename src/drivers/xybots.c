@@ -353,7 +353,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4MHz */
-	{ 80 | YM2151_STEREO_REVERSE },
+	{ YM3012_VOL(80,OSD_PAN_RIGHT,80,OSD_PAN_LEFT) },
 	{ 0 }
 };
 

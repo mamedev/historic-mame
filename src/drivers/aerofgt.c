@@ -698,14 +698,15 @@ struct YM2610interface ym2610_interface =
 {
 	1,
 	8000000,	/* 8 MHz??? */
-	{ YM2203_VOL(50,50) },
+	{ 50 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
 	{ 4 },
-	{ 3 }
+	{ 3 },
+	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) }
 };
 
 

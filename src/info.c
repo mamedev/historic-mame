@@ -31,6 +31,7 @@ struct cpu_desc CPU_DESC[] =
 	{ CPU_8085A,     "I8085"    },
 	{ CPU_8080,      "I8080"    },
 	{ CPU_M6502,     "M6502"    },
+	{ CPU_H6280,     "H6280"    },
 	{ CPU_I86,       "I86"      },
 	{ CPU_I8039,     "I8039"    },
 	{ CPU_I8035,     "I8035"    },
@@ -99,7 +100,6 @@ struct sound_desc SOUND_DESC[] =
 	{ SOUND_SN76496,    SN76496_num,   SN76496_clock,   "SN76496"   },
 	{ SOUND_POKEY,      POKEY_num,     POKEY_clock,     "Pokey"     },
 	{ SOUND_NAMCO,      0,             0,               "Namco"     },
-	{ SOUND_NAMCOS1,    0,             0,               "Namco S1"  },
 	{ SOUND_NES,        NES_num,       NES_clock,       "NES"       },
 	{ SOUND_TMS5220,    0,             TMS5220_clock,   "TMS5520"   },
 	{ SOUND_VLM5030,    0,             VLM5030_clock,   "VLM5030"   },
@@ -465,9 +465,8 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 	{
 		if (cpu[j].cpu_type!=0)
 		{
-			int cpu_type = cpu[j].cpu_type & ~CPU_FLAGS_MASK;
 			fprintf(out, L1P "chip" L2B);
-			if (cpu_type & CPU_AUDIO_CPU)
+			if (cpu[j].cpu_type & CPU_AUDIO_CPU)
 				fprintf(out, L2P "type audio" L2N);
 			else
 				fprintf(out, L2P "type cpu" L2N);

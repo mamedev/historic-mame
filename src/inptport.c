@@ -197,21 +197,22 @@ static void writeint(void *f,UINT32 num)
 
 static int readword(void *f,UINT16 *num)
 {
-	int i;
+	int i,res;
 
 
-	*num = 0;
+	res = 0;
 	for (i = 0;i < sizeof(UINT16);i++)
 	{
 		unsigned char c;
 
 
-		*num <<= 8;
+		res <<= 8;
 		if (osd_fread(f,&c,1) != 1)
 			return -1;
-		*num |= c;
+		res |= c;
 	}
 
+	*num = res;
 	return 0;
 }
 

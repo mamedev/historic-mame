@@ -275,7 +275,7 @@ int i;
 	0E		Number
 
 */
-void draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
 int color,code,sx,sy,attr,xdisp,ydisp,ndisp,sprite,offs;
 unsigned char *spritedata, *objectdata;

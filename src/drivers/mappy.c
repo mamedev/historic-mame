@@ -492,8 +492,8 @@ static struct GfxLayout charlayout =
 	256,             /* 256 characters */
 	2,             /* 2 bits per pixel */
 	{ 0, 4 },      /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },   /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },   /* characters are rotated 90 degrees */
 	16*8           /* every char takes 16 bytes */
 };
 
@@ -505,10 +505,10 @@ static struct GfxLayout mappy_spritelayout =
 	128,            /* 128 sprites */
 	4,                 /* 4 bits per pixel */
 	{ 0, 4, 8192*8, 8192*8+4 },     /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8    /* every sprite takes 64 bytes */
 };
 
@@ -519,10 +519,10 @@ static struct GfxLayout digdug2_spritelayout =
 	256,            /* 256 sprites */
 	4,                 /* 4 bits per pixel */
 	{ 0, 4, 16384*8, 16384*8+4 },   /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8    /* every sprite takes 64 bytes */
 };
 
@@ -586,7 +586,7 @@ static struct MachineDriver mappy_machine_driver =
 	mappy_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	mappy_gfxdecodeinfo,
 	32,64*4+16*16,
 	mappy_vh_convert_color_prom,
@@ -632,7 +632,7 @@ static struct MachineDriver digdug2_machine_driver =
 	mappy_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	digdug2_gfxdecodeinfo,
 	32,64*4+16*16,
 	mappy_vh_convert_color_prom,
@@ -678,7 +678,7 @@ static struct MachineDriver motos_machine_driver =
 	motos_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	digdug2_gfxdecodeinfo,
 	32,64*4+16*16,
 	mappy_vh_convert_color_prom,
@@ -724,7 +724,7 @@ static struct MachineDriver todruaga_machine_driver =
 	mappy_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	todruaga_gfxdecodeinfo,
 	32,64*4+64*16,
 	mappy_vh_convert_color_prom,
@@ -1096,7 +1096,7 @@ struct GameDriver mappy_driver =
 	mappy_input_ports,
 
 	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	mappy_hiload, mappy_hisave
 };
@@ -1122,7 +1122,7 @@ struct GameDriver mappyjp_driver =
 	mappy_input_ports,
 
 	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	mappy_hiload, mappy_hisave
 };
@@ -1148,7 +1148,7 @@ struct GameDriver digdug2_driver =
 	digdug2_input_ports,
 
 	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	digdug2_hiload, digdug2_hisave
 };
@@ -1174,7 +1174,7 @@ struct GameDriver motos_driver =
 	motos_input_ports,
 
 	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	motos_hiload, motos_hisave
 };
@@ -1200,7 +1200,7 @@ struct GameDriver todruaga_driver =
 	todruaga_input_ports,
 
 	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	todruaga_hiload, todruaga_hisave
 };

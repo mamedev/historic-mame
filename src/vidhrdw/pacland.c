@@ -113,11 +113,14 @@ int pacland_vh_start( void )
 	return 0;
 }
 
+extern void pacland_stop_mcu_timer( void );
 void pacland_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap2);
 	free( dirtybuffer );
 	osd_free_bitmap( tmpbitmap );
+
+	pacland_stop_mcu_timer();
 }
 
 

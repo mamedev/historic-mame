@@ -61,6 +61,16 @@ if (errorlog) fprintf(errorlog,"Error: generic_vh_start() called but videoram_si
 }
 
 
+int generic_bitmapped_vh_start(void)
+{
+	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
 
 /***************************************************************************
 
@@ -69,9 +79,6 @@ if (errorlog) fprintf(errorlog,"Error: generic_vh_start() called but videoram_si
 ***************************************************************************/
 void generic_vh_stop(void)
 {
-	int i;
-
-
 	free(dirtybuffer);
 	osd_free_bitmap(tmpbitmap);
 
@@ -79,6 +86,25 @@ void generic_vh_stop(void)
 	tmpbitmap = 0;
 }
 
+void generic_bitmapped_vh_stop(void)
+{
+	osd_free_bitmap(tmpbitmap);
+
+	tmpbitmap = 0;
+}
+
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  To be used by bitmapped games not using sprites.
+
+***************************************************************************/
+void generic_bitmapped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	if (full_refresh)
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
 
 
 int videoram_r(int offset)

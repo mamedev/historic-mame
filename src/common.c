@@ -2400,8 +2400,8 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			struct osd_bitmap *source_bmp = gfx->gfxdata;
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
-			int sprite_screen_height = (scaley*gfx->height)>>16;
-			int sprite_screen_width = (scalex*gfx->width)>>16;
+			int sprite_screen_height = (scaley*gfx->height+0x7fff)>>16;
+			int sprite_screen_width = (scalex*gfx->width+0x7fff)>>16;
 
 			/* compute sprite increment per screen pixel */
 			int dx = (gfx->width<<16)/sprite_screen_width;

@@ -326,8 +326,8 @@ static struct GfxLayout charlayout =
 	256,                                           /* 256 characters */
 	2,                                             /* 2 bits per pixel */
 	{ 0, 4 },                                      /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },    /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },    /* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },    /* characters are rotated 90 degrees */
 	16*8                                           /* every char takes 16 bytes */
 };
 
@@ -339,10 +339,10 @@ static struct GfxLayout spritelayout =
 	128,                                           /* 128 sprites */
 	2,                                             /* 2 bits per pixel */
 	{ 0, 4 },                                      /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8                                           /* every sprite takes 64 bytes */
 };
 
@@ -399,8 +399,8 @@ static struct MachineDriver superpac_machine_driver =
 	superpac_init_machine,     /* init machine routine */
 
 	/* video hardware */
-	28*8, 36*8,                /* screen_width, screen_height */
-	{ 0*8, 28*8-1, 0*8, 36*8-1 },/* struct rectangle visible_area */
+	36*8, 28*8,                /* screen_width, screen_height */
+	{ 0*8, 36*8-1, 0*8, 28*8-1 },/* struct rectangle visible_area */
 	gfxdecodeinfo,             /* GfxDecodeInfo * */
 	32,                        /* total colors */
 	4*(64+64),                 /* color table length */
@@ -455,8 +455,8 @@ static struct MachineDriver pacnpal_machine_driver =
 	superpac_init_machine,     /* init machine routine */
 
 	/* video hardware */
-	28*8, 36*8,                /* screen_width, screen_height */
-	{ 0*8, 28*8-1, 0*8, 36*8-1 },/* struct rectangle visible_area */
+	36*8, 28*8,                /* screen_width, screen_height */
+	{ 0*8, 36*8-1, 0*8, 28*8-1 },/* struct rectangle visible_area */
 	gfxdecodeinfo,             /* GfxDecodeInfo * */
 	32,                        /* total colors */
 	4*(64+64),                 /* color table length */
@@ -689,7 +689,7 @@ struct GameDriver superpac_driver =
 	PROM_MEMORY_REGION(2),	  /* color prom */
 	0,                        /* palette */
 	0,                        /* color table */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	superpac_hiload, superpac_hisave /* hi score save/load */
 };
@@ -717,7 +717,7 @@ struct GameDriver superpcn_driver =
 	PROM_MEMORY_REGION(2),    /* color prom */
 	0,                        /* palette */
 	0,                        /* color table */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	superpac_hiload, superpac_hisave /* hi score save/load */
 };
@@ -745,7 +745,7 @@ struct GameDriver pacnpal_driver =
 	PROM_MEMORY_REGION(2),    /* color prom */
 	0,                        /* palette */
 	0,                        /* color table */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	pacnpal_hiload, pacnpal_hisave /* hi score save/load */
 };

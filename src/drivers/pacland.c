@@ -31,6 +31,13 @@ f000-ffff MCU internal ROM
 #include "vidhrdw/generic.h"
 #include "cpu/m6808/m6808.h"
 
+/* This is the clock speed in Hz divided by 64 that is connected to the E pin on the MCU */
+/* Each pulse on the E pin increments timer A, wich is used for music tempo. */
+/* I've made the decision to downgrade the timer accuracy to allow better speed. */
+/* Looking at the code tho, its more than accurate for its purpose. */
+#define MCU_E_CLK (1500000/64) /* Hz */
+
+
 static unsigned char *sharedram1;
 static unsigned char *hd_regs;
 static void *pacland_timer = 0;
@@ -43,20 +50,26 @@ int pacland_vh_start(void);
 void pacland_vh_stop(void);
 void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-
-static void pacland_init_machine(void)
+static void pacland_timer_proc( int param )
 {
-	pacland_timer = 0;
-}
+	int current_time, total_time, old_time;
 
-static void pacland_halt_mcu_w( int offset, int data )
-{
-	int v = 0;
+	current_time = ( hd_regs[0x09] << 8 ) | hd_regs[0x0a];
+	total_time = ( hd_regs[0x0b] << 8 ) | hd_regs[0x0c];
 
-	if ( offset == 0 )
-		v = 1;
+	old_time = current_time;
 
-	cpu_halt( 1, v );
+	/* increment timer A */
+	current_time += 64;
+
+	/* update time */
+	hd_regs[0x09] = ( current_time >> 8 ) & 0xff;
+	hd_regs[0x0a] = current_time & 0xff;
+
+	if ( total_time >= old_time && total_time <= current_time ) {
+		if ( hd_regs[0x08] & 8 )
+			cpu_cause_interrupt( 1, M6808_INT_OCI );
+	}
 }
 
 static int sharedram1_r( int offset )
@@ -78,33 +91,38 @@ void pacland_stop_mcu_timer( void )
 	}
 }
 
-void pacland_timer_proc( int param )
+static void pacland_halt_mcu_w( int offset, int data )
 {
-	pacland_timer = 0;
+	if ( offset == 0 ) {
+		cpu_reset( 1 );
 
-	/* update current time with compare time */
-	hd_regs[0x09] = hd_regs[0x0b];
-	hd_regs[0x0a] = hd_regs[0x0c];
+		/* Init timer A */
+		hd_regs[0x09] = 0;
+		hd_regs[0x0a] = 0;
 
-	if ( hd_regs[0x08] & 8 )
-		cpu_cause_interrupt( 1, M6808_INT_OCI );
+		pacland_timer = timer_pulse( TIME_IN_HZ( MCU_E_CLK ), 0,pacland_timer_proc );
+
+		cpu_halt( 1, 1 );
+	} else {
+		cpu_halt( 1, 0 );
+		pacland_stop_mcu_timer();
+	}
 }
 
-void pacland_start_mcu_timer( void )
+static void pacland_init_machine(void)
 {
-	int total_time, current_time;
+	/* stop timer if running */
+	pacland_stop_mcu_timer();
 
-	current_time = ( hd_regs[0x09] << 8 ) | hd_regs[0x0a];
-	total_time = ( hd_regs[0x0b] << 8 ) | hd_regs[0x0c];
+	/* make sure we dont trigger interrupts */
+	hd_regs[0x08] = 0;
 
-	total_time = ( total_time - current_time );
+	/* Init timer A */
+	hd_regs[0x09] = 0;
+	hd_regs[0x0a] = 0;
 
-	total_time &= 0xffff;
-
-	if ( pacland_timer )
-		timer_remove( pacland_timer );
-
-	pacland_timer = timer_set( ( ( (double)total_time ) / ((double)Machine->drv->cpu[1].cpu_clock ) ), 0, pacland_timer_proc );
+	/* start up Timer A */
+	pacland_timer = timer_pulse( TIME_IN_HZ( MCU_E_CLK ), 0,pacland_timer_proc );
 }
 
 static int hd_regs_r( int offset )
@@ -116,8 +134,6 @@ static int hd_regs_r( int offset )
 
 static void hd_regs_w( int offset, int data )
 {
-	if ( offset == 0x0c )	// Timer A
-		pacland_start_mcu_timer();
 	hd_regs[offset] = data;
 }
 
@@ -176,9 +192,10 @@ static struct MemoryReadAddress mcu_readmem[] =
 {
 	{ 0x0000, 0x0027, hd_regs_r },
 	{ 0x0040, 0x013f, MRA_RAM },
+	{ 0x1100, 0x113f, MRA_RAM, &namco_soundregs }, /* PSG device */
 	{ 0x1000, 0x13ff, sharedram1_r },
 	{ 0x8000, 0x9fff, MRA_ROM },
-	{ 0xc000, 0xc800, MRA_RAM }, // namco sound?
+	{ 0xc000, 0xc800, MRA_RAM },
 	{ 0xd000, 0xd000, dsw_r0 },
 	{ 0xd000, 0xd001, dsw_r1 },
 	{ 0xd000, 0xd002, input_port_2_r },
@@ -191,12 +208,13 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x0027, hd_regs_w, &hd_regs },
 	{ 0x0040, 0x013f, MWA_RAM },
+	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device */
 	{ 0x1000, 0x13ff, sharedram1_w },
 	{ 0x2000, 0x2000, MWA_NOP }, // ???? (w)
 	{ 0x4000, 0x4000, MWA_NOP }, // ???? (w)
 	{ 0x6000, 0x6000, MWA_NOP }, // ???? (w)
 	{ 0x8000, 0x9fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM }, // namco sound?
+	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -323,6 +341,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+static struct namco_interface namco_interface =
+{
+	23920/2,/* sample rate (approximate value) */
+	8,		/* number of voices */
+	16,		/* gain adjustment */
+	255,	/* playback volume */
+	4,		/* memory region */
+	0		/* stereo */
+};
+
 
 static struct MachineDriver machine_driver =
 {
@@ -330,14 +358,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			2000000,	/* 2.000 Mhz (?) */
+			3000000,	/* 3.000 Mhz (?) */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			2000000,	/* 2.000 Mhz (?) */
+			3000000,	/* 3.000 Mhz (?) */
 			3,
 			mcu_readmem,mcu_writemem,0,0,
 			interrupt,1
@@ -360,7 +388,13 @@ static struct MachineDriver machine_driver =
 	pacland_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
 };
 
 
@@ -398,6 +432,9 @@ ROM_START( pacland_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGION(0x200)	/* sound prom */
+	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
 ROM_START( pacland2_rom )
@@ -428,6 +465,9 @@ ROM_START( pacland2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGION(0x200)	/* sound prom */
+	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
 ROM_START( pacland3_rom )
@@ -458,6 +498,9 @@ ROM_START( pacland3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGION(0x200)	/* sound prom */
+	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
 ROM_START( paclandm_rom )
@@ -488,6 +531,9 @@ ROM_START( paclandm_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGION(0x200)	/* sound prom */
+	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
 

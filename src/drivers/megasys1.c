@@ -814,7 +814,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3000000,	/* ?? */
-	{ 0xff,0xff },
+	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -824,7 +824,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,
 	22000,	/* ?? */
 	{3,4},
-	{ 0xff, 0xff }
+	{ 50, 50 }
 };
 
 #define MEGASYS1_MACHINE(_type_) \

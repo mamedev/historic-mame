@@ -140,8 +140,8 @@ int bnj_vh_start (void)
 	}
 	memset(dirtybuffer2,1,bnj_backgroundram_size);
 
-	/* the background area is twice as tall as the screen */
-	if ((background_bitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	/* the background area is twice as wide as the screen */
+	if ((background_bitmap = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -374,8 +374,8 @@ static void drawchars(struct osd_bitmap *bitmap, int color, int background_on)
 
 		dirtybuffer[offs] = 0;
 
-		sx = offs % 32;
-		sy = offs / 32;
+		sx = 31 - (offs / 32);
+		sy = offs % 32;
 
 		if (flipscreen)
 		{
@@ -404,11 +404,11 @@ static void drawsprites(struct osd_bitmap *bitmap, int color,
 
 		if (!(videoram[offs + 0] & 0x01)) continue;
 
-		sx = 240 - videoram[offs + 2*0x20] - sprite_x_adjust;
-		sy = videoram[offs + 3*0x20];
+		sx = 240 - videoram[offs + 3*0x20];
+		sy = 240 - videoram[offs + 2*0x20] - sprite_x_adjust;
 
-		flipx = videoram[offs + 0] & 0x02;
-		flipy = videoram[offs + 0] & 0x04;
+		flipx = videoram[offs + 0] & 0x04;
+		flipy = videoram[offs + 0] & 0x02;
 
 		if (flipscreen)
 		{
@@ -426,7 +426,7 @@ static void drawsprites(struct osd_bitmap *bitmap, int color,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-		sx += (flipscreen ? -256 : 256);
+		sy += (flipscreen ? -256 : 256);
 
 		// Wrap around
 		drawgfx(bitmap,Machine->gfx[1],
@@ -458,8 +458,8 @@ static void drawbackground(struct osd_bitmap *bitmap, unsigned char* tilemap)
 		{
 			int sx,sy;
 
-			sx = 16 * (offs % 16);
-			sy = 16 * (offs / 16) + scroll;
+			sx = 240 - (16 * (offs / 16) + scroll);
+			sy = 16 * (offs % 16);
 
 			if (flipscreen)
 			{
@@ -576,13 +576,14 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer2[offs] = 0;
 
-			sx = 16 * (((offs % 0x100) < 0x80) ? offs % 8 : (offs % 8) + 8);
-			sy = 16 * ((offs < 0x100) ? ((offs % 0x80) / 8) : ((offs % 0x80) / 8) + 16);
+			sx = 16 * ((offs < 0x100) ? ((offs % 0x80) / 8) : ((offs % 0x80) / 8) + 16);
+			sy = 16 * (((offs % 0x100) < 0x80) ? offs % 8 : (offs % 8) + 8);
+			sx = 496 - sx;
 
 			if (flipscreen)
 			{
-				sx = 240 - sx;
-				sy = 496 - sy;
+				sx = 496 - sx;
+				sy = 240 - sy;
 			}
 
 			drawgfx(background_bitmap, Machine->gfx[2],
@@ -595,9 +596,9 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* copy the background bitmap to the screen */
 		scroll = (bnj_scroll1 & 0x02) * 128 + 511 - bnj_scroll2;
-		if (flipscreen)
+		if (!flipscreen)
 			scroll = 767-scroll;
-		copyscrollbitmap (bitmap, background_bitmap, 0, 0, 1, &scroll, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
+		copyscrollbitmap (bitmap, background_bitmap, 1, &scroll, 0, 0, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
 
 		// The sprites appear below the foremost layer
 		drawsprites(bitmap, 0, 0, 0);
@@ -630,8 +631,8 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int sx,sy;
 
-		sx = offs % 32;
-		sy = offs / 32;
+		sx = 31 - (offs / 32);
+		sy = offs % 32;
 
 		if (flipscreen)
 		{

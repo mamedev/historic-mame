@@ -299,7 +299,7 @@ static struct MachineDriver machine_driver =
 	0,						/* length in bytes of the color lookup table (3*total_colors bytes)	*/
 	0,	/* vh_convert_color_prom()	*/
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_4_3,	/* video_attributes	*/
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	/* video_attributes	*/
 	0,						/* vh_init()	*/
 	liberator_vh_start,		/* vh_start()	*/
 	liberator_vh_stop,		/* vh_stop()	*/

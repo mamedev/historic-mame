@@ -7,16 +7,17 @@ LD = gcc
 #ASM = nasm
 ASM = nasmw
 ASMFLAGS = -f coff
-VPATH=src src/cpu/z80 src/cpu/m6502 src/cpu/i86 src/cpu/m6809 src/cpu/m6808 \
-      src/cpu/m68000 src/cpu/tms34010 src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010
+VPATH=src src/cpu/z80 src/cpu/m6502 src/cpu/h6280 src/cpu/i86 \
+      src/cpu/m6809 src/cpu/m6808 src/cpu/m68000 src/cpu/tms34010 \
+      src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010
 
 # uncomment next line to include the debugger
 # DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = zerowing_driver
-TINY_OBJS = obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o
+TINY_NAME = lkage_driver
+TINY_OBJS = obj/drivers/lkage.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -39,7 +40,9 @@ ifdef X86_ASM_68K
 M68KOBJS = obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
 M68KDEF  = -DA68KEM
 else
-M68KOBJS = obj/cpu/m68000/m68000.o obj/cpu/m68000/m68kmame.o
+M68KOBJS = obj/cpu/m68000/m68kops.o obj/cpu/m68000/m68kcpu.o \
+           obj/cpu/m68000/m68kopac.o obj/cpu/m68000/m68kopdm.o \
+           obj/cpu/m68000/m68kopnz.o obj/cpu/m68000/m68kmame.o
 M68KDEF  =
 endif
 
@@ -98,7 +101,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
          obj/tilemap.o \
          obj/sndhrdw/adpcm.o \
-         obj/sndhrdw/ay8910.o obj/sndhrdw/psgintf.o \
+         obj/sndhrdw/ay8910.o obj/sndhrdw/2203intf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
          obj/sndhrdw/ym2151.o obj/sndhrdw/ym2413.o \
          obj/sndhrdw/2610intf.o \
@@ -108,7 +111,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
 		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o obj/sndhrdw/astrocde.o \
 		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
 		 obj/sndhrdw/k007232.o obj/sndhrdw/upd7759.o obj/sndhrdw/cvsd.o \
-         obj/sndhrdw/namco.o obj/sndhrdw/namcos1.o \
+         obj/sndhrdw/namco.o \
 		 obj/sndhrdw/streams.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
@@ -117,15 +120,15 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          $(M68KOBJS) \
          $(Z80OBJS) \
          $(M6808OBJS) \
-         obj/cpu/m6502/m6502.o \
+         obj/cpu/m6502/m6502.o obj/cpu/h6280/h6280.o \
          obj/cpu/i86/i86.o obj/cpu/i8039/i8039.o obj/cpu/i8085/i8085.o \
          obj/cpu/m6809/m6809.o obj/cpu/m6805/m6805.o \
          obj/cpu/s2650/s2650.o obj/cpu/t11/t11.o \
          obj/cpu/tms34010/tms34010.o obj/cpu/tms34010/34010fld.o \
          obj/cpu/tms9900/tms9900.o obj/cpu/z8000/z8000.o \
          obj/mamedbg.o obj/asg.o \
-         obj/cpu/m68000/d68000.o \
-         obj/cpu/z80/z80dasm.o obj/cpu/m6502/6502dasm.o \
+         obj/cpu/m68000/d68k.o \
+         obj/cpu/z80/z80dasm.o obj/cpu/m6502/6502dasm.o obj/cpu/h6280/6280dasm.o \
          obj/cpu/i86/i86dasm.o obj/cpu/i8039/8039dasm.o obj/cpu/i8085/8085dasm.o \
          obj/cpu/m6809/6809dasm.o obj/cpu/m6805/6805dasm.o \
          obj/cpu/s2650/2650dasm.o obj/cpu/t11/t11dasm.o obj/cpu/tms34010/34010dsm.o \
@@ -146,13 +149,14 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/atarisy2.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/thepit.a obj/valadon.a \
-         obj/seibu.a obj/nichibut.a obj/jaleco.a obj/visco.a obj/other.a \
+         obj/seibu.a obj/nichibut.a obj/jaleco.a obj/visco.a obj/toaplan.a \
+         obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
-MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/vector.o obj/msdos/sound.o \
-         obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o obj/msdos/fronthlp.o \
-		 obj/msdos/profiler.o \
+MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/vector.o \
+         obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o \
+         obj/msdos/fronthlp.o obj/msdos/profiler.o \
 
 ifdef TINY_COMPILE
 	OBJS = $(TINY_OBJS)
@@ -244,6 +248,7 @@ obj/namco.a: \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
          obj/vidhrdw/pacland.o obj/drivers/pacland.o \
          obj/vidhrdw/rthunder.o obj/drivers/rthunder.o \
+         obj/machine/namcos1.o obj/vidhrdw/namcos1.o obj/drivers/namcos1.o \
 
 obj/univers.a: \
          obj/vidhrdw/cosmic.o obj/drivers/cosmic.o \
@@ -316,6 +321,7 @@ obj/taito2.a: \
          obj/drivers/arkanoi2.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
+         obj/drivers/lkage.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o \
 
@@ -559,6 +565,10 @@ obj/jaleco.a: \
 obj/visco.a: \
          obj/vidhrdw/aerofgt.o obj/drivers/aerofgt.o \
 
+obj/toaplan.a: \
+         obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
+         obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
+
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
 
@@ -581,8 +591,6 @@ obj/other.a: \
          obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
          obj/vidhrdw/toki.o obj/drivers/toki.o \
-         obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
-         obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
          obj/vidhrdw/gundealr.o obj/drivers/gundealr.o \
          obj/machine/leprechn.o obj/vidhrdw/leprechn.o obj/drivers/leprechn.o \
          obj/vidhrdw/hexa.o obj/drivers/hexa.o \
@@ -606,6 +614,7 @@ obj/other.a: \
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
 obj/cpu/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
+obj/cpu/m6502/h6280.o: h6280.c h6280.h h6280ops.h tblh6280.c
 obj/cpu/i86/i86.o:  i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
 obj/cpu/m6809/m6809.o:  m6809.c m6809.h 6809ops.c
 obj/cpu/m6808/m6808.o:  m6808.c m6808.h
@@ -620,6 +629,7 @@ makedir:
 	md obj\cpu
 	md obj\cpu\z80
 	md obj\cpu\m6502
+	md obj\cpu\h6280
 	md obj\cpu\i86
 	md obj\cpu\i8039
 	md obj\cpu\i8085
@@ -647,6 +657,7 @@ clean:
 	del obj\cpu\z80\*.asm
 	del obj\cpu\z80\*.exe
 	del obj\cpu\m6502\*.o
+	del obj\cpu\h6280\*.o
 	del obj\cpu\i86\*.o
 	del obj\cpu\i8039\*.o
 	del obj\cpu\i8085\*.o
@@ -679,6 +690,7 @@ cleandebug:
 	del obj\cpu\z80\*.asm
 	del obj\cpu\z80\*.exe
 	del obj\cpu\m6502\*.o
+	del obj\cpu\h6280\*.o
 	del obj\cpu\i86\*.o
 	del obj\cpu\i8039\*.o
 	del obj\cpu\i8085\*.o

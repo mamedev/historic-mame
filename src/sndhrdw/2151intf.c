@@ -71,7 +71,7 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 	int rate = Machine->sample_rate;
 	char buf[YM2151_NUMBUF][40];
 	const char *name[YM2151_NUMBUF];
-	int vol;
+	int mixed_vol,vol[YM2151_NUMBUF],pan[YM2151_NUMBUF];
 
 	if( rate == 0 ) rate = 1000;	/* kludge to prevent nasty crashes */
 
@@ -86,40 +86,37 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 		/* stream system initialize */
 		for (i = 0;i < intf->num;i++)
 		{
+			mixed_vol = intf->volume[i];
 			/* stream setup */
 			for (j = 0 ; j < YM2151_NUMBUF ; j++)
 			{
-				char *chname[2] = { "Lt", "Rt" };
-				int ch;
+				char *chname;
 
-
-				name[j] = buf[j];
-				ch = j & 1;
-				if (intf->volume[i] & YM2151_STEREO_REVERSE)
-					ch ^= 1;
-				sprintf(buf[j],"YM2151 #%d %s",i,chname[ch]);
+				name[j]=buf[j];
+				vol[j] = mixed_vol & 0xff;
+				pan[j] = (mixed_vol>>8) & 0xff;
+				mixed_vol>>=16;
+				switch( pan[j] ){
+				case OSD_PAN_CENTER:chname="Ct";break;
+				case OSD_PAN_LEFT:  chname="Lt";break;
+				case OSD_PAN_RIGHT: chname="Rt";break;
+				default:            chname="??";break;
+				}
+				sprintf(buf[j],"YM2151 #%d Ch%d(%s)",i,j+1,chname);
 			}
 			stream[i] = stream_init_multi(YM2151_NUMBUF,
-				name,rate,Machine->sample_bits,
-				i,OPMUpdateOne);
+				name,rate,FM_OUTPUT_BIT,i,OPMUpdateOne);
 			/* volume setup */
-			vol = intf->volume[i] & 0xff;
-			for( j=0 ; j < YM2151_NUMBUF ; j++ )
+			for (j = 0 ; j < YM2151_NUMBUF ; j++)
 			{
-				int ch;
-
-				ch = j & 1;
-				if (intf->volume[i] & YM2151_STEREO_REVERSE)
-					ch ^= 1;
-
-				stream_set_volume(stream[i]+j,vol);
-				stream_set_pan(stream[i]+j,ch ? OSD_PAN_RIGHT : OSD_PAN_LEFT);
+				stream_set_volume(stream[i]+j,vol[j]);
+				stream_set_pan(stream[i]+j,pan[j]);
 			}
 		}
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
 			Timer[i][0] =Timer[i][1] = 0;
-		if (OPMInit(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits,TimerHandler,0) == 0)
+		if (OPMInit(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,0) == 0)
 		{
 			/* set port handler */
 			for (i = 0; i < intf->num; i++)
@@ -133,33 +130,31 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 		for (i = 0;i < intf->num;i++)
 		{
 			/* stream setup */
+			mixed_vol = intf->volume[i];
 			for (j = 0 ; j < YM2151_NUMBUF ; j++)
 			{
-				char *chname[2] = { "Lt", "Rt" };
-				int ch;
+				char *chname;
 
-
-				name[j] = buf[j];
-				ch = j & 1;
-				if (intf->volume[i] & YM2151_STEREO_REVERSE)
-					ch ^= 1;
-				sprintf(buf[j],"YM2151 #%d %s",i,chname[ch]);
+				name[j]=buf[j];
+				vol[j] = mixed_vol & 0xff;
+				pan[j] = (mixed_vol>>8) & 0xff;
+				mixed_vol>>=16;
+				switch( pan[j] ){
+				case OSD_PAN_CENTER:chname="Ct";break;
+				case OSD_PAN_LEFT:  chname="Lt";break;
+				case OSD_PAN_RIGHT: chname="Rt";break;
+				default:            chname="??";break;
+				}
+				sprintf(buf[j],"YM2151 #%d Ch%d(%s)",i,j+1,chname);
 			}
 			stream[i] = stream_init_multi(YM2151_NUMBUF,
 				name,rate,Machine->sample_bits,
 				i,YM2151UpdateOne);
 			/* volume setup */
-			vol = intf->volume[i] & 0xff;
-			for( j=0 ; j < YM2151_NUMBUF ; j++ )
+			for (j = 0 ; j < YM2151_NUMBUF ; j++)
 			{
-				int ch;
-
-				ch = j & 1;
-				if (intf->volume[i] & YM2151_STEREO_REVERSE)
-					ch ^= 1;
-
-				stream_set_volume(stream[i]+j,vol);
-				stream_set_pan(stream[i]+j,ch ? OSD_PAN_RIGHT : OSD_PAN_LEFT);
+				stream_set_volume(stream[i]+j,vol[j]);
+				stream_set_pan(stream[i]+j,pan[j]);
 			}
 		}
 		if (YM2151Init(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits) == 0)

@@ -80,7 +80,7 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			height = 32;
 		}
 
-		if ((gfx_num & 0xc0) == 0xc0)
+		if ((gfx_num & 0xc0) == 0xc0)	/* next column */
 			sx += 16;
 		else
 		{

@@ -114,16 +114,16 @@ void xevious_vh_latch_w(int offset, int data)
 	switch (reg)
 	{
 	case 0:		/* BG Y scroll position */
-		bg_y_pos = data;
-		break;
-	case 2:		/* BG X scroll position ?? */
 		bg_x_pos = data;
 		break;
+	case 2:		/* BG X scroll position ?? */
+		bg_y_pos = data;
+		break;
 	case 1:		/* FONT Y scroll position ??*/
-		fo_y_pos = data;
+		fo_x_pos = data;
 		break;
 	case 3:		/* FONT X scroll position ?? */
-		fo_x_pos = data;
+		fo_y_pos = data;
 		break;
 	case 7:		/* DISPLAY XY FLIP ?? */
 		flip = data&1;
@@ -196,14 +196,14 @@ int xevious_vh_start(void)
 	}
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((tmpbitmap1 = osd_create_bitmap(32*8,64*8)) == 0)
+	if ((tmpbitmap1 = osd_create_bitmap(64*8,32*8)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((tmpbitmap2 = osd_create_bitmap(32*8,64*8)) == 0)
+	if ((tmpbitmap2 = osd_create_bitmap(64*8,32*8)) == 0)
 	{
 		osd_free_bitmap(tmpbitmap1);
 		free(dirtybuffer2);
@@ -268,13 +268,13 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			dirtybuffer[offs] = 0;
 
-			sx = 31 - (offs / 64);
-			sy = offs % 64;
+			sx = offs % 64;
+			sy = offs / 64;
 
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					videoram[offs],
 					((colorram[offs] & 0x03) << 4) + ((colorram[offs] >> 2) & 0x0f),
-					colorram[offs] & 0x80,colorram[offs] & 0x40,
+					colorram[offs] & 0x40,colorram[offs] & 0x80,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -284,15 +284,15 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			dirtybuffer2[offs] = 0;
 
-			sx = 31 - (offs / 64);
-			sy = offs % 64;
+			sx = offs % 64;
+			sy = offs / 64;
 
 			drawgfx(tmpbitmap2,Machine->gfx[1],
 					xevious_videoram2[offs] + 256*(xevious_colorram2[offs] & 1),
 					((xevious_colorram2[offs] >> 2) & 0xf) +
 							((xevious_colorram2[offs] & 0x3) << 5) +
 							((xevious_videoram2[offs] & 0x80) >> 3),
-					xevious_colorram2[offs] & 0x80,xevious_colorram2[offs] & 0x40,
+					xevious_colorram2[offs] & 0x40,xevious_colorram2[offs] & 0x80,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -303,9 +303,8 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scrollx,scrolly;
 
-
-		scrollx = bg_x_pos - 16;
-		scrolly = -bg_y_pos - 20;
+		scrollx = -bg_x_pos - 20;
+		scrolly = -bg_y_pos - 16;
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -322,44 +321,44 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			bank = 2 + ((spriteram[offs] & 0x80) >> 7) + ((spriteram_3[offs] & 0x80) >> 6);
 			code = spriteram[offs] & 0x7f;
 			color = spriteram[offs + 1] & 0x7f;
-			flipx = spriteram_3[offs] & 4;
-			flipy = spriteram_3[offs + 1] & 4;
-			sx = spriteram_2[offs] - 15;
-			sy = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
-			if (spriteram_3[offs] & 2)	/* double width (?) */
+			flipx = spriteram_3[offs + 1] & 4;
+			flipy = spriteram_3[offs] & 4;
+			sx = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
+			sy = 28*8-spriteram_2[offs]+1;
+			if (spriteram_3[offs] & 2)	/* double height (?) */
 			{
 				if (spriteram_3[offs] & 1)	/* double width, double height */
 				{
 					code &= 0x7c;
 					drawgfx(bitmap,Machine->gfx[bank],
 							code+3,color,flipx,flipy,
-							flipx ? sx+16 : sx,flipy ? sy : sy+16,
+							flipx ? sx : sx+16,flipy ? sy-16 : sy,
 							&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 					drawgfx(bitmap,Machine->gfx[bank],
 							code+1,color,flipx,flipy,
-							flipx ? sx : sx+16,flipy ? sy : sy+16,
+							flipx ? sx : sx+16,flipy ? sy : sy-16,
 							&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 				}
 				code &= 0x7d;
 				drawgfx(bitmap,Machine->gfx[bank],
 						code+2,color,flipx,flipy,
-						flipx ? sx+16 : sx,flipy ? sy+16 : sy,
+						flipx ? sx+16 : sx,flipy ? sy-16 : sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,
-						flipx ? sx : sx+16,flipy ? sy+16 : sy,
+						flipx ? sx+16 : sx,flipy ? sy : sy-16,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
-			else if (spriteram_3[offs] & 1)	/* double height */
+			else if (spriteram_3[offs] & 1)	/* double width */
 			{
 				code &= 0x7e;
 				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,
-						flipx ? sx+16 : sx,flipy ? sy+16 : sy,
+						flipx ? sx+16 : sx,flipy ? sy-16 : sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 				drawgfx(bitmap,Machine->gfx[bank],
 						code+1,color,flipx,flipy,
-						flipx ? sx+16 : sx,flipy ? sy : sy+16,
+						flipx ? sx : sx+16,flipy ? sy-16 : sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
 			else	/* normal */
@@ -377,8 +376,8 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scrollx,scrolly;
 
 
-		scrollx = fo_x_pos - 14;
-		scrolly = -fo_y_pos - 32;
+		scrollx = -fo_x_pos - 32;
+		scrolly = -fo_y_pos - 14;
 
 		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 	}

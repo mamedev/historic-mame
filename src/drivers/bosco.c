@@ -556,8 +556,41 @@ ROM_START( bosco_rom )
 	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
 	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
 
-	ROM_REGION(0x100)	/* sound prom */
-	ROM_LOAD( "bosco.spr",    0x0000, 0x100, 0xee8ca3a8 )
+	ROM_REGION(0x0200)	/* sound prom */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( bosco2_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "3n",           0x0000, 0x1000, 0x441b501a )
+	ROM_LOAD( "3m",           0x1000, 0x1000, 0xa3c5c7ef )
+	ROM_LOAD( "3l",           0x2000, 0x1000, 0x6ca9a0cf )
+	ROM_LOAD( "3k",           0x3000, 0x1000, 0xd83bacc5 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
+	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
+
+	ROM_REGION(0x120)	/* color proms */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x020, 0xd2b96fb0 ) /* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x100, 0x4e15d59c ) /* lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "3j",           0x0000, 0x1000, 0x4374e39a )
+	ROM_LOAD( "3h",           0x1000, 0x1000, 0x04e9fcef )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "2900.3e",      0x0000, 0x1000, 0xd45a4911 )
+
+	ROM_REGION(0x3000)	/* ROMs for digitised speech */
+	ROM_LOAD( "4900.5n",      0x0000, 0x1000, 0x09acc978 )
+	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
+	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
+
+	ROM_REGION(0x0200)	/* sound prom */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( bosconm_rom )
@@ -587,8 +620,9 @@ ROM_START( bosconm_rom )
 	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
 	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
 
-	ROM_REGION(0x100)	/* sound prom */
-	ROM_LOAD( "bosco.spr",    0x0000, 0x100, 0xee8ca3a8 )
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 static const char *bosco_sample_names[] =
@@ -662,7 +696,7 @@ struct GameDriver bosco_driver =
 	__FILE__,
 	0,
 	"bosco",
-	"Bosconian (Midway)",
+	"Bosconian (Midway, set 1)",
 	"1981",
 	"[Namco] (Midway license)",
 	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
@@ -671,6 +705,32 @@ struct GameDriver bosco_driver =
 	0,
 
 	bosco_rom,
+	0, 0,
+	bosco_sample_names,
+	0,	/* sound_prom */
+
+	bosco_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver bosco2_driver =
+{
+	__FILE__,
+	&bosco_driver,
+	"bosco2",
+	"Bosconian (Midway, set 2)",
+	"1981",
+	"[Namco] (Midway license)",
+	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
+	0,
+	&machine_driver,
+	0,
+
+	bosco2_rom,
 	0, 0,
 	bosco_sample_names,
 	0,	/* sound_prom */
@@ -708,3 +768,5 @@ struct GameDriver bosconm_driver =
 
 	hiload, hisave
 };
+
+

@@ -6,18 +6,26 @@ John Clegg
 
 Loosely based on the our previous 10 Yard Fight driver.
 
+
+- I haven't understood how char/sprite priority works. This is used for
+  tunnels. I hacked it just by making the two needed colors opaque. They
+  don't seem to be used anywhere else.
+
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
+extern unsigned char *spriteram;
+extern int spriteram_size;
 
-extern unsigned char *travrusa_scroll_x_low;
-extern unsigned char *travrusa_scroll_x_high;
+extern unsigned char *travrusa_videoram;
 
 void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int travrusa_vh_start(void);
 void travrusa_vh_stop(void);
+void travrusa_videoram_w(int offset,int data);
+void travrusa_scroll_x_low_w(int offset,int data);
+void travrusa_scroll_x_high_w(int offset,int data);
 void travrusa_flipscreen_w(int offset,int data);
 void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -45,9 +53,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, videoram_w, &videoram, &videoram_size },
-	{ 0x9000, 0x9000, MWA_RAM, &travrusa_scroll_x_low },
-	{ 0xa000, 0xa000, MWA_RAM, &travrusa_scroll_x_high },
+	{ 0x8000, 0x8fff, travrusa_videoram_w, &travrusa_videoram },
+	{ 0x9000, 0x9000, travrusa_scroll_x_low_w },
+	{ 0xa000, 0xa000, travrusa_scroll_x_high_w },
 	{ 0xc800, 0xc9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xd000, irem_sound_cmd_w },
 	{ 0xd001, 0xd001, travrusa_flipscreen_w },	/* + coin counters */

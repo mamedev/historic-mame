@@ -52,6 +52,7 @@ extern struct tile_info {
 
 struct tilemap {
 	int type;
+	int attributes;
 	int transparent_pen;
 	unsigned int transmask[4];
 
@@ -111,10 +112,15 @@ struct tilemap *tilemap_create(
 void tilemap_dispose( struct tilemap *tilemap );
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row );
+void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
 void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap );
 
 void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
+
+#define TILEMAP_FLIPX 0x1
+#define TILEMAP_FLIPY 0x2
+void tilemap_set_attributes( struct tilemap *tilemap, int attributes );
 
 void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 

@@ -487,16 +487,16 @@ INLINE UINT16 ARG16(void)
 /***************************************************************
  * RETN
  ***************************************************************/
-#define RETN	{												\
+#define RETN    {                                               \
     LOG((errorlog,"Z80#%d RETN IFF1:%d IFF2:%d\n", cpu_getactivecpu(), _IFF1, _IFF2)); \
-	if (!_IFF1 && _IFF2) {										\
-		if (Z80.irq_state != CLEAR_LINE || Z80.request_irq >= 0) { \
-			LOG((errorlog, "Z80#%d RETN takes IRQ\n", cpu_getactivecpu())); \
-			take_interrupt();									\
+    RET(1);                                                     \
+    if (!_IFF1 && _IFF2) {                                      \
+        _IFF1 = _IFF2;                                          \
+        if (Z80.irq_state != CLEAR_LINE || Z80.request_irq >= 0) { \
+            LOG((errorlog, "Z80#%d RETN takes IRQ\n", cpu_getactivecpu())); \
+            take_interrupt();                                   \
         }                                                       \
-	}															\
-	_IFF1 = _IFF2;												\
-	RET(1); 													\
+    } else _IFF1 = _IFF2;                                       \
 }
 
 /***************************************************************
@@ -504,11 +504,11 @@ INLINE UINT16 ARG16(void)
  ***************************************************************/
 #define RETI	{												\
 	int device = Z80.service_irq;								\
+	RET(1); 													\
 	if (device >= 0) {											\
 		LOG((errorlog,"Z80#%d RETI device %d: $%02x\n",cpu_getactivecpu(), device, Z80.irq[device].irq_param)); \
 		Z80.irq[device].interrupt_reti(Z80.irq[device].irq_param); \
 	}															\
-	RET(1); 													\
 }
 
 /***************************************************************

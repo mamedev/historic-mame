@@ -10,18 +10,16 @@
 /* 6808 Registers */
 typedef struct
 {
-	UINT16	pc; 	/* Program counter */
-	UINT16	s;		/* Stack pointer */
-	UINT16	x;		/* Index register */
-	UINT8	a, b;	/* Accumulators */
+	UINT16	pc; 		/* Program counter */
+	UINT16	s;			/* Stack pointer */
+	UINT16	x;			/* Index register */
+	UINT8	a, b;		/* Accumulators */
 	UINT8	cc;
-
-	int pending_interrupts;	/* MB */
-#if NEW_INTERRUPT_SYSTEM
-	int nmi_state;
-    int irq_state;
-	int (*irq_callback)(int irqline);
-#endif
+	INT8	wai_state;	/* WAI opcode state */
+	INT8	nmi_state;
+	INT8	irq_state[2];
+	UINT8	dummy;		/* align to a dword */
+	int 	(*irq_callback)(int irqline);
 } m6808_Regs;
 
 #ifndef INLINE
@@ -35,28 +33,15 @@ typedef struct
 #define M6808_INT_OCI	4			/* Output Compare interrupt (timer) */
 #define M6808_WAI		8			/* set when WAI is waiting for an interrupt */
 
-#if NEW_INTERRUPT_SYSTEM
-#define CHECK_IRQ_LINE(cc)	\
-	if (irq_state != CLEAR_LINE && (cc & 0x10) == 0) \
-		pending_interrupts = (pending_interrupts & ~M6808_WAI) | M6808_INT_IRQ
-#else
-#define CHECK_IRQ_LINE(cc)
-#endif
-
 /* PUBLIC FUNCTIONS */
 extern void m6808_SetRegs(m6808_Regs *Regs);
 extern void m6808_GetRegs(m6808_Regs *Regs);
 extern unsigned m6808_GetPC(void);
 extern void m6808_reset(void);
 extern int  m6808_execute(int cycles);             /* MB */
-#if NEW_INTERRUPT_SYSTEM
 extern void m6808_set_nmi_line(int state);
 extern void m6808_set_irq_line(int irqline, int state);
 extern void m6808_set_irq_callback(int (*callback)(int irqline));
-#else
-extern void m6808_Cause_Interrupt(int type);       /* MB */
-extern void m6808_Clear_Pending_Interrupts(void);  /* MB */
-#endif
 
 /* PUBLIC GLOBALS */
 extern int	m6808_ICount;

@@ -874,14 +874,30 @@ int cpu_readmem16_word (int address)
     /* 1st element link */
     hw = cur_mrhard[address >> (ABITS2_16 + ABITS_MIN_16)];
     if( !hw )
-        return READ_WORD( &RAM[address] );
+    {
+    	UINT16 data16;
+
+        data16 = READ_WORD( &RAM[address] );
+#ifndef LSB_FIRST
+		data16 = ((data16 & 0xff) << 8) | ((data16 & 0xff00) >> 8);
+#endif
+		return data16;
+	}
 
     if( hw >= MH_HARDMAX ) {
         /* 2nd element link */
         int ele = ((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16));
         hw = readhardware[ele];
         if( !hw && !readhardware[++ele] )
-            return READ_WORD( &RAM[address] );
+    	{
+    		UINT16 data16;
+
+			data16 = READ_WORD( &RAM[address] );
+#ifndef LSB_FIRST
+			data16 = ((data16 & 0xff) << 8) | ((data16 & 0xff00) >> 8);
+#endif
+			return data16;
+		}
     }
     if ( !hw )
         data = RAM[address];
@@ -965,6 +981,25 @@ int cpu_readmem20 (int address)
 	}
 
 	/* fallback to handler */
+	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
+}
+
+
+int cpu_readmem21 (int address)
+{
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mrhard[address >> (ABITS2_21 + ABITS_MIN_21)];
+
+	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][(address - memoryreadoffset[hw])];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_21) & MHMASK(ABITS2_21))];
+		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][(address - memoryreadoffset[hw])];
+	}
+
 	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
 }
 
@@ -1254,6 +1289,9 @@ void cpu_writemem16_word (int address, int data)
     /* 1st element link */
 	hw = cur_mwhard[address >> (ABITS2_16 + ABITS_MIN_16)];
 	if( !hw ) {
+#ifndef LSB_FIRST
+		data = ((data & 0xff) << 8) | ((data & 0xff00) >> 8);
+#endif
 		WRITE_WORD( &RAM[address], data );
 		return;
 	}
@@ -1263,6 +1301,9 @@ void cpu_writemem16_word (int address, int data)
 		hw = writehardware[ele];
 		if( !hw ) {
 			if ( !writehardware[++ele] ) {
+#ifndef LSB_FIRST
+				data = ((data & 0xff) << 8) | ((data & 0xff00) >> 8);
+#endif
 				WRITE_WORD( &RAM[address], data );
 				return;
 			}
@@ -1377,6 +1418,34 @@ void cpu_writemem20 (int address, int data)
 		if (!hw)
 		{
 			RAM[address] = data;
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	memorywritehandler[hw](address - memorywriteoffset[hw],data);
+}
+
+
+void cpu_writemem21 (int address, int data)
+{
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_21 + ABITS_MIN_21)];
+
+	if (hw <= HT_BANKMAX)
+	{
+		cpu_bankbase[hw][(address - memorywriteoffset[hw])] = data;
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_21) & MHMASK(ABITS2_21))];
+		if (hw <= HT_BANKMAX)
+		{
+			cpu_bankbase[hw][(address - memorywriteoffset[hw])] = data;
 			return;
 		}
 	}
@@ -2017,6 +2086,14 @@ void cpu_setOPbase20 (int pc)
 
 	/* do not support on callbank memory reasion */
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+}
+
+
+/* Opcode execution is _always_ within the 16 bit range */
+void cpu_setOPbase21 (int pc)
+{
+	OP_RAM = RAM;
+	OP_ROM = ROM;
 }
 
 

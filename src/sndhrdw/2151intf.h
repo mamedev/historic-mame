@@ -3,16 +3,20 @@
 
 #define MAX_2151 3
 
+#ifndef VOL_YM3012
+/* YM2151interface->volume optionaly macro */
+/* #define YM3014_VOL(Vol,Pan) VOL_YM3012((Vol)/2,Pan,(Vol)/2,Pan) */
+#define YM3012_VOL(LVol,LPan,RVol,RPan) ((LVol)|((LPan)<<8)|((RVol)<<16)|((RPan)<<24))
+#endif
+
 struct YM2151interface
 {
 	int num;
 	int baseclock;
-	int volume[MAX_2151];
+	int volume[MAX_2151]; /* need for use YM3012()_VOL macro */
 	void (*irqhandler[MAX_2151])(void);
 	void (*portwritehandler[MAX_2151])(int,int);
 };
-
-#define YM2151_STEREO_REVERSE 0x100
 
 int YM2151_status_port_0_r(int offset);
 int YM2151_status_port_1_r(int offset);

@@ -683,7 +683,7 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_DIPSETTING(    0x00,"Japan" )
 	PORT_DIPSETTING(    0x01,"USA" )
 	PORT_DIPSETTING(    0x02,"Europe" )
-	PORT_DIPNAME( 0x04, 0x04,"Machine mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04,"Machine Mode", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00,"Home" )
 	PORT_DIPSETTING(    0x04,"Arcade" )
 
@@ -770,14 +770,15 @@ struct YM2610interface neogeo_ym2610_interface =
 {
 	1,
 	8000000,
-	{ YM2203_VOL(60,0x301e) },
+	{ 0x301e },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ neogeo_sound_irq },
 	{ 7 },
-	{ 6 }
+	{ 6 },
+	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) }
 };
 
 /******************************************************************************/
@@ -2892,7 +2893,7 @@ ROM_START( twinspri_rom )
 	NEO_BIOS_SOUND_128K( "sprit_m1.rom", 0x364d6f96 )
 
 	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "sprit_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "sprit_v1.rom", 0x000000, 0x400000, 0xff57f088 )
 	ROM_LOAD( "sprit_v2.rom", 0x400000, 0x200000, 0x7ad26599 )
 ROM_END
 
@@ -3115,7 +3116,7 @@ ROM_START( magdrop3_rom )
 	NEO_BIOS_SOUND_128K( "drop3_m1.rom", 0x5beaf34e )
 
 	ROM_REGION_OPTIONAL(0x480000) /* sound samples */
-	ROM_LOAD( "drop3_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "drop3_v1.rom", 0x000000, 0x400000, 0x58839298 )
 	ROM_LOAD( "drop3_v2.rom", 0x400000, 0x080000, 0xd5e30df4 )
 ROM_END
 
@@ -4369,7 +4370,7 @@ NEODRIVER(aodk,    "Aggressors of Dark Kombat / Tougai Gan San","1994","ADK/SNK"
 NEODRIVER(whp,     "World Heroes Perfect","1995","ADK/SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(ninjamas,"Ninja Master's","1996","ADK/SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(overtop, "Overtop","1996","ADK",&neogeo_mvs_machine_driver)
-NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK",&neogeo_mvs_machine_driver)
+NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK",&neogeo_mvs_16bit_machine_driver)
 
 /* Saurus */
 NEODRIVER(stakwin, "Stakes Winner","1995","Saurus",&neogeo_mvs_machine_driver)
@@ -4434,7 +4435,7 @@ NEODRIVER(rbffspec,"Real Bout Fatal Fury Special","1996","SNK",&neogeo_mvs_machi
 NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle","1996","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(ssideki4,"Super Sidekicks 4 - Ultimate 11","1996","SNK",&neogeo_mvs_raster_machine_driver)
 NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(lastblad,"Last Blade / Gekka No Kenshi","1997","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(lastblad,"Last Blade / Gekka No Kenshi","1997","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(mslug2,  "Metal Slug 2","1998","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(rbff2,   "Real Bout Fatal Fury 2 - The Newcomers","1998","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(kof98,   "The King of Fighters '98","1998","SNK",&neogeo_mvs_16bit_machine_driver)

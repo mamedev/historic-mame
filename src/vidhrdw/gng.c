@@ -133,10 +133,11 @@ void gng_bgscrolly_w(int offset,int data){
 
 
 void gng_flipscreen_w(int offset,int data){
-	if (flipscreen != (~data & 1)){
-		flipscreen = ~data & 1;
-		tilemap_mark_all_pixels_dirty(bg_tilemap);
-		tilemap_mark_all_pixels_dirty(fg_tilemap);
+	flipscreen = ~data & 1;
+	{
+		int attributes = flipscreen?(TILEMAP_FLIPY|TILEMAP_FLIPX):0;
+		tilemap_set_attributes( bg_tilemap, attributes );
+		tilemap_set_attributes( fg_tilemap, attributes );
 	}
 }
 

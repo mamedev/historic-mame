@@ -158,17 +158,18 @@ struct osd_bitmap
 #define OSD_KEY_THROTTLE			137
 #define OSD_KEY_SHOW_FPS			138
 #define OSD_KEY_SHOW_PROFILE		139
-#define OSD_KEY_SNAPSHOT			140
-#define OSD_KEY_CHEAT_TOGGLE		141
-#define OSD_KEY_DEBUGGER			142
-#define OSD_KEY_UI_LEFT				143
-#define OSD_KEY_UI_RIGHT			144
-#define OSD_KEY_UI_UP				145
-#define OSD_KEY_UI_DOWN				146
-#define OSD_KEY_UI_SELECT			147
-#define OSD_KEY_ANY					148
+#define OSD_KEY_SHOW_TOTAL_COLORS	140
+#define OSD_KEY_SNAPSHOT			141
+#define OSD_KEY_CHEAT_TOGGLE		142
+#define OSD_KEY_DEBUGGER			143
+#define OSD_KEY_UI_LEFT				144
+#define OSD_KEY_UI_RIGHT			145
+#define OSD_KEY_UI_UP				146
+#define OSD_KEY_UI_DOWN				147
+#define OSD_KEY_UI_SELECT			148
+#define OSD_KEY_ANY					149
 
-#define OSD_MAX_PSEUDO				148
+#define OSD_MAX_PSEUDO				149
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2

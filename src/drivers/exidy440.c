@@ -98,6 +98,15 @@ Combat (reports Hardware Error 1 if any of these are not true)
 	conclusion: LS244 at 18J on main board needs to generate negative logic
 					LS367 at 1A on audio board needs to generate negative logic
 
+Crackshot (reports Hardware Error W if any of these are not true)
+	* a read from $2E20 must return 0 in bit 2
+	* a read from $2E80 must return 0's in bits 1,2,3,4,5
+	* a read from $2B03 must return 0 in bit 0
+
+	conclusion: LS244 at 18J on main board needs to generate negative logic
+					LS367 at 1A on audio board needs to generate negative logic
+					LS128 at 2A on audio board needs negative logic into pin 5
+
 Chiller (reports Hardware Error R if any of these are not true)
 	* a read from $2E20 must return 0 in bit 2
 	* a read from $2E80 must return 0's in bits 1,2,3,4,5
@@ -561,7 +570,7 @@ void crossbow_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 32767. / 21652.;
+	exidy440_sound_gain = 2.0;
 }
 
 
@@ -715,7 +724,7 @@ void cheyenne_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 32767. / 18575.;
+	exidy440_sound_gain = 1.25;
 }
 
 
@@ -863,7 +872,7 @@ void combat_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 32767. / 30563.;
+	exidy440_sound_gain = 0.6;
 }
 
 
@@ -886,6 +895,149 @@ struct GameDriver combat_driver =
 	0,	/* sound_prom */
 
 	combat_input_ports,
+
+	0,0,0,
+	ORIENTATION_DEFAULT,
+
+	exidy440_hiload,exidy440_hisave
+};
+
+
+/***************************************************************************/
+
+
+/* ROM loader description */
+ROM_START( cracksht_rom )
+	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_LOAD( "csl2.1a",   0x08000, 0x2000, 0x16fd0171 )
+	ROM_LOAD( "csl2.3a",   0x0a000, 0x2000, 0x906f3209 )
+	ROM_LOAD( "csl2.4a",   0x0c000, 0x2000, 0x9996d2bf )
+	ROM_LOAD( "csl2.6a",   0x0e000, 0x2000, 0xc8d6e945 )
+	ROM_LOAD( "csl2.11d",  0x2e000, 0x2000, 0xb1173dd3 )
+	ROM_LOAD( "csl2.1c",   0x30000, 0x2000, 0xe44975a7 )
+	ROM_LOAD( "csl2.3c",   0x32000, 0x2000, 0xa3ab11e9 )
+	ROM_LOAD( "csl2.4c",   0x34000, 0x2000, 0x89266302 )
+	ROM_LOAD( "csl2.6c",   0x36000, 0x2000, 0xbb0f8d32 )
+	ROM_LOAD( "csl2.7c",   0x38000, 0x2000, 0xe203ed0b )
+	ROM_LOAD( "csl2.8c",   0x3a000, 0x2000, 0x3e028a62 )
+	ROM_LOAD( "csl2.10c",  0x3c000, 0x2000, 0xc5494f9f )
+	ROM_LOAD( "csl2.11c",  0x3e000, 0x2000, 0x0159bdcb )
+	ROM_LOAD( "csl2.1b",   0x40000, 0x2000, 0x8adf33fc )
+	ROM_LOAD( "csl2.3b",   0x42000, 0x2000, 0x7561be69 )
+	ROM_LOAD( "csl2.4b",   0x44000, 0x2000, 0x848e3aff )
+	ROM_LOAD( "csl2.6b",   0x46000, 0x2000, 0xd0fd87df )
+	ROM_LOAD( "csl2.7b",   0x48000, 0x2000, 0x7e0a6a31 )
+	ROM_LOAD( "csl2.8b",   0x4a000, 0x2000, 0xaf1c8cb8 )
+	ROM_LOAD( "csl2.10b",  0x4c000, 0x2000, 0x8a0d6ad0 )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "csa3.1h",   0x0e000, 0x2000, 0x5ba8b4ac )
+
+	ROM_REGION(0x20000)
+	ROM_LOAD( "csa3.2k",   0x00000, 0x2000, 0x067a4f71 )
+	ROM_LOAD( "csa3.2l",   0x02000, 0x2000, 0x5716c59e )
+	ROM_LOAD( "csa3.2m",   0x04000, 0x2000, 0xb3ff659b )
+	ROM_LOAD( "csa3.2n",   0x06000, 0x2000, 0xa8968342 )
+	ROM_LOAD( "csa3.2p",   0x08000, 0x2000, 0x5db225b8 )
+	ROM_LOAD( "csa3.2r",   0x0a000, 0x2000, 0xfda2669d )
+	ROM_LOAD( "csa3.2s",   0x0c000, 0x2000, 0xe8d2413f )
+	ROM_LOAD( "csa3.2t",   0x0e000, 0x2000, 0x841a1855 )
+	ROM_LOAD( "csa3.1k",   0x10000, 0x2000, 0x27dda69b )
+	ROM_LOAD( "csa3.1l",   0x12000, 0x2000, 0x86eea479 )
+	ROM_LOAD( "csa3.1m",   0x14000, 0x2000, 0x2c24cb35 )
+	ROM_LOAD( "csa3.1n",   0x16000, 0x2000, 0xf3a4f2be )
+	ROM_LOAD( "csa3.1p",   0x18000, 0x2000, 0x14dd8993 )
+	ROM_LOAD( "csa3.1r",   0x1a000, 0x2000, 0xdfa783e4 )
+	ROM_LOAD( "csa3.1s",   0x1c000, 0x2000, 0x18d097ac )
+	ROM_LOAD( "csa3.1t",   0x1e000, 0x2000, 0x5f41c282 )
+ROM_END
+
+
+/* input from the outside world */
+INPUT_PORTS_START( cracksht_input_ports )
+	PORT_START				/* player inputs and logic board dips */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x0c, 0x0c, "Seconds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "20" )
+	PORT_DIPSETTING(    0x0c, "30" )
+	PORT_DIPSETTING(    0x04, "40" )
+	PORT_DIPSETTING(    0x00, "50" )
+	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x10, "Hardest" )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* audio board dips */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* start button */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* coin counters */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* fake analog X */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+
+	PORT_START				/* fake analog Y */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+INPUT_PORTS_END
+
+
+void cracksht_init(void)
+{
+	port_0_xor = 0xff;
+	port_2_xor = 0xff;
+	port_3_xor = 0x04;
+	mirror_vblank_bit = 0;
+	mirror_trigger_bit = 0;
+	copy_protection_read = 0x00;
+	exidy440_sound_gain = 0.75;
+}
+
+
+struct GameDriver cracksht_driver =
+{
+	__FILE__,
+	0,
+	"cracksht",
+	"Crackshot (version 2.0)",
+	"1985",
+	"Exidy",
+	"Aaron Giles",
+	0,
+	&exidy440_machine_driver,
+	cracksht_init,
+
+	cracksht_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	cracksht_input_ports,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
@@ -989,7 +1141,7 @@ void claypign_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x76;	/* actually used */
-	exidy440_sound_gain = 32767. / 24630.;
+	exidy440_sound_gain = 1.25;
 }
 
 
@@ -1139,7 +1291,7 @@ void chiller_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 0.9 * (32767. / 34804.);
+	exidy440_sound_gain = 0.5;
 }
 
 
@@ -1306,7 +1458,7 @@ void topsecex_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;	/* actually used */
-	exidy440_sound_gain = 32767. / 21005.;
+	exidy440_sound_gain = 0.6;
 }
 
 
@@ -1454,7 +1606,7 @@ void hitnmiss_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 1;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 32767. / 21005.;
+	exidy440_sound_gain = 1.5;
 }
 
 
@@ -1609,7 +1761,7 @@ void whodunit_init(void)
 	mirror_vblank_bit = 1;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 32767. / 21005.;
+	exidy440_sound_gain = 1.1;
 }
 
 
@@ -1818,7 +1970,7 @@ void showdown_init(void)
 	mirror_vblank_bit = 0;
 	mirror_trigger_bit = 0;
 	copy_protection_read = 0x00;
-	exidy440_sound_gain = 32767. / 18485.;
+	exidy440_sound_gain = 1.75;
 
 	/* set up the fake PLD */
 	showdown_bank_triggered = 0;
