@@ -212,9 +212,11 @@ char *dirty_new=line2;
 /* ASG 971011 */
 void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 {
-	/* DOS doesn't do dirty rects ... yet */
-	/* But the VESA code does dirty lines now. BW */
-	if (use_dirty)
+	if (use_dirty == 2)	/* GfxLayer dirty handling */
+	{
+		layer_mark_rectangle_dirty_norotate(Machine->dirtylayer,x1,x2,y1,y2);
+	}
+	else if (use_dirty)
 	{
 		if (y1 >= MAXDIRTY || y2 < 0) return;
 		if (y1 < 0) y1 = 0;
@@ -226,7 +228,12 @@ void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 
 static void init_dirty(char dirty)
 {
-	memset(&dirty_new[0], dirty, MAXDIRTY);
+	if (use_dirty == 2)
+	{
+		layer_mark_all_dirty(Machine->dirtylayer,dirty ? MARK_ALL_DIRTY : MARK_ALL_CLEAN);
+	}
+	else
+		memset(&dirty_new[0], dirty, MAXDIRTY);
 }
 
 static void swap_dirty(void)
@@ -530,6 +537,9 @@ struct osd_bitmap *osd_create_display(int width,int height,unsigned int totalcol
 		use_dirty = 1;
 	else
 		use_dirty = 0;
+
+	/* if driver uses the GfxLayer system, use different dirty support */
+	if (Machine->drv->layer) use_dirty = 2;
 
 	select_display_mode();
 
@@ -926,79 +936,160 @@ inline void double_pixels16(unsigned long *lb, short seg,
 
 void update_screen(void)
 {
-	if (gfx_mode==GFX_VGA)
+	if (use_dirty == 2)	/* different dirty handling for GfxLayer games */
 	{
-		int width,width4,y,columns4;
-		unsigned long *lb, address;
-
-
-		width = gfx_width;
-		width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
-		columns4 = gfx_display_columns/4;
-		address = 0xa0000 + gfx_xoffset + gfx_yoffset * width;
-		lb = (unsigned long *)(bitmap->line[skiplines] + skipcolumns);
-		for (y = 0; y < gfx_display_lines; y++)
+		if (gfx_mode==GFX_VGA)
 		{
-			if (!use_dirty || (dirty_new[y+skiplines]+dirty_old[y+skiplines]) != 0)
-				_dosmemputl(lb,columns4,address);
+			int width,width4,y,columns4;
+			unsigned long *lb, address;
 
-			lb+=width4;
-			address+=width;
+
+			width = gfx_width;
+			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
+			columns4 = gfx_display_columns/4;
+			address = 0xa0000 + gfx_xoffset + gfx_yoffset * width;
+			lb = (unsigned long *)(bitmap->line[skiplines] + skipcolumns);
+			for (y = 0; y < gfx_display_lines; y++)
+			{
+				if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
+					_dosmemputl(lb,columns4,address);
+
+				lb+=width4;
+				address+=width;
+			}
+		}
+		else
+		{
+			short src_seg, dest_seg;
+			int y, vesa_line, width4, columns4, skipcol2;
+			unsigned long *lb, address;
+			int xoffs, depth;
+
+			src_seg = _my_ds();
+			dest_seg = screen->seg;
+			vesa_line = gfx_yoffset;
+			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
+			depth = bitmap->depth;
+			if (depth == 8)
+			{
+				xoffs = gfx_xoffset;
+				columns4 = gfx_display_columns/4;
+				skipcol2 = skipcolumns;
+			}
+			else /* depth == 16 */
+			{
+				xoffs = 2 * gfx_xoffset;
+				columns4 = gfx_display_columns/2;
+				skipcol2 = skipcolumns*2;
+			}
+
+			lb = (unsigned long *)(bitmap->line[skiplines] + skipcol2 );
+			for (y = 0; y < gfx_display_lines; y++)
+			{
+				if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
+				{
+					address = bmp_write_line (screen, vesa_line) + xoffs;
+					if (doubling != 0)
+					{
+						if (depth == 16)
+							double_pixels16(lb,dest_seg,address,columns4);
+						else
+							double_pixels(lb,dest_seg,address,columns4);
+						if (!scanlines)
+						{
+						   address = bmp_write_line (screen, vesa_line+1) + xoffs;
+						   if (depth == 16)
+							   double_pixels16(lb,dest_seg,address,columns4);
+						   else
+							   double_pixels(lb,dest_seg,address,columns4);
+						}
+					}
+					else
+						_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+				}
+
+				vesa_line++;
+				if (doubling != 0) vesa_line++;
+				lb+=width4;
+			}
 		}
 	}
 	else
 	{
-		short src_seg, dest_seg;
-		int y, vesa_line, width4, columns4, skipcol2;
-		unsigned long *lb, address;
-		int xoffs, depth;
-
-		src_seg = _my_ds();
-		dest_seg = screen->seg;
-		vesa_line = gfx_yoffset;
-		width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
-		depth = bitmap->depth;
-		if (depth == 8)
+		if (gfx_mode==GFX_VGA)
 		{
-			xoffs = gfx_xoffset;
+			int width,width4,y,columns4;
+			unsigned long *lb, address;
+
+
+			width = gfx_width;
+			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
 			columns4 = gfx_display_columns/4;
-			skipcol2 = skipcolumns;
-		}
-		else /* depth == 16 */
-		{
-			xoffs = 2 * gfx_xoffset;
-			columns4 = gfx_display_columns/2;
-			skipcol2 = skipcolumns*2;
-		}
-
-		lb = (unsigned long *)(bitmap->line[skiplines] + skipcol2 );
-		for (y = 0; y < gfx_display_lines; y++)
-		{
-			if (!use_dirty || (dirty_new[y+skiplines]+dirty_old[y+skiplines]) != 0)
+			address = 0xa0000 + gfx_xoffset + gfx_yoffset * width;
+			lb = (unsigned long *)(bitmap->line[skiplines] + skipcolumns);
+			for (y = 0; y < gfx_display_lines; y++)
 			{
-				address = bmp_write_line (screen, vesa_line) + xoffs;
-				if (doubling != 0)
-				{
-					if (depth == 16)
-						double_pixels16(lb,dest_seg,address,columns4);
-					else
-						double_pixels(lb,dest_seg,address,columns4);
-					if (!scanlines)
-					{
-					   address = bmp_write_line (screen, vesa_line+1) + xoffs;
-					   if (depth == 16)
-						   double_pixels16(lb,dest_seg,address,columns4);
-					   else
-						   double_pixels(lb,dest_seg,address,columns4);
-					}
-				}
-				else
-					_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+				if (!use_dirty || (dirty_new[y+skiplines]+dirty_old[y+skiplines]) != 0)
+					_dosmemputl(lb,columns4,address);
+
+				lb+=width4;
+				address+=width;
+			}
+		}
+		else
+		{
+			short src_seg, dest_seg;
+			int y, vesa_line, width4, columns4, skipcol2;
+			unsigned long *lb, address;
+			int xoffs, depth;
+
+			src_seg = _my_ds();
+			dest_seg = screen->seg;
+			vesa_line = gfx_yoffset;
+			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
+			depth = bitmap->depth;
+			if (depth == 8)
+			{
+				xoffs = gfx_xoffset;
+				columns4 = gfx_display_columns/4;
+				skipcol2 = skipcolumns;
+			}
+			else /* depth == 16 */
+			{
+				xoffs = 2 * gfx_xoffset;
+				columns4 = gfx_display_columns/2;
+				skipcol2 = skipcolumns*2;
 			}
 
-			vesa_line++;
-			if (doubling != 0) vesa_line++;
-			lb+=width4;
+			lb = (unsigned long *)(bitmap->line[skiplines] + skipcol2 );
+			for (y = 0; y < gfx_display_lines; y++)
+			{
+				if (!use_dirty || (dirty_new[y+skiplines]+dirty_old[y+skiplines]) != 0)
+				{
+					address = bmp_write_line (screen, vesa_line) + xoffs;
+					if (doubling != 0)
+					{
+						if (depth == 16)
+							double_pixels16(lb,dest_seg,address,columns4);
+						else
+							double_pixels(lb,dest_seg,address,columns4);
+						if (!scanlines)
+						{
+						   address = bmp_write_line (screen, vesa_line+1) + xoffs;
+						   if (depth == 16)
+							   double_pixels16(lb,dest_seg,address,columns4);
+						   else
+							   double_pixels(lb,dest_seg,address,columns4);
+						}
+					}
+					else
+						_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+				}
+
+				vesa_line++;
+				if (doubling != 0) vesa_line++;
+				lb+=width4;
+			}
 		}
 	}
 }

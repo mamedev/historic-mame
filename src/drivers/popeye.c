@@ -69,15 +69,16 @@ void popeye_vh_stop(void);
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8c00, 0x8e7f, MRA_RAM },
 	{ 0x8f00, 0x8fff, MRA_RAM },
-	{ 0x0000, 0x7fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8c04, 0x8e7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8f00, 0x8fff, MWA_RAM },
@@ -86,7 +87,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xcfff, popeye_videoram_w, &popeye_videoram, &popeye_videoram_size },
 	{ 0x8c00, 0x8c01, MWA_RAM, &popeye_background_pos },
 	{ 0x8c03, 0x8c03, popeye_palettebank_w, &popeye_palette_bank },
-	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -156,14 +156,9 @@ INPUT_PORTS_START( input_ports )
 /*  0x0e = 2 Coins/1 Credit
     0x07, 0x0c = 1 Coin/1 Credit
     0x01, 0x0b, 0x0d = 1 Coin/2 Credits */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 7 scans DSW1 one bit at a time */
 
-	PORT_START	/* DSW1 */
+	PORT_START	/* DSW1 (FAKE - appears as bit 7 of DSW0, see code below) */
 	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
@@ -288,7 +283,10 @@ static int dswbit;
 
 static void popeye_portB_w(int offset,int data)
 {
-	dswbit = data >> 1;
+	/* bit 0 does something - RV in the schematics */
+
+	/* bits 1-3 select DSW1 bit to read */
+	dswbit = (data & 0x0e) >> 1;
 }
 
 static int popeye_portA_r(int offset)
@@ -305,7 +303,7 @@ static int popeye_portA_r(int offset)
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ????? */
+	2000000,	/* 2 MHz */
 	{ 255 },
 	{ popeye_portA_r },
 	{ 0 },
@@ -360,6 +358,21 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( popeye_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "c-7a", 0x0000, 0x2000, 0x5f13584d )
+	ROM_LOAD( "c-7b", 0x2000, 0x2000, 0xf99a528a )
+	ROM_LOAD( "c-7c", 0x4000, 0x2000, 0x71cf5be9 )
+	ROM_LOAD( "c-7e", 0x6000, 0x2000, 0x31de0626 )
+
+	ROM_REGION(0x9000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "v-5n", 0x0000, 0x1000, 0x27406a96 )
+	ROM_LOAD( "v-1e", 0x1000, 0x2000, 0x034f71a7 )
+	ROM_LOAD( "v-1f", 0x3000, 0x2000, 0x0d9053e2 )
+	ROM_LOAD( "v-1j", 0x5000, 0x2000, 0x8568d90c )
+	ROM_LOAD( "v-1k", 0x7000, 0x2000, 0xe2b9685f )
+ROM_END
 
 ROM_START( popeyebl_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -435,6 +448,30 @@ static void hisave(void)
 }
 
 
+
+/* The original doesn't work because the ROMs are encrypted. */
+/* The encryption is based on a custom ALU and seems to be dynamically evolving */
+/* (like Jr. PacMan). I think it decodes 16 bits at a time, bits 0-2 are (or can be) */
+/* an opcode for the ALU and the others contain the data. */
+struct GameDriver popeye_driver =
+{
+	"Popeye",
+	"popeye",
+	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
+	&machine_driver,
+
+	popeye_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
 
 struct GameDriver popeyebl_driver =
 {

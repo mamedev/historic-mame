@@ -380,7 +380,7 @@ ROM_START( kangaroo_rom )
 	ROM_LOAD( "tvg86.bin", 0x13000, 0x1000, 0x9048077c )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* sound */

@@ -177,7 +177,6 @@ int roadrunn_vh_start (void);
 int roadblst_vh_start (void);
 void atarisys1_vh_stop (void);
 
-void atarisys1_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap);
 void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap);
 
@@ -703,7 +702,7 @@ static struct MachineDriver marble_machine_driver =
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	marble_gfxdecodeinfo,
 	256,1024+64,
-	atarisys1_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
@@ -753,7 +752,7 @@ static struct MachineDriver peterpak_machine_driver =
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	peterpak_gfxdecodeinfo,
 	256,1024+64,
-	atarisys1_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
@@ -803,7 +802,7 @@ static struct MachineDriver indytemp_machine_driver =
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	indytemp_gfxdecodeinfo,
 	256,1024+64,
-	atarisys1_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
@@ -857,7 +856,7 @@ static struct MachineDriver roadrunn_machine_driver =
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	roadrunn_gfxdecodeinfo,
 	256,1024+64,
-	atarisys1_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,

@@ -4,7 +4,7 @@ void op_5000(ULONG opcode) /* ADD */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG src = srcreg;
-{	BYTE dst = regs.d[dstreg];
+{	BYTE dst = regs.d[dstreg].B.l;
 {{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
@@ -13,7 +13,7 @@ void op_5000(ULONG opcode) /* ADD */
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
 	NFLG = flgn != 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((newv) & 0xff);
+	regs.d[dstreg].B.l = newv;
 }}}}}}}
 void op_5010(ULONG opcode) /* ADD */
 {
@@ -139,7 +139,7 @@ void op_5040(ULONG opcode) /* ADD */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG src = srcreg;
-{	WORD dst = regs.d[dstreg];
+{	WORD dst = regs.d[dstreg].W.l;
 {{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
@@ -148,7 +148,7 @@ void op_5040(ULONG opcode) /* ADD */
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
 	NFLG = flgn != 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((newv) & 0xffff);
+	regs.d[dstreg].W.l = newv;
 }}}}}}}
 void op_5048(ULONG opcode) /* ADDA */
 {
@@ -283,7 +283,7 @@ void op_5080(ULONG opcode) /* ADD */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG src = srcreg;
-{	LONG dst = regs.d[dstreg];
+{	LONG dst = regs.d[dstreg].D;
 {{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
@@ -292,7 +292,7 @@ void op_5080(ULONG opcode) /* ADD */
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
 	NFLG = flgn != 0;
-	regs.d[dstreg] = (newv);
+	regs.d[dstreg].D = (newv);
 }}}}}}}
 void op_5088(ULONG opcode) /* ADDA */
 {
@@ -426,16 +426,16 @@ void op_50c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(0) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_50c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(0)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_50d0(ULONG opcode) /* Scc */
@@ -492,7 +492,7 @@ void op_5100(ULONG opcode) /* SUB */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG src = srcreg;
-{	BYTE dst = regs.d[dstreg];
+{	BYTE dst = regs.d[dstreg].B.l;
 {{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
@@ -501,7 +501,7 @@ void op_5100(ULONG opcode) /* SUB */
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
 	NFLG = flgn != 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((newv) & 0xff);
+	regs.d[dstreg].B.l = newv;
 }}}}}}}
 void op_5110(ULONG opcode) /* SUB */
 {
@@ -627,7 +627,7 @@ void op_5140(ULONG opcode) /* SUB */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG src = srcreg;
-{	WORD dst = regs.d[dstreg];
+{	WORD dst = regs.d[dstreg].W.l;
 {{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
@@ -636,7 +636,7 @@ void op_5140(ULONG opcode) /* SUB */
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
 	NFLG = flgn != 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((newv) & 0xffff);
+	regs.d[dstreg].W.l = newv;
 }}}}}}}
 void op_5148(ULONG opcode) /* SUBA */
 {
@@ -771,7 +771,7 @@ void op_5180(ULONG opcode) /* SUB */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG src = srcreg;
-{	LONG dst = regs.d[dstreg];
+{	LONG dst = regs.d[dstreg].D;
 {{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
@@ -780,7 +780,7 @@ void op_5180(ULONG opcode) /* SUB */
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
 	NFLG = flgn != 0;
-	regs.d[dstreg] = (newv);
+	regs.d[dstreg].D = (newv);
 }}}}}}}
 void op_5188(ULONG opcode) /* SUBA */
 {
@@ -914,16 +914,16 @@ void op_51c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(1) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_51c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(1)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_51d0(ULONG opcode) /* Scc */
@@ -979,16 +979,16 @@ void op_52c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(2) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_52c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(2)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_52d0(ULONG opcode) /* Scc */
@@ -1044,16 +1044,16 @@ void op_53c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(3) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_53c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(3)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_53d0(ULONG opcode) /* Scc */
@@ -1109,16 +1109,16 @@ void op_54c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(4) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_54c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(4)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_54d0(ULONG opcode) /* Scc */
@@ -1174,16 +1174,16 @@ void op_55c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(5) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_55c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(5)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_55d0(ULONG opcode) /* Scc */
@@ -1239,16 +1239,16 @@ void op_56c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(6) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_56c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(6)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_56d0(ULONG opcode) /* Scc */
@@ -1304,16 +1304,16 @@ void op_57c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(7) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_57c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(7)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_57d0(ULONG opcode) /* Scc */
@@ -1369,16 +1369,16 @@ void op_58c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(8) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_58c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(8)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_58d0(ULONG opcode) /* Scc */
@@ -1434,16 +1434,16 @@ void op_59c0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(9) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_59c8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(9)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/; }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_59d0(ULONG opcode) /* Scc */
@@ -1499,16 +1499,16 @@ void op_5ac0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(10) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_5ac8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(10)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_5ad0(ULONG opcode) /* Scc */
@@ -1564,16 +1564,16 @@ void op_5bc0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(11) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_5bc8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(11)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_5bd0(ULONG opcode) /* Scc */
@@ -1629,16 +1629,16 @@ void op_5cc0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(12) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_5cc8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(12)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_5cd0(ULONG opcode) /* Scc */
@@ -1694,16 +1694,16 @@ void op_5dc0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(13) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_5dc8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(13)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_5dd0(ULONG opcode) /* Scc */
@@ -1759,16 +1759,16 @@ void op_5ec0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(14) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_5ec8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(14)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_5ed0(ULONG opcode) /* Scc */
@@ -1824,16 +1824,16 @@ void op_5fc0(ULONG opcode) /* Scc */
 {
 	ULONG srcreg = (opcode & 7);
 {{{	int val = cctrue(15) ? 0xff : 0;
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xff) | ((val) & 0xff);
+	regs.d[srcreg].B.l = val;
 }}}}
 void op_5fc8(ULONG opcode) /* DBcc */
 {
 	ULONG srcreg = (opcode & 7);
-{{	WORD src = regs.d[srcreg];
+{{	WORD src = regs.d[srcreg].W.l;
 {	WORD offs = nextiword();
 	if (!cctrue(15)) {
 	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
-	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
+	regs.d[srcreg].W.l = src;
 	}
 }}}}
 void op_5fd0(ULONG opcode) /* Scc */

@@ -4,11 +4,20 @@
 
   Functions used to handle MAME's crude user interface.
 
+Changes:
+	042898 - LBO
+	* Changed UI menu to be more dynamic, added option to display stats
+
 *********************************************************************/
 
 #include "driver.h"
 
 extern int nocheat;
+
+/* Variables for stat menu */
+extern char mameversion[];
+extern unsigned int dispensed_tickets;
+extern unsigned int coins[COIN_COUNTERS];
 
 /* Prototypes for routines found in inptport.c */
 const char *default_name(const struct InputPort *in);
@@ -17,8 +26,8 @@ int default_joy(const struct InputPort *in);
 
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 {
-	Machine->uiwidth = xmax-xmin;
-	Machine->uiheight = ymax-ymin;
+	Machine->uiwidth = xmax-xmin+1;
+	Machine->uiheight = ymax-ymin+1;
 	Machine->uixmin = xmin;
 	Machine->uiymin = ymin;
 }
@@ -1201,6 +1210,59 @@ static int settraksettings(void)
 	else return 0;
 }
 
+void mame_stats (void)
+{
+	int key;
+	struct DisplayText dt[2];
+	char temp[10];
+	char buf[1024];
+
+	strcpy (buf, "MAME ver: ");
+	strcat (buf, mameversion);
+	strcat (buf, "\n\n");
+
+	strcat (buf, "Tickets dispensed: ");
+	if (!dispensed_tickets)
+		strcat (buf, "NA\n\n");
+	else
+	{
+		sprintf (temp, "%d\n\n", dispensed_tickets);
+		strcat (buf, temp);
+	}
+	strcat (buf, "Coin A: ");
+	if (!coins[0])
+		strcat (buf, "NA\n");
+	else
+	{
+		sprintf (temp, "%d\n", coins[0]);
+		strcat (buf, temp);
+	}
+	strcat (buf, "Coin B: ");
+	if (!coins[1])
+		strcat (buf, "NA\n");
+	else
+	{
+		sprintf (temp, "%d\n", coins[1]);
+		strcat (buf, temp);
+	}
+	strcat (buf, "Coin C: ");
+	if (!coins[2])
+		strcat (buf, "NA\n\n");
+	else
+	{
+		sprintf (temp, "%d\n\n", coins[2]);
+		strcat (buf, temp);
+	}
+	dt[0].text = buf;
+	dt[0].color = DT_COLOR_WHITE;
+	dt[0].x = 0;
+	dt[0].y = 0;
+	dt[1].text = 0;
+	displaytext(dt,1);
+
+	key = osd_read_key();
+	while (osd_key_pressed(key));	/* wait for key release */
+}
 
 int showcredits(void)
 {
@@ -1224,24 +1286,52 @@ int showcredits(void)
 	return 0;
 }
 
+enum { UI_SWITCH = 0, UI_KEY, UI_JOY, UI_ANALOG, UI_STATS, UI_CREDITS, UI_CHEAT, UI_EXIT };
 
-
-int setup_menu(void)
+int setup_menu (void)
 {
 	struct DisplayText dt[10];
+	int ui_menu[9];
 	int i,s,key,done;
-	int total;
+	int total = 0;
 
 
-	total = nocheat ? 6 : 7;
-	dt[0].text = "DIP SWITCH SETUP";
-	dt[1].text = "KEYBOARD SETUP";
-	dt[2].text = "JOYSTICK SETUP";
-	dt[3].text = "ANALOG SETUP";
-	dt[4].text = "CREDITS";
-	if (nocheat == 0) dt[5].text = "CHEAT";
-	dt[total-1].text = "RETURN TO GAME";
-	for (i = 0;i < total;i++)
+	dt[total].text = "DIP SWITCH SETUP"; ui_menu[total++] = UI_SWITCH;
+	dt[total].text = "KEYBOARD SETUP"; ui_menu[total++] = UI_KEY;
+	dt[total].text = "JOYSTICK SETUP"; ui_menu[total++] = UI_JOY;
+
+	/* Determine if there are any analog controls */
+	{
+		struct InputPort *in;
+		int num;
+
+		in = Machine->input_ports;
+
+		num = 0;
+		while (in->type != IPT_END)
+		{
+			if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
+					&& !(nocheat && (in->type & IPF_CHEAT)))
+				num++;
+			in++;
+		}
+
+		if (num != 0)
+		{
+			dt[total].text = "ANALOG SETUP"; ui_menu[total++] = UI_ANALOG;
+		}
+	}
+
+	dt[total].text = "STATS"; ui_menu[total++] = UI_STATS;
+	dt[total].text = "CREDITS"; ui_menu[total++] = UI_CREDITS;
+
+	if (nocheat == 0)
+	{
+		dt[total].text = "CHEAT"; ui_menu[total++] = UI_CHEAT;
+	}
+
+	dt[total].text = "RETURN TO GAME"; ui_menu[total++] = UI_EXIT;
+	for (i = 0; i < total; i++)
 	{
 		dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
 		dt[i].y = i * 2*Machine->uifont->height + (Machine->uiheight - 2*Machine->uifont->height * (total - 1)) / 2;
@@ -1253,14 +1343,14 @@ int setup_menu(void)
 	done = 0;
 	do
 	{
-		for (i = 0;i < total;i++)
+		for (i = 0; i < total; i++)
 		{
 			dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 		}
 
-		displaytext(dt,1);
+		displaytext (dt,1);
 
-		key = osd_read_keyrepeat();
+		key = osd_read_keyrepeat ();
 
 		switch (key)
 		{
@@ -1275,39 +1365,37 @@ int setup_menu(void)
 				break;
 
 			case OSD_KEY_ENTER:
-				switch (s)
+				switch (ui_menu[s])
 				{
-					case 0:
-						if (setdipswitches())
-							done = 2;
+					case UI_SWITCH:
+						if (setdipswitches()) done = 2;
 						break;
 
-					case 1:
-						if (setkeysettings())
-							done = 2;
+					case UI_KEY:
+						if (setkeysettings()) done = 2;
 						break;
 
-					case 2:
-						if (setjoysettings())
-							done = 2;
+					case UI_JOY:
+						if (setjoysettings()) done = 2;
 						break;
 
-					case 3:
-						if(settraksettings())
-							done = 2;
+					case UI_ANALOG:
+						if (settraksettings()) done = 2;
 						break;
 
-					case 4:
-						if (showcredits())
-							done = 2;
+					case UI_STATS:
+						mame_stats ();
 						break;
 
-					case 5:
-						if (nocheat) done = 1;
-						else cheat_menu();
+					case UI_CREDITS:
+						if (showcredits()) done = 2;
 						break;
 
-					case 6:
+					case UI_CHEAT:
+						cheat_menu();
+						break;
+
+					case UI_EXIT:
 						done = 1;
 						break;
 				}

@@ -45,23 +45,29 @@ static unsigned char *dirtybuffer2;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void mystston_paletteram_w(int offset,int data)
 {
-	int i;
+	int bit0,bit1,bit2;
+	int r,g,b;
 
+	mystston_paletteram[offset] = data;
 
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
+	bit0 = (data >> 0) & 0x01;
+	bit1 = (data >> 1) & 0x01;
+	bit2 = (data >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i;
+	bit0 = (data >> 3) & 0x01;
+	bit1 = (data >> 4) & 0x01;
+	bit2 = (data >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	bit0 = 0;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen(Machine->pens[offset],r,g,b);
 }
 
 
@@ -140,31 +146,6 @@ void mystston_colorram3_w(int offset,int data)
 
 		mystston_colorram3[offset] = data;
 	}
-}
-
-void mystston_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2;
-	int r,g,b;
-
-	mystston_paletteram[offset] = data;
-
-	bit0 = (data >> 0) & 0x01;
-	bit1 = (data >> 1) & 0x01;
-	bit2 = (data >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	bit0 = (data >> 3) & 0x01;
-	bit1 = (data >> 4) & 0x01;
-	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	bit0 = 0;
-	bit1 = (data >> 6) & 0x01;
-	bit2 = (data >> 7) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	osd_modify_pen(Machine->pens[offset],r,g,b);
 }
 
 

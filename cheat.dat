@@ -149,6 +149,21 @@ crush:0:4C1C:6:0:Infinite Lives
 defender:0:A1C9:5:0:Infinite Lives
 defender:0:A1CB:5:0:Infinite Smart Bomb
 defender:0:A0FA:A:0:Never go into space
+;This cheat takes effect after the wave you
+;you enabled it on is completed.
+;Setting cheat type to 1 keeps you from playing
+;the same attack wave over & over.
+defender:0:A1CA:19:1:Go to Attack Wave 25
+defender:0:A1CA:32:1:Go to Attack Wave 50
+defender:0:A1CA:4B:1:Go to Attack Wave 75
+defender:0:A1CA:64:1:Go to Attack Wave 100
+defender:0:A1CA:7D:1:Go to Attack Wave 125
+defender:0:A1CA:96:1:Go to Attack Wave 150
+defender:0:A1CA:AF:1:Go to Attack Wave 175
+defender:0:A1CA:C8:1:Go to Attack Wave 200
+defender:0:A1CA:E1:1:Go to Attack Wave 225
+defender:0:A1CA:FA:1:Go to Atttack Wave 250
+defender:0:A1CA:FE:1:Go to Atttack Wave 254
 desterth:0:21AC:6:0:Infinite lives PL1
 desterth:0:22AC:6:0:Infinite lives PL2
 diamond:0:049C:6:0:Infinite lives
@@ -691,3 +706,13 @@ indytemp:0:40062E:6:0:Infinite Lives
 ;For The Following Cheat, You MUST Rescue At Least One Kid
 ;For The Game To Re-Read The Value.
 indytemp:0:400CD4:0:0:All Children Rescued
+
+roadrunn:0:401591:5:0:No missed birdseed
+roadrunn:0:400C8C:3:0:Infinite lives
+
+gundealr:0:EDB5:FF:0:Winning Score (1 of 2)
+gundealr:0:ED5F:FF:0:Winning Score (2 of 2)
+gundealr:0:ECAB:34:0:End Level
+
+tazmania:0:852F:A:0:Infinite Bombs
+tazmania:0:8529:5:0:Infinite Lives

@@ -62,7 +62,17 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
 
+void amidar_coina_w (int offset, int data)
+{
+	coin_counter_w (0, data);
+	coin_counter_w (0, 0);
+}
 
+void amidar_coinb_w (int offset, int data)
+{
+	coin_counter_w (1, data);
+	coin_counter_w (1, 0);
+}
 
 static struct MemoryReadAddress amidar_readmem[] =
 {
@@ -89,8 +99,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa008, 0xa008, interrupt_enable_w },
 	{ 0xa010, 0xa010, MWA_RAM, &flip_screen_x },
 	{ 0xa018, 0xa018, MWA_RAM, &flip_screen_y },
-	{ 0xa030, 0xa030, MWA_NOP },
-	{ 0xa038, 0xa038, MWA_NOP },
+	{ 0xa030, 0xa030, amidar_coina_w },
+	{ 0xa038, 0xa038, amidar_coinb_w },
 	{ 0xb800, 0xb800, soundlatch_w },
 	{ 0xb810, 0xb810, scramble_sh_irqtrigger_w },
 	{ -1 }	/* end of table */

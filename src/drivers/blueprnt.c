@@ -95,7 +95,15 @@ void blueprnt_sound_command_w(int offset,int data)
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-
+static void blueprnt_coin_w (int offset, int data)
+{
+	static int lastval;
+	
+	if (lastval == data) return;
+	coin_counter_w (0, data & 0x01);
+	coin_counter_w (1, data & 0x02);
+	lastval = data;
+}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -117,7 +125,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0xb000, 0xb0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xc000, 0xc000, MWA_NOP },
+	{ 0xc000, 0xc000, blueprnt_coin_w },
 	{ 0xd000, 0xd000, blueprnt_sound_command_w },
 	{ 0xe000, 0xe000, blueprnt_flipscreen_w },
 	{ 0xf000, 0xf3ff, colorram_w, &colorram },

@@ -7,5 +7,5 @@ void op_7000(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
-	regs.d[dstreg] = (src);
+	regs.d[dstreg].D = (src);
 }}}}

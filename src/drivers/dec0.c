@@ -23,6 +23,7 @@
 	Sly Spy:
 	  No playfield/sprite priority
 	  The end of game scrolling background is corrupted
+	Robocop end credits don't show up
 
 
   Thanks to Gouky & Richard Bush for information along the way, especially
@@ -51,6 +52,8 @@ void dec0_priority_w(int offset,int data);
 void hippo_sprite_fix(int offset, int data);
 
 void dec0_scroll_t(int offset, int data);
+
+extern unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll;
 
 void dec0_pf1_control_0_w(int offset,int data);
 void dec0_pf1_control_1_w(int offset,int data);
@@ -130,14 +133,12 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
 	{ 0x242000, 0x24207f, MWA_NOP },	/* unknown */
-	{ 0x242400, 0x24241f, dec0_pf1_rowscroll_w },
-	{ 0x242420, 0x2427ff, MWA_NOP },	/* unknown */
+	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
 	{ 0x244000, 0x245fff, dec0_pf1_data_w },
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
 	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
 	{ 0x248000, 0x24807f, MWA_NOP },	/* unknown */
-	{ 0x248400, 0x24841f, dec0_pf2_rowscroll_w },
-	{ 0x248420, 0x2487ff, MWA_NOP },	/* unknown */
+	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w },
 	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
 	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
@@ -172,15 +173,15 @@ static struct MemoryWriteAddress robocop_writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
-	{ 0x242000, 0x24207f, MWA_NOP },	/* unknown */
-	{ 0x242400, 0x24241f, dec0_pf1_rowscroll_w },
-	{ 0x242420, 0x2427ff, MWA_NOP },	/* unknown */
+//	{ 0x242000, 0x24207f, MWA_NOP },	/* unknown */
+	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
 	{ 0x242a00, 0x242bff, MWA_BANK3 },	/* ?? used during attract mode */
 	{ 0x243200, 0x2433ff, MWA_BANK4 },	/* ?? used during attract mode */
 	{ 0x243800, 0x243813, MWA_BANK5 },	/* ?? needed for the pictures at the beginning of the game to work */
 	{ 0x244000, 0x245fff, dec0_pf1_data_w },
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
 	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
+	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w },
 	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
 	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
@@ -213,14 +214,12 @@ static struct MemoryWriteAddress hbarrel_writemem[] =
 	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
 	{ 0x242000, 0x24207f, MWA_NOP },	/* unknown */
-	{ 0x242400, 0x24241f, dec0_pf1_rowscroll_w },
-	{ 0x242420, 0x2427ff, MWA_NOP },	/* unknown */
+	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
 	{ 0x244000, 0x245fff, dec0_pf1_data_w },
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
 	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
 	{ 0x248000, 0x24807f, MWA_NOP },	/* unknown */
-	{ 0x248400, 0x24841f, dec0_pf2_rowscroll_w },
-	{ 0x248420, 0x2487ff, MWA_NOP },	/* unknown */
+	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w },
 	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
 	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
@@ -253,9 +252,11 @@ static struct MemoryWriteAddress hippodrm_writemem[] =
 	{ 0x180000, 0x18001f, MWA_NOP },	/* ??? protection ??? */
 	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
+	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
 	{ 0x244000, 0x245fff, dec0_pf1_data_w },
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
 	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
+	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w },
 	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* playfield priority at 30c010, */
 											/* sound at 30c014, watchdog at 30c018, */
@@ -290,7 +291,7 @@ static struct MemoryWriteAddress midres_writemem[] =
 	{ 0x200010, 0x200017, dec0_pf2_control_1_w },
 	{ 0x220000, 0x2207ff, dec0_pf2_data_w },
 	{ 0x240000, 0x24007f, MWA_NOP },	/* unknown */
-	{ 0x240400, 0x2407ff, MWA_NOP },	/* unknown */
+	{ 0x240400, 0x2407ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
 	{ 0x280000, 0x280007, dec0_pf3_control_0_w },
 	{ 0x280010, 0x280017, dec0_pf3_control_1_w },
 	{ 0x2a0000, 0x2a07ff, dec0_pf3_data_w },
@@ -298,9 +299,9 @@ static struct MemoryWriteAddress midres_writemem[] =
 	{ 0x2c0400, 0x2c07ff, MWA_NOP },	/* unknown */
 	{ 0x300000, 0x300007, dec0_pf1_control_0_w },
 	{ 0x300010, 0x300017, dec0_pf1_control_1_w },
-	{ 0x340000, 0x34007f, MWA_NOP },	/* unknown */
-	{ 0x340400, 0x3407ff, MWA_NOP },	/* unknown */
 	{ 0x320000, 0x321fff, dec0_pf1_data_w },
+	{ 0x340000, 0x34007f, MWA_NOP },	/* unknown */
+	{ 0x340400, 0x3407ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
 	{ -1 }  /* end of table */
 };
 
@@ -321,7 +322,11 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 	{ 0x230000, 0x230007, dec0_pf2_control_0_w },	/* moved at this address */
 	{ 0x230010, 0x230017, dec0_pf2_control_1_w },	/* by slyspy_patch() */
 { 0x240000, 0x2407ff, dec0_pf2_data_w },
-	{ 0x242400, 0x24241f, dec0_pf2_rowscroll_w },
+	{ 0x242400, 0x24241f, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },	/* larger in the */
+												/* other drivers, but in this case it */
+												/* overlaps pf1_data_w below */
+{ 0x243800, 0x243fff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },	/* ARBITRARILY placed here */
+												/* just to make pf1_rowscroll point somewhere */
 { 0x242000, 0x243fff, dec0_pf1_data_w },
 	{ 0x244000, 0x244003, MWA_NOP }, /* ?? watchdog ?? */
 { 0x246000, 0x2467ff, dec0_pf2_data_w },

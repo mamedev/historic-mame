@@ -26,18 +26,18 @@ int milliped_IN0_r (int offset)
 	static int counter, sign;
 	int delta;
 
-	/* Return dipswitch when 4000 cycles remain before interrupt. */
-	if (cpu_geticount () < 4000)
+	/* Hack: return dipswitch when 3000 cycles remain before interrupt. */
+	if (cpu_geticount () < 3000)
 		return (readinputport (0) | sign);
 
 	delta=readinputport(6);
 	if (delta !=0)
 	{
 		counter=(counter+delta) & 0x0f;
-		sign=(delta<8)? 0: 0x80;
+		sign = delta & 0x80;
 	}
 
-	return ((readinputport(0) & 0xe0) | counter | sign );
+	return ((readinputport(0) & 0x70) | counter | sign );
 }
 
 int milliped_IN1_r (int offset)
@@ -45,16 +45,16 @@ int milliped_IN1_r (int offset)
 	static int counter, sign;
 	int delta;
 
-	/* Return dipswitch when 4000 cycles remain before interrupt. */
-	if (cpu_geticount () < 4000)
+	/* Hack: return dipswitch when 3000 cycles remain before interrupt. */
+	if (cpu_geticount () < 3000)
 		return (readinputport (1) | sign);
 
 	delta=readinputport(7);
 	if (delta !=0)
 	{
 		counter=(counter+delta) & 0x0f;
-		sign=(delta<8)? 0: 0x80;
+		sign = delta & 0x80;
 	}
 
-	return ((readinputport(1) & 0xe0) | counter | sign );
+	return ((readinputport(1) & 0x70) | counter | sign );
 }

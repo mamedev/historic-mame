@@ -208,6 +208,17 @@ static void tempest_led_w (int offset, int data)
 	/* FLIP is bit 0x04 */
 }
 
+static void tempest_coin_w (int offset, int data)
+{
+	static int lastval;
+	
+	if (lastval == data) return;
+	coin_counter_w (0, (data & 0x01));
+	coin_counter_w (1, (data & 0x02));
+	coin_counter_w (2, (data & 0x04));
+	lastval = data;
+}
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0053, 0x0053, tempest_catch_busyloop }, /* small advantage. BW */
@@ -243,7 +254,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5800, 0x5800, avgdvg_reset },
 	{ 0x9000, 0xdfff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x4000, 0x4000, tempest_coin_w },
 	{ 0x60e0, 0x60e0, tempest_led_w },
 	{ -1 }	/* end of table */
 };

@@ -24,66 +24,66 @@ static struct rectangle spritevisiblearea =
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
-  Actually, Centipede doesn't have a color PROM. Eight RAM locations control
+  Centipede doesn't have a color PROM. Eight RAM locations control
   the color of characters and sprites. The meanings of the four bits are
   (all bits are inverted):
 
-  bit 3 luminance
+  bit 3 alternate
         blue
         green
   bit 0 red
 
+  The alternate bit affects blue and green, not red. The way I weighted its
+  effect might not be perfectly accurate, but is reasonably close.
+
 ***************************************************************************/
-void centiped_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* characters use colors 4-7 */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 4;
-
-	/* sprites use colors 12-15 */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i + 12;
-}
-
-
-
-void centiped_paletteram_w(int offset,int data)
+static void setcolor(int pen,int data)
 {
 	int r,g,b;
 
 
+	r = 0xff * ((~data >> 0) & 1);
+	g = 0xff * ((~data >> 1) & 1);
+	b = 0xff * ((~data >> 2) & 1);
+
+	if (~data & 0x08) /* alternate = 1 */
+	{
+		/* when blue component is not 0, decrease it. When blue component is 0, */
+		/* decrease green component. */
+		if (b) b = 0xc0;
+		else if (g) g = 0xc0;
+	}
+
+	osd_modify_pen(Machine->pens[pen],r,g,b);
+}
+
+void centiped_paletteram_w(int offset,int data)
+{
 	centiped_paletteram[offset] = data;
 
-	if ((~data & 0x08) == 0) /* luminance = 0 */
-	{
-		r = 0xc0 * ((~data >> 0) & 1);
-		g = 0xc0 * ((~data >> 1) & 1);
-		b = 0xc0 * ((~data >> 2) & 1);
-	}
-	else	/* luminance = 1 */
-	{
-		r = 0xff * ((~data >> 0) & 1);
-		g = 0xff * ((~data >> 1) & 1);
-		b = 0xff * ((~data >> 2) & 1);
-	}
+	/* the char palette will be effectively updated by the next interrupt handler */
 
-	osd_modify_pen(Machine->pens[offset],r,g,b);
+	if (offset >= 12 && offset < 16)	/* sprites palette */
+	{
+		int start = Machine->drv->gfxdecodeinfo[1].color_codes_start;
+
+		setcolor(start + (offset - 12),data);
+	}
+}
+
+int centiped_interrupt(void)
+{
+	int offset;
+	int slice = 3 - cpu_getiloops();
+	int start = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+
+
+	/* set the palette for the previous screen slice to properly support */
+	/* midframe palette changes in test mode */
+	for (offset = 4;offset < 8;offset++)
+		setcolor(4 * slice + start + (offset - 4),centiped_paletteram[offset]);
+
+	return interrupt();
 }
 
 
@@ -125,7 +125,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					(videoram[offs] & 0x3f) + 0x40,
-					0,
+					sy / 8,	/* support midframe palette changes in test mode */
 					flipscreen,flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -158,11 +158,11 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* pen 00 is transparent */
 		color = spriteram[offs+0x30];
 		Machine->gfx[1]->colortable[3] =
-				Machine->pens[12 + ((color >> 4) & 3)];
+				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 4) & 3)];
 		Machine->gfx[1]->colortable[2] =
-				Machine->pens[12 + ((color >> 2) & 3)];
+				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 2) & 3)];
 		Machine->gfx[1]->colortable[1] =
-				Machine->pens[12 + ((color >> 0) & 3)];
+				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 0) & 3)];
 
 		drawgfx(bitmap,Machine->gfx[1],
 				spritenum,0,

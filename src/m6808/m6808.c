@@ -308,21 +308,36 @@ static void Interrupt(void)
 		SEI;
 		pcreg=M_RDMEM_WORD(0xfffc);change_pc(pcreg);
 		m6808_ICount -= 19;
-	}
-	else if ((pending_interrupts & M6808_INT_IRQ) != 0 && (cc & 0x10) == 0)
-	{
-		pending_interrupts &= ~M6808_INT_IRQ;
+	} else
+		if  ( ( cc & 0x10 ) == 0 ) {
+			if ((pending_interrupts & M6808_INT_IRQ) != 0) {
+				pending_interrupts &= ~M6808_INT_IRQ;
 
-		/* standard IRQ */
-		PUSHWORD(pcreg)
-		PUSHWORD(xreg)
-		PUSHBYTE(breg)
-		PUSHBYTE(areg)
-		PUSHBYTE(cc)
-		SEI;
-		pcreg=M_RDMEM_WORD(0xfff8);change_pc(pcreg);
-		m6808_ICount -= 19;
-	}
+				/* standard IRQ */
+				PUSHWORD(pcreg)
+				PUSHWORD(xreg)
+				PUSHBYTE(breg)
+				PUSHBYTE(areg)
+				PUSHBYTE(cc)
+				SEI;
+				pcreg=M_RDMEM_WORD(0xfff8);change_pc(pcreg);
+				m6808_ICount -= 19;
+			}
+			else
+			if ((pending_interrupts & M6808_INT_OCI) != 0) {
+				pending_interrupts &= ~M6808_INT_OCI;
+
+				/* standard IRQ */
+				PUSHWORD(pcreg)
+				PUSHWORD(xreg)
+				PUSHBYTE(breg)
+				PUSHBYTE(areg)
+				PUSHBYTE(cc)
+				SEI;
+				pcreg=M_RDMEM_WORD(0xfff4);change_pc(pcreg);
+				m6808_ICount -= 19;
+			}
+		}
 }
 
 
@@ -358,15 +373,15 @@ void m6808_Cause_Interrupt(int type)
 	{
 		if ((pending_interrupts & M6808_INT_NMI) != 0)
 			pending_interrupts &= ~M6808_WAI;
-		else if ((pending_interrupts & M6808_INT_IRQ) !=0 && (cc & 0x10) == 0)
-			pending_interrupts &= ~M6808_WAI;
+		else if ( (cc & 0x10) == 0 )
+				pending_interrupts &= ~M6808_WAI;
 	}
 }
 
 
 void m6808_Clear_Pending_Interrupts(void)
 {
-	pending_interrupts &= ~(M6808_INT_IRQ | M6808_INT_NMI);
+	pending_interrupts &= ~( M6808_INT_IRQ | M6808_INT_NMI | M6808_INT_OCI );
 }
 
 

@@ -66,7 +66,6 @@ NMI interrupts for music timing
 
 
 extern unsigned char *bombjack_paletteram;
-void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void bombjack_paletteram_w(int offset,int data);
 void bombjack_background_w(int offset,int data);
 void bombjack_updatehook0(int offset);
@@ -389,10 +388,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	128, 16*8,
-	bombjack_vh_convert_color_prom,
+	128, 128,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	machine_layers,
 	generic_vh_start,
 	generic_vh_stop,
@@ -533,7 +532,7 @@ struct GameDriver bombjack_driver =
 
 	input_ports,
 
-	0,0,0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

@@ -53,8 +53,6 @@ out:
 static unsigned char *twincobr_sharedram;
 
 
-void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-
 int twincobr_vh_start(void)
 {
 	return 0;
@@ -417,7 +415,7 @@ static struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	256, 256,
-	bombjack_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER,
 	0,

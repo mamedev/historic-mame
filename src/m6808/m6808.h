@@ -31,6 +31,7 @@ typedef struct
 #define M6808_INT_NONE  0			/* No interrupt required */
 #define M6808_INT_IRQ	1 			/* Standard IRQ interrupt */
 #define M6808_INT_NMI	2			/* NMI interrupt          */
+#define M6808_INT_OCI	4			/* Output Compare interrupt (timer) */
 #define M6808_WAI		8			/* set when WAI is waiting for an interrupt */
 
 

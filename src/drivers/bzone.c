@@ -279,7 +279,7 @@ static struct MemoryWriteAddress bzone_writemem[] =
 	{ 0x1820, 0x182f, bzone_pokey_w },
 	{ 0x1860, 0x187f, mb_go },
 	{ 0x1200, 0x1200, avgdvg_go },
-	{ 0x1000, 0x1000, MWA_NOP }, /* coin out */
+	{ 0x1000, 0x1000, coin_counter_w },
 	{ 0x1400, 0x1400, MWA_NOP }, /* watchdog clear */
 	{ 0x1600, 0x1600, avgdvg_reset },
 	{ 0x1840, 0x1840, bzone_sounds_w },

@@ -88,25 +88,8 @@ static void sinistar_opaque_solid_blitter_w (int offset, int data, int keepmask)
 
 ***************************************************************************/
 
-/*
- *  Create the palette
- */
-
 void williams_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
 	/* no remap table by default */
 	williams_remap_lookup = 0;
 }

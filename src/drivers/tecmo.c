@@ -566,6 +566,17 @@ static struct GfxLayout silkworm_spritelayout2x =
 	512*8	/* every sprite takes 512 consecutive bytes */
 };
 
+static struct GfxLayout silkworm_spritelayout8x8 =
+{
+	8,8,	/* 8*8 xprites */
+	8192,	/* 8192 sprites */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+
 /* the only difference in rygar_spritelayout is that half as many sprites are present */
 
 static struct GfxLayout rygar_spritelayout = /* only difference is half as many sprites as silkworm */
@@ -598,20 +609,33 @@ static struct GfxLayout rygar_spritelayout2x =
 	512*8	/* every sprite takes 512 consecutive bytes */
 };
 
+static struct GfxLayout rygar_spritelayout8x8 =
+{
+	8,8,	/* 8*8 xprites */
+	4096,	/* 8192 sprites */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &tecmo_charlayout,        1*16*16, 16 },
-	{ 1, 0x08000, &silkworm_spritelayout,   0*16*16, 16 },
-	{ 1, 0x08000, &silkworm_spritelayout2x, 0*16*16, 16 }, /* double size hack */
-	{ 1, 0x48000, &silkworm_spritelayout,   2*16*16, 16 }, /* bg #1 */
-	{ 1, 0x88000, &silkworm_spritelayout,   3*16*16, 16 }, /* bg #2 */
+	{ 1, 0x08000, &silkworm_spritelayout8x8,0*16*16, 16 },	/* 8x8 sprites */
+	{ 1, 0x08000, &silkworm_spritelayout,   0*16*16, 16 },	/* 16x16 sprites */
+	{ 1, 0x08000, &silkworm_spritelayout2x, 0*16*16, 16 },	/* double size hack */
+	{ 1, 0x48000, &silkworm_spritelayout,   2*16*16, 16 },	/* bg #1 */
+	{ 1, 0x88000, &silkworm_spritelayout,   3*16*16, 16 },	/* bg #2 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &tecmo_charlayout,     1*16*16, 16 },
-	{ 1, 0x08000, &rygar_spritelayout,   0*16*16, 16 },
+	{ 1, 0x08000, &rygar_spritelayout8x8,0*16*16, 16 },	/* 8x8 sprites */
+	{ 1, 0x08000, &rygar_spritelayout,   0*16*16, 16 },	/* 16x16 sprites */
 	{ 1, 0x08000, &rygar_spritelayout2x, 0*16*16, 16 },	/* double size hack */
 	{ 1, 0x28000, &rygar_spritelayout,     2*16*16, 16 }, /* bg #1 */
 	{ 1, 0x48000, &rygar_spritelayout,     3*16*16, 16 }, /* bg #2 */

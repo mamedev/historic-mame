@@ -784,7 +784,7 @@ ROM_START( elevator_rom )
 	/* 10000-11fff space for banked ROMs (not used) */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
@@ -817,7 +817,7 @@ ROM_START( elevatob_rom )
 	ROM_LOAD( "ea52.bin", 0x11000, 0x1000, 0xde40e7e6 )	/* protection crack, bank switched at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
@@ -849,7 +849,7 @@ ROM_START( junglek_rom )
 	ROM_LOAD( "kn60.bin",   0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
@@ -882,7 +882,7 @@ ROM_START( jhunt_rom )
 	ROM_LOAD( "kn60",   0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
@@ -913,7 +913,7 @@ ROM_START( wwestern_rom )
 	/* 10000-11fff space for banked ROMs (not used) */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
@@ -938,7 +938,7 @@ ROM_START( frontlin_rom )
 	ROM_LOAD( "aa1.09", 0x10000, 0x2000, 0xaebb291b )	/* banked at 6000 */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
@@ -965,7 +965,7 @@ ROM_START( alpine_rom )
 	/* 10000-11fff space for banked ROMs (not used) */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */

@@ -73,8 +73,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1400, 0x1400, watchdog_reset_w },
 	{ 0x1480, 0x1480, hyperspt_flipscreen_w },
 	{ 0x1481, 0x1481, konami_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
-	{ 0x1483, 0x1483, MWA_NOP },  /* Coin counter 1 */
-	{ 0x1484, 0x1484, MWA_NOP },  /* Coin counter 2 */
+	{ 0x1483, 0x1484, coin_counter_w },
 	{ 0x1487, 0x1487, interrupt_enable_w },  /* Interrupt enable */
 	{ 0x1500, 0x1500, soundlatch_w },
 	{ 0x2000, 0x27ff, videoram_w, &videoram, &videoram_size },

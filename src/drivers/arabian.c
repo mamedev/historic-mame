@@ -348,7 +348,7 @@ ROM_START( arabian_rom )
 	ROM_LOAD( "ic4.90", 0x6000, 0x2000, 0xcd8565b1 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* space for graphics roms */

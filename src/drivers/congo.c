@@ -89,8 +89,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc018, 0xc018, MWA_NOP }, /* coinAen */
 	{ 0xc019, 0xc019, MWA_NOP }, /* coinBen */
 	{ 0xc01a, 0xc01a, MWA_NOP }, /* serven */
-	{ 0xc01b, 0xc01b, MWA_NOP }, /* counterA */
-	{ 0xc01c, 0xc01c, MWA_NOP }, /* counterB */
+	{ 0xc01b, 0xc01c, coin_counter_w }, /* counterA, counterB */
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }  /* end of table */
 };

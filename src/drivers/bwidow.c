@@ -271,6 +271,25 @@ static int spacduel_IN3_r (int offset) {
 
 int bzone_IN0_r(int offset);
 
+void bwidow_misc_w (int offset, int data)
+{
+	/*
+		0x10 = p1 led
+		0x20 = p2 led
+		0x01 = coin counter 1
+		0x02 = coin counter 2
+	*/
+	static int lastdata;
+	
+	if (data == lastdata) return;
+	osd_led_w (0, ~((data & 0x10) >> 4));
+	osd_led_w (1, ~((data & 0x20) >> 5));
+	coin_counter_w (0, data & 0x01);
+	coin_counter_w (1, data & 0x02);
+	lastdata = data;
+}
+
+
 static struct MemoryReadAddress bwidow_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -292,7 +311,7 @@ static struct MemoryWriteAddress bwidow_writemem[] =
 	{ 0x2000, 0x27ff, MWA_RAM },
 	{ 0x6000, 0x67ff, pokey1_w },
 	{ 0x6800, 0x6fff, pokey2_w },
-	{ 0x8800, 0x8800, MWA_NOP }, /* coin out */
+	{ 0x8800, 0x8800, bwidow_misc_w }, /* coin counters, leds */
 	{ 0x8840, 0x8840, avgdvg_go },
 	{ 0x8880, 0x8880, avgdvg_reset },
 	{ 0x88c0, 0x88c0, MWA_NOP }, /* interrupt acknowledge */
@@ -326,7 +345,7 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ 0x1000, 0x13ff, pokey1_w },
 	{ 0x1400, 0x17ff, pokey2_w },
 	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
-	{ 0x0c00, 0x0c00, MWA_NOP }, /* coin out */
+//	{ 0x0c00, 0x0c00, coin_counter_w }, /* coin out */
 	{ 0x0c80, 0x0c80, avgdvg_go },
 	{ 0x0d00, 0x0d00, MWA_NOP }, /* watchdog clear */
 	{ 0x0d80, 0x0d80, avgdvg_reset },

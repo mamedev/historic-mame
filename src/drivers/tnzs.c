@@ -33,7 +33,6 @@ void init_tnzs(void);
 int tnzs_interrupt(void){return 0;}
 int tnzs_objram_r(int offset);
 
-int tnzs_xxxx2_r(int offset);
 int tnzs_yyyy2_r(int offset);
 int tnzs_cpu2ram_r(int offset);
 int tnzs_workram_r(int offset);
@@ -42,7 +41,6 @@ int tnzs_vdcram_r(int offset);
 void tnzs_objram_w(int offset, int data);
 void tnzs_bankswitch1_w(int offset, int data);
 void tnzs_xxxx_w(int offset, int data);
-void tnzs_xxxx2_w(int offset, int data);
 void tnzs_yyyy2_w(int offset, int data);
 void tnzs_cpu2ram_w(int offset, int data);
 void tnzs_workram_w(int offset, int data);
@@ -120,7 +118,6 @@ int tnzs_objectram_size;
 void tnzs_videoram_w(int offset,int data);
 void tnzs_objectram_w(int offset,int data);
 void tnzs_paletteram_w(int offset,int data);
-void tnzs_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int tnzs_vh_start(void);
 void tnzs_vh_stop(void);
 void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -170,7 +167,8 @@ static struct MemoryReadAddress readmem1[] =
 {
     { 0x0000, 0x7fff, MRA_ROM },
     { 0x8000, 0x9fff, MRA_BANK2 },
-    { 0xb000, 0xb002, tnzs_xxxx2_r },
+    { 0xb000, 0xb000, YM2203_status_port_0_r  },
+    { 0xb001, 0xb001, YM2203_read_port_0_r  },
     { 0xc000, 0xc002, tnzs_yyyy2_r},
     { 0xd000, 0xdfff, tnzs_cpu2ram_r },
     { 0xe000, 0xefff, tnzs_workram_r },
@@ -182,7 +180,8 @@ static struct MemoryWriteAddress writemem1[] =
 {
     { 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
-    { 0xb000, 0xb002, tnzs_xxxx2_w },
+    { 0xb000, 0xb000, YM2203_control_port_0_w  },
+    { 0xb001, 0xb001, YM2203_write_port_0_w  },
     { 0xc000, 0xc002, tnzs_yyyy2_w},
     { 0xd000, 0xdfff, tnzs_cpu2ram_w, &tnzs_cpu2ram },
     { 0xe000, 0xefff, tnzs_workram_w },
@@ -329,8 +328,8 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	1500000,	/* 1.5 MHz ??? */
 	{ YM2203_VOL(255,255) },
-	{ 0 },
-	{ 0 },
+	{ input_port_6_r },
+	{ input_port_7_r },
 	{ 0 },
 	{ 0 }
 };
@@ -370,8 +369,8 @@ static struct MachineDriver tnzs_machine_driver =
     { 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
 #endif
     gfxdecodeinfo,
-    256, 16 * 16, /* 64,32+32, */
-	tnzs_vh_convert_color_prom,
+    256, 256,
+	0,
 
 	VIDEO_TYPE_RASTER,
     0,

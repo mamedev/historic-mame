@@ -7,7 +7,6 @@ Q*bert Qubes: same as Q*bert with two banks of sprites
 #include "vidhrdw/generic.h"
 
 int qbert_vh_start(void);
-void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void qbert_sh_w(int offset, int data);
 void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_paletteram;
@@ -186,7 +185,7 @@ static const struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
 	16, 16,
-	gottlieb_vh_init_color_palette,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,      /* init vh */

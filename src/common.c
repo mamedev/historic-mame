@@ -8,6 +8,11 @@
 
 #include "driver.h"
 
+/* These globals are only kept on a machine basis - LBO 042898 */
+unsigned int dispensed_tickets;
+unsigned int coins[COIN_COUNTERS];
+unsigned int lastcoin[COIN_COUNTERS];
+
 /* LBO */
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
@@ -458,7 +463,17 @@ void freesamples(struct GameSamples *samples)
 	free(samples);
 }
 
-
+/* LBO 042898 - added coin counters */
+void coin_counter_w (int offset, int data)
+{
+	if (offset >= COIN_COUNTERS) return;
+	/* Count it only if the data has changed from 0 to non-zero */
+	if (data && (lastcoin[offset] == 0))
+	{
+		coins[offset] ++;
+	}
+	lastcoin[offset] = data;
+}
 
 /***************************************************************************
 

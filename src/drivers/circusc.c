@@ -66,8 +66,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0000, circusc_flipscreen_w },
 	{ 0x0001, 0x0001, interrupt_enable_w },
-	{ 0x0003, 0x0003, MWA_NOP },  /* Coin counter 1 */
-	{ 0x0004, 0x0004, MWA_NOP },  /* Coin counter 2 */
+	{ 0x0003, 0x0004, coin_counter_w },  /* Coin counters */
 	{ 0x0005, 0x0005, MWA_RAM, &circusc_spritebank },
 	{ 0x0400, 0x0400, watchdog_reset_w },
 	{ 0x0800, 0x0800, soundlatch_w },

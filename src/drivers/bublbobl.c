@@ -53,7 +53,6 @@ extern int bublbobl_objectram_size;
 void bublbobl_videoram_w(int offset,int data);
 void bublbobl_objectram_w(int offset,int data);
 void bublbobl_paletteram_w(int offset,int data);
-void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int bublbobl_vh_start(void);
 void bublbobl_vh_stop(void);
 void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -431,9 +430,8 @@ static struct MachineDriver bublbobl_machine_driver =
     32*8, 32*8,			/* screen_width, height */
     { 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
     gfxdecodeinfo,
-    256, /* total_colours */
-    16*16,		/* color_table_len */
-    bublbobl_vh_convert_color_prom,
+    256, 256,
+    0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
     0,
@@ -491,9 +489,8 @@ static struct MachineDriver boblbobl_machine_driver =
     32*8, 32*8,			/* screen_width, height */
     { 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
     gfxdecodeinfo,
-    256, /* total_colours */
-    16*16,		/* color_table_len */
-    bublbobl_vh_convert_color_prom,
+	256, 256,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
     0,

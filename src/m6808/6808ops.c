@@ -298,7 +298,7 @@ INLINE void ble( void )
 /* $30 TSX inherent ----- */
 INLINE void tsx (void)
 {
-	xreg=sreg + 1;
+	xreg=( sreg + 1 );
 }
 
 /* $31 INS inherent ----- */
@@ -328,7 +328,7 @@ INLINE void des (void)
 /* $35 TXS inherent ----- */
 INLINE void txs (void)
 {
-	sreg=xreg - 1;
+	sreg=( xreg - 1 );
 }
 
 /* $36 PSHA inherent ----- */

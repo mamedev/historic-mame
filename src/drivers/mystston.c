@@ -67,7 +67,6 @@ extern unsigned char *mystston_scroll;
 extern unsigned char *mystston_paletteram;
 
 void mystston_paletteram_w(int offset,int data);
-void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void mystston_videoram3_w(int offset,int data);
 void mystston_colorram3_w(int offset,int data);
 int mystston_vh_start(void);
@@ -231,8 +230,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	24, 3*8,
-	mystston_vh_convert_color_prom,
+	24, 24,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,

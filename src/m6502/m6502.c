@@ -189,7 +189,7 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 void Reset6502(M6502 *R)
 {
   R->A=R->X=R->Y=0x00;
-  R->P=Z_FLAG|R_FLAG;
+  R->P=Z_FLAG|R_FLAG|I_FLAG;	/* NS 980501 added I_FLAG to fix Centipede test mode */
   R->S=0xFF;
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);

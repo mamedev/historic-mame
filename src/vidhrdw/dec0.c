@@ -74,7 +74,8 @@ static int palette_dirty;
 
 /* playfield control registers:
    bank 0:
-   0: unknown (82, 86, 8e)
+   0: unknown (82, 86, 8e...)
+      in Robocop: 03 normal, 07 = enable scanline scroll registers (fade-in at start of game)
    2: unknown (00 in fg, 03 in bg)
    4: unknown (always 00)
    6: playfield shape: 00 = 4x1, 01 = 2x2, 02 = 1x4
@@ -87,10 +88,9 @@ static int palette_dirty;
 */
 static unsigned char dec0_pf1_control_0[8];
 static unsigned char dec0_pf1_control_1[8];
-static unsigned char dec0_pf1_rowscroll[32];
+unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll;
 static unsigned char dec0_pf2_control_0[8];
 static unsigned char dec0_pf2_control_1[8];
-static unsigned char dec0_pf2_rowscroll[32];
 static unsigned char dec0_pf3_control_0[8];
 static unsigned char dec0_pf3_control_1[8];
 static unsigned char dec0_pf3_rowscroll[32];
@@ -124,42 +124,42 @@ for (i = 0;i < 8;i+=2)
 {
 	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_0[i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*0,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*2,0,TRANSPARENCY_NONE,0);
 }
 for (i = 0;i < 8;i+=2)
 {
 	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_1[i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*1,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*3,0,TRANSPARENCY_NONE,0);
 }
 for (i = 0;i < 8;i+=2)
 {
 	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_0[i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*3,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
 }
 for (i = 0;i < 8;i+=2)
 {
 	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_1[i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*4,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*6,0,TRANSPARENCY_NONE,0);
 }
 for (i = 0;i < 8;i+=2)
 {
 	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_0[i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*6,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*8,0,TRANSPARENCY_NONE,0);
 }
 for (i = 0;i < 8;i+=2)
 {
 	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_1[i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*7,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*9,0,TRANSPARENCY_NONE,0);
 }
 {
 	sprintf(buf,"%04X",dec0_pri);
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j,8*9,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j,8*11,0,TRANSPARENCY_NONE,0);
 }
 
 	Machine->orientation = trueorientation;
@@ -540,13 +540,21 @@ void dec0_pf1_draw(struct osd_bitmap *bitmap)
 
 	scrolly = -READ_WORD(&dec0_pf1_control_1[2]);
 
-	if (READ_WORD(&dec0_pf1_control_1[6]) == 0x04)
+	if (READ_WORD(&dec0_pf1_control_1[6]) == 0x04)	/* Bad Dudes */
 	{
 		int rscrollx[16];
 
 		for (offs = 0;offs < 16;offs++)
 			rscrollx[offs] = -READ_WORD(&dec0_pf1_control_1[0]) - READ_WORD(&dec0_pf1_rowscroll[2*offs]);
 		copyscrollbitmap(bitmap,dec0_pf1_bitmap,16,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	}
+	else if (READ_WORD(&dec0_pf1_control_0[0]) == 0x07)	/* Robocop */
+	{
+		int rscrollx[512];
+
+		for (offs = 0;offs < 512;offs++)
+			rscrollx[offs] = -READ_WORD(&dec0_pf1_control_1[0]) - READ_WORD(&dec0_pf1_rowscroll[2*offs]);
+		copyscrollbitmap(bitmap,dec0_pf1_bitmap,512,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 	else
 	{

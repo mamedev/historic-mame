@@ -15,38 +15,38 @@
 
 static char *mnemonic_xx_cb[256]=
 {
- "#","#","#","#","#","#","rlc Y"  ,"#",
- "#","#","#","#","#","#","rrc Y"  ,"#",
- "#","#","#","#","#","#","rl Y"   ,"#",
- "#","#","#","#","#","#","rr Y"   ,"#",
- "#","#","#","#","#","#","sla Y"  ,"#",
- "#","#","#","#","#","#","sra Y"  ,"#",
- "#","#","#","#","#","#","sll Y"  ,"#",
- "#","#","#","#","#","#","srl Y"  ,"#",
- "#","#","#","#","#","#","bit 0,Y","#",
- "#","#","#","#","#","#","bit 1,Y","#",
- "#","#","#","#","#","#","bit 2,Y","#",
- "#","#","#","#","#","#","bit 3,Y","#",
- "#","#","#","#","#","#","bit 4,Y","#",
- "#","#","#","#","#","#","bit 5,Y","#",
- "#","#","#","#","#","#","bit 6,Y","#",
- "#","#","#","#","#","#","bit 7,Y","#",
- "#","#","#","#","#","#","res 0,Y","#",
- "#","#","#","#","#","#","res 1,Y","#",
- "#","#","#","#","#","#","res 2,Y","#",
- "#","#","#","#","#","#","res 3,Y","#",
- "#","#","#","#","#","#","res 4,Y","#",
- "#","#","#","#","#","#","res 5,Y","#",
- "#","#","#","#","#","#","res 6,Y","#",
- "#","#","#","#","#","#","res 7,Y","#",
- "#","#","#","#","#","#","set 0,Y","#",
- "#","#","#","#","#","#","set 1,Y","#",
- "#","#","#","#","#","#","set 2,Y","#",
- "#","#","#","#","#","#","set 3,Y","#",
- "#","#","#","#","#","#","set 4,Y","#",
- "#","#","#","#","#","#","set 5,Y","#",
- "#","#","#","#","#","#","set 6,Y","#",
- "#","#","#","#","#","#","set 7,Y","#"
+ "rlc b=Y","rlc c=Y","rlc d=Y","rlc e=Y","rlc h=Y","rlc l=Y","rlc Y",  "rlc a=Y",
+ "rrc b=Y","rrc c=Y","rrc d=Y","rrc e=Y","rrc h=Y","rrc l=Y","rrc Y",  "rrc a=Y",
+ "rl b=Y", "rl c=Y", "rl d=Y", "rl e=Y", "rl h=Y", "rl l=Y", "rl Y",   "rl a=Y",
+ "rr b=Y" ,"rr c=Y" ,"rr d=Y" ,"rr e=Y" ,"rr h=Y" ,"rr l=Y", "rr Y",   "rr a=Y",
+ "sla b=Y","sla c=Y","sla d=Y","sla e=Y","sla h=Y","sla l=Y","sla Y",  "sla a=Y",
+ "sra b=Y","sra c=Y","sra d=Y","sra e=Y","sra h=Y","sra l=Y","sra Y",  "sra a=Y",
+ "sll b=Y","sll c=Y","sll d=Y","sll e=Y","sll h=Y","sll l=Y","sll Y",  "sll a=Y",
+ "srl b=Y","srl c=Y","srl d=Y","srl e=Y","srl h=Y","srl l=Y","srl Y",  "srl a=Y",
+ "bit b=0,Y","bit c=0,Y","bit d=0,Y","bit e=0,Y","bit h=0,Y","bit l=0,Y","bit 0,Y","bit a=0,Y",
+ "bit b=1,Y","bit c=1,Y","bit d=1,Y","bit e=1,Y","bit h=1,Y","bit l=1,Y","bit 1,Y","bit a=1,Y",
+ "bit b=2,Y","bit c=2,Y","bit d=2,Y","bit e=2,Y","bit h=2,Y","bit l=2,Y","bit 2,Y","bit a=2,Y",
+ "bit b=3,Y","bit c=3,Y","bit d=3,Y","bit e=3,Y","bit h=3,Y","bit l=3,Y","bit 3,Y","bit a=3,Y",
+ "bit b=4,Y","bit c=4,Y","bit d=4,Y","bit e=4,Y","bit h=4,Y","bit l=4,Y","bit 4,Y","bit a=4,Y",
+ "bit b=5,Y","bit c=5,Y","bit d=5,Y","bit e=5,Y","bit h=5,Y","bit l=5,Y","bit 5,Y","bit a=5,Y",
+ "bit b=6,Y","bit c=6,Y","bit d=6,Y","bit e=6,Y","bit h=6,Y","bit l=6,Y","bit 6,Y","bit a=6,Y",
+ "bit b=7,Y","bit c=7,Y","bit d=7,Y","bit e=7,Y","bit h=7,Y","bit l=7,Y","bit 7,Y","bit a=7,Y",
+ "res b=0,Y","res c=0,Y","res d=0,Y","res e=0,Y","res h=0,Y","res l=0,Y","res 0,Y","res a=0,Y",
+ "res b=1,Y","res c=1,Y","res d=1,Y","res e=1,Y","res h=1,Y","res l=1,Y","res 1,Y","res a=1,Y",
+ "res b=2,Y","res c=2,Y","res d=2,Y","res e=2,Y","res h=2,Y","res l=2,Y","res 2,Y","res a=2,Y",
+ "res b=3,Y","res c=3,Y","res d=3,Y","res e=3,Y","res h=3,Y","res l=3,Y","res 3,Y","res a=3,Y",
+ "res b=4,Y","res c=4,Y","res d=4,Y","res e=4,Y","res h=4,Y","res l=4,Y","res 4,Y","res a=4,Y",
+ "res b=5,Y","res c=5,Y","res d=5,Y","res e=5,Y","res h=5,Y","res l=5,Y","res 5,Y","res a=5,Y",
+ "res b=6,Y","res c=6,Y","res d=6,Y","res e=6,Y","res h=6,Y","res l=6,Y","res 6,Y","res a=6,Y",
+ "res b=7,Y","res c=7,Y","res d=7,Y","res e=7,Y","res h=7,Y","res l=7,Y","res 7,Y","res a=7,Y",
+ "set b=0,Y","set c=0,Y","set d=0,Y","set e=0,Y","set h=0,Y","set l=0,Y","set 0,Y","set a=0,Y",
+ "set b=1,Y","set c=1,Y","set d=1,Y","set e=1,Y","set h=1,Y","set l=1,Y","set 1,Y","set a=1,Y",
+ "set b=2,Y","set c=2,Y","set d=2,Y","set e=2,Y","set h=2,Y","set l=2,Y","set 2,Y","set a=2,Y",
+ "set b=3,Y","set c=3,Y","set d=3,Y","set e=3,Y","set h=3,Y","set l=3,Y","set 3,Y","set a=3,Y",
+ "set b=4,Y","set c=4,Y","set d=4,Y","set e=4,Y","set h=4,Y","set l=4,Y","set 4,Y","set a=4,Y",
+ "set b=5,Y","set c=5,Y","set d=5,Y","set e=5,Y","set h=5,Y","set l=5,Y","set 5,Y","set a=5,Y",
+ "set b=6,Y","set c=6,Y","set d=6,Y","set e=6,Y","set h=6,Y","set l=6,Y","set 6,Y","set a=6,Y",
+ "set b=7,Y","set c=7,Y","set d=7,Y","set e=7,Y","set h=7,Y","set l=7,Y","set 7,Y","set =a7Y,"
 };
 
 static char *mnemonic_cb[256]=
@@ -297,9 +297,11 @@ static int DasmZ80 (char *dest,int PC)
    case '@':
     sprintf (dest,"db     $%02x",Z80_RDOP_ARG(PC));
     return 1;
+#if 0
    case '#':
     sprintf (dest,"db     $%02x,$cb,$%02x",Z80_RDOP_ARG(PC),Z80_RDOP_ARG(PC+2));
     return 2;
+#endif
    case ' ':
     k=strlen(dest);
     if (k<4) k=5-k;

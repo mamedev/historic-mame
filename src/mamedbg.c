@@ -12,7 +12,9 @@
  *		Commands:
  *		-  BPX  <address>           Set a breakpoint
  *		-  BC                       Clear all breakpoints
- *		-  D    <address> [1|2]     Display an address on viewport 1 or 2
+ *		-  D    <1|2> [address]     Display an address on viewport 1
+ *									or 2.  Default to disassembly
+ *									window cursor location.
  *		-  DASM <filename>          Disassemble a range of memory to file
  *		        <StartAddress>      Addresses may be a value or a register
  *		        <EndAddress>
@@ -21,7 +23,9 @@
  *		        <EndAddress>
  *		-  TRACE <filename>|OFF		Start CPU instruction tracing to "filename"
  *									or turn CPU instruction tracing OFF
- *		-  E    <address> [1|2]     Edit an address on viewport 1 or 2
+ *		-  E    <1|2> [address]     Edit an address on viewport 1 or
+ *									2.  Default to not changing the
+ *									location which the viewport is editing.
  *		-  G    <address>           Continue execution.  If an address is
  *		                            provided, MDB will set a breakpoint there
  *		-  HERE                     Set a temporary breakpoint to current
@@ -53,6 +57,18 @@
  */
 
 #ifdef MAME_DEBUG
+
+/* undefine the following if you don't want 'LEFT' and 'RIGHT' to do
+   anything in the disassembly window.
+
+   Nicola wrote:
+
+   > Actually, I would like right and left to move in and out of
+   > subroutines.  Press RIGHT while on a CALL/JSR/JMP instruction, and
+   > you go to the pointed address. move as you like, then press LEFT to
+   > return to the previous point.  Recursively, of course.
+*/
+#define ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW	/* CM 980428 */
 
 #include "mamedbg.h"
 #include "mame.h"
@@ -566,27 +582,25 @@ static int EditMemory(char *param)
 
 	if (strlen(pr) > 0)
 	{
-			nCorrectParams = sscanf(pr, "%s %d", s1, &view);
-			if (nCorrectParams > 0)
-			{
+		nCorrectParams = sscanf(pr, "%d %s", &view, s1);	/* CM 980428 */
+		if (nCorrectParams > 0)
+		{
+			if (nCorrectParams == 2)
 				addr = GetAddress(cputype, s1);
-				if (nCorrectParams == 2)
-				{
-					if (view == 1)
-					  MEM1 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
-										DebugInfo[cputype].MemWindowDataXEnd,
-										3, 10, MEM1_COLOUR, addr, &DisplayASCII[0]);
-					else if (view == 2)
-					  MEM2 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
-										DebugInfo[cputype].MemWindowDataXEnd,
-										12, 19, MEM2_COLOUR, addr, &DisplayASCII[1]);
-					else rv = -1;
-				}
-				else
-					  MEM1 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
-										DebugInfo[cputype].MemWindowDataXEnd,
-										3, 10, MEM1_COLOUR, addr, &DisplayASCII[0]);
-			}
+			else
+				/* if no address was specified, use current viewport address */
+				addr = (view == 1 ? MEM1 : MEM2);			/* CM 980428 */
+
+			if (view == 1)
+				MEM1 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
+								  DebugInfo[cputype].MemWindowDataXEnd,
+								  3, 10, MEM1_COLOUR, addr, &DisplayASCII[0]);
+			else if (view == 2)
+				MEM2 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
+								  DebugInfo[cputype].MemWindowDataXEnd,
+								  12, 19, MEM2_COLOUR, addr, &DisplayASCII[1]);
+			else rv = -1;
+		}
 	}
 	else
 	{
@@ -610,29 +624,27 @@ static int DisplayMemory(char *param)
 
 	if (strlen(pr) > 0)
 	{
-		nCorrectParams = sscanf(pr, "%s %d", s1, &view);
+		nCorrectParams = sscanf(pr, "%d %s", &view, s1); /* CM 980428 */
 		if (nCorrectParams > 0)
 		{
-			addr = GetAddress(cputype, s1);
 			if (nCorrectParams == 2)
-			{
-				if (view == 1)
-				{
-				  DrawMemWindow (addr, MEM1_COLOUR, 3, DisplayASCII[0]);	/* MB 980103 */
-				  MEM1 = addr;
-				}
-				else if (view == 2)
-				{
-				  DrawMemWindow (addr, MEM2_COLOUR, 12, DisplayASCII[1]);	/* MB 980103 */
-				  MEM2 = addr;
-				}
-				else rv = -1;
-			}
+				addr = GetAddress(cputype, s1);
 			else
+				/* if no address is specified, use current disassembly
+				 * window cursor position */
+				addr = CursorPC; /* CM 980428 */
+
+			if (view == 1)
 			{
-				  DrawMemWindow (addr, MEM1_COLOUR, 3, DisplayASCII[0]);	/* MB 980103 */
-				  MEM1 = addr;
+				DrawMemWindow (addr, MEM1_COLOUR, 3, DisplayASCII[0]);	/* MB 980103 */
+				MEM1 = addr;
 			}
+			else if (view == 2)
+			{
+				DrawMemWindow (addr, MEM2_COLOUR, 12, DisplayASCII[1]);	/* MB 980103 */
+				MEM2 = addr;
+			}
+			else rv = -1;
 		}
 	}
 	else
@@ -1716,6 +1728,16 @@ void MAME_Debug (void)
 						Update = TRUE;
 						break;
 
+#ifdef ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW
+					case OSD_KEY_LEFT:		/* Move Cursor back one alignment unit */
+											/* CM 980428 */
+						ResetCommandLine = 1;
+						StartAddress = CursorPC -= DebugInfo[cputype].AlignUnit;
+						if (StartAddress < 0) StartAddress = 0;
+						EndAddress = debug_draw_disasm (StartAddress);
+						break;
+#endif /* ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW */
+
 					case OSD_KEY_UP:		/* Scroll disassembly up a line */
 						ResetCommandLine = 1;
 						if ((CursorPC >= StartAddress+debug_dasm_line(StartAddress,S)) &&
@@ -1738,24 +1760,27 @@ void MAME_Debug (void)
 						}
 						else
 						{
-							  /*
-							   * Try to find the previous instruction by searching
-							   * from the longest instruction length towards the
-							   * current address.  If we can't find one then
-							   * just go back one byte, which means that a
-							   * previous guess was wrong.
-							   */
-							  for (TempAddress = StartAddress -
-									  DebugInfo[cputype].MaxInstLen;
-									  TempAddress < StartAddress; TempAddress++)
+							/*
+							 * Try to find the previous instruction by searching
+							 * from the longest instruction length towards the
+							 * current address.  If we can't find one then
+							 * just go back one byte, which means that a
+							 * previous guess was wrong.
+							 */
+							TempAddress = StartAddress - DebugInfo[cputype].MaxInstLen;
+							if (TempAddress < 0) TempAddress = 0; /* CM 980428 */
+
+							for (TempAddress = (TempAddress > 0) ? TempAddress : 0;
+								 TempAddress < StartAddress; /* CM 980428 */
+								 TempAddress += DebugInfo[cputype].AlignUnit)
 							  {
 								  if ((TempAddress +
 									  debug_dasm_line (TempAddress, S)) ==
 										  StartAddress)
 									  break;
 							  }
-							  if (TempAddress == StartAddress)
-								  TempAddress--;
+							  if (TempAddress == StartAddress) /* CM 980428 */
+								  TempAddress -= DebugInfo[cputype].AlignUnit;
 							  CursorPC = TempAddress;
 												  if (CursorPC < StartAddress) StartAddress = CursorPC;
 												  EndAddress = debug_draw_disasm (StartAddress);
@@ -1763,25 +1788,54 @@ void MAME_Debug (void)
 						break;
 
 					case OSD_KEY_PGUP:			/* Page Up */
+					{
+						/* This uses a 'rolling window' of start
+						   addresses to work out the best address to
+						   use to generate the previous pagefull of
+						   disassembly - CM 980428 */
+						int TempAddresses[16];
+
 						ResetCommandLine = 1;
-						for (Line = 0; Line < 15; Line++)	/* MB 980103 */
+
+						TempAddress = StartAddress -
+							DebugInfo[cputype].MaxInstLen * 16;
+
+						if (TempAddress < 0) TempAddress = 0;
+
+						for (Line = 0; TempAddress < StartAddress; Line++)
 						{
-							for (TempAddress = StartAddress -
-									DebugInfo[cputype].MaxInstLen;
-									TempAddress <StartAddress;TempAddress++)
-							{
-								if ((TempAddress +
-									debug_dasm_line (TempAddress, S)) ==
-									StartAddress)
-									break;
-							}
-							if (TempAddress == StartAddress)
-								TempAddress--;
-							StartAddress = TempAddress;
+							TempAddresses[Line % 16] = TempAddress;
+							TempAddress += debug_dasm_line(TempAddress, S);
 						}
+
+						/* If this ever happens, it's because our
+						   'MaxInstLen' member is too small for the
+						   CPU */
+						if (Line < 16)
+						{
+							StartAddress = TempAddresses[0];
+							if (errorlog)
+								fprintf(errorlog, "Increase MaxInstLen? Line = %d\n",
+										Line);
+						}
+						else
+						{
+							StartAddress = TempAddresses[(Line + 1) % 16];
+						}
+
 						CursorPC = StartAddress;
 						EndAddress = debug_draw_disasm (StartAddress);
 						break;
+					}
+
+#ifdef ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW
+					case OSD_KEY_RIGHT:		/* Move Cursor forward one alignment unit */
+											/* CM 980428 */
+						ResetCommandLine = 1;
+						StartAddress = CursorPC += DebugInfo[cputype].AlignUnit;
+						EndAddress = debug_draw_disasm (StartAddress);
+						break;
+#endif /* ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW */
 
 					case OSD_KEY_DOWN:		/* Scroll disassembly down a line */
 						ResetCommandLine = 1;

@@ -91,7 +91,10 @@ int frogger_portB_r(int offset);
 void frogger_sh_irqtrigger_w(int offset,int data);
 void frogger2_sh_irqtrigger_w(int offset,int data);
 
-
+static void frogger_counterb_w (int offset, int data)
+{
+	coin_counter_w (1, data);
+}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -116,6 +119,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb808, 0xb808, interrupt_enable_w },
 	{ 0xd000, 0xd000, soundlatch_w },
 	{ 0xd002, 0xd002, frogger_sh_irqtrigger_w },
+	{ 0xb818, 0xb818, coin_counter_w },
+	{ 0xb81c, 0xb81c, frogger_counterb_w },
 	{ -1 }	/* end of table */
 };
 

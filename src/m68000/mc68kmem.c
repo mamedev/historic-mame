@@ -38,7 +38,7 @@ void m68k_dumpstate(void)
    int i;
    CPTR nextpc;
    for(i = 0; i < 8; i++){
-      printf("D%d: %08x ", i, regs.d[i]);
+      printf("D%d: %08x ", i, regs.d[i].D);
       if ((i & 3) == 3) printf("\n");
    }
    for(i = 0; i < 8; i++){

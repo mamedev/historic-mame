@@ -5,8 +5,8 @@ CC = gcc
 LD = gcc
 
 # add -DMAME_DEBUG to include the debugger
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES
-#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DMAME_DEBUG
+#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DMAME_DEBUG -DBETA_VERSION
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
 	-W -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
@@ -82,7 +82,6 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/mpatrol.o  obj/sndhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
          obj/vidhrdw/btime.o obj/drivers/btime.o \
-         obj/vidhrdw/bnj.o obj/drivers/bnj.o \
          obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
          obj/vidhrdw/gberet.o obj/drivers/gberet.o \
          obj/vidhrdw/exidy.o obj/drivers/exidy.o \
@@ -128,7 +127,6 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/quantum.o obj/drivers/quantum.o \
          obj/machine/missile.o obj/vidhrdw/missile.o obj/drivers/missile.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
-         obj/vidhrdw/eggs.o obj/drivers/eggs.o \
          obj/machine/bosco.o obj/sndhrdw/bosco.o obj/vidhrdw/bosco.o obj/drivers/bosco.o \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
@@ -217,6 +215,11 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/atetris.o obj/drivers/atetris.o \
          obj/vidhrdw/dday.o obj/drivers/dday.o \
          obj/machine/system8.o obj/drivers/system8.o \
+         obj/vidhrdw/pacland.o obj/drivers/pacland.o \
+         obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
+         obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
+         obj/vidhrdw/zarzon.o obj/drivers/zarzon.o \
+         obj/vidhrdw/xain.o obj/drivers/xain.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o \
 		 obj/M6809/m6809.o obj/M6808/m6808.o obj/M6805/m6805.o \
          obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \

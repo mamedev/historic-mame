@@ -24,8 +24,6 @@ static int flipscreen;
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
   Ghosts 'n Goblins doesn't have color PROMs, it uses RAM instead.
 
   I don't know the exact values of the resistors between the RAM and the
@@ -49,23 +47,34 @@ static int flipscreen;
   bit 0 -- unused
 
 ***************************************************************************/
-void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void gng_paletteram_w(int offset,int data)
 {
-	int i;
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
 
+	gng_paletteram[offset] = data;
 
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
+	val = gng_paletteram[offset & ~0x100];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i;
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	val = gng_paletteram[offset | 0x100];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	osd_modify_pen(Machine->pens[(offset & ~0x100)],r,g,b);
 }
 
 
@@ -134,38 +143,6 @@ void gng_bgcolorram_w(int offset,int data)
 
 		gng_bgcolorram[offset] = data;
 	}
-}
-
-
-
-void gng_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-	gng_paletteram[offset] = data;
-
-	val = gng_paletteram[offset & ~0x100];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	val = gng_paletteram[offset | 0x100];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	osd_modify_pen(Machine->pens[(offset & ~0x100)],r,g,b);
 }
 
 

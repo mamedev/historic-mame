@@ -47,8 +47,10 @@ void starwars_out_w (int offset, int data)
 	switch (offset)
 	{
 		case 0:		/* Coin counter 1 */
+			coin_counter_w (0, data);
 			break;
 		case 1:		/* Coin counter 2 */
+			coin_counter_w (1, data);
 			break;
 		case 2:		/* LED 3 */
 			osd_led_w (2, data >> 7); break;
@@ -359,7 +361,7 @@ ROM_START( starwars_rom )
 	ROM_LOAD( "136021.113",0x0c00,0x0400, 0x4d20bcd2 ) /* PROM 3 */
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */

@@ -221,7 +221,7 @@ static struct MemoryWriteAddress astdelux_writemem[] =
 /*	{ 0x3c00, 0x3c03, astdelux_led_w },*/ /* P1 LED, P2 LED, unknown, thrust? */
 	{ 0x3c00, 0x3c03, MWA_NOP }, /* P1 LED, P2 LED, unknown, thrust? */
 	{ 0x3c04, 0x3c04, astdelux_bank_switch_w },
-	{ 0x3c05, 0x3c07, MWA_NOP }, /* Coin counters */
+	{ 0x3c05, 0x3c07, coin_counter_w },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x4800, 0x57ff, MWA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */

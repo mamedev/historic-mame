@@ -60,7 +60,6 @@ Sound processor (6502) memory map:
 #include "vidhrdw/generic.h"
 
 int reactor_vh_start(void);
-void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
 void gottlieb_characterram_w(int offset, int data);
 int gottlieb_sh_init(const char *gamename);
@@ -225,7 +224,7 @@ static const struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
 	16, 16,
-	gottlieb_vh_init_color_palette,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,      /* init vh */

@@ -27,13 +27,51 @@
 
 
 
-#define BYTE signed char
-#define UBYTE unsigned char
-#define UWORD unsigned short
-#define WORD short
-#define ULONG unsigned int
-#define LONG int
-#define CPTR unsigned int
+typedef signed char	BYTE;
+typedef unsigned char	UBYTE;
+typedef unsigned short	UWORD;
+typedef short		WORD;
+typedef unsigned int	ULONG;
+typedef int		LONG;
+typedef unsigned int	CPTR;
+
+/****************************************************************************/
+/* Define a MC68K word. Upper bytes are always zero			    */
+/****************************************************************************/
+typedef union
+{
+#ifdef __128BIT__
+ #ifdef LSB_FIRST
+   struct { UBYTE l,h,h2,h3,h4,h5,h6,h7, h8,h9,h10,h11,h12,h13,h14,h15; } B;
+   struct { UWORD l,h,h2,h3,h4,h5,h6,h7; } W;
+   ULONG D;
+ #else
+   struct { UBYTE h15,h14,h13,h12,h11,h10,h9,h8, h7,h6,h5,h4,h3,h2,h,l; } B;
+   struct { UWORD h7,h6,h5,h4,h3,h2,h,l; } W;
+   ULONG D;
+ #endif
+#elif __64BIT__
+ #ifdef LSB_FIRST
+   struct { UBYTE l,h,h2,h3,h4,h5,h6,h7; } B;
+   struct { UWORD l,h,h2,h3; } W;
+   ULONG D;
+ #else
+   struct { UBYTE h7,h6,h5,h4,h3,h2,h,l; } B;
+   struct { UWORD h3,h2,h,l; } W;
+   ULONG D;
+ #endif
+#else
+ #ifdef LSB_FIRST
+   struct { UBYTE l,h,h2,h3; } B;
+   struct { UWORD l,h; } W;
+   ULONG D;
+ #else
+   struct { UBYTE h3,h2,h,l; } B;
+   struct { UWORD h,l; } W;
+   ULONG D;
+ #endif
+#endif
+} pair68000;
 
 extern void Exception(int nr, CPTR oldpc);
 
@@ -98,7 +136,7 @@ extern UBYTE *actadr;
 
 typedef struct
 {
-            ULONG d[8];
+	    pair68000  d[8];
             CPTR  a[8],usp,isp,msp;
             UWORD sr;
             flagtype t1;
@@ -120,7 +158,9 @@ extern regstruct regs, lastint_regs;
 
 extern union flagu intel_flag_lookup[256];
 extern union flagu regflags;
-
+extern UBYTE aslmask_ubyte[];
+extern UWORD aslmask_uword[];
+extern ULONG aslmask_ulong[];
 
 #define ZFLG (regflags.flags.z)
 #define NFLG (regflags.flags.n)
@@ -170,7 +210,7 @@ static __inline__ ULONG get_disp_ea (ULONG base)
 {
    UWORD dp = nextiword();
         int reg = (dp >> 12) & 7;
-        LONG regd = dp & 0x8000 ? regs.a[reg] : regs.d[reg];
+	LONG regd = dp & 0x8000 ? regs.a[reg] : regs.d[reg].D;
         if ((dp & 0x800) == 0)
             regd = (LONG)(WORD)regd;
         return base + (BYTE)(dp) + regd;

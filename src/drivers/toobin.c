@@ -135,7 +135,6 @@ int toobin_sound_interrupt (void);
 
 void toobin_init_machine(void);
 
-void toobin_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
 int toobin_vh_start (void);
 void toobin_vh_stop (void);
 void toobin_vh_screenrefresh (struct osd_bitmap *bitmap);
@@ -393,8 +392,8 @@ static struct MachineDriver toobin_machine_driver =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	toobin_gfxdecodeinfo,
-	256,1024,
-	toobin_vh_convert_color_prom,
+	256, 1024,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,

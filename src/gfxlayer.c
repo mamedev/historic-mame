@@ -143,165 +143,12 @@ void freetiles(struct GfxTileBank *gfxtilebank)
 
 
 
-
-
-struct GfxLayer *create_tile_layer(struct MachineLayer *ml)
-{
-	struct GfxLayer *layer;
-	int i,len,virtuallen;
-
-
-/* TODO: this part should only be done once since it initializes the globals */
-{
-	int minx,miny,maxx,maxy;
-
-
-	/* determine the size of the dirty buffer */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		layer_width = Machine->drv->screen_height;
-		layer_height = Machine->drv->screen_width;
-		minx = Machine->drv->visible_area.min_y;
-		maxx = Machine->drv->visible_area.max_y;
-		miny = Machine->drv->visible_area.min_x;
-		maxy = Machine->drv->visible_area.max_x;
-	}
-	else
-	{
-		layer_width = Machine->drv->screen_width;
-		layer_height = Machine->drv->screen_height;
-		minx = Machine->drv->visible_area.min_x;
-		maxx = Machine->drv->visible_area.max_x;
-		miny = Machine->drv->visible_area.min_y;
-		maxy = Machine->drv->visible_area.max_y;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		int temp;
-
-
-		temp = minx;
-		minx = layer_width - 1 - maxx;
-		maxx = layer_width - 1 - temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		int temp;
-
-
-		temp = miny;
-		miny = layer_height - 1 - maxy;
-		maxy = layer_height - 1 - temp;
-	}
-
-	layer_dirty_minx = minx & ~0x07;
-	layer_dirty_maxx = maxx & ~0x07;
-	layer_dirty_miny = miny & ~0x07;
-	layer_dirty_maxy = maxy & ~0x07;
-
-	layer_dirty_shift = 0;
-	for (i = (layer_width - 1) >> 3;i != 0;i >>= 1)
-		layer_dirty_shift++;
-
-	layer_dirty_size = (1 << layer_dirty_shift) * (layer_height >> 3) * sizeof(unsigned char);
-}
-
-
-	if ((layer = malloc(sizeof(struct GfxLayer))) != 0)
-	{
-		layer->dirty = malloc(layer_dirty_size);
-		/* first of all, mark everything clean */
-		memset(layer->dirty,TILE_CLEAN,layer_dirty_size);
-		/* then mark the *visible* region dirty */
-		layer_mark_all_dirty(layer,MARK_ALL_DIRTY);
-
-
-
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			layer->tilemap.width = ml->height;
-			layer->tilemap.height = ml->width;
-		}
-		else
-		{
-			layer->tilemap.width = ml->width;
-			layer->tilemap.height = ml->height;
-		}
-
-		layer->tilemap.virtualwidth = ml->width / 8;
-		layer->tilemap.virtualheight = ml->height / 8;
-		layer->tilemap.gfxtilecompose = ml->gfxtilecompose;
-		if (ml->gfxtilecompose)
-		{
-			layer->tilemap.virtualwidth /= ml->gfxtilecompose->width;
-			layer->tilemap.virtualheight /= ml->gfxtilecompose->height;
-		}
-		layer->tilemap.flip = 0;
-
-		len = (ml->width / 8) * (ml->height / 8);
-		virtuallen = layer->tilemap.virtualwidth * layer->tilemap.virtualheight;
-		layer->tilemap.tiles = malloc(len * sizeof(unsigned long));
-		layer->tilemap.virtualtiles = malloc(virtuallen * sizeof(unsigned long));
-		layer->tilemap.virtualdirty = malloc(virtuallen * sizeof(unsigned char));
-		for (i = 0;i < MAX_TILE_BANKS;i++)
-			layer->tilemap.gfxtilebank[i] = 0;
-
-		if (layer->dirty == 0 || layer->tilemap.tiles == 0 || layer->tilemap.virtualtiles == 0 || layer->tilemap.virtualdirty == 0)
-		{
-			free_tile_layer(layer);
-			return 0;
-		}
-		else
-		{
-			if (ml->gfxtiledecodeinfo)
-			{
-				i = 0;
-				while (i < MAX_TILE_BANKS && ml->gfxtiledecodeinfo[i].memory_region != -1)
-				{
-					if ((layer->tilemap.gfxtilebank[i] = decodetiles(&ml->gfxtiledecodeinfo[i],ml)) == 0)
-					{
-						free_tile_layer(layer);
-						return 0;
-					}
-
-					i++;
-				}
-			}
-
-			memset(layer->tilemap.tiles,0,len * sizeof(unsigned long));
-			memset(layer->tilemap.virtualtiles,0,virtuallen * sizeof(unsigned long));
-			memset(layer->tilemap.virtualdirty,1,virtuallen * sizeof(unsigned char));
-		}
-	}
-
-	return layer;
-}
-
-void free_tile_layer(struct GfxLayer *layer)
-{
-	int i;
-
-
-	if (layer == 0) return;
-
-	free(layer->dirty);
-
-	free(layer->tilemap.tiles);
-	for (i = 0;i < MAX_TILE_BANKS;i++)
-		freetiles(layer->tilemap.gfxtilebank[i]);
-
-	free(layer);
-}
-
-
 /* minx and miny are the coordinates (in pixels) of the top left corner of the */
 /* 8x8 block to mark. */
 void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 {
 	int block;
 
-
-	if (layer == 0) return;
 
 	if (minx < layer_dirty_minx)
 	{
@@ -336,13 +183,17 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 			{
 				case MARK_ALL_DIRTY:
 					layer->dirty[block] = TILE_DIRTY;
+					layer->dirtyline[miny >> 3] = 1;
 					break;
 				case MARK_ALL_NOT_CLEAN:
 					layer->dirty[block] = TILE_NOT_CLEAN;
 					break;
 				case MARK_DIRTY_IF_NOT_CLEAN:
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block] = TILE_DIRTY;
+						layer->dirtyline[miny >> 3] = 1;
+					}
 					break;
 			}
 		}
@@ -356,6 +207,7 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					layer->dirty[block] = TILE_DIRTY;
 					block += 1 << layer_dirty_shift;
 					layer->dirty[block] = TILE_DIRTY;
+					layer->dirtyline[(miny >> 3) + 1] = 1;
 					break;
 				case MARK_ALL_NOT_CLEAN:
 					layer->dirty[block] = TILE_NOT_CLEAN;
@@ -364,10 +216,16 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					break;
 				case MARK_DIRTY_IF_NOT_CLEAN:
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block] = TILE_DIRTY;
+						layer->dirtyline[(miny >> 3) + 1] = 1;
+					}
 					block += 1 << layer_dirty_shift;
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block] = TILE_DIRTY;
+						layer->dirtyline[(miny >> 3) + 1] = 1;
+					}
 					break;
 			}
 		}
@@ -383,6 +241,7 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 				case MARK_ALL_DIRTY:
 					layer->dirty[block] = TILE_DIRTY;
 					layer->dirty[block + 1] = TILE_DIRTY;
+					layer->dirtyline[miny >> 3] = 1;
 					break;
 				case MARK_ALL_NOT_CLEAN:
 					layer->dirty[block] = TILE_NOT_CLEAN;
@@ -390,9 +249,15 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					break;
 				case MARK_DIRTY_IF_NOT_CLEAN:
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block] = TILE_DIRTY;
+						layer->dirtyline[miny >> 3] = 1;
+					}
 					if (layer->dirty[block + 1] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block + 1] = TILE_DIRTY;
+						layer->dirtyline[miny >> 3] = 1;
+					}
 					break;
 			}
 		}
@@ -408,6 +273,8 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					block += 1 << layer_dirty_shift;
 					layer->dirty[block] = TILE_DIRTY;
 					layer->dirty[block + 1] = TILE_DIRTY;
+					layer->dirtyline[miny >> 3] = 1;
+					layer->dirtyline[(miny >> 3) + 1] = 1;
 					break;
 				case MARK_ALL_NOT_CLEAN:
 					layer->dirty[block] = TILE_NOT_CLEAN;
@@ -418,14 +285,26 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					break;
 				case MARK_DIRTY_IF_NOT_CLEAN:
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block] = TILE_DIRTY;
+						layer->dirtyline[miny >> 3] = 1;
+					}
 					if (layer->dirty[block + 1] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block + 1] = TILE_DIRTY;
+						layer->dirtyline[miny >> 3] = 1;
+					}
 					block += 1 << layer_dirty_shift;
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block] = TILE_DIRTY;
+						layer->dirtyline[(miny >> 3) + 1] = 1;
+					}
 					if (layer->dirty[block + 1] == TILE_NOT_CLEAN)
+					{
 						layer->dirty[block + 1] = TILE_DIRTY;
+						layer->dirtyline[(miny >> 3) + 1] = 1;
+					}
 					break;
 			}
 		}
@@ -442,94 +321,113 @@ void layer_mark_all_dirty(struct GfxLayer *layer,int action)
 
 	switch (action)
 	{
-		case MARK_ALL_DIRTY:
-			for (y = layer_dirty_miny;y <= layer_dirty_maxy;y += 8)
+		case MARK_ALL_CLEAN:
+			for (y = layer_dirty_miny / 8;y <= layer_dirty_maxy / 8;y++)
 			{
-				for (x = layer_dirty_minx;x <= layer_dirty_maxx;x += 8)
-				{
-					block = ((y >> 3) << layer_dirty_shift) + (x >> 3);
-					layer->dirty[block] = TILE_DIRTY;
-				}
+				block = y << layer_dirty_shift;
+
+				for (x = layer_dirty_minx / 8;x <= layer_dirty_maxx / 8;x++)
+					layer->dirty[block + x] = TILE_CLEAN;
+
+				layer->dirtyline[y] = 0;
+			}
+			break;
+		case MARK_ALL_DIRTY:
+			for (y = layer_dirty_miny / 8;y <= layer_dirty_maxy / 8;y++)
+			{
+				block = y << layer_dirty_shift;
+
+				for (x = layer_dirty_minx / 8;x <= layer_dirty_maxx / 8;x++)
+					layer->dirty[block + x] = TILE_DIRTY;
+
+				layer->dirtyline[y] = 1;
 			}
 			break;
 		case MARK_ALL_NOT_CLEAN:
-			for (y = layer_dirty_miny;y <= layer_dirty_maxy;y += 8)
+			for (y = layer_dirty_miny / 8;y <= layer_dirty_maxy / 8;y++)
 			{
-				for (x = layer_dirty_minx;x <= layer_dirty_maxx;x += 8)
-				{
-					block = ((y >> 3) << layer_dirty_shift) + (x >> 3);
-					layer->dirty[block] = TILE_NOT_CLEAN;
-				}
+				block = y << layer_dirty_shift;
+
+				for (x = layer_dirty_minx / 8;x <= layer_dirty_maxx / 8;x++)
+					layer->dirty[block + x] = TILE_NOT_CLEAN;
+
+				layer->dirtyline[y] = 0;
 			}
 			break;
 		case MARK_DIRTY_IF_NOT_CLEAN:
-			for (y = layer_dirty_miny;y <= layer_dirty_maxy;y += 8)
+			for (y = layer_dirty_miny / 8;y <= layer_dirty_maxy / 8;y++)
 			{
-				for (x = layer_dirty_minx;x <= layer_dirty_maxx;x += 8)
+				block = y << layer_dirty_shift;
+
+				for (x = layer_dirty_minx / 8;x <= layer_dirty_maxx / 8;x++)
 				{
-					block = ((y >> 3) << layer_dirty_shift) + (x >> 3);
-					if (layer->dirty[block] == TILE_NOT_CLEAN)
-						layer->dirty[block] = TILE_DIRTY;
+					if (layer->dirty[block + x] == TILE_NOT_CLEAN)
+					{
+						layer->dirty[block + x] = TILE_DIRTY;
+						layer->dirtyline[y] = 1;
+					}
 				}
 			}
 			break;
 		case MARK_CLEAN_IF_DIRTY:
-			for (y = layer_dirty_miny;y <= layer_dirty_maxy;y += 8)
+			for (y = layer_dirty_miny / 8;y <= layer_dirty_maxy / 8;y++)
 			{
-				for (x = layer_dirty_minx;x <= layer_dirty_maxx;x += 8)
+				block = y << layer_dirty_shift;
+
+				for (x = layer_dirty_minx / 8;x <= layer_dirty_maxx / 8;x++)
 				{
-					block = ((y >> 3) << layer_dirty_shift) + (x >> 3);
-					if (layer->dirty[block] == TILE_DIRTY)
-						layer->dirty[block] = TILE_CLEAN;
+					if (layer->dirty[block + x] == TILE_DIRTY)
+						layer->dirty[block + x] = TILE_CLEAN;
 				}
+
+				layer->dirtyline[y] = 0;
 			}
 			break;
 	}
 }
 
-int layer_is_block_dirty(struct GfxLayer *layer,int minx,int miny)
+
+/* starts from the 8x8 block whose top left corner is at minx,miny, and goes to the */
+/* right, counting how many consecutive ones are dirty. Returns 0 if it is not dirty. */
+int layer_count_blocks_dirty(struct GfxLayer *layer,int minx,int miny)
 {
-	int block;
+	int block,maxblock;
+	int count;
 
 
-	if (layer == 0) return 0;
-
-	if (minx < layer_dirty_minx)
-	{
-		if (minx <= layer_dirty_minx - 8) return 0;
-		minx = layer_dirty_minx;
-	}
-	if (miny < layer_dirty_miny)
-	{
-		if (miny <= layer_dirty_miny - 8) return 0;
-		miny = layer_dirty_miny;
-	}
-	if (minx > layer_dirty_maxx)
-	{
-		if (minx >= layer_dirty_maxx + 8) return 0;
-		minx = layer_dirty_maxx;
-	}
-	if (miny > layer_dirty_maxy)
-	{
-		if (miny >= layer_dirty_maxy + 8) return 0;
-		miny = layer_dirty_maxy;
-	}
+	if (minx < layer_dirty_minx) minx = layer_dirty_minx;
+	if (miny < layer_dirty_miny) miny = layer_dirty_miny;
+	if (minx > layer_dirty_maxx) minx = layer_dirty_maxx;
+	if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
 
 	block = ((miny >> 3) << layer_dirty_shift) + (minx >> 3);
+	maxblock = ((miny >> 3) << layer_dirty_shift) + (layer_dirty_maxx >> 3);
+	count = 0;
 
 	if ((minx & 0x07) == 0)
 	{
 		if ((miny & 0x07) == 0)
 		{
 			/* totally aligned case */
-			if (layer->dirty[block] == TILE_DIRTY) return 1;
+			while (layer->dirty[block] == TILE_DIRTY)
+			{
+				count++;
+				if (block == maxblock) return count;
+				block++;
+			}
+			return count;
 		}
 		else
 		{
 			/* horizontally aligned case */
-			if (layer->dirty[block] == TILE_DIRTY) return 1;
-			block += 1 << layer_dirty_shift;
-			if (layer->dirty[block] == TILE_DIRTY) return 1;
+			while (layer->dirty[block] == TILE_DIRTY ||
+					layer->dirty[block + (1 << layer_dirty_shift)] == TILE_DIRTY)
+			{
+				count++;
+				if (block == maxblock) return count;
+				block++;
+			}
+			return count;
 		}
 	}
 	else
@@ -537,34 +435,151 @@ int layer_is_block_dirty(struct GfxLayer *layer,int minx,int miny)
 		if ((miny & 0x07) == 0)
 		{
 			/* vertically aligned case */
-			if (layer->dirty[block] == TILE_DIRTY) return 1;
-			if (layer->dirty[block + 1] == TILE_DIRTY) return 1;
+loop1:
+			while (layer->dirty[block] == TILE_DIRTY)
+			{
+				count++;
+				if (block == maxblock) return count;
+				block++;
+			}
+			if (block == maxblock) return count;
+			block++;
+			if (layer->dirty[block] == TILE_DIRTY)
+			{
+				count++;
+				goto loop1;
+			}
+
+			return count;
 		}
 		else
 		{
 			/* totally unaligned case */
-			if (layer->dirty[block] == TILE_DIRTY) return 1;
-			if (layer->dirty[block + 1] == TILE_DIRTY) return 1;
-			block += 1 << layer_dirty_shift;
-			if (layer->dirty[block] == TILE_DIRTY) return 1;
-			if (layer->dirty[block + 1] == TILE_DIRTY) return 1;
+loop2:
+			while (layer->dirty[block] == TILE_DIRTY ||
+					layer->dirty[block + (1 << layer_dirty_shift)] == TILE_DIRTY)
+			{
+				count++;
+				if (block == maxblock) return count;
+				block++;
+			}
+			if (block == maxblock) return count;
+			block++;
+			if (layer->dirty[block] == TILE_DIRTY ||
+					layer->dirty[block + (1 << layer_dirty_shift)] == TILE_DIRTY)
+			{
+				count++;
+				goto loop1;
+			}
+
+			return count;
 		}
 	}
 
 	return 0;
 }
 
-
-
-void update_tile_layer_core8(int layer_num,struct osd_bitmap *bitmap)
+int layer_is_line_dirty(struct GfxLayer *layer,int miny)
 {
+	int block;
+
+
+	if (miny < layer_dirty_miny) miny = layer_dirty_miny;
+	if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
+
+	block = miny >> 3;
+
+	if ((miny & 0x07) == 0)
+	{
+		/* aligned case */
+		if (layer->dirtyline[block]) return 1;
+	}
+	else
+	{
+		/* unaligned case */
+		if (layer->dirtyline[block] || layer->dirtyline[block+1]) return 1;
+	}
+
+	return 0;
+}
+
+static inline int are_tiles_opaque_norotate(int layer_num,int minx,int miny)
+{
+	int x,y,tile;
+	struct GfxLayer *layer = Machine->layer[layer_num];
+	int bminy;
+	int lminx,lminy;
+
+
+	if (layer == 0) return 0;
+
+	if (layer->tilemap.flip & TILE_FLIPX)
+		minx = layer->tilemap.width - 8 - minx;
+	if (layer->tilemap.flip & TILE_FLIPY)
+		miny = layer->tilemap.height - 8 - miny;
+
+	minx -= layer->tilemap.scrollx;
+	miny -= layer->tilemap.scrolly;
+
+	do
+	{
+		lminx = minx;
+		if (lminx > -8 && lminx < layer->tilemap.width)
+		{
+			if (lminx < 0) lminx = 0;
+			bminy = miny;
+			do
+			{
+				lminy = bminy;
+				if (lminy > -8 && lminy < layer->tilemap.height)
+				{
+					if (lminy < 0) lminy = 0;
+					x = lminx / 8;
+					y = lminy / 8;
+
+					tile = y * (layer->tilemap.width / 8) + x;
+					if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile]) != TILE_TRANSPARENCY_OPAQUE)
+						return 0;
+					if (lminx & 0x07)
+					{
+						if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile + 1]) != TILE_TRANSPARENCY_OPAQUE)
+							return 0;
+					}
+
+					if (lminy & 0x07)
+					{
+						tile += layer->tilemap.width / 8;
+						if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile]) != TILE_TRANSPARENCY_OPAQUE)
+							return 0;
+
+						if (lminx & 0x07)
+						{
+							if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile + 1]) != TILE_TRANSPARENCY_OPAQUE)
+								return 0;
+						}
+					}
+				}
+				bminy += layer->tilemap.height;
+			} while (bminy < layer->tilemap.height);
+		}
+		minx += layer->tilemap.width;
+	} while (minx < layer->tilemap.width);
+
+	return 1;
+}
+
+
+
+static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int y)
+{
+#define DATA_SIZE unsigned char
 	unsigned long *tiles;
 	int dx,dy;
-	unsigned char *bm,*ebm,*eebm;
+	DATA_SIZE *bm,*ebm,*eebm;
 	int flipx,flipy;
 	struct GfxLayer *layer = Machine->layer[layer_num];
-int rows_to_copy,endofcolskip;
-int quarter;
+	int cols_to_copy;
+	int minx,maxx,miny,maxy;
 
 
 	if (layer == 0) return;
@@ -572,104 +587,65 @@ int quarter;
 	flipx = layer->tilemap.flip & TILE_FLIPX;
 	flipy = layer->tilemap.flip & TILE_FLIPY;
 
-
-for (quarter = 0;quarter < 4;quarter++)
-{
-	int minx,maxx,miny,maxy;
-
-switch (quarter)
-{
-case 0:
-default:
 	tiles = layer->tilemap.tiles;
 
-	minx = layer->tilemap.scrollx;
-	if (minx >= bitmap->width) minx = bitmap->width;
-	maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = layer->tilemap.scrolly;
-	if (miny >= bitmap->height) miny = bitmap->height;
-	maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
+	if (x >= 0)
+	{
+		minx = x;
+		maxx = layer_dirty_maxx + 8;
+		if (minx >= maxx) return;
+		while (minx <= layer_dirty_minx - 8)
+		{
+			minx += 8;
+			tiles++;
+		}
+		if ((maxx - minx) & 0x07)
+			maxx += 8 - ((maxx - minx) & 0x07);
+	}
+	else
+	{
+		minx = layer_dirty_minx;
+		maxx = x + layer->tilemap.width;
+		if (minx >= maxx) return;
+		if ((maxx - minx) & 0x07)
+			minx -= 8 - ((maxx - minx) & 0x07);
+		tiles += (layer->tilemap.width - (maxx - minx)) / 8;
 
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-case 1:
-	tiles = layer->tilemap.tiles;
+		while (maxx >= layer_dirty_maxx + 16)
+			maxx -= 8;
+	}
 
-	minx = layer->tilemap.scrollx;
-	if (minx >= bitmap->width) minx = bitmap->width;
-	maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = 0;
-	maxy = layer->tilemap.scrolly;
-	if ((maxy - miny) & 0x07)
-		miny -= 8 - ((maxy - miny) & 0x07);
-	tiles += (layer->tilemap.height - (maxy - miny)) / 8;
+	if (y >= 0)
+	{
+		miny = y;
+		maxy = layer_dirty_maxy + 8;
+		if (miny >= maxy) return;
+		while (miny <= layer_dirty_miny - 8)
+		{
+			miny += 8;
+			tiles += (layer->tilemap.width / 8);
+		}
+		if ((maxy - miny) & 0x07)
+			maxy += 8 - ((maxy - miny) & 0x07);
+	}
+	else
+	{
+		miny = layer_dirty_miny;
+		maxy = y + layer->tilemap.height;
+		if (miny >= maxy) return;
+		if ((maxy - miny) & 0x07)
+			miny -= 8 - ((maxy - miny) & 0x07);
+		tiles += (layer->tilemap.width / 8) * (layer->tilemap.height - (maxy - miny)) / 8;
 
-	if (maxy > bitmap->height) maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
+		while (maxy >= layer_dirty_maxy + 16)
+			maxy -= 8;
+	}
 
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-case 2:
-	tiles = layer->tilemap.tiles;
 
-	minx = 0;
-	maxx = layer->tilemap.scrollx;
-	if ((maxx - minx) & 0x07)
-		minx -= 8 - ((maxx - minx) & 0x07);
-	tiles += (layer->tilemap.height / 8) * ((layer->tilemap.width - (maxx - minx)) / 8);
+	cols_to_copy = (maxx - minx) / 8;
 
-	if (maxx > bitmap->width) maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = layer->tilemap.scrolly;
-	if (miny >= bitmap->height) miny = bitmap->height;
-	maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
-
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-case 3:
-	tiles = layer->tilemap.tiles;
-
-	minx = 0;
-	maxx = layer->tilemap.scrollx;
-	if ((maxx - minx) & 0x07)
-		minx -= 8 - ((maxx - minx) & 0x07);
-	tiles += (layer->tilemap.height / 8) * ((layer->tilemap.width - (maxx - minx)) / 8);
-
-	if (maxx > bitmap->width) maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = 0;
-	maxy = layer->tilemap.scrolly;
-	if ((maxy - miny) & 0x07)
-		miny -= 8 - ((maxy - miny) & 0x07);
-	tiles += (layer->tilemap.height - (maxy - miny)) / 8;
-
-	if (maxy > bitmap->height) maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
-
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-}
-
-if (minx < maxx && miny < maxy)
-{
-	dy = bitmap->line[1] - bitmap->line[0];
-	bm = bitmap->line[0] + dy * miny + minx;
+	dy = (DATA_SIZE *)bitmap->line[1] - (DATA_SIZE *)bitmap->line[0];
+	bm = (DATA_SIZE *)bitmap->line[0] + dy * miny + minx;
 	if (flipy)
 	{
 		bm += (layer->tilemap.height - 1) * dy;
@@ -682,74 +658,83 @@ if (minx < maxx && miny < maxy)
 		dx = -dx;
 	}
 
-	ebm = bm + rows_to_copy * dy;
-	eebm = ebm + ((maxx - minx) / 8) * dx;
+	ebm = bm + cols_to_copy * dx;
+	eebm = ebm + (maxy - miny) * dy;
 
 	while (ebm != eebm)
 	{
-		while (bm != ebm)
+		if (dy > 0)
+			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) / dy - 8;
+		else
+			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) / -dy - 7 - 8;
+
+		if (layer_is_line_dirty(layer,miny))
 		{
-			long tile;
+			int countdirty;
 
 
-			tile = *tiles;
-
-			if (dy > 0)
+			countdirty = 0;
+			while (bm != ebm)
 			{
-				minx = (bm - (bitmap->line[0]-8-8*dy)) % dy - 8;
-				miny = (bm - (bitmap->line[0]-8-8*dy)) / dy - 8;
-			}
-			else
-			{
-				minx = (bm - (bitmap->line[0]-8+8*dy)) % -dy - 8;
-				miny = (bm - (bitmap->line[0]-8+8*dy)) / -dy - 7 - 8;
-			}
+				long tile;
 
-			if (layer_is_block_dirty(layer,minx,miny))
-			{
-				if (layer_num == 0)
-				{
-					/* mark screen bitmap dirty */
-					osd_mark_dirty(minx,miny,minx+7,miny+7,0);
-				}
+
+				tile = *tiles;
+
+				if (dy > 0)
+					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) % dy - 8;
 				else
+					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) % -dy - 8;
+
+				if (countdirty == 0) countdirty = layer_count_blocks_dirty(layer,minx,miny);
+
+				if (countdirty > 0)
 				{
-					/* mark tiles in the layer above this one as dirty */
-					layer_mark_block_dirty(Machine->layer[layer_num - 1],minx,miny,MARK_ALL_DIRTY);
-				}
+					countdirty--;
 
-				if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT)
-				{
-					int i;
-
-
-					/* check opaqueness of all tiles above this one */
-					for (i = 0;i < layer_num;i++)
+					if (layer_num == 0)
 					{
-						if (are_tiles_opaque_norotate(i,minx,miny))
-						{
-							/* we are totally covered, no need to redraw */
-							break;
-						}
+						/* mark screen bitmap dirty */
+						layer_mark_block_dirty(Machine->dirtylayer,minx,miny,MARK_ALL_DIRTY);
 					}
-					if (i == layer_num)
+					else
 					{
-						const unsigned short *paldata;
-						const unsigned char *sd;
-						const struct GfxTileBank *gfxtilebank;
+						/* mark tiles in the layer above this one as dirty */
+						layer_mark_block_dirty(Machine->layer[layer_num - 1],minx,miny,MARK_ALL_DIRTY);
+					}
+
+					if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT)
+					{
+						int i;
 
 
-						/* mark all tiles below this one as not clean */
-						for (i = layer_num + 1;i < MAX_LAYERS;i++)
-							layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
-
-						gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
-
-						paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
-						sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
-
-						switch (TILE_TRANSPARENCY(tile))
+						/* check opaqueness of all tiles above this one */
+						for (i = 0;i < layer_num;i++)
 						{
+							if (are_tiles_opaque_norotate(i,minx,miny))
+							{
+								/* we are totally covered, no need to redraw */
+								break;
+							}
+						}
+						if (i == layer_num)
+						{
+							const unsigned short *paldata;
+							const unsigned char *sd;
+							const struct GfxTileBank *gfxtilebank;
+
+
+							/* mark all tiles below this one as not clean */
+							for (i = layer_num + 1;i < MAX_LAYERS && Machine->layer[i];i++)
+								layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
+
+							gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
+
+							paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
+							sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
+
+							switch (TILE_TRANSPARENCY(tile))
+							{
 #define DOALLCOPIES \
 	switch (TILE_FLIP(tile) ^ flipx) {\
 		case 0:\
@@ -824,12 +809,12 @@ if (minx < maxx && miny < maxy)
 	}
 
 
-							case TILE_TRANSPARENCY_TRANSPARENT:
-								/* don't draw anything, totally transparent */
-								bm += 8 * dy;
-								break;
+								case TILE_TRANSPARENCY_TRANSPARENT:
+									/* don't draw anything, totally transparent */
+									bm += dx;
+									break;
 
-							case TILE_TRANSPARENCY_OPAQUE:
+								case TILE_TRANSPARENCY_OPAQUE:
 #define DOCOPY \
 	bm[0] = paldata[sd[0]];\
 	bm[1] = paldata[sd[1]];\
@@ -849,13 +834,13 @@ if (minx < maxx && miny < maxy)
 	bm[6] = paldata[sd[1]];\
 	bm[7] = paldata[sd[0]];
 
-								DOALLCOPIES
+									DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-								break;
+									break;
 
-							case TILE_TRANSPARENCY_PEN:
+								case TILE_TRANSPARENCY_PEN:
 {
 	unsigned char *mask;
 	unsigned char m;
@@ -883,14 +868,14 @@ if (minx < maxx && miny < maxy)
 	if (m & 0x40) bm[1] = paldata[sd[6]];\
 	if (m & 0x80) bm[0] = paldata[sd[7]];
 
-								DOALLCOPIESWITHMASK
+									DOALLCOPIESWITHMASK
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
 }
-								break;
+									break;
 
-							case TILE_TRANSPARENCY_COLOR:
+								case TILE_TRANSPARENCY_COLOR:
 #define DOCOPY \
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[0]])) == 0) bm[0] = paldata[sd[0]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[1]])) == 0) bm[1] = paldata[sd[1]];\
@@ -910,41 +895,48 @@ if (minx < maxx && miny < maxy)
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[6]])) == 0) bm[1] = paldata[sd[6]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[7]])) == 0) bm[0] = paldata[sd[7]];
 
-								DOALLCOPIES
+									DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-								break;
-						}
-					}
-					else bm += 8 * dy;
-				}
-				else bm += 8 * dy;
-			}
-			else bm += 8 * dy;
+									break;
+							}
 
-			tiles++;
+							bm = bm - 8 * dy + dx;
+						}
+						else bm += dx;
+					}
+					else bm += dx;
+				}
+				else bm += dx;
+
+				tiles++;
+			}
+
+			bm = bm - cols_to_copy * dx + 8 * dy;
+			tiles = tiles - cols_to_copy + layer->tilemap.width / 8;
+		}
+		else
+		{
+			bm += 8 * dy;
+			tiles += layer->tilemap.width / 8;
 		}
 
-		bm += dx - rows_to_copy * dy;
-		ebm += dx;
-		tiles += endofcolskip;
+		ebm += 8 * dy;
 	}
-}
-}
-
-	layer_mark_all_dirty(layer,MARK_CLEAN_IF_DIRTY);
+#undef DATA_SIZE
 }
 
-void update_tile_layer_core16(int layer_num,struct osd_bitmap *bitmap)
+static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,int y)
 {
+#define DATA_SIZE unsigned short
 	unsigned long *tiles;
 	int dx,dy;
-	unsigned short *bm,*ebm,*eebm;
+	DATA_SIZE *bm,*ebm,*eebm;
 	int flipx,flipy;
 	struct GfxLayer *layer = Machine->layer[layer_num];
-int rows_to_copy,endofcolskip;
-int quarter;
+	int cols_to_copy;
+	int minx,maxx,miny,maxy;
 
 
 	if (layer == 0) return;
@@ -952,104 +944,65 @@ int quarter;
 	flipx = layer->tilemap.flip & TILE_FLIPX;
 	flipy = layer->tilemap.flip & TILE_FLIPY;
 
-
-for (quarter = 0;quarter < 4;quarter++)
-{
-	int minx,maxx,miny,maxy;
-
-switch (quarter)
-{
-case 0:
-default:
 	tiles = layer->tilemap.tiles;
 
-	minx = layer->tilemap.scrollx;
-	if (minx >= bitmap->width) minx = bitmap->width;
-	maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = layer->tilemap.scrolly;
-	if (miny >= bitmap->height) miny = bitmap->height;
-	maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
+	if (x >= 0)
+	{
+		minx = x;
+		maxx = layer_dirty_maxx + 8;
+		if (minx >= maxx) return;
+		while (minx <= layer_dirty_minx - 8)
+		{
+			minx += 8;
+			tiles++;
+		}
+		if ((maxx - minx) & 0x07)
+			maxx += 8 - ((maxx - minx) & 0x07);
+	}
+	else
+	{
+		minx = layer_dirty_minx;
+		maxx = x + layer->tilemap.width;
+		if (minx >= maxx) return;
+		if ((maxx - minx) & 0x07)
+			minx -= 8 - ((maxx - minx) & 0x07);
+		tiles += (layer->tilemap.width - (maxx - minx)) / 8;
 
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-case 1:
-	tiles = layer->tilemap.tiles;
+		while (maxx >= layer_dirty_maxx + 16)
+			maxx -= 8;
+	}
 
-	minx = layer->tilemap.scrollx;
-	if (minx >= bitmap->width) minx = bitmap->width;
-	maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = 0;
-	maxy = layer->tilemap.scrolly;
-	if ((maxy - miny) & 0x07)
-		miny -= 8 - ((maxy - miny) & 0x07);
-	tiles += (layer->tilemap.height - (maxy - miny)) / 8;
+	if (y >= 0)
+	{
+		miny = y;
+		maxy = layer_dirty_maxy + 8;
+		if (miny >= maxy) return;
+		while (miny <= layer_dirty_miny - 8)
+		{
+			miny += 8;
+			tiles += (layer->tilemap.width / 8);
+		}
+		if ((maxy - miny) & 0x07)
+			maxy += 8 - ((maxy - miny) & 0x07);
+	}
+	else
+	{
+		miny = layer_dirty_miny;
+		maxy = y + layer->tilemap.height;
+		if (miny >= maxy) return;
+		if ((maxy - miny) & 0x07)
+			miny -= 8 - ((maxy - miny) & 0x07);
+		tiles += (layer->tilemap.width / 8) * (layer->tilemap.height - (maxy - miny)) / 8;
 
-	if (maxy > bitmap->height) maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
+		while (maxy >= layer_dirty_maxy + 16)
+			maxy -= 8;
+	}
 
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-case 2:
-	tiles = layer->tilemap.tiles;
 
-	minx = 0;
-	maxx = layer->tilemap.scrollx;
-	if ((maxx - minx) & 0x07)
-		minx -= 8 - ((maxx - minx) & 0x07);
-	tiles += (layer->tilemap.height / 8) * ((layer->tilemap.width - (maxx - minx)) / 8);
+	cols_to_copy = (maxx - minx) / 8;
 
-	if (maxx > bitmap->width) maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = layer->tilemap.scrolly;
-	if (miny >= bitmap->height) miny = bitmap->height;
-	maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
-
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-case 3:
-	tiles = layer->tilemap.tiles;
-
-	minx = 0;
-	maxx = layer->tilemap.scrollx;
-	if ((maxx - minx) & 0x07)
-		minx -= 8 - ((maxx - minx) & 0x07);
-	tiles += (layer->tilemap.height / 8) * ((layer->tilemap.width - (maxx - minx)) / 8);
-
-	if (maxx > bitmap->width) maxx = bitmap->width;
-	if ((maxx - minx) & 0x07)
-		maxx += 8 - ((maxx - minx) & 0x07);
-	miny = 0;
-	maxy = layer->tilemap.scrolly;
-	if ((maxy - miny) & 0x07)
-		miny -= 8 - ((maxy - miny) & 0x07);
-	tiles += (layer->tilemap.height - (maxy - miny)) / 8;
-
-	if (maxy > bitmap->height) maxy = bitmap->height;
-	if ((maxy - miny) & 0x07)
-		maxy += 8 - ((maxy - miny) & 0x07);
-
-	rows_to_copy = maxy - miny;
-	endofcolskip = (layer->tilemap.height - rows_to_copy) / 8;
-	break;
-}
-
-if (minx < maxx && miny < maxy)
-{
-	dy = (unsigned short *)bitmap->line[1] - (unsigned short *)bitmap->line[0];
-	bm = (unsigned short *)bitmap->line[0] + dy * miny + minx;
+	dy = (DATA_SIZE *)bitmap->line[1] - (DATA_SIZE *)bitmap->line[0];
+	bm = (DATA_SIZE *)bitmap->line[0] + dy * miny + minx;
 	if (flipy)
 	{
 		bm += (layer->tilemap.height - 1) * dy;
@@ -1062,74 +1015,83 @@ if (minx < maxx && miny < maxy)
 		dx = -dx;
 	}
 
-	ebm = bm + rows_to_copy * dy;
-	eebm = ebm + ((maxx - minx) / 8) * dx;
+	ebm = bm + cols_to_copy * dx;
+	eebm = ebm + (maxy - miny) * dy;
 
 	while (ebm != eebm)
 	{
-		while (bm != ebm)
+		if (dy > 0)
+			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) / dy - 8;
+		else
+			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) / -dy - 7 - 8;
+
+		if (layer_is_line_dirty(layer,miny))
 		{
-			long tile;
+			int countdirty;
 
 
-			tile = *tiles;
-
-			if (dy > 0)
+			countdirty = 0;
+			while (bm != ebm)
 			{
-				minx = (bm - ((unsigned short *)bitmap->line[0]-8-8*dy)) % dy - 8;
-				miny = (bm - ((unsigned short *)bitmap->line[0]-8-8*dy)) / dy - 8;
-			}
-			else
-			{
-				minx = (bm - ((unsigned short *)bitmap->line[0]-8+8*dy)) % -dy - 8;
-				miny = (bm - ((unsigned short *)bitmap->line[0]-8+8*dy)) / -dy - 7 - 8;
-			}
+				long tile;
 
-			if (layer_is_block_dirty(layer,minx,miny))
-			{
-				if (layer_num == 0)
-				{
-					/* mark screen bitmap dirty */
-					osd_mark_dirty(minx,miny,minx+7,miny+7,0);
-				}
+
+				tile = *tiles;
+
+				if (dy > 0)
+					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) % dy - 8;
 				else
+					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) % -dy - 8;
+
+				if (countdirty == 0) countdirty = layer_count_blocks_dirty(layer,minx,miny);
+
+				if (countdirty > 0)
 				{
-					/* mark tiles in the layer above this one as dirty */
-					layer_mark_block_dirty(Machine->layer[layer_num - 1],minx,miny,MARK_ALL_DIRTY);
-				}
+					countdirty--;
 
-				if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT)
-				{
-					int i;
-
-
-					/* check opaqueness of all tiles above this one */
-					for (i = 0;i < layer_num;i++)
+					if (layer_num == 0)
 					{
-						if (are_tiles_opaque_norotate(i,minx,miny))
-						{
-							/* we are totally covered, no need to redraw */
-							break;
-						}
+						/* mark screen bitmap dirty */
+						layer_mark_block_dirty(Machine->dirtylayer,minx,miny,MARK_ALL_DIRTY);
 					}
-					if (i == layer_num)
+					else
 					{
-						const unsigned short *paldata;
-						const unsigned char *sd;
-						const struct GfxTileBank *gfxtilebank;
+						/* mark tiles in the layer above this one as dirty */
+						layer_mark_block_dirty(Machine->layer[layer_num - 1],minx,miny,MARK_ALL_DIRTY);
+					}
+
+					if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT)
+					{
+						int i;
 
 
-						/* mark all tiles below this one as not clean */
-						for (i = layer_num + 1;i < MAX_LAYERS;i++)
-							layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
-
-						gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
-
-						paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
-						sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
-
-						switch (TILE_TRANSPARENCY(tile))
+						/* check opaqueness of all tiles above this one */
+						for (i = 0;i < layer_num;i++)
 						{
+							if (are_tiles_opaque_norotate(i,minx,miny))
+							{
+								/* we are totally covered, no need to redraw */
+								break;
+							}
+						}
+						if (i == layer_num)
+						{
+							const unsigned short *paldata;
+							const unsigned char *sd;
+							const struct GfxTileBank *gfxtilebank;
+
+
+							/* mark all tiles below this one as not clean */
+							for (i = layer_num + 1;i < MAX_LAYERS && Machine->layer[i];i++)
+								layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
+
+							gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
+
+							paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
+							sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
+
+							switch (TILE_TRANSPARENCY(tile))
+							{
 #define DOALLCOPIES \
 	switch (TILE_FLIP(tile) ^ flipx) {\
 		case 0:\
@@ -1204,12 +1166,12 @@ if (minx < maxx && miny < maxy)
 	}
 
 
-							case TILE_TRANSPARENCY_TRANSPARENT:
-								/* don't draw anything, totally transparent */
-								bm += 8 * dy;
-								break;
+								case TILE_TRANSPARENCY_TRANSPARENT:
+									/* don't draw anything, totally transparent */
+									bm += dx;
+									break;
 
-							case TILE_TRANSPARENCY_OPAQUE:
+								case TILE_TRANSPARENCY_OPAQUE:
 #define DOCOPY \
 	bm[0] = paldata[sd[0]];\
 	bm[1] = paldata[sd[1]];\
@@ -1229,13 +1191,13 @@ if (minx < maxx && miny < maxy)
 	bm[6] = paldata[sd[1]];\
 	bm[7] = paldata[sd[0]];
 
-								DOALLCOPIES
+									DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-								break;
+									break;
 
-							case TILE_TRANSPARENCY_PEN:
+								case TILE_TRANSPARENCY_PEN:
 {
 	unsigned char *mask;
 	unsigned char m;
@@ -1263,14 +1225,14 @@ if (minx < maxx && miny < maxy)
 	if (m & 0x40) bm[1] = paldata[sd[6]];\
 	if (m & 0x80) bm[0] = paldata[sd[7]];
 
-								DOALLCOPIESWITHMASK
+									DOALLCOPIESWITHMASK
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
 }
-								break;
+									break;
 
-							case TILE_TRANSPARENCY_COLOR:
+								case TILE_TRANSPARENCY_COLOR:
 #define DOCOPY \
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[0]])) == 0) bm[0] = paldata[sd[0]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[1]])) == 0) bm[1] = paldata[sd[1]];\
@@ -1290,39 +1252,69 @@ if (minx < maxx && miny < maxy)
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[6]])) == 0) bm[1] = paldata[sd[6]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[7]])) == 0) bm[0] = paldata[sd[7]];
 
-								DOALLCOPIES
+									DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-								break;
-						}
-					}
-					else bm += 8 * dy;
-				}
-				else bm += 8 * dy;
-			}
-			else bm += 8 * dy;
+									break;
+							}
 
-			tiles++;
+							bm = bm - 8 * dy + dx;
+						}
+						else bm += dx;
+					}
+					else bm += dx;
+				}
+				else bm += dx;
+
+				tiles++;
+			}
+
+			bm = bm - cols_to_copy * dx + 8 * dy;
+			tiles = tiles - cols_to_copy + layer->tilemap.width / 8;
+		}
+		else
+		{
+			bm += 8 * dy;
+			tiles += layer->tilemap.width / 8;
 		}
 
-		bm += dx - rows_to_copy * dy;
-		ebm += dx;
-		tiles += endofcolskip;
+		ebm += 8 * dy;
 	}
-}
-}
-
-	layer_mark_all_dirty(layer,MARK_CLEAN_IF_DIRTY);
+#undef DATA_SIZE
 }
 
 void update_tile_layer(int layer_num,struct osd_bitmap *bitmap)
 {
+	struct GfxLayer *layer = Machine->layer[layer_num];
+
+
 	if (bitmap->depth != 16)
-		update_tile_layer_core8(layer_num,bitmap);
+	{
+		draw_tilemap_core8(layer_num,bitmap,
+				layer->tilemap.scrollx,layer->tilemap.scrolly);
+		draw_tilemap_core8(layer_num,bitmap,
+				layer->tilemap.scrollx - layer->tilemap.width,layer->tilemap.scrolly);
+		draw_tilemap_core8(layer_num,bitmap,
+				layer->tilemap.scrollx,layer->tilemap.scrolly - layer->tilemap.height);
+		draw_tilemap_core8(layer_num,bitmap,
+				layer->tilemap.scrollx - layer->tilemap.width,layer->tilemap.scrolly - layer->tilemap.height);
+	}
 	else
-		update_tile_layer_core16(layer_num,bitmap);
+	{
+		draw_tilemap_core16(layer_num,bitmap,
+				layer->tilemap.scrollx,layer->tilemap.scrolly);
+		draw_tilemap_core16(layer_num,bitmap,
+				layer->tilemap.scrollx - layer->tilemap.width,layer->tilemap.scrolly);
+		draw_tilemap_core16(layer_num,bitmap,
+				layer->tilemap.scrollx,layer->tilemap.scrolly - layer->tilemap.height);
+		draw_tilemap_core16(layer_num,bitmap,
+				layer->tilemap.scrollx - layer->tilemap.width,layer->tilemap.scrolly - layer->tilemap.height);
+	}
+
+	layer_mark_all_dirty(layer,MARK_CLEAN_IF_DIRTY);
 }
+
 
 
 static void set_tile_attributes_core(int layer_num,struct osd_bitmap *bitmap,int x,int y,int attr)
@@ -1354,8 +1346,7 @@ static void set_tile_attributes_core(int layer_num,struct osd_bitmap *bitmap,int
 	if (x < 0 || x >= layer->tilemap.width / 8 || y < 0 || y >= layer->tilemap.height / 8)
 		return;
 
-	/* invert x and y coordinates so tiles are ordered by column */
-	tile = x * (layer->tilemap.height / 8) + y;
+	tile = y * (layer->tilemap.width / 8) + x;
 
 	bank = TILE_BANK(attr);
 	code = TILE_CODE(attr);
@@ -1436,13 +1427,17 @@ static void set_tile_attributes_core(int layer_num,struct osd_bitmap *bitmap,int
 	layer_mark_block_dirty(layer,minx,miny-layer->tilemap.height,MARK_ALL_DIRTY);
 	layer_mark_block_dirty(layer,minx-layer->tilemap.width,miny-layer->tilemap.height,MARK_ALL_DIRTY);
 
-	/* mark tiles in the bottom layer as dirty if they need to be refreshed */
-	i = MAX_LAYERS - 1;
-	while (Machine->layer[i] == 0) i--;	/* find the bottom layer */
-	layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_DIRTY_IF_NOT_CLEAN);
-	layer_mark_block_dirty(Machine->layer[i],minx-layer->tilemap.width,miny,MARK_DIRTY_IF_NOT_CLEAN);
-	layer_mark_block_dirty(Machine->layer[i],minx,miny-layer->tilemap.height,MARK_DIRTY_IF_NOT_CLEAN);
-	layer_mark_block_dirty(Machine->layer[i],minx-layer->tilemap.width,miny-layer->tilemap.height,MARK_DIRTY_IF_NOT_CLEAN);
+	/* if the tile is not opaque, mark tiles in the bottom layer as dirty if they */
+	/* need to be redrawn before redrawing it. */
+	if (TILE_TRANSPARENCY(attr) != TILE_TRANSPARENCY_OPAQUE)
+	{
+		i = MAX_LAYERS - 1;
+		while (Machine->layer[i] == 0) i--;	/* find the bottom layer */
+		layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_DIRTY_IF_NOT_CLEAN);
+		layer_mark_block_dirty(Machine->layer[i],minx-layer->tilemap.width,miny,MARK_DIRTY_IF_NOT_CLEAN);
+		layer_mark_block_dirty(Machine->layer[i],minx,miny-layer->tilemap.height,MARK_DIRTY_IF_NOT_CLEAN);
+		layer_mark_block_dirty(Machine->layer[i],minx-layer->tilemap.width,miny-layer->tilemap.height,MARK_DIRTY_IF_NOT_CLEAN);
+	}
 }
 
 void set_tile_layer_attributes(int layer_num,struct osd_bitmap *bitmap,int scrollx,int scrolly,int flipx,int flipy,unsigned long global_attr_mask,unsigned long global_attr)
@@ -1476,9 +1471,9 @@ void set_tile_layer_attributes(int layer_num,struct osd_bitmap *bitmap,int scrol
 		else flipy = 0;
 	}
 	if (!(Machine->orientation & ORIENTATION_FLIP_X) ^ !flipx)
-		scrollx = layer->tilemap.width - bitmap->width - scrollx;
+		scrollx = bitmap->width - layer->tilemap.width - scrollx;
 	if (!(Machine->orientation & ORIENTATION_FLIP_Y) ^ !flipy)
-		scrolly = layer->tilemap.height - bitmap->height - scrolly;
+		scrolly = bitmap->height - layer->tilemap.height - scrolly;
 
 	if (scrollx < 0)
 	{
@@ -1636,61 +1631,157 @@ void set_tile_attributes_fast(int layer_num,int tile,int attr)
 	}
 }
 
-int are_tiles_opaque_norotate(int layer_num,int minx,int miny)
+struct GfxLayer *create_tile_layer(struct MachineLayer *ml)
 {
-	int x,y,tile;
-	struct GfxLayer *layer = Machine->layer[layer_num];
-	int bminy;
-	int lminx,lmaxx,lminy,lmaxy;
+	struct GfxLayer *layer;
+	int i,len,virtuallen;
 
 
-	if (layer == 0) return 0;
+/* TODO: this part should only be done once since it initializes the globals */
+{
+	int minx,miny,maxx,maxy;
 
-	if (layer->tilemap.flip & TILE_FLIPX)
-		minx = layer->tilemap.width - 8 - minx;
-	if (layer->tilemap.flip & TILE_FLIPY)
-		miny = layer->tilemap.height - 8 - miny;
 
-	minx -= layer->tilemap.scrollx;
-	miny -= layer->tilemap.scrolly;
-
-	do
+	/* determine the size of the dirty buffer */
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		lminx = minx;
-		lmaxx = lminx + 7;
-		if (lminx < 0) lminx = 0;
-		if (lmaxx >= layer->tilemap.width) lmaxx = layer->tilemap.width - 1;
+		layer_width = Machine->drv->screen_height;
+		layer_height = Machine->drv->screen_width;
+		minx = Machine->drv->visible_area.min_y;
+		maxx = Machine->drv->visible_area.max_y;
+		miny = Machine->drv->visible_area.min_x;
+		maxy = Machine->drv->visible_area.max_x;
+	}
+	else
+	{
+		layer_width = Machine->drv->screen_width;
+		layer_height = Machine->drv->screen_height;
+		minx = Machine->drv->visible_area.min_x;
+		maxx = Machine->drv->visible_area.max_x;
+		miny = Machine->drv->visible_area.min_y;
+		maxy = Machine->drv->visible_area.max_y;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		int temp;
 
-		if (lminx <= lmaxx)
+
+		temp = minx;
+		minx = layer_width - 1 - maxx;
+		maxx = layer_width - 1 - temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		int temp;
+
+
+		temp = miny;
+		miny = layer_height - 1 - maxy;
+		maxy = layer_height - 1 - temp;
+	}
+
+	layer_dirty_minx = minx & ~0x07;
+	layer_dirty_maxx = maxx & ~0x07;
+	layer_dirty_miny = miny & ~0x07;
+	layer_dirty_maxy = maxy & ~0x07;
+
+	layer_dirty_shift = 0;
+	for (i = (layer_width - 1) >> 3;i != 0;i >>= 1)
+		layer_dirty_shift++;
+
+	layer_dirty_size = (1 << layer_dirty_shift) * (layer_height >> 3) * sizeof(unsigned char);
+}
+
+
+	if ((layer = malloc(sizeof(struct GfxLayer))) != 0)
+	{
+		layer->dirty = malloc(layer_dirty_size);
+		layer->dirtyline = malloc((layer_height + 7) / 8);
+		if (layer->dirty && layer->dirtyline)
 		{
-			bminy = miny;
-			do
-			{
-				lminy = bminy;
-				lmaxy = lminy + 7;
-				if (lminy < 0) lminy = 0;
-				if (lmaxy >= layer->tilemap.height) lmaxy = layer->tilemap.height - 1;
-
-				if (lminy <= lmaxy)
-				{
-					for (x = lminx / 8;x <= lmaxx / 8;x++)
-					{
-						for (y = lminy / 8;y <= lmaxy / 8;y++)
-						{
-							/* invert x and y coordinates so tiles are ordered by column */
-							tile = x * (layer->tilemap.height / 8) + y;
-							if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile]) != TILE_TRANSPARENCY_OPAQUE)
-								return 0;
-						}
-					}
-				}
-				bminy += layer->tilemap.height;
-			} while (bminy < layer->tilemap.height);
+			/* first of all, mark everything clean */
+			memset(layer->dirty,TILE_CLEAN,layer_dirty_size);
+			memset(layer->dirtyline,0,(layer_height + 7) / 8);
+			/* then mark the *visible* region dirty */
+			layer_mark_all_dirty(layer,MARK_ALL_DIRTY);
 		}
-		minx += layer->tilemap.width;
-	} while (minx < layer->tilemap.width);
 
-	return 1;
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			layer->tilemap.width = ml->height;
+			layer->tilemap.height = ml->width;
+		}
+		else
+		{
+			layer->tilemap.width = ml->width;
+			layer->tilemap.height = ml->height;
+		}
+
+		layer->tilemap.virtualwidth = ml->width / 8;
+		layer->tilemap.virtualheight = ml->height / 8;
+		layer->tilemap.gfxtilecompose = ml->gfxtilecompose;
+		if (ml->gfxtilecompose)
+		{
+			layer->tilemap.virtualwidth /= ml->gfxtilecompose->width;
+			layer->tilemap.virtualheight /= ml->gfxtilecompose->height;
+		}
+		layer->tilemap.flip = 0;
+
+		len = (ml->width / 8) * (ml->height / 8);
+		virtuallen = layer->tilemap.virtualwidth * layer->tilemap.virtualheight;
+		layer->tilemap.tiles = malloc(len * sizeof(unsigned long));
+		layer->tilemap.virtualtiles = malloc(virtuallen * sizeof(unsigned long));
+		layer->tilemap.virtualdirty = malloc(virtuallen * sizeof(unsigned char));
+		for (i = 0;i < MAX_TILE_BANKS;i++)
+			layer->tilemap.gfxtilebank[i] = 0;
+
+		if (layer->tilemap.tiles == 0 || layer->tilemap.virtualtiles == 0 || layer->tilemap.virtualdirty == 0)
+		{
+			free_tile_layer(layer);
+			return 0;
+		}
+		else
+		{
+			if (ml->gfxtiledecodeinfo)
+			{
+				i = 0;
+				while (i < MAX_TILE_BANKS && ml->gfxtiledecodeinfo[i].memory_region != -1)
+				{
+					if ((layer->tilemap.gfxtilebank[i] = decodetiles(&ml->gfxtiledecodeinfo[i],ml)) == 0)
+					{
+						free_tile_layer(layer);
+						return 0;
+					}
+
+					i++;
+				}
+			}
+
+			memset(layer->tilemap.tiles,0,len * sizeof(unsigned long));
+			memset(layer->tilemap.virtualtiles,0,virtuallen * sizeof(unsigned long));
+			memset(layer->tilemap.virtualdirty,1,virtuallen * sizeof(unsigned char));
+		}
+	}
+
+	return layer;
+}
+
+void free_tile_layer(struct GfxLayer *layer)
+{
+	int i;
+
+
+	if (layer == 0) return;
+
+	free(layer->dirty);
+	free(layer->dirtyline);
+
+	free(layer->tilemap.tiles);
+	for (i = 0;i < MAX_TILE_BANKS;i++)
+		freetiles(layer->tilemap.gfxtilebank[i]);
+
+	free(layer);
 }
 
 void layer_mark_rectangle_dirty(struct GfxLayer *layer,int minx,int maxx,int miny,int maxy)
@@ -1731,6 +1822,27 @@ void layer_mark_rectangle_dirty(struct GfxLayer *layer,int minx,int maxx,int min
 		miny = layer_height - 1 - maxy;
 		maxy = layer_height - 1 - temp;
 	}
+
+	if (minx < layer_dirty_minx) minx = layer_dirty_minx;
+	if (miny < layer_dirty_miny) miny = layer_dirty_miny;
+	if (maxx > layer_dirty_maxx) maxx = layer_dirty_maxx;
+	if (maxy > layer_dirty_maxy) maxy = layer_dirty_maxy;
+
+	for (y = miny & ~0x07;y <= maxy;y += 8)
+	{
+		for (x = minx & ~0x07;x <= maxx;x += 8)
+		{
+			layer_mark_block_dirty(layer,x,y,MARK_ALL_DIRTY);
+		}
+	}
+}
+
+void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int maxx,int miny,int maxy)
+{
+	int x,y;
+
+
+	if (layer == 0) return;
 
 	if (minx < layer_dirty_minx) minx = layer_dirty_minx;
 	if (miny < layer_dirty_miny) miny = layer_dirty_miny;

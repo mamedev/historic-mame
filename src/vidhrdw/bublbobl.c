@@ -19,8 +19,6 @@ int bublbobl_objectram_size;
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
   Bubble Bobble doesn't have a color PROM. It uses 512 bytes of RAM to
   dynamically create the palette. Each couple of bytes defines one
   color (4 bits per pixel; the low 4 bits of the second byte are unused).
@@ -48,23 +46,39 @@ int bublbobl_objectram_size;
   bit 0 -- unused
 
 ***************************************************************************/
-void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void bublbobl_paletteram_w(int offset,int data)
 {
-	int i;
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
 
 
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
+	bublbobl_paletteram[offset] = data;
 
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[i] = i;
+	/* red component */
+	val = bublbobl_paletteram[offset & ~1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* green component */
+	val = bublbobl_paletteram[offset & ~1];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* blue component */
+	val = bublbobl_paletteram[offset | 1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	osd_modify_pen(Machine->pens[(offset / 2) ^ 0x0f],r,g,b);
 }
 
 
@@ -126,43 +140,6 @@ void bublbobl_objectram_w(int offset,int data)
 		if (offset < 0x40 && offset % 4 == 3) memset(dirtybuffer,1,videoram_size / 2);
 		bublbobl_objectram[offset] = data;
 	}
-}
-
-
-
-void bublbobl_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-
-	bublbobl_paletteram[offset] = data;
-
-	/* red component */
-	val = bublbobl_paletteram[offset & ~1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = bublbobl_paletteram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = bublbobl_paletteram[offset | 1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	osd_modify_pen(Machine->pens[(offset / 2) ^ 0x0f],r,g,b);
 }
 
 

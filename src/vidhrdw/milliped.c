@@ -23,9 +23,7 @@ static struct rectangle spritevisiblearea =
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
-  Actually, Millipede doesn't have a color PROM, it uses RAM.
+  Millipede doesn't have a color PROM, it uses RAM.
   The RAM seems to be conncted to the video output this way:
 
   bit 7 red
@@ -38,27 +36,6 @@ static struct rectangle spritevisiblearea =
   bit 0 blue
 
 ***************************************************************************/
-void milliped_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i;
-}
-
-
-
 void milliped_paletteram_w(int offset,int data)
 {
 	int bit0,bit1,bit2;

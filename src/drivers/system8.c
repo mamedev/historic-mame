@@ -1014,6 +1014,30 @@ ROM_START( wbml_rom )
 	ROM_LOAD( "WBML.11", 0x0000, 0x8000, 0x8057f681 )
 ROM_END
 
+ROM_START( upndown_rom )
+	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_LOAD( "UPND5679.BIN", 0x0000, 0x2000, 0xf4bca48a )
+	ROM_LOAD( "UPND5680.BIN", 0x2000, 0x2000, 0xa24d61c1 )
+	ROM_LOAD( "UPND5681.BIN", 0x4000, 0x2000, 0x3aa82e56 )
+	ROM_LOAD( "UPND5682.BIN", 0x6000, 0x2000, 0x4ba5c101 )
+	ROM_LOAD( "UPND5683.BIN", 0x8000, 0x2000, 0x14e87170 )
+	ROM_LOAD( "UPND5684.BIN", 0xA000, 0x2000, 0xdfbc8d48 )
+
+	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "UPND5527.BIN", 0x00000, 0x2000, 0x0caa0934 )
+	ROM_LOAD( "UPND5526.BIN", 0x02000, 0x2000, 0x377bebb9 )
+	ROM_LOAD( "UPND5525.BIN", 0x04000, 0x2000, 0x0bf84b26 )
+	ROM_LOAD( "UPND5524.BIN", 0x06000, 0x2000, 0x8aacb4ae )
+	ROM_LOAD( "UPND5523.BIN", 0x08000, 0x2000, 0x3971bd0d )
+	ROM_LOAD( "UPND5522.BIN", 0x0A000, 0x2000, 0xbca7b3a9 )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "UPND5514.BIN", 0x00000, 0x4000, 0x953bcab7 )  /* sprites */
+	ROM_LOAD( "UPND5515.BIN", 0x04000, 0x4000, 0xb93737a3 )
+
+	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_LOAD( "UPND5528.BIN", 0x00000, 0x2000, 0x058ca4a2 )
+ROM_END
 
 ROM_START( pitfall2_rom )
 	ROM_REGION(0x10000)		/* 64k for code */
@@ -1233,6 +1257,24 @@ struct GameDriver wbdeluxe_driver =
 	wbdeluxe_hiload, wbdeluxe_hisave
 };
 
+struct GameDriver upndown_driver =
+{
+	"Up'n Down",
+	"upndown",
+	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
+	&wbdeluxe_machine_driver,
+
+	upndown_rom,
+	0, 0,   				/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	wbdeluxe_input_ports,
+
+	wrong_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
 
 struct GameDriver wbml_driver =
 {

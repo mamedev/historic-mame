@@ -76,13 +76,13 @@ struct GameSamples
 
 struct GfxLayout
 {
-	short width,height;	/* width and height of chars/sprites */
-	short total;	/* total numer of chars/sprites in the rom */
-	short planes;	/* number of bitplanes */
-	int planeoffset[8];	/* start of every bitplane */
-	int xoffset[32];	/* coordinates of the bit corresponding to the pixel */
-	int yoffset[32];	/* of the given coordinates */
-	short charincrement;	/* distance between two consecutive characters/sprites */
+	unsigned short width,height; /* width and height of chars/sprites */
+	unsigned short total; /* total numer of chars/sprites in the rom */
+	unsigned short planes; /* number of bitplanes */
+	int planeoffset[8]; /* start of every bitplane */
+	int xoffset[32]; /* coordinates of the bit corresponding to the pixel */
+	int yoffset[32]; /* of the given coordinates */
+	short charincrement; /* distance between two consecutive characters/sprites */
 };
 
 struct GfxElement
@@ -130,6 +130,10 @@ struct rectangle
 #define TRANSPARENCY_THROUGH 3
 
 void showdisclaimer(void);
+
+/* LBO 042898 - added coin counters */
+#define COIN_COUNTERS	4	/* total # of coin counters */
+void coin_counter_w (int offset, int data);
 
 int readroms(const struct RomModule *romp,const char *basename);
 void printromlist(const struct RomModule *romp,const char *basename);

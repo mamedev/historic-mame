@@ -346,8 +346,8 @@ void InitCheat(void)
   for(i=0;i<10;i++)
     //Watches[i] = 0xFFFF;
     Watches[i] = 0xFFFFFF;	/* JB 980407 */
-  WatchX = 0;
-  WatchY = 0;
+  WatchX = Machine->uixmin;
+  WatchY = Machine->uiymin;
   WatchesFlag = 0;
 
 /* Load the cheats for that game */

@@ -5,7 +5,6 @@
 
 extern struct osd_bitmap *bitmap;
 extern unsigned char current_palette[256][3];
-extern char *dirty_new;
 extern int vector_updates;
 extern int use_anti_alias;
 

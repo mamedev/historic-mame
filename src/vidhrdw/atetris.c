@@ -15,27 +15,6 @@
 unsigned char *atetris_paletteram;
 static unsigned char *palette_entry_dirty;
 
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-***************************************************************************/
-void atetris_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-    int i;
-
-    /* the palette will be initialized later. We just set it to some */
-    /* pre-cooked values so the startup copyright notice can be displayed. */
-    for (i = 0;i < Machine->drv->total_colors;i++)
-    {
-            *(palette++) = ((i & 1) >> 0) * 0xff;
-            *(palette++) = ((i & 2) >> 1) * 0xff;
-            *(palette++) = ((i & 4) >> 2) * 0xff;
-
-            colortable[i] = i;
-    }
-}
-
 
 /***************************************************************************
 

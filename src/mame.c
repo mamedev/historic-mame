@@ -2,7 +2,7 @@
 
 /* Mame frontend interface rountines by Maurizio Zanello */
 
-char mameversion[] = "0.31 ("__DATE__")";
+char mameversion[] = "0.33 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -231,6 +231,7 @@ static void vh_close(void)
 	/* ASG 980209 - added: */
 	free(Machine->pens);
 	osd_close_display();
+	free_tile_layer(Machine->dirtylayer);
 }
 
 
@@ -282,26 +283,52 @@ static int vh_open(void)
 		int r, g, b;
 
 		for (r = 0; r < 8; r++)
+		{
 			for (g = 0; g < 8; g++)
+			{
 				for (b = 0; b < 4; b++)
 				{
 					*p++ = (r << 5) | (r << 2) | (r >> 1);
 					*p++ = (g << 5) | (g << 2) | (g >> 1);
 					*p++ = (b << 6) | (b << 4) | (b << 2) | b;
 				}
+			}
+		}
 		palette = convpalette;
 		colortable = convtable;
 	}
-	else if (drv->vh_convert_color_prom)
-	{
-		(*drv->vh_convert_color_prom)(convpalette,convtable,gamedrv->color_prom);
-		palette = convpalette;
-		colortable = convtable;
-	}
-	else
+	else if (gamedrv->palette)
 	{
 		palette = gamedrv->palette;
 		colortable = gamedrv->colortable;
+	}
+	else
+	{
+		unsigned char *p = convpalette;
+		int i;
+
+
+		/* We initialize the palette and colortable to some default values so that */
+		/* drivers which dynamically change the palette don't need a convert_color_prom() */
+		/* function (provided the default color table fits their needs). */
+		/* The default color table follows the same order of the palette. */
+
+		for (i = 0;i < drv->total_colors;i++)
+		{
+			*(p++) = ((i & 1) >> 0) * 0xff;
+			*(p++) = ((i & 2) >> 1) * 0xff;
+			*(p++) = ((i & 4) >> 2) * 0xff;
+		}
+
+		for (i = 0;i < drv->color_table_len;i++)
+			convtable[i] = i % drv->total_colors;
+
+		/* now the driver can modify the dafult values if it wants to. */
+		if (drv->vh_convert_color_prom)
+ 			(*drv->vh_convert_color_prom)(convpalette,convtable,gamedrv->color_prom);
+
+		palette = convpalette;
+		colortable = convtable;
 	}
 
 
@@ -326,6 +353,24 @@ static int vh_open(void)
 		free (convtable);
 		return 1;
 	}
+
+{
+	static struct MachineLayer ml =
+	{
+		LAYER_TILE,
+		0,0,	/* width and height, filled in later */
+		/* all other fields are 0 */
+	};
+
+	ml.width = drv->screen_width;
+	ml.height = drv->screen_height;
+	if ((Machine->dirtylayer = create_tile_layer(&ml)) == 0)
+	{
+		vh_close();
+		free(convtable);
+		return 1;
+	}
+}
 
 
 	for (i = 0;i < drv->color_table_len;i++)
@@ -361,11 +406,20 @@ static int vh_open(void)
 int updatescreen(void)
 {
 	static int framecount = 0, showvoltemp = 0; /* M.Z.: new options */
+#ifdef BETA_VERSION
+	static int beta_count;
+#endif
 
 
 #ifndef macintosh /* LBO 061497 */
 	/* if the user pressed ESC, stop the emulation */
-	if (osd_key_pressed(OSD_KEY_ESC)) return 1;
+	if (osd_key_pressed(OSD_KEY_ESC))
+	{
+#ifdef BETA_VERSION
+		beta_count = 0;
+#endif
+		return 1;
+	}
 #else
 	/* LBO - moved most of the key-handling stuff to the OS routines so menu selections       */
 	/* can get trapped as well rather than having a sick hack in the osd_key_pressed routine  */
@@ -491,7 +545,7 @@ int updatescreen(void)
 			trueorientation = Machine->orientation;
 			Machine->orientation = ORIENTATION_DEFAULT;
 
-			x = (drv->screen_width - 24*Machine->uifont->width)/2;
+			x = (Machine->uiwidth - 24*Machine->uifont->width)/2;
 			strcpy(volstr,"                      ");
 			for (i = 0;i < (CurrentVolume/5);i++) volstr[i+1] = '\x15';
 
@@ -499,10 +553,39 @@ int updatescreen(void)
 			drawgfx(Machine->scrbitmap,Machine->uifont,17,DT_COLOR_RED,0,0,x+23*Machine->uifont->width,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
 			for (i = 0;i < 22;i++)
 			    drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_WHITE,
-					0,0,x+(i+1)*Machine->uifont->width,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
+					0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
 
 			Machine->orientation = trueorientation;
 		}                     /* MAURY_END: nuove opzioni */
+
+#ifdef BETA_VERSION
+		if (beta_count < 5 * Machine->drv->frames_per_second)
+		{
+			beta_count += frameskip+1;
+
+			if (beta_count < 5 * Machine->drv->frames_per_second)
+			{
+				int trueorientation;
+				int i,x;
+				char volstr[25];
+
+
+				trueorientation = Machine->orientation;
+				Machine->orientation = ORIENTATION_DEFAULT;
+
+				x = (Machine->uiwidth - 12*Machine->uifont->width)/2;
+				strcpy(volstr,"BETA VERSION");
+
+				for (i = 0;i < 12;i++)
+					drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_RED,
+						0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
+
+				Machine->orientation = trueorientation;
+			}
+			else
+				osd_clearbitmap(Machine->scrbitmap);
+		}
+#endif
 
 		osd_poll_joystick();
 

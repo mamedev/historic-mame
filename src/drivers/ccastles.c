@@ -89,7 +89,6 @@ extern unsigned char *ccastles_mobram2;
 void ccastles_paletteram_w(int offset,int data);
 int ccastles_vh_start(void);
 void ccastles_vh_stop(void);
-void ccastles_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int ccastles_trakball_x(int data);
@@ -265,8 +264,8 @@ static struct MachineDriver ccastles_machine =
 	0,
 	256, 232, { 0, 255, 0, 231 },
 	gfxdecodeinfo,
-	32, 16+16,
-	ccastles_vh_convert_color_prom,
+	32, 32,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,

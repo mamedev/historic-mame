@@ -13,7 +13,6 @@ CPU:
 
 
 
-void superqix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int superqix_vh_start(void);
 void superqix_vh_stop(void);
 int superqix_palette_r(int offset);
@@ -226,7 +225,7 @@ static struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 256,
-	superqix_vh_convert_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER,// | VIDEO_SUPPORTS_DIRTY,
 	0,

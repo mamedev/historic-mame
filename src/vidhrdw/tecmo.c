@@ -139,21 +139,21 @@ void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority ){
       int bank = spriteram[offs+0];
       if( bank & 4 ){ /* visible */
 	int size = (spriteram[offs + 2] & 3);
-	/* 1 = single, 2 = double;
-	   we might also need to support size 0 (8x8 sprites) in some games */
+	/* 0 = 8x8 1 = 16x16 2 = 32x32 */
 
 	int which = spriteram[offs+1];
 
 	int code;
 
 	if( video_type )
-	  code = (which>>2) + ((bank&0xf8)<<3); /* silkworm */
+	  code = (which) + ((bank&0xf8)<<5); /* silkworm */
 	else
-	  code = (which>>2)+((bank&0xf0)<<2); /* rygar */
+	  code = (which)+((bank&0xf0)<<4); /* rygar */
 
-	if (size == 2) code >>= 2;
+	if (size == 1) code >>= 2;
+	else if (size == 2) code >>= 4;
 
-	drawgfx(bitmap,Machine->gfx[size],
+	drawgfx(bitmap,Machine->gfx[size+1],
 		code,
 		flags&0xf, /* color */
 		bank&1, /* flipx */
@@ -183,7 +183,7 @@ void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* rebuild the color lookup table */
 	{
 		int i,j;
-		int gf[4] = { 1, 0, 3, 4 };
+		int gf[4] = { 1, 0, 4, 5 };
 		int off[4] = { 0x000, 0x200, 0x400, 0x600 };
 
 		for (j = 0;j < 4;j++)
@@ -221,7 +221,7 @@ void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx = offs % 32;
 			int sy = offs / 32;
 
-			drawgfx(tmpbitmap2,Machine->gfx[4],
+			drawgfx(tmpbitmap2,Machine->gfx[5],
 					videoram[offs] + 256 * (colorram[offs] & 0x7),
 					color,
 					0,0,
@@ -238,7 +238,7 @@ void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx = offs % 32;
 			int sy = offs / 32;
 
-			drawgfx(tmpbitmap3,Machine->gfx[3],
+			drawgfx(tmpbitmap3,Machine->gfx[4],
 					tecmo_videoram[offs] + 256 * (tecmo_colorram[offs] & 0x7),
 					color,
 					0,0,
@@ -284,18 +284,15 @@ void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = tecmo_videoram2_size - 1;offs >= 0;offs--)
 	{
-		if( tecmo_videoram2[offs] )		/* don't draw spaces */
-		{
-			int sx = offs % 32;
-			int sy = offs / 32;
+		int sx = offs % 32;
+		int sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
-					tecmo_videoram2[offs] + ((tecmo_colorram2[offs] & 0x03) << 8),
-					tecmo_colorram2[offs] >> 4,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				tecmo_videoram2[offs] + ((tecmo_colorram2[offs] & 0x03) << 8),
+				tecmo_colorram2[offs] >> 4,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 	tecmo_draw_sprites( bitmap,0 ); /* frontmost sprites - used? */
 }
@@ -316,7 +313,7 @@ void gemini_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* rebuild the color lookup table */
 	{
 		int i,j;
-		int gf[4] = { 1, 0, 3, 4 };
+		int gf[4] = { 1, 0, 4, 5 };
 		int off[4] = { 0x000, 0x200, 0x400, 0x600 };
 
 		for (j = 0;j < 4;j++)
@@ -354,7 +351,7 @@ void gemini_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx = offs % 32;
 			int sy = offs / 32;
 
-			drawgfx(tmpbitmap2,Machine->gfx[4],
+			drawgfx(tmpbitmap2,Machine->gfx[5],
 					videoram[offs] + 16 * (colorram[offs] & 0x70),
 					color,
 					0,0,
@@ -371,7 +368,7 @@ void gemini_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx = offs % 32;
 			int sy = offs / 32;
 
-			drawgfx(tmpbitmap3,Machine->gfx[3],
+			drawgfx(tmpbitmap3,Machine->gfx[4],
 					tecmo_videoram[offs] + 16 * (tecmo_colorram[offs] & 0x70),
 					color,
 					0,0,
@@ -417,18 +414,15 @@ void gemini_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = tecmo_videoram2_size - 1;offs >= 0;offs--)
 	{
-		if( tecmo_videoram2[offs] )		/* don't draw spaces */
-		{
-			int sx = offs % 32;
-			int sy = offs / 32;
+		int sx = offs % 32;
+		int sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
-					tecmo_videoram2[offs] + ((tecmo_colorram2[offs] & 0x03) << 8),
-					tecmo_colorram2[offs] >> 4,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				tecmo_videoram2[offs] + ((tecmo_colorram2[offs] & 0x03) << 8),
+				tecmo_colorram2[offs] >> 4,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 	tecmo_draw_sprites( bitmap,0 ); /* frontmost sprites - used? */
 }

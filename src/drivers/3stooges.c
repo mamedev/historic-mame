@@ -49,7 +49,6 @@ just some guesses for now, obtained with a fast overlook at the sound rom
 #include "vidhrdw/generic.h"
 
 int stooges_vh_start(void);
-void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh2_w(int offset, int data);
 void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_characterram;
@@ -290,8 +289,8 @@ static const struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	16,256,
-	gottlieb_vh_init_color_palette,
+	16, 16,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,      /* init vh */

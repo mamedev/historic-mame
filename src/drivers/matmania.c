@@ -396,7 +396,7 @@ static struct MachineDriver matmania_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	matmania_gfxdecodeinfo,
-	64+16,8*8+2*8,
+	64+16, 64+16,
 	matmania_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -445,7 +445,7 @@ static struct MachineDriver maniach_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	maniach_gfxdecodeinfo,
-	64+16,8*8+2*8,
+	64+16, 64+16,
 	matmania_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,

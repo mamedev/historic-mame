@@ -365,7 +365,7 @@ static struct MachineDriver machine_driver =
 	16,4*32,
 	pengo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	machine_layers,
 	pacman_vh_start,
 	generic_vh_stop,

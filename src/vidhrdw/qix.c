@@ -38,21 +38,6 @@ FILE	*led_log;
   bit 0 -- Intensity
 
 ***************************************************************************/
-void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-}
-
-
 static void update_pen (int pen, int val)
 {
 	/* this conversion table should be about right. It gives a reasonable */

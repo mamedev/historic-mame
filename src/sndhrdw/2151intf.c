@@ -52,8 +52,9 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	sample_bits = Machine->sample_bits;
 
-	if( No_FM ) FMMode = CHIP_YM2151_DAC;
-	else        FMMode = CHIP_YM2151_OPL;
+	FMMode = CHIP_YM2151_DAC;
+//	if( No_FM ) FMMode = CHIP_YM2151_DAC;
+//	else        FMMode = CHIP_YM2151_OPL;
 
 	if( emu_mode == 0 )
 	{	/* Tatsuyuki's */

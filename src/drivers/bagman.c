@@ -85,8 +85,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa7ff, 0xa805, bagman_pal16r6_w },	/* PAL16r6 custom logic */
 														/* writes are handled by colorram_w */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
+	{ 0xa004, 0xa004, coin_counter_w },
 #if 0
-	{ 0xa004, 0xa004, MWA_NOP },	/* ???? */
 	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
 	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
 	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */

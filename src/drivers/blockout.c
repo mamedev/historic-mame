@@ -19,7 +19,6 @@ int blockout_frontvideoram_r(int offset);
 void blockout_paletteram_w(int offset, int data);
 int blockout_paletteram_r(int offset);
 void blockout_frontcolor_w(int offset, int data);
-void blockout_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int blockout_vh_start(void);
 void blockout_vh_stop(void);
 void blockout_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -242,8 +241,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	320, 256, { 0, 319, 8, 247 },
 	0,
-	256,0,
-	blockout_vh_convert_color_prom,
+	256, 0,
+	0,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -278,7 +277,7 @@ ROM_START( blockout_rom )
 	ROM_LOAD_ODD ( "BO29A1-2.BIN", 0x00000, 0x20000, 0x3eb5a6ff )
 
 	ROM_REGION(0x800)
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */

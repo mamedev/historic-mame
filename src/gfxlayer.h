@@ -3,8 +3,8 @@
 
 struct GfxTileLayout
 {
-	short total;			/* total numer of tiles in this set */
-	short planes;			/* number of bitplanes */
+	unsigned short total;			/* total numer of tiles in this set */
+	unsigned short planes;			/* number of bitplanes */
 	int planeoffset[8];		/* start of every bitplane */
 	int xoffset[8];			/* coordinates of the bit corresponding to the pixel */
 	int yoffset[8];			/* of the given coordinates */
@@ -12,7 +12,7 @@ struct GfxTileLayout
 };
 
 
-#define MAX_COMPOSED_TILE_SIZE 4
+#define MAX_COMPOSED_TILE_SIZE 16
 
 struct GfxTileCompose
 {
@@ -21,7 +21,7 @@ struct GfxTileCompose
 						/* the 8x8 tile code */
 	short xoffset[MAX_COMPOSED_TILE_SIZE];		/* how much to add to the base 8x8 tile code to get the */
 	short yoffset[MAX_COMPOSED_TILE_SIZE];		/* codes of all the components. */
-	char bankxoffset[MAX_COMPOSED_TILE_SIZE];	/* in some cases the components might */
+	char bankxoffset[MAX_COMPOSED_TILE_SIZE];	/* in some cases the components might be */
 	char bankyoffset[MAX_COMPOSED_TILE_SIZE];	/* in different GfxTileBanks */
 };
 
@@ -126,6 +126,7 @@ struct TileMap
 struct GfxLayer
 {
 	unsigned char *dirty;
+	unsigned char *dirtyline;
 	struct TileMap tilemap;
 };
 
@@ -144,21 +145,23 @@ void freetiles(struct GfxTileBank *gfxtilebank);
 
 struct GfxLayer *create_tile_layer(struct MachineLayer *ml);
 void free_tile_layer(struct GfxLayer *layer);
-void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action);
-void layer_mark_all_dirty(struct GfxLayer *layer,int action);
+#define MARK_ALL_CLEAN 0	/* supported only by layer_mark_all_dirty() */
 #define MARK_ALL_DIRTY 1
 #define MARK_ALL_NOT_CLEAN 2
 #define MARK_DIRTY_IF_NOT_CLEAN 3
 #define MARK_CLEAN_IF_DIRTY 4	/* supported only by layer_mark_all_dirty() */
-int layer_is_block_dirty(struct GfxLayer *layer,int minx,int miny);
+void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action);
+void layer_mark_all_dirty(struct GfxLayer *layer,int action);
+int layer_count_blocks_dirty(struct GfxLayer *layer,int minx,int miny);
+int layer_is_line_dirty(struct GfxLayer *layer,int miny);
 void update_tile_layer(int layer_num,struct osd_bitmap *bitmap);
 void set_tile_layer_attributes(int layer_num,struct osd_bitmap *bitmap,int scrollx,int scrolly,int flipx,int flipy,unsigned long global_attr_mask,unsigned long global_attr);
 void set_tile_attributes_fast(int layer_num,int tile,int attr);
 #define set_tile_attributes(layer,tile,bank,code,color,flipx,flipy,transparency) \
 	set_tile_attributes_fast(layer,tile,MAKE_TILE(bank,code,color,flipx,flipy,transparency))
-int are_tiles_opaque_norotate(int layer_num,int minx,int miny);
 
 void layer_mark_rectangle_dirty(struct GfxLayer *layer,int minx,int maxx,int miny,int maxy);
+void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int maxx,int miny,int maxy);
 void layer_mark_full_screen_dirty(void);
 
 #endif

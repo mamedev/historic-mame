@@ -169,7 +169,6 @@ OUTPUT:
 
 void gng_bankswitch_w(int offset,int data);
 int gng_bankedrom_r(int offset);
-int gng_catch_loop_r(int offset); /* JB 970823 */
 void gng_init_machine(void);
 
 extern unsigned char *gng_paletteram;
@@ -182,28 +181,11 @@ void gng_bgcolorram_w(int offset,int data);
 void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
 void gng_vh_stop(void);
-void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
 static struct MemoryReadAddress readmem[] =
-{
-	{ 0x0000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3000, input_port_0_r },
-	{ 0x3001, 0x3001, input_port_1_r },
-	{ 0x3002, 0x3002, input_port_2_r },
-	{ 0x3003, 0x3003, input_port_3_r },
-	{ 0x3004, 0x3004, input_port_4_r },
-	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
-	{ 0x4000, 0x5fff, MRA_BANK1 },
-	{ 0x6184, 0x6184, gng_catch_loop_r }, /* JB 970823 */
-	{ 0x6000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
-
-/* JB 970823 - separate diamond run from gng */
-static struct MemoryReadAddress diamond_readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x3000, input_port_0_r },
@@ -552,9 +534,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   8*8+4*16, 16 },
-	{ 1, 0x04000, &tilelayout,          0, 8 },
-	{ 1, 0x1c000, &spritelayout,      8*8, 4 },
+	{ 1, 0x00000, &charlayout,   128, 16 },	/* use colors 128-195 */
+	{ 1, 0x04000, &tilelayout,     0, 8 },	/* use colors 0-63 */
+	{ 1, 0x1c000, &spritelayout,  64, 4 },	/* use colors 64-127 */
 	{ -1 } /* end of array */
 };
 
@@ -600,55 +582,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 8*8+4*16+16*4,
-	gng_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	256, 256,
 	0,
-	gng_vh_start,
-	gng_vh_stop,
-	gng_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
-
-/* JB 970823 - separate diamond run from gng */
-static struct MachineDriver diamond_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,			/* 1.5 Mhz ? */
-			0,
-			diamond_readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz (?) */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 500,	/* frames per second, vblank duration */
-				/* vblank duration is crucial to get proper sprite/background alignment */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	gng_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 8*8+4*16+16*4,
-	gng_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -940,7 +875,7 @@ struct GameDriver diamond_driver =
 	"Diamond Run",
 	"diamond",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nMike Balfour",
-	&diamond_machine_driver,	/* JB 970823 - separate machine driver for D.R. */
+	&machine_driver,
 
 	diamond_rom,
 	0, 0,

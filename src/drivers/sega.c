@@ -184,7 +184,7 @@ static struct IOWritePort spacfury_writeport[] =
 	{ 0x3f, 0x3f, spacfury2_sh_w },
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
-/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
+	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -203,7 +203,7 @@ static struct IOWritePort zektor_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
+	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -213,7 +213,7 @@ static struct IOWritePort tacscan_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
+	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -242,7 +242,7 @@ static struct IOWritePort elim_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
+	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -253,7 +253,7 @@ static struct IOWritePort startrek_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
+	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 

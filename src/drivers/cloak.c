@@ -103,7 +103,6 @@ extern void graph_processor_w(int offset, int data);
 extern void cloak_clearbmp_w(int offset, int data);
 extern int  cloak_vh_start(void);
 extern void cloak_vh_stop(void);
-extern void cloak_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -142,7 +141,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2800, 0x29ff, MWA_RAM, &cloak_nvRAM },
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3200, 0x327f, cloak_paletteram_w },
-	{ 0x3800, 0x3805, MWA_RAM },
+	{ 0x3800, 0x3801, coin_counter_w },
+	{ 0x3802, 0x3805, MWA_RAM },
 	{ 0x3806, 0x3807, cloak_led_w },
 	{ 0x3a00, 0x3a00, MWA_NOP },
 	{ 0x3e00, 0x3e00, MWA_RAM, &enable_nvRAM },
@@ -313,8 +313,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	64,32+32,
-	cloak_vh_convert_color_prom,
+	64, 64,
+	0,
 
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,

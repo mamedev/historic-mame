@@ -18,7 +18,6 @@ Known problems:
 unsigned char *jack_paletteram;
 
 void jack_paletteram_w(int offset,int data);
-void jack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void jack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void jack_sh_command_w(int offset,int data)
@@ -259,8 +258,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32,8*4,
-	jack_vh_convert_color_prom,
+	32, 32,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,

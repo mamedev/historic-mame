@@ -131,33 +131,12 @@ static int atarisys1_debug (void);
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
   System 1 doesn't have a color PROM. It uses 1024 words of RAM to
   dynamically create the palette. Each word defines one color (5 bits
   per pixel). However, more than 256 colors is rarely used, so the
   video system has a dynamic palette mapping function
 
 ***************************************************************************/
-
-void atarisys1_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom)
-{
-	int i;
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0; i < Machine->drv->total_colors; i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* initialize the color table */
-	for (i = 0; i < Machine->drv->color_table_len; i++)
-		colortable[i] = i & 0xff;
-}
-
 
 
 /*************************************

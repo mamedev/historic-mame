@@ -13,7 +13,7 @@ Millipede memory map (preliminary)
 2000            BIT 1-4 trackball
                 BIT 5 IS P1 FIRE
                 BIT 6 IS P1 START
-                BIT 7 IS SERVICE
+                BIT 7 IS VBLANK
 
 2001            BIT 1-4 trackball
                 BIT 5 IS P2 FIRE
@@ -27,15 +27,18 @@ Millipede memory map (preliminary)
                 BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
                 BIT 6,7 (?)
                 BIT 8 IS RIGHT COIN
-
+2030            earom read
 2480-249F       COLOR RAM
+2500-2502		Coin counters
+2503-2504		LEDs
+2505-2507		Coin door lights ??
 2600            INTERRUPT ACKNOWLEDGE
 2680            CLEAR WATCHDOG
+2700			earom control
+2780			earom write
 4000-7FFF       GAME CODE
 
 Known issues:
-
-* Color ram isn't emulated. I think it fills 2480-249f.
 
 * The dipswitches under $2000 aren't fully emulated. There must be some sort of
 trick to reading them properly.
@@ -44,22 +47,25 @@ trick to reading them properly.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/atari_vg.h"
 
 
 extern unsigned char *milliped_paletteram;
 
-void milliped_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void milliped_paletteram_w(int offset,int data);
 void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int milliped_IN0_r(int offset);	/* JB 971220 */
 int milliped_IN1_r(int offset);	/* JB 971220 */
 
-
+void milliped_led_w (int offset, int data)
+{
+	osd_led_w (offset, ~(data >> 7));
+}
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x0200, MRA_RAM },
+	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x040f, pokey1_r },
 	{ 0x0800, 0x080f, pokey2_r },
 	{ 0x1000, 0x13ff, MRA_RAM },
@@ -67,6 +73,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2001, 0x2001, milliped_IN1_r },	/* JB 971220 */
 	{ 0x2010, 0x2010, input_port_2_r },
 	{ 0x2011, 0x2011, input_port_3_r },
+	{ 0x2030, 0x2030, atari_vg_earom_r },
 	{ 0x4000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
 	{ -1 }	/* end of table */
@@ -76,12 +83,19 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0200, MWA_RAM },
+	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x040f, pokey1_w },
 	{ 0x0800, 0x080f, pokey2_w },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
 	{ 0x2480, 0x249f, milliped_paletteram_w, &milliped_paletteram },
+	{ 0x2680, 0x2680, watchdog_reset_w },
+	{ 0x2600, 0x2600, MWA_NOP }, /* IRQ ack */
+	{ 0x2500, 0x2502, coin_counter_w },
+	{ 0x2503, 0x2504, milliped_led_w },
+	{ 0x2780, 0x27bf, atari_vg_earom_w },
+	{ 0x2700, 0x2700, atari_vg_earom_ctrl },
+	{ 0x2505, 0x2507, MWA_NOP }, /* coin door lights? */
 	{ 0x4000, 0x73ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -101,7 +115,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x0c, "0 1x 2x 3x" )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 $2001 */	/* see port 7 for y trackball */
@@ -135,7 +149,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* 4 */ /* DSW1 $0408 */
 	PORT_DIPNAME (0x01, 0x00, "Millipede Head", IP_KEY_NONE )
@@ -186,11 +202,10 @@ INPUT_PORTS_START( input_ports )
 
 	/* JB 971220 */
 	PORT_START	/* IN6: FAKE - used for trackball-x at $2000 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 100, 7, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
-//	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
 
 	PORT_START	/* IN7: FAKE - used for trackball-y at $2001 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 7, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
 INPUT_PORTS_END
 
 
@@ -220,8 +235,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 4 },
-	{ 1, 0x0000, &spritelayout,   4*4, 1 },
+	{ 1, 0x0000, &charlayout,      0, 4 },	/* use colors 0-15 */
+	{ 1, 0x0000, &spritelayout,   16, 1 },	/* use colors 16-19 */
 	{ -1 } /* end of array */
 };
 
@@ -255,10 +270,10 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			1500000,	/* 1.5 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			interrupt,2		/* ASG -- 2 per frame, once for VBLANK and once not? */
+			interrupt,4
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -268,8 +283,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	32,4*4+4,
-	milliped_vh_convert_color_prom,
+	32, 32,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -310,47 +325,11 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0064],"\x75\x91\x08",3) == 0 &&
-			memcmp(&RAM[0x0079],"\x16\x19\x04",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0064],6*8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0064],6*8);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver milliped_driver =
 {
 	"Millipede",
 	"milliped",
-	"IVAN MACKINTOSH\nNICOLA SALMORIA\nJOHN BUTLER\nAARON GILES\nBERND WIEBELT\nBRAD OLIVER",
+	"Ivan Mackintosh\nNicola Salmoria\nJohn Butler\nAaron Giles\nBernd Wiebelt\nBrad Oliver",
 	&machine_driver,
 
 	milliped_rom,
@@ -363,6 +342,6 @@ struct GameDriver milliped_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload, hisave
+	atari_vg_earom_load, atari_vg_earom_save
 };
 

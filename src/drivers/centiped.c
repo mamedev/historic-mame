@@ -121,15 +121,23 @@ Off  On   Off                            For every 3 coins inserted, game logic
 -------------------------------------------------------------------------------------
 $ = Manufacturer's suggested settings
 
+Changes:
+	30 Apr 98 LBO
+	* Fixed test mode
+	* Changed high score to use earom routines
+	* Added support for alternate rom set
+
 Known issues:
 
-* The self-test mode doesn't work. This may be related to interrupts much like
-the Atari vector games.
+* The rev1 set doesn't seem to work with the trackball
+* Are coins supposed to take over a second to register?
+* Need to confirm CPU and Pokey clocks
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/atari_vg.h"
 
 
 int centiped_IN0_r(int offset);
@@ -137,10 +145,11 @@ int centiped_IN2_r(int offset);	/* JB 971220 */
 
 extern unsigned char *centiped_paletteram;
 
-void centiped_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void centiped_paletteram_w (int offset, int data);
 void centiped_vh_flipscreen_w (int offset,int data);
 void centiped_vh_screenrefresh (struct osd_bitmap *bitmap);
+
+int centiped_interrupt(void);	/* in vidhrdw */
 
 
 
@@ -148,6 +157,7 @@ void centiped_led_w(int offset,int data)
 {
 	osd_led_w(offset,~data >> 7);
 }
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -163,6 +173,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
 	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
 	{ 0x1000, 0x100f, pokey1_r },
+	{ 0x1700, 0x173f, atari_vg_earom_r },
 	{ -1 }	/* end of table */
 };
 
@@ -173,13 +184,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x1000, 0x100f, pokey1_w },
 	{ 0x1400, 0x140f, centiped_paletteram_w, &centiped_paletteram },
-	{ 0x1800, 0x1800, MWA_NOP },
-	{ 0x1c00, 0x1c02, MWA_NOP },
+	{ 0x1600, 0x163f, atari_vg_earom_w },
+	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
+	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
+	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
-	{ 0x1c05, 0x1c06, MWA_NOP },
+	{ 0x1c05, 0x1c06, MWA_NOP }, /* coin door lights? */
 	{ 0x1c07, 0x1c07, centiped_vh_flipscreen_w },
-	{ 0x1680, 0x1680, MWA_NOP },
-	{ 0x2000, 0x2000, MWA_NOP },
+	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -207,14 +219,13 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN2 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 7, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
 	/* The lower 4 bits are the input, and bit 7 is the direction. */
-	/* The state of bit 7 does not change if the trackball is not */
-	/* moved. JB 971220, BW 980121 */
+	/* The state of bit 7 does not change if the trackball is not moved.*/
 
 	PORT_START	/* IN3 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
@@ -242,12 +253,12 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x10, "12000" )
 	PORT_DIPSETTING (   0x20, "15000" )
 	PORT_DIPSETTING (   0x30, "20000" )
-	PORT_DIPNAME (0x40, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME (0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x40, "Easy" )
 	PORT_DIPSETTING (   0x00, "Hard" )
-	PORT_DIPSETTING (   0x10, "Easy" )
 	PORT_DIPNAME (0x80, 0x00, "Credit Minimum", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "1" )
-	PORT_DIPSETTING (   0x10, "2" )
+	PORT_DIPSETTING (   0x80, "2" )
 
 	PORT_START	/* IN5 */
 	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
@@ -269,10 +280,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
 	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
 	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
-	PORT_DIPSETTING (   0x0a, "4 credits/3 coins" )
+	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
 
 	PORT_START	/* IN6, fake trackball input port. */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 100, 7, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
 INPUT_PORTS_END
 
 
@@ -302,8 +313,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 1 },
-	{ 1, 0x0000, &spritelayout, 4, 1 },
+	{ 1, 0x0000, &charlayout,   4, 4 },	/* 4 color codes to support midframe */
+										/* palette changes in test mode */
+	{ 1, 0x0000, &spritelayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -329,29 +341,27 @@ static struct POKEYinterface pokey_interface =
 	{ 0 },
 };
 
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			1500000,	/* 1.5 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			interrupt,1
+			centiped_interrupt,4
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	16, 2*4,
-	centiped_vh_convert_color_prom,
+	4+4*4, 4+4*4,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -390,42 +400,18 @@ ROM_START( centiped_rom )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xc9016e3f )
 ROM_END
 
+ROM_START( centipd1_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0x45b4d32c )
+	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0xb7c2dd22 )
+	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xc4549966 )
+	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0xd6b0956a )
+	ROM_RELOAD(         0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-
-static int hiload(void)
-{
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0002],"\x43\x65\x01",3) == 0 &&
-			memcmp(&RAM[0x0017],"\x02\x21\x01",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0002],6*8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0002],6*8);
-		osd_fclose(f);
-	}
-}
-
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x704a2608 )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xc9016e3f )
+ROM_END
 
 
 struct GameDriver centiped_driver =
@@ -445,5 +431,25 @@ struct GameDriver centiped_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload, hisave
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
+struct GameDriver centipd1_driver =
+{
+	"Centipede (rev 1)",
+	"centipd1",
+	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
+	&machine_driver,
+
+	centipd1_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	atari_vg_earom_load, atari_vg_earom_save
 };

@@ -10,12 +10,12 @@
 /****************************************************************************/
 
 #define M_POP(Rg)           \
-        R.Rg.D=M_RDSTACK(R.SP.D)+(M_RDSTACK((R.SP.D+1)&65535)<<8); \
+	R.Rg.D=M_RDSTACK(R.SP.D)+(M_RDSTACK((word)(R.SP.D+1))<<8); \
         R.SP.W.l+=2
 #define M_PUSH(Rg)          \
         R.SP.W.l-=2;        \
         M_WRSTACK(R.SP.D,R.Rg.D); \
-        M_WRSTACK((R.SP.D+1)&65535,R.Rg.D>>8)
+	M_WRSTACK((word)(R.SP.D+1),R.Rg.D>>8)
 #define M_CALL              \
 {                           \
  int q;                     \
@@ -26,7 +26,7 @@
  Z80_ICount-=7;             \
 }
 #define M_JP                \
-        R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((R.PC.D+1)&65535))<<8)\
+	R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((word)(R.PC.D+1)))<<8)\
         ;change_pc(R.PC.D)	/* TS 971002 */
 #define M_JR                \
         R.PC.W.l+=((offset)M_RDOP_ARG(R.PC.D))+1; Z80_ICount-=5\
@@ -52,7 +52,7 @@
  R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&C_FLAG)
 
 #define M_RRCA              \
- R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&0x01); \
+ R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&C_FLAG); \
  R.AF.B.h=(R.AF.B.h>>1)|(R.AF.B.h<<7)
 
 #define M_RLA               \

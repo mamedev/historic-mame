@@ -163,6 +163,7 @@ typedef struct
 	int		MemWindowDataXEnd;
 	int		MemWindowNumBytes;
 	int		MaxInstLen;
+	int		AlignUnit;			/* CM 980428 */
 	int		*SPReg;
 	int		SPSize;
 	tRegdef	RegList[32];
@@ -191,10 +192,10 @@ static tCommands CommandInfo[] =
 {
 	{	cmBPX,	"BPX ",		"bpx [address]", SetBreakPoint },
 	{	cmBC,	"BC ",		"Breakpoint clear", ClearBreakPoint },
-	{	cmD,	"D ",		"Display <Address> [1|2]", DisplayMemory },
+	{	cmD,	"D ",		"Display <1|2> [Address]", DisplayMemory },
 	{	cmDASM,	"DASM ",	"Dasm <FileName> <StartAddr> <EndAddr>", DasmToFile },
 	{	cmDUMP,	"DUMP ",	"Dump <FileName> <StartAddr> <EndAddr>", DumpToFile },
-	{   cmE,	"E ",		"Edit <address> [1|2]", EditMemory },
+	{   cmE,	"E ",		"Edit <1|2> [address]", EditMemory },
 	{	cmG,	"G ", 		"Go <address>", Go },
 	{	cmHERE,	"HERE ",	"Run to cursor", Here },
 	{	cmJ,	"J ",		"Jump <Address>", DisplayCode },
@@ -341,7 +342,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"........", (int *)&DummyCC, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		1,
+		1, 1,					/* CM 980428 */
 		(int *)-1, -1,
 		{
 			{ "", (int *)-1, -1, -1, -1 }
@@ -355,7 +356,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"SZ.H.PNC", (int *)&((Z80_Regs *)rgs)->AF.B.l, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		4,
+		4, 1,					/* CM 980428 */
 		(int *)&((Z80_Regs *)rgs)->SP.W.l, 2,
 		{
 			{ "AF", (int *)&((Z80_Regs *)rgs)->AF.W.l, 2, 2, 1 },
@@ -379,7 +380,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"NVRBDIZC", (int *)&((M6502 *)rgs)->P, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		3,
+		3, 1,					/* CM 980428 */
 		(int *)&((M6502 *)rgs)->S, 1,
 		{
 			{ "A", (int *)&((M6502 *)rgs)->A, 1, 2, 1 },	/* JB 980103 */
@@ -398,7 +399,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"................", (int *)&((i86_Regs *)rgs)->flags, 16,
 		"%06X:     ", 0xffffff,
 		32, 40, 62, 8,
-		5,
+		5, 1,					/* CM 980428 */
 		(int *)&((i86_Regs *)rgs)->regs.w[4], 2,
 		{
 			{ "IP", (int *)&((i86_Regs *)rgs)->ip, 4, 2, 1 },
@@ -425,7 +426,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"........", (int *)&((I8039_Regs *)rgs)->PSW, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		1,
+		1, 1,					/* CM 980428 */
 		(int *)&((I8039_Regs *)rgs)->SP, 1,
 		{
 			{ "PC", (int *)&((I8039_Regs *)rgs)->PC, 2, 2, 1 },
@@ -442,7 +443,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"..HINZVC", (int *)&((m6808_Regs *)rgs)->cc, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		4,
+		4, 1,					/* CM 980428 */
 		(int *)&((m6808_Regs *)rgs)->s, 2,
 		{
 			{ "A", (int *)&((m6808_Regs *)rgs)->a, 1, 2, 1 },
@@ -461,7 +462,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"...HINZC",  (int *)&((m6805_Regs *)rgs)->cc, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		4,
+		4, 1,					/* CM 980428 */
 		(int *)&((m6805_Regs *)rgs)->s, 2,
 		{
 			{ "A", (int *)&((m6805_Regs *)rgs)->a, 1, 2, 1 },
@@ -479,7 +480,7 @@ static tDebugCpuInfo DebugInfo[] =
 		"..H.NZVC", (int *)&((m6809_Regs *)rgs)->cc, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		5,
+		5, 1,					/* CM 980428 */
 		(int *)&((m6809_Regs *)rgs)->s, 2,
 		{
 			{ "A", (int *)&((m6809_Regs *)rgs)->a, 1, 2, 1 },
@@ -501,7 +502,8 @@ static tDebugCpuInfo DebugInfo[] =
 		"T.S..III...XNZVC", (int *)&((MC68000_Regs *)rgs)->regs.sr, 16,
 		"%06.6X:     ", 0xffffff,
 		33, 41, 63, 8,
-		8,
+		10,						/* CM 980428; "MOVE.W $12345678,$87654321" is 10 bytes*/
+		2,						/* CM 980428; MC68000 instructions are evenly aligned */
 		(int *)&((MC68000_Regs *)rgs)->regs.isp, 4,
 		{
 			{ "PC", (int *)&((MC68000_Regs *)rgs)->regs.pc, 4, 2, 1 },

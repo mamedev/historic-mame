@@ -19,8 +19,6 @@ static unsigned char *superqix_bitmapram,*superqix_bitmapram2;
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
   Super Qix doesn't have colors PROMs, it uses RAM. The meaning of the bits are
   bit 7 -- Blue
         -- Blue
@@ -32,24 +30,27 @@ static unsigned char *superqix_bitmapram,*superqix_bitmapram2;
   bit 0 -- Intensity
 
 ***************************************************************************/
-void superqix_vh_convert_color_prom(unsigned char *palette,unsigned char *colortable,const unsigned char *color_prom)
+void superqix_palette_w(int offset,int data)
 {
-	int i;
+	int bits,intensity,r,g,b;
 
 
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
+	superqix_palette[offset] = data;
 
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[i] = i;
+	intensity = (data >> 0) & 0x03;
+	/* red component */
+	bits = (data >> 2) & 0x03;
+	r = 0x44 * bits + 0x11 * intensity;
+	/* green component */
+	bits = (data >> 4) & 0x03;
+	g = 0x44 * bits + 0x11 * intensity;
+	/* blue component */
+	bits = (data >> 6) & 0x03;
+	b = 0x44 * bits + 0x11 * intensity;
+
+	osd_modify_pen(Machine->pens[offset],r,g,b);
 }
+
 
 
 
@@ -107,27 +108,6 @@ void superqix_vh_stop(void)
 int superqix_palette_r(int offset)
 {
 	return superqix_palette[offset];
-}
-
-void superqix_palette_w(int offset,int data)
-{
-	int bits,intensity,r,g,b;
-
-
-	superqix_palette[offset] = data;
-
-	intensity = (data >> 0) & 0x03;
-	/* red component */
-	bits = (data >> 2) & 0x03;
-	r = 0x44 * bits + 0x11 * intensity;
-	/* green component */
-	bits = (data >> 4) & 0x03;
-	g = 0x44 * bits + 0x11 * intensity;
-	/* blue component */
-	bits = (data >> 6) & 0x03;
-	b = 0x44 * bits + 0x11 * intensity;
-
-	osd_modify_pen(Machine->pens[offset],r,g,b);
 }
 
 

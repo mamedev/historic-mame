@@ -87,9 +87,9 @@ Here are some of the people contributing to MAME. If you have comments,
 suggestions or bug reports about an existing driver, check the driver's Credits
 section to find who has worked on it, and send comments to that person. If you
 are not sure who to contact, write to Mirko or Nicola. If you have comments
-specific to a system other than DOS (e.g. Mac, Win32, Unix) should be sent to
-the respective port maintainer. Don't send them to Mirko or Nicola - they will
-be ignored.
+specific to a system other than DOS (e.g. Mac, Win32, Unix), they should be sent
+to the respective port maintainer. DON'T SEND THEM TO MIRKO OR NICOLA - they
+will be ignored.
 
 You can send source code to mame@lim.dsi.unimi.it. Do not use this address for
 non-source code bug reports.
@@ -145,6 +145,8 @@ The list doesn't include variants of the same game.
 | 1942                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | 1942     |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | 1943                 |  Yes   |  Yes   | Yes(2) |  Yes   |   No   | 1943     |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Alpine Ski           |   No   |  Yes   |  Yes   |   No   |  Yes   | alpine   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Amidar               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | amidar   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -398,6 +400,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Liberator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liberatr |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Lock'n'Chase         |  Yes   |   No   |  Yes   |  Yes   |   No   | lnc      |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Loco-Motion          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | locomotn |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Lode Runner          |  Yes   |  Yes   |  Yes   |   No   |   No   | lrunner  |
@@ -464,7 +468,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Naughty Boy          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | naughtyb |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| New Zealand Story    |  Yes   |   No   |   No   |   No   |   No   | tnzs     |
+| New Zealand Story    |Partial |   No   |  Yes   |   No   |   No   | tnzs     |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -473,6 +477,8 @@ The list doesn't include variants of the same game.
 | Ninja Gai Den        |  Yes   |  Yes   |Partial |   No   |   No   | gaiden   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Pac-Land             |  Yes   |  Yes   |   No   |   No   |   No   | pacland  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -496,15 +502,17 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Pleiads              |  Yes   |  Yes   |Limited |  Yes   |   No   | pleiads  |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Pooyan               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pooyan   |
+| Pooyan               |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | pooyan   |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeyebl |
+| Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Pop Flamer           |  Yes   |  Yes   |  Yes   |   No   |   No   | popflame |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Pulsar               |  Yes   |  Yes?  |   No   |   No   |   No   | pulsar   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Punch Out            |  Yes   |  Yes   |Partial |  Yes   |  n/a   | punchout |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Punk Shot            |  Yes   |  Yes   |   No   |   No   |   No   | punkshot |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -538,7 +546,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Road Runner          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | roadrunn |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Robocop              |  Yes   |  Yes   | Yes(3) |   No   |   No   | robocop  |
+| Robocop              |  Yes   |  Yes   | Yes(3) |   No   |   No   | robocopp |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Robot Bowl           |  Yes   |  Yes   |   No   |   No   |   No   | robotbwl |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -567,6 +575,8 @@ The list doesn't include variants of the same game.
 | Shao-Lin's Road      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shaolins |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Sidearms             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sidearms |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Side Pocket          |  Yes   |   No   | Yes(3) |   No   |   No   | sidepckt |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Silkworm             |  Yes   |  Yes   | Yes(3) |   No   |   No   | silkworm |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -652,6 +662,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Tazz-Mania           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tazmania |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| T.M.N.T.             |  Yes   |  Yes   |Partial |   No   |   No   | tmnt     |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Tempest              |  Yes   | Close  |  Yes   |  Yes   |   No   | tempest  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Tetris (Atari)       |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | atetris  |
@@ -702,6 +714,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Uniwars              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | uniwars  |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Up'n Down            |Partial |   No   |  Yes   |   No   |   No   | upndown  |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Vanguard             |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | vanguard |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Vastar               |  Yes   |   No   |  Yes   |   No   |   No   | vastar   |
@@ -736,7 +750,11 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Yie Ar Kung Fu       |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | yiear    |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Xain'd Sleena        |Partial |  Yes   | Yes(2) |   No   |   No   | xsleena  |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | xevious  |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Zarzon               |  Yes   |  Yes?  |   No   |   No   |   No   | zarzon   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -966,6 +984,8 @@ Known issues:
 - Currently, the original version doesn't work at all due to the copy
   protection. Use the bootleg instead.
 - Sound is not perfect yet, it gets out of sync soon and eventually die.
+- In boblbobl, service mode works only if Language is set to Japanese. This is
+  probably a "feature" of the bootleg.
 
 
 
@@ -999,7 +1019,7 @@ In test mode, press 3 to advance through the various tests.
 
 Clones supported:
   different ROM set, without Midway copyright and different attract mode
-  ("btimea")
+     ("btimea")
   bootleg called Hamburger ("hamburge")
 
 Known issues:
@@ -1016,6 +1036,16 @@ Clones supported:
 
 Known issues:
 - The sound of the rolling ball is randomly wrong.
+
+
+
+Centipede ("centipede")
+=======================
+Clones supported:
+  rev 1 ("centipd1")
+
+To see the color test, keep T pressed then hit F2. Insert a coin to proceed to
+the convergence test.
 
 
 
@@ -1242,7 +1272,7 @@ Clones supported:
 Known issues:
 - The original version doesn't work consistently due to the copy
   protection. Use the bootleg version instead.
-- Some sprite priority problems (people half disappearing behind doos etc.)
+- Some sprite priority problems (people half disappearing behind doors etc.)
 
 
 
@@ -1846,6 +1876,13 @@ Clones supported:
 
 
 
+Nibbler ("nibbler")
+===================
+Clones supported:
+  alternate version ("nibblera")
+
+
+
 Night Driver ("nitedrvr")
 =========================
 The gear and track displays are not a part of the original game, but have been
@@ -1857,6 +1894,16 @@ Ninja Gai Den ("gaiden")
 ========================
 Clones supported:
   Shadow Warriors ("shadoww")
+
+
+
+Pac-Land ("pacland")
+====================
+Midway version
+
+Clones supported:
+  Namco version ("paclandn")
+  Alternate Namco version ("paclanda")
 
 
 
@@ -1927,11 +1974,13 @@ Clones supported:
 
 
 
-Popeye ("popeyebl")
+Popeye ("popeye")
 =============================
-Bootleg version. The original version is not supported.
+Clones supported:
+  bootleg version ("popeyebl")
 
 Known issues:
+- Due to encryption, the original doesn't work. Use the bootleg instead.
 - You get about 7 bonus lives when you reach level 4.
 
 
@@ -2502,10 +2551,10 @@ Clones supported:
 
 Tutankham ("tutankhm")
 ======================
-Known issues:
-- David Dahl reported a possible missing ROM ("ra1_9a.snd"???), but the area
-  2000-2fff doesn't seem to be used. Maybe different music roms are available
-  since there is a place for a 3rd ROM.
+Konami copyright.
+
+Clones supported:
+  Stern copyeight ("tutankst")
 
 
 
@@ -2591,6 +2640,16 @@ Known issues:
 
 
 
+Xain'd Sleena ("xsleena")
+=========================
+Clones suported:
+  Solar Warriow ("solarwar")
+
+Known issues:
+- several.
+
+
+
 Xevious ("xevious")
 ===================
 Atari/Namco copyright
@@ -2621,7 +2680,7 @@ There are no dip switches, press F1 to enter the service mode, then
   F6      Down
 
 The first time you run the game, it will ask the location. You can change the
-name using F5/F6 a F2, then F1 to proceed through all the configuration
+name using F5/F6 and F2, then F1 to proceed through all the configuration
 screens, or just reset (F3).
 
 Known issues:

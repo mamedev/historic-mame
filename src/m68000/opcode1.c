@@ -3,11 +3,11 @@ void op_1000(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}
 void op_1010(ULONG opcode) /* MOVE */
 {
@@ -18,7 +18,7 @@ void op_1010(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}
 void op_1018(ULONG opcode) /* MOVE */
 {
@@ -30,7 +30,7 @@ void op_1018(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}}
 void op_1020(ULONG opcode) /* MOVE */
 {
@@ -42,7 +42,7 @@ void op_1020(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}}
 void op_1028(ULONG opcode) /* MOVE */
 {
@@ -53,7 +53,7 @@ void op_1028(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}
 void op_1030(ULONG opcode) /* MOVE */
 {
@@ -64,7 +64,7 @@ void op_1030(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}}
 void op_1038(ULONG opcode) /* MOVE */
 {
@@ -74,7 +74,7 @@ void op_1038(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}
 void op_1039(ULONG opcode) /* MOVE */
 {
@@ -84,7 +84,7 @@ void op_1039(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}
 void op_103a(ULONG opcode) /* MOVE */
 {
@@ -95,7 +95,7 @@ void op_103a(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}}
 void op_103b(ULONG opcode) /* MOVE */
 {
@@ -105,7 +105,7 @@ void op_103b(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}}
 void op_103c(ULONG opcode) /* MOVE */
 {
@@ -114,13 +114,13 @@ void op_103c(ULONG opcode) /* MOVE */
 {	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
+	regs.d[dstreg].B.l = src;
 }}}}
 void op_1080(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CPTR dsta = regs.a[dstreg];
 	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
@@ -248,7 +248,7 @@ void op_10c0(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CPTR dsta = regs.a[dstreg];
 {	regs.a[dstreg] += areg_byteinc[dstreg];
 	CLEARVC;
@@ -387,7 +387,7 @@ void op_1100(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	CLEARVC;
@@ -526,7 +526,7 @@ void op_1140(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
@@ -654,7 +654,7 @@ void op_1180(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
@@ -781,7 +781,7 @@ void op_11bc(ULONG opcode) /* MOVE */
 void op_11c0(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
@@ -898,7 +898,7 @@ void op_11fc(ULONG opcode) /* MOVE */
 void op_13c0(ULONG opcode) /* MOVE */
 {
 	ULONG srcreg = (opcode & 7);
-{{	BYTE src = regs.d[srcreg];
+{{	BYTE src = regs.d[srcreg].B.l;
 {	CPTR dsta = nextilong();
 	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;

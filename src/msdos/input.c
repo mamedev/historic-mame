@@ -156,16 +156,6 @@ void osd_poll_joystick(void)
 /* osdepend.h. Return 0 if it is not pressed, nonzero otherwise. */
 int osd_joy_pressed(int joycode)
 {
-	/* compiler bug? If I don't declare these variables as volatile, */
-	/* joystick right is not detected */
-#if 0
-	extern volatile joy_left, joy_right, joy_up, joy_down;
-	extern volatile joy2_left, joy2_right, joy2_up, joy2_down;
-	extern volatile joy_b1, joy_b2, joy_b3, joy_b4, joy_b5, joy_b6;
-	extern volatile joy2_b1, joy2_b2;
-	extern volatile joy_hat;
-#endif
-
 	switch (joycode)
 	{
 		case OSD_JOY_LEFT:

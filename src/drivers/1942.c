@@ -665,7 +665,7 @@ static struct MachineDriver machine_driver =
 	256,64*4+4*32*8+16*16,
 	c1942_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	machine_layers,
 	generic_vh_start,
 	generic_vh_stop,

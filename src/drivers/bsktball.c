@@ -95,7 +95,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
 	{ 0x1000, 0x1000, MWA_RAM }, /* Timer Reset */
 	{ 0x1010, 0x101f, bsktball_bounce_w }, /* Crowd Amp / Bounce */
-	{ 0x1022, 0x1023, MWA_RAM }, /* Coin Counter */
+	{ 0x1022, 0x1023, coin_counter_w }, /* Coin Counter */
 	{ 0x1024, 0x1025, bsktball_led1_w }, /* LED 1 */
 	{ 0x1026, 0x1027, bsktball_led2_w }, /* LED 2 */
 	{ 0x1028, 0x1029, bsktball_ld1_w }, /* LD 1 */

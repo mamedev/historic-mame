@@ -16,9 +16,7 @@ void jack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
-  Actually Jack uses RAM, not PROMs to store the palette.
+  Jack uses RAM, not PROMs to store the palette.
   I don't know for sure how the palette RAM is connected to the RGB output,
   but it's probably the usual:
 
@@ -32,25 +30,6 @@ void jack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void jack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i;
-}
-
 void jack_paletteram_w (int offset,int data)
 {
 	int bit0,bit1,bit2;

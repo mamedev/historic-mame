@@ -4,7 +4,7 @@
 
 *************************************************************************/
 
-#include "sndhrdw/tms5220.h"
+#include "sndhrdw/5220intf.h"
 #include "vidhrdw/generic.h"
 #include "m6502/m6502.h"
 #include "m68000/m68000.h"
@@ -58,7 +58,6 @@ static unsigned char m6522_regs[16];
 static unsigned long speedcheck_time1, speedcheck_time2;
 
 static int indytemp_setopbase (int pc);
-
 
 
 /*************************************
@@ -564,7 +563,7 @@ int atarisys1_6522_r (int offset)
 	switch (offset)
 	{
 		case 0x00:	/* DRB */
-			return (m6522_drb & m6522_ddrb) | (!tms5220_ready_read () << 2) | (!tms5220_int_read () << 3);
+			return (m6522_drb & m6522_ddrb) | (!tms5220_ready_r () << 2) | (!tms5220_int_r () << 3);
 
 		case 0x01:	/* DRA */
 		case 0x0f:	/* NHDRA */
@@ -592,9 +591,9 @@ void atarisys1_6522_w (int offset, int data)
 			old = m6522_drb;
 			m6522_drb = (m6522_drb & ~m6522_ddrb) | (data & m6522_ddrb);
 			if (!(old & 1) && (m6522_drb & 1))
-				tms5220_data_write (m6522_dra);
+				tms5220_data_w (0, m6522_dra);
 			if (!(old & 2) && (m6522_drb & 2))
-				m6522_dra = (m6522_dra & m6522_ddra) | (tms5220_status_read () & ~m6522_ddra);
+				m6522_dra = (m6522_dra & m6522_ddra) | (tms5220_status_r (0) & ~m6522_ddra);
 			break;
 
 		case 0x01:	/* DRA */

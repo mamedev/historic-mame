@@ -4,7 +4,7 @@ void op_e000(ULONG opcode) /* ASR */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	ULONG sign = cmask & val;
@@ -21,14 +21,14 @@ void op_e000(ULONG opcode) /* ASR */
 	}}
 	NFLG = sign != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e008(ULONG opcode) /* LSR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -41,14 +41,14 @@ void op_e008(ULONG opcode) /* LSR */
 		val >>= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e010(ULONG opcode) /* ROXR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	ULONG carry;
@@ -60,14 +60,14 @@ void op_e010(ULONG opcode) /* ROXR */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e018(ULONG opcode) /* ROR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -79,14 +79,14 @@ void op_e018(ULONG opcode) /* ROR */
 	CFLG = carry;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e020(ULONG opcode) /* ASR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	ULONG sign = cmask & val;
@@ -103,14 +103,14 @@ void op_e020(ULONG opcode) /* ASR */
 	}}
 	NFLG = sign != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e028(ULONG opcode) /* LSR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -123,14 +123,14 @@ void op_e028(ULONG opcode) /* LSR */
 		val >>= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e030(ULONG opcode) /* ROXR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	ULONG carry;
@@ -142,14 +142,14 @@ void op_e030(ULONG opcode) /* ROXR */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e038(ULONG opcode) /* ROR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -161,14 +161,14 @@ void op_e038(ULONG opcode) /* ROR */
 	CFLG = carry;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e040(ULONG opcode) /* ASR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	ULONG sign = cmask & val;
@@ -185,14 +185,14 @@ void op_e040(ULONG opcode) /* ASR */
 	}}
 	NFLG = sign != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e048(ULONG opcode) /* LSR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -205,14 +205,14 @@ void op_e048(ULONG opcode) /* LSR */
 		val >>= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e050(ULONG opcode) /* ROXR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	ULONG carry;
@@ -224,14 +224,14 @@ void op_e050(ULONG opcode) /* ROXR */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e058(ULONG opcode) /* ROR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -243,14 +243,14 @@ void op_e058(ULONG opcode) /* ROR */
 	CFLG = carry;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e060(ULONG opcode) /* ASR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	ULONG sign = cmask & val;
@@ -267,14 +267,14 @@ void op_e060(ULONG opcode) /* ASR */
 	}}
 	NFLG = sign != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e068(ULONG opcode) /* LSR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -287,14 +287,14 @@ void op_e068(ULONG opcode) /* LSR */
 		val >>= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e070(ULONG opcode) /* ROXR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	ULONG carry;
@@ -306,14 +306,14 @@ void op_e070(ULONG opcode) /* ROXR */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e078(ULONG opcode) /* ROR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -325,14 +325,14 @@ void op_e078(ULONG opcode) /* ROR */
 	CFLG = carry;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e080(ULONG opcode) /* ASR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	ULONG sign = cmask & val;
@@ -349,14 +349,14 @@ void op_e080(ULONG opcode) /* ASR */
 	}}
 	NFLG = sign != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e088(ULONG opcode) /* LSR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -369,14 +369,14 @@ void op_e088(ULONG opcode) /* LSR */
 		val >>= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e090(ULONG opcode) /* ROXR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	ULONG carry;
@@ -388,14 +388,14 @@ void op_e090(ULONG opcode) /* ROXR */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e098(ULONG opcode) /* ROR */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -407,14 +407,14 @@ void op_e098(ULONG opcode) /* ROR */
 	CFLG = carry;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e0a0(ULONG opcode) /* ASR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	ULONG sign = cmask & val;
@@ -431,14 +431,14 @@ void op_e0a0(ULONG opcode) /* ASR */
 	}}
 	NFLG = sign != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e0a8(ULONG opcode) /* LSR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -451,14 +451,14 @@ void op_e0a8(ULONG opcode) /* LSR */
 		val >>= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e0b0(ULONG opcode) /* ROXR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	ULONG carry;
@@ -470,14 +470,14 @@ void op_e0b0(ULONG opcode) /* ROXR */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e0b8(ULONG opcode) /* ROR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -489,7 +489,7 @@ void op_e0b8(ULONG opcode) /* ROR */
 	CFLG = carry;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e0d0(ULONG opcode) /* ASRW */
 {
@@ -594,7 +594,7 @@ void op_e100(ULONG opcode) /* ASL */
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -605,21 +605,21 @@ void op_e100(ULONG opcode) /* ASL */
 		CFLG=regs.x = cnt == 8 ? val & 1 : 0;
 		val = 0;
 	} else {
-		ULONG mask = (0xff << (7 - cnt)) & 0xff;
+		ULONG mask = aslmask_ubyte[cnt];
 		CFLG=regs.x=(val << (cnt-1)) & cmask ? 1 : 0;
 		VFLG = (val & mask) != mask && (val & mask) != 0;
 		val <<= cnt;
 	}}
 	NFLG = (val&cmask) != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e108(ULONG opcode) /* LSL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -632,14 +632,14 @@ void op_e108(ULONG opcode) /* LSL */
 		val <<= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e110(ULONG opcode) /* ROXL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	ULONG carry;
@@ -651,14 +651,14 @@ void op_e110(ULONG opcode) /* ROXL */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e118(ULONG opcode) /* ROL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	BYTE data = regs.d[dstreg];
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -671,14 +671,14 @@ void op_e118(ULONG opcode) /* ROL */
 	CFLG = carry!=0;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e120(ULONG opcode) /* ASL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -689,21 +689,21 @@ void op_e120(ULONG opcode) /* ASL */
 		CFLG=regs.x = cnt == 8 ? val & 1 : 0;
 		val = 0;
 	} else {
-		ULONG mask = (0xff << (7 - cnt)) & 0xff;
+		ULONG mask = aslmask_ubyte[cnt];
 		CFLG=regs.x=(val << (cnt-1)) & cmask ? 1 : 0;
 		VFLG = (val & mask) != mask && (val & mask) != 0;
 		val <<= cnt;
 	}}
 	NFLG = (val&cmask) != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e128(ULONG opcode) /* LSL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -716,14 +716,14 @@ void op_e128(ULONG opcode) /* LSL */
 		val <<= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e130(ULONG opcode) /* ROXL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	ULONG carry;
@@ -735,14 +735,14 @@ void op_e130(ULONG opcode) /* ROXL */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e138(ULONG opcode) /* ROL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE cnt = regs.d[srcreg];
-{	BYTE data = regs.d[dstreg];
+{{	BYTE cnt = regs.d[srcreg].D;
+{	BYTE data = regs.d[dstreg].D;
 {	UBYTE val = data;
 	ULONG cmask = 0x80;
 	cnt &= 63;
@@ -755,14 +755,14 @@ void op_e138(ULONG opcode) /* ROL */
 	CFLG = carry!=0;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((val) & 0xff);
+	regs.d[dstreg].B.l = val;
 }}}}}
 void op_e140(ULONG opcode) /* ASL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -773,21 +773,21 @@ void op_e140(ULONG opcode) /* ASL */
 		CFLG=regs.x = cnt == 16 ? val & 1 : 0;
 		val = 0;
 	} else {
-		ULONG mask = (0xffff << (15 - cnt)) & 0xffff;
+		ULONG mask = aslmask_uword[cnt];
 		CFLG=regs.x=(val << (cnt-1)) & cmask ? 1 : 0;
 		VFLG = (val & mask) != mask && (val & mask) != 0;
 		val <<= cnt;
 	}}
 	NFLG = (val&cmask) != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e148(ULONG opcode) /* LSL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -800,14 +800,14 @@ void op_e148(ULONG opcode) /* LSL */
 		val <<= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e150(ULONG opcode) /* ROXL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	ULONG carry;
@@ -819,14 +819,14 @@ void op_e150(ULONG opcode) /* ROXL */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e158(ULONG opcode) /* ROL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	WORD data = regs.d[dstreg];
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -839,14 +839,14 @@ void op_e158(ULONG opcode) /* ROL */
 	CFLG = carry!=0;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e160(ULONG opcode) /* ASL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -857,21 +857,21 @@ void op_e160(ULONG opcode) /* ASL */
 		CFLG=regs.x = cnt == 16 ? val & 1 : 0;
 		val = 0;
 	} else {
-		ULONG mask = (0xffff << (15 - cnt)) & 0xffff;
+		ULONG mask = aslmask_uword[cnt];
 		CFLG=regs.x=(val << (cnt-1)) & cmask ? 1 : 0;
 		VFLG = (val & mask) != mask && (val & mask) != 0;
 		val <<= cnt;
 	}}
 	NFLG = (val&cmask) != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e168(ULONG opcode) /* LSL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -884,14 +884,14 @@ void op_e168(ULONG opcode) /* LSL */
 		val <<= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e170(ULONG opcode) /* ROXL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	ULONG carry;
@@ -903,14 +903,14 @@ void op_e170(ULONG opcode) /* ROXL */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e178(ULONG opcode) /* ROL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	WORD cnt = regs.d[srcreg];
-{	WORD data = regs.d[dstreg];
+{{	WORD cnt = regs.d[srcreg].D;
+{	WORD data = regs.d[dstreg].D;
 {	UWORD val = data;
 	ULONG cmask = 0x8000;
 	cnt &= 63;
@@ -923,14 +923,14 @@ void op_e178(ULONG opcode) /* ROL */
 	CFLG = carry!=0;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((val) & 0xffff);
+	regs.d[dstreg].W.l = val;
 }}}}}
 void op_e180(ULONG opcode) /* ASL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -941,21 +941,21 @@ void op_e180(ULONG opcode) /* ASL */
 		CFLG=regs.x = cnt == 32 ? val & 1 : 0;
 		val = 0;
 	} else {
-		ULONG mask = (0xffffffff << (31 - cnt)) & 0xffffffff;
+		ULONG mask = aslmask_ulong[cnt];
 		CFLG=regs.x=(val << (cnt-1)) & cmask ? 1 : 0;
 		VFLG = (val & mask) != mask && (val & mask) != 0;
 		val <<= cnt;
 	}}
 	NFLG = (val&cmask) != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e188(ULONG opcode) /* LSL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -968,14 +968,14 @@ void op_e188(ULONG opcode) /* LSL */
 		val <<= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e190(ULONG opcode) /* ROXL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	ULONG carry;
@@ -987,14 +987,14 @@ void op_e190(ULONG opcode) /* ROXL */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e198(ULONG opcode) /* ROL */
 {
 	ULONG srcreg = imm8_table[((opcode >> 9) & 7)];
 	ULONG dstreg = opcode & 7;
 {{	ULONG cnt = srcreg;
-{	LONG data = regs.d[dstreg];
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -1007,14 +1007,14 @@ void op_e198(ULONG opcode) /* ROL */
 	CFLG = carry!=0;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e1a0(ULONG opcode) /* ASL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -1025,21 +1025,21 @@ void op_e1a0(ULONG opcode) /* ASL */
 		CFLG=regs.x = cnt == 32 ? val & 1 : 0;
 		val = 0;
 	} else {
-		ULONG mask = (0xffffffff << (31 - cnt)) & 0xffffffff;
+		ULONG mask = aslmask_ulong[cnt];
 		CFLG=regs.x=(val << (cnt-1)) & cmask ? 1 : 0;
 		VFLG = (val & mask) != mask && (val & mask) != 0;
 		val <<= cnt;
 	}}
 	NFLG = (val&cmask) != 0;
 	ZFLG = val == 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e1a8(ULONG opcode) /* LSL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -1052,14 +1052,14 @@ void op_e1a8(ULONG opcode) /* LSL */
 		val <<= cnt;
 	}}
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e1b0(ULONG opcode) /* ROXL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	ULONG carry;
@@ -1071,14 +1071,14 @@ void op_e1b0(ULONG opcode) /* ROXL */
 	}
 	CFLG = regs.x;
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e1b8(ULONG opcode) /* ROL */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG cnt = regs.d[srcreg];
-{	LONG data = regs.d[dstreg];
+{{	LONG cnt = regs.d[srcreg].D;
+{	LONG data = regs.d[dstreg].D;
 {	ULONG val = data;
 	ULONG cmask = 0x80000000;
 	cnt &= 63;
@@ -1091,7 +1091,7 @@ void op_e1b8(ULONG opcode) /* ROL */
 	CFLG = carry!=0;
 }
 	NFLG = (val & cmask) != 0; ZFLG = val == 0; VFLG = 0;
-	regs.d[dstreg] = (val);
+	regs.d[dstreg].D = (val);
 }}}}}
 void op_e1d0(ULONG opcode) /* ASLW */
 {

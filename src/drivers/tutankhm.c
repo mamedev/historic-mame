@@ -187,7 +187,6 @@ extern unsigned char *tutankhm_scrollx;
 void tutankhm_videoram_w( int offset, int data );
 void tutankhm_palette_w( int offset, int data );
 void tutankhm_flipscreen_w( int offset, int data );
-void tutankhm_vh_convert_color_prom( unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom );
 void tutankhm_vh_screenrefresh( struct osd_bitmap *bitmap );
 
 
@@ -451,9 +450,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* not sure about the visible area */
 	0,					/* GfxDecodeInfo * */
-	16,                                  /* total colors */
-	0,                                      /* color table length */
-	tutankhm_vh_convert_color_prom,			/* convert color prom routine */
+	16, 0,
+	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,						/* vh_init routine */
@@ -474,6 +472,35 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tutankhm_rom )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_LOAD( "h1.bin", 0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
+	ROM_LOAD( "h2.bin", 0x0b000, 0x1000, 0x4cff2ad5 )
+	ROM_LOAD( "h3.bin", 0x0c000, 0x1000, 0x0a8bae5d )
+	ROM_LOAD( "h4.bin", 0x0d000, 0x1000, 0x0c36af12 )
+	ROM_LOAD( "h5.bin", 0x0e000, 0x1000, 0xf6bc4352 )
+	ROM_LOAD( "h6.bin", 0x0f000, 0x1000, 0xf7ce5fda )
+	ROM_LOAD( "j1.bin", 0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "j2.bin", 0x11000, 0x1000, 0x7c5691fa )
+	ROM_LOAD( "j3.bin", 0x12000, 0x1000, 0xda9a4984 )
+	ROM_LOAD( "j4.bin", 0x13000, 0x1000, 0x8938bdc0 )
+	ROM_LOAD( "j5.bin", 0x14000, 0x1000, 0x6643cec3 )
+	ROM_LOAD( "j6.bin", 0x15000, 0x1000, 0x2721bb0b )
+	ROM_LOAD( "j7.bin", 0x16000, 0x1000, 0xe48c0550 )
+	ROM_LOAD( "j8.bin", 0x17000, 0x1000, 0x7a2c6b34 )
+	ROM_LOAD( "j9.bin", 0x18000, 0x1000, 0x8e1e46ce )
+	/* the other banks (1900-1fff) are empty */
+
+	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
+	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 )
+	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 )
+ROM_END
+
+
+ROM_START( tutankst_rom )
+	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "ra1_1h.cpu", 0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
 	ROM_LOAD( "ra1_2h.cpu", 0x0b000, 0x1000, 0x4cff2ad5 )
 	ROM_LOAD( "ra1_3h.cpu", 0x0c000, 0x1000, 0xb3914153 )
@@ -492,7 +519,7 @@ ROM_START( tutankhm_rom )
 	/* the other banks (1900-1fff) are empty */
 
 	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
@@ -546,7 +573,7 @@ static void hisave(void)
 
 struct GameDriver tutankhm_driver =
 {
-	"Tutankham",
+	"Tutankham (Konami)",
 	"tutankhm",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	&machine_driver,
@@ -563,3 +590,24 @@ struct GameDriver tutankhm_driver =
 
 	hiload, hisave		        /* High score load and save */
 };
+
+struct GameDriver tutankst_driver =
+{
+	"Tutankham (Stern)",
+	"tutankst",
+	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
+	&machine_driver,
+
+        tutankst_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave		        /* High score load and save */
+};
+

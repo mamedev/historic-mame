@@ -83,30 +83,43 @@ void matmania_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 		color_prom++;
 	}
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 64;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-
-	/* characters use colors 0-31 */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
-
-	/* tiles use colors 32-63 */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i + 32;
-
-	/* sprites use colors 64-79 */
-	for (i = 0;i < TOTAL_COLORS(2);i++)
-		COLOR(2,i) = i + 64;
 }
 
+
+
+void matmania_paletteram_w(int offset,int data)
+{
+	int bit0,bit1,bit2,bit3,val;
+	int r,g,b;
+	int offs2;
+
+
+	matmania_paletteram[offset] = data;
+	offs2 = offset & 0x0f;
+
+	val = matmania_paletteram[offs2];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	val = matmania_paletteram[offs2 | 0x10];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	val = matmania_paletteram[offs2 | 0x20];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	osd_modify_pen(Machine->pens[offs2 + 64],r,g,b);
+}
 
 
 /***************************************************************************
@@ -185,39 +198,6 @@ void matmania_colorram3_w(int offset,int data)
 	}
 }
 
-void matmania_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3,val;
-	int r,g,b;
-	int offs2;
-
-
-	matmania_paletteram[offset] = data;
-	offs2 = offset & 0x0f;
-
-	val = matmania_paletteram[offs2];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	val = matmania_paletteram[offs2 | 0x10];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	val = matmania_paletteram[offs2 | 0x20];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	osd_modify_pen(Machine->pens[offs2 + 64],r,g,b);
-}
 
 void matmania_vh_screenrefresh(struct osd_bitmap *bitmap)
 {

@@ -267,7 +267,7 @@ ROM_START( capbowl_rom )
 	ROM_LOAD( "gr2", 0x20000, 0x8000, 0x325fce25 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)   /* 64k for sound */
@@ -282,7 +282,7 @@ ROM_START( clbowl_rom )
 	ROM_LOAD( "gr2", 0x20000, 0x8000, 0xb63eb4f2 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)   /* 64k for sound */

@@ -20,8 +20,9 @@ extern FILE *errorlog;
 struct RunningMachine
 {
 	unsigned char *memory_region[MAX_MEMORY_REGIONS];
-	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
+	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
+	struct GfxLayer *dirtylayer;	/* for GfxLayer games: keep track of dirty portions of scrbitmap */
 	struct GfxLayer *layer[MAX_LAYERS];
 	/* ASG 980209 - converted pens from an array to a pointer */
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */

@@ -27,8 +27,8 @@ static struct osd_bitmap *tmpbitmap2;
   - 32x8 char palette
   - 32x8 background palette
   - two 256x4 sprite palette
-  I don't know for sure how the PROMs are connected to the RGB output, but
-  it's probably the usual:
+
+  The char and sprite PROMs are connected to the RGB output this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
         -- 470 ohm resistor  -- BLUE
@@ -38,6 +38,19 @@ static struct osd_bitmap *tmpbitmap2;
         -- 220 ohm resistor  -- RED
         -- 470 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
+
+  The background PROM is connected to the RGB output this way:
+
+  bit 7 -- 470 ohm resistor  -- BLUE
+        -- 680 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- GREEN
+        -- 680 ohm resistor  -- GREEN
+        -- 1.2kohm resistor  -- GREEN
+        -- 470 ohm resistor  -- RED
+        -- 680 ohm resistor  -- RED
+  bit 0 -- 1.2kohm resistor  -- RED
+
+TODO: properly implement the above values. The current palette is an approximation.
 
 ***************************************************************************/
 void popeye_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)

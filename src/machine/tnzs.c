@@ -45,27 +45,6 @@ int tnzs_cpu2ram_r(int offset)
 	return tnzs_cpu2ram[offset];
 }
 
-static int dsw = 0;
-
-int tnzs_xxxx2_r(int offset)
-{
-	switch(offset)
-	{
-		case 0:
-			if (errorlog)
-				fprintf(errorlog, "WARNING: reading 0xb000\n");
-			return 0;
-			break;
-		case 1:
-			return readinputport(dsw + 6);
-			break;
-		default:
-			if (errorlog)
-				fprintf(errorlog, "WARNING: reading from 0x%04x\n",
-						offset + 0xb000);
-			return 1;
-	}
-}
 
 int tnzs_yyyy2_r(int offset)
 {
@@ -147,32 +126,6 @@ void tnzs_xxxx_w(int offset, int data)
 			break;
 		case 3:
 			break;
-	}
-}
-
-void tnzs_xxxx2_w(int offset, int data)
-{
-	switch(offset)
-	{
-		case 0:
-			switch(data)
-			{
-				case 0x0e:
-					dsw = 0;
-					break;
-				case 0x0f:
-					dsw = 1;
-					break;
-				default:
-					if (errorlog)
-						fprintf(errorlog, "WARNING: writing %02x to 0xb000\n",
-								data);
-			}
-			break;
-		default:
-			if (errorlog)
-				fprintf(errorlog, "WARNING: writing %02x to 0x%04x\n",
-						data, 0xb000 + offset);
 	}
 }
 

@@ -1894,7 +1894,7 @@ ROM_START( robotron_rom )
 	ROM_LOAD( "ROBOTRON.SBc", 0xf000, 0x1000, 0xcfc2d9aa )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -1917,7 +1917,7 @@ ROM_START( robotryo_rom )
 	ROM_LOAD( "ROBOTRON.YOc", 0xf000, 0x1000, 0xd4bdec59 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -1988,7 +1988,7 @@ ROM_START( joust_rom )
 	ROM_LOAD( "JOUST.WGc", 0xf000, 0x1000, 0x0cd46bb8 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2011,7 +2011,7 @@ ROM_START( joustr_rom )
 	ROM_LOAD( "JOUST.SRc", 0xf000, 0x1000, 0x0cd46bd8 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2034,7 +2034,7 @@ ROM_START( joustg_rom )
 	ROM_LOAD( "JOUST.SGc", 0xf000, 0x1000, 0x0cd46bb8 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2057,7 +2057,7 @@ ROM_START( joustwr_rom )
 	ROM_LOAD( "JOUST.WRc", 0xf000, 0x1000, 0x0cd46bb8 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2167,7 +2167,7 @@ ROM_START( sinistar_rom )
 	ROM_LOAD( "SINISTAR.11", 0xf000, 0x1000, 0x81481d1a )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2232,7 +2232,7 @@ ROM_START( bubbles_rom )
 	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfdb24d56 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2255,7 +2255,7 @@ ROM_START( bubblesr_rom )
 	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfcb24da2 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2327,7 +2327,7 @@ ROM_START( stargate_rom )
 	ROM_LOAD( "12", 0xf000, 0x1000, 0x94afba0b )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2378,7 +2378,7 @@ ROM_START( defender_rom )
 	ROM_LOAD( "defend.3", 0xf000, 0x1000, 0x3f6e9fe2 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2428,7 +2428,7 @@ ROM_START( splat_rom )
 	ROM_LOAD( "SPLAT.12", 0xf000, 0x1000, 0x9f4667ba )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2485,7 +2485,7 @@ ROM_START( blaster_rom )
 	ROM_LOAD( "blaster.3",  0x38000, 0x4000, 0x86ddd013 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
@@ -2623,7 +2623,7 @@ ROM_START( lottofun_rom )
 	ROM_LOAD( "vl7e.dat", 0xf000, 0x1000, 0x820df961 )
 
 	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) 	/* 64k for the sound CPU */

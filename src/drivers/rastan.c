@@ -401,7 +401,7 @@ static struct MachineDriver machine_driver =
 	256,0x80*16, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
 	machine_layers,
 	rastan_vh_start,
 	rastan_vh_stop,

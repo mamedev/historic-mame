@@ -175,7 +175,6 @@ void qix_palettebank_w(int offset,int data);
 int qix_sharedram_r(int offset);
 void qix_sharedram_w(int offset, int data);
 int qix_interrupt_video(void);
-void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap);
 int qix_vh_start(void);
 void qix_vh_stop(void);
@@ -453,7 +452,7 @@ static struct MachineDriver machine_driver =
 	0,							/* GfxDecodeInfo * */
 	256,						/* total colors */
 	0,							/* color table length */
-	qix_vh_convert_color_prom,	/* convert color prom routine */
+	0,							/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,							/* vh_init routine */
@@ -513,7 +512,7 @@ static struct MachineDriver zoo_machine_driver =
 	0,							/* GfxDecodeInfo * */
 	256,						/* total colors */
 	0,							/* color table length */
-	qix_vh_convert_color_prom,	/* convert color prom routine */
+	0,							/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,							/* vh_init routine */
@@ -551,7 +550,7 @@ ROM_START( qix_rom )
 	ROM_LOAD( "u19", 0xF800, 0x800, 0x1bf904ff )
 
 	ROM_REGION(0x800)
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
@@ -579,7 +578,7 @@ ROM_START( qix2_rom )
 	ROM_LOAD( "u19.rmb", 0xF800, 0x800, 0x83908386 )
 
 	ROM_REGION(0x800)
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
@@ -608,7 +607,7 @@ ROM_START( zookeeper_rom )
 	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
 
 	ROM_REGION(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
+	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */

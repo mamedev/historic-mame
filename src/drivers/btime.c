@@ -1,60 +1,37 @@
 /***************************************************************************
 
-Burgertime memory map (preliminary)
+Burger Time hardware description:
 
-MAIN BOARD:
+Actually Lock'n'Chase is (C)1981 while Burger Time is (C)1982, so it might
+be more accurate to say 'Lock'n'Chase hardware'.
 
-0000-07ff RAM
-0c00-0c0f palette RAM (the game writes to 0c00-0c1f, but the RAM seems to be only 16 bytes)
-1000-13ff Video RAM (the left column contains sprites)
-1400-17ff Attributes RAM
-1800-1bff Mirror address of video RAM, but x and y coordinates are swapped
-1c00-1fff Mirror address of color RAM, but x and y coordinates are swapped
-b000-ffff ROM
+This hardware is pretty straightforward, but has a couple of interesting
+twists. There are two ports to the video and color RAMs, one normal access,
+and one with X and Y coordinates swapped. The sprite RAM occupies the
+first row of the swapped area, so it appears in the regular video RAM as
+the first column of on the left side.
 
-read:
-4000      IN0
-4001      IN1
-4002      coin
-4003      DSW1
-4004      DSW2
+These games don't have VBLANK interrupts, but instead an IRQ or NMI
+(depending on the particular board) is generated when a coin is inserted.
 
-write
-4000      Coinbox enable
-4001      not used
-4002      flip screen
-4003      command to sound board / trigger interrupt on sound board
-4004      Map number
-5005      ?
+Burger Time and Bump 'n' Jump also have a background playfield which, in the
+case of Bump 'n' Jump, can be scrolled vertically.
 
-
-interrupts:
-A NMI causes reset.
-
-
-SOUND BOARD:
-0000-03ff RAM
-f000-ffff ROM
-
-read:
-a000      command from CPU board / interrupt acknowledge
-
-write:
-2000      8910 #1  write
-4000      8910 #1  control
-6000      8910 #2  write
-8000      8910 #2  control
-c000      NMI enable
-
-interrupts:
-NMI used for timing (music etc), clocked at 8V
-IRQ triggered by commands sent by the main CPU.
-
+These boards use two 8910's for sound, controlled by a dedicated 6502 (except
+in Eggs, where the main processor handles the sound). The main processor
+triggers an IRQ request when writing a command to the sound CPU.
 
 Main clock: XTAL = 12 MHz
 Horizontal video frequency: HSYNC = XTAL/768?? = 15.625 kHz ??
 Video frequency: VSYNC = HSYNC/272 = 57.44 Hz ?
 VBlank duration: 1/VSYNC * (24/272) = 1536 us ?
+
+
+Note on Lock'n'Chase:
+
+The watchdog test prints "WATCHDOG TEST ER". Just by looking at the code,
+I can't see how it could print anything else, there is only one path it
+can take. Should the game reset????
 
 ***************************************************************************/
 
@@ -62,43 +39,41 @@ VBlank duration: 1/VSYNC * (24/272) = 1536 us ?
 #include "vidhrdw/generic.h"
 #include "M6502/M6502.h"
 
-
+extern unsigned char *lnc_charbank;
+extern unsigned char *lnc_control;
+extern unsigned char *bnj_backgroundram;
+extern int bnj_backgroundram_size;
+extern unsigned char *bnj_scroll2;
 
 void btime_paletteram_w(int offset,int data);
 void btime_background_w(int offset,int data);
-int btime_mirrorvideoram_r(int offset);
-int btime_mirrorcolorram_r(int offset);
+void bnj_background_w(int offset, int data);
+void bnj_scroll1_w(int offset, int data);
+int  btime_mirrorvideoram_r(int offset);
+int  btime_mirrorcolorram_r(int offset);
 void btime_mirrorvideoram_w(int offset,int data);
+void lnc_videoram_w(int offset,int data);
+void lnc_mirrorvideoram_w(int offset,int data);
 void btime_mirrorcolorram_w(int offset,int data);
-void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
+static void sound_command_w(int offset,int data);
 
-
-
-static void btime_sound_command_w(int offset,int data)
-{
-	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,INT_IRQ);
-}
-
-
-
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress btime_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x17ff, MRA_RAM },
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
 	{ 0x1c00, 0x1fff, btime_mirrorcolorram_r },
-	{ 0x4000, 0x4000, input_port_0_r },	/* IN0 */
-	{ 0x4001, 0x4001, input_port_1_r },	/* IN1 */
-	{ 0x4002, 0x4002, input_port_2_r },	/* coin */
-	{ 0x4003, 0x4003, input_port_3_r },	/* DSW1 */
-	{ 0x4004, 0x4004, input_port_4_r },	/* DSW2 */
+	{ 0x4000, 0x4000, input_port_0_r },     /* IN0 */
+	{ 0x4001, 0x4001, input_port_1_r },     /* IN1 */
+	{ 0x4002, 0x4002, input_port_2_r },     /* coin */
+	{ 0x4003, 0x4003, input_port_3_r },     /* DSW1 */
+	{ 0x4004, 0x4004, input_port_4_r },     /* DSW2 */
 	{ 0xb000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress btime_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0c00, 0x0c0f, btime_paletteram_w },
@@ -107,12 +82,104 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
 	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
 	{ 0x4000, 0x4000, MWA_NOP },
-	{ 0x4003, 0x4003, btime_sound_command_w },
+	{ 0x4003, 0x4003, sound_command_w },
 	{ 0x4004, 0x4004, btime_background_w },
 	{ 0xb000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
+
+static struct MemoryReadAddress eggs_readmem[] =
+{
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
+	{ 0x1c00, 0x1fff, btime_mirrorcolorram_r },
+	{ 0x2000, 0x2000, input_port_2_r },     /* DSW1 */
+	{ 0x2001, 0x2001, input_port_3_r },     /* DSW2 */
+	{ 0x2002, 0x2002, input_port_0_r },     /* IN0 */
+	{ 0x2003, 0x2003, input_port_1_r },     /* IN1 */
+	{ 0x3000, 0x7fff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_ROM },    /* reset/interrupt vectors */
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress eggs_writemem[] =
+{
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
+	{ 0x1400, 0x17ff, colorram_w, &colorram },
+	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
+	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
+	{ 0x2001, 0x2001, MWA_NOP },
+	{ 0x2004, 0x2004, AY8910_control_port_0_w },
+	{ 0x2005, 0x2005, AY8910_write_port_0_w },
+	{ 0x2006, 0x2006, AY8910_control_port_1_w },
+	{ 0x2007, 0x2007, AY8910_write_port_1_w },
+	{ 0x3000, 0x7fff, MWA_ROM },
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress lnc_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_RAM },
+	{ 0x7c00, 0x7fff, btime_mirrorvideoram_r },
+	{ 0x8000, 0x8000, input_port_3_r },     /* DSW1 */
+	{ 0x8001, 0x8001, input_port_4_r },     /* DSW2 */
+	{ 0x9000, 0x9000, input_port_0_r },     /* IN0 */
+	{ 0x9001, 0x9001, input_port_1_r },     /* IN1 */
+	{ 0x9002, 0x9002, input_port_2_r },     /* coin */
+	{ 0xc000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress lnc_writemem[] =
+{
+	{ 0x0000, 0x3bff, MWA_RAM },
+	{ 0x3c00, 0x3fff, lnc_videoram_w, &videoram, &videoram_size },
+	{ 0x7800, 0x7bff, MWA_RAM, &colorram },  // Dummy
+	{ 0x7c00, 0x7fff, lnc_mirrorvideoram_w },
+	{ 0x8000, 0x8000, MWA_NOP },            /* ??? */
+	{ 0x8001, 0x8001, MWA_RAM, &lnc_control },
+	{ 0x8003, 0x8003, MWA_RAM, &lnc_charbank },
+	{ 0x9000, 0x9000, MWA_NOP },            /* ??? */
+	{ 0x9002, 0x9002, sound_command_w },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress bnj_readmem[] =
+{
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x1000, 0x1000, input_port_3_r },     /* DSW1 */
+	{ 0x1001, 0x1001, input_port_4_r },     /* DSW2 */
+	{ 0x1002, 0x1002, input_port_0_r },     /* IN0 */
+	{ 0x1003, 0x1003, input_port_1_r },     /* IN1 */
+	{ 0x1004, 0x1004, input_port_2_r },     /* coin */
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x4800, 0x4bff, btime_mirrorvideoram_r },
+	{ 0x4c00, 0x4fff, btime_mirrorcolorram_r },
+	{ 0xa000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress bnj_writemem[] =
+{
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x1002, 0x1002, sound_command_w },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4800, 0x4bff, btime_mirrorvideoram_w },
+	{ 0x4c00, 0x4fff, btime_mirrorcolorram_w },
+	{ 0x5000, 0x51ff, bnj_background_w, &bnj_backgroundram, &bnj_backgroundram_size },
+	{ 0x5400, 0x5400, bnj_scroll1_w },
+	{ 0x5800, 0x5800, MWA_RAM, &bnj_scroll2 },
+	{ 0x5c00, 0x5c0f, btime_paletteram_w },
+	{ 0xa000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -120,7 +187,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
@@ -132,28 +199,31 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0x8000, AY8910_control_port_1_w },
 	{ 0xc000, 0xc000, interrupt_enable_w },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
 
 /***************************************************************************
 
-  Burger Time doesn't have VBlank interrupts.
-  Interrupts are still used by the game, coin insertion generates an IRQ.
+These games don't have VBlank interrupts.
+Interrupts are still used by the game, coin insertion generates an IRQ.
 
 ***************************************************************************/
-int btime_interrupt(void)
+static int btime_interrupt(int(*generated_interrupt)(void), int active_high)
 {
 	static int coin;
+	int port;
 
+	port = readinputport(2) & 0xc0;
+	if (active_high) port ^= 0xc0;
 
-	if (readinputport(2) & 0xc0)	/* Coin */
+	if (port != 0xc0)    /* Coin */
 	{
 		if (coin == 0)
 		{
 			coin = 1;
-			return interrupt();
+			return generated_interrupt();
 		}
 	}
 	else coin = 0;
@@ -161,10 +231,35 @@ int btime_interrupt(void)
 	return ignore_interrupt();
 }
 
+static int btime_irq_interrupt(void)
+{
+	return btime_interrupt(interrupt, 1);
+}
+
+static int btime_nmi_interrupt(void)
+{
+	return btime_interrupt(nmi_interrupt, 0);
+}
+
+int lnc_sound_interrupt(void)
+{
+	// I have a feeling that this only works by coincidence. I couldn't
+	// figure out how NMI's are disabled by the sound processor
+	if (*lnc_control & 0x08)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
+static void sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,INT_IRQ);
+}
 
 
-INPUT_PORTS_START( input_ports )
-	PORT_START	/* IN0 */
+INPUT_PORTS_START( btime_input_ports )
+	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
@@ -174,7 +269,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
@@ -184,17 +279,17 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_COIN2 )
 
-	PORT_START	/* DSW1 */
+	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
@@ -216,7 +311,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x40, "Cocktail" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
-	PORT_START	/* DSW2 */
+	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -243,53 +338,285 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( eggs_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_BIT( 0x30, 0x30, IPT_UNKNOWN )     /* almost certainly unused */
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x04, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x02, "50000" )
+	PORT_DIPSETTING(    0x00, "70000"  )
+	PORT_DIPSETTING(    0x06, "None"  )
+	PORT_BIT( 0x78, 0x78, IPT_UNKNOWN )     /* almost certainly unused */
+	PORT_DIPNAME( 0x80, 0x80, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( lnc_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x30, 0x30, "Test Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "Off" )
+	PORT_DIPSETTING(    0x00, "RAM Test Only" )
+	PORT_DIPSETTING(    0x20, "Watchdog Test Only" )
+	PORT_DIPSETTING(    0x10, "All Tests" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Controller" )
+	PORT_DIPSETTING(    0x40, "2 Controllers" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "15,000" )
+	PORT_DIPSETTING(    0x04, "20,000" )
+	PORT_DIPSETTING(    0x02, "30,000" )
+	PORT_DIPSETTING(    0x00, "Never" )
+	PORT_DIPNAME( 0x08, 0x08, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 1", IP_KEY_NONE )  // Doesn't seem to be accessed
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 2", IP_KEY_NONE )  // Doesn't seem to be accessed
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 3", IP_KEY_NONE )  // Doesn't seem to be accessed
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 4", IP_KEY_NONE )  // Doesn't seem to be accessed
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x50, "On" )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( bnj_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(        0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(        0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(        0x01, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(        0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(        0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(        0x04, "1 Coin/3 Credits" )
+	PORT_BITX(      0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(        0x10, "Off" )
+	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x20, "Off" )
+	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x00, "Upright" )
+	PORT_DIPSETTING(        0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x01, "3" )
+	PORT_DIPSETTING(        0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x06, "every 30k" )
+	PORT_DIPSETTING(        0x04, "every 70k" )
+	PORT_DIPSETTING(        0x02, "20k only"  )
+	PORT_DIPSETTING(        0x00, "30k only"  )
+	PORT_DIPNAME( 0x08, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x08, "No" )
+	PORT_DIPSETTING(        0x00, "Yes" )
+	PORT_DIPNAME( 0x10, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x10, "Easy" )
+	PORT_DIPSETTING(        0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x20, "Off" )
+	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x40, "Off" )
+	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(        0x80, "Off" )
+	PORT_DIPSETTING(        0x00, "On" )
+INPUT_PORTS_END
+
+
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
+	8,8,    /* 8*8 characters */
+	1024,   /* 1024 characters */
+	3,      /* 3 bits per pixel */
+	{ 0, 1024*8*8, 2*1024*8*8 },    /* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8     /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	256,    /* 256 sprites */
-	3,	/* 3 bits per pixel */
-	{ 0, 256*16*16, 2*256*16*16 },	/* the bitplanes are separated */
+	3,      /* 3 bits per pixel */
+	{ 0, 256*16*16, 2*256*16*16 },  /* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	  16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
+	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static struct GfxLayout btime_tilelayout =
 {
 	16,16,  /* 16*16 characters */
 	64,    /* 64 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 64*16*16, 64*2*16*16 },	/* the bitplanes are separated */
+	3,      /* 3 bits per pixel */
+	{ 0, 64*16*16, 64*2*16*16 },    /* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
-	32*8	/* every tile takes 32 consecutive bytes */
+	  16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
+	32*8    /* every tile takes 32 consecutive bytes */
 };
 
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxLayout bnj_tilelayout =
 {
-	{ 1, 0x0000, &charlayout,   0, 1 },	/* char set #1 */
-	{ 1, 0x0000, &spritelayout, 0, 1 },	/* sprites */
-	{ 1, 0x6000, &tilelayout,   8, 1 },	/* background tiles */
+	16,16,  /* 16*16 characters */
+	64, /* 64 characters */
+	3,  /* 3 bits per pixel */
+	{ 2*64*16*16+4, 0, 4 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	{ 3, 2, 1, 0, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
+	  2*16*8+3, 2*16*8+2, 2*16*8+1, 2*16*8+0, 3*16*8+3, 3*16*8+2, 3*16*8+1, 3*16*8+0 },
+	64*8    /* every tile takes 64 consecutive bytes */
+};
+
+static struct GfxDecodeInfo btime_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &charlayout,       0, 1 }, /* char set #1 */
+	{ 1, 0x0000, &spritelayout,     0, 1 }, /* sprites */
+	{ 1, 0x6000, &btime_tilelayout, 8, 1 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &charlayout,   0, 1 },     /* char set #1 */
+	{ 1, 0x0000, &spritelayout, 0, 1 },     /* sprites */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo bnj_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &charlayout,       0, 1 }, /* char set #1 */
+	{ 1, 0x0000, &spritelayout,     0, 1 }, /* sprites */
+	{ 1, 0x6000, &bnj_tilelayout,   8, 1 }, /* background tiles */
+	{ -1 } /* end of array */
+};
 
 
 /* The original Burger Time has color RAM, but the bootleg uses a PROM. */
@@ -299,12 +626,49 @@ static unsigned char hamburge_color_prom[] =
 	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7
 };
 
+unsigned char eggs_palette[] =
+{
+	0x00,0x00,0x00,   /* black      */
+	0xd8,0xd8,0x74,   /* darkyellow */
+	0xd8,0x74,0x40,   /* darkwhite  */
+	0xff,0x44,0x00,   /* orange     */
+	0x00,0x00,0xd8,   /* blue   */
+	0xf8,0x00,0x00,   /* red    */
+	0xf8,0xf8,0x20,   /* yellow */
+	0xff,0xff,0xff    /* white  */
+};
+
+enum
+{
+	black, darkyellow, darkwhite, orange, blue, red, yellow, white
+};
+
+unsigned char eggs_colortable[] =
+{
+	black, darkyellow, blue, darkwhite, red, orange, yellow, white
+};
+
+static unsigned char lnc_color_prom[] =
+{
+	/* palette SC-5M */
+		0x00,0xdf,0x51,0x1c,0xa7,0xe0,0xfc,0xff,
+//RGB	BLK  DKW  DKG  GRN  PUR	 RED  YEL  WHT
+//RBG	BLK	 DKW  DKB  BLU  MUST RED  PUR  WHT
+//GRB	BLK	 DKW  DKR  RED	LBL	 GRN  LBLU WHT
+//GBR	BLK  DKW  DKB  BLU  TAN  GRN  YEL  WHT
+//BRG	BLK	 DKW  DKR  RED	LBL	 BLU  PUR  WHT
+//BGR	BLK  DKW  DKG  GRN	PUR	 BLU  LBLU WHT
+
+	/* ROM SB-4C, don't know what it is, unused for now */
+	0xf7,0xf7,0xf5,0xfd,0xf9,0xf9,0xf0,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,
+	0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6
+};
 
 
 static struct AY8910interface ay8910_interface =
 {
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz ? (hand tuned) */
+	2,      /* 2 chips */
+	1500000,        /* 1.5 MHz ? (hand tuned) */
 	{ 0x20ff, 0x20ff },
 	{ 0 },
 	{ 0 },
@@ -312,137 +676,267 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
+/********************************************************************
+*
+*  Machine Driver macro
+*  ====================
+*
+*  Abusing the pre-processor.
+*
+********************************************************************/
 
+#define MACHINE_DRIVER(GAMENAME, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
+																	\
+void GAMENAME##_init_machine(void);                                 \
+void GAMENAME##_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom); \
+int  GAMENAME##_vh_start (void);                                    \
+void GAMENAME##_vh_stop (void);                                     \
+																	\
+static struct MachineDriver GAMENAME##_machine_driver =             \
+{                                                                   \
+	/* basic machine hardware */                                	\
+	{		                                                        \
+		{	  	                                                    \
+			CPU_M6502,                                  			\
+			750000,        /* 750 Khz ???? */          				\
+			0,                                          			\
+			GAMENAME##_readmem,GAMENAME##_writemem,0,0, 			\
+			MAIN_IRQ,1                                  			\
+		},		                                                    \
+		{		                                                    \
+			CPU_M6502 | CPU_AUDIO_CPU,                  			\
+			500000, /* 500 kHz */                       			\
+			2,      /* memory region #2 */              			\
+			sound_readmem,sound_writemem,0,0,           			\
+			SOUND_IRQ,16   /* IRQs are triggered by the main CPU */ \
+		}                                                   		\
+	},                                                          	\
+	57, 1536,        /* frames per second, vblank duration */   	\
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	GAMENAME##_init_machine,                                    	\
+																	\
+	/* video hardware */                                        	\
+	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },                   	\
+	GFX,                                                        	\
+	COLOR,COLOR,                                                	\
+	GAMENAME##_vh_convert_color_prom,                           	\
+																	\
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,                   	\
+	0,                                                          	\
+	GAMENAME##_vh_start,                                        	\
+	GAMENAME##_vh_stop,                                         	\
+	btime_vh_screenrefresh,                                     	\
+																	\
+	/* sound hardware */                                        	\
+	0,0,0,0,                                                    	\
+	{                                                           	\
+		{                                                   		\
+			SOUND_AY8910,                               			\
+			&ay8910_interface                           			\
+		}                                                   		\
+	}                                                           	\
+}
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 Mhz ???? */
-			0,
-			readmem,writemem,0,0,
-			btime_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			500000,	/* 500 kHz */
-			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,16	/* IRQs are triggered by the main CPU */
-		}
-	},
-	57, 1536, //DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+MACHINE_DRIVER(btime, btime_irq_interrupt, nmi_interrupt, btime_gfxdecodeinfo, 16);
 
-	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	16,2*8,
-	btime_vh_convert_color_prom,
+MACHINE_DRIVER(eggs, interrupt, nmi_interrupt, gfxdecodeinfo, sizeof(eggs_palette)/3);
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	btime_vh_screenrefresh,
+MACHINE_DRIVER(lnc, btime_nmi_interrupt, lnc_sound_interrupt, gfxdecodeinfo, 8);
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
-
-
+MACHINE_DRIVER(bnj, btime_nmi_interrupt, nmi_interrupt, bnj_gfxdecodeinfo, 16);
 
 /***************************************************************************
 
-  Game driver(s)
+	Game driver(s)
 
 ***************************************************************************/
 
 ROM_START( btime_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ab05a1.12b", 0xb000, 0x1000, 0x1d9da777 )
 	ROM_LOAD( "ab04.9b",    0xc000, 0x1000, 0x9dcc9634 )
 	ROM_LOAD( "ab06.13b",   0xd000, 0x1000, 0x8fe2de1c )
 	ROM_LOAD( "ab05.10b",   0xe000, 0x1000, 0x24560b1c )
 	ROM_LOAD( "ab07.15b",   0xf000, 0x1000, 0x7e750c89 )
 
-	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ab8.13k",    0x0000, 0x1000, 0xccc1f7cf )	/* charset #1 */
+	ROM_REGION(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ab8.13k",    0x0000, 0x1000, 0xccc1f7cf )    /* charset #1 */
 	ROM_LOAD( "ab9.15k",    0x1000, 0x1000, 0xfcee0000 )
 	ROM_LOAD( "ab10.10k",   0x2000, 0x1000, 0x9f7eaf02 )
 	ROM_LOAD( "ab11.12k",   0x3000, 0x1000, 0xf491ffff )
 	ROM_LOAD( "ab12.7k",    0x4000, 0x1000, 0x85b738a9 )
 	ROM_LOAD( "ab13.9k" ,   0x5000, 0x1000, 0xf5faff00 )
-	ROM_LOAD( "ab02.4b",    0x6000, 0x0800, 0x644f1331 )	/* charset #2 */
+	ROM_LOAD( "ab02.4b",    0x6000, 0x0800, 0x644f1331 )    /* charset #2 */
 	ROM_LOAD( "ab01.3b",    0x6800, 0x0800, 0x18000000 )
 	ROM_LOAD( "ab00.1b",    0x7000, 0x0800, 0xea53eb39 )
 
-	ROM_REGION(0x0800)	/* background graphics */
-	ROM_LOAD( "ab03.6b",    0x0000, 0x0800, 0x8d200806 )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "ab14.12h",   0xf000, 0x1000, 0x06b5888d )
+
+	ROM_REGION(0x0800)      /* background graphics */
+	ROM_LOAD( "ab03.6b",    0x0000, 0x0800, 0x8d200806 )
 ROM_END
 
 ROM_START( btimea_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "aa04.9b",    0xc000, 0x1000, 0x3d080936 )
 	ROM_LOAD( "aa06.13b",   0xd000, 0x1000, 0xe2db880f )
 	ROM_LOAD( "aa05.10b",   0xe000, 0x1000, 0x34bec090 )
 	ROM_LOAD( "aa07.15b",   0xf000, 0x1000, 0xd993a235 )
 
-	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "aa8.13k",    0x0000, 0x1000, 0xf994fcc4 )	/* charset #1 */
+	ROM_REGION(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "aa8.13k",    0x0000, 0x1000, 0xf994fcc4 )    /* charset #1 */
 	ROM_LOAD( "aa9.15k",    0x1000, 0x1000, 0xfcee0000 )
 	ROM_LOAD( "aa10.10k",   0x2000, 0x1000, 0x9f7eaf02 )
 	ROM_LOAD( "aa11.12k",   0x3000, 0x1000, 0xf491ffff )
 	ROM_LOAD( "aa12.7k",    0x4000, 0x1000, 0x7f8438a2 )
 	ROM_LOAD( "aa13.9k" ,   0x5000, 0x1000, 0xf5faff00 )
-	ROM_LOAD( "aa02.4b",    0x6000, 0x0800, 0x644f1331 )	/* charset #2 */
+	ROM_LOAD( "aa02.4b",    0x6000, 0x0800, 0x644f1331 )    /* charset #2 */
 	ROM_LOAD( "aa01.3b",    0x6800, 0x0800, 0x18000000 )
 	ROM_LOAD( "aa00.1b",    0x7000, 0x0800, 0xea53eb39 )
 
-	ROM_REGION(0x0800)	/* background graphics */
-	ROM_LOAD( "aa03.6b",    0x0000, 0x0800, 0x8d200806 )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "aa14.12h",   0xf000, 0x1000, 0x06b5888d )
+	ROM_LOAD( "aa00.1b",    0x7000, 0x0800, 0xea53eb39 )
+
+	ROM_REGION(0x0800)      /* background graphics */
+	ROM_LOAD( "aa03.6b",    0x0000, 0x0800, 0x8d200806 )
 ROM_END
 
 ROM_START( hamburge_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	/* the following might be wrong - ROMs seem encrypted */
 	ROM_LOAD( "inc.1", 0xc000, 0x2000, 0x5e7aae64 )
 	ROM_LOAD( "inc.2", 0xe000, 0x2000, 0x57e824c8 )
 
-	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "inc.9", 0x0000, 0x2000, 0x2cd80018 )	/* charset #1 */
+	ROM_REGION(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "inc.9", 0x0000, 0x2000, 0x2cd80018 ) /* charset #1 */
 	ROM_LOAD( "inc.8", 0x2000, 0x2000, 0x940f50fd )
 	ROM_LOAD( "inc.7", 0x4000, 0x2000, 0xdd7cc6dc )
-	ROM_LOAD( "inc.5", 0x6000, 0x0800, 0x241199e7 )	/* garbage?? */
-	ROM_CONTINUE(      0x6000, 0x0800 )		/* charset #2 */
-	ROM_LOAD( "inc.4", 0x6800, 0x0800, 0x02c16917 )	/* garbage?? */
+	ROM_LOAD( "inc.5", 0x6000, 0x0800, 0x241199e7 ) /* garbage?? */
+	ROM_CONTINUE(      0x6000, 0x0800 )             /* charset #2 */
+	ROM_LOAD( "inc.4", 0x6800, 0x0800, 0x02c16917 ) /* garbage?? */
 	ROM_CONTINUE(      0x6800, 0x0800 )
-	ROM_LOAD( "inc.3", 0x7000, 0x0800, 0xc8b931bf )	/* garbage?? */
+	ROM_LOAD( "inc.3", 0x7000, 0x0800, 0xc8b931bf ) /* garbage?? */
 	ROM_CONTINUE(      0x7000, 0x0800 )
 
-	ROM_REGION(0x0800)	/* background graphics */
-	/* this ROM is missing? maybe the hardware works differently */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "inc.6", 0x0000, 0x1000, 0x3c760fb8 ) /* starts at 0000, not f000; 0000-01ff is RAM */
+	ROM_RELOAD(        0xf000, 0x1000 )     /* for the reset/interrupt vectors */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "inc.6", 0x0000, 0x1000, 0x3c760fb8 )	/* starts at 0000, not f000; 0000-01ff is RAM */
-	ROM_RELOAD(        0xf000, 0x1000 )	/* for the reset/interrupt vectors */
+	ROM_REGION(0x0800)      /* background graphics */
+	/* this ROM is missing? maybe the hardware works differently */
 ROM_END
 
+ROM_START( eggs_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "e14.bin", 0x3000, 0x1000, 0x996dbebf )
+	ROM_LOAD( "d14.bin", 0x4000, 0x1000, 0xbbbce334 )
+	ROM_LOAD( "c14.bin", 0x5000, 0x1000, 0xc89bff1d )
+	ROM_LOAD( "b14.bin", 0x6000, 0x1000, 0x86e4f94e )
+	ROM_LOAD( "a14.bin", 0x7000, 0x1000, 0x9beb93e9 )
+	ROM_RELOAD(          0xf000, 0x1000 )   /* for reset/interrupt vectors */
+
+	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "j12.bin",  0x0000, 0x1000, 0x27ab70f5 )
+	ROM_LOAD( "j10.bin",  0x1000, 0x1000, 0x8786e8c4 )
+	ROM_LOAD( "h12.bin",  0x2000, 0x1000, 0x9c23f42b )
+	ROM_LOAD( "h10.bin",  0x3000, 0x1000, 0x77b53ac7 )
+	ROM_LOAD( "g12.bin",  0x4000, 0x1000, 0x4beb2eab )
+	ROM_LOAD( "g10.bin",  0x5000, 0x1000, 0x61460352 )
+
+	ROM_REGION(0x10000)     /* Dummy region for nonexistent audio CPU */
+ROM_END
+
+ROM_START( scregg_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "scregg.e14", 0x3000, 0x1000, 0x84a288b2 )
+	ROM_LOAD( "scregg.d14", 0x4000, 0x1000, 0x8ab8d190 )
+	ROM_LOAD( "scregg.c14", 0x5000, 0x1000, 0xf212ac78 )
+	ROM_LOAD( "scregg.b14", 0x6000, 0x1000, 0xdc095969 )
+	ROM_LOAD( "scregg.a14", 0x7000, 0x1000, 0x1afd9ddb )
+	ROM_RELOAD(             0xf000, 0x1000 )        /* for reset/interrupt vectors */
+
+	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "scregg.j12",  0x0000, 0x1000, 0xe5077119 )
+	ROM_LOAD( "scregg.j10",  0x1000, 0x1000, 0xc41a7b5e )
+	ROM_LOAD( "scregg.h12",  0x2000, 0x1000, 0xc48207f2 )
+	ROM_LOAD( "scregg.h10",  0x3000, 0x1000, 0x007800b8 )
+	ROM_LOAD( "scregg.g12",  0x4000, 0x1000, 0xa3b0e2d6 )
+	ROM_LOAD( "scregg.g10",  0x5000, 0x1000, 0xeb7f0865 )
+
+	ROM_REGION(0x10000)     /* Dummy region for nonexistent audio CPU */
+ROM_END
+
+ROM_START( lnc_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "s3-3d", 0xc000, 0x1000, 0xa8106830 )
+	ROM_LOAD( "s2-3c", 0xd000, 0x1000, 0x1c274145 )
+	ROM_LOAD( "s1-3b", 0xe000, 0x1000, 0xa41f02d5 )
+	ROM_LOAD( "s0-3a", 0xf000, 0x1000, 0xee021c06 )
+
+	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-15l",  0x0000, 0x1000, 0x04ac8f32 )  // 2
+	ROM_LOAD( "s9-15m",  0x1000, 0x1000, 0x0845b92f )
+	ROM_LOAD( "s6-13l",  0x2000, 0x1000, 0x7550c9d6 )  // 1
+	ROM_LOAD( "s7-13m",  0x3000, 0x1000, 0x23457281 )
+	ROM_LOAD( "s4-11l",  0x4000, 0x1000, 0x4b6f09bf )  // 0
+	ROM_LOAD( "s5-11m",  0x5000, 0x1000, 0x7aa5ddab )
+// 0 1 2   2 1 0   1 0 2   0 2 1   1 2 0    2 0 1
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "sa-1h",  0xf000, 0x1000, 0x2c680040 )
+ROM_END
+
+ROM_START( bnj_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "bnj12b.bin", 0xa000, 0x2000, 0x9ce25062 )
+	ROM_LOAD( "bnj12c.bin", 0xc000, 0x2000, 0x9e763206 )
+	ROM_LOAD( "bnj12d.bin", 0xe000, 0x2000, 0xc5a135b9 )
+
+	ROM_REGION(0x8000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bnj4h.bin",  0x0000, 0x2000, 0xc141332f )
+	ROM_LOAD( "bnj4f.bin",  0x2000, 0x2000, 0x5035d3c9 )
+	ROM_LOAD( "bnj4e.bin",  0x4000, 0x2000, 0x97b719fb )
+	ROM_LOAD( "bnj10e.bin", 0x6000, 0x1000, 0x43556767 )
+	ROM_LOAD( "bnj10f.bin", 0x7000, 0x1000, 0xc1bfbfbf )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "bnj6c.bin",  0xf000, 0x1000, 0x80f9e12b )
+ROM_END
+
+ROM_START( brubber_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	/* a000-bfff space for the service ROM */
+	ROM_LOAD( "brubber.12c", 0xc000, 0x2000, 0x2e85db11 )
+	ROM_LOAD( "brubber.12d", 0xe000, 0x2000, 0x1d905348 )
+
+	ROM_REGION(0x8000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "brubber.4h",  0x0000, 0x2000, 0xc141332f )
+	ROM_LOAD( "brubber.4f",  0x2000, 0x2000, 0x5035d3c9 )
+	ROM_LOAD( "brubber.4e",  0x4000, 0x2000, 0x97b719fb )
+	ROM_LOAD( "brubber.10e", 0x6000, 0x1000, 0x43556767 )
+	ROM_LOAD( "brubber.10f", 0x7000, 0x1000, 0xc1bfbfbf )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "brubber.6c",  0xf000, 0x1000, 0x80f9e12b )
+ROM_END
+
+ROM_START( caractn_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	/* a000-bfff space for the service ROM */
+	ROM_LOAD( "caractn.a7", 0xc000, 0x2000, 0x2e85db11 )
+	ROM_LOAD( "caractn.a6", 0xe000, 0x2000, 0x105bf9d5 )
+
+	ROM_REGION(0x8000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "caractn.a2", 0x0000, 0x2000, 0xa72dd54b )
+	ROM_LOAD( "caractn.a1", 0x2000, 0x2000, 0x3582b118 )
+	ROM_LOAD( "caractn.a0", 0x4000, 0x2000, 0x6da52fab )
+	ROM_LOAD( "caractn.a3", 0x6000, 0x1000, 0x43556767 )
+	ROM_LOAD( "caractn.a4", 0x7000, 0x1000, 0xc1bfbfbf )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "caractn.a5", 0xf000, 0x1000, 0x80f9e12b )
+ROM_END
 
 
 static void btime_decode(void)
@@ -524,10 +1018,9 @@ static void btime_decode(void)
 	{
 		int A;
 
-
 		A = patchlist[i];
 		ROM[A] = (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
-				| ((RAM[A] & 0x08) << 2);
+			   | ((RAM[A] & 0x08) << 2);
 	}
 }
 
@@ -589,28 +1082,42 @@ static void btimea_decode(void)
 	{
 		int A;
 
-
 		A = patchlist[i];
 		ROM[A] = (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
-				| ((RAM[A] & 0x08) << 2);
+			   | ((RAM[A] & 0x08) << 2);
+	}
+}
+
+static void lnc_decode (void)
+{
+	static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
+								  0x80, 0x90, 0xc0, 0xd0, 0xa0, 0xb0, 0xe0, 0xf0};
+
+	int A;
+
+	for (A = 0;A < 0x10000;A++)
+	{
+		/*
+		 *  The encryption is dead simple.  Just swap bits 5 & 6 for opcodes
+		 *  only.
+		 */
+		ROM[A] = (RAM[A] & 0x0f) | encrypttable[RAM[A] >> 4];
 	}
 }
 
 
 
-static int hiload(void)
+static int btime_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
-
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0036],"\x00\x80\x02",3) == 0 &&
-			memcmp(&RAM[0x0042],"\x50\x48\00",3) == 0)
+		memcmp(&RAM[0x0042],"\x50\x48\00",3) == 0)
 	{
 		void *f;
-
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
@@ -623,18 +1130,15 @@ static int hiload(void)
 
 		return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
-static void hisave(void)
+static void btime_hisave(void)
 {
 	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
-
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -644,63 +1148,206 @@ static void hisave(void)
 }
 
 
-
-struct GameDriver btime_driver =
+static int eggs_hiload(void)
 {
-	"Burger Time (Midway)",
-	"btime",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x0400],"\x17\x25\x19",3)==0) &&
+		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
+	{
+		void *f;
 
-	btime_rom,
-	0, btime_decode,
-	0,
-	0,	/* sound_prom */
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0400],0x1E);
+			/* Fix hi score at top */
+			memcpy(&RAM[0x0015],&RAM[0x0403],3);
+			osd_fclose(f);
+		}
 
-    input_ports,
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
 
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver btimea_driver =
+static void eggs_hisave(void)
 {
-	"Burger Time (Data East)",
-	"btimea",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+	void *f;
 
-	btimea_rom,
-	0, btimea_decode,
-	0,
-	0,	/* sound_prom */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0400],0x1E);
+		osd_fclose(f);
+	}
+}
 
-    input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver hamburge_driver =
+static int lnc_hiload(void)
 {
-	"Hamburger",
-	"hamburge",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+	/*
+	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
+	 *   global RAM pointer is pointing to the right place)
+	 */
+	unsigned char *RAM = Machine->memory_region[0];
 
-	hamburge_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
+	/*   Check if the hi score table has already been initialized.
+	 */
+	if (RAM[0x02b7] == 0xff)
+	{
+		void *f;
 
-    input_ports,
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			int banksave, i;
 
-	hamburge_color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+			osd_fread(f,&RAM[0x0008],0x03);
+			osd_fread(f,&RAM[0x0294],0x0f);
+			osd_fread(f,&RAM[0x02a6],0x0f);
 
-	hiload, hisave
-};
+			// Put high score on screen as we missed when it was done
+			// by the program
+			banksave = *lnc_charbank;
+			*lnc_charbank = 0;
+
+			lnc_videoram_w(0x004c, 0x0b);
+			lnc_videoram_w(0x0052, (RAM[0x0008] & 0x0f) + 1);
+			lnc_videoram_w(0x0051, (RAM[0x0008] >> 4) + 1);
+			lnc_videoram_w(0x0050, (RAM[0x0009] & 0x0f) + 1);
+			lnc_videoram_w(0x004f, (RAM[0x0009] >> 4) + 1);
+			lnc_videoram_w(0x004e, (RAM[0x000a] & 0x0f) + 1);
+			lnc_videoram_w(0x004d, (RAM[0x000a] >> 4) + 1);
+
+			// Remove leading zeros
+			for (i = 0; i < 5; i++)
+			{
+				if (videoram_r(0x004d + i) != 0x01) break;
+
+				lnc_videoram_w(0x004c + i, 0x00);
+				lnc_videoram_w(0x004d + i, 0x0b);
+			}
+
+			*lnc_charbank = banksave;
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+
+	/*
+	 *  The hi scores can't be loaded yet.
+	 */
+	return 0;
+}
+
+static void lnc_hisave(void)
+{
+	void *f;
+
+	/*
+	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
+	 *   global RAM pointer is pointing to the right place)
+	 */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0008],0x03);
+		osd_fwrite(f,&RAM[0x0294],0x0f);
+		osd_fwrite(f,&RAM[0x02a6],0x0f);
+		osd_fclose(f);
+	}
+}
+
+static int bnj_hiload(void)
+{
+	/*
+	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
+	 *   global RAM pointer is pointing to the right place)
+	 */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/*   Check if the hi score table has already been initialized.
+	 */
+	if (RAM[0x0640] == 0x4d)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0500],640);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+
+	/*
+	 *  The hi scores can't be loaded yet.
+	 */
+	return 0;
+}
+
+static void bnj_hisave(void)
+{
+	void *f;
+
+	/*
+	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
+	 *   global RAM pointer is pointing to the right place)
+	 */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0500],640);
+		osd_fclose(f);
+	}
+}
+
+
+#define GAMEDRIVER(GAMENAME, BASENAME, DECODE, PROM, DESC, CREDITS) \
+struct GameDriver GAMENAME##_driver =          \
+{                                              \
+	DESC,	                                   \
+	#GAMENAME,                             	   \
+	CREDITS,                               	   \
+	&BASENAME##_machine_driver,            	   \
+											   \
+	GAMENAME##_rom,                        	   \
+	0, DECODE,                          	   \
+	0,                                     	   \
+	0,      /* sound_prom */             	   \
+											   \
+	BASENAME##_input_ports,                	   \
+											   \
+	PROM, 0, 0,                            	   \
+	ORIENTATION_DEFAULT,                   	   \
+											   \
+	BASENAME##_hiload, BASENAME##_hisave   	   \
+}
+
+GAMEDRIVER(btime, btime, btime_decode, 0, "Burger Time (Midway)",
+		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)");
+
+GAMEDRIVER(btimea, btime, btimea_decode, 0, "Burger Time (Data East)",
+		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)");
+
+GAMEDRIVER(hamburge, btime, 0, hamburge_color_prom, "Hamburger",
+		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)");
+
+GAMEDRIVER(eggs, eggs, 0, 0, "Eggs",
+		   "Nicola Salmoria (MAME driver)\nMike Balfour (high score save)");
+
+GAMEDRIVER(scregg, eggs, 0, 0, "Scrambled Egg",
+		   "Nicola Salmoria (MAME driver)\nMike Balfour (high score save)");
+
+GAMEDRIVER(lnc, lnc, lnc_decode, lnc_color_prom, "Lock'n'Chase",
+		   "Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)");
+
+GAMEDRIVER(bnj, bnj, lnc_decode, 0, "Bump 'n' Jump",
+		   "Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)");
+
+GAMEDRIVER(brubber, bnj, lnc_decode, 0, "Burnin' Rubber",
+		   "Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)");
+
+GAMEDRIVER(caractn, bnj, lnc_decode, 0, "Car Action",
+		   "Ivan Mackintosh\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)");

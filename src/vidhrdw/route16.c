@@ -215,7 +215,7 @@ void route16_sharedram_w(int offset,int data)
         if (offset >= 0x0313 && offset <= 0x0319 && data == 0xff && route16)
         {
                 // Let the other CPU run
-                cpu_seticount(0);
+                cpu_yield();
         }
 }
 

@@ -18,6 +18,10 @@ extern int nocheat;
 extern void *record;
 extern void *playback;
 
+extern unsigned int dispensed_tickets;
+extern unsigned int coins[COIN_COUNTERS];
+extern unsigned int lastcoin[COIN_COUNTERS];
+
 static unsigned char input_port_value[MAX_INPUT_PORTS];
 static unsigned char input_vblank[MAX_INPUT_PORTS];
 
@@ -113,7 +117,7 @@ void load_input_port_settings(void)
 		struct InputPort *in;
 		int total,savedtotal;
 		char buf[8];
-
+		int i;
 
 		in = Machine->gamedrv->new_input_ports;
 
@@ -167,6 +171,20 @@ void load_input_port_settings(void)
 			in++;
 		}
 
+		/* Clear the coin & ticket counters - LBO 042898 */
+		for (i = 0; i < COIN_COUNTERS; i ++)
+			coins[i] = lastcoin[i] = 0;
+		dispensed_tickets = 0;
+
+		/* read in the coin/ticket counters */
+		for (i = 0; i < COIN_COUNTERS; i ++)
+		{
+			if (readint(f, &coins[i]) != 0)
+				goto getout;
+		}
+		if (readint (f, &dispensed_tickets) != 0)
+			goto getout;
+
 getout:
 		osd_fclose(f);
 	}
@@ -190,6 +208,7 @@ void save_input_port_settings(void)
 	{
 		struct InputPort *in;
 		int total;
+		int i;
 
 
 		in = Machine->gamedrv->new_input_ports;
@@ -220,6 +239,11 @@ void save_input_port_settings(void)
 			writeip(f,in);
 			in++;
 		}
+
+		/* write out the coin/ticket counters for this machine - LBO 042898 */
+		for (i = 0; i < COIN_COUNTERS; i ++)
+			writeint (f, coins[i]);
+		writeint (f, dispensed_tickets);
 
 		osd_fclose(f);
 	}
@@ -437,8 +461,11 @@ void update_analog_port(int port)
 	/* extremes can be either signed or unsigned */
 	if (min > max) min = min - 256;
 
+	/* if IPF_CENTER go back to the default position, but without throwing away */
+	/* sub-precision movements which might have been done. */
 	if (((in->type & IPF_CENTER) && (!is_stick)))
-		input_analog_value[port] = default_value;
+		input_analog_value[port] -=
+				(input_analog_value[port] * sensitivity / 100 - in->default_value) * 100 / sensitivity;
 
 	current = input_analog_value[port];
 

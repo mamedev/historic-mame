@@ -34,7 +34,6 @@ extern unsigned char *atetris_paletteram;
 
 int  atetris_vh_start(void);
 void atetris_vh_stop(void);
-void atetris_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void atetris_vh_screenrefresh(struct osd_bitmap *bitmap);
 int  atetris_slapstic_r(int offset);
 void atetris_palette_w(int offset, int data);
@@ -181,8 +180,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	42*8, 32*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,16*16,
-	atetris_vh_convert_color_prom,
+	256, 256,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,

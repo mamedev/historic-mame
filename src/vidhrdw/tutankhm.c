@@ -22,28 +22,8 @@ static int flipscreen[2];
 /***************************************************************************
 
   Tutankhm doesn't have a color PROM, it uses RAM palette registers.
-  This routine sets up the color tables to simulate it.
 
 ***************************************************************************/
-void tutankhm_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-}
-
-
-
 void tutankhm_palette_w(int offset,int data)
 {
 	int r, g, b;
